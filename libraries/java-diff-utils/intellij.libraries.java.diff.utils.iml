@@ -9,19 +9,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="java-diff-utils" type="repository">
-        <properties maven-id="io.github.java-diff-utils:java-diff-utils:4.16">
+        <properties maven-id="io.github.java-diff-utils:java-diff-utils:4.17">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/github/java-diff-utils/java-diff-utils/4.16/java-diff-utils-4.16.jar">
-              <sha256sum>620403030d676a4a27f780a3acec7438dee1b1651a1c804fa6bb11bb07399a6f</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/github/java-diff-utils/java-diff-utils/4.17/java-diff-utils-4.17.jar">
+              <sha256sum>3e3b6e149bf5d091422689ad6fcc22baad503a52b1139a9baf250fb6de633024</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/github/java-diff-utils/java-diff-utils/4.16/java-diff-utils-4.16.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/java-diff-utils/java-diff-utils/4.17/java-diff-utils-4.17.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/github/java-diff-utils/java-diff-utils/4.16/java-diff-utils-4.16-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/java-diff-utils/java-diff-utils/4.17/java-diff-utils-4.17-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

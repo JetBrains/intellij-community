@@ -52,6 +52,38 @@ This is useful when:
 - You need to regenerate BUILD files after git operations
 - Troubleshooting build system synchronization issues
 
+## Library Version Changes
+
+After you change the version of a repository library in an `*.iml` or in `.idea/libraries/*.xml`, run the Fleet generator in the monorepo checkout:
+
+```bash
+./fleet/build/generateProjectModel.cmd dump
+```
+
+The Fleet generator copies the JPS library versions into `fleet/build/gradle/jps.versions.toml`, `fleet/build/jps-library-mappings.tsv` and both `fleet/kmp.MODULE.bazel` files. Its `check` mode fails on drift.
+
+When the dump changes a `kmp.MODULE.bazel`, update both Bazel lockfiles:
+
+```bash
+./bazel.cmd mod deps --lockfile_mode=update
+(cd community && ./bazel.cmd mod deps --lockfile_mode=update)
+```
+
+The `kmp` module extension records its artifact list in the `MODULE.bazel.lock` of each module, and CI runs Bazel with `--lockfile_mode=error`, so a stale lockfile fails the build. `bun community/build/libraries-dashboard/libraries-dashboard.mjs bump` prints these commands after a bump.
+
+Some files outside the JPS model copy a library version, and the project structure tests check each copy:
+
+- `community/platform/jps-bootstrap/pom.xml` copies every library that jps-bootstrap uses (`JpsBoostrapStructureTest`).
+- `JetBrainsAnnotationsExternalLibraryResolver.VERSION` copies `org.jetbrains:annotations` (`IdeaUltimateProjectStructureTest`).
+
+The bump command rewrites these copies and reports a copy that still differs. After a manual version change, edit them by hand. Then run the tests that gate the Smoke Tests build:
+
+```bash
+./tests.cmd --module intellij.projectStructureTests --test 'com.intellij.ideaProjectStructure.fast.*'
+```
+
+These tests also check the Kotlin, Compose and LanguageTool version alignment and the unused project libraries.
+
 ## BUILD.bazel Auto-Generated Sections
 
 BUILD.bazel files have auto-generated sections marked with comments:

@@ -5972,73 +5972,73 @@ http_file(
 )
 
 http_file(
-    name = "org_jetbrains_intellij-blockmap-1_0_7_http",
-    downloaded_file_path = "blockmap-1.0.7.jar",
-    sha256 = "7e3f98d3370551fea909ceb952e4797108a3a5ef67a1d7b5fb03a036eab24df9",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/blockmap/1.0.7/blockmap-1.0.7.jar",
+    name = "org_jetbrains_intellij-blockmap-1_0_10_http",
+    downloaded_file_path = "blockmap-1.0.10.jar",
+    sha256 = "2342f50c3bf64773d270ddb41eeccb763f74f95ad1ee9f5640ed00a0d231a432",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/blockmap/1.0.10/blockmap-1.0.10.jar",
 )
 
 http_file(
-    name = "org_jetbrains_intellij-blockmap-1_0_7-sources_http",
-    downloaded_file_path = "blockmap-1.0.7-sources.jar",
-    sha256 = "bac026c62cee8c3a1395f6004b6e84b44e23cd8de9606350b55a1599b4a62bda",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/blockmap/1.0.7/blockmap-1.0.7-sources.jar",
+    name = "org_jetbrains_intellij-blockmap-1_0_10-sources_http",
+    downloaded_file_path = "blockmap-1.0.10-sources.jar",
+    sha256 = "e1989815aab49ad3ab52ea14cad68007178ec2d058e95c591f09f790637b0a2e",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/blockmap/1.0.10/blockmap-1.0.10-sources.jar",
 )
 
 http_file(
-    name = "org_bouncycastle-bcpg-jdk18on-1_84_http",
-    downloaded_file_path = "bcpg-jdk18on-1.84.jar",
-    sha256 = "c0e6303a0d7589040f400950ecee87a14b81312e84ed15e5390ebb0c4566ddab",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/bouncycastle/bcpg-jdk18on/1.84/bcpg-jdk18on-1.84.jar",
+    name = "org_bouncycastle-bcpg-jdk18on-1_86_http",
+    downloaded_file_path = "bcpg-jdk18on-1.86.jar",
+    sha256 = "8a52ea45b2063f6d41b8ca94409f255a1f4604922f7451c18a7cfd3a3c5b85ab",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/bouncycastle/bcpg-jdk18on/1.86/bcpg-jdk18on-1.86.jar",
 )
 
 http_file(
-    name = "org_bouncycastle-bcpg-jdk18on-1_84-sources_http",
-    downloaded_file_path = "bcpg-jdk18on-1.84-sources.jar",
-    sha256 = "a8baa033c57614d36c3d2339a8c8e5902a8a2ed8cb7387cdb2b919e5a4b15f30",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/bouncycastle/bcpg-jdk18on/1.84/bcpg-jdk18on-1.84-sources.jar",
+    name = "org_bouncycastle-bcpg-jdk18on-1_86-sources_http",
+    downloaded_file_path = "bcpg-jdk18on-1.86-sources.jar",
+    sha256 = "02c36d0c102abbae4ce5c81449cf66338f6befcec2844fc07d685c412e20f1d6",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/bouncycastle/bcpg-jdk18on/1.86/bcpg-jdk18on-1.86-sources.jar",
 )
 
 http_file(
-    name = "org_bouncycastle-bcpkix-jdk18on-1_84_http",
-    downloaded_file_path = "bcpkix-jdk18on-1.84.jar",
-    sha256 = "c87f16ed9e5ec61bc94151e9f3646ac44e50cd448121ce84367fa4b7ec7ec1bb",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/bouncycastle/bcpkix-jdk18on/1.84/bcpkix-jdk18on-1.84.jar",
+    name = "org_bouncycastle-bcpkix-jdk18on-1_86_http",
+    downloaded_file_path = "bcpkix-jdk18on-1.86.jar",
+    sha256 = "8d8b41a4b149bdae8d331f059a578870954d1e3ff29f8269a9eb3ee19a7e4ef7",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/bouncycastle/bcpkix-jdk18on/1.86/bcpkix-jdk18on-1.86.jar",
 )
 
 http_file(
-    name = "org_bouncycastle-bcutil-jdk18on-1_84_http",
-    downloaded_file_path = "bcutil-jdk18on-1.84.jar",
-    sha256 = "b374e16963421fb9cfb01cc20d7ad8fd2f8b8188e3eef0ec0a8965e245f7619a",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/bouncycastle/bcutil-jdk18on/1.84/bcutil-jdk18on-1.84.jar",
+    name = "org_bouncycastle-bcutil-jdk18on-1_86_http",
+    downloaded_file_path = "bcutil-jdk18on-1.86.jar",
+    sha256 = "1c268e15f785aafb1e4670d8d6e5f856f69475e96c162dadcd1ff9b350e9139f",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/bouncycastle/bcutil-jdk18on/1.86/bcutil-jdk18on-1.86.jar",
 )
 
 http_file(
-    name = "org_bouncycastle-bcprov-jdk18on-1_84_http",
-    downloaded_file_path = "bcprov-jdk18on-1.84.jar",
-    sha256 = "64d6c5a6121fcd927152dd182cbed39afe0fda641a970d9bcc0c9cb1858b2731",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/bouncycastle/bcprov-jdk18on/1.84/bcprov-jdk18on-1.84.jar",
+    name = "org_bouncycastle-bcprov-jdk18on-1_86_http",
+    downloaded_file_path = "bcprov-jdk18on-1.86.jar",
+    sha256 = "2af190b300cbb0b35e248ccf5f4a06b6072030aeb3da7a98ec73abe5b4cb371f",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/bouncycastle/bcprov-jdk18on/1.86/bcprov-jdk18on-1.86.jar",
 )
 
 http_file(
-    name = "org_bouncycastle-bcpkix-jdk18on-1_84-sources_http",
-    downloaded_file_path = "bcpkix-jdk18on-1.84-sources.jar",
-    sha256 = "fe00c12243c28ead30ad6c7742be40ff005ab29f493c350b83b637fe4a9b5597",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/bouncycastle/bcpkix-jdk18on/1.84/bcpkix-jdk18on-1.84-sources.jar",
+    name = "org_bouncycastle-bcpkix-jdk18on-1_86-sources_http",
+    downloaded_file_path = "bcpkix-jdk18on-1.86-sources.jar",
+    sha256 = "0bb00b50a80404e40c6465cb8012d3835d2a9100d94d16eaa9efed4587d7e34d",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/bouncycastle/bcpkix-jdk18on/1.86/bcpkix-jdk18on-1.86-sources.jar",
 )
 
 http_file(
-    name = "org_bouncycastle-bcutil-jdk18on-1_84-sources_http",
-    downloaded_file_path = "bcutil-jdk18on-1.84-sources.jar",
-    sha256 = "192b719273dc33e8fd6edc3b30b126760b6740cf2e1ac3cc7cf845c7ffec9f2b",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/bouncycastle/bcutil-jdk18on/1.84/bcutil-jdk18on-1.84-sources.jar",
+    name = "org_bouncycastle-bcutil-jdk18on-1_86-sources_http",
+    downloaded_file_path = "bcutil-jdk18on-1.86-sources.jar",
+    sha256 = "a79e8cdbc04a24aecf64503eda9a4aa61019132484c64f7ce32a68ac30ef6df7",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/bouncycastle/bcutil-jdk18on/1.86/bcutil-jdk18on-1.86-sources.jar",
 )
 
 http_file(
-    name = "org_bouncycastle-bcprov-jdk18on-1_84-sources_http",
-    downloaded_file_path = "bcprov-jdk18on-1.84-sources.jar",
-    sha256 = "e5f04550f7740e588edcbd1654c59277cd7ee8725d8b674e44f7f8f4b9c5674a",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/bouncycastle/bcprov-jdk18on/1.84/bcprov-jdk18on-1.84-sources.jar",
+    name = "org_bouncycastle-bcprov-jdk18on-1_86-sources_http",
+    downloaded_file_path = "bcprov-jdk18on-1.86-sources.jar",
+    sha256 = "34a8b7dcb030a08ddd5356d3d5be962f9299ca5275e1460273186f8fdbe44c34",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/bouncycastle/bcprov-jdk18on/1.86/bcprov-jdk18on-1.86-sources.jar",
 )
 
 http_file(
@@ -6070,31 +6070,31 @@ http_file(
 )
 
 http_file(
-    name = "com_github_ben-manes_caffeine-caffeine-3_2_3_http",
-    downloaded_file_path = "caffeine-3.2.3.jar",
-    sha256 = "ca70c90a5d1ce1511880ce9c93d4ad22108f61111d3daf91eb52762b571bd179",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/ben-manes/caffeine/caffeine/3.2.3/caffeine-3.2.3.jar",
+    name = "com_github_ben-manes_caffeine-caffeine-3_2_4_http",
+    downloaded_file_path = "caffeine-3.2.4.jar",
+    sha256 = "9d9d2cfd681fd9272ded3d27c9930db12f89f732345975aa113ebc223bbf1224",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/ben-manes/caffeine/caffeine/3.2.4/caffeine-3.2.4.jar",
 )
 
 http_file(
-    name = "com_google_errorprone-error_prone_annotations-2_43_0_http",
-    downloaded_file_path = "error_prone_annotations-2.43.0.jar",
-    sha256 = "48272e75c16e1f7bdc7bd19529ccacd5ee170404701d7f5a23441bb5847957f5",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/errorprone/error_prone_annotations/2.43.0/error_prone_annotations-2.43.0.jar",
+    name = "com_google_errorprone-error_prone_annotations-2_49_0_http",
+    downloaded_file_path = "error_prone_annotations-2.49.0.jar",
+    sha256 = "3b1003e51b8ae56fdbd7c71073e81d1683b97e6c4dff5a9151164d59b769d13c",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/errorprone/error_prone_annotations/2.49.0/error_prone_annotations-2.49.0.jar",
 )
 
 http_file(
-    name = "com_github_ben-manes_caffeine-caffeine-3_2_3-sources_http",
-    downloaded_file_path = "caffeine-3.2.3-sources.jar",
-    sha256 = "60434a548af57d0dbe13b1aa4aaf08816e5bf1d3442264c669246f8929f4b757",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/ben-manes/caffeine/caffeine/3.2.3/caffeine-3.2.3-sources.jar",
+    name = "com_github_ben-manes_caffeine-caffeine-3_2_4-sources_http",
+    downloaded_file_path = "caffeine-3.2.4-sources.jar",
+    sha256 = "5079e1b327d79e2fc8ae3f5927587e59c968603e63785fb33479acd8b732211d",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/ben-manes/caffeine/caffeine/3.2.4/caffeine-3.2.4-sources.jar",
 )
 
 http_file(
-    name = "com_google_errorprone-error_prone_annotations-2_43_0-sources_http",
-    downloaded_file_path = "error_prone_annotations-2.43.0-sources.jar",
-    sha256 = "458c91db60611551ede96c331c0632ee6d6cb0e5fcf1793d73017207530ebb52",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/errorprone/error_prone_annotations/2.43.0/error_prone_annotations-2.43.0-sources.jar",
+    name = "com_google_errorprone-error_prone_annotations-2_49_0-sources_http",
+    downloaded_file_path = "error_prone_annotations-2.49.0-sources.jar",
+    sha256 = "69d2de7f69033ff914ba06f0858adb96ac7b1436959f04fca7de5805c834b281",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/errorprone/error_prone_annotations/2.49.0/error_prone_annotations-2.49.0-sources.jar",
 )
 
 http_file(
@@ -6112,17 +6112,17 @@ http_file(
 )
 
 http_file(
-    name = "io_github_classgraph-classgraph-4_8_181_http",
-    downloaded_file_path = "classgraph-4.8.181.jar",
-    sha256 = "62a6436d69710ef5fab6ec243781ce4c5b299047ed1841b5f92746ae852ce545",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/classgraph/classgraph/4.8.181/classgraph-4.8.181.jar",
+    name = "io_github_classgraph-classgraph-4_8_195_http",
+    downloaded_file_path = "classgraph-4.8.195.jar",
+    sha256 = "84820d3e187d208c311f2b24719689f371c1361608e0881ff61d6acef0bf6807",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/classgraph/classgraph/4.8.195/classgraph-4.8.195.jar",
 )
 
 http_file(
-    name = "io_github_classgraph-classgraph-4_8_181-sources_http",
-    downloaded_file_path = "classgraph-4.8.181-sources.jar",
-    sha256 = "6df77971fd117f7cb5007eab6a36ec219ea028165339cdbb531286cc5f57aac9",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/classgraph/classgraph/4.8.181/classgraph-4.8.181-sources.jar",
+    name = "io_github_classgraph-classgraph-4_8_195-sources_http",
+    downloaded_file_path = "classgraph-4.8.195-sources.jar",
+    sha256 = "b60d9acc56ec9292b8fad1de28cd370f7cfaae48e91fbe703471900b3bd79577",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/classgraph/classgraph/4.8.195/classgraph-4.8.195-sources.jar",
 )
 
 http_file(
@@ -6350,17 +6350,17 @@ http_file(
 )
 
 http_file(
-    name = "commons-codec-commons-codec-1_21_0_http",
-    downloaded_file_path = "commons-codec-1.21.0.jar",
-    sha256 = "4da851cb6abfb98bfe9eb77c5e5fc47f5414fa28b94e21b7fd9a646705dc167f",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/commons-codec/commons-codec/1.21.0/commons-codec-1.21.0.jar",
+    name = "commons-codec-commons-codec-1_22_1_http",
+    downloaded_file_path = "commons-codec-1.22.1.jar",
+    sha256 = "78a5d732fbd715e2d10bd7150d2f8030bae57267f8aacc5c88f642cb6c2e5d3f",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/commons-codec/commons-codec/1.22.1/commons-codec-1.22.1.jar",
 )
 
 http_file(
-    name = "commons-codec-commons-codec-1_21_0-sources_http",
-    downloaded_file_path = "commons-codec-1.21.0-sources.jar",
-    sha256 = "4b4558c13a54afb6461ab795a95b6c349b1fada9cd785defe1f47531853247ec",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/commons-codec/commons-codec/1.21.0/commons-codec-1.21.0-sources.jar",
+    name = "commons-codec-commons-codec-1_22_1-sources_http",
+    downloaded_file_path = "commons-codec-1.22.1-sources.jar",
+    sha256 = "96444ee2fa5a41dc4d3b7b95f46b67495795d458e2050fc08bb88ab7f87ac021",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/commons-codec/commons-codec/1.22.1/commons-codec-1.22.1-sources.jar",
 )
 
 http_file(
@@ -6392,17 +6392,17 @@ http_file(
 )
 
 http_file(
-    name = "commons-io-commons-io-2_21_0_http",
-    downloaded_file_path = "commons-io-2.21.0.jar",
-    sha256 = "7d643a2afea8b058b762aa6fb90e5b256f6c729739f8b3784c3370ddc609e88d",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/commons-io/commons-io/2.21.0/commons-io-2.21.0.jar",
+    name = "commons-io-commons-io-2_22_0_http",
+    downloaded_file_path = "commons-io-2.22.0.jar",
+    sha256 = "2b9a7b1f726fb86216dbd2c8321eabe0221dbd5b1be81c18e1cb53811b104758",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/commons-io/commons-io/2.22.0/commons-io-2.22.0.jar",
 )
 
 http_file(
-    name = "commons-io-commons-io-2_21_0-sources_http",
-    downloaded_file_path = "commons-io-2.21.0-sources.jar",
-    sha256 = "5fd4d4493dd1eee5c6f314159dbac7fda1988a4ab037feacbeb2ecb3033c43b4",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/commons-io/commons-io/2.21.0/commons-io-2.21.0-sources.jar",
+    name = "commons-io-commons-io-2_22_0-sources_http",
+    downloaded_file_path = "commons-io-2.22.0-sources.jar",
+    sha256 = "de5acfae5fa2735276df7facf46cdb0347374208ea47db246b554fae59277fb5",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/commons-io/commons-io/2.22.0/commons-io-2.22.0-sources.jar",
 )
 
 http_file(
@@ -8380,17 +8380,31 @@ http_file(
 )
 
 http_file(
-    name = "com_google_code_gson-gson-2_13_2_http",
-    downloaded_file_path = "gson-2.13.2.jar",
-    sha256 = "dd0ce1b55a3ed2080cb70f9c655850cda86c206862310009dcb5e5c95265a5e0",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/code/gson/gson/2.13.2/gson-2.13.2.jar",
+    name = "com_google_code_gson-gson-2_14_0_http",
+    downloaded_file_path = "gson-2.14.0.jar",
+    sha256 = "2cbd119bf1961c28788310963dc80ba65f58cdeec1dd139c8bdb1240faa2c36f",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/code/gson/gson/2.14.0/gson-2.14.0.jar",
 )
 
 http_file(
-    name = "com_google_code_gson-gson-2_13_2-sources_http",
-    downloaded_file_path = "gson-2.13.2-sources.jar",
-    sha256 = "058974b69cb7b0a04712278e11870e84ee8cd8fb5f551bd8401e72ba6638bfef",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/code/gson/gson/2.13.2/gson-2.13.2-sources.jar",
+    name = "com_google_code_gson-gson-2_14_0-sources_http",
+    downloaded_file_path = "gson-2.14.0-sources.jar",
+    sha256 = "a4873f0ef88981cab520c3d7449cd89a68e605f15e9fe46e1aa2c77d5f87eb6f",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/code/gson/gson/2.14.0/gson-2.14.0-sources.jar",
+)
+
+http_file(
+    name = "com_google_guava-guava-33_7_1-jre_http",
+    downloaded_file_path = "guava-33.7.1-jre.jar",
+    sha256 = "796d8e28ac64e83a47c4c5935a8fecc4682650a04bbdead738ef0f5a3a0e6c46",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/guava/guava/33.7.1-jre/guava-33.7.1-jre.jar",
+)
+
+http_file(
+    name = "com_google_guava-guava-33_7_1-jre-sources_http",
+    downloaded_file_path = "guava-33.7.1-jre-sources.jar",
+    sha256 = "9d60f1613f9252d1f1bc89847466915cfe711af33b0847b885c9184a8602d166",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/guava/guava/33.7.1-jre/guava-33.7.1-jre-sources.jar",
 )
 
 http_file(
@@ -8751,87 +8765,87 @@ http_file(
 )
 
 http_file(
-    name = "tools_jackson_core-jackson-databind-3_2_1_http",
-    downloaded_file_path = "jackson-databind-3.2.1.jar",
-    sha256 = "8d005c5626b1839e2eea6bd33a437287e7a24d54e1bb3746b8f861193262b519",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/tools/jackson/core/jackson-databind/3.2.1/jackson-databind-3.2.1.jar",
+    name = "tools_jackson_core-jackson-databind-3_2_2_http",
+    downloaded_file_path = "jackson-databind-3.2.2.jar",
+    sha256 = "d27509f990d990fc779a01f3f612005ff6c67dc3bb0a720f5f4d9b2f5c713401",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/tools/jackson/core/jackson-databind/3.2.2/jackson-databind-3.2.2.jar",
 )
 
 http_file(
-    name = "tools_jackson_core-jackson-databind-3_2_1-sources_http",
-    downloaded_file_path = "jackson-databind-3.2.1-sources.jar",
-    sha256 = "e6455e24b0621c5f9def55101fdb1e0599fbadce11389f9b51e478d5a664d4e5",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/tools/jackson/core/jackson-databind/3.2.1/jackson-databind-3.2.1-sources.jar",
+    name = "tools_jackson_core-jackson-databind-3_2_2-sources_http",
+    downloaded_file_path = "jackson-databind-3.2.2-sources.jar",
+    sha256 = "da9d8f260e7cf527e9f26ccd2ccc7dec65d5c6eaad03bf6842b3a29425c644b7",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/tools/jackson/core/jackson-databind/3.2.2/jackson-databind-3.2.2-sources.jar",
 )
 
 http_file(
-    name = "tools_jackson_dataformat-jackson-dataformat-toml-3_2_1_http",
-    downloaded_file_path = "jackson-dataformat-toml-3.2.1.jar",
-    sha256 = "18829c4cac6e9aae8ebff68f3f483508f72cf666fd6928aa10253bae59ba8215",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/tools/jackson/dataformat/jackson-dataformat-toml/3.2.1/jackson-dataformat-toml-3.2.1.jar",
+    name = "tools_jackson_dataformat-jackson-dataformat-toml-3_2_2_http",
+    downloaded_file_path = "jackson-dataformat-toml-3.2.2.jar",
+    sha256 = "b77f852d139a9978212e9d52dadfb5a547f2602f580322be1f73f2f8a2efcead",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/tools/jackson/dataformat/jackson-dataformat-toml/3.2.2/jackson-dataformat-toml-3.2.2.jar",
 )
 
 http_file(
-    name = "tools_jackson_dataformat-jackson-dataformat-toml-3_2_1-sources_http",
-    downloaded_file_path = "jackson-dataformat-toml-3.2.1-sources.jar",
-    sha256 = "a7a6c34093053090a0a5cbebdb38e1cd9623821a9e91aa466b97b07df5a6288d",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/tools/jackson/dataformat/jackson-dataformat-toml/3.2.1/jackson-dataformat-toml-3.2.1-sources.jar",
+    name = "tools_jackson_dataformat-jackson-dataformat-toml-3_2_2-sources_http",
+    downloaded_file_path = "jackson-dataformat-toml-3.2.2-sources.jar",
+    sha256 = "b083acbc01517b3b8a631aea03afe990eafdd760ede2f0d298e10a4c22880aab",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/tools/jackson/dataformat/jackson-dataformat-toml/3.2.2/jackson-dataformat-toml-3.2.2-sources.jar",
 )
 
 http_file(
-    name = "tools_jackson_dataformat-jackson-dataformat-yaml-3_2_1_http",
-    downloaded_file_path = "jackson-dataformat-yaml-3.2.1.jar",
-    sha256 = "b6a748ca9aab640f647079b6bfa53f16a5b65b815a19581c4afe0601e754854e",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/tools/jackson/dataformat/jackson-dataformat-yaml/3.2.1/jackson-dataformat-yaml-3.2.1.jar",
+    name = "tools_jackson_dataformat-jackson-dataformat-yaml-3_2_2_http",
+    downloaded_file_path = "jackson-dataformat-yaml-3.2.2.jar",
+    sha256 = "c2c24e93676832dbb14196685e24292bb04258165c70d6c1e41e475e34fc93d3",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/tools/jackson/dataformat/jackson-dataformat-yaml/3.2.2/jackson-dataformat-yaml-3.2.2.jar",
 )
 
 http_file(
-    name = "tools_jackson_dataformat-jackson-dataformat-yaml-3_2_1-sources_http",
-    downloaded_file_path = "jackson-dataformat-yaml-3.2.1-sources.jar",
-    sha256 = "c64757ea5e5deb9913c652adefeb9474e5926dda4ddd70463bdc971449474129",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/tools/jackson/dataformat/jackson-dataformat-yaml/3.2.1/jackson-dataformat-yaml-3.2.1-sources.jar",
+    name = "tools_jackson_dataformat-jackson-dataformat-yaml-3_2_2-sources_http",
+    downloaded_file_path = "jackson-dataformat-yaml-3.2.2-sources.jar",
+    sha256 = "6d7f8a4c3c6c21fed71e951999291aa3d5de00f3e214ec605372f8258f3995f7",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/tools/jackson/dataformat/jackson-dataformat-yaml/3.2.2/jackson-dataformat-yaml-3.2.2-sources.jar",
 )
 
 http_file(
-    name = "tools_jackson_core-jackson-core-3_2_1_http",
-    downloaded_file_path = "jackson-core-3.2.1.jar",
-    sha256 = "2688aaa60b207403287e16a71fb5644bf2f9cfc464cc601ae95c6c86a5af1f94",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/tools/jackson/core/jackson-core/3.2.1/jackson-core-3.2.1.jar",
+    name = "tools_jackson_core-jackson-core-3_2_2_http",
+    downloaded_file_path = "jackson-core-3.2.2.jar",
+    sha256 = "93d9090b8c505b2f942ad85dd5821e8c401bfbafafff11708a3fbe2ef9da18ca",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/tools/jackson/core/jackson-core/3.2.2/jackson-core-3.2.2.jar",
 )
 
 http_file(
-    name = "tools_jackson_core-jackson-core-3_2_1-sources_http",
-    downloaded_file_path = "jackson-core-3.2.1-sources.jar",
-    sha256 = "06db11dfde5279230a7fb63a91659ead5d4f37879a5368c8493590324356619d",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/tools/jackson/core/jackson-core/3.2.1/jackson-core-3.2.1-sources.jar",
+    name = "tools_jackson_core-jackson-core-3_2_2-sources_http",
+    downloaded_file_path = "jackson-core-3.2.2-sources.jar",
+    sha256 = "3d20867513cc78a44f56f1152f85f94492ba3e1f89a1065a3bd7629dbfdb3b94",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/tools/jackson/core/jackson-core/3.2.2/jackson-core-3.2.2-sources.jar",
 )
 
 http_file(
-    name = "tools_jackson_jr-jackson-jr-objects-3_2_1_http",
-    downloaded_file_path = "jackson-jr-objects-3.2.1.jar",
-    sha256 = "51d4f7d2438dfd32413fa55b28050096b7c114389146fb31883f47f8cd12f8ad",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/tools/jackson/jr/jackson-jr-objects/3.2.1/jackson-jr-objects-3.2.1.jar",
+    name = "tools_jackson_jr-jackson-jr-objects-3_2_2_http",
+    downloaded_file_path = "jackson-jr-objects-3.2.2.jar",
+    sha256 = "ede8d56254447d3352b7728cb42ac87113ce6dcdfaa6fac5330e9802add4ffbd",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/tools/jackson/jr/jackson-jr-objects/3.2.2/jackson-jr-objects-3.2.2.jar",
 )
 
 http_file(
-    name = "tools_jackson_jr-jackson-jr-objects-3_2_1-sources_http",
-    downloaded_file_path = "jackson-jr-objects-3.2.1-sources.jar",
-    sha256 = "2068be529ff98fbc3e2d80c480d8cb0c0e760680b09df80e0a71e5aa1e683516",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/tools/jackson/jr/jackson-jr-objects/3.2.1/jackson-jr-objects-3.2.1-sources.jar",
+    name = "tools_jackson_jr-jackson-jr-objects-3_2_2-sources_http",
+    downloaded_file_path = "jackson-jr-objects-3.2.2-sources.jar",
+    sha256 = "434971ad087bf4d774b9a2371a005652250e5422731d1f98fdb3c54ca5a7b54b",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/tools/jackson/jr/jackson-jr-objects/3.2.2/jackson-jr-objects-3.2.2-sources.jar",
 )
 
 http_file(
-    name = "tools_jackson_module-jackson-module-kotlin-3_2_1_http",
-    downloaded_file_path = "jackson-module-kotlin-3.2.1.jar",
-    sha256 = "987517db3ed030a8dc002f54b94a99de90f6fbc15271a3552a3c63775b6b75cd",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/tools/jackson/module/jackson-module-kotlin/3.2.1/jackson-module-kotlin-3.2.1.jar",
+    name = "tools_jackson_module-jackson-module-kotlin-3_2_2_http",
+    downloaded_file_path = "jackson-module-kotlin-3.2.2.jar",
+    sha256 = "d497603e016ca0a07fba3a44af5cfa192064b6c851886300e73cb6cd3d7c39cb",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/tools/jackson/module/jackson-module-kotlin/3.2.2/jackson-module-kotlin-3.2.2.jar",
 )
 
 http_file(
-    name = "tools_jackson_module-jackson-module-kotlin-3_2_1-sources_http",
-    downloaded_file_path = "jackson-module-kotlin-3.2.1-sources.jar",
-    sha256 = "fcc693dbfb5bbcccd5d02d851caa68294eb134643bdacebe37d8cea26ed3e970",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/tools/jackson/module/jackson-module-kotlin/3.2.1/jackson-module-kotlin-3.2.1-sources.jar",
+    name = "tools_jackson_module-jackson-module-kotlin-3_2_2-sources_http",
+    downloaded_file_path = "jackson-module-kotlin-3.2.2-sources.jar",
+    sha256 = "4dc48c84be916009bad8ad6601b3a78cd3b810434eeb4f4885f6986eabfae45b",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/tools/jackson/module/jackson-module-kotlin/3.2.2/jackson-module-kotlin-3.2.2-sources.jar",
 )
 
 http_file(
@@ -8849,17 +8863,17 @@ http_file(
 )
 
 http_file(
-    name = "io_github_java-diff-utils-java-diff-utils-4_16_http",
-    downloaded_file_path = "java-diff-utils-4.16.jar",
-    sha256 = "620403030d676a4a27f780a3acec7438dee1b1651a1c804fa6bb11bb07399a6f",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/java-diff-utils/java-diff-utils/4.16/java-diff-utils-4.16.jar",
+    name = "io_github_java-diff-utils-java-diff-utils-4_17_http",
+    downloaded_file_path = "java-diff-utils-4.17.jar",
+    sha256 = "3e3b6e149bf5d091422689ad6fcc22baad503a52b1139a9baf250fb6de633024",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/java-diff-utils/java-diff-utils/4.17/java-diff-utils-4.17.jar",
 )
 
 http_file(
-    name = "io_github_java-diff-utils-java-diff-utils-4_16-sources_http",
-    downloaded_file_path = "java-diff-utils-4.16-sources.jar",
-    sha256 = "1307a36819f8dac34187402947e2a9e850b9e7ce95dd5044524e4860c3378ab0",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/java-diff-utils/java-diff-utils/4.16/java-diff-utils-4.16-sources.jar",
+    name = "io_github_java-diff-utils-java-diff-utils-4_17-sources_http",
+    downloaded_file_path = "java-diff-utils-4.17-sources.jar",
+    sha256 = "a510439dd5d4795e80eb671107a270c0f2c8e1b0741a7bc88c6decf0c3ab3bdf",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/java-diff-utils/java-diff-utils/4.17/java-diff-utils-4.17-sources.jar",
 )
 
 http_file(
@@ -8975,17 +8989,17 @@ http_file(
 )
 
 http_file(
-    name = "org_jetbrains-annotations-26_0_2_http",
-    downloaded_file_path = "annotations-26.0.2.jar",
-    sha256 = "2037be378980d3ba9333e97955f3b2cde392aa124d04ca73ce2eee6657199297",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/annotations/26.0.2/annotations-26.0.2.jar",
+    name = "org_jetbrains-annotations-26_1_0_http",
+    downloaded_file_path = "annotations-26.1.0.jar",
+    sha256 = "ebc7aec252ed0c7d2d04c039d7f00e69f7b86b1f493c741d67b3ef31b986b054",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/annotations/26.1.0/annotations-26.1.0.jar",
 )
 
 http_file(
-    name = "org_jetbrains-annotations-26_0_2-sources_http",
-    downloaded_file_path = "annotations-26.0.2-sources.jar",
-    sha256 = "a3bea3ada0af186437f8f3a089e6b0f52ac5aa068c1cb829058fb8a5069f6b0f",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/annotations/26.0.2/annotations-26.0.2-sources.jar",
+    name = "org_jetbrains-annotations-26_1_0-sources_http",
+    downloaded_file_path = "annotations-26.1.0-sources.jar",
+    sha256 = "736d7e0e4bd95570ec8856cacffa3c34eb78ad8e45ca78c5df610d7347963b53",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/annotations/26.1.0/annotations-26.1.0-sources.jar",
 )
 
 http_file(
@@ -9003,17 +9017,17 @@ http_file(
 )
 
 http_file(
-    name = "org_codehaus_jettison-jettison-1_5_4_http",
-    downloaded_file_path = "jettison-1.5.4.jar",
-    sha256 = "fc3a68a7c17688ee50817340fef265d8d3f6c192c92bbee00d17f18a6d3dfeda",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/jettison/jettison/1.5.4/jettison-1.5.4.jar",
+    name = "org_codehaus_jettison-jettison-1_5_7_http",
+    downloaded_file_path = "jettison-1.5.7.jar",
+    sha256 = "0fa0f1144fe37925e3568f8f5413ba5c0a551a243c47ec2d1885505e76a7b186",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/jettison/jettison/1.5.7/jettison-1.5.7.jar",
 )
 
 http_file(
-    name = "org_codehaus_jettison-jettison-1_5_4-sources_http",
-    downloaded_file_path = "jettison-1.5.4-sources.jar",
-    sha256 = "bc7643e6bdb8c3a2995a4420d150ae5b414902eafedbadfdb4cf94c5de31469c",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/jettison/jettison/1.5.4/jettison-1.5.4-sources.jar",
+    name = "org_codehaus_jettison-jettison-1_5_7-sources_http",
+    downloaded_file_path = "jettison-1.5.7-sources.jar",
+    sha256 = "ecfce2b3915faf1d3e95c12a25227c47db623328452772de824db24dd66b2e18",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/jettison/jettison/1.5.7/jettison-1.5.7-sources.jar",
 )
 
 http_file(
@@ -9325,17 +9339,17 @@ http_file(
 )
 
 http_file(
-    name = "org_jsoup-jsoup-1_22_1_http",
-    downloaded_file_path = "jsoup-1.22.1.jar",
-    sha256 = "cfd3298d8720cddfb0545109ccc6ea0ef39eff7e9c40a10ad95c93a65f01c916",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jsoup/jsoup/1.22.1/jsoup-1.22.1.jar",
+    name = "org_jsoup-jsoup-1_23_2_http",
+    downloaded_file_path = "jsoup-1.23.2.jar",
+    sha256 = "e9d8c856856680427f096d156f02a414289985c930998fcb519ce5be39b42003",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jsoup/jsoup/1.23.2/jsoup-1.23.2.jar",
 )
 
 http_file(
-    name = "org_jsoup-jsoup-1_22_1-sources_http",
-    downloaded_file_path = "jsoup-1.22.1-sources.jar",
-    sha256 = "457c4571fa8c20a03a173ed6ca77290089603798fbdb05b54dca5ed472945ba5",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jsoup/jsoup/1.22.1/jsoup-1.22.1-sources.jar",
+    name = "org_jsoup-jsoup-1_23_2-sources_http",
+    downloaded_file_path = "jsoup-1.23.2-sources.jar",
+    sha256 = "f0ed21735857df93c3e461d1aecf89d28c3eda552f2e043d68959d341376aa17",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jsoup/jsoup/1.23.2/jsoup-1.23.2-sources.jar",
 )
 
 http_file(
@@ -9353,17 +9367,31 @@ http_file(
 )
 
 http_file(
-    name = "com_github_weisj-jsvg-2_1_0_http",
-    downloaded_file_path = "jsvg-2.1.0.jar",
-    sha256 = "a538142d27c57c55066da02a535cc8eee3afd0d37b3daff8eba6344bd0ffc1b6",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/weisj/jsvg/2.1.0/jsvg-2.1.0.jar",
+    name = "org_jspecify-jspecify-1_0_1_http",
+    downloaded_file_path = "jspecify-1.0.1.jar",
+    sha256 = "070d75f261fe4c5b8202508366715f7f2d4660f88c8ef7e6d3575e48c9683b66",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jspecify/jspecify/1.0.1/jspecify-1.0.1.jar",
 )
 
 http_file(
-    name = "com_github_weisj-jsvg-2_1_0-sources_http",
-    downloaded_file_path = "jsvg-2.1.0-sources.jar",
-    sha256 = "6616050e4b185d5a7313f8ea9f4c5446a1d26ac880e1c35cccf44c9176bbd866",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/weisj/jsvg/2.1.0/jsvg-2.1.0-sources.jar",
+    name = "org_jspecify-jspecify-1_0_1-sources_http",
+    downloaded_file_path = "jspecify-1.0.1-sources.jar",
+    sha256 = "230c491aac6d2a2b7e66b68d4331b1d2626f1bf3a372c33bbe2b077297e46c45",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jspecify/jspecify/1.0.1/jspecify-1.0.1-sources.jar",
+)
+
+http_file(
+    name = "com_github_weisj-jsvg-2_2_0_http",
+    downloaded_file_path = "jsvg-2.2.0.jar",
+    sha256 = "abc17a201f9cba7f690f1f68e9c0e9dacf225a8727922226b2b480c0d11c99e9",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/weisj/jsvg/2.2.0/jsvg-2.2.0.jar",
+)
+
+http_file(
+    name = "com_github_weisj-jsvg-2_2_0-sources_http",
+    downloaded_file_path = "jsvg-2.2.0-sources.jar",
+    sha256 = "a0d5b259c2c29e0dff14bf19d989d12ce195ca90c1ccb00185064905f762b2df",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/weisj/jsvg/2.2.0/jsvg-2.2.0-sources.jar",
 )
 
 http_file(
@@ -10333,17 +10361,17 @@ http_file(
 )
 
 http_file(
-    name = "org_jetbrains_kotlinx-kotlinx-collections-immutable-jvm-0_5_0_http",
-    downloaded_file_path = "kotlinx-collections-immutable-jvm-0.5.0.jar",
-    sha256 = "9481ed3b87e282ffb95d7e2a033702afa3af476e3b89137294aeccebb27c76f7",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-collections-immutable-jvm/0.5.0/kotlinx-collections-immutable-jvm-0.5.0.jar",
+    name = "org_jetbrains_kotlinx-kotlinx-collections-immutable-jvm-0_5_2_http",
+    downloaded_file_path = "kotlinx-collections-immutable-jvm-0.5.2.jar",
+    sha256 = "6d7f84d544644fa857bba83292820cdb1e0dae408fa41d2dced903d290286463",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-collections-immutable-jvm/0.5.2/kotlinx-collections-immutable-jvm-0.5.2.jar",
 )
 
 http_file(
-    name = "org_jetbrains_kotlinx-kotlinx-collections-immutable-jvm-0_5_0-sources_http",
-    downloaded_file_path = "kotlinx-collections-immutable-jvm-0.5.0-sources.jar",
-    sha256 = "49cc02cb15dac26a800e9cc35f3fc76e647a202eaddf979276dd9eed95d5bb87",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-collections-immutable-jvm/0.5.0/kotlinx-collections-immutable-jvm-0.5.0-sources.jar",
+    name = "org_jetbrains_kotlinx-kotlinx-collections-immutable-jvm-0_5_2-sources_http",
+    downloaded_file_path = "kotlinx-collections-immutable-jvm-0.5.2-sources.jar",
+    sha256 = "940d99f083ccb474d349e9dd9ac69f587280778b5f8c3eb5c860098a3fa965ae",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-collections-immutable-jvm/0.5.2/kotlinx-collections-immutable-jvm-0.5.2-sources.jar",
 )
 
 http_file(
@@ -10599,6 +10627,20 @@ http_file(
 )
 
 http_file(
+    name = "org_objenesis-objenesis-3_6_http",
+    downloaded_file_path = "objenesis-3.6.jar",
+    sha256 = "6ecc0fc776af04e2bfd2bf42d618ab5161440dcb8a0e7dff9e84c065c7cec3dd",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/objenesis/objenesis/3.6/objenesis-3.6.jar",
+)
+
+http_file(
+    name = "org_objenesis-objenesis-3_6-sources_http",
+    downloaded_file_path = "objenesis-3.6-sources.jar",
+    sha256 = "af21c7512521755acc9d65018639a0e898046cb4b130343a05ea7c1fd46648a5",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/objenesis/objenesis/3.6/objenesis-3.6-sources.jar",
+)
+
+http_file(
     name = "com_esotericsoftware-kryo5-5_6_0_http",
     downloaded_file_path = "kryo5-5.6.0.jar",
     sha256 = "2ceef6a5a0527ad89ab6d1fd71bba4fef355cded510970c650d1443412b18dc5",
@@ -10802,45 +10844,45 @@ http_file(
 )
 
 http_file(
-    name = "org_apache_lucene-lucene-analysis-common-10_5_0_http",
-    downloaded_file_path = "lucene-analysis-common-10.5.0.jar",
-    sha256 = "922e217fe5cc88305b5a8e057cd80a30b7de96be2ff20dc4327fb524d26e6a25",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/lucene/lucene-analysis-common/10.5.0/lucene-analysis-common-10.5.0.jar",
+    name = "org_apache_lucene-lucene-analysis-common-10_5_1_http",
+    downloaded_file_path = "lucene-analysis-common-10.5.1.jar",
+    sha256 = "f710afd91a820987a48f3a215e076715b9237b324cf5458281109ef0d2a17b73",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/lucene/lucene-analysis-common/10.5.1/lucene-analysis-common-10.5.1.jar",
 )
 
 http_file(
-    name = "org_apache_lucene-lucene-analysis-common-10_5_0-sources_http",
-    downloaded_file_path = "lucene-analysis-common-10.5.0-sources.jar",
-    sha256 = "bf873863f14c621ae0a8b13d9530e269a778f7552c47c05a00b85ca18f248df7",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/lucene/lucene-analysis-common/10.5.0/lucene-analysis-common-10.5.0-sources.jar",
+    name = "org_apache_lucene-lucene-analysis-common-10_5_1-sources_http",
+    downloaded_file_path = "lucene-analysis-common-10.5.1-sources.jar",
+    sha256 = "e3fef65eabb8c8c23d82ce8c8a73b1cff34e595fbfa97cb5fbfc14997a1ff9d0",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/lucene/lucene-analysis-common/10.5.1/lucene-analysis-common-10.5.1-sources.jar",
 )
 
 http_file(
-    name = "org_apache_lucene-lucene-core-10_5_0_http",
-    downloaded_file_path = "lucene-core-10.5.0.jar",
-    sha256 = "ec05ee432860dc6116765fc6bd9ffccf65311cb0430a42a3a90f09fffcd310b1",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/lucene/lucene-core/10.5.0/lucene-core-10.5.0.jar",
+    name = "org_apache_lucene-lucene-core-10_5_1_http",
+    downloaded_file_path = "lucene-core-10.5.1.jar",
+    sha256 = "2b4912cc792f462e8e7b350f7c958f538ee7ec42da4cf4b65902fb9d546bba53",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/lucene/lucene-core/10.5.1/lucene-core-10.5.1.jar",
 )
 
 http_file(
-    name = "org_apache_lucene-lucene-core-10_5_0-sources_http",
-    downloaded_file_path = "lucene-core-10.5.0-sources.jar",
-    sha256 = "6579d8b498142f83ca756b2bdfbed3cad59d3eb093b5362bebb8f53a909c6221",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/lucene/lucene-core/10.5.0/lucene-core-10.5.0-sources.jar",
+    name = "org_apache_lucene-lucene-core-10_5_1-sources_http",
+    downloaded_file_path = "lucene-core-10.5.1-sources.jar",
+    sha256 = "04941f26f1bb4b6ca95a4738bceeecb30919611f7cb5d844eddb19da94495373",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/lucene/lucene-core/10.5.1/lucene-core-10.5.1-sources.jar",
 )
 
 http_file(
-    name = "at_yawk_lz4-lz4-java-1_11_0_http",
-    downloaded_file_path = "lz4-java-1.11.0.jar",
-    sha256 = "535c5578cab5dcd0a438e202df80091632b873c0370c25d9b1c1ad1d73577207",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/at/yawk/lz4/lz4-java/1.11.0/lz4-java-1.11.0.jar",
+    name = "at_yawk_lz4-lz4-java-1_11_3_http",
+    downloaded_file_path = "lz4-java-1.11.3.jar",
+    sha256 = "ffdfceacabf20fef15547ab2113374cb2c2b42634f5ac14be72c296a77fd49f8",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/at/yawk/lz4/lz4-java/1.11.3/lz4-java-1.11.3.jar",
 )
 
 http_file(
-    name = "at_yawk_lz4-lz4-java-1_11_0-sources_http",
-    downloaded_file_path = "lz4-java-1.11.0-sources.jar",
-    sha256 = "131c7ba5fb00b5c06ef5eafe6acc20e2f324c1c93ffb71c0daacead102b08d58",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/at/yawk/lz4/lz4-java/1.11.0/lz4-java-1.11.0-sources.jar",
+    name = "at_yawk_lz4-lz4-java-1_11_3-sources_http",
+    downloaded_file_path = "lz4-java-1.11.3-sources.jar",
+    sha256 = "3f4134f6d4cccf1c801faa58a18f28488a34fcc754dba7b0d79848464b88ed61",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/at/yawk/lz4/lz4-java/1.11.3/lz4-java-1.11.3-sources.jar",
 )
 
 http_file(
@@ -11152,31 +11194,31 @@ http_file(
 )
 
 http_file(
-    name = "com_miglayout-miglayout-swing-11_4_2_http",
-    downloaded_file_path = "miglayout-swing-11.4.2.jar",
-    sha256 = "036b8532021092afcc7159d3756086a5fbe19f6014ac8474817d55d1289af756",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/miglayout/miglayout-swing/11.4.2/miglayout-swing-11.4.2.jar",
+    name = "com_miglayout-miglayout-swing-11_4_3_http",
+    downloaded_file_path = "miglayout-swing-11.4.3.jar",
+    sha256 = "7ccbda5d8475995f7e9c403e2b7339e912d70e118d164cd15926d0530c069125",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/miglayout/miglayout-swing/11.4.3/miglayout-swing-11.4.3.jar",
 )
 
 http_file(
-    name = "com_miglayout-miglayout-core-11_4_2_http",
-    downloaded_file_path = "miglayout-core-11.4.2.jar",
-    sha256 = "1c23f628d8f2a7a1b72c8f634c6775d1a8fd0100fcf05bf50d7a2ac8dafb0e62",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/miglayout/miglayout-core/11.4.2/miglayout-core-11.4.2.jar",
+    name = "com_miglayout-miglayout-core-11_4_3_http",
+    downloaded_file_path = "miglayout-core-11.4.3.jar",
+    sha256 = "760bc0ca994603ea436b24612977d367b837374676779dc8e6ec441d38727936",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/miglayout/miglayout-core/11.4.3/miglayout-core-11.4.3.jar",
 )
 
 http_file(
-    name = "com_miglayout-miglayout-swing-11_4_2-sources_http",
-    downloaded_file_path = "miglayout-swing-11.4.2-sources.jar",
-    sha256 = "70cc167a5a3d72b8534c5c1d8633d78b00c2fc07c4e3dfa163ec0e4cb49a45e0",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/miglayout/miglayout-swing/11.4.2/miglayout-swing-11.4.2-sources.jar",
+    name = "com_miglayout-miglayout-swing-11_4_3-sources_http",
+    downloaded_file_path = "miglayout-swing-11.4.3-sources.jar",
+    sha256 = "100960cf806523a9904ddcad3b6da8d0cb5ad85aec2d721c69b61d3dc948404f",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/miglayout/miglayout-swing/11.4.3/miglayout-swing-11.4.3-sources.jar",
 )
 
 http_file(
-    name = "com_miglayout-miglayout-core-11_4_2-sources_http",
-    downloaded_file_path = "miglayout-core-11.4.2-sources.jar",
-    sha256 = "933dfa0ee061a3c6ac990613b4a82eb075c8c2d9415945fee7932be002631311",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/miglayout/miglayout-core/11.4.2/miglayout-core-11.4.2-sources.jar",
+    name = "com_miglayout-miglayout-core-11_4_3-sources_http",
+    downloaded_file_path = "miglayout-core-11.4.3-sources.jar",
+    sha256 = "b60e6e8005ca3639636f9f181a663c335f725aea52c1347b740d708b4838472a",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/miglayout/miglayout-core/11.4.3/miglayout-core-11.4.3-sources.jar",
 )
 
 http_file(
@@ -11257,143 +11299,143 @@ http_file(
 )
 
 http_file(
-    name = "io_mockk-mockk-1_14_5_http",
-    downloaded_file_path = "mockk-1.14.5.jar",
+    name = "io_mockk-mockk-1_14_11_http",
+    downloaded_file_path = "mockk-1.14.11.jar",
     sha256 = "089e24417bf9f6c34eec5720eebb2cbcc82ea2855ecef90133eb17e1079d5868",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk/1.14.5/mockk-1.14.5.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk/1.14.11/mockk-1.14.11.jar",
 )
 
 http_file(
-    name = "io_mockk-mockk-dsl-1_14_5_http",
-    downloaded_file_path = "mockk-dsl-1.14.5.jar",
+    name = "io_mockk-mockk-dsl-1_14_11_http",
+    downloaded_file_path = "mockk-dsl-1.14.11.jar",
     sha256 = "089e24417bf9f6c34eec5720eebb2cbcc82ea2855ecef90133eb17e1079d5868",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-dsl/1.14.5/mockk-dsl-1.14.5.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-dsl/1.14.11/mockk-dsl-1.14.11.jar",
 )
 
 http_file(
-    name = "io_mockk-mockk-agent-1_14_5_http",
-    downloaded_file_path = "mockk-agent-1.14.5.jar",
+    name = "io_mockk-mockk-agent-1_14_11_http",
+    downloaded_file_path = "mockk-agent-1.14.11.jar",
     sha256 = "089e24417bf9f6c34eec5720eebb2cbcc82ea2855ecef90133eb17e1079d5868",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-agent/1.14.5/mockk-agent-1.14.5.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-agent/1.14.11/mockk-agent-1.14.11.jar",
 )
 
 http_file(
-    name = "io_mockk-mockk-agent-api-1_14_5_http",
-    downloaded_file_path = "mockk-agent-api-1.14.5.jar",
+    name = "io_mockk-mockk-agent-api-1_14_11_http",
+    downloaded_file_path = "mockk-agent-api-1.14.11.jar",
     sha256 = "089e24417bf9f6c34eec5720eebb2cbcc82ea2855ecef90133eb17e1079d5868",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-agent-api/1.14.5/mockk-agent-api-1.14.5.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-agent-api/1.14.11/mockk-agent-api-1.14.11.jar",
 )
 
 http_file(
-    name = "io_mockk-mockk-core-1_14_5_http",
-    downloaded_file_path = "mockk-core-1.14.5.jar",
+    name = "io_mockk-mockk-core-1_14_11_http",
+    downloaded_file_path = "mockk-core-1.14.11.jar",
     sha256 = "089e24417bf9f6c34eec5720eebb2cbcc82ea2855ecef90133eb17e1079d5868",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-core/1.14.5/mockk-core-1.14.5.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-core/1.14.11/mockk-core-1.14.11.jar",
 )
 
 http_file(
-    name = "io_mockk-mockk-1_14_5-sources_http",
-    downloaded_file_path = "mockk-1.14.5-sources.jar",
+    name = "io_mockk-mockk-1_14_11-sources_http",
+    downloaded_file_path = "mockk-1.14.11-sources.jar",
     sha256 = "c6deada2fac53b8ea6523dbda77597b128006674616f140f04df23264c6d1aa3",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk/1.14.5/mockk-1.14.5-sources.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk/1.14.11/mockk-1.14.11-sources.jar",
 )
 
 http_file(
-    name = "io_mockk-mockk-dsl-1_14_5-sources_http",
-    downloaded_file_path = "mockk-dsl-1.14.5-sources.jar",
+    name = "io_mockk-mockk-dsl-1_14_11-sources_http",
+    downloaded_file_path = "mockk-dsl-1.14.11-sources.jar",
     sha256 = "c6deada2fac53b8ea6523dbda77597b128006674616f140f04df23264c6d1aa3",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-dsl/1.14.5/mockk-dsl-1.14.5-sources.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-dsl/1.14.11/mockk-dsl-1.14.11-sources.jar",
 )
 
 http_file(
-    name = "io_mockk-mockk-agent-1_14_5-sources_http",
-    downloaded_file_path = "mockk-agent-1.14.5-sources.jar",
+    name = "io_mockk-mockk-agent-1_14_11-sources_http",
+    downloaded_file_path = "mockk-agent-1.14.11-sources.jar",
     sha256 = "c6deada2fac53b8ea6523dbda77597b128006674616f140f04df23264c6d1aa3",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-agent/1.14.5/mockk-agent-1.14.5-sources.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-agent/1.14.11/mockk-agent-1.14.11-sources.jar",
 )
 
 http_file(
-    name = "io_mockk-mockk-agent-api-1_14_5-sources_http",
-    downloaded_file_path = "mockk-agent-api-1.14.5-sources.jar",
+    name = "io_mockk-mockk-agent-api-1_14_11-sources_http",
+    downloaded_file_path = "mockk-agent-api-1.14.11-sources.jar",
     sha256 = "c6deada2fac53b8ea6523dbda77597b128006674616f140f04df23264c6d1aa3",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-agent-api/1.14.5/mockk-agent-api-1.14.5-sources.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-agent-api/1.14.11/mockk-agent-api-1.14.11-sources.jar",
 )
 
 http_file(
-    name = "io_mockk-mockk-core-1_14_5-sources_http",
-    downloaded_file_path = "mockk-core-1.14.5-sources.jar",
+    name = "io_mockk-mockk-core-1_14_11-sources_http",
+    downloaded_file_path = "mockk-core-1.14.11-sources.jar",
     sha256 = "c6deada2fac53b8ea6523dbda77597b128006674616f140f04df23264c6d1aa3",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-core/1.14.5/mockk-core-1.14.5-sources.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-core/1.14.11/mockk-core-1.14.11-sources.jar",
 )
 
 http_file(
-    name = "io_mockk-mockk-jvm-1_14_5_http",
-    downloaded_file_path = "mockk-jvm-1.14.5.jar",
-    sha256 = "74deb86cbab6871a3e4d0f97ba8eacbdae7aacd7537f142bcb083590465a6219",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-jvm/1.14.5/mockk-jvm-1.14.5.jar",
+    name = "io_mockk-mockk-jvm-1_14_11_http",
+    downloaded_file_path = "mockk-jvm-1.14.11.jar",
+    sha256 = "f16462fbfe0596d84af976c0d401e3ed252336c75e14b971ba8b08af2aa172a9",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-jvm/1.14.11/mockk-jvm-1.14.11.jar",
 )
 
 http_file(
-    name = "io_mockk-mockk-dsl-jvm-1_14_5_http",
-    downloaded_file_path = "mockk-dsl-jvm-1.14.5.jar",
-    sha256 = "d01d6ce85f9824d8ddb22ea7f1bccd581b831ffad504f48a4f18abf9bc6f2eac",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-dsl-jvm/1.14.5/mockk-dsl-jvm-1.14.5.jar",
+    name = "io_mockk-mockk-dsl-jvm-1_14_11_http",
+    downloaded_file_path = "mockk-dsl-jvm-1.14.11.jar",
+    sha256 = "486179b645632a041edc1ecd1913983cefbfce58e7eec3f43c5c62c7aa80c77c",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-dsl-jvm/1.14.11/mockk-dsl-jvm-1.14.11.jar",
 )
 
 http_file(
-    name = "io_mockk-mockk-agent-jvm-1_14_5_http",
-    downloaded_file_path = "mockk-agent-jvm-1.14.5.jar",
-    sha256 = "9f78e9988e84c98569edcf9a6225d5b7354939529642e54c2c58da3ef3913106",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-agent-jvm/1.14.5/mockk-agent-jvm-1.14.5.jar",
+    name = "io_mockk-mockk-agent-jvm-1_14_11_http",
+    downloaded_file_path = "mockk-agent-jvm-1.14.11.jar",
+    sha256 = "bb3af4f281c8d5d50141cad9d1a1f8dde9d2bd695b68054777830957708ea0b4",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-agent-jvm/1.14.11/mockk-agent-jvm-1.14.11.jar",
 )
 
 http_file(
-    name = "io_mockk-mockk-agent-api-jvm-1_14_5_http",
-    downloaded_file_path = "mockk-agent-api-jvm-1.14.5.jar",
-    sha256 = "a919a8fec03dfb0c084cb43dafcebe2dd9351431c7a08c2fc8147037de1d06b7",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-agent-api-jvm/1.14.5/mockk-agent-api-jvm-1.14.5.jar",
+    name = "io_mockk-mockk-agent-api-jvm-1_14_11_http",
+    downloaded_file_path = "mockk-agent-api-jvm-1.14.11.jar",
+    sha256 = "9459d7eb7694b6e0039e19f7d1a89dfc7ae1fa782ff8d38f2952bda1ffa39242",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-agent-api-jvm/1.14.11/mockk-agent-api-jvm-1.14.11.jar",
 )
 
 http_file(
-    name = "io_mockk-mockk-core-jvm-1_14_5_http",
-    downloaded_file_path = "mockk-core-jvm-1.14.5.jar",
-    sha256 = "060fffe7452e74f6e18bb9dfe1221e92c4ec0de29a84b022fb562ec6cd954691",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-core-jvm/1.14.5/mockk-core-jvm-1.14.5.jar",
+    name = "io_mockk-mockk-core-jvm-1_14_11_http",
+    downloaded_file_path = "mockk-core-jvm-1.14.11.jar",
+    sha256 = "53a0ab8742aac4d1a6538cc77c6067de7e1a9c1a35358a873faa9c5ed2d58e51",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-core-jvm/1.14.11/mockk-core-jvm-1.14.11.jar",
 )
 
 http_file(
-    name = "io_mockk-mockk-jvm-1_14_5-sources_http",
-    downloaded_file_path = "mockk-jvm-1.14.5-sources.jar",
-    sha256 = "b2931c01a2e19e3831c161a3b3021173f3e56dd482e94dcccecee9ad57754768",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-jvm/1.14.5/mockk-jvm-1.14.5-sources.jar",
+    name = "io_mockk-mockk-jvm-1_14_11-sources_http",
+    downloaded_file_path = "mockk-jvm-1.14.11-sources.jar",
+    sha256 = "07c080cc6ad0d7464e90dd7c2317cf497e6e95491e2288e70bab1e8d21de973a",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-jvm/1.14.11/mockk-jvm-1.14.11-sources.jar",
 )
 
 http_file(
-    name = "io_mockk-mockk-dsl-jvm-1_14_5-sources_http",
-    downloaded_file_path = "mockk-dsl-jvm-1.14.5-sources.jar",
-    sha256 = "a1b332c0536906d631408f70e2b27a9e9b4d43227ecf0b9b73cee364544bd6ce",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-dsl-jvm/1.14.5/mockk-dsl-jvm-1.14.5-sources.jar",
+    name = "io_mockk-mockk-dsl-jvm-1_14_11-sources_http",
+    downloaded_file_path = "mockk-dsl-jvm-1.14.11-sources.jar",
+    sha256 = "401e8c51c052ff548f4adaf4e2614664b574b2d3377c2a6016e313f8865fc8c8",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-dsl-jvm/1.14.11/mockk-dsl-jvm-1.14.11-sources.jar",
 )
 
 http_file(
-    name = "io_mockk-mockk-agent-jvm-1_14_5-sources_http",
-    downloaded_file_path = "mockk-agent-jvm-1.14.5-sources.jar",
-    sha256 = "572a634d38fedb6a716df0636c93a3ef4c5cdd052660e7f7cf61940d1a1a545e",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-agent-jvm/1.14.5/mockk-agent-jvm-1.14.5-sources.jar",
+    name = "io_mockk-mockk-agent-jvm-1_14_11-sources_http",
+    downloaded_file_path = "mockk-agent-jvm-1.14.11-sources.jar",
+    sha256 = "e7a024bcda2979f27d3d99b5b4de3463b340ff4f2517a91a470a8ea0ee3ef3e7",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-agent-jvm/1.14.11/mockk-agent-jvm-1.14.11-sources.jar",
 )
 
 http_file(
-    name = "io_mockk-mockk-agent-api-jvm-1_14_5-sources_http",
-    downloaded_file_path = "mockk-agent-api-jvm-1.14.5-sources.jar",
-    sha256 = "b88f7e2e15058764ed113d7426e3c9700b7fecbe0840f80ca4d5d3a3f5edaf64",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-agent-api-jvm/1.14.5/mockk-agent-api-jvm-1.14.5-sources.jar",
+    name = "io_mockk-mockk-agent-api-jvm-1_14_11-sources_http",
+    downloaded_file_path = "mockk-agent-api-jvm-1.14.11-sources.jar",
+    sha256 = "f4c6d8fe6b9da1051acfb2a0e5d4c06865c40fad3eaa535ca80b7d929d3800b4",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-agent-api-jvm/1.14.11/mockk-agent-api-jvm-1.14.11-sources.jar",
 )
 
 http_file(
-    name = "io_mockk-mockk-core-jvm-1_14_5-sources_http",
-    downloaded_file_path = "mockk-core-jvm-1.14.5-sources.jar",
-    sha256 = "f2ff944144a5048770574271c6cd874fb8c8726ed0449b8507afd93b4b170249",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-core-jvm/1.14.5/mockk-core-jvm-1.14.5-sources.jar",
+    name = "io_mockk-mockk-core-jvm-1_14_11-sources_http",
+    downloaded_file_path = "mockk-core-jvm-1.14.11-sources.jar",
+    sha256 = "ff00b38cd497ddb066de2c37695594d254301bdf4dd757e79e3a0c12efa1329d",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-core-jvm/1.14.11/mockk-core-jvm-1.14.11-sources.jar",
 )
 
 http_file(
@@ -12405,17 +12447,17 @@ http_file(
 )
 
 http_file(
-    name = "com_squareup_okio-okio-jvm-3_16_0_http",
-    downloaded_file_path = "okio-jvm-3.16.0.jar",
-    sha256 = "c737c035ca675187bf11a67ddb9581954bf0d5ca9f3e048e838b3267cf32b5c3",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/squareup/okio/okio-jvm/3.16.0/okio-jvm-3.16.0.jar",
+    name = "com_squareup_okio-okio-jvm-3_18_2_http",
+    downloaded_file_path = "okio-jvm-3.18.2.jar",
+    sha256 = "681fed549d1d2c63710f42c9eab433d642c71af778babd67035c50f8c425aaff",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/squareup/okio/okio-jvm/3.18.2/okio-jvm-3.18.2.jar",
 )
 
 http_file(
-    name = "com_squareup_okio-okio-jvm-3_16_0-sources_http",
-    downloaded_file_path = "okio-jvm-3.16.0-sources.jar",
-    sha256 = "53b847af2f85c194f090e310d566ce700f3558c56c9a8c06d7362829875049c8",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/squareup/okio/okio-jvm/3.16.0/okio-jvm-3.16.0-sources.jar",
+    name = "com_squareup_okio-okio-jvm-3_18_2-sources_http",
+    downloaded_file_path = "okio-jvm-3.18.2-sources.jar",
+    sha256 = "967a2e30e8504e48c2de60acfc96d091d2fd44671def26875896a37a1624a0f4",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/squareup/okio/okio-jvm/3.18.2/okio-jvm-3.18.2-sources.jar",
 )
 
 http_file(
@@ -12916,17 +12958,17 @@ http_file(
 )
 
 http_file(
-    name = "org_tukaani-xz-1_10_http",
-    downloaded_file_path = "xz-1.10.jar",
-    sha256 = "95c63c1a55b22dd6453890a419cc1a640f790bbf7d8ae82db1e30aefefb08888",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/tukaani/xz/1.10/xz-1.10.jar",
+    name = "org_tukaani-xz-1_12_http",
+    downloaded_file_path = "xz-1.12.jar",
+    sha256 = "3e158a87bd73d8afb4b6e8239c013b7d049c48563f45860ce99cd2e448cf4a6b",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/tukaani/xz/1.12/xz-1.12.jar",
 )
 
 http_file(
-    name = "org_tukaani-xz-1_10-sources_http",
-    downloaded_file_path = "xz-1.10-sources.jar",
-    sha256 = "6ac7a5478e952a23fe1f354efa70303f94b2331b7a6279c923f4dbe0ac6e352c",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/tukaani/xz/1.10/xz-1.10-sources.jar",
+    name = "org_tukaani-xz-1_12-sources_http",
+    downloaded_file_path = "xz-1.12-sources.jar",
+    sha256 = "c35c682fa8b617c1f6f21270df14bad4e11df2fe46962dfe45e765b7aec0181b",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/tukaani/xz/1.12/xz-1.12-sources.jar",
 )
 
 http_file(
@@ -12944,17 +12986,31 @@ http_file(
 )
 
 http_file(
-    name = "com_google_zxing-core-3_5_1_http",
-    downloaded_file_path = "core-3.5.1.jar",
-    sha256 = "1ba7c0fbb6c267e2fb74e1497d855adae633ccc98edc8c75163aa64bc08e3059",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/zxing/core/3.5.1/core-3.5.1.jar",
+    name = "com_github_luben-zstd-jni-1_5_7-16_http",
+    downloaded_file_path = "zstd-jni-1.5.7-16.jar",
+    sha256 = "d84360d39f57a40dc1e26ea2d4bb66da0cb88057ba117edae67431a719057edc",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/luben/zstd-jni/1.5.7-16/zstd-jni-1.5.7-16.jar",
 )
 
 http_file(
-    name = "com_google_zxing-core-3_5_1-sources_http",
-    downloaded_file_path = "core-3.5.1-sources.jar",
-    sha256 = "57cd4543bfb94f301800b8b28d37b91194fa38ee3d87c10d412d49d522a37965",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/zxing/core/3.5.1/core-3.5.1-sources.jar",
+    name = "com_github_luben-zstd-jni-1_5_7-16-sources_http",
+    downloaded_file_path = "zstd-jni-1.5.7-16-sources.jar",
+    sha256 = "a6274d53a1062b1ec85d45fdb27084be59d8270cd20e73e837bbf2a30911b9e2",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/luben/zstd-jni/1.5.7-16/zstd-jni-1.5.7-16-sources.jar",
+)
+
+http_file(
+    name = "com_google_zxing-core-3_5_4_http",
+    downloaded_file_path = "core-3.5.4.jar",
+    sha256 = "71de5d89341b5fcf5dd89da7f44e84d825d0e084cdf3ec77c9abe26b0f0ceb13",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/zxing/core/3.5.4/core-3.5.4.jar",
+)
+
+http_file(
+    name = "com_google_zxing-core-3_5_4-sources_http",
+    downloaded_file_path = "core-3.5.4-sources.jar",
+    sha256 = "a611e3b63b661aeb2a81b8b4f4bde2daace1e2976adbb37917a674a0019c8fac",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/zxing/core/3.5.4/core-3.5.4-sources.jar",
 )
 
 http_file(
@@ -15380,13 +15436,6 @@ http_file(
 )
 
 http_file(
-    name = "com_google_code_gson-gson-2_14_0_http",
-    downloaded_file_path = "gson-2.14.0.jar",
-    sha256 = "2cbd119bf1961c28788310963dc80ba65f58cdeec1dd139c8bdb1240faa2c36f",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/code/gson/gson/2.14.0/gson-2.14.0.jar",
-)
-
-http_file(
     name = "org_apache_maven_resolver-maven-resolver-util-2_0_21_http",
     downloaded_file_path = "maven-resolver-util-2.0.21.jar",
     sha256 = "ce707615455f3ceabb397a5790c023e54186ed6ec283b437711e7cd451fdd1bd",
@@ -15818,13 +15867,6 @@ http_file(
     downloaded_file_path = "maven-resolver-spi-2.0.21-sources.jar",
     sha256 = "30a964031c16ae186b91f7899ed5cc79fa0a53798c6a16be741791cd74d9ca7a",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/resolver/maven-resolver-spi/2.0.21/maven-resolver-spi-2.0.21-sources.jar",
-)
-
-http_file(
-    name = "com_google_code_gson-gson-2_14_0-sources_http",
-    downloaded_file_path = "gson-2.14.0-sources.jar",
-    sha256 = "a4873f0ef88981cab520c3d7449cd89a68e605f15e9fe46e1aa2c77d5f87eb6f",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/code/gson/gson/2.14.0/gson-2.14.0-sources.jar",
 )
 
 http_file(

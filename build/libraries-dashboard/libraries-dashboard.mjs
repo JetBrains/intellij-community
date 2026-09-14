@@ -5,6 +5,7 @@
 // Dashboard of Maven library versions pinned in intellij.libraries.* wrapper modules and .idea/libraries project libraries.
 // Report: bun community/build/libraries-dashboard/libraries-dashboard.mjs [--no-cache|--refresh] [--format=html|text|json|all] [--open]
 // Bump:   bun community/build/libraries-dashboard/libraries-dashboard.mjs bump <groupId:artifactId>[=<version>]... [--no-cache|--refresh]
+// The bump also rewrites the version copies listed in VERSION_MIRRORS and prints the project structure test that checks them.
 
 import {createHash} from "node:crypto"
 import {mkdir, readdir, readFile, writeFile} from "node:fs/promises"
@@ -19,6 +20,26 @@ export const REPO_ROOT = resolve(SELF_DIR, "..", "..", "..")
 // Every IDE project that owns a modules.xml, a libraries directory and a jarRepositories.xml.
 const PROJECT_ROOTS = [REPO_ROOT, join(REPO_ROOT, "community")]
 const OUT_DIR = join(REPO_ROOT, "out/libraries-dashboard")
+
+/**
+ * The commands to run after a bump. The Fleet generator copies the JPS library versions into
+ * `fleet/build/gradle/jps.versions.toml`, `fleet/build/jps-library-mappings.tsv` and both `fleet/kmp.MODULE.bazel`
+ * files, and its `check` mode fails on drift. The `kmp` module extension records the artifact list of each
+ * `kmp.MODULE.bazel` in the `MODULE.bazel.lock` of its module, and CI runs Bazel with `--lockfile_mode=error`,
+ * so both lockfiles need an update after the dump. The generator exists only in the monorepo checkout.
+ */
+export function followUpCommands(repoRoot = REPO_ROOT) {
+  const commands = ["./build/jpsModelToBazel.cmd"]
+  if (existsSync(join(repoRoot, "fleet/build/generateProjectModel.cmd"))) {
+    commands.push(
+      "./fleet/build/generateProjectModel.cmd dump",
+      "./bazel.cmd mod deps --lockfile_mode=update",
+      "(cd community && ./bazel.cmd mod deps --lockfile_mode=update)",
+    )
+  }
+  commands.push("bazel run //:format.check")
+  return commands
+}
 const CACHE_PATH = join(OUT_DIR, "cache.json")
 const HTML_OUT = join(OUT_DIR, "dashboard.html")
 const JSON_OUT = join(OUT_DIR, "dashboard.json")
@@ -50,7 +71,8 @@ export function parseArgs(argv) {
           "  --refresh   rewrite cache from scratch\n" +
           "  --format    output mode (default: all = html + terminal)\n" +
           "  --open      open the HTML report in the default browser\n" +
-          "  bump        rewrite maven-id, jar URLs and sha256 of the named libraries (default target: resolved latest)\n" +
+          "  bump        rewrite maven-id, jar URLs and sha256 of the named libraries (default target: resolved latest);\n" +
+          "              also rewrite the version copies outside the JPS model (jps-bootstrap pom.xml, annotations quick fix)\n" +
           "  --kind      bump only wrapper modules or only .idea/libraries project libraries (default: both)"
       )
       process.exit(0)
@@ -632,6 +654,105 @@ export function parseCoordinate(arg) {
   return { groupId: parts[0], artifactId: parts[1], version: version || null }
 }
 
+/**
+ * Files outside the JPS model that copy a library version. A project structure test checks each copy, so a bump
+ * that skips one fails the Smoke Tests build. `pom`: every `<dependency>` of the file whose groupId:artifactId is
+ * pinned in the JPS model, unless its version is a property. `constant`: one literal in one source file; the
+ * second capture group of `pattern` is the version.
+ */
+export const VERSION_MIRRORS = [
+  {
+    kind: "pom",
+    path: "community/platform/jps-bootstrap/pom.xml",
+    test: "com.intellij.ideaProjectStructure.fast.JpsBoostrapStructureTest",
+  },
+  {
+    kind: "constant",
+    path: "community/java/java-impl/src/com/intellij/codeInsight/daemon/impl/quickfix/JetBrainsAnnotationsExternalLibraryResolver.java",
+    groupId: "org.jetbrains",
+    artifactId: "annotations",
+    pattern: /(private static final String VERSION = ")([^"]+)(")/,
+    test: "com.intellij.ideaProjectStructure.fast.IdeaUltimateProjectStructureTest",
+  },
+]
+
+export const STRUCTURE_TESTS_COMMAND =
+  "./tests.cmd --module intellij.projectStructureTests --test 'com.intellij.ideaProjectStructure.fast.*'"
+
+// The version copies of one mirror file: [{groupId, artifactId, version}]. A property reference is not a copy.
+export function mirrorVersions(content, mirror) {
+  if (mirror.kind === "constant") {
+    const m = content.match(mirror.pattern)
+    return m ? [{ groupId: mirror.groupId, artifactId: mirror.artifactId, version: m[2] }] : []
+  }
+  const out = []
+  for (const m of content.matchAll(POM_DEPENDENCY_RE)) {
+    const version = tag(m[1], "version")
+    if (version === null || version.startsWith("${")) continue
+    out.push({ groupId: tag(m[1], "groupId"), artifactId: tag(m[1], "artifactId"), version })
+  }
+  return out
+}
+
+// Rewrite the copies of groupId:artifactId in one mirror file. Returns null when the file has no copy.
+export function rewriteMirror(content, mirror, { groupId, artifactId, newVersion }) {
+  const copies = mirrorVersions(content, mirror).filter(c => c.groupId === groupId && c.artifactId === artifactId)
+  if (copies.length === 0) return null
+  const from = copies[0].version
+  if (mirror.kind === "constant") {
+    return { content: content.replace(mirror.pattern, `$1${newVersion}$3`), from }
+  }
+  const out = content.replace(POM_DEPENDENCY_RE, whole => {
+    if (tag(whole, "groupId") !== groupId || tag(whole, "artifactId") !== artifactId) return whole
+    const version = tag(whole, "version")
+    if (version === null || version.startsWith("${")) return whole
+    return whole.replace(/(<version>\s*)[^<]*?(\s*<\/version>)/, `$1${newVersion}$2`)
+  })
+  return { content: out, from }
+}
+
+// The copies whose version differs from the JPS model: [{path, groupId, artifactId, version, pinned}].
+export function mirrorDrift(content, mirror, pinnedVersions) {
+  const out = []
+  for (const c of mirrorVersions(content, mirror)) {
+    const pinned = pinnedVersions.get(`${c.groupId}:${c.artifactId}`)
+    if (pinned && pinned !== c.version) out.push({ path: mirror.path, ...c, pinned })
+  }
+  return out
+}
+
+async function bumpMirrors(g, target) {
+  const changed = []
+  for (const mirror of VERSION_MIRRORS) {
+    const path = join(REPO_ROOT, mirror.path)
+    const content = await readOptional(path)
+    if (content === null) continue
+    const result = rewriteMirror(content, mirror, { groupId: g.groupId, artifactId: g.artifactId, newVersion: target })
+    if (!result || result.content === content) continue
+    await writeFile(path, result.content)
+    changed.push({ path, from: result.from, test: mirror.test })
+  }
+  return changed
+}
+
+// The highest pinned version of every group, for the drift check.
+function pinnedVersions(groups) {
+  return new Map(groups.map(g => [`${g.groupId}:${g.artifactId}`, g.versions[g.versions.length - 1]]))
+}
+
+async function reportMirrorDrift(groups) {
+  const pinned = pinnedVersions(groups)
+  const drift = []
+  for (const mirror of VERSION_MIRRORS) {
+    const content = await readOptional(join(REPO_ROOT, mirror.path))
+    if (content !== null) drift.push(...mirrorDrift(content, mirror, pinned))
+  }
+  if (drift.length === 0) return false
+  console.error(`\nVersion copies outside the JPS model differ from the pinned versions (${STRUCTURE_TESTS_COMMAND} fails):`)
+  for (const d of drift) console.error(`  ${d.path}: ${d.groupId}:${d.artifactId} ${d.version}, pinned ${d.pinned}`)
+  return true
+}
+
 // Rewrite the library block of one source file in memory. Returns the new content and the artifact count.
 export async function bumpFile(content, { groupId, artifactId, oldVersion, newVersion }, checksumFor) {
   const oldId = `maven-id="${groupId}:${artifactId}:${oldVersion}"`
@@ -722,6 +843,7 @@ async function runBump(opts) {
       const changed = await bumpGroup(g, target, opts.kind, checksumRepo)
       console.log(`${ga}: ${g.versions.join(", ")} -> ${target} (${repoLabel(g.repo)})`)
       for (const c of changed) console.log(`  ${relPath(c.path)} (${c.from} -> ${target}, ${c.artifacts} artifact${c.artifacts === 1 ? "" : "s"})`)
+      for (const c of await bumpMirrors(g, target)) console.log(`  ${relPath(c.path)} (${c.from} -> ${target}, version copy checked by ${c.test})`)
       const skipped = g.modules.filter(m => m.version !== target && opts.kind && m.kind !== opts.kind)
       for (const m of skipped) console.log(`  skipped ${m.kind} library ${m.module} @${m.version} in ${relPath(m.path)} (--kind=${opts.kind})`)
       if (changed.some(c => c.artifacts > 1)) {
@@ -734,7 +856,9 @@ async function runBump(opts) {
       failed = true
     }
   }
-  console.log("\nNext: ./build/jpsModelToBazel.cmd && bazel run //:format.check")
+  if (await reportMirrorDrift(groups)) failed = true
+  console.log(`\nNext: ${followUpCommands().join(" && ")}`)
+  console.log(`Verify: ${STRUCTURE_TESTS_COMMAND}`)
   if (failed) process.exit(1)
 }
 
@@ -789,12 +913,15 @@ export function buildUpdatePrompt(g, repoRoot) {
     ``,
     `Run from the repository root:`,
     `  bun community/build/libraries-dashboard/libraries-dashboard.mjs bump ${ga}=${g.latest}`,
-    `  ./build/jpsModelToBazel.cmd`,
-    `  bazel run //:format.check`,
+    ...followUpCommands(repoRoot).map(c => `  ${c}`),
     ``,
     `The bump command rewrites maven-id, the jar URLs and every <sha256sum> and keeps the file layout.`,
+    `It also rewrites the version copies outside the JPS model, such as community/platform/jps-bootstrap/pom.xml.`,
     `When it prints the POM dependencies, compare them with the artifact list in the library block.`,
+    `The Fleet dump refreshes the generated Fleet files that copy the JPS library versions; do not skip it.`,
+    `The two lockfile updates record the new kmp.MODULE.bazel artifact lists; CI fails on a stale lockfile.`,
     `Then build the wrapper module and run the tests of one module that depends on it.`,
+    `Run the project structure tests, which check every version copy: ${STRUCTURE_TESTS_COMMAND}`,
   ].join("\n")
 }
 
@@ -1097,6 +1224,7 @@ async function runReport(opts) {
     process.exit(1)
   }
   const groups = groupByGA(entries)
+  await reportMirrorDrift(groups)
 
   const cache = await loadCache(opts.cache && !opts.refresh)
   const { repos } = await loadRepositories()

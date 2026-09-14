@@ -9,19 +9,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="lz4-java" type="repository">
-        <properties maven-id="at.yawk.lz4:lz4-java:1.11.0">
+        <properties maven-id="at.yawk.lz4:lz4-java:1.11.3">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/at/yawk/lz4/lz4-java/1.11.0/lz4-java-1.11.0.jar">
-              <sha256sum>535c5578cab5dcd0a438e202df80091632b873c0370c25d9b1c1ad1d73577207</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/at/yawk/lz4/lz4-java/1.11.3/lz4-java-1.11.3.jar">
+              <sha256sum>ffdfceacabf20fef15547ab2113374cb2c2b42634f5ac14be72c296a77fd49f8</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/at/yawk/lz4/lz4-java/1.11.0/lz4-java-1.11.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/at/yawk/lz4/lz4-java/1.11.3/lz4-java-1.11.3.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/at/yawk/lz4/lz4-java/1.11.0/lz4-java-1.11.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/at/yawk/lz4/lz4-java/1.11.3/lz4-java-1.11.3-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

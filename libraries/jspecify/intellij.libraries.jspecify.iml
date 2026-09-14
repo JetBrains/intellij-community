@@ -9,19 +9,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="jspecify" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jspecify:jspecify:1.0.0">
+        <properties include-transitive-deps="false" maven-id="org.jspecify:jspecify:1.0.1">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar">
-              <sha256sum>1fad6e6be7557781e4d33729d49ae1cdc8fdda6fe477bb0cc68ce351eafdfbab</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jspecify/jspecify/1.0.1/jspecify-1.0.1.jar">
+              <sha256sum>070d75f261fe4c5b8202508366715f7f2d4660f88c8ef7e6d3575e48c9683b66</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jspecify/jspecify/1.0.1/jspecify-1.0.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jspecify/jspecify/1.0.0/jspecify-1.0.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jspecify/jspecify/1.0.1/jspecify-1.0.1-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

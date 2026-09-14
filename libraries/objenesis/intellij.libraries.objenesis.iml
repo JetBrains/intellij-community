@@ -9,19 +9,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="Objenesis" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.objenesis:objenesis:3.4">
+        <properties include-transitive-deps="false" maven-id="org.objenesis:objenesis:3.6">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/objenesis/objenesis/3.4/objenesis-3.4.jar">
-              <sha256sum>95488102feaf2e2858adf6b299353677dac6c15294006f8ed1c5556f8e3cd251</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/objenesis/objenesis/3.6/objenesis-3.6.jar">
+              <sha256sum>6ecc0fc776af04e2bfd2bf42d618ab5161440dcb8a0e7dff9e84c065c7cec3dd</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/objenesis/objenesis/3.4/objenesis-3.4.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/objenesis/objenesis/3.6/objenesis-3.6.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/objenesis/objenesis/3.4/objenesis-3.4-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/objenesis/objenesis/3.6/objenesis-3.6-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

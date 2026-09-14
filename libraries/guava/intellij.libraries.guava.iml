@@ -9,10 +9,10 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="Guava" type="repository">
-        <properties maven-id="com.google.guava:guava:33.5.0-jre">
+        <properties maven-id="com.google.guava:guava:33.7.1-jre">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/com/google/guava/guava/33.5.0-jre/guava-33.5.0-jre.jar">
-              <sha256sum>1e301f0c52ac248b0b14fdc3d12283c77252d4d6f48521d572e7d8c4c2cc4ac7</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/google/guava/guava/33.7.1-jre/guava-33.7.1-jre.jar">
+              <sha256sum>796d8e28ac64e83a47c4c5935a8fecc4682650a04bbdead738ef0f5a3a0e6c46</sha256sum>
             </artifact>
             <artifact url="file://$MAVEN_REPOSITORY$/com/google/guava/failureaccess/1.0.3/failureaccess-1.0.3.jar">
               <sha256sum>cbfc3906b19b8f55dd7cfd6dfe0aa4532e834250d7f080bd8d211a3e246b59cb</sha256sum>
@@ -29,12 +29,12 @@
           <root url="file://$MODULE_DIR$/../../lib/annotations/guava" />
         </ANNOTATIONS>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/google/guava/guava/33.5.0-jre/guava-33.5.0-jre.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/google/guava/guava/33.7.1-jre/guava-33.7.1-jre.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/com/google/guava/failureaccess/1.0.3/failureaccess-1.0.3.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/google/guava/guava/33.5.0-jre/guava-33.5.0-jre-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/google/guava/guava/33.7.1-jre/guava-33.7.1-jre-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/com/google/guava/failureaccess/1.0.3/failureaccess-1.0.3-sources.jar!/" />
         </SOURCES>
       </library>
