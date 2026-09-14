@@ -7,6 +7,7 @@ import com.intellij.find.FindModel
 import com.intellij.find.FindModelExtension
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.ExtensionTestUtil
@@ -124,6 +125,23 @@ internal class DirectorySearchEngineTest {
 
     assertThat(search(root)).containsExactlyInAnyOrder("root.txt", "child/child.txt")
     assertThat(checks.get()).isEqualTo(1)
+  }
+
+  @Test
+  fun `unsaved documents are searched even when the directory engine returns no files`(): Unit = timeoutRunBlocking {
+    val root = createFiles("changed.txt")
+    val file = requireNotNull(root.findChild("changed.txt"))
+    edtWriteAction {
+      VfsUtil.saveText(file, "before")
+      requireNotNull(FileDocumentManager.getInstance().getDocument(file)).setText("needle")
+    }
+    val searchedDirectories = ConcurrentLinkedQueue<String>()
+    addEngine(weight = { 1 }) { directory, _ ->
+      searchedDirectories.add(directory.path)
+    }
+
+    assertThat(search(root)).containsExactly("changed.txt")
+    assertThat(searchedDirectories).containsExactly(root.path)
   }
 
   private suspend fun createFiles(vararg paths: String): VirtualFile = edtWriteAction {

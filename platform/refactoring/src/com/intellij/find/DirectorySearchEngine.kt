@@ -35,8 +35,9 @@ interface DirectorySearchEngine {
 
   /**
    * Adds batches of descendants of [directory] to the shared search queue through [consumer].
-   * The engine can expand one or more levels and must supply all files that can match the request.
-   * It can supply a directory to defer that directory's expansion to another engine.
+   * The engine can expand one or more levels and must supply all files whose content on disk can match the request.
+   * The engine does not need to inspect changes in unsaved documents - the platform adds files with unsaved changes to the search queue.
+   * The engine can supply a directory to defer that directory's expansion to another engine.
    * The caller applies the file filters and searches the supplied files for occurrences.
    * All calls to [consumer] must finish before this method returns.
    * This method runs inside or outside a read action.

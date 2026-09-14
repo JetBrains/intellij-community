@@ -645,6 +645,9 @@ final class FindInProjectTask {
       VirtualFile cacheAvoidingDirectory = NewVirtualFile.asCacheAvoiding(directoryToSearchIn);
       if (withSubdirectories) {
         searchItems.add(cacheAvoidingDirectory);
+
+        // DirectorySearchEngine is not obliged to add unsaved documents to the search queue - do it now.
+        searchItems.addAll(getUnsavedDocumentsUnderDirectory(directoryToSearchIn));
       }
       else {
         ContainerUtil.addAll(searchItems, cacheAvoidingDirectory.getChildren());
@@ -683,8 +686,26 @@ final class FindInProjectTask {
 
     searchItems.addAll(FindModelExtension.EP_NAME.getExtensionList());
 
-
     return searchItems;
+  }
+
+  private static Collection<VirtualFile> getUnsavedDocumentsUnderDirectory(VirtualFile directory) {
+    if (directory instanceof CacheAvoidingVirtualFile cacheAvoidingDirectory) {
+      directory = cacheAvoidingDirectory.asCacheable();
+      if (directory == null) {
+        return List.of();
+      }
+    }
+
+    var fileDocumentManager = FileDocumentManager.getInstance();
+    var changedFiles = new ArrayList<VirtualFile>();
+    for (Document document : fileDocumentManager.getUnsavedDocuments()) {
+      VirtualFile file = fileDocumentManager.getFile(document);
+      if (file != null && VfsUtilCore.isAncestor(directory, file, false)) {
+        changedFiles.add(file);
+      }
+    }
+    return changedFiles;
   }
 
   /** @return candidate files found by searchers, filtered by fileMaskFilter */
