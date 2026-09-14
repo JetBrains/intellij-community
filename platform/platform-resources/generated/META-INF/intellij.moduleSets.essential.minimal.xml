@@ -315,7 +315,7 @@
     <module name="intellij.platform.inline.completion"/>
     <module name="intellij.platform.ide.initialConfigImport" loading="embedded"/>
     <module name="intellij.platform.markdown.utils" loading="embedded"/>
-    <module name="intellij.platform.ml" loading="embedded"/>
+    <module name="intellij.platform.ml"/>
     <!-- endregion -->
   </content>
 </idea-plugin>

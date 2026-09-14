@@ -111,7 +111,7 @@ object CommunityModuleSets {
 
     embeddedModule("intellij.platform.ide.initialConfigImport")
     embeddedModule("intellij.platform.markdown.utils")
-    embeddedModule("intellij.platform.ml")
+    module("intellij.platform.ml")
   }
 
   /**
