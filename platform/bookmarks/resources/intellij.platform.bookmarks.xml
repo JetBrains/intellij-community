@@ -29,6 +29,7 @@
     <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->
+  <resource-bundle>messages.BookmarkBundle</resource-bundle>
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceInterface="com.intellij.ide.bookmark.BookmarksManager"
                     serviceImplementation="com.intellij.ide.bookmark.BookmarksManagerImpl"/>
