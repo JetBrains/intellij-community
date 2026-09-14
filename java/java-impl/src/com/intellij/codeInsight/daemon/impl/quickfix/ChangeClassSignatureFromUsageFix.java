@@ -13,6 +13,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiIntersectionType;
 import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.PsiReferenceParameterList;
 import com.intellij.psi.PsiType;
@@ -25,13 +26,11 @@ import com.intellij.refactoring.changeClassSignature.ChangeClassSignatureDialog;
 import com.intellij.refactoring.changeClassSignature.ChangeClassSignatureDialog.TypeParameterInfoView;
 import com.intellij.refactoring.changeClassSignature.Existing;
 import com.intellij.refactoring.changeClassSignature.New;
-import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -75,47 +74,43 @@ public class ChangeClassSignatureFromUsageFix extends BaseIntentionAction {
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     PsiReferenceParameterList parameterList = PsiTreeUtil.findSameElementInCopy(myParameterList, psiFile);
     PsiTypeParameter[] classTypeParameters = myClass.getTypeParameters();
-    List<TypeParameterInfoView> parameters = createTypeParameters(JavaCodeFragmentFactory.getInstance(project),
-                                                                  Arrays.asList(classTypeParameters),
-                                                                  Arrays.asList(parameterList.getTypeParameterElements()));
+    List<TypeParameterInfoView> parameters = createTypeParameters(myClass, Arrays.asList(parameterList.getTypeParameterElements()));
     String className = "class " + myClass.getName();
-    String originClassDeclaration = className + (classTypeParameters.length == 0 ? "" : "<" + StringUtil.join(classTypeParameters, p -> p.getName(), ",") + ">");
+    String originClassDeclaration =
+      className + (classTypeParameters.length == 0 ? "" : "<" + StringUtil.join(classTypeParameters, p -> p.getName(), ",") + ">");
     String modifiedClassDeclaration = className + "<" + StringUtil.join(parameters, p -> p.info().getName(classTypeParameters), ", ") + ">";
     return new IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, originClassDeclaration, modifiedClassDeclaration);
   }
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
-    final PsiTypeParameterList classTypeParameterList = myClass.getTypeParameterList();
-    if (classTypeParameterList == null) {
-      return;
-    }
-
-    ChangeClassSignatureDialog dialog = new ChangeClassSignatureDialog(
-      myClass,
-      createTypeParameters(
-        JavaCodeFragmentFactory.getInstance(project),
-        Arrays.asList(classTypeParameterList.getTypeParameters()),
-        Arrays.asList(myParameterList.getTypeParameterElements())
-      ),
-      false
-    );
+    List<TypeParameterInfoView> typeParameters = createTypeParameters(myClass, Arrays.asList(myParameterList.getTypeParameterElements()));
+    ChangeClassSignatureDialog dialog = new ChangeClassSignatureDialog(myClass, typeParameters, false);
     dialog.show();
   }
 
-  private static @NotNull List<TypeParameterInfoView> createTypeParameters(@NotNull JavaCodeFragmentFactory factory,
-                                                                           @NotNull List<? extends PsiTypeParameter> classTypeParameters,
+  private static @NotNull List<TypeParameterInfoView> createTypeParameters(@NotNull PsiClass aClass,
                                                                            @NotNull List<? extends PsiTypeElement> typeElements) {
+    PsiTypeParameter[] classTypeParameters = aClass.getTypeParameters();
     final TypeParameterNameSuggester suggester = new TypeParameterNameSuggester(classTypeParameters);
 
+    JavaCodeFragmentFactory factory = JavaCodeFragmentFactory.getInstance(aClass.getProject());
     List<TypeParameterInfoView> result = new ArrayList<>();
     int listIndex = 0;
     for (PsiTypeElement typeElement : typeElements) {
-      if (listIndex < classTypeParameters.size()) {
-        final PsiTypeParameter typeParameter = classTypeParameters.get(listIndex);
+      if (listIndex < classTypeParameters.length) {
+        final PsiTypeParameter typeParameter = classTypeParameters[listIndex];
 
         if (isAssignable(typeParameter, typeElement.getType())) {
-          result.add(new TypeParameterInfoView(new Existing(listIndex++), null, null));
+          PsiClassType[] types = typeParameter.getExtendsList().getReferencedTypes();
+          if (types.length > 0) {
+            PsiType type = types.length > 1 ? PsiIntersectionType.createIntersection(types) : types[0];
+            PsiTypeCodeFragment fragment = ChangeClassSignatureDialog.createTableCodeFragment(type, aClass, factory, true);
+            result.add(new TypeParameterInfoView(new Existing(listIndex++), fragment, null));
+          }
+          else {
+            result.add(new TypeParameterInfoView(new Existing(listIndex++), null, null));
+          }
           continue;
         }
       }
@@ -139,12 +134,9 @@ public class ChangeClassSignatureFromUsageFix extends BaseIntentionAction {
       else {
         suggestedName = suggester.suggestUnusedName("T");
       }
-      final PsiTypeCodeFragment boundFragment = CommonJavaRefactoringUtil.createTableCodeFragment(boundType, typeElement, factory, true);
-      result.add(new TypeParameterInfoView(new New(suggestedName, defaultType, null),
-                                           boundFragment,
-                                           boundType == null ? factory.createTypeCodeFragment(suggestedName, typeElement, true)
-                                                             : CommonJavaRefactoringUtil
-                                             .createTableCodeFragment(boundType, typeElement, factory, false)));
+      final PsiTypeCodeFragment boundFragment = ChangeClassSignatureDialog.createTableCodeFragment(boundType, typeElement, factory, true);
+      PsiTypeCodeFragment defaultValueFragment = factory.createTypeCodeFragment(typeElement.getText(), typeElement, true);
+      result.add(new TypeParameterInfoView(new New(suggestedName, defaultType, null), boundFragment, defaultValueFragment));
     }
     return result;
   }

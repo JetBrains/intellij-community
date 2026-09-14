@@ -1,30 +1,28 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeClassSignature;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiIntersectionType;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeParameter;
 import com.intellij.refactoring.util.CanonicalTypes;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+
+import static com.intellij.refactoring.changeClassSignature.ChangeClassSignatureDialog.getCanonicalText;
 
 public class New implements TypeParameterInfo {
   private String myNewName;
   private CanonicalTypes.Type myDefaultValue;
   private CanonicalTypes.Type myBoundValue;
 
-  public New(@NotNull String name, @Nullable PsiType aType, @Nullable PsiType boundValue) {
+  public New(@NotNull String name, @Nullable PsiType defaultValue, @Nullable PsiType boundValue) {
     myNewName = name;
-    myDefaultValue = aType != null ? CanonicalTypes.createTypeWrapper(aType) : null;
+    myDefaultValue = defaultValue != null ? CanonicalTypes.createTypeWrapper(defaultValue) : null;
     myBoundValue = boundValue != null ? CanonicalTypes.createTypeWrapper(boundValue) : null;
   }
 
@@ -32,7 +30,7 @@ public class New implements TypeParameterInfo {
   public New(@NotNull PsiClass aClass,
              @NotNull @NonNls String name,
              @NotNull @NonNls String defaultValue,
-             @NotNull @NonNls String boundValue) throws IncorrectOperationException {
+             @NotNull @NonNls String boundValue) {
     this(name,
          JavaPsiFacade.getElementFactory(aClass.getProject()).createTypeFromText(defaultValue, aClass.getLBrace()),
          boundValue.isEmpty()
@@ -62,18 +60,10 @@ public class New implements TypeParameterInfo {
     final String extendsText = myBoundValue == null
                                ? ""
                                : " extends " + getCanonicalText(myBoundValue.getType(null, PsiManager.getInstance(project)));
-    return JavaPsiFacade.getElementFactory(project).createTypeParameterFromText(myNewName +
-                                                                                extendsText, null);
+    return JavaPsiFacade.getElementFactory(project).createTypeParameterFromText(myNewName + extendsText, null);
   }
 
   public CanonicalTypes.Type getDefaultValue() {
     return myDefaultValue;
-  }
-
-  private static String getCanonicalText(PsiType boundType) {
-    if (boundType instanceof PsiIntersectionType) {
-      return StringUtil.join(ContainerUtil.map(((PsiIntersectionType)boundType).getConjuncts(), type -> type.getCanonicalText()), " & ");
-    }
-    return boundType.getCanonicalText();
   }
 }

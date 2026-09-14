@@ -6,14 +6,18 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaCodeFragmentFactory;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiIntersectionType;
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeCodeFragment;
 import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringFactory;
 import com.intellij.refactoring.RefactoringBundle;
@@ -27,7 +31,6 @@ import com.intellij.ui.TableColumnAnimator;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.JBTable;
-import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.JBUI;
@@ -74,11 +77,21 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     );
   }
 
-  private static @NotNull List<TypeParameterInfoView> initTypeParameterInfos(int length) {
-    final List<TypeParameterInfoView> result =
-      new ArrayList<>();
-    for (int i = 0; i < length; i++) {
-      result.add(new TypeParameterInfoView(new Existing(i), null, null));
+  private static @NotNull List<TypeParameterInfoView> initTypeParameterInfos(PsiClass aClass) {
+    PsiTypeParameter[] parameters = aClass.getTypeParameters();
+    final List<TypeParameterInfoView> result = new ArrayList<>();
+    JavaCodeFragmentFactory codeFragmentFactory = JavaCodeFragmentFactory.getInstance(aClass.getProject());
+    for (int i = 0; i < parameters.length; i++) {
+      PsiClassType[] types = parameters[i].getExtendsList().getReferencedTypes();
+
+      if (types.length > 0) {
+        PsiType type = types.length > 1 ? PsiIntersectionType.createIntersection(types) : types[0];
+        PsiTypeCodeFragment fragment = createTableCodeFragment(type, aClass, codeFragmentFactory, true);
+        result.add(new TypeParameterInfoView(new Existing(i), fragment, null));
+      }
+      else {
+        result.add(new TypeParameterInfoView(new Existing(i), null, null));
+      }
     }
     return result;
   }
@@ -126,8 +139,10 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     Project project = myClass.getProject();
     nameColumn.setCellRenderer(new MyCellRenderer());
     nameColumn.setCellEditor(new StringTableCellEditor(project, true));
+    boundColumn.setPreferredWidth(200);
     boundColumn.setCellRenderer(new CodeFragmentTableCellRenderer(project));
     boundColumn.setCellEditor(new JavaCodeFragmentTableCellEditor(project));
+    valueColumn.setPreferredWidth(200);
     valueColumn.setCellRenderer(new CodeFragmentTableCellRenderer(project));
     valueColumn.setCellEditor(new JavaCodeFragmentTableCellEditor(project));
 
@@ -222,6 +237,20 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     return null;
   }
 
+  public static PsiTypeCodeFragment createTableCodeFragment(@Nullable PsiType type,
+                                                            @NotNull PsiElement context,
+                                                            @NotNull JavaCodeFragmentFactory factory,
+                                                            boolean allowConjunctions) {
+    int flags = (allowConjunctions && PsiUtil.isLanguageLevel8OrHigher(context)) ? JavaCodeFragmentFactory.ALLOW_INTERSECTION : 0;
+    return factory.createTypeCodeFragment(type == null ? "" : getCanonicalText(type), context, true, flags);
+  }
+
+  static String getCanonicalText(PsiType boundType) {
+    return boundType instanceof PsiIntersectionType t
+           ? StringUtil.join(ContainerUtil.map(t.getConjuncts(), type -> type.getCanonicalText()), " & ")
+           : boundType.getCanonicalText();
+  }
+
   private class MyTableModel extends AbstractTableModel implements EditableModel {
     @Override
     public int getColumnCount() {
@@ -284,8 +313,8 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
       myTypeParameterInfos.add(new New("", null, null));
       JavaCodeFragmentFactory codeFragmentFactory = JavaCodeFragmentFactory.getInstance(myProject);
       PsiElement context = myClass.getLBrace() != null ? myClass.getLBrace() : myClass;
-      myBoundValueTypeCodeFragments.add(CommonJavaRefactoringUtil.createTableCodeFragment(null, context, codeFragmentFactory, true));
-      myDefaultValueTypeCodeFragments.add(CommonJavaRefactoringUtil.createTableCodeFragment(null, context, codeFragmentFactory, false));
+      myBoundValueTypeCodeFragments.add(createTableCodeFragment(null, context, codeFragmentFactory, true));
+      myDefaultValueTypeCodeFragments.add(createTableCodeFragment(null, context, codeFragmentFactory, false));
       final int row = myDefaultValueTypeCodeFragments.size() - 1;
       fireTableRowsInserted(row, row);
     }
