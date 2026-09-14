@@ -17,7 +17,9 @@ import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -213,6 +215,36 @@ class ScanningCancellationMonitorTest {
         tracker.unregister(thread, outer)
       }
     }, wrapper)
+  }
+
+  @Test
+  fun `the thread dump section names an unobservable cancellation`() {
+    val root = ProgressIndicatorBase(false, false)
+    val wrapper = SensitiveProgressWrapper(root)
+    root.cancel()
+    registerStuckReadAction(wrapper)
+
+    val dump = dumpScanningWork(tracker) ?: fail("the section must appear while a scan read action is active")
+
+    assertTrue(dump.contains("1 scanning read actions active:"), dump)
+    assertTrue(dump.contains("indicator.isCanceled: true"), dump)
+    assertTrue(dump.contains("checkCanceled can throw here: false"), dump)
+    assertTrue(dump.contains("diagnosis: " + ScanningStallKind.CANCELLATION_UNOBSERVED), dump)
+    // no line may start with a quote, or ThreadDumpParser reads it as a thread header
+    assertTrue(dump.lineSequence().none { it.startsWith("\"") }, dump)
+  }
+
+  @Test
+  fun `the thread dump section disappears when no scan read action is active`() {
+    assertNull(dumpScanningWork(tracker))
+  }
+
+  @Test
+  @RegistryKey(SCANNING_MONITOR_ENABLED_KEY, "false")
+  fun `the thread dump section disappears when the monitor is off`() {
+    registerStuckReadAction(sensitiveWrapper())
+
+    assertNull(dumpScanningWork(tracker))
   }
 
   private fun monitor(reports: CompletableFuture<ScanningStallReport>, graceMs: () -> Long): ScanningCancellationMonitor =

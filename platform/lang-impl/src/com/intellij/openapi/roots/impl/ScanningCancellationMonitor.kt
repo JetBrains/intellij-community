@@ -4,7 +4,9 @@
 
 package com.intellij.openapi.roots.impl
 
+import com.intellij.concurrency.SensitiveProgressWrapper
 import com.intellij.diagnostic.PerformanceWatcher
+import com.intellij.diagnostic.ScanningWorkDumper
 import com.intellij.diagnostic.ThreadDumper
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -63,6 +65,17 @@ enum class ScanningStallKind {
    * action. The check runs only after the grace period, so the thread already had that long to stop.
    */
   CANCELED_AND_MARKED,
+}
+
+/**
+ * Why a scanning worker still holds a read action.
+ *
+ * The stall report and the thread dump both call this, so the two never disagree.
+ */
+private fun stallKind(indicator: SensitiveProgressWrapper, underCanceledIndicator: Boolean): ScanningStallKind = when {
+  !indicator.isCanceled -> ScanningStallKind.NOT_CANCELED
+  !underCanceledIndicator -> ScanningStallKind.CANCELLATION_UNOBSERVED
+  else -> ScanningStallKind.CANCELED_AND_MARKED
 }
 
 @Internal
@@ -269,11 +282,7 @@ class ScanningCancellationMonitor(
   private fun classify(readAction: ScanningReadAction): ScanningStallEntry {
     val indicator = readAction.indicator
     val underCanceledIndicator = CoreProgressManager.hasThreadUnderCanceledIndicator(readAction.thread)
-    val kind = when {
-      !indicator.isCanceled -> ScanningStallKind.NOT_CANCELED
-      !underCanceledIndicator -> ScanningStallKind.CANCELLATION_UNOBSERVED
-      else -> ScanningStallKind.CANCELED_AND_MARKED
-    }
+    val kind = stallKind(indicator, underCanceledIndicator)
     return ScanningStallEntry(
       thread = readAction.thread,
       indicatorPresentation = indicator.toString(),
@@ -326,6 +335,56 @@ private class WriteActionLog {
   }
 }
 
+/** The maximum number of read actions that the thread dump section shows. */
+private const val MAX_DUMPED_READ_ACTIONS = 64
+
+/**
+ * Renders the active scanning read actions for a thread dump.
+ *
+ * [FilesScanExecutor] registers a read action per item, so `held for` stays small even during a long
+ * freeze. Compare two consecutive dumps to tell a blind worker from a busy one. The same thread in
+ * both, with a small but different age, means the worker keeps taking items while a write action is
+ * pending.
+ *
+ * Returns null when the monitor is off or when no worker holds a read action. Then the whole section
+ * disappears from the dump.
+ */
+fun dumpScanningWork(tracker: ScanningWorkTracker): String? {
+  try {
+    if (!Registry.`is`(SCANNING_MONITOR_ENABLED_KEY, true)) {
+      return null
+    }
+    val readActions = tracker.activeReadActions()
+    if (readActions.isEmpty()) {
+      return null
+    }
+    return buildString {
+      append("ProgressManager.checkCanceled behavior: ").append(CoreProgressManager.getCheckCanceledBehaviorName()).append('\n')
+      append(readActions.size).append(" scanning read actions active:\n")
+      for (readAction in readActions.take(MAX_DUMPED_READ_ACTIONS)) {
+        val indicator = readAction.indicator
+        val underCanceledIndicator = CoreProgressManager.hasThreadUnderCanceledIndicator(readAction.thread)
+        val ageMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - readAction.startedAtNanos)
+        append(readAction.thread).append(' ').append(readAction.thread.state).append('\n')
+        append("    held for ").append(ageMs).append(" ms\n")
+        append("    indicator chain: ").append(CoreProgressManager.indicatorChain(indicator)).append('\n')
+        append("    indicator.isCanceled: ").append(indicator.isCanceled).append('\n')
+        append("    checkCanceled can throw here: ").append(underCanceledIndicator).append('\n')
+        append("    diagnosis: ").append(stallKind(indicator, underCanceledIndicator)).append('\n')
+      }
+      val hidden = readActions.size - MAX_DUMPED_READ_ACTIONS
+      if (hidden > 0) {
+        append("    ... and ").append(hidden).append(" more\n")
+      }
+    }
+  }
+  catch (e: Throwable) {
+    // A thread dump must never throw. It runs while the IDE is already in trouble.
+    rethrowControlFlowException(e)
+    return "the scanning read actions dump failed: $e\n"
+  }
+}
+
 private fun reportStallToLog(report: ScanningStallReport) {
   val details = report.details()
   val attachments = ArrayList<Attachment>()
@@ -363,10 +422,18 @@ private fun reportStallToLog(report: ScanningStallReport) {
  * Being a service also means the installation happens exactly once however many projects are opened.
  */
 @Service(Service.Level.APP)
-internal class ScanningCancellationMonitorService(coroutineScope: CoroutineScope) : Disposable.Default {
+internal class ScanningCancellationMonitorService(coroutineScope: CoroutineScope) : Disposable {
   init {
+    val tracker = ScanningWorkTracker.getInstance()
     val application = ApplicationManagerEx.getApplicationEx()
-    application.addWriteActionListener(ScanningCancellationMonitor(coroutineScope), this)
+    application.addWriteActionListener(ScanningCancellationMonitor(coroutineScope, tracker), this)
+    // The supplier holds the tracker, so a thread dump makes no service lookup. A lookup can throw once
+    // the application is disposed, and a thread dump must never throw.
+    ScanningWorkDumper.setScanningWorkDumper { dumpScanningWork(tracker) }
+  }
+
+  override fun dispose() {
+    ScanningWorkDumper.removeScanningWorkDumper()
   }
 }
 
