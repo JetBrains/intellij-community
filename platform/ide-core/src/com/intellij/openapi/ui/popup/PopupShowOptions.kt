@@ -1,8 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.popup
 
-import com.intellij.openapi.ui.popup.PopupShowOptions.Companion.aboveComponent
 import com.intellij.ui.awt.AnchoredPoint
+import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.Point
@@ -14,6 +14,11 @@ import java.awt.Point
  * The created options may then be modified using interface methods.
  */
 sealed interface PopupShowOptions {
+  val screenX: Int
+
+  val screenY: Int
+
+  val popupComponentGap: Int
   /**
    * The gap between the popup and the component.
    *
@@ -30,10 +35,22 @@ sealed interface PopupShowOptions {
    */
   fun withMinimumHeight(minimumHeight: Int?): PopupShowOptions
 
+  fun withDefaultPopupComponentUnscaledGap(popupComponentGap: Int): PopupShowOptions
+
+  fun withComponentPoint(componentPoint: AnchoredPoint): PopupShowOptions
+
+  fun withScreenXY(screenX: Int, screenY: Int): PopupShowOptions
+
+  fun withForcedXY(considerForcedXY: Boolean): PopupShowOptions
+
+  fun withDefaultPopupAnchor(popupAnchor: AnchoredPoint.Anchor): PopupShowOptions
+
+  fun withRelativePosition(relativePosition: PopupRelativePosition): PopupShowOptions
+
   companion object {
 
     /**
-     * Creates popup options to show the popup above a specific component.
+     * Creates popup options to show the popup above a specific component and left-aligned with it.
      */
     @JvmStatic
     fun aboveComponent(
@@ -44,6 +61,57 @@ sealed interface PopupShowOptions {
         .withRelativePosition(PopupRelativePosition.TOP)
         .withDefaultPopupAnchor(AnchoredPoint.Anchor.BOTTOM_LEFT)
         .withDefaultPopupComponentUnscaledGap(4)
+    }
+
+    /**
+     * Creates popup options to show the popup above a specific component and right-aligned with it.
+     */
+    @JvmStatic
+    fun aboveComponentRightAligned(
+      component: Component,
+    ): PopupShowOptions {
+      return PopupShowOptionsBuilder()
+        .withComponentPoint(AnchoredPoint(AnchoredPoint.Anchor.TOP_RIGHT, component))
+        .withRelativePosition(PopupRelativePosition.TOP)
+        .withDefaultPopupAnchor(AnchoredPoint.Anchor.BOTTOM_RIGHT)
+        .withDefaultPopupComponentUnscaledGap(4)
+    }
+
+    /**
+     * Creates popup options to show the popup blow a specific component and left-aligned with it.
+     */
+    @JvmStatic
+    fun belowComponent(
+      component: Component,
+    ): PopupShowOptions {
+      return PopupShowOptionsBuilder()
+        .withComponentPoint(AnchoredPoint(AnchoredPoint.Anchor.BOTTOM_LEFT, component))
+        .withRelativePosition(PopupRelativePosition.BOTTOM)
+        .withDefaultPopupAnchor(AnchoredPoint.Anchor.TOP_LEFT)
+    }
+
+    /**
+     * Creates popup options to show the popup blow a specific component and right-aligned with it.
+     */
+    @JvmStatic
+    fun belowComponentRightAligned(
+      component: Component,
+    ): PopupShowOptions {
+      return PopupShowOptionsBuilder()
+        .withComponentPoint(AnchoredPoint(AnchoredPoint.Anchor.BOTTOM_RIGHT, component))
+        .withRelativePosition(PopupRelativePosition.BOTTOM)
+        .withDefaultPopupAnchor(AnchoredPoint.Anchor.TOP_RIGHT)
+    }
+
+    /**
+     * Creates popup options to show the popup at the specified screen point.
+     */
+    @JvmStatic
+    fun atScreenLocation(owner: Component, screenX: Int, screenY: Int, forced: Boolean): PopupShowOptions {
+      return PopupShowOptionsBuilder()
+        .withOwner(owner)
+        .withScreenXY(screenX, screenY)
+        .withForcedXY(forced)
     }
   }
 }
@@ -59,33 +127,36 @@ class PopupShowOptionsBuilder : PopupShowOptions {
   private var popupComponentUnscaledGap: Int? = null
   private var minimumHeight: Int? = null
 
-  val screenX: Int get() = screenPoint?.x ?: -1
-  val screenY: Int get() = screenPoint?.y ?: -1
+  override val screenX: Int get() = screenPoint?.x ?: -1
+  override val screenY: Int get() = screenPoint?.y ?: -1
+
+  override val popupComponentGap: Int
+    get() = JBUI.scale(popupComponentUnscaledGap ?: 0)
 
   fun withOwner(owner: Component): PopupShowOptionsBuilder = apply {
     this.owner = owner
   }
 
-  fun withComponentPoint(componentPoint: AnchoredPoint): PopupShowOptionsBuilder = withOwner(componentPoint.component).apply {
+  override fun withComponentPoint(componentPoint: AnchoredPoint): PopupShowOptionsBuilder = withOwner(componentPoint.component).apply {
     this.screenPoint = componentPoint.screenPoint
     this.ownerAnchor = componentPoint.anchor
   }
 
-  fun withScreenXY(screenX: Int, screenY: Int): PopupShowOptionsBuilder = apply {
+  override fun withScreenXY(screenX: Int, screenY: Int): PopupShowOptionsBuilder = apply {
     this.screenPoint = if (screenX == -1 && screenY == -1) null else Point(screenX, screenY)
   }
 
-  fun withForcedXY(considerForcedXY: Boolean): PopupShowOptionsBuilder = apply {
+  override fun withForcedXY(considerForcedXY: Boolean): PopupShowOptionsBuilder = apply {
     this.considerForcedXY = considerForcedXY
   }
 
-  fun withDefaultPopupAnchor(popupAnchor: AnchoredPoint.Anchor): PopupShowOptionsBuilder = apply {
+  override fun withDefaultPopupAnchor(popupAnchor: AnchoredPoint.Anchor): PopupShowOptionsBuilder = apply {
     if (this.popupAnchor == null) {
       this.popupAnchor = popupAnchor
     }
   }
 
-  fun withRelativePosition(relativePosition: PopupRelativePosition): PopupShowOptionsBuilder = apply {
+  override fun withRelativePosition(relativePosition: PopupRelativePosition): PopupShowOptionsBuilder = apply {
     this.relativePosition = relativePosition
   }
 
@@ -97,7 +168,7 @@ class PopupShowOptionsBuilder : PopupShowOptions {
     this.popupComponentUnscaledGap = popupComponentGap
   }
 
-  fun withDefaultPopupComponentUnscaledGap(popupComponentGap: Int): PopupShowOptionsBuilder = apply {
+  override fun withDefaultPopupComponentUnscaledGap(popupComponentGap: Int): PopupShowOptionsBuilder = apply {
     if (this.popupComponentUnscaledGap == null) {
       this.popupComponentUnscaledGap = popupComponentGap
     }
@@ -134,7 +205,6 @@ data class PopupShowOptionsImpl(
   val screenY: Int get() = screenPoint?.y ?: -1
 }
 
-@ApiStatus.Internal
 enum class PopupRelativePosition {
   LEFT,
   RIGHT,

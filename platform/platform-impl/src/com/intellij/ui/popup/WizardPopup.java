@@ -12,6 +12,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.ListPopupStep;
+import com.intellij.openapi.ui.popup.PopupShowOptions;
 import com.intellij.openapi.ui.popup.PopupShowOptionsBuilder;
 import com.intellij.openapi.ui.popup.PopupShowOptionsImpl;
 import com.intellij.openapi.ui.popup.PopupStep;
@@ -32,8 +33,8 @@ import com.intellij.ui.speedSearch.ElementFilter;
 import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.ui.wayland.WaylandUtilKt;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.TimerUtil;
 import com.intellij.util.ui.JdkConstants;
+import com.intellij.util.ui.TimerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -295,10 +296,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
       if (LOG.isDebugEnabled()) {
         LOG.debug("END the WizardPopup part, delegating to super(), the target bounds: " + targetBounds);
       }
-      newOptions = new PopupShowOptionsBuilder()
-        .withOwner(owner)
-        .withScreenXY(targetBounds.x, targetBounds.y)
-        .withForcedXY(true);
+      newOptions = (PopupShowOptionsBuilder)PopupShowOptions.atScreenLocation(owner, targetBounds.x, targetBounds.y, true);
     }
     else {
       // The superclass does positioning for the new anchors, so do nothing here.

@@ -1192,12 +1192,8 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup,
   }
 
   public void show(@NotNull Component owner, int aScreenX, int aScreenY, final boolean considerForcedXY) {
-    var builder = new PopupShowOptionsBuilder();
     showImpl(
-      builder
-        .withOwner(owner)
-        .withScreenXY(aScreenX, aScreenY)
-        .withForcedXY(considerForcedXY)
+      (PopupShowOptionsBuilder)PopupShowOptions.atScreenLocation(owner, aScreenX, aScreenY, considerForcedXY)
     );
   }
 
