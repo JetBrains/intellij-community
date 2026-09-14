@@ -17,8 +17,8 @@ class _LocalState:
     @toplevel_context.setter
     def toplevel_context(self, value) -> None: ...
 
-def get_context(raise_context_error: bool = ...): ...
-def get_toplevel_context(raise_context_error: bool = ...): ...
+def get_context(raise_context_error: bool = True): ...
+def get_toplevel_context(raise_context_error: bool = True): ...
 
 class _ContextTuple(NamedTuple):
     id: Incomplete
@@ -38,24 +38,24 @@ class _Context(_ContextTuple):
     def __new__(
         cls,
         client,
-        id: Incomplete | None = ...,
+        id=None,
         namespace=...,
-        eventloop: Incomplete | None = ...,
-        batches: Incomplete | None = ...,
-        commit_batches: Incomplete | None = ...,
-        transaction: Incomplete | None = ...,
-        cache: Incomplete | None = ...,
-        cache_policy: Incomplete | None = ...,
-        global_cache: Incomplete | None = ...,
-        global_cache_policy: Callable[[Key], bool] | None = ...,
-        global_cache_timeout_policy: Incomplete | None = ...,
-        datastore_policy: Incomplete | None = ...,
-        on_commit_callbacks: Incomplete | None = ...,
-        transaction_complete_callbacks: Incomplete | None = ...,
-        legacy_data: bool = ...,
-        retry: Incomplete | None = ...,
-        rpc_time: Incomplete | None = ...,
-        wait_time: Incomplete | None = ...,
+        eventloop=None,
+        batches=None,
+        commit_batches=None,
+        transaction=None,
+        cache=None,
+        cache_policy=None,
+        global_cache=None,
+        global_cache_policy: Callable[[Key], bool] | None = None,
+        global_cache_timeout_policy=None,
+        datastore_policy=None,
+        on_commit_callbacks=None,
+        transaction_complete_callbacks=None,
+        legacy_data: bool = True,
+        retry=None,
+        rpc_time=None,
+        wait_time=None,
     ): ...
     def new(self, **kwargs): ...
     rpc_time: int

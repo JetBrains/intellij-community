@@ -14,6 +14,7 @@
         "stdlib/distutils/cmd.pyi",
         "stdlib/distutils/command",
         "stdlib/distutils/dist.pyi",
+        "stdlib/email/*.pyi",
         "stdlib/encodings/__init__.pyi",
         "stdlib/lib2to3/fixes/*.pyi",
         "stdlib/numbers.pyi",

@@ -9,7 +9,7 @@ import tempfile
 from collections.abc import Iterable, Mapping
 from pathlib import Path
 from types import MethodType
-from typing import TYPE_CHECKING, Any, Final, NamedTuple, TypeAlias
+from typing import TYPE_CHECKING, Any, Final, Literal, NamedTuple, TypeAlias
 
 import pathspec
 from packaging.requirements import Requirement
@@ -25,6 +25,26 @@ except ImportError:
 
     def colored(text: str, color: str | None = None, **kwargs: Any) -> str:  # type: ignore[misc] # noqa: ARG001
         return text
+
+
+TextColor: TypeAlias = Literal[
+    "black",
+    "red",
+    "green",
+    "yellow",
+    "blue",
+    "magenta",
+    "cyan",
+    "white",
+    "light_grey",
+    "dark_grey",
+    "light_red",
+    "light_green",
+    "light_yellow",
+    "light_blue",
+    "light_magenta",
+    "light_cyan",
+]
 
 
 _REMOVE_COMMENT_RE = re.compile(
@@ -75,14 +95,6 @@ def print_command(cmd: str | Iterable[str]) -> None:
     print(colored(f"Running: {cmd}", "blue"))
 
 
-def print_info(message: str) -> None:
-    print(colored(message, "blue"))
-
-
-def print_warning(message: str) -> None:
-    print(colored(message, "yellow"))
-
-
 def print_skipped(message: str) -> None:
     print(colored(message, "yellow"))
 
@@ -99,18 +111,8 @@ def print_success_msg() -> None:
     print(colored("success", "green"))
 
 
-def print_divider() -> None:
-    """Print a row of * symbols across the screen.
-
-    This can be useful to divide terminal output into separate sections.
-    """
-    print()
-    print("*" * 70)
-    print()
-
-
-def print_time(t: float) -> None:
-    print(f"({t:.2f} s) ", end="")
+def format_time(t: float) -> str:
+    return f"({t:.2f} s)"
 
 
 # ====================================================================

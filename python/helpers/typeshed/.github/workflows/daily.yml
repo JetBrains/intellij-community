@@ -141,7 +141,7 @@ jobs:
         run: |
           cd stub_uploader
           # Keep Python version in sync with stub_uploader's check_scripts.yml workflow.
-          uv run --python=3.13 --no-project --with-requirements=requirements.txt -m pytest tests
+          uv run --python=3.13 --locked --group dev -m pytest tests
 
   # https://github.community/t/run-github-actions-job-only-if-previous-job-has-failed/174786/2
   create-issue-on-failure:

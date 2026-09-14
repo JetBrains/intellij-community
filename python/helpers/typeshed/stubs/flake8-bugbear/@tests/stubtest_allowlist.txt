@@ -24,6 +24,11 @@ bugbear.NamedExprFinder.__gt__
 bugbear.NamedExprFinder.__le__
 bugbear.NamedExprFinder.__lt__
 bugbear.NamedExprFinder.__match_args__
+bugbear.B020AttributeFinder.__ge__
+bugbear.B020AttributeFinder.__gt__
+bugbear.B020AttributeFinder.__le__
+bugbear.B020AttributeFinder.__lt__
+bugbear.B020AttributeFinder.__match_args__
 # == Python 3.13
 bugbear.B040CaughtException.__replace__
 bugbear.B041VariableKeyType.__replace__
@@ -31,3 +36,4 @@ bugbear.BugBearChecker.__replace__
 bugbear.BugBearVisitor.__replace__
 bugbear.NameFinder.__replace__
 bugbear.NamedExprFinder.__replace__
+bugbear.B020AttributeFinder.__replace__

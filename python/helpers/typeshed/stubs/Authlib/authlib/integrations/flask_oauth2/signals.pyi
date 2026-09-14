@@ -1,5 +1,5 @@
-from _typeshed import Incomplete
+from blinker import NamedSignal
 
-client_authenticated: Incomplete
-token_revoked: Incomplete
-token_authenticated: Incomplete
+client_authenticated: NamedSignal
+token_revoked: NamedSignal
+token_authenticated: NamedSignal

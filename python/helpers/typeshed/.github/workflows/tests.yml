@@ -267,4 +267,4 @@ jobs:
       - name: Run tests
         run: |
           cd stub_uploader
-          uv run --python=3.13 --no-project --with-requirements=requirements.txt -m pytest tests
+          uv run --python=3.13 --locked --group dev -m pytest tests

@@ -17,19 +17,19 @@ class Client:
     database: str | None
     def __init__(
         self,
-        project: str | None = ...,
-        namespace: str | None = ...,
-        credentials: Incomplete | None = ...,
-        client_options: Incomplete | None = ...,
+        project: str | None = None,
+        namespace: str | None = None,
+        credentials=None,
+        client_options=None,
         database: str | None = None,
     ) -> None: ...
     @contextmanager
     def context(
         self,
         namespace=...,
-        cache_policy: Callable[[key.Key], bool] | None = ...,
-        global_cache: Incomplete | None = ...,
-        global_cache_policy: Callable[[key.Key], bool] | None = ...,
-        global_cache_timeout_policy: Callable[[key.Key], int] | None = ...,
-        legacy_data: bool = ...,
+        cache_policy: Callable[[key.Key], bool] | None = None,
+        global_cache=None,
+        global_cache_policy: Callable[[key.Key], bool] | None = None,
+        global_cache_timeout_policy: Callable[[key.Key], int] | None = None,
+        legacy_data: bool = True,
     ) -> Generator[context_module.Context]: ...

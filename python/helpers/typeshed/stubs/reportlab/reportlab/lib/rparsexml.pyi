@@ -2,7 +2,6 @@ from _typeshed import FileDescriptorOrPath, Unused
 from collections.abc import Iterable
 from typing import Final, type_check_only
 
-RequirePyRXP: int
 simpleparse: int
 
 @type_check_only
