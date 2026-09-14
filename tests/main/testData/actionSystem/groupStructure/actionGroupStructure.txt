@@ -875,6 +875,8 @@
         DumpGroovyControlFlowAction
       DetectProjectLeaks
       TestJbProtocolCommand
+      PythonPsiInternalGroup
+        PyTypeBenchmarkAction
       FeatureUsage.Internal
         OpenStatisticsEventLogAction
         RecordStateCollectors
@@ -896,8 +898,6 @@
         SetCurrentLessonAsPassed
         ResetOnboardingFeedbackState
         ShowDemoAltClickPromoter
-      PythonPsiInternalGroup
-        PyTypeBenchmarkAction
       ReloadProjectAction
       Internal.Ex
         ClearIDEStatistics
