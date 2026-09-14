@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.NotNull;
@@ -489,6 +490,12 @@ public interface Editor extends UserDataHolder {
   @ApiStatus.Experimental
   default int getStickyLinesPanelHeight() {
     return 0;
+  }
+
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  default @NotNull CoroutineScope getCoroutineScope() {
+    return EditorCoroutineScopeService.defaultScope(getProject());
   }
 
   /**

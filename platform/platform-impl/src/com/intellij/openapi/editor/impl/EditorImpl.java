@@ -122,7 +122,6 @@ import com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.impl.caret.EditorCaretMutator;
-import com.intellij.openapi.editor.impl.caret.EditorCaretMutatorFactory;
 import com.intellij.openapi.editor.impl.caret.model.CaretCursorSnapshot;
 import com.intellij.openapi.editor.impl.caret.model.CaretRectangle;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
@@ -137,7 +136,6 @@ import com.intellij.openapi.editor.impl.view.CharacterGrid;
 import com.intellij.openapi.editor.impl.view.CharacterGridImpl;
 import com.intellij.openapi.editor.impl.view.EditorView;
 import com.intellij.openapi.editor.impl.view.animation.EditorAnimationCache;
-import com.intellij.openapi.editor.impl.view.animation.EditorAnimationCacheService;
 import com.intellij.openapi.editor.markup.GutterDraggableObject;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -219,6 +217,7 @@ import com.intellij.util.ui.TimerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import kotlin.Unit;
+import kotlinx.coroutines.CoroutineScope;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
@@ -499,6 +498,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private final EditorSizeAdjustmentStrategy mySizeAdjustmentStrategy = new EditorSizeAdjustmentStrategy();
   private final Disposable myDisposable = Disposer.newDisposable();
+  private final CoroutineScope myCoroutineScope;
 
   private List<CaretState> myCaretStateBeforeLastPress;
   LogicalPosition myLastMousePressedLocation;
@@ -580,6 +580,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myProject = project;
     myDocument = (DocumentEx)document;
     myElfDocument = ElfFeatureFlag.isEnabled() ? (DocumentEx)Elf.getElf().getElfDocument(document) : myDocument;
+    myCoroutineScope = EditorCoroutineScopes.createEditorScope(myProject, myDisposable);
     myVirtualFile = file;
     myState = new EditorState();
     myState.refreshAll();
@@ -650,7 +651,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     };
 
     myIndentsModel = new IndentsModelImpl(this);
-    caretMutator = EditorCaretMutatorFactory.createMutator(this);
+    caretMutator = new EditorCaretMutator(this);
     Disposer.register(myDisposable, caretMutator);
 
     myState.setVerticalScrollBarOrientation(VERTICAL_SCROLLBAR_RIGHT);
@@ -693,7 +694,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myEditorModel = new EditorModelImpl(this);
 
     myView = new EditorView(this, myEditorModel);
-    myContentAnimationCache = EditorAnimationCacheService.createCache(this);
+    myContentAnimationCache = Registry.is("editor.animation.cache.enabled")
+                              ? new EditorAnimationCache(this)
+                              : null;
     if (myContentAnimationCache != null) {
       Disposer.register(myDisposable, myContentAnimationCache);
     }
@@ -6041,5 +6044,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @ApiStatus.Internal
   public void throwEditorInvariantBroken(@NotNull String message) {
     throw new RuntimeExceptionWithAttachments(message, AttachmentFactory.createContext(dumpState()));
+  }
+
+  /**
+   * The scope is cancelled when this editor is released. A component that reads editor state from a coroutine still
+   * needs its own disposal guard, because cancellation does not wait for the running coroutines.
+   */
+  @ApiStatus.Internal
+  @Override
+  public @NotNull CoroutineScope getCoroutineScope() {
+    return myCoroutineScope;
   }
 }

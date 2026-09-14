@@ -2,8 +2,6 @@
 package com.intellij.openapi.editor.impl.caret
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.getOrHandleException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
@@ -14,11 +12,9 @@ import com.intellij.openapi.editor.impl.caret.model.CaretFrameInterval
 import com.intellij.openapi.editor.impl.caret.model.CaretTick
 import com.intellij.openapi.editor.impl.view.animation.AnimationClock
 import com.intellij.openapi.editor.impl.view.animation.AnimationTimeMark
-import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
@@ -43,31 +39,11 @@ import kotlin.time.Duration
 //   A settled move has no motion left. It skips the loop:
 //   caretMoved() |> state.updateAndGet { retarget } |> advanceNow(tick) |> advanceStep(prefetching = false)
 //                                                                       |> propagateStep() |> repaintCarets()
-@Service(Service.Level.APP)
-internal class EditorCaretMutatorFactory(private val scope: CoroutineScope) {
-  companion object {
-    @JvmStatic
-    fun createMutator(editor: EditorImpl): EditorCaretMutator {
-      val factory = service<EditorCaretMutatorFactory>()
-      return factory.create(editor)
-    }
-  }
-
-  private val frameDispatcher: CoroutineContext = Dispatchers.Default.limitedParallelism(1, "EditorCaretAnimation")
-
-  private fun create(editor: EditorImpl): EditorCaretMutator {
-    val animationScope = scope.childScope("Caret animation for $editor")
-    return EditorCaretMutator(animationScope, editor, frameDispatcher)
-  }
-}
-
 internal class EditorCaretMutator internal constructor(
-  private val coroutineScope: CoroutineScope,
   private val editor: EditorImpl,
-  private val frameDispatcher: CoroutineContext,
 ) : Disposable {
+  private val coroutineScope: CoroutineScope = editor.coroutineScope
   private val state = MutableStateFlow(CaretAnimationState.initial())
-
   private val settings = AtomicReference(editor.caretAnimationSettings())
   private val disposed = AtomicBoolean(false)
 
@@ -161,7 +137,6 @@ internal class EditorCaretMutator internal constructor(
   override fun dispose() {
     disposed.set(true)
     state.updateAndGet { it.withRunning(false) }
-    coroutineScope.cancel()
   }
 
   /// MARK: animation loop
@@ -187,7 +162,7 @@ internal class EditorCaretMutator internal constructor(
     if (wasRunning) {
       return
     }
-    coroutineScope.launch(frameDispatcher) {
+    coroutineScope.launch(DISPATCHER) {
       runCatching {
         loop()
       }.getOrHandleException {
@@ -300,6 +275,9 @@ internal class EditorCaretMutator internal constructor(
       advanceNow(tick)
     }
   }
-}
 
-private val LOG = logger<EditorCaretMutator>()
+  companion object {
+    private val LOG = logger<EditorCaretMutator>()
+    private val DISPATCHER: CoroutineContext = Dispatchers.Default.limitedParallelism(1, "EditorCaretMutator")
+  }
+}

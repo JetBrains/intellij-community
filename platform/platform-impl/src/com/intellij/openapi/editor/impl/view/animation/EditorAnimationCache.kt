@@ -5,8 +5,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.getOrHandleException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.impl.EditorImageUtil.createEditorImage
@@ -16,13 +14,10 @@ import com.intellij.openapi.editor.impl.caret.model.CARET_CACHE_RECTANGLE_MARGIN
 import com.intellij.openapi.editor.impl.caret.model.CaretRectangle
 import com.intellij.openapi.editor.impl.view.animation.EditorAnimationCacheStatistics.recordHit
 import com.intellij.openapi.editor.impl.view.animation.EditorAnimationCacheStatistics.recordMiss
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.paint.use
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.update
@@ -36,27 +31,10 @@ import java.awt.image.BufferedImage
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration.Companion.milliseconds
 
-@Service(Service.Level.APP)
-internal class EditorAnimationCacheService(private val scope: CoroutineScope) {
-  private val dispatcher = Dispatchers.Default.limitedParallelism(1, "EditorAnimationCache")
-
-  companion object {
-    @JvmStatic
-    fun createCache(editor: EditorImpl): EditorAnimationCache? {
-      if (!Registry.`is`("editor.animation.cache.enabled")) {
-        return null
-      }
-      val service = service<EditorAnimationCacheService>()
-      val cacheScope = service.scope.childScope("Editor animation cache", service.dispatcher)
-      return EditorAnimationCache(editor, cacheScope)
-    }
-  }
-}
-
 internal class EditorAnimationCache(
   private val editor: EditorImpl,
-  private val coroutineScope: CoroutineScope,
 ) : Disposable {
+  private val coroutineScope: CoroutineScope = editor.coroutineScope
   private var isDisposed = false
   private val lastCacheKey = AtomicReference<EditorAnimationCacheKey?>(null)
 
@@ -89,7 +67,6 @@ internal class EditorAnimationCache(
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun dispose() {
     isDisposed = true
-    coroutineScope.cancel()
     requests.value = null
     clear()
   }
@@ -176,7 +153,7 @@ internal class EditorAnimationCache(
    * Serves every posted request, one at a time, so that no two cache builds ever overlap.
    */
   private fun serveRequests() {
-    coroutineScope.launch {
+    coroutineScope.launch(DISPATCHER) {
       requests.filterNotNull().collect { request: CacheRequest ->
         serve(request)
       }
@@ -305,6 +282,8 @@ internal class EditorAnimationCache(
 
   companion object {
     private val LOG = logger<EditorAnimationCache>()
+
+    private val DISPATCHER = Dispatchers.Default.limitedParallelism(1, "EditorAnimationCache")
 
     /**
      * How much editor content the cache may hold, in multiples of the visible area.
