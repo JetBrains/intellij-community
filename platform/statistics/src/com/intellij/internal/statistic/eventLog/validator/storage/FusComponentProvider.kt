@@ -54,8 +54,10 @@ import com.jetbrains.fus.reporting.FileStorage
 import com.jetbrains.fus.reporting.FileStorageMode
 import com.jetbrains.fus.reporting.FusClient
 import com.jetbrains.fus.reporting.FusJsonSerializer
+import com.jetbrains.fus.reporting.FusLoggerFactory
 import com.jetbrains.fus.reporting.LoadError
 import com.jetbrains.fus.reporting.LoadErrorType
+import com.jetbrains.fus.reporting.Logger
 import com.jetbrains.fus.reporting.METADATA_LOADED_TOPIC
 import com.jetbrains.fus.reporting.METADATA_LOAD_FAILED_TOPIC
 import com.jetbrains.fus.reporting.METADATA_UPDATED_TOPIC
@@ -284,7 +286,7 @@ object FusComponentProvider {
       setupMessageHandlers(recorderId, systemCollector)
 
       components {
-        loggerFactory { NoOpLoggerFactory() }
+        loggerFactory { FusDebugLoggerFactory(recorderId) }
         httpClient { _ -> applicationInfo.connectionSettings.createJvmHttpClient() }
         fileStorage { if (isUnitTest) InMemoryJvmFileStorage() else JvmFileStorage(getMetadataDir(recorderId)) }
         bundledFileStorage { BundledJvmFileStorage(recorderId) }
@@ -688,4 +690,22 @@ object FusComponentProvider {
       return CustomPrettyPrinter(this)
     }
   }
+}
+
+class FusDebugLogger(name: String, recorder: String) : Logger {
+  private val logger: com.intellij.openapi.diagnostic.Logger = com.intellij.openapi.diagnostic.Logger.getInstance("$name[recorder=$recorder]")
+
+  override fun info(message: String): Unit = logger.debug(message) // we consider all internal FUS logging to be DEBUG
+
+  override fun debug(message: String): Unit = logger.debug(message)
+
+  override fun error(message: String): Unit = logger.debug(message)
+}
+
+/**
+ * To see internal FUS log messages, add `com.jetbrains.fus.reporting` to the debug settings under:
+ * * Help | Diagnostic Tools | Debug Log Settings
+ */
+class FusDebugLoggerFactory(val recorder: String) : FusLoggerFactory {
+  override fun getLogger(name: String): Logger = FusDebugLogger(name, recorder)
 }
