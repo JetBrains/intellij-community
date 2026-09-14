@@ -1,0 +1,6 @@
+// COMPILER_ARGUMENTS: -XXLanguage:+FullValueClasses
+
+value class User(val firstName: String, val lastName: String) {
+    fun fullName(): String = "$firstName $lastName"
+    fun copy(firstName: String = this.firstName, lastName: String = this.lastName): User = User(firstName, lastName)
+}

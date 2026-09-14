@@ -16650,6 +16650,109 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/convertToValueClass")
+        public static class ConvertToValueClass extends AbstractK2LocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("computedBodyProperty.kt")
+            public void testComputedBodyProperty() throws Exception {
+                runTest("testData/inspectionsLocal/convertToValueClass/computedBodyProperty.kt");
+            }
+
+            @TestMetadata("copyAndComponents.kt")
+            public void testCopyAndComponents() throws Exception {
+                runTest("testData/inspectionsLocal/convertToValueClass/copyAndComponents.kt");
+            }
+
+            @TestMetadata("copyOnly.kt")
+            public void testCopyOnly() throws Exception {
+                runTest("testData/inspectionsLocal/convertToValueClass/copyOnly.kt");
+            }
+
+            @TestMetadata("existingBody.kt")
+            public void testExistingBody() throws Exception {
+                runTest("testData/inspectionsLocal/convertToValueClass/existingBody.kt");
+            }
+
+            @TestMetadata("generic.kt")
+            public void testGeneric() throws Exception {
+                runTest("testData/inspectionsLocal/convertToValueClass/generic.kt");
+            }
+
+            @TestMetadata("implementsInterface.kt")
+            public void testImplementsInterface() throws Exception {
+                runTest("testData/inspectionsLocal/convertToValueClass/implementsInterface.kt");
+            }
+
+            @TestMetadata("implementsInterfaceWithComponentN.kt")
+            public void testImplementsInterfaceWithComponentN() throws Exception {
+                runTest("testData/inspectionsLocal/convertToValueClass/implementsInterfaceWithComponentN.kt");
+            }
+
+            @TestMetadata("implementsInterfaceWithComponentN2.kt")
+            public void testImplementsInterfaceWithComponentN2() throws Exception {
+                runTest("testData/inspectionsLocal/convertToValueClass/implementsInterfaceWithComponentN2.kt");
+            }
+
+            @TestMetadata("implementsInterfaceWithComponentN3.kt")
+            public void testImplementsInterfaceWithComponentN3() throws Exception {
+                runTest("testData/inspectionsLocal/convertToValueClass/implementsInterfaceWithComponentN3.kt");
+            }
+
+            @TestMetadata("implementsInterfaceWithComponentN4.kt")
+            public void testImplementsInterfaceWithComponentN4() throws Exception {
+                runTest("testData/inspectionsLocal/convertToValueClass/implementsInterfaceWithComponentN4.kt");
+            }
+
+            @TestMetadata("implementsInterfaceWithComponentNProperty.kt")
+            public void testImplementsInterfaceWithComponentNProperty() throws Exception {
+                runTest("testData/inspectionsLocal/convertToValueClass/implementsInterfaceWithComponentNProperty.kt");
+            }
+
+            @TestMetadata("noFunctions.kt")
+            public void testNoFunctions() throws Exception {
+                runTest("testData/inspectionsLocal/convertToValueClass/noFunctions.kt");
+            }
+
+            @TestMetadata("notApplicable_bodyPropertyWithBackingField.kt")
+            public void testNotApplicable_bodyPropertyWithBackingField() throws Exception {
+                runTest("testData/inspectionsLocal/convertToValueClass/notApplicable_bodyPropertyWithBackingField.kt");
+            }
+
+            @TestMetadata("notApplicable_explicitBackingField.kt")
+            public void testNotApplicable_explicitBackingField() throws Exception {
+                runTest("testData/inspectionsLocal/convertToValueClass/notApplicable_explicitBackingField.kt");
+            }
+
+            @TestMetadata("notApplicable_extendsClass.kt")
+            public void testNotApplicable_extendsClass() throws Exception {
+                runTest("testData/inspectionsLocal/convertToValueClass/notApplicable_extendsClass.kt");
+            }
+
+            @TestMetadata("notApplicable_inner.kt")
+            public void testNotApplicable_inner() throws Exception {
+                runTest("testData/inspectionsLocal/convertToValueClass/notApplicable_inner.kt");
+            }
+
+            @TestMetadata("notApplicable_notDataClass.kt")
+            public void testNotApplicable_notDataClass() throws Exception {
+                runTest("testData/inspectionsLocal/convertToValueClass/notApplicable_notDataClass.kt");
+            }
+
+            @TestMetadata("notApplicable_varProperty.kt")
+            public void testNotApplicable_varProperty() throws Exception {
+                runTest("testData/inspectionsLocal/convertToValueClass/notApplicable_varProperty.kt");
+            }
+
+            @TestMetadata("singleProperty.kt")
+            public void testSingleProperty() throws Exception {
+                runTest("testData/inspectionsLocal/convertToValueClass/singleProperty.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/convertTwoComparisonsToRangeCheck")
         public static class ConvertTwoComparisonsToRangeCheck extends AbstractK2LocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {

@@ -1,0 +1,6 @@
+// COMPILER_ARGUMENTS: -XXLanguage:+FullValueClasses
+
+value class User(val firstName: String, val lastName: String, private val secret: String) {
+    fun copy(firstName: String = this.firstName, lastName: String = this.lastName, secret: String = this.secret): User =
+        User(firstName, lastName, secret)
+}
