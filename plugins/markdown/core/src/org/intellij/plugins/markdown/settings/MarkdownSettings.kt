@@ -18,10 +18,6 @@ const val MARKDOWN_SETTINGS_FILE_NAME: String = "markdown.xml"
 @Service(Service.Level.PROJECT)
 @State(name = "MarkdownSettings", storages = [(Storage(MARKDOWN_SETTINGS_FILE_NAME))])
 class MarkdownSettings(internal val project: Project): SimplePersistentStateComponent<MarkdownSettingsState>(MarkdownSettingsState()) {
-  var enableLivePreview: Boolean
-    get() = state.enableLivePreview
-    set(value) { state.enableLivePreview = value }
-
   var areInjectionsEnabled: Boolean
     get() = state.areInjectionsEnabled
     set(value) { state.areInjectionsEnabled = value }

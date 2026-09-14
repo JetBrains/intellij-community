@@ -36,7 +36,7 @@ import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewSpec
 import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewSpecSet
 import org.intellij.plugins.markdown.editor.livepreview.toTextRange
 import org.intellij.plugins.markdown.highlighting.MarkdownHighlighterColors
-import org.intellij.plugins.markdown.settings.MarkdownSettings
+import org.intellij.plugins.markdown.settings.MarkdownApplicationSettings
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.awt.Graphics
@@ -90,9 +90,8 @@ class MarkdownLivePreviewReconciler private constructor(
     editor.foldingModel.addListener(object : FoldingListener {
       override fun onFoldProcessingEnd() = scheduleReconcile()
     }, this)
-    project.messageBus.connect(this).subscribe(MarkdownSettings.ChangeListener.TOPIC, object : MarkdownSettings.ChangeListener {
-      override fun settingsChanged(settings: MarkdownSettings) = scheduleReconcile()
-    })
+    ApplicationManager.getApplication().messageBus.connect(this)
+      .subscribe(MarkdownApplicationSettings.ChangeListener.TOPIC, MarkdownApplicationSettings.ChangeListener { scheduleReconcile() })
   }
 
   /**
@@ -341,7 +340,7 @@ class MarkdownLivePreviewReconciler private constructor(
   private fun isLivePreviewEnabled(): Boolean {
     // Diff, preview and console editors have their layout managed for them, and concealing markup would fight that.
     // Both EditorKind.MAIN_EDITOR and EditorKind.UNTYPED are allowed because there are plenty of ordinary editors that use the latter kind.
-    return MarkdownSettings.getInstance(project).enableLivePreview && editor.editorKind in AllowedEditorKinds
+    return MarkdownApplicationSettings.getInstance().enableLivePreview && editor.editorKind in AllowedEditorKinds
   }
 
   private class CaretSnapshot(private val caret: Caret) {

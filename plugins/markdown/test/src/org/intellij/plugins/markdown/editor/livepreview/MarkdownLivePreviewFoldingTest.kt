@@ -28,14 +28,14 @@ import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.fixtures.EditorMouseFixture
 import com.intellij.util.DocumentUtil
-import org.intellij.plugins.markdown.settings.MarkdownSettings
+import org.intellij.plugins.markdown.settings.MarkdownApplicationSettings
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
 import javax.imageio.ImageIO
 
 class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
 
-  private val settings get() = MarkdownSettings.getInstance(project)
+  private val settings get() = MarkdownApplicationSettings.getInstance()
 
   override fun setUp() {
     super.setUp()
