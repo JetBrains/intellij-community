@@ -357,7 +357,7 @@
     <module name="intellij.platform.polySymbols" loading="embedded"/>
     <module name="intellij.platform.polySymbols.web" loading="embedded"/>
     <module name="intellij.platform.builtInServer.impl" loading="embedded"/>
-    <module name="intellij.platform.externalSystem.dependencyUpdater" loading="embedded"/>
+    <module name="intellij.platform.externalSystem.dependencyUpdater"/>
     <module name="intellij.platform.externalSystem.impl" loading="embedded"/>
     <module name="intellij.platform.externalProcessAuthHelper"/>
     <module name="intellij.platform.util.commonsLangV2Shim"/>

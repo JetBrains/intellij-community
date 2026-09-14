@@ -7,7 +7,6 @@
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.execution"/>
-    <module name="intellij.platform.externalSystem.dependencyUpdater"/>
     <module name="intellij.platform.ide"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.lang"/>
