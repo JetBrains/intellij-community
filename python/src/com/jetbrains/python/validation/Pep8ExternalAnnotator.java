@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.validation;
 
 import com.google.common.collect.ImmutableMap;
@@ -186,7 +186,7 @@ public final class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalA
     if (!profile.isToolEnabled(key, psiFile)) {
       return null;
     }
-    if (psiFile instanceof PyFileImpl && !((PyFileImpl)psiFile).isAcceptedFor(PyPep8Inspection.class)) {
+    if (psiFile instanceof PyFileImpl file && !file.isAcceptedFor(PyPep8Inspection.class)) {
       return null;
     }
     final PyPep8Inspection inspection = (PyPep8Inspection)profile.getUnwrappedTool(PyPep8Inspection.INSPECTION_SHORT_NAME, psiFile);
@@ -240,9 +240,6 @@ public final class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalA
     PythonHelper pycodestyleScript;
     if (collectedInfo.interpreterVersion.isOlderThan(LanguageLevel.PYTHON36)) {
       pycodestyleScript = PythonHelper.PYCODESTYLE_2_8_0;
-    }
-    else if (collectedInfo.interpreterVersion.isOlderThan(LanguageLevel.PYTHON38)) {
-      pycodestyleScript = PythonHelper.PYCODESTYLE_2_10_0;
     }
     else {
       pycodestyleScript = PythonHelper.PYCODESTYLE;
