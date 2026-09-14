@@ -6,9 +6,7 @@ import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.IdeEventQueue.Companion.getInstance
 import com.intellij.lang.documentation.ide.ui.PopupUpdateEvent
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.popup.PopupRelativePosition
-import com.intellij.openapi.ui.popup.PopupShowOptionsBuilder
-import com.intellij.openapi.ui.popup.PopupShowOptionsImpl
+import com.intellij.openapi.ui.popup.PopupShowOptions
 import com.intellij.ui.MouseMovementTracker
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.WidthBasedLayout
@@ -199,27 +197,23 @@ internal class ComponentAreaPopupContext(
       }
     }
 
-    private fun calculatePosition(component: Component, popup: AbstractPopup): PopupShowOptionsBuilder {
+    private fun calculatePosition(component: Component, popup: AbstractPopup): PopupShowOptions {
       val bounds = component.bounds
-      return PopupShowOptionsBuilder()
+      return PopupShowOptions.belowComponent(component)
                .withComponentPoint(AnchoredPoint(
                  AnchoredPoint.Anchor.TOP_LEFT,
                  component,
                  Point(bounds.x + areaWithinComponent.x, bounds.y + areaWithinComponent.y + areaWithinComponent.height),
                ))
-               .withRelativePosition(PopupRelativePosition.BOTTOM)
-               .withDefaultPopupAnchor(AnchoredPoint.Anchor.TOP_LEFT)
                .withMinimumHeight(minHeight)
                .withDefaultPopupComponentUnscaledGap(4)
-               .takeIf { isWithinScreen(it.build(), popup) }
-             ?: PopupShowOptionsBuilder()
+               .takeIf { isWithinScreen(it, popup) }
+             ?: PopupShowOptions.aboveComponent(component)
                .withComponentPoint(AnchoredPoint(
                  AnchoredPoint.Anchor.TOP_LEFT,
                  component,
                  Point(bounds.x + areaWithinComponent.x, bounds.y + areaWithinComponent.y),
                ))
-               .withRelativePosition(PopupRelativePosition.TOP)
-               .withDefaultPopupAnchor(AnchoredPoint.Anchor.BOTTOM_LEFT)
                .withMinimumHeight(minHeight)
                .withDefaultPopupComponentUnscaledGap(4)
     }
@@ -292,13 +286,14 @@ internal class ComponentAreaPopupContext(
       }
     }
 
-    private fun isWithinScreen(position: PopupShowOptionsImpl, popup: AbstractPopup): Boolean {
+    private fun isWithinScreen(position: PopupShowOptions, popup: AbstractPopup): Boolean {
       val screen = ScreenUtil.getScreenRectangle(position.screenX, position.screenY)
       val targetBounds = Rectangle(Point(position.screenX, position.screenY), popup.content.getPreferredSize())
-      if (targetBounds.height < 200) {
-        targetBounds.height = 200
+      val minHeight = JBUI.scale(200)
+      if (targetBounds.height < minHeight) {
+        targetBounds.height = minHeight
       }
-      targetBounds.height += position.popupComponentUnscaledGap
+      targetBounds.height += position.popupComponentGap
       return screen.contains(targetBounds)
     }
   }
