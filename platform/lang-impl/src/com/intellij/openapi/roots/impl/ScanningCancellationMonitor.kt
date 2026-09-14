@@ -43,6 +43,9 @@ const val SCANNING_MONITOR_ENABLED_KEY: String = "ide.scanning.cancellation.moni
 const val SCANNING_MONITOR_GRACE_MS_KEY: String = "ide.scanning.cancellation.monitor.grace.ms"
 const val SCANNING_MONITOR_MAX_REPORTS_KEY: String = "ide.scanning.cancellation.monitor.max.reports"
 
+/** The shortest wait before the monitor judges whether a repair worked. */
+private const val REPAIR_VERIFICATION_MIN_MS = 1_000L
+
 /** Why a [FilesScanExecutor] worker was still holding a read action after a write action asked it to stop. */
 @Internal
 enum class ScanningStallKind {
@@ -287,8 +290,11 @@ class ScanningCancellationMonitor(
       readAction.indicator.cancel()
     }
     // Report whether re-canceling was enough, so we learn if the repair actually works in the field.
+    // The wait never drops below REPAIR_VERIFICATION_MIN_MS. A repaired worker needs to reach its next
+    // `ProgressManager.checkCanceled()` and unwind, so a verdict taken right away means nothing.
+    val verificationMs = maxOf(graceMs(), REPAIR_VERIFICATION_MIN_MS)
     coroutineScope.launch(Dispatchers.IO) {
-      delay(graceMs().milliseconds)
+      delay(verificationMs.milliseconds)
       val stillHolding = tracker.activeReadActions().count { it.thread in threads }
       if (stillHolding > 0) {
         THROTTLED_LOG.error("$stillHolding scanning thread(s) still hold a read action after being re-canceled")
