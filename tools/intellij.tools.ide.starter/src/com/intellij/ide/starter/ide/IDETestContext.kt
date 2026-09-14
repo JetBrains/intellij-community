@@ -42,6 +42,7 @@ import org.kodein.di.direct
 import org.kodein.di.factory
 import org.kodein.di.instance
 import org.kodein.di.newInstance
+import java.nio.file.Files
 import java.nio.file.Path
 import java.util.Base64
 import kotlin.io.path.ExperimentalPathApi
@@ -552,6 +553,19 @@ open class IDETestContext(
         }
       }
     }
+    return this
+  }
+
+  fun setDefaultNewProjectsDirectory(
+    directory: Path = Files.createTempDirectory(paths.testHome, "new-projects-"),
+  ): IDETestContext {
+    writeConfigFile("options/ide.general.local.xml", """
+      <application>
+        <component name="GeneralLocalSettings">
+          <option name="defaultProjectDirectory" value="${directory.toAbsolutePath()}" />
+        </component>
+      </application>
+    """)
     return this
   }
 

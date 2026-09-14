@@ -166,6 +166,7 @@ interface TestContainer {
 
     val preparedContext = testContext
       .updateGeneralSettings()
+      .setDefaultNewProjectsDirectory()
       .apply { installPerformanceTestingPluginIfMissing(this) }
 
     testCase.projectInfo.configureProjectBeforeUse.invoke(preparedContext)
