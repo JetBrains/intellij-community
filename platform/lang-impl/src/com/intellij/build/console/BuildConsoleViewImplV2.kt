@@ -14,6 +14,7 @@ import com.intellij.build.events.MessageEvent
 import com.intellij.build.events.OutputBuildEvent
 import com.intellij.build.events.OutputReferenceEvent
 import com.intellij.execution.impl.ConsoleViewImpl
+import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.execution.ui.ConsoleViewWithDelegate
 import com.intellij.execution.ui.ExecutionConsole
 import com.intellij.openapi.application.ApplicationManager
@@ -24,12 +25,19 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.InlayProperties
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.ScrollType
+import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.addComponentInlay
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.text.nullize
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
 import java.util.concurrent.ConcurrentHashMap
+import javax.swing.SwingUtilities
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlinx.html.HTML
 import kotlinx.html.body
@@ -59,6 +67,14 @@ internal class BuildConsoleViewImplV2(
    */
   private val recordNodeText: Boolean = ApplicationManager.getApplication().isUnitTestMode
   private val consoleInlayInfos = ConcurrentHashMap<Any, MutableList<ConsoleInlayInfo>>()
+
+  /** Count of Swing component inlays added. Extra messages are printed as plain text (IDEA-374341). */
+  @Volatile private var inlayCount = 0
+
+  /** User intent to follow the tail. Only a user scroll gesture changes it, not content growth. Read and written on EDT. */
+  private var autoScroll = true
+  private var followListenersAttached = false
+
 
   init {
     Disposer.register(this, delegate)
@@ -221,9 +237,43 @@ internal class BuildConsoleViewImplV2(
     }
   }
 
+  private fun isVScrollAtBottom(editor: EditorEx): Boolean {
+    val bar = editor.scrollPane.verticalScrollBar
+    return bar.value >= bar.maximum - bar.visibleAmount
+  }
+
+  private fun ensureFollowListeners(editor: EditorEx) {
+    if (followListenersAttached) return
+    followListenersAttached = true
+    val scrollPane = editor.scrollPane
+    // Only a user gesture changes the follow intent. Do not react to raw scrollbar value changes, because content growth
+    // also moves the bar and would switch following off.
+    scrollPane.addMouseWheelListener { e ->
+      if (!e.isShiftDown) SwingUtilities.invokeLater { autoScroll = isVScrollAtBottom(editor) }
+    }
+    val mouse = object : MouseAdapter() {
+      override fun mouseReleased(e: MouseEvent) { autoScroll = isVScrollAtBottom(editor) }
+      override fun mouseDragged(e: MouseEvent) { autoScroll = isVScrollAtBottom(editor) }
+    }
+    val bar = scrollPane.verticalScrollBar
+    bar.addMouseListener(mouse)
+    bar.addMouseMotionListener(mouse)
+  }
+
   private fun addConsoleInlay(nodeId: Any, inlayInfo: ConsoleInlayInfo) {
     if (recordNodeText) {
       consoleInlayInfos.computeIfAbsent(nodeId) { CopyOnWriteArrayList() }.add(inlayInfo)
+    }
+    // Beyond the registry limit render the message as plain text. Thousands of Swing inlays make the editor layout
+    // O(n) on every document change and lag the whole UI (IDEA-374341). Print off the EDT and let the console batch it;
+    // a per-message state.access forces an EDT round-trip and a flush, which is the slow part.
+    if (inlayCount >= Registry.intValue("build.console.max.inlays", 100)) {
+      val contentType = if (inlayInfo.kind == BuildConsoleViewInlay.Kind.ERROR) ConsoleViewContentType.ERROR_OUTPUT
+      else ConsoleViewContentType.NORMAL_OUTPUT
+      // Each message is a separate line. Some infos (for example file messages) carry no trailing newline.
+      val plainText = inlayInfo.plainText
+      delegate.print(if (plainText.endsWith("\n")) plainText else plainText + "\n", contentType)
+      return
     }
     val consoleOffset = delegate.contentSize
     state.access {
@@ -234,6 +284,8 @@ internal class BuildConsoleViewImplV2(
         }
         else -> addNodeOutputMarkers(nodeId, inlayInfo.outputIds)
       }
+      inlayCount++
+      (editor as? EditorEx)?.let { ensureFollowListeners(it) }
       val inlayProperties = InlayProperties()
         .showAbove(true)
       val inlayComponent = when (inlayInfo.outputIds.isEmpty()) {
@@ -242,6 +294,15 @@ internal class BuildConsoleViewImplV2(
       }
       val inlayOffset = sortedOutputMarkers(nodeId).firstOrNull()?.startOffset ?: return@access
       editor.addComponentInlay(inlayOffset, inlayProperties, inlayComponent, ComponentInlayAlignment.FIT_VIEWPORT_WIDTH)
+      // An inlay adds height outside the document, so the native console auto-follow does not fire, and the inlay gets
+      // its height only after its component is laid out. Follow the tail on that first layout, honoring the user intent.
+      // requestScrollingToEnd flushes any pending text first, so text that follows an inlay is included.
+      inlayComponent.addComponentListener(object : ComponentAdapter() {
+        override fun componentResized(e: ComponentEvent) {
+          inlayComponent.removeComponentListener(this)
+          if (autoScroll) delegate.requestScrollingToEnd()
+        }
+      })
     }
   }
 

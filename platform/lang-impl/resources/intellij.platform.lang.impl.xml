@@ -570,6 +570,8 @@
     <projectSettings service="com.intellij.ui.tabs.PerTeamFileColorModelStorageManager"/>
     <applicationSettings service="com.intellij.codeInsight.hints.chain.DeclarativeCallChainInlaySettings"/>
     <registryKey key="hyperlink.ide.decompiler.open.file" defaultValue="true" description="Load binary files in hyperlink on background thread"/>
+    <registryKey key="build.console.max.inlays" defaultValue="100"
+                 description="Maximum number of Swing component inlays in the single build console. Extra messages are printed as plain text."/>
     <registryKey key="ide.project.view.skip.loading.children.for.remote.directories" defaultValue="true"
                  description="Prevents Project View from loading directory children eagerly for directories in remote file systems."/>
     <registryKey key="project.structure.source.roots.editable.limit" defaultValue="20"
