@@ -159,7 +159,7 @@ object CommunityModuleSets {
     embeddedModule("intellij.platform.builtInServer.impl")
     embeddedModule("intellij.platform.externalSystem.dependencyUpdater")
     embeddedModule("intellij.platform.externalSystem.impl")
-    embeddedModule("intellij.platform.externalProcessAuthHelper")
+    module("intellij.platform.externalProcessAuthHelper")
 
     module("intellij.platform.util.commonsLangV2Shim")
   }
