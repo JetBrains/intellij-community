@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.theoryinpractice.testng.configuration;
 
@@ -509,7 +509,9 @@ public class TestNGConfiguration extends JavaTestConfigurationWithDiscoverySuppo
 
   @Override
   public @NotNull SMTRunnerConsoleProperties createTestConsoleProperties(@NotNull Executor executor) {
-    return new TestNGConsoleProperties(this, executor);
+    TestNGConsoleProperties properties = new TestNGConsoleProperties(this, executor);
+    properties.setIdBasedTestTree(true);
+    return properties;
   }
 
   @Override

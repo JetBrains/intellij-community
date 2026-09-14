@@ -86,6 +86,11 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
   }
 
   @Override
+  protected boolean isIdBasedTestTree() {
+    return true;
+  }
+
+  @Override
   protected JavaParameters createJavaParameters() throws ExecutionException {
     final JavaParameters javaParameters = super.createJavaParameters();
     if (javaParameters.getMainClass() == null) { // for custom main class, e.g. overridden by JUnitDevKitUnitTestingSettings.Companion#apply

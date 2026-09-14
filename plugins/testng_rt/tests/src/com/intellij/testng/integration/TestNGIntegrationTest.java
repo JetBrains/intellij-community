@@ -78,9 +78,9 @@ public class TestNGIntegrationTest extends AbstractTestFrameworkCompilingIntegra
       .collect(Collectors.joining("\n"));
 
     assertEquals("""
-                   ##teamcity[testStarted name='%s' locationHint='java:test://a.Test1/simple']
-                   ##teamcity[testFinished name='%s']
-                   ##teamcity[testStarted name='Test1.simple2' locationHint='java:test://a.Test1/simple2']
-                   ##teamcity[testFinished name='Test1.simple2']""".formatted(testName, testName), messages);
+                   ##teamcity[testStarted name='%s' nodeId='a.Test1/simple' parentNodeId='a.Test1' locationHint='java:test://a.Test1/simple']
+                   ##teamcity[testFinished name='%s' nodeId='a.Test1/simple']
+                   ##teamcity[testStarted name='Test1.simple2' nodeId='a.Test1/simple2' parentNodeId='a.Test1' locationHint='java:test://a.Test1/simple2']
+                   ##teamcity[testFinished name='Test1.simple2' nodeId='a.Test1/simple2']""".formatted(testName, testName), messages);
   }
 }

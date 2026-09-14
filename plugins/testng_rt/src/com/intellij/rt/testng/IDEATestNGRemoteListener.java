@@ -33,12 +33,15 @@ public class IDEATestNGRemoteListener {
 
   public static final String SUITE_DURATION = "test.use.suite.duration";
 
+  private static final String ROOT_NODE_ID = "0";
+
   private final PrintStream myPrintStream;
   private final boolean myUseSuiteDuration;
   private final List<String> myCurrentSuites = new ArrayList<>();
   private final Map<String, Long> mySuiteStartNanos = new ConcurrentHashMap<>();
   private final Map<String, Integer> myInvocationCounts = new HashMap<>();
   private final Map<ExposedTestResult, String> myParamsMap = new HashMap<>();
+  private final Map<ExposedTestResult, String> myNodeIds = new HashMap<>();
   private final Map<ExposedTestResult, DelegatedResult> myResults = new HashMap<>();
   private int mySkipped = 0;
 
@@ -82,10 +85,14 @@ public class IDEATestNGRemoteListener {
               }
             }
             if (!found) {
-              final String fullEscapedMethodName = escapeName(getShortName(method.getTestClass().getName()) + "/" + method.getMethodName());
-              myPrintStream.println("##teamcity[testStarted name='" + fullEscapedMethodName + "']");
-              myPrintStream.println("##teamcity[testIgnored name='" + fullEscapedMethodName + "']");
-              myPrintStream.println("##teamcity[testFinished name='" + fullEscapedMethodName + "']");
+              final String className = method.getTestClass().getName();
+              onSuiteStart(className, true);
+              final String fullEscapedMethodName = escapeName(getShortName(className) + "/" + method.getMethodName());
+              final String nodeId = escapeName(className + "/" + method.getMethodName());
+              final String ids = " nodeId='" + nodeId + "' parentNodeId='" + escapeName(className) + "'";
+              myPrintStream.println("##teamcity[testStarted name='" + fullEscapedMethodName + "'" + ids + "]");
+              myPrintStream.println("##teamcity[testIgnored name='" + fullEscapedMethodName + "' nodeId='" + nodeId + "']");
+              myPrintStream.println("##teamcity[testFinished name='" + fullEscapedMethodName + "' nodeId='" + nodeId + "']");
               break;
             }
           }
@@ -192,8 +199,8 @@ public class IDEATestNGRemoteListener {
     String currentParent;
     while (idx < myCurrentSuites.size() && idx < parentsHierarchy.size()) {
       currentClass = myCurrentSuites.get(idx);
-      currentParent =parentsHierarchy.get(parentsHierarchy.size() - 1 - idx);
-      if (!currentClass.equals(getShortName(currentParent))) break;
+      currentParent = parentsHierarchy.get(parentsHierarchy.size() - 1 - idx);
+      if (!currentClass.equals(currentParent)) break;
       idx++;
     }
 
@@ -215,11 +222,13 @@ public class IDEATestNGRemoteListener {
           }
         }
       }
+      final String parentNodeId = myCurrentSuites.isEmpty() ? ROOT_NODE_ID : myCurrentSuites.get(myCurrentSuites.size() - 1);
       myPrintStream.println("##teamcity[testSuiteStarted name ='" + escapeName(currentClassName) +
+                            "' nodeId='" + escapeName(fqName) + "' parentNodeId='" + escapeName(parentNodeId) +
                             (provideLocation ? "' locationHint = '" + location : "") + "']");
-      myCurrentSuites.add(currentClassName);
+      myCurrentSuites.add(fqName);
       if (myUseSuiteDuration) {
-        mySuiteStartNanos.put(currentClassName, System.nanoTime());
+        mySuiteStartNanos.put(fqName, System.nanoTime());
       }
     }
     return false;
@@ -234,7 +243,8 @@ public class IDEATestNGRemoteListener {
         if (durationMs > 0) durationAttr = " duration='" + durationMs + "'";
       }
     }
-    myPrintStream.println("##teamcity[testSuiteFinished name='" + escapeName(suiteName) + "'" + durationAttr + "]");
+    myPrintStream.println("##teamcity[testSuiteFinished name='" + escapeName(getShortName(suiteName)) +
+                          "' nodeId='" + escapeName(suiteName) + "'" + durationAttr + "]");
   }
 
   private void onTestStart(ExposedTestResult result, String paramString, Integer invocationCount, boolean config) {
@@ -243,8 +253,10 @@ public class IDEATestNGRemoteListener {
     final String className = result.getClassName();
     final String methodName = result.getDisplayMethodName();
     final String location = className + "/" + result.getMethodName() + (invocationCount > 0 ? "[" + invocationCount + "]" : "");
+    myNodeIds.put(result, location);
     myPrintStream.println(
       "##teamcity[testStarted name='" + escapeName(getShortName(className) + "." + methodName + (paramString != null ? paramString : "")) +
+      "' nodeId='" + escapeName(location) + "' parentNodeId='" + escapeName(className) +
       "' locationHint='java:test://" + escapeName(location) + (config ? "' config='true" : "") +
       "']");
   }
@@ -257,6 +269,7 @@ public class IDEATestNGRemoteListener {
     String methodName = getTestMethodNameWithParams(result);
     final Map<String, String> attrs = new LinkedHashMap<>();
     attrs.put("name", methodName);
+    attrs.put("nodeId", nodeIdOf(result));
     final String failureMessage = ex != null ? ex.getMessage() : null;
     if (ex != null) {
       String expectedPrefix = " expected [";
@@ -294,7 +307,8 @@ public class IDEATestNGRemoteListener {
       onTestStart(result);
       mySkipped++;
     }
-    myPrintStream.println("##teamcity[testIgnored name='" + escapeName(getTestMethodNameWithParams(result)) + "']");
+    myPrintStream.println("##teamcity[testIgnored name='" + escapeName(getTestMethodNameWithParams(result)) +
+                          "' nodeId='" + escapeName(nodeIdOf(result)) + "']");
     onTestFinished(result);
   }
 
@@ -302,8 +316,14 @@ public class IDEATestNGRemoteListener {
     final long duration = result.getDuration();
     myPrintStream.println("##teamcity[testFinished name='" +
                           escapeName(getTestMethodNameWithParams(result)) +
+                          "' nodeId='" + escapeName(nodeIdOf(result)) +
                           (duration > 0 ? "' duration='" + duration : "") +
                           "']");
+  }
+
+  private synchronized String nodeIdOf(ExposedTestResult result) {
+    final String nodeId = myNodeIds.get(result);
+    return nodeId != null ? nodeId : result.getClassName() + "/" + result.getMethodName();
   }
 
   private synchronized String getTestMethodNameWithParams(ExposedTestResult result) {
