@@ -2168,6 +2168,11 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
                 runTest("../../completion/testData/basic/common/namedArguments/PrefillPreferParameterOverContextArgument.kt");
             }
 
+            @TestMetadata("PrefillSameNameMemberSmartCast.kt")
+            public void testPrefillSameNameMemberSmartCast() throws Exception {
+                runTest("../../completion/testData/basic/common/namedArguments/PrefillSameNameMemberSmartCast.kt");
+            }
+
             @TestMetadata("PrefillSameNameParameter.kt")
             public void testPrefillSameNameParameter() throws Exception {
                 runTest("../../completion/testData/basic/common/namedArguments/PrefillSameNameParameter.kt");
@@ -2191,6 +2196,16 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
             @TestMetadata("PrefillSameNameVariableSmart.kt")
             public void testPrefillSameNameVariableSmart() throws Exception {
                 runTest("../../completion/testData/basic/common/namedArguments/PrefillSameNameVariableSmart.kt");
+            }
+
+            @TestMetadata("PrefillSameNameVariableSmartCast.kt")
+            public void testPrefillSameNameVariableSmartCast() throws Exception {
+                runTest("../../completion/testData/basic/common/namedArguments/PrefillSameNameVariableSmartCast.kt");
+            }
+
+            @TestMetadata("PrefillSameNameVariableSmartCastTypeMismatch.kt")
+            public void testPrefillSameNameVariableSmartCastTypeMismatch() throws Exception {
+                runTest("../../completion/testData/basic/common/namedArguments/PrefillSameNameVariableSmartCastTypeMismatch.kt");
             }
 
             @TestMetadata("PrefillSameNameVariableTypeMismatch.kt")

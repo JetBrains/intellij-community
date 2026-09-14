@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.K2SimpleCompletionContributo
 import org.jetbrains.kotlin.idea.completion.impl.k2.context.getOriginalDeclarationOrSelf
 import org.jetbrains.kotlin.idea.completion.impl.k2.isAfterRangeOperator
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.KotlinFirLookupElementFactory
+import org.jetbrains.kotlin.idea.completion.impl.k2.smartCastTypeForSymbol
 import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.Weighers.applyWeighs
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinExpressionNameReferencePositionContext
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -117,12 +118,16 @@ internal class K2NamedArgumentCompletionContributor : K2SimpleCompletionContribu
                     }
 
                     // We only check matching names and types if there is only a single type at the current position.
-                    val singleTypeAtPosition = typesAtCurrentPosition.singleOrNull()
-                    if (singleTypeAtPosition != null) {
+                    val singleMissingParameter = typesAtCurrentPosition.singleOrNull()
+                    if (singleMissingParameter != null) {
                         // Try and find a _local_ variable with the same name and matching type to prefill it
-                        val variableTypeWithSameName = potentiallyRelevantLocalVariables[name]?.returnType
-                        if (variableTypeWithSameName?.isPossiblySubTypeOf(singleTypeAtPosition.type) == true) {
-                            add(createNamedArgumentWithValueLookupElement(name, name.asString(), singleTypeAtPosition.index))
+                        val type = singleMissingParameter.type
+                        val typeOfVariableWithSameName = potentiallyRelevantLocalVariables[name]?.let { variableSymbol ->
+                            val originalType = variableSymbol.symbol.returnType
+                            smartCastTypeForSymbol(variableSymbol.symbol, originalType, variableSymbol.scopeKind) ?: originalType
+                        }
+                        if (typeOfVariableWithSameName?.isPossiblySubTypeOf(type) == true) {
+                            add(createNamedArgumentWithValueLookupElement(name, name.asString(), singleMissingParameter.index))
                         }
                     }
                 }

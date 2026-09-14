@@ -7,6 +7,3 @@ fun bar(b: String, a: Int, c: String?) {
 }
 
 // EXIST: "a, b, c"
-
-// todo for K2: K2 Requires smart cast handling
-// IGNORE_K2

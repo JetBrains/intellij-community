@@ -925,6 +925,11 @@ public abstract class K2SmartCompletionTestGenerated extends AbstractK2SmartComp
             runTest("../../completion/testData/smart/multipleArgsItem/CallWithBrackets.kt");
         }
 
+        @TestMetadata("MemberSmartCast.kt")
+        public void testMemberSmartCast() throws Exception {
+            runTest("../../completion/testData/smart/multipleArgsItem/MemberSmartCast.kt");
+        }
+
         @TestMetadata("notFirstArgument.kt")
         public void testNotFirstArgument() throws Exception {
             runTest("../../completion/testData/smart/multipleArgsItem/notFirstArgument.kt");
@@ -953,6 +958,16 @@ public abstract class K2SmartCompletionTestGenerated extends AbstractK2SmartComp
         @TestMetadata("shadowingReverse.kt")
         public void testShadowingReverse() throws Exception {
             runTest("../../completion/testData/smart/multipleArgsItem/shadowingReverse.kt");
+        }
+
+        @TestMetadata("SmartCast.kt")
+        public void testSmartCast() throws Exception {
+            runTest("../../completion/testData/smart/multipleArgsItem/SmartCast.kt");
+        }
+
+        @TestMetadata("SmartCastTypeMismatch.kt")
+        public void testSmartCastTypeMismatch() throws Exception {
+            runTest("../../completion/testData/smart/multipleArgsItem/SmartCastTypeMismatch.kt");
         }
     }
 
