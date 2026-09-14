@@ -1203,8 +1203,8 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
    */
   private static @NotNull String getProgressStateRepresentation() {
     synchronized (threadsUnderIndicator) {
-      int totalIndicators = threadsUnderIndicator.size();
-      String result = totalIndicators+" indicators registered:\n";
+      StringBuilder result = new StringBuilder();
+      result.append(threadsUnderIndicator.size()).append(" indicators registered:\n");
       MultiMap<Thread, ProgressIndicator> threadIndicators = new MultiMap<>();
       for (Map.Entry<ProgressIndicator, Set<Thread>> entry : threadsUnderIndicator.entrySet()) {
         ProgressIndicator indicator = entry.getKey();
@@ -1224,21 +1224,32 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
         ProgressIndicator current = currentIndicators.get(threadId);
         ProgressIndicator topLevel = threadTopLevelIndicators.get(threadId);
         List<String> readActionStatus = threadingSupport == null ? Collections.emptyList() : threadingSupport.dumpSomeDiagnosticInfo(thread);
-        result += readableThreadInfo(threadInfos.get(threadId)) + "\n" +
-                  (readActionStatus.isEmpty() && !writeActionPending && !writeActionInProgress ? "" :
-                  "    rw action status:" + readActionStatus + (writeActionPending || writeActionInProgress ? "(writeActionPending:"+writeActionPending+", writeActionInProgress:"+writeActionInProgress+")" : "") + "\n") +
-                  (current == null ? "" :
-                  "    current indicator: " + current+"\n") +
-                  (current == topLevel ? "" :
-                  "    top level indicator: " + topLevel + "\n") +
-                  (indicators.isEmpty() ? "" :
-                  "    owns " + indicators.size() + " indicators:"+"\n");
+        result.append(readableThreadInfo(threadInfos.get(threadId))).append('\n');
+        if (!readActionStatus.isEmpty() || writeActionPending || writeActionInProgress) {
+          result.append("    rw action status:").append(readActionStatus);
+          if (writeActionPending || writeActionInProgress) {
+            result.append("(writeActionPending:").append(writeActionPending)
+              .append(", writeActionInProgress:").append(writeActionInProgress).append(')');
+          }
+          result.append('\n');
+        }
+        if (current != null) {
+          result.append("    current indicator: ").append(current).append('\n');
+        }
+        if (current != topLevel) {
+          result.append("    top level indicator: ").append(topLevel).append('\n');
+        }
+        if (!indicators.isEmpty()) {
+          result.append("    owns ").append(indicators.size()).append(" indicators:\n");
+        }
         for (ProgressIndicator indicator : indicators) {
-          result +=
-                  "       " + indicator + "("+indicator.getClass()+" canceled: " + indicator.isCanceled() + ", running:" + indicator.isRunning() + ")" + "\n";
+          result.append("       ").append(indicator).append('(').append(indicator.getClass())
+            .append(" canceled: ").append(indicator.isCanceled())
+            .append(", running:").append(indicator.isRunning())
+            .append(")\n");
         }
       }
-      return result;
+      return result.toString();
     }
   }
   private static String readableThreadInfo(@Nullable ThreadInfo info) {
