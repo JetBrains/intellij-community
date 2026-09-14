@@ -3,6 +3,7 @@ package com.intellij.openapi.editor.impl.view.animation
 
 import com.intellij.util.ui.StartupUiUtil
 import java.awt.Graphics2D
+import java.awt.geom.Area
 import java.awt.geom.Rectangle2D
 import java.awt.image.BufferedImage
 
@@ -24,6 +25,10 @@ internal class CacheEntry(private val rectangle: Rectangle2D, private val image:
     frameGraphics.translate(rectangle.x, rectangle.y)
     StartupUiUtil.drawImage(frameGraphics, image, 0, 0, null)
     frameGraphics.translate(-rectangle.x, -rectangle.y)
+  }
+
+  fun addBorderTo(shape: Area) {
+    shape.add(rectangle.borderRing())
   }
 
   override fun toString(): String {

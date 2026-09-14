@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.impl.caret.model.CARET_CACHE_RECTANGLE_MARGIN
 import com.intellij.openapi.editor.impl.caret.model.CaretRectangle
 import com.intellij.openapi.editor.impl.view.animation.EditorAnimationCacheStatistics.recordHit
 import com.intellij.openapi.editor.impl.view.animation.EditorAnimationCacheStatistics.recordMiss
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.paint.use
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineScope
@@ -35,8 +36,8 @@ internal class EditorAnimationCache(
   private val editor: EditorImpl,
 ) : Disposable {
   private val coroutineScope: CoroutineScope = editor.coroutineScope
-  private var isDisposed = false
   private val lastCacheKey = AtomicReference<EditorAnimationCacheKey?>(null)
+  private val debugWindow: EditorAnimationCacheDebugWindow?
 
   /**
    * The zone that waits to be cached, or `null` when there is nothing to do. A newer request replaces an older one,
@@ -55,36 +56,10 @@ internal class EditorAnimationCache(
 
   init {
     serveRequests()
-  }
-
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
-  fun clear() {
-    lastCacheKey.set(null)
-    pixelGrid = null
-    entries.clear()
-  }
-
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
-  override fun dispose() {
-    isDisposed = true
-    requests.value = null
-    clear()
-  }
-
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
-  fun invalidate(clip: Rectangle?) {
-    if (clip == null) {
-      clear()
-      return
-    }
-    lastCacheKey.set(null)
-    // Nothing was ever built, so there is no entry to drop and no thrashing to detect.
-    val lastBuildAt = lastBuildAt ?: return
-    val now = AnimationClock.markAnimationNow()
-    val removedEntries = entries.removeIntersecting(clip)
-    val builtRecently = (now - lastBuildAt) < THRASH_WINDOW
-    if (removedEntries && builtRecently) {
-      cooldownUntil = now + THRASH_COOLDOWN
+    debugWindow = if (Registry.`is`("editor.animation.cache.debug.enabled", false)) {
+      EditorAnimationCacheDebugWindow.createIfSupported(editor, entries)
+    } else {
+      null
     }
   }
 
@@ -123,7 +98,7 @@ internal class EditorAnimationCache(
    */
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun paintFromCache(graphics: Graphics2D, rect: Rectangle2D): Boolean {
-    if (isDisposed || !ensureOpaqueContent()) {
+    if (editor.isDisposed || !ensureOpaqueContent()) {
       return false
     }
     val currentPixelGrid = EditorPixelGrid.forGraphics(graphics)
@@ -144,14 +119,44 @@ internal class EditorAnimationCache(
       frameGraphics.composite = AlphaComposite.SrcOver
       editor.view.paintCaretFrame(frameGraphics)
     }
+    debugWindow?.servedAreaChanged(visibleRect)
     return recordHit()
   }
 
-  /// MARK: cache building
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  fun clear() {
+    lastCacheKey.set(null)
+    pixelGrid = null
+    entries.clear()
+    debugWindow?.zonesChanged()
+  }
 
-  /**
-   * Serves every posted request, one at a time, so that no two cache builds ever overlap.
-   */
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  fun invalidate(clip: Rectangle?) {
+    if (clip == null) {
+      clear()
+      return
+    }
+    lastCacheKey.set(null)
+    // Nothing was ever built, so there is no entry to drop and no thrashing to detect.
+    val lastBuildAt = lastBuildAt ?: return
+    val now = AnimationClock.markAnimationNow()
+    val removedEntries = entries.removeIntersecting(clip)
+    if (removedEntries) {
+      debugWindow?.zonesChanged()
+    }
+    val builtRecently = (now - lastBuildAt) < THRASH_WINDOW
+    if (removedEntries && builtRecently) {
+      cooldownUntil = now + THRASH_COOLDOWN
+    }
+  }
+
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  override fun dispose() {
+    requests.value = null
+    clear()
+  }
+
   private fun serveRequests() {
     coroutineScope.launch(DISPATCHER) {
       requests.filterNotNull().collect { request: CacheRequest ->
@@ -174,7 +179,7 @@ internal class EditorAnimationCache(
 
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun cacheMissingAreas(request: CacheRequest) {
-    if (isDisposed || editor.isDumb) {
+    if (editor.isDisposed || editor.isDumb) {
       return
     }
     if (isWithinCooldown()) {
@@ -235,22 +240,15 @@ internal class EditorAnimationCache(
   private fun buildEntry(repaintedArea: Rectangle2D, grid: EditorPixelGrid, visibleArea: Rectangle): Boolean {
     val image = renderToImage(repaintedArea)
     // Building the cache paints editor content, which can run plugin code and dispose the view reentrantly.
-    if (isDisposed) {
+    if (editor.isDisposed) {
       return false
     }
     val budget = visibleArea.area() * MAX_CACHED_VISIBLE_AREAS
     entries.add(CacheEntry(repaintedArea, image), budget)
+    debugWindow?.zonesChanged()
     pixelGrid = grid
     lastBuildAt = AnimationClock.markAnimationNow()
     return true
-  }
-
-  private fun ensureOpaqueContent(): Boolean {
-    if (editor.contentComponent.isOpaque) {
-      return true
-    }
-    clear()
-    return false
   }
 
   private fun renderToImage(rectangle: Rectangle2D): BufferedImage {
@@ -265,6 +263,14 @@ internal class EditorAnimationCache(
       editor.isCurrentlyBuildingCache = false
     }
     return image
+  }
+
+  private fun ensureOpaqueContent(): Boolean {
+    if (editor.contentComponent.isOpaque) {
+      return true
+    }
+    clear()
+    return false
   }
 
   private fun Rectangle2D.visibleRectangle(): Rectangle2D? {
