@@ -27,6 +27,7 @@ import com.intellij.platform.searchEverywhere.SeTransferItem
 import com.intellij.platform.searchEverywhere.asRef
 import com.intellij.platform.searchEverywhere.equalityProviders.SeEqualityChecker
 import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
+import com.intellij.platform.searchEverywhere.providers.SeLegacyContributorsRegistry
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.providers.SeProvidersHolder
 import com.intellij.platform.searchEverywhere.providers.SeSortedProviderIds
@@ -182,6 +183,7 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
         return@withLock null
       }
       sessionIdToProviderHolders[sessionEntity.eid] = providersHolder
+      SeLegacyContributorsRegistry.getInstance().register(session, providersHolder.legacyContributors, providersHolder)
 
       sessionEntity.onDispose(coroutineScope.coroutineContext[Rete]!!) {
         Disposer.dispose(providersHolder)

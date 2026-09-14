@@ -42,6 +42,7 @@ import com.intellij.platform.searchEverywhere.frontend.ui.SePopupHeaderPane
 import com.intellij.platform.searchEverywhere.frontend.vm.SeDummyTabVm
 import com.intellij.platform.searchEverywhere.frontend.vm.SePopupVm
 import com.intellij.platform.searchEverywhere.impl.SeRemoteApi
+import com.intellij.platform.searchEverywhere.providers.SeLegacyContributorsRegistry
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.providers.SeLog.LIFE_CYCLE
 import com.intellij.platform.searchEverywhere.providers.SeProvidersHolder
@@ -353,7 +354,7 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
       }
       if (availableRemoteProviders == null) return@initAsync null
 
-      val fetchedRemoteLegacyContributors = availableRemoteProviders.originalBackendLegacyContributors?.separateTab ?: emptyMap()
+      val fetchedRemoteLegacyContributors = SeLegacyContributorsRegistry.getInstance().get(session)?.separateTab ?: emptyMap()
       val adaptedSeparateTabInfos = availableRemoteProviders.adaptedWithPresentationOrFetchable(fetchedRemoteLegacyContributors.keys).separateTab
       if (adaptedSeparateTabInfos.isEmpty()) return@initAsync null
 
