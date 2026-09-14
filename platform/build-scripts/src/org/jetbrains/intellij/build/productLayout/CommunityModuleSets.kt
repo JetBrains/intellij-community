@@ -15,6 +15,7 @@ import org.jetbrains.intellij.build.productLayout.CoreModuleSets.rpcBackend
  * - **vcs**: Version control support
  * - **xml**: XML support
  * - **compose**: Compose UI
+ * - **spellchecker/settingsSync/ml/librariesGrpc**: one feature with the library it needs
  * - **ideCommon**: Full IDE common modules
  *
  * Has a one-way dependency on CoreModuleSets (libraries, platform infrastructure, RPC).
@@ -179,9 +180,11 @@ object CommunityModuleSets {
   /**
    * VCS (Version Control System) shared anchor modules.
    * Implementation, log, DVCS, and sqlite content is bundled via intellij.platform.vcs.plugin.
+   * The microba date picker is a dependency of `intellij.platform.vcs.impl` in that plugin.
    */
   fun vcs(): ModuleSet = moduleSet("vcs") {
     embeddedModule("intellij.platform.vcs")
+    module("intellij.libraries.microba")
 
     moduleSet(vcsShared())
   }
@@ -266,8 +269,10 @@ object CommunityModuleSets {
 
   /**
    * Compose UI modules.
+   * `intellij.libraries.compose.runtime.desktop` depends on the jspecify annotations.
    */
   fun compose(): ModuleSet = moduleSet("compose") {
+    module("intellij.libraries.jspecify")
     module("intellij.libraries.skiko")
     module("intellij.libraries.coil")
     module("intellij.libraries.compose.swing")
@@ -344,26 +349,64 @@ object CommunityModuleSets {
   }
 
   /**
-   * Popular applied libraries, required for many plugins.
+   * Libraries that only plugins consume, with no platform owner.
+   * Each entry is a shared-set placement under ADR 0005 that a plugin-private copy could replace.
    */
   fun librariesIdeCommon(): ModuleSet = moduleSet("libraries.ide.common") {
     module("intellij.libraries.javax.activation")
     module("intellij.libraries.opencsv")
     module("intellij.libraries.squareup.okio.jvm")
-    module("intellij.libraries.lucene.common")
     module("intellij.libraries.jettison")
     module("intellij.libraries.xstream")
     module("intellij.libraries.commons.text")
   }
 
   /**
-   * IDE common modules (includes essential, compose, vcs, duplicates).
+   * gRPC runtime, used by the process mediator, IJent, and many plugins.
+   */
+  fun librariesGrpc(): ModuleSet = moduleSet("libraries.grpc") {
+    module("intellij.libraries.grpc")
+    module("intellij.libraries.grpc.netty.shaded")
+  }
+
+  /**
+   * The spellchecker core module and its Lucene dictionary index.
+   * The VCS and XML spellchecker strategies stay in [ideCommon], because lean products bundle the core without them.
+   */
+  fun spellchecker(): ModuleSet = moduleSet("spellchecker") {
+    module("intellij.spellchecker")
+    module("intellij.libraries.lucene.common")
+  }
+
+  /**
+   * Settings Sync core and the JGit library it stores settings with.
+   */
+  fun settingsSync(): ModuleSet = moduleSet("settings.sync") {
+    module("intellij.settingsSync.core")
+    module("intellij.libraries.jgit")
+  }
+
+  /**
+   * ML platform implementation, consumed only by the ML ranking plugins.
+   * The `intellij.platform.ml` API stays embedded in [essentialMinimal].
+   */
+  fun ml(): ModuleSet = moduleSet("ml") {
+    module("intellij.platform.ml.impl")
+  }
+
+  /**
+   * IDE common modules.
+   * Nests essential, compose, libraries.ide.common, libraries.grpc, spellchecker, settings.sync, ml, vcs, lsp, and duplicates.
    */
   fun ideCommon(): ModuleSet = moduleSet("ide.common") {
     // Include essential first (which includes coreLang from CoreModuleSets)
     moduleSet(essential())
     moduleSet(compose())
     moduleSet(librariesIdeCommon())
+    moduleSet(librariesGrpc())
+    moduleSet(spellchecker())
+    moduleSet(settingsSync())
+    moduleSet(ml())
 
     // Additional IDE-specific modules
     module("intellij.platform.lvcs.impl")
@@ -374,15 +417,9 @@ object CommunityModuleSets {
     module("intellij.platform.scriptDebugger.backend")
     module("intellij.platform.scriptDebugger.protocolReaderRuntime")
 
-    module("intellij.platform.ml.impl")
-
-    module("intellij.libraries.microba")
     module("intellij.platform.diagnostic.freezeAnalyzer")
     module("intellij.platform.warmup")
     module("intellij.platform.inspect")
-    module("intellij.libraries.jgit")
-    module("intellij.settingsSync.core")
-    module("intellij.spellchecker")
     module("intellij.spellchecker.vcs")
     module("intellij.spellchecker.xml")
     module("intellij.platform.buildView")
@@ -399,12 +436,8 @@ object CommunityModuleSets {
     module("intellij.regexp")
     module("intellij.platform.langInjection")
     module("intellij.platform.langInjection.backend")
-    module("intellij.libraries.grpc")
-    module("intellij.libraries.grpc.netty.shaded")
-    module("intellij.libraries.jspecify")
 
-    embeddedModule("intellij.platform.vcs")
-    moduleSet(vcsShared())
+    moduleSet(vcs())
     moduleSet(lsp())
     // the other xml modules live in the `intellij.xml.plugin` wrapper plugin; cglib is kept embedded
     // (i.e. loaded by the core classloader): `AdvancedEnhancer.getDefaultClassLoader()` defines each
@@ -412,7 +445,6 @@ object CommunityModuleSets {
     // has to be resolvable from any plugin classloader - a set the layout cannot enumerate.
     embeddedModule("intellij.libraries.cglib")
     moduleSet(duplicates())
-    embeddedModule("intellij.libraries.batik")
 
     // Note: rd.common is intentionally NOT included in ide.common
     // Reason: Rider uses custom module loading mode due to early backend startup requirements.

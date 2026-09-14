@@ -13,6 +13,7 @@
 
     <!-- region direct modules -->
     <module name="intellij.platform.vcs" loading="embedded"/>
+    <module name="intellij.libraries.microba"/>
     <!-- endregion -->
   </content>
 </idea-plugin>

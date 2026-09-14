@@ -365,6 +365,7 @@
     <!-- endregion -->
 
     <!-- region nested: compose -->
+    <module name="intellij.libraries.jspecify"/>
     <module name="intellij.libraries.skiko"/>
     <module name="intellij.libraries.coil"/>
     <module name="intellij.libraries.compose.swing"/>
@@ -390,17 +391,42 @@
     <module name="intellij.libraries.javax.activation"/>
     <module name="intellij.libraries.opencsv"/>
     <module name="intellij.libraries.squareup.okio.jvm"/>
-    <module name="intellij.libraries.lucene.common"/>
     <module name="intellij.libraries.jettison"/>
     <module name="intellij.libraries.xstream"/>
     <module name="intellij.libraries.commons.text"/>
     <!-- endregion -->
 
-    <!-- region nested: vcs.shared -->
+    <!-- region nested: libraries.grpc -->
+    <module name="intellij.libraries.grpc"/>
+    <module name="intellij.libraries.grpc.netty.shaded"/>
+    <!-- endregion -->
+
+    <!-- region nested: spellchecker -->
+    <module name="intellij.spellchecker"/>
+    <module name="intellij.libraries.lucene.common"/>
+    <!-- endregion -->
+
+    <!-- region nested: settings.sync -->
+    <module name="intellij.settingsSync.core"/>
+    <module name="intellij.libraries.jgit"/>
+    <!-- endregion -->
+
+    <!-- region nested: ml -->
+    <module name="intellij.platform.ml.impl"/>
+    <!-- endregion -->
+
+    <!-- region nested: vcs -->
+    <!-- region nested: vcs > vcs.shared -->
     <module name="intellij.platform.vcs.core" loading="embedded"/>
     <module name="intellij.platform.vcs.shared" loading="embedded"/>
     <module name="intellij.platform.vcs.impl.shared"/>
     <module name="intellij.platform.vcs.dvcs.impl.shared"/>
+    <!-- endregion -->
+
+    <!-- region direct modules -->
+    <module name="intellij.platform.vcs" loading="embedded"/>
+    <module name="intellij.libraries.microba"/>
+    <!-- endregion -->
     <!-- endregion -->
 
     <!-- region nested: lsp -->
@@ -428,14 +454,9 @@
     <module name="intellij.platform.scriptDebugger.ui"/>
     <module name="intellij.platform.scriptDebugger.backend"/>
     <module name="intellij.platform.scriptDebugger.protocolReaderRuntime"/>
-    <module name="intellij.platform.ml.impl"/>
-    <module name="intellij.libraries.microba"/>
     <module name="intellij.platform.diagnostic.freezeAnalyzer"/>
     <module name="intellij.platform.warmup"/>
     <module name="intellij.platform.inspect"/>
-    <module name="intellij.libraries.jgit"/>
-    <module name="intellij.settingsSync.core"/>
-    <module name="intellij.spellchecker"/>
     <module name="intellij.spellchecker.vcs"/>
     <module name="intellij.spellchecker.xml"/>
     <module name="intellij.platform.buildView"/>
@@ -451,12 +472,7 @@
     <module name="intellij.regexp"/>
     <module name="intellij.platform.langInjection"/>
     <module name="intellij.platform.langInjection.backend"/>
-    <module name="intellij.libraries.grpc"/>
-    <module name="intellij.libraries.grpc.netty.shaded"/>
-    <module name="intellij.libraries.jspecify"/>
-    <module name="intellij.platform.vcs" loading="embedded"/>
     <module name="intellij.libraries.cglib" loading="embedded"/>
-    <module name="intellij.libraries.batik" loading="embedded"/>
     <!-- endregion -->
   </content>
 </idea-plugin>
