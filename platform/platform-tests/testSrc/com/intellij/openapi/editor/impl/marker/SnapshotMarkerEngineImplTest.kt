@@ -857,9 +857,9 @@ class SnapshotMarkerEngineImplTest {
   fun `marker spec delegates transformation to its policy`() {
     var receivedPatch: DocumentTextPatch? = null
     val invalidatedMarkerIds = ArrayList<Long>()
-    val policy = MarkerPolicy { _, patch, _, _ ->
+    val policy = MarkerPolicy { entry, patch, _, _ ->
       receivedPatch = patch
-      MarkerTransformResult.Invalid("Invalidated by test marker policy")
+      MarkerTransformResult(entry, "Invalidated by test marker policy")
     }
     val root = PMarkerRootImpl.empty().insert(
       markerId = 1,
@@ -892,7 +892,7 @@ class SnapshotMarkerEngineImplTest {
     val invalidatedMarkerIds = ArrayList<Long>()
     val affectedMarkerIds = ArrayList<Long>()
     val invalidatingPolicy = MarkerPolicy { entry, _, _, _ ->
-      MarkerTransformResult.Invalid("Invalidated by test marker policy", entry)
+      MarkerTransformResult(entry, "Invalidated by test marker policy")
     }
     val root = PMarkerRootImpl.empty()
       .insert(1, 0, 1, nonGreedySpec(), flavorFlags = 0)

@@ -59,18 +59,19 @@ private object CaretPositionMarkerPolicy : MarkerPolicy {
     beforeText: DocumentText,
     afterText: DocumentText,
   ): MarkerTransformResult {
-    val updatedEntry = when (val transformed = DefaultMarkerPolicy.transform(entry, patch, beforeText, afterText)) {
-      is MarkerTransformResult.Valid -> transformed.entry
-      is MarkerTransformResult.Invalid -> {
-        val offset = minOf(entry.nodeStart, patch.startOffset() + patch.newFragment().length)
-        entry.copy(nodeStart = offset, nodeEnd = offset)
-      }
+    val transformed = DefaultMarkerPolicy.transform(entry, patch, beforeText, afterText)
+    val updatedEntry = if (transformed.errorReason == null) {
+      transformed.entry
     }
-    return MarkerTransformResult.Valid(alignPoint(updatedEntry, afterText))
+    else {
+      val offset = minOf(entry.nodeStart, patch.startOffset() + patch.newFragment().length)
+      entry.copy(nodeStart = offset, nodeEnd = offset)
+    }
+    return MarkerTransformResult(alignPoint(updatedEntry, afterText))
   }
 
   override fun afterRetarget(entry: PMarkerRoot.MarkerEntry, text: DocumentText): MarkerTransformResult {
-    return MarkerTransformResult.Valid(alignPoint(entry, text))
+    return MarkerTransformResult(alignPoint(entry, text))
   }
 
   private fun alignPoint(entry: PMarkerRoot.MarkerEntry, text: DocumentText): PMarkerRoot.MarkerEntry {
@@ -86,14 +87,17 @@ private object CaretSelectionMarkerPolicy : MarkerPolicy {
     beforeText: DocumentText,
     afterText: DocumentText,
   ): MarkerTransformResult {
-    return when (val transformed = DefaultMarkerPolicy.transform(entry, patch, beforeText, afterText)) {
-      is MarkerTransformResult.Invalid -> transformed
-      is MarkerTransformResult.Valid -> MarkerTransformResult.Valid(alignRange(transformed.entry, afterText))
+    val transformed = DefaultMarkerPolicy.transform(entry, patch, beforeText, afterText)
+    return if (transformed.errorReason != null) {
+      transformed
+    }
+    else {
+      MarkerTransformResult(alignRange(transformed.entry, afterText))
     }
   }
 
   override fun afterRetarget(entry: PMarkerRoot.MarkerEntry, text: DocumentText): MarkerTransformResult {
-    return MarkerTransformResult.Valid(alignRange(entry, text))
+    return MarkerTransformResult(alignRange(entry, text))
   }
 
   private fun alignRange(entry: PMarkerRoot.MarkerEntry, text: DocumentText): PMarkerRoot.MarkerEntry {

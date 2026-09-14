@@ -472,9 +472,12 @@ private object FoldRegionMarkerPolicy : MarkerPolicy {
     beforeText: DocumentText,
     afterText: DocumentText,
   ): MarkerTransformResult {
-    return when (val transformed = DefaultMarkerPolicy.transform(entry, patch, beforeText, afterText)) {
-      is MarkerTransformResult.Invalid -> transformed
-      is MarkerTransformResult.Valid -> validateRange(alignToCharacterBoundaries(transformed.entry, afterText))
+    val transformed = DefaultMarkerPolicy.transform(entry, patch, beforeText, afterText)
+    return if (transformed.errorReason != null) {
+      transformed
+    }
+    else {
+      validateRange(alignToCharacterBoundaries(transformed.entry, afterText))
     }
   }
 
@@ -484,10 +487,10 @@ private object FoldRegionMarkerPolicy : MarkerPolicy {
 
   private fun validateRange(entry: PMarkerRoot.MarkerEntry): MarkerTransformResult {
     return if (entry.nodeStart < entry.nodeEnd) {
-      MarkerTransformResult.Valid(entry)
+      MarkerTransformResult(entry)
     }
     else {
-      MarkerTransformResult.Invalid("The fold region became empty", entry)
+      MarkerTransformResult(entry, "The fold region became empty")
     }
   }
 }
@@ -499,9 +502,12 @@ private object CustomFoldRegionMarkerPolicy : MarkerPolicy {
     beforeText: DocumentText,
     afterText: DocumentText,
   ): MarkerTransformResult {
-    return when (val transformed = DefaultMarkerPolicy.transform(entry, patch, beforeText, afterText)) {
-      is MarkerTransformResult.Invalid -> transformed
-      is MarkerTransformResult.Valid -> validateLineBoundaries(transformed.entry, afterText)
+    val transformed = DefaultMarkerPolicy.transform(entry, patch, beforeText, afterText)
+    return if (transformed.errorReason != null) {
+      transformed
+    }
+    else {
+      validateLineBoundaries(transformed.entry, afterText)
     }
   }
 
@@ -511,15 +517,15 @@ private object CustomFoldRegionMarkerPolicy : MarkerPolicy {
 
   private fun validateLineBoundaries(entry: PMarkerRoot.MarkerEntry, text: DocumentText): MarkerTransformResult {
     if (entry.nodeStart >= entry.nodeEnd) {
-      return MarkerTransformResult.Invalid("The custom fold region became empty", entry)
+      return MarkerTransformResult(entry, "The custom fold region became empty")
     }
     val startLine = text.lineNumber(entry.nodeStart)
     val endLine = text.lineNumber(entry.nodeEnd)
     return if (entry.nodeStart == text.lineStartOffset(startLine) && entry.nodeEnd == text.lineEndOffset(endLine)) {
-      MarkerTransformResult.Valid(entry)
+      MarkerTransformResult(entry)
     }
     else {
-      MarkerTransformResult.Invalid("The custom fold region left its line boundaries", entry)
+      MarkerTransformResult(entry, "The custom fold region left its line boundaries")
     }
   }
 }

@@ -34,7 +34,7 @@ object PersistentMarkerPolicy : MarkerPolicy {
     }
     val translated = translate(entry, patch, beforeText, afterText)
     return if (translated != null) {
-      MarkerTransformResult.Valid(translated)
+      MarkerTransformResult(translated)
     }
     else {
       DefaultMarkerPolicy.transform(entry, patch, beforeText, afterText)

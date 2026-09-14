@@ -415,9 +415,12 @@ private object InlineInlayMarkerPolicy : MarkerPolicy {
     beforeText: DocumentText,
     afterText: DocumentText,
   ): MarkerTransformResult {
-    return when (val transformed = DefaultMarkerPolicy.transform(entry, patch, beforeText, afterText)) {
-      is MarkerTransformResult.Invalid -> transformed
-      is MarkerTransformResult.Valid -> validateOffset(transformed.entry, afterText)
+    val transformed = DefaultMarkerPolicy.transform(entry, patch, beforeText, afterText)
+    return if (transformed.errorReason != null) {
+      transformed
+    }
+    else {
+      validateOffset(transformed.entry, afterText)
     }
   }
 
@@ -427,13 +430,13 @@ private object InlineInlayMarkerPolicy : MarkerPolicy {
 
   private fun validateOffset(entry: PMarkerRoot.MarkerEntry, text: DocumentText): MarkerTransformResult {
     val offset = entry.nodeStart
-    if (offset <= 0 || offset >= text.length()) return MarkerTransformResult.Valid(entry)
+    if (offset <= 0 || offset >= text.length()) return MarkerTransformResult(entry)
     val chars = text.cachedChars()
     return if (Character.isHighSurrogate(chars[offset - 1]) && Character.isLowSurrogate(chars[offset])) {
-      MarkerTransformResult.Invalid("The inline inlay reached a surrogate pair", entry)
+      MarkerTransformResult(entry, "The inline inlay reached a surrogate pair")
     }
     else {
-      MarkerTransformResult.Valid(entry)
+      MarkerTransformResult(entry)
     }
   }
 }

@@ -125,9 +125,12 @@ private object CustomWrapMarkerPolicy : MarkerPolicy {
     beforeText: DocumentText,
     afterText: DocumentText,
   ): MarkerTransformResult {
-    return when (val transformed = DefaultMarkerPolicy.transform(entry, patch, beforeText, afterText)) {
-      is MarkerTransformResult.Invalid -> transformed
-      is MarkerTransformResult.Valid -> validateOffset(transformed.entry, afterText)
+    val transformed = DefaultMarkerPolicy.transform(entry, patch, beforeText, afterText)
+    return if (transformed.errorReason != null) {
+      transformed
+    }
+    else {
+      validateOffset(transformed.entry, afterText)
     }
   }
 
@@ -137,12 +140,12 @@ private object CustomWrapMarkerPolicy : MarkerPolicy {
 
   private fun validateOffset(entry: PMarkerRoot.MarkerEntry, text: DocumentText): MarkerTransformResult {
     return if (isValidCustomWrapOffset(entry.nodeStart, text)) {
-      MarkerTransformResult.Valid(entry)
+      MarkerTransformResult(entry)
     }
     else {
-      MarkerTransformResult.Invalid(
-        reason = "The custom wrap reached an invalid offset",
-        entry = entry,
+      MarkerTransformResult(
+        entry,
+        "The custom wrap reached an invalid offset",
       )
     }
   }

@@ -32,30 +32,28 @@ enum class PersistentHighlighterPolicy(private val wholeLineRange: Boolean) : Ma
         val changeStartLine = afterText.lineNumber(lineDiff.changeStartOffset)
         val translatedLine = lineDiff.translateLineStrict(startLine, changeStartLine, afterText.chars())
         if (translatedLine !in 0..<afterText.lineCount()) {
-          return MarkerTransformResult.Invalid(INVALIDATED_BY_EDIT)
+          return MarkerTransformResult(entry, INVALIDATED_BY_EDIT)
         }
-        return MarkerTransformResult.Valid(normalizeLine(entry, afterText, translatedLine))
+        return MarkerTransformResult(normalizeLine(entry, afterText, translatedLine))
       }
       catch (_: FilesTooBigForDiffException) {
       }
     }
 
-    return when (val transformed = DefaultMarkerPolicy.transform(entry, patch, beforeText, afterText)) {
-      is MarkerTransformResult.Invalid -> transformed
-      is MarkerTransformResult.Valid -> {
-        val transformedEntry = transformed.entry
-        val startLine = afterText.lineNumber(transformedEntry.nodeStart)
-        val endLine = afterText.lineNumber(transformedEntry.nodeEnd)
-        if (wholeLineRange) {
-          MarkerTransformResult.Valid(normalizeLine(transformedEntry, afterText, startLine))
-        }
-        else if (endLine != startLine) {
-          MarkerTransformResult.Valid(transformedEntry.copy(nodeEnd = afterText.lineEndOffset(startLine)))
-        }
-        else {
-          transformed
-        }
-      }
+    val transformed = DefaultMarkerPolicy.transform(entry, patch, beforeText, afterText)
+    if (transformed.errorReason != null) return transformed
+
+    val transformedEntry = transformed.entry
+    val startLine = afterText.lineNumber(transformedEntry.nodeStart)
+    val endLine = afterText.lineNumber(transformedEntry.nodeEnd)
+    return if (wholeLineRange) {
+      MarkerTransformResult(normalizeLine(transformedEntry, afterText, startLine))
+    }
+    else if (endLine != startLine) {
+      MarkerTransformResult(transformedEntry.copy(nodeEnd = afterText.lineEndOffset(startLine)))
+    }
+    else {
+      transformed
     }
   }
 
