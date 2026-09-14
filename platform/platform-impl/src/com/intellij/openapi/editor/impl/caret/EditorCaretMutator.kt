@@ -51,15 +51,15 @@ internal class EditorCaretMutator internal constructor(
     editor.document.addDocumentListener(BulkUpdateListener(), this)
   }
 
-  /// MARK: editor requests
-
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun caretMoved() {
     val placements = editor.caretPlacements()
     val isCaretShown = editor.isCaretShown(snapshot())
     val repaintMetrics = editor.view.caretRepaintMetrics
     val tick = tick(CaretFrameInterval.MOVEMENT)
-    val next = state.updateAndGet { it.retarget(placements, tick, isCaretShown, repaintMetrics) }
+    val next = state.updateAndGet {
+      it.retarget(placements, tick, isCaretShown, repaintMetrics)
+    }
     if (next.isMotionSettled) {
       advanceNow(tick)
     } else {
@@ -72,7 +72,9 @@ internal class EditorCaretMutator internal constructor(
     val placements = editor.caretPlacements()
     val repaintMetrics = editor.view.caretRepaintMetrics
     val tick = tick(CaretFrameInterval.MOVEMENT)
-    state.updateAndGet { it.snapTo(placements, tick, repaintMetrics) }
+    state.update {
+      it.snapTo(placements, tick, repaintMetrics)
+    }
     advanceNow(tick)
   }
 
@@ -84,16 +86,20 @@ internal class EditorCaretMutator internal constructor(
   fun reinitSettings() {
     settings.set(editor.caretAnimationSettings())
     val repaintMetrics = editor.view.caretRepaintMetrics
-    state.updateAndGet { it.restartBlink().withRepaintMetrics(repaintMetrics) }
+    state.update {
+      it.restartBlink().withRepaintMetrics(repaintMetrics)
+    }
     ensureLoop()
   }
 
-  /// MARK: caret state
-
-  fun snapshot(): CaretCursorSnapshot = state.value.snapshot
+  fun snapshot(): CaretCursorSnapshot {
+    return state.value.snapshot
+  }
 
   fun setEnabled(enabled: Boolean): Boolean {
-    val previous = state.getAndUpdate { it.withEnabled(enabled) }.snapshot
+    val previous: CaretCursorSnapshot = state.getAndUpdate {
+      it.withEnabled(enabled)
+    }.snapshot
     if (previous.isEnabled != enabled) {
       repaint(previous)
     }
@@ -101,7 +107,9 @@ internal class EditorCaretMutator internal constructor(
   }
 
   fun setVisible(visible: Boolean): Boolean {
-    val previousState = state.getAndUpdate { it.withShown(visible, AnimationClock.markAnimationNow()) }
+    val previousState = state.getAndUpdate {
+      it.withShown(visible, AnimationClock.markAnimationNow())
+    }
     val previous = previousState.snapshot
     val visibilityChanged = previous.isShown != visible
     val becomesFullyOpaque = visible && !previous.isFullyOpaque
@@ -113,11 +121,11 @@ internal class EditorCaretMutator internal constructor(
   }
 
   fun setBlinking(blinking: Boolean) {
-    state.updateAndGet { current ->
+    state.updateAndGet {
       if (blinking) {
-        current.startBlink()
+        it.startBlink()
       } else {
-        current.stopBlink()
+        it.stopBlink()
       }
     }
     ensureLoop()
@@ -127,24 +135,24 @@ internal class EditorCaretMutator internal constructor(
    * Shows the caret at full opacity, without restarting the quiet period.
    */
   fun showFullyOpaque() {
-    state.updateAndGet(CaretAnimationState::showFullyOpaque)
+    state.update(CaretAnimationState::showFullyOpaque)
   }
 
   /**
    * Marks the caret as active now, which holds the blink off for one quiet period.
    */
   fun recordActivity() {
-    state.updateAndGet { it.withActivityAt(AnimationClock.markAnimationNow()) }
+    state.update {
+      it.withActivityAt(AnimationClock.markAnimationNow())
+    }
   }
-
-  /// MARK: disposal
 
   override fun dispose() {
     disposed.set(true)
-    state.updateAndGet { it.withRunning(false) }
+    state.update {
+      it.withRunning(false)
+    }
   }
-
-  /// MARK: animation loop
 
   /**
    * Produces one step on the calling thread, so that a settled move appears without waiting for the loop.
@@ -163,7 +171,9 @@ internal class EditorCaretMutator internal constructor(
     if (disposed.get()) {
       return
     }
-    val wasRunning = state.getAndUpdate { it.withRunning(true) }.isRunning
+    val wasRunning = state.getAndUpdate {
+      it.withRunning(true)
+    }.isRunning
     if (wasRunning) {
       return
     }
@@ -188,12 +198,18 @@ internal class EditorCaretMutator internal constructor(
           break
         }
         // Wake up when the next frame is due, or as soon as somebody else changes the state.
-        withTimeoutOrNull(step.nextDelay) { state.first { it.version != step.version } }
+        withTimeoutOrNull(step.nextDelay) {
+          state.first {
+            it.version != step.version
+          }
+        }
       }
     }
     finally {
       if (isRunning) {
-        state.update { it.withRunning(false) }
+        state.update {
+          it.withRunning(false)
+        }
       }
     }
   }
@@ -211,13 +227,17 @@ internal class EditorCaretMutator internal constructor(
       val current = state.value
       val tick = current.computeTick()
       val isFrozen = disposed.get() || editor.document.isInBulkUpdate
-      val (advanced, step) = if (isFrozen) {
+      val (advanced: CaretAnimationState, step: CaretStep) = if (isFrozen) {
         current.freeze(tick.now)
       } else {
         current.advance(tick, prefetching)
       }
       val shouldStopLoop = stopWhenIdle && step.isIdle
-      val next = if (shouldStopLoop) advanced.withRunning(false) else advanced
+      val next: CaretAnimationState = if (shouldStopLoop) {
+        advanced.withRunning(false)
+      } else {
+        advanced
+      }
       if (state.compareAndSet(current, next)) {
         propagateStep(current, next, step)
         return step
@@ -225,9 +245,11 @@ internal class EditorCaretMutator internal constructor(
     }
   }
 
-  /// MARK: rendering
-
-  private fun propagateStep(previousState: CaretAnimationState, nextState: CaretAnimationState, step: CaretStep) {
+  private fun propagateStep(
+    previousState: CaretAnimationState,
+    nextState: CaretAnimationState,
+    step: CaretStep,
+  ) {
     if (disposed.get()) {
       return
     }
@@ -252,8 +274,6 @@ internal class EditorCaretMutator internal constructor(
     editor.view.repaintCarets(snapshot)
   }
 
-  /// MARK: frame timing
-
   /**
    * The tick of a loop frame, whose duration is however long the previous frame actually took.
    */
@@ -262,7 +282,10 @@ internal class EditorCaretMutator internal constructor(
     return tick(frameDurationAt(now), now)
   }
 
-  private fun tick(frameDuration: Duration, now: AnimationTimeMark = AnimationClock.markAnimationNow()): CaretTick {
+  private fun tick(
+    frameDuration: Duration,
+    now: AnimationTimeMark = AnimationClock.markAnimationNow(),
+  ): CaretTick {
     return CaretTick(
       now = now,
       frameDuration = frameDuration,
@@ -271,12 +294,12 @@ internal class EditorCaretMutator internal constructor(
     )
   }
 
-  /// MARK: listeners
-
   private inner class BulkUpdateListener : DocumentListener {
     override fun bulkUpdateStarting(document: Document) {
       val tick = tick(CaretFrameInterval.MOVEMENT)
-      state.update { it.settle(tick) }
+      state.update {
+        it.settle(tick)
+      }
       advanceNow(tick)
     }
   }
