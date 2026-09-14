@@ -43,6 +43,7 @@ import org.jetbrains.annotations.ApiStatus;
 import sun.awt.image.SunVolatileImage;
 
 import java.awt.geom.GeneralPath;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 import javax.swing.JComponent;
@@ -100,7 +101,7 @@ public final class ImmediatePainter {
       final List<EditorActionPlan.Replacement> replacements = plan.getReplacements();
       if (replacements.size() != 1) return false;
 
-      final EditorActionPlan.Replacement replacement = replacements.get(0);
+      final EditorActionPlan.Replacement replacement = replacements.getFirst();
       if (replacement.getText().length() != 1) return false;
 
       final int caretOffset = replacement.getBegin();
@@ -152,6 +153,7 @@ public final class ImmediatePainter {
     });
   }
 
+  /// @noinspection GraphicsSetClipInspection
   private void paintImmediately(final Graphics2D g, final int offset, final char c2) {
     final EditorImpl editor = myEditor;
     final Document document = editor.getElfDocument();
@@ -309,14 +311,14 @@ public final class ImmediatePainter {
 
   private static boolean isImageValid(VolatileImage image, Component component) {
     GraphicsConfiguration componentConfig = component.getGraphicsConfiguration();
-    if (SystemInfo.isWindows && image instanceof SunVolatileImage) { // JBR-1540
-      GraphicsConfiguration imageConfig = ((SunVolatileImage)image).getGraphicsConfig();
+    if (SystemInfo.isWindows && image instanceof SunVolatileImage volatileImage) { // JBR-1540
+      GraphicsConfiguration imageConfig = volatileImage.getGraphicsConfig();
       if (imageConfig != null && componentConfig != null && imageConfig.getDevice() != componentConfig.getDevice()) return false;
     }
     return image.validate(componentConfig) != VolatileImage.IMAGE_INCOMPATIBLE;
   }
 
-  private void paintCaretBar(final Graphics2D g, final Rectangle2D r, final Color color) {
+  private static void paintCaretBar(final Graphics2D g, final Rectangle2D r, final Color color) {
     double w = r.getWidth(), h = r.getHeight();
     double x = r.getX(), y = r.getY();
 
@@ -406,7 +408,6 @@ public final class ImmediatePainter {
 
     final int size = highlighters.size();
 
-    //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < size; i++) {
       RangeHighlighterEx highlighter = highlighters.get(i);
       if (highlighter.getTextAttributes(editor.getColorsScheme()) == TextAttributes.ERASE_MARKER) {
@@ -416,7 +417,6 @@ public final class ImmediatePainter {
 
     final List<TextAttributes> cachedAttributes = new ArrayList<>();
 
-    //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < size; i++) {
       RangeHighlighterEx highlighter = highlighters.get(i);
 
@@ -445,7 +445,6 @@ public final class ImmediatePainter {
     EffectType effectType = null;
     int fontType = 0;
 
-    //noinspection ForLoopReplaceableByForEach, Duplicates
     for (int i = 0; i < cachedAttributes.size(); i++) {
       TextAttributes attrs = cachedAttributes.get(i);
 
@@ -473,7 +472,7 @@ public final class ImmediatePainter {
     TextAttributes defaultAttributes = editor.getColorsScheme().getAttributes(HighlighterColors.TEXT);
     if (fontType == Font.PLAIN) fontType = defaultAttributes == null ? Font.PLAIN : defaultAttributes.getFontType();
 
-    attributes.setAttributes(foreground, background, effect, null, effectType, fontType);
+    Objects.requireNonNull(attributes).setAttributes(foreground, background, effect, null, effectType, fontType);
   }
 
   private static void pause() {
