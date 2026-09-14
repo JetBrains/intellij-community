@@ -135,10 +135,6 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
         packageName = "com.intellij.jinja"
       )
 
-      "intellij.bigdatatools.visualisation" -> IntellijIconClassGeneratorModuleConfig(
-        className = "BigdatatoolsVisualisationIcons",
-        packageName = "com.intellij.bigdatatools.visualization"
-      )
       "intellij.bigdatatools.core" -> IntellijIconClassGeneratorModuleConfig(
         className = "BigdatatoolsCoreIcons",
         packageName = "com.jetbrains.bigdatatools.common"
