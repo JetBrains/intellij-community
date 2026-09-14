@@ -127,6 +127,9 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
     }
   }
 
+  private fun buildPyTypeOrAny(pyElement: PyTypedElement, tspType: PyreflyLsp4jServer.TspType): PyType =
+    buildPyType(pyElement, tspType)?.get() ?: PyAnyType.Any
+
   private fun findElement(tspNode: PyreflyLsp4jServer.TspNode): PsiElement? {
     val virtualFile = VirtualFileManager.getInstance().findFileByUrl(tspNode.uri) ?: return null
     val file = psiFile.manager.findFile(virtualFile) ?: return null
@@ -198,7 +201,7 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
     }
     val typeArgs = tspType.typeArgs
     val instanceType: PyClassLikeType = if (!typeArgs.isNullOrEmpty()) {
-      val elementTypes = typeArgs.map { buildPyType(pyElement, it)?.get() }
+      val elementTypes = typeArgs.map { buildPyTypeOrAny(pyElement, it) }
       if (pyClass.qualifiedName == PyNames.FQN.TUPLE) {
         PyTupleType.create(pyElement, elementTypes) ?: PyClassTypeImpl(pyClass, false)
       }
@@ -241,7 +244,7 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
   }
 
   private fun buildPyTupleType(pyElement: PyTypedElement, typeArgs: List<PyreflyLsp4jServer.TspType>, isDefinition: Boolean): Ref<PyType?>? {
-    val elementTypes = typeArgs.map { buildPyType(pyElement, it)?.get() }
+    val elementTypes = typeArgs.map { buildPyTypeOrAny(pyElement, it) }
     val tupleType = PyTupleType.create(pyElement, elementTypes) ?: return null
     thisLogger().info("Pyrefly TSP: built PyTupleType with ${elementTypes.size} elements (isDefinition=$isDefinition)")
     return Ref.create(tupleType.asDefinitionIf(isDefinition))
@@ -283,8 +286,8 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
 
   private fun buildSynthesizedCallableType(pyElement: PyTypedElement, tspType: PyreflyLsp4jServer.TspType): Ref<PyType?>? {
     val signature = tspType.specializedTypes ?: return null
-    val parameters = signature.parameterTypes.orEmpty().map { PyCallableParameterImpl.nonPsi(buildPyType(pyElement, it)?.get()) }
-    val returnType = (signature.returnType ?: tspType.returnType)?.let { buildPyType(pyElement, it)?.get() }
+    val parameters = signature.parameterTypes.orEmpty().map { PyCallableParameterImpl.nonPsi(buildPyTypeOrAny(pyElement, it)) }
+    val returnType = (signature.returnType ?: tspType.returnType)?.let { buildPyTypeOrAny(pyElement, it) } ?: PyAnyType.unknown
     thisLogger().info("Pyrefly TSP: built PyCallableType with ${parameters.size} parameters")
     return Ref.create(PyCallableTypeImpl(parameters, returnType))
   }
@@ -304,18 +307,18 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
     val psiParams = callable.parameterList.parameters
     val substituted = tspType.specializedTypes?.parameterTypes
     val parameters = psiParams.mapIndexed { i, p ->
-      val resolved = substituted?.getOrNull(i)?.let { buildPyType(pyElement, it)?.get() }
+      val resolved = substituted?.getOrNull(i)?.let { buildPyTypeOrAny(pyElement, it) }
       if (resolved != null) PyCallableParameterImpl.psi(p, resolved) else PyCallableParameterImpl.psi(p)
     }
     val returnTsp = tspType.specializedTypes?.returnType ?: tspType.returnType
-    val returnType = returnTsp?.let { buildPyType(pyElement, it)?.get() }
+    val returnType = returnTsp?.let { buildPyTypeOrAny(pyElement, it) } ?: PyAnyType.unknown
     return PyCallableTypeImpl(null, PyCallableParameterListTypeImpl(parameters), returnType, callable, null)
   }
 
   private fun buildPyUnionType(pyElement: PyTypedElement, tspType: PyreflyLsp4jServer.TspType): Ref<PyType?>? {
     val subTypes = tspType.subTypes ?: return null
     if (subTypes.isEmpty()) return null
-    val members = subTypes.map { buildPyType(pyElement, it)?.get() }
+    val members = subTypes.map { buildPyTypeOrAny(pyElement, it) }
     if (members.all { it == null }) return null
     thisLogger().info("Pyrefly TSP: built PyUnionType with ${members.size} members")
     return Ref.create(PyUnionType.unionOrUnknown(members))
@@ -367,7 +370,7 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
         // reference, and there is none here, so the target is set afterwards. The renderer shows
         // its qualified name. Asking the engine for the target would come back to this method.
         val declaredType = targetExpression.findAssignedValue()?.let { PyTypingTypeProvider.getType(it, context)?.get() }
-        val typeVar = (declaredType as? PyTypeVarTypeImpl ?: PyTypeVarTypeImpl(name, null)).withDeclarationElement(targetExpression)
+        val typeVar = (declaredType as? PyTypeVarTypeImpl ?: PyTypeVarTypeImpl(name, PyAnyType.unknown)).withDeclarationElement(targetExpression)
         thisLogger().info("Pyrefly TSP: built PyTypeVarType for $name from the declaration ${targetExpression.qualifiedName} (bound=${typeVar.bound})")
         return Ref.create(typeVar)
       }

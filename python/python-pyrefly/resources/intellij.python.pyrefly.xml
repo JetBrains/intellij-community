@@ -40,6 +40,10 @@
 
     <postStartupActivity implementation="com.intellij.python.pyrefly.PyreflyTypeEngineRegistryListener"/>
 
+    <registryKey key="use.bundled.pyrefly" defaultValue="false"
+                 description="Use the bundled Pyrefly as the type engine"
+                 restartRequired="true"/>
+
     <python.lsp.typeEngineConfigurable implementation="com.intellij.python.pyrefly.PyreflyPyTypeEngineProvider"/>
     <projectSettings service="com.intellij.python.pyrefly.PyreflyConfiguration"/>
     <python.pytools.pyTool implementation="com.intellij.python.pyrefly.PyreflyPyTool"/>
