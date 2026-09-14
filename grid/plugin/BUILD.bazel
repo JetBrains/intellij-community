@@ -1,23 +1,21 @@
-load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
-load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_DESCRIPTORS", "MODULE_TARGETS")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `dev intellij.grid.plugin` start
 dev_dist_plugin(
-    main_module = "intellij.grid.plugin",
-    module_targets = MODULE_TARGETS,
-    prepacked_content_modules = [
+    content_modules = [
         # do not sort,
         "intellij.grid",
         "intellij.grid.core.impl",
         "intellij.grid.csv.core.impl",
-        "intellij.grid.images.impl",
-        "intellij.grid.impl.ide",
         "intellij.grid.impl",
-        "intellij.grid.json.impl",
+        "intellij.grid.impl.ide",
         "intellij.grid.types",
+        "intellij.grid.json.impl",
+        "intellij.grid.images.impl",
+        "intellij.grid.structureview",
     ],
+    main_module = "intellij.grid.plugin",
 )
 ### auto-generated section `dev intellij.grid.plugin` end
 
@@ -47,22 +45,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = [":plugin"],
 )
-
-ij_plugin(
-    name = "plugin_plugin",
-    descriptor_module = ":plugin",
-    content_modules = [
-        # do not sort,
-        "//grid/api:grid",
-        "//grid/core-impl",
-        "//grid/csv:csv-core-impl",
-        "//grid/impl",
-        "//grid/impl-ide",
-        "//grid/types",
-    ],
-    visibility = ["//visibility:public"],
-)
-### auto-generated section `build intellij.grid.core.plugin` end
+### auto-generated section `build intellij.grid.plugin` end
 
 ### auto-generated section `iml intellij.grid.plugin` start
 exports_files(

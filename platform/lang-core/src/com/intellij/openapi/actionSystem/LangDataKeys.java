@@ -1,4 +1,3 @@
-
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
@@ -9,8 +8,11 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.ApiStatus;
+
+import java.util.Optional;
 
 /**
  * @see PlatformCoreDataKeys
@@ -83,6 +85,9 @@ public class LangDataKeys extends PlatformCoreDataKeys {
    */
   @Deprecated
   public static final DataKey<?> RUN_CONTENT_DESCRIPTOR = DataKey.create("RUN_CONTENT_DESCRIPTOR");
+
+  @ApiStatus.Experimental
+  public static final DataKey<Optional<VirtualFile>> STRUCTURE_VIEW_TARGET_FILE_KEY = DataKey.create("STRUCTURE_VIEW_TARGET_FILE_KEY");
 
   @ApiStatus.Internal
   public interface Names {

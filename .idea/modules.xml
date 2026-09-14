@@ -606,6 +606,7 @@
       <module fileurl="file://$PROJECT_DIR$/grid/impl-ide/intellij.grid.impl.ide.iml" filepath="$PROJECT_DIR$/grid/impl-ide/intellij.grid.impl.ide.iml" />
       <module fileurl="file://$PROJECT_DIR$/grid/json/intellij.grid.json.impl.iml" filepath="$PROJECT_DIR$/grid/json/intellij.grid.json.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/grid/plugin/intellij.grid.plugin.iml" filepath="$PROJECT_DIR$/grid/plugin/intellij.grid.plugin.iml" />
+      <module fileurl="file://$PROJECT_DIR$/grid/structureview/intellij.grid.structureview.iml" filepath="$PROJECT_DIR$/grid/structureview/intellij.grid.structureview.iml" />
       <module fileurl="file://$PROJECT_DIR$/grid/types/intellij.grid.types.iml" filepath="$PROJECT_DIR$/grid/types/intellij.grid.types.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/groovy/intellij.groovy.iml" filepath="$PROJECT_DIR$/plugins/groovy/intellij.groovy.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/groovy/ant/intellij.groovy.ant.iml" filepath="$PROJECT_DIR$/plugins/groovy/ant/intellij.groovy.ant.iml" />

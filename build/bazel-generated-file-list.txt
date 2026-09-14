@@ -280,6 +280,7 @@ grid/impl
 grid/impl-ide
 grid/json
 grid/plugin
+grid/structureview
 grid/types
 idea/customization/backend
 idea/customization/base

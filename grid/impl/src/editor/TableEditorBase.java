@@ -6,11 +6,8 @@ import com.intellij.database.datagrid.GridColumn;
 import com.intellij.database.datagrid.GridDataHookUp;
 import com.intellij.database.datagrid.GridRow;
 import com.intellij.ide.structureView.StructureViewBuilder;
-import com.intellij.ide.structureView.StructureViewModel;
-import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.UiDataProvider;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.project.Project;
@@ -22,9 +19,6 @@ import javax.swing.JComponent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
-/**
- * @author gregsh
- */
 public abstract class TableEditorBase extends UserDataHolderBase implements FileEditor, DataGridContainer, DataHookupContainer {
 
   private final Project myProject;
@@ -73,19 +67,8 @@ public abstract class TableEditorBase extends UserDataHolderBase implements File
   }
 
   @Override
-  public StructureViewBuilder getStructureViewBuilder() {
-    //return StructureViewBuilder.PROVIDER.getStructureViewBuilder(myFile.getFileType(), myFile, myProject);
-    return new TreeBasedStructureViewBuilder() {
-      @Override
-      public boolean isRootNodeShown() {
-        return false;
-      }
-
-      @Override
-      public @NotNull StructureViewModel createStructureViewModel(@Nullable Editor editor) {
-        return new TableEditorStructureViewModel(TableEditorBase.this);
-      }
-    };
+  public @Nullable StructureViewBuilder getStructureViewBuilder() {
+    return GridStructureViewModelFactory.createBuilder(myProject, getDataGrid());
   }
 
   @Override

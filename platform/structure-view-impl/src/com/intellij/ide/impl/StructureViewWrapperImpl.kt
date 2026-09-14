@@ -28,6 +28,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.actionSystem.impl.Utils
@@ -54,7 +55,6 @@ import com.intellij.openapi.project.impl.ProjectManagerImpl.Companion.isLight
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.NonPhysicalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.isTooLargeForIntellijSense
@@ -100,7 +100,6 @@ import java.awt.Color
 import java.awt.Component
 import java.awt.Container
 import java.awt.KeyboardFocusManager
-import java.util.Optional
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JComponent
@@ -683,10 +682,6 @@ class StructureViewWrapperImpl(
     val STRUCTURE_CHANGED: Topic<Runnable> = Topic("structure view changed", Runnable::class.java,
                                                    Topic.BroadcastDirection.NONE)
 
-    @ApiStatus.Experimental
-    @JvmField
-    val STRUCTURE_VIEW_TARGET_FILE_KEY: DataKey<Optional<VirtualFile?>> = DataKey.create("STRUCTURE_VIEW_TARGET_FILE_KEY")
-    private val STRUCTURE_VIEW_SELECTED_TAB_KEY: Key<String> = Key.create("STRUCTURE_VIEW_SELECTED_TAB")
     private const val STRUCTURE_VIEW_ACTION_GROUP_ID: String = "Structure.ViewOptions"
 
     private val LOG = Logger.getInstance(StructureViewWrapperImpl::class.java)
@@ -695,7 +690,7 @@ class StructureViewWrapperImpl(
     private const val REBUILD_TIME = 100L // time to wait and merge requests to rebuild a tree model
 
     private fun getTargetVirtualFile(asyncDataContext: DataContext): VirtualFile? {
-      val explicitlySpecifiedFile = STRUCTURE_VIEW_TARGET_FILE_KEY.getData(asyncDataContext)
+      val explicitlySpecifiedFile = LangDataKeys.STRUCTURE_VIEW_TARGET_FILE_KEY.getData(asyncDataContext)
       // explicitlySpecifiedFile == null           means no value was specified for this key
       // explicitlySpecifiedFile.isEmpty() == true means target virtual file (and structure view itself) is explicitly suppressed
       if (explicitlySpecifiedFile != null) {
@@ -722,7 +717,7 @@ class StructureViewWrapperImpl(
         task.run()
         true
       }
-      catch (exception: ProcessCanceledException) {
+      catch (_: ProcessCanceledException) {
         LOG.debug(message, ": canceled")
         false
       }

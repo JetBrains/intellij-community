@@ -1,4 +1,4 @@
-package com.intellij.database.editor;
+package com.intellij.grid.structureview;
 
 import com.intellij.database.datagrid.DataGrid;
 import com.intellij.database.datagrid.DataGridListener;
@@ -10,6 +10,7 @@ import com.intellij.database.datagrid.GridRequestSource;
 import com.intellij.database.datagrid.GridRow;
 import com.intellij.database.datagrid.HierarchicalColumnsCollapseManager;
 import com.intellij.database.datagrid.ModelIndex;
+import com.intellij.database.editor.DataGridColors;
 import com.intellij.database.run.ui.DataAccessType;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.structureView.FileEditorPositionListener;
@@ -30,6 +31,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,26 +43,23 @@ import java.util.List;
 /**
  * @author Sergey.Rieder
  */
-public class TableEditorStructureViewModel implements StructureViewModel, StructureViewModel.ElementInfoProvider {
+@ApiStatus.Internal
+public final class TableEditorStructureViewModel implements StructureViewModel, StructureViewModel.ElementInfoProvider {
 
   private final Project myProject;
   private final DataGrid myDataGrid;
   private final List<Object> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final Disposable myDisposable = Disposer.newDisposable();
 
-  public TableEditorStructureViewModel(@NotNull TableEditorBase editor) {
-    this(editor.getProject(), editor.getDataGrid());
-  }
-
-  public TableEditorStructureViewModel(@NotNull Project project, @NotNull DataGrid dataGrid) {
+  TableEditorStructureViewModel(@NotNull Project project, @NotNull DataGrid dataGrid) {
     myProject = project;
     myDataGrid = dataGrid;
     myDataGrid.addDataGridListener(new DataGridListener() {
       @Override
       public void onSelectionChanged(DataGrid dataGrid) {
         for (Object listener : myListeners) {
-          if (listener instanceof FileEditorPositionListener) {
-            ((FileEditorPositionListener)listener).onCurrentElementChanged();
+          if (listener instanceof FileEditorPositionListener positionListener) {
+            positionListener.onCurrentElementChanged();
           }
         }
       }
@@ -68,8 +67,8 @@ public class TableEditorStructureViewModel implements StructureViewModel, Struct
       @Override
       public void onContentChanged(DataGrid dataGrid, @Nullable GridRequestSource.RequestPlace place) {
         for (Object listener : myListeners) {
-          if (listener instanceof ModelListener) {
-            ((ModelListener)listener).onModelChanged();
+          if (listener instanceof ModelListener modelListener) {
+            modelListener.onModelChanged();
           }
         }
       }
