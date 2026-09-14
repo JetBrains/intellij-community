@@ -94,7 +94,10 @@ public abstract class EditorAction extends AnAction implements DumbAware, LightE
       String actionId = ActionManager.getInstance().getId(this);
       InputEvent inputEvent = e.getInputEvent();
       if (actionId != null && inputEvent != null) {
-        LatencyRecorder.getInstance().recordLatencyAwareAction(editor, actionId, inputEvent.getWhen());
+        LatencyRecorder latencyRecorder = LatencyRecorder.getInstance();
+        if (latencyRecorder != null) {
+          latencyRecorder.recordLatencyAwareAction(editor, actionId, inputEvent.getWhen());
+        }
       }
     }
     if (this.getTemplatePresentation().isRWLockRequired()) {
