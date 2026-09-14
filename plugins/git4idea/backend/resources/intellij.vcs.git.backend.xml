@@ -293,6 +293,7 @@
     <group id="Git.Branches.List">
       <reference ref="Git.Ongoing.Rebase.Actions"/>
       <reference ref="Git.CreateNewBranch"/>
+      <reference ref="Git.CreateNewWorkingTree"/>
       <action class="git4idea.actions.branch.GitCheckoutFromInputAction"/>
     </group>
 
