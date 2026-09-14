@@ -152,6 +152,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
   val sessionDataId: XDebugSessionDataId
 
   private val myActiveNonLineBreakpointAndPositionFlow = MutableStateFlow<Pair<XBreakpoint<*>, XSourcePosition?>?>(null)
+  @Volatile private var myHitBreakpoint: XBreakpoint<*>? = null
   private val myPausedEvents = MutableSharedFlow<XDebugSessionPausedInfo>(replay = 1, extraBufferCapacity = 1)
   private val myTabClients = Collections.synchronizedSet(HashSet<Disposable>())
   private val myShowTabDeferred = CompletableDeferred<Unit>()
@@ -790,6 +791,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
     this.currentExecutionStack = null
     currentStackFrame = null
     topStackFrame.value = null
+    myHitBreakpoint = null
     clearActiveNonLineBreakpoint()
   }
 
@@ -841,6 +843,14 @@ class XDebugSessionImpl @JvmOverloads constructor(
   fun activateSession(forceUpdateExecutionPosition: Boolean) {
     debuggerManager.setCurrentSession(this)
   }
+
+  /**
+   * The breakpoint of any type that stopped the session. Null after a step, a pause, a resume, or a stop the debug
+   * process reported without a breakpoint, so a step that ends on a line with a breakpoint names none.
+   * [activeNonLineBreakpoint] is the narrower view for the execution point UI.
+   */
+  val hitBreakpoint: XBreakpoint<*>?
+    @ApiStatus.Internal get() = myHitBreakpoint
 
   val activeNonLineBreakpoint: XBreakpoint<*>? get() = myActiveNonLineBreakpointFlow.value
   val activeNonLineBreakpointFlow: StateFlow<XBreakpoint<*>?> get() = myActiveNonLineBreakpointFlow
@@ -933,6 +943,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
     // set this session active on breakpoint, update execution position will be called inside positionReached
     debuggerManager.setCurrentSession(this)
 
+    myHitBreakpoint = breakpoint
     positionReachedInternal(suspendContext, true)
 
     if (doProcessing && breakpoint is XBreakpointBase<*, *, *> && breakpoint.isTemporary) {
@@ -1006,6 +1017,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
   }
 
   override fun positionReached(suspendContext: XSuspendContext, attract: Boolean) {
+    myHitBreakpoint = null
     clearActiveNonLineBreakpoint()
     positionReachedInternal(suspendContext, attract)
   }
