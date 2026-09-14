@@ -58,8 +58,11 @@ enum class ScanningStallKind {
    */
   CANCELLATION_UNOBSERVED,
 
-  /** Canceled and correctly marked; the thread simply has not reached its next cancellation check yet. */
-  CANCELED_NOT_YET_NOTICED,
+  /**
+   * The indicator reports canceled, the thread is correctly marked, and the thread still holds the read
+   * action. The check runs only after the grace period, so the thread already had that long to stop.
+   */
+  CANCELED_AND_MARKED,
 }
 
 @Internal
@@ -69,9 +72,7 @@ class ScanningStallEntry(
   @JvmField val ageMs: Long,
   @JvmField val kind: ScanningStallKind,
   @JvmField val underCanceledIndicator: Boolean,
-) {
-  val isStalled: Boolean get() = kind != ScanningStallKind.CANCELED_NOT_YET_NOTICED
-}
+)
 
 @Internal
 class ScanningStallReport(
@@ -81,13 +82,13 @@ class ScanningStallReport(
   @JvmField val entries: List<ScanningStallEntry>,
   @JvmField val recentWriteActions: List<String>,
 ) {
-  val stalled: List<ScanningStallEntry> get() = entries.filter { it.isStalled }
-
   fun summary(): String {
-    val notCanceled = stalled.count { it.kind == ScanningStallKind.NOT_CANCELED }
-    val unobserved = stalled.count { it.kind == ScanningStallKind.CANCELLATION_UNOBSERVED }
+    val notCanceled = entries.count { it.kind == ScanningStallKind.NOT_CANCELED }
+    val unobserved = entries.count { it.kind == ScanningStallKind.CANCELLATION_UNOBSERVED }
+    val markedAndRunning = entries.count { it.kind == ScanningStallKind.CANCELED_AND_MARKED }
     return "Scanning thread(s) did not stop for a pending write action: " +
-           "$notCanceled not canceled, $unobserved with unobservable cancellation"
+           "$notCanceled not canceled, $unobserved with unobservable cancellation, " +
+           "$markedAndRunning canceled and marked"
   }
 
   fun details(): String = buildString {
@@ -224,8 +225,8 @@ class ScanningCancellationMonitor(
       val entries = tracker.activeReadActions()
         .filter { it.startedAtNanos < writeActionStartedAtNanos }
         .map { classify(it) }
-      if (entries.none { it.isStalled }) {
-        // either everything stopped, or the remaining workers are correctly canceled and simply have not noticed yet
+      if (entries.isEmpty()) {
+        // every worker released its read action, so nothing held the write action up
         return
       }
 
@@ -271,7 +272,7 @@ class ScanningCancellationMonitor(
     val kind = when {
       !indicator.isCanceled -> ScanningStallKind.NOT_CANCELED
       !underCanceledIndicator -> ScanningStallKind.CANCELLATION_UNOBSERVED
-      else -> ScanningStallKind.CANCELED_NOT_YET_NOTICED
+      else -> ScanningStallKind.CANCELED_AND_MARKED
     }
     return ScanningStallEntry(
       thread = readAction.thread,
@@ -283,7 +284,7 @@ class ScanningCancellationMonitor(
   }
 
   private fun repair(entries: List<ScanningStallEntry>) {
-    val threads = entries.filter { it.isStalled }.mapTo(HashSet()) { it.thread }
+    val threads = entries.mapTo(HashSet()) { it.thread }
     if (threads.isEmpty()) return
     val repaired = tracker.activeReadActions().filter { it.thread in threads }
     for (readAction in repaired) {

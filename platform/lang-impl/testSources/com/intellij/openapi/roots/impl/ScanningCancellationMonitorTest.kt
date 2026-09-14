@@ -2,6 +2,7 @@
 package com.intellij.openapi.roots.impl
 
 import com.intellij.concurrency.SensitiveProgressWrapper
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.platform.util.coroutines.childScope
@@ -68,7 +69,7 @@ class ScanningCancellationMonitorTest {
 
     val report = awaitReport()
 
-    val stalled = report.stalled.single()
+    val stalled = report.entries.single()
     assertEquals(ScanningStallKind.NOT_CANCELED, stalled.kind)
     assertTrue(wrapper.isCanceled, "the monitor must cancel the indicator it reported")
     // exercises the formatting, including dumping the stack of a thread that was never started
@@ -88,7 +89,7 @@ class ScanningCancellationMonitorTest {
 
     val report = awaitReport()
 
-    assertEquals(ScanningStallKind.CANCELLATION_UNOBSERVED, report.stalled.single().kind)
+    assertEquals(ScanningStallKind.CANCELLATION_UNOBSERVED, report.entries.single().kind)
   }
 
   @Test
@@ -189,6 +190,29 @@ class ScanningCancellationMonitorTest {
     val recent = reports.get(TIMEOUT_SECONDS, TimeUnit.SECONDS).recentWriteActions
     assertTrue(recent.size in 1..64, "history must stay bounded, was ${recent.size}")
     assertTrue(recent.last().contains("pending"), recent.last())
+  }
+
+  @Test
+  fun `a canceled and marked thread that still holds the read action is reported`() {
+    val wrapper = sensitiveWrapper()
+    val reports = CompletableFuture<ScanningStallReport>()
+    val monitor = monitor(reports) { 0 }
+    // Runs under the indicator so that the platform marks this thread. That is the state the monitor used
+    // to excuse as "not yet noticed", although the grace period had already passed.
+    ProgressManager.getInstance().runProcess({
+      val thread = Thread.currentThread()
+      val outer = tracker.register(thread, wrapper)
+      try {
+        wrapper.cancel()
+        assertTrue(CoreProgressManager.hasThreadUnderCanceledIndicator(thread))
+        monitor.beforeWriteActionStart(javaClass)
+        val report = reports.get(TIMEOUT_SECONDS, TimeUnit.SECONDS)
+        assertEquals(ScanningStallKind.CANCELED_AND_MARKED, report.entries.single().kind)
+      }
+      finally {
+        tracker.unregister(thread, outer)
+      }
+    }, wrapper)
   }
 
   private fun monitor(reports: CompletableFuture<ScanningStallReport>, graceMs: () -> Long): ScanningCancellationMonitor =
