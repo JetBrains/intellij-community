@@ -5,8 +5,10 @@ package org.jetbrains.kotlin.idea.completion.impl.k2.lookups
 import com.intellij.codeInsight.completion.InsertionContext
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.compositeScope
 import org.jetbrains.kotlin.analysis.api.components.importingScopeContext
+import org.jetbrains.kotlin.analysis.api.scopes.KaScope
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaKotlinPropertySymbol
@@ -45,27 +47,42 @@ internal fun addImportIfRequired(
     context.doPostponedOperationsAndUnblockDocument()
 }
 
-private fun alreadyHasImport(file: KtFile, nameToImport: FqName): Boolean {
-    if (file.importDirectives.any { it.importPath?.fqName == nameToImport }) return true
+internal fun alreadyHasImport(file: KtFile, nameToImport: FqName): Boolean {
+    if (hasImportDirective(file, nameToImport)) return true
 
     withAllowedResolve {
         analyze(file) {
-            val scope = file.importingScopeContext.compositeScope()
-            if (!scope.mayContainName(nameToImport.shortName())) return false
-
-            val anyCallableSymbolMatches = scope
-                .callables(nameToImport.shortName())
-                .any { callable ->
-                    val callableFqName = callable.callableId?.asSingleFqName()
-                    callable is KaKotlinPropertySymbol && callableFqName == nameToImport ||
-                            callable is KaNamedFunctionSymbol && callableFqName == nameToImport
-                }
-            if (anyCallableSymbolMatches) return true
-
-            return scope.classifiers(nameToImport.shortName()).any { classifier ->
-                val classId = (classifier as? KaClassLikeSymbol)?.classId
-                classId?.asSingleFqName() == nameToImport
-            }
+            return importingScope(file).hasDeclaration(nameToImport)
         }
+    }
+}
+
+internal fun hasImportDirective(file: KtFile, nameToImport: FqName): Boolean {
+    return file.importDirectives.any { it.importPath?.fqName == nameToImport }
+}
+
+/**
+ * The scope [alreadyHasImport] looks in: explicit, default and package imports of [file]. It depends on the file only,
+ * so a caller that checks many names builds it once per analysis.
+ */
+context(_: KaSession)
+internal fun importingScope(file: KtFile): KaScope = file.importingScopeContext.compositeScope()
+
+/** Whether this importing scope has a property, a function or a classifier of [nameToImport]. */
+context(_: KaSession)
+internal fun KaScope.hasDeclaration(nameToImport: FqName): Boolean {
+    if (!mayContainName(nameToImport.shortName())) return false
+
+    val anyCallableSymbolMatches = callables(nameToImport.shortName())
+        .any { callable ->
+            val callableFqName = callable.callableId?.asSingleFqName()
+            callable is KaKotlinPropertySymbol && callableFqName == nameToImport ||
+                    callable is KaNamedFunctionSymbol && callableFqName == nameToImport
+        }
+    if (anyCallableSymbolMatches) return true
+
+    return classifiers(nameToImport.shortName()).any { classifier ->
+        val classId = (classifier as? KaClassLikeSymbol)?.classId
+        classId?.asSingleFqName() == nameToImport
     }
 }
