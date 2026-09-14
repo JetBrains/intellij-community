@@ -12,11 +12,12 @@ import kotlin.test.assertTrue
 
 class ExternalEntityMappingImplTest {
   private val externalMappingKey = ExternalMappingKey.create<Any>("test.my.mapping")
+
   @Test
   fun `mapping mutability test`() {
     val initialBuilder = createEmptyBuilder()
     val sampleEntity = initialBuilder addEntity SampleEntity(false, "123", ArrayList(), HashMap(),
-                                                             ConcurrentVirtualFileUrlManager().getOrCreateFromUrl("file:///tmp"),
+                                                             ConcurrentVirtualFileUrlManager().storeAndGet("file:///tmp"),
                                                              SampleEntitySource("test"))
     val mutableMapping = initialBuilder.getMutableExternalMapping(externalMappingKey)
     mutableMapping.addMapping(sampleEntity, 1)
@@ -24,7 +25,7 @@ class ExternalEntityMappingImplTest {
     val newBuilder = createBuilderFrom(initialBuilder)
 
     val anotherEntity = initialBuilder addEntity SampleEntity(false, "321", ArrayList(), HashMap(),
-                                                              ConcurrentVirtualFileUrlManager().getOrCreateFromUrl("file:///tmp"),
+                                                              ConcurrentVirtualFileUrlManager().storeAndGet("file:///tmp"),
                                                               SampleEntitySource("test"))
     mutableMapping.addMapping(anotherEntity, 2)
 

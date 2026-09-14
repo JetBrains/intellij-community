@@ -8,7 +8,7 @@ import org.junit.Assert
 import org.junit.Ignore
 import org.junit.Test
 
-class SimpleMetadataSerializationTest: MetadataSerializationTest() {
+class SimpleMetadataSerializationTest : MetadataSerializationTest() {
 
   @Test
   fun `changed props order entity`() {
@@ -78,7 +78,9 @@ class SimpleMetadataSerializationTest: MetadataSerializationTest() {
 
     builder addEntity com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.AnotherOneToManyRefEntity(
       version = 2,
-      someData = com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.OneToManyRefDataClass(listOf(hashSetOf("something"), hashSetOf("text")), 4),
+      someData = com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.OneToManyRefDataClass(listOf(hashSetOf("something"),
+                                                                                                                         hashSetOf("text")),
+                                                                                                                  4),
       SampleEntitySource("test")
     ) {
       parentEntity = oneToManyRefEntity
@@ -202,7 +204,7 @@ class SimpleMetadataSerializationTest: MetadataSerializationTest() {
     builder addEntity com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.KeyPropEntity(
       someInt = 5,
       text = "cache version",
-      url = virtualFileManager.getOrCreateFromUrl("file:///tmp"),
+      url = virtualFileManager.storeAndGet("file:///tmp"),
       SampleEntitySource("test")
     )
 

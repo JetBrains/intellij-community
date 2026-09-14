@@ -144,7 +144,7 @@ class ArtifactModifiableModelBridge(
       }
     }
 
-    val outputUrl = outputPath?.let { fileManager.getOrCreateFromUrl(VfsUtilCore.pathToUrl(it)) }
+    val outputUrl = outputPath?.let { fileManager.storeAndGet(VfsUtilCore.pathToUrl(it)) }
     val artifactEntity = diff addEntity ArtifactEntity(uniqueName, artifactType.id, false, source) {
       this.outputUrl = outputUrl
       this.rootElement = rootElementEntity

@@ -102,7 +102,7 @@ final class EclipseClasspathStorageProvider implements ClasspathStorageProvider 
       VirtualFileUrlManager virtualFileUrlManager = WorkspaceModel.getInstance(model.getModule().getProject()).getVirtualFileUrlManager();
       String contentRoot = getContentRoot(model);
       String classpathFileUrl = VfsUtilCore.pathToUrl(contentRoot) + "/" + EclipseXml.CLASSPATH_FILE;
-      return new EclipseProjectFile(virtualFileUrlManager.getOrCreateFromUrl(classpathFileUrl), (JpsFileEntitySource)source);
+      return new EclipseProjectFile(virtualFileUrlManager.storeAndGet(classpathFileUrl), (JpsFileEntitySource)source);
     });
   }
 

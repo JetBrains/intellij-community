@@ -73,7 +73,7 @@ fun String.toVirtualFileUrl(fileUrlManager: VirtualFileUrlManager): VirtualFileU
         else -> URLUtil.FILE_PROTOCOL + URLUtil.SCHEME_SEPARATOR + FileUtil.toSystemIndependentName(this)
     }
 
-    return fileUrlManager.getOrCreateFromUrl(url)
+    return fileUrlManager.storeAndGet(url)
 }
 
 private fun Iterable<ScriptDependency>.toVirtualFileUrls(urlManager: VirtualFileUrlManager): List<VirtualFileUrl> =

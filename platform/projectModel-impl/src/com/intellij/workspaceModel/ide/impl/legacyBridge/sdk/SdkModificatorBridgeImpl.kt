@@ -70,7 +70,7 @@ internal class SdkModificatorBridgeImpl(
     if (path != null) {
       val descriptor = getMachine(path)
       val globalInstance = GlobalWorkspaceModel.getInstance(descriptor).getVirtualFileUrlManager()
-      modifiedSdkEntity.homePath = globalInstance.getOrCreateFromUrl(path)
+      modifiedSdkEntity.homePath = globalInstance.storeAndGet(path)
       modifiedSdkEntity.entitySource = SdkBridgeImpl.createEntitySourceForSdk(descriptor.getInternalEnvironmentName())
     }
     else {

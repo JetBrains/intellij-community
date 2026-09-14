@@ -93,7 +93,7 @@ class GlobalLibraryTableBridgeImpl(val eelMachine: EelMachine) : GlobalLibraryTa
       is InternalEnvironmentName.Custom -> optionsDir.resolve(environmentName.name)
     }
     val globalLibrariesFile = environmentDir.resolve(JpsGlobalEntitiesSerializers.GLOBAL_LIBRARIES_FILE_NAME + PathManager.DEFAULT_EXT)
-    return JpsGlobalFileEntitySource(virtualFileUrlManager.getOrCreateFromUrl(globalLibrariesFile.toAbsolutePath().toString()))
+    return JpsGlobalFileEntitySource(virtualFileUrlManager.storeAndGet(globalLibrariesFile.toAbsolutePath().toString()))
   }
 
   companion object {

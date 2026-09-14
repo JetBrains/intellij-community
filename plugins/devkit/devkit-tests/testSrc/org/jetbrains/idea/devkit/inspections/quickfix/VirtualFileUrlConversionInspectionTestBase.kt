@@ -37,7 +37,7 @@ abstract class VirtualFileUrlConversionInspectionTestBase : LightDevKitInspectio
     myFixture.addClass(
       """package com.intellij.platform.workspace.storage.url;
         |public interface VirtualFileUrlManager {
-        |  VirtualFileUrl getOrCreateFromUrl(String url);
+        |  VirtualFileUrl storeAndGet(String url);
         |}""".trimMargin()
     )
   }

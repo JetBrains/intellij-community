@@ -288,12 +288,12 @@ class NoIteratingUnderExcludedRootsTest {
     val workspaceModel = WorkspaceModel.getInstance(projectModel.project)
     val virtualFileUrlManager = workspaceModel.getVirtualFileUrlManager()
     workspaceModel.updateProjectModel("register content under excluded") { builder ->
-      builder.addEntity(ExcludeUrlEntity(virtualFileUrlManager.getOrCreateFromUrl(VfsUtilCore.pathToUrl(excludedRoot.pathString)),
+      builder.addEntity(ExcludeUrlEntity(virtualFileUrlManager.storeAndGet(VfsUtilCore.pathToUrl(excludedRoot.pathString)),
                                          NonPersistentEntitySource))
       val moduleEntity = builder.resolve(ModuleId(module.name))!!
       builder.modifyModuleEntity(moduleEntity) {
         this.contentRoots += contentRoots.map { contentRoot ->
-          ContentRootEntity(virtualFileUrlManager.getOrCreateFromUrl(VfsUtilCore.pathToUrl(contentRoot.pathString)),
+          ContentRootEntity(virtualFileUrlManager.storeAndGet(VfsUtilCore.pathToUrl(contentRoot.pathString)),
                             emptyList<@NlsSafe String>(),
                             moduleEntity.entitySource)
         }

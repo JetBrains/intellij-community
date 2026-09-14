@@ -42,11 +42,11 @@ class LibraryBridgeVirtualFileUrlTest {
 
     val root = projectLibraryRoot(LibraryTableId.ProjectLibraryTableId)
     assertSame(
-      projectManager.getOrCreateFromUrl(CLASSES_URL), root.url,
+      projectManager.storeAndGet(CLASSES_URL), root.url,
       "the URL of a project library root must be the instance from the manager of the project",
     )
     assertNotSame(
-      globalManager.getOrCreateFromUrl(CLASSES_URL), root.url,
+      globalManager.storeAndGet(CLASSES_URL), root.url,
       "the URL of a project library root must not come from the global manager",
     )
   }
@@ -63,7 +63,7 @@ class LibraryBridgeVirtualFileUrlTest {
     val globalSnapshot = GlobalWorkspaceModel.getInstance(LocalEelMachine).currentSnapshot
     val root = libraryRoot(globalSnapshot.resolve(LibraryId(LIBRARY_NAME, tableId))?.roots)
     assertSame(
-      globalManager.getOrCreateFromUrl(CLASSES_URL), root.url,
+      globalManager.storeAndGet(CLASSES_URL), root.url,
       "the URL of an application library root must be the instance from the global manager",
     )
 
@@ -73,7 +73,7 @@ class LibraryBridgeVirtualFileUrlTest {
       WorkspaceModel.getInstance(projectModel.project).currentSnapshot.resolve(LibraryId(LIBRARY_NAME, tableId))?.roots
     )
     assertSame(
-      projectManager.getOrCreateFromUrl(CLASSES_URL), copiedRoot.url,
+      projectManager.storeAndGet(CLASSES_URL), copiedRoot.url,
       "the copy in the project must use the manager of the project",
     )
   }

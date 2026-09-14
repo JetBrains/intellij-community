@@ -100,13 +100,13 @@ object JpsProjectEntitiesLoader {
     val externalModuleListSerializer = ExternalModuleListSerializer(externalStorageRoot, context)
 
     val entityTypeSerializers: MutableList<JpsFileEntityTypeSerializer<*>> = mutableListOf(
-      JpsLibrariesExternalFileSerializer(librariesExternalStorageFile, virtualFileManager.getOrCreateFromUrl(librariesDirectoryUrl),
+      JpsLibrariesExternalFileSerializer(librariesExternalStorageFile, virtualFileManager.storeAndGet(librariesDirectoryUrl),
                                          context.fileInDirectorySourceNames))
 
     val artifactsExternalStorageFile = JpsProjectFileEntitySource.ExactFile(externalStorageRoot.append("project/artifacts.xml"),
                                                                             configLocation)
     val artifactsExternalFileSerializer = JpsArtifactsExternalFileSerializer(artifactsExternalStorageFile,
-                                                                             virtualFileManager.getOrCreateFromUrl(artifactsDirectoryUrl),
+                                                                             virtualFileManager.storeAndGet(artifactsDirectoryUrl),
                                                                              context.fileInDirectorySourceNames,
                                                                              virtualFileManager)
     entityTypeSerializers += artifactsExternalFileSerializer

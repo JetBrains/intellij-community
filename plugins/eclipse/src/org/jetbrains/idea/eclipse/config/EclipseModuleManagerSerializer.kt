@@ -41,7 +41,7 @@ class EclipseModuleManagerSerializer : CustomModuleComponentSerializer {
     }
     entity.apply {
       componentTag.getChildren(LIBELEMENT).forEach {
-        eclipseUrls.add(virtualFileManager.getOrCreateFromUrl(it.getAttributeValue(VALUE_ATTR)!!))
+        eclipseUrls.add(virtualFileManager.storeAndGet(it.getAttributeValue(VALUE_ATTR)!!))
       }
       componentTag.getChildren(VARELEMENT).forEach {
         variablePaths = variablePaths.toMutableMap().also { map ->

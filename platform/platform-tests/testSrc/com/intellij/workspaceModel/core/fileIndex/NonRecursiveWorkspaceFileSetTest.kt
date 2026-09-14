@@ -88,7 +88,7 @@ class NonRecursiveWorkspaceFileSetTest {
     val workspaceModel = projectModel.project.serviceAsync<WorkspaceModel>()
     val rootUrl = VfsUtilCore.pathToUrl(projectModel.baseProjectDir.rootPath.resolve("nonRecursiveRoot").invariantSeparatorsPathString)
     workspaceModel.update {
-      val url = workspaceModel.getVirtualFileUrlManager().getOrCreateFromUrl(rootUrl)
+      val url = workspaceModel.getVirtualFileUrlManager().storeAndGet(rootUrl)
       it.addEntity(NonRecursiveTestEntity(url, NonPersistentEntitySource))
     }
 

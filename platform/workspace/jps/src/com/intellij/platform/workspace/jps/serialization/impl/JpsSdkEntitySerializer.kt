@@ -84,7 +84,7 @@ class JpsSdkEntitySerializer(val entitySource: JpsGlobalFileEntitySource, privat
     }
     val sdkVersion = sdkElement.getChild(ELEMENT_VERSION)?.getAttributeValue(ATTRIBUTE_VALUE)
     val homePath = sdkElement.getChild(ELEMENT_HOMEPATH).getAttributeValueStrict(ATTRIBUTE_VALUE)
-    val homePathVfu = virtualFileManager.getOrCreateFromUrl(homePath)
+    val homePathVfu = virtualFileManager.storeAndGet(homePath)
 
     val roots = readRoots(sdkElement.getChildTagStrict(ELEMENT_ROOTS), virtualFileManager)
 
@@ -117,7 +117,7 @@ class JpsSdkEntitySerializer(val entitySource: JpsGlobalFileEntitySource, privat
       val composite = composites[0]
       for (rootTag in composite.getChildren(JpsJavaModelSerializerExtension.ROOT_TAG)) {
         val url = rootTag.getAttributeValueStrict(JpsModuleRootModelSerializer.URL_ATTRIBUTE)
-        result.add(SdkRoot(virtualFileManager.getOrCreateFromUrl(url), rootTypes[rootType]!!))
+        result.add(SdkRoot(virtualFileManager.storeAndGet(url), rootTypes[rootType]!!))
       }
     }
     return result

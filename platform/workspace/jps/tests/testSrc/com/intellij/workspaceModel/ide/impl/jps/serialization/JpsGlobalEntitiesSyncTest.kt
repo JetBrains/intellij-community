@@ -105,9 +105,9 @@ class JpsGlobalEntitiesSyncTest {
           val virtualFileManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
           WorkspaceModel.getInstance(project).updateProjectModel("Test update") { builder ->
             val projectSdkEntity = SdkEntity("oracle-1.8", "JavaSDK",
-                                             listOf(SdkRoot(virtualFileManager.getOrCreateFromUrl("/Library/Java/JavaVirtualMachines/oracle-1.8/Contents/Home!/java.base"), SdkRootTypeId("sourcePath"))),
+                                             listOf(SdkRoot(virtualFileManager.storeAndGet("/Library/Java/JavaVirtualMachines/oracle-1.8/Contents/Home!/java.base"), SdkRootTypeId("sourcePath"))),
                                              "", entitySource) {
-              homePath = virtualFileManager.getOrCreateFromUrl("/Library/Java/JavaVirtualMachines/oracle-1.8/Contents/Home")
+              homePath = virtualFileManager.storeAndGet("/Library/Java/JavaVirtualMachines/oracle-1.8/Contents/Home")
               version = "1.8"
             }
             builder.addEntity(projectSdkEntity)
@@ -145,8 +145,8 @@ class JpsGlobalEntitiesSyncTest {
         val globalVfu = sdkEntities.find { it.name == projectSdk.name }!!.roots[0].url
 
         assertEquals(globalVfu.url, projectVfu.url)
-        assertSame(projectVfu, projectVirtualFileUrlManager.getOrCreateFromUrl(projectVfu.url))
-        assertSame(globalVfu, globalVirtualFileUrlManager.getOrCreateFromUrl(globalVfu.url))
+        assertSame(projectVfu, projectVirtualFileUrlManager.storeAndGet(projectVfu.url))
+        assertSame(globalVfu, globalVirtualFileUrlManager.storeAndGet(globalVfu.url))
         assertNotSame(globalVfu, projectVfu)
       }
     }
@@ -194,7 +194,7 @@ class JpsGlobalEntitiesSyncTest {
             val gradleLibraryEntity = LibraryEntity("com.gradle",
                                                     LibraryTableId.GlobalLibraryTableId(LibraryTablesRegistrar.APPLICATION_LEVEL),
                                                     listOf(
-                                                      LibraryRoot(virtualFileManager.getOrCreateFromUrl("/a/b/one.txt"), LibraryRootTypeId.SOURCES)),
+                                                      LibraryRoot(virtualFileManager.storeAndGet("/a/b/one.txt"), LibraryRootTypeId.SOURCES)),
                                                     entitySource)
             builder.addEntity(gradleLibraryEntity)
             globalLibrariesNames.add(gradleLibraryEntity.name)
@@ -236,8 +236,8 @@ class JpsGlobalEntitiesSyncTest {
         val globalVfu = globalLibraryEntities[projectLibrary.name]!!.roots[0].url
 
         assertEquals(globalVfu.url, projectVfu.url)
-        assertSame(projectVfu, projectVirtualFileUrlManager.getOrCreateFromUrl(projectVfu.url))
-        assertSame(globalVfu, globalVirtualFileUrlManager.getOrCreateFromUrl(globalVfu.url))
+        assertSame(projectVfu, projectVirtualFileUrlManager.storeAndGet(projectVfu.url))
+        assertSame(globalVfu, globalVirtualFileUrlManager.storeAndGet(globalVfu.url))
         assertNotSame(globalVfu, projectVfu)
       }
     }

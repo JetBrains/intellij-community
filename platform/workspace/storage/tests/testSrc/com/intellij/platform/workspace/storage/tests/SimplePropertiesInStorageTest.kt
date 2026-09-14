@@ -33,7 +33,7 @@ class SimplePropertiesInStorageTest {
     val builder = createEmptyBuilder()
     val source = SampleEntitySource("test")
     val entity = builder addEntity SampleEntity(true, "hello", mutableListOf("one", "two"), HashMap(),
-                                                virtualFileManager.getOrCreateFromUrl("file:///tmp"), source)
+                                                virtualFileManager.storeAndGet("file:///tmp"), source)
     assertTrue(entity.booleanProperty)
     assertEquals("hello", entity.stringProperty)
     assertEquals(listOf("one", "two"), entity.stringListProperty)
@@ -44,7 +44,8 @@ class SimplePropertiesInStorageTest {
   @Test
   fun `remove entity`() {
     val builder = createEmptyBuilder()
-    val entity = builder addEntity SampleEntity(false, "hello", ArrayList(), HashMap(), ConcurrentVirtualFileUrlManager().getOrCreateFromUrl("file:///tmp"),
+    val entity = builder addEntity SampleEntity(false, "hello", ArrayList(), HashMap(),
+                                                ConcurrentVirtualFileUrlManager().storeAndGet("file:///tmp"),
                                                 SampleEntitySource("test"))
     builder.removeEntity(entity)
     assertTrue(builder.entities(SampleEntity::class.java).toList().isEmpty())
@@ -55,12 +56,12 @@ class SimplePropertiesInStorageTest {
   fun `modify entity`() {
     val builder = createEmptyBuilder()
     val original = builder addEntity SampleEntity(false, "hello", ArrayList(), HashMap(),
-                                                  ConcurrentVirtualFileUrlManager().getOrCreateFromUrl("file:///tmp"), SampleEntitySource("test"))
+                                                  ConcurrentVirtualFileUrlManager().storeAndGet("file:///tmp"), SampleEntitySource("test"))
     val modified = builder.modifySampleEntity(original) {
       stringProperty = "foo"
       stringListProperty.add("first")
       booleanProperty = true
-      fileProperty = virtualFileManager.getOrCreateFromUrl("file:///xxx")
+      fileProperty = virtualFileManager.storeAndGet("file:///xxx")
     }
     assertEquals("hello", original.stringProperty)
     assertEquals(emptyList<String>(), original.stringListProperty)
@@ -73,7 +74,7 @@ class SimplePropertiesInStorageTest {
   @Test
   fun `builder from storage`() {
     val storage = createEmptyBuilder().apply {
-      this addEntity SampleEntity(false, "hello", ArrayList(), HashMap(), ConcurrentVirtualFileUrlManager().getOrCreateFromUrl("file:///tmp"),
+      this addEntity SampleEntity(false, "hello", ArrayList(), HashMap(), ConcurrentVirtualFileUrlManager().storeAndGet("file:///tmp"),
                                   SampleEntitySource("test"))
     }.toSnapshot()
 
@@ -93,7 +94,7 @@ class SimplePropertiesInStorageTest {
   @Test
   fun `snapshot from builder`() {
     val builder = createEmptyBuilder()
-    builder addEntity SampleEntity(false, "hello", ArrayList(), HashMap(), ConcurrentVirtualFileUrlManager().getOrCreateFromUrl("file:///tmp"),
+    builder addEntity SampleEntity(false, "hello", ArrayList(), HashMap(), ConcurrentVirtualFileUrlManager().storeAndGet("file:///tmp"),
                                    SampleEntitySource("test"))
 
     val snapshot = builder.toSnapshot()
@@ -143,7 +144,8 @@ class SimplePropertiesInStorageTest {
     val builder = createEmptyBuilder()
     val source1 = SampleEntitySource("1")
     val source2 = SampleEntitySource("2")
-    val foo = builder addEntity SampleEntity(false, "foo", ArrayList(), HashMap(), ConcurrentVirtualFileUrlManager().getOrCreateFromUrl("file:///tmp"),
+    val foo = builder addEntity SampleEntity(false, "foo", ArrayList(), HashMap(),
+                                             ConcurrentVirtualFileUrlManager().storeAndGet("file:///tmp"),
                                              source1)
     val foo2 = builder.modifySampleEntity(foo) { this.entitySource = source2 }
     assertEquals(source1, foo.entitySource)
@@ -156,8 +158,12 @@ class SimplePropertiesInStorageTest {
   @Test
   fun `test trying to modify non-existing entity`() {
     val builder = createEmptyBuilder()
-    val sampleEntity = builder addEntity SampleEntity(false, "Prop", ArrayList(), HashMap(),
-                                                      ConcurrentVirtualFileUrlManager().getOrCreateFromUrl("file:///tmp"), SampleEntitySource("test"))
+    val sampleEntity = builder addEntity SampleEntity(false,
+                                                      "Prop",
+                                                      ArrayList(),
+                                                      HashMap(),
+                                                      ConcurrentVirtualFileUrlManager().storeAndGet("file:///tmp"),
+                                                      SampleEntitySource("test"))
     val anotherBuilder = createEmptyBuilder()
     assertThrows<IllegalStateException> {
       anotherBuilder.modifySampleEntity(sampleEntity) {

@@ -11,16 +11,16 @@ class Conversions {
     fileUrl: VirtualFileUrl,
     plainUrl: String,
   ) {
-    urlManager.<warning descr="Use 'toVirtualFileUrl(...)' to cache the VirtualFile-to-VirtualFileUrl association">getOrCreateFromUrl</warning>(file.url)
+    urlManager.<warning descr="Use `get` or `storeAndGet` extension that accepts VirtualFile to cache the VirtualFile-to-VirtualFileUrl association">storeAndGet</warning>(file.url)
     fileManager.<warning descr="Use 'VirtualFileUrl.virtualFile' to reuse the cached VirtualFile">findFileByUrl</warning>(fileUrl.url)
 
     val urlFromFile = file.url
-    urlManager.<warning descr="Use 'toVirtualFileUrl(...)' to cache the VirtualFile-to-VirtualFileUrl association">getOrCreateFromUrl</warning>(urlFromFile)
+    urlManager.<warning descr="Use `get` or `storeAndGet` extension that accepts VirtualFile to cache the VirtualFile-to-VirtualFileUrl association">storeAndGet</warning>(urlFromFile)
 
     val urlFromFileUrl = fileUrl.url
     fileManager.<warning descr="Use 'VirtualFileUrl.virtualFile' to reuse the cached VirtualFile">findFileByUrl</warning>(urlFromFileUrl)
 
-    urlManager.getOrCreateFromUrl(plainUrl)
+    urlManager.storeAndGet(plainUrl)
     fileManager.findFileByUrl(file.url)
     fileManager.findFileByUrl(plainUrl)
 

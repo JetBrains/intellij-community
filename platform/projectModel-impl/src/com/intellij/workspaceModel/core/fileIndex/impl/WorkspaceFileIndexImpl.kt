@@ -142,7 +142,7 @@ class WorkspaceFileIndexImpl : WorkspaceFileIndexEx, Disposable.Default {
       if (file != null) {
         return ThreeState.fromBoolean(isInContent(file))
       }
-      val virtualFileUrl = urlManager.findByUrl(currentUrl)
+        val virtualFileUrl = urlManager.get(currentUrl)
       if (virtualFileUrl != null) {
         val kinds = getMainIndexData().getNonExistentFileSetKinds(virtualFileUrl, includeNonRecursive)
         if (NonExistingFileSetKind.EXCLUDED_FROM_CONTENT in kinds) {
@@ -165,7 +165,7 @@ class WorkspaceFileIndexImpl : WorkspaceFileIndexEx, Disposable.Default {
   }
 
   override fun isUrlIndexableRecursiveFileSetRoot(url: String): Boolean {
-    val virtualFileUrl = project.workspaceModel.getVirtualFileUrlManager().findByUrl(url)
+      val virtualFileUrl = project.workspaceModel.getVirtualFileUrlManager().get(url)
     // MAYBE IM: do early return if virtualFileUrl == null, when all filesets must be registered by VirtualFileUrl
 
     if (virtualFileUrl != null) {

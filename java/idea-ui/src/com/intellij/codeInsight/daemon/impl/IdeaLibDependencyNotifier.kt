@@ -157,7 +157,7 @@ private fun convertToRepositoryLibraryAction(
           val urlManager = workspaceModel.getVirtualFileUrlManager()
           libraryEditor.getUrls(OrderRootType.CLASSES)
             .asSequence()
-            .map { urlString -> urlManager.getOrCreateFromUrl(urlString) }
+            .map { urlString -> urlManager.storeAndGet(urlString) }
             .map { url -> LibraryRoot(url, LibraryRootTypeId.COMPILED) }
             .forEach { root -> roots.add(root) }
         }

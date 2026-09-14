@@ -708,7 +708,7 @@ class WorkspaceBuilderChangeLogTest {
     entity = builder.modifyNamedEntity(entity) {
       this.entitySource = AnotherSource
     }
-    entity =builder.modifyNamedEntity(entity) {
+    entity = builder.modifyNamedEntity(entity) {
       myName = "Parent"
     }
     builder.modifyNamedEntity(entity) {
@@ -851,7 +851,12 @@ class WorkspaceBuilderChangeLogTest {
   fun updateParentOfOneToOneChild() {
     val child = builder addEntity ChildSampleEntity("data", MySource)
     val newBuilder = builder.toSnapshot().toBuilder() as MutableEntityStorageImpl
-    newBuilder addEntity SampleEntity(true, "", listOf(), emptyMap(), ConcurrentVirtualFileUrlManager().getOrCreateFromUrl("file:///tmp"), MySource) {
+    newBuilder addEntity SampleEntity(true,
+                                      "",
+                                      listOf(),
+                                      emptyMap(),
+                                      ConcurrentVirtualFileUrlManager().storeAndGet("file:///tmp"),
+                                      MySource) {
       this.children = listOf(child.builderFrom(newBuilder))
     }
 
@@ -903,7 +908,7 @@ class WorkspaceBuilderChangeLogTest {
 
     val newChild = RightEntity(SampleEntitySource("sample"))
     builder.modifyLeftEntity(parent) {
-      this.children = listOf (
+      this.children = listOf(
         newChild,
         remainedChild,
       )

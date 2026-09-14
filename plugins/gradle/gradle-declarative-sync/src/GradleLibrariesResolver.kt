@@ -158,7 +158,7 @@ internal class GradleLibrariesResolver {
     for(subDir in subDirs) {
       for(file in subDir.children) {
         if(file.isFile && file.fileType == ArchiveFileType.INSTANCE) {
-          return LibraryRoot(virtualFileUrlManager.getOrCreateFromUrl(VfsUtil.getUrlForLibraryRoot(file.toNioPath())), LibraryRootTypeId("CLASSES"))
+          return LibraryRoot(virtualFileUrlManager.storeAndGet(VfsUtil.getUrlForLibraryRoot(file.toNioPath())), LibraryRootTypeId("CLASSES"))
         }
       }
     }

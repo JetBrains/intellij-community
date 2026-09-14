@@ -31,12 +31,12 @@ fun getJpsProjectConfigLocation(project: Project, virtualFileUrlManager: Virtual
   val dotIdea = storeDescriptor.dotIdea
   if (dotIdea == null) {
     val projectFileUrl = VfsUtilCore.pathToUrl(storeDescriptor.presentableUrl.invariantSeparatorsPathString)
-    val iprFile = virtualFileUrlManager.getOrCreateFromUrl(projectFileUrl)
+    val iprFile = virtualFileUrlManager.storeAndGet(projectFileUrl)
     return JpsProjectConfigLocation.FileBased(iprFile, iprFile.parent!!)
   }
   else {
     val ideaFolder = dotIdea.toVirtualFileUrl(virtualFileUrlManager)
     val baseUrl = VfsUtilCore.pathToUrl(storeDescriptor.historicalProjectBasePath.invariantSeparatorsPathString)
-    return JpsProjectConfigLocation.DirectoryBased(virtualFileUrlManager.getOrCreateFromUrl(baseUrl), ideaFolder)
+    return JpsProjectConfigLocation.DirectoryBased(virtualFileUrlManager.storeAndGet(baseUrl), ideaFolder)
   }
 }

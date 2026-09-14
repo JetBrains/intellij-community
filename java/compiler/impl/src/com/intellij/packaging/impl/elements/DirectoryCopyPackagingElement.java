@@ -2,6 +2,7 @@
 package com.intellij.packaging.impl.elements;
 
 import com.intellij.java.workspace.entities.DirectoryCopyPackagingElementEntity;
+import com.intellij.java.workspace.entities.DirectoryCopyPackagingElementEntityModifications;
 import com.intellij.java.workspace.entities.PackagingElementEntity;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -42,8 +43,9 @@ public class DirectoryCopyPackagingElement extends FileOrDirectoryCopyPackagingE
 
     VirtualFileUrlManager fileUrlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager();
     Objects.requireNonNull(myFilePath, "filePath is not specified");
-    VirtualFileUrl fileUrl = fileUrlManager.getOrCreateFromUrl(VfsUtilCore.pathToUrl(myFilePath));
-    DirectoryCopyPackagingElementEntity addedEntity = diff.addEntity(DirectoryCopyPackagingElementEntity.create(fileUrl, source));
+    VirtualFileUrl fileUrl = fileUrlManager.storeAndGet(VfsUtilCore.pathToUrl(myFilePath));
+    DirectoryCopyPackagingElementEntity addedEntity =
+      diff.addEntity(DirectoryCopyPackagingElementEntityModifications.createDirectoryCopyPackagingElementEntity(fileUrl, source));
     diff.getMutableExternalMapping(PackagingExternalMapping.key).addMapping(addedEntity, this);
     return getBuilder(diff, addedEntity);
   }

@@ -134,7 +134,7 @@ internal class NonIncrementalContributors(private val project: Project) {
           }
         }
         else {
-          excludedUrls.add(virtualFileUrlManager.getOrCreateFromUrl(url))
+          excludedUrls.add(virtualFileUrlManager.storeAndGet(url))
         }
       }
       @Suppress("DEPRECATION", "removal")
@@ -169,7 +169,7 @@ internal class NonIncrementalContributors(private val project: Project) {
               }
             }
             else {
-              excludedUrls.add(virtualFileUrlManager.getOrCreateFromUrl(pointer.url))
+              excludedUrls.add(virtualFileUrlManager.storeAndGet(pointer.url))
             }
           }
         }

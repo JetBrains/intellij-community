@@ -33,7 +33,7 @@ internal class MavenCompileSourceRootsConfigurator : MavenWorkspaceConfigurator 
       val executionId = unescapeCompileSourceRootModuleSuffix(moduleSuffix)
       val sourceRoots = MavenImportUtil.getCompileSourceRoots(mavenProject, executionId)
       sourceRoots.forEach { sourceRoot ->
-        val url = virtualFileUrlManager.getOrCreateFromUrl(VfsUtilCore.pathToUrl(sourceRoot))
+        val url = virtualFileUrlManager.storeAndGet(VfsUtilCore.pathToUrl(sourceRoot))
         val contentRootEntity = ContentRootEntity(url, emptyList(), entitySource)
         val sourceRootEntity = SourceRootEntity(url, JAVA_SOURCE_ROOT_ENTITY_TYPE_ID, entitySource)
         sourceRootEntity.javaSourceRoots += JavaSourceRootPropertiesEntity(false, "", sourceRootEntity.entitySource)

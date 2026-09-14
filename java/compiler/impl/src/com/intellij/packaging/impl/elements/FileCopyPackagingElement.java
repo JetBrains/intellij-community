@@ -2,6 +2,7 @@
 package com.intellij.packaging.impl.elements;
 
 import com.intellij.java.workspace.entities.FileCopyPackagingElementEntity;
+import com.intellij.java.workspace.entities.FileCopyPackagingElementEntityModifications;
 import com.intellij.java.workspace.entities.PackagingElementEntity;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
@@ -145,12 +146,13 @@ public class FileCopyPackagingElement extends FileOrDirectoryCopyPackagingElemen
     Objects.requireNonNull(filePath, "filePath is not specified");
     FileCopyPackagingElementEntity addedEntity;
     VirtualFileUrlManager fileUrlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager();
-    VirtualFileUrl fileUrl = fileUrlManager.getOrCreateFromUrl(VfsUtilCore.pathToUrl(filePath));
+    VirtualFileUrl fileUrl = fileUrlManager.storeAndGet(VfsUtilCore.pathToUrl(filePath));
     if (renamedOutputFileName != null) {
-      addedEntity = diff.addEntity(FileCopyPackagingElementEntity.create(fileUrl, source, entityBuilder -> {
-        entityBuilder.setRenamedOutputFileName(renamedOutputFileName);
-        return Unit.INSTANCE;
-      }));
+      addedEntity =
+        diff.addEntity(FileCopyPackagingElementEntityModifications.createFileCopyPackagingElementEntity(fileUrl, source, entityBuilder -> {
+          entityBuilder.setRenamedOutputFileName(renamedOutputFileName);
+          return Unit.INSTANCE;
+        }));
     }
     else {
       addedEntity = diff.addEntity(FileCopyPackagingElementEntity.create(fileUrl, source));

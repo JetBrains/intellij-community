@@ -50,8 +50,8 @@ class LibraryEntityWorkspaceModelTest {
     val manager = model.getVirtualFileUrlManager()
     model.update { builder ->
       val roots = listOf(
-        LibraryRoot(manager.getOrCreateFromUrl("/123"), LibraryRootTypeId.SOURCES),
-        LibraryRoot(manager.getOrCreateFromUrl("/321"), LibraryRootTypeId.COMPILED),
+        LibraryRoot(manager.storeAndGet("/123"), LibraryRootTypeId.SOURCES),
+        LibraryRoot(manager.storeAndGet("/321"), LibraryRootTypeId.COMPILED),
       )
       builder addEntity LibraryEntity("MyLib", LibraryTableId.ProjectLibraryTableId, roots, MySource)
 
@@ -90,8 +90,8 @@ class LibraryEntityWorkspaceModelTest {
     val manager = model.getVirtualFileUrlManager()
     model.update { builder ->
       val roots = listOf(
-        LibraryRoot(manager.getOrCreateFromUrl("/123"), LibraryRootTypeId.SOURCES),
-        LibraryRoot(manager.getOrCreateFromUrl("/321"), LibraryRootTypeId.COMPILED),
+        LibraryRoot(manager.storeAndGet("/123"), LibraryRootTypeId.SOURCES),
+        LibraryRoot(manager.storeAndGet("/321"), LibraryRootTypeId.COMPILED),
       )
       builder addEntity LibraryEntity("MyLib", LibraryTableId.ProjectLibraryTableId, roots, MySource)
 
@@ -132,8 +132,8 @@ class LibraryEntityWorkspaceModelTest {
     val manager = model.getVirtualFileUrlManager()
     model.update { builder ->
       val roots = listOf(
-        LibraryRoot(manager.getOrCreateFromUrl("/123"), LibraryRootTypeId.COMPILED),
-        LibraryRoot(manager.getOrCreateFromUrl("/321"), LibraryRootTypeId.COMPILED),
+        LibraryRoot(manager.storeAndGet("/123"), LibraryRootTypeId.COMPILED),
+        LibraryRoot(manager.storeAndGet("/321"), LibraryRootTypeId.COMPILED),
       )
       builder addEntity LibraryEntity("MyLib", LibraryTableId.ProjectLibraryTableId, roots, MySource)
 

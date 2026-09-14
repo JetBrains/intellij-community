@@ -435,7 +435,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       // If there is no .idea nor .ipr in the selected directory, then we should not get here.
       val basePath = project.basePath
       if (basePath != null) {
-        createProjectFromFolder(builder, "untrusted", workspaceModel.virtualFileManager.getOrCreateFromUrl("file://$basePath"))
+        createProjectFromFolder(builder, "untrusted", workspaceModel.virtualFileManager.storeAndGet("file://$basePath"))
       }
       LoadedProjectEntities(builder, orphanage, unloadedEntitiesBuilder, emptyList())
     }

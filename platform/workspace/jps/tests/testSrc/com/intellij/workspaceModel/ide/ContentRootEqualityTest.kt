@@ -31,8 +31,8 @@ class ContentRootEqualityTest {
   @Ignore
   fun `content roots with same urls`() {
     // create module with content root but without source roots
-    val contentRootUrl = virtualFileManager.getOrCreateFromUrl("/123")
-    val sourceRootUrl = virtualFileManager.getOrCreateFromUrl("/data")
+    val contentRootUrl = virtualFileManager.storeAndGet("/123")
+    val sourceRootUrl = virtualFileManager.storeAndGet("/data")
 
     val targetBuilder = MutableEntityStorage.create()
     val module = targetBuilder.addEntity(ModuleEntity("MyName", emptyList(), MySource) {
@@ -66,9 +66,9 @@ class ContentRootEqualityTest {
     val builder1 = MutableEntityStorage.create()
     builder1.addEntity(ModuleEntity("MyName", emptyList(), MySource) {
       contentRoots = listOf(
-        ContentRootEntity(virtualFileManager.getOrCreateFromUrl("/123"), emptyList(), MySource) {
+        ContentRootEntity(virtualFileManager.storeAndGet("/123"), emptyList(), MySource) {
           sourceRoots = listOf(
-            SourceRootEntity(virtualFileManager.getOrCreateFromUrl("/data"), SourceRootTypeId("Type"), AnotherSource),
+            SourceRootEntity(virtualFileManager.storeAndGet("/data"), SourceRootTypeId("Type"), AnotherSource),
           )
         },
       )
@@ -77,8 +77,8 @@ class ContentRootEqualityTest {
     val builder2 = MutableEntityStorage.create()
     builder2.addEntity(ModuleEntity("MyName", emptyList(), MySource) {
       contentRoots = listOf(
-        ContentRootEntity(virtualFileManager.getOrCreateFromUrl("/123"), emptyList(), MySource) {
-          this.excludedUrls = listOf(ExcludeUrlEntity(virtualFileManager.getOrCreateFromUrl("/myRoot"), this.entitySource))
+        ContentRootEntity(virtualFileManager.storeAndGet("/123"), emptyList(), MySource) {
+          this.excludedUrls = listOf(ExcludeUrlEntity(virtualFileManager.storeAndGet("/myRoot"), this.entitySource))
         },
       )
     })

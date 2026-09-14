@@ -25,33 +25,33 @@ class ConcurrentVirtualFileUrlManagerTest {
 
   @Test
   fun `check base insert case`() {
-    virtualFileManager.getOrCreateFromUrl("/a/b/a.txt")
-    virtualFileManager.getOrCreateFromUrl("/a/b.txt")
-    virtualFileManager.getOrCreateFromUrl("/c")
-    virtualFileManager.getOrCreateFromUrl("/a/b/d.txt")
+    virtualFileManager.storeAndGet("/a/b/a.txt")
+    virtualFileManager.storeAndGet("/a/b.txt")
+    virtualFileManager.storeAndGet("/c")
+    virtualFileManager.storeAndGet("/a/b/d.txt")
 
     // Every inserted path is retrievable and interned to the same (equal) node; a missing path is not.
     for (path in listOf("/a/b/a.txt", "/a/b.txt", "/c", "/a/b/d.txt")) {
-      assertEquals(virtualFileManager.getOrCreateFromUrl(path), virtualFileManager.findByUrl(path))
+      assertEquals(virtualFileManager.storeAndGet(path), virtualFileManager.findByUrl(path))
     }
     assertNull(virtualFileManager.findByUrl("/a/b/missing.txt"))
 
     // Prefix sharing: the subtree under "/a"
     assertEquals(
       setOf(
-        virtualFileManager.getOrCreateFromUrl("/a/b"),
-        virtualFileManager.getOrCreateFromUrl("/a/b/a.txt"),
-        virtualFileManager.getOrCreateFromUrl("/a/b/d.txt"),
-        virtualFileManager.getOrCreateFromUrl("/a/b.txt"),
+        virtualFileManager.storeAndGet("/a/b"),
+        virtualFileManager.storeAndGet("/a/b/a.txt"),
+        virtualFileManager.storeAndGet("/a/b/d.txt"),
+        virtualFileManager.storeAndGet("/a/b.txt"),
       ),
-      virtualFileManager.getOrCreateFromUrl("/a").getSubTreeFileUrls().toSet(),
+      virtualFileManager.storeAndGet("/a").getSubTreeFileUrls().toSet(),
     )
   }
 
   @Test
   fun `repeated segment names share a single canonical string instance`() {
-    val a = virtualFileManager.getOrCreateFromUrl("/x/src/A.kt")
-    val b = virtualFileManager.getOrCreateFromUrl("/y/src/B.kt")
+    val a = virtualFileManager.storeAndGet("/x/src/A.kt")
+    val b = virtualFileManager.storeAndGet("/y/src/B.kt")
 
     // The "src" segment lives under two different parents but must be stored as one interned String
     assertSame(
@@ -64,17 +64,17 @@ class ConcurrentVirtualFileUrlManagerTest {
 
   @Test
   fun `check insert with duplicates`() {
-    val first = virtualFileManager.getOrCreateFromUrl("/a/b/a.txt")
+    val first = virtualFileManager.storeAndGet("/a/b/a.txt")
     repeat(3) {
-      assertEquals(first, virtualFileManager.getOrCreateFromUrl("/a/b/a.txt"))
+      assertEquals(first, virtualFileManager.storeAndGet("/a/b/a.txt"))
     }
     // No duplicate nodes are created
     assertEquals(
       setOf(
-        virtualFileManager.getOrCreateFromUrl("/a/b"),
-        virtualFileManager.getOrCreateFromUrl("/a/b/a.txt"),
+        virtualFileManager.storeAndGet("/a/b"),
+        virtualFileManager.storeAndGet("/a/b/a.txt"),
       ),
-      virtualFileManager.getOrCreateFromUrl("/a").getSubTreeFileUrls().toSet(),
+      virtualFileManager.storeAndGet("/a").getSubTreeFileUrls().toSet(),
     )
   }
 
@@ -107,10 +107,10 @@ class ConcurrentVirtualFileUrlManagerTest {
 
   @Test
   fun `check from path`() {
-    assertEquals("file://", virtualFileManager.getOrCreateFromUrl(VfsUtilCore.pathToUrl("")).url)
+    assertEquals("file://", virtualFileManager.storeAndGet(VfsUtilCore.pathToUrl("")).url)
 
     fun assertUrlFromPath(path: String) {
-      assertEquals(VfsUtil.pathToUrl(path), virtualFileManager.getOrCreateFromUrl(VfsUtilCore.pathToUrl(path)).url)
+      assertEquals(VfsUtil.pathToUrl(path), virtualFileManager.storeAndGet(VfsUtilCore.pathToUrl(path)).url)
     }
 
     assertUrlFromPath("/main/a.jar")
@@ -121,27 +121,27 @@ class ConcurrentVirtualFileUrlManagerTest {
 
   @Test
   fun `check normalize slashes`() {
-    assertEquals("jar://C:/Users/X/a.txt", virtualFileManager.getOrCreateFromUrl("jar://C:/Users\\X\\a.txt").url)
+    assertEquals("jar://C:/Users/X/a.txt", virtualFileManager.storeAndGet("jar://C:/Users\\X\\a.txt").url)
   }
 
   @Test
   fun `the overridable factory makes the empty url`() {
     val manager = FactoryTrackingVirtualFileUrlManager()
 
-    val empty = manager.getOrCreateFromUrl("")
+    val empty = manager.storeAndGet("")
 
     assertEquals("", empty.url)
     // getOrCreateFromUrl gives the empty URL to callers. Therefore, the empty URL must have the same class as all other
     // nodes. ConcurrentIdeVirtualFileUrlManagerImpl needs this class to be a VirtualFilePointer.
     assertIs<FactoryTrackingVirtualFileUrl>(empty, "createVirtualFileUrl must make the empty URL")
-    assertIs<FactoryTrackingVirtualFileUrl>(manager.getOrCreateFromUrl("/a/b"))
-    assertSame(empty, manager.getOrCreateFromUrl(""), "the empty URL must be one shared instance")
+    assertIs<FactoryTrackingVirtualFileUrl>(manager.storeAndGet("/a/b"))
+    assertSame(empty, manager.storeAndGet(""), "the empty URL must be one shared instance")
   }
 
   @Test
   fun `different nodes can have the same url and must stay different`() {
     // The two empty segments of "/" both have the URL "/". Therefore, equality that uses only getUrl() is not correct.
-    val slash = virtualFileManager.getOrCreateFromUrl("/")
+    val slash = virtualFileManager.storeAndGet("/")
     val parent = slash.parent!!
 
     assertEquals("/", slash.url)
@@ -163,10 +163,10 @@ class ConcurrentVirtualFileUrlManagerTest {
   ) : NewVirtualFileUrlImpl(name, manager, parent)
 
   private fun assertFilePath(expectedResult: String?, url: String) {
-    assertEquals(expectedResult, virtualFileManager.getOrCreateFromUrl(url).presentableUrl)
+    assertEquals(expectedResult, virtualFileManager.storeAndGet(url).presentableUrl)
   }
 
   private fun roundTrip(url: String) {
-    assertEquals(url, virtualFileManager.getOrCreateFromUrl(url).url)
+    assertEquals(url, virtualFileManager.storeAndGet(url).url)
   }
 }

@@ -158,7 +158,7 @@ class WorkspaceModelJsonDumpTest {
       project.waitForSmartMode()
       val vfuManager = project.workspaceModel.getVirtualFileUrlManager()
       project.workspaceModel.update {
-        val vfu = vfuManager.getOrCreateFromUrl("file:///tmp")
+        val vfu = vfuManager.storeAndGet("file:///tmp")
         val moduleDependency = ModuleDependency(ModuleId("some_module"), false, DependencyScope.COMPILE, true)
         val libraryEntity = it.addEntity(LibraryEntity(
           "some_library",
@@ -202,7 +202,7 @@ class WorkspaceModelJsonDumpTest {
 
       val vfuManager = project.workspaceModel.getVirtualFileUrlManager()
       project.workspaceModel.update {
-        val urls = listOf("1.txt", "2.kt", "3.cpp").map { name -> vfuManager.getOrCreateFromUrl("file:///someDir/subDir/$name") }
+        val urls = listOf("1.txt", "2.kt", "3.cpp").map { name -> vfuManager.storeAndGet("file:///someDir/subDir/$name") }
         val strings = listOf("a", "a", "b", "c", "b")
         it.addEntity(BaseTestEntity(
           "base",

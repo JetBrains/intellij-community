@@ -24,7 +24,7 @@ class KtVirtualFileUrlConversionInspectionTest : VirtualFileUrlConversionInspect
         }
 
         interface VirtualFileUrlManager {
-          fun getOrCreateFromUrl(url: String): VirtualFileUrl
+          fun storeAndGet(url: String): VirtualFileUrl
         }
       """.trimIndent()
     )

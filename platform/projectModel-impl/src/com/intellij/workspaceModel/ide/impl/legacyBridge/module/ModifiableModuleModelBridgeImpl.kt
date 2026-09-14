@@ -109,7 +109,7 @@ internal class ModifiableModuleModelBridgeImpl(
     }
 
     val parentPath = PathUtilRt.getParentPath(canonicalPath)
-    val baseModuleDir = WorkspaceModel.getInstance(project).getVirtualFileUrlManager().getOrCreateFromUrl(VfsUtilCore.pathToUrl(parentPath))
+    val baseModuleDir = WorkspaceModel.getInstance(project).getVirtualFileUrlManager().storeAndGet(VfsUtilCore.pathToUrl(parentPath))
     val entitySource = LegacyBridgeJpsEntitySourceFactory.getInstance(project).createEntitySourceForModule(
       baseModuleDir = baseModuleDir,
       externalSource = null,
