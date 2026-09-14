@@ -6,6 +6,7 @@ package com.intellij.platform.util.progress
 import com.intellij.concurrency.IntelliJContextElement
 import com.intellij.platform.util.progress.impl.EmptyProgressStep
 import com.intellij.platform.util.progress.impl.ProgressStep
+import com.intellij.platform.util.progress.impl.ProgressStepImpl
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.currentCoroutineContext
 import org.jetbrains.annotations.ApiStatus
@@ -20,15 +21,16 @@ import kotlin.coroutines.CoroutineContext
  *
  * - Implementation can use [reportSequentialProgress], [reportProgress], [forEachWithProgress],
  * or other functions which rely on [currentProgressStep] without much thinking.
- * - If the context step is not fresh, no reporting from inside the function is visible to the caller,
- * as if there was no progress step in the context at all.
+ * - If the context step is not fresh, functions cannot take ownership again and return no-op reporters.
  * - It's up to the caller to provide a fresh step in the context by wrapping the call into [SequentialProgressReporter.sizedStep],
  * [SequentialProgressReporter.indeterminateStep], [ProgressReporter.itemStep], etc.
  * - If a function allows to mix reporting done by caller and reporting done by itself,
  * then such function can do this only by declaring a reporter parameter.
  * This is allowed when calling a private function, don't expose concrete reporter in your API.
  *
- * Platform utilities, such as [com.intellij.openapi.progress.coroutineToIndicator], follow this convention.
+ * Platform utilities, such as [com.intellij.openapi.progress.coroutineToIndicator], can also reuse the current step's active raw reporter.
+ * They do not take ownership or close that reporter. The caller must coordinate their updates with its own reporting.
+ * After the owner closes the raw reporter, bridges cannot reuse it.
  *
  * #### Design notes
  *
@@ -82,6 +84,11 @@ private class ProgressStepElement(val step: ProgressStep) : AbstractCoroutineCon
 @Internal
 fun CoroutineContext.internalCreateRawHandleFromContextStepIfExistsAndFresh(): RawProgressReporterHandle? {
   return currentProgressStep().asRaw()
+}
+
+@Internal
+fun CoroutineContext.rawReporterIfExists(): RawProgressReporter? {
+  return (currentProgressStep() as? ProgressStepImpl)?.rawReporterIfExists()
 }
 
 @ApiStatus.ScheduledForRemoval

@@ -16,6 +16,7 @@ import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.util.progress.internalCreateRawHandleFromContextStepIfExistsAndFresh
+import com.intellij.platform.util.progress.rawReporterIfExists
 import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.util.IntelliJCoroutinesFacade
 import com.intellij.util.SystemProperties
@@ -488,10 +489,12 @@ suspend fun <T> coroutineToIndicator(action: () -> T): T {
  *
  * ### Progress reporting
  *
- * If there is a fresh [currentProgressStep] in the coroutine context, this function [switches it to raw][reportRawProgress].
- * If the step is not fresh, then no reporting from this function is visible to the caller.
- * Please consult [currentProgressStep] for more info about fresh steps.
+ * If there is a fresh `currentProgressStep` in the coroutine context, this function [switches it to raw][reportRawProgress].
+ * If the step already has an active raw reporter, this function reuses it without taking ownership or closing it.
+ * The owner must coordinate indicator updates with its own reporting.
+ * Otherwise, reporting from this function is not visible to the caller.
  *
+ * @see reportRawProgress
  * @see runBlockingCancellable
  * @see ProgressManager.runProcess
  */
@@ -522,8 +525,10 @@ suspend fun <T> coroutineToIndicator(action: (ProgressIndicator) -> T): T {
  * ### Progress reporting
  *
  * If there is a fresh [currentProgressStep] in the coroutine context, this function [switches it to raw][reportRawProgress].
- * If the step is not fresh, then no reporting from this function is visible to the caller.
- * Please consult [currentProgressStep] for more info about fresh steps.
+ * If the step already has an active raw reporter, this function reuses it without taking ownership or closing it.
+ * An outer [reportRawProgress] keeps that reporter active across read action restarts.
+ * The owner must coordinate indicator updates with its own reporting.
+ * Otherwise, reporting from this function is not visible to the caller.
  */
 @Internal
 @RequiresBlockingContext
@@ -554,7 +559,13 @@ private fun <T> contextToIndicator(ctx: CoroutineContext, action: () -> T): T {
     }
   }
   else {
-    val indicator = JobDependentIndicator(contextModality, job)
+    val reporter = ctx.rawReporterIfExists()
+    val indicator = if (reporter != null) {
+      RawProgressReporterIndicator(reporter, contextModality)
+    }
+    else {
+      JobDependentIndicator(contextModality, job)
+    }
     jobToIndicator(job, indicator, action)
   }
 }

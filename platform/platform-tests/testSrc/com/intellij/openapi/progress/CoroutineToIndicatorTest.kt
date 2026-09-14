@@ -7,6 +7,8 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.ModalityStateEx
 import com.intellij.platform.util.progress.ExpectedState
 import com.intellij.platform.util.progress.progressReporterTest
+import com.intellij.platform.util.progress.rawReporterIfExists
+import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.testFramework.common.timeoutRunBlocking
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancelAndJoin
@@ -153,6 +155,7 @@ class CoroutineToIndicatorTest : CancellationTest() {
       ExpectedState(text = "Hello", details = "World", fraction = 0.42),
       ExpectedState(text = null, details = "World", fraction = 0.42),
       ExpectedState(text = null, details = "World", fraction = null),
+      ExpectedState(text = "Nested", details = "World", fraction = null),
     ) {
       coroutineToIndicator {
         ProgressManager.progress("Hello", "World")
@@ -160,7 +163,41 @@ class CoroutineToIndicatorTest : CancellationTest() {
         indicator.fraction = 0.42
         indicator.text = null
         indicator.isIndeterminate = true
+        blockingContextToIndicator {
+          checkNotNull(ProgressManager.getGlobalProgressIndicator()).text = "Nested"
+        }
+        assertTrue(indicator === ProgressManager.getGlobalProgressIndicator())
       }
+      assertNull(coroutineContext.rawReporterIfExists())
+    }
+  }
+
+  @Test
+  @Timeout(30)
+  fun `nested indicators preserve the raw reporter until its owner fails`() {
+    progressReporterTest(
+      ExpectedState(text = "first"),
+      ExpectedState(text = "nested"),
+      ExpectedState(text = "second"),
+      ExpectedState(text = "owner"),
+    ) {
+      val failure = IllegalStateException("owner failed")
+      val thrown = assertThrows<IllegalStateException> {
+        reportRawProgress { reporter ->
+          coroutineToIndicator { indicator ->
+            indicator.text = "first"
+            blockingContextToIndicator {
+              checkNotNull(ProgressManager.getGlobalProgressIndicator()).text = "nested"
+            }
+          }
+          assertSame(reporter, coroutineContext.rawReporterIfExists())
+          coroutineToIndicator { indicator -> indicator.text = "second" }
+          reporter.text("owner")
+          throw failure
+        }
+      }
+      assertSame(failure, thrown)
+      assertNull(coroutineContext.rawReporterIfExists())
     }
   }
 }

@@ -3,6 +3,7 @@ package com.intellij.platform.util.progress.impl
 
 import com.intellij.platform.util.progress.ProgressReporterHandle
 import com.intellij.platform.util.progress.ProgressReporterImpl
+import com.intellij.platform.util.progress.RawProgressReporter
 import com.intellij.platform.util.progress.RawProgressReporterHandle
 import com.intellij.platform.util.progress.RawProgressReporterHandleImpl
 import com.intellij.platform.util.progress.RawProgressReporterImpl
@@ -19,6 +20,7 @@ import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
 
 internal class ProgressStepImpl(
   private val parentScope: CoroutineScope,
@@ -36,6 +38,9 @@ internal class ProgressStepImpl(
   }
 
   private val _taken = AtomicBoolean()
+  private val storedRawReporter = AtomicReference<RawProgressReporter?>()
+
+  fun rawReporterIfExists(): RawProgressReporter? = storedRawReporter.get()
 
   override fun progressUpdates(): Flow<StepState> {
     return state
@@ -93,7 +98,10 @@ internal class ProgressStepImpl(
       return null
     }
     val reporter = RawProgressReporterImpl(config)
-    return RawProgressReporterHandleImpl(parentScope, state, reporter)
+    storedRawReporter.set(reporter)
+    return RawProgressReporterHandleImpl(parentScope, state, reporter) {
+      storedRawReporter.set(null)
+    }
   }
 
   private fun validateSizeAndTakeOwnership(size: Int): Boolean {

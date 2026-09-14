@@ -12,6 +12,7 @@ internal class RawProgressReporterHandleImpl(
   parentScope: CoroutineScope,
   private val state: MutableStateFlow<StepState>,
   override val reporter: RawProgressReporterImpl,
+  private val onClose: () -> Unit,
 ) : RawProgressReporterHandle {
 
   private val subscription = parentScope.launch(start = CoroutineStart.UNDISPATCHED) {
@@ -24,6 +25,7 @@ internal class RawProgressReporterHandleImpl(
   }
 
   override fun close() {
+    onClose()
     subscription.cancel()
   }
 }

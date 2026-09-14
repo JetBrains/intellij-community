@@ -9,7 +9,6 @@ import com.intellij.platform.util.progress.impl.ProgressText
 import com.intellij.platform.util.progress.impl.ScopedLambda
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.forEach
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Experimental
@@ -100,6 +99,8 @@ suspend fun <T> reportProgressScope(size: Int = 100, action: suspend CoroutineSc
  * Takes ownership of the [current step][currentProgressStep], runs [action] with a raw reporter.
  *
  * If the current step is already not fresh, the passed reporter is no-op.
+ * Indicator bridges can reuse an active raw reporter without taking ownership, including across read action restarts.
+ * The owner must coordinate indicator updates with its own reporting.
  *
  * The reporter is technically allowed to be used concurrently from several coroutines,
  * but the caller is responsible to report concurrent progress updates,

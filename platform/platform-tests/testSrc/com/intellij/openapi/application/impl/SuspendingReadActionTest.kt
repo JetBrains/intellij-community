@@ -23,7 +23,6 @@ import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.application.stallReadActionsIfThereIsPendingWrite
 import com.intellij.openapi.application.writeAction
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.assertCurrentJobIsChildOf
@@ -33,6 +32,9 @@ import com.intellij.openapi.progress.testExceptions
 import com.intellij.openapi.progress.testNoExceptions
 import com.intellij.openapi.progress.timeoutWaitUp
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.util.progress.ExpectedState
+import com.intellij.platform.util.progress.progressReporterTest
+import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.util.application
 import com.intellij.util.concurrency.Semaphore
@@ -60,12 +62,12 @@ import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.assertThrows
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
-import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.sync.Semaphore as KSemaphore
 
@@ -331,6 +333,45 @@ class NonBlockingSuspendingReadActionTest : SuspendingReadActionTest() {
       }
     }
     assertEquals(42, result)
+  }
+
+  @RepeatedTest(REPETITIONS)
+  @Timeout(30)
+  fun `read action restarts report through the outer raw reporter`() {
+    var attempts = 0
+    progressReporterTest(
+      ExpectedState(text = "first attempt"),
+      ExpectedState(text = "second attempt"),
+    ) {
+      val result = reportRawProgress {
+        readAction {
+          when (attempts++) {
+            0 -> {
+              throw assertThrows<CannotReadException> {
+                blockingContextToIndicator {
+                  checkNotNull(ProgressManager.getGlobalProgressIndicator()).text = "first attempt"
+                  waitForPendingWrite().up()
+                  throw assertThrows<CannotReadException> {
+                    ProgressManager.checkCanceled()
+                  }
+                }
+              }
+            }
+            1 -> {
+              assertDoesNotThrow {
+                blockingContextToIndicator {
+                  checkNotNull(ProgressManager.getGlobalProgressIndicator()).text = "second attempt"
+                  ProgressManager.checkCanceled()
+                }
+              }
+              42
+            }
+            else -> fail()
+          }
+        }
+      }
+      assertEquals(42, result)
+    }
   }
 
   @RepeatedTest(REPETITIONS)
