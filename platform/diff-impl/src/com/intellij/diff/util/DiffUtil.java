@@ -1801,7 +1801,7 @@ public final class DiffUtil {
     if (composites.size() != 1) return;
 
     Project project = editorWindow.getManager().getProject();
-    VirtualFile file = composites.get(0).getFile();
+    VirtualFile file = composites.getFirst().getFile();
 
     if (DiffEditorTabFilesManager.getInstance(project).isDiffOpenedInWindow(file)) {
       Window window = UIUtil.getWindow(diffComponent);
