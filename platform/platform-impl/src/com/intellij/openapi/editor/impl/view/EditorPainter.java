@@ -1583,12 +1583,12 @@ public final class EditorPainter implements TextDrawingCallback {
     /// @noinspection GraphicsSetClipInspection
     private void paintCaret(CaretCursorSnapshot snapshot, int yShift) {
       Graphics2D g = IdeBackgroundUtil.getOriginalGraphics(myGraphics);
-      int caretHeight = myView.getCaretHeight();
       EditorSettings settings = myEditor.getSettings();
-      int topOverhang = settings.isFullLineHeightCursor() ? 0 : myView.getTopOverhang();
       Color caretColor = myEditor.getColorsScheme().getColor(EditorColors.CARET_COLOR);
       if (caretColor == null) caretColor = new JBColor(CARET_DARK, CARET_LIGHT);
       int minX = myInsets.left;
+      int caretHeight = snapshot.repaintMetrics.caretHeight;
+      int topOverhang = snapshot.repaintMetrics.topOverhang;
       float opacity = snapshot.blinkOpacity;
       for (CaretRectangle location : snapshot.locations) {
         float x = (float)location.getX();

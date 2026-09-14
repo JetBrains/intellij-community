@@ -15,12 +15,10 @@ internal data class EditorAnimationCacheKey(private val contentHash: Int) {
     fun of(locations: List<CaretRectangle>): EditorAnimationCacheKey {
       var hash = locations.size
       for (location in locations) {
-        hash = hash * CACHE_KEY_HASH_FACTOR + location.contentHash
+        hash = hash * 31 + location.contentHash
       }
       return EditorAnimationCacheKey(hash)
     }
-
-    private const val CACHE_KEY_HASH_FACTOR = 31
   }
 }
 
@@ -49,8 +47,8 @@ internal data class CacheRequest(
   fun storeKeyIn(atomicKey: AtomicReference<EditorAnimationCacheKey?>) {
     atomicKey.set(key)
   }
-}
 
-private fun List<Rectangle2D>.boundingBox(): Rectangle2D? {
-  return reduceOrNull { union, rectangle -> union.createUnion(rectangle) }
+  private fun List<Rectangle2D>.boundingBox(): Rectangle2D? {
+    return reduceOrNull { union, rectangle -> union.createUnion(rectangle) }
+  }
 }

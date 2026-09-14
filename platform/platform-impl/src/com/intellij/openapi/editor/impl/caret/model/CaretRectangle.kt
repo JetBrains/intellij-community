@@ -24,8 +24,8 @@ internal class CaretRectangle private constructor(
   val contentHash: Int
     get() {
       var hash = x.hashCode()
-      hash = hash * HASH_FACTOR + y.hashCode()
-      hash = hash * HASH_FACTOR + width.hashCode()
+      hash = hash * 31 + y.hashCode()
+      hash = hash * 31 + width.hashCode()
       return hash
     }
 
@@ -42,7 +42,5 @@ internal class CaretRectangle private constructor(
      * Narrower carets are hard to hit with the eye, so a thin one is padded out to this width.
      */
     private const val MIN_WIDTH = 2f
-
-    private const val HASH_FACTOR = 31
   }
 }
