@@ -352,7 +352,7 @@ public fun DropdownLink(
                     true
                 },
                 modifier = menuModifier,
-                style = menuStyle,
+                menuStyle = menuStyle,
                 horizontalAlignment = Alignment.Start,
                 content = menuContent,
             )
