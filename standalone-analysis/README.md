@@ -35,6 +35,30 @@ To update the files after local changes, pass the `pass.idea.tests.overwrite.dat
     --test org.jetbrains.intellij.build.StandaloneMavenArtifactsTest -Dpass.idea.tests.overwrite.data=true
   ```
 
+## How to use
+
+Use `JavaCoreApplicationEnvironment` and `JavaCoreProjectEnvironment` (or their language-agnostic alternatives, `CoreApplicationEnvironment`
+and `CoreProjectEnvironment`) to set up the IntelliJ Standalone Analysis environment. These classes register all services and extensions
+necessary for the platform to work, so you can only register your components (e.g., custom file types, parsers and so on).
+
+```kotlin
+val environment = JavaCoreApplicationEnvironment(rootDisposable, /* unitTestMode = */ false)
+
+// Register your language if you need to
+environment.registerFileType(MyFileType, "my")
+environment.registerParserDefinition(MyParserDefinition())
+
+val projectEnvironment = JavaCoreProjectEnvironment(rootDisposable, environment)
+projectEnvironment.addJarToClassPath(File("lib/library.jar"))
+
+val project = projectEnvironment.project
+val allScope = GlobalSearchScope.allScope(projectEnvironment.project)
+val psiClass = JavaPsiFacade.getInstance(project).findClass("java.lang.String", allScope)
+```
+
+Currently, the `Application` is a process-wide singleton, so you cannot configure multiple `JavaCoreApplicationEnvironment` with a
+different set of extensions.
+
 ## How to build artifacts locally
 
 ```bash

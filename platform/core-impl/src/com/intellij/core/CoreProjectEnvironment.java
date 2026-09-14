@@ -13,15 +13,20 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.pom.PomModel;
+import com.intellij.pom.core.impl.PomModelImpl;
+import com.intellij.pom.tree.TreeAspect;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiTreeChangeListener;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.impl.DocumentCommitProcessor;
 import com.intellij.psi.impl.PsiCachedValuesFactory;
 import com.intellij.psi.impl.PsiFileFactoryImpl;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
+import com.intellij.psi.impl.PsiTreeChangePreprocessor;
 import com.intellij.psi.impl.ResolveScopeManager;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.psi.impl.file.PsiDirectoryFactoryImpl;
@@ -49,6 +54,9 @@ public class CoreProjectEnvironment {
     myEnvironment = applicationEnvironment;
     project = createProject(myEnvironment.getApplication().getPicoContainer(), myParentDisposable);
 
+    CoreApplicationEnvironment.registerExtensionPoint(project.getExtensionArea(), PsiTreeChangePreprocessor.EP.getName(), PsiTreeChangePreprocessor.class);
+    CoreApplicationEnvironment.registerExtensionPoint(project.getExtensionArea(), PsiTreeChangeListener.EP.getName(), PsiTreeChangeListener.class);
+
     preregisterServices();
 
     myFileIndexFacade = createFileIndexFacade();
@@ -65,6 +73,8 @@ public class CoreProjectEnvironment {
     project.registerService(SmartPointerManager.class, SmartPointerManagerImpl.class);
     project.registerService(DocumentCommitProcessor.class, new MockDocumentCommitProcessor());
     project.registerService(PsiDocumentManager.class, new CorePsiDocumentManager(project));
+    project.registerService(TreeAspect.class);
+    project.registerService(PomModel.class, PomModelImpl.class);
 
     project.registerService(ResolveScopeManager.class, createResolveScopeManager(myPsiManager));
 

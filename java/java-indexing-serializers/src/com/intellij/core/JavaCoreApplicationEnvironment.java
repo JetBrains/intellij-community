@@ -6,6 +6,7 @@ import com.intellij.codeInsight.JavaContainerProvider;
 import com.intellij.codeInsight.folding.JavaCodeFoldingSettings;
 import com.intellij.codeInsight.folding.impl.JavaCodeFoldingSettingsBase;
 import com.intellij.codeInsight.folding.impl.JavaFoldingBuilderBase;
+import com.intellij.codeInsight.runner.JavaMainMethodProvider;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.ide.highlighter.JavaFileType;
@@ -23,11 +24,14 @@ import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.fileTypes.PlainTextParserDefinition;
 import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.platform.syntax.psi.CommonElementTypeConverterFactory;
 import com.intellij.platform.syntax.psi.ElementTypeConverters;
 import com.intellij.platform.syntax.psi.LanguageSyntaxDefinitions;
 import com.intellij.platform.syntax.psi.PsiSyntaxBuilderFactory;
 import com.intellij.platform.syntax.psi.PsiSyntaxBuilderFactoryImpl;
+import com.intellij.pom.java.InternalPersistentJavaLanguageLevelReaderService;
 import com.intellij.psi.ClassFileViewProviderFactory;
+import com.intellij.psi.ClassTypePointerFactory;
 import com.intellij.psi.DumbJavaModuleGraphHelper;
 import com.intellij.psi.FileTypeFileViewProviders;
 import com.intellij.psi.JavaDirectoryService;
@@ -42,17 +46,25 @@ import com.intellij.psi.PsiNewExpression;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiSubstitutorFactory;
+import com.intellij.psi.augment.PsiAugmentProvider;
+import com.intellij.psi.codeStyle.JavaFileCodeStyleFacade;
+import com.intellij.psi.codeStyle.JavaFileCodeStyleFacadeFactory;
 import com.intellij.psi.compiled.ClassFileDecompilers;
+import com.intellij.psi.impl.JavaClassSupersImpl;
 import com.intellij.psi.impl.LanguageConstantExpressionEvaluator;
 import com.intellij.psi.impl.PsiExpressionEvaluator;
 import com.intellij.psi.impl.PsiSubstitutorFactoryImpl;
 import com.intellij.psi.impl.compiled.ClassFileStubBuilder;
+import com.intellij.psi.impl.compiled.ClsCustomNavigationPolicy;
 import com.intellij.psi.impl.compiled.ClsDecompilerImpl;
 import com.intellij.psi.impl.file.PsiPackageImplementationHelper;
 import com.intellij.psi.impl.java.stubs.JavaStubRegistryExtension;
 import com.intellij.psi.impl.search.MethodSuperSearcher;
+import com.intellij.psi.impl.smartPointers.PsiClassReferenceTypePointerFactory;
 import com.intellij.psi.impl.source.tree.JavaASTFactory;
+import com.intellij.psi.impl.source.tree.JavaTreeGenerator;
 import com.intellij.psi.impl.source.tree.PlainTextASTFactory;
+import com.intellij.psi.impl.source.tree.TreeGenerator;
 import com.intellij.psi.presentation.java.ClassPresentationProvider;
 import com.intellij.psi.presentation.java.FieldPresentationProvider;
 import com.intellij.psi.presentation.java.MethodPresentationProvider;
@@ -61,6 +73,7 @@ import com.intellij.psi.presentation.java.VariablePresentationProvider;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.stubs.BinaryFileStubBuilders;
 import com.intellij.psi.stubs.StubElementRegistryServiceImplKt;
+import com.intellij.psi.util.JavaClassSupers;
 import com.intellij.util.QueryExecutor;
 import org.jetbrains.annotations.NotNull;
 
@@ -96,12 +109,24 @@ public class JavaCoreApplicationEnvironment extends CoreApplicationEnvironment {
 
     addExplicitExtension(LanguageASTFactory.INSTANCE, JavaLanguage.INSTANCE, new JavaASTFactory());
     addExplicitExtension(LanguageSyntaxDefinitions.getINSTANCE(), JavaLanguage.INSTANCE, new JavaSyntaxDefinitionExtension());
+    addExplicitExtension(ElementTypeConverters.getInstance(), JavaLanguage.INSTANCE, new CommonElementTypeConverterFactory());
     addExplicitExtension(ElementTypeConverters.getInstance(), JavaLanguage.INSTANCE, new JavaElementTypeConverterExtension());
     registerParserDefinition(new JavaParserDefinition());
     addExplicitExtension(LanguageConstantExpressionEvaluator.INSTANCE, JavaLanguage.INSTANCE, new PsiExpressionEvaluator());
 
     registerApplicationExtensionPoint(ContainerProvider.EP_NAME, ContainerProvider.class);
+    registerApplicationExtensionPoint(PsiAugmentProvider.EP_NAME, PsiAugmentProvider.class);
+    registerApplicationExtensionPoint(JavaMainMethodProvider.EP_NAME, JavaMainMethodProvider.class);
+    registerApplicationExtensionPoint(ClsCustomNavigationPolicy.EP_NAME, ClsCustomNavigationPolicy.class);
+    registerApplicationExtensionPoint(ClassTypePointerFactory.EP_NAME, ClassTypePointerFactory.class);
+
     addExtension(ContainerProvider.EP_NAME, new JavaContainerProvider());
+    addExtension(ClassTypePointerFactory.EP_NAME, new PsiClassReferenceTypePointerFactory());
+    addExtension(TreeGenerator.EP_NAME, new JavaTreeGenerator());
+
+    registerApplicationService(JavaClassSupers.class, new JavaClassSupersImpl());
+    registerApplicationService(InternalPersistentJavaLanguageLevelReaderService.class, new InternalPersistentJavaLanguageLevelReaderService.DefaultImpl());
+    registerApplicationService(JavaFileCodeStyleFacadeFactory.class, createJavaFileCodeStyleFacadeFactory());
 
     application.registerService(PsiPackageImplementationHelper.class, new CorePsiPackageImplementationHelper());
 
@@ -138,10 +163,18 @@ public class JavaCoreApplicationEnvironment extends CoreApplicationEnvironment {
     registerApplicationDynamicExtensionPoint("com.intellij.filetype.decompiler", BinaryFileTypeDecompilers.class);
     registerApplicationDynamicExtensionPoint("com.intellij.psi.classFileDecompiler", ClassFileDecompilers.Decompiler.class);
     addExtension(ClassFileDecompilers.STATIC_EP_NAME, new ClsDecompilerImpl());
+
+    // The decompiler point notifies this service when the environment is disposed. The service registers a listener on the application
+    // in its constructor, which fails on a disposed application, so the service must exist before the disposal.
+    BinaryFileTypeDecompilers.getInstance();
   }
 
   // overridden in upsource
   protected CoreJavaDirectoryService createJavaDirectoryService() {
     return new CoreJavaDirectoryService();
+  }
+
+  protected @NotNull JavaFileCodeStyleFacadeFactory createJavaFileCodeStyleFacadeFactory() {
+    return psiFile -> psiFile.getProject().getService(JavaFileCodeStyleFacade.class);
   }
 }

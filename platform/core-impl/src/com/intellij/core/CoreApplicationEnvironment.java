@@ -6,6 +6,8 @@ import com.intellij.codeInsight.folding.CodeFoldingSettings;
 import com.intellij.codeInsight.multiverse.CodeInsightContextProvider;
 import com.intellij.codeInsight.multiverse.MultiverseEnabler;
 import com.intellij.concurrency.JobLauncher;
+import com.intellij.diagnostic.PluginException;
+import com.intellij.diagnostic.PluginProblemReporter;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginDescriptorLoader;
 import com.intellij.ide.plugins.PluginEnabler;
@@ -14,6 +16,7 @@ import com.intellij.lang.DefaultASTFactory;
 import com.intellij.lang.DefaultASTFactoryImpl;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
+import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.MetaLanguage;
 import com.intellij.lang.MetaLanguageProvider;
@@ -26,10 +29,13 @@ import com.intellij.mock.MockFileDocumentManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.TransactionGuardImpl;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.impl.CoreCommandProcessor;
 import com.intellij.openapi.editor.impl.DocumentImpl;
+import com.intellij.openapi.editor.impl.DocumentWriteAccessGuard;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointDescriptor;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -44,8 +50,11 @@ import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.project.DumbUtil;
 import com.intellij.openapi.util.ClassExtension;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.CompactVirtualFileSetFactory;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileManagerListener;
+import com.intellij.openapi.vfs.VirtualFileSetFactory;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.impl.CoreVirtualFilePointerManager;
@@ -53,10 +62,16 @@ import com.intellij.openapi.vfs.impl.VirtualFileManagerImpl;
 import com.intellij.openapi.vfs.impl.jar.CoreJarFileSystem;
 import com.intellij.openapi.vfs.local.CoreLocalFileSystem;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.psi.FileContextProvider;
 import com.intellij.psi.PsiReferenceService;
 import com.intellij.psi.PsiReferenceServiceImpl;
+import com.intellij.psi.impl.smartPointers.SmartPointerAnchorProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
+import com.intellij.psi.impl.source.codeStyle.IndentHelper;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistryImpl;
+import com.intellij.psi.impl.source.tree.TreeCopyHandler;
+import com.intellij.psi.impl.source.tree.TreeGenerator;
+import com.intellij.psi.meta.MetaDataContributor;
 import com.intellij.psi.stubs.CoreStubTreeLoader;
 import com.intellij.psi.stubs.StubElementRegistryService;
 import com.intellij.psi.stubs.StubElementRegistryServiceImpl;
@@ -65,6 +80,7 @@ import com.intellij.psi.stubs.StubRegistryExtension;
 import com.intellij.psi.stubs.StubTreeLoader;
 import com.intellij.util.KeyedLazyInstanceEP;
 import com.intellij.util.concurrency.AppScheduledExecutorService;
+import com.intellij.util.concurrency.TransferredWriteActionService;
 import com.intellij.util.graph.GraphAlgorithms;
 import com.intellij.util.graph.impl.GraphAlgorithmsImpl;
 import com.intellij.util.pico.DefaultPicoContainer;
@@ -115,13 +131,18 @@ public class CoreApplicationEnvironment {
 
     application = createApplication(parentDisposable);
     ApplicationManager.setApplication(application, parentDisposable);
+
+    // A headless process has no registry state to load.
+    // Without the mark, a read of a registry value logs an error in test mode.
+    Registry.markAsLoaded();
+
     myFileTypeRegistry = new CoreFileTypeRegistry();
     FileTypeRegistry.setInstanceSupplier(() -> myFileTypeRegistry, parentDisposable);
     myLocalFileSystem = createLocalFileSystem();
     myJarFileSystem = createJarFileSystem();
     myJrtFileSystem = createJrtFileSystem();
 
-    registerApplicationService(FileDocumentManager.class, new MockFileDocumentManagerImpl(null, DocumentImpl::new));
+    registerApplicationService(FileDocumentManager.class, createFileDocumentManager());
 
     registerApplicationExtensionPoint(new ExtensionPointName<>("com.intellij.virtualFileManagerListener"), VirtualFileManagerListener.class);
     List<VirtualFileSystem> fs = myJrtFileSystem != null
@@ -150,15 +171,44 @@ public class CoreApplicationEnvironment {
     registerApplicationService(DumbUtil.class, new MockDumbUtil());
 
     registerApplicationExtensionPoint(StubElementRegistryServiceImplKt.STUB_REGISTRY_EP, StubRegistryExtension.class);
+    registerApplicationExtensionPoint(new ExtensionPointName<>("com.intellij.languageStubDefinition"), LanguageExtensionPoint.class);
     registerApplicationService(StubElementRegistryService.class, new StubElementRegistryServiceImpl(application.getCoroutineScope()));
 
     application.registerService(ApplicationInfo.class, ApplicationInfoImpl.class);
 
     registerApplicationExtensionPoint(DynamicBundle.LanguageBundleEP.EP_NAME, DynamicBundle.LanguageBundleEP.class);
+
+    registerApplicationExtensionPoint(MetaLanguage.PROVIDER_EP_NAME, MetaLanguageProvider.class);
+    registerApplicationExtensionPoint(FileContextProvider.EP_NAME, FileContextProvider.class);
+    registerApplicationExtensionPoint(MetaDataContributor.EP_NAME, MetaDataContributor.class);
+    registerApplicationExtensionPoint(SmartPointerAnchorProvider.EP_NAME, SmartPointerAnchorProvider.class);
+    registerApplicationExtensionPoint(TreeCopyHandler.EP_NAME, TreeCopyHandler.class);
+    registerApplicationExtensionPoint(TreeGenerator.EP_NAME, TreeGenerator.class);
+    registerApplicationExtensionPoint(DocumentWriteAccessGuard.EP_NAME, DocumentWriteAccessGuard.class);
+
+    registerApplicationService(TransactionGuard.class, new TransactionGuardImpl());
+    registerApplicationService(VirtualFileSetFactory.class, new CompactVirtualFileSetFactory());
+
+    // A headless process loads no plugins, so every failure of an extension belongs to the platform
+    registerApplicationService(
+      PluginProblemReporter.class,
+      (errorMessage, cause, pluginClass) -> new PluginException(errorMessage, cause, null)
+    );
+
+    registerApplicationService(IndentHelper.class, new CoreIndentHelper());
+    registerApplicationService(TransferredWriteActionService.class, createTransferredWriteActionService());
   }
 
   public <T> void registerApplicationService(@NotNull Class<T> serviceInterface, @NotNull T serviceImplementation) {
     application.registerService(serviceInterface, serviceImplementation);
+  }
+
+  protected @NotNull TransferredWriteActionService createTransferredWriteActionService() {
+    return new CoreTransferredWriteActionService();
+  }
+
+  protected @NotNull FileDocumentManager createFileDocumentManager() {
+    return new MockFileDocumentManagerImpl(null, text -> new DocumentImpl(text, true));
   }
 
   protected @NotNull VirtualFilePointerManager createVirtualFilePointerManager() {
