@@ -12,6 +12,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.DefaultLogger;
+import com.intellij.diagnostic.ProgressIndicatorDumper;
 import com.intellij.openapi.progress.Cancellation;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -356,6 +357,26 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
       assertTrue(CoreProgressManager.hasThreadUnderCanceledIndicator(Thread.currentThread()));
     }, new EmptyProgressIndicator());
     assertFalse(checkCanceledCalled);
+  }
+
+  public void testProgressStateDumpNamesAnUnobservableCancellation() {
+    ProgressIndicator outer = new ProgressIndicatorBase();
+    ProgressIndicator nested = new ProgressIndicatorBase();
+    ProgressManager.getInstance().executeProcessUnderProgress(() -> {
+      outer.cancel();
+      assertTrue(CoreProgressManager.hasThreadUnderCanceledIndicator(Thread.currentThread()));
+      String marked = ProgressIndicatorDumper.INSTANCE.dumpProgressIndicatorState();
+      assertTrue(marked, marked.contains("ProgressManager.checkCanceled behavior: INDICATOR_PLUS_HOOKS"));
+      assertTrue(marked, marked.contains("checkCanceled can throw here: true"));
+
+      // Under a nested, unrelated indicator the thread still owns the canceled outer one, and nothing marks
+      // it. That is the state the freeze reports of IJPL-238885 show.
+      ProgressManager.getInstance().executeProcessUnderProgress(() -> {
+        assertFalse(CoreProgressManager.hasThreadUnderCanceledIndicator(Thread.currentThread()));
+        String unobserved = ProgressIndicatorDumper.INSTANCE.dumpProgressIndicatorState();
+        assertTrue(unobserved, unobserved.contains(CoreProgressManager.CANCELLATION_UNOBSERVED_MARKER));
+      }, nested);
+    }, outer);
   }
 
   public void testWrappedIndicatorsAreSortedRight() {
