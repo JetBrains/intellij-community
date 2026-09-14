@@ -41,6 +41,9 @@ import com.jetbrains.python.sdk.PythonSdkUtil
  *
  * "Go to declaration" is always user-initiated action, so we resolve it manually using best context
  *
+ * Other user actions, e.g. quick documentation, find usages, and rename, get the target element from
+ * [com.jetbrains.python.codeInsight.PyTargetElementEvaluator]. That evaluator also uses a user-initiated context.
+ *
  * @author Ilya.Kazakevich
  */
 class PyGotoDeclarationHandler : GotoDeclarationHandlerBase() {

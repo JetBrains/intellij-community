@@ -245,6 +245,12 @@ public class Py3QuickDocTest extends LightMarkedTestCase {
     checkByHTML(myProvider.generateDoc(target, originalElement));
   }
 
+  @TestFor(issues = "PY-66245")
+  public void testClassAttrOfFunctionResultFromOtherFile() {
+    myFixture.copyFileToProject(getTestName(false) + "/mod.py", "mod.py");
+    doMultiFileCheckByHTML("main.py");
+  }
+
   public void testParamOfLambda() {
     checkHTMLOnly();
   }

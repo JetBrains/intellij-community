@@ -4,6 +4,7 @@ package com.jetbrains.python.testing
 import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Components
+import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.codeInsight.navigation.actions.GotoTypeDeclarationAction
 import com.intellij.idea.TestFor
 import com.intellij.psi.PsiElement
@@ -14,6 +15,7 @@ import com.jetbrains.python.fixture.PythonCommonTestCase
 import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyNamedParameter
+import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.resolve.ImportedResolveResult
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.testing.pyTestFixtures.CONFTEST_PY
@@ -390,5 +392,16 @@ class PyTestFixtureResolvingTest : PyTestCase() {
     assertNotNull("Go to Type Declaration should resolve the fixture parameter type", types)
     assertEquals(1, types!!.size)
     assertEquals((myFixture.file as PyFile).findTopLevelClass("A"), types.single())
+  }
+
+  @TestFor(issues = ["PY-66245"])
+  fun `test target element for attribute of fixture from conftest`() {
+    myFixture.configureByFile("/testAttributeOfFixtureFromConftest/test_attribute.py")
+    val target = TargetElementUtil.findTargetElement(myFixture.editor, TargetElementUtil.getInstance().allAccepted)
+    assertInstanceOf(target, PyTargetExpression::class.java)
+    target as PyTargetExpression
+    assertEquals("key", target.name)
+    assertEquals("TestData", target.containingClass?.name)
+    assertEquals(CONFTEST_PY, target.containingFile.name)
   }
 }
