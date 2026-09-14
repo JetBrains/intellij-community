@@ -448,7 +448,6 @@
     <!-- endregion -->
 
     <!-- region direct modules -->
-    <module name="intellij.platform.vcs"/>
     <module name="intellij.libraries.microba"/>
     <!-- endregion -->
     <!-- endregion -->

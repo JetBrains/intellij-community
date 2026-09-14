@@ -52,7 +52,6 @@
     <module name="intellij.platform.testIntegration.ui"/>
     <module name="intellij.platform.usageView"/>
     <module name="intellij.platform.util.ui"/>
-    <module name="intellij.platform.vcs"/>
   </dependencies>
   <!-- endregion -->
 <extensions defaultExtensionNs="com.intellij">

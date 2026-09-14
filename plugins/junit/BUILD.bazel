@@ -6,6 +6,7 @@ dev_dist_plugin(
     content_modules = [
         # do not sort,
         "intellij.junit.properties",
+        "intellij.junit.vcs",
         "intellij.libraries.hamcrest",
         "intellij.libraries.junit4",
         "intellij.junit.rt",
@@ -77,7 +78,6 @@ jvm_library(
         "//platform/projectModel-api:projectModel",
         "//platform/refactoring",
         "//platform/testRunner",
-        "//platform/vcs-api:vcs",
         "//plugins/junit_rt:junit-rt",
         "//java/compiler/openapi:java-compiler",
         "//platform/platform-impl:ide-impl",
@@ -143,7 +143,6 @@ jvm_library(
         "//platform/projectModel-api:projectModel_test_lib",
         "//platform/refactoring:refactoring_test_lib",
         "//platform/testRunner:testRunner_test_lib",
-        "//platform/vcs-api:vcs_test_lib",
         "//plugins/junit_rt:junit-rt_test_lib",
         "//java/compiler/openapi:java-compiler_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",

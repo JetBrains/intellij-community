@@ -5,6 +5,9 @@
     "layoutSignature": "{platform:layoutSignature}",
     "assets": [
         {
+            "module": "intellij.platform.vcs"
+        },
+        {
             "module": "intellij.platform.vcs.impl"
         },
         {
