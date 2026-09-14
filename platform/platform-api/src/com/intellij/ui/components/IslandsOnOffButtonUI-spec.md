@@ -27,7 +27,7 @@ The toggle is a **pill-shaped track** with a small **notch indicator** (no text 
 
 The ON notch is a **solid filled 10×10px circle** at `left: 13px`; the OFF notch is a **hollow 8×8px ring** at `left: 4px`. Both keep uniform padding inside the track — 3px around the ON notch, 4px around the OFF notch. Track, border and notch all come from the `toggle*.svg` assets (see §3), so the geometry lives in the icons rather than in paint code.
 
-The component preferred size is larger than the track to accommodate the focus ring without clipping. The track is centered within the component bounds. Focus ring padding = gap (1px) + stroke (2px) = 3px per side, and it lives inside the asset canvas rather than in paint code, so all six assets share one canvas and gaining focus never moves the track or resizes the component.
+The component preferred size is larger than the track to accommodate the focus ring without clipping. The track is centered within the component bounds. Focus ring padding = gap (1px) + stroke (2px) = 3px per side, and it lives inside the asset canvas rather than in paint code, so all six assets share one canvas and gaining focus never moves the track or resizes the component. `UINewThemeIconsTest.testToggleIconsHaveTheSameSize` enforces that shared size, since the component is laid out from a single icon (see §8 note 4) but paints any of the six.
 
 The toggle has no separate compact mode size — it uses the same dimensions regardless of the UI density setting.
 
@@ -196,8 +196,8 @@ Registered programmatically by `IslandsUICustomization.applyMissingKeys()` whene
 
 ## 8. Implementation Notes
 
-1. **Everything** — painted from a single `toggle*.svg` icon per state, centered in the component bounds. Icons are resolved by `findIconUsingNewImplementation`, so they are cached and HiDPI-aware, then wrapped with `createWithPatcher` so rasterization is shared per resolved palette.
-2. **State selection** — `toggleOn`/`toggleOff` plus a `Disabled` or `Focused` suffix, the scheme `LafIconLookup` uses for checkboxes. The assets live in the flat `laf/icons/` directory rather than the `intellij/` and `darcula/` subdirectories, because one asset serves every theme.
+1. **Everything** — painted from a single `toggle*.svg` icon per state, centered in the component bounds. Icons are referenced through the generated `PlatformIdeImplIcons.Toggle*` constants, so they are cached and HiDPI-aware, then wrapped with `createWithPatcher` so rasterization is shared per resolved palette.
+2. **State selection** — a `when` over the button model maps each state to one of the six constants (`ToggleOn`/`ToggleOff`, each also `Focused` and `Disabled`). Referencing the generated constants rather than assembling a resource path keeps a renamed or deleted asset a compile error instead of a blank toggle at paint time. The assets live in the flat `laf/icons/` directory rather than the `intellij/` and `darcula/` subdirectories, because one asset serves every theme.
 3. **Focus ring** — part of the focused assets. Only shown when enabled, focused, and no validation outline.
 4. **Preferred size** — taken from the asset canvas rather than hardcoded, so changing the assets cannot desynchronize layout from what is painted.
 5. **No text** in paint path — the Islands UI ignores `onText`/`offText` entirely.

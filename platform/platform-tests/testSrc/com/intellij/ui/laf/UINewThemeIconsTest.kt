@@ -3,12 +3,18 @@ package com.intellij.ui.laf
 
 import com.intellij.ide.ui.FILL_STROKE_SEPARATOR
 import com.intellij.ide.ui.PaletteKeys
+import com.intellij.openapi.util.IconLoader
+import com.intellij.platform.ide.impl.icons.PlatformIdeImplIcons
+import com.intellij.ui.IconManager
+import com.intellij.ui.icons.CachedImageIcon
 import com.intellij.ui.svg.ATTR_FILL
 import com.intellij.ui.svg.ATTR_ID
 import com.intellij.ui.svg.ATTR_STROKE
 import com.intellij.ui.svg.AttributeMutator
 import com.intellij.ui.svg.createJSvgDocument
 import com.intellij.util.xml.dom.createXmlStreamReader
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.fail
 
@@ -16,6 +22,18 @@ private const val COLOR_FILL_KEY = "color-fill-key"
 private const val COLOR_STROKE_KEY = "color-stroke-key"
 
 class UINewThemeIconsTest {
+
+  @BeforeEach
+  fun setUp() {
+    IconLoader.activate()
+    IconManager.activate(null)
+  }
+
+  @AfterEach
+  fun tearDown() {
+    IconManager.deactivate()
+    IconLoader.deactivate()
+  }
 
   private val iconsPath = "/themes/expUI/icons/dark/"
 
@@ -99,6 +117,25 @@ class UINewThemeIconsTest {
           fail("Theme: $theme, color $key is not declared, see IslandsOnOffButtonUI-spec.md")
         }
       }
+    }
+  }
+
+  @Test
+  fun testToggleIconsHaveTheSameSize() {
+    val icons = listOf(
+      PlatformIdeImplIcons.ToggleOff, PlatformIdeImplIcons.ToggleOffFocused, PlatformIdeImplIcons.ToggleOffDisabled,
+      PlatformIdeImplIcons.ToggleOn, PlatformIdeImplIcons.ToggleOnFocused, PlatformIdeImplIcons.ToggleOnDisabled,
+    )
+
+    val sizes = icons.map { icon ->
+      if (icon !is CachedImageIcon) {
+        fail("Icon $icon is not a loaded icon, so its size is a fallback, see setUp()")
+      }
+      "${icon.iconWidth}x${icon.iconHeight}"
+    }
+
+    if (sizes.distinct().size != 1) {
+      fail("Toggle icons must have the same size, got $sizes, see IslandsOnOffButtonUI-spec.md")
     }
   }
 

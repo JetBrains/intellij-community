@@ -99,6 +99,7 @@ public class OnOffButton extends JToggleButton {
    *
    * @param ipad insets
    */
+  @ApiStatus.Internal
   public void setIpad(@NotNull Insets ipad) {
     myIpad = ipad;
   }
@@ -106,6 +107,7 @@ public class OnOffButton extends JToggleButton {
   /**
    * @return internal paddings of the component
    */
+  @ApiStatus.Internal
   public @NotNull Insets getIpad() {
     return myIpad;
   }

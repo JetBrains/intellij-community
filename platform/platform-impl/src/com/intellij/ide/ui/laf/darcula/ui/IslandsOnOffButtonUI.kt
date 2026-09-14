@@ -2,8 +2,10 @@
 package com.intellij.ide.ui.laf.darcula.ui
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
-import com.intellij.openapi.util.findIconUsingNewImplementation
+import com.intellij.platform.ide.impl.icons.PlatformIdeImplIcons
 import com.intellij.ui.components.OnOffButton
+import com.intellij.ui.dsl.builder.DslComponentProperty
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.icons.CachedImageIcon
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.svg.ATTR_FILL
@@ -20,8 +22,6 @@ import javax.swing.JComponent
 import javax.swing.UIManager
 import javax.swing.plaf.basic.BasicToggleButtonUI
 import kotlin.math.max
-
-private const val ICONS_DIR = "com/intellij/ide/ui/laf/icons/"
 
 /**
  * Attributes naming the theme color a painted element takes its fill or stroke from, the same
@@ -47,12 +47,6 @@ private val TOGGLE_COLOR_KEYS: List<String> = listOf(
 
 /** Identity of this patcher implementation, so its digests never collide with another patcher's. */
 private const val PATCHER_IMPL_ID = 6222195294178155463L
-
-/**
- * Asset the layout size is taken from. Every `toggle*.svg` shares one canvas, so any of them would
- * do; using a fixed one keeps [IslandsOnOffButtonUI.getPreferredSize] independent of button state.
- */
-private const val REFERENCE_ICON = "toggleOff"
 
 /** Minimum component height, so a toggle lines up with other controls in list rows and forms. */
 private const val MIN_HEIGHT = 32
@@ -141,36 +135,38 @@ internal class IslandsOnOffButtonUI : BasicToggleButtonUI() {
       return patcher
     }
 
-    private fun findIcon(name: String): Icon? {
-      val icon = findIconUsingNewImplementation(path = "$ICONS_DIR$name.svg",
-                                                classLoader = IslandsOnOffButtonUI::class.java.classLoader)
-      // the patched copy is cheap: rasterization is shared through the patcher digest
-      return (icon as? CachedImageIcon)?.createWithPatcher(colorPatcher = patcher()) ?: icon
-    }
-
     /**
      * `Disabled` wins over `Focused` because a disabled toggle is not focusable and there is no
      * combined asset. A validation outline suppresses the focus ring, as in [DarculaCheckBoxUI].
      */
-    private fun getIcon(button: OnOffButton): Icon? {
-      val state = when {
-        !button.isEnabled -> "Disabled"
-        button.hasFocus() && DarculaUIUtil.getOutline(button) == null -> "Focused"
-        else -> ""
+    private fun getIcon(button: OnOffButton): Icon {
+      val selected = button.isSelected
+      val icon = when {
+        !button.isEnabled -> if (selected) PlatformIdeImplIcons.ToggleOnDisabled else PlatformIdeImplIcons.ToggleOffDisabled
+        button.hasFocus() && DarculaUIUtil.getOutline(button) == null ->
+          if (selected) PlatformIdeImplIcons.ToggleOnFocused else PlatformIdeImplIcons.ToggleOffFocused
+        else -> if (selected) PlatformIdeImplIcons.ToggleOn else PlatformIdeImplIcons.ToggleOff
       }
-      return findIcon((if (button.isSelected) "toggleOn" else "toggleOff") + state)
+      // the patched copy is cheap: rasterization is shared through the patcher digest
+      return (icon as? CachedImageIcon)?.createWithPatcher(colorPatcher = patcher()) ?: icon
     }
   }
 
   override fun installUI(c: JComponent) {
     super.installUI(c)
     c.alignmentY = 0.5f
+    c.putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps(3))
+  }
+
+  override fun uninstallUI(c: JComponent?) {
+    c?.putClientProperty(DslComponentProperty.VISUAL_PADDINGS, null)
+    super.uninstallUI(c)
   }
 
   override fun getPreferredSize(c: JComponent): Dimension {
-    val icon = findIcon(REFERENCE_ICON)
-    return Dimension(icon?.iconWidth ?: JBUIScale.scale(32),
-                     max(JBUIScale.scale(MIN_HEIGHT), icon?.iconHeight ?: JBUIScale.scale(22)))
+    // All `toggle*.svg` images have the same size
+    val icon = PlatformIdeImplIcons.ToggleOff
+    return Dimension(icon.iconWidth, icon.iconHeight)
   }
 
   override fun getMinimumSize(c: JComponent): Dimension = getPreferredSize(c)
@@ -179,7 +175,7 @@ internal class IslandsOnOffButtonUI : BasicToggleButtonUI() {
 
   override fun paint(g: Graphics, c: JComponent) {
     if (c !is OnOffButton) return
-    val icon = getIcon(c) ?: return
+    val icon = getIcon(c)
     icon.paintIcon(c, g, (c.width - icon.iconWidth) / 2, (c.height - icon.iconHeight) / 2)
   }
 }
