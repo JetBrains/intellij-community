@@ -10,15 +10,18 @@ import com.intellij.openapi.editor.InlayProperties
 import com.intellij.openapi.editor.ex.DocumentTextPatch
 import com.intellij.openapi.editor.impl.marker.SnapshotMarker
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngineImpl
+import com.intellij.openapi.editor.impl.marker.SnapshotMarkerRootStore
 import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl
 import com.intellij.openapi.editor.impl.marker.UsePMarkerImplementation
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.util.ref.GCUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import java.lang.ref.WeakReference
 
 @TestApplication
 @UsePMarkerImplementation
@@ -248,6 +251,16 @@ class SnapshotInlayModelTest {
   }
 
   @Test
+  fun `released editor storage is not retained by document marker stores`(): Unit = timeoutRunBlocking {
+    val releasedStorage = createReleasedEditorStorage()
+
+    GCUtil.tryGcSoftlyReachableObjects { releasedStorage.rootStoreReference.get() == null }
+
+    assertThat(releasedStorage.rootStoreReference.get()).isNull()
+    assertThat(releasedStorage.document.text).isEqualTo("abc")
+  }
+
+  @Test
   @UsePMarkerImplementation(false)
   fun `disabled snapshot marker implementation uses inlay trees`(): Unit = timeoutRunBlocking {
     val usesSnapshotStorage = withEditor("abc") { editor ->
@@ -335,6 +348,11 @@ class SnapshotInlayModelTest {
     val inlayIsValid: Boolean,
     val childIsDisposed: Boolean,
     val hasBlockElements: Boolean,
+  )
+
+  private data class ReleasedEditorStorage(
+    val document: DocumentImpl,
+    val rootStoreReference: WeakReference<SnapshotMarkerRootStore>,
   )
 
   private val renderer = EditorCustomElementRenderer { 1 }
