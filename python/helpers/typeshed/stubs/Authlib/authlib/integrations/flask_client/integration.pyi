@@ -1,8 +1,10 @@
 from _typeshed import Incomplete
 
+from blinker import NamedSignal
+
 from ..base_client import FrameworkIntegration
 
-token_update: Incomplete
+token_update: NamedSignal
 
 class FlaskIntegration(FrameworkIntegration):
     def update_token(self, token, refresh_token=None, access_token=None) -> None: ...

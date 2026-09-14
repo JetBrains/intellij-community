@@ -195,7 +195,6 @@ def run_testcases(
             temp_config.name,
             # Avoid race conditions when using the cache
             # https://github.com/python/mypy/issues/13916
-            "--no-incremental",
             "--cache-dir",
             str(tempdir / ".mypy_cache" / version / platform),
             # Not useful for the test cases

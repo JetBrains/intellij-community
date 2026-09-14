@@ -12,7 +12,7 @@ from matplotlib.text import Text  # type: ignore[import-not-found]
 from matplotlib.typing import ColorType  # type: ignore[import-not-found]
 from networkx._typing import Array2D
 from networkx.classes.digraph import DiGraph
-from networkx.classes.graph import Graph, _Node
+from networkx.classes.graph import Graph, _EdgeData, _Node, _NodeData
 
 __all__ = [
     "display",
@@ -34,7 +34,7 @@ __all__ = [
     "draw_forceatlas2",
 ]
 
-_G = TypeVar("_G", bound=Graph[Any])
+_G = TypeVar("_G", bound=Graph[Any, Any, Any])
 
 # types from matplotlib
 _FontSize: TypeAlias = Literal["xx-small", "x-small", "small", "medium", "large", "x-large", "xx-large"] | float
@@ -102,7 +102,7 @@ class _DrawNetworkxKwds(TypedDict, Generic[_Node], total=False):
     hide_ticks: bool
 
 def apply_matplotlib_colors(
-    G: Graph[_Node],
+    G: Graph[_Node, _NodeData, _EdgeData],
     src_attr: str,
     dest_attr: str,
     map: str | Colormap,
@@ -157,7 +157,7 @@ def display(
     hide_ticks: bool = True,
 ) -> _G: ...
 def draw(
-    G: Graph[_Node],
+    G: Graph[_Node, _NodeData, _EdgeData],
     pos: Mapping[_Node, Collection[float]] | None = None,
     ax: Axes | None = None,
     *,
@@ -165,7 +165,7 @@ def draw(
     **kwds: Unpack[_DrawNetworkxKwds[_Node]],
 ) -> None: ...
 def draw_networkx(
-    G: Graph[_Node],
+    G: Graph[_Node, _NodeData, _EdgeData],
     pos: Mapping[_Node, Collection[float]] | None = None,
     arrows: bool | None = None,
     with_labels: bool = True,
@@ -174,7 +174,7 @@ def draw_networkx(
     **kwds: Unpack[_DrawNetworkxKwds[_Node]],
 ) -> None: ...
 def draw_networkx_nodes(  # keep in sync with _DrawNetworkxKwds above
-    G: Graph[_Node],
+    G: Graph[_Node, _NodeData, _EdgeData],
     pos: Mapping[_Node, Collection[float]],
     nodelist: Collection[_Node] | None = None,
     node_size: float | Collection[float] = 300,
@@ -194,7 +194,7 @@ def draw_networkx_nodes(  # keep in sync with _DrawNetworkxKwds above
 
 @overload  # arrows=None -> LineCollection if G is undirected, list[FancyArrowPatch] if G is directed
 def draw_networkx_edges(  # keep in sync with _DrawNetworkxKwds above
-    G: Graph[_Node],
+    G: Graph[_Node, _NodeData, _EdgeData],
     pos: Mapping[_Node, Collection[float]],
     edgelist: Collection[_Node | Hashable] | None = None,  # (u, v, k) for multigraphs and (u, v) for simple graphs
     width: float | Collection[float] = 1.0,
@@ -219,7 +219,7 @@ def draw_networkx_edges(  # keep in sync with _DrawNetworkxKwds above
 ) -> LineCollection | list[FancyArrowPatch]: ...
 @overload  # directed graph and arrows=None -> list[FancyArrowPatch]
 def draw_networkx_edges(
-    G: DiGraph[_Node],
+    G: DiGraph[_Node, _NodeData, _EdgeData],
     pos: Mapping[_Node, Collection[float]],
     edgelist: Collection[_Node | Hashable] | None = None,  # (u, v, k) for multigraphs and (u, v) for simple graphs
     width: float | Collection[float] = 1.0,
@@ -244,7 +244,7 @@ def draw_networkx_edges(
 ) -> list[FancyArrowPatch]: ...
 @overload  # arrows=True -> list[FancyArrowPatch]
 def draw_networkx_edges(
-    G: Graph[_Node],
+    G: Graph[_Node, _NodeData, _EdgeData],
     pos: Mapping[_Node, Collection[float]],
     edgelist: Collection[_Node | Hashable] | None = None,  # (u, v, k) for multigraphs and (u, v) for simple graphs
     width: float | Collection[float] = 1.0,
@@ -270,7 +270,7 @@ def draw_networkx_edges(
 ) -> list[FancyArrowPatch]: ...
 @overload  # arrows=False -> LineCollection
 def draw_networkx_edges(
-    G: Graph[_Node],
+    G: Graph[_Node, _NodeData, _EdgeData],
     pos: Mapping[_Node, Collection[float]],
     edgelist: Collection[_Node | Hashable] | None = None,  # (u, v, k) for multigraphs and (u, v) for simple graphs
     width: float | Collection[float] = 1.0,
@@ -291,7 +291,7 @@ def draw_networkx_edges(
 ) -> LineCollection: ...
 
 def draw_networkx_labels(  # keep in sync with _DrawNetworkxKwds above
-    G: Graph[_Node],
+    G: Graph[_Node, _NodeData, _EdgeData],
     pos: Mapping[_Node, Collection[float]],
     labels: Mapping[_Node, object] | None = None,  # labels are explicitly converted to str
     font_size: _FontSize | Mapping[_Node, _FontSize] = 12,
@@ -308,7 +308,7 @@ def draw_networkx_labels(  # keep in sync with _DrawNetworkxKwds above
 ) -> dict[_Node, Text]: ...
 def draw_networkx_edge_labels(
     # TODO: find a way to have a covariant list for params annotated with `something | list[Incomplete]`
-    G: Graph[_Node],
+    G: Graph[_Node, _NodeData, _EdgeData],
     pos: Mapping[_Node, Collection[float]],
     edge_labels: (
         SupportsItems[
@@ -335,25 +335,49 @@ def draw_networkx_edge_labels(
     hide_ticks: bool = True,
 ) -> dict[tuple[_Node, _Node] | tuple[_Node, _Node, Any], Text]: ...  # Any is for multigraph key
 def draw_bipartite(
-    G: Graph[_Node], *, ax: Axes | None = None, with_labels: bool = ..., **kwargs: Unpack[_DrawNetworkxKwds[_Node]]
+    G: Graph[_Node, _NodeData, _EdgeData],
+    *,
+    ax: Axes | None = None,
+    with_labels: bool = ...,
+    **kwargs: Unpack[_DrawNetworkxKwds[_Node]],
 ) -> None: ...
 def draw_circular(
-    G: Graph[_Node], *, ax: Axes | None = None, with_labels: bool = ..., **kwargs: Unpack[_DrawNetworkxKwds[_Node]]
+    G: Graph[_Node, _NodeData, _EdgeData],
+    *,
+    ax: Axes | None = None,
+    with_labels: bool = ...,
+    **kwargs: Unpack[_DrawNetworkxKwds[_Node]],
 ) -> None: ...
 def draw_kamada_kawai(
-    G: Graph[_Node], *, ax: Axes | None = None, with_labels: bool = ..., **kwargs: Unpack[_DrawNetworkxKwds[_Node]]
+    G: Graph[_Node, _NodeData, _EdgeData],
+    *,
+    ax: Axes | None = None,
+    with_labels: bool = ...,
+    **kwargs: Unpack[_DrawNetworkxKwds[_Node]],
 ) -> None: ...
 def draw_random(
-    G: Graph[_Node], *, ax: Axes | None = None, with_labels: bool = ..., **kwargs: Unpack[_DrawNetworkxKwds[_Node]]
+    G: Graph[_Node, _NodeData, _EdgeData],
+    *,
+    ax: Axes | None = None,
+    with_labels: bool = ...,
+    **kwargs: Unpack[_DrawNetworkxKwds[_Node]],
 ) -> None: ...
 def draw_spectral(
-    G: Graph[_Node], *, ax: Axes | None = None, with_labels: bool = ..., **kwargs: Unpack[_DrawNetworkxKwds[_Node]]
+    G: Graph[_Node, _NodeData, _EdgeData],
+    *,
+    ax: Axes | None = None,
+    with_labels: bool = ...,
+    **kwargs: Unpack[_DrawNetworkxKwds[_Node]],
 ) -> None: ...
 def draw_spring(
-    G: Graph[_Node], *, ax: Axes | None = None, with_labels: bool = ..., **kwargs: Unpack[_DrawNetworkxKwds[_Node]]
+    G: Graph[_Node, _NodeData, _EdgeData],
+    *,
+    ax: Axes | None = None,
+    with_labels: bool = ...,
+    **kwargs: Unpack[_DrawNetworkxKwds[_Node]],
 ) -> None: ...
 def draw_shell(
-    G: Graph[_Node],
+    G: Graph[_Node, _NodeData, _EdgeData],
     nlist: Collection[Collection[_Node]] | None = None,
     *,
     ax: Axes | None = None,
@@ -361,10 +385,18 @@ def draw_shell(
     **kwargs: Unpack[_DrawNetworkxKwds[_Node]],
 ) -> None: ...
 def draw_planar(
-    G: Graph[_Node], *, ax: Axes | None = None, with_labels: bool = ..., **kwargs: Unpack[_DrawNetworkxKwds[_Node]]
+    G: Graph[_Node, _NodeData, _EdgeData],
+    *,
+    ax: Axes | None = None,
+    with_labels: bool = ...,
+    **kwargs: Unpack[_DrawNetworkxKwds[_Node]],
 ) -> None: ...
 def draw_forceatlas2(
-    G: Graph[_Node], *, ax: Axes | None = None, with_labels: bool = ..., **kwargs: Unpack[_DrawNetworkxKwds[_Node]]
+    G: Graph[_Node, _NodeData, _EdgeData],
+    *,
+    ax: Axes | None = None,
+    with_labels: bool = ...,
+    **kwargs: Unpack[_DrawNetworkxKwds[_Node]],
 ) -> None: ...
 def apply_alpha(
     colors: ColorType | Collection[ColorType] | Collection[float],

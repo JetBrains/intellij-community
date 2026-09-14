@@ -2,7 +2,6 @@
 # TODO: Allowlist entries that should be fixed
 # ============================================
 
-_frozen_importlib_external.PathFinder.discover
 dataclasses.MISSING
 dataclasses._MISSING_TYPE
 dataclasses.field
