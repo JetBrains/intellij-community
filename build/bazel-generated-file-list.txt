@@ -1382,6 +1382,7 @@ plugins/junit/kotlin-tests-k2
 plugins/junit/kotlin-tests-shared
 plugins/junit/properties
 plugins/junit/testFramework
+plugins/junit/vcs
 plugins/junit5_rt
 plugins/junit5_rt_tests
 plugins/junit6_rt

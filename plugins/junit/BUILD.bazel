@@ -15,6 +15,7 @@ dev_dist_plugin(
     descriptor = "resources/META-INF/plugin.xml",
     descriptor_modules = [
         "intellij.junit.properties",
+        "intellij.junit.vcs",
         "intellij.libraries.hamcrest",
         "intellij.libraries.junit4",
     ],
@@ -56,6 +57,7 @@ jvm_library(
     exports = ["//jvm/jvm-analysis-api:analysis"],
     deps = [
         # do not sort,
+        "@lib//:kotlin-stdlib",
         "//java/execution/openapi:java-execution",
         "//java/openapi:java",
         "//java/java-syntax:syntax",

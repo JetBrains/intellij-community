@@ -22,8 +22,6 @@ import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.psi.JavaCodeFragment;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -49,7 +47,6 @@ import java.awt.GridBagLayout;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import static com.intellij.execution.junit2.configuration.JUnitConfigurationModel.ALL_IN_PACKAGE;
@@ -157,13 +154,8 @@ public class JUnitTestKindFragment extends SettingsEditorFragment<JUnitConfigura
   private static void setupChangeLists(Project project, JComboBox<String> comboBox) {
     final DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>();
     comboBox.setModel(model);
-    model.addElement(JUnitBundle.message("test.discovery.by.all.changes.combo.item"));
-
-    if (!project.isDefault()) {
-      final List<LocalChangeList> changeLists = ChangeListManager.getInstance(project).getChangeLists();
-      for (LocalChangeList changeList : changeLists) {
-        model.addElement(changeList.getName());
-      }
+    for (var name : JUnitTestDiscoveryProvider.getInstance().getChangeListNames(project)) {
+      model.addElement(name);
     }
   }
 

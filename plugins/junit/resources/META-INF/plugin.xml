@@ -17,6 +17,7 @@
   <vendor>JetBrains</vendor>
   <content namespace="jetbrains">
     <module name="intellij.junit.properties"/>
+    <module name="intellij.junit.vcs"/>
   </content>
   <content>
     <module name="intellij.libraries.hamcrest" loading="embedded"/>
