@@ -11,13 +11,13 @@ import java.nio.file.Path
 
 class ModuleSetRunnerTest {
   @Test
-  fun `community discovery includes the core library modules`() {
+  fun `community discovery includes the library module sets`() {
     val sources = discoverCommunityModuleSetSources()
-    assertThat(sources.keys).containsExactlyInAnyOrder(ModuleSetSourceLabels.COMMUNITY, ModuleSetSourceLabels.CORE)
+    assertThat(sources.keys).containsExactlyInAnyOrder(ModuleSetSourceLabels.COMMUNITY, ModuleSetSourceLabels.CORE, ModuleSetSourceLabels.LIBRARIES)
 
-    val core = sources.getValue(ModuleSetSourceLabels.CORE)
-    assertThat(core.sourceFile).endsWith("/CoreModuleSets.kt")
-    val libraries = core.moduleSets.single { it.name == "libraries.platform" }
+    val librarySource = sources.getValue(ModuleSetSourceLabels.LIBRARIES)
+    assertThat(librarySource.sourceFile).endsWith("/LibraryModuleSets.kt")
+    val libraries = librarySource.moduleSets.single { it.name == "libraries.platform" }
     assertThat(libraries.modules.map { it.moduleId.name }).contains("intellij.libraries.jna")
 
     val moduleSetNames = sources.values.flatMap { source -> source.moduleSets.map { it.name } }

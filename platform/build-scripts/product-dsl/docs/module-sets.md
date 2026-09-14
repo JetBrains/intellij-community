@@ -34,7 +34,8 @@ Module sets are **defined in Kotlin code** and **auto-generate XML files**:
 | Location | File Path | Description |
 |----------|-----------|-------------|
 | Community | `community/platform/build-scripts/src/org/jetbrains/intellij/build/productLayout/CommunityModuleSets.kt` | IDE feature sets (essential, vcs, xml, debugger) |
-| Community (Core) | `community/platform/build-scripts/src/org/jetbrains/intellij/build/productLayout/CoreModuleSets.kt` | Platform infrastructure (libraries, corePlatform, rpc) |
+| Community (Core) | `community/platform/build-scripts/src/org/jetbrains/intellij/build/productLayout/CoreModuleSets.kt` | Platform infrastructure (corePlatform, coreLang, rpc, telemetry) |
+| Community (Libraries) | `community/platform/build-scripts/src/org/jetbrains/intellij/build/productLayout/LibraryModuleSets.kt` | Library wrapper sets (libraries.platform, libraries.ide, libraries.grpc) |
 | Ultimate | `platform/buildScripts/src/productLayout/UltimateModuleSets.kt` | Ultimate-only module sets |
 
 Each module set is defined as a Kotlin function (e.g., `fun essential(): ModuleSet`) that returns a `ModuleSet` object. The XML files (pattern: `intellij.moduleSets.<name>.xml`) are **auto-generated** from this Kotlin code.

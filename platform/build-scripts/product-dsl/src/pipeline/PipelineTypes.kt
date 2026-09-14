@@ -31,7 +31,7 @@ import java.nio.file.Path
  * **Consumed by:** [ModelBuildingStage]
  */
 internal data class DiscoveryResult(
-  /** Module sets by label (e.g., "community" → [...], "ultimate" → [...], "core" → [...]) */
+  /** Module sets by label (e.g., "community" → [...], "ultimate" → [...], "core" → [...], "libraries" → [...]) */
   @JvmField val moduleSetsByLabel: Map<String, List<ModuleSet>>,
 
   /** All discovered products from dev-build.json */
@@ -60,14 +60,22 @@ internal data class DiscoveryResult(
   val coreModuleSets: List<ModuleSet>
     get() = moduleSetsByLabel.get(ModuleSetSourceLabels.CORE) ?: emptyList()
 
+  /** Library module sets */
+  val libraryModuleSets: List<ModuleSet>
+    get() = moduleSetsByLabel.get(ModuleSetSourceLabels.LIBRARIES) ?: emptyList()
+
   /**
    * The module sets a community product can ship.
    *
-   * `ultimateGenerator` maps the COMMUNITY and CORE labels to the community generated META-INF directory, and the
+   * `ultimateGenerator` maps the COMMUNITY, CORE and LIBRARIES labels to the community generated META-INF directory, and the
    * ULTIMATE label to the `licenseCommon` one. So a library of such a set needs an entry in the community license list.
    */
   val communityShippedModuleSets: List<ModuleSet>
-    get() = communityModuleSets + coreModuleSets
+    get() = buildList {
+      addAll(communityModuleSets)
+      addAll(coreModuleSets)
+      addAll(libraryModuleSets)
+    }
 }
 
 /**

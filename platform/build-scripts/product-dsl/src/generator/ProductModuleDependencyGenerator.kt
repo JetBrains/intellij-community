@@ -43,7 +43,12 @@ internal object ProductModuleDependencyGenerator : PipelineNode {
   override fun execute(ctx: ComputeContext) {
     run {
       val model = ctx.model
-      val allModuleSets = model.discovery.communityModuleSets + model.discovery.coreModuleSets + model.discovery.ultimateModuleSets
+      val allModuleSets = buildList {
+        addAll(model.discovery.communityModuleSets)
+        addAll(model.discovery.coreModuleSets)
+        addAll(model.discovery.libraryModuleSets)
+        addAll(model.discovery.ultimateModuleSets)
+      }
       val modulesToProcess = collectModulesToProcess(allModuleSets)
       if (modulesToProcess.isEmpty()) {
         ctx.publish(Slots.PRODUCT_MODULE_DEPS, ProductModuleDepsOutput(files = emptyList()))

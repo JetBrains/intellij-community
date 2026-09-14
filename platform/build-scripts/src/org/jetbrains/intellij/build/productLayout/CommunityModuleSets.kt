@@ -5,6 +5,9 @@ package org.jetbrains.intellij.build.productLayout
 
 import org.jetbrains.intellij.build.productLayout.CoreModuleSets.coreLang
 import org.jetbrains.intellij.build.productLayout.CoreModuleSets.rpcBackend
+import org.jetbrains.intellij.build.productLayout.LibraryModuleSets.librariesGrpc
+import org.jetbrains.intellij.build.productLayout.LibraryModuleSets.librariesIdeCommon
+import org.jetbrains.intellij.build.productLayout.LibraryModuleSets.librariesLsp4j
 
 /**
  * Community module sets for IDE features that build on CoreModuleSets.
@@ -15,10 +18,10 @@ import org.jetbrains.intellij.build.productLayout.CoreModuleSets.rpcBackend
  * - **vcs**: Version control support
  * - **xml**: XML support
  * - **compose**: Compose UI
- * - **spellchecker/settingsSync/ml/librariesGrpc**: one feature with the library it needs
+ * - **spellchecker/settingsSync/ml**: one feature with the library it needs
  * - **ideCommon**: Full IDE common modules
  *
- * Has a one-way dependency on CoreModuleSets (libraries, platform infrastructure, RPC).
+ * Has a one-way dependency on CoreModuleSets (platform infrastructure, RPC) and LibraryModuleSets (library wrappers).
  *
  * **How to regenerate XML files:**
  * - IDE: Run configuration "Generate Product Layouts"
@@ -27,7 +30,8 @@ import org.jetbrains.intellij.build.productLayout.CoreModuleSets.rpcBackend
  * For comprehensive documentation:
  * - [Module Sets](../product-dsl/docs/module-sets.md) - How module sets work and best practices
  *
- * @see CoreModuleSets for platform infrastructure (libraries, corePlatform, coreIde, coreLang, rpc, fleet)
+ * @see CoreModuleSets for platform infrastructure (corePlatform, coreIde, coreLang, rpc, fleet)
+ * @see LibraryModuleSets for the library wrapper sets
  */
 object CommunityModuleSets {
   // region Essential and Debugger
@@ -203,7 +207,7 @@ object CommunityModuleSets {
    * Language Server Protocol (LSP) support modules.
    */
   fun lsp(): ModuleSet = moduleSet("lsp") {
-    moduleSet(CoreModuleSets.librariesLsp4j())
+    moduleSet(librariesLsp4j())
     embeddedModule("intellij.platform.lsp")
     embeddedModule("intellij.platform.lsp.impl")
     module("intellij.platform.lsp.impl.structureView")
@@ -349,27 +353,6 @@ object CommunityModuleSets {
   }
 
   /**
-   * Libraries that only plugins consume, with no platform owner.
-   * Each entry is a shared-set placement under ADR 0005 that a plugin-private copy could replace.
-   */
-  fun librariesIdeCommon(): ModuleSet = moduleSet("libraries.ide.common") {
-    module("intellij.libraries.javax.activation")
-    module("intellij.libraries.opencsv")
-    module("intellij.libraries.squareup.okio.jvm")
-    module("intellij.libraries.jettison")
-    module("intellij.libraries.xstream")
-    module("intellij.libraries.commons.text")
-  }
-
-  /**
-   * gRPC runtime, used by the process mediator, IJent, and many plugins.
-   */
-  fun librariesGrpc(): ModuleSet = moduleSet("libraries.grpc") {
-    module("intellij.libraries.grpc")
-    module("intellij.libraries.grpc.netty.shaded")
-  }
-
-  /**
    * The spellchecker core module and its Lucene dictionary index.
    * The VCS and XML spellchecker strategies stay in [ideCommon], because lean products bundle the core without them.
    */
@@ -396,7 +379,8 @@ object CommunityModuleSets {
 
   /**
    * IDE common modules.
-   * Nests essential, compose, libraries.ide.common, libraries.grpc, spellchecker, settings.sync, ml, vcs, lsp, and duplicates.
+   * Nests essential, compose, spellchecker, settings.sync, ml, vcs, lsp, duplicates, and the
+   * libraries.ide.common and libraries.grpc sets from [LibraryModuleSets].
    */
   fun ideCommon(): ModuleSet = moduleSet("ide.common") {
     // Include essential first (which includes coreLang from CoreModuleSets)

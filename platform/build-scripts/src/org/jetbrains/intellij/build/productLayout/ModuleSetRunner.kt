@@ -49,6 +49,10 @@ fun discoverCommunityModuleSetSources(): Map<String, DiscoveredModuleSetSource> 
       moduleSets = discoverModuleSets(CoreModuleSets),
       sourceFile = "community/platform/build-scripts/src/org/jetbrains/intellij/build/productLayout/CoreModuleSets.kt",
     ),
+    ModuleSetSourceLabels.LIBRARIES to DiscoveredModuleSetSource(
+      moduleSets = discoverModuleSets(LibraryModuleSets),
+      sourceFile = "community/platform/build-scripts/src/org/jetbrains/intellij/build/productLayout/LibraryModuleSets.kt",
+    ),
   )
 }
 

@@ -48,7 +48,7 @@ class CommunityLibraryLicenseValidatorTest {
 
     assertThat(errors).hasSize(1)
     val error = errors.single() as MissingLibraryLicenseError
-    assertThat(error.context).isEqualTo("the community and core module sets")
+    assertThat(error.context).isEqualTo("the community, core and library module sets")
     assertThat(error.licenseFile).isEqualTo("CommunityLibraryLicenses.kt")
     val violation = error.violations.single()
     assertThat(violation.libraryName).isEqualTo("example-lib")
@@ -114,7 +114,7 @@ class CommunityLibraryLicenseValidatorTest {
     assertThatThrownBy {
       runBlocking(Dispatchers.Default) { run(tempDir, label = ModuleSetSourceLabels.ULTIMATE, licenses = listOf(unrelatedLicense)) }
     }.isInstanceOf(IllegalStateException::class.java)
-      .hasMessageContaining("No module of a community or core module set")
+      .hasMessageContaining("No module of a community, core or library module set")
   }
 
   @Test

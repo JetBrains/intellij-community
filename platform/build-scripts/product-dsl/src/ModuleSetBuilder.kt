@@ -44,6 +44,7 @@ import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRule
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import org.jetbrains.intellij.build.ModuleOutputProvider
+import org.jetbrains.intellij.build.productLayout.discovery.ModuleSetSourceLabels
 import org.jetbrains.intellij.build.productLayout.discovery.discoverModuleSets
 import org.jetbrains.intellij.build.productLayout.stats.FileChangeStatus
 import org.jetbrains.intellij.build.productLayout.stats.ModuleSetFileResult
@@ -293,13 +294,18 @@ private fun appendModuleSetContent(
  * Builds the XML content for a module set.
  *
  * @param moduleSet The module set to build XML for
- * @param label Description label ("community" or "ultimate") for header generation
+ * @param label Discovery label ("community", "core", "libraries" or "ultimate") that names the source file in the header
  * @return ModuleSetBuildResult containing XML and direct module count
  */
 internal fun buildModuleSetXml(moduleSet: ModuleSet, label: String): ModuleSetBuildResult {
   val xml = buildString {
     // Add generated file header
-    val mainClass = if (label == "community") "CommunityModuleSets" else "UltimateModuleSets"
+    val mainClass = when (label) {
+      ModuleSetSourceLabels.COMMUNITY -> "CommunityModuleSets"
+      ModuleSetSourceLabels.CORE -> "CoreModuleSets"
+      ModuleSetSourceLabels.LIBRARIES -> "LibraryModuleSets"
+      else -> "UltimateModuleSets"
+    }
     append("<!-- DO NOT EDIT: This file is auto-generated from Kotlin code -->\n")
     append("<!-- To regenerate, run: `Generate Product Layouts` or `bazel run //platform/buildScripts:plugin-model-tool` -->\n")
     append("<!-- Source: see moduleSet(\"${moduleSet.name}\") function in ${mainClass}.kt -->\n")
