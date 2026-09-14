@@ -23,6 +23,7 @@ internal data class RdClientModuleLoadingError(
       if (unexpectedModules.isNotEmpty()) {
         appendLine("  You probably created a .frontend.split module without a dependency on intellij.platform.frontend.split.")
         appendLine("  This makes your module eligible to load in a monolith IDE and loads a forbidden `intellij.rd.client` module.")
+        appendLine("  In test configurations, declare unused RD test frameworks with on-demand loading.")
       }
       for ((module, reason) in missingModules.entries.sortedBy { it.key.value }) {
         appendLine("  Required module is inactive: ${module.value}")

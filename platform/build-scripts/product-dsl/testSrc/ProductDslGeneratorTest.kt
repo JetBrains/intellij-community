@@ -45,6 +45,46 @@ class ProductDslGeneratorTest {
     )
   }
 
+  @Test
+  fun `buildModuleSetXml preserves on-demand loading`() {
+    val moduleSet = moduleSet("loading") {
+      module("intellij.optional")
+      embeddedModule("intellij.embedded")
+      requiredModule("intellij.required")
+      onDemandModule("intellij.onDemand")
+    }
+
+    val result = buildModuleSetXml(moduleSet, label = "test")
+
+    assertThat(result.xml).contains(
+      "<module name=\"intellij.optional\"/>",
+      "<module name=\"intellij.embedded\" loading=\"embedded\"/>",
+      "<module name=\"intellij.required\" loading=\"required\"/>",
+      "<module name=\"intellij.onDemand\" loading=\"on-demand\"/>",
+    )
+  }
+
+  @Test
+  fun `buildModuleSetXml preserves nested on-demand loading`() {
+    val nested = moduleSet("nested") {
+      onDemandModule("intellij.nested.onDemand")
+    }
+    val parent = moduleSet("parent") {
+      moduleSet(nested)
+    }
+    val root = moduleSet("root") {
+      moduleSet(parent)
+      onDemandModule("intellij.root.onDemand")
+    }
+
+    val result = buildModuleSetXml(root, label = "test")
+
+    assertThat(result.xml).contains(
+      "<module name=\"intellij.nested.onDemand\" loading=\"on-demand\"/>",
+      "<module name=\"intellij.root.onDemand\" loading=\"on-demand\"/>",
+    )
+  }
+
   // Tests for containsOverriddenNestedSet()
 
   @Test

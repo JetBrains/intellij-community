@@ -45,9 +45,7 @@ fun discoverAllProducts(projectRoot: Path, outputProvider: ModuleOutputProvider)
         .map { TargetName(it) }
         .toList(),
       coreClassloaderModules = productProperties.productLayout.productImplementationModules.map { TargetName(it) },
-      modularLoaderPluginModules = if (productProperties.rootModuleForModularLoader == null) emptyList() else {
-        getBundledPluginModules(productProperties, outputProvider).map(::TargetName)
-      },
+      bundledPluginModules = getBundledPluginModules(productProperties, outputProvider).map(::TargetName),
     )
   }
 }

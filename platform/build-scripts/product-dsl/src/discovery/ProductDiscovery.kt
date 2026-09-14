@@ -66,8 +66,8 @@ data class DiscoveredProduct(
    * extra roots; see `UnusedEmbeddedLibraryAnalysis`.
    */
   @JvmField val coreClassloaderModules: List<TargetName> = emptyList(),
-  /** Bundled plugins read from product-modules.xml and its includes. */
-  @JvmField val modularLoaderPluginModules: List<TargetName> = emptyList(),
+  /** Bundled plugins from the product declaration or the modular loader. */
+  @JvmField val bundledPluginModules: List<TargetName> = emptyList(),
 )
 
 /**

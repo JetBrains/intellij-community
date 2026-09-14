@@ -1,4 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
+
 package org.jetbrains.intellij.build.productLayout.traversal
 
 import com.intellij.platform.pluginGraph.ContentModuleName
@@ -11,12 +13,14 @@ import com.intellij.platform.pluginGraph.contentName
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleVisibilityValue
 import org.jetbrains.intellij.build.productLayout.ProductModulesContentSpec
+import org.jetbrains.intellij.build.productLayout.TestPluginSpec
 import org.jetbrains.intellij.build.productLayout.buildContentBlocksAndChainMapping
 import org.jetbrains.intellij.build.productLayout.collectAndValidateAliases
 import org.jetbrains.intellij.build.productLayout.contentName
 import org.jetbrains.intellij.build.productLayout.dependency.ModuleDescriptorCache
 import org.jetbrains.intellij.build.productLayout.deps.ContentModuleDependencyPlanOutput
 import org.jetbrains.intellij.build.productLayout.deps.PluginDependencyPlanOutput
+import org.jetbrains.intellij.build.productLayout.deps.TestPluginDependencyPlanOutput
 import org.jetbrains.intellij.build.productLayout.discovery.PluginContentInfo
 
 /** The active content modules and the reasons that exclude other candidates from a product. */
@@ -32,16 +36,20 @@ internal class ProductModuleLoading(
   pluginPlans: PluginDependencyPlanOutput,
   private val descriptorLookup: (ContentModuleName) -> ModuleDescriptorCache.DescriptorInfo?,
   private val pluginLookup: (TargetName) -> PluginContentInfo? = { null },
+  private val testPluginPlans: TestPluginDependencyPlanOutput = TestPluginDependencyPlanOutput(emptyList()),
 ) {
   private val pluginPlansByName = pluginPlans.plans.associateBy { it.pluginContentModuleName.value }
 
   fun analyze(
     productName: String,
     spec: ProductModulesContentSpec? = null,
-    modularLoaderPlugins: List<TargetName> = emptyList(),
+    additionalPlugins: List<TargetName> = emptyList(),
+    disabledPluginIds: Set<PluginId> = emptySet(),
+    testPlugins: List<TestPluginSpec> = emptyList(),
   ): ProductModuleLoadingResult {
     val content = spec?.let { buildContentBlocksAndChainMapping(it, collectModuleSetAliases = true) }
     val productAliases = if (content == null) emptySet() else collectAndValidateAliases(spec, content.aliasToSource).toSet()
+    val selectedTestPlugins = testPlugins.associateBy { it.pluginId }
     return graph.query {
       val product = requireNotNull(product(productName)) { "Product '$productName' is absent from the plugin graph." }
       val candidates = ArrayList<Candidate>()
@@ -88,7 +96,8 @@ internal class ProductModuleLoading(
       }
 
       fun addPlugin(plugin: PluginNode) {
-        if (plugin.isTest || plugin in pluginNodes) return
+        val testSpec = selectedTestPlugins.get(plugin.pluginIdOrNull)
+        if (plugin.isTest && testSpec == null || plugin in pluginNodes || plugin.pluginIdOrNull in disabledPluginIds) return
         val loading = if (plugin.isAlias) ModuleLoadingRuleValue.ON_DEMAND else ModuleLoadingRuleValue.REQUIRED
         val candidate = Candidate("plugin ${plugin.name().value}", moduleName = null, parent = null, loading = loading)
         candidates.add(candidate)
@@ -97,23 +106,35 @@ internal class ProductModuleLoading(
         plugin.declaresAlias { alias ->
           alias.pluginIdOrNull?.let { plugins.getOrPut(it, ::ArrayList).add(candidate) }
         }
-        plugin.containsContent { module, loading ->
-          val content = addModule(module.name(), loading, candidate)
+        fun addContent(name: ContentModuleName, loading: ModuleLoadingRuleValue) {
+          val content = addModule(name, loading, candidate)
           content.dependencies.add(Dependency(candidate.label, listOf(candidate)))
           if (loading == ModuleLoadingRuleValue.REQUIRED || loading == ModuleLoadingRuleValue.EMBEDDED) {
             candidate.dependencies.add(Dependency(content.label, listOf(content)))
           }
         }
+        if (testSpec == null) {
+          plugin.containsContent { module, loading -> addContent(module.name(), loading) }
+        }
+        else {
+          for (block in buildContentBlocksAndChainMapping(testSpec.spec).contentBlocks) {
+            for (module in block.modules) addContent(module.contentName(), module.loading)
+          }
+        }
       }
       product.bundles { addPlugin(it) }
-      for (name in modularLoaderPlugins.distinct()) {
+      for (testPlugin in testPlugins) {
+        addPlugin(requireNotNull(plugin(testPlugin.pluginId.value)) { "Test plugin '${testPlugin.pluginId.value}' is absent from the graph." })
+      }
+      val suppliedPlugins = additionalPlugins + testPlugins.flatMap { it.additionalBundledPluginTargetNames }
+      for (name in suppliedPlugins.distinct()) {
         val node = plugin(name.value)
         if (node != null) {
           addPlugin(node)
           continue
         }
         val info = requireNotNull(pluginLookup(name)) { "Bundled plugin '${name.value}' has no descriptor." }
-        if (info.isTestPlugin) continue
+        if (info.isTestPlugin || info.pluginId in disabledPluginIds) continue
         val candidate = Candidate("plugin ${name.value}", null, null, ModuleLoadingRuleValue.REQUIRED)
         candidates.add(candidate)
         descriptorPlugins.put(name, candidate to info)
@@ -174,6 +195,17 @@ internal class ProductModuleLoading(
       }
 
       for ((plugin, candidate) in pluginNodes) {
+        val testSpec = selectedTestPlugins.get(plugin.pluginIdOrNull)
+        if (testSpec != null) {
+          testSpec.platformModule?.let { addModuleDependency(candidate, ContentModuleName(it)) }
+          val testPlan = testPluginPlans.plansByPluginId.get(testSpec.pluginId)
+          if (testPlan != null) {
+            testPlan.moduleDependencies.filterNot { name -> modules.get(name).orEmpty().any { it.parent === candidate } }
+              .forEach { addModuleDependency(candidate, it) }
+            testPlan.pluginDependencies.forEach { addPluginDependency(candidate, it) }
+            continue
+          }
+        }
         if (plugin.isAlias) {
           if (plugin.pluginIdOrNull in productAliases) continue
           val moduleProviders = plugins.get(plugin.pluginIdOrNull).orEmpty().filter { it.moduleName != null }

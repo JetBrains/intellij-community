@@ -1,4 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package org.jetbrains.intellij.build.productLayout.traversal
 
 import com.intellij.platform.pluginGraph.ContentModuleName
@@ -11,13 +13,17 @@ import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleVisibilityV
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.intellij.build.productLayout.TestFailureLogger
 import org.jetbrains.intellij.build.productLayout.ProductModulesContentSpec
+import org.jetbrains.intellij.build.productLayout.TestPluginSpec
 import org.jetbrains.intellij.build.productLayout.dependency.ModuleDescriptorCache
 import org.jetbrains.intellij.build.productLayout.dependency.pluginGraph
 import org.jetbrains.intellij.build.productLayout.deps.ContentModuleDependencyPlan
 import org.jetbrains.intellij.build.productLayout.deps.ContentModuleDependencyPlanOutput
 import org.jetbrains.intellij.build.productLayout.deps.PluginDependencyPlanOutput
+import org.jetbrains.intellij.build.productLayout.deps.TestPluginDependencyPlan
+import org.jetbrains.intellij.build.productLayout.deps.TestPluginDependencyPlanOutput
 import org.jetbrains.intellij.build.productLayout.discovery.ContentModuleInfo
 import org.jetbrains.intellij.build.productLayout.discovery.PluginContentInfo
+import org.jetbrains.intellij.build.productLayout.discovery.PluginSource
 import org.jetbrains.intellij.build.productLayout.moduleSet
 import org.jetbrains.intellij.build.productLayout.productModules
 import org.junit.jupiter.api.Test
@@ -205,6 +211,98 @@ class ProductModuleLoadingTest {
     assertThat(result.activationPaths).isEmpty()
   }
 
+  @Test
+  fun `a disabled plugin cannot satisfy an alias dependency`() {
+    val graph = pluginGraph {
+      product("IDE") {
+        bundlesPlugin("provider")
+        bundlesPlugin("consumer")
+      }
+      plugin("provider")
+      pluginAlias("IDE", "provider", "capability")
+      plugin("consumer") {
+        dependsOnPlugin("capability")
+        content("consumer.module")
+      }
+    }
+    assertThat(analyze(graph).activationPaths.keys).containsExactly(ContentModuleName("consumer.module"))
+    assertThat(analyze(graph, disabledPluginIds = setOf(PluginId("provider"))).activationPaths).isEmpty()
+  }
+
+  @Test
+  fun `descriptor plugins respect disabled IDs and exclude test plugins`() {
+    val graph = pluginGraph { product("IDE") }
+    val info = PluginContentInfo(
+      pluginXmlPath = Path.of("plugin.xml"),
+      pluginXmlContent = "<idea-plugin/>",
+      pluginId = PluginId("provider.id"),
+      contentModules = listOf(ContentModuleInfo(PluginModuleId("consumer", "jetbrains"), ModuleLoadingRuleValue.OPTIONAL)),
+    )
+    assertThat(analyze(graph, modularPlugins = listOf("provider.target"), pluginDescriptors = mapOf("provider.target" to info)).activationPaths)
+      .containsKey(ContentModuleName("consumer"))
+    assertThat(analyze(
+      graph, modularPlugins = listOf("provider.target"), pluginDescriptors = mapOf("provider.target" to info),
+      disabledPluginIds = setOf(PluginId("provider.id")),
+    ).activationPaths).isEmpty()
+    assertThat(analyze(
+      graph, modularPlugins = listOf("provider.target"),
+      pluginDescriptors = mapOf("provider.target" to info.copy(source = PluginSource.TEST)),
+    ).activationPaths).isEmpty()
+  }
+
+  @Test
+  fun `selected test content uses expanded loading rules and additional bundles`() {
+    val graph = pluginGraph {
+      product("IDE") { bundlesTestPlugin("tests") }
+      testPlugin("tests") { testContent("stale.content") }
+      plugin("provider") { content("production") }
+      linkContentModuleDeps("tests.consumer", "framework", "production")
+    }
+    val spec = TestPluginSpec(
+      pluginId = PluginId("tests"), name = "Tests", pluginXmlPath = "plugin.xml",
+      additionalBundledPluginTargetNames = listOf(TargetName("provider")),
+      spec = productModules {
+        moduleSet(moduleSet("expanded") {
+          module("framework", loading = ModuleLoadingRuleValue.ON_DEMAND)
+          module("unused.framework", loading = ModuleLoadingRuleValue.ON_DEMAND)
+        })
+        module("tests.consumer")
+      },
+    )
+    assertThat(analyze(graph, modularPlugins = listOf("tests")).activationPaths).isEmpty()
+    val result = analyze(graph, testPlugins = listOf(spec))
+    assertThat(result.activationPaths.keys).containsExactlyInAnyOrder(
+      ContentModuleName("production"), ContentModuleName("tests.consumer"), ContentModuleName("framework"),
+    )
+    assertThat(result.activationPaths.getValue(ContentModuleName("framework"))).containsExactly("tests.consumer", "framework")
+  }
+
+  @Test
+  fun `test root dependencies use the effective plan and the platform module`() {
+    val graph = pluginGraph {
+      product("IDE") { content("platform", loading = ModuleLoadingRuleValue.ON_DEMAND) }
+      testPlugin("tests") { dependsOnContentModule("stale.dependency") }
+    }
+    val spec = TestPluginSpec(
+      pluginId = PluginId("tests"), name = "Tests", pluginXmlPath = "plugin.xml", platformModule = "platform",
+      spec = productModules { module("framework", loading = ModuleLoadingRuleValue.ON_DEMAND) },
+    )
+    val plan = TestPluginDependencyPlan(
+      spec = spec, productName = "IDE", productClass = "Properties",
+      pluginDependencies = emptyList(), moduleDependencies = listOf(ContentModuleName("framework")),
+      requiredByPlugin = emptyMap(), unresolvedDependencies = emptyList(),
+    )
+    assertThat(analyze(graph, testPlugins = listOf(spec), testPlans = listOf(plan)).activationPaths.keys)
+      .containsExactly(ContentModuleName("platform"))
+    assertThat(analyze(graph, testPlugins = listOf(spec.copy(platformModule = "absent")), testPlans = listOf(plan)).activationPaths).isEmpty()
+    assertThat(analyze(
+      graph, testPlugins = listOf(spec), testPlans = listOf(plan.copy(pluginDependencies = listOf(PluginId("absent")))),
+    ).activationPaths).isEmpty()
+    assertThat(analyze(
+      graph, testPlugins = listOf(spec), testPlans = listOf(plan.copy(moduleDependencies = listOf(ContentModuleName("absent")))),
+    ).activationPaths).isEmpty()
+  }
+
   private fun analyze(
     graph: PluginGraph,
     descriptors: Map<String, ModuleDescriptorCache.DescriptorInfo> = emptyMap(),
@@ -212,6 +310,9 @@ class ProductModuleLoadingTest {
     spec: ProductModulesContentSpec? = null,
     modularPlugins: List<String> = emptyList(),
     pluginDescriptors: Map<String, PluginContentInfo> = emptyMap(),
+    disabledPluginIds: Set<PluginId> = emptySet(),
+    testPlugins: List<TestPluginSpec> = emptyList(),
+    testPlans: List<TestPluginDependencyPlan> = emptyList(),
   ): ProductModuleLoadingResult {
     return ProductModuleLoading(
       graph,
@@ -219,7 +320,8 @@ class ProductModuleLoadingTest {
       PluginDependencyPlanOutput(emptyList()),
       descriptorLookup = { descriptors.get(it.value) },
       pluginLookup = { pluginDescriptors.get(it.value) },
-    ).analyze("IDE", spec, modularPlugins.map(::TargetName))
+      testPluginPlans = TestPluginDependencyPlanOutput(testPlans),
+    ).analyze("IDE", spec, modularPlugins.map(::TargetName), disabledPluginIds, testPlugins)
   }
 
   private fun descriptor(

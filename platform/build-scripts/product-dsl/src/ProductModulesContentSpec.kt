@@ -71,7 +71,7 @@ enum class CompositionType {
   MODULE_SET_REF,
   /** deprecatedInclude(...) - reference to an XML file */
   DEPRECATED_XML,
-  /** module() / embeddedModule() / requiredModule() - direct module addition */
+  /** module() / embeddedModule() / requiredModule() / onDemandModule() - direct module addition */
   DIRECT_MODULE,
   /** alias() - module alias addition */
   ALIAS,
@@ -425,6 +425,15 @@ class ProductModulesContentSpecBuilder @PublishedApi internal constructor() {
       path = java.util.List.copyOf(pathStack),
       sourceLocation = null,
     ))
+  }
+
+  /** Adds a module with on-demand loading. */
+  fun onDemandModule(
+    name: String,
+    namespace: String? = PluginModuleId.DEFAULT_NAMESPACE,
+    allowedMissingPluginIds: List<String> = emptyList(),
+  ) {
+    module(name, namespace = namespace, loading = ModuleLoadingRuleValue.ON_DEMAND, allowedMissingPluginIds = allowedMissingPluginIds)
   }
 
   /**
