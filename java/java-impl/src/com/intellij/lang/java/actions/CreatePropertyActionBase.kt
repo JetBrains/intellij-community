@@ -4,6 +4,7 @@ package com.intellij.lang.java.actions
 import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.lang.java.beans.PropertyKind
+import com.intellij.lang.jvm.JvmClass
 import com.intellij.lang.jvm.actions.CreateMethodRequest
 import com.intellij.lang.jvm.actions.JvmActionGroup
 import com.intellij.lang.jvm.actions.JvmGroupIntentionAction
@@ -21,11 +22,13 @@ import com.intellij.psi.util.PsiTreeUtil
 internal abstract class CreatePropertyActionBase(
   target: PsiClass,
   override val request: CreateMethodRequest
-) : CreateMemberAction(target, request), JvmGroupIntentionAction {
+) : CreateTargetAction<PsiClass>(target, request), JvmGroupIntentionAction {
 
   override fun getFamilyName(): String = QuickFixBundle.message("create.property.from.usage.family")
 
   private fun doGetPropertyInfo() = PropertyUtilBase.getPropertyNameAndKind(request.methodName)
+
+  override fun getTarget(): JvmClass = target
 
   override fun isAvailable(project: Project, file: PsiFile, target: PsiClass): Boolean {
     if (!super.isAvailable(project, file, target)) return false

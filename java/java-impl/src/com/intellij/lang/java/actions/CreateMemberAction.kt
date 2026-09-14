@@ -5,7 +5,6 @@ import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.codeInsight.intention.PriorityAction
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.codeInspection.util.IntentionName
-import com.intellij.lang.jvm.JvmClass
 import com.intellij.lang.jvm.actions.ActionRequest
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.Presentation
@@ -49,11 +48,6 @@ public abstract class CreateTargetAction<T : PsiElement>(
   public abstract fun invoke(project: Project, file: PsiFile, target: T)
 
   override fun getElementToMakeWritable(currentFile: PsiFile): PsiElement? = target
-}
-
-public abstract class CreateMemberAction(target: PsiClass, request: ActionRequest) : CreateTargetAction<PsiClass>(target, request) {
-
-  public open fun getTarget(): JvmClass = target
 }
 
 /**
