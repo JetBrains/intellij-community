@@ -38,10 +38,6 @@
     <registryKey key="pyrefly.type.engine" defaultValue="false"
                  description="Enforce pyrefly type engine"/>
 
-    <registryKey key="pyrefly.type.engine.tsp" defaultValue="false"
-                 description="Use the Type Server Protocol (TSP) instead of LSP for the Pyrefly type engine"
-                 restartRequired="true"/>
-
     <python.lsp.typeEngineConfigurable implementation="com.intellij.python.pyrefly.PyreflyPyTypeEngineProvider"/>
     <projectSettings service="com.intellij.python.pyrefly.PyreflyConfiguration"/>
     <python.pytools.pyTool implementation="com.intellij.python.pyrefly.PyreflyPyTool"/>

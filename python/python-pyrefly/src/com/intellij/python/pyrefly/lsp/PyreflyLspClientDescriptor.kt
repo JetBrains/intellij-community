@@ -12,7 +12,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.isWindows
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.lsp.api.Lsp4jServer
@@ -88,8 +87,7 @@ class PyreflyLspClientDescriptor(
     }
   }
 
-  override fun lspArguments(): List<String> =
-    listOf(if (Registry.`is`("pyrefly.type.engine.tsp")) "tsp" else "lsp")
+  override fun lspArguments(): List<String> = listOf("lsp")
 
   override val usesSourceRoots: Boolean = true
 

@@ -4,7 +4,6 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.Ref
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.lsp.api.LspClient
@@ -60,10 +59,6 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
   }
 
   override fun provideType(element: PyTypedElement, isUserInitiated: Boolean): Ref<PyType?>? {
-    if (!Registry.`is`("pyrefly.type.engine.tsp")) {
-      // Old way: fetch types over LSP via the base-class flow (requestTypes / resolveStringType).
-      return super.provideType(element, isUserInitiated)
-    }
     if (element is PsiFile) return null
     val file = psiFile.virtualFile ?: return null
     val document = FileDocumentManager.getInstance().getDocument(file) ?: return null
