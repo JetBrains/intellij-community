@@ -123,6 +123,7 @@ private fun getRelatedModules(
 ): Iterable<ModuleId> {
     return buildSet {
         addIfNotNull(sourceRootIndex.getAncestorValues(model.virtualFile.toNioPath()).lastOrNull())
+        model.sourcePath.mapNotNullTo(this) { contentRootIndex.getAncestorValues(of(it)).lastOrNull() }
         
         if (model.classpathModel != null) {
             addAll(

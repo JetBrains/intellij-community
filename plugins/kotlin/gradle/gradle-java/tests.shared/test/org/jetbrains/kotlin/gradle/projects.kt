@@ -89,3 +89,54 @@ val GRADLE_KOTLIN_FIXTURE: GradleTestFixtureBuilder = GradleTestFixtureBuilder.c
                 """.trimIndent()
     )
 }
+
+/** A root build with two subprojects and a buildSrc, as in KTIJ-38188 and KTIJ-38825. */
+val GRADLE_BUILD_SRC_FIXTURE: GradleTestFixtureBuilder = GradleTestFixtureBuilder.create("GradleKotlinBuildSrcFixture") { gradleVersion ->
+    withSettingsFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {
+        setProjectName("GradleKotlinBuildSrcFixture")
+        include(":app", ":lib")
+    }
+    withBuildFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {
+        withMavenCentral()
+        withPostfix { code("myHelperMethod()") }
+    }
+    withBuildFile(gradleVersion, "buildSrc", gradleDsl = GradleDsl.KOTLIN) {
+        withKotlinDsl()
+        withMavenCentral()
+    }
+    withFile(
+        "buildSrc/src/main/kotlin/Helper.kt", """
+            fun myHelperMethod() {
+                println("from buildSrc")
+            }
+        """.trimIndent()
+    )
+    withFile(
+        "buildSrc/src/main/kotlin/Versions.kt", $$"""
+            object Versions {
+                const val KOTLIN = "2.3.20"
+            }
+
+            object Libs {
+                object Kotlin {
+                    const val STDLIB = "org.jetbrains.kotlin:kotlin-stdlib:${Versions.KOTLIN}"
+                }
+            }
+
+            object Plugins {
+                object Id {
+                    const val JAVA_LIBRARY = "java-library"
+                }
+            }
+        """.trimIndent()
+    )
+    for (subproject in listOf("app", "lib")) {
+        withBuildFile(gradleVersion, subproject, gradleDsl = GradleDsl.KOTLIN) {
+            withPlugin { code("id(Plugins.Id.JAVA_LIBRARY)") }
+            withPostfix {
+                code("version = Versions.KOTLIN")
+                code("description = Libs.Kotlin.STDLIB")
+            }
+        }
+    }
+}

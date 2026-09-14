@@ -1,0 +1,5 @@
+// FILE: buildSrc/src/main/kotlin/Helper.kt
+// "EXPECTED-FIND_USAGE-FILE_TEXT": "build.gradle.kts myHelperMethod"
+fun myHelper<caret>Method() {
+    println("from buildSrc")
+}

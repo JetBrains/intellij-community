@@ -1,0 +1,8 @@
+// FILE: app/build.gradle.kts
+// "EXPECTED-NAVIGATION-SUBSTRING": "const val JAVA_LIBRARY = "java-library""
+plugins {
+    id(Plugins.Id.JAVA_LIB<caret>RARY)
+}
+
+version = Versions.KOTLIN
+description = Libs.Kotlin.STDLIB

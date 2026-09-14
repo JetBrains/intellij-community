@@ -1,0 +1,8 @@
+// FILE: lib/build.gradle.kts
+// "EXPECTED-NAVIGATION-SUBSTRING": "const val KOTLIN = "2.3.20""
+plugins {
+    id(Plugins.Id.JAVA_LIBRARY)
+}
+
+version = Versions.KOT<caret>LIN
+description = Libs.Kotlin.STDLIB
