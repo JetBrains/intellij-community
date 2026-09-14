@@ -5678,7 +5678,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                                                 && !UISettings.getInstance().getPresentationMode();
           float shift = e.getWheelRotation();
 
-          var strategy = getUserData(ChangeEditorFontSizeStrategy.KEY);
+          ChangeEditorFontSizeStrategy strategy = getUserData(ChangeEditorFontSizeStrategy.KEY);
           if (strategy != null) {
             strategy.setFontSize(strategy.getFontSize() - shift);
             return;
