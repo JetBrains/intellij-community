@@ -947,14 +947,16 @@ class PluginDetailsPageComponent private constructor(
   }
 
   private fun createPopup(link: DropDownLink<PluginUpdateSourceId?>): JBPopup {
-    val initialItems: List<PluginUpdateSourceId?> = PluginUpdateSourceService.getInstance().getAllSources().sortedWith { first, second ->
-      when {
-        first.isMarketplace && second.isMarketplace -> 0
-        first.isMarketplace -> -1
-        second.isMarketplace -> 1
-        else -> first.host.compareTo(second.host)
+    val initialItems: List<PluginUpdateSourceId?> = PluginUpdateSourceService.getInstance().getAllSources()
+      .filter { it.isMarketplace || it.host.isNotBlank() }
+      .sortedWith { first, second ->
+        when {
+          first.isMarketplace && second.isMarketplace -> 0
+          first.isMarketplace -> -1
+          second.isMarketplace -> 1
+          else -> first.host.compareTo(second.host)
+        }
       }
-    }
 
     val builder = JBPopupFactory.getInstance()
       .createPopupChooserBuilder(initialItems)
