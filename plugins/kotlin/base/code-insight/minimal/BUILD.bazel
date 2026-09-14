@@ -56,7 +56,6 @@ jvm_library(
         "//platform/editor-ui-ex:editor-ex",
         "//platform/util/jdom",
         "//plugins/kotlin/formatter/minimal",
-        "//java/java-psi-api:psi",
         "//platform/lang-api:lang",
     ],
 )
@@ -87,7 +86,6 @@ jvm_library(
         "//platform/editor-ui-ex:editor-ex_test_lib",
         "//platform/util/jdom:jdom_test_lib",
         "//plugins/kotlin/formatter/minimal:minimal_test_lib",
-        "//java/java-psi-api:psi_test_lib",
         "//platform/lang-api:lang_test_lib",
     ],
 )

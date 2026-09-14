@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea
 
-import com.intellij.codeInsight.folding.JavaCodeFoldingSettings
+import com.intellij.codeInsight.folding.CodeFoldingSettings
 import com.intellij.lang.ASTNode
 import com.intellij.lang.folding.CustomFoldingBuilder
 import com.intellij.lang.folding.FoldingDescriptor
@@ -208,16 +208,16 @@ class KotlinFoldingBuilder : CustomFoldingBuilder(), DumbAware {
     }
 
     override fun isRegionCollapsedByDefault(node: ASTNode): Boolean {
-        val settings = JavaCodeFoldingSettings.getInstance()
+        val settings = CodeFoldingSettings.getInstance()
 
         if (node.psi is KtImportList) {
-            return settings.isCollapseImports
+            return settings.COLLAPSE_IMPORTS
         }
 
         val type = node.elementType
         if (type == KtTokens.BLOCK_COMMENT || type == KDocTokens.KDOC) {
             if (isFirstElementInFile(node.psi)) {
-                return settings.isCollapseFileHeader
+                return settings.COLLAPSE_FILE_HEADER
             }
         }
 
