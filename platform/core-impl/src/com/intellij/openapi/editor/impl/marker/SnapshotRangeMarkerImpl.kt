@@ -23,6 +23,9 @@ open class SnapshotRangeMarkerImpl private constructor(
   initialSpec: MarkerSpec,
   internal val initialRange: TextRange,
 ) : UserDataHolderBase(), SnapshotMarker, RangeMarkerEx {
+  /**
+   * Creates a marker in the range marker store for [document]. A non-null [fileRoot] stores it in that root instead.
+   */
   internal constructor(
     document: DocumentImpl,
     fileRoot: FileMarkerRoot?,
@@ -31,6 +34,7 @@ open class SnapshotRangeMarkerImpl private constructor(
     initialRange: TextRange,
   ) : this(fileRoot?.file ?: document, fileRoot, document.rangeMarkers.rootStore(), markerId, initialSpec, initialRange)
 
+  /** Creates a marker in [fileRoot] before the document is available. */
   internal constructor(
     fileRoot: FileMarkerRoot,
     markerId: Long,
@@ -38,12 +42,16 @@ open class SnapshotRangeMarkerImpl private constructor(
     initialRange: TextRange,
   ) : this(fileRoot.file, fileRoot, null, markerId, initialSpec, initialRange)
 
+  /**
+   * Creates a marker in the supplied [rootStore]. Use this constructor for markers that an editor or a markup model owns.
+   */
   protected constructor(
     document: Document,
+    rootStore: SnapshotMarkerRootStore,
     markerId: Long,
     initialSpec: MarkerSpec,
     initialRange: TextRange,
-  ) : this(document, null, (document as DocumentImpl).rangeMarkers.rootStore(), markerId, initialSpec, initialRange)
+  ) : this(document, null, rootStore, markerId, initialSpec, initialRange)
 
   @Volatile
   internal var disposed: Boolean = false
@@ -154,7 +162,7 @@ open class SnapshotRangeMarkerImpl private constructor(
   }
 
   @ApiStatus.Internal
-  open fun currentRootReference(): AtomicReference<PMarkerRoot> {
+  fun currentRootReference(): AtomicReference<PMarkerRoot> {
     val documentOrFile = documentOrFile
     if (documentOrFile is VirtualFile) {
       return checkNotNull(fileRoot).rootReference()

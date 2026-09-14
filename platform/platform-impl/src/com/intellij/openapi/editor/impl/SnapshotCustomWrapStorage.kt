@@ -17,7 +17,6 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.util.containers.ConcurrentLongObjectMap
 import com.intellij.util.containers.Java11Shim
 import it.unimi.dsi.fastutil.longs.LongList
-import java.util.concurrent.atomic.AtomicReference
 
 /** Stores the snapshot custom wraps for one editor. */
 internal class SnapshotCustomWrapStorage(
@@ -74,10 +73,6 @@ internal class SnapshotCustomWrapStorage(
     return found
   }
 
-  fun rootReference(snapshot: DocumentSnapshot): AtomicReference<PMarkerRoot> {
-    return rootStore.rootReference(snapshot)
-  }
-
   fun currentSnapshot(): DocumentSnapshot = document.core.snapshot()
 
   fun afterDisposed(wrap: SnapshotCustomWrap) {
@@ -112,11 +107,9 @@ internal class SnapshotCustomWrap(
   initialRange: TextRange,
   override val indent: Int,
   override val priority: Int,
-) : SnapshotRangeMarkerImpl(storage.document, markerId, spec, initialRange), CustomWrap {
+) : SnapshotRangeMarkerImpl(storage.document, storage.rootStore, markerId, spec, initialRange), CustomWrap {
   override val offset: Int
     get() = startOffset
-
-  override fun currentRootReference(): AtomicReference<PMarkerRoot> = storage.rootReference(storage.currentSnapshot())
 
   override fun afterDispose() {
     storage.afterDisposed(this)

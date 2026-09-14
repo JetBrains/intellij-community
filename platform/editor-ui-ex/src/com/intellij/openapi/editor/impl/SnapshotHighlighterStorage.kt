@@ -17,7 +17,6 @@ import java.lang.ref.ReferenceQueue
 import java.lang.ref.WeakReference
 import java.util.Comparator
 import java.util.NoSuchElementException
-import java.util.concurrent.atomic.AtomicReference
 
 /**
  * Stores and updates the snapshot highlighters for one markup model.
@@ -61,10 +60,6 @@ internal class SnapshotHighlighterStorage(
       it.insert(markerId, startOffset, endOffset, spec, highlighter.flavorFlags, markerReference)
     }
     model.invalidateHighlighterCache()
-  }
-
-  fun rootReference(snapshot: DocumentSnapshot): AtomicReference<PMarkerRoot> {
-    return rootStore.rootReference(snapshot, CompoundPMarkerRoot.empty())
   }
 
   fun currentSnapshot(): DocumentSnapshot = document.core.snapshot()

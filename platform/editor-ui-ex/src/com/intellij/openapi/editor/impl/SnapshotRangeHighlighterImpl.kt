@@ -9,7 +9,6 @@ import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.editor.impl.marker.DefaultMarkerPolicy
 import com.intellij.openapi.editor.impl.marker.MarkerSpec
-import com.intellij.openapi.editor.impl.marker.PMarkerRoot
 import com.intellij.openapi.editor.impl.marker.PersistentHighlighterPolicy
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngineImpl
 import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl
@@ -27,7 +26,6 @@ import com.intellij.util.Consumer
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.awt.Font
-import java.util.concurrent.atomic.AtomicReference
 
 internal class SnapshotRangeHighlighterImpl private constructor(
   private val storage: SnapshotHighlighterStorage,
@@ -41,6 +39,7 @@ internal class SnapshotRangeHighlighterImpl private constructor(
   private var textAttributesKey: TextAttributesKey?,
 ) : SnapshotRangeMarkerImpl(
   storage.document,
+  storage.rootStore,
   highlighterId,
   initialSpec,
   TextRange(startOffset, endOffset),
@@ -63,10 +62,6 @@ internal class SnapshotRangeHighlighterImpl private constructor(
   private var thinErrorStripeMark: Boolean = false
   private var inBatchChange: Boolean = false
   private var batchChangeStatus: Int = 0
-
-  override fun currentRootReference(): AtomicReference<PMarkerRoot> {
-    return storage.rootReference(storage.currentSnapshot())
-  }
 
   override fun getLayer(): Int = layer
 

@@ -13,7 +13,6 @@ import com.intellij.openapi.editor.impl.marker.PMarkerRoot
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngineImpl
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerRootStore
 import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl
-import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Consumer
 
 /** Stores caret position and selection markers for one editor. */
@@ -21,7 +20,7 @@ internal class SnapshotCaretMarkerStorage(
   val document: DocumentImpl,
   documentChanged: Consumer<DocumentEvent>,
 ) {
-  private val rootStore: SnapshotMarkerRootStore = SnapshotMarkerRootStore(document, onDocumentChanged = documentChanged::accept)
+  val rootStore: SnapshotMarkerRootStore = SnapshotMarkerRootStore(document, onDocumentChanged = documentChanged::accept)
 
   fun dispose() {
     rootStore.dispose(document.snapshotMarkerStores)
@@ -44,8 +43,6 @@ internal class SnapshotCaretMarkerStorage(
       it.remove(marker.id).insert(marker.id, offset, offset, spec, marker.flavorFlags)
     }
   }
-
-  fun rootReference(snapshot: DocumentSnapshot): AtomicReference<PMarkerRoot> = rootStore.rootReference(snapshot)
 
   fun currentSnapshot(): DocumentSnapshot = document.core.snapshot()
 

@@ -26,7 +26,6 @@ import com.intellij.util.containers.ConcurrentLongObjectMap
 import com.intellij.util.containers.Java11Shim
 import it.unimi.dsi.fastutil.longs.LongList
 import it.unimi.dsi.fastutil.longs.LongLists
-import java.util.concurrent.atomic.AtomicReference
 
 /** Stores inline, after-line-end, and block inlays for one editor. */
 internal class SnapshotInlayStorage(
@@ -177,8 +176,6 @@ internal class SnapshotInlayStorage(
     markersById.clear()
   }
 
-  fun rootReference(snapshot: DocumentSnapshot): AtomicReference<PMarkerRoot> = rootStore.rootReference(snapshot)
-
   fun currentSnapshot(): DocumentSnapshot = document.core.snapshot()
 
   fun afterDisposed(marker: SnapshotInlayMarker<*>) {
@@ -254,7 +251,7 @@ internal abstract class SnapshotInlayMarker<R : EditorCustomElementRenderer>(
   initialRange: TextRange,
   private val relatesToPrecedingText: Boolean,
   private val renderer: R,
-) : SnapshotRangeMarkerImpl(storage.document, markerId, spec, initialRange), EditorInlay<R> {
+) : SnapshotRangeMarkerImpl(storage.document, storage.rootStore, markerId, spec, initialRange), EditorInlay<R> {
   private var widthInPixels: Int = 0
 
   @Volatile
@@ -273,8 +270,6 @@ internal abstract class SnapshotInlayMarker<R : EditorCustomElementRenderer>(
   }
 
   override fun isValid(): Boolean = !editor.isDisposed && super.isValid()
-
-  final override fun currentRootReference(): AtomicReference<PMarkerRoot> = storage.rootReference(storage.currentSnapshot())
 
   final override fun afterDispose() {
     storage.afterDisposed(this)

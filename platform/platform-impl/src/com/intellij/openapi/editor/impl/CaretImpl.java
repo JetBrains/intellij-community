@@ -37,7 +37,6 @@ import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.editor.impl.marker.MarkerSpec;
-import com.intellij.openapi.editor.impl.marker.PMarkerRoot;
 import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapHelper;
 import com.intellij.openapi.editor.impl.view.EditorPainter;
@@ -63,7 +62,6 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.awt.Point;
 import java.awt.Rectangle;
-import java.util.concurrent.atomic.AtomicReference;
 
 @ApiStatus.Internal
 public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
@@ -1744,16 +1742,11 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
     }
 
     private SnapshotPositionMarker(@NotNull SnapshotCaretMarkerStorage storage, int offset, long markerId, @NotNull MarkerSpec spec) {
-      super(myDocument, markerId, spec, new TextRange(offset, offset));
+      super(myDocument, storage.getRootStore(), markerId, spec, new TextRange(offset, offset));
       this.storage = storage;
       this.spec = spec;
       offsetBeforeChange = offset;
       storage.add(this, offset, offset, spec);
-    }
-
-    @Override
-    public @NotNull AtomicReference<PMarkerRoot> currentRootReference() {
-      return storage.rootReference(storage.currentSnapshot());
     }
 
     private void beforeDocumentChange() {
@@ -1801,7 +1794,6 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
   }
 
   final class SnapshotSelectionMarker extends SnapshotRangeMarkerImpl implements SelectionMarker {
-    private final SnapshotCaretMarkerStorage storage;
     private int startVirtualOffset;
     private int endVirtualOffset;
 
@@ -1814,14 +1806,8 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
                                     int endOffset,
                                     long markerId,
                                     @NotNull MarkerSpec spec) {
-      super(myDocument, markerId, spec, new TextRange(startOffset, endOffset));
-      this.storage = storage;
+      super(myDocument, storage.getRootStore(), markerId, spec, new TextRange(startOffset, endOffset));
       storage.add(this, startOffset, endOffset, spec);
-    }
-
-    @Override
-    public @NotNull AtomicReference<PMarkerRoot> currentRootReference() {
-      return storage.rootReference(storage.currentSnapshot());
     }
 
     @Override

@@ -28,7 +28,6 @@ import com.intellij.util.containers.ConcurrentLongObjectMap
 import com.intellij.util.containers.Java11Shim
 import it.unimi.dsi.fastutil.longs.LongList
 import java.awt.Point
-import java.util.concurrent.atomic.AtomicReference
 
 private const val FOLD_REGION_FLAVOR: Int = 1
 private const val CUSTOM_FOLD_REGION_FLAVOR: Int = 2
@@ -148,8 +147,6 @@ internal class SnapshotFoldingRegionStorage(
     sizesBeforeUpdate = sizes ?: emptyMap()
   }
 
-  fun rootReference(snapshot: DocumentSnapshot): AtomicReference<PMarkerRoot> = rootStore.rootReference(snapshot)
-
   fun currentSnapshot(): DocumentSnapshot = document.core.snapshot()
 
   private fun <T : SnapshotFoldRegion> register(
@@ -267,7 +264,7 @@ internal open class SnapshotFoldRegion(
   private var placeholder: String,
   private val group: FoldingGroup?,
   private val neverExpands: Boolean,
-) : SnapshotRangeMarkerImpl(storage.document, markerId, spec, initialRange), FoldRegionMarker {
+) : SnapshotRangeMarkerImpl(storage.document, storage.rootStore, markerId, spec, initialRange), FoldRegionMarker {
   protected val editorImpl: EditorImpl
     get() = storage.editor
 
@@ -358,8 +355,6 @@ internal open class SnapshotFoldRegion(
   override fun dispose() {
     storage.model.removeRegionFromTree(this)
   }
-
-  override fun currentRootReference(): AtomicReference<PMarkerRoot> = storage.rootReference(storage.currentSnapshot())
 
   override fun toString(): String {
     return "FoldRegion ${if (expanded) "-" else "+"}($startOffset:$endOffset)" +
