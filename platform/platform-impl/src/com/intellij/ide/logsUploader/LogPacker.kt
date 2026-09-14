@@ -8,17 +8,31 @@ import com.intellij.ide.troubleshooting.collectDimensionServiceDiagnosticsData
 import com.intellij.idea.LoggerFactory
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.RegistryManager
+import com.intellij.platform.util.coroutines.childScope
+import com.intellij.troubleshooting.GeneralTroubleInfoCollector
 import com.intellij.troubleshooting.TroubleInfoCollector
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.Compressor
 import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.async
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.nio.charset.StandardCharsets
@@ -26,10 +40,13 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.concurrent.CancellationException
 import kotlin.io.path.exists
 import kotlin.io.path.forEachDirectoryEntry
 import kotlin.io.path.isDirectory
 import kotlin.io.path.name
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 @ApiStatus.Internal
 @Suppress("UseOptimizedEelFunctions")
@@ -54,13 +71,8 @@ object LogPacker {
     try {
       Compressor.Zip(archive).use { zip ->
         if (project != null) {
-          val settings = StringBuilder()
-          settings.append(CompositeGeneralTroubleInfoCollector().collectInfo(project))
-          for (troubleInfoCollector in TroubleInfoCollector.EP_SETTINGS.extensionList) {
-            coroutineContext.ensureActive()
-            settings.append(troubleInfoCollector.collectInfo(project)).append('\n')
-          }
-          zip.addFile("troubleshooting.txt", settings.toString().toByteArray(StandardCharsets.UTF_8))
+          val settings = serviceAsync<TroubleInfoCollectionService>().collectInfo(project)
+          zip.addFile("troubleshooting.txt", settings.toByteArray(StandardCharsets.UTF_8))
           zip.addFile("dimension.txt", collectDimensionServiceDiagnosticsData(project).toByteArray(StandardCharsets.UTF_8))
         }
 
@@ -138,3 +150,77 @@ object LogPacker {
     return false
   }
 }
+
+@Service(Service.Level.APP)
+private class TroubleInfoCollectionService(private val coroutineScope: CoroutineScope) {
+  /**
+   * Process EPs, abandoning the hanging collectors if timeout is set.
+   */
+  @Suppress("IncorrectCancellationExceptionHandling")
+  suspend fun collectInfo(project: Project): String {
+    val timeoutSeconds = RegistryManager.getInstanceAsync().intValue("ide.logs.troubleshoot.collector.timeout.seconds")
+    val timeout = if (timeoutSeconds < 0) Duration.INFINITE else timeoutSeconds.seconds
+
+    val collectorScope = coroutineScope.childScope("Log collectors", Dispatchers.IO)
+    try {
+      val infoFromGeneralCollectors = GeneralTroubleInfoCollector.EP_SETTINGS.extensionList.map { collector ->
+        asyncCollector(collectorScope, collector.getTitle()) {
+          CompositeGeneralTroubleInfoCollector.collectInfo(project, collector)
+        }
+      }
+      val infoFromCollectors = TroubleInfoCollector.EP_SETTINGS.extensionList.map { collector ->
+        asyncCollector(collectorScope, collector.toString()) {
+          collector.collectInfo(project) + "\n"
+        }
+      }
+
+      val allCollectors = infoFromGeneralCollectors + infoFromCollectors
+      try {
+        withTimeout(timeout) {
+          allCollectors.map { it.deferred }.joinAll()
+        }
+      }
+      catch (_: TimeoutCancellationException) {
+        // the unfinished collectors will be canceled in finally block
+      }
+
+      val settings = StringBuilder()
+      for (result in allCollectors) {
+        if (!result.deferred.isCompleted) {
+          // the task is still running after the timeout
+          settings.append("=== Collector ${result.collectorPresentation} did not finish in ${timeout} ===\n\n")
+          continue
+        }
+        try {
+          val collectorText = result.deferred.await() // completed, returns immediately
+          settings.append(collectorText)
+        }
+        catch (_: CancellationException) {
+          currentCoroutineContext().ensureActive() // throws if the current coroutine was cancelled
+          settings.append("=== Collector ${result.collectorPresentation} was cancelled ===\n\n")
+        }
+        catch (e: Throwable) {
+          settings.append("=== Collector ${result.collectorPresentation} has failed ===\n\n")
+          logger<LogPacker>().error(e)
+        }
+      }
+      return settings.toString()
+    }
+    finally {
+      collectorScope.cancel()
+    }
+  }
+
+  private fun asyncCollector(
+    coroutineScope: CoroutineScope,
+    collectorPresentation: String,
+    block: suspend CoroutineScope.() -> CharSequence,
+  ): AsyncCollectorResult {
+    val deferred = coroutineScope.async {
+      block()
+    }
+    return AsyncCollectorResult(deferred, collectorPresentation)
+  }
+}
+
+private class AsyncCollectorResult(val deferred: Deferred<CharSequence>, val collectorPresentation: String)

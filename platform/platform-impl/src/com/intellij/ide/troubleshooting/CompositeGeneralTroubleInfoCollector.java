@@ -4,6 +4,7 @@ package com.intellij.ide.troubleshooting;
 import com.intellij.openapi.project.Project;
 import com.intellij.troubleshooting.GeneralTroubleInfoCollector;
 import com.intellij.troubleshooting.TroubleInfoCollector;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public final class CompositeGeneralTroubleInfoCollector implements TroubleInfoCollector {
@@ -15,9 +16,7 @@ public final class CompositeGeneralTroubleInfoCollector implements TroubleInfoCo
   static @NotNull String collectInfo(@NotNull Project project, @NotNull GeneralTroubleInfoCollector @NotNull... collectors) {
     StringBuilder builder = new StringBuilder();
     for (GeneralTroubleInfoCollector collector : collectors) {
-      builder.append("=== ").append(collector.getTitle()).append(" ===\n");
-      builder.append(collector.collectInfo(project).trim());
-      builder.append("\n\n");
+      builder.append(collectInfo(project, collector));
     }
     return builder.toString();
   }
@@ -25,5 +24,14 @@ public final class CompositeGeneralTroubleInfoCollector implements TroubleInfoCo
   @Override
   public String toString() {
     return "General";
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull CharSequence collectInfo(@NotNull Project project, @NotNull GeneralTroubleInfoCollector collector) {
+    StringBuilder builder = new StringBuilder();
+    builder.append("=== ").append(collector.getTitle()).append(" ===\n");
+    builder.append(collector.collectInfo(project).trim());
+    builder.append("\n\n");
+    return builder;
   }
 }
