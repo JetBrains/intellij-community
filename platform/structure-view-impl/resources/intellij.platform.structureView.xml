@@ -31,7 +31,7 @@
     <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->
-  <resource-bundle>messages.ActionsBundle</resource-bundle>
+  <resource-bundle>messages.StructureViewBundle</resource-bundle>
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.lang.logicalStructureTreeElementProvider" interface="com.intellij.ide.structureView.logical.LogicalStructureTreeElementProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.lang.logicalStructureElementsProvider" beanClass="com.intellij.openapi.util.ClassExtensionPoint" dynamic="true">
@@ -39,7 +39,7 @@
     </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.structurePopupProvider" interface="com.intellij.platform.structureView.impl.StructurePopupProvider" dynamic="true"/>
   </extensionPoints>
-  <actions>
+  <actions resource-bundle="messages.ActionsBundle">
     <action id="FileStructurePopup" class="com.intellij.platform.structureView.impl.actions.ViewStructureAction">
       <add-to-group group-id="GoToCodeGroup" anchor="before" relative-to-action="ShowFilePath"/>
     </action>
