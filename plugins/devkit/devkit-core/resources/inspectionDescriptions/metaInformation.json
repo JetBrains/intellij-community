@@ -263,6 +263,10 @@
     {
       "id": "UseIntelliJVirtualThreads",
       "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "PersistentStatePropertyNotSerialized",
+      "codeQualityCategory": "Reliability"
     }
   ]
 }

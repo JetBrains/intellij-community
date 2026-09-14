@@ -615,6 +615,12 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.ApplicationServiceAsStaticFinalFieldOrPropertyInspection"/>
 
+    <localInspection language="UAST" shortName="PersistentStatePropertyNotSerialized" groupPathKey="inspections.group.path"
+                     projectType="INTELLIJ_PLUGIN"
+                     key="inspection.persistent.state.property.not.serialized.display.name" groupKey="inspections.group.code"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.PersistentStatePropertyNotSerializedInspection"/>
+
     <localInspection language="UAST" enabledByDefault="false" level="ERROR"
                      projectType="INTELLIJ_PLUGIN"
                      key="inspection.threading.concurrency.display.name"
