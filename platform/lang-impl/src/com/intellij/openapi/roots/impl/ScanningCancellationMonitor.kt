@@ -144,7 +144,7 @@ class ScanningCancellationMonitor(
   private val coroutineScope: CoroutineScope,
   private val tracker: ScanningWorkTracker = ScanningWorkTracker.getInstance(),
   private val reporter: (ScanningStallReport) -> Unit = ::reportStallToLog,
-  private val graceMs: () -> Long = { Registry.intValue(SCANNING_MONITOR_GRACE_MS_KEY, 1000).toLong() },
+  private val graceMs: () -> Long = { Registry.intValue(SCANNING_MONITOR_GRACE_MS_KEY, 10_000).toLong() },
 ) : WriteActionListener {
 
   private val pendingCheck = AtomicReference<Job?>()
