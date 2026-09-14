@@ -1,4 +1,4 @@
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" visibility="internal">
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" visibility="public">
   <!-- comes from the Kotlin compiler -->
   <xi:include href="/META-INF/analysis-api/analysis-api-fir.xml"/>
 
