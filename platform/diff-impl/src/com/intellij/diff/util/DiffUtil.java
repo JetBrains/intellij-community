@@ -1788,7 +1788,8 @@ public final class DiffUtil {
   }
 
   /**
-   * MacOS hack. Try to minimize the window while we are navigating to sources from the window diff in full screen mode.
+   * MacOS hack. Try to minimize the diff window while we are navigating to sources from the window diff in the project's full screen mode.
+   * No need to do this if the diff window is in the full screen mode itself.
    */
   public static void minimizeDiffIfOpenedInWindow(@NotNull Component diffComponent) {
     if (!SystemInfo.isMac) return;
@@ -1815,9 +1816,10 @@ public final class DiffUtil {
   private static boolean canBeHiddenBehind(@NotNull Window window) {
     if (!(window instanceof Frame)) return false;
     if (SystemInfo.isMac) {
-      if (window instanceof IdeFrame) {
+      if (window instanceof IdeFrame ideFrame) {
+        if (ideFrame.isInFullScreen()) return true;
         // we can't move focus to full-screen main frame, as it will be hidden behind other frame windows
-        Project project = ((IdeFrame)window).getProject();
+        Project project = ideFrame.getProject();
         IdeFrame projectFrame = WindowManager.getInstance().getIdeFrame(project);
         if (projectFrame != null) {
           JComponent projectFrameComponent = projectFrame.getComponent();

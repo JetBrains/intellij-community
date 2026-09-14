@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.driver.sdk.ui.components.vcs
 
+import com.intellij.driver.client.Driver
 import com.intellij.driver.sdk.logicalPosition
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.components.ComponentData
@@ -9,7 +10,9 @@ import com.intellij.driver.sdk.ui.components.UiComponent.Companion.waitFound
 import com.intellij.driver.sdk.ui.components.common.JEditorUiComponent
 import com.intellij.driver.sdk.ui.components.common.editor
 import com.intellij.driver.sdk.ui.components.elements.ActionButtonUi
+import com.intellij.driver.sdk.ui.components.elements.WindowUiComponent
 import com.intellij.driver.sdk.ui.components.elements.actionButton
+import com.intellij.driver.sdk.ui.ui
 import com.intellij.driver.sdk.ui.xQuery
 
 private const val DIFF_REQUEST_PROCESSOR_PANEL = $$"com.intellij.diff.impl.DiffRequestProcessor$MyPanel"
@@ -18,6 +21,7 @@ private const val ONE_SIDE_CONTENT_PANEL = "com.intellij.diff.tools.util.side.On
 private const val TWO_SIDE_CONTENT_PANEL = "com.intellij.diff.tools.util.side.TwosideContentPanel"
 private const val THREE_SIDE_CONTENT_PANEL = "com.intellij.diff.tools.util.side.ThreesideContentPanel"
 private const val DIFF_CONTENT_LAYOUT_PANEL = "com.intellij.diff.tools.util.side.DiffContentLayoutPanel"
+private const val FRAME_WRAPPER_FRAME = "com.intellij.openapi.ui.MyJFrame"
 
 class DiffProcessorUi(data: ComponentData) : UiComponent(data) {
 
@@ -90,6 +94,15 @@ fun Finder.diffProcessor(): DiffProcessorUi =
 fun Finder.diffProcessor(action: DiffProcessorUi.() -> Unit) {
   diffProcessor().action()
 }
+
+/**
+ * The separate window that holds a diff. The IDE opens it when the advanced setting `show.diff.as.editor.tab` is off.
+ */
+fun Finder.diffWindow(): WindowUiComponent =
+  x(xQuery { byJavaClass(FRAME_WRAPPER_FRAME) } +
+    "[.${xQuery { byType(DIFF_REQUEST_PROCESSOR_PANEL) }}]", WindowUiComponent::class.java, "diff window").waitFound()
+
+fun Driver.diffWindow(): WindowUiComponent = ui.diffWindow()
 
 fun JEditorUiComponent.lastLineY(): Int {
   val lineCount = document.getLineCount()
