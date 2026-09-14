@@ -585,8 +585,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myState = new EditorState();
     myState.refreshAll();
     final EditorColorsScheme boundColorScheme = createBoundColorSchemeDelegate(null);
-    if (boundColorScheme instanceof EditorColorSchemeDelegate) {
-      myScheme = (EditorColorSchemeDelegate)boundColorScheme;
+    if (boundColorScheme instanceof EditorColorSchemeDelegate delegate) {
+      myScheme = delegate;
     }
     else {
       LOG.warn("createBoundColorSchemeDelegate created delegate of type '%s'. Will wrap it with MyColorSchemeDelegate".formatted(boundColorScheme.getClass()),
@@ -720,7 +720,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     updateCaretCursor();
 
     if (!ApplicationManager.getApplication().isHeadlessEnvironment() && SystemInfoRt.isMac && SystemInfo.isJetBrainsJvm) {
-      MacGestureSupportInstaller.installOnComponent(getComponent(), e -> myForcePushHappened = true);
+      MacGestureSupportInstaller.installOnComponent(getComponent(), _ -> myForcePushHappened = true);
     }
 
     myPopupHandlers.add(new DefaultPopupHandler());
@@ -1684,7 +1684,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       LOG.error(e);
     }
     // update area available for soft wrapping on the component shown/hidden
-    myPanel.addHierarchyListener(e -> mySoftWrapModel.getApplianceManager().updateAvailableArea());
+    myPanel.addHierarchyListener(_ -> mySoftWrapModel.getApplianceManager().updateAvailableArea());
 
     myPanel.addComponentListener(new ComponentAdapter() {
       @DirtyUI
@@ -2458,25 +2458,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   /**
-   * Sets a callback invoked after every repaint request.
-   * <p>
-   *   The callback is only invoked if the component is showing and the request has a non-empty rectangle.
-   *   In other words, it's invoked when the repaint request is likely to be followed by an actual painting operation.
-   * </p>
-   * <p>
-   *   The callback must be fast, non-intrusive, and should not throw any exceptions.
-   * </p>
-   * <p>
-   *   This is an internal hack, which is why it doesn't follow the usual add-listener pattern.
-   * </p>
-   * @param callback the callback, {@code null} removes the callback
-   */
-  @ApiStatus.Internal
-  public void setRepaintCallback(@Nullable Runnable callback) {
-    myEditorComponent.setRepaintCallback(callback);
-  }
-
-  /**
    * Sets a callback invoked after every paint operation.
    * <p>
    *   The callback must be fast, non-intrusive, and should not throw any exceptions.
@@ -2848,10 +2829,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
            + ", soft wraps: " + (mySoftWrapModel.isSoftWrappingEnabled() ? "on" : "off")
            + ", caret model: " + getCaretModel().dumpState()
            + ", soft wraps data: " + getSoftWrapModel().dumpState()
-           + "\ncustom wraps data: " + ((myCustomWrapModel instanceof CustomWrapModelImpl) ? ((CustomWrapModelImpl)myCustomWrapModel).dumpState() : myCustomWrapModel.toString())
+           + "\ncustom wraps data: " + ((myCustomWrapModel instanceof CustomWrapModelImpl model) ? model.dumpState() : myCustomWrapModel.toString())
            + "\n\nfolding data: " + getFoldingModel().dumpState()
            + "\ninlay model: " + getInlayModel().dumpState()
-           + (myDocument instanceof DocumentImpl ? "\n\ndocument info: " + ((DocumentImpl)myDocument).dumpState() : "")
+           + (myDocument instanceof DocumentImpl document ? "\n\ndocument info: " + document.dumpState() : "")
            + "\nfont preferences: " + myScheme.getFontPreferences()
            + "\npure painting mode: " + myPurePaintingMode
            + "\ninsets: " + myEditorComponent.getInsets()
@@ -3512,8 +3493,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private int validateOffset(int offset) {
     if (offset < 0) return 0;
-    if (offset > getElfDocument().getTextLength()) return getElfDocument().getTextLength();
-    return offset;
+    return Math.min(offset, getElfDocument().getTextLength());
   }
 
   void clearDnDContext() {
@@ -3559,9 +3539,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private @NotNull Caret getLeadCaret() {
     List<Caret> allCarets = myCaretModel.getAllCarets();
-    Caret firstCaret = allCarets.get(0);
+    Caret firstCaret = allCarets.getFirst();
     if (firstCaret == myCaretModel.getPrimaryCaret()) {
-      return allCarets.get(allCarets.size() - 1);
+      return allCarets.getLast();
     }
     return firstCaret;
   }
@@ -3770,7 +3750,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
 
 
-      myTimer = TimerUtil.createNamedTimer("Editor scroll timer", Registry.intValue("editor.scrolling.animation.interval.ms"), e -> {
+      myTimer = TimerUtil.createNamedTimer("Editor scroll timer", Registry.intValue("editor.scrolling.animation.interval.ms"), _ -> {
         if (isDisposed()) {
           stop();
           return;
@@ -3836,8 +3816,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private static void updateOpaque(@Nullable JScrollBar bar) {
-    if (bar instanceof OpaqueAwareScrollBar) {
-      bar.setOpaque(((OpaqueAwareScrollBar)bar).myOpaque);
+    if (bar instanceof OpaqueAwareScrollBar scrollBar) {
+      bar.setOpaque(scrollBar.myOpaque);
     }
   }
 
@@ -3852,7 +3832,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         }
         return getColorsScheme().getColor(key);
       });
-      addPropertyChangeListener("opaque", event -> {
+      addPropertyChangeListener("opaque", _ -> {
         revalidate();
         repaint();
       });
@@ -3898,8 +3878,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       ScrollBarUI barUI = getUI();
       Insets insets = getInsets();
       int top = Math.max(0, insets.top);
-      if (barUI instanceof ButtonlessScrollBarUI) {
-        return top + ((ButtonlessScrollBarUI)barUI).getDecrementButtonHeight();
+      if (barUI instanceof ButtonlessScrollBarUI scrollBarUI) {
+        return top + scrollBarUI.getDecrementButtonHeight();
       }
       if (barUI instanceof BasicScrollBarUI) {
         try {
@@ -3922,8 +3902,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int getIncScrollButtonHeight() {
       ScrollBarUI barUI = getUI();
       Insets insets = getInsets();
-      if (barUI instanceof ButtonlessScrollBarUI) {
-        return insets.top + ((ButtonlessScrollBarUI)barUI).getIncrementButtonHeight();
+      if (barUI instanceof ButtonlessScrollBarUI scrollBarUI) {
+        return insets.top + scrollBarUI.getIncrementButtonHeight();
       }
       if (barUI instanceof BasicScrollBarUI) {
         try {
@@ -3956,8 +3936,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     private void registerRepaintCallback(@Nullable ButtonlessScrollBarUI.ScrollbarRepaintCallback callback) {
-      if (myPersistentUI instanceof ButtonlessScrollBarUI) {
-        ((ButtonlessScrollBarUI)myPersistentUI).registerRepaintCallback(callback);
+      if (myPersistentUI instanceof ButtonlessScrollBarUI barUI) {
+        barUI.registerRepaintCallback(callback);
       }
     }
   }
@@ -4017,8 +3997,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       LOG.info("Skipping attempt to set color scheme without EditorColorsManager");
       return;
     }
-    if (scheme instanceof EditorColorSchemeDelegate) {
-      myScheme = (EditorColorSchemeDelegate)scheme;
+    if (scheme instanceof EditorColorSchemeDelegate delegate) {
+      myScheme = delegate;
     }
     else {
       myScheme = new EditorColorSchemeDelegate(this, scheme);
@@ -4892,7 +4872,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (isColumnMode()) {
         @NotNull List<CaretState> caretsAndSelections = getCaretModel().getCaretsAndSelections();
 
-        CaretState originalCaret = caretsAndSelections.get(0);
+        CaretState originalCaret = caretsAndSelections.getFirst();
         oldBlockStart = Objects.equals(originalCaret.getCaretPosition(), originalCaret.getSelectionEnd())
                         ? originalCaret.getSelectionStart()
                         : originalCaret.getSelectionEnd();
@@ -4945,7 +4925,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           }
         }
         else if (e.getSource() != myGutterComponent && isCreateRectangularSelectionEvent(e)) {
-          CaretState anchorCaretState = myCaretModel.getCaretsAndSelections().get(0);
+          CaretState anchorCaretState = myCaretModel.getCaretsAndSelections().getFirst();
           LogicalPosition anchor = Objects.equals(anchorCaretState.getCaretPosition(), anchorCaretState.getSelectionStart()) ?
                                    anchorCaretState.getSelectionEnd() : anchorCaretState.getSelectionStart();
           if (anchor == null) anchor = myCaretModel.getLogicalPosition();
@@ -5271,8 +5251,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                       inlayCandidate.getPlacement() == Inlay.Placement.ABOVE_LINE) &&
                      inlayCandidate.getWidthInPixels() <= relX ? null : inlayCandidate;
     FoldRegion foldRegionCandidate = inEditingArea ? myFoldingModel.getFoldingPlaceholderAt(location, true) : null;
-    FoldRegion foldRegion = foldRegionCandidate instanceof CustomFoldRegion &&
-                            ((CustomFoldRegion)foldRegionCandidate).getWidthInPixels() <= relX ? null : foldRegionCandidate;
+    FoldRegion foldRegion = foldRegionCandidate instanceof CustomFoldRegion region &&
+                            region.getWidthInPixels() <= relX ? null : foldRegionCandidate;
     GutterIconRenderer gutterIconRenderer = inEditingArea ? null : myGutterComponent.getGutterRenderer(point);
     boolean overText = inlayCandidate == null &&
                        (foldRegionCandidate == null || foldRegion != null) &&
@@ -5351,8 +5331,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       try {
         if (t.isDataFlavorSupported(GutterDraggableObject.flavor)) {
           Object attachedObject = t.getTransferData(GutterDraggableObject.flavor);
-          if (attachedObject instanceof GutterIconRenderer) {
-            GutterDraggableObject object = ((GutterIconRenderer)attachedObject).getDraggableObject();
+          if (attachedObject instanceof GutterIconRenderer renderer) {
+            GutterDraggableObject object = renderer.getDraggableObject();
             if (object != null) {
               object.remove();
               Point mouseLocationOnScreen = MouseInfo.getPointerInfo().getLocation();
@@ -5364,7 +5344,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                 new Point(
                   mouseLocationOnScreen.x - editorComponentLocationOnScreen.x,
                   mouseLocationOnScreen.y - editorComponentLocationOnScreen.y
-                ), editor.myGutterComponent.getDragImage((GutterIconRenderer)attachedObject), painterListenersDisposable
+                ), editor.myGutterComponent.getDragImage(renderer), painterListenersDisposable
               );
               IdeGlassPaneUtil.installPainter(
                 editorComponent,
@@ -5414,8 +5394,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         editor.putUserData(LAST_PASTED_REGION, null);
 
         AnAction pasteAction = ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_PASTE);
-        if (pasteAction instanceof EditorAction) {
-          EditorTextInsertHandler handler = ((EditorAction)pasteAction).getHandlerOfType(EditorTextInsertHandler.class);
+        if (pasteAction instanceof EditorAction action) {
+          EditorTextInsertHandler handler = action.getHandlerOfType(EditorTextInsertHandler.class);
           if (handler == null) {
             LOG.error("No suitable paste handler found");
           }
@@ -5588,7 +5568,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         // But settings for the file may have changed, so we must request the settings properly.
         // If the settings indeed need to be recomputed, the request will trigger a background computation.
         // Once that computation is finished, this method will be called again with eventSettings != null.
-        CodeStyle.getSettings(myProject, file);
+        CodeStyle.getSettings(myProject, Objects.requireNonNull(file));
       }
       if (eventSettings != null) {
         this.putUserData(CODE_STYLE_SETTINGS, eventSettings);

@@ -145,8 +145,6 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
 
   private final EditorImpl editor;
 
-  private @Nullable Runnable myRepaintCallback;
-
   private @NotNull Point2D alignment = new Point2D.Double();
 
   public EditorComponentImpl(@NotNull EditorImpl editor) {
@@ -215,10 +213,6 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
     for (FocusListener l : getFocusListeners()) removeFocusListener(l);
 
     setupEditorSwingCaretUpdatesCourierIfRequired();
-  }
-
-  void setRepaintCallback(@Nullable Runnable repaintCallback) {
-    myRepaintCallback = repaintCallback;
   }
 
   @Override
@@ -416,9 +410,6 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
     int topOverhang = Math.max(0, editor.myView.getTopOverhang());
     int bottomOverhang = Math.max(0, editor.myView.getBottomOverhang());
     repaint(x, y - topOverhang, width, height + topOverhang + bottomOverhang);
-    if (myRepaintCallback != null && isShowing() && width > 0 && height > 0) {
-      myRepaintCallback.run();
-    }
   }
 
   @Override
@@ -514,7 +505,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
    *    (if the primary caret position will have been changed)<br>
    * 2. otherwise, if any of {@link #documentChanged}, {@link #caretPositionChanged}, {@link #caretAdded}, {@link #caretRemoved} gets called,
    *    {@link #fireCaretUpdate} will be called as well (again, if the primary caret position will have been changed)
-   *
+   * <p>
    * <p/>
    *
    * Why we need all these listeners:<br>
@@ -807,7 +798,6 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
 
   /** Redispatch an IDE {@link DocumentEvent} to a Swing {@link javax.swing.event.DocumentListener} */
   private void fireJTextComponentDocumentChange(final DocumentEvent event) {
-    //noinspection deprecation
     List<javax.swing.event.DocumentListener> listeners = ((EditorAccessibilityDocument)getDocument()).getListeners();
     if (listeners == null) {
       return;
@@ -826,7 +816,6 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
 
       @Override
       public javax.swing.text.Document getDocument() {
-        //noinspection deprecation
         return EditorComponentImpl.this.getDocument();
       }
 
@@ -927,19 +916,19 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
     }
 
     @Override
-    public @Nullable Position getStartPosition() {
+    public @NotNull Position getStartPosition() {
       notSupported();
       return null;
     }
 
     @Override
-    public @Nullable Position getEndPosition() {
+    public @NotNull Position getEndPosition() {
       notSupported();
       return null;
     }
 
     @Override
-    public @Nullable Position createPosition(int i) {
+    public @NotNull Position createPosition(int i) {
       notSupported();
       return null;
     }
@@ -1240,7 +1229,6 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
     // proper text area handling.
     // Note: This is true for MacOS only. For other platform, we need to return the "regular"
     // TEXT role to ensure screen readers behave as expected.
-    @SuppressWarnings("SpellCheckingInspection")
     private static final AccessibleRole TEXT_AREA = new TextAccessibleRole("textarea");
 
     private TextAccessibleRole(@NonNls String key) {
@@ -1319,7 +1307,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
     // ---- Implements AccessibleContext ----
 
     @Override
-    public @Nullable String getAccessibleName() {
+    public @NotNull String getAccessibleName() {
       if (accessibleName != null) {
         return accessibleName;
       }
@@ -1411,9 +1399,9 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
     @Override
     public @Nullable String getAtIndex(
       @MagicConstant(intValues = {
-        AccessibleText.CHARACTER,
-        AccessibleText.WORD,
-        AccessibleText.SENTENCE})
+        CHARACTER,
+        WORD,
+        SENTENCE})
       int part,
       int index) {
       return getTextAtOffset(part, index, HERE);
@@ -1421,7 +1409,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
 
     @Override
     public @Nullable String getAfterIndex(
-      @MagicConstant(intValues = {AccessibleText.CHARACTER, AccessibleText.WORD, AccessibleText.SENTENCE})
+      @MagicConstant(intValues = {CHARACTER, WORD, SENTENCE})
       int part,
       int index) {
       return getTextAtOffset(part, index, AFTER);
@@ -1429,7 +1417,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
 
     @Override
     public @Nullable String getBeforeIndex(
-      @MagicConstant(intValues = {AccessibleText.CHARACTER, AccessibleText.WORD, AccessibleText.SENTENCE})
+      @MagicConstant(intValues = {CHARACTER, WORD, SENTENCE})
       int part,
       int index) {
       return getTextAtOffset(part, index, BEFORE);
@@ -1526,11 +1514,11 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
     @Override
     public @Nullable AccessibleTextSequence getTextSequenceAt(
       @MagicConstant(intValues = {
-        AccessibleText.CHARACTER,
-        AccessibleText.WORD,
-        AccessibleText.SENTENCE,
-        AccessibleExtendedText.LINE,
-        AccessibleExtendedText.ATTRIBUTE_RUN})
+        CHARACTER,
+        WORD,
+        SENTENCE,
+        LINE,
+        ATTRIBUTE_RUN})
       int part,
       int index) {
       return getSequenceAtIndex(part, index, HERE);
@@ -1539,11 +1527,11 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
     @Override
     public @Nullable AccessibleTextSequence getTextSequenceAfter(
       @MagicConstant(intValues = {
-        AccessibleText.CHARACTER,
-        AccessibleText.WORD,
-        AccessibleText.SENTENCE,
-        AccessibleExtendedText.LINE,
-        AccessibleExtendedText.ATTRIBUTE_RUN})
+        CHARACTER,
+        WORD,
+        SENTENCE,
+        LINE,
+        ATTRIBUTE_RUN})
       int part,
       int index) {
       return getSequenceAtIndex(part, index, AFTER);
@@ -1552,18 +1540,18 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
     @Override
     public @Nullable AccessibleTextSequence getTextSequenceBefore(
       @MagicConstant(intValues = {
-        AccessibleText.CHARACTER,
-        AccessibleText.WORD,
-        AccessibleText.SENTENCE,
-        AccessibleExtendedText.LINE,
-        AccessibleExtendedText.ATTRIBUTE_RUN})
+        CHARACTER,
+        WORD,
+        SENTENCE,
+        LINE,
+        ATTRIBUTE_RUN})
       int part,
       int index) {
       return getSequenceAtIndex(part, index, BEFORE);
     }
 
     @Override
-    public @Nullable Rectangle getTextBounds(int startIndex, int endIndex) {
+    public @NotNull Rectangle getTextBounds(int startIndex, int endIndex) {
       LogicalPosition startPos = editor.offsetToLogicalPosition(startIndex);
       Point startPoint = editor.logicalPositionToXY(startPos);
       Rectangle rectangle = new Rectangle(startPoint);
@@ -1597,7 +1585,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
     }
 
     private @Nullable String getTextAtOffset(
-      @MagicConstant(intValues = {AccessibleText.CHARACTER, AccessibleText.WORD, AccessibleText.SENTENCE})
+      @MagicConstant(intValues = {CHARACTER, WORD, SENTENCE})
       int type,
       int offset,
       @MagicConstant(intValues = {BEFORE, HERE, AFTER})
@@ -1607,7 +1595,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
         return null;
       }
       switch (type) {
-        case AccessibleText.CHARACTER: {
+        case CHARACTER: {
           if (offset + direction < document.getTextLength() && offset + direction >= 0) {
             int startOffset = offset + direction;
             return document.getCharsSequence().subSequence(startOffset, startOffset + 1).toString();
@@ -1615,12 +1603,12 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
           break;
         }
 
-        case AccessibleText.WORD: {
+        case WORD: {
           var word = getWordOrLexeme(offset, direction);
           return word == null ? null : word.text;
         }
 
-        case AccessibleText.SENTENCE: {
+        case SENTENCE: {
           int lineStart = getLineAtOffsetStart(offset, direction);
           int lineEnd = getLineAtOffsetEnd(offset, direction);
           if (lineStart == -1 || lineEnd == -1) {
@@ -1629,8 +1617,8 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
           return document.getCharsSequence().subSequence(lineStart, lineEnd).toString();
         }
 
-        case AccessibleExtendedText.LINE:
-        case AccessibleExtendedText.ATTRIBUTE_RUN:
+        case LINE:
+        case ATTRIBUTE_RUN:
           // Not expected to be called in this method!
           assert false : type;
 
@@ -1646,11 +1634,11 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
      */
     private @Nullable AccessibleTextSequence getSequenceAtIndex(
         @MagicConstant(intValues = {
-          AccessibleText.CHARACTER,
-          AccessibleText.WORD,
-          AccessibleText.SENTENCE,
-          AccessibleExtendedText.LINE,
-          AccessibleExtendedText.ATTRIBUTE_RUN})
+          CHARACTER,
+          WORD,
+          SENTENCE,
+          LINE,
+          ATTRIBUTE_RUN})
         int type,
         int offset,
         @MagicConstant(intValues = {BEFORE, HERE, AFTER})
@@ -1663,7 +1651,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
       }
 
       switch (type) {
-        case AccessibleText.CHARACTER -> {
+        case CHARACTER -> {
           AccessibleTextSequence charSequence = null;
           if (offset + direction < document.getTextLength() &&
               offset + direction >= 0) {
@@ -1673,10 +1661,10 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
           }
           return charSequence;
         }
-        case AccessibleExtendedText.ATTRIBUTE_RUN, AccessibleText.WORD -> {
+        case ATTRIBUTE_RUN, WORD -> {
           return getWordOrLexeme(offset, direction);
         }
-        case AccessibleExtendedText.LINE, AccessibleText.SENTENCE -> {
+        case LINE, SENTENCE -> {
           int lineStart = getLineAtOffsetStart(offset, direction);
           int lineEnd = getLineAtOffsetEnd(offset, direction);
           if (lineStart == -1 || lineEnd == -1) {
@@ -1869,7 +1857,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
   }
 
   private final class EditorAccessibleContextDelegate extends AccessibleContextDelegateWithContextMenu implements AccessibleText {
-    public EditorAccessibleContextDelegate() { super(new AccessibleEditorComponentImpl()); }
+    private EditorAccessibleContextDelegate() { super(new AccessibleEditorComponentImpl()); }
 
     @Override
     protected void doShowContextMenu() {

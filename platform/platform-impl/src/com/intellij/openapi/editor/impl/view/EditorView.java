@@ -891,8 +891,8 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   }
 
   private void assertNotInBulkMode() {
-    if (myDocument instanceof DocumentImpl) {
-      ((DocumentImpl)myDocument).assertNotInBulkUpdate();
+    if (myDocument instanceof DocumentImpl impl) {
+      impl.assertNotInBulkUpdate();
     }
     else if (myDocument.isInBulkUpdate()) {
       throw new IllegalStateException("Current operation is not permitted in bulk mode");
