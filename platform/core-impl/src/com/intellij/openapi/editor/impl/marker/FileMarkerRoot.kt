@@ -19,19 +19,24 @@ import java.util.concurrent.atomic.AtomicReference
 internal class FileMarkerRoot private constructor(
   internal val file: VirtualFile,
   initialRootReference: AtomicReference<PMarkerRoot>,
-) : DocumentListener {
+) : MarkerRootUpdater(), DocumentListener {
   @Volatile
   private var rootReference: AtomicReference<PMarkerRoot> = initialRootReference
 
   @Volatile
   private var documentReference: WeakReference<DocumentImpl>? = null
 
-  internal fun rootReference(): AtomicReference<PMarkerRoot> {
-    val document = documentReference?.get() ?: return rootReference
+  override fun selectCurrentRootReference(): AtomicReference<PMarkerRoot> {
+    val observedDocumentReference = documentReference ?: return rootReference
+    val document = observedDocumentReference.get() ?: return rootReference
     val currentRootReference = markerRoot(document)
-    rootReference = currentRootReference
+    if (documentReference === observedDocumentReference) {
+      rootReference = currentRootReference
+    }
     return currentRootReference
   }
+
+  override fun <T> withRootUpdateLock(action: () -> T): T = synchronized(this, action)
 
   private fun attach(document: DocumentImpl) {
     synchronized(this) {
@@ -74,7 +79,9 @@ internal class FileMarkerRoot private constructor(
 
   override fun documentChanged(event: DocumentEvent) {
     val document = event.document as? DocumentImpl ?: return
-    rootReference = markerRoot(document)
+    synchronized(this) {
+      rootReference = markerRoot(document)
+    }
   }
 
   companion object {
@@ -133,6 +140,6 @@ internal class FileMarkerRoot private constructor(
     }
 
     private fun markerRoot(document: DocumentImpl): AtomicReference<PMarkerRoot> =
-      document.rangeMarkers.rootStore().retainedRootReference(document.core.snapshot())
+      document.rangeMarkers.rootStore().rootReference(document.core.snapshot())
   }
 }

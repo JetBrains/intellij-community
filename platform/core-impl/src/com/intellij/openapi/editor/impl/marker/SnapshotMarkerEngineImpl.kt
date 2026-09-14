@@ -13,7 +13,6 @@ import com.intellij.util.Processor
 import org.jetbrains.annotations.ApiStatus
 import java.lang.ref.ReferenceQueue
 import java.lang.ref.WeakReference
-import java.util.concurrent.atomic.AtomicReference
 
 /**
  * Mutable snapshot-marker engine backed by immutable persistent [PMarkerRoot] values in external marker stores.
@@ -94,13 +93,12 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine {
       QueuedMarkerReference(marker, documentImpl, markerQueue)
     }
 
-    while (true) {
-      val oldRoot = rootReference.get()
-      val newRoot = oldRoot.insert(markerId, startOffset, endOffset, spec, marker.flavorFlags, markerReference)
-      if (rootReference.compareAndSet(oldRoot, newRoot)) {
-        return marker
-      }
+    val update: (PMarkerRoot) -> PMarkerRoot = {
+      it.insert(markerId, startOffset, endOffset, spec, marker.flavorFlags, markerReference)
     }
+    val rootStorage = fileRoot ?: documentImpl.rangeMarkers.rootStore()
+    rootStorage.updateRoot(rootReference, update)
+    return marker
   }
 
   @ApiStatus.Internal
@@ -133,29 +131,19 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine {
     }
     val marker = SnapshotLazyRangeMarker(fileRoot, markerId, spec, TextRange(startOffset, startOffset), initialLineColumns)
     val markerReference = QueuedMarkerReference(marker, cachedDocument, markerQueue)
-    val rootReference = fileRoot.rootReference()
-    while (true) {
-      val oldRoot = rootReference.get()
-      val newRoot = oldRoot.insert(markerId, startOffset, startOffset, spec, marker.flavorFlags, markerReference)
-      if (rootReference.compareAndSet(oldRoot, newRoot)) return marker
+    fileRoot.updateCurrentRoot {
+      it.insert(markerId, startOffset, startOffset, spec, marker.flavorFlags, markerReference)
     }
+    return marker
   }
 
   fun processQueue(): Boolean {
     var purgedAny = false
     while (true) {
       val reference = markerQueue.poll() as QueuedMarkerReference? ?: break
-      val fileRoot = reference.fileRootReference?.get()
-      val document = reference.documentReference?.get()
-      val purged = if (document != null) {
-        purgeRangeMarker(document.rangeMarkers.rootStore().rootReference(document.core.snapshot()), reference.markerId)
-      }
-      else if (fileRoot != null) {
-        purgeRangeMarker(fileRoot.rootReference(), reference.markerId)
-      }
-      else {
-        false
-      }
+      val rootStorage = reference.fileRootReference?.get()
+                        ?: reference.documentReference?.get()?.rangeMarkers?.rootStore()
+      val purged = rootStorage?.updateCurrentRoot { it.purge(reference.markerId) } ?: false
       if (purged) purgedAny = true
     }
     return purgedAny
@@ -172,27 +160,7 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine {
     val storedMarker = marker as SnapshotRangeMarkerImpl
     val markerId = storedMarker.markerId
     storedMarker.markDisposed()
-    val rootReference = storedMarker.currentRootReference()
-    while (true) {
-      val oldRoot = rootReference.get()
-      val newRoot = oldRoot.remove(markerId)
-      if (rootReference.compareAndSet(oldRoot, newRoot)) {
-        return oldRoot !== newRoot
-      }
-    }
-  }
-
-  private fun purgeRangeMarker(
-    rootReference: AtomicReference<PMarkerRoot>,
-    markerId: Long,
-  ): Boolean {
-    while (true) {
-      val oldRoot = rootReference.get()
-      val newRoot = oldRoot.purge(markerId)
-      if (rootReference.compareAndSet(oldRoot, newRoot)) {
-        return oldRoot !== newRoot
-      }
-    }
+    return storedMarker.updateCurrentRoot { it.remove(markerId) }
   }
 
   override fun processRangeMarkersOverlappingWith(

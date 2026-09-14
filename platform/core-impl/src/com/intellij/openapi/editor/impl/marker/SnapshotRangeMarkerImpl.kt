@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.AtomicReference
 open class SnapshotRangeMarkerImpl private constructor(
   private val documentOrFile: Any,
   internal val fileRoot: FileMarkerRoot?,
-  private val rootStore: SnapshotMarkerRootStore?,
+  private val rootStorage: MarkerRootUpdater,
   internal val markerId: Long,
   initialSpec: MarkerSpec,
   internal val initialRange: TextRange,
@@ -32,7 +32,7 @@ open class SnapshotRangeMarkerImpl private constructor(
     markerId: Long,
     initialSpec: MarkerSpec,
     initialRange: TextRange,
-  ) : this(fileRoot?.file ?: document, fileRoot, document.rangeMarkers.rootStore(), markerId, initialSpec, initialRange)
+  ) : this(fileRoot?.file ?: document, fileRoot, fileRoot ?: document.rangeMarkers.rootStore(), markerId, initialSpec, initialRange)
 
   /** Creates a marker in [fileRoot] before the document is available. */
   internal constructor(
@@ -40,7 +40,7 @@ open class SnapshotRangeMarkerImpl private constructor(
     markerId: Long,
     initialSpec: MarkerSpec,
     initialRange: TextRange,
-  ) : this(fileRoot.file, fileRoot, null, markerId, initialSpec, initialRange)
+  ) : this(fileRoot.file, fileRoot, fileRoot, markerId, initialSpec, initialRange)
 
   /**
    * Creates a marker in the supplied [rootStore]. Use this constructor for markers that an editor or a markup model owns.
@@ -133,16 +133,8 @@ open class SnapshotRangeMarkerImpl private constructor(
       val newSpec = transform(oldSpec)
       if (newSpec == oldSpec) return
 
-      val rootReference = currentRootReference()
-      while (!disposed) {
-        val oldRoot = rootReference.get()
-        val newRoot = oldRoot.updateSpec(markerId, newSpec)
-        if (newRoot === oldRoot) return
-        if (rootReference.compareAndSet(oldRoot, newRoot)) {
-          spec = newSpec
-          return
-        }
-      }
+      if (!updateCurrentRoot { root -> if (disposed) root else root.updateSpec(markerId, newSpec) }) return
+      spec = newSpec
     }
   }
 
@@ -151,7 +143,7 @@ open class SnapshotRangeMarkerImpl private constructor(
   private var cachedResolution: CachedResolution? = null
 
   private fun currentResolution(): PMarkerResolution {
-    val root = currentRootReference().get()
+    val root = currentRoot()
     val cached = cachedResolution
     if (cached != null && cached.root === root) {
       return cached.resolution
@@ -161,15 +153,14 @@ open class SnapshotRangeMarkerImpl private constructor(
     return resolution
   }
 
-  @ApiStatus.Internal
-  fun currentRootReference(): AtomicReference<PMarkerRoot> {
-    val documentOrFile = documentOrFile
-    if (documentOrFile is VirtualFile) {
-      return checkNotNull(fileRoot).rootReference()
-    }
-    val document = documentOrFile as DocumentImpl
-    return checkNotNull(rootStore).rootReference(document.core.snapshot())
+  private fun currentRoot(): PMarkerRoot = rootStorage.currentRootReference().get()
+
+  internal fun updateCurrentRoot(update: (PMarkerRoot) -> PMarkerRoot): Boolean {
+    return rootStorage.updateCurrentRoot(update)
   }
+
+  @ApiStatus.Internal
+  fun currentRootReference(): AtomicReference<PMarkerRoot> = rootStorage.currentRootReference()
 
   override fun toString(): String = "SnapshotRangeMarker(id=$markerId" +
                                     (if (disposed) ", disposed" else "") +

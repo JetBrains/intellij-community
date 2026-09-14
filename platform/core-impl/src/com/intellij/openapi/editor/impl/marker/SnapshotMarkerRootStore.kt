@@ -29,11 +29,11 @@ class SnapshotMarkerRootStore @JvmOverloads constructor(
   private val onMarkersInvalidated: ((LongList) -> Unit)? = null,
   private val onDocumentChanged: ((DocumentEvent) -> Unit)? = null,
   private val onMarkersAffected: ((LongList) -> Unit)? = null,
-) {
+) : MarkerRootUpdater() {
   private val documentReference: WeakReference<DocumentImpl> = WeakReference(document)
 
   private val roots: ConcurrentMap<DocumentSnapshot, RootState> =
-    CollectionFactory.createConcurrentWeakIdentityMap { _, _, rootState -> rootState?.clean() }
+    CollectionFactory.createConcurrentWeakIdentityMap()
 
   private val documentListener: PrioritizedDocumentListener? =
     if (onMarkersInvalidated != null || onDocumentChanged != null || onMarkersAffected != null) {
@@ -62,7 +62,6 @@ class SnapshotMarkerRootStore @JvmOverloads constructor(
     processQueue()
     documentListener?.let { listener -> documentReference.get()?.removeDocumentListener(listener) }
     markerStores.unregister(this)
-    roots.values.forEach(RootState::clean)
     roots.clear()
   }
 
@@ -78,19 +77,9 @@ class SnapshotMarkerRootStore @JvmOverloads constructor(
     return rootState(snapshot, initialRoot).rootReference
   }
 
-  internal fun retainedRootReference(snapshot: DocumentSnapshot): AtomicReference<PMarkerRoot> {
-    val rootState = rootState(snapshot, PMarkerRootImpl.empty())
-    rootState.retainAfterSnapshotCollection()
-    return rootState.rootReference
-  }
-
-  private fun updateRoot(rootReference: AtomicReference<PMarkerRoot>, update: (PMarkerRoot) -> PMarkerRoot): Boolean {
-    while (true) {
-      val oldRoot = rootReference.get()
-      val newRoot = update(oldRoot)
-      if (newRoot === oldRoot) return false
-      if (rootReference.compareAndSet(oldRoot, newRoot)) return true
-    }
+  override fun selectCurrentRootReference(): AtomicReference<PMarkerRoot> {
+    val document = checkNotNull(documentReference.get()) { "The document is unavailable" }
+    return rootReference(document.core.snapshot())
   }
 
   fun updateRoot(snapshot: DocumentSnapshot, initialRoot: PMarkerRoot = PMarkerRootImpl.empty(), update: (PMarkerRoot) -> PMarkerRoot): Boolean {
@@ -143,19 +132,12 @@ class SnapshotMarkerRootStore @JvmOverloads constructor(
       affectedMarkerConsumer,
     )
     val newState = RootState(afterRoot, invalidatedMarkerIds ?: LongLists.EMPTY_LIST, affectedMarkerIds ?: LongLists.EMPTY_LIST)
-    val existingState = roots.putIfAbsent(afterSnapshot, newState)
-    if (existingState != null) {
-      newState.clean()
-    }
+    roots.putIfAbsent(afterSnapshot, newState)
   }
 
   internal fun inherit(beforeRoot: PMarkerRoot, afterSnapshot: DocumentSnapshot) {
     processQueue()
-    val newState = RootState(beforeRoot)
-    val existingState = roots.putIfAbsent(afterSnapshot, newState)
-    if (existingState != null) {
-      newState.clean()
-    }
+    roots.putIfAbsent(afterSnapshot, RootState(beforeRoot))
   }
 
   internal fun merge(markerSnapshot: DocumentSnapshot, metadataSnapshot: DocumentSnapshot, mergedSnapshot: DocumentSnapshot) {
@@ -170,10 +152,7 @@ class SnapshotMarkerRootStore @JvmOverloads constructor(
       else -> markerRoots.rootReference.get().mergeValidMarkersFrom(metadataRoots.rootReference.get())
     }
     val newState = RootState(mergedRoot)
-    val existingState = roots.putIfAbsent(mergedSnapshot, newState)
-    if (existingState != null) {
-      newState.clean()
-    }
+    roots.putIfAbsent(mergedSnapshot, newState)
   }
 
   private fun rootState(snapshot: DocumentSnapshot, initialRoot: PMarkerRoot): RootState {
@@ -189,18 +168,5 @@ class SnapshotMarkerRootStore @JvmOverloads constructor(
     val affectedMarkerIds: LongList = LongLists.EMPTY_LIST,
   ) {
     val rootReference: AtomicReference<PMarkerRoot> = AtomicReference(root)
-
-    @Volatile
-    private var retainRoot: Boolean = false
-
-    fun clean() {
-      if (!retainRoot) {
-        rootReference.set(rootReference.get().emptyRoot())
-      }
-    }
-
-    fun retainAfterSnapshotCollection() {
-      retainRoot = true
-    }
   }
 }
