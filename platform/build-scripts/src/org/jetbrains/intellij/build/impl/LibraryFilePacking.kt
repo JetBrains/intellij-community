@@ -21,7 +21,8 @@ fun nameToJarFileName(name: String): String = sanitizeFileName(name.lowercase(),
 
 private val agentLibrariesNotForcedInSeparateJars = listOf(
   "code-agents",
-  "code-prompt-agents"
+  "code-prompt-agents",
+  "jcp-agent-spawner"
 )
 
 private val mavenLibrariesNotForcedInSeparateJars = listOf(

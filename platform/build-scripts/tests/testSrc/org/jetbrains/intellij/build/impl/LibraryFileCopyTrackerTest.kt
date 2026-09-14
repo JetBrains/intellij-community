@@ -37,5 +37,8 @@ internal class LibraryFileCopyTrackerTest {
     assertThat(isSeparateLibraryJar("kotlin-stdlib.jar")).isFalse()
     // an ordinary library: it must stay inside the content module that wraps it, or that module's jar ends up empty
     assertThat(isSeparateLibraryJar("objenesis-3.4.jar")).isFalse()
+    // API clients, not Java agents: hoisting them splits them from the library they call across two class loaders
+    assertThat(isSeparateLibraryJar("jcp-agent-spawner-sessions-api-0.3.1.jar")).isFalse()
+    assertThat(isSeparateLibraryJar("jcp-agent-spawner-tasks-api-0.3.1.jar")).isFalse()
   }
 }
