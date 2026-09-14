@@ -12,6 +12,7 @@ import com.intellij.internal.statistic.eventLog.validator.storage.FusComponentPr
 import com.intellij.internal.statistic.eventLog.validator.storage.FusComponentProvider.listenToOptionsChanges
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
@@ -70,7 +71,9 @@ internal class StatisticsJobsScheduler : ApplicationActivity {
       launch {
         delay(5.seconds)
 
-        serviceAsync<StatisticsNotificationManager>().showNotificationIfNeeded()
+        (ApplicationManager.getApplication() as ComponentManagerEx)
+          .getServiceAsyncIfDefined(StatisticsNotificationManager::class.java)
+          ?.showNotificationIfNeeded()
       }
       launch {
         checkPreviousExternalUploadResult()
