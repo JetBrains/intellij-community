@@ -28,6 +28,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.CollectionFactory
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -54,7 +55,8 @@ class CodeInsightContextManagerImpl(
   private val preferredContext: AtomicMapCache<VirtualFile, CodeInsightContext> =
     AtomicMapCache { CollectionFactory.createConcurrentWeakKeySoftValueMap() }
 
-  private val _changeFlow = MutableSharedFlow<Unit>()
+  // The buffer lets tryEmit succeed when subscribers are present. A zero-capacity flow rejects tryEmit and drops the invalidation event.
+  private val _changeFlow = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   init {
     EP_NAME.addChangeListener(cs) {
@@ -81,7 +83,8 @@ class CodeInsightContextManagerImpl(
     preferredContext.invalidate()
     allContexts.invalidate()
     project.messageBus.syncPublisher(CodeInsightContextManager.topic).contextsChanged()
-    _changeFlow.tryEmit(Unit)
+    val emitted = _changeFlow.tryEmit(Unit)
+    log.assertTrue(emitted, "failed to emit a context invalidation event, subscribers are not notified")
     log.debug { "[ctx-diag] all contexts invalidated" }
     log.trace { "all contexts are invalidated" }
   }
