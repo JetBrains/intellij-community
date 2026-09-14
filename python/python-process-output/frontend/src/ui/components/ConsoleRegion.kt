@@ -10,6 +10,7 @@ import com.intellij.ui.ColorUtil
 import com.intellij.ui.InplaceButton
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
+import kotlinx.coroutines.flow.MutableStateFlow
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Color
@@ -35,21 +36,21 @@ internal data class ConsoleTextLine<TTag>(
   val foreground: Color? = null,
 ) where TTag : ConsoleTag, TTag : Enum<TTag>
 
-internal class CollapsibleConsolePanel<TTag>(
+internal class ConsoleRegion<TTag> private constructor(
   @Nls title: String,
   name: String,
   private val formatter: ConsoleTagFormatter<TTag>,
-  private val onToggle: () -> Unit,
+  private val onChevronClicked: (() -> Unit)? = null,
   private val onCopy: ((line: ConsoleTextLine<TTag>, index: Int) -> Unit)? = null,
   private val onRebuild: (() -> Unit)? = null,
 ) where TTag : ConsoleTag, TTag : Enum<TTag> {
-  private var lines: List<ConsoleTextLine<TTag>> = emptyList()
-  private var sections: List<Section<TTag>> = emptyList()
-  private var showTags: Boolean = true
-  private var wrap: Boolean = false
-  private var expanded: Boolean = true
+  private var lines = emptyList<ConsoleTextLine<TTag>>()
+  private var sections = emptyList<Section<TTag>>()
+  private var showTags = true
+  private var wrap = false
+  private var expanded = true
 
-  private val textPane: JTextPane =
+  private val textPane =
     object : JTextPane() {
       override fun getPreferredSize(): Dimension {
         val superSize = super.getPreferredSize()
@@ -66,12 +67,13 @@ internal class CollapsibleConsolePanel<TTag>(
         return Dimension(maxOf(superSize.width, width), superSize.height)
       }
     }
-  private val baseStyle: Style = textPane.addStyle(null, null)
+  private val baseStyle = textPane.addStyle(null, null)
   private val tagColumn = ColumnPanel { i -> sections.getOrNull(i)?.textOffset }
   private val copyColumn = ColumnPanel { i -> sections.getOrNull(i)?.textOffset }
   private val chevronLabel = JBLabel(AllIcons.General.ArrowDown)
-  private val body: JPanel = JPanel(BorderLayout())
-  private val header: JPanel = JPanel(BorderLayout())
+  private val body = JPanel(BorderLayout())
+  private val header = JPanel(BorderLayout())
+  private val isCollapsible = onChevronClicked != null
 
   val component: JComponent
     field = JPanel(BorderLayout())
@@ -87,6 +89,18 @@ internal class CollapsibleConsolePanel<TTag>(
     StyleConstants.setFontSize(baseStyle, Styling.MONOSPACED_FONT.size)
 
     body.isOpaque = false
+    body.border =
+      JBUI.Borders.empty(
+        0,
+        if (isCollapsible) {
+          0
+        }
+        else {
+          Styling.HEADER_HORIZONTAL_PADDING + chevronLabel.icon.iconWidth + Styling.HEADER_ICON_TEXT_GAP
+        },
+        Styling.BODY_BOTTOM_PADDING,
+        0
+      )
     body.add(tagColumn, BorderLayout.WEST)
     body.add(textPane, BorderLayout.CENTER)
     body.add(copyColumn, BorderLayout.EAST)
@@ -103,9 +117,13 @@ internal class CollapsibleConsolePanel<TTag>(
 
     header.addMouseListener(object : MouseAdapter() {
       override fun mouseClicked(e: MouseEvent) {
-        onToggle()
+        onChevronClicked?.invoke()
       }
     })
+
+    if (!isCollapsible) {
+      header.isVisible = false
+    }
 
     component.isOpaque = false
     component.add(header, BorderLayout.NORTH)
@@ -193,7 +211,8 @@ internal class CollapsibleConsolePanel<TTag>(
 
     doc.remove(0, doc.length)
 
-    for ((_, text, foreground) in lines) {
+    for ((index, line) in lines.withIndex()) {
+      val (_, text, foreground) = line
       val attrs =
         if (foreground == null) {
           baseStyle
@@ -201,8 +220,13 @@ internal class CollapsibleConsolePanel<TTag>(
         else {
           SimpleAttributeSet(baseStyle).also { StyleConstants.setForeground(it, foreground) }
         }
+      var finalText = text
 
-      doc.insertString(doc.length, text + "\n", attrs)
+      if (index < lines.size - 1) {
+        finalText += "\n"
+      }
+
+      doc.insertString(doc.length, finalText, attrs)
     }
 
     textPane.caretPosition = 0
@@ -222,7 +246,11 @@ internal class CollapsibleConsolePanel<TTag>(
       }
 
       prevTag = line.tag
-      offset += line.text.length + 1 // trailing newline
+      offset += line.text.length
+
+      if (index < lines.size - 1) {
+        offset += 1 // trailing newline
+      }
     }
 
     sections = newSections
@@ -315,11 +343,32 @@ internal class CollapsibleConsolePanel<TTag>(
     const val HEADER_VERTICAL_PADDING = 4
     const val HEADER_HORIZONTAL_PADDING = 8
     const val HEADER_ICON_TEXT_GAP = 4
+    const val BODY_BOTTOM_PADDING = 8
     val TAG_FOREGROUND = ColorUtil.withAlpha(JBUI.CurrentTheme.Label.foreground(), 0.75)
 
     val MONOSPACED_FONT =
       EditorColorsManager.getInstance().globalScheme.let {
         Font(it.editorFontName, Font.PLAIN, it.editorFontSize)
       }
+  }
+
+  companion object {
+    fun <TTag> createCollapsibleRegion(
+      @Nls title: String,
+      name: String,
+      formatter: ConsoleTagFormatter<TTag>,
+      onChevronClicked: () -> Unit,
+      onCopy: ((line: ConsoleTextLine<TTag>, index: Int) -> Unit)? = null,
+      onRebuild: (() -> Unit)? = null,
+    ) where TTag : ConsoleTag, TTag : Enum<TTag> =
+      ConsoleRegion(title, name, formatter, onChevronClicked, onCopy, onRebuild)
+
+    fun <TTag> createStaticRegion(
+      name: String,
+      formatter: ConsoleTagFormatter<TTag>,
+      onCopy: ((line: ConsoleTextLine<TTag>, index: Int) -> Unit)? = null,
+      onRebuild: (() -> Unit)? = null,
+    ) where TTag : ConsoleTag, TTag : Enum<TTag> =
+      ConsoleRegion("", name, formatter, null, onCopy, onRebuild)
   }
 }
