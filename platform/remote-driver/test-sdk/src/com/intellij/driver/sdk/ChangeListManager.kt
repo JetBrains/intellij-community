@@ -5,7 +5,7 @@ import com.intellij.driver.client.Remote
 import com.intellij.driver.client.service
 import com.intellij.driver.model.RdTarget
 
-@Remote("com.intellij.openapi.vcs.changes.ChangeListManager", plugin = "com.intellij/intellij.platform.vcs", rdTarget = RdTarget.BACKEND)
+@Remote("com.intellij.openapi.vcs.changes.ChangeListManager", plugin = "intellij.vcs.plugin/intellij.platform.vcs", rdTarget = RdTarget.BACKEND)
 interface ChangeListManager {
   fun getChangeLists(): List<LocalChangeList>
   fun findChangeList(name: String): LocalChangeList?

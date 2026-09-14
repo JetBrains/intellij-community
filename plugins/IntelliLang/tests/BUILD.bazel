@@ -21,7 +21,11 @@ jvm_library(
     ),
     module_name = "intellij.platform.langInjection.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = ["//xml/plugin"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/vcs/plugin",
+        "//xml/plugin",
+    ],
 )
 
 jvm_library(
@@ -44,6 +48,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":tests",
+        "//platform/vcs/plugin:plugin_test_lib",
         "//platform/ide-core:ide-core_test_lib",
         "//xml/plugin:plugin_test_lib",
     ],

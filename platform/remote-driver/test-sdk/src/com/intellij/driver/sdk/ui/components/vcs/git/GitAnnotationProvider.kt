@@ -10,12 +10,12 @@ interface GitAnnotationProvider {
   fun annotate(file: VirtualFile): FileAnnotation
 }
 
-@Remote("com.intellij.openapi.vcs.annotate.FileAnnotation", plugin = "com.intellij/intellij.platform.vcs")
+@Remote("com.intellij.openapi.vcs.annotate.FileAnnotation", plugin = "intellij.vcs.plugin/intellij.platform.vcs")
 interface FileAnnotation {
   fun getRevisions(): List<VcsFileRevision>
 }
 
-@Remote("com.intellij.openapi.vcs.history.VcsFileRevision", plugin = "com.intellij/intellij.platform.vcs")
+@Remote("com.intellij.openapi.vcs.history.VcsFileRevision", plugin = "intellij.vcs.plugin/intellij.platform.vcs")
 interface VcsFileRevision {
   fun getRevisionDate(): Date
   fun getAuthor(): String

@@ -27,6 +27,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
+        "//platform/vcs/plugin",
         "//xml/dom-impl",
         "//xml/impl",
         "//java/testFramework",
@@ -52,6 +53,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":dom-tests",
+        "//platform/vcs/plugin:plugin_test_lib",
         "//libraries/lucene.common:lucene.common_test_lib",
     ],
     deps = [

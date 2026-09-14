@@ -185,6 +185,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
+        "//platform/vcs/plugin",
         "//platform/structuralsearch/plugin",
         "//platform/structure-view-impl/plugin",
         "//platform/todo/plugin",
@@ -212,6 +213,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":ant-tests",
+        "//platform/vcs/plugin:plugin_test_lib",
         "//platform/ide-core-impl:ide-core-impl_test_lib",
         "//platform/ide-core:ide-core_test_lib",
         "//platform/platform-impl/concurrency:concurrency_test_lib",

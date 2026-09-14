@@ -129,6 +129,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         "//platform/platform-impl/internal",
+        "//platform/vcs/plugin",
         "//platform/structuralsearch:structuralSearch",
         "//platform/structuralsearch/plugin",
         "//xml/impl",
@@ -153,6 +154,7 @@ jvm_library(
         # do not sort,
         ":structuralSearch-tests",
         "//platform/platform-impl/internal:internal_test_lib",
+        "//platform/vcs/plugin:plugin_test_lib",
         "//platform/ide-core:ide-core_test_lib",
         "//xml/plugin:plugin_test_lib",
     ],

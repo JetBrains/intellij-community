@@ -146,6 +146,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
+        "//platform/vcs/plugin",
         "//platform/backend",
         "//xml/plugin",
     ],
@@ -170,6 +171,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":relaxng-tests",
+        "//platform/vcs/plugin:plugin_test_lib",
         "//platform/backend:backend_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
         "//platform/platform-impl/internal:internal_test_lib",

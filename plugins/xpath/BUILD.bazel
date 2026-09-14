@@ -170,6 +170,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         "//platform/platform-impl/internal",
+        "//platform/vcs/plugin",
         "//xml/dom-impl",
         "//xml/plugin",
     ],
@@ -199,6 +200,7 @@ jvm_library(
         # do not sort,
         ":xpath-tests",
         "//platform/platform-impl/internal:internal_test_lib",
+        "//platform/vcs/plugin:plugin_test_lib",
         "//platform/platform-impl/concurrency:concurrency_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
         "//xml/dom-impl:dom-impl_test_lib",

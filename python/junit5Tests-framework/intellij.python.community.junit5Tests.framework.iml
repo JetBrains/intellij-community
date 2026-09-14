@@ -57,6 +57,7 @@
     <orderEntry type="module" module-name="intellij.jcef.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testRunner.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.structureView.plugin" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.community.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.impl.pipenv" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.plugin" scope="RUNTIME" />

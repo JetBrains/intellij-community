@@ -32,6 +32,7 @@ jvm_library(
     ],
     runtime_deps = [
         # do not sort,
+        "//platform/vcs/plugin",
         "//python/pluginCore:community-plugin",
         "//xml/plugin",
     ],
@@ -67,6 +68,7 @@ jvm_library(
         ":community-junit5Tests-framework",
         "//platform/ide-core:ide-core_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/vcs/plugin:plugin_test_lib",
         "//python/pluginCore:community-plugin_test_lib",
         "//xml/plugin:plugin_test_lib",
     ],
