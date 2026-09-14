@@ -1,6 +1,6 @@
 ---
 name: Libraries Dashboard Spec
-description: Requirements for the CLI tool that reports Maven library versions pinned in intellij.libraries.* wrapper modules and their upstream latest releases.
+description: Requirements for the CLI tool that reports Maven library versions pinned in intellij.libraries.* wrapper modules and .idea/libraries project libraries, compares them with the upstream releases, and bumps a library in place.
 targets:
   - ../libraries-dashboard.mjs
 ---
@@ -8,148 +8,183 @@ targets:
 # Libraries Dashboard Spec
 
 Status: Draft
-Date: 2026-04-17
+Date: 2026-09-14
 
 ## Summary
-A single-file Bun CLI (`libraries-dashboard.mjs`) that scans every `intellij.libraries.*.iml` wrapper module in the repository, extracts the pinned Maven coordinates, and reports — per artifact — the current pinned version(s), the latest version available on Maven Central, an outdatedness classification, and a link to the artifact's GitHub releases page when derivable from the POM. The tool must run offline-friendly (disk cache) and produce both an HTML dashboard and an ANSI terminal table.
+A single-file Bun CLI (`libraries-dashboard.mjs`) with two commands. The report command scans every `intellij.libraries.*.iml` wrapper module and every `.idea/libraries/*.xml` project library, extracts the pinned Maven coordinates, and reports per artifact the pinned version(s), the latest version in the first repository that serves the artifact, an outdatedness classification, the repository, and a link to the GitHub releases page when the POM names one. The bump command rewrites the pinned version, the jar URLs and the checksums of a library in place. The tool runs offline-friendly (disk cache) and produces an HTML dashboard, an ANSI terminal table, or JSON.
 
 ## Goals
-- Discover every Maven library currently pinned through `intellij.libraries.*` wrapper modules without manual input.
-- Surface which libraries are outdated and by how much (major / minor / patch).
-- Provide a one-click path from a row in the dashboard to the upstream GitHub releases page, when the library is hosted on GitHub.
-- Run with `bun` using only built-ins (`fs`, `path`, global `fetch`), no npm/package.json dependencies.
-- Finish a cold run in under ~2 minutes on a typical connection; a warm (cached) run must complete in under 5 seconds.
+- Discover every Maven library pinned through a wrapper module or a project library without manual input.
+- Surface which libraries are outdated and by how much (major / minor / patch), and which pins are JetBrains forks.
+- Resolve artifacts from every repository the IDE project declares, not only Maven Central.
+- Provide a one-click path from a row in the dashboard to the upstream GitHub releases page.
+- Make a version bump mechanical: one command edits the files, the build regenerates the rest.
+- Run with `bun` using only built-ins (`fs`, `path`, `crypto`, global `fetch`), no npm/package.json dependencies.
+- Finish a cold run in a few minutes on a typical connection; a warm (cached) run must complete in under 5 seconds.
 
 ## Non-goals
-- Editing, bumping, or committing library version changes.
-- Surfacing project-level libraries declared in `.idea/libraries/*.xml` (deferred to a future version).
+- Committing library version changes or creating tickets.
+- Recomputing the transitive artifact set of a library. The bump command keeps the snapshot and prints the new POM dependencies for a manual comparison.
 - Surfacing `http_file` entries in `MODULE.bazel` or other Bazel-only Maven pins.
-- Calling the GitHub API (which would require auth/tokens and rate-limit handling).
-- Gating CI or builds — the tool must always exit `0` on successful report generation.
+- Calling the GitHub API.
+- Gating CI or builds. The report command always exits `0` when it produced a report.
 
 ## Requirements
 
 ### Discovery
-- The tool MUST recursively scan `community/libraries/` and `community/platform/libraries/` for files matching `intellij.libraries.*.iml`.
-- The tool MUST NOT scan other directories or follow symlinks out of the repository.
-- The tool MUST tolerate missing scan roots (e.g. partial checkout): an absent root MUST be skipped silently, not raised as an error.
+- The tool MUST read `.idea/modules.xml` in the repository root and in `community/` and take every `filepath` whose file name starts with `intellij.libraries.` and ends with `.iml`. `$PROJECT_DIR$` resolves to the directory that holds the `.idea` folder. These files are the `wrapper` sources.
+- The tool MUST read every `*.xml` file in `.idea/libraries/` and `community/.idea/libraries/`. These files are the `project` sources.
+- The tool MUST NOT walk the file tree for wrapper modules, so copies under test data are not scanned.
+- A file registered by both `modules.xml` files (every community module) MUST be scanned once.
+- The tool MUST tolerate a missing `modules.xml` or libraries directory (partial checkout): the source is skipped silently.
   [@test] ../test/discovery.test.mjs
 
 ### Parsing
-- For each discovered `.iml`, the tool MUST extract every `<library ... type="repository">…</library>` block.
+- For each source file, the tool MUST extract every `<library ... type="repository">…</library>` block.
 - Within each block, the tool MUST read the `maven-id="groupId:artifactId:version"` attribute on the `<properties>` element as the canonical coordinate. When `maven-id` is absent, the block MUST be ignored.
-- The parser MUST be tolerant of attribute order inside the `<library>` open tag (`name=` and `type=` may appear in either order).
-- The parser MUST NOT use a full XML parser; it may rely on regular expressions given the stable iml serialization format.
+- The parser MUST be tolerant of attribute order inside the `<library>` open tag.
+- The parser MUST NOT use a full XML parser; it may rely on regular expressions given the stable serialization format.
+- Each entry carries its `kind` (`wrapper` or `project`). The source name of a wrapper is the module name without the `intellij.libraries.` prefix; the source name of a project library is its `name` attribute.
   [@test] ../test/parsing.test.mjs
 
 ### Grouping
-- Entries MUST be deduplicated by `groupId:artifactId`. Each group MUST carry:
+- Entries MUST be deduplicated by `groupId:artifactId` across both kinds. Each group MUST carry:
   - the sorted list of distinct versions observed,
-  - the list of referring modules (module name derived from the iml file name by stripping the `intellij.libraries.` prefix and `.iml` suffix),
-  - the source file path per module reference.
+  - the list of referring sources with kind, version and file path.
 - When a group contains more than one distinct version, the group's status MUST be `inconsistent` regardless of upstream comparison.
 
+### Version model
+- A version is `\d+(\.\d+){0,3}` followed by an optional suffix that starts with `.`, `-`, `+` or `_`. The suffix is split into tokens on those separators. Versions of another shape are ignored.
+- The tokens `Final`, `RELEASE` and `GA` are release markers and count as no suffix.
+- A prerelease token matches `alpha|beta|rc|cr|ea|eap|milestone|snapshot|preview|dev|pr|m|nightly` with optional trailing digits.
+- The variant family of a version is the list of alpha tokens that are neither prerelease tokens nor fork markers (`jre`, `jdk5`, `r`, `x-compat`). An empty family means a plain release.
+- Comparison: numeric segments first, then suffix tokens pairwise. Numeric tokens compare numerically. A missing token beats a prerelease token and loses to a numeric token. Prerelease tokens compare by stage (`dev` < `snapshot` < ... < `rc` < `cr`), then by their number.
+  [@test] ../test/version-selection.test.mjs
+
 ### Latest-version lookup
-- The tool MUST query `https://repo1.maven.org/maven2/{groupPath}/{artifactId}/maven-metadata.xml` (not the Solr search endpoint, which returns unreliable `latestVersion` values for artifacts with legacy date-formatted tags).
+- The tool MUST build the repository list from Maven Central (`https://repo1.maven.org/maven2`) followed by every `<option name="url">` in `.idea/jarRepositories.xml` and `community/.idea/jarRepositories.xml`, in file order, without duplicates and without a second Maven Central mirror.
+- For each artifact the tool MUST query `{repo}/{groupPath}/{artifactId}/maven-metadata.xml` repository by repository and stop at the first one that returns a non-empty `<version>` list. That repository is the artifact's `repo`.
 - The latest version MUST be selected from the `<version>` entries by:
-  - filtering to semver-shaped versions (`\d+\.\d+(\.\d+)?[+-]?` etc.),
-  - excluding prereleases (alpha, beta, rc, cr, ea, milestone, snapshot, preview, dev, pr, m) unless the *current* pinned version is itself a prerelease,
-  - picking the numerically highest remaining version.
-- If no candidate survives filtering, the tool MUST fall back to the highest semver-shaped version including prereleases.
-- Artifacts not available on Maven Central (HTTP ≠ 200, empty metadata) MUST be reported as `unknown` and MUST NOT crash the run.
+  - keeping only versions of the version model shape,
+  - dropping fork versions,
+  - keeping only versions whose variant family equals the family of the highest pinned version,
+  - picking the highest stable version. When no stable version exists and the pinned version is a prerelease, picking the highest prerelease.
+- When the pin is stable and only prereleases exist, `latest` MUST be null and the group MUST carry the note `only prereleases: <highest>`.
+- Artifacts absent from every repository MUST be reported as `unknown` and MUST NOT crash the run.
   [@test] ../test/version-selection.test.mjs
 
 ### GitHub link derivation
-- For each artifact, the tool SHOULD fetch the POM at `https://repo1.maven.org/maven2/{groupPath}/{artifactId}/{currentVersion}/{artifactId}-{currentVersion}.pom`.
+- For each artifact, the tool SHOULD fetch the POM at `{repo}/{groupPath}/{artifactId}/{currentVersion}/{artifactId}-{currentVersion}.pom` from the resolving repository.
 - The tool SHOULD search the POM in this order:
   1. `<scm>` child `<url>`, `<connection>`, or `<developerConnection>` containing `github.com`.
   2. Top-level `<url>` pointing to `github.com`.
 - The extracted URL MUST be normalized to `https://github.com/{owner}/{repo}` (strip `scm:git:` / `git+` / `git://` prefixes, trailing slashes, and `.git` suffix).
-- The dashboard link MUST point to `https://github.com/{owner}/{repo}/releases/latest` — a plain browser URL that relies on GitHub's redirect to the current tag. The tool MUST NOT call the GitHub API.
+- The dashboard link MUST point to `https://github.com/{owner}/{repo}/releases/latest`. The tool MUST NOT call the GitHub API.
 - POM fetch failures MUST NOT abort the run; the artifact MUST simply report no GitHub link.
-  [@test] ../test/github-link.test.mjs
+  [@test] ../test/parsing.test.mjs
 
 ### Classification
-- Status values (in priority order for sorting worst-first): `major`, `minor`, `patch`, `inconsistent`, `unknown`, `ahead`, `up-to-date`.
+- Status values (in priority order for sorting worst-first): `major`, `minor`, `patch`, `inconsistent`, `unknown`, `fork`, `ahead`, `up-to-date`.
+- A pin is a `fork` when its groupId starts with `org.jetbrains.intellij.deps` or its version carries a token `jetbrains`, `intellij`, `jb<digits>`, `idea<digits>`, `patched` or `amn`. The upstream latest is still resolved and shown; the row is not actionable.
 - Classification MUST compare the highest observed current version against the resolved latest:
   - differing first numeric segment → `major`,
   - differing second segment → `minor`,
-  - differing third or fourth segment → `patch`,
-  - identical numeric parts → `up-to-date`,
+  - differing third or fourth segment, or a lower suffix → `patch`,
+  - identical → `up-to-date`,
   - current > latest → `ahead`,
   - unresolvable latest → `unknown`.
+  [@test] ../test/version-selection.test.mjs
 
 ### Caching
-- The tool MUST persist fetched `{latest, githubUrl, fetchedAt}` per `groupId:artifactId` to `<repo>/out/libraries-dashboard/cache.json` — the repo-root `/out/` directory is already git-ignored, keeping generated artifacts out of the source tree.
-- The output directory MUST be created on demand (`mkdir -p`) before any write.
+- The tool MUST persist `{latest, githubUrl, repo, note, fetchedAt}` per `groupId:artifactId` to `<repo>/out/libraries-dashboard/cache.json`. The repo-root `/out/` directory is git-ignored.
+- The cache file carries `"version": 2`. A file with another version MUST be discarded.
+- The output directory MUST be created on demand before any write.
 - Cache entries older than 24 hours MUST be ignored.
 - `--no-cache` MUST skip reading the cache (writes still occur).
-- `--refresh` MUST force a full refetch regardless of cache freshness.
+- `--refresh` MUST force a full refetch regardless of cache freshness. The cached `repo` of an artifact is tried first.
 
 ### CLI surface
-- Flags: `--no-cache`, `--refresh`, `--format=html|text|json|all`, `--open`, `-h`/`--help`.
+- Report: `bun libraries-dashboard.mjs [--no-cache] [--refresh] [--format=html|text|json|all] [--open]`.
+- Bump: `bun libraries-dashboard.mjs bump <groupId:artifactId>[=<version>]... [--kind=wrapper|project] [--no-cache] [--refresh]`.
 - Default `--format` MUST be `all` (HTML file + terminal table).
 - `--format=html` or `all` MUST write `<repo>/out/libraries-dashboard/dashboard.html`.
 - `--format=json` MUST write `<repo>/out/libraries-dashboard/dashboard.json` and MUST NOT print the terminal table.
 - `--format=text` MUST print the terminal table only and MUST NOT touch disk for output.
-- `--open` MUST launch the system default browser on the generated HTML (macOS `open`, Windows `start`, Linux `xdg-open`) and MUST be a no-op when the selected format did not produce an HTML file.
-- Unknown flags MUST exit with status `2` and a short error.
+- `--open` MUST launch the system default browser on the generated HTML and MUST be a no-op when the selected format did not produce an HTML file.
+- Unknown flags, a bump without coordinates, and a coordinate that is not pinned anywhere MUST exit with status `2` and a short error.
 - Successful runs MUST exit with status `0`; fatal parse/IO errors MUST exit with status `1`.
+
+### Bump command
+- The target version is the explicit `=version` or, when absent, the resolved latest. Without a target or a resolving repository the library is reported and skipped; the command exits `1` at the end.
+- `--kind` restricts the rewrite to wrapper modules or to project libraries. Skipped sources are listed. The Fleet project libraries (`fleet:*`) are generated from the Fleet version catalog by `fleet/build/generator`, so a bump of those goes through the catalog, not through this tool.
+- For every source file of the library and only inside the `<library>` block whose `maven-id` matches the pinned coordinate, the tool MUST:
+  1. replace `maven-id="G:A:old"` with the new version,
+  2. replace the version in every URL whose path contains `/<old>/<name>-<old>`, so the jar, the sources jar and every `<artifact url>` of the same version move together while roots pinned to another version stay,
+  3. replace the `<sha256sum>` of every `<artifact>` with the checksum of the new jar. The checksum comes from `<jar url>.sha256` in the resolving repository; when that file is absent the jar is downloaded and hashed. For Maven Central the checksum is fetched through the Central mirror from `jarRepositories.xml`, because the build downloads through that mirror and a release the mirror has not cached yet must fail the bump, not the build.
+- The file MUST be written back byte-exact except for the replaced substrings. No trailing newline is added.
+- All files of one library MUST be rewritten in memory before any write, so a failed checksum leaves the library untouched.
+- When the block lists more than one `<artifact>`, the tool MUST print the compile and runtime dependencies of the new POM for a manual comparison with the artifact list.
+- After the changes the tool MUST print the follow-up commands: `./build/jpsModelToBazel.cmd` and `bazel run //:format.check`.
+  [@test] ../test/bump.test.mjs
 
 ### HTML output
 - The generated HTML MUST be self-contained: no external scripts, no CDN references, no network dependencies at view time.
 - It MUST support light and dark themes via `color-scheme: light dark` and system-color keywords (`Canvas`, `CanvasText`, `GrayText`).
-- It MUST include, above the table, a live text filter over `groupId:artifactId`, a status dropdown, and status count chips.
+- It MUST include, above the table, a live text filter over `groupId:artifactId`, a status dropdown, a kind dropdown (`wrapper` / `project`), and status count chips.
 - Column headers MUST be sortable (ascending/descending toggle) client-side.
-- The modules column MUST render as a `<details>` element showing the count by default and expanding to the full module list with per-module version.
-- Status MUST render as a colored badge (`.badge-major`, `.badge-minor`, `.badge-patch`, `.badge-inconsistent`, `.badge-up-to-date`, `.badge-ahead`, `.badge-unknown`).
-- Each row MUST expose an **Action** column with a **Copy prompt** button for every artifact that is not `up-to-date` or `ahead`. Clicking the button MUST place a pre-filled, ready-to-paste prompt onto the system clipboard (via `navigator.clipboard.writeText`, falling back to a hidden `<textarea>` + `document.execCommand("copy")` when the async API is unavailable, e.g. when viewing the file over `file://` without clipboard permission).
-- After a successful copy the button MUST flash a `.copied` state (~1.2s) and a transient toast ("Prompt copied to clipboard") MUST appear near the bottom of the viewport for ~1.6s.
-- The prompt for outdated artifacts MUST include: the `groupId:artifactId`, the current (highest observed) pinned version, the target latest version, the repo-relative path of every iml file referencing the library with its pinned version, step-by-step guidance to update `maven-id`, the `<artifact>` / `CLASSES` / `SOURCES` URLs, and the `<sha256sum>`, and a reminder to run `./build/jpsModelToBazel.cmd`.
-- The prompt for `unknown` artifacts MUST instead ask the agent to investigate the authoritative release source (since the artifact is absent from Maven Central) and propose a bump plan.
-- All file paths embedded in prompts MUST be repo-relative (stripped of `REPO_ROOT` prefix), not absolute.
+- Columns: artifact, current, latest, status, kind, source count, repository, GitHub, action. The source count renders as a `<details>` element that expands to the source list with kind and version. The latest cell shows the note as a tooltip when present.
+- Status MUST render as a colored badge (`.badge-major`, `.badge-minor`, `.badge-patch`, `.badge-inconsistent`, `.badge-unknown`, `.badge-fork`, `.badge-ahead`, `.badge-up-to-date`).
+- Each row MUST expose an **Action** column with a **Copy prompt** button for every artifact that is not `up-to-date`, `ahead` or `fork`. Clicking the button MUST place a ready-to-paste prompt onto the system clipboard (via `navigator.clipboard.writeText`, falling back to a hidden `<textarea>` + `document.execCommand("copy")`).
+- After a successful copy the button MUST flash a `.copied` state (~1.2s) and a transient toast MUST appear near the bottom of the viewport for ~1.6s.
+- The prompt for outdated artifacts MUST name the `groupId:artifactId`, the current and target versions, the repo-relative path and kind of every source file, the `bump` command with the explicit target, the follow-up commands, and the hint to compare the printed POM dependencies with the artifact list.
+- The prompt for `unknown` artifacts MUST instead ask the agent to investigate the authoritative release source and propose a bump plan. It names the note when one exists.
+- All file paths embedded in prompts MUST be repo-relative, not absolute.
 
 ### Terminal output
-- Output MUST be sorted worst-first (`major` → `minor` → `patch` → `inconsistent` → `unknown` → `ahead` → `up-to-date`); ties broken by `groupId:artifactId`.
+- Output MUST be sorted worst-first by status; ties broken by `groupId:artifactId`.
+- Columns: artifact, current, latest (with the note when there is no latest), status, kind, source count, repository label, GitHub.
+- The repository label is `central` for Maven Central, the project path for a JetBrains Space repository (`ij/intellij-dependencies`), `google` for the Android repository, otherwise the host.
 - ANSI colors MUST be emitted only when `process.stdout.isTTY` is truthy and `NO_COLOR` is unset.
 - A single summary line MUST follow the table: `Total: {n} ({status: count ...})`.
 
 ### Concurrency & networking
-- Outbound HTTP requests (Maven metadata + POM) MUST be issued in a pool of at most 8 concurrent tasks.
+- Outbound HTTP requests MUST be issued in a pool of at most 8 concurrent artifacts. One artifact queries its repositories sequentially.
 - Every `fetch` MUST use `AbortSignal.timeout(15000)`.
 - Every `fetch` MUST send a `user-agent: intellij-libraries-dashboard/<ver>` header.
-- Timeouts and non-2xx responses MUST be handled as soft failures (the artifact is marked `unknown` / no GitHub link), never thrown up the call stack.
+- Timeouts and non-2xx responses MUST be handled as soft failures (try the next repository, mark `unknown`, or drop the GitHub link), never thrown up the call stack.
 
 ## User Experience
-- The tool is a CLI only — no in-IDE integration is in scope.
+- The tool is a CLI only. No in-IDE integration is in scope.
 - User-visible strings in the HTML and terminal output are English-only; localization is out of scope (the tool is for platform maintainers).
-- Typical invocation: `bun community/build/libraries-dashboard/libraries-dashboard.mjs --open` from the repository root.
+- Typical invocation from the repository root: `bun community/build/libraries-dashboard/libraries-dashboard.mjs --open`, then `bun community/build/libraries-dashboard/libraries-dashboard.mjs bump <G:A>=<version>` for one row.
 
 ## Data & Backend
-- Sources: Maven Central Repository 2 (`repo1.maven.org/maven2/...`). No authenticated endpoints, no JetBrains-internal repositories.
-- Formats consumed: `maven-metadata.xml` (versioning `<version>` list), Maven POM (`<scm>`, `<url>`).
-- Artifact coordinates are read exclusively from iml files; no JPS or Bazel model is loaded.
-- Cache file shape: `{ "version": 1, "entries": { "<G:A>": { "latest": string|null, "githubUrl": string|null, "fetchedAt": number } } }`.
+- Sources: Maven Central Repository 2 and the repositories in the two `jarRepositories.xml` files (all reached through `cache-redirector.jetbrains.com`). No authenticated endpoints.
+- Formats consumed: `maven-metadata.xml` (versioning `<version>` list), Maven POM (`<scm>`, `<url>`, `<dependency>`), `<jar>.sha256`.
+- Artifact coordinates are read exclusively from iml and library xml files; no JPS or Bazel model is loaded.
+- Cache file shape: `{ "version": 2, "entries": { "<G:A>": { "latest": string|null, "githubUrl": string|null, "repo": string|null, "note": string|null, "fetchedAt": number } } }`.
 
 ## Error Handling
-- Missing scan roots: skipped silently.
-- Unreadable `.iml` file: skipped; other files continue.
-- `.iml` without any `maven-id`: skipped silently (many wrapper modules only re-export other modules).
-- Artifact not on Maven Central: reported as `unknown`, GitHub link empty, counted in summary.
+- Missing `modules.xml`, libraries directory or `jarRepositories.xml`: skipped silently.
+- Unreadable source file: skipped; other files continue.
+- Source file without any `maven-id`: skipped silently.
+- Artifact in no repository: reported as `unknown`, repository and GitHub link empty, counted in summary.
 - POM lookup failure: GitHub column shows `—`, artifact is not otherwise degraded.
-- Invalid JSON in cache: cache is discarded and rebuilt on the current run.
+- Invalid JSON or an old version in the cache: cache is discarded and rebuilt on the current run.
 - No artifacts discovered: the tool MUST print a diagnostic and exit `1`.
+- Bump with a missing checksum or a source file that does not pin the old version: that library is left unchanged and reported; the command exits `1` after the other libraries.
 
 ## Testing / Local Run
+- Unit tests: `node --test community/build/libraries-dashboard/test/*.test.mjs`. The tests import the script; the script runs `main()` only when it is the entry point.
 - Cold run (forces full refetch): `bun community/build/libraries-dashboard/libraries-dashboard.mjs --refresh`.
 - Warm run (uses cache): `bun community/build/libraries-dashboard/libraries-dashboard.mjs`.
 - Verify HTML: `open out/libraries-dashboard/dashboard.html` (or pass `--open`).
 - Verify JSON shape: `bun community/build/libraries-dashboard/libraries-dashboard.mjs --format=json && jq '.artifacts[0]' out/libraries-dashboard/dashboard.json`.
 - Spot-check an artifact's reported latest against `https://central.sonatype.com/artifact/{groupId}/{artifactId}`.
-- Unit tests (when authored) MUST live under `community/build/libraries-dashboard/test/*.test.mjs` and be runnable with `bun test community/build/libraries-dashboard/test`.
+- Verify a bump: run it on a single-artifact library, inspect `git diff`, then run `./build/jpsModelToBazel.cmd`, which downloads every jar and fails on a checksum mismatch.
 
 ## Open Questions / Risks
-- Inaccessible artifacts (`unknown`) are dominated by JetBrains-internal feeds (`ai.grazie.*`, `androidx.*`, `org.jetbrains.intellij.*`). A future version may add a second resolver against the JetBrains public Maven repository.
-- Prerelease filter relies on a hard-coded keyword list; novel suffixes (e.g. `-nightly`, `-jb`) are not recognized as prereleases and may influence latest-version selection.
-- `repo1.maven.org` does not rate-limit anonymously, but at >500 artifacts the sustained request volume may become impolite; the 8-way concurrency cap is a heuristic, not a negotiated budget.
-- If Maven Central rolls out auth-required metadata endpoints, the fallback strategy is undefined.
+- A cold run on a library that lives in a late repository costs one request per earlier repository. The repository order in `jarRepositories.xml` decides the cost.
+- The prerelease and fork token lists are hard-coded; a novel suffix is treated as a variant family and may hide a newer release until the list grows.
+- The bump command does not update the transitive artifact set. A release that adds or drops a dependency needs a manual edit of the `<artifact>` and `<root>` lists; the printed POM dependencies are the hint.
+- `repo1.maven.org` does not rate-limit anonymously, but the sustained request volume may become impolite; the 8-way concurrency cap is a heuristic.
