@@ -152,7 +152,7 @@ object CommunityModuleSets {
     module("intellij.platform.completion.backend")
 
     embeddedModule("intellij.platform.polySymbols")
-    embeddedModule("intellij.platform.polySymbols.web")
+    module("intellij.platform.polySymbols.web")
 
     // Platform language modules (moved from platformLangBase for consolidation)
     // These provide core IDE functionality needed by all full IDE products
