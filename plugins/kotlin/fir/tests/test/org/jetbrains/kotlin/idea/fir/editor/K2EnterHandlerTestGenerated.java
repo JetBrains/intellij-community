@@ -1352,6 +1352,11 @@ public abstract class K2EnterHandlerTestGenerated extends AbstractK2EnterHandler
             public void testImplicitKotlinFenceTrailingSpaces() throws Exception {
                 runTest("../../idea/tests/testData/editor/enterHandler/kDocCodeFence/ImplicitKotlinFenceTrailingSpaces.after.kt");
             }
+
+            @TestMetadata("ImplicitKotlinFenceWord.after.kt")
+            public void testImplicitKotlinFenceWord() throws Exception {
+                runTest("../../idea/tests/testData/editor/enterHandler/kDocCodeFence/ImplicitKotlinFenceWord.after.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
