@@ -96,11 +96,15 @@
                     interface="com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizard" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.jarRepositoryAuthenticationDataProvider"
                     interface="com.intellij.jarRepository.JarRepositoryAuthenticationDataProvider" dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.librarySourcesMismatchSuppressor"
+                    interface="com.intellij.codeInsight.daemon.impl.LibrarySourcesMismatchSuppressor" dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <applicationService
       serviceInterface="com.intellij.codeInsight.options.JavaInspectionButtonProvider"
       serviceImplementation="com.intellij.java.ui.inspections.JavaInspectionDialogButtonProvider"/>
     <inspectionCustomComponent implementation="com.intellij.java.ui.inspections.JavaInspectionButtons"/>
+    <librarySourcesMismatchSuppressor implementation="com.intellij.codeInsight.daemon.impl.AndroidSdkSourcesMismatchSuppressor" />
   </extensions>
 </idea-plugin>

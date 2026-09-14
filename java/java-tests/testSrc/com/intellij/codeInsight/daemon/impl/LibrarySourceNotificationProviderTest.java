@@ -5,6 +5,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
@@ -23,6 +24,7 @@ import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.ui.EditorNotificationProvider;
+import com.intellij.util.io.Compressor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,40 +38,61 @@ import java.util.function.Function;
 
 public class LibrarySourceNotificationProviderTest extends LightJavaCodeInsightFixtureTestCase {
 
+  private static final String SOURCE = """
+    package lib;
+    public class Foo {
+    }
+    """;
+
+  private static final String SOURCE_TO_COMPILE = """
+    package lib;
+    public class Foo {
+      public int generatedField;
+      public void generatedMethod() {}
+    }
+    """;
+
   public void testAugmentedLibrarySourceDoesNotShowMismatchNotification() throws IOException {
     PsiAugmentProvider.EP_NAME.getPoint().registerExtension(new GeneratedMembersAugmentProvider(), myFixture.getTestRootDisposable());
 
-    String source = """
-      package lib;
-      public class Foo {
-      }
-      """;
-    String sourceToCompile = """
-      package lib;
-      public class Foo {
-        public int generatedField;
-        public void generatedMethod() {}
-      }
-      """;
-    PsiJavaFile librarySource = prepareLibrarySource(source, sourceToCompile);
+    PsiJavaFile librarySource = prepareLibrarySource(SOURCE, SOURCE_TO_COMPILE);
     assertNull(collectNotificationData(librarySource));
   }
 
+  public void testMatchingLibrarySourceDoesNotShowNotification() throws IOException {
+    PsiJavaFile sourceFile = prepareLibrarySource(SOURCE_TO_COMPILE, SOURCE_TO_COMPILE);
+    assertInstanceOf(sourceFile.getClasses()[0].getOriginalElement(), PsiCompiledElement.class);
+    assertNull(collectNotificationData(sourceFile));
+  }
+
   public void testMismatchingLibrarySourceShowsNotification() throws IOException {
-    String source = """
-      package lib;
-      public class Foo {
-      }
-      """;
-    String sourceToCompile = """
-      package lib;
-      public class Foo {
-        public int generatedField;
-        public void generatedMethod() {}
-      }
-      """;
-    PsiJavaFile sourceFile = prepareLibrarySource(source, sourceToCompile);
+    PsiJavaFile sourceFile = prepareLibrarySource(SOURCE, SOURCE_TO_COMPILE);
     assertNotNull(collectNotificationData(sourceFile));
+  }
+
+  public void testSuppressedLibrarySourceDoesNotShowMismatchNotification() throws IOException {
+    LibrarySourcesMismatchSuppressor.EP_NAME.getPoint().registerExtension(sourceClass -> {
+      assertEquals("lib.Foo", sourceClass.getQualifiedName());
+      assertFalse(sourceClass instanceof PsiCompiledElement);
+      return true;
+    }, myFixture.getTestRootDisposable());
+
+    PsiJavaFile sourceFile = prepareLibrarySource(SOURCE, SOURCE_TO_COMPILE);
+    assertNull(collectNotificationData(sourceFile));
+  }
+
+  public void testAndroidSdkLibrarySourceDoesNotShowMismatchNotification() throws IOException {
+    PsiJavaFile sourceFile = prepareLibrarySource(SOURCE, SOURCE_TO_COMPILE, "platforms/android-30/android.jar");
+    assertNull(collectNotificationData(sourceFile));
+  }
+
+  public void testMismatchingLibrarySourceInOtherJarShowsNotification() throws IOException {
+    PsiJavaFile sourceFile = prepareLibrarySource(SOURCE, SOURCE_TO_COMPILE, "platforms/android-30/other.jar");
+    assertNotNull(collectNotificationData(sourceFile));
+  }
+
+  private PsiJavaFile prepareLibrarySource(String source, String sourceToCompile) throws IOException {
+    return prepareLibrarySource(source, sourceToCompile, null);
   }
 
   /**
@@ -77,10 +100,12 @@ public class LibrarySourceNotificationProviderTest extends LightJavaCodeInsightF
    *
    * @param source          the content of the source file to be added to the library.
    * @param sourceToCompile the content of the source file to be compiled and added as class files to the library.
+   * @param jarRelativePath the path of the jar that holds the class files, relative to the library root,
+   *                        or {@code null} to use the directory of the class files as the class root.
    * @return the prepared {@code PsiJavaFile} instance representing the library source.
    * @throws IOException if an error occurs during file creation or writing.
    */
-  private PsiJavaFile prepareLibrarySource(String source, String sourceToCompile) throws IOException {
+  private PsiJavaFile prepareLibrarySource(String source, String sourceToCompile, @Nullable String jarRelativePath) throws IOException {
     String libraryName = getTestName(true);
     File libraryRoot = FileUtil.createTempDirectory(libraryName, null);
     Disposer.register(myFixture.getTestRootDisposable(), () -> FileUtil.delete(libraryRoot));
@@ -98,16 +123,29 @@ public class LibrarySourceNotificationProviderTest extends LightJavaCodeInsightF
 
     IdeaTestUtil.compileFile(compilationSourcePath, classesPath);
 
-    VirtualFile classesDir = refreshAndFind(classesPath);
+    VirtualFile classesRoot = jarRelativePath == null
+                              ? refreshAndFind(classesPath)
+                              : packIntoJar(classesPath, new File(libraryRoot, jarRelativePath));
     VirtualFile sourcesDir = refreshAndFind(sourcesPath);
     VirtualFile librarySourceFile = refreshAndFind(librarySourcePath);
-    PsiTestUtil.addProjectLibrary(getModule(), libraryName, List.of(classesDir), List.of(sourcesDir));
+    PsiTestUtil.addProjectLibrary(getModule(), libraryName, List.of(classesRoot), List.of(sourcesDir));
     IndexingTestUtil.waitUntilIndexesAreReady(getProject());
 
     PsiJavaFile librarySource = (PsiJavaFile)PsiManager.getInstance(getProject()).findFile(librarySourceFile);
     assertNotNull(librarySource);
     assertTrue(FileIndexFacade.getInstance(getProject()).isInLibrarySource(librarySource.getVirtualFile()));
     return librarySource;
+  }
+
+  private static VirtualFile packIntoJar(File classesPath, File jarPath) throws IOException {
+    FileUtil.createParentDirs(jarPath);
+    try (Compressor.Zip jar = new Compressor.Zip(jarPath.toPath())) {
+      jar.addDirectory(classesPath.toPath());
+    }
+
+    VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(refreshAndFind(jarPath));
+    assertNotNull(jarPath.getPath(), jarRoot);
+    return jarRoot;
   }
 
   private static VirtualFile refreshAndFind(File path) {
