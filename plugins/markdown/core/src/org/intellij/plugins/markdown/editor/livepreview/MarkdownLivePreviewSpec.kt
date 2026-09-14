@@ -41,7 +41,6 @@ fun MarkdownLivePreviewRange.toTextRange(): TextRange {
 data class MarkdownLivePreviewDocumentVersion(
   @JvmField val patchVersion: DocumentPatchVersion?,
   @JvmField val localModificationStamp: Long,
-  @JvmField val elementsHash: Int = 0,
 ) {
   fun matchesDocument(other: MarkdownLivePreviewDocumentVersion): Boolean {
     if (patchVersion != null || other.patchVersion != null) {
@@ -52,10 +51,6 @@ data class MarkdownLivePreviewDocumentVersion(
 
   fun matches(document: Document, project: Project): Boolean {
     return matchesDocument(capture(document, project))
-  }
-
-  fun withElements(elements: List<MarkdownLivePreviewSpec>, sourceHash: Int = 0): MarkdownLivePreviewDocumentVersion {
-    return copy(elementsHash = 31 * elements.hashCode() + sourceHash)
   }
 
   companion object {
@@ -92,6 +87,7 @@ sealed interface MarkdownLivePreviewSpec {
     override val range: MarkdownLivePreviewRange,
     val destination: String,
     val source: VirtualFileId? = null,
+    val stamp: Long? = null,
   ) : MarkdownLivePreviewSpec
 
   /** Replaces a list marker with a depth-aware bullet placeholder. */

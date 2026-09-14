@@ -172,7 +172,7 @@ class MarkdownLivePreviewReconciler private constructor(
         is MarkdownLivePreviewSpec.Bullet -> regions[spec.concealRange.toTextRange()] = OwnedRegion.Text(spec.placeholderText)
         is MarkdownLivePreviewSpec.Image -> {
           if (spec.source == null) imageRenderer.requestImage(spec.destination)
-          else regions[spec.range.toTextRange()] = OwnedRegion.Image(spec.destination, specSet.documentVersion.elementsHash)
+          else regions[spec.range.toTextRange()] = OwnedRegion.Image(spec.destination, spec.stamp)
         }
       }
     }
@@ -192,7 +192,7 @@ class MarkdownLivePreviewReconciler private constructor(
         continue
       }
       kept[range] = region
-      if (wanted is OwnedRegion.Image) imageRenderer.updateRegion(region, wanted.elementsHash)
+      if (wanted is OwnedRegion.Image) imageRenderer.updateRegion(region, wanted.stamp)
     }
     val obsolete = existing.filterKeys { it !in kept }.values
     ownedRegions.clear()
@@ -284,7 +284,7 @@ class MarkdownLivePreviewReconciler private constructor(
     return when (wanted) {
       is OwnedRegion.Text -> createTextRegion(range, wanted.placeholderText)
       OwnedRegion.HorizontalRule -> createTextRegion(range, "")
-      is OwnedRegion.Image -> imageRenderer.createRegion(range, wanted.destination, wanted.elementsHash)
+      is OwnedRegion.Image -> imageRenderer.createRegion(range, wanted.destination, wanted.stamp)
     }
   }
 
@@ -395,7 +395,7 @@ private fun MarkdownLivePreviewSpec.concealedRanges(): List<TextRange> {
 private sealed interface OwnedRegion {
   data class Text(val placeholderText: String) : OwnedRegion
   data object HorizontalRule : OwnedRegion
-  data class Image(val destination: String, val elementsHash: Int) : OwnedRegion
+  data class Image(val destination: String, val stamp: Long?) : OwnedRegion
 
   fun matches(region: FoldRegion): Boolean {
     return when (this) {

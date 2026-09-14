@@ -78,7 +78,7 @@ internal class MarkdownLivePreviewImageRenderer(
 
   /** Creates the fold region that paints [destination] over the lines of [range], or null if the folding model refuses it. */
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
-  fun createRegion(range: TextRange, destination: String, elementsHash: Int): CustomFoldRegion? {
+  fun createRegion(range: TextRange, destination: String, stamp: Long?): CustomFoldRegion? {
     if (range.isEmpty) return null
     val foldingModel = editor.foldingModel
     // A normal region that shares one boundary with the image lines and extends beyond them blocks a custom region.
@@ -87,7 +87,7 @@ internal class MarkdownLivePreviewImageRenderer(
       .filter { (it.startOffset == range.startOffset && it.endOffset > range.endOffset) ||
                 (it.startOffset < range.startOffset && it.endOffset == range.endOffset) }
       .forEach(foldingModel::removeFoldRegion)
-    val item = MarkdownImageRenderItem(editor, range, destination, imageUrl(destination, elementsHash))
+    val item = MarkdownImageRenderItem(editor, range, destination, imageUrl(destination, stamp))
     val document = editor.document
     val region = foldingModel.addCustomLinesFolding(
       document.getLineNumber(range.startOffset),
@@ -104,11 +104,11 @@ internal class MarkdownLivePreviewImageRenderer(
     return region
   }
 
-  /** Re-renders the image of [region] when [elementsHash] changed, which is how a refreshed source bypasses the image cache. */
+  /** Re-renders the image of [region] when [stamp] changed, which is how a refreshed source bypasses the image cache. */
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
-  fun updateRegion(region: FoldRegion, elementsHash: Int) {
+  fun updateRegion(region: FoldRegion, stamp: Long?) {
     val item = (region as? CustomFoldRegion)?.markdownImageRenderItem() ?: return
-    if (item.updateImageUrl(imageUrl(item.destination, elementsHash))) {
+    if (item.updateImageUrl(imageUrl(item.destination, stamp))) {
       DocRenderItemUpdater.updateRenderers(listOf(item), true)
     }
   }
@@ -126,9 +126,9 @@ internal class MarkdownLivePreviewImageRenderer(
     return editor.scrollingModel.visibleArea.width to JBUIScale.pixScale(editor.contentComponent.graphicsConfiguration)
   }
 
-  private fun imageUrl(destination: String, elementsHash: Int): String {
+  private fun imageUrl(destination: String, stamp: Long?): String {
     val resourceName = MarkdownImageResourceProvider.resourceName(destination)
-    return "${PreviewStaticServer.getStaticUrl(resourceProvider, resourceName)}?refresh=$elementsHash"
+    return "${PreviewStaticServer.getStaticUrl(resourceProvider, resourceName)}?refresh=$stamp"
   }
 
   override fun dispose() {

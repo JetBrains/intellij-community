@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.intellij.plugins.markdown.editor.livepreview
+package com.intellij.markdown.backend.editor.livepreview
 
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -8,6 +9,10 @@ import com.intellij.psi.SyntaxTraverser
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilCore
+import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewDocumentVersion
+import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewSpec
+import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewSpecSet
+import org.intellij.plugins.markdown.editor.livepreview.toMarkdownLivePreviewRange
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownImage
@@ -43,24 +48,23 @@ private val LeafAutolinkTypes: Set<IElementType> = setOf(
 private const val BULLET_PLACEHOLDERS = "•◦▪"
 
 /**
- * The markup live preview can hide in [file], sorted by element start offset.
- *
- * Pure function of the PSI: which of these are actually hidden depends on where the carets are, and that
- * is decided when the specs are applied.
+ * The live-preview spec set for [file] in [editor], sorted by element start offset.
  *
  * Collects the markup to hide, skipping the subtrees named in [NoDescendTypes].
  */
 @ApiStatus.Internal
-fun computeLivePreviewSpecs(file: PsiFile): List<MarkdownLivePreviewSpec> {
-  return SyntaxTraverser.psiTraverser(file)
+fun computeLivePreviewSpecs(file: PsiFile, editor: Editor): MarkdownLivePreviewSpecSet {
+  val elements = SyntaxTraverser.psiTraverser(file)
     .expand { PsiUtilCore.getElementType(it) !in NoDescendTypes }
     .asSequence()
-    .mapNotNull { it.toDecorationSpecs() }
+    .mapNotNull { it.toDecorationSpecs(editor) }
     .sortedWith(compareBy({ it.range.startOffset }, { it.range.endOffset }))
     .toList()
+  val version = MarkdownLivePreviewDocumentVersion.capture(editor.document, file.project)
+  return MarkdownLivePreviewSpecSet(version, elements)
 }
 
-private fun PsiElement.toDecorationSpecs(): MarkdownLivePreviewSpec? {
+private fun PsiElement.toDecorationSpecs(editor: Editor): MarkdownLivePreviewSpec? {
   return when (PsiUtilCore.getElementType(this)) {
     // One `*` or `_` is one EMPH token, so `**bold**` has two of them on each side, and the token type is
     // shared by emphasis and strong. A nested emphasis element is a composite of a different type, so it
@@ -69,7 +73,7 @@ private fun PsiElement.toDecorationSpecs(): MarkdownLivePreviewSpec? {
     MarkdownElementTypes.STRIKETHROUGH -> delimiterConceals(MarkdownTokenTypes.TILDE)
     MarkdownElementTypes.CODE_SPAN -> delimiterConceals(MarkdownTokenTypes.BACKTICK)
     MarkdownElementTypes.INLINE_LINK -> toInlineLinkSpecs()
-    MarkdownElementTypes.IMAGE -> toImageSpec()
+    MarkdownElementTypes.IMAGE -> toImageSpec(editor)
     // `<https://example.org>` becomes a composite holding the brackets, while `<name@example.org>` stays
     // flat and keeps them as siblings, so the two forms need different lookups.
     MarkdownElementTypes.AUTOLINK -> toAutolinkSpecs()
@@ -82,7 +86,7 @@ private fun PsiElement.toDecorationSpecs(): MarkdownLivePreviewSpec? {
   }
 }
 
-private fun PsiElement.toImageSpec(): MarkdownLivePreviewSpec.Image? {
+private fun PsiElement.toImageSpec(editor: Editor): MarkdownLivePreviewSpec.Image? {
   val image = this as? MarkdownImage ?: return null
   val paragraph = image.parent ?: return null
   if (PsiUtilCore.getElementType(paragraph) != MarkdownElementTypes.PARAGRAPH) return null
@@ -103,7 +107,9 @@ private fun PsiElement.toImageSpec(): MarkdownLivePreviewSpec.Image? {
     return null
   }
   val lineRange = image.wholeLineRange() ?: return null
-  return MarkdownLivePreviewSpec.Image(lineRange.toMarkdownLivePreviewRange(), destination)
+  val specImage = MarkdownLivePreviewSpec.Image(lineRange.toMarkdownLivePreviewRange(), destination)
+  val (source, stamp) = editor.getOrCreateMarkdownLivePreviewImageManager().findImageData(destination) ?: return specImage
+  return specImage.copy(source = source, stamp = stamp)
 }
 
 private fun List<MarkdownImage>.hasNonBlankTextBetween(paragraphText: String, paragraphStart: Int): Boolean {

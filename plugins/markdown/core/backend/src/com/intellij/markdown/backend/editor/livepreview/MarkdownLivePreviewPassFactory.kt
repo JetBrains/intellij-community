@@ -12,10 +12,9 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
-import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewDocumentVersion
 import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewSpecSet
-import org.intellij.plugins.markdown.editor.livepreview.computeLivePreviewSpecs
 import org.intellij.plugins.markdown.lang.isMarkdownLanguage
+import org.intellij.plugins.markdown.settings.MarkdownSettings
 
 /** Recomputes live-preview specs when the Markdown PSI changes. */
 internal class MarkdownLivePreviewPassFactory:
@@ -41,9 +40,7 @@ private class MarkdownLivePreviewPass(editor: Editor, psiFile: PsiFile):
   private var specSet: MarkdownLivePreviewSpecSet? = null
 
   override fun doCollectInformation(progress: ProgressIndicator) {
-    val elements = computeLivePreviewSpecs(myFile)
-    val documentVersion = MarkdownLivePreviewDocumentVersion.capture(myDocument, myProject).withElements(elements)
-    specSet = MarkdownLivePreviewSpecSet(documentVersion, elements)
+    specSet = computeLivePreviewSpecs(myFile, myEditor)
   }
 
   override fun doApplyInformationToEditor() {

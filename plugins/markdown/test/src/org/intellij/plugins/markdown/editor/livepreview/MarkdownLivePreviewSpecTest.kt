@@ -2,6 +2,7 @@
 package org.intellij.plugins.markdown.editor.livepreview
 
 import com.intellij.ide.rpc.DocumentPatchVersion
+import com.intellij.markdown.backend.editor.livepreview.computeLivePreviewSpecs
 import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
@@ -212,7 +213,7 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
 
   private fun elements(content: String): List<MarkdownLivePreviewSpec> {
     myFixture.configureByText("test.md", content)
-    val elements = computeLivePreviewSpecs(myFixture.file)
+    val elements = computeLivePreviewSpecs(myFixture.file, myFixture.editor).elements
     for (element in elements) {
       val conceals = element.concealedRanges()
       assertFalse("An element with nothing to conceal must not be reported: $element", conceals.isEmpty())
