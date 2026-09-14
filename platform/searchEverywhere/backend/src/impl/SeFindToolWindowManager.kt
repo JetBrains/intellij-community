@@ -17,13 +17,13 @@ import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.withModalProgress
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProject
+import com.intellij.platform.searchEverywhere.SeItem
 import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.SeProviderId
-import com.intellij.platform.searchEverywhere.providers.text.SeTextSearchItem
-import com.intellij.platform.searchEverywhere.providers.SeAdaptedItem
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.providers.SeProvidersHolder
 import com.intellij.platform.searchEverywhere.providers.target.SeTargetItem
+import com.intellij.platform.searchEverywhere.providers.text.SeTextSearchItem
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.usageView.UsageInfo
@@ -82,12 +82,7 @@ class SeFindToolWindowManager(private val project: Project) {
             indicator.checkCanceled()
             collectedCount++
 
-            val element = when (item) {
-              is SeAdaptedItem -> item.rawObject
-              is SeTargetItem -> item.legacyItem.item
-              is SeTextSearchItem -> item.item
-              else -> null
-            }
+            val element = rawElementForUsage(item)
 
             when (element) {
               is UsageInfo2UsageAdapter -> usages.add(element)
@@ -174,4 +169,10 @@ class SeFindToolWindowManager(private val project: Project) {
       (filteredOut?.let { ", $it filtered out by the usage filtering rules" } ?: "")
     }
   }
+}
+
+internal fun rawElementForUsage(item: SeItem): Any? = when (item) {
+  is SeTargetItem -> item.legacyItem.item
+  is SeTextSearchItem -> item.item
+  else -> item.rawObject
 }
