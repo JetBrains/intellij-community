@@ -30,6 +30,7 @@ plugin that owns the API, then a shared module set. Read
 | 17 | Library license coverage | Content module | [library-license.md](validators/library-license.md) |
 | 18 | Module in multiple plugins | Plugin layouts | [module-in-multiple-plugins.md](validators/module-in-multiple-plugins.md) |
 | 19 | Content module dependency declarations | Content module | [content-module-dependency-declaration.md](validators/content-module-dependency-declaration.md) |
+| 20 | RD client module loading | Product | [rd-client-module-loading.md](validators/rd-client-module-loading.md) |
 
 ## When Validation Runs
 

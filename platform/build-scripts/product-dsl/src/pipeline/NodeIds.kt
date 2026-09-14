@@ -103,6 +103,9 @@ internal object NodeIds {
   /** Plugin content module JPS dependency validation */
   @JvmField val PLUGIN_CONTENT_MODULE_VALIDATION = NodeId("pluginContentModuleValidation", NodeCategory.VALIDATION)
 
+  /** RD client activation in production products. */
+  @JvmField val RD_CLIENT_MODULE_LOADING_VALIDATION = NodeId("rdClientModuleLoadingValidation", NodeCategory.VALIDATION)
+
   /** Duplicate content modules across bundled plugins */
   @JvmField val PLUGIN_CONTENT_DUPLICATE_VALIDATION = NodeId("pluginContentDuplicateValidation", NodeCategory.VALIDATION)
 

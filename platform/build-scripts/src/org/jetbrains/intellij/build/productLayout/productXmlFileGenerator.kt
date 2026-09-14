@@ -6,6 +6,7 @@ import kotlinx.serialization.json.Json
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.mapConcurrent
 import org.jetbrains.intellij.build.dev.createProductProperties
+import org.jetbrains.intellij.build.impl.getBundledPluginModules
 import org.jetbrains.intellij.build.productLayout.discovery.DiscoveredProduct
 import org.jetbrains.intellij.build.productLayout.discovery.PRODUCT_REGISTRY_PATH
 import org.jetbrains.intellij.build.productLayout.discovery.ProductConfigurationRegistry
@@ -44,6 +45,9 @@ fun discoverAllProducts(projectRoot: Path, outputProvider: ModuleOutputProvider)
         .map { TargetName(it) }
         .toList(),
       coreClassloaderModules = productProperties.productLayout.productImplementationModules.map { TargetName(it) },
+      modularLoaderPluginModules = if (productProperties.rootModuleForModularLoader == null) emptyList() else {
+        getBundledPluginModules(productProperties, outputProvider).map(::TargetName)
+      },
     )
   }
 }
