@@ -20,7 +20,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidgetFactory
 import com.intellij.openapi.wm.impl.status.EditorBasedStatusBarPopup
+import com.intellij.openapi.wm.impl.status.StatusBarUtil
 import com.intellij.platform.project.projectId
+import com.intellij.psi.PsiManager
 import com.intellij.python.typeEngine.common.PyTypeEngineApi
 import com.intellij.python.typeEngine.common.PyTypeEngineEvent
 import com.intellij.python.typeEngine.common.PyTypeEngineEventRequest
@@ -28,6 +30,7 @@ import com.intellij.python.typeEngine.common.PyTypeEngineId
 import com.intellij.python.typeEngine.common.PyTypeEngineSelectionRequest
 import com.intellij.ui.components.Badge
 import com.jetbrains.python.PythonFileType
+import com.jetbrains.python.PythonLanguage
 import com.jetbrains.python.pyi.PyiFileType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -71,8 +74,11 @@ private class PyTypeEngineStatusBarWidget(
 
   override fun createInstance(project: Project): StatusBarWidget = PyTypeEngineStatusBarWidget(project, scope)
 
+  override fun getSelectedFile(): VirtualFile? =
+    statusBar?.let(StatusBarUtil::getCurrentFileEditor)?.file ?: super.getSelectedFile()
+
   override fun getWidgetState(file: VirtualFile?): WidgetState {
-    if (file?.fileType !is PythonFileType)
+    if (!isEnabledForFile(file))
       return WidgetState.HIDDEN
     val state = PyTypeEngineFrontendState.getInstance(project).get()
     if (state.supported.size <= 1)
@@ -86,7 +92,8 @@ private class PyTypeEngineStatusBarWidget(
     )
   }
 
-  override fun isEnabledForFile(file: VirtualFile?): Boolean = file?.fileType in setOf(PythonFileType.INSTANCE, PyiFileType.INSTANCE)
+  override fun isEnabledForFile(file: VirtualFile?): Boolean =
+    file != null && (file.fileType in setOf(PythonFileType.INSTANCE, PyiFileType.INSTANCE) || file.isPythonNotebook(project))
 
   override fun createPopup(context: DataContext): ListPopup {
     logEvent(PyTypeEngineEvent.STATUS_WIDGET_CLICKED)
@@ -183,3 +190,7 @@ private class PyTypeEngineStatusBarWidget(
     }
   }
 }
+
+private fun VirtualFile.isPythonNotebook(project: Project): Boolean =
+  extension.equals("ipynb", ignoreCase = true) &&
+  PsiManager.getInstance(project).findFile(this)?.viewProvider?.languages?.any { it.isKindOf(PythonLanguage.INSTANCE) } == true
