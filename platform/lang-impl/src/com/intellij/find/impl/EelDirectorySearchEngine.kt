@@ -19,9 +19,6 @@ import com.intellij.platform.eel.provider.LocalEelDescriptor
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
-import java.nio.file.Files
-import java.nio.file.NoSuchFileException
-import java.nio.file.attribute.BasicFileAttributes
 import java.util.function.Consumer
 
 /**
@@ -103,21 +100,16 @@ class EelDirectorySearchEngine @VisibleForTesting constructor(private val edges:
 
   private fun resolveFileIgnoreVanishedOrThrow(path: EelPath): VirtualFile? {
     val nioPath = edges.nioPathOf(path)
-    val file = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(nioPath)
-    if (file != null) return file
+    return VirtualFileManager.getInstance().findFileByNioPath(nioPath)
 
-    // A hit that vanished between the remote walk and this resolve contains no matches to lose,
-    // so the race costs one stat instead of a full local re-enumeration of the root.
-    // Everything else (a live file VFS cannot resolve, a stat that fails for other reasons)
-    // is a real failure: the root cannot be reported as covered.
-    try {
-      Files.readAttributes(nioPath, BasicFileAttributes::class.java)
-    }
-    catch (_: NoSuchFileException) {
-      return null
-    }
-
-    throw IOException("Cannot resolve $path in VFS")
+    // findFileByNioPath may return null also in these cases that should have been handled,
+    // but did not because this code is invoked under RA:
+    // 1. dirty VFS directory: we should use refreshAndFindFileByNioPath
+    // 2. concurrent modification: file has been deleted immediately after it was discovered.
+    //     Files.readAttributes(nioPath, BasicFileAttributes::class.java) throwing NoSuchFileException confirms this situation which
+    //     should not be considered a failure.
+    // All the other null-s should be considered as a failure:
+    // throw IOException("Cannot resolve $path in VFS")
   }
 
   companion object {
