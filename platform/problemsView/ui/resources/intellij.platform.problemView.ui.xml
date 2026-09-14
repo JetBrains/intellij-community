@@ -42,6 +42,7 @@
     <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->
+  <resource-bundle>messages.ProblemsViewBundle</resource-bundle>
 
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.problemsViewPanelProvider"
