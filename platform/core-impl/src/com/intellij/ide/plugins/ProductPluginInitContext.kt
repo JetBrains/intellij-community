@@ -261,7 +261,7 @@ class ProductPluginInitContext(
           for (moduleId in listOf(frontendSplit, platformSplit, rpc, rdClient, cwmPluginCommon)) {
             setModuleAvailability(moduleId, false)
           }
-          val enableDebugger = SystemProperties.getBooleanProperty("intellij.platform.light.mode.enable.debugger", true)
+          val enableDebugger = SystemProperties.getBooleanProperty("intellij.platform.light.mode.enable.debugger", false)
           setModuleAvailability(debugger, enableDebugger)
 
           for (moduleId in listOf(platformSplitConnection)) {
