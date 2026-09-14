@@ -47,6 +47,9 @@ object WelcomeUtils {
     }
 
     val provider = getWelcomeScreenProjectProvider() ?: return null
+    if (!provider.showHomeActionInProjectWidget()) {
+      return null
+    }
     val path = WelcomeScreenProjectProvider.getWelcomeScreenProjectPath() ?: return null
 
     val name = provider.getWelcomeScreenProjectName()

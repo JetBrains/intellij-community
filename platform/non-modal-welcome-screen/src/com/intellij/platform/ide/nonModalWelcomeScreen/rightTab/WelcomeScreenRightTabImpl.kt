@@ -319,7 +319,7 @@ internal class WelcomeScreenRightTabImpl(
     additionalPanel.isOpaque = false
 
     createAdditionalComponents(additionalPanel)
-    createSingleBanner(additionalPanel, extraContent)
+    //createSingleBanner(additionalPanel, extraContent) // TODO: again disable until we haven't better implementation
 
     if (additionalPanel.componentCount > 0) {
       parentPanel.addToBottom(additionalPanel)

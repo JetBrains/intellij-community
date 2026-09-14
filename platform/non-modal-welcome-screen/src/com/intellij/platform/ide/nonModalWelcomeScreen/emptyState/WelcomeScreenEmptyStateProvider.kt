@@ -10,13 +10,14 @@ import com.intellij.platform.ide.nonModalWelcomeScreen.isWelcomeExperienceProjec
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeRightTabContentProvider
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenRightTabImpl
 import com.intellij.ui.ClientProperty
+import com.intellij.util.PlatformUtils
 import javax.swing.JComponent
 
 private val COMPONENT_KEY = Key<WelcomeScreenRightTabImpl>("EMPTY_PROVIDER")
 
 internal class WelcomeScreenEmptyStateProvider : EditorEmptyStateComponentProvider {
   override fun isAvailable(splitters: EditorsSplitters): Boolean {
-    val result = splitters.manager.project.isWelcomeExperienceProjectSync() &&
+    val result = (splitters.manager.project.isWelcomeExperienceProjectSync() || PlatformUtils.isDataGrip()) &&
                  isNonModalWelcomeScreenEnabled && WelcomeRightTabContentProvider.getSingleExtension() != null
     if (result) {
       splitters.putClientProperty("WELCOME_EXPERIENCE", true)

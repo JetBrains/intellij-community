@@ -65,6 +65,8 @@
     <group id="NewProjectOrModuleGroup">
     </group>
 
+    <group id="NonModalWelcomeNewProjectGroup"/>
+
     <reference ref="SaveFileAsTemplate">
       <add-to-group group-id="FileMenu" anchor="after" relative-to-action="FileOtherSettingsGroup"/>
     </reference>

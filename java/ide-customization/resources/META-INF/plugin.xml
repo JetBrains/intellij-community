@@ -53,7 +53,7 @@
 
   <actions resource-bundle="messages.NonModalWelcomeScreenBundle">
     <group id="NonModalWelcomeScreen.LeftTabActions.New" overrides="true" icon="AllIcons.General.Add" popup="true">
-      <reference ref="NewProject"/>
+      <reference ref="NonModalWelcomeNewProjectGroup"/>
       <separator/>
       <reference ref="WelcomeNewEmptyFile"/>
       <reference ref="WelcomeMarkdownNewFile"/>

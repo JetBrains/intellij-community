@@ -159,6 +159,8 @@ abstract class WelcomeScreenProjectProvider {
     return name == getWelcomeScreenProjectName() || name == getWelcomeScreenProjectDirName()
   }
 
+  open fun showHomeActionInProjectWidget(): Boolean = true
+
   /**
    * Return true if your project is not only a welcome screen, but also a real project where the user can create, store and edit files.
    * Junie and other features might be disabled for non-editable welcome screen projects.
