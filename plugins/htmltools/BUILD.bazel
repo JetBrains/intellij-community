@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
 load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_TARGETS")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -95,6 +96,12 @@ jvm_library(
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
         "//platform/util:util-ui_test_lib",
     ],
+)
+
+ij_plugin(
+    name = "html-tools_plugin",
+    descriptor_module = ":html-tools",
+    visibility = ["//visibility:public"],
 )
 ### auto-generated section `build intellij.html.tools` end
 

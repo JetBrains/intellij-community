@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
 load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_DESCRIPTORS", "MODULE_TARGETS")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -141,6 +142,19 @@ jvm_library(
         "//platform/util-ex:util-ex_test_lib",
         "//platform/util/coroutines:coroutines_test_lib",
     ],
+)
+
+ij_plugin(
+    name = "mermaid_plugin",
+    descriptor_module = ":mermaid",
+    content_modules = [
+        # do not sort,
+        "//plugins/mermaid/markdown",
+        "//plugins/mermaid/frontend",
+        "//plugins/mermaid/json",
+        "//plugins/mermaid/spellchecker",
+    ],
+    visibility = ["//visibility:public"],
 )
 ### auto-generated section `build intellij.mermaid` end
 

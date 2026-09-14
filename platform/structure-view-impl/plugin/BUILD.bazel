@@ -1,4 +1,5 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
 load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_DESCRIPTORS", "MODULE_TARGETS")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -49,6 +50,19 @@ jvm_library(
     module_name = "intellij.platform.structureView.plugin",
     visibility = ["//visibility:public"],
     runtime_deps = [":plugin"],
+)
+
+ij_plugin(
+    name = "plugin_plugin",
+    descriptor_module = ":plugin",
+    content_modules = [
+        # do not sort,
+        "//platform/structure-view-impl:structureView",
+        "//platform/structure-view-impl/backend",
+        "//platform/structure-view-impl/frontend",
+        "//platform/structure-view-impl/intellij.platform.structureView.impl:structureView-impl",
+    ],
+    visibility = ["//visibility:public"],
 )
 ### auto-generated section `build intellij.platform.structureView.plugin` end
 

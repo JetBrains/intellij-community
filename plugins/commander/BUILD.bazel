@@ -1,4 +1,5 @@
 load("@community//build:tests-options.bzl", "jps_test")
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jps_test(
@@ -92,6 +93,12 @@ jvm_library(
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
         "//java/java-backend:backend_test_lib",
     ],
+)
+
+ij_plugin(
+    name = "commander_plugin",
+    descriptor_module = ":commander",
+    visibility = ["//visibility:public"],
 )
 ### auto-generated section `build intellij.commander` end
 

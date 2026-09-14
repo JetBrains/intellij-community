@@ -1,6 +1,7 @@
 load("@community//build:bazel_targets_json.bzl", "current_bazel_targets_json")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
 load("@jps_dynamic_deps_community//:targets.bzl", "ALL_COMMUNITY_TARGETS", "MODULE_TARGETS")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -70,6 +71,22 @@ jvm_library(
         ":debugger-streams-plugin",
         "//platform/ide-core-impl:ide-core-impl_test_lib",
     ],
+)
+
+ij_plugin(
+    name = "debugger-streams-plugin_plugin",
+    descriptor_module = ":debugger-streams-plugin",
+    content_modules = [
+        # do not sort,
+        "//plugins/stream-debugger/core",
+        "//plugins/stream-debugger/shared",
+        "//plugins/stream-debugger/backend",
+        "//plugins/stream-debugger/java",
+        "//plugins/stream-debugger/java/frontend",
+        "//plugins/stream-debugger/rt",
+        "//plugins/stream-debugger/rt/gatherers",
+    ],
+    visibility = ["//visibility:public"],
 )
 ### auto-generated section `build intellij.debugger.streams.plugin` end
 

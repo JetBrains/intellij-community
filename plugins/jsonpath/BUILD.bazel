@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
 load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_TARGETS")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -99,6 +100,12 @@ jvm_library(
         "//platform/testFramework/extensions:testExtensions_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
     ],
+)
+
+ij_plugin(
+    name = "jsonpath_plugin",
+    descriptor_module = ":jsonpath",
+    visibility = ["//visibility:public"],
 )
 ### auto-generated section `build intellij.jsonpath` end
 

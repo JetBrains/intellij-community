@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
 load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_TARGETS")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -166,6 +167,12 @@ jvm_library(
         "//java/java-psi-api:psi_test_lib",
         "//java/java-frontback-psi-api:frontback-psi_test_lib",
     ],
+)
+
+ij_plugin(
+    name = "java-i18n_plugin",
+    descriptor_module = ":java-i18n",
+    visibility = ["//visibility:public"],
 )
 ### auto-generated section `build intellij.java.i18n` end
 
