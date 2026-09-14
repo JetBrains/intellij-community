@@ -11,12 +11,22 @@ import org.jetbrains.annotations.VisibleForTesting
 
 /**
  * The plugin model rules that a [ProductMode] implies.
+ *
+ * These rules are product policy, so they stay here and not on [ProductMode]. [ProductMode] carries
+ * only the structural facts of a mode.
  */
 @ApiStatus.Internal
 object ProductModeCapabilities {
+  /** `true` when the process of this mode owns the indexes, the project model and the other backend work. */
   internal val ProductMode.providesBackendModule: Boolean
     get() = this == ProductMode.MONOLITH || this == ProductMode.BACKEND || this == ProductMode.LANGUAGE_SERVER
 
+  /**
+   * `true` when the process of this mode shows the UI.
+   *
+   * This is not [ProductMode.isFrontendProcess]. A monolith process shows the UI, so this property is
+   * `true` for it, but it is not a frontend process.
+   */
   internal val ProductMode.providesFrontendModule: Boolean
     get() = this == ProductMode.MONOLITH || this == ProductMode.FRONTEND ||
             this == ProductMode.LIGHT || this == ProductMode.LIGHT_WITH_RD_CONNECTION // TODO: Subject to change when product mode for monolith light is ready
