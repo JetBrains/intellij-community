@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.execService.python
 
 import com.intellij.openapi.diagnostic.fileLogger
@@ -7,6 +7,7 @@ import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.BinaryToExec
 import com.intellij.python.community.execService.ExecOptions
 import com.intellij.python.community.execService.ExecService
+import com.intellij.python.community.execService.ProcessOutputTransformer
 import com.intellij.python.community.execService.PyProcessListener
 import com.intellij.python.community.execService.ZeroCodeStdoutTransformer
 import com.intellij.python.community.execService.python.advancedApi.ExecutablePython
@@ -26,10 +27,11 @@ private val logger = fileLogger()
 typealias PythonBinaryOnEelOrTarget = BinaryToExec
 
 /**
- * Execute [helper] on [python]. For remote eels, [helper] is copied (but only one file!).
+ * Execute [helper] on [python]. For remote eels, [helper] is copied (but only one file, however see [PyHelper.addDependency]!).
  * To write something into the `stdin` of [helper], use [stdInProvider].
  * The process output is reported as progress.
- * Returns `stdout`
+ * Returns `stdout`.
+ * Provide [processOutputTransformer] if you want to ignore non-null exit code, or take a part in descicion if result is success.
  */
 suspend fun ExecService.executeHelper(
   python: BinaryToExec,
@@ -38,6 +40,7 @@ suspend fun ExecService.executeHelper(
   options: ExecOptions = ExecOptions(),
   procListener: PyProcessListener? = null,
   stdInProvider: StdInProvider? = null,
+  processOutputTransformer: ProcessOutputTransformer<String> = ZeroCodeStdoutTransformer,
 ): PyResult<String> = executeHelperAdvanced(
   ExecutablePython.vanillaExecutablePython(python),
   helper,
@@ -45,7 +48,7 @@ suspend fun ExecService.executeHelper(
   options,
   procListener,
   stdInProvider,
-  ZeroCodeStdoutTransformer,
+  processOutputTransformer,
 )
 
 /**
