@@ -76,10 +76,15 @@ internal class EditorCaretMutator internal constructor(
     advanceNow(tick)
   }
 
+  /**
+   * Adopts the settings and the caret measurements of the editor. The view has to reinit its own settings first,
+   * because it measures the caret from a font cache that only its own reinit drops.
+   */
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun reinitSettings() {
     settings.set(editor.caretAnimationSettings())
-    state.updateAndGet { it.restartBlink() }
+    val repaintMetrics = editor.view.caretRepaintMetrics
+    state.updateAndGet { it.restartBlink().withRepaintMetrics(repaintMetrics) }
     ensureLoop()
   }
 
@@ -244,7 +249,7 @@ internal class EditorCaretMutator internal constructor(
     if (disposed.get()) {
       return
     }
-    editor.view.repaintCarets(snapshot.locations, snapshot.repaintMetrics)
+    editor.view.repaintCarets(snapshot)
   }
 
   /// MARK: frame timing

@@ -93,7 +93,7 @@ internal class EditorAnimationCache(
   }
 
   /**
-   * Paints the cached content behind [rect] plus the current caret frame, instead of repainting the editor.
+   * Paints the cached content behind [rect], instead of repainting the editor. The caller paints the caret on top.
    * Returns `false` when nothing usable is cached, so the caller has to repaint after all.
    */
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
@@ -116,8 +116,6 @@ internal class EditorAnimationCache(
       frameGraphics.clip(visibleRect)
       frameGraphics.composite = AlphaComposite.Src
       entry.paint(frameGraphics)
-      frameGraphics.composite = AlphaComposite.SrcOver
-      editor.view.paintCaretFrame(frameGraphics)
     }
     debugWindow?.servedAreaChanged(visibleRect)
     return recordHit()

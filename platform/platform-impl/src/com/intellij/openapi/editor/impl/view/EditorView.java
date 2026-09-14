@@ -256,28 +256,12 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     checkFontRenderContext(g.getFontRenderContext());
     Rectangle clip = g.getClipBounds();
     if (cache != null && clip != null && cache.paintFromCache(g, clip)) {
+      paintCaretFrame(g);
       runPaintCallback();
       return;
     }
     myPainter.paint(g);
     runPaintCallback();
-  }
-
-  @ApiStatus.Internal
-  public void paintCaretFrame(Graphics2D graphics) {
-    CaretCursorSnapshot snapshot = myEditor.getCaretCursorSnapshot(true);
-    if (snapshot == null) return;
-
-    Rectangle clip = graphics.getClipBounds();
-    if (clip == null) return;
-
-    myPainter.paintCaret(graphics, snapshot, clip.y);
-  }
-
-  private void runPaintCallback() {
-    if (!myEditor.isCurrentlyBuildingCache() && myPaintCallback != null) {
-      myPaintCallback.run();
-    }
   }
 
   @ApiStatus.Internal
@@ -299,14 +283,8 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   }
 
   @ApiStatus.Internal
-  @RequiresEdt
-  public void repaintCarets(CaretRectangle @NotNull [] locations) {
-    repaintCarets(locations, getCaretRepaintMetrics());
-  }
-
-  @ApiStatus.Internal
-  public void repaintCarets(CaretRectangle @NotNull [] locations, @NotNull CaretRepaintMetrics metrics) {
-    myPainter.repaintCarets(locations, metrics);
+  public void repaintCarets(@NotNull CaretCursorSnapshot snapshot) {
+    myPainter.repaintCarets(snapshot);
   }
 
   @RequiresEdt
@@ -778,6 +756,24 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
 
   int getBidiFlags() {
     return myBidiFlags;
+  }
+
+  private void paintCaretFrame(Graphics2D graphics) {
+    CaretCursorSnapshot snapshot = myEditor.getCaretCursorSnapshot(true);
+    if (snapshot == null) {
+      return;
+    }
+    Rectangle clip = graphics.getClipBounds();
+    if (clip == null) {
+      return;
+    }
+    myPainter.paintCaret(graphics, snapshot, clip.y);
+  }
+
+  private void runPaintCallback() {
+    if (!myEditor.isCurrentlyBuildingCache() && myPaintCallback != null) {
+      myPaintCallback.run();
+    }
   }
 
   private void invalidateFoldRegionLayouts() {

@@ -1468,9 +1468,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     mySoftWrapModel.reinitSettings();
     myCaretModel.reinitSettings();
     mySelectionModel.reinitSettings();
-    caretMutator.reinitSettings();
 
     myView.reinitSettings();
+    // After the view, because the mutator adopts the caret measurements that the view reinit recomputes.
+    caretMutator.reinitSettings();
     myFoldingModel.refreshSettings();
     myFoldingModel.rebuild();
     myInlayModel.reinitSettings();
@@ -3586,7 +3587,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void repaintCaretCursorSnapshot() {
-    myView.repaintCarets(caretMutator.snapshot().locations);
+    myView.repaintCarets(caretMutator.snapshot());
   }
 
   @ApiStatus.Internal

@@ -16,8 +16,8 @@ internal class CaretCursorSnapshot private constructor(
   @JvmField val isEnabled: Boolean,
   @JvmField val isShown: Boolean,
   @JvmField val blinkOpacity: Float,
-  private val lastActivityAt: AnimationTimeMark?,
   @JvmField val repaintMetrics: CaretRepaintMetrics,
+  private val lastActivityAt: AnimationTimeMark?,
 ) {
   /**
    * Whether the caret asks to be painted. The editor still has to agree, because a caret in a renderer or in an
@@ -50,7 +50,7 @@ internal class CaretCursorSnapshot private constructor(
     if (enabled == isEnabled) {
       return this
     }
-    return CaretCursorSnapshot(locations, enabled, isShown, blinkOpacity, lastActivityAt, repaintMetrics)
+    return CaretCursorSnapshot(locations, enabled, isShown, blinkOpacity, repaintMetrics, lastActivityAt)
   }
 
   /**
@@ -58,20 +58,30 @@ internal class CaretCursorSnapshot private constructor(
    */
   fun withShown(shown: Boolean, now: AnimationTimeMark): CaretCursorSnapshot {
     if (!shown) {
-      return CaretCursorSnapshot(locations, isEnabled, false, blinkOpacity, lastActivityAt, repaintMetrics)
+      return CaretCursorSnapshot(locations, isEnabled, false, blinkOpacity, repaintMetrics, lastActivityAt)
     }
-    return CaretCursorSnapshot(locations, isEnabled, true, FULL_OPACITY, now, repaintMetrics)
+    return CaretCursorSnapshot(locations, isEnabled, true, FULL_OPACITY, repaintMetrics, now)
   }
 
   /**
    * Shows the caret at full opacity, which is how it looks while the user is busy typing.
    */
   fun shownFullyOpaque(): CaretCursorSnapshot {
-    return CaretCursorSnapshot(locations, isEnabled, true, FULL_OPACITY, lastActivityAt, repaintMetrics)
+    return CaretCursorSnapshot(locations, isEnabled, true, FULL_OPACITY, repaintMetrics, lastActivityAt)
   }
 
   fun withActivityAt(activityAt: AnimationTimeMark): CaretCursorSnapshot {
-    return CaretCursorSnapshot(locations, isEnabled, isShown, blinkOpacity, activityAt, repaintMetrics)
+    return CaretCursorSnapshot(locations, isEnabled, isShown, blinkOpacity, repaintMetrics, activityAt)
+  }
+
+  /**
+   * Adopts the metrics the caret is repainted with, so that a repaint of this snapshot covers the caret it paints.
+   */
+  fun withRepaintMetrics(repaintMetrics: CaretRepaintMetrics): CaretCursorSnapshot {
+    if (repaintMetrics == this.repaintMetrics) {
+      return this
+    }
+    return CaretCursorSnapshot(locations, isEnabled, isShown, blinkOpacity, repaintMetrics, lastActivityAt)
   }
 
   /**
@@ -93,8 +103,8 @@ internal class CaretCursorSnapshot private constructor(
       isEnabled = isEnabled,
       isShown = isShown,
       blinkOpacity = nextOpacity,
-      lastActivityAt = nextActivityAt,
       repaintMetrics = repaintMetrics,
+      lastActivityAt = nextActivityAt,
     )
   }
 
@@ -109,8 +119,8 @@ internal class CaretCursorSnapshot private constructor(
       isEnabled = true,
       isShown = false,
       blinkOpacity = FULL_OPACITY,
-      lastActivityAt = null,
       repaintMetrics = CaretRepaintMetrics.EMPTY,
+      lastActivityAt = null,
     )
 
     private const val FULL_OPACITY = 1.0f

@@ -195,7 +195,9 @@ public final class EditorPainter implements TextDrawingCallback {
     return caretRectanglesForLocations(locations, grow, myView.getCaretRepaintMetrics());
   }
 
-  void repaintCarets(CaretRectangle @NotNull [] locations, @NotNull CaretRepaintMetrics metrics) {
+  void repaintCarets(@NotNull CaretCursorSnapshot snapshot) {
+    var locations = snapshot.locations;
+    var metrics = snapshot.repaintMetrics;
     var editor = myView.getEditor();
     for (var rectangle : caretRectanglesForLocations(locations, CARET_REPAINT_RECTANGLE_MARGIN, metrics)) {
       editor.getContentComponent().repaintCaret(

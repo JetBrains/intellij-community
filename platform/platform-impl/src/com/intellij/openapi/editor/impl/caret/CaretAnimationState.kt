@@ -70,6 +70,15 @@ internal class CaretAnimationState private constructor(
 
   fun restartBlink(): CaretAnimationState = next(blink = blink.restart())
 
+  /// MARK: measurement updates
+
+  fun withRepaintMetrics(repaintMetrics: CaretRepaintMetrics): CaretAnimationState {
+    if (repaintMetrics == this.repaintMetrics) {
+      return this
+    }
+    return next(repaintMetrics = repaintMetrics, snapshot = snapshot.withRepaintMetrics(repaintMetrics))
+  }
+
   /// MARK: snapshot updates
 
   fun withEnabled(enabled: Boolean): CaretAnimationState {
