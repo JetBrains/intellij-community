@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.gradle.diagnostic
 
 import java.util.regex.Pattern
 
-class CompilerInternalError(message: String, cause: Throwable? = null) : Exception(message, cause) {
+class CompilerInternalError(message: String?, cause: Throwable? = null) : Exception(message, cause) {
     companion object {
         private val STACK_TRACE_ELEMENT_PATTERN = Pattern.compile("at (.+)\\.(.+)\\(([^:]+)(:?)(\\d*)\\)$")
         private const val CAUSED_BY_PREFIX = "Caused by:"
@@ -27,7 +27,7 @@ class CompilerInternalError(message: String, cause: Throwable? = null) : Excepti
         fun parseStack(rawStack: List<String>): List<Throwable> {
             var currentMessage: String? = null
             var currentStack = ArrayList<StackTraceElement>()
-            var currentReasonsList = ArrayList<Pair<String, List<StackTraceElement>>>()
+            var currentReasonsList = ArrayList<Pair<String?, List<StackTraceElement>>>()
             val exceptions = ArrayList<Throwable>()
 
             fun clearValues() {
@@ -49,8 +49,11 @@ class CompilerInternalError(message: String, cause: Throwable? = null) : Excepti
 
                     it.trim().startsWith("at") -> parseStackTraceLine(it.trim())?.also { currentStack.add(it) }
                     it.trim().startsWith(CAUSED_BY_PREFIX) -> {
-                        currentReasonsList.add(Pair(currentMessage ?: "TODO", currentStack))
-                        currentMessage = it.trim().substring(CAUSED_BY_PREFIX.length)
+                        //a report can start with "Caused by:". Then the level above it holds nothing to keep.
+                        if (currentMessage != null || currentStack.isNotEmpty()) {
+                            currentReasonsList.add(Pair(currentMessage, currentStack))
+                        }
+                        currentMessage = it.trim().substring(CAUSED_BY_PREFIX.length).trim()
                         currentStack = ArrayList()
                     }
                     else -> currentMessage = currentMessage?.let{ message -> "$message ${it.trim()}" } ?: it.trim()
@@ -64,9 +67,9 @@ class CompilerInternalError(message: String, cause: Throwable? = null) : Excepti
         private fun joinIntoException(
             message: String?,
             currentStack: ArrayList<StackTraceElement>,
-            reasonsList: ArrayList<Pair<String, List<StackTraceElement>>>
+            reasonsList: ArrayList<Pair<String?, List<StackTraceElement>>>
         ): CompilerInternalError {
-            var exception = CompilerInternalError(message ?: "TODO").also { it.stackTrace = currentStack.toTypedArray() }
+            var exception = CompilerInternalError(message).also { it.stackTrace = currentStack.toTypedArray() }
 
             reasonsList.asReversed().forEach { (message, stacktrace) ->
                 exception = CompilerInternalError(message, exception).also { it.stackTrace = stacktrace.toTypedArray() }
