@@ -28,7 +28,7 @@ enum class PersistentHighlighterPolicy(private val wholeLineRange: Boolean) : Ma
     if (entry.shouldTranslateViaDiff(patch, beforeText, afterText)) {
       try {
         val lineDiff = patch.lineDiff(beforeText)
-        val startLine = beforeText.lineNumber(entry.startOffset)
+        val startLine = beforeText.lineNumber(entry.nodeStart)
         val changeStartLine = afterText.lineNumber(lineDiff.changeStartOffset)
         val translatedLine = lineDiff.translateLineStrict(startLine, changeStartLine, afterText.chars())
         if (translatedLine !in 0..<afterText.lineCount()) {
@@ -44,13 +44,13 @@ enum class PersistentHighlighterPolicy(private val wholeLineRange: Boolean) : Ma
       is MarkerTransformResult.Invalid -> transformed
       is MarkerTransformResult.Valid -> {
         val transformedEntry = transformed.entry
-        val startLine = afterText.lineNumber(transformedEntry.startOffset)
-        val endLine = afterText.lineNumber(transformedEntry.endOffset)
+        val startLine = afterText.lineNumber(transformedEntry.nodeStart)
+        val endLine = afterText.lineNumber(transformedEntry.nodeEnd)
         if (wholeLineRange) {
           MarkerTransformResult.Valid(normalizeLine(transformedEntry, afterText, startLine))
         }
         else if (endLine != startLine) {
-          MarkerTransformResult.Valid(transformedEntry.copy(endOffset = afterText.lineEndOffset(startLine)))
+          MarkerTransformResult.Valid(transformedEntry.copy(nodeEnd = afterText.lineEndOffset(startLine)))
         }
         else {
           transformed
@@ -63,7 +63,7 @@ enum class PersistentHighlighterPolicy(private val wholeLineRange: Boolean) : Ma
     val lineStart = text.lineStartOffset(line)
     val lineEnd = text.lineEndOffset(line)
     val startOffset = if (wholeLineRange) firstNonSpaceOffset(text.cachedChars(), lineStart, lineEnd) else lineStart
-    return entry.copy(startOffset = startOffset, endOffset = lineEnd)
+    return entry.copy(nodeStart = startOffset, nodeEnd = lineEnd)
   }
 
   private fun MarkerEntry.shouldTranslateViaDiff(
@@ -72,7 +72,7 @@ enum class PersistentHighlighterPolicy(private val wholeLineRange: Boolean) : Ma
     afterText: DocumentText,
   ): Boolean {
     if (beforeText.length() != 0 && patch.originStartOffset() == 0 && patch.originEndOffset() == beforeText.length()) return true
-    if (patch.startOffset() >= endOffset || patch.endOffset() <= startOffset) return false
+    if (patch.startOffset() >= nodeEnd || patch.endOffset() <= nodeStart) return false
     return PersistentMarkerPolicy.requiresFullTraversal(patch, beforeText, afterText)
   }
 

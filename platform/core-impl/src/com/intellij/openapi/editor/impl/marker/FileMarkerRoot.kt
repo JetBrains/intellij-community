@@ -56,8 +56,9 @@ internal class FileMarkerRoot private constructor(
       sourceRoot.processRangeMarkersOverlappingWith(0, Int.MAX_VALUE, 0) { entry ->
         val marker = entry.markerReference?.get() as? SnapshotLazyRangeMarker ?: return@processRangeMarkersOverlappingWith true
         val range = marker.initialRange(document, tabSize) ?: return@processRangeMarkersOverlappingWith true
+        val resolution = sourceRoot.resolve(entry.markerId, marker.initialRange)
         resolvedMarkers.add(marker)
-        if (range.startOffset != entry.startOffset || range.endOffset != entry.endOffset) {
+        if (range.startOffset != resolution.startOffset || range.endOffset != resolution.endOffset) {
           restoredRoot = restoredRoot.remove(entry.markerId).insert(
             entry.markerId,
             range.startOffset,

@@ -426,7 +426,7 @@ private object InlineInlayMarkerPolicy : MarkerPolicy {
   }
 
   private fun validateOffset(entry: PMarkerRoot.MarkerEntry, text: DocumentText): MarkerTransformResult {
-    val offset = entry.startOffset
+    val offset = entry.nodeStart
     if (offset <= 0 || offset >= text.length()) return MarkerTransformResult.Valid(entry)
     val chars = text.cachedChars()
     return if (Character.isHighSurrogate(chars[offset - 1]) && Character.isLowSurrogate(chars[offset])) {

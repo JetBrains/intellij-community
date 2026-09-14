@@ -17,6 +17,10 @@ fun interface MarkerPolicy {
   val isPersistent: Boolean
     get() = false
 
+  /**
+   * Transforms [entry] for [patch]. The root applies all pending ancestor shifts before this call.
+   * [MarkerEntry.nodeStart] and [MarkerEntry.nodeEnd] therefore use [beforeText] coordinates.
+   */
   fun transform(
     entry: MarkerEntry,
     patch: DocumentTextPatch,
@@ -52,7 +56,7 @@ object DefaultMarkerPolicy : MarkerPolicy {
     beforeText: DocumentText,
     afterText: DocumentText,
   ): MarkerTransformResult {
-    return if (entry.startOffset == entry.endOffset) {
+    return if (entry.nodeStart == entry.nodeEnd) {
       transformPoint(entry, patch)
     }
     else {
@@ -61,7 +65,7 @@ object DefaultMarkerPolicy : MarkerPolicy {
   }
 
   private fun transformPoint(entry: MarkerEntry, patch: DocumentTextPatch): MarkerTransformResult {
-    val point = entry.startOffset
+    val point = entry.nodeStart
     val editStart = patch.startOffset()
     val editEnd = patch.endOffset()
     val oldLength = editEnd - editStart
@@ -70,25 +74,25 @@ object DefaultMarkerPolicy : MarkerPolicy {
     if (editStart < point && point < editEnd) return MarkerTransformResult.Invalid(INVALIDATED_BY_EDIT)
 
     if (oldLength == 0 && editStart == point && entry.spec.isGreedyToRight) {
-      return MarkerTransformResult.Valid(entry.copy(endOffset = point + newLength))
+      return MarkerTransformResult.Valid(entry.copy(nodeEnd = point + newLength))
     }
 
     if (oldLength == 0 && editStart == point && entry.spec.isStickingToRight) {
       val shifted = point + newLength
-      return MarkerTransformResult.Valid(entry.copy(startOffset = shifted, endOffset = shifted))
+      return MarkerTransformResult.Valid(entry.copy(nodeStart = shifted, nodeEnd = shifted))
     }
 
     if (point > editEnd || point == editEnd && oldLength > 0) {
       val shifted = point + newLength - oldLength
-      return MarkerTransformResult.Valid(entry.copy(startOffset = shifted, endOffset = shifted))
+      return MarkerTransformResult.Valid(entry.copy(nodeStart = shifted, nodeEnd = shifted))
     }
 
     return MarkerTransformResult.Valid(entry)
   }
 
   private fun transformRange(entry: MarkerEntry, patch: DocumentTextPatch): MarkerTransformResult {
-    val startOffset = entry.startOffset
-    val endOffset = entry.endOffset
+    val startOffset = entry.nodeStart
+    val endOffset = entry.nodeEnd
     val editStart = patch.startOffset()
     val editEnd = patch.endOffset()
     val newLength = patch.newFragment().length
@@ -97,33 +101,33 @@ object DefaultMarkerPolicy : MarkerPolicy {
     if (editStart > endOffset) return MarkerTransformResult.Valid(entry)
     if (!entry.spec.isGreedyToRight && endOffset == editStart) {
       if (editStart == editEnd && patch.originStartOffset() < editStart) {
-        return MarkerTransformResult.Valid(entry.copy(endOffset = endOffset + newLength))
+        return MarkerTransformResult.Valid(entry.copy(nodeEnd = endOffset + newLength))
       }
       return MarkerTransformResult.Valid(entry)
     }
     if (startOffset > editEnd) {
       return MarkerTransformResult.Valid(
-        entry.copy(startOffset = startOffset + delta, endOffset = endOffset + delta)
+        entry.copy(nodeStart = startOffset + delta, nodeEnd = endOffset + delta)
       )
     }
     if (!entry.spec.isGreedyToLeft && startOffset == editEnd) {
       if (editStart == editEnd && patch.originEndOffset() > editStart) {
-        return MarkerTransformResult.Valid(entry.copy(endOffset = endOffset + newLength))
+        return MarkerTransformResult.Valid(entry.copy(nodeEnd = endOffset + newLength))
       }
       return MarkerTransformResult.Valid(
-        entry.copy(startOffset = startOffset + delta, endOffset = endOffset + delta)
+        entry.copy(nodeStart = startOffset + delta, nodeEnd = endOffset + delta)
       )
     }
     if (startOffset <= editStart && endOffset >= editEnd) {
-      return MarkerTransformResult.Valid(entry.copy(endOffset = endOffset + delta))
+      return MarkerTransformResult.Valid(entry.copy(nodeEnd = endOffset + delta))
     }
     if (startOffset >= editStart && startOffset <= editEnd && endOffset > editEnd) {
       return MarkerTransformResult.Valid(
-        entry.copy(startOffset = editStart + newLength, endOffset = endOffset + delta)
+        entry.copy(nodeStart = editStart + newLength, nodeEnd = endOffset + delta)
       )
     }
     if (endOffset <= editEnd && startOffset < editStart) {
-      return MarkerTransformResult.Valid(entry.copy(endOffset = editStart))
+      return MarkerTransformResult.Valid(entry.copy(nodeEnd = editStart))
     }
     return MarkerTransformResult.Invalid(INVALIDATED_BY_EDIT)
   }

@@ -136,7 +136,7 @@ private object CustomWrapMarkerPolicy : MarkerPolicy {
   }
 
   private fun validateOffset(entry: PMarkerRoot.MarkerEntry, text: DocumentText): MarkerTransformResult {
-    return if (isValidCustomWrapOffset(entry.startOffset, text)) {
+    return if (isValidCustomWrapOffset(entry.nodeStart, text)) {
       MarkerTransformResult.Valid(entry)
     }
     else {

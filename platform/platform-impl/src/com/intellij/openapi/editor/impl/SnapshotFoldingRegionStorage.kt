@@ -483,7 +483,7 @@ private object FoldRegionMarkerPolicy : MarkerPolicy {
   }
 
   private fun validateRange(entry: PMarkerRoot.MarkerEntry): MarkerTransformResult {
-    return if (entry.startOffset < entry.endOffset) {
+    return if (entry.nodeStart < entry.nodeEnd) {
       MarkerTransformResult.Valid(entry)
     }
     else {
@@ -510,12 +510,12 @@ private object CustomFoldRegionMarkerPolicy : MarkerPolicy {
   }
 
   private fun validateLineBoundaries(entry: PMarkerRoot.MarkerEntry, text: DocumentText): MarkerTransformResult {
-    if (entry.startOffset >= entry.endOffset) {
+    if (entry.nodeStart >= entry.nodeEnd) {
       return MarkerTransformResult.Invalid("The custom fold region became empty", entry)
     }
-    val startLine = text.lineNumber(entry.startOffset)
-    val endLine = text.lineNumber(entry.endOffset)
-    return if (entry.startOffset == text.lineStartOffset(startLine) && entry.endOffset == text.lineEndOffset(endLine)) {
+    val startLine = text.lineNumber(entry.nodeStart)
+    val endLine = text.lineNumber(entry.nodeEnd)
+    return if (entry.nodeStart == text.lineStartOffset(startLine) && entry.nodeEnd == text.lineEndOffset(endLine)) {
       MarkerTransformResult.Valid(entry)
     }
     else {
@@ -525,13 +525,13 @@ private object CustomFoldRegionMarkerPolicy : MarkerPolicy {
 }
 
 private fun alignToCharacterBoundaries(entry: PMarkerRoot.MarkerEntry, text: DocumentText): PMarkerRoot.MarkerEntry {
-  val startOffset = if (isInsideCharacterPair(entry.startOffset, text)) entry.startOffset - 1 else entry.startOffset
-  val endOffset = if (isInsideCharacterPair(entry.endOffset, text)) entry.endOffset - 1 else entry.endOffset
-  return if (startOffset == entry.startOffset && endOffset == entry.endOffset) {
+  val startOffset = if (isInsideCharacterPair(entry.nodeStart, text)) entry.nodeStart - 1 else entry.nodeStart
+  val endOffset = if (isInsideCharacterPair(entry.nodeEnd, text)) entry.nodeEnd - 1 else entry.nodeEnd
+  return if (startOffset == entry.nodeStart && endOffset == entry.nodeEnd) {
     entry
   }
   else {
-    entry.copy(startOffset = startOffset, endOffset = endOffset)
+    entry.copy(nodeStart = startOffset, nodeEnd = endOffset)
   }
 }
 

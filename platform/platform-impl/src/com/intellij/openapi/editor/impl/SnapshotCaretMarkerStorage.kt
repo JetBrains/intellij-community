@@ -62,8 +62,8 @@ private object CaretPositionMarkerPolicy : MarkerPolicy {
     val updatedEntry = when (val transformed = DefaultMarkerPolicy.transform(entry, patch, beforeText, afterText)) {
       is MarkerTransformResult.Valid -> transformed.entry
       is MarkerTransformResult.Invalid -> {
-        val offset = minOf(entry.startOffset, patch.startOffset() + patch.newFragment().length)
-        entry.copy(startOffset = offset, endOffset = offset)
+        val offset = minOf(entry.nodeStart, patch.startOffset() + patch.newFragment().length)
+        entry.copy(nodeStart = offset, nodeEnd = offset)
       }
     }
     return MarkerTransformResult.Valid(alignPoint(updatedEntry, afterText))
@@ -74,8 +74,8 @@ private object CaretPositionMarkerPolicy : MarkerPolicy {
   }
 
   private fun alignPoint(entry: PMarkerRoot.MarkerEntry, text: DocumentText): PMarkerRoot.MarkerEntry {
-    val offset = alignToCodePointBoundary(entry.startOffset, text)
-    return if (offset == entry.startOffset) entry else entry.copy(startOffset = offset, endOffset = offset)
+    val offset = alignToCodePointBoundary(entry.nodeStart, text)
+    return if (offset == entry.nodeStart) entry else entry.copy(nodeStart = offset, nodeEnd = offset)
   }
 }
 
@@ -97,13 +97,13 @@ private object CaretSelectionMarkerPolicy : MarkerPolicy {
   }
 
   private fun alignRange(entry: PMarkerRoot.MarkerEntry, text: DocumentText): PMarkerRoot.MarkerEntry {
-    val startOffset = alignToCodePointBoundary(entry.startOffset, text)
-    val endOffset = alignToCodePointBoundary(entry.endOffset, text)
-    return if (startOffset == entry.startOffset && endOffset == entry.endOffset) {
+    val startOffset = alignToCodePointBoundary(entry.nodeStart, text)
+    val endOffset = alignToCodePointBoundary(entry.nodeEnd, text)
+    return if (startOffset == entry.nodeStart && endOffset == entry.nodeEnd) {
       entry
     }
     else {
-      entry.copy(startOffset = startOffset, endOffset = endOffset)
+      entry.copy(nodeStart = startOffset, nodeEnd = endOffset)
     }
   }
 }

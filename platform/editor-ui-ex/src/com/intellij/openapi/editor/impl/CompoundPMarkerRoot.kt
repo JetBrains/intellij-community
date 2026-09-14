@@ -178,7 +178,7 @@ open class CompoundPMarkerRoot private constructor(
     fun empty(): CompoundPMarkerRoot = EMPTY
 
     private fun compareEntries(first: MarkerEntry, second: MarkerEntry): Int {
-      val byStartOffset = first.startOffset.compareTo(second.startOffset)
+      val byStartOffset = first.nodeStart.compareTo(second.nodeStart)
       return if (byStartOffset != 0) byStartOffset else first.markerId.compareTo(second.markerId)
     }
   }

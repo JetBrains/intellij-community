@@ -47,10 +47,10 @@ object PersistentMarkerPolicy : MarkerPolicy {
     beforeText: DocumentText,
     afterText: DocumentText,
   ): MarkerEntry? {
-    val startLine = beforeText.lineNumber(entry.startOffset)
-    val endLine = beforeText.lineNumber(entry.endOffset)
-    val startColumn = entry.startOffset - beforeText.lineStartOffset(startLine)
-    val endColumn = entry.endOffset - beforeText.lineStartOffset(endLine)
+    val startLine = beforeText.lineNumber(entry.nodeStart)
+    val endLine = beforeText.lineNumber(entry.nodeEnd)
+    val startColumn = entry.nodeStart - beforeText.lineStartOffset(startLine)
+    val endColumn = entry.nodeEnd - beforeText.lineStartOffset(endLine)
 
     val lineDiff = patch.lineDiff(beforeText)
     val changeStartLine = afterText.lineNumber(lineDiff.changeStartOffset)
@@ -74,7 +74,7 @@ object PersistentMarkerPolicy : MarkerPolicy {
     if (translatedEndLine < translatedStartLine) return null
     if (translatedStartLine == translatedEndLine && endColumn < startColumn) return null
 
-    return entry.copy(startOffset = startOffset, endOffset = endOffset)
+    return entry.copy(nodeStart = startOffset, nodeEnd = endOffset)
   }
 
   private fun MarkerEntry.shouldTranslateViaDiff(
@@ -83,7 +83,7 @@ object PersistentMarkerPolicy : MarkerPolicy {
     afterText: DocumentText,
   ): Boolean {
     if (patch.isWholeTextReplacement(beforeText)) return true
-    if (patch.startOffset() >= endOffset || patch.endOffset() <= startOffset) return false
+    if (patch.startOffset() >= nodeEnd || patch.endOffset() <= nodeStart) return false
     return patch.mayUseDiffTranslation(beforeText, afterText)
   }
 

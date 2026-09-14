@@ -976,8 +976,8 @@ class SnapshotMarkerEngineImplTest {
     val entries = edited.overlappingIterator(3, 9, firstFlavor.toInt()).asSequence().toList()
 
     assertEquals(listOf(1L, 3L), entries.map { it.markerId })
-    assertEquals(listOf(2, 8), entries.map { it.startOffset })
-    assertEquals(listOf(4, 10), entries.map { it.endOffset })
+    assertEquals(listOf(2, 8), entries.map { it.nodeStart })
+    assertEquals(listOf(4, 10), entries.map { it.nodeEnd })
   }
 
   @Test
