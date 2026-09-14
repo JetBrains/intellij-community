@@ -148,6 +148,13 @@ private class ProcessOutputControllerImplTest {
 
     process.exit(0)
 
+    waitUntil {
+      when (val status = process.status.value) {
+        is ProcessStatus.Done -> status.exitCode == 0
+        ProcessStatus.Running -> false
+      }
+    }
+
     // copy stdout section 0..5
     controller.copyOutputTagAtIndexToClipboard(process, 0)
 
@@ -223,6 +230,13 @@ private class ProcessOutputControllerImplTest {
     }
 
     process.exit(0)
+
+    waitUntil {
+      when (val status = process.status.value) {
+        is ProcessStatus.Done -> status.exitCode == 0
+        ProcessStatus.Running -> false
+      }
+    }
 
     // copying output
     controller.copyOutputToClipboard(process)
@@ -550,9 +564,9 @@ private class ProcessOutputControllerImplTest {
     private fun runOutputControllerImplTest(
       timeout: Duration = 10.seconds,
       testBody: suspend TestContext.() -> Unit,
-    ) =
+    ) {
       timeoutRunBlocking(timeout) {
-        val eventsFlow = MutableSharedFlow<ProcessOutputEventDto>()
+        val eventsFlow = MutableSharedFlow<ProcessOutputEventDto>(extraBufferCapacity = 1024, replay = 1024)
         val copiedStrings = mutableListOf<String>()
         val controller = ProcessOutputControllerImpl(
           coroutineScope = testScope.get(),
@@ -571,6 +585,7 @@ private class ProcessOutputControllerImplTest {
 
         TestContext(controller, eventsFlow, copiedStrings).testBody()
       }
+    }
 
     private fun traceContextDto(title: String, parentUuid: TraceContextUuid? = null) =
       TraceContextDto(

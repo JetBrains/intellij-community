@@ -27,6 +27,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeoutOrNull
 import java.util.WeakHashMap
 import javax.swing.tree.DefaultMutableTreeNode
@@ -67,6 +69,7 @@ internal class ProcessOutputControllerImpl(
   private val isOutputExpandedFlow = MutableStateFlow(true)
   private val searchQuery = MutableStateFlow("")
   private val treeRoot = MutableStateFlow<List<ProcessTreeNode>>(emptyList())
+  private val treeRootMutex = Mutex()
 
   override val uiEvents: Flow<UiEvent>
     field = MutableSharedFlow()
@@ -373,14 +376,14 @@ internal class ProcessOutputControllerImpl(
     }
   }
 
-  private fun updateProcessTree() {
+  private suspend fun updateProcessTree() {
     val search = treeSectionState.searchQuery.value
     val filters = treeSectionState.filters.active.value
 
     updateProcessTree(search, filters)
   }
-
-  private fun updateProcessTree(searchQuery: String, filters: Set<TreeFilter.Item>) {
+  
+  private suspend fun updateProcessTree(searchQuery: String, filters: Set<TreeFilter.Item>) = treeRootMutex.withLock {
     val processList = processMap.values
 
     val lowercaseSearch = searchQuery.trim().lowercase()
