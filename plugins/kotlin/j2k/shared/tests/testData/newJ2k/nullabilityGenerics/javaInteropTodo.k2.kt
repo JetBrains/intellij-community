@@ -1,11 +1,11 @@
-// ERROR: Return type mismatch: expected 'ArrayList<String?>', actual 'ArrayList<String>'.
-// ERROR: Return type mismatch: expected 'ArrayList<String?>?', actual 'ArrayList<String>?'.
+// ERROR: Initializer type mismatch: expected 'ArrayList<String?>?', actual 'ArrayList<String>?'.
+// ERROR: Initializer type mismatch: expected 'ArrayList<String?>', actual 'ArrayList<String>'.
+// ERROR: Initializer type mismatch: expected 'ArrayList<String?>?', actual 'ArrayList<String>?'.
+// ERROR: Initializer type mismatch: expected 'ArrayList<String?>', actual 'ArrayList<String>'.
 // ERROR: Argument type mismatch: actual type is 'ArrayList<String?>?', but 'ArrayList<String>?' was expected.
 // ERROR: Argument type mismatch: actual type is 'ArrayList<String?>', but 'ArrayList<String>' was expected.
-// ERROR: Initializer type mismatch: expected 'ArrayList<String?>?', actual 'ArrayList<String>?'.
-// ERROR: Initializer type mismatch: expected 'ArrayList<String?>', actual 'ArrayList<String>'.
-// ERROR: Initializer type mismatch: expected 'ArrayList<String?>?', actual 'ArrayList<String>?'.
-// ERROR: Initializer type mismatch: expected 'ArrayList<String?>', actual 'ArrayList<String>'.
+// ERROR: Return type mismatch: expected 'ArrayList<String?>?', actual 'ArrayList<String>?'.
+// ERROR: Return type mismatch: expected 'ArrayList<String?>', actual 'ArrayList<String>'.
 class Foo {
     fun testAssignment(j: J) {
         val l1 = j.return1()
