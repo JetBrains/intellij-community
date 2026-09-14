@@ -5,6 +5,7 @@ import com.intellij.diff.impl.CacheDiffRequestProcessor
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.Nls
 
 /**
@@ -18,8 +19,11 @@ abstract class UpdatableMultipleChangesDiffRequestProcessor(
   /**
    * The presentable name of the change that the processor shows now, or `null` if it shows no change.
    * The diff editor tab uses this name as its title.
+   *
+   * An implementation must publish the name safely. The editor tab title provider reads it off the EDT.
+   * A caller outside the EDT can get a stale name, because the shown change can change right after the read.
    */
-  @RequiresEdt
+  @CalledInAny
   abstract fun getCurrentChangeName(): @Nls String?
 
   /**

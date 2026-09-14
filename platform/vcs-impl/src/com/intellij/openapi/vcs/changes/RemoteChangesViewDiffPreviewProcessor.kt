@@ -28,6 +28,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.CalledInAny
 
 /**
  * Diff preview of the Changes View in split mode, where the changes tree lives on the frontend.
@@ -141,6 +142,7 @@ internal class RemoteChangesViewDiffPreviewProcessor(
   // Presentation
   //
 
+  @CalledInAny
   override fun getCurrentChangeName(): String? = currentPath?.filePath?.filePath?.name
 
   override fun getCurrentChangeIndex(): Int = changesView.diffableSelection.value?.selectedIndex ?: -1

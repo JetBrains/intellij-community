@@ -46,7 +46,7 @@ import static com.intellij.platform.vcs.changes.ChangesUtil.isScopeNavigationToG
 
 public abstract class ChangeViewDiffRequestProcessor extends UpdatableMultipleChangesDiffRequestProcessor {
 
-  private @Nullable Wrapper myCurrentChange;
+  private volatile @Nullable Wrapper myCurrentChange;
 
   public ChangeViewDiffRequestProcessor(@NotNull Project project, @NotNull String place) {
     super(project, place);
@@ -101,7 +101,8 @@ public abstract class ChangeViewDiffRequestProcessor extends UpdatableMultipleCh
 
   @Override
   protected DiffRequestProducer getCurrentRequestProvider() {
-    return myCurrentChange != null ? myCurrentChange.createProducer(getProject()) : null;
+    Wrapper currentChange = myCurrentChange;
+    return currentChange != null ? currentChange.createProducer(getProject()) : null;
   }
 
   @Override
@@ -178,16 +179,17 @@ public abstract class ChangeViewDiffRequestProcessor extends UpdatableMultipleCh
     List<? extends Wrapper> selectedChanges = ContainerUtil.newArrayList(iterateSelectedChanges());
     if (selectedChanges.isEmpty() && showAllChangesForEmptySelection()) selectedChanges = ContainerUtil.newArrayList(iterateAllChanges());
 
-    Wrapper selectedChange = myCurrentChange != null ? ContainerUtil.find(selectedChanges, myCurrentChange) : null;
+    Wrapper currentChange = myCurrentChange;
+    Wrapper selectedChange = currentChange != null ? ContainerUtil.find(selectedChanges, currentChange) : null;
     if (fromModelRefresh &&
         selectedChange == null &&
-        myCurrentChange != null &&
+        currentChange != null &&
         forceKeepCurrentFileWhileFocused() &&
         getContext().isWindowFocused() &&
         getContext().isFocusedInWindow()) {
       // Do not automatically switch focused viewer
-      if (selectedChanges.size() == 1 && ContainerUtil.exists(iterateAllChanges(), it -> myCurrentChange.equals(it))) {
-        selectChange(myCurrentChange); // Restore selection if necessary
+      if (selectedChanges.size() == 1 && ContainerUtil.exists(iterateAllChanges(), it -> currentChange.equals(it))) {
+        selectChange(currentChange); // Restore selection if necessary
       }
       return;
     }
@@ -206,12 +208,13 @@ public abstract class ChangeViewDiffRequestProcessor extends UpdatableMultipleCh
   }
 
   @Override
-  @RequiresEdt
+  @CalledInAny
   public @Nullable @Nls String getCurrentChangeName() {
-    if (myCurrentChange == null) {
+    Wrapper currentChange = myCurrentChange;
+    if (currentChange == null) {
       return null;
     }
-    return myCurrentChange.getPresentableName();
+    return currentChange.getPresentableName();
   }
 
   @RequiresEdt
