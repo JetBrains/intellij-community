@@ -1,5 +1,6 @@
 <!--suppress PluginXmlDynamicPlugin -->
 <idea-plugin>
+  <resource-bundle>messages.VcsBundle</resource-bundle>
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.openapi.vcs.actions.VcsContextFactory"
                         serviceImplementation="com.intellij.peer.impl.VcsContextFactoryImpl"/>

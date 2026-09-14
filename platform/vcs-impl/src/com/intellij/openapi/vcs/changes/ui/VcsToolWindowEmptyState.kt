@@ -2,7 +2,6 @@
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.ActivateToolWindowAction
 import com.intellij.ide.plugins.PluginManagerConfigurableUtils.showInstallPluginDialog
 import com.intellij.openapi.actionSystem.ActionManager
@@ -21,6 +20,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.actions.VcsStatisticsCollector
 import com.intellij.openapi.vfs.VirtualFile
@@ -118,7 +118,7 @@ internal fun setCommitViewEmptyState(statusText: StatusText, project: Project) {
 
 internal class ActivateCommitToolWindowAction : ActivateToolWindowAction(ToolWindowId.COMMIT) {
   init {
-    templatePresentation.setText(IdeBundle.messagePointer("toolwindow.stripe.Commit"))
+    templatePresentation.setText(VcsBundle.messagePointer("toolwindow.stripe.Commit"))
     templatePresentation.icon = AllIcons.Toolwindows.ToolWindowCommit
   }
 
