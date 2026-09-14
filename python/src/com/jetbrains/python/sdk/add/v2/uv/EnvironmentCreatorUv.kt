@@ -192,8 +192,8 @@ internal class EnvironmentCreatorUv<P : PathHolder>(
             val versionRequest = PyProjectToml.parseOrNull(pyProjectTomlPath)?.project?.requiresPython
 
             val cli = validateAndCreateUvCli(executable.pathHolder, model.fileSystem).getOr { return@withContext emptyList() }
-            val cwd = Path.of("")
-            val uvLowLevel = createUvLowLevel(cwd, cli, model.fileSystem, null)
+            // The supported Python versions of uv do not depend on a directory, so this runs with none.
+            val uvLowLevel = createUvLowLevel(cwd = null, cli, model.fileSystem, null)
             uvLowLevel.listSupportedPythonVersions(versionRequest)
               .getOr { return@withContext emptyList() }
           }

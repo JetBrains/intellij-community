@@ -118,9 +118,18 @@ data class EelFileSystem(
   override val eelDescriptor: EelDescriptor = eelApi.descriptor
 
   override fun getBinaryToExec(path: PathHolder.Eel, workingDir: Path?): BinaryToExec {
-    // Only an absolute path names a directory on the eel. A caller that has no work directory passes a placeholder
-    // such as `Path.of(".")` or `Path.of("")`, and the eel must get no work directory for it.
-    return BinOnEel(path.path, workingDir?.takeIf { it.isAbsolute }?.asEelPath())
+    // Only an absolute path names a directory on the eel. A relative one would resolve against the current directory
+    // of the IDE process, so it is dropped. A caller with no work directory must pass null.
+    val eelWorkingDir = workingDir?.let {
+      if (it.isAbsolute) {
+        it.asEelPath()
+      }
+      else {
+        LOG.warn("Dropped the relative work directory '$it' of $path")
+        null
+      }
+    }
+    return BinOnEel(path.path, eelWorkingDir)
   }
 
   override fun createTargetRequest(): TargetEnvironmentRequest = LocalTargetEnvironmentRequest()
