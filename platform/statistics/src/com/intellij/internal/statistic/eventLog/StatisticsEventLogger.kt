@@ -10,6 +10,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.Disposer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.File
 import java.util.Collections
@@ -34,6 +35,8 @@ interface StatisticsEventLogger {
 
   fun cleanup()
 
+  @Deprecated("Handled internally by FUS lib now.")
+  @ApiStatus.ScheduledForRemoval
   fun rollOver()
 }
 
