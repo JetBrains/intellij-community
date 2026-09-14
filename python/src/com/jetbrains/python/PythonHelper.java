@@ -90,7 +90,10 @@ public enum PythonHelper implements HelperPackage {
   JUPYTER("pycharm", "jupyter");
 
 
-  private static @NotNull PathHelperPackage findModule(String moduleEntryPoint, String path, boolean asModule, String[] thirdPartyDependencies) {
+  private static @NotNull PathHelperPackage findModule(String moduleEntryPoint,
+                                                       String path,
+                                                       boolean asModule,
+                                                       String[] thirdPartyDependencies) {
     List<HelperDependency> dependencies = HelperDependency.findThirdPartyDependencies(thirdPartyDependencies);
 
     if (findPathInHelpersPossibleNull(path + ".zip") != null) {
