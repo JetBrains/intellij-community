@@ -1767,6 +1767,11 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
             runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/imports/addImportsWithSameName.before.Main.kt");
         }
 
+        @TestMetadata("brokenImports.before.Main.kt")
+        public void testBrokenImports() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/imports/brokenImports.before.Main.kt");
+        }
+
         @TestMetadata("changeImports.before.Main.kt")
         public void testChangeImports() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/imports/changeImports.before.Main.kt");
@@ -2434,6 +2439,11 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
             @TestMetadata("addImportsWithSameName.before.Main.kt")
             public void testAddImportsWithSameName() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/imports/addImportsWithSameName.before.Main.kt");
+            }
+
+            @TestMetadata("brokenImports.before.Main.kt")
+            public void testBrokenImports() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/imports/brokenImports.before.Main.kt");
             }
 
             @TestMetadata("changeImports.before.Main.kt")

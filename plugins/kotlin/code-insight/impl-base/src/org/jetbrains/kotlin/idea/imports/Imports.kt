@@ -33,7 +33,9 @@ fun KtFile.addImportFor(fqName: FqName) {
 }
 
 fun KtFile.addImportsFromStrings(imports: List<String>) =
-    imports.map { ImportPath.fromString(it) }
+    imports
+        .filter { it.isNotEmpty() }
+        .map { ImportPath.fromString(it) }
         .forEach {
             if (it.isAllUnder) {
                 addImport(it.fqName, it.isAllUnder)
