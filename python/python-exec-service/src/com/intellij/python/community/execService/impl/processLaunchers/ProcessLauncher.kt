@@ -25,7 +25,7 @@ private val logger = fileLogger()
 internal class ProcessLauncher(
   val exeForError: Exe,
   val args: List<String>,
-  private val processCommands: ProcessCommands,
+  val processCommands: ProcessCommands,
 ) {
   suspend fun start(weight: ConcurrentProcessWeight? = null): Result<LoggingProcess, ExecErrorReason.CantStart> =
     processCommands.start()

@@ -28,6 +28,7 @@ import com.jetbrains.python.sdk.getModuleRoots
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.io.IOException
 import java.nio.file.Path
 import kotlin.io.path.pathString
 
@@ -66,10 +67,18 @@ private class EelProcessCommands(
 ) : ProcessCommands {
   private var eelProcess: EelProcess? = null
 
+  /**
+   * The work directory of the process, as [start] resolved it.
+   *
+   * [info] must not read the file system. The directory can disappear while the process runs. The caller reads
+   * [info] outside of a try block, so an [IOException] here escapes the whole exec call.
+   */
+  private var resolvedWorkDir: Path? = binOnEel.workDir
+
   override val info: ProcessCommandsInfo
     get() = ProcessCommandsInfo(
       env = env,
-      cwd = binOnEel.workDir?.toRealPath()?.pathString,
+      cwd = resolvedWorkDir?.pathString,
       target = binOnEel.path.getEelDescriptor().name,
     )
 
@@ -79,8 +88,20 @@ private class EelProcessCommands(
   )
 
   override suspend fun start(): Result<Process, ExecErrorReason.CantStart> {
-    var workDir = binOnEel.workDir
-    workDir = withContext(Dispatchers.IO) { if (workDir != null && !workDir.isAbsolute) workDir.toRealPath() else workDir }
+    val requestedWorkDir = binOnEel.workDir
+    val workDir = if (requestedWorkDir != null && !requestedWorkDir.isAbsolute) {
+      try {
+        withContext(Dispatchers.IO) { requestedWorkDir.toRealPath() }
+      }
+      catch (e: IOException) {
+        log.trace { "Can't resolve the work dir $requestedWorkDir: $e" }
+        return Result.failure(ExecErrorReason.CantStart(null, e.localizedMessage))
+      }
+    }
+    else {
+      requestedWorkDir
+    }
+    resolvedWorkDir = workDir
 
     // If project is untrusted we should not execute anything there
     val nioPathToExec = withContext(Dispatchers.IO) {
