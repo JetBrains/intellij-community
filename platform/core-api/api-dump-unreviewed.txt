@@ -1626,7 +1626,6 @@ a:com.intellij.psi.PsiDocumentManager
 com.intellij.psi.PsiDocumentManager$Listener
 - java.util.EventListener
 - a:documentCreated(com.intellij.openapi.editor.Document,com.intellij.psi.PsiFile):V
-- fileCreated(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Document):V
 c:com.intellij.psi.PsiElementResolveResult
 - <init>(com.intellij.psi.PsiElement,Z):V
 - equals(java.lang.Object):Z
