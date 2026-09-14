@@ -37,7 +37,7 @@ internal class ChangesViewDiffableSelectionHelper(private val changesView: Chang
    * The file counter values change when the tree model changes (files added or removed, changelist edited), so
    * [updateSelection] would keep stale numbers.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun updateSelectionAfterModelChange() {
     if (changesView.selectedDiffableNode != null) {
       _diffableSelection.value = getDiffableSelection(_diffableSelection.value?.selectedChange)
@@ -86,7 +86,7 @@ internal class ChangesViewDiffableSelectionHelper(private val changesView: Chang
    * The previous and the next file stay scoped to the whole tree, as they are in monolith mode, so navigation can leave
    * the group.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun getGroupOrSelectionScopedPosition(selectedObject: Any, explicitSelection: List<Any>): SelectionPosition {
     // An explicit selection of 2+ diffable files scopes navigation to itself, as monolith mode does, so that
     // "Compare Previous/Next File" walks the selected files only. Moving inside it must not change the tree selection,
@@ -108,7 +108,7 @@ internal class ChangesViewDiffableSelectionHelper(private val changesView: Chang
    * Mirrors `ChangeViewDiffRequestProcessor.getChanges`. An explicit selection of 2+ diffable files still scopes the
    * previous and the next file to itself, as it does in monolith mode.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun getTreeScopedPosition(selectedObject: Any, explicitSelection: List<Any>): SelectionPosition {
     var previousObject: Any? = null
     var nextObject: Any? = null
@@ -150,7 +150,7 @@ internal class ChangesViewDiffableSelectionHelper(private val changesView: Chang
    * the selection has to be preserved here too.
    * @return false when [path] does not belong to such a selection, so that the caller selects the corresponding node in the tree instead.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun moveWithinExplicitSelection(path: ChangesTreePath): Boolean {
     val selectedObjects = selectedDiffableObjects()
     if (selectedObjects.take(2).count() < 2) return false
@@ -175,7 +175,7 @@ internal class ChangesViewDiffableSelectionHelper(private val changesView: Chang
    * `ChangesViewDiffPreviewHandler.iterateChangesFromSameGroup`. Falls back to the current selection for a node that
    * belongs to no group, as the monolith does.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun getGroupCounter(selectedNode: ChangesBrowserNode<*>, selectedObjects: List<Any>): FilesCounter {
     val groupNode = selectedNode.findDiffGroupNode() ?: return counterWithin(selectedObjects, selectedNode.userObject)
 
@@ -198,7 +198,7 @@ internal class ChangesViewDiffableSelectionHelper(private val changesView: Chang
    * display order first, then selected unversioned files – so that navigating inside a selection visits files in the
    * same order in both modes.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun selectedDiffableObjects(): Sequence<Any> {
     val changes = changesView.selectedChangesNodes.asSequence().map { it.userObject }.filterIsInstance<Change>()
     val unversionedFiles = changesView.selectedUnversionedFiles.asSequence()
@@ -208,7 +208,7 @@ internal class ChangesViewDiffableSelectionHelper(private val changesView: Chang
   /**
    * [currentChange] if it is still selected, the first selected diffable object otherwise.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun findSelectedDiffableNode(currentChange: ChangesTreePath?): Any? {
     if (currentChange != null) {
       val stillSelected = selectedDiffableObjects().firstOrNull { currentChange.matches(it) }
@@ -220,7 +220,7 @@ internal class ChangesViewDiffableSelectionHelper(private val changesView: Chang
   /**
    * All diffable nodes of the tree, in the display order. Lazy, so that a caller can stop the walk.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun diffableNodes(): Sequence<ChangesBrowserNode<*>> =
     VcsTreeModelData.all(changesView).iterateNodes().asSequence().filter { isDiffableNode(it) }
 

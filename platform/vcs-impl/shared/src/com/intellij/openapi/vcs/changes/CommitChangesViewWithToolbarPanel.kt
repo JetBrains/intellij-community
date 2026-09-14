@@ -195,7 +195,7 @@ abstract class CommitChangesViewWithToolbarPanel(
   /**
    * Called right after the tree model was replaced.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   protected open fun onTreeModelUpdated() {
   }
 
