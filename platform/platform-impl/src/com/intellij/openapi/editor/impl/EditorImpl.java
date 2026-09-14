@@ -5132,6 +5132,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (actionId.equals(mappedActionId)) continue;
       AnAction action = actionManager.getAction(mappedActionId);
       DataContext dataContext = DataManager.getInstance().getDataContext(e.getComponent());
+      // todo IJPL-255575 replace the deprecated factory with AnActionEvent.createEvent
+      //noinspection removal
       AnActionEvent actionEvent = AnActionEvent.createFromAnAction(action, e, ActionPlaces.MAIN_MENU, dataContext);
       ActionUtil.updateAction(action, actionEvent);
       if (actionEvent.getPresentation().isEnabled()) return false;
