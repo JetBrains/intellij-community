@@ -39,8 +39,7 @@ public class ChangeClassSignatureFromUsageFix extends BaseIntentionAction {
   private final PsiClass myClass;
   private final PsiReferenceParameterList myParameterList;
 
-  public ChangeClassSignatureFromUsageFix(@NotNull PsiClass aClass,
-                                          @NotNull PsiReferenceParameterList parameterList) {
+  public ChangeClassSignatureFromUsageFix(@NotNull PsiClass aClass, @NotNull PsiReferenceParameterList parameterList) {
     myClass = aClass;
     myParameterList = parameterList;
   }
@@ -118,9 +117,9 @@ public class ChangeClassSignatureFromUsageFix extends BaseIntentionAction {
       final PsiType defaultType = typeElement.getType();
       final String suggestedName;
       PsiClassType boundType = null;
-      if (defaultType instanceof PsiClassType) {
-        suggestedName = suggester.suggest((PsiClassType)defaultType);
-        final PsiClass resolved = ((PsiClassType)defaultType).resolve();
+      if (defaultType instanceof PsiClassType type) {
+        suggestedName = suggester.suggest(type);
+        final PsiClass resolved = type.resolve();
         if (resolved != null) {
           final PsiReferenceList extendsList = resolved.getExtendsList();
           if (extendsList != null) {
@@ -156,15 +155,10 @@ public class ChangeClassSignatureFromUsageFix extends BaseIntentionAction {
     return false;
   }
 
-
   private static class TypeParameterNameSuggester {
     private final Set<String> usedNames = new HashSet<>();
 
     TypeParameterNameSuggester(PsiTypeParameter @NotNull ... typeParameters) {
-      this(Arrays.asList(typeParameters));
-    }
-
-    TypeParameterNameSuggester(@NotNull Collection<? extends PsiTypeParameter> typeParameters) {
       for (PsiTypeParameter p : typeParameters) {
         usedNames.add(p.getName());
       }

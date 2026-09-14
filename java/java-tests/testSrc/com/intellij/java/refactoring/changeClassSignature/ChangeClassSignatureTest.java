@@ -20,11 +20,10 @@ import org.jetbrains.annotations.NotNull;
 import java.util.function.Function;
 
 public class ChangeClassSignatureTest extends LightJavaCodeInsightTestCase {
-  @NonNls private static final String DATA_PATH = "/refactoring/changeClassSignature/";
+  private static final @NonNls String DATA_PATH = "/refactoring/changeClassSignature/";
 
-  @NotNull
   @Override
-  protected String getTestDataPath() {
+  protected @NotNull String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
@@ -41,29 +40,29 @@ public class ChangeClassSignatureTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testSubstituteParamInsideClass() {
-    doTest(aClass -> new TypeParameterInfo[0]);
+    doTest(_ -> new TypeParameterInfo[0]);
   }
 
   public void testRemoveAllParams() {
-    doTest(aClass -> new TypeParameterInfo[0]);
+    doTest(_ -> new TypeParameterInfo[0]);
   }
 
   public void testReorderParams() {
-    doTest(aClass -> new TypeParameterInfo[] {
+    doTest(_ -> new TypeParameterInfo[]{
       new Existing(1),
       new Existing(0)
     });
   }
 
   public void testAddParam() {
-    doTest(aClass -> new TypeParameterInfo[] {
+    doTest(aClass -> new TypeParameterInfo[]{
       new Existing(0),
       new New(aClass, "E", "L<T>", "")
     });
   }
 
   public void testAddParamDiamond() {
-    doTest(aClass -> new TypeParameterInfo[] {
+    doTest(aClass -> new TypeParameterInfo[]{
       new Existing(0),
       new New(aClass, "I", "Integer", "")
     });
@@ -83,11 +82,11 @@ public class ChangeClassSignatureTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testRemoveOneLast() {
-    doTest(aClass -> new TypeParameterInfo[0], "OneString.java", "Zero.java");
+    doTest(_ -> new TypeParameterInfo[0], "OneString.java", "Zero.java");
   }
 
   public void testRemoveManyLast() {
-    doTest(aClass -> new TypeParameterInfo[0], "TwoSubjectFaceSetObject.java", "Zero.java");
+    doTest(_ -> new TypeParameterInfo[0], "TwoSubjectFaceSetObject.java", "Zero.java");
   }
 
   public void testModifyWithBound() {
@@ -115,12 +114,14 @@ public class ChangeClassSignatureTest extends LightJavaCodeInsightTestCase {
   }
 
   private void doTest(Function<PsiClass, TypeParameterInfo[]> gen) {
-    @NonNls final String filePathBefore = getTestName(false) + ".java";
-    @NonNls final String filePathAfter = getTestName(false) + ".java.after";
+    final @NonNls String filePathBefore = getTestName(false) + ".java";
+    final @NonNls String filePathAfter = getTestName(false) + ".java.after";
     doTest(gen, filePathBefore, filePathAfter);
   }
 
-  private void doTest(Function<PsiClass, TypeParameterInfo[]> paramsGenerator, @NonNls String filePathBefore, @NonNls String filePathAfter) {
+  private void doTest(Function<PsiClass, TypeParameterInfo[]> paramsGenerator,
+                      @NonNls String filePathBefore,
+                      @NonNls String filePathAfter) {
     final String filePath = DATA_PATH + filePathBefore;
     configureByFile(filePath);
     final PsiElement targetElement = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED);

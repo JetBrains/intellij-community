@@ -14,7 +14,6 @@ import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.lang.java.parser.PsiSyntaxBuilderWithLanguageLevel;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.platform.syntax.lexer.Lexer;
 import com.intellij.platform.syntax.lexer.TokenList;
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilder;
 import com.intellij.platform.syntax.psi.ParsingDiagnostics;
@@ -115,8 +114,7 @@ public interface JavaElementType {
   class JavaCompositeElementType extends IJavaElementType implements ICompositeElementType {
     private final Supplier<? extends ASTNode> myConstructor;
 
-    public JavaCompositeElementType(@NonNls @NotNull String debugName,
-                                    @NotNull Supplier<? extends ASTNode> constructor) {
+    public JavaCompositeElementType(@NonNls @NotNull String debugName, @NotNull Supplier<? extends ASTNode> constructor) {
       this(debugName, constructor, false);
     }
 
@@ -176,8 +174,7 @@ public interface JavaElementType {
   IElementType IMPORT_STATIC_REFERENCE =
     new JavaCompositeElementType("IMPORT_STATIC_REFERENCE", () -> new PsiImportStaticReferenceElementImpl());
   IElementType TYPE = new JavaCompositeElementType("TYPE", () -> new PsiTypeElementImpl());
-  IElementType DIAMOND_TYPE =
-    new JavaCompositeElementType("DIAMOND_TYPE", () -> new PsiDiamondTypeElementImpl());
+  IElementType DIAMOND_TYPE = new JavaCompositeElementType("DIAMOND_TYPE", () -> new PsiDiamondTypeElementImpl());
   IElementType REFERENCE_PARAMETER_LIST =
     new JavaCompositeElementType("REFERENCE_PARAMETER_LIST", () -> new PsiReferenceParameterListImpl(), true);
   IElementType JAVA_CODE_REFERENCE = new JavaCompositeElementType("JAVA_CODE_REFERENCE", () -> new PsiJavaCodeReferenceElementImpl());
@@ -239,27 +236,20 @@ public interface JavaElementType {
     new JavaCompositeElementType("ANNOTATION_ARRAY_INITIALIZER", () -> new PsiArrayInitializerMemberValueImpl());
   IElementType RECEIVER_PARAMETER = new JavaCompositeElementType("RECEIVER", () -> new PsiReceiverParameterImpl());
   IElementType MODULE_REFERENCE = new JavaCompositeElementType("MODULE_REFERENCE", () -> new PsiJavaModuleReferenceElementImpl());
-  IElementType UNNAMED_PATTERN =
-    new JavaCompositeElementType("UNNAMED_PATTERN", () -> new PsiUnnamedPatternImpl());
-  IElementType TYPE_TEST_PATTERN =
-    new JavaCompositeElementType("TYPE_TEST_PATTERN", () -> new PsiTypeTestPatternImpl());
-  IElementType PATTERN_VARIABLE =
-    new JavaCompositeElementType("PATTERN_VARIABLE", () -> new PsiPatternVariableImpl());
-  IElementType DECONSTRUCTION_PATTERN =
-    new JavaCompositeElementType("DECONSTRUCTION_PATTERN", () -> new PsiDeconstructionPatternImpl());
-  IElementType DECONSTRUCTION_LIST =
-    new JavaCompositeElementType("DECONSTRUCTION_LIST", () -> new PsiDeconstructionListImpl());
+  IElementType UNNAMED_PATTERN = new JavaCompositeElementType("UNNAMED_PATTERN", () -> new PsiUnnamedPatternImpl());
+  IElementType TYPE_TEST_PATTERN = new JavaCompositeElementType("TYPE_TEST_PATTERN", () -> new PsiTypeTestPatternImpl());
+  IElementType PATTERN_VARIABLE = new JavaCompositeElementType("PATTERN_VARIABLE", () -> new PsiPatternVariableImpl());
+  IElementType DECONSTRUCTION_PATTERN = new JavaCompositeElementType("DECONSTRUCTION_PATTERN", () -> new PsiDeconstructionPatternImpl());
+  IElementType DECONSTRUCTION_LIST = new JavaCompositeElementType("DECONSTRUCTION_LIST", () -> new PsiDeconstructionListImpl());
   IElementType DECONSTRUCTION_PATTERN_VARIABLE =
     new JavaCompositeElementType("DECONSTRUCTION_PATTERN_VARIABLE", () -> new PsiDeconstructionPatternVariableImpl());
   IElementType DEFAULT_CASE_LABEL_ELEMENT =
     new JavaCompositeElementType("DEFAULT_CASE_LABEL_ELEMENT", () -> new PsiDefaultLabelElementImpl());
-  IElementType CASE_LABEL_ELEMENT_LIST =
-    new JavaCompositeElementType("CASE_LABEL_ELEMENT_LIST", () -> new PsiCaseLabelElementListImpl());
+  IElementType CASE_LABEL_ELEMENT_LIST = new JavaCompositeElementType("CASE_LABEL_ELEMENT_LIST", () -> new PsiCaseLabelElementListImpl());
 
-  ILazyParseableElementType CODE_BLOCK = new FrontBackICodeBlockElementType(PsiUtil::getLanguageLevel,
-                                                                            JavaParserUtil::obtainTokens) {
+  ILazyParseableElementType CODE_BLOCK = new FrontBackICodeBlockElementType(PsiUtil::getLanguageLevel, JavaParserUtil::obtainTokens) {
     @Override
-    public ASTNode createNode(final CharSequence text) {
+    public ASTNode createNode(CharSequence text) {
       return new PsiCodeBlockImpl(text);
     }
 
@@ -286,20 +276,16 @@ public interface JavaElementType {
 
     @Override
     public @NotNull ASTNode createCompositeNode() {
-      return new CompositePsiElement(this) {
-      };
+      return new CompositePsiElement(this) {};
     }
 
     @Override
-    public @Nullable ASTNode parseContents(final @NotNull ASTNode chameleon) {
+    public @Nullable ASTNode parseContents(@NotNull ASTNode chameleon) {
       assert chameleon instanceof JavaDummyElement : chameleon;
       final JavaDummyElement dummyElement = (JavaDummyElement)chameleon;
-      return JavaParserUtil.parseFragment(chameleon, dummyElement.getParser(), dummyElement.consumeAll(),
-                                               dummyElement.getLanguageLevel()
-      );
+      return JavaParserUtil.parseFragment(chameleon, dummyElement.getParser(), dummyElement.consumeAll(), dummyElement.getLanguageLevel());
     }
   }
-
 
   abstract class FrontBackICodeBlockElementType extends IErrorCounterReparseableElementType
     implements ICompositeElementType, ILightLazyParseableElementType {
@@ -314,9 +300,8 @@ public interface JavaElementType {
     }
 
     @Override
-    public ASTNode parseContents(final @NotNull ASTNode chameleon) {
-      PsiSyntaxBuilderWithLanguageLevel
-        builderAndLevel = JavaParserUtil.createSyntaxBuilder(chameleon, languageLevelFunction, psiAsLexer);
+    public ASTNode parseContents(@NotNull ASTNode chameleon) {
+      PsiSyntaxBuilderWithLanguageLevel builderAndLevel = JavaParserUtil.createSyntaxBuilder(chameleon, languageLevelFunction, psiAsLexer);
       PsiSyntaxBuilder psiSyntaxBuilder = builderAndLevel.getBuilder();
       LanguageLevel level = builderAndLevel.getLanguageLevel();
       long startTime = System.nanoTime();
@@ -328,7 +313,7 @@ public interface JavaElementType {
     }
 
     @Override
-    public @NotNull FlyweightCapableTreeStructure<LighterASTNode> parseContents(final @NotNull LighterLazyParseableNode chameleon) {
+    public @NotNull FlyweightCapableTreeStructure<LighterASTNode> parseContents(@NotNull LighterLazyParseableNode chameleon) {
       PsiSyntaxBuilderWithLanguageLevel builderAndLevel = JavaParserUtil.createSyntaxBuilder(chameleon, languageLevelFunction);
       PsiSyntaxBuilder psiSyntaxBuilder = builderAndLevel.getBuilder();
       LanguageLevel level = builderAndLevel.getLanguageLevel();
@@ -341,12 +326,10 @@ public interface JavaElementType {
     }
 
     @Override
-    public int getErrorsCount(final CharSequence seq, Language fileLanguage, final Project project) {
-      Lexer lexer = new JavaLexer(LanguageLevel.HIGHEST);
-      boolean isBalanced = SyntaxBuilderUtil.isBalancedBlock(
-        seq, lexer, JavaSyntaxTokenType.LBRACE, JavaSyntaxTokenType.RBRACE,
-        () -> ProgressManager.checkCanceled()
-      );
+    public int getErrorsCount(CharSequence seq, Language fileLanguage, Project project) {
+      boolean isBalanced = 
+        SyntaxBuilderUtil.isBalancedBlock(seq, new JavaLexer(LanguageLevel.HIGHEST), JavaSyntaxTokenType.LBRACE, JavaSyntaxTokenType.RBRACE,
+                                          () -> ProgressManager.checkCanceled());
       return isBalanced ? NO_ERRORS : FATAL_ERROR;
     }
 
@@ -373,7 +356,7 @@ public interface JavaElementType {
     };
 
     @Override
-    public @Nullable ASTNode parseContents(final @NotNull ASTNode chameleon) {
+    public @Nullable ASTNode parseContents(@NotNull ASTNode chameleon) {
       return JavaParserUtil.parseFragmentWithHighestLanguageLevel(chameleon, myParser, JavaLexer::new);
     }
   }
@@ -413,14 +396,13 @@ public interface JavaElementType {
   class ThinCodeFragmentElementType extends ICodeFragmentElementType {
     private final JavaParserUtil.ParserWrapper myParser;
 
-    private ThinCodeFragmentElementType(@NotNull String debugName,
-                                        @NotNull JavaParserUtil.ParserWrapper parser) {
+    private ThinCodeFragmentElementType(@NotNull String debugName, @NotNull JavaParserUtil.ParserWrapper parser) {
       super(debugName, JavaLanguage.INSTANCE);
       myParser = parser;
     }
 
     @Override
-    public @Nullable ASTNode parseContents(final @NotNull ASTNode chameleon) {
+    public @Nullable ASTNode parseContents(@NotNull ASTNode chameleon) {
       return JavaParserUtil.parseFragmentWithHighestLanguageLevel(chameleon, myParser, JavaLexer::new);
     }
   }

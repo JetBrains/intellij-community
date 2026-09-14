@@ -70,11 +70,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
   private final boolean myHideDefaultValueColumn;
 
   public ChangeClassSignatureDialog(@NotNull PsiClass aClass, boolean hideDefaultValueColumn) {
-    this(
-      aClass,
-      initTypeParameterInfos(aClass.getTypeParameters().length),
-      hideDefaultValueColumn
-    );
+    this(aClass, initTypeParameterInfos(aClass), hideDefaultValueColumn);
   }
 
   private static @NotNull List<TypeParameterInfoView> initTypeParameterInfos(PsiClass aClass) {
@@ -181,7 +177,8 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     TableUtil.stopEditing(myTable);
     String message = validateAndCommitData();
     if (message != null) {
-      CommonRefactoringUtil.showErrorMessage(JavaRefactoringBundle.message("error.incorrect.data"), message, HelpID.CHANGE_CLASS_SIGNATURE, myClass.getProject());
+      CommonRefactoringUtil.showErrorMessage(JavaRefactoringBundle.message("error.incorrect.data"), message,
+                                             HelpID.CHANGE_CLASS_SIGNATURE, myClass.getProject());
       return;
     }
     invokeRefactoring(JavaRefactoringFactory.getInstance(myProject)
@@ -191,9 +188,8 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
   private @NlsContexts.DialogMessage String validateAndCommitData() {
     final PsiTypeParameter[] parameters = myClass.getTypeParameters();
     final Map<String, TypeParameterInfo> infos = new HashMap<>();
-    for (final TypeParameterInfo info : myTypeParameterInfos) {
-      if (info instanceof New &&
-          !PsiNameHelper.getInstance(myClass.getProject()).isIdentifier(info.getName(parameters))) {
+    for (TypeParameterInfo info : myTypeParameterInfos) {
+      if (info instanceof New && !PsiNameHelper.getInstance(myClass.getProject()).isIdentifier(info.getName(parameters))) {
         return JavaRefactoringBundle.message("error.wrong.name.input", info.getName(parameters));
       }
       final String newName = info.getName(parameters);
@@ -225,8 +221,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
       }
     }
     catch (PsiTypeCodeFragment.TypeSyntaxException e) {
-      return JavaRefactoringBundle
-        .message("changeClassSignature.bad.value", updater.getValueName(), source.getText(), info.getName(null));
+      return JavaRefactoringBundle.message("changeClassSignature.bad.value", updater.getValueName(), source.getText(), info.getName(null));
     }
     catch (PsiTypeCodeFragment.NoTypeException e) {
       return updater == InfoUpdater.DEFAULT_VALUE
@@ -263,7 +258,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     }
 
     @Override
-    public @Nullable Class getColumnClass(int columnIndex) {
+    public @Nullable Class<?> getColumnClass(int columnIndex) {
       return columnIndex == NAME_COLUMN ? String.class : null;
     }
 
@@ -312,9 +307,8 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
       TableUtil.stopEditing(myTable);
       myTypeParameterInfos.add(new New("", null, null));
       JavaCodeFragmentFactory codeFragmentFactory = JavaCodeFragmentFactory.getInstance(myProject);
-      PsiElement context = myClass.getLBrace() != null ? myClass.getLBrace() : myClass;
-      myBoundValueTypeCodeFragments.add(createTableCodeFragment(null, context, codeFragmentFactory, true));
-      myDefaultValueTypeCodeFragments.add(createTableCodeFragment(null, context, codeFragmentFactory, false));
+      myBoundValueTypeCodeFragments.add(createTableCodeFragment(null, myClass, codeFragmentFactory, true));
+      myDefaultValueTypeCodeFragments.add(createTableCodeFragment(null, myClass, codeFragmentFactory, false));
       final int row = myDefaultValueTypeCodeFragments.size() - 1;
       fireTableRowsInserted(row, row);
     }
@@ -333,7 +327,6 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
       ContainerUtil.swapElements(myBoundValueTypeCodeFragments, index1, index2);
       ContainerUtil.swapElements(myDefaultValueTypeCodeFragments, index1, index2);
       fireTableDataChanged();
-      //fireTableRowsUpdated(Math.min(index1, index2), Math.max(index1, index2));
     }
 
     @Override
@@ -349,8 +342,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     }
 
     @Override
-    public void customizeCellRenderer(@NotNull JTable table, Object value,
-                                      boolean isSelected, boolean hasFocus, int row, int col) {
+    public void customizeCellRenderer(@NotNull JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
       if (value == null) return;
       setPaintFocusBorder(false);
       acquireState(table, isSelected, false, row, col);
