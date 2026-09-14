@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -22,9 +22,9 @@ import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.PsiTypeParameterList;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.changeClassSignature.ChangeClassSignatureDialog;
+import com.intellij.refactoring.changeClassSignature.ChangeClassSignatureDialog.TypeParameterInfoView;
 import com.intellij.refactoring.changeClassSignature.Existing;
 import com.intellij.refactoring.changeClassSignature.New;
-import com.intellij.refactoring.changeClassSignature.TypeParameterInfo;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -80,7 +80,7 @@ public class ChangeClassSignatureFromUsageFix extends BaseIntentionAction {
                                                                   Arrays.asList(parameterList.getTypeParameterElements()));
     String className = "class " + myClass.getName();
     String originClassDeclaration = className + (classTypeParameters.length == 0 ? "" : "<" + StringUtil.join(classTypeParameters, p -> p.getName(), ",") + ">");
-    String modifiedClassDeclaration = className + "<" + StringUtil.join(parameters, p -> p.getInfo().getName(classTypeParameters), ", ") + ">";
+    String modifiedClassDeclaration = className + "<" + StringUtil.join(parameters, p -> p.info().getName(classTypeParameters), ", ") + ">";
     return new IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, originClassDeclaration, modifiedClassDeclaration);
   }
 
@@ -191,30 +191,6 @@ public class ChangeClassSignatureFromUsageFix extends BaseIntentionAction {
 
     public @NotNull String suggest(@NotNull PsiClassType type) {
       return suggestUnusedName(StringUtil.toUpperCase(type.getClassName().substring(0, 1)));
-    }
-  }
-
-  public static class TypeParameterInfoView {
-    private final TypeParameterInfo myInfo;
-    private final PsiTypeCodeFragment myBoundValueFragment;
-    private final PsiTypeCodeFragment myDefaultValueFragment;
-
-    public TypeParameterInfoView(TypeParameterInfo info, PsiTypeCodeFragment boundValueFragment, PsiTypeCodeFragment defaultValueFragment) {
-      myInfo = info;
-      myBoundValueFragment = boundValueFragment;
-      myDefaultValueFragment = defaultValueFragment;
-    }
-
-    public TypeParameterInfo getInfo() {
-      return myInfo;
-    }
-
-    public PsiTypeCodeFragment getBoundValueFragment() {
-      return myBoundValueFragment;
-    }
-
-    public PsiTypeCodeFragment getDefaultValueFragment() {
-      return myDefaultValueFragment;
     }
   }
 }

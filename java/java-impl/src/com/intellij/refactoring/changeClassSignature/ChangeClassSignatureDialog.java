@@ -1,7 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeClassSignature;
 
-import com.intellij.codeInsight.daemon.impl.quickfix.ChangeClassSignatureFromUsageFix;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -75,17 +74,17 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     );
   }
 
-  private static @NotNull List<ChangeClassSignatureFromUsageFix.TypeParameterInfoView> initTypeParameterInfos(int length) {
-    final List<ChangeClassSignatureFromUsageFix.TypeParameterInfoView> result =
+  private static @NotNull List<TypeParameterInfoView> initTypeParameterInfos(int length) {
+    final List<TypeParameterInfoView> result =
       new ArrayList<>();
     for (int i = 0; i < length; i++) {
-      result.add(new ChangeClassSignatureFromUsageFix.TypeParameterInfoView(new Existing(i), null, null));
+      result.add(new TypeParameterInfoView(new Existing(i), null, null));
     }
     return result;
   }
 
   public ChangeClassSignatureDialog(@NotNull PsiClass aClass,
-                                    @NotNull List<? extends ChangeClassSignatureFromUsageFix.TypeParameterInfoView> parameters,
+                                    @NotNull List<TypeParameterInfoView> parameters,
                                     boolean hideDefaultValueColumn) {
     super(aClass.getProject(), true);
     myHideDefaultValueColumn = hideDefaultValueColumn;
@@ -97,10 +96,10 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     myTypeParameterInfos = new ArrayList<>(parameters.size());
     myBoundValueTypeCodeFragments = new ArrayList<>(parameters.size());
     myDefaultValueTypeCodeFragments = new ArrayList<>(parameters.size());
-    for (ChangeClassSignatureFromUsageFix.TypeParameterInfoView p : parameters) {
-      myTypeParameterInfos.add(p.getInfo());
-      myBoundValueTypeCodeFragments.add(p.getBoundValueFragment());
-      myDefaultValueTypeCodeFragments.add(p.getDefaultValueFragment());
+    for (TypeParameterInfoView p : parameters) {
+      myTypeParameterInfos.add(p.info());
+      myBoundValueTypeCodeFragments.add(p.boundValueFragment());
+      myDefaultValueTypeCodeFragments.add(p.defaultValueFragment());
     }
 
     myTableModel = new MyTableModel();
@@ -365,4 +364,10 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
   public static @NlsContexts.DialogTitle String getRefactoringName() {
     return JavaRefactoringBundle.message("changeClassSignature.refactoring.name");
   }
+
+  public record TypeParameterInfoView(
+    TypeParameterInfo info,
+    PsiTypeCodeFragment boundValueFragment,
+    PsiTypeCodeFragment defaultValueFragment
+  ) {}
 }
