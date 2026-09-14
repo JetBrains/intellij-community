@@ -21,6 +21,7 @@ import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
+import java.lang.ref.Reference
 import java.lang.ref.WeakReference
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -646,6 +647,27 @@ class SnapshotMarkerEngineImplTest {
 
     assertEquals(0, countOverlappingMarkers(fixture.rootStore, fixture.initialSnapshot, startOffset = 0, endOffset = 6))
     assertFalse(currentRootContains(fixture, weakMarker.markerId))
+  }
+
+  @Test
+  fun `queue processing reports an earlier successful purge`() {
+    val document = DocumentImpl("abcdef", true)
+    val snapshot = document.core.snapshot()
+    val firstMarker = document.createRangeMarker(1, 2) as SnapshotMarker
+    val secondMarker = document.createRangeMarker(3, 4) as SnapshotMarker
+    val rootStore = document.rangeMarkers.rootStore()
+    val markerReferences = rootStore.root(snapshot)!!
+      .overlappingIterator(0, document.textLength, 0)
+      .asSequence()
+      .associate { it.markerId to (it.markerReference as Reference<*>) }
+    assertTrue(rootStore.purge(snapshot, secondMarker.id))
+
+    // Manual enqueue uses reverse order. The successful purge runs first.
+    assertTrue(markerReferences.getValue(secondMarker.id).enqueue())
+    assertTrue(markerReferences.getValue(firstMarker.id).enqueue())
+
+    assertTrue(SnapshotMarkerEngineImpl.processQueue())
+    assertFalse(rootStore.containsMarkerId(snapshot, firstMarker.id))
   }
 
   @Test

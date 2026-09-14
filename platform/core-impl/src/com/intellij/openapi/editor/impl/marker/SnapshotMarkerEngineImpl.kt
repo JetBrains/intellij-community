@@ -142,19 +142,23 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine {
   }
 
   fun processQueue(): Boolean {
-    var ret = false
+    var purgedAny = false
     while (true) {
       val reference = markerQueue.poll() as QueuedMarkerReference? ?: break
       val fileRoot = reference.fileRootReference?.get()
       val document = reference.documentReference?.get()
-      if (document != null) {
-        ret = purgeRangeMarker(document.rangeMarkers.rootStore().rootReference(document.core.snapshot()), reference.markerId)
+      val purged = if (document != null) {
+        purgeRangeMarker(document.rangeMarkers.rootStore().rootReference(document.core.snapshot()), reference.markerId)
       }
       else if (fileRoot != null) {
-        ret = purgeRangeMarker(fileRoot.rootReference(), reference.markerId)
+        purgeRangeMarker(fileRoot.rootReference(), reference.markerId)
       }
+      else {
+        false
+      }
+      if (purged) purgedAny = true
     }
-    return ret
+    return purgedAny
   }
 
   /** Creates a marker reference with the requested ownership for a root store. */
