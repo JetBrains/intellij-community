@@ -1,8 +1,8 @@
 from typing import Any, Generic, Literal
 
 from django.db import models
-from django.forms.forms import BaseForm
-from django.forms.models import BaseModelForm
+from django.forms.forms import BaseForm, Form
+from django.forms.models import BaseModelForm, ModelForm
 from django.http import HttpRequest, HttpResponse
 from django.utils.datastructures import _ListOrTuple
 from django.utils.functional import _StrOrPromise
@@ -10,9 +10,10 @@ from django.views.generic.base import ContextMixin, TemplateResponseMixin, View
 from django.views.generic.detail import BaseDetailView, SingleObjectMixin, SingleObjectTemplateResponseMixin
 from typing_extensions import TypeVar, override
 
-_FormT = TypeVar("_FormT", bound=BaseForm)
-_ModelFormT = TypeVar("_ModelFormT", bound=BaseModelForm[Any])
 _M = TypeVar("_M", bound=models.Model)
+_FormT = TypeVar("_FormT", bound=BaseForm)
+_DeleteFormT = TypeVar("_DeleteFormT", bound=BaseForm, default=Form)
+_ModelFormT = TypeVar("_ModelFormT", bound=BaseModelForm[Any], default=ModelForm[_M])
 
 class FormMixin(ContextMixin, Generic[_FormT]):
     initial: dict[str, Any]
@@ -76,9 +77,9 @@ class DeletionMixin(Generic[_M]):
     def delete(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse: ...
     def get_success_url(self) -> str: ...
 
-class BaseDeleteView(DeletionMixin[_M], FormMixin[_FormT], BaseDetailView[_M], Generic[_M, _FormT]):
+class BaseDeleteView(DeletionMixin[_M], FormMixin[_DeleteFormT], BaseDetailView[_M], Generic[_M, _DeleteFormT]):
     object: _M
 
-class DeleteView(SingleObjectTemplateResponseMixin, BaseDeleteView[_M, _FormT], Generic[_M, _FormT]):
+class DeleteView(SingleObjectTemplateResponseMixin, BaseDeleteView[_M, _DeleteFormT], Generic[_M, _DeleteFormT]):
     object: _M
     template_name_suffix: str

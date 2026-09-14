@@ -1,5 +1,5 @@
 from collections.abc import Collection, Iterable, Sequence
-from typing import Any, ClassVar, Final, Self, overload
+from typing import Any, ClassVar, Final, Literal, Self, overload
 from weakref import ReferenceType
 
 from django.core.checks.messages import CheckMessage
@@ -48,6 +48,11 @@ class ModelBase(type):
     def _base_manager(cls: type[_Self]) -> Manager[_Self]: ...  # type: ignore[misc]
     @property
     def _default_manager(cls: type[_Self]) -> Manager[_Self]: ...  # type: ignore[misc]
+    # Class level only access for the `objects` manager when it's not defined explicitly.
+    # Because this acts as a fallback (matching django adding this manager if not defined), it resolves conflict
+    # we previously had with pyright and pyrefly when overriding `objects`.
+    # See https://github.com/typeddjango/django-stubs/pull/3559#issue-5057479304
+    def __getattr__(cls: type[_Self], name: Literal["objects"]) -> Manager[_Self]: ...
 
 class Model(AltersData, metaclass=ModelBase):
     # These attributes should only exist on concrete subclasses, not abstract models, and are
@@ -59,7 +64,6 @@ class Model(AltersData, metaclass=ModelBase):
     DoesNotExist: Final[type[ObjectDoesNotExist]]
     NotUpdated: Final[type[ObjectNotUpdated]]
     MultipleObjectsReturned: Final[type[BaseMultipleObjectsReturned]]
-    objects: ClassVar[Manager[Self]]
 
     _meta: ClassVar[Options[Self]]
     pk: Any

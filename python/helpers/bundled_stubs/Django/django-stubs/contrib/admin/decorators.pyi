@@ -58,6 +58,7 @@ def display(
 ) -> Callable[[_F], _F]: ...
 @overload
 def display(
+    function: None = None,
     *,
     boolean: None = ...,
     ordering: str | Combinable | BaseExpression | None = ...,

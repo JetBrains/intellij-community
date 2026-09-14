@@ -5,8 +5,9 @@ from typing import Any, Generic, Literal, NoReturn, Self, overload
 from django.core.checks.messages import CheckMessage
 from django.db.models.base import Model
 from django.db.models.expressions import Combinable, OrderBy
+from django.db.models.options import Options
 from django.db.models.query import Prefetch, QuerySet, RawQuerySet, _LookupT, _PrefetchedQuerySetT, _ToAttrT
-from typing_extensions import TypeVar
+from typing_extensions import TypeVar, override
 
 _T = TypeVar("_T", bound=Model, covariant=True)
 
@@ -34,6 +35,11 @@ class BaseManager(Generic[_T]):
     def db(self) -> str: ...
     def get_queryset(self) -> QuerySet[_T]: ...
     def all(self) -> QuerySet[_T]: ...
+    # At runtime, managers declared on a model are wrapped in a `ManagerDescriptor` which raises on instance access.
+    # Accepting only `instance=None` makes `instance.objects` a type error.
+    # `Options` is accepted to work around https://github.com/python/mypy/issues/13608
+    # mypy re-applies `__get__` to the return type of `Options.base_manager`, passing the `Options` object as `instance`.
+    def __get__(self, instance: Options[Any] | None, cls: type[Any] | None = None) -> Self: ...
 
 class Manager(BaseManager[_T]):
     # NOTE: The following methods are in common with QuerySet, but note that the use of QuerySet as a return type
@@ -174,3 +180,7 @@ class ManagerDescriptor:
 
 class EmptyManager(Manager[_T]):
     def __init__(self, model: type[_T]) -> None: ...
+    # Unlike other managers, `EmptyManager` is exposed through properties of plain classes (e.g. `AnonymousUser.groups`)
+    # where instance access is legitimate.
+    @override
+    def __get__(self, instance: object, cls: type[Any] | None = None) -> Self: ...

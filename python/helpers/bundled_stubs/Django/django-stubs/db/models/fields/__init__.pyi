@@ -341,6 +341,7 @@ class CharField(Field[_ST, _GT]):
     _pyi_private_get_type: str
     # objects are converted to string before comparison
     _pyi_lookup_exact_type: Any
+    db_collation: str | None
     def __init__(
         self,
         verbose_name: _StrOrPromise | None = ...,
@@ -400,6 +401,7 @@ class SlugField(CharField[_ST, _GT]):
         max_length: int | None = 50,
         db_index: bool = True,
         allow_unicode: bool = False,
+        db_collation: str | None = None,
     ) -> None: ...
 
 class EmailField(CharField[_ST, _GT]):
@@ -433,6 +435,7 @@ class URLField(CharField[_ST, _GT]):
         auto_created: bool = ...,
         validators: Iterable[_ValidatorCallable] = ...,
         error_messages: _ErrorMessagesMapping | None = ...,
+        db_collation: str | None = None,
     ) -> None: ...
 
 class TextField(Field[_ST, _GT]):
@@ -440,6 +443,7 @@ class TextField(Field[_ST, _GT]):
     _pyi_private_get_type: str
     # objects are converted to string before comparison
     _pyi_lookup_exact_type: Any
+    db_collation: str | None
     def __init__(
         self,
         verbose_name: _StrOrPromise | None = ...,

@@ -104,6 +104,9 @@ class ReverseManyToOneDescriptor(Generic[_To]):
 @type_check_only
 class RelatedManager(Manager[_To], Generic[_To]):
     related_val: tuple[int, ...]
+    # Related managers are bound to model instances, so we allow instance access.
+    @override
+    def __get__(self, instance: object, cls: type[Any] | None = None) -> Self: ...
     def __call__(self, *, manager: str) -> RelatedManager[_To]: ...
     def add(self, *objs: _To | int, bulk: bool = ...) -> None: ...
     async def aadd(self, *objs: _To | int, bulk: bool = ...) -> None: ...
@@ -161,6 +164,9 @@ class ManyToManyDescriptor(ReverseManyToOneDescriptor[Any], Generic[_To, _Throug
 @type_check_only
 class ManyRelatedManager(Manager[_To], Generic[_To, _Through]):
     related_val: tuple[int, ...]
+    # See `RelatedManager.__get__`
+    @override
+    def __get__(self, instance: object, cls: type[Any] | None = None) -> Self: ...
     through: type[_Through]
     def __call__(self, *, manager: str) -> ManyRelatedManager[_To, _Through]: ...
     def add(

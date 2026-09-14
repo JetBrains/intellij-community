@@ -117,16 +117,48 @@ class SimpleTestCase(unittest.TestCase):
         errors: list[str] | str,
         msg_prefix: str = "",
     ) -> None: ...
+    # with self.assertTemplateUsed("template.html"): ...
+    @overload
     def assertTemplateUsed(
         self,
-        response: HttpResponseBase | str | None = None,
+        response: str,
+        template_name: None = None,
+        msg_prefix: str = "",
+        count: int | None = None,
+    ) -> _AssertTemplateUsedContext: ...
+    # with self.assertTemplateUsed(template_name="template.html"): ...
+    @overload
+    def assertTemplateUsed(
+        self,
+        response: None = None,
         template_name: str | None = None,
         msg_prefix: str = "",
         count: int | None = None,
-    ) -> _AssertTemplateUsedContext | None: ...
+    ) -> _AssertTemplateUsedContext: ...
+    # self.assertTemplateUsed(response, "template.html")
+    @overload
+    def assertTemplateUsed(
+        self,
+        response: HttpResponseBase,
+        template_name: str | None = None,
+        msg_prefix: str = "",
+        count: int | None = None,
+    ) -> None: ...
+    # with self.assertTemplateNotUsed("template.html"): ...
+    @overload
     def assertTemplateNotUsed(
-        self, response: HttpResponseBase | str | None = None, template_name: str | None = None, msg_prefix: str = ""
-    ) -> _AssertTemplateNotUsedContext | None: ...
+        self, response: str, template_name: None = None, msg_prefix: str = ""
+    ) -> _AssertTemplateNotUsedContext: ...
+    # with self.assertTemplateNotUsed(template_name="template.html"): ...
+    @overload
+    def assertTemplateNotUsed(
+        self, response: None = None, template_name: str | None = None, msg_prefix: str = ""
+    ) -> _AssertTemplateNotUsedContext: ...
+    # self.assertTemplateNotUsed(response, "template.html")
+    @overload
+    def assertTemplateNotUsed(
+        self, response: HttpResponseBase, template_name: str | None = None, msg_prefix: str = ""
+    ) -> None: ...
     def assertRaisesMessage(
         self, expected_exception: type[Exception], expected_message: str, *args: Any, **kwargs: Any
     ) -> Any: ...
