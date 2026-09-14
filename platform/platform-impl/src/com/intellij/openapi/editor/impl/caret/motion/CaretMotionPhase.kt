@@ -42,9 +42,10 @@ internal value class Settling private constructor(private val ticks: Int) {
 
   fun after(distance: Double): Settling {
     val isNearTarget = distance < SETTLE_EPSILON
-    return when {
-      isNearTarget -> Settling(ticks + 1)
-      else -> RESTLESS
+    return if (isNearTarget) {
+      Settling(ticks + 1)
+    } else {
+      RESTLESS
     }
   }
 
@@ -76,12 +77,18 @@ internal sealed interface CaretMotionPhase {
   /**
    * Where every caret is painted right now.
    */
-  val locations: List<CaretRectangle> get() = trajectories.values.map { trajectory -> trajectory.rectangle() }
+  val locations: List<CaretRectangle>
+    get() {
+      return trajectories.values.map { trajectory -> trajectory.rectangle() }
+    }
 
   /**
    * Where every caret is heading.
    */
-  val targets: List<CaretPlacement> get() = trajectories.values.map { trajectory -> trajectory.target }
+  val targets: List<CaretPlacement>
+    get() {
+      return trajectories.values.map { trajectory -> trajectory.target }
+    }
 
   fun withTrajectories(trajectories: Map<Caret, CaretTrajectory>): CaretMotionPhase
 
@@ -187,10 +194,14 @@ private fun snappedEasingTime(elapsed: Duration, settings: CaretAnimationSetting
 }
 
 private fun Map<Caret, CaretTrajectory>.residualDistance(): Double {
-  return values.maxOfOrNull { trajectory -> trajectory.distanceToTarget } ?: 0.0
+  val furthestDistance = values.maxOfOrNull { trajectory -> trajectory.distanceToTarget }
+  return furthestDistance ?: 0.0
 }
 
-private fun Map<Caret, CaretTrajectory>.rested(settling: Settling): Map<Caret, CaretTrajectory> = when {
-  settling.isComplete -> mapValues { (_, trajectory) -> trajectory.atTarget() }
-  else -> this
+private fun Map<Caret, CaretTrajectory>.rested(settling: Settling): Map<Caret, CaretTrajectory> {
+  return if (settling.isComplete) {
+    mapValues { (_, trajectory) -> trajectory.atTarget() }
+  } else {
+    this
+  }
 }

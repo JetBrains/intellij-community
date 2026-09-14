@@ -5,7 +5,6 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.ui.paint.PaintUtil
 import com.intellij.ui.scale.ScaleContext
 import java.awt.Graphics2D
-import java.awt.Rectangle
 import java.awt.geom.Point2D
 import java.awt.geom.Rectangle2D
 
@@ -50,11 +49,4 @@ internal data class EditorPixelGrid(private val scaleContext: ScaleContext, priv
       )
     }
   }
-}
-
-internal fun Rectangle2D.intersectWithVisibleArea(visibleArea: Rectangle): Rectangle2D? {
-  if (!intersects(visibleArea)) {
-    return null
-  }
-  return createIntersection(visibleArea)
 }

@@ -213,8 +213,10 @@ public final class EditorPainter implements TextDrawingCallback {
     int grow,
     @NotNull CaretRepaintMetrics metrics
   ) {
-    return ContainerUtil.map(locations, location -> caretRectangleForLocationAndGrow(location, metrics.topOverhang, metrics.caretHeight, grow))
-      .toArray(Rectangle[]::new);
+    return ContainerUtil.map(
+      locations,
+      location -> caretRectangleForLocationAndGrow(location, metrics.topOverhang, metrics.caretHeight, grow)
+    ).toArray(Rectangle[]::new);
   }
 
   @ApiStatus.Internal

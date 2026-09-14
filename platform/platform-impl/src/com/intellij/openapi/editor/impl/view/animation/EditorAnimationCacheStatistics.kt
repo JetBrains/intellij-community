@@ -8,15 +8,6 @@ import kotlin.time.Duration.Companion.milliseconds
 internal val STATISTICS_BUCKET_DURATION: Duration = 500.milliseconds
 internal const val STATISTICS_BUCKET_COUNT = 10
 
-internal data class CacheHitRate(val hits: Int, val misses: Int) {
-  val hitPercent: Int
-    get() {
-      val total = hits + misses
-      val rounding = total / 2
-      return ((hits.toLong() * 100 + rounding) / total).toInt()
-    }
-}
-
 internal object EditorAnimationCacheStatistics {
   private val startedAt = AnimationClock.markAnimationNow()
   private val hits = IntArray(STATISTICS_BUCKET_COUNT)
@@ -37,8 +28,10 @@ internal object EditorAnimationCacheStatistics {
 
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun hitRate(): CacheHitRate? {
-    val newest = currentStamp(currentBucket())
-    val oldest = newest - STATISTICS_BUCKET_DURATION * (STATISTICS_BUCKET_COUNT - 1)
+    val elapsedBuckets = currentBucket()
+    val newest = currentStamp(elapsedBuckets)
+    val windowLength = STATISTICS_BUCKET_DURATION * (STATISTICS_BUCKET_COUNT - 1)
+    val oldest = newest - windowLength
     var totalHits = 0
     var totalMisses = 0
     for (bucket in 0 until STATISTICS_BUCKET_COUNT) {
@@ -48,9 +41,10 @@ internal object EditorAnimationCacheStatistics {
         totalMisses += misses[bucket]
       }
     }
-    return when (totalHits + totalMisses) {
-      0 -> null
-      else -> CacheHitRate(totalHits, totalMisses)
+    return if (totalHits + totalMisses == 0) {
+      null
+    } else {
+      CacheHitRate(totalHits, totalMisses)
     }
   }
 

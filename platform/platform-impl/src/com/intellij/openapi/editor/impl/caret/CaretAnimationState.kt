@@ -91,9 +91,10 @@ internal class CaretAnimationState private constructor(
   /// MARK: frame updates
 
   fun withRunning(running: Boolean): CaretAnimationState {
-    return when (running) {
-      isRunning -> this
-      else -> next(isRunning = running)
+    return if (running == isRunning) {
+      this
+    } else {
+      next(isRunning = running)
     }
   }
 
@@ -149,9 +150,10 @@ internal class CaretAnimationState private constructor(
       return motionPrefetch
     }
     val canPrefetchBlink = blinkStep.wantsPrefetch && nextSnapshot.locations.isNotEmpty()
-    return when {
-      canPrefetchBlink -> nextSnapshot.locations.asList()
-      else -> null
+    return if (canPrefetchBlink) {
+      nextSnapshot.locations.asList()
+    } else {
+      null
     }
   }
 

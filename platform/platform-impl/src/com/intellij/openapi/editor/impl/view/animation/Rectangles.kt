@@ -4,8 +4,9 @@ package com.intellij.openapi.editor.impl.view.animation
 import java.awt.Rectangle
 import java.awt.geom.Rectangle2D
 
-internal val Rectangle2D.area: Double
-  get() = width.coerceAtLeast(0.0) * height.coerceAtLeast(0.0)
+internal fun Rectangle2D.area(): Double {
+  return width.coerceAtLeast(0.0) * height.coerceAtLeast(0.0)
+}
 
 internal fun Rectangle2D.coerceAtLeastEmpty(): Rectangle2D {
   val newX = x.coerceAtLeast(0.0)
@@ -21,4 +22,11 @@ internal fun Rectangle.coerceAtLeastEmpty(): Rectangle {
   val newWidth = (width + (x - newX)).coerceAtLeast(0)
   val newHeight = (height + (y - newY)).coerceAtLeast(0)
   return Rectangle(newX, newY, newWidth, newHeight)
+}
+
+internal fun Rectangle2D.intersectWithVisibleArea(visibleArea: Rectangle): Rectangle2D? {
+  if (!intersects(visibleArea)) {
+    return null
+  }
+  return createIntersection(visibleArea)
 }

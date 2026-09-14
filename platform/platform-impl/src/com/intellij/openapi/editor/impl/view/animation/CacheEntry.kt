@@ -7,11 +7,17 @@ import java.awt.geom.Rectangle2D
 import java.awt.image.BufferedImage
 
 internal class CacheEntry(private val rectangle: Rectangle2D, private val image: BufferedImage) {
-  val area: Double get() = rectangle.area
+  fun contains(rectangle: Rectangle2D): Boolean {
+    return this.rectangle.contains(rectangle)
+  }
 
-  fun contains(rectangle: Rectangle2D): Boolean = this.rectangle.contains(rectangle)
+  fun intersects(rectangle: Rectangle2D): Boolean {
+    return this.rectangle.intersects(rectangle)
+  }
 
-  fun intersects(rectangle: Rectangle2D): Boolean = this.rectangle.intersects(rectangle)
+  fun area(): Double {
+    return rectangle.area()
+  }
 
   fun paint(frameGraphics: Graphics2D) {
     // use translate because drawImage supports only integer coordinates

@@ -103,7 +103,8 @@ private class HitRateBar : TextPanel() {
 
   override fun paintComponent(g: Graphics) {
     val size = size
-    val servedWidth = size.width * (rate?.hitPercent ?: 0) / 100
+    val hitPercent = rate?.hitPercent ?: 0
+    val servedWidth = size.width * hitPercent / 100
 
     val isIslandTheme = IslandsState.isEnabled()
     val arc = if (isIslandTheme) JBUI.scale(6) else 0
@@ -124,19 +125,25 @@ private class HitRateBar : TextPanel() {
     super.paintComponent(g)
   }
 
-  private fun labelFor(hitRate: CacheHitRate?): @Nls String = when (hitRate) {
-    null -> UIBundle.message("status.bar.editor.animation.cache.widget.idle")
-    else -> UIBundle.message("status.bar.editor.animation.cache.widget.text", hitRate.hitPercent)
+  private fun labelFor(hitRate: CacheHitRate?): @Nls String {
+    return if (hitRate == null) {
+      UIBundle.message("status.bar.editor.animation.cache.widget.idle")
+    } else {
+      UIBundle.message("status.bar.editor.animation.cache.widget.text", hitRate.hitPercent)
+    }
   }
 
-  private fun tooltipFor(hitRate: CacheHitRate?): @Nls String = when (hitRate) {
-    null -> UIBundle.message("status.bar.editor.animation.cache.widget.tooltip.idle", WINDOW_SECONDS.inWholeSeconds)
-    else -> UIBundle.message(
-      "status.bar.editor.animation.cache.widget.tooltip",
-      hitRate.hits,
-      hitRate.misses,
-      WINDOW_SECONDS.inWholeSeconds,
-    )
+  private fun tooltipFor(hitRate: CacheHitRate?): @Nls String {
+    return if (hitRate == null) {
+      UIBundle.message("status.bar.editor.animation.cache.widget.tooltip.idle", WINDOW_SECONDS.inWholeSeconds)
+    } else {
+      UIBundle.message(
+        "status.bar.editor.animation.cache.widget.tooltip",
+        hitRate.hits,
+        hitRate.misses,
+        WINDOW_SECONDS.inWholeSeconds,
+      )
+    }
   }
 }
 

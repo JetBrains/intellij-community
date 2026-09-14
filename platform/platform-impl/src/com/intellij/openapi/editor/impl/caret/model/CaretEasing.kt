@@ -44,7 +44,8 @@ internal enum class CaretEasing {
     val durationInFrames = (duration / CaretFrameInterval.MOVEMENT).toInt()
     val steps = max(MIN_TIME_CONSTANT_STEPS, durationInFrames)
     val sampledProgress = (1..steps).map { step -> step.toDouble() / steps }
-    return sampledProgress.firstOrNull { progress -> apply(progress) >= MATCHED_PROGRESS } ?: 1.0
+    val firstMatch = sampledProgress.firstOrNull { progress -> apply(progress) >= MATCHED_PROGRESS }
+    return firstMatch ?: 1.0
   }
 
   companion object {

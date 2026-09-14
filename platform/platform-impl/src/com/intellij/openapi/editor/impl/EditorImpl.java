@@ -95,7 +95,6 @@ import com.intellij.openapi.editor.elf.ElfFeatureFlag;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.event.EditorMouseListener;
@@ -137,6 +136,8 @@ import com.intellij.openapi.editor.impl.stickyLines.ui.StickyLinesPanel;
 import com.intellij.openapi.editor.impl.view.CharacterGrid;
 import com.intellij.openapi.editor.impl.view.CharacterGridImpl;
 import com.intellij.openapi.editor.impl.view.EditorView;
+import com.intellij.openapi.editor.impl.view.animation.EditorAnimationCache;
+import com.intellij.openapi.editor.impl.view.animation.EditorAnimationCacheService;
 import com.intellij.openapi.editor.markup.GutterDraggableObject;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -359,6 +360,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   boolean myCursorSetExternally;
 
   private boolean myIsCurrentlyBuildingCache = false;
+  private final @Nullable EditorAnimationCache myContentAnimationCache;
   private final @NotNull EditorCaretMutator caretMutator;
 
   private static final Integer SCROLL_PANE_LAYER = 0;
@@ -691,6 +693,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myEditorModel = new EditorModelImpl(this);
 
     myView = new EditorView(this, myEditorModel);
+    myContentAnimationCache = EditorAnimationCacheService.createCache(this);
+    if (myContentAnimationCache != null) {
+      Disposer.register(myDisposable, myContentAnimationCache);
+    }
 
     myTextDrawingCallback = new EditorTextDrawingCallback(myView);
 
@@ -927,7 +933,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myFocusKeepSelectionOnMousePress = false;
     mySelectionModel.reinitSettings();
-    myView.invalidateContentAnimationCache(null);
+    invalidateAnimationCaches(null);
 
     clearCaretThread();
     for (Caret caret : myCaretModel.getAllCarets()) {
@@ -1535,6 +1541,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       isReleased = true;
       // Stop background frames before the editor models they read are disposed.
       Disposer.dispose(caretMutator);
+      if (myContentAnimationCache != null) {
+        Disposer.dispose(myContentAnimationCache);
+      }
       myDisposalTimestampNanos = System.nanoTime();
       mySizeAdjustmentStrategy.cancelAllRequests();
       cancelAutoResetForMouseSelectionState();
@@ -2489,9 +2498,24 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myIsCurrentlyBuildingCache = isCurrentlyBuildingCache;
   }
 
+  /**
+   * Drops the cached content behind {@code clip}, or all of it when {@code clip} is {@code null}.
+   */
   @ApiStatus.Internal
   public void invalidateAnimationCaches(@Nullable Rectangle clip) {
-    myView.invalidateContentAnimationCache(clip);
+    if (myContentAnimationCache != null) {
+      myContentAnimationCache.invalidate(clip);
+    }
+  }
+
+  /**
+   * Asks the animation cache to hold the content behind {@code locations}, so the frames that follow can be blitted.
+   */
+  @ApiStatus.Internal
+  public void prefetchCaretFrames(@NotNull List<CaretRectangle> locations) {
+    if (myContentAnimationCache != null) {
+      myContentAnimationCache.cacheCaretFrames(locations);
+    }
   }
 
   @Override
@@ -2631,7 +2655,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return;
     }
 
-    myView.paint(g);
+    myView.paint(g, canPaintFromContentAnimationCache() ? myContentAnimationCache : null);
 
     boolean isBackgroundImageSet = IdeBackgroundUtil.isEditorBackgroundImageSet(myProject);
     if (myBackgroundImageSet != isBackgroundImageSet) {
@@ -2639,6 +2663,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       updateOpaque(myScrollPane.getHorizontalScrollBar());
       updateOpaque(myScrollPane.getVerticalScrollBar());
     }
+  }
+
+  private boolean canPaintFromContentAnimationCache() {
+    return !isCurrentlyBuildingCache() &&
+           !isStickyLinePainting() &&
+           !isPaintingDumbBuffer() &&
+           !isPurePaintingMode();
   }
 
   @NotNull Color getDisposedBackground() {

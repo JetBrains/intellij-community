@@ -34,7 +34,6 @@ import com.intellij.openapi.editor.impl.caret.model.CaretRectangle;
 import com.intellij.openapi.editor.impl.caret.model.CaretRepaintMetrics;
 import com.intellij.openapi.editor.impl.TextDrawingCallback;
 import com.intellij.openapi.editor.impl.view.animation.EditorAnimationCache;
-import com.intellij.openapi.editor.impl.view.animation.EditorAnimationCacheKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -64,10 +63,7 @@ import java.awt.font.FontRenderContext;
 import java.awt.font.LineMetrics;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
 import java.text.Bidi;
-import java.util.List;
-import java.util.function.Supplier;
 
 /**
  * A facade for components responsible for drawing editor contents, managing editor size 
@@ -89,7 +85,6 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   private final TextLayoutCache myTextLayoutCache;
   private final LogicalPositionCache myLogicalPositionCache;
   private final CharWidthCache myCharWidthCache;
-  private final @Nullable EditorAnimationCache myContentAnimationCache;
   private final TabFragment myTabFragment;
   private final SelectionVisualModel mySelectionVisualModel;
 
@@ -127,17 +122,12 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     myTextLayoutCache = new TextLayoutCache(this, new ComponentVisibilityTracker(myEditor.getContentComponent()));
     myLogicalPositionCache = new LogicalPositionCache(myDocument, () -> myEditor.throwDisposalError("Editor is already disposed"));
     myCharWidthCache = new CharWidthCache(this);
-    myContentAnimationCache = EditorAnimationCache.createAnimationCache(editor);
     myTabFragment = new TabFragment(this);
     mySelectionVisualModel = new SelectionVisualModel(myEditor);
 
     myEditor.getContentComponent().addHierarchyListener(this);
     getScrollingModel().addVisibleAreaListener(this);
 
-    if (myContentAnimationCache != null) {
-      Disposer.register(this, myContentAnimationCache);
-      myContentAnimationCache.start();
-    }
     Disposer.register(this, myLogicalPositionCache);
     Disposer.register(this, myTextLayoutCache);
     Disposer.register(this, mySizeManager);
@@ -261,26 +251,16 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   }
 
   @RequiresEdt
-  public void paint(Graphics2D g) {
+  public void paint(Graphics2D g, @Nullable EditorAnimationCache cache) {
     getSoftWrapModel().prepareToMapping();
     checkFontRenderContext(g.getFontRenderContext());
-
     Rectangle clip = g.getClipBounds();
-    EditorAnimationCache cache = myContentAnimationCache;
-    if (cache != null && clip != null && canPaintFromContentAnimationCache() && cache.paintFromCache(g, clip)) {
+    if (cache != null && clip != null && cache.paintFromCache(g, clip)) {
       runPaintCallback();
       return;
     }
-
     myPainter.paint(g);
     runPaintCallback();
-  }
-
-  private boolean canPaintFromContentAnimationCache() {
-    return !myEditor.isCurrentlyBuildingCache() &&
-           !myEditor.isStickyLinePainting() &&
-           !myEditor.isPaintingDumbBuffer() &&
-           !myEditor.isPurePaintingMode();
   }
 
   @ApiStatus.Internal
@@ -301,13 +281,6 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   }
 
   @ApiStatus.Internal
-  public void cacheAreasForRepaint(@NotNull EditorAnimationCacheKey key, @NotNull Supplier<List<Rectangle2D>> rectangles) {
-    if (myContentAnimationCache != null) {
-      myContentAnimationCache.cacheAreasForRepaint(key, rectangles);
-    }
-  }
-
-  @ApiStatus.Internal
   @RequiresEdt
   public @NotNull CaretRepaintMetrics getCaretRepaintMetrics() {
     int caretHeight = getCaretHeight();
@@ -321,17 +294,8 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     return myPainter.caretRectanglesForLocations(locations, grow);
   }
 
-  @ApiStatus.Internal
-  public void invalidateContentAnimationCache(@Nullable Rectangle clip) {
-    if (myContentAnimationCache != null) {
-      myContentAnimationCache.invalidate(clip);
-    }
-  }
-
-  void clearContentAnimationCache() {
-    if (myContentAnimationCache != null) {
-      myContentAnimationCache.clear();
-    }
+  private void clearContentAnimationCache() {
+    myEditor.invalidateAnimationCaches(null);
   }
 
   @ApiStatus.Internal

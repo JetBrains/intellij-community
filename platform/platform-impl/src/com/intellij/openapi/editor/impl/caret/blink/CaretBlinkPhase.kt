@@ -32,9 +32,10 @@ internal sealed interface CaretBlinkPhase {
     }
 
     override fun step(tick: CaretTick, prefetching: Boolean): CaretBlinkStep {
-      val nextDelay = when {
-        tick.settings.isBlinking -> tick.remainingQuietTime
-        else -> Duration.INFINITE
+      val nextDelay = if (tick.settings.isBlinking) {
+        tick.remainingQuietTime
+      } else {
+        Duration.INFINITE
       }
       return CaretBlinkStep(opacity = 1.0f, wantsPrefetch = false, nextDelay = nextDelay)
     }

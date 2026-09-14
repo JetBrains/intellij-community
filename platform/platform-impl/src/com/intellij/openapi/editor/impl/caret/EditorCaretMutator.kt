@@ -84,9 +84,10 @@ internal class EditorCaretMutator internal constructor(
     val repaintMetrics = editor.view.caretRepaintMetrics
     val tick = tick(CaretFrameInterval.MOVEMENT)
     val next = state.updateAndGet { it.retarget(placements, tick, isCaretShown, repaintMetrics) }
-    when (next.isMotionSettled) {
-      true -> advanceNow(tick)
-      false -> ensureLoop()
+    if (next.isMotionSettled) {
+      advanceNow(tick)
+    } else {
+      ensureLoop()
     }
   }
 
@@ -132,9 +133,10 @@ internal class EditorCaretMutator internal constructor(
 
   fun setBlinking(blinking: Boolean) {
     state.updateAndGet { current ->
-      when {
-        blinking -> current.startBlink()
-        else -> current.stopBlink()
+      if (blinking) {
+        current.startBlink()
+      } else {
+        current.stopBlink()
       }
     }
     ensureLoop()
@@ -169,7 +171,9 @@ internal class EditorCaretMutator internal constructor(
    */
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun advanceNow(tick: CaretTick) {
-    val step = advanceStep(prefetching = false, stopWhenIdle = false) { tick }
+    val step = advanceStep(prefetching = false, stopWhenIdle = false) {
+      tick
+    }
     if (!step.isIdle) {
       ensureLoop()
     }
@@ -184,7 +188,11 @@ internal class EditorCaretMutator internal constructor(
       return
     }
     coroutineScope.launch(frameDispatcher) {
-      runCatching { loop() }.getOrHandleException { LOG.error("Caret animation failed", it) }
+      runCatching {
+        loop()
+      }.getOrHandleException {
+        LOG.error("Caret animation failed", it)
+      }
     }
   }
 
@@ -192,7 +200,9 @@ internal class EditorCaretMutator internal constructor(
     var isRunning = true
     try {
       while (currentCoroutineContext().isActive) {
-        val step = advanceStep(prefetching = true, stopWhenIdle = true) { loopTick() }
+        val step = advanceStep(prefetching = true, stopWhenIdle = true) {
+          loopTick()
+        }
         isRunning = !step.isIdle
         if (!isRunning) {
           break
@@ -221,9 +231,10 @@ internal class EditorCaretMutator internal constructor(
       val current = state.value
       val tick = current.computeTick()
       val isFrozen = disposed.get() || editor.document.isInBulkUpdate
-      val (advanced, step) = when {
-        isFrozen -> current.freeze(tick.now)
-        else -> current.advance(tick, prefetching)
+      val (advanced, step) = if (isFrozen) {
+        current.freeze(tick.now)
+      } else {
+        current.advance(tick, prefetching)
       }
       val shouldStopLoop = stopWhenIdle && step.isIdle
       val next = if (shouldStopLoop) advanced.withRunning(false) else advanced

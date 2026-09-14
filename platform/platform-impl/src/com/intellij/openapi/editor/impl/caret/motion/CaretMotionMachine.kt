@@ -81,9 +81,10 @@ internal class CaretMotionMachine private constructor(
    */
   private fun urgencyAfterRetarget(placements: List<CaretPlacement>, snapping: Boolean): Double {
     val keepsUrgency = snapping || holdsSameTargets(placements)
-    return when {
-      keepsUrgency -> urgency
-      else -> max(MIN_URGENCY, urgency * URGENCY_DECAY)
+    return if (keepsUrgency) {
+      urgency
+    } else {
+      max(MIN_URGENCY, urgency * URGENCY_DECAY)
     }
   }
 
@@ -141,9 +142,10 @@ internal class CaretMotionMachine private constructor(
     placement: CaretPlacement,
     rebase: (CaretTrajectory, CaretPlacement) -> CaretTrajectory,
   ): CaretTrajectory {
-    return when (existing) {
-      null -> CaretTrajectory.restingAt(placement)
-      else -> rebase(existing, placement)
+    return if (existing == null) {
+      CaretTrajectory.restingAt(placement)
+    } else {
+      rebase(existing, placement)
     }
   }
 
@@ -164,27 +166,39 @@ internal class CaretMotionMachine private constructor(
    * Whether every placement is already painted where it belongs, whatever document position it now denotes.
    */
   private fun holdsSameSpots(placements: List<CaretPlacement>): Boolean {
-    val hasPlacements = placements.isNotEmpty()
-    val allSameSpots by lazy { placements.all { targetFor(it)?.isVisuallyAt(it) == true } }
-    return hasPlacements && allSameSpots
+    if (placements.isEmpty()) {
+      return false
+    }
+    return placements.all { placement ->
+      val target = targetFor(placement)
+      target != null && target.isVisuallyAt(placement)
+    }
   }
 
   /**
    * Whether every placement denotes the document position it already targeted, whatever pixel that is now.
    */
   private fun holdsSamePlaces(placements: List<CaretPlacement>): Boolean {
-    val hasTrajectories = phase.trajectories.isNotEmpty()
-    val allSamePlaces by lazy { placements.all { targetFor(it)?.isSamePlace(it) == true } }
-    return hasTrajectories && allSamePlaces
+    if (phase.trajectories.isEmpty()) {
+      return false
+    }
+    return placements.all { placement ->
+      val target = targetFor(placement)
+      target != null && target.isSamePlace(placement)
+    }
   }
 
   /**
    * Whether no caret was added, removed or retargeted, so the move in progress needs no adjustment at all.
    */
   private fun holdsSameTargets(placements: List<CaretPlacement>): Boolean {
-    val noNewCarets = phase.trajectories.size == placements.size
-    val allSameTargets by lazy { placements.all { targetFor(it)?.matches(it) == true } }
-    return noNewCarets && allSameTargets
+    if (phase.trajectories.size != placements.size) {
+      return false
+    }
+    return placements.all { placement ->
+      val target = targetFor(placement)
+      target != null && target.matches(placement)
+    }
   }
 
   companion object {
@@ -211,8 +225,9 @@ internal class CaretMotionMachine private constructor(
  */
 private fun CaretMotionPhase.framesWorthPrefetching(settings: CaretAnimationSettings): List<CaretRectangle>? {
   val hasEasingInProgress = trajectories.isNotEmpty() && isEasing && !isSettled
-  return when {
-    hasEasingInProgress -> plannedFrames(settings)
-    else -> null
+  return if (hasEasingInProgress) {
+    plannedFrames(settings)
+  } else {
+    null
   }
 }

@@ -12,6 +12,8 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.impl.EditorImageUtil.createEditorImage
 import com.intellij.openapi.editor.impl.EditorImageUtil.createImageGraphics
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.editor.impl.caret.model.CARET_CACHE_RECTANGLE_MARGIN
+import com.intellij.openapi.editor.impl.caret.model.CaretRectangle
 import com.intellij.openapi.editor.impl.view.animation.EditorAnimationCacheStatistics.recordHit
 import com.intellij.openapi.editor.impl.view.animation.EditorAnimationCacheStatistics.recordMiss
 import com.intellij.openapi.util.registry.Registry
@@ -32,16 +34,22 @@ import java.awt.Rectangle
 import java.awt.geom.Rectangle2D
 import java.awt.image.BufferedImage
 import java.util.concurrent.atomic.AtomicReference
-import java.util.function.Supplier
 import kotlin.time.Duration.Companion.milliseconds
 
 @Service(Service.Level.APP)
 internal class EditorAnimationCacheService(private val scope: CoroutineScope) {
   private val dispatcher = Dispatchers.Default.limitedParallelism(1, "EditorAnimationCache")
 
-  fun createCache(editor: EditorImpl): EditorAnimationCache {
-    val cacheScope = scope.childScope("Editor animation cache", dispatcher)
-    return EditorAnimationCache(editor, cacheScope)
+  companion object {
+    @JvmStatic
+    fun createCache(editor: EditorImpl): EditorAnimationCache? {
+      if (!Registry.`is`("editor.animation.cache.enabled")) {
+        return null
+      }
+      val service = service<EditorAnimationCacheService>()
+      val cacheScope = service.scope.childScope("Editor animation cache", service.dispatcher)
+      return EditorAnimationCache(editor, cacheScope)
+    }
   }
 }
 
@@ -51,20 +59,24 @@ internal class EditorAnimationCache(
 ) : Disposable {
   private var isDisposed = false
   private val lastCacheKey = AtomicReference<EditorAnimationCacheKey?>(null)
+
+  /**
+   * The zone that waits to be cached, or `null` when there is nothing to do. A newer request replaces an older one,
+   * so that a stream of frames never builds a backlog.
+   *
+   * A [CacheRequest] carries the supplier that measures its own rectangles, so two requests are never equal even when
+   * their keys match. [MutableStateFlow] drops a value equal to the current one without waking the collector, so that
+   * inequality is what makes every posted request arrive.
+   */
   private val requests = MutableStateFlow<CacheRequest?>(null)
+
   private var pixelGrid: EditorPixelGrid? = null
   private val entries = CacheEntryList()
   private var lastBuildAt: AnimationTimeMark? = null
   private var cooldownUntil: AnimationTimeMark? = null
 
-  /**
-   * Starts serving the requests posted by [cacheAreasForRepaint]. A request for content the cache already holds is
-   * dropped here, so that the common case never reaches the EDT.
-   */
-  fun start() {
-    coroutineScope.launch {
-      requests.filterNotNull().collect { request -> serve(request) }
-    }
+  init {
+    serveRequests()
   }
 
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
@@ -100,19 +112,30 @@ internal class EditorAnimationCache(
   }
 
   /**
-   * Caches the editor content behind the area that [rectangles] are about to be repainted in,
-   * so that [paintFromCache] can restore it instead of repainting the content.
+   * Caches the editor content behind [locations], so that [paintFromCache] can restore it instead of repainting the
+   * content. A request for content the cache already holds costs nothing beyond the key, which is the steady state of
+   * a move: every frame of one move asks for the same zone.
    *
-   * A single zone covering the bounding box of [rectangles] is cached, not one zone per rectangle. Swing coalesces all
+   * A single zone covering the bounding box of [locations] is cached, not one zone per caret. Swing coalesces all
    * pending repaint requests for a component into their bounding box, so that box is the smallest clip
-   * [paintFromCache] can ever be asked for. Caching the rectangles individually would leave the gaps between them
+   * [paintFromCache] can ever be asked for. Caching the carets individually would leave the gaps between them
    * uncached, and no single zone would contain the clip, so every multi-caret repaint would miss.
    */
-  fun cacheAreasForRepaint(requestKey: EditorAnimationCacheKey, rectangles: Supplier<List<Rectangle2D>>) {
-    requests.update { pending ->
-      when (pending?.isDuplicate(requestKey)) {
-        true -> pending
-        else -> CacheRequest(requestKey, rectangles)
+  fun cacheCaretFrames(locations: List<CaretRectangle>) {
+    val requestKey = EditorAnimationCacheKey.of(locations)
+    val cachedKey = lastCacheKey.get()
+    if (requestKey == cachedKey) {
+      // Also drop whatever waits here, because the carets have moved past it.
+      requests.value = null
+      return
+    }
+    requests.update { pending: CacheRequest? ->
+      if (pending?.isDuplicate(requestKey) == true) {
+        pending
+      } else {
+        CacheRequest(requestKey) {
+          caretCacheRectangles(locations)
+        }
       }
     }
   }
@@ -133,7 +156,10 @@ internal class EditorAnimationCache(
     }
     val visiblePart = rect.visibleRectangle() ?: return false
     val visibleRect = currentPixelGrid.align(visiblePart)
-    val entry = entries.findContaining(visibleRect) ?: return recordMiss()
+    val entry = entries.findContaining(visibleRect)
+    if (entry == null) {
+      return recordMiss()
+    }
     (graphics.create() as Graphics2D).use { frameGraphics ->
       frameGraphics.clip(visibleRect)
       frameGraphics.composite = AlphaComposite.Src
@@ -146,8 +172,21 @@ internal class EditorAnimationCache(
 
   /// MARK: cache building
 
+  /**
+   * Serves every posted request, one at a time, so that no two cache builds ever overlap.
+   */
+  private fun serveRequests() {
+    coroutineScope.launch {
+      requests.filterNotNull().collect { request: CacheRequest ->
+        serve(request)
+      }
+    }
+  }
+
   private suspend fun serve(request: CacheRequest) {
     requests.compareAndSet(request, null)
+    // [cacheCaretFrames] drops a request for content the cache holds. This catches the narrower case of a key that
+    // was stored while the request waited here.
     if (request.isDuplicate(lastCacheKey.get())) {
       return
     }
@@ -167,9 +206,21 @@ internal class EditorAnimationCache(
     if (!ensureOpaqueContent()) {
       return
     }
-    runCatching { cacheRequestedArea(request) }.getOrHandleException { e ->
+    runCatching {
+      cacheRequestedArea(request)
+    }.getOrHandleException { e ->
       LOG.error("An exception occurred while building editor animation cache", e)
     }
+  }
+
+  /**
+   * The areas that [locations] need cached. Measured when the request reaches the EDT, so that the geometry belongs to
+   * the frame the cache is actually built for.
+   */
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  private fun caretCacheRectangles(locations: List<CaretRectangle>): List<Rectangle2D> {
+    val caretRectangles = editor.view.caretRectanglesForLocations(locations.toTypedArray(), CARET_CACHE_RECTANGLE_MARGIN)
+    return caretRectangles.map { rectangle -> rectangle.coerceAtLeastEmpty() }
   }
 
   private fun isWithinCooldown(): Boolean {
@@ -205,16 +256,13 @@ internal class EditorAnimationCache(
    */
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun buildEntry(repaintedArea: Rectangle2D, grid: EditorPixelGrid, visibleArea: Rectangle): Boolean {
-    val budget = visibleArea.area * MAX_CACHED_VISIBLE_AREAS
-    if (entries.wouldExceed(budget, repaintedArea)) {
-      entries.clear()
-    }
     val image = renderToImage(repaintedArea)
     // Building the cache paints editor content, which can run plugin code and dispose the view reentrantly.
     if (isDisposed) {
       return false
     }
-    entries.add(CacheEntry(repaintedArea, image))
+    val budget = visibleArea.area() * MAX_CACHED_VISIBLE_AREAS
+    entries.add(CacheEntry(repaintedArea, image), budget)
     pixelGrid = grid
     lastBuildAt = AnimationClock.markAnimationNow()
     return true
@@ -247,19 +295,16 @@ internal class EditorAnimationCache(
     if (visibleArea.isEmpty) {
       return null
     }
-    return intersectWithVisibleArea(visibleArea)?.coerceAtLeastEmpty()?.takeUnless { it.isEmpty }
+    val visiblePart = intersectWithVisibleArea(visibleArea) ?: return null
+    val clampedPart = visiblePart.coerceAtLeastEmpty()
+    if (clampedPart.isEmpty) {
+      return null
+    }
+    return clampedPart
   }
 
   companion object {
-    @JvmStatic
-    fun createAnimationCache(editor: EditorImpl): EditorAnimationCache? {
-      if (!Registry.`is`(CACHE_ENABLED_REGISTRY_KEY)) {
-        return null
-      }
-      return service<EditorAnimationCacheService>().createCache(editor)
-    }
-
-    private const val CACHE_ENABLED_REGISTRY_KEY = "editor.animation.cache.enabled"
+    private val LOG = logger<EditorAnimationCache>()
 
     /**
      * How much editor content the cache may hold, in multiples of the visible area.
@@ -279,5 +324,3 @@ internal class EditorAnimationCache(
     private val THRASH_COOLDOWN = 250.milliseconds
   }
 }
-
-private val LOG = logger<EditorAnimationCache>()
