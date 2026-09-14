@@ -1,0 +1,16 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <plugin id="com.intellij.modules.vcs"/>
+    <module name="intellij.markdown"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.projectModel.impl"/>
+    <module name="intellij.platform.vcs"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <ignoredFileProvider implementation="com.intellij.markdown.vcs.MarkdownIgnoredFileProvider"/>
+  </extensions>
+</idea-plugin>

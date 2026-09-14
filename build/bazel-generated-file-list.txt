@@ -1611,6 +1611,7 @@ plugins/markdown/projectView
 plugins/markdown/spellchecker
 plugins/markdown/test
 plugins/markdown/textMate
+plugins/markdown/vcs
 plugins/markdown/xml
 plugins/marketplace-ml
 plugins/maven

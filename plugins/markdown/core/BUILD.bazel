@@ -26,6 +26,7 @@ dev_dist_plugin(
         "intellij.markdown.projectView",
         "intellij.markdown.spellchecker",
         "intellij.markdown.fenceInjector.textMate",
+        "intellij.markdown.vcs",
         "intellij.markdown.xml",
     ],
 )
