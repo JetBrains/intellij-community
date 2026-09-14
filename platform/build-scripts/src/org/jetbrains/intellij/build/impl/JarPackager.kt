@@ -1003,9 +1003,14 @@ private fun buildAsset(
     listOf(includedModules.values.first().first())
   }
   else {
+    //put modules before libraries and put the module containing the plugin descriptor before other modules
     val sources = ObjectLinkedOpenHashSet<Source>(asset.sources.size + includedModules.values.sumOf { it.size })
-    sources.addAll(asset.sources)
+    val pluginDescriptorModuleSources = includedModules.entries.find { it.key.moduleName == (layout as? PluginLayout)?.mainModule }?.value
+    if (pluginDescriptorModuleSources != null) {
+      sources.addAll(pluginDescriptorModuleSources)
+    }
     for (moduleSources in includedModules.values) {
+      if (moduleSources === pluginDescriptorModuleSources) continue
       for (source in moduleSources) {
         val old = sources.get(source)
         require(old == null) {
@@ -1014,6 +1019,11 @@ private fun buildAsset(
 
         sources.add(source)
       }
+    }
+    for (source in asset.sources) {
+      val old = sources.get(source)
+      require(old == null) { "Source is duplicated: new $source, old: $old"}
+      sources.add(source)
     }
     sources
   }
