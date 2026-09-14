@@ -105,6 +105,12 @@ enum class KotlinBuildToolFusMetricName(val metric: KotlinBuildToolFusMetric<*>)
             listOf("moduleName", "rootPackage")
         )
     ),
+    SWIFT_EXPORT_DSL_XCODE_INTEGRATION_OVERRIDES(
+        ConcatenatedAllowedListValuesStringFusMetric(
+            "SWIFT_EXPORT_DSL_XCODE_INTEGRATION_OVERRIDES",
+            listOf("exposed", "hidden", "moduleName", "rootPackage", "settings")
+        )
+    ),
 
     //Build reports
     FILE_BUILD_REPORT(KotlinBuildToolBooleanFusMetric("FILE_BUILD_REPORT")),
