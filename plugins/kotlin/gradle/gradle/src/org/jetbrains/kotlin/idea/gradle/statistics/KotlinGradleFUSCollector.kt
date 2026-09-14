@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.statistics.metrics.NumericalMetrics
 import org.jetbrains.kotlin.statistics.metrics.StringListMetrics
 import org.jetbrains.kotlin.statistics.metrics.StringMetrics
 
-private const val BASE_FUS_VERSION = 19
+private const val BASE_FUS_VERSION = 20
 
 object KotlinGradleFUSCollector : CounterUsagesCollector() {
 
@@ -78,6 +78,7 @@ object KotlinGradleFUSCollector : CounterUsagesCollector() {
             BooleanMetrics.KOTLIN_CROSS_COMPILATION_NOT_SUPPORTED,
             BooleanMetrics.KOTLIN_NATIVE_CACHE_DISABLED,
             StringListMetrics.WASM_COMPILER_MODE,
+            StringListMetrics.SWIFT_EXPORT_DSL_MODULE_OPTIONS_OVERRIDES,
         ),
 
         KotlinGradleEvent(

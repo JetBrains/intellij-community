@@ -65,7 +65,8 @@ val kotlinBuildToolsFusEvenList = listOf(
             KotlinBuildToolFusMetricName.KOTLIN_NATIVE_CACHE_DISABLED,
             KotlinBuildToolFusMetricName.WASM_COMPILER_MODE,
             KotlinBuildToolFusMetricName.KMP_JVM_CLASSPATH_METADATA_ENABLED,
-            KotlinBuildToolFusMetricName.KMP_JVM_INCREMENTAL_COMPILATION_OF_COMMON_SOURCES_ENABLED
+            KotlinBuildToolFusMetricName.KMP_JVM_INCREMENTAL_COMPILATION_OF_COMMON_SOURCES_ENABLED,
+            KotlinBuildToolFusMetricName.SWIFT_EXPORT_DSL_MODULE_OPTIONS_OVERRIDES,
         )
     ),
 
