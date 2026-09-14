@@ -42,7 +42,7 @@ class PrimaryTableResultView(
    * set removes the region. The pinned columns keep their place in this view and are rendered at width 0 here, their
    * real width living in the frozen view, so pinning never changes the column order.
    */
-  override fun setFrozenColumns(pinnedColumns: Collection<ModelIndex<GridColumn>>) {
+  override fun setFrozenColumns(pinnedColumns: Set<ModelIndex<GridColumn>>) {
     frozenColumnsController.setFrozenColumns(pinnedColumns)
   }
 
@@ -50,7 +50,7 @@ class PrimaryTableResultView(
   override fun getAvailableColumnsWidth(): Int = frozenColumnsController.getAvailableColumnsWidth()
 
   override fun dropFrozenColumns() {
-    setFrozenColumns(emptyList())
+    setFrozenColumns(emptySet())
   }
 
   override fun dispose() {

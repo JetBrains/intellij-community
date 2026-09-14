@@ -293,7 +293,7 @@ internal class FrozenColumnsController(
    * Renders the visible columns of [pinnedColumns] in main-table order, retaining zero-width placeholders there.
    * Hidden pins remain in the logical state but occupy no space.
    */
-  fun setFrozenColumns(pinnedColumns: Collection<ModelIndex<GridColumn>>) {
+  fun setFrozenColumns(pinnedColumns: Set<ModelIndex<GridColumn>>) {
     val parent = findScrollPane() ?: return
     if ((primaryView.isEditing || isEditingInFrozenView()) && !primaryView.stopEditing()) primaryView.cancelEditing()
     restorePreviouslyFrozenColumns()

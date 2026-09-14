@@ -8,7 +8,7 @@ import com.intellij.database.datagrid.ModelIndex
 @JvmSuppressWildcards
 interface ResultViewWithFrozenColumns {
   /** Renders the visible columns of [pinnedColumns] in the frozen region. An empty set removes the region. */
-  fun setFrozenColumns(pinnedColumns: Collection<ModelIndex<GridColumn>>)
+  fun setFrozenColumns(pinnedColumns: Set<ModelIndex<GridColumn>>)
 
   /** Whether freezing exactly [pinnedColumns] would leave the rest of the view usable. */
   fun canFitPinnedColumns(pinnedColumns: Set<ModelIndex<GridColumn>>): Boolean
