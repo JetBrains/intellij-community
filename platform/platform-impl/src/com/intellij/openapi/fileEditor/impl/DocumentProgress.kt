@@ -8,6 +8,7 @@ import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.blockingContextToIndicator
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.util.runIf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -16,6 +17,8 @@ import org.jetbrains.annotations.ApiStatus
 /**
  * Runs [action] with a progress indicator bound to the current job if no indicator is installed.
  * Use it to surface progress that blocking code reports through the thread progress indicator.
+ *
+ * Reports to the current progress step. An outer [reportRawProgress] keeps reporting active across cancelable actions
  */
 @ApiStatus.Internal
 fun <T> withProgressReport(action: () -> T): T {
@@ -41,10 +44,12 @@ suspend fun FileDocumentManager.getOrLoadDocumentUnderProgress(file: VirtualFile
     if (FileDocumentManagerBase.isBinaryWithoutDecompiler(file)) {
       return@withContext null
     }
-    readAction {
-      runIf(file.isValid) {
-        getCachedDocument(file) ?: withProgressReport {
-          getDocument(file)
+    reportRawProgress {
+      readAction {
+        runIf(file.isValid) {
+          getCachedDocument(file) ?: withProgressReport {
+            getDocument(file)
+          }
         }
       }
     }

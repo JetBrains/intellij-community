@@ -31,6 +31,7 @@ import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.fileEditor.impl.getOrLoadDocumentUnderProgress
 import com.intellij.openapi.fileEditor.impl.navigateAndSelectEditor
+import com.intellij.openapi.fileEditor.impl.withProgressReport
 import com.intellij.openapi.fileEditor.navigateInProjectView
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeManager
@@ -55,6 +56,8 @@ import com.intellij.platform.ide.navigation.RequestedEditor
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.hasProgressStep
 import com.intellij.platform.util.progress.mapWithProgress
+import com.intellij.platform.util.progress.reportRawProgress
+import com.intellij.platform.util.progress.reportSequentialProgress
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -102,9 +105,15 @@ internal class IdeNavigationService(private val project: Project) : NavigationSe
   }
 
   private suspend fun Collection<Navigatable>.toNavigationRequests(): List<NavigationRequest> {
-    return mapWithProgress {
-      readAction {
-        it.navigationRequest()
+    return mapWithProgress { navigatable ->
+      // Progress needed if we want to navigate in ProjectView and keep "Decompiling file <N>..."
+      // Keep reporter outside the RA to survive restarts
+      reportRawProgress {
+        readAction {
+          withProgressReport {
+            navigatable.navigationRequest()
+          }
+        }
       }
     }.filterNotNull()
   }
@@ -126,8 +135,16 @@ internal class IdeNavigationService(private val project: Project) : NavigationSe
         twoPhaseExecutor.submit(
           prepare = {
             prepareWithProgressIfNeeded(options) {
-              limitRequestsToNavigate(action()).takeIf { it.isNotEmpty() }?.let { requests ->
-                requests to preloadTargetDocuments(requests)
+              // keep the visible progress as one task
+              reportSequentialProgress { reporter ->
+                val requests = reporter.indeterminateStep {
+                  limitRequestsToNavigate(action())
+                }.takeIf { it.isNotEmpty() }
+                requests?.let {
+                  it to reporter.indeterminateStep {
+                    preloadTargetDocuments(it)
+                  }
+                }
               }
             }
           }
@@ -169,9 +186,9 @@ internal class IdeNavigationService(private val project: Project) : NavigationSe
   private suspend fun preloadTargetDocuments(requests: Collection<NavigationRequest>): List<Document> {
     val fileDocumentManager = serviceAsync<FileDocumentManager>()
     val files = requests.mapNotNullTo(LinkedHashSet()) { (it as? SourceNavigationRequest)?.file }
-    return files.mapNotNull { file ->
+    return files.mapWithProgress { file ->
       fileDocumentManager.getOrLoadDocumentUnderProgress(file)
-    }
+    }.filterNotNull()
   }
 
   private suspend inline fun <T> withHistoryIfNeeded(options: NavigationOptions, crossinline action: suspend () -> T): T {
