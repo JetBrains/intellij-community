@@ -23,8 +23,6 @@ jvm_library(
             "src/**/*.kt",
             "src/**/*.java",
             "src/**/*.form",
-            "gen/**/*.kt",
-            "gen/**/*.java",
         ],
         allow_empty = True,
     ),
@@ -34,6 +32,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    exports = ["//platform/collaboration-tools/shared"],
     deps = [
         # do not sort,
         "//platform/analysis-api:analysis",
@@ -77,6 +76,7 @@ jvm_library(
         "//libraries/http-client",
         "//platform/vcs-impl/shared",
         "//platform/util:util-ui",
+        "//platform/collaboration-tools/shared",
     ],
 )
 
@@ -89,6 +89,11 @@ jvm_library(
     ),
     module_name = "intellij.platform.collaborationTools",
     visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "//platform/collaboration-tools/shared",
+        "//platform/collaboration-tools/shared:shared_test_lib",
+    ],
     runtime_deps = [
         # do not sort,
         ":collaboration-tools",
@@ -149,6 +154,7 @@ jvm_library(
         "//libraries/assertj-core:assertj-core_test_lib",
         "//platform/vcs-impl/shared:shared_test_lib",
         "//platform/util:util-ui_test_lib",
+        "//platform/collaboration-tools/shared:shared_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.collaborationTools` end

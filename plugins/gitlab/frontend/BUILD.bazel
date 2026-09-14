@@ -29,6 +29,7 @@ jvm_library(
         "//platform/core-api:core",
         "//platform/util",
         "//platform/platform-frontend:frontend",
+        "//platform/collaboration-tools/shared",
     ],
 )
 
@@ -48,6 +49,7 @@ jvm_library(
         "//platform/core-api:core_test_lib",
         "//platform/util:util_test_lib",
         "//platform/platform-frontend:frontend_test_lib",
+        "//platform/collaboration-tools/shared:shared_test_lib",
     ],
 )
 ### auto-generated section `build intellij.vcs.gitlab.frontend` end
