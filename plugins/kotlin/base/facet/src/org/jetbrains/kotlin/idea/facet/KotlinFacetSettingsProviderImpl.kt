@@ -47,7 +47,7 @@ class KotlinFacetSettingsProviderImpl(project: Project) :
 
     override fun checkKeyValidity(key: Module) {
         if (key.isDisposed) {
-            throw AlreadyDisposedException("Module '${key.name}' is already disposed")
+            throw IllegalStateException("Module '${key.name}' is already disposed")
         }
     }
 
