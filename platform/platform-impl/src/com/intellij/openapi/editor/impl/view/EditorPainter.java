@@ -109,6 +109,7 @@ import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 import static com.intellij.openapi.editor.impl.caret.model.CaretRectangleKt.CARET_REPAINT_RECTANGLE_MARGIN;
@@ -138,85 +139,6 @@ public final class EditorPainter implements TextDrawingCallback {
     return editor.getSettings().isRightMarginShown() &&
            editor.getColorsScheme().getColor(EditorColors.RIGHT_MARGIN_COLOR) != null &&
            (Registry.is("editor.show.right.margin.in.read.only.files") || editor.getDocument().isWritable());
-  }
-
-  static float getBaseMarginWidth(@NotNull EditorView view) {
-    Editor editor = view.getEditor();
-    return editor.getSettings().getRightMargin(editor.getProject()) * view.getPlainSpaceWidth();
-  }
-
-  private final EditorView myView;
-
-  EditorPainter(EditorView view) {
-    myView = view;
-  }
-
-  void paint(Graphics2D g) {
-    new Session(myView, g).paint();
-  }
-
-  void paintCaret(Graphics2D g, CaretCursorSnapshot snapshot, int yShift) {
-    new Session(myView, g).paintCaret(snapshot, yShift);
-  }
-
-  /**
-   * The tightest integer-pixel rectangle (in user space) that covers everything the caret draws at a given location:
-   * the caret bar itself plus its direction mark, extended upward by {@code topOverhang} and down to {@code caretHeight}.
-   * <p>
-   * The horizontal bounds are computed with {@code floor}/{@code ceil} around the fractional caret x, so the returned
-   * rectangle always encloses the ideal geometry without clipping it. This is the exact bounds only; it does not
-   * account for the plus-minus-one-pixel error introduced by fractional scaling &mdash; callers that paint or request
-   * repaints under such scaling should use {@link #caretRectangleForLocationAndGrow} to overextend it.
-   */
-  @ApiStatus.Internal
-  public static Rectangle exactCaretRectangleForLocation(
-    CaretRectangle location,
-    int topOverhang,
-    int caretHeight
-  ) {
-    float x = (float)location.getX();
-    int y = (int)location.getY() - topOverhang;
-    float width = location.getWidth() + CARET_DIRECTION_MARK_SIZE;
-    int xStart = (int)Math.floor(x - width);
-    int xEnd = (int)Math.ceil(x + width);
-    return new Rectangle(xStart, y, xEnd - xStart, caretHeight);
-  }
-
-  /**
-   * {@link #exactCaretRectangleForLocation} grown by {@code grow} pixels on every side.
-   * <p>
-   * Due to how fractional scaling works (mostly on Windows), the exact rectangle in user space can map to physical
-   * pixels with a plus-minus-one-pixel error, so painting/repainting exactly the tight bounds leaves thin uncovered
-   * strips ("tango" and the trail of dots). The fix is to consistently work with slightly larger rectangles: cache a
-   * bit more than we repaint, and repaint a bit more than the exact bounds.
-   *
-   * @param grow number of pixels to expand the rectangle by on each side
-   */
-  @ApiStatus.Internal
-  public static Rectangle caretRectangleForLocationAndGrow(
-    CaretRectangle location,
-    int topOverhang,
-    int caretHeight,
-    int grow
-  ) {
-    var rectangle = exactCaretRectangleForLocation(location, topOverhang, caretHeight);
-    rectangle.grow(grow, grow);
-    return rectangle;
-  }
-
-  Rectangle [] caretRectanglesForLocations(CaretRectangle @NotNull [] locations, int grow) {
-    return caretRectanglesForLocations(locations, grow, myView.getCaretRepaintMetrics());
-  }
-
-  private static Rectangle[] caretRectanglesForLocations(
-    CaretRectangle @NotNull [] locations,
-    int grow,
-    @NotNull CaretRepaintMetrics metrics
-  ) {
-    return ContainerUtil.map(
-      locations,
-      location -> caretRectangleForLocationAndGrow(location, metrics.topOverhang, metrics.caretHeight, grow)
-    ).toArray(Rectangle[]::new);
   }
 
   @ApiStatus.Internal
@@ -250,6 +172,29 @@ public final class EditorPainter implements TextDrawingCallback {
     }
   }
 
+  static float getBaseMarginWidth(@NotNull EditorView view) {
+    Editor editor = view.getEditor();
+    return editor.getSettings().getRightMargin(editor.getProject()) * view.getPlainSpaceWidth();
+  }
+
+  private final EditorView myView;
+
+  EditorPainter(EditorView view) {
+    myView = view;
+  }
+
+  void paint(Graphics2D g) {
+    new Session(myView, g).paint();
+  }
+
+  void paintCaret(Graphics2D g, CaretCursorSnapshot snapshot, int yShift) {
+    new Session(myView, g).paintCaret(snapshot, yShift);
+  }
+
+  Rectangle [] caretRectanglesForLocations(CaretRectangle @NotNull [] locations, int grow) {
+    return caretRectanglesForLocations(locations, grow, myView.getCaretRepaintMetrics());
+  }
+
   void repaintCarets(CaretRectangle @NotNull [] locations, @NotNull CaretRepaintMetrics metrics) {
     var editor = myView.getEditor();
     for (var rectangle : caretRectanglesForLocations(locations, CARET_REPAINT_RECTANGLE_MARGIN, metrics)) {
@@ -264,6 +209,60 @@ public final class EditorPainter implements TextDrawingCallback {
     g.setFont(fontInfo.getFont());
     g.setColor(color);
     g.drawChars(data, start, end - start, x, y);
+  }
+
+  /**
+   * The tightest integer-pixel rectangle (in user space) that covers everything the caret draws at a given location:
+   * the caret bar itself plus its direction mark, extended upward by {@code topOverhang} and down to {@code caretHeight}.
+   * <p>
+   * The horizontal bounds are computed with {@code floor}/{@code ceil} around the fractional caret x, so the returned
+   * rectangle always encloses the ideal geometry without clipping it. This is the exact bounds only; it does not
+   * account for the plus-minus-one-pixel error introduced by fractional scaling &mdash; callers that paint or request
+   * repaints under such scaling should use {@link #caretRectangleForLocationAndGrow} to overextend it.
+   */
+  private static Rectangle exactCaretRectangleForLocation(
+    CaretRectangle location,
+    int topOverhang,
+    int caretHeight
+  ) {
+    float x = (float)location.getX();
+    int y = (int)location.getY() - topOverhang;
+    float width = location.getWidth() + CARET_DIRECTION_MARK_SIZE;
+    int xStart = (int)Math.floor(x - width);
+    int xEnd = (int)Math.ceil(x + width);
+    return new Rectangle(xStart, y, xEnd - xStart, caretHeight);
+  }
+
+  /**
+   * {@link #exactCaretRectangleForLocation} grown by {@code grow} pixels on every side.
+   * <p>
+   * Due to how fractional scaling works (mostly on Windows), the exact rectangle in user space can map to physical
+   * pixels with a plus-minus-one-pixel error, so painting/repainting exactly the tight bounds leaves thin uncovered
+   * strips ("tango" and the trail of dots). The fix is to consistently work with slightly larger rectangles: cache a
+   * bit more than we repaint, and repaint a bit more than the exact bounds.
+   *
+   * @param grow number of pixels to expand the rectangle by on each side
+   */
+  private static Rectangle caretRectangleForLocationAndGrow(
+    CaretRectangle location,
+    int topOverhang,
+    int caretHeight,
+    int grow
+  ) {
+    var rectangle = exactCaretRectangleForLocation(location, topOverhang, caretHeight);
+    rectangle.grow(grow, grow);
+    return rectangle;
+  }
+
+  private static Rectangle[] caretRectanglesForLocations(
+    CaretRectangle @NotNull [] locations,
+    int grow,
+    @NotNull CaretRepaintMetrics metrics
+  ) {
+    return ContainerUtil.map(
+      locations,
+      location -> caretRectangleForLocationAndGrow(location, metrics.topOverhang, metrics.caretHeight, grow)
+    ).toArray(Rectangle[]::new);
   }
 
   private static final class Session {
@@ -536,7 +535,7 @@ public final class EditorPainter implements TextDrawingCallback {
         float width = prefixLayout.getWidth();
         TextAttributes attributes = myView.getPrefixAttributes();
         paintBackground(attributes, myCorrector.startX(myStartVisualLine), myYShift + myView.visualLineToY(0), width);
-        myTextDrawingTasks.add(g -> {
+        myTextDrawingTasks.add(_ -> {
           paintLineLayoutWithEffect(prefixLayout,
                                     myCorrector.startX(myStartVisualLine), myAscent + myYShift + myView.visualLineToY(0),
                                     attributes.getForegroundColor(), attributes.getEffectColor(), attributes.getEffectType());
@@ -587,7 +586,7 @@ public final class EditorPainter implements TextDrawingCallback {
               mySelectionModelView.paintBlock(new Rectangle2D.Double(xEnd - selectionExtensionWidth, y, selectionExtensionWidth, myLineHeight));
             }
             if (softWrap == null) return;
-            paintSelectionOnSecondSoftWrapLineIfNecessary(visualLine, columnEnd, xEnd, y, primarySelectionStart, primarySelectionEnd);
+            paintSelectionOnSecondSoftWrapLineIfNecessary(visualLine, columnEnd, xEnd, y, Objects.requireNonNull(primarySelectionStart), primarySelectionEnd);
             if (paintSoftWraps && softWrap.isPaintable()) {
               int x = (int)xEnd;
               myTextDrawingTasks.add(g -> {
@@ -611,7 +610,7 @@ public final class EditorPainter implements TextDrawingCallback {
                 mySelectionModelView.paintBlock(new Rectangle2D.Double(xStart, y, xEnd - xStart, myLineHeight));
               }
             }
-            Inlay inlay = fragment.getCurrentInlay();
+            Inlay<?> inlay = fragment.getCurrentInlay();
             if (inlay != null) {
               TextAttributes attrs = attributes.clone();
               myTextDrawingTasks.add(g -> {
@@ -624,7 +623,7 @@ public final class EditorPainter implements TextDrawingCallback {
               }
               if (attributes != null) {
                 attributes.forEachEffect((type, color) -> myTextDrawingTasks.add(
-                  g -> paintTextEffect(xStart, xEnd, y + myAscent, color, type, foldRegion != null)
+                  _ -> paintTextEffect(xStart, xEnd, y + myAscent, color, type, foldRegion != null)
                 ));
               }
               if (attributes != null) {
@@ -694,7 +693,7 @@ public final class EditorPainter implements TextDrawingCallback {
               myTextDrawingTasks.add(g -> {
                 if (!inlays.isEmpty()) {
                   float curX = x + myView.getPlainSpaceWidth();
-                  for (Inlay inlay : inlays) {
+                  for (Inlay<?> inlay : inlays) {
                     int width = inlay.getWidthInPixels();
                     inlay.getRenderer().paint(inlay, g, new Rectangle2D.Double(curX, y, width, myLineHeight), backgroundAttributes);
                     curX += width;
@@ -1422,7 +1421,7 @@ public final class EditorPainter implements TextDrawingCallback {
           int maxOffset = fragment.getMaxOffset();
           if (startOffset == endOffset) {
             lastX = fragment.getEndX();
-            Inlay inlay = fragment.getCurrentInlay();
+            Inlay<?> inlay = fragment.getCurrentInlay();
             if (inlay != null) {
               if (startOffset == minOffset && inlay.isRelatedToPrecedingText()) {
                 float x = fragment.getStartX();
@@ -1494,7 +1493,7 @@ public final class EditorPainter implements TextDrawingCallback {
         List<Inlay<?>> inlaysAbove = visLinesIterator.getBlockInlaysAbove();
         if (!inlaysAbove.isEmpty()) {
           TextAttributes attributes = getInlayAttributes(visualLine);
-          for (Inlay inlay : inlaysAbove) {
+          for (Inlay<?> inlay : inlaysAbove) {
             if (curY <= myClip.y + myYShift) break;
             int height = inlay.getHeightInPixels();
             if (height > 0) {
@@ -1509,7 +1508,7 @@ public final class EditorPainter implements TextDrawingCallback {
         List<Inlay<?>> inlaysBelow = visLinesIterator.getBlockInlaysBelow();
         if (!inlaysBelow.isEmpty()) {
           TextAttributes attributes = getInlayAttributes(visualLine + 1);
-          for (Inlay inlay : inlaysBelow) {
+          for (Inlay<?> inlay : inlaysBelow) {
             if (curY >= myClip.y + myClip.height + myYShift) break;
             int height = inlay.getHeightInPixels();
             if (height > 0) {
@@ -1566,7 +1565,7 @@ public final class EditorPainter implements TextDrawingCallback {
     }
 
     private static Color withOpacity(Color color, float opacity) {
-      return new Color(color.getRed(), color.getGreen(), color.getBlue(), (int)(color.getAlpha() * opacity));
+      return ColorUtil.toAlpha(color, (int)(color.getAlpha() * opacity));
     }
 
     private void paintCaret() {
@@ -1579,6 +1578,7 @@ public final class EditorPainter implements TextDrawingCallback {
       paintCaret(snapshot, 0);
     }
 
+    /// @noinspection GraphicsSetClipInspection
     private void paintCaret(CaretCursorSnapshot snapshot, int yShift) {
       Graphics2D g = IdeBackgroundUtil.getOriginalGraphics(myGraphics);
       int caretHeight = myView.getCaretHeight();
@@ -1593,8 +1593,8 @@ public final class EditorPainter implements TextDrawingCallback {
         int y = (int)location.getY() - topOverhang + myYShift + yShift;
         Caret caret = location.getCaret();
         CaretVisualAttributes attr = caret == null ? CaretVisualAttributes.getDefault() : caret.getVisualAttributes();
-
-        g.setColor(withOpacity(attr.getColor() != null ? attr.getColor() : caretColor, opacity));
+        Color caretWithOpacity = withOpacity(attr.getColor() != null ? attr.getColor() : caretColor, opacity);
+        g.setColor(caretWithOpacity);
         boolean isRtl = location.isRtl();
         float width = location.getWidth();
         float startX = Math.max(minX, isRtl ? x - width : x);
@@ -1739,23 +1739,6 @@ public final class EditorPainter implements TextDrawingCallback {
         finally {
           config.restore();
         }
-      }
-    }
-
-    private void paintCaretRtlMarker(@NotNull Graphics2D g, @Nullable Caret caret, float x, float y, float w, boolean isRtl) {
-      // We only draw the RTL marker for bar carets. If our bar is close to being a block, skip it. We keep the entire caret inside the
-      // caret location width.
-      if (myDocument.getTextLength() > 0 && caret != null &&
-          !myView.getTextLayoutCache().getLineLayout(caret.getLogicalPosition().line).isLtr()) {
-        GeneralPath triangle = new GeneralPath(Path2D.WIND_NON_ZERO, 3);
-        triangle.moveTo(isRtl ? x : x + w, y + CARET_DIRECTION_MARK_SIZE);
-        triangle.quadTo(
-          isRtl ? x : x + w, y,
-          x + w / 2, y
-        );
-        triangle.lineTo(isRtl ? x - CARET_DIRECTION_MARK_SIZE : x + w + CARET_DIRECTION_MARK_SIZE, y);
-        triangle.closePath();
-        g.fill(triangle);
       }
     }
 
