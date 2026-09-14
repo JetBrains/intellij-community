@@ -119,6 +119,15 @@ internal class TerminalSessionKeyEventTest : GhosttyTerminalSessionTestCase() {
     }
   }
 
+  @Test
+  fun `cmd+backspace kills the line`() {
+    Assume.assumeTrue(SystemInfoRt.isMac)
+    runSessionTest { session, _, _ ->
+      assertThat(bytesOf(session.processKeyEvent(pressed(KeyEvent.VK_BACK_SPACE, '\b', InputEvent.META_DOWN_MASK))))
+        .isEqualTo(Char(21).toString()) // Ctrl+U: kill line, not plain Backspace
+    }
+  }
+
   // ---- harness ----
 
   private fun bytesOf(result: KeyEventProcessingResultDto): String {

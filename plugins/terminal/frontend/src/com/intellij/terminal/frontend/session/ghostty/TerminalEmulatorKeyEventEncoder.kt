@@ -19,10 +19,9 @@ import java.awt.event.KeyEvent
  * hand-maintained table for the JediTerm session, this class gets from the emulator.
  *
  * What stays at this layer is policy the wire protocol does not know about:
- * - the macOS "natural text editing" chords (Cmd/Option + arrows), which both
- *   jediterm's key table and the Ghostty app's default keybinds resolve above VT
- *   encoding — a VT encoder reports SUPER as the xterm meta modifier, which shells
- *   ignore;
+ * - the macOS "natural text editing" chords (Cmd/Option + arrows, Cmd+Backspace),
+ *   which the Ghostty app's default keybinds resolve above VT encoding — a VT encoder
+ *   reports SUPER as the xterm meta modifier, which shells ignore;
  * - Alt as an ESC prefix for characters (the `altSendsEscape` setting); the native
  *   encoder cannot apply it on macOS, where its `macos_option_as_alt` option defaults
  *   to off;
@@ -138,9 +137,9 @@ internal class TerminalEmulatorKeyEventEncoder(
   }
 
   /**
-   * The macOS "natural text editing" chords, resolved above VT encoding like jediterm's
-   * macOS key table and the Ghostty app's default keybinds: Cmd+arrows edit the line
-   * via Ctrl+A / Ctrl+E, Option+arrows jump words via ESC b / ESC f.
+   * The macOS "natural text editing" chords, resolved above VT encoding like the
+   * Ghostty app's default keybinds: Cmd+arrows edit the line via Ctrl+A / Ctrl+E,
+   * Option+arrows jump words via ESC b / ESC f, and Cmd+Backspace kills the line via Ctrl+U.
    */
   private fun macNaturalTextEditingChord(e: KeyEvent): ByteArray? {
     if (!SystemInfoRt.isMac) return null
@@ -150,6 +149,7 @@ internal class TerminalEmulatorKeyEventEncoder(
     return when {
       cmd && e.keyCode == KeyEvent.VK_LEFT -> byteArrayOf(1) // Ctrl+A: line start
       cmd && e.keyCode == KeyEvent.VK_RIGHT -> byteArrayOf(5) // Ctrl+E: line end
+      cmd && e.keyCode == KeyEvent.VK_BACK_SPACE -> byteArrayOf(NAK) // Ctrl+U: kill line
       option && e.keyCode == KeyEvent.VK_LEFT -> byteArrayOf(ESC, 'b'.code.toByte()) // backward-word
       option && e.keyCode == KeyEvent.VK_RIGHT -> byteArrayOf(ESC, 'f'.code.toByte()) // forward-word
       else -> null
@@ -236,5 +236,6 @@ internal class TerminalEmulatorKeyEventEncoder(
   companion object {
     private const val ESC: Byte = 0x1B
     private const val CR: Byte = 0x0D
+    private const val NAK: Byte = 0x15  // Ctrl+U: kill line
   }
 }
