@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python;
 
 import com.intellij.ide.scratch.ScratchUtil;
@@ -11,6 +11,7 @@ import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.python.externalIndex.PyExternalFilesIndexService;
 import com.intellij.remote.RemoteSdkAdditionalData;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.jetbrains.python.console.PyConsoleOptions;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.console.PydevConsoleRunnerUtil;
@@ -91,12 +92,14 @@ public final class PythonRuntimeServiceImpl extends PythonRuntimeService {
     return PydevConsoleRunnerUtil.getPythonConsoleData(node);
   }
 
+  @RequiresBackgroundThread
   @Override
   public String formatDocstring(@NotNull Module module,
                                 @NotNull DocStringFormat format,
                                 @NotNull String input,
                                 @NotNull List<String> formatterFlags) {
-    return PyRuntimeDocstringFormatter.INSTANCE.runExternalTool(module, format, input, formatterFlags);
+    return PyRuntimeDocstringFormatter.INSTANCE.runExternalTool(new PyRuntimeDocstringFormatter.ModuleOrSdk.TheModule((module)), format,
+                                                                input, formatterFlags);
   }
 
   @Override

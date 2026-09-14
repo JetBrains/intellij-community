@@ -2,23 +2,14 @@
 package com.intellij.python.junit5Tests.env.documentation
 
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
-import com.intellij.python.community.execService.Args
-import com.intellij.python.community.execService.ExecOptions
-import com.intellij.python.community.execService.ExecService
-import com.intellij.python.community.execService.asBinToExec
-import com.intellij.python.community.execService.python.PyHelper
-import com.intellij.python.community.execService.python.executeHelper
-import com.intellij.python.community.helpersLocator.PythonHelpersLocator
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
-import com.intellij.python.junit5Tests.framework.env.PythonBinaryPath
+import com.intellij.python.junit5Tests.framework.env.pySdkFixture
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.util.io.write
-import com.jetbrains.python.PYTHONPATH
-import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.documentation.PyDocstringFormatterCache
 import com.jetbrains.python.documentation.PyRuntimeDocstringFormatter
+import com.jetbrains.python.documentation.PyRuntimeDocstringFormatter.runExternalTool
 import com.jetbrains.python.documentation.docstrings.DocStringFormat
-import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.psi.LanguageLevel
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
@@ -27,11 +18,11 @@ import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicInteger
 
 @PyEnvTestCase
-class PyDocstringFormatterCacheEnvTest {
+internal class PyDocstringFormatterCacheEnvTest {
+  private val sdkFixture by pySdkFixture()
 
   @Test
   fun `identical docstring is formatted by the real interpreter only once`(
-    @PythonBinaryPath python: PythonBinary,
     @TempDir tempDir: Path,
   ): Unit = timeoutRunBlocking {
     val cache = PyDocstringFormatterCache()
@@ -40,7 +31,7 @@ class PyDocstringFormatterCacheEnvTest {
     inputFile.write(INPUT)
 
     fun format(): String? = PyRuntimeDocstringFormatter.formatCached(
-      sdkHome = python.toString(),
+      sdkHome = sdkFixture.sdk.homePath!!,
       languageLevel = LanguageLevel.PYTHON312,
       format = DocStringFormat.REST,
       formatterFlags = emptyList(),
@@ -48,7 +39,7 @@ class PyDocstringFormatterCacheEnvTest {
       cache = cache,
     ) {
       formatterInvocations.incrementAndGet()
-      runBlockingMaybeCancellable { runRealFormatter(python, inputFile) }
+      runBlockingMaybeCancellable { runRealFormatter() }
     }
 
     val first = format()
@@ -61,14 +52,11 @@ class PyDocstringFormatterCacheEnvTest {
                             "The external formatter must run exactly once for identical input; the second call must be served from the cache")
   }
 
-  private suspend fun runRealFormatter(python: PythonBinary, inputFile: Path): String {
-    return ExecService().executeHelper(
-      python.asBinToExec(),
-      PyHelper("docstring_formatter.py"),
-      Args("--format", "rest", "--input", inputFile.toString()),
-      ExecOptions(env = mapOf(PYTHONPATH to PythonHelpersLocator.getCommunityHelpersRoot().resolve("py3only").toString())),
-    ).getOrThrow()
-  }
+  private fun runRealFormatter(): String? =
+    runExternalTool(PyRuntimeDocstringFormatter.ModuleOrSdk.TheSdk(sdkFixture.sdk),
+                    DocStringFormat.REST,
+                    INPUT,
+                    emptyList())
 
   companion object {
     private val INPUT = """

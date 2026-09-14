@@ -1,39 +1,64 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.documentation
 
 import com.google.gson.Gson
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.python.community.execService.Args
+import com.intellij.python.community.execService.ExecService
+import com.intellij.python.community.execService.python.PyHelper
+import com.intellij.python.community.execService.python.StdInProvider
+import com.intellij.python.sdk.backend.getPythonInfo
+import com.intellij.python.sdk.backend.pythonInterpreter
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PyPsiBundle
-import com.jetbrains.python.PythonHelper
+import com.jetbrains.python.Result
 import com.jetbrains.python.documentation.docstrings.DocStringFormat
 import com.jetbrains.python.psi.LanguageLevel
-import com.jetbrains.python.sdk.PySdkUtil
-import com.jetbrains.python.sdk.PySdkUtil.getLanguageLevelForSdk
 import com.jetbrains.python.sdk.PythonSdkType
+import com.jetbrains.python.sdk.executeHelper
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.VisibleForTesting
-import java.nio.file.Path
 
-object PyRuntimeDocstringFormatter {
-  fun runExternalTool(module: Module, format: DocStringFormat, input: String, formatterFlags: List<String>): String? {
-    val sdk = PythonSdkType.findLocalCPython(module) ?: return logSdkNotFound(format)
-    val languageLevel = getLanguageLevelForSdk(sdk)
-    if (languageLevel.isPython2) {
-      return logPy2NotSupported()
+internal object PyRuntimeDocstringFormatter {
+
+  private val helper = PyHelper("docstring_formatter.py", addDependency = true)
+
+  internal sealed interface ModuleOrSdk {
+    data class TheSdk(val sdk: Sdk) : ModuleOrSdk
+    data class TheModule(val module: Module) : ModuleOrSdk
+  }
+
+  @RequiresBackgroundThread
+  fun runExternalTool(moduleOrSdk: ModuleOrSdk, format: DocStringFormat, input: String, formatterFlags: List<String>): String? {
+    val sdk = when (moduleOrSdk) {
+      is ModuleOrSdk.TheSdk -> moduleOrSdk.sdk
+      is ModuleOrSdk.TheModule -> {
+        PythonSdkType.findLocalCPython(moduleOrSdk.module) ?: return logSdkNotFound(format)
+      }
     }
-    val sdkHome = sdk.homePath ?: return null
-
-    return formatCached(sdkHome, languageLevel, format, formatterFlags, input) {
-      runProcess(sdk, sdkHome, format, formatterFlags, input)
+    val languageLevel = sdk.pythonInterpreter().getPythonInfo().getOr {
+      LOG.debug { "Sdk $sdk is broken ${it.error}" }
+      return null
+    }.languageLevel
+    return if (languageLevel.isPython2) {
+      logPy2NotSupported()
+    }
+    else {
+      formatCached(sdk.homePath!!, languageLevel, format, formatterFlags, input) {
+        runProcess(sdk, format, formatterFlags, input)
+      }
     }
   }
 
-  private fun runProcess(sdk: Sdk, sdkHome: String, format: DocStringFormat, formatterFlags: List<String>, input: String): String? {
+  @RequiresBackgroundThread
+  private fun runProcess(sdk: Sdk, format: DocStringFormat, formatterFlags: List<String>, input: String): String? {
     val encodedInput = DEFAULT_CHARSET.encode(input)
     val data = ByteArray(encodedInput.limit()).also { encodedInput.get(it) }
     val arguments = formatterFlags.toMutableList().apply {
@@ -41,19 +66,26 @@ object PyRuntimeDocstringFormatter {
       add(format.formatterCommand)
     }
 
-    val commandLine = PythonHelper.DOCSTRING_FORMATTER
-      .newCommandLine(sdk, arguments)
-      .withCharset(DEFAULT_CHARSET)
-
-    LOG.debug("Command for launching docstring formatter: ${commandLine.commandLineString}")
-
-    val output = PySdkUtil.getProcessOutput(commandLine, Path.of(sdkHome).parent?.toString(),
-                                            null, 5000, data, false)
-
-    return if (output.checkSuccess(LOG)) {
-      output.stdout
+    val stdInProvider = StdInProvider(data = data) {
+      // If script started, but closed its input, it is 100% helper problem
+      LOG.error("Failed to write to helper input", it)
     }
-    else logScriptError(input)
+    val result = runBlockingMaybeCancellable {
+      ExecService().executeHelper(
+        sdk = sdk,
+        helper = helper,
+        helperArgs = Args(*arguments.toTypedArray()),
+        stdInProvider = stdInProvider
+      )
+    }
+
+    return when (result) {
+      is Result.Success -> result.result
+      is Result.Failure -> {
+        LOG.warn("Error ${result.error} for input:\n$input")
+        null
+      }
+    }
   }
 
   @VisibleForTesting
@@ -85,11 +117,6 @@ object PyRuntimeDocstringFormatter {
   private fun logSdkNotFound(format: DocStringFormat): String {
     LOG.warn("Python SDK for input formatter $format is not found")
     return logErrorToJsonBody(PyPsiBundle.message("QDOC.python.3.sdk.needed.to.render.docstrings"))
-  }
-
-  private fun logScriptError(input: String): String? {
-    LOG.warn("Malformed input or internal script error:\n$input")
-    return null
   }
 
   private val LOG: Logger by lazy { Logger.getInstance(PyRuntimeDocstringFormatter::class.java) }
