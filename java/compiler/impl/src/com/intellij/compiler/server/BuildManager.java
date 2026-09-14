@@ -96,6 +96,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.platform.backend.workspace.GlobalWorkspaceModelCache;
 import com.intellij.platform.backend.workspace.WorkspaceModelCache;
 import com.intellij.platform.eel.path.EelPath;
@@ -105,7 +106,6 @@ import com.intellij.platform.eel.provider.utils.EelPathUtils;
 import com.intellij.platform.eel.provider.utils.EelProjectUtils;
 import com.intellij.platform.eel.provider.utils.EelSystemFolderUtils;
 import com.intellij.platform.workspace.storage.InternalEnvironmentName;
-import com.intellij.ui.ComponentUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ConcurrencyUtil;
@@ -783,9 +783,10 @@ public final class BuildManager implements Disposable {
 
     Project project = null;
     if (!GraphicsEnvironment.isHeadless()) {
+      // This method runs on a background thread. Read the focus state only. Do not create an AWT component here.
       var window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
       if (window == null) {
-        window = ComponentUtil.getActiveWindow();
+        window = WindowManager.getInstance().getMostRecentFocusedWindow();
       }
       project = getProjectForComponent(window);
     }
