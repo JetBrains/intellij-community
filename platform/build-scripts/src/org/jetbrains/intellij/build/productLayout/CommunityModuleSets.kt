@@ -190,7 +190,6 @@ object CommunityModuleSets {
    * The microba date picker is a dependency of `intellij.platform.vcs.impl` in that plugin.
    */
   fun vcs(): ModuleSet = moduleSet("vcs") {
-    module("intellij.platform.vcs")
     module("intellij.libraries.microba")
 
     moduleSet(vcsShared())

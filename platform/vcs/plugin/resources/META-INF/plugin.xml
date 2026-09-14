@@ -12,6 +12,7 @@
   ]]></description>
   <vendor>JetBrains</vendor>
   <content namespace="jetbrains">
+    <module name="intellij.platform.vcs"/>
     <module name="intellij.platform.vcs.impl"/>
     <module name="intellij.platform.vcs.impl.exec"/>
     <module name="intellij.platform.vcs.impl.debugger"/>

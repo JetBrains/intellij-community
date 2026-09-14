@@ -21,23 +21,23 @@
   </dependencies>
   <!-- endregion -->
   <extensionPoints>
-    <extensionPoint name="checkinHandlerFactory"
+    <extensionPoint qualifiedName="com.intellij.checkinHandlerFactory"
                     interface="com.intellij.openapi.vcs.checkin.CheckinHandlerFactory"
                     dynamic="true"/>
-    <extensionPoint name="vcsCheckinHandlerFactory"
+    <extensionPoint qualifiedName="com.intellij.vcsCheckinHandlerFactory"
                     interface="com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory"
                     dynamic="true"/>
-    <extensionPoint name="checkoutListener"
+    <extensionPoint qualifiedName="com.intellij.checkoutListener"
                     interface="com.intellij.openapi.vcs.checkout.CheckoutListener"
                     dynamic="true"/>
-    <extensionPoint name="vcsAwareCheckoutListener"
+    <extensionPoint qualifiedName="com.intellij.vcsAwareCheckoutListener"
                     interface="com.intellij.openapi.vcs.checkout.VcsAwareCheckoutListener"
                     dynamic="true"/>
-    <extensionPoint name="checkoutCompletedListener"
+    <extensionPoint qualifiedName="com.intellij.checkoutCompletedListener"
                     interface="com.intellij.openapi.vcs.checkout.CheckoutListener"
                     dynamic="true"/>
 
-    <extensionPoint name="changeListManagerStatusProvider"
+    <extensionPoint qualifiedName="com.intellij.changeListManagerStatusProvider"
                     interface="com.intellij.openapi.vcs.changes.ChangeListManagerStatusProvider"
                     dynamic="true"/>
 

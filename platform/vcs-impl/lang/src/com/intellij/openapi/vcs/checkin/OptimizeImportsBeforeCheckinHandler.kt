@@ -14,12 +14,15 @@ import com.intellij.openapi.vcs.changes.ui.BooleanCommitOption
 import com.intellij.openapi.vcs.checkin.CheckinHandlerUtil.getPsiFiles
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class OptimizeOptionsCheckinHandlerFactory : CheckinHandlerFactory() {
-  override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler =
-    OptimizeImportsBeforeCheckinHandler(panel.project)
+  override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler {
+    if (PlatformUtils.isDataGrip()) return CheckinHandler.DUMMY
+    return OptimizeImportsBeforeCheckinHandler(panel.project)
+  }
 }
 
 @ApiStatus.Internal

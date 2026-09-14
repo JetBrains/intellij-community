@@ -13,12 +13,16 @@ import com.intellij.openapi.vcs.changes.ui.BooleanCommitOption
 import com.intellij.openapi.vcs.checkin.CheckinHandlerUtil.getPsiFiles
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.ide.productInfo.IdeProductInfo
+import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class RearrangeCheckinHandlerFactory : CheckinHandlerFactory() {
-  override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler =
-    RearrangeBeforeCheckinHandler(panel.project)
+  override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler {
+    if (PlatformUtils.isDataGrip()) return CheckinHandler.DUMMY
+    return RearrangeBeforeCheckinHandler(panel.project)
+  }
 }
 
 @ApiStatus.Internal
