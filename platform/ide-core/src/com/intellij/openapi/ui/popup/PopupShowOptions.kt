@@ -117,7 +117,7 @@ sealed interface PopupShowOptions {
 }
 
 @ApiStatus.Internal
-class PopupShowOptionsBuilder : PopupShowOptions {
+class PopupShowOptionsBuilder internal constructor() : PopupShowOptions {
   private var owner: Component? = null
   private var screenPoint: Point? = null
   private var considerForcedXY: Boolean = false
