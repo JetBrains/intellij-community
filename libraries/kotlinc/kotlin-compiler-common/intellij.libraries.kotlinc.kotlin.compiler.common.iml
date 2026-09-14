@@ -41,6 +41,5 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="module" module-name="intellij.java.frontback.psi" scope="RUNTIME" />
   </component>
 </module>

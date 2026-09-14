@@ -14,11 +14,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-kotlinc-kotlin-compiler-common-kotlinc-kotlin-compiler-common"],
-    runtime_deps = [
-        # do not sort,
-        "@lib//:libraries-kotlinc-kotlin-compiler-common-kotlinc-kotlin-compiler-common",
-        "//java/java-frontback-psi-api:frontback-psi",
-    ],
+    runtime_deps = ["@lib//:libraries-kotlinc-kotlin-compiler-common-kotlinc-kotlin-compiler-common"],
 )
 
 jvm_library(
@@ -32,11 +28,7 @@ jvm_library(
     module_name = "intellij.libraries.kotlinc.kotlin.compiler.common",
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-kotlinc-kotlin-compiler-common-kotlinc-kotlin-compiler-common"],
-    runtime_deps = [
-        # do not sort,
-        ":libraries-kotlinc-kotlin-compiler-common",
-        "//java/java-frontback-psi-api:frontback-psi_test_lib",
-    ],
+    runtime_deps = [":libraries-kotlinc-kotlin-compiler-common"],
 )
 ### auto-generated section `build intellij.libraries.kotlinc.kotlin.compiler.common` end
 
