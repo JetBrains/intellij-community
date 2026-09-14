@@ -15,7 +15,6 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.LambdaUtil;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFunctionalExpression;
 import com.intellij.psi.PsiMethod;
@@ -178,12 +177,8 @@ public class MarkerType {
       .elementsConsumer((methods, navigator) -> {
         if (!methods.isEmpty()) {
           boolean showMethodNames = !PsiUtil.allMethodsHaveSameSignature(methods.toArray(PsiMethod.EMPTY_ARRAY));
-          navigator.presentationProvider(element -> {
-            if (element instanceof PsiCompiledElement) {
-              ((PsiCompiledElement)element).getMirror(); // load decompiler in background thread
-            }
-            return GotoTargetHandler.computePresentation(element, showMethodNames);
-          });
+          // target computations performed on BG in NavigationService
+          navigator.presentationProvider(element -> GotoTargetHandler.computePresentation(element, showMethodNames));
         }
       })
       .navigate(e, DaemonBundle.message("navigation.title.super.method", method.getName()), method.getProject());

@@ -67,6 +67,12 @@ private fun CoroutineContext.currentProgressStep(): ProgressStep {
   return this[ProgressStepElement.Key]?.step ?: EmptyProgressStep
 }
 
+/**
+ * @return whether this context contains a progress step.
+ */
+@Internal
+fun CoroutineContext.hasProgressStep(): Boolean = this[ProgressStepElement.Key] != null
+
 private class ProgressStepElement(val step: ProgressStep) : AbstractCoroutineContextElement(Key), IntelliJContextElement {
   override fun produceChildElement(parentContext: CoroutineContext, isStructured: Boolean): IntelliJContextElement = this
 

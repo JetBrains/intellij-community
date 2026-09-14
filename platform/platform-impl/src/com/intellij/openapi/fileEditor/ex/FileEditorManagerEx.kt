@@ -204,6 +204,9 @@ abstract class FileEditorManagerEx : FileEditorManager() {
                         options: FileEditorOpenOptions = FileEditorOpenOptions()): FileEditorComposite
 
   /**
+   * Preloads the document before opening the file.
+   * Uses the current progress or creates a cancellable background task when loading is needed.
+   *
    * For external plugins use the [openFile] overload with [FileEditorOpenRequest] parameter.
    */
   @Internal

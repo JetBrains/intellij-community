@@ -10,6 +10,7 @@ import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.asContextElement
 import com.intellij.diagnostic.PerformanceWatcher
 import com.intellij.featureStatistics.fusCollectors.FileEditorCollector
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.ide.ui.UISettings
@@ -45,6 +46,7 @@ import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorBundle
 import com.intellij.openapi.editor.ScrollType
@@ -113,9 +115,11 @@ import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.fileEditor.FileEntry
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.coroutines.attachAsChildTo
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.util.coroutines.flow.zipWithNext
+import com.intellij.platform.util.progress.hasProgressStep
 import com.intellij.pom.Navigatable
 import com.intellij.ui.docking.DockContainer
 import com.intellij.ui.docking.DockManager
@@ -146,6 +150,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -183,6 +188,7 @@ import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import java.beans.PropertyChangeEvent
 import java.beans.PropertyChangeListener
+import java.lang.ref.Reference
 import java.util.EventListener
 import java.util.IdentityHashMap
 import java.util.concurrent.CompletableFuture
@@ -1118,7 +1124,32 @@ open class FileEditorManagerImpl(
         options = options.copy(reuseOpen = true),
       ) ?: FileEditorComposite.EMPTY
     }
+    val document = preloadDocumentUnderProgress(file)
+    return try {
+      doOpen(file, options)
+    }
+    finally {
+      Reference.reachabilityFence(document)
+    }
+  }
 
+  private suspend fun preloadDocumentUnderProgress(file: VirtualFile): Document? {
+    if (!file.isValid || file.isDirectory) {
+      return null
+    }
+    val fileDocumentManager = serviceAsync<FileDocumentManager>()
+    fileDocumentManager.getCachedDocument(file)?.let { return it }
+    return if (currentCoroutineContext().hasProgressStep()) {
+      fileDocumentManager.getOrLoadDocumentUnderProgress(file)
+    }
+    else {
+      withBackgroundProgress(project, IdeBundle.message("progress.title.preparing.file", file.name)) {
+        fileDocumentManager.getOrLoadDocumentUnderProgress(file)
+      }
+    }
+  }
+
+  private suspend fun doOpen(file: VirtualFile, options: FileEditorOpenOptions): FileEditorComposite {
     // an explicitly requested window takes precedence over the open mode; a disposed window falls back to the open mode
     val requestedWindow = options.window?.takeIf { !it.isDisposed }
     if (requestedWindow == null) {

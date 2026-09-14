@@ -358,8 +358,6 @@ private suspend fun activatePsiElementIfOpenAsync(element: PsiElement, searchFor
   val wasAlreadyOpen = fileEditorManager.isFileOpen(vFile)
   val openOptions = FileEditorOpenOptions(requestFocus = requestFocus, reuseOpen = searchForOpen)
   if (!wasAlreadyOpen) {
-    // suspend overload — releases EDT while composite.waitForAvailable() suspends,
-    // so the readAction { getDocument } inside the composite is cancellable.
     fileEditorManager.openFile(file = vFile, options = openOptions)
   }
 

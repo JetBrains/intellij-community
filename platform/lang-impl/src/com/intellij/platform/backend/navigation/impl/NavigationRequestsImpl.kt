@@ -9,6 +9,7 @@ import com.intellij.codeInsight.navigation.shouldOpenAsNative
 import com.intellij.ide.util.EditSourceUtil
 import com.intellij.openapi.editor.LazyRangeMarkerFactory
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.impl.withProgressReport
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
@@ -91,6 +92,9 @@ internal class NavigationRequestsImpl : NavigationRequests {
       }
       else -> {
         val project = element.project
+        val (offset, elementRange) = withProgressReport {
+          navigationElement.textOffset to navigationElement.textRange
+        }
         if (isSharedSourceSupportEnabled(project)) {
           val navigationFileViewProvider = navigationElement.containingFile?.viewProvider
 
@@ -104,19 +108,16 @@ internal class NavigationRequestsImpl : NavigationRequests {
             project = project,
             file = virtualFile,
             context = context,
-            // this triggers decompiler if [virtualFile] corresponds to a .class file,
-            // usually it is expected, because it should be run under progress bar
-            // see, for example, com.intellij.codeInsight.navigation.actions.IdeKt.navigateRequestLazy
-            offset = navigationElement.textOffset,
-            elementRange = navigationElement.textRange,
+            offset = offset,
+            elementRange = elementRange,
           )
         }
         else {
           sourceNavigationRequest(
             project = project,
             file = virtualFile,
-            offset = navigationElement.textOffset, // this triggers decompiler if [virtualFile] corresponds to a .class file
-            elementRange = navigationElement.textRange,
+            offset = offset,
+            elementRange = elementRange,
           )
         }
       }
