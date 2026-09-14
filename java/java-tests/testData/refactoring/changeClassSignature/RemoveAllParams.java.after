@@ -1,5 +1,6 @@
 class C {
   {
     C c = new C();
+    C d = new C();
   }
 }

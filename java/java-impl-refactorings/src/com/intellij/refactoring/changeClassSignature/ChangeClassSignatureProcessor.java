@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeClassSignature;
 
 import com.intellij.history.LocalHistory;
@@ -110,9 +110,6 @@ public class ChangeClassSignatureProcessor extends BaseRefactoringProcessor {
                                                  parent.getParent() instanceof PsiClassObjectAccessExpression)) {
           continue;
         }
-        if (parent instanceof PsiNewExpression newExpression && PsiDiamondType.hasDiamond(newExpression)) {
-          continue;
-        }
         if (parent instanceof PsiTypeElement || parent instanceof PsiNewExpression || parent instanceof PsiAnonymousClass ||
             parent instanceof PsiReferenceList) {
           if (!hadTypeParameters || referenceElement.getTypeParameters().length > 0) {
@@ -206,16 +203,26 @@ public class ChangeClassSignatureProcessor extends BaseRefactoringProcessor {
   }
 
   private void processUsage(UsageInfo usage, PsiTypeParameter[] original, boolean[] toRemove) throws IncorrectOperationException {
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(myClass.getProject());
     PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)usage.getElement();
     assert referenceElement != null : usage;
-    PsiSubstitutor usageSubstitutor = determineUsageSubstitutor(referenceElement);
-
     PsiReferenceParameterList referenceParameterList = referenceElement.getParameterList();
     assert referenceParameterList != null : referenceElement;
+    if (referenceElement.getParent() instanceof PsiNewExpression newExpression && PsiDiamondType.hasDiamond(newExpression)) {
+      boolean removeAll = true;
+      for (boolean remove : toRemove) {
+        removeAll &= remove;
+      }
+      if (removeAll) {
+        referenceParameterList.delete();
+      }
+      return;
+    }
+
+    PsiSubstitutor usageSubstitutor = determineUsageSubstitutor(referenceElement);
     PsiTypeElement[] oldValues = referenceParameterList.getTypeParameterElements();
     if (oldValues.length != original.length) return;
     List<PsiTypeElement> newValues = new ArrayList<>();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(myClass.getProject());
     for (final TypeParameterInfo info : myNewSignature) {
       if (info instanceof Existing) {
         newValues.add(oldValues[((Existing)info).getParameterIndex()]);
