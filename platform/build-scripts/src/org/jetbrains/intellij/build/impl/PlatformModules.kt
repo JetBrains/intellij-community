@@ -11,8 +11,8 @@ import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.DescriptorSearchPass
 import org.jetbrains.intellij.build.JarPackagerDependencyHelper
 import org.jetbrains.intellij.build.ModuleOutputProvider
-import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.PLATFORM_LOADER_JAR
+import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.UTIL_8_JAR
 import org.jetbrains.intellij.build.UTIL_JAR
 import org.jetbrains.intellij.build.UTIL_RT_JAR
@@ -106,7 +106,6 @@ private fun createPlatformLayout(
   // trove is not used by JB Client - fix RuntimeModuleRepositoryChecker assert
   addModule("trove.jar", sequenceOf(
     "intellij.platform.util.trove",
-    "intellij.platform.util.troveCompileOnly",
   ), productLayout = productLayout, layout = layout)
 
   // maven uses JDOM in an external process
