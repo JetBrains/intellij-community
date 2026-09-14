@@ -5,9 +5,6 @@ import com.intellij.openapi.editor.Caret
 import java.awt.geom.Point2D
 import kotlin.math.max
 
-internal const val CARET_REPAINT_RECTANGLE_MARGIN = 1
-internal const val CARET_CACHE_RECTANGLE_MARGIN = CARET_REPAINT_RECTANGLE_MARGIN + 1
-
 internal class CaretRectangle private constructor(
   val x: Double,
   val y: Double,

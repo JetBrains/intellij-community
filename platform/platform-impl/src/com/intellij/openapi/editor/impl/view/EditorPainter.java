@@ -112,8 +112,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-import static com.intellij.openapi.editor.impl.caret.model.CaretRectangleKt.CARET_REPAINT_RECTANGLE_MARGIN;
-
 //@ApiStatus.Internal
 public final class EditorPainter implements TextDrawingCallback {
 
@@ -123,6 +121,8 @@ public final class EditorPainter implements TextDrawingCallback {
   private static final Color CARET_DARK = Gray._0;
   private static final int CARET_DIRECTION_MARK_SIZE = 3;
   private static final Object ourCachedDot = ObjectUtils.sentinel("space symbol");
+  private static final int CARET_REPAINT_RECTANGLE_MARGIN = 1;
+  private static final int CARET_CACHE_RECTANGLE_MARGIN = CARET_REPAINT_RECTANGLE_MARGIN + 1;
 
   @ApiStatus.Internal
   public static final Stroke IME_COMPOSED_TEXT_UNDERLINE_STROKE = new BasicStroke(1, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0, new float[]{0, 2, 0, 2}, 0);
@@ -191,8 +191,8 @@ public final class EditorPainter implements TextDrawingCallback {
     new Session(myView, g).paintCaret(snapshot, yShift);
   }
 
-  Rectangle [] caretRectanglesForLocations(CaretRectangle @NotNull [] locations, int grow) {
-    return caretRectanglesForLocations(locations, grow, myView.getCaretRepaintMetrics());
+  Rectangle [] caretRectanglesForLocations(CaretRectangle @NotNull [] locations) {
+    return caretRectanglesForLocations(locations, CARET_CACHE_RECTANGLE_MARGIN, myView.getCaretRepaintMetrics());
   }
 
   void repaintCarets(@NotNull CaretCursorSnapshot snapshot) {

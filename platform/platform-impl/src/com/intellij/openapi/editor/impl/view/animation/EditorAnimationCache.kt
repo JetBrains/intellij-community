@@ -10,7 +10,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.impl.EditorImageUtil.createEditorImage
 import com.intellij.openapi.editor.impl.EditorImageUtil.createImageGraphics
 import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.openapi.editor.impl.caret.model.CARET_CACHE_RECTANGLE_MARGIN
 import com.intellij.openapi.editor.impl.caret.model.CaretRectangle
 import com.intellij.openapi.editor.impl.view.animation.EditorAnimationCacheStatistics.recordHit
 import com.intellij.openapi.editor.impl.view.animation.EditorAnimationCacheStatistics.recordMiss
@@ -199,7 +198,7 @@ internal class EditorAnimationCache(
    */
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun caretCacheRectangles(locations: List<CaretRectangle>): List<Rectangle2D> {
-    val caretRectangles = editor.view.caretRectanglesForLocations(locations.toTypedArray(), CARET_CACHE_RECTANGLE_MARGIN)
+    val caretRectangles = editor.view.caretRectanglesForLocations(locations.toTypedArray())
     return caretRectangles.map { rectangle -> rectangle.coerceAtLeastEmpty() }
   }
 

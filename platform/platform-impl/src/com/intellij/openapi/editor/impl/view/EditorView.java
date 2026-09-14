@@ -274,8 +274,8 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
 
   @ApiStatus.Internal
   @RequiresEdt
-  public Rectangle @NotNull [] caretRectanglesForLocations(CaretRectangle @NotNull [] locations, int grow) {
-    return myPainter.caretRectanglesForLocations(locations, grow);
+  public Rectangle @NotNull [] caretRectanglesForLocations(CaretRectangle @NotNull [] locations) {
+    return myPainter.caretRectanglesForLocations(locations);
   }
 
   private void clearContentAnimationCache() {
