@@ -241,6 +241,10 @@ jvm_library(
         "//python/python-test-env/junit5:junit5_test_lib",
         "//platform/util/coroutines",
         "//platform/util/coroutines:coroutines_test_lib",
+        "//platform/eel",
+        "//platform/eel:eel_test_lib",
+        "//platform/eel-nioFs",
+        "//platform/eel-nioFs:eel-nioFs_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.processOutput.frontend.tests` end

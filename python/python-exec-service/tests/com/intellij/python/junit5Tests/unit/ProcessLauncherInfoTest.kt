@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests.unit
 
+import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.community.execService.impl.processLaunchers.LaunchRequest
@@ -27,7 +28,7 @@ internal class ProcessLauncherInfoTest {
   fun infoReportsRemovedWorkDir(@TempDir tempDir: Path): Unit = timeoutRunBlocking {
     val workDir = (tempDir / "workDir").createDirectory()
     val launcher = createProcessLauncherOnEel(
-      BinOnEel(path = tempDir / "tool", workDir = workDir),
+      BinOnEel(path = tempDir / "tool", workDir = workDir.asEelPath()),
       LaunchRequest(scopeToBind = this, args = Args(), env = emptyMap(), usePty = null),
     )
     workDir.deleteExisting()

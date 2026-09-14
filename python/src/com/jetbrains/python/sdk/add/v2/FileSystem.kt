@@ -24,6 +24,7 @@ import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.environmentVariables
+import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.localEel
@@ -117,7 +118,9 @@ data class EelFileSystem(
   override val eelDescriptor: EelDescriptor = eelApi.descriptor
 
   override fun getBinaryToExec(path: PathHolder.Eel, workingDir: Path?): BinaryToExec {
-    return BinOnEel(path.path, workingDir)
+    // Only an absolute path names a directory on the eel. A caller that has no work directory passes a placeholder
+    // such as `Path.of(".")` or `Path.of("")`, and the eel must get no work directory for it.
+    return BinOnEel(path.path, workingDir?.takeIf { it.isAbsolute }?.asEelPath())
   }
 
   override fun createTargetRequest(): TargetEnvironmentRequest = LocalTargetEnvironmentRequest()

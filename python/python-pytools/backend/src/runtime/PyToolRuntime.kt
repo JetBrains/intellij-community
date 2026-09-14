@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.pytools.backend.runtime
 
+import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.community.execService.BinOnTarget
@@ -31,7 +32,7 @@ data class PyToolRuntime(
 
   fun withWorkingDirectory(workDirectoryPath: Path): PyToolRuntime {
     val binaryWithWorkingDirectory = when (binary) {
-      is BinOnEel -> binary.copy(workDir = workDirectoryPath)
+      is BinOnEel -> binary.copy(workDir = workDirectoryPath.asEelPath())
       is BinOnTarget -> binary.copy(workingDir = workDirectoryPath)
     }
     return copy(binary = binaryWithWorkingDirectory)

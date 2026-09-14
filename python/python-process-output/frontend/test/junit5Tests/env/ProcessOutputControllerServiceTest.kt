@@ -3,6 +3,7 @@ package com.intellij.python.junit5Tests.env
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.ide.CopyPasteManager
+import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.community.execService.ExecService
@@ -49,7 +50,7 @@ internal class ProcessOutputControllerServiceTest {
     @PythonBinaryPath python: PythonBinary,
   ): Unit = timeoutRunBlocking(5.minutes) {
     val service = projectFixture.get().service<ProcessOutputControllerService>()
-    val binOnEel = BinOnEel(python, cwd)
+    val binOnEel = BinOnEel(python, cwd.asEelPath())
     val fileContent = { id: Int ->
       """
         import sys
@@ -107,7 +108,7 @@ internal class ProcessOutputControllerServiceTest {
     @PythonBinaryPath python: PythonBinary,
   ): Unit = timeoutRunBlocking(5.minutes) {
     val service = projectFixture.get().service<ProcessOutputControllerService>()
-    val binOnEel = BinOnEel(python, cwd)
+    val binOnEel = BinOnEel(python, cwd.asEelPath())
 
     val process =
       binOnEel.runTestScriptFile(

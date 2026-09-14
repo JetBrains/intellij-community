@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.sdk.backend
 
+import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.eel.provider.utils.stderrString
@@ -66,9 +67,9 @@ suspend fun ModuleOrProject.toolExecutableWithBaseArgs(
                        ?: customPath
                        ?: findExecutableInPath(eelApi, executableName)
 
-  val workDir = workingDir
-                ?: moduleIfExists?.baseDir?.toNioPath()
-                ?: project.baseDir?.toNioPath()
+  val workDir = (workingDir
+                 ?: moduleIfExists?.baseDir?.toNioPath()
+                 ?: project.baseDir?.toNioPath())?.asEelPath()
 
   if (toolBinaryPath != null) {
     return PyResult.success(BinOnEel(toolBinaryPath, workDir = workDir) to emptyList())

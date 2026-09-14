@@ -12,7 +12,9 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.getShell
+import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.utils.EelProcessExecutionResult
 import com.intellij.platform.eel.provider.utils.stdoutString
 import com.intellij.platform.util.progress.reportRawProgress
@@ -54,10 +56,22 @@ sealed interface BinaryToExec
 
 /**
  * [path] on eel (Use it for anything but SSH).
- * [workDir] is pwd. As it should be on the same eel as [path] for most cases (except WSL), it is better not to set it at all.
+ *
+ * [workDir] is pwd. It is better not to set it at all.
+ * It is an [EelPath], so it is always absolute. A relative path belongs to no eel, and the platform resolves such a
+ * path against the current directory of the IDE process, not against the machine that runs [path].
+ * It must also sit on the same eel as [path]. The eel API maps no path between two machines, so it sends the work
+ * directory to the machine of [path] as it is.
+ *
  * Prefer full [path] over relative.
  */
-data class BinOnEel(val path: Path, internal val workDir: Path? = null) : BinaryToExec
+data class BinOnEel(val path: Path, internal val workDir: EelPath? = null) : BinaryToExec {
+  init {
+    require(workDir == null || workDir.descriptor == path.getEelDescriptor()) {
+      "The work directory $workDir and the binary $path are on two different eels"
+    }
+  }
+}
 
 /**
  * Legacy Targets-based approach. Do not use it, unless you know what you are doing
@@ -439,6 +453,6 @@ class Args(vararg initialArgs: String) {
 
 
 fun BinaryToExec.asGeneralCommandLine(): PyResult<GeneralCommandLine> = when (this) {
-  is BinOnEel -> PyResult.success(GeneralCommandLine(path.toString()).withWorkingDirectory(workDir))
+  is BinOnEel -> PyResult.success(GeneralCommandLine(path.toString()).withWorkingDirectory(workDir?.asNioPath()))
   is BinOnTarget -> PyResult.localizedError(message("py.exec.target.binaries.are.not.supported"))
 }
