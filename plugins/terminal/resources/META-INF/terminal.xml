@@ -1,4 +1,5 @@
 <idea-plugin>
+  <resource-bundle>messages.TerminalBundle</resource-bundle>
   <extensions defaultExtensionNs="com.intellij">
     <toolWindow id="Terminal" anchor="bottom" icon="com.intellij.terminal.icons.TerminalIcons.OpenTerminal_13x13"
                 factoryClass="org.jetbrains.plugins.terminal.TerminalToolWindowFactory"
