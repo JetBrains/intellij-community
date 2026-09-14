@@ -490,6 +490,11 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <directorySearchEngine implementation="com.intellij.find.impl.DefaultDirectorySearchEngine"/>
+
+    <directorySearchEngine implementation="com.intellij.find.impl.EelDirectorySearchEngine"/>
+    <registryKey defaultValue="false" key="find.in.files.eel.remote.search" restartRequired="false"
+                 description="Search remote directories through EEL in Find in Files"/>
+
     <applicationService serviceInterface="com.intellij.ide.RecentProjectsManager" open="true"
                         serviceImplementation="com.intellij.ide.AttachedModuleAwareRecentProjectsManager" preload="notHeadless"/>
     <applicationService serviceInterface="com.intellij.openapi.module.ModuleTypeManager" open="true"
