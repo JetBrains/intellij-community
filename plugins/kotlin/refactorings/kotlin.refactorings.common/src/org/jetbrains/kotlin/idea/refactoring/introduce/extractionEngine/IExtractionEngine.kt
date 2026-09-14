@@ -17,6 +17,7 @@ import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.ui.awt.RelativePoint
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.checkConflictsInteractively
 import org.jetbrains.kotlin.idea.refactoring.introduce.showErrorHint
@@ -135,6 +136,7 @@ abstract class IExtractionEngine<KotlinType,
             }
         }
 
+        @Suppress("HardCodedStringLiteral")
         val message = analysisResult.messages.joinToString("\n") { it.renderMessage() }
         when (analysisResult.status) {
             AnalysisResult.Status.CRITICAL_ERROR -> {

@@ -40,8 +40,7 @@ class AnalysisResult<KotlinType>(
             return this
         }
 
-        @Nls
-        fun renderMessage(): String {
+        fun renderMessage(): @Nls String {
             val message = KotlinBundle.message(
                 when (this) {
                     NO_EXPRESSION -> "cannot.refactor.no.expression"
@@ -59,9 +58,9 @@ class AnalysisResult<KotlinType>(
             )
 
             return additionalInfo?.let {
-                "$message\n\n${
+                "$message\n\n${ 
+                    @Suppress("HardCodedStringLiteral")
                     it.joinToString("\n") { msg ->
-                        @Suppress("HardCodedStringLiteral")
                         StringUtil.htmlEmphasize(msg)
                     }
                 }"

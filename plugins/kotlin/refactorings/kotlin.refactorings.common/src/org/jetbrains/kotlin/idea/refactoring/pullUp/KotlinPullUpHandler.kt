@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiNamedElement
 import com.intellij.refactoring.HelpID
@@ -103,5 +104,6 @@ class KotlinPullUpHandler : AbstractPullPushMembersHandler(
     }
 }
 
+@get:NlsContexts.DialogTitle
 @get:ApiStatus.Internal
 val PULL_MEMBERS_UP: String get() = RefactoringBundle.message("pull.members.up.title")

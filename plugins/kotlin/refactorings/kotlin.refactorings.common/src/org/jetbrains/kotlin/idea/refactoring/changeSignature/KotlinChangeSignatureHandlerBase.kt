@@ -15,6 +15,7 @@ import com.intellij.refactoring.HelpID
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.changeSignature.ChangeSignatureHandler
 import com.intellij.refactoring.util.CommonRefactoringUtil
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -44,7 +45,7 @@ import org.jetbrains.kotlin.utils.exceptions.checkWithAttachment
 import org.jetbrains.kotlin.utils.exceptions.withPsiEntry
 
 abstract class KotlinChangeSignatureHandlerBase : ChangeSignatureHandler {
-    protected enum class InapplicabilityKind(val description: String) {
+    protected enum class InapplicabilityKind(val description: @Nls String) {
         Varargs(KotlinBundle.message("error.cant.refactor.vararg.functions")),
         Library(KotlinBundle.message("error.hint.library.declarations.cannot.be.changed")),
         Synthetic(KotlinBundle.message("cannot.refactor.synthesized.function")),

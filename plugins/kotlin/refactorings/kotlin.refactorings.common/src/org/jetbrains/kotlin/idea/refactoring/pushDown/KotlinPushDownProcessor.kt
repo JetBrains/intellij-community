@@ -69,6 +69,7 @@ abstract class KotlinPushDownProcessor(
                 ?.let { "${it.text} $className" }
                 ?: className
             val message = KotlinBundle.message("text.0.have.no.inheritors.warning", classPresentableName)
+            @Suppress("HardCodedStringLiteral")
             val answer = Messages.showYesNoDialog(message.capitalize(), PUSH_MEMBERS_DOWN, Messages.getWarningIcon())
             if (answer == Messages.NO) return false
         }
