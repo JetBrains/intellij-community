@@ -57,8 +57,10 @@ internal class AutoSyncManager(private val icsManager: IcsManager) {
           doSyncOnAppExit()
         }
       }
-      runBlockingMaybeCancellable {
-        doSyncOnAppExit()
+      else {
+        runBlockingMaybeCancellable {
+          doSyncOnAppExit()
+        }
       }
       return
     }
