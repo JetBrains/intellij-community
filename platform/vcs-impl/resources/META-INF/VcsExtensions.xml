@@ -374,7 +374,15 @@
 
     <vcsAwareCheckoutListener implementation="com.intellij.openapi.vcs.checkout.RegisterMappingCheckoutListener"/>
 
-    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.vcs.VcsRemoteApiProvider"/>
+    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.vcs.VcsRemoteApiProvider"
+                                            apiInterfaces="com.intellij.platform.vcs.impl.shared.rpc.RemoteShelfApi,
+                                                           com.intellij.platform.vcs.impl.shared.rpc.RemoteShelfActionsApi,
+                                                           com.intellij.platform.vcs.impl.shared.rpc.ChangeListsApi,
+                                                           com.intellij.platform.vcs.impl.shared.rpc.VcsMappingsApi,
+                                                           com.intellij.platform.vcs.impl.shared.rpc.PartialChangesApi,
+                                                           com.intellij.platform.vcs.impl.shared.rpc.ChangesViewApi,
+                                                           com.intellij.platform.vcs.impl.shared.rpc.ChangesViewDiffApi,
+                                                           com.intellij.platform.vcs.impl.shared.rpc.ChangesViewInclusionModelApi"/>
     <vcs.impl.backend.treeNodeConverter implementation="com.intellij.vcs.shelf.ShelvedChangeListToEntityConverter"/>
     <vcs.impl.backend.treeNodeConverter implementation="com.intellij.vcs.shelf.TagNodeToEntityConverter"/>
     <vcs.impl.backend.treeNodeConverter implementation="com.intellij.vcs.shelf.ShelvedChangeNodeConverter"/>

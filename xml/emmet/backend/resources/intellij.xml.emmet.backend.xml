@@ -14,6 +14,7 @@
                              dynamic="true" provider="com.intellij.application.options.emmet.EmmetConfigurableProvider"/>
     <lookup.actionProvider implementation="com.intellij.codeInsight.template.emmet.completion.EmmetLookupActionProvider"/>
     <platform.rpc.backend.remoteApiProvider
-      implementation="com.intellij.codeInsight.template.emmet.rpc.EmmetAbbreviationBaloonRpcBackendProvider"/>
+      implementation="com.intellij.codeInsight.template.emmet.rpc.EmmetAbbreviationBaloonRpcBackendProvider"
+      apiInterfaces="com.intellij.xml.emmet.shared.EmmetAbbreviationBaloonRpc"/>
   </extensions>
 </idea-plugin>

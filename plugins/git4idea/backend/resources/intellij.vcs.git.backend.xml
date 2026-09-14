@@ -1030,7 +1030,12 @@
 
     <troubleInfoCollector implementation="git4idea.troubleshooting.GitTroubleInfoCollector"/>
 
-    <platform.rpc.backend.remoteApiProvider implementation="git4idea.remoteApi.GitApiProvider"/>
+    <platform.rpc.backend.remoteApiProvider implementation="git4idea.remoteApi.GitApiProvider"
+                                            apiInterfaces="com.intellij.vcs.git.rpc.GitWidgetApi,
+                                                           com.intellij.vcs.git.rpc.GitRepositoryApi,
+                                                           com.intellij.vcs.git.rpc.GitIncomingOutgoingStateApi,
+                                                           com.intellij.vcs.git.rpc.GitUiSettingsApi,
+                                                           com.intellij.vcs.git.rpc.GitOperationsApi"/>
 
     <uiDataRule implementation="git4idea.actions.branch.GitBackendBranchesWidgetUiDataRule"/>
 

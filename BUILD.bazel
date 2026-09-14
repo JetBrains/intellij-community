@@ -1179,6 +1179,8 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
+        "//platform/kernel/rpc.tests",
+        "//platform/kernel/rpc.tests:rpc.tests_test_lib",
     ],
 )
 ### auto-generated section `build intellij.idea.community.main.tests` end

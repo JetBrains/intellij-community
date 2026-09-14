@@ -18,6 +18,7 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.execution.serviceView.backend.BackendServiceViewRpcApiProvider"/>
+    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.execution.serviceView.backend.BackendServiceViewRpcApiProvider"
+                                            apiInterfaces="com.intellij.platform.execution.serviceView.splitApi.ServiceViewRpc"/>
   </extensions>
 </idea-plugin>

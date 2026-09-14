@@ -191,6 +191,28 @@ class PluginModelValidatorTest {
     """.trimIndent())
   }
 
+  @Test
+  fun `a lazy rpc extension must declare the id the registry routes by`(): Unit = runBlocking(Dispatchers.Default) {
+    val project = producePluginWithContentModule {
+      it.replace("</dependencies>", """
+        </dependencies>
+        <extensions defaultExtensionNs="com.intellij">
+          <platform.rpc.backend.remoteApiProvider implementation="plugin.module.Provider"/>
+          <platform.rpc.projectRemoteTopicListener implementation="plugin.module.Listener" topicId="plugin.topic"/>
+          <platform.rpc.applicationRemoteTopicListener implementation="plugin.module.AppListener" topicId=""/>
+        </extensions>
+      """)
+    }
+    val result = validatePluginModel(project, root, PluginValidationOptions(
+      referencedPluginIdsOfExternalPlugins = setOf("com.intellij.modules.lang")
+    ))
+    val messages = result.errors.map { it.message!!.lineSequence().first() }
+    assertThat(messages).containsExactlyInAnyOrder(
+      "Extension 'com.intellij.platform.rpc.backend.remoteApiProvider' with implementation 'plugin.module.Provider' has no 'apiInterfaces' attribute.",
+      "Extension 'com.intellij.platform.rpc.applicationRemoteTopicListener' with implementation 'plugin.module.AppListener' has no 'topicId' attribute.",
+    )
+  }
+
   private fun produceDependencyAndDependentPlugins(mutator: (String) -> String = { it }): JpsProject {
     val project = JpsElementFactory.getInstance().createModel().project
     createModuleWithXml(

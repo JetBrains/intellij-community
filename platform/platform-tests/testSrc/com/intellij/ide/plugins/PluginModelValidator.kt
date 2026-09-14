@@ -99,6 +99,13 @@ data class PluginValidationOptions(
   val externallyOverriddenServices: Set<String> = emptySet(),
 )
 
+/** The extension point FQN to the attribute that carries the id the RPC registry routes by. */
+private val lazyRpcExtensionAttributes: Map<String, String> = java.util.Map.of(
+  "com.intellij.platform.rpc.backend.remoteApiProvider", "apiInterfaces",
+  "com.intellij.platform.rpc.applicationRemoteTopicListener", "topicId",
+  "com.intellij.platform.rpc.projectRemoteTopicListener", "topicId",
+)
+
 /**
  * Runs [PluginModelValidator] on the specified [project] and returns the result.
  */
@@ -206,6 +213,10 @@ internal class PluginModelValidator(
     if (!validationOptions.skipServicesOverridesCheck) {
       checkServicesOverrides(descriptorFileInfos, RawPluginDescriptor::projectElementsContainer)
       checkServicesOverrides(descriptorFileInfos, RawPluginDescriptor::appElementsContainer)
+    }
+
+    for (descriptorFileInfo in descriptorFileInfos) {
+      checkLazyRpcExtensionAttributes(descriptorFileInfo)
     }
 
     // 3. check dependencies - we are aware about all modules now
@@ -326,6 +337,28 @@ internal class PluginModelValidator(
     }
 
     return PluginValidationResult(_errors, pluginIdToInfo)
+  }
+
+  /**
+   * The RPC registries route by the id in these attributes, so they construct an extension without the attribute at startup.
+   * See IJPL-254356.
+   */
+  private fun checkLazyRpcExtensionAttributes(descriptorFileInfo: DescriptorFileInfo) {
+    for ((extensionPointName, attribute) in lazyRpcExtensionAttributes) {
+      for (extension in descriptorFileInfo.descriptor.extensions.get(extensionPointName) ?: continue) {
+        if (extension.element?.attributes?.get(attribute).isNullOrBlank()) {
+          reportError(
+            """
+            |Extension '$extensionPointName' with implementation '${extension.implementation}' has no '$attribute' attribute.
+            |The platform constructs an extension without the attribute at startup, which loads the classes of the whole module.
+            |Add the attribute, see the KDoc of the extension interface for its value.
+            """.trimMargin(),
+            descriptorFileInfo.sourceModule,
+            mapOf("descriptorFile" to descriptorFileInfo.descriptorFile),
+          )
+        }
+      }
+    }
   }
 
   private fun getOpenServices(

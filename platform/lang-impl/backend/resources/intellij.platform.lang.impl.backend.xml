@@ -13,9 +13,12 @@
   <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
-    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.lang.impl.backend.IdeLanguageCustomizationApiProvider"/>
-    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.lang.impl.backend.GotoContributorsAvailabilityApiProvider"/>
-    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.lang.impl.backend.QuestionHintApiProvider"/>
+    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.lang.impl.backend.IdeLanguageCustomizationApiProvider"
+                                            apiInterfaces="com.intellij.find.impl.IdeLanguageCustomizationApi"/>
+    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.lang.impl.backend.GotoContributorsAvailabilityApiProvider"
+                                            apiInterfaces="com.intellij.ide.actions.searcheverywhere.GotoContributorsAvailabilityApi"/>
+    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.lang.impl.backend.QuestionHintApiProvider"
+                                            apiInterfaces="com.intellij.codeInsight.hint.QuestionHintApi"/>
 
     <intentionAction>
       <language/>

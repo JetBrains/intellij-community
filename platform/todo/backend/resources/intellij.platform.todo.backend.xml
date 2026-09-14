@@ -22,6 +22,7 @@
     <projectService serviceInterface="com.intellij.psi.impl.cache.TodoCacheManager"
                     serviceImplementation="com.intellij.psi.impl.cache.impl.IndexTodoCacheManagerImpl"
                     overrides="true"/>
-    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.todo.backend.rpc.TodoRemoteApiProvider"/>
+    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.todo.backend.rpc.TodoRemoteApiProvider"
+                                            apiInterfaces="com.intellij.ide.todo.rpc.TodoRemoteApi"/>
   </extensions>
 </idea-plugin>

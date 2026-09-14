@@ -28,7 +28,8 @@
     <registryKey key="switcher.presentation.update.debounce.interval.ms" defaultValue="300"
                  description="A time period to skip before updating name/color/etc for the next file batch for the switcher/recent files model, measured in millis"/>
 
-    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.recentFiles.backend.RecentFilesBackendApiProvider"/>
+    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.recentFiles.backend.RecentFilesBackendApiProvider"
+                                            apiInterfaces="com.intellij.platform.recentFiles.shared.FileSwitcherApi"/>
     <vfs.asyncListener id="RecentFileRemovalListener" implementation="com.intellij.platform.recentFiles.backend.RecentFilesVfsListener"/>
     <postStartupActivity implementation="com.intellij.platform.recentFiles.backend.BackendRecentFileModelSynchronizer"/>
   </extensions>

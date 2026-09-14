@@ -16,7 +16,9 @@
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.platform.project.ProjectEntitiesStorage"
                         serviceImplementation="com.intellij.platform.project.backend.BackendProjectEntitiesStorage"/>
-    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.project.backend.module.ModuleStateApiProvider"/>
-    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.project.backend.OpenFileChooserApiProvider"/>
+    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.project.backend.module.ModuleStateApiProvider"
+                                            apiInterfaces="com.intellij.platform.project.module.ModuleStateApi"/>
+    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.project.backend.OpenFileChooserApiProvider"
+                                            apiInterfaces="com.intellij.platform.project.OpenFileChooserApi"/>
   </extensions>
 </idea-plugin>

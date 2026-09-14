@@ -1052,7 +1052,8 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij.platform">
-    <rpc.backend.remoteApiProvider implementation="com.jetbrains.python.sdk.evolution.PyEvoSdkApiProvider"/>
+    <rpc.backend.remoteApiProvider implementation="com.jetbrains.python.sdk.evolution.PyEvoSdkApiProvider"
+                                   apiInterfaces="com.intellij.python.sdk.common.evolution.PyEvoSdkApi"/>
   </extensions>
 
   <extensions defaultExtensionNs="Pythonid">

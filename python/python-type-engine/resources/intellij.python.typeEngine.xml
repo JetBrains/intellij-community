@@ -55,7 +55,8 @@
 
 
   <extensions defaultExtensionNs="com.intellij">
-    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.python.typeEngine.PyTypeEngineApiProvider"/>
+    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.python.typeEngine.PyTypeEngineApiProvider"
+                                            apiInterfaces="com.intellij.python.typeEngine.common.PyTypeEngineApi"/>
 
     <registryKey key="pycharm.type.engine" defaultValue="true"
                  description="Enable PyCharm type engine configuration"/>

@@ -7,6 +7,21 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
     <platform.rpc.backend.remoteApiProvider
-      implementation="com.intellij.platform.debugger.impl.backend.BackendXDebuggerRemoteApiProviders"/>
+      implementation="com.intellij.platform.debugger.impl.backend.BackendXDebuggerRemoteApiProviders"
+      apiInterfaces="com.intellij.platform.debugger.impl.rpc.XDebuggerValueLookupHintsRemoteApi,
+                     com.intellij.platform.debugger.impl.rpc.XDebuggerEvaluatorApi,
+                     com.intellij.platform.debugger.impl.rpc.XDebuggerManagerApi,
+                     com.intellij.platform.debugger.impl.rpc.XDebugSessionApi,
+                     com.intellij.platform.debugger.impl.rpc.XDebugSessionTabApi,
+                     com.intellij.platform.debugger.impl.rpc.XDebuggerHotSwapApi,
+                     com.intellij.platform.debugger.impl.rpc.XDebuggerValueModifierApi,
+                     com.intellij.platform.debugger.impl.rpc.XDebuggerValueMarkupApi,
+                     com.intellij.platform.debugger.impl.rpc.XDebuggerNavigationApi,
+                     com.intellij.platform.debugger.impl.rpc.XValueApi,
+                     com.intellij.platform.debugger.impl.rpc.XExecutionStackApi,
+                     com.intellij.platform.debugger.impl.rpc.XBreakpointApi,
+                     com.intellij.platform.debugger.impl.rpc.XBreakpointTypeApi,
+                     com.intellij.platform.debugger.impl.rpc.XDependentBreakpointManagerApi,
+                     com.intellij.platform.debugger.impl.rpc.XMixedModeApi"/>
   </extensions>
 </idea-plugin>

@@ -31,7 +31,8 @@
   <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
-    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.searchEverywhere.backend.impl.SeRemoteApiProvider"/>
+    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.searchEverywhere.backend.impl.SeRemoteApiProvider"
+                                            apiInterfaces="com.intellij.platform.searchEverywhere.impl.SeRemoteApi"/>
 
     <uiDataRule implementation="com.intellij.platform.searchEverywhere.backend.impl.SeUiDataRule"/>
 

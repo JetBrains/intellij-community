@@ -19,6 +19,7 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.ide.nonModalWelcomeScreen.backend.BackendWelcomeScreenFeatureApiProvider"/>
+    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.ide.nonModalWelcomeScreen.backend.BackendWelcomeScreenFeatureApiProvider"
+                                            apiInterfaces="com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenFeatureApi"/>
   </extensions>
 </idea-plugin>

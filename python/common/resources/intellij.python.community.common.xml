@@ -15,7 +15,8 @@
                     interface="com.intellij.python.community.common.tools.spi.ToolIdToIconMapper"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
-    <platform.rpc.projectRemoteTopicListener implementation="com.intellij.python.community.common.sdk.PythonSdkAvailableTopicListener"/>
+    <platform.rpc.projectRemoteTopicListener implementation="com.intellij.python.community.common.sdk.PythonSdkAvailableTopicListener"
+                                             topicId="PythonSdkAvailableTopic"/>
     <registryKey key="python.toolwindows.available.at.startup"
                  defaultValue="false"
                  restartRequired="false"

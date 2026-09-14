@@ -12,6 +12,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <platform.rpc.projectRemoteTopicListener
-      implementation="com.intellij.codeInsight.template.emmet.EmmetAbbreviationBalloonListener"/>
+      implementation="com.intellij.codeInsight.template.emmet.EmmetAbbreviationBalloonListener"
+      topicId="emmet.showAbbreviationBaloon"/>
   </extensions>
 </idea-plugin>
