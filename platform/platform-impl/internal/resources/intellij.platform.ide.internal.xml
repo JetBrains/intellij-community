@@ -65,7 +65,7 @@
                         serviceImplementation="com.intellij.internal.statistic.notification.StatisticsNotificationManagerImpl"/>
 
     <applicationService serviceInterface="com.intellij.internal.statistic.eventLog.StatisticsRegionSettingsService"
-                        serviceImplementation="com.intellij.internal.statistic.StatisticsRegionSettingsServiceImpl" preload="notLightEdit"/>
+                        serviceImplementation="com.intellij.internal.statistic.StatisticsRegionSettingsServiceImpl"/>
 
     <statistics.validation.customValidationRule
       implementation="com.intellij.internal.statistic.collectors.fus.FacetTypeUsageCollector$FacetTypeUtilValidator"/>

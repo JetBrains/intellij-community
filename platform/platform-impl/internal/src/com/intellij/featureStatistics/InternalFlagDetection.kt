@@ -6,24 +6,25 @@ import com.intellij.ide.plugins.PluginManager
 import com.intellij.internal.statistic.collectors.fus.project.isIdeaProject
 import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogMetadataSettingsPersistence
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 
 internal class InternalFlagDetection : ProjectActivity {
-  private val internalPluginIds = setOf(
-    "com.jetbrains.intellij.api.watcher",
-    "com.jetbrains.idea.safepush",
-    "com.intellij.internalTools",
-    "com.intellij.sisyphus", // exception analyzer
-  )
-
   override suspend fun execute(project: Project) {
-    if (EventLogMetadataSettingsPersistence.getInstance().isInternal) return
+    val metadataSettingsPersistence = serviceAsync<EventLogMetadataSettingsPersistence>()
+    if (metadataSettingsPersistence.isInternal) return
 
     val isMonorepo = isIdeaProject(project)
 
     val isLicensedToJetBrains = EAPUsageCollector.isJBTeam()
+
+    val internalPluginIds = setOf(
+      "com.jetbrains.intellij.api.watcher",
+      "com.jetbrains.idea.safepush",
+      "com.intellij.internalTools"
+    )
 
     // detect plugins
     val internalPluginsDetected = internalPluginIds.any { pluginId ->
@@ -33,6 +34,6 @@ internal class InternalFlagDetection : ProjectActivity {
     val fusTest = StatisticsUploadAssistant.isTestStatisticsEnabled()
 
     // store
-    EventLogMetadataSettingsPersistence.getInstance().isInternal = isMonorepo || isLicensedToJetBrains || internalPluginsDetected || fusTest
+    metadataSettingsPersistence.isInternal = isMonorepo || isLicensedToJetBrains || internalPluginsDetected || fusTest
   }
 }
