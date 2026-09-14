@@ -75,15 +75,25 @@ internal fun createInvisibleLink(
   hyperlinkInfo,
 ).also { it.isInvisibleLink = true }
 
+/**
+ * Creates the file path filter for the terminal session of [scope],
+ * or returns `null` if generic file hyperlinks are disabled.
+ */
+@ApiStatus.Internal
+fun createTerminalGenericFileFilter(project: Project, scope: TerminalFilterScope): TerminalGenericFileFilter? {
+  if (!Registry.`is`("terminal.generic.hyperlinks", false)) return null
+  val filterContext = scope.filterContext.takeIf {
+    Registry.`is`("terminal.generic.hyperlinks.for.relative.path", true)
+  }
+  return TerminalGenericFileFilter(project, filterContext, LocalFileSystem.getInstance())
+}
+
 internal class TerminalGenericFileFilterProvider : ConsoleFilterProviderEx {
   override fun getDefaultFilters(project: Project, scope: GlobalSearchScope): Array<out Filter> {
-    if (scope is TerminalFilterScope && Registry.`is`("terminal.generic.hyperlinks", false)) {
-      val filterContext = scope.filterContext.takeIf {
-        Registry.`is`("terminal.generic.hyperlinks.for.relative.path", true)
-      }
-      return arrayOf(TerminalGenericFileFilter(project, filterContext, LocalFileSystem.getInstance()))
-    }
-    return emptyArray()
+    // In the hover mode, TerminalHoverHyperlinkFilterProvider provides the same links for the hovered line only.
+    if (scope !is TerminalFilterScope || Registry.`is`("terminal.hyperlinks.on.hover", true)) return emptyArray()
+    val filter = createTerminalGenericFileFilter(project, scope) ?: return emptyArray()
+    return arrayOf(filter)
   }
 
   override fun getDefaultFilters(project: Project): Array<out Filter?> = emptyArray()

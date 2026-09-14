@@ -140,6 +140,7 @@
     <extensionPoint qualifiedName="com.intellij.projectTaskRunner" interface="com.intellij.task.ProjectTaskRunner" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.executionTargetProvider" interface="com.intellij.execution.ExecutionTargetProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.consoleFilterProvider" interface="com.intellij.execution.filters.ConsoleFilterProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.invisibleHyperlinkFilterProvider" interface="com.intellij.execution.filters.InvisibleHyperlinkFilterProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.consoleInputFilterProvider" interface="com.intellij.execution.filters.ConsoleInputFilterProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.consoleActionsPostProcessor" interface="com.intellij.execution.actions.ConsoleActionsPostProcessor" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.configurationProducer" interface="com.intellij.execution.junit.RuntimeConfigurationProducer" dynamic="true"/>

@@ -3,6 +3,7 @@
 *:com.intellij.execution.impl.EditorTextDecorationApplier
 - a:addDecorations(java.util.Collection):V
 - a:getHoveredHyperlink():com.intellij.execution.impl.HyperlinkDecoration
+- a:getMouseHoveredTextOffset():kotlinx.coroutines.flow.StateFlow
 - a:removeDecorations(java.util.Collection):V
 *:com.intellij.execution.impl.EditorTextDecorationApplierBuilder
 - a:getConsumeOnlyOnCtrlClick():Z

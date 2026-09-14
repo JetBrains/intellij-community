@@ -1,5 +1,6 @@
 package com.intellij.terminal.frontend.view.hyperlinks
 
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.execution.impl.EditorTextDecoration
 import com.intellij.execution.impl.EditorTextDecorationApplier
 import com.intellij.execution.impl.buildHighlighting
@@ -77,16 +78,18 @@ fun installHyperlinksProcessing(
   // The modification stamp of the most recent highlighting task whose
   // `TerminalHyperlinksOutputEvent.TaskFinished` event has been observed.
   val lastFinishedTaskStamp = MutableStateFlow(0L)
+  // The number of processed hover states, see installInvisibleHyperlinksOnHover().
+  val processedHovers = MutableStateFlow(0L)
 
   val sessionDeferred = coroutineScope.async(CoroutineName("createHyperlinksSession")) {
     createHyperlinksSession(project, eelDescriptor, coroutineScope.childScope("FrontendTerminalHyperlinksSession"))
   }
 
   coroutineScope.launch(CoroutineName("processHyperlinks")) {
-    processHyperlinks(outputModel, sessionModel, sessionDeferred, decorationApplier, lastFinishedTaskStamp)
+    processHyperlinks(outputModel, sessionModel, sessionDeferred, decorationApplier, lastFinishedTaskStamp, processedHovers)
   }
 
-  return FrontendTerminalHyperlinkFacade(sessionDeferred, decorationApplier, lastFinishedTaskStamp)
+  return FrontendTerminalHyperlinkFacade(sessionDeferred, decorationApplier, lastFinishedTaskStamp, processedHovers)
 }
 
 private suspend fun processHyperlinks(
@@ -95,9 +98,23 @@ private suspend fun processHyperlinks(
   sessionDeferred: Deferred<TerminalHyperlinksSession>,
   applier: EditorTextDecorationApplier,
   lastFinishedTaskStamp: MutableStateFlow<Long>,
+  processedHovers: MutableStateFlow<Long>,
 ) = coroutineScope {
   val scope = this
   val session = sessionDeferred.await()
+  val onLinkClicked: (TerminalHyperlinkId, EditorMouseEvent) -> Unit = { id, mouseEvent ->
+    scope.launch {
+      try {
+        session.handleHyperlinkClick(TerminalHyperlinkClickedEvent(id, mouseEvent))
+      }
+      catch (e: Exception) {
+        rethrowControlFlowException(e)
+        LOG.warn("Failed to follow the hyperlink $id", e)
+      }
+    }
+  }
+
+  installInvisibleHyperlinksOnHover(outputModel, applier, session, onLinkClicked, processedHovers, scope)
 
   val outputModelChangesTracker = TerminalOutputModelChangesTracker(outputModel, parentDisposable = this.asDisposable())
 
@@ -114,11 +131,7 @@ private suspend fun processHyperlinks(
       hyperlinkUpdatesChannel = session.hyperlinkUpdatesChannel,
       inputEventsSink = session.inputEventsSink,
       lastFinishedTaskStamp = lastFinishedTaskStamp,
-      onLinkClicked = { id, mouseEvent ->
-        scope.launch {
-          session.handleHyperlinkClick(TerminalHyperlinkClickedEvent(id, mouseEvent))
-        }
-      }
+      onLinkClicked = onLinkClicked,
     )
   }
 }
@@ -372,7 +385,7 @@ private fun processHyperlinksUpdatedEvent(
   applier.addDecorations(decorations)
 }
 
-private fun TerminalFilterResultInfo.toEditorDecoration(
+internal fun TerminalFilterResultInfo.toEditorDecoration(
   outputModel: TerminalOutputModel,
   onLinkClicked: (TerminalHyperlinkId, EditorMouseEvent) -> Unit,
 ): EditorTextDecoration? {

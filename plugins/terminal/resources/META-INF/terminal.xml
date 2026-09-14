@@ -68,6 +68,9 @@
                   Open a new terminal after enabling this option to take effect."/>
     <registryKey key="terminal.generic.hyperlinks.for.relative.path" defaultValue="true"
                  description="Show generic file hyperlinks for relative paths in the reworked terminal. Requires enabled `terminal.generic.hyperlinks`."/>
+    <registryKey key="terminal.hyperlinks.on.hover" defaultValue="true"
+                 description="Compute invisible file hyperlinks in the reworked terminal only for the line under the mouse pointer.
+                  When disabled, they are computed for every output line. Open a new terminal after changing this option to take effect."/>
     <registryKey key="terminal.minimal.document.edits" defaultValue="true"
                  description="When updating the terminal document, try to perform minimal edits,
                   to preserve range markers (hyperlink highlighters) over unchanged lines so they blink less.

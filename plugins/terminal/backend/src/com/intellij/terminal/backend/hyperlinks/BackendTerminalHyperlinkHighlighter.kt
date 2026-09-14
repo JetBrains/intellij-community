@@ -3,9 +3,7 @@
 package com.intellij.terminal.backend.hyperlinks
 
 import com.intellij.execution.filters.CompositeFilter
-import com.intellij.execution.filters.Filter
 import com.intellij.execution.impl.HypertextInput
-import com.intellij.execution.impl.InlayProvider
 import com.intellij.execution.impl.applyToLineRange
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.UI
@@ -27,15 +25,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.launch
-import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinkId
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalOutputContentUpdate
 import org.jetbrains.plugins.terminal.hyperlinks.filter.CompositeFilterWrapper
 import org.jetbrains.plugins.terminal.hyperlinks.session.TerminalFilterResultInfoDto
-import org.jetbrains.plugins.terminal.hyperlinks.session.TerminalHighlightingInfoDto
-import org.jetbrains.plugins.terminal.hyperlinks.session.TerminalHyperlinkInfoDto
 import org.jetbrains.plugins.terminal.hyperlinks.session.TerminalHyperlinksOutputEvent
-import org.jetbrains.plugins.terminal.hyperlinks.session.TerminalInlayInfoDto
-import org.jetbrains.plugins.terminal.hyperlinks.session.toDto
 import org.jetbrains.plugins.terminal.view.TerminalLineIndex
 import org.jetbrains.plugins.terminal.view.TerminalOffset
 import java.awt.event.MouseEvent
@@ -46,10 +39,9 @@ import javax.swing.JLabel
 
 internal class BackendTerminalHyperlinkHighlighter(
   private val filterWrapper: CompositeFilterWrapper,
+  private val hyperlinkId: AtomicLong,
   coroutineScope: CoroutineScope,
 ) {
-
-  private val hyperlinkId = AtomicLong()
 
   // The state is only modified from the model coroutine but can be read concurrently.
   private val currentTaskState = MutableStateFlow(TaskState(null, null))
@@ -452,79 +444,11 @@ private class HyperlinkProcessor(
         val relativeEnd = (endLine.toAbsolute() - task.startLine.toAbsolute()).toInt()
         filter.applyToLineRange(hypertext, relativeStart, relativeEnd) { applyResult ->
           checkCanceled()
-          val hyperlinks = applyResult.filterResult?.resultItems?.flatMap { createHyperlinkOrHighlighting(task, it) } ?: emptyList()
+          val hyperlinks = applyResult.filterResult?.resultItems?.flatMap { it.toFilterResultDtos(hyperlinkId, task::absoluteOffsetOf) } ?: emptyList()
           results.addAll(hyperlinks)
         }
       }
     }
-
-  private fun createHyperlinkOrHighlighting(
-    task: HighlightTask,
-    resultItem: Filter.ResultItem,
-  ): List<TerminalFilterResultInfoDto> {
-    val hyperlinkInfo = resultItem.hyperlinkInfo
-    val highlightAttributes = resultItem.highlightAttributes
-    val notInlayResult = when {
-      hyperlinkInfo != null -> TerminalHyperlinkInfoDto(
-        id = TerminalHyperlinkId(hyperlinkId.incrementAndGet()),
-        hyperlinkInfo = hyperlinkInfo,
-        absoluteStartOffset = task.absoluteOffsetOf(resultItem.highlightStartOffset),
-        absoluteEndOffset = task.absoluteOffsetOf(resultItem.highlightEndOffset),
-        style = highlightAttributes?.toDto(),
-        followedStyle = resultItem.followedHyperlinkAttributes?.toDto(),
-        hoveredStyle = resultItem.hoveredHyperlinkAttributes?.toDto(),
-        isInvisibleLink = resultItem.isInvisibleLink,
-        layer = resultItem.highlighterLayer,
-      )
-      highlightAttributes != null -> TerminalHighlightingInfoDto(
-        id = TerminalHyperlinkId(hyperlinkId.incrementAndGet()),
-        absoluteStartOffset = task.absoluteOffsetOf(resultItem.highlightStartOffset),
-        absoluteEndOffset = task.absoluteOffsetOf(resultItem.highlightEndOffset),
-        style = highlightAttributes.toDto(),
-        layer = resultItem.highlighterLayer,
-      )
-      else -> null
-    }
-    val inlayResult = (resultItem as? InlayProvider)?.let { inlayProvider ->
-      TerminalInlayInfoDto(
-        id = TerminalHyperlinkId(hyperlinkId.incrementAndGet()),
-        absoluteStartOffset = task.absoluteOffsetOf(resultItem.highlightStartOffset),
-        absoluteEndOffset = task.absoluteOffsetOf(resultItem.highlightEndOffset),
-        inlayProvider = inlayProvider,
-      )
-    }
-    return listOfNotNull(notInlayResult, inlayResult)
-  }
-}
-
-private class HypertextFromCharSequenceAdapter(private val chars: CharSequence) : HypertextInput {
-  private val lineStartOffsets: IntArray = run {
-    val lineCount = chars.count { it == '\n' } + 1
-    val starts = IntArray(lineCount)
-    var idx = 1
-    chars.forEachIndexed { i, c ->
-      if (c == '\n') {
-        starts[idx++] = i + 1
-      }
-    }
-    starts
-  }
-
-  override val lineCount: Int
-    get() = lineStartOffsets.size
-
-  override fun getLineStartOffset(lineIndex: Int): Int = lineStartOffsets[lineIndex]
-
-  override fun getLineText(lineIndex: Int): String {
-    val start = lineStartOffsets[lineIndex]
-    return if (lineIndex + 1 < lineStartOffsets.size) {
-      val end = lineStartOffsets[lineIndex + 1]
-      chars.subSequence(start, end).toString()  // with line break at the end
-    }
-    else {
-      chars.subSequence(start, chars.length).toString() + "\n"
-    }
-  }
 }
 
 /**

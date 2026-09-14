@@ -19,6 +19,8 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.util.SlowOperations
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus
 import java.awt.event.MouseEvent
 import kotlin.math.abs
@@ -54,6 +56,11 @@ sealed interface EditorTextDecorationApplier {
    * Returns the currently hovered hyperlink, if any.
    */
   fun getHoveredHyperlink(): HyperlinkDecoration?
+
+  /**
+   * The document offset under the mouse pointer, or `null` when the pointer is not over text.
+   */
+  val mouseHoveredTextOffset: StateFlow<Int?>
 }
 
 /**
@@ -357,6 +364,7 @@ private class EditorTextDecorationApplierImpl(
   private val inlaysById = hashMapOf<EditorTextDecorationId, com.intellij.openapi.editor.Inlay<*>>()
   private val hyperlinkInteraction = EditorHyperlinkInteraction(editor, MyEffectSupplier(), parentDisposable)
   private var hoveredHyperlink: HyperlinkDecoration? = null
+  private var lastMouseMovedEvent: EditorMouseEvent? = null
 
   init {
     editor.addEditorMouseListener(MyMouseListener(), parentDisposable)
@@ -380,15 +388,40 @@ private class EditorTextDecorationApplierImpl(
       }
     }
     addInlays(inlays)
+    refreshHoveredHyperlink()
   }
 
   override fun removeDecorations(decorationIds: Collection<EditorTextDecorationId>) {
     for (id in decorationIds) {
       removeDecoration(id)
     }
+    if (hoveredHyperlink != null) {
+      refreshHoveredHyperlink()
+    }
   }
 
   override fun getHoveredHyperlink(): HyperlinkDecoration? = hoveredHyperlink
+
+  override val mouseHoveredTextOffset: StateFlow<Int?>
+    field = MutableStateFlow<Int?>(null)
+
+  /** Re-evaluates the hovered hyperlink after a decoration change, as if the pointer moved in place. */
+  private fun refreshHoveredHyperlink() {
+    val event = lastMouseMovedEvent ?: return
+    updateHoveredHyperlink(event)
+  }
+
+  private fun updateHoveredHyperlink(e: EditorMouseEvent) {
+    val highlightedLink = findDecoration(e)
+    if (highlightedLink?.link?.action == null) {
+      hyperlinkInteraction.linkHovered(null, e)
+      hoveredHyperlink = null
+    }
+    else {
+      hyperlinkInteraction.linkHovered(highlightedLink.highlighter, e)
+      hoveredHyperlink = highlightedLink.link
+    }
+  }
 
   private fun addHyperlinkOrHighlighting(decoration: HyperlinkOrHighlightingImpl) {
     editor.markupModel.addRangeHighlighterAndChangeAttributes(
@@ -435,8 +468,8 @@ private class EditorTextDecorationApplierImpl(
   }
 
   private fun findDecoration(event: EditorMouseEvent): HighlightedTextDecoration? {
-    if (event.area != EditorMouseEventArea.EDITING_AREA || !event.isOverText) return null
-    return findDecoration(event.offset)
+    val offset = event.hoveredOffsetOrNull() ?: return null
+    return findDecoration(offset)
   }
 
   private fun findDecoration(offset: Int): HighlightedTextDecoration? {
@@ -513,6 +546,8 @@ private class EditorTextDecorationApplierImpl(
     }
 
     override fun mouseExited(event: EditorMouseEvent) {
+      lastMouseMovedEvent = null
+      mouseHoveredTextOffset.value = null
       hyperlinkInteraction.linkHovered(null, event)
       hoveredHyperlink = null
     }
@@ -520,15 +555,9 @@ private class EditorTextDecorationApplierImpl(
 
   private inner class MyMouseMotionListener : EditorMouseMotionListener {
     override fun mouseMoved(e: EditorMouseEvent) {
-      val highlightedLink = findDecoration(e)
-      if (highlightedLink?.link?.action == null) {
-        hyperlinkInteraction.linkHovered(null, e)
-        hoveredHyperlink = null
-      }
-      else {
-        hyperlinkInteraction.linkHovered(highlightedLink.highlighter, e)
-        hoveredHyperlink = highlightedLink.link
-      }
+      lastMouseMovedEvent = e
+      mouseHoveredTextOffset.value = e.hoveredOffsetOrNull()
+      updateHoveredHyperlink(e)
     }
 
     override fun mouseDragged(e: EditorMouseEvent) {
@@ -552,6 +581,10 @@ private class EditorTextDecorationApplierImpl(
 }
 
 private data class HighlightedTextDecoration(val link: HyperlinkOrHighlightingImpl, val highlighter: RangeHighlighterEx)
+
+/** Returns the document offset under the pointer, or `null` when the pointer is not over text. */
+private fun EditorMouseEvent.hoveredOffsetOrNull(): Int? =
+  if (area == EditorMouseEventArea.EDITING_AREA && isOverText) offset else null
 
 private fun RangeHighlighterEx.getHyperlink(): HyperlinkOrHighlightingImpl = checkNotNull(getHyperlinkOrNull()) {
   "Highlighter provided to EditorHyperlinkEffectSupport doesn't have a hyperlink, highlighter = $this"

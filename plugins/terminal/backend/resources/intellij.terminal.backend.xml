@@ -37,6 +37,7 @@
     <applicationService
       serviceInterface="org.jetbrains.plugins.terminal.hyperlinks.menu.BackendHyperlinkInfoService"
       serviceImplementation="com.intellij.terminal.backend.hyperlinks.BackendHyperlinkInfoServiceImpl"/>
+    <invisibleHyperlinkFilterProvider implementation="com.intellij.terminal.backend.hyperlinks.TerminalHoverHyperlinkFilterProvider"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.terminal.backend.CliUtilInstallCollector"/>
   </extensions>
 

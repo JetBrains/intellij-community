@@ -9,6 +9,8 @@ import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.hyperlinks.session.TerminalFilterResultInfoDto
+import org.jetbrains.plugins.terminal.hyperlinks.session.TerminalHoverLineRequest
 import org.jetbrains.plugins.terminal.hyperlinks.session.TerminalHyperlinkClickedEvent
 import org.jetbrains.plugins.terminal.hyperlinks.session.TerminalHyperlinksInputEvent
 import org.jetbrains.plugins.terminal.hyperlinks.session.TerminalHyperlinksOutputEvent
@@ -32,6 +34,12 @@ interface TerminalHyperlinksSessionRemoteApi : RemoteApi<Unit> {
     sessionId: TerminalHyperlinksSessionId,
     event: TerminalHyperlinkClickedEvent,
   )
+
+  suspend fun findInvisibleHyperlinks(
+    projectId: ProjectId,
+    sessionId: TerminalHyperlinksSessionId,
+    request: TerminalHoverLineRequest,
+  ): List<TerminalFilterResultInfoDto>
 
   companion object {
     suspend fun getInstance(): TerminalHyperlinksSessionRemoteApi {

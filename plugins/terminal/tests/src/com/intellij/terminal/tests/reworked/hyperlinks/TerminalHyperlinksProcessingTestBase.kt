@@ -1,0 +1,532 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.terminal.tests.reworked.hyperlinks
+
+import com.intellij.execution.filters.ConsoleFilterProvider
+import com.intellij.execution.filters.Filter
+import com.intellij.execution.filters.HyperlinkInfo
+import com.intellij.execution.filters.InvisibleHyperlinkFilterProvider
+import com.intellij.execution.impl.InlayProvider
+import com.intellij.execution.impl.createEditorTextDecorationApplier
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorCustomElementRenderer
+import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.event.EditorMouseEvent
+import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.markup.HighlighterLayer
+import com.intellij.openapi.editor.markup.RangeHighlighter
+import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.TextRange
+import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.util.coroutines.childScope
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.terminal.frontend.view.hyperlinks.installHyperlinksProcessing
+import com.intellij.terminal.tests.reworked.util.TerminalTestUtil
+import com.intellij.testFramework.ExtensionTestUtil
+import com.intellij.testFramework.common.DEFAULT_TEST_TIMEOUT
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.util.AwaitCancellationAndInvoke
+import com.intellij.util.asDisposable
+import com.intellij.util.awaitCancellationAndInvoke
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.update
+import org.assertj.core.api.Assertions.assertThat
+import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
+import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
+import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModelImpl
+import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
+import org.jetbrains.plugins.terminal.hyperlinks.TerminalAsyncHyperlinkInfo
+import org.jetbrains.plugins.terminal.session.impl.TerminalContentUpdatedEvent
+import org.jetbrains.plugins.terminal.view.TerminalOffset
+import org.jetbrains.plugins.terminal.view.TerminalOutputModel
+import org.jetbrains.plugins.terminal.view.impl.updateContent
+import java.awt.event.InputEvent
+import java.awt.event.MouseEvent
+import java.util.Collections
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
+
+/**
+ * The shared fixture of the hyperlink processing tests: a terminal output model with its editor,
+ * the hyperlinks processing wired to an in-process backend, and helpers to drive and assert it.
+ */
+internal abstract class TerminalHyperlinksProcessingTestBase : BasePlatformTestCase() {
+  override fun runInDispatchThread(): Boolean = false
+
+  protected fun withFixture(
+    timeout: Duration = DEFAULT_TEST_TIMEOUT,
+    maxOutputLength: Int = MAX_LENGTH,
+    extraHoverFilterProviders: List<InvisibleHyperlinkFilterProvider> = emptyList(),
+    test: suspend Fixture.() -> Unit,
+  ) =
+    timeoutRunBlocking(
+      timeout = timeout,
+      context = Dispatchers.EDT + ModalityState.any().asContextElement(),
+      coroutineName = "BackendTerminalHyperlinkHighlighterTest"
+    ) {
+      val fixtureScope = childScope("Fixture")
+      try {
+        val fixture = Fixture(project, fixtureScope, maxOutputLength)
+        ExtensionTestUtil.maskExtensions<ConsoleFilterProvider>(
+          ConsoleFilterProvider.FILTER_PROVIDERS,
+          listOf(ConsoleFilterProvider { arrayOf(fixture.filter as Filter) }),
+          testRootDisposable
+        )
+        ExtensionTestUtil.maskExtensions(
+          InvisibleHyperlinkFilterProvider.EP_NAME,
+          listOf(fixture.hoverFilterProvider) + extraHoverFilterProviders,
+          testRootDisposable
+        )
+
+        test(fixture)
+      }
+      finally {
+        fixtureScope.cancel()
+      }
+    }
+
+  @OptIn(AwaitCancellationAndInvoke::class)
+  protected class Fixture(
+    private val project: Project,
+    private val coroutineScope: CoroutineScope,
+    maxOutputLength: Int,
+  ) {
+    private val outputModel = TerminalTestUtil.createOutputModel(maxOutputLength)
+
+    private val editor = TerminalUiUtils.createOutputEditor(
+      document = outputModel.document,
+      project = project,
+      settings = JBTerminalSystemSettingsProvider(),
+      installContextMenu = false,
+    ).also {
+      coroutineScope.awaitCancellationAndInvoke(Dispatchers.EDT) {
+        EditorFactory.getInstance().releaseEditor(it)
+      }
+      // Size the editor so that offsetToXY produces valid screen coordinates in a headless test.
+      it.component.setSize(800, 600)
+    }
+
+    private val decorationApplier = createEditorTextDecorationApplier(editor, coroutineScope.asDisposable()) { consumeOnlyOnCtrlClick = true }
+
+    private val hyperlinkFacade = installHyperlinksProcessing(
+      project = project,
+      outputModel = outputModel,
+      decorationApplier = decorationApplier,
+      sessionModel = createSessionModel(),
+      eelDescriptor = LocalEelDescriptor,
+      coroutineScope = coroutineScope.childScope("HyperlinksProcessing")
+    )
+
+    val filter = MyFilter()
+
+    val hoverFilter = MyHoverFilter()
+
+    val hoverFilterProvider = object : InvisibleHyperlinkFilterProvider {
+      override fun getFilters(project: Project, scope: GlobalSearchScope): List<Filter> = listOf(hoverFilter)
+    }
+
+    private val clickedLinks = MutableStateFlow(emptyList<String>())
+
+    private fun createSessionModel(): TerminalSessionModel {
+      val model = TerminalSessionModelImpl()
+      // Hyperlink frontend logic expects currentDirectory to be set
+      val state = model.terminalState.value.copy(currentDirectory = project.basePath)
+      model.updateTerminalState(state)
+      return model
+    }
+
+    fun updateModel(fromLine: Long, newText: String) {
+      val textWithEol = newText.ensureEOL()
+      val event = TerminalContentUpdatedEvent(
+        text = textWithEol,
+        styles = emptyList(),
+        startLineLogicalIndex = fromLine,
+        cursorLogicalLineIndex = fromLine + textWithEol.count { it == '\n' } - 1,
+        cursorColumnIndex = 0,
+        screenTopLogicalLineIndex = fromLine,
+        screenTopColumnIndex = 0,
+      )
+      outputModel.updateContent(event)
+    }
+
+    suspend fun assertText(expected: String) {
+      awaitEventProcessing()
+      assertThat(editor.document.text).isEqualTo(expected.ensureEOL())
+    }
+
+    suspend fun assertLinks(vararg expectedLinks: Link) {
+      awaitEventProcessing()
+
+      val actualHighlighters = readMarkup(HighlighterLayer.HYPERLINK)
+      assertHighlighters(actualHighlighters, expectedLinks.map { Decorated(it.locator, it.highlight) }, layerLabel = "link")
+    }
+
+    suspend fun assertHighlightings(vararg expectedHighlightings: Highlighting) {
+      awaitEventProcessing()
+
+      val actualHighlighters = readMarkup(HighlighterLayer.CONSOLE_FILTER)
+      assertHighlighters(actualHighlighters, expectedHighlightings.map { Decorated(it.locator, it.highlight) }, layerLabel = "highlight")
+    }
+
+    fun assertHoverLinks(vararg expectedLinks: LinkLocator) {
+      val actualHighlighters = readMarkup(HighlighterLayer.HYPERLINK, hoverFilter.pattern)
+      assertHighlighters(actualHighlighters, expectedLinks.map { Decorated(it, null) }, layerLabel = "hover link")
+    }
+
+    /** Moves the mouse pointer over [at] and waits until the hovered line is processed. */
+    suspend fun hover(at: LinkLocator) {
+      awaitEventProcessing() // hover processing starts once the hyperlinks session is ready
+      val processedBefore = processedHoversCount()
+      moveMouse(at)
+      awaitHoverProcessed(processedBefore)
+    }
+
+    fun moveMouse(at: LinkLocator) {
+      val point = editor.offsetToXY(at.locateOffset(outputModel).toRelative(outputModel))
+      val component = editor.contentComponent
+      component.dispatchEvent(MouseEvent(component, MouseEvent.MOUSE_MOVED, System.currentTimeMillis(), 0, point.x, point.y, 0, false))
+    }
+
+    fun exitEditor() {
+      val component = editor.contentComponent
+      component.dispatchEvent(MouseEvent(component, MouseEvent.MOUSE_EXITED, System.currentTimeMillis(), 0, -1, -1, 0, false))
+    }
+
+    /** Waits until the hover links are exactly [expectedLinks]. The test timeout bounds the wait. */
+    suspend fun awaitHoverLinks(vararg expectedLinks: LinkLocator) {
+      val expectedTexts = expectedLinks.map { it.substring }
+      while (readMarkup(HighlighterLayer.HYPERLINK, hoverFilter.pattern).map { it.visibleText() } != expectedTexts) {
+        delay(10.milliseconds)
+      }
+      assertHoverLinks(*expectedLinks)
+    }
+
+    /** Waits until the hover filter has been called at least [count] times. */
+    suspend fun awaitHoverFilterCalls(count: Int) {
+      while (hoverFilter.appliedTexts.size < count) {
+        delay(10.milliseconds)
+      }
+    }
+
+    fun processedHoversCount(): Long = hyperlinkFacade.processedHoversCount()
+
+    fun hoveredHyperlink() = decorationApplier.getHoveredHyperlink()
+
+    suspend fun awaitHoverProcessed(count: Long) {
+      hyperlinkFacade.awaitHoverProcessed(count)
+    }
+
+    /** Clicks with the modifier that follows an invisible link at once instead of showing the hint. */
+    suspend fun ctrlClick(at: LinkLocator) {
+      val expectedSize = clickedLinks.value.size + 1
+      val point = editor.offsetToXY(at.locateOffset(outputModel).toRelative(outputModel))
+      val component = editor.contentComponent
+      val modifiers = if (SystemInfo.isMac) InputEvent.META_DOWN_MASK else InputEvent.CTRL_DOWN_MASK
+      val ts = System.currentTimeMillis()
+      component.dispatchEvent(MouseEvent(component, MouseEvent.MOUSE_PRESSED, ts, modifiers, point.x, point.y, 1, false, MouseEvent.BUTTON1))
+      component.dispatchEvent(MouseEvent(component, MouseEvent.MOUSE_RELEASED, ts + 1, modifiers, point.x, point.y, 1, false, MouseEvent.BUTTON1))
+      clickedLinks.first { it.size == expectedSize }
+    }
+
+    private fun readMarkup(layer: Int, pattern: Regex = filter.pattern): List<RangeHighlighter> {
+      val text = editor.document.text
+      return editor.markupModel.allHighlighters
+        .filter { it.isValid && it.layer == layer }
+        .filter {
+          // Drop leading partially trimmed highlighters: the highlighter's visible text no
+          // longer starts with the filter's "link" / "highlight" prefix.
+          val visibleText = text.substring(it.startOffset, it.endOffset)
+          visibleText.matches(pattern)
+        }
+        .sortedBy { it.startOffset }
+    }
+
+    private fun assertHighlighters(actual: List<RangeHighlighter>, expected: List<Decorated>, layerLabel: String) {
+      assertThat(actual).hasSameSizeAs(expected)
+      for (i in actual.indices) {
+        val actualHighlighter = actual[i]
+        val expectedDecorated = expected[i]
+        val expectedAbsStart = expectedDecorated.locator.locateOffset(outputModel)
+        val expectedAbsEnd = expectedAbsStart + expectedDecorated.locator.length.toLong()
+        val expectedStartOffset = expectedAbsStart.toRelative(outputModel)
+        val expectedEndOffset = expectedAbsEnd.toRelative(outputModel)
+
+        val description = "at $i actual $layerLabel ${actualHighlighter.toRangeString(editor)} " +
+                          "expected $layerLabel $expectedDecorated"
+        assertThat(actualHighlighter.startOffset).`as`(description).isEqualTo(expectedStartOffset)
+        assertThat(actualHighlighter.endOffset).`as`(description).isEqualTo(expectedEndOffset)
+
+        val expectedAttributes = expectedDecorated.highlight
+        if (expectedAttributes != null) {
+          val actualAttributes = actualHighlighter.getTextAttributes(editor.colorsScheme)
+          assertThat(actualAttributes).`as`(description).isEqualTo(expectedAttributes)
+        }
+      }
+    }
+
+    private fun RangeHighlighter.visibleText(): String = editor.document.getText(TextRange.create(startOffset, endOffset))
+
+    private fun RangeHighlighter.toRangeString(editor: EditorEx): String =
+      "RangeHighlighter(start=$startOffset, end=$endOffset, layer=$layer, " +
+      "text=\"${editor.document.getText(TextRange.create(startOffset, endOffset))}\")"
+
+    suspend fun assertInlays(vararg expectedInlays: Inlay) {
+      awaitEventProcessing()
+
+      val actual = editor.inlayModel.getInlineElementsInRange(0, editor.document.textLength).sortedBy { it.offset }
+      assertThat(actual).hasSameSizeAs(expectedInlays)
+      for (i in actual.indices) {
+        val actualInlay = actual[i]
+        val expected = expectedInlays[i]
+        val expectedAbsStart = expected.locator.locateOffset(outputModel)
+        val expectedAbsEnd = expectedAbsStart + expected.locator.length.toLong()
+        val expectedEndOffset = expectedAbsEnd.toRelative(outputModel)
+        val description = "at $i actual inlay offset=${actualInlay.offset} expected $expected (end=$expectedEndOffset)"
+        // The applier places inlays at the END offset of the highlighted range, see toEditorDecoration().
+        assertThat(actualInlay.offset).`as`(description).isEqualTo(expectedEndOffset)
+      }
+    }
+
+    suspend fun assertClicks(vararg clicks: LinkLocator) {
+      click(*clicks)
+      assertClickedLinks(*clicks.map { it.substring }.toTypedArray())
+    }
+
+    suspend fun click(vararg clicks: LinkLocator) {
+      awaitEventProcessing()
+
+      for (clickLocator in clicks) {
+        val expectedSize = clickedLinks.value.size + 1
+        val absoluteOffset = clickLocator.locateOffset(outputModel)
+        val relativeOffset = absoluteOffset.toRelative(outputModel)
+        val point = editor.offsetToXY(relativeOffset)
+        val component = editor.contentComponent
+        val ts = System.currentTimeMillis()
+        component.dispatchEvent(MouseEvent(component, MouseEvent.MOUSE_PRESSED, ts, 0, point.x, point.y, 1, false, MouseEvent.BUTTON1))
+        component.dispatchEvent(MouseEvent(component, MouseEvent.MOUSE_RELEASED, ts + 1, 0, point.x, point.y, 1, false, MouseEvent.BUTTON1))
+        // Await the click is processed
+        clickedLinks.first { it.size == expectedSize }
+      }
+    }
+
+    fun assertClickedLinks(vararg expectedLinks: String) {
+      assertThat(clickedLinks.value).containsExactly(*expectedLinks)
+    }
+
+    fun link(
+      at: LinkLocator,
+      highlight: TextAttributes? = filter.highlight,
+    ): Link = Link(at, highlight)
+
+    fun inlay(
+      at: LinkLocator,
+    ): Inlay = Inlay(at)
+
+    fun highlight(
+      at: LinkLocator,
+      highlight: TextAttributes? = filter.highlight,
+    ): Highlighting = Highlighting(at, highlight)
+
+    fun at(line: Int, substring: String): LinkLocator = LinkLocator(line, substring)
+
+    suspend fun awaitEventProcessing() {
+      hyperlinkFacade.awaitProcessed(outputModel.modificationStamp)
+    }
+
+    data class Link(
+      val locator: LinkLocator,
+      val highlight: TextAttributes?,
+    )
+
+    data class Highlighting(
+      val locator: LinkLocator,
+      val highlight: TextAttributes?,
+    )
+
+    data class Inlay(
+      val locator: LinkLocator,
+    )
+
+    private data class Decorated(val locator: LinkLocator, val highlight: TextAttributes?)
+
+    data class LinkLocator(val line: Int, val substring: String) {
+      val length: Int get() = substring.length
+
+      fun locateOffset(model: TerminalOutputModel): TerminalOffset {
+        val line = model.firstLineIndex + line.toLong()
+        val lineStart = model.getStartOfLine(line)
+        val lineEnd = model.getEndOfLine(line)
+        val lineText = model.getText(lineStart, lineEnd).toString()
+        val column = lineText.indexOfSingle(substring)
+        return lineStart + column.toLong()
+      }
+    }
+
+    inner class MyFilter : Filter {
+      var highlight: TextAttributes? = null
+      var followedHighlight: TextAttributes? = null
+      var hoveredHighlight: TextAttributes? = null
+      var delayPerLine = 0L
+      var hyperlinkInfoFactory: (HyperlinkInfo) -> HyperlinkInfo = { hyperlinkInfo -> hyperlinkInfo }
+
+      val pattern = Regex("""(link|highlight|link_inlay|highlight_inlay)\d+""")
+
+      override fun applyFilter(line: String, entireLength: Int): Filter.Result? {
+        if (delayPerLine > 0) {
+          Thread.sleep(delayPerLine)
+        }
+        val startOffset = entireLength - line.length
+        val results = mutableListOf<Filter.ResultItem>()
+        pattern.findAll(line).forEach { matchResult ->
+          val isHyperlink = matchResult.groups[1]?.value?.startsWith("link") == true
+          val isInlay = matchResult.groups[1]?.value?.endsWith("_inlay") == true
+          results += createResultItem(
+            highlightStartOffset = startOffset + matchResult.range.first,
+            highlightEndOffset = startOffset + matchResult.range.last + 1,
+            hyperlinkInfo = if (isHyperlink) hyperlinkInfoFactory(MyHyperlinkInfo(matchResult.value)) else null,
+            highlightAttributes = highlight,
+            followedHyperlinkAttributes = if (isHyperlink) followedHighlight else null,
+            hoveredHyperlinkAttributes = if (isHyperlink) hoveredHighlight else null,
+            isInlay = isInlay,
+          )
+        }
+        return if (results.isNotEmpty()) Filter.Result(results) else null
+      }
+
+      private fun createResultItem(
+        highlightStartOffset: Int,
+        highlightEndOffset: Int,
+        hyperlinkInfo: HyperlinkInfo?,
+        highlightAttributes: TextAttributes?,
+        followedHyperlinkAttributes: TextAttributes?,
+        hoveredHyperlinkAttributes: TextAttributes?,
+        isInlay: Boolean,
+      ): Filter.ResultItem = if (isInlay) {
+        InlayResultItem(
+          highlightStartOffset,
+          highlightEndOffset,
+          hyperlinkInfo,
+          highlightAttributes,
+          followedHyperlinkAttributes,
+          hoveredHyperlinkAttributes
+        )
+      }
+      else {
+        Filter.ResultItem(
+          highlightStartOffset,
+          highlightEndOffset,
+          hyperlinkInfo,
+          highlightAttributes,
+          followedHyperlinkAttributes,
+          hoveredHyperlinkAttributes
+        )
+      }
+    }
+
+    /** Marks `hover<N>` tokens as invisible links and records the texts it was applied to. */
+    inner class MyHoverFilter : Filter {
+      val pattern = Regex("""hover\d+""")
+      val appliedTexts: MutableList<String> = Collections.synchronizedList(ArrayList())
+      var delayPerLine = 0L
+
+      override fun applyFilter(line: String, entireLength: Int): Filter.Result? {
+        appliedTexts += line
+        if (delayPerLine > 0) {
+          Thread.sleep(delayPerLine)
+        }
+        val startOffset = entireLength - line.length
+        val items = pattern.findAll(line).map { matchResult ->
+          Filter.ResultItem(startOffset + matchResult.range.first, startOffset + matchResult.range.last + 1, MyHyperlinkInfo(matchResult.value))
+            .also { it.isInvisibleLink = true }
+        }.toList()
+        return if (items.isEmpty()) null else Filter.Result(items)
+      }
+    }
+
+    private inner class MyHyperlinkInfo(private val value: String) : HyperlinkInfo {
+      override fun navigate(project: Project) {
+        clickedLinks.update { it + value }
+      }
+    }
+
+    fun createRecordingAsyncHyperlink(
+      delegate: HyperlinkInfo,
+      value: String,
+      delegateAfterRecording: Boolean = false,
+      failOnSyncNavigate: Boolean = false,
+    ): HyperlinkInfo {
+      return RecordingAsyncHyperlinkInfo(delegate, value, delegateAfterRecording, failOnSyncNavigate)
+    }
+
+    private inner class RecordingAsyncHyperlinkInfo(
+      private val delegate: HyperlinkInfo,
+      private val value: String,
+      private val delegateAfterRecording: Boolean,
+      private val failOnSyncNavigate: Boolean,
+    ) : TerminalAsyncHyperlinkInfo {
+      override fun navigate(project: Project) {
+        check(!failOnSyncNavigate) { "sync navigate should not be used for async terminal hyperlinks" }
+        delegate.navigate(project)
+      }
+
+      override suspend fun navigate(project: Project, mouseEvent: EditorMouseEvent?) {
+        clickedLinks.update { it + value }
+        if (!delegateAfterRecording) {
+          return
+        }
+        if (delegate is TerminalAsyncHyperlinkInfo) {
+          delegate.navigate(project, mouseEvent)
+        }
+        else {
+          delegate.navigate(project)
+        }
+      }
+    }
+  }
+}
+
+private fun String.ensureEOL(): String = if (isEmpty() || endsWith('\n')) this else this + '\n'
+
+private class InlayResultItem(
+  highlightStartOffset: Int,
+  highlightEndOffset: Int,
+  hyperlinkInfo: HyperlinkInfo?,
+  highlightAttributes: TextAttributes?,
+  followedHyperlinkAttributes: TextAttributes?,
+  hoveredHyperlinkAttributes: TextAttributes?,
+) : Filter.ResultItem(
+  highlightStartOffset,
+  highlightEndOffset,
+  hyperlinkInfo,
+  highlightAttributes,
+  followedHyperlinkAttributes,
+  hoveredHyperlinkAttributes
+), InlayProvider {
+  override fun createInlayRenderer(editor: Editor): EditorCustomElementRenderer {
+    return EditorCustomElementRenderer { 1 }
+  }
+}
+
+private const val MAX_LENGTH = 10000 // filters are processed in 200-line chunks, this should be enough to have multiple chunks
+
+private fun String.indexOfSingle(substring: String): Int {
+  val indexOfFirst = indexOf(substring)
+  val indexOfLast = lastIndexOf(substring)
+  require(indexOfFirst != -1) { "Substring '$substring' not found in '$this'" }
+  require(indexOfFirst == indexOfLast) { "There are several substrings from $indexOfFirst to $indexOfLast" }
+  return indexOfFirst
+}
+
+private fun TerminalOffset.toRelative(model: TerminalOutputModel): Int {
+  return (this - model.startOffset).toInt()
+}

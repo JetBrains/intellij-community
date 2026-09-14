@@ -1,6 +1,16 @@
 package com.intellij.terminal.backend.hyperlinks
 
+import com.intellij.diagnostic.PluginException
+import com.intellij.diagnostic.rethrowControlFlowException
+import com.intellij.execution.filters.CompositeFilter
+import com.intellij.execution.filters.Filter
+import com.intellij.execution.filters.HyperlinkInfo
+import com.intellij.execution.filters.InvisibleHyperlinkFilterProvider
+import com.intellij.execution.impl.applyToLineRange
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.event.EditorMouseEvent
+import com.intellij.openapi.progress.ProgressManager.checkCanceled
 import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.annotations.NativePath
@@ -18,10 +28,15 @@ import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinkNavigator
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinksModel
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalOutputContentUpdate
 import org.jetbrains.plugins.terminal.hyperlinks.filter.CompositeFilterWrapper
+import org.jetbrains.plugins.terminal.hyperlinks.filter.TerminalFilterScope
 import org.jetbrains.plugins.terminal.hyperlinks.menu.BackendHyperlinkInfo
+import org.jetbrains.plugins.terminal.hyperlinks.session.TerminalFilterResultInfoDto
+import org.jetbrains.plugins.terminal.hyperlinks.session.TerminalHoverLineRequest
+import org.jetbrains.plugins.terminal.hyperlinks.session.TerminalHyperlinkInfoDto
 import org.jetbrains.plugins.terminal.hyperlinks.session.TerminalHyperlinksOutputEvent
 import org.jetbrains.plugins.terminal.hyperlinks.session.toFilterResultInfo
 import org.jetbrains.plugins.terminal.view.TerminalOffset
+import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -40,10 +55,14 @@ internal class BackendTerminalHyperlinkFacade(
   private val filterWrapper = CompositeFilterWrapper(project, coroutineScope, filterContext).also {
     it.getFilter() // kickstart computation
   }
-  private val highlighter = BackendTerminalHyperlinkHighlighter(filterWrapper, coroutineScope)
+  // Shared by the eager and the hover paths, so their ids never clash.
+  private val hyperlinkIdCounter = AtomicLong()
+  private val highlighter = BackendTerminalHyperlinkHighlighter(filterWrapper, hyperlinkIdCounter, coroutineScope)
 
   private val trimOffset = AtomicReference(TerminalOffset.of(0))
   private val model = TerminalHyperlinksModel(debugName = debugName)
+
+  private val invisibleHyperlinks = BackendTerminalInvisibleHyperlinkStorage()
 
   val heartbeatFlow: Flow<Unit> = flow {
     while (true) {
@@ -91,9 +110,57 @@ internal class BackendTerminalHyperlinkFacade(
     }
   }
 
+  /**
+   * Runs the [InvisibleHyperlinkFilterProvider] filters over the hovered line
+   * and remembers the found hyperlinks so that they can be followed by id.
+   * Forgets the hyperlinks of the earlier requests that [TerminalHoverLineRequest.retainedIds] does not list.
+   */
+  suspend fun findInvisibleHyperlinks(request: TerminalHoverLineRequest): List<TerminalFilterResultInfoDto> {
+    val scope = TerminalFilterScope(project, filterContext)
+    val filters = InvisibleHyperlinkFilterProvider.EP_NAME.extensionList.flatMap { provider ->
+      try {
+        provider.getFilters(project, scope)
+      }
+      catch (e: Exception) {
+        rethrowControlFlowException(e)
+        PluginException.logPluginError(LOG, "Failed to create invisible hyperlink filters", e, provider.javaClass)
+        emptyList()
+      }
+    }
+    val results = applyFilters(filters, request)
+    val hyperlinkInfos = results.mapNotNull { result ->
+      (result as? TerminalHyperlinkInfoDto)?.hyperlinkInfo?.let { result.id to it }
+    }.toMap()
+    mutex.withLock {
+      invisibleHyperlinks.retainRequests(request.retainedIds)
+      invisibleHyperlinks.addRequestResult(request.id, hyperlinkInfos)
+    }
+    return results
+  }
+
+  private suspend fun applyFilters(
+    filters: List<Filter>,
+    request: TerminalHoverLineRequest,
+  ): List<TerminalFilterResultInfoDto> {
+    if (filters.isEmpty()) return emptyList()
+    val filter = CompositeFilter(project, filters).also { it.setForceUseAllFilters(true) }
+    val input = HypertextFromCharSequenceAdapter(request.text)
+    return readAction {
+      val dtos = mutableListOf<TerminalFilterResultInfoDto>()
+      filter.applyToLineRange(input, 0, 0) { applyResult ->
+        checkCanceled()
+        val items = applyResult.filterResult?.resultItems ?: return@applyToLineRange
+        for (item in items) {
+          dtos += item.toFilterResultDtos(hyperlinkIdCounter) { offset -> request.startOffset + offset }
+        }
+      }
+      dtos
+    }
+  }
+
   suspend fun getHyperlink(hyperlinkId: TerminalHyperlinkId): BackendHyperlinkInfo? {
     return mutex.withLock {
-      model.getHyperlink(hyperlinkId)?.hyperlinkInfo?.let { hyperlinkInfo ->
+      findHyperlinkInfo(hyperlinkId)?.let { hyperlinkInfo ->
         BackendHyperlinkInfo(hyperlinkInfo, highlighter.fakeMouseEvent)
       }
     }
@@ -101,9 +168,15 @@ internal class BackendTerminalHyperlinkFacade(
 
   suspend fun hyperlinkClicked(hyperlinkId: TerminalHyperlinkId, mouseEvent: EditorMouseEvent?) {
     val hyperlink = mutex.withLock {
-      model.getHyperlink(hyperlinkId)?.hyperlinkInfo
+      findHyperlinkInfo(hyperlinkId)
     } ?: return
     TerminalHyperlinkNavigator.navigate(project, hyperlink, mouseEvent)
     ReworkedTerminalUsageCollector.logHyperlinkFollowed(hyperlink.javaClass)
   }
+
+  // Must be called under the mutex.
+  private fun findHyperlinkInfo(hyperlinkId: TerminalHyperlinkId): HyperlinkInfo? =
+    model.getHyperlink(hyperlinkId)?.hyperlinkInfo ?: invisibleHyperlinks.findHyperlink(hyperlinkId)
 }
+
+private val LOG = logger<BackendTerminalHyperlinkFacade>()

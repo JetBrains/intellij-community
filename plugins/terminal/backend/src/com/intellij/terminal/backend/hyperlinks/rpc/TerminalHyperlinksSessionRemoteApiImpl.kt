@@ -6,6 +6,8 @@ import com.intellij.terminal.backend.hyperlinks.BackendTerminalHyperlinksSession
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
 import org.jetbrains.plugins.terminal.hyperlinks.rpc.TerminalHyperlinksSessionRemoteApi
+import org.jetbrains.plugins.terminal.hyperlinks.session.TerminalFilterResultInfoDto
+import org.jetbrains.plugins.terminal.hyperlinks.session.TerminalHoverLineRequest
 import org.jetbrains.plugins.terminal.hyperlinks.session.TerminalHyperlinkClickedEvent
 import org.jetbrains.plugins.terminal.hyperlinks.session.TerminalHyperlinksInputEvent
 import org.jetbrains.plugins.terminal.hyperlinks.session.TerminalHyperlinksOutputEvent
@@ -33,6 +35,14 @@ internal class TerminalHyperlinksSessionRemoteApiImpl : TerminalHyperlinksSessio
     event: TerminalHyperlinkClickedEvent,
   ) {
     getSession(projectId, sessionId).handleHyperlinkClick(event)
+  }
+
+  override suspend fun findInvisibleHyperlinks(
+    projectId: ProjectId,
+    sessionId: TerminalHyperlinksSessionId,
+    request: TerminalHoverLineRequest,
+  ): List<TerminalFilterResultInfoDto> {
+    return getSession(projectId, sessionId).findInvisibleHyperlinks(request)
   }
 
   private fun getSession(projectId: ProjectId, sessionId: TerminalHyperlinksSessionId): TerminalHyperlinksSession {

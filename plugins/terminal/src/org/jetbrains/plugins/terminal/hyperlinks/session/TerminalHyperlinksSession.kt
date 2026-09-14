@@ -14,4 +14,12 @@ interface TerminalHyperlinksSession {
   val hyperlinkUpdatesChannel: ReceiveChannel<TerminalHyperlinksOutputEvent>
 
   suspend fun handleHyperlinkClick(event: TerminalHyperlinkClickedEvent)
+
+  /**
+   * Finds invisible hyperlinks in the hovered line.
+   *
+   * The found hyperlinks can be followed with [handleHyperlinkClick]
+   * until a later request stops retaining them, see [TerminalHoverLineRequest.retainedIds].
+   */
+  suspend fun findInvisibleHyperlinks(request: TerminalHoverLineRequest): List<TerminalFilterResultInfoDto>
 }
