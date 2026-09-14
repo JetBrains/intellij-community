@@ -273,10 +273,8 @@ public interface JavaElementType {
   IElementType STATEMENTS = new StatementThinCodeFragmentElementType();
   IElementType EXPRESSION_TEXT = new ExpressionThinCodeFragmentElementType();
   IElementType REFERENCE_TEXT = new ReferenceThinCodeFragmentElementType();
-  IElementType TYPE_WITH_DISJUNCTIONS_TEXT = new FrontBackTypeTextElementType("TYPE_WITH_DISJUNCTIONS_TEXT",
-                                                                              ReferenceParser.DISJUNCTIONS);
-  IElementType TYPE_WITH_CONJUNCTIONS_TEXT = new FrontBackTypeTextElementType("TYPE_WITH_CONJUNCTIONS_TEXT",
-                                                                              ReferenceParser.DISJUNCTIONS);
+  IElementType TYPE_WITH_DISJUNCTIONS_TEXT = new FrontBackTypeTextElementType("TYPE_WITH_DISJUNCTIONS_TEXT", ReferenceParser.DISJUNCTIONS);
+  IElementType TYPE_WITH_CONJUNCTIONS_TEXT = new FrontBackTypeTextElementType("TYPE_WITH_CONJUNCTIONS_TEXT", ReferenceParser.CONJUNCTIONS);
   IElementType DUMMY_ELEMENT = new JavaDummyElementType();
 
   @ApiStatus.Internal
