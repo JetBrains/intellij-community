@@ -4,7 +4,6 @@ package com.intellij.configurationStore
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.ComponentManager
-import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -33,13 +32,16 @@ internal open class NoOpSaveAndSyncHandler : SaveAndSyncHandler() {
   override fun saveSettingsUnderModalProgress(componentManager: ComponentManager): Boolean = true
 }
 
-private class HeadlessSaveAndSyncHandler : NoOpSaveAndSyncHandler() {
+internal class HeadlessSaveAndSyncHandler : NoOpSaveAndSyncHandler() {
   override fun saveSettingsUnderModalProgress(componentManager: ComponentManager): Boolean {
-    runInAutoSaveDisabledMode {
+    return saveSettingsUnderModalProgress(listOf(componentManager))
+  }
+
+  override fun saveSettingsUnderModalProgress(componentManagers: List<ComponentManager>): Boolean {
+    return runInAutoSaveDisabledMode {
       runWithModalProgressBlocking(ModalTaskOwner.guess(), "") {
-        componentManager.stateStore.save(forceSavingAllSettings = true)
+        saveSettingsBatch(componentManagers)
       }
     }
-    return true
   }
 }

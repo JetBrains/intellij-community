@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
-import com.intellij.conversion.ConversionService
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.IdleTracker
@@ -18,11 +18,11 @@ import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.application.ui
 import com.intellij.openapi.components.ComponentManager
-import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.getOrLogException
+import com.intellij.openapi.diagnostic.isControlFlowException
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -45,7 +45,6 @@ import com.intellij.platform.backend.observation.Observation
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.intellij.project.stateStore
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineName
@@ -155,6 +154,7 @@ internal class SaveAndSyncHandlerImpl @JvmOverloads constructor(
       }
 
       launch(CoroutineName("save requests flow processing")) {
+        val saveScope = this
         // not collectLatest - wait for previous execution
         saveRequests.collect {
           val forceExecuteImmediately = forceExecuteImmediatelyState.compareAndSet(true, false)
@@ -162,22 +162,17 @@ internal class SaveAndSyncHandlerImpl @JvmOverloads constructor(
             delay(300.milliseconds)
           }
 
-          if (blockSaveOnFrameDeactivationCount.get() != 0) {
-            return@collect
-          }
-
-          val job = currentJob.updateAndGet { oldJob ->
-            oldJob?.cancel()
-            launch(start = CoroutineStart.LAZY) {
+          val job = synchronized(saveQueue) {
+            if (blockSaveOnFrameDeactivationCount.get() != 0) {
+              return@collect
+            }
+            saveScope.launch(start = CoroutineStart.LAZY) {
               processSaveTasks(forceExecuteImmediately)
-            }
-          }!!
-          try {
-            if (job.start()) {
-              job.join()
-            }
+            }.also { currentJob.set(it) }
           }
-          catch (@Suppress("IncorrectCancellationExceptionHandling") _: CancellationException) {
+          try {
+            job.start()
+            job.join()
           }
           finally {
             currentJob.compareAndSet(job, null)
@@ -252,31 +247,37 @@ internal class SaveAndSyncHandlerImpl @JvmOverloads constructor(
 
   private suspend fun processSaveTasks(forceExecuteImmediately: Boolean) {
     while (true) {
-      if (blockSaveOnFrameDeactivationCount.get() != 0) {
-        return
-      }
-
       val task = synchronized(saveQueue) {
+        if (blockSaveOnFrameDeactivationCount.get() != 0 || ProgressManager.getInstance().hasModalProgressIndicator()) {
+          return
+        }
         saveQueue.pollFirst() ?: return
       }
-
       if (task.project?.isDisposed == true) {
         continue
       }
 
-      if (blockSaveOnFrameDeactivationCount.get() > 0 || ProgressManager.getInstance().hasModalProgressIndicator()) {
-        return
-      }
-
-      for (listener in EP_NAME.extensionList) {
-        runCatching {
-          listener.beforeSave(task, forceExecuteImmediately)
-        }.getOrLogException(LOG)
-      }
-
-      runCatching {
+      try {
+        for (listener in EP_NAME.extensionList) {
+          try {
+            listener.beforeSave(task, forceExecuteImmediately)
+          }
+          catch (e: Throwable) {
+            rethrowControlFlowException(e)
+            LOG.error(e)
+          }
+        }
         saveProjectsAndApp(forceSavingAllSettings = task.forceSavingAllSettings, onlyProject = task.project)
-      }.getOrLogException(LOG)
+      }
+      catch (e: Throwable) {
+        if (e.isControlFlowException) {
+          // an interrupted task runs again once the save is unblocked
+          addToSaveQueue(task)
+          requestSave()
+          throw e
+        }
+        LOG.error(e)
+      }
     }
   }
 
@@ -381,61 +382,49 @@ internal class SaveAndSyncHandlerImpl @JvmOverloads constructor(
     }
   }
 
-  /**
-   * On app or project closing save is performed. In EDT. It means that if there is already running save in a pooled thread,
-   * deadlock may occur because some saving activities require EDT with modality state "not modal" (by intention).
-   */
   override fun saveSettingsUnderModalProgress(componentManager: ComponentManager): Boolean {
-    // saveSettingsUnderModalProgress is intended to be called only in EDT because
-    // otherwise wrapping into a modal progress task is not required and `saveSettings` should be called directly
+    return saveSettingsUnderModalProgress(listOf(componentManager))
+  }
+
+  override fun saveSettingsUnderModalProgress(componentManagers: List<ComponentManager>): Boolean {
     EDT.assertIsEdt()
-
-    var isSavedSuccessfully = true
-    var isAutoSaveCancelled = false
+    val targets = componentManagers.distinct()
+    require(targets.none { it is Project && it.isDefault }) { "Must not save the default project here" }
+    val project = targets.singleOrNull() as? Project
+    var saved = false
     disableAutoSave().use {
-      val currentJob = currentJob.getAndSet(null)
-      currentJob?.let {
-        it.cancel(CancellationException("Superseded by explicit save"))
-        isAutoSaveCancelled = true
-      }
-
-      synchronized(saveQueue) {
-        if (componentManager is Application) {
-          saveQueue.removeAll { it.project == null }
+      val interruptedJob = currentJob.get()
+      val coveredTasks = mutableListOf<SaveTask>()
+      try {
+        @Suppress("DialogTitleCapitalization")
+        runWithModalProgressBlocking(
+          owner = if (project == null) ModalTaskOwner.guess() else ModalTaskOwner.project(project),
+          title = if (project == null) IdeBundle.message("progress.saving.app") else getProgressTitle(project),
+          cancellation = TaskCancellation.nonCancellable(),
+        ) {
+          interruptedJob?.join()
+          val coversAllProjects = targets.any { it is Application } && getOpenedProjects().all { it in targets }
+          synchronized(saveQueue) {
+            saveQueue.removeAll { task ->
+              val covered = if (task.project == null) coversAllProjects else targets.any { it === task.project }
+              if (covered) {
+                coveredTasks.add(task)
+              }
+              covered
+            }
+          }
+          saved = saveSettingsBatch(targets)
         }
-        else {
-          saveQueue.removeAll { it.project === componentManager }
-        }
       }
-
-      val project = componentManager as? Project
-      require(project == null || !project.isDefault) { "Must be called for default project" }
-
-      @Suppress("DialogTitleCapitalization")
-      runWithModalProgressBlocking(
-        owner = if (project == null) ModalTaskOwner.guess() else ModalTaskOwner.project(project),
-        title = getProgressTitle(componentManager),
-        cancellation = TaskCancellation.nonCancellable(),
-      ) {
-        // ensure that is fully canceled
-        currentJob?.join()
-
-        isSavedSuccessfully = saveSettings(componentManager = componentManager, forceSavingAllSettings = true)
-
-        if (project != null && !ApplicationManager.getApplication().isUnitTestMode) {
-          val stateStore = project.stateStore
-          val storeDescriptor = stateStore.storeDescriptor
-          val path = if (storeDescriptor.dotIdea == null) storeDescriptor.presentableUrl else storeDescriptor.historicalProjectBasePath
-          // update last modified for all project files modified between project open and close
-          (componentManager as ComponentManagerEx).getServiceAsyncIfDefined(ConversionService::class.java)?.saveConversionResult(path)
+      finally {
+        if (!saved) {
+          for (task in coveredTasks) {
+            addToSaveQueue(task)
+          }
         }
       }
     }
-
-    if (isAutoSaveCancelled) {
-      requestSave()
-    }
-    return isSavedSuccessfully
+    return saved
   }
 
   private fun canSyncOrSave(): Boolean = !LaterInvocator.isInModalContext() && !ProgressManager.getInstance().hasModalProgressIndicator()
@@ -500,12 +489,20 @@ internal class SaveAndSyncHandlerImpl @JvmOverloads constructor(
 
   override fun blockSaveOnFrameDeactivation() {
     LOG.debug("save blocked")
-    currentJob.getAndSet(null)?.cancel(CancellationException("Save on frame deactivation is disabled"))
-    blockSaveOnFrameDeactivationCount.incrementAndGet()
+    val job = synchronized(saveQueue) {
+      blockSaveOnFrameDeactivationCount.incrementAndGet()
+      currentJob.get()
+    }
+    job?.cancel(CancellationException("Save on frame deactivation is disabled"))
   }
 
   override fun unblockSaveOnFrameDeactivation() {
-    blockSaveOnFrameDeactivationCount.decrementAndGet()
+    val resume = synchronized(saveQueue) {
+      blockSaveOnFrameDeactivationCount.decrementAndGet() == 0 && saveQueue.isNotEmpty()
+    }
+    if (resume) {
+      requestSave()
+    }
     LOG.debug("save unblocked")
   }
 

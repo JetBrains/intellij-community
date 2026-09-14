@@ -15,7 +15,6 @@ import com.intellij.ide.ApplicationActivationStateManager;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
-import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.ide.ThreadingSupportHolder;
 import com.intellij.ide.plugins.ContainerDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
@@ -76,7 +75,6 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.platform.diagnostic.telemetry.PlatformScopesKt;
 import com.intellij.platform.diagnostic.telemetry.Scope;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
-import com.intellij.platform.diagnostic.telemetry.helpers.TraceKt;
 import com.intellij.platform.locking.impl.NestedLocksThreadingSupport;
 import com.intellij.platform.locking.impl.listeners.ErrorHandler;
 import com.intellij.platform.locking.impl.listeners.LegacyProgressIndicatorProvider;
@@ -326,8 +324,10 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
 
   @VisibleForTesting
   public void disposeContainer() {
-    // NonCancellable will override context Job
-    var coroutineContext = ThreadContext.currentThreadContext();
+    disposeContainer(ThreadContext.currentThreadContext());
+  }
+
+  private void disposeContainer(CoroutineContext coroutineContext) {
     try (var ignored = Cancellation.withNonCancelableSection()) {
       cancelAndJoinBlocking(this, coroutineContext);
       runWriteAction(() -> Suppressions.runSuppressing(
@@ -855,98 +855,77 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
         logErrorDuringExit("Failed to invoke lifecycle listeners", t);
       }
 
-      if (BitUtil.isSet(flags, SAVE)) {
+      // captured before the exit helper resets the thread context: `cancelAndJoinBlocking` checks it for a wait on our own job
+      var exitContext = ThreadContext.currentThreadContext();
+      return ApplicationExitKt.saveAndCloseProjectsOnExit(this, tracer, BitUtil.isSet(flags, SAVE), !force, () -> {
         try {
-          TraceKt.use(tracer.spanBuilder("saveSettingsOnExit"),
-                      _ -> SaveAndSyncHandler.getInstance().saveSettingsUnderModalProgress(this));
-        }
-        catch (Throwable e) {
-          logErrorDuringExit("Failed to save settings", e);
-        }
-      }
-
-      try {
-        if (isInstantShutdownPossible()) {
-          for (var frame : Frame.getFrames()) {
-            frame.setVisible(false);
-          }
-        }
-      }
-      catch (Throwable e) {
-        logErrorDuringExit("Failed to instant shutdown the frames", e);
-      }
-
-      try {
-        lifecycleListener.appWillBeClosed(restart);
-      }
-      catch (Throwable t) {
-        logErrorDuringExit("Failed to invoke lifecycle listeners", t);
-      }
-
-      try {
-        LifecycleUsageTriggerCollector.onIdeClose(restart);
-      }
-      catch (Throwable e) {
-        logErrorDuringExit("Failed to notify usage collector", e);
-      }
-
-      var success = true;
-      var manager = ProjectManagerEx.getInstanceExIfCreated();
-      if (manager != null) {
-        try {
-          boolean projectsClosedSuccessfully = TraceKt.use(tracer.spanBuilder("disposeProjects"), _ -> {
-            return manager.closeAndDisposeAllProjects(!force);
-          });
-          if (!projectsClosedSuccessfully) {
-            success = false;
+          if (isInstantShutdownPossible()) {
+            for (var frame : Frame.getFrames()) {
+              frame.setVisible(false);
+            }
           }
         }
         catch (Throwable e) {
-          logErrorDuringExit("Failed to close and dispose all projects", e);
+          logErrorDuringExit("Failed to instant shutdown the frames", e);
         }
-      }
 
-      try {
-        // can't report OT after the container disposal
-        scope.close();
-        exitSpan.end();
-      }
-      catch (Throwable e) {
-        logErrorDuringExit("Failed to report the telemetry", e);
-      }
+        try {
+          lifecycleListener.appWillBeClosed(restart);
+        }
+        catch (Throwable t) {
+          logErrorDuringExit("Failed to invoke lifecycle listeners", t);
+        }
 
-      disposeContainer();
+        try {
+          LifecycleUsageTriggerCollector.onIdeClose(restart);
+        }
+        catch (Throwable e) {
+          logErrorDuringExit("Failed to notify usage collector", e);
+        }
+      }, () -> {
+        var actualExitCode = exitCode;
+        try {
+          // can't report OT after the container disposal
+          scope.close();
+          exitSpan.end();
+        }
+        catch (Throwable e) {
+          logErrorDuringExit("Failed to report the telemetry", e);
+        }
 
-      if (!success || isUnitTestMode()) {
-        return null;
-      }
+        disposeContainer(exitContext);
 
-      IdeEventQueue.applicationClose();
+        if (isUnitTestMode()) {
+          return null;
+        }
 
-      if (Boolean.getBoolean("idea.test.guimode")) {
-        //noinspection TestOnlyProblems
-        ShutDownTracker.getInstance().run();
-        return null;
-      }
+        IdeEventQueue.applicationClose();
 
-      IdeaLogger.dropFrequentExceptionsCaches();
-      if (restart) {
-        if (canRestart) {
-          try {
-            Restarter.scheduleRestart(BitUtil.isSet(flags, ELEVATE), List.of(beforeRestart));
+        if (Boolean.getBoolean("idea.test.guimode")) {
+          //noinspection TestOnlyProblems
+          ShutDownTracker.getInstance().run();
+          return null;
+        }
+
+        IdeaLogger.dropFrequentExceptionsCaches();
+        if (restart) {
+          if (canRestart) {
+            try {
+              Restarter.scheduleRestart(BitUtil.isSet(flags, ELEVATE), List.of(beforeRestart));
+            }
+            catch (Throwable t) {
+              logErrorDuringExit("Failed to restart the application", t);
+            }
           }
-          catch (Throwable t) {
-            logErrorDuringExit("Failed to restart the application", t);
+          else {
+            getLogger().warn("Restart not supported; exiting");
+          }
+          if (actualExitCode == 0) {
+            actualExitCode = AppExitCodes.RESTART_FAILED;
           }
         }
-        else {
-          getLogger().warn("Restart not supported; exiting");
-        }
-        if (exitCode == 0) {
-          exitCode = AppExitCodes.RESTART_FAILED;
-        }
-      }
-      return exitCode;
+        return actualExitCode;
+      });
     }
     finally {
       exitSpan.end();
@@ -954,7 +933,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
     }
   }
 
-  private static void logErrorDuringExit(String message, Throwable err) {
+  static void logErrorDuringExit(String message, Throwable err) {
     // A special class to bypass problems with logging ControlFlowException.
     class ApplicationExitException extends RuntimeException {
       ApplicationExitException(Throwable cause) {

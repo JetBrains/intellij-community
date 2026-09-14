@@ -74,8 +74,23 @@ abstract class SaveAndSyncHandler {
   @ApiStatus.Internal
   abstract fun maybeRefresh(modalityState: ModalityState)
 
+  /**
+   * Saves only the settings of [componentManager] under modal progress on the EDT.
+   */
   @ApiStatus.Internal
   abstract fun saveSettingsUnderModalProgress(componentManager: ComponentManager): Boolean
+
+  /**
+   * Saves the specified stores on the EDT. Returns `true` if every save succeeds.
+   */
+  @ApiStatus.Internal
+  open fun saveSettingsUnderModalProgress(componentManagers: List<ComponentManager>): Boolean {
+    var saved = true
+    for (componentManager in componentManagers) {
+      saved = saveSettingsUnderModalProgress(componentManager) && saved
+    }
+    return saved
+  }
 
   /**
    * @return a modification tracker incrementing when external commands are likely run.

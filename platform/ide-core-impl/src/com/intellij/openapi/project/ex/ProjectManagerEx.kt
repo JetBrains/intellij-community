@@ -2,7 +2,6 @@
 package com.intellij.openapi.project.ex
 
 import com.intellij.ide.impl.OpenProjectTask
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -114,6 +113,43 @@ abstract class ProjectManagerEx : ProjectManager() {
   // return true if successful
   abstract fun closeAndDisposeAllProjects(checkCanClose: Boolean): Boolean
 
+  /**
+   * Prepares the open projects for an exit save without disposing them.
+   * Returns `null` when [checkCanClose] is set and a close veto stops the close.
+   */
+  @Internal
+  open fun prepareProjectsForExit(checkCanClose: Boolean): PreparedProjectCloseBatch? {
+    val projects = openProjects.toList()
+    if (checkCanClose && !projects.all { canClose(it) }) {
+      return null
+    }
+    return object : PreparedProjectCloseBatch {
+      override val projects: List<Project> = projects
+
+      override fun close() {
+        closeAndDisposeAllProjects(checkCanClose = false)
+      }
+    }
+  }
+
   @Internal
   abstract fun getAllExcludedUrls(project: Project?): List<String>
+}
+
+/**
+ * Holds the projects prepared for an exit save. Call [confirmCloseAfterSave] after the save and before [close].
+ */
+@Internal
+interface PreparedProjectCloseBatch {
+  val projects: List<Project>
+
+  /**
+   * Asks the user about the files that the save could not write.
+   */
+  fun confirmCloseAfterSave(): Boolean = true
+
+  /**
+   * Attempts to dispose every project. Reports failures after all attempts finish.
+   */
+  fun close()
 }
