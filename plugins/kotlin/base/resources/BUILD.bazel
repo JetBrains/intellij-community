@@ -59,7 +59,6 @@ jvm_library(
         "//platform/util-ex",
         "//platform/util:util-ui",
         "//platform/core-ui",
-        "//java/java-frontback-psi-api:frontback-psi",
         "//platform/lang-impl",
     ],
 )
@@ -83,7 +82,6 @@ jvm_library(
         "//platform/util-ex:util-ex_test_lib",
         "//platform/util:util-ui_test_lib",
         "//platform/core-ui:core-ui_test_lib",
-        "//java/java-frontback-psi-api:frontback-psi_test_lib",
         "//platform/lang-impl:lang-impl_test_lib",
     ],
 )
