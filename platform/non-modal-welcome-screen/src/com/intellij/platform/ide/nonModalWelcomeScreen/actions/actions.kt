@@ -70,10 +70,7 @@ private fun getLanguage(languageId: String): Language? {
     return language
   }
 
-  val fileType = FileTypeRegistry.getInstance().findFileTypeByName(languageId)
-  if (fileType == UnknownFileType.INSTANCE) {
-    return null
-  }
+  val fileType = FileTypeRegistry.getInstance().findFileTypeByName(languageId) ?: return null
   return LanguageUtil.getFileTypeLanguage(fileType)
 }
 

@@ -42,12 +42,10 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFilePreCloseCheck
 import com.intellij.openapi.vfs.findOrCreateFile
-import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenActionsUtil
 import com.intellij.platform.PROJECT_CLOSE_WITH_CONFIRMATION
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.util.Consumer
-import com.intellij.util.PlatformUtils
 import com.intellij.util.SystemProperties
 import com.intellij.util.containers.toArray
 import org.jetbrains.annotations.ApiStatus
@@ -59,10 +57,6 @@ internal class WelcomeNewEmptyFileAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
     val project = e.project
     e.presentation.isEnabledAndVisible = project != null && WelcomeUtils.isWelcomeProject(project)
-
-    if (e.getData(WelcomeScreenActionsUtil.NON_MODAL_WELCOME_SCREEN) == true && PlatformUtils.isRider()) {
-      e.presentation.text = ActionsBundle.message("action.WelcomeNewEmptyFile.new.text")
-    }
   }
 
   override fun actionPerformed(e: AnActionEvent) {

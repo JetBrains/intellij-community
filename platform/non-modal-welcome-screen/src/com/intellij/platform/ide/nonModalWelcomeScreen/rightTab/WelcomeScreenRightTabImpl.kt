@@ -319,7 +319,7 @@ internal class WelcomeScreenRightTabImpl(
     additionalPanel.isOpaque = false
 
     createAdditionalComponents(additionalPanel)
-    createSingleBanner(additionalPanel)
+    createSingleBanner(additionalPanel, extraContent)
 
     if (additionalPanel.componentCount > 0) {
       parentPanel.addToBottom(additionalPanel)
@@ -386,11 +386,11 @@ internal class WelcomeScreenRightTabImpl(
     }
   }
 
-  private fun createSingleBanner(parentPanel: JPanel) {
+  private fun createSingleBanner(parentPanel: JPanel, extraContent: Boolean) {
     val singleBanner = WelcomeScreenRightTabBannerProvider.createSingleBanner(project)
     if (singleBanner != null) {
       val wrapper = Wrapper(singleBanner)
-      wrapper.border = JBUI.Borders.emptyTop(24)
+      wrapper.border = JBUI.Borders.emptyTop(if (extraContent) 32 else 52)
       // A provider may return a placeholder that starts invisible and only becomes visible once some
       // async check resolves whether there's anything to show (e.g. GoFeaturesWelcomeRightTabBannerProvider).
       // Mirroring visibility onto the wrapper keeps its border from reserving space while that's the case.

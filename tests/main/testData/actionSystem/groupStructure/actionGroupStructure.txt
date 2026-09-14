@@ -1344,7 +1344,6 @@
       MergeAllWindowsAction
       <separator>
   HelpMenu
-    OpenWelcome
     GotoAction
     <separator>
     HelpTopics
@@ -2305,7 +2304,6 @@
   DiagnosticGroup
   KotlinCriDiagnostics
 [group HelpMenu]
-  OpenWelcome
   GotoAction
   <separator>
   HelpTopics

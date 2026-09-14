@@ -51,7 +51,7 @@
                  description="Show the Welcome screen in non-modal mode for IDEA"/>
   </extensions>
 
-  <actions>
+  <actions resource-bundle="messages.NonModalWelcomeScreenBundle">
     <group id="NonModalWelcomeScreen.LeftTabActions.New" overrides="true" icon="AllIcons.General.Add" popup="true">
       <reference ref="NewProject"/>
       <separator/>
