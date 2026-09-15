@@ -30,7 +30,6 @@ import com.intellij.psi.PsiReferenceContributor
 import com.intellij.psi.PsiReferenceProvider
 import com.intellij.psi.PsiReferenceRegistrar
 import com.intellij.psi.impl.FakePsiElement
-import com.intellij.ui.jcef.JBCefApp
 import com.intellij.util.ProcessingContext
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.PyPackageName
@@ -42,6 +41,7 @@ import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.findPackageSpecification
 import com.jetbrains.python.packaging.repository.PyPiPackageRepository
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
+import com.jetbrains.python.ui.PyEmbeddedBrowserProvider
 import com.intellij.python.requirements.parser.psi.NameReq
 import com.intellij.python.requirements.parser.psi.PackageName
 import com.intellij.python.requirements.parser.psi.Path
@@ -237,7 +237,7 @@ private class RemoteRequirementNavTarget(
         val url = packageManager.resolvePackageUrl(packageName)
 
         // JCEF tab when available, system browser as a fallback (headless / JCEF-stripped runtimes).
-        if (JBCefApp.isSupported()) {
+        if (PyEmbeddedBrowserProvider.isSupported()) {
           withContext(Dispatchers.EDT) {
             HTMLEditorProvider.openEditor(project, packageName, HTMLEditorProvider.Request.url(url))
           }

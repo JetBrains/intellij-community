@@ -1995,6 +1995,7 @@
       <module fileurl="file://$PROJECT_DIR$/python/conda/frontend/intellij.python.community.impl.conda.frontend.iml" filepath="$PROJECT_DIR$/python/conda/frontend/intellij.python.community.impl.conda.frontend.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/huggingFace/intellij.python.community.impl.huggingFace.iml" filepath="$PROJECT_DIR$/python/huggingFace/intellij.python.community.impl.huggingFace.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/installer/intellij.python.community.impl.installer.iml" filepath="$PROJECT_DIR$/python/installer/intellij.python.community.impl.installer.iml" />
+      <module fileurl="file://$PROJECT_DIR$/python/jcef/intellij.python.community.impl.jcef.iml" filepath="$PROJECT_DIR$/python/jcef/intellij.python.community.impl.jcef.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/pipenv/intellij.python.community.impl.pipenv.iml" filepath="$PROJECT_DIR$/python/pipenv/intellij.python.community.impl.pipenv.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/pipenv/common/intellij.python.community.impl.pipenv.common.iml" filepath="$PROJECT_DIR$/python/pipenv/common/intellij.python.community.impl.pipenv.common.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/pipenv/frontend/intellij.python.community.impl.pipenv.frontend.iml" filepath="$PROJECT_DIR$/python/pipenv/frontend/intellij.python.community.impl.pipenv.frontend.iml" />

@@ -14,7 +14,6 @@
     <module name="intellij.libraries.jackson.dataformat.yaml"/>
     <module name="intellij.libraries.jackson.module.kotlin"/>
     <module name="intellij.libraries.javax.annotation"/>
-    <module name="intellij.libraries.jcef"/>
     <module name="intellij.libraries.jetbrains.annotations"/>
     <module name="intellij.libraries.jna"/>
     <module name="intellij.libraries.jsoup"/>
@@ -72,7 +71,6 @@
     <module name="intellij.platform.testIntegration"/>
     <module name="intellij.platform.testIntegration.ui"/>
     <module name="intellij.platform.testRunner"/>
-    <module name="intellij.platform.ui.jcef"/>
     <module name="intellij.platform.usageView"/>
     <module name="intellij.platform.usageView.impl"/>
     <module name="intellij.platform.util.coroutines"/>
@@ -934,6 +932,9 @@
   <extensionPoints>
     <extensionPoint qualifiedName="Pythonid.packageInstalledIconProvider"
                     interface="com.jetbrains.python.packaging.toolwindow.packages.tree.renderers.PyPackageInstalledIconProvider"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="Pythonid.embeddedBrowserProvider"
+                    interface="com.jetbrains.python.ui.PyEmbeddedBrowserProvider"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.jetbrains.python.console.runnerFactory"
                     interface="com.jetbrains.python.console.PythonConsoleRunnerFactory"

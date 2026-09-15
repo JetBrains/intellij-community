@@ -1,0 +1,71 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.python.community.impl.jcef` start
+content_module_jar(module = ":jcef")
+### auto-generated section `dev intellij.python.community.impl.jcef` end
+
+### auto-generated section `build intellij.python.community.impl.jcef` start
+jvm_library(
+    name = "jcef",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.python.community.impl.jcef",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/core-api:core",
+        "//platform/platform-api:ide",
+        "//plugins/jcef/plugin",
+        "//platform/ui.jcef",
+        "//platform/util",
+        "//platform/util:util-ui",
+        "//libraries/guava",
+        "//python:python-community-impl",
+    ],
+)
+
+jvm_library(
+    name = "jcef_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.python.community.impl.jcef",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":jcef",
+        "//platform/core-api:core_test_lib",
+        "//platform/platform-api:ide_test_lib",
+        "//plugins/jcef/plugin:plugin_test_lib",
+        "//platform/ui.jcef:ui.jcef_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/util:util-ui_test_lib",
+        "//libraries/guava:guava_test_lib",
+        "//python:python-community-impl_test_lib",
+    ],
+)
+### auto-generated section `build intellij.python.community.impl.jcef` end
+
+### auto-generated section `iml intellij.python.community.impl.jcef` start
+exports_files(
+    [
+        "intellij.python.community.impl.jcef.iml",
+        "resources/intellij.python.community.impl.jcef.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.python.community.impl.jcef` end

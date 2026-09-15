@@ -1797,6 +1797,7 @@ python/impl.helperLocator
 python/installer
 python/intellij.python.community.communityOnly
 python/intellij.python.ml.features
+python/jcef
 python/junit5Tests-framework
 python/mcp
 python/openapi

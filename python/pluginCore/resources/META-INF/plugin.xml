@@ -84,6 +84,7 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <module name="intellij.python.community.helpersLocator"/>
     <module name="intellij.python.community"/>
     <module name="intellij.python.community.impl" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.python.community.impl.jcef"/>
     <module name="intellij.python.community.execService"/>
     <module name="intellij.python.community.execService.python"/>
     <module name="intellij.python.community.impl.installer"/>
