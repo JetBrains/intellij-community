@@ -676,6 +676,68 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
                                  "ffffffffffffffffff/ggggggggggggggggg/hhhhhhhhhhhhhhhh/ClassName.java"), List.of(veryLongNameFile));
   }
 
+  public void test_pasted_relative_path_finds_the_file() {
+    PsiFile file = addEmptyFile("foo/bar/goo/index.html");
+    addEmptyFile("foo/index.html");
+    assertOrderedEquals(gotoFile("foo/bar/goo/index.html"), List.of(file));
+  }
+
+  public void test_pasted_relative_path_finds_the_same_path_under_another_directory() {
+    PsiFile atRoot = addEmptyFile("src/main/java/Foo.java");
+    PsiFile nested = addEmptyFile("moduleA/src/main/java/Foo.java");
+    assertSameElements(gotoFile("src/main/java/Foo.java"), List.of(atRoot, nested));
+  }
+
+  public void test_pasted_relative_path_keeps_a_loosely_matching_directory() {
+    PsiFile exact = addEmptyFile("main/java/util/Foo.java");
+    PsiFile loose = addEmptyFile("main/javafx/util/Foo.java");
+    assertOrderedEquals(gotoFile("main/java/util/Foo.java"), List.of(exact, loose));
+  }
+
+  public void test_pasted_relative_path_keeps_a_directory_that_only_a_subsequence_matches() {
+    PsiFile exact = addEmptyFile("platform/util/foo/a.txt");
+    PsiFile loose = addEmptyFile("platform/core-util/foo/a.txt");
+    assertOrderedEquals(gotoFile("platform/util/foo/a.txt"), List.of(exact, loose));
+  }
+
+  /** The full name of a file in the popup starts with the name of its root, so a copied path can repeat it. */
+  public void test_pasted_relative_path_reads_the_root_name_both_ways() {
+    PsiFile withoutPrefix = addEmptyFile("main/java/Foo.java");
+    PsiFile withPrefix = addEmptyFile("src/main/java/Foo.java");
+    assertSameElements(gotoFile("src/main/java/Foo.java"), List.of(withoutPrefix, withPrefix));
+  }
+
+  public void test_pasted_relative_path_reports_each_file_once() {
+    PsiFile exact = addEmptyFile("foo/bar/goo/index.html");
+    PsiFile loose = addEmptyFile("foo/bar/goo2/index.html");
+    List<PsiFile> result = gotoFile("foo/bar/goo/index.html");
+    assertOrderedEquals(result, List.of(exact, loose));
+  }
+
+  public void test_mis_cased_relative_path_still_finds_the_file() {
+    PsiFile file = addEmptyFile("foo/bar/goo/index.html");
+    assertOrderedEquals(gotoFile("FOO/BAR/goo/index.html"), List.of(file));
+  }
+
+  public void test_pasted_relative_path_with_backslashes_finds_the_file() {
+    PsiFile file = addEmptyFile("foo/bar/goo/index.html");
+    assertOrderedEquals(gotoFile("foo\\bar\\goo\\index.html"), List.of(file));
+  }
+
+  public void test_pasted_relative_path_of_a_directory_finds_the_directory() {
+    PsiFile file = addEmptyFile("foo/bar/goo/doo/index.html");
+    PsiDirectory dooDir = file.getContainingDirectory();
+
+    SearchEverywhereContributor<Object> contributor = createFileContributor(getProject(), getTestRootDisposable(), file);
+    fuzzySearchRegistryValue.setValue(false);
+    try {
+      assertOrderedEquals(calcContributorElements(contributor, "foo/bar/goo/doo/"), List.of(dooDir));
+    }
+    finally {
+      fuzzySearchRegistryValue.setValue(isFuzzySearchEnabled);
+    }
+  }
+
   public void test_exactly_matching_qualified_symbol_gets_the_exact_match_degree() {
     PsiMethod method = myFixture.addClass("package foo; class Bar { void createBreakpoints() {} }").getMethods()[0];
     WeightedSearchEverywhereContributor<?> contributor =
