@@ -1159,6 +1159,18 @@ def internal_get_next_statement_targets(dbg, seq, thread_id, frame_id):
         dbg.writer.add_command(cmd)
 
 
+_EVALUATE_RESPONDED = "_pydevd_evaluate_responded"
+
+
+def _send_evaluate_response(py_db, request, variables_response):
+    """
+    Sends an evaluate response and records on the request that it was answered, so that a
+    console interrupt landing right after cannot answer the same request a second time.
+    """
+    setattr(request, _EVALUATE_RESPONDED, True)
+    py_db.writer.add_command(NetCommand(CMD_RETURN, 0, variables_response, is_json=True))
+
+
 def _evaluate_response(py_db, request, result, error_message=""):
     is_error = isinstance(result, ExceptionOnEvaluate)
     if is_error:
@@ -1166,32 +1178,50 @@ def _evaluate_response(py_db, request, result, error_message=""):
     if not error_message:
         body = pydevd_schema.EvaluateResponseBody(result=result, variablesReference=0)
         variables_response = pydevd_base_schema.build_response(request, kwargs={"body": body})
-        py_db.writer.add_command(NetCommand(CMD_RETURN, 0, variables_response, is_json=True))
+        _send_evaluate_response(py_db, request, variables_response)
     else:
         body = pydevd_schema.EvaluateResponseBody(result=result, variablesReference=0)
         variables_response = pydevd_base_schema.build_response(request, kwargs={"body": body, "success": False, "message": error_message})
-        py_db.writer.add_command(NetCommand(CMD_RETURN, 0, variables_response, is_json=True))
+        _send_evaluate_response(py_db, request, variables_response)
 
 
 _global_frame = None
 
 
 @contextmanager
-def _console_interrupt_scope(py_db, context):
+def _console_interrupt_scope(py_db, request, context):
     """
     While a repl evaluation runs, registers a callback that allows interrupting it on request
     (e.g. Ctrl+C in the debug console) by raising a KeyboardInterrupt in this thread. The
     callback must be created here so it targets the thread that actually runs the evaluation.
+
+    The callback raises the KeyboardInterrupt once, by an emulated Ctrl+C where that works and
+    by thread ident otherwise, so the interrupt does not depend on the SIGINT disposition the
+    debuggee ended up with.
     """
     if context != "repl":
         yield
         return
 
-    py_db.set_console_interrupt_callback(pydevd_timeout.create_interrupt_this_thread_callback())
+    py_db.set_console_interrupt_callback(pydevd_timeout.create_interrupt_this_thread_by_ident_callback())
     try:
         yield
+    except KeyboardInterrupt:
+        # The interrupt arrived after the evaluation produced its result, while the response
+        # was still being built. Clear the callback first, so a second pending interrupt
+        # cannot take the response down too. Without this, the bare `except:` in
+        # PyDB._do_wait_suspend swallows the interrupt and the client waits for a response
+        # which never arrives.
+        py_db.clear_console_interrupt_callback()
+        if not getattr(request, _EVALUATE_RESPONDED, False):
+            _evaluate_response_return_exception(py_db, request, *sys.exc_info())
     finally:
-        py_db.set_console_interrupt_callback(None)
+        try:
+            py_db.clear_console_interrupt_callback()
+        except KeyboardInterrupt:
+            # A Ctrl+C which arrives exactly here must not replace the answer the evaluation
+            # already produced, so it is dropped. The callback is cleared either way.
+            py_db._console_interrupt_callback = None
 
 
 def internal_evaluate_expression_json(py_db, request, thread_id):
@@ -1217,7 +1247,7 @@ def internal_evaluate_expression_json(py_db, request, thread_id):
         # If we're not in a repl (watch, hover, ...) don't show warnings.
         ctx = filter_all_warnings()
 
-    with ctx, _console_interrupt_scope(py_db, context):
+    with ctx, _console_interrupt_scope(py_db, request, context):
         try_exec = False
         if frame_id is None:
             if _global_frame is None:
@@ -1310,7 +1340,7 @@ def internal_evaluate_expression_json(py_db, request, thread_id):
                 indexedVariables=var_data.get("indexedVariables"),
             )
         variables_response = pydevd_base_schema.build_response(request, kwargs={"body": body})
-        py_db.writer.add_command(NetCommand(CMD_RETURN, 0, variables_response, is_json=True))
+        _send_evaluate_response(py_db, request, variables_response)
 
 
 def _evaluate_response_return_exception(py_db, request, exc_type, exc, initial_tb):

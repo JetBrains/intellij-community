@@ -305,6 +305,17 @@ class PyDevJsonCommandProcessor(object):
             if DEBUG:
                 print("Handled in pydevd: %s (in PyDevJsonCommandProcessor).\n" % (method_name,))
 
+        if request.command == "pydevdInterruptConsole" and py_db.authentication.is_authenticated():
+            # Must be executed outside of the main lock, so the interrupt reaches the thread
+            # which runs the console evaluation right away instead of queueing behind another
+            # request. The CMD_INTERRUPT_DEBUG_CONSOLE handler in pydevd_process_net_command
+            # does the same for the pydevd debugger. A request which is not authenticated
+            # falls through and gets the answer the locked path builds for it.
+            cmd = on_request(py_db, request)
+            if cmd is not None and send_response:
+                py_db.writer.add_command(cmd)
+            return
+
         with py_db._main_lock:
             if request.__class__ == PydevdAuthorizeRequest:
                 authorize_request = request  # : :type authorize_request: PydevdAuthorizeRequest
