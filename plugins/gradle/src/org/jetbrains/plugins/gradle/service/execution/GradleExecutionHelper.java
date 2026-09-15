@@ -153,8 +153,8 @@ public final class GradleExecutionHelper {
       // Setting the custom build file location is deprecated since Gradle 7.6, see IDEA-359161 for more details.
       setupProjectDirectory(context);
 
-      GradleConnectorService connectorService = GradleConnectorService.getInstance(context.getProjectPath(), context.getTaskId());
-      return connectorService.withGradleConnection(context.getProjectPath(), context.getTaskId(), context.getSettings(), context.getListener(), context.getCancellationToken(), connection ->
+      GradleConnectorService connectorService = GradleConnectorService.getInstance(context.getProject());
+      return connectorService.withGradleConnection(context, connection ->
         SystemPropertiesAdjuster.executeAdjusted(context.getProjectPath(), () -> {
           BuildEnvironment buildEnvironment = getBuildEnvironment(connection, context);
           buildEnvironmentRef.set(buildEnvironment);
