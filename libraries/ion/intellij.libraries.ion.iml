@@ -9,19 +9,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="ion" type="repository">
-        <properties maven-id="com.amazon.ion:ion-java:1.11.11">
+        <properties maven-id="com.amazon.ion:ion-java:1.12.1">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/com/amazon/ion/ion-java/1.11.11/ion-java-1.11.11.jar">
-              <sha256sum>9637c74909f00b33de83ae517b3542156cdaa215fcbd6ebff54a019bf845cd0b</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/amazon/ion/ion-java/1.12.1/ion-java-1.12.1.jar">
+              <sha256sum>47f5d5b90690eb6fbff2b5946c1e20e22ba02b0dd9444a7e08de46f19c5b000e</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/amazon/ion/ion-java/1.11.11/ion-java-1.11.11.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/amazon/ion/ion-java/1.12.1/ion-java-1.12.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/amazon/ion/ion-java/1.11.11/ion-java-1.11.11-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/amazon/ion/ion-java/1.12.1/ion-java-1.12.1-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

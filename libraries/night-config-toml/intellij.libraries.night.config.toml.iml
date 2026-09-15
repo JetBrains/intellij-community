@@ -9,24 +9,24 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="night-config-toml" type="repository">
-        <properties maven-id="com.electronwill.night-config:toml:3.8.4">
+        <properties maven-id="com.electronwill.night-config:toml:3.9.0">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/com/electronwill/night-config/toml/3.8.4/toml-3.8.4.jar">
-              <sha256sum>127bf8b025c341139145c55bc897f3188057eec19940f99d3eae624399e88f2a</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/electronwill/night-config/toml/3.9.0/toml-3.9.0.jar">
+              <sha256sum>475e6fa3315619294d5ab74f2eb80f0705129d43e652d3ccd5337c77d0a29a6b</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/com/electronwill/night-config/core/3.8.4/core-3.8.4.jar">
-              <sha256sum>2d9532aa851742a6e2f3cb472a6a5b3c0e7e8b9da287c7d20a2963466f4aebb4</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/electronwill/night-config/core/3.9.0/core-3.9.0.jar">
+              <sha256sum>cd890520bd3c680cf82e79f16071de9c8f367206a2f841c777d944289f343ebc</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/electronwill/night-config/toml/3.8.4/toml-3.8.4.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/com/electronwill/night-config/core/3.8.4/core-3.8.4.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/electronwill/night-config/toml/3.9.0/toml-3.9.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/electronwill/night-config/core/3.9.0/core-3.9.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/electronwill/night-config/toml/3.8.4/toml-3.8.4-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/com/electronwill/night-config/core/3.8.4/core-3.8.4-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/electronwill/night-config/toml/3.9.0/toml-3.9.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/electronwill/night-config/core/3.9.0/core-3.9.0-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

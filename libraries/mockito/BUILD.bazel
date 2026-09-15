@@ -14,6 +14,7 @@ jvm_library(
         # do not sort,
         "@lib//:libraries-mockito-mockito",
         "//libraries/byte-buddy",
+        "//libraries/byte-buddy/agent",
     ],
 )
 
@@ -31,6 +32,7 @@ jvm_library(
         # do not sort,
         ":mockito",
         "//libraries/byte-buddy:byte-buddy_test_lib",
+        "//libraries/byte-buddy/agent:agent_test_lib",
     ],
 )
 ### auto-generated section `build intellij.libraries.mockito` end

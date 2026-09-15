@@ -9,19 +9,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="ivy" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.apache.ivy:ivy:2.5.2">
+        <properties include-transitive-deps="false" maven-id="org.apache.ivy:ivy:2.6.0">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/ivy/ivy/2.5.2/ivy-2.5.2.jar">
-              <sha256sum>98428d545ea63cd9a0aaf255caf42cb8cb64fe430dbb5e709aed536d4daeed04</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/ivy/ivy/2.6.0/ivy-2.6.0.jar">
+              <sha256sum>7e14fe77306a8cc71197cb3f1681e9e673ccc04254a5ede7e848e2248491ec78</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/ivy/ivy/2.5.2/ivy-2.5.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/ivy/ivy/2.6.0/ivy-2.6.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/ivy/ivy/2.5.2/ivy-2.5.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/ivy/ivy/2.6.0/ivy-2.6.0-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

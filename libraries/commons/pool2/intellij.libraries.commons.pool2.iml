@@ -9,19 +9,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="commons-pool2" type="repository">
-        <properties maven-id="org.apache.commons:commons-pool2:2.12.0">
+        <properties maven-id="org.apache.commons:commons-pool2:2.13.1">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/commons/commons-pool2/2.12.0/commons-pool2-2.12.0.jar">
-              <sha256sum>6d3bd18df8410f3e31b031aca582cc109342358a62a2759ebd0c4cdf30d06f8b</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/commons/commons-pool2/2.13.1/commons-pool2-2.13.1.jar">
+              <sha256sum>f77a5060d6936a9144023584232f9de3f2248f1abfe156e9d31795f18770674f</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-pool2/2.12.0/commons-pool2-2.12.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-pool2/2.13.1/commons-pool2-2.13.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-pool2/2.12.0/commons-pool2-2.12.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-pool2/2.13.1/commons-pool2-2.13.1-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

@@ -9,19 +9,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="byte-buddy-agent" type="repository">
-        <properties maven-id="net.bytebuddy:byte-buddy-agent:1.17.6">
+        <properties maven-id="net.bytebuddy:byte-buddy-agent:1.18.13">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy-agent/1.17.6/byte-buddy-agent-1.17.6.jar">
-              <sha256sum>8a80959465bb09848cd41a89301490c55b9d940dc6ec30d8abac0f63b39fd5d0</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy-agent/1.18.13/byte-buddy-agent-1.18.13.jar">
+              <sha256sum>990c630297fb8c84fea5b16085a4b3035b81748084a94a98f0b9dc0c5d63d499</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy-agent/1.17.6/byte-buddy-agent-1.17.6.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy-agent/1.18.13/byte-buddy-agent-1.18.13.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy-agent/1.17.6/byte-buddy-agent-1.17.6-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy-agent/1.18.13/byte-buddy-agent-1.18.13-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

@@ -6925,17 +6925,17 @@ jvm_import(
 )
 
 copy_file(
-    name = "com.fasterxml/aalto-xml-1.3.4.jar_copy",
-    src = "@com_fasterxml-aalto-xml-1_3_4_http//file",
-    out = "com.fasterxml/aalto-xml-1.3.4.jar",
+    name = "com.fasterxml/aalto-xml-1.4.0.jar_copy",
+    src = "@com_fasterxml-aalto-xml-1_4_0_http//file",
+    out = "com.fasterxml/aalto-xml-1.4.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.codehaus.woodstox/stax2-api-4.2.2.jar_copy",
-    src = "@org_codehaus_woodstox-stax2-api-4_2_2_http//file",
-    out = "org.codehaus.woodstox/stax2-api-4.2.2.jar",
+    name = "org.codehaus.woodstox/stax2-api-4.3.0.jar_copy",
+    src = "@org_codehaus_woodstox-stax2-api-4_3_0_http//file",
+    out = "org.codehaus.woodstox/stax2-api-4.3.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
@@ -6945,21 +6945,21 @@ java_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        ":com_fasterxml-aalto-xml-1_3_4_http_import",
-        ":org_codehaus_woodstox-stax2-api-4_2_2_http_import",
+        ":com_fasterxml-aalto-xml-1_4_0_http_import",
+        ":org_codehaus_woodstox-stax2-api-4_3_0_http_import",
     ],
 )
 
 jvm_import(
-    name = "com_fasterxml-aalto-xml-1_3_4_http_import",
-    jar = "@com_fasterxml-aalto-xml-1_3_4_http//file",
-    source_jar = "@com_fasterxml-aalto-xml-1_3_4-sources_http//file",
+    name = "com_fasterxml-aalto-xml-1_4_0_http_import",
+    jar = "@com_fasterxml-aalto-xml-1_4_0_http//file",
+    source_jar = "@com_fasterxml-aalto-xml-1_4_0-sources_http//file",
 )
 
 jvm_import(
-    name = "org_codehaus_woodstox-stax2-api-4_2_2_http_import",
-    jar = "@org_codehaus_woodstox-stax2-api-4_2_2_http//file",
-    source_jar = "@org_codehaus_woodstox-stax2-api-4_2_2-sources_http//file",
+    name = "org_codehaus_woodstox-stax2-api-4_3_0_http_import",
+    jar = "@org_codehaus_woodstox-stax2-api-4_3_0_http//file",
+    source_jar = "@org_codehaus_woodstox-stax2-api-4_3_0-sources_http//file",
 )
 
 copy_file(
@@ -7320,25 +7320,9 @@ jvm_import(
 )
 
 copy_file(
-    name = "org.ow2.asm/asm-analysis-9.8.jar_copy",
-    src = "@org_ow2_asm-asm-analysis-9_8_http//file",
-    out = "org.ow2.asm/asm-analysis-9.8.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "org.ow2.asm/asm-tree-9.8.jar_copy",
-    src = "@org_ow2_asm-asm-tree-9_8_http//file",
-    out = "org.ow2.asm/asm-tree-9.8.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "org.ow2.asm/asm-9.8.jar_copy",
-    src = "@org_ow2_asm-asm-9_8_http//file",
-    out = "org.ow2.asm/asm-9.8.jar",
+    name = "org.ow2.asm/asm-analysis-9.10.1.jar_copy",
+    src = "@org_ow2_asm-asm-analysis-9_10_1_http//file",
+    out = "org.ow2.asm/asm-analysis-9.10.1.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
@@ -7348,28 +7332,16 @@ java_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        ":org_ow2_asm-asm-analysis-9_8_http_import",
-        ":org_ow2_asm-asm-tree-9_8_http_import",
-        ":org_ow2_asm-asm-9_8_http_import",
+        ":org_ow2_asm-asm-analysis-9_10_1_http_import",
+        ":org_ow2_asm-asm-tree-9_10_1_http_import",
+        ":org_ow2_asm-asm-9_10_1_http_import",
     ],
 )
 
 jvm_import(
-    name = "org_ow2_asm-asm-analysis-9_8_http_import",
-    jar = "@org_ow2_asm-asm-analysis-9_8_http//file",
-    source_jar = "@org_ow2_asm-asm-analysis-9_8-sources_http//file",
-)
-
-jvm_import(
-    name = "org_ow2_asm-asm-tree-9_8_http_import",
-    jar = "@org_ow2_asm-asm-tree-9_8_http//file",
-    source_jar = "@org_ow2_asm-asm-tree-9_8-sources_http//file",
-)
-
-jvm_import(
-    name = "org_ow2_asm-asm-9_8_http_import",
-    jar = "@org_ow2_asm-asm-9_8_http//file",
-    source_jar = "@org_ow2_asm-asm-9_8-sources_http//file",
+    name = "org_ow2_asm-asm-analysis-9_10_1_http_import",
+    jar = "@org_ow2_asm-asm-analysis-9_10_1_http//file",
+    source_jar = "@org_ow2_asm-asm-analysis-9_10_1-sources_http//file",
 )
 
 copy_file(
@@ -7772,32 +7744,32 @@ jvm_import(
 )
 
 copy_file(
-    name = "net.bytebuddy/byte-buddy-agent-1.17.6.jar_copy",
-    src = "@net_bytebuddy-byte-buddy-agent-1_17_6_http//file",
-    out = "net.bytebuddy/byte-buddy-agent-1.17.6.jar",
+    name = "net.bytebuddy/byte-buddy-agent-1.18.13.jar_copy",
+    src = "@net_bytebuddy-byte-buddy-agent-1_18_13_http//file",
+    out = "net.bytebuddy/byte-buddy-agent-1.18.13.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-byte-buddy-agent-byte-buddy-agent",
-    jar = "@net_bytebuddy-byte-buddy-agent-1_17_6_http//file",
-    source_jar = "@net_bytebuddy-byte-buddy-agent-1_17_6-sources_http//file",
+    jar = "@net_bytebuddy-byte-buddy-agent-1_18_13_http//file",
+    source_jar = "@net_bytebuddy-byte-buddy-agent-1_18_13-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "net.bytebuddy/byte-buddy-1.17.7.jar_copy",
-    src = "@net_bytebuddy-byte-buddy-1_17_7_http//file",
-    out = "net.bytebuddy/byte-buddy-1.17.7.jar",
+    name = "net.bytebuddy/byte-buddy-1.18.13.jar_copy",
+    src = "@net_bytebuddy-byte-buddy-1_18_13_http//file",
+    out = "net.bytebuddy/byte-buddy-1.18.13.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-byte-buddy-byte-buddy",
-    jar = "@net_bytebuddy-byte-buddy-1_17_7_http//file",
-    source_jar = "@net_bytebuddy-byte-buddy-1_17_7-sources_http//file",
+    jar = "@net_bytebuddy-byte-buddy-1_18_13_http//file",
+    source_jar = "@net_bytebuddy-byte-buddy-1_18_13-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
@@ -8211,24 +8183,32 @@ jvm_import(
 )
 
 copy_file(
-    name = "commons-logging/commons-logging-1.2.jar_copy",
-    src = "@commons-logging-commons-logging-1_2_http//file",
-    out = "commons-logging/commons-logging-1.2.jar",
+    name = "commons-logging/commons-logging-1.4.0.jar_copy",
+    src = "@commons-logging-commons-logging-1_4_0_http//file",
+    out = "commons-logging/commons-logging-1.4.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-commons-logging-commons-logging",
-    jar = "@commons-logging-commons-logging-1_2_http//file",
-    source_jar = "@commons-logging-commons-logging-1_2-sources_http//file",
+    jar = "@commons-logging-commons-logging-1_4_0_http//file",
+    source_jar = "@commons-logging-commons-logging-1_4_0-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "org.apache.commons/commons-pool2-2.13.1.jar_copy",
+    src = "@org_apache_commons-commons-pool2-2_13_1_http//file",
+    out = "org.apache.commons/commons-pool2-2.13.1.jar",
+    allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-commons-pool2-commons-pool2",
-    jar = "@org_apache_commons-commons-pool2-2_12_0_http//file",
-    source_jar = "@org_apache_commons-commons-pool2-2_12_0-sources_http//file",
+    jar = "@org_apache_commons-commons-pool2-2_13_1_http//file",
+    source_jar = "@org_apache_commons-commons-pool2-2_13_1-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
@@ -10709,17 +10689,17 @@ jvm_import(
 )
 
 copy_file(
-    name = "com.amazon.ion/ion-java-1.11.11.jar_copy",
-    src = "@com_amazon_ion-ion-java-1_11_11_http//file",
-    out = "com.amazon.ion/ion-java-1.11.11.jar",
+    name = "com.amazon.ion/ion-java-1.12.1.jar_copy",
+    src = "@com_amazon_ion-ion-java-1_12_1_http//file",
+    out = "com.amazon.ion/ion-java-1.12.1.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-ion-ion",
-    jar = "@com_amazon_ion-ion-java-1_11_11_http//file",
-    source_jar = "@com_amazon_ion-ion-java-1_11_11-sources_http//file",
+    jar = "@com_amazon_ion-ion-java-1_12_1_http//file",
+    source_jar = "@com_amazon_ion-ion-java-1_12_1-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
@@ -10738,17 +10718,17 @@ jvm_import(
 )
 
 copy_file(
-    name = "org.apache.ivy/ivy-2.5.2.jar_copy",
-    src = "@org_apache_ivy-ivy-2_5_2_http//file",
-    out = "org.apache.ivy/ivy-2.5.2.jar",
+    name = "org.apache.ivy/ivy-2.6.0.jar_copy",
+    src = "@org_apache_ivy-ivy-2_6_0_http//file",
+    out = "org.apache.ivy/ivy-2.6.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-ivy-ivy",
-    jar = "@org_apache_ivy-ivy-2_5_2_http//file",
-    source_jar = "@org_apache_ivy-ivy-2_5_2-sources_http//file",
+    jar = "@org_apache_ivy-ivy-2_6_0_http//file",
+    source_jar = "@org_apache_ivy-ivy-2_6_0-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
@@ -10768,84 +10748,84 @@ jvm_import(
 )
 
 copy_file(
-    name = "com.fasterxml.jackson.core/jackson-databind-2.19.0.jar_copy",
-    src = "@com_fasterxml_jackson_core-jackson-databind-2_19_0_http//file",
-    out = "com.fasterxml.jackson.core/jackson-databind-2.19.0.jar",
+    name = "com.fasterxml.jackson.core/jackson-databind-2.22.2.jar_copy",
+    src = "@com_fasterxml_jackson_core-jackson-databind-2_22_2_http//file",
+    out = "com.fasterxml.jackson.core/jackson-databind-2.22.2.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-jackson-databind-jackson-databind",
-    jar = "@com_fasterxml_jackson_core-jackson-databind-2_19_0_http//file",
-    source_jar = "@com_fasterxml_jackson_core-jackson-databind-2_19_0-sources_http//file",
+    jar = "@com_fasterxml_jackson_core-jackson-databind-2_22_2_http//file",
+    source_jar = "@com_fasterxml_jackson_core-jackson-databind-2_22_2-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "com.fasterxml.jackson.dataformat/jackson-dataformat-toml-2.19.0.jar_copy",
-    src = "@com_fasterxml_jackson_dataformat-jackson-dataformat-toml-2_19_0_http//file",
-    out = "com.fasterxml.jackson.dataformat/jackson-dataformat-toml-2.19.0.jar",
+    name = "com.fasterxml.jackson.dataformat/jackson-dataformat-toml-2.22.2.jar_copy",
+    src = "@com_fasterxml_jackson_dataformat-jackson-dataformat-toml-2_22_2_http//file",
+    out = "com.fasterxml.jackson.dataformat/jackson-dataformat-toml-2.22.2.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-jackson-dataformat-toml-jackson-dataformat-toml",
-    jar = "@com_fasterxml_jackson_dataformat-jackson-dataformat-toml-2_19_0_http//file",
-    source_jar = "@com_fasterxml_jackson_dataformat-jackson-dataformat-toml-2_19_0-sources_http//file",
+    jar = "@com_fasterxml_jackson_dataformat-jackson-dataformat-toml-2_22_2_http//file",
+    source_jar = "@com_fasterxml_jackson_dataformat-jackson-dataformat-toml-2_22_2-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "com.fasterxml.jackson.dataformat/jackson-dataformat-xml-2.19.0.jar_copy",
-    src = "@com_fasterxml_jackson_dataformat-jackson-dataformat-xml-2_19_0_http//file",
-    out = "com.fasterxml.jackson.dataformat/jackson-dataformat-xml-2.19.0.jar",
+    name = "com.fasterxml.jackson.dataformat/jackson-dataformat-xml-2.22.2.jar_copy",
+    src = "@com_fasterxml_jackson_dataformat-jackson-dataformat-xml-2_22_2_http//file",
+    out = "com.fasterxml.jackson.dataformat/jackson-dataformat-xml-2.22.2.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-jackson-dataformat-xml-jackson-dataformat-xml",
-    jar = "@com_fasterxml_jackson_dataformat-jackson-dataformat-xml-2_19_0_http//file",
-    source_jar = "@com_fasterxml_jackson_dataformat-jackson-dataformat-xml-2_19_0-sources_http//file",
+    jar = "@com_fasterxml_jackson_dataformat-jackson-dataformat-xml-2_22_2_http//file",
+    source_jar = "@com_fasterxml_jackson_dataformat-jackson-dataformat-xml-2_22_2-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "com.fasterxml.jackson.dataformat/jackson-dataformat-yaml-2.19.0.jar_copy",
-    src = "@com_fasterxml_jackson_dataformat-jackson-dataformat-yaml-2_19_0_http//file",
-    out = "com.fasterxml.jackson.dataformat/jackson-dataformat-yaml-2.19.0.jar",
+    name = "com.fasterxml.jackson.dataformat/jackson-dataformat-yaml-2.22.2.jar_copy",
+    src = "@com_fasterxml_jackson_dataformat-jackson-dataformat-yaml-2_22_2_http//file",
+    out = "com.fasterxml.jackson.dataformat/jackson-dataformat-yaml-2.22.2.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-jackson-dataformat-yaml-jackson-dataformat-yaml",
-    jar = "@com_fasterxml_jackson_dataformat-jackson-dataformat-yaml-2_19_0_http//file",
-    source_jar = "@com_fasterxml_jackson_dataformat-jackson-dataformat-yaml-2_19_0-sources_http//file",
+    jar = "@com_fasterxml_jackson_dataformat-jackson-dataformat-yaml-2_22_2_http//file",
+    source_jar = "@com_fasterxml_jackson_dataformat-jackson-dataformat-yaml-2_22_2-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "com.fasterxml.jackson.datatype/jackson-datatype-jdk8-2.19.0.jar_copy",
-    src = "@com_fasterxml_jackson_datatype-jackson-datatype-jdk8-2_19_0_http//file",
-    out = "com.fasterxml.jackson.datatype/jackson-datatype-jdk8-2.19.0.jar",
+    name = "com.fasterxml.jackson.datatype/jackson-datatype-jdk8-2.22.2.jar_copy",
+    src = "@com_fasterxml_jackson_datatype-jackson-datatype-jdk8-2_22_2_http//file",
+    out = "com.fasterxml.jackson.datatype/jackson-datatype-jdk8-2.22.2.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-jackson-datatype-jdk8-jackson-datatype-jdk8",
-    jar = "@com_fasterxml_jackson_datatype-jackson-datatype-jdk8-2_19_0_http//file",
-    source_jar = "@com_fasterxml_jackson_datatype-jackson-datatype-jdk8-2_19_0-sources_http//file",
+    jar = "@com_fasterxml_jackson_datatype-jackson-datatype-jdk8-2_22_2_http//file",
+    source_jar = "@com_fasterxml_jackson_datatype-jackson-datatype-jdk8-2_22_2-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "com.fasterxml.jackson.datatype/jackson-datatype-joda-2.19.0.jar_copy",
-    src = "@com_fasterxml_jackson_datatype-jackson-datatype-joda-2_19_0_http//file",
-    out = "com.fasterxml.jackson.datatype/jackson-datatype-joda-2.19.0.jar",
+    name = "com.fasterxml.jackson.datatype/jackson-datatype-joda-2.22.2.jar_copy",
+    src = "@com_fasterxml_jackson_datatype-jackson-datatype-joda-2_22_2_http//file",
+    out = "com.fasterxml.jackson.datatype/jackson-datatype-joda-2.22.2.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
@@ -10863,15 +10843,15 @@ java_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        ":com_fasterxml_jackson_datatype-jackson-datatype-joda-2_19_0_http_import",
+        ":com_fasterxml_jackson_datatype-jackson-datatype-joda-2_22_2_http_import",
         ":joda-time-joda-time-2_12_7_http_import",
     ],
 )
 
 jvm_import(
-    name = "com_fasterxml_jackson_datatype-jackson-datatype-joda-2_19_0_http_import",
-    jar = "@com_fasterxml_jackson_datatype-jackson-datatype-joda-2_19_0_http//file",
-    source_jar = "@com_fasterxml_jackson_datatype-jackson-datatype-joda-2_19_0-sources_http//file",
+    name = "com_fasterxml_jackson_datatype-jackson-datatype-joda-2_22_2_http_import",
+    jar = "@com_fasterxml_jackson_datatype-jackson-datatype-joda-2_22_2_http//file",
+    source_jar = "@com_fasterxml_jackson_datatype-jackson-datatype-joda-2_22_2-sources_http//file",
 )
 
 jvm_import(
@@ -10881,62 +10861,62 @@ jvm_import(
 )
 
 copy_file(
-    name = "com.fasterxml.jackson.datatype/jackson-datatype-jsr310-2.19.0.jar_copy",
-    src = "@com_fasterxml_jackson_datatype-jackson-datatype-jsr310-2_19_0_http//file",
-    out = "com.fasterxml.jackson.datatype/jackson-datatype-jsr310-2.19.0.jar",
+    name = "com.fasterxml.jackson.datatype/jackson-datatype-jsr310-2.22.2.jar_copy",
+    src = "@com_fasterxml_jackson_datatype-jackson-datatype-jsr310-2_22_2_http//file",
+    out = "com.fasterxml.jackson.datatype/jackson-datatype-jsr310-2.22.2.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-jackson-datatype-jsr310-jackson-datatype-jsr310",
-    jar = "@com_fasterxml_jackson_datatype-jackson-datatype-jsr310-2_19_0_http//file",
-    source_jar = "@com_fasterxml_jackson_datatype-jackson-datatype-jsr310-2_19_0-sources_http//file",
+    jar = "@com_fasterxml_jackson_datatype-jackson-datatype-jsr310-2_22_2_http//file",
+    source_jar = "@com_fasterxml_jackson_datatype-jackson-datatype-jsr310-2_22_2-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "com.fasterxml.jackson.core/jackson-core-2.19.0.jar_copy",
-    src = "@com_fasterxml_jackson_core-jackson-core-2_19_0_http//file",
-    out = "com.fasterxml.jackson.core/jackson-core-2.19.0.jar",
+    name = "com.fasterxml.jackson.core/jackson-core-2.22.2.jar_copy",
+    src = "@com_fasterxml_jackson_core-jackson-core-2_22_2_http//file",
+    out = "com.fasterxml.jackson.core/jackson-core-2.22.2.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-jackson-jackson",
-    jar = "@com_fasterxml_jackson_core-jackson-core-2_19_0_http//file",
-    source_jar = "@com_fasterxml_jackson_core-jackson-core-2_19_0-sources_http//file",
+    jar = "@com_fasterxml_jackson_core-jackson-core-2_22_2_http//file",
+    source_jar = "@com_fasterxml_jackson_core-jackson-core-2_22_2-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "com.fasterxml.jackson.jr/jackson-jr-objects-2.19.0.jar_copy",
-    src = "@com_fasterxml_jackson_jr-jackson-jr-objects-2_19_0_http//file",
-    out = "com.fasterxml.jackson.jr/jackson-jr-objects-2.19.0.jar",
+    name = "com.fasterxml.jackson.jr/jackson-jr-objects-2.22.2.jar_copy",
+    src = "@com_fasterxml_jackson_jr-jackson-jr-objects-2_22_2_http//file",
+    out = "com.fasterxml.jackson.jr/jackson-jr-objects-2.22.2.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-jackson-jr-objects-jackson-jr-objects",
-    jar = "@com_fasterxml_jackson_jr-jackson-jr-objects-2_19_0_http//file",
-    source_jar = "@com_fasterxml_jackson_jr-jackson-jr-objects-2_19_0-sources_http//file",
+    jar = "@com_fasterxml_jackson_jr-jackson-jr-objects-2_22_2_http//file",
+    source_jar = "@com_fasterxml_jackson_jr-jackson-jr-objects-2_22_2-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "com.fasterxml.jackson.module/jackson-module-kotlin-2.19.0.jar_copy",
-    src = "@com_fasterxml_jackson_module-jackson-module-kotlin-2_19_0_http//file",
-    out = "com.fasterxml.jackson.module/jackson-module-kotlin-2.19.0.jar",
+    name = "com.fasterxml.jackson.module/jackson-module-kotlin-2.22.2.jar_copy",
+    src = "@com_fasterxml_jackson_module-jackson-module-kotlin-2_22_2_http//file",
+    out = "com.fasterxml.jackson.module/jackson-module-kotlin-2.22.2.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-jackson-module-kotlin-jackson-module-kotlin",
-    jar = "@com_fasterxml_jackson_module-jackson-module-kotlin-2_19_0_http//file",
-    source_jar = "@com_fasterxml_jackson_module-jackson-module-kotlin-2_19_0-sources_http//file",
+    jar = "@com_fasterxml_jackson_module-jackson-module-kotlin-2_22_2_http//file",
+    source_jar = "@com_fasterxml_jackson_module-jackson-module-kotlin-2_22_2-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
@@ -13942,24 +13922,24 @@ jvm_import(
 )
 
 copy_file(
-    name = "org.mockito.kotlin/mockito-kotlin-6.0.0.jar_copy",
-    src = "@org_mockito_kotlin-mockito-kotlin-6_0_0_http//file",
-    out = "org.mockito.kotlin/mockito-kotlin-6.0.0.jar",
+    name = "org.mockito.kotlin/mockito-kotlin-6.3.0.jar_copy",
+    src = "@org_mockito_kotlin-mockito-kotlin-6_3_0_http//file",
+    out = "org.mockito.kotlin/mockito-kotlin-6.3.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-mockito-kotlin-mockito-kotlin",
-    jar = "@org_mockito_kotlin-mockito-kotlin-6_0_0_http//file",
-    source_jar = "@org_mockito_kotlin-mockito-kotlin-6_0_0-sources_http//file",
+    jar = "@org_mockito_kotlin-mockito-kotlin-6_3_0_http//file",
+    source_jar = "@org_mockito_kotlin-mockito-kotlin-6_3_0-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.mockito/mockito-core-5.19.0.jar_copy",
-    src = "@org_mockito-mockito-core-5_19_0_http//file",
-    out = "org.mockito/mockito-core-5.19.0.jar",
+    name = "org.mockito/mockito-core-5.23.0.jar_copy",
+    src = "@org_mockito-mockito-core-5_23_0_http//file",
+    out = "org.mockito/mockito-core-5.23.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
@@ -13977,22 +13957,15 @@ java_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        ":org_mockito-mockito-core-5_19_0_http_import",
-        ":net_bytebuddy-byte-buddy-agent-1_17_6_http_import",
+        ":org_mockito-mockito-core-5_23_0_http_import",
         ":org_objenesis-objenesis-3_3_http_import",
     ],
 )
 
 jvm_import(
-    name = "org_mockito-mockito-core-5_19_0_http_import",
-    jar = "@org_mockito-mockito-core-5_19_0_http//file",
-    source_jar = "@org_mockito-mockito-core-5_19_0-sources_http//file",
-)
-
-jvm_import(
-    name = "net_bytebuddy-byte-buddy-agent-1_17_6_http_import",
-    jar = "@net_bytebuddy-byte-buddy-agent-1_17_6_http//file",
-    source_jar = "@net_bytebuddy-byte-buddy-agent-1_17_6-sources_http//file",
+    name = "org_mockito-mockito-core-5_23_0_http_import",
+    jar = "@org_mockito-mockito-core-5_23_0_http//file",
+    source_jar = "@org_mockito-mockito-core-5_23_0-sources_http//file",
 )
 
 jvm_import(
@@ -14530,17 +14503,17 @@ jvm_import(
 )
 
 copy_file(
-    name = "com.electronwill.night-config/toml-3.8.4.jar_copy",
-    src = "@com_electronwill_night-config-toml-3_8_4_http//file",
-    out = "com.electronwill.night-config/toml-3.8.4.jar",
+    name = "com.electronwill.night-config/toml-3.9.0.jar_copy",
+    src = "@com_electronwill_night-config-toml-3_9_0_http//file",
+    out = "com.electronwill.night-config/toml-3.9.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "com.electronwill.night-config/core-3.8.4.jar_copy",
-    src = "@com_electronwill_night-config-core-3_8_4_http//file",
-    out = "com.electronwill.night-config/core-3.8.4.jar",
+    name = "com.electronwill.night-config/core-3.9.0.jar_copy",
+    src = "@com_electronwill_night-config-core-3_9_0_http//file",
+    out = "com.electronwill.night-config/core-3.9.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
@@ -14550,21 +14523,21 @@ java_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        ":com_electronwill_night-config-toml-3_8_4_http_import",
-        ":com_electronwill_night-config-core-3_8_4_http_import",
+        ":com_electronwill_night-config-toml-3_9_0_http_import",
+        ":com_electronwill_night-config-core-3_9_0_http_import",
     ],
 )
 
 jvm_import(
-    name = "com_electronwill_night-config-toml-3_8_4_http_import",
-    jar = "@com_electronwill_night-config-toml-3_8_4_http//file",
-    source_jar = "@com_electronwill_night-config-toml-3_8_4-sources_http//file",
+    name = "com_electronwill_night-config-toml-3_9_0_http_import",
+    jar = "@com_electronwill_night-config-toml-3_9_0_http//file",
+    source_jar = "@com_electronwill_night-config-toml-3_9_0-sources_http//file",
 )
 
 jvm_import(
-    name = "com_electronwill_night-config-core-3_8_4_http_import",
-    jar = "@com_electronwill_night-config-core-3_8_4_http//file",
-    source_jar = "@com_electronwill_night-config-core-3_8_4-sources_http//file",
+    name = "com_electronwill_night-config-core-3_9_0_http_import",
+    jar = "@com_electronwill_night-config-core-3_9_0_http//file",
+    source_jar = "@com_electronwill_night-config-core-3_9_0-sources_http//file",
 )
 
 jvm_import(
@@ -14575,9 +14548,9 @@ jvm_import(
 )
 
 copy_file(
-    name = "com.opencsv/opencsv-5.11.2.jar_copy",
-    src = "@com_opencsv-opencsv-5_11_2_http//file",
-    out = "com.opencsv/opencsv-5.11.2.jar",
+    name = "com.opencsv/opencsv-5.12.0.jar_copy",
+    src = "@com_opencsv-opencsv-5_12_0_http//file",
+    out = "com.opencsv/opencsv-5.12.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
@@ -14595,15 +14568,15 @@ java_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        ":com_opencsv-opencsv-5_11_2_http_import",
+        ":com_opencsv-opencsv-5_12_0_http_import",
         ":commons-beanutils-commons-beanutils-1_11_0_http_import",
     ],
 )
 
 jvm_import(
-    name = "com_opencsv-opencsv-5_11_2_http_import",
-    jar = "@com_opencsv-opencsv-5_11_2_http//file",
-    source_jar = "@com_opencsv-opencsv-5_11_2-sources_http//file",
+    name = "com_opencsv-opencsv-5_12_0_http_import",
+    jar = "@com_opencsv-opencsv-5_12_0_http//file",
+    source_jar = "@com_opencsv-opencsv-5_12_0-sources_http//file",
 )
 
 jvm_import(
@@ -15350,17 +15323,17 @@ jvm_import(
 )
 
 copy_file(
-    name = "org.yaml/snakeyaml-2.4.jar_copy",
-    src = "@org_yaml-snakeyaml-2_4_http//file",
-    out = "org.yaml/snakeyaml-2.4.jar",
+    name = "org.yaml/snakeyaml-2.7.jar_copy",
+    src = "@org_yaml-snakeyaml-2_7_http//file",
+    out = "org.yaml/snakeyaml-2.7.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-snakeyaml-snakeyaml",
-    jar = "@org_yaml-snakeyaml-2_4_http//file",
-    source_jar = "@org_yaml-snakeyaml-2_4-sources_http//file",
+    jar = "@org_yaml-snakeyaml-2_7_http//file",
+    source_jar = "@org_yaml-snakeyaml-2_7-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
@@ -15379,17 +15352,17 @@ jvm_import(
 )
 
 copy_file(
-    name = "org.xerial/sqlite-jdbc-3.53.2.1.jar_copy",
-    src = "@org_xerial-sqlite-jdbc-3_53_2_1_http//file",
-    out = "org.xerial/sqlite-jdbc-3.53.2.1.jar",
+    name = "org.xerial/sqlite-jdbc-3.53.4.0.jar_copy",
+    src = "@org_xerial-sqlite-jdbc-3_53_4_0_http//file",
+    out = "org.xerial/sqlite-jdbc-3.53.4.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-sqlite-sqlite",
-    jar = "@org_xerial-sqlite-jdbc-3_53_2_1_http//file",
-    source_jar = "@org_xerial-sqlite-jdbc-3_53_2_1-sources_http//file",
+    jar = "@org_xerial-sqlite-jdbc-3_53_4_0_http//file",
+    source_jar = "@org_xerial-sqlite-jdbc-3_53_4_0-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
@@ -15756,9 +15729,9 @@ jvm_import(
 )
 
 copy_file(
-    name = "io.consensys.tuweni/tuweni-toml-2.7.1.jar_copy",
-    src = "@io_consensys_tuweni-tuweni-toml-2_7_1_http//file",
-    out = "io.consensys.tuweni/tuweni-toml-2.7.1.jar",
+    name = "io.consensys.tuweni/tuweni-toml-2.8.0.jar_copy",
+    src = "@io_consensys_tuweni-tuweni-toml-2_8_0_http//file",
+    out = "io.consensys.tuweni/tuweni-toml-2.8.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
@@ -15776,15 +15749,15 @@ java_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        ":io_consensys_tuweni-tuweni-toml-2_7_1_http_import",
+        ":io_consensys_tuweni-tuweni-toml-2_8_0_http_import",
         ":org_antlr-antlr4-runtime-4_13_0_http_import",
     ],
 )
 
 jvm_import(
-    name = "io_consensys_tuweni-tuweni-toml-2_7_1_http_import",
-    jar = "@io_consensys_tuweni-tuweni-toml-2_7_1_http//file",
-    source_jar = "@io_consensys_tuweni-tuweni-toml-2_7_1-sources_http//file",
+    name = "io_consensys_tuweni-tuweni-toml-2_8_0_http_import",
+    jar = "@io_consensys_tuweni-tuweni-toml-2_8_0_http//file",
+    source_jar = "@io_consensys_tuweni-tuweni-toml-2_8_0-sources_http//file",
 )
 
 jvm_import(
@@ -15794,17 +15767,17 @@ jvm_import(
 )
 
 copy_file(
-    name = "org.apache.velocity/velocity-engine-core-2.3.jar_copy",
-    src = "@org_apache_velocity-velocity-engine-core-2_3_http//file",
-    out = "org.apache.velocity/velocity-engine-core-2.3.jar",
+    name = "org.apache.velocity/velocity-engine-core-2.4.1.jar_copy",
+    src = "@org_apache_velocity-velocity-engine-core-2_4_1_http//file",
+    out = "org.apache.velocity/velocity-engine-core-2.4.1.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-velocity-_velocity",
-    jar = "@org_apache_velocity-velocity-engine-core-2_3_http//file",
-    source_jar = "@org_apache_velocity-velocity-engine-core-2_3-sources_http//file",
+    jar = "@org_apache_velocity-velocity-engine-core-2_4_1_http//file",
+    source_jar = "@org_apache_velocity-velocity-engine-core-2_4_1-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
@@ -15852,17 +15825,17 @@ jvm_import(
 )
 
 copy_file(
-    name = "org.xerial.snappy/snappy-java-1.1.10.7.jar_copy",
-    src = "@org_xerial_snappy-snappy-java-1_1_10_7_http//file",
-    out = "org.xerial.snappy/snappy-java-1.1.10.7.jar",
+    name = "org.xerial.snappy/snappy-java-1.1.10.8.jar_copy",
+    src = "@org_xerial_snappy-snappy-java-1_1_10_8_http//file",
+    out = "org.xerial.snappy/snappy-java-1.1.10.8.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-xerial-snappy-java-xerial-snappy-java",
-    jar = "@org_xerial_snappy-snappy-java-1_1_10_7_http//file",
-    source_jar = "@org_xerial_snappy-snappy-java-1_1_10_7-sources_http//file",
+    jar = "@org_xerial_snappy-snappy-java-1_1_10_8_http//file",
+    source_jar = "@org_xerial_snappy-snappy-java-1_1_10_8-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
@@ -15897,24 +15870,24 @@ jvm_import(
 )
 
 copy_file(
-    name = "org.apache.xmlbeans/xmlbeans-5.1.1.jar_copy",
-    src = "@org_apache_xmlbeans-xmlbeans-5_1_1_http//file",
-    out = "org.apache.xmlbeans/xmlbeans-5.1.1.jar",
+    name = "org.apache.xmlbeans/xmlbeans-5.4.0.jar_copy",
+    src = "@org_apache_xmlbeans-xmlbeans-5_4_0_http//file",
+    out = "org.apache.xmlbeans/xmlbeans-5.4.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-xmlbeans-_xml_beans",
-    jar = "@org_apache_xmlbeans-xmlbeans-5_1_1_http//file",
-    source_jar = "@org_apache_xmlbeans-xmlbeans-5_1_1-sources_http//file",
+    jar = "@org_apache_xmlbeans-xmlbeans-5_4_0_http//file",
+    source_jar = "@org_apache_xmlbeans-xmlbeans-5_4_0-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.xmlunit/xmlunit-core-2.9.1.jar_copy",
-    src = "@org_xmlunit-xmlunit-core-2_9_1_http//file",
-    out = "org.xmlunit/xmlunit-core-2.9.1.jar",
+    name = "org.xmlunit/xmlunit-core-2.13.0.jar_copy",
+    src = "@org_xmlunit-xmlunit-core-2_13_0_http//file",
+    out = "org.xmlunit/xmlunit-core-2.13.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
@@ -15932,16 +15905,16 @@ java_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        ":org_xmlunit-xmlunit-core-2_9_1_http_import",
+        ":org_xmlunit-xmlunit-core-2_13_0_http_import",
         ":jakarta_xml_bind-jakarta_xml_bind-api-2_3_3_http_import",
         ":jakarta_activation-jakarta_activation-api-1_2_2_http_import",
     ],
 )
 
 jvm_import(
-    name = "org_xmlunit-xmlunit-core-2_9_1_http_import",
-    jar = "@org_xmlunit-xmlunit-core-2_9_1_http//file",
-    source_jar = "@org_xmlunit-xmlunit-core-2_9_1-sources_http//file",
+    name = "org_xmlunit-xmlunit-core-2_13_0_http_import",
+    jar = "@org_xmlunit-xmlunit-core-2_13_0_http//file",
+    source_jar = "@org_xmlunit-xmlunit-core-2_13_0-sources_http//file",
 )
 
 jvm_import(
@@ -19277,14 +19250,6 @@ copy_file(
 )
 
 copy_file(
-    name = "org.codehaus.woodstox/stax2-api-4.3.0.jar_copy",
-    src = "@org_codehaus_woodstox-stax2-api-4_3_0_http//file",
-    out = "org.codehaus.woodstox/stax2-api-4.3.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
     name = "org.apache.maven/maven-artifact-4.0.0-rc-6.jar_copy",
     src = "@org_apache_maven-maven-artifact-4_0_0-rc-6_http//file",
     out = "org.apache.maven/maven-artifact-4.0.0-rc-6.jar",
@@ -19771,12 +19736,6 @@ jvm_import(
 )
 
 jvm_import(
-    name = "org_codehaus_woodstox-stax2-api-4_3_0_http_import",
-    jar = "@org_codehaus_woodstox-stax2-api-4_3_0_http//file",
-    source_jar = "@org_codehaus_woodstox-stax2-api-4_3_0-sources_http//file",
-)
-
-jvm_import(
     name = "org_apache_maven-maven-artifact-4_0_0-rc-6_http_import",
     jar = "@org_apache_maven-maven-artifact-4_0_0-rc-6_http//file",
     source_jar = "@org_apache_maven-maven-artifact-4_0_0-rc-6-sources_http//file",
@@ -19970,17 +19929,17 @@ jvm_import(
 )
 
 copy_file(
-    name = "org.mockito/mockito-junit-jupiter-5.19.0.jar_copy",
-    src = "@org_mockito-mockito-junit-jupiter-5_19_0_http//file",
-    out = "org.mockito/mockito-junit-jupiter-5.19.0.jar",
+    name = "org.mockito/mockito-junit-jupiter-5.23.0.jar_copy",
+    src = "@org_mockito-mockito-junit-jupiter-5_23_0_http//file",
+    out = "org.mockito/mockito-junit-jupiter-5.23.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "mockito-junit-jupiter",
-    jar = "@org_mockito-mockito-junit-jupiter-5_19_0_http//file",
-    source_jar = "@org_mockito-mockito-junit-jupiter-5_19_0-sources_http//file",
+    jar = "@org_mockito-mockito-junit-jupiter-5_23_0_http//file",
+    source_jar = "@org_mockito-mockito-junit-jupiter-5_23_0-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
