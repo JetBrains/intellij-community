@@ -1,8 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.starters.remote
 
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.intellij.codeInsight.actions.ReformatCodeProcessor
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.PluginManagerCore
@@ -73,6 +71,9 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.HttpRequests.RequestProcessor
 import org.jetbrains.annotations.ApiStatus
+import tools.jackson.databind.JsonNode
+import tools.jackson.databind.ObjectMapper
+import tools.jackson.databind.json.JsonMapper
 import java.io.File
 import java.io.IOException
 import java.net.URLConnection
@@ -84,7 +85,7 @@ abstract class WebStarterModuleBuilder : ModuleBuilder() {
   protected val starterContext: WebStarterContext = WebStarterContext()
   protected val starterSettings: StarterWizardSettings by lazy { createSettings() }
 
-  protected val objectMapper: ObjectMapper by lazy { ObjectMapper() }
+  protected val objectMapper: ObjectMapper by lazy { JsonMapper.builder().build() }
 
   override fun getModuleType(): ModuleType<*> = JavaModuleType.getModuleType()
   override fun getWeight(): Int = JVM_WEIGHT

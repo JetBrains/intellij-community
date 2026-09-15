@@ -3,14 +3,14 @@
 
 package org.jetbrains.idea.devkit.inspections.remotedev
 
-import com.fasterxml.jackson.core.JsonProcessingException
-import com.fasterxml.jackson.core.json.JsonReadFeature
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.json.JsonMapper
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
+import tools.jackson.core.JacksonException
+import tools.jackson.core.json.JsonReadFeature
+import tools.jackson.databind.ObjectMapper
+import tools.jackson.databind.json.JsonMapper
 import java.io.IOException
 
 internal const val MONOREPO_FEATURES_WITHOUT_SPLIT_MODE_SUPPORT_FILE_NAME: String = "MonorepoFeaturesWithoutSplitModeSupport.json5"
@@ -79,7 +79,7 @@ private fun parseMonorepoFeaturesWithoutSplitModeSupport(json5Text: String): Mon
   val normalizedJson = try {
     json5.readTree(json5Text).toString()
   }
-  catch (e: JsonProcessingException) {
+  catch (e: JacksonException) {
     throw IllegalArgumentException("Cannot parse $MONOREPO_FEATURES_WITHOUT_SPLIT_MODE_SUPPORT_RELATIVE_PATH", e)
   }
   catch (e: IOException) {
@@ -188,7 +188,7 @@ private val json5: ObjectMapper = JsonMapper.builder()
   .enable(
     JsonReadFeature.ALLOW_JAVA_COMMENTS,
     JsonReadFeature.ALLOW_SINGLE_QUOTES,
-    JsonReadFeature.ALLOW_UNQUOTED_FIELD_NAMES,
+    JsonReadFeature.ALLOW_UNQUOTED_PROPERTY_NAMES,
     JsonReadFeature.ALLOW_TRAILING_COMMA,
   )
   .build()

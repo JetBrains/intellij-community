@@ -14,9 +14,6 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.psi.PsiModifierListOwner
 import com.intellij.psi.xml.XmlFile
-import com.fasterxml.jackson.core.json.JsonReadFeature
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.json.JsonMapper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -35,6 +32,9 @@ import org.jetbrains.idea.devkit.inspections.remotedev.SplitModeInspectionResour
 import org.jetbrains.idea.devkit.inspections.remotedev.SplitModeInspectionResourceReader
 import org.jetbrains.uast.UAnnotated
 import org.jetbrains.uast.toUElementOfType
+import tools.jackson.core.json.JsonReadFeature
+import tools.jackson.databind.ObjectMapper
+import tools.jackson.databind.json.JsonMapper
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -118,7 +118,7 @@ class SplitModeApiRestrictionsService(
     .enable(
       JsonReadFeature.ALLOW_JAVA_COMMENTS,
       JsonReadFeature.ALLOW_SINGLE_QUOTES,
-      JsonReadFeature.ALLOW_UNQUOTED_FIELD_NAMES,
+      JsonReadFeature.ALLOW_UNQUOTED_PROPERTY_NAMES,
       JsonReadFeature.ALLOW_TRAILING_COMMA,
     )
     .build()

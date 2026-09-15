@@ -19,13 +19,14 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.writeText
-import com.fasterxml.jackson.core.json.JsonReadFeature
-import com.fasterxml.jackson.databind.json.JsonMapper
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import org.jetbrains.idea.devkit.DevKitBundle.message
+import tools.jackson.core.JacksonException
+import tools.jackson.core.json.JsonReadFeature
+import tools.jackson.databind.json.JsonMapper
 import java.io.IOException
 
 internal const val PROJECT_BASELINE_VERSION_FILE_NAME: String = "SplitModeProjectBaselineVersion.json5"
@@ -93,6 +94,10 @@ internal class SplitModeInspectionExclusionsService(private val project: Project
       LOG.warn("Cannot parse $PROJECT_BASELINE_VERSION_RELATIVE_PATH", e)
       SplitModeProjectBaselineVersionFile(currentProjectBaselineVersion = 0)
     }
+    catch (e: JacksonException) {
+      LOG.warn("Cannot parse $PROJECT_BASELINE_VERSION_RELATIVE_PATH", e)
+      SplitModeProjectBaselineVersionFile(currentProjectBaselineVersion = 0)
+    }
     catch (e: IllegalArgumentException) {
       LOG.warn("Cannot parse $PROJECT_BASELINE_VERSION_RELATIVE_PATH", e)
       SplitModeProjectBaselineVersionFile(currentProjectBaselineVersion = 0)
@@ -137,7 +142,7 @@ private val json5 = JsonMapper.builder()
   .enable(
     JsonReadFeature.ALLOW_JAVA_COMMENTS,
     JsonReadFeature.ALLOW_SINGLE_QUOTES,
-    JsonReadFeature.ALLOW_UNQUOTED_FIELD_NAMES,
+    JsonReadFeature.ALLOW_UNQUOTED_PROPERTY_NAMES,
     JsonReadFeature.ALLOW_TRAILING_COMMA,
   )
   .build()
