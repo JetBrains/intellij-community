@@ -1,13 +1,12 @@
 
 package com.intellij.polySymbols.webTypes.json;
 
-import java.io.IOException;
 import java.util.List;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.JsonToken;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.ValueDeserializer;
+import tools.jackson.databind.annotation.JsonDeserialize;
 
 @JsonDeserialize(using = NamePatternTemplate.MyDeserializer.class)
 public class NamePatternTemplate {
@@ -35,13 +34,12 @@ public class NamePatternTemplate {
     }
 
     public static class MyDeserializer
-        extends JsonDeserializer<NamePatternTemplate>
+        extends ValueDeserializer<NamePatternTemplate>
     {
 
 
         @Override
         public NamePatternTemplate deserialize(JsonParser parser, DeserializationContext deserializationContext)
-            throws IOException
         {
             NamePatternTemplate result = new NamePatternTemplate();
             JsonToken token = parser.currentToken();
@@ -49,7 +47,7 @@ public class NamePatternTemplate {
                 result.value = parser.readValueAs(String.class);
             } else {
                 if (token == JsonToken.START_ARRAY) {
-                    result.value = parser.getCodec().readValue(parser, deserializationContext.getTypeFactory().constructParametricType(List.class, NamePatternTemplate.class));
+                    result.value = deserializationContext.readValue(parser, deserializationContext.getTypeFactory().constructParametricType(List.class, NamePatternTemplate.class));
                 } else {
                     if (token == JsonToken.START_OBJECT) {
                         result.value = parser.readValueAs(NamePatternBase.class);

@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.polySymbols.webTypes
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.StandardFileSystems
@@ -11,6 +10,7 @@ import org.apache.commons.compress.archivers.ArchiveEntry
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
 import org.jetbrains.annotations.ApiStatus
+import tools.jackson.databind.json.JsonMapper
 import java.io.BufferedInputStream
 import java.io.ByteArrayInputStream
 import java.io.File
@@ -34,7 +34,7 @@ object WebTypesJsonFilesCache {
     if (!downloadedJson.exists()) {
       downloadedJson.parentFile.mkdirs()
       val content = downloadWebTypesJson(url)
-      val mapper = ObjectMapper()
+      val mapper = JsonMapper.builder().build()
       val webTypesJson = mapper.readTree(content)
       mapper.writer().writeValue(downloadedJson, webTypesJson)
     }

@@ -1,12 +1,11 @@
 
 package com.intellij.polySymbols.webTypes.json;
 
-import java.io.IOException;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.JsonToken;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.ValueDeserializer;
+import tools.jackson.databind.annotation.JsonDeserialize;
 
 @JsonDeserialize(using = Experimental.MyDeserializer.class)
 public class Experimental {
@@ -34,13 +33,12 @@ public class Experimental {
     }
 
     public static class MyDeserializer
-        extends JsonDeserializer<Experimental>
+        extends ValueDeserializer<Experimental>
     {
 
 
         @Override
         public Experimental deserialize(JsonParser parser, DeserializationContext deserializationContext)
-            throws IOException
         {
             Experimental result = new Experimental();
             JsonToken token = parser.currentToken();

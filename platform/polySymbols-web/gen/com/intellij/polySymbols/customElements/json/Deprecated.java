@@ -1,12 +1,11 @@
 
 package com.intellij.polySymbols.customElements.json;
 
-import java.io.IOException;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.JsonToken;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.ValueDeserializer;
+import tools.jackson.databind.annotation.JsonDeserialize;
 
 @JsonDeserialize(using = Deprecated.MyDeserializer.class)
 public class Deprecated {
@@ -34,13 +33,12 @@ public class Deprecated {
     }
 
     public static class MyDeserializer
-        extends JsonDeserializer<Deprecated>
+        extends ValueDeserializer<Deprecated>
     {
 
 
         @Override
         public Deprecated deserialize(JsonParser parser, DeserializationContext deserializationContext)
-            throws IOException
         {
             Deprecated result = new Deprecated();
             JsonToken token = parser.currentToken();

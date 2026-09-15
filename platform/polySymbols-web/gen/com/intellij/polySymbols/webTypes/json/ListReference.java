@@ -1,13 +1,12 @@
 
 package com.intellij.polySymbols.webTypes.json;
 
-import java.io.IOException;
 import java.util.ArrayList;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.JsonToken;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.ValueDeserializer;
+import tools.jackson.databind.annotation.JsonDeserialize;
 
 @JsonDeserialize(using = ListReference.MyDeserializer.class)
 public class ListReference
@@ -16,13 +15,12 @@ public class ListReference
 
 
     public static class MyDeserializer
-        extends JsonDeserializer<ListReference>
+        extends ValueDeserializer<ListReference>
     {
 
 
         @Override
         public ListReference deserialize(JsonParser parser, DeserializationContext deserializationContext)
-            throws IOException
         {
             ListReference result = new ListReference();
             JsonToken token = parser.currentToken();

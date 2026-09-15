@@ -2,12 +2,7 @@ package com.intellij.polySymbols.webTypes.gen;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -22,7 +17,6 @@ import org.jsonschema2pojo.rules.Rule;
 import org.jsonschema2pojo.rules.RuleFactory;
 import org.jsonschema2pojo.util.SerializableHelper;
 
-import java.io.IOException;
 import java.net.URI;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
@@ -244,7 +238,7 @@ public class WebTypesComplexTypeRule implements Rule<JPackage, JType> {
     JBlock statements = attachDeserializerTo(wrapperClass);
 
     statements.decl(0, wrapperClass, "result", JExpr._new(wrapperClass));
-    statements.decl(0, model.ref(JsonToken.class), "token", JExpr.invoke(JExpr.ref("parser"), "currentToken"));
+    statements.decl(0, model.directClass("tools.jackson.core.JsonToken"), "token", JExpr.invoke(JExpr.ref("parser"), "currentToken"));
 
     JBlock block = statements;
     for (Map.Entry<String, JClass> entry : types.entrySet()) {
@@ -270,7 +264,7 @@ public class WebTypesComplexTypeRule implements Rule<JPackage, JType> {
     }
     JExpression condition = null;
     for (String token : tokenKinds) {
-      JExpression tokenCondition = JExpr.ref("token").eq(model.ref(JsonToken.class).staticRef(token));
+      JExpression tokenCondition = JExpr.ref("token").eq(model.directClass("tools.jackson.core.JsonToken").staticRef(token));
       if (condition == null) {
         condition = tokenCondition;
       }
@@ -289,16 +283,15 @@ public class WebTypesComplexTypeRule implements Rule<JPackage, JType> {
     catch (JClassAlreadyExistsException e) {
       throw new GenerationException(e);
     }
-    deserializer._extends(pojo.owner().ref(JsonDeserializer.class).narrow(pojo));
+    deserializer._extends(pojo.owner().directClass("tools.jackson.databind.ValueDeserializer").narrow(pojo));
 
-    JAnnotationUse annotation = pojo.annotate(JsonDeserialize.class);
+    JAnnotationUse annotation = pojo.annotate(pojo.owner().directClass("tools.jackson.databind.annotation.JsonDeserialize"));
     annotation.param("using", deserializer);
 
     JMethod deserialize = deserializer.method(JMod.PUBLIC, pojo, "deserialize");
     deserialize.annotate(Override.class);
-    deserialize.param(JsonParser.class, "parser");
-    deserialize.param(DeserializationContext.class, "deserializationContext");
-    deserialize._throws(IOException.class);
+    deserialize.param(pojo.owner().directClass("tools.jackson.core.JsonParser"), "parser");
+    deserialize.param(pojo.owner().directClass("tools.jackson.databind.DeserializationContext"), "deserializationContext");
 
     return deserialize.body();
   }
@@ -316,8 +309,8 @@ public class WebTypesComplexTypeRule implements Rule<JPackage, JType> {
 
     JBlock statements = attachDeserializerTo(wrapperClass);
     statements.decl(0, wrapperClass, "result", JExpr._new(wrapperClass));
-    statements.decl(0, model.ref(JsonToken.class), "token", JExpr.invoke(JExpr.ref("parser"), "currentToken"));
-    JConditional mainIf = statements._if(JExpr.ref("token").eq(model.ref(JsonToken.class).staticRef("START_ARRAY")));
+    statements.decl(0, model.directClass("tools.jackson.core.JsonToken"), "token", JExpr.invoke(JExpr.ref("parser"), "currentToken"));
+    JConditional mainIf = statements._if(JExpr.ref("token").eq(model.directClass("tools.jackson.core.JsonToken").staticRef("START_ARRAY")));
 
 
     String[] jsonItemTypes = new String[]{arrayItemJsonType};
@@ -332,7 +325,7 @@ public class WebTypesComplexTypeRule implements Rule<JPackage, JType> {
       }
     }
 
-    JBlock whileBlock = mainIf._then()._while(JExpr.ref("parser").invoke("nextToken").ne(model.ref(JsonToken.class).staticRef("END_ARRAY")))
+    JBlock whileBlock = mainIf._then()._while(JExpr.ref("parser").invoke("nextToken").ne(model.directClass("tools.jackson.core.JsonToken").staticRef("END_ARRAY")))
       .body();
 
     whileBlock.assign(JExpr.ref("token"), JExpr.invoke(JExpr.ref("parser"), "currentToken"));
@@ -373,7 +366,7 @@ public class WebTypesComplexTypeRule implements Rule<JPackage, JType> {
       for (JClass param : itemClass.getTypeParameters()) {
         inv.arg(param.dotclass());
       }
-      return JExpr.ref("parser").invoke("getCodec").invoke("readValue").arg(JExpr.ref("parser")).arg(inv);
+      return JExpr.ref("deserializationContext").invoke("readValue").arg(JExpr.ref("parser")).arg(inv);
     }
   }
 

@@ -1,13 +1,12 @@
 
 package com.intellij.polySymbols.webTypes.json;
 
-import java.io.IOException;
 import java.util.List;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.JsonToken;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.ValueDeserializer;
+import tools.jackson.databind.annotation.JsonDeserialize;
 
 @JsonDeserialize(using = NameVariants.MyDeserializer.class)
 public class NameVariants {
@@ -35,18 +34,17 @@ public class NameVariants {
     }
 
     public static class MyDeserializer
-        extends JsonDeserializer<NameVariants>
+        extends ValueDeserializer<NameVariants>
     {
 
 
         @Override
         public NameVariants deserialize(JsonParser parser, DeserializationContext deserializationContext)
-            throws IOException
         {
             NameVariants result = new NameVariants();
             JsonToken token = parser.currentToken();
             if (token == JsonToken.START_ARRAY) {
-                result.value = parser.getCodec().readValue(parser, deserializationContext.getTypeFactory().constructParametricType(List.class, com.intellij.polySymbols.webTypes.json.NameConversionRulesSingle.NameConverter.class));
+                result.value = deserializationContext.readValue(parser, deserializationContext.getTypeFactory().constructParametricType(List.class, com.intellij.polySymbols.webTypes.json.NameConversionRulesSingle.NameConverter.class));
             } else {
                 if (token == JsonToken.START_OBJECT) {
                     result.value = parser.readValueAs(NameConversionRulesMultiple.class);

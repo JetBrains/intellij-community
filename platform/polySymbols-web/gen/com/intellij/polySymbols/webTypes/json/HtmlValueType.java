@@ -1,13 +1,12 @@
 
 package com.intellij.polySymbols.webTypes.json;
 
-import java.io.IOException;
 import java.util.List;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.JsonToken;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.ValueDeserializer;
+import tools.jackson.databind.annotation.JsonDeserialize;
 
 @JsonDeserialize(using = HtmlValueType.MyDeserializer.class)
 public class HtmlValueType {
@@ -35,13 +34,12 @@ public class HtmlValueType {
     }
 
     public static class MyDeserializer
-        extends JsonDeserializer<HtmlValueType>
+        extends ValueDeserializer<HtmlValueType>
     {
 
 
         @Override
         public HtmlValueType deserialize(JsonParser parser, DeserializationContext deserializationContext)
-            throws IOException
         {
             HtmlValueType result = new HtmlValueType();
             JsonToken token = parser.currentToken();
@@ -52,7 +50,7 @@ public class HtmlValueType {
                     result.value = parser.readValueAs(TypeReference.class);
                 } else {
                     if (token == JsonToken.START_ARRAY) {
-                        result.value = parser.getCodec().readValue(parser, deserializationContext.getTypeFactory().constructParametricType(List.class, Type.class));
+                        result.value = deserializationContext.readValue(parser, deserializationContext.getTypeFactory().constructParametricType(List.class, Type.class));
                     } else {
                         deserializationContext.handleUnexpectedToken(Object.class, parser);
                     }
