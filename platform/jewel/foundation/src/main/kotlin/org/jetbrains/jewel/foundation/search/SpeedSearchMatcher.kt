@@ -78,12 +78,16 @@ public fun interface SpeedSearchMatcher {
             caseSensitivity: MatchingCaseSensitivity = MatchingCaseSensitivity.None,
             ignoredSeparators: String = "",
         ): SpeedSearchMatcher =
-            PatternSpeedSearchMatcher(
-                basePattern = pattern.convertToPattern(matchFromBeginning),
-                options = caseSensitivity,
-                ignoredSeparators = ignoredSeparators,
-                containsMatcher = exactSubstringMatcher(pattern, caseSensitivity != MatchingCaseSensitivity.All),
-            )
+            if (pattern.isBlank()) {
+                EmptySpeedSearchMatcher
+            } else {
+                PatternSpeedSearchMatcher(
+                    basePattern = pattern.convertToPattern(matchFromBeginning),
+                    options = caseSensitivity,
+                    ignoredSeparators = ignoredSeparators,
+                    containsMatcher = exactSubstringMatcher(pattern, caseSensitivity != MatchingCaseSensitivity.All),
+                )
+            }
     }
 
     /** The result of a [SpeedSearchMatcher.matches] call: either [NoMatch] or a [Match] with matched ranges. */
@@ -114,6 +118,37 @@ public fun interface SpeedSearchMatcher {
                 if (ranges.isNullOrEmpty()) NoMatch else Match(ranges)
         }
     }
+}
+
+/**
+ * Wraps this matcher so that match results are reused for texts that have already been matched.
+ *
+ * Results are held in an LRU cache of up to 100 entries, keyed by the matched text. Null or blank text is never cached
+ * and is always delegated to the original matcher. [EmptySpeedSearchMatcher] is returned unwrapped, as it matches
+ * everything and has nothing worth caching.
+ *
+ * This is useful when the same matcher is applied repeatedly over a stable set of items, e.g., when re-filtering a list
+ * on every recomposition.
+ *
+ * @return A caching wrapper around this matcher, or this matcher itself if it is [EmptySpeedSearchMatcher].
+ */
+public fun SpeedSearchMatcher.cached(): SpeedSearchMatcher =
+    this as? EmptySpeedSearchMatcher
+        ?: object : SpeedSearchMatcher {
+            private val cache = LRUCache<CharSequence, SpeedSearchMatcher.MatchResult>(100)
+
+            override fun matches(text: String?): SpeedSearchMatcher.MatchResult = matches(text as? CharSequence)
+
+            override fun matches(text: CharSequence?): SpeedSearchMatcher.MatchResult =
+                if (text.isNullOrBlank()) {
+                    this@cached.matches(text)
+                } else {
+                    cache.getOrPut(text) { this@cached.matches(text) }
+                }
+        }
+
+private class LRUCache<K : Any, V : Any>(private val capacity: Int) : LinkedHashMap<K, V>(capacity, 0.75f, true) {
+    override fun removeEldestEntry(eldest: MutableMap.MutableEntry<K, V>?): Boolean = size > capacity
 }
 
 /**
@@ -185,7 +220,9 @@ public enum class MatchingCaseSensitivity {
 @InternalJewelApi
 @ApiStatus.Internal
 public object EmptySpeedSearchMatcher : SpeedSearchMatcher {
-    override fun matches(text: String?): MatchResult = MatchResult.NoMatch
+    override fun matches(text: String?): SpeedSearchMatcher.MatchResult = matches(text as? CharSequence)
+
+    override fun matches(text: CharSequence?): SpeedSearchMatcher.MatchResult = SpeedSearchMatcher.MatchResult.NoMatch
 }
 
 /**
@@ -197,8 +234,8 @@ public object EmptySpeedSearchMatcher : SpeedSearchMatcher {
  * Example:
  * ```kotlin
  * val matcher = SpeedSearchMatcher.patternMatcher("foo")
- * matcher.doesMatch("foobar") // true
- * matcher.doesMatch("baz") // false
+ * matcher.matches("foobar") // true
+ * matcher.matches("baz") // false
  * ```
  *
  * @param matcher The [SpeedSearchMatcher] to use for matching.
