@@ -173,6 +173,17 @@ internal enum class GhosttyTerminalOption(val code: Int) {
   DEFAULT_CURSOR_BLINK(23),
   SCROLLBACK_MAX_BYTES(27),
   PROGRESS_REPORT(30),
+  RESIZE_SCROLLBACK_PULL(40),
+}
+
+/**
+ * `GhosttyTerminalScrollbackPull` (terminal.h) — value for
+ * [GhosttyTerminalOption.RESIZE_SCROLLBACK_PULL].
+ */
+internal enum class GhosttyTerminalScrollbackPull(val code: Int) {
+  ALWAYS(0),
+  CURSOR_AT_BOTTOM(1),
+  NEVER(2),
 }
 
 /** `GhosttyTerminalProgressState` (terminal.h) — the state of an `OSC 9;4` progress report. */

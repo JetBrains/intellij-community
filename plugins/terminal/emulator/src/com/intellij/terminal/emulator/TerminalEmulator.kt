@@ -15,6 +15,7 @@ import org.jetbrains.annotations.ApiStatus
 //   TerminalGrid.kt          the grid to read back: TerminalSize, Cell (+ CellStyle, CellWidth,
 //                            TerminalColor, Underline), TerminalRow and its StyledText projection
 //                            (+ StyleRange, HyperlinkRange)
+//   TerminalResizePolicy.kt  ScrollbackPullPolicy — how a growing resize treats scrollback
 //   TerminalCursor.kt        Cursor, CursorShape
 //   TerminalMouseModes.kt    MouseProtocol, MouseEncoding
 //   TerminalKeyEvents.kt     TerminalKeyEvent (+ TerminalKey, TerminalKeyAction) — key events to
@@ -55,6 +56,13 @@ interface TerminalEmulator : AutoCloseable {
 
   /** Change the screen size; the primary screen reflows if wraparound is enabled. */
   fun resize(size: TerminalSize)
+
+  /**
+   * Sets the policy for whether growing the row count on [resize] pulls rows back from
+   * scrollback.
+   * See [ScrollbackPullPolicy]. The default is [ScrollbackPullPolicy.CURSOR_AT_BOTTOM].
+   */
+  fun setResizeScrollbackPullPolicy(policy: ScrollbackPullPolicy)
 
   // screen state (always current)
   val cursor: Cursor
