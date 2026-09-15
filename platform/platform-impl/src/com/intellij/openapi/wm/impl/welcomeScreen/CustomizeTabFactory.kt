@@ -309,8 +309,7 @@ private class CustomizeTab(val parentDisposable: Disposable) : DefaultWelcomeScr
       }.topGap(TopGap.MEDIUM)
       row {
         link(IdeBundle.message("welcome.screen.all.settings.link")) {
-          ShowSettingsUtil.getInstance().showSettingsDialog(defaultProject,
-                                                            *ShowSettingsUtilImpl.getConfigurableGroups(defaultProject, true))
+          ShowSettingsUtilImpl.showSettingsDialog(defaultProject, null, null)
         }
       }
     }.withBorder(JBUI.Borders.empty(23, 30, 20, 20))
