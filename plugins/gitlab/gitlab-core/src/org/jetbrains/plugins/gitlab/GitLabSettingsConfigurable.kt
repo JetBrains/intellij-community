@@ -16,6 +16,7 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
 import com.intellij.openapi.options.BoundConfigurable
+import com.intellij.openapi.options.NoAutomaticReset
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.ValidationInfo
@@ -42,7 +43,7 @@ import org.jetbrains.plugins.gitlab.util.GitLabBundle.message
 import org.jetbrains.plugins.gitlab.util.GitLabUtil
 
 internal class GitLabSettingsConfigurable(private val project: Project)
-  : BoundConfigurable(GitLabUtil.SERVICE_DISPLAY_NAME, "settings.gitlab") {
+  : BoundConfigurable(GitLabUtil.SERVICE_DISPLAY_NAME, "settings.gitlab"), NoAutomaticReset {
   private lateinit var panel: DialogPanel
 
   override fun createPanel(): DialogPanel {
