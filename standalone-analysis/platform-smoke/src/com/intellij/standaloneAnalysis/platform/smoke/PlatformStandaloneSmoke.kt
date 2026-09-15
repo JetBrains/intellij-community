@@ -24,18 +24,34 @@ import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.impl.source.tree.PlainTextASTFactory
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiModificationTracker
+import com.intellij.util.concurrency.AppScheduledExecutorService
 import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.Callable
+import java.util.concurrent.TimeUnit
+import kotlin.system.exitProcess
 
 @ApiStatus.Internal
 object PlatformStandaloneSmoke {
   @JvmStatic
   fun main(args: Array<String>) {
+    try {
+      run()
+    }
+    catch (e: Throwable) {
+      // A failed check must end the process also when a leaked thread would keep it alive.
+      e.printStackTrace()
+      exitProcess(1)
+    }
+  }
+
+  private fun run() {
     val applicationDisposable = Disposer.newDisposable("PlatformStandaloneSmoke application")
     val projectDisposable = Disposer.newDisposable("PlatformStandaloneSmoke project")
 
     val project = try {
-      val environment = CoreApplicationEnvironment(applicationDisposable, false)
+      val environment = CoreApplicationEnvironment(applicationDisposable, false, true)
       check(ApplicationManager.getApplication() === environment.application) { "The environment application is not the application" }
+      pooledThreadIsDaemon()
 
       environment.registerFileType(PlainTextFileType.INSTANCE, "info")
       environment.registerParserDefinition(PlainTextParserDefinition())
@@ -58,6 +74,28 @@ object PlatformStandaloneSmoke {
     }
     check(project.isDisposed) { "The project is not disposed with the environment" }
     check(ApplicationManager.getApplication() == null) { "The application is not released after the disposal" }
+
+    // Application can be disposed and recreated later
+    val secondDisposable = Disposer.newDisposable("PlatformStandaloneSmoke second application")
+    try {
+      val environment = CoreApplicationEnvironment(secondDisposable, false, true)
+      check(ApplicationManager.getApplication() === environment.application) { "The second application is not the application" }
+      pooledThreadIsDaemon()
+    }
+    finally {
+      Disposer.dispose(secondDisposable)
+    }
+    check(ApplicationManager.getApplication() == null) { "The second application is not released after the disposal" }
+  }
+
+  /**
+   * A task on the application pool starts the pool. An environment in headless mode configures the pool with daemon threads, so the
+   * pool does not keep the process alive after the disposal, see KT-73127.
+   */
+  private fun pooledThreadIsDaemon() {
+    val thread = ApplicationManager.getApplication().executeOnPooledThread(Callable { Thread.currentThread() }).get(10, TimeUnit.SECONDS)
+    check(thread.name.startsWith(AppScheduledExecutorService.POOLED_THREAD_PREFIX)) { "The task runs on unexpected pool: ${thread.name}" }
+    check(thread.isDaemon) { "A pooled thread is not daemon: ${thread.name}" }
   }
 
   private class Checks(private val project: Project, private val disposable: Disposable) {

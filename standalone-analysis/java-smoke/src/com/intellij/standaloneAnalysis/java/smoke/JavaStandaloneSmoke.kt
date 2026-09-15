@@ -36,6 +36,7 @@ import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.psi.util.TypeConversionUtil
+import com.intellij.util.concurrency.AppScheduledExecutorService
 import com.intellij.util.io.AbstractStringEnumerator
 import com.intellij.util.io.DataEnumerator
 import org.jetbrains.annotations.ApiStatus
@@ -45,6 +46,9 @@ import java.io.ByteArrayOutputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.util.concurrent.Callable
+import java.util.concurrent.TimeUnit
+import kotlin.system.exitProcess
 
 @ApiStatus.Internal
 object JavaStandaloneSmoke {
@@ -106,12 +110,26 @@ object JavaStandaloneSmoke {
 
   @JvmStatic
   fun main(args: Array<String>) {
+    try {
+      run()
+      println("The Java standalone environment works")
+    }
+    catch (e: Throwable) {
+      // a failed check must end the process also when a leaked thread would keep it alive
+      e.printStackTrace()
+      exitProcess(1)
+    }
+  }
+
+  private fun run() {
     val applicationDisposable = Disposer.newDisposable("JavaStandaloneSmoke application")
     val projectDisposable = Disposer.newDisposable("JavaStandaloneSmoke project")
     val mockJdk = mockJdkClassesJar()
     try {
-      val environment = JavaCoreApplicationEnvironment(applicationDisposable, false)
+      val environment = JavaCoreApplicationEnvironment(applicationDisposable, false, true)
       check(ApplicationManager.getApplication() === environment.application) { "The environment application is not the application" }
+
+      pooledThreadIsDaemon()
 
       val projectEnvironment = JavaCoreProjectEnvironment(projectDisposable, environment)
       val annotationsJar = PathManager.getJarPathForClass(NotNull::class.java) ?: error("The annotations jar is not found")
@@ -141,6 +159,16 @@ object JavaStandaloneSmoke {
       Disposer.dispose(applicationDisposable)
     }
     check(ApplicationManager.getApplication() == null) { "The application is not released after the disposal" }
+  }
+
+  /**
+   * A task on the application pool starts the pool. An environment in headless mode configures the pool with daemon threads, so the
+   * pool does not keep the process alive after the disposal, see KT-73127.
+   */
+  private fun pooledThreadIsDaemon() {
+    val thread = ApplicationManager.getApplication().executeOnPooledThread(Callable { Thread.currentThread() }).get(10, TimeUnit.SECONDS)
+    check(thread.name.startsWith(AppScheduledExecutorService.POOLED_THREAD_PREFIX)) { "The task runs on unexpected pool: ${thread.name}" }
+    check(thread.isDaemon) { "A pooled thread is not daemon: ${thread.name}" }
   }
 
   private fun mockJdkClassesJar(): Path {
