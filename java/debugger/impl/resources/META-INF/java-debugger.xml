@@ -119,13 +119,9 @@
 
     <xdebugger.settings implementation="com.intellij.debugger.settings.JavaDebuggerSettings"/>
     <registryKey key="execution.java.always.debug" defaultValue="false" description="Always run java processes with the debug agent"/>
-    <debugger.agentProvider implementation="com.intellij.debugger.engine.DebuggerAgentProviderImpl"/>
 
     <xdebugger.breakpointGroupingRule implementation="com.intellij.debugger.ui.XBreakpointGroupingByPackageRule"/>
     <xdebugger.breakpointGroupingRule implementation="com.intellij.debugger.ui.XBreakpointGroupingByClassRule"/>
-
-    <projectConfigurable parentId="project.propDebugger" instance="com.intellij.debugger.settings.CaptureConfigurable"
-                         key="async.stacktraces.configurable.display.name" bundle="messages.JavaDebuggerBundle"/>
 
     <xdebugger.attachDebuggerProvider implementation="com.intellij.debugger.impl.attach.JavaAttachDebuggerProvider"/>
     <xdebugger.attachDebuggerProvider implementation="com.intellij.debugger.impl.attach.JavaSAAttachDebuggerProvider"/>

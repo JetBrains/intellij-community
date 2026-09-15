@@ -13,8 +13,6 @@ object JavaPluginLayout {
 
       spec.withModule("intellij.platform.jps.build.launcher", "jps-launcher.jar")
 
-      spec.withModuleLibrary("debugger-agent", "intellij.java.debugger.agent.holder", "rt")
-
       spec.withProjectLibrary("Eclipse", "ecj")
 
       spec.withModuleLibrary("debugger-memory-agent", "intellij.java.debugger.memory.agent", "")

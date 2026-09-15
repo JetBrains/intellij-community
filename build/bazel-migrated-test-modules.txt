@@ -39,6 +39,7 @@ intellij.idea.community.main.tests
 intellij.idea.tools.launch.tests
 intellij.java.byteCodeViewer.tests
 intellij.java.coverage.tests
+intellij.java.debugger.impl
 intellij.java.debugger.streams.tests
 intellij.java.frontback.tests
 intellij.java.guiForms.compiler.tests
@@ -58,6 +59,7 @@ intellij.jsonpath.tests
 intellij.jvm.analysis.java.tests
 intellij.kotlin.gradle.tooling.impl.tests
 intellij.kotlin.jvm.debugger.eval4j.tests
+intellij.kotlin.onboarding.gradle.tests
 intellij.kotlin.onboarding.tests
 intellij.markdown.tests
 intellij.maven.groovy.tests

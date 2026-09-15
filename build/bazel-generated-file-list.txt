@@ -293,7 +293,6 @@ java/compiler/instrumentation-util-8
 java/compiler/javac2
 java/compiler/openapi
 java/debugger/backend
-java/debugger/debugger-agent
 java/debugger/frontend
 java/debugger/impl
 java/debugger/jb-jdi

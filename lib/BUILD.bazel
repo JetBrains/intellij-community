@@ -4297,21 +4297,6 @@ java_library(
 )
 
 copy_file(
-    name = "org.jetbrains.intellij.deps/debugger-agent-1.193.jar_copy",
-    src = "@org_jetbrains_intellij_deps-debugger-agent-1_193_http//file",
-    out = "org.jetbrains.intellij.deps/debugger-agent-1.193.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "java-debugger-agent-holder-debugger-agent",
-    jar = "@org_jetbrains_intellij_deps-debugger-agent-1_193_http//file",
-    source_jar = "@org_jetbrains_intellij_deps-debugger-agent-1_193-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
     name = "org.jetbrains.intellij.deps/sa-jdwp-1.25.jar_copy",
     src = "@org_jetbrains_intellij_deps-sa-jdwp-1_25_http//file",
     out = "org.jetbrains.intellij.deps/sa-jdwp-1.25.jar",

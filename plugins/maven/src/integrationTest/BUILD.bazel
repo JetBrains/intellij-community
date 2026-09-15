@@ -152,6 +152,8 @@ jvm_library(
         "//platform/backend/workspace:workspace_test_lib",
         "//java/java-impl:impl",
         "//java/java-impl:impl_test_lib",
+        "//java/debugger/impl",
+        "//java/debugger/impl:impl_test_lib",
         "//platform/backend/observation",
         "//platform/backend/observation:observation_test_lib",
         "//libraries/hash4j",

@@ -119,12 +119,6 @@ internal class JpsModuleToBazel {
       generator.save(ultimateResult.moduleBuildFiles)
 
       generator.generateLibs(jarRepositories = jarRepositories, m2Repo = m2RepoPath)
-      generateDebuggerTestDepsModuleBazel(
-        communityRoot = communityRoot,
-        allLibraries = generator.allLibraries,
-        urlCache = urlCache,
-        m2Repo = m2RepoPath,
-      )
 
       // Check that after all workings of generator, all checksums from urls with checksums
       // are saved to MODULE.bazel correctly

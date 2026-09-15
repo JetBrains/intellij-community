@@ -78,7 +78,6 @@ val CE_CLASS_VERSIONS: Map<String, String> = mapOf(
   "plugins/maven-plugin/lib/intellij.maven.server3/maven3-server.jar" to "1.8",
   "plugins/maven-plugin/lib/artifact-resolver-m31.jar" to "1.8",
   "plugins/java/lib/sa-jdwp" to "",  // ignored
-  "plugins/java/lib/rt/debugger-agent.jar" to "1.7",
   "plugins/Groovy/lib/groovy-rt.jar" to "1.8",
   "plugins/Groovy/lib/groovy-constants-rt.jar" to "1.8",
 )

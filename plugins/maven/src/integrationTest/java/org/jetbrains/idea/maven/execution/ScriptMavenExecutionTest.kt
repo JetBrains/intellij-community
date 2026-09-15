@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.execution
 
+import com.intellij.debugger.engine.AsyncStacksUtils
 import com.intellij.execution.configurations.ParametersList
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.idea.TestFor
@@ -250,8 +251,7 @@ class ScriptMavenExecutionTest(mavenVersion: String, modelVersion: String) {
     val debugOpts = debugExecInfo.stdout.lines().singleOrNull { it.startsWith("MAVEN_OPTS") }
     assertNotNull(debugOpts, debugExecInfo.toString())
     assertTrue(debugOpts!!.contains("-agentlib:jdwp=transport=dt_socket"), debugOpts)
-    // maven.use.scripts.debug.agent = true is set to `true` by default
-    assertTrue(debugOpts.contains("debugger-agent.jar"), debugOpts)
+    assertEquals(AsyncStacksUtils.isAgentAvailable(), debugOpts.contains("debugger-agent.jar"), debugOpts)
   }
 
 
