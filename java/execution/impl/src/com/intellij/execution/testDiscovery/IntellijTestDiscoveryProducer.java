@@ -4,9 +4,6 @@ package com.intellij.execution.testDiscovery;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectReader;
 import com.google.gson.annotations.SerializedName;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.application.ApplicationManager;
@@ -25,6 +22,10 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.HttpRequests;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectReader;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -67,7 +68,7 @@ public final class IntellijTestDiscoveryProducer implements TestDiscoveryProduce
     catch (HttpRequests.HttpStatusException http) {
       LOG.debug("No tests found", http);
     }
-    catch (IOException e) {
+    catch (IOException | JacksonException e) {
       LOG.debug(e);
     }
     return MultiMap.empty();
@@ -96,7 +97,7 @@ public final class IntellijTestDiscoveryProducer implements TestDiscoveryProduce
     try {
       return request(filePaths, s -> "\"" + s + "\"", "files");
     }
-    catch (IOException e) {
+    catch (IOException | JacksonException e) {
       LOG.debug(e);
     }
     return MultiMap.empty();
@@ -263,7 +264,7 @@ public final class IntellijTestDiscoveryProducer implements TestDiscoveryProduce
       }
       return query.compute();
     }
-    catch (IOException e) {
+    catch (IOException | JacksonException e) {
       LOG.warn("Can't execute remote query", e);
       return Collections.emptyList();
     }

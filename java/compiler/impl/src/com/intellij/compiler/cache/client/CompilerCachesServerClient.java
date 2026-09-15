@@ -1,9 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.cache.client;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.StreamUtil;
@@ -11,6 +8,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.HttpRequests;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,7 +28,7 @@ import java.util.zip.GZIPInputStream;
 
 public final class CompilerCachesServerClient {
   private static final Logger LOG = Logger.getInstance(CompilerCachesServerClient.class);
-  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+  private static final ObjectMapper OBJECT_MAPPER = JsonMapper.builder().build();
 
   public static @NotNull Map<String, Set<String>> getCacheKeysPerRemote(@NotNull Project project, @NotNull String serverUrl) {
     Map<String, List<String>> response = doGetRequest(project, serverUrl);
@@ -62,7 +63,7 @@ public final class CompilerCachesServerClient {
           return null;
         });
     }
-    catch (IOException e) {
+    catch (IOException | JacksonException e) {
       LOG.warn("Failed request to cache server", e);
     }
     return null;
