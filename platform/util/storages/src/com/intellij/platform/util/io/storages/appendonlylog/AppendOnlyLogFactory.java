@@ -214,6 +214,8 @@ public class AppendOnlyLogFactory implements StorageFactory<AppendOnlyLogOverMMa
             appendOnlyLog.setDataVersion(expectedDataVersion);
           }
           else if (dataFormatVersion != expectedDataVersion) {
+            // TODO RC: Replace VersionUpdatedException with UnsupportedFormatException.
+            //          First, check whether callers rely on CorruptedException.
             throw new VersionUpdatedException(storagePath, expectedDataVersion, dataFormatVersion);
           }
         }
