@@ -9721,6 +9721,21 @@ jvm_import(
 )
 
 copy_file(
+    name = "tools.jackson.dataformat/jackson-dataformat-cbor-3.2.2.jar_copy",
+    src = "@tools_jackson_dataformat-jackson-dataformat-cbor-3_2_2_http//file",
+    out = "tools.jackson.dataformat/jackson-dataformat-cbor-3.2.2.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-jackson3-dataformat-cbor-jackson3-dataformat-cbor",
+    jar = "@tools_jackson_dataformat-jackson-dataformat-cbor-3_2_2_http//file",
+    source_jar = "@tools_jackson_dataformat-jackson-dataformat-cbor-3_2_2-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
     name = "tools.jackson.dataformat/jackson-dataformat-toml-3.2.2.jar_copy",
     src = "@tools_jackson_dataformat-jackson-dataformat-toml-3_2_2_http//file",
     out = "tools.jackson.dataformat/jackson-dataformat-toml-3.2.2.jar",
@@ -9732,6 +9747,21 @@ jvm_import(
     name = "libraries-jackson3-dataformat-toml-jackson3-dataformat-toml",
     jar = "@tools_jackson_dataformat-jackson-dataformat-toml-3_2_2_http//file",
     source_jar = "@tools_jackson_dataformat-jackson-dataformat-toml-3_2_2-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "tools.jackson.dataformat/jackson-dataformat-xml-3.2.2.jar_copy",
+    src = "@tools_jackson_dataformat-jackson-dataformat-xml-3_2_2_http//file",
+    out = "tools.jackson.dataformat/jackson-dataformat-xml-3.2.2.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-jackson3-dataformat-xml-jackson3-dataformat-xml",
+    jar = "@tools_jackson_dataformat-jackson-dataformat-xml-3_2_2_http//file",
+    source_jar = "@tools_jackson_dataformat-jackson-dataformat-xml-3_2_2-sources_http//file",
     visibility = ["//visibility:public"],
 )
 

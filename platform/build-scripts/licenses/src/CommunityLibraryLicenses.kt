@@ -599,6 +599,7 @@ val COMMUNITY_LICENSES_LIST: List<LibraryLicense> = listOf(
     .suppliedByPersons("Tatu Saloranta", "Christopher Currie", "Paul Brown"),
 
   LibraryLicense("Jackson Dataformat CBOR", libraryName = "jackson-dataformat-cbor", url = "https://github.com/FasterXML/jackson-dataformats-binary")
+    .additionalLibraryNames("jackson3-dataformat-cbor")
     .apache("https://github.com/FasterXML/jackson-dataformats-binary/blob/2.14/pom.xml")
     .suppliedByPersons("Tatu Saloranta", "Christopher Currie", "Paul Brown"),
 
@@ -608,6 +609,7 @@ val COMMUNITY_LICENSES_LIST: List<LibraryLicense> = listOf(
     .suppliedByPersons("Tatu Saloranta", "Christopher Currie", "Paul Brown"),
 
   LibraryLicense("Jackson Dataformat XML", libraryName = "jackson-dataformat-xml", url = "https://github.com/FasterXML/jackson-dataformat-xml")
+    .additionalLibraryNames("jackson3-dataformat-xml")
     .apache("https://github.com/FasterXML/jackson-dataformat-xml/blob/2.19/LICENSE"),
 
   LibraryLicense("Jackson Dataformat YAML", libraryName = "jackson-dataformat-yaml", url = "https://github.com/FasterXML/jackson-dataformats-text")

@@ -7764,6 +7764,20 @@ http_file(
 )
 
 http_file(
+    name = "tools_jackson_dataformat-jackson-dataformat-cbor-3_2_2_http",
+    downloaded_file_path = "jackson-dataformat-cbor-3.2.2.jar",
+    sha256 = "3edb580e626632186bc2ac304d031201da70daaf981a696f7eb3fba14f36545d",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/tools/jackson/dataformat/jackson-dataformat-cbor/3.2.2/jackson-dataformat-cbor-3.2.2.jar",
+)
+
+http_file(
+    name = "tools_jackson_dataformat-jackson-dataformat-cbor-3_2_2-sources_http",
+    downloaded_file_path = "jackson-dataformat-cbor-3.2.2-sources.jar",
+    sha256 = "91db1b67b5967cc237f119ae4867e7c542fb1f9b66b37faf833954a904dc9abc",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/tools/jackson/dataformat/jackson-dataformat-cbor/3.2.2/jackson-dataformat-cbor-3.2.2-sources.jar",
+)
+
+http_file(
     name = "tools_jackson_dataformat-jackson-dataformat-toml-3_2_2_http",
     downloaded_file_path = "jackson-dataformat-toml-3.2.2.jar",
     sha256 = "b77f852d139a9978212e9d52dadfb5a547f2602f580322be1f73f2f8a2efcead",
@@ -7775,6 +7789,20 @@ http_file(
     downloaded_file_path = "jackson-dataformat-toml-3.2.2-sources.jar",
     sha256 = "b083acbc01517b3b8a631aea03afe990eafdd760ede2f0d298e10a4c22880aab",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/tools/jackson/dataformat/jackson-dataformat-toml/3.2.2/jackson-dataformat-toml-3.2.2-sources.jar",
+)
+
+http_file(
+    name = "tools_jackson_dataformat-jackson-dataformat-xml-3_2_2_http",
+    downloaded_file_path = "jackson-dataformat-xml-3.2.2.jar",
+    sha256 = "627a1c904e866822c929fec9c4447068f78f3b94fa84d1fd1b47f6ce1e7dca4a",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/tools/jackson/dataformat/jackson-dataformat-xml/3.2.2/jackson-dataformat-xml-3.2.2.jar",
+)
+
+http_file(
+    name = "tools_jackson_dataformat-jackson-dataformat-xml-3_2_2-sources_http",
+    downloaded_file_path = "jackson-dataformat-xml-3.2.2-sources.jar",
+    sha256 = "618e4dfbd6d7d4e76135ab9ab93b432976f01a414d3519ebd583f8760d75bb92",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/tools/jackson/dataformat/jackson-dataformat-xml/3.2.2/jackson-dataformat-xml-3.2.2-sources.jar",
 )
 
 http_file(
