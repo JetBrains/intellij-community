@@ -29,7 +29,9 @@ internal data class PyProjectImpl private constructor(override val baseDir: Path
           // Hence a warning and not an error report -- every root belongs to the same module, so the deterministic
           // first one is a safe base dir, and reporting an error here would fail the sync of any such project.
           log.warn("Python module has more than one content root, falling back to the first one: module=${module.name}, roots=$n")
-          roots.minBy { it.url.fileName } // We sort it to make it predictable between runs
+          // By the whole URL and not by the file name: two roots can share a name (`/a/src` and `/b/src`), and the
+          // whole URL is unique, so the pick stays the same between runs.
+          roots.minBy { it.url.url }
         }
       }
       return PyProjectImpl(root.url.toPath(), residesOnModule = module)
