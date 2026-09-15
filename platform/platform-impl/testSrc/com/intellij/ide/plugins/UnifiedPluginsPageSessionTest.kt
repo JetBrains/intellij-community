@@ -50,10 +50,14 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.ui.AnimatedIcon
+import com.intellij.ui.ComponentUtil
 import com.intellij.ui.SearchTextField
 import com.intellij.ui.components.SearchFieldWithExtension
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.withForcedRespectIsShowingClientProperty
+import com.intellij.util.ui.withShowingChanged
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -76,6 +80,7 @@ import java.util.HashSet
 import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.JComponent
 import javax.swing.JButton
+import javax.swing.JPanel
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -93,7 +98,7 @@ internal class UnifiedPluginsPageSessionTest {
 
   @Test
   fun `session renders the unified shell and supports compatibility search`(): Unit =
-    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+    uiTest {
       val session = createSession("initial query")
       try {
         val content = session.getComponent()
@@ -126,7 +131,7 @@ internal class UnifiedPluginsPageSessionTest {
 
   @Test
   fun `session reports each non-empty search after all sources settle`(): Unit =
-    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+    uiTest {
       val searches = mutableListOf<Pair<UnifiedPluginSearchStatistics, Int>>()
       val provider = FixedLocalDataProvider(
         UnifiedPluginInventory(listOf(inventoryItem("local.plugin", "Local Plugin")), emptyList())
@@ -164,7 +169,7 @@ internal class UnifiedPluginsPageSessionTest {
 
   @Test
   fun `session started identifies the unified page`(@TestDisposable disposable: Disposable): Unit =
-    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+    uiTest {
       lateinit var session: UnifiedPluginsPageSession
       val events = FUCollectorTestCase.collectLogEvents(disposable) {
         session = createSession(null)
@@ -179,7 +184,7 @@ internal class UnifiedPluginsPageSessionTest {
 
   @Test
   fun `search and actions stay vertically centered`(): Unit =
-    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+    uiTest {
       val session = createSession(null)
       try {
         val header = session.getCenterComponent(Configurable.TopComponentController.EMPTY)
@@ -212,7 +217,7 @@ internal class UnifiedPluginsPageSessionTest {
 
   @Test
   fun `search keeps its maximum with internal controls and shrinks for header actions`(): Unit =
-    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+    uiTest {
       val session = createSession(null)
       try {
         val header = session.getCenterComponent(Configurable.TopComponentController.EMPTY)
@@ -240,7 +245,7 @@ internal class UnifiedPluginsPageSessionTest {
 
   @Test
   fun `Update All button counts prepared executor targets`(): Unit =
-    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+    uiTest {
       val updates = MutableSharedFlow<PluginUpdatesEvent>(replay = 1)
       val executor = RecordingUpdateAllExecutor()
       val first = PluginDto("First", PluginId.getId("first"))
@@ -291,7 +296,7 @@ internal class UnifiedPluginsPageSessionTest {
 
   @Test
   fun `Update All waits for the local plugin inventory`(): Unit =
-    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+    uiTest {
       val inventoryReady = CompletableDeferred<Unit>()
       val update = PluginDto("Plugin update", PluginId.getId("plugin.id"))
       val updates = MutableSharedFlow<PluginUpdatesEvent>(replay = 1)
@@ -321,7 +326,7 @@ internal class UnifiedPluginsPageSessionTest {
 
   @Test
   fun `unmodified lifecycle calls and repeated disposal are safe`(): Unit =
-    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+    uiTest {
       val session = createSession(null)
 
       assertThat(session.isModified()).isFalse()
@@ -338,7 +343,7 @@ internal class UnifiedPluginsPageSessionTest {
 
   @Test
   fun `session renders and filters installed and bundled rows`(): Unit =
-    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+    uiTest {
       val installed = inventoryItem("custom.plugin", "Custom Plugin")
       val bundled = inventoryItem("bundled.plugin", "Bundled Plugin", bundled = true)
       val provider = FixedLocalDataProvider(UnifiedPluginInventory(listOf(installed), listOf(bundled)))
@@ -357,8 +362,35 @@ internal class UnifiedPluginsPageSessionTest {
     }
 
   @Test
+  fun `page replays source state when it first becomes visible`(): Unit =
+    uiTest {
+      val inventoryEnriched = CompletableDeferred<Unit>()
+      val provider = FixedLocalDataProvider(
+        UnifiedPluginInventory(
+          installedPlugins = listOf(inventoryItem("installed.plugin", "Installed Plugin")),
+          bundledPlugins = emptyList(),
+        ),
+        onEnrich = { inventoryEnriched.complete(Unit) },
+      )
+      val session = createSession(null, provider, showPage = false)
+      try {
+        val content = session.getComponent()
+        inventoryEnriched.await()
+        delay(100.milliseconds)
+        assertThat(componentsOfType(content, ListPluginComponent::class.java)).isEmpty()
+
+        showComponent(content)
+
+        waitForPluginIds(content, setOf("installed.plugin"))
+      }
+      finally {
+        Disposer.dispose(session)
+      }
+    }
+
+  @Test
   fun `plugin source enrichment waits for readiness without blocking the page`(): Unit =
-    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+    uiTest {
       val pluginStatesReady = CompletableDeferred<Unit>()
       val sessionInitialized = CompletableDeferred<Unit>()
       val allSourcesAwaitSessionInitialization = CompletableDeferred<Unit>()
@@ -423,7 +455,7 @@ internal class UnifiedPluginsPageSessionTest {
 
   @Test
   fun `disposing the page cancels enrichment that waits for plugin states`(): Unit =
-    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+    uiTest {
       val pluginStatesReady = CompletableDeferred<Unit>()
       val inventoryLoaded = CompletableDeferred<Unit>()
       val enrichmentStarted = CompletableDeferred<Unit>()
@@ -444,7 +476,7 @@ internal class UnifiedPluginsPageSessionTest {
 
   @Test
   fun `session replaces Suggested rows with Marketplace search results`(): Unit =
-    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+    uiTest {
       val suggested = PluginDto("Suggested Plugin", PluginId.getId("suggested.plugin"))
       val marketplace = PluginDto("Marketplace Plugin", PluginId.getId("marketplace.plugin"))
       val remoteProvider = FixedMarketplaceDataProvider(
@@ -467,7 +499,7 @@ internal class UnifiedPluginsPageSessionTest {
 
   @Test
   fun `suggested compatibility query restores Suggested without Marketplace search`(): Unit =
-    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+    uiTest {
       val suggested = PluginDto("Suggested Plugin", PluginId.getId("suggested.plugin"))
       val remoteProvider = FixedMarketplaceDataProvider(suggested = listOf(suggested))
       val session = createSession(null, marketplaceProvider = remoteProvider)
@@ -490,7 +522,7 @@ internal class UnifiedPluginsPageSessionTest {
 
   @Test
   fun `session renders and filters ordered repository rows`(): Unit =
-    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+    uiTest {
       val first = CustomPluginRepository("first", PluginSource.LOCAL)
       val second = CustomPluginRepository("second", PluginSource.LOCAL)
       val repositoryProvider = FixedRepositoryDataProvider(
@@ -518,7 +550,7 @@ internal class UnifiedPluginsPageSessionTest {
 
   @Test
   fun `programmatic selection accumulates plugins from separately published sources`(): Unit =
-    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+    uiTest {
       val first = CustomPluginRepository("first", PluginSource.LOCAL)
       val second = CustomPluginRepository("second", PluginSource.LOCAL)
       val firstResult = CompletableDeferred<List<PluginUiModel>>()
@@ -550,7 +582,7 @@ internal class UnifiedPluginsPageSessionTest {
 
   @Test
   fun `programmatic selection waits for the Internal descriptor`() =
-    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+    uiTest {
       val internalGroup = CompletableDeferred<UnifiedPluginInternalGroup?>()
       val localPlugin = inventoryItem("local.plugin", "Local Plugin")
       val internalPlugin = PluginDto("Internal Plugin", PluginId.getId("internal.plugin"))
@@ -575,6 +607,12 @@ internal class UnifiedPluginsPageSessionTest {
       }
     }
 
+  private fun uiTest(action: suspend CoroutineScope.() -> Unit) {
+    withForcedRespectIsShowingClientProperty {
+      timeoutRunBlocking(context = Dispatchers.UiWithModelAccess, action = action)
+    }
+  }
+
   private fun createSession(
     searchQuery: String?,
     provider: UnifiedPluginLocalDataProvider = FixedLocalDataProvider(UnifiedPluginInventory(emptyList(), emptyList())),
@@ -587,8 +625,9 @@ internal class UnifiedPluginsPageSessionTest {
     internalLoadingDelay: Duration = 100.milliseconds,
     updateAllExecutor: UnifiedPluginUpdateAllExecutor = UnifiedPluginUpdateAllExecutor { _, _ -> },
     unifiedSearchLogger: (UnifiedPluginSearchStatistics, Int) -> Unit = { _, _ -> },
+    showPage: Boolean = true,
   ): UnifiedPluginsPageSession {
-    return UnifiedPluginsPageSession(
+    val session = UnifiedPluginsPageSession(
       searchQuery,
       PluginManagerOpenSourceEnum.OTHER,
       localDataProviderFactory = { provider },
@@ -603,6 +642,14 @@ internal class UnifiedPluginsPageSessionTest {
       updateAllExecutorFactory = { _, _ -> updateAllExecutor },
       unifiedSearchLogger = unifiedSearchLogger,
     )
+    if (showPage) showComponent(session.getComponent())
+    return session
+  }
+
+  private fun showComponent(component: JComponent) {
+    val container = JPanel()
+    ComponentUtil.forceMarkAsShowing(container, true)
+    withShowingChanged { container.add(component) }
   }
 
   private suspend fun waitForPluginIds(content: Component, expected: Set<String>) {
