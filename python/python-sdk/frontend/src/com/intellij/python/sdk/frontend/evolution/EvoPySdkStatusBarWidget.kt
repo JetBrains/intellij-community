@@ -25,6 +25,7 @@ import com.intellij.python.sdk.common.evolution.PyEvoWidgetCollector
 import com.intellij.python.sdk.common.evolution.PyInterpreterDto
 import com.intellij.python.sdk.common.evolution.evoRpcOrNull
 import com.intellij.python.sdk.common.evolution.requestEvoAssociatedInterpreters
+import org.jetbrains.annotations.ApiStatus
 import com.intellij.python.sdk.common.evolution.requestEvoCurrentInterpreter
 import com.intellij.python.sdk.common.evolution.requestEvoNodes
 import com.intellij.python.sdk.common.evolution.requestEvoPyProjects
@@ -417,8 +418,7 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
       try {
         val associated = evoRpcOrNull { requestEvoAssociatedInterpreters(project.projectId(), askedProject) }.orEmpty()
         val base = cache[dataKey] ?: return@launch
-        // Compare by what a row names, not by the DTOs: an IconId is not guaranteed to be equal across fetches.
-        if (base.associated.map { it.ref } == associated.map { it.ref }) return@launch
+        if (!interpreterRowsChanged(base.associated, associated)) return@launch
         cache[dataKey] = base.copy(associated = associated)
         dropPopupTreeBuiltFrom(dataKey)
         update()
@@ -593,3 +593,26 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
     ModuleManager.getInstance(project).modules.firstOrNull { it.moduleContentScope.contains(file) }
 
 }
+
+/**
+ * Whether [fresh] rows would draw differently from the [shown] ones, which is when the popup has to be rebuilt.
+ *
+ * Everything a row renders counts, except the icon: an [com.intellij.ide.ui.icons.IconId] is not guaranteed to be
+ * equal across fetches, so weighing it would rebuild the popup on every read.
+ *
+ * [PyInterpreterDto.title] is the field this exists for. It carries the version, and a comparison by
+ * [PyInterpreterDto.ref] alone missed it: an environment recreated on another Python keeps its SDK name, so the refs
+ * still matched, the fresh list was dropped, and the popup went on showing a version that was gone.
+ *
+ * Keep [rowIdentity] in step with [PyInterpreterDto]. A field added there and not here is a change the popup will
+ * not show.
+ *
+ * Public only to be reachable from `intellij.python.sdk.tests`, which is its own Kotlin module.
+ */
+@ApiStatus.Internal
+fun interpreterRowsChanged(shown: List<PyInterpreterDto>, fresh: List<PyInterpreterDto>): Boolean =
+  shown.map { it.rowIdentity() } != fresh.map { it.rowIdentity() }
+
+/** Everything [PyInterpreterDto] renders, less the icon. See [interpreterRowsChanged]. */
+private fun PyInterpreterDto.rowIdentity(): List<Any?> =
+  listOf(ref, title, description, dependencyFileUrl, activeNodeId)
