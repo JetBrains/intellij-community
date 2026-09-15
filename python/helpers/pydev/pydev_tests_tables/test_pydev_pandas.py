@@ -583,20 +583,12 @@ def test_define_format_function():
         ("%+6.2f", (1.1, " +1.10")),  # explicit sign
         ("%06.2f", (1.1, "001.10")),  # zero-padded
         ("% d", (1.1, " 1")),
-        ("% s", (1.1, " 1.1")),
+        ("% s", (1.1, "1.1")),
         ("% .2f", (1.1, " 1.10")),
 
         ("%#f", (1.1, "1.100000")),  # alternate form (still valid)
         ("%#.0f", (1.0, "1.")),  # forces decimal point
         ("%+d", (1.1, "+1")),
-
-        ("%.0f%%", (0.123 * 100, "12%")),
-        ("%.1f%%", (0.123 * 100, "12.3%")),
-        ("%.2f%%", (0.123 * 100, "12.30%")),
-        ("%.2f%%", (1.1, "1.10%")),
-        ("%.2f%%", (0.0, "0.00%")),
-        ("%.2f%%", (100.0, "100.00%")),
-        ("%.2f%%", (-5.0, "-5.00%")),
 
         ("%.2f", (float("nan"), "nan")),
         ("%.2f", (float("inf"), "inf")),
@@ -622,6 +614,8 @@ def test_define_format_function():
         "%2",  # incomplete specifier
         "%q",  # unsupported specifier
         "%%%",  # malformed escaping
+        "%.2f%%",  # suffixes are not supported
+        "%d garbage",  # suffixes are not supported
         object(),  # non-string
         [],  # non-string
         "value: %.2f", # we don't pass such format TODO: is this restriction needed?
@@ -688,15 +682,14 @@ def test_get_data_float_values_d(setup_dataframe_with_float_values):
 
 
 # 33
-@pytest.mark.skipif(sys.version_info < (3, 0), reason="%d doesn't work with np.float('nan')")
-def test_get_data_float_values_d_garbage(setup_dataframe_with_float_values):
+def test_get_data_ignores_invalid_format(setup_dataframe_with_float_values):
     df = setup_dataframe_with_float_values
-    actual = pandas_tables_helpers.get_data(df, False, 0, 3, format="%d garbage")
+    with pd.option_context("display.float_format", None):
+        expected = pandas_tables_helpers.get_data(df, False, 0, 3)
+        actual = pandas_tables_helpers.get_data(df, False, 0, 3, format="%d garbage")
 
-    __read_expected_from_file_and_compare_with_actual(
-        actual=actual,
-        expected_file='test_data/pandas/' + test_data_dir + '/get_data_float_values_d_garbage.txt'
-    )
+        assert actual == expected
+        assert pd.get_option("display.float_format") is None
 
 
 # 34

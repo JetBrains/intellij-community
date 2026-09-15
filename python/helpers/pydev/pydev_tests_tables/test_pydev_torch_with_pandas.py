@@ -144,14 +144,14 @@ def test_get_data_float_values_d(setup_torch_tensor_with_floats):
 
 
 # 11
-def test_get_data_float_values_d_garbage(setup_torch_tensor_with_floats):
+def test_get_data_ignores_invalid_format(setup_torch_tensor_with_floats):
     tensor = setup_torch_tensor_with_floats
-    actual = numpy_based_tables_helpers.get_data(tensor, False, 0, 5, format="%d garbage")
+    with pd.option_context("display.float_format", None):
+        expected = numpy_based_tables_helpers.get_data(tensor, False, 0, 5)
+        actual = numpy_based_tables_helpers.get_data(tensor, False, 0, 5, format="%d garbage")
 
-    __read_expected_from_file_and_compare_with_actual(
-        actual=actual,
-        expected_file='test_data/numpy_based_with_pandas/torch_with_pandas/' + test_data_directory + '/get_data_float_values_d_garbage.txt'
-    )
+        assert actual == expected
+        assert pd.get_option("display.float_format") is None
 
 
 # 12

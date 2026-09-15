@@ -124,20 +124,12 @@ def test_define_format_function():
         ("%+6.2f", (1.1, " +1.10")),  # explicit sign
         ("%06.2f", (1.1, "001.10")),  # zero-padded
         ("% d", (1.1, " 1")),
-        ("% s", (1.1, " 1.1")),
+        ("% s", (1.1, "1.1")),
         ("% .2f", (1.1, " 1.10")),
 
         ("%#f", (1.1, "1.100000")),  # alternate form (still valid)
         ("%#.0f", (1.0, "1.")),  # forces decimal point
         ("%+d", (1.1, "+1")),
-
-        ("%.0f%%", (0.123 * 100, "12%")),
-        ("%.1f%%", (0.123 * 100, "12.3%")),
-        ("%.2f%%", (0.123 * 100, "12.30%")),
-        ("%.2f%%", (1.1, "1.10%")),
-        ("%.2f%%", (0.0, "0.00%")),
-        ("%.2f%%", (100.0, "100.00%")),
-        ("%.2f%%", (-5.0, "-5.00%")),
 
         ("%.2f", (float("nan"), "nan")),
         ("%.2f", (float("inf"), "inf")),
@@ -163,6 +155,8 @@ def test_define_format_function():
         "%2",  # incomplete specifier
         "%q",  # unsupported specifier
         "%%%",  # malformed escaping
+        "%.2f%%",  # suffixes are not supported
+        "%d garbage",  # suffixes are not supported
         object(),  # non-string
         [],  # non-string
         "value: %.2f", # we don't pass such format TODO: is this restriction needed?
@@ -244,14 +238,14 @@ def test_get_data_float_values_d(setup_tf_tensor_with_floats):
 
 
 # 11
-def test_get_data_float_values_d_garbage(setup_tf_tensor_with_floats):
+def test_get_data_ignores_invalid_format(setup_tf_tensor_with_floats):
     np_array = setup_tf_tensor_with_floats
-    actual = numpy_based_tables_helpers.get_data(np_array, False, 0, 5, format="%d garbage")
+    with pd.option_context("display.float_format", None):
+        expected = numpy_based_tables_helpers.get_data(np_array, False, 0, 5)
+        actual = numpy_based_tables_helpers.get_data(np_array, False, 0, 5, format="%d garbage")
 
-    __read_expected_from_file_and_compare_with_actual(
-        actual=actual,
-        expected_file='test_data/numpy_based_with_pandas/tensorflow_with_pandas/' + test_data_directory + '/get_data_float_values_d_garbage.txt'
-    )
+        assert actual == expected
+        assert pd.get_option("display.float_format") is None
 
 
 # 12
@@ -407,14 +401,14 @@ def test_get_data_float_values_sparse_d(setup_sparse_tf_tensor_with_floats):
 
 
 # 24
-def test_get_data_float_values_sparse_d_garbage(setup_sparse_tf_tensor_with_floats):
+def test_get_data_sparse_ignores_invalid_format(setup_sparse_tf_tensor_with_floats):
     np_array = setup_sparse_tf_tensor_with_floats
-    actual = numpy_based_tables_helpers.get_data(np_array, False, 0, 5, format="%d garbage")
+    with pd.option_context("display.float_format", None):
+        expected = numpy_based_tables_helpers.get_data(np_array, False, 0, 5)
+        actual = numpy_based_tables_helpers.get_data(np_array, False, 0, 5, format="%d garbage")
 
-    __read_expected_from_file_and_compare_with_actual(
-        actual=actual,
-        expected_file='test_data/numpy_based_with_pandas/tensorflow_with_pandas/' + test_data_directory + '/get_data_float_values_sparse_d_garbage.txt'
-    )
+        assert actual == expected
+        assert pd.get_option("display.float_format") is None
 
 
 # 25
@@ -559,14 +553,14 @@ def test_get_data_float_values_variable_d(setup_variable_tf_tensor_with_floats):
 
 
 # 38
-def test_get_data_float_values_variable_d_garbage(setup_variable_tf_tensor_with_floats):
+def test_get_data_variable_ignores_invalid_format(setup_variable_tf_tensor_with_floats):
     np_array = setup_variable_tf_tensor_with_floats
-    actual = numpy_based_tables_helpers.get_data(np_array, False, 0, 5, format="%d garbage")
+    with pd.option_context("display.float_format", None):
+        expected = numpy_based_tables_helpers.get_data(np_array, False, 0, 5)
+        actual = numpy_based_tables_helpers.get_data(np_array, False, 0, 5, format="%d garbage")
 
-    __read_expected_from_file_and_compare_with_actual(
-        actual=actual,
-        expected_file='test_data/numpy_based_with_pandas/tensorflow_with_pandas/' + test_data_directory + '/get_data_float_values_variable_d_garbage.txt'
-    )
+        assert actual == expected
+        assert pd.get_option("display.float_format") is None
 
 
 # 39
