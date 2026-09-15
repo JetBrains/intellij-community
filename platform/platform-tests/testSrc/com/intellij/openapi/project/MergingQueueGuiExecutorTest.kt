@@ -15,6 +15,7 @@ import com.intellij.testFramework.ProjectRule
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.Semaphore
 import junit.framework.TestCase
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.time.withTimeoutOrNull
@@ -37,6 +38,7 @@ import kotlin.random.Random
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.milliseconds
 
 
 private fun Phaser.arriveAndAwaitAdvanceWithTimeout() {
@@ -385,6 +387,53 @@ class MergingQueueGuiExecutorTest {
     TestCase.assertEquals("Not all expected tasks were submitted", repeatCount * writeThreadsCount, id.get())
     TestCase.assertEquals("Not all submitted tasks were launched", repeatCount * writeThreadsCount, performLog.size)
     TestCase.assertEquals("Not all submitted tasks were disposed", repeatCount * writeThreadsCount, disposeLog.size)
+
+    stopExecutor(executor)
+  }
+
+  @Test
+  fun `test queued tasks are recognised as scheduled`() {
+    // DumbServiceGuiExecutor has tasks to run; we need to wait for it to finish for this test case as both it and the test
+    // MergingQueueGuiExecutor share the same coroutine scope
+    assertTrue(DumbService.getInstance(project).waitForSmartMode(10_000))
+
+    val repeatCount = 500
+    val exceptionRef = AtomicReference<Throwable>()
+    val listener = ValidatingListener(exceptionRef)
+    val queue = MergingTaskQueue<LoggingTask>()
+    val executor = BareMergingQueueGuiExecutor(
+      project, queue, listener, "title", "suspend"
+    )
+
+    val id = AtomicInteger()
+    val performLog = ConcurrentLinkedDeque<Int>()
+    val disposeLog = ConcurrentLinkedDeque<Int>()
+
+    TestCase.assertFalse("Executor should have no scheduled tasks", executor.hasScheduledTasks())
+
+    repeat(repeatCount) {
+      queue.addTask(LoggingTask(id.incrementAndGet(), performLog, disposeLog))
+    }
+
+    TestCase.assertTrue("Executor should have scheduled tasks", executor.hasScheduledTasks())
+
+    executor.startBackgroundProcess(onFinish = {})
+
+    waitForExecutorToCompleteSubmittedTasks(executor, 10)
+
+    runBlocking {
+      withTimeoutOrNull(Duration.ofSeconds(3)) {
+        while (executor.hasScheduledTasks()) {
+          delay(10.milliseconds)
+        }
+      } ?: fail("Executor still reports scheduled tasks despite not running")
+    }
+
+    TestCase.assertNull(exceptionRef.get())
+    TestCase.assertTrue("Queue should be empty", queue.isEmpty)
+    TestCase.assertEquals("Not all expected tasks were submitted", repeatCount, id.get())
+    TestCase.assertEquals("Not all submitted tasks were launched", repeatCount, performLog.size)
+    TestCase.assertEquals("Not all submitted tasks were disposed", repeatCount, disposeLog.size)
 
     stopExecutor(executor)
   }

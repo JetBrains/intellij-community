@@ -19,7 +19,6 @@ import com.intellij.platform.util.progress.reportRawProgress
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
@@ -114,7 +113,10 @@ open class MergingQueueGuiExecutor<T : MergeableQueueTask<T>> protected construc
   ): SubmissionReceipt? {
     return guiSuspender.setCurrentSuspenderAndSuspendIfRequested(TaskSuspender.getContextSuspender(), Supplier<SubmissionReceipt?> {
       while (true) {
-        if (project.isDisposed) return@Supplier null
+        if (project.isDisposed) {
+          taskQueue.disposePendingTasks()
+          return@Supplier null
+        }
 
         // There is no race: we either observe correct latestSubmittedReceipt and no next task, either non-null next task
         // (latestSubmittedReceipt might be stale then, but it is not used in this case anyway)
@@ -270,6 +272,6 @@ open class MergingQueueGuiExecutor<T : MergeableQueueTask<T>> protected construc
   private class ScopeHolder(val scope: CoroutineScope)
 
   fun hasScheduledTasks(): Boolean {
-    return project.service<ScopeHolder>().scope.coroutineContext.job.children.firstOrNull() != null
+    return !taskQueue.isEmpty || project.service<ScopeHolder>().scope.coroutineContext.job.children.firstOrNull() != null
   }
 }
