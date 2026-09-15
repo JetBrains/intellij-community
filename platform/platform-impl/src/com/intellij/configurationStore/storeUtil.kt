@@ -58,7 +58,7 @@ object StoreUtil {
   @JvmStatic
   @CalledInAny
   fun saveSettings(componentManager: ComponentManager, forceSavingAllSettings: Boolean = false) {
-    runInAutoSaveDisabledMode {
+    SaveAndSyncHandler.getInstance().withDisabledAutoSaveBlocking {
       runUnderModalProgressIfIsEdt {
         com.intellij.configurationStore.saveSettings(componentManager, forceSavingAllSettings)
       }
@@ -72,7 +72,7 @@ object StoreUtil {
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   @JvmStatic
   fun saveDocumentsAndProjectSettings(project: Project) {
-    runInAutoSaveDisabledMode {
+    SaveAndSyncHandler.getInstance().withDisabledAutoSaveBlocking {
       FileDocumentManager.getInstance().saveAllDocuments()
       runWithModalProgressBlocking(project, IdeBundle.message("progress.saving.project", project.name)) {
         com.intellij.configurationStore.saveSettings(project)
@@ -90,7 +90,7 @@ object StoreUtil {
   @JvmStatic
   @Internal
   fun saveDocumentsAndProjectsAndApp(forceSavingAllSettings: Boolean) {
-    runInAutoSaveDisabledMode {
+    SaveAndSyncHandler.getInstance().withDisabledAutoSaveBlocking {
       FileDocumentManager.getInstance().saveAllDocuments()
       runWithModalProgressBlocking(ModalTaskOwner.guess(), "") {
         saveProjectsAndApp(forceSavingAllSettings)
@@ -244,12 +244,6 @@ suspend fun saveProjectsAndApp(forceSavingAllSettings: Boolean, onlyProject: Pro
   }
 }
 
-inline fun <T> runInAutoSaveDisabledMode(task: () -> T): T {
-  SaveAndSyncHandler.getInstance().disableAutoSave().use {
-    return task()
-  }
-}
-
 inline fun runInAllowSaveMode(isSaveAllowed: Boolean = true, task: () -> Unit) {
   val app = ApplicationManagerEx.getApplicationEx()
   if (isSaveAllowed == app.isSaveAllowed) {
@@ -269,7 +263,7 @@ inline fun runInAllowSaveMode(isSaveAllowed: Boolean = true, task: () -> Unit) {
 @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 @Internal
 fun forPoorJavaClientOnlySaveProjectIndEdtDoNotUseThisMethod(project: Project, forceSavingAllSettings: Boolean = false) {
-  runInAutoSaveDisabledMode {
+  SaveAndSyncHandler.getInstance().withDisabledAutoSaveBlocking {
     runWithModalProgressBlocking(project, IdeBundle.message("progress.saving.project", project.name)) {
       saveSettings(project, forceSavingAllSettings = forceSavingAllSettings)
     }

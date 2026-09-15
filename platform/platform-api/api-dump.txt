@@ -679,7 +679,6 @@ a:com.intellij.ide.SaveAndSyncHandler
 - <init>():V
 - a:blockSaveOnFrameDeactivation():V
 - a:blockSyncOnFrameActivation():V
-- disableAutoSave():com.intellij.openapi.application.AccessToken
 - pf:getExternalChangesModificationTracker():com.intellij.openapi.util.SimpleModificationTracker
 - sf:getInstance():com.intellij.ide.SaveAndSyncHandler
 - a:refreshOpenFiles():V
@@ -690,6 +689,8 @@ a:com.intellij.ide.SaveAndSyncHandler
 - f:scheduleSave(com.intellij.ide.SaveAndSyncHandler$SaveTask):V
 - a:unblockSaveOnFrameDeactivation():V
 - a:unblockSyncOnFrameActivation():V
+- withDisabledAutoSave(kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+- withDisabledAutoSaveBlocking(kotlin.jvm.functions.Function0):java.lang.Object
 f:com.intellij.ide.SaveAndSyncHandler$Companion
 - f:getInstance():com.intellij.ide.SaveAndSyncHandler
 f:com.intellij.ide.SaveAndSyncHandler$SaveTask

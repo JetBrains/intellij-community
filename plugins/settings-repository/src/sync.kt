@@ -5,9 +5,9 @@ import com.intellij.configurationStore.ComponentStoreImpl
 import com.intellij.configurationStore.StateStorageManagerImpl
 import com.intellij.configurationStore.XmlElementStorage
 import com.intellij.configurationStore.askToRestart
-import com.intellij.configurationStore.runInAutoSaveDisabledMode
 import com.intellij.configurationStore.saveSettings
 import com.intellij.configurationStore.schemeManager.SchemeManagerImpl
+import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.StateStorage
@@ -29,7 +29,7 @@ internal class SyncManager(private val icsManager: IcsManager, private val autoS
   private suspend fun runSyncTask(onAppExit: Boolean, task: suspend () -> Unit) {
     icsManager.runInAutoCommitDisabledMode {
       if (!onAppExit) {
-        runInAutoSaveDisabledMode {
+        SaveAndSyncHandler.getInstance().withDisabledAutoSave {
           saveSettings(ApplicationManager.getApplication(), false)
         }
       }

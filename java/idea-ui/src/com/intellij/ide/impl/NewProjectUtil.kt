@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl
 
-import com.intellij.configurationStore.runInAutoSaveDisabledMode
 import com.intellij.configurationStore.saveSettings
 import com.intellij.featureStatistics.fusCollectors.WslUsagesCollector
 import com.intellij.ide.JavaUiBundle
@@ -221,7 +220,7 @@ suspend fun createProjectFromWizardImpl(wizard: AbstractProjectWizard, projectFi
     if (projectBuilder != null) {
       // validate can require a project on disk
       if (!ApplicationManager.getApplication().isUnitTestMode) {
-        runInAutoSaveDisabledMode {
+        SaveAndSyncHandler.getInstance().withDisabledAutoSave {
           saveSettings(componentManager = newProject, forceSavingAllSettings = true)
         }
       }

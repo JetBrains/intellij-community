@@ -3,7 +3,6 @@ package com.intellij.ide.impl
 
 import com.intellij.CommonBundle
 import com.intellij.configurationStore.ProjectStorePathManager
-import com.intellij.configurationStore.runInAutoSaveDisabledMode
 import com.intellij.configurationStore.saveSettings
 import com.intellij.execution.wsl.WslPath.Companion.isWslUncPath
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
@@ -11,6 +10,7 @@ import com.intellij.ide.GeneralLocalSettings
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.RecentProjectsManager
+import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.actions.OpenFileAction
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.ide.trustedProjects.TrustedFiles
@@ -794,7 +794,7 @@ object ProjectUtil {
     })
 
     try {
-      runInAutoSaveDisabledMode {
+      SaveAndSyncHandler.getInstance().withDisabledAutoSave {
         saveSettings(componentManager = newProject, forceSavingAllSettings = true)
       }
       PlatformProjectOpenProcessor.runDirectoryProjectConfigurators(

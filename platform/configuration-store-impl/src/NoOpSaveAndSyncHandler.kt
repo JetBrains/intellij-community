@@ -38,7 +38,7 @@ internal class HeadlessSaveAndSyncHandler : NoOpSaveAndSyncHandler() {
   }
 
   override fun saveSettingsUnderModalProgress(componentManagers: List<ComponentManager>): Boolean {
-    return runInAutoSaveDisabledMode {
+    return SaveAndSyncHandler.getInstance().withDisabledAutoSaveBlocking {
       runWithModalProgressBlocking(ModalTaskOwner.guess(), "") {
         saveSettingsBatch(componentManagers)
       }

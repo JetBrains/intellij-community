@@ -56,6 +56,7 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -392,7 +393,7 @@ internal class SaveAndSyncHandlerImpl @JvmOverloads constructor(
     require(targets.none { it is Project && it.isDefault }) { "Must not save the default project here" }
     val project = targets.singleOrNull() as? Project
     var saved = false
-    disableAutoSave().use {
+    withDisabledAutoSaveBlocking {
       val interruptedJob = currentJob.get()
       val coveredTasks = mutableListOf<SaveTask>()
       try {
@@ -476,13 +477,27 @@ internal class SaveAndSyncHandlerImpl @JvmOverloads constructor(
     check(refreshOpenedFilesRequests.tryEmit(Unit))
   }
 
-  override fun disableAutoSave(): AccessToken {
+  private fun disableAutoSave(): AccessToken {
     blockSaveOnFrameDeactivation()
     blockSyncOnFrameActivation()
     return object : AccessToken() {
       override fun finish() {
         unblockSaveOnFrameDeactivation()
         unblockSyncOnFrameActivation()
+      }
+    }
+  }
+
+  override fun <T> withDisabledAutoSaveBlocking(action: () -> T): T {
+    return disableAutoSave().use {
+      action()
+    }
+  }
+
+  override suspend fun <T> withDisabledAutoSave(action: suspend CoroutineScope.() -> T): T {
+    return disableAutoSave().use {
+      coroutineScope {
+        action()
       }
     }
   }

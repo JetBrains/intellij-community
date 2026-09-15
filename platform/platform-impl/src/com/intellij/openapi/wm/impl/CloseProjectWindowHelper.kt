@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl
 
-import com.intellij.configurationStore.runInAutoSaveDisabledMode
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.SaveAndSyncHandler
@@ -105,7 +104,7 @@ open class CloseProjectWindowHelper {
       }
     }
 
-    runInAutoSaveDisabledMode {
+    SaveAndSyncHandler.getInstance().withDisabledAutoSaveBlocking {
       if (project != null && project.isOpen) {
         ProjectManager.getInstance().closeAndDispose(project)
       }

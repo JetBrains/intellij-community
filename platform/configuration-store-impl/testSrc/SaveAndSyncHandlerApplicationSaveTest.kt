@@ -212,7 +212,7 @@ internal class SaveAndSyncHandlerApplicationSaveTest {
         }
       }, firstModel.disposableRule.disposable)
     withHandler { handler ->
-      handler.disableAutoSave().use {
+      handler.withDisabledAutoSaveBlocking {
         handler.scheduleSave(SaveAndSyncHandler.SaveTask(firstModel.project), forceExecuteImmediately = true)
         assertThat(saved.isCompleted).isFalse()
       }

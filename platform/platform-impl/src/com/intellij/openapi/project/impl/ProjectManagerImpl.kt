@@ -781,11 +781,11 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   private suspend fun doOpenAsync(options: OpenProjectTask, projectIdentityFile: Path): Project? {
     val frameAllocator = createFrameAllocator(projectIdentityFile, options)
     val unitTestMode = ApplicationManager.getApplication().isUnitTestMode
-    val disableAutoSaveToken = serviceAsync<SaveAndSyncHandler>().disableAutoSave()
     val module: Module? = null
     var result: Project? = null
+
     try {
-      coroutineScope {
+      serviceAsync<SaveAndSyncHandler>().withDisabledAutoSave {
         val initScope = this
         val initHelper = ProjectInitHelper(initScope, frameAllocator)
         val backgroundJob = launch(CoroutineName("frame allocator background")) {
@@ -904,9 +904,6 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       LOG.error("project loading failed", e)
       failedToOpenProject(frameAllocator, e, options)
       return null
-    }
-    finally {
-      disableAutoSaveToken.finish()
     }
 
     val project = result!!

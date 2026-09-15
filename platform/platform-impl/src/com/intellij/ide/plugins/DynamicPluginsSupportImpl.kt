@@ -1,10 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
-import com.intellij.configurationStore.runInAutoSaveDisabledMode
 import com.intellij.configurationStore.saveProjectsAndApp
 import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.plugins.DynamicPluginsCachesCleanup.clearCachedValues
 import com.intellij.ide.plugins.DynamicPluginsCachesCleanup.clearCachesAfterUnload
@@ -166,7 +166,7 @@ internal class DynamicPluginsSupportImpl(
 
   private suspend fun saveAllSettings() {
     withProgressText(IdeBundle.message("progress.text.dynamic.plugins.saving.settings")) {
-      runInAutoSaveDisabledMode {
+      SaveAndSyncHandler.getInstance().withDisabledAutoSave {
         FileDocumentManager.getInstance().saveAllDocuments()
         saveProjectsAndApp(true)
       }

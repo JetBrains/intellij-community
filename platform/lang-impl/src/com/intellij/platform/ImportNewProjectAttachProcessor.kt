@@ -2,9 +2,9 @@
 package com.intellij.platform
 
 import com.intellij.CommonBundle
-import com.intellij.configurationStore.runInAutoSaveDisabledMode
 import com.intellij.configurationStore.saveSettings
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
+import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.application.ApplicationManager
@@ -64,7 +64,7 @@ class ImportNewProjectAttachProcessor : ProjectAttachProcessor() {
         newProject = true,
         createModule = true,
       )
-      runInAutoSaveDisabledMode {
+      SaveAndSyncHandler.getInstance().withDisabledAutoSave {
         saveSettings(scaffoldProject)
       }
       readAction { ModuleManager.getInstance(scaffoldProject).modules.firstOrNull()?.moduleNioFile }

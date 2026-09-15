@@ -34,7 +34,7 @@ fun <T> saveAndCloseProjectsOnExit(
 ): T? {
   val saveHandler = SaveAndSyncHandler.getInstance()
   return resetThreadContext {
-    val closed = saveHandler.disableAutoSave().use {
+    val closed = saveHandler.withDisabledAutoSaveBlocking {
       val closeBatch = try {
         prepareProjects(checkCanClose)
       }
@@ -43,7 +43,7 @@ fun <T> saveAndCloseProjectsOnExit(
         NoProjects
       }
       if (closeBatch == null) {
-        return@use false
+        return@withDisabledAutoSaveBlocking false
       }
 
       val stores = buildList {
@@ -69,7 +69,7 @@ fun <T> saveAndCloseProjectsOnExit(
         }
       }
       if (checkCanClose && !closeBatch.confirmCloseAfterSave()) {
-        return@use false
+        return@withDisabledAutoSaveBlocking false
       }
 
       beforeProjectClose.run()

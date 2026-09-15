@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project.impl
 
-import com.intellij.configurationStore.runInAutoSaveDisabledMode
 import com.intellij.configurationStore.saveSettings
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
@@ -409,7 +408,7 @@ open class ProjectImpl(parent: ComponentManagerImpl, private val isLightTestProj
       return
     }
 
-    runInAutoSaveDisabledMode {
+    SaveAndSyncHandler.getInstance().withDisabledAutoSaveBlocking {
       @Suppress("DEPRECATION")
       runUnderModalProgressIfIsEdt {
         saveSettings(componentManager = this@ProjectImpl)

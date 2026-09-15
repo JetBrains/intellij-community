@@ -35,9 +35,11 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.testFramework.replaceService
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.job
 import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
@@ -392,13 +394,21 @@ private class RecordingExitSaveHandler : SaveAndSyncHandler() {
     return saved
   }
 
-  override fun disableAutoSave(): AccessToken {
+  private fun disableAutoSave(): AccessToken {
     paused++
     return object : AccessToken() {
       override fun finish() {
         paused--
       }
     }
+  }
+
+  override fun <T> withDisabledAutoSaveBlocking(action: () -> T): T {
+    return disableAutoSave().use { action() }
+  }
+
+  override suspend fun <T> withDisabledAutoSave(action: suspend CoroutineScope.() -> T): T {
+    return disableAutoSave().use { coroutineScope { action() } }
   }
 
   override fun scheduleSave(task: SaveTask, forceExecuteImmediately: Boolean) {}
