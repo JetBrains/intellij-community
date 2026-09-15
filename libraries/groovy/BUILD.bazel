@@ -1,13 +1,15 @@
+load("@community//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", "ij_plugin_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.libraries.groovy` start
-jvm_library(
+ij_plugin_module(
     name = "groovy",
     srcs = glob(
         [],
         allow_empty = True,
     ),
     module_name = "intellij.libraries.groovy",
+    packed_deps = ["@lib//:libraries-groovy-groovy"],
     resource_strip_prefix = "resources",
     resources = glob(
         ["resources/**/*"],

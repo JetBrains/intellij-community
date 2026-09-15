@@ -1,13 +1,15 @@
+load("@community//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", "ij_plugin_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.libraries.ivy` start
-jvm_library(
+ij_plugin_module(
     name = "ivy",
     srcs = glob(
         [],
         allow_empty = True,
     ),
     module_name = "intellij.libraries.ivy",
+    packed_deps = ["@lib//:libraries-ivy-ivy"],
     resource_strip_prefix = "resources",
     resources = glob(
         ["resources/**/*"],
