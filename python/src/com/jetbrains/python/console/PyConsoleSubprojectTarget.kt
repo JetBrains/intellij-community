@@ -1,10 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.console
 
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
@@ -36,29 +34,18 @@ internal class PyConsoleTarget(val pyProject: PyProject, val interpreter: Python
 }
 
 /**
- * The subproject [file] belongs to, by the widget's rule (`EvoPySdkStatusBarWidget.targetFor`):
+ * The subproject [file] belongs to, plus its interpreter, awaiting the project structure and the SDK table when
+ * either is still loading.
  *
- * * a file in a Python module speaks for that module's subproject;
- * * a file in no module at all — a scratch, a file dragged in from outside — and no file at all, both fall back to
- *   the main subproject, the one rooted at the project's own base dir;
- * * a file in a module that is not Python has no target, so that a mixed project never lends an unrelated interpreter.
- */
-private fun EvoPyProjectModel.Snapshot.targetFor(project: Project, file: VirtualFile?): EvoPyProject? {
-  if (file == null) return main
-  val module = ModuleUtilCore.findModuleForFile(file, project) ?: return main
-  return forModule(module)
-}
-
-/**
- * [targetFor] plus its interpreter, awaiting the project structure and the SDK table when either is still loading.
+ * The subproject comes from [EvoPyProjectModel.Snapshot.forFile], which every Python surface reads, so the console
+ * and the status bar can never disagree about a directory.
  *
  * The target arrives as an `EvoPyProject`, which keeps its own [PyProject] private, so the [PyProject] is asked for
  * again by module. One extra lookup, and it is what lets everything above hold the wrapper.
  */
 internal suspend fun resolveConsoleTarget(project: Project, file: VirtualFile?): PyConsoleTarget? {
   val snapshot = project.service<EvoPyProjectModel>().snapshot()
-  // Only the module lookup touches the project model; the snapshot itself is a plain map.
-  val target = readAction { snapshot.targetFor(project, file) } ?: return null
+  val target = snapshot.forFile(file) ?: return null
   val pyProject = target.module.asPyProject() ?: return null
   return PyConsoleTarget(pyProject, pyProject.getInterpreter())
 }

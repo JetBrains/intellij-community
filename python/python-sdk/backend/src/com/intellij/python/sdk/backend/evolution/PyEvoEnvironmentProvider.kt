@@ -84,6 +84,9 @@ class EvoWorkspace(
 
   /** The directory every tool runs in. */
   val baseDir: Directory get() = root.baseDir
+
+  /** The wire identity of the [root]. See [keyOf]. */
+  val rootKey: String = keyOf(root)
 }
 
 /**
@@ -117,7 +120,23 @@ class EvoPyProject(
 
   /** This project's own base dir. See [EvoWorkspace.baseDir] for the directory a tool runs in. */
   val baseDir: Directory get() = self.baseDir
+
+  /**
+   * This project's wire identity. See [keyOf].
+   *
+   * A field, so the key travels with the project it addresses. A caller that holds one never has to derive the other.
+   */
+  val key: String = keyOf(self)
 }
+
+/**
+ * A `PyProject`'s wire identity: its base dir, system-independent.
+ *
+ * System-independent because the frontend matches it against a content root's
+ * [com.intellij.openapi.vfs.VirtualFile.getPath], which is already in that form. So the comparison is plain string
+ * equality on both sides, with no path parsing and no VFS lookup.
+ */
+private fun keyOf(pyProject: PyProject): String = FileUtil.toSystemIndependentName(pyProject.baseDir.toString())
 
 /** [EvoToolContext.cached] key under which the core-supplied system-Python list is memoized. */
 private const val SYSTEM_PYTHONS_KEY: String = "core.systemPythons"

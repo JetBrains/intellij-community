@@ -298,7 +298,7 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
 
   override fun getWidgetState(file: VirtualFile?): WidgetState {
     val structure = this.structure ?: return hidden()
-    val target = targetFor(file) ?: return hidden()
+    val target = forFile(file) ?: return hidden()
     shownKey = target.key
     val askedProject = structure.askedProjectOf(target)
     val dataKey = structure.dataKeyOf(target)
@@ -574,8 +574,16 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
    * project, i.e. whenever a `PyProject` is rooted at the project's base dir: in PyCharm that is always (a plain Python
    * module is kept at the project root even with no `pyproject.toml` declaring one), and in IDEA exactly when the
    * project root really is Python — which is what the widget used to approximate with a PyCharm-only check.
+   *
+   * The backend states the same rule in `EvoPyProjectModel.Snapshot.forFile`, which every backend surface reads.
+   * This copy exists because the frontend holds [EvoPyProjectDto] and not `EvoPyProject`. Change the two together: a
+   * surface that answers on its own rule names an interpreter another surface does not (PY-90174).
+   *
+   * No test covers this copy. `EvoPyProjectModelTest` and `PyConsoleSubprojectTargetTest` prove the backend rule
+   * only, so a change here that disagrees with it stays green. Covering it means either lifting the rule off this
+   * widget into something a unit test can call, or writing it in the UI suite.
    */
-  private fun targetFor(file: VirtualFile?): EvoPyProjectDto? {
+  private fun forFile(file: VirtualFile?): EvoPyProjectDto? {
     val structure = this.structure ?: return null
     val module = file?.let { findModule(it) }
     return if (module != null) structure.of(module) else structure.main

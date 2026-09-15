@@ -9,10 +9,10 @@ import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.FileEditorManagerListener.FILE_EDITOR_MANAGER
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleUtilCore
-import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.sdk.findPythonSdk
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.backend.workspace.WorkspaceModel
@@ -72,7 +72,8 @@ private fun VersionedStorageChange.affectsPyProjects(): Boolean =
  * about the target of any one call, so they are computed per project-model generation instead of per call.
  *
  * It is also the frontend's only source of this knowledge: `PyProject` is backend-only (its service lives in
- * `intellij.python.pyproject`), so [dtos] is pushed over RPC and the frontend resolves its target against that.
+ * `intellij.python.pyproject`), so an [EvoPyProjectDto] of each is pushed over RPC and the frontend resolves its
+ * target against that.
  */
 @Service(Service.Level.PROJECT)
 @ApiStatus.Internal
@@ -81,15 +82,22 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
   /**
    * One self-consistent view of the project's Python structure. Immutable: a recomputation publishes a new instance
    * rather than mutating this one, so a caller that resolved a target keeps working against the generation it read.
+   *
+   * Inner, so it reads the model's own [project] rather than holding a second reference to it, and so only the model
+   * can build one. A snapshot answers for one project and for no other, and that now follows from the type.
    */
-  class Snapshot(
+  inner class Snapshot(
     /**
-     * Every `PyProject` of this generation, by its wire identity. See [keyOf].
+     * Every `PyProject` of this generation, in project-model order.
+     *
+     * A list and not an index: a project holds one `PyProject`, or at most the members of one tool workspace, so a
+     * scan of it costs less than the two maps that used to index it. Each one states its own [EvoPyProject.key], so
+     * nothing outside has to hold a key to address one.
      *
      * The whole content of a generation, for a caller that projects it — the RPC layer builds [EvoPyProjectDto] from
-     * it. A caller that wants one of them by key or by module asks [resolve] or [forModule] instead.
+     * it. A caller that wants one of them by key or by file asks [forKey] or [forFile] instead.
      */
-    val byKey: Map<String, EvoPyProject>,
+    val pyProjects: List<EvoPyProject>,
     /**
      * The `PyProject` rooted at the project's own base dir, i.e. the one that makes the *project* a Python project —
      * `null` when its root belongs to no Python module. See [EvoPyProjectDto.isMain].
@@ -104,26 +112,53 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
      * one being published and this being read, and handing a disposed module to a tool provider is not a state any of
      * them are written for.
      */
-    fun resolve(key: String): EvoPyProject? = byKey[key]?.takeUnless { it.module.isDisposed }
-
-    /** By the module a `PyProject` resides on, which [computeSnapshot] already treats as its identity. */
-    private val byModule: Map<Module, EvoPyProject> = byKey.values.associateBy { it.module }
+    fun forKey(key: String): EvoPyProject? = pyProjects.firstOrNull { it.key == key }?.takeUnless { it.module.isDisposed }
 
     /**
      * The `PyProject` residing on [module], or `null` when it is not a Python module at all.
+     *
+     * The module is the identity [computeSnapshot] builds a generation from, so at most one project answers here.
+     * Private: [forFile] is the one way in, so no caller states the rule around this on its own.
      */
-    fun forModule(module: Module): EvoPyProject? = byModule[module]?.takeUnless { it.module.isDisposed }
+    private fun forModule(module: Module): EvoPyProject? = pyProjects.firstOrNull { it.module == module }?.takeUnless { it.module.isDisposed }
+
+    /**
+     * The `PyProject` [file] belongs to:
+     *
+     * * a file in a Python module answers with that module's `PyProject`;
+     * * a file in no module at all — a scratch, a file dragged in from outside — and no file at all, both fall back
+     *   to [main], the `PyProject` rooted at the project's own base dir;
+     * * a file in a module that is not Python has no target, so that a mixed project never lends an unrelated
+     *   interpreter.
+     *
+     * The one rule every Python surface reads. The interpreter widget states it again on the frontend, over
+     * [EvoPyProjectDto] and across the RPC boundary, so that copy cannot be shared. The two must stay the same: a
+     * surface that answers on its own rule names an interpreter another surface does not (PY-90174).
+     *
+     * Suspends, unlike [forKey] and [forModule], because it alone leaves the snapshot: the module lookup reads the
+     * project model under a read action.
+     *
+     * [ProjectFileIndex.getModuleForFile] and not [com.intellij.openapi.module.ModuleUtilCore.findModuleForFile],
+     * which is the same call under [com.intellij.openapi.application.ReadAction.computeBlocking]. That blocks the
+     * thread while a write action runs, and it is the wrong lock for a suspend caller.
+     */
+    suspend fun forFile(file: VirtualFile?): EvoPyProject? {
+      if (file == null) return main
+      val module = readAction { ProjectFileIndex.getInstance(project).getModuleForFile(file) } ?: return main
+      return forModule(module)
+    }
 
     /** Every `PyProject`'s own base dir — a workspace member's own, not its root's. Used to exclude sibling projects from env discovery. */
-    val baseDirs: Set<Path> get() = byKey.values.mapTo(mutableSetOf()) { it.baseDir }
+    val baseDirs: Set<Path> = pyProjects.mapTo(mutableSetOf()) { it.baseDir }
 
     /**
      * Every interpreter a project of this generation uses.
      *
      * The answer to "does this project use that interpreter", for a caller that would otherwise walk every module to
      * find out. Read from the same generation as everything else here, so a caller never mixes two answers.
+     *
      */
-    val sdks: Set<Sdk> = byKey.values.mapNotNullTo(mutableSetOf()) { it.sdk }
+    val sdks: Set<Sdk> = pyProjects.mapNotNullTo(mutableSetOf()) { it.sdk }
   }
 
   private val state = MutableStateFlow<Snapshot?>(null)
@@ -176,8 +211,9 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
   /**
    * Every structure this model publishes, the current one first.
    *
-   * The one source the other three read: [snapshot] takes its first element, [snapshotOrNull] the value behind it, and
-   * [dtos] its wire projection. Each states a different contract — await, peek, follow — over the same generations.
+   * The one source the others read: [snapshot] takes its first element, [snapshotOrNull] the value behind it, and the
+   * RPC layer its [EvoPyProjectDto] projection. Each states a different contract — await, peek, follow — over the
+   * same generations.
    *
    * For a caller that must follow the structure rather than ask for it: a change of the interpreter of a module
    * arrives here, in order, after the model is recomputed. A workspace-model listener sees the change earlier, while
@@ -185,27 +221,16 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
    */
   fun snapshotFlow(): Flow<Snapshot> = state.filterNotNull()
 
-  /** See [Snapshot.resolve]. */
-  suspend fun resolve(key: String): EvoPyProject? = snapshot().resolve(key)
-
   /**
-   * The `PyProject` [file] belongs to, or the project's own when it belongs to none — a scratch, a file dragged in
-   * from outside, or nothing focused at all. See [EvoPyProjectDto.isMain].
-   */
-  internal suspend fun targetFor(file: VirtualFile?): EvoPyProject? {
-    val snapshot = snapshot()
-    val module = file?.let { readAction { ModuleUtilCore.findModuleForFile(it, project) } } ?: return snapshot.main
-    return snapshot.forModule(module) ?: snapshot.main
-  }
-
-  /**
-   * The interpreter every Python surface shows for [file]: the one the workspace declares when [file]'s `PyProject`
-   * takes part in one, and the one its own module carries otherwise.
+   * The interpreter every Python surface shows for [file], which is what [interpreter] publishes.
    *
-   * Nothing where [file] resolves to no `PyProject`. That is the same nothing the interpreter widget shows, and the
-   * two surfaces state one interpreter, so neither invents one the other does not have.
+   * Private: it states nothing that [Snapshot.forFile] does not, so a caller that wants one file's interpreter reads
+   * `snapshot().forFile(file)?.interpreter` and a caller that wants the edited file's follows [interpreter].
    */
-  suspend fun interpreterFor(file: VirtualFile?): Sdk? = targetFor(file)?.sdk
+  private suspend fun interpreterFor(file: VirtualFile?): Sdk? {
+    val snapshot = snapshot()
+    return snapshot.forFile(file)?.sdk
+  }
 
   /**
    * The interpreter for the file being edited, as [interpreterFor] resolves it, recomputed whenever the structure or
@@ -220,14 +245,14 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
   private fun selectedFile(): VirtualFile? = FileEditorManager.getInstance(project).selectedFiles.firstOrNull()
 
   private suspend fun computeSnapshot(): Snapshot {
-    val pyProjects = project.getPyProjects()
-    val byModule = pyProjects.associateBy { it.residesOnModule }
+    val sources = project.getPyProjects()
+    val byModule = sources.associateBy { it.residesOnModule }
     // One read action for the whole pass rather than one per module: each call reads the same workspace-model
     // snapshot, and taking it once also keeps the layouts consistent with each other.
-    val layouts = readAction { pyProjects.associate { it.residesOnModule to it.residesOnModule.getWorkspaceLayout() } }
+    val layouts = readAction { sources.associate { it.residesOnModule to it.residesOnModule.getWorkspaceLayout() } }
     // Waits for the project model, once for the whole generation, so no reader of this snapshot waits again and none
     // reads `null` for a configured interpreter while the SDK table is still loading (PY-91871).
-    val sdks = pyProjects.associate { it.residesOnModule to it.residesOnModule.findPythonSdk() }
+    val sdks = sources.associate { it.residesOnModule to it.residesOnModule.findPythonSdk() }
 
     /**
      * The workspace root of [pyProject], or `null` when it is standalone.
@@ -253,21 +278,10 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
 
     // Same spelling as the keys, so "is this the main one" is a comparison of like with like.
     val mainKey = project.basePath?.let { FileUtil.toSystemIndependentName(it) }
-    // Keyed rather than listed, and the DTOs derived from the map, so the two can never disagree about what exists.
-    val byKey = pyProjects.associateBy({ keyOf(it) }, { EvoPyProject(it, workspaceOf(it), sdks[it.residesOnModule]) })
-    return Snapshot(byKey, mainKey?.let { byKey[it] })
+    val pyProjects = sources.map { EvoPyProject(it, workspaceOf(it), sdks[it.residesOnModule]) }
+    return Snapshot(pyProjects, pyProjects.firstOrNull { it.key == mainKey })
   }
 }
-
-/**
- * A `PyProject`'s wire identity: its base dir, system-independent.
- *
- * System-independent because the frontend matches it against a content root's
- * [com.intellij.openapi.vfs.VirtualFile.getPath], which is already in that form — so the comparison is plain string
- * equality on both sides, with no path parsing and no VFS lookup.
- */
-@ApiStatus.Internal
-fun keyOf(pyProject: PyProject): String = FileUtil.toSystemIndependentName(pyProject.baseDir.toString())
 
 /**
  * The interpreter of the module at the project root, for a file that belongs to no module, such as a scratch file.

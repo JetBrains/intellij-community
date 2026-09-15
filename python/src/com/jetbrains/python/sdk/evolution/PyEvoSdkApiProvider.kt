@@ -42,7 +42,6 @@ import com.intellij.python.processOutput.common.ProcessOutputTopic
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
-import com.intellij.python.pyproject.model.evolution.keyOf
 import com.intellij.python.sdk.backend.asInterpreterRef
 import com.intellij.python.pytools.backend.PyTool
 import com.intellij.python.pytools.backend.performToolInstallation
@@ -489,14 +488,14 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
    * already, and only a connected frontend ever asks for one.
    */
   private fun EvoPyProjectModel.Snapshot.toDtos(): List<EvoPyProjectDto> =
-    byKey.map { (key, target) ->
+    pyProjects.map { target ->
       EvoPyProjectDto(
-        key = key,
+        key = target.key,
         name = target.module.name,
         isMain = target === main,
         // Always the root, a standalone project's own self included: it is its own root, so the key it states is its
         // own, which every reader already treats as "no workspace of its own".
-        workspaceRootKey = keyOf(target.workspace.root),
+        workspaceRootKey = target.workspace.rootKey,
         // A ref is the name of the SDK, so building one reads nothing.
         interpreterRef = target.sdk?.asInterpreterRef(),
       )
@@ -1206,7 +1205,7 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
    * costs nothing per call even though every entry point starts here.
    */
   private suspend fun resolvePyProject(projectId: ProjectId, pyProjectKey: String): EvoPyProject? =
-    projectId.findProjectOrNull()?.service<EvoPyProjectModel>()?.resolve(pyProjectKey)
+    projectId.findProjectOrNull()?.service<EvoPyProjectModel>()?.snapshot()?.forKey(pyProjectKey)
 }
 
 /** Owns the project-level parent scope for the widget's per-tree root coroutines, so they are never unparented. */

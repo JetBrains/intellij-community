@@ -28,7 +28,7 @@ import java.nio.file.Path
 import kotlin.io.path.writeText
 
 /**
- * Covers [EvoPyProjectModel.interpreterFor], the interpreter every Python surface shows for the file being edited —
+ * Covers [EvoPyProjectModel.Snapshot.forFile], the interpreter every Python surface shows for the file being edited —
  * the packages tool window and the interpreter widget alike, so the two never name different ones.
  *
  * Regression test for PY-91300: with an environment configured per subproject, the tool window used
@@ -84,7 +84,8 @@ internal class PyPackagesToolWindowSdkResolutionTest {
 
   private suspend fun resolvedInterpreter(): Sdk? {
     val project = projectFixture.get()
-    return project.service<EvoPyProjectModel>().interpreterFor(FileEditorManager.getInstance(project).selectedFiles.firstOrNull())
+    val selected = FileEditorManager.getInstance(project).selectedFiles.firstOrNull()
+    return project.service<EvoPyProjectModel>().snapshot().forFile(selected)?.sdk
   }
 
   /**
