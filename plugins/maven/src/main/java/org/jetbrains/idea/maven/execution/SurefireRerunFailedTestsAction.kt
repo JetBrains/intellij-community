@@ -18,7 +18,7 @@ private val LOG = logger<SurefireRerunFailedTestsAction>()
  * Reruns only the tests that failed in the last Surefire run.
  *
  * The failed test names are read from the SM runner model (populated by [SurefireReportParser])
- * and reconstructed into a `-Dtest=Class1#method1+Class2#method2` Surefire filter.
+ * and reconstructed into a `-Dtest=Class1#method1+method2,Class2#method3` Surefire filter.
  *
  * We override [actionPerformed] rather than [getRunProfile] to avoid the [MyRunProfile] wrapper
  * that [AbstractRerunFailedTestsAction] normally uses: [MavenResumeAction] hard-casts
@@ -61,8 +61,7 @@ internal class SurefireRerunFailedTestsAction(
         surefireSpecFromLocation(proxy.locationUrl)
           ?: surefireSpecFromLocation(proxy.parent?.locationUrl)
       }
-      .distinct()
-    return specs.ifEmpty { null }?.joinToString("+")
+    return groupSpecsForSurefire(specs)
   }
 }
 
@@ -83,6 +82,41 @@ fun surefireSpecFromLocation(locationUrl: String?): String? {
   val methodName = path.substring(slash + 1)
   if (className.isEmpty() || methodName.isEmpty()) return null
   return "$className#$methodName"
+}
+
+/**
+ * Groups a list of `ClassName#methodName` Surefire specs and formats them into a single
+ * `-Dtest=` parameter value.
+ *
+ * Maven Surefire uses two separators in the `-Dtest=` value:
+ * - `,` between different class specifications
+ * - `+` between method names within the same class specification
+ *
+ * For example, two failing methods in `BasicTests` must be expressed as
+ * `BasicTests#test1+test2`, not `BasicTests#test1+BasicTests#test2`.
+ * The latter is parsed as class `BasicTests` with methods `test1` and `BasicTests#test2`,
+ * so only `test1` runs.
+ *
+ * Returns null when [specs] is empty.
+ */
+@ApiStatus.Internal
+fun groupSpecsForSurefire(specs: Iterable<String>): String? {
+  val methodsByClass = LinkedHashMap<String, LinkedHashSet<String>>()
+  for (spec in specs) {
+    val sharp = spec.indexOf('#')
+    if (sharp < 0) {
+      methodsByClass.getOrPut(spec) { linkedSetOf() }
+    }
+    else {
+      methodsByClass.getOrPut(spec.substring(0, sharp)) { linkedSetOf() }
+        .add(spec.substring(sharp + 1))
+    }
+  }
+  if (methodsByClass.isEmpty()) return null
+  // Surefire -Dtest= syntax: comma between class specs, + between methods of the same class.
+  return methodsByClass.entries.joinToString(",") { (cls, methods) ->
+    if (methods.isEmpty()) cls else "$cls#${methods.joinToString("+")}"
+  }
 }
 
 /**

@@ -6,7 +6,8 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 
 /**
- * Pure unit tests for [surefireTestSpec] — no platform initialization required.
+ * Pure unit tests for [surefireTestSpec], [surefireSpecFromLocation], and
+ * [groupSpecsForSurefire] — no platform initialization required.
  */
 class SurefireRerunFailedTestsActionTest {
 
@@ -90,5 +91,56 @@ class SurefireRerunFailedTestsActionTest {
   @Test
   fun `location URL without slash returns null`() {
     assertNull(surefireSpecFromLocation("java:test://com.example.MyTest"))
+  }
+
+  // ── groupSpecsForSurefire ─────────────────────────────────────────────────
+
+  @Test
+  fun `single spec is returned as-is`() {
+    assertEquals("com.example.MyTest#method1", groupSpecsForSurefire(listOf("com.example.MyTest#method1")))
+  }
+
+  @Test
+  fun `two methods in the same class are joined with plus`() {
+    // Must produce "ClassName#method1+method2", NOT "ClassName#method1+ClassName#method2".
+    // The latter is misread by Surefire as a method named "ClassName#method2".
+    assertEquals(
+      "com.example.MyTest#method1+method2",
+      groupSpecsForSurefire(listOf("com.example.MyTest#method1", "com.example.MyTest#method2")),
+    )
+  }
+
+  @Test
+  fun `methods in different classes are joined with comma`() {
+    assertEquals(
+      "com.example.Test1#method1,com.example.Test2#method2",
+      groupSpecsForSurefire(listOf("com.example.Test1#method1", "com.example.Test2#method2")),
+    )
+  }
+
+  @Test
+  fun `mixed same-class and cross-class specs`() {
+    assertEquals(
+      "com.example.Test1#m1+m2,com.example.Test2#m3",
+      groupSpecsForSurefire(listOf("com.example.Test1#m1", "com.example.Test1#m2", "com.example.Test2#m3")),
+    )
+  }
+
+  @Test
+  fun `duplicate specs are deduplicated`() {
+    assertEquals(
+      "com.example.MyTest#method1",
+      groupSpecsForSurefire(listOf("com.example.MyTest#method1", "com.example.MyTest#method1")),
+    )
+  }
+
+  @Test
+  fun `empty list returns null`() {
+    assertNull(groupSpecsForSurefire(emptyList()))
+  }
+
+  @Test
+  fun `class-only spec without hash is preserved`() {
+    assertEquals("com.example.MyTest", groupSpecsForSurefire(listOf("com.example.MyTest")))
   }
 }
