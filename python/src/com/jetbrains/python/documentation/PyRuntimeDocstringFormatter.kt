@@ -14,6 +14,7 @@ import com.intellij.python.community.execService.python.PyHelper
 import com.intellij.python.community.execService.python.StdInProvider
 import com.intellij.python.sdk.backend.getPythonInfo
 import com.intellij.python.sdk.backend.pythonInterpreter
+import com.intellij.python.sdk.backend.pythonInterpreterAsync
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -72,7 +73,7 @@ internal object PyRuntimeDocstringFormatter {
     }
     val result = runBlockingMaybeCancellable {
       ExecService().executeHelper(
-        sdk = sdk,
+        interpreter = sdk.pythonInterpreterAsync(),
         helper = helper,
         helperArgs = Args(*arguments.toTypedArray()),
         stdInProvider = stdInProvider

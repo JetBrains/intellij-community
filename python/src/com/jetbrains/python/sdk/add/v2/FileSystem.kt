@@ -49,6 +49,7 @@ import com.intellij.python.pytools.backend.ToolCommandSpec
 import com.intellij.python.pytools.backend.ToolSearchPath
 import com.intellij.python.pytools.backend.impl.detectExecutableOnEel
 import com.intellij.python.sdk.backend.PySdkBundle
+import com.intellij.python.sdk.backend.pythonInterpreterAsync
 import com.intellij.python.sdk.backend.resolvePythonBinary
 import com.intellij.python.venv.sdk.flavors.VirtualEnvSdkFlavor
 import com.intellij.util.SlowOperations
@@ -810,7 +811,7 @@ internal suspend fun <P : PathHolder> FileSystem<P>.getExistingSelectableInterpr
       val languageLevel = sdk.versionString?.let {
         LanguageLevel.getLanguageLevelFromVersionStringStaticSafe(it)
       } ?: run {
-        val binToExecute = sdk.asBinToExecute().orLogException(LOG)
+        val binToExecute = sdk.pythonInterpreterAsync().asBinToExecute().orLogException(LOG)
         val pythonInfo = binToExecute?.let {
           binToExecute.validatePythonAndGetInfo().orLogException(LOG)
         }

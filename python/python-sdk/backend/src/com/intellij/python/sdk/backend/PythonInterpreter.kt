@@ -2,6 +2,7 @@
 package com.intellij.python.sdk.backend
 
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.python.sdk.backend.impl.enrichLocalPythonSdkWithHomeInfo
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.jetbrains.python.PythonBinary
@@ -9,7 +10,6 @@ import com.jetbrains.python.PythonHomePath
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.project.PyProject
 import com.jetbrains.python.sdk.findPythonSdk
-import com.intellij.python.sdk.backend.impl.enrichLocalPythonSdkWithHomeInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -82,6 +82,14 @@ fun Sdk.pythonInterpreter(forceRefresh: Boolean = false): PythonInterpreter {
   return PythonInterpreter(this, enrichLocalPythonSdkWithHomeInfo(forceRefresh))
 }
 
+/**
+ * [Sdk.pythonInterpreter] for a caller that can suspend. This is the main entry point.
+ *
+ * The detection runs on [Dispatchers.IO] and caches its result per SDK, so only the first call pays for the file
+ * reads. It takes no lock and never touches the EDT.
+ *
+ * @param forceRefresh re-detect even if a cached result already exists.
+ */
 suspend fun Sdk.pythonInterpreterAsync(forceRefresh: Boolean = false): PythonInterpreter = withContext(Dispatchers.IO) {
   this@pythonInterpreterAsync.pythonInterpreter(forceRefresh)
 }

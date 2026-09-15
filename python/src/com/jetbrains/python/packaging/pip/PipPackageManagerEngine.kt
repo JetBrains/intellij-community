@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.pip
 
 import com.intellij.openapi.diagnostic.thisLogger
@@ -8,13 +8,14 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.python.PyHelper
+import com.intellij.python.pyproject.PyDependencyGroup
+import com.intellij.python.sdk.backend.pythonInterpreterAsync
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.onFailure
 import com.jetbrains.python.packaging.PyPIPackageUtil
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
-import com.intellij.python.pyproject.PyDependencyGroup
 import com.jetbrains.python.packaging.management.PyWorkspaceMember
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.management.PythonPackageManager
@@ -95,7 +96,7 @@ internal class PipPackageManagerEngine(
 
     thisLogger().debug("Running python packaging tool. Operation: $operation")
     ExecService().executeHelper(
-      sdk,
+      sdk.pythonInterpreterAsync(),
       PyHelper(PACKAGING_TOOL_NAME),
       parameters,
     )
