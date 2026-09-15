@@ -99,6 +99,7 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : LoadablePluginsUiCom
   val searchPluginTextField: JTextFieldUI = textField("Plugins search textfield") { byAccessibleName("Search plugins") }
   val unifiedFilterButton: JButtonUiComponent =
     button("Unified Plugins filter button") { byAccessibleName("Filter plugins") }
+  @Deprecated("Does not exist in Unified Plugins; consider using openInstalledTab()")
   val installedTab: JLabelUiComponent =
     x(JLabelUiComponent::class.java, readableName = "Installed tab") { and(byType(JLabel::class.java), byAccessibleName("Installed")) }
   val marketplaceTab: UiComponent = x("Marketplace tab") { and(byType(JLabel::class.java), byAccessibleName("Marketplace")) }
