@@ -284,6 +284,21 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : LoadablePluginsUiCom
       readableName = "Plugin '$pluginName' in the '$sectionName' section",
     ).apply(action)
 
+  fun getInstalledPluginFromUnifiedSection(
+    pluginName: String,
+    action: ListPluginComponent.() -> Unit = {},
+  ): ListPluginComponent = getPluginFromUnifiedSection("Installed", pluginName, action)
+
+  fun getBundledPluginFromUnifiedSection(
+    pluginName: String,
+    action: ListPluginComponent.() -> Unit = {},
+  ): ListPluginComponent = getPluginFromUnifiedSection("Bundled", pluginName, action)
+
+  fun getMarketplacePluginFromUnifiedSection(
+    pluginName: String,
+    action: ListPluginComponent.() -> Unit = {},
+  ): ListPluginComponent = getPluginFromUnifiedSection("Marketplace", pluginName, action)
+
   fun getPluginFromList(pluginName: String, action: ListPluginComponent.() -> Unit = {}): ListPluginComponent =
     x(ListPluginComponent::class.java, readableName = "Plugin '$pluginName' in a list") {
       and(byType("com.intellij.ide.plugins.newui.ListPluginComponent"), byAccessibleName(pluginName))
