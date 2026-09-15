@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.settings;
 
+import com.intellij.debugger.engine.AsyncStacksUtils;
 import com.intellij.internal.statistic.beans.MetricEvent;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
@@ -60,8 +61,10 @@ public final class DebuggerSettingsStatisticsCollector extends ApplicationUsages
     addBoolIfDiffers(set, settings, sDefault, s -> s.KILL_PROCESS_IMMEDIATELY, KILL_PROCESS_IMMEDIATELY);
     addBoolIfDiffers(set, settings, sDefault, s -> s.RESUME_ONLY_CURRENT_THREAD, RESUME_ONLY_CURRENT_THREAD);
     addBoolIfDiffers(set, settings, sDefault, s -> s.HIDE_STACK_FRAMES_USING_STEPPING_FILTER, HIDE_STACK_FRAMES_USING_STEPPING_FILTER);
-    addBoolIfDiffers(set, settings, sDefault, s -> s.INSTRUMENTING_AGENT, INSTRUMENTING_AGENT);
-    addBoolIfDiffers(set, settings, sDefault, s -> s.AGENT_THROTTLING, AGENT_THROTTLING);
+    if (AsyncStacksUtils.isAgentAvailable()) {
+      addBoolIfDiffers(set, settings, sDefault, s -> s.INSTRUMENTING_AGENT, INSTRUMENTING_AGENT);
+      addBoolIfDiffers(set, settings, sDefault, s -> s.AGENT_THROTTLING, AGENT_THROTTLING);
+    }
 
     return set;
   }

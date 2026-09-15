@@ -13,38 +13,25 @@ import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.memory.utils.StackFrameItem;
 import com.intellij.debugger.settings.CaptureSettingsProvider;
 import com.intellij.debugger.settings.DebuggerSettings;
-import com.intellij.debugger.testFramework.TestDebuggerAgentArtifactsProvider;
 import com.intellij.debugger.ui.breakpoints.JavaCollectionBreakpointType;
 import com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint;
-import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.ide.plugins.PluginManagerCoreKt;
-import com.intellij.idea.AppMode;
-import com.intellij.java.debugger.impl.shared.JavaDebuggerSharedBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.platform.eel.EelDescriptor;
-import com.intellij.platform.eel.provider.EelProviderUtil;
-import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import com.intellij.platform.eel.provider.utils.EelPathUtils;
 import com.intellij.platform.eel.provider.utils.EelProjectUtils;
 import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.BazelEnvironmentUtil;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.frame.XCompositeNode;
@@ -65,8 +52,6 @@ import com.sun.jdi.event.LocatableEvent;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.intellij.build.BuildDependenciesJps;
-import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot;
 
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
@@ -81,7 +66,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
-import java.util.ServiceLoader;
 
 import static com.intellij.platform.eel.provider.EelNioBridgeServiceKt.asEelPath;
 
@@ -104,7 +88,11 @@ public final class AsyncStacksUtils {
   }
 
   public static boolean isAgentEnabled() {
-    return DebuggerSettings.getInstance().INSTRUMENTING_AGENT;
+    return isAgentAvailable() && DebuggerSettings.getInstance().INSTRUMENTING_AGENT;
+  }
+
+  public static boolean isAgentAvailable() {
+    return DebuggerAgentProvider.getInstance() != null;
   }
 
   public static boolean isSuspendHelperEnabled() {
@@ -407,119 +395,8 @@ public final class AsyncStacksUtils {
   }
 
   private static @Nullable Path getAgentArtifactPath(@Nullable Project project, @Nullable Disposable disposable) {
-    if (PluginManagerCore.isRunningFromSources() && !AppMode.isRunningFromDevBuild()) {
-      return getArtifactPathForDownloadedAgent(project, disposable);
-    }
-    else {
-      return getArtifactPathForBundledAgent(project, disposable);
-    }
-  }
-
-  private static @NotNull Path getArtifactPathForDownloadedAgent(@Nullable Project project, @Nullable Disposable disposable) {
-    // Code runs from IDEA run configuration (code from .class file in out/ directory)
-    try {
-      Path agentArtifactPath = createTemporaryAgentPath(project, disposable);
-
-      Path downloadedAgent;
-      // In jps runs we resolve the debugger agent via the standard BuildDependenciesJps path below.
-      // However, when tests are executed under Bazel, they run inside a hermetic sandbox. In this environment:
-      // - Network/downloads and access to arbitrary files are restricted.
-      // - All runtime inputs must come from explicit Bazel-declared dependencies (runfiles).
-      // Therefore, in Bazel unit-test mode we must obtain the agent JAR from the test classpath via a test-only
-      // service. The TestDebuggerAgentArtifactsProvider is implemented in test sources and knows how to locate
-      // the agent artifact provided by Bazel via runfiles, so we use ServiceLoader to find that provider
-      // on the tests classpath and resolve the agent from there. Outside Bazel (regular production/dev runs), we
-      // keep using the standard resolution path that downloads the dependency if needed.
-      if (PluginManagerCore.isUnitTestMode && BazelEnvironmentUtil.isBazelTestRun()) {
-        ServiceLoader<TestDebuggerAgentArtifactsProvider> providerClasses = ServiceLoader.load(TestDebuggerAgentArtifactsProvider.class);
-        var iterator = providerClasses.iterator();
-        if (!iterator.hasNext()) {
-          throw new IllegalStateException("TestDebuggerAgentArtifactsProvider service provider not found");
-        }
-        TestDebuggerAgentArtifactsProvider provider = iterator.next();
-        if (iterator.hasNext()) {
-          throw new IllegalStateException("more than one TestDebuggerAgentArtifactsProvider service providers found. Only one is expected");
-        }
-
-        downloadedAgent = provider.getDebuggerAgentJar();
-      } else {
-        Path communityRoot = Path.of(PathManager.getCommunityHomePath());
-        Path iml = BuildDependenciesJps.getProjectModule(communityRoot, "intellij.java.debugger.agent.holder");
-        downloadedAgent = BuildDependenciesJps.INSTANCE.getModuleLibrarySingleRootSync(
-          iml,
-          "debugger-agent",
-          "https://cache-redirector.jetbrains.com/intellij-dependencies",
-          new BuildDependenciesCommunityRoot(Path.of(PathManager.getCommunityHomePath())));
-      }
-
-      // The agent file must have a fixed name (AGENT_JAR_NAME) which is mentioned in MANIFEST.MF inside.
-      // The copy operation is used as the rename operation.
-      // toRealPath is required because EEL does not support copying of symbolic links
-      Files.copy(downloadedAgent.toRealPath(), agentArtifactPath);
-      return agentArtifactPath;
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  private static @Nullable Path getArtifactPathForBundledAgent(
-    @Nullable Project project,
-    @Nullable Disposable disposable
-  ) {
-    //take class from embedded module - JavaDebuggerSharedBundle, to resolve plugin dir
-    Path pluginDistDir = PluginManagerCoreKt.getPluginDistDirByClass(JavaDebuggerSharedBundle.class);
-    if (pluginDistDir == null || !Files.isDirectory(pluginDistDir)) {
-      LOG.error("Unable to find the (java) plugin distribution directory by class AsyncStacksUtils");
-      return null;
-    }
-
-    Path bundledAgentPath = pluginDistDir.resolve("lib").resolve("rt").resolve(AGENT_JAR_NAME);
-    if (!Files.exists(bundledAgentPath)) {
-      LOG.error("Unable to find bundled debugger agent under the (java) plugin directory: " + bundledAgentPath);
-      return null;
-    }
-
-    EelDescriptor projectEelDescriptor = project == null ? null : EelProviderUtil.getEelDescriptor(project);
-    if (project == null || LocalEelDescriptor.INSTANCE.equals(projectEelDescriptor)) {
-      String processedAgentPath = JavaExecutionUtil.handleSpacesInAgentPath(
-        bundledAgentPath.toAbsolutePath().toString(),
-        "captureAgent",
-        null,
-        f -> f.getName().startsWith("debugger-agent")
-      );
-      if (processedAgentPath != null) {
-        return Path.of(processedAgentPath);
-      }
-      return null;
-    }
-    Path temporaryAgentPath = createTemporaryAgentPath(project, disposable);
-    try {
-      // toRealPath is required because EEL does not support copying of symbolic links
-      EelPathUtils.transferLocalContentToRemote(
-        bundledAgentPath.toRealPath(),
-        new EelPathUtils.TransferTarget.Explicit(temporaryAgentPath)
-      );
-    } catch (IOException e) {
-      LOG.error(String.format("Unable to copy the java-debugger agent file from %s to %s", bundledAgentPath, temporaryAgentPath), e);
-      return null;
-    }
-    return temporaryAgentPath;
-  }
-
-  private static @NotNull Path createTemporaryAgentPath(@Nullable Project project, @Nullable Disposable disposable) {
-    // The agent file must have a fixed name (AGENT_JAR_NAME) which is mentioned in MANIFEST.MF inside
-    Path debuggerAgentDir = EelProjectUtils.createTemporaryDirectory(project, "debugger-agent", "", disposable == null);
-    if (disposable != null) {
-      Disposer.register(disposable, () -> {
-        try {
-          FileUtilRt.deleteRecursively(debuggerAgentDir);
-        }
-        catch (IOException ignored) {
-        }
-      });
-    }
-    return debuggerAgentDir.resolve(AGENT_JAR_NAME);
+    DebuggerAgentProvider provider = DebuggerAgentProvider.getInstance();
+    return provider == null ? null : provider.getAgentArtifactPath(project, disposable);
   }
 
   private static String generateAgentSettings(@Nullable Project project) {

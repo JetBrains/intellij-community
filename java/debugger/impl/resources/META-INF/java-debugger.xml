@@ -81,6 +81,8 @@
                     interface="com.intellij.debugger.impl.ThreadDumpItemsProviderFactory" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.debugger.agentParametersModifier"
                     interface="com.intellij.debugger.engine.DebuggerAgentParametersModifier" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.debugger.agentProvider"
+                    interface="com.intellij.debugger.engine.DebuggerAgentProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.debugger.hotSwapSourceFileFilterProvider"
                     interface="com.intellij.debugger.impl.hotswap.HotSwapSourceFileFilterProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.debugger.hotSwapSourceChangeCompatibilityCheckerProvider"
@@ -117,6 +119,7 @@
 
     <xdebugger.settings implementation="com.intellij.debugger.settings.JavaDebuggerSettings"/>
     <registryKey key="execution.java.always.debug" defaultValue="false" description="Always run java processes with the debug agent"/>
+    <debugger.agentProvider implementation="com.intellij.debugger.engine.DebuggerAgentProviderImpl"/>
 
     <xdebugger.breakpointGroupingRule implementation="com.intellij.debugger.ui.XBreakpointGroupingByPackageRule"/>
     <xdebugger.breakpointGroupingRule implementation="com.intellij.debugger.ui.XBreakpointGroupingByClassRule"/>
