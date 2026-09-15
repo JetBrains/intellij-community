@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.codereview.comment
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSetting.ESSENTIAL
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil
 import com.intellij.collaboration.ui.CodeReviewUiUtil
@@ -39,6 +40,11 @@ internal object CodeReviewMarkdownEditor {
     val document = runReadActionBlocking {
       psiDocumentManager.getDocument(psiFile)
     } ?: editorFactory.createDocument("")
+
+    // This file is not physical, so the daemon does not invalidate it on an edit the way it invalidates an
+    // editor. A wide annotator highlight, such as the code span color, then goes stale after a nearby edit.
+    // This marker opts the document into the same invalidation an editor gets.
+    document.putUserData(DaemonCodeAnalyzer.INTERACTIVE_NON_PHYSICAL_DOCUMENT, project)
 
     document.addDocumentListener(object : BulkAwareDocumentListener.Simple {
       override fun documentChangedNonBulk(event: DocumentEvent) {
