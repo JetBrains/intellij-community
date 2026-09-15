@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 import {deepStrictEqual, rejects} from 'node:assert/strict'
-import {mkdtemp, mkdir, rename, rm, writeFile} from 'node:fs/promises'
+import {mkdir, mkdtemp, rename, rm, writeFile} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import path from 'node:path'
 import {afterEach, describe, it} from 'bun:test'
@@ -197,6 +197,64 @@ describe('rename tool', () => {
     )
 
     deepStrictEqual(toolCalls, ['search_text'])
+  })
+
+  it('forwards the target arguments to the IDE', async () => {
+    const projectPath = await createProject({'src/Shadow.kt': 'class Shadow\n'})
+    const toolCalls: Array<{name: string; args: Record<string, unknown>}> = []
+
+    await handleRenameTool(
+      {
+        pathInProject: 'src/Shadow.kt',
+        symbolName: 'counter',
+        newName: 'hitCount',
+        contextSnippet: 'private val counter = 0',
+        targetIndex: 2
+      },
+      projectPath,
+      async (name, args) => {
+        toolCalls.push({name, args})
+        if (name === 'search_text') return {structuredContent: {items: [{filePath: 'src/Shadow.kt'}]}}
+        if (name !== 'rename_refactoring') throw new Error(`Unexpected tool: ${name}`)
+        return {content: [{type: 'text', text: '{"ok":true,"applied":true}'}]}
+      }
+    )
+
+    deepStrictEqual(toolCalls[1], {
+      name: 'rename_refactoring',
+      args: {
+        // The handler forwards the OS-native relative path, so the separator differs per platform.
+        pathInProject: path.join('src', 'Shadow.kt'),
+        symbolName: 'counter',
+        newName: 'hitCount',
+        contextSnippet: 'private val counter = 0',
+        targetIndex: 2
+      }
+    })
+  })
+
+  it('skips the scan-and-hash pass for a preview and reports no change', async () => {
+    const projectPath = await createProject({'src/Old.kt': 'class Old\n'})
+    const toolCalls: Array<{name: string; args: Record<string, unknown>}> = []
+
+    const output = await handleRenameTool(
+      {pathInProject: 'src/Old.kt', symbolName: 'Old', newName: 'New', preview: true},
+      projectPath,
+      async (name, args) => {
+        toolCalls.push({name, args})
+        if (name !== 'rename_refactoring') throw new Error(`Unexpected tool: ${name}`)
+        return {content: [{type: 'text', text: '{"ok":true,"applied":false}'}]}
+      }
+    )
+
+    // No search_text: a preview writes nothing, so there is nothing to fingerprint.
+    deepStrictEqual(toolCalls, [
+      {
+        name: 'rename_refactoring',
+        args: {pathInProject: path.join('src', 'Old.kt'), symbolName: 'Old', newName: 'New', preview: true}
+      }
+    ])
+    deepStrictEqual(readChanges(output), [])
   })
 })
 

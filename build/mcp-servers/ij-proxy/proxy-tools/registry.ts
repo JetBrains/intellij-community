@@ -1,26 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 import {handleRenameTool} from './handlers/rename'
-import {
-  handleContainerBash,
-  handleContainerSearchFile,
-  handleContainerSearchRegex,
-  handleContainerSearchText
-} from './container-handlers'
-import {
-  createRenameSchema,
-  createSearchFileSchema,
-  createSearchRegexSchema,
-  createSearchTextSchema
-} from './schemas'
-import type {
-  ContainerSessionConfig,
-  ToolAnnotationsLike,
-  ToolArgs,
-  ToolInputSchema,
-  ToolSpecLike,
-  UpstreamToolCaller
-} from './types'
+import {handleContainerBash, handleContainerSearchFile, handleContainerSearchRegex, handleContainerSearchText} from './container-handlers'
+import {createRenameSchema, createSearchFileSchema, createSearchRegexSchema, createSearchTextSchema} from './schemas'
+import type {ContainerSessionConfig, ToolAnnotationsLike, ToolArgs, ToolInputSchema, ToolSpecLike, UpstreamToolCaller} from './types'
 
 interface ToolContext {
   projectPath: string
@@ -74,7 +57,9 @@ export const BLOCKED_TOOL_NAMES = new Set([
 const EXTRA_REPLACED_TOOL_NAMES = [
   'get_file_problems'
 ]
-const RENAME_TOOL_DESCRIPTION = 'Rename a symbol (class/function/variable/etc.) using IDE refactoring. Updates all references across the project; do not use text replacement for renames.'
+const RENAME_TOOL_DESCRIPTION = 'Rename a symbol (class/function/variable/etc.) using IDE refactoring. Updates all references across the project; do not use text replacement for renames. ' +
+  'When the name is not unique in the file, pass contextSnippet (an exact fragment of the file that shows the symbol), or line and column copied from search_symbol output. ' +
+  'Read `applied` in the response: applied=false means nothing changed, and the reason is in candidates, conflicts or error. On an ambiguous name, pick one with targetIndex.'
 const READ_ONLY_TOOL_ANNOTATIONS: ToolAnnotationsLike = {readOnlyHint: true, openWorldHint: false}
 
 function resolveToolDescription(description: ToolDescription, context: ToolContext): string {

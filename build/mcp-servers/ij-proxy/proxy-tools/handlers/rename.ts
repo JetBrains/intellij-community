@@ -11,6 +11,11 @@ interface RenameToolArgs {
   pathInProject?: unknown
   symbolName?: unknown
   newName?: unknown
+  contextSnippet?: unknown
+  line?: unknown
+  column?: unknown
+  targetIndex?: unknown
+  preview?: unknown
 }
 
 interface RenameFileChange {
@@ -35,6 +40,27 @@ export async function handleRenameTool(
   const newName = requireString(toolArgs.newName, 'newName')
   const {relative} = resolvePathInProject(projectPath, filePath, 'pathInProject')
   const normalizedRelative = toPosixPath(relative)
+  const targetArgs = {
+    ...(toolArgs.contextSnippet !== undefined ? {contextSnippet: toolArgs.contextSnippet} : {}),
+    ...(toolArgs.line !== undefined ? {line: toolArgs.line} : {}),
+    ...(toolArgs.column !== undefined ? {column: toolArgs.column} : {}),
+    ...(toolArgs.targetIndex !== undefined ? {targetIndex: toolArgs.targetIndex} : {})
+  }
+
+  // A preview writes nothing, so the scan-and-hash pass below would only report an empty change set.
+  if (toolArgs.preview === true) {
+    const previewResult = await callUpstreamTool('rename_refactoring', {
+      pathInProject: relative,
+      symbolName,
+      newName,
+      preview: true,
+      ...targetArgs
+    })
+    const previewMessage = extractTextFromResult(previewResult) ??
+                           `Analyzed the rename of ${symbolName} to ${newName} in ${path.resolve(projectPath, relative)}`
+    return `${previewMessage}\n${RENAME_FILE_CHANGES_PREFIX}${JSON.stringify({version: 1, changes: []})}`
+  }
+
   const candidatePaths = await findCandidatePaths(
     projectPath,
     normalizedRelative,
@@ -46,7 +72,8 @@ export async function handleRenameTool(
   const result = await callUpstreamTool('rename_refactoring', {
     pathInProject: relative,
     symbolName,
-    newName
+    newName,
+    ...targetArgs
   })
 
   const after = await fingerprintPaths(projectPath, candidatePaths)

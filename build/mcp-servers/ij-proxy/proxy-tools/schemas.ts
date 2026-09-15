@@ -63,6 +63,10 @@ export function createSearchFileSchema(): ToolInputSchema {
   )
 }
 
+/**
+ * Mirrors the IDE's `rename_refactoring` parameters. The schema sets `additionalProperties: false`,
+ * so a parameter missing here is rejected before it reaches the IDE.
+ */
 export function createRenameSchema(): ToolInputSchema {
   return objectSchema(
     {
@@ -77,6 +81,26 @@ export function createRenameSchema(): ToolInputSchema {
       newName: {
         type: 'string',
         description: 'New, case-sensitive name for the symbol.'
+      },
+      contextSnippet: {
+        type: 'string',
+        description: 'Preferred way to point at the symbol when the name is not unique in the file. An exact fragment of the file that shows the symbol; it must match the file once and contain symbolName. Copy it from the file text you just read.'
+      },
+      line: {
+        type: 'number',
+        description: '1-based line of the symbol. Copy it from search_symbol output; never count lines. Needs column too.'
+      },
+      column: {
+        type: 'number',
+        description: '1-based column of the symbol. Copy it from search_symbol output. Needs line too.'
+      },
+      targetIndex: {
+        type: 'number',
+        description: '1-based pick from the candidates list a previous call returned.'
+      },
+      preview: {
+        type: 'boolean',
+        description: 'Analyze only: report affects and conflicts without writing anything.'
       }
     },
     ['pathInProject', 'symbolName', 'newName']
