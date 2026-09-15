@@ -116,9 +116,11 @@ class InterpreterSettingsQuickFix(private val myModule: Module?) : LocalQuickFix
 
   companion object {
     fun showPythonInterpreterSettings(project: Project, module: Module?) {
+      // one tree, both for the test and for the dialog
       val group = ConfigurableExtensionPointUtil.getConfigurableGroup(project, true)
-      if (ConfigurableVisitor.findById(PyActiveSdkModuleConfigurable.CONFIGURABLE_ID, listOf(group)) != null) {
-        ShowSettingsUtilImpl.showSettingsDialog(project, PyActiveSdkModuleConfigurable.CONFIGURABLE_ID, null)
+      val configurable = ConfigurableVisitor.findById(PyActiveSdkModuleConfigurable.CONFIGURABLE_ID, listOf(group))
+      if (configurable != null) {
+        ShowSettingsUtilImpl.showSettings(project, listOf(group), configurable)
         return
       }
 
