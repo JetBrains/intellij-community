@@ -5,11 +5,14 @@
 // Dashboard of Maven library versions pinned in intellij.libraries.* wrapper modules and .idea/libraries project libraries.
 // Report: bun community/build/libraries-dashboard/libraries-dashboard.mjs [--no-cache|--refresh] [--format=html|text|json|all] [--open]
 // Bump:   bun community/build/libraries-dashboard/libraries-dashboard.mjs bump <groupId:artifactId>[=<version>]... [--no-cache|--refresh]
+// Check:  bun community/build/libraries-dashboard/libraries-dashboard.mjs check [<groupId:artifactId>...]
 // The bump also rewrites the version copies listed in VERSION_MIRRORS and prints the project structure test that checks them.
+// The bump and the check compare the artifact list of a multi-artifact library with the direct dependencies of its POM.
 
 import {createHash} from "node:crypto"
 import {mkdir, readdir, readFile, writeFile} from "node:fs/promises"
 import {existsSync} from "node:fs"
+import {homedir} from "node:os"
 import {basename, dirname, join, resolve} from "node:path"
 import process from "node:process"
 import {fileURLToPath} from "node:url"
@@ -53,30 +56,35 @@ const WRAPPER_PREFIX = "intellij.libraries."
 export function parseArgs(argv) {
   const opts = { cache: true, refresh: false, format: "all", open: false, command: "report", coordinates: [], kind: null }
   const args = argv.slice(2)
-  if (args[0] === "bump") {
-    opts.command = "bump"
+  if (args[0] === "bump" || args[0] === "check") {
+    opts.command = args[0]
     args.shift()
   }
+  const takesCoordinates = opts.command === "bump" || opts.command === "check"
   for (const a of args) {
     if (a === "--no-cache") opts.cache = false
     else if (a === "--refresh") opts.refresh = true
     else if (a === "--open") opts.open = true
     else if (a.startsWith("--format=")) opts.format = a.slice("--format=".length)
-    else if (a.startsWith("--kind=") && opts.command === "bump") opts.kind = a.slice("--kind=".length)
+    else if (a.startsWith("--kind=") && takesCoordinates) opts.kind = a.slice("--kind=".length)
     else if (a === "-h" || a === "--help") {
       console.log(
         "Usage: bun libraries-dashboard.mjs [--no-cache] [--refresh] [--format=html|text|json|all] [--open]\n" +
           "       bun libraries-dashboard.mjs bump <groupId:artifactId>[=<version>]... [--kind=wrapper|project] [--no-cache] [--refresh]\n" +
+          "       bun libraries-dashboard.mjs check [<groupId:artifactId>...] [--kind=wrapper|project] [--no-cache] [--refresh]\n" +
           "  --no-cache  ignore cached Maven/POM responses\n" +
           "  --refresh   rewrite cache from scratch\n" +
           "  --format    output mode (default: all = html + terminal)\n" +
           "  --open      open the HTML report in the default browser\n" +
           "  bump        rewrite maven-id, jar URLs and sha256 of the named libraries (default target: resolved latest);\n" +
           "              also rewrite the version copies outside the JPS model (jps-bootstrap pom.xml, annotations quick fix)\n" +
-          "  --kind      bump only wrapper modules or only .idea/libraries project libraries (default: both)"
+          "              and check the artifact list of a multi-artifact library against the direct dependencies of the new POM\n" +
+          "  check       compare the artifact list of every multi-artifact library, or of the named ones, with the direct\n" +
+          "              dependencies of its POM; JPS fails on a mismatch that Bazel accepts\n" +
+          "  --kind      bump or check only wrapper modules or only .idea/libraries project libraries (default: both)"
       )
       process.exit(0)
-    } else if (opts.command === "bump" && !a.startsWith("-")) {
+    } else if (takesCoordinates && !a.startsWith("-")) {
       opts.coordinates.push(a)
     } else {
       console.error(`Unknown arg: ${a}`)
@@ -632,15 +640,149 @@ function tag(xml, name) {
   return xml.match(new RegExp(`<${name}>\\s*([^<]*?)\\s*</${name}>`))?.[1] ?? null
 }
 
-// compile and runtime dependencies of a POM, as "groupId:artifactId:version (scope)".
-export function pomDependencies(pom) {
+// --- POM direct dependencies and the artifact snapshot check ---
+//
+// JPS resolves a repository library from its POM and then requires the resolved jar set to equal the
+// <verification> artifact set (DependencyResolvingBuilder.isAllCompiledRootsVerificationPresent). A transitive
+// artifact pinned at another version than the POM declares, or a direct dependency without an <artifact>,
+// fails every JPS build while Bazel, which downloads the listed URLs, still passes. The check below compares
+// the direct compile and runtime dependencies of the POM with the block; it does not walk deeper levels.
+
+// The sections of a POM that hold <version> and <groupId> tags of other artifacts.
+const POM_FOREIGN_SECTIONS_RE = /<(parent|dependencyManagement|dependencies|build|profiles|reporting|pluginRepositories|repositories)>[\s\S]*?<\/\1>/g
+
+// A POM without its XML comments; a commented-out dependency is not a dependency.
+function stripXmlComments(xml) {
+  return xml.replace(/<!--[\s\S]*?-->/g, "")
+}
+
+// The groupId and version of the POM's own project; the parent supplies a missing one.
+export function pomProjectCoordinates(pom) {
+  const clean = stripXmlComments(pom)
+  const own = clean.replace(POM_FOREIGN_SECTIONS_RE, "")
+  const parent = clean.match(/<parent>([\s\S]*?)<\/parent>/)?.[1] ?? ""
+  return {
+    groupId: tag(own, "groupId") ?? tag(parent, "groupId"),
+    version: tag(own, "version") ?? tag(parent, "version"),
+  }
+}
+
+// Resolve `${...}` references from the POM's own <properties>, project.version and project.groupId.
+// Returns null when a reference stays unresolved, for example a property of the parent POM.
+export function resolvePomValue(value, pom) {
+  if (value === null) return null
+  const project = pomProjectCoordinates(pom)
+  const properties = stripXmlComments(pom).match(/<properties>([\s\S]*?)<\/properties>/)?.[1] ?? ""
+  let unresolved = false
+  const out = value.replace(/\$\{([^}]+)}/g, (whole, name) => {
+    if (name === "project.version" || name === "version" || name === "pom.version") return project.version ?? (unresolved = true, whole)
+    if (name === "project.groupId" || name === "groupId" || name === "pom.groupId") return project.groupId ?? (unresolved = true, whole)
+    const v = tag(properties, name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+    if (v === null) {
+      unresolved = true
+      return whole
+    }
+    return v
+  })
+  return unresolved ? null : out
+}
+
+// A Maven version requirement as one version: `[1.2.0]` is exactly 1.2.0; an open range is null.
+export function exactVersion(requirement) {
+  if (requirement === null) return null
+  const hard = requirement.match(/^\[\s*([^,[\]()]+?)\s*]$/)
+  if (hard) return hard[1]
+  return /^[\[(]/.test(requirement) ? null : requirement
+}
+
+// The sections of a POM whose <dependencies> are not dependencies of the artifact.
+const POM_NON_DEPENDENCY_SECTIONS_RE = /<(profiles|build|reporting|dependencyManagement)>[\s\S]*?<\/\1>/g
+
+// The direct compile and runtime jar dependencies of a POM: [{groupId, artifactId, version, scope, classifier}].
+// The version is null when a reference cannot be resolved from this POM. A dependency without a version is
+// managed by a parent or an import and is null too. <dependencyManagement>, plugin and profile entries are not dependencies.
+export function pomDirectDependencies(pom) {
+  const clean = stripXmlComments(pom)
+  const section = clean.replace(POM_NON_DEPENDENCY_SECTIONS_RE, "").match(/<dependencies>([\s\S]*?)<\/dependencies>/)?.[1]
+  if (!section) return []
   const out = []
-  for (const m of pom.matchAll(POM_DEPENDENCY_RE)) {
+  for (const m of section.matchAll(POM_DEPENDENCY_RE)) {
     const scope = tag(m[1], "scope") || "compile"
-    if (scope === "test" || scope === "provided" || tag(m[1], "optional") === "true") continue
-    out.push(`${tag(m[1], "groupId")}:${tag(m[1], "artifactId")}:${tag(m[1], "version") ?? "?"} (${scope})`)
+    if (scope === "test" || scope === "provided" || scope === "system" || tag(m[1], "optional") === "true") continue
+    const type = tag(m[1], "type")
+    if (type !== null && type !== "jar") continue
+    out.push({
+      groupId: resolvePomValue(tag(m[1], "groupId"), clean),
+      artifactId: resolvePomValue(tag(m[1], "artifactId"), clean),
+      version: exactVersion(resolvePomValue(tag(m[1], "version"), clean)),
+      scope,
+      classifier: tag(m[1], "classifier"),
+    })
   }
   return out
+}
+
+// compile and runtime dependencies of a POM, as "groupId:artifactId:version (scope)".
+export function pomDependencies(pom) {
+  return pomDirectDependencies(pom).map(d => `${d.groupId}:${d.artifactId}:${d.version ?? "?"} (${d.scope})`)
+}
+
+const ARTIFACT_URL_RE = /<artifact url="file:\/\/\$MAVEN_REPOSITORY\$\/(.+)\/([^/"]+)\/([^/"]+)\/[^/"]+\.jar"/g
+const EXCLUDED_DEPENDENCY_RE = /<dependency maven-id="([^"]+)"/g
+
+// The <artifact> coordinates of a library block: [{groupId, artifactId, version}].
+export function blockArtifacts(block) {
+  const out = []
+  for (const m of block.matchAll(ARTIFACT_URL_RE)) out.push({ groupId: m[1].replaceAll("/", "."), artifactId: m[2], version: m[3] })
+  return out
+}
+
+// The library block of a file whose maven-id is `groupId:artifactId:version`, or null.
+export function findLibraryBlock(content, mavenId) {
+  for (const b of content.matchAll(LIB_BLOCK_RE)) {
+    if (b[1].includes(`maven-id="${mavenId}"`)) return b[0]
+  }
+  return null
+}
+
+/**
+ * Compare the <artifact> snapshot of one library block with the direct dependencies of its POM.
+ * Returns `{problems, notes}`. A problem is `{kind: "version", ...}` when an artifact of a direct dependency is
+ * pinned at another version than the POM declares, or `{kind: "missing", ...}` when a direct dependency has no
+ * artifact and is not excluded. A note names a dependency whose version this POM cannot resolve. A block with
+ * `include-transitive-deps="false"` has nothing to compare.
+ */
+export function checkArtifactSnapshot(block, deps) {
+  const problems = []
+  const notes = []
+  if (/include-transitive-deps="false"/.test(block)) return { problems, notes }
+  const artifacts = blockArtifacts(block)
+  const excluded = new Set()
+  const exclude = block.match(/<exclude>([\s\S]*?)<\/exclude>/)?.[1] ?? ""
+  for (const m of exclude.matchAll(EXCLUDED_DEPENDENCY_RE)) excluded.add(m[1])
+  for (const d of deps) {
+    const ga = `${d.groupId}:${d.artifactId}`
+    if (excluded.has(ga) || d.classifier !== null) continue
+    if (d.version === null) {
+      notes.push(`${ga}: the POM does not name one exact version (a parent property or a range); compare it by hand`)
+      continue
+    }
+    const artifact = artifacts.find(a => a.groupId === d.groupId && a.artifactId === d.artifactId)
+    if (!artifact) problems.push({ kind: "missing", groupId: d.groupId, artifactId: d.artifactId, declared: d.version, scope: d.scope })
+    else if (artifact.version !== d.version) problems.push({ kind: "version", groupId: d.groupId, artifactId: d.artifactId, pinned: artifact.version, declared: d.version, scope: d.scope })
+  }
+  return { problems, notes }
+}
+
+export const SNAPSHOT_REMEDY =
+  "JPS resolves the artifact set from the POM and requires the <verification> list to match it. " +
+  "Pin the version the POM declares, or exclude the dependency and depend on its wrapper module."
+
+export function formatSnapshotProblem(p) {
+  const ga = `${p.groupId}:${p.artifactId}`
+  return p.kind === "version"
+    ? `${ga} is pinned at ${p.pinned}, the POM declares ${p.declared} (${p.scope})`
+    : `${ga}:${p.declared} (${p.scope}) is a direct dependency without an <artifact> and without an <exclude>`
 }
 
 function relPath(path) {
@@ -797,6 +939,95 @@ async function bumpGroup(g, target, kind, checksumRepo) {
   return pending.map(({ content, ...rest }) => rest)
 }
 
+// Check the rewritten blocks of one library against its new POM. Returns true when a block has a problem.
+async function reportSnapshotProblems(changed, mavenId, pom) {
+  const deps = pomDirectDependencies(pom)
+  let failed = false
+  for (const c of changed) {
+    const block = findLibraryBlock(await readFile(c.path, "utf8"), mavenId)
+    if (!block) continue
+    const { problems, notes } = checkArtifactSnapshot(block, deps)
+    for (const n of notes) console.log(`  ${relPath(c.path)}: ${n}`)
+    if (problems.length === 0) continue
+    failed = true
+    console.error(`  ${relPath(c.path)}: the artifact list does not match the POM. ${SNAPSHOT_REMEDY}`)
+    for (const p of problems) console.error(`    ${formatSnapshotProblem(p)}`)
+  }
+  return failed
+}
+
+// The POM of a pinned library: the local Maven repository first, then the cached repository, then every repository.
+async function loadPom(entry, repos, cache) {
+  const rel = `${artifactPath(entry.groupId, entry.artifactId)}/${entry.version}/${entry.artifactId}-${entry.version}.pom`
+  const local = await readOptional(join(localMavenRepository(), rel))
+  if (local !== null) return local
+  const cached = cache.get(`${entry.groupId}:${entry.artifactId}`)?.repo
+  for (const repo of new Set([cached, ...repos].filter(Boolean))) {
+    const pom = await fetchText(`${repo}/${rel}`)
+    if (pom !== null) return pom
+  }
+  return null
+}
+
+function localMavenRepository() {
+  return process.env.MAVEN_REPOSITORY || join(homedir(), ".m2/repository")
+}
+
+// `check`: compare every multi-artifact library block, or the blocks of the named libraries, with its POM.
+async function runCheck(opts) {
+  const wanted = new Set(opts.coordinates.map(parseCoordinate).map(t => `${t.groupId}:${t.artifactId}`))
+  const entries = (await collectLibraries()).filter(e => wanted.size === 0 || wanted.has(`${e.groupId}:${e.artifactId}`))
+  for (const ga of wanted) {
+    if (!entries.some(e => `${e.groupId}:${e.artifactId}` === ga)) {
+      console.error(`Not pinned anywhere: ${ga}`)
+      process.exit(2)
+    }
+  }
+  const blocks = []
+  const contents = new Map()
+  for (const e of entries) {
+    if (opts.kind && e.kind !== opts.kind) continue
+    if (!contents.has(e.filePath)) contents.set(e.filePath, await readFile(e.filePath, "utf8"))
+    const block = findLibraryBlock(contents.get(e.filePath), `${e.groupId}:${e.artifactId}:${e.version}`)
+    if (!block || blockArtifacts(block).length < 2 || /include-transitive-deps="false"/.test(block)) continue
+    blocks.push({ ...e, block })
+  }
+  const cache = await loadCache(opts.cache && !opts.refresh)
+  const { repos } = await loadRepositories()
+  let problems = 0
+  let unavailable = 0
+  let notes = 0
+  await runPool(
+    blocks,
+    async b => {
+      const pom = await loadPom(b, repos, cache)
+      const mavenId = `${b.groupId}:${b.artifactId}:${b.version}`
+      if (pom === null) {
+        unavailable++
+        console.error(`${relPath(b.filePath)}: ${mavenId}: POM not available`)
+        return
+      }
+      const result = checkArtifactSnapshot(b.block, pomDirectDependencies(pom))
+      notes += result.notes.length
+      // A whole-repository run lists only the problems; a named library gets its notes too.
+      if (wanted.size > 0) for (const n of result.notes) console.log(`${relPath(b.filePath)}: ${mavenId}: ${n}`)
+      if (result.problems.length === 0) return
+      problems += result.problems.length
+      console.error(`${relPath(b.filePath)}: ${mavenId}: the artifact list does not match the POM`)
+      for (const p of result.problems) console.error(`  ${formatSnapshotProblem(p)}`)
+    },
+    FETCH_CONCURRENCY
+  )
+  const summary = [`${problems} problem${problems === 1 ? "" : "s"}`]
+  if (notes > 0) summary.push(`${notes} dependenc${notes === 1 ? "y" : "ies"} without one exact version in the POM, not compared${wanted.size > 0 ? "" : " (name the library to list them)"}`)
+  if (unavailable > 0) summary.push(`${unavailable} POM${unavailable === 1 ? "" : "s"} not available`)
+  console.log(`\nChecked ${blocks.length} multi-artifact librar${blocks.length === 1 ? "y" : "ies"}: ${summary.join(", ")}`)
+  if (problems > 0) {
+    console.error(SNAPSHOT_REMEDY)
+    process.exit(1)
+  }
+}
+
 async function runBump(opts) {
   const targets = opts.coordinates.map(parseCoordinate)
   const entries = await collectLibraries()
@@ -848,8 +1079,9 @@ async function runBump(opts) {
       for (const m of skipped) console.log(`  skipped ${m.kind} library ${m.module} @${m.version} in ${relPath(m.path)} (--kind=${opts.kind})`)
       if (changed.some(c => c.artifacts > 1)) {
         const pom = await fetchText(pomUrl(g.repo, g.groupId, g.artifactId, target))
-        console.log(`  the library snapshots transitive artifacts; compare them with the ${target} POM dependencies:`)
+        console.log(`  the library snapshots transitive artifacts; the ${target} POM declares:`)
         for (const d of pom ? pomDependencies(pom) : ["(POM not available)"]) console.log(`    ${d}`)
+        if (pom && (await reportSnapshotProblems(changed.filter(c => c.artifacts > 1), `${ga}:${target}`, pom))) failed = true
       }
     } catch (e) {
       console.error(`${ga}: ${e.message} (checksums from ${checksumRepo})`)
@@ -917,7 +1149,9 @@ export function buildUpdatePrompt(g, repoRoot) {
     ``,
     `The bump command rewrites maven-id, the jar URLs and every <sha256sum> and keeps the file layout.`,
     `It also rewrites the version copies outside the JPS model, such as community/platform/jps-bootstrap/pom.xml.`,
-    `When it prints the POM dependencies, compare them with the artifact list in the library block.`,
+    `For a library that snapshots transitive artifacts it compares the artifact list with the direct dependencies of the new POM and fails on a mismatch.`,
+    `JPS resolves the artifact set from the POM and requires the <verification> list to match it, so pin the declared version or exclude the dependency and depend on its wrapper module.`,
+    `After a manual edit of a library block, run: bun community/build/libraries-dashboard/libraries-dashboard.mjs check ${ga}`,
     `The Fleet dump refreshes the generated Fleet files that copy the JPS library versions; do not skip it.`,
     `The two lockfile updates record the new kmp.MODULE.bazel artifact lists; CI fails on a stale lockfile.`,
     `Then build the wrapper module and run the tests of one module that depends on it.`,
@@ -1275,6 +1509,7 @@ async function runReport(opts) {
 async function main() {
   const opts = parseArgs(process.argv)
   if (opts.command === "bump") await runBump(opts)
+  else if (opts.command === "check") await runCheck(opts)
   else await runReport(opts)
 }
 

@@ -11,7 +11,7 @@ Status: Draft
 Date: 2026-09-14
 
 ## Summary
-A single-file Bun CLI (`libraries-dashboard.mjs`) with two commands. The report command scans every `intellij.libraries.*.iml` wrapper module and every `.idea/libraries/*.xml` project library, extracts the pinned Maven coordinates, and reports per artifact the pinned version(s), the latest version in the first repository that serves the artifact, an outdatedness classification, the repository, and a link to the GitHub releases page when the POM names one. The bump command rewrites the pinned version, the jar URLs and the checksums of a library in place. The tool runs offline-friendly (disk cache) and produces an HTML dashboard, an ANSI terminal table, or JSON.
+A single-file Bun CLI (`libraries-dashboard.mjs`) with three commands. The report command scans every `intellij.libraries.*.iml` wrapper module and every `.idea/libraries/*.xml` project library, extracts the pinned Maven coordinates, and reports per artifact the pinned version(s), the latest version in the first repository that serves the artifact, an outdatedness classification, the repository, and a link to the GitHub releases page when the POM names one. The bump command rewrites the pinned version, the jar URLs and the checksums of a library in place. The check command compares the artifact snapshot of a multi-artifact library with the direct dependencies of its POM, which is the comparison JPS enforces at build time. The tool runs offline-friendly (disk cache) and produces an HTML dashboard, an ANSI terminal table, or JSON.
 
 ## Goals
 - Discover every Maven library pinned through a wrapper module or a project library without manual input.
@@ -24,7 +24,7 @@ A single-file Bun CLI (`libraries-dashboard.mjs`) with two commands. The report 
 
 ## Non-goals
 - Committing library version changes or creating tickets.
-- Recomputing the transitive artifact set of a library. The bump command keeps the snapshot and prints the new POM dependencies for a manual comparison.
+- Recomputing the transitive artifact set of a library. The bump command keeps the snapshot and checks it against the direct dependencies of the new POM only; a change deeper in the dependency tree needs the JPS resolution (`./build/downloadLibraries.cmd`).
 - Surfacing `http_file` entries in `MODULE.bazel` or other Bazel-only Maven pins.
 - Calling the GitHub API.
 - Gating CI or builds. The report command always exits `0` when it produced a report.
@@ -106,12 +106,13 @@ A single-file Bun CLI (`libraries-dashboard.mjs`) with two commands. The report 
 ### CLI surface
 - Report: `bun libraries-dashboard.mjs [--no-cache] [--refresh] [--format=html|text|json|all] [--open]`.
 - Bump: `bun libraries-dashboard.mjs bump <groupId:artifactId>[=<version>]... [--kind=wrapper|project] [--no-cache] [--refresh]`.
+- Check: `bun libraries-dashboard.mjs check [<groupId:artifactId>...] [--kind=wrapper|project] [--no-cache] [--refresh]`.
 - Default `--format` MUST be `all` (HTML file + terminal table).
 - `--format=html` or `all` MUST write `<repo>/out/libraries-dashboard/dashboard.html`.
 - `--format=json` MUST write `<repo>/out/libraries-dashboard/dashboard.json` and MUST NOT print the terminal table.
 - `--format=text` MUST print the terminal table only and MUST NOT touch disk for output.
 - `--open` MUST launch the system default browser on the generated HTML and MUST be a no-op when the selected format did not produce an HTML file.
-- Unknown flags, a bump without coordinates, and a coordinate that is not pinned anywhere MUST exit with status `2` and a short error.
+- Unknown flags, a bump without coordinates, and a coordinate that is not pinned anywhere (bump or check) MUST exit with status `2` and a short error.
 - Successful runs MUST exit with status `0`; fatal parse/IO errors MUST exit with status `1`.
 
 ### Bump command
@@ -123,10 +124,24 @@ A single-file Bun CLI (`libraries-dashboard.mjs`) with two commands. The report 
   3. replace the `<sha256sum>` of every `<artifact>` with the checksum of the new jar. The checksum comes from `<jar url>.sha256` in the resolving repository; when that file is absent the jar is downloaded and hashed. For Maven Central the checksum is fetched through the Central mirror from `jarRepositories.xml`, because the build downloads through that mirror and a release the mirror has not cached yet must fail the bump, not the build.
 - The file MUST be written back byte-exact except for the replaced substrings. No trailing newline is added.
 - All files of one library MUST be rewritten in memory before any write, so a failed checksum leaves the library untouched.
-- When the block lists more than one `<artifact>`, the tool MUST print the compile and runtime dependencies of the new POM for a manual comparison with the artifact list.
+- When the block lists more than one `<artifact>`, the tool MUST print the compile and runtime dependencies of the new POM and MUST run the snapshot check (below) on the rewritten block. A problem is printed with the remedy and the command exits `1` at the end; the rewritten files stay, so the agent can apply the remedy in place.
 - Some files outside the JPS model copy a library version, and a project structure test checks each copy: `community/platform/jps-bootstrap/pom.xml` (`JpsBoostrapStructureTest`) and the `VERSION` constant of `JetBrainsAnnotationsExternalLibraryResolver.java` (`IdeaUltimateProjectStructureTest`). The tool MUST keep the list in `VERSION_MIRRORS`. A bump MUST rewrite every copy of the bumped library in these files and list each rewritten file with the test that checks it. A POM version that is a property reference is not a copy. Both the bump and the report MUST print every copy whose version differs from the highest pinned version, and the bump MUST exit `1` when such a copy remains.
 - After the changes the tool MUST print the follow-up commands: `./build/jpsModelToBazel.cmd`, then `./fleet/build/generateProjectModel.cmd dump` and `bazel mod deps --lockfile_mode=update` in the root and in `community/` when the Fleet generator exists in the checkout, then `bazel run //:format.check`. The Fleet generator copies the JPS library versions into `fleet/build/gradle/jps.versions.toml`, `fleet/build/jps-library-mappings.tsv` and both `fleet/kmp.MODULE.bazel` files, and its `check` mode fails on drift. The `kmp` module extension records the artifact list of each `kmp.MODULE.bazel` in the `MODULE.bazel.lock` of its module, and CI runs Bazel with `--lockfile_mode=error`, so a stale lockfile fails the build. Then the tool MUST print the verification command `./tests.cmd --module intellij.projectStructureTests --test 'com.intellij.ideaProjectStructure.fast.*'`. The generated update prompt MUST list the same commands.
   [@test] ../test/bump.test.mjs
+
+### Snapshot check
+JPS resolves a repository library from its POM and then requires the resolved jar set to equal the `<verification>` artifact set (`DependencyResolvingBuilder.isAllCompiledRootsVerificationPresent`). Bazel downloads the listed URLs instead, so a snapshot that disagrees with the POM passes every local Bazel build and fails the first JPS build on TeamCity. The mockito 5.23.0 bump pinned `byte-buddy-agent` at 1.18.13 while the POM declares 1.17.7; the check exists to catch this before a push.
+
+- The direct dependencies of a POM are the `<dependency>` entries of the top-level `<dependencies>` element with scope `compile` or `runtime` (default `compile`), not optional, and of type `jar` (the default). Entries under `<dependencyManagement>`, `<build>`, `<profiles>` and `<reporting>`, and entries inside an XML comment, are not dependencies.
+- The tool MUST resolve `${project.version}`, `${project.groupId}` and a `${property}` declared in the `<properties>` of the same POM. The project version and groupId fall back to the `<parent>`. A reference the POM cannot resolve, a dependency without a `<version>`, and an open version range yield no exact version. A hard requirement `[x]` is the exact version `x`.
+- For one library block the check MUST report:
+  - a `version` problem when an `<artifact>` has the `groupId:artifactId` of a direct dependency at another version than the POM declares,
+  - a `missing` problem when a direct dependency has no `<artifact>` and no `<exclude>` entry.
+- A dependency listed under `<exclude>`, a dependency with a `<classifier>`, and every dependency of a block with `include-transitive-deps="false"` are not compared. A dependency without an exact version is a note, not a problem.
+- The check MUST print the remedy with every problem: pin the version the POM declares, or exclude the dependency and add a module dependency on its wrapper module.
+- The `check` command MUST scan every library block that lists more than one `<artifact>` (or the blocks of the named libraries), read the POM from the local Maven repository (`$MAVEN_REPOSITORY` or `~/.m2/repository`) first and then from the cached repository and every repository in order, and exit `1` when a problem exists. A whole-repository run prints the notes as one count; a run with named libraries prints each note. An unavailable POM is reported and counted, not a failure.
+- The check compares direct dependencies only. A dependency of a dependency is out of scope; the JPS run (`./build/downloadLibraries.cmd`) covers it.
+  [@test] ../test/snapshot-check.test.mjs
 
 ### HTML output
 - The generated HTML MUST be self-contained: no external scripts, no CDN references, no network dependencies at view time.
@@ -137,7 +152,7 @@ A single-file Bun CLI (`libraries-dashboard.mjs`) with two commands. The report 
 - Status MUST render as a colored badge (`.badge-major`, `.badge-minor`, `.badge-patch`, `.badge-inconsistent`, `.badge-unknown`, `.badge-fork`, `.badge-ahead`, `.badge-up-to-date`).
 - Each row MUST expose an **Action** column with a **Copy prompt** button for every artifact that is not `up-to-date`, `ahead` or `fork`. Clicking the button MUST place a ready-to-paste prompt onto the system clipboard (via `navigator.clipboard.writeText`, falling back to a hidden `<textarea>` + `document.execCommand("copy")`).
 - After a successful copy the button MUST flash a `.copied` state (~1.2s) and a transient toast MUST appear near the bottom of the viewport for ~1.6s.
-- The prompt for outdated artifacts MUST name the `groupId:artifactId`, the current and target versions, the repo-relative path and kind of every source file, the `bump` command with the explicit target, the follow-up commands, and the hint to compare the printed POM dependencies with the artifact list.
+- The prompt for outdated artifacts MUST name the `groupId:artifactId`, the current and target versions, the repo-relative path and kind of every source file, the `bump` command with the explicit target, the follow-up commands, the JPS rule the snapshot check enforces with its remedy, and the `check` command to run after a manual edit of the block.
 - The prompt for `unknown` artifacts MUST instead ask the agent to investigate the authoritative release source and propose a bump plan. It names the note when one exists.
 - All file paths embedded in prompts MUST be repo-relative, not absolute.
 
@@ -174,6 +189,8 @@ A single-file Bun CLI (`libraries-dashboard.mjs`) with two commands. The report 
 - Invalid JSON or an old version in the cache: cache is discarded and rebuilt on the current run.
 - No artifacts discovered: the tool MUST print a diagnostic and exit `1`.
 - Bump with a missing checksum or a source file that does not pin the old version: that library is left unchanged and reported; the command exits `1` after the other libraries.
+- Bump whose rewritten block fails the snapshot check: the files stay rewritten, the problems and the remedy are printed, and the command exits `1` after the other libraries.
+- Check with an unavailable POM: the library is reported and counted; the exit status depends on the problems of the other libraries only.
 
 ## Testing / Local Run
 - Unit tests: `node --test community/build/libraries-dashboard/test/*.test.mjs`. The tests import the script; the script runs `main()` only when it is the entry point.
@@ -182,11 +199,14 @@ A single-file Bun CLI (`libraries-dashboard.mjs`) with two commands. The report 
 - Verify HTML: `open out/libraries-dashboard/dashboard.html` (or pass `--open`).
 - Verify JSON shape: `bun community/build/libraries-dashboard/libraries-dashboard.mjs --format=json && jq '.artifacts[0]' out/libraries-dashboard/dashboard.json`.
 - Spot-check an artifact's reported latest against `https://central.sonatype.com/artifact/{groupId}/{artifactId}`.
-- Verify a bump: run it on a single-artifact library, inspect `git diff`, then run `./build/jpsModelToBazel.cmd`, which downloads every jar and fails on a checksum mismatch. Then run `./fleet/build/generateProjectModel.cmd dump` and confirm with `./fleet/build/generateProjectModel.cmd check`. When the dump changes a `kmp.MODULE.bazel`, run `bazel mod deps --lockfile_mode=update` in the root and in `community/`, then confirm with `bazel build --nobuild --lockfile_mode=error` on a target that uses the `kmp` extension. Finish with `./tests.cmd --module intellij.projectStructureTests --test 'com.intellij.ideaProjectStructure.fast.*'`, which is the Smoke Tests gate for the version copies and the Kotlin, Compose and LanguageTool version alignment.
+- Snapshot check over the repository: `bun community/build/libraries-dashboard/libraries-dashboard.mjs check`; for one library with its notes: `... check org.mockito:mockito-core`. The whole run reads the POMs from `~/.m2/repository` and finishes in under a second when they are there.
+- Reproduce the JPS resolution that TeamCity runs before every build: `./build/downloadLibraries.cmd`. It calls the same `resolveProjectDependencies()` as jps-bootstrap and needs Space credentials.
+- Verify a bump: run it on a single-artifact library, inspect `git diff`, then run `./build/jpsModelToBazel.cmd`, which downloads every jar and fails on a checksum mismatch. `jpsModelToBazel` does not compare the snapshot with the POM; the bump and `check` do. Then run `./fleet/build/generateProjectModel.cmd dump` and confirm with `./fleet/build/generateProjectModel.cmd check`. When the dump changes a `kmp.MODULE.bazel`, run `bazel mod deps --lockfile_mode=update` in the root and in `community/`, then confirm with `bazel build --nobuild --lockfile_mode=error` on a target that uses the `kmp` extension. Finish with `./tests.cmd --module intellij.projectStructureTests --test 'com.intellij.ideaProjectStructure.fast.*'`, which is the Smoke Tests gate for the version copies and the Kotlin, Compose and LanguageTool version alignment.
 
 ## Open Questions / Risks
 - A cold run on a library that lives in a late repository costs one request per earlier repository. The repository order in `jarRepositories.xml` decides the cost.
 - The prerelease and fork token lists are hard-coded; a novel suffix is treated as a variant family and may hide a newer release until the list grows.
 - The mirror list is hard-coded. A new file that copies a library version, together with a new project structure test, needs an entry in `VERSION_MIRRORS`, or the bump misses it and the Smoke Tests build fails.
-- The bump command does not update the transitive artifact set. A release that adds or drops a dependency needs a manual edit of the `<artifact>` and `<root>` lists; the printed POM dependencies are the hint.
+- The bump command does not update the transitive artifact set. A release that adds or drops a direct dependency fails the snapshot check and needs a manual edit of the `<artifact>` and `<root>` lists. A change deeper in the tree passes the check; only the JPS run finds it.
+- The snapshot check reads one POM without its parents, so a version managed by a parent POM or a BOM is a note, not a comparison (132 such dependencies across 176 multi-artifact libraries on 2026-09-15).
 - `repo1.maven.org` does not rate-limit anonymously, but the sustained request volume may become impolite; the 8-way concurrency cap is a heuristic.
