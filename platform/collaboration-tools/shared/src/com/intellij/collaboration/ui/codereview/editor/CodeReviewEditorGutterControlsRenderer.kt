@@ -2,7 +2,7 @@
 package com.intellij.collaboration.ui.codereview.editor
 
 import com.intellij.codeInsight.documentation.render.DocRenderer
-import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.THREAD_TOP_MARGIN
+import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorUIConstants.THREAD_TOP_MARGIN
 import com.intellij.diff.util.DiffDrawUtil
 import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.LineRange
@@ -390,7 +390,7 @@ private constructor(
       }
 
       val commentable: Boolean by lazy {
-        if (ReviewInEditorUtil.isLastBlankLine(editor.document, logicalLine)) return@lazy false
+        if (CodeReviewEditorDocumentUtil.isLastBlankLine(editor.document, logicalLine)) return@lazy false
         state.isLineCommentable(logicalLine)
       }
     }

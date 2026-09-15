@@ -2,6 +2,7 @@
 package com.intellij.collaboration.util
 
 import kotlinx.coroutines.flow.FlowCollector
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.CancellationException
 
 /**
@@ -10,7 +11,7 @@ import java.util.concurrent.CancellationException
  * null value means that the computation hasn't completed yet
  */
 @JvmInline
-value class ComputedResult<out T> internal constructor(
+value class ComputedResult<out T> @ApiStatus.Internal constructor(
   val result: Result<T>?,
 ) {
   val isSuccess: Boolean get() = result != null && result.isSuccess

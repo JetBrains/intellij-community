@@ -436,41 +436,9 @@ f:com.intellij.collaboration.util.CollectionDelta
 - f:getRemovedItems():java.util.Collection
 - f:isEmpty():Z
 f:com.intellij.collaboration.util.ComputableSequenceKt
-f:com.intellij.collaboration.util.ComputedResult
-- sf:Companion:com.intellij.collaboration.util.ComputedResult$Companion
-- bsf:box-impl(kotlin.Result):com.intellij.collaboration.util.ComputedResult
-- equals(java.lang.Object):Z
-- s:equals-impl(kotlin.Result,java.lang.Object):Z
-- sf:equals-impl0(kotlin.Result,kotlin.Result):Z
-- f:getResult-xLWZpok():kotlin.Result
-- hashCode():I
-- s:hashCode-impl(kotlin.Result):I
-- sf:isInProgress-impl(kotlin.Result):Z
-- sf:isSuccess-impl(kotlin.Result):Z
-- s:toString-impl(kotlin.Result):java.lang.String
-- bf:unbox-impl():kotlin.Result
-f:com.intellij.collaboration.util.ComputedResult$Companion
-- f:compute-Jugeb-E(kotlin.jvm.functions.Function0):com.intellij.collaboration.util.ComputedResult
-- f:failure-NCBHHgM(java.lang.Throwable):kotlin.Result
-- f:fromResult-vAKnILo(java.lang.Object):kotlin.Result
-- f:loading-uUe189E():kotlin.Result
-- f:success-NCBHHgM(java.lang.Object):kotlin.Result
-f:com.intellij.collaboration.util.ComputedResultKt
-- sf:computeEmitting(kotlinx.coroutines.flow.FlowCollector,kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
-- sf:exceptionOrNull-dyXsKJo(kotlin.Result):java.lang.Throwable
-- sf:fold--EiVA6M(kotlin.Result,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1):java.lang.Object
-- sf:getOrNull-dyXsKJo(kotlin.Result):java.lang.Object
-- sf:map-dMZ2rFk(kotlin.Result,kotlin.jvm.functions.Function1):kotlin.Result
-- sf:onFailure-dMZ2rFk(kotlin.Result,kotlin.jvm.functions.Function1):kotlin.Result
-- sf:onInProgress-dMZ2rFk(kotlin.Result,kotlin.jvm.functions.Function0):kotlin.Result
-- sf:onSuccess-dMZ2rFk(kotlin.Result,kotlin.jvm.functions.Function1):kotlin.Result
 f:com.intellij.collaboration.util.ExcludingApproximateChangedRangesShifter
 - sf:INSTANCE:com.intellij.collaboration.util.ExcludingApproximateChangedRangesShifter
 - f:shift(java.lang.Iterable,java.lang.Iterable):java.util.List
-f:com.intellij.collaboration.util.HashingUtil
-- sf:INSTANCE:com.intellij.collaboration.util.HashingUtil
-- f:mappingStrategy(kotlin.jvm.functions.Function1,com.intellij.util.containers.HashingStrategy):com.intellij.util.containers.HashingStrategy
-- bs:mappingStrategy$default(com.intellij.collaboration.util.HashingUtil,kotlin.jvm.functions.Function1,com.intellij.util.containers.HashingStrategy,I,java.lang.Object):com.intellij.util.containers.HashingStrategy
 f:com.intellij.collaboration.util.HideableKt
 - sf:syncOrToggleAll(kotlin.sequences.Sequence):V
 f:com.intellij.collaboration.util.IncrementallyComputedValue

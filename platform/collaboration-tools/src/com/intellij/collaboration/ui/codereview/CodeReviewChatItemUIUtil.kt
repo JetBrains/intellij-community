@@ -7,10 +7,10 @@ import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.codereview.avatar.Avatar
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil
+import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorUIConstants
 import com.intellij.collaboration.ui.util.CodeReviewColorUtil
 import com.intellij.ui.JBColor
 import com.intellij.ui.hover.HoverStateListener
-import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.Panels.simplePanel
 import net.miginfocom.layout.CC
@@ -25,17 +25,14 @@ import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
-import kotlin.math.roundToInt
 
 object CodeReviewChatItemUIUtil {
 
   /**
    * Maximum width for textual content for it to be readable
-   * Equals to 42em
    */
   val TEXT_CONTENT_WIDTH: Int
-    get() = (JBUIScale.DEF_SYSTEM_FONT_SIZE * 42).roundToInt()
-  const val THREAD_TOP_MARGIN: Int = 8
+    get() = CodeReviewEditorUIConstants.TEXT_CONTENT_WIDTH
 
   // we use unscaled insets, bc they will be scaled when we create the border
   @Suppress("UseDPIAwareInsets")

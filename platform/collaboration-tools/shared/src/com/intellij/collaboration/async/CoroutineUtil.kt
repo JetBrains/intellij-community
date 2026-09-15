@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:OptIn(ExperimentalCoroutinesApi::class)
 
 package com.intellij.collaboration.async
@@ -521,7 +521,8 @@ suspend fun <T> Flow<Deferred<T>>.awaitCompleted(): T =
 /**
  * A copy-paste of [await] which interrupts the future when await is canceled
  */
-internal suspend fun <T> CompletionStage<T>.awaitInterrupting(): T {
+@ApiStatus.Internal
+suspend fun <T> CompletionStage<T>.awaitInterrupting(): T {
   val future = toCompletableFuture() // retrieve the future
   // fast path when CompletableFuture is already done (does not suspend)
   if (future.isDone) {

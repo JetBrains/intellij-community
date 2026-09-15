@@ -5,7 +5,6 @@ import com.intellij.collaboration.async.cancelAndJoin
 import com.intellij.collaboration.async.collectScoped
 import com.intellij.collaboration.async.combineStateIn
 import com.intellij.collaboration.async.launchNow
-import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout
 import com.intellij.collaboration.ui.util.DimensionRestrictions
 import com.intellij.collaboration.util.HashingUtil
@@ -48,7 +47,7 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 
 typealias RendererFactory<VM, C> = CoroutineScope.(VM) -> ComponentInlayRenderer<C>
-internal typealias CodeReviewRendererFactory<VM> = CoroutineScope.(VM) -> CodeReviewComponentInlayRenderer
+typealias CodeReviewRendererFactory<VM> = CoroutineScope.(VM) -> CodeReviewComponentInlayRenderer
 
 @Deprecated("Use EditorMappedViewModel instead for explicit flow guarantees")
 interface EditorMapped {
@@ -224,7 +223,7 @@ private fun EditorEx.insertComponent(offset: Int, renderer: ComponentInlayRender
 
 // 52 for avatar and gaps
 open class CodeReviewComponentInlayRenderer(private val actualComponent: JComponent)
-  : ComponentInlayRenderer<JComponent>(wrapWithLimitedWidth(actualComponent, CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH + 52),
+  : ComponentInlayRenderer<JComponent>(wrapWithLimitedWidth(actualComponent, CodeReviewEditorUIConstants.TEXT_CONTENT_WIDTH + 52),
                                        ComponentInlayAlignment.FIT_VIEWPORT_WIDTH) {
   var isVisible: Boolean
     get() = actualComponent.isVisible

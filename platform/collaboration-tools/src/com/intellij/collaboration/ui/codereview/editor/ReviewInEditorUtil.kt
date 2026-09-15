@@ -2,14 +2,12 @@
 package com.intellij.collaboration.ui.codereview.editor
 
 import com.intellij.collaboration.ui.codereview.editor.action.CodeReviewInEditorToolbarActionGroup
-import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.Range
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.Constraints
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.EdtImmediate
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.diff.LineStatusMarkerColorScheme
 import com.intellij.openapi.editor.Document
@@ -18,9 +16,6 @@ import com.intellij.openapi.editor.colors.ColorKey
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.ex.EditorMarkupModel
 import com.intellij.openapi.editor.markup.TextAttributes
-import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vcs.ex.DocumentTracker
-import com.intellij.openapi.vcs.ex.LineStatusTrackerBase
 import com.intellij.openapi.vcs.ex.LstRange
 import com.intellij.ui.JBColor
 import kotlinx.coroutines.Dispatchers
@@ -55,65 +50,17 @@ object ReviewInEditorUtil {
     override fun getErrorStripeColor(): Color = lineStatusMarkerColorScheme.getErrorStripeColor(0) ?: REVIEW_CHANGES_STATUS_COLOR
   }
 
-  fun transferLineToAfter(ranges: List<Range>, line: Int): Int {
-    if (ranges.isEmpty()) return line
-    var result = line
-    for (range in ranges) {
-      if (line in range.start1 until range.end1) {
-        return (range.end2 - 1).coerceAtLeast(0)
-      }
+  fun transferLineToAfter(ranges: List<Range>, line: Int): Int =
+    CodeReviewEditorDocumentUtil.transferLineToAfter(ranges, line)
 
-      if (range.end1 > line) return result
+  fun transferLineFromAfter(ranges: List<Range>, line: Int, approximate: Boolean = false): Int? =
+    CodeReviewEditorDocumentUtil.transferLineFromAfter(ranges, line, approximate)
 
-      val length1 = range.end1 - range.start1
-      val length2 = range.end2 - range.start2
-      result += length2 - length1
-    }
-    return result
-  }
+  suspend fun trackDocumentDiffSync(originalContent: CharSequence, document: Document, changesCollector: (List<Range>) -> Unit): Nothing =
+    CodeReviewEditorDocumentUtil.trackDocumentDiffSync(originalContent, document, changesCollector)
 
-  fun transferLineFromAfter(ranges: List<Range>, line: Int, approximate: Boolean = false): Int? {
-    if (ranges.isEmpty()) return line
-    var result = line
-    for (range in ranges) {
-      if (line < range.start2) return result
-
-      if (line in range.start2 until range.end2) {
-        return if (approximate) range.end1 else null
-      }
-
-      val length1 = range.end1 - range.start1
-      val length2 = range.end2 - range.start2
-      result -= length2 - length1
-    }
-    return result
-  }
-
-  suspend fun trackDocumentDiffSync(originalContent: CharSequence, document: Document, changesCollector: (List<Range>) -> Unit): Nothing {
-    val reviewHeadDocument = LineStatusTrackerBase.createVcsDocument(originalContent)
-    trackDocumentDiffSync(reviewHeadDocument, document, changesCollector)
-  }
-
-  suspend fun trackDocumentDiffSync(originalDocument: Document, currentDocument: Document, changesCollector: (List<Range>) -> Unit): Nothing {
-    withContext(Dispatchers.EdtImmediate) {
-      val documentTracker = DocumentTracker(originalDocument, currentDocument)
-      val trackerHandler = object : DocumentTracker.Handler {
-        override fun afterBulkRangeChange(isDirty: Boolean) {
-          val trackerRanges = documentTracker.blocks.map { it.range }
-          changesCollector(trackerRanges)
-        }
-      }
-
-      try {
-        documentTracker.addHandler(trackerHandler)
-        trackerHandler.afterBulkRangeChange(true)
-        awaitCancellation()
-      }
-      finally {
-        Disposer.dispose(documentTracker)
-      }
-    }
-  }
+  suspend fun trackDocumentDiffSync(originalDocument: Document, currentDocument: Document, changesCollector: (List<Range>) -> Unit): Nothing =
+    CodeReviewEditorDocumentUtil.trackDocumentDiffSync(originalDocument, currentDocument, changesCollector)
 
   /**
    * Sets up an inspection widget action group for review in editor
@@ -158,11 +105,7 @@ object ReviewInEditorUtil {
   }
 
   fun isLastBlankLine(document: Document, lineIdx: Int): Boolean {
-    val lineCount = DiffUtil.getLineCount(document)
-    if (lineIdx != lineCount - 1) return false
-    val start = document.getLineStartOffset(lineIdx)
-    val end = document.getLineEndOffset(lineIdx)
-    return start == end
+    return CodeReviewEditorDocumentUtil.isLastBlankLine(document, lineIdx)
   }
 
   // Awaits cancellation indefinitely until scope is cancelled
