@@ -57,6 +57,17 @@ interface SnapshotMarkerEngine {
    */
   fun removeRangeMarker(marker: SnapshotMarker): Boolean
 
+  /**
+   * Processes valid markers that non-strictly intersect the requested range.
+   *
+   * Each marker must contain every flavor bit in [tastePreference]. A zero value matches every marker.
+   * Collected weak marker references are purged. Disposed markers are skipped.
+   *
+   * @param rootStore supplies the marker root for [snapshot]
+   * @param snapshot selects the marker root
+   * @param processor receives each matching marker
+   * @return `false` when [processor] stops processing; otherwise, `true`
+   */
   fun processRangeMarkersOverlappingWith(
     rootStore: SnapshotMarkerRootStore,
     snapshot: DocumentSnapshot,

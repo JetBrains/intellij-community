@@ -33,8 +33,10 @@ fun interface MarkerPolicy {
 }
 
 /**
- * Final state of one marker after an edit.
- * [errorReason] is null when the marker stays valid.
+ * Contains one marker state after an edit.
+ *
+ * [entry] is the final state for both valid and invalid markers.
+ * [errorReason] is null for a valid marker. A non-null value explains why the marker is invalid.
  */
 @ApiStatus.Internal
 data class MarkerTransformResult(

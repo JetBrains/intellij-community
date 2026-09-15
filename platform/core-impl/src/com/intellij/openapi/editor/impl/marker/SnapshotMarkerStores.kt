@@ -8,7 +8,12 @@ import com.intellij.openapi.editor.impl.DocumentSnapshotImpl
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 
-/** Applies each [DocumentOp] to all marker roots for one document. */
+/**
+ * Applies each [DocumentOp] to all marker roots for one document.
+ *
+ * The registry holds each active store strongly. This ownership ensures that every active store receives each document operation.
+ * A store registers itself during construction. [SnapshotMarkerRootStore.dispose] removes the store from this registry.
+ */
 @ApiStatus.Internal
 class SnapshotMarkerStores {
   private val stores: MutableSet<SnapshotMarkerRootStore> = ConcurrentHashMap.newKeySet()

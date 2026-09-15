@@ -137,6 +137,11 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine {
     return marker
   }
 
+  /**
+   * Purges collected weak marker handles from their current roots.
+   *
+   * @return `true` when at least one root changed
+   */
   fun processQueue(): Boolean {
     var purgedAny = false
     while (true) {

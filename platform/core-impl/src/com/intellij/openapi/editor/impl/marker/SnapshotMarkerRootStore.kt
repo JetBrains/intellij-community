@@ -21,7 +21,17 @@ import java.util.concurrent.atomic.AtomicReference
 import java.util.function.LongConsumer
 
 /**
- * Stores marker [roots] outside the [document] snapshot and follows each [DocumentSnapshot] transition.
+ * Stores marker [roots] outside snapshots and follows each [DocumentSnapshot] transition for [document].
+ *
+ * The store uses weak identity keys. A snapshot can be collected after all other owners release it.
+ *
+ * The constructor registers this store with the document's [SnapshotMarkerStores].
+ * An owner with a shorter lifetime than the document must call [dispose].
+ *
+ * @param document supplies snapshot transitions and owns the store registry
+ * @param onMarkersInvalidated receives marker IDs that became invalid during a text change
+ * @param onDocumentChanged receives the document event after the marker callbacks run
+ * @param onMarkersAffected receives IDs for valid markers whose policies processed the text change
  */
 @ApiStatus.Internal
 class SnapshotMarkerRootStore @JvmOverloads constructor(
@@ -58,6 +68,7 @@ class SnapshotMarkerRootStore @JvmOverloads constructor(
     documentListener?.let { listener -> document.addDocumentListener(listener) }
   }
 
+  /** Removes the document listener and the store registration. It also clears all snapshot roots. */
   fun dispose(markerStores: SnapshotMarkerStores) {
     processQueue()
     documentListener?.let { listener -> documentReference.get()?.removeDocumentListener(listener) }
@@ -160,6 +171,11 @@ class SnapshotMarkerRootStore @JvmOverloads constructor(
     return roots.computeIfAbsent(snapshot) { RootState(initialRoot) }
   }
 
+  /**
+   * Removes root entries whose snapshot keys were collected.
+   *
+   * @return `true` when at least one entry was removed
+   */
   fun processQueue(): Boolean = (roots as ReferenceQueueable).processQueue()
 
   private class RootState(
