@@ -98,6 +98,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
   public void testDeleteConstructorParameterWithAnonymousClassUsage() { doSingleFileTest(); }
   public void testAccidentalPropertyRef() { doSingleFileTest(); }
   public void testMethodCannotBePrivate() { doSingleFileTest(); }
+  public void testNoRedundantImplements() { doSingleFileTest(); }
 
   public void testRecordAccessorCannotBePrivate() {
     IdeaTestUtil.setModuleLanguageLevel(getModule(), LanguageLevel.JDK_16, getTestRootDisposable());

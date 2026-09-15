@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.safeDelete.usageInfo;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -16,8 +16,6 @@ import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.SealedUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -46,17 +44,19 @@ public class SafeDeleteExtendsClassUsageInfo extends SafeDeleteReferenceUsageInf
   }
 
   @Override
-  public void deleteElement() throws IncorrectOperationException {
-    final PsiElement parent = getElement().getParent();
+  public void deleteElement() {
+    PsiElement element = getElement();
+    if (element == null) return;
+    final PsiElement parent = element.getParent();
     LOG.assertTrue(parent instanceof PsiReferenceList);
     final PsiClass refClass = getReferencedElement();
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(refClass.getProject());
 
+    element.delete();
     boolean targetTypeParameter = myExtendingClass instanceof PsiTypeParameter;
     copyExtendsList(refClass, refClass.getExtendsList(), refClass.isInterface() == myExtendingClass.isInterface() || targetTypeParameter, elementFactory);
     copyExtendsList(refClass, refClass.getImplementsList(), targetTypeParameter, elementFactory);
 
-    getElement().delete();
 
     if (!refClass.hasModifierProperty(PsiModifier.SEALED)) return;
     SealedUtils.removeFromPermitsList(refClass, myExtendingClass);
@@ -72,11 +72,11 @@ public class SafeDeleteExtendsClassUsageInfo extends SafeDeleteReferenceUsageInf
                                boolean targetExtends,
                                PsiElementFactory elementFactory) {
     if (sourceExtendsList != null) {
-      final PsiClassType[] referenceTypes = sourceExtendsList.getReferencedTypes();
       final PsiReferenceList targetExtendsList = targetExtends ? myExtendingClass.getExtendsList() : myExtendingClass.getImplementsList();
-      final PsiClassType[] existingRefTypes = targetExtendsList.getReferencedTypes();
-      for (PsiClassType referenceType : referenceTypes) {
-        if (ArrayUtilRt.find(existingRefTypes, referenceType) > -1) continue;
+      assert targetExtendsList != null;
+      for (PsiClassType referenceType : sourceExtendsList.getReferencedTypes()) {
+        PsiClass resolved = referenceType.resolve();
+        if (resolved != null && myExtendingClass.isInheritor(resolved, true)) continue;
         PsiClassType classType = (PsiClassType)mySubstitutor.substitute(referenceType);
         PsiElement extendsRef = targetExtendsList.add(elementFactory.createReferenceElementByType(classType));
         PsiClass classToExtend = classType.resolve();
