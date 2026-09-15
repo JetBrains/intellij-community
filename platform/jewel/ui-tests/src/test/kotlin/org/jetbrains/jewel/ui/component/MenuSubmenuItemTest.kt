@@ -22,12 +22,15 @@ class MenuSubmenuItemTest {
 
     @Test
     fun `clicking submenu item opens submenu`() {
+        val selected = mutableStateOf(false)
+
         rule.setContent {
             IntUiTheme {
                 CompositionLocalProvider(LocalMenuController provides FakeMenuController()) {
                     MenuSubmenuItem(
                         showIcon = false,
-                        selected = false,
+                        selected = selected.value,
+                        onSelectedChange = { selected.value = it },
                         submenu = { selectableItem(false, onClick = {}) { Text("Submenu") } },
                         content = { Text("Parent") },
                     )
@@ -47,13 +50,15 @@ class MenuSubmenuItemTest {
     @Test
     fun `disabling while submenu is open closes the submenu`() {
         val enabled = mutableStateOf(true)
+        val selected = mutableStateOf(false)
 
         rule.setContent {
             IntUiTheme {
                 CompositionLocalProvider(LocalMenuController provides FakeMenuController()) {
                     MenuSubmenuItem(
                         showIcon = false,
-                        selected = false,
+                        selected = selected.value,
+                        onSelectedChange = { selected.value = it },
                         enabled = enabled.value,
                         submenu = { selectableItem(false, onClick = {}) { Text("Submenu") } },
                         content = { Text("Parent") },
@@ -80,6 +85,7 @@ class MenuSubmenuItemTest {
                     MenuSubmenuItem(
                         showIcon = false,
                         selected = false,
+                        onSelectedChange = {},
                         enabled = false,
                         submenu = { selectableItem(selected = false, onClick = {}) { Text("Submenu") } },
                         content = { Text("Parent") },
@@ -96,12 +102,15 @@ class MenuSubmenuItemTest {
 
     @Test
     fun `right arrow opens submenu`() {
+        val selected = mutableStateOf(false)
+
         rule.setContent {
             IntUiTheme {
                 CompositionLocalProvider(LocalMenuController provides FakeMenuController()) {
                     MenuSubmenuItem(
                         showIcon = false,
-                        selected = false,
+                        selected = selected.value,
+                        onSelectedChange = { selected.value = it },
                         submenu = { selectableItem(selected = false, onClick = {}) { Text("Submenu") } },
                         content = { Text("Parent") },
                     )
