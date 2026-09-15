@@ -84,7 +84,7 @@ import javax.swing.border.CompoundBorder
 @ApiStatus.Internal
 open class SettingsNonModalDialog @ApiStatus.Internal constructor(
   project: Project,
-  groups: List<ConfigurableGroup>,
+  private val groups: List<ConfigurableGroup>,
   configurable: Configurable?,
   filter: String?,
 ) : NonModalWindowWrapper(project, FLOAT_MODE_KEY, DIMENSION_KEY) {
@@ -109,10 +109,12 @@ open class SettingsNonModalDialog @ApiStatus.Internal constructor(
 
     /**
      * Returns the single app-wide settings window, creating it if necessary.
-     * - Same project: navigates to [configurable] / applies [filter]; returns the existing window.
-     * - Different project: prompts the user to save/discard, closes the current window, and creates
-     *   a new one. If the user canceled or apply failed, returns the existing window unchanged.
-     * - No existing window: creates a new one using [create] and returns it.
+     * - Same project: navigates to `configurable(existing groups)` / applies [filter]; returns the
+     *   existing window. [groups] is not called, so no configurable tree is built.
+     * - Different project or no window: calls [groups], and resolves the target in that tree.
+     *   For a different project it prompts the user to save/discard, closes the current window, and
+     *   creates a new one. If the user canceled or apply failed, returns the existing window unchanged.
+     *   With no existing window it creates one using [create].
      *
      * The caller must call [show] on the returned dialog.
      *
@@ -122,27 +124,49 @@ open class SettingsNonModalDialog @ApiStatus.Internal constructor(
     @JvmStatic
     fun getOrCreate(
       project: Project,
-      groups: List<ConfigurableGroup>,
-      configurable: Configurable?,
+      groups: () -> List<ConfigurableGroup>,
+      configurable: (List<ConfigurableGroup>) -> Configurable?,
       filter: String?,
       create: (Project, List<ConfigurableGroup>, Configurable?, String?) -> SettingsNonModalDialog = ::SettingsNonModalDialog,
     ): SettingsNonModalDialog {
       val existing = ourInstance
       if (existing != null && !existing.isDisposed) {
         if (existing.project == project) {
-          if (configurable != null) {
-            existing.editor.selectWithFilter(configurable, filter)
-          }
-          else {
-            filter?.let { existing.editor.setFilter(it) }
-          }
+          // the open window holds its own tree, so [groups] is never called here
+          existing.navigateTo(configurable(existing.groups), filter)
           return existing
         }
         else {
-          return existing.handleDifferentProject(project, groups, configurable, filter, create)
+          val newGroups = groups()
+          return existing.handleDifferentProject(project, newGroups, configurable(newGroups), filter, create)
         }
       }
-      return create(project, groups, configurable, filter).also { ourInstance = it }
+      val newGroups = groups()
+      return create(project, newGroups, configurable(newGroups), filter).also { ourInstance = it }
+    }
+
+    /**
+     * Navigates the open settings window of [project] to a configurable, and returns `true`.
+     * Returns `false` when no such window is open, so that the caller builds a tree only then.
+     *
+     * [configurable] receives the groups of the open window, because the tree selects a node by the
+     * [Configurable] instance. A configurable from another tree matches no node.
+     *
+     * This function calls [show] on the window itself.
+     */
+    @JvmStatic
+    fun navigateOpenDialog(
+      project: Project,
+      filter: String?,
+      configurable: (List<ConfigurableGroup>) -> Configurable?,
+    ): Boolean {
+      val existing = ourInstance ?: return false
+      if (existing.isDisposed || existing.project != project) {
+        return false
+      }
+      existing.navigateTo(configurable(existing.groups), filter)
+      existing.show()
+      return true
     }
 
     /**
@@ -353,6 +377,15 @@ open class SettingsNonModalDialog @ApiStatus.Internal constructor(
         UnsavedChangesResult.DISCARDED
       }
       else -> UnsavedChangesResult.CANCELED
+    }
+  }
+
+  private fun navigateTo(configurable: Configurable?, filter: String?) {
+    if (configurable != null) {
+      editor.selectWithFilter(configurable, filter)
+    }
+    else {
+      filter?.let { editor.setFilter(it) }
     }
   }
 

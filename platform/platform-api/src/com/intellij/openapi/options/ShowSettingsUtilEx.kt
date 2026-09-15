@@ -12,4 +12,14 @@ interface ShowSettingsUtilEx {
    * Must not be called from the UI context.
    */
   suspend fun showSettingsDialog(project: Project, groups: List<ConfigurableGroup>)
+
+  /**
+   * Shows the settings dialog of [project], and builds the configurable tree only when a dialog
+   * must be created. An open settings window of the same project is reused, so no tree is built.
+   *
+   * Prefer this function over the overload that takes a built group list.
+   *
+   * Must not be called from the UI context.
+   */
+  suspend fun showSettingsDialog(project: Project)
 }
