@@ -105,7 +105,6 @@
     <orderEntry type="module" module-name="intellij.libraries.opentelemetry.semconv" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry.impl" />
-    <orderEntry type="module" module-name="intellij.platform.feedback" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.html" />
     <orderEntry type="module" module-name="intellij.platform.util.text.matching" />
     <orderEntry type="module" module-name="intellij.platform.util.base" />
