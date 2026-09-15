@@ -17,8 +17,6 @@
   <extensions defaultExtensionNs="com.intellij">
     <multiRoutingFileSystemBackend implementation="com.intellij.platform.eel.tcp.TcpEelMrfsBackend"/>
     <eelEnvironmentInitializer implementation="com.intellij.platform.eel.tcp.TcpEelEnvironmentInitializer"/>
-    <eelTcpPathParser implementation="com.intellij.platform.eel.tcp.raw.RawTcpPathParser"/>
-    <eelMachineResolver implementation="com.intellij.platform.eel.tcp.raw.RawTcpMachineResolver"/>
   </extensions>
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.eelTcpPathParser" interface="com.intellij.platform.eel.tcp.TcpEelPathParser"
