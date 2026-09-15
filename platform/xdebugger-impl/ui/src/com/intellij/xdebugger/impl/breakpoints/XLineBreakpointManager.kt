@@ -549,8 +549,12 @@ class XLineBreakpointManager(
     }
 
     private fun isInsideClickableGutterArea(e: EditorMouseEvent): Boolean {
-      if (isNewUI() && e.area == EditorMouseEventArea.LINE_NUMBERS_AREA) {
+      val clickOnLineNumbersArea = e.area == EditorMouseEventArea.LINE_NUMBERS_AREA
+      if (isNewUI() && clickOnLineNumbersArea) {
         return getInstance().showBreakpointsOverLineNumbers
+      }
+      if (keyModifierPressed(e)) {
+        return clickOnLineNumbersArea && !getInstance().showBreakpointsOverLineNumbers
       }
       if (isNewUI() && e.editor.settings.isLineNumbersAfterIcons && e.editor.settings.isLineNumbersShown) {
         return false
@@ -559,6 +563,10 @@ class XLineBreakpointManager(
         return false
       }
       return e.mouseEvent.x <= (e.editor as EditorEx).gutterComponentEx.whitespaceSeparatorOffset
+    }
+
+    fun keyModifierPressed(e: EditorMouseEvent): Boolean {
+      return e.mouseEvent.modifiersEx and XLineBreakpointVerticalPlacement.ON_LINE.keyModifier != 0
     }
   }
 
