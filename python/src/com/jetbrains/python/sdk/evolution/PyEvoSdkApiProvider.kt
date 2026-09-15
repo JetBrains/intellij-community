@@ -43,6 +43,7 @@ import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
 import com.intellij.python.sdk.backend.asInterpreterRef
+import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.pytools.backend.PyTool
 import com.intellij.python.pytools.backend.performToolInstallation
 import com.intellij.python.sdk.backend.evolution.EvoWorkspace
@@ -487,6 +488,7 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
    * Built here, where it is pushed, and not held on the structure: everything a DTO states lives on the generation
    * already, and only a connected frontend ever asks for one.
    */
+  @Suppress("DEPRECATION")
   private fun EvoPyProjectModel.Snapshot.toDtos(): List<EvoPyProjectDto> =
     pyProjects.map { target ->
       EvoPyProjectDto(
@@ -497,7 +499,7 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
         // own, which every reader already treats as "no workspace of its own".
         workspaceRootKey = target.workspace.rootKey,
         // A ref is the name of the SDK, so building one reads nothing.
-        interpreterRef = target.sdk?.asInterpreterRef(),
+        interpreterRef = target.interpreter?.getSdkAPI()?.asInterpreterRef(),
       )
     }
 

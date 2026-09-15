@@ -6,49 +6,22 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.evolution.EvoPyProject
-import com.intellij.python.sdk.backend.getInterpreter
-import com.jetbrains.python.project.PyProject
-import com.jetbrains.python.project.PyProject.Companion.asPyProject
 import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
 
 /**
- * The subproject a Python Console runs for, and its interpreter.
+ * The subproject a Python Console runs for, awaiting the project structure and the SDK table when either is still
+ * loading.
  *
- * Both answers come from where the interpreter widget takes them, so the console and the status bar can never
- * disagree about a directory.
+ * From [EvoPyProjectModel.Snapshot.forFile], which every Python surface reads, so the console and the status bar can
+ * never disagree about a directory. The interpreter rides along on the target, already resolved by the snapshot.
  *
- * The subproject's own root needs no field here. It follows from [module]: the console takes its working directory
- * from the module's first content root, and `constructPyPathAndWorkingDirCommand` always puts the working directory
- * on `sys.path`.
+ * The subproject's own root needs no answer here. It follows from [EvoPyProject.module]: the console takes its
+ * working directory from the module's first content root, and `constructPyPathAndWorkingDirCommand` always puts the
+ * working directory on `sys.path`.
  */
-internal class PyConsoleTarget(val pyProject: PyProject, val interpreter: PythonInterpreter?) {
-  /**
-   * The module the console runs on.
-   *
-   * `residesOnModule` asks not to be used unless necessary, and here it is: both
-   * [PythonConsoleRunnerFactory.createConsoleRunner] and [consoleTabTitle] take a `Module`.
-   */
-  val module: Module get() = pyProject.residesOnModule
-}
-
-/**
- * The subproject [file] belongs to, plus its interpreter, awaiting the project structure and the SDK table when
- * either is still loading.
- *
- * The subproject comes from [EvoPyProjectModel.Snapshot.forFile], which every Python surface reads, so the console
- * and the status bar can never disagree about a directory.
- *
- * The target arrives as an `EvoPyProject`, which keeps its own [PyProject] private, so the [PyProject] is asked for
- * again by module. One extra lookup, and it is what lets everything above hold the wrapper.
- */
-internal suspend fun resolveConsoleTarget(project: Project, file: VirtualFile?): PyConsoleTarget? {
-  val snapshot = project.service<EvoPyProjectModel>().snapshot()
-  val target = snapshot.forFile(file) ?: return null
-  val pyProject = target.module.asPyProject() ?: return null
-  return PyConsoleTarget(pyProject, pyProject.getInterpreter())
-}
+internal suspend fun resolveConsoleTarget(project: Project, file: VirtualFile?): EvoPyProject? =
+  project.service<EvoPyProjectModel>().snapshot().forFile(file)
 
 /**
  * The main subproject — the one rooted at the project's own base dir — or `null` when the project has none, or when

@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Disposer
 import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
+import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.IncorrectOperationException
 import com.jetbrains.python.packaging.PyPackageUtil
@@ -70,13 +71,15 @@ internal class PythonPackageManagerServiceImpl(
    */
   private fun syncWatchers(structure: EvoPyProjectModel.Snapshot?) {
     if (cache.isEmpty() || structure == null) return
+    @Suppress("DEPRECATION")
+    val sdksInUse = structure.interpreters.mapTo(mutableSetOf()) { it.getSdkAPI() }
     watchersLock.withLock {
       for ((key, entry) in cache) {
         val watched = entry.watcher != null
-        if (entry.sdk in structure.sdks && !watched) {
+        if (entry.sdk in sdksInUse && !watched) {
           watchInterpreterPaths(key, entry)
         }
-        else if (entry.sdk !in structure.sdks && watched) {
+        else if (entry.sdk !in sdksInUse && watched) {
           logger.info("The project does not use '${entry.sdk.name}' any more, so its paths are not watched")
           entry.watcher?.let { Disposer.dispose(it) }
           entry.watcher = null

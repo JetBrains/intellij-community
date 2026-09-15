@@ -12,7 +12,8 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.pythonInterpreterAsync
 import com.jetbrains.python.sdk.findPythonSdk
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.backend.workspace.WorkspaceModel
@@ -157,15 +158,16 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
      * The answer to "does this project use that interpreter", for a caller that would otherwise walk every module to
      * find out. Read from the same generation as everything else here, so a caller never mixes two answers.
      *
+     * A set, so [PythonInterpreter] equality carries it: two wrappers of one SDK are one interpreter here.
      */
-    val sdks: Set<Sdk> = pyProjects.mapNotNullTo(mutableSetOf()) { it.sdk }
+    val interpreters: Set<PythonInterpreter> = pyProjects.mapNotNullTo(mutableSetOf()) { it.interpreter }
   }
 
   private val state = MutableStateFlow<Snapshot?>(null)
 
   // Declared before `init`: the coroutines it starts read these fields. A dispatch can start one before the
   // constructor ends.
-  private val interpreterState = MutableStateFlow<Sdk?>(null)
+  private val interpreterState = MutableStateFlow<PythonInterpreter?>(null)
 
   private val selectionChanges = MutableStateFlow(0)
 
@@ -227,9 +229,9 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
    * Private: it states nothing that [Snapshot.forFile] does not, so a caller that wants one file's interpreter reads
    * `snapshot().forFile(file)?.interpreter` and a caller that wants the edited file's follows [interpreter].
    */
-  private suspend fun interpreterFor(file: VirtualFile?): Sdk? {
+  private suspend fun interpreterFor(file: VirtualFile?): PythonInterpreter? {
     val snapshot = snapshot()
-    return snapshot.forFile(file)?.sdk
+    return snapshot.forFile(file)?.interpreter
   }
 
   /**
@@ -240,7 +242,7 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
    * window followed the file's own module and cleared itself on a file whose module carried no interpreter, while the
    * widget followed the workspace and kept showing it (PY-90174).
    */
-  val interpreter: StateFlow<Sdk?> get() = interpreterState.asStateFlow()
+  val interpreter: StateFlow<PythonInterpreter?> get() = interpreterState.asStateFlow()
 
   private fun selectedFile(): VirtualFile? = FileEditorManager.getInstance(project).selectedFiles.firstOrNull()
 
@@ -251,8 +253,9 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
     // snapshot, and taking it once also keeps the layouts consistent with each other.
     val layouts = readAction { sources.associate { it.residesOnModule to it.residesOnModule.getWorkspaceLayout() } }
     // Waits for the project model, once for the whole generation, so no reader of this snapshot waits again and none
-    // reads `null` for a configured interpreter while the SDK table is still loading (PY-91871).
-    val sdks = sources.associate { it.residesOnModule to it.residesOnModule.findPythonSdk() }
+    // reads `null` for a configured interpreter while the SDK table is still loading (PY-91871). Detection runs here
+    // too: it reads the layout around the binary and caches on the SDK, so a reader never pays for it.
+    val interpreters = sources.associate { it.residesOnModule to it.residesOnModule.findPythonSdk()?.pythonInterpreterAsync() }
 
     /**
      * The workspace root of [pyProject], or `null` when it is standalone.
@@ -278,7 +281,7 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
 
     // Same spelling as the keys, so "is this the main one" is a comparison of like with like.
     val mainKey = project.basePath?.let { FileUtil.toSystemIndependentName(it) }
-    val pyProjects = sources.map { EvoPyProject(it, workspaceOf(it), sdks[it.residesOnModule]) }
+    val pyProjects = sources.map { EvoPyProject(it, workspaceOf(it), interpreters[it.residesOnModule]) }
     return Snapshot(pyProjects, pyProjects.firstOrNull { it.key == mainKey })
   }
 }
@@ -289,8 +292,8 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
  * Replaces `ProjectRootManager.getProjectSdk()`, which reads `project-jdk-name` from `.idea/misc.xml`. That attribute
  * is missing or stale in the projects PY-89831 reports.
  *
- * Waits for the structure and for the project model behind the module's own SDK reference, so it never answers on
- * incomplete information.
+ * Waits for the structure, which already holds the interpreter of every module, so it never answers on incomplete
+ * information and it repeats no lookup.
  */
 @ApiStatus.Internal
-suspend fun Project.findMainPythonSdk(): Sdk? = service<EvoPyProjectModel>().snapshot().main?.module?.findPythonSdk()
+suspend fun Project.findMainPythonInterpreter(): PythonInterpreter? = service<EvoPyProjectModel>().snapshot().main?.interpreter

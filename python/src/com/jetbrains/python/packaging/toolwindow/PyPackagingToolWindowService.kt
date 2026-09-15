@@ -59,6 +59,7 @@ import com.intellij.python.requirements.pyRequirement
 import com.jetbrains.python.packaging.repository.PyPiPackageRepository
 import com.jetbrains.python.packaging.repository.PyPackageRepositories
 import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
+import com.intellij.python.sdk.backend.getSdkAPI
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.packaging.repository.PyRepositoriesList
 import com.jetbrains.python.packaging.repository.checkValid
@@ -171,7 +172,8 @@ internal class PyPackagingToolWindowService(val project: Project, val serviceSco
   fun initialize(toolWindowPanel: PyPackagingToolWindowPanel) {
     this.toolWindowPanel = toolWindowPanel
     serviceScope.launch(Dispatchers.IO) {
-      val sdkToOpenOn = project.service<EvoPyProjectModel>().interpreter.value
+      @Suppress("DEPRECATION")
+      val sdkToOpenOn = project.service<EvoPyProjectModel>().interpreter.value?.getSdkAPI()
       val boundSdk = sdkContext?.sdk
       if (shouldReplayBoundSdk(boundSdk, sdkToOpenOn)) {
         checkNotNull(boundSdk)
@@ -567,7 +569,8 @@ internal class PyPackagingToolWindowService(val project: Project, val serviceSco
    */
   private fun followSharedInterpreter() {
     serviceScope.launch {
-      project.service<EvoPyProjectModel>().interpreter.collect { initForSdk(it) }
+      @Suppress("DEPRECATION")
+      project.service<EvoPyProjectModel>().interpreter.collect { initForSdk(it?.getSdkAPI()) }
     }
   }
 

@@ -5,6 +5,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
+import com.intellij.python.sdk.backend.getSdkAPI
 
 /**
  * The interpreter of the module at the project root, for a file that belongs to no module, such as a scratch file.
@@ -14,6 +15,7 @@ import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
  *
  * Internal to resolve, which cannot suspend. It answers `null` until the first structure lands, and nothing
  * invalidates what was resolved in that window, so it is not an answer to hand out. Everything else asks
- * [com.intellij.python.pyproject.model.evolution.findMainPythonSdk], which waits.
+ * [com.intellij.python.pyproject.model.evolution.findMainPythonInterpreter], which waits.
  */
-internal fun Project.mainPythonSdk(): Sdk? = service<EvoPyProjectModel>().snapshotOrNull()?.main?.sdk
+@Suppress("DEPRECATION")
+internal fun Project.mainPythonSdk(): Sdk? = service<EvoPyProjectModel>().snapshotOrNull()?.main?.interpreter?.getSdkAPI()

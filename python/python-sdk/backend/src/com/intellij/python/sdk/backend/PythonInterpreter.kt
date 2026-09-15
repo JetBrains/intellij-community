@@ -49,6 +49,19 @@ class PythonInterpreter internal constructor(
 
   val isActivatable: Boolean
     get() = pythonEnvironment?.isActivatable == true
+
+  /**
+   * By the [Sdk] alone, which is the interpreter's identity. [environmentResult] is detected state that a refresh
+   * replaces, so two wrappers of one SDK are the same interpreter even when their detection differs.
+   *
+   * A factory builds a new wrapper on every call, so without this a `Set` or a `Map` of interpreters compares by
+   * reference and never finds one it already holds.
+   */
+  override fun equals(other: Any?): Boolean = this === other || (other is PythonInterpreter && sdk == other.sdk)
+
+  override fun hashCode(): Int = sdk.hashCode()
+
+  override fun toString(): String = "PythonInterpreter(${sdk.name})"
 }
 
 /**

@@ -11,7 +11,8 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectFileIndex
-import com.intellij.python.pyproject.model.evolution.findMainPythonSdk
+import com.intellij.python.pyproject.model.evolution.findMainPythonInterpreter
+import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -76,7 +77,8 @@ class PyPartialStubMarkersInvalidator(
     }
 
     // Debounced on a coroutine, so it can await the structure rather than miss the main interpreter.
-    project.findMainPythonSdk()?.let(sdks::add)
+    @Suppress("DEPRECATION")
+    project.findMainPythonInterpreter()?.getSdkAPI()?.let(sdks::add)
 
     for (sdk in sdks) {
       PythonSdkPathCache.getInstance(project, sdk).clearCache()

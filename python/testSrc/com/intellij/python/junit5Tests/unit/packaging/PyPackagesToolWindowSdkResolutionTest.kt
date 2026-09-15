@@ -16,6 +16,7 @@ import com.intellij.python.junit5Tests.framework.pyModuleFixture
 import com.jetbrains.python.junit5.framework.pyMockSdkFixture
 import com.intellij.openapi.components.service
 import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
+import com.intellij.python.sdk.backend.getSdkAPI
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.PythonSdkType
 import kotlinx.coroutines.Dispatchers
@@ -82,10 +83,12 @@ internal class PyPackagesToolWindowSdkResolutionTest {
                "With no editor to go by and no Python project at the root, neither surface can name an interpreter")
   }
 
+  /** Asserted on SDK identity, which is what the interpreter wraps. */
+  @Suppress("DEPRECATION")
   private suspend fun resolvedInterpreter(): Sdk? {
     val project = projectFixture.get()
     val selected = FileEditorManager.getInstance(project).selectedFiles.firstOrNull()
-    return project.service<EvoPyProjectModel>().snapshot().forFile(selected)?.sdk
+    return project.service<EvoPyProjectModel>().snapshot().forFile(selected)?.interpreter?.getSdkAPI()
   }
 
   /**
