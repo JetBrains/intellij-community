@@ -1,10 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history
 
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.ChangesUtil
+import com.intellij.platform.util.coroutines.childScope
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.testFramework.junit5.drainUncaughtExceptions
 import com.intellij.testFramework.junit5.fixture.disposableFixture
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.data.VcsLogData
@@ -18,16 +18,12 @@ import git4idea.repo.GitObjectFormat
 import git4idea.test.GitSingleRepoContext
 import git4idea.test.gitSingleRepoContextFixture
 import git4idea.test.makeCommit
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancelAndJoin
-import kotlinx.coroutines.job
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.cancel
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import kotlin.random.nextInt
@@ -38,32 +34,19 @@ class GitHistoryTraverserImplTest {
   private val context: GitSingleRepoContext get() = fixture.get()
 
   private val disposable by disposableFixture()
-  private lateinit var testCs: CoroutineScope
-  private lateinit var logData: VcsLogData
-
-  private val traverser: GitHistoryTraverser
-    get() = GitHistoryTraverserImpl(context.project, logData, disposable)
 
   @BeforeEach
-  fun setUp(): Unit = with(context) {
+  fun setUp() {
     VcsLogData.getIndexingRegistryValue().setValue(true)
-    @Suppress("RAW_SCOPE_CREATION")
-    testCs = CoroutineScope(SupervisorJob())
-    logData = createLogDataIn(testCs, repo, logProvider)
   }
 
   @AfterEach
   fun tearDown() {
-    runBlocking {
-      testCs.coroutineContext.job.cancelAndJoin()
-    }
-
-    drainIndexDiagnosticStorageCloseException()
     VcsLogData.getIndexingRegistryValue().resetToDefault()
   }
 
   @Test
-  fun `test files from commits made by user`(): Unit = with(context) {
+  fun `test files from commits made by user`(): Unit = runHistoryTest { logData, traverser ->
     val file = "file.txt"
     touch(file, "content")
 
@@ -84,7 +67,7 @@ class GitHistoryTraverserImplTest {
         if (commitId in authorCommitIds) {
           loadFullDetailsLater(commitId) { details ->
             assertThat(details.id in authorCommits).isTrue()
-            assertThat(areOnlyFilesInCommit(details, setOf("file.txt"))).isTrue()
+            assertThat(areOnlyFilesInCommit(details, setOf(file))).isTrue()
           }
         }
         true
@@ -93,7 +76,7 @@ class GitHistoryTraverserImplTest {
   }
 
   @Test
-  fun `test bfs early termination`(): Unit = with(context) {
+  fun `test bfs early termination`(): Unit = runHistoryTest { logData, traverser ->
     val file = "file.txt"
     touch(file, "content")
 
@@ -116,7 +99,7 @@ class GitHistoryTraverserImplTest {
     var commitsCounter = 0
     traverser.traverse(repo.root) { (commitId, _) ->
       loadFullDetailsLater(commitId) { details ->
-        if (areOnlyFilesInCommit(details, setOf("file.txt"))) {
+        if (areOnlyFilesInCommit(details, setOf(file))) {
           fileInCommitCount++
         }
       }
@@ -127,7 +110,7 @@ class GitHistoryTraverserImplTest {
   }
 
   @Test
-  fun `test last commit by user with file`(): Unit = with(context) {
+  fun `test last commit by user with file`(): Unit = runHistoryTest { logData, traverser ->
     val file = "file.txt"
     val filePath = VcsUtil.getFilePath(touch(file, "content"), false)
 
@@ -160,7 +143,7 @@ class GitHistoryTraverserImplTest {
   }
 
   @Test
-  fun `test withIndex waiting for index`(): Unit = with(context) {
+  fun `test withIndex waiting for index`(): Unit = runHistoryTest { logData, traverser ->
     val file = "file.txt"
     touch(file, "content")
     repeat(10) {
@@ -169,29 +152,20 @@ class GitHistoryTraverserImplTest {
 
     logData.refreshAndWait(repo, waitIndexFinishing = false)
     val indexingWaiter = CompletableFuture<GitHistoryTraverser.IndexedRoot>()
-    val indexWaiterDisposable = Disposer.newDisposable()
     var blockExecutedCount = 0
     traverser.addIndexingListener(listOf(repo.root), disposable) { indexedRoots ->
       val indexedRoot = indexedRoots.single()
       blockExecutedCount++
       indexingWaiter.complete(indexedRoot)
     }
-    try {
-      val indexedRoot = indexingWaiter.get(5, TimeUnit.SECONDS)
-      assertThat(indexedRoot.root).isEqualTo(repo.root)
-      assertThat(logData.index.isIndexed(indexedRoot.root)).isTrue()
-      assertThat(blockExecutedCount).isEqualTo(1)
-    }
-    catch (e: Exception) {
-      fail(e.message)
-    }
-    finally {
-      Disposer.dispose(indexWaiterDisposable)
-    }
+    val indexedRoot = indexingWaiter.get(5, TimeUnit.SECONDS)
+    assertThat(indexedRoot.root).isEqualTo(repo.root)
+    assertThat(logData.index.isIndexed(indexedRoot.root)).isTrue()
+    assertThat(blockExecutedCount).isEqualTo(1)
   }
 
   @Test
-  fun `test traverse from master`(): Unit = with(context) {
+  fun `test traverse from master`(): Unit = runHistoryTest { logData, traverser ->
     val file = "file.txt"
     touch(file, "content")
     val expectedCommitsCount = 10 // with initial commit
@@ -213,7 +187,7 @@ class GitHistoryTraverserImplTest {
   }
 
   @Test
-  fun `test IllegalArgumentException when start hash doesn't exist`(): Unit = with(context) {
+  fun `test IllegalArgumentException when start hash doesn't exist`(): Unit = runHistoryTest { logData, traverser ->
     val file = "file.txt"
     touch(file, "content")
     val expectedCommitsCount = 10 // with initial commit
@@ -245,36 +219,32 @@ class GitHistoryTraverserImplTest {
     while (notExistedHash in commitHashes) {
       notExistedHash = getRandomHash()
     }
-    try {
+    assertThrows<IllegalArgumentException> {
       traverser.traverse(
         repo.root,
         start = GitHistoryTraverser.StartNode.CommitHash(notExistedHash)
       ) {
         true
       }
-      fail()
-    }
-    catch (_: IllegalArgumentException) {
     }
   }
 
-  private fun areOnlyFilesInCommit(commit: GitCommit, fileNames: Collection<String>): Boolean {
-    val fileNamesMap = fileNames.associateWith { false }.toMutableMap()
-    for (change in commit.changes) {
-      val fileName = ChangesUtil.getFilePath(change).name
-      if (fileName !in fileNamesMap) {
-        return false
+  private fun areOnlyFilesInCommit(commit: GitCommit, fileNames: Set<String>): Boolean =
+    commit.changes.map { ChangesUtil.getFilePath(it).name }.toSet() == fileNames
+
+  private fun runHistoryTest(
+    action: suspend GitSingleRepoContext.(logData: VcsLogData, traverser: GitHistoryTraverser) -> Unit,
+  ): Unit = timeoutRunBlocking {
+    val backgroundScope = childScope("test background scope")
+    try {
+      with(context) {
+        val logData = createLogDataIn(backgroundScope, repo, logProvider)
+        val traverser = GitHistoryTraverserImpl(project, logData, disposable)
+        action(logData, traverser)
       }
-      fileNamesMap[fileName] = true
     }
-    return fileNamesMap.values.all { it }
-  }
-
-  private fun drainIndexDiagnosticStorageCloseException() {
-    drainUncaughtExceptions { exception ->
-      exception is IllegalStateException &&
-      exception.message?.startsWith("Storage is closed:") == true &&
-      exception.stackTrace.any { it.className == "com.intellij.vcs.log.data.index.IndexDiagnosticRunner" }
+    finally {
+      backgroundScope.cancel()
     }
   }
 }

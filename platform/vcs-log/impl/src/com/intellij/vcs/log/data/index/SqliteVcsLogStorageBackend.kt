@@ -173,6 +173,9 @@ internal class SqliteVcsLogStorageBackend(project: Project,
     Disposer.register(disposable, it)
   }
 
+  private val disposableFlag = Disposer.newCheckedDisposable(disposable)
+  override val isDisposed: Boolean get() = disposableFlag.isDisposed
+
   private val userRegistry = project.service<VcsUserRegistry>()
 
   private val sortedRoots = logProviders.keys.sortedWith(Comparator.comparing(VirtualFile::getPath))
@@ -382,6 +385,8 @@ internal class SqliteVcsLogStorageBackend(project: Project,
   }
 
   override fun markCorrupted() {
+    if (isDisposed) return
+
     val oldConnectionManager = connectionManager
     connectionManager = connectionManager.recreate().also { Disposer.register(disposable, it) }
     Disposer.dispose(oldConnectionManager)

@@ -90,6 +90,8 @@ internal class IndexDiagnosticRunner(
   @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private fun doRunDiagnostic(rootsToCheck: Collection<VirtualFile>) {
     val dataGetter = index.dataGetter ?: return
+    // the diagnostic cannot check a closed storage
+    if (dataGetter.indexStorageBackend.isDisposed) return
 
     val dataPack = dataPackGetter()
     if (!dataPack.isFull) return

@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.log
 
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.disposableFixture
@@ -35,6 +36,7 @@ import git4idea.test.setupDefaultUsername
 import git4idea.test.setupUsername
 import git4idea.test.tac
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatExceptionOfType
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtensionContext
@@ -43,6 +45,7 @@ import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.ArgumentsProvider
 import org.junit.jupiter.params.provider.ArgumentsSource
 import org.junit.jupiter.params.support.ParameterDeclarations
+import java.util.concurrent.CancellationException
 import java.util.stream.Stream
 
 /**
@@ -364,6 +367,25 @@ internal class GitLogIndexTest(val testType: String, val useSqlite: Boolean) {
 
     val actualHistory = dataGetter.filter(listOf(createPathFilter(dir)))
     assertThat(actualHistory).isEqualTo(expectedHistory)
+  }
+
+  /**
+   * The disposal of the log data closes the index storage.
+   * A read of the closed storage must stop with a cancellation.
+   * It must not look like a corrupted index, because the report of a corruption drops the whole index.
+   */
+  @Test
+  fun `test filter after dispose reports no corruption`(): Unit = with(context) {
+    tac("file.txt")
+    indexAll()
+    val getter = dataGetter
+
+    Disposer.dispose(disposableFixture.get())
+
+    // the test error handler rethrows the original failure when the index reports a corruption
+    assertThatExceptionOfType(CancellationException::class.java).isThrownBy {
+      getter.filter(listOf(VcsLogFilterObject.fromUser(defaultUser, setOf(defaultUser))))
+    }
   }
 
   private fun GitSingleRepoContext.createPathFilter(relativePath: String) =

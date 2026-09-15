@@ -2,12 +2,12 @@
 package com.intellij.vcs.log.data.index;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Throwable2Computable;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.vcs.log.CommitId;
@@ -57,6 +57,7 @@ import java.util.function.IntConsumer;
 import java.util.function.IntFunction;
 import java.util.function.Predicate;
 
+import static com.intellij.diagnostic.ControlFlowExceptionsKt.rethrowControlFlowException;
 import static com.intellij.vcs.log.data.index.PhmVcsLogStorageBackendKt.getHashes;
 import static com.intellij.vcs.log.history.FileHistoryKt.FILE_PATH_HASHING_STRATEGY;
 
@@ -460,8 +461,11 @@ public final class IndexDataGetter {
       return computable.compute();
     }
     catch (Exception e) {
-      if (e instanceof ProcessCanceledException pce) {
-        throw pce;
+      rethrowControlFlowException(e);
+
+      if (myIndexStorageBackend.isDisposed()) {
+        LOG.debug("Vcs Log index storage is closed", e);
+        throw new AlreadyDisposedException("Vcs Log index storage is closed: " + myIndexStorageBackend.getStorageId());
       }
       else if (isCorruptedDataException(e)) {
         handleCorruptedData(Collections.singletonList(e));
@@ -476,6 +480,13 @@ public final class IndexDataGetter {
   }
 
   private void handleCorruptedData(List<Exception> exceptions) {
+    if (myIndexStorageBackend.isDisposed()) {
+      for (Exception e : exceptions) {
+        LOG.debug("Vcs Log index storage is closed", e);
+      }
+      return;
+    }
+
     for (Exception e : exceptions) {
       myErrorHandler.handleError(VcsLogErrorHandler.Source.Index, e);
     }

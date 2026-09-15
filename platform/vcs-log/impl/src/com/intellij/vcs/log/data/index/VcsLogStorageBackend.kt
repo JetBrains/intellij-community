@@ -16,6 +16,14 @@ internal interface VcsLogStorageBackend : VcsLogUsersStorage, VcsLogPathsStorage
   var isFresh: Boolean
   val isEmpty: Boolean
 
+  /**
+   * True after the Disposer disposes this backend.
+   *
+   * The disposal closes the storage. Each read and each write of a closed storage then fails.
+   * Such a failure does not show a corrupted index. See [markCorrupted].
+   */
+  val isDisposed: Boolean
+
   fun getMessage(commitId: VcsLogCommitStorageIndex): String?
 
   fun getMessages(commitIds: Collection<VcsLogCommitStorageIndex>): Map<VcsLogCommitStorageIndex, String> {

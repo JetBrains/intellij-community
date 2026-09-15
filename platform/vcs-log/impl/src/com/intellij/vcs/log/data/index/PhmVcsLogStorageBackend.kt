@@ -72,6 +72,9 @@ internal class PhmVcsLogStorageBackend(
   private val container: StorageContainer
     get() = _container ?: error("Storage is closed: ${storageId}")
 
+  private val disposableFlag = Disposer.newCheckedDisposable(disposable)
+  override val isDisposed: Boolean get() = disposableFlag.isDisposed
+
   private val messages get() = container.messages
   private val parents get() = container.parents
   private val committers get() = container.committers
@@ -230,6 +233,8 @@ internal class PhmVcsLogStorageBackend(
   }
 
   override fun markCorrupted() {
+    if (isDisposed) return
+
     try {
       synchronized(messages) {
         messages.markCorrupted()
@@ -375,6 +380,8 @@ internal class PhmVcsLogStorageBackend(
   }
 
   internal fun clearCaches() {
+    if (isDisposed) return
+
     for (index in listOf(trigrams, paths, users)) {
       index.clearCaches()
     }
