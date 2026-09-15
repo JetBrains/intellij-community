@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.intellij.ide.plugins.IdeaPluginDependency
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.InstalledPluginsState
@@ -27,6 +26,7 @@ import org.apache.http.client.utils.URLEncodedUtils
 import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
+import tools.jackson.databind.ObjectMapper
 import java.net.InetSocketAddress
 import java.net.URI
 import java.nio.charset.StandardCharsets

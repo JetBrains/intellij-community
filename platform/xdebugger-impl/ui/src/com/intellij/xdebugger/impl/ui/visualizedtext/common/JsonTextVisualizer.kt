@@ -1,9 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.visualizedtext.common
 
-import com.fasterxml.jackson.core.JsonProcessingException
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.util.NlsSafe
@@ -13,6 +10,9 @@ import com.intellij.xdebugger.impl.ui.visualizedtext.TextVisualizerContentType
 import com.intellij.xdebugger.impl.ui.visualizedtext.VisualizedContentTabWithStats
 import com.intellij.xdebugger.ui.TextValueVisualizer
 import com.intellij.xdebugger.ui.VisualizedContentTab
+import tools.jackson.core.JacksonException
+import tools.jackson.databind.JsonNode
+import tools.jackson.databind.json.JsonMapper
 
 internal class JsonTextVisualizer : TextValueVisualizer {
 
@@ -56,13 +56,13 @@ internal class JsonTextVisualizer : TextValueVisualizer {
 }
 
 internal object JsonEncodingUtil {
-  private fun objectMapper() = ObjectMapper()
+  private fun objectMapper() = JsonMapper.builder().build()
 
   fun tryParseJson(value: String): JsonNode? =
     try {
       objectMapper()
         .readTree(value)
-    } catch (_: JsonProcessingException) {
+    } catch (_: JacksonException) {
       null
     }
 

@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.ide
 
-import com.fasterxml.jackson.jr.ob.JSON
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.COLLECT_LOGS_NOTIFICATION_GROUP
 import com.intellij.ide.actions.ReportFeedbackService
@@ -22,6 +21,7 @@ import io.netty.handler.codec.http.HttpResponseStatus
 import io.netty.handler.codec.http.QueryStringDecoder
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
+import tools.jackson.jr.ob.JSON
 import java.io.IOException
 
 private const val propertyKeyForTrustedHosts = "idea.api.collectLogs.hosts.trusted"

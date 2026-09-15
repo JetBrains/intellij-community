@@ -212,7 +212,7 @@ object LibraryModuleSets {
   fun librariesJackson2(): ModuleSet = moduleSet("libraries.jackson2") {
     embeddedModule("intellij.libraries.jackson.annotations")
     embeddedModule("intellij.libraries.jackson")
-    embeddedModule("intellij.libraries.jackson.jr.objects")
+    module("intellij.libraries.jackson.jr.objects")
     embeddedModule("intellij.libraries.jackson.databind")
 
     module("intellij.libraries.jackson.dataformat.xml")

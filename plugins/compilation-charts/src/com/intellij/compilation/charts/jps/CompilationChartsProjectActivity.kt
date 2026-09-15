@@ -1,11 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compilation.charts.jps
 
-import com.fasterxml.jackson.core.JsonFactory
-import com.fasterxml.jackson.core.JsonProcessingException
-import com.fasterxml.jackson.core.type.TypeReference
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.intellij.build.BuildProgressListener
 import com.intellij.build.BuildViewManager
 import com.intellij.build.events.BuildEvent
@@ -27,6 +22,9 @@ import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.messages.MessageBusConnection
+import tools.jackson.core.JacksonException
+import tools.jackson.core.type.TypeReference
+import tools.jackson.module.kotlin.jacksonObjectMapper
 import java.util.ArrayDeque
 import java.util.Queue
 import java.util.UUID
@@ -91,7 +89,7 @@ class CompilationChartsProjectActivity : ProjectActivity {
   }
 
   private class CompilationChartsMessageHandler : CustomBuilderMessageHandler {
-    private val json = ObjectMapper(JsonFactory()).registerModule(KotlinModule.Builder().build())
+    private val json = jacksonObjectMapper()
     private val states: Queue<CompilationChartsBuildEvent> = ArrayDeque()
     private var currentState: CompilationChartsBuildEvent? = null
     private val defaultUUID: UUID = UUID.randomUUID()
@@ -147,7 +145,7 @@ class CompilationChartsProjectActivity : ProjectActivity {
           }
         }
       }
-      catch (e: JsonProcessingException) {
+      catch (e: JacksonException) {
         LOG.warn("Failed to parse message: $messageText", e)
       }
     }

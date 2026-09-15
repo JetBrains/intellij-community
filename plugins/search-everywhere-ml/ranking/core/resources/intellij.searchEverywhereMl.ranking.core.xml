@@ -4,9 +4,9 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.libraries.caffeine"/>
-    <module name="intellij.libraries.jackson"/>
-    <module name="intellij.libraries.jackson.databind"/>
-    <module name="intellij.libraries.jackson.module.kotlin"/>
+    <module name="intellij.libraries.jackson3"/>
+    <module name="intellij.libraries.jackson3.databind"/>
+    <module name="intellij.libraries.jackson3.module.kotlin"/>
     <module name="intellij.libraries.search.everywhere.find.all.model"/>
     <module name="intellij.libraries.search.everywhere.find.ec.model"/>
     <module name="intellij.platform.analysis"/>

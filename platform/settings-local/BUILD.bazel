@@ -13,10 +13,7 @@ jps_test(
 ### skip generation section `test intellij.platform.settings.local.tests`
 
 ### auto-generated section `dev intellij.platform.settings.local` start
-content_module_jar(
-    libraries = ["@lib//:platform-settings-local-jackson-dataformat-cbor"],
-    module = ":settings-local",
-)
+content_module_jar(module = ":settings-local")
 ### auto-generated section `dev intellij.platform.settings.local` end
 
 ### auto-generated section `build intellij.platform.settings.local` start
@@ -58,8 +55,6 @@ jvm_library(
         "//libraries/opentelemetry",
         "//libraries/opentelemetry-semconv",
         "//libraries/mvstore",
-        "//libraries/jackson/jackson",
-        "@lib//:platform-settings-local-jackson-dataformat-cbor",
         "//platform/util/jdom",
         "//platform/util/xmlDom",
         "//platform/util",
@@ -97,7 +92,6 @@ jvm_library(
         "//libraries/opentelemetry:opentelemetry_test_lib",
         "//libraries/opentelemetry-semconv:opentelemetry-semconv_test_lib",
         "//libraries/mvstore:mvstore_test_lib",
-        "//libraries/jackson/jackson:jackson_test_lib",
         "//platform/util/jdom:jdom_test_lib",
         "//platform/util/xmlDom:xmlDom_test_lib",
         "//platform/util:util_test_lib",
@@ -190,17 +184,18 @@ jvm_library(
         "//libraries/opentelemetry-semconv:opentelemetry-semconv_test_lib",
         "//libraries/mvstore",
         "//libraries/mvstore:mvstore_test_lib",
-        "//libraries/jackson/jackson",
-        "//libraries/jackson/jackson:jackson_test_lib",
+        "//libraries/jackson3/jackson:libraries-jackson3",
+        "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
         "//platform/testFramework/junit5",
         "//platform/testFramework/junit5:junit5_test_lib",
         "//platform/core-impl",
         "//platform/core-impl:core-impl_test_lib",
-        "@lib//:platform-settings-local-tests-jackson-dataformat-cbor",
-        "//libraries/jackson/databind",
-        "//libraries/jackson/databind:databind_test_lib",
-        "//libraries/jackson/dataformat-yaml:libraries-jackson-dataformat-yaml",
-        "//libraries/jackson/dataformat-yaml:libraries-jackson-dataformat-yaml_test_lib",
+        "//libraries/jackson3/dataformat-cbor:libraries-jackson3-dataformat-cbor",
+        "//libraries/jackson3/dataformat-cbor:libraries-jackson3-dataformat-cbor_test_lib",
+        "//libraries/jackson3/databind",
+        "//libraries/jackson3/databind:databind_test_lib",
+        "//libraries/jackson3/dataformat-yaml:libraries-jackson3-dataformat-yaml",
+        "//libraries/jackson3/dataformat-yaml:libraries-jackson3-dataformat-yaml_test_lib",
         "//platform/util/jdom",
         "//platform/util/jdom:jdom_test_lib",
         "//platform/util/xmlDom",

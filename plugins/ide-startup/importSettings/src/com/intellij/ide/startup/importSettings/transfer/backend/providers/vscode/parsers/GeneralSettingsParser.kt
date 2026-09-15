@@ -1,14 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.transfer.backend.providers.vscode.parsers
 
-import com.fasterxml.jackson.databind.node.JsonNodeType
-import com.fasterxml.jackson.databind.node.ObjectNode
 import com.intellij.ide.startup.importSettings.db.KnownLafs
 import com.intellij.ide.startup.importSettings.models.ILookAndFeel
 import com.intellij.ide.startup.importSettings.models.Settings
 import com.intellij.ide.startup.importSettings.models.SystemDarkThemeDetectorLookAndFeel
 import com.intellij.ide.startup.importSettings.providers.vscode.mappings.ThemesMappings
 import com.intellij.openapi.diagnostic.logger
+import tools.jackson.databind.node.JsonNodeType
+import tools.jackson.databind.node.ObjectNode
 import java.io.File
 
 private val logger = logger<GeneralSettingsParser>()
@@ -36,7 +36,7 @@ class GeneralSettingsParser(private val settings: Settings) {
 
   private fun processThemeAndScheme(root: ObjectNode) {
     try {
-      val theme = root[COLOR_THEME]?.textValue() ?: return
+      val theme = root[COLOR_THEME]?.stringValue(null) ?: return
       val laf = ThemesMappings.themeMap(theme)
       settings.laf = laf
     }
@@ -49,7 +49,7 @@ class GeneralSettingsParser(private val settings: Settings) {
     var lightLaf: ILookAndFeel? = null
     var darkLaf: ILookAndFeel? = null
     try {
-      val preferredDarkTheme = root[PREFERRED_DARK_THEME]?.textValue() ?: return
+      val preferredDarkTheme = root[PREFERRED_DARK_THEME]?.stringValue(null) ?: return
       val laf = ThemesMappings.themeMap(preferredDarkTheme)
       darkLaf = laf
     }
@@ -58,7 +58,7 @@ class GeneralSettingsParser(private val settings: Settings) {
     }
 
     try {
-      val preferredLightTheme = root[PREFERRED_LIGHT_THEME]?.textValue() ?: return
+      val preferredLightTheme = root[PREFERRED_LIGHT_THEME]?.stringValue(null) ?: return
       val laf = ThemesMappings.themeMap(preferredLightTheme)
       lightLaf = laf
     }

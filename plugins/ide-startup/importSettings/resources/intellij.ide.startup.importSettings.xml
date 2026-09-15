@@ -1,8 +1,8 @@
 <idea-plugin visibility="internal" package="com.intellij.ide.startup.importSettings">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="intellij.libraries.jackson"/>
-    <module name="intellij.libraries.jackson.databind"/>
+    <module name="intellij.libraries.jackson3"/>
+    <module name="intellij.libraries.jackson3.databind"/>
     <module name="intellij.libraries.jna"/>
     <module name="intellij.libraries.kotlinx.serialization.core"/>
     <module name="intellij.libraries.kotlinx.serialization.json"/>

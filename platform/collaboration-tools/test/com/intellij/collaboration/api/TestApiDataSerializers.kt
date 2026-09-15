@@ -1,16 +1,16 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.api
 
-import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.databind.JavaType
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.jacksonMapperBuilder
 import com.intellij.collaboration.api.dto.GraphQLErrorDTO
 import com.intellij.collaboration.api.dto.GraphQLResponseDTO
 import com.intellij.collaboration.api.graphql.GraphQLDataDeserializer
 import com.intellij.collaboration.api.json.JsonDataDeserializer
 import com.intellij.collaboration.api.json.JsonDataSerializer
+import tools.jackson.databind.DeserializationFeature
+import tools.jackson.databind.JavaType
+import tools.jackson.databind.JsonNode
+import tools.jackson.databind.ObjectMapper
+import tools.jackson.module.kotlin.jacksonMapperBuilder
 import java.io.InputStream
 import java.io.Reader
 import java.nio.charset.Charset

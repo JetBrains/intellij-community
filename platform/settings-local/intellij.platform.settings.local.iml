@@ -44,25 +44,6 @@
     <orderEntry type="module" module-name="intellij.libraries.opentelemetry" />
     <orderEntry type="module" module-name="intellij.libraries.opentelemetry.semconv" />
     <orderEntry type="module" module-name="intellij.libraries.mvstore" />
-    <orderEntry type="module" module-name="intellij.libraries.jackson" />
-    <orderEntry type="module-library">
-      <library name="jackson-dataformat-cbor" type="repository">
-        <properties include-transitive-deps="false" maven-id="com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:2.19.0">
-          <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-cbor/2.19.0/jackson-dataformat-cbor-2.19.0.jar">
-              <sha256sum>ce27bf04655ac4a9f703ebf340782cf6836fc36c569a2daf25077c32532c88be</sha256sum>
-            </artifact>
-          </verification>
-        </properties>
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-cbor/2.19.0/jackson-dataformat-cbor-2.19.0.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-cbor/2.19.0/jackson-dataformat-cbor-2.19.0-sources.jar!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="module" module-name="intellij.platform.util.xmlDom" />
     <orderEntry type="module" module-name="intellij.platform.util" />

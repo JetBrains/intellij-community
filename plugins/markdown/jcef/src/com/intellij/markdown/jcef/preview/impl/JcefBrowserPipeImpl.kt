@@ -1,8 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.markdown.jcef.preview.impl
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.jcef.JBCefBrowserBase
@@ -12,6 +10,9 @@ import org.cef.browser.CefFrame
 import org.cef.handler.CefLoadHandlerAdapter
 import org.intellij.plugins.markdown.ui.preview.BrowserPipe
 import org.jetbrains.annotations.ApiStatus
+import tools.jackson.core.JacksonException
+import tools.jackson.module.kotlin.jacksonObjectMapper
+import tools.jackson.module.kotlin.readValue
 import java.io.IOException
 
 /**
@@ -96,6 +97,10 @@ internal class JcefBrowserPipeImpl(
       return jacksonObjectMapper().readValue<PackedMessage>(raw).takeIf { it.type.isNotEmpty() }
     }
     catch (exception: IOException) {
+      logger.error(exception)
+      return null
+    }
+    catch (exception: JacksonException) {
       logger.error(exception)
       return null
     }

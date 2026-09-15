@@ -1,8 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.visualizedtext.common
 
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.xdebugger.XDebuggerBundle
@@ -11,6 +9,8 @@ import com.intellij.xdebugger.impl.ui.visualizedtext.TextVisualizerContentType
 import com.intellij.xdebugger.impl.ui.visualizedtext.VisualizedContentTabWithStats
 import com.intellij.xdebugger.ui.TextValueVisualizer
 import com.intellij.xdebugger.ui.VisualizedContentTab
+import tools.jackson.databind.JsonNode
+import tools.jackson.databind.node.JsonNodeFactory
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
@@ -57,8 +57,8 @@ internal class JwtTextVisualizer : TextValueVisualizer {
   private fun prettify(jwt: JWT): String {
     val factory = JsonNodeFactory.instance
     val json = factory.objectNode().apply {
-      set<JsonNode>("header", jwt.header)
-      set<JsonNode>("payload", jwt.payload)
+      set("header", jwt.header)
+      set("payload", jwt.payload)
       put("signature", jwt.signature)
     }
     return JsonEncodingUtil.prettifyJson(json)

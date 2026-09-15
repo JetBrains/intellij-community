@@ -1,9 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.emmet;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.application.options.emmet.EmmetOptions;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
@@ -30,6 +27,12 @@ import com.intellij.util.ThrowableRunnable;
 import junit.framework.TestSuite;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.JsonToken;
+import tools.jackson.core.ObjectReadContext;
+import tools.jackson.core.json.JsonFactory;
+import tools.jackson.core.json.JsonReadFeature;
 
 import java.io.File;
 import java.io.IOException;
@@ -45,23 +48,22 @@ public abstract class EmmetAbbreviationTestSuite extends TestSuite {
   }
 
   protected void addTestFromJson(String filePath, String... extensions) throws IOException {
-    JsonFactory factory = JsonFactory.builder().build();
-    try (JsonParser parser = factory.createParser(new File(filePath))) {
-      parser.enable(JsonParser.Feature.ALLOW_COMMENTS);
+    JsonFactory factory = JsonFactory.builder().enable(JsonReadFeature.ALLOW_JAVA_COMMENTS).build();
+    try (JsonParser parser = factory.createParser(ObjectReadContext.empty(), new File(filePath))) {
       if (parser.nextToken() != JsonToken.START_OBJECT) {
         throw new IOException("Unexpected JSON format");
       }
       while (parser.nextToken() != JsonToken.END_OBJECT) {
-        String key = parser.getText();
+        String key = parser.getString();
         parser.nextToken();
-        String expected = parser.getText();
+        String expected = parser.getString();
         for (String source : StringUtil.split(key, "|")) {
           // replace ${1:hello} with hello
           expected = expected.replaceAll("\\$\\{\\d(:([^}]+))?}", "$2");
           addTest(source, expected, extensions);
         }
       }
-    } catch (IOException e) {
+    } catch (IOException | JacksonException e) {
       addTest(e.getMessage(), filePath + " file was found.", extensions);
     }
     /*

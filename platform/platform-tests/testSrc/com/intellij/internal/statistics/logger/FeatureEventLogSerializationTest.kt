@@ -1,8 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistics.logger
 
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.intellij.internal.statistic.eventLog.LogEventDeserializer
 import com.intellij.internal.statistic.eventLog.LogEventRecord
 import com.intellij.internal.statistic.eventLog.LogEventRecordRequest
@@ -18,6 +16,8 @@ import com.intellij.openapi.util.io.FileUtil
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import org.junit.Test
 import org.junit.jupiter.api.assertThrows
+import tools.jackson.databind.JsonNode
+import tools.jackson.databind.ObjectMapper
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -439,16 +439,16 @@ class FeatureEventLogSerializationTest {
 
   private fun assertLogEventContentIsValid(json: JsonNode, recorder: String, product: String, device: String, internal: Boolean, isState: Boolean) {
     assertTrue(json.get("device").isValueNode)
-    assertTrue(isValid(json.get("device").asText()))
-    assertEquals(device, json.get("device").asText())
+    assertTrue(isValid(json.get("device").asString()))
+    assertEquals(device, json.get("device").asString())
 
     assertTrue(json.get("product").isValueNode)
-    assertTrue(isValid(json.get("product").asText()))
-    assertEquals(product, json.get("product").asText())
+    assertTrue(isValid(json.get("product").asString()))
+    assertEquals(product, json.get("product").asString())
 
     assertTrue(json.get("recorder").isValueNode)
-    assertTrue(isValid(json.get("recorder").asText()))
-    assertEquals(recorder, json.get("recorder").asText())
+    assertTrue(isValid(json.get("recorder").asString()))
+    assertEquals(recorder, json.get("recorder").asString())
 
     assertEquals(internal, json.has("internal"))
     if (internal) {

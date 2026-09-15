@@ -4,7 +4,6 @@ package com.intellij.gradle.declarativeSync
 import com.android.tools.idea.gradle.dsl.api.dependencies.ArtifactDependencyModel
 import com.android.tools.idea.gradle.dsl.api.ext.GradlePropertyModel
 import com.android.tools.idea.gradle.dsl.model.ProjectBuildModelImpl
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.intellij.ide.highlighter.ArchiveFileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
@@ -25,6 +24,7 @@ import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
+import tools.jackson.databind.json.JsonMapper
 import java.nio.file.Path
 
 /**
@@ -180,7 +180,7 @@ internal class GradleLibrariesResolver {
 
   private fun getDependenciesGMM(file: VirtualFile): List<LibDepData> {
     val data = mutableListOf<LibDepData>()
-    ObjectMapper().readTree(file.inputStream).let {
+    JsonMapper.builder().build().readTree(file.inputStream).let {
       val variants = it["variants"]
       if(variants != null) {
         for(variant in variants) {
@@ -189,14 +189,14 @@ internal class GradleLibrariesResolver {
           val dependencies = variant["dependencies"]
           if(dependencies != null) {
             for (dependency in dependencies) {
-              val group = dependency["group"].asText()
-              val name = dependency["module"].asText()
+              val group = dependency["group"].asString()
+              val name = dependency["module"].asString()
               var version = ""
               val versionObj = dependency["version"]
               if(versionObj != null) {
                 val requires = versionObj["requires"]
                 if(requires != null) {
-                  version = requires.asText()
+                  version = requires.asString()
                 } else {
                   // TODO implement prefers, strictly and rejects
                 }

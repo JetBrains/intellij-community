@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.tools.projectWizard.gradle
 
-import com.fasterxml.jackson.dataformat.toml.TomlMapper
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleCodeChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleCodeFinished
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Kotlin.logGenerateMultipleModulesChanged
@@ -71,6 +70,7 @@ import org.jetbrains.plugins.gradle.service.project.wizard.addGradleWrapperAsset
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.gradle.util.GradleConstants.KOTLIN_DSL_SCRIPT_NAME
 import org.jetbrains.plugins.gradle.util.GradleConstants.KOTLIN_DSL_SETTINGS_FILE_NAME
+import tools.jackson.dataformat.toml.TomlMapper
 
 private const val GENERATE_MULTIPLE_MODULES_PROPERTY_NAME: String = "NewProjectWizard.generateMultipleModules"
 
@@ -353,12 +353,12 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
             val gradleFolder = project.guessProjectDir()?.findChild("gradle") ?: return false
             val gradlePluginKey = runCatching {
                 val tomlFile = gradleFolder.findChild("libs.versions.toml")?.toNioPath()?.toFile() ?: return false
-                val tomlTree = TomlMapper().readTree(tomlFile)
+                val tomlTree = TomlMapper.builder().build().readTree(tomlFile)
                 // Find the library entries from the libraries table in the TOML file
                 val libraryEntries = tomlTree.get("libraries") ?: return false
                 // Find the name of the library entry that contains the Kotlin Gradle Plugin
                 libraryEntries.properties().firstOrNull { (_, node) ->
-                    node.get("module")?.asText()?.contains(KOTLIN_GRADLE_PLUGIN_ID) == true
+                    node.get("module")?.asString()?.contains(KOTLIN_GRADLE_PLUGIN_ID) == true
                 }?.key
             }.getOrNull() ?: return false
 

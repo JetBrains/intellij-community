@@ -1,7 +1,6 @@
 package com.intellij.searchEverywhereMl.ranking.core.actions
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.ide.scratch.ScratchFileCreationHelper
@@ -20,6 +19,7 @@ import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMlFacade
 import com.intellij.searchEverywhereMl.ranking.core.adapters.SearchResultAdapter
 import com.intellij.searchEverywhereMl.ranking.core.adapters.SearchResultProviderAdapter
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereContributorFeaturesProvider
+import tools.jackson.module.kotlin.jacksonObjectMapper
 
 /**
  * This action will open a scratch file with a feature dump.

@@ -1,15 +1,15 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.transfer.backend.providers.vscode.parsers
 
-import com.fasterxml.jackson.databind.node.ArrayNode
-import com.fasterxml.jackson.databind.node.JsonNodeType
-import com.fasterxml.jackson.databind.node.ObjectNode
 import com.intellij.ide.startup.importSettings.models.KeyBinding
 import com.intellij.ide.startup.importSettings.models.PatchedKeymap
 import com.intellij.ide.startup.importSettings.models.Settings
 import com.intellij.ide.startup.importSettings.transfer.backend.providers.vscode.mappings.KeyBindingsMappings
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.diagnostic.logger
+import tools.jackson.databind.node.ArrayNode
+import tools.jackson.databind.node.JsonNodeType
+import tools.jackson.databind.node.ObjectNode
 import java.io.File
 import javax.swing.KeyStroke
 
@@ -34,12 +34,12 @@ class KeyBindingsParser(private val settings: Settings) {
   }
 
   private fun processKeyBindings(root: ArrayNode) {
-    root.elements()?.forEach {
+    root.values().forEach {
       try {
         val binding = it as? ObjectNode ?: return@forEach
 
-        val commandId = binding[COMMAND]?.textValue() ?: return@forEach
-        val shortcuts = binding[KEY]?.textValue() ?: return@forEach
+        val commandId = binding[COMMAND]?.stringValue(null) ?: return@forEach
+        val shortcuts = binding[KEY]?.stringValue(null) ?: return@forEach
 
         addCustomShortcut(commandId, shortcuts)
       }

@@ -1,9 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.transfer.backend.providers.vscode.parsers
 
-import com.fasterxml.jackson.databind.node.ArrayNode
-import com.fasterxml.jackson.databind.node.JsonNodeType
-import com.fasterxml.jackson.databind.node.ObjectNode
 import com.intellij.ide.RecentProjectMetaInfo
 import com.intellij.ide.startup.importSettings.db.KnownLafs
 import com.intellij.ide.startup.importSettings.models.RecentPathInfo
@@ -14,6 +11,9 @@ import com.intellij.ide.startup.importSettings.transfer.backend.db.KnownColorSch
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.util.SystemInfo
+import tools.jackson.databind.node.ArrayNode
+import tools.jackson.databind.node.JsonNodeType
+import tools.jackson.databind.node.ObjectNode
 import java.io.File
 import java.net.URI
 import java.nio.file.Path
@@ -93,13 +93,13 @@ class StorageParser(private val settings: Settings) {
       val openedPaths = root[OPENED_PATHS] as? ObjectNode ?: return
       val flatList = openedPaths.toList().flatMap { (it as ArrayNode).toList() }
       val workspacesNew = try {
-        flatList.mapNotNull { it["folderUri"] }.mapNotNull { it.textValue() }
+        flatList.mapNotNull { it["folderUri"] }.mapNotNull { it.stringValue(null) }
       }
       catch (t: Throwable) {
         null
       }
       val workspacesOld = try {
-        flatList.mapNotNull { it.textValue() ?: return@mapNotNull null }
+        flatList.mapNotNull { it.stringValue(null) ?: return@mapNotNull null }
       }
       catch (t: Throwable) {
         null
@@ -121,7 +121,7 @@ class StorageParser(private val settings: Settings) {
 
   private fun processThemeAndScheme(root: ObjectNode) {
     try {
-      val theme = root[THEME]?.textValue() ?: return
+      val theme = root[THEME]?.stringValue(null) ?: return
       val laf = ThemesMappings.themeMap(theme)
 
       settings.laf = laf

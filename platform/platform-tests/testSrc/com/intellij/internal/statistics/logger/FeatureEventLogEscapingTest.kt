@@ -1,11 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistics.logger
 
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.node.ArrayNode
-import com.fasterxml.jackson.databind.node.ObjectNode
-import com.fasterxml.jackson.databind.node.ValueNode
 import com.intellij.internal.statistic.eventLog.LogEventSerializer
 import com.intellij.internal.statistic.eventLog.escape
 import com.intellij.internal.statistics.StatisticsTestEventFactory.newEvent
@@ -13,6 +8,11 @@ import com.intellij.internal.statistics.StatisticsTestEventValidator.assertLogEv
 import com.intellij.internal.statistics.StatisticsTestEventValidator.isValid
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import org.junit.Test
+import tools.jackson.databind.JsonNode
+import tools.jackson.databind.ObjectMapper
+import tools.jackson.databind.node.ArrayNode
+import tools.jackson.databind.node.ObjectNode
+import tools.jackson.databind.node.ValueNode
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
@@ -231,8 +231,8 @@ class FeatureEventLogEscapingTest {
     val json = ObjectMapper().readTree(LogEventSerializer.toString(event.escape()))
     assertLogEventIsValid(json, false)
 
-    assertEquals(expectedGroupId, json["group"]["id"].asText())
-    assertEquals(expectedEventId, json["event"]["id"].asText())
+    assertEquals(expectedGroupId, json["group"]["id"].asString())
+    assertEquals(expectedEventId, json["event"]["id"].asString())
 
     val obj = json["event"]["data"]
     validateJsonObject(expectedData.keys, expectedData, obj)
@@ -246,18 +246,18 @@ class FeatureEventLogEscapingTest {
       assertTrue(isValid(option))
       val expectedValue = expectedData[option]
       when (val jsonElement = obj.get(option)) {
-        is ValueNode -> assertEquals(expectedValue, jsonElement.asText())
+        is ValueNode -> assertEquals(expectedValue, jsonElement.asString())
         is ArrayNode -> {
           for ((dataPart, expected) in jsonElement.zip(expectedValue as Collection<*>)) {
             if (dataPart is ObjectNode) {
-              validateJsonObject(dataPart.fieldNames().asSequence().toSet(), expected, dataPart)
+              validateJsonObject(dataPart.propertyNames().toSet(), expected, dataPart)
             } else {
-              assertEquals(expected, dataPart.asText())
+              assertEquals(expected, dataPart.asString())
             }
           }
         }
         is ObjectNode -> {
-          validateJsonObject(jsonElement.fieldNames().asSequence().toSet(), expectedValue, jsonElement)
+          validateJsonObject(jsonElement.propertyNames().toSet(), expectedValue, jsonElement)
         }
         else -> throw IllegalStateException("Unsupported type of event data")
       }

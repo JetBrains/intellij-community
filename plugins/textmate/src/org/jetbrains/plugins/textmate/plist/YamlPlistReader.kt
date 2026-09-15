@@ -1,12 +1,12 @@
 package org.jetbrains.plugins.textmate.plist
 
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.node.ObjectNode
-import com.fasterxml.jackson.dataformat.yaml.YAMLMapper
+import tools.jackson.databind.JsonNode
+import tools.jackson.databind.node.ObjectNode
+import tools.jackson.dataformat.yaml.YAMLMapper
 
 class YamlPlistReader : PlistReaderCore {
   private val textmateYaml: YAMLMapper by lazy {
-    YAMLMapper()
+    YAMLMapper.builder().build()
   }
 
   override fun read(bytes: ByteArray): Plist {
@@ -48,7 +48,7 @@ class YamlPlistReader : PlistReaderCore {
 
   private fun readBasicValue(value: JsonNode): PListValue? {
     return when {
-      value.isTextual -> PListValue.value(value.textValue(), PlistValueType.STRING)
+      value.isString -> PListValue.value(value.stringValue(), PlistValueType.STRING)
       value.isBoolean -> PListValue.value(value.booleanValue(), PlistValueType.BOOLEAN)
       value.isIntegralNumber && value.canConvertToInt() -> PListValue.value(value.intValue(), PlistValueType.INTEGER)
       value.isNumber -> PListValue.value(value.doubleValue(), PlistValueType.REAL)

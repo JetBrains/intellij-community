@@ -1,7 +1,6 @@
 @file:Suppress("UsePropertyAccessSyntax")
 package com.intellij.configurationScript
 
-import com.fasterxml.jackson.core.JsonFactory
 import com.intellij.configurationScript.providers.readRunConfigurations
 import com.intellij.configurationScript.schemaGenerators.rcTypeIdToPropertyName
 //import com.intellij.execution.application.JvmMainMethodRunConfigurationOptions
@@ -13,6 +12,8 @@ import com.intellij.util.text.CharSequenceReader
 import org.intellij.lang.annotations.Language
 import org.junit.ClassRule
 import org.junit.Test
+import tools.jackson.core.ObjectReadContext
+import tools.jackson.core.json.JsonFactory
 import javax.swing.Icon
 
 class ConfigurationFileTest {
@@ -37,7 +38,7 @@ class ConfigurationFileTest {
     // check that parseable
     val schema = doGenerateConfigurationSchema(emptyList())
     val jsonFactory = JsonFactory()
-    jsonFactory.createParser(CharSequenceReader(schema)).nextValue()
+    jsonFactory.createParser(ObjectReadContext.empty(), CharSequenceReader(schema)).nextValue()
   }
 
   @Test

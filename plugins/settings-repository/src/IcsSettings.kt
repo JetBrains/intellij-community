@@ -4,14 +4,14 @@ package org.jetbrains.settingsRepository
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
-import com.fasterxml.jackson.core.JsonGenerator
-import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.intellij.util.PathUtilRt
 import com.intellij.util.SmartList
 import com.intellij.util.Time
 import com.intellij.util.io.sanitizeFileName
 import com.intellij.util.io.write
+import tools.jackson.core.JsonGenerator
+import tools.jackson.core.util.DefaultPrettyPrinter
+import tools.jackson.databind.json.JsonMapper
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -19,12 +19,12 @@ private const val DEFAULT_COMMIT_DELAY = 10 * Time.MINUTE
 
 class MyPrettyPrinter : DefaultPrettyPrinter() {
   init {
-    _arrayIndenter = NopIndenter.instance
+    _arrayIndenter = NopIndenter.instance()
   }
 
   override fun createInstance() = MyPrettyPrinter()
 
-  override fun writeObjectFieldValueSeparator(jg: JsonGenerator) {
+  override fun writeObjectNameValueSeparator(jg: JsonGenerator) {
     jg.writeRaw(": ")
   }
 
@@ -47,7 +47,7 @@ class MyPrettyPrinter : DefaultPrettyPrinter() {
 }
 
 fun saveSettings(settings: IcsSettings, settingsFile: Path) {
-  val serialized = ObjectMapper().writer(MyPrettyPrinter()).writeValueAsBytes(settings)
+  val serialized = JsonMapper.builder().build().writer().with(MyPrettyPrinter()).writeValueAsBytes(settings)
   if (serialized.size <= 2) {
     Files.delete(settingsFile)
   }
@@ -61,7 +61,7 @@ fun loadSettings(settingsFile: Path): IcsSettings {
     return IcsSettings()
   }
 
-  val settings = ObjectMapper().readValue(settingsFile.toFile(), IcsSettings::class.java)
+  val settings = JsonMapper.builder().build().readValue(settingsFile, IcsSettings::class.java)
   if (settings.commitDelay <= 0) {
     settings.commitDelay = DEFAULT_COMMIT_DELAY
   }

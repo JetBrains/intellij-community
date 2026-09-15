@@ -1,9 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.transfer.backend.providers.vscode.parsers
 
-import com.fasterxml.jackson.databind.node.ArrayNode
-import com.fasterxml.jackson.databind.node.JsonNodeType
-import com.fasterxml.jackson.databind.node.ObjectNode
 import com.intellij.ide.startup.importSettings.models.Settings
 import com.intellij.ide.startup.importSettings.transfer.backend.LegacySettingsTransferWizard
 import com.intellij.openapi.diagnostic.logger
@@ -12,6 +9,9 @@ import com.intellij.openapi.util.io.FileUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import tools.jackson.databind.node.ArrayNode
+import tools.jackson.databind.node.JsonNodeType
+import tools.jackson.databind.node.ObjectNode
 import java.io.File
 import java.net.URI
 import java.sql.Connection
@@ -52,7 +52,7 @@ class StateDatabaseParser(private val scope: CoroutineScope, private val setting
                  as? ObjectNode
                ?: error("Unexpected JSON data; expected: ${JsonNodeType.OBJECT}")
 
-    val paths = (root["entries"] as ArrayNode).mapNotNull { it["folderUri"]?.textValue() }
+    val paths = (root["entries"] as ArrayNode).mapNotNull { it["folderUri"]?.stringValue(null) }
     for (uri in paths) {
       val shouldBreak = logger.runAndLogException {
         !settings.addRecentProjectIfNeeded { StorageParser.parsePath(URI(uri)) }

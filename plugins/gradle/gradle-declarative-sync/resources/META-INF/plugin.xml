@@ -14,8 +14,8 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.gradle"/>
-    <module name="intellij.libraries.jackson"/>
-    <module name="intellij.libraries.jackson.databind"/>
+    <module name="intellij.libraries.jackson3"/>
+    <module name="intellij.libraries.jackson3.databind"/>
     <module name="intellij.libraries.jetbrains.annotations"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.backend.workspace"/>

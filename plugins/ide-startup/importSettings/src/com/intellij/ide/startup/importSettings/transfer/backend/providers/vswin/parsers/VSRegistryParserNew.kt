@@ -1,9 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.transfer.backend.providers.vswin.parsers
 
-import com.fasterxml.jackson.core.JsonFactory
-import com.fasterxml.jackson.core.JsonParser
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.intellij.ide.RecentProjectMetaInfo
 import com.intellij.ide.startup.importSettings.db.WindowsEnvVariables
 import com.intellij.ide.startup.importSettings.models.FeatureInfo
@@ -25,6 +22,8 @@ import com.jetbrains.rd.util.lifetime.Lifetime
 import com.sun.jna.platform.win32.Win32Exception
 import com.sun.jna.platform.win32.WinReg
 import org.w3c.dom.Node
+import tools.jackson.core.json.JsonReadFeature
+import tools.jackson.databind.json.JsonMapper
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Instant
@@ -198,7 +197,7 @@ class VSRegistryParserNew private constructor(val hive: VSHive) {
   private fun recentProjectsNewVSInit(): MutableList<RecentPathInfo>? {
     val dataSource = loadCodeContainersFromConfig() ?: loadCodeContainersFromRegistry() ?: return null
     val root = try {
-      ObjectMapper(JsonFactory().enable(JsonParser.Feature.ALLOW_COMMENTS)).readTree(dataSource)
+      JsonMapper.builder().enable(JsonReadFeature.ALLOW_JAVA_COMMENTS).build().readTree(dataSource)
     }
     catch (t: Throwable) {
       logger.warn(t)
@@ -208,8 +207,8 @@ class VSRegistryParserNew private constructor(val hive: VSHive) {
     val preItems = root.mapNotNull {
       if (!it["Value"]["IsLocal"].asBoolean()) return@mapNotNull null
 
-      val date = it["Value"]["LastAccessed"].asText()
-      val path = it["Value"]["LocalProperties"]["FullPath"].asText()
+      val date = it["Value"]["LastAccessed"].asString()
+      val path = it["Value"]["LocalProperties"]["FullPath"].asString()
       val pathExpanded = VSProfileDetectorUtils.expandPath(path, hive)
 
       if (pathExpanded == null || !Path(pathExpanded).exists()) return@mapNotNull null
