@@ -22,6 +22,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemTelemetryUtil;
 import com.intellij.openapi.externalSystem.util.OutputWrapper;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
@@ -186,47 +187,41 @@ public final class GradleExecutionHelper {
       projectDir = projectPath;
     }
     GradleConnectorService connectorService = GradleConnectorService.getInstance(projectDir, taskId);
-    return connectorService.withGradleConnection(projectDir, taskId, settings, listener, cancellationToken, connection -> {
-      try {
-        return SystemPropertiesAdjuster.executeAdjusted(projectDir, () -> f.fun(connection));
-      }
-      catch (ExternalSystemException | ProcessCanceledException e) {
-        throw e;
-      }
-      catch (Throwable e) {
-        LOG.warn("Gradle execution error", e);
-        Throwable rootCause = ExceptionUtil.getRootCause(e);
-        ExternalSystemException externalSystemException = new ExternalSystemException(ExceptionUtil.getMessage(rootCause), e);
-        externalSystemException.initCause(e);
-        throw externalSystemException;
-      }
-    });
+    return connectorService.withGradleConnection(projectDir, taskId, settings, listener, cancellationToken, connection ->
+      SystemPropertiesAdjuster.executeAdjusted(projectDir, () -> f.fun(connection))
+    );
   }
 
   public static <T> T execute(
     @NotNull GradleExecutionContextImpl context,
     @NotNull java.util.function.Function<? super ProjectConnection, ? extends T> action
   ) {
-    return execute(
-      context.getProjectPath(), context.getSettings(), context.getTaskId(), context.getListener(), context.getCancellationToken(),
-      connection -> {
-        BuildEnvironment buildEnvironment = null;
-        try {
-          buildEnvironment = getBuildEnvironment(connection, context);
-          context.setBuildEnvironment(buildEnvironment);
-          return action.apply(connection);
-        }
-        catch (CancellationException | ExternalSystemException e) {
-          throw e;
-        }
-        catch (BuildCancelledException e) {
-          throw new ProcessCanceledException(e);
-        }
-        catch (Exception ex) {
-          throw GradleProjectResolver.createProjectResolverChain()
-            .getUserFriendlyError(buildEnvironment, ex, context.getProjectPath(), null);
-        }
+    Ref<BuildEnvironment> buildEnvironmentRef = new Ref<>();
+    try {
+      return execute(context.getProjectPath(), context.getSettings(), context.getTaskId(), context.getListener(), context.getCancellationToken(), connection -> {
+        BuildEnvironment buildEnvironment = getBuildEnvironment(connection, context);
+        buildEnvironmentRef.set(buildEnvironment);
+        context.setBuildEnvironment(buildEnvironment);
+        return action.apply(connection);
       });
+    }
+    catch (CancellationException | ExternalSystemException e) {
+      throw e;
+    }
+    catch (BuildCancelledException e) {
+      throw new ProcessCanceledException(e);
+    }
+    catch (Exception ex) {
+      throw GradleProjectResolver.createProjectResolverChain()
+        .getUserFriendlyError(buildEnvironmentRef.get(), ex, context.getProjectPath(), null);
+    }
+    catch (Throwable e) {
+      LOG.warn("Gradle execution error", e);
+      Throwable rootCause = ExceptionUtil.getRootCause(e);
+      ExternalSystemException externalSystemException = new ExternalSystemException(ExceptionUtil.getMessage(rootCause), e);
+      externalSystemException.initCause(e);
+      throw externalSystemException;
+    }
   }
 
   public static void prepareForExecution(
