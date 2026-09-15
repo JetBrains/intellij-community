@@ -525,6 +525,8 @@ private val contentModulesExtractedInCorePluginWhichCanBeUsedFromExternalPlugins
   "intellij.platform.debugger.impl",
   "intellij.platform.debugger.impl.shared",
   "intellij.platform.debugger.impl.ui",
+  "intellij.platform.externalSystem",
+  "intellij.platform.externalSystem.impl",
   "intellij.platform.tasks",
   "intellij.platform.tasks.impl",
   "intellij.platform.remoteServers.impl",

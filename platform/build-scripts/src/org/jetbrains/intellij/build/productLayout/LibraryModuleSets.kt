@@ -88,7 +88,7 @@ object LibraryModuleSets {
     embeddedModule("intellij.libraries.caffeine")
     embeddedModule("intellij.libraries.classgraph")
     embeddedModule("intellij.libraries.cli.parser")
-    embeddedModule("intellij.libraries.commons.cli")
+    module("intellij.libraries.commons.cli")
     // embedded because embedded library content needs them in the core classloader:
     // `commons-compress` calls into both (`ArchiveInputStream`, `FramedLZ4CompressorInputStream`) and `batik`
     // (via `xmlgraphics-commons`) calls into commons-io. Both exclude the artifacts and depend on these wrappers.

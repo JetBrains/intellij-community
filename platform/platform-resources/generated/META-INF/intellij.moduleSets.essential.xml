@@ -68,7 +68,7 @@
     <module name="intellij.libraries.caffeine" loading="embedded"/>
     <module name="intellij.libraries.classgraph" loading="embedded"/>
     <module name="intellij.libraries.cli.parser" loading="embedded"/>
-    <module name="intellij.libraries.commons.cli" loading="embedded"/>
+    <module name="intellij.libraries.commons.cli"/>
     <module name="intellij.libraries.commons.codec" loading="embedded"/>
     <module name="intellij.libraries.commons.compress" loading="embedded"/>
     <module name="intellij.libraries.commons.io" loading="embedded"/>
@@ -275,7 +275,7 @@
     <module name="intellij.platform.ide.concurrency" loading="embedded"/>
     <module name="intellij.platform.builtInServer" loading="embedded"/>
     <module name="intellij.platform.discoverability" loading="embedded"/>
-    <module name="intellij.platform.externalSystem" loading="embedded"/>
+    <module name="intellij.platform.externalSystem"/>
     <module name="intellij.platform.eel.impl" loading="embedded"/>
     <module name="intellij.platform.eel.nioFs.impl" loading="embedded"/>
     <module name="intellij.platform.diff" loading="embedded"/>
@@ -357,7 +357,7 @@
     <module name="intellij.platform.polySymbols.web"/>
     <module name="intellij.platform.builtInServer.impl" loading="embedded"/>
     <module name="intellij.platform.externalSystem.dependencyUpdater"/>
-    <module name="intellij.platform.externalSystem.impl" loading="embedded"/>
+    <module name="intellij.platform.externalSystem.impl"/>
     <module name="intellij.platform.externalProcessAuthHelper"/>
     <module name="intellij.platform.util.commonsLangV2Shim"/>
     <!-- endregion -->

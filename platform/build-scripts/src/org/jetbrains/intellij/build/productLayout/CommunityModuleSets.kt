@@ -158,7 +158,7 @@ object CommunityModuleSets {
     // These provide core IDE functionality needed by all full IDE products
     embeddedModule("intellij.platform.builtInServer.impl")
     module("intellij.platform.externalSystem.dependencyUpdater")
-    embeddedModule("intellij.platform.externalSystem.impl")
+    module("intellij.platform.externalSystem.impl")
     module("intellij.platform.externalProcessAuthHelper")
 
     module("intellij.platform.util.commonsLangV2Shim")
