@@ -24,7 +24,7 @@ import java.io.IOException;
  * _require_ to be durable -- empty flush/close methods are OK.
  */
 @ApiStatus.Internal
-public interface DurableIntToMultiIntMap extends Flushable, Closeable, CleanableStorage {
+public interface DurableIntToMultiIntMap extends Durable, CleanableStorage {
   int NO_VALUE = DataEnumerator.NULL_ID;
 
   /**
