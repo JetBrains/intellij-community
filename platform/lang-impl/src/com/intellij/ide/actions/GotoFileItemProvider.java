@@ -320,8 +320,8 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     processNames(parameters, name -> grouper.processName(name));
 
     DirectoryConsumer directoryConsumer = new DirectoryConsumer(isFuzzyFileSearchEnabled());
-    if (!processItemsForDirMatcher(base, parameters, consumer, hasSuggestions, directoryConsumer, grouper,
-                                   DirectoryPathMatcher.root(myModel, dirPattern))) {
+    NamePass pass = new NamePass(base, parameters, consumer, hasSuggestions, directoryConsumer, grouper);
+    if (!pass.process(DirectoryPathMatcher.root(myModel, dirPattern))) {
       return false;
     }
 
@@ -336,27 +336,56 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     return true;
   }
 
-  private boolean processItemsForDirMatcher(@NotNull ChooseByNameViewModel base,
-                                            @NotNull FindSymbolParameters parameters,
-                                            @NotNull Processor<? super FoundItemDescriptor<?>> consumer,
-                                            @NotNull Ref<Boolean> hasSuggestions,
-                                            @NotNull DirectoryConsumer directoryConsumer,
-                                            @NotNull NameGrouper grouper,
-                                            @Nullable DirectoryPathMatcher dirMatcher) {
-    while (dirMatcher != null) {
-      int index = grouper.index;
-      SuffixMatches group = grouper.nextGroup(base);
-      if (group == null) break;
-      if (!group.processFiles(parameters.withLocalPattern(dirMatcher.dirPattern), consumer, hasSuggestions, dirMatcher,
-                              directoryConsumer)) {
-        return false;
-      }
-      dirMatcher = dirMatcher.appendChar(grouper.namePattern.charAt(index));
-      if (!myModel.isSlashlessMatchingEnabled()) {
-        return true;
-      }
+  /**
+   * One pass over the grouped file names of the project, along one {@link DirectoryPathMatcher} chain.
+   * <p>
+   * The pass consumes the grouper: {@link NameGrouper#nextGroup} empties the bucket it reads.
+   */
+  private final class NamePass {
+    private final @NotNull ChooseByNameViewModel base;
+    private final @NotNull FindSymbolParameters parameters;
+    private final @NotNull Processor<? super FoundItemDescriptor<?>> consumer;
+    private final @NotNull Ref<Boolean> hasSuggestions;
+    private final @NotNull DirectoryConsumer directoryConsumer;
+    private final @NotNull NameGrouper grouper;
+
+    NamePass(@NotNull ChooseByNameViewModel base,
+             @NotNull FindSymbolParameters parameters,
+             @NotNull Processor<? super FoundItemDescriptor<?>> consumer,
+             @NotNull Ref<Boolean> hasSuggestions,
+             @NotNull DirectoryConsumer directoryConsumer,
+             @NotNull NameGrouper grouper) {
+      this.base = base;
+      this.parameters = parameters;
+      this.consumer = consumer;
+      this.hasSuggestions = hasSuggestions;
+      this.directoryConsumer = directoryConsumer;
+      this.grouper = grouper;
     }
-    return true;
+
+    /**
+     * Reports the files of each name group, and narrows the chain by one character of the name pattern per group.
+     *
+     * @param dirMatcher the chain to start from, or {@code null} when no directory matches the directory pattern
+     * @return {@code false} when the pass stopped, either because the consumer asked for it or because the project
+     * holds no suggestion
+     */
+    boolean process(@Nullable DirectoryPathMatcher dirMatcher) {
+      while (dirMatcher != null) {
+        int index = grouper.index;
+        SuffixMatches group = grouper.nextGroup(base);
+        if (group == null) break;
+        if (!group.processFiles(parameters.withLocalPattern(dirMatcher.dirPattern), consumer, hasSuggestions, dirMatcher,
+                                directoryConsumer)) {
+          return false;
+        }
+        dirMatcher = dirMatcher.appendChar(grouper.namePattern.charAt(index));
+        if (!myModel.isSlashlessMatchingEnabled()) {
+          return true;
+        }
+      }
+      return true;
+    }
   }
 
   /**
