@@ -1,11 +1,14 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.lang.lexer
 
+import com.intellij.lexer.Lexer
 import com.intellij.lexer.MergeFunction
 import com.intellij.lexer.MergingLexerAdapterBase
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 
-class MarkdownMergingLexer : MergingLexerAdapterBase(MarkdownLexerAdapter()) {
+class MarkdownMergingLexer(original: Lexer) : MergingLexerAdapterBase(original) {
+  constructor() : this(MarkdownLexerAdapter())
+
   override fun getMergeFunction(): MergeFunction {
     return APOSTROPHE_MERGING_FUNCTION
   }

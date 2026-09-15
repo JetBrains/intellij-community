@@ -12,6 +12,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.ILazyParseableElementType;
 import org.intellij.markdown.flavours.MarkdownFlavourDescriptor;
 import org.intellij.plugins.markdown.lang.lexer.MarkdownMergingLexer;
+import org.intellij.plugins.markdown.lang.lexer.MarkdownToplevelLexer;
 import org.intellij.plugins.markdown.lang.parser.CancellableText;
 import org.intellij.plugins.markdown.lang.parser.MarkdownFlavourUtil;
 import org.intellij.plugins.markdown.lang.parser.MarkdownParserManager;
@@ -33,18 +34,19 @@ public class MarkdownLazyElementType extends ILazyParseableElementType {
   @Override
   protected ASTNode doParseContents(@NotNull ASTNode chameleon, @NotNull PsiElement psi) {
     final Project project = psi.getProject();
-    final Lexer lexer = new MarkdownMergingLexer();
     final CharSequence chars = CancellableText.of(chameleon.getChars());
 
     final var file = psi.getContainingFile();
     Objects.requireNonNull(file, () -> "Expected a non-null containing file for " + psi);
     final var flavour = obtainFlavour(file);
-    final PsiBuilder builder = PsiBuilderFactory.getInstance().createBuilder(project, chameleon, lexer, getLanguage(), chars);
 
     var startTime = System.nanoTime();
     final var parser = MarkdownParserManager.createMarkdownParser(flavour, true);
     final var nodeType = MarkdownElementType.markdownType(chameleon.getElementType());
     final var node = parser.parseInline(nodeType, chars, 0, chars.length());
+
+    final Lexer lexer = new MarkdownMergingLexer(new MarkdownToplevelLexer(flavour, node));
+    final PsiBuilder builder = PsiBuilderFactory.getInstance().createBuilder(project, chameleon, lexer, getLanguage(), chars);
 
     PsiBuilder.Marker rootMarker = builder.mark();
 
