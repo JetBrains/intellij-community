@@ -127,7 +127,9 @@ public class ExtendibleMapFactory implements StorageFactory<ExtendibleHashMap> {
       return mappedStorageFactory.wrapStorageSafely(
         storagePath,
         mappedStorage -> {
-          ExtendibleHashMap map = new ExtendibleHashMap(mappedStorage, segmentSize);
+          ExtendibleHashMap map = new ExtendibleHashMap(
+            new ExtendibleHashMapStorageOverMMappedFile(mappedStorage, segmentSize)
+          );
           if (!map.wasProperlyClosed()
               && notClosedProperlyAction != IGNORE_AND_HOPE_FOR_THE_BEST) {
             throw new CorruptedException(
@@ -146,7 +148,9 @@ public class ExtendibleMapFactory implements StorageFactory<ExtendibleHashMap> {
 
         return mappedStorageFactory.wrapStorageSafely(
           storagePath,
-          mappedStorage -> new ExtendibleHashMap(mappedStorage, segmentSize)
+          mappedStorage -> new ExtendibleHashMap(
+            new ExtendibleHashMapStorageOverMMappedFile(mappedStorage, segmentSize)
+          )
         );
       }
       else {//if (notClosedProperlyAction == FAIL)

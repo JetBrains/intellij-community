@@ -3,7 +3,6 @@ package com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.platform.util.io.storages.intmultimaps.DurableIntToMultiIntMap;
-import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorage;
 import com.intellij.util.io.ClosedStorageException;
 import com.intellij.util.io.CorruptedException;
 import com.intellij.util.io.IOUtil;
@@ -90,8 +89,7 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
   //        2) .size() is now O(N), make it O(1)
   //        3) Under-utilized (< 50%-utilized) segmentTable room (see HeaderLayout comments)
 
-  private final MMappedFileStorage storage;
-  private transient DataSource dataSource;
+  private final ExtendibleHashMapStorage storage;
 
   /** Used to avoid updating header.fileState on _each_ modification */
   private boolean dirty = false;
@@ -109,28 +107,19 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
 
   private final transient HashMapAlgo hashMapAlgo = new HashMapAlgo(0.5f);
 
-  public ExtendibleHashMap(@NotNull MMappedFileStorage storage,
-                           int segmentSize) throws IOException {
+  public ExtendibleHashMap(@NotNull ExtendibleHashMapStorage storage) throws IOException {
+    int segmentSize = storage.segmentSize();
     if (Integer.bitCount(segmentSize) != 1) {
-      throw new IllegalArgumentException("segmentSize(=" + segmentSize + ") must be power of 2");
-    }
-    int pageSize = storage.pageSize();
-    if (segmentSize > pageSize) {
-      throw new IllegalArgumentException("segmentSize(=" + segmentSize + ") must be <= pageSize(=" + pageSize + ")");
-    }
-    if ((pageSize % segmentSize) != 0) {
-      throw new IllegalArgumentException("segmentSize(=" + segmentSize + ") must align with pageSize(=" + pageSize + ")");
+      throw new IllegalArgumentException("segmentSize(=" + segmentSize + ") must be a power of 2");
     }
 
     synchronized (this) {
       this.storage = storage;
-      boolean fileIsEmpty = (storage.actualFileSize() == 0);
+      boolean storageIsEmpty = storage.isEmpty();
+      MemorySegment headerSegment = storageIsEmpty ? storage.allocateSegment(0) : storage.segment(0);
+      header = new HeaderLayout(headerSegment, segmentSize);
 
-      dataSource = new DataSourceOverMMappedFileStorage(storage);
-
-      header = new HeaderLayout(dataSource, segmentSize);
-
-      if (fileIsEmpty) {
+      if (storageIsEmpty) {
         initEmptyMap(segmentSize);
         wasProperlyClosed = true; //new empty storage is by definition 'correct'
       }
@@ -138,18 +127,18 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
         int magicWord = header.magicWord();
         if (magicWord != MAGIC_WORD) {
           throw new IOException(
-            "[" + storage.storagePath() + "] is of incorrect type: " +
+            "[" + storage + "] is of incorrect type: " +
             ".magicWord(=" + magicWord + ", '" + IOUtil.magicWordToASCII(magicWord) + "') != " + MAGIC_WORD + " expected");
         }
 
         if (header.version() != IMPLEMENTATION_VERSION) {
           throw new IOException(
-            "[" + storage.storagePath() + "]: version(=" + header.version() + ") != current impl version(=" + IMPLEMENTATION_VERSION + ")");
+            "[" + storage + "]: version(=" + header.version() + ") != current impl version(=" + IMPLEMENTATION_VERSION + ")");
         }
 
         if (header.segmentSize() != segmentSize) {
           throw new IOException(
-            "[" + storage.storagePath() + "]: segmentSize(=" + segmentSize + ") != segmentSize(=" + header.segmentSize() + ")" +
+            "[" + storage + "]: segmentSize(=" + segmentSize + ") != segmentSize(=" + header.segmentSize() + ")" +
             " storage was initialized with");
         }
 
@@ -265,11 +254,10 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
   public synchronized int size() throws IOException {
     checkNotClosed();
     //FIXME RC: it is O(#segments) now, but O(1) would be better -> just keep recordsCount in a header
-    int segmentSize = header.segmentSize();
     int segmentsCount = header.actualSegmentsCount();
     int totalEntries = 0;
     for (int segmentIndex = 1; segmentIndex <= segmentsCount; segmentIndex++) {
-      totalEntries += HashMapSegmentLayout.aliveEntriesCount(dataSource, segmentIndex, segmentSize);
+      totalEntries += HashMapSegmentLayout.aliveEntriesCount(storage.segment(segmentIndex));
     }
     return totalEntries;
   }
@@ -277,10 +265,9 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
   @Override
   public synchronized boolean isEmpty() throws IOException {
     checkNotClosed();
-    int segmentSize = header.segmentSize();
     int segmentsCount = header.actualSegmentsCount();
     for (int segmentIndex = 1; segmentIndex <= segmentsCount; segmentIndex++) {
-      int aliveEntriesCount = HashMapSegmentLayout.aliveEntriesCount(dataSource, segmentIndex, segmentSize);
+      int aliveEntriesCount = HashMapSegmentLayout.aliveEntriesCount(storage.segment(segmentIndex));
       if (aliveEntriesCount > 0) {
         return false;
       }
@@ -295,7 +282,7 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
     int segmentSize = header.segmentSize();
     int segmentsCount = header.actualSegmentsCount();
     for (int segmentIndex = 1; segmentIndex <= segmentsCount; segmentIndex++) {
-      HashMapSegmentLayout segment = new HashMapSegmentLayout(dataSource, segmentIndex, segmentSize);
+      HashMapSegmentLayout segment = new HashMapSegmentLayout(segmentIndex, segmentSize, storage.segment(segmentIndex));
       if (segment.aliveEntriesCount() > 0) {
         if (!hashMapAlgo.forEach(segment, processor)) {
           return false;
@@ -322,10 +309,8 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
 
     segmentsCache.clear();
 
-    storage.zeroizeTillEOF(0);
-    //MAYBE RC: zeroize() is not very fast, and also mmapped file size remains the same, hence it still occupies a significant space
-    //          on disk. Better having something like storage.truncate() -- but it is hard to implement cross-platform for memory-mapped
-    //          files
+    storage.clear();
+    header = new HeaderLayout(storage.allocateSegment(0), segmentSize);
     initEmptyMap(segmentSize);
     dirty = false;
     markModified();
@@ -350,7 +335,6 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
       //Clear all references to mapped memory segments so the storage can unmap them.
       segmentsCache.clear();
       header = null;
-      dataSource = null;
     }
   }
 
@@ -362,7 +346,6 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
   @Override
   public synchronized void closeAndUnsafelyUnmap() throws IOException {
     close();
-    storage.closeAndUnsafelyUnmap();
   }
 
   @Override
@@ -374,7 +357,7 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
   @Override
   public String toString() {
     return "ExtendibleHashMap" +
-           "[" + storage.storagePath() + "]" +
+           "[" + storage + "]" +
            "[opened: " + storage.isOpen() + "]" +
            "[wasProperlyClosed: " + wasProperlyClosed + "]";
   }
@@ -427,7 +410,7 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
 
     HashMapSegmentLayout layout = segmentsCache.get(segmentIndex);
     if (layout == null) {
-      layout = new HashMapSegmentLayout(dataSource, segmentIndex, header.segmentSize());
+      layout = new HashMapSegmentLayout(segmentIndex, header.segmentSize(), storage.segment(segmentIndex));
       segmentsCache.put(segmentIndex, layout);
     }
     return layout;
@@ -519,7 +502,11 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
     int segmentsCount = header.actualSegmentsCount();
     int segmentIndex = segmentsCount + 1;// segmentIndex starts with 1 (segmentIndex=0 is the header)
 
-    HashMapSegmentLayout segment = new HashMapSegmentLayout(dataSource, segmentIndex, header.segmentSize());
+    HashMapSegmentLayout segment = new HashMapSegmentLayout(
+      segmentIndex,
+      header.segmentSize(),
+      storage.allocateSegment(segmentIndex)
+    );
     segment.updateHashSuffix(hashSuffix, hashSuffixDepth);
 
     header.actualSegmentsCount(segmentsCount + 1);
@@ -678,15 +665,20 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
     /** headerSegmentSize == {@link #segmentSize()} (we check that in ctor), but we cache it in field since it is frequently used */
     private final transient int headerSegmentSize;
 
-    HeaderLayout(@NotNull DataSource dataSource,
-                 int headerSegmentSize) throws IOException {
+    HeaderLayout(@NotNull MemorySegment headerSegment,
+                 int headerSegmentSize) {
       if (headerSegmentSize <= STATIC_HEADER_SIZE) {
         throw new IllegalArgumentException("headerSize(=" +
                                            headerSegmentSize + ") must be > STATIC_HEADER_SIZE(=" + STATIC_HEADER_SIZE + ")");
       }
+      if (headerSegment.byteSize() != headerSegmentSize) {
+        throw new IllegalArgumentException(
+          "headerSegment.byteSize()(=" + headerSegment.byteSize() + ") must be " + headerSegmentSize
+        );
+      }
 
       this.headerSegmentSize = headerSegmentSize;
-      headerSegment = dataSource.slice(0, headerSegmentSize);
+      this.headerSegment = headerSegment;
     }
 
     public int magicWord() {
@@ -848,15 +840,11 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
       if (segmentIndex < 1) {
         throw new IllegalArgumentException("segmentIndex(=" + segmentIndex + ") must be >=1 (0-th segment is a header)");
       }
-    }
-
-    @VisibleForTesting
-    public HashMapSegmentLayout(@NotNull DataSource dataSource,
-                                int segmentIndex,
-                                int segmentSize) throws IOException {
-      this(segmentIndex, segmentSize,
-           dataSource.slice(segmentIndex * (long)segmentSize, segmentSize)
-      );
+      if (segment.byteSize() != segmentSize) {
+        throw new IllegalArgumentException(
+          "segment.byteSize()(=" + segment.byteSize() + ") must be " + segmentSize
+        );
+      }
     }
 
     @Override
@@ -870,18 +858,9 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
       throw new UnsupportedOperationException("Method not implemented yet");
     }
 
-    /**
-     * 'Inlined' version of {@code new HashMapSegmentLayout(dataSource, segmentIndex, segmentSize).aliveEntriesCount()}
-     * with reduced allocations and slicing
-     */
-    public static int aliveEntriesCount(@NotNull DataSource dataSource,
-                                        int segmentIndex,
-                                        int segmentSize) throws IOException {
-      if (segmentIndex < 1) {
-        throw new IllegalArgumentException("segmentIndex(=" + segmentIndex + ") must be >=1 (0-th segment is a header)");
-      }
-      long offsetInFile = segmentIndex * (long)segmentSize;
-      return dataSource.getInt(offsetInFile);
+    /** Reads the entry count without creating a segment layout. */
+    public static int aliveEntriesCount(@NotNull MemorySegment segment) {
+      return (int)LIVE_ENTRIES_COUNT_HANDLE.get(segment, 0L);
     }
 
     @Override
@@ -979,15 +958,6 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
       }
       return sb.toString();
     }
-  }
-
-  /** Abstracts access to the map underlying data */
-  public interface DataSource {
-    @NotNull MemorySegment slice(long offsetInFile,
-                                 int length) throws IOException;
-
-    /** == {@code slice(offsetInFile, 4).get(JAVA_INT, 0)} */
-    int getInt(long offsetInFile) throws IOException;
   }
 
   /** Abstracts data storage for open-addressing hash-table implementation */
@@ -1315,25 +1285,4 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
     }
   }
 
-  private record DataSourceOverMMappedFileStorage(@NotNull MMappedFileStorage storage) implements DataSource {
-    @Override
-    public @NotNull MemorySegment slice(long offsetInFile,
-                                        int length) throws IOException {
-      MemorySegment segment = storage.pageByOffset(offsetInFile).rawPageSegment();
-      int offsetInPage = storage.toOffsetInPage(offsetInFile);
-      return segment.asSlice(offsetInPage, length);
-    }
-
-    @Override
-    public int getInt(long offsetInFile) throws IOException {
-      MemorySegment segment = storage.pageByOffset(offsetInFile).rawPageSegment();
-      int offsetInPage = storage.toOffsetInPage(offsetInFile);
-      return segment.get(JAVA_INT, offsetInPage);
-    }
-
-    @Override
-    public String toString() {
-      return "DataSourceOverMMappedFileStorage{" + storage + '}';
-    }
-  }
 }

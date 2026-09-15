@@ -10,6 +10,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.lang.foreign.Arena;
+import java.lang.foreign.MemorySegment;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -18,6 +20,7 @@ import java.util.List;
 import static com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleMapFactory.NotClosedProperlyAction.DROP_AND_CREATE_EMPTY_MAP;
 import static com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleMapFactory.NotClosedProperlyAction.FAIL_SPECTACULARLY;
 import static com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleMapFactory.NotClosedProperlyAction.IGNORE_AND_HOPE_FOR_THE_BEST;
+import static java.lang.foreign.ValueLayout.JAVA_BYTE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -148,6 +151,48 @@ public class ExtendibleHashMapTest extends DurableIntToMultiIntMapTestBase<Exten
     assertTrue(multimap.isDirty(), "Clearing a non-empty map must mark the map as dirty");
   }
 
+  @Test
+  public void failedFlush_keepsMapDirtyAndOpened() throws IOException {
+    var storage = new TestStorage();
+    var map = new ExtendibleHashMap(storage);
+    try {
+      map.put(1, 10);
+      storage.failFlush = true;
+
+      assertThrows(IOException.class, map::flush);
+      assertTrue(map.isDirty());
+      assertEquals(TestStorage.FILE_STATUS_OPENED, storage.fileStatus());
+      assertEquals(1, storage.flushCount);
+
+      storage.failFlush = false;
+      map.flush();
+      assertFalse(map.isDirty());
+      assertEquals(TestStorage.FILE_STATUS_PROPERLY_CLOSED, storage.fileStatus());
+      assertEquals(2, storage.flushCount);
+    }
+    finally {
+      storage.failFlush = false;
+      map.closeAndClean();
+    }
+  }
+
+  @Test
+  public void close_flushesStorage() throws IOException {
+    var storage = new TestStorage();
+    var map = new ExtendibleHashMap(storage);
+    try {
+      map.put(1, 10);
+      map.close();
+
+      assertEquals(1, storage.flushCount);
+      assertEquals(TestStorage.FILE_STATUS_PROPERLY_CLOSED, storage.fileStatusAtClose);
+      assertFalse(storage.isOpen());
+    }
+    finally {
+      map.closeAndClean();
+    }
+  }
+
   //===================== infrastructure ===============================================================
 
   private Path storagePath;
@@ -209,4 +254,80 @@ public class ExtendibleHashMapTest extends DurableIntToMultiIntMapTestBase<Exten
     }
   }
 
+  private static final class TestStorage implements ExtendibleHashMapStorage {
+    private static final int SEGMENT_SIZE = 1024;
+    private static final long FILE_STATUS_OFFSET = Integer.BYTES * 4L + Byte.BYTES;
+    private static final byte FILE_STATUS_OPENED = 0;
+    private static final byte FILE_STATUS_PROPERLY_CLOSED = 1;
+
+    private final Arena arena = Arena.ofConfined();
+    private final List<MemorySegment> segments = new ArrayList<>();
+
+    private boolean open = true;
+    private boolean failFlush;
+    private int flushCount;
+    private byte fileStatusAtClose;
+
+    @Override
+    public boolean isOpen() {
+      return open;
+    }
+
+    @Override
+    public boolean isEmpty() {
+      return segments.isEmpty();
+    }
+
+    @Override
+    public int segmentSize() {
+      return SEGMENT_SIZE;
+    }
+
+    @Override
+    public @NotNull MemorySegment segment(int segmentIndex) {
+      return segments.get(segmentIndex);
+    }
+
+    @Override
+    public @NotNull MemorySegment allocateSegment(int segmentIndex) {
+      if (segmentIndex != segments.size()) {
+        throw new IllegalArgumentException("The segment index must be " + segments.size() + ", but it is " + segmentIndex);
+      }
+      var segment = arena.allocate(SEGMENT_SIZE, Integer.BYTES);
+      segments.add(segment);
+      return segment;
+    }
+
+    @Override
+    public void clear() {
+      segments.clear();
+    }
+
+    @Override
+    public void flush() throws IOException {
+      flushCount++;
+      if (failFlush) {
+        throw new IOException("Test flush failure");
+      }
+    }
+
+    @Override
+    public void close() {
+      if (open) {
+        fileStatusAtClose = fileStatus();
+        open = false;
+        arena.close();
+      }
+    }
+
+    @Override
+    public void closeAndClean() {
+      close();
+      segments.clear();
+    }
+
+    private byte fileStatus() {
+      return segments.getFirst().get(JAVA_BYTE, FILE_STATUS_OFFSET);
+    }
+  }
 }
