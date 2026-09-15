@@ -28,7 +28,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JavaVersion;
@@ -37,7 +36,6 @@ import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.context.Scope;
 import org.gradle.tooling.BuildCancelledException;
 import org.gradle.tooling.BuildLauncher;
-import org.gradle.tooling.CancellationToken;
 import org.gradle.tooling.LongRunningOperation;
 import org.gradle.tooling.ModelBuilder;
 import org.gradle.tooling.ProgressListener;
@@ -72,6 +70,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
+import java.util.function.Function;
 
 /**
  * This is the low-level Gradle execution API that connects and interacts with the Gradle daemon using the Gradle tooling API.
@@ -145,51 +144,24 @@ public final class GradleExecutionHelper {
     }
   }
 
-  /**
-   * @deprecated use the {@link GradleExecutionHelper#execute} function with {@link GradleExecutionContext} instead
-   */
-  @Deprecated
-  public <T> T execute(
-    @NotNull String projectPath,
-    @Nullable GradleExecutionSettings settings,
-    @NotNull Function<? super ProjectConnection, ? extends T> f
-  ) {
-    return execute(projectPath, settings, null, null, null, f);
-  }
-
-  /**
-   * @deprecated use the {@link GradleExecutionHelper#execute} function with {@link GradleExecutionContext} instead
-   */
-  @Deprecated
-  public static <T> T execute(
-    @NotNull String projectPath,
-    @Nullable GradleExecutionSettings settings,
-    @Nullable ExternalSystemTaskId taskId,
-    @Nullable ExternalSystemTaskNotificationListener listener,
-    @Nullable CancellationToken cancellationToken,
-    @NotNull Function<? super ProjectConnection, ? extends T> f
-  ) {
-    GradleConnectorService connectorService = GradleConnectorService.getInstance(projectPath, taskId);
-    return connectorService.withGradleConnection(projectPath, taskId, settings, listener, cancellationToken, connection ->
-      SystemPropertiesAdjuster.executeAdjusted(projectPath, () -> f.fun(connection))
-    );
-  }
-
   public static <T> T execute(
     @NotNull GradleExecutionContextImpl context,
-    @NotNull java.util.function.Function<? super ProjectConnection, ? extends T> action
+    @NotNull Function<? super ProjectConnection, ? extends T> action
   ) {
     Ref<BuildEnvironment> buildEnvironmentRef = new Ref<>();
     try {
       // Setting the custom build file location is deprecated since Gradle 7.6, see IDEA-359161 for more details.
       setupProjectDirectory(context);
 
-      return execute(context.getProjectPath(), context.getSettings(), context.getTaskId(), context.getListener(), context.getCancellationToken(), connection -> {
-        BuildEnvironment buildEnvironment = getBuildEnvironment(connection, context);
-        buildEnvironmentRef.set(buildEnvironment);
-        context.setBuildEnvironment(buildEnvironment);
-        return action.apply(connection);
-      });
+      GradleConnectorService connectorService = GradleConnectorService.getInstance(context.getProjectPath(), context.getTaskId());
+      return connectorService.withGradleConnection(context.getProjectPath(), context.getTaskId(), context.getSettings(), context.getListener(), context.getCancellationToken(), connection ->
+        SystemPropertiesAdjuster.executeAdjusted(context.getProjectPath(), () -> {
+          BuildEnvironment buildEnvironment = getBuildEnvironment(connection, context);
+          buildEnvironmentRef.set(buildEnvironment);
+          context.setBuildEnvironment(buildEnvironment);
+          return action.apply(connection);
+        })
+      );
     }
     catch (CancellationException | ExternalSystemException e) {
       throw e;
