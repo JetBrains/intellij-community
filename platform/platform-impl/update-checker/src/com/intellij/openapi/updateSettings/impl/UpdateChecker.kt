@@ -751,6 +751,12 @@ private suspend fun doUpdateAndShowResult(
     return null
   }
 
+  // The check has completed and there is no platform update.
+  // Custom settings are a probe with another channel, and its answer is not about the real state
+  if (platformUpdates !is PlatformUpdates.Loaded && customSettings == null) {
+    UpdateSettingsEntryPointActionProvider.clearPlatformUpdateInfo()
+  }
+
   // "Remind Me Later" mutes the IDE announcement
   val announcedUpdate = if (userInitiated || !IdeUpdateWidgetState.isRemindLaterActive()) platformUpdates as? PlatformUpdates.Loaded
                         else null
