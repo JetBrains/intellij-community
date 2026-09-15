@@ -25,9 +25,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher
-import com.intellij.openapi.options.ConfigurableGroup
 import com.intellij.openapi.options.ShowSettingsUtil
-import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.startup.StartupManager
@@ -87,7 +85,7 @@ fun initMacApplication(mainScope: CoroutineScope) {
       if (project == null || project.isDefault) {
         LOG.debug("MacMenu: no opened project frame, use default project instead")
         val defaultProject = project ?: serviceAsync<ProjectManager>().defaultProject
-        showSettingsUtil.showSettingsDialog(defaultProject, createConfigurableGroups(defaultProject))
+        showSettingsUtil.showSettingsDialog(defaultProject)
       }
       else {
         // Execute in the project coroutine scope to ensure that,
@@ -95,7 +93,7 @@ fun initMacApplication(mainScope: CoroutineScope) {
         // Still, we `.join` to ensure that mac menu actions is disabled for the entire duration of the task (contract of `submit`).
         project.serviceAsync<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
           (project.serviceAsync<StartupManager>() as StartupManagerEx).waitForInitProjectActivities(IdeBundle.message("settings.modal.opening.message"))
-          showSettingsUtil.showSettingsDialog(project, createConfigurableGroups(project))
+          showSettingsUtil.showSettingsDialog(project)
         }.join()
       }
 
@@ -138,10 +136,6 @@ fun initMacApplication(mainScope: CoroutineScope) {
     Foundation.executeOnMainThread(false, false, Runnable { installAutoUpdateMenu() })
     installProtocolHandler(desktop, mainScope)
   }
-}
-
-private fun createConfigurableGroups(project: Project): List<ConfigurableGroup> {
-  return listOf(ConfigurableExtensionPointUtil.doGetConfigurableGroup(project, true))
 }
 
 private suspend fun reportActionUsed(project: Project?, actionId: String) {
