@@ -156,9 +156,10 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
   protected @NotNull FutureTask<Boolean> prepareTask(@NotNull PsiFile psiFile, boolean processChangedTextOnly) {
     awaitFileCodeStyleSettings(psiFile);
 
-    if (DumbService.isDumb(psiFile.getProject()) || !psiFile.isValid()) {
+    if (DumbService.isDumb(psiFile.getProject())) {
       return emptyTask();
     }
+
     final List<Runnable> runnablesSuspendOptimizers = OptimizeImportsSuspendHelper.collectSuspendOptimizers(psiFile);
 
     return ReadAction.nonBlocking(() -> {
