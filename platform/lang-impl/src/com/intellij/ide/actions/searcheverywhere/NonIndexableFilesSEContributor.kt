@@ -9,6 +9,7 @@ import com.intellij.ide.actions.searcheverywhere.footer.createPsiExtendedInfo
 import com.intellij.ide.util.gotoByName.FileTypeRef
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.readActionUndispatched
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
@@ -31,10 +32,8 @@ import com.intellij.util.IncorrectOperationException
 import com.intellij.util.Processor
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresReadLock
-import com.intellij.util.indexing.NonIndexableFilesDequeImpl
-import com.intellij.util.indexing.nonIndexableRootsAsCacheAvoiding
+import com.intellij.util.indexing.ConcurrentFilesDeque
 import com.intellij.util.text.matching.MatchingMode
-import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
@@ -205,7 +204,7 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
     else filterByType.and { file -> scope.containsNonIndexed(file) }
 
     val searchInLibraries = (scope as? GlobalSearchScope)?.isSearchInLibraries ?: true
-    val workspaceFileIndex = WorkspaceFileIndexEx.getInstance(project)
+    if (!searchInLibraries && !Registry.`is`("lookup.non.indexable.content.in.project.scope")) return
 
     if (!NonIndexableProductBehaviorService.getInstance().shouldLookupInProjectScopes() && !searchInLibraries) return
 
@@ -227,32 +226,18 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
     @Suppress("UsagesOfObsoleteApi") // must use it due to using the old contributors api
     ProgressManager.getInstance().executeProcessUnderProgress(
       {
-        // tail position
         runBlockingCancellable {
-          val roots = readActionUndispatched { when {
-            searchInLibraries -> workspaceFileIndex.nonIndexableRootsAsCacheAvoiding()
-            else ->
-              if (Registry.`is`("lookup.non.indexable.content.in.project.scope"))
-                workspaceFileIndex.nonIndexableRootsAsCacheAvoiding { fileSet -> fileSet.kind.isContent }
-              else
-                setOf()
-          } }
-
-          if (roots.isEmpty()) return@runBlockingCancellable
-
-          val state = SearchJobsState(roots)
+          // we do not pass [filter] here, because we want to show files that do not match the filter in suboptimal matches
+          val nonIndexableDeque = readAction { ConcurrentFilesDeque.nonIndexableDequeue(project, searchInLibraries) }
+          val state = SearchJobsState(nonIndexableDeque)
+          if (state.roots.isEmpty()) return@runBlockingCancellable
 
           val toplevelProducerJob = launch(Dispatchers.IO.limitedParallelism(MAX_JOBS)) {
             ParallelQueueProcessor.createRunning(
               scope = this@launch, jobsNumber = MAX_JOBS, initialItems = state.roots, workerJobYieldTimeout = 50.milliseconds
             ) processor@{ handle, file ->
-              if (state.isAlreadyVisitedRoot(file)) return@processor
-              val shouldProcessSubtree = NonIndexableFilesDequeImpl.getSubtreeProcessingModeAt(file, workspaceFileIndex)
-              if (shouldProcessSubtree.shouldProcessChildren()) {
-                file.children.forEach(handle::queueSpawningWorkerJobIfNotAtLimit)
-              }
-
-              if (!shouldProcessSubtree.shouldProcessRoot()) return@processor
+              val shouldProcessSelf = state.processItem(file, handle)
+              if (!shouldProcessSelf) return@processor
 
               val filePath = file.path
               val rootOfFile = state.getPathRootOfPath(filePath)
@@ -377,12 +362,12 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
 private class SearchJobsState {
   val roots: Set<VirtualFile>
   private val rootsPaths: List<String>
+  private val deque: ConcurrentFilesDeque
   private val resultsChannel: Channel<Pair<VirtualFile, Int>> = Channel(Channel.UNLIMITED)
 
-  val visitedRoots: MutableSet<VirtualFile> = ConcurrentHashMap.newKeySet()
-
-  constructor(roots: Set<VirtualFile>) {
-    this.roots = ConcurrentHashMap.newKeySet<VirtualFile>().apply { addAll(roots) }
+  constructor(deque: ConcurrentFilesDeque) {
+    this.deque = deque
+    this.roots = ConcurrentHashMap.newKeySet<VirtualFile>().apply { addAll(deque.initialItems()) }
     this.rootsPaths = roots.map { it.path }
   }
 
@@ -390,13 +375,10 @@ private class SearchJobsState {
     return rootsPaths.firstOrNull { filePath.startsWith(it) }
   }
 
-  /**
-   * @return `true` if the file is an already visited root. `false` if the file is not a root, or a root which is not visited yet
-   */
-  fun isAlreadyVisitedRoot(file: VirtualFile): Boolean {
-    if (file in visitedRoots) return true
-    if (file in roots) !visitedRoots.add(file)
-    return false
+  fun processItem(file: VirtualFile, handle: ParallelQueueProcessor<VirtualFile>): Boolean {
+    return deque.computeNext(file) { files ->
+      files.forEach(handle::queueSpawningWorkerJobIfNotAtLimit)
+    }
   }
 
   fun emitResult(file: VirtualFile, score: Int) {
