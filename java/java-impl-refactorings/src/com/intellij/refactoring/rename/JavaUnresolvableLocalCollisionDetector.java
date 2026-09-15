@@ -48,8 +48,7 @@ public final class JavaUnresolvableLocalCollisionDetector {
         if (!methodParameter &&
             helper.resolveAccessibleReferencedVariable(newName, element) != collidingVariable &&
             helper.resolveAccessibleReferencedVariable(oldName, collidingVariable) != element) return;
-        UnresolvableLocalCollisionUsageInfo collision = new UnresolvableLocalCollisionUsageInfo(collidingVariable, element);
-        result.add(collision);
+        result.add(new UnresolvableLocalCollisionUsageInfo(collidingVariable, element));
       }
     };
 
@@ -65,8 +64,7 @@ public final class JavaUnresolvableLocalCollisionDetector {
 
   private static void visitDownstreamCollisions(PsiElement scope, PsiElement place, String newName,
                                                 CollidingVariableVisitor collidingNameVisitor) {
-    ConflictingLocalVariablesVisitor collector =
-      new ConflictingLocalVariablesVisitor(newName, collidingNameVisitor);
+    ConflictingLocalVariablesVisitor collector = new ConflictingLocalVariablesVisitor(newName, collidingNameVisitor);
     if (place == null) {
       scope.accept(collector);
     }
@@ -119,12 +117,14 @@ public final class JavaUnresolvableLocalCollisionDetector {
       if (myName.equals(field.getName())) {
         myCollidingNameVisitor.visitCollidingElement(field);
       }
+      super.visitField(field);
     }
 
     @Override public void visitVariable(@NotNull PsiVariable variable) {
       if (myName.equals(variable.getName())) {
         myCollidingNameVisitor.visitCollidingElement(variable);
       }
+      super.visitVariable(variable);
     }
   }
 }
