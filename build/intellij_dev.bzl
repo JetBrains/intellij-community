@@ -102,14 +102,18 @@ def _runtime_jvm_flags(name, jvm_flags, platform_prefix, config_path, system_pat
     `$${...}` is a literal `${...}` the java stub expands at launch; `BUILD_WORKSPACE_DIRECTORY` is set by `bazel run`,
     so a launcher started any other way must export it itself.
     """
-    all_jvm_flags = DEFAULT_JVM_FLAGS + jvm_flags
-
-    if platform_prefix:
-        all_jvm_flags = all_jvm_flags + ["-Didea.platform.prefix=" + platform_prefix]
 
     # Use provided paths or defaults based on target name
     effective_config_path = config_path if config_path else "$${BUILD_WORKSPACE_DIRECTORY}/out/dev-data/" + name + "/config"
     effective_system_path = system_path if system_path else "$${BUILD_WORKSPACE_DIRECTORY}/out/dev-data/" + name + "/system"
+
+    all_jvm_flags = DEFAULT_JVM_FLAGS + [
+        "-Didea.plugins.path=" + effective_config_path + "/plugins",
+        "-Didea.log.path=" + effective_system_path + "/log",
+    ] + jvm_flags
+
+    if platform_prefix:
+        all_jvm_flags = all_jvm_flags + ["-Didea.platform.prefix=" + platform_prefix]
 
     return all_jvm_flags + [
         "-Didea.config.path=" + effective_config_path,
