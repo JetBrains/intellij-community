@@ -28,7 +28,7 @@ import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
 import org.jetbrains.kotlin.psi.KtConstantExpression
-import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtDeclarationWithReturnType
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
 import org.jetbrains.kotlin.psi.KtDestructuringDeclarationEntry
 import org.jetbrains.kotlin.psi.KtElement
@@ -61,7 +61,7 @@ fun KaType.isEnum(): Boolean {
 @OptIn(KaContextParameterApi::class)
 context(_: KaSession)
 fun KtExpression.expressionOrReturnType(): KaType? {
-    return if (this is KtDeclaration) returnType else expressionType
+    return if (this is KtDeclarationWithReturnType) returnType else expressionType
 }
 
 fun KtExpression.shouldShowType(): Boolean = when (this) {
