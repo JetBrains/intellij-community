@@ -144,8 +144,8 @@ internal abstract class SortKeyAction(
 
 private fun optionSupplier(
   legacyActionSupplier: () -> ProjectViewImpl.Action,
-  optionSupplier: (AnActionEvent) -> Option,
-): Function<in AnActionEvent, out Option> {
+  optionSupplier: (AnActionEvent) -> Option?,
+): Function<in AnActionEvent, out Option?> {
   return Function { event ->
     if (isProjectViewSplit()) {
       optionSupplier(event)
