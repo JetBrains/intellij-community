@@ -46,6 +46,8 @@ jvm_library(
         "//plugins/gradle:gradle_test_lib",
         "//plugins/gradle:gradle-tests",
         "//plugins/gradle:gradle-tests_test_lib",
+        "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
+        "//plugins/gradle/tooling-extension-impl:toolingExtension-impl_test_lib",
         "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
         "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
         "@lib//:kotlin-stdlib",
