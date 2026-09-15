@@ -313,11 +313,36 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
                                          @NotNull Ref<Boolean> hasSuggestions) {
     String sanitized = getSanitizedPattern(parameters.getCompletePattern(), myModel);
     int qualifierEnd = sanitized.lastIndexOf('/') + 1;
-    NameGrouper grouper = new NameGrouper(sanitized.substring(qualifierEnd), indicator);
+    String namePattern = sanitized.substring(qualifierEnd);
+    String dirPattern = sanitized.substring(0, qualifierEnd);
+
+    NameGrouper grouper = new NameGrouper(namePattern, indicator);
     processNames(parameters, name -> grouper.processName(name));
 
-    DirectoryPathMatcher dirMatcher = DirectoryPathMatcher.root(myModel, sanitized.substring(0, qualifierEnd));
     DirectoryConsumer directoryConsumer = new DirectoryConsumer(isFuzzyFileSearchEnabled());
+    if (!processItemsForDirMatcher(base, parameters, consumer, hasSuggestions, directoryConsumer, grouper,
+                                   DirectoryPathMatcher.root(myModel, dirPattern))) {
+      return false;
+    }
+
+    PsiDirectory directory = directoryConsumer.getDirectoryIfTheOnlyOne();
+    if (directory != null) {
+      List<FoundItemDescriptor<PsiFileSystemItem>> childElements = getListWithChildItems(directory, myProject);
+      if (!ContainerUtil.process(childElements, consumer)) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  private boolean processItemsForDirMatcher(@NotNull ChooseByNameViewModel base,
+                                            @NotNull FindSymbolParameters parameters,
+                                            @NotNull Processor<? super FoundItemDescriptor<?>> consumer,
+                                            @NotNull Ref<Boolean> hasSuggestions,
+                                            @NotNull DirectoryConsumer directoryConsumer,
+                                            @NotNull NameGrouper grouper,
+                                            @Nullable DirectoryPathMatcher dirMatcher) {
     while (dirMatcher != null) {
       int index = grouper.index;
       SuffixMatches group = grouper.nextGroup(base);
@@ -331,15 +356,6 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
         return true;
       }
     }
-
-    PsiDirectory directory = directoryConsumer.getDirectoryIfTheOnlyOne();
-    if (directory != null) {
-      List<FoundItemDescriptor<PsiFileSystemItem>> childElements = getListWithChildItems(directory, myProject);
-      if (!ContainerUtil.process(childElements, consumer)) {
-        return false;
-      }
-    }
-
     return true;
   }
 
