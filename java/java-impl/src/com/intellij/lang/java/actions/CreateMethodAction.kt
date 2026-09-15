@@ -205,7 +205,10 @@ private class JavaMethodRenderer(
    * second call gives the same result as the first one.
    */
   private fun setupBody(method: PsiMethod, updater: ModPsiUpdater) {
-    if (method.body == null && !method.hasModifierProperty(PsiModifier.DEFAULT)) return
+    if (method.body == null && !method.hasModifierProperty(PsiModifier.DEFAULT)) {
+      updater.moveCaretTo(method.textRange.endOffset)
+      return
+    }
     setupMethodBody(method, updater)
     val body = method.body ?: return
     setupEditor(body, updater)
