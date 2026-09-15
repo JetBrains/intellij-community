@@ -24,6 +24,7 @@ import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiPackage;
 import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.PsiTypeParameterList;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -75,7 +76,7 @@ final class ExtractGeneratedClassUtil {
     generatedFile.setPackageName(packageName);
     extractedClass = PsiTreeUtil.findChildOfType(generatedFile, PsiClass.class);
     assert extractedClass != null;
-    copyStaticImports(generatedInnerClass, extractedClass, generatedFile, elementFactory);
+    copyStaticImports(generatedInnerClass, generatedFile, elementFactory);
     PsiElement codeBlock = PsiTreeUtil.findFirstParent(anchor, false, element -> element instanceof PsiCodeBlock);
     if (codeBlock == null) {
       codeBlock = anchor.getParent();
@@ -103,12 +104,11 @@ final class ExtractGeneratedClassUtil {
   }
 
   private static void copyStaticImports(@NotNull PsiElement from,
-                                        @NotNull PsiElement target,
                                         @NotNull PsiJavaFile destFile,
                                         @NotNull PsiElementFactory elementFactory) {
     PsiJavaFile fromFile = PsiTreeUtil.getParentOfType(from, PsiJavaFile.class);
     if (fromFile != null) {
-      List<PsiJavaCodeReferenceElement> references = collectUnqualifiedReferences(target);
+      List<PsiJavaCodeReferenceElement> references = collectUnqualifiedReferences(destFile);
       PsiImportList sourceImportList = fromFile.getImportList();
       if (sourceImportList != null) {
         PsiImportList destImportList = destFile.getImportList();
@@ -148,7 +148,10 @@ final class ExtractGeneratedClassUtil {
       @Override
       public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
         if (reference.getQualifier() == null) {
-          references.add(reference);
+          var target = reference.resolve();
+          if (!PsiUtil.isJvmLocalVariable(target) && !(target instanceof PsiPackage)) {
+            references.add(reference);
+          }
         }
         super.visitReferenceElement(reference);
       }
@@ -187,7 +190,7 @@ final class ExtractGeneratedClassUtil {
           member.hasModifierProperty(PsiModifier.STATIC)) {
         PsiClass containingClass = member.getContainingClass();
         if (containingClass != null &&
-            (importedClass.getManager().areElementsEquivalent(importedClass, containingClass) ||
+            (importedClass.isEquivalentTo(containingClass) ||
              importedClass.isInheritor(containingClass, true))) {
           result.add(reference);
         }
