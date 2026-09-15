@@ -8,6 +8,7 @@ import org.gradle.api.artifacts.component.ComponentArtifactIdentifier;
 import org.gradle.api.artifacts.component.ComponentIdentifier;
 import org.gradle.api.artifacts.component.ModuleComponentIdentifier;
 import org.gradle.api.artifacts.result.ResolvedArtifactResult;
+import org.gradle.api.artifacts.type.ArtifactTypeDefinition;
 import org.gradle.api.attributes.Bundling;
 import org.gradle.api.attributes.Category;
 import org.gradle.api.attributes.DocsType;
@@ -19,9 +20,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -33,6 +36,24 @@ import java.util.Set;
  */
 @ApiStatus.Internal
 public class AuxiliaryArtifactResolverImpl implements AuxiliaryArtifactResolver {
+
+  /**
+   * Archive artifact types that IntelliJ IDEA can mount as a library source or Javadoc root.
+   * <p>
+   * The request must name a concrete artifact type. Without it the view can return an intermediate format that IntelliJ cannot read
+   * (see IDEA-254862). A named type also lets Gradle run an artifact transform to that type.
+   * <p>
+   * IntelliJ IDEA registers these archive extensions for the {@code ARCHIVE} file type: {@code ane, apk, ear, egg, jar, swc, war, zip}
+   * (see {@code intellij.platform.ide.impl.xml}). Only {@code jar} and {@code zip} ever hold source or Javadoc content, so the resolver
+   * requests these two types. The tooling extension runs in the Gradle daemon and cannot read the platform file type registration, so the
+   * list is fixed here.
+   * <p>
+   * The resolver runs one view for each type and merges the results.
+   */
+  private static final List<String> SUPPORTED_ARCHIVE_ARTIFACT_TYPES = Arrays.asList(
+    ArtifactTypeDefinition.JAR_TYPE,
+    ArtifactTypeDefinition.ZIP_TYPE
+  );
 
   private final @NotNull Project project;
   private final @NotNull GradleDependencyDownloadPolicy policy;
@@ -56,15 +77,34 @@ public class AuxiliaryArtifactResolverImpl implements AuxiliaryArtifactResolver 
     }
     Map<ComponentIdentifier, Set<File>> javadocs = Collections.emptyMap();
     if (downloadJavadoc) {
-      Set<ResolvedArtifactResult> artifacts = resolve(configuration, DocsType.JAVADOC);
-      javadocs = classify(artifacts);
+      javadocs = resolveAuxiliaryArtifacts(configuration, DocsType.JAVADOC);
     }
     Map<ComponentIdentifier, Set<File>> sources = Collections.emptyMap();
     if (downloadSources) {
-      Set<ResolvedArtifactResult> artifacts = resolve(configuration, DocsType.SOURCES);
-      sources = classify(artifacts);
+      sources = resolveAuxiliaryArtifacts(configuration, DocsType.SOURCES);
     }
     return new AuxiliaryConfigurationArtifacts(sources, javadocs);
+  }
+
+  private @NotNull Map<ComponentIdentifier, Set<File>> resolveAuxiliaryArtifacts(
+    @NotNull Configuration configuration,
+    @MagicConstant(stringValues = {DocsType.JAVADOC, DocsType.SOURCES}) @NotNull String docsType
+  ) {
+    Map<ComponentIdentifier, Set<File>> result = new HashMap<>();
+    for (String artifactType : SUPPORTED_ARCHIVE_ARTIFACT_TYPES) {
+      Set<ResolvedArtifactResult> artifacts = resolve(configuration, docsType, artifactType);
+      classifyInto(result, artifacts);
+    }
+    return result;
+  }
+
+  private static void classifyInto(
+    @NotNull Map<ComponentIdentifier, Set<File>> target,
+    @NotNull Set<ResolvedArtifactResult> artifacts
+  ) {
+    for (Map.Entry<ComponentIdentifier, Set<File>> entry : classify(artifacts).entrySet()) {
+      target.computeIfAbsent(entry.getKey(), __ -> new HashSet<>()).addAll(entry.getValue());
+    }
   }
 
   @VisibleForTesting
@@ -84,7 +124,8 @@ public class AuxiliaryArtifactResolverImpl implements AuxiliaryArtifactResolver 
 
   private @NotNull Set<ResolvedArtifactResult> resolve(
     @NotNull Configuration configuration,
-    @MagicConstant(stringValues = {DocsType.JAVADOC, DocsType.SOURCES}) @NotNull String docsType
+    @MagicConstant(stringValues = {DocsType.JAVADOC, DocsType.SOURCES}) @NotNull String docsType,
+    @NotNull String artifactType
   ) {
     ObjectFactory objects = project.getObjects();
     return configuration
@@ -107,6 +148,8 @@ public class AuxiliaryArtifactResolverImpl implements AuxiliaryArtifactResolver 
           container.attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category.class, Category.DOCUMENTATION));
           container.attribute(Bundling.BUNDLING_ATTRIBUTE, objects.named(Bundling.class, Bundling.EXTERNAL));
           container.attribute(DocsType.DOCS_TYPE_ATTRIBUTE, objects.named(DocsType.class, docsType));
+          // request a concrete archive type so IntelliJ receives a readable artifact and Gradle can transform to it
+          container.attribute(ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE, artifactType);
         });
       })
       .getArtifacts()
