@@ -360,9 +360,8 @@ class MarkdownPreviewFileEditor(
             attachHtmlPanel()
           }
           else {
-            val editor = mainEditor.firstOrNull() ?: return@launch
-            val offset = editor.caretModel.offset
-            panel?.reloadWithOffset(offset)
+            panel?.reloadStyles()
+            updateHtml()
           }
         }
       }

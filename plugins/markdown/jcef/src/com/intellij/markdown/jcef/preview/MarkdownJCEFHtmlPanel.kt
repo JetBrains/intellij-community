@@ -253,6 +253,27 @@ class MarkdownJCEFHtmlPanel(private val project: Project?, private val virtualFi
     updateHandler.reloadWithOffset(offset)
   }
 
+  override fun reloadStyles() {
+    coroutineScope.launch {
+      initialization.await()
+      // language=JavaScript
+      val code = """
+      |(function() {
+      |  const token = Date.now();
+      |  for (const link of document.querySelectorAll('link[rel="stylesheet"]')) {
+      |    const fresh = link.cloneNode(false);
+      |    fresh.href = link.href.split("?")[0] + "?v=" + token;
+      |    const dropStale = () => link.remove();
+      |    fresh.addEventListener("load", dropStale, { once: true });
+      |    fresh.addEventListener("error", dropStale, { once: true });
+      |    link.insertAdjacentElement("afterend", fresh);
+      |  }
+      |})();
+      """.trimMargin()
+      runJavaScript(code)
+    }
+  }
+
   override fun dispose() {
     for (extension in currentExtensions) {
       Disposer.dispose(extension)
