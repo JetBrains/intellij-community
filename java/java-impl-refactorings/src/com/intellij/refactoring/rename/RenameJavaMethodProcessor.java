@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pass;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.JavaResolveResult;
@@ -56,6 +57,8 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.ui.EDT;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -278,6 +281,13 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
       conflicts);
   }
 
+  /**
+   * Collects the overriders to rename, and asks the user nothing.
+   * <p>
+   * It runs on EDT for a rename with a user, and on a background thread inside a read action for a
+   * rename with no user. The search goes under a modal progress only on EDT, for the reason
+   * {@code SuperMethodWarningUtil.getSuperMethods} states.
+   */
   @Override
   public void prepareRenaming(@NotNull PsiElement element,
                               @NotNull String newName,
@@ -291,12 +301,12 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
         allRenames.put(sibling, newName);
       }
 
-      Collection<PsiMethod> allOverriders = ProgressManager.getInstance().runProcessWithProgressSynchronously(
-        () -> OverridingMethodsSearch.search(sibling, scope, true).findAll(),
-        RefactoringBundle.message("searching.for.overrides"),
-        true,
-        element.getProject()
-      );
+      ThrowableComputable<Collection<PsiMethod>, RuntimeException> search =
+        () -> OverridingMethodsSearch.search(sibling, scope, true).findAll();
+      Collection<PsiMethod> allOverriders = EDT.isCurrentThreadEdt()
+                                            ? ProgressManager.getInstance().runProcessWithProgressSynchronously(
+                                              search, RefactoringBundle.message("searching.for.overrides"), true, element.getProject())
+                                            : search.compute();
 
       for (PsiMethod overrider : allOverriders) {
         if (overrider instanceof PsiMirrorElement mirror && mirror.getPrototype() instanceof PsiMethod m) {
@@ -334,19 +344,39 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
 
   @Override
   public @Nullable PsiElement substituteElementToRename(@NotNull PsiElement element, Editor editor) {
+    return substituteElementToRename(element, editor, true);
+  }
+
+  /**
+   * The element to rename instead of {@code element}.
+   *
+   * @param askUser false answers the base-method question with the base method and its whole
+   *                hierarchy, and reports an error through a return value instead of a dialog. A
+   *                rename with no user passes false. See
+   *                {@link HeadlessRenameJavaMethodProcessor#substituteElementToRenameHeadless}.
+   */
+  @ApiStatus.Internal
+  public @Nullable PsiElement substituteElementToRename(@NotNull PsiElement element, @Nullable Editor editor, boolean askUser) {
     PsiMethod psiMethod = (PsiMethod)element;
     if (psiMethod.isConstructor()) {
       PsiClass containingClass = psiMethod.getContainingClass();
       if (containingClass == null) return null;
       if (Comparing.strEqual(psiMethod.getName(), containingClass.getName())) {
-        return !PsiElementRenameHandler.canRename(containingClass.getProject(), editor, containingClass) ? null : containingClass;
+        if (askUser) {
+          return !PsiElementRenameHandler.canRename(containingClass.getProject(), editor, containingClass) ? null : containingClass;
+        }
+        // canRename shows an error hint. The caller of the headless path reports the message itself.
+        return PsiElementRenameHandler.getRenameErrorMessage(containingClass.getProject(), null, containingClass) == null
+               ? containingClass : null;
       }
     }
     PsiRecordComponent recordComponent = JavaPsiRecordUtil.getRecordComponentForAccessor(psiMethod);
     if (recordComponent != null) {
       return recordComponent;
     }
-    PsiMethod[] superMethods = SuperMethodWarningUtil.checkSuperMethods(psiMethod, RefactoringBundle.message("to.rename"));
+    PsiMethod[] superMethods = askUser
+                               ? SuperMethodWarningUtil.checkSuperMethods(psiMethod, RefactoringBundle.message("to.rename"))
+                               : SuperMethodWarningUtil.getTargetMethodCandidates(psiMethod, List.of());
     if (superMethods.length == 0) return null;
     SuperMethodWarningUtil.putSiblings(superMethods, superMethods[0]);
     return superMethods[0];
@@ -432,5 +462,26 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
         return 29 * super.hashCode() + element.hashCode();
       }
     };
+  }
+
+  /**
+   * Renames a Java method for a caller that has no user.
+   * <p>
+   * The outer class does not implement {@link HeadlessRenamePsiElementProcessor}, because it has
+   * subclasses in several plugins. A subclass must not inherit the statement that it renames with no
+   * user, so this class carries the statement alone.
+   */
+  public static final class HeadlessRenameJavaMethodProcessor extends RenameJavaMethodProcessor
+    implements DelegatingHeadlessRenamePsiElementProcessor {
+    /**
+     * The base method and its whole hierarchy, when {@code element} overrides something.
+     * <p>
+     * Java asks the user here whether to rename the base method. This answers that question with
+     * yes, so that the code stays consistent.
+     */
+    @Override
+    public @Nullable PsiElement substituteElementToRenameHeadless(@NotNull PsiElement element) {
+      return substituteElementToRename(element, null, false);
+    }
   }
 }

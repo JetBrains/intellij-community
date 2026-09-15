@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename;
 
 import com.intellij.openapi.editor.Editor;
@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.SearchScope;
@@ -21,10 +22,27 @@ import java.util.Collection;
 import java.util.Collections;
 
 
-public class RenamePsiDirectoryProcessor extends RenamePsiElementProcessor {
+public class RenamePsiDirectoryProcessor extends RenamePsiElementProcessor
+  implements DelegatingHeadlessRenamePsiElementProcessor {
   @Override
   public boolean canProcessElement(final @NotNull PsiElement element) {
     return element instanceof PsiDirectory;
+  }
+
+  @Override
+  public @Nullable PsiElement substituteElementToRenameHeadless(@NotNull PsiElement element) {
+    PsiDirectory directory = (PsiDirectory)element;
+    PsiPackage aPackage = JavaDirectoryService.getInstance().getPackageInSources(directory);
+    if (aPackage == null || aPackage.getQualifiedName().isEmpty()) {
+      return directory;
+    }
+    if (!PsiNameHelper.getInstance(directory.getProject()).isIdentifier(directory.getName())) {
+      return directory;
+    }
+    if (aPackage.occursInPackagePrefixes().length > 0) {
+      return null;
+    }
+    return aPackage.getDirectories().length == 1 ? aPackage : null;
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -14,7 +14,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Map;
 
-public final class RenameJavaModuleProcessor extends RenamePsiElementProcessor {
+public final class RenameJavaModuleProcessor extends RenamePsiElementProcessor
+  implements DelegatingHeadlessRenamePsiElementProcessor {
   @Override
   public boolean canProcessElement(@NotNull PsiElement element) {
     return element instanceof PsiJavaModule;

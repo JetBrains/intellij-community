@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename;
 
 import com.intellij.codeInsight.ChangeContextUtil;
@@ -376,5 +376,15 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
   @Override
   public void setToSearchForTextOccurrences(final @NotNull PsiElement element, final boolean enabled) {
     JavaRefactoringSettings.getInstance().RENAME_SEARCH_FOR_TEXT_FOR_CLASS = enabled;
+  }
+
+  /**
+   * Renames a Java class for a caller that has no user.
+   * <p>
+   * The outer class asks the user nothing, but it does not state the headless rename itself, because
+   * it has a subclass. A subclass must not inherit that statement.
+   */
+  public static final class HeadlessRenameJavaClassProcessor extends RenameJavaClassProcessor
+    implements DelegatingHeadlessRenamePsiElementProcessor {
   }
 }

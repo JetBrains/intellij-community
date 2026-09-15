@@ -46,6 +46,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 import static com.intellij.openapi.util.NlsContexts.DialogMessage;
 
@@ -197,8 +198,21 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
                                         @NotNull String newName,
                                         @NotNull MultiMap<PsiElement, @DialogMessage String> conflicts,
                                         @NotNull Map<PsiElement, String> allRenames) {
+    findExistingNameConflicts(conflicts, allRenames, RenamePsiElementProcessor::forElement);
+  }
+
+  /**
+   * Collects the conflicts of every element of the rename, each one with the processor of that element.
+   *
+   * @param processorOf the processor of an element. A rename with a user takes it from
+   *                    {@code renamePsiElementProcessor}, and a rename with no user takes it from
+   *                    {@link HeadlessRenamePsiElementProcessor}, which is registered on its own.
+   */
+  static void findExistingNameConflicts(@NotNull MultiMap<PsiElement, @DialogMessage String> conflicts,
+                                        @NotNull Map<PsiElement, String> allRenames,
+                                        @NotNull Function<PsiElement, ? extends RenamePsiElementProcessorBase> processorOf) {
     for (PsiElement psiElement : allRenames.keySet()) {
-      forElement(psiElement).findExistingNameConflicts(psiElement, allRenames.get(psiElement), conflicts);
+      processorOf.apply(psiElement).findExistingNameConflicts(psiElement, allRenames.get(psiElement), conflicts);
     }
   }
 
@@ -326,5 +340,31 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
     if (containingClass == null) return null;
     String qualifiedName = containingClass.getQualifiedName();
     return qualifiedName == null ? null : StringUtil.getQualifiedName(qualifiedName, newName);
+  }
+
+  /**
+   * Renames a Java variable for a caller that has no user.
+   * <p>
+   * The outer class asks the user nothing, but it does not state the headless rename itself, because
+   * it has subclasses. A subclass must not inherit that statement.
+   */
+  public static final class HeadlessRenameJavaVariableProcessor extends RenameJavaVariableProcessor
+    implements DelegatingHeadlessRenamePsiElementProcessor {
+
+    /**
+     * Collects the conflicts of every element of the rename, and reads no interactive registration.
+     * <p>
+     * The outer class dispatches the conflicts of one element to the processor of that element, and it
+     * takes that processor from {@code renamePsiElementProcessor}. A caller with no user can leave that
+     * extension point empty, and the default processor collects no conflict. So this dispatches through
+     * {@link HeadlessRenamePsiElementProcessor} instead.
+     */
+    @Override
+    public void findExistingNameConflictsHeadless(@NotNull PsiElement element,
+                                                  @NotNull String newName,
+                                                  @NotNull MultiMap<PsiElement, @DialogMessage String> conflicts,
+                                                  @NotNull Map<PsiElement, String> allRenames) {
+      findExistingNameConflicts(conflicts, allRenames, HeadlessRenamePsiElementProcessor::processorOf);
+    }
   }
 }

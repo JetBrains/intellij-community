@@ -14,6 +14,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
@@ -35,6 +36,7 @@ import com.intellij.refactoring.util.RefactoringDescriptionLocation;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -97,10 +99,18 @@ public final class SuperMethodWarningUtil {
     };
   }
 
+  /**
+   * The methods {@code method} overrides, and no question to the user.
+   * <p>
+   * It runs on EDT for a rename with a user, and on a background thread inside a read action for a
+   * rename with no user. The search for a sibling below goes under a modal progress only on EDT. A
+   * modal progress on a background thread stops the interface of a person who asked for nothing, and
+   * it needs the write thread to enter the modality.
+   */
   @VisibleForTesting
   @ApiStatus.Internal
   public static @NotNull Collection<PsiMethod> getSuperMethods(@NotNull PsiMethod method, PsiClass aClass, @NotNull Collection<? extends PsiElement> ignore) {
-    ThreadingAssertions.assertEventDispatchThread();
+    ThreadingAssertions.assertReadAccess();
     assert !ApplicationManager.getApplication().isWriteAccessAllowed();
     Collection<PsiMethod> superMethods = new ArrayList<>(DeepestSuperMethodsSearch.search(method).findAll());
     superMethods.removeAll(ignore);
@@ -109,9 +119,17 @@ public final class SuperMethodWarningUtil {
       VirtualFile virtualFile = PsiUtilCore.getVirtualFile(aClass);
       if (virtualFile != null && ProjectRootManager.getInstance(aClass.getProject()).getFileIndex().isInSourceContent(virtualFile)) {
         PsiMethod[] siblingSuperMethod = new PsiMethod[1];
-        if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(()->{
-          siblingSuperMethod[0] = ReadAction.compute(()->FindSuperElementsHelper.getSiblingInheritedViaSubClass(method));
-        }, JavaBundle.message("progress.title.searching.for.sub.classes"), true, aClass.getProject())) {
+        ThrowableComputable<PsiMethod, RuntimeException> searchSibling = () -> FindSuperElementsHelper.getSiblingInheritedViaSubClass(method);
+        if (!EDT.isCurrentThreadEdt()) {
+          ReadAction.nonBlocking(
+            () -> siblingSuperMethod[0] = searchSibling.compute()
+          ).executeSynchronously();
+        }
+        else if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(
+          () -> {
+            siblingSuperMethod[0] = ReadAction.compute(searchSibling);
+          },
+          JavaBundle.message("progress.title.searching.for.sub.classes"), true, aClass.getProject())) {
           throw new ProcessCanceledException();
         }
         if (siblingSuperMethod[0] != null) {

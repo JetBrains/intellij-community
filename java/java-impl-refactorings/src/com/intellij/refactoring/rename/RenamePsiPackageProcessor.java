@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename;
 
 import com.intellij.java.JavaBundle;
@@ -208,5 +208,38 @@ public class RenamePsiPackageProcessor extends RenamePsiElementProcessor {
   @Override
   public void setToSearchForTextOccurrences(final @NotNull PsiElement element, final boolean enabled) {
     JavaRefactoringSettings.getInstance().RENAME_SEARCH_FOR_TEXT_FOR_PACKAGE = enabled;
+  }
+
+  /**
+   * Renames a Java package for a caller that has no user.
+   * <p>
+   * The outer class asks the user nothing, but it does not state the headless rename itself, because
+   * it has a subclass. A subclass must not inherit that statement.
+   */
+  public static final class HeadlessRenamePsiPackageProcessor extends RenamePsiPackageProcessor
+    implements DelegatingHeadlessRenamePsiElementProcessor {
+
+    /**
+     * Refuses a name that moves the package, then collects the conflicts the outer class collects.
+     * <p>
+     * A qualified name is a name for a package, so {@link PsiPackageRenameValidator} takes it. The
+     * rename dialog then reads the parent package of it: an equal parent keeps a rename, and another
+     * parent starts a move instead. See {@code createRenameDialog} above, which calls
+     * {@link #createRenameMoveProcessor}. A headless rename holds no move, so it refuses that name
+     * here. It renames the last part of the name, as {@link #renameElement} states with
+     * {@code getShortName}.
+     */
+    @Override
+    public void findExistingNameConflictsHeadless(@NotNull PsiElement element,
+                                                  @NotNull String newName,
+                                                  @NotNull MultiMap<PsiElement, @DialogMessage String> conflicts,
+                                                  @NotNull Map<PsiElement, String> allRenames) {
+      String newParentName = StringUtil.getPackageName(newName);
+      String oldParentName = StringUtil.getPackageName(((PsiPackage)element).getQualifiedName());
+      if (!newParentName.isEmpty() && !newParentName.equals(oldParentName)) {
+        conflicts.putValue(element, JavaBundle.message("rename.package.move.not.supported.conflict", newName));
+      }
+      findExistingNameConflicts(element, newName, conflicts, allRenames);
+    }
   }
 }
