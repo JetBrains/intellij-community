@@ -239,6 +239,8 @@ jvm_library(
         "@lib//:kotlin-stdlib",
         "//platform/eel",
         "//platform/eel:eel_test_lib",
+        "//platform/eel/testFramework",
+        "//platform/eel/testFramework:testFramework_test_lib",
         "//platform/eel-impl",
         "//platform/eel-impl:eel-impl_test_lib",
         "//libraries/junit5",

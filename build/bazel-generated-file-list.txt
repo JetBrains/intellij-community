@@ -779,6 +779,7 @@ platform/eel-nioFs
 platform/eel-nioFs-impl
 platform/eel-provider
 platform/eel-tcp
+platform/eel/testFramework
 platform/execution
 platform/execution-impl
 platform/execution-impl/backend
