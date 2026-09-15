@@ -1174,7 +1174,7 @@ class PyVariadicGenericTypeTest : PyCodeInsightTestCase() {
       foo(1, baz, args=(0, 'foo', 1.0, False))
       
       foo(1, bar, args=('foo', 0)) # WARNING Expected type 'tuple[int, str]' (matched generic type 'tuple[*Ts]'), got 'tuple[Literal['foo'], Literal[0]]' instead
-      foo(1, baz, args=('foo', 0, 1.0, False)) # WARNING Expected type 'tuple[int, str, float | int, bool]' (matched generic type 'tuple[*Ts]'), got 'tuple[Literal['foo'], Literal[0], float, Literal[False]]' instead
+      foo(1, baz, args=('foo', 0, 1.0, False)) # WARNING Expected type 'tuple[int, str, float | int, bool]' (matched generic type 'tuple[*Ts]'), got 'tuple[Literal['foo'], Literal[0], float | int, Literal[False]]' instead
       """.trimIndent())
 
     @Test

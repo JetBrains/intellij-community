@@ -1133,7 +1133,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
 
       tuple_of_list_and_tuple_set: Tuple[List[Tuple[L2, L1]], Set[L2]] = ([('b', 'test'), (5, 'test')], {'b', 5})
       tuple_of_list_and_tuple_set_incorrect: Tuple[List[Tuple[L2, L1]], Set[L2]] = ([('r', 'test'), (5, 'test')], {'b', 5})
-      #                                                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'tuple[list[tuple[Literal['a', 'b', 5], Literal['test']]], set[Literal['a', 'b', 5]]]', got 'tuple[list[tuple[str, str] | tuple[int, str]], set[str | int]]' instead
+      #                                                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'tuple[list[tuple[Literal['a', 'b', 5], Literal['test']]], set[Literal['a', 'b', 5]]]', got 'tuple[list[tuple[Literal['r'], Literal['test']] | tuple[Literal[5], Literal['test']]], set[str | int]]' instead
 
       FooTuple = Tuple[Literal["a", "b"], int]
 
@@ -1167,7 +1167,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
 
       list_tuple: List[Tuple[L2, L1]] = [('b', 'test'), (5, 'test')]
       list_tuple_incorrect: List[Tuple[L2, L1]] = [('a',), (5, 'test')]
-      #                                           ^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'list[tuple[Literal['a', 'b', 5], Literal['test']]]', got 'list[tuple[str] | tuple[int, str]]' instead
+      #                                           ^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'list[tuple[Literal['a', 'b', 5], Literal['test']]]', got 'list[tuple[Literal['a']] | tuple[Literal[5], Literal['test']]]' instead
       """.trimIndent())
 
     @Test
@@ -1196,7 +1196,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
 
       set_of_tuple_and_list: Set[Union[Tuple[L2, L1], List[L1]]] = {('b', 'test'), ['test', 'test'], (5, 'test')}
       set_of_tuple_and_list_incorrect: Set[Union[Tuple[L2, L1], List[L1]]] = {('b', 'r'), ['test', 'test'], (5, 'test')}
-      #                                                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'set[tuple[Literal['a', 'b', 5], Literal['test']] | list[Literal['test']]]', got 'set[tuple[str, str] | list[str] | tuple[int, str]]' instead
+      #                                                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'set[tuple[Literal['a', 'b', 5], Literal['test']] | list[Literal['test']]]', got 'set[tuple[Literal['b'], Literal['r']] | list[str] | tuple[Literal[5], Literal['test']]]' instead
       """.trimIndent())
 
     @Test

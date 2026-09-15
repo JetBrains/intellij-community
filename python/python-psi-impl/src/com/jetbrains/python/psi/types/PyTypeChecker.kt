@@ -1559,10 +1559,11 @@ object PyTypeChecker {
 
             if (shouldExpandElementwiseCollectionType(classType)) {
               /** treat tuples as `class tuple[_T_co#1, _T_co#2, ..., _T_co#n](Sequence[_T_co]): ...`. @see [expandTupleTypeParameters]. */
-              val expandedTypeParameters = expandTupleTypeParameters(definitionTypeParameters, classType.typeArguments.size)
+              val actualArguments = classType.typeArguments - definitionTypeParameters
+              val expandedTypeParameters = expandTupleTypeParameters(definitionTypeParameters, actualArguments.size)
               if (expandedTypeParameters != null) {
-                val unionTypes = classType.typeArguments.flatMap { et -> if (et is PyUnpackedTupleType) et.elementTypes else listOf(et) }
-                elementTypes = listOf(PyUnionType.union(unionTypes)) + classType.typeArguments
+                val unionTypes = actualArguments.flatMap { et -> if (et is PyUnpackedTupleType) et.elementTypes else listOf(et) }
+                elementTypes = listOf(PyUnionType.union(unionTypes)) + actualArguments
                 typeParameters = definitionTypeParameters + expandedTypeParameters
               }
             }
@@ -1599,7 +1600,7 @@ object PyTypeChecker {
    *
    * Also note the explanations at the use-site of expanded type parameters: [ConstraintReducer.subtract]
    */
-  private fun expandTupleTypeParameters(definitionTypeParameters: List<PyType?>, size: Int): List<PyType?>? {
+  internal fun expandTupleTypeParameters(definitionTypeParameters: List<PyType?>, size: Int): List<PyType?>? {
     if (definitionTypeParameters.size != 1 || size <= 1) {
       return null
     }
@@ -2072,29 +2073,6 @@ object PyTypeChecker {
     substitutions: GenericSubstitutions,
     context: TypeEvalContext,
   ): PyType? {
-    return substituteWithOptions(type, substitutions, true, context)
-  }
-
-  /**
-   * All type parameters in the given type are substituted according to the given substitutions mapping.
-   * No other type modifications are performed.
-   */
-  @JvmStatic
-  fun substitutePlainly(
-    type: PyType?,
-    substitutions: GenericSubstitutions,
-    context: TypeEvalContext,
-  ): PyType? {
-    return substituteWithOptions(type, substitutions, false, context)
-  }
-
-  @JvmStatic
-  fun substituteWithOptions(
-    type: PyType?,
-    substitutions: GenericSubstitutions,
-    widenTupleLiterals: Boolean,
-    context: TypeEvalContext,
-  ): PyType? {
     return PyCloningTypeVisitor.clone(type, object : PyCloningTypeVisitor(context) {
       // Type variables currently being expanded along the active substitution path. A substitution map can be
       // mutually recursive (e.g. {T: S, S: T}) or self-referential (e.g. {T: list[T]}), and the transformations
@@ -2243,8 +2221,7 @@ object PyTypeChecker {
           classType.pyClass, classType.isDefinition,
           classType.typeArguments.flatMap { typeArg ->
             val clonedTypeArg = clone<PyType>(typeArg)
-            val clonedAndWidenedTypeArg = if (widenTupleLiterals) clonedTypeArg.widenTupleLiterals() else clonedTypeArg
-            flattenUnpackedTuple(clonedAndWidenedTypeArg)
+            flattenUnpackedTuple(clonedTypeArg)
           }
         )
         return if (classType is PyClassTypeImpl) classType.withUserDataCopy(clonedClassType) else clonedClassType

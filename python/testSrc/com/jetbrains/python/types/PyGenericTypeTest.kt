@@ -997,7 +997,7 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
           pass
       
       expr = to_tuple(PairExt(42, 'foo'))
-      #└ TYPE tuple[Literal[42], Literal["foo"]]
+      #└ TYPE tuple[Literal[42], Literal['foo']]
       """.trimIndent())
 
     @Test
@@ -1018,7 +1018,7 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
           pass
       
       expr = to_tuple(PairExt(42, 'foo'))
-      #└ TYPE tuple[Literal[42], Literal["foo"]]
+      #└ TYPE tuple[Literal[42], Literal['foo']]
       """.trimIndent())
 
     @Test

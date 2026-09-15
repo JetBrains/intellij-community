@@ -1,5 +1,6 @@
 package com.jetbrains.python.psi.types
 
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.StackOverflowPreventedException
@@ -52,10 +53,12 @@ import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.PyTypeChecker.hasGenerics
 import com.jetbrains.python.psi.types.PyTypeChecker.substitute
+import com.jetbrains.python.psi.types.PyTypeUtil.derefOrUnknown
 
 
 object PyExpectedTypeJudgement {
   private val recursionGuard = RecursionManager.createGuard<Pair<PsiElement, TypeEvalContext>>("PyExpectedTypeJudgement")
+  private val SYNTHETIC_PROTOCOL: Key<Boolean> = Key.create("PyExpectedTypeJudgement.SYNTHETIC_PROTOCOL")
 
   /**
    * Computes the expected type of the given expression from its usage in the AST.
@@ -125,7 +128,7 @@ object PyExpectedTypeJudgement {
           }
           if (typeOfStarParent is PyClassType && typeOfStarParent.isParameterized) {
             // upcast to Iterable
-            return createIterableType(expr, typeOfStarParent.iteratedItemType)
+            return createIterableType(expr, PyTypeChecker.getIteratedItemType(typeOfStarParent, ctx))
           }
         }
         return null
@@ -159,7 +162,7 @@ object PyExpectedTypeJudgement {
           return getElementTypeAtTupleIndex(parent, typeOfParentTuple, indexOfExpr)
         }
         if (typeOfParentTuple is PyClassType && typeOfParentTuple.isParameterized) {
-          return typeOfParentTuple.iteratedItemType
+          return PyTypeChecker.getIteratedItemType(typeOfParentTuple, ctx)
         }
         return null
       }
@@ -169,7 +172,7 @@ object PyExpectedTypeJudgement {
         -> {
         val typeOfParentList = getExpectedType(parent, ctx)
         if (typeOfParentList is PyClassType && typeOfParentList.isParameterized) {
-          return typeOfParentList.iteratedItemType
+          return PyTypeChecker.getIteratedItemType(typeOfParentList, ctx)
         }
         return null
       }
@@ -192,6 +195,13 @@ object PyExpectedTypeJudgement {
           return typeOfParentDict.typedDictType.getElementType(argName)
         }
         return null
+      }
+
+      is PyNamedParameter -> {
+        val annotationValue = parent.annotation?.value
+        if (expr === parent.defaultValue && annotationValue != null) {
+          return PyTypingTypeProvider.getType(annotationValue, ctx).derefOrUnknown()
+        }
       }
 
       is PyParameterList -> {
@@ -266,7 +276,7 @@ object PyExpectedTypeJudgement {
 
         val paramTypeOrUnpacked = param.getArgumentType(ctx)
         if (paramTypeOrUnpacked is PyUnpackedTupleType) {
-          // happens here: f(1, "s") for function: def f(*args: *tuple[int,str]): pass;
+          // happens here: f(1, "s") for function: `def f(*args: *tuple[int,str]): pass`
           if (paramTypeOrUnpacked.isUnbound) {
             paramType = paramTypeOrUnpacked.elementTypes.firstOrNull()
           }
@@ -437,7 +447,11 @@ object PyExpectedTypeJudgement {
 
       is PySubscriptionExpression -> {
         val operandType = ctx.getType(lhs.operand)
-        val iterableType = if (operandType is PyClassType && operandType.isParameterized) operandType.iteratedItemType else PyAnyType.any
+        val iterableType = if (operandType is PyClassType && operandType.isParameterized)
+          PyTypeChecker.getIteratedItemType(operandType, ctx)
+        else
+          PyAnyType.any
+
         if (lhs.indexExpression is PySliceItem) {
           return createIterableType(lhs, iterableType)
         }
@@ -589,7 +603,7 @@ object PyExpectedTypeJudgement {
         val cache = PyBuiltinCache.getInstance(expr)
         val intType = cache.intType
         val typeOfOther = ctx.getType(otherOperand)
-        if (isSequenceLike(typeOfOther)) {
+        if (isSequence(typeOfOther, ctx)) {
           // Create:  `__index__() -> int`, i.e. `SupportsIndex`.
           val syntheticType = createSyntheticDunderProtocolType(expr, "__index__", null, intType, ctx)
           return syntheticType
@@ -632,6 +646,7 @@ object PyExpectedTypeJudgement {
                        else -> null
                      } ?: return null
 
+    @Suppress("SENSELESS_COMPARISON") // to keep systematic/self-explaining implementation below
     val otherOperand = when {
                          expr === leftExpr -> rightExpr
                          expr === rightExpr -> leftExpr
@@ -639,10 +654,24 @@ object PyExpectedTypeJudgement {
                        } ?: return null
 
     val otherOperandType = ctx.getType(otherOperand)
-    val expectedResultType = getExpectedType(binaryExpr, ctx).takeUnless { it is PyAnyType } ?: PyAnyType.any
+    val expectedResultType = getExpectedType(binaryExpr, ctx).takeUnless { it is PyAnyType || containsSyntheticProtocol(it) } ?: PyAnyType.any
     val syntheticType = createSyntheticDunderProtocolType(expr, methodName, Ref.create(otherOperandType), expectedResultType, ctx)
 
     return PyUnionType.union(syntheticType, PyAnyType.any)
+  }
+
+  /**
+   * A synthetic protocol from an enclosing binary expression must not become the return type of this one:
+   * it only exists in its own code fragment, so rendering it as text would either not resolve or resolve to the
+   * protocol being declared, yielding a recursive protocol (`def __add__(...) -> _Supports__add__ | Any`).
+   * This might happen in this example: `expr = (1,) + (True, 'spam') + ()`.
+   */
+  private fun containsSyntheticProtocol(type: PyType?): Boolean {
+    return when (type) {
+      is PyUnionType -> type.members.any { containsSyntheticProtocol(it) }
+      is PyClassType -> type.pyClass.getUserData(SYNTHETIC_PROTOCOL) == true
+      else -> false
+    }
   }
 
   private fun fromComparisonExpression(expr: PyExpression, binaryExpr: PyBinaryExpression, operator: IElementType, ctx: TypeEvalContext): PyType? {
@@ -718,14 +747,13 @@ object PyExpectedTypeJudgement {
 
     val cls = PsiTreeUtil.findChildOfType(codeFragment, PyClass::class.java)
               ?: error("Failed to create synthetic protocol class from text:\n$text")
+    cls.putUserData(SYNTHETIC_PROTOCOL, true)
 
     return PyClassTypeImpl(cls, false)
   }
 
-  private fun isSequenceLike(type: PyType?): Boolean {
-    if (type == null) return false
-    if (type is PyCollectionType) return true
-    return type.name == PyNames.TYPE_STR || type.name == PyNames.BYTES || type.name == PyNames.TYPE_BYTEARRAY
+  private fun isSequence(type: PyType?, ctx: TypeEvalContext): Boolean {
+    return type != null && PyABCUtil.isSubtype(type, PyNames.SEQUENCE, ctx)
   }
 
   private fun renderTypeHint(type: PyType?, ctx: TypeEvalContext): String {

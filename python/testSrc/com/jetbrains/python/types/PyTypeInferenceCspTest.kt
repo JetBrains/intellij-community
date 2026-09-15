@@ -763,6 +763,77 @@ class PyTypeInferenceCspTest : PyCodeInsightTestCase() {
     """.trimIndent())
 
   @Test
+  @TestFor(issues = ["PY-92184"])
+  @TestCaseOptions(enableRegistryKeys = ["python.subtypechecks.respect.variance"])
+  fun `list of lists is not a list of tuples`() = test("""
+    ok : list[tuple[int|str]] = [(1,), ("s",)]
+    err : list[tuple[int|str]] = [[1], ["s"]]
+    #                            ^^^^^^^^^^^^ WARNING Expected type 'list[tuple[int | str]]', got 'list[list[int] | list[str]]' instead
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-92184"])
+  @TestCaseOptions(enableRegistryKeys = ["python.subtypechecks.respect.variance"])
+  fun `list of int or str in tuple widened`() = test("""
+    x : list[tuple[int|str]] = [(1,), ("s",)] # ok
+    y : tuple[list[int|str]] = ([1], ) # ok
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-92184"])
+  @TestCaseOptions(enableRegistryKeys = ["python.subtypechecks.respect.variance"])
+  fun `list of int or str in tuple widened with classes`() = test("""
+    class A: ...
+    class B(A): ...
+    x : list[tuple[A]] = [(B(),)] # ok
+    y : tuple[list[A]] = ([B()], ) # ok
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-92184"])
+  @TestCaseOptions(enableRegistryKeys = ["python.subtypechecks.respect.variance"])
+  fun `list of int or str in tuple`() = test("""
+    li : list[int] = [1]
+    y  : tuple[list[int|str]] = (li, )
+    #                           ^^^^^^ WARNING FIXME Expected type 'tuple[list[int | str]]', got 'tuple[list[int]]' instead # PY-89564
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-92184"])
+  fun `Tuple in generic function`() = test("""
+    def f[X](t: tuple[int, X], x: X) -> X: ...
+    res : str = f((1, 2), "s")
+    #           ^^^^^^^^^^^^^^ WARNING Expected type 'str', got 'Literal["s", 2]' instead
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-92184"])
+  fun `Tuple element expected from generic function`() = test("""
+    def foo[T](t: T) -> T: ...
+    res3 : tuple[int, str] = 1, foo(2)
+    #                        ^^^^^^^^^ WARNING Expected type 'tuple[int, str]', got 'tuple[Literal[1], Literal[2]]' instead
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-92184"])
+  fun `tuple in generic explicit is valid`() = test("""
+      from typing import Literal
+      _: list[tuple[Literal[1]]] = [(1,)] # no error
+      """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-92184"])
+  fun `dict literal`() = test("""
+      from typing import TypedDict
+      class User[T](TypedDict):
+          name: str
+          data: T
+      
+      def f(user: User[int]) : ...
+      f({ "name": "Alice", "data": 30 })
+      """.trimIndent())
+
+  @Test
   @TestFor(issues = ["PY-91164"])
   fun `type var substitution caused soe`() = test("""
     from typing import TypeVar, Generic, TypeVarTuple, Unpack, ParamSpec, Concatenate, Callable
@@ -771,7 +842,6 @@ class PyTypeInferenceCspTest : PyCodeInsightTestCase() {
     WTT = TypeVar('WTT', bound=type)
     Ps = TypeVarTuple('Ps')
     Q = ParamSpec('Q')
-
 
     class WalkerFilterRegistry(Generic[Unpack[Ps], WT]):
         def __init__(self,

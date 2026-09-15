@@ -60,8 +60,59 @@ class CspBuilder(val context: TypeEvalContext) {
     if (left == right) {
       return
     }
-    val newConstraint = TypeConstraint(left, right, variance, priority, isBinding)
+    val leftNoRecursion = removeFromCompositeTypes(left, right, context)
+    val rightNoRecursion = removeFromCompositeTypes(right, left, context)
+    val newConstraint = TypeConstraint(leftNoRecursion, rightNoRecursion, variance, priority, isBinding)
     initialConstraints.add(newConstraint)
+  }
+
+  /**
+   * The control flow analysis sometimes computes types that are self-recursive,
+   * see test case [RecursionAndFixedPointLoops.types in loop compute fast].
+   *
+   * This results in type constraints such as `T = int | T` that would lead to `T` being `T | unknown`.
+   */
+  @ApiStatus.Internal
+  fun removeFromCompositeTypes(type: PyType?, typeToRemove: PyType?, context: TypeEvalContext): PyType? {
+    if (typeToRemove !is PyInferenceVariable) return type
+
+    var referencesInfVar = false
+    PyRecursiveTypeVisitor.traverse(type, context, object : PyTypeTraverser() {
+      override fun visitPyType(type: PyType): PyRecursiveTypeVisitor.Traversal {
+        if (type == typeToRemove.typeVariable) {
+          referencesInfVar = true
+          return PyRecursiveTypeVisitor.Traversal.TERMINATE
+        }
+        return PyRecursiveTypeVisitor.Traversal.CONTINUE
+      }
+    })
+    if (!referencesInfVar) return type
+
+    return PyCloningTypeVisitor.clone(type, object : PyCloningTypeVisitor(context) {
+      private fun rebuildCompositeType(members: Collection<PyType?>, createComposite: (List<PyType?>) -> PyType?): PyType? {
+        val remainingMembers = members
+          .map { member -> clone<PyType?>(member) }
+          .filter { member -> member != typeToRemove.typeVariable }
+
+        return when (remainingMembers.size) {
+          0 -> PyAnyType.unknown
+          1 -> remainingMembers.single()
+          else -> createComposite(remainingMembers)
+        }
+      }
+
+      override fun visitPyUnionType(unionType: PyUnionType): PyType? {
+        return rebuildCompositeType(unionType.members, PyUnionType::union)
+      }
+
+      override fun visitPyUnsafeUnionType(unsafeUnionType: PyUnsafeUnionType): PyType? {
+        return rebuildCompositeType(unsafeUnionType.members, PyUnsafeUnionType::unsafeUnion)
+      }
+
+      override fun visitPyIntersectionType(intersectionType: PyIntersectionType): PyType? {
+        return rebuildCompositeType(intersectionType.members, PyIntersectionType::intersection)
+      }
+    })
   }
 
   /**
@@ -412,6 +463,7 @@ private class ConstraintProblem(
 
   fun addBound(left: PyInferenceVariable, right: PyType?, variance: PyVariance) {
     if (left == right) return
+    if (right.isUnknown) return
     val newBound = TypeBound(left, right, variance, context)
     val boundWasAdded = bounds.add(newBound)
     if (!boundWasAdded) return
@@ -583,7 +635,7 @@ private object ConstraintReducer {
     val rightSubstitutions = PyTypeChecker.unifyReceiver(right, cp.context).addToCopy(reversibleSubstitutionData.rightBackSubstitutions.typeVars)
 
     for ((rightMember, leftMembers) in matchingMembers) {
-      val rightMemberType = PyTypeChecker.substitutePlainly(rightMember.type, rightSubstitutions, cp.context)
+      val rightMemberType = PyTypeChecker.substitute(rightMember.type, rightSubstitutions, cp.context)
       val leftMemberTypes = mutableSetOf<PyType?>()
       for (leftMember in leftMembers) {
         if (variance == PyVariance.INVARIANT) {
@@ -593,7 +645,7 @@ private object ConstraintReducer {
           val rightIsReadOnly = rightMemberElement is PyTargetExpression && PyExpectedVarianceJudgment.isEffectivelyReadOnly(rightMemberElement, cp.context)
           if (leftIsReadOnly != rightIsReadOnly) continue
         }
-        val leftMemberType = PyTypeChecker.substitutePlainly(leftMember.type, leftSubstitutions, cp.context)
+        val leftMemberType = PyTypeChecker.substitute(leftMember.type, leftSubstitutions, cp.context)
         leftMemberTypes += leftMemberType
       }
       when (leftMemberTypes.size) {
@@ -753,8 +805,8 @@ private object ConstraintReducer {
     for (leftTV in substitutionsLeft.typeVars.keys) {
       val leftTypeArg = substitutionsLeft.typeVars[leftTV] ?: continue
       if (substitutionsRight.typeVars.containsKey(leftTV)) {
-        val typeArgSubst = PyTypeChecker.substitutePlainly(leftTypeArg.get(), substitutionsRight, cp.context)
-        val typeVarSubst = PyTypeChecker.substitutePlainly(leftTV, substitutionsRight, cp.context)
+        val typeArgSubst = PyTypeChecker.substitute(leftTypeArg.get(), substitutionsRight, cp.context)
+        val typeVarSubst = PyTypeChecker.substitute(leftTV, substitutionsRight, cp.context)
         val inferredVariance = PyInferredVarianceJudgment.getDeclaredOrInferredVariance(leftTV, cp.context)
         val defSiteVariance = if (inferredVariance == PyVariance.BIVARIANT) PyVariance.COVARIANT else inferredVariance
         reduce(typeVarSubst, typeArgSubst, defSiteVariance, cp)
@@ -1592,7 +1644,7 @@ private object TypeBoundResolver {
       val boundType = bound.right
       // It may happen that inference variables depend on each other, hence create a cycle
       // In this case it is necessary to substitute these inference variables by Any type
-      val substitutedBoundType = substituteInferenceVariablesBy(boundType, context) { iv -> Ref(iv.typeVariable.defaultType.derefOrUnknown()) }
+      val substitutedBoundType = substituteInferenceVariablesBy(boundType, context)
       result.add(substitutedBoundType)
     }
     return result.toTypedArray()
@@ -1735,19 +1787,14 @@ private fun substituteInferenceVariable(typeRef: PyType?, infVar: PyInferenceVar
   })
 }
 
-private fun substituteInferenceVariablesBy(typeRef: PyType?, context: TypeEvalContext, by: (PyInferenceVariable) -> Ref<PyType?>): PyType? {
-  return substituteInferenceVariablesBy(typeRef, PyInferenceVariable::class.java, context, by)
-}
-
-private fun substituteInferenceVariablesBy(typeRef: PyType?, ivType: Class<PyInferenceVariable>, context: TypeEvalContext, by: (PyInferenceVariable) -> Ref<PyType?>): PyType? {
+private fun substituteInferenceVariablesBy(typeRef: PyType?, context: TypeEvalContext): PyType? {
   if (typeRef.isUnknown) return typeRef
 
   // Fast path: if the type doesn't reference the inference variable, return as is
   var referencesInfVar = false
   PyRecursiveTypeVisitor.traverse(typeRef, context, object : PyTypeTraverser() {
     override fun visitPyType(type: PyType): PyRecursiveTypeVisitor.Traversal {
-      @Suppress("UNCHECKED_CAST")
-      if (type.javaClass.isAssignableFrom(ivType)) {
+      if (type is PyInferenceVariable) {
         referencesInfVar = true
         return PyRecursiveTypeVisitor.Traversal.TERMINATE
       }
@@ -1758,10 +1805,8 @@ private fun substituteInferenceVariablesBy(typeRef: PyType?, ivType: Class<PyInf
 
   return PyCloningTypeVisitor.clone(typeRef, object : PyCloningTypeVisitor(context) {
     override fun visitPyType(type: PyType): PyType? {
-      // substitute inference variables by Any
-      if (type.javaClass.isAssignableFrom(ivType)) {
-        @Suppress("UNCHECKED_CAST")
-        return by(type as PyInferenceVariable).get()
+      if (type is PyInferenceVariable) {
+        return type.typeVariable.defaultType.derefOrUnknown()
       }
       return super.visitPyType(type)
     }

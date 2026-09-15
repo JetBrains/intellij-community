@@ -1,1 +1,1 @@
-it<the_ref>ems = (42, 'foo')
+it<the_ref>ems = (42, "foo")

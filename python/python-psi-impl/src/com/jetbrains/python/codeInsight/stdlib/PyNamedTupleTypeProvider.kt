@@ -167,7 +167,7 @@ internal fun parameterizeNamedTupleType(
   val fields = type.fields.entries.associateTo(NTFields()) { (name, field) ->
     // A field without a type parameter keeps its type. `substitutePlainly` also keeps a literal tuple,
     // because a parameterization must not widen the declared type of a field.
-    val fieldType = if (field.type.hasGenerics(context)) PyTypeChecker.substitutePlainly(field.type, substitutions, context)
+    val fieldType = if (field.type.hasGenerics(context)) PyTypeChecker.substitute(field.type, substitutions, context)
     else field.type
     name to PyNamedTupleType.FieldTypeAndDefaultValue(fieldType, field.defaultValue)
   }
