@@ -36,7 +36,6 @@ import io.opentelemetry.context.Scope;
 import org.gradle.tooling.BuildCancelledException;
 import org.gradle.tooling.BuildLauncher;
 import org.gradle.tooling.CancellationToken;
-import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.LongRunningOperation;
 import org.gradle.tooling.ModelBuilder;
 import org.gradle.tooling.ProgressListener;
@@ -99,30 +98,6 @@ public final class GradleExecutionHelper {
   // this flag is used only for the situation where is not possible to execute a Gradle task in an appropriate way and we have to use
   // the bundled JDK for the execution
   public static final Key<Boolean> AUTO_JAVA_HOME = Key.create("AUTO_JAVA_HOME");
-
-  /**
-   * @deprecated use the {@link GradleExecutionHelper#execute} function with {@link GradleExecutionContext} instead.
-   * The {@link BuildEnvironment} model will be automatically provided to {@link GradleExecutionContext}.
-   */
-  @Deprecated
-  public static @NotNull BuildEnvironment getBuildEnvironment(
-    @NotNull ProjectConnection connection,
-    @NotNull ExternalSystemTaskId taskId,
-    @NotNull ExternalSystemTaskNotificationListener listener,
-    @Nullable CancellationToken cancellationToken,
-    @Nullable GradleExecutionSettings settings
-  ) {
-    GradleExecutionSettings effectiveSettings = ObjectUtils.notNull(settings, () ->
-      new GradleExecutionSettings()
-    );
-    CancellationToken effectiveCancellationToken = ObjectUtils.notNull(cancellationToken, () ->
-      GradleConnector.newCancellationTokenSource().token()
-    );
-    GradleExecutionContextImpl context = new GradleExecutionContextImpl(
-      "", taskId, effectiveSettings, listener, effectiveCancellationToken
-    );
-    return getBuildEnvironment(connection, context);
-  }
 
   public static <Model> @NotNull Model getModel(
     @NotNull ProjectConnection connection,
