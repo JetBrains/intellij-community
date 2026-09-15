@@ -840,9 +840,7 @@ public final class PersistentFSRecordsOverMMappedFile implements PersistentFSRec
       }
     }
 
-    if (MMappedFileStorage.FSYNC_ON_FLUSH_BY_DEFAULT) {
-      storage.fsync();
-    }
+    storage.flush();
   }
 
   @Override

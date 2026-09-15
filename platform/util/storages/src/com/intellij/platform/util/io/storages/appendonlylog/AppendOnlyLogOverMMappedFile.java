@@ -673,7 +673,7 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
 
   @Override
   public void flush() throws IOException {
-    flush(MMappedFileStorage.FSYNC_ON_FLUSH_BY_DEFAULT);
+    storage.flush();
   }
 
   /** fsync=true should be used in a rare occasions only: see {@link MMappedFileStorage#FSYNC_ON_FLUSH_BY_DEFAULT} */

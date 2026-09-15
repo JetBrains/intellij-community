@@ -4,6 +4,7 @@ package com.intellij.platform.util.io.storages.appendonlylog;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.platform.util.io.storages.StorageFactory;
+import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorage;
 import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorageFactory;
 import com.intellij.util.io.CorruptedException;
 import com.intellij.util.io.VersionUpdatedException;
@@ -32,6 +33,7 @@ public class AppendOnlyLogFactory implements StorageFactory<AppendOnlyLogOverMMa
 
   private final int magicWord;
   private final int pageSize;
+  private final boolean fsyncOnFlush;
 
   private final int expectedDataVersion;
   private final boolean ensureDataVersion;
@@ -51,6 +53,7 @@ public class AppendOnlyLogFactory implements StorageFactory<AppendOnlyLogOverMMa
 
   private AppendOnlyLogFactory(int magicWord,
                                int pageSize,
+                               boolean fsyncOnFlush,
                                boolean ensureDataVersion,
                                int expectedDataVersion,
                                boolean failInsteadOfRecovery,
@@ -58,6 +61,7 @@ public class AppendOnlyLogFactory implements StorageFactory<AppendOnlyLogOverMMa
                                boolean cleanFileIfIncompatible) {
     this.pageSize = pageSize;
     this.magicWord = magicWord;
+    this.fsyncOnFlush = fsyncOnFlush;
     this.expectedDataVersion = expectedDataVersion;
     this.ensureDataVersion = ensureDataVersion;
     this.eagerlyCheckFileCompatibility = eagerlyCheckFileCompatibility;
@@ -68,6 +72,7 @@ public class AppendOnlyLogFactory implements StorageFactory<AppendOnlyLogOverMMa
   public static AppendOnlyLogFactory withDefaults() {
     return new AppendOnlyLogFactory(
       AppendOnlyLogOverMMappedFile.DEFAULT_MAGIC_WORD, DEFAULT_PAGE_SIZE,
+      MMappedFileStorage.FSYNC_ON_FLUSH_BY_DEFAULT,
       /* ensureDataVersion:         */ false, 0,
       /* failInsteadOfRecovery:     */ false,
       /* eagerlyCheckCompatibility: */ true,
@@ -78,6 +83,15 @@ public class AppendOnlyLogFactory implements StorageFactory<AppendOnlyLogOverMMa
   public AppendOnlyLogFactory pageSize(int pageSize) {
     return new AppendOnlyLogFactory(
       magicWord, pageSize,
+      fsyncOnFlush,
+      ensureDataVersion, expectedDataVersion,
+      failInsteadOfRecovery, eagerlyCheckFileCompatibility, cleanFileIfIncompatible
+    );
+  }
+
+  public AppendOnlyLogFactory fsyncOnFlush(boolean newFsyncOnFlush) {
+    return new AppendOnlyLogFactory(
+      magicWord, pageSize, newFsyncOnFlush,
       ensureDataVersion, expectedDataVersion,
       failInsteadOfRecovery, eagerlyCheckFileCompatibility, cleanFileIfIncompatible
     );
@@ -87,6 +101,7 @@ public class AppendOnlyLogFactory implements StorageFactory<AppendOnlyLogOverMMa
   public AppendOnlyLogFactory magicWord(int magicWord) {
     return new AppendOnlyLogFactory(
       magicWord, pageSize,
+      fsyncOnFlush,
       ensureDataVersion, expectedDataVersion,
       failInsteadOfRecovery, eagerlyCheckFileCompatibility, cleanFileIfIncompatible
     );
@@ -95,6 +110,7 @@ public class AppendOnlyLogFactory implements StorageFactory<AppendOnlyLogOverMMa
   public AppendOnlyLogFactory failIfDataFormatVersionNotMatch(int expectedDataVersion) {
     return new AppendOnlyLogFactory(
       magicWord, pageSize,
+      fsyncOnFlush,
       /*ensureDataVersion: */ true, expectedDataVersion,
       failInsteadOfRecovery, eagerlyCheckFileCompatibility, cleanFileIfIncompatible
     );
@@ -103,6 +119,7 @@ public class AppendOnlyLogFactory implements StorageFactory<AppendOnlyLogOverMMa
   public AppendOnlyLogFactory ignoreDataFormatVersion() {
     return new AppendOnlyLogFactory(
       magicWord, pageSize,
+      fsyncOnFlush,
       /*ensureDataVersion: */ false, /*expectedDataVersion: */ 0,
       failInsteadOfRecovery, eagerlyCheckFileCompatibility, cleanFileIfIncompatible
     );
@@ -111,7 +128,7 @@ public class AppendOnlyLogFactory implements StorageFactory<AppendOnlyLogOverMMa
   /** Fail if recovery was needed */
   public AppendOnlyLogFactory dontRecoverFailInstead() {
     return new AppendOnlyLogFactory(
-      magicWord, pageSize, ensureDataVersion, expectedDataVersion,
+      magicWord, pageSize, fsyncOnFlush, ensureDataVersion, expectedDataVersion,
       /* dontRecoverFailInstead: */ true,
       eagerlyCheckFileCompatibility,
       cleanFileIfIncompatible
@@ -120,14 +137,14 @@ public class AppendOnlyLogFactory implements StorageFactory<AppendOnlyLogOverMMa
 
   public AppendOnlyLogFactory checkIfFileCompatibleEagerly(boolean eagerlyCheckCompatibility) {
     return new AppendOnlyLogFactory(
-      magicWord, pageSize, ensureDataVersion, expectedDataVersion, failInsteadOfRecovery, eagerlyCheckCompatibility,
+      magicWord, pageSize, fsyncOnFlush, ensureDataVersion, expectedDataVersion, failInsteadOfRecovery, eagerlyCheckCompatibility,
       cleanFileIfIncompatible
     );
   }
 
   public AppendOnlyLogFactory cleanIfFileIncompatible() {
     return new AppendOnlyLogFactory(
-      magicWord, pageSize, ensureDataVersion, expectedDataVersion, failInsteadOfRecovery,
+      magicWord, pageSize, fsyncOnFlush, ensureDataVersion, expectedDataVersion, failInsteadOfRecovery,
       /* eagerlyCheckFileCompatibility: */ true,
       /* cleanFileIfIncompatible:       */ true
     );
@@ -135,7 +152,7 @@ public class AppendOnlyLogFactory implements StorageFactory<AppendOnlyLogOverMMa
 
   public AppendOnlyLogFactory failIfFileIncompatible() {
     return new AppendOnlyLogFactory(
-      magicWord, pageSize, ensureDataVersion, expectedDataVersion, failInsteadOfRecovery,
+      magicWord, pageSize, fsyncOnFlush, ensureDataVersion, expectedDataVersion, failInsteadOfRecovery,
       /* eagerlyCheckFileCompatibility: */ true,
       /* cleanFileIfIncompatible:       */ false
     );
@@ -177,7 +194,8 @@ public class AppendOnlyLogFactory implements StorageFactory<AppendOnlyLogOverMMa
     }
 
     MMappedFileStorageFactory mappedFileStorageFactory = MMappedFileStorageFactory.withDefaults()
-      .pageSize(pageSize);
+      .pageSize(pageSize)
+      .fsyncOnFlush(fsyncOnFlush);
     return mappedFileStorageFactory.wrapStorageSafely(
       storagePath,
       storage -> {
@@ -210,6 +228,7 @@ public class AppendOnlyLogFactory implements StorageFactory<AppendOnlyLogOverMMa
     return "AppendOnlyLogFactory{" +
            "magicWord=" + magicWord +
            ", pageSize=" + pageSize +
+           ", fsyncOnFlush=" + fsyncOnFlush +
            (ensureDataVersion ? ", ensure data version: " + expectedDataVersion : "") +
            ", failInsteadOfRecovery=" + failInsteadOfRecovery +
            ", eagerlyCheckFileCompatibility=" + eagerlyCheckFileCompatibility +

@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Closeable;
+import java.io.Flushable;
 import java.io.IOException;
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
@@ -47,7 +48,7 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
  * For create/open use {@link MMappedFileStorageFactory} instead of ctor
  */
 @ApiStatus.Internal
-public final class MMappedFileStorage implements Closeable, Unmappable, CleanableStorage {
+public final class MMappedFileStorage implements Closeable, Flushable, Unmappable, CleanableStorage {
   static final Logger LOG = Logger.getInstance(MMappedFileStorage.class);
   private static final ThrottledLogger THROTTLED_LOG = new ThrottledLogger(LOG, 1000);
 
@@ -111,6 +112,8 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private Page[] pages;
 
+  private final boolean fsyncOnFlush;
+
   private final RegionAllocationAtomicityLock regionAllocationAtomicityLock;
 
   /**
@@ -123,14 +126,16 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
   /** Use {@link MMappedFileStorageFactory} */
   MMappedFileStorage(@NotNull Path path,
                      int pageSize,
-                     @NotNull RegionAllocationAtomicityLock regionAllocationAtomicityLock) throws IOException {
-    this(path, pageSize, 0, regionAllocationAtomicityLock);
+                     @NotNull RegionAllocationAtomicityLock regionAllocationAtomicityLock,
+                     boolean fsyncOnFlush) throws IOException {
+    this(path, pageSize, 0, regionAllocationAtomicityLock, fsyncOnFlush);
   }
 
   private MMappedFileStorage(Path path,
                              int pageSize,
                              int pagesCountToMapInitially,
-                             @NotNull RegionAllocationAtomicityLock regionAllocationAtomicityLock) throws IOException {
+                             @NotNull RegionAllocationAtomicityLock regionAllocationAtomicityLock,
+                             boolean fsyncOnFlush) throws IOException {
     if (pageSize <= 0) {
       throw new IllegalArgumentException("pageSize(=" + pageSize + ") must be >0");
     }
@@ -144,6 +149,8 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
     pageSizeBits = Integer.numberOfTrailingZeros(pageSize);
     pageSizeMask = pageSize - 1;
     this.pageSize = pageSize;
+
+    this.fsyncOnFlush = fsyncOnFlush;
 
     Path absolutePath = path.toAbsolutePath();
     this.storagePath = absolutePath;
@@ -258,6 +265,25 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
     closeStorageAndUnmapMemory();
   }
 
+  /// Issues [fsync] if [fsyncOnFlush] configuration parameter is set, does nothing otherwise.
+  ///
+  /// For mmapped storages 'flush' has ambiguous semantics: normally 'flush' ~= 'everything is stored on disk', but really
+  ///  flush-like methods just write in-memory buffers to a file-handle -- which doesn't guarantee data lends on disk physically,
+  ///  usually data just lends in an OS file-cache. Normally, 'flush' doesn't invoke 'fsync' afterward, since it is quite expensive.
+  /// For mmapped storages such-defined 'flush' is just noop, since the data is always written into OS file-cache. Which makes the
+  ///  developers of mmapped storages to question: 'should I call fsync in my flush to do _something_'? -- and none of the answers
+  /// is perfect.
+  /// So this method is introduced: one could call it everywhere a regular 'flush' should be called, and configure mmappedStorage
+  ///  in ctor about how to react on it. [fsync] is left for the cases the explicit syncing is needed, like guarantee some state
+  /// change definitely persists even OS crash.
+  @Override
+  public void flush() throws IOException {
+    if (fsyncOnFlush) {
+      fsync();
+    }//else -> do nothing
+  }
+
+  /// Consider using [flush] in more mundane cases
   public void fsync() throws IOException {
     if (channel.isOpen()) {
       channel.force(true);
@@ -313,7 +339,7 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
   @Override
   public String toString() {
     return "MMappedFileStorage[" + storagePath + "]" +
-           "[" + pages.length + " pages of " + pageSize + "b]";
+           "[" + pages.length + " pages of " + pageSize + "b]{fsyncOnFlush: " + fsyncOnFlush + "}";
   }
 
   private void closeStorageAndUnmapMemory() throws IOException {
