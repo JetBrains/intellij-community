@@ -211,5 +211,11 @@ public final class ReadAction {
     public static @NotNull Runnable jobCancellation(@NotNull Job job) {
       return () -> job.cancel(new CannotReadException());
     }
+
+    @Internal
+    @Override
+    public synchronized Throwable fillInStackTrace() {
+      return this;
+    }
   }
 }
