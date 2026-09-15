@@ -123,7 +123,15 @@ if [ "$CHECK_LAUNCHER_INTEGRITY" = "true" ]; then
   LAUNCHER_ARCH="$(lipo -archs "$LAUNCHER_PATH")"
   HOST_ARCH="$(arch)"
   if [ "$LAUNCHER_ARCH" = "$HOST_ARCH" ]; then
-    "$LAUNCHER_PATH" --version
+    # an empty '<envVarBaseName>_VM_OPTIONS' file keeps the user VM options out of the check
+    ENV_VAR_BASE_NAME="$(plutil -extract envVarBaseName raw -o - "$MOUNT_POINT/$BUILD_NAME/Contents/Resources/product-info.json")"
+    EMPTY_VM_OPTIONS="$(mktemp)"
+    env "${ENV_VAR_BASE_NAME}_VM_OPTIONS=$EMPTY_VM_OPTIONS" "$LAUNCHER_PATH" --version || {
+      ec=$?
+      log "The launcher integrity check failed: '$LAUNCHER_PATH --version' exited with code $ec"
+      exit $ec
+    }
+    rm -f "$EMPTY_VM_OPTIONS"
   else
     log "The launcher arch is $LAUNCHER_ARCH, the host arch is $HOST_ARCH, integrity may not be checked"
   fi
