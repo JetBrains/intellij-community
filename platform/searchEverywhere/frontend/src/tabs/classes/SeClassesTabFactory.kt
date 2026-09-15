@@ -22,7 +22,9 @@ class SeClassesTabFactory : SeEssentialTabFactory {
   override val priority: Int get() = SeClassesTab.PRIORITY
 
   override fun isAvailable(project: Project?): Boolean =
-    project != null && !WelcomeScreenProjectProvider.isWelcomeScreenProject(project)
+    project != null &&
+    !WelcomeScreenProjectProvider.isWelcomeScreenProject(project) &&
+    GotoContributorsAvailabilityService.getInstance(project).hasClassContributors()
 
   override suspend fun getTab(scope: CoroutineScope, project: Project?, session: SeSession, initEvent: AnActionEvent, registerShortcut: (AnAction) -> Unit): SeTab? {
     project ?: return null

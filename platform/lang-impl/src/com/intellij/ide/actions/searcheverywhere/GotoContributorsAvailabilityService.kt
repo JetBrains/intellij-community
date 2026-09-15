@@ -6,7 +6,9 @@ import com.intellij.navigation.ChooseByNameRegistry
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.platform.project.projectId
+import com.intellij.platform.runtime.product.ProductMode
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
@@ -26,6 +28,10 @@ class GotoContributorsAvailabilityService(private val project: Project, private 
   @Volatile
   private var remoteAvailability: RemoteAvailability? = null
 
+  // Strictly LIGHT, not isLight: LIGHT_WITH_RD_CONNECTION already awaits the backend. See awaitWithLocalFallback.
+  private val unknownRemoteCountsAsAvailable: Boolean
+    get() = IdeProductMode.getInstance().currentMode != ProductMode.LIGHT
+
   init {
     val refresh = Runnable {
       coroutineScope.launch {
@@ -40,15 +46,16 @@ class GotoContributorsAvailabilityService(private val project: Project, private 
   /**
    * A fast check for an action update.
    * It uses the last known remote state. The state refreshes when an extension point changes.
-   * Before the first fetch completes, the remote state counts as available. This keeps the current behavior.
+   * Before the first fetch completes, the remote state counts as available while a backend can still answer.
+   * A strictly-Light session has no backend, so its unknown remote state counts as unavailable.
    */
   fun hasClassContributors(): Boolean {
-    return hasLocalClassContributors(project) || (remoteAvailability?.hasClassContributors ?: true)
+    return hasLocalClassContributors(project) || (remoteAvailability?.hasClassContributors ?: unknownRemoteCountsAsAvailable)
   }
 
   /** See [hasClassContributors]. */
   fun hasSymbolContributors(): Boolean {
-    return hasLocalSymbolContributors(project) || (remoteAvailability?.hasSymbolContributors ?: true)
+    return hasLocalSymbolContributors(project) || (remoteAvailability?.hasSymbolContributors ?: unknownRemoteCountsAsAvailable)
   }
 
   /** A slow check for a suspending caller. It fetches the fresh remote state. */

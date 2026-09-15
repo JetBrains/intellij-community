@@ -22,7 +22,9 @@ class SeSymbolsTabFactory : SeEssentialTabFactory {
   override val priority: Int get() = SeSymbolsTab.PRIORITY
 
   override fun isAvailable(project: Project?): Boolean =
-    project != null && !WelcomeScreenProjectProvider.isWelcomeScreenProject(project)
+    project != null &&
+    !WelcomeScreenProjectProvider.isWelcomeScreenProject(project) &&
+    GotoContributorsAvailabilityService.getInstance(project).hasSymbolContributors()
 
   override suspend fun getTab(scope: CoroutineScope, project: Project?, session: SeSession, initEvent: AnActionEvent, registerShortcut: (AnAction) -> Unit): SeTab? {
     project ?: return null
