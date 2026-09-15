@@ -30,6 +30,11 @@ interface SeMlService {
   fun applyMlWeight(seItemData: SeItemData): SeItemData
 
   /**
+   * Processes the itemData without applying the weight
+   */
+  fun process(seItemData: SeItemData)
+
+  /**
    * Notifies the service that the UI list has received updated search results.
    */
   fun notifySearchResultsUpdated()

@@ -36,6 +36,11 @@ internal class SplitSeMlService : SeMlService {
     }
   }
 
+  override fun process(seItemData: SeItemData) {
+    val adapter = SearchResultAdapter.createAdapterFor(seItemData)
+    SearchEverywhereMlFacade.processSearchResult(adapter)
+  }
+
   override fun notifySearchResultsUpdated() {
     SearchEverywhereMlFacade.notifySearchResultsUpdated()
   }
