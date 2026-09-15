@@ -13,7 +13,6 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProjectCollectors
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectFilteringTree
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectPanelComponentFactory
@@ -67,10 +66,7 @@ internal class FrontendWelcomeScreenLeftPanelProvider : PureUiProjectViewPanePro
 
 private class FrontendWelcomeScreenLeftPanelModel(private val project: Project) : FrontendProjectViewPaneModel {
   override suspend fun describe(builder: ProjectViewPaneDescriptorBuilder): ProjectViewPaneDescriptor {
-    builder.setDefault(
-      !Registry.`is`("ide.welcome.screen.change.project.view.depending.on.opened.file", false) &&
-      project.isWelcomeExperienceProject()
-    )
+    builder.setDefault(project.isWelcomeExperienceProject())
     builder.setIcon(IconManager.getInstance().getPlatformIcon(PlatformIcons.Folder))
     return builder.build(
       id = projectViewPaneId(WelcomeScreenLeftPanel.ID),

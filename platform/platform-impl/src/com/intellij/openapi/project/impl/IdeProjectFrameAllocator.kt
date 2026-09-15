@@ -64,7 +64,6 @@ import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
 import com.intellij.openapi.wm.ex.ProjectFrameTypeService
 import com.intellij.openapi.wm.ex.ProjectFrameUiPolicy
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
-import com.intellij.openapi.wm.ex.WelcomeScreenTabService
 import com.intellij.openapi.wm.ex.normalizeProjectFrameKey
 import com.intellij.openapi.wm.impl.FrameBoundsConverter
 import com.intellij.openapi.wm.impl.FrameInfo
@@ -606,7 +605,6 @@ private suspend fun restoreEditors(
       }
     }
     if (editorState == null) {
-      WelcomeScreenTabService.getInstance(fileEditorManager.project).openTab()
       serviceAsync<StartUpPerformanceService>().editorRestoringTillHighlighted()
       return@coroutineScope
     }
@@ -617,12 +615,6 @@ private suspend fun restoreEditors(
 
     span("editor reopening post-processing", Dispatchers.UI) {
       focusSelectedEditor(editorComponent)
-    }
-
-    // a state whose tabs were all closed, or whose files are gone, restores nothing: the editor area is as empty as with no
-    // state at all, and the welcome project shows its welcome tab in that case
-    if (!fileEditorManager.hasOpenFiles()) {
-      WelcomeScreenTabService.getInstance(fileEditorManager.project).openTab()
     }
   }
 }

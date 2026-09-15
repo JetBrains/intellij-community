@@ -29,10 +29,6 @@ interface WelcomeRightTabContentProvider {
 
   val productIcon: Icon? get() = null
 
-  val isDisableOptionVisible: Boolean
-  val isStartupSwitchPanelOptionVisible: Boolean
-    get() = false
-
   val buttonsPerRow: Int
     get() = 3
 
@@ -56,10 +52,6 @@ interface WelcomeRightTabContentProvider {
    * laid out left-to-right, so a component's position in the row defines its column.
    */
   fun getAdditionalComponents(project: Project): List<List<WelcomeContent>> = emptyList()
-
-  /** Enables the optional banner below the feature grid for this product. */
-  val isSingleBannerEnabled: Boolean
-    get() = false
 
   fun getFileDragAndDropHandler(): FileDragAndDropHandler = DefaultFileDragAndDropHandler
 

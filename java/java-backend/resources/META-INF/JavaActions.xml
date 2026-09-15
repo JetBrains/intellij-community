@@ -23,6 +23,7 @@
         <action id="NewProject" class="com.intellij.ide.actions.NewProjectAction">
           <override-text place="ProjectWidgetPopup"/>
           <add-to-group group-id="ProjectWidget.Actions" anchor="first"/>
+          <add-to-group group-id="NonModalWelcomeNewProjectGroup"/>
         </action>
         <action id="ImportProject" class="com.intellij.ide.actions.ImportProjectAction"/>
       </group>

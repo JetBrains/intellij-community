@@ -306,7 +306,7 @@ public final class ScratchFileActions {
         context.fileExtension = ScratchImplUtil.getFileTypeExtensions(fileType, true, FileTypeManager.getInstance()).first();
       }
     }
-    if (context.language != null) {
+    if (context.language != null && context.prepareText) {
       ScratchFileCreationHelper helper = ScratchFileCreationHelper.EXTENSION.forLanguage(context.language);
       if (StringUtil.isEmpty(context.text)) {
         helper.prepareText(project, context, dataContext);

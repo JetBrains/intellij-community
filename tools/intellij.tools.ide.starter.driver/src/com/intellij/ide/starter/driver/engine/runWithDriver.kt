@@ -22,14 +22,22 @@ fun IDETestContext.runIdeWithDriver(commandLine: (IDERunContext) -> IDECommandLi
                                     expectedKill: Boolean = false,
                                     expectedExitCode: Int = 0,
                                     collectNativeThreads: Boolean = false,
+                                    disableNonModalWelcomeScreen: Boolean = false,
                                     pauseOnIndexing: Duration? = null,
                                     configure: IDERunContext.() -> Unit = {}): BackgroundRun {
   return selectedDriverRunner().runIdeWithDriver(this, commandLine, commands, runTimeout, useStartupScript, launchName, expectedKill, expectedExitCode, collectNativeThreads, pauseOnIndexing) {
     if (System.getenv("SCREEN_RECORDING_ENABLED").toBoolean()) {
       withScreenRecording()
     }
+    if (disableNonModalWelcomeScreen) {
+      disableNonModalWelcomeScreen()
+    }
     configure()
   }
+}
+
+fun IDETestContext.runIdeWithDriverDisableNewWelcome(): BackgroundRun {
+  return runIdeWithDriver(disableNonModalWelcomeScreen = true)
 }
 
 /**

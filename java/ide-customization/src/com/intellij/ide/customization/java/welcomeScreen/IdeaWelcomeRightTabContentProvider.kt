@@ -3,18 +3,17 @@ package com.intellij.ide.customization.java.welcomeScreen
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
+import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.impl.DialogBackgroundImageProviderBase
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeRightTabContentProvider
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenFeatureApi
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenFeatureUI
 import com.intellij.platform.project.projectId
-import com.intellij.util.IconUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.awt.Image
 import java.net.URL
-import javax.swing.Icon
 
 internal class IdeaWelcomeRightTabContentProvider(override val coroutineScope: CoroutineScope) : WelcomeRightTabContentProvider {
   private val bgImageLoader = object : DialogBackgroundImageProviderBase() {
@@ -29,25 +28,29 @@ internal class IdeaWelcomeRightTabContentProvider(override val coroutineScope: C
   override val title = IdeBundle.messagePointer("idea.non.modal.welcome.screen.right.tab.header")
   override val secondaryTitle = IdeBundle.messagePointer("idea.non.modal.welcome.screen.right.tab.secondary.header")
 
-  override val isDisableOptionVisible = false
-
   override val fileTypeIcon = AllIcons.Ultimate.IdeaUltimatePromo
 
   override fun getFeatureButtonModels(project: Project): List<WelcomeRightTabContentProvider.FeatureButtonModel> {
     return listOfNotNull(
-      pluginProvidedFeatureButtonModel(IdeaFeatureKeys.AIR_SESSIONS),
       WelcomeRightTabContentProvider.FeatureButtonModel(
-        text = IdeBundle.message("configurable.TerminalOptionsConfigurable.display.name"),
-        icon = scale(AllIcons.Debugger.Console, true),
+        text = ActionsBundle.message ("action.NewJavaFile.text"),
+        icon = AllIcons.FileTypes.Java,
         onClick = { _, _ ->
-          featureButtonOnClick(project, IdeaFeatureKeys.TERMINAL)
+          featureButtonOnClick(project, IdeaFeatureKeys.NEW_JAVA_FILE)
         }
       ),
       WelcomeRightTabContentProvider.FeatureButtonModel(
-        text = IdeBundle.message("welcome.screen.plugins.title"),
-        icon = scale(AllIcons.Nodes.Plugin, true),
+        text = ActionsBundle.message("action.NewKotlinFile.text"),
+        icon = AllIcons.Language.Kotlin,
         onClick = { _, _ ->
-          featureButtonOnClick(project, IdeaFeatureKeys.PLUGINS)
+          featureButtonOnClick(project, IdeaFeatureKeys.NEW_KOTLIN_FILE)
+        }
+      ),
+      WelcomeRightTabContentProvider.FeatureButtonModel(
+        text = ActionsBundle.message("action.AttachDebuger.text"),
+        icon = AllIcons.Toolwindows.ToolWindowDebugger,
+        onClick = { _, _ ->
+          featureButtonOnClick(project, IdeaFeatureKeys.ATTACH_TO_PROCESS)
         }
       )
     )
@@ -66,11 +69,9 @@ internal class IdeaWelcomeRightTabContentProvider(override val coroutineScope: C
     return WelcomeRightTabContentProvider.FeatureButtonModelWithBackend(
       featureKey = feature.featureKey,
       text = text,
-      icon = scale(feature.icon, true),
+      icon = feature.icon
     )
   }
-
-  private fun scale(icon: Icon, color: Boolean) = IconUtil.scale(icon, null, 1.5f) // TODO: colorize to blue
 
   private fun featureButtonOnClick(project: Project, featureKey: String) {
     coroutineScope.launch {

@@ -2,21 +2,25 @@
 package com.intellij.platform.ide.nonModalWelcomeScreen.rightTab
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.dnd.FileCopyPasteUtil
+import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.ui.LafManagerListener
+import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
-import com.intellij.openapi.wm.impl.IdeBackgroundUtil
-import com.intellij.platform.ide.nonModalWelcomeScreen.NON_MODAL_WELCOME_SCREEN_SETTING_ID
 import com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenBundle
 import com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenComboBoxKind
 import com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenTabUsageCollector
@@ -24,23 +28,16 @@ import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeRightTabC
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenRightTabComboBoxModel.KeymapModel
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenRightTabComboBoxModel.StartupSwitchModel
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenRightTabComboBoxModel.ThemeModel
-import com.intellij.ui.JBColor
 import com.intellij.ui.components.DisclosureButton
-import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.dsl.gridLayout.GridLayout
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
-import com.intellij.ui.scale.JBUIScale.scale
-import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.runSuppressing
 import com.intellij.util.ui.AbstractLayoutManager
-import com.intellij.util.ui.JBDimension
-import com.intellij.util.ui.JBFont
-import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
@@ -49,15 +46,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.awt.BorderLayout
-import java.awt.Color
 import java.awt.Container
 import java.awt.Dimension
-import java.awt.Graphics
-import java.awt.Graphics2D
 import java.awt.KeyboardFocusManager
 import java.awt.Rectangle
-import java.awt.RenderingHints
 import java.awt.dnd.DnDConstants
 import java.awt.dnd.DropTarget
 import java.awt.dnd.DropTargetAdapter
@@ -66,11 +58,8 @@ import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import java.awt.geom.RoundRectangle2D
-import java.util.function.Supplier
 import javax.swing.ComboBoxModel
 import javax.swing.Icon
-import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
@@ -84,33 +73,9 @@ internal class WelcomeScreenRightTabImpl(
   contentProvider: WelcomeRightTabContentProvider,
 ) : WelcomeScreenRightTab(project, contentProvider) {
 
-  override val component: JComponent = object : JPanel() {
-    private val gradientPainterLight = IdeBackgroundUtil.createImagePainter(
-      Supplier { contentProvider.backgroundImageVectorLight },
-      IdeBackgroundUtil.Fill.PLAIN,
-      IdeBackgroundUtil.Anchor.TOP_LEFT,
-      1f,
-      JBInsets.emptyInsets())
-
-    private val gradientPainterDark = IdeBackgroundUtil.createImagePainter(
-      Supplier { contentProvider.backgroundImageVectorDark },
-      IdeBackgroundUtil.Fill.PLAIN,
-      IdeBackgroundUtil.Anchor.TOP_LEFT,
-      1f,
-      JBInsets.emptyInsets())
-
-    override fun paintComponent(g: Graphics) {
-      super.paintComponent(g)
-      (if (JBColor.isBright()) gradientPainterLight else gradientPainterDark).executePaint(this, g as Graphics2D)
-    }
-  }
-
-  private val secondaryTitleLabel = JLabel().centered()
+  override val component = JPanel()
 
   private val contentPanel = BorderLayoutPanel()
-
-  private val backButton =
-    HoveredButton(NonModalWelcomeScreenBundle.message("welcome.screen.right.tab.back.to.default"), AllIcons.Actions.Back)
 
   private var featureContents: List<WelcomeScreenFeatureUI.Content> = emptyList()
   private var disposed: Boolean = false
@@ -122,31 +87,7 @@ internal class WelcomeScreenRightTabImpl(
   private var contentGeneration: Int = 0
 
   init {
-    val headerPanel = BorderLayoutPanel()
-    headerPanel.isOpaque = false
-
-    val productIcon = contentProvider.productIcon
-    if (productIcon != null) {
-      val label = JLabel(productIcon).centered()
-      label.border = JBUI.Borders.emptyBottom(32)
-      headerPanel.addToTop(label)
-    }
-
-    val titleLabel = JLabel(contentProvider.title.get())
-    titleLabel.font = JBFont.label().biggerOn(9f)
-    titleLabel.border = JBUI.Borders.emptyBottom(8)
-    headerPanel.addToCenter(titleLabel.centered())
-
-    secondaryTitleLabel.foreground = JBUI.CurrentTheme.ActionsList.MNEMONIC_FOREGROUND
-    secondaryTitleLabel.border = JBUI.Borders.emptyBottom(32)
-    headerPanel.addToBottom(secondaryTitleLabel)
-
     contentPanel.isOpaque = false
-
-    val centeredComponent = BorderLayoutPanel()
-    centeredComponent.isOpaque = false
-    centeredComponent.addToTop(headerPanel)
-    centeredComponent.addToCenter(contentPanel)
 
     component.focusTraversalPolicy = LayoutFocusTraversalPolicy()
     component.isFocusTraversalPolicyProvider = true
@@ -174,10 +115,16 @@ internal class WelcomeScreenRightTabImpl(
 
     component.layout = object : AbstractLayoutManager() {
       override fun preferredLayoutSize(container: Container): Dimension {
-        if (container.componentCount > 0) {
-          return container.getComponent(0).preferredSize
+        var width = 0
+        var height = JBUI.scale(32)
+        val size = container.componentCount
+
+        for (i in 0..<size) {
+          val preferredSize = container.getComponent(i).preferredSize
+          width = max(width, preferredSize.width)
+          height += preferredSize.height
         }
-        return JBDimension(0, 0)
+        return Dimension(width, height)
       }
 
       override fun minimumLayoutSize(container: Container) = preferredLayoutSize(container)
@@ -209,24 +156,19 @@ internal class WelcomeScreenRightTabImpl(
           bottomChild.bounds = Rectangle((fullSize.width - bottomSize.width) / 2,
                                          bottomY, bottomSize.width, bottomSize.height)
         }
-
-        if (count == 3) {
-          val button = container.getComponent(2)
-          val offset = JBUI.scale(30)
-          val size = button.preferredSize
-          button.bounds = Rectangle(offset, offset, size.width, size.height)
-        }
       }
     }
-    component.add(centeredComponent)
+    component.add(contentPanel)
 
-    backButton.addActionListener { switchToDefaultContent() }
+    createDefaultContent {
+      component.doLayout()
+      component.revalidate()
+      component.repaint()
+    }
 
-    createDefaultContent {}
+    createFooter()
 
     val busConnection = ApplicationManager.getApplication().messageBus.connect(project)
-    createFooter(busConnection)
-
     busConnection.subscribe(LafManagerListener.TOPIC, LafManagerListener {
       updateLafIconCallback()
     })
@@ -271,27 +213,6 @@ internal class WelcomeScreenRightTabImpl(
   override fun dispose() {
     disposed = true
     disposeFeatureContents()
-  }
-
-  override fun switchToDefaultContent() {
-    createContent(::createDefaultContent)
-  }
-
-  override fun switchToCustomContent(provider: WelcomeRightCustomTabProvider) {
-    createContent { createCustomContent(provider) }
-  }
-
-  private fun createContent(builder: (() -> Unit) -> Unit) {
-    contentGeneration++
-    backButton.parent?.remove(backButton)
-    disposeFeatureContents()
-    contentPanel.removeAll()
-
-    builder {
-      component.doLayout()
-      component.revalidate()
-      component.repaint()
-    }
   }
 
   /**
@@ -360,33 +281,25 @@ internal class WelcomeScreenRightTabImpl(
       }
   }
 
-  private fun createCustomContent(provider: WelcomeRightCustomTabProvider) {
-    secondaryTitleLabel.text = provider.customSubtitle?.get() ?: contentProvider.secondaryTitle.get()
-
-    component.add(backButton)
-    contentPanel.addToCenter(provider.createTabContent(project))
-  }
-
   private fun createDefaultContent(
     backendFeatureIds: Set<String>,
     contents: List<WelcomeScreenFeatureUI.Content>,
     finish: () -> Unit,
   ) {
-    secondaryTitleLabel.text = contentProvider.secondaryTitle.get()
-
-    createFeatureGrid(backendFeatureIds)
-
-    val additionalPanel = JPanel(VerticalLayout(0))
-    additionalPanel.isOpaque = false
-
-    createAdditionalComponents(additionalPanel)
-    createFeatureSections(additionalPanel, contents)
-    if (contentProvider.isSingleBannerEnabled) {
-      createSingleBanner(additionalPanel)
+    if (contents.isEmpty()) {
+      createDefaultContent(contentPanel, backendFeatureIds, false)
     }
+    else {
+      val contentsPanel = JPanel(VerticalLayout(0))
+      contentsPanel.isOpaque = false
+      contentsPanel.border = JBUI.Borders.emptyBottom(40)
+      createFeatureSections(contentsPanel, contents)
+      contentPanel.addToCenter(contentsPanel)
 
-    if (additionalPanel.componentCount > 0) {
-      contentPanel.addToBottom(additionalPanel)
+      val bottomPanel = BorderLayoutPanel()
+      bottomPanel.isOpaque = false
+      createDefaultContent(bottomPanel, backendFeatureIds, true)
+      contentPanel.addToBottom(bottomPanel)
     }
 
     finish()
@@ -399,7 +312,21 @@ internal class WelcomeScreenRightTabImpl(
     }
   }
 
-  private fun createFeatureGrid(backendFeatureIds: Set<String>) {
+  private fun createDefaultContent(parentPanel: BorderLayoutPanel, backendFeatureIds: Set<String>, extraContent: Boolean) {
+    parentPanel.addToCenter(createFeatureGrid(backendFeatureIds, extraContent))
+
+    val additionalPanel = JPanel(VerticalLayout(0))
+    additionalPanel.isOpaque = false
+
+    createAdditionalComponents(additionalPanel)
+    //createSingleBanner(additionalPanel, extraContent) // TODO: again disable until we haven't better implementation
+
+    if (additionalPanel.componentCount > 0) {
+      parentPanel.addToBottom(additionalPanel)
+    }
+  }
+
+  private fun createFeatureGrid(backendFeatureIds: Set<String>, extraContent: Boolean): JPanel {
     // Show only available backend features (and all non-backend features)
     val featureModels = contentProvider.getFeatureButtonModels(project).filter {
       it !is WelcomeRightTabContentProvider.FeatureButtonModelWithBackend || it.isAlwaysAvailable || it.featureKey in backendFeatureIds
@@ -410,43 +337,28 @@ internal class WelcomeScreenRightTabImpl(
 
     val wrapper = Wrapper(true)
     wrapper.add(buttonPanel)
-    contentPanel.addToCenter(wrapper)
 
     val gridBuilder = RowsGridBuilder(buttonPanel)
+
+    val buttonHeight = JBUI.scale(if (extraContent) 36 else 48)
 
     for (row in featureModels.chunked(contentProvider.buttonsPerRow)) {
       for (model in row) {
         val button = DisclosureButton()
         button.arrowIcon = null
-        button.buttonHeight = JBUI.scale(90)
-        button.leftMargin = JBUI.scale(51)
-        button.rightMargin = JBUI.scale(51)
+        button.buttonHeight = buttonHeight
         button.isOpaque = false
-        button.layout = BorderLayout()
-        button.buttonBackground = model.background
-
-        val innerPanel = JPanel(VerticalLayout(0, SwingConstants.CENTER))
-        innerPanel.isOpaque = false
-        button.add(innerPanel)
-
-        innerPanel.add(JLabel(model.icon).centered(), VerticalLayout.CENTER)
-
-        val titleLabel = JLabel(model.text)
-        titleLabel.border = JBUI.Borders.emptyTop(8)
-        titleLabel.font = JBFont.medium()
-        innerPanel.add(titleLabel.centered(), VerticalLayout.CENTER)
+        button.text = model.text
+        button.icon = model.icon
 
         button.addActionListener { model.onClick(project, contentProvider.coroutineScope) }
 
-        val buttonPanel = BorderLayoutPanel()
-        buttonPanel.isOpaque = false
-        buttonPanel.border = JBUI.Borders.empty(5)
-        buttonPanel.addToCenter(button)
-
-        gridBuilder.cell(buttonPanel)
+        gridBuilder.cell(button, gaps = UnscaledGaps(right = 10))
       }
       gridBuilder.row()
     }
+
+    return wrapper
   }
 
   private fun createAdditionalComponents(parentPanel: JPanel) {
@@ -474,11 +386,11 @@ internal class WelcomeScreenRightTabImpl(
     }
   }
 
-  private fun createSingleBanner(parentPanel: JPanel) {
+  private fun createSingleBanner(parentPanel: JPanel, extraContent: Boolean) {
     val singleBanner = WelcomeScreenRightTabBannerProvider.createSingleBanner(project)
     if (singleBanner != null) {
       val wrapper = Wrapper(singleBanner)
-      wrapper.border = JBUI.Borders.emptyTop(24)
+      wrapper.border = JBUI.Borders.emptyTop(if (extraContent) 32 else 52)
       // A provider may return a placeholder that starts invisible and only becomes visible once some
       // async check resolves whether there's anything to show (e.g. GoFeaturesWelcomeRightTabBannerProvider).
       // Mirroring visibility onto the wrapper keeps its border from reserving space while that's the case.
@@ -500,7 +412,7 @@ internal class WelcomeScreenRightTabImpl(
 
   private lateinit var updateLafIconCallback: () -> Unit
 
-  private fun createFooter(busConnection: MessageBusConnection) {
+  private fun createFooter() {
     val panel = JPanel(GridLayout())
     panel.isOpaque = false
     component.add(panel)
@@ -508,7 +420,6 @@ internal class WelcomeScreenRightTabImpl(
     val gridBuilder = RowsGridBuilder(panel)
 
     createFooterButtons(gridBuilder)
-    createDisableOptionAction(gridBuilder, busConnection)
   }
 
   private fun createFooterButtons(gridBuilder: RowsGridBuilder) {
@@ -544,12 +455,21 @@ internal class WelcomeScreenRightTabImpl(
 
             cellPanel.add(combo)
 
-            gridBuilder.cell(cellPanel.also { it.border = JBUI.Borders.empty(0, 0, 12, 16) })
+            gridBuilder.cell(cellPanel.also { it.border = JBUI.Borders.empty(0, 0, 16, 16) })
           }
           is ButtonInfoPanelModel -> {
-            val button = HoveredButton(model.itemPrefix, model.icon)
-            button.addActionListener { model.onClick(project, coroutineScope) }
-            gridBuilder.cell(Wrapper(button).also { it.border = JBUI.Borders.empty(0, 0, 12, 16) })
+            val presentation = Presentation()
+            presentation.icon = model.icon
+            presentation.text = model.itemPrefix
+
+            val action = object : DumbAwareAction() {
+              override fun actionPerformed(e: AnActionEvent) {
+                model.onClick(project, coroutineScope)
+              }
+            }
+
+            val button = ActionButtonWithText(action, presentation, "", ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE)
+            gridBuilder.cell(Wrapper(button).also { it.border = JBUI.Borders.empty(0, 0, 16, 16) })
           }
         }
       }
@@ -559,31 +479,13 @@ internal class WelcomeScreenRightTabImpl(
 
   private fun createFooterModels(): List<InfoPanelModel> {
     return buildList {
+      add(ButtonInfoPanelModel(WelcomeRightTabContentProvider.InfoButtonModel(IdeBundle.message("welcome.screen.plugins.title"),
+                                                                              AllIcons.Nodes.Plugin) { project, _ ->
+        PluginManagerConfigurable.showSettingsDialogFromWelcomeScreen(project)
+      }))
       add(ComboBoxInfoPanelModel(ThemeModel.getIcon(), "welcome.screen.right.tab.theme.switch.prefix", ThemeModel()))
       add(ComboBoxInfoPanelModel(AllIcons.General.Keyboard, "welcome.screen.right.tab.keymap.switch.prefix", KeymapModel()))
-      if (contentProvider.isStartupSwitchPanelOptionVisible) {
-        add(ComboBoxInfoPanelModel(AllIcons.General.Settings, "welcome.screen.right.tab.startup.switch.prefix", StartupSwitchModel()))
-      }
       addAll(contentProvider.getAdditionalInfoButtonModels(project).map { ButtonInfoPanelModel(it) })
-    }
-  }
-
-  private fun createDisableOptionAction(gridBuilder: RowsGridBuilder, busConnection: MessageBusConnection) {
-    if (contentProvider.isDisableOptionVisible) {
-      val checkbox = JBCheckBox(NonModalWelcomeScreenBundle.message("welcome.screen.enabled.checkbox"))
-      checkbox.isSelected = isRightTabEnabled
-      checkbox.addItemListener { isRightTabEnabled = checkbox.isSelected }
-
-      gridBuilder.cell(Wrapper(checkbox).also { it.border = JBUI.Borders.empty(0, 0, 12, 16) },
-                       horizontalAlign = HorizontalAlign.CENTER, width = contentProvider.buttonsPerRow)
-
-      busConnection.subscribe(AdvancedSettingsChangeListener.TOPIC, object : AdvancedSettingsChangeListener {
-        override fun advancedSettingChanged(id: String, oldValue: Any, newValue: Any) {
-          if (id == NON_MODAL_WELCOME_SCREEN_SETTING_ID) {
-            checkbox.isSelected = isRightTabEnabled
-          }
-        }
-      })
     }
   }
 }
@@ -679,60 +581,6 @@ private class ComboModel(
   }
 
   override fun removeListDataListener(listener: ListDataListener) {
-  }
-}
-
-private class HoveredButton(text: @NlsSafe String, icon: Icon) : JButton(text, icon) {
-  private var hoverColor: Color? = null
-
-  init {
-    isFocusPainted = false
-    isBorderPainted = false
-    isRolloverEnabled = true
-    isContentAreaFilled = false
-    background = null
-
-    addMouseListener(object : MouseAdapter() {
-      override fun mouseEntered(evt: MouseEvent) {
-        hoverColor = JBUI.CurrentTheme.ActionButton.hoverBackground()
-      }
-
-      override fun mouseExited(evt: MouseEvent) {
-        hoverColor = null
-      }
-    })
-  }
-
-  override fun setBackground(bg: Color?) {
-    super.setBackground(null)
-  }
-
-  override fun paintComponent(g: Graphics) {
-    val hoverColor = hoverColor
-    if (hoverColor != null) {
-      val g2 = g.create() as Graphics2D
-
-      try {
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-        g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE)
-        g2.color = hoverColor
-
-        val rect = Rectangle(size)
-        JBInsets.removeFrom(rect, insets)
-
-        val arc = scale(JBUI.getInt("Button.arc", 6))
-        g2.fill(RoundRectangle2D.Float(rect.x.toFloat(),
-                                       rect.y.toFloat(),
-                                       rect.width.toFloat(),
-                                       rect.height.toFloat(),
-                                       arc.toFloat(),
-                                       arc.toFloat()))
-      }
-      finally {
-        g2.dispose()
-      }
-    }
-    super.paintComponent(g)
   }
 }
 

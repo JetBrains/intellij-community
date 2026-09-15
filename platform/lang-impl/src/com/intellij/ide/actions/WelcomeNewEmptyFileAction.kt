@@ -64,7 +64,13 @@ internal class WelcomeNewEmptyFileAction : DumbAwareAction() {
     val context = ScratchFileCreationHelper.Context()
     context.defaultRootType = WelcomeFilesRootType.Util.instance
     context.filePrefix = "Untitled"
-    context.fileExtension = "txt"
+    context.language = CommonDataKeys.LANGUAGE.getData(e.dataContext)
+    if (context.language == null) {
+      context.fileExtension = "txt"
+    }
+    else {
+      context.prepareText = false
+    }
     ScratchFileActions.doCreateNewScratch(project, context, e.dataContext)
   }
 }

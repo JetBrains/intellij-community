@@ -25,6 +25,7 @@ class RemoteDevDriverOptions {
    */
   private val remoteDevVmOptions: Map<String, String> =
     mapOf(
-      "ide.mac.file.chooser.native" to "false"
+      "ide.mac.file.chooser.native" to "false",
+      "idea.welcome.screen.non.modal.enabled" to "false"
     )
 }

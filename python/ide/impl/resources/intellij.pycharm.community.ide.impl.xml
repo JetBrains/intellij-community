@@ -205,7 +205,7 @@
     <!--Non Modal Welcome Screen customization-->
     <action id="welcome.screen.left.tab.new.py.script"
             class="com.intellij.pycharm.community.ide.impl.miscProject.impl.PyNewMiscScriptAction">
-      <add-to-group group-id="NonModalWelcomeScreen.LeftTabActions.New"/>
+      <add-to-group group-id="NonModalWelcomeScreen.LeftTabActions.New" anchor="before" relative-to-action="WelcomeNewEmptyFile"/>
     </action>
   </actions>
 
