@@ -842,16 +842,10 @@ object UniversalFileChooser {
         pathTextField.addKeyListener(object : KeyAdapter() {
           override fun keyPressed(e: KeyEvent) {
             if (e.isConsumed) return
-            when (e.keyCode) {
-              KeyEvent.VK_ENTER -> {
-                navigateToTextFieldPath(); e.consume()
-              }
-              KeyEvent.VK_ESCAPE -> {
-                setPathTextFieldError(false)
-                updatePathField(fileTree.getSelectedFile()?.let { listOf(it) } ?: emptyList())
-                focusTree()
-                e.consume()
-              }
+            // Esc is intentionally not consumed here: it must close the dialog, like everywhere
+            // else in the IDE, instead of only moving the focus to the tree (see IJPL-255128).
+            if (e.keyCode == KeyEvent.VK_ENTER) {
+              navigateToTextFieldPath(); e.consume()
             }
           }
         })
