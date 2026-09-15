@@ -72,7 +72,6 @@
                     beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.command.CommandProvider"/>
     </extensionPoint>
-    <extensionPoint name="languageInjector" interface="com.intellij.psi.LanguageInjector" dynamic="true"/>
     <extensionPoint name="completion.contributor" beanClass="com.intellij.codeInsight.completion.CompletionContributorEP" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.CompletionContributor"/>
     </extensionPoint>
@@ -82,7 +81,6 @@
     <extensionPoint name="completion.skip" interface="com.intellij.codeInsight.completion.CompletionPreselectSkipper" dynamic="true"/>
     <extensionPoint name="inspectionCustomComponent" interface="com.intellij.codeInspection.options.CustomComponentExtension"
                     dynamic="true"/>
-    <extensionPoint name="highlightErrorFilter" interface="com.intellij.codeInsight.highlighting.HighlightErrorFilter" area="IDEA_PROJECT" dynamic="true"/>
 
     <extensionPoint name="fileContextProvider" interface="com.intellij.psi.FileContextProvider" area="IDEA_PROJECT" dynamic="true"/>
     <extensionPoint name="fileLookupInfoProvider" interface="com.intellij.psi.file.FileLookupInfoProvider" dynamic="true"/>

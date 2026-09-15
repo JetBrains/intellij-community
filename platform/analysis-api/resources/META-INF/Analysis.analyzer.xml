@@ -31,5 +31,8 @@
       <with attribute="implementationClass" implements="com.intellij.psi.Weigher"/>
     </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.newRdCompletionVeto" interface="com.intellij.codeInsight.completion.NewRdCompletionVeto" dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.languageInjector" interface="com.intellij.psi.LanguageInjector" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.highlightErrorFilter" interface="com.intellij.codeInsight.highlighting.HighlightErrorFilter" area="IDEA_PROJECT" dynamic="true"/>
   </extensionPoints>
 </idea-plugin>
