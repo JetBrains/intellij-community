@@ -5310,6 +5310,10 @@ c:com.intellij.refactoring.rename.RenamePsiFileProcessor
 - com.intellij.refactoring.rename.RenamePsiElementProcessor
 - <init>():V
 - canProcessElement(com.intellij.psi.PsiElement):Z
+f:com.intellij.refactoring.rename.RenamePsiFileProcessor$HeadlessRenamePsiFileProcessor
+- com.intellij.refactoring.rename.RenamePsiFileProcessor
+- com.intellij.refactoring.rename.DelegatingHeadlessRenamePsiElementProcessor
+- <init>():V
 c:com.intellij.refactoring.rename.RenamePsiFileProcessor$PsiFileRenameDialog
 - com.intellij.refactoring.rename.RenameWithOptionalReferencesDialog
 c:com.intellij.refactoring.rename.RenameViewDescriptor

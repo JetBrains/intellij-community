@@ -469,6 +469,7 @@ f:com.intellij.refactoring.rename.RenameInputValidatorRegistry
 - s:getInputErrorValidator(com.intellij.psi.PsiElement):com.intellij.util.Function
 - s:getInputValidator(com.intellij.psi.PsiElement):com.intellij.openapi.util.Condition
 a:com.intellij.refactoring.rename.RenamePsiElementProcessorBase
+- com.intellij.refactoring.rename.RenamePsiElementProcessorCore
 - sf:DEFAULT:com.intellij.refactoring.rename.RenamePsiElementProcessorBase
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - <init>():V

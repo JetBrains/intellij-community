@@ -59,6 +59,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import io.opentelemetry.api.trace.Tracer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -162,6 +163,17 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     return RenamePsiElementProcessor.forElement(myPrimaryElement).getHelpID(myPrimaryElement);
   }
 
+  /**
+   * The processor which renames {@code element}.
+   * <p>
+   * A rename with a user takes it from {@code renamePsiElementProcessor}. A rename with no user overrides
+   * this and takes it from {@link HeadlessRenamePsiElementProcessor}, which is registered on its own.
+   */
+  @ApiStatus.Internal
+  protected @NotNull RenamePsiElementProcessorCore processorFor(@NotNull PsiElement element) {
+    return RenamePsiElementProcessor.forElement(element);
+  }
+
   @Override
   public boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     UsageInfo[] usagesIn = refUsages.get();
@@ -211,7 +223,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
             final UsageInfo[] usages =
               ReadAction.computeBlocking(() -> RenameUtil.findUsages(
                 entry.getKey(), entry.getValue(), myRefactoringScope,
-                mySearchInComments, mySearchTextOccurrences, myAllRenames));
+                mySearchInComments, mySearchTextOccurrences, myAllRenames, processorFor(entry.getKey())));
             Collections.addAll(variableUsages, usages);
           }
         };
@@ -322,7 +334,8 @@ public class RenameProcessor extends BaseRefactoringProcessor {
 
       String newName = myAllRenames.get(element);
       UsageInfo[] usages = RenameUtil.findUsages(element, newName, myRefactoringScope,
-                                                 mySearchInComments, mySearchTextOccurrences, myAllRenames);
+                                                 mySearchInComments, mySearchTextOccurrences, myAllRenames,
+                                                 processorFor(element));
       List<UsageInfo> usagesList = Arrays.asList(usages);
       result.addAll(usagesList);
 
@@ -413,7 +426,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
 
       final RefactoringElementListener elementListener = getTransaction().getElementListener(element);
       Collection<UsageInfo> infos = classified.get(element);
-      final RenamePsiElementProcessor renamePsiElementProcessor = RenamePsiElementProcessor.forElement(element);
+      final RenamePsiElementProcessorCore renamePsiElementProcessor = processorFor(element);
       Runnable postRenameCallback = renamePsiElementProcessor.getPostRenameCallback(element, newName, infos, myAllRenames, elementListener);
       try {
         RenameUtil.registerUndoableRename(element, elementListener);
@@ -431,7 +444,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
         });
       }
       catch (IncorrectOperationException e) {
-        RenameUtil.showErrorMessage(e, element, myProject);
+        showRenameErrorMessage(e, element);
         return;
       }
       if (postRenameCallback != null) {
@@ -442,6 +455,19 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     myNonCodeUsages = nonCodeUsages;
 
     afterRename(postRenameCallbacks, renameEvents);
+  }
+
+  /**
+   * Reports that the language refused to rename {@code element}, and the rename stopped there.
+   * <p>
+   * The elements before {@code element} are already renamed, so the code holds a part of the rename.
+   * Override this in a subclass which has no user to show the message to, and record the reason
+   * instead. {@link #performRefactoring} returns after the call either way.
+   */
+  @ApiStatus.OverrideOnly
+  @ApiStatus.Experimental
+  protected void showRenameErrorMessage(@NotNull IncorrectOperationException e, @NotNull PsiElement element) {
+    RenameUtil.showErrorMessage(e, element, myProject);
   }
 
   private void afterRename(List<? extends Runnable> postRenameCallbacks,
@@ -552,7 +578,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   }
 
   private void logScopeStatistics(VarargEventId eventId) {
-    Class<? extends RenamePsiElementProcessor> renameProcessor = RenamePsiElementProcessor.forElement(myPrimaryElement).getClass();
+    Class<? extends RenamePsiElementProcessorCore> renameProcessor = processorFor(myPrimaryElement).getClass();
     eventId.log(
       myProject,
       RenameUsagesCollector.scopeType.with(getStatisticsCompatibleScopeName()),

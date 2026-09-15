@@ -33,6 +33,11 @@
 
     <extensionPoint name="renameHandler" interface="com.intellij.refactoring.rename.RenameHandler" dynamic="true"/>
     <extensionPoint name="renamePsiElementProcessor" interface="com.intellij.refactoring.rename.RenamePsiElementProcessorBase" dynamic="true"/>
+    <extensionPoint name="headlessRenamePsiElementProcessor"
+                    interface="com.intellij.refactoring.rename.HeadlessRenamePsiElementProcessor" dynamic="true"/>
+    <!-- Temporary. See HeadlessRenameSupportedLanguage. Remove it when every language is converted. -->
+    <extensionPoint name="headlessRenameSupportedLanguage"
+                    beanClass="com.intellij.refactoring.rename.HeadlessRenameSupportedLanguage" dynamic="true"/>
     <extensionPoint name="renameRefactoringDialogProvider" interface="com.intellij.refactoring.rename.RenameRefactoringDialogProvider" dynamic="true"/>
     <extensionPoint name="updateAddedFileProcessor" interface="com.intellij.psi.impl.file.UpdateAddedFileProcessor" dynamic="true"/>
     <extensionPoint name="automaticRenamerFactory" interface="com.intellij.refactoring.rename.naming.AutomaticRenamerFactory" dynamic="true"/>

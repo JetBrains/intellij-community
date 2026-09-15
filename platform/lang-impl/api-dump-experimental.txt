@@ -928,6 +928,100 @@ f:com.intellij.platform.ide.documentation.ActionsKt
 c:com.intellij.refactoring.memberPushDown.PushDownProcessor
 - com.intellij.refactoring.BaseRefactoringProcessor
 - *:<init>(com.intellij.psi.PsiElement,java.util.List,com.intellij.refactoring.util.DocCommentPolicy,Z):V
+*f:com.intellij.refactoring.rename.HeadlessRenameConflict
+- <init>(java.lang.String,java.lang.String):V
+- f:component1():java.lang.String
+- f:component2():java.lang.String
+- f:copy(java.lang.String,java.lang.String):com.intellij.refactoring.rename.HeadlessRenameConflict
+- bs:copy$default(com.intellij.refactoring.rename.HeadlessRenameConflict,java.lang.String,java.lang.String,I,java.lang.Object):com.intellij.refactoring.rename.HeadlessRenameConflict
+- equals(java.lang.Object):Z
+- f:getDescription():java.lang.String
+- f:getFilePath():java.lang.String
+- hashCode():I
+*e:com.intellij.refactoring.rename.HeadlessRenameFailure
+- java.lang.Enum
+- sf:INCOMPLETE_USE_SCOPE:com.intellij.refactoring.rename.HeadlessRenameFailure
+- sf:INDEX_NOT_READY:com.intellij.refactoring.rename.HeadlessRenameFailure
+- sf:LANGUAGE_NOT_SUPPORTED:com.intellij.refactoring.rename.HeadlessRenameFailure
+- sf:NEW_NAME_REFUSED:com.intellij.refactoring.rename.HeadlessRenameFailure
+- sf:PLAN_STALE:com.intellij.refactoring.rename.HeadlessRenameFailure
+- sf:READ_ONLY_USAGES:com.intellij.refactoring.rename.HeadlessRenameFailure
+- sf:TARGET_NOT_RENAMABLE:com.intellij.refactoring.rename.HeadlessRenameFailure
+- sf:UNKNOWN:com.intellij.refactoring.rename.HeadlessRenameFailure
+- sf:UNSUPPORTED_REFERENCE_LANGUAGE:com.intellij.refactoring.rename.HeadlessRenameFailure
+- sf:WRITE_FAILED:com.intellij.refactoring.rename.HeadlessRenameFailure
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.refactoring.rename.HeadlessRenameFailure
+- s:values():com.intellij.refactoring.rename.HeadlessRenameFailure[]
+*f:com.intellij.refactoring.rename.HeadlessRenameProcessor
+- sf:INSTANCE:com.intellij.refactoring.rename.HeadlessRenameProcessor
+- sf:analyze(com.intellij.openapi.project.Project,com.intellij.psi.PsiElement,java.lang.String):com.intellij.refactoring.rename.HeadlessRenameResult
+- sf:analyze(com.intellij.openapi.project.Project,com.intellij.psi.PsiElement,java.lang.String,com.intellij.refactoring.rename.ReadOnlyUsagePolicy):com.intellij.refactoring.rename.HeadlessRenameResult
+- sf:analyze(com.intellij.openapi.project.Project,com.intellij.psi.PsiElement,java.lang.String,com.intellij.refactoring.rename.ReadOnlyUsagePolicy,Z):com.intellij.refactoring.rename.HeadlessRenameResult
+- bs:analyze$default(com.intellij.openapi.project.Project,com.intellij.psi.PsiElement,java.lang.String,com.intellij.refactoring.rename.ReadOnlyUsagePolicy,Z,I,java.lang.Object):com.intellij.refactoring.rename.HeadlessRenameResult
+- sf:canRename(com.intellij.psi.PsiElement):Z
+*:com.intellij.refactoring.rename.HeadlessRenameResult
+*f:com.intellij.refactoring.rename.HeadlessRenameResult$Applied
+- com.intellij.refactoring.rename.HeadlessRenameResult
+- <init>(I,java.util.List,java.util.List,java.util.List):V
+- f:component1():I
+- f:component2():java.util.List
+- f:component3():java.util.List
+- f:component4():java.util.List
+- f:copy(I,java.util.List,java.util.List,java.util.List):com.intellij.refactoring.rename.HeadlessRenameResult$Applied
+- bs:copy$default(com.intellij.refactoring.rename.HeadlessRenameResult$Applied,I,java.util.List,java.util.List,java.util.List,I,java.lang.Object):com.intellij.refactoring.rename.HeadlessRenameResult$Applied
+- equals(java.lang.Object):Z
+- f:getAffectedFiles():java.util.List
+- f:getAffectedUsages():I
+- f:getNotes():java.util.List
+- f:getSkippedFiles():java.util.List
+- hashCode():I
+*f:com.intellij.refactoring.rename.HeadlessRenameResult$Failed
+- com.intellij.refactoring.rename.HeadlessRenameResult
+- <init>(com.intellij.refactoring.rename.HeadlessRenameFailure,java.lang.String):V
+- f:component1():com.intellij.refactoring.rename.HeadlessRenameFailure
+- f:component2():java.lang.String
+- f:copy(com.intellij.refactoring.rename.HeadlessRenameFailure,java.lang.String):com.intellij.refactoring.rename.HeadlessRenameResult$Failed
+- bs:copy$default(com.intellij.refactoring.rename.HeadlessRenameResult$Failed,com.intellij.refactoring.rename.HeadlessRenameFailure,java.lang.String,I,java.lang.Object):com.intellij.refactoring.rename.HeadlessRenameResult$Failed
+- equals(java.lang.Object):Z
+- f:getDetail():java.lang.String
+- f:getKind():com.intellij.refactoring.rename.HeadlessRenameFailure
+- hashCode():I
+*f:com.intellij.refactoring.rename.HeadlessRenameResult$Planned
+- com.intellij.refactoring.rename.HeadlessRenameResult
+- <init>(com.intellij.refactoring.rename.RenamePlan):V
+- f:component1():com.intellij.refactoring.rename.RenamePlan
+- f:copy(com.intellij.refactoring.rename.RenamePlan):com.intellij.refactoring.rename.HeadlessRenameResult$Planned
+- bs:copy$default(com.intellij.refactoring.rename.HeadlessRenameResult$Planned,com.intellij.refactoring.rename.RenamePlan,I,java.lang.Object):com.intellij.refactoring.rename.HeadlessRenameResult$Planned
+- equals(java.lang.Object):Z
+- f:getPlan():com.intellij.refactoring.rename.RenamePlan
+- hashCode():I
+*f:com.intellij.refactoring.rename.HeadlessRenameResult$Refused
+- com.intellij.refactoring.rename.HeadlessRenameResult
+- <init>(java.util.List):V
+- f:component1():java.util.List
+- f:copy(java.util.List):com.intellij.refactoring.rename.HeadlessRenameResult$Refused
+- bs:copy$default(com.intellij.refactoring.rename.HeadlessRenameResult$Refused,java.util.List,I,java.lang.Object):com.intellij.refactoring.rename.HeadlessRenameResult$Refused
+- equals(java.lang.Object):Z
+- f:getConflicts():java.util.List
+- hashCode():I
+*e:com.intellij.refactoring.rename.ReadOnlyUsagePolicy
+- java.lang.Enum
+- sf:REFUSE:com.intellij.refactoring.rename.ReadOnlyUsagePolicy
+- sf:SKIP:com.intellij.refactoring.rename.ReadOnlyUsagePolicy
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.refactoring.rename.ReadOnlyUsagePolicy
+- s:values():com.intellij.refactoring.rename.ReadOnlyUsagePolicy[]
+*f:com.intellij.refactoring.rename.RenamePlan
+- f:apply():com.intellij.refactoring.rename.HeadlessRenameResult
+- f:getAffectedFiles():java.util.List
+- f:getAffectedUsages():I
+- f:getNotes():java.util.List
+- f:getPrimaryElement():com.intellij.psi.PsiElement
+- f:getUsages():java.util.List
+c:com.intellij.refactoring.rename.RenameProcessor
+- com.intellij.refactoring.BaseRefactoringProcessor
+- *p:showRenameErrorMessage(com.intellij.util.IncorrectOperationException,com.intellij.psi.PsiElement):V
 *a:com.intellij.refactoring.rename.api.FileOperation
 - *sf:Companion:com.intellij.refactoring.rename.api.FileOperation$Companion
 - *sf:addFile(java.nio.file.Path,java.lang.CharSequence):com.intellij.refactoring.rename.api.FileOperation

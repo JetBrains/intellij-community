@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
@@ -92,9 +92,27 @@ public final class RenameUtil {
                                                  boolean searchInStringsAndComments,
                                                  boolean searchForTextOccurrences,
                                                  Map<? extends PsiElement, String> allRenames) {
-    List<UsageInfo> result = Collections.synchronizedList(new ArrayList<>());
+    return findUsages(element, newName, searchScope, searchInStringsAndComments, searchForTextOccurrences, allRenames,
+                      RenamePsiElementProcessorBase.forPsiElement(element));
+  }
 
-    RenamePsiElementProcessorBase elementProcessor = RenamePsiElementProcessorBase.forPsiElement(element);
+  /**
+   * The usages of {@code element}, found with {@code elementProcessor}.
+   * <p>
+   * A caller which already holds the processor of the element passes it here. A headless rename holds the
+   * processor of {@link HeadlessRenamePsiElementProcessor}, and that one is registered on its own.
+   *
+   * @param elementProcessor the processor which renames {@code element}
+   */
+  @ApiStatus.Internal
+  public static UsageInfo @NotNull [] findUsages(@NotNull PsiElement element,
+                                                 String newName,
+                                                 @NotNull SearchScope searchScope,
+                                                 boolean searchInStringsAndComments,
+                                                 boolean searchForTextOccurrences,
+                                                 Map<? extends PsiElement, String> allRenames,
+                                                 @NotNull RenamePsiElementProcessorCore elementProcessor) {
+    List<UsageInfo> result = Collections.synchronizedList(new ArrayList<>());
 
     processUsages(element, elementProcessor, newName, searchScope, true, searchInStringsAndComments, searchForTextOccurrences, info -> {
                     result.add(info);
@@ -113,14 +131,14 @@ public final class RenameUtil {
                                          @NotNull SearchScope searchScope,
                                          boolean searchInStringsAndComments,
                                          boolean searchForTextOccurrences) {
-    RenamePsiElementProcessorBase elementProcessor = RenamePsiElementProcessorBase.forPsiElement(element);
+    RenamePsiElementProcessorCore elementProcessor = RenamePsiElementProcessorBase.forPsiElement(element);
     return !processUsages(element, elementProcessor, newName, searchScope, false, searchInStringsAndComments, searchForTextOccurrences, info -> false
     );
   }
 
   private static boolean processUsages(
     @NotNull PsiElement element,
-    @NotNull RenamePsiElementProcessorBase elementProcessor,
+    @NotNull RenamePsiElementProcessorCore elementProcessor,
     String newName,
     @NotNull SearchScope searchScope,
     boolean searchInCode,
@@ -211,7 +229,7 @@ public final class RenameUtil {
     }
   }
 
-  private static String getStringToReplace(@NotNull PsiElement psiElement, String newName, boolean nonJava, @NotNull RenamePsiElementProcessorBase theProcessor) {
+  private static String getStringToReplace(@NotNull PsiElement psiElement, String newName, boolean nonJava, @NotNull RenamePsiElementProcessorCore theProcessor) {
     if (psiElement instanceof PsiMetaOwner psiMetaOwner) {
       final PsiMetaData metaData = psiMetaOwner.getMetaData();
       if (metaData != null) {
@@ -262,7 +280,7 @@ public final class RenameUtil {
   public static void doRename(final PsiElement element, String newName, UsageInfo[] usages, final Project project,
                               final @Nullable RefactoringElementListener listener) throws IncorrectOperationException{
     registerUndoableRename(element, listener);
-    RenamePsiElementProcessorBase processor = RenamePsiElementProcessorBase.forPsiElement(element);
+    RenamePsiElementProcessorCore processor = RenamePsiElementProcessorBase.forPsiElement(element);
     processor.renameElement(element, newName, usages, listener);
   }
 

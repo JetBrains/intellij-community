@@ -39,6 +39,32 @@
 *:com.intellij.refactoring.changeSignature.ChangeSignatureUsageProvider
 - a:createOverrideUsageInfo(com.intellij.refactoring.changeSignature.ChangeInfo,com.intellij.psi.PsiElement,com.intellij.psi.PsiElement,Z,Z,Z,java.util.List):com.intellij.usageView.UsageInfo
 - a:createUsageInfo(com.intellij.refactoring.changeSignature.ChangeInfo,com.intellij.psi.PsiReference,com.intellij.psi.PsiElement,Z,Z):com.intellij.usageView.UsageInfo
+*:com.intellij.refactoring.rename.DelegatingHeadlessRenamePsiElementProcessor
+- com.intellij.refactoring.rename.HeadlessRenamePsiElementProcessor
+- canProcessElementHeadless(com.intellij.psi.PsiElement):Z
+- findExistingNameConflictsHeadless(com.intellij.psi.PsiElement,java.lang.String,com.intellij.util.containers.MultiMap,java.util.Map):V
+- prepareRenamingHeadless(com.intellij.psi.PsiElement,java.lang.String,java.util.Map):V
+- processorCore():com.intellij.refactoring.rename.RenamePsiElementProcessorCore
+- substituteElementToRenameHeadless(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+*:com.intellij.refactoring.rename.HeadlessRenamePsiElementProcessor
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:canProcessElementHeadless(com.intellij.psi.PsiElement):Z
+- a:findExistingNameConflictsHeadless(com.intellij.psi.PsiElement,java.lang.String,com.intellij.util.containers.MultiMap,java.util.Map):V
+- a:prepareRenamingHeadless(com.intellij.psi.PsiElement,java.lang.String,java.util.Map):V
+- a:processorCore():com.intellij.refactoring.rename.RenamePsiElementProcessorCore
+- s:processorOf(com.intellij.psi.PsiElement):com.intellij.refactoring.rename.RenamePsiElementProcessorBase
+- a:substituteElementToRenameHeadless(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+*:com.intellij.refactoring.rename.RenamePsiElementProcessorCore
+- sf:DEFAULT:com.intellij.refactoring.rename.RenamePsiElementProcessorCore
+- createUsageInfo(com.intellij.psi.PsiElement,com.intellij.psi.PsiReference,com.intellij.psi.PsiElement):com.intellij.usageView.UsageInfo
+- findCollisions(com.intellij.psi.PsiElement,java.lang.String,java.util.Map,java.util.List):V
+- findReferences(com.intellij.psi.PsiElement,com.intellij.psi.search.SearchScope,Z):java.util.Collection
+- getElementToSearchInStringsAndComments(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- getPostRenameCallback(com.intellij.psi.PsiElement,java.lang.String,com.intellij.refactoring.listeners.RefactoringElementListener):java.lang.Runnable
+- getPostRenameCallback(com.intellij.psi.PsiElement,java.lang.String,java.util.Collection,java.util.Map,com.intellij.refactoring.listeners.RefactoringElementListener):java.lang.Runnable
+- getQualifiedNameAfterRename(com.intellij.psi.PsiElement,java.lang.String,Z):java.lang.String
+- getTextOccurrenceSearchStrings(com.intellij.psi.PsiElement,java.lang.String):com.intellij.openapi.util.Pair
+- renameElement(com.intellij.psi.PsiElement,java.lang.String,com.intellij.usageView.UsageInfo[],com.intellij.refactoring.listeners.RefactoringElementListener):V
 *:com.intellij.refactoring.rename.Renamer
 - a:getPresentableText():java.lang.String
 - a:performRename():V

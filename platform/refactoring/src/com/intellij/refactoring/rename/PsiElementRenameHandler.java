@@ -30,6 +30,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.UiInterceptors;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -152,6 +153,23 @@ public class PsiElementRenameHandler implements RenameHandler {
   public static @Nullable @NlsContexts.DialogMessage String getRenameErrorMessage(@NotNull Project project, Editor editor, PsiElement element) {
     boolean hasRenameProcessor =
       !(RenamePsiElementProcessorBase.forPsiElement(element) instanceof RenamePsiElementProcessorBase.DefaultRenamePsiElementProcessor);
+    return getRenameErrorMessage(project, editor, element, hasRenameProcessor);
+  }
+
+  /**
+   * Computes the error for the element if it can't be renamed due to general reasons like a file not being writable.
+   * <p>
+   * A caller which knows its own processor of {@code element} states it in {@code hasRenameProcessor}. A headless
+   * rename knows it from {@link HeadlessRenamePsiElementProcessor}, which is registered on its own, so
+   * {@code renamePsiElementProcessor} can hold nothing for the element.
+   *
+   * @param hasRenameProcessor whether a processor other than the default one renames {@code element}
+   */
+  @ApiStatus.Internal
+  public static @Nullable @NlsContexts.DialogMessage String getRenameErrorMessage(@NotNull Project project,
+                                                                                  Editor editor,
+                                                                                  PsiElement element,
+                                                                                  boolean hasRenameProcessor) {
     boolean hasWritableMetaData = element instanceof PsiMetaOwner o && o.getMetaData() instanceof PsiWritableMetaData;
 
     if (!hasRenameProcessor && !hasWritableMetaData && !(element instanceof PsiNamedElement)) {

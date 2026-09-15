@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.microservices.url.parameters
 
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler
@@ -24,13 +24,20 @@ import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.UseScopeEnlarger
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.walkUp
+import com.intellij.refactoring.rename.DelegatingHeadlessRenamePsiElementProcessor
 import com.intellij.refactoring.rename.RenamePsiElementProcessor
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.Processor
 import com.intellij.util.SmartList
 import com.intellij.util.containers.addIfNotNull
 
-internal class SemElementRenamePsiElementProcessor : RenamePsiElementProcessor() {
+/**
+ * Renames a query parameter or a path variable, and every companion of it.
+ *
+ * It asks the user nothing, so it states the headless rename. Without that statement a headless
+ * rename of a companion element keeps the old name, and the engine reports nothing.
+ */
+internal class SemElementRenamePsiElementProcessor : RenamePsiElementProcessor(), DelegatingHeadlessRenamePsiElementProcessor {
 
   override fun canProcessElement(element: PsiElement): Boolean = supportedElement(element)
 
