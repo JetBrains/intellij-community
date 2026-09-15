@@ -5,3 +5,7 @@ This directory contains product-embedded library modules that make third-party l
 ## Creating a New Library Module
 
 See [convert-lib-to-product-module skill](../../.agents/skills/convert-lib-to-product-module/SKILL.md)
+
+## Jackson
+
+The repository moves from Jackson 2 to Jackson 3. See [jackson3/README.md](jackson3/README.md) for the steps and the renames.
