@@ -207,7 +207,7 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
                  description="Increase unresponsive interval after each recorded dump"/>
     <registryKey key="performance.watcher.pooled.maximum.dumps" defaultValue="10"
                  description="Stop recording thread dumps after specified amount. Use '-1' to keep writing the thread dumps."/>
-    <registryKey key="performance.watcher.pooled.compensation.enabled" defaultValue="false"
+    <registryKey key="performance.watcher.pooled.compensation.enabled" defaultValue="true"
                  description="Grant extra parallelism to a pooled dispatcher when it becomes unresponsive, and revoke it once responsive again, independent of thread dump reporting."/>
     <registryKey key="performance.watcher.pooled.compensation.interval.ms" defaultValue="2000"
                  description="Grant additional pool parallelism if no pooled threads are available for longer than the specified time interval in ms"/>
