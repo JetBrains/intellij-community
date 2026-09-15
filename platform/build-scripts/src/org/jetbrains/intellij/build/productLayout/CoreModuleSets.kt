@@ -66,8 +66,7 @@ object CoreModuleSets {
    * `intellij.libraries.opentelemetry.exporter.sender.jdk` are here because the OTLP exporter needs them at
    * runtime, not because any platform module compiles against them.
    *
-   * `intellij.platform.diagnostic.telemetry.exporters` is not listed: the platform layout merges it into
-   * `intellij.platform.diagnostic.telemetry.impl.jar`, so it follows `intellij.platform.diagnostic.telemetry.impl` automatically.
+   * `intellij.platform.diagnostic.telemetry.exporters` holds the exporters `TelemetryManagerImpl` loads.
    *
    * @see telemetry for the API and the OpenTelemetry API/SDK wrappers
    */
@@ -75,6 +74,7 @@ object CoreModuleSets {
     moduleSet(librariesOpenTelemetryExporter())
 
     embeddedModule("intellij.platform.diagnostic.telemetry.impl")
+    embeddedModule("intellij.platform.diagnostic.telemetry.exporters")
   }
 
   // endregion
@@ -111,12 +111,27 @@ object CoreModuleSets {
     embeddedModule("intellij.platform.util.ex")
     embeddedModule("intellij.platform.util.ui")
     embeddedModule("intellij.platform.util.coroutines")
+    embeddedModule("intellij.platform.util.annotations")
+    embeddedModule("intellij.platform.util.progress")
+    embeddedModule("intellij.platform.util.text.matching")
+    embeddedModule("intellij.platform.util.io.storages")
+    embeddedModule("intellij.platform.concurrency")
+    embeddedModule("intellij.platform.objectSerializer")
+    embeddedModule("intellij.platform.settings")
+    embeddedModule("intellij.platform.pluginSystem.parser.impl")
+    embeddedModule("intellij.platform.jbr")
+    embeddedModule("intellij.platform.buildData")
+    embeddedModule("intellij.platform.eel.provider")
 
     embeddedModule("intellij.platform.locking.impl")
 
     embeddedModule("intellij.platform.core")
     embeddedModule("intellij.platform.core.ui")
     embeddedModule("intellij.platform.core.impl")
+    embeddedModule("intellij.platform.icons.api")
+    embeddedModule("intellij.platform.icons.api.rendering")
+    embeddedModule("intellij.platform.icons")
+    embeddedModule("intellij.platform.icons.impl")
     embeddedModule("intellij.platform.indexing")
     // stays here: intellij.codeServer.core needs it directly, and so does the
     // intellij.platform.editor.ex -> intellij.platform.indexing.impl runtime closure
@@ -131,10 +146,19 @@ object CoreModuleSets {
     embeddedModule("intellij.platform.instanceContainer")
     embeddedModule("intellij.platform.serviceContainer")
     embeddedModule("intellij.platform.workspace.jps")
+    embeddedModule("intellij.platform.workspace.storage")
+    embeddedModule("intellij.platform.backend.workspace")
+    embeddedModule("intellij.platform.backend.observation")
 
     // Analysis modules needed by core platform modules
     embeddedModule("intellij.platform.analysis")
     embeddedModule("intellij.platform.analysis.impl")
+    embeddedModule("intellij.platform.syntax")
+    embeddedModule("intellij.platform.syntax.extensions")
+    embeddedModule("intellij.platform.syntax.i18n")
+    embeddedModule("intellij.platform.syntax.tree")
+    embeddedModule("intellij.platform.syntax.util")
+    embeddedModule("intellij.platform.pratt")
 
     moduleSet(rpcMinimal())
 
@@ -168,6 +192,14 @@ object CoreModuleSets {
 
     // Add basic IDE functionality on top of platform
     embeddedModule("intellij.platform.ide")
+    embeddedModule("intellij.platform.ide.ui")
+    embeddedModule("intellij.platform.ide.observable")
+    embeddedModule("intellij.platform.ide.recentProjects")
+    embeddedModule("intellij.platform.util.http")
+    embeddedModule("intellij.platform.ide.util.netty")
+    embeddedModule("intellij.platform.ide.util.io.impl")
+    embeddedModule("intellij.platform.resources")
+    embeddedModule("intellij.platform.resources.en")
 
     // consumed by intellij.platform.ide - not by anything in corePlatform()
     embeddedModule("intellij.platform.welcomeScreen")
@@ -176,6 +208,7 @@ object CoreModuleSets {
     module("intellij.platform.remoteServers")
 
     embeddedModule("intellij.platform.usageView")
+    embeddedModule("intellij.platform.ide.rpc")
     embeddedModule("intellij.platform.credentialStore")
   }
 
@@ -244,8 +277,13 @@ object CoreModuleSets {
     embeddedModule("intellij.platform.project")
     embeddedModule("intellij.platform.ide.progress")
     embeddedModule("intellij.platform.codeStyle.impl")
+    embeddedModule("intellij.platform.foldings")
+    embeddedModule("intellij.platform.indexing.impl")
     embeddedModule("intellij.platform.refactoring")
     embeddedModule("intellij.platform.ide.impl")
+    embeddedModule("intellij.platform.ide.codeinsight.inline")
+    embeddedModule("intellij.platform.pasta")
+    embeddedModule("intellij.platform.diagnostic.startUpPerformanceReporter")
     requiredModule("intellij.platform.ide.util.io.native")
     requiredModule("intellij.platform.ide.osCertificates")
     // keeps marketplace-zip-signer out of the core classloader - loaded only when a plugin signature is verified
@@ -276,6 +314,13 @@ object CoreModuleSets {
     module("intellij.platform.externalSystem")
     embeddedModule("intellij.platform.eel.impl")
     embeddedModule("intellij.platform.eel.nioFs.impl")
+    embeddedModule("intellij.platform.eel.impl.base")
+    embeddedModule("intellij.platform.ijent")
+    embeddedModule("intellij.platform.ijent.community.buildConstants")
+    embeddedModule("intellij.platform.ijent.community.impl")
+    embeddedModule("intellij.platform.wsl.impl")
+    embeddedModule("intellij.platform.ide.bootstrap.eel")
+    embeddedModule("intellij.platform.ide.bootstrap.kernel")
     embeddedModule("intellij.platform.diff")
     embeddedModule("intellij.platform.diff.impl")
     embeddedModule("intellij.platform.util.diff")

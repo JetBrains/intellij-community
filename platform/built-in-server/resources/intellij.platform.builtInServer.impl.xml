@@ -16,6 +16,7 @@
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.builtInServer"/>
     <module name="intellij.platform.codeStyle"/>
+    <module name="intellij.platform.concurrency"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.core.ui"/>
@@ -27,9 +28,12 @@
     <module name="intellij.platform.ide.core.plugins"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.ide.progress"/>
+    <module name="intellij.platform.ide.util.io.impl"/>
+    <module name="intellij.platform.ide.util.netty"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.projectModel.impl"/>
     <module name="intellij.platform.util.ex"/>
+    <module name="intellij.platform.util.progress"/>
     <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->

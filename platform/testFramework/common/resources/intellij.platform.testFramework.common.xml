@@ -5,25 +5,30 @@
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.analysis.impl"/>
+    <module name="intellij.platform.backend.workspace"/>
     <module name="intellij.platform.buildScripts.downloader"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.diagnostic.telemetry"/>
     <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.ide.bootstrap"/>
+    <module name="intellij.platform.ide.bootstrap.kernel"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.core.impl"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.ide.osCertificates"/>
     <module name="intellij.platform.ide.progress"/>
     <module name="intellij.platform.ide.util.io.native"/>
+    <module name="intellij.platform.ide.util.netty"/>
     <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.indexing.impl"/>
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.projectModel.impl"/>
     <module name="intellij.platform.serviceContainer"/>
     <module name="intellij.platform.testFramework.core"/>
     <module name="intellij.platform.util.ui"/>
+    <module name="intellij.platform.workspace.storage"/>
   </dependencies>
   <!-- endregion -->
 </idea-plugin>

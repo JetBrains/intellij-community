@@ -4,6 +4,8 @@
     <plugin id="org.toml.lang"/>
     <module name="intellij.libraries.tuweni.toml"/>
     <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.backend.observation"/>
+    <module name="intellij.platform.backend.workspace"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.editor.ui"/>
@@ -20,6 +22,7 @@
     <module name="intellij.platform.statistics"/>
     <module name="intellij.platform.util.ui"/>
     <module name="intellij.platform.workspace.jps"/>
+    <module name="intellij.platform.workspace.storage"/>
     <module name="intellij.python.community"/>
     <module name="intellij.python.community.common"/>
     <module name="intellij.python.requirements.backend"/>

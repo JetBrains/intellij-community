@@ -8,12 +8,13 @@
     <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.find"/>
     <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.rpc"/>
     <module name="intellij.platform.indexing"/>
     <module name="intellij.platform.kernel.backend"/>
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.project"/>
-    <module name="intellij.platform.rpc.backend"/>
     <module name="intellij.platform.rpc"/>
+    <module name="intellij.platform.rpc.backend"/>
     <module name="intellij.platform.usageView"/>
     <module name="intellij.platform.util.ui"/>
   </dependencies>

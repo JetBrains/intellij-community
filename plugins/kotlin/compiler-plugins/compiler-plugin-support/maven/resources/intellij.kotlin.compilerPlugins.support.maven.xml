@@ -8,6 +8,7 @@
     <module name="intellij.kotlin.maven"/>
     <module name="intellij.libraries.kotlinc.kotlin.jps.common"/>
     <module name="intellij.platform.core"/>
+    <module name="intellij.platform.eel.provider"/>
   </dependencies>
   <!-- endregion -->
 </idea-plugin>

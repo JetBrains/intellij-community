@@ -3,6 +3,7 @@
   <dependencies>
     <module name="fleet.rhizomedb"/>
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.platform.concurrency"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.editor.ui"/>
@@ -13,6 +14,7 @@
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.core.impl"/>
     <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.rpc"/>
     <module name="intellij.platform.kernel"/>
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.lang.impl"/>

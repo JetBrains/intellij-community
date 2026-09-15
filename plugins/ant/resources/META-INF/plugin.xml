@@ -22,6 +22,7 @@ To use the <b>Ant</b> tool window, select <b>View > Tool Windows > Ant</b>.
     <module name="intellij.libraries.stream"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.codeStyle"/>
+    <module name="intellij.platform.concurrency"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.core.ui"/>
@@ -34,6 +35,7 @@ To use the <b>Ant</b> tool window, select <b>View > Tool Windows > Ant</b>.
     <module name="intellij.platform.ide.core.impl"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.indexing.impl"/>
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.lang.core"/>
     <module name="intellij.platform.lang.impl"/>

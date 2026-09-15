@@ -4,6 +4,7 @@
     <plugin id="org.jetbrains.kotlin"/>
     <plugin id="org.editorconfig.editorconfigjetbrains"/>
     <module name="intellij.java.backend"/>
+    <module name="intellij.kotlin.formatter.minimal"/>
     <plugin id="com.intellij.copyright"/>
     <module name="intellij.devkit.core"/>
     <module name="intellij.java.aetherDependencyResolver"/>
@@ -15,7 +16,6 @@
     <module name="intellij.kotlin.base.plugin"/>
     <module name="intellij.kotlin.base.projectStructure"/>
     <module name="intellij.kotlin.base.psi"/>
-    <module name="intellij.kotlin.formatter.minimal"/>
     <module name="intellij.kotlin.references"/>
     <module name="intellij.libraries.kotlin.reflect"/>
     <module name="intellij.libraries.kotlinc.analysis.api"/>
@@ -25,8 +25,10 @@
     <module name="intellij.libraries.kotlinx.serialization.json"/>
     <module name="intellij.libraries.workspace.model.codegen"/>
     <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.backend.workspace"/>
     <module name="intellij.platform.codeStyle"/>
     <module name="intellij.platform.codeStyle.impl"/>
+    <module name="intellij.platform.concurrency"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.core.ui"/>
@@ -41,7 +43,9 @@
     <module name="intellij.platform.problemView.shared"/>
     <module name="intellij.platform.problemView.ui"/>
     <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.progress"/>
     <module name="intellij.platform.workspace.jps"/>
+    <module name="intellij.platform.workspace.storage"/>
   </dependencies>
   <!-- endregion -->
 

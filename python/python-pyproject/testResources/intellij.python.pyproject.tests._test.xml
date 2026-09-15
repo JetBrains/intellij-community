@@ -8,6 +8,8 @@
     <module name="intellij.libraries.junit5"/>
     <module name="intellij.libraries.junit5.params"/>
     <module name="intellij.libraries.junit5.pioneer"/>
+    <module name="intellij.platform.backend.observation"/>
+    <module name="intellij.platform.backend.workspace"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.editor.ui"/>
@@ -27,6 +29,7 @@
     <module name="intellij.platform.testFramework.junit5.projectStructure"/>
     <module name="intellij.platform.util.ex"/>
     <module name="intellij.platform.workspace.jps"/>
+    <module name="intellij.platform.workspace.storage"/>
     <module name="intellij.python.requirements.common"/>
     <module name="intellij.python.test.env.common"/>
     <module name="intellij.python.test.env.junit5"/>

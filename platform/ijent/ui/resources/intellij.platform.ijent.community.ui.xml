@@ -10,17 +10,23 @@
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.eel.nioFs.impl"/>
+    <module name="intellij.platform.eel.provider"/>
     <module name="intellij.platform.execution"/>
     <module name="intellij.platform.execution.impl"/>
     <module name="intellij.platform.ide"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.core.impl"/>
     <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.observable"/>
     <module name="intellij.platform.ide.progress"/>
+    <module name="intellij.platform.ijent"/>
+    <module name="intellij.platform.ijent.community.impl"/>
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.progress"/>
     <module name="intellij.platform.util.ui"/>
+    <module name="intellij.platform.workspace.storage"/>
   </dependencies>
   <!-- endregion -->
 

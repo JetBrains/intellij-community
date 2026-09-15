@@ -1,5 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.platform.eel.impl.base` start
+content_module_jar(module = ":eel-impl-base")
+### auto-generated section `dev intellij.platform.eel.impl.base` end
 
 ### auto-generated section `build intellij.platform.eel.impl.base` start
 create_kotlinc_options(
@@ -20,6 +25,10 @@ jvm_library(
     ),
     kotlinc_opts = ":custom_eel-impl-base",
     module_name = "intellij.platform.eel.impl.base",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
@@ -56,6 +65,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.eel.impl.base.iml",
+        "resources/intellij.platform.eel.impl.base.xml",
     ],
     visibility = ["//visibility:public"],
 )

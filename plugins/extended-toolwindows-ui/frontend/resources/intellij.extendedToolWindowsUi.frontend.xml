@@ -1,15 +1,16 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.frontend"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.ui"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.util.ui"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
     <toolWindowStripeExtension implementation="com.intellij.extendedToolWindowsUi.frontend.ToolWindowStripeExtensionImpl"/>

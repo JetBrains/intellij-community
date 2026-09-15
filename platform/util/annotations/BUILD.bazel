@@ -1,4 +1,9 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.platform.util.annotations` start
+content_module_jar(module = ":annotations")
+### auto-generated section `dev intellij.platform.util.annotations` end
 
 ### auto-generated section `build intellij.platform.util.annotations` start
 jvm_library(
@@ -13,6 +18,10 @@ jvm_library(
     ),
     kotlinc_opts = "@community//:k8",
     module_name = "intellij.platform.util.annotations",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
     visibility = ["//visibility:public"],
     deps = ["//libraries/jetbrains/annotations"],
 )
@@ -39,6 +48,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.util.annotations.iml",
+        "resources/intellij.platform.util.annotations.xml",
     ],
     visibility = ["//visibility:public"],
 )

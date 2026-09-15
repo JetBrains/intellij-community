@@ -6,6 +6,7 @@
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.analysis.impl"/>
     <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.concurrency"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.core.ui"/>
@@ -15,6 +16,7 @@
     <module name="intellij.platform.ide"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.rpc"/>
     <module name="intellij.platform.kernel"/>
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.lang.impl"/>

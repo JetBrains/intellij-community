@@ -4,6 +4,7 @@
     <module name="intellij.debugger.streams.shared"/>
     <module name="intellij.libraries.stream"/>
     <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.concurrency"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.debugger"/>

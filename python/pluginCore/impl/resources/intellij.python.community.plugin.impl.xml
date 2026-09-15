@@ -6,6 +6,7 @@
     <plugin id="com.intellij.modules.python-in-non-pycharm-ide-capable"/>
     <module name="intellij.libraries.guava"/>
     <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.concurrency"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.editor.ui"/>

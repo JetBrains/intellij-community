@@ -43,11 +43,13 @@
     <module name="intellij.libraries.kotlinc.symbol.light.classes"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.analysis.impl"/>
+    <module name="intellij.platform.backend.workspace"/>
     <module name="intellij.platform.codeStyle"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.eel.provider"/>
     <module name="intellij.platform.execution.impl"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.lang"/>
@@ -56,6 +58,7 @@
     <module name="intellij.platform.refactoring"/>
     <module name="intellij.platform.usageView"/>
     <module name="intellij.platform.workspace.jps"/>
+    <module name="intellij.platform.workspace.storage"/>
     <module name="kotlin.fir.frontend-independent"/>
   </dependencies>
   <!-- endregion -->

@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "kt_javac_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 # The `--add-opens` inventory a distribution's vmoptions are generated from, read off disk by
 # `getCommandLineArgumentsForOpenPackages` - so a dev assembly with no checkout has to declare it.
@@ -16,6 +17,13 @@ jps_test(
     runtime_deps = [":ide-impl-tests_test_lib"],
 )
 ### skip generation section `test intellij.platform.ide.impl.tests`
+
+### auto-generated section `dev intellij.platform.ide.impl` start
+content_module_jar(
+    libraries = ["@lib//:diogen-analysis"],
+    module = ":ide-impl",
+)
+### auto-generated section `dev intellij.platform.ide.impl` end
 
 ### auto-generated section `build intellij.platform.ide.impl` start
 kt_javac_options(

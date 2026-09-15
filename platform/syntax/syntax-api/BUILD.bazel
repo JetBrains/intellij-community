@@ -1,6 +1,7 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 jps_test(
     name = "tests_test",
@@ -10,6 +11,10 @@ jps_test(
 )
 
 ### skip generation section `test intellij.platform.syntax.tests`
+
+### auto-generated section `dev intellij.platform.syntax` start
+content_module_jar(module = ":syntax")
+### auto-generated section `dev intellij.platform.syntax` end
 
 ### auto-generated section `build intellij.platform.syntax` start
 create_kotlinc_options(
@@ -39,6 +44,10 @@ jvm_library(
     ),
     kotlinc_opts = ":custom_syntax",
     module_name = "intellij.platform.syntax",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
@@ -78,6 +87,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.syntax.iml",
+        "resources/intellij.platform.syntax.xml",
     ],
     visibility = ["//visibility:public"],
 )

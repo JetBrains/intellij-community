@@ -82,6 +82,7 @@ exports_files(
         "src/idea/FindViewColorsScheme.xml",
         "src/idea/PlatformApplicationInfo.xml",
         "src/idea/PlatformLangXmlApplicationInfo.xml",
+        "src/intellij.platform.resources.xml",
         "src/keymaps/$default.xml",
         "src/keymaps/Default for GNOME.xml",
         "src/keymaps/Default for KDE.xml",

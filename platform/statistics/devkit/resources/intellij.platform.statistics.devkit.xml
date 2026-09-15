@@ -1,6 +1,6 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.json"/>
     <module name="intellij.libraries.guava"/>
     <module name="intellij.libraries.jackson"/>
@@ -11,6 +11,7 @@
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.codeStyle"/>
+    <module name="intellij.platform.concurrency"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.core.ui"/>
@@ -27,9 +28,10 @@
     <module name="intellij.platform.statistics"/>
     <module name="intellij.platform.statistics.config"/>
     <module name="intellij.platform.statistics.uploader"/>
+    <module name="intellij.platform.util.progress"/>
     <module name="intellij.platform.util.ui"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
 
   <resource-bundle>messages.ActionsBundle</resource-bundle>
   <actions>

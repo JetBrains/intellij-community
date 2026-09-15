@@ -16,8 +16,11 @@
     <module name="intellij.libraries.junit5.params"/>
     <module name="intellij.libraries.kotlinx.collections.immutable"/>
     <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.backend.observation"/>
+    <module name="intellij.platform.backend.workspace"/>
     <module name="intellij.platform.codeStyle"/>
     <module name="intellij.platform.codeStyle.impl"/>
+    <module name="intellij.platform.concurrency"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.core.ui"/>
@@ -41,6 +44,7 @@
     <module name="intellij.platform.refactoring"/>
     <module name="intellij.platform.structureView"/>
     <module name="intellij.platform.util.ui"/>
+    <module name="intellij.platform.workspace.storage"/>
     <module name="intellij.xml.parser"/>
     <module name="intellij.xml.psi"/>
   </dependencies>

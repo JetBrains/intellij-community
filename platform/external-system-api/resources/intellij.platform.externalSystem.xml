@@ -3,16 +3,22 @@
   <dependencies>
     <module name="intellij.libraries.fastutil"/>
     <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.backend.observation"/>
+    <module name="intellij.platform.backend.workspace"/>
+    <module name="intellij.platform.concurrency"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.execution"/>
     <module name="intellij.platform.ide"/>
     <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.observable"/>
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.objectSerializer"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.util.ui"/>
+    <module name="intellij.platform.workspace.storage"/>
   </dependencies>
   <!-- endregion -->
 </idea-plugin>

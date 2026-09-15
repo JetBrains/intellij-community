@@ -3,6 +3,7 @@
   <dependencies>
     <plugin id="com.jetbrains.performancePlugin"/>
     <module name="intellij.libraries.opentelemetry"/>
+    <module name="intellij.platform.concurrency"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.diagnostic.telemetry"/>

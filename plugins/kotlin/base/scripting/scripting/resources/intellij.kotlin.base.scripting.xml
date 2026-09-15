@@ -33,10 +33,13 @@
     <module name="intellij.libraries.kotlinc.kotlin.scripting.jvm"/>
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.backend.observation"/>
+    <module name="intellij.platform.backend.workspace"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.eel.provider"/>
     <module name="intellij.platform.execution"/>
     <module name="intellij.platform.execution.impl"/>
     <module name="intellij.platform.externalSystem"/>
@@ -45,6 +48,7 @@
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.core.impl"/>
     <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.observable"/>
     <module name="intellij.platform.ide.progress"/>
     <module name="intellij.platform.indexing"/>
     <module name="intellij.platform.lang"/>
@@ -54,8 +58,10 @@
     <module name="intellij.platform.projectModel.impl"/>
     <module name="intellij.platform.refactoring"/>
     <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.util.progress"/>
     <module name="intellij.platform.util.ui"/>
     <module name="intellij.platform.workspace.jps"/>
+    <module name="intellij.platform.workspace.storage"/>
     <module name="kotlin.scripting"/>
   </dependencies>
   <!-- endregion -->

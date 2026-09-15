@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 filegroup(
     name = "testSnapshots",
@@ -17,6 +18,10 @@ jps_test(
 
 ### skip generation section `test intellij.platform.objectSerializer.tests`
 
+### auto-generated section `dev intellij.platform.objectSerializer` start
+content_module_jar(module = ":object-serializer")
+### auto-generated section `dev intellij.platform.objectSerializer` end
+
 ### auto-generated section `build intellij.platform.objectSerializer` start
 jvm_library(
     name = "object-serializer",
@@ -29,6 +34,10 @@ jvm_library(
         allow_empty = True,
     ),
     module_name = "intellij.platform.objectSerializer",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
@@ -88,6 +97,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.objectSerializer.iml",
+        "resources/intellij.platform.objectSerializer.xml",
     ],
     visibility = ["//visibility:public"],
 )

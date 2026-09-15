@@ -3,7 +3,9 @@
   <dependencies>
     <plugin id="org.jetbrains.plugins.terminal"/>
     <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.backend.workspace"/>
     <module name="intellij.platform.core"/>
+    <module name="intellij.platform.eel.provider"/>
     <module name="intellij.platform.execution"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.impl"/>
@@ -12,6 +14,7 @@
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.rpc.backend"/>
     <module name="intellij.platform.workspace.jps"/>
+    <module name="intellij.platform.workspace.storage"/>
     <module name="intellij.python.community.impl"/>
     <module name="intellij.python.sdk.backend"/>
     <module name="intellij.python.terminal.shared"/>

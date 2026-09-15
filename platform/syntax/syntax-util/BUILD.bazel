@@ -1,6 +1,7 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 jps_test(
     name = "util-tests_test",
@@ -9,6 +10,10 @@ jps_test(
     runtime_deps = [":util-tests_test_lib"],
 )
 ### skip generation section `test intellij.platform.syntax.util.tests`
+
+### auto-generated section `dev intellij.platform.syntax.util` start
+content_module_jar(module = ":util")
+### auto-generated section `dev intellij.platform.syntax.util` end
 
 ### auto-generated section `build intellij.platform.syntax.util` start
 create_kotlinc_options(
@@ -76,6 +81,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.syntax.util.iml",
+        "resources/intellij.platform.syntax.util.xml",
     ],
     visibility = ["//visibility:public"],
 )

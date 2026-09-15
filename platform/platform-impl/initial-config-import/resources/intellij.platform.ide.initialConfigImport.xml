@@ -3,6 +3,7 @@
   <dependencies>
     <module name="intellij.libraries.fastutil"/>
     <module name="intellij.libraries.jackson3"/>
+    <module name="intellij.platform.concurrency"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.core.ui"/>
@@ -10,6 +11,7 @@
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.core.plugins"/>
     <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.util.io.impl"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.serviceContainer"/>
     <module name="intellij.platform.statistics"/>

@@ -7,10 +7,12 @@
     <module name="intellij.libraries.gson"/>
     <module name="intellij.libraries.netty.buffer"/>
     <module name="intellij.libraries.netty.codec.http"/>
+    <module name="intellij.platform.concurrency"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.ide"/>
     <module name="intellij.platform.ide.core.impl"/>
     <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.util.netty"/>
     <module name="intellij.platform.scriptDebugger.protocolReaderRuntime"/>
     <module name="intellij.platform.util.ex"/>
   </dependencies>

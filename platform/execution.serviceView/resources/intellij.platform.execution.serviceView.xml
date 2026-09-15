@@ -7,6 +7,7 @@
     <module name="intellij.libraries.kotlinx.serialization.core"/>
     <module name="intellij.libraries.kotlinx.serialization.json"/>
     <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.concurrency"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.core.ui"/>
@@ -16,10 +17,12 @@
     <module name="intellij.platform.ide.concurrency"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.rpc"/>
     <module name="intellij.platform.kernel"/>
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.navbar.frontend"/>
+    <module name="intellij.platform.objectSerializer"/>
     <module name="intellij.platform.project"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.rpc"/>

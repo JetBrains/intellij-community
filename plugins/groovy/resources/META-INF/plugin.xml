@@ -47,8 +47,10 @@
     <module name="intellij.libraries.kotlinx.collections.immutable"/>
     <module name="intellij.libraries.protobuf"/>
     <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.backend.workspace"/>
     <module name="intellij.platform.codeStyle"/>
     <module name="intellij.platform.codeStyle.impl"/>
+    <module name="intellij.platform.concurrency"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.core.ui"/>
@@ -60,6 +62,7 @@
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.core.impl"/>
     <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.observable"/>
     <module name="intellij.platform.indexing"/>
     <module name="intellij.platform.jps.build"/>
     <module name="intellij.platform.jps.build.javac.rt"/>
@@ -76,6 +79,7 @@
     <module name="intellij.platform.util.ex"/>
     <module name="intellij.platform.util.ui"/>
     <module name="intellij.platform.workspace.jps"/>
+    <module name="intellij.platform.workspace.storage"/>
     <module name="intellij.properties.backend"/>
     <module name="intellij.properties.psi"/>
     <module name="intellij.regexp"/>

@@ -4,6 +4,7 @@
     <module name="intellij.libraries.jetbrains.annotations"/>
     <module name="intellij.platform.backend"/>
     <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.rpc"/>
     <module name="intellij.platform.ide.updateChecker"/>
     <module name="intellij.platform.kernel.backend"/>
     <module name="intellij.platform.rpc.backend"/>

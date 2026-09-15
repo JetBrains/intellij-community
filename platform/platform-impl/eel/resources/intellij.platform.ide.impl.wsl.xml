@@ -8,9 +8,12 @@
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.diagnostic.telemetry.impl"/>
     <module name="intellij.platform.eel.nioFs.impl"/>
+    <module name="intellij.platform.eel.provider"/>
     <module name="intellij.platform.execution"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ijent"/>
+    <module name="intellij.platform.ijent.community.impl"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.util.coroutines"/>
     <module name="intellij.platform.util.ex"/>

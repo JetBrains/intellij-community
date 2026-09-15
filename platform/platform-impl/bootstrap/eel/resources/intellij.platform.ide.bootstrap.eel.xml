@@ -1,0 +1,13 @@
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.eel.provider"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ijent.community.buildConstants"/>
+    <module name="intellij.platform.ijent.community.impl"/>
+    <module name="intellij.platform.util.annotations"/>
+  </dependencies>
+  <!-- endregion -->
+</idea-plugin>

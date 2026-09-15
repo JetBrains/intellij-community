@@ -12,10 +12,7 @@ jps_test(
 ### skip generation section `test intellij.platform.execution.tests`
 
 ### auto-generated section `dev intellij.platform.execution.impl` start
-content_module_jar(
-    module = ":execution-impl",
-    modules_after = ["//platform/wsl-impl"],
-)
+content_module_jar(module = ":execution-impl")
 ### auto-generated section `dev intellij.platform.execution.impl` end
 
 ### auto-generated section `build intellij.platform.execution.impl` start

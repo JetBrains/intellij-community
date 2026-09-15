@@ -2,14 +2,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `dev intellij.platform.core.impl` start
-content_module_jar(
-    module = ":core-impl",
-    modules_after = [
-        # do not sort,
-        "//platform/pluginSystem/parser/impl",
-        "//platform/syntax/syntax-api:syntax",
-    ],
-)
+content_module_jar(module = ":core-impl")
 ### auto-generated section `dev intellij.platform.core.impl` end
 
 ### auto-generated section `build intellij.platform.core.impl` start

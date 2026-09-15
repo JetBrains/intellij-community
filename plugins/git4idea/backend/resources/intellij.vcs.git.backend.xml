@@ -23,9 +23,11 @@
     <module name="intellij.libraries.xz"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.backend.observation"/>
     <module name="intellij.platform.builtInServer"/>
     <module name="intellij.platform.codeStyle"/>
     <module name="intellij.platform.collaborationTools"/>
+    <module name="intellij.platform.concurrency"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.core.ui"/>
@@ -35,6 +37,7 @@
     <module name="intellij.platform.diff.impl"/>
     <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.eel.impl"/>
+    <module name="intellij.platform.eel.provider"/>
     <module name="intellij.platform.execution"/>
     <module name="intellij.platform.execution.impl"/>
     <module name="intellij.platform.externalProcessAuthHelper"/>
@@ -43,7 +46,12 @@
     <module name="intellij.platform.ide.core.impl"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.ide.impl.wsl"/>
+    <module name="intellij.platform.ide.observable"/>
     <module name="intellij.platform.ide.progress"/>
+    <module name="intellij.platform.ide.recentProjects"/>
+    <module name="intellij.platform.ide.rpc"/>
+    <module name="intellij.platform.ide.ui"/>
+    <module name="intellij.platform.ide.util.netty"/>
     <module name="intellij.platform.kernel.backend"/>
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.lang.impl"/>
@@ -59,6 +67,8 @@
     <module name="intellij.platform.util.coroutines"/>
     <module name="intellij.platform.util.diff"/>
     <module name="intellij.platform.util.ex"/>
+    <module name="intellij.platform.util.progress"/>
+    <module name="intellij.platform.util.text.matching"/>
     <module name="intellij.platform.util.ui"/>
     <module name="intellij.platform.vcs"/>
     <module name="intellij.platform.vcs.dvcs"/>

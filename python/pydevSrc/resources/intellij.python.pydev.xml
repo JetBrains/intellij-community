@@ -3,6 +3,7 @@
   <dependencies>
     <module name="intellij.libraries.guava"/>
     <module name="intellij.libraries.xstream"/>
+    <module name="intellij.platform.concurrency"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.core.ui"/>

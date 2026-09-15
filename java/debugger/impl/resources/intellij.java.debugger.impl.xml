@@ -3,8 +3,6 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <plugin id="com.intellij.modules.java-capable"/>
-    <module name="intellij.platform.debugger.impl"/>
-    <module name="intellij.platform.debugger.impl.shared"/>
     <module name="fleet.rpc"/>
     <module name="intellij.platform.rpc"/>
     <module name="intellij.platform.backend"/>
@@ -34,12 +32,16 @@
     <module name="intellij.libraries.stream"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.buildScripts.downloader"/>
+    <module name="intellij.platform.concurrency"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.debugger.impl"/>
     <module name="intellij.platform.debugger.impl.rpc"/>
+    <module name="intellij.platform.debugger.impl.shared"/>
     <module name="intellij.platform.debugger.impl.ui"/>
     <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.eel.provider"/>
     <module name="intellij.platform.execution"/>
     <module name="intellij.platform.execution.impl"/>
     <module name="intellij.platform.feedback"/>
@@ -47,6 +49,7 @@
     <module name="intellij.platform.ide.core.impl"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.ide.progress"/>
+    <module name="intellij.platform.ide.util.io.impl"/>
     <module name="intellij.platform.indexing"/>
     <module name="intellij.platform.jps.build"/>
     <module name="intellij.platform.lang"/>
@@ -57,6 +60,7 @@
     <module name="intellij.platform.threadDumpParser"/>
     <module name="intellij.platform.util.coroutines"/>
     <module name="intellij.platform.util.ex"/>
+    <module name="intellij.platform.util.progress"/>
     <module name="intellij.platform.util.ui"/>
     <module name="intellij.xml.psi"/>
   </dependencies>

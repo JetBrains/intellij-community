@@ -1,4 +1,9 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.platform.util.http` start
+content_module_jar(module = ":http")
+### auto-generated section `dev intellij.platform.util.http` end
 
 ### auto-generated section `build intellij.platform.util.http` start
 jvm_library(
@@ -13,6 +18,10 @@ jvm_library(
     ),
     kotlinc_opts = "@community//:k11",
     module_name = "intellij.platform.util.http",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
@@ -49,6 +58,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.util.http.iml",
+        "resources/intellij.platform.util.http.xml",
     ],
     visibility = ["//visibility:public"],
 )

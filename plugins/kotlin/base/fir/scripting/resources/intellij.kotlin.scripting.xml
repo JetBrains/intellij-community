@@ -21,11 +21,13 @@
     <module name="intellij.libraries.kotlinc.kotlin.scripting.common"/>
     <module name="intellij.libraries.kotlinc.kotlin.scripting.compiler.impl"/>
     <module name="intellij.libraries.kotlinc.kotlin.scripting.jvm"/>
+    <module name="intellij.platform.backend.workspace"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.projectModel.impl"/>
     <module name="intellij.platform.workspace.jps"/>
+    <module name="intellij.platform.workspace.storage"/>
   </dependencies>
   <!-- endregion -->
 </idea-plugin>

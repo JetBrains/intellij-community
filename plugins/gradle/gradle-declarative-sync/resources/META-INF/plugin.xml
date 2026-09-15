@@ -18,9 +18,11 @@
     <module name="intellij.libraries.jackson.databind"/>
     <module name="intellij.libraries.jetbrains.annotations"/>
     <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.backend.workspace"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.externalSystem.impl"/>
     <module name="intellij.platform.workspace.jps"/>
+    <module name="intellij.platform.workspace.storage"/>
   </dependencies>
   <!-- endregion -->
   <content namespace="jetbrains"/>

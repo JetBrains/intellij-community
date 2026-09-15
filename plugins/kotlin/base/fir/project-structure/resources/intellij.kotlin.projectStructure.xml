@@ -14,12 +14,14 @@
     <module name="intellij.libraries.kotlinc.analysis.api.platform.interface"/>
     <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
     <module name="intellij.libraries.kotlinc.kotlin.jps.common"/>
+    <module name="intellij.platform.backend.workspace"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.lang.core"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.projectModel.impl"/>
     <module name="intellij.platform.workspace.jps"/>
+    <module name="intellij.platform.workspace.storage"/>
   </dependencies>
   <!-- endregion -->
 

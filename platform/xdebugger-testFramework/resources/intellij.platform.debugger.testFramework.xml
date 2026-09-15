@@ -3,6 +3,7 @@
   <dependencies>
     <module name="intellij.libraries.junit4"/>
     <module name="intellij.libraries.stream"/>
+    <module name="intellij.platform.concurrency"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.debugger"/>

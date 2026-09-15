@@ -6,6 +6,7 @@
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.diagnostic.telemetry"/>
     <module name="intellij.platform.eel.impl"/>
+    <module name="intellij.platform.util.annotations"/>
   </dependencies>
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">

@@ -4,6 +4,9 @@
     <module name="intellij.libraries.fastutil"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.syntax"/>
+    <module name="intellij.platform.syntax.extensions"/>
+    <module name="intellij.platform.syntax.util"/>
   </dependencies>
   <!-- endregion -->
   <extensionPoints>
