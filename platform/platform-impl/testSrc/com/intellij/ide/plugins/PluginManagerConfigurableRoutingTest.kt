@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.marketplace.statistics.enums.PluginManagerOpenSourceEnum
 import com.intellij.ide.ui.LafManager
 import com.intellij.openapi.Disposable
@@ -12,15 +13,22 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.ui.components.DarculaSearchFieldWithExtensionBorder
+import com.intellij.ui.components.JBLabel
+import com.intellij.ui.components.SearchFieldWithExtension
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.Dispatchers
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.awt.Component
+import java.awt.Container
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
+import java.awt.Point
 import javax.swing.JComponent
+import javax.swing.SwingUtilities
 
 @TestApplication
 internal class PluginManagerConfigurableRoutingTest {
@@ -90,6 +98,33 @@ internal class PluginManagerConfigurableRoutingTest {
       configurable.disposeUIResources()
     }
   }
+
+  @Test
+  @RegistryKey(key = UnifiedPluginsPageFeature.REGISTRY_KEY, value = "true")
+  fun `standalone unified page aligns the Islands search border with section titles`(): Unit =
+    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+      val session = createPluginsPageSession(null, PluginManagerOpenSourceEnum.NOTIFICATION, isStandaloneConfigurable = true)
+      try {
+        val controller = RecordingTopController()
+        val header = session.getCenterComponent(controller)
+        val content = session.getComponent()
+        content.size = content.preferredSize
+        layoutRecursively(content)
+
+        val search = header.components.first() as SearchFieldWithExtension
+        val installedTitle = checkNotNull(UIUtil.uiTraverser(content).find {
+          it is JBLabel && it.text == IdeBundle.message("plugin.manager.tab.installed")
+        } as? JBLabel)
+        val sectionTitleX = SwingUtilities.convertPoint(installedTitle, Point(), content).x
+        val searchBorderInset = DarculaSearchFieldWithExtensionBorder().getBorderInsets(search).left
+
+        assertThat(controller.centerComponentGap).isEqualTo(JBUI.scale(13))
+        assertThat(controller.centerComponentGap!! + searchBorderInset).isEqualTo(sectionTitleX)
+      }
+      finally {
+        Disposer.dispose(session)
+      }
+    }
 
   @Test
   @RegistryKey(key = UnifiedPluginsPageFeature.REGISTRY_KEY, value = "false")
@@ -165,6 +200,12 @@ internal class PluginManagerConfigurableRoutingTest {
     finally {
       configurable.disposeUIResources()
     }
+  }
+
+  private fun layoutRecursively(component: Component) {
+    if (component !is Container) return
+    component.doLayout()
+    component.components.forEach(::layoutRecursively)
   }
 
   private class RecordingTopController : Configurable.TopComponentController {

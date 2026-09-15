@@ -106,6 +106,7 @@ import kotlin.time.TimeSource
 internal class UnifiedPluginsPageSession @RequiresEdt(generateAssertion = false /* IJPL-115548 */) constructor(
   searchQuery: String?,
   openSource: PluginManagerOpenSourceEnum,
+  private val isStandaloneConfigurable: Boolean = false,
   localDataProviderFactory: (LegacyPluginUiHost) -> UnifiedPluginLocalDataProvider = ::DefaultUnifiedPluginLocalDataProvider,
   repositoryDataProviderFactory: () -> UnifiedPluginRepositoryDataProvider = ::DefaultUnifiedPluginRepositoryDataProvider,
   marketplaceDataProviderFactory:
@@ -315,7 +316,7 @@ internal class UnifiedPluginsPageSession @RequiresEdt(generateAssertion = false 
   override fun getCenterComponent(controller: Configurable.TopComponentController): JComponent {
     controller.showProgressIndicator(false)
     controller.showResetAction(false)
-    controller.setCenterComponentGap(JBUI.scale(-2))
+    controller.setCenterComponentGap(JBUI.scale(if (isStandaloneConfigurable) 13 else -2))
     host.setTopController(controller)
     return headerComponent
   }

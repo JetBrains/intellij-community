@@ -39,6 +39,7 @@ import javax.swing.JComponent
 class PluginManagerConfigurable() : SearchableConfigurable, Configurable.NoScroll, Configurable.NoMargin, Configurable.TopComponentProvider {
   private var myPanel: PluginsPageSession? = null
   private var openSource: PluginManagerOpenSourceEnum? = null
+  private var isStandaloneConfigurable = false
 
   /**
    * @deprecated Use {@link PluginManagerConfigurable#PluginManagerConfigurable()}
@@ -89,7 +90,7 @@ class PluginManagerConfigurable() : SearchableConfigurable, Configurable.NoScrol
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun createPanelIfNeeded(searchQuery: String?): PluginsPageSession {
     if (myPanel == null) {
-      myPanel = createPluginsPageSession(searchQuery, openSource ?: PluginManagerOpenSourceEnum.OTHER)
+      myPanel = createPluginsPageSession(searchQuery, openSource ?: PluginManagerOpenSourceEnum.OTHER, isStandaloneConfigurable)
     }
     return myPanel!!
   }
@@ -316,7 +317,7 @@ class PluginManagerConfigurable() : SearchableConfigurable, Configurable.NoScrol
     @ApiStatus.Internal
     @JvmStatic
     fun showPluginManagerDialog(project: Project?, source: PluginManagerOpenSourceEnum, advancedInitialization: (PluginManagerConfigurable) -> Unit) {
-      val configurable = createWithOpenSource(source)
+      val configurable = createWithOpenSource(source).apply { isStandaloneConfigurable = true }
       ShowSettingsUtil.getInstance().editConfigurable(
         project,
         configurable,

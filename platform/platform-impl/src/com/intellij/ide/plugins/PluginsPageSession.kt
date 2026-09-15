@@ -54,9 +54,10 @@ internal interface PluginsPageSession : Disposable {
 internal fun createPluginsPageSession(
   searchQuery: String?,
   openSource: PluginManagerOpenSourceEnum,
+  isStandaloneConfigurable: Boolean = false,
 ): PluginsPageSession {
   return if (UnifiedPluginsPageFeature.isEnabled()) {
-    UnifiedPluginsPageSession(searchQuery, openSource)
+    UnifiedPluginsPageSession(searchQuery, openSource, isStandaloneConfigurable = isStandaloneConfigurable)
   }
   else {
     PluginManagerConfigurablePanel(searchQuery, openSource)
