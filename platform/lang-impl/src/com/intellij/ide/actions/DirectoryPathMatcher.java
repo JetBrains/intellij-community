@@ -47,29 +47,35 @@ final class DirectoryPathMatcher {
 
   final @NotNull String dirPattern;
 
-  private DirectoryPathMatcher(@NotNull GotoFileModel model, @Nullable List<Pair<VirtualFile, String>> files, @NotNull String pattern) {
+  private DirectoryPathMatcher(@NotNull GotoFileModel model,
+                               @Nullable List<Pair<VirtualFile, String>> files,
+                               @NotNull String pattern,
+                               @NotNull Predicate<VirtualFile> projectFileFilter) {
     myModel = model;
     myFiles = files;
     dirPattern = pattern;
+    myProjectFileFilter = projectFileFilter;
+  }
 
-    FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
-    Project project = model.getProject();
-    IdFilter projectIndexableFilesFilter = fileBasedIndex.projectIndexableFiles(project);
-    var allScope = GlobalSearchScope.allScope(project);
+  private @NotNull DirectoryPathMatcher derive(@Nullable List<Pair<VirtualFile, String>> files, @NotNull String pattern) {
+    return new DirectoryPathMatcher(myModel, files, pattern, myProjectFileFilter);
+  }
+
+  private static @NotNull Predicate<VirtualFile> createProjectFileFilter(@NotNull Project project) {
+    IdFilter projectIndexableFilesFilter = FileBasedIndex.getInstance().projectIndexableFiles(project);
+    GlobalSearchScope allScope = GlobalSearchScope.allScope(project);
     if (projectIndexableFilesFilter == null) {
-      myProjectFileFilter = vFile -> allScope.contains(vFile);
+      return vFile -> allScope.contains(vFile);
     }
-    else {
-      myProjectFileFilter = vFile -> {
-        return vFile instanceof VirtualFileWithId
-               ? projectIndexableFilesFilter.containsFileId(((VirtualFileWithId)vFile).getId()) || allScope.contains(vFile)
-               : allScope.contains(vFile);
-      };
-    }
+    return vFile -> {
+      return vFile instanceof VirtualFileWithId fileWithId
+             ? projectIndexableFilesFilter.containsFileId(fileWithId.getId()) || allScope.contains(vFile)
+             : allScope.contains(vFile);
+    };
   }
 
   static @Nullable DirectoryPathMatcher root(@NotNull GotoFileModel model, @NotNull String pattern) {
-    DirectoryPathMatcher matcher = new DirectoryPathMatcher(model, null, "");
+    DirectoryPathMatcher matcher = new DirectoryPathMatcher(model, null, "", createProjectFileFilter(model.getProject()));
     for (int i = 0; i < pattern.length(); i++) {
       matcher = matcher.appendChar(pattern.charAt(i));
       if (matcher == null) return null;
@@ -80,7 +86,7 @@ final class DirectoryPathMatcher {
   @Nullable
   DirectoryPathMatcher appendChar(char c) {
     String nextPattern = dirPattern + c;
-    if (c == '*' || c == '/' || c == ' ') return new DirectoryPathMatcher(myModel, myFiles, nextPattern);
+    if (c == '*' || c == '/' || c == ' ') return appendNonWalkingChar(c);
 
     List<Pair<VirtualFile, String>> files = getMatchingRoots();
 
@@ -105,7 +111,12 @@ final class DirectoryPathMatcher {
       }
     }
 
-    return nextRoots.isEmpty() ? null : new DirectoryPathMatcher(myModel, nextRoots, nextPattern);
+    return nextRoots.isEmpty() ? null : derive(nextRoots, nextPattern);
+  }
+
+  /** Extends the pattern by a character that drives no walk, so the directories stay as they are. */
+  private @NotNull DirectoryPathMatcher appendNonWalkingChar(char c) {
+    return derive(myFiles, dirPattern + c);
   }
 
   /** return null if not cheap */
