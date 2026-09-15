@@ -495,7 +495,7 @@ internal data class AnchorHorizontalMenuPositionProvider(
 
         // Compute vertical position.
         val leftSpacing = anchorBounds.left - contentOffsetX - windowSpaceBounds.left
-        val rightSpacing = windowSpaceBounds.width - anchorBounds.right - contentOffsetY
+        val rightSpacing = windowSpaceBounds.right - anchorBounds.right - contentOffsetX
 
         val x =
             if (rightSpacing > popupContentSize.width || rightSpacing >= leftSpacing) {

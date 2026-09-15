@@ -44,6 +44,7 @@ import org.jetbrains.jewel.ui.component.SpeedSearchArea
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.rememberSpeedSearchState
 import org.jetbrains.jewel.ui.component.search.SpeedSearchableComboBox
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
 // Headful, and deliberately not a jps_test: the app under test must keep a standalone-only runtime closure,
@@ -69,6 +70,39 @@ class CustomPopupRendererSpectreTest {
             // previously let the popup's JDialogRenderer consume Escape as a no-op dismissal.
             automator.pressKey(KeyEvent.VK_ESCAPE)
             automator.waitUntilGone("The ComboBox popup") { findByTestTag(COMBO_BOX_POPUP_TAG) }
+        } finally {
+            app.stop()
+        }
+    }
+
+    @Disabled(
+        "JDialogRenderer puts the popup in its own native window, and Compose inside it never receives a pointer " +
+            "exit when the cursor leaves that window, so onHover(false) never fires and hover-driven state stays " +
+            "stuck. Needs a renderer-level signal. Enable once that exists."
+    )
+    @Test
+    fun `moving the pointer off a menu popup disarms its item`(): Unit = runSpectreTestWithCustomPopupRenderer {
+        val app = SpectreTestApplication()
+        app.start()
+        try {
+            val automator = ComposeAutomator.inProcess(RobotDriver.synthetic(app.awaitWindow()))
+
+            val menuButton = automator.waitForNode(tag = MENU_BUTTON_TAG)
+            automator.click(menuButton)
+            automator.waitForNode(tag = MENU_POPUP_TAG)
+
+            automator.moveTo(automator.waitForNode(text = MENU_ITEM_TEXT))
+            automator.waitForIdle()
+            assertTrue(automator.waitForNode(text = MENU_ITEM_TEXT).isFocused, "the hovered item should be armed")
+
+            // Back onto the owner window, which leaves the popup's own native window entirely. The renderer has to
+            // surface that as a pointer exit, or the item stays armed with the pointer nowhere near it.
+            automator.moveTo(menuButton)
+            automator.waitForIdle()
+            assertFalse(
+                automator.waitForNode(text = MENU_ITEM_TEXT).isFocused,
+                "the item should disarm once the pointer leaves the popup",
+            )
         } finally {
             app.stop()
         }
@@ -241,7 +275,7 @@ private fun PopupEscapeScreen() {
                     horizontalAlignment = Alignment.Start,
                     modifier = Modifier.testTag(MENU_POPUP_TAG),
                 ) {
-                    selectableItem(selected = false, onClick = {}) { Text("Menu item") }
+                    selectableItem(selected = false, onClick = {}) { Text(MENU_ITEM_TEXT) }
                 }
             }
         }
@@ -298,6 +332,7 @@ private const val REGULAR_COMBO_TAG = "spectre.regularCombo"
 private const val EDITABLE_COMBO_TAG = "spectre.editableCombo"
 private const val MENU_BUTTON_TAG = "spectre.menuButton"
 private const val MENU_POPUP_TAG = "spectre.menuPopup"
+private const val MENU_ITEM_TEXT = "Menu item"
 private const val SPEED_SEARCH_COMBO_TAG = "spectre.speedSearchCombo"
 
 /** Distance from the ComboBox's trailing edge that reliably lands on the chevron rather than the label. */

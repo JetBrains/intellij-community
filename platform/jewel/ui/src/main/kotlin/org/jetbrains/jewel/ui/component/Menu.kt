@@ -343,6 +343,7 @@ public fun MenuContent(
     val scrollState = rememberScrollState()
     val colors = style.colors
     val menuShape = RoundedCornerShape(style.metrics.cornerSize)
+    val focusManager = LocalFocusManager.current
 
     DisposableEffect(selectableItems, localMenuController, localMenuItemShortcutProvider, localInputModeManager) {
         selectableItems.forEach { item ->
@@ -359,6 +360,8 @@ public fun MenuContent(
         onDispose { localMenuController.clearShortcutActions() }
     }
 
+    var selectedSubMenu by remember { mutableStateOf<SubmenuItem?>(null) }
+
     Box(
         modifier =
             modifier
@@ -371,11 +374,17 @@ public fun MenuContent(
                 )
                 .background(colors.background, menuShape)
                 .width(IntrinsicSize.Max)
-                .onHover { localMenuController.onHoveredChange(it) }
+                .onHover { hovered ->
+                    localMenuController.onHoveredChange(hovered)
+
+                    // Items arm themselves by taking focus, so moving between them needs no bookkeeping here. Only
+                    // leaving the menu has to disarm it, and not while one of its items is holding a submenu open:
+                    // Swing keeps that item armed because the selection path continues through it.
+                    if (!hovered && selectedSubMenu == null) focusManager.clearFocus(force = true)
+                }
     ) {
         Column(Modifier.clip(menuShape).verticalScroll(scrollState)) {
             Column(Modifier.padding(style.metrics.contentPadding)) {
-                var selectedSubMenu by remember { mutableStateOf<SubmenuItem?>(null) }
                 items.forEach { item ->
                     MenuItem(
                         item = item,
@@ -453,6 +462,7 @@ private fun MenuItem(
             MenuSubmenuItem(
                 showIcons,
                 selected = item == selectedSubMenu,
+                onSelectedChange = { if (it) selectSubmenu(item) else deselectSubmenu() },
                 enabled = item.isEnabled,
                 submenu = item.submenu,
                 iconKey = item.iconKey,
@@ -913,6 +923,7 @@ internal fun MenuItemBase(
 public fun MenuSubmenuItem(
     showIcon: Boolean,
     selected: Boolean,
+    onSelectedChange: (Boolean) -> Unit,
     submenu: MenuScope.() -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
@@ -921,12 +932,13 @@ public fun MenuSubmenuItem(
     style: MenuStyle = JewelTheme.menuStyle,
     content: @Composable (itemState: MenuItemState) -> Unit,
 ) {
-    var itemState by rememberMenuItemState(selected, enabled, interactionSource)
+    val itemState by rememberMenuItemState(selected, enabled, interactionSource)
     // When the item becomes disabled, close any open submenu
-    remember(enabled) { if (!enabled) itemState = itemState.copy(selected = false) }
+    val currentOnSelectedChange by rememberUpdatedState(onSelectedChange)
+    remember(enabled) { if (!enabled && selected) currentOnSelectedChange(false) }
     val focusRequester = remember { FocusRequester() }
 
-    LaunchedEffect(itemState.isSelected) { if (itemState.isSelected) focusRequester.requestFocus() }
+    LaunchedEffect(selected) { if (selected) focusRequester.requestFocus() }
 
     Box(
         modifier =
@@ -934,14 +946,14 @@ public fun MenuSubmenuItem(
                 .fillMaxWidth()
                 .focusRequester(focusRequester)
                 .clickable(
-                    onClick = { itemState = itemState.copy(selected = !itemState.isSelected) },
+                    onClick = { currentOnSelectedChange(!selected) },
                     enabled = enabled,
                     interactionSource = interactionSource,
                     indication = null,
                 )
                 .onKeyEvent {
                     if (it.type == KeyEventType.KeyDown && it.key == Key.DirectionRight) {
-                        itemState = itemState.copy(selected = true)
+                        currentOnSelectedChange(true)
                         true
                     } else {
                         false
@@ -965,13 +977,13 @@ public fun MenuSubmenuItem(
             content = { content(itemState) },
         )
 
-        if (itemState.isSelected) {
+        if (selected) {
             Submenu(
                 onDismissRequest = {
                     if (it == InputMode.Touch && itemState.isHovered) {
                         false
                     } else {
-                        itemState = itemState.copy(selected = false)
+                        currentOnSelectedChange(false)
                         true
                     }
                 },
@@ -1089,7 +1101,7 @@ internal fun Submenu(
     Popup(
         popupPositionProvider = popupPositionProvider,
         onDismissRequest = { menuController.closeAll(InputMode.Touch, false) },
-        properties = PopupProperties(focusable = true),
+        properties = PopupProperties(focusable = true, consumePointerInputOutside = false),
         onPreviewKeyEvent = { false },
         cornerSize = style.metrics.cornerSize,
         onKeyEvent = {
