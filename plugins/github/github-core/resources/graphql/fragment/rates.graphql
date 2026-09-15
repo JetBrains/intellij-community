@@ -1,3 +1,5 @@
 fragment rates on RateLimit {
   cost
+  remaining
+  resetAt
 }

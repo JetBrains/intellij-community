@@ -39,6 +39,14 @@ import java.io.InputStreamReader
 import java.io.Reader
 import java.net.HttpURLConnection
 import java.net.URL
+import java.time.Clock
+import java.time.Duration
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.Semaphore
+import java.util.concurrent.TimeUnit
 import java.util.zip.GZIPInputStream
 
 /**
@@ -101,46 +109,76 @@ sealed class GithubApiRequestExecutor {
     }
   }
 
-  abstract class Base(private val githubSettings: GithubSettings) : GithubApiRequestExecutor() {
-    protected fun <T> RequestBuilder.execute(request: GithubApiRequest<T>, indicator: ProgressIndicator): T {
+  abstract class Base(
+    private val githubSettings: GithubSettings,
+    clock: Clock = Clock.systemUTC(),
+  ) : GithubApiRequestExecutor() {
+
+    @VisibleForTesting
+    internal val rateLimitState = RateLimitState(clock)
+
+    private val graphQLGate = Semaphore(MAX_CONCURRENT_GRAPHQL_REQUESTS)
+
+    protected fun <T> RequestBuilder.execute(request: GithubApiRequest<T>, indicator: ProgressIndicator): T =
+      executeRequest(request, indicator) { processor -> connect(processor) }
+
+    @VisibleForTesting
+    internal fun <T> executeRequest(
+      request: GithubApiRequest<T>,
+      indicator: ProgressIndicator,
+      connect: (HttpRequests.RequestProcessor<T>) -> T,
+    ): T {
       indicator.checkCanceled()
+      val resource = RateLimitState.resourceOf(request)
+      // no point in sending a request before the reset instant, the budget is per user
+      rateLimitState.checkNotExhausted(resource)
+
       try {
         LOG.debug("Request: ${request.url} ${request.operationName} : Connecting")
         val activity = GHPRStatisticsCollector.logApiRequestStart(request.operation)
-        return connect {
-          val connection = it.connection as HttpURLConnection
-          if (request is GithubApiRequest.WithBody) {
-            LOG.debug("Request: ${connection.requestMethod} ${connection.url} with body:\n${request.body} : Connected")
-            request.body?.let { body -> it.write(body) }
+        return withGraphQLGate(request, indicator) {
+          connect {
+            val connection = it.connection as HttpURLConnection
+            if (request is GithubApiRequest.WithBody) {
+              LOG.debug("Request: ${connection.requestMethod} ${connection.url} with body:\n${request.body} : Connected")
+              request.body?.let { body -> it.write(body) }
+            }
+            else {
+              LOG.debug("Request: ${connection.requestMethod} ${connection.url} : Connected")
+            }
+
+            GHPRStatisticsCollector.logApiResponseReceived(
+              activity = activity,
+              remaining = connection.getHeaderFieldInt(HEADER_RATE_LIMIT_REMAINING, -1),
+              resourceName = connection.getHeaderField(HEADER_RATE_LIMIT_RESOURCE) ?: "unknown",
+              statusCode = connection.responseCode,
+            )
+
+            updateRateLimitState(connection, resource)
+            checkResponseCode(connection, resource)
+            checkServerVersion(connection)
+
+            indicator.checkCanceled()
+
+            val (result, rates) = if (request is GithubApiRequest.Post.GQLQuery) {
+              request.extractResultWithCost(createResponse(it, indicator))
+            }
+            else {
+              request.extractResult(createResponse(it, indicator)) to null
+            }
+            val cost = rates?.cost
+
+            GHPRStatisticsCollector.logApiResponseRates(request.operation, cost ?: 1, isGuessed = cost == null)
+
+            // REST /rate_limit does not reflect the GraphQL budget, only this block does
+            val remaining = rates?.remaining
+            if (remaining != null) {
+              rateLimitState.update(RateLimitState.RESOURCE_GRAPHQL, remaining, rates.resetAt?.toInstant())
+            }
+
+            LOG.debug("Request: ${connection.requestMethod} ${connection.url} : Result extracted")
+            result
           }
-          else {
-            LOG.debug("Request: ${connection.requestMethod} ${connection.url} : Connected")
-          }
-
-          GHPRStatisticsCollector.logApiResponseReceived(
-            activity = activity,
-            remaining = connection.getHeaderFieldInt("x-ratelimit-remaining", -1),
-            resourceName = connection.getHeaderField("x-ratelimit-resource") ?: "unknown",
-            statusCode = connection.responseCode,
-          )
-
-          checkResponseCode(connection)
-          checkServerVersion(connection)
-
-          indicator.checkCanceled()
-
-          val (result, rates) = if (request is GithubApiRequest.Post.GQLQuery) {
-            request.extractResultWithCost(createResponse(it, indicator))
-          }
-          else {
-            request.extractResult(createResponse(it, indicator)) to null
-          }
-          val cost = rates?.cost
-
-          GHPRStatisticsCollector.logApiResponseRates(request.operation, cost ?: 1, isGuessed = cost == null)
-
-          LOG.debug("Request: ${connection.requestMethod} ${connection.url} : Result extracted")
-          result
         }
       }
       catch (e: GithubStatusCodeException) {
@@ -155,6 +193,34 @@ sealed class GithubApiRequestExecutor {
         }
         throw e
       }
+    }
+
+    private fun <T> withGraphQLGate(request: GithubApiRequest<*>, indicator: ProgressIndicator, body: () -> T): T {
+      if (request !is GithubApiRequest.Post.GQLQuery) return body()
+      while (!graphQLGate.tryAcquire(GATE_POLL_INTERVAL_MS, TimeUnit.MILLISECONDS)) {
+        indicator.checkCanceled()
+      }
+      try {
+        return body()
+      }
+      finally {
+        graphQLGate.release()
+      }
+    }
+
+    private fun updateRateLimitState(connection: HttpURLConnection, requestResource: String) {
+      val remaining = connection.getHeaderFieldInt(HEADER_RATE_LIMIT_REMAINING, -1)
+      if (remaining < 0) return
+      val resource = connection.getHeaderField(HEADER_RATE_LIMIT_RESOURCE) ?: requestResource
+      rateLimitState.update(resource, remaining, getResetInstant(connection))
+    }
+
+    private fun getResetInstant(connection: HttpURLConnection): Instant? {
+      val resetEpochSeconds = connection.getHeaderFieldLong(HEADER_RATE_LIMIT_RESET, -1)
+      if (resetEpochSeconds > 0) return Instant.ofEpochSecond(resetEpochSeconds)
+      val retryAfterSeconds = connection.getHeaderFieldLong(HEADER_RETRY_AFTER, -1)
+      if (retryAfterSeconds > 0) return rateLimitState.now().plusSeconds(retryAfterSeconds)
+      return null
     }
 
     protected fun createRequestBuilder(request: GithubApiRequest<*>): RequestBuilder {
@@ -178,7 +244,7 @@ sealed class GithubApiRequestExecutor {
     }
 
     @Throws(IOException::class)
-    private fun checkResponseCode(connection: HttpURLConnection) {
+    private fun checkResponseCode(connection: HttpURLConnection, requestResource: String) {
       if (connection.responseCode < 400) return
       val statusLine = "${connection.responseCode} ${connection.responseMessage}"
       val errorText = getErrorText(connection)
@@ -193,7 +259,9 @@ sealed class GithubApiRequestExecutor {
         HttpURLConnection.HTTP_FORBIDDEN,
           -> {
           if (jsonError?.containsReasonMessage("API rate limit exceeded") == true) {
-            GithubRateLimitExceededException(jsonError.presentableError)
+            val resource = connection.getHeaderField(HEADER_RATE_LIMIT_RESOURCE) ?: requestResource
+            val resetAt = rateLimitState.markExhausted(resource, getResetInstant(connection))
+            GithubRateLimitExceededException(jsonError.presentableError, resetAt)
           }
           else GithubAuthenticationException(
             GithubBundle.message("request.response.0", jsonError?.presentableError ?: errorText ?: statusLine))
@@ -247,6 +315,71 @@ sealed class GithubApiRequestExecutor {
           converter.convert(it)
         }
       }
+    }
+
+    companion object {
+      @VisibleForTesting
+      internal const val MAX_CONCURRENT_GRAPHQL_REQUESTS = 8
+      private const val GATE_POLL_INTERVAL_MS = 100L
+
+      private const val HEADER_RATE_LIMIT_REMAINING = "x-ratelimit-remaining"
+      private const val HEADER_RATE_LIMIT_RESOURCE = "x-ratelimit-resource"
+      private const val HEADER_RATE_LIMIT_RESET = "x-ratelimit-reset"
+      private const val HEADER_RETRY_AFTER = "Retry-After"
+    }
+  }
+
+  @VisibleForTesting
+  internal class RateLimitState(private val clock: Clock) {
+    private val exhaustedUntil = ConcurrentHashMap<String, Instant>()
+
+    fun now(): Instant = clock.instant()
+
+    fun exhaustedUntil(resource: String): Instant? {
+      val until = exhaustedUntil[resource] ?: return null
+      if (!until.isAfter(now())) {
+        exhaustedUntil.remove(resource, until)
+        return null
+      }
+      return until
+    }
+
+    @Throws(GithubRateLimitExceededException::class)
+    fun checkNotExhausted(resource: String) {
+      val until = exhaustedUntil(resource) ?: return
+      val message = GithubBundle.message("request.rate.limit.exceeded.resets.at", RESET_TIME_FORMAT.format(until))
+      throw GithubRateLimitExceededException(message, until)
+    }
+
+    fun update(resource: String, remaining: Int, resetAt: Instant?) {
+      if (remaining > 0) {
+        exhaustedUntil.remove(resource)
+      }
+      else {
+        markExhausted(resource, resetAt)
+      }
+    }
+
+    fun markExhausted(resource: String, resetAt: Instant?): Instant {
+      val now = now()
+      val until = resetAt?.takeIf { it.isAfter(now) }
+                  ?: exhaustedUntil[resource]?.takeIf { it.isAfter(now) }
+                  ?: now.plus(DEFAULT_COOLDOWN)
+      exhaustedUntil[resource] = until
+      return until
+    }
+
+    companion object {
+      const val RESOURCE_GRAPHQL = "graphql"
+      const val RESOURCE_CORE = "core"
+
+      @VisibleForTesting
+      internal val DEFAULT_COOLDOWN: Duration = Duration.ofMinutes(1)
+
+      private val RESET_TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault())
+
+      fun resourceOf(request: GithubApiRequest<*>): String =
+        if (request is GithubApiRequest.Post.GQLQuery) RESOURCE_GRAPHQL else RESOURCE_CORE
     }
   }
 
