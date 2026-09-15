@@ -135,7 +135,7 @@ internal class CodeInsightContextSwitcher(
     val shownContext = shownContext()
     e.presentation.isVisible = shownContext != null
     if (shownContext != null) {
-      e.presentation.text = shownContext.text
+      e.presentation.setText(shownContext.text, false)
       e.presentation.icon = shownContext.icon
       // AbstractToolbarCombo.updateFromPresentation renders the description as the combo's tooltip.
       e.presentation.description = shownContext.tooltip
@@ -170,7 +170,11 @@ internal class CodeInsightContextSwitcher(
   private inner class SwitchContextAction(
     private val contextPresentation: CodeInsightContextPresentation,
     val isCurrent: Boolean,
-  ) : AnAction(contextPresentation.text, null, contextPresentation.icon) {
+  ) : AnAction(null, null, contextPresentation.icon) {
+    init {
+      templatePresentation.setText(contextPresentation.text, false)
+    }
+
     override fun actionPerformed(e: AnActionEvent) {
       controller.applyNewActiveContext(contextPresentation)
     }
