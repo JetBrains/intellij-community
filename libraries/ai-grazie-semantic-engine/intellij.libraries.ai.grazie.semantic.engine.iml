@@ -9,10 +9,10 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="ai.grazie.semantic.engine" type="repository">
-        <properties include-transitive-deps="false" maven-id="ai.grazie:grazie-rules-llm:0.4.8">
+        <properties include-transitive-deps="false" maven-id="ai.grazie:grazie-rules-llm:0.4.31">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/grazie-rules-llm/0.4.8/grazie-rules-llm-0.4.8.jar">
-              <sha256sum>d015676f20eed34ed02d455bccd8059c78102c4e5e13ec500e9f4b067f3d3f17</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/grazie-rules-llm/0.4.31/grazie-rules-llm-0.4.31.jar">
+              <sha256sum>eee6c9ab9476c2065d7cd36de19cba68b6ce7f0dfe1bdbac3fe0ca9e7d5925d5</sha256sum>
             </artifact>
           </verification>
           <exclude>
@@ -21,11 +21,11 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/grazie-rules-llm/0.4.8/grazie-rules-llm-0.4.8.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/grazie-rules-llm/0.4.31/grazie-rules-llm-0.4.31.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/grazie-rules-llm/0.4.8/grazie-rules-llm-0.4.8-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/grazie-rules-llm/0.4.31/grazie-rules-llm-0.4.31-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
