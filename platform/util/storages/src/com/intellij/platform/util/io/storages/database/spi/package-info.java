@@ -5,6 +5,7 @@
 /// - [BlocksDatabase] a database of [BlocksStore.Block]s -- a low-level database on top of which application-level
 ///   storages are implemented;
 /// - [BlocksStore] container of blocks that belong to a specific application-level storage;
+/// - [BlocksDatabaseFactory] to open a low-level [BlocksDatabase];
 @Internal
 package com.intellij.platform.util.io.storages.database.spi;
 

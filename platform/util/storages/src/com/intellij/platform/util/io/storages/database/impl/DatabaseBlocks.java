@@ -92,6 +92,19 @@ final class DatabaseBlocks implements Closeable {
     }
   }
 
+  /// Discards the store's blocks after its deletion reaches persistent storage
+  void retireStoreBlocks(int storeId) throws IOException {
+    synchronized (lock) {
+      ensureNotClosed();
+      var blocks = blocksByStoreId.get(storeId);
+      if (blocks != null) {
+        for (var block : blocks) {
+          block.retireForStoreDrop();
+        }
+      }
+    }
+  }
+
   ///Pure function, does not change the counter -- counter is updated in [registerBlock]
   //GuardedBy(lock)
   private int nextBlockId() {
