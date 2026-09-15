@@ -44,20 +44,41 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
   private final @NotNull String myName;
   private final LowMemoryWatcherManager myLowMemoryWatcherManager;
 
+  private static volatile boolean ourIsHeadless;
+
   private static final class Holder {
-    private static final AppScheduledExecutorService INSTANCE = new AppScheduledExecutorService("Global instance", 1, MINUTES, true);
+    private static final AppScheduledExecutorService INSTANCE;
+
+    static {
+      boolean isHeadless = ourIsHeadless;
+      INSTANCE = new AppScheduledExecutorService("Global instance", 1, MINUTES, !isHeadless, isHeadless);
+    }
   }
   static @NotNull ScheduledExecutorService getInstance() {
     return Holder.INSTANCE;
   }
 
   /**
+   * Configures the global pool for a headless process, such as a compiler. The pool then uses daemon threads, so they do not keep the
+   * process alive after the application ends. The pool also has no low memory watcher manager which is unnecessary for command-line tools.
+   * The IDE does not call this method.
+   */
+  public static void configureForHeadlessProcess() {
+    ourIsHeadless = true;
+  }
+
+  /**
    * @param initLowMemoryWatcherManager introduced to test AppScheduledExecutorService without initializing LowMemoryWatcherManager inside.
    *                                    LowMemoryWatcherManager complicates the behavior of the AppScheduledExecutorService which makes it
    *                                    harder to test
+   * @param isDaemonThreads             whether the pooled threads are daemon, see {@link #configureForHeadlessProcess()}
    */
-  private AppScheduledExecutorService(@NotNull String name, long keepAliveTime, @NotNull TimeUnit unit, boolean initLowMemoryWatcherManager) {
-    super(new BackendThreadPoolExecutor(new MyThreadFactory(), keepAliveTime, unit), new AppDelayQueue());
+  private AppScheduledExecutorService(@NotNull String name,
+                                      long keepAliveTime,
+                                      @NotNull TimeUnit unit,
+                                      boolean initLowMemoryWatcherManager,
+                                      boolean isDaemonThreads) {
+    super(new BackendThreadPoolExecutor(new MyThreadFactory(isDaemonThreads), keepAliveTime, unit), new AppDelayQueue());
     myName = name;
     //TODO RC: why LowMemoryWatcher is owned by AppScheduledExecutorService? Shouldn't it be a dedicated service itself?
     //         There are issues in LowMemoryWatcherManager initialization because of that, and also issues in tests,
@@ -81,10 +102,17 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
   private static final class MyThreadFactory extends CountingThreadFactory {
     private BiConsumer<? super Thread, ? super Runnable> newThreadListener;
     private final ThreadFactory myThreadFactory = Executors.privilegedThreadFactory();
+    private final boolean myIsDaemon;
+
+    MyThreadFactory(boolean isDaemon) {
+      myIsDaemon = isDaemon;
+    }
+
     @Override
     public @NotNull Thread newThread(final @NotNull Runnable r) {
       Thread thread = myThreadFactory.newThread(r);
       thread.setName(POOLED_THREAD_PREFIX + counter.incrementAndGet());
+      thread.setDaemon(myIsDaemon);
 
       thread.setPriority(Thread.NORM_PRIORITY - 1);
 
@@ -299,7 +327,7 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
   public static void withTemporaryAppScheduledServiceInTests(@NotNull String name,
                                                              @NotNull ThrowableConsumer<? super AppScheduledExecutorService, Throwable> consumer)
     throws Throwable {
-    AppScheduledExecutorService service = new AppScheduledExecutorService(name, 10, MINUTES, false);
+    AppScheduledExecutorService service = new AppScheduledExecutorService(name, 10, MINUTES, false, false);
     try {
       consumer.consume(service);
     }
