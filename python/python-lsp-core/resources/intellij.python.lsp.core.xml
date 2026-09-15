@@ -37,6 +37,11 @@
   <extensions defaultExtensionNs="com.intellij">
     <python.lsp.typeEngineConfigurable implementation="com.intellij.python.lsp.core.typeEngine.BuiltInPyTypeEngineProvider"/>
 
+    <completion.contributor language="Python"
+                            id="PyLspCompletionContributor"
+                            order="first, after pythonConsoleCompletionBlocking, after comboEditor, before pyClassNameCompletionContributor"
+                            implementationClass="com.intellij.python.lsp.core.completion.PyLspCompletionContributor"/>
+
     <registryKey key="python.lsp.type.engine.notebooks"
                  defaultValue="true"
                  description="Enable Python LSP-backed type engines in notebooks"/>

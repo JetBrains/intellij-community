@@ -22,7 +22,8 @@ import org.eclipse.lsp4j.Position
 import org.eclipse.lsp4j.Range
 import org.jetbrains.annotations.ApiStatus
 
-internal class LspCompletionContributor : CompletionContributor(), DumbAware {
+@ApiStatus.Internal
+class LspCompletionContributor : CompletionContributor(), DumbAware {
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
     val psiFile = parameters.originalFile
     val project = psiFile.getProject()
