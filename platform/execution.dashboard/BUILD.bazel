@@ -22,7 +22,6 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = ["//platform/xdebugger-impl:debugger-impl"],
     deps = [
         # do not sort,
         "//libraries/kotlinx/serialization/core",
@@ -57,7 +56,6 @@ jvm_library(
         "//platform/util/concurrency",
         "//platform/util:util-ui",
         "//fleet/rhizomedb",
-        "//platform/xdebugger-impl/ui",
     ],
 )
 
@@ -90,7 +88,6 @@ jvm_library(
         "//platform/ide-core-impl:ide-core-impl_test_lib",
         "//platform/ide-core:ide-core_test_lib",
         "//platform/execution.serviceView:execution.serviceView_test_lib",
-        "//platform/xdebugger-impl:debugger-impl_test_lib",
         "//platform/platform-impl/rpc:rpc_test_lib",
         "//platform/kernel/rpc:rpc_test_lib",
         "//platform/project/shared:project_test_lib",
@@ -106,7 +103,6 @@ jvm_library(
         "//platform/util/concurrency:concurrency_test_lib",
         "//platform/util:util-ui_test_lib",
         "//fleet/rhizomedb:rhizomedb_test_lib",
-        "//platform/xdebugger-impl/ui:ui_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.execution.dashboard` end

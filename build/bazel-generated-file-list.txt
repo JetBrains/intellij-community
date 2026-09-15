@@ -790,6 +790,7 @@ platform/execution-process-mediator/common
 platform/execution-process-mediator/daemon
 platform/execution.dashboard
 platform/execution.dashboard/backend
+platform/execution.dashboard/debugger
 platform/execution.dashboard/frontend
 platform/execution.serviceView
 platform/execution.serviceView/backend

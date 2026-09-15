@@ -1,0 +1,28 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.debugger.impl"/>
+    <module name="intellij.platform.debugger.impl.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.execution.dashboard"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.util.ui"/>
+  </dependencies>
+  <!-- endregion -->
+  <resource-bundle>messages.ActionsBundle</resource-bundle>
+  <actions>
+    <reference ref="RunDashboard.Run">
+      <add-to-group anchor="first" group-id="XDebugger.ToolWindow.TopToolbar3"/>
+    </reference>
+    <action id="RunDashboard.Debug" icon="AllIcons.Actions.StartDebugger" use-shortcut-of="DebugClass"
+            class="com.intellij.platform.execution.dashboard.debugger.DebugAction">
+      <add-to-group anchor="after" relative-to-action="RunDashboard.Run" group-id="RunTab.TopToolbar"/>
+      <add-to-group anchor="after" relative-to-action="RunDashboard.Run" group-id="RunTab.TopToolbar.Old"/>
+      <add-to-group anchor="after" relative-to-action="RunDashboard.Run" group-id="XDebugger.ToolWindow.TopToolbar3"/>
+      <add-to-group anchor="after" relative-to-action="RunDashboard.Run" group-id="RunDashboardContentToolbar"/>
+    </action>
+  </actions>
+</idea-plugin>

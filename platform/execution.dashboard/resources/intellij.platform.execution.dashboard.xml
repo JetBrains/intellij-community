@@ -10,8 +10,6 @@
     <module name="intellij.platform.concurrency"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.ui"/>
-    <module name="intellij.platform.debugger.impl"/>
-    <module name="intellij.platform.debugger.impl.ui"/>
     <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.execution"/>
     <module name="intellij.platform.execution.impl"/>
@@ -74,13 +72,6 @@
             class="com.intellij.platform.execution.dashboard.actions.RunAction">
       <add-to-group anchor="first" group-id="RunTab.TopToolbar"/>
       <add-to-group anchor="first" group-id="RunTab.TopToolbar.Old"/>
-      <add-to-group anchor="first" group-id="XDebugger.ToolWindow.TopToolbar3"/>
-    </action>
-    <action id="RunDashboard.Debug" icon="AllIcons.Actions.StartDebugger" use-shortcut-of="DebugClass"
-            class="com.intellij.platform.execution.dashboard.actions.DebugAction">
-      <add-to-group anchor="after" relative-to-action="RunDashboard.Run" group-id="RunTab.TopToolbar"/>
-      <add-to-group anchor="after" relative-to-action="RunDashboard.Run" group-id="RunTab.TopToolbar.Old"/>
-      <add-to-group anchor="after" relative-to-action="RunDashboard.Run" group-id="XDebugger.ToolWindow.TopToolbar3"/>
     </action>
     <action id="RunDashboard.Stop" icon="AllIcons.Actions.Suspend" use-shortcut-of="Stop"
             class="com.intellij.platform.execution.dashboard.actions.StopAction">
@@ -88,7 +79,6 @@
 
     <group id="RunDashboardContentToolbar">
       <reference ref="RunDashboard.Run"/>
-      <reference ref="RunDashboard.Debug"/>
       <reference ref="RunDashboard.Stop"/>
       <separator/>
       <reference ref="ExpandAll"/>
