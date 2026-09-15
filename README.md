@@ -2,6 +2,7 @@
 
 # IntelliJ Open Source Repository
 
+
 This repository is the open-source part of the JetBrains IDEs codebase.
 It also serves as the basis for [IntelliJ Platform development](https://www.jetbrains.com/opensource/idea). 
 
