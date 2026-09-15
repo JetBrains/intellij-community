@@ -11,15 +11,17 @@ import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.project.stateStore
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.supervisorScope
 
 /**
  * Saves every store once, in parallel. Returns `true` if every save succeeds. [saveSettings] logs a failed save.
+ * Propagates a store cancellation after the other saves finish. Cancellation of the caller cancels all saves.
  */
 internal suspend fun saveSettingsBatch(componentManagers: List<ComponentManager>): Boolean {
   try {
-    return coroutineScope {
-      componentManagers.distinct().map { componentManager ->
+    return supervisorScope {
+      val saves = componentManagers.distinct().map { componentManager ->
         async {
           val saved = saveSettings(componentManager, forceSavingAllSettings = true)
           if (componentManager is Project && !ApplicationManager.getApplication().isUnitTestMode) {
@@ -27,7 +29,9 @@ internal suspend fun saveSettingsBatch(componentManagers: List<ComponentManager>
           }
           saved
         }
-      }.awaitAll().all { it }
+      }
+      saves.joinAll()
+      saves.awaitAll().all { it }
     }
   }
   finally {

@@ -16,7 +16,6 @@ import com.intellij.diagnostic.Activity
 import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.MessagePool
 import com.intellij.diagnostic.PluginException
-import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.ide.AppLifecycleListener
@@ -59,6 +58,7 @@ import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.getOrLogException
+import com.intellij.openapi.diagnostic.isControlFlowException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginDescriptor
@@ -381,7 +381,12 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   final override fun closeAndDisposeAllProjects(checkCanClose: Boolean): Boolean {
     val batch = prepareProjectsForExit(checkCanClose) ?: return false
     serviceIfCreated<FileDocumentManager>()?.saveAllDocuments()
-    SaveAndSyncHandler.getInstance().saveSettingsUnderModalProgress(batch.projects)
+    val saveFailure = runCatching { SaveAndSyncHandler.getInstance().saveSettingsUnderModalProgress(batch.projects) }.exceptionOrNull()
+    if (saveFailure != null) {
+      // the caller's own cancellation is not a save failure
+      Cancellation.checkCancelled()
+      LOG.warn("Failed to save the projects before closing", loggable(saveFailure))
+    }
     if (checkCanClose && !batch.confirmCloseAfterSave()) {
       return false
     }
@@ -401,13 +406,12 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     }
     val started = System.currentTimeMillis()
     for (project in heavyProjects) {
-      try {
-        prepareProjectClose(project)
-      }
-      catch (e: Throwable) {
-        rethrowControlFlowException(e)
-        LOG.warn("Failed to prepare $project for closing", e)
-      }
+      // a cancelled caller stops before the next project; the application exit runs without a job and never stops
+      Cancellation.checkCancelled()
+      val failure = runCatching { prepareProjectClose(project) }.exceptionOrNull() ?: continue
+      // the caller's own cancellation is not a listener failure
+      Cancellation.checkCancelled()
+      LOG.warn("Failed to prepare $project for closing", loggable(failure))
     }
     return object : PreparedProjectCloseBatch {
       override val projects: List<Project> = projects
@@ -1623,4 +1627,11 @@ fun CoroutineScope.runInitProjectActivities(project: Project, logger: Logger) {
       }.getOrLogException(logger)
     }
   }
+}
+
+/**
+ * Wraps a control-flow exception so that a logger accepts it. Returns any other failure as is.
+ */
+private fun loggable(failure: Throwable): Throwable {
+  return if (failure.isControlFlowException) RuntimeException("The operation was cancelled", failure) else failure
 }

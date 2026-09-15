@@ -163,6 +163,131 @@ internal class ApplicationExitTest {
   }
 
   @Test
+  fun `a cancelled preparation does not skip project saves or disposal`(): Unit = timeoutRunBlocking {
+    withProjects { projects, handler, disposable ->
+      val prepared = mutableListOf<Project>()
+      val app = ApplicationManager.getApplication()
+      app.messageBus.connect(disposable).subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
+        override fun projectClosingBeforeSave(project: Project) {
+          prepared.add(project)
+          if (project === projects.first()) {
+            throw ProcessCanceledException()
+          }
+        }
+      })
+
+      val result = withContext(Dispatchers.EDT) {
+        saveAndCloseProjectsOnExit(app, tracer, true, false, {}, { "exit" })
+      }
+
+      assertThat(result).isEqualTo("exit")
+      assertThat(prepared).containsExactlyElementsOf(projects)
+      assertThat(handler.saved).containsExactly(app, *projects.toTypedArray())
+      assertThat(projects.all { it.isDisposed }).isTrue()
+      assertThat(handler.paused).isZero()
+    }
+  }
+
+  @Test
+  fun `a cancelled save in closeAndDisposeAllProjects still disposes every project`(): Unit = timeoutRunBlocking {
+    withProjects { projects, handler, _ ->
+      handler.saveFailure = ProcessCanceledException()
+
+      val closed = withContext(Dispatchers.EDT) {
+        ProjectManagerEx.getInstanceEx().closeAndDisposeAllProjects(checkCanClose = false)
+      }
+
+      assertThat(closed).isTrue()
+      assertThat(handler.saved).containsExactlyElementsOf(projects)
+      assertThat(projects.all { it.isDisposed }).isTrue()
+    }
+  }
+
+  @Test
+  fun `a cancelled caller fails before any project is prepared`(): Unit = timeoutRunBlocking {
+    withProjects { projects, handler, disposable ->
+      val prepared = mutableListOf<Project>()
+      ApplicationManager.getApplication().messageBus.connect(disposable).subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
+        override fun projectClosingBeforeSave(project: Project) {
+          prepared.add(project)
+        }
+      })
+      val callerJob = Job().apply { cancel() }
+
+      val failure = withContext(Dispatchers.EDT) {
+        installThreadContext(callerJob, replace = true) {
+          runCatching { ProjectManagerEx.getInstanceEx().closeAndDisposeAllProjects(checkCanClose = false) }.exceptionOrNull()
+        }
+      }
+
+      assertThat(failure).isInstanceOf(ProcessCanceledException::class.java)
+      assertThat(prepared).isEmpty()
+      assertThat(handler.saved).isEmpty()
+      assertThat(projects.none { it.isDisposed }).isTrue()
+    }
+  }
+
+  @Test
+  fun `a caller cancelled during the preparation stops before the next project`(): Unit = timeoutRunBlocking {
+    withProjects { projects, handler, disposable ->
+      val callerJob = Job()
+      val prepared = mutableListOf<Project>()
+      ApplicationManager.getApplication().messageBus.connect(disposable).subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
+        override fun projectClosingBeforeSave(project: Project) {
+          prepared.add(project)
+          if (project === projects.first()) {
+            callerJob.cancel()
+          }
+        }
+      })
+
+      val failure = withContext(Dispatchers.EDT) {
+        installThreadContext(callerJob, replace = true) {
+          runCatching { ProjectManagerEx.getInstanceEx().closeAndDisposeAllProjects(checkCanClose = false) }.exceptionOrNull()
+        }
+      }
+
+      assertThat(failure).isInstanceOf(ProcessCanceledException::class.java)
+      assertThat(prepared).containsExactly(projects.first())
+      assertThat(handler.saved).isEmpty()
+      assertThat(projects.none { it.isDisposed }).isTrue()
+    }
+  }
+
+  @Test
+  fun `a failing preparation does not skip project saves or disposal`(): Unit = timeoutRunBlocking {
+    withProjects { projects, handler, disposable ->
+      val app = ApplicationManager.getApplication()
+      val expected = IOException("expected preparation failure")
+      app.messageBus.connect(disposable).subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
+        override fun projectClosingBeforeSave(project: Project) {
+          if (project === projects.first()) {
+            throw expected
+          }
+        }
+      })
+
+      // by default the message bus logs a subscriber failure instead of rethrowing it; the processor turns the log back into a throw
+      val result = LoggedErrorProcessor.executeWith(object : LoggedErrorProcessor() {
+        override fun processError(category: String, message: String, details: Array<out String?>, t: Throwable?): Set<Action> {
+          if (t === expected) {
+            throw expected
+          }
+          return super.processError(category, message, details, t)
+        }
+      }).use {
+        withContext(Dispatchers.EDT) {
+          saveAndCloseProjectsOnExit(app, tracer, true, false, {}, { "exit" })
+        }
+      }
+
+      assertThat(result).isEqualTo("exit")
+      assertThat(handler.saved).containsExactly(app, *projects.toTypedArray())
+      assertThat(projects.all { it.isDisposed }).isTrue()
+    }
+  }
+
+  @Test
   fun `a cancelled closing listener does not skip the next project`(): Unit = timeoutRunBlocking {
     withProjects { projects, _, disposable ->
       var listenerCalled = false
@@ -250,12 +375,21 @@ private class RecordingExitSaveHandler : SaveAndSyncHandler() {
   val saved = mutableListOf<ComponentManager>()
   var paused = 0
 
+  /** Thrown after every store of a batch is saved, the way [com.intellij.configurationStore.saveSettingsBatch] propagates a cancellation. */
+  var saveFailure: Throwable? = null
+
   override fun saveSettingsUnderModalProgress(componentManager: ComponentManager): Boolean {
     saved.add(componentManager)
     runWithModalProgressBlocking(ModalTaskOwner.guess(), "") {
       componentManager.stateStore.save(forceSavingAllSettings = true)
     }
     return true
+  }
+
+  override fun saveSettingsUnderModalProgress(componentManagers: List<ComponentManager>): Boolean {
+    val saved = super.saveSettingsUnderModalProgress(componentManagers)
+    saveFailure?.let { throw it }
+    return saved
   }
 
   override fun disableAutoSave(): AccessToken {

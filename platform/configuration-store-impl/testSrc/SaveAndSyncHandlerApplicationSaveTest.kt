@@ -12,6 +12,7 @@ import com.intellij.openapi.components.impl.stores.ComponentStoreOwner
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -22,10 +23,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.yield
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
@@ -91,6 +94,45 @@ internal class SaveAndSyncHandlerApplicationSaveTest {
     assertThat(failedSaves.get()).isEqualTo(1)
     assertThat(successfulSaves.get()).isEqualTo(1)
     assertThat(errors.get()).isEqualTo(1)
+  }
+
+  @Test
+  fun `a cancelled store does not interrupt another save`(): Unit = timeoutRunBlocking {
+    val cancellation = ProcessCanceledException()
+    var saved = false
+    val failed = target(firstModel.project) { throw cancellation }
+    val successful = target(secondModel.project) {
+      yield()
+      saved = true
+    }
+
+    val failure = runCatching { saveSettingsBatch(listOf(failed, successful)) }.exceptionOrNull()
+
+    assertThat(failure).isSameAs(cancellation)
+    assertThat(saved).isTrue()
+  }
+
+  @Test
+  fun `cancelling the batch still cancels its stores`(): Unit = timeoutRunBlocking {
+    val started = List(2) { CompletableDeferred<Unit>() }
+    val stopped = List(2) { CompletableDeferred<Unit>() }
+    val stores = listOf(firstModel.project, secondModel.project).mapIndexed { index, project ->
+      target(project) {
+        started[index].complete(Unit)
+        try {
+          awaitCancellation()
+        }
+        finally {
+          stopped[index].complete(Unit)
+        }
+      }
+    }
+    val batch = launch { saveSettingsBatch(stores) }
+    started.forEach { it.await() }
+
+    batch.cancelAndJoin()
+
+    assertThat(stopped.all { it.isCompleted }).isTrue()
   }
 
   @Test
