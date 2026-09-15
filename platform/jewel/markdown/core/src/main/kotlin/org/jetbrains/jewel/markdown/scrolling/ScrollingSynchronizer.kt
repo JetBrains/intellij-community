@@ -12,6 +12,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.text.TextLayoutResult
 import java.util.TreeMap
+import kotlin.math.roundToInt
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.util.myLogger
@@ -47,6 +48,13 @@ import org.jetbrains.jewel.markdown.processing.MarkdownProcessor
  * [acceptTextLayout] serves the purpose of calculation every line's position within the composable. This information
  * may, in turn, be used together with global positioning of the composable to compute the absolute position of a
  * certain line in the preview.
+ *
+ * # Continuous scrolling
+ *
+ * [scrollToLine] moves the preview from block to block, so it stands still while the editor scrolls through a long,
+ * soft-wrapped line and then jumps. [previewOffsetAt] and [editorOffsetAt] instead interpolate between the tops of the
+ * blocks around the current offset, in either direction, given where the editor puts each source line. [syncScrolling]
+ * uses them to keep two [ScrollState]s in step.
  *
  * # Editing
  *
@@ -143,6 +151,26 @@ public abstract class ScrollingSynchronizer {
      */
     public abstract fun acceptTextLayout(block: MarkdownBlock, textLayout: TextLayoutResult)
 
+    /**
+     * Accept the [coordinates] of the scrolled content holding all the blocks. Block positions arrive relative to the
+     * composition root; this is what makes them relative to the preview when the preview doesn't start at the root.
+     * Called on first composition and whenever the content moves, including on every scroll.
+     */
+    public open fun acceptContentPosition(coordinates: LayoutCoordinates) {}
+
+    /**
+     * The preview scroll offset matching [editorOffset], interpolated between the tops of the two blocks around it, so
+     * that the preview keeps moving as long as the editor does.
+     *
+     * [editorOffsetOfLine] returns the editor scroll offset at which a source line starts, or `null` if the editor
+     * doesn't know that line. [editorMaxOffset] is the editor's maximum scroll offset; it is paired with the preview's
+     * so that both reach their ends together.
+     */
+    public abstract fun previewOffsetAt(editorOffset: Int, editorMaxOffset: Int, editorOffsetOfLine: (Int) -> Int?): Int
+
+    /** The editor scroll offset matching [previewOffset]. The inverse of [previewOffsetAt]. */
+    public abstract fun editorOffsetAt(previewOffset: Int, editorMaxOffset: Int, editorOffsetOfLine: (Int) -> Int?): Int
+
     /** Companion object for [ScrollingSynchronizer]. */
     public companion object {
         /**
@@ -206,18 +234,64 @@ public abstract class ScrollingSynchronizer {
         // so this map always keeps relevant information.
         private val blocks2TextOffsets = mutableMapOf<MarkdownBlock, List<Int>>()
 
+        // Parsing mutates the maps on whichever thread parses, while positions and lookups come from the UI thread.
+        private val lock = Any()
+
+        // Like block positions: measured from the root plus the scroll offset, so it doesn't change while scrolling.
+        private var contentTop = 0
+
         override suspend fun scrollToCoordinate(y: Int, animationSpec: AnimationSpec<Float>) {
             scrollState.animateScrollTo(y, animationSpec)
         }
 
-        override suspend fun findYCoordinateToScroll(sourceLine: Int): Int {
-            blocksSortedByPreference(sourceLine).forEach { block ->
-                val positionToScroll = block.positionToScroll(sourceLine)
-                if (positionToScroll != null) {
-                    return positionToScroll
-                }
+        override suspend fun findYCoordinateToScroll(sourceLine: Int): Int =
+            synchronized(lock) {
+                blocksSortedByPreference(sourceLine).asSequence().firstNotNullOfOrNull {
+                    it.positionToScroll(sourceLine)
+                } ?: 0
             }
-            return 0
+
+        override fun acceptContentPosition(coordinates: LayoutCoordinates) {
+            contentTop = coordinates.positionInRoot().y.toInt() + scrollState.value
+        }
+
+        override fun previewOffsetAt(editorOffset: Int, editorMaxOffset: Int, editorOffsetOfLine: (Int) -> Int?): Int =
+            anchors(editorMaxOffset, editorOffsetOfLine)
+                .interpolate(editorOffset, { it.editorOffset }, { it.previewOffset })
+
+        override fun editorOffsetAt(previewOffset: Int, editorMaxOffset: Int, editorOffsetOfLine: (Int) -> Int?): Int =
+            anchors(editorMaxOffset, editorOffsetOfLine)
+                .interpolate(previewOffset, { it.previewOffset }, { it.editorOffset })
+
+        /** The top of one block, as an editor scroll offset and as a preview scroll offset. */
+        private class Anchor(val editorOffset: Int, val previewOffset: Int)
+
+        /** One anchor per positioned block, sorted by editor offset, between both panes' zero and maximum offsets. */
+        private fun anchors(editorMaxOffset: Int, editorOffsetOfLine: (Int) -> Int?): List<Anchor> {
+            val previewMaxOffset = scrollState.maxValue
+            val blockAnchors =
+                synchronized(lock) {
+                    blocks2Top.mapNotNull { (block, top) ->
+                        val line = (block as? LocatableMarkdownBlock)?.lines?.first ?: return@mapNotNull null
+                        val editorOffset = editorOffsetOfLine(line) ?: return@mapNotNull null
+                        Anchor(editorOffset, top - contentTop)
+                    }
+                }
+            return blockAnchors
+                // Blocks on either edge would only add a jump: the first block sits below the panes' padding, and
+                // blocks in the last screenful never reach the top of a pane.
+                .filter { it.editorOffset in 1..<editorMaxOffset && it.previewOffset in 1..<previewMaxOffset }
+                .sortedWith(compareBy({ it.editorOffset }, { it.previewOffset }))
+                .let { listOf(Anchor(0, 0)) + it + Anchor(editorMaxOffset, previewMaxOffset) }
+        }
+
+        private fun List<Anchor>.interpolate(value: Int, from: (Anchor) -> Int, to: (Anchor) -> Int): Int {
+            val hi = indexOfFirst { from(it) >= value }
+            if (hi == 0) return to(first())
+            if (hi < 0) return to(last())
+            val lo = hi - 1 // from(lo) < value <= from(hi), so the divisor is never zero
+            val fraction = (value - from(this[lo])).toFloat() / (from(this[hi]) - from(this[lo]))
+            return (to(this[lo]) + (to(this[hi]) - to(this[lo])) * fraction).roundToInt()
         }
 
         private fun blocksSortedByPreference(sourceLine: Int) = iterator {
@@ -247,7 +321,7 @@ public abstract class ScrollingSynchronizer {
         }
 
         private fun MarkdownBlock.positionToScroll(sourceLine: Int): Int? {
-            val y = blocks2Top[this] ?: return null
+            val y = (blocks2Top[this] ?: return null) - contentTop
             val lineRange = (this as? LocatableMarkdownBlock)?.lines ?: return y
 
             // The line may be empty and represent no block,
@@ -261,14 +335,16 @@ public abstract class ScrollingSynchronizer {
         override fun beforeProcessing() {
             // acceptBlockSpans works on ALL the nodes, including those unchanged,
             // so it will be fully rebuilt during processing anyway
-            lines2Blocks.clear()
+            synchronized(lock) { lines2Blocks.clear() }
         }
 
         /**
          * Update the internal structures based on the difference between the blocks before and after the Markdown
          * source is edited.
          */
-        override fun afterProcessing() {
+        override fun afterProcessing(): Unit = synchronized(lock) { reconcileBlocks() }
+
+        private fun reconcileBlocks() {
             var firstChangedIndex = -1
             // First, find the "common prefix" before and after changes, in terms of topmost Markdown blocks whose
             // contents didn't change.
@@ -347,11 +423,13 @@ public abstract class ScrollingSynchronizer {
 
         override fun acceptBlockSpans(block: MarkdownBlock, sourceRange: IntRange): MarkdownBlock {
             val locatableMarkdownBlock = block as? LocatableMarkdownBlock ?: LocatableMarkdownBlock(block, sourceRange)
-            for (line in sourceRange) {
-                // DFS -- keep the innermost block for the given line
-                lines2Blocks.putIfAbsent(line, locatableMarkdownBlock)
+            synchronized(lock) {
+                for (line in sourceRange) {
+                    // DFS -- keep the innermost block for the given line
+                    lines2Blocks.putIfAbsent(line, locatableMarkdownBlock)
+                }
+                currentBlocks += locatableMarkdownBlock
             }
-            currentBlocks += locatableMarkdownBlock
             return locatableMarkdownBlock
         }
 
@@ -361,19 +439,27 @@ public abstract class ScrollingSynchronizer {
             // to get the real absolute coordinates we need to consider scroll state
             val y = coordinates.positionInRoot().y.toInt() + scrollState.value
 
-            // let's not recalculate internal structures on the preview scrolling -- more safety
-            val oldY = previousPositions[block]
-            if (oldY == null || y != oldY) {
-                blocks2Top[block] = y
-                previousPositions[block] = y
+            synchronized(lock) {
+                // let's not recalculate internal structures on the preview scrolling -- more safety
+                val oldY = previousPositions[block]
+                if (oldY == null || y != oldY) {
+                    blocks2Top[block] = y
+                    previousPositions[block] = y
+                }
             }
         }
 
         override fun acceptTextLayout(block: MarkdownBlock, textLayout: TextLayoutResult) {
             val originalBlock = (block as? LocatableMarkdownBlock)?.originalBlock ?: return
             if (originalBlock !is MarkdownBlock.CodeBlock) return
-            val sourceLines = block.lines
+            synchronized(lock) { blocks2TextOffsets[block] = textOffsets(originalBlock, block.lines, textLayout) }
+        }
 
+        private fun textOffsets(
+            originalBlock: MarkdownBlock.CodeBlock,
+            sourceLines: IntRange,
+            textLayout: TextLayoutResult,
+        ): List<Int> {
             var y = 0
             val list = mutableListOf<Int>()
 
@@ -430,7 +516,7 @@ public abstract class ScrollingSynchronizer {
                     y += lineHeight.toInt()
                 }
             }
-            blocks2TextOffsets[block] = list
+            return list
         }
     }
 }

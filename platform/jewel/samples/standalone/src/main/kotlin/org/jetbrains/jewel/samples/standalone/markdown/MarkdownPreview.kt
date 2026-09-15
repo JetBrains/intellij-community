@@ -1,9 +1,8 @@
 package org.jetbrains.jewel.samples.standalone.markdown
 
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.ScrollableState
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -20,8 +19,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.intui.markdown.standalone.ProvideMarkdownStyling
-import org.jetbrains.jewel.intui.markdown.standalone.dark
-import org.jetbrains.jewel.intui.markdown.standalone.light
 import org.jetbrains.jewel.intui.markdown.standalone.styling.dark
 import org.jetbrains.jewel.intui.markdown.standalone.styling.extensions.frontmatter.dark
 import org.jetbrains.jewel.intui.markdown.standalone.styling.extensions.frontmatter.light
@@ -32,7 +29,7 @@ import org.jetbrains.jewel.intui.markdown.standalone.styling.extensions.github.t
 import org.jetbrains.jewel.intui.markdown.standalone.styling.light
 import org.jetbrains.jewel.intui.standalone.code.highlighting.SimpleCodeHighlighter
 import org.jetbrains.jewel.intui.standalone.code.highlighting.SyntaxHighlightColors
-import org.jetbrains.jewel.markdown.LazyMarkdown
+import org.jetbrains.jewel.markdown.Markdown
 import org.jetbrains.jewel.markdown.MarkdownBlock
 import org.jetbrains.jewel.markdown.extensions.autolink.AutolinkProcessorExtension
 import org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatterProcessorExtension
@@ -47,14 +44,17 @@ import org.jetbrains.jewel.markdown.extensions.github.tables.GfmTableStyling
 import org.jetbrains.jewel.markdown.extensions.github.tables.GitHubTableProcessorExtension
 import org.jetbrains.jewel.markdown.extensions.github.tables.GitHubTableRendererExtension
 import org.jetbrains.jewel.markdown.extensions.images.Coil3ImageRendererExtension
+import org.jetbrains.jewel.markdown.extensions.markdownMode
 import org.jetbrains.jewel.markdown.processing.MarkdownProcessor
-import org.jetbrains.jewel.markdown.rendering.MarkdownBlockRenderer
+import org.jetbrains.jewel.markdown.rendering.InlineMarkdownRenderer
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling
+import org.jetbrains.jewel.markdown.rendering.create
+import org.jetbrains.jewel.markdown.scrolling.ScrollSyncMarkdownBlockRenderer
 import org.jetbrains.jewel.ui.component.VerticallyScrollableContainer
 import org.jetbrains.jewel.ui.component.scrollbarContentSafePadding
 
 @Composable
-internal fun MarkdownPreview(rawMarkdown: CharSequence, modifier: Modifier = Modifier) {
+internal fun MarkdownPreview(rawMarkdown: CharSequence, scrollState: ScrollState, modifier: Modifier = Modifier) {
     val isDark = JewelTheme.isDark
     val instanceUuid = JewelTheme.instanceUuid
 
@@ -65,57 +65,63 @@ internal fun MarkdownPreview(rawMarkdown: CharSequence, modifier: Modifier = Mod
     // We are doing this here for the sake of simplicity.
     // In a real-world scenario you would be doing this outside your Composables,
     // potentially involving ViewModels, dependency injection, etc.
-    val processor = remember {
-        MarkdownProcessor(
-            listOf(
-                AutolinkProcessorExtension,
-                FrontMatterProcessorExtension,
-                GitHubAlertProcessorExtension,
-                GitHubStrikethroughProcessorExtension(),
-                GitHubTableProcessorExtension,
+    // The mode is what makes the processor tag blocks with their source lines.
+    val markdownMode = JewelTheme.markdownMode
+    val processor =
+        remember(markdownMode) {
+            MarkdownProcessor(
+                listOf(
+                    AutolinkProcessorExtension,
+                    FrontMatterProcessorExtension,
+                    GitHubAlertProcessorExtension,
+                    GitHubStrikethroughProcessorExtension(),
+                    GitHubTableProcessorExtension,
+                ),
+                markdownMode,
             )
-        )
-    }
+        }
 
     val coilContext = LocalPlatformContext.current
     val coil3ImageRendererExtension =
         remember(coilContext) { Coil3ImageRendererExtension.withDefaultLoader(coilContext) }
 
+    // Cancelling this effect does not stop a parse that is already running, and the scrolling synchronizer tracks one
+    // parse at a time, so parses must never overlap: one background thread, in order.
+    @Suppress("InjectDispatcher") // This should never go in the composable IRL
+    val parsingDispatcher = remember { Dispatchers.Default.limitedParallelism(1) }
     LaunchedEffect(rawMarkdown) {
         // TODO you may want to debounce or drop on backpressure, in real usages. You should also
         // not do this
         //  in the UI to begin with.
-        @Suppress("InjectDispatcher") // This should never go in the composable IRL
-        markdownBlocks = withContext(Dispatchers.Default) { processor.processMarkdownDocument(rawMarkdown.toString()) }
+        markdownBlocks = withContext(parsingDispatcher) { processor.processMarkdownDocument(rawMarkdown.toString()) }
     }
 
     val blockRenderer =
         remember(markdownStyling) {
-            if (isDark) {
-                MarkdownBlockRenderer.dark(
-                    styling = markdownStyling,
-                    rendererExtensions =
-                        listOf(
-                            coil3ImageRendererExtension,
-                            FrontMatterRendererExtension(FrontMatterStyling.dark()),
-                            GitHubAlertRendererExtension(AlertStyling.dark(), markdownStyling),
-                            GitHubStrikethroughRendererExtension,
-                            GitHubTableRendererExtension(GfmTableStyling.dark(), markdownStyling),
-                        ),
-                )
-            } else {
-                MarkdownBlockRenderer.light(
-                    styling = markdownStyling,
-                    rendererExtensions =
-                        listOf(
-                            coil3ImageRendererExtension,
-                            FrontMatterRendererExtension(FrontMatterStyling.light()),
-                            GitHubAlertRendererExtension(AlertStyling.light(), markdownStyling),
-                            GitHubStrikethroughRendererExtension,
-                            GitHubTableRendererExtension(GfmTableStyling.light(), markdownStyling),
-                        ),
-                )
-            }
+            val rendererExtensions =
+                if (isDark) {
+                    listOf(
+                        coil3ImageRendererExtension,
+                        FrontMatterRendererExtension(FrontMatterStyling.dark()),
+                        GitHubAlertRendererExtension(AlertStyling.dark(), markdownStyling),
+                        GitHubStrikethroughRendererExtension,
+                        GitHubTableRendererExtension(GfmTableStyling.dark(), markdownStyling),
+                    )
+                } else {
+                    listOf(
+                        coil3ImageRendererExtension,
+                        FrontMatterRendererExtension(FrontMatterStyling.light()),
+                        GitHubAlertRendererExtension(AlertStyling.light(), markdownStyling),
+                        GitHubStrikethroughRendererExtension,
+                        GitHubTableRendererExtension(GfmTableStyling.light(), markdownStyling),
+                    )
+                }
+            // Reports every block's position to the scrolling synchronizer
+            ScrollSyncMarkdownBlockRenderer(
+                markdownStyling,
+                rendererExtensions,
+                InlineMarkdownRenderer.create(rendererExtensions),
+            )
         }
 
     // Using the values from the GitHub rendering to ensure contrast
@@ -125,15 +131,19 @@ internal fun MarkdownPreview(rawMarkdown: CharSequence, modifier: Modifier = Mod
             SimpleCodeHighlighter(if (isDark) SyntaxHighlightColors.dark() else SyntaxHighlightColors.light())
         }
 
-    ProvideMarkdownStyling(markdownStyling, blockRenderer, codeHighlighter) {
-        val lazyListState = rememberLazyListState()
-        VerticallyScrollableContainer(lazyListState as ScrollableState, modifier.background(background)) {
-            LazyMarkdown(
-                blocks = markdownBlocks,
-                modifier = Modifier.background(background),
-                contentPadding =
-                    PaddingValues(start = 8.dp, top = 8.dp, end = 8.dp + scrollbarContentSafePadding(), bottom = 8.dp),
-                state = lazyListState,
+    ProvideMarkdownStyling(markdownStyling, blockRenderer, codeHighlighter, markdownMode, processor) {
+        VerticallyScrollableContainer(scrollState = scrollState, modifier = modifier.background(background)) {
+            // Not LazyMarkdown: ScrollingSynchronizer.create() returns null for a LazyListState.
+            Markdown(
+                markdownBlocks = markdownBlocks,
+                markdown = rawMarkdown.toString(),
+                modifier =
+                    Modifier.padding(
+                        start = 8.dp,
+                        top = 8.dp,
+                        end = 8.dp + scrollbarContentSafePadding(),
+                        bottom = 8.dp,
+                    ),
                 selectable = true,
                 onUrlClick = { url: String -> getDesktop().browse(create(url)) },
             )
