@@ -172,8 +172,8 @@ object CoreModuleSets {
     // consumed by intellij.platform.ide - not by anything in corePlatform()
     embeddedModule("intellij.platform.welcomeScreen")
 
-    embeddedModule("intellij.platform.remoteServers.agent.rt")
-    embeddedModule("intellij.platform.remoteServers")
+    module("intellij.platform.remoteServers.agent.rt")
+    module("intellij.platform.remoteServers")
 
     embeddedModule("intellij.platform.usageView")
     embeddedModule("intellij.platform.credentialStore")

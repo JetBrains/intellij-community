@@ -217,8 +217,8 @@
     <!-- region direct modules -->
     <module name="intellij.platform.ide" loading="embedded"/>
     <module name="intellij.platform.welcomeScreen" loading="embedded"/>
-    <module name="intellij.platform.remoteServers.agent.rt" loading="embedded"/>
-    <module name="intellij.platform.remoteServers" loading="embedded"/>
+    <module name="intellij.platform.remoteServers.agent.rt"/>
+    <module name="intellij.platform.remoteServers"/>
     <module name="intellij.platform.usageView" loading="embedded"/>
     <module name="intellij.platform.credentialStore" loading="embedded"/>
     <!-- endregion -->

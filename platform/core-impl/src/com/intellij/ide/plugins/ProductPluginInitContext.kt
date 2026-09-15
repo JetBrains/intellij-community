@@ -529,6 +529,7 @@ private val contentModulesExtractedInCorePluginWhichCanBeUsedFromExternalPlugins
   "intellij.platform.externalSystem.impl",
   "intellij.platform.tasks",
   "intellij.platform.tasks.impl",
+  "intellij.platform.remoteServers",
   "intellij.platform.remoteServers.impl",
   "intellij.platform.scriptDebugger.ui",
   "intellij.platform.scriptDebugger.backend",
