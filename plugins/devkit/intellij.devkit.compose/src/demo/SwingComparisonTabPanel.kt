@@ -820,38 +820,38 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
           popupMenu.component.show(comp, 0, comp.height)
         }
       }
-        .align(AlignY.CENTER)
+        .align(AlignY.TOP)
 
       compose {
         var showJewelMenu by remember { mutableStateOf(false) }
 
-        Box(modifier = Modifier.height(150.dp)) {
-          OutlinedButton(onClick = { showJewelMenu = true }, modifier = Modifier.align(Alignment.Center)) {
-            Text("Open Jewel Menu")
-          }
+        Box(modifier = Modifier.size(width = 460.dp, height = 200.dp)) {
+          Box(modifier = Modifier.align(Alignment.TopStart)) {
+            OutlinedButton(onClick = { showJewelMenu = true }) { Text("Open Jewel Menu") }
 
-          if (showJewelMenu) {
-            PopupMenu(
-              onDismissRequest = { showJewelMenu = false; true },
-              horizontalAlignment = Alignment.Start,
-            ) {
-              selectableItem(selected = false, onClick = {}) { Text("Menu Item 1") }
-              selectableItem(selected = false, onClick = {}) { Text("Menu Item 2") }
-              selectableItem(selected = false, onClick = {}) { Text("Menu Item 3") }
-              separator()
-              submenu(submenu = {
-                selectableItem(selected = false, onClick = {}) { Text("Submenu Item 1") }
-                selectableItem(selected = false, onClick = {}) { Text("Submenu Item 2") }
-                selectableItem(selected = false, onClick = {}) { Text("Submenu Item 3") }
-              }) {
-                Text("Submenu")
+            if (showJewelMenu) {
+              PopupMenu(
+                onDismissRequest = { showJewelMenu = false; true },
+                horizontalAlignment = Alignment.Start,
+              ) {
+                selectableItem(selected = false, onClick = {}) { Text("Menu Item 1") }
+                selectableItem(selected = false, onClick = {}) { Text("Menu Item 2") }
+                selectableItem(selected = false, onClick = {}) { Text("Menu Item 3") }
+                separator()
+                submenu(submenu = {
+                  selectableItem(selected = false, onClick = {}) { Text("Submenu Item 1") }
+                  selectableItem(selected = false, onClick = {}) { Text("Submenu Item 2") }
+                  selectableItem(selected = false, onClick = {}) { Text("Submenu Item 3") }
+                }) {
+                  Text("Submenu")
+                }
+                separator()
+                selectableItem(selected = false, onClick = {}) { Text("Menu Item 4") }
               }
-              separator()
-              selectableItem(selected = false, onClick = {}) { Text("Menu Item 4") }
             }
           }
         }
-      }.align(AlignY.CENTER)
+      }.align(AlignY.TOP)
     }
       .layout(RowLayout.PARENT_GRID)
   }

@@ -343,6 +343,7 @@ public fun MenuContent(
     val scrollState = rememberScrollState()
     val colors = style.colors
     val menuShape = RoundedCornerShape(style.metrics.cornerSize)
+    val focusManager = LocalFocusManager.current
 
     DisposableEffect(selectableItems, localMenuController, localMenuItemShortcutProvider, localInputModeManager) {
         selectableItems.forEach { item ->
@@ -359,6 +360,8 @@ public fun MenuContent(
         onDispose { localMenuController.clearShortcutActions() }
     }
 
+    var selectedSubMenu by remember { mutableStateOf<SubmenuItem?>(null) }
+
     Box(
         modifier =
             modifier
@@ -371,11 +374,17 @@ public fun MenuContent(
                 )
                 .background(colors.background, menuShape)
                 .width(IntrinsicSize.Max)
-                .onHover { localMenuController.onHoveredChange(it) }
+                .onHover { hovered ->
+                    localMenuController.onHoveredChange(hovered)
+
+                    // Items arm themselves by taking focus, so moving between them needs no bookkeeping here. Only
+                    // leaving the menu has to disarm it, and not while one of its items is holding a submenu open:
+                    // Swing keeps that item armed because the selection path continues through it.
+                    if (!hovered && selectedSubMenu == null) focusManager.clearFocus(force = true)
+                }
     ) {
         Column(Modifier.clip(menuShape).verticalScroll(scrollState)) {
             Column(Modifier.padding(style.metrics.contentPadding)) {
-                var selectedSubMenu by remember { mutableStateOf<SubmenuItem?>(null) }
                 items.forEach { item ->
                     MenuItem(
                         item = item,
@@ -1089,7 +1098,7 @@ internal fun Submenu(
     Popup(
         popupPositionProvider = popupPositionProvider,
         onDismissRequest = { menuController.closeAll(InputMode.Touch, false) },
-        properties = PopupProperties(focusable = true),
+        properties = PopupProperties(focusable = true, consumePointerInputOutside = false),
         onPreviewKeyEvent = { false },
         cornerSize = style.metrics.cornerSize,
         onKeyEvent = {
