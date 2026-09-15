@@ -3,6 +3,8 @@
 
 package com.intellij.platform.projectView.impl
 
+import com.intellij.codeWithMe.ClientId
+import com.intellij.codeWithMe.asContextElement
 import com.intellij.ide.DataManager
 import com.intellij.ide.DeleteProvider
 import com.intellij.ide.IdeView
@@ -18,7 +20,6 @@ import com.intellij.ide.projectView.impl.ProjectViewPane
 import com.intellij.ide.projectView.impl.nodes.LibraryGroupElement
 import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement
 import com.intellij.ide.util.DirectoryChooserUtil
-import com.intellij.ide.util.EditorHelper
 import com.intellij.idea.AppMode
 import com.intellij.notebook.editor.BackedVirtualFile
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -29,7 +30,6 @@ import com.intellij.openapi.actionSystem.DataSnapshot
 import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ReadConstraint
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.constrainedReadAction
@@ -63,6 +63,7 @@ import com.intellij.platform.projectView.pane.ProjectViewPaneDnDHandler
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
 import com.intellij.platform.projectView.pane.ProjectViewPaneLoadChildrenOptions
 import com.intellij.platform.projectView.pane.ProjectViewPaneModel
+import com.intellij.platform.projectView.pane.ProjectViewPaneNavigateOptionsImpl
 import com.intellij.platform.projectView.pane.ProjectViewPaneSelectionOptions
 import com.intellij.platform.projectView.pane.ProjectViewPaneStateBuilder
 import com.intellij.platform.projectView.pane.SUPER_ROOT_ID
@@ -410,6 +411,8 @@ abstract class TreeBasedProjectViewPaneModel<T : Any>(override val project: Proj
     }
   }
 
+  private data class SelectRequest(val elementPointer: SmartPsiElementPointer<PsiElement>, val clientId: ClientId)
+
   private inner class ProjectViewPaneTreeState(
     private val id: ProjectViewPaneId,
     private val builder: ProjectViewPaneStateBuilder,
@@ -420,7 +423,8 @@ abstract class TreeBasedProjectViewPaneModel<T : Any>(override val project: Proj
 
     private val stateUpdateRequests = Channel<StateUpdateRequest>(capacity = Channel.UNLIMITED)
     // Only the latest selection matters, so an old pending request may be dropped in favor of a newer one.
-    private val selectRequests = Channel<SmartPsiElementPointer<PsiElement>>(capacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    private val selectRequests = Channel<SelectRequest>(capacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
     private val pendingUpdates = ConcurrentHashMap<Long, ProjectViewNodeUpdateOptions>()
 
     private val pendingUpdatesSignal = MutableStateFlow(0L)
@@ -556,7 +560,7 @@ abstract class TreeBasedProjectViewPaneModel<T : Any>(override val project: Proj
     }
 
     fun scheduleSelectElement(element: PsiElement) {
-      selectRequests.trySend(element.createSmartPointer())
+      selectRequests.trySend(SelectRequest(element.createSmartPointer(), ClientId.current))
     }
 
     private fun scheduleProcessPendingUpdates(): Long {
@@ -619,23 +623,24 @@ abstract class TreeBasedProjectViewPaneModel<T : Any>(override val project: Proj
       return existingChildren
     }
 
-    private suspend fun selectElementImpl(elementPointer: SmartPsiElementPointer<PsiElement>) {
+    private suspend fun selectElementImpl(request: SelectRequest) {
       // Make sure everything submitted before the selection request is reflected in the tree,
       // so that a just-created element can be found (the equivalent of the old myNodeUpdater.updateImmediately).
       awaitPendingUpdates()
       val (target, isDir) = readAction {
-        val element = elementPointer.dereference() ?: return@readAction null
+        val element = request.elementPointer.dereference() ?: return@readAction null
         val file = if (element.isValid) PsiUtilCore.getVirtualFile(element) else null
-        Pair(SelectTarget(elementPointer, file), element is PsiDirectory)
+        Pair(SelectTarget(request.elementPointer, file), element is PsiDirectory)
       } ?: return
       val nodePath = findNodePathForTarget(target) ?: return
       var requestFocus = isDir
       // Old school legacy stuff: open the new file if it's a file.
       if (!isDir) {
-        withContext(Dispatchers.EDT) {
-          val element = target.elementPointer?.dereference() ?: return@withContext
-          // If the editor can't be opened, focus the new file in the PV at least.
-          requestFocus = EditorHelper.openInEditor(element, false, true) == null
+        withContext(request.clientId.asContextElement()) { // the editor has to know the client ID to focus it on the frontend
+          if (!navigate(nodePath.nodeIds.last(), ProjectViewPaneNavigateOptionsImpl(requestFocus = true))) {
+            // If the editor can't be opened, focus the new file in the PV at least.
+            requestFocus = true
+          }
         }
       }
       schedule { SelectNodeRequest(it, nodePath, requestFocus) }

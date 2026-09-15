@@ -54,8 +54,8 @@ abstract class TreeStructureBasedProjectViewPaneModel(project: Project) : TreeBa
     }
   }
 
-  override suspend fun navigate(nodeId: Long, options: ProjectViewPaneNavigateOptions) {
-    navigateToTreeStructureNode(project, suspendingState?.getNodeById(nodeId), options)
+  override suspend fun navigate(nodeId: Long, options: ProjectViewPaneNavigateOptions): Boolean {
+    return navigateToTreeStructureNode(project, suspendingState?.getNodeById(nodeId), options)
   }
 
   override fun createSelectNodeVisitorProvider(): ProjectViewSelectNodeVisitorProvider<TreeStructureProjectViewNode> {
@@ -69,10 +69,10 @@ suspend fun navigateToTreeStructureNode(
   project: Project,
   node: BackendProjectViewNodeModel<TreeStructureProjectViewNode>?,
   options: ProjectViewPaneNavigateOptions,
-) {
-  val navigatable = node?.userObject?.elementDescriptor as? Navigatable? ?: return
-  val navigationRequest = readAction { navigatable.navigationRequest() } ?: return
-  NavigationService.getInstance(project).navigate(
+): Boolean {
+  val navigatable = node?.userObject?.elementDescriptor as? Navigatable? ?: return false
+  val navigationRequest = readAction { navigatable.navigationRequest() } ?: return false
+  return NavigationService.getInstance(project).navigate(
     request = navigationRequest,
     options = NavigationOptions.defaultOptions()
       .requestFocus(options.requestFocus),

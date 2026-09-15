@@ -226,10 +226,10 @@ private class LegacyBackendProjectViewPaneModel(
   }
 
   override suspend fun navigate(
-    nodeId: Long,
-    options: ProjectViewPaneNavigateOptions,
-  ) {
-    withContext(Dispatchers.UI) {
+      nodeId: Long,
+      options: ProjectViewPaneNavigateOptions,
+  ): Boolean {
+    return withContext(Dispatchers.UI) {
       legacyPaneManager.navigate(nodeId, options.requestFocus)
     }
   }
@@ -631,11 +631,11 @@ private class AbstractProjectViewPaneStateManager(
 
   private fun isExpandOnDoubleClick(node: Any): Boolean = (TreeUtil.getUserObject(node) as? NodeDescriptor<*>)?.expandOnDoubleClick() != false
 
-  suspend fun navigate(id: Long, requestFocus: Boolean) {
-    val node = nodeById[id] ?: return
-    val navigatable = TreeUtil.getUserObject(node.modelNode) as? Navigatable? ?: return
-    val navigationRequest = readAction { navigatable.navigationRequest() } ?: return
-    NavigationService.getInstance(project).navigate(
+  suspend fun navigate(id: Long, requestFocus: Boolean): Boolean {
+    val node = nodeById[id] ?: return false
+    val navigatable = TreeUtil.getUserObject(node.modelNode) as? Navigatable? ?: return false
+    val navigationRequest = readAction { navigatable.navigationRequest() } ?: return false
+    return NavigationService.getInstance(project).navigate(
       request = navigationRequest,
       options = NavigationOptions.defaultOptions()
         .requestFocus(requestFocus),
