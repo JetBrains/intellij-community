@@ -246,14 +246,18 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
             ParallelQueueProcessor.createRunning(
               scope = this@launch, jobsNumber = MAX_JOBS, initialItems = state.roots, workerJobYieldTimeout = 50.milliseconds
             ) processor@{ handle, file ->
-              if (!state.visitingRootAllowed(file)) return@processor
-              val searchValidFile = state.processFileSubtree(file, workspaceFileIndex, handle)
-              if (searchValidFile == null) return@processor
+              if (state.isAlreadyVisitedRoot(file)) return@processor
+              val shouldProcessSubtree = NonIndexableFilesDequeImpl.getSubtreeProcessingModeAt(file, workspaceFileIndex)
+              if (shouldProcessSubtree.shouldProcessChildren()) {
+                file.children.forEach(handle::queueSpawningWorkerJobIfNotAtLimit)
+              }
 
-              val filePath = searchValidFile.path
+              if (!shouldProcessSubtree.shouldProcessRoot()) return@processor
+
+              val filePath = file.path
               val rootOfFile = state.getPathRootOfPath(filePath)
               if (rootOfFile == null) {
-                LOG.warn("File $searchValidFile that was yielded as a file under a non-indexable root didn't match any non-indexable roots; Continue search...")
+                LOG.warn("File $file that was yielded as a file under a non-indexable root didn't match any non-indexable roots; Continue search...")
                 return@processor
               }
 
@@ -386,22 +390,13 @@ private class SearchJobsState {
     return rootsPaths.firstOrNull { filePath.startsWith(it) }
   }
 
-  fun visitingRootAllowed(file: VirtualFile): Boolean {
-    if (file in visitedRoots) return false
-    if (file in roots) visitedRoots.add(file)
-    return true
-  }
-
-  fun processFileSubtree(
-    file: VirtualFile, workspaceFileIndex: WorkspaceFileIndexEx,
-    processorHandle: ParallelQueueProcessor<VirtualFile>
-  ): VirtualFile? {
-    val shouldProcess = NonIndexableFilesDequeImpl.shouldProcessFileAndListChildrenIfTheyShouldBe(workspaceFileIndex, file) { children ->
-      for (child in children) {
-        processorHandle.queueSpawningWorkerJobIfNotAtLimit(child)
-      }
-    }
-    return if (shouldProcess) file else null
+  /**
+   * @return `true` if the file is an already visited root. `false` if the file is not a root, or a root which is not visited yet
+   */
+  fun isAlreadyVisitedRoot(file: VirtualFile): Boolean {
+    if (file in visitedRoots) return true
+    if (file in roots) !visitedRoots.add(file)
+    return false
   }
 
   fun emitResult(file: VirtualFile, score: Int) {

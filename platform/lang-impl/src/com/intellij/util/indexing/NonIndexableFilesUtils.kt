@@ -5,7 +5,6 @@ package com.intellij.util.indexing
 
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runReadActionBlocking
-import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentIterator
@@ -14,9 +13,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.openapi.vfs.VirtualFileVisitor
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
-import com.intellij.platform.eel.provider.LocalEelDescriptor
-import com.intellij.platform.eel.provider.getEelDescriptor
-import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
@@ -137,8 +133,8 @@ interface FilesDeque {
     ): FilesDeque {
       val workspaceFileIndex = WorkspaceFileIndexEx.getInstance(project)
       val roots = when {
-          searchInLibraries -> workspaceFileIndex.nonIndexableRootsAsCacheAvoiding()
-          else -> workspaceFileIndex.nonIndexableRootsAsCacheAvoiding { fileSet -> fileSet.kind.isContent }
+        searchInLibraries -> workspaceFileIndex.nonIndexableRootsAsCacheAvoiding()
+        else -> workspaceFileIndex.nonIndexableRootsAsCacheAvoiding { fileSet -> fileSet.kind.isContent }
       }
       return NonIndexableFilesDequeImpl(project, roots, filter)
     }
@@ -153,36 +149,36 @@ class NonIndexableFilesDequeImpl internal constructor(
 ) : FilesDeque {
 
   companion object {
-    @JvmStatic
     @ApiStatus.Internal
-    fun shouldProcessFileAndListChildrenIfTheyShouldBe(project: Project, file: VirtualFile, childrenProcessor: (Array<VirtualFile>) -> Unit): Boolean {
-      val workspaceFileIndex = WorkspaceFileIndexEx.getInstance(project)
-      return shouldProcessFileAndListChildrenIfTheyShouldBe(workspaceFileIndex, file, childrenProcessor)
+    enum class SubtreeProcessingMode {
+      NONE, ROOT, ROOT_AND_CHILDREN, CHILDREN;
+
+      fun shouldProcessRoot(): Boolean = this == ROOT || this == ROOT_AND_CHILDREN
+      fun shouldProcessChildren(): Boolean = this == CHILDREN || this == ROOT_AND_CHILDREN
+
+      companion object {
+        fun fromPair(shouldProcessRoot: Boolean, shouldProcessChildren: Boolean): SubtreeProcessingMode {
+          return if (shouldProcessRoot) {
+            if (shouldProcessChildren) ROOT_AND_CHILDREN else ROOT
+          }
+          else {
+            if (shouldProcessChildren) CHILDREN else NONE
+          }
+        }
+      }
     }
 
-    @JvmStatic
     @ApiStatus.Internal
-    fun shouldProcessFileAndListChildrenIfTheyShouldBe(workspaceFileIndex: WorkspaceFileIndexEx, file: VirtualFile, childrenProcessor: (Array<VirtualFile>) -> Unit): Boolean {
-      if (workspaceFileIndex.isExcludedOrInvalid(file)) return false
-      val indexableFileSetsFromFile = workspaceFileIndex.allIndexableFileSets(file)
-      if (indexableFileSetsFromFile.recursive.isNotEmpty()) return false
+    fun getSubtreeProcessingModeAt(file: VirtualFile, workspaceFileIndex: WorkspaceFileIndexEx): SubtreeProcessingMode {
+      if (workspaceFileIndex.isExcludedOrInvalid(file)) return SubtreeProcessingMode.NONE
 
-      // This cancellation is not installed when run from under coroutines
-      // Hence this generally does nothing but enabling the inline execution of DiskQueryRelay
-      // Since we are on a polled thread without global lock model affinity here, we don't care
-      // (vfs has internal consistency)
-      // Would be great but the plaform callsites don't allow this
-      //ThreadingAssertions.assertBackgroundThread()
-      //ThreadingAssertions.assertNoReadAccess()
-      // Have to to each with cancellations :( or platform gets angry
-      //nonCancellableIfFileIsLocal(file) { file ->
-        if (file.isValid && !file.isRecursiveOrCircularSymlink) {
-          val children = file.children
-          childrenProcessor(children)
-        }
-      //}
-      if (indexableFileSetsFromFile.nonRecursive.isNotEmpty()) return false // skip only the current file, children can be non-indexable
-      return true
+      val indexableFileSetsFromFile = workspaceFileIndex.allIndexableFileSets(file)
+      if (indexableFileSetsFromFile.recursive.isNotEmpty()) return SubtreeProcessingMode.NONE
+
+      val shouldProcessChildren = (file.isValid && !file.isRecursiveOrCircularSymlink)
+      val shouldProcessRoot = indexableFileSetsFromFile.nonRecursive.isEmpty() // skip only the current file, children can be non-indexable
+
+      return SubtreeProcessingMode.fromPair(shouldProcessRoot, shouldProcessChildren)
     }
   }
 
@@ -196,10 +192,12 @@ class NonIndexableFilesDequeImpl internal constructor(
       if (file in visitedRoots) continue
       if (file in roots) visitedRoots.add(file)
 
-      val shouldProcessSelf = shouldProcessFileAndListChildrenIfTheyShouldBe(project, file) { children ->
-        bfsQueue.addAll(children)
+      val subtreeProcessingMode = getSubtreeProcessingModeAt(file, WorkspaceFileIndexEx.getInstance(project))
+
+      if (subtreeProcessingMode.shouldProcessChildren()) {
+        bfsQueue.addAll(file.children)
       }
-      if (!shouldProcessSelf) continue
+      if (!subtreeProcessingMode.shouldProcessRoot()) continue
       if (!runReadActionBlocking { filter.accept(file) }) continue // skip only the current file, children can pass the filter
 
       return file
