@@ -30,7 +30,15 @@ public final class BinaryFileTypeDecompilers extends FileTypeExtension<BinaryFil
   }
 
   public void notifyDecompilerSetChange() {
-    ApplicationManager.getApplication().invokeLater(() -> FileDocumentManager.getInstance().reloadBinaryFiles(), ModalityState.nonModal());
+    Application application = ApplicationManager.getApplication();
+    // The change can be the disposal of a headless application, which removes its decompilers.
+    // The `Application` is gone when the event queue runs the reload, so we get the document manager now (when it's still available).
+    FileDocumentManager manager = FileDocumentManager.getInstance();
+    application.invokeLater(() -> {
+      if (!application.isDisposed()) {
+        manager.reloadBinaryFiles();
+      }
+    }, ModalityState.nonModal());
   }
 
   public static BinaryFileTypeDecompilers getInstance() {
