@@ -1,14 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl.light.nodes
 
-import com.fasterxml.jackson.core.JsonFactory
-import com.fasterxml.jackson.core.JsonParser
-import com.fasterxml.jackson.core.json.JsonReadFeature
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.json.JsonMapper
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
-import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
@@ -21,6 +13,14 @@ import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.containers.ConcurrentFactoryMap
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject
 import org.jetbrains.annotations.ApiStatus
+import tools.jackson.core.StreamReadFeature
+import tools.jackson.core.json.JsonFactory
+import tools.jackson.core.json.JsonReadFeature
+import tools.jackson.databind.JsonNode
+import tools.jackson.databind.json.JsonMapper
+import tools.jackson.dataformat.yaml.YAMLFactory
+import tools.jackson.dataformat.yaml.YAMLMapper
+import tools.jackson.dataformat.yaml.YAMLWriteFeature
 import java.io.InputStream
 import java.util.concurrent.CancellationException
 
@@ -109,22 +109,23 @@ class JsonSchemaObjectStorage {
   }
 }
 
-internal val json5ObjectMapper = JsonMapper(
+internal val json5ObjectMapper = JsonMapper.builder(
   JsonFactory.builder()
     .enable(JsonReadFeature.ALLOW_JAVA_COMMENTS)
     .enable(JsonReadFeature.ALLOW_SINGLE_QUOTES)
-    .enable(JsonReadFeature.ALLOW_UNQUOTED_FIELD_NAMES)
+    .enable(JsonReadFeature.ALLOW_UNQUOTED_PROPERTY_NAMES)
     .enable(JsonReadFeature.ALLOW_MISSING_VALUES)
     .enable(JsonReadFeature.ALLOW_TRAILING_COMMA)
     .enable(JsonReadFeature.ALLOW_LEADING_DECIMAL_POINT_FOR_NUMBERS)
     .enable(JsonReadFeature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER)
     .enable(JsonReadFeature.ALLOW_NON_NUMERIC_NUMBERS)
+    .enable(StreamReadFeature.INCLUDE_SOURCE_IN_LOCATION)
     .build()
-).enable(JsonParser.Feature.INCLUDE_SOURCE_IN_LOCATION)
+).build()
 
 
-internal val yamlObjectMapper = ObjectMapper(
+internal val yamlObjectMapper = YAMLMapper.builder(
   YAMLFactory.builder()
-    .disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER)
+    .disable(YAMLWriteFeature.WRITE_DOC_START_MARKER)
     .build()
-)
+).build()

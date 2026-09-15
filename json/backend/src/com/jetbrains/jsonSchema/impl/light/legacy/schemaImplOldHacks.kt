@@ -25,14 +25,14 @@ internal fun JsonSchemaObjectBackedByJacksonBase.tryReadEnumMetadata(): Map<Stri
   }?.value?.properties()?.asSequence()
     ?.mapNotNull { (name, valueNode) ->
       when {
-        valueNode.isTextual -> {
-          name to mapOf(DESCRIPTION to valueNode.asText())
+        valueNode.isString -> {
+          name to mapOf(DESCRIPTION to valueNode.asString())
         }
         valueNode.isObject -> {
           name to valueNode.properties().asSequence()
             .mapNotNull { (fieldName, fieldValue) ->
-              if (fieldValue.isTextual) {
-                fieldName to fieldValue.asText()
+              if (fieldValue.isString) {
+                fieldName to fieldValue.asString()
               }
               else {
                 null

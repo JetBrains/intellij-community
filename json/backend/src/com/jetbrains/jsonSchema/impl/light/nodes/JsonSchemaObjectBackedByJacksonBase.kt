@@ -1,8 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl.light.nodes
 
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.node.ArrayNode
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.keyFMap.KeyFMap
@@ -35,6 +33,8 @@ import com.jetbrains.jsonSchema.impl.light.legacy.tryReadEnumMetadata
 import com.jetbrains.jsonSchema.impl.light.resolveLocalSchemaNode
 import com.jetbrains.jsonSchema.impl.light.versions.JsonSchemaInterpretationStrategy
 import org.jetbrains.annotations.ApiStatus
+import tools.jackson.databind.JsonNode
+import tools.jackson.databind.node.ArrayNode
 import java.util.Collections
 import java.util.concurrent.atomic.AtomicReference
 
@@ -506,10 +506,10 @@ abstract class JsonSchemaObjectBackedByJacksonBase(
     return JacksonSchemaNodeAccessor.readNodeAsMapEntries(rawSchemaNode, X_INTELLIJ_METADATA)
       ?.mapNotNull {
         val values = (it.second as? ArrayNode)?.let {
-          it.elements().asSequence().mapNotNull {
-            it.takeIf { it.isTextual }?.asText()
+          it.values().asSequence().mapNotNull {
+            it.takeIf { it.isString }?.asString()
           }.toList()
-        } ?: it.second.takeIf { it.isTextual }?.asText()?.let { listOf(it) }
+        } ?: it.second.takeIf { it.isString }?.asString()?.let { listOf(it) }
         if (values.isNullOrEmpty()) null
         else JsonSchemaMetadataEntry(it.first, values)
       }?.toList()

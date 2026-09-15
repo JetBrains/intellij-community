@@ -2,13 +2,14 @@
 package com.jetbrains.jsonSchema.fus
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import com.fasterxml.jackson.core.JsonFactory
-import com.fasterxml.jackson.core.StreamReadFeature
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.openapi.diagnostic.thisLogger
+import tools.jackson.core.JacksonException
+import tools.jackson.core.StreamReadFeature
+import tools.jackson.core.json.JsonFactory
+import tools.jackson.databind.json.JsonMapper
 import java.io.IOException
 
 /**
@@ -42,9 +43,9 @@ internal class JsonSchemaIdValidationRule : CustomValidationRule() {
       val bundledDataStream =
         try {
           JsonSchemaIdValidationRule::class.java.getResourceAsStream("KnownSchemaIdentifiers.json").use { stream ->
-            val objectMapper = ObjectMapper(
+            val objectMapper = JsonMapper.builder(
               JsonFactory.builder().enable(StreamReadFeature.INCLUDE_SOURCE_IN_LOCATION).build()
-            )
+            ).build()
             objectMapper.readValue<ArrayList<KnownJsonSchemaIdentity>>(
               stream,
               objectMapper.typeFactory.constructCollectionType(ArrayList::class.java, KnownJsonSchemaIdentity::class.java)
@@ -52,6 +53,10 @@ internal class JsonSchemaIdValidationRule : CustomValidationRule() {
           }
         }
         catch (exception: IOException) {
+          thisLogger().warn("Failed to load bundled allowed schema identifiers", exception)
+          return emptySet()
+        }
+        catch (exception: JacksonException) {
           thisLogger().warn("Failed to load bundled allowed schema identifiers", exception)
           return emptySet()
         }

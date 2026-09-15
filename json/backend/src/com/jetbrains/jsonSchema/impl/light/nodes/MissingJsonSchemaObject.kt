@@ -1,13 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl.light.nodes
 
-import com.fasterxml.jackson.databind.node.MissingNode
 import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.jsonSchema.impl.IfThenElse
 import com.jetbrains.jsonSchema.impl.JsonSchemaMetadataEntry
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject
 import com.jetbrains.jsonSchema.impl.JsonSchemaType
 import com.jetbrains.jsonSchema.impl.light.SCHEMA_ROOT_POINTER
+import tools.jackson.databind.node.MissingNode
 
 private val ERROR_MESSAGE by lazy {
   "MissingJsonSchemaObject does not provide any meaningful method implementations"

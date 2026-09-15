@@ -1,10 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl.light.nodes
 
-import com.fasterxml.jackson.core.JsonPointer
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.node.ArrayNode
-import com.fasterxml.jackson.databind.node.MissingNode
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.asSafely
@@ -12,6 +8,10 @@ import com.intellij.util.io.URLUtil
 import com.jetbrains.jsonSchema.impl.EnumArrayValueWrapper
 import com.jetbrains.jsonSchema.impl.EnumObjectValueWrapper
 import com.jetbrains.jsonSchema.impl.light.RawJsonSchemaNodeAccessor
+import tools.jackson.core.JsonPointer
+import tools.jackson.databind.JsonNode
+import tools.jackson.databind.node.ArrayNode
+import tools.jackson.databind.node.MissingNode
 
 internal object JacksonSchemaNodeAccessor : RawJsonSchemaNodeAccessor<JsonNode> {
   override fun resolveNode(rootNode: JsonNode, absoluteNodeJsonPointer: String): JsonNode? {
@@ -35,7 +35,7 @@ internal object JacksonSchemaNodeAccessor : RawJsonSchemaNodeAccessor<JsonNode> 
   override fun readTextNodeValue(node: JsonNode, relativeChildPath: String?): String? {
     if (!node.isObject && relativeChildPath != null) return null
     val maybeString = getExistingChildByNonEmptyPathOrSelf(node, relativeChildPath)
-    return if (maybeString.isTextual) maybeString.asText() else null
+    return if (maybeString.isString) maybeString.asString() else null
   }
 
   override fun readBooleanNodeValue(node: JsonNode, relativeChildPath: String?): Boolean? {
@@ -72,12 +72,12 @@ internal object JacksonSchemaNodeAccessor : RawJsonSchemaNodeAccessor<JsonNode> 
     readNodeAsMapEntries(node, relativeChildPath)
       ?.mapNotNull { (stringKey, arrayValue) ->
         if (!arrayValue.isArray) return@mapNotNull null
-        stringKey to arrayValue.elements().asSequence().mapNotNull { if (it.isTextual) it.asText() else null }.toList()
+        stringKey to arrayValue.values().asSequence().mapNotNull { if (it.isString) it.asString() else null }.toList()
       }
 
   override fun readNodeKeys(node: JsonNode, relativeChildPath: String?): Sequence<String>? {
     val expandedNode = getExistingChildByNonEmptyPathOrSelf(node, relativeChildPath)
-    return expandedNode.fieldNames().takeIf(Iterator<String>::hasNext)?.asSequence()
+    return expandedNode.propertyNames().takeIf { it.isNotEmpty() }?.asSequence()
   }
 
   private fun getExistingChildByNonEmptyPathOrSelf(node: JsonNode, directChildName: String? = null): JsonNode =
@@ -89,24 +89,24 @@ internal object JacksonSchemaNodeAccessor : RawJsonSchemaNodeAccessor<JsonNode> 
     else getExistingChildByNonEmptyPathOrSelf(node, relativeChildPath)
       .takeIf { it.isArray }
       ?.asSafely<ArrayNode>()
-      ?.elements()
+      ?.values()
       ?.asSequence()
 
   private fun readAnything(node: JsonNode): Any? = when {
-    node.isTextual -> asDoubleQuotedTextOrNull(node)
-    node.isNull -> node.asText()
+    node.isString -> asDoubleQuotedTextOrNull(node)
+    node.isNull -> "null"
     node.isInt -> node.asInt()
     node.isLong -> node.asLong()
     node.isDouble -> node.asDouble()
     node.isBoolean -> node.asBoolean()
     node.isObject -> EnumObjectValueWrapper(node.properties().asSequence().mapNotNull { it.key to readAnything(it.value) }.toMap())
-    node.isArray -> EnumArrayValueWrapper(node.elements().asSequence().mapNotNull(JacksonSchemaNodeAccessor::readAnything).toList().toTypedArray())
+    node.isArray -> EnumArrayValueWrapper(node.values().asSequence().mapNotNull(JacksonSchemaNodeAccessor::readAnything).toList().toTypedArray())
     else -> null
   }
 
   private fun asDoubleQuotedTextOrNull(jsonNode: JsonNode): String? =
-    if (!jsonNode.isTextual) null
-    else jsonNode.asText().asDoubleQuotedString()
+    if (!jsonNode.isString) null
+    else jsonNode.asString().asDoubleQuotedString()
 
   private fun escapeAndCompileJsonPointer(unescapedPointer: String): JsonPointer? =
     if (!fastCheckIfCorrectPointer(unescapedPointer)) null

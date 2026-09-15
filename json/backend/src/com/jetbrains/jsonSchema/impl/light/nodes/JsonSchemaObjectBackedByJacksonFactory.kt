@@ -1,12 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl.light.nodes
 
-import com.fasterxml.jackson.databind.JsonNode
 import com.intellij.util.containers.ConcurrentFactoryMap
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject
 import com.jetbrains.jsonSchema.impl.JsonSchemaReader
 import com.jetbrains.jsonSchema.impl.light.JsonSchemaObjectFactory
 import com.jetbrains.jsonSchema.impl.light.ROOT_POINTER_VARIANTS
+import tools.jackson.databind.JsonNode
 
 internal class JsonSchemaObjectBackedByJacksonFactory(private val rootSchemaObject: RootJsonSchemaObjectBackedByJackson) : JsonSchemaObjectFactory<JsonNode, JsonSchemaObjectBackedByJacksonBase> {
 

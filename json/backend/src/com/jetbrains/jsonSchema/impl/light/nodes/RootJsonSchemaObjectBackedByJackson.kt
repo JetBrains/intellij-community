@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl.light.nodes
 
-import com.fasterxml.jackson.databind.JsonNode
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.sequenceOfNotNull
@@ -12,6 +11,7 @@ import com.jetbrains.jsonSchema.impl.light.X_INTELLIJ_LANGUAGE_INJECTION
 import com.jetbrains.jsonSchema.impl.light.versions.JsonSchemaInterpretationStrategy
 import com.jetbrains.jsonSchema.impl.light.versions.computeJsonSchemaVersion
 import org.jetbrains.annotations.ApiStatus
+import tools.jackson.databind.JsonNode
 
 private val IDS_MAP_KEY = Key<Map<String, String>>("ids")
 private val DYNAMIC_ANCHORS_MAP_KEY = Key<Map<String, String>>("dynamicAnchors")
@@ -84,9 +84,9 @@ class RootJsonSchemaObjectBackedByJackson(rootNode: JsonNode, val schemaFile: Vi
   private fun collectValuesWithKey(expectedKey: String, storeIn: Key<Map<String, String>>): Map<String, String> {
     return getOrComputeValue(storeIn) {
       indexSchema(rawSchemaNode) { node, parentPointer ->
-        if (!node.isTextual || parentPointer.lastOrNull() != expectedKey) return@indexSchema null
+        if (!node.isString || parentPointer.lastOrNull() != expectedKey) return@indexSchema null
 
-        val leafNodeText = node.asText()
+        val leafNodeText = node.asString()
         val jsonPointer = parentPointer.take(parentPointer.size - 1)
           .joinToString(prefix = "/", separator = "/", transform = ::escapeForbiddenJsonPointerSymbols)
 
@@ -109,11 +109,11 @@ class RootJsonSchemaObjectBackedByJackson(rootNode: JsonNode, val schemaFile: Vi
         val retrievedValue = retrieveDataFromNode(root, parentPointer)
         if (retrievedValue != null) return sequenceOf(retrievedValue)
 
-        root.elements().asSequence().flatMapIndexed { index, arrayItem ->
+        root.values().asSequence().flatMapIndexed { index, arrayItem ->
           indexSchema(arrayItem, parentPointer + index.toString(), retrieveDataFromNode)
         }
       }
-      root.isTextual -> {
+      root.isString -> {
         val retrievedValue = retrieveDataFromNode(root, parentPointer)
         sequenceOfNotNull(retrievedValue)
       }

@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.actions
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.intellij.json.JsonBundle
 import com.intellij.json.JsonFileType
 import com.intellij.json.JsonUtil
@@ -24,6 +23,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.testFramework.LightVirtualFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import tools.jackson.databind.json.JsonMapper
 
 internal class JsonJacksonReformatAction : AnAction(), LargeFileWriteRequestor {
   override fun update(e: AnActionEvent) {
@@ -42,7 +42,7 @@ internal class JsonJacksonReformatAction : AnAction(), LargeFileWriteRequestor {
     runWithModalProgressBlocking(project, JsonBundle.message("JsonJacksonReformatAction.progress.title.json.reformatting")) {
 
       val formatted = withContext(Dispatchers.IO) {
-        val objectMapper = ObjectMapper()
+        val objectMapper = JsonMapper.builder().build()
         val parsed = virtualFile.inputStream.use { objectMapper.readTree(it) }
         objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(parsed)
       }
