@@ -37,14 +37,6 @@ DevDistPlatformPayloadInfo = provider(
     },
 )
 
-def _declared_modules(ctx, packed_members):
-    """The payload modules a fragment still declares: the payload minus the members of the packed jars.
-
-    A move of the pruning from fetch time to analysis time. A repository rule used to prune the payload with a
-    checked-in table of packed module names; the packing answer is a provider, so the pruning happens here.
-    """
-    return {name: True for name in ctx.attr.modules_by_name if name not in packed_members}
-
 def _dev_dist_platform_payload_impl(ctx):
     packed_jars = []
     packed_metadata = []
@@ -80,12 +72,24 @@ def _dev_dist_platform_payload_impl(ctx):
 
     packed_members = {name: True for name in packed_member_names}
 
+    # The payload minus the members of the packed jars, by the JPS module name `jvm_library` sets on `KtJvmInfo`. That
+    # name is the key the packed jars' `member_modules` and the fragment's `owned_inputs` use too, so nothing has to
+    # repeat the payload as a name list. A repository rule used to prune the payload with a checked-in table of packed
+    # module names; the packing answer is a provider, so the pruning happens here.
+    declared_modules = []
+    for target in ctx.attr.modules:
+        module_name = getattr(target[_KtJvmInfo], "module_name", None)
+        if not module_name:
+            fail("%s is in the payload but is not a module" % target.label, attr = "modules")
+        if module_name not in packed_members:
+            declared_modules.append(module_name)
+
     return [
         DevDistPlatformPayloadInfo(
             packed_jars = packed,
             packed_metadata = depset(packed_metadata),
             packed_jar_names = sorted(owner_by_name.keys()),
-            declared_modules = depset(_declared_modules(ctx, packed_members).keys()),
+            declared_modules = depset(declared_modules),
         ),
         # The reference target's whole declaration: it packs the handed-over jars the `JarPackager` way, so what it reads
         # is exactly what is inside them - the member module jars and the libraries merged into them. Ordinary content,
@@ -113,7 +117,7 @@ dev_dist_platform_payload = rule(
     * `packed_jars` go to `intellij_dev_packed_jars_component`, which composes them in;
     * `packed_jar_names` go to the owning fragment as the jars it must **not** pack, and to the reference target as the
       jars it packs and nothing else;
-    * `declared_modules` is what the owning fragment still declares - see `_declared_modules`;
+    * `declared_modules` is what the owning fragment still declares: the payload minus the members of the packed jars;
     * `DevDistContentInfo` is the other side of the same split, and is the reference target's whole declaration.
 
     A stale set is no longer a thing that can happen: a module that stops packing a jar stops appearing here in the same
@@ -123,7 +127,8 @@ dev_dist_platform_payload = rule(
     attrs = {
         "modules": attr.label_list(
             doc = "The payload's own modules, as their `jvm_library` targets - the dependency edge that makes this " +
-                  "target stand for the platform this product assembles.",
+                  "target stand for the platform this product assembles. Their `KtJvmInfo.module_name` is the key " +
+                  "`declared_modules` and `owned_inputs` share.",
             providers = [_KtJvmInfo],
             mandatory = True,
         ),
@@ -131,10 +136,6 @@ dev_dist_platform_payload = rule(
             doc = "The `content_module_jar` targets of those payload modules that own a `lib/` jar. One per jar - a " +
                   "module that packs none has no such target, so this list *is* the handover set.",
             providers = [[ContentModuleJarInfo], [DevDistPlatformJarInfo]],
-            mandatory = True,
-        ),
-        "modules_by_name": attr.string_list(
-            doc = "The same modules by JPS module name, which is the key `declared_modules` and `owned_inputs` share.",
             mandatory = True,
         ),
     },

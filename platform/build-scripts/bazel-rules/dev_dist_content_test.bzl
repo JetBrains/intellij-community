@@ -424,20 +424,17 @@ def dev_dist_content_test_suite(name):
 
     packed_owner = name + "_packed_owner"
     raw_owner = name + "_raw_owner"
-    dependency = name + "_dependency"
     packed = name + "_packed"
     _fake_module(name = packed_owner, module_name = "test.packed")
     _fake_module(name = raw_owner, module_name = "test.raw")
-    _fake_module(name = dependency, module_name = "test.dependency")
     _fake_packed(name = packed, member = ":" + packed_owner, library = ":" + library)
     nested = name + "_nested"
     _fake_platform_jar(name = nested, destination = "ext/nested.jar")
     payload = name + "_payload"
     dev_dist_platform_payload(
         name = payload,
-        modules = [":" + packed_owner, ":" + raw_owner, ":" + dependency],
+        modules = [":" + packed_owner, ":" + raw_owner],
         packed = [":" + packed, ":" + nested],
-        modules_by_name = ["test.packed", "test.raw", "test.dependency"],
     )
     tests.append(name + "_platform_payload_test")
     _platform_payload_test(
@@ -445,7 +442,7 @@ def dev_dist_content_test_suite(name):
         target_under_test = ":" + payload,
         packed = ":" + packed,
         nested = ":" + nested,
-        expected_declared_modules = ["test.raw", "test.dependency"],
+        expected_declared_modules = ["test.raw"],
     )
 
     descriptors = name + "_descriptors"

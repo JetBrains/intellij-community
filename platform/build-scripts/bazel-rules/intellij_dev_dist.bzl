@@ -87,9 +87,9 @@ def _dev_build_inputs_impl(ctx):
 
     # A raw input a payload asked for on behalf of named modules, kept only while one of those modules is still declared.
     # This is where a handed-over `lib/` jar stops costing declarations: the module whose bytes are now in that jar is
-    # not declared, so neither its own output, nor its libraries, nor - through `declared_modules` - anything only its
-    # dependencies needed, stays in the manifest. The value is module *names* because a payload is written in names, and
-    # a name is the one key that means the same thing to the repository rule that wrote it and to analysis here.
+    # not declared, so neither its own output nor its libraries stay in the manifest. The value is module *names*
+    # because a payload is written in names, and a name is the one key that means the same thing to the repository rule
+    # that wrote it and to analysis here.
     if ctx.attr.owned_inputs:
         declared = {name: True for name in ctx.attr.platform_payload[DevDistPlatformPayloadInfo].declared_modules.to_list()}
         for target, owners in ctx.attr.owned_inputs.items():
