@@ -1199,12 +1199,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return EditorThreading.compute(() -> myView.getPrefixTextWidthInPixels()).intValue();
   }
 
+  @RequiresEdt
   @Override
   public void setPrefixTextAndAttributes(@Nullable String prefixText, @Nullable TextAttributes attributes) {
-    EditorThreading.run(() -> {
-      mySoftWrapModel.recalculate("prefix changed");
-      myView.setPrefix(prefixText, attributes);
-    });
+    mySoftWrapModel.recalculate("prefix changed");
+    myView.setPrefix(prefixText, attributes);
   }
 
   @Override

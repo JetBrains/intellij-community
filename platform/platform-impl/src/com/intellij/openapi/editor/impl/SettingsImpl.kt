@@ -137,7 +137,6 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
             propertyName != state::myVerticalScrollJump.name &&
             propertyName != state::myHorizontalScrollJump.name &&
             propertyName != state::myIsBlockCursor.name &&
-            propertyName != state::myIsFullLineHeightCursor.name &&
             propertyName != state::myIsSmoothCaretMovement.name &&
             propertyName != state::myIsWhitespacesShown.name &&
             propertyName != state::myIsLeadingWhitespacesShown.name &&
@@ -165,9 +164,7 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
         ) {
           fireEditorRefresh()
         }
-
-        if (propertyName == state::myIsBlockCursor.name || propertyName == state::myIsSmoothCaretMovement.name ||
-            propertyName == state::myIsFullLineHeightCursor.name) {
+        if (propertyName == state::myIsBlockCursor.name || propertyName == state::myIsSmoothCaretMovement.name) {
           editor?.updateCaretCursor()
           editor?.contentComponent?.repaint()
         }
