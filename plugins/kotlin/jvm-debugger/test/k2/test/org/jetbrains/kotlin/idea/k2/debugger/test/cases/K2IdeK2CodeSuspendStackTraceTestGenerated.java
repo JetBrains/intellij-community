@@ -28,11 +28,6 @@ public class K2IdeK2CodeSuspendStackTraceTestGenerated extends AbstractK2IdeK2Co
         runTest("../testData/suspendStackTrace/asyncFunctions.kt");
     }
 
-    @TestMetadata("asyncLambdas.kt")
-    public void testAsyncLambdas() throws Exception {
-        runTest("../testData/suspendStackTrace/asyncLambdas.kt");
-    }
-
     @TestMetadata("asyncSimple.kt")
     public void testAsyncSimple() throws Exception {
         runTest("../testData/suspendStackTrace/asyncSimple.kt");

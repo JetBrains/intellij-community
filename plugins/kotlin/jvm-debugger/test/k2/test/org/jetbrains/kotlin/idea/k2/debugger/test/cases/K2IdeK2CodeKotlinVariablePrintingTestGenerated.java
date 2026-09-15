@@ -48,33 +48,8 @@ public class K2IdeK2CodeKotlinVariablePrintingTestGenerated extends AbstractK2Id
         runTest("../testData/variables/optimisedVariablesInSuspendContexts.kt");
     }
 
-    @TestMetadata("optimisedVariablesInSuspendInline.kt")
-    public void testOptimisedVariablesInSuspendInline() throws Exception {
-        runTest("../testData/variables/optimisedVariablesInSuspendInline.kt");
-    }
-
-    @TestMetadata("optimisedVariablesWithLambdas.kt")
-    public void testOptimisedVariablesWithLambdas() throws Exception {
-        runTest("../testData/variables/optimisedVariablesWithLambdas.kt");
-    }
-
-    @TestMetadata("optimisedVariablesWithWhen.kt")
-    public void testOptimisedVariablesWithWhen() throws Exception {
-        runTest("../testData/variables/optimisedVariablesWithWhen.kt");
-    }
-
     @TestMetadata("reentrantInlineFunctions.kt")
     public void testReentrantInlineFunctions() throws Exception {
         runTest("../testData/variables/reentrantInlineFunctions.kt");
-    }
-
-    @TestMetadata("scopeVariablesInInlineSuspendBlock.kt")
-    public void testScopeVariablesInInlineSuspendBlock() throws Exception {
-        runTest("../testData/variables/scopeVariablesInInlineSuspendBlock.kt");
-    }
-
-    @TestMetadata("spilledCapturedVariables.kt")
-    public void testSpilledCapturedVariables() throws Exception {
-        runTest("../testData/variables/spilledCapturedVariables.kt");
     }
 }

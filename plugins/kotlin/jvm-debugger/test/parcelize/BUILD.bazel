@@ -6,7 +6,6 @@ jps_test(
     name = "parcelize_test",
     data = [
         "@community//plugins/kotlin/jvm-debugger/test:testData",
-        "@debugger_test_deps_debugger_agent//file:debugger-agent.jar",
     ] + all_test_dep_targets,
     sandbox = True,
     runtime_deps = [

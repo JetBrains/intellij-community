@@ -52,10 +52,8 @@ abstract class AbstractPositionManagerTest : KotlinLightCodeInsightFixtureTestCa
         if (fileName.endsWith(".kt")) {
             myFixture.configureByFile(path)
         } else {
-            File(path).walkTopDown().forEach { file: File ->
-                val fileName1 = file.name
-                val path1 = getPath(fileName1)
-                myFixture.configureByFile(path1)
+            File(path).walkTopDown().filter(File::isFile).forEach { file ->
+                myFixture.configureByFile(getPath(file.path))
             }
         }
 

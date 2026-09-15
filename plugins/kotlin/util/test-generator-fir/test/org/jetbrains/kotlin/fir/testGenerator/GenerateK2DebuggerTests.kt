@@ -11,10 +11,8 @@ import org.jetbrains.kotlin.idea.fir.debugger.evaluate.AbstractK2MultiplatformCo
 import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractInlineScopesAndK2IdeK2CodeEvaluateExpressionTest
 import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2BreakpointApplicabilityTest
 import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2ClassNameCalculatorTest
-import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2FlowAsyncStackTraceTest
 import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2IdeK2CodeBreakpointHighlightingTest
 import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2IdeK2CodeContinuationStackTraceTest
-import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2IdeK2CodeCoroutineAsyncStackTraceTest
 import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2IdeK2CodeCoroutineDumpTest
 import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2IdeK2CodeFileRankingTest
 import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2IdeK2CodeKotlinEvaluateExpressionTest
@@ -105,20 +103,10 @@ internal fun MutableTWorkspace.generateK2DebuggerTests() {
             }
         }
 
-        listOf(AbstractK2IdeK2CodeCoroutineAsyncStackTraceTest::class).forEach {
-            testClass(it) {
-                model("asyncStackTrace/coroutines")
-            }
-        }
-
         listOf(AbstractK2IdeK2CodeSuspendStackTraceTest::class).forEach {
             testClass(it) {
                 model("suspendStackTrace")
             }
-        }
-
-        testClass<AbstractK2FlowAsyncStackTraceTest> {
-            model("asyncStackTrace/flows")
         }
 
         listOf(

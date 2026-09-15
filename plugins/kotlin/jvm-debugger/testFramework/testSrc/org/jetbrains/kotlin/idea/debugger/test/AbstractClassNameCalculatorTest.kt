@@ -2,6 +2,7 @@
 @file:Suppress("DEPRECATION_ERROR") // ClassNameCalculator will become an implementation detail of ClassNameProvider
 package org.jetbrains.kotlin.idea.debugger.test
 
+import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiRecursiveElementVisitor
@@ -14,6 +15,11 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 
 abstract class AbstractClassNameCalculatorTest : KotlinLightCodeInsightFixtureTestCase() {
     override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
+
+    override fun setUp() {
+        super.setUp()
+        VfsRootAccess.allowRootAccess(testRootDisposable, testDataDirectory.path)
+    }
 
     protected fun doTest(unused: String) {
         val testFile = dataFile()

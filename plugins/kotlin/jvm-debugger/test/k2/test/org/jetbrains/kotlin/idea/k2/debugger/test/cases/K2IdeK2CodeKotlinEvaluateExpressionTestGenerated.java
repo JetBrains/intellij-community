@@ -1002,11 +1002,6 @@ public abstract class K2IdeK2CodeKotlinEvaluateExpressionTestGenerated extends A
                 runTest("../testData/evaluation/singleBreakpoint/frame/gettersAreNotDuplicated.kt");
             }
 
-            @TestMetadata("hideContinuationThis.kt")
-            public void testHideContinuationThis() throws Exception {
-                runTest("../testData/evaluation/singleBreakpoint/frame/hideContinuationThis.kt");
-            }
-
             @TestMetadata("hideSyntheticThis.kt")
             public void testHideSyntheticThis() throws Exception {
                 runTest("../testData/evaluation/singleBreakpoint/frame/hideSyntheticThis.kt");
