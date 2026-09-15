@@ -14,8 +14,10 @@ import com.intellij.codeInsight.intention.choice.ChoiceTitleIntentionAction
 import com.intellij.codeInsight.intention.impl.CachedIntentions
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
 import com.intellij.internal.statistic.service.fus.collectors.TooltipActionsLogger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.TooltipAction
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiDocumentManager
@@ -27,6 +29,8 @@ import com.intellij.xml.util.XmlStringUtil
 import org.jetbrains.annotations.ApiStatus
 import java.awt.event.InputEvent
 import java.util.Objects
+
+private val LOG = logger<DaemonTooltipAction>()
 
 @ApiStatus.Internal
 class DaemonTooltipActionProvider : TooltipActionProvider {
@@ -58,7 +62,11 @@ class DaemonTooltipAction(
     TooltipActionsLogger.logExecute(project, inputEvent)
     val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return
 
-    val action = findIntention(editor, psiFile, myActualOffset, myActionText) ?: return
+    val action = findIntention(editor, psiFile, myActualOffset, myActionText)
+    if (action == null) {
+      LOG.warn("The tooltip action '$myActionText' is not available at the offset $myActualOffset in ${psiFile.name}")
+      return
+    }
     editor.caretModel.moveToOffset(myActualOffset)
     ShowIntentionActionsHandler.chooseActionAndInvoke(
       psiFile, editor, action, myActionText, IntentionSource.DAEMON_TOOLTIP
@@ -92,9 +100,13 @@ class DaemonTooltipAction(
 fun extractMostPriorityFixFromHighlightInfo(highlightInfo: HighlightInfo, editor: Editor, psiFile: PsiFile): IntentionAction? {
   ThreadingAssertions.assertReadAccess()
 
+  val dumbService = DumbService.getInstance(psiFile.project)
+  val virtualFile = psiFile.virtualFile
   val fixes = mutableListOf<HighlightInfo.IntentionActionDescriptor>()
   highlightInfo.findRegisteredQuickFix<Any?> { desc, _ ->
-    fixes.add(desc)
+    if (dumbService.isUsableInCurrentContext(desc.action, virtualFile)) {
+      fixes.add(desc)
+    }
 
     null
   }
