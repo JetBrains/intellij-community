@@ -104,8 +104,8 @@ abstract class IjentControlledEnvironmentDeployingStrategy : IjentDeployingStrat
     onSessionConnected: (IjentSession) -> Unit,
   ): IjentSession =
     try {
-      deployEvents.emit(DeployEvent.DEPLOY_STARTED)
       val targetPlatform = getPlatform()
+      deployEvents.emit(DeployEvent.DEPLOY_STARTED)
       val remotePathToBinary = copyFile(ijentExecFileProvider.getIjentBinary(targetPlatform))
       val mediator = createProcess(remotePathToBinary)
       val connectionStrategy = getConnectionStrategy()
