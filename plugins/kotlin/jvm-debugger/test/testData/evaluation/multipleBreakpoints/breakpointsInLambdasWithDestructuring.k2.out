@@ -51,14 +51,14 @@ InlineStackFrame lambda 'filter' in 'main' (breakpointsInLambdasWithDestructurin
     JavaValue[local] x: int = 1 (breakpointsInLambdasWithDestructuring.kt:44)
     JavaValue[local] y: int = 2 (breakpointsInLambdasWithDestructuring.kt:44)
 InlineStackFrame filterTo (_Collections.!EXT!)
-    JavaValue[local] this: java.lang.Iterable =  size = 1
-        JavaValue[element] 0: A@uniqueID = A(x=1, y=2)
-            JavaValue[field] x: int = 1 (destructurableClasses.kt:4)
-            JavaValue[field] y: int = 2 (destructurableClasses.kt:4)
     JavaValue[local] destination: java.util.Collection =  size = 0
     JavaValue[local] element: java.lang.Object = A(x=1, y=2)
         JavaValue[field] x: int = 1 (destructurableClasses.kt:4)
         JavaValue[field] y: int = 2 (destructurableClasses.kt:4)
+    JavaValue[local] this: java.lang.Iterable =  size = 1
+        JavaValue[element] 0: A@uniqueID = A(x=1, y=2)
+            JavaValue[field] x: int = 1 (destructurableClasses.kt:4)
+            JavaValue[field] y: int = 2 (destructurableClasses.kt:4)
 InlineStackFrame filter (_Collections.!EXT!)
     JavaValue[local] this: java.lang.Iterable =  size = 1
         JavaValue[element] 0: A@uniqueID = A(x=1, y=2)
@@ -79,13 +79,13 @@ InlineStackFrame lambda 'forEach' in 'main' (breakpointsInLambdasWithDestructuri
     JavaValue[local] x: int = 1 (breakpointsInLambdasWithDestructuring.kt:46)
     JavaValue[local] y: int = 2 (breakpointsInLambdasWithDestructuring.kt:46)
 InlineStackFrame forEach (_Collections.!EXT!)
+    JavaValue[local] element: java.lang.Object = A(x=1, y=2)
+        JavaValue[field] x: int = 1 (destructurableClasses.kt:4)
+        JavaValue[field] y: int = 2 (destructurableClasses.kt:4)
     JavaValue[local] this: java.lang.Iterable =  size = 1
         JavaValue[element] 0: A@uniqueID = A(x=1, y=2)
             JavaValue[field] x: int = 1 (destructurableClasses.kt:4)
             JavaValue[field] y: int = 2 (destructurableClasses.kt:4)
-    JavaValue[local] element: java.lang.Object = A(x=1, y=2)
-        JavaValue[field] x: int = 1 (destructurableClasses.kt:4)
-        JavaValue[field] y: int = 2 (destructurableClasses.kt:4)
 KotlinStackFrame (breakpointsInLambdasWithDestructuring.kt:46)
     JavaValue[local] list: java.util.List =  size = 1 (breakpointsInLambdasWithDestructuring.kt:42)
         JavaValue[element] 0: A@uniqueID = A(x=1, y=2)
@@ -94,6 +94,7 @@ KotlinStackFrame (breakpointsInLambdasWithDestructuring.kt:46)
 breakpointsInLambdasWithDestructuring.kt:50
 Compile bytecode for key + value
 InlineStackFrame lambda 'forEach' in 'main' (breakpointsInLambdasWithDestructuring.kt:50)
+    JavaValue[local] key: int = 1 (breakpointsInLambdasWithDestructuring.kt:50)
     JavaValue[local] list: java.util.List =  size = 1 (breakpointsInLambdasWithDestructuring.kt:42)
         JavaValue[element] 0: A@uniqueID = A(x=1, y=2)
             JavaValue[field] x: int = 1 (destructurableClasses.kt:4)
@@ -104,20 +105,19 @@ InlineStackFrame lambda 'forEach' in 'main' (breakpointsInLambdasWithDestructuri
                 JavaValue[field] value: int = 1 (Integer.!EXT!)
             JavaValue value: java.lang.Integer = 2
                 JavaValue[field] value: int = 2 (Integer.!EXT!)
-    JavaValue[local] key: int = 1 (breakpointsInLambdasWithDestructuring.kt:50)
     JavaValue[local] value: int = 2 (breakpointsInLambdasWithDestructuring.kt:50)
 InlineStackFrame forEach (_Maps.!EXT!)
+    JavaValue[local] element: java.util.Map$Entry = ... -> ...
+        JavaValue key: java.lang.Integer = 1
+            JavaValue[field] value: int = 1 (Integer.!EXT!)
+        JavaValue value: java.lang.Integer = 2
+            JavaValue[field] value: int = 2 (Integer.!EXT!)
     JavaValue[local] this: java.util.Map =  size = 1
         JavaValue[element] 0 = ... -> ...
             JavaValue key: java.lang.Integer = 1
                 JavaValue[field] value: int = 1 (Integer.!EXT!)
             JavaValue value: java.lang.Integer = 2
                 JavaValue[field] value: int = 2 (Integer.!EXT!)
-    JavaValue[local] element: java.util.Map$Entry = ... -> ...
-        JavaValue key: java.lang.Integer = 1
-            JavaValue[field] value: int = 1 (Integer.!EXT!)
-        JavaValue value: java.lang.Integer = 2
-            JavaValue[field] value: int = 2 (Integer.!EXT!)
 KotlinStackFrame (breakpointsInLambdasWithDestructuring.kt:50)
     JavaValue[local] list: java.util.List =  size = 1 (breakpointsInLambdasWithDestructuring.kt:42)
         JavaValue[element] 0: A@uniqueID = A(x=1, y=2)

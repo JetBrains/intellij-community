@@ -14,6 +14,9 @@ InlineStackFrame lambda 'map' in 'main' (standardLibraryFunctions.kt:7)
             JavaValue[field] value: int = 3 (Integer.!EXT!)
     JavaValue[local] x: int = 1 (standardLibraryFunctions.kt:7)
 InlineStackFrame mapTo (_Collections.!EXT!)
+    JavaValue[local] destination: java.util.Collection =  size = 0
+    JavaValue[local] item: java.lang.Object = 1
+        JavaValue[field] value: int = 1 (Integer.!EXT!)
     JavaValue[local] this: java.lang.Iterable =  size = 3
         JavaValue[element] 0: Integer@uniqueID = 1
             JavaValue[field] value: int = 1 (Integer.!EXT!)
@@ -21,9 +24,6 @@ InlineStackFrame mapTo (_Collections.!EXT!)
             JavaValue[field] value: int = 2 (Integer.!EXT!)
         JavaValue[element] 2: Integer@uniqueID = 3
             JavaValue[field] value: int = 3 (Integer.!EXT!)
-    JavaValue[local] destination: java.util.Collection =  size = 0
-    JavaValue[local] item: java.lang.Object = 1
-        JavaValue[field] value: int = 1 (Integer.!EXT!)
 InlineStackFrame map (_Collections.!EXT!)
     JavaValue[local] this: java.lang.Iterable =  size = 3
         JavaValue[element] 0: Integer@uniqueID = 1
@@ -51,6 +51,11 @@ InlineStackFrame lambda 'map' in 'main' (standardLibraryFunctions.kt:7)
             JavaValue[field] value: int = 3 (Integer.!EXT!)
     JavaValue[local] x: int = 2 (standardLibraryFunctions.kt:7)
 InlineStackFrame mapTo (_Collections.!EXT!)
+    JavaValue[local] destination: java.util.Collection =  size = 1
+        JavaValue[element] 0: Integer@uniqueID = 0
+            JavaValue[field] value: int = 0 (Integer.!EXT!)
+    JavaValue[local] item: java.lang.Object = 2
+        JavaValue[field] value: int = 2 (Integer.!EXT!)
     JavaValue[local] this: java.lang.Iterable =  size = 3
         JavaValue[element] 0: Integer@uniqueID = 1
             JavaValue[field] value: int = 1 (Integer.!EXT!)
@@ -58,11 +63,6 @@ InlineStackFrame mapTo (_Collections.!EXT!)
             JavaValue[field] value: int = 2 (Integer.!EXT!)
         JavaValue[element] 2: Integer@uniqueID = 3
             JavaValue[field] value: int = 3 (Integer.!EXT!)
-    JavaValue[local] destination: java.util.Collection =  size = 1
-        JavaValue[element] 0: Integer@uniqueID = 0
-            JavaValue[field] value: int = 0 (Integer.!EXT!)
-    JavaValue[local] item: java.lang.Object = 2
-        JavaValue[field] value: int = 2 (Integer.!EXT!)
 InlineStackFrame map (_Collections.!EXT!)
     JavaValue[local] this: java.lang.Iterable =  size = 3
         JavaValue[element] 0: Integer@uniqueID = 1
@@ -90,13 +90,6 @@ InlineStackFrame lambda 'map' in 'main' (standardLibraryFunctions.kt:7)
             JavaValue[field] value: int = 3 (Integer.!EXT!)
     JavaValue[local] x: int = 3 (standardLibraryFunctions.kt:7)
 InlineStackFrame mapTo (_Collections.!EXT!)
-    JavaValue[local] this: java.lang.Iterable =  size = 3
-        JavaValue[element] 0: Integer@uniqueID = 1
-            JavaValue[field] value: int = 1 (Integer.!EXT!)
-        JavaValue[element] 1: Integer@uniqueID = 2
-            JavaValue[field] value: int = 2 (Integer.!EXT!)
-        JavaValue[element] 2: Integer@uniqueID = 3
-            JavaValue[field] value: int = 3 (Integer.!EXT!)
     JavaValue[local] destination: java.util.Collection =  size = 2
         JavaValue[element] 0: Integer@uniqueID = 0
             JavaValue[field] value: int = 0 (Integer.!EXT!)
@@ -104,6 +97,13 @@ InlineStackFrame mapTo (_Collections.!EXT!)
             JavaValue[field] value: int = 1 (Integer.!EXT!)
     JavaValue[local] item: java.lang.Object = 3
         JavaValue[field] value: int = 3 (Integer.!EXT!)
+    JavaValue[local] this: java.lang.Iterable =  size = 3
+        JavaValue[element] 0: Integer@uniqueID = 1
+            JavaValue[field] value: int = 1 (Integer.!EXT!)
+        JavaValue[element] 1: Integer@uniqueID = 2
+            JavaValue[field] value: int = 2 (Integer.!EXT!)
+        JavaValue[element] 2: Integer@uniqueID = 3
+            JavaValue[field] value: int = 3 (Integer.!EXT!)
 InlineStackFrame map (_Collections.!EXT!)
     JavaValue[local] this: java.lang.Iterable =  size = 3
         JavaValue[element] 0: Integer@uniqueID = 1
@@ -132,16 +132,16 @@ InlineStackFrame lambda 'filter' in 'main' (standardLibraryFunctions.kt:9)
             JavaValue[field] value: int = 3 (Integer.!EXT!)
     JavaValue[local] x: int = 0 (standardLibraryFunctions.kt:9)
 InlineStackFrame filterTo (_Collections.!EXT!)
-    JavaValue[local] this: java.lang.Iterable =  size = 3
-        JavaValue[element] 0: Integer@uniqueID = 0
-            JavaValue[field] value: int = 0 (Integer.!EXT!)
-        JavaValue[element] 1: Integer@uniqueID = 1
-            JavaValue[field] value: int = 1 (Integer.!EXT!)
-        JavaValue[element] 2: Integer@uniqueID = 1
-            JavaValue[field] value: int = 1 (Integer.!EXT!)
     JavaValue[local] destination: java.util.Collection =  size = 0
     JavaValue[local] element: java.lang.Object = 0
         JavaValue[field] value: int = 0 (Integer.!EXT!)
+    JavaValue[local] this: java.lang.Iterable =  size = 3
+        JavaValue[element] 0: Integer@uniqueID = 0
+            JavaValue[field] value: int = 0 (Integer.!EXT!)
+        JavaValue[element] 1: Integer@uniqueID = 1
+            JavaValue[field] value: int = 1 (Integer.!EXT!)
+        JavaValue[element] 2: Integer@uniqueID = 1
+            JavaValue[field] value: int = 1 (Integer.!EXT!)
 InlineStackFrame filter (_Collections.!EXT!)
     JavaValue[local] this: java.lang.Iterable =  size = 3
         JavaValue[element] 0: Integer@uniqueID = 0
@@ -169,6 +169,9 @@ InlineStackFrame lambda 'filter' in 'main' (standardLibraryFunctions.kt:9)
             JavaValue[field] value: int = 3 (Integer.!EXT!)
     JavaValue[local] x: int = 1 (standardLibraryFunctions.kt:9)
 InlineStackFrame filterTo (_Collections.!EXT!)
+    JavaValue[local] destination: java.util.Collection =  size = 0
+    JavaValue[local] element: java.lang.Object = 1
+        JavaValue[field] value: int = 1 (Integer.!EXT!)
     JavaValue[local] this: java.lang.Iterable =  size = 3
         JavaValue[element] 0: Integer@uniqueID = 0
             JavaValue[field] value: int = 0 (Integer.!EXT!)
@@ -176,9 +179,6 @@ InlineStackFrame filterTo (_Collections.!EXT!)
             JavaValue[field] value: int = 1 (Integer.!EXT!)
         JavaValue[element] 2: Integer@uniqueID = 1
             JavaValue[field] value: int = 1 (Integer.!EXT!)
-    JavaValue[local] destination: java.util.Collection =  size = 0
-    JavaValue[local] element: java.lang.Object = 1
-        JavaValue[field] value: int = 1 (Integer.!EXT!)
 InlineStackFrame filter (_Collections.!EXT!)
     JavaValue[local] this: java.lang.Iterable =  size = 3
         JavaValue[element] 0: Integer@uniqueID = 0
@@ -206,6 +206,9 @@ InlineStackFrame lambda 'filter' in 'main' (standardLibraryFunctions.kt:9)
             JavaValue[field] value: int = 3 (Integer.!EXT!)
     JavaValue[local] x: int = 1 (standardLibraryFunctions.kt:9)
 InlineStackFrame filterTo (_Collections.!EXT!)
+    JavaValue[local] destination: java.util.Collection =  size = 0
+    JavaValue[local] element: java.lang.Object = 1
+        JavaValue[field] value: int = 1 (Integer.!EXT!)
     JavaValue[local] this: java.lang.Iterable =  size = 3
         JavaValue[element] 0: Integer@uniqueID = 0
             JavaValue[field] value: int = 0 (Integer.!EXT!)
@@ -213,9 +216,6 @@ InlineStackFrame filterTo (_Collections.!EXT!)
             JavaValue[field] value: int = 1 (Integer.!EXT!)
         JavaValue[element] 2: Integer@uniqueID = 1
             JavaValue[field] value: int = 1 (Integer.!EXT!)
-    JavaValue[local] destination: java.util.Collection =  size = 0
-    JavaValue[local] element: java.lang.Object = 1
-        JavaValue[field] value: int = 1 (Integer.!EXT!)
 InlineStackFrame filter (_Collections.!EXT!)
     JavaValue[local] this: java.lang.Iterable =  size = 3
         JavaValue[element] 0: Integer@uniqueID = 0

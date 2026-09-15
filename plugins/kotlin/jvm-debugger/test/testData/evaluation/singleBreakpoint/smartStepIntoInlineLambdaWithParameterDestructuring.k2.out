@@ -6,14 +6,14 @@ smartStepIntoInlineLambdaWithParameterDestructuring.kt:20
 smartStepIntoInlineLambdaWithParameterDestructuring.kt:20
 Compile bytecode for a + b + c + d + e + f + g
 InlineStackFrame lambda 'inlineFoo' in 'main' (smartStepIntoInlineLambdaWithParameterDestructuring.kt:20)
-    JavaValue[local] x: int = 1 (smartStepIntoInlineLambdaWithParameterDestructuring.kt:17)
-    JavaValue[local] g: int = 1 (smartStepIntoInlineLambdaWithParameterDestructuring.kt:20)
     JavaValue[local] a: int = 1 (smartStepIntoInlineLambdaWithParameterDestructuring.kt:20)
     JavaValue[local] b: int = 1 (smartStepIntoInlineLambdaWithParameterDestructuring.kt:20)
     JavaValue[local] c: int = 1 (smartStepIntoInlineLambdaWithParameterDestructuring.kt:20)
     JavaValue[local] d: int = 1 (smartStepIntoInlineLambdaWithParameterDestructuring.kt:20)
     JavaValue[local] e: int = 1 (smartStepIntoInlineLambdaWithParameterDestructuring.kt:20)
     JavaValue[local] f: int = 1 (smartStepIntoInlineLambdaWithParameterDestructuring.kt:20)
+    JavaValue[local] g: int = 1 (smartStepIntoInlineLambdaWithParameterDestructuring.kt:20)
+    JavaValue[local] x: int = 1 (smartStepIntoInlineLambdaWithParameterDestructuring.kt:17)
 InlineStackFrame inlineFoo (smartStepIntoInlineLambdaWithParameterDestructuring.kt:11)
     JavaValue[local] a: destructurableClasses.A = A(x=1, y=1) (smartStepIntoInlineLambdaWithParameterDestructuring.kt:20)
         JavaValue[field] x: int = 1 (destructurableClasses.kt:4)
