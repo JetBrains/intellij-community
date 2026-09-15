@@ -12,7 +12,6 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.SyntheticLibrary;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -40,15 +39,21 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+/**
+ * Narrows the directories that a Goto File pattern can point to.
+ * <p>
+ * The matcher is immutable. {@link #root} builds the chain for the directory part of a pattern, and
+ * {@link #appendChar} extends it for the file-name part.
+ */
 final class DirectoryPathMatcher {
   private final @NotNull GotoFileModel myModel;
-  private final @Nullable List<Pair<VirtualFile, String>> myFiles;
+  private final @Nullable List<NamedDirectory> myFiles;
   private final @NotNull Predicate<VirtualFile> myProjectFileFilter;
 
   final @NotNull String dirPattern;
 
   private DirectoryPathMatcher(@NotNull GotoFileModel model,
-                               @Nullable List<Pair<VirtualFile, String>> files,
+                               @Nullable List<NamedDirectory> files,
                                @NotNull String pattern,
                                @NotNull Predicate<VirtualFile> projectFileFilter) {
     myModel = model;
@@ -57,7 +62,7 @@ final class DirectoryPathMatcher {
     myProjectFileFilter = projectFileFilter;
   }
 
-  private @NotNull DirectoryPathMatcher derive(@Nullable List<Pair<VirtualFile, String>> files, @NotNull String pattern) {
+  private @NotNull DirectoryPathMatcher derive(@Nullable List<NamedDirectory> files, @NotNull String pattern) {
     return new DirectoryPathMatcher(myModel, files, pattern, myProjectFileFilter);
   }
 
@@ -74,8 +79,12 @@ final class DirectoryPathMatcher {
     };
   }
 
+  private static @NotNull DirectoryPathMatcher createRoot(@NotNull GotoFileModel model) {
+    return new DirectoryPathMatcher(model, null, "", createProjectFileFilter(model.getProject()));
+  }
+
   static @Nullable DirectoryPathMatcher root(@NotNull GotoFileModel model, @NotNull String pattern) {
-    DirectoryPathMatcher matcher = new DirectoryPathMatcher(model, null, "", createProjectFileFilter(model.getProject()));
+    DirectoryPathMatcher matcher = createRoot(model);
     for (int i = 0; i < pattern.length(); i++) {
       matcher = matcher.appendChar(pattern.charAt(i));
       if (matcher == null) return null;
@@ -88,22 +97,20 @@ final class DirectoryPathMatcher {
     String nextPattern = dirPattern + c;
     if (c == '*' || c == '/' || c == ' ') return appendNonWalkingChar(c);
 
-    List<Pair<VirtualFile, String>> files = getMatchingRoots();
-
-    List<Pair<VirtualFile, String>> nextRoots = new ArrayList<>();
+    List<NamedDirectory> nextRoots = new ArrayList<>();
     MinusculeMatcher matcher = GotoFileItemProvider.getQualifiedNameMatcher(nextPattern);
-    for (Pair<VirtualFile, String> pair : files) {
-      if (containsChar(pair.second, c) && matcher.matches(pair.second)) {
-        nextRoots.add(pair);
+    for (NamedDirectory root : getMatchingRoots()) {
+      if (containsChar(root.fullName(), c) && matcher.matches(root.fullName())) {
+        nextRoots.add(root);
       }
       else {
-        processProjectFilesUnder(pair.first, sub -> {
+        processProjectFilesUnder(root.file(), sub -> {
           if (!sub.isDirectory()) return false;
           if (!containsChar(sub.getNameSequence(), c)) return true; //go deeper
 
-          String fullName = pair.second + '/' + VfsUtilCore.getRelativePath(sub, pair.first, '/');
-          if (matcher.matches(fullName)) {
-            nextRoots.add(Pair.create(sub, fullName));
+          NamedDirectory child = root.child(sub);
+          if (matcher.matches(child.fullName())) {
+            nextRoots.add(child);
             return false;
           }
           return true;
@@ -122,17 +129,16 @@ final class DirectoryPathMatcher {
   /** return null if not cheap */
   @Nullable
   Set<String> findFileNamesMatchingIfCheap(char nextLetter, MinusculeMatcher matcher) {
-    List<Pair<VirtualFile, String>> files = getMatchingRoots();
     Set<String> names = new HashSet<>();
     AtomicInteger counter = new AtomicInteger();
     BooleanSupplier tooMany = () -> counter.get() > 1000;
-    for (Pair<VirtualFile, String> pair : files) {
+    for (NamedDirectory root : getMatchingRoots()) {
       // Commented this out because the pattern Utils/TT matched the original "Utils" directory name and nothing more here.
       // ("Utils" contain "t", "Utils" is matched by a ["T" "T"] matcher)
-      //if (containsChar(pair.second, nextLetter) && matcher.matches(pair.second)) {
-      //  names.add(pair.first.getName());
+      //if (containsChar(root.fullName(), nextLetter) && matcher.matches(root.fullName())) {
+      //  names.add(root.file().getName());
       //} else {
-      processProjectFilesUnder(pair.first, sub -> {
+      processProjectFilesUnder(root.file(), sub -> {
         counter.incrementAndGet();
         if (tooMany.getAsBoolean()) return false;
 
@@ -147,7 +153,7 @@ final class DirectoryPathMatcher {
     return tooMany.getAsBoolean() ? null : names;
   }
 
-  private @NotNull List<Pair<VirtualFile, String>> getMatchingRoots() {
+  private @NotNull List<NamedDirectory> getMatchingRoots() {
     return myFiles != null ? myFiles : getProjectRoots(myModel);
   }
 
@@ -155,7 +161,7 @@ final class DirectoryPathMatcher {
   GlobalSearchScope narrowDown(@NotNull GlobalSearchScope fileSearchScope) {
     if (myFiles == null) return fileSearchScope;
 
-    VirtualFile[] array = ContainerUtil.map2Array(myFiles, VirtualFile.class, p -> p.first);
+    VirtualFile[] array = ContainerUtil.map2Array(myFiles, VirtualFile.class, NamedDirectory::file);
     return GlobalSearchScopesCore.directoriesScope(myModel.getProject(), true, array).intersectWith(fileSearchScope);
   }
 
@@ -179,7 +185,7 @@ final class DirectoryPathMatcher {
   }
 
   @ApiStatus.Internal
-  static @NotNull List<Pair<VirtualFile, String>> getProjectRoots(GotoFileModel model) {
+  static @NotNull List<NamedDirectory> getProjectRoots(GotoFileModel model) {
     Set<VirtualFile> roots = new HashSet<>(BaseProjectDirectories.getBaseDirectories(model.getProject()));
 
     for (Module module : ModuleManager.getInstance(model.getProject()).getModules()) {
@@ -202,7 +208,7 @@ final class DirectoryPathMatcher {
         return top != null ? top : root;
       })
       .distinct()
-      .map(r -> Pair.create(r, StringUtil.notNullize(model.getFullName(r))))
+      .map(root -> NamedDirectory.of(model, root))
       .collect(Collectors.toList());
   }
 }
