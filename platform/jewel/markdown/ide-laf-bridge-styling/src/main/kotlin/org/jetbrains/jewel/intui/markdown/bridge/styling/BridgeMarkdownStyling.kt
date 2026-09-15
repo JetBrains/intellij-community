@@ -47,6 +47,7 @@ import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.ThematicBreak
 /** Creates a [MarkdownStyling] by reading values from the current IntelliJ LaF theme and editor color scheme. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
+@Suppress("DEPRECATION") // The htmlBlock parameter is only kept for compatibility reasons
 public fun MarkdownStyling.Companion.create(
     baseTextStyle: TextStyle = defaultTextStyle,
     editorTextStyle: TextStyle = defaultEditorTextStyle,
@@ -447,9 +448,15 @@ public fun ThematicBreak.Companion.create(
     lineColor: Color = dividerColor,
 ): ThematicBreak = ThematicBreak(padding, lineWidth, lineColor)
 
-/** Creates an [HtmlBlock] styling using the editor text style and a bordered rounded container. */
+/**
+ * Creates an [HtmlBlock] styling using the editor text style and a bordered rounded container.
+ *
+ * @deprecated HTML blocks are no longer rendered, and this styling is ignored. It will be removed in a future release.
+ */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
+@Suppress("DEPRECATION")
+@Deprecated("HTML blocks are no longer rendered, and this styling is ignored. It will be removed in a future release.")
 public fun HtmlBlock.Companion.create(
     textStyle: TextStyle = defaultEditorTextStyle,
     padding: PaddingValues = PaddingValues(8.dp),
