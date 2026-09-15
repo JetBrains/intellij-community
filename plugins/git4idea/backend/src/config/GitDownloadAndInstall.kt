@@ -1,9 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.config
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.node.ArrayNode
-import com.fasterxml.jackson.databind.node.ObjectNode
 import com.google.common.hash.Hashing
 import com.google.common.io.Files
 import com.intellij.openapi.diagnostic.Logger
@@ -14,6 +11,9 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.HttpRequests
 import git4idea.i18n.GitBundle
 import org.tukaani.xz.XZInputStream
+import tools.jackson.databind.json.JsonMapper
+import tools.jackson.databind.node.ArrayNode
+import tools.jackson.databind.node.ObjectNode
 import java.io.ByteArrayInputStream
 import java.io.File
 
@@ -107,7 +107,7 @@ private fun downloadGitJson(): ByteArray {
     .readBytes(ProgressManager.getInstance().progressIndicator)
 }
 
-private fun readTree(rawData: ByteArray) = ObjectMapper().readTree(rawData) as? ObjectNode ?: error("Unexpected JSON data")
+private fun readTree(rawData: ByteArray) = JsonMapper.builder().build().readTree(rawData) as? ObjectNode ?: error("Unexpected JSON data")
 
 private fun parse(node: ObjectNode) : List<GitInstaller> {
   val items = node["gits"] as? ArrayNode ?: error("`gits` element is missing in JSON")
@@ -116,13 +116,13 @@ private fun parse(node: ObjectNode) : List<GitInstaller> {
   for (item in items.filterIsInstance<ObjectNode>()) {
     result.add(
       GitInstaller(
-        item["os"]?.asText() ?: continue,
-        item["arch"]?.asText() ?: continue,
-        item["version"]?.asText() ?: continue,
-        item["url"]?.asText() ?: continue,
-        item["fileName"]?.asText() ?: continue,
-        item["pkgFileName"]?.asText(),
-        item["sha256"]?.asText() ?: continue
+        item["os"]?.asString() ?: continue,
+        item["arch"]?.asString() ?: continue,
+        item["version"]?.asString() ?: continue,
+        item["url"]?.asString() ?: continue,
+        item["fileName"]?.asString() ?: continue,
+        item["pkgFileName"]?.asString(),
+        item["sha256"]?.asString() ?: continue
       )
     )
   }

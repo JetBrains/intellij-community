@@ -38,12 +38,6 @@ import com.apollographql.apollo.ast.Issue
 import com.apollographql.apollo.ast.fieldDefinitions
 import com.apollographql.apollo.ast.parseAsGQLDocument
 import com.apollographql.apollo.ast.validateAsExecutable
-import com.fasterxml.jackson.databind.JavaType
-import com.fasterxml.jackson.databind.exc.InvalidNullException
-import com.fasterxml.jackson.databind.introspect.AnnotatedClass
-import com.fasterxml.jackson.databind.introspect.BeanPropertyDefinition
-import com.fasterxml.jackson.databind.type.ArrayType
-import com.fasterxml.jackson.databind.type.CollectionLikeType
 import com.intellij.collaboration.api.data.GraphQLRequestPagination
 import com.intellij.diff.util.Side
 import com.intellij.idea.IJIgnore
@@ -59,6 +53,13 @@ import org.junit.jupiter.api.assertNull
 import org.junit.jupiter.api.assertThrows
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
+import tools.jackson.databind.BeanDescription
+import tools.jackson.databind.JavaType
+import tools.jackson.databind.exc.InvalidNullException
+import tools.jackson.databind.introspect.AnnotatedClass
+import tools.jackson.databind.introspect.BeanPropertyDefinition
+import tools.jackson.databind.type.ArrayType
+import tools.jackson.databind.type.CollectionLikeType
 import java.util.Date
 import kotlin.reflect.full.primaryConstructor
 
@@ -312,11 +313,11 @@ class GHGQLDTOTest(val testCase: TestCase) {
 
   private fun verifyDtoClass(gqlTypedef: GQLTypeDefinition, gqlFields: List<GQLSelection>, baseJavaType: JavaType) {
     val fragmentFields = listAllFragmentFields(gqlTypedef, gqlFields).associateBy { it.field.alias ?: it.field.name }
-    val baseBeanDescription = mapper.serializationConfig.introspect(baseJavaType)
+    val baseBeanDescription = introspect(baseJavaType)
 
     val allSubtypes = getAllSubtypes(baseJavaType, baseBeanDescription.classInfo)
     for (javaType in allSubtypes) {
-      val beanDescription = mapper.serializationConfig.introspect(javaType)
+      val beanDescription = introspect(javaType)
 
       for (field in beanDescription.findProperties()) {
         if (field.name in ALWAYS_VALID_FIELD_NAMES) continue
@@ -343,11 +344,16 @@ class GHGQLDTOTest(val testCase: TestCase) {
     }
   }
 
+  private fun introspect(type: JavaType): BeanDescription {
+    val introspector = mapper.serializationConfig().classIntrospectorInstance()
+    return introspector.introspectForSerialization(type, introspector.introspectClassAnnotations(type))
+  }
+
   /**
    * Find all possible subtypes (e.g., @JsonSubTypes) to make sure that they also will be resolved correctly
    */
   private fun getAllSubtypes(javaType: JavaType, annotatedClass: AnnotatedClass): List<JavaType> {
-    val config = mapper.serializationConfig
+    val config = mapper.serializationConfig()
     val namedSubtypes = config.subtypeResolver.collectAndResolveSubtypesByTypeId(config, annotatedClass)
 
     val subtypeJavaTypes = namedSubtypes

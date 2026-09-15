@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.api
 
-import com.fasterxml.jackson.databind.JsonNode
 import com.intellij.collaboration.api.dto.GraphQLRequestDTO
 import com.intellij.collaboration.api.dto.GraphQLResponseDTO
 import com.intellij.collaboration.api.util.LinkHttpHeaderValue
@@ -14,6 +13,7 @@ import org.jetbrains.plugins.github.api.data.graphql.GHGQLRateLimit
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
 import org.jetbrains.plugins.github.exceptions.GithubConfusingException
 import org.jetbrains.plugins.github.exceptions.GithubJsonException
+import tools.jackson.databind.JsonNode
 import java.io.IOException
 
 /**

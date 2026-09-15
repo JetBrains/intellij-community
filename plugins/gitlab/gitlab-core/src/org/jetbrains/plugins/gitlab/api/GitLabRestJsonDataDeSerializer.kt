@@ -3,16 +3,18 @@ package org.jetbrains.plugins.gitlab.api
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect
 import com.fasterxml.jackson.annotation.JsonInclude
-import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.MapperFeature
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.PropertyNamingStrategies
-import com.fasterxml.jackson.databind.SerializationFeature
-import com.fasterxml.jackson.databind.introspect.VisibilityChecker
-import com.fasterxml.jackson.module.kotlin.jacksonMapperBuilder
 import com.intellij.collaboration.api.json.JsonDataDeserializer
 import com.intellij.collaboration.api.json.JsonDataSerializer
+import tools.jackson.databind.DeserializationFeature
+import tools.jackson.databind.JsonNode
+import tools.jackson.databind.MapperFeature
+import tools.jackson.databind.ObjectMapper
+import tools.jackson.databind.PropertyNamingStrategies
+import tools.jackson.databind.SerializationFeature
+import tools.jackson.databind.cfg.EnumFeature
+import tools.jackson.databind.json.JsonMapper
+import tools.jackson.module.kotlin.KotlinFeature
+import tools.jackson.module.kotlin.jacksonMapperBuilder
 import java.io.InputStream
 import java.io.Reader
 import java.nio.charset.Charset
@@ -21,27 +23,26 @@ import java.util.TimeZone
 
 object GitLabRestJsonDataDeSerializer : JsonDataSerializer, JsonDataDeserializer {
 
-  private val mapper: ObjectMapper = gitlabJacksonMapper()
-    .genericConfig()
-    .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
+  private val mapper: ObjectMapper = gitlabJacksonMapperBuilder()
+    .defaultDateFormat(SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX"))
+    .propertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
+    .build()
 
-  internal fun gitlabJacksonMapper(): ObjectMapper =
-    jacksonMapperBuilder()
+  internal fun gitlabJacksonMapperBuilder(): JsonMapper.Builder =
+    jacksonMapperBuilder { disable(KotlinFeature.StrictNullChecks) }
       .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-      .configure(DeserializationFeature.READ_UNKNOWN_ENUM_VALUES_USING_DEFAULT_VALUE, true)
+      .configure(EnumFeature.READ_UNKNOWN_ENUM_VALUES_USING_DEFAULT_VALUE, true)
       .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
       .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS)
-      .serializationInclusion(JsonInclude.Include.NON_NULL)
-      .visibility(VisibilityChecker.Std(JsonAutoDetect.Visibility.NONE,
-                                        JsonAutoDetect.Visibility.NONE,
-                                        JsonAutoDetect.Visibility.NONE,
-                                        JsonAutoDetect.Visibility.NONE,
-                                        JsonAutoDetect.Visibility.ANY))
-      .build()
-
-  internal fun ObjectMapper.genericConfig(): ObjectMapper =
-    this.setDateFormat(SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX"))
-      .setTimeZone(TimeZone.getDefault())
+      .changeDefaultPropertyInclusion { JsonInclude.Value.construct(JsonInclude.Include.NON_NULL, JsonInclude.Include.NON_NULL) }
+      .changeDefaultVisibility {
+        it.withGetterVisibility(JsonAutoDetect.Visibility.NONE)
+          .withIsGetterVisibility(JsonAutoDetect.Visibility.NONE)
+          .withSetterVisibility(JsonAutoDetect.Visibility.NONE)
+          .withCreatorVisibility(JsonAutoDetect.Visibility.NONE)
+          .withFieldVisibility(JsonAutoDetect.Visibility.ANY)
+      }
+      .defaultTimeZone(TimeZone.getDefault())
 
   override fun toJsonBytes(content: Any): ByteArray = mapper.writeValueAsBytes(content)
 

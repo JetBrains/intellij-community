@@ -2,14 +2,13 @@
 package org.jetbrains.plugins.gitlab.mergerequest.file
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect
-import com.fasterxml.jackson.databind.introspect.VisibilityChecker
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.vcs.editor.ComplexPathVirtualFileSystem
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
+import tools.jackson.module.kotlin.jacksonMapperBuilder
 
 internal class GitLabVirtualFileSystem : ComplexPathVirtualFileSystem<GitLabVirtualFileSystem.FilePath>(PathSerializer()) {
   override fun getProtocol() = PROTOCOL
@@ -53,13 +52,15 @@ internal class GitLabVirtualFileSystem : ComplexPathVirtualFileSystem<GitLabVirt
   }
 
   private class PathSerializer : ComplexPathSerializer<FilePath> {
-    private val mapper = jacksonObjectMapper().apply {
-      setVisibility(VisibilityChecker.Std(JsonAutoDetect.Visibility.NONE,
-                                          JsonAutoDetect.Visibility.NONE,
-                                          JsonAutoDetect.Visibility.NONE,
-                                          JsonAutoDetect.Visibility.NONE,
-                                          JsonAutoDetect.Visibility.ANY))
-    }
+    private val mapper = jacksonMapperBuilder()
+      .changeDefaultVisibility {
+        it.withGetterVisibility(JsonAutoDetect.Visibility.NONE)
+          .withIsGetterVisibility(JsonAutoDetect.Visibility.NONE)
+          .withSetterVisibility(JsonAutoDetect.Visibility.NONE)
+          .withCreatorVisibility(JsonAutoDetect.Visibility.NONE)
+          .withFieldVisibility(JsonAutoDetect.Visibility.ANY)
+      }
+      .build()
 
     override fun serialize(path: FilePath): String = mapper.writeValueAsString(path)
     override fun deserialize(rawPath: String): FilePath = mapper.readValue(rawPath, FilePath::class.java)

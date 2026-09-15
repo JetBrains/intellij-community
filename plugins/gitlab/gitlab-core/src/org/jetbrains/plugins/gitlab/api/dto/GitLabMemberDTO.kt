@@ -1,15 +1,15 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.api.dto
 
-import com.fasterxml.jackson.core.JsonParser
-import com.fasterxml.jackson.databind.DeserializationContext
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize
-import com.fasterxml.jackson.databind.deser.std.StdDeserializer
 import com.intellij.collaboration.api.dto.GraphQLFragment
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import org.jetbrains.plugins.gitlab.api.SinceGitLab
+import tools.jackson.core.JsonParser
+import tools.jackson.databind.DeserializationContext
+import tools.jackson.databind.JsonNode
+import tools.jackson.databind.annotation.JsonDeserialize
+import tools.jackson.databind.deser.std.StdDeserializer
 
 @SinceGitLab("13.1")
 @GraphQLFragment("graphql/fragment/member.graphql")
@@ -22,15 +22,14 @@ class GitLabMemberDTO(
 
 class GitLabMemberDTODeserializer : StdDeserializer<GitLabMemberDTO?>(GitLabMemberDTO::class.java) {
   override fun deserialize(jsonParser: JsonParser, context: DeserializationContext): GitLabMemberDTO? {
-    val codec = jsonParser.codec
-    val node: JsonNode = codec.readTree(jsonParser)
+    val node: JsonNode = context.readTree(jsonParser)
 
     return if (node.isEmpty) null
     else {
-      //codec.treeToValue(node, GitLabMemberDTO::class.java) leads to SOE
-      val id: String = node["id"].asText()
-      val user: GitLabUserDTO = codec.treeToValue(node["user"], GitLabUserDTO::class.java)
-      val accessLevel = node["accessLevel"]["stringValue"].asText().let(::parseAccessLevel)
+      //context.readTreeAsValue(node, GitLabMemberDTO::class.java) leads to SOE
+      val id: String = node["id"].asString()
+      val user: GitLabUserDTO = context.readTreeAsValue(node["user"], GitLabUserDTO::class.java)
+      val accessLevel = node["accessLevel"]["stringValue"].asString().let(::parseAccessLevel)
       GitLabMemberDTO(id, user, accessLevel)
     }
   }
