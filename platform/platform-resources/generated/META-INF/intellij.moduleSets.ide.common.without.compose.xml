@@ -1,6 +1,6 @@
 <!-- DO NOT EDIT: This file is auto-generated from Kotlin code -->
 <!-- To regenerate, run: `Generate Product Layouts` or `bazel run //platform/buildScripts:plugin-model-tool` -->
-<!-- Source: see moduleSet("ide.common") function in CommunityModuleSets.kt -->
+<!-- Source: see moduleSet("ide.common.without.compose") function in CommunityModuleSets.kt -->
 <!-- Note: Files are kept under VCS to support running products without dev mode (deprecated) -->
 <idea-plugin>
   <content namespace="jetbrains">
@@ -398,29 +398,6 @@
     <module name="intellij.platform.externalProcessAuthHelper"/>
     <module name="intellij.platform.util.commonsLangV2Shim"/>
     <!-- endregion -->
-    <!-- endregion -->
-
-    <!-- region nested: compose -->
-    <module name="intellij.libraries.jspecify"/>
-    <module name="intellij.libraries.skiko"/>
-    <module name="intellij.libraries.coil"/>
-    <module name="intellij.libraries.compose.swing"/>
-    <module name="intellij.platform.compose"/>
-    <module name="intellij.platform.compose.markdown"/>
-    <module name="intellij.platform.compose.swing"/>
-    <module name="intellij.platform.jewel.foundation"/>
-    <module name="intellij.libraries.compose.foundation.desktop"/>
-    <module name="intellij.libraries.compose.runtime.desktop"/>
-    <module name="intellij.platform.jewel.ui"/>
-    <module name="intellij.platform.jewel.ideLafBridge"/>
-    <module name="intellij.platform.jewel.markdown.ideLafBridgeStyling"/>
-    <module name="intellij.platform.jewel.markdown.extensions.autolink"/>
-    <module name="intellij.platform.jewel.markdown.extensions.gfmAlerts"/>
-    <module name="intellij.platform.jewel.markdown.extensions.gfmTables"/>
-    <module name="intellij.platform.jewel.markdown.extensions.gfmStrikethrough"/>
-    <module name="intellij.platform.jewel.markdown.extensions.frontMatter"/>
-    <module name="intellij.platform.jewel.markdown.extensions.images"/>
-    <module name="intellij.platform.jewel.markdown.core"/>
     <!-- endregion -->
 
     <!-- region nested: debugger -->

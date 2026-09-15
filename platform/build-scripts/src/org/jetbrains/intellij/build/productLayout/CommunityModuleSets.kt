@@ -385,12 +385,31 @@ object CommunityModuleSets {
    * Nests essential, debugger, compose, spellchecker, settings.sync, ml, vcs, lsp, duplicates, and the
    * libraries.ide.common and libraries.grpc sets from [LibraryModuleSets].
    */
-  fun ideCommon(): ModuleSet = moduleSet("ide.common") {
+  fun ideCommon(): ModuleSet = ideCommon(includeCompose = true)
+
+  /**
+   * [ideCommon] without the nested [compose] set (skiko, Compose, Jewel, coil).
+   *
+   * **Use when:** the product renders no Compose UI.
+   * The compose set is about 80 MB of jars plus the skiko native runtime.
+   *
+   * **Example products:**
+   * - **JetBrains Light**
+   */
+  fun ideCommonWithoutCompose(): ModuleSet = ideCommon(includeCompose = false)
+
+  /**
+   * The generator discovers a module set through a public function without parameters,
+   * so each variant has its own public entry point above.
+   */
+  private fun ideCommon(includeCompose: Boolean): ModuleSet = moduleSet(if (includeCompose) "ide.common" else "ide.common.without.compose") {
     // Include essential first (which includes coreLang from CoreModuleSets)
     moduleSet(essential())
+    if (includeCompose) {
+      moduleSet(compose())
+    }
     // `intellij.platform.scriptDebugger.ui` in this set depends on the debugger modules
     moduleSet(debugger())
-    moduleSet(compose())
     moduleSet(librariesIdeCommon())
     moduleSet(librariesGrpc())
     moduleSet(spellchecker())
