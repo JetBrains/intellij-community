@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes
 
 import com.intellij.CommonBundle
 import com.intellij.concurrency.SensitiveProgressWrapper
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ex.ApplicationManagerEx
@@ -14,9 +15,7 @@ import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
@@ -78,6 +77,7 @@ import com.intellij.vcs.commit.ShowNotificationCommitResultHandler
 import com.intellij.vcs.commit.SingleChangeListCommitter.Companion.create
 import com.intellij.vcsUtil.VcsUtil
 import com.intellij.xml.util.XmlStringUtil
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.suspendCancellableCoroutine
 import org.jdom.Element
@@ -581,7 +581,7 @@ class ChangeListManagerImpl(
           iterateScopes(newDataHolder, scopes, vcsIndicator)
         }, vcsIndicator)
       }
-      catch (@Suppress("IncorrectCancellationExceptionHandling") _: ProcessCanceledException) {
+      catch (@Suppress("IncorrectCancellationExceptionHandling") _: CancellationException) {
       }
       val wasCancelled = vcsIndicator.isCanceled()
 
@@ -636,7 +636,7 @@ class ChangeListManagerImpl(
 
       return !wasCancelled
     }
-    catch (@Suppress("IncorrectCancellationExceptionHandling") _: ProcessCanceledException) {
+    catch (@Suppress("IncorrectCancellationExceptionHandling") _: CancellationException) {
       // OK, we're finishing all the stuff now.
     }
     catch (ex: Exception) {
