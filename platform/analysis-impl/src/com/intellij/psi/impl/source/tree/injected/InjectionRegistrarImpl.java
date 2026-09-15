@@ -803,8 +803,11 @@ public final class InjectionRegistrarImpl implements MultiHostRegistrar {
       }
 
       try {
+        // a headless analyzer has no color scheme
         List<InjectedLanguageUtilBase.TokenInfo> tokens =
-          obtainHighlightTokensFromLexer(decodedChars, virtualFile, finalLanguage, project, placeInfos);
+          EditorColorsManager.getInstance() == null
+          ? List.of()
+          : obtainHighlightTokensFromLexer(decodedChars, virtualFile, finalLanguage, project, placeInfos);
         InjectedLanguageUtilBase.setHighlightTokens(psiFile, tokens);
       }
       catch (ProcessCanceledException e) {

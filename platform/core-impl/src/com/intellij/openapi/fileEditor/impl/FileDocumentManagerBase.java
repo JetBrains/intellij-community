@@ -185,6 +185,15 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
 
   @Override
   public @Nullable VirtualFile getFile(@NotNull Document document) {
+    return getRegisteredFile(document);
+  }
+
+  /**
+   * Returns the file bound to {@code document} by {@link #registerDocument(Document, VirtualFile)} or by a document load.
+   * A {@link FileDocumentManager} outside this class hierarchy calls it to resolve the file of an injected document.
+   */
+  @ApiStatus.Internal
+  public static @Nullable VirtualFile getRegisteredFile(@NotNull Document document) {
     return document instanceof FrozenDocument ? null : document.getUserData(FILE_KEY);
   }
 
