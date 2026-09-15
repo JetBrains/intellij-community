@@ -79,6 +79,12 @@ _ij_plugin_module = rule(
         ),
         "packed_deps": attr.label_list(
             providers = [JavaInfo],
+            doc = """Dependencies that are packed together with this module in the plugin distribution.
+
+            For a content module, the packager merges these JARs into the content module JAR.
+            For a plugin descriptor module, each JAR becomes a separate JAR in the `lib` directory, named after the JAR file
+            with the version removed.
+            """,
         ),
     },
     provides = [PluginModuleInfo],

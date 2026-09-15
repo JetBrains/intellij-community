@@ -245,6 +245,93 @@ internal class IjPluginPackagerTest {
   }
 
   @Test
+  fun packagesAllJarsOfDescriptorModule(@TempDir tempDirectory: Path) {
+    val inputDirectory = tempDirectory.resolve("input")
+    createDescriptorJar(inputDirectory)
+    directoryContent {
+      zip("library-1.2.3.jar") {
+        dir("META-INF") {
+          file("MANIFEST.MF", "library manifest")
+          file("INDEX.LIST", "library index")
+        }
+        file("module-info.class", "library module descriptor")
+        file("Library.class", "library")
+      }
+      zip("other-library.jar") {
+        file("OtherLibrary.class", "other library")
+      }
+    }.generate(inputDirectory)
+
+    val outputDirectory = tempDirectory.resolve("output")
+    IjPluginPackager.packPlugin(
+      args = listOf(
+        "output",
+        "--descriptor_module",
+        "descriptor:input/descriptor.jar,input/library-1.2.3.jar,input/other-library.jar",
+      ),
+      baseDir = tempDirectory,
+    )
+
+    outputDirectory.assertMatches(directoryContent {
+      dir("lib") {
+        zip("descriptor.jar") {
+          file("__index__")
+          dir("META-INF") {
+            file("plugin.xml", """
+              <idea-plugin>
+                <id>my.plugin</id>
+              </idea-plugin>
+            """.trimIndent())
+          }
+        }
+        zip("library.jar") {
+          file("__index__")
+          dir("META-INF") {
+            file("MANIFEST.MF", "library manifest")
+          }
+          file("module-info.class", "library module descriptor")
+          file("Library.class", "library")
+        }
+        zip("other-library.jar") {
+          file("__index__")
+          file("OtherLibrary.class", "other library")
+        }
+      }
+    })
+  }
+
+  @Test
+  fun reportsErrorIfDescriptorModuleLibrariesHaveDuplicateJarNames(@TempDir tempDirectory: Path) {
+    val inputDirectory = tempDirectory.resolve("input")
+    createDescriptorJar(inputDirectory)
+    directoryContent {
+      zip("library-1.2.jar") {
+        file("Library.class", "first library")
+      }
+      zip("library-2.0.jar") {
+        file("Library.class", "second library")
+      }
+    }.generate(inputDirectory)
+
+    val error = assertThrows(IjPluginPackagingException::class.java) {
+      IjPluginPackager.packPlugin(
+        args = listOf(
+          "output",
+          "--descriptor_module",
+          "descriptor:input/descriptor.jar,input/library-1.2.jar,input/library-2.0.jar",
+        ),
+        baseDir = tempDirectory,
+      )
+    }
+
+    assertEquals(
+      "Duplicate JAR name: both ${inputDirectory.resolve("library-1.2.jar")} and ${inputDirectory.resolve("library-2.0.jar")} " +
+      "are put to ${tempDirectory.resolve("output/lib/library.jar")}",
+      error.message,
+    )
+  }
+
+  @Test
   fun doesNotGeneratePackedModulesIfOptionIsNotSpecified(@TempDir tempDirectory: Path) {
     val inputDirectory = tempDirectory.resolve("input")
     directoryContent {
