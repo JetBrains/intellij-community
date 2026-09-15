@@ -22,6 +22,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemTelemetryUtil;
 import com.intellij.openapi.externalSystem.util.OutputWrapper;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.io.NioPathUtil;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
@@ -168,27 +169,9 @@ public final class GradleExecutionHelper {
     @Nullable CancellationToken cancellationToken,
     @NotNull Function<? super ProjectConnection, ? extends T> f
   ) {
-    String projectDir;
-    //noinspection IO_FILE_USAGE
-    File projectPathFile = new File(projectPath);
-    if (Files.isRegularFile(Path.of(projectPath)) &&
-        projectPath.endsWith(GradleConstants.EXTENSION) &&
-        projectPathFile.getParent() != null) {
-      projectDir = projectPathFile.getParent();
-      if (settings != null) {
-        List<String> arguments = settings.getArguments();
-        // Setting the custom build file location is deprecated since Gradle 7.6, see IDEA-359161 for more details.
-        if (!arguments.contains("-b") && !arguments.contains("--build-file")) {
-          settings.withArguments("-b", projectPath);
-        }
-      }
-    }
-    else {
-      projectDir = projectPath;
-    }
-    GradleConnectorService connectorService = GradleConnectorService.getInstance(projectDir, taskId);
-    return connectorService.withGradleConnection(projectDir, taskId, settings, listener, cancellationToken, connection ->
-      SystemPropertiesAdjuster.executeAdjusted(projectDir, () -> f.fun(connection))
+    GradleConnectorService connectorService = GradleConnectorService.getInstance(projectPath, taskId);
+    return connectorService.withGradleConnection(projectPath, taskId, settings, listener, cancellationToken, connection ->
+      SystemPropertiesAdjuster.executeAdjusted(projectPath, () -> f.fun(connection))
     );
   }
 
@@ -198,6 +181,9 @@ public final class GradleExecutionHelper {
   ) {
     Ref<BuildEnvironment> buildEnvironmentRef = new Ref<>();
     try {
+      // Setting the custom build file location is deprecated since Gradle 7.6, see IDEA-359161 for more details.
+      setupProjectDirectory(context);
+
       return execute(context.getProjectPath(), context.getSettings(), context.getTaskId(), context.getListener(), context.getCancellationToken(), connection -> {
         BuildEnvironment buildEnvironment = getBuildEnvironment(connection, context);
         buildEnvironmentRef.set(buildEnvironment);
@@ -221,6 +207,21 @@ public final class GradleExecutionHelper {
       ExternalSystemException externalSystemException = new ExternalSystemException(ExceptionUtil.getMessage(rootCause), e);
       externalSystemException.initCause(e);
       throw externalSystemException;
+    }
+  }
+
+  private static void setupProjectDirectory(
+    @NotNull GradleExecutionContextImpl context
+  ) {
+    Path projectFile = Path.of(context.getProjectPath());
+    Path projectDirectory = projectFile.getParent();
+    if (projectFile.endsWith(GradleConstants.EXTENSION) && projectDirectory != null && Files.isRegularFile(projectFile)) {
+      GradleExecutionSettings settings = context.getSettings();
+      List<String> arguments = settings.getArguments();
+      if (!arguments.contains("-b") && !arguments.contains("--build-file")) {
+        settings.withArguments("-b", NioPathUtil.toCanonicalPath(projectFile));
+      }
+      context.setProjectPath(NioPathUtil.toCanonicalPath(projectDirectory));
     }
   }
 
