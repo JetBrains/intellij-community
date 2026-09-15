@@ -3681,6 +3681,7 @@ f:com.intellij.util.concurrency.ThreadingAssertions
 - s:softAssertEventDispatchThread():V
 - s:softAssertNoReadAccess():V
 - s:softAssertReadAccess():V
+- s:softAssertWriteAccess():V
 @:com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 - java.lang.annotation.Annotation
 - a:generateAssertion():Z

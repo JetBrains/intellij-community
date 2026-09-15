@@ -9,6 +9,13 @@ import org.jetbrains.org.objectweb.asm.MethodVisitor;
 public interface TMHAssertionGenerator {
   boolean isMyAnnotation(String annotationDescriptor);
 
+  /**
+   * Returns false when the generator must not instrument a method with this descriptor.
+   */
+  default boolean isApplicableMethod(String methodDescriptor) {
+    return true;
+  }
+
   AnnotationVisitor getAnnotationChecker(int api, Runnable onShouldGenerateAssertion);
 
   void generateAssertion(MethodVisitor writer, int methodStartLineNumber);

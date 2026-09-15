@@ -288,6 +288,23 @@ public final class ThreadingAssertions {
     }
   }
 
+  /**
+   * Asserts that the current thread has write access <b>without throwing</b> an exception.
+   *
+   * @see com.intellij.util.concurrency.annotations.RequiresWriteLock
+   */
+  public static void softAssertWriteAccess() {
+    Application application = ApplicationManager.getApplication();
+    if (application != null) {
+      if (!application.isWriteAccessAllowed()) {
+        getLogger().error(createThreadAccessException(MUST_EXECUTE_IN_WRITE_ACTION));
+      }
+      else {
+        trySoftAssertWriteAccessWhenLocksAreForbidden(application);
+      }
+    }
+  }
+
   private static void trySoftAssertWriteAccessWhenLocksAreForbidden(@NotNull Application application) {
     String advice = application.getLockProhibitedAdvice();
     if (advice != null) {

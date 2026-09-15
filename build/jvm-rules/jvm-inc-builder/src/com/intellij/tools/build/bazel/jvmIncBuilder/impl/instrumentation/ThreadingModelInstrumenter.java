@@ -3,6 +3,7 @@ package com.intellij.tools.build.bazel.jvmIncBuilder.impl.instrumentation;
 
 import com.intellij.tools.build.bazel.jvmIncBuilder.instrumentation.InstrumentationClassFinder;
 import com.intellij.tools.build.bazel.jvmIncBuilder.runner.OutputOrigin;
+import com.intellij.tools.build.bazel.jvmIncBuilder.tmh.TMHAssertionGenerator;
 import com.intellij.tools.build.bazel.jvmIncBuilder.tmh.TMHAssertionGenerator1;
 import com.intellij.tools.build.bazel.jvmIncBuilder.tmh.TMHAssertionGenerator2;
 import com.intellij.tools.build.bazel.jvmIncBuilder.tmh.TMHInstrumenter;
@@ -11,8 +12,10 @@ import org.jetbrains.org.objectweb.asm.ClassReader;
 import org.jetbrains.org.objectweb.asm.ClassWriter;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class ThreadingModelInstrumenter implements BytecodeInstrumenter {
   public static final String INSTRUMENT_ANNOTATIONS_PROPERTY = "tmh.instrument.annotations";
@@ -21,10 +24,12 @@ public class ThreadingModelInstrumenter implements BytecodeInstrumenter {
   private static final String ASSERTIONS_CLASS = "com/intellij/util/concurrency/ThreadingAssertions";
   private final boolean myIsEnabled;
   private final boolean myIsGenerateLineNumbers;
+  private final OutputOrigin.Kind myOriginKind;
 
-  ThreadingModelInstrumenter() {
+  ThreadingModelInstrumenter(OutputOrigin.Kind originKind) {
     myIsEnabled = Boolean.getBoolean(INSTRUMENT_ANNOTATIONS_PROPERTY);
     myIsGenerateLineNumbers = Boolean.getBoolean(GENERATE_LINE_NUMBERS_PROPERTY);
+    myOriginKind = originKind;
   }
 
   @Override
@@ -34,22 +39,37 @@ public class ThreadingModelInstrumenter implements BytecodeInstrumenter {
 
   @Override
   public Set<OutputOrigin.Kind> getSupportedOrigins() {
-    // todo: Instrumentation of kotlinc-produced code is turned off to comply with the current JPS behavior.
-    // todo: Uncomment as soon as 'kotlin.jps.instrument.bytecode' flag is set to 'true'
-    return EnumSet.of(OutputOrigin.Kind.java/*, OutputOrigin.Kind.kotlin*/);
+    return EnumSet.of(myOriginKind);
   }
 
   @Override
   public byte @Nullable [] instrument(String filePath, ClassReader reader, ClassWriter writer, InstrumentationClassFinder finder) {
     if (myIsEnabled && !"module-info".equals(reader.getClassName())) {
-      var generators = hasThreadingAssertions(finder) ? TMHAssertionGenerator2.generators()
-                                                      : TMHAssertionGenerator1.generators();
+      var generators = getGenerators(finder);
       if (TMHInstrumenter.instrument(reader, writer, generators, myIsGenerateLineNumbers)) {
         return writer.toByteArray();
       }
     }
 
     return null;
+  }
+
+  /**
+   * Returns generators whose assertion methods are available in ThreadingAssertions.
+   * This provides backward compatability by avoiding generating calls to methods that do not exist
+   */
+  private Set<? extends TMHAssertionGenerator> getGenerators(InstrumentationClassFinder finder) {
+    if (hasThreadingAssertions(finder)) {
+      return TMHAssertionGenerator2.generators(myOriginKind)
+        .stream()
+        .filter(generator -> generator.hasAssertionMethod(finder))
+        .collect(Collectors.toSet());
+    }
+    if (myOriginKind == OutputOrigin.Kind.java) {
+      // No assert generation for older version for kotlin files
+      return TMHAssertionGenerator1.generators();
+    }
+    return Collections.emptySet();
   }
 
   private static boolean hasThreadingAssertions(InstrumentationClassFinder finder) {
