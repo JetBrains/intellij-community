@@ -16,10 +16,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
+import java.lang.foreign.MemoryLayout;
+import java.lang.foreign.MemorySegment;
+import java.lang.invoke.VarHandle;
 import java.util.Objects;
 
 import static com.intellij.util.SystemProperties.getBooleanProperty;
+import static java.lang.foreign.MemoryLayout.PathElement.groupElement;
+import static java.lang.foreign.ValueLayout.JAVA_BYTE;
+import static java.lang.foreign.ValueLayout.JAVA_INT;
+import static java.lang.foreign.ValueLayout.JAVA_SHORT;
 
 /**
  * Implementation of <a href="https://en.wikipedia.org/wiki/Extendible_hashing">Extendible hash map</a>
@@ -85,7 +91,7 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
   //        3) Under-utilized (< 50%-utilized) segmentTable room (see HeaderLayout comments)
 
   private final MMappedFileStorage storage;
-  private transient BufferSource bufferSource;
+  private transient DataSource dataSource;
 
   /** Used to avoid updating header.fileState on _each_ modification */
   private boolean dirty = false;
@@ -120,9 +126,9 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
       this.storage = storage;
       boolean fileIsEmpty = (storage.actualFileSize() == 0);
 
-      bufferSource = new BufferSourceOverMMappedFileStorage(storage);
+      dataSource = new DataSourceOverMMappedFileStorage(storage);
 
-      header = new HeaderLayout(bufferSource, segmentSize);
+      header = new HeaderLayout(dataSource, segmentSize);
 
       if (fileIsEmpty) {
         initEmptyMap(segmentSize);
@@ -255,7 +261,7 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
     int segmentsCount = header.actualSegmentsCount();
     int totalEntries = 0;
     for (int segmentIndex = 1; segmentIndex <= segmentsCount; segmentIndex++) {
-      totalEntries += HashMapSegmentLayout.aliveEntriesCount(bufferSource, segmentIndex, segmentSize);
+      totalEntries += HashMapSegmentLayout.aliveEntriesCount(dataSource, segmentIndex, segmentSize);
     }
     return totalEntries;
   }
@@ -266,7 +272,7 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
     int segmentSize = header.segmentSize();
     int segmentsCount = header.actualSegmentsCount();
     for (int segmentIndex = 1; segmentIndex <= segmentsCount; segmentIndex++) {
-      int aliveEntriesCount = HashMapSegmentLayout.aliveEntriesCount(bufferSource, segmentIndex, segmentSize);
+      int aliveEntriesCount = HashMapSegmentLayout.aliveEntriesCount(dataSource, segmentIndex, segmentSize);
       if (aliveEntriesCount > 0) {
         return false;
       }
@@ -281,7 +287,7 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
     int segmentSize = header.segmentSize();
     int segmentsCount = header.actualSegmentsCount();
     for (int segmentIndex = 1; segmentIndex <= segmentsCount; segmentIndex++) {
-      HashMapSegmentLayout segment = new HashMapSegmentLayout(bufferSource, segmentIndex, segmentSize);
+      HashMapSegmentLayout segment = new HashMapSegmentLayout(dataSource, segmentIndex, segmentSize);
       if (segment.aliveEntriesCount() > 0) {
         if (!hashMapAlgo.forEach(segment, processor)) {
           return false;
@@ -345,10 +351,10 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
       }
       storage.close();
 
-      //clean all references to mapped ByteBuffers, so it's easier for GC to unmap them:
+      //Clear all references to mapped memory segments so the storage can unmap them.
       segmentsCache.clear();
       header = null;
-      bufferSource = null;
+      dataSource = null;
     }
   }
 
@@ -403,7 +409,7 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
 
     HashMapSegmentLayout layout = segmentsCache.get(segmentIndex);
     if (layout == null) {
-      layout = new HashMapSegmentLayout(bufferSource, segmentIndex, header.segmentSize());
+      layout = new HashMapSegmentLayout(dataSource, segmentIndex, header.segmentSize());
       segmentsCache.put(segmentIndex, layout);
     }
     return layout;
@@ -495,7 +501,7 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
     int segmentsCount = header.actualSegmentsCount();
     int segmentIndex = segmentsCount + 1;// segmentIndex starts with 1 (segmentIndex=0 is the header)
 
-    HashMapSegmentLayout segment = new HashMapSegmentLayout(bufferSource, segmentIndex, header.segmentSize());
+    HashMapSegmentLayout segment = new HashMapSegmentLayout(dataSource, segmentIndex, header.segmentSize());
     segment.updateHashSuffix(hashSuffix, hashSuffixDepth);
 
     header.actualSegmentsCount(segmentsCount + 1);
@@ -554,7 +560,7 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
       // as-is.
       // Solution is a regular pruning: keep track of segment tombstone count, and re-hash segment if there
       // are too many tombstones. Since segment size is fixed and not too big, we could copy alive entries
-      // in memory buffer, clean the segment entries table, and insert values back into it -- simple and fast.
+      // in a temporary buffer, clean the segment entries table, and insert values back into it -- simple and fast.
     }
 
     return Pair.pair(segmentToSplit, newSegment);
@@ -609,24 +615,31 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
 
 
   static final class HeaderLayout {
+    public static final MemoryLayout LAYOUT = MemoryLayout.structLayout(
+      JAVA_INT.withName("magicWord"),
+      JAVA_INT.withName("version"),
+      JAVA_INT.withName("segmentSize"),
+      JAVA_INT.withName("actualSegmentsCount"),
+      JAVA_BYTE.withName("globalHashSuffixDepth"),
+      JAVA_BYTE.withName("fileStatus"),
+      MemoryLayout.sequenceLayout(62, JAVA_BYTE).withName("reserved")
+    ).withName("ExtendibleHashMap.HeaderLayout");
+
     //@formatter:off
-    public static final int MAGIC_WORD_OFFSET               =  0;  //int32
-    public static final int VERSION_OFFSET                  =  4;  //int32
-    public static final int SEGMENT_SIZE_OFFSET             =  8;  //int32
-    public static final int ACTUAL_SEGMENTS_COUNT_OFFSET    = 12;  //int32
-    public static final int GLOBAL_HASH_SUFFIX_DEPTH_OFFSET = 16;  //int8
+    private static final VarHandle MAGIC_WORD_HANDLE               = fieldHandle("magicWord");
+    private static final VarHandle VERSION_HANDLE                  = fieldHandle("version");
+    private static final VarHandle SEGMENT_SIZE_HANDLE             = fieldHandle("segmentSize");
+    private static final VarHandle ACTUAL_SEGMENTS_COUNT_HANDLE    = fieldHandle("actualSegmentsCount");
+    private static final VarHandle GLOBAL_HASH_SUFFIX_DEPTH_HANDLE = fieldHandle("globalHashSuffixDepth");
+    private static final VarHandle FILE_STATUS_HANDLE              = fieldHandle("fileStatus");
 
-    public static final int FILE_STATUS_OFFSET              = 17;  //int8
+    public  static final int STATIC_HEADER_SIZE                    = Math.toIntExact(LAYOUT.byteSize());
+    private static final int SEGMENTS_TABLE_OFFSET                 = STATIC_HEADER_SIZE; //int16[N]
 
-    public static final int FIRST_FREE_OFFSET               = 18;
-    // region [18..79] is reserved for the generations to come
-    public static final int STATIC_HEADER_SIZE              = 80;
 
-    private static final int SEGMENTS_TABLE_OFFSET = STATIC_HEADER_SIZE; //int16[N]
+    public static final byte FILE_STATUS_PROPERLY_CLOSED           = 1;
+    public static final byte FILE_STATUS_OPENED                    = 0;
     //@formatter:on
-
-    public static final byte FILE_STATUS_PROPERLY_CLOSED = 1;
-    public static final byte FILE_STATUS_OPENED = 0;
 
     //TODO RC: segmentSize is 2^N, and segmentsTable also must have 2^M entries -- but since we use few bytes
     // for static header, this means M <= N-1 -- i.e. we waste _almost half_ of header segment space because
@@ -642,12 +655,12 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
     // size (4k-16k) usually smaller than segmentSize (32k-64k) - only a part (< 50%) of those 32k-64k of wasted
     // space would really waste _RAM_.
 
-    private final ByteBuffer headerBuffer;
+    private final MemorySegment headerSegment;
 
     /** headerSegmentSize == {@link #segmentSize()} (we check that in ctor), but we cache it in field since it is frequently used */
     private final transient int headerSegmentSize;
 
-    HeaderLayout(@NotNull BufferSource bufferSource,
+    HeaderLayout(@NotNull DataSource dataSource,
                  int headerSegmentSize) throws IOException {
       if (headerSegmentSize <= STATIC_HEADER_SIZE) {
         throw new IllegalArgumentException("headerSize(=" +
@@ -655,83 +668,83 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
       }
 
       this.headerSegmentSize = headerSegmentSize;
-      headerBuffer = bufferSource.slice(0, headerSegmentSize);
+      headerSegment = dataSource.slice(0, headerSegmentSize);
     }
 
     public int magicWord() {
-      return headerBuffer.getInt(MAGIC_WORD_OFFSET);
+      return magicWord(headerSegment);
     }
 
     public void magicWord(int magicWord) {
-      headerBuffer.putInt(MAGIC_WORD_OFFSET, magicWord);
+      MAGIC_WORD_HANDLE.set(headerSegment, 0L, magicWord);
     }
 
     public int version() {
-      return headerBuffer.getInt(VERSION_OFFSET);
+      return version(headerSegment);
     }
 
     public void version(int version) {
-      headerBuffer.putInt(VERSION_OFFSET, version);
+      VERSION_HANDLE.set(headerSegment, 0L, version);
     }
 
     public int segmentSize() {
-      return headerBuffer.getInt(SEGMENT_SIZE_OFFSET);
+      return segmentSize(headerSegment);
     }
 
     public void segmentSize(int size) {
-      headerBuffer.putInt(SEGMENT_SIZE_OFFSET, size);
+      SEGMENT_SIZE_HANDLE.set(headerSegment, 0L, size);
     }
 
     public byte fileStatus() {
-      return headerBuffer.get(FILE_STATUS_OFFSET);
+      return fileStatus(headerSegment);
     }
 
     public void fileStatus(@MagicConstant(intValues = {FILE_STATUS_PROPERLY_CLOSED, FILE_STATUS_OPENED})
                            byte connectionStatus) {
-      headerBuffer.put(FILE_STATUS_OFFSET, connectionStatus);
+      FILE_STATUS_HANDLE.set(headerSegment, 0L, connectionStatus);
     }
 
-    public static int magicWord(@NotNull ByteBuffer headerBuffer) {
-      return headerBuffer.getInt(MAGIC_WORD_OFFSET);
+    public static int magicWord(@NotNull MemorySegment headerSegment) {
+      return (int)MAGIC_WORD_HANDLE.get(headerSegment, 0L);
     }
 
-    public static int version(@NotNull ByteBuffer headerBuffer) {
-      return headerBuffer.getInt(VERSION_OFFSET);
+    public static int version(@NotNull MemorySegment headerSegment) {
+      return (int)VERSION_HANDLE.get(headerSegment, 0L);
     }
 
-    public static int segmentSize(@NotNull ByteBuffer headerBuffer) {
-      return headerBuffer.getInt(SEGMENT_SIZE_OFFSET);
+    public static int segmentSize(@NotNull MemorySegment headerSegment) {
+      return (int)SEGMENT_SIZE_HANDLE.get(headerSegment, 0L);
     }
 
-    public static byte fileStatus(@NotNull ByteBuffer headerBuffer) {
-      return headerBuffer.get(FILE_STATUS_OFFSET);
+    public static byte fileStatus(@NotNull MemorySegment headerSegment) {
+      return (byte)FILE_STATUS_HANDLE.get(headerSegment, 0L);
     }
 
 
     public int actualSegmentsCount() {
-      return headerBuffer.getInt(ACTUAL_SEGMENTS_COUNT_OFFSET);
+      return (int)ACTUAL_SEGMENTS_COUNT_HANDLE.get(headerSegment, 0L);
     }
 
     public void actualSegmentsCount(int count) {
-      headerBuffer.putInt(ACTUAL_SEGMENTS_COUNT_OFFSET, count);
+      ACTUAL_SEGMENTS_COUNT_HANDLE.set(headerSegment, 0L, count);
     }
 
     /** How many trailing bits of key.hash to use to determine segment to store the key */
     public byte globalHashSuffixDepth() {
-      return headerBuffer.get(GLOBAL_HASH_SUFFIX_DEPTH_OFFSET);
+      return (byte)GLOBAL_HASH_SUFFIX_DEPTH_HANDLE.get(headerSegment, 0L);
     }
 
     public void globalHashSuffixDepth(int depth) {
       if (depth < 0 || depth >= Integer.SIZE) {
         throw new IllegalArgumentException("depth(=" + depth + ") must be in [0..32)");
       }
-      headerBuffer.put(GLOBAL_HASH_SUFFIX_DEPTH_OFFSET, (byte)depth);
+      GLOBAL_HASH_SUFFIX_DEPTH_HANDLE.set(headerSegment, 0L, (byte)depth);
     }
 
     /** @return segmentIndex in [1..actualSegmentsCount], for slotIndex in [0..segmentTableSize) */
     public int segmentIndex(int slotIndex) throws IOException {
       Objects.checkIndex(slotIndex, segmentTableSize());
-      return Short.toUnsignedInt(headerBuffer.getShort(SEGMENTS_TABLE_OFFSET + slotIndex * Short.BYTES));
+      return Short.toUnsignedInt(headerSegment.get(JAVA_SHORT, SEGMENTS_TABLE_OFFSET + slotIndex * (long)Short.BYTES));
     }
 
     public int segmentIndexByHash(int hash) throws IOException {
@@ -753,7 +766,7 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
       if (segmentIndex < 1 || segmentIndex > 0xFFFF) {
         throw new IllegalArgumentException("segmentIndex(=" + segmentIndex + ") must be in [1..0xFFFF]");
       }
-      headerBuffer.putShort(SEGMENTS_TABLE_OFFSET + slotIndex * Short.BYTES, (short)segmentIndex);
+      headerSegment.set(JAVA_SHORT, SEGMENTS_TABLE_OFFSET + slotIndex * (long)Short.BYTES, (short)segmentIndex);
     }
 
     public int segmentTableSize() {
@@ -778,19 +791,39 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
       }
       return sb.toString();
     }
+
+    private static VarHandle fieldHandle(String fieldName) {
+      return LAYOUT.varHandle(groupElement(fieldName)).withInvokeExactBehavior();
+    }
   }
 
   @VisibleForTesting
   @ApiStatus.Internal
-  public record HashMapSegmentLayout(int segmentIndex, int segmentSize, @NotNull ByteBuffer segmentBuffer) implements HashTableData {
-    //@formatter:off
-    private static final int LIVE_ENTRIES_COUNT_OFFSET  =  0; //int32
-    private static final int HASH_SUFFIX_OFFSET         =  4; //int32
-    private static final int HASH_SUFFIX_DEPTH_OFFSET   =  8; //int8
-    // == region [9..15] is reserved for generations to come
-    private static final int STATIC_HEADER_SIZE         = 16;
+  public record HashMapSegmentLayout(int segmentIndex, int segmentSize, @NotNull MemorySegment segment) implements HashTableData {
+    //TODO RC: re-use constants/methods from LayoutUtils
+    private static final MemoryLayout HEADER_LAYOUT = MemoryLayout.structLayout(
+      JAVA_INT.withName("liveEntriesCount"),
+      JAVA_INT.withName("hashSuffix"),
+      JAVA_BYTE.withName("hashSuffixDepth"),
+      MemoryLayout.sequenceLayout(7, JAVA_BYTE).withName("reserved")
+    ).withName("ExtendibleHashMap.HashMapSegmentHeaderLayout");
 
-    private static final int HASHTABLE_SLOTS_OFFSET     = STATIC_HEADER_SIZE; //int32[N]
+    private static final MemoryLayout ENTRY_LAYOUT = MemoryLayout.structLayout(
+      JAVA_INT.withName("key"),
+      JAVA_INT.withName("value")
+    ).withName("ExtendibleHashMap.HashMapEntryLayout");
+
+    //@formatter:off
+    private static final VarHandle LIVE_ENTRIES_COUNT_HANDLE = headerFieldHandle("liveEntriesCount");
+    private static final VarHandle HASH_SUFFIX_HANDLE        = headerFieldHandle("hashSuffix");
+    private static final VarHandle HASH_SUFFIX_DEPTH_HANDLE  = headerFieldHandle("hashSuffixDepth");
+
+    private static final VarHandle ENTRY_KEY_HANDLE          = entryFieldHandle("key");
+    private static final VarHandle ENTRY_VALUE_HANDLE        = entryFieldHandle("value");
+
+    private static final int STATIC_HEADER_SIZE              = Math.toIntExact(HEADER_LAYOUT.byteSize());
+    private static final int HASHTABLE_ENTRIES_OFFSET        = STATIC_HEADER_SIZE;
+    private static final int ENTRY_SIZE                      = Math.toIntExact(ENTRY_LAYOUT.byteSize());
     //@formatter:on
 
     public HashMapSegmentLayout {
@@ -800,17 +833,17 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
     }
 
     @VisibleForTesting
-    public HashMapSegmentLayout(@NotNull BufferSource bufferSource,
+    public HashMapSegmentLayout(@NotNull DataSource dataSource,
                                 int segmentIndex,
                                 int segmentSize) throws IOException {
       this(segmentIndex, segmentSize,
-           bufferSource.slice(segmentIndex * (long)segmentSize, segmentSize)
+           dataSource.slice(segmentIndex * (long)segmentSize, segmentSize)
       );
     }
 
     @Override
     public int aliveEntriesCount() {
-      return segmentBuffer.getInt(LIVE_ENTRIES_COUNT_OFFSET);
+      return (int)LIVE_ENTRIES_COUNT_HANDLE.get(segment, 0L);
     }
 
     void clear() {
@@ -820,30 +853,30 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
     }
 
     /**
-     * 'Inlined' version of {@code new HashMapSegmentLayout(bufferSource, segmentIndex, segmentSize).aliveEntriesCount()}
+     * 'Inlined' version of {@code new HashMapSegmentLayout(dataSource, segmentIndex, segmentSize).aliveEntriesCount()}
      * with reduced allocations and slicing
      */
-    public static int aliveEntriesCount(@NotNull BufferSource bufferSource,
+    public static int aliveEntriesCount(@NotNull DataSource dataSource,
                                         int segmentIndex,
                                         int segmentSize) throws IOException {
       if (segmentIndex < 1) {
         throw new IllegalArgumentException("segmentIndex(=" + segmentIndex + ") must be >=1 (0-th segment is a header)");
       }
       long offsetInFile = segmentIndex * (long)segmentSize;
-      return bufferSource.getInt(offsetInFile + LIVE_ENTRIES_COUNT_OFFSET);
+      return dataSource.getInt(offsetInFile);
     }
 
     @Override
     public void updateAliveEntriesCount(int aliveCount) {
-      segmentBuffer.putInt(LIVE_ENTRIES_COUNT_OFFSET, aliveCount);
+      LIVE_ENTRIES_COUNT_HANDLE.set(segment, 0L, aliveCount);
     }
 
     public byte hashSuffixDepth() {
-      return segmentBuffer.get(HASH_SUFFIX_DEPTH_OFFSET);
+      return (byte)HASH_SUFFIX_DEPTH_HANDLE.get(segment, 0L);
     }
 
     public int hashSuffix() {
-      return segmentBuffer.getInt(HASH_SUFFIX_OFFSET);
+      return (int)HASH_SUFFIX_HANDLE.get(segment, 0L);
     }
 
     public int hashSuffixMask() {
@@ -863,46 +896,46 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
           "(mask: " + Integer.toBinaryString(mask) + ")"
         );
       }
-      segmentBuffer.put(HASH_SUFFIX_DEPTH_OFFSET, newHashSuffixDepth);
-      segmentBuffer.putInt(HASH_SUFFIX_OFFSET, newHashSuffix);
+      HASH_SUFFIX_DEPTH_HANDLE.set(segment, 0L, newHashSuffixDepth);
+      HASH_SUFFIX_HANDLE.set(segment, 0L, newHashSuffix);
     }
 
     @Override
     public int entriesCount() {
-      return slotsCount() / 2;
+      return (segmentSize - STATIC_HEADER_SIZE) / ENTRY_SIZE;
     }
 
     /** entryIndex in [0..entriesCount) */
     @Override
     public int entryKey(int entryIndex) {
-      return slot(entryIndex * 2);
+      return (int)ENTRY_KEY_HANDLE.get(segment, offsetOfEntry(entryIndex));
     }
 
     /** entryIndex in [0..entriesCount) */
     @Override
     public int entryValue(int entryIndex) {
-      return slot(entryIndex * 2 + 1);
+      return (int)ENTRY_VALUE_HANDLE.get(segment, offsetOfEntry(entryIndex));
     }
 
     @Override
     public void updateEntry(int entryIndex,
                             int key,
                             int value) {
-      segmentBuffer.putInt(offsetOfSlot(entryIndex * 2), key);
-      segmentBuffer.putInt(offsetOfSlot(entryIndex * 2 + 1), value);
+      long entryOffset = offsetOfEntry(entryIndex);
+      ENTRY_KEY_HANDLE.set(segment, entryOffset, key);
+      ENTRY_VALUE_HANDLE.set(segment, entryOffset, value);
     }
 
-    /** slotNo in [0..slotsCount) */
-    private int slot(int slotNo) {
-      return segmentBuffer.getInt(offsetOfSlot(slotNo));
+    private static long offsetOfEntry(int entryIndex) {
+      return HASHTABLE_ENTRIES_OFFSET + entryIndex * (long)ENTRY_SIZE;
     }
 
-    private static int offsetOfSlot(int slotNo) {
-      return HASHTABLE_SLOTS_OFFSET + slotNo * Integer.BYTES;
+    private static VarHandle headerFieldHandle(String fieldName) {
+      return HEADER_LAYOUT.varHandle(groupElement(fieldName)).withInvokeExactBehavior();
     }
 
-    private int slotsCount() {
-      return (segmentSize - STATIC_HEADER_SIZE) / Integer.BYTES;
+    private static VarHandle entryFieldHandle(String fieldName) {
+      return ENTRY_LAYOUT.varHandle(groupElement(fieldName)).withInvokeExactBehavior();
     }
 
 
@@ -930,12 +963,12 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
     }
   }
 
-  public interface BufferSource {
-    @NotNull
-    ByteBuffer slice(long offsetInFile,
-                     int length) throws IOException;
+  /** Abstracts access to the map underlying data */
+  public interface DataSource {
+    @NotNull MemorySegment slice(long offsetInFile,
+                                 int length) throws IOException;
 
-    /** == {@code slice(offsetInFile, 4).getInt()} */
+    /** == {@code slice(offsetInFile, 4).get(JAVA_INT, 0)} */
     int getInt(long offsetInFile) throws IOException;
   }
 
@@ -1084,7 +1117,7 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
       // Hence, in the current design it could be there are not-so-many alive entries, but a lot of tombstones -- which
       // deteriorates performance.
       // The simplest solution would be to prune the tombstones on segment split in old segment also: currently we copy
-      // ~1/2 alive entries in the new segment -- instead we should copy _all_ alive entries into memory buffer first,
+      // ~1/2 alive entries in the new segment -- instead we should copy _all_ alive entries into a temporary memory first,
       // clean the old segment entirely, and copy the entries from in-memory buffer into old/new segments afterwards.
 
       if (aliveValues(table) == 0) {
@@ -1264,26 +1297,25 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
     }
   }
 
-  private record BufferSourceOverMMappedFileStorage(@NotNull MMappedFileStorage storage) implements BufferSource {
+  private record DataSourceOverMMappedFileStorage(@NotNull MMappedFileStorage storage) implements DataSource {
     @Override
-    public @NotNull ByteBuffer slice(long offsetInFile,
-                                     int length) throws IOException {
-      ByteBuffer buffer = storage.pageByOffset(offsetInFile).rawPageBuffer();
+    public @NotNull MemorySegment slice(long offsetInFile,
+                                        int length) throws IOException {
+      MemorySegment segment = storage.pageByOffset(offsetInFile).rawPageSegment();
       int offsetInPage = storage.toOffsetInPage(offsetInFile);
-      return buffer.slice(offsetInPage, length)
-        .order(buffer.order());
+      return segment.asSlice(offsetInPage, length);
     }
 
     @Override
     public int getInt(long offsetInFile) throws IOException {
-      ByteBuffer buffer = storage.pageByOffset(offsetInFile).rawPageBuffer();
+      MemorySegment segment = storage.pageByOffset(offsetInFile).rawPageSegment();
       int offsetInPage = storage.toOffsetInPage(offsetInFile);
-      return buffer.getInt(offsetInPage);
+      return segment.get(JAVA_INT, offsetInPage);
     }
 
     @Override
     public String toString() {
-      return "BufferSourceOverMMappedFileStorage{" + storage + '}';
+      return "DataSourceOverMMappedFileStorage{" + storage + '}';
     }
   }
 }

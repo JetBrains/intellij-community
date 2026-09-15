@@ -11,14 +11,13 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
+import java.lang.foreign.Arena;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleMapFactory.NotClosedProperlyAction.DROP_AND_CREATE_EMPTY_MAP;
 import static com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleMapFactory.NotClosedProperlyAction.IGNORE_AND_HOPE_FOR_THE_BEST;
-import static java.nio.ByteOrder.nativeOrder;
 import static java.nio.file.StandardOpenOption.READ;
 
 @ApiStatus.Internal
@@ -157,11 +156,10 @@ public class ExtendibleMapFactory implements StorageFactory<ExtendibleHashMap> {
   }
 
   private void checkCrucialFileHeaderParamsEagerly(@NotNull Path storagePath) throws IOException {
-    ByteBuffer headerBuffer = ByteBuffer.allocate(ExtendibleHashMap.HeaderLayout.STATIC_HEADER_SIZE)
-      .order(nativeOrder())
-      .clear();
-
-    try (FileChannel channel = FileChannel.open(storagePath, READ)) {
+    try (var arena = Arena.ofConfined();
+         var channel = FileChannel.open(storagePath, READ)) {
+      var headerSegment = arena.allocate(ExtendibleHashMap.HeaderLayout.STATIC_HEADER_SIZE, Integer.BYTES);
+      var headerBuffer = headerSegment.asByteBuffer();
       try {
         int actuallyRead = channel.read(headerBuffer);
         if (actuallyRead != ExtendibleHashMap.HeaderLayout.STATIC_HEADER_SIZE) {
@@ -170,7 +168,7 @@ public class ExtendibleMapFactory implements StorageFactory<ExtendibleHashMap> {
           );
         }
 
-        int magicWord = ExtendibleHashMap.HeaderLayout.magicWord(headerBuffer);
+        int magicWord = ExtendibleHashMap.HeaderLayout.magicWord(headerSegment);
         if (magicWord != ExtendibleHashMap.MAGIC_WORD) {
           throw new IOException(
             "[" + storagePath + "] is of incorrect type: " +
@@ -179,7 +177,7 @@ public class ExtendibleMapFactory implements StorageFactory<ExtendibleHashMap> {
           );
         }
 
-        int implVersion = ExtendibleHashMap.HeaderLayout.version(headerBuffer);
+        int implVersion = ExtendibleHashMap.HeaderLayout.version(headerSegment);
         if (implVersion != ExtendibleHashMap.IMPLEMENTATION_VERSION) {
           throw new IOException(
             "[" + storagePath + "]: version(=" + implVersion + ") " +
@@ -187,7 +185,7 @@ public class ExtendibleMapFactory implements StorageFactory<ExtendibleHashMap> {
           );
         }
 
-        int segmentSize = ExtendibleHashMap.HeaderLayout.segmentSize(headerBuffer);
+        int segmentSize = ExtendibleHashMap.HeaderLayout.segmentSize(headerSegment);
         if (segmentSize != this.segmentSize) {
           throw new IOException(
             "[" + storagePath + "]: segmentSize(=" + this.segmentSize + ") != segmentSize(=" + segmentSize + ")" +
@@ -208,7 +206,7 @@ public class ExtendibleMapFactory implements StorageFactory<ExtendibleHashMap> {
         }
       }
 
-      byte fileStatus = ExtendibleHashMap.HeaderLayout.fileStatus(headerBuffer);
+      byte fileStatus = ExtendibleHashMap.HeaderLayout.fileStatus(headerSegment);
       boolean wasProperlyClosed = (fileStatus == ExtendibleHashMap.HeaderLayout.FILE_STATUS_PROPERLY_CLOSED);
       if (!wasProperlyClosed) {
         switch (notClosedProperlyAction) {

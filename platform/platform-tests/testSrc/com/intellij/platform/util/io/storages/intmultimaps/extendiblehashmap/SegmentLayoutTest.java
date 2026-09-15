@@ -7,7 +7,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
+import java.lang.foreign.MemorySegment;
+
+import static java.lang.foreign.ValueLayout.JAVA_INT;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -18,21 +20,21 @@ public class SegmentLayoutTest {
   public static final int SEGMENT_SIZE = 1 << 16;
 
   private HashMapSegmentLayout segmentLayout;
-  private ExtendibleHashMap.BufferSource bufferSource;
+  private ExtendibleHashMap.DataSource bufferSource;
 
   @BeforeEach
   void setUp() throws IOException {
-    ByteBuffer buffer = ByteBuffer.allocate(SEGMENT_SIZE);
-    bufferSource = new ExtendibleHashMap.BufferSource() {
+    var buffer = MemorySegment.ofArray(new int[SEGMENT_SIZE / Integer.BYTES]);
+    bufferSource = new ExtendibleHashMap.DataSource() {
       @Override
-      public @NotNull ByteBuffer slice(long offsetInFile, int length) throws IOException {
+      public @NotNull MemorySegment slice(long offsetInFile, int length) {
         return buffer;
       }
 
       @Override
-      public int getInt(long offsetInFile) throws IOException {
+      public int getInt(long offsetInFile) {
         //we emulate 1st segment (because first segment is header, it is special), but buffer is 0-based
-        return buffer.getInt((int)offsetInFile - SEGMENT_SIZE);
+        return buffer.get(JAVA_INT, offsetInFile - SEGMENT_SIZE);
       }
     };
     segmentLayout = new HashMapSegmentLayout(
@@ -43,7 +45,7 @@ public class SegmentLayoutTest {
   }
 
   @Test
-  void initially_thereIsNoAliveEntries() throws IOException {
+  void initially_thereIsNoAliveEntries() {
     assertEquals(
       0,
       segmentLayout.aliveEntriesCount()
