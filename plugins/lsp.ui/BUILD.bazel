@@ -1,4 +1,5 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
 load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_TARGETS")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -84,6 +85,12 @@ jvm_library(
         "//platform/lang-impl:lang-impl_test_lib",
         "//json:json_test_lib",
     ],
+)
+
+ij_plugin(
+    name = "lsp.ui_plugin",
+    descriptor_module = ":lsp.ui",
+    visibility = ["//visibility:public"],
 )
 ### auto-generated section `build intellij.lsp.ui` end
 
