@@ -170,6 +170,17 @@ f:git4idea.push.GitPushNotificationCustomizerKt
 - f:getKey():java.lang.String
 - getRoot():com.intellij.openapi.vfs.VirtualFile
 - hashCode():I
+*:git4idea.ui.branch.GitBranchReviewPresenter
+- *sf:Companion:git4idea.ui.branch.GitBranchReviewPresenter$Companion
+- a:getReviewsFlow(git4idea.repo.GitRepository,java.util.Set):kotlinx.coroutines.flow.Flow
+*f:git4idea.ui.branch.GitBranchReviewPresenter$Companion
+- f:getReviewsFlow(git4idea.repo.GitRepository,java.util.Set):kotlinx.coroutines.flow.Flow
+*f:git4idea.ui.branch.GitBranchReviewPresenter$Review
+- <init>(java.lang.String,kotlin.jvm.functions.Function0):V
+- equals(java.lang.Object):Z
+- f:getTitle():java.lang.String
+- hashCode():I
+- f:open():V
 f:git4idea.ui.branch.GitCurrentBranchPresenter$Companion
 - *f:getPRESENTATION_UPDATED():com.intellij.util.messages.Topic
 *:git4idea.ui.branch.GitCurrentBranchPresenter$PresentationUpdatedListener

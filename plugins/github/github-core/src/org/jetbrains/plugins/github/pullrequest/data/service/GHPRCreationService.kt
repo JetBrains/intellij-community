@@ -6,6 +6,7 @@ import com.intellij.vcs.log.VcsCommitMetadata
 import git4idea.GitBranch
 import git4idea.GitRemoteBranch
 import org.jetbrains.plugins.github.api.GHRepositoryPath
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestBranchMatch
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRestIdOnly
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
@@ -26,6 +27,11 @@ internal interface GHPRCreationService {
   suspend fun findOpenPullRequestDetails(baseBranch: GitRemoteBranch?,
                                          headRepo: GHRepositoryPath,
                                          headBranch: GitRemoteBranch): GHPullRequestRestIdOnly?
+
+  /**
+   * Finds an open pull request for each of [headBranches] that has one, in a single request.
+   */
+  suspend fun findOpenPullRequestsByHeadBranches(headBranches: Collection<GitRemoteBranch>): List<GHPullRequestBranchMatch>
 
   suspend fun getDiff(commit: VcsCommitMetadata): Collection<RefComparisonChange>
 

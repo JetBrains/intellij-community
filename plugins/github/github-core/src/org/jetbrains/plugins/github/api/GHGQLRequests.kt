@@ -23,6 +23,7 @@ import org.jetbrains.plugins.github.api.data.commit.GHCommitStatusRollupContextD
 import org.jetbrains.plugins.github.api.data.commit.GHCommitStatusRollupShortDTO
 import org.jetbrains.plugins.github.api.data.graphql.query.GHGQLSearchQueryResponse
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestBranchMatch
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestChangedFile
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestCommit
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestMergeabilityData
@@ -38,6 +39,7 @@ import org.jetbrains.plugins.github.api.data.request.search.GithubIssueSearchTyp
 import org.jetbrains.plugins.github.api.util.GHSchemaPreview
 import org.jetbrains.plugins.github.api.util.GithubApiSearchQueryBuilder
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
+import org.jetbrains.plugins.github.pullrequest.data.GHPRSearchQuery
 import org.jetbrains.plugins.github.pullrequest.data.GHPRSearchQuery.QualifierName
 
 object GHGQLRequests {
@@ -355,6 +357,35 @@ object GHGQLRequests {
         withOperation(GithubApiRequestOperation.GraphQLSearchPullRequests)
         withOperationName("search issues")
       }
+
+    /**
+     * Finds open pull requests whose head branch matches one of [headBranchRefs], in a single request.
+     * Each entry in [headBranchRefs] is a bare branch name, as accepted by the GitHub "head" search qualifier.
+     * Do not prefix an entry with the owner. The "owner:branch-name" form fits the REST "head" parameter, not this qualifier.
+     */
+    fun searchByHeadBranches(repository: GHRepositoryCoordinates, headBranchRefs: Collection<String>): GQLQuery<GHGQLSearchQueryResponse<GHPullRequestBranchMatch>> =
+      GQLQuery.Parsed(
+        repository.serverPath.toGraphQLUrl(), GHGQLQueries.findPullRequestsByHeadBranch,
+        mapOf("query" to buildHeadBranchSearchQuery(repository, headBranchRefs),
+              "pageSize" to headBranchRefs.size.coerceIn(1, 100)),
+        BranchMatchSearch::class.java
+      ).apply {
+        acceptMimeType = GHSchemaPreview.PR_DRAFT.mimeType
+
+        withOperation(GithubApiRequestOperation.GraphQLSearchPullRequestsByHeadBranch)
+        withOperationName("search pull requests by head branch")
+      }
+
+    private fun buildHeadBranchSearchQuery(repository: GHRepositoryCoordinates, headBranchRefs: Collection<String>): String =
+      GHPRSearchQuery(listOf(
+        QualifierName.repo.createTerm(repository.repositoryPath.toString(showOwner = true)),
+        QualifierName.type.createTerm(GithubIssueSearchType.pr.name),
+        QualifierName.state.createTerm(GithubIssueState.open.name),
+        GHPRSearchQuery.Term.Or(headBranchRefs.map { QualifierName.head.createTerm("\"$it\"") }),
+      )).toString()
+
+    private class BranchMatchSearch(search: SearchConnection<GHPullRequestBranchMatch>)
+      : GHGQLSearchQueryResponse<GHPullRequestBranchMatch>(search)
 
     fun findParticipants(
       repository: GHRepositoryCoordinates,

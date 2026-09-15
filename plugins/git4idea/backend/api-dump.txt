@@ -254,6 +254,7 @@ f:git4idea.remote.hosting.GitRemoteBranchesUtil
 - f:testRemoteBranchCheckedOut(git4idea.repo.GitRepository,git4idea.GitRemoteBranch,kotlin.coroutines.Continuation):java.lang.Object
 - f:testRemoteBranchCheckedOut(git4idea.repo.GitRepository,git4idea.remote.hosting.HostedGitRepositoryRemote,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
 f:git4idea.remote.hosting.HostedGitRepositoriesManagerKt
+- sf:findHostedRemoteBranchTrackedBy(git4idea.remote.hosting.HostedGitRepositoriesManager,git4idea.repo.GitRepository,git4idea.GitStandardLocalBranch):kotlinx.coroutines.flow.Flow
 - sf:getKnownRepositories(git4idea.remote.hosting.HostedGitRepositoriesManager):java.util.Set
 f:git4idea.remote.hosting.SingleHostedGitRepositoryConnectionManagerImpl
 - closeConnection(kotlin.coroutines.Continuation):java.lang.Object

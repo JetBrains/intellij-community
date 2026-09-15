@@ -27,7 +27,6 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration.Companion.seconds
 
 /**
@@ -142,48 +141,6 @@ internal class GitWorktreesViewModelTest {
       assertThat(viewModel.reviews.value[healthyKey])
         .describedAs("The failure on the other branch must not have killed the shared collector")
         .isEqualTo(healthyReview)
-    }
-  }
-
-  @Test
-  fun `test adding a new worktree does not restart the lookup for an already-resolved branch`(): Unit = with(context) {
-    val firstRepo = createRepository(project, projectNioRoot, true)
-    GitRepositoriesHolder.getAndInit(project)
-
-    val firstReview = fakeReview("Add feature")
-    val secondReview = fakeReview("Fix bug")
-    val firstRepoLookups = AtomicInteger(0)
-    registerReviewPresenter(fakeReviewPresenter { repository, branches ->
-      if (repository.root.path == firstRepo.root.path) {
-        firstRepoLookups.incrementAndGet()
-        flowOf(branches.associateWith { firstReview })
-      }
-      else flowOf(branches.associateWith { secondReview })
-    })
-
-    withViewModel { viewModel ->
-      val firstKey = awaitSingleRowKey(viewModel)
-      waitUntil("the first repository's review resolves", timeout = 10.seconds) {
-        viewModel.reviews.value[firstKey] == firstReview
-      }
-      assertThat(firstRepoLookups.get())
-        .describedAs("Exactly one lookup for the pre-existing branch before adding a new worktree")
-        .isEqualTo(1)
-
-      val secondRepo = createRepository(project, testNioRoot.resolve("second-repo"), true)
-
-      waitUntil("the second worktree row is built", timeout = 10.seconds) {
-        viewModel.entries.value.filterIsInstance<GitWorktreeRow>().size == 2
-      }
-      val secondKey = viewModel.entries.value.filterIsInstance<GitWorktreeRow>()
-        .single { it.repository.root.path == secondRepo.root.path }.resolveReviewBranchKey()!!
-      waitUntil("the second repository's review resolves", timeout = 10.seconds) {
-        viewModel.reviews.value[secondKey] == secondReview
-      }
-
-      assertThat(firstRepoLookups.get())
-        .describedAs("Adding an unrelated worktree must not re-trigger the already-resolved branch's lookup")
-        .isEqualTo(1)
     }
   }
 

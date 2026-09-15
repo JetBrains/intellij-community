@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.ui.review
 
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import git4idea.GitStandardLocalBranch
 import git4idea.remote.hosting.findHostedRemoteBranchTrackedBy
 import git4idea.remote.hosting.findKnownRepositories
@@ -15,14 +16,12 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRestIdOnly
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestBranchMatch
 import org.jetbrains.plugins.github.api.data.pullrequest.toPRIdentifier
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.pullrequest.GHRepositoryConnectionManager
 import org.jetbrains.plugins.github.pullrequest.ui.GHPRProjectViewModel
 import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
-
-private typealias PullRequestAndAccount = Pair<GHPullRequestRestIdOnly, Pair<GHRepositoryCoordinates, GithubAccount>>
 
 class GHBranchReviewPresenter : GitBranchReviewPresenter {
   @OptIn(ExperimentalCoroutinesApi::class)
@@ -31,45 +30,58 @@ class GHBranchReviewPresenter : GitBranchReviewPresenter {
     branches: Set<GitStandardLocalBranch>,
   ): Flow<Map<GitStandardLocalBranch, GitBranchReviewPresenter.Review?>>? {
     val repositoriesManager = repository.project.service<GHHostedRepositoriesManager>()
-    if (repositoriesManager.findKnownRepositories(repository).isEmpty()) return null
+    if (repositoriesManager.findKnownRepositories(repository).isEmpty()) {
+      LOG.debug("No known GitHub repository for ${repository.root.name}, review status is disabled")
+      return null
+    }
 
     val connectionManager = repository.project.service<GHRepositoryConnectionManager>()
-    // GitHub's REST API has no batch "find PR by branch" call, so each branch is still looked up on its own -
-    // but concurrently, under this single per-repository subscription, instead of one subscription per branch.
-    val branchReviewFlows = branches.map { branch ->
-      getReviewFlow(repository, branch, repositoriesManager, connectionManager).map { review -> branch to review }
+    val remoteBranchFlows = branches.map { branch ->
+      repositoriesManager.findHostedRemoteBranchTrackedBy(repository, branch)
+        .map { branch to it }
     }
-    return combine(branchReviewFlows) { pairs -> pairs.toMap() }
+    return combine(remoteBranchFlows) { pairs -> pairs.toMap() }
+      .combine(connectionManager.connectionState) { branchToMappingAndBranch, connection -> branchToMappingAndBranch to connection }
+      .flatMapLatest { (branchToMappingAndBranch, connection) ->
+        val noReviews = flowOf(branches.associateWith { null as GitBranchReviewPresenter.Review? })
+        if (connection == null) {
+          return@flatMapLatest noReviews
+        }
+
+        val remoteBranchByBranch = branchToMappingAndBranch.mapNotNull { (branch, mappingAndBranch) ->
+          val (mapping, remoteBranch) = mappingAndBranch ?: return@mapNotNull null
+          if (connection.repo != mapping) return@mapNotNull null
+          branch to remoteBranch
+        }.toMap()
+        if (remoteBranchByBranch.isEmpty()) return@flatMapLatest noReviews
+
+        val repoAndAccount = connection.repo.repository to connection.account
+        flow {
+          val pullRequestsByHeadRef = connection.dataContext.creationService
+            .findOpenPullRequestsByHeadBranches(remoteBranchByBranch.values)
+            .groupBy { it.headRefName }
+          emit(branches.associateWith { branch ->
+            val remoteBranch = remoteBranchByBranch[branch] ?: return@associateWith null
+            val pullRequest = pullRequestsByHeadRef[remoteBranch.nameForRemoteOperations]?.firstOrNull() ?: return@associateWith null
+            toReview(repository, pullRequest, repoAndAccount, branch)
+          })
+        }
+      }
   }
 
-  @OptIn(ExperimentalCoroutinesApi::class)
-  private fun getReviewFlow(
+  private fun toReview(
     repository: GitRepository,
+    pullRequest: GHPullRequestBranchMatch,
+    repoAndAccount: Pair<GHRepositoryCoordinates, GithubAccount>,
     branch: GitStandardLocalBranch,
-    repositoriesManager: GHHostedRepositoriesManager,
-    connectionManager: GHRepositoryConnectionManager,
-  ): Flow<GitBranchReviewPresenter.Review?> =
-    repositoriesManager.findHostedRemoteBranchTrackedBy(repository, branch)
-      .combine(connectionManager.connectionState) { mappingAndBranch, connection -> mappingAndBranch to connection }
-      .flatMapLatest { (mappingAndBranch, connection) ->
-        val (mapping, remoteBranch) = mappingAndBranch ?: return@flatMapLatest flowOf<PullRequestAndAccount?>(null)
-        if (connection == null || connection.repo != mapping) return@flatMapLatest flowOf(null)
-        val repoAndAccount = mapping.repository to connection.account
-        flow {
-          val pullRequest = connection.dataContext.creationService
-            .findOpenPullRequestDetails(null, mapping.repository.repositoryPath, remoteBranch)
-          emit(pullRequest?.let { it to repoAndAccount })
-        }
+  ): GitBranchReviewPresenter.Review {
+    val prId = pullRequest.toPRIdentifier()
+    return GitBranchReviewPresenter.Review(pullRequest.title ?: branch.name) {
+      repository.project.service<GHPRProjectViewModel>().activateAndAwaitProject(repoAndAccount) {
+        viewPullRequest(prId)
       }
-      .map { prAndRepoAndAccount ->
-        prAndRepoAndAccount?.let { (pullRequest, repoAndAccount) ->
-          val project = repository.project
-          val prId = pullRequest.toPRIdentifier()
-          GitBranchReviewPresenter.Review(pullRequest.title ?: branch.name) {
-            project.service<GHPRProjectViewModel>().activateAndAwaitProject(repoAndAccount) {
-              viewPullRequest(prId)
-            }
-          }
-        }
-      }
+    }
+  }
 }
+
+private val LOG = logger<GHBranchReviewPresenter>()

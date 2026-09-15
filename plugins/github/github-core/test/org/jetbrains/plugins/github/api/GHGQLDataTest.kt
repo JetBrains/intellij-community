@@ -578,6 +578,7 @@ private object TestCases {
       GHGQLRequests.PullRequest.mergeabilityData(DUMMY_REPO_COORDINATES, DUMMY_NUMBER),
       GHGQLRequests.PullRequest.search(DUMMY_SERVER_PATH, DUMMY_TEXT, DUMMY_PAGINATION),
       GHGQLRequests.PullRequest.search(DUMMY_SERVER_PATH, DUMMY_TEXT, null),
+      GHGQLRequests.PullRequest.searchByHeadBranches(DUMMY_REPO_COORDINATES, listOf(DUMMY_TEXT)),
       GHGQLRequests.PullRequest.metrics(DUMMY_REPO_COORDINATES),
       GHGQLRequests.PullRequest.reviewThreads(DUMMY_REPO_COORDINATES, DUMMY_NUMBER, DUMMY_PAGINATION),
       GHGQLRequests.PullRequest.reviewThreads(DUMMY_REPO_COORDINATES, DUMMY_NUMBER, null),
@@ -613,12 +614,23 @@ private object TestCases {
     QUERIES.groupBy { it.queryName }
   }
 
+  // Queries that use a schema feature missing from some vendored GitHub Enterprise schemas.
+  // Query name -> display names of the schemas that lack the feature.
+  private val SCHEMA_INCOMPATIBLE_COMBINATIONS: Map<String, Set<String>> = mapOf(
+    // GHE Server 3.10-3.15 and our vendored cloud-latest schema don't have SearchType.ISSUE_ADVANCED yet,
+    // added to github.com in March 2025. https://youtrack.jetbrains.com/issue/IJPL-255868 will fix this
+    // by updating the vendored schemas.
+    "findPullRequestsByHeadBranch.graphql" to setOf("3.10", "3.11", "3.12", "3.13", "3.14", "3.15", "cloud-latest"),
+  )
+
   fun <TestCase> constructTestCases(f: (queryName: String, pluginQueries: List<PluginQuery<*>>, GraphQLSchemaAndQueryLoaderHolder) -> List<TestCase>): List<TestCase> {
     val schemas = GHGQLTestSchemas.all
     val queryNames = GHGQLQueryTestData.queryNames
 
     return schemas.flatMap { schema ->
       queryNames.flatMap { queryName ->
+        if (schema.displayName in SCHEMA_INCOMPATIBLE_COMBINATIONS[queryName].orEmpty()) return@flatMap emptyList()
+
         val queryPath = GHGQLQueryTestData.toPath(queryName)
         val queries = QUERIES_BY_PATH[queryPath] ?: error("""
           Missing query object for ${queryPath}.

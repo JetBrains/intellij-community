@@ -19,7 +19,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.onSubscription
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -106,13 +105,13 @@ internal class GitWorktreesViewModel(
       val droppedKeys = (reviewBranchesByRepository[repositoryId].orEmpty() - branches).map { GitWorktreeBranchKey(repositoryId, it) }
       _reviews.update { it - droppedKeys }
 
-      val repository = GitRepositoryIdCache.getInstance(project).get(repositoryId) ?: continue
       reviewJobs[repositoryId] = cs.launch {
-        GitBranchReviewPresenter.getReviewsFlow(repository, branches)
-          .onStart { emit(branches.associateWith { null }) }
-          .collect { reviewsByBranch ->
-            _reviews.update { it + reviewsByBranch.mapKeys { (branch, _) -> GitWorktreeBranchKey(repositoryId, branch) } }
-          }
+        _reviews.update { it + branches.associateWith { null }.mapKeys { (branch, _) -> GitWorktreeBranchKey(repositoryId, branch) } }
+
+        val repository = GitRepositoryIdCache.getInstance(project).get(repositoryId) ?: return@launch
+        GitBranchReviewPresenter.getReviewsFlow(repository, branches).collect { reviewsByBranch ->
+          _reviews.update { it + reviewsByBranch.mapKeys { (branch, _) -> GitWorktreeBranchKey(repositoryId, branch) } }
+        }
       }
     }
 

@@ -32,6 +32,7 @@ class GHPRSearchQuery(val terms: List<Term<*>>) {
     `is`("is"),
     assignee("assignee"),
     author("author"),
+    head("head"),
     label("label"),
     repo("repo"),
     review("review"),
@@ -67,6 +68,15 @@ class GHPRSearchQuery(val terms: List<Term<*>>) {
       override val apiValue = this.value
 
       override fun toString(): String = value
+    }
+
+    /**
+     * A group of terms joined with "OR", wrapped in parentheses.
+     */
+    class Or(terms: List<Term<*>>) : Term<List<Term<*>>>(terms) {
+      override val apiValue = value.joinToString(" OR ") { it.toString() }
+
+      override fun toString(): String = value.joinToString(" OR ", prefix = "(", postfix = ")") { it.toString() }
     }
 
     sealed class Qualifier<T : Any>(protected val name: QualifierName, value: T) : Term<T>(value) {

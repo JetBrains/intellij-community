@@ -1,0 +1,14 @@
+query findPullRequestsByHeadBranch($query: String!, $pageSize: Int = 100, $cursor: String) {
+  search(first: $pageSize, after: $cursor, type: ISSUE_ADVANCED, query: $query) {
+    pageInfo {
+      ...pageInfo
+    }
+    nodes {
+      ...pullRequestBranchMatch
+    }
+  }
+
+  rateLimit {
+    ...rates
+  }
+}

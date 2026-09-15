@@ -31,7 +31,7 @@ interface GitBranchReviewPresenter {
      */
     fun getReviewsFlow(repository: GitRepository, branches: Set<GitStandardLocalBranch>): Flow<Map<GitStandardLocalBranch, Review?>> {
       if (branches.isEmpty()) return flowOf(emptyMap())
-      return (EP_NAME.extensionList.firstNotNullOfOrNull { it.getReviewsFlow(repository, branches) } ?: flowOf(branches.associateWith { null }))
+      return (EP_NAME.computeSafeIfAny { it.getReviewsFlow(repository, branches) } ?: flowOf(branches.associateWith { null }))
         .catch { c ->
           rethrowControlFlowException(c)
           LOG.warn("Failed to compute reviews for branches ${branches.joinToString { it.name }} in ${repository.root}", c)

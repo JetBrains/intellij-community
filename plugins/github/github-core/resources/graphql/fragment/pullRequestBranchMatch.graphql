@@ -1,0 +1,6 @@
+fragment pullRequestBranchMatch on PullRequest {
+  ...nodeInfo
+  number
+  title
+  headRefName
+}
