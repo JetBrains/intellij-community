@@ -26,9 +26,6 @@
     <orderEntry type="module" module-name="intellij.platform.ide.core.plugins" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.projectFrame" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.jackson" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.jackson.databind" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.jackson.module.kotlin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.jackson3" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.jackson3.databind" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.jackson3.module.kotlin" scope="TEST" />

@@ -12,15 +12,15 @@
     <!-- region nested: essential > essential.minimal > core.lang > core.ide > core.platform > libraries.platform -->
     <!-- region nested: essential > essential.minimal > core.lang > core.ide > core.platform > libraries.platform > libraries.jackson2 -->
     <module name="intellij.libraries.jackson.annotations" loading="embedded"/>
-    <module name="intellij.libraries.jackson" loading="embedded"/>
-    <module name="intellij.libraries.jackson.jr.objects" loading="embedded"/>
-    <module name="intellij.libraries.jackson.databind" loading="embedded"/>
+    <module name="intellij.libraries.jackson"/>
+    <module name="intellij.libraries.jackson.jr.objects"/>
+    <module name="intellij.libraries.jackson.databind"/>
     <module name="intellij.libraries.jackson.dataformat.xml"/>
     <module name="intellij.libraries.jackson.dataformat.yaml"/>
     <module name="intellij.libraries.jackson.dataformat.toml"/>
     <module name="intellij.libraries.jackson.datatype.jdk8"/>
     <module name="intellij.libraries.jackson.datatype.jsr310"/>
-    <module name="intellij.libraries.jackson.module.kotlin" loading="embedded"/>
+    <module name="intellij.libraries.jackson.module.kotlin"/>
     <!-- endregion -->
 
     <!-- region nested: essential > essential.minimal > core.lang > core.ide > core.platform > libraries.platform > libraries.jackson3 -->

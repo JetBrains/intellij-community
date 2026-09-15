@@ -5,8 +5,6 @@
     <module name="intellij.libraries.eclipse.lsp4j.jsonrpc"/>
     <module name="intellij.libraries.fastutil"/>
     <module name="intellij.libraries.guava"/>
-    <module name="intellij.libraries.jackson"/>
-    <module name="intellij.libraries.jackson.databind"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.backend"/>
     <module name="intellij.platform.codeStyle.impl"/>

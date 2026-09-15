@@ -207,13 +207,15 @@ object LibraryModuleSets {
    *
    * Kept as a dedicated module set so that `librariesPlatform()` stays focused on truly universal utilities.
    *
+   * Only `intellij.libraries.jackson.annotations` is embedded, because no other embedded platform module uses Jackson 2.
+   *
    * Included transitively by `librariesPlatform()`.
    */
   fun librariesJackson2(): ModuleSet = moduleSet("libraries.jackson2") {
     embeddedModule("intellij.libraries.jackson.annotations")
-    embeddedModule("intellij.libraries.jackson")
+    module("intellij.libraries.jackson")
     module("intellij.libraries.jackson.jr.objects")
-    embeddedModule("intellij.libraries.jackson.databind")
+    module("intellij.libraries.jackson.databind")
 
     module("intellij.libraries.jackson.dataformat.xml")
     module("intellij.libraries.jackson.dataformat.yaml")
@@ -222,7 +224,7 @@ object LibraryModuleSets {
     module("intellij.libraries.jackson.datatype.jdk8")
     module("intellij.libraries.jackson.datatype.jsr310")
 
-    embeddedModule("intellij.libraries.jackson.module.kotlin")
+    module("intellij.libraries.jackson.module.kotlin")
   }
 
   /**
