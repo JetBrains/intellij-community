@@ -237,23 +237,26 @@ class NavigatorWithinProject(
         editor.caretModel.moveToOffset(convertLocationToOffset(locationInFile, editor))
         editor.scrollingModel.scrollToCaret(ScrollType.CENTER)
         editor.selectionModel.removeSelection()
+        applySelections(editor)
         IdeFocusManager.getGlobalInstance().requestFocus(editor.contentComponent, true)
       }
     }
-    makeSelectionsVisible()
   }
 
   private suspend fun makeSelectionsVisible() {
     withContext(Dispatchers.EDT) {
       writeIntentReadAction {
-        val editor = FileEditorManager.getInstance(project).selectedTextEditor
-        selections.forEach {
-          editor?.selectionModel?.setSelection(
-            convertLocationToOffset(it.first, editor),
-            convertLocationToOffset(it.second, editor)
-          )
-        }
+        FileEditorManager.getInstance(project).selectedTextEditor?.let { applySelections(it) }
       }
+    }
+  }
+
+  private fun applySelections(editor: Editor) {
+    for (selection in selections) {
+      editor.selectionModel.setSelection(
+        convertLocationToOffset(selection.first, editor),
+        convertLocationToOffset(selection.second, editor)
+      )
     }
   }
 
