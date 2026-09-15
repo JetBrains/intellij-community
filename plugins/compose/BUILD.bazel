@@ -7,15 +7,15 @@ dev_dist_plugin(
         # do not sort,
         "intellij.compose.ide.plugin.shared",
         "intellij.compose.ide.plugin.shared.android",
-        "intellij.compose.ide.plugin.k2",
+        "intellij.compose.ide.plugin.codeInsight",
         "intellij.compose.ide.plugin.gradleTooling.rt",
         "intellij.compose.ide.plugin.resources",
         "intellij.compose.ide.plugin.resources.android",
     ],
     descriptor = "resources/META-INF/plugin.xml",
     descriptor_modules = [
+        "intellij.compose.ide.plugin.codeInsight",
         "intellij.compose.ide.plugin.gradleTooling.rt",
-        "intellij.compose.ide.plugin.k2",
         "intellij.compose.ide.plugin.resources",
         "intellij.compose.ide.plugin.resources.android",
         "intellij.compose.ide.plugin.shared",
@@ -24,7 +24,7 @@ dev_dist_plugin(
     jars = {
         "lib/compose-ide-plugin.jar": [
             "intellij.compose.ide.plugin",
-            "intellij.compose.ide.plugin.k2",
+            "intellij.compose.ide.plugin.codeInsight",
             "intellij.compose.ide.plugin.resources",
             "intellij.compose.ide.plugin.resources.android",
         ],
