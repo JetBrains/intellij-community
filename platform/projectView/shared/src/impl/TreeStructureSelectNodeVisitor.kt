@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.projectView.pane.BackendProjectViewNodeModel
 import com.intellij.psi.PsiElement
+import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.ui.tree.TreeVisitor
@@ -21,22 +22,22 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 class TreeStructureSelectNodeVisitorProvider : ProjectViewSelectNodeVisitorProvider<TreeStructureProjectViewNode> {
   override fun createSelectNodeVisitor(
-    element: PsiElement?,
+    elementPointer: SmartPsiElementPointer<PsiElement>?,
     file: VirtualFile?,
-  ): ProjectViewSelectNodeVisitor<TreeStructureProjectViewNode> = TreeStructureSelectNodeVisitor(element, file)
+  ): ProjectViewSelectNodeVisitor<TreeStructureProjectViewNode> = TreeStructureSelectNodeVisitor(elementPointer, file)
 }
 
 private class TreeStructureSelectNodeVisitor(
-  element: PsiElement?,
+  elementPointer: SmartPsiElementPointer<PsiElement>?,
   file: VirtualFile?,
-) : ProjectViewSelectNodeVisitor<TreeStructureProjectViewNode>(element, file) {
+) : ProjectViewSelectNodeVisitor<TreeStructureProjectViewNode>(elementPointer, file) {
 
   override suspend fun visitNodeForSelect(
     node: BackendProjectViewNodeModel<TreeStructureProjectViewNode>,
   ): TreeVisitor.Action = readAction {
     val treeNode = node.userObject.elementDescriptor as? AbstractTreeNode<*>
                    ?: return@readAction TreeVisitor.Action.SKIP_CHILDREN // not a legacy node, nothing to match against
-    val element = element
+    val element = elementPointer?.dereference()
     val file = file
     when {
       element != null -> visitForElement(treeNode, element, file)
