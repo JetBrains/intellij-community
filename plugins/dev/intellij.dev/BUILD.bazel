@@ -16,6 +16,7 @@ dev_dist_plugin(
         "intellij.java.dev",
         "intellij.groovy.dev",
         "intellij.kotlin.dev",
+        "intellij.dev.core",
     ],
     main_module = "intellij.dev",
 )

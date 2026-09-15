@@ -6162,10 +6162,6 @@ f:com.intellij.ui.RightMarginEditorCustomization
 - <init>(Z,I):V
 - customize(com.intellij.openapi.editor.ex.EditorEx):V
 - getRightMarginColumns():I
-f:com.intellij.ui.ShowSplashAction
-- <init>():V
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 a:com.intellij.ui.SimpleEditorCustomization
 - p:<init>(Z):V
 - p:isEnabled():Z

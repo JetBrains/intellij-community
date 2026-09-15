@@ -45,6 +45,7 @@
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.core.impl"/>
     <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.internal"/>
     <module name="intellij.platform.ide.observable"/>
     <module name="intellij.platform.ide.progress"/>
     <module name="intellij.platform.ide.util.netty"/>
@@ -55,6 +56,7 @@
     <module name="intellij.platform.lang.core"/>
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.markdown.utils"/>
+    <module name="intellij.platform.projectFrame"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.refactoring"/>
     <module name="intellij.platform.serviceContainer"/>
@@ -63,6 +65,7 @@
     <module name="intellij.platform.testRunner"/>
     <module name="intellij.platform.usageView"/>
     <module name="intellij.platform.usageView.impl"/>
+    <module name="intellij.platform.util.coroutines"/>
     <module name="intellij.platform.util.progress"/>
     <module name="intellij.platform.util.text.matching"/>
     <module name="intellij.platform.util.ui"/>
@@ -92,7 +95,6 @@
     <codeInsight.lineMarkerProvider language="UAST"
                                     implementationClass="org.jetbrains.idea.devkit.testAssistant.TestDataLineMarkerProvider"/>
     <fileEditorProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestDataGroupEditorProvider"/>
-    <editorNotificationProvider implementation="org.jetbrains.idea.devkit.module.icons.GeneratedPluginIconNotificationProvider"/>
     <gotoRelatedProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestDataAsRelatedFileProvider"/>
     <gotoRelatedProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestCaseAsRelatedFileProvider"/>
     <gotoRelatedProvider implementation="org.jetbrains.idea.devkit.navigation.DescriptionInspectionGotoRelatedProvider"/>
@@ -955,6 +957,7 @@
     <notificationGroup id="DevKit Errors" displayType="BALLOON" hideFromSettings="true"/>
     <notificationGroup id="Update from Sources" displayType="BALLOON" hideFromSettings="true"/>
     <notificationGroup id="testdata" displayType="BALLOON" bundle="messages.DevKitBundle" key="notification.group.testdata"/>
+    <notificationGroup id="editor-rendering-benchmark" displayType="NONE" hideFromSettings="true"/>
 
     <!-- Threading Model Helper -->
     <buildProcess.parametersProvider implementation="org.jetbrains.idea.devkit.threadingModelHelper.TMHBuildProcessParametersProvider"/>
@@ -1191,6 +1194,159 @@
       <action id="AnalyzeUnloadablePlugins" internal="true" class="org.jetbrains.idea.devkit.internal.AnalyzeUnloadablePluginsAction"/>
       <add-to-group group-id="Internal" anchor="last"/>
     </group>
+
+    <action id="ExceptionShowCaseAction" internal="true" class="org.jetbrains.idea.devkit.internal.ExceptionShowCaseAction">
+      <add-to-group group-id="Internal.Errors"/>
+    </action>
+    <action id="EditorRenderingBenchmarkAction" internal="true"
+            class="org.jetbrains.idea.devkit.internal.EditorRenderingBenchmarkAction">
+      <add-to-group group-id="Internal.Editor"/>
+    </action>
+    <action id="EditorAddCustomWrap" internal="true" class="org.jetbrains.idea.devkit.internal.AddCustomWrapAction">
+      <add-to-group group-id="Internal.Editor"/>
+    </action>
+    <action id="EditorRemoveCustomWrapsAtCaret" internal="true"
+            class="org.jetbrains.idea.devkit.internal.RemoveCustomWrapsAtCaretAction">
+      <add-to-group group-id="Internal.Editor"/>
+    </action>
+    <action id="ShowEditorHighlighterTokens" internal="true"
+            class="org.jetbrains.idea.devkit.internal.ShowEditorHighlighterTokensAction">
+      <add-to-group group-id="Internal"/>
+    </action>
+
+    <action id="DumpFocusableComponentHierarchyAction" internal="true"
+            class="org.jetbrains.idea.devkit.internal.focus.DumpFocusableComponentHierarchyAction"/>
+
+    <action id="ShowNotificationIconsDialogAction" internal="true"
+            class="org.jetbrains.idea.devkit.internal.ui.ShowNotificationIconsDialogAction">
+      <add-to-group group-id="Internal.UI"/>
+    </action>
+    <action id="NotificationTestAction" internal="true" class="org.jetbrains.idea.devkit.internal.ui.NotificationTestAction">
+      <add-to-group group-id="Internal.UI"/>
+    </action>
+    <action id="TestMessageBoxAction" internal="true" class="org.jetbrains.idea.devkit.internal.ui.TestMessageBoxAction">
+      <add-to-group group-id="Internal.UI"/>
+    </action>
+    <action id="ShowCountdownDialog" internal="true" class="org.jetbrains.idea.devkit.internal.ui.ShowCountdownDialogAction">
+      <add-to-group group-id="Internal.UI"/>
+    </action>
+    <action id="PlayTestSoundAction" internal="true" class="org.jetbrains.idea.devkit.internal.ui.PlayTestSoundAction">
+      <add-to-group group-id="Internal.UI"/>
+    </action>
+    <action id="ColorBlindnessTest" internal="true" class="org.jetbrains.idea.devkit.internal.ui.ColorBlindnessInternalAction">
+      <add-to-group group-id="Internal.UI"/>
+    </action>
+    <action id="UIDefaults" internal="true" class="org.jetbrains.idea.devkit.internal.ui.ShowUIDefaultsAction">
+      <abbreviation value="laf"/>
+      <add-to-group group-id="Internal.UI"/>
+    </action>
+    <action id="AddTestProcessAction" internal="true" class="org.jetbrains.idea.devkit.internal.ui.AddTestProcessAction">
+      <add-to-group group-id="Internal.UI"/>
+    </action>
+    <action id="AddRandomNamesTestProcessAction" internal="true"
+            class="org.jetbrains.idea.devkit.internal.ui.AddRandomNamesTestProcessAction">
+      <add-to-group group-id="Internal.UI"/>
+    </action>
+    <action id="AddManyTestProcesses" internal="true" class="org.jetbrains.idea.devkit.internal.ui.AddManyTestProcesses">
+      <add-to-group group-id="Internal.UI"/>
+    </action>
+    <action id="ShowCompressibleToolbarAction" internal="true"
+            class="org.jetbrains.idea.devkit.internal.ui.ShowCompressibleToolbarAction">
+      <add-to-group group-id="Internal.UI"/>
+    </action>
+    <action id="TestGestureAction" internal="true" class="org.jetbrains.idea.devkit.internal.ui.TestGestureAction">
+      <add-to-group group-id="Internal.UI"/>
+    </action>
+    <action id="ShowProgressTestDialogAction" internal="true"
+            class="org.jetbrains.idea.devkit.internal.ui.ShowProgressTestDialogAction">
+      <add-to-group group-id="Internal.UI"/>
+    </action>
+    <action id="ShowSouthPanelTestDialogAction" internal="true"
+            class="org.jetbrains.idea.devkit.internal.ui.ShowSouthPanelTestDialogAction">
+      <add-to-group group-id="Internal.UI"/>
+    </action>
+    <action id="TestTextFieldAction" internal="true" class="org.jetbrains.idea.devkit.internal.ui.TestTextFieldAction">
+      <add-to-group group-id="Internal.UI"/>
+    </action>
+
+    <action id="LabelSizeDemoAction" internal="true" class="org.jetbrains.idea.devkit.internal.ui.LabelSizeDemoAction">
+      <add-to-group group-id="Internal.UI.Demos"/>
+    </action>
+    <action id="JEditorPaneDemoAction" internal="true" class="org.jetbrains.idea.devkit.internal.ui.JEditorPaneDemoAction">
+      <add-to-group group-id="Internal.UI.Demos"/>
+    </action>
+    <action id="JBTabsDemo" internal="true" class="org.jetbrains.idea.devkit.internal.ui.JBTabsDemoAction">
+      <add-to-group group-id="Internal.UI.Demos"/>
+    </action>
+    <action id="JTabbedPaneDemo" internal="true" class="org.jetbrains.idea.devkit.internal.ui.JTabbedPaneDemoAction">
+      <add-to-group group-id="Internal.UI.Demos"/>
+    </action>
+    <action id="TestTooltipsAction" internal="true" class="org.jetbrains.idea.devkit.internal.ui.TestTooltipsAction">
+      <add-to-group group-id="Internal.UI.Demos"/>
+    </action>
+    <action id="ShowInlineBanner" internal="true" class="org.jetbrains.idea.devkit.internal.ui.InlineBannerTestAction">
+      <add-to-group group-id="Internal.UI.Demos"/>
+    </action>
+    <action id="ToolbarDemo" internal="true" class="org.jetbrains.idea.devkit.internal.ui.ToolbarDemoAction">
+      <add-to-group group-id="Internal.UI.Demos"/>
+    </action>
+    <action id="TreeViewModelDemo" internal="true" class="org.jetbrains.idea.devkit.internal.ui.TreeViewModelDemoAction">
+      <add-to-group group-id="Internal.UI.Demos"/>
+    </action>
+
+    <group id="Internal.UI.Animation" internal="true" popup="true">
+      <action id="AnimationPanelTestAction" internal="true" class="org.jetbrains.idea.devkit.internal.ui.AnimationPanelTestAction"/>
+      <action id="AnimatorTestAction" class="org.jetbrains.idea.devkit.internal.ui.AnimatorTestAction"/>
+      <action id="EditorSkeletonFadeInSheet" internal="true"
+              class="org.jetbrains.idea.devkit.internal.ui.EditorSkeletonFadeInSheetAction"/>
+      <add-to-group group-id="Internal.UI.Ex"/>
+    </group>
+
+    <group id="Internal.UI.Focus" internal="true" popup="true">
+      <action id="FocusDebugger" internal="true" class="org.jetbrains.idea.devkit.internal.focus.FocusDebuggerAction"/>
+      <action id="FocusTracer" internal="true" class="org.jetbrains.idea.devkit.internal.focus.FocusTracesAction"/>
+      <action id="LogFocusRequests" class="org.jetbrains.idea.devkit.internal.ui.LogFocusRequestsAction"/>
+      <add-to-group group-id="Internal.UI.Ex"/>
+    </group>
+
+    <group id="Internal.UI.Icons" internal="true" popup="true">
+      <action id="RoundedIconTestAction" internal="true" class="org.jetbrains.idea.devkit.internal.ui.RoundedIconTestAction"/>
+      <action id="ProgressIconShowcaseAction" internal="true" class="org.jetbrains.idea.devkit.internal.ui.ProgressIconShowcaseAction"/>
+      <action id="IconScaleTestAction" internal="true" class="org.jetbrains.idea.devkit.internal.ui.ShowIconScaleTestAction"/>
+      <add-to-group group-id="Internal.UI.Ex"/>
+    </group>
+
+    <group id="Internal.UI.KotlinUiDsl" internal="true" popup="true">
+      <action id="GridLayoutTestAction" internal="true"
+              class="org.jetbrains.idea.devkit.internal.ui.gridLayoutTestAction.GridLayoutTestAction"/>
+      <add-to-group group-id="Internal.UI.Ex"/>
+    </group>
+
+    <action id="ComponentPanelTestAction" internal="true"
+            class="org.jetbrains.idea.devkit.internal.ui.componentPanelTestAction.ComponentPanelTestAction">
+      <add-to-group group-id="Internal.UI.Ex"/>
+    </action>
+    <action id="WrapLayoutTestAction" internal="true" class="org.jetbrains.idea.devkit.internal.ui.WrapLayoutTestAction">
+      <add-to-group group-id="Internal.UI.Ex"/>
+    </action>
+    <action id="GrayFilterConfig" internal="true" class="org.jetbrains.idea.devkit.internal.ui.GrayFilterConfig">
+      <add-to-group group-id="Internal.UI.Ex"/>
+    </action>
+    <action id="TextGrayFilterConfig" internal="true" class="org.jetbrains.idea.devkit.internal.ui.TextGrayFilterConfig">
+      <add-to-group group-id="Internal.UI.Ex"/>
+    </action>
+    <action id="MacMessagesTest" internal="true" class="org.jetbrains.idea.devkit.internal.validation.TestMacMessagesAction">
+      <add-to-group group-id="Internal.UI.Ex"/>
+    </action>
+    <action id="UnixInfoTest" internal="true" class="org.jetbrains.idea.devkit.internal.ui.UnixInfoTestAction">
+      <add-to-group group-id="Internal.UI.Ex"/>
+    </action>
+    <action id="TreeExpandAll" internal="true" class="org.jetbrains.idea.devkit.internal.tree.ExpandAll">
+      <add-to-group group-id="Internal.UI.Ex"/>
+    </action>
+    <action id="RulerGuide" internal="true" class="org.jetbrains.idea.devkit.internal.rulerguide.RulerGuideAction">
+      <add-to-group group-id="Internal.UI.Ex"/>
+    </action>
 
     <action id="TestData.Navigate" class="org.jetbrains.idea.devkit.testAssistant.NavigateToTestDataAction" use-shortcut-of="GotoRelated">
       <add-to-group anchor="last" group-id="TestTreePopupMenu"/>

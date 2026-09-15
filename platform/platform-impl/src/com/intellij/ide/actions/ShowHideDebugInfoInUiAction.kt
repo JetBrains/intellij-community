@@ -8,12 +8,10 @@ import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
-import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Window
 import javax.swing.JTree
 
-@Internal
-class ShowHideDebugInfoInUiAction : DumbAwareToggleAction() {
+internal class ShowHideDebugInfoInUiAction : DumbAwareToggleAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun isSelected(e: AnActionEvent): Boolean = UISettings.getInstance().showInplaceCommentsInternal

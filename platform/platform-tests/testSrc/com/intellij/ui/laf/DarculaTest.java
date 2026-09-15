@@ -2,7 +2,6 @@
 package com.intellij.ui.laf;
 
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
-import com.intellij.ui.ShowUIDefaultsAction;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBRadioButton;
@@ -31,14 +30,10 @@ import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.WindowConstants;
 import javax.swing.table.DefaultTableModel;
-import java.awt.AWTEvent;
 import java.awt.Dimension;
 import java.awt.Insets;
-import java.awt.Toolkit;
-import java.awt.event.AWTEventListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
 
 /**
  * @author Konstantin Bulenkov
@@ -494,14 +489,6 @@ public class DarculaTest {
     frame.setContentPane(root);
     frame.getRootPane().setDefaultButton(form.myDefaultButton);
     frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-    Toolkit.getDefaultToolkit().addAWTEventListener(new AWTEventListener() {
-      @Override
-      public void eventDispatched(AWTEvent event) {
-        if (event instanceof KeyEvent && event.getID() == KeyEvent.KEY_PRESSED && ((KeyEvent)event).getKeyCode() == KeyEvent.VK_F1) {
-          new ShowUIDefaultsAction().perform(null);
-        }
-      }
-    }, AWTEvent.KEY_EVENT_MASK);
     SwingUtilities.invokeLater(() -> frame.setVisible(true));
   }
 }

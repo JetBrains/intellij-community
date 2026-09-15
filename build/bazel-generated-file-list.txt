@@ -1182,6 +1182,7 @@ plugins/cucumber-jvm-formatter5
 plugins/dev
 plugins/dev/intellij.dev
 plugins/dev/intellij.dev.codeInsight
+plugins/dev/intellij.dev.core
 plugins/dev/intellij.dev.leakDetection
 plugins/dev/intellij.dev.pluginLoading
 plugins/dev/intellij.dev.psiViewer

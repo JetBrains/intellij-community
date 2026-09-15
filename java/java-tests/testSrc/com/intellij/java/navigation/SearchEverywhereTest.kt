@@ -199,13 +199,13 @@ class SearchEverywhereTest : LightJavaCodeInsightFixtureTestCase() {
     }
 
     try {
-      abbreviationManager.register("cp", "ScanSourceCommentsAction")
+      abbreviationManager.register("cp", "DumpCodeStyleCache")
       val future = ui.findElementsForPattern("cp")
       val firstItem = waitForFuture(future, SEARCH_TIMEOUT)[0]
-      val matchedAction = GotoActionTest.createMatchedAction(actionManager.getAction("ScanSourceCommentsAction"), "cp")
+      val matchedAction = GotoActionTest.createMatchedAction(actionManager.getAction("DumpCodeStyleCache"), "cp")
       assertEquals(matchedAction, firstItem)
     } finally {
-      abbreviationManager.remove("cp", "ScanSourceCommentsAction")
+      abbreviationManager.remove("cp", "DumpCodeStyleCache")
     }
   }
 

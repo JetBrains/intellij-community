@@ -31,7 +31,7 @@ abstract class AudioCuePlayer {
     }
   }
 
-  internal fun preview(vararg cues: AudioCue) {
+  fun preview(vararg cues: AudioCue) {
     if (cues.isNotEmpty()) playEnabled(cues.distinctBy { it.id })
   }
 

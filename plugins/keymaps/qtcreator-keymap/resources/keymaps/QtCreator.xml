@@ -91,7 +91,6 @@
   <action id="ActivateProjectToolWindow">
     <keyboard-shortcut first-keystroke="alt X"/>
   </action>
-  <action id="FocusTracer"/>
   <action id="ToggleFullScreen">
     <keyboard-shortcut first-keystroke="control shift F11"/>
   </action>

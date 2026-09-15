@@ -25,6 +25,7 @@
     <module name="intellij.groovy.dev"/>
     <module name="intellij.kotlin.dev"/>
     <module name="intellij.php.dev"/>
+    <module name="intellij.dev.core"/>
   </content>
 
   <dependencies>

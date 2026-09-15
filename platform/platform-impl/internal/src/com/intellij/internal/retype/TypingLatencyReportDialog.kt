@@ -8,9 +8,6 @@ import com.intellij.internal.performance.latencyMap
 import com.intellij.internal.performance.latencyRecorderProperties
 import com.intellij.internal.statistic.collectors.fus.LatencyDistributionRecord
 import com.intellij.internal.statistic.collectors.fus.LatencyRecord
-import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.fileChooser.FileSaverDescriptor
 import com.intellij.openapi.project.Project
@@ -25,6 +22,7 @@ import com.intellij.ui.treeStructure.Tree
 import com.intellij.unscramble.AnalyzeStacktraceUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.tree.TreeUtil
+import org.jetbrains.annotations.ApiStatus
 import java.awt.event.ActionEvent
 import java.nio.file.Path
 import javax.swing.AbstractAction
@@ -37,21 +35,8 @@ import javax.swing.JTree
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 
-internal class TypingLatencyReportAction : AnAction() {
-
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
-
-  override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = e.project != null
-  }
-
-  override fun actionPerformed(e: AnActionEvent) {
-    val project = e.project ?: return
-    TypingLatencyReportDialog(project).show()
-  }
-}
-
-internal class TypingLatencyReportDialog(
+@ApiStatus.Internal
+class TypingLatencyReportDialog(
   private val project: Project,
   private val threadDumps: List<String> = emptyList()
 ) : DialogWrapper(project) {

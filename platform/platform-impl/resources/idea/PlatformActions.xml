@@ -437,7 +437,6 @@
         <group id="PowerSaveGroup">
           <separator/>
           <reference ref="TogglePowerSave"/>
-          <reference ref="ToggleEssentialHighlighting"/>
         </group>
         <separator/>
         <reference ref="Exit"/>
@@ -1073,7 +1072,6 @@
 
     <group id="MaintenanceGroup">
       <reference ref="ShowRegistry"/>
-      <reference ref="UiDebugger"/>
       <reference ref="ShowExperiments"/>
     </group>
 
@@ -1097,6 +1095,7 @@
       <reference ref="UntrustProject"/>
     </group>
 
+    <!-- Make sure groups you add-to-group are marked with `internal="true"` as well -->
     <group id="Internal" internal="true" popup="true" compact="true">
       <group id="Internal.Errors" popup="true">
         <reference ref="DropAnError"/>
@@ -1110,59 +1109,27 @@
         <reference ref="WorkspaceEntitiesJsonLog"/>
         <reference ref="WorkspaceEntitiesJsonLogFile"/>
       </group>
-      <reference ref="TriggerProjectIndexableFilesFilterHealthCheckAction"/>
       <separator/>
-      <group id="Internal.Editor" popup="true">
-        <reference ref="AddInlayInternalAction"/>
-        <reference ref="AddAfterLineEndInlayInternalAction"/>
-        <reference ref="AddInlayBlockInternalAction"/>
-        <reference ref="DumpEditorStateInternalAction"/>
-        <reference ref="SetCaretVisualAttributesInternalAction"/>
-        <reference ref="EditorAddCustomWrap"/>
-        <reference ref="EditorRemoveCustomWrapsAtCaret"/>
-      </group>
+      <group id="Internal.Editor" popup="true"/>
 
-      <group id="Internal.UI" popup="true">
-        <reference ref="ShowNotificationIconsDialogAction"/>
-
-        <reference ref="NotificationTestAction"/>
-        <reference ref="TestMessageBoxAction"/>
-        <reference ref="ShowCountdownDialog"/>
-        <reference ref="PlayTestSoundAction"/>
-        <separator/>
+      <group id="Internal.UI" internal="true" popup="true">
         <reference ref="ShowSplash"/>
-        <reference ref="ColorBlindnessTest"/>
-        <reference ref="UIDefaults"/>
         <reference ref="EnableMetalRendering"/>
         <reference ref="EnableWayland"/>
         <reference ref="ShowHideDebugInfoInUi"/>
         <separator/>
-        <reference ref="AddTestProcessAction"/>
-        <reference ref="AddRandomNamesTestProcessAction"/>
-        <reference ref="AddManyTestProcesses"/>
-        <separator/>
         <reference ref="ShowBundleLocalizationDialogAction"/>
-        <reference ref="ShowCompressibleToolbarAction"/>
-        <reference ref="TestGestureAction"/>
-        <reference ref="ShowProgressTestDialogAction"/>
-        <reference ref="ShowSouthPanelTestDialogAction"/>
-        <reference ref="TestTextFieldAction"/>
+
+        <group id="Internal.UI.Ex" internal="true">
+          <group id="Internal.UI.Demos" popup="true" internal="true"/>
+        </group>
       </group>
-      <reference ref="ImageDuplicates"/>
-      <reference ref="TestIconMappings"/>
-      <reference ref="ShowNonRetinaImages"/>
       <reference ref="DataSharingOptions"/>
       <separator/>
       <reference ref="MaintenanceGroup"/>
 
-      <reference ref="ShowEditorHighlighterTokens"/>
-
-      <reference ref="ShowSearchEverywhereItemInfo"/>
-
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
-
-    <reference ref="DumpFocusableComponentHierarchyAction"/>
 
     <reference ref="ChooseRuntime"/>
 
@@ -1410,13 +1377,6 @@
       <reference ref="CheckVfsSanityInMenu"/>
       <reference ref="MarkVfsCorrupted"/>
       <reference ref="RequestCachesDefragmentation"/>
-      <reference ref="LoadAllContent"/>
-      <reference ref="LoadAllVFSContent"/>
-      <reference ref="ComputeVFStatistics"/>
-      <reference ref="DumpVfsInfoForExcludedFiles"/>
-      <reference ref="DumpVfsInfoForFsRoot"/>
-      <reference ref="DumpWatchedRoots"/>
-      <reference ref="CountVfsFileChildrenAction"/>
       <separator/>
       <reference ref="PruneEmptyDirectories"/>
       <reference ref="FixLineSeparators"/>
@@ -1425,11 +1385,7 @@
     </group>
     <reference ref="ShowUsageFeatures"/>
 
-    <reference ref="ShowWorkspaceFileState"/>
-
     <reference ref="CheckVfsSanity"/>
-    <reference ref="PaintEditorLineStripeComponentAction"/>
-    <reference ref="ShowInlineCompletionStatistics"/>
 
     <group id="CustomizeMainToolbarGroup" popup="true" searchable="false">
       <reference ref="CustomizeMainToolbarAction"/>
@@ -1439,8 +1395,6 @@
 
     <reference ref="UndoDumpAction"/>
     <reference ref="UndoClearAction"/>
-
-
 
     <reference ref="OpenInBrowser"/>
     <reference ref="OpenInBrowserGroup">

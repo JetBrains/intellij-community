@@ -722,13 +722,6 @@
       <add-to-group group-id="MaintenanceGroup"/>
     </reference>
 
-    <reference ref="CompletionQualityStats">
-      <add-to-group group-id="Internal" anchor="last"/>
-    </reference>
-    <reference ref="ShowControlFlowAction">
-      <add-to-group group-id="Internal" anchor="last"/>
-    </reference>
-
     <reference ref="FileChooser.LightEditGotoOpenedFile">
       <add-to-group group-id="FileChooserToolbar" anchor="after" relative-to-action="FileChooser.GotoDesktop"/>
     </reference>

@@ -322,10 +322,8 @@
     <action id="EditorSearchSession.PrevOccurrence" class="com.intellij.find.editorHeaderActions.PrevOccurrenceAction"/>
     <action id="EditorSearchSession.NextOccurrenceAction" class="com.intellij.find.editorHeaderActions.NextOccurrenceAction"/>
     <action id="IdeScriptingConsole" class="com.intellij.ide.script.RunIdeConsoleAction"/>
-    <action id="CompletionQualityStats" class="com.intellij.internal.CompletionQualityStatsAction" internal="true"/>
-    <action id="ShowControlFlowAction" class="com.intellij.internal.cfgView.ShowControlFlowAction" internal="true"/>
     <action class="com.intellij.ide.hierarchy.actions.ActivateHierarchyToolWindowAction" id="ActivateHierarchyToolWindow"/>
-    <action id="SwitchFileBasedIndexStorageAction"
+    <action id="SwitchFileBasedIndexStorageAction" internal="true"
             class="com.intellij.util.indexing.impl.storage.SwitchFileBasedIndexStorageAction"/>
     <action id="ClickLink" class="com.intellij.codeInsight.navigation.actions.ClickLinkAction"
             use-shortcut-of="GotoDeclaration" />
@@ -333,17 +331,6 @@
     <action id="ForceIndexRebuild" internal="true" class="com.intellij.util.indexing.ForceIndexRebuildAction" icon="AllIcons.Actions.Refresh"/>
     <action id="ToggleFileBasedIndexes" internal="true" class="com.intellij.util.indexing.internal.ToggleFileBasedIndexesAction"/>
     <action id="PauseScanningAndIndexing" internal="true" class="com.intellij.util.indexing.internal.PauseScanningAndIndexingAction"/>
-    <action id="DumpExtensions" internal="true" class="com.intellij.internal.DumpExtensionsAction"/>
-    <action id="DumpInspectionDescriptions" internal="true" class="com.intellij.internal.DumpInspectionDescriptionsAction"/>
-    <action id="DumpIntentionsDescriptions" internal="true" class="com.intellij.internal.DumpIntentionsAction"/>
-    <action id="ScanSourceCommentsAction" internal="true" class="com.intellij.tools.ScanSourceCommentsAction"/>
-    <action id="DumpScreenConfiguration" class="com.intellij.internal.DumpScreenConfigurationAction" internal="true"/>
-    <action id="DumpIElementTypesAction" internal="true" class="com.intellij.internal.DumpIElementTypesAction"/>
-    <action id="DumpLoadedInspectionsAction" internal="true" class="com.intellij.internal.DumpLoadedInspectionsAction"/>
-    <action id="DumpPluginDescriptorsAction" internal="true" class="com.intellij.internal.DumpPluginDescriptorsAction"/>
-    <action id="DumpRunConfigurationTypesAction" internal="true" class="com.intellij.internal.DumpRunConfigurationTypesAction"/>
-    <action id="DumpFormattingModel" class="com.intellij.internal.DumpFormattingModelAction" internal="true"/>
-    <action id="CheckClassLoading" internal="true" class="com.intellij.internal.CheckClassLoadingAction"/>
     <action id="QuickDocCopy" class="com.intellij.codeInsight.documentation.actions.CopyQuickDocAction"
             icon="AllIcons.Actions.Copy" use-shortcut-of="$Copy"/>
     <action id="SearchEverywhere" class="com.intellij.ide.actions.SearchEverywhereAction" icon="AllIcons.Actions.Find"/>
@@ -362,7 +349,6 @@
     </action>
     <action id="Print" class="com.intellij.codeEditor.printing.PrintAction" icon="AllIcons.General.Print"/>
     <action id="TogglePowerSave" class="com.intellij.ide.actions.TogglePowerSaveAction"/>
-    <action id="ToggleEssentialHighlighting" class="com.intellij.ide.actions.ToggleEssentialHighlightingAction" internal="true"/>
     <action id="ToggleFindInSelection" class="com.intellij.find.editorHeaderActions.ToggleFindInSelectionAction"/>
     <action id="Find" class="com.intellij.openapi.editor.actions.IncrementalFindAction" icon="AllIcons.Actions.Find"/>
     <action id="Replace" class="com.intellij.openapi.editor.actions.ReplaceAction" icon="AllIcons.Actions.Replace"/>
@@ -396,18 +382,6 @@
     <action id="FindSelectionInPath" class="com.intellij.find.actions.FindSelectionInPathAction" use-shortcut-of="FindInPath"/>
     <action id="ConfigureSoftWraps" class="com.intellij.openapi.editor.actions.ConfigureSoftWrapsAction"/>
     <action id="ShowRegistry" class="com.intellij.openapi.util.registry.ShowRegistryAction"/>
-    <action id="UiDebugger" class="com.intellij.ui.debugger.ShowUiDebuggerAction"/>
-    <action id="TriggerProjectIndexableFilesFilterHealthCheckAction" internal="true"
-            class="com.intellij.util.indexing.projectFilter.TriggerProjectIndexableFilesFilterHealthCheckAction"/>
-    <action id="AddInlayInternalAction" internal="true" class="com.intellij.internal.AddInlayInternalAction"/>
-    <action id="AddAfterLineEndInlayInternalAction" internal="true" class="com.intellij.internal.AddAfterLineEndInlayInternalAction"/>
-    <action id="AddInlayBlockInternalAction" internal="true" class="com.intellij.internal.AddInlayBlockInternalAction"/>
-    <action id="DumpEditorStateInternalAction" internal="true" class="com.intellij.internal.DumpEditorStateInternalAction"/>
-    <action id="SetCaretVisualAttributesInternalAction" internal="true" class="com.intellij.internal.SetCaretVisualAttributesAction"/>
-    <action id="ImageDuplicates" internal="true" class="com.intellij.internal.ShowImageDuplicatesAction"/>
-    <action id="TestIconMappings" internal="true" class="com.intellij.internal.TestIconMappingsAction"/>
-    <action id="ShowNonRetinaImages" internal="true" class="com.intellij.internal.ShowNonRetinaImagesActions"/>
-    <action id="ShowSearchEverywhereItemInfo" class="com.intellij.ide.actions.searcheverywhere.ShowElementInfoAction" internal="true"/>
     <action id="ChooseRuntime" class="com.intellij.openapi.projectRoots.impl.jdkDownloader.RuntimeChooserAction">
       <synonym text="Choose Runtime"/>
     </action>
@@ -442,18 +416,6 @@
     <action id="CopySourceRootPath" class="com.intellij.ide.actions.CopySourceRootPathProvider"/>
     <action id="CopyTBXReference" class="com.intellij.ide.actions.CopyTBXReferenceProvider" icon="AllIcons.Nodes.Toolbox"/>
     <action id="ActivateFindToolWindow" class="com.intellij.find.actions.ActivateFindToolWindowAction"/>
-    <action id="LoadAllContent" internal="true" class="com.intellij.internal.LoadAllContentsAction"/>
-    <action id="LoadAllVFSContent" internal="true" class="com.intellij.internal.LoadAllVfsStoredContentsAction"/>
-    <action id="ComputeVFStatistics" internal="true" class="com.intellij.internal.ComputeVirtualFileNameStatAction"/>
-    <action id="DumpVfsInfoForExcludedFiles" internal="true" class="com.intellij.internal.DumpVfsInfoForExcludedFilesAction"/>
-    <action id="DumpVfsInfoForFsRoot" internal="true" class="com.intellij.internal.DumpVfsInfoForFsRootAction"/>
-    <action id="DumpWatchedRoots" internal="true" class="com.intellij.openapi.roots.impl.DumpWatchedRootsAction"/>
-    <action id="CountVfsFileChildrenAction" internal="true" class="com.intellij.internal.CountVfsFileChildrenAction"/>
-    <action id="ShowWorkspaceFileState" class="com.intellij.workspaceModel.ide.ShowWorkspaceFileStateAction" internal="true"/>
-    <action id="PaintEditorLineStripeComponentAction"
-            class="com.intellij.codeInsight.editorLineStripeHint.PaintEditorLineStripeHintComponentAction" internal="true"/>
-    <action id="ShowInlineCompletionStatistics" internal="true"
-            class="com.intellij.codeInsight.inline.completion.statistics.ShowCompletionLocalStatisticsAction"/>
     <group id="OpenProjectWindows" class="com.intellij.openapi.wm.impl.ProjectWindowActionGroup" overrides="true" keep-content="true"/>
     <group id="CopyReferencePopupGroup" class="com.intellij.ide.actions.CopyReferencePopup" overrides="true" keep-content="true"/>
     <group id="IntroduceActionsGroup" class="com.intellij.ide.actions.PopupInMainMenuActionGroup" overrides="true" keep-content="true"/>
@@ -544,18 +506,8 @@
       <reference ref="Arrangement.Rule.Group.Condition.Move.Down"/>
     </group>
     <group id="Internal.Dump" internal="true" popup="true">
-      <reference ref="DumpExtensions"/>
-      <reference ref="DumpInspectionDescriptions"/>
-      <reference ref="DumpIntentionsDescriptions"/>
-      <reference ref="ScanSourceCommentsAction"/>
-      <reference ref="DumpScreenConfiguration"/>
-      <reference ref="DumpIElementTypesAction"/>
-      <reference ref="DumpLoadedInspectionsAction"/>
-      <reference ref="DumpPluginDescriptorsAction"/>
-      <reference ref="DumpRunConfigurationTypesAction"/>
-      <reference ref="DumpFormattingModel"/>
-      <reference ref="CheckClassLoading"/>
       <reference ref="DumpCodeStyleCache"/>
+      <reference ref="DumpPluginDescriptorsAction"/>
     </group>
     <group id="HierarchyGroup">
       <reference ref="TypeHierarchy"/>

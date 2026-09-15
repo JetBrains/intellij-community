@@ -17,7 +17,8 @@ interface AudioCueProvider {
   }
 }
 
-internal fun getAudioCues(): List<AudioCue> {
+@ApiStatus.Internal
+fun getAudioCues(): List<AudioCue> {
   val cuesById = LinkedHashMap<String, AudioCue>()
   for (provider in AudioCueProvider.EP_NAME.extensionList) {
     for (cue in provider.audioCues) {

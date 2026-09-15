@@ -716,19 +716,18 @@
         DropAnErrorWithAttachments
         DropPluginError
         DropAnOutOfMemoryError
-        ExceptionShowCaseAction
         DebugListen
         Internal.Errors.Additional
           <separator>
           ResetFreezeNotificationState
           PrintErrorAutoReporterState
+        ExceptionShowCaseAction
       <separator>
       Internal.WorkspaceModel
         WorkspaceEntitiesJsonClipboard
         WorkspaceEntitiesJsonLog
         WorkspaceEntitiesJsonLogFile
         PrintModulesAndEntitySources
-      TriggerProjectIndexableFilesFilterHealthCheckAction
       <separator>
       Internal.Editor
         AddInlayInternalAction
@@ -736,33 +735,59 @@
         AddInlayBlockInternalAction
         DumpEditorStateInternalAction
         SetCaretVisualAttributesInternalAction
+        EditorRenderingBenchmarkAction
         EditorAddCustomWrap
         EditorRemoveCustomWrapsAtCaret
-        EditorRenderingBenchmarkAction
       Internal.UI
-        ShowNotificationIconsDialogAction
-        NotificationTestAction
-        TestMessageBoxAction
-        ShowCountdownDialog
-        PlayTestSoundAction
-        <separator>
         ShowSplash
-        ColorBlindnessTest
-        UIDefaults
         EnableMetalRendering
         EnableWayland
         ShowHideDebugInfoInUi
         <separator>
-        AddTestProcessAction
-        AddRandomNamesTestProcessAction
-        AddManyTestProcesses
-        <separator>
         ShowBundleLocalizationDialogAction
-        ShowCompressibleToolbarAction
-        TestGestureAction
-        ShowProgressTestDialogAction
-        ShowSouthPanelTestDialogAction
-        TestTextFieldAction
+        Internal.UI.Ex
+          Internal.UI.Demos
+            LabelSizeDemoAction
+            JEditorPaneDemoAction
+            JBTabsDemo
+            JTabbedPaneDemo
+            TestTooltipsAction
+            ShowInlineBanner
+            ToolbarDemo
+            TreeViewModelDemo
+          WriteActionUnderProgress
+          LongBackgroundWriteAction
+          FrequentBackgroundWriteAction
+          FrequentBackgroundReadAction
+          TestProgressWindow
+          TestCoroutineProgress
+          PositionTrackerTestAction
+          UIFreeze
+          PooledFreeze
+          Internal.UI.Animation
+            AnimationPanelTestAction
+            AnimatorTestAction
+            EditorSkeletonFadeInSheet
+          Internal.UI.Focus
+            FocusDebugger
+            FocusTracer
+            LogFocusRequests
+          Internal.UI.Icons
+            RoundedIconTestAction
+            ProgressIconShowcaseAction
+            IconScaleTestAction
+          Internal.UI.KotlinUiDsl
+            GridLayoutTestAction
+            UiDslShowcaseInternalGroup
+              UiDslShowcaseAction
+          ComponentPanelTestAction
+          WrapLayoutTestAction
+          GrayFilterConfig
+          TextGrayFilterConfig
+          MacMessagesTest
+          UnixInfoTest
+          TreeExpandAll
+          RulerGuide
         FeedbackDialogGroup
           <separator>
           com.intellij.platform.feedback.demo.action.ShowDemoFeedbackDialogAction
@@ -784,69 +809,34 @@
           Internal.PMM
             ApplyFixedWindowSize
             ConfigureDefaultSize
-        Internal.UI.Ex
-          Internal.UI.Demos
-            LabelSizeDemoAction
-            JEditorPaneDemoAction
-            JBTabsDemo
-            JTabbedPaneDemo
-            TestTooltipsAction
-            ShowInlineBanner
-            ToolbarDemo
-            TreeViewModelDemo
-          Internal.UI.Animation
-            AnimationPanelTestAction
-            AnimatorTestAction
-            EditorSkeletonFadeInSheet
-          Internal.UI.Focus
-            FocusDebugger
-            FocusTracer
-            LogFocusRequests
-          Internal.UI.Icons
-            RoundedIconTestAction
-            ProgressIconShowcaseAction
-            IconScaleTestAction
-          Internal.UI.KotlinUiDsl
-            GridLayoutTestAction
-            UiDslShowcaseInternalGroup
-              UiDslShowcaseAction
-          ComponentPanelTestAction
-          WrapLayoutTestAction
-          UIFreeze
-          PooledFreeze
-          GrayFilterConfig
-          TextGrayFilterConfig
-          ValidationTest
-          MacMessagesTest
-          UnixInfoTest
-          TreeExpandAll
-          RulerGuide
-          WriteActionUnderProgress
-          LongBackgroundWriteAction
-          FrequentBackgroundWriteAction
-          FrequentBackgroundReadAction
-          TestProgressWindow
-          TestCoroutineProgress
-          TestDndAction
-          PositionTrackerTestAction
+        ShowNotificationIconsDialogAction
+        NotificationTestAction
+        TestMessageBoxAction
+        ShowCountdownDialog
+        PlayTestSoundAction
+        ColorBlindnessTest
+        UIDefaults
+        AddTestProcessAction
+        AddRandomNamesTestProcessAction
+        AddManyTestProcesses
+        ShowCompressibleToolbarAction
+        TestGestureAction
+        ShowProgressTestDialogAction
+        ShowSouthPanelTestDialogAction
+        TestTextFieldAction
         UISandboxAction
-      ImageDuplicates
-      TestIconMappings
-      ShowNonRetinaImages
       DataSharingOptions
       <separator>
       MaintenanceGroup
         ShowRegistry
-        UiDebugger
         ShowExperiments
         DumpMLCompletionFeatures
         DumpLookupElementWeights
         IdeScriptingConsole
+        UiDebugger
         com.intellij.searchEverywhereMl.typos.actions.DumpDictionaryToFileAction
         com.intellij.searchEverywhereMl.typos.actions.CorpusToFileAction
         com.intellij.searchEverywhereMl.ranking.core.actions.OpenFeaturesInScratchFileAction
-      ShowEditorHighlighterTokens
-      ShowSearchEverywhereItemInfo
       Internal.HeapAnalysis
         UserInvokedFullAnalysis
         SilentHeapDumpSnapshot
@@ -857,6 +847,12 @@
         CheckVfsSanityInMenu
         MarkVfsCorrupted
         RequestCachesDefragmentation
+        <separator>
+        PruneEmptyDirectories
+        FixLineSeparators
+        <separator>
+        MarkFileDirty
+        ValidateLocalHistory
         LoadAllContent
         LoadAllVFSContent
         ComputeVFStatistics
@@ -864,15 +860,9 @@
         DumpVfsInfoForFsRoot
         DumpWatchedRoots
         CountVfsFileChildrenAction
-        <separator>
-        PruneEmptyDirectories
-        FixLineSeparators
-        <separator>
-        MarkFileDirty
-        ValidateLocalHistory
-      CompletionQualityStats
-      ShowControlFlowAction
       Internal.Dump
+        DumpCodeStyleCache
+        DumpPluginDescriptorsAction
         DumpExtensions
         DumpInspectionDescriptions
         DumpIntentionsDescriptions
@@ -880,11 +870,9 @@
         DumpScreenConfiguration
         DumpIElementTypesAction
         DumpLoadedInspectionsAction
-        DumpPluginDescriptorsAction
         DumpRunConfigurationTypesAction
         DumpFormattingModel
         CheckClassLoading
-        DumpCodeStyleCache
         DumpGroovyControlFlowAction
       DetectProjectLeaks
       TestJbProtocolCommand
@@ -913,28 +901,34 @@
         PyTypeBenchmarkAction
       ReloadProjectAction
       Internal.Ex
-        ShowEdtUtilizationChart
         ClearIDEStatistics
         ShowMainMenu
         DumbMode
-        ShortDumbMode
         ToggleIncompleteMode
+        ResetGotItTooltips
+        Internal.Performance
+          LaggingMode
+          TypingLatencyReport
+          RetypeFile
+        ShowUpdateDialogAction
+        ShowEdtUtilizationChart
+        ShortDumbMode
         DumbModeTremble
         IoFlooding
         ShowPoweredProgress
         SkipWindowDeactivationEvents
-        ResetGotItTooltips
         ListPersistentStateComponents
-        Internal.Performance
-          TurnOnOffCachedValueProfilerAction
-          LaggingMode
-          TypingLatencyReport
-          RetypeFile
         ShowIconsNotPatchedForExpUi
         TopAnomalies
-        ShowUpdateDialogAction
         KeymapToCsv
         CompareKeymaps
+      TriggerProjectIndexableFilesFilterHealthCheckAction
+      ImageDuplicates
+      TestIconMappings
+      ShowNonRetinaImages
+      ShowSearchEverywhereItemInfo
+      CompletionQualityStats
+      ShowControlFlowAction
       PythonGenerateDictionaries
       Internal.Python
         PyUpdateProjectSdk
@@ -983,6 +977,7 @@
         ShowHelpPageById
         DevKit.AnalyzePersistentSyntaxTreeOverhead
         AnalyzeUnloadablePlugins
+      ShowEditorHighlighterTokens
     Markdown.Tools
       Markdown.ImportFromDocx
       Markdown.Export

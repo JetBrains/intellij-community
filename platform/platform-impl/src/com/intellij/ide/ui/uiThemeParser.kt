@@ -16,8 +16,10 @@ import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import javax.swing.UIDefaults
 import javax.swing.plaf.BorderUIResource
+import org.jetbrains.annotations.ApiStatus
 
-internal fun parseUiThemeValue(key: String, value: Any?, classLoader: ClassLoader, warn: (String, Throwable?) -> Unit): Any? {
+@ApiStatus.Internal
+fun parseUiThemeValue(key: String, value: Any?, classLoader: ClassLoader, warn: (String, Throwable?) -> Unit): Any? {
   if (value !is String) {
     return value
   }

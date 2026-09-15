@@ -171,7 +171,6 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
                  description="Defines storing Run Anything context combobox directories number."/>
     <registryKey key="ide.enable.notification.trace.data.sharing" defaultValue="true" description="Enables notification about sharing trace data"/>
     <notificationGroup id="scrolling-capabilities-debug" displayType="NONE" hideFromSettings="true"/>
-    <notificationGroup id="editor-rendering-benchmark" displayType="NONE" hideFromSettings="true"/>
     <notificationGroup id="Clear IDE Statistics" displayType="BALLOON" hideFromSettings="true"/>
     <notificationGroup id="Test ToolWindow Notification" displayType="TOOL_WINDOW" toolWindowId="TODO" hideFromSettings="true"/>
     <notificationGroup id="Test Sticky Notification" displayType="STICKY_BALLOON" hideFromSettings="true"/>
@@ -182,13 +181,11 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
     <notificationGroup id="Diff Changes Loading Error" displayType="BALLOON" hideFromSettings="true"/>
     <notificationGroup id="Collect Zipped Logs" displayType="BALLOON" hideFromSettings="true"/>
     <notificationGroup id="Dump Threads Group" displayType="BALLOON" isLogByDefault="false" hideFromSettings="true"/>
-    <notificationGroup id="Cached value profiling" displayType="BALLOON" hideFromSettings="true"/>
     <notificationGroup id="File Watcher Messages" displayType="STICKY_BALLOON" bundle="messages.IdeCoreBundle"
                        key="notification.group.file.watcher"/>
     <notificationGroup id="Test Results" displayType="TOOL_WINDOW" toolWindowId="Run" isLogByDefault="false" hideFromSettings="true"/>
     <notificationGroup id="Settings External Change Conflict" displayType="STICKY_BALLOON" hideFromSettings="true"/>
     <notificationGroup id="code.style.cache.dump" displayType="BALLOON" hideFromSettings="true" isLogByDefault="false"/>
-    <notificationGroup id="editor.state.dump" displayType="BALLOON" hideFromSettings="true" isLogByDefault="false"/>
     <registryKey key="html.editor.timeout" defaultValue="15000" description="HTML editor content loading timeout, ms"/>
     <registryKey key="performance.watcher.maxDumpDuration.ms" defaultValue="40000"
                  description="Maximum duration of performance watcher dumps in ms"/>

@@ -5032,8 +5032,6 @@ f:com.intellij.ui.RemoteTransferUIManager
 - sf:markFocusOnShowForInlay(javax.swing.JComponent):V
 f:com.intellij.ui.RightMarginEditorCustomization
 - com.intellij.ui.SimpleEditorCustomization
-f:com.intellij.ui.ShowSplashAction
-- com.intellij.openapi.project.DumbAwareAction
 a:com.intellij.ui.SimpleEditorCustomization
 - com.intellij.ui.EditorCustomization
 f:com.intellij.ui.SoftWrapsEditorCustomization

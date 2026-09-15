@@ -1,0 +1,253 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.gson"/>
+    <module name="intellij.libraries.jackson3"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.json"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.analysis.impl"/>
+    <module name="intellij.platform.backend.workspace"/>
+    <module name="intellij.platform.codeStyle"/>
+    <module name="intellij.platform.codeStyle.impl"/>
+    <module name="intellij.platform.concurrency"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ex"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.codeinsight.inline"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.impl"/>
+    <module name="intellij.platform.ide.core.plugins"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.internal"/>
+    <module name="intellij.platform.ide.progress"/>
+    <module name="intellij.platform.ide.ui"/>
+    <module name="intellij.platform.ide.util.io.impl"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.indexing.impl"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.locking.impl"/>
+    <module name="intellij.platform.projectFrame"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.projectModel.impl"/>
+    <module name="intellij.platform.serviceContainer"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.ex"/>
+    <module name="intellij.platform.util.progress"/>
+    <module name="intellij.platform.util.ui"/>
+    <module name="intellij.platform.workspace.jps"/>
+    <module name="intellij.platform.workspace.storage"/>
+  </dependencies>
+  <!-- endregion -->
+  <resource-bundle>messages.DevCoreBundle</resource-bundle>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <notificationGroup id="editor.state.dump" displayType="BALLOON" hideFromSettings="true" isLogByDefault="false"/>
+  </extensions>
+
+  <actions resource-bundle="messages.DevCoreBundle">
+    <!-- The action class stays in `intellij.platform.ide.internal`, because a platform performance test uses it. -->
+    <action id="IconsLoadTime" internal="true" class="com.intellij.internal.IconsLoadTime"/>
+
+    <action id="PrintModulesAndEntitySources" internal="true"
+            class="com.intellij.dev.core.PrintModulesAndEntitySources">
+      <add-to-group group-id="Internal.WorkspaceModel"/>
+    </action>
+
+    <action id="ShowEdtUtilizationChart" internal="true" class="com.intellij.dev.core.ShowEdtUtilizationChartAction">
+      <add-to-group group-id="Internal.Ex"/>
+    </action>
+    <action id="ShortDumbMode" internal="true" class="com.intellij.dev.core.RunShortDumbModeAction">
+      <add-to-group group-id="Internal.Ex"/>
+    </action>
+    <action id="DumbModeTremble" class="com.intellij.dev.core.DumbModeTrembleAction" internal="true">
+      <synonym text="Exit Tremble Dumb Mode"/>
+      <synonym text="Enter Tremble Dumb Mode"/>
+      <add-to-group group-id="Internal.Ex"/>
+    </action>
+    <action id="IoFlooding" class="com.intellij.dev.core.IoFloodingAction" internal="true">
+      <synonym text="Stop IO Flooding"/>
+      <synonym text="Start IO Flooding"/>
+      <add-to-group group-id="Internal.Ex"/>
+    </action>
+    <action id="ShowPoweredProgress" internal="true"
+            class="com.intellij.dev.core.ShowPoweredProgressAction">
+      <add-to-group group-id="Internal.Ex"/>
+    </action>
+    <action id="SkipWindowDeactivationEvents" class="com.intellij.dev.core.SkipWindowDeactivationEventsAction" internal="true">
+      <synonym text="Disable ProcessCanceledException"/>
+      <add-to-group group-id="Internal.Ex"/>
+    </action>
+    <action id="ListPersistentStateComponents" internal="true"
+            class="com.intellij.dev.core.ListPersistentStateComponentsAction">
+      <add-to-group group-id="Internal.Ex"/>
+    </action>
+
+    <action id="LaggingMode" internal="true" class="com.intellij.dev.core.ToggleLaggingModeAction">
+      <add-to-group group-id="Internal.Performance"/>
+    </action>
+    <action id="TypingLatencyReport" class="com.intellij.dev.core.TypingLatencyReportAction" internal="true">
+      <add-to-group group-id="Internal.Performance"/>
+    </action>
+    <action id="RetypeFile" class="com.intellij.dev.core.RetypeFileAction" internal="true">
+      <add-to-group group-id="Internal.Performance"/>
+    </action>
+    <action id="ShowIconsNotPatchedForExpUi" class="com.intellij.dev.core.ShowIconsNotPatchedForExpUi" internal="true">
+      <add-to-group group-id="Internal.Ex"/>
+    </action>
+
+    <group id="TopAnomalies" internal="true" class="com.intellij.dev.core.TopAnomaliesAction" popup="true">
+      <add-to-group group-id="Internal.Ex"/>
+    </group>
+    <action id="KeymapToCsv" internal="true" class="com.intellij.dev.core.KeymapToCsvAction">
+      <add-to-group group-id="Internal.Ex"/>
+    </action>
+    <action id="CompareKeymaps" internal="true" class="com.intellij.dev.core.CompareKeymapsAction">
+      <add-to-group group-id="Internal.Ex"/>
+    </action>
+
+    <action id="WriteActionUnderProgress" internal="true" class="com.intellij.dev.core.TestWriteActionUnderProgress">
+      <add-to-group group-id="Internal.UI.Ex"/>
+    </action>
+    <action id="LongBackgroundWriteAction" internal="true" class="com.intellij.dev.core.LongBackgroundWriteAction">
+      <add-to-group group-id="Internal.UI.Ex"/>
+    </action>
+    <action id="FrequentBackgroundWriteAction" internal="true" class="com.intellij.dev.core.FrequentBackgroundWriteAction">
+      <add-to-group group-id="Internal.UI.Ex"/>
+    </action>
+    <action id="FrequentBackgroundReadAction" internal="true" class="com.intellij.dev.core.FrequentBackgroundReadAction">
+      <add-to-group group-id="Internal.UI.Ex"/>
+    </action>
+    <action id="TestProgressWindow" internal="true" class="com.intellij.dev.core.TestProgressWindow">
+      <add-to-group group-id="Internal.UI.Ex"/>
+    </action>
+    <action id="TestCoroutineProgress" internal="true" class="com.intellij.dev.core.TestCoroutineProgressAction">
+      <add-to-group group-id="Internal.UI.Ex"/>
+    </action>
+    <action id="PositionTrackerTestAction" internal="true" class="com.intellij.dev.core.PositionTrackerTestAction">
+      <add-to-group group-id="Internal.UI.Ex"/>
+    </action>
+    <action id="UIFreeze" internal="true" class="com.intellij.dev.core.UIFreezeAction">
+      <add-to-group group-id="Internal.UI.Ex"/>
+    </action>
+    <action id="PooledFreeze" internal="true" class="com.intellij.dev.core.PooledFreezeAction">
+      <add-to-group group-id="Internal.UI.Ex"/>
+    </action>
+
+    <action id="UiDebugger" class="com.intellij.dev.core.ShowUiDebuggerAction">
+      <add-to-group group-id="MaintenanceGroup"/>
+    </action>
+    <action id="ToggleEssentialHighlighting" internal="true" class="com.intellij.dev.core.ToggleEssentialHighlightingAction">
+      <add-to-group group-id="PowerSaveGroup"/>
+    </action>
+
+    <action id="AddInlayInternalAction" internal="true" class="com.intellij.dev.core.AddInlayInternalAction">
+      <add-to-group group-id="Internal.Editor"/>
+    </action>
+    <action id="AddAfterLineEndInlayInternalAction" internal="true"
+            class="com.intellij.dev.core.AddAfterLineEndInlayInternalAction">
+      <add-to-group group-id="Internal.Editor"/>
+    </action>
+    <action id="AddInlayBlockInternalAction" internal="true" class="com.intellij.dev.core.AddInlayBlockInternalAction">
+      <add-to-group group-id="Internal.Editor"/>
+    </action>
+    <action id="DumpEditorStateInternalAction" internal="true" class="com.intellij.dev.core.DumpEditorStateInternalAction">
+      <add-to-group group-id="Internal.Editor"/>
+    </action>
+    <action id="SetCaretVisualAttributesInternalAction" internal="true"
+            class="com.intellij.dev.core.SetCaretVisualAttributesAction">
+      <add-to-group group-id="Internal.Editor"/>
+    </action>
+
+    <action id="TriggerProjectIndexableFilesFilterHealthCheckAction" internal="true"
+            class="com.intellij.dev.core.TriggerProjectIndexableFilesFilterHealthCheckAction">
+      <add-to-group group-id="Internal"/>
+    </action>
+    <action id="ImageDuplicates" internal="true" class="com.intellij.dev.core.ShowImageDuplicatesAction">
+      <add-to-group group-id="Internal"/>
+    </action>
+    <action id="TestIconMappings" internal="true" class="com.intellij.dev.core.TestIconMappingsAction">
+      <add-to-group group-id="Internal"/>
+    </action>
+    <action id="ShowNonRetinaImages" internal="true" class="com.intellij.dev.core.ShowNonRetinaImagesActions">
+      <add-to-group group-id="Internal"/>
+    </action>
+    <action id="ShowSearchEverywhereItemInfo" internal="true" class="com.intellij.dev.core.ShowElementInfoAction">
+      <add-to-group group-id="Internal"/>
+    </action>
+    <action id="CompletionQualityStats" internal="true" class="com.intellij.dev.core.CompletionQualityStatsAction">
+      <add-to-group group-id="Internal" anchor="last"/>
+    </action>
+    <action id="ShowControlFlowAction" internal="true" class="com.intellij.dev.core.ShowControlFlowAction">
+      <add-to-group group-id="Internal" anchor="last"/>
+    </action>
+
+    <action id="LoadAllContent" internal="true" class="com.intellij.dev.core.LoadAllContentsAction">
+      <add-to-group group-id="Internal.VFS"/>
+    </action>
+    <action id="LoadAllVFSContent" internal="true" class="com.intellij.dev.core.LoadAllVfsStoredContentsAction">
+      <add-to-group group-id="Internal.VFS"/>
+    </action>
+    <action id="ComputeVFStatistics" internal="true" class="com.intellij.dev.core.ComputeVirtualFileNameStatAction">
+      <add-to-group group-id="Internal.VFS"/>
+    </action>
+    <action id="DumpVfsInfoForExcludedFiles" internal="true" class="com.intellij.dev.core.DumpVfsInfoForExcludedFilesAction">
+      <add-to-group group-id="Internal.VFS"/>
+    </action>
+    <action id="DumpVfsInfoForFsRoot" internal="true" class="com.intellij.dev.core.DumpVfsInfoForFsRootAction">
+      <add-to-group group-id="Internal.VFS"/>
+    </action>
+    <action id="DumpWatchedRoots" internal="true" class="com.intellij.dev.core.DumpWatchedRootsAction">
+      <add-to-group group-id="Internal.VFS"/>
+    </action>
+    <action id="CountVfsFileChildrenAction" internal="true" class="com.intellij.dev.core.CountVfsFileChildrenAction">
+      <add-to-group group-id="Internal.VFS"/>
+    </action>
+
+    <action id="DumpExtensions" internal="true" class="com.intellij.dev.core.DumpExtensionsAction">
+      <add-to-group group-id="Internal.Dump"/>
+    </action>
+    <action id="DumpInspectionDescriptions" internal="true" class="com.intellij.dev.core.DumpInspectionDescriptionsAction">
+      <add-to-group group-id="Internal.Dump"/>
+    </action>
+    <action id="DumpIntentionsDescriptions" internal="true" class="com.intellij.dev.core.DumpIntentionsAction">
+      <add-to-group group-id="Internal.Dump"/>
+    </action>
+    <action id="ScanSourceCommentsAction" internal="true" class="com.intellij.dev.core.ScanSourceCommentsAction">
+      <add-to-group group-id="Internal.Dump"/>
+    </action>
+    <action id="DumpScreenConfiguration" internal="true" class="com.intellij.dev.core.DumpScreenConfigurationAction">
+      <add-to-group group-id="Internal.Dump"/>
+    </action>
+    <action id="DumpIElementTypesAction" internal="true" class="com.intellij.dev.core.DumpIElementTypesAction">
+      <add-to-group group-id="Internal.Dump"/>
+    </action>
+    <action id="DumpLoadedInspectionsAction" internal="true" class="com.intellij.dev.core.DumpLoadedInspectionsAction">
+      <add-to-group group-id="Internal.Dump"/>
+    </action>
+    <action id="DumpRunConfigurationTypesAction" internal="true" class="com.intellij.dev.core.DumpRunConfigurationTypesAction">
+      <add-to-group group-id="Internal.Dump"/>
+    </action>
+    <action id="DumpFormattingModel" internal="true" class="com.intellij.dev.core.DumpFormattingModelAction">
+      <add-to-group group-id="Internal.Dump"/>
+    </action>
+    <action id="CheckClassLoading" internal="true" class="com.intellij.dev.core.CheckClassLoadingAction">
+      <add-to-group group-id="Internal.Dump"/>
+    </action>
+
+    <action id="ShowWorkspaceFileState" internal="true" class="com.intellij.dev.core.ShowWorkspaceFileStateAction"/>
+    <action id="PaintEditorLineStripeComponentAction" internal="true"
+            class="com.intellij.dev.core.PaintEditorLineStripeHintComponentAction"/>
+    <action id="ShowInlineCompletionStatistics" internal="true"
+            class="com.intellij.dev.core.ShowCompletionLocalStatisticsAction"/>
+  </actions>
+</idea-plugin>

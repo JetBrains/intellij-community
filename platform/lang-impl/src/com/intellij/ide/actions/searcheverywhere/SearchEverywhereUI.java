@@ -632,7 +632,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
     return ctx.getData(key);
   }
 
-  @NotNull List<SearchEverywhereFoundElementInfo> getSelectedInfos() {
+  @ApiStatus.Internal
+  public @NotNull List<SearchEverywhereFoundElementInfo> getSelectedInfos() {
     return Arrays.stream(myResultsList.getSelectedIndices())
       .mapToObj(myListModel::getRawFoundElementAt)
       .filter(o -> o.getElement() != SearchListModel.MORE_ELEMENT

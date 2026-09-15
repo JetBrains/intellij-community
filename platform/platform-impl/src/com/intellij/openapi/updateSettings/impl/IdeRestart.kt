@@ -21,6 +21,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.awt.event.ActionEvent
 import javax.swing.Action
@@ -30,7 +31,6 @@ import javax.swing.JProgressBar
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
-import org.jetbrains.annotations.ApiStatus
 
 fun restartOrNotify(
   project: Project,
@@ -65,7 +65,8 @@ private fun scheduleRestart(
   CountdownDialog(project, progressTitle, timeout = 10.seconds, action = restart).show()
 }
 
-internal class CountdownDialog(
+@ApiStatus.Internal
+class CountdownDialog(
   project: Project?,
   @NlsContexts.DialogTitle dialogTitle: String,
   private val timeout: Duration,

@@ -20,6 +20,6 @@
   </extensions>
 
   <actions resource-bundle="messages.ActionsBundle">
-    <action id="WebBrowser" class="com.intellij.jcef.frontend.internal.jcef.JBCefBrowserDemo"/>
+    <action id="WebBrowser" internal="true" class="com.intellij.jcef.frontend.internal.jcef.JBCefBrowserDemo"/>
   </actions>
 </idea-plugin>
