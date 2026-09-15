@@ -84,6 +84,7 @@ import javax.swing.JPanel;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Rectangle;
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
@@ -350,7 +351,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     addInclusionListener(() -> updateButtons(), this);
     getBrowser().getViewer().addSelectionListener(() -> {
       refreshDetails(getBrowser().getViewer().isModelUpdateInProgress(), true);
-    });
+    }, getDisposable());
 
     initCommitActions(myWorkflow.getCommitExecutors());
 
@@ -389,13 +390,16 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
       @Override
       public void on(int hideableHeight) {
         if (hideableHeight == 0) return;
-        getWindow().addComponentListener(new ComponentAdapter() {
+        Window window = getWindow();
+        ComponentAdapter resizeListener = new ComponentAdapter() {
           @Override
           public void componentResized(ComponentEvent e) {
-            e.getComponent().removeComponentListener(this);
+            window.removeComponentListener(this);
             refreshDetails(false, true);
           }
-        });
+        };
+        window.addComponentListener(resizeListener);
+        Disposer.register(getDisposable(), () -> window.removeComponentListener(resizeListener));
         mySplitter.skipNextLayout();
         myDetailsSplitter.getComponent().skipNextLayout();
         Dimension dialogSize = getSize();
