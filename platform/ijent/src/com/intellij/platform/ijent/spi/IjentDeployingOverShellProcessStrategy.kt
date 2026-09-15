@@ -78,6 +78,34 @@ abstract class IjentDeployingOverShellProcessStrategy(
     }
   }
 
+  /** Starts a deployment shell through a command when the target shell is unknown. */
+  abstract class WithShellBootstrap(scope: ParentOfIjentScopes, currentDispatcher: CoroutineDispatcher) :
+    IjentDeployingOverShellProcessStrategy(scope, currentDispatcher) {
+    private val shellBootstrap by lazy { createShellBootstrap() }
+
+    /** Runs [script] as the initial command and keeps the process streams open. */
+    protected abstract suspend fun createShellProcessFacade(
+      ijentProcessScope: IjentScope,
+      script: String,
+    ): IjentSessionProcessMediator.ProcessFacade
+
+    final override suspend fun createShellProcessFacade(ijentProcessScope: IjentScope): IjentSessionProcessMediator.ProcessFacade =
+      createShellProcessFacade(ijentProcessScope, shellBootstrap.command)
+
+    final override suspend fun getShellDialect(process: IjentSessionProcessMediator.ProcessFacade): ShellDialect {
+      val result = runCatching { detectBootstrappedShell(process, shellBootstrap.marker) }
+      result.exceptionOrNull()?.let { failure ->
+        withContext(NonCancellable) {
+          runCatching { process.destroyForcibly() }.exceptionOrNull()?.let(failure::addSuppressed)
+        }
+      }
+      return when (result.getOrThrow()) {
+        DetectedShell.Posix -> ShellDialect.POSIX
+        DetectedShell.PowerShell -> ShellDialect.POWERSHELL
+      }
+    }
+  }
+
   protected sealed interface ExecutionStrategy {
     data object Default : ExecutionStrategy
 
@@ -107,7 +135,7 @@ abstract class IjentDeployingOverShellProcessStrategy(
 
   protected enum class ShellDialect { POSIX, POWERSHELL }
 
-  protected open suspend fun getShellDialect(): ShellDialect = ShellDialect.POSIX
+  protected open suspend fun getShellDialect(process: IjentSessionProcessMediator.ProcessFacade): ShellDialect = ShellDialect.POSIX
 
   /**
    * Interruption strategy for the initial shell setup.
@@ -154,7 +182,7 @@ abstract class IjentDeployingOverShellProcessStrategy(
       currentCoroutineContext().ensureActive()
     }
     withShellInitializationInterruption {
-      val shellIo = when (getShellDialect()) {
+      val shellIo = when (getShellDialect(processFacade)) {
         ShellDialect.POSIX -> PosixShellIo(shell)
         ShellDialect.POWERSHELL -> PowerShellIo(shell)
       }

@@ -43,7 +43,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.cancelAndJoin
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
@@ -66,6 +65,34 @@ import kotlin.time.Duration.Companion.seconds
 
 @Timeout(30)
 class IjentDeployingOverShellProcessStrategyUnitTest {
+  @Test
+  fun `bootstrap detects PowerShell without a known dialect`(): Unit = timeoutRunBlocking(10.seconds) {
+    val strategy = TestShellCommandStrategy(this, "OS=Windows_NT ARCH=AMD64 SHELL=powershell.exe")
+
+    try {
+      strategy.detectPlatform().shouldBeInstanceOf<EelPlatform.Windows>().arch shouldBe EelPlatform.Arch.X86_64
+    }
+    finally {
+      strategy.closeStrategy()
+      strategy.shellProcess.destroyed.await()
+    }
+  }
+
+  @Test
+  fun `bootstrap cleanup failure does not mask a malformed response`(): Unit = timeoutRunBlocking(10.seconds) {
+    supervisorScope {
+      val cleanupFailure = IOException("test bootstrap cleanup failure")
+      val strategy = TestShellCommandStrategy(this, "malformed", destroyFailure = cleanupFailure)
+
+      val error = shouldThrow<IjentUnavailableException.CommunicationFailure> {
+        strategy.createIjentSession(failingProvider("Connection must not be attempted when shell detection fails"))
+      }
+      error.message should include("Malformed target shell marker")
+      cleanupFailure should beIn(error.suppressed.toList())
+      strategy.shellProcess.destroyed.await()
+    }
+  }
+
   @Test
   @ExtendWith(LoggedErrorProcessorEnabler.DoNoRethrowErrors::class)
   fun `shell write failure is reported and the owned process is closed`(): Unit = timeoutRunBlocking(10.seconds) {
@@ -161,9 +188,12 @@ class IjentDeployingOverShellProcessStrategyUnitTest {
         }
         strategy.shellCreated.await()
         strategy.shellProcess.platformProbeStarted.await()
-        parentScope.cancel(CancellationException("Test cancellation during shell command"))
+        val cancellation = CancellationException("Test cancellation during shell command")
+        parentScope.cancel(cancellation)
 
-        shouldThrow<CancellationException> { deployment.await() }
+        val error = shouldThrow<Exception> { deployment.await() }
+        val reason = IjentUnavailableException.resolveDeadSessionReason(error, strategy.shellProcess.ijentProcessScope, 1.seconds)
+        reason.shouldBeInstanceOf<IjentUnavailableException.ClosedByApplication>().cause?.message shouldBe cancellation.message
 
         strategy.shellProcess.destroyed.await()
         strategy.shellProcess.isAlive shouldBe false
@@ -566,7 +596,7 @@ private class TestShellStrategy(
     override suspend fun getIjentBinary(targetPlatform: EelPlatform): Path = binaryProvider(targetPlatform, shellProcess)
   }
 
-  override suspend fun getShellDialect(): ShellDialect =
+  override suspend fun getShellDialect(process: IjentSessionProcessMediator.ProcessFacade): ShellDialect =
     if (usePowerShell) ShellDialect.POWERSHELL else ShellDialect.POSIX
 
   override suspend fun mapPath(path: Path): String? = pathMapper(path)
@@ -607,11 +637,43 @@ private class TestShellStrategy(
   }
 }
 
+private class TestShellCommandStrategy(
+  parentScope: CoroutineScope,
+  private val shellProbe: String,
+  private val destroyFailure: Exception? = null,
+) : IjentDeployingOverShellProcessStrategy.WithShellBootstrap(ParentOfIjentScopes(parentScope), Dispatchers.Default) {
+  override val ijentLabel: String = "test shell bootstrap"
+  lateinit var shellProcess: TestShellProcessFacade
+    private set
+
+  override val ijentExecFileProvider: IjentExecFileProvider = object : IjentExecFileProvider {
+    override suspend fun getIjentBinary(targetPlatform: EelPlatform): Path = error("The shell probe must not request an IJent binary")
+  }
+
+  override suspend fun mapPath(path: Path): String? = null
+
+  override suspend fun createShellProcessFacade(
+    ijentProcessScope: IjentScope,
+    script: String,
+  ): IjentSessionProcessMediator.ProcessFacade {
+    val marker = requireNotNull(Regex("IJENT_SHELL_PROBE_[a-z0-9]+").find(script)).value
+    return TestShellProcessFacade(ijentProcessScope, destroyFailure = destroyFailure, bootstrapOutput = "$marker $shellProbe\r\n").also {
+      shellProcess = it
+    }
+  }
+
+  suspend fun detectPlatform(): EelPlatform = getTargetPlatform()
+
+  fun closeStrategy() = close()
+}
+
+@Suppress("checkedExceptions") // The fake shell can close while it sends a response.
 private class TestShellProcessFacade(
-  ijentProcessScope: IjentScope,
+  val ijentProcessScope: IjentScope,
   private val blockPlatformProbe: Boolean = false,
   private val destroyFailure: Exception? = null,
   shellWriteFailure: IOException? = null,
+  bootstrapOutput: String? = null,
 ) : IjentSessionProcessMediator.ProcessFacade {
   private val stdinPipe = EelPipe("test shell stdin", prefersDirectBuffers = false)
   private val stdoutPipe = EelPipe("test shell stdout", prefersDirectBuffers = false)
@@ -639,6 +701,7 @@ private class TestShellProcessFacade(
 
   init {
     ijentProcessScope.s.launch {
+      bootstrapOutput?.let { stdoutPipe.sink.sendWholeText(it) }
       stdinPipe.source.lines(StandardCharsets.UTF_8).collect { command ->
         respondTo(command)
       }
@@ -662,7 +725,6 @@ private class TestShellProcessFacade(
     finish(42)
   }
 
-  @Suppress("checkedExceptions") // The fake shell can close while it sends a response.
   private suspend fun respondTo(command: String) {
     receivedCommands += command
     val powerShellCommand = "Write-Output" in command

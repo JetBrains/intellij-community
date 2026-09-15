@@ -333,7 +333,8 @@ class IjentBinaryCacheTest {
         override suspend fun getIjentBinary(targetPlatform: EelPlatform): Path = binary
       }
 
-      override suspend fun getShellDialect(): ShellDialect = if (powerShell) ShellDialect.POWERSHELL else ShellDialect.POSIX
+      override suspend fun getShellDialect(process: IjentSessionProcessMediator.ProcessFacade): ShellDialect =
+        if (powerShell) ShellDialect.POWERSHELL else ShellDialect.POSIX
 
       override suspend fun mapPath(path: Path): String? = null
 
