@@ -784,6 +784,15 @@
                      groupKey="inspections.group.code"
                      key="inspection.target.process.builder.display.name"/>
 
+    <localInspection language="UAST"
+                     projectType="INTELLIJ_PLUGIN"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.eel.TargetSystemInfoInspection"
+                     groupPathKey="inspections.group.path"
+                     groupKey="inspections.group.code"
+                     key="inspection.target.system.info.display.name"/>
+
     <localInspection language="UAST" projectType="INTELLIJ_PLUGIN" enabledByDefault="true" level="WARNING" shortName="EventLogDescription"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code" key="inspections.event.log.description.display.name"
                      implementationClass="org.jetbrains.idea.devkit.inspections.EventLogDescriptionInspection"/>
