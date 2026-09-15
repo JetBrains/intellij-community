@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.performancePlugin.commands
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.ex.ApplicationEx
@@ -12,6 +11,8 @@ import com.jetbrains.performancePlugin.commands.MemoryCapture.Companion.capture
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
+import tools.jackson.core.JacksonException
+import tools.jackson.databind.json.JsonMapper
 import java.io.File
 import java.io.IOException
 
@@ -50,9 +51,12 @@ private fun writeExitMetrics(path: String) {
   val memory = MemoryMetrics(capture.usedMb, capture.maxMb, capture.metaspaceMb)
   val metrics = ExitMetrics(memory)
   try {
-    ObjectMapper().writeValue(File(path), metrics)
+    JsonMapper.builder().build().writeValue(File(path), metrics)
   }
   catch (e: IOException) {
+    println("Unable to write exit metrics from ${ExitAppCommand::class.java.getSimpleName()} ${e.message}")
+  }
+  catch (e: JacksonException) {
     println("Unable to write exit metrics from ${ExitAppCommand::class.java.getSimpleName()} ${e.message}")
   }
 }

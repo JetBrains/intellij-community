@@ -1,11 +1,11 @@
 package com.intellij.tools.ide.metrics.collector.starter.publishing
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.ide.starter.models.IDEStartResult
 import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics
 import com.intellij.tools.ide.metrics.collector.starter.metrics.CommonMetrics
 import com.intellij.tools.ide.metrics.collector.starter.metrics.GCLogAnalyzer
 import com.intellij.tools.ide.util.common.logOutput
+import tools.jackson.module.kotlin.jacksonObjectMapper
 import java.nio.file.Files
 import java.nio.file.Path
 

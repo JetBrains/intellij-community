@@ -1,13 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tools.ide.starter.bus.shared.client
 
-import com.fasterxml.jackson.core.type.TypeReference
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.tools.ide.starter.bus.events.Event
 import com.intellij.tools.ide.starter.bus.logger.EventBusLoggerFactory
 import com.intellij.tools.ide.starter.bus.shared.dto.SharedEventDto
 import com.intellij.tools.ide.starter.bus.shared.dto.SubscriberDto
 import com.intellij.tools.ide.starter.bus.shared.server.LocalEventBusServer
+import tools.jackson.core.type.TypeReference
+import tools.jackson.module.kotlin.jacksonObjectMapper
 import java.net.ConnectException
 import java.net.HttpURLConnection
 import java.net.URL

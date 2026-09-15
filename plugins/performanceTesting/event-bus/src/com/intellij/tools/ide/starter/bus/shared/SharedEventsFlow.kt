@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tools.ide.starter.bus.shared
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.tools.ide.starter.bus.EventsBus
 import com.intellij.tools.ide.starter.bus.EventsFlow
 import com.intellij.tools.ide.starter.bus.events.Event
@@ -15,6 +14,7 @@ import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import tools.jackson.module.kotlin.jacksonObjectMapper
 import java.util.UUID
 import kotlin.time.Duration
 

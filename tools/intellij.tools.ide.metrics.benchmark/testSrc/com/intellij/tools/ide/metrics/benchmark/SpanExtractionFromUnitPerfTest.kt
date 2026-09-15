@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tools.ide.metrics.benchmark
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.testFramework.BenchmarkTestInfo
@@ -12,6 +11,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInfo
+import tools.jackson.module.kotlin.jacksonObjectMapper
 import java.nio.file.FileSystemAlreadyExistsException
 import java.nio.file.FileSystems
 import java.nio.file.Files

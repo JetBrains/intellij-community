@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tools.ide.performanceTesting.commands
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.tools.ide.performanceTesting.commands.dto.BuildToolsAutoReloadType
 import com.intellij.tools.ide.performanceTesting.commands.dto.BuildType
 import com.intellij.tools.ide.performanceTesting.commands.dto.GradleTaskInfoDto
@@ -13,6 +12,7 @@ import com.intellij.tools.ide.performanceTesting.commands.dto.MoveFilesData
 import com.intellij.tools.ide.performanceTesting.commands.dto.NewGradleProjectDto
 import com.intellij.tools.ide.performanceTesting.commands.dto.NewMavenProjectDto
 import com.intellij.tools.ide.performanceTesting.commands.dto.NewSpringProjectDto
+import tools.jackson.module.kotlin.jacksonObjectMapper
 import java.io.File
 import java.lang.reflect.Modifier
 import java.nio.file.Path

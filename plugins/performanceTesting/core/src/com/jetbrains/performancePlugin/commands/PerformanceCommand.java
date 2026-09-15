@@ -1,8 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.performancePlugin.commands;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.intellij.openapi.ui.playback.commands.AbstractCommand;
 import com.jetbrains.performancePlugin.PerformanceTestSpan;
 import com.jetbrains.performancePlugin.SpanBuilderWithSystemInfoAttributes;
@@ -10,8 +8,10 @@ import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.SpanBuilder;
 import io.opentelemetry.api.trace.Tracer;
 import org.jetbrains.annotations.NotNull;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
-import static com.fasterxml.jackson.module.kotlin.ExtensionsKt.jacksonObjectMapper;
+import static tools.jackson.module.kotlin.ExtensionsKt.jacksonObjectMapper;
 
 public abstract class PerformanceCommand extends AbstractCommand {
 
@@ -57,7 +57,7 @@ public abstract class PerformanceCommand extends AbstractCommand {
     try {
       return myObjectMapper.readValue(json, clazz);
     }
-    catch (JsonProcessingException e) {
+    catch (JacksonException e) {
       throw new RuntimeException(e);
     }
   }

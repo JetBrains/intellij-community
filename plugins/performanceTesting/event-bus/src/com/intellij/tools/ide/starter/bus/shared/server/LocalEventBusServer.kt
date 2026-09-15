@@ -1,8 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tools.ide.starter.bus.shared.server
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.tools.ide.starter.bus.logger.EventBusLoggerFactory
 import com.intellij.tools.ide.starter.bus.shared.dto.SharedEventDto
 import com.intellij.tools.ide.starter.bus.shared.dto.SubscriberDto
@@ -32,6 +30,8 @@ import io.netty.handler.codec.http.HttpServerCodec
 import io.netty.handler.codec.http.HttpVersion
 import io.netty.util.CharsetUtil
 import io.netty.util.concurrent.DefaultThreadFactory
+import tools.jackson.databind.ObjectMapper
+import tools.jackson.module.kotlin.jacksonObjectMapper
 import java.net.BindException
 import java.nio.channels.spi.SelectorProvider
 import java.util.concurrent.CompletableFuture
