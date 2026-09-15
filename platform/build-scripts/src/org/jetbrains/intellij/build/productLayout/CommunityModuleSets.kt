@@ -50,7 +50,7 @@ object CommunityModuleSets {
    * **Use when:** Building lightweight IDE products that provide code editing functionality
    *
    * **Example products:**
-   * - **Gateway**: Remote development gateway - uses `essentialMinimal()` + `vcs()` + `ssh()`
+   * - **Gateway**: Remote development gateway - uses `essential()` + `vcsShared()` + the SSH plugin
    *
    * **Don't use for:**
    * - Analysis-only tools without editing (e.g., CodeServer) → Use `corePlatform()` instead
@@ -66,7 +66,7 @@ object CommunityModuleSets {
    * **Note:** Most IDE products should start with this module set or `essential()` (which includes this).
    * Nested by `essential()` to avoid duplication.
    *
-   * @see essential for full IDE with navigation, debugging, and more features
+   * @see essential for full IDE with navigation and more features
    * @see CoreModuleSets.coreLang for just language support without editor/search/RPC
    * @see CoreModuleSets.corePlatform for analysis tools without editing
    */
@@ -116,13 +116,13 @@ object CommunityModuleSets {
 
   /**
    * Essential platform modules required by most IDE products.
+   *
+   * The debugger platform is not part of this set. [ideCommon] nests [debugger],
+   * and a lean product that needs the debugger adds [debugger] itself.
    */
   fun essential(): ModuleSet = moduleSet("essential", includeDependencies = true) {
     // Include minimal essential modules (core backend/frontend, editor, search)
     moduleSet(essentialMinimal())
-
-    // TODO: may be debugger shouldn't be essential? E.g. gateway doesn't need it.
-    moduleSet(debugger())
 
     module("intellij.platform.scopes")
     module("intellij.platform.scopes.backend")
@@ -166,6 +166,9 @@ object CommunityModuleSets {
 
   /**
    * Provides the platform for implementing Debugger functionality.
+   *
+   * [ideCommon] nests this set. A lean product that needs the debugger adds this set itself.
+   * Gateway does not need it.
    */
   fun debugger(): ModuleSet = moduleSet("debugger", includeDependencies = true) {
     module("intellij.platform.debugger.impl.frontend")
@@ -379,12 +382,14 @@ object CommunityModuleSets {
 
   /**
    * IDE common modules.
-   * Nests essential, compose, spellchecker, settings.sync, ml, vcs, lsp, duplicates, and the
+   * Nests essential, debugger, compose, spellchecker, settings.sync, ml, vcs, lsp, duplicates, and the
    * libraries.ide.common and libraries.grpc sets from [LibraryModuleSets].
    */
   fun ideCommon(): ModuleSet = moduleSet("ide.common") {
     // Include essential first (which includes coreLang from CoreModuleSets)
     moduleSet(essential())
+    // `intellij.platform.scriptDebugger.ui` in this set depends on the debugger modules
+    moduleSet(debugger())
     moduleSet(compose())
     moduleSet(librariesIdeCommon())
     moduleSet(librariesGrpc())

@@ -902,6 +902,13 @@
           Git.Log.Internal
             Git.Log.Show.Command
         Git.Cleanup.Branches
+      IFTInternalActions
+        DumpFeaturesTrainerText
+        AutorunAllLessons
+        AutorunCurrentLesson
+        SetCurrentLessonAsPassed
+        ResetOnboardingFeedbackState
+        ShowDemoAltClickPromoter
       PythonPsiInternalGroup
         PyTypeBenchmarkAction
       ReloadProjectAction
@@ -928,13 +935,6 @@
         ShowUpdateDialogAction
         KeymapToCsv
         CompareKeymaps
-      IFTInternalActions
-        DumpFeaturesTrainerText
-        AutorunAllLessons
-        AutorunCurrentLesson
-        SetCurrentLessonAsPassed
-        ResetOnboardingFeedbackState
-        ShowDemoAltClickPromoter
       PythonGenerateDictionaries
       Internal.Python
         PyUpdateProjectSdk

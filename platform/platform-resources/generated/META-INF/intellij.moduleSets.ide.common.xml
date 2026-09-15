@@ -321,16 +321,6 @@
     <!-- endregion -->
     <!-- endregion -->
 
-    <!-- region nested: essential > debugger -->
-    <module name="intellij.platform.debugger.impl.frontend"/>
-    <module name="intellij.platform.debugger.impl.backend"/>
-    <module name="intellij.platform.debugger.impl.shared"/>
-    <module name="intellij.platform.debugger.impl.rpc"/>
-    <module name="intellij.platform.debugger.impl.ui"/>
-    <module name="intellij.platform.debugger"/>
-    <module name="intellij.platform.debugger.impl"/>
-    <!-- endregion -->
-
     <!-- region direct modules -->
     <module name="intellij.platform.scopes"/>
     <module name="intellij.platform.scopes.backend"/>
@@ -362,6 +352,16 @@
     <module name="intellij.platform.externalProcessAuthHelper"/>
     <module name="intellij.platform.util.commonsLangV2Shim"/>
     <!-- endregion -->
+    <!-- endregion -->
+
+    <!-- region nested: debugger -->
+    <module name="intellij.platform.debugger.impl.frontend"/>
+    <module name="intellij.platform.debugger.impl.backend"/>
+    <module name="intellij.platform.debugger.impl.shared"/>
+    <module name="intellij.platform.debugger.impl.rpc"/>
+    <module name="intellij.platform.debugger.impl.ui"/>
+    <module name="intellij.platform.debugger"/>
+    <module name="intellij.platform.debugger.impl"/>
     <!-- endregion -->
 
     <!-- region nested: compose -->

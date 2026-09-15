@@ -286,7 +286,6 @@ fun librariesTestFrameworks(): ModuleSet = moduleSet("libraries.testFrameworks")
 fun essential(): ModuleSet = moduleSet("essential", includeDependencies = true) {
   // Include minimal essential modules
   moduleSet(essentialMinimal())
-  moduleSet(debugger())
 
   // Embedded modules (core classloader)
   embeddedModule("intellij.platform.scopes")
