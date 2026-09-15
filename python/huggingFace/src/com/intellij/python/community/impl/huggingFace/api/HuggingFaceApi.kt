@@ -1,10 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.impl.huggingFace.api
 
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.node.ArrayNode
-import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.python.community.impl.huggingFace.HuggingFaceEntityKind
 import com.intellij.python.community.impl.huggingFace.cache.HuggingFaceCache
@@ -17,6 +13,9 @@ import com.intellij.util.io.HttpRequests.HttpStatusException
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import tools.jackson.databind.JsonNode
+import tools.jackson.databind.node.ArrayNode
+import tools.jackson.module.kotlin.jacksonObjectMapper
 import java.time.Instant
 
 @ApiStatus.Internal
@@ -64,7 +63,7 @@ object HuggingFaceApi {
     val modelUrl = HuggingFaceURLProvider.fetchApiDataForModel(modelId)
     val response = HuggingFaceHttpClient.downloadContentAndHeaders(modelUrl.toString()).getOrNull()
     return response?.content?.let { json ->
-      val objectMapper = ObjectMapper().registerKotlinModule()
+      val objectMapper = jacksonObjectMapper()
       val jsonObject: JsonNode = objectMapper.readTree(json)
       objectMapper.treeToValue(jsonObject, HuggingFaceEntityBasicApiData::class.java).copy(kind = HuggingFaceEntityKind.MODEL)
     }
@@ -74,7 +73,7 @@ object HuggingFaceApi {
     endpointKind: HuggingFaceEntityKind,
     json: String
   ): Map<String, HuggingFaceEntityBasicApiData> {
-    val objectMapper = ObjectMapper().registerKotlinModule()
+    val objectMapper = jacksonObjectMapper()
     val jsonArray: ArrayNode = objectMapper.readTree(json) as ArrayNode
     val modelDataMap = mutableMapOf<String, HuggingFaceEntityBasicApiData>()
 

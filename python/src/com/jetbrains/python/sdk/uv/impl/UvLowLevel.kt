@@ -1,11 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.uv.impl
 
-import com.fasterxml.jackson.core.JacksonException
-import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.databind.RuntimeJsonMappingException
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.community.execService.Args
 import com.intellij.python.pyproject.PyDependencyGroup
@@ -34,6 +29,9 @@ import com.jetbrains.python.sdk.uv.UvScriptEnvironment
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import com.jetbrains.python.venvReader.tryResolvePath
 import io.github.z4kn4fein.semver.Version
+import tools.jackson.core.JacksonException
+import tools.jackson.module.kotlin.jacksonObjectMapper
+import tools.jackson.module.kotlin.readValue
 import java.nio.file.Path
 import kotlin.io.path.name
 import kotlin.io.path.pathString
@@ -164,14 +162,13 @@ private class UvLowLevelImpl<P : PathHolder>(
 
     try {
       val mapper = jacksonObjectMapper()
-        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
       val packages = mapper.readValue<List<OutdatedPackageInfo>>(out).map {
         PythonOutdatedPackage(it.name, it.version, it.latest_version)
       }
 
       return PyExecResult.success(packages)
     }
-    catch (e: RuntimeJsonMappingException) {
+    catch (e: JacksonException) {
       return PyResult.localizedError(e.message ?: e.localizedMessage ?: e.toString())
     }
   }
@@ -358,7 +355,7 @@ private class UvLowLevelImpl<P : PathHolder>(
     }
 
     // uv calls this schema a preview and has already revised it, so refuse an unfamiliar one rather than guess.
-    val schemaVersion = report.path("schema").path("version").textValue()
+    val schemaVersion = report.path("schema").path("version").stringValue(null)
     if (schemaVersion != SUPPORTED_SYNC_SCHEMA_VERSION) {
       return PyResult.localizedError(
         PyBundle.message("uv.script.sync.unsupported.schema", schemaVersion ?: "", SUPPORTED_SYNC_SCHEMA_VERSION)
@@ -366,8 +363,8 @@ private class UvLowLevelImpl<P : PathHolder>(
     }
 
     val environment = report.path("sync").path("environment")
-    val environmentPath = environment.path("path").textValue()
-    val pythonPath = environment.path("python").path("path").textValue()
+    val environmentPath = environment.path("path").stringValue(null)
+    val pythonPath = environment.path("python").path("path").stringValue(null)
     if (environmentPath.isNullOrBlank() || pythonPath.isNullOrBlank()) {
       return PyResult.localizedError(PyBundle.message("uv.script.sync.no.environment", scriptPath.pathString))
     }

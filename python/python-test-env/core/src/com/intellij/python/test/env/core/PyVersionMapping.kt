@@ -2,14 +2,13 @@
 package com.intellij.python.test.env.core
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.jacksonTypeRef
-import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.intellij.util.system.CpuArch
 import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
 import com.intellij.util.text.SemVer
 import org.jetbrains.annotations.ApiStatus
+import tools.jackson.module.kotlin.jacksonObjectMapper
+import tools.jackson.module.kotlin.jacksonTypeRef
 
 /**
  * Shared Python version mapping utility for test environment providers.
@@ -68,7 +67,7 @@ object PyVersionMapping {
    */
   private fun loadVersionMapping(): Map<SemVer, PythonBuildInfo> {
     val resourceName = "/com/intellij/python/test/env/core/python-version-mapping.json"
-    val mapper = ObjectMapper().registerKotlinModule()
+    val mapper = jacksonObjectMapper()
 
     val inputStream = PyVersionMapping::class.java.getResourceAsStream(resourceName)
       ?: error("Failed to load Python version mapping from $resourceName")

@@ -1,14 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.flavors.conda
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.intellij.python.community.execService.BinaryToExec
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.conda.execution.CondaExecutor
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
+import tools.jackson.core.JacksonException
+import tools.jackson.dataformat.yaml.YAMLMapper
 import java.io.IOException
 import java.nio.file.Path
 import kotlin.io.path.bufferedReader
@@ -76,17 +76,20 @@ sealed class NewCondaEnvRequest {
     private fun readEnvName(): String = try {
       environmentYaml.bufferedReader().use { reader ->
         val environment = yamlMapper.readTree(reader)
-        environment.path("name").asText().takeIf { it.isNotEmpty() } ?: DEFAULT_ENV_NAME
+        environment.path("name").asString().takeIf { it.isNotEmpty() } ?: DEFAULT_ENV_NAME
       }
     }
     catch (_: IOException) {
+      DEFAULT_ENV_NAME
+    }
+    catch (_: JacksonException) {
       DEFAULT_ENV_NAME
     }
   }
 
   @ApiStatus.Internal
   companion object {
-    private val yamlMapper = ObjectMapper(YAMLFactory())
+    private val yamlMapper = YAMLMapper.builder().build()
     private const val DEFAULT_ENV_NAME = "default"
   }
 }

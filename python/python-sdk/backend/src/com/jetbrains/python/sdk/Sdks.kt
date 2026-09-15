@@ -2,14 +2,6 @@
 package com.jetbrains.python.sdk
 
 import com.fasterxml.jackson.annotation.JsonInclude
-import com.fasterxml.jackson.core.JsonGenerator
-import com.fasterxml.jackson.core.JsonParser
-import com.fasterxml.jackson.databind.DeserializationContext
-import com.fasterxml.jackson.databind.JsonDeserializer
-import com.fasterxml.jackson.databind.JsonSerializer
-import com.fasterxml.jackson.databind.SerializerProvider
-import com.fasterxml.jackson.databind.module.SimpleModule
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.google.common.io.Resources
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
@@ -21,6 +13,14 @@ import com.intellij.util.system.CpuArch
 import com.intellij.util.system.OS
 import com.jetbrains.python.psi.LanguageLevel
 import org.jetbrains.annotations.ApiStatus
+import tools.jackson.core.JsonGenerator
+import tools.jackson.core.JsonParser
+import tools.jackson.databind.DeserializationContext
+import tools.jackson.databind.SerializationContext
+import tools.jackson.databind.ValueDeserializer
+import tools.jackson.databind.ValueSerializer
+import tools.jackson.databind.module.SimpleModule
+import tools.jackson.module.kotlin.jacksonMapperBuilder
 import java.net.URL
 import java.nio.charset.StandardCharsets
 
@@ -129,18 +129,16 @@ fun Version?.toLanguageLevel(): LanguageLevel? = this?.let { LanguageLevel.fromP
  * @see com.intellij.util.Url
  */
 @ApiStatus.Internal
-class UrlDeserializer : JsonDeserializer<Url>() {
-  override fun deserialize(p: JsonParser?, ctxt: DeserializationContext?): Url {
-    return Urls.parseEncoded(p!!.valueAsString)!!
+class UrlDeserializer : ValueDeserializer<Url>() {
+  override fun deserialize(p: JsonParser, ctxt: DeserializationContext): Url {
+    return Urls.parseEncoded(p.valueAsString)!!
   }
 }
 
 @ApiStatus.Internal
-class UrlSerializer : JsonSerializer<Url>() {
-  override fun serialize(value: Url?, gen: JsonGenerator?, serializers: SerializerProvider?) {
-    value?.let {
-      gen?.writeString(it.toString())
-    }
+class UrlSerializer : ValueSerializer<Url>() {
+  override fun serialize(value: Url, gen: JsonGenerator, ctxt: SerializationContext) {
+    gen.writeString(value.toString())
   }
 }
 
@@ -165,11 +163,12 @@ object SdksKeeper {
 
 
   private fun deserialize(content: String?): Sdks = try {
-    jacksonObjectMapper()
-      .registerModule(
+    jacksonMapperBuilder()
+      .addModule(
         SimpleModule()
           .addDeserializer(Url::class.java, UrlDeserializer())
       )
+      .build()
       .readValue(content, Sdks::class.java)
   }
   catch (ex: Exception) {
@@ -178,12 +177,13 @@ object SdksKeeper {
   }
 
   fun serialize(sdks: Sdks): String {
-    return jacksonObjectMapper()
-      .registerModule(
+    return jacksonMapperBuilder()
+      .addModule(
         SimpleModule()
           .addSerializer(Url::class.java, UrlSerializer())
       )
-      .setSerializationInclusion(JsonInclude.Include.NON_NULL)
+      .changeDefaultPropertyInclusion { JsonInclude.Value.construct(JsonInclude.Include.NON_NULL, JsonInclude.Include.NON_NULL) }
+      .build()
       .writeValueAsString(sdks)
   }
 

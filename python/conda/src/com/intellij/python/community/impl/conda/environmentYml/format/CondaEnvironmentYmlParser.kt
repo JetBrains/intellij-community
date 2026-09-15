@@ -1,9 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.impl.conda.environmentYml.format
 
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -15,10 +12,13 @@ import com.intellij.python.requirements.parser.RequirementsParserHelper
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import kotlinx.io.IOException
 import org.jetbrains.annotations.ApiStatus
+import tools.jackson.core.JacksonException
+import tools.jackson.databind.JsonNode
+import tools.jackson.dataformat.yaml.YAMLMapper
 
 @ApiStatus.Internal
 object CondaEnvironmentYmlParser {
-  private val yamlMapper = ObjectMapper(YAMLFactory())
+  private val yamlMapper = YAMLMapper.builder().build()
 
   suspend fun readNameFromFile(file: VirtualFile): String? = readFieldFromFile(file, "name")
   suspend fun readPrefixFromFile(file: VirtualFile): String? = readFieldFromFile(file, "prefix")
@@ -26,7 +26,7 @@ object CondaEnvironmentYmlParser {
   private suspend fun readFieldFromFile(file: VirtualFile, field: String): String? {
     val text = readAction { FileDocumentManager.getInstance().getDocument(file)?.text } ?: return null
     val environment: JsonNode = yamlMapper.readTree(text)
-    return environment.path(field).asText().takeIf { it.isNotEmpty() }
+    return environment.path(field).asString().takeIf { it.isNotEmpty() }
   }
 
   suspend fun fromFile(file: VirtualFile): List<PyRequirement>? {
@@ -34,6 +34,10 @@ object CondaEnvironmentYmlParser {
       readDeps(file)
     }
     catch (e: IOException) {
+      thisLogger().info("Cannot parse deps from ${file.readText()}", e)
+      return null
+    }
+    catch (e: JacksonException) {
       thisLogger().info("Cannot parse deps from ${file.readText()}", e)
       return null
     }
@@ -52,8 +56,8 @@ object CondaEnvironmentYmlParser {
 
     for (dependency in dependencies) {
       when {
-        dependency.isTextual -> {
-          val dep = dependency.asText()
+        dependency.isString -> {
+          val dep = dependency.asString()
           val parsed = parseCondaDep(dep) ?: continue
           result.add(parsed)
         }
@@ -120,7 +124,7 @@ object CondaEnvironmentYmlParser {
   }
 
   private suspend fun parsePipListDeps(pipList: JsonNode, file: VirtualFile): List<PyRequirement> {
-    val pipText = pipList.filter { it.isTextual }.joinToString("\n") { it.asText() }
+    val pipText = pipList.filter { it.isString }.joinToString("\n") { it.asString() }
     return readAction { PyRequirementParser.fromText(pipText, file, mutableSetOf<VirtualFile>()) }
   }
 }

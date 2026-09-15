@@ -1,6 +1,5 @@
 package com.intellij.python.ty
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
@@ -15,6 +14,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.PosixFilePermission
 import javax.swing.Icon
+import tools.jackson.databind.json.JsonMapper
 import kotlin.io.path.div
 import kotlin.io.path.setPosixFilePermissions
 
@@ -69,19 +69,19 @@ object TyUtil {
       .userAgent("intellij-ty-plugin")
       .readString()
 
-    val mapper = ObjectMapper()
+    val mapper = JsonMapper.builder().build()
     val jsonNode = mapper.readTree(response)
 
-    val tagName = jsonNode.get("tag_name")?.asText() ?: return null
+    val tagName = jsonNode.get("tag_name")?.asString() ?: return null
     val assets = jsonNode.get("assets") ?: return null
 
     val platformSuffix = getPlatformSuffix()
     val asset = assets.find { node ->
-      val name = node.get("name")?.asText() ?: ""
+      val name = node.get("name")?.asString() ?: ""
       name.contains(platformSuffix, ignoreCase = true)
     } ?: return null
 
-    val downloadUrl = asset.get("browser_download_url")?.asText() ?: return null
+    val downloadUrl = asset.get("browser_download_url")?.asString() ?: return null
 
     return TyReleaseInfo(tagName, downloadUrl)
   }
