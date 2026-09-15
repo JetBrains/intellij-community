@@ -18,6 +18,7 @@ import org.jetbrains.intellij.build.io.copyFileToDir
 import org.jetbrains.intellij.build.resolveFileForReading
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.attribute.PosixFilePermission.OWNER_EXECUTE
 
 const val PYREFLY_BUNDLE_ENABLED_PROPERTY: String = "pyrefly.bundle"
 
@@ -71,7 +72,7 @@ private fun copyPyreflyLicenseReport(targetDir: Path, context: BuildContext) {
   check(Files.isDirectory(licenseDir)) {
     "Pyrefly license report is missing from the archive: $licenseDir"
   }
-  context.messages.info("Bundling pyrefly license report in $licenseDir")
+  context.messages.warning("Bundling pyrefly license report in $licenseDir")
   copyDir(sourceDir = licenseDir, targetDir = targetDir.resolve(PYREFLY_DIR_NAME).resolve("license"))
 }
 
@@ -83,14 +84,19 @@ private fun copyPyreflyBinary(targetDir: Path, context: BuildContext, os: OsFami
     "Pyrefly binary for ${os.osName} ${arch.archName} is missing from the archive: $binary"
   }
   context.messages.info("Bundling pyrefly binary at $binary into ${os.osName} ${arch.archName}")
-  copyFileToDir(binary, targetDir.resolve(PYREFLY_DIR_NAME).resolve(platformDirName))
+  val outputDir = targetDir.resolve(PYREFLY_DIR_NAME)
+  copyFileToDir(binary, outputDir, overwrite = true)
+  if (os != OsFamily.WINDOWS) {
+    val outputBinary = outputDir.resolve(binary.fileName)
+    Files.setPosixFilePermissions(outputBinary, Files.getPosixFilePermissions(outputBinary) + OWNER_EXECUTE)
+  }
 }
 
 private fun downloadPyrefly(context: BuildContext, artifactId: String): Path {
   val communityRoot = context.paths.communityHomeDirRoot
   val version = context.dependenciesProperties.property(PYREFLY_VERSION_PROPERTY)
   val uri = BuildDependenciesDownloader.getUriForMavenArtifact(INTELLIJ_DEPENDENCIES_URL, PYREFLY_GROUP_ID, artifactId, version, PYREFLY_PACKAGING)
-  val resolved = resolveFileForReading(uri.toString(), communityRoot, context.httpSession)
+  val resolved = resolveFileForReading(uri.toString(), communityRoot)
   return extractToCacheLocation(
     archiveFile = resolved.file,
     communityRoot = communityRoot,

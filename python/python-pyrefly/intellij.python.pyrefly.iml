@@ -31,6 +31,7 @@
     <orderEntry type="module" module-name="intellij.libraries.eclipse.lsp4j" />
     <orderEntry type="module" module-name="intellij.libraries.eclipse.lsp4j.jsonrpc" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
+    <orderEntry type="module" module-name="intellij.platform.eel" />
     <orderEntry type="module" module-name="intellij.python.lsp.core" />
     <orderEntry type="module" module-name="intellij.python.pyrefly.common" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" />

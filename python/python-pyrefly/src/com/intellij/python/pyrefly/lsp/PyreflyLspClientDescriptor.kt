@@ -1,14 +1,20 @@
 package com.intellij.python.pyrefly.lsp
 
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.execution.ExecutionException
+import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.BaseProcessHandler
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.components.service
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.eel.isWindows
+import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.lsp.api.Lsp4jServer
 import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.api.LspServerState
@@ -19,15 +25,21 @@ import com.intellij.python.lsp.core.PyLspToolDescriptor
 import com.intellij.python.lsp.core.typeEngine.PyTypeEngineUtils
 import com.intellij.python.lsp.core.utils.PyLspServerModificationTracker
 import com.intellij.python.pyrefly.PyreflyConfiguration
+import com.intellij.python.pyrefly.PyreflyBundle
 import com.intellij.python.pyrefly.PyreflyPyTool
 import com.intellij.python.pyrefly.PyreflyUsageCollector
 import com.intellij.python.lsp.core.PyLspToolSettings
 import com.jetbrains.python.codeInsight.typing.PyTypeShed
+import com.jetbrains.python.project.PyProject.Companion.asPyProject
 import com.jetbrains.python.sdk.pythonSdk
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.eclipse.lsp4j.ConfigurationItem
 import org.eclipse.lsp4j.DidChangeConfigurationParams
 import org.eclipse.lsp4j.Diagnostic
 import org.eclipse.lsp4j.InitializeResult
+import java.nio.file.Path
+import kotlin.io.path.isExecutable
 
 @Suppress("UsagesOfObsoleteApi")
 class PyreflyLspClientDescriptor(
@@ -82,6 +94,21 @@ class PyreflyLspClientDescriptor(
   override val usesSourceRoots: Boolean = true
 
   override val usesExcludedRoots: Boolean = true
+
+  override suspend fun resolveCommandLine(): GeneralCommandLine {
+    if (!PyreflyPyTool.getInstance().isSelectedAsTypeEngine(project)) {
+      return super.resolveCommandLine()
+    }
+
+    val executable = getPyreflyPath()
+    if (!withContext(Dispatchers.IO) { executable.isExecutable() }) {
+      throw ExecutionException(PyreflyBundle.message("pyrefly.executable.unavailable", executable))
+    }
+    val workingDirectory = module.asPyProject()?.baseDir
+    return GeneralCommandLine(executable.toString())
+      .withWorkingDirectory(workingDirectory)
+      .withParameters(*lspArguments().toTypedArray())
+  }
 
   override fun createInitializationOptions(): Map<String, Any>? {
     val homePath = module.pythonSdk?.homePath ?: return null
@@ -187,5 +214,22 @@ class PyreflyLspClientDescriptor(
     }
 
     return super.startServerProcess()
+  }
+
+  private companion object {
+    const val PYTHON_CORE_PLUGIN_ID = "PythonCore"
+    const val PYREFLY_BINARY_NAME = "pyrefly"
+    const val PYREFLY_BINARY_PATH_PROPERTY = "pyrefly.binary.path"
+
+    fun getPyreflyPath(): Path =
+      System.getProperty(PYREFLY_BINARY_PATH_PROPERTY)?.takeIf { it.isNotBlank() }?.let(Path::of)
+      ?: getBundledPyreflyPath()
+
+    fun getBundledPyreflyPath(): Path {
+      val plugin = PluginManagerCore.getPlugin(PluginId.getId(PYTHON_CORE_PLUGIN_ID))
+                   ?: error("PythonCore plugin is not loaded")
+      val binaryName = if (localEel.platform.isWindows) "$PYREFLY_BINARY_NAME.exe" else PYREFLY_BINARY_NAME
+      return plugin.pluginPath.resolve(PYREFLY_BINARY_NAME).resolve(binaryName)
+    }
   }
 }

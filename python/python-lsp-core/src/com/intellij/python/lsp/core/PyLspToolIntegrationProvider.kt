@@ -113,14 +113,17 @@ abstract class PyLspToolIntegrationProvider : LspIntegrationProvider {
 
     // Find the module for this file
     val module = ModuleUtilCore.findModuleForFile(file, project) ?: return
-
     val descriptor = getDescriptor(module)
     if (!descriptor.isSupportedFile(file))
       return
     attach(descriptor)
 
-    if (!descriptor.hasExecutable())
+    try {
+      runBlockingMaybeCancellable { descriptor.resolveCommandLine() }
+    }
+    catch (_: ExecutionException) {
       return
+    }
 
     clientStarter.ensureClientStarted(descriptor)
   }
@@ -507,9 +510,6 @@ abstract class PyLspToolDescriptor(
    */
   fun executableCandidates(): List<Module> = pyLspExecutableCandidates(liveServedModules, pyLspServeKeysView(project, pyTool))
 
-  /** Whether some served module's interpreter provides the tool binary. */
-  fun hasExecutable(): Boolean = findExecutable() != null
-
   /** The last computed [projectExcludes]. Only [refreshProjectExcludes] writes it. */
   @Volatile
   private var cachedProjectExcludes: List<String> = emptyList()
@@ -603,7 +603,8 @@ abstract class PyLspToolDescriptor(
 
   abstract fun lspArguments(): List<String>
 
-  override fun createCommandLine(): GeneralCommandLine {
+  /** Resolves the command line before the client starts. Bundled tools can override this function. */
+  open suspend fun resolveCommandLine(): GeneralCommandLine {
     @Suppress("HardCodedStringLiteral") // this text goes only to the IDE logs
     val noExecutable = liveServedModules.ifEmpty { null }
                          ?.let { "No module of ${it.joinToString { m -> m.name }} provides the $presentableName executable" }
@@ -613,6 +614,8 @@ abstract class PyLspToolDescriptor(
       .withParameters(*baseArgs.toTypedArray(), *lspArguments().toTypedArray())
     return cmd
   }
+
+  override fun createCommandLine(): GeneralCommandLine = runBlockingMaybeCancellable { resolveCommandLine() }
 
   lateinit var supportProvider: PyLspToolIntegrationProvider
 
