@@ -93,8 +93,7 @@ object PlatformStandaloneSmoke {
       check(file.text == "standalone works") { "The PSI change is not applied: ${file.text}" }
       check(tracker.modificationCount > countBefore) { "The modification tracker did not notice the change" }
       check(events.isNotEmpty()) { "No tree change event is fired" }
-      // The platform drops a listener added by hand when the `PsiTreeChangeListener` point has no extension
-      check(plainEvents.isEmpty()) { "A tree change event reaches the listener added by hand" }
+      check(plainEvents.isNotEmpty()) { "No tree change event reaches the listener added by hand" }
       val document = PsiDocumentManager.getInstance(project).getDocument(file) ?: error("The file has no document")
       check(document.text == "standalone works") { "The document is not synchronized with the PSI: ${document.text}" }
     }
