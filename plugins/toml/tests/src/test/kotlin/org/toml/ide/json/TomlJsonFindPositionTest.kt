@@ -77,6 +77,18 @@ class TomlJsonFindPositionTest : TomlTestBase() {
         [[foo]]
     """, "/foo/1/bar")
 
+    fun `test nested table header in repeated array table`() = assertPosition("""
+        [[a]]
+        unit = "first"
+        [a.b]
+        unit = "first"
+
+        [[a]]
+        unit = "second"
+        [a.b<caret>]
+        unit = "second"
+    """, "/a/1/b")
+
     fun `test inline array`() = assertPosition("""
         [[foo]]
         
