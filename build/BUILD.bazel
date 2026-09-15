@@ -163,8 +163,8 @@ intellij_dev_binary_community(
 
 intellij_dev_binary_community(
     name = "idea_community_devkit",
-    platform_prefix = "community",
     additional_modules = "intellij.devkit",
+    platform_prefix = "community",
 )
 
 intellij_dev_binary_community(

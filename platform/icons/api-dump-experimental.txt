@@ -105,9 +105,13 @@
 - sf:getMoveToBottomLeft():com.intellij.platform.icons.IconDescriptor
 - sf:getMoveToBottomRight():com.intellij.platform.icons.IconDescriptor
 - sf:getMoveToButton():com.intellij.platform.icons.IconDescriptor
+- sf:getMoveToLeft():com.intellij.platform.icons.IconDescriptor
 - sf:getMoveToLeftBottom():com.intellij.platform.icons.IconDescriptor
+- sf:getMoveToLeftSideBySide():com.intellij.platform.icons.IconDescriptor
 - sf:getMoveToLeftTop():com.intellij.platform.icons.IconDescriptor
+- sf:getMoveToRight():com.intellij.platform.icons.IconDescriptor
 - sf:getMoveToRightBottom():com.intellij.platform.icons.IconDescriptor
+- sf:getMoveToRightSideBySide():com.intellij.platform.icons.IconDescriptor
 - sf:getMoveToRightTop():com.intellij.platform.icons.IconDescriptor
 - sf:getMoveToTopLeft():com.intellij.platform.icons.IconDescriptor
 - sf:getMoveToTopRight():com.intellij.platform.icons.IconDescriptor
@@ -620,6 +624,7 @@
 - sf:getShowInfos():com.intellij.platform.icons.IconDescriptor
 - sf:getShowWarning():com.intellij.platform.icons.IconDescriptor
 - sf:getShow_to_implement():com.intellij.platform.icons.IconDescriptor
+- sf:getSortBy():com.intellij.platform.icons.IconDescriptor
 - sf:getSuccessDialog():com.intellij.platform.icons.IconDescriptor
 - sf:getSuccessLogin():com.intellij.platform.icons.IconDescriptor
 - sf:getTbHidden():com.intellij.platform.icons.IconDescriptor
