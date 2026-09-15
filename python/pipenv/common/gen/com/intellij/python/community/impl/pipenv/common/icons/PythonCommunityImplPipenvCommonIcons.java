@@ -15,5 +15,5 @@ public final class PythonCommunityImplPipenvCommonIcons {
   private static @NotNull Icon load(@NotNull String path, int cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, PythonCommunityImplPipenvCommonIcons.class.getClassLoader(), cacheKey, flags);
   }
-  /** 16x16 */ public static final @NotNull Icon Pipenv = load("images/intellij/python/community/impl/pipenv/common/expui/pipenv.svg", 437455270, 2);
+  /** 16x16 */ public static final @NotNull Icon Pipenv = load("images/intellij/python/community/impl/pipenv/common/expui/pipenv.svg", -1588238693, 2);
 }
