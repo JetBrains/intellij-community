@@ -72,7 +72,6 @@ internal fun StringBuilder.appendInlinedModuleSet(
             moduleId = module.moduleId,
             loading = effectiveLoading,
             requiredIfAvailable = module.requiredIfAvailable,
-            includeDependencies = module.includeDependencies,
             allowedMissingPluginIds = module.allowedMissingPluginIds,
           ),
           "    ",

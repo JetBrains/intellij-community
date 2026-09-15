@@ -45,13 +45,11 @@ internal fun processAndGetProductPluginContentModules(
 
   val element: Element
   val moduleToSetChainMapping: Map<String, List<String>>?
-  val moduleToIncludeDependenciesMapping: Map<String, Boolean>?
   val descriptorResolverModules: Collection<String>
   val programmaticModulesSpec = productProperties.getProductContentDescriptor()
   if (programmaticModulesSpec == null) {
     element = JDOMUtil.load(file)
     moduleToSetChainMapping = null
-    moduleToIncludeDependenciesMapping = null
     descriptorResolverModules = includedPlatformModulesPartialList
   }
   else {
@@ -68,7 +66,6 @@ internal fun processAndGetProductPluginContentModules(
 
     element = JDOMUtil.load(buildResult.xml)
     moduleToSetChainMapping = buildResult.moduleToSetChainMapping.mapKeys { it.key.value }
-    moduleToIncludeDependenciesMapping = buildResult.moduleToIncludeDependenciesMapping.mapKeys { it.key.value }
     descriptorResolverModules = LinkedHashSet<String>().apply {
       addAll(includedPlatformModulesPartialList)
       for ((_, modules) in buildResult.contentBlocks) {
@@ -97,7 +94,6 @@ internal fun processAndGetProductPluginContentModules(
       layout = layout,
       result = moduleItems,
       moduleToSetChainOverride = moduleToSetChainMapping,
-      moduleToIncludeDependenciesOverride = moduleToIncludeDependenciesMapping,
       descriptorCache = descriptorCache,
       xIncludeResolver = xIncludeResolver,
       moduleName = moduleName,
@@ -177,7 +173,6 @@ private fun processProductModule(
   layout: PlatformLayout,
   result: LinkedHashSet<ModuleItem>,
   moduleToSetChainOverride: Map<String, List<String>>? = null,
-  moduleToIncludeDependenciesOverride: Map<String, Boolean>? = null,
   descriptorCache: ScopedCachedDescriptorContainer,
   xIncludeResolver: XIncludeElementResolverImpl,
   moduleName: String,
@@ -191,14 +186,12 @@ private fun processProductModule(
 
   // extract module set from override mapping (for programmatic spec)
   val moduleSet = moduleToSetChainOverride?.get(moduleName)
-  val includeDependencies = moduleToIncludeDependenciesOverride?.get(moduleName) ?: false
   result.add(
     ModuleItem(
       moduleName = moduleName,
       relativeOutputFile = relativeOutputFile,
       reason = if (isEmbedded) ModuleIncludeReasons.PRODUCT_EMBEDDED_MODULES else ModuleIncludeReasons.PRODUCT_MODULES,
       moduleSet = moduleSet,
-      includeDependencies = includeDependencies,
     )
   )
 

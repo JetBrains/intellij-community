@@ -61,7 +61,7 @@ fun snapshotDevPluginLibraryLayoutRecipe(
     mainModule = layout.mainModule, directoryName = layout.directoryName, mainJarName = layout.getMainJarName(), idPrefix = idPrefix,
     layoutPatcherCount = layout.patchers.size,
     orderedModules = layout.includedModules.map {
-      DevPluginLibraryLayoutModule(it.moduleName, it.relativeOutputFile, it.includeDependencies, it.moduleSet)
+      DevPluginLibraryLayoutModule(it.moduleName, it.relativeOutputFile, it.moduleSet)
     },
     orderedExclusions = layout.moduleExcludes.map { (moduleName, patterns) -> DevPluginLibraryLayoutExclusion(moduleName, patterns) },
     orderedFilters = filters.map { DevPluginLibraryLayoutRecipeFilter(it.moduleName, it.manifest, it.inputs, it.outputs) },

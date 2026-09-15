@@ -177,7 +177,7 @@ See [docs/validators/plugin-content-dependency.md](validators/plugin-content-dep
 Generates dependencies for **product modules** (modules declared in module sets like `essential()`, `ideCommon()`).
 
 **Responsibilities:**
-- Collects modules with `includeDependencies=true`, library modules (`intellij.libraries.*`), settings modules
+- Collects the library modules (`intellij.libraries.*`) and the settings modules of every module set
 - Validates both direct AND transitive dependencies
 - Performs two-tier validation:
   - **Tier 1:** Self-contained module sets validated in isolation
@@ -294,7 +294,7 @@ Test plugin validation: Checks EDGE_CONTENT_MODULE_DEPENDS_ON_TEST
 | **Generator** | `ModuleDescriptorDependencyGenerator` | `PluginDependencyPlanner` + `PluginXmlWriter` |
 | **Files updated** | `{moduleName}.xml` | `plugin.xml`, content module XMLs |
 | **Validation** | Full transitive validation | JPS dependencies with filtering |
-| **Configuration** | `includeDependencies=true` flag | Automatic for all content modules |
+| **Configuration** | Library and settings modules of a module set | Automatic for all content modules |
 | **Filtering** | None (use `@skip-dependency-generation` to skip) | Suppressions only |
 
 ### Plugin.xml Generation Scope

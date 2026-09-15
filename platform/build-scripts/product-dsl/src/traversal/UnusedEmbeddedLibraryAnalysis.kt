@@ -15,7 +15,6 @@ import com.intellij.platform.pluginGraph.TargetNode
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
 import kotlinx.serialization.Serializable
 import org.jetbrains.intellij.build.productLayout.LIB_MODULE_PREFIX
-import org.jetbrains.intellij.build.productLayout.ProductModulesContentSpec
 
 @Serializable
 internal data class UnusedEmbeddedLibraryModulesResult(
@@ -43,13 +42,10 @@ internal data class UnusedEmbeddedLibraryModuleViolation(
  * Finds library content modules which are embedded in module sets but are not reachable from
  * embedded, non-library product content through an all-embedded production dependency path.
  */
-internal fun analyzeUnusedEmbeddedLibraryModules(
-  graph: PluginGraph,
-  productSpecsByName: Map<String, ProductModulesContentSpec> = emptyMap(),
-): UnusedEmbeddedLibraryModulesResult {
+internal fun analyzeUnusedEmbeddedLibraryModules(graph: PluginGraph): UnusedEmbeddedLibraryModulesResult {
   return graph.query {
     val candidates = collectEmbeddedLibraryCandidates()
-    val liveCandidates = collectLiveEmbeddedLibraries(candidates.keys, productSpecsByName)
+    val liveCandidates = collectLiveEmbeddedLibraries(candidates.keys)
     val productionPluginConsumers = collectPluginConsumers(candidates.keys, includeTestPlugins = false)
     val testPluginConsumers = collectPluginConsumers(candidates.keys, includeTestPlugins = true)
     val platformConsumers = collectPlatformConsumers(candidates.keys)
@@ -111,10 +107,7 @@ private fun GraphScope.collectEmbeddedLibraryCandidates(): Map<Int, Set<String>>
   return candidates
 }
 
-private fun GraphScope.collectLiveEmbeddedLibraries(
-  candidateIds: Set<Int>,
-  productSpecsByName: Map<String, ProductModulesContentSpec>,
-): Set<Int> {
+private fun GraphScope.collectLiveEmbeddedLibraries(candidateIds: Set<Int>): Set<Int> {
   val result = HashSet<Int>()
   products { product ->
     collectLibrariesUsedByEmbeddedProductTargets(product, candidateIds, result)
@@ -141,19 +134,6 @@ private fun GraphScope.collectLiveEmbeddedLibraries(
         if (visited.add(dependency.id)) {
           queue.add(dependency)
         }
-      }
-    }
-
-    val spec = productSpecsByName.get(product.name()) ?: return@products
-    val implicitAnalysis = analyzeImplicitEmbeddedContentModules(product, spec)
-    for ((dependencyName, origins) in implicitAnalysis.reachedModules) {
-      val dependency = contentModule(dependencyName) ?: continue
-      if (dependency.id !in candidateIds || !isEmbeddedInProductContent(dependency, product)) continue
-      if (origins.any { originName ->
-          !originName.value.startsWith(LIB_MODULE_PREFIX) &&
-          contentModule(originName)?.let { isEmbeddedInProductContent(it, product) } == true
-        }) {
-        result.add(dependency.id)
       }
     }
   }

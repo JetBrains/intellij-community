@@ -225,7 +225,7 @@ internal fun computePluginContentFromDslSpec(
   }
 
   // Start with declared modules
-  for ((moduleId, _, _, _, allowedMissingPluginIds) in allModules) {
+  for ((moduleId, _, _, allowedMissingPluginIds) in allModules) {
     val moduleName = moduleId.contentName()
     queue.add(moduleName)
     parentByModule.put(moduleName, null)

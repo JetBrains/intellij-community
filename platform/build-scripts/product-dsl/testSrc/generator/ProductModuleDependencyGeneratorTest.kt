@@ -32,7 +32,7 @@ class ProductModuleDependencyGeneratorTest {
   @Test
   fun `product module written deps exclude self dependency`(@TempDir tempDir: Path) {
     runBlocking(Dispatchers.Default) {
-      val moduleName = "intellij.self.module"
+      val moduleName = "intellij.libraries.self.module"
       val setup = pluginTestSetup(tempDir) {
         contentModule(moduleName) {
           descriptor = """<idea-plugin package="self.module"/>"""
@@ -48,7 +48,7 @@ class ProductModuleDependencyGeneratorTest {
         discovery = DiscoveryResult(
           moduleSetsByLabel = mapOf(
             "community" to listOf(
-              moduleSet("self.deps.test", includeDependencies = true) {
+              moduleSet("self.deps.test") {
                 module(moduleName)
               }
             )
@@ -76,7 +76,7 @@ class ProductModuleDependencyGeneratorTest {
   @Test
   fun `product module updateSuppressions does not preserve existing TEST scope dependency`(@TempDir tempDir: Path) {
     runBlocking(Dispatchers.Default) {
-      val moduleName = "intellij.groovy.duplicates"
+      val moduleName = "intellij.libraries.groovy.duplicates"
       val testFramework = ContentModuleName("intellij.platform.testFramework")
       val setup = pluginTestSetup(tempDir) {
         contentModule(testFramework.value) {
@@ -106,7 +106,7 @@ class ProductModuleDependencyGeneratorTest {
         discovery = DiscoveryResult(
           moduleSetsByLabel = mapOf(
             "community" to listOf(
-              moduleSet("groovy.deps.test", includeDependencies = true) {
+              moduleSet("groovy.deps.test") {
                 module(moduleName)
               }
             )

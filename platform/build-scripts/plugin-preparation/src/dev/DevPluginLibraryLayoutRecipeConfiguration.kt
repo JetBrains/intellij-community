@@ -88,7 +88,6 @@ private fun freezeLibraryLayoutConsumerRecipe(recipe: CanonicalJarRecipe): Canon
 class DevPluginLibraryLayoutModule(
   @JvmField val name: String,
   @JvmField val relativeOutputFile: String,
-  @JvmField val includeDependencies: Boolean,
   @SerialName("moduleSet") private var orderedModuleSet: List<String>?,
 ) {
   val moduleSet: List<String>? get() = orderedModuleSet

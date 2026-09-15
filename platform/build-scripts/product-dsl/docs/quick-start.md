@@ -20,7 +20,7 @@ Get started with product-dsl in 5 minutes.
 
 2. **Find the module set function** and add your module:
    ```kotlin
-   fun essential(): ModuleSet = moduleSet("essential", includeDependencies = true) {
+   fun essential(): ModuleSet = moduleSet("essential") {
      // ... existing modules ...
      
      module("intellij.platform.new.feature")  // Add your module

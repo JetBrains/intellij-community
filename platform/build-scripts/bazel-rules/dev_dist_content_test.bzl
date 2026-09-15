@@ -438,8 +438,6 @@ def dev_dist_content_test_suite(name):
         modules = [":" + packed_owner, ":" + raw_owner, ":" + dependency],
         packed = [":" + packed, ":" + nested],
         modules_by_name = ["test.packed", "test.raw", "test.dependency"],
-        seeds = ["test.raw"],
-        module_deps = {"test.raw": "test.dependency"},
     )
     tests.append(name + "_platform_payload_test")
     _platform_payload_test(

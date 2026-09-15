@@ -423,7 +423,7 @@ private fun layoutState(layout: PluginLayout): String {
 private fun appendLayoutState(layout: BaseLayout, values: MutableList<String>) {
   values.add(layout.includedModules.size.toString())
   for (module in layout.includedModules) {
-    values.addAll(listOf(module.moduleName, module.relativeOutputFile, module.includeDependencies.toString(), module.moduleSet.toString()))
+    values.addAll(listOf(module.moduleName, module.relativeOutputFile, module.moduleSet.toString()))
   }
   values.add(layout.moduleExcludes.size.toString())
   for ((moduleName, excludes) in layout.moduleExcludes) values.addAll(listOf(moduleName, excludes.size.toString()) + excludes)

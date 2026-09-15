@@ -4,7 +4,6 @@
 package org.jetbrains.intellij.build.impl
 
 import kotlinx.collections.immutable.PersistentList
-import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.JarPackagerDependencyHelper
 import java.util.concurrent.ConcurrentHashMap
@@ -59,41 +58,5 @@ fun collectTransitiveRuntimeDependencies(
     nextFrontier.sortBy { it.first }
     frontier = nextFrontier
   }
-  return result
-}
-
-@Internal
-fun computeEmbeddedModuleDependenciesInOrder(
-  embeddedModulesInProcessingOrder: List<ModuleItem>,
-  excludedModuleNames: Set<String>,
-  alreadyIncluded: HashSet<String>,
-  dependencyResolver: RuntimeDependencyResolver,
-): Set<ModuleItem> {
-  val result = LinkedHashSet<ModuleItem>()
-  val rootChain = persistentListOf<String>()
-
-  for (embeddedModule in embeddedModulesInProcessingOrder) {
-    val dependencies = collectTransitiveRuntimeDependencies(
-      roots = listOf(embeddedModule.moduleName to rootChain),
-      blockedOrSeen = alreadyIncluded,
-      omitFromResult = emptySet(),
-      dependencyResolver = dependencyResolver,
-    )
-    for ((depName, chain) in dependencies) {
-      if (excludedModuleNames.contains(depName)) {
-        continue
-      }
-
-      result.add(
-        ModuleItem(
-          moduleName = depName,
-          relativeOutputFile = embeddedModule.relativeOutputFile,
-          reason = ModuleIncludeReasons.PRODUCT_EMBEDDED_MODULES + " <- " + chain.asReversed().joinToString(separator = " <- "),
-          moduleSet = embeddedModule.moduleSet,
-        )
-      )
-    }
-  }
-
   return result
 }

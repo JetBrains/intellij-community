@@ -12,9 +12,7 @@ import org.jetbrains.intellij.build.productLayout.TestFailureLogger
 import org.jetbrains.intellij.build.productLayout.dependency.pluginGraph
 import org.jetbrains.intellij.build.productLayout.dependency.runValidationRule
 import org.jetbrains.intellij.build.productLayout.dependency.testGenerationModel
-import org.jetbrains.intellij.build.productLayout.moduleSet
 import org.jetbrains.intellij.build.productLayout.model.error.UnusedEmbeddedLibraryModuleError
-import org.jetbrains.intellij.build.productLayout.productModules
 import org.jetbrains.intellij.build.productLayout.traversal.analyzeUnusedEmbeddedLibraryModules
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -90,10 +88,6 @@ class UnusedEmbeddedLibraryModuleValidatorTest {
 
   @Test
   fun `keeps library reached through embedded JPS runtime closure`() {
-    val core = moduleSet("core", includeDependencies = true) {
-      embeddedModule("intellij.platform.core")
-      embeddedModule("intellij.libraries.implicit")
-    }
     val graph = pluginGraph {
       product("IDEA") { includesModuleSet("core") }
       moduleSet("core") {
@@ -104,13 +98,7 @@ class UnusedEmbeddedLibraryModuleValidatorTest {
       moduleWithDeps("intellij.libraries.implicit")
     }
 
-    val spec = productModules { moduleSet(core) }
-    val result = analyzeUnusedEmbeddedLibraryModules(
-      graph = graph,
-      productSpecsByName = mapOf("IDEA" to spec),
-    )
-
-    assertThat(result.violations).isEmpty()
+    assertThat(analyzeUnusedEmbeddedLibraryModules(graph).violations).isEmpty()
   }
 
   @Test

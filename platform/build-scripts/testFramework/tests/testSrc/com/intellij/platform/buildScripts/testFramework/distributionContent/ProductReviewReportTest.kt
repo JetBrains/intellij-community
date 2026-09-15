@@ -63,7 +63,7 @@ class ProductReviewReportTest {
     val report = emptyReport.copy(
       platform = ProductPlatformReview(
         moduleSets = listOf(moduleSet, ProductModuleSetReference("another"), moduleSet),
-        modules = listOf(module, module.copy(namespace = "private", includeDependencies = true), module),
+        modules = listOf(module, module.copy(namespace = "private"), module),
         xmlIncludes = listOf(included, included),
         legacyProductModules = listOf("z", "a", "a"),
         legacyProductEmbeddedModules = listOf("z", "a", "a"),
@@ -73,7 +73,7 @@ class ProductReviewReportTest {
     val text = writeProductReviewReport(report)
     val restored = readProductReviewReport(text)
     assertThat(restored.platform.moduleSets).containsExactly(ProductModuleSetReference("another"), moduleSet)
-    assertThat(restored.platform.modules).containsExactly(module, module.copy(namespace = "private", includeDependencies = true))
+    assertThat(restored.platform.modules).containsExactly(module, module.copy(namespace = "private"))
     assertThat(restored.platform.xmlIncludes).containsExactly(included)
     assertThat(restored.platform.legacyProductModules).containsExactly("a", "z")
     assertThat(restored.platform.legacyProductEmbeddedModules).containsExactly("a", "z")

@@ -46,8 +46,6 @@ data class ProductContentBuildResult(
   @JvmField val contentBlocks: List<ContentBlock>,
   /** Mapping from module name to its module set chain as list (e.g., ["parent", "child"]) */
   @JvmField val moduleToSetChainMapping: Map<ContentModuleName, List<String>>,
-  /** Mapping from module name to includeDependencies flag */
-  @JvmField val moduleToIncludeDependenciesMapping: Map<ContentModuleName, Boolean>,
 )
 
 /**

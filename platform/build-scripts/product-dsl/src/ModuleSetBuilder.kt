@@ -9,7 +9,7 @@
  *
  * **Key types**:
  * - [ModuleSet] - Immutable representation of a module collection
- * - [ContentModule] - Module with optional loading mode and dependency flags
+ * - [ContentModule] - Module with optional loading mode
  * - [ModuleSetBuilder] - DSL builder for constructing module sets
  *
  * **DSL entry point**: [moduleSet] function creates a module set using builder syntax:
@@ -69,7 +69,6 @@ data class ContentModule(
   @JvmField val moduleId: PluginModuleId,
   @JvmField val loading: ModuleLoadingRuleValue = ModuleLoadingRuleValue.OPTIONAL,
   @JvmField val requiredIfAvailable: PluginModuleId? = null,
-  @JvmField val includeDependencies: Boolean = false,
   @Transient @JvmField val allowedMissingPluginIds: List<PluginId> = emptyList(),
 )
 
@@ -101,7 +100,7 @@ data class ModuleSet(
  * DSL builder for creating ModuleSets with reduced boilerplate.
  */
 @ProductDslMarker
-class ModuleSetBuilder(private val defaultIncludeDependencies: Boolean = false) {
+class ModuleSetBuilder {
   private val modules = ArrayList<ContentModule>()
   private val nestedSets = ArrayList<ModuleSet>()
 
@@ -123,7 +122,6 @@ class ModuleSetBuilder(private val defaultIncludeDependencies: Boolean = false) 
         moduleId = PluginModuleId(name, PluginModuleId.DEFAULT_NAMESPACE),
         loading = loading,
         requiredIfAvailable = requiredIfAvailable,
-        includeDependencies = defaultIncludeDependencies,
         allowedMissingPluginIds = allowedMissingPluginIds.map { PluginId(it) },
       )
     )
@@ -137,7 +135,6 @@ class ModuleSetBuilder(private val defaultIncludeDependencies: Boolean = false) 
       ContentModule(
         moduleId = PluginModuleId(name, PluginModuleId.DEFAULT_NAMESPACE),
         loading = ModuleLoadingRuleValue.EMBEDDED,
-        includeDependencies = defaultIncludeDependencies,
         allowedMissingPluginIds = allowedMissingPluginIds.map { PluginId(it) },
       )
     )
@@ -151,7 +148,6 @@ class ModuleSetBuilder(private val defaultIncludeDependencies: Boolean = false) 
       ContentModule(
         moduleId = PluginModuleId(name, PluginModuleId.DEFAULT_NAMESPACE),
         loading = ModuleLoadingRuleValue.REQUIRED,
-        includeDependencies = defaultIncludeDependencies,
         allowedMissingPluginIds = allowedMissingPluginIds.map { PluginId(it) },
       )
     )
@@ -199,12 +195,6 @@ class ModuleSetBuilder(private val defaultIncludeDependencies: Boolean = false) 
  * fun corePlatform() = moduleSet("core.platform", selfContained = true, outputModule = "intellij.platform.ide.core") {
  *   // Must include all dependencies - validated in isolation
  * }
- *
- * // With includeDependencies default for all embedded modules:
- * fun corePlatform() = moduleSet("core.platform", includeDependencies = true) {
- *   embeddedModule("intellij.platform.util.ex")  // inherits includeDependencies=true
- *   embeddedModule("intellij.platform.core")     // inherits includeDependencies=true
- * }
  * ```
  */
 inline fun moduleSet(
@@ -212,10 +202,9 @@ inline fun moduleSet(
   alias: String? = null,
   outputModule: String? = null,
   selfContained: Boolean = false,
-  includeDependencies: Boolean = false,
   block: ModuleSetBuilder.() -> Unit,
 ): ModuleSet {
-  val (modules, nestedSets) = ModuleSetBuilder(defaultIncludeDependencies = includeDependencies).apply(block).build()
+  val (modules, nestedSets) = ModuleSetBuilder().apply(block).build()
   return ModuleSet(
     name = name,
     modules = modules,

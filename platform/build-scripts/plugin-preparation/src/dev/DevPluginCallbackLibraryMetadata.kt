@@ -154,7 +154,7 @@ private fun librarySignature(configuration: DevPluginLibraryLayoutRecipeConfigur
   val layout = ArrayList<String>()
   layout.addAll(listOf(configuration.mainModule, configuration.directoryName, configuration.mainJarName, configuration.modules.size.toString()))
   for (module in configuration.modules) {
-    layout.addAll(listOf(module.name, module.relativeOutputFile, module.includeDependencies.toString(), module.moduleSet.toString()))
+    layout.addAll(listOf(module.name, module.relativeOutputFile, module.moduleSet.toString()))
   }
   layout.add(configuration.exclusions.size.toString())
   for (exclusion in configuration.exclusions) layout.addAll(listOf(exclusion.moduleName, exclusion.patterns.size.toString()) + exclusion.patterns)

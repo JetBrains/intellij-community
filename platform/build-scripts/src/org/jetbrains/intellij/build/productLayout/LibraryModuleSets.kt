@@ -158,9 +158,8 @@ object LibraryModuleSets {
    * OpenTelemetry API and SDK library wrappers.
    *
    * A nested set rather than plain members of `CoreModuleSets.telemetry()`, matching how
-   * `CoreModuleSets.telemetryImpl()` nests `librariesOpenTelemetryExporter()`: library wrappers must never pick up
-   * a set's `includeDependencies` default, since their own JPS deps are other wrappers and packing those would
-   * bundle them twice. `telemetry()` doesn't set the flag; `telemetryImpl()` still does.
+   * `CoreModuleSets.telemetryImpl()` nests `librariesOpenTelemetryExporter()`: the library wrappers of one family
+   * form a set of their own, so a reader reviews and bumps the family in one place.
    */
   fun librariesOpenTelemetry(): ModuleSet = moduleSet("libraries.opentelemetry") {
     embeddedModule("intellij.libraries.opentelemetry")
@@ -171,7 +170,7 @@ object LibraryModuleSets {
   /**
    * OpenTelemetry exporter library wrappers - the OTLP exporter plus the SPI and HTTP sender it loads at runtime.
    *
-   * Nested in `CoreModuleSets.telemetryImpl()` for the same `includeDependencies` reason as `librariesOpenTelemetry()`.
+   * Nested in `CoreModuleSets.telemetryImpl()` for the same reason as `librariesOpenTelemetry()`.
    */
   fun librariesOpenTelemetryExporter(): ModuleSet = moduleSet("libraries.opentelemetry.exporter") {
     embeddedModule("intellij.libraries.opentelemetry.exporter.otlp.common")

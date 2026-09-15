@@ -70,7 +70,7 @@ object CoreModuleSets {
    *
    * @see telemetry for the API and the OpenTelemetry API/SDK wrappers
    */
-  fun telemetryImpl(): ModuleSet = moduleSet("telemetry.impl", includeDependencies = true) {
+  fun telemetryImpl(): ModuleSet = moduleSet("telemetry.impl") {
     moduleSet(librariesOpenTelemetryExporter())
 
     embeddedModule("intellij.platform.diagnostic.telemetry.impl")
@@ -99,7 +99,7 @@ object CoreModuleSets {
    * @see coreLang for platform with IDE and language support
    * @see [CommunityModuleSets.essentialMinimal] for lightweight IDE with editing (most IDE products should use this)
    */
-  fun corePlatform(): ModuleSet = moduleSet("core.platform", selfContained = true, outputModule = "intellij.platform.ide.core", includeDependencies = true) {
+  fun corePlatform(): ModuleSet = moduleSet("core.platform", selfContained = true, outputModule = "intellij.platform.ide.core") {
     moduleSet(librariesPlatform())
     moduleSet(librariesDap())
     moduleSet(telemetry())
@@ -183,7 +183,7 @@ object CoreModuleSets {
    * @see corePlatform for platform without IDE functionality
    * @see coreLang for IDE with language support
    */
-  fun coreIde(): ModuleSet = moduleSet("core.ide", includeDependencies = true) {
+  fun coreIde(): ModuleSet = moduleSet("core.ide") {
     // Include core platform (util, core, projectModel, analysis, ide.core, kernel)
     moduleSet(corePlatform())
 
@@ -240,7 +240,7 @@ object CoreModuleSets {
    * @see corePlatform for base platform without IDE or language support
    * @see [CommunityModuleSets.essentialMinimal] for full minimal IDE (includes this + RPC + editor + search) - RECOMMENDED
    */
-  fun coreLang(): ModuleSet = moduleSet("core.lang", includeDependencies = true) {
+  fun coreLang(): ModuleSet = moduleSet("core.lang") {
     // Include core IDE (corePlatform + intellij.platform.ide)
     moduleSet(coreIde())
 
@@ -331,7 +331,7 @@ object CoreModuleSets {
 
   // region Fleet and RPC
 
-  fun fleet(): ModuleSet = moduleSet("fleet", includeDependencies = true) {
+  fun fleet(): ModuleSet = moduleSet("fleet") {
     // Same modules as fleet() - all are required
     embeddedModule("fleet.bifurcan")
     embeddedModule("fleet.fastutil")
@@ -366,7 +366,7 @@ object CoreModuleSets {
    * @see rpcBackend for full RPC functionality with backend/frontend split (includes kernel.backend)
    * @see fleet for the fleet module set definition
    */
-  fun rpcMinimal(): ModuleSet = moduleSet("rpc.minimal", outputModule = "intellij.platform.ide.core", includeDependencies = true) {
+  fun rpcMinimal(): ModuleSet = moduleSet("rpc.minimal", outputModule = "intellij.platform.ide.core") {
     // All fleet modules (13 total) including transitive content dependencies
     // All modules are content modules with XML descriptors, so splitting is not practical
     moduleSet(fleet())

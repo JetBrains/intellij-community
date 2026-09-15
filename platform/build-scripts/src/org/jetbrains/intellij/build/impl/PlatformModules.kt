@@ -2,8 +2,6 @@
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "RedundantSuppression", "ReplaceGetOrSet", "ReplacePutWithAssignment")
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.util.graph.DFSTBuilder
-import com.intellij.util.graph.OutboundSemiGraph
 import io.opentelemetry.api.trace.Span
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
@@ -23,7 +21,6 @@ import org.jetbrains.intellij.build.withRestarter
 import org.jetbrains.intellij.build.impl.PlatformJarNames.TEST_FRAMEWORK_JAR
 import org.jetbrains.intellij.build.productLayout.ProductModulesLayout
 import org.jetbrains.intellij.build.readDescriptor
-import org.jetbrains.jps.model.module.JpsModuleDependency
 
 private fun addModule(relativeJarPath: String, moduleNames: Sequence<String>, productLayout: ProductModulesLayout, layout: PlatformLayout) {
   layout.withModules(
@@ -225,26 +222,6 @@ private fun createPlatformLayout(
     markModuleForScrambling = markModuleForScrambling,
   ).toCollection(LinkedHashSet())
 
-  // compute and add dependencies for embedded modules with includeDependencies=true
-  val embeddedModulesWithDeps = productPluginContentModules.filter {
-    it.reason == ModuleIncludeReasons.PRODUCT_EMBEDDED_MODULES && it.includeDependencies
-  }
-  if (embeddedModulesWithDeps.isNotEmpty()) {
-    // Collect modules already in layout
-    val alreadyIncluded = layout.includedModules.mapTo(HashSet()) { it.moduleName }
-    productPluginContentModules.mapTo(alreadyIncluded) { it.moduleName }
-    alreadyIncluded.addAll(explicitModuleNames)
-
-    val embeddedDependencies = computeEmbeddedModuleDependencies(
-      alreadyIncluded = alreadyIncluded,
-      embeddedModules = embeddedModulesWithDeps,
-      productLayout = productLayout,
-      outputProvider = outputProvider,
-      runtimeDependencyResolver = runtimeDependencyResolver,
-    )
-    productPluginContentModules.addAll(embeddedDependencies)
-  }
-
   val implicit = computeImplicitRequiredModules(
     explicit = explicitModuleNames,
     layout = layout,
@@ -329,61 +306,6 @@ fun getEnabledPluginModules(pluginsToPublish: Set<PluginLayout>, context: BuildC
   result.addAll(context.getBundledPluginModules())
   pluginsToPublish.mapTo(result) { it.mainModule }
   return result
-}
-
-/**
- * Sorts embedded modules topologically so dependencies are processed before dependents.
- * This ensures that when computing transitive dependencies, modules don't incorrectly
- * include dependencies that should belong to their own dependencies.
- */
-private fun sortEmbeddedModulesTopologically(embeddedModules: Collection<ModuleItem>, outputProvider: ModuleOutputProvider): List<ModuleItem> {
-  val graph = EmbeddedModuleGraph(embeddedModules, outputProvider)
-  val builder = DFSTBuilder(graph)
-  builder.circularDependency?.let { (from, to) ->
-    throw IllegalStateException("Circular dependency detected: ${from.moduleName} -> ${to.moduleName}")
-  }
-  return builder.sortedNodes
-}
-
-private class EmbeddedModuleGraph(
-  private val modules: Collection<ModuleItem>,
-  private val outputProvider: ModuleOutputProvider,
-) : OutboundSemiGraph<ModuleItem> {
-  private val moduleByName = modules.associateBy { it.moduleName }
-
-  override fun getNodes(): Collection<ModuleItem> = modules
-
-  override fun getOut(node: ModuleItem): Iterator<ModuleItem> {
-    val jpsModule = outputProvider.findRequiredModule(node.moduleName)
-    return jpsModule.dependenciesList.dependencies
-      .asSequence()
-      .filterIsInstance<JpsModuleDependency>()
-      .mapNotNull { moduleByName.get(it.moduleReference.moduleName) }
-      .iterator()
-  }
-}
-
-/**
- * Computes transitive dependencies for embedded modules that have `includeDependencies=true`.
- * Dependencies are packaged into the same JAR as their parent embedded module.
- *
- * @param embeddedModules embedded modules with includeDependencies=true (already filtered)
- * @param productLayout product modules layout
- * @return set of module items representing dependencies to add
- */
-private fun computeEmbeddedModuleDependencies(
-  embeddedModules: Collection<ModuleItem>,
-  productLayout: ProductModulesLayout,
-  alreadyIncluded: HashSet<String>,
-  outputProvider: ModuleOutputProvider,
-  runtimeDependencyResolver: RuntimeDependencyResolver,
-): Set<ModuleItem> {
-  return computeEmbeddedModuleDependenciesInOrder(
-    embeddedModulesInProcessingOrder = sortEmbeddedModulesTopologically(embeddedModules, outputProvider).asReversed(),
-    excludedModuleNames = productLayout.excludedModuleNames,
-    alreadyIncluded = alreadyIncluded,
-    dependencyResolver = runtimeDependencyResolver,
-  )
 }
 
 private fun computeImplicitRequiredModules(
@@ -504,9 +426,5 @@ internal object ModuleIncludeReasons {
   const val PRODUCT_MODULES: String = "productModule"
   const val PRODUCT_EMBEDDED_MODULES: String = "productEmbeddedModule"
 
-  fun isProductModule(reason: String?): Boolean {
-    return reason == PRODUCT_MODULES ||
-           reason == PRODUCT_EMBEDDED_MODULES ||
-           reason?.startsWith("$PRODUCT_EMBEDDED_MODULES <- ") == true
-  }
+  fun isProductModule(reason: String?): Boolean = reason == PRODUCT_MODULES || reason == PRODUCT_EMBEDDED_MODULES
 }

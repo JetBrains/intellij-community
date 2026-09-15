@@ -223,56 +223,6 @@ private fun formatReason(issue: ContentModuleBackingIssue): String {
   }
 }
 
-/**
- * Reported when an embedded module with `includeDependencies=true` transitively pulls
- * a content module that is not explicitly declared by the product (or any of its module
- * sets / bundled plugins).
- *
- * Plugin-model content modules must be the only truth for product packaging. Silently
- * bundling a content module through JPS runtime closure makes the jar layout differ
- * across products and hides real dependencies. Ancient JPS-only (non-content) modules
- * are allowed to flow; content modules must be listed explicitly.
- */
-data class ImplicitEmbeddedContentModuleError(
-  override val context: String,
-  /** Map from transitively pulled content module → set of embedded-with-includeDependencies=true roots whose chain reached it */
-  @JvmField val missingModules: Map<ContentModuleName, Set<ContentModuleName>>,
-  /** Dep chain (target names) for each missing module, from the embedded root to the violating module */
-  @JvmField val chains: Map<ContentModuleName, List<String>> = emptyMap(),
-  override val ruleName: String = "ImplicitEmbeddedContentModuleValidation",
-) : ValidationError {
-  override val category: ErrorCategory get() = ErrorCategory.IMPLICIT_EMBEDDED_CONTENT_MODULE
-
-  override fun format(s: AnsiStyle): String = buildString {
-    appendLine("${s.red}${s.bold}Product '${context}' implicitly bundles content modules via embedded-module JPS runtime-dep closure${s.reset}")
-    appendLine()
-    appendLine("${s.yellow}Packaging packs transitive JPS runtime deps of each embedded module declared with includeDependencies=true into that embedded module's jar.${s.reset}")
-    appendLine("${s.yellow}For content modules (modules with a descriptor) reached via this closure, silent bundling is forbidden — the plugin model must be the only truth for packaging.${s.reset}")
-    appendLine()
-
-    for ((missingDep, rootModules) in missingModules.entries.sortedByDescending { it.value.size }) {
-      appendLine("  ${s.red}*${s.reset} Implicitly bundled: ${s.bold}${missingDep.value}${s.reset}")
-      appendLine("    Reached from embedded module(s) with includeDependencies=true:")
-      for (root in rootModules.sortedBy { it.value }) {
-        appendLine("      - ${root.value}")
-      }
-      val chain = chains.get(missingDep)
-      if (!chain.isNullOrEmpty()) {
-        appendLine("    Chain: ${chain.joinToString(separator = " -> ")}")
-      }
-    }
-
-    appendLine()
-    appendLine("${s.yellow}Fix:${s.reset}")
-    appendLine("1. Add each implicitly bundled content module explicitly to the product's content spec (module set or additionalModules).")
-    appendLine("2. Or, if the module truly should not ship with the product, break the JPS dependency chain that pulls it in.")
-    appendLine("3. As a temporary allowlist, add the module name to the product's allowedMissingDependencies.")
-    appendLine()
-    appendLine("${s.gray}[Rule: $ruleName]${s.reset}")
-    appendLine()
-  }
-}
-
 data class EmbeddedContentModuleSource(
   @JvmField val kind: String,
   @JvmField val name: String,

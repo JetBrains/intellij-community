@@ -40,10 +40,7 @@ class DevPluginLibraryLayoutRecipeRuntime : DevPluginLibraryLayoutRuntime {
     }
     (layout.includedModules as MutableCollection<ModuleItem>).clear()
     layout.withModules(configuration.modules.asSequence().map {
-      ModuleItem(
-        moduleName = it.name, relativeOutputFile = it.relativeOutputFile, reason = null, moduleSet = it.moduleSet,
-        includeDependencies = it.includeDependencies,
-      )
+      ModuleItem(moduleName = it.name, relativeOutputFile = it.relativeOutputFile, reason = null, moduleSet = it.moduleSet)
     })
     for (exclusion in configuration.exclusions) layout.excludeFromModule(exclusion.moduleName, exclusion.patterns)
     val callbacks = configuration.callbacks.associateBy { it.layoutIndex }

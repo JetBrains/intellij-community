@@ -65,8 +65,6 @@ enum class ErrorCategory {
   /** [MissingDependenciesError] - hard failure, not suppressible */
   MISSING_DEPENDENCY,
 
-  /** [ImplicitEmbeddedContentModuleError] - hard failure, not suppressible */
-  IMPLICIT_EMBEDDED_CONTENT_MODULE,
   /** [EmbeddedContentModuleDependencyError] - hard failure, not suppressible */
   EMBEDDED_CONTENT_MODULE_DEPENDENCY,
   /** [UnusedEmbeddedLibraryModuleError] - hard failure, not suppressible */
@@ -139,7 +137,6 @@ fun ValidationError.errorId(): String {
     is MissingPluginIdError -> "missing-plugin-id:${pluginName.value}"
     is DuplicateDslTestPluginIdError -> "dsl-test-plugin-id-dup:${pluginId.value}"
     is MissingContentModuleBackingError -> "content-module-backing:$context"
-    is ImplicitEmbeddedContentModuleError -> "implicit-embedded-content:$context"
     is EmbeddedContentModuleDependencyError -> "embedded-content-dependency:$context"
     is UnusedEmbeddedLibraryModuleError -> "unused-embedded-library:$context"
     is UnusedSharedLibraryModuleError -> "unused-shared-library:$context"

@@ -31,47 +31,19 @@ DevDistPlatformPayloadInfo = provider(
         pack it matches this against the destination its own plan states.""",
         "declared_modules": """depset of string: the payload modules whose inputs a fragment still declares.
 
-        The payload minus everything a packed jar already holds, plus the dependency closure of the seeds that survive
-        that subtraction. `intellij_dev_build_inputs` keeps an `owned_inputs` entry when any module that contributed it
-        is in here, which is what removes a handed-over module's jar, its libraries and its dependencies at once.""",
+        The payload minus everything a packed jar already holds. `intellij_dev_build_inputs` keeps an `owned_inputs`
+        entry when any module that contributed it is in here, which is what removes a handed-over module's jar and its
+        libraries at once.""",
     },
 )
 
 def _declared_modules(ctx, packed_members):
-    """The payload modules a fragment still declares, and the closure of the seeds among them.
+    """The payload modules a fragment still declares: the payload minus the members of the packed jars.
 
-    A faithful move of one loop from fetch time to analysis time. A repository rule used to prune the payload with a
-    checked-in table of packed module names before walking `modules_with_dependencies`, and the walk is the reason the
-    table could not simply be dropped: a handed-over module's *dependencies* are not declared either, because the module
-    itself is not, and by the time a payload has been flattened into labels nothing remembers which module asked for
-    which input. So the walk happens here, where the packing answer is a provider.
-
-    Measured 2026-08-22 for `idea`: 155 of the 156 seeds are packed - `intellij.platform.core` is the one that is not -
-    so declaring every seed's closure would take `platform_lib` from 83 declared inputs to 430.
+    A move of the pruning from fetch time to analysis time. A repository rule used to prune the payload with a
+    checked-in table of packed module names; the packing answer is a provider, so the pruning happens here.
     """
-    declared = {name: True for name in ctx.attr.modules_by_name if name not in packed_members}
-
-    frontier = [name for name in ctx.attr.seeds if name not in packed_members]
-    reached = {}
-    for _ in range(len(ctx.attr.module_deps) + 1):
-        if not frontier:
-            break
-        next_frontier = []
-        for name in frontier:
-            if name in reached:
-                continue
-            reached[name] = True
-            deps = ctx.attr.module_deps.get(name, "")
-            if deps:
-                next_frontier.extend(deps.split(" "))
-        frontier = next_frontier
-    if frontier:
-        fail("%s: the module dependency closure did not settle" % ctx.label)
-
-    for name in reached.keys():
-        if name not in packed_members:
-            declared[name] = True
-    return declared
+    return {name: True for name in ctx.attr.modules_by_name if name not in packed_members}
 
 def _dev_dist_platform_payload_impl(ctx):
     packed_jars = []
@@ -164,16 +136,6 @@ dev_dist_platform_payload = rule(
         "modules_by_name": attr.string_list(
             doc = "The same modules by JPS module name, which is the key `declared_modules` and `owned_inputs` share.",
             mandatory = True,
-        ),
-        # Names, not targets. Whether a jar is handed over is decided over `modules` alone - a module the payload reaches
-        # only through a dependency is not part of the platform this product assembles, and the fetch-time intersection
-        # did not hand its jar over either - so the closure is walked to find out what a surviving seed still needs, and
-        # for nothing else. `owned_inputs` already carries these modules' inputs keyed by the same names.
-        "seeds": attr.string_list(
-            doc = "The payload modules declared with their dependencies - `modules_with_dependencies` in the plan.",
-        ),
-        "module_deps": attr.string_dict(
-            doc = "Module name to its direct production module dependencies, space separated, over the closure above.",
         ),
     },
 )

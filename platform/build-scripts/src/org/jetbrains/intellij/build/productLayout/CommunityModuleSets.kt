@@ -70,7 +70,7 @@ object CommunityModuleSets {
    * @see CoreModuleSets.coreLang for just language support without editor/search/RPC
    * @see CoreModuleSets.corePlatform for analysis tools without editing
    */
-  fun essentialMinimal(): ModuleSet = moduleSet("essential.minimal", includeDependencies = true) {
+  fun essentialMinimal(): ModuleSet = moduleSet("essential.minimal") {
     // Lang includes corePlatform (which includes librariesPlatform) as nested set
     moduleSet(coreLang())
 
@@ -120,7 +120,7 @@ object CommunityModuleSets {
    * The debugger platform is not part of this set. [ideCommon] nests [debugger],
    * and a lean product that needs the debugger adds [debugger] itself.
    */
-  fun essential(): ModuleSet = moduleSet("essential", includeDependencies = true) {
+  fun essential(): ModuleSet = moduleSet("essential") {
     // Include minimal essential modules (core backend/frontend, editor, search)
     moduleSet(essentialMinimal())
 
@@ -170,7 +170,7 @@ object CommunityModuleSets {
    * [ideCommon] nests this set. A lean product that needs the debugger adds this set itself.
    * Gateway does not need it.
    */
-  fun debugger(): ModuleSet = moduleSet("debugger", includeDependencies = true) {
+  fun debugger(): ModuleSet = moduleSet("debugger") {
     module("intellij.platform.debugger.impl.frontend")
     module("intellij.platform.debugger.impl.backend")
     module("intellij.platform.debugger.impl.shared")

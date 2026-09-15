@@ -81,7 +81,7 @@ object DevPluginCallbackRecipeFixture {
     val layout = PluginLayout.plugin(MAIN) { it.mainJarName = "module.jar" }
     (layout.includedModules as MutableCollection<ModuleItem>).clear()
     layout.withModules(sequenceOf(
-      ModuleItem(OTHER, "merged.jar", "ordered archive roots", listOf("first", "second"), true),
+      ModuleItem(OTHER, "merged.jar", "ordered archive roots", listOf("first", "second")),
       ModuleItem(MAIN, "module.jar", null),
       ModuleItem(OTHER, "sibling/other.jar", "repeated module contribution"),
     ))
