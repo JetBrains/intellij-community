@@ -11,13 +11,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
 import com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
 import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
-import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
@@ -28,7 +26,6 @@ import org.gradle.tooling.CancellationToken;
 import org.gradle.tooling.CancellationTokenSource;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
-import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -303,38 +300,13 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
     return false;
   }
 
-  /**
-   * @deprecated Use {@link ExternalSystemUtil#runTask} instead
-   */
-  @Deprecated(forRemoval = true)
-  public static void appendInitScriptArgument(
-    @NotNull List<String> taskNames,
-    @Nullable String jvmParametersSetup,
-    @NotNull GradleExecutionSettings settings
-  ) {
-    var id = ExternalSystemTaskId.create(GradleConstants.SYSTEM_ID, ExternalSystemTaskType.EXECUTE_TASK, "");
-    settings.setTasks(taskNames);
-    settings.setJvmParameters(jvmParametersSetup);
-    configureTasks("", id, settings, null);
-  }
-
   @ApiStatus.Internal
   public static void configureTasks(
     @NotNull GradleExecutionSettings settings,
     @NotNull GradleTaskExecutionContext context
   ) {
-    configureTasks(context.getProjectPath(), context.getTaskId(), settings, context.getExecutionContext().getGradleVersion());
-  }
-
-  @ApiStatus.Internal
-  public static void configureTasks(
-    @NotNull String projectPath,
-    @NotNull ExternalSystemTaskId id,
-    @NotNull GradleExecutionSettings settings,
-    @Nullable GradleVersion gradleVersion
-  ) {
     GradleTaskManagerExtension.EP_NAME.forEachExtensionSafe(it -> {
-      it.configureTasks(projectPath, id, settings, gradleVersion);
+      it.configureTasks(context.getProjectPath(), context.getTaskId(), settings, context.getExecutionContext().getGradleVersion());
     });
 
     final String initScript = settings.getUserData(INIT_SCRIPT_KEY);
@@ -344,8 +316,8 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
     }
 
     final Collection<VersionSpecificInitScript> scripts = settings.getUserData(VERSION_SPECIFIC_SCRIPTS_KEY);
-    if (gradleVersion != null && scripts != null) {
-      settings.addInitScript(gradleVersion, scripts);
+    if (scripts != null) {
+      settings.addInitScript(context.getExecutionContext().getGradleVersion(), scripts);
     }
 
     if (settings.getArguments().contains(GradleConstants.INIT_SCRIPT_CMD_OPTION)) {
