@@ -323,7 +323,7 @@ public final class PyPsiRefactoringUtil {
     generator.createFromText(LanguageLevel.PYTHON34, PyClass.class, "class foo(object, metaclass=Foo): pass").getSuperClassExpressionList();
     if (paramExpressions != null) {
       for (final String paramExpression : paramExpressions) {
-        superClassExpressionList.addArgument(generator.createParameter(paramExpression));
+        superClassExpressionList.addArgument(generator.createExpressionFromText(languageLevel, paramExpression));
       }
     }
 
@@ -397,17 +397,66 @@ public final class PyPsiRefactoringUtil {
                                      final @NotNull PyClass clazz,
                                      final PyClass @NotNull ... superClasses) {
 
-    final Collection<String> superClassNames = new ArrayList<>();
-
+    final Collection<String> superClassExpressions = new ArrayList<>();
+    final PsiFile file = clazz.getContainingFile();
+    final PyFile pyFile = file instanceof PyFile ? (PyFile)file : null;
 
     for (final PyClass superClass : Collections2.filter(Arrays.asList(superClasses), NotNullPredicate.INSTANCE)) {
-      if (superClass.getName() != null) {
-        superClassNames.add(superClass.getName());
+      final String superName = superClass.getName();
+      if (superName == null) continue;
+
+      String expressionToAdd = superName; // default: bare name, may require import
+      boolean needImport = true;
+
+      // Try to respect existing imports in the target file
+      if (pyFile != null) {
+        final QualifiedName qname = QualifiedNameFinder.findCanonicalImportPath(superClass, clazz);
+        if (qname != null && isValidQualifiedName(qname)) {
+          final String importedName = getOriginalName(superClass);
+          final QualifiedName containingQName = qname; // module containing the class
+
+          // 1) from <module> import <importedName> [as alias]
+          for (PyFromImportStatement from : pyFile.getFromImports()) {
+            final QualifiedName src = from.getImportSourceQName();
+            if (src != null && src.equals(containingQName)) {
+              for (PyImportElement elt : from.getImportElements()) {
+                final QualifiedName eltQn = elt.getImportedQName();
+                final String asName = elt.getAsName();
+                if (eltQn != null && importedName != null && importedName.equals(eltQn.getLastComponent())) {
+                  expressionToAdd = asName != null ? asName : importedName;
+                  needImport = false; // name already available
+                  break;
+                }
+              }
+              if (!needImport) break;
+            }
+          }
+
+          // 2) import <module> [as alias]
+          if (needImport) {
+            for (PyImportElement imp : pyFile.getImportTargets()) {
+              final QualifiedName impQn = imp.getImportedQName();
+              if (impQn != null && (impQn.equals(containingQName) || impQn.equals(containingQName.append(importedName)))) {
+                final String alias = imp.getAsName();
+                final String moduleRef = alias != null ? alias : impQn.getLastComponent();
+                if (moduleRef != null) {
+                  expressionToAdd = moduleRef + "." + importedName;
+                  needImport = false; // can use qualified reference
+                  break;
+                }
+              }
+            }
+          }
+        }
+      }
+
+      superClassExpressions.add(expressionToAdd);
+      if (needImport) {
         insertImport(clazz, superClass);
       }
     }
 
-    addSuperClassExpressions(project, clazz, superClassNames, null);
+    addSuperClassExpressions(project, clazz, superClassExpressions, null);
   }
 
   public static boolean shouldCopyAnnotations(@NotNull PsiElement copiedElement, @NotNull PsiFile destFile) {
