@@ -10,13 +10,12 @@ import java.net.InetAddress
  *                       **NB: there's a possibility to use bare TCP to connect to the remote host. If it's not needed it could be omitted just to the port**
  * @param deployingInfo The host:port pair or just host that is used to launch the IJent process. The host is the listening address. If the port is not specified,
  *                       a random port will be chosen.
- * @param tlsCertificates The certificates that protect the socket with mutual TLS. There's no default value: every deployment must state
- *                        explicitly whether the socket is authenticated or is left plaintext and available to everyone on the target machine.
+ * @param tlsCertificates The certificates that protect the socket with mutual TLS. A TCP socket of IJent is never plaintext.
  */
 data class TcpIjentDeploymentAndConnectionSpec(
   val connectionInfo: TcpDeployInfo.FixedPort,
   val deployingInfo: TcpDeployInfo,
-  val tlsCertificates: MutualTlsCertificates?,
+  val tlsCertificates: MutualTlsCertificates,
 )
 
 sealed interface TcpDeployInfo {

@@ -110,8 +110,7 @@ abstract class IjentDeployingOverShellProcessStrategy(
     data object Default : ExecutionStrategy
 
     /**
-     * [tlsCertificates] intentionally has no default value: every deployer must state explicitly whether the TCP socket
-     * of IJent is protected with mutual TLS or is left plaintext and unauthenticated.
+     * [tlsCertificates] protect the TCP socket of IJent with mutual TLS. A plaintext TCP socket is not an option.
      *
      * [noShutdownOnDisconnect] makes IJent outlive the death of its gRPC peer; in exchange, an explicit close asks it
      * to terminate in-band (the flag is mirrored into [IjentConnectionContext.noShutdownOnDisconnect]). Only a deployer
@@ -120,7 +119,7 @@ abstract class IjentDeployingOverShellProcessStrategy(
      */
     data class Tcp(
       val deployInfo: TcpDeployInfo,
-      val tlsCertificates: MutualTlsCertificates?,
+      val tlsCertificates: MutualTlsCertificates,
       val noShutdownOnDisconnect: Boolean = false,
     ) : ExecutionStrategy
   }
@@ -536,7 +535,7 @@ private sealed interface IjentLaunchOptions {
 
   data class Tcp(
     val deployInfo: TcpDeployInfo,
-    val tlsCertificates: MutualTlsCertificates?,
+    val tlsCertificates: MutualTlsCertificates,
     val noShutdownOnDisconnect: Boolean,
   ) : IjentLaunchOptions
 }
@@ -558,7 +557,7 @@ private fun IjentLaunchOptions.command(remoteBinaryPath: String): IjentLaunchCom
         selfDeleteOnExit = true,
         noShutdownOnDisconnect = noShutdownOnDisconnect,
         deployInfo = deployInfo,
-        useTLS = tlsCertificates != null,
+        useTLS = true,
       ),
       tlsCertificates = tlsCertificates,
     )
