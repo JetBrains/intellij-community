@@ -487,7 +487,9 @@ abstract class TreeBasedProjectViewPaneModel<T : Any>(override val project: Proj
                   applySortKeyChange(request.sortKey)
                 }
                 is SelectNodeRequest -> {
-                  builder.selectNode(request.nodePath)
+                  builder.selectNode(request.nodePath) { options -> 
+                    options.requestFocus = request.requestFocus
+                  }
                 }
               }
               appliedUpdateEpoch.value = request.epoch
@@ -619,14 +621,14 @@ abstract class TreeBasedProjectViewPaneModel<T : Any>(override val project: Proj
       // Make sure everything submitted before the selection request is reflected in the tree,
       // so that a just-created element can be found (the equivalent of the old myNodeUpdater.updateImmediately).
       awaitPendingUpdates()
-      val target = readAction {
+      val (target, requestFocus) = readAction {
         val element = elementPointer.dereference() ?: return@readAction null
         val file = if (element.isValid) PsiUtilCore.getVirtualFile(element) else null
-        SelectTarget(elementPointer, file)
+        Pair(SelectTarget(elementPointer, file), element is PsiDirectory)
       } ?: return
       val nodePath = findNodePathForTarget(target) ?: return
       // Route the actual state-flow emission through the single update-requests writer (see run()).
-      schedule { SelectNodeRequest(it, nodePath) }
+      schedule { SelectNodeRequest(it, nodePath, requestFocus) }
     }
 
     suspend fun findNodeForSelectIn(request: SelectInRequest): ProjectViewNodePath? {
@@ -1112,7 +1114,7 @@ private data class ProcessPendingUpdatesRequest(override val epoch: Long) : Stat
 private data class UpdateSettingsRequest(override val epoch: Long) : StateUpdateRequest()
 private data class SetOptionRequest(override val epoch: Long, val option: ProjectViewPaneOption, val newValue: Boolean) : StateUpdateRequest()
 private data class SetSortKeyRequest(override val epoch: Long, val sortKey: ProjectViewPaneSortKey) : StateUpdateRequest()
-private data class SelectNodeRequest(override val epoch: Long, val nodePath: ProjectViewNodePath) : StateUpdateRequest()
+private data class SelectNodeRequest(override val epoch: Long, val nodePath: ProjectViewNodePath, val requestFocus: Boolean) : StateUpdateRequest()
 private data class UpdateNodeModelRequest<T>(override val epoch: Long, val id: Long, val model: BackendProjectViewNodeModel<T>) : StateUpdateRequest()
 
 private val LOG = logger<TreeBasedProjectViewPaneModel<*>>()

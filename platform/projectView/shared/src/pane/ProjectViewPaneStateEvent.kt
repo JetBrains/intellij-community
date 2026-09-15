@@ -93,6 +93,7 @@ data class ProjectViewChildRemoved(
 @Serializable
 data class ProjectViewSelectNodeEvent(
   val nodePath: ProjectViewNodePathImpl,
+  val requestFocus: Boolean,
 ) : ProjectViewPaneStateSerializableEvent()
 
 @ApiStatus.Internal

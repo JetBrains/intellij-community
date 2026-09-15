@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.projectView.actions.ProjectViewActionSupport
 import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPane
 import com.intellij.platform.projectView.frontend.pane.id
@@ -84,7 +85,7 @@ import kotlin.time.TimeSource
  */
 @Suppress("ConvertToExplicitBackingFields") // no, thank you, I don't want to write `componentToFocus` everywhere
 internal class TreeBasedFrontendProjectViewPane(
-  project: Project,
+  private val project: Project,
   descriptor: ProjectViewPaneDescriptorImpl,
 ) : FrontendProjectViewPane, UiDataProvider {
   private val paneTreeModel = FrontendProjectViewPaneTreeModel(project, descriptor)
@@ -212,8 +213,11 @@ internal class TreeBasedFrontendProjectViewPane(
           }
       }
       launch(CoroutineName("select node requests") + Dispatchers.UI) {
-        paneTreeModel.selectionRequests.consumeAsFlow().collectLatest { nodePath ->
-          selectNode(nodePath)
+        paneTreeModel.selectionRequests.consumeAsFlow().collectLatest { request ->
+          selectNode(request.nodePath)
+          if (request.requestFocus) {
+            IdeFocusManager.getGlobalInstance().requestFocusInProject(tree, project)
+          }
         }
       }
       if (Registry.`is`("error.stripe.enabled", defaultValue = true)) {

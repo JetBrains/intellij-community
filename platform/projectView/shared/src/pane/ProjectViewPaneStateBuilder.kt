@@ -15,7 +15,7 @@ sealed interface ProjectViewPaneStateBuilder {
   suspend fun removeNodeChildren(parentId: Long)
   suspend fun removeNodeChild(parentId: Long, index: Int)
   suspend fun moveNodeChild(parentId: Long, childModel: ProjectViewNodeModel, newIndex: Int)
-  suspend fun selectNode(nodePath: ProjectViewNodePath)
+  suspend fun selectNode(nodePath: ProjectViewNodePath, options: ((SelectInProjectViewRequestBuilder) -> Unit)? = null)
   suspend fun updateSettingsState(build: (ProjectViewPaneSettingsStateBuilder) -> Unit)
   suspend fun clear()
   fun <T> asBackendStateAccessor(): BackendProjectViewPaneStateAccessor<T>
