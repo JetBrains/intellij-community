@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.gradle.statistics.v2.flow
 
 import com.intellij.openapi.application.PathManager
+import org.jetbrains.kotlin.idea.gradle.statistics.GradleStatisticsEventGroups
 import org.junit.Test
 import java.io.File
 import java.security.MessageDigest
@@ -13,6 +14,15 @@ class KotlinBuildToolsFusEvenListTest {
     fun checkUniqueEventName() {
         val duplicates = kotlinBuildToolsFusEvenList.groupBy { it.eventName }.filter { it.value.size > 1 }.keys
         assert(duplicates.isEmpty()) { "Found duplicate event names: $duplicates" }
+    }
+
+    @Test
+    fun checkEveryEventGroupHasSendingStep() {
+        val declaredEventNames = kotlinBuildToolsFusEvenList.map { it.eventName }
+        val missing = GradleStatisticsEventGroups.entries.filter { it !in declaredEventNames }
+        assert(missing.isEmpty()) {
+            "No event is register for for the event groups: $missing. Please add corresponding FusFlowSendingStep to `kotlinBuildToolsFusEvenList`"
+        }
     }
 
     private val GROUP_EXPECTED_VERSION_AND_HASH = Pair(19, "81aec677123a3862ff19b1840ae3bafb")
