@@ -60,7 +60,7 @@ import javax.swing.ListCellRenderer
 /**
  * Announces an available IDE update in the main toolbar instead of the [com.intellij.ide.actions.SettingsEntryPointAction] menu.
  *
- * Shown only for updates from the release channel and only while [IdeUpdateWidgetState.isWidgetShown] holds,
+ * Shown only for updates from the release channel and only while [IdeUpdateWidgetState.isUpdateAvailable] holds,
  * see [UpdateSettingsEntryPointActionProvider].
  */
 internal class IdeUpdateToolbarWidget :
@@ -73,7 +73,7 @@ internal class IdeUpdateToolbarWidget :
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isVisible = e.place == ActionPlaces.MAIN_TOOLBAR && IdeUpdateWidgetState.isWidgetShown()
+    e.presentation.isVisible = e.place == ActionPlaces.MAIN_TOOLBAR && IdeUpdateWidgetState.isUpdateAvailable()
     e.presentation.isEnabled = IdeUpdateWidgetState.getInstance().isClickable()
   }
 

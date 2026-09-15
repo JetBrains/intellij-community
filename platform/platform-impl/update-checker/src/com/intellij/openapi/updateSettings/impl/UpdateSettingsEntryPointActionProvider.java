@@ -68,7 +68,8 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
   }
 
   private static void preparePrevPlatformUpdate() {
-    if (!UpdateSettings.getInstance().isCheckNeeded()) {
+    // An external update manager owns the updates, so the IDE announces none, see UpdateChecker.getPlatformUpdates
+    if (!UpdateSettings.getInstance().isCheckNeeded() || ExternalUpdateManager.ACTUAL != null) {
       return;
     }
 
@@ -132,6 +133,17 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
     setPlatformUpdateInfo(null);
     setWidgetStatus(false);
     newPlatformUpdate(null, null, (String)null, null);
+    updateState();
+  }
+
+  /**
+   * Forgets an announced platform update, because a completed check has not found it again.
+   * The plugin updates stay: the same check reports them on its own.
+   */
+  static void clearPlatformUpdateInfo() {
+    setPlatformUpdateInfo(null);
+    setWidgetStatus(false);
+    myNextRunPlatformUpdateVersion = null;
     updateState();
   }
 
@@ -261,7 +273,7 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
     PlatformUpdateDialog dialog = new PlatformUpdateDialog(project, platformUpdateInfo, true,
                                                           myLocalUpdatesForPlugins, myIncompatiblePluginNames);
     // The toolbar button keeps announcing the update after it has been started, so the info has to be kept as well
-    if (dialog.showAndGet() && !IdeUpdateWidgetState.isWidgetShown()) {
+    if (dialog.showAndGet() && !IdeUpdateWidgetState.isUpdateAvailable()) {
       clearUpdatesInfo();
     }
   }
@@ -320,7 +332,7 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
     Collection<UpdateAction> actions = new ArrayList<>();
 
     // when the update is announced by IdeUpdateToolbarWidget, only plugin updates are left for the Settings menu
-    boolean ideUpdateInToolbar = IdeUpdateWidgetState.isWidgetShown();
+    boolean ideUpdateInToolbar = IdeUpdateWidgetState.isUpdateAvailable();
 
     if (!ideUpdateInToolbar && myNextRunPlatformUpdateVersion != null) {
       actions.add(new IdeUpdateAction(myNextRunPlatformUpdateVersion) {

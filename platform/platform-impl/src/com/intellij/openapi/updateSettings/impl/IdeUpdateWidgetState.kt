@@ -5,7 +5,9 @@ import com.intellij.ide.ActivityTracker
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -42,6 +44,9 @@ class IdeUpdateWidgetState {
   }
 
   companion object {
+
+    private val LOG = logger<IdeUpdateWidgetState>()
+
     @JvmStatic
     fun getInstance(): IdeUpdateWidgetState = service()
 
@@ -49,10 +54,16 @@ class IdeUpdateWidgetState {
     fun isEnabled(): Boolean = Registry.`is`("ide.update.toolbar.widget", false)
 
     /**
-     * When shown, the toolbar button replaces the update item in the [com.intellij.ide.actions.SettingsEntryPointAction] menu.
+     * When the toolbar button owns the update, it replaces the item in the [com.intellij.ide.actions.SettingsEntryPointAction] menu.
      */
     @JvmStatic
-    fun isWidgetShown(): Boolean = isEnabled() && getInstance().status.value != Status.NONE
+    fun isUpdateAvailable(): Boolean = isEnabled() && getInstance().status.value != Status.NONE
+
+    /**
+     * Whether the user sees the button.
+     */
+    @JvmStatic
+    fun isWidgetShown(): Boolean = isUpdateAvailable() && WelcomeFrame.getInstance() == null
 
     /**
      * Whether an update must not be announced, because the user has asked to be reminded later.
@@ -85,17 +96,27 @@ class IdeUpdateWidgetState {
     }
 
     val current = mutableStatus.value
+    if (current == value) {
+      return
+    }
+
     // [Status.RESTART] is a final status
-    if (current == value || current == Status.RESTART) {
+    if (current == Status.RESTART) {
+      LOG.info("Status $value is declined, $current is final")
+
       return
     }
 
     if (mutableStatus.compareAndSet(current, value)) {
+      LOG.info("Status changed: $current -> $value")
+
       updateWidget()
     }
   }
 
   fun remindMeLater() {
+    LOG.info("remindMeLater")
+
     PropertiesComponent.getInstance().setValue(REMIND_LATER_TIME, System.currentTimeMillis().toString())
   }
 
@@ -107,6 +128,8 @@ class IdeUpdateWidgetState {
    */
   fun onDownloadFinished() {
     if (isEnabled() && mutableStatus.compareAndSet(Status.DOWNLOADING, Status.AVAILABLE)) {
+      LOG.info("onDownloadFinished")
+
       updateWidget()
     }
   }
@@ -115,6 +138,8 @@ class IdeUpdateWidgetState {
    * The [command] is `null` when restart is not available
    */
   fun onRestartReady(command: Array<String>?) {
+    LOG.info("onRestartReady, restart capable: ${command != null}")
+
     restartCommand = command
     updateStatus(Status.RESTART)
   }
