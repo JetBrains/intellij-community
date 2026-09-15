@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.rename
 
@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.refactoring.listeners.RefactoringElementListener
+import com.intellij.refactoring.rename.DelegatingHeadlessRenamePsiElementProcessor
 import com.intellij.refactoring.rename.RenamePsiFileProcessor
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
@@ -19,7 +20,13 @@ import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.load.kotlin.PackagePartClassUtils
 import org.jetbrains.kotlin.psi.KtFile
 
-class RenameKotlinFileProcessor : RenamePsiFileProcessor() {
+/**
+ * Renames a Kotlin file, and also the facade class of that file.
+ *
+ * It asks the user nothing, so it states the headless rename itself. The base class cannot state it:
+ * it has subclasses in several products, and a subclass must not inherit the statement.
+ */
+class RenameKotlinFileProcessor : RenamePsiFileProcessor(), DelegatingHeadlessRenamePsiElementProcessor {
     class FileRenamingPsiClassWrapper(
         private val psiClass: KtLightClassForFacade,
         private val file: KtFile

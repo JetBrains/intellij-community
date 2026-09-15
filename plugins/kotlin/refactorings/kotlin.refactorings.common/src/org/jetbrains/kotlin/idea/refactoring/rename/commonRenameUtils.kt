@@ -3,6 +3,8 @@ package org.jetbrains.kotlin.idea.refactoring.rename
 
 import com.intellij.CommonBundle
 import com.intellij.ide.IdeBundle
+import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -25,6 +27,7 @@ import com.intellij.refactoring.util.MoveRenameUsageInfo
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewTypeLocation
+import com.intellij.util.ui.EDT
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.asJava.unwrapped
@@ -70,6 +73,39 @@ inline fun <T> runProcessWithProgressSynchronously(
     canBeCancelled,
     project
 )
+
+/**
+ * Runs [action], and shows a modal progress only where one is of use.
+ *
+ * A rename with a user starts on EDT. The progress there keeps the interface alive while the search
+ * runs on another thread. A rename with no user starts on a background thread. A modal progress
+ * there stops the interface of a person who asked for nothing, and it needs the write thread to
+ * enter the modality. So this runs [action] on the calling thread, in a read action.
+ *
+ * A language server counts its own event thread as EDT, so it keeps the progress and the behavior it
+ * has today.
+ */
+internal fun <T> runProcessWithProgressIfOnEdt(
+    @NlsContexts.DialogMessage progressTitle: String,
+    project: Project,
+    action: () -> T,
+): T =
+    if (EDT.isCurrentThreadEdt()) runProcessWithProgressSynchronously(progressTitle, canBeCancelled = true, project, action)
+    else runReadActionBlocking(action)
+
+/**
+ * Runs [computable] in a read action, and shows a modal progress only where one is of use.
+ *
+ * It answers for [ActionUtil.underModalProgress] what [runProcessWithProgressIfOnEdt] answers for
+ * [runProcessWithProgressSynchronously].
+ */
+internal fun <T> underModalProgressIfOnEdt(
+    project: Project,
+    @NlsContexts.ProgressTitle progressTitle: String,
+    computable: () -> T,
+): T =
+    if (EDT.isCurrentThreadEdt()) ActionUtil.underModalProgress(project, progressTitle) { computable() }
+    else runReadActionBlocking(computable)
 
 fun checkConflictsAndReplaceUsageInfos(
     element: PsiElement,
@@ -183,14 +219,22 @@ fun checkSuperMethodsWithPopup(
         .showInBestPositionFor(editor)
 }
 
+/**
+ * The declarations to rename when [declaration] overrides something.
+ *
+ * @param askUser false answers the question with the base declarations. A caller with no user, such
+ *                as an MCP tool or a language server, passes false.
+ *                See `HeadlessRenamePsiElementProcessor`.
+ */
 fun checkSuperMethods(
     declaration: KtNamedDeclaration,
-    deepestSuperMethods: List<PsiElement>
+    deepestSuperMethods: List<PsiElement>,
+    askUser: Boolean = true,
 ): List<PsiElement> {
     if (deepestSuperMethods.isEmpty()) return listOf(declaration)
 
     val title = getRenameBaseTitle(declaration, deepestSuperMethods) ?: return listOf(declaration)
-    if (isUnitTestMode()) return deepestSuperMethods
+    if (isUnitTestMode() || !askUser) return deepestSuperMethods
 
     val exitCode = showYesNoCancelDialog(
         declaration.project, title, IdeBundle.message("title.warning"),

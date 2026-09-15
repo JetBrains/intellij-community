@@ -1,15 +1,16 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.rename
 
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.listeners.RefactoringElementListener
+import com.intellij.refactoring.rename.DelegatingHeadlessRenamePsiElementProcessor
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.SmartList
 import org.jetbrains.kotlin.idea.refactoring.conflicts.checkRedeclarationConflicts
 import org.jetbrains.kotlin.psi.KtTypeParameter
 
-class RenameKotlinTypeParameterProcessor : RenameKotlinPsiProcessor() {
+class RenameKotlinTypeParameterProcessor : RenameKotlinPsiProcessor(), DelegatingHeadlessRenamePsiElementProcessor {
   override fun canProcessElement(element: PsiElement) = element is KtTypeParameter
 
   override fun findCollisions(

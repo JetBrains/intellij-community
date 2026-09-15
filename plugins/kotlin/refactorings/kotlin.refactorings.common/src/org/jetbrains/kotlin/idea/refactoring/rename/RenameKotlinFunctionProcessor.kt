@@ -1,8 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.rename
 
-import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -13,6 +12,7 @@ import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.SearchScope
 import com.intellij.refactoring.listeners.RefactoringElementListener
+import com.intellij.refactoring.rename.DelegatingHeadlessRenamePsiElementProcessor
 import com.intellij.refactoring.rename.PsiElementRenameHandler
 import com.intellij.refactoring.rename.RenameDialog
 import com.intellij.refactoring.rename.RenameJavaMethodProcessor
@@ -36,7 +36,7 @@ import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 
-open class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
+open class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor(), DelegatingHeadlessRenamePsiElementProcessor {
 
     private val javaMethodProcessorInstance = RenameJavaMethodProcessor()
 
@@ -95,31 +95,48 @@ open class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
 
     private fun substituteForExpectOrActual(element: PsiElement?) =
         (element?.namedUnwrappedElement as? KtNamedDeclaration)?.let { el ->
-            ActionUtil.underModalProgress(el.project, KotlinBundle.message("progress.title.searching.for.expected.actual")) { ExpectActualUtils.liftToExpect(el) }
+            underModalProgressIfOnEdt(el.project, KotlinBundle.message("progress.title.searching.for.expected.actual")) { ExpectActualUtils.liftToExpect(el) }
         }
 
-    override fun substituteElementToRename(element: PsiElement, editor: Editor?): PsiElement? {
+    override fun substituteElementToRename(element: PsiElement, editor: Editor?): PsiElement? =
+        substituteElementToRename(element, editor, askUser = true)
+
+    /**
+     * The base declarations, when [element] overrides something.
+     *
+     * Kotlin asks the user here whether to rename the base declaration. This answers that question
+     * with yes, so that the code stays consistent.
+     */
+    override fun substituteElementToRenameHeadless(element: PsiElement): PsiElement? =
+        substituteElementToRename(element, null, askUser = false)
+
+    /**
+     * The element to rename instead of [element].
+     *
+     * @param askUser false answers the base-declaration question with the base declarations, and
+     *                reports an error through the return value instead of a hint.
+     *                [substituteElementToRenameHeadless] passes false.
+     */
+    private fun substituteElementToRename(element: PsiElement, editor: Editor?, askUser: Boolean): PsiElement? {
         substituteForExpectOrActual(element)?.let { return it }
 
-        val deepestSuperMethods =
-            runProcessWithProgressSynchronously(
-                KotlinBundle.message("rename.searching.for.super.declaration"),
-                canBeCancelled = true,
-                element.project
-            ) {
-                runReadAction {
-                    KotlinSearchUsagesSupport.SearchUtils.findDeepestSuperMethodsNoWrapping(element)
-                }
+        val deepestSuperMethods = runProcessWithProgressIfOnEdt(
+            KotlinBundle.message("rename.searching.for.super.declaration"),
+            element.project,
+        ) {
+            runReadAction {
+                KotlinSearchUsagesSupport.SearchUtils.findDeepestSuperMethodsNoWrapping(element)
             }
+        }
 
         val substitutedJavaElement = when {
             deepestSuperMethods.isEmpty() -> return element
             element is PsiMethod -> {
-                javaMethodProcessorInstance.substituteElementToRename(element, editor)
+                javaMethodProcessorInstance.substituteElementToRename(element, editor, askUser)
             }
             else -> {
                 val declaration = element.unwrapped as? KtNamedFunction ?: return element
-                val chosenElements = selectSuperMethods(declaration, deepestSuperMethods)
+                val chosenElements = selectSuperMethods(declaration, deepestSuperMethods, askUser)
                 if (chosenElements.size > 1) FunctionWithSupersWrapper(declaration, chosenElements) else chosenElements.firstOrNull() ?: element
             }
         }
@@ -128,15 +145,25 @@ open class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
             return substitutedJavaElement.kotlinOrigin as? KtNamedFunction
         }
 
-        return if (substitutedJavaElement != null && canRename(element.project, editor, substitutedJavaElement)) substitutedJavaElement else element
+        if (substitutedJavaElement == null) return element
+        // canRename shows an error hint. A caller with no user reports the message itself.
+        val renamable = if (askUser) canRename(element.project, editor, substitutedJavaElement)
+        else PsiElementRenameHandler.getRenameErrorMessage(element.project, null, substitutedJavaElement) == null
+        return if (renamable) substitutedJavaElement else element
     }
 
     /**
      * Selects super methods that should be renamed.
      * It is expected that [deepestSuperMethods] is not empty.
+     *
+     * @param askUser false answers the question with [deepestSuperMethods].
      */
-    protected open fun selectSuperMethods(declaration: KtNamedFunction, deepestSuperMethods: List<PsiElement>): List<PsiElement> {
-        return checkSuperMethods(declaration, deepestSuperMethods)
+    protected open fun selectSuperMethods(
+        declaration: KtNamedFunction,
+        deepestSuperMethods: List<PsiElement>,
+        askUser: Boolean = true,
+    ): List<PsiElement> {
+        return checkSuperMethods(declaration, deepestSuperMethods, askUser)
     }
 
     protected open fun canRename(

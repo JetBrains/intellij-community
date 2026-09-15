@@ -1,8 +1,7 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.rename
 
-import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiClass
@@ -153,7 +152,7 @@ abstract class RenameKotlinPsiProcessor : RenamePsiElementProcessor() {
             allRenames[element] = safeNewName
         }
 
-        ActionUtil.underModalProgress(element.project, KotlinBundle.message("progress.title.searching.for.expected.actual")) {
+        underModalProgressIfOnEdt(element.project, KotlinBundle.message("progress.title.searching.for.expected.actual")) {
             val declaration = element.namedUnwrappedElement as? KtNamedDeclaration
             if (declaration != null) {
                 ExpectActualUtils.liftToExpect(declaration)?.let { expectDeclaration ->
@@ -311,7 +310,7 @@ abstract class RenameKotlinPsiProcessor : RenamePsiElementProcessor() {
     ) {
         val project = declaration.project
         val searchHelper = PsiSearchHelper.getInstance(project)
-        val overriders = ActionUtil.underModalProgress(project, KotlinBundle.message("rename.searching.for.all.overrides")) {
+        val overriders = underModalProgressIfOnEdt(project, KotlinBundle.message("rename.searching.for.all.overrides")) {
             val multiplatformDeclarations =
                 if (declaration is KtNamedDeclaration) { withExpectedActuals(declaration) } else listOf(declaration)
 

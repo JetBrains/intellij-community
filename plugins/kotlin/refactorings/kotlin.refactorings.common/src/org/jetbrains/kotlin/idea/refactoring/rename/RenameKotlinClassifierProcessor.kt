@@ -1,13 +1,15 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.rename
 
-import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.SearchScope
 import com.intellij.refactoring.listeners.RefactoringElementListener
+import com.intellij.refactoring.rename.DelegatingHeadlessRenamePsiElementProcessor
+import com.intellij.refactoring.rename.HeadlessRenamePsiElementProcessor
+import com.intellij.refactoring.rename.RenamePsiElementProcessorBase
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.SmartList
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
@@ -24,7 +26,7 @@ import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.KtTypeAlias
 
-class RenameKotlinClassifierProcessor : RenameKotlinPsiProcessor() {
+class RenameKotlinClassifierProcessor : RenameKotlinPsiProcessor(), DelegatingHeadlessRenamePsiElementProcessor {
 
   override fun canProcessElement(element: PsiElement): Boolean {
     return element is KtClassOrObject || element is KtLightClass || element is KtConstructor<*> || element is KtTypeAlias
@@ -45,10 +47,23 @@ class RenameKotlinClassifierProcessor : RenameKotlinPsiProcessor() {
   override fun substituteElementToRename(element: PsiElement, editor: Editor?) = getClassOrObject(element)
 
   override fun prepareRenaming(element: PsiElement, newName: String, allRenames: MutableMap<PsiElement, String>) {
+    prepareRenaming(element, newName, allRenames) { forElement(it) }
+  }
+
+  override fun prepareRenamingHeadless(element: PsiElement, newName: String, allRenames: MutableMap<PsiElement, String>) {
+    prepareRenaming(element, newName, allRenames) { HeadlessRenamePsiElementProcessor.processorOf(it) }
+  }
+
+  private fun prepareRenaming(
+    element: PsiElement,
+    newName: String,
+    allRenames: MutableMap<PsiElement, String>,
+    processorOf: (PsiElement) -> RenamePsiElementProcessorBase,
+  ) {
     super.prepareRenaming(element, newName, allRenames)
 
     val classOrObject = getClassOrObject(element) as? KtClassOrObject ?: return
-    val topLevelClassifiers = ActionUtil.underModalProgress(element.project, KotlinBundle.message("progress.title.searching.for.expected.actual")) {
+    val topLevelClassifiers = underModalProgressIfOnEdt(element.project, KotlinBundle.message("progress.title.searching.for.expected.actual")) {
         ExpectActualUtils.withExpectedActuals(classOrObject).filter { it.parent is KtFile }
     }
 
@@ -60,7 +75,7 @@ class RenameKotlinClassifierProcessor : RenameKotlinPsiProcessor() {
         if (nameWithoutExtensions == it.name) {
           val newFileName = newName + "." + virtualFile.extension
           allRenames.put(file, newFileName)
-          forElement(file).prepareRenaming(file, newFileName, allRenames)
+          processorOf(file).prepareRenaming(file, newFileName, allRenames)
         }
       }
     }

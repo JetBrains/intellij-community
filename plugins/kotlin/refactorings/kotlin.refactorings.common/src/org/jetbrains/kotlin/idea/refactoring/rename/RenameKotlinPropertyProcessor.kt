@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.rename
 
@@ -12,10 +12,12 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.SyntheticElement
+import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.listeners.RefactoringElementListener
+import com.intellij.refactoring.rename.DelegatingHeadlessRenamePsiElementProcessor
 import com.intellij.refactoring.rename.RenameUtil
 import com.intellij.refactoring.util.MoveRenameUsageInfo
 import com.intellij.refactoring.util.RefactoringUtil
@@ -61,7 +63,7 @@ import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.resolve.DataClassResolver
 import org.jetbrains.kotlin.utils.SmartList
 
-class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
+class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor(), DelegatingHeadlessRenamePsiElementProcessor {
 
   override fun canProcessElement(element: PsiElement): Boolean {
     val namedUnwrappedElement = element.namedUnwrappedElement
@@ -121,13 +123,13 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
     result += collisions
   }
 
-  private fun chooseCallableToRename(callableDeclaration: KtCallableDeclaration): KtCallableDeclaration? {
+  private fun chooseCallableToRename(callableDeclaration: KtCallableDeclaration, askUser: Boolean): KtCallableDeclaration? {
     val deepestSuperDeclaration = findDeepestOverriddenDeclaration(callableDeclaration)
     if (deepestSuperDeclaration == null || deepestSuperDeclaration == callableDeclaration) {
       return callableDeclaration
     }
 
-    if (isUnitTestMode()) return deepestSuperDeclaration
+    if (isUnitTestMode() || !askUser) return deepestSuperDeclaration
 
     val containsText: String? =
       deepestSuperDeclaration.fqName?.parent()?.asString() ?: (deepestSuperDeclaration.parent as? KtClassOrObject)?.name
@@ -151,7 +153,25 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
     }
   }
 
-  override fun substituteElementToRename(element: PsiElement, editor: Editor?): PsiElement? {
+  override fun substituteElementToRename(element: PsiElement, editor: Editor?): PsiElement? =
+    substituteElementToRename(element, askUser = true)
+
+  /**
+   * The base property, when [element] overrides something.
+   *
+   * Kotlin asks the user here whether to rename the base property. This answers that question with
+   * yes, so that the code stays consistent.
+   */
+  override fun substituteElementToRenameHeadless(element: PsiElement): PsiElement? =
+    substituteElementToRename(element, askUser = false)
+
+  /**
+   * The element to rename instead of [element].
+   *
+   * @param askUser false answers the base-property question with the base property.
+   *                [substituteElementToRenameHeadless] passes false.
+   */
+  private fun substituteElementToRename(element: PsiElement, askUser: Boolean): PsiElement? {
     val namedUnwrappedElement = element.namedUnwrappedElement ?: return null
     // a local property has no overrides, no light-class accessors, and no JvmName
     if (namedUnwrappedElement is KtProperty && namedUnwrappedElement.isLocal) return namedUnwrappedElement
@@ -159,7 +179,7 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
     val callableDeclaration = namedUnwrappedElement as? KtCallableDeclaration
                               ?: throw IllegalStateException("Can't be for element $element there because of canProcessElement()")
 
-    val declarationToRename = chooseCallableToRename(callableDeclaration) ?: return null
+    val declarationToRename = chooseCallableToRename(callableDeclaration, askUser) ?: return null
 
     val (getterJvmName, setterJvmName) = getJvmNames(namedUnwrappedElement)
     if (element is KtLightMethod) {
@@ -213,6 +233,34 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
   }
 
     override fun prepareRenaming(element: PsiElement, newName: String, allRenames: MutableMap<PsiElement, String>, scope: SearchScope) {
+        prepareRenaming(element, newName, allRenames, scope, askUser = true)
+    }
+
+    /**
+     * The second accessor of the property, and every other element the rename must change.
+     *
+     * Kotlin asks the user here whether to rename the second accessor. This answers that question
+     * with yes, so that a getter and a setter keep one name.
+     */
+    override fun prepareRenamingHeadless(element: PsiElement, newName: String, allRenames: MutableMap<PsiElement, String>) {
+        // The scope of the three-parameter prepareRenaming of the base class.
+        val scope = PsiSearchHelper.getInstance(element.project).getUseScope(element)
+        prepareRenaming(element, newName, allRenames, scope, askUser = false)
+    }
+
+    /**
+     * Collects the other elements the rename must change.
+     *
+     * @param askUser false answers the second-accessor question with yes, so that a getter and a
+     *                setter keep one name. [prepareRenamingHeadless] passes false.
+     */
+    private fun prepareRenaming(
+        element: PsiElement,
+        newName: String,
+        allRenames: MutableMap<PsiElement, String>,
+        scope: SearchScope,
+        askUser: Boolean,
+    ) {
         super.prepareRenaming(element, newName, allRenames, scope)
 
         val namedUnwrappedElement = element.namedUnwrappedElement
@@ -240,7 +288,7 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
         ) {
             val accessorToRename = if (element == getter) setter else getter
             val newAccessorName = if (element == getter) JvmAbi.setterName(newPropertyName) else JvmAbi.getterName(newPropertyName)
-            if (isUnitTestMode() || Messages.showYesNoDialog(
+            if (isUnitTestMode() || !askUser || Messages.showYesNoDialog(
                     KotlinBundle.message("text.do.you.want.to.rename.0.as.well", accessorToRename.name),
                     RefactoringBundle.message("rename.title"),
                     Messages.getQuestionIcon()
@@ -302,9 +350,8 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
     allRenames: MutableMap<PsiElement, String>,
     scope: SearchScope
   ) {
-    val allOverriders = runProcessWithProgressSynchronously(
+    val allOverriders = runProcessWithProgressIfOnEdt(
       KotlinBundle.message("rename.searching.for.all.overrides"),
-      canBeCancelled = true,
       psiMethod.project,
     ) {
       OverridingMethodsSearch.search(psiMethod, scope, true).findAll()
@@ -344,10 +391,9 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
 
   private fun findDeepestOverriddenDeclaration(declaration: KtCallableDeclaration): KtCallableDeclaration? {
     if (declaration.modifierList?.hasModifier(KtTokens.OVERRIDE_KEYWORD) == true) {
-      val deepestSuperDeclarations = runProcessWithProgressSynchronously(
+      val deepestSuperDeclarations = runProcessWithProgressIfOnEdt(
         KotlinBundle.message("rename.searching.for.super.declaration"),
-        canBeCancelled = true,
-        declaration.project
+        declaration.project,
       ) {
         runReadAction {
           KotlinSearchUsagesSupport.SearchUtils.findDeepestSuperMethodsNoWrapping(declaration)
