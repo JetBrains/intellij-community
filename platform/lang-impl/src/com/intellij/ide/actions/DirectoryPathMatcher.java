@@ -44,6 +44,10 @@ import java.util.stream.Collectors;
  * <p>
  * The matcher is immutable. {@link #root} builds the chain for the directory part of a pattern, and
  * {@link #appendChar} extends it for the file-name part.
+ * <p>
+ * {@link #literalRoot} builds another chain, from {@link LiteralDirectoryLookup}. It is fast, and it holds a
+ * subset of the walk, because it drops a directory that only the fuzzy matcher keeps. It is therefore no replacement
+ * for the walk. {@link GotoFileItemProvider} runs it as a first chain and the walk after it, so no result is lost.
  */
 final class DirectoryPathMatcher {
   private final @NotNull GotoFileModel myModel;
@@ -163,6 +167,19 @@ final class DirectoryPathMatcher {
 
     VirtualFile[] array = ContainerUtil.map2Array(myFiles, VirtualFile.class, NamedDirectory::file);
     return GlobalSearchScopesCore.directoriesScope(myModel.getProject(), true, array).intersectWith(fileSearchScope);
+  }
+
+  /**
+   * Builds the chain for a directory part that is a literal path, which is what a pasted path looks like.
+   * The chain holds a subset of the walk, so the caller must run {@link #root} after it.
+   * See {@link LiteralDirectoryLookup}.
+   *
+   * @return {@code null} when the lookup finds no directory for the pattern
+   */
+  static @Nullable DirectoryPathMatcher literalRoot(@NotNull GotoFileModel model, @NotNull String pattern) {
+    DirectoryPathMatcher matcher = createRoot(model);
+    List<NamedDirectory> roots = LiteralDirectoryLookup.findDirectories(model, matcher.myProjectFileFilter, pattern);
+    return roots.isEmpty() ? null : matcher.derive(roots, pattern);
   }
 
   private void processProjectFilesUnder(VirtualFile root, Processor<? super VirtualFile> consumer) {

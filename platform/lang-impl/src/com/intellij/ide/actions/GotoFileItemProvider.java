@@ -293,7 +293,8 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
       if (directory == null) {
         directory = anotherDirectory;
       }
-      else {
+      // the two matcher chains of NamePass can both find the same directory
+      else if (!directory.getVirtualFile().equals(anotherDirectory.getVirtualFile())) {
         moreThanOne = true;
       }
     }
@@ -321,7 +322,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
 
     DirectoryConsumer directoryConsumer = new DirectoryConsumer(isFuzzyFileSearchEnabled());
     NamePass pass = new NamePass(base, parameters, consumer, hasSuggestions, directoryConsumer, grouper);
-    if (!pass.process(DirectoryPathMatcher.root(myModel, dirPattern))) {
+    if (!pass.process(dirPattern)) {
       return false;
     }
 
@@ -337,7 +338,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
   }
 
   /**
-   * One pass over the grouped file names of the project, along one {@link DirectoryPathMatcher} chain.
+   * One pass over the grouped file names of the project, along up to two {@link DirectoryPathMatcher} chains.
    * <p>
    * The pass consumes the grouper: {@link NameGrouper#nextGroup} empties the bucket it reads.
    */
@@ -348,6 +349,8 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     private final @NotNull Ref<Boolean> hasSuggestions;
     private final @NotNull DirectoryConsumer directoryConsumer;
     private final @NotNull NameGrouper grouper;
+    /** Whether the consumer asked to stop, which is the only reason that may end the pass along the literal chain. */
+    private boolean stoppedByConsumer = false;
 
     NamePass(@NotNull ChooseByNameViewModel base,
              @NotNull FindSymbolParameters parameters,
@@ -357,34 +360,67 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
              @NotNull NameGrouper grouper) {
       this.base = base;
       this.parameters = parameters;
-      this.consumer = consumer;
+      this.consumer = item -> {
+        if (consumer.process(item)) return true;
+        stoppedByConsumer = true;
+        return false;
+      };
       this.hasSuggestions = hasSuggestions;
       this.directoryConsumer = directoryConsumer;
       this.grouper = grouper;
     }
 
     /**
-     * Reports the files of each name group, and narrows the chain by one character of the name pattern per group.
+     * Reports the files of each name group, and narrows each chain by one character of the name pattern per group.
+     * <p>
+     * {@link DirectoryPathMatcher#literalRoot} resolves a pasted path at once, but its chain holds a subset of the
+     * walk, so the walk chain follows in each group and adds every result the literal chain missed. The walk root is
+     * built after the literal chain reported the first group, because the walk is the expensive stage.
+     * Both chains can report one file. Search Everywhere keeps one copy of it.
      *
-     * @param dirMatcher the chain to start from, or {@code null} when no directory matches the directory pattern
      * @return {@code false} when the pass stopped, either because the consumer asked for it or because the project
      * holds no suggestion
      */
-    boolean process(@Nullable DirectoryPathMatcher dirMatcher) {
-      while (dirMatcher != null) {
+    boolean process(@NotNull String dirPattern) {
+      DirectoryPathMatcher literalMatcher = DirectoryPathMatcher.literalRoot(myModel, dirPattern);
+      DirectoryPathMatcher walkMatcher = null;
+      boolean walkRootBuilt = false;
+
+      while (literalMatcher != null || !walkRootBuilt || walkMatcher != null) {
         int index = grouper.index;
         SuffixMatches group = grouper.nextGroup(base);
         if (group == null) break;
-        if (!group.processFiles(parameters.withLocalPattern(dirMatcher.dirPattern), consumer, hasSuggestions, dirMatcher,
-                                directoryConsumer)) {
-          return false;
+        char nameChar = grouper.namePattern.charAt(index);
+
+        if (literalMatcher != null) {
+          // a stop that the consumer did not ask for means "no suggestion here", and the walk chain can still find one
+          if (!processGroup(group, literalMatcher) && stoppedByConsumer) {
+            return false;
+          }
+          literalMatcher = literalMatcher.appendChar(nameChar);
         }
-        dirMatcher = dirMatcher.appendChar(grouper.namePattern.charAt(index));
+
+        if (!walkRootBuilt) {
+          walkMatcher = DirectoryPathMatcher.root(myModel, dirPattern);
+          walkRootBuilt = true;
+        }
+        if (walkMatcher != null) {
+          if (!processGroup(group, walkMatcher)) {
+            return false;
+          }
+          walkMatcher = walkMatcher.appendChar(nameChar);
+        }
+
         if (!myModel.isSlashlessMatchingEnabled()) {
           return true;
         }
       }
       return true;
+    }
+
+    private boolean processGroup(@NotNull SuffixMatches group, @NotNull DirectoryPathMatcher dirMatcher) {
+      return group.processFiles(parameters.withLocalPattern(dirMatcher.dirPattern), consumer, hasSuggestions, dirMatcher,
+                                directoryConsumer);
     }
   }
 
