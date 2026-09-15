@@ -65,6 +65,21 @@ interface EditorContextManager {
   @ApiStatus.Internal
   fun setEditorContextNoFire(editor: Editor, contexts: EditorSelectedContexts)
 
+  /**
+   * The reset affordance offered by the owning provider of [editor]'s file, e.g. "clear the per-file pin", or `null`
+   * when there is nothing to reset. The switcher shows it as an icon button next to the context combo box.
+   */
+  @ApiStatus.Internal
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  fun getContextResetAction(editor: Editor): ContextResetAction? = null
+
+  /** Tells the owning provider of [editor]'s file that the user picked [context] in the switcher. */
+  @ApiStatus.Internal
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  fun notifyContextPicked(editor: Editor, context: CodeInsightContext) {}
+
   val eventFlow: Flow<ChangeEvent>
 
   class ChangeEvent(

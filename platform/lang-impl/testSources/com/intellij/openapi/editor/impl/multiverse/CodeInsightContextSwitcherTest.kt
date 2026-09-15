@@ -7,6 +7,7 @@ import com.intellij.codeInsight.multiverse.ModuleContext
 import com.intellij.codeInsight.multiverse.SingleEditorContext
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.EDT
@@ -252,15 +253,17 @@ internal class CodeInsightContextSwitcherTest {
   }
 
   private suspend fun <T> withSwitcher(editor: Editor, block: suspend (AnAction) -> T): T {
-    val action = withContext(Dispatchers.EDT) {
+    val group = withContext(Dispatchers.EDT) {
       val provider = InspectionWidgetActionProvider.EP_NAME.extensionList.first { it.javaClass.name == SWITCHER_PROVIDER_CLASS }
       requireNotNull(provider.createAction(editor)) { "the switcher provider must create an action for $editor" }
     }
     try {
-      return block(action)
+      // The provider returns the reset button and the combo as one group. These tests drive the combo.
+      val combo = (group as DefaultActionGroup).childActionsOrStubs.filterIsInstance<ExpandableComboAction>().single()
+      return block(combo)
     }
     finally {
-      Disposer.dispose(action as Disposable)
+      Disposer.dispose(group as Disposable)
     }
   }
 

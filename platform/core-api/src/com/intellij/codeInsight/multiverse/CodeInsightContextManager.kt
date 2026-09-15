@@ -42,6 +42,12 @@ interface CodeInsightContextManager {
   @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun getPreferredContext(file: VirtualFile): CodeInsightContext
 
+  /** Runs [block] on the provider that owns [file]. `null` when nobody owns it, or when the provider threw. */
+  @Internal
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  fun <T> withOwnerOf(file: VirtualFile, block: (CodeInsightContextProvider) -> T): T?
+
   @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun getCodeInsightContext(fileViewProvider: FileViewProvider): CodeInsightContext

@@ -48,6 +48,20 @@ internal class EditorContextManagerImpl(
 
   @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  override fun getContextResetAction(editor: Editor): ContextResetAction? {
+    val file = FileDocumentManager.getInstance().getFile(editor.document) ?: return null
+    return CodeInsightContextManager.getInstance(project).withOwnerOf(file) { it.getContextResetAction(file, project) }
+  }
+
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  override fun notifyContextPicked(editor: Editor, context: CodeInsightContext) {
+    val file = FileDocumentManager.getInstance().getFile(editor.document) ?: return
+    CodeInsightContextManager.getInstance(project).withOwnerOf(file) { it.onContextPicked(file, project, context) }
+  }
+
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private fun getCurrentContextStateWithPreferredDefault(editor: Editor): EditorSelectedContexts {
     assert(editor.project?.equals(project)?:true) {
       "called with wrong project: $project. editor project: ${editor.project}"

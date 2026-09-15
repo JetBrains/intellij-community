@@ -17,25 +17,22 @@ data class CodeInsightContextPresentation(
   val context: CodeInsightContext,
   val text: @Nls String, // todo IJPL-339 capitalization???
   val icon: Icon?,
+  val tooltip: @Nls String?,
 )
 
 @ApiStatus.Experimental
 fun createCodeInsightContextPresentation(codeInsightContext: CodeInsightContext, project: Project): CodeInsightContextPresentation {
-  val (icon, presentableText) = CODE_INSIGHT_CONTEXT_PRESENTATION_EP.computeSafeIfAny { provider ->
+  return CODE_INSIGHT_CONTEXT_PRESENTATION_EP.computeSafeIfAny { provider ->
     if (provider.isApplicable(codeInsightContext)) {
       provider as CodeInsightContextPresentationProvider<CodeInsightContext>
 
-      val icon = provider.getIcon(codeInsightContext, project)
-      val presentableText = provider.getPresentableText(codeInsightContext, project)
-
-      icon to presentableText
+      CodeInsightContextPresentation(
+        context = codeInsightContext,
+        text = provider.getPresentableText(codeInsightContext, project),
+        icon = provider.getIcon(codeInsightContext, project),
+        tooltip = provider.getTooltipText(codeInsightContext, project),
+      )
     }
     else null
-  } ?: (null to "")
-
-  return CodeInsightContextPresentation(
-    context = codeInsightContext,
-    text = presentableText,
-    icon = icon,
-  )
+  } ?: CodeInsightContextPresentation(codeInsightContext, text = "", icon = null, tooltip = null)
 }

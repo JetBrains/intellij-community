@@ -17,9 +17,14 @@
 *:com.intellij.codeInsight.multiverse.CodeInsightContextPresentationProvider
 - a:getIcon(com.intellij.codeInsight.multiverse.CodeInsightContext,com.intellij.openapi.project.Project):javax.swing.Icon
 - a:getPresentableText(com.intellij.codeInsight.multiverse.CodeInsightContext,com.intellij.openapi.project.Project):java.lang.String
+- getTooltipText(com.intellij.codeInsight.multiverse.CodeInsightContext,com.intellij.openapi.project.Project):java.lang.String
 - a:isApplicable(com.intellij.codeInsight.multiverse.CodeInsightContext):Z
 *:com.intellij.codeInsight.multiverse.CodeInsightContextProvider
+- getContextResetAction(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):kotlin.jvm.functions.Function1
 - a:getContexts(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):java.util.List
+- getPreferredContext(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project,java.util.List):com.intellij.codeInsight.multiverse.CodeInsightContext
+- a:isOwnerOf(com.intellij.codeInsight.multiverse.CodeInsightContext):Z
+- onContextPicked(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project,com.intellij.codeInsight.multiverse.CodeInsightContext):V
 - a:subscribeToChanges(com.intellij.openapi.project.Project,com.intellij.codeInsight.multiverse.CodeInsightContextProvider$Invalidator):V
 *:com.intellij.codeInsight.multiverse.CodeInsightContextProvider$Invalidator
 - a:requestInvalidation():V

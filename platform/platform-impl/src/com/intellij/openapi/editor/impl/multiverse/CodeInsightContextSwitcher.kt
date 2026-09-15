@@ -6,12 +6,14 @@ import com.intellij.codeInsight.multiverse.EditorContextManager
 import com.intellij.codeInsight.multiverse.EditorSelectedContexts
 import com.intellij.codeInsight.multiverse.SingleEditorContext
 import com.intellij.codeInsight.multiverse.isSharedSourceSupportEnabled
+import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.readAndEdtWriteAction
@@ -26,6 +28,7 @@ import com.intellij.openapi.editor.markup.InspectionWidgetActionProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.impl.ExpandableComboAction
 import com.intellij.openapi.wm.impl.ListenableToolbarComboButton
@@ -65,7 +68,7 @@ internal class CodeInsightContextSwitcherProvider : InspectionWidgetActionProvid
 
     val file = editor.virtualFile ?: return null
 
-    return CodeInsightContextSwitcher(editor, project, file)
+    return CodeInsightContextSwitcher(editor, project, file).widgetGroup
   }
 }
 
@@ -97,6 +100,9 @@ internal class CodeInsightContextSwitcher(
   private val widgetState: MutableStateFlow<SwitcherState> = MutableStateFlow(NotLoaded)
   private val controller = Controller()
 
+  /** The reset button and the combo. Rendered inline, so the reset sits left of the combo; disposing it disposes this. */
+  val widgetGroup: DefaultActionGroup = WidgetGroup()
+
   override fun createToolbarComboButton(model: ToolbarComboButtonModel): ToolbarComboButton = SwitcherComboBox(model)
 
   override fun dispose() {
@@ -126,20 +132,20 @@ internal class CodeInsightContextSwitcher(
   }
 
   override fun update(e: AnActionEvent) {
+    val shownContext = shownContext()
+    e.presentation.isVisible = shownContext != null
+    if (shownContext != null) {
+      e.presentation.text = shownContext.text
+      e.presentation.icon = shownContext.icon
+      // AbstractToolbarCombo.updateFromPresentation renders the description as the combo's tooltip.
+      e.presentation.description = shownContext.tooltip
+    }
+  }
+
+  /** The context to show, or `null` to hide: with fewer than two contexts there is nothing to choose between. */
+  private fun shownContext(): CodeInsightContextPresentation? {
     val state = widgetState.value
-
-    val currentContext = state.currentContext
-    val availableContexts = state.availableContexts
-
-    if (currentContext != null && availableContexts != null && availableContexts.size > 1) {
-      e.presentation.text = currentContext.text
-      e.presentation.icon = currentContext.icon
-      e.presentation.isVisible = true
-    }
-    else {
-      // don't show switcher if there are no options to choose (i.e., there is no context at all, or only one context is available)
-      e.presentation.isVisible = false
-    }
+    return state.currentContext?.takeIf { (state.availableContexts?.size ?: 0) > 1 }
   }
 
   override fun createPopup(event: AnActionEvent): JBPopup {
@@ -169,8 +175,50 @@ internal class CodeInsightContextSwitcher(
       controller.applyNewActiveContext(contextPresentation)
     }
 
+    override fun update(e: AnActionEvent) {
+      // A popup list item takes its tooltip from TOOLTIP_TEXT (PopupFactoryImpl.ActionItem), not from the description.
+      e.presentation.putClientProperty(ActionUtil.TOOLTIP_TEXT, contextPresentation.tooltip)
+    }
+
     override fun getActionUpdateThread(): ActionUpdateThread {
       return ActionUpdateThread.BGT
+    }
+  }
+
+  /**
+   * Clears whatever override the owning provider has on the file, for example a per-file pin. An `x` button next to the
+   * combo rather than an entry in the popup, because it is not one of the contexts to choose between.
+   */
+  private inner class ResetContextAction : AnAction(AllIcons.Actions.Close) {
+    init {
+      templatePresentation.hoveredIcon = AllIcons.Actions.CloseHovered
+    }
+
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
+    override fun update(e: AnActionEvent) {
+      // Tied to the combo on purpose: with nothing to switch between there is nothing to reset back to either.
+      // No read action needed, a BGT update already holds the read lock.
+      val reset = if (shownContext() == null) null
+      else EditorContextManager.getInstance(project).getContextResetAction(editor)
+      e.presentation.isVisible = reset != null
+      // Icon-only button, so the text is the tooltip rather than a label.
+      e.presentation.text = if (reset == null) "" else IdeBundle.message("context.switcher.reset.text")
+      e.presentation.description = e.presentation.text
+    }
+
+    override fun actionPerformed(e: AnActionEvent) {
+      // Deliberately not processUpdate: its semaphore drops queued work, which is fine for a recompute but not a click.
+      scope.launch {
+        val reset = readAction { EditorContextManager.getInstance(project).getContextResetAction(editor) } ?: return@launch
+        reset()
+      }
+    }
+  }
+
+  private inner class WidgetGroup : DefaultActionGroup(ResetContextAction(), this@CodeInsightContextSwitcher), Disposable {
+    override fun dispose() {
+      Disposer.dispose(this@CodeInsightContextSwitcher)
     }
   }
 
@@ -331,19 +379,27 @@ internal class CodeInsightContextSwitcher(
     private suspend fun setContext(presentation: CodeInsightContextPresentation) = withContext(Dispatchers.Default) {
       updateWidgetState(presentation)
 
-      readAndEdtWriteAction {
-        val contextManager = CodeInsightContextManager.getInstance(project)
-        val validContexts = contextManager.getCodeInsightContexts(editor.virtualFile!!)
-        val context = presentation.context
-        if (context in validContexts) {
+      val contextManager = CodeInsightContextManager.getInstance(project)
+      val editorContextManager = EditorContextManager.getInstance(project)
+      val virtualFile = editor.virtualFile!!
+      val context = presentation.context
+
+      val applied = readAndEdtWriteAction {
+        if (context in contextManager.getCodeInsightContexts(virtualFile)) {
           writeAction {
-            EditorContextManager.getInstance(project).setEditorContext(editor, SingleEditorContext(context))
+            editorContextManager.setEditorContext(editor, SingleEditorContext(context))
+            true
           }
         }
         else {
           // todo IJPL-339 report failure?
-          value(Unit)
+          value(false)
         }
+      }
+
+      // After the pick is applied, and outside the read-write block, so a retried block cannot report it twice.
+      if (applied) {
+        readAction { editorContextManager.notifyContextPicked(editor, context) }
       }
     }
 

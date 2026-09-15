@@ -333,8 +333,15 @@ class KotlinEventLimitOutOfBlockModificationTest : AbstractKotlinModificationEve
 
         val mockContext = object : CodeInsightContext {}
 
+        // A file has a single owning provider, and a test-only provider is registered first, so it owns every file it
+        // claims. To give `a.kt` two contexts this provider must supply both itself: the mock one and module A's.
+        // Other files stay unclaimed (null), so the platform provider owns them.
         CodeInsightContextManager.getInstance(project).registerTestOnlyCodeInsightContextProvider(object : CodeInsightContextProvider {
-            override fun getContexts(file: VirtualFile, project: Project): List<CodeInsightContext> = listOf(mockContext)
+            override fun isOwnerOf(context: CodeInsightContext): Boolean = context === mockContext
+
+            override fun getContexts(file: VirtualFile, project: Project): List<CodeInsightContext>? =
+                if (file.name == "a.kt") listOf(mockContext, moduleContextA) else null
+
             override fun subscribeToChanges(project: Project, invalidator: CodeInsightContextProvider.Invalidator) {}
         }, testRootDisposable)
 

@@ -19,4 +19,7 @@ interface CodeInsightContextPresentationProvider<Context : CodeInsightContext> {
 
   fun getIcon(context: Context, project: Project): Icon
   fun getPresentableText(context: Context, project: Project): @Nls String
+
+  /** Hover text for [context], for details that do not fit into the label. Returns `null` when there are none. */
+  fun getTooltipText(context: Context, project: Project): @Nls String? = null
 }

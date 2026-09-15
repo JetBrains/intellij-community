@@ -4,11 +4,13 @@ package com.intellij.codeInsight.multiverse
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.backgroundWriteAction
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectLocator
 import com.intellij.openapi.util.Key
@@ -96,20 +98,27 @@ class CodeInsightContextManagerImpl(
 
     ensureReadAccess(file)
 
-    return allContexts.getOrPut(file) {
-      log.trace { "requested all contexts of file ${file.path}" }
-      getContextSequence(file).toContextOrArray().also {
-        log.debug { "[ctx-diag] computed contexts of ${file.path}: ${it.wrapToList()}" }
-      }
-    }.wrapToList()
+    return getContextsOf(file).wrapToList()
   }
 
-  private fun getContextSequence(file: VirtualFile): Sequence<CodeInsightContext> {
-    if (!isSharedSourceSupportEnabled(project)) return emptySequence()
+  /** lazySequence, not extensionList: getContexts can cost a workspace-index query, so providers past the owner are not asked. */
+  private fun getContextsOf(file: VirtualFile): ContextOrArray = allContexts.getOrPut(file) {
+    log.trace { "requested all contexts of file ${file.path}" }
 
-    return EP_NAME.lazySequence().flatMap { provider ->
-      provider.getContextSafely(file)
-    }.appendIfEmpty(defaultContext())
+    for (provider in EP_NAME.lazySequence()) {
+      val contexts = provider.getContextSafely(file) ?: continue
+      return@getOrPut contexts.ifEmpty { listOf(defaultContext()) }.asSequence().toContextOrArray().also {
+        log.debug { "[ctx-diag] computed contexts of ${file.path}: ${it.wrapToList()}" }
+      }
+    }
+
+    defaultContext()
+  }
+
+  /** The provider whose contexts [file] carries. Derived from the contexts, so the cache stores no owner per file. */
+  private fun findOwner(file: VirtualFile): CodeInsightContextProvider? {
+    val context = getContextsOf(file).getFirstContextOrNull() ?: return null
+    return EP_NAME.lazySequence().firstOrNull { runSafely { it.isOwnerOf(context) } == true }
   }
 
   override val changeFlow: Flow<Unit> = _changeFlow.asSharedFlow()
@@ -124,12 +133,32 @@ class CodeInsightContextManagerImpl(
     log.trace { "requested preferred context of file ${file.path}" }
 
     return preferredContext.getOrPut(file) {
-      val contexts = getCodeInsightContexts(file)
-      // TODO IJPL-339 implement a better way to select the preferred context
-      val preferred = contexts.first()
+      val preferred = selectPreferredContext(file)
       log.assertTrue(preferred !== anyContext()) { "preferredContext must not be anyContext" }
       preferred
     }
+  }
+
+  @RequiresReadLock
+  @RequiresBackgroundThread
+  override fun <T> withOwnerOf(file: VirtualFile, block: (CodeInsightContextProvider) -> T): T? {
+    if (!isSharedSourceSupportEnabled(project)) return null
+
+    ensureReadAccess(file)
+
+    val provider = findOwner(file) ?: return null
+    return runSafely { block(provider) }
+  }
+
+  private fun selectPreferredContext(file: VirtualFile): CodeInsightContext {
+    val contexts = getContextsOf(file).wrapToList()
+    val owner = findOwner(file) ?: return contexts.first()
+
+    val nominee = runSafely { owner.getPreferredContext(file, project, contexts) } ?: return contexts.first()
+    if (nominee in contexts) return nominee
+
+    log.warn("${owner.javaClass.name}.getPreferredContext returned $nominee, not among the contexts offered for ${file.path}")
+    return contexts.first()
   }
 
   override fun getCodeInsightContext(fileViewProvider: FileViewProvider): CodeInsightContext {
@@ -148,11 +177,12 @@ class CodeInsightContextManagerImpl(
     return context
   }
 
-  private fun CodeInsightContextProvider.getContextSafely(file: VirtualFile): List<CodeInsightContext> {
-    return runSafely { this.getContexts(file, project) } ?: emptyList()
+  /** `null` when the provider does not own [file], or when it threw. A provider that throws is broken, so we isolate it. */
+  private fun CodeInsightContextProvider.getContextSafely(file: VirtualFile): List<CodeInsightContext>? {
+    return runSafely { this.getContexts(file, project) }
   }
 
-  private inline fun <T : Any> runSafely(block: () -> T): T? {
+  private inline fun <T> runSafely(block: () -> T): T? {
     try {
       return block()
     }
@@ -217,7 +247,14 @@ class CodeInsightContextManagerImpl(
       throw IllegalStateException("This method is only available in tests")
     }
 
-    EP_NAME.point.registerExtension(provider, disposable)
+    // First, so a test provider owns the files it claims, like a product provider declaring order="first".
+    EP_NAME.point.registerExtension(provider, LoadingOrder.FIRST, disposable)
+
+    // The EP change listener invalidates asynchronously, so invalidate here too: a test reading contexts right after
+    // registering would otherwise see the pre-registration cache.
+    runWriteAction {
+      invalidateAllContexts()
+    }
   }
 
 
@@ -255,23 +292,17 @@ private val codeInsightContextKey = Key.create<CodeInsightContext>("codeInsightC
 private val log = logger<CodeInsightContextManagerImpl>()
 
 /**
- * appends an item to the sequence if the sequence is empty
- */
-private fun <T> Sequence<T>.appendIfEmpty(item: T) = sequence {
-  var isEmpty = true
-  for (item in this@appendIfEmpty) {
-    yield(item)
-    isEmpty = false
-  }
-  if (isEmpty) {
-    yield(item)
-  }
-}
-
-/**
  * a single [CodeInsightContext] or an array of [CodeInsightContext]s
  */
 private typealias ContextOrArray = Any
+
+private fun ContextOrArray.getFirstContextOrNull(): CodeInsightContext? {
+  @Suppress("UNCHECKED_CAST")
+  return when (this) {
+    is Array<*> -> (this as Array<CodeInsightContext>).firstOrNull()
+    else -> this as CodeInsightContext
+  }
+}
 
 private fun ContextOrArray.wrapToList(): List<CodeInsightContext> {
   @Suppress("UNCHECKED_CAST")
