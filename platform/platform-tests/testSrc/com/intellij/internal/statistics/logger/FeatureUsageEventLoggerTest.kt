@@ -27,11 +27,8 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.UsefulTestCase
-import com.jetbrains.fus.reporting.FusHttpClient
-import com.jetbrains.fus.reporting.HttpResponse
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import org.junit.Test
-import java.nio.file.Files
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit
 import kotlin.test.assertTrue
@@ -529,7 +526,7 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
     val listenersManager = service<EventLogListenersManager>()
     listenersManager.subscribe(listener, TEST_RECORDER)
 
-    val eventLogDir = Files.createTempDirectory("fus-event-logger-test")
+    val eventLogDir = tempDir.createDir()
     val logger = StatisticsFileEventLogger(TEST_RECORDER, session, build, bucket, recorderVersion, client, eventLogDir)
     try {
       action(logger)
