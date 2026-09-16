@@ -508,66 +508,18 @@ public final class GradleExecutionHelper {
     operation.setEnvironmentVariables(effectiveEnvironment);
   }
 
-  /**
-   * Visible for {@link com.android.tools.idea.gradle.project.build.invoker.GradleTasksExecutorImpl}.
-   */
-  public static @NotNull BuildEnvironment getBuildEnvironment(
+  private static @NotNull BuildEnvironment getBuildEnvironment(
     @NotNull ProjectConnection connection,
     @NotNull GradleExecutionContext context
   ) {
-    Span span = ExternalSystemTelemetryUtil.getTracer(GradleConstants.SYSTEM_ID)
-      .spanBuilder("GetBuildEnvironment")
-      .startSpan();
-    try (Scope ignore = span.makeCurrent()) {
-      BuildEnvironment buildEnvironment;
-      try {
-        ExternalSystemTaskId taskId = context.getTaskId();
-        ExternalSystemTaskNotificationListener listener = context.getListener();
-
-        ModelBuilder<BuildEnvironment> modelBuilder = connection.model(BuildEnvironment.class);
-
-        modelBuilder.withCancellationToken(context.getCancellationToken());
-
-        setupJavaHome(modelBuilder, context.getSettings(), taskId, listener, null);
-
-        // do not use connection.getModel methods since it doesn't allow to handle progress events
-        // and we can miss gradle tooling client side events like distribution download.
-        GradleProgressListener gradleProgressListener = new GradleProgressListener(
-          context.getTaskId(), context.getReporter(), context.getListener(), context.getProjectPath()
-        );
-        modelBuilder.addProgressListener((ProgressListener)gradleProgressListener);
-        modelBuilder.addProgressListener((org.gradle.tooling.events.ProgressListener)gradleProgressListener);
-        modelBuilder.setStandardOutput(new OutputWrapper(listener, taskId, true));
-        modelBuilder.setStandardError(new OutputWrapper(listener, taskId, false));
-
-        buildEnvironment = modelBuilder.get();
-      }
-      catch (ExternalSystemException | CancellationException e) {
-        throw e;
-      }
-      catch (Exception ex) {
-        throw new RuntimeException("Failed to obtain build environment from Gradle daemon.", ex);
-      }
-
-      checkThatGradleBuildEnvironmentIsSupportedByIdea(buildEnvironment);
-      checkThatGradleBuildEnvironmentIsDeprecatedByIdea(context, buildEnvironment);
-      var checkers = GradleExecutionChecker.EP_NAME.getExtensionList();
-      for (var checker : checkers) {
-        checker.checkExecution(context, buildEnvironment);
-      }
-      return buildEnvironment;
+    var buildEnvironment = getModel(connection, context, BuildEnvironment.class);
+    checkThatGradleBuildEnvironmentIsSupportedByIdea(buildEnvironment);
+    checkThatGradleBuildEnvironmentIsDeprecatedByIdea(context, buildEnvironment);
+    var checkers = GradleExecutionChecker.EP_NAME.getExtensionList();
+    for (var checker : checkers) {
+      checker.checkExecution(context, buildEnvironment);
     }
-    catch (CancellationException ce) {
-      throw ce;
-    }
-    catch (Exception ex) {
-      span.recordException(ex);
-      span.setStatus(StatusCode.ERROR);
-      throw ex;
-    }
-    finally {
-      span.end();
-    }
+    return buildEnvironment;
   }
 
   private static void checkThatGradleBuildEnvironmentIsDeprecatedByIdea(
