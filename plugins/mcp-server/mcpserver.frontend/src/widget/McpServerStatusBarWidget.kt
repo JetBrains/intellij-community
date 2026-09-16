@@ -1,13 +1,10 @@
 package com.intellij.mcpserver.frontend.widget
 
-import androidx.compose.foundation.layout.width
-import androidx.compose.runtime.remember
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import com.intellij.icons.AllIcons
 import com.intellij.ide.setToolTipText
 import com.intellij.mcpserver.McpServerBundle
 import com.intellij.mcpserver.frontend.settings.McpServerSettingsConfigurable
+import com.intellij.mcpserver.frontend.settings.McpToolFilterConfigurable
 import com.intellij.mcpserver.impl.McpServerService
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.serviceAsync
@@ -17,15 +14,21 @@ import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.wm.CustomStatusBarWidget
 import com.intellij.openapi.wm.StatusBar
+import com.intellij.platform.compose.swing.composeSwingPanel
 import com.intellij.ui.BadgeIconSupplier
-import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.IconLabelButton
 import com.intellij.ui.popup.PopupState
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.ui.JBUI
+import java.awt.Dimension
+import java.awt.Point
+import javax.swing.Icon
+import javax.swing.JComponent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -33,13 +36,12 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
-import org.jetbrains.jewel.bridge.JewelComposePanel
-import org.jetbrains.jewel.bridge.component.resizeHostOnContentSizeChange
-import org.jetbrains.jewel.foundation.ExperimentalJewelApi
-import java.awt.Dimension
-import java.awt.Point
-import javax.swing.Icon
-import javax.swing.JComponent
+import org.jetbrains.compose.swing.modifier.SwingModifier
+import org.jetbrains.compose.swing.modifier.layout.layoutConstraint
+import org.jetbrains.compose.swing.modifier.layout.maximumSize
+import org.jetbrains.compose.swing.modifier.layout.minimumSize
+import org.jetbrains.compose.swing.modifier.listener.componentListener
+import java.awt.BorderLayout
 
 internal class McpServerStatusBarWidget(private val project: Project) : CustomStatusBarWidget {
   private val popupState = PopupState.forPopup()
@@ -52,6 +54,7 @@ internal class McpServerStatusBarWidget(private val project: Project) : CustomSt
   }
 
   private val widgetComponent by lazy { createComponent() }
+
   @Suppress("RAW_SCOPE_CREATION")
   private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
@@ -99,33 +102,39 @@ internal class McpServerStatusBarWidget(private val project: Project) : CustomSt
     else McpServerBundle.message("mcp.server.status.bar.widget.tooltip.disabled")
   }
 
-  @OptIn(ExperimentalJewelApi::class)
   private fun createAndShowPopup(component: JComponent) {
     var popupRef: JBPopup? = null
-
-    val panel = JewelComposePanel(focusOnClickInside = true, config = {
-      preferredSize = Dimension(POPUP_WIDTH, POPUP_HEIGHT)
-    }) {
-      val model = remember {
-        McpServerPopupModelImpl(
-          project = project,
-          coroutineScope = coroutineScope,
-          onSettingsClickAction = {
-            popupState.popup?.cancel()
-            ShowSettingsUtil.getInstance().showSettingsDialog(project, McpServerSettingsConfigurable::class.java)
-          },
-          onStateChangedAction = { updatePresentation() },
-        )
-      }
+    val model = McpServerPopupModelImpl(
+      project = project,
+      coroutineScope = coroutineScope,
+      onSettingsClickAction = {
+        popupState.popup?.cancel()
+        ShowSettingsUtil.getInstance().showSettingsDialog(project, McpServerSettingsConfigurable::class.java)
+      },
+      onToolsSettingsClickAction = {
+        popupState.popup?.cancel()
+        ShowSettingsUtil.getInstance().showSettingsDialog(project, McpToolFilterConfigurable::class.java)
+      },
+      onStateChangedAction = { updatePresentation() },
+    )
+    val contentDisposable = Disposer.newDisposable("MCP popup")
+    Disposer.register(this, contentDisposable)
+    val panel = composeSwingPanel(contentDisposable) {
       McpServerPopupContent(
         model = model,
-        modifier = Modifier
-          .resizeHostOnContentSizeChange(
-            popup = { popupRef },
-            onResize = { popupRef?.let { adjustPopupLocation(it, component) } },
-          )
-          .width(POPUP_WIDTH.dp),
+        modifier = SwingModifier
+          .layoutConstraint(BorderLayout.NORTH)
+          .componentListener(onComponentResized = {
+            popupRef?.let { popup ->
+              popup.size = Dimension(POPUP_WIDTH, it.component.height)
+              adjustPopupLocation(popup, component)
+            }
+          })
+          .minimumSize(JBUI.scale(POPUP_WIDTH), 0)
+          .maximumSize(JBUI.scale(POPUP_WIDTH), Int.MAX_VALUE),
       )
+    }.apply {
+      preferredSize = JBUI.size(POPUP_WIDTH, POPUP_HEIGHT)
     }
 
     val popup = JBPopupFactory.getInstance()
@@ -136,6 +145,8 @@ internal class McpServerStatusBarWidget(private val project: Project) : CustomSt
       .setFocusable(true)
       .setRequestFocus(true)
       .createPopup()
+    Disposer.register(this, popup)
+    Disposer.register(popup, contentDisposable)
     popupRef = popup
 
     popupState.prepareToShow(popup)
@@ -154,8 +165,7 @@ internal class McpServerStatusBarWidget(private val project: Project) : CustomSt
 }
 
 private fun adjustPopupLocation(popup: JBPopup, component: JComponent) {
-  val point = RelativePoint(component, Point())
-  val location = Point(point.screenPoint).apply {
+  val location = Point(component.locationOnScreen).apply {
     x -= popup.size.width - component.width
     y -= popup.size.height
   }

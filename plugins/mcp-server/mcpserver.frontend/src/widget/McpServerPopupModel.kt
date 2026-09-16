@@ -2,14 +2,12 @@ package com.intellij.mcpserver.frontend.widget
 
 import androidx.compose.runtime.Stable
 import com.intellij.execution.services.ServiceViewManager
-import com.intellij.ide.BrowserUtil
 import com.intellij.mcpserver.McpServerBundle
 import com.intellij.mcpserver.clients.McpClient
 import com.intellij.mcpserver.createSseServerJsonEntry
 import com.intellij.mcpserver.createStdioMcpServerJsonConfiguration
 import com.intellij.mcpserver.createStreamableServerJsonEntry
 import com.intellij.mcpserver.frontend.services.McpServiceViewContributor
-import com.intellij.mcpserver.frontend.util.getConsentDialog
 import com.intellij.mcpserver.impl.McpClientDetector
 import com.intellij.mcpserver.impl.McpServerService
 import com.intellij.mcpserver.impl.util.network.McpServerConnectionAddressProvider
@@ -24,6 +22,7 @@ import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.util.ui.TextTransferable
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -35,28 +34,41 @@ internal interface McpServerPopupModel {
   val braveMode: Boolean
   val sseUrl: String?
   val streamUrl: String?
-  val unconfiguredMessage: String?
   val helpLink: String
-  val detectedClientNames: List<String>
+  suspend fun detectClientNames(): List<String>
+  suspend fun detectClients(): List<DetectedClientInfo>
   val activeConnectionCount: Int
 
-  fun tryEnable(): Boolean
+  fun enable()
   fun disable()
   fun setBraveMode(value: Boolean)
+  suspend fun configureClient(id: String): Boolean
   fun copySseConfig(): Boolean
   fun copyStdioConfig(): Boolean
   fun copyStreamConfig(): Boolean
-  fun browseUrl(url: String)
+  fun copySseUrl(): Boolean
+  fun copyStreamUrl(): Boolean
   fun onSettingsClick()
+  fun onToolsSettingsClick()
   fun showInServiceView()
 }
 
 private val LOG = logger<McpServerPopupModelImpl>()
 
+/** Describes a detected client for the popup client list. */
+@Stable
+internal data class DetectedClientInfo(
+  val id: String,
+  val displayName: String,
+  val needsConfig: Boolean,
+  val initialError: String?,
+)
+
 internal class McpServerPopupModelImpl(
   private val project: Project,
   private val coroutineScope: CoroutineScope,
   private val onSettingsClickAction: () -> Unit,
+  private val onToolsSettingsClickAction: () -> Unit,
   private val onStateChangedAction: () -> Unit,
 ) : McpServerPopupModel {
   private val addressProvider = McpServerConnectionAddressProvider.getInstanceOrNull()
@@ -79,24 +91,43 @@ internal class McpServerPopupModelImpl(
 
   override val helpLink: String get() = getHelpLink("mcp-server.html#supported-tools")
 
-  override val detectedClientNames: List<String> by lazy {
+  override suspend fun detectClientNames(): List<String> = withContext(Dispatchers.IO) {
     McpClientDetector.detectGlobalMcpClients().map { it.mcpClientInfo.displayName }
   }
 
-  override val unconfiguredMessage: String? by lazy {
-    val unconfigured = McpClientDetector.detectGlobalMcpClients()
-      .filter { !it.isConnectedToThisIde() }
-      .map { it.mcpClientInfo.displayName }
-    if (unconfigured.isNotEmpty()) {
-      McpServerBundle.message("mcp.unconfigured.clients.detected.notification.message", unconfigured.joinToString(", "))
+  override suspend fun detectClients(): List<DetectedClientInfo> = withContext(Dispatchers.IO) {
+    McpClientDetector.detectGlobalMcpClients().map { client ->
+      val needsConfig = !client.isConnectedToThisIde()
+      val initialError = if (!client.isPortCorrect()) {
+        McpServerBundle.message("mcp.server.configured.port.mismatch")
+      }
+      else null
+      DetectedClientInfo(
+        id = client.mcpClientInfo.name.toString(),
+        displayName = client.mcpClientInfo.displayName,
+        needsConfig = needsConfig,
+        initialError = initialError,
+      )
     }
-    else null
   }
 
-  override fun tryEnable(): Boolean {
-    val consented = getConsentDialog(project)
-    if (!consented) return false
+  override suspend fun configureClient(id: String): Boolean = withContext(Dispatchers.IO) {
+    try {
+      val client = McpClientDetector.detectGlobalMcpClients()
+        .find { it.mcpClientInfo.name.toString() == id } ?: return@withContext false
+      client.autoConfigure()
+      true
+    }
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (e: Exception) {
+      LOG.info("Failed to configure client: ${e.message}", e)
+      false
+    }
+  }
 
+  override fun enable() {
     coroutineScope.launch {
       McpServerSettings.getInstance().enableMcpServer = true
       McpServerService.getInstance().settingsChanged(true)
@@ -104,7 +135,6 @@ internal class McpServerPopupModelImpl(
         onStateChangedAction()
       }
     }
-    return true
   }
 
   override fun disable() {
@@ -130,12 +160,17 @@ internal class McpServerPopupModelImpl(
   override fun copyStreamConfig(): Boolean =
     copyToClipboard(McpClient.json.encodeToString(createStreamableServerJsonEntry(McpServerService.getInstance().port, project.getPathForMcp())))
 
-  override fun browseUrl(url: String) {
-    BrowserUtil.browse(url)
-  }
+  override fun copySseUrl(): Boolean = sseUrl?.let { copyToClipboard(it) } ?: false
+
+  override fun copyStreamUrl(): Boolean = streamUrl?.let { copyToClipboard(it) } ?: false
+
 
   override fun onSettingsClick() {
     onSettingsClickAction()
+  }
+
+  override fun onToolsSettingsClick() {
+    onToolsSettingsClickAction()
   }
 
   override fun showInServiceView() {
