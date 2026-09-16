@@ -7,6 +7,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.components.impl.stores.stateStore
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -82,7 +83,12 @@ internal class KotlinProjectOpenerCollector : ProjectUsagesCollector() {
         val text = receiptPath.readText()
 
         val json = Json { ignoreUnknownKeys = true }
-        val event = json.decodeFromString<KotlinProjectOpenEvent>(text)
+        val event = try {
+            json.decodeFromString<KotlinProjectOpenEvent>(text)
+        } catch (e: Exception) {
+            Logger.getInstance(this::class.java).error(e)
+            throw e
+        }
 
         receiptPath.deleteIfExists()
 
@@ -99,7 +105,7 @@ internal class KotlinProjectOpenerCollector : ProjectUsagesCollector() {
 @Serializable
 internal data class KotlinProjectOpenEvent(
     @SerialName("spec") val spec: Spec,
-    @SerialName("timestamp") val timestamp: String,
+    @SerialName("timestamp") val timestamp: String? = null,
     @SerialName("uid") val uid: String? = null
 ) {
     @Serializable
