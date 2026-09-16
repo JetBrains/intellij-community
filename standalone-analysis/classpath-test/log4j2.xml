@@ -1,0 +1,12 @@
+<Configuration>
+  <Appenders>
+    <Console name="stderr" target="SYSTEM_ERR">
+      <PatternLayout pattern="%m&#10;"/>
+    </Console>
+  </Appenders>
+  <Loggers>
+    <Root level="warn">
+      <AppenderRef ref="stderr"/>
+    </Root>
+  </Loggers>
+</Configuration>

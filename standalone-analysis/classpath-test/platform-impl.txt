@@ -1,0 +1,8 @@
+Warning: com.intellij.ide.plugins.ClassLoaderConfigurator: can't find referenced method 'java.util.function.Function invokeExact()' in library class java.lang.invoke.MethodHandle
+Warning: com.intellij.ide.plugins.ClassLoaderConfiguratorKt: can't find referenced method 'void invoke(java.lang.ClassLoader,java.util.List)' in library class java.lang.invoke.MethodHandle
+Warning: com.intellij.ide.plugins.PluginUtils: can't find referenced method 'java.lang.Object invoke(java.lang.ClassLoader,java.lang.String)' in library class java.lang.invoke.MethodHandle
+Warning: there were 3 unresolved references to library class members.
+         You probably need to update the library versions.
+         Alternatively, you may have to specify the option 
+         '-dontskipnonpubliclibraryclassmembers'.
+         (https://www.guardsquare.com/proguard/manual/troubleshooting#unresolvedlibraryclassmember)

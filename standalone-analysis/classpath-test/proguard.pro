@@ -1,0 +1,10 @@
+-target 1.8
+-dontshrink
+-dontoptimize
+-dontobfuscate
+-dontpreverify
+-dontprocesskotlinmetadata
+-dontskipnonpubliclibraryclassmembers
+-dontnote **
+-ignorewarnings
+-keep class ** { *; }

@@ -1,0 +1,55 @@
+Warning: com.intellij.openapi.util.io.FileUtil$2: can't find superclass or interface gnu.trove.TObjectHashingStrategy
+Warning: com.intellij.DynamicBundle: can't find referenced method 'void invoke(java.util.ResourceBundle)' in library class java.lang.invoke.MethodHandle
+Warning: com.intellij.diagnostic.ThreadDumper: can't find referenced method 'int invokeExact(java.lang.management.ThreadInfo)' in library class java.lang.invoke.MethodHandle
+Warning: com.intellij.execution.process.CurrentProcess: can't find referenced method 'java.lang.Object invoke()' in library class java.lang.invoke.MethodHandle
+Warning: com.intellij.execution.process.CurrentProcess: can't find referenced method 'long invoke(java.lang.Object)' in library class java.lang.invoke.MethodHandle
+Warning: com.intellij.execution.process.UnixProcessManager: can't find referenced method 'int invokeExact(java.lang.String)' in library class java.lang.invoke.MethodHandle
+Warning: com.intellij.openapi.application.PathManager: can't find referenced method 'java.lang.Object invoke()' in library class java.lang.invoke.MethodHandle
+Warning: com.intellij.openapi.application.PathManager: can't find referenced method 'java.lang.String invoke(java.lang.Object)' in library class java.lang.invoke.MethodHandle
+Warning: com.intellij.openapi.util.io.FileUtil: can't find referenced class gnu.trove.TObjectHashingStrategy
+Warning: com.intellij.openapi.util.io.FileUtil: can't find referenced class gnu.trove.TObjectHashingStrategy
+Warning: com.intellij.openapi.util.io.FileUtil: can't find referenced class gnu.trove.TObjectHashingStrategy
+Warning: com.intellij.openapi.util.io.FileUtil$2: can't find referenced class gnu.trove.TObjectHashingStrategy
+Warning: com.intellij.openapi.util.io.FileUtil$2: can't find referenced class gnu.trove.TObjectHashingStrategy
+Warning: com.intellij.platform.eel.EelSharedSecrets$EelFilesAccessor$Default: can't find referenced method 'java.lang.String invokeExact(java.nio.file.Path,java.nio.charset.Charset)' in library class java.lang.invoke.MethodHandle
+Warning: com.intellij.platform.syntax.extensions.impl.CollectionsImplJvmKt: can't find referenced class fleet.util.multiplatform.Actual
+Warning: com.intellij.platform.syntax.extensions.impl.CollectionsImplJvmKt: can't find referenced class fleet.util.multiplatform.Actual
+Warning: com.intellij.platform.syntax.extensions.impl.ExtensionRegistryHolderJvmKt: can't find referenced class fleet.util.multiplatform.Actual
+Warning: com.intellij.platform.syntax.extensions.impl.ThreadLocalRegistryHolderJvmKt: can't find referenced class fleet.util.multiplatform.Actual
+Warning: com.intellij.platform.syntax.i18n.JvmResourceBundleKt: can't find referenced class fleet.util.multiplatform.Actual
+Warning: com.intellij.platform.syntax.impl.builder.MarkerProductionJvmKt: can't find referenced class fleet.util.multiplatform.Actual
+Warning: com.intellij.platform.syntax.tree.ASTMarkersJvmKt: can't find referenced class fleet.util.multiplatform.Actual
+Warning: com.intellij.platform.syntax.tree.ASTMarkersJvmKt: can't find referenced class fleet.util.multiplatform.Actual
+Warning: com.intellij.ui.IconManager$Companion: can't find referenced method 'com.intellij.ui.IconManager invoke()' in library class java.lang.invoke.MethodHandle
+Warning: com.intellij.util.CompressionUtil: can't find referenced method 'net.jpountz.lz4.LZ4Compressor invoke()' in library class java.lang.invoke.MethodHandle
+Warning: com.intellij.util.CompressionUtil: can't find referenced method 'net.jpountz.lz4.LZ4FastDecompressor invoke()' in library class java.lang.invoke.MethodHandle
+Warning: com.intellij.util.JavaVersionJvmKt: can't find referenced class fleet.util.multiplatform.Actual
+Warning: com.intellij.util.ThreadLocal_jvmKt: can't find referenced class fleet.util.multiplatform.Actual
+Warning: com.intellij.util.containers.Unsafe: can't find referenced method 'boolean invokeExact(java.lang.Object,long,int,int)' in library class java.lang.invoke.MethodHandle
+Warning: com.intellij.util.containers.Unsafe: can't find referenced method 'int invokeExact(java.lang.Object,long)' in library class java.lang.invoke.MethodHandle
+Warning: com.intellij.util.containers.Unsafe: can't find referenced method 'boolean invokeExact(java.lang.Object,long,long,long)' in library class java.lang.invoke.MethodHandle
+Warning: com.intellij.util.containers.Unsafe: can't find referenced method 'int invokeExact(java.lang.Object,long,int)' in library class java.lang.invoke.MethodHandle
+Warning: com.intellij.util.containers.Unsafe: can't find referenced method 'java.lang.Object invokeExact(java.lang.Object,long)' in library class java.lang.invoke.MethodHandle
+Warning: com.intellij.util.containers.Unsafe: can't find referenced method 'boolean invokeExact(java.lang.Object,long,java.lang.Object,java.lang.Object)' in library class java.lang.invoke.MethodHandle
+Warning: com.intellij.util.containers.Unsafe: can't find referenced method 'void invokeExact(java.lang.Object,long,java.lang.Object)' in library class java.lang.invoke.MethodHandle
+Warning: com.intellij.util.containers.Unsafe: can't find referenced method 'long invokeExact(java.lang.reflect.Field)' in library class java.lang.invoke.MethodHandle
+Warning: com.intellij.util.containers.Unsafe: can't find referenced method 'int invokeExact(java.lang.Class)' in library class java.lang.invoke.MethodHandle
+Warning: com.intellij.util.io.ByteBufferUtil: can't find referenced method 'java.lang.Object invoke(java.nio.ByteBuffer)' in library class java.lang.invoke.MethodHandle
+Warning: com.intellij.util.io.ByteBufferUtil: can't find referenced method 'void invoke(java.lang.Object)' in library class java.lang.invoke.MethodHandle
+Warning: com.intellij.util.lang.UrlClassLoader: can't find referenced method 'java.lang.Object invoke(java.lang.Class)' in library class java.lang.invoke.MethodHandle
+Warning: com.intellij.util.lang.UrlClassLoader: can't find referenced method 'void invokeExact(java.lang.String,java.lang.Throwable)' in library class java.lang.invoke.MethodHandle
+Warning: com.intellij.util.messages.impl.MessageBusImplKt: can't find referenced method 'void invoke(java.lang.Object)' in library class java.lang.invoke.MethodHandle
+Warning: com.intellij.util.messages.impl.MessageBusImplKt: can't find referenced method 'void invokeExact(java.lang.Object[])' in library class java.lang.invoke.MethodHandle
+Warning: com.intellij.util.text.JvmKt: can't find referenced class fleet.util.multiplatform.Actual
+Warning: com.intellij.util.text.JvmKt: can't find referenced class fleet.util.multiplatform.Actual
+Warning: com.intellij.util.ui.EDT: can't find referenced method 'void invoke(java.awt.AWTEvent)' in library class java.lang.invoke.MethodHandle
+Warning: there were 18 unresolved references to classes or interfaces.
+         You may need to add missing library jars or update their versions.
+         If your code works fine without the missing classes, you can suppress
+         the warnings with '-dontwarn' options.
+         (https://www.guardsquare.com/proguard/manual/troubleshooting#unresolvedclass)
+Warning: there were 27 unresolved references to library class members.
+         You probably need to update the library versions.
+         Alternatively, you may have to specify the option 
+         '-dontskipnonpubliclibraryclassmembers'.
+         (https://www.guardsquare.com/proguard/manual/troubleshooting#unresolvedlibraryclassmember)

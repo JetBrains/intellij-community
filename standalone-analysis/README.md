@@ -41,6 +41,13 @@ The smoke test verifies the IntelliJ Standalone Analysis artifacts can analyze J
 ./bazel.cmd test @community//standalone-analysis/platform-smoke:smoke_test @community//standalone-analysis/java-smoke:smoke_test
 ```
 
+The classpath check verifies that the classpath of each layer has no unexpected broken references (e.g., because of missing library
+dependencies):
+
+```bash
+./bazel.cmd test @community//standalone-analysis/classpath-test:tests
+```
+
 ## How to use
 
 Use `JavaCoreApplicationEnvironment` and `JavaCoreProjectEnvironment` (or their language-agnostic alternatives, `CoreApplicationEnvironment`

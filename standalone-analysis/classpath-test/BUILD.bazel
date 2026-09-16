@@ -1,0 +1,81 @@
+load("@rules_java//java:defs.bzl", "java_binary", "java_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load(":classpath.bzl", "standalone_classpath")
+
+LAYERS = {
+    "platform-api": ("//standalone-analysis/platform-api:standaloneAnalysis-platform", []),
+    "platform-impl": (
+        "//standalone-analysis/platform-impl:standaloneAnalysis-platform-impl",
+        ["//standalone-analysis/platform-api:standaloneAnalysis-platform"],
+    ),
+    "java-api": (
+        "//standalone-analysis/java-api:standaloneAnalysis-java",
+        ["//standalone-analysis/platform-api:standaloneAnalysis-platform"],
+    ),
+    "java-impl": (
+        "//standalone-analysis/java-impl:standaloneAnalysis-java-impl",
+        [
+            "//standalone-analysis/java-api:standaloneAnalysis-java",
+            "//standalone-analysis/platform-impl:standaloneAnalysis-platform-impl",
+        ],
+    ),
+}
+
+[
+    standalone_classpath(
+        name = layer + "_classpath",
+        testonly = True,
+        layer = target,
+        lower_layers = lower_layers,
+    )
+    for layer, (target, lower_layers) in LAYERS.items()
+]
+
+[
+    java_test(
+        name = layer + "_test",
+        size = "medium",
+        args = [
+            "$(rootpath :proguard)",
+            "$(rootpath :" + layer + "_classpath)",
+            "$(rootpath :proguard.pro)",
+            "$(rootpath :" + layer + ".txt)",
+        ],
+        data = [
+            ":proguard",
+            ":" + layer + "_classpath",
+            "proguard.pro",
+            layer + ".txt",
+        ],
+        main_class = "org.jetbrains.intellij.standalone.StandaloneClasspathTestKt",
+        tags = ["community-aggregator"],
+        use_testrunner = False,
+        runtime_deps = [":test_runner"],
+    )
+    for layer in LAYERS
+]
+
+test_suite(
+    name = "tests",
+    tests = [layer + "_test" for layer in LAYERS],
+    visibility = ["//visibility:public"],
+)
+
+jvm_library(
+    name = "test_runner",
+    testonly = True,
+    srcs = ["StandaloneClasspathTest.kt"],
+    deps = ["@lib//:kotlin-stdlib"],
+)
+
+java_binary(
+    name = "proguard",
+    testonly = True,
+    main_class = "proguard.ProGuard",
+    resource_strip_prefix = "standalone-analysis/classpath-test",
+    resources = ["log4j2.xml"],
+    runtime_deps = [
+        "@lib//:kotlin-stdlib",
+        "@lib//:platform-build_scripts-code_optimizer-proguard",
+    ],
+)
