@@ -2,7 +2,6 @@
 
 package com.intellij.psi.util;
 
-import com.intellij.codeInsight.multiverse.CodeInsightContext;
 import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
@@ -92,8 +91,7 @@ public final class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
   public static @Nullable PsiElement getElementAtCaret(@NotNull Editor editor) {
     Project project = editor.getProject();
     if (project == null) return null;
-    CodeInsightContext context = EditorContextManager.getEditorContext(editor, project);
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument(), context);
+    PsiFile file = EditorContextManager.getPsiFileForEditor(editor, project);
     return file == null ? null : file.findElementAt(editor.getCaretModel().getOffset());
   }
 
@@ -104,8 +102,7 @@ public final class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
   public static @Nullable PsiFile getPsiFileInEditor(@NotNull Caret caret, final @NotNull Project project) {
     Editor editor = caret.getEditor();
     assertEditorAndProjectConsistent(project, editor);
-    CodeInsightContext context = EditorContextManager.getEditorContext(editor, project);
-    PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument(), context);
+    PsiFile psiFile = EditorContextManager.getPsiFileForEditor(editor, project);
     if (psiFile == null) return null;
 
     // PsiUtilCore.ensureValid: throws because PsiFileImpl.isValid returns false

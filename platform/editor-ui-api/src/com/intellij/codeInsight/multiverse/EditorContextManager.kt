@@ -5,6 +5,8 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiFile
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
@@ -43,6 +45,13 @@ interface EditorContextManager {
       }
       val editorContextManager = getInstance(project)
       return editorContextManager.getCachedEditorContexts(editor)?.mainContext
+    }
+
+    @ApiStatus.Internal
+    @JvmStatic
+    fun getPsiFileForEditor(editor: Editor, project: Project): PsiFile? {
+      val context = getEditorContext(editor, project)
+      return PsiDocumentManager.getInstance(project).getPsiFile(editor.document, context)
     }
   }
 

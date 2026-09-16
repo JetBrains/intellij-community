@@ -22,7 +22,6 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SyntaxTraverser
@@ -72,8 +71,7 @@ abstract class RenameAwareReferencesCodeVisionProvider : CodeVisionProvider<Noth
   private fun recomputeLenses(editor: Editor, project: Project, stamp: Long?, cacheService: CodeVisionCacheService): CodeVisionState {
     if (DumbService.isDumb(project)) return CodeVisionState.READY_EMPTY
 
-    val mainContext = EditorContextManager.getEditorContext(editor, project)
-    val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document, mainContext) ?: return CodeVisionState.READY_EMPTY
+    val file = EditorContextManager.getPsiFileForEditor(editor, project) ?: return CodeVisionState.READY_EMPTY
 
     if (file.project.isDefault) return CodeVisionState.READY_EMPTY
     if (!acceptsFile(file)) return CodeVisionState.READY_EMPTY

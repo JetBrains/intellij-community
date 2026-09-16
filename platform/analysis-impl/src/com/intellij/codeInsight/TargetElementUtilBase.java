@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
-import com.intellij.codeInsight.multiverse.CodeInsightContext;
 import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
@@ -13,7 +12,6 @@ import com.intellij.pom.PomDeclarationSearcher;
 import com.intellij.pom.PomTarget;
 import com.intellij.pom.PsiDeclaredTarget;
 import com.intellij.pom.references.PomService;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
@@ -192,8 +190,7 @@ public final class TargetElementUtilBase {
     if (project == null) return null;
 
     Document document = editor.getDocument();
-    CodeInsightContext context = EditorContextManager.getEditorContext(editor, project);
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document, context);
+    PsiFile file = EditorContextManager.getPsiFileForEditor(editor, project);
     if (file == null) return null;
 
     PsiReference ref = file.findReferenceAt(adjustOffset(file, document, offset));
@@ -225,8 +222,7 @@ public final class TargetElementUtilBase {
     if (project == null) return null;
 
     Document document = editor.getDocument();
-    CodeInsightContext context = EditorContextManager.getEditorContext(editor, project);
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document, context);
+    PsiFile file = EditorContextManager.getPsiFileForEditor(editor, project);
     if (file == null) return null;
 
     int adjusted = adjustOffset(file, document, offset);

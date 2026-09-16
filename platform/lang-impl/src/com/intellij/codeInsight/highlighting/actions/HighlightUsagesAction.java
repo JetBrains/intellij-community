@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.highlighting.actions;
 
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
-import com.intellij.codeInsight.multiverse.CodeInsightContext;
 import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -17,7 +16,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -50,8 +48,7 @@ public final class HighlightUsagesAction extends AnAction implements DumbAware {
       project,
       () -> {
 
-        CodeInsightContext context = EditorContextManager.getEditorContext(editor, project);
-        PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument(), context);
+        PsiFile psiFile = EditorContextManager.getPsiFileForEditor(editor, project);
         try {
           HighlightUsagesHandler.invoke(project, editor, psiFile);
         }

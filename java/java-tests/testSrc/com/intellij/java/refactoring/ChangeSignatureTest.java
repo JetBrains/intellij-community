@@ -2,10 +2,8 @@
 package com.intellij.java.refactoring;
 
 import com.intellij.codeInsight.TargetElementUtil;
-import com.intellij.codeInsight.multiverse.CodeInsightContext;
 import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.CommonClassNames;
@@ -13,7 +11,6 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiCall;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiEllipsisType;
 import com.intellij.psi.PsiFile;
@@ -62,10 +59,8 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
   
   private PsiElement findCalledElement() {
     Editor editor = getEditor();
-    Document document = editor.getDocument();
     Project project = getProject();
-    CodeInsightContext context = EditorContextManager.getEditorContext(editor, project);
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document, context);
+    PsiFile file = EditorContextManager.getPsiFileForEditor(editor, project);
     if (file == null) return null;
     int offset = editor.getCaretModel().getOffset();
     PsiElement element = file.findElementAt(offset);
