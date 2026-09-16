@@ -50,7 +50,6 @@
 
     <codeInsight.lineMarkerProvider language="kotlin"
                                     implementationClass="com.intellij.compose.ide.plugin.k2.K2ComposeColorLineMarkerProviderDescriptor"/>
-    <lang.foldingBuilder language="kotlin" implementationClass="com.intellij.compose.ide.plugin.k2.K2ComposeFoldingBuilder"/>
 
     <localInspection implementationClass="com.intellij.compose.ide.plugin.k2.inspections.K2ComposeMissingPluginInspection"
                      language="kotlin"
