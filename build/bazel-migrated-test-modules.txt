@@ -6,7 +6,6 @@ language-server.*
 intellij.air.frontend.session.view.tests
 intellij.ant.tests
 intellij.commander.tests
-intellij.community.wintools.tests
 intellij.completionMlRanking.tests
 intellij.completionMlRankingModels.tests
 intellij.configurationScript.test.java

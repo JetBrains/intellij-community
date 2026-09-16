@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/wintools/intellij.community.wintools.tests.iml" filepath="$PROJECT_DIR$/wintools/intellij.community.wintools.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/subtools/intellij.community.subtools.tests.iml" filepath="$PROJECT_DIR$/subtools/intellij.community.subtools.tests.iml" />
     </modules>
   </component>
 </project>

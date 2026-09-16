@@ -157,7 +157,7 @@ private object WindowsProcessMetrics {
       val callState = arena.allocate(WindowsKernel32.CALL_STATE)
       val process = WindowsKernel32.openProcess(callState, WindowsKernel32.PROCESS_QUERY_LIMITED_INFORMATION, pid)
       if (process.address() == 0L) {
-        LOG.debug { "OpenProcess failed for the process $pid: ${WindowsKernel32.lastError(callState)}" }
+        LOG.debug { "OpenProcess failed for the process $pid: ${WindowsError.prettyHRESULT(WindowsKernel32.lastError(callState))}" }
         return null
       }
       try {

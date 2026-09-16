@@ -1,0 +1,35 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.community.subtools.tests` start
+jvm_library(
+    name = "subtools-tests",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.community.subtools.tests",
+    visibility = ["//visibility:public"],
+)
+
+jvm_library(
+    name = "subtools-tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k21",
+    module_name = "intellij.community.subtools.tests",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":subtools-tests"],
+)
+### auto-generated section `build intellij.community.subtools.tests` end
+
+### auto-generated section `iml intellij.community.subtools.tests` start
+exports_files(
+    [
+        "intellij.community.subtools.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.community.subtools.tests` end

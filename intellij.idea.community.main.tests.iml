@@ -112,7 +112,6 @@
     <orderEntry type="module" module-name="intellij.platform.whatsNew" scope="TEST" />
     <orderEntry type="module" module-name="intellij.remoteDev.util" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.inspect" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.community.wintools" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.execService" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.pyproject" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.indexing.tests" scope="TEST" />
@@ -175,7 +174,6 @@
     <orderEntry type="module" module-name="intellij.platform.concurrency.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.ant.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.commander.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.community.wintools.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.copyright.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.devkit.apiDump.lang.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.devkit.debugger.tests" scope="TEST" />

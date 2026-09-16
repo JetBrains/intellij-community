@@ -372,7 +372,7 @@ fun TestFixture<Module>.sourceRootFixture(
 }
 
 /**
- * [directory] might be locked on Windows. Before using `com.intellij.community.wintools` to unlock it, we try to wait a little
+ * [directory] might be locked on Windows. Before using `com.intellij.util.system.WindowsFileLocks` to unlock it, we try to wait a little
  */
 private suspend fun doBestDeletingDirectory(directory: Path): Unit = withContext(Dispatchers.IO) {
   for (i in (0..10)) {

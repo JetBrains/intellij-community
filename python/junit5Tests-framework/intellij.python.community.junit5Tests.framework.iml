@@ -35,7 +35,7 @@
     <orderEntry type="module" module-name="intellij.libraries.mockk.jvm" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.jna" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlin-stdlib" level="project" />
-    <orderEntry type="module" module-name="intellij.community.wintools" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util.ex" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.system.stubs.jupiter" exported="" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.testcontainers" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.analysis" scope="TEST" />

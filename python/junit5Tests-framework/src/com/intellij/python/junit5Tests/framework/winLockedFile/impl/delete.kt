@@ -1,10 +1,10 @@
 package com.intellij.python.junit5Tests.framework.winLockedFile.impl
 
-import com.intellij.community.wintools.WinProcessInfo
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.python.junit5Tests.framework.winLockedFile.FileLockedException
 import com.intellij.python.junit5Tests.framework.winLockedFile.getProcessLockedPath
+import com.intellij.util.system.WindowsProcessInfo
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
@@ -34,12 +34,12 @@ internal fun deleteCheckLockingImpl(path: Path, vararg processesToKill: Regex) {
         val command = process.info().command().getOrNull() ?: continue
         val fileName = Path.of(command).fileName.toString()
         if (processesToKill.any { it.matches(fileName) }) {
-          val processInfo = WinProcessInfo.get(process.pid())
+          val processInfo = WindowsProcessInfo.get(process.pid())
           fileLogger.warn("Killing ${process.pid()} ${processInfo}")
           killProcess(process)
         }
         else {
-          fileLogger.warn("Process ${WinProcessInfo.get(process.pid())} locks file $child, but I can't kill it as it doesnt match ${processesToKill.joinToString(",")}")
+          fileLogger.warn("Process ${WindowsProcessInfo.get(process.pid())} locks file $child, but I can't kill it as it doesnt match ${processesToKill.joinToString(",")}")
         }
       }
     }

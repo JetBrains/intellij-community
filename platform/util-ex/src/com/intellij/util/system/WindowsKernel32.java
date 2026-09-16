@@ -15,6 +15,7 @@ import java.lang.invoke.VarHandle;
 
 import static java.lang.foreign.ValueLayout.ADDRESS;
 import static java.lang.foreign.ValueLayout.JAVA_INT;
+import static java.lang.foreign.ValueLayout.JAVA_LONG;
 
 /**
  * The {@code kernel32.dll} downcalls that more than one class needs. Windows only: the first call loads the library.
@@ -32,6 +33,8 @@ public final class WindowsKernel32 {
 
   /** {@code FILE_READ_ATTRIBUTES} */
   public static final int FILE_READ_ATTRIBUTES = 0x80;
+  /** {@code FILE_SHARE_READ} */
+  public static final int FILE_SHARE_READ = 0x1;
   /** {@code FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE} */
   public static final int FILE_SHARE_ALL = 0x1 | 0x2 | 0x4;
   /** {@code OPEN_EXISTING} */
@@ -39,8 +42,12 @@ public final class WindowsKernel32 {
   /** {@code FILE_FLAG_BACKUP_SEMANTICS}: a directory does not open without this flag. */
   public static final int FILE_FLAG_BACKUP_SEMANTICS = 0x02000000;
 
+  /** {@code PROCESS_QUERY_INFORMATION} */
+  public static final int PROCESS_QUERY_INFORMATION = 0x0400;
   /** {@code PROCESS_QUERY_LIMITED_INFORMATION}: enough for a memory query since Windows 8.1. */
   public static final int PROCESS_QUERY_LIMITED_INFORMATION = 0x1000;
+  /** {@code PROCESS_VM_READ} */
+  public static final int PROCESS_VM_READ = 0x0010;
 
   /**
    * The layout of the state that a call captures. Allocate one segment of it per call sequence, and read it
@@ -89,11 +96,41 @@ public final class WindowsKernel32 {
     }
   }
 
+  /**
+   * {@code BOOL ReadProcessMemory(HANDLE process, LPCVOID address, LPVOID buffer, SIZE_T size, SIZE_T* read)},
+   * which reads the whole block or nothing.
+   *
+   * @return {@code true} when the call filled {@code buffer}
+   */
+  @ApiStatus.Internal
+  public static boolean readProcessMemory(
+    @NotNull MemorySegment callState, @NotNull MemorySegment process, @NotNull MemorySegment address,
+    @NotNull MemorySegment buffer, long size
+  ) {
+    try {
+      return (int)Handles.READ_PROCESS_MEMORY.invokeExact(callState, process, address, buffer, size, MemorySegment.NULL) != 0;
+    }
+    catch (Throwable t) {
+      throw new IllegalStateException(t);
+    }
+  }
+
   /** {@code BOOL CloseHandle(HANDLE)}. @return {@code true} when the call closed the handle */
   @ApiStatus.Internal
   public static boolean closeHandle(@NotNull MemorySegment handle) {
     try {
       return (int)Handles.CLOSE_HANDLE.invokeExact(handle) != 0;
+    }
+    catch (Throwable t) {
+      throw new IllegalStateException(t);
+    }
+  }
+
+  /** {@code HLOCAL LocalFree(HLOCAL)}. @return {@code true} when the call released the block */
+  @ApiStatus.Internal
+  public static boolean localFree(@NotNull MemorySegment block) {
+    try {
+      return ((MemorySegment)Handles.LOCAL_FREE.invokeExact(block)).address() == 0;
     }
     catch (Throwable t) {
       throw new IllegalStateException(t);
@@ -115,7 +152,14 @@ public final class WindowsKernel32 {
     static final MethodHandle OPEN_PROCESS = LINKER.downcallHandle(
       KERNEL32.findOrThrow("OpenProcess"), FunctionDescriptor.of(ADDRESS, JAVA_INT, JAVA_INT, JAVA_INT), CAPTURE_LAST_ERROR);
 
+    static final MethodHandle READ_PROCESS_MEMORY = LINKER.downcallHandle(
+      KERNEL32.findOrThrow("ReadProcessMemory"),
+      FunctionDescriptor.of(JAVA_INT, ADDRESS, ADDRESS, ADDRESS, JAVA_LONG, ADDRESS), CAPTURE_LAST_ERROR);
+
     static final MethodHandle CLOSE_HANDLE = LINKER.downcallHandle(
       KERNEL32.findOrThrow("CloseHandle"), FunctionDescriptor.of(JAVA_INT, ADDRESS));
+
+    static final MethodHandle LOCAL_FREE = LINKER.downcallHandle(
+      KERNEL32.findOrThrow("LocalFree"), FunctionDescriptor.of(ADDRESS, ADDRESS));
   }
 }
