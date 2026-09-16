@@ -1,8 +1,30 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.kotlin.jsr223` start
+content_module_jar(module = ":jsr223")
+### auto-generated section `dev intellij.kotlin.jsr223` end
+
 ### auto-generated section `build intellij.kotlin.jsr223` start
+create_kotlinc_options(
+    name = "custom_jsr223",
+    opt_in = [
+        "org.jetbrains.kotlin.psi.KtExperimentalApi",
+        "org.jetbrains.kotlin.psi.KtNonPublicApi",
+        "org.jetbrains.kotlin.psi.KtIdeApi",
+        "org.jetbrains.kotlin.analysis.api.KaExperimentalApi",
+        "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+        "org.jetbrains.kotlin.analysis.api.KaPlatformInterface",
+        "org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaUnstableDiagnosticApi",
+        "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
+        "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+        "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+    ],
+    x_context_parameters = True,
+)
+
 jvm_library(
     name = "jsr223",
     srcs = glob(
@@ -13,6 +35,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    kotlinc_opts = ":custom_jsr223",
     module_name = "intellij.kotlin.jsr223",
     resource_strip_prefix = "resources",
     resources = glob(
@@ -31,40 +54,25 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":jsr223")
-
 jvm_library(
     name = "jsr223_test_lib",
     testonly = True,
     srcs = glob(
-        [
-            "testSrc/**/*.kt",
-            "testSrc/**/*.java",
-            "testSrc/**/*.form",
-        ],
+        [],
         allow_empty = True,
     ),
-    associates = [":jsr223"],
+    kotlinc_opts = ":custom_jsr223",
+    module_name = "intellij.kotlin.jsr223",
     visibility = ["//visibility:public"],
-    runtime_deps = ["//platform/platform-util-io:ide-util-io_test_lib"],
-    deps = [
+    runtime_deps = [
         # do not sort,
-        "@lib//:kotlin-stdlib",
-        "//platform/core-api:core",
+        ":jsr223",
         "//platform/core-api:core_test_lib",
-        "//platform/util",
         "//platform/util:util_test_lib",
-        "//platform/platform-util-io:ide-util-io",
-        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//platform/platform-util-io:ide-util-io_test_lib",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
-        "//libraries/kotlinc/kotlin-script-runtime:libraries-kotlinc-kotlin-script-runtime",
         "//libraries/kotlinc/kotlin-script-runtime:libraries-kotlinc-kotlin-script-runtime_test_lib",
-        "//libraries/kotlinc/kotlin-scripting-jvm:libraries-kotlinc-kotlin-scripting-jvm",
         "//libraries/kotlinc/kotlin-scripting-jvm:libraries-kotlinc-kotlin-scripting-jvm_test_lib",
-        "//libraries/junit5",
-        "//libraries/junit5:junit5_test_lib",
-        "//libraries/junit5-jupiter",
-        "//libraries/junit5-jupiter:junit5-jupiter_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.jsr223` end
@@ -79,9 +87,77 @@ exports_files(
 )
 ### auto-generated section `iml intellij.kotlin.jsr223` end
 
-### auto-generated section `test intellij.kotlin.jsr223` start
-jps_test(
-    name = "jsr223_test",
-    runtime_deps = [":jsr223_test_lib"],
+### auto-generated section `build intellij.kotlin.jsr223.tests` start
+create_kotlinc_options(
+    name = "custom_jsr223-tests",
+    opt_in = [
+        "org.jetbrains.kotlin.psi.KtExperimentalApi",
+        "org.jetbrains.kotlin.psi.KtNonPublicApi",
+        "org.jetbrains.kotlin.psi.KtIdeApi",
+        "org.jetbrains.kotlin.analysis.api.KaExperimentalApi",
+        "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+        "org.jetbrains.kotlin.analysis.api.KaPlatformInterface",
+        "org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaUnstableDiagnosticApi",
+        "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
+        "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+        "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+    ],
+    x_context_parameters = True,
 )
-### auto-generated section `test intellij.kotlin.jsr223` end
+
+jvm_library(
+    name = "jsr223-tests",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.kotlin.jsr223.tests",
+    visibility = ["//visibility:public"],
+)
+
+jvm_library(
+    name = "jsr223-tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testSrc/**/*.kt",
+            "testSrc/**/*.java",
+            "testSrc/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = [
+        "//plugins/kotlin/jsr223",
+        "//plugins/kotlin/jsr223:jsr223_test_lib",
+    ],
+    kotlinc_opts = ":custom_jsr223-tests",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":jsr223-tests"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "//libraries/junit5-jupiter",
+        "//libraries/junit5-jupiter:junit5-jupiter_test_lib",
+    ],
+)
+### auto-generated section `build intellij.kotlin.jsr223.tests` end
+
+### auto-generated section `iml intellij.kotlin.jsr223.tests` start
+exports_files(
+    [
+        "intellij.kotlin.jsr223.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.kotlin.jsr223.tests` end
+
+### auto-generated section `test intellij.kotlin.jsr223.tests` start
+jps_test(
+    name = "jsr223-tests_test",
+    runtime_deps = [":jsr223-tests_test_lib"],
+)
+### auto-generated section `test intellij.kotlin.jsr223.tests` end
