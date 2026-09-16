@@ -41,6 +41,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -52,7 +53,7 @@ public final class PsiCopyPasteManager {
 
   private static final Logger LOG = Logger.getInstance(PsiCopyPasteManager.class);
 
-  private MyData myRecentData;
+  private volatile MyData myRecentData;
   private final CopyPasteManagerEx myCopyPasteManager;
 
   public PsiCopyPasteManager() {
@@ -153,7 +154,7 @@ public final class PsiCopyPasteManager {
   static final class MyData {
     final Project project;
     final boolean isCopied;
-    final List<SmartPsiElementPointer<?>> pointers = new ArrayList<>();
+    final List<SmartPsiElementPointer<?>> pointers = new CopyOnWriteArrayList<>();
     final String names;
     final List<File> files;
 

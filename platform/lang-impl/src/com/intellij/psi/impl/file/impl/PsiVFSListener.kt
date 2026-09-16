@@ -28,7 +28,7 @@ internal class PsiVFSListener(private val project: Project) {
   private val myProjectRootManager: ProjectRootManager = ProjectRootManager.getInstance(project)
   private val manager = PsiManagerEx.getInstanceEx(project)
   private val fileManager = manager.fileManager as FileManagerEx
-  private var reportedUnloadedPsiChange = false
+  @Volatile private var reportedUnloadedPsiChange = false
 
   private fun fileCreated(vFile: VirtualFile) {
     runWriteActionWithExternalChange {
