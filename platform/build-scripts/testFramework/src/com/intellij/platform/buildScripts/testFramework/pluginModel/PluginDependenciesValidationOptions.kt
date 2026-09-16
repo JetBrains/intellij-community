@@ -65,6 +65,22 @@ data class PluginDependenciesValidationOptions(
   val pluginsToIgnore: Set<String> = emptySet(),
 
   /**
+   * Names the content modules that the product must load.
+   * The validator reports such a module when the plugin set leaves it out because one of its own dependencies is absent.
+   * A module excluded after an excluded plugin, or after an excluded module in this set, is reported at that plugin or module.
+   * A module excluded after an excluded module outside this set is reported at itself.
+   * Any other content module may stay out silently, which is the normal fate of an optional content module.
+   */
+  val contentModulesThatMustLoad: (contentModuleName: String) -> Boolean = { false },
+
+  /**
+   * Names the content modules whose own exclusion the validator accepts as the root of an exclusion chain.
+   * A module from [contentModulesThatMustLoad] that is excluded after such a root is not reported.
+   * Use it for a root that the product supplies at runtime in a way the static plugin model does not see.
+   */
+  val toleratedExclusionRoots: Set<String> = emptySet(),
+
+  /**
    * Checks that each used extension point is declared in the same runtime dependency tree.
    */
   val checkExtensionPointDependencies: Boolean = true,

@@ -169,13 +169,31 @@ class PluginDependenciesValidator private constructor(
     for (plugin in pluginSet.resolvedPluginSet.candidateSet.plugins) {
       pluginSet.resolvedPluginSet.getExclusionReason(plugin)?.let(::report)
       for (descriptor in plugin.sequenceAllDescriptors()) {
-        val reason = pluginSet.resolvedPluginSet.getExclusionReason(descriptor)
-        if (reason is PackagePrefixConflictWithAnotherModule) {
+        val reason = pluginSet.resolvedPluginSet.getExclusionReason(descriptor) ?: continue
+        if (reason is PackagePrefixConflictWithAnotherModule || isUnexplainedExclusionOfModuleThatMustLoad(descriptor, pluginSet.resolvedPluginSet)) {
           report(reason)
         }
       }
     }
   }
+
+  /**
+   * True for a content module that [PluginDependenciesValidationOptions.contentModulesThatMustLoad] names and that no earlier link of its
+   * exclusion chain explains. An excluded plugin is always reported. An excluded module that must load too is reported here.
+   * A chain root from [PluginDependenciesValidationOptions.toleratedExclusionRoots] explains the exclusion.
+   */
+  private fun isUnexplainedExclusionOfModuleThatMustLoad(descriptor: IdeaPluginDescriptorImpl, resolvedPluginSet: ResolvedPluginSet): Boolean {
+    if (!descriptor.mustLoad()) {
+      return false
+    }
+    val precedingLinks = descriptor.sequenceDescriptorExclusionChain(resolvedPluginSet::getExclusionReason).drop(1).toList()
+    if (precedingLinks.any { it is PluginMainDescriptor || it.mustLoad() }) {
+      return false
+    }
+    return precedingLinks.lastOrNull()?.contentModuleName !in options.toleratedExclusionRoots
+  }
+
+  private fun IdeaPluginDescriptorImpl.mustLoad(): Boolean = contentModuleName?.let(options.contentModulesThatMustLoad) == true
 
   private fun DescriptorExclusionReason.isIgnoredByBuildValidation(): Boolean = when (this) {
     is ExcludedByEnvironmentConfiguration,
