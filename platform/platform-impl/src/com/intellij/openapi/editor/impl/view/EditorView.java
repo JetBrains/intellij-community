@@ -678,9 +678,9 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     if (myEditor.isCurrentlyBuildingCache()) {
       return;
     }
-    EditorViewSnapshot snapshot = mySnapshot;
-    if (snapshot.paintCallback != null) {
-      snapshot.paintCallback.run();
+    Runnable callback = mySnapshot.paintCallback;
+    if (callback != null) {
+      callback.run();
     }
   }
 
