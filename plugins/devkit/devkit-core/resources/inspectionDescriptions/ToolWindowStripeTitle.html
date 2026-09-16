@@ -1,0 +1,77 @@
+<html>
+<body>
+Reports a <code>toolwindow.stripe.*</code> key that the platform cannot read.
+<p>
+  The inspection highlights both ends of the problem: the <code>id</code> attribute of the
+  <code>&lt;toolWindow&gt;</code> extension, and the key in the resource bundle.
+</p>
+
+<h4>How a stripe title works</h4>
+<p>
+  A tool window shows its stripe title on the stripe button. The platform builds the key from the tool window ID.
+  It adds the prefix <code>toolwindow.stripe.</code> and replaces every space with an underscore. The tool window
+  <code>Version Control</code> therefore needs the key <code>toolwindow.stripe.Version_Control</code>.
+</p>
+<p>
+  The platform reads that key from <b>one</b> bundle. It never searches other bundles. Two rules decide which
+  bundle it reads:
+</p>
+<ul>
+  <li>The core plugin owns the module, so the platform reads <code>messages.IdeBundle</code>. It ignores the
+    bundle that the descriptor declares.
+  </li>
+  <li>A plugin owns the module, so the platform reads the <code>&lt;resource-bundle&gt;</code> of the descriptor
+    that declares the <code>&lt;toolWindow&gt;</code> extension.
+  </li>
+</ul>
+<p>
+  A content module does not inherit <code>&lt;resource-bundle&gt;</code> from the <code>plugin.xml</code> of its
+  plugin. Each content module declares its own bundle. A descriptor without a declaration gets no bundle, and the
+  platform then reads no stripe title at all.
+</p>
+
+<h4>Why the problem is easy to miss</h4>
+<p>
+  A missing key is silent. The platform falls back to the tool window ID, and it logs nothing. The stripe looks
+  correct in English, because the ID often reads like the title. The title stays untranslated in every language
+  pack.
+</p>
+<p>
+  This commonly happens after a module moves out of the platform into a plugin. The key stays in
+  <code>messages.IdeBundle</code>, which the platform no longer reads for that module.
+</p>
+
+<h4>How to fix it</h4>
+<p>
+  Choose one of two changes:
+</p>
+<ul>
+  <li>Move the key into the bundle that the descriptor declares.</li>
+  <li>Declare the bundle that already holds the key. Add
+    <code>&lt;resource-bundle&gt;messages.MyBundle&lt;/resource-bundle&gt;</code> to the descriptor.
+  </li>
+</ul>
+<p>
+  Before you change a declaration, check every other element in the descriptor that needs a bundle. An
+  <code>&lt;actions&gt;</code> block, a configurable, a notification group, an inspection and an advanced setting
+  can all use the declared bundle. Pin each one with its own <code>bundle</code> or <code>resource-bundle</code>
+  attribute, or move its keys too.
+</p>
+
+<h4>When the inspection stays silent</h4>
+<ul>
+  <li>No bundle holds the key. Then there is nothing to move. Add the key to the bundle that the descriptor
+    declares.
+  </li>
+  <li>The factory sets the title itself. <code>ToolWindowFactory.init()</code> can call
+    <code>setStripeTitle</code> or <code>setStripeTitleProvider</code>. That call runs after the platform installs
+    the bundle-derived title, so it wins, and the bundle does not matter.
+    A call to <code>setStripeShortTitleProvider</code> does not count. The short title is a separate string, and
+    the stripe title still comes from the bundle.
+  </li>
+  <li>The owner of the descriptor is unclear. The inspection reports a problem only when it can prove which
+    bundle the platform reads.
+  </li>
+</ul>
+</body>
+</html>
