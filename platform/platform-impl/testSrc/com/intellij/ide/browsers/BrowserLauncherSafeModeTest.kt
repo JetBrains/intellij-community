@@ -94,8 +94,19 @@ class BrowserLauncherSafeModeTest {
   }
 
   @Test
+  fun `the helper is active by default`(): Unit = timeoutRunBlocking {
+    // the registry key is on by default, so the test does not touch it
+    val project = projectFixture.get()
+
+    val file = createOutsideFile("default.html")
+    TrustedFiles.markExternallyOpened(file)
+
+    assertEquals(file, BrowserLauncherImpl.findStandaloneFile(project, fileUrl(file)))
+  }
+
+  @Test
   fun `the helper is inactive while the safe mode is off`(): Unit = timeoutRunBlocking {
-    // the registry key is off by default
+    Registry.get(TrustedFiles.SAFE_MODE_REGISTRY_KEY).setValue(false, asDisposable())
     val project = projectFixture.get()
 
     val file = createOutsideFile("off.html")
