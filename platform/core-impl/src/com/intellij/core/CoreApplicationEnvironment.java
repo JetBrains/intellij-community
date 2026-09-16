@@ -93,17 +93,17 @@ public class CoreApplicationEnvironment {
     this(parentDisposable, true);
   }
 
-  public CoreApplicationEnvironment(@NotNull Disposable parentDisposable, boolean unitTestMode) {
-    this(parentDisposable, unitTestMode, false);
+  public CoreApplicationEnvironment(@NotNull Disposable parentDisposable, boolean isUnitTestMode) {
+    this(parentDisposable, isUnitTestMode, false);
   }
 
   /**
    * @param isHeadlessMode whether this environment is the application of a headless process, such as a compiler.
    *                       The option makes pool threads 'daemon' so the application can finish normally.
    */
-  public CoreApplicationEnvironment(@NotNull Disposable parentDisposable, boolean unitTestMode, boolean isHeadlessMode) {
+  public CoreApplicationEnvironment(@NotNull Disposable parentDisposable, boolean isUnitTestMode, boolean isHeadlessMode) {
     myParentDisposable = parentDisposable;
-    myUnitTestMode = unitTestMode;
+    myUnitTestMode = isUnitTestMode;
 
     if (isHeadlessMode) {
       AppScheduledExecutorService.configureForHeadlessProcess();
