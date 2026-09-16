@@ -457,7 +457,7 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
         notifyPsiTreeChangeListener(event, listener);
       }
       List<PsiTreeChangeListener> listeners = PsiTreeChangeListener.EP.getExtensions(myProject);
-      if (!myTreeChangeListeners.isEmpty() && !listeners.isEmpty()) {
+      if (!myTreeChangeListeners.isEmpty() || !listeners.isEmpty()) {
         runWriteActionOnEdtRegardlessOfCurrentThread(() -> {
           for (PsiTreeChangeListener listener : myTreeChangeListeners) {
             notifyPsiTreeChangeListener(event, listener);
