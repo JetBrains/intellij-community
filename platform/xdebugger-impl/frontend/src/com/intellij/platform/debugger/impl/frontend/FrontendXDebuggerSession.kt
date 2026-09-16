@@ -24,7 +24,9 @@ import com.intellij.platform.debugger.impl.frontend.frame.FrontendXExecutionStac
 import com.intellij.platform.debugger.impl.frontend.frame.FrontendXExecutionStackGroup
 import com.intellij.platform.debugger.impl.frontend.frame.FrontendXStackFrame
 import com.intellij.platform.debugger.impl.frontend.frame.FrontendXSuspendContext
+import com.intellij.platform.debugger.impl.frontend.storage.FrontendXExecutionStacksStorage
 import com.intellij.platform.debugger.impl.frontend.storage.FrontendXStackFramesStorage
+import com.intellij.platform.debugger.impl.frontend.storage.getOrCreateExecutionStack
 import com.intellij.platform.debugger.impl.frontend.storage.getOrCreateStackFrame
 import com.intellij.platform.debugger.impl.rpc.ErrorOccurredEvent
 import com.intellij.platform.debugger.impl.rpc.NewExecutionStackGroupsEvent
@@ -40,7 +42,6 @@ import com.intellij.platform.debugger.impl.rpc.XDebuggerSessionEvent
 import com.intellij.platform.debugger.impl.rpc.XDebuggerSessionTabDto
 import com.intellij.platform.debugger.impl.rpc.XDebuggerSessionTabInfo
 import com.intellij.platform.debugger.impl.rpc.XDebuggerSessionTabInfoCallback
-import com.intellij.platform.debugger.impl.rpc.XExecutionStackDto
 import com.intellij.platform.debugger.impl.rpc.XExecutionStackGroupsEvent
 import com.intellij.platform.debugger.impl.rpc.XSuspendContextDto
 import com.intellij.platform.debugger.impl.rpc.XValueMarkerId
@@ -333,7 +334,7 @@ class FrontendXDebuggerSession(
         val currentSuspendContext = getCurrentSuspendContext()
         val executionStackDto = executionStack
         if (currentSuspendContext != null && executionStackDto != null) {
-          currentExecutionStack = executionStackDto.toCurrentExecutionStack(currentSuspendContext)
+          currentExecutionStack = currentSuspendContext.getOrCreateExecutionStack(executionStackDto)
         }
         val newFrame = stackFrame?.let { currentSuspendContext?.getOrCreateStackFrame(it) }
         currentStackFrame.value = StackFrameUpdate.notifyChanged(newFrame)
@@ -347,13 +348,6 @@ class FrontendXDebuggerSession(
 
   private fun XDebuggerSessionEvent.EventWithState.updateState() {
     sessionStateFlow.value = state
-  }
-
-  /** The current stack stays when the ids match; the frames view compares stacks by id and keeps its thread then. */
-  private fun XExecutionStackDto.toCurrentExecutionStack(suspendContext: FrontendXSuspendContext): FrontendXExecutionStack {
-    val current = currentExecutionStack
-    if (current != null && current.id == executionStackId) return current
-    return FrontendXExecutionStack(this, project, suspendContext.lifetimeScope)
   }
 
   private fun clearSuspendContext() {
@@ -370,9 +364,7 @@ class FrontendXDebuggerSession(
     val suspendContextLifetimeScope = currentSuspendContext.lifetimeScope
     topSourcePosition = topSourcePositionDto?.sourcePosition()
 
-    val stack = executionStackDto?.let {
-      FrontendXExecutionStack(executionStackDto, project, suspendContextLifetimeScope)
-    }
+    val stack = executionStackDto?.let { currentSuspendContext.getOrCreateExecutionStack(it) }
     currentExecutionStack = stack
     currentSuspendContext.activeExecutionStack = stack
     isTopFrameSelected = stack != null
@@ -548,7 +540,7 @@ class FrontendXDebuggerSession(
 
   override fun computeRunningExecutionStacks(container: XSuspendContext.XExecutionStackGroupContainer) {
     val suspendContext = getCurrentSuspendContext()
-    val scope = suspendContext?.lifetimeScope ?: coroutineScope.childScopeForRunningExecutionStack()
+    val scope = suspendContext?.lifetimeScope ?: childScopeForRunningExecutionStack()
     scope.launch {
       durable {
         XDebugSessionApi.getInstance()
@@ -558,10 +550,9 @@ class FrontendXDebuggerSession(
     }
   }
 
-  private fun CoroutineScope.childScopeForRunningExecutionStack(): CoroutineScope {
-    return coroutineScope.childScopeCancelledOnSessionEvents("FrontendRunningExecutionStacksScope", this@FrontendXDebuggerSession).also {
-      coroutineContext.plus(FrontendXStackFramesStorage())
-    }
+  private fun childScopeForRunningExecutionStack(): CoroutineScope {
+    return coroutineScope.childScopeCancelledOnSessionEvents("FrontendRunningExecutionStacksScope", this)
+      .childScope("FrontendRunningExecutionStacksStorage", FrontendXStackFramesStorage() + FrontendXExecutionStacksStorage())
   }
 
   private fun getCurrentSuspendContext() = suspendContext.get()
@@ -731,7 +722,7 @@ private suspend fun Flow<XExecutionStackGroupsEvent>.collectExecutionStackGroupE
         container.errorOccurred(executionStackEvent.errorMessage)
       }
       is NewExecutionStacksEvent -> {
-        val feStacks = executionStackEvent.stacks.map { FrontendXExecutionStack(it, project, coroutineScope) }
+        val feStacks = executionStackEvent.stacks.map { coroutineScope.getOrCreateExecutionStack(it, project) }
         container.addExecutionStack(feStacks, executionStackEvent.last)
       }
       is NewExecutionStackGroupsEvent -> {
