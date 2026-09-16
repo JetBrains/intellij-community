@@ -27,6 +27,7 @@ import com.intellij.psi.impl.PsiFileFactoryImpl;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.psi.impl.PsiTreeChangePreprocessor;
+import com.intellij.psi.impl.PsiTreeChangePreprocessorBackgroundable;
 import com.intellij.psi.impl.ResolveScopeManager;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.psi.impl.file.PsiDirectoryFactoryImpl;
@@ -55,6 +56,8 @@ public class CoreProjectEnvironment {
     project = createProject(myEnvironment.getApplication().getPicoContainer(), myParentDisposable);
 
     CoreApplicationEnvironment.registerExtensionPoint(project.getExtensionArea(), PsiTreeChangePreprocessor.EP.getName(), PsiTreeChangePreprocessor.class);
+    CoreApplicationEnvironment.registerExtensionPoint(project.getExtensionArea(), PsiTreeChangePreprocessorBackgroundable.EP.getName(),
+                                                      PsiTreeChangePreprocessorBackgroundable.class);
     CoreApplicationEnvironment.registerExtensionPoint(project.getExtensionArea(), PsiTreeChangeListener.EP.getName(), PsiTreeChangeListener.class);
 
     preregisterServices();

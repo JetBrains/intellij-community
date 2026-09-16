@@ -122,6 +122,9 @@ f:com.intellij.psi.impl.PsiModificationTrackerImpl
 - com.intellij.psi.impl.PsiTreeChangePreprocessor
 - com.intellij.psi.util.PsiModificationTracker
 - *:incLanguageModificationCount(com.intellij.lang.Language):V
+*:com.intellij.psi.impl.PsiTreeChangePreprocessorBackgroundable
+- com.intellij.psi.impl.PsiTreeChangePreprocessor
+- sf:EP:com.intellij.openapi.extensions.ProjectExtensionPointName
 f:com.intellij.psi.impl.file.PsiFileImplUtil
 - *s:setNonPhysicalFileDeleteHandler(com.intellij.psi.PsiFile,java.util.function.Consumer):V
 com.intellij.psi.impl.file.impl.FileManager

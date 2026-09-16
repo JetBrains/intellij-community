@@ -458,6 +458,14 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
           LOG.error(PluginException.createByClass(e, preprocessor.getClass()));
         }
       }
+      for (PsiTreeChangePreprocessorBackgroundable preprocessor : PsiTreeChangePreprocessorBackgroundable.EP.getExtensions(myProject)) {
+        try {
+          preprocessor.treeChanged(event);
+        }
+        catch (Throwable e) {
+          LOG.error(e);
+        }
+      }
       if (isBeforeEvent || !myTreeChangePreprocessors.isEmpty() || !PsiTreeChangePreprocessor.EP.getExtensions(myProject).isEmpty()) {
         runWriteActionOnEdtRegardlessOfCurrentThread(() -> {
           if (isBeforeEvent) {

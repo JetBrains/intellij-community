@@ -21,6 +21,8 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiTreeChangeAdapter
 import com.intellij.psi.PsiTreeChangeEvent
 import com.intellij.testFramework.ExtensionTestUtil
+import com.intellij.testFramework.LoggedErrorProcessor
+import com.intellij.testFramework.LoggedErrorProcessor.Action
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.common.waitForAllDocumentsCommitted
 import com.intellij.testFramework.junit5.TestApplication
@@ -53,6 +55,10 @@ class DocumentCommitOnBackgroundTest {
     /** The same point as [PsiTreeChangePreprocessor.EP], but in the form that [ExtensionTestUtil] accepts. */
     val PREPROCESSOR_EP_NAME: ExtensionPointName<PsiTreeChangePreprocessor> =
       ExtensionPointName("com.intellij.psi.treeChangePreprocessor")
+
+    /** The same point as [PsiTreeChangePreprocessorBackgroundable.EP], but in the form that [ExtensionTestUtil] accepts. */
+    val PREPROCESSOR_BACKGROUNDABLE_EP_NAME: ExtensionPointName<PsiTreeChangePreprocessorBackgroundable> =
+      ExtensionPointName("com.intellij.psi.treeChangePreprocessorBackgroundable")
   }
 
   val file = sourceRoot.psiFileFixture("A.java", "class A {}")
@@ -88,6 +94,25 @@ class DocumentCommitOnBackgroundTest {
       recorder.recordUsage()
     }
   }
+
+  class RecordingTreeChangePreprocessorBackgroundable : PsiTreeChangePreprocessorBackgroundable {
+    val recorder = Recorder()
+
+    override fun treeChanged(event: PsiTreeChangeEventImpl) {
+      recorder.recordUsage()
+    }
+  }
+
+  class ThrowingTreeChangePreprocessorBackgroundable : PsiTreeChangePreprocessorBackgroundable {
+    val recorder = Recorder()
+
+    override fun treeChanged(event: PsiTreeChangeEventImpl) {
+      recorder.recordUsage()
+      throw ExpectedPreprocessorFailure()
+    }
+  }
+
+  class ExpectedPreprocessorFailure : RuntimeException("The expected failure of the throwing preprocessor")
 
   class RecordingDocumentTransactionListener : PsiDocumentTransactionListener {
     val recorder = Recorder()
@@ -325,7 +350,7 @@ class DocumentCommitOnBackgroundTest {
   }
 
   @Test
-  fun `an extension point preprocessor runs on EDT and an imperative backgroundable one runs in place`(
+  fun `the legacy preprocessor EP runs on EDT and the backgroundable channels run in place`(
     @TestDisposable testDisposable: Disposable,
   ) {
     Registry.get("document.async.commit.with.coroutines").setValue(true, testDisposable)
@@ -338,6 +363,11 @@ class DocumentCommitOnBackgroundTest {
 
     val backgroundablePreprocessor = RecordingTreeChangePreprocessor()
     psiManager.addTreeChangePreprocessorBackgroundable(backgroundablePreprocessor, testDisposable)
+
+    val backgroundableEpPreprocessor = RecordingTreeChangePreprocessorBackgroundable()
+    ExtensionTestUtil.maskExtensions(PREPROCESSOR_BACKGROUNDABLE_EP_NAME,
+                                     listOf<PsiTreeChangePreprocessorBackgroundable>(backgroundableEpPreprocessor), testDisposable, true,
+                                     project.get())
 
     invokeAndWaitIfNeeded {
       val file = file.get()
@@ -356,6 +386,50 @@ class DocumentCommitOnBackgroundTest {
     // Some events fire when dumb mode ends. They come from EDT, so a strict zero is not possible here.
     assertTrue(backgroundablePreprocessor.recorder.onEdt.get() < backgroundablePreprocessor.recorder.invoked.get(),
                "The backgroundable preprocessor must run in place, off EDT")
+
+    assertTrue(backgroundableEpPreprocessor.recorder.invoked.get() > 0, "The backgroundable extension point preprocessor got no event")
+    assertTrue(backgroundableEpPreprocessor.recorder.onEdt.get() < backgroundableEpPreprocessor.recorder.invoked.get(),
+               "The backgroundable extension point preprocessor must run in place, off EDT")
+  }
+
+  @Test
+  fun `a failing backgroundable extension point preprocessor is logged and does not stop the dispatch`(
+    @TestDisposable testDisposable: Disposable,
+  ) {
+    Registry.get("document.async.commit.with.coroutines").setValue(true, testDisposable)
+    val psiDocumentManager = PsiDocumentManager.getInstance(project.get())
+    val psiManager = PsiManagerEx.getInstanceEx(project.get())
+
+    val throwingPreprocessor = ThrowingTreeChangePreprocessorBackgroundable()
+    val nextPreprocessor = RecordingTreeChangePreprocessorBackgroundable()
+    ExtensionTestUtil.maskExtensions(PREPROCESSOR_BACKGROUNDABLE_EP_NAME,
+                                     listOf(throwingPreprocessor, nextPreprocessor), testDisposable, true, project.get())
+
+    val listener = RecordingTreeChangeListener()
+    psiManager.addPsiTreeChangeListenerBackgroundable(listener, testDisposable)
+
+    val loggedErrors = CopyOnWriteArrayList<Throwable?>()
+    LoggedErrorProcessor.executeWith<Throwable>(object : LoggedErrorProcessor() {
+      override fun processError(category: String, message: String, details: Array<String>, t: Throwable?): Set<Action> {
+        loggedErrors.add(t)
+        return Action.NONE
+      }
+    }) {
+      invokeAndWaitIfNeeded {
+        val file = file.get()
+        val document = psiDocumentManager.getDocument(file)!!
+        WriteCommandAction.runWriteCommandAction(project.get()) { document.insertString(0, "jkl") }
+        waitForAllDocumentsCommitted(10, TimeUnit.SECONDS)
+      }
+      DumbService.getInstance(project.get()).waitForSmartMode()
+    }
+
+    val invoked = throwingPreprocessor.recorder.invoked.get()
+    assertTrue(invoked > 0, "The throwing preprocessor got no event")
+    assertEquals(invoked, loggedErrors.size, "Each failure must be logged once, and nothing else must be logged: $loggedErrors")
+    assertTrue(loggedErrors.all { it is ExpectedPreprocessorFailure }, "Only the expected failure must be logged: $loggedErrors")
+    assertEquals(invoked, nextPreprocessor.recorder.invoked.get(), "The next preprocessor must get each event after the failure")
+    assertTrue(listener.recorder.invoked.get() > 0, "The listener must get the events after the failure")
   }
 
   @Test

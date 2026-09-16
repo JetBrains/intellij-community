@@ -22,6 +22,10 @@
                     interface="com.intellij.psi.impl.PsiTreeChangePreprocessor"
                     area="IDEA_PROJECT"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.psi.treeChangePreprocessorBackgroundable"
+                    interface="com.intellij.psi.impl.PsiTreeChangePreprocessorBackgroundable"
+                    area="IDEA_PROJECT"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.treeCopyHandler"
                     interface="com.intellij.psi.impl.source.tree.TreeCopyHandler"
                     dynamic="true"/>

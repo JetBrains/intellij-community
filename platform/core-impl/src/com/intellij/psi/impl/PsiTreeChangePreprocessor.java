@@ -11,6 +11,10 @@ import org.jetbrains.annotations.NotNull;
  * Try to avoid processing PSI events at all cost! See {@link com.intellij.psi.PsiTreeChangeEvent} documentation for more details.
  */
 public interface PsiTreeChangePreprocessor {
+  /**
+   * The legacy point. An extension of this point always runs on the EDT, inside a transferred write action.
+   * For an extension that runs in place, see {@link PsiTreeChangePreprocessorBackgroundable#EP}.
+   */
   ProjectExtensionPointName<PsiTreeChangePreprocessor> EP = new ProjectExtensionPointName<>("com.intellij.psi.treeChangePreprocessor");
 
   void treeChanged(@NotNull PsiTreeChangeEventImpl event);
