@@ -75,6 +75,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.expressions.functionType
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
@@ -134,6 +135,7 @@ import org.jetbrains.kotlin.idea.debugger.core.isInsideInlineArgument
 import org.jetbrains.kotlin.idea.debugger.core.isInsideProjectWithCompose
 import org.jetbrains.kotlin.idea.debugger.core.stackFrame.InlineStackTraceCalculator
 import org.jetbrains.kotlin.idea.debugger.core.stackFrame.KotlinStackFrame
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.FqName
@@ -419,11 +421,36 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         if (allReferenceExpressions.isEmpty()) return null
         val (inlinedReference, notInlined) = allReferenceExpressions.separateInlinedAndNonInlinedElements(location)
         if (inlinedReference != null) return inlinedReference
+        val adapterMethodName = location.safeMethod()?.takeIf { it.isPrivate && it.isStatic }?.name()
         return readAction {
             notInlined.firstOrNull {
-                it.calculatedClassNameMatches(currentLocationClassName, false)
+                it.calculatedClassNameMatches(currentLocationClassName, false) ||
+                        adapterMethodName != null && it.matchesIndyCallableReference(adapterMethodName, currentLocationClassName)
             }
         }
+    }
+
+    /**
+     * Matches an indy adapter named '<enclosing functions>$<referenced function>[$<index>]' in the enclosing class.
+     * The enclosing function names are joined with '$'.
+     * These are source names, even when `@JvmName` changes the JVM method names.
+     */
+    private fun KtCallableReferenceExpression.matchesIndyCallableReference(methodName: String, className: String): Boolean {
+        val containingFunction = getContainingMethod() as? KtNamedFunction ?: return false
+        if (!containingFunction.calculatedClassNameMatches(className, false)) return false
+        val enclosingNames = generateSequence(containingFunction) {
+            if (it.isLocal) it.getContainingMethod() as? KtNamedFunction else null
+        }.toList().asReversed().map { it.name ?: return false }
+        val enclosingName = enclosingNames.joinToString("$")
+        if (!methodName.startsWith("$enclosingName\$")) return false
+
+        val targetName = runDumbAnalyze(this, fallback = null) {
+            (callableReference.mainReference.resolveToSymbol() as? KaNamedFunctionSymbol)?.name?.asString()
+        } ?: return false
+        val adapterName = "$enclosingName\$$targetName"
+        if (methodName == adapterName) return true
+        if (!methodName.startsWith("$adapterName\$")) return false
+        return methodName.substring(adapterName.length + 1).toIntOrNull() != null
     }
 
     private suspend fun getLambdaOrFunOnLineIfInside(location: Location, file: KtFile, lineNumber: Int): KtFunction? {
