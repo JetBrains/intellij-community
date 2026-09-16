@@ -2,7 +2,6 @@
 package com.intellij.platform.eel.provider.utils
 
 import com.intellij.platform.eel.EelProcess
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
@@ -87,8 +86,16 @@ internal suspend fun <T> computeDetached(dispatcher: CoroutineContext = unlimite
   try {
     return deferred.await()
   }
-  catch (ce: CancellationException) {
-    deferred.cancel(ce)
+  catch (ce: java.util.concurrent.CancellationException) {
+    // `Job.cancel` calls completion handlers synchronously on the calling thread.
+    // When the action runs `runInterruptible`, its internal completion handler interrupts the worker thread.
+    // If the worker thread blocks in a Java NIO channel, the JVM interrupt hook calls channel.close() synchronously.
+    // On Windows, closing a file descriptor with an active synchronous pipe read (such as native ReadFile)
+    // blocks until that read completes.
+    // Calling `cancel` in a detached coroutine prevents such synchronous cancellation hooks from freezing the caller.
+    GlobalScope.launch(dispatcher) {
+      deferred.cancel(ce)
+    }
     throw ce
   }
 }

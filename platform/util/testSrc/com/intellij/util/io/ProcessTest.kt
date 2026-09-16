@@ -6,14 +6,18 @@ package com.intellij.util.io
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.pollAssertionsAsync
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.fail
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 import org.mockito.Mockito
@@ -24,6 +28,8 @@ import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration.Companion.ZERO
 import kotlin.time.Duration.Companion.milliseconds
@@ -34,6 +40,50 @@ import kotlin.time.Duration.Companion.seconds
 // otherwise, the test fails in configuration phase because coroutines' DebugProbes loads ByteBuddy
 @TestApplication
 class ProcessTest {
+  @Nested
+  inner class ComputeDetachedTest {
+    @OptIn(DelicateCoroutinesApi::class)
+    @Test
+    @Timeout(6, unit = TimeUnit.SECONDS) // A bit larger than in `timeoutRunBlocking`
+    fun `computeDetached does not block caller when action cancellation hook blocks`(): Unit = timeoutRunBlocking(timeout = 5.seconds) {
+      val unblockCleanup = CountDownLatch(1)
+
+      // The bug reproduces exactly with implementations of AbstractInterruptibleChannel.
+      // An attempt to replace this code with a simple lambda can cause a false positive result.
+      val evilNioChannel = object : java.nio.channels.spi.AbstractInterruptibleChannel() {
+        override fun implCloseChannel() {
+          // Simulates a channel whose close() blocks during interrupt/cancellation (e.g. native ReadFile on Windows)
+          unblockCleanup.await()
+        }
+
+        fun simulateInfiniteBlockingRead() {
+          begin()
+          try {
+            while (isOpen) {
+              Thread.sleep(100)
+            }
+          }
+          finally {
+            end(true)
+          }
+        }
+      }
+
+      try {
+        withTimeoutOrNull(1.seconds) {
+          computeDetached {
+            runInterruptible {
+              evilNioChannel.simulateInfiniteBlockingRead()
+            }
+          }
+        }
+      }
+      finally {
+        unblockCleanup.countDown()
+      }
+    }
+  }
+
   @Nested
   inner class copyToAsync {
 

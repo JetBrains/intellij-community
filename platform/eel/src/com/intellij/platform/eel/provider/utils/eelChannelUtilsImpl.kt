@@ -113,7 +113,12 @@ internal class NioReadToEelAdapter(
       selector?.let(selectorPool::returnBack)
       // Hello Java!
       if (readableByteChannel is SocketChannel) {
-        readableByteChannel.shutdownInput()
+        try {
+          readableByteChannel.shutdownInput()
+        }
+        catch (_: java.nio.channels.ClosedChannelException) {
+          // Who could even care about that?
+        }
       }
       else {
         readableByteChannel.close()
@@ -203,7 +208,12 @@ internal class NioWriteToEelAdapter(
 
       // Hello Java!
       if (writableByteChannel is SocketChannel) {
-        writableByteChannel.shutdownOutput()
+        try {
+          writableByteChannel.shutdownOutput()
+        }
+        catch (_: java.nio.channels.ClosedByInterruptException) {
+          // Who could even care about that?
+        }
       }
       else {
         writableByteChannel.close()

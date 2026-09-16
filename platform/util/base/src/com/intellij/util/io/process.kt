@@ -6,6 +6,7 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -67,7 +68,15 @@ suspend fun <T> computeDetached(
     return deferred.await()
   }
   catch (ce: CancellationException) {
-    deferred.cancel(ce)
+    // `Job.cancel` calls completion handlers synchronously on the calling thread.
+    // When the action runs `runInterruptible`, its internal completion handler interrupts the worker thread.
+    // If the worker thread blocks in a Java NIO channel, the JVM interrupt hook calls channel.close() synchronously.
+    // On Windows, closing a file descriptor with an active synchronous pipe read (such as native ReadFile)
+    // blocks until that read completes.
+    // Calling `cancel` in a detached coroutine prevents such synchronous cancellation hooks from freezing the caller.
+    GlobalScope.launch(blockingDispatcher) {
+      deferred.cancel(ce)
+    }
     throw ce
   }
 }
