@@ -72,19 +72,14 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
   @Override
   public void initialize(@NotNull FileWatcherNotificationSink notificationSink) {
     myNotificationSink = notificationSink;
-
-    var disabled = isDisabled();
     myExecutable = getExecutable();
 
-    if (disabled) {
+    if (isDisabled()) {
       LOG.info("Native file watcher is disabled");
     }
     else if (myExecutable == null) {
       if (OS.CURRENT == OS.Windows || OS.CURRENT == OS.macOS || OS.CURRENT == OS.Linux && (CpuArch.isIntel64() || CpuArch.isArm64())) {
         notifyOnFailure(IdeCoreBundle.message("watcher.exe.not.found"), null);
-      }
-      else if (OS.CURRENT == OS.Linux) {
-        notifyOnFailure(IdeCoreBundle.message("watcher.exe.compile"), NotificationListener.URL_OPENING_LISTENER);
       }
       else {
         notifyOnFailure(IdeCoreBundle.message("watcher.exe.not.exists"), null);
