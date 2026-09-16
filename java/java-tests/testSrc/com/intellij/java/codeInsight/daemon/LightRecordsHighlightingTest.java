@@ -2,6 +2,7 @@
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.idea.TestFor;
 import com.intellij.psi.PsiDeclarationStatement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduceVariable.ReassignVariableUtil;
@@ -42,6 +43,24 @@ public class LightRecordsHighlightingTest extends LightJavaCodeInsightFixtureTes
   public void testRecordCompactConstructors() {
     doTest();
   }
+
+  @TestFor(issues = "IDEA-393876")
+  public void testVarArgsCompactConstructorFromStub() {
+    myFixture.addClass("""
+                         public record VarArgsRecord(String... xs) {
+                           public VarArgsRecord { xs = xs.clone(); }
+                         }""");
+    myFixture.configureByText("B.java", """
+      class B {
+        void test() {
+          new VarArgsRecord();
+          new VarArgsRecord("x");
+          new VarArgsRecord("x", "y");
+        }
+      }""");
+    myFixture.checkHighlighting();
+  }
+
   public void testLocalRecords() {
     doTest();
   }
