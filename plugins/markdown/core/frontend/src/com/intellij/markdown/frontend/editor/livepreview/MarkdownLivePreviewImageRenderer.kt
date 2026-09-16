@@ -118,7 +118,7 @@ internal class MarkdownLivePreviewImageRenderer(
     val current = currentGeometry()
     if (current == geometry) return
     geometry = current
-    DocRenderItemUpdater.updateRenderers(items, true)
+    DocRenderItemUpdater.updateRenderers(items, false)
   }
 
   /** The visible width and the pixel scale, which are what decide the rendered size of an image. */
