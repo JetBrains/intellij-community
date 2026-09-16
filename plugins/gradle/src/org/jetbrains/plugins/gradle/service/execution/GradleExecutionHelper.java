@@ -156,9 +156,10 @@ public final class GradleExecutionHelper {
       GradleConnectorService connectorService = GradleConnectorService.getInstance(context.getProject());
       return connectorService.withGradleConnection(context, connection ->
         SystemPropertiesAdjuster.executeAdjusted(context.getProjectPath(), () -> {
-          BuildEnvironment buildEnvironment = getBuildEnvironment(connection, context);
+          var buildEnvironment = getModel(connection, context, BuildEnvironment.class);
           buildEnvironmentRef.set(buildEnvironment);
           context.setBuildEnvironment(buildEnvironment);
+          checkExecutionEnvironment(context);
           return action.apply(connection);
         })
       );
@@ -476,25 +477,14 @@ public final class GradleExecutionHelper {
     operation.setEnvironmentVariables(effectiveEnvironment);
   }
 
-  private static @NotNull BuildEnvironment getBuildEnvironment(
-    @NotNull ProjectConnection connection,
-    @NotNull GradleExecutionContext context
-  ) {
-    var buildEnvironment = getModel(connection, context, BuildEnvironment.class);
-    checkThatGradleBuildEnvironmentIsSupportedByIdea(buildEnvironment);
-    checkThatGradleBuildEnvironmentIsDeprecatedByIdea(context, buildEnvironment);
-    var checkers = GradleExecutionChecker.EP_NAME.getExtensionList();
-    for (var checker : checkers) {
-      checker.checkExecution(context, buildEnvironment);
-    }
-    return buildEnvironment;
+  private static void checkExecutionEnvironment(@NotNull GradleExecutionContext context) {
+    checkThatGradleBuildEnvironmentIsSupportedByIdea(context);
+    checkThatGradleBuildEnvironmentIsDeprecatedByIdea(context);
+    GradleExecutionChecker.EP_NAME.forEachExtensionSafe(checker -> checker.checkExecutionEnvironment(context));
   }
 
-  private static void checkThatGradleBuildEnvironmentIsDeprecatedByIdea(
-    @NotNull GradleExecutionContext context,
-    @NotNull BuildEnvironment buildEnvironment
-  ) {
-    final GradleVersion gradleVersion = GradleVersion.version(buildEnvironment.getGradle().getGradleVersion());
+  private static void checkThatGradleBuildEnvironmentIsDeprecatedByIdea(@NotNull GradleExecutionContext context) {
+    var gradleVersion = context.getGradleVersion();
     if (GradleJvmSupportMatrix.isGradleDeprecatedByIdea(gradleVersion)) {
       final String projectPath = context.getProjectPath();
       final var issue = new DeprecatedGradleVersionIssue(gradleVersion, projectPath);
@@ -507,14 +497,15 @@ public final class GradleExecutionHelper {
     }
   }
 
-  private static void checkThatGradleBuildEnvironmentIsSupportedByIdea(@NotNull BuildEnvironment buildEnvironment) {
-    var gradleVersion = GradleVersion.version(buildEnvironment.getGradle().getGradleVersion());
+  private static void checkThatGradleBuildEnvironmentIsSupportedByIdea(@NotNull GradleExecutionContext context) {
+    var gradleVersion = context.getGradleVersion();
     LOG.debug("Gradle version: " + gradleVersion);
     if (!GradleJvmSupportMatrix.isGradleSupportedByIdea(gradleVersion)) {
       throw new UnsupportedGradleVersionByIdeaException(gradleVersion);
     }
-    var javaHome = buildEnvironment.getJava().getJavaHome();
-    var jvmArguments = buildEnvironment.getJava().getJvmArguments();
+    var javaEnvironment = context.getBuildEnvironment().getJava();
+    var javaHome = javaEnvironment.getJavaHome();
+    var jvmArguments = javaEnvironment.getJvmArguments();
     LOG.debug("Gradle java home: " + javaHome);
     LOG.debug("Gradle jvm arguments: " + jvmArguments);
     var javaVersion = ExternalSystemJdkUtil.getJavaVersion(javaHome.getPath());
