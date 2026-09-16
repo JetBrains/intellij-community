@@ -20,6 +20,7 @@ import com.intellij.ide.plugins.newui.PluginNodeModelBuilderFactory
 import com.intellij.ide.plugins.newui.PluginPreparedUpdateState
 import com.intellij.ide.plugins.newui.PluginProgressState
 import com.intellij.ide.plugins.newui.PluginRowInput
+import com.intellij.ide.plugins.newui.PluginSource
 import com.intellij.ide.plugins.newui.PluginStatus
 import com.intellij.ide.plugins.newui.SearchQueryParser
 import com.intellij.ide.plugins.newui.TagComponent
@@ -58,6 +59,8 @@ import org.junit.jupiter.api.Timeout
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Container
+import java.awt.event.FocusEvent
+import java.awt.event.KeyEvent
 import java.util.concurrent.CompletableFuture
 import javax.swing.JButton
 import javax.swing.JComponent
@@ -256,12 +259,75 @@ internal class LegacyPluginRowFactoryTest {
         assertThat(abs(verticalCenterTwice(toggle) - 2 * (row.insets.top + JBUI.scale(20)))).isLessThanOrEqualTo(1)
         assertThat(row.width - row.insets.right + JBUI.scale(4)).isEqualTo(toggle.x + toggle.width)
         assertThat(toggle.x - updateButton.x - updateButton.width).isEqualTo(JBUI.scale(2))
+
+        val updatedItem = item.copy(rowInput = checkNotNull(item.rowInput).copy(enabled = false))
+        val updatedSection = section.copy(items = listOf(updatedItem))
+        val updatedBinding = reconciler.reconcile(listOf(factory.specification(updatedSection, updatedItem))).single()
+        factory.rowsRendered(listOf(updatedBinding))
+
+        assertThat(updatedBinding.row).isSameAs(binding.row)
+        assertThat(componentsOfType(row, OnOffButton::class.java).single()).isSameAs(toggle)
       }
     }
     finally {
       host.dispose(closeSession = false)
     }
   }
+
+  @Test
+  fun `reused update button resolves the refreshed descriptor`(): Unit =
+    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+      val host = LegacyPluginUiHost(parentScope = this, operationScope = this)
+      try {
+        val pluginId = PluginId.getId("refreshed.update.plugin")
+        val installed = PluginNodeModelBuilderFactory.createBuilder(pluginId).setName("Installed Plugin").build()
+        val firstUpdate = PluginNodeModelBuilderFactory.createBuilder(pluginId).setName("First Update").build().apply {
+          source = PluginSource.LOCAL
+        }
+        val refreshedUpdate = PluginNodeModelBuilderFactory.createBuilder(pluginId).setName("Refreshed Update").build().apply {
+          source = PluginSource.REMOTE
+        }
+        val listModel = ListPluginModel().apply {
+          setPluginInstallationState(pluginId, PluginInstallationState(true))
+        }
+        val item = PluginItemState(
+          pluginId,
+          installed.name,
+          modelHandle = PluginItemModelHandle(installed),
+          rowInput = PluginRowInput(
+            installedPlugin = installed,
+            installationState = PluginInstallationState(true),
+            errors = emptyList(),
+            updateDescriptor = firstUpdate,
+            enabled = true,
+            restrictedByProduct = false,
+          ),
+        )
+        val section = PluginSectionState(PluginSectionId.Installed, items = listOf(item))
+        val factory = LegacyPluginRowFactory(host, listModel, { _, _ -> }, onSelectionChanged = {})
+        factory.createReconciler { _, _ -> }.use { reconciler ->
+          val binding = reconciler.reconcile(listOf(factory.specification(section, item))).single()
+          val row = (binding.row as LegacyPluginRow).component
+          JPanel().add(row)
+          factory.rowsRendered(listOf(binding))
+          val updateButton = checkNotNull(row.myUpdateButton)
+
+          val refreshedItem = item.copy(rowInput = checkNotNull(item.rowInput).copy(updateDescriptor = refreshedUpdate))
+          val refreshedSection = section.copy(items = listOf(refreshedItem))
+          val refreshedBinding = reconciler.reconcile(listOf(factory.specification(refreshedSection, refreshedItem))).single()
+          factory.rowsRendered(listOf(refreshedBinding))
+
+          assertThat(refreshedBinding.row).isSameAs(binding.row)
+          assertThat(row.myUpdateButton).isSameAs(updateButton)
+          val (actionDescriptor, updateDescriptor) = checkNotNull(row.getUpdateActionDescriptors())
+          assertThat(actionDescriptor).isSameAs(installed)
+          assertThat(updateDescriptor).isSameAs(refreshedUpdate)
+        }
+      }
+      finally {
+        host.dispose(closeSession = false)
+      }
+    }
 
   @Test
   fun `details page spacing is enabled only for the unified page`(): Unit =
@@ -631,8 +697,10 @@ internal class LegacyPluginRowFactoryTest {
           factory.rowsRendered(listOf(binding))
           val row = (binding.row as LegacyPluginRow).component
           val initialPreferredSize = row.preferredSize
+          val contentBorder = row.border
           val insets = row.border.getBorderInsets(row)
 
+          assertThat(row.isFocusable).isTrue()
           assertThat(row.selectionArc).isEqualTo(JBUI.scale(8))
           assertThat(row.selectionInsets).isEqualTo(JBUI.insets(0, 8))
           assertThat(insets.top).isEqualTo(JBUI.scale(12))
@@ -652,6 +720,129 @@ internal class LegacyPluginRowFactoryTest {
           row.setSelection(EventHandler.SelectionType.NONE, false)
           assertThat(row.selectionColor).isNull()
           assertThat(row.preferredSize).isEqualTo(initialPreferredSize)
+
+          val traversalFocusEvent = FocusEvent(row, FocusEvent.FOCUS_GAINED, false, null, FocusEvent.Cause.TRAVERSAL_FORWARD)
+          row.focusListeners.forEach { it.focusGained(traversalFocusEvent) }
+          assertThat(row.border).isNotSameAs(contentBorder)
+          assertThat(row.border.getBorderInsets(row)).isEqualTo(insets)
+          assertThat(row.preferredSize).isEqualTo(initialPreferredSize)
+          assertThat(row.getSelection()).isEqualTo(EventHandler.SelectionType.NONE)
+
+          binding.row.renderSelection(true)
+          assertThat(row.border).isSameAs(contentBorder)
+
+          binding.row.renderSelection(false)
+          assertThat(row.border).isNotSameAs(contentBorder)
+
+          row.focusListeners.forEach { it.focusLost(FocusEvent(row, FocusEvent.FOCUS_LOST)) }
+          assertThat(row.border).isSameAs(contentBorder)
+
+          val mouseFocusEvent = FocusEvent(row, FocusEvent.FOCUS_GAINED, false, null, FocusEvent.Cause.MOUSE_EVENT)
+          row.focusListeners.forEach { it.focusGained(mouseFocusEvent) }
+          assertThat(row.border).isSameAs(contentBorder)
+          assertThat(row.getSelection()).isEqualTo(EventHandler.SelectionType.NONE)
+        }
+      }
+      finally {
+        host.dispose(closeSession = false)
+      }
+    }
+
+  @Test
+  fun `card activation selects plugin without invoking its primary action`(): Unit =
+    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+      val host = LegacyPluginUiHost(parentScope = this, operationScope = this)
+      try {
+        val pluginId = PluginId.getId("card.activation.plugin")
+        val model = PluginNodeModelBuilderFactory.createBuilder(pluginId).setName("Card Activation Plugin").build()
+        val item = PluginItemState(
+          pluginId,
+          model.name,
+          modelHandle = PluginItemModelHandle(model),
+          rowInput = PluginRowInput(
+            installedPlugin = null,
+            installationState = PluginInstallationState(false),
+            errors = emptyList(),
+            updateDescriptor = null,
+            enabled = true,
+            restrictedByProduct = false,
+          ),
+        )
+        val section = PluginSectionState(PluginSectionId.Suggested, items = listOf(item))
+        val selectionChanges = ArrayList<List<PluginOccurrenceId>>()
+        val listener = LinkListener<Any> { _, _ -> }
+        val factory = LegacyPluginRowFactory(host, ListPluginModel(), listener, onSelectionChanged = selectionChanges::add)
+        factory.createReconciler { _, _ -> }.use { reconciler ->
+          val binding = reconciler.reconcile(listOf(factory.specification(section, item))).single()
+          val row = (binding.row as LegacyPluginRow).component
+          JPanel().add(row)
+          factory.rowsRendered(listOf(binding))
+
+          val installButton = checkNotNull(row.myInstallButton)
+          installButton.actionListeners.forEach(installButton::removeActionListener)
+          var installRequests = 0
+          installButton.addActionListener { installRequests++ }
+
+          val contentBorder = row.border
+          val traversalFocusEvent = FocusEvent(row, FocusEvent.FOCUS_GAINED, false, null, FocusEvent.Cause.TRAVERSAL_FORWARD)
+          row.focusListeners.forEach { it.focusGained(traversalFocusEvent) }
+          assertThat(row.border).isNotSameAs(contentBorder)
+
+          for (keyCode in listOf(KeyEvent.VK_ENTER, KeyEvent.VK_SPACE)) {
+            val event = KeyEvent(row, KeyEvent.KEY_PRESSED, 0, 0, keyCode, KeyEvent.CHAR_UNDEFINED)
+            row.keyListeners.forEach { it.keyPressed(event) }
+            assertThat(event.isConsumed).isTrue()
+          }
+
+          assertThat(row.getSelection()).isEqualTo(EventHandler.SelectionType.SELECTION)
+          assertThat(row.border).isSameAs(contentBorder)
+          assertThat(selectionChanges).containsExactly(listOf(binding.occurrenceId))
+          assertThat(installRequests).isZero()
+        }
+      }
+      finally {
+        host.dispose(closeSession = false)
+      }
+    }
+
+  @Test
+  fun `keyboard navigation does not outline the row that loses selection`(): Unit =
+    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+      val host = LegacyPluginUiHost(parentScope = this, operationScope = this)
+      try {
+        val items = listOf("first.navigation.plugin", "second.navigation.plugin").map { id ->
+          val pluginId = PluginId.getId(id)
+          val model = PluginNodeModelBuilderFactory.createBuilder(pluginId).setName(id).build()
+          PluginItemState(pluginId, model.name, modelHandle = PluginItemModelHandle(model))
+        }
+        val section = PluginSectionState(PluginSectionId.Installed, items = items)
+        val selectionChanges = ArrayList<List<PluginOccurrenceId>>()
+        val factory = LegacyPluginRowFactory(
+          host,
+          ListPluginModel(),
+          LinkListener { _, _ -> },
+          onSelectionChanged = selectionChanges::add,
+        )
+        factory.createReconciler { _, _ -> }.use { reconciler ->
+          val bindings = reconciler.reconcile(items.map { factory.specification(section, it) })
+          factory.rowsRendered(bindings)
+          val firstRow = (bindings.first().row as LegacyPluginRow).component
+          val secondRow = (bindings.last().row as LegacyPluginRow).component
+          val firstContentBorder = firstRow.border
+
+          val focusEvent = FocusEvent(firstRow, FocusEvent.FOCUS_GAINED, false, null, FocusEvent.Cause.TRAVERSAL_FORWARD)
+          firstRow.focusListeners.forEach { it.focusGained(focusEvent) }
+          bindings.first().row.renderSelection(true)
+          assertThat(firstRow.border).isSameAs(firstContentBorder)
+
+          val downEvent = KeyEvent(firstRow, KeyEvent.KEY_PRESSED, 0, 0, KeyEvent.VK_DOWN, KeyEvent.CHAR_UNDEFINED)
+          firstRow.keyListeners.forEach { it.keyPressed(downEvent) }
+
+          assertThat(downEvent.isConsumed).isTrue()
+          assertThat(firstRow.getSelection()).isEqualTo(EventHandler.SelectionType.NONE)
+          assertThat(firstRow.border).isSameAs(firstContentBorder)
+          assertThat(secondRow.getSelection()).isEqualTo(EventHandler.SelectionType.SELECTION)
+          assertThat(selectionChanges.last()).containsExactly(bindings.last().occurrenceId)
         }
       }
       finally {
@@ -760,6 +951,7 @@ internal class LegacyPluginRowFactoryTest {
           view.render(UnifiedPluginsPageController(listOf(PluginSectionState(PluginSectionId.Installed, items = listOf(item)))).state.value)
           val row = componentsOfType(view.component, ListPluginComponent::class.java).single()
           assertThat(row.parent).isNotNull()
+          assertThat(row.parent.isFocusable).isFalse()
           assertThat(row.getUpdatePluginDescriptor()?.pluginId).isEqualTo(pluginId)
         }
       }

@@ -53,6 +53,7 @@ internal class LegacyPluginRowFactory @RequiresEdt(generateAssertion = false /* 
       renderKey as PluginRowRenderKey,
       registerInstallingWithoutGroup = occurrenceId.sectionId == PluginSectionId.Installing,
     )
+    component.isFocusable = true
     try {
       eventHandler.register(occurrenceId, component)
     }
@@ -119,13 +120,26 @@ internal class LegacyPluginRow(
 
   fun renderInput(input: PluginRowInput?) {
     if (input == null || input == renderedInput) return
+    val canRenderWithoutButtonRebuild = renderedInput?.let { previous ->
+      previous.copy(
+        errors = input.errors,
+        updateDescriptor = input.updateDescriptor,
+        enabled = input.enabled,
+        detailsProgress = input.detailsProgress,
+      ) == input
+    } == true
     if (input.operationInProgress) {
       component.showReadOnlyProgress()
     }
     else if (component.underProgress()) {
       component.hideProgress()
     }
-    component.updateButtons(input.installedPlugin, input.installationState)
+    if (canRenderWithoutButtonRebuild) {
+      component.updateEnabledState()
+    }
+    else {
+      component.updateButtons(input.installedPlugin, input.installationState)
+    }
     component.updateErrors(input.errors)
     component.setUpdateDescriptor(input.updateDescriptor)
     input.preparedUpdate?.let { prepared ->
@@ -140,6 +154,7 @@ internal class LegacyPluginRow(
       else com.intellij.ide.plugins.newui.EventHandler.SelectionType.NONE,
       false,
     )
+    eventHandler.selectionChanged(component)
   }
 
   override fun close() {

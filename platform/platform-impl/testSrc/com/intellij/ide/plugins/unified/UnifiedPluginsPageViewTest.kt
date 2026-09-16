@@ -54,7 +54,6 @@ import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.RepaintManager
-import javax.swing.SwingConstants
 import javax.swing.SwingUtilities
 import javax.swing.JToggleButton
 import javax.swing.KeyStroke
@@ -256,7 +255,7 @@ internal class UnifiedPluginsPageViewTest {
   }
 
   @Test
-  fun `expandable section header is one mouse keyboard and hover target`(): Unit = timeoutRunBlocking(context = Dispatchers.UI) {
+  fun `expandable section header supports mouse keyboard hover and focus`(): Unit = timeoutRunBlocking(context = Dispatchers.UI) {
     val expansionChanges = ArrayList<Pair<PluginSectionId, Boolean>>()
     val controller = UnifiedPluginsPageController(listOf(section(PluginSectionId.Installed, itemCount = 5)))
     val view = createView(onExpansionChanged = { id, expanded -> expansionChanges.add(id to expanded) })
@@ -288,11 +287,32 @@ internal class UnifiedPluginsPageViewTest {
     assertThat(Color(image.getRGB(0, header.height / 2), true).rgb).isNotEqualTo(hoverColor.rgb)
 
     headerButton.model.isRollover = false
+    val contentBorder = headerButton.border
+    val contentInsets = headerButton.border.getBorderInsets(headerButton)
+    headerButton.focusListeners.forEach { it.focusGained(FocusEvent(headerButton, FocusEvent.FOCUS_GAINED)) }
+    val focusedImage = paintedImage(header)
+    val focusColor = JBUI.CurrentTheme.ActionButton.focusedBorder()
+    val focusTop = JBUI.scale(7)
+    val focusGap = JBUI.scale(1)
+    val focusWidth = JBUI.scale(2)
+    assertThat(header.selectionColor).isNull()
+    assertThat(headerButton.border.getBorderInsets(headerButton)).isEqualTo(contentInsets)
+    assertThat(Color(focusedImage.getRGB(hoverX, focusTop), true).rgb).isNotEqualTo(focusColor.rgb)
+    assertThat(Color(focusedImage.getRGB(hoverX, focusTop + focusGap), true).rgb).isEqualTo(focusColor.rgb)
+    assertThat(Color(focusedImage.getRGB(hoverX, focusTop + focusGap + focusWidth - 1), true).rgb).isEqualTo(focusColor.rgb)
+    assertThat(Color(focusedImage.getRGB(hoverX, focusTop + focusGap + focusWidth), true).rgb).isNotEqualTo(focusColor.rgb)
+
+    headerButton.focusListeners.forEach { it.focusLost(FocusEvent(headerButton, FocusEvent.FOCUS_LOST)) }
+    assertThat(header.selectionColor).isNull()
+
+    val mouseFocusEvent = FocusEvent(headerButton, FocusEvent.FOCUS_GAINED, false, null, FocusEvent.Cause.MOUSE_EVENT)
+    headerButton.focusListeners.forEach { it.focusGained(mouseFocusEvent) }
+    assertThat(headerButton.border).isSameAs(contentBorder)
+
     headerButton.isSelected = true
     val selectedImage = paintedImage(header)
-    val selectionColor = ColorUtil.alphaBlending(ListPluginComponent.SELECTION_COLOR, PluginManagerConfigurable.MAIN_BG_COLOR)
     assertThat(header.selectionColor).isNull()
-    assertThat(Color(selectedImage.getRGB(hoverX, hoverY), true).rgb).isNotEqualTo(selectionColor.rgb)
+    assertThat(Color(selectedImage.getRGB(hoverX, focusTop + focusGap), true).rgb).isNotEqualTo(focusColor.rgb)
 
     titleLabel.dispatchEvent(MouseEvent(
       titleLabel,
@@ -668,8 +688,11 @@ internal class UnifiedPluginsPageViewTest {
     view.render(controller.state.value)
     layoutRecursively(view.component)
 
+    assertThat(scrollPane.isFocusable).isFalse()
     assertThat(scrollPane.verticalScrollBar.isVisible).isTrue()
     assertThat(scrollPane.verticalScrollBar.isOpaque).isFalse()
+    assertThat(scrollPane.verticalScrollBar.isFocusable).isFalse()
+    assertThat(scrollPane.horizontalScrollBar.isFocusable).isFalse()
     assertThat(scrollPane.viewport.width).isEqualTo(viewportWidth)
     val initialScrollBarBounds = scrollPane.verticalScrollBar.bounds
     assertThat(initialScrollBarBounds.y).isEqualTo(JBUI.scale(40))

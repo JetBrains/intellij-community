@@ -782,7 +782,11 @@ class ListPluginComponent private constructor(
       if (myUpdateButton == null) {
         myUpdateButton = UpdateButton(myUseSecondaryButtons)
         myLayout.addButtonComponent(myUpdateButton!!, 0)
-        myUpdateButton!!.addActionListener { updatePlugin(descriptorForActions, updateDescriptor) }
+        myUpdateButton!!.addActionListener {
+          getUpdateActionDescriptors()?.let { (descriptorForActions, currentUpdateDescriptor) ->
+            updatePlugin(descriptorForActions, currentUpdateDescriptor)
+          }
+        }
       }
       else if (!successfullyFinishedOnce) {
         myUpdateButton!!.isEnabled = true
@@ -1510,6 +1514,10 @@ class ListPluginComponent private constructor(
 
   fun getUpdatePluginDescriptor(): PluginUiModel? {
     return if (myUpdateDescriptor != null) myUpdateDescriptor else null
+  }
+
+  internal fun getUpdateActionDescriptors(): Pair<PluginUiModel, PluginUiModel>? {
+    return myUpdateDescriptor?.let { getDescriptorForActions() to it }
   }
 
   fun getDescriptorForActions(): PluginUiModel {

@@ -74,6 +74,7 @@ import javax.swing.SwingUtilities
 import javax.swing.Timer
 import javax.swing.JToggleButton
 import javax.swing.KeyStroke
+import javax.swing.border.Border
 import javax.swing.event.DocumentEvent
 import org.jetbrains.annotations.Nls
 
@@ -137,11 +138,14 @@ internal class UnifiedPluginsPageView @RequiresEdt(generateAssertion = false /* 
     }
 
     scrollPane.apply {
+      isFocusable = false
       border = JBUI.Borders.empty()
       setOverlappingScrollBar(true)
       horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
       verticalScrollBarPolicy = ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
+      horizontalScrollBar.isFocusable = false
       verticalScrollBar.isOpaque = false
+      verticalScrollBar.isFocusable = false
       viewport.background = PluginManagerConfigurable.MAIN_BG_COLOR
     }
     scrollPane.viewport.addChangeListener { handleViewportChange() }
@@ -525,6 +529,7 @@ internal class UnifiedPluginsPageView @RequiresEdt(generateAssertion = false /* 
     private val list = JBList(model)
     private val rowsPanel = JPanel(ListLayout.vertical(ROW_GAP)).apply {
       background = PluginManagerConfigurable.MAIN_BG_COLOR
+      isFocusable = false
     }
     private val realRowComponents = LinkedHashMap<PluginOccurrenceId, JComponent>()
     private val categoryHeaderViews = LinkedHashMap<String, CategoryHeaderView>()
@@ -737,6 +742,9 @@ internal class UnifiedPluginsPageView @RequiresEdt(generateAssertion = false /* 
     private class SectionHeaderButton(
       private val onToggle: () -> Unit,
     ) : SelectablePanel() {
+      private var contentBorder: Border = JBUI.Borders.empty()
+      private var focusBorder: Border = contentBorder
+      private var focusVisible = false
       private val toggleButton = object : JToggleButton() {
         override fun getAccessibleContext(): AccessibleContext {
           if (accessibleContext == null) {
@@ -778,17 +786,26 @@ internal class UnifiedPluginsPageView @RequiresEdt(generateAssertion = false /* 
           actionMap.put(TOGGLE_ACTION_KEY, object : AbstractAction() {
             override fun actionPerformed(event: java.awt.event.ActionEvent) = doClick()
           })
-          model.addChangeListener { updateSelectionSurface() }
+          model.addChangeListener { updateFocusPresentation() }
           addFocusListener(object : FocusAdapter() {
-            override fun focusGained(event: FocusEvent) = updateSelectionSurface()
-            override fun focusLost(event: FocusEvent) = updateSelectionSurface()
+            override fun focusGained(event: FocusEvent) {
+              focusVisible = event.cause != FocusEvent.Cause.MOUSE_EVENT
+              updateFocusPresentation()
+            }
+
+            override fun focusLost(event: FocusEvent) {
+              focusVisible = false
+              updateFocusPresentation()
+            }
           })
         }
         add(toggleButton, BorderLayout.CENTER)
       }
 
-      fun setContentBorder(border: javax.swing.border.Border) {
-        toggleButton.border = border
+      fun setContentBorder(border: Border) {
+        contentBorder = border
+        focusBorder = createUnifiedPluginFocusBorder(toggleButton, border, selectionInsets, selectionArc)
+        updateFocusPresentation()
       }
 
       override fun doLayout() {
@@ -808,7 +825,7 @@ internal class UnifiedPluginsPageView @RequiresEdt(generateAssertion = false /* 
         this.cursor = cursor
         toggleButton.cursor = cursor
         toggleButton.accessibleContext.accessibleName = accessibleName
-        updateSelectionSurface()
+        updateFocusPresentation()
       }
 
       fun forwardMouseEventsFromChildren() {
@@ -842,9 +859,12 @@ internal class UnifiedPluginsPageView @RequiresEdt(generateAssertion = false /* 
         if (component is Container) component.components.forEach(::forwardMouseEvents)
       }
 
-      private fun updateSelectionSurface() {
+      private fun updateFocusPresentation() {
+        val showFocus = toggleButton.isEnabled && focusVisible
+        toggleButton.isBorderPainted = showFocus
+        toggleButton.border = if (showFocus) focusBorder else contentBorder
         val token = ListPluginComponent.HOVER_COLOR.takeIf {
-          toggleButton.isEnabled && toggleButton.model.isRollover
+          toggleButton.isEnabled && !showFocus && toggleButton.model.isRollover
         }
         selectionColor = token?.let { ColorUtil.alphaBlending(it, PluginManagerConfigurable.MAIN_BG_COLOR) }
       }

@@ -20,7 +20,9 @@ import java.awt.event.MouseEvent
 import java.util.Collections
 import java.util.IdentityHashMap
 import javax.swing.AbstractButton
+import javax.swing.JComponent
 import javax.swing.SwingUtilities
+import javax.swing.border.Border
 
 internal class UnifiedPluginRowEventHandler(
   private val onSelectionChanged: (List<PluginOccurrenceId>) -> Unit,
@@ -28,6 +30,9 @@ internal class UnifiedPluginRowEventHandler(
   private val occurrences = IdentityHashMap<ListPluginComponent, PluginOccurrenceId>()
   private val listenerOwners = IdentityHashMap<Component, ListPluginComponent>()
   private val listenerComponentsByRow = IdentityHashMap<ListPluginComponent, MutableSet<Component>>()
+  private val rowBorders = IdentityHashMap<ListPluginComponent, Border>()
+  private val rowFocusBorders = IdentityHashMap<ListPluginComponent, Border>()
+  private val rowsWithKeyboardFocus = Collections.newSetFromMap(IdentityHashMap<ListPluginComponent, Boolean>())
   private var orderedRows: List<ListPluginComponent> = emptyList()
   private var hoveredRow: ListPluginComponent? = null
   private var selectionAnchor: ListPluginComponent? = null
@@ -45,9 +50,9 @@ internal class UnifiedPluginRowEventHandler(
       }
       else if (SwingUtilities.isLeftMouseButton(event)) {
         when {
-          event.isShiftDown -> selectRange(row)
+          event.isShiftDown -> selectRange(row, FocusEvent.Cause.MOUSE_EVENT)
           isPluginRowToggleSelectionEvent(event) -> toggleSelection(row)
-          else -> selectExclusive(row, requestFocus = true)
+          else -> selectExclusive(row, requestFocus = true, focusCause = FocusEvent.Cause.MOUSE_EVENT)
         }
       }
     }
@@ -96,7 +101,18 @@ internal class UnifiedPluginRowEventHandler(
       if (targetIndex >= 0) {
         event.consume()
         val target = orderedRows[targetIndex]
-        if (event.isShiftDown) selectRange(target) else selectExclusive(target, requestFocus = true)
+        if (event.isShiftDown) {
+          selectRange(target, FocusEvent.Cause.TRAVERSAL)
+        }
+        else {
+          selectExclusive(target, requestFocus = true, focusCause = FocusEvent.Cause.TRAVERSAL)
+        }
+      }
+      else if (event.component === row && (event.keyCode == KeyEvent.VK_ENTER || event.keyCode == KeyEvent.VK_SPACE)) {
+        event.consume()
+        if (row.getSelection() != SelectionType.SELECTION) {
+          selectExclusive(row, requestFocus = false)
+        }
       }
       else if (event.keyCode == KeyEvent.VK_ENTER || event.keyCode == KeyEvent.VK_SPACE || event.keyCode == DELETE_CODE) {
         event.consume()
@@ -116,9 +132,23 @@ internal class UnifiedPluginRowEventHandler(
     override fun focusGained(event: FocusEvent) {
       if (isPluginRowActionControl(event.component)) return
       val row = findRow(event.component) ?: return
-      if (row.getSelection() != SelectionType.SELECTION) {
+      if (event.cause == FocusEvent.Cause.MOUSE_EVENT) {
+        rowsWithKeyboardFocus.remove(row)
+      }
+      else {
+        rowsWithKeyboardFocus.add(row)
+      }
+      updateFocusPresentation(row)
+      if (event.component !== row && row.getSelection() != SelectionType.SELECTION) {
         selectExclusive(row, requestFocus = false)
       }
+    }
+
+    override fun focusLost(event: FocusEvent) {
+      if (isPluginRowActionControl(event.component)) return
+      val row = findRow(event.component) ?: return
+      rowsWithKeyboardFocus.remove(row)
+      updateFocusPresentation(row)
     }
   }
 
@@ -126,6 +156,11 @@ internal class UnifiedPluginRowEventHandler(
     check(occurrences.put(row, occurrenceId) == null) { "Plugin row is already registered" }
     check(listenerComponentsByRow.put(row, Collections.newSetFromMap(IdentityHashMap())) == null) {
       "Plugin row listeners are already registered"
+    }
+    val contentBorder = checkNotNull(row.border)
+    check(rowBorders.put(row, contentBorder) == null) { "Plugin row border is already registered" }
+    check(rowFocusBorders.put(row, createUnifiedPluginFocusBorder(row, contentBorder, row.selectionInsets, row.selectionArc)) == null) {
+      "Plugin row focus border is already registered"
     }
     try {
       row.setListeners(this)
@@ -144,12 +179,19 @@ internal class UnifiedPluginRowEventHandler(
     if (selectionAnchor === row) {
       selectionAnchor = null
     }
+    rowsWithKeyboardFocus.remove(row)
+    rowBorders.remove(row)?.let { row.border = it }
+    rowFocusBorders.remove(row)
     removeListeners(row)
   }
 
   fun renderRows(bindings: List<Pair<PluginOccurrenceId, ListPluginComponent>>) {
     orderedRows = bindings.map { it.second }
     if (selectionAnchor !in orderedRows) selectionAnchor = null
+  }
+
+  fun selectionChanged(row: ListPluginComponent) {
+    updateFocusPresentation(row)
   }
 
   override fun add(component: Component) {
@@ -167,9 +209,13 @@ internal class UnifiedPluginRowEventHandler(
     component.addFocusListener(focusListener)
   }
 
-  private fun selectExclusive(row: ListPluginComponent, requestFocus: Boolean) {
+  private fun selectExclusive(
+    row: ListPluginComponent,
+    requestFocus: Boolean,
+    focusCause: FocusEvent.Cause = FocusEvent.Cause.UNKNOWN,
+  ) {
     selectionAnchor = row
-    updateSelection(listOf(row), row.takeIf { requestFocus })
+    updateSelection(listOf(row), row.takeIf { requestFocus }, focusCause)
   }
 
   private fun toggleSelection(row: ListPluginComponent) {
@@ -185,10 +231,10 @@ internal class UnifiedPluginRowEventHandler(
       listOf(row)
     }
     selectionAnchor = row
-    updateSelection(updated, row)
+    updateSelection(updated, row, FocusEvent.Cause.MOUSE_EVENT)
   }
 
-  private fun selectRange(row: ListPluginComponent) {
+  private fun selectRange(row: ListPluginComponent, focusCause: FocusEvent.Cause) {
     val rowIndex = orderedRows.indexOf(row)
     if (rowIndex < 0) return
     val mode = rowMode(row) ?: return
@@ -197,26 +243,51 @@ internal class UnifiedPluginRowEventHandler(
     val range = if (anchorIndex <= rowIndex) anchorIndex..rowIndex else rowIndex..anchorIndex
     val rows = range.map(orderedRows::get).filter { rowMode(it) == mode }
     selectionAnchor = anchor
-    updateSelection(rows, row)
+    updateSelection(rows, row, focusCause)
   }
 
   private fun selectAllCompatible(row: ListPluginComponent) {
     val mode = rowMode(row) ?: return
     selectionAnchor = row
-    updateSelection(orderedRows.filter { rowMode(it) == mode }, row)
+    updateSelection(orderedRows.filter { rowMode(it) == mode }, row, FocusEvent.Cause.TRAVERSAL)
   }
 
-  private fun updateSelection(selected: List<ListPluginComponent>, focusRow: ListPluginComponent?) {
+  private fun updateSelection(
+    selected: List<ListPluginComponent>,
+    focusRow: ListPluginComponent?,
+    focusCause: FocusEvent.Cause,
+  ) {
     val selectedSet = selected.toHashSet()
+    if (focusRow != null) {
+      rowsWithKeyboardFocus.removeIf { row -> row !== focusRow || focusCause == FocusEvent.Cause.MOUSE_EVENT }
+    }
     for (row in orderedRows) {
       row.setSelection(if (row in selectedSet) SelectionType.SELECTION else SelectionType.NONE, false)
+      updateFocusPresentation(row)
     }
-    focusRow?.takeIf { it in selectedSet }?.setSelection(SelectionType.SELECTION, true)
+    focusRow?.takeIf { it in selectedSet }?.let { row ->
+      val parent = row.parent as? JComponent
+      if (parent != null && !parent.visibleRect.contains(row.bounds)) {
+        parent.scrollRectToVisible(row.bounds)
+      }
+      SwingUtilities.invokeLater { row.requestFocus(focusCause) }
+    }
     onSelectionChanged(orderedRows.mapNotNull { row -> occurrences[row]?.takeIf { row in selectedSet } })
   }
 
   private fun selectedRows(): List<ListPluginComponent> {
     return orderedRows.filter { it.getSelection() == SelectionType.SELECTION }
+  }
+
+  private fun updateFocusPresentation(row: ListPluginComponent) {
+    val contentBorder = rowBorders[row] ?: return
+    row.border = if (row in rowsWithKeyboardFocus && row.getSelection() != SelectionType.SELECTION) {
+      checkNotNull(rowFocusBorders[row])
+    }
+    else {
+      contentBorder
+    }
+    row.repaint()
   }
 
   private fun rowMode(row: ListPluginComponent): PluginDetailsMode? {

@@ -35,6 +35,7 @@ import com.intellij.ide.ui.LafManager
 import com.intellij.internal.statistic.FUCollectorTestCase
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.DataMap
 import com.intellij.openapi.actionSystem.DataProvider
@@ -73,11 +74,14 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
+import java.awt.Color
 import java.awt.Component
 import java.awt.Container
 import java.awt.Dimension
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
+import java.awt.event.FocusEvent
+import java.awt.image.BufferedImage
 import java.util.ArrayList
 import java.util.HashMap
 import java.util.HashSet
@@ -340,6 +344,8 @@ internal class UnifiedPluginsPageSessionTest {
         updateAllButton.isVisible = true
         updateAllButton.text = "Update All"
         val settingsToolbar = header.components.single { it !== searchComponent && it !is JButton }
+        (settingsToolbar as ActionToolbar).updateActionsAsync()
+        val settingsButton = componentsOfType(settingsToolbar, ActionButton::class.java).single()
         val layout = header.layout as GridBagLayout
         val searchConstraints = layout.getConstraints(searchComponent)
         val updateAllConstraints = layout.getConstraints(updateAllButton)
@@ -360,6 +366,54 @@ internal class UnifiedPluginsPageSessionTest {
         assertThat(searchConstraints.anchor).isEqualTo(GridBagConstraints.CENTER)
         assertThat(updateAllConstraints.anchor).isEqualTo(GridBagConstraints.CENTER)
         assertThat(settingsConstraints.anchor).isEqualTo(GridBagConstraints.WEST)
+        assertThat(settingsButton.isFocusable).isTrue()
+      }
+      finally {
+        Disposer.dispose(session)
+      }
+    }
+
+  @Test
+  fun `settings action shows keyboard focus outline`(): Unit =
+    uiTest {
+      val session = createSession(null)
+      try {
+        val header = session.getCenterComponent(Configurable.TopComponentController.EMPTY)
+        val settingsToolbar = header.components.single { it !is SearchFieldWithExtension && it !is JButton }
+        (settingsToolbar as ActionToolbar).updateActionsAsync()
+        val settingsButton = componentsOfType(settingsToolbar, ActionButton::class.java).single()
+        settingsButton.size = settingsButton.preferredSize
+        val contentBorder = settingsButton.border
+        val contentInsets = contentBorder.getBorderInsets(settingsButton)
+
+        val traversalFocusEvent = FocusEvent(
+          settingsButton,
+          FocusEvent.FOCUS_GAINED,
+          false,
+          null,
+          FocusEvent.Cause.TRAVERSAL_FORWARD,
+        )
+        settingsButton.focusListeners.forEach { it.focusGained(traversalFocusEvent) }
+
+        val focusBorder = settingsButton.border
+        assertThat(focusBorder).isNotSameAs(contentBorder)
+        assertThat(focusBorder.getBorderInsets(settingsButton)).isEqualTo(contentInsets)
+        val image = paintedBorder(settingsButton)
+        val focusColor = JBUI.CurrentTheme.ActionButton.focusedBorder()
+        val focusGap = JBUI.scale(1)
+        val focusWidth = JBUI.scale(2)
+        val centerX = settingsButton.width / 2
+        assertThat(Color(image.getRGB(centerX, 0), true).rgb).isNotEqualTo(focusColor.rgb)
+        assertThat(Color(image.getRGB(centerX, focusGap), true).rgb).isEqualTo(focusColor.rgb)
+        assertThat(Color(image.getRGB(centerX, focusGap + focusWidth - 1), true).rgb).isEqualTo(focusColor.rgb)
+        assertThat(Color(image.getRGB(centerX, focusGap + focusWidth), true).rgb).isNotEqualTo(focusColor.rgb)
+
+        settingsButton.focusListeners.forEach { it.focusLost(FocusEvent(settingsButton, FocusEvent.FOCUS_LOST)) }
+        assertThat(settingsButton.border).isSameAs(contentBorder)
+
+        val mouseFocusEvent = FocusEvent(settingsButton, FocusEvent.FOCUS_GAINED, false, null, FocusEvent.Cause.MOUSE_EVENT)
+        settingsButton.focusListeners.forEach { it.focusGained(mouseFocusEvent) }
+        assertThat(settingsButton.border).isSameAs(contentBorder)
       }
       finally {
         Disposer.dispose(session)
@@ -1140,6 +1194,18 @@ internal class UnifiedPluginsPageSessionTest {
     override suspend fun loadRepository(repository: CustomPluginRepository): CustomPluginRepositoryLoadResult {
       return CustomPluginRepositoryLoadResult(results.getValue(repository.id).await())
     }
+  }
+
+  private fun paintedBorder(component: JComponent): BufferedImage {
+    val image = BufferedImage(component.width, component.height, BufferedImage.TYPE_INT_ARGB)
+    val graphics = image.createGraphics()
+    try {
+      component.border.paintBorder(component, graphics, 0, 0, component.width, component.height)
+    }
+    finally {
+      graphics.dispose()
+    }
+    return image
   }
 
   private fun inventoryItem(id: String, name: String, bundled: Boolean = false): UnifiedPluginInventoryItem {
