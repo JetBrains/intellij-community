@@ -491,6 +491,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     myEventRequestManager = null;
     myRequestWarnings.clear();
     myRequestorToBelongedRequests.clear();
+    myInstrumentationInfo.clear();
   }
 
   @Override
