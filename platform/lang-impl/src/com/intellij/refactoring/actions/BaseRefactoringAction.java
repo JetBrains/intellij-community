@@ -226,7 +226,8 @@ public abstract class BaseRefactoringAction extends AnAction {
       }
     }
     else {
-      PsiElement element = findRefactoringTargetInEditor(dataContext, this::isAvailableForLanguage);
+      boolean availableForAnyLanguage = file != null && isAvailableForAnyLanguage(file);
+      PsiElement element = findRefactoringTargetInEditor(dataContext, language -> availableForAnyLanguage || isAvailableForLanguage(language));
       if (element != null) {
         boolean isEnabled = file != null && isAvailableOnElementInEditorAndFile(element, editor, file, dataContext, e.getPlace());
         if (!isEnabled) {
@@ -300,6 +301,14 @@ public abstract class BaseRefactoringAction extends AnAction {
 
   protected boolean isAvailableForLanguage(Language language) {
     return true;
+  }
+
+  /**
+   * Whether a language-agnostic refactoring support, registered for {@link Language#ANY} (e.g. an LSP server), is available in the file.
+   * Such support cannot be decided by language, so it is checked per file and shows the action in the editor only.
+   */
+  protected boolean isAvailableForAnyLanguage(@NotNull PsiFile file) {
+    return false;
   }
 
   protected boolean isAvailableForFile(PsiFile file) {

@@ -69,8 +69,9 @@ public final class InlineAction extends BasePlatformRefactoringAction {
   protected RefactoringActionHandler getHandler(@NotNull Language language, PsiElement element) {
     RefactoringActionHandler handler = super.getHandler(language, element);
     if (handler != null) return handler;
-    List<InlineHandler> handlers = InlineHandlers.getInlineHandlers(language);
-    return handlers.isEmpty() ? null : new InlineRefactoringActionHandler();
+    // an InlineActionHandler or an InlineHandler serves the language without a RefactoringSupportProvider;
+    // InlineRefactoringActionHandler picks the concrete one with the editor, which this method does not have
+    return isAvailableForLanguage(language) ? new InlineRefactoringActionHandler() : null;
   }
 
   @Override

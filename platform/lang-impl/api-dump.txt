@@ -4888,10 +4888,12 @@ e:com.intellij.refactoring.SkipOverwriteChoice
 a:com.intellij.refactoring.actions.BasePlatformRefactoringAction
 - com.intellij.refactoring.actions.BaseRefactoringAction
 - <init>():V
+- p:isAvailableForAnyLanguage(com.intellij.psi.PsiFile):Z
 a:com.intellij.refactoring.actions.BaseRefactoringAction
 - com.intellij.openapi.actionSystem.AnAction
 - <init>():V
 - s:getPsiElementArray(com.intellij.openapi.actionSystem.DataContext):com.intellij.psi.PsiElement[]
+- p:isAvailableForAnyLanguage(com.intellij.psi.PsiFile):Z
 - p:isAvailableForFile(com.intellij.psi.PsiFile):Z
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.refactoring.actions.ExtractClassAction

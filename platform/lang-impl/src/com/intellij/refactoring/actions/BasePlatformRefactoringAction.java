@@ -82,10 +82,13 @@ public abstract class BasePlatformRefactoringAction extends BaseRefactoringActio
   }
 
   protected @Nullable RefactoringActionHandler getHandler(@NotNull Language language, PsiElement element) {
-    List<RefactoringSupportProvider> providers = LanguageRefactoringSupport.getInstance().allForLanguage(language);
-    if (providers.isEmpty()) return null;
-    if (element == null) return getRefactoringHandler(providers.getFirst());
-    for (RefactoringSupportProvider provider : providers) {
+    LanguageRefactoringSupport support = LanguageRefactoringSupport.getInstance();
+    if (element == null) {
+      // a Language.ANY provider decides per element, so it cannot answer without one
+      RefactoringSupportProvider provider = ContainerUtil.getFirstItem(support.allForLanguage(language));
+      return provider == null ? null : getRefactoringHandler(provider);
+    }
+    for (RefactoringSupportProvider provider : support.allForLanguageOrAny(language)) {
       if (provider.isAvailable(element)) {
         RefactoringActionHandler handler = getRefactoringHandler(provider, element);
         if (handler != null) {
@@ -105,6 +108,15 @@ public abstract class BasePlatformRefactoringAction extends BaseRefactoringActio
   protected boolean isAvailableForLanguage(final Language language) {
     List<RefactoringSupportProvider> providers = LanguageRefactoringSupport.getInstance().allForLanguage(language);
     return ContainerUtil.find(providers, myCondition) != null;
+  }
+
+  @Override
+  protected boolean isAvailableForAnyLanguage(@NotNull PsiFile file) {
+    return ContainerUtil.exists(anyLanguageProviders(), provider -> myCondition.value(provider) && provider.isAvailable(file));
+  }
+
+  private static @NotNull List<RefactoringSupportProvider> anyLanguageProviders() {
+    return LanguageRefactoringSupport.getInstance().allForLanguage(Language.ANY);
   }
 
   @Override
@@ -144,6 +156,7 @@ public abstract class BasePlatformRefactoringAction extends BaseRefactoringActio
         return false;
       }
     }
-    return true;
+    // a Language.ANY provider (e.g. an LSP server) serves any language, decided per file
+    return !ContainerUtil.exists(anyLanguageProviders(), myCondition);
   }
 }
