@@ -146,6 +146,9 @@ internal class IjPluginPackagerTest {
         - name: lib/modules/module.with.package.and.library.jar
           contentModules:
           - name: module.with.package.and.library
+            libraries:
+              library:
+                - name: module.with.package.and.library.jar
         - name: lib/modules/optional.module.jar
           contentModules:
           - name: optional.module
@@ -268,6 +271,8 @@ internal class IjPluginPackagerTest {
         "output",
         "--descriptor_module",
         "descriptor:input/descriptor.jar,input/library-1.2.3.jar,input/other-library.jar",
+        "--packed_modules",
+        "output/packed-modules.yaml",
       ),
       baseDir = tempDirectory,
     )
@@ -297,6 +302,17 @@ internal class IjPluginPackagerTest {
           file("OtherLibrary.class", "other library")
         }
       }
+      file("packed-modules.yaml", """
+        - name: lib/descriptor.jar
+          modules:
+          - name: descriptor
+        - name: lib/library.jar
+          library: library
+          module: descriptor
+        - name: lib/other-library.jar
+          library: other-library
+          module: descriptor
+      """.trimIndent())
     })
   }
 

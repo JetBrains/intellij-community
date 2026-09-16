@@ -22,6 +22,7 @@ import org.jetbrains.intellij.build.impl.ScopedCachedDescriptorContainer
 import org.jetbrains.intellij.build.impl.bazel.runBazelBuild
 import org.jetbrains.intellij.build.impl.isIncludePluginsInBuiltinCustomRepository
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
+import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleLibraryFileEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOutputEntry
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.readEntryFromZip
@@ -132,18 +133,9 @@ internal fun buildPluginsByBazel(
 /**
  * Reads the `packed-modules.yaml` that the `ij_plugin` Bazel rule writes for one plugin.
  *
- * The file names each jar of the plugin distribution, and under each jar the modules the packager put into it. Its
- * shape is the [FileEntry] shape, so that schema's own deserializer reads it. The conversion to [ModuleOutputEntry]
+ * The file names each jar of the plugin distribution, and under each jar the modules and libraries the packager put into it. Its
+ * shape is the [FileEntry] shape, so that schema's own deserializer reads it. The conversion to [ModuleOutputEntry] adn [ModuleLibraryFileEntry]
  * stays local, because nothing outside this builder wants it.
- *
- * Only [FileEntry.modules] and [FileEntry.contentModules] become entries, and [checkOnlyModuleLists] refuses a file
- * that carries anything else. `PackedModulesWriter` writes those two lists and a name, so nothing fails that check
- * today. It is here for the day the writer grows a third list. A silent drop would leave the plugin's distribution
- * entries short of that content.
- *
- * [ModuleOutputEntry] gets a size and a hash of 0, because no reader of these entries asks for a byte count.
- * [com.intellij.platform.distributionContent.ModuleEntry] offers a size, and [checkOnlyModuleLists]
- * refuses a module that states one.
  */
 private fun readPackedModules(
   packedModulesPath: Path,
@@ -151,24 +143,26 @@ private fun readPackedModules(
   pluginDistributionDirectory: Path,
 ): List<DistributionFileEntry> {
   return deserializeContentData(packedModulesPath.readText()).flatMap { entry ->
-    checkOnlyModuleLists(packedModulesPath, entry)
-    entry.modules.map { convertModuleEntry(it, entry.name, pluginMainModule, isContentModule = false, pluginDistributionDirectory) } +
-    entry.contentModules.map { convertModuleEntry(it, entry.name, pluginMainModule, isContentModule = true, pluginDistributionDirectory) }
+    checkEntryProperties(packedModulesPath, entry)
+    buildList {
+      entry.modules.flatMapTo(this) { convertModuleEntry(it, entry.name, pluginMainModule, isContentModule = false, pluginDistributionDirectory) }
+      entry.contentModules.flatMapTo(this) { convertModuleEntry(it, entry.name, pluginMainModule, isContentModule = true, pluginDistributionDirectory) }
+      if (entry.library != null && entry.module != null) {
+        add(convertLibraryEntry(entry.library!!, entry.module!!, entry.name, pluginDistributionDirectory))
+      }
+    }
   }
 }
 
 /**
  * Fails when [entry] carries a field that [readPackedModules] does not convert.
- *
- * The comparison is against a copy that holds the name and the two module lists, so the check needs no list of the
- * fields it rejects and a new field in the schema cannot slip past it.
  */
-private fun checkOnlyModuleLists(packedModulesPath: Path, entry: FileEntry) {
-  check(entry == FileEntry(name = entry.name, modules = entry.modules, contentModules = entry.contentModules)) {
+private fun checkEntryProperties(packedModulesPath: Path, entry: FileEntry) {
+  check(entry == FileEntry(name = entry.name, modules = entry.modules, contentModules = entry.contentModules, module = entry.module, library = entry.library)) {
     "$packedModulesPath: entry '${entry.name}' sets a field that the build scripts do not convert: $entry"
   }
   for (module in entry.modules.asSequence() + entry.contentModules.asSequence()) {
-    check(module == ModuleEntry(name = module.name)) {
+    check(module == ModuleEntry(name = module.name, libraries = module.libraries)) {
       "$packedModulesPath: module '${module.name}' of '${entry.name}' sets a field that the build scripts do not convert: $module"
     }
   }
@@ -180,21 +174,62 @@ private fun convertModuleEntry(
   pluginMainModule: String,
   isContentModule: Boolean,
   pluginDistributionDirectory: Path,
-): ModuleOutputEntry {
+): List<DistributionFileEntry> {
   val moduleItem = ModuleItem(
     moduleName = moduleEntry.name,
     relativeOutputFile = relativeJarPath.removePrefix("lib/"),
     reason = if (isContentModule) generateInclusionReasonForContentModule(pluginMainModule) else null,
   )
-  return ModuleOutputEntry(
+  return buildList {
+    val entryPath = pluginDistributionDirectory.resolve(relativeJarPath)
+    add(ModuleOutputEntry(
+      path = entryPath,
+      owner = moduleItem,
+      size = 0,
+      hash = 0,
+      relativeOutputFile = moduleItem.relativeOutputFile,
+      reason = moduleItem.reason,
+    ))
+    moduleEntry.libraries.entries.forEach { libraryEntry ->
+      add(ModuleLibraryFileEntry(
+        path = entryPath,
+        owner = moduleItem,
+        moduleName = moduleItem.moduleName,
+        libraryName = libraryEntry.key,
+        relativeOutputFile = moduleItem.relativeOutputFile,
+        libraryFile = null,
+        canonicalLibraryPath = null,
+        size = 0,
+        hash = 0,
+      ))
+    }
+  }
+}
+
+private fun convertLibraryEntry(
+  libraryName: String,
+  moduleName: String,
+  relativeJarPath: String,
+  pluginDistributionDirectory: Path,
+): DistributionFileEntry {
+  val moduleItem = ModuleItem(
+    moduleName = moduleName,
+    relativeOutputFile = relativeJarPath.removePrefix("lib/"),
+    reason = null,
+  )
+  return ModuleLibraryFileEntry(
     path = pluginDistributionDirectory.resolve(relativeJarPath),
     owner = moduleItem,
+    moduleName = moduleName,
+    libraryName = libraryName,
+    relativeOutputFile = moduleItem.relativeOutputFile,
+    libraryFile = null,
+    canonicalLibraryPath = null,
     size = 0,
     hash = 0,
-    relativeOutputFile = moduleItem.relativeOutputFile,
-    reason = moduleItem.reason,
   )
 }
+
 
 /**
  * Maps the searchable options index to the JARs of a plugin distribution built by the `ij_plugin` rule, following the same

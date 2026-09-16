@@ -171,11 +171,24 @@ object IjPluginPackager {
       packedModulesWriter?.addModule(descriptorOutputJar, it.moduleElement.name)
     }
     copyNonClasspathData(nonClasspathData, outputDirectory)
-    packAdditionalJarsForDescriptorModule(descriptorModuleArgument.jars.asSequence().drop(1), libDirectory, pluginDescriptorJarName)
+    val additionalJars = descriptorModuleArgument.jars.asSequence().drop(1)
+    packAdditionalJarsForDescriptorModule(
+      jars = additionalJars,
+      libDirectory = libDirectory,
+      pluginDescriptorJarName = pluginDescriptorJarName,
+      pluginDescriptorModuleName = descriptorModuleArgument.name,
+      packedModulesWriter = packedModulesWriter
+    )
     packedModulesWriter?.write()
   }
 
-  private fun packAdditionalJarsForDescriptorModule(jars: Sequence<Path>, libDirectory: Path, pluginDescriptorJarName: String) {
+  private fun packAdditionalJarsForDescriptorModule(
+    jars: Sequence<Path>,
+    libDirectory: Path,
+    pluginDescriptorJarName: String,
+    pluginDescriptorModuleName: String,
+    packedModulesWriter: PackedModulesWriter?
+  ) {
     val existingJarNames = HashMap<String, String>()
     existingJarNames[pluginDescriptorJarName] = "plugin descriptor module JAR"
     jars.forEach {  jar ->
@@ -193,6 +206,7 @@ object IjPluginPackager {
           dataFetcher()
         }
       }
+      packedModulesWriter?.addModuleLibrary(targetJar, pluginDescriptorModuleName, targetJarName.removeSuffix(".jar"))
     }
   }
 
@@ -243,7 +257,13 @@ object IjPluginPackager {
           }
         }
       }
-      packedModulesWriter?.addContentModule(outputJar, contentModuleElement.name)
+      if (packedModulesWriter != null) {
+        packedModulesWriter.addContentModule(outputJar, contentModuleElement.name)
+        contentModule.jars.asSequence().drop(1).forEach { jar ->
+          val libraryName = removeVersionFromJar(jar.name).removeSuffix(".jar")
+          packedModulesWriter.addModuleLibrary(outputJar, contentModuleElement.name, libraryName)
+        }
+      }
     }
   }
 
