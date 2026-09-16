@@ -5,25 +5,41 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import java.awt.font.FontRenderContext
 
 internal data class EditorViewSnapshot(
-  @JvmField val fontRenderContext: FontRenderContext,
-  @JvmField val prefixText: String?,
-  @JvmField val prefixLayout: LineLayout?,
-  @JvmField val prefixAttributes: TextAttributes?,
-  @JvmField val bidiFlags: Int,
-  @JvmField val tabSize: Int,
-  @JvmField val paintCallback: Runnable?,
-  @JvmField val metrics: EditorViewMetrics?,
+  private val fontRenderContext: FontRenderContext,
+  private val metrics: EditorViewMetrics,
+  private val tabSize: Int,
+  private val bidiFlags: Int,
+  private val prefix: EditorPrefix?,
+  private val paintCallback: Runnable?,
 ) {
   constructor(fontRenderContext: FontRenderContext) : this(
     fontRenderContext = fontRenderContext,
-    prefixText = null,
-    prefixLayout = null,
-    prefixAttributes = null,
     bidiFlags = 0,
     tabSize = -1,
+    metrics = EditorViewMetrics.UNINITIALIZED,
+    prefix = null,
     paintCallback = null,
-    metrics = null,
   )
+
+  fun fontRenderContext(): FontRenderContext = fontRenderContext
+  fun plainSpaceWidth(): Float = metrics.plainSpaceWidth
+  fun lineHeight(): Int = metrics.lineHeight
+  fun descent(): Int = metrics.descent
+  fun charHeight(): Int = metrics.charHeight
+  fun maxCharWidth(): Float = metrics.maxCharWidth
+  fun capHeight(): Int = metrics.capHeight
+  fun topOverhang(): Int = metrics.topOverhang
+  fun bottomOverhang(): Int = metrics.bottomOverhang
+  fun caretHeight(): Int = metrics.caretHeight
+  fun ascent(): Int = metrics.ascent
+  fun prefixText(): String? = prefix?.prefixText
+  fun prefixLayout(): LineLayout? = prefix?.prefixLayout
+  fun prefixAttributes(): TextAttributes? = prefix?.prefixAttributes
+  fun tabSize(): Int = tabSize
+  fun bidiFlags(): Int = bidiFlags
+  fun paintCallback(): Runnable? = paintCallback
+  fun prefix(): EditorPrefix? = prefix
+  fun metrics(): EditorViewMetrics = metrics
 
   fun withFontRenderContext(fontRenderContext: FontRenderContext): EditorViewSnapshot {
     return if (fontRenderContext === this.fontRenderContext) {
@@ -33,35 +49,11 @@ internal data class EditorViewSnapshot(
     }
   }
 
-  fun withPrefixText(prefixText: String?): EditorViewSnapshot {
-    return if (prefixText == this.prefixText) {
+  fun withMetrics(metrics: EditorViewMetrics): EditorViewSnapshot {
+    return if (metrics === this.metrics) {
       this
     } else {
-      copy(prefixText = prefixText)
-    }
-  }
-
-  fun withPrefixLayout(prefixLayout: LineLayout?): EditorViewSnapshot {
-    return if (prefixLayout === this.prefixLayout) {
-      this
-    } else {
-      copy(prefixLayout = prefixLayout)
-    }
-  }
-
-  fun withPrefixAttributes(prefixAttributes: TextAttributes?): EditorViewSnapshot {
-    return if (prefixAttributes === this.prefixAttributes) {
-      this
-    } else {
-      copy(prefixAttributes = prefixAttributes)
-    }
-  }
-
-  fun withBidiFlags(bidiFlags: Int): EditorViewSnapshot {
-    return if (bidiFlags == this.bidiFlags) {
-      this
-    } else {
-      copy(bidiFlags = bidiFlags)
+      copy(metrics = metrics)
     }
   }
 
@@ -73,19 +65,31 @@ internal data class EditorViewSnapshot(
     }
   }
 
+  fun withBidiFlags(bidiFlags: Int): EditorViewSnapshot {
+    return if (bidiFlags == this.bidiFlags) {
+      this
+    } else {
+      copy(bidiFlags = bidiFlags)
+    }
+  }
+
+  fun withPrefix(prefix: EditorPrefix?): EditorViewSnapshot {
+    return if (prefix === this.prefix) {
+      this
+    } else {
+      copy(prefix = prefix)
+    }
+  }
+
+  fun withPrefixLayout(prefixLayout: LineLayout?): EditorViewSnapshot {
+    return withPrefix(prefix?.withPrefixLayout(prefixLayout))
+  }
+
   fun withPaintCallback(paintCallback: Runnable?): EditorViewSnapshot {
     return if (paintCallback === this.paintCallback) {
       this
     } else {
       copy(paintCallback = paintCallback)
-    }
-  }
-
-  fun withMetrics(metrics: EditorViewMetrics?): EditorViewSnapshot {
-    return if (metrics === this.metrics) {
-      this
-    } else {
-      copy(metrics = metrics)
     }
   }
 }
