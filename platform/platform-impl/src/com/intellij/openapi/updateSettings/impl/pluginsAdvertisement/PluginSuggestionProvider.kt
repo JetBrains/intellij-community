@@ -36,6 +36,7 @@ internal class DefaultPluginSuggestion(
   private val pluginName: String,
   private val suggestionText: @Nls String,
   private val suggestionDismissKey: String,
+  private val onPluginEnabled: (() -> Unit)?,
 ) : PluginSuggestion {
   override fun apply(fileEditor: FileEditor): EditorNotificationPanel {
     val panel = EditorNotificationPanel(fileEditor, EditorNotificationPanel.Status.Info)
@@ -44,6 +45,7 @@ internal class DefaultPluginSuggestion(
     panel.createActionLabel(IdeBundle.message("plugins.advertiser.action.install.plugin.name", pluginName)) {
       FUSEventSource.EDITOR.logInstallPlugins(pluginIds, project)
       installAndEnable(project, pluginIds.map(PluginId::getId).toSet(), true) {
+        onPluginEnabled?.invoke()
         EditorNotifications.getInstance(project).updateAllNotifications()
       }
     }
@@ -59,12 +61,14 @@ internal class DefaultPluginSuggestion(
 }
 
 @ApiStatus.Internal
+@JvmOverloads
 fun buildSuggestionIfNeeded(
   project: Project,
   pluginIds: List<String>,
   pluginName: String,
   suggestionText: @Nls String,
   suggestionDismissKey: String,
+  onPluginEnabled: (() -> Unit)? = null,
 ): PluginSuggestion? {
   if (PropertiesComponent.getInstance().isTrueValue(suggestionDismissKey)) return null
 
@@ -81,7 +85,8 @@ fun buildSuggestionIfNeeded(
                                  pluginIds = requiredPluginIds,
                                  pluginName = pluginName,
                                  suggestionText = suggestionText,
-                                 suggestionDismissKey = suggestionDismissKey)
+                                 suggestionDismissKey = suggestionDismissKey,
+                                 onPluginEnabled = onPluginEnabled)
 }
 
 @ApiStatus.Internal
