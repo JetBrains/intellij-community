@@ -36,7 +36,6 @@ class MarkdownTablePresentationStalePsiTest : LightPlatformCodeInsightTestCase()
     )
     val table = requireNotNull(PsiTreeUtil.findChildOfType(file, MarkdownTable::class.java))
     val presentation = HorizontalBarPresentation(editor, table)
-    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
     assertTrue(presentation.width > 0)
 
     paintInEditor(presentation)

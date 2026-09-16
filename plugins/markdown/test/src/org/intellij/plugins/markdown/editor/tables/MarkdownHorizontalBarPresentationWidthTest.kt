@@ -48,11 +48,6 @@ class MarkdownHorizontalBarPresentationWidthTest : LightPlatformCodeInsightTestC
     val expected = renderedWidth(header.textRange.startOffset, header.textRange.endOffset)
 
     val presentation = HorizontalBarPresentation(editor, table)
-    PlatformTestUtil.waitWithEventsDispatching(
-      "the presentation never computed its bounds",
-      { presentation.width > 0 },
-      TIMEOUT_SECONDS,
-    )
     assertEquals(expected, presentation.width)
   }
 

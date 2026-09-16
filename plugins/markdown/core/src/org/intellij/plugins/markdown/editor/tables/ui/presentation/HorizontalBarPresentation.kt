@@ -12,19 +12,11 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.impl.ToolbarUtils
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.command.executeCommand
-import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorFontType
-import com.intellij.openapi.editor.event.DocumentEvent
-import com.intellij.openapi.editor.event.DocumentListener
-import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.markup.TextAttributes
-import com.intellij.openapi.util.Disposer
-import com.intellij.psi.PsiDocumentManager
 import org.jetbrains.annotations.ApiStatus
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.siblings
@@ -60,66 +52,26 @@ class HorizontalBarPresentation(private val editor: Editor, private val table: M
   )
 
   private var lastSelectedIndex: Int? = null
-  private var boundsState = emptyBoundsState
-  private var refreshScheduled = false
+  private var boundsState: BoundsState? = null
 
-  init {
-    val document = editor.document
-    scheduleBoundsRefresh(document)
-    val listenerDisposable = Disposer.newDisposable("HorizontalBarPresentation document listener")
-    EditorUtil.disposeWithEditor(editor, listenerDisposable)
-    document.addDocumentListener(object : DocumentListener {
-      override fun documentChanged(event: DocumentEvent) {
-        if (isInvalid) {
-          boundsState = emptyBoundsState
-          return
-        }
-        if (refreshScheduled) return
-        refreshScheduled = true
-        ApplicationManager.getApplication().invokeLater(
-          {
-            refreshScheduled = false
-            if (!isInvalid) scheduleBoundsRefresh(document)
-          },
-          ModalityState.stateForComponent(editor.contentComponent),
-        )
-      }
-    }, listenerDisposable)
-  }
-
-  private fun scheduleBoundsRefresh(document: Document) {
-    PsiDocumentManager.getInstance(table.project).performForCommittedDocument(document) {
-      invokeLater(ModalityState.stateForComponent(editor.contentComponent)) {
-        if (isInvalid || table.isSoftWrapping(editor)) return@invokeLater
-        val previous = boundsState
-        val calculated = calculateCurrentBoundsState()
-        if (calculated == previous) return@invokeLater
-        boundsState = calculated
-        val previousSize = Dimension(previous.width, previous.height)
-        val newSize = Dimension(calculated.width, calculated.height)
-        if (previousSize == newSize) {
-          fireUpdateEvent(previousSize)
-        } else {
-          fireSizeChanged(previousSize, newSize)
-        }
-      }
-    }
+  private fun obtainBounds(): BoundsState {
+    return boundsState ?: calculateCurrentBoundsState().also { boundsState = it }
   }
 
   private val barsModel
-    get() = boundsState.barsModel
+    get() = boundsState?.barsModel ?: emptyList()
 
   private val isInvalid
     get() = !table.isValid || editor.isDisposed
 
-  override val width
-    get() = boundsState.width
+  override val width: Int
+    get() = obtainBounds().width
 
-  override val height
-    get() = boundsState.height
+  override val height: Int
+    get() = obtainBounds().height
 
   override fun paint(graphics: Graphics2D, attributes: TextAttributes) {
-    if (editor.isDisposed || boundsState == emptyBoundsState) {
+    if (editor.isDisposed || barsModel.isEmpty()) {
       return
     }
     graphics.useCopy { local ->
@@ -148,20 +100,17 @@ class HorizontalBarPresentation(private val editor: Editor, private val table: M
   }
 
   private fun calculateCurrentBoundsState(): BoundsState {
-    if (isInvalid) {
+    if (isInvalid || table.isSoftWrapping(editor)) {
       return emptyBoundsState
     }
+    val header = table.headerRow ?: return emptyBoundsState
     val fontsMetrics = obtainFontMetrics(editor)
-    val width = calculateRowWidth()
-    val barsModel = buildBarsModel(fontsMetrics)
+    val width = calculateRowWidth(header)
+    val barsModel = buildBarsModel(header, fontsMetrics)
     return BoundsState(width, barHeight, barsModel)
   }
 
-  private fun calculateRowWidth(): Int {
-    if (isInvalid) {
-      return 0
-    }
-    val header = table.headerRow ?: return 0
+  private fun calculateRowWidth(header: MarkdownTableRow): Int {
     val range = header.textRange
     if (editor.offsetToXY(range.startOffset).y != editor.offsetToXY(range.endOffset).y) {
       return 0
@@ -182,8 +131,7 @@ class HorizontalBarPresentation(private val editor: Editor, private val table: M
     }
   }
 
-  private fun buildBarsModel(fontMetrics: FontMetrics): List<Rectangle> {
-    val header = requireNotNull(table.headerRow)
+  private fun buildBarsModel(header: MarkdownTableRow, fontMetrics: FontMetrics): List<Rectangle> {
     val positions = calculatePositions(header, fontMetrics)
     val sectors = buildSectors(positions)
     return sectors.map { (offset, width) -> Rectangle(offset - barHeight / 2, 0, width + barHeight, barHeight) }
