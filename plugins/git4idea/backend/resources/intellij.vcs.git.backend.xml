@@ -1082,6 +1082,9 @@
                     qualifiedName="Git4Idea.gitPushNotificationCustomizer"
                     dynamic="true"
                     area="IDEA_PROJECT"/>
+    <extensionPoint interface="git4idea.workingTrees.GitWorktreeOpenPathProvider"
+                    qualifiedName="Git4Idea.gitWorktreeOpenPathProvider"
+                    dynamic="true"/>
   </extensionPoints>
 
   <projectListeners>

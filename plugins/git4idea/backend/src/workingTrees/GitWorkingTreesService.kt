@@ -2,6 +2,7 @@
 package git4idea.workingTrees
 
 import com.intellij.CommonBundle
+import com.intellij.configurationStore.ProjectStorePathManager
 import com.intellij.dvcs.repo.repositoryId
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.RecentProjectsManager
@@ -67,6 +68,8 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Window
+import java.io.IOException
+import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.Path
@@ -466,7 +469,13 @@ class GitWorkingTreesService(private val project: Project, val coroutineScope: C
   private fun onWorkingTreeDeleted(repository: GitRepository, tree: GitWorkingTree) {
     rootsAwaitingRemovalFromModel[tree.path] = repository.repositoryId()
     repository.workingTreeHolder.scheduleReload()
-    RecentProjectsManager.getInstance().removePath(tree.path.path)
+    val recentProjectsManager = RecentProjectsManagerBase.getInstanceEx()
+    recentProjectsManager.removePath(tree.path.path)
+    for (recentPath in recentProjectsManager.getRecentPaths()) {
+      if (FileUtil.isAncestor(tree.path.path, recentPath, true)) {
+        recentProjectsManager.removePath(recentPath)
+      }
+    }
   }
 
   private fun notifyWorkingTreesDeletedSuccess(project: Project, deletedTrees: List<GitWorkingTree>) {
@@ -589,11 +598,34 @@ class GitWorkingTreesService(private val project: Project, val coroutineScope: C
   }
 
   suspend fun openProjectInNewWindow(path: Path): Project? {
+    val (pathToOpen, existingProject) = withContext(Dispatchers.IO) {
+      val pathToOpen = resolveWorktreeOpenPath(project, path)
+      val projectIdentity = ProjectStorePathManager.getInstance().getStoreDescriptor(pathToOpen).presentableUrl
+      val recentProjectsManager = RecentProjectsManager.getInstance()
+      val existingProject = ProjectUtil.getOpenProjects().firstOrNull {
+        val openProjectIdentity = recentProjectsManager.getProjectPath(it) ?: return@firstOrNull false
+        if (openProjectIdentity.fileSystem !== projectIdentity.fileSystem) return@firstOrNull false
+        try {
+          Files.isSameFile(openProjectIdentity, projectIdentity)
+        }
+        catch (_: IOException) {
+          false
+        }
+      }
+      pathToOpen to existingProject
+    }
+    if (existingProject != null) {
+      withContext(Dispatchers.UI) {
+        ProjectUtil.focusProjectWindow(existingProject)
+      }
+      return existingProject
+    }
+
     val generalSettings = GeneralSettings.getInstance()
     val savedConfirmOpen = generalSettings.confirmOpenNewProject
     try {
       generalSettings.confirmOpenNewProject = GeneralSettings.OPEN_PROJECT_ASK
-      return ProjectUtil.openOrImportAsync(path)
+      return ProjectUtil.openOrImportAsync(pathToOpen)
     }
     finally {
       generalSettings.confirmOpenNewProject = savedConfirmOpen
