@@ -5,8 +5,6 @@ import javaApi.JFunction0
 import javaApi.JFunction1
 import javaApi.JFunction2
 import javaApi.MethodReferenceHelperClass
-import test.Java8Class
-import test.Test
 
 internal class Test {
     fun memberFun(): Int {
@@ -93,10 +91,10 @@ internal class Java8Class {
         MethodReferenceHelperClass.staticFun0(JFunction0 { Java8Class() })
         h.memberFun0(JFunction0 { Java8Class() })
 
-        val qualifiedConstructorSameClass = JFunction0 { test.Java8Class() }
+        val qualifiedConstructorSameClass = JFunction0 { Java8Class() }
         qualifiedConstructorSameClass.foo()
-        MethodReferenceHelperClass.staticFun0(JFunction0 { test.Java8Class() })
-        h.memberFun0(JFunction0 { test.Java8Class() })
+        MethodReferenceHelperClass.staticFun0(JFunction0 { Java8Class() })
+        h.memberFun0(JFunction0 { Java8Class() })
 
         val constructorAnotherClass = JFunction0 { Test() }
         constructorAnotherClass.foo()
@@ -108,10 +106,10 @@ internal class Java8Class {
         MethodReferenceHelperClass.staticFun2<Int?, Test?>(JFunction2 { i: Int? -> Test(i!!) })
         h.memberFun2<Int?, Test?>(JFunction2 { i: Int? -> Test(i!!) })
 
-        val qualifiedConstructorAnotherClass = JFunction0 { test.Test() }
+        val qualifiedConstructorAnotherClass = JFunction0 { Test() }
         qualifiedConstructorAnotherClass.foo()
-        MethodReferenceHelperClass.staticFun0(JFunction0 { test.Test() })
-        h.memberFun0(JFunction0 { test.Test() })
+        MethodReferenceHelperClass.staticFun0(JFunction0 { Test() })
+        h.memberFun0(JFunction0 { Test() })
 
         val constructorAnotherClassWithoutConstructor = JFunction0 { Test2() }
         constructorAnotherClassWithoutConstructor.foo()

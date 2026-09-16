@@ -73,13 +73,13 @@ internal class JavaMultiverseCodeVisionProviderTest {
     val moduleAContext = setContext(editor, moduleAFixture.get())
     codeVision.testProviders(moduleAContext, """
         package com.company;
-        class Shared {}/*<# [3 usages] #>*/
+        public class Shared {}/*<# [3 usages] #>*/
       """.trimIndent(), JavaReferencesCodeVisionProvider().groupId)
 
     val moduleBContext = setContext(editor, moduleBFixture.get())
     codeVision.testProviders(moduleBContext, """
       package com.company;
-      class Shared {}/*<# [2 usages] #>*/
+      public class Shared {}/*<# [2 usages] #>*/
     """.trimIndent(), JavaReferencesCodeVisionProvider().groupId)
 
   }
@@ -114,16 +114,16 @@ internal class JavaMultiverseCodeVisionProviderTest {
     val moduleAContext = setContext(editor, moduleAFixture.get())
     codeVision.testProviders(moduleAContext, """
       package com.company;
-      class Shared {/*<# [3 usages] #>*/
-        void doShared() {}/*<# [1 usage] #>*/
+      public class Shared {/*<# [3 usages] #>*/
+        public void doShared() {}/*<# [1 usage] #>*/
       }
     """.trimIndent(), JavaReferencesCodeVisionProvider().groupId)
 
     val moduleBContext = setContext(editor, moduleBFixture.get())
     codeVision.testProviders(moduleBContext, """
         package com.company;
-        class Shared {/*<# [2 usages] #>*/
-          void doShared() {}/*<# [no usages] #>*/
+        public class Shared {/*<# [2 usages] #>*/
+          public void doShared() {}/*<# [no usages] #>*/
         }
       """.trimIndent(), JavaReferencesCodeVisionProvider().groupId)
   }
@@ -147,13 +147,13 @@ internal class JavaMultiverseCodeVisionProviderTest {
     val moduleAContext = setContext(editor, moduleAFixture.get())
     codeVision.testProviders(moduleAContext, """
         package com.company;
-        class Shared{}/*<# [3 usages   2 inheritors] #>*/
+        public class Shared{}/*<# [3 usages   2 inheritors] #>*/
       """.trimIndent(), JavaReferencesCodeVisionProvider().groupId, JavaInheritorsCodeVisionProvider().groupId)
 
     val moduleBContext = setContext(editor, moduleBFixture.get())
     codeVision.testProviders(moduleBContext, """
         package com.company;
-        class Shared{}/*<# [2 usages   1 inheritor] #>*/
+        public class Shared{}/*<# [2 usages   1 inheritor] #>*/
       """.trimIndent(), JavaReferencesCodeVisionProvider().groupId, JavaInheritorsCodeVisionProvider().groupId)
   }
 
@@ -176,7 +176,7 @@ internal class JavaMultiverseCodeVisionProviderTest {
     val moduleAContext = setContext(editor, moduleAFixture.get())
     codeVision.testProviders(moduleAContext, """
         package com.company;
-        interface Shared{}/*<# [2 usages   1 implementation] #>*/
+        public interface Shared{}/*<# [2 usages   1 implementation] #>*/
       """.trimIndent(), JavaReferencesCodeVisionProvider().groupId,
                              JavaInheritorsCodeVisionProvider().groupId
     )
@@ -184,7 +184,7 @@ internal class JavaMultiverseCodeVisionProviderTest {
     val moduleBContext = setContext(editor, moduleBFixture.get())
     codeVision.testProviders(moduleBContext, """
         package com.company;
-        interface Shared{}/*<# [3 usages   2 implementations] #>*/
+        public interface Shared{}/*<# [3 usages   2 implementations] #>*/
       """.trimIndent(), JavaReferencesCodeVisionProvider().groupId,
                              JavaInheritorsCodeVisionProvider().groupId
     )
@@ -215,7 +215,7 @@ internal class JavaMultiverseCodeVisionProviderTest {
     val moduleAContext = setContext(editor, moduleAFixture.get())
     codeVision.testProviders(moduleAContext, """
         package com.company;
-        class Shared{/*<# [2 usages   1 inheritor] #>*/
+        public class Shared{/*<# [2 usages   1 inheritor] #>*/
           public void foo(){}/*<# [no usages   1 override] #>*/
         }
       """.trimIndent(), JavaReferencesCodeVisionProvider().groupId,
@@ -225,7 +225,7 @@ internal class JavaMultiverseCodeVisionProviderTest {
     val moduleBContext = setContext(editor, moduleBFixture.get())
     codeVision.testProviders(moduleBContext, """
         package com.company;
-        class Shared{/*<# [3 usages   2 inheritors] #>*/
+        public class Shared{/*<# [3 usages   2 inheritors] #>*/
           public void foo(){}/*<# [no usages   2 overrides] #>*/
         }
       """.trimIndent(), JavaReferencesCodeVisionProvider().groupId,
@@ -258,7 +258,7 @@ internal class JavaMultiverseCodeVisionProviderTest {
     val moduleAContext = setContext(editor, moduleAFixture.get())
     codeVision.testProviders(moduleAContext, """
         package com.company;
-        interface Shared {/*<# [2 usages   1 implementation] #>*/
+        public interface Shared {/*<# [2 usages   1 implementation] #>*/
         void foo();/*<# [no usages   1 implementation] #>*/
       }
       """.trimIndent(), JavaReferencesCodeVisionProvider().groupId,
@@ -268,7 +268,7 @@ internal class JavaMultiverseCodeVisionProviderTest {
     val moduleBContext = setContext(editor, moduleBFixture.get())
     codeVision.testProviders(moduleBContext, """
         package com.company;
-        interface Shared {/*<# [3 usages   2 implementations] #>*/
+        public interface Shared {/*<# [3 usages   2 implementations] #>*/
         void foo();/*<# [no usages   2 implementations] #>*/
       }
       """.trimIndent(), JavaReferencesCodeVisionProvider().groupId,
@@ -304,7 +304,7 @@ internal class JavaMultiverseCodeVisionProviderTest {
     val moduleAContext = setContext(editor, moduleAFixture.get())
     codeVision.testProviders(moduleAContext, """
         package com.company;
-        enum E {/*<# [7 usages] #>*/
+        public enum E {/*<# [7 usages] #>*/
           E1, E2, E3, E4/*<# [1 usage] #>*/
         }
       """.trimIndent(), JavaReferencesCodeVisionProvider().groupId,
@@ -314,7 +314,7 @@ internal class JavaMultiverseCodeVisionProviderTest {
     val moduleBContext = setContext(editor, moduleBFixture.get())
     codeVision.testProviders(moduleBContext, """
         package com.company;
-        enum E {/*<# [5 usages] #>*/
+        public enum E {/*<# [5 usages] #>*/
           E1, E2, E3, E4/*<# [1 usage] #>*/
         }
       """.trimIndent(), JavaReferencesCodeVisionProvider().groupId,

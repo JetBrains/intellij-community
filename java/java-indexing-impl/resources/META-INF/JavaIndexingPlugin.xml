@@ -42,6 +42,8 @@
     <fileBasedIndex implementation="com.intellij.psi.impl.search.JavaNullMethodArgumentIndex"/>
     <fileBasedIndex implementation="com.intellij.psi.impl.java.stubs.index.ExternalAnnotationsIndex"/>
     <fileBasedIndex implementation="com.intellij.psi.impl.java.JavaFunctionalExpressionIndex"/>
+    <fileBasedIndex implementation="com.intellij.psi.impl.java.JavaDeclaredPackageIndex"/>
+    <java.elementFinder implementation="com.intellij.psi.impl.java.DeclaredPackageElementFinder" order="last"/>
     <workspaceModel.fileIndexContributor implementation="com.intellij.psi.impl.java.stubs.index.ExternalAnnotationsLibraryRootFileIndexContributor"/>
     <workspaceModel.fileIndexContributor implementation="com.intellij.psi.impl.java.stubs.index.ExternalAnnotationsSdkRootFileIndexContributor"/>
     <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaModuleNameIndex"/>

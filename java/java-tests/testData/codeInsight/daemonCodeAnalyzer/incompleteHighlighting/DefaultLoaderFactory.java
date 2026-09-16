@@ -1,7 +1,7 @@
 package com.haulmont.yarg.loaders.factory;
 
-import <info descr="Not resolved until the project is fully loaded">com</info>.<info descr="Not resolved until the project is fully loaded">haulmont</info>.<info descr="Not resolved until the project is fully loaded">yarg</info>.<info descr="Not resolved until the project is fully loaded">exception</info>.<info descr="Not resolved until the project is fully loaded">UnsupportedLoaderException</info>;
-import <info descr="Not resolved until the project is fully loaded">com</info>.<info descr="Not resolved until the project is fully loaded">haulmont</info>.<info descr="Not resolved until the project is fully loaded">yarg</info>.<info descr="Not resolved until the project is fully loaded">loaders</info>.<info descr="Not resolved until the project is fully loaded">ReportDataLoader</info>;
+import com.haulmont.yarg.<info descr="Not resolved until the project is fully loaded">exception</info>.<info descr="Not resolved until the project is fully loaded">UnsupportedLoaderException</info>;
+import com.haulmont.yarg.loaders.<info descr="Not resolved until the project is fully loaded">ReportDataLoader</info>;
 
 import java.util.HashMap;
 import java.util.Map;

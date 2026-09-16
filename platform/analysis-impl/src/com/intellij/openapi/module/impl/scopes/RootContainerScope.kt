@@ -86,6 +86,10 @@ abstract class RootContainerScope internal constructor(
 
   @ApiStatus.Experimental
   override fun getFileInfo(file: VirtualFile): CodeInsightContextFileInfo {
+    if (!this.isSharedSourceSupportEnabled) {
+      return createContainingContextFileInfo(emptyList(), contains(file))
+    }
+
     val roots = myProjectFileIndex.getModuleSourceOrLibraryClassesRoots(file)
     if (roots.isEmpty()) {
       return DoesNotContainFileInfo()

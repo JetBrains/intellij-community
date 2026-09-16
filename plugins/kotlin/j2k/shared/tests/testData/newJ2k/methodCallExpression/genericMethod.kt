@@ -6,7 +6,7 @@ internal class Map {
 
 internal class U {
     fun test() {
-        val m: Map = demo.Map()
+        val m = Map()
         m.put<String?, Int?>(null, 10)
     }
 }

@@ -4,6 +4,6 @@ class Inequity {
   }
 
   void m() {
-    new Inequity(null, null);
+    new Inequity(new String[]{null, null});
   }
 }

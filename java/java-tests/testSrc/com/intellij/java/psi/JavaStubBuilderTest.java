@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi;
 
+import com.intellij.idea.TestFor;
 import com.intellij.lang.FileASTNode;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiJavaFile;
@@ -595,6 +596,30 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
                      MODIFIER_LIST:PsiModifierListStub[mask=0]
                  EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]
                  IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]
+             """);
+  }
+
+  @TestFor(issues = "IDEA-393876")
+  public void testRecordWithVarArgsCompactConstructor() {
+    doTest("record A(int x, String... y) { A { y = y.clone(); } }",
+
+           """
+             PsiJavaFileStub []
+               IMPORT_LIST:PsiImportListStub
+               CLASS:PsiClassStub[record name=A fqn=A]
+                 MODIFIER_LIST:PsiModifierListStub[mask=0]
+                 TYPE_PARAMETER_LIST:PsiTypeParameterListStub
+                 RECORD_HEADER:PsiRecordHeaderStub
+                   RECORD_COMPONENT:PsiRecordComponentStub[x:int]
+                     MODIFIER_LIST:PsiModifierListStub[mask=0]
+                   RECORD_COMPONENT:PsiRecordComponentStub[y:String...]
+                     MODIFIER_LIST:PsiModifierListStub[mask=0]
+                 EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]
+                 IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]
+                 METHOD:PsiMethodStub[cons varargs A:null]
+                   MODIFIER_LIST:PsiModifierListStub[mask=0]
+                   TYPE_PARAMETER_LIST:PsiTypeParameterListStub
+                   THROWS_LIST:PsiRefListStub[THROWS_LIST:]
              """);
   }
 

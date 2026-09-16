@@ -37,6 +37,7 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiExpressionList;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNewExpression;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiParameterList;
 import com.intellij.psi.PsiReference;
@@ -110,6 +111,8 @@ public final class VarargParameterInspection extends BaseInspection {
         return SyntaxTraverser.psiTraverser(method.getContainingFile())
           .filter(ref -> ref instanceof PsiJavaCodeReferenceElement element && element.isReferenceTo(method) ||
                          ref instanceof PsiEnumConstant constant && method.isEquivalentTo(constant.resolveMethod()) ||
+                         // the class reference of a new expression resolves to the class, so it does not report the constructor
+                         ref instanceof PsiNewExpression newExpression && method.isEquivalentTo(newExpression.resolveMethod()) ||
                          ref instanceof PsiDocMethodOrFieldRef && ref.getReference() instanceof PsiReference docRef && docRef.isReferenceTo(method))
           .toList();
       }

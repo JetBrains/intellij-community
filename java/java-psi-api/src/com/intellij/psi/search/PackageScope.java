@@ -15,14 +15,22 @@ import com.intellij.psi.PsiClassOwner;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPackage;
 import com.intellij.util.Query;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 public class PackageScope extends GlobalSearchScope {
   private final Set<VirtualFile> myDirs;
   private final Set<VirtualFile> myFiles;
+  /**
+   * The URL of each file of {@link #myFiles}. An environment can represent one file by more than one
+   * {@link VirtualFile} instance, and {@link #myFiles} then misses the instance which the caller holds.
+   */
+  private final Set<String> myFileUrls;
   private final PsiPackage myPackage;
   private final boolean myIncludeSubpackages;
   private final boolean myIncludeLibraries;
@@ -66,6 +74,15 @@ public class PackageScope extends GlobalSearchScope {
       return true;
     });
 
+    // A file can declare a package which no directory holds. PackageIndex does not know such a file, but an element finder does.
+    for (PsiFile file : myPackage.getIndividualFiles(packageScope != null ? packageScope : allScope(project))) {
+      VirtualFile virtualFile = file.getVirtualFile();
+      if (virtualFile != null) {
+        myFiles.add(virtualFile);
+      }
+    }
+    myFileUrls = myFiles.isEmpty() ? Collections.emptySet() : new HashSet<>(ContainerUtil.map(myFiles, VirtualFile::getUrl));
+
     myIncludeLibraries = includeLibraries;
 
     myPartOfPackagePrefix = JavaPsiFacade.getInstance(project).isPartOfPackagePrefix(myPackageQualifiedName);
@@ -95,7 +112,8 @@ public class PackageScope extends GlobalSearchScope {
         }
       }
     }
-    return myFiles.contains(file);
+    if (myFiles.contains(file)) return true;
+    return !myFileUrls.isEmpty() && myFileUrls.contains(file.getUrl());
   }
 
   @Override
