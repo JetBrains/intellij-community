@@ -59,12 +59,19 @@ public class BuildManagerAutoMakeTriggerTest extends LightJavaCodeInsightFixture
     assertEmpty(filter.seenFiles);
   }
 
-  public void testDeletedFileTriggersMakeWithoutProject() throws IOException {
+  public void testDeletedFileTriggersMakeBeforeTheVfsChangeOnly() throws IOException {
     var file = addContentFile("Deleted.java", "class Deleted {}");
+    var event = new VFileDeleteEvent(null, file);
+    assertTrue(BuildManager.shouldTriggerMakeOnRemoval(getProject(), List.of(event)));
+
     WriteAction.run(() -> file.delete(this));
     assertFalse(file.isValid());
+    assertFalse(BuildManager.shouldTriggerMake(getProject(), List.of(event)));
+  }
 
-    assertTrue(BuildManager.shouldTriggerMake(null, List.of(new VFileDeleteEvent(null, file))));
+  public void testContentChangeDoesNotTriggerMakeOnRemoval() {
+    var file = addContentFile("A.java", "class A {}");
+    assertFalse(BuildManager.shouldTriggerMakeOnRemoval(getProject(), List.of(change(file))));
   }
 
   public void testMissingOrInvalidProjectDoesNotTriggerMake() {

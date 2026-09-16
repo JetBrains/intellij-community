@@ -89,13 +89,16 @@ import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.util.registry.RegistryManagerKt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
+import com.intellij.openapi.vfs.AsyncFileListener;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
+import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.platform.backend.workspace.GlobalWorkspaceModelCache;
 import com.intellij.platform.backend.workspace.WorkspaceModelCache;
@@ -431,7 +434,9 @@ public final class BuildManager implements Disposable {
   }
 
   /**
-   * Decides if a batch of VFS events needs an auto-make.
+   * Decides if a batch of VFS events needs an auto-make, after the VFS applied them.
+   * A file that the batch removed is already invalid here, and its old location is gone with it.
+   * {@link RemovedContentListener} classifies removals before the VFS change instead, so this method skips them.
    * @param project the project that provides the content roots, or {@code null} if no project has the focus
    * @param events  the buffered VFS events in the order of arrival
    * @return {@code true} if an auto-make must be scheduled
@@ -439,40 +444,50 @@ public final class BuildManager implements Disposable {
   @ApiStatus.Internal
   @VisibleForTesting
   public static boolean shouldTriggerMake(@Nullable Project project, @NotNull List<? extends VFileEvent> events) {
-    if (PowerSaveMode.isEnabled() || ApplicationManager.getApplication().isDisposed()) {
+    if (PowerSaveMode.isEnabled() || ApplicationManager.getApplication().isDisposed() || !isValidProject(project)) {
       return false;
     }
 
-    ProjectFileIndex fileIndex = null;
-
+    var fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     for (var event : events) {
       ProgressManager.checkCanceled();
-
-      var eventFile = event.getFile();
-      if (eventFile == null) {
-        continue;
-      }
-      if (!eventFile.isValid()) {
-        return true; // should be deleted
-      }
-
-      if (fileIndex == null) {
-        if (!isValidProject(project)) {
-          return false;
-        }
-        fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-      }
-
-      if (fileIndex.isInContent(eventFile)) {
-        if (ProjectUtil.isProjectOrWorkspaceFile(eventFile) ||
-            GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(eventFile, project)) {
-          // changes in project files or generated stuff should not trigger auto-make
-          continue;
-        }
+      if (isRelevantChange(project, fileIndex, event.getFile())) {
         return true;
       }
     }
     return false;
+  }
+
+  /**
+   * Decides if a batch of VFS events needs an auto-make for a location the events remove.
+   * The events must come from {@link AsyncFileListener#prepareChange}, where the file is still valid and the file index
+   * still knows where it lives.
+   */
+  @ApiStatus.Internal
+  @VisibleForTesting
+  public static boolean shouldTriggerMakeOnRemoval(@Nullable Project project, @NotNull List<? extends VFileEvent> events) {
+    if (PowerSaveMode.isEnabled() || ApplicationManager.getApplication().isDisposed() || !isValidProject(project)) {
+      return false;
+    }
+
+    var fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    for (var event : events) {
+      ProgressManager.checkCanceled();
+      // a move removes the file from its old location, which is the side this phase can still see
+      if ((event instanceof VFileDeleteEvent || event instanceof VFileMoveEvent) &&
+          isRelevantChange(project, fileIndex, event.getFile())) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean isRelevantChange(@NotNull Project project, @NotNull ProjectFileIndex fileIndex, @Nullable VirtualFile file) {
+    if (file == null || !file.isValid() || !fileIndex.isInContent(file)) {
+      return false;
+    }
+    // changes in project files or generated stuff should not trigger auto-make
+    return !ProjectUtil.isProjectOrWorkspaceFile(file) && !GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(file, project);
   }
 
   private void configureIdleAutomake(@NotNull RegistryManager registryManager) {
@@ -759,6 +774,29 @@ public final class BuildManager implements Disposable {
 
   private static int getAutomakeWhileIdleTimeout(@NotNull RegistryManager registryManager) {
     return registryManager.intValue("compiler.automake.build.while.idle.timeout", 60000);
+  }
+
+  /**
+   * Schedules auto-make after a file is removed from project content.
+   * The listener classifies removals before the VFS change, while the old location is still available.
+   */
+  static final class RemovedContentListener implements AsyncFileListener {
+    @Override
+    public @Nullable ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        return null;
+      }
+      // prepareChange runs in a read action, so the file index is already safe to query here
+      if (!shouldTriggerMakeOnRemoval(getCurrentContextProject(), events)) {
+        return null;
+      }
+      return new ChangeApplier() {
+        @Override
+        public void afterVfsChange() {
+          getInstance().scheduleAutoMake();
+        }
+      };
+    }
   }
 
   private static boolean canStartAutoMake(@NotNull Project project) {
