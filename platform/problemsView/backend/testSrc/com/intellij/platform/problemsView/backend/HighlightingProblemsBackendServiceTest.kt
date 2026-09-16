@@ -8,30 +8,43 @@ import com.intellij.analysis.problemsView.toolWindow.HighlightingProblem
 import com.intellij.analysis.problemsView.toolWindow.splitApi.ProblemEvent
 import com.intellij.analysis.problemsView.toolWindow.splitApi.ProblemEventDto
 import com.intellij.analysis.problemsView.toolWindow.splitApi.ProblemLifetime
+import com.intellij.codeInsight.daemon.HighlightDisplayKey
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil
 import com.intellij.codeInsight.intention.EmptyIntentionAction
 import com.intellij.codeInsight.quickfix.LazyQuickFixUpdater
+import com.intellij.codeInspection.CustomSuppressableInspectionTool
+import com.intellij.codeInspection.LocalInspectionTool
+import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.SuppressIntentionAction
 import com.intellij.ide.vfs.rpcId
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.project.Project
 import com.intellij.platform.problemsView.collector.ProjectErrorsCollector
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiPlainText
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.enableInspectionTool
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.psiFileFixture
 import com.intellij.testFramework.junit5.fixture.sourceRootFixture
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -41,6 +54,7 @@ import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -53,7 +67,7 @@ class HighlightingProblemsBackendServiceTest {
   private val testFile by projectFixture
     .moduleFixture("testModule")
     .sourceRootFixture()
-    .psiFileFixture("testFile.java", "\n")
+    .psiFileFixture("testFile.java", "class TestMe {}\n")
 
   private suspend fun createTestHighlightingProblems(problemCount: Int): List<HighlightInfo> = readAction {
     (1..problemCount).mapNotNull { i ->
@@ -65,9 +79,12 @@ class HighlightingProblemsBackendServiceTest {
   }
 
   private suspend fun addProblemsToDocument(problemCount: Int) {
-    val document = readAction { testFile.viewProvider.document }
     val highlightInfos = createTestHighlightingProblems(problemCount = problemCount)
+    addProblemsToDocument(highlightInfos)
+  }
 
+  private suspend fun addProblemsToDocument(highlightInfos: List<HighlightInfo>) {
+    val document = readAction { testFile.viewProvider.document }
     withContext(Dispatchers.EDT) {
       UpdateHighlightersUtil.setHighlightersToEditor(
         project,
@@ -414,6 +431,77 @@ class HighlightingProblemsBackendServiceTest {
     finally {
       lifetimeScope.cancel()
     }
+  }
+
+  @Test
+  @Timeout(30)
+  fun `inspection suppression uses the problem element`(@TestDisposable disposable: Disposable): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      FileEditorManager.getInstance(project).openFile(testFile.virtualFile)
+
+    }
+    val lifetimeManager = ProblemLifetimeManager.getInstance(project)
+
+    val flow = HighlightingProblemsBackendService.getInstance(project)
+      .getOrCreateEventFlowForFile(testFile.virtualFile.rpcId())
+    val batches = mutableListOf<List<ProblemEventDto>>()
+    val collectorJob = launch {
+      flow.collect { batch -> batches.add(batch) }
+    }
+
+    class TestSuppress: SuppressIntentionAction() {
+      override fun getText(): String = familyName
+
+      override fun getFamilyName(): String = "Suppress test class problem"
+
+      override fun isAvailable(project: Project, editor: Editor?, element: PsiElement): Boolean = true
+
+      override fun invoke(project: Project, editor: Editor?, element: PsiElement) = Unit
+    }
+
+    class TestClassInspection : LocalInspectionTool(), CustomSuppressableInspectionTool {
+      override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
+        return object : PsiElementVisitor() {
+          override fun visitPlainText(content: PsiPlainText) {
+            holder.registerProblem(content, "Test class problem")
+          }
+        }
+      }
+
+      override fun getSuppressActions(element: PsiElement?): Array<SuppressIntentionAction> {
+        return if (element is PsiFile) emptyArray() else arrayOf(TestSuppress())
+      }
+
+      override fun isSuppressedFor(element: PsiElement): Boolean = false
+    }
+
+
+    val inspection = TestClassInspection()
+    enableInspectionTool(project, inspection, disposable)
+    val key = requireNotNull(HighlightDisplayKey.find(inspection.shortName))
+
+    val problems = readAction {
+      listOfNotNull(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+                      .range(0, 0)
+                      .description("test problem with quick fixes")
+                      .registerFix(EmptyIntentionAction("Test fix"), null, "", null, key)
+                      .create())
+    }
+
+    addProblemsToDocument(problems)
+
+    val appearedId = waitForAllExpectedProblemEvents(batches = batches, expectedCount = 1)
+      .filterIsInstance<ProblemEventDto.Appeared>()
+      .single()
+      .problemDto.id
+    collectorJob.cancel()
+
+    val problem = lifetimeManager.findProblemById(appearedId) as HighlightingProblem
+
+    assertTrue(problem.info?.findRegisteredQuickFix { descriptor, _ ->
+      val intentionAction = descriptor.getOptions(testFile.findElementAt(0)!!, null)
+      intentionAction.any { it is TestSuppress }
+    } == true)
   }
 
   private class TestProblemsProvider(override val project: Project) : ProblemsProvider
