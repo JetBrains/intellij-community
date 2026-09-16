@@ -472,10 +472,6 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
       layout.rawPluginXmlPatcher = pluginXmlPatcher
     }
 
-    fun withPluginXmlPatcher(pluginXmlPatcher: (String, BuildContext) -> String) {
-      layout.pluginXmlPatcher = pluginXmlPatcher
-    }
-
     fun withDeprecatedPostProcessor(
       layoutAssetSpec: DevPluginLayoutAssetSpec,
       layoutPatcher: LayoutPatcher,

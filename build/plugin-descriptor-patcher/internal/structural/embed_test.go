@@ -242,6 +242,19 @@ func TestAModuleThatAlreadyHoldsContentIsLeftAlone(t *testing.T) {
 	}
 }
 
+// A `<module/>` that already holds content still needs its declared descriptor: the assembly resolves every content
+// module for the runtime module repository, and the port refuses what the assembly would refuse.
+func TestAModuleThatAlreadyHoldsContentStillNeedsItsDescriptor(t *testing.T) {
+	_, err := embed(t,
+		`<idea-plugin><content><module name="a.b"><![CDATA[<idea-plugin package="already"/>]]></module></content></idea-plugin>`,
+		structural.ContentRequest{MainModule: "intellij.example", Embeds: true},
+		nil)
+
+	if err == nil || !strings.Contains(err.Error(), "no declared descriptor answers it") {
+		t.Fatalf("a pre-filled module without a declared descriptor must be refused, got: %v", err)
+	}
+}
+
 // An embedded descriptor resolves its own includes, through a search path the content module heads
 // (`contentModuleEmbedding.kt:328`, `:347`).
 func TestAnEmbeddedDescriptorResolvesItsOwnIncludes(t *testing.T) {

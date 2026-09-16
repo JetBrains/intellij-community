@@ -579,7 +579,8 @@ BUILD TIME                              RUNTIME
 **Purpose**: Helper function that resolves a content module descriptor and embeds it as CDATA.
 
 **Key Features**:
-- Checks if content is already embedded (idempotent)
+- Resolves and caches the module descriptor first, because the runtime module repository reads that cache for every module of the published `<content>` list
+- A module that already holds a body keeps it, which makes the stage idempotent
 - Resolves module descriptor from cache (post-scrambling if applicable)
 - Applies optional descriptor modifications via callback
 - Embeds result as CDATA in the module element

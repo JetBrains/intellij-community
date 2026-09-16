@@ -19,6 +19,7 @@ import org.jetbrains.intellij.build.WindowsDistributionCustomizer
 import org.jetbrains.intellij.build.impl.BuildUtils.checkedReplace
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.PluginLayout
+import org.jetbrains.intellij.build.impl.PluginVersionEvaluatorResult
 import org.jetbrains.intellij.build.productLayout.CommunityModuleSets
 import org.jetbrains.intellij.build.productLayout.CommunityProductFragments
 import org.jetbrains.intellij.build.productLayout.ProductModulesContentSpec
@@ -246,23 +247,33 @@ class MPSProperties : JetBrainsProductProperties() {
     }
 
     private fun patchPluginXml(): (PluginLayout.PluginLayoutSpec) -> Unit = { spec ->
-      spec.withPluginXmlPatcher { text, _ ->
-        val newText = checkedReplace(
-          oldText = text,
-          regex = """<version>([^.]+)\.([^.]+)\.?(.*)</version>""",
-          newText = """<version>$1.100$2.$3-MPS</version>""",
-        )
-        
-        val regex = """(?m)(?s)(.*)<content namespace="jetbrains">(.+)</idea-plugin>([\n]*)"""
-        val patchedManifestContent = javaClass.classLoader.getResourceAsStream("java-impl.jar/META-INF/plugin.xml")?.use {
-          it.bufferedReader().readText()
-        } ?: throw IllegalStateException("Failed to resolve plugin xml")
-        val matchResult = Regex(regex).matchEntire(patchedManifestContent) ?: throw IllegalStateException("Failed to match regex")
-        checkedReplace(
-          oldText = newText,
-          regex = regex,
-          newText = """$1<content namespace="jetbrains">${matchResult.groups[2]?.value}</idea-plugin>$3""",
-        )
+      // The MPS version is not SemVer and not the IDE build scheme, so the descriptor version check must not run on it.
+      spec.semanticVersioning = false
+      spec.withCustomVersion { _, ideBuildVersion, _ ->
+        PluginVersionEvaluatorResult(pluginVersion = mpsJavaPluginVersion(ideBuildVersion))
       }
+      spec.withRawPluginXmlPatcher { text, _ -> replaceJavaPluginTail(text) }
     }
+}
+
+/** `X.Y.Z` becomes `X.100Y.Z-MPS`. */
+private fun mpsJavaPluginVersion(ideBuildVersion: String): String {
+  return checkedReplace(oldText = ideBuildVersion, regex = """([^.]+)\.([^.]+)\.?(.*)""", newText = "$1.100$2.$3-MPS")
+}
+
+/**
+ * Replaces the source descriptor from `<content namespace="jetbrains">` to the end with the tail of the checked-in
+ * manifest. The tail states every content module with an inline descriptor, so the build embeds nothing into it.
+ */
+private fun replaceJavaPluginTail(text: String): String {
+  val regex = """(?m)(?s)(.*)<content namespace="jetbrains">(.+)</idea-plugin>(\n*)"""
+  val patchedManifestContent = MPSProperties::class.java.classLoader.getResourceAsStream("java-impl.jar/META-INF/plugin.xml")?.use {
+    it.bufferedReader().readText()
+  } ?: throw IllegalStateException("Failed to resolve plugin xml")
+  val matchResult = Regex(regex).matchEntire(patchedManifestContent) ?: throw IllegalStateException("Failed to match regex")
+  return checkedReplace(
+    oldText = text,
+    regex = regex,
+    newText = """$1<content namespace="jetbrains">${matchResult.groups[2]?.value}</idea-plugin>$3""",
+  )
 }

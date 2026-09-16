@@ -100,12 +100,8 @@ func resolveAndEmbedContentModuleDescriptor(
 	cache *Cache,
 	resolver *Resolver,
 ) error {
-	// A `<module/>` that already holds content keeps it. The whole stage is the one that puts a body there, so this is
-	// what makes the stage idempotent (`contentModuleEmbedding.kt:339-341`).
-	if len(moduleElement.Children) != 0 {
-		return nil
-	}
-
+	// The assembly resolves the descriptor of every content module, because its runtime module repository reads the
+	// cache the resolve fills. This port resolves too, so a pre-filled module needs a declared descriptor on both sides.
 	descriptor, err := resolveContentModuleDescriptor(
 		moduleName,
 		cache,
@@ -113,6 +109,11 @@ func resolveAndEmbedContentModuleDescriptor(
 	)
 	if err != nil {
 		return err
+	}
+	// A `<module/>` that already holds content keeps it. The whole stage is the one that puts a body there, so this is
+	// what makes the stage idempotent (`resolveAndEmbedContentModuleDescriptor` in `contentModuleEmbedding.kt`).
+	if len(moduleElement.Children) != 0 {
+		return nil
 	}
 
 	applySeparateJar(descriptor, moduleName, request)
