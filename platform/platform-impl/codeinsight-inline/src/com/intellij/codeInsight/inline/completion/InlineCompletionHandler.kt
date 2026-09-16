@@ -82,7 +82,9 @@ abstract class InlineCompletionHandler @ApiStatus.Internal constructor(
     EventDispatcher.create(InlineCompletionInvalidationListener::class.java)
 
   init {
-    addEventListener(InlineCompletionUsageTracker.Listener()) // todo remove
+    if (InlineCompletionEditorType.get(editor) != InlineCompletionEditorType.TERMINAL) {
+      addEventListener(InlineCompletionUsageTracker.Listener()) // todo remove
+    }
 
     val logsListener = InlineCompletionLogsListener(editor)
     addEventListener(logsListener)
