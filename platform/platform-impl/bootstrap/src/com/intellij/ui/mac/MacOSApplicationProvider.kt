@@ -31,6 +31,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.IdeFrame
+import com.intellij.openapi.wm.WindowManager
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.ui.AppIcon
 import com.intellij.ui.mac.foundation.Foundation
@@ -253,10 +254,17 @@ private fun installProtocolHandler(desktop: Desktop, mainScope: CoroutineScope) 
     }
     if (LoadingState.APP_STARTED.isOccurred) {
       mainScope.launch {
-        CommandLineProcessor.processProtocolCommand(uriString)
+       val result = CommandLineProcessor.processProtocolCommand(uriString)
         withContext(Dispatchers.EDT) {
-          CommandLineProcessor.findVisibleFrame()?.let { frame ->
-            AppIcon.getInstance().requestFocus(frame)
+          if (result.project != null) {
+            WindowManager.getInstance().getIdeFrame(result.project)?.let { frame ->
+              AppIcon.getInstance().requestFocus(frame)
+            }
+          }
+          else {
+            CommandLineProcessor.findVisibleFrame()?.let { frame ->
+              AppIcon.getInstance().requestFocus(frame)
+            }
           }
         }
       }
