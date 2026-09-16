@@ -74,4 +74,5 @@
     <orderEntry type="module" module-name="intellij.idea.community.customization" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.xml.plugin" scope="RUNTIME" />
   </component>
+  <component name="TestModuleProperties" production-module="intellij.platform.externalSystem.impl" />
 </module>

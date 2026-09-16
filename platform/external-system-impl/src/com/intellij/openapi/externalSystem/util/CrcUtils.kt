@@ -3,92 +3,133 @@
 
 package com.intellij.openapi.externalSystem.util
 
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
-import com.intellij.openapi.fileEditor.impl.LoadTextUtil
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.readBytes
+import com.intellij.openapi.vfs.readText
+import com.intellij.psi.util.CachedValue
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import java.io.IOException
+import java.util.concurrent.ConcurrentHashMap
 import java.util.zip.CRC32
 
-fun Document.calculateCrc(project: Project, file: VirtualFile): Long = this.calculateCrc(project, null, file)
+@Deprecated("Use getOrCalculateCrc instead")
+fun Document.calculateCrc(project: Project, file: VirtualFile): Long =
+  project.service<DocumentCrcCache>().getOrCalculateCrc(ProjectSystemId.IDE, this, file) ?: 0
 
-fun Document.calculateCrc(project: Project, systemId: ProjectSystemId?, file: VirtualFile): Long {
-  file.getCachedCrc(modificationStamp)?.let { return it }
-  return findOrCalculateCrc(modificationStamp) {
-    doCalculateCrc(project, systemId, file) ?: file.calculateCrc()
-  }
+@Deprecated("Use getOrCalculateCrc instead")
+fun Document.calculateCrc(project: Project, systemId: ProjectSystemId?, file: VirtualFile): Long =
+  project.service<DocumentCrcCache>().getOrCalculateCrc(systemId ?: ProjectSystemId.IDE, this, file) ?: 0
+
+@Deprecated("Use getOrCalculateCrc instead")
+fun VirtualFile.calculateCrc(project: Project): Long =
+  project.service<VirtualFileCrcCache>().getOrCalculateCrc(ProjectSystemId.IDE, this) ?: 0
+
+@Deprecated("Use getOrCalculateCrc instead")
+fun VirtualFile.calculateCrc(project: Project, systemId: ProjectSystemId?): Long =
+  project.service<VirtualFileCrcCache>().getOrCalculateCrc(systemId ?: ProjectSystemId.IDE, this) ?: 0
+
+@Deprecated("Use getOrCalculateCrc instead")
+fun VirtualFile.calculateCrc(): Long = calculateCrcFromBytes(this)
+
+/**
+ * Returns the CRC of [file], from the cache or a new calculation.
+ *
+ * Note: Thread unsafe. Expect a cancel and a retry on each change to the file or its document.
+ *
+ * @return `null` when CRC cannot be calculated for [file] (e.g. [IOException])
+ */
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+fun getOrCalculateCrc(project: Project, systemId: ProjectSystemId, file: VirtualFile): Long? {
+  ProgressManager.checkCanceled()
+
+  val document = FileDocumentManager.getInstance().getCachedDocument(file)
+  return document?.let { project.service<DocumentCrcCache>().getOrCalculateCrc(systemId, it, file) }
+         ?: project.service<VirtualFileCrcCache>().getOrCalculateCrc(systemId, file)
 }
 
-fun VirtualFile.calculateCrc(project: Project) = calculateCrc(project, null)
-
-fun VirtualFile.calculateCrc(project: Project, systemId: ProjectSystemId?) =
-  findOrCalculateCrc(modificationStamp) {
-    doCalculateCrc(project, systemId) ?: calculateCrc()
-  }
-
-fun VirtualFile.calculateCrc(): Long {
+private fun calculateCrcFromBytes(file: VirtualFile): Long {
   val crc32 = CRC32()
-  crc32.update(contentsToByteArray())
+  crc32.update(file.readBytes())
   return crc32.value
 }
 
-private fun <T : UserDataHolder> T.findOrCalculateCrc(modificationStamp: Long, calculate: () -> Long): Long {
-  ApplicationManager.getApplication().assertReadAccessAllowed()
-  val cachedCrc = getCachedCrc(modificationStamp)
-  if (cachedCrc != null) return cachedCrc
-  val crc = try {
-    calculate()
+private fun calculateCrcFromText(text: CharSequence): Long {
+  val crc32 = CRC32()
+  for (char in text) {
+    crc32.update(char.code)
   }
-  catch (ex: IOException) {
-    LOG.warn(ex)
-    0
-  }
-  setCachedCrc(crc, modificationStamp)
-  return crc
+  return crc32.value
 }
 
-private fun calculateCrc(project: Project, charSequence: CharSequence, systemId: ProjectSystemId?, file: VirtualFile): Long? {
-  val crcCalculator = getCrcCalculator(systemId, file)
-  return crcCalculator.calculateCrc(project, file, charSequence)
+private fun calculateCrcFromText(project: Project, systemId: ProjectSystemId, file: VirtualFile, text: CharSequence): Long {
+  val crcCalculator = ExternalSystemCrcCalculator.getInstance(systemId, file) ?: DefaultCrcCalculator
+  return crcCalculator.calculateCrc(project, file, text) ?: calculateCrcFromText(text)
 }
 
-private fun getCrcCalculator(systemId: ProjectSystemId?, file: VirtualFile): ExternalSystemCrcCalculator {
-  if (systemId != null) {
-    return ExternalSystemCrcCalculator.getInstance(systemId, file) ?: DefaultCrcCalculator
+/**
+ * File context CRC values cache.
+ *
+ * The VFS rejects a [CachedValue] in the user data of a [VirtualFile], because a VFS entry outlives the project.
+ * A [Document] is an application level object too, but the CRC also depends on the [Project] and [ProjectSystemId].
+ * Therefore, this service holds the [CachedValue], and the file or the document stays only the dependency.
+ */
+private abstract class CrcCache(protected val project: Project) : Disposable {
+
+  private data class CrcKey(val systemId: ProjectSystemId, val dependency: Any)
+
+  private val cache = ConcurrentHashMap<CrcKey, CachedValue<Long?>>()
+
+  protected fun getOrCalculateCrc(systemId: ProjectSystemId, dependency: Any, calculate: () -> Long?): Long? {
+    val cachedValue = cache.computeIfAbsent(CrcKey(systemId, dependency)) {
+      CachedValuesManager.getManager(project).createCachedValue {
+        CachedValueProvider.Result.create(calculateCrcOrNull(calculate), dependency)
+      }
+    }
+    return cachedValue.value
   }
-  return DefaultCrcCalculator
-}
 
-private fun Document.doCalculateCrc(project: Project, systemId: ProjectSystemId?, file: VirtualFile) =
-  when {
-    file.fileType.isBinary -> null
-    else -> calculateCrc(project, immutableCharSequence, systemId, file)
+  private fun calculateCrcOrNull(calculate: () -> Long?): Long? {
+    return try {
+      calculate()
+    }
+    catch (_: IOException) {
+      null
+    }
   }
 
-private fun VirtualFile.doCalculateCrc(project: Project, systemId: ProjectSystemId?) =
-  when {
-    isDirectory -> null
-    fileType.isBinary -> null
-    else -> calculateCrc(project, LoadTextUtil.loadText(this), systemId, this)
+  override fun dispose() {
+    cache.clear()
   }
-
-private fun UserDataHolder.getCachedCrc(modificationStamp: Long): Long? {
-  val (value, stamp) = getUserData(CRC_CACHE) ?: return null
-  if (stamp == modificationStamp) return value
-  return null
 }
 
-private fun UserDataHolder.setCachedCrc(value: Long, modificationStamp: Long) {
-  putUserData(CRC_CACHE, CrcCache(value, modificationStamp))
+@Service(Service.Level.PROJECT)
+private class DocumentCrcCache(project: Project) : CrcCache(project) {
+  fun getOrCalculateCrc(systemId: ProjectSystemId, document: Document, file: VirtualFile): Long? =
+    getOrCalculateCrc(systemId, document) {
+      when {
+        file.fileType.isBinary -> null
+        else -> calculateCrcFromText(project, systemId, file, document.immutableCharSequence)
+      }
+    }
 }
 
-private val LOG = Logger.getInstance("#com.intellij.openapi.externalSystem.util.CRC")
-
-private val CRC_CACHE = Key<CrcCache>("com.intellij.openapi.externalSystem.util.CRC_CACHE")
-
-private data class CrcCache(val value: Long, val modificationStamp: Long)
+@Service(Service.Level.PROJECT)
+private class VirtualFileCrcCache(project: Project) : CrcCache(project) {
+  fun getOrCalculateCrc(systemId: ProjectSystemId, file: VirtualFile): Long? =
+    getOrCalculateCrc(systemId, file) {
+      when {
+        file.fileType.isBinary -> calculateCrcFromBytes(file)
+        else -> calculateCrcFromText(project, systemId, file, file.readText())
+      }
+    }
+}

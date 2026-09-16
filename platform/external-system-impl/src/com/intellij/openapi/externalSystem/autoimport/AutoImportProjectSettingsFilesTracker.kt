@@ -2,33 +2,31 @@
 package com.intellij.openapi.externalSystem.autoimport
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker.Companion.isAsyncChangesProcessing
-import com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext.Event
-import com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext.ReloadStatus
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectStatus.ProjectEvent.Invalidate
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectStatus.ProjectEvent.Revert
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectStatus.ProjectEvent.Synchronize
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectStatus.Stamp
+import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker.Companion.isAsyncChangesProcessing
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext.Event
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext.ReloadStatus
 import com.intellij.openapi.externalSystem.autoimport.changes.AsyncFileChangesListener.Companion.subscribeOnDocumentsAndVirtualFilesChanges
 import com.intellij.openapi.externalSystem.autoimport.changes.FilesChangesListener
 import com.intellij.openapi.externalSystem.autoimport.changes.NewFilesListener.Companion.whenNewFilesCreated
 import com.intellij.openapi.externalSystem.autoimport.settings.AsyncSupplier
 import com.intellij.openapi.externalSystem.autoimport.settings.BackgroundAsyncSupplier
 import com.intellij.openapi.externalSystem.service.ui.completion.cache.AsyncLocalCache
-import com.intellij.openapi.externalSystem.util.calculateCrc
-import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.externalSystem.util.getOrCalculateCrc
 import com.intellij.openapi.observable.operation.core.AtomicOperationTrace
 import com.intellij.openapi.observable.operation.core.isOperationInProgress
 import com.intellij.openapi.observable.operation.core.whenOperationFinished
 import com.intellij.openapi.observable.operation.core.whenOperationStarted
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt.toSystemIndependentName
 import com.intellij.openapi.vfs.StandardFileSystems
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
@@ -52,25 +50,6 @@ class AutoImportProjectSettingsFilesTracker(
   private val applyChangesOperation = AtomicOperationTrace(name = "Apply changes operation")
 
   private val settingsAsyncSupplier = SettingsFilesAsyncSupplier()
-
-  private fun calculateSettingsFilesCRC(settingsFiles: Set<String>): Map<String, Long> {
-    val localFileSystem = StandardFileSystems.local()
-    return settingsFiles
-      .asSequence()
-      .mapNotNull { localFileSystem.findFileByPath(it) }
-      .mapNotNull {
-        val crc = calculateCrc(it)
-        if (crc != 0L) it.path to crc else null
-      }
-      .toMap()
-  }
-
-  private fun calculateCrc(file: VirtualFile): Long {
-    val fileDocumentManager = FileDocumentManager.getInstance()
-    val document = fileDocumentManager.getCachedDocument(file)
-    if (document != null) return document.calculateCrc(project, projectAware.projectId.systemId, file)
-    return file.calculateCrc(project, projectAware.projectId.systemId)
-  }
 
   fun isUpToDate(): Boolean {
     return projectStatus.isUpToDate()
@@ -208,12 +187,26 @@ class AutoImportProjectSettingsFilesTracker(
       // Therefore, the operation stamp cannot be taken earlier than VFS refresh for the settings files.
       // @see the AsyncFileChangesListener#apply function for details
       val operationStamp = Stamp.nextStamp()
-      val newSettingsFilesCRC = ReadAction.nonBlocking<Map<String, Long>> {
-        calculateSettingsFilesCRC(settingsPaths)
-      }.expireWith(parentDisposable).executeSynchronously()
+      val newSettingsFilesCRC = calculateSettingsFilesCRC(settingsPaths)
       val settingsFilesStatus = updateSettingsFilesStatus(operationName, newSettingsFilesCRC, context.reloadStatus)
       updateProjectStatus(operationStamp, context.syncEvent, context.changeEvent, settingsFilesStatus)
       context.callback?.invoke()
+    }
+  }
+
+  private fun calculateSettingsFilesCRC(settingsFiles: Set<String>): Map<String, Long> {
+    val systemId = projectAware.projectId.systemId
+    val fileSystem = StandardFileSystems.local()
+    return buildMap {
+      for (path in settingsFiles) {
+        ProgressManager.checkCanceled()
+
+        val file = fileSystem.findFileByPath(path) ?: continue
+        val crc = getOrCalculateCrc(project, systemId, file) ?: continue
+        if (crc != 0L) {
+          put(path, crc)
+        }
+      }
     }
   }
 
