@@ -40,14 +40,26 @@ class TrustedFilesTest {
   }
 
   @Test
-  fun `every file is trusted while the safe mode is off`(): Unit = timeoutRunBlocking {
+  fun `a marked outside file is untrusted by default`(): Unit = timeoutRunBlocking {
+    // the registry key is on by default, so the test does not touch it
     val project = projectFixture.get()
     val outsideFile = tempPath.resolve("outside.txt")
     Files.writeString(outsideFile, "text")
     val file = requireNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(outsideFile))
     TrustedFiles.markExternallyOpened(file)
 
-    // the registry key is off by default
+    assertFalse(TrustedFiles.isTrusted(file, project))
+  }
+
+  @Test
+  fun `every file is trusted while the safe mode is off`(): Unit = timeoutRunBlocking {
+    Registry.get(TrustedFiles.SAFE_MODE_REGISTRY_KEY).setValue(false, asDisposable())
+    val project = projectFixture.get()
+    val outsideFile = tempPath.resolve("outside.txt")
+    Files.writeString(outsideFile, "text")
+    val file = requireNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(outsideFile))
+    TrustedFiles.markExternallyOpened(file)
+
     assertTrue(TrustedFiles.isTrusted(file, project))
   }
 
