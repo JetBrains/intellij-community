@@ -51,7 +51,10 @@ class SeRunConfigurationsProvider(private val contributorWrapper: SeAsyncContrib
       val indicator = DelegatingProgressIndicator(ProgressManager.getGlobalProgressIndicator())
       contributor.fetchElements(params.inputQuery, indicator) { item ->
         (item as? ChooseRunConfigurationPopup.ItemWrapper<*>)?.let {
-          val weight = contributor.getElementPriority(item, params.inputQuery)
+          val weight =
+            if (it.text == params.inputQuery) EXACT_MATCH_PRIORITY
+            else contributor.getElementPriority(item, params.inputQuery)
+
           runBlockingCancellable { collector.put(SeRunConfigurationsItem(it, contributor, weight, contributor.getExtendedInfo(it), contributorWrapper.contributor.isMultiSelectionSupported)) }
         } ?: true
       }
@@ -73,5 +76,9 @@ class SeRunConfigurationsProvider(private val contributorWrapper: SeAsyncContrib
 
   override fun dispose() {
     Disposer.dispose(contributorWrapper)
+  }
+
+  companion object {
+    private const val EXACT_MATCH_PRIORITY: Int = 2000
   }
 }
