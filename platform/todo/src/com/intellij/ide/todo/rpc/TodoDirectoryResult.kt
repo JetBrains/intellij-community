@@ -7,16 +7,8 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 @Serializable
-sealed interface TodoEvent {
-  @Serializable
-  data class ItemUpserted(val item: TodoFileResult) : TodoEvent
-
-  @Serializable
-  data class ItemRemoved(val fileId: VirtualFileId) : TodoEvent
-
-  @Serializable
-  data object AllItemsRemoved : TodoEvent
-
-  @Serializable
-  data object ScanFinished : TodoEvent
-}
+data class TodoDirectoryResult(
+  val fileId: VirtualFileId,
+  val name: String,
+  val presentableUrl: String,
+)
