@@ -41,6 +41,21 @@ class MarkdownStylingActionsConsistencyTest {
       checkResultByText(content)
     }
 
+    fun `test disabled inside fenced code block`() {
+      // language=Markdown
+      val content = """
+      Some text
+
+      ```python
+      some_cal<caret>l()
+      ```
+      """.trimIndent()
+      configureFromFileText("some.md", content)
+      val action = ActionManager.getInstance().getAction(actionId)
+      assertFalse(EditorTestUtil.checkActionIsEnabled(editor, action))
+      checkResultByText(content)
+    }
+
     fun `test disabled inside inline link text`() {
       val content = """
       Click [<selection>JetBrains</selection>](https://jetbrains.com) here
