@@ -16,7 +16,7 @@ import com.intellij.util.xmlb.XmlSerializerUtil
 )
 data class PyreflyConfiguration(
   override var inlayHints: Boolean? = false,
-  override var completions: Boolean? = false,
+  override var completions: Boolean? = true,
   override var documentation: Boolean? = false,
 ) : PyLspToolConfiguration<PyreflyConfiguration>() {
   override fun loadState(state: PyreflyConfiguration) {
