@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidgetFactory
@@ -92,8 +93,14 @@ private class PyTypeEngineStatusBarWidget(
     )
   }
 
-  override fun isEnabledForFile(file: VirtualFile?): Boolean =
-    file != null && (file.fileType in setOf(PythonFileType.INSTANCE, PyiFileType.INSTANCE) || file.isPythonNotebook(project))
+  override fun isEnabledForFile(file: VirtualFile?): Boolean {
+    if (file == null) return false
+    if (file.fileType in setOf(PythonFileType.INSTANCE, PyiFileType.INSTANCE)) return true
+    if (!file.isPythonNotebook(project)) return false
+
+    val registry = RegistryManager.getInstance()
+    return registry.`is`("jupyter.lsp.enabled") && registry.`is`("python.lsp.type.engine.notebooks")
+  }
 
   override fun createPopup(context: DataContext): ListPopup {
     logEvent(PyTypeEngineEvent.STATUS_WIDGET_CLICKED)
