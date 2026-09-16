@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.universal
 
+import com.intellij.ide.dnd.FileCopyPasteUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.DataKey
@@ -35,6 +36,11 @@ import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Color
+import java.awt.dnd.DnDConstants
+import java.awt.dnd.DropTarget
+import java.awt.dnd.DropTargetAdapter
+import java.awt.dnd.DropTargetDragEvent
+import java.awt.dnd.DropTargetDropEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import java.io.IOException
@@ -73,6 +79,15 @@ class NioFileSystemTree(
   private val subscriptionJobs: ConcurrentHashMap<Path, Job> = ConcurrentHashMap()
   private val fileWatcherAdapter = contributor.getFileWatcherAdapter()
 
+  /**
+   * Handles an OS file drop on the tree component.
+   *
+   * When it is null, the drop navigates inside this tree: it selects and expands the first
+   * dropped path. A caller can set a handler to route the drop, for example to the correct view
+   * of a multi-root chooser.
+   */
+  var onFilesDropped: ((List<Path>) -> Unit)? = null
+
   init {
     myTree.model = asyncTreeModel
     myTree.selectionModel.addTreeSelectionListener { processSelectionChange() }
@@ -93,6 +108,50 @@ class NioFileSystemTree(
       override fun treeCollapsed(event: TreeExpansionEvent) {
       }
     })
+
+    installDropTarget()
+  }
+
+  private fun installDropTarget() {
+    DropTarget(myTree, DnDConstants.ACTION_COPY, object : DropTargetAdapter() {
+      override fun dragEnter(e: DropTargetDragEvent) {
+        if (FileCopyPasteUtil.isFileListFlavorAvailable(e.currentDataFlavors)) {
+          e.acceptDrag(DnDConstants.ACTION_COPY)
+        }
+        else {
+          e.rejectDrag()
+        }
+      }
+
+      override fun dragOver(e: DropTargetDragEvent) {
+        dragEnter(e)
+      }
+
+      override fun dropActionChanged(e: DropTargetDragEvent) {
+        dragEnter(e)
+      }
+
+      override fun drop(e: DropTargetDropEvent) {
+        e.acceptDrop(DnDConstants.ACTION_COPY)
+        val paths = FileCopyPasteUtil.getFiles(e.transferable)
+        if (paths.isNullOrEmpty()) {
+          e.dropComplete(false)
+          return
+        }
+        handleFilesDropped(paths)
+        e.dropComplete(true)
+      }
+    })
+  }
+
+  private fun handleFilesDropped(paths: List<Path>) {
+    val handler = onFilesDropped
+    if (handler != null) {
+      handler(paths)
+      return
+    }
+    val target = paths.first()
+    select(target) { expand(target, null) }
   }
 
   private fun registerTreeActions() {

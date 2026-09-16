@@ -278,6 +278,7 @@ object UniversalFileChooser {
       for (contributor in effectiveContributors) {
         val restrictRoots = contributor in restrictedContributors
         val fileView = FileView(contributor, descriptor, disposable, project, okAction, scope, topToolbar, popupActionGroup, ::updateOkEnabled, restrictRoots)
+        fileView.fileTree.onFilesDropped = { paths -> paths.firstOrNull()?.let { navigateToFile(it) } }
         fileViews.add(fileView)
       }
       // If there is a single tab available, don't show the tab itself, only its content panel.
