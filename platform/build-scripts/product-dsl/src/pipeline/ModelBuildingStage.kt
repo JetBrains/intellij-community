@@ -1145,6 +1145,7 @@ internal object ModelBuildingStage {
       nonBundled.forEach { addPlugin(it, declared = false) }
     }
     config.knownPlugins.forEach { addPlugin(it, declared = false) }
+    config.ignoredCompatiblePlugins.forEach { addPlugin(it, declared = false) }
     testPluginModuleNames.forEach(::addPlugin)
     dslTestPluginAdditionalBundles.forEach(::addPlugin)
     extraPluginModules.forEach { addPlugin(it, declared = false) }

@@ -50,6 +50,15 @@ data class ModuleSetGenerationConfig(
    */
   @JvmField val knownPlugins: Set<TargetName> = emptySet(),
   /**
+   * The main modules of the plugins that a product leaves out of its build, even when the plugin is compatible with it.
+   * `ProductModulesLayout.compatiblePluginsToIgnore` of each discovered product holds them.
+   *
+   * The build leaves such a plugin out of the pipeline, so [nonBundledPlugins] holds it for no product. The graph
+   * still needs the plugin, because the generator owns the dependency region of its descriptors, and a development
+   * run loads the plugin.
+   */
+  @JvmField val ignoredCompatiblePlugins: Set<TargetName> = emptySet(),
+  /**
    * Map of product name to set of test plugin names for that product.
    * Test plugins have plugin.xml in test resources and provide test framework modules.
    * Used for: (1) content extraction with onlyProductionSources=false, (2) test dep validation.

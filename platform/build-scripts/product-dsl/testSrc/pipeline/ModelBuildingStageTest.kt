@@ -139,6 +139,69 @@ class ModelBuildingStageTest {
   }
 
   @Test
+  fun `an ignored compatible plugin keeps descriptor ownership`(@TempDir tempDir: Path) {
+    runBlocking(Dispatchers.Default) {
+      val pluginName = "intellij.scope.ignored"
+      val jps = jpsProject(tempDir) {
+        module(pluginName) {
+          resourceRoot = "resources"
+        }
+      }
+      val descriptor = tempDir.resolve("${pluginName.replace('.', '/')}/resources/META-INF/plugin.xml")
+      Files.createDirectories(descriptor.parent)
+      Files.writeString(
+        descriptor,
+        """
+        <idea-plugin><id>$pluginName</id>
+        <dependencies>
+          <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+          <!-- endregion -->
+        </dependencies>
+        </idea-plugin>
+        """.trimIndent(),
+      )
+      // no product bundles the plugin, and no product publishes it, so only the ignore list names it
+      val products = listOf(DiscoveredProduct(
+        name = "Demo",
+        config = ProductConfiguration(modules = emptyList(), className = "DemoProperties"),
+        properties = null,
+        spec = productModules { },
+        pluginXmlPath = null,
+      ))
+
+      fun ownedPlugins(ignored: Set<TargetName>): List<String> {
+        val model = ModelBuildingStage.execute(
+          discovery = DiscoveryResult(
+            moduleSetsByLabel = emptyMap(),
+            products = products,
+            testProductSpecs = emptyList(),
+            moduleSetSources = emptyMap(),
+          ),
+          config = ModuleSetGenerationConfig(
+            moduleSetSources = emptyMap(),
+            discoveredProducts = products,
+            projectRoot = tempDir,
+            outputProvider = createTestModuleOutputProvider(jps.project),
+            ignoredCompatiblePlugins = ignored,
+          ),
+          owner = owner,
+          updateSuppressions = false,
+          commitChanges = false,
+          errorSink = ErrorSink(),
+          phaseTimings = ArrayList(),
+        )
+        val context = ComputeContextImpl(model)
+        context.initSlot(Slots.PLUGIN_DEPENDENCY_PLAN)
+        PluginDependencyPlanner.execute(context.forNode(PluginDependencyPlanner.id))
+        return context.get(Slots.PLUGIN_DEPENDENCY_PLAN).plans.map { it.pluginContentModuleName.value }
+      }
+
+      assertThat(ownedPlugins(emptySet())).isEmpty()
+      assertThat(ownedPlugins(setOf(TargetName(pluginName)))).containsExactly(pluginName)
+    }
+  }
+
+  @Test
   fun `execute reads build-declared module set wrapper from disk`(@TempDir tempDir: Path) {
     runBlocking(Dispatchers.Default) {
       val jps = jpsProject(tempDir) {
