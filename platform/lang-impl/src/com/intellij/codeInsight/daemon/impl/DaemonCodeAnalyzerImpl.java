@@ -21,6 +21,7 @@ import com.intellij.codeInsight.quickfix.LazyQuickFixUpdater;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.concurrency.JobLauncher;
+import com.intellij.concurrency.JobLauncherImpl;
 import com.intellij.concurrency.ThreadContext;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.ide.impl.ProjectUtil;
@@ -1382,8 +1383,8 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
       session = HighlightingSessionImpl.createHighlightingSession(psiFileToSubmit, editor, scheme, progress, daemonCancelEventCount);
       Runnable runnable = ThreadContext.captureThreadContext(Context.current().wrap(() ->
         submitInBackground(fileEditor, document, virtualFile, psiFileToSubmit, backgroundHighlighter, passesToIgnore, progress, session, mainDocumentPasses)));
-      JobLauncher.getInstance().submitToJobThread(runnable,
-         // manifest exceptions in EDT to avoid storing them in the Future and abandoning
+      ((JobLauncherImpl)JobLauncher.getInstance()).submitToJobThread(runnable,
+                                                                    // manifest exceptions in EDT to avoid storing them in the Future and abandoning
         task -> ApplicationManager.getApplication().invokeLater(() -> ConcurrencyUtil.manifestExceptionsIn(task)));
     }
     if (PassExecutorService.LOG.isDebugEnabled()) {
