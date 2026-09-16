@@ -82,11 +82,12 @@ class NioFileSystemTree(
   /**
    * Handles an OS file drop on the tree component.
    *
-   * When it is null, the drop navigates inside this tree: it selects and expands the first
-   * dropped path. A caller can set a handler to route the drop, for example to the correct view
-   * of a multi-root chooser.
+   * The first argument is the tree node under the drop point, or null when the drop is on an empty
+   * area. A caller uses it as the destination directory. When this handler is null, the drop
+   * navigates inside this tree: it selects and expands the first dropped path. A caller can set a
+   * handler to route the drop, for example to copy the files to a non-local file system.
    */
-  var onFilesDropped: ((List<Path>) -> Unit)? = null
+  var onFilesDropped: ((dropTarget: Path?, paths: List<Path>) -> Unit)? = null
 
   init {
     myTree.model = asyncTreeModel
@@ -138,16 +139,23 @@ class NioFileSystemTree(
           e.dropComplete(false)
           return
         }
-        handleFilesDropped(paths)
+        val dropTarget = getDropTargetPath(e.location)
+        handleFilesDropped(dropTarget, paths)
         e.dropComplete(true)
       }
     })
   }
 
-  private fun handleFilesDropped(paths: List<Path>) {
+  /** Returns the tree node path under the drop point, or null when there is none. */
+  private fun getDropTargetPath(location: java.awt.Point): Path? {
+    val treePath = myTree.getClosestPathForLocation(location.x, location.y) ?: return null
+    return getNioPath(treePath)
+  }
+
+  private fun handleFilesDropped(dropTarget: Path?, paths: List<Path>) {
     val handler = onFilesDropped
     if (handler != null) {
-      handler(paths)
+      handler(dropTarget, paths)
       return
     }
     val target = paths.first()

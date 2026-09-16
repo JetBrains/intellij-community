@@ -43,7 +43,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.toEelApi
+import com.intellij.platform.eel.provider.utils.EelPathTransfer
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.util.progress.RawProgressReporter
@@ -278,7 +280,7 @@ object UniversalFileChooser {
       for (contributor in effectiveContributors) {
         val restrictRoots = contributor in restrictedContributors
         val fileView = FileView(contributor, descriptor, disposable, project, okAction, scope, topToolbar, popupActionGroup, ::updateOkEnabled, restrictRoots)
-        fileView.fileTree.onFilesDropped = { paths -> paths.firstOrNull()?.let { navigateToFile(it) } }
+        fileView.fileTree.onFilesDropped = { dropTarget, paths -> handleFilesDropped(fileView, dropTarget, paths) }
         fileViews.add(fileView)
       }
       // If there is a single tab available, don't show the tab itself, only its content panel.
@@ -581,6 +583,86 @@ object UniversalFileChooser {
       }
       targetView.fileToSelect = file
       targetView.fileTree.select(file) { targetView.fileTree.expand(file, null) }
+    }
+
+    /**
+     * Handles an OS file drop on [fileView].
+     *
+     * When the dropped files and the drop destination share a file system, the drop only navigates
+     * to the first dropped file. When they differ, for example a local drop onto a non-local (WSL or
+     * Docker) view, the files are copied to the destination directory through the EEL API.
+     *
+     * [dropTarget] is the tree node under the drop point, or null for a drop on an empty area.
+     */
+    private fun handleFilesDropped(fileView: FileView, dropTarget: Path?, paths: List<Path>) {
+      if (paths.isEmpty()) return
+      // Capture the destination candidate on the EDT before the background work starts.
+      val candidate = dropTarget ?: fileView.fileTree.getSelectedFile()
+      scope.launch {
+        val destinationDir = withContext(Dispatchers.IO) { resolveDestinationDir(fileView, candidate) }
+                             ?: return@launch
+        val foreign = paths.any { it.getEelDescriptor() != destinationDir.getEelDescriptor() }
+        if (!foreign) {
+          runOnEdt { navigateToFile(paths.first()) }
+          return@launch
+        }
+        copyDroppedFiles(fileView, destinationDir, paths)
+      }
+    }
+
+    private suspend fun resolveDestinationDir(fileView: FileView, candidate: Path?): Path? {
+      if (candidate != null) {
+        return if (Files.isDirectory(candidate)) candidate else candidate.parent
+      }
+      return runCatching { fileView.contributor.getRoots().firstOrNull()?.path }.getOrNull()
+    }
+
+    private suspend fun copyDroppedFiles(fileView: FileView, destinationDir: Path, paths: List<Path>) {
+      var firstCopied: Path? = null
+      var failedSource: Path? = null
+      var failure: Exception? = null
+      try {
+        withBackgroundProgress(project, IdeBundle.message("universal.file.chooser.dnd.copy.progress.title")) {
+          withContext(Dispatchers.IO) {
+            reportRawProgress { reporter ->
+              for (source in paths) {
+                val name = source.fileName?.toString() ?: continue
+                val target = destinationDir.resolve(name)
+                reporter.text(IdeBundle.message("universal.file.chooser.dnd.copy.progress.item", name))
+                try {
+                  EelPathTransfer.walkingTransfer(source, target, removeSource = false, copyAttributes = true)
+                }
+                catch (e: CancellationException) {
+                  throw e
+                }
+                catch (e: Exception) {
+                  failedSource = source
+                  failure = e
+                  break
+                }
+                if (firstCopied == null) firstCopied = target
+              }
+            }
+          }
+        }
+      }
+      catch (e: CancellationException) {
+        runOnEdt { fileView.fileTree.updateTree() }
+        throw e
+      }
+      val copied = firstCopied
+      val error = failure
+      runOnEdt {
+        fileView.fileTree.updateTree()
+        if (error != null) {
+          val name = failedSource?.fileName?.toString() ?: ""
+          Messages.showErrorDialog(
+            IdeBundle.message("universal.file.chooser.dnd.copy.error.message", name, error.message ?: ""),
+            IdeBundle.message("universal.file.chooser.dnd.copy.error.title"),
+          )
+        }
+        if (copied != null) navigateToFile(copied)
+      }
     }
 
     fun getPreferredFocusedComponent(): JComponent? = getActiveFileView()?.pathTextField
