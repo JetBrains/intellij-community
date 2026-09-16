@@ -57,6 +57,45 @@ class DumpItemMergeTest : BasePlatformTestCase() {
                  "--A4 [and 1 similar]\n", printTree(mergedItems))
   }
 
+  fun testMergingJavaThreadDumpItemsIgnoresVirtualThreadMountLines() {
+    val threadState1 = ThreadState("carrier-1", "runnable").also {
+      it.uniqueId = 0
+      it.setStackTrace(
+        """
+          "carrier-1"
+             Carrying virtual thread #1
+             at com.example.Worker.run(Worker.java:1)
+        """.trimIndent(),
+        false,
+      )
+    }
+    val threadState2 = ThreadState("carrier-2", "runnable").also {
+      it.uniqueId = 1
+      it.setStackTrace(
+        """
+          "carrier-2"
+             Mounted virtual thread #638
+             at com.example.Worker.run(Worker.java:1)
+        """.trimIndent(),
+        false,
+      )
+    }
+
+    val mergedItems = CompoundDumpItem.mergeThreadDumpItems(toDumpItems(listOf(threadState1, threadState2)))
+
+    assertEquals(1, mergedItems.size)
+    assertEquals("carrier-1 [and 1 similar]", mergedItems.single().name)
+  }
+
+  fun testThreadContainerStackTraceContainsContainerName() {
+    val dumpItems = toDumpItems(
+      emptyList(),
+      listOf(JavaThreadContainerDesc("java.util.concurrent.StructuredTaskScope@12", 0, null)),
+    )
+
+    assertEquals("StructuredTaskScope@12", dumpItems.single().stackTrace)
+  }
+
   private fun printTree(items: List<DumpItem>): String {
     val byParent: Map<Long?, List<DumpItem>> = items.groupBy { it.parentTreeId }
     val allIds = items.mapNotNullTo(HashSet()) { it.treeId }

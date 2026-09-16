@@ -308,7 +308,9 @@ private class JavaThreadDumpItem(private val threadState: ThreadState) : Mergeab
 
   private inner class JavaMergeableToken : MergeableToken {
     private val comparableStackTrace: String =
-      stackTrace.substringAfter("\n").replace("<0x\\d+>\\s".toRegex(), "<merged>")
+      stackTrace.substringAfter("\n")
+        .replace(platformThreadVirtualThreadLineRegex, "")
+        .replace("<0x\\d+>\\s".toRegex(), "<merged>")
 
     override val item: JavaThreadDumpItem get() = this@JavaThreadDumpItem
 
@@ -400,6 +402,8 @@ private class JavaThreadContainerItem(private val containerName: String, overrid
     }
   }
 }
+
+private val platformThreadVirtualThreadLineRegex = Regex("""(?m)^[ \t]*(?:Carrying|Mounted) virtual thread #\d+[ \t]*(?:\r?\n|$)""")
 
 class InfoDumpItem(private val title: @Nls String, private val details: @NlsSafe String) : MergeableDumpItem {
   override val name: @NlsSafe String
