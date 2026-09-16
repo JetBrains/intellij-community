@@ -2,7 +2,6 @@
 package com.intellij.ide
 
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
-import com.intellij.ide.CommandLineProcessorResult.Companion.createError
 import com.intellij.ide.actions.ShowLogAction
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
@@ -105,7 +104,7 @@ object CommandLineProcessor {
         }
       }
       catch (@Suppress("IncorrectCancellationExceptionHandling") _: ProcessCanceledException) {
-        return createError(IdeBundle.message("dialog.message.open.cancelled"))
+        return CommandLineProcessorResult(IdeBundle.message("dialog.message.open.cancelled"))
       }
     }
 
@@ -131,14 +130,14 @@ object CommandLineProcessor {
           return CommandLineProcessorResult(lightEditProject, future)
         }
       }
-      return createError(IdeBundle.message("dialog.message.can.not.open.file", ioFile.toString()))
+      return CommandLineProcessorResult(IdeBundle.message("dialog.message.can.not.open.file", ioFile.toString()))
     }
 
     if (projects.isEmpty()) {
       val project = CommandLineProjectOpenProcessor.openProjectAndFile(ioFile, tempProject, OpenProjectTask {
         this.line = line
         this.column = column
-      }) ?: return createError(IdeBundle.message("dialog.message.no.project.found.to.open.file.in"))
+      }) ?: return CommandLineProcessorResult(IdeBundle.message("dialog.message.no.project.found.to.open.file.in"))
       val future = if (shouldWait) CommandLineWaitingManager.getInstance().addHookForFile(file).asDeferred() else OK_FUTURE
       return CommandLineProcessorResult(project, future)
     }
@@ -343,7 +342,7 @@ object CommandLineProcessor {
     if (parsedArgsResult.isFailure) {
       FUSProjectHotStartUpMeasurer.noProjectFound()
       when (val e = parsedArgsResult.exceptionOrNull()) {
-        is ParseException -> return createError(IdeBundle.message("dialog.message.invalid.path", e.message))
+        is ParseException -> return CommandLineProcessorResult(IdeBundle.message("dialog.message.invalid.path", e.message))
         else -> error("Unexpected exception during parsing arguments: $e")
       }
     }

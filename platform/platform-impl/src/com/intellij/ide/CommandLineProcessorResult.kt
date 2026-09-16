@@ -14,11 +14,7 @@ import org.jetbrains.annotations.Nls
 @ApiStatus.Internal
 data class CommandLineProcessorResult(val project: Project?, val future: Deferred<CliResult>) {
   constructor(project: Project?, result: CliResult) : this(project, CompletableDeferred(value = result))
-
-  companion object {
-    fun createError(@NlsContexts.DialogMessage message : String): CommandLineProcessorResult =
-      CommandLineProcessorResult(project = null, future = CompletableDeferred(CliResult(1, message)))
-  }
+  constructor(message : @NlsContexts.DialogMessage String) : this(project = null, future = CompletableDeferred(CliResult(1, message)))
 
   val hasError: Boolean
     get() = future.isCompleted && future.getCompleted().exitCode == 1
