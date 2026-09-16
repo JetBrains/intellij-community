@@ -3,6 +3,7 @@ package com.intellij.util.io
 
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.util.system.WindowsKernel32
 import com.intellij.util.system.WindowsSystemLibraries
 import org.jetbrains.annotations.ApiStatus
 import java.lang.foreign.Arena
@@ -123,8 +124,8 @@ object WinHttp {
   private object Handles {
     private val LINKER: Linker = Linker.nativeLinker()
     private val WINHTTP: SymbolLookup = WindowsSystemLibraries.lookup("winhttp.dll")
-    private val KERNEL32: SymbolLookup = WindowsSystemLibraries.lookup("kernel32.dll")
-    private val CAPTURE_LAST_ERROR: Linker.Option = Linker.Option.captureCallState("GetLastError")
+    private val KERNEL32: SymbolLookup = WindowsKernel32.kernel32()
+    private val CAPTURE_LAST_ERROR: Linker.Option = WindowsKernel32.captureLastError()
 
     val CALL_STATE: StructLayout = Linker.Option.captureStateLayout()
 

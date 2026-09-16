@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
-import com.intellij.util.system.WindowsSystemLibraries;
+import com.intellij.util.system.WindowsKernel32;
 import org.jetbrains.annotations.ApiStatus;
 
 import java.io.IOException;
@@ -11,7 +11,6 @@ import java.lang.foreign.Linker;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.StructLayout;
 import java.lang.invoke.MethodHandle;
-import java.lang.invoke.VarHandle;
 
 import static java.lang.foreign.ValueLayout.ADDRESS;
 import static java.lang.foreign.ValueLayout.JAVA_BYTE;
@@ -28,11 +27,11 @@ public final class WindowsPower {
    */
   public static int acLineStatus() throws IOException {
     try (var arena = Arena.ofConfined()) {
-      var callState = arena.allocate(Handles.CALL_STATE_LAYOUT);
+      var callState = arena.allocate(WindowsKernel32.CALL_STATE);
       var status = arena.allocate(Handles.SYSTEM_POWER_STATUS);
       var succeeded = (int)Handles.GET_SYSTEM_POWER_STATUS.invokeExact(callState, status);
       if (succeeded == 0) {
-        throw new IOException("GetSystemPowerStatus(): " + (int)Handles.LAST_ERROR.get(callState, 0L));
+        throw new IOException("GetSystemPowerStatus(): " + WindowsKernel32.lastError(callState));
       }
       return Byte.toUnsignedInt(status.get(JAVA_BYTE, 0));
     }
@@ -52,13 +51,10 @@ public final class WindowsPower {
       JAVA_BYTE.withName("ACLineStatus"), JAVA_BYTE.withName("BatteryFlag"), JAVA_BYTE.withName("BatteryLifePercent"), JAVA_BYTE.withName("SystemStatusFlag"),
       JAVA_INT.withName("BatteryLifeTime"), JAVA_INT.withName("BatteryFullLifeTime"));
 
-    static final StructLayout CALL_STATE_LAYOUT = Linker.Option.captureStateLayout();
-    static final VarHandle LAST_ERROR = CALL_STATE_LAYOUT.varHandle(MemoryLayout.PathElement.groupElement("GetLastError"));
-
     /** {@code BOOL GetSystemPowerStatus(LPSYSTEM_POWER_STATUS)}, with {@code GetLastError} captured into the leading call-state argument */
     static final MethodHandle GET_SYSTEM_POWER_STATUS = LINKER.downcallHandle(
-      WindowsSystemLibraries.lookup("kernel32.dll").findOrThrow("GetSystemPowerStatus"),
+      WindowsKernel32.kernel32().findOrThrow("GetSystemPowerStatus"),
       FunctionDescriptor.of(JAVA_INT, ADDRESS),
-      Linker.Option.captureCallState("GetLastError"));
+      WindowsKernel32.captureLastError());
   }
 }

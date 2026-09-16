@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
+import com.intellij.util.system.WindowsKernel32;
 import com.intellij.util.system.WindowsSystemLibraries;
 import org.jetbrains.annotations.ApiStatus;
 
@@ -8,12 +9,8 @@ import java.io.IOException;
 import java.lang.foreign.Arena;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.Linker;
-import java.lang.foreign.MemoryLayout;
-import java.lang.foreign.MemorySegment;
-import java.lang.foreign.StructLayout;
 import java.lang.foreign.SymbolLookup;
 import java.lang.invoke.MethodHandle;
-import java.lang.invoke.VarHandle;
 
 import static java.lang.foreign.ValueLayout.ADDRESS;
 import static java.lang.foreign.ValueLayout.JAVA_INT;
@@ -36,11 +33,11 @@ public final class WindowsTokenElevation {
    */
   public static boolean isElevated() throws IOException {
     try (var arena = Arena.ofConfined()) {
-      var callState = arena.allocate(Handles.CALL_STATE_LAYOUT);
-      var process = (MemorySegment)Handles.GET_CURRENT_PROCESS.invokeExact();
+      var callState = arena.allocate(WindowsKernel32.CALL_STATE);
+      var process = WindowsKernel32.currentProcess();
       var tokenHandle = arena.allocate(ADDRESS);
       if ((int)Handles.OPEN_PROCESS_TOKEN.invokeExact(callState, process, TOKEN_QUERY, tokenHandle) == 0) {
-        throw new IOException("OpenProcessToken: " + (int)Handles.LAST_ERROR.get(callState, 0L));
+        throw new IOException("OpenProcessToken: " + WindowsKernel32.lastError(callState));
       }
       var token = tokenHandle.get(ADDRESS, 0);
       try {
@@ -48,12 +45,12 @@ public final class WindowsTokenElevation {
         var elevation = arena.allocate(JAVA_INT);
         var returnLength = arena.allocate(JAVA_INT);
         if ((int)Handles.GET_TOKEN_INFORMATION.invokeExact(callState, token, TOKEN_ELEVATION_CLASS, elevation, (int)elevation.byteSize(), returnLength) == 0) {
-          throw new IOException("GetTokenInformation: " + (int)Handles.LAST_ERROR.get(callState, 0L));
+          throw new IOException("GetTokenInformation: " + WindowsKernel32.lastError(callState));
         }
         return elevation.get(JAVA_INT, 0) != 0;
       }
       finally {
-        var _ = (int)Handles.CLOSE_HANDLE.invokeExact(token);
+        WindowsKernel32.closeHandle(token);
       }
     }
     catch (IOException e) {
@@ -67,17 +64,9 @@ public final class WindowsTokenElevation {
   /** {@code HANDLE} is an address; {@code BOOL} and {@code DWORD} are {@code int}. The two calls that can fail capture {@code GetLastError}. */
   private static final class Handles {
     private static final Linker LINKER = Linker.nativeLinker();
-    private static final SymbolLookup KERNEL32 = WindowsSystemLibraries.lookup("kernel32.dll");
     private static final SymbolLookup ADVAPI32 = WindowsSystemLibraries.lookup("advapi32.dll");
-    private static final Linker.Option CAPTURE_LAST_ERROR = Linker.Option.captureCallState("GetLastError");
+    private static final Linker.Option CAPTURE_LAST_ERROR = WindowsKernel32.captureLastError();
 
-    static final StructLayout CALL_STATE_LAYOUT = Linker.Option.captureStateLayout();
-    static final VarHandle LAST_ERROR = CALL_STATE_LAYOUT.varHandle(MemoryLayout.PathElement.groupElement("GetLastError"));
-
-    /** {@code HANDLE GetCurrentProcess()} */
-    static final MethodHandle GET_CURRENT_PROCESS = LINKER.downcallHandle(KERNEL32.findOrThrow("GetCurrentProcess"), FunctionDescriptor.of(ADDRESS));
-    /** {@code BOOL CloseHandle(HANDLE)} */
-    static final MethodHandle CLOSE_HANDLE = LINKER.downcallHandle(KERNEL32.findOrThrow("CloseHandle"), FunctionDescriptor.of(JAVA_INT, ADDRESS));
     /** {@code BOOL OpenProcessToken(HANDLE process, DWORD access, PHANDLE token)} */
     static final MethodHandle OPEN_PROCESS_TOKEN = LINKER.downcallHandle(
       ADVAPI32.findOrThrow("OpenProcessToken"), FunctionDescriptor.of(JAVA_INT, ADDRESS, JAVA_INT, ADDRESS), CAPTURE_LAST_ERROR);

@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remoteDev.util;
 
+import com.intellij.util.system.WindowsKernel32;
 import com.intellij.util.system.WindowsSystemLibraries;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -8,12 +9,9 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.foreign.Arena;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.Linker;
-import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.StructLayout;
 import java.lang.foreign.SymbolLookup;
 import java.lang.invoke.MethodHandle;
-import java.lang.invoke.VarHandle;
 import java.nio.charset.StandardCharsets;
 
 import static java.lang.foreign.ValueLayout.ADDRESS;
@@ -36,15 +34,15 @@ public final class WindowsServices {
    */
   public static int openService(@NotNull String serviceName) {
     try (var arena = Arena.ofConfined()) {
-      var callState = arena.allocate(Handles.CALL_STATE_LAYOUT);
+      var callState = arena.allocate(WindowsKernel32.CALL_STATE);
       var manager = (MemorySegment)Handles.OPEN_SC_MANAGER.invokeExact(callState, MemorySegment.NULL, MemorySegment.NULL, SC_MANAGER_CONNECT);
       if (manager.address() == 0) {
-        throw new IllegalStateException("OpenSCManagerW failed with Win32 error " + (int)Handles.LAST_ERROR.get(callState, 0L));
+        throw new IllegalStateException("OpenSCManagerW failed with Win32 error " + WindowsKernel32.lastError(callState));
       }
       try {
         var service = (MemorySegment)Handles.OPEN_SERVICE.invokeExact(callState, manager, arena.allocateFrom(serviceName, StandardCharsets.UTF_16LE), SC_MANAGER_CONNECT);
         if (service.address() == 0) {
-          return (int)Handles.LAST_ERROR.get(callState, 0L);
+          return WindowsKernel32.lastError(callState);
         }
         var _ = (int)Handles.CLOSE_SERVICE_HANDLE.invokeExact(service);
         return 0;
@@ -61,10 +59,7 @@ public final class WindowsServices {
   private static final class Handles {
     private static final Linker LINKER = Linker.nativeLinker();
     private static final SymbolLookup ADVAPI32 = WindowsSystemLibraries.lookup("advapi32.dll");
-    private static final Linker.Option CAPTURE_LAST_ERROR = Linker.Option.captureCallState("GetLastError");
-
-    static final StructLayout CALL_STATE_LAYOUT = Linker.Option.captureStateLayout();
-    static final VarHandle LAST_ERROR = CALL_STATE_LAYOUT.varHandle(MemoryLayout.PathElement.groupElement("GetLastError"));
+    private static final Linker.Option CAPTURE_LAST_ERROR = WindowsKernel32.captureLastError();
 
     /** {@code SC_HANDLE OpenSCManagerW(LPCWSTR machine, LPCWSTR database, DWORD access)} */
     static final MethodHandle OPEN_SC_MANAGER = LINKER.downcallHandle(

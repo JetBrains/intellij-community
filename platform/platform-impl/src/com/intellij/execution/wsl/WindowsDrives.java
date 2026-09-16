@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl;
 
-import com.intellij.util.system.WindowsSystemLibraries;
+import com.intellij.util.system.WindowsKernel32;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -65,7 +65,7 @@ public final class WindowsDrives {
 
   private static final class Handles {
     private static final Linker LINKER = Linker.nativeLinker();
-    private static final SymbolLookup KERNEL32 = WindowsSystemLibraries.lookup("kernel32.dll");
+    private static final SymbolLookup KERNEL32 = WindowsKernel32.kernel32();
 
     /** {@code DWORD GetLogicalDriveStringsW(DWORD bufferLength, LPWSTR buffer)}: the length needed when the buffer is too small */
     static final MethodHandle GET_LOGICAL_DRIVE_STRINGS = LINKER.downcallHandle(KERNEL32.findOrThrow("GetLogicalDriveStringsW"), FunctionDescriptor.of(JAVA_INT, JAVA_INT, ADDRESS));

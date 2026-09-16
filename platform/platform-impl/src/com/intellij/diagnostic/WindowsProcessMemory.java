@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
+import com.intellij.util.system.WindowsKernel32;
 import com.intellij.util.system.WindowsSystemLibraries;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
@@ -9,7 +10,6 @@ import java.lang.foreign.Arena;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.Linker;
 import java.lang.foreign.MemoryLayout;
-import java.lang.foreign.MemorySegment;
 import java.lang.foreign.StructLayout;
 import java.lang.invoke.MethodHandle;
 
@@ -33,7 +33,7 @@ final class WindowsProcessMemory {
     try (var arena = Arena.ofConfined()) {
       var counters = arena.allocate(Handles.PROCESS_MEMORY_COUNTERS_EX2);
       counters.set(JAVA_INT, 0, (int)Handles.PROCESS_MEMORY_COUNTERS_EX2.byteSize());
-      var process = (MemorySegment)Handles.GET_CURRENT_PROCESS.invokeExact();
+      var process = WindowsKernel32.currentProcess();
       var succeeded = (int)Handles.GET_PROCESS_MEMORY_INFO.invokeExact(process, counters, (int)Handles.PROCESS_MEMORY_COUNTERS_EX2.byteSize());
       if (succeeded == 0) {
         return null;
@@ -67,9 +67,6 @@ final class WindowsProcessMemory {
       JAVA_LONG.withName("PagefileUsage"), JAVA_LONG.withName("PeakPagefileUsage"),
       JAVA_LONG.withName("PrivateUsage"), JAVA_LONG.withName("PrivateWorkingSetSize"), JAVA_LONG.withName("SharedCommitUsage"));
 
-    /** {@code HANDLE GetCurrentProcess()} */
-    static final MethodHandle GET_CURRENT_PROCESS = LINKER.downcallHandle(
-      WindowsSystemLibraries.lookup("kernel32.dll").findOrThrow("GetCurrentProcess"), FunctionDescriptor.of(ADDRESS));
     /** {@code BOOL GetProcessMemoryInfo(HANDLE, PPROCESS_MEMORY_COUNTERS, DWORD cb)} */
     static final MethodHandle GET_PROCESS_MEMORY_INFO = LINKER.downcallHandle(
       WindowsSystemLibraries.lookup("psapi.dll").findOrThrow("GetProcessMemoryInfo"), FunctionDescriptor.of(JAVA_INT, ADDRESS, ADDRESS, JAVA_INT));

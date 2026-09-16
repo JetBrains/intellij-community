@@ -61,6 +61,8 @@ public final class WindowsNtDll {
     ADDRESS.withName("Pointer"),
     JAVA_LONG.withName("Information"));
 
+  public static final long IO_STATUS_INFORMATION = IO_STATUS_BLOCK.byteOffset(groupElement("Information"));
+
   /**
    * {@code PROCESS_BASIC_INFORMATION} from {@code winternl.h}, 48 bytes. The padding holds {@code ExitStatus},
    * {@code AffinityMask}, {@code BasePriority} and {@code UniqueProcessId}.
@@ -123,6 +125,15 @@ public final class WindowsNtDll {
   public static final long PROCESS_ID_LIST = FILE_PROCESS_IDS.byteOffset(groupElement("ProcessIdList"));
 
   /**
+   * The {@code ntdll.dll} lookup, for a symbol that only one class needs. A symbol that more than one class
+   * needs belongs in this class.
+   */
+  @ApiStatus.Internal
+  public static @NotNull SymbolLookup ntdll() {
+    return Handles.NTDLL;
+  }
+
+  /**
    * {@code NTSTATUS NtQueryInformationFile(HANDLE file, PIO_STATUS_BLOCK, PVOID information, ULONG length,
    * FILE_INFORMATION_CLASS)}
    *
@@ -161,7 +172,7 @@ public final class WindowsNtDll {
   /** The library and the handles load on the first call, so the layouts above stay readable on another operating system. */
   private static final class Handles {
     private static final Linker LINKER = Linker.nativeLinker();
-    private static final SymbolLookup NTDLL = WindowsSystemLibraries.lookup("ntdll.dll");
+    static final SymbolLookup NTDLL = WindowsSystemLibraries.lookup("ntdll.dll");
 
     static final MethodHandle QUERY_INFORMATION_FILE = LINKER.downcallHandle(
       NTDLL.findOrThrow("NtQueryInformationFile"),

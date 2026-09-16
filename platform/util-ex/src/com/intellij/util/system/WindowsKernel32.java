@@ -3,7 +3,9 @@ package com.intellij.util.system;
 
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.lang.foreign.Arena;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.Linker;
 import java.lang.foreign.MemoryLayout;
@@ -49,16 +51,67 @@ public final class WindowsKernel32 {
   /** {@code PROCESS_VM_READ} */
   public static final int PROCESS_VM_READ = 0x0010;
 
+  /** {@code STILL_ACTIVE}: the exit code that {@link #exitCode} answers for a running process. */
+  public static final int STILL_ACTIVE = 259;
+
   /**
    * The layout of the state that a call captures. Allocate one segment of it per call sequence, and read it
    * with {@link #lastError}. The layout itself needs no library, so it is safe to touch on any operating system.
    */
   public static final StructLayout CALL_STATE = Linker.Option.captureStateLayout();
 
+  /**
+   * The {@code kernel32.dll} lookup, for a symbol that only one class needs. A symbol that more than one class
+   * needs belongs in this class.
+   */
+  @ApiStatus.Internal
+  public static @NotNull SymbolLookup kernel32() {
+    return Handles.KERNEL32;
+  }
+
+  /**
+   * The option that makes a downcall write its {@code GetLastError} code into a leading call-state argument.
+   * Allocate the argument from {@link #CALL_STATE} and read it with {@link #lastError}.
+   * <p>
+   * Windows only: the option names a state that another operating system does not have.
+   */
+  @ApiStatus.Internal
+  public static @NotNull Linker.Option captureLastError() {
+    return Handles.CAPTURE_LAST_ERROR;
+  }
+
   /** @return the {@code GetLastError} code that the last call wrote into {@code callState} */
   @ApiStatus.Internal
   public static int lastError(@NotNull MemorySegment callState) {
     return (int)Handles.LAST_ERROR.get(callState, 0L);
+  }
+
+  /** {@code HANDLE GetCurrentProcess()}: a pseudo handle of the current process. It needs no close. */
+  @ApiStatus.Internal
+  public static @NotNull MemorySegment currentProcess() {
+    try {
+      return (MemorySegment)Handles.GET_CURRENT_PROCESS.invokeExact();
+    }
+    catch (Throwable t) {
+      throw new IllegalStateException(t);
+    }
+  }
+
+  /**
+   * {@code BOOL GetExitCodeProcess(HANDLE process, LPDWORD exitCode)}
+   *
+   * @return the exit code, {@link #STILL_ACTIVE} for a running process, or {@code null} when the call fails
+   */
+  @ApiStatus.Internal
+  public static @Nullable Integer exitCode(@NotNull MemorySegment process) {
+    try (var arena = Arena.ofConfined()) {
+      var exitCode = arena.allocate(JAVA_INT);
+      var succeeded = (int)Handles.GET_EXIT_CODE_PROCESS.invokeExact(process, exitCode);
+      return succeeded != 0 ? exitCode.get(JAVA_INT, 0) : null;
+    }
+    catch (Throwable t) {
+      throw new IllegalStateException(t);
+    }
   }
 
   /**
@@ -126,6 +179,21 @@ public final class WindowsKernel32 {
     }
   }
 
+  /**
+   * {@code BOOL CloseHandle(HANDLE)}, for a caller that reports the error of a failed close.
+   *
+   * @return {@code true} when the call closed the handle. Read the code of a failure with {@link #lastError}.
+   */
+  @ApiStatus.Internal
+  public static boolean closeHandle(@NotNull MemorySegment callState, @NotNull MemorySegment handle) {
+    try {
+      return (int)Handles.CLOSE_HANDLE_WITH_ERROR.invokeExact(callState, handle) != 0;
+    }
+    catch (Throwable t) {
+      throw new IllegalStateException(t);
+    }
+  }
+
   /** {@code HLOCAL LocalFree(HLOCAL)}. @return {@code true} when the call released the block */
   @ApiStatus.Internal
   public static boolean localFree(@NotNull MemorySegment block) {
@@ -140,10 +208,16 @@ public final class WindowsKernel32 {
   /** The library and the handles load on the first call, so a class of this package stays readable on another operating system. */
   private static final class Handles {
     private static final Linker LINKER = Linker.nativeLinker();
-    private static final SymbolLookup KERNEL32 = WindowsSystemLibraries.lookup("kernel32.dll");
-    private static final Linker.Option CAPTURE_LAST_ERROR = Linker.Option.captureCallState("GetLastError");
+    static final SymbolLookup KERNEL32 = WindowsSystemLibraries.lookup("kernel32.dll");
+    static final Linker.Option CAPTURE_LAST_ERROR = Linker.Option.captureCallState("GetLastError");
 
     static final VarHandle LAST_ERROR = CALL_STATE.varHandle(MemoryLayout.PathElement.groupElement("GetLastError"));
+
+    static final MethodHandle GET_CURRENT_PROCESS = LINKER.downcallHandle(
+      KERNEL32.findOrThrow("GetCurrentProcess"), FunctionDescriptor.of(ADDRESS));
+
+    static final MethodHandle GET_EXIT_CODE_PROCESS = LINKER.downcallHandle(
+      KERNEL32.findOrThrow("GetExitCodeProcess"), FunctionDescriptor.of(JAVA_INT, ADDRESS, ADDRESS));
 
     static final MethodHandle CREATE_FILE = LINKER.downcallHandle(
       KERNEL32.findOrThrow("CreateFileW"),
@@ -156,8 +230,12 @@ public final class WindowsKernel32 {
       KERNEL32.findOrThrow("ReadProcessMemory"),
       FunctionDescriptor.of(JAVA_INT, ADDRESS, ADDRESS, ADDRESS, JAVA_LONG, ADDRESS), CAPTURE_LAST_ERROR);
 
-    static final MethodHandle CLOSE_HANDLE = LINKER.downcallHandle(
-      KERNEL32.findOrThrow("CloseHandle"), FunctionDescriptor.of(JAVA_INT, ADDRESS));
+    private static final FunctionDescriptor CLOSE_HANDLE_DESCRIPTOR = FunctionDescriptor.of(JAVA_INT, ADDRESS);
+
+    static final MethodHandle CLOSE_HANDLE = LINKER.downcallHandle(KERNEL32.findOrThrow("CloseHandle"), CLOSE_HANDLE_DESCRIPTOR);
+
+    static final MethodHandle CLOSE_HANDLE_WITH_ERROR = LINKER.downcallHandle(
+      KERNEL32.findOrThrow("CloseHandle"), CLOSE_HANDLE_DESCRIPTOR, CAPTURE_LAST_ERROR);
 
     static final MethodHandle LOCAL_FREE = LINKER.downcallHandle(
       KERNEL32.findOrThrow("LocalFree"), FunctionDescriptor.of(ADDRESS, ADDRESS));

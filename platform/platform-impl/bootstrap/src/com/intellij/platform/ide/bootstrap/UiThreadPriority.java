@@ -2,8 +2,7 @@
 package com.intellij.platform.ide.bootstrap;
 
 import com.intellij.util.system.OS;
-import com.intellij.util.system.WindowsSystemLibraries;
-
+import com.intellij.util.system.WindowsKernel32;
 import javax.swing.SwingUtilities;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -99,7 +98,7 @@ final class UiThreadPriority {
   /** {@code kernel32.dll} downcalls for the debug output; {@code HANDLE} is an address. */
   private static final class WindowsThread {
     private static final Linker LINKER = Linker.nativeLinker();
-    private static final SymbolLookup KERNEL32 = WindowsSystemLibraries.lookup("kernel32.dll");
+    private static final SymbolLookup KERNEL32 = WindowsKernel32.kernel32();
 
     /** {@code HANDLE GetCurrentThread()}, a pseudo handle that needs no close */
     static final MethodHandle GET_CURRENT_THREAD = LINKER.downcallHandle(KERNEL32.findOrThrow("GetCurrentThread"), FunctionDescriptor.of(ADDRESS));

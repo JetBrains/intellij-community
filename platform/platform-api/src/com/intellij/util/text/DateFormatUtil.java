@@ -7,7 +7,7 @@ import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.UtilBundle;
 import com.intellij.util.system.OS;
-import com.intellij.util.system.WindowsSystemLibraries;
+import com.intellij.util.system.WindowsKernel32;
 import com.intellij.util.text.DateTimeFormatManager.Formats;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,7 +20,6 @@ import java.lang.foreign.MemorySegment;
 import java.lang.foreign.StructLayout;
 import java.lang.foreign.SymbolLookup;
 import java.lang.invoke.MethodHandle;
-import java.lang.invoke.VarHandle;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
@@ -391,16 +390,14 @@ public final class DateFormatUtil {
     static final int LOCALE_SSHORTTIME = 0x00000079;
     static final int LOCALE_STIMEFORMAT = 0x00001003;
 
-    static final StructLayout CALL_STATE_LAYOUT = Linker.Option.captureStateLayout();
-    static final VarHandle LAST_ERROR = CALL_STATE_LAYOUT.varHandle(MemoryLayout.PathElement.groupElement("GetLastError"));
     static final MethodHandle GET_LOCALE_INFO_EX = Linker.nativeLinker().downcallHandle(
-      WindowsSystemLibraries.lookup("kernel32.dll").findOrThrow("GetLocaleInfoEx"),
-      FunctionDescriptor.of(JAVA_INT, ADDRESS, JAVA_INT, ADDRESS, JAVA_INT), Linker.Option.captureCallState("GetLastError"));
+      WindowsKernel32.kernel32().findOrThrow("GetLocaleInfoEx"),
+      FunctionDescriptor.of(JAVA_INT, ADDRESS, JAVA_INT, ADDRESS, JAVA_INT), WindowsKernel32.captureLastError());
   }
 
   static Formats getWindowsFormats() throws Throwable {
     try (var arena = Arena.ofConfined()) {
-      var callState = arena.allocate(Kernel32.CALL_STATE_LAYOUT);
+      var callState = arena.allocate(WindowsKernel32.CALL_STATE);
       var buffer = arena.allocate(JAVA_CHAR, 128);
       var shortDate = getWindowsFormat(Kernel32.LOCALE_SSHORTDATE, callState, buffer);
       var shortTime = getWindowsFormat(Kernel32.LOCALE_SSHORTTIME, callState, buffer);
@@ -413,7 +410,7 @@ public final class DateFormatUtil {
   private static String getWindowsFormat(int localeType, MemorySegment callState, MemorySegment buffer) throws Throwable {
     var capacity = (int)(buffer.byteSize() / JAVA_CHAR.byteSize());
     var result = (int)Kernel32.GET_LOCALE_INFO_EX.invokeExact(callState, MemorySegment.NULL, localeType, buffer, capacity);
-    if (result < 2) throw new IllegalStateException("GetLocaleInfoEx: " + (int)Kernel32.LAST_ERROR.get(callState, 0L));
+    if (result < 2) throw new IllegalStateException("GetLocaleInfoEx: " + WindowsKernel32.lastError(callState));
     return fixWindowsFormat(new String(buffer.asSlice(0, (result - 1L) * JAVA_CHAR.byteSize()).toArray(JAVA_CHAR)));
   }
 

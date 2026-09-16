@@ -5,7 +5,8 @@
 package com.intellij.openapi.vfs.impl.local.windows
 
 import com.intellij.util.system.LowLevelLocalMachineAccess
-import com.intellij.util.system.OS
+import com.intellij.util.system.WindowsKernel32
+import com.intellij.util.system.WindowsNtDll
 import org.jetbrains.annotations.ApiStatus
 import java.io.Closeable
 import java.io.IOException
@@ -15,6 +16,7 @@ import java.lang.foreign.Linker
 import java.lang.foreign.MemoryLayout
 import java.lang.foreign.MemorySegment
 import java.lang.foreign.SymbolLookup
+import java.lang.foreign.ValueLayout
 import java.lang.invoke.MethodHandle
 import java.nio.ByteOrder
 import java.nio.file.AccessDeniedException
@@ -22,15 +24,10 @@ import java.nio.file.FileSystemException
 import java.nio.file.NoSuchFileException
 import java.nio.file.NotDirectoryException
 import java.nio.file.Path
-import kotlin.io.path.Path
-import kotlin.io.path.div
 
-// Will be empty if won't get it
-private val systemRoot: Path = Path(System.getenv("SystemRoot") ?: "/")
-
-private enum class WindowsLibrary(val path: Path) {
-  Kernel32(systemRoot / "System32" / "kernel32.dll"),
-  Ntdll(systemRoot / "System32" / "ntdll.dll")
+private enum class WindowsLibrary {
+  Kernel32,
+  Ntdll
 }
 
 private enum class WindowsSymbol {
@@ -45,21 +42,20 @@ private enum class WindowsSymbol {
 private val handleCache = mutableMapOf<Pair<WindowsLibrary, WindowsSymbol>, MethodHandle>()
 
 private object WindowsDllLookup {
-  private val kernel32DllLookup: SymbolLookup? = if (OS.CURRENT == OS.Windows) SymbolLookup.libraryLookup(WindowsLibrary.Kernel32.path, Arena.global()) else null
-  private val ntdllDllLookup: SymbolLookup? = if (OS.CURRENT == OS.Windows) SymbolLookup.libraryLookup(WindowsLibrary.Ntdll.path, Arena.global()) else null
-
-  private val libsLookups = mapOf(
-    WindowsLibrary.Kernel32 to kernel32DllLookup,
-    WindowsLibrary.Ntdll to ntdllDllLookup
-  )
+  /**
+   * The lookup comes from the facade of the library, so the DLL name stays in one place.
+   * The facade loads the library on the first call, so this object holds no library until a call needs one.
+   */
+  private fun lookupFor(library: WindowsLibrary): SymbolLookup = when (library) {
+    WindowsLibrary.Kernel32 -> WindowsKernel32.kernel32()
+    WindowsLibrary.Ntdll -> WindowsNtDll.ntdll()
+  }
 
   fun handleFor(library: WindowsLibrary, label: WindowsSymbol): MethodHandle {
     return synchronized(handleCache) {
       handleCache.getOrPut(library to label) {
-        val libraryLookup = libsLookups[library] ?: throw IllegalArgumentException("Library '$library' not defined as a lookupable library")
         val callStub = WindowsStubs[label] ?: throw IllegalArgumentException("Call stub '$label' not defined for library '$library'")
-        val getLastErrorOption = Linker.Option.captureCallState("GetLastError")
-        return@getOrPut Linker.nativeLinker().downcallHandle(libraryLookup.findOrThrow(label.name), callStub, getLastErrorOption)
+        return@getOrPut Linker.nativeLinker().downcallHandle(lookupFor(library).findOrThrow(label.name), callStub, WindowsKernel32.captureLastError())
       }
     }
   }
@@ -152,14 +148,6 @@ private object WindowsStubs {
   )
 
   val ULONG_PTR = canonicalLayouts["void*"]!!
-
-  val IO_STATUS_BLOCK: MemoryLayout = MemoryLayout.structLayout(
-    MemoryLayout.unionLayout(
-      NTSTATUS.withName("Status"),
-      PVOID.withName("Pointer")
-    ),
-    ULONG_PTR.withName("Information")
-  )
 
   //NTSYSAPI ULONG RtlNtStatusToDosError(
   //  [in] NTSTATUS Status
@@ -277,10 +265,8 @@ internal class Windows(val arena: Arena) : Closeable {
     }
 
     object IO_STATUS_BLOCK {
-      private val informationHandle = WindowsStubs.IO_STATUS_BLOCK.varHandle(MemoryLayout.PathElement.groupElement("Information"))
-
       fun Information(memorySegment: MemorySegment): Long {
-        return (informationHandle.get(memorySegment, 0L) as MemorySegment).address()
+        return memorySegment.get(ValueLayout.JAVA_LONG, WindowsNtDll.IO_STATUS_INFORMATION)
       }
     }
 
@@ -354,7 +340,7 @@ internal class Windows(val arena: Arena) : Closeable {
 
   object Alloc {
     fun IO_STATUS_BLOCK(arena: Arena): MemorySegment {
-      return arena.allocate(WindowsStubs.IO_STATUS_BLOCK)
+      return arena.allocate(WindowsNtDll.IO_STATUS_BLOCK)
     }
 
     fun ByteBuffer(arena: Arena, size: Long): MemorySegment {

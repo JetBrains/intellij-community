@@ -7,7 +7,6 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.foreign.Arena;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.Linker;
-import java.lang.foreign.MemorySegment;
 import java.lang.foreign.SymbolLookup;
 import java.lang.invoke.MethodHandle;
 
@@ -38,7 +37,7 @@ public final class Wow64 {
     try (var arena = Arena.ofConfined()) {
       var processMachine = arena.allocate(JAVA_SHORT);
       var nativeMachine = arena.allocate(JAVA_SHORT);
-      var process = (MemorySegment)Handles.GET_CURRENT_PROCESS.invokeExact();
+      var process = WindowsKernel32.currentProcess();
       var succeeded = (int)isWow64Process2.invokeExact(process, processMachine, nativeMachine);
       if (succeeded == 0) {
         return null;
@@ -58,12 +57,7 @@ public final class Wow64 {
   /** Downcalls into {@code kernel32.dll}. {@code HANDLE} is an address, {@code BOOL} is {@code int}, {@code USHORT*} points at a {@code short}. */
   private static final class Handles {
     private static final Linker LINKER = Linker.nativeLinker();
-    private static final SymbolLookup KERNEL32 = WindowsSystemLibraries.lookup("kernel32.dll");
-
-    /** {@code HANDLE GetCurrentProcess()} */
-    static final MethodHandle GET_CURRENT_PROCESS = LINKER.downcallHandle(
-      KERNEL32.findOrThrow("GetCurrentProcess"),
-      FunctionDescriptor.of(ADDRESS));
+    private static final SymbolLookup KERNEL32 = WindowsKernel32.kernel32();
 
     /** {@code BOOL IsWow64Process2(HANDLE process, USHORT *processMachine, USHORT *nativeMachine)}, absent before Windows 10 1709 */
     static final @Nullable MethodHandle IS_WOW64_PROCESS_2 = KERNEL32.find("IsWow64Process2")
