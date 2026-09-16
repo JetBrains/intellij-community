@@ -15,28 +15,21 @@ import com.intellij.python.pyproject.model.api.ModelRebuiltListener
 import com.intellij.python.pyproject.model.api.isPyProjectTomlBased
 import com.intellij.python.pyproject.model.internal.MODEL_REBUILD
 import com.intellij.python.pyproject.model.internal.platformBridge.PyProjectModelSyncService
-import com.intellij.python.pyproject.model.spi.PyProjectManager
-import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.util.io.createDirectories
-import com.jetbrains.python.venvReader.Directory
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeoutOrNull
-import org.apache.tuweni.toml.TomlTable
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
-import java.io.IOException
 import java.nio.file.Path
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.io.path.deleteExisting
 import kotlin.io.path.writeText
@@ -117,40 +110,6 @@ internal class PyProjectTomlVfsListenerTest {
     val member = findInVfs(root.resolve("member"))
     writeAction { member.rename(this, ".hidden") }
     awaitPyModules("a directory with a pruned name")
-  }
-
-  @ParameterizedTest
-  @ValueSource(booleans = [false, true])
-  fun testRebuildAfterFailure(onStart: Boolean, @TestDisposable disposable: Disposable): Unit = timeoutRunBlocking(TEST_TIMEOUT) {
-    val service = projectFixture.get().service<PyProjectModelSyncService>()
-    if (onStart) service.stop()
-    val managers = PyProjectManager.EP.extensionList
-    val manager = managers.first()
-    val fail = AtomicBoolean(true)
-    val failed = CompletableDeferred<Unit>()
-    val failingManager = object : PyProjectManager by manager {
-      override suspend fun getSrcRoots(toml: TomlTable, projectRoot: Directory): Set<Directory> {
-        if (fail.get()) {
-          failed.complete(Unit)
-          throw IOException("Cannot read the source roots")
-        }
-        return manager.getSrcRoots(toml, projectRoot)
-      }
-    }
-    ExtensionTestUtil.maskExtensions(PyProjectManager.EP, listOf(failingManager) + managers.drop(1), disposable)
-
-    if (onStart) {
-      service.start()
-    }
-    else {
-      root.resolve("member").writeToml("changed")
-      refreshWithoutRecursion(root.resolve("member"))
-    }
-    failed.await()
-    fail.set(false)
-    root.resolve("second").writeToml("second")
-    refreshWithoutRecursion(root)
-    awaitPyModules("a change after a failed rebuild", if (onStart) "member" else "changed", "second")
   }
 
   @Test

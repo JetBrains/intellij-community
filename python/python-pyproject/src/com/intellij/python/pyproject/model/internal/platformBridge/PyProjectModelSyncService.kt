@@ -25,7 +25,6 @@ import com.intellij.python.pyproject.model.internal.notifyModelRebuilt
 import com.intellij.python.pyproject.model.internal.pyProjectToml.findPyProjectTomlWithContent
 import com.intellij.python.pyproject.model.internal.workspaceBridge.collectExcludedPaths
 import com.intellij.python.pyproject.model.internal.workspaceBridge.rebuildProjectModel
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -164,7 +163,6 @@ internal class PyProjectModelSyncService(private val project: Project, private v
 
   /**
    * Rebuilds the model once for each batch of [requests].
-   * Keeps tracking after a failed rebuild and retries unfinished loads on the next request.
    *
    * [debounceBatch] holds a request until [DEBOUNCE] of quiet, and it then reports every request of the
    * burst. A burst of VFS events therefore costs one rebuild, and a long burst costs none until it ends.
@@ -174,34 +172,15 @@ internal class PyProjectModelSyncService(private val project: Project, private v
    * runs inside a write action, where it cannot suspend.
    */
   private suspend fun consumeRequests(requests: Channel<RebuildRequest>) {
-    val directoriesToLoad = LinkedHashSet<VirtualFile>()
-    var rootsLoaded = false
-
-    suspend fun rebuild(reason: String) {
-      try {
-        if (!rootsLoaded) {
-          loadProjectRootsIntoVfs()
-          rootsLoaded = true
-        }
-        if (directoriesToLoad.isNotEmpty()) {
-          val loaded = measureTime { loadSubtreesIntoVfs(directoriesToLoad, collectExcludedPaths(project)) }
-          log.debug { "Loaded ${directoriesToLoad.size} new directories into the VFS in $loaded" }
-          directoriesToLoad.clear()
-        }
-        rebuildNow(reason)
-      }
-      catch (e: CancellationException) {
-        throw e
-      }
-      catch (e: Exception) {
-        log.warn("Could not rebuild the pyproject.toml model because of $reason. The next change will retry the rebuild.", e)
-      }
-    }
-
-    rebuild("the start of the sync")
+    loadProjectRootsIntoVfs()
+    rebuildNow("the start of the sync")
     requests.receiveAsFlow().debounceBatch(DEBOUNCE).collect { batch ->
-      batch.flatMapTo(directoriesToLoad) { it.directoriesToLoad }
-      rebuild(batch.mapTo(LinkedHashSet()) { it.reason }.joinToString(" and "))
+      val directoriesToLoad = batch.flatMapTo(LinkedHashSet()) { it.directoriesToLoad }
+      if (directoriesToLoad.isNotEmpty()) {
+        val loaded = measureTime { loadSubtreesIntoVfs(directoriesToLoad, collectExcludedPaths(project)) }
+        log.debug { "Loaded ${directoriesToLoad.size} new directories into the VFS in $loaded" }
+      }
+      rebuildNow(batch.mapTo(LinkedHashSet()) { it.reason }.joinToString(" and "))
     }
   }
 
@@ -263,14 +242,13 @@ internal class PyProjectModelSyncService(private val project: Project, private v
   }
 
   /**
-   * Loads the project tree into the VFS before the first build. The consumer retries a failed load.
+   * Loads the project tree into the VFS before the first build.
    *
    * The scanning pass and the initial VFS refresh reach the content roots only. A directory that no content
    * root covers is therefore unknown to the VFS, and the filename index cannot report its `pyproject.toml`.
    * That directory is the one this feature has to turn into a module, so the load must happen (PY-91841).
    *
    * Every later change arrives as a VFS event, and the listener loads the new subtree itself.
-   * The consumer stops calling this method after one successful load.
    */
   private suspend fun loadProjectRootsIntoVfs() {
     val (loadedRoots, loaded) = measureTimedValue {
