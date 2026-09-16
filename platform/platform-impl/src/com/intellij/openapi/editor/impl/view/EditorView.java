@@ -237,7 +237,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   @RequiresEdt
   public @NotNull CaretRepaintMetrics getCaretRepaintMetrics() {
     EditorViewSnapshot snapshot = getSnapshotWithMetrics();
-    return new CaretRepaintMetrics(snapshot.caretHeight(), snapshot.topOverhang());
+    return new CaretRepaintMetrics(snapshot.caretHeight(), snapshot.caretTopOverhang());
   }
 
   @RequiresEdt
@@ -856,6 +856,8 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     int newTopOverhang = fontMetricsHeight - newLineHeight + newDescent - descent;
     int newBottomOverhang = descent - newDescent;
     int newCaretHeight = fullLineHeightCursor ? newLineHeight : newLineHeight + newTopOverhang + newBottomOverhang;
+    // A full line height caret starts at the line top, so it overhangs nothing.
+    int newCaretTopOverhang = fullLineHeightCursor ? 0 : newTopOverhang;
 
     // assuming that bold italic 'W' gives a good approximation of font's widest character
     FontMetrics fmBI = FontInfo.getFontMetrics(colorsScheme.getFont(EditorFontType.BOLD_ITALIC), fontRenderContext);
@@ -872,7 +874,8 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
       /* capHeight= */ newCapHeight,
       /* topOverhang= */ newTopOverhang,
       /* bottomOverhang= */ newBottomOverhang,
-      /* caretHeight= */ newCaretHeight
+      /* caretHeight= */ newCaretHeight,
+      /* caretTopOverhang= */ newCaretTopOverhang
     );
   }
 

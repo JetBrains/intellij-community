@@ -10,4 +10,11 @@ public final class EditorViewAccessor {
   public static EditorView getView(@NotNull Editor editor) {
     return ((EditorImpl)editor).getView();
   }
+
+  /**
+   * {@code CaretRepaintMetrics} is internal to Kotlin, so a Kotlin test cannot name it.
+   */
+  public static int getCaretTopOverhang(@NotNull Editor editor) {
+    return getView(editor).getCaretRepaintMetrics().caretTopOverhang;
+  }
 }

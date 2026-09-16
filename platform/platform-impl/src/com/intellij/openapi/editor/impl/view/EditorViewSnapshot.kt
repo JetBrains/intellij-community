@@ -31,6 +31,7 @@ internal data class EditorViewSnapshot(
   fun topOverhang(): Int = metrics.topOverhang
   fun bottomOverhang(): Int = metrics.bottomOverhang
   fun caretHeight(): Int = metrics.caretHeight
+  fun caretTopOverhang(): Int = metrics.caretTopOverhang
   fun ascent(): Int = metrics.ascent
   fun prefixText(): String? = prefix?.prefixText
   fun prefixLayout(): LineLayout? = prefix?.prefixLayout

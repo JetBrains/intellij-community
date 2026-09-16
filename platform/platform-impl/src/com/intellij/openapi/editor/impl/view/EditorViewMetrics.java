@@ -14,18 +14,10 @@ public record EditorViewMetrics(
   int capHeight,
   int topOverhang,
   int bottomOverhang,
-  int caretHeight
+  int caretHeight,
+  int caretTopOverhang
 ) {
   public static final EditorViewMetrics UNINITIALIZED = new EditorViewMetrics(
-    -1,
-    -1,
-    -1,
-    -1,
-    -1,
-    -1,
-    -1,
-    -1,
-    -1,
-    -1
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1
   );
 }
