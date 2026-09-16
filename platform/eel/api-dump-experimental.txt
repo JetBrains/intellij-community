@@ -283,7 +283,6 @@ f:com.intellij.platform.eel.EelPlatformKt
 - *sf:isWindows(com.intellij.platform.eel.EelPlatform):Z
 - *sf:isX86(com.intellij.platform.eel.EelPlatform):Z
 - *sf:isX86_64(com.intellij.platform.eel.EelPlatform):Z
-- *sf:osNameAsEelOsFamily(java.lang.String):com.intellij.platform.eel.EelOsFamily
 *:com.intellij.platform.eel.EelPosixApi
 - com.intellij.platform.eel.EelApi
 - a:getExec():com.intellij.platform.eel.EelExecPosixApi
