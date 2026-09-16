@@ -81,6 +81,7 @@ import com.intellij.util.AstLoadingFilter;
 import com.intellij.util.BitUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.cls.ClsFormatException;
+import com.intellij.util.progress.CancellationUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.Attribute;
@@ -93,6 +94,7 @@ import java.lang.ref.SoftReference;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static com.intellij.codeInsight.multiverse.CodeInsightContexts.isSharedSourceSupportEnabled;
 import static com.intellij.reference.SoftReference.dereference;
@@ -111,7 +113,7 @@ public class ClsFileImpl extends PsiBinaryFileImpl
 
   private static final Key<Document> CLS_DOCUMENT_LINK_KEY = Key.create("cls.document.link");
 
-  private final Object myMirrorLock = new Object();  // NOTE: one absolutely MUST NOT hold PsiLock under the mirror lock
+  private final ReentrantLock myMirrorLock = new ReentrantLock();  // NOTE: one absolutely MUST NOT hold PsiLock under the mirror lock
   private final Object myStubLock = new Object();
 
   private final boolean myIsForDecompiling;
@@ -316,7 +318,8 @@ public class ClsFileImpl extends PsiBinaryFileImpl
   public @NotNull PsiElement getMirror() {
     TreeElement mirrorTreeElement = dereference(myMirrorFileElement);
     if (mirrorTreeElement == null) {
-      synchronized (myMirrorLock) {
+      CancellationUtil.lockMaybeCancellable(myMirrorLock);
+      try {
         mirrorTreeElement = dereference(myMirrorFileElement);
         if (mirrorTreeElement == null) {
           VirtualFile file = getVirtualFile();
@@ -357,6 +360,9 @@ public class ClsFileImpl extends PsiBinaryFileImpl
           ((PsiFileImpl)mirror).setOriginalFile(this);
           myMirrorFileElement = new SoftReference<>(mirrorTreeElement);
         }
+      }
+      finally {
+        myMirrorLock.unlock();
       }
     }
     return mirrorTreeElement.getPsi();
@@ -532,9 +538,13 @@ public class ClsFileImpl extends PsiBinaryFileImpl
       }
     }
 
-    synchronized (myMirrorLock) {
+    myMirrorLock.lock();
+    try {
       putUserData(CLS_DOCUMENT_LINK_KEY, null);
       myMirrorFileElement = null;
+    }
+    finally {
+      myMirrorLock.unlock();
     }
   }
 
