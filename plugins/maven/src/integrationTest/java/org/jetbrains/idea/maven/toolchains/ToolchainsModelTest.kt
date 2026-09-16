@@ -54,6 +54,23 @@ class ToolchainsModelTest {
     assertFalse(model.matches(requirement))
   }
 
-}
+  @Test
+  fun testMatchingEnvList() {
+    val requirement = ToolchainRequirement.Builder(ToolchainRequirement.JDK_TYPE)
+      .set("env", "JAVA_HOME,TEST_HOME")
+      .build()
+    val model = ToolchainModel("jdk", mapOf("env" to "JAVA_HOME,TEST_HOME,OTHER_HOME"), emptyMap())
+    assertTrue(model.matches(requirement))
+  }
 
+  @Test
+  fun testMatchingEnvListNegative() {
+    val requirement = ToolchainRequirement.Builder(ToolchainRequirement.JDK_TYPE)
+      .set("env", "JAVA_HOME,TEST_HOME")
+      .build()
+    val model = ToolchainModel("jdk", mapOf("env" to "JAVA_HOME"), emptyMap())
+    assertFalse(model.matches(requirement))
+  }
+
+}
 

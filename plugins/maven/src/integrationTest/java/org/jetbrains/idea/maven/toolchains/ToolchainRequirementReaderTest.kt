@@ -3,12 +3,14 @@ package org.jetbrains.idea.maven.toolchains
 
 import com.intellij.testFramework.UsefulTestCase.assertSameElements
 import com.intellij.testFramework.junit5.TestApplication
-import kotlinx.coroutines.runBlocking
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
 import com.intellij.maven.testFramework.fixtures.createProjectSubFile
 import com.intellij.maven.testFramework.fixtures.importProjectAsync
 import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
@@ -54,6 +56,9 @@ class ToolchainRequirementReaderTest(mavenVersion: String, modelVersion: String)
                 </goals>
                 <configuration>
                   <version>99</version>
+                  <runtimeName>test runtime</runtimeName>
+                  <runtimeVersion>99.0.1</runtimeVersion>
+                  <env>JAVA_HOME,TEST_HOME</env>
                   <someParam>blablabla</someParam>
                 </configuration>
               </execution>
@@ -76,7 +81,11 @@ class ToolchainRequirementReaderTest(mavenVersion: String, modelVersion: String)
 
     val expectedRequirement = ToolchainRequirement.Builder(ToolchainRequirement.JDK_TYPE)
       .set("version", "99")
-      .set("someParam", "blablabla")
+      .set("runtime.name", "test runtime")
+      .set("runtime.version", "99.0.1")
+      .set("env", "JAVA_HOME,TEST_HOME")
+      .useImporterJdkIfMatches(true)
+      .discoverJdks(true)
       .build()
 
     val allToolchainRequirements = finder.allToolchainRequirements(mavenProject)
@@ -86,6 +95,137 @@ class ToolchainRequirementReaderTest(mavenVersion: String, modelVersion: String)
     assertEquals(expectedRequirement,
                  finder.searchToolchainRequirementForExecution(mavenProject, "test-execution"),
                  "Compiler execution toolchain does not match")
+  }
+
+  @Test
+  fun testIgnoreUnsupportedParametersFromSelectJdkToolchain() = runBlocking {
+    val finder = ToolchainFinder()
+
+    maven.importProjectAsync("""
+      <groupId>test</groupId>
+      <artifactId>test</artifactId>
+      <version>1</version>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-toolchains-plugin</artifactId>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>select-jdk-toolchain</goal>
+                </goals>
+                <configuration>
+                  <version>99</version>
+                  <useJdk>Never</useJdk>
+                  <discoverToolchains>true</discoverToolchains>
+                  <comparator>lts,current,env,version,vendor</comparator>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+""")
+
+    val mavenProject = maven.projectsManager.rootProjects[0]!!
+
+    val expectedRequirement = ToolchainRequirement.Builder(ToolchainRequirement.JDK_TYPE)
+      .set("version", "99")
+      .discoverJdks(true)
+      .build()
+
+    assertSameElements(finder.allToolchainRequirements(mavenProject), expectedRequirement)
+    assertEquals(expectedRequirement, finder.searchToolchainRequirementForMain(mavenProject), "Main toolchain does not match")
+    assertEquals(expectedRequirement, finder.searchToolchainRequirementForTest(mavenProject), "Test toolchain does not match")
+  }
+
+  @Test
+  fun testIgnoreToolchainGoalConfigurationForSelectJdkToolchain() = runBlocking {
+    val finder = ToolchainFinder()
+
+    maven.importProjectAsync("""
+      <groupId>test</groupId>
+      <artifactId>test</artifactId>
+      <version>1</version>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-toolchains-plugin</artifactId>
+            <configuration>
+              <toolchains>
+                <jdk>
+                  <version>99</version>
+                </jdk>
+              </toolchains>
+            </configuration>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>select-jdk-toolchain</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+""")
+
+    val mavenProject = maven.projectsManager.rootProjects[0]!!
+
+    assertTrue(finder.allToolchainRequirements(mavenProject).isEmpty())
+    assertNull(finder.searchToolchainRequirementForMain(mavenProject), "Main toolchain does not match")
+    assertNull(finder.searchToolchainRequirementForTest(mavenProject), "Test toolchain does not match")
+  }
+
+  @Test
+  fun testReadSelectJdkToolchainRequirementFromUserProperties() = runBlocking {
+    val finder = ToolchainFinder()
+
+    maven.importProjectAsync("""
+      <groupId>test</groupId>
+      <artifactId>test</artifactId>
+      <version>1</version>
+      <properties>
+        <toolchain.jdk.version>[99,100)</toolchain.jdk.version>
+        <toolchain.jdk.vendor>test vendor</toolchain.jdk.vendor>
+        <toolchain.jdk.runtime.name>test runtime</toolchain.jdk.runtime.name>
+        <toolchain.jdk.runtime.version>99.0.1</toolchain.jdk.runtime.version>
+        <toolchain.jdk.env>JAVA_HOME,TEST_HOME</toolchain.jdk.env>
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-toolchains-plugin</artifactId>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>select-jdk-toolchain</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+""")
+
+    val mavenProject = maven.projectsManager.rootProjects[0]!!
+
+    val expectedRequirement = ToolchainRequirement.Builder(ToolchainRequirement.JDK_TYPE)
+      .set("version", "[99,100)")
+      .set("vendor", "test vendor")
+      .set("runtime.name", "test runtime")
+      .set("runtime.version", "99.0.1")
+      .set("env", "JAVA_HOME,TEST_HOME")
+      .useImporterJdkIfMatches(true)
+      .discoverJdks(true)
+      .build()
+
+    assertSameElements(finder.allToolchainRequirements(mavenProject), expectedRequirement)
+    assertEquals(expectedRequirement, finder.searchToolchainRequirementForMain(mavenProject), "Main toolchain does not match")
+    assertEquals(expectedRequirement, finder.searchToolchainRequirementForTest(mavenProject), "Test toolchain does not match")
   }
 
   @Test

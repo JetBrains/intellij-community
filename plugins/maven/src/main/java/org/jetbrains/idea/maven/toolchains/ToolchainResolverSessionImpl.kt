@@ -8,6 +8,7 @@ import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.JdkUtil
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.impl.JavaHomeFinder
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.getOrCreateUserData
@@ -19,6 +20,7 @@ import kotlinx.coroutines.withContext
 import org.jdom.Element
 import org.jetbrains.idea.maven.buildtool.MavenSyncSession
 import org.jetbrains.idea.maven.buildtool.getToolchainsFile
+import org.jetbrains.idea.maven.utils.MavenUtil.getJdkForImporter
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil
 import java.nio.file.Path
 import kotlin.io.path.absolutePathString
@@ -31,6 +33,8 @@ class ToolchainResolverSession private constructor(
 ) {
 
   companion object {
+    private const val DISCOVERED_JDK_TOOLCHAINS_CACHE = "discovered-jdk-toolchains-cache.xml"
+
     fun forSession(syncSession: MavenSyncSession): ToolchainResolverSession {
       val project = syncSession.project
       return syncSession.syncContext.getOrCreateUserData(TOOLCHAIN_SESSION_KEY) {
@@ -42,7 +46,8 @@ class ToolchainResolverSession private constructor(
     val TOOLCHAIN_SESSION_KEY: Key<ToolchainResolverSession> = Key.create("Sync.ToolchainResolverSession.cache")
   }
 
-  private var cached: List<ToolchainModel>? = null
+  private var cachedToolchains: List<ToolchainModel>? = null
+  private var cachedDiscoveredJdks: List<ToolchainModel>? = null
 
   private val resolvedSdks = HashMap<ToolchainRequirement, Sdk>()
   private val unresolvedSdks = HashSet<ToolchainRequirement>()
@@ -50,17 +55,31 @@ class ToolchainResolverSession private constructor(
   fun unresolved(): List<ToolchainRequirement> = unresolvedSdks.toList()
   fun resolvedCount(): Int = resolvedSdks.size
 
-  private suspend fun allToolchains(): List<ToolchainModel> {
-    var result = cached
+  private suspend fun toolchainsFromFile(): List<ToolchainModel> {
+    var result = cachedToolchains
     if (result == null) {
-      result = doReadToolchains()
-      cached = result
+      result = readToolchains(myToolchainsFile)
+      cachedToolchains = result
+    }
+    return result
+  }
+
+  private suspend fun discoveredJdks(): List<ToolchainModel> {
+    var result = cachedDiscoveredJdks
+    if (result == null) {
+      result = readDiscoveredJdks()
+      cachedDiscoveredJdks = result
     }
     return result
   }
 
   private suspend fun findToolchain(requirement: ToolchainRequirement): ToolchainModel? {
-    val descriptors = allToolchains()
+    val descriptors = if (requirement.discoverJdks) {
+      toolchainsFromFile() + discoveredJdks()
+    }
+    else {
+      toolchainsFromFile()
+    }
     return descriptors.firstOrNull { it.matches(requirement) }
   }
 
@@ -85,12 +104,36 @@ class ToolchainResolverSession private constructor(
     }
   }
 
-  private suspend fun doReadToolchains(): List<ToolchainModel> {
-    if (!myToolchainsFile.isRegularFile()) return emptyList()
-    val toolchains = MavenJDOMUtil.read(myToolchainsFile, Charsets.UTF_8, null) ?: return emptyList()
+  private suspend fun readDiscoveredJdks(): List<ToolchainModel> {
+    val discoveredToolchainsFile = myToolchainsFile.parent?.resolve(DISCOVERED_JDK_TOOLCHAINS_CACHE)
+    return listOfNotNull(discoveredToolchainsFile)
+             .flatMap { readToolchains(it) } + readRegisteredJdks() + detectJdks()
+  }
+
+  private suspend fun readToolchains(toolchainsFile: Path): List<ToolchainModel> {
+    if (!toolchainsFile.isRegularFile()) return emptyList()
+    val toolchains = MavenJDOMUtil.read(toolchainsFile, Charsets.UTF_8, null) ?: return emptyList()
     return toolchains.children.filter { it.name == "toolchain" }
       .mapNotNull { readToolchain(it) }
 
+  }
+
+  private fun readRegisteredJdks(): List<ToolchainModel> {
+    val sdkType = ExternalSystemJdkUtil.getJavaSdkType()
+    return ProjectJdkTable.getInstance().getSdksOfType(sdkType)
+      .mapNotNull { ToolchainModel.fromSdk(it) }
+  }
+
+  private fun detectJdks(): List<ToolchainModel> {
+    return JavaHomeFinder.findJdks(myProject.getEelDescriptor(), false)
+      .mapNotNull {
+        val versionInfo = it.versionInfo() ?: return@mapNotNull null
+        ToolchainModel(
+          type = "jdk",
+          providesMap = mapOf("version" to versionInfo.version.toFeatureString()),
+          configurationMap = mapOf("jdkHome" to it.path()),
+        )
+      }
   }
 
   private fun readToolchain(element: Element): ToolchainModel? {
@@ -104,6 +147,10 @@ class ToolchainResolverSession private constructor(
   suspend fun findOrInstallJdk(requirement: ToolchainRequirement?): Sdk? {
     if (requirement == null) return null
     resolvedSdks[requirement]?.let { return it }
+    findImporterJdk(requirement)?.let {
+      resolvedSdks[requirement] = it
+      return it
+    }
     if (unresolvedSdks.contains(requirement)) return null
 
     val foundSdk = doFindOrInstall(requirement)
@@ -126,5 +173,12 @@ class ToolchainResolverSession private constructor(
       null
     }
     return foundSdk
+  }
+
+  private fun findImporterJdk(requirement: ToolchainRequirement): Sdk? {
+    if (!requirement.useImporterJdkIfMatches) return null
+    val jdk = getJdkForImporter(myProject)
+    val model = ToolchainModel.fromSdk(jdk) ?: return null
+    return if (model.matches(requirement)) jdk else null
   }
 }

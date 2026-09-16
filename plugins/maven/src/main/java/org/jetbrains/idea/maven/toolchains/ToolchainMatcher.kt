@@ -1,5 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.toolchains
+
 import com.intellij.util.lang.JavaVersion
 
 interface ToolchainMatcher {
@@ -11,6 +12,7 @@ fun findMatcher(key: String): ToolchainMatcher {
   return when (key) {
     "version" -> ToolchainVersionMatcher
     "vendor" -> AlwaysMatcher
+    "env" -> ToolchainEnvMatcher
     else -> ExactMatcher
   }
 }
@@ -21,7 +23,8 @@ object ToolchainVersionMatcher : ToolchainMatcher {
 
     return try {
       matchesVersionConstraint(value, actualVersion)
-    } catch (e: Exception) {
+    }
+    catch (e: Exception) {
       false
     }
   }
@@ -95,7 +98,7 @@ object ToolchainVersionMatcher : ToolchainMatcher {
     val lower: JavaVersion?,
     val lowerInclusive: Boolean,
     val upper: JavaVersion?,
-    val upperInclusive: Boolean
+    val upperInclusive: Boolean,
   ) {
     fun contains(version: JavaVersion): Boolean {
       if (lower != null) {
@@ -117,6 +120,23 @@ object ToolchainVersionMatcher : ToolchainMatcher {
 
 object AlwaysMatcher : ToolchainMatcher {
   override fun matches(key: String, value: String, model: ToolchainModel): Boolean = true
+}
+
+object ToolchainEnvMatcher : ToolchainMatcher {
+  override fun matches(key: String, value: String, model: ToolchainModel): Boolean {
+    val requiredEnv = value.splitToSequence(',')
+      .map { it.trim() }
+      .filter { it.isNotEmpty() }
+      .toSet()
+    if (requiredEnv.isEmpty()) return true
+
+    val actualEnv = model.provides[key]?.splitToSequence(',')
+                      ?.map { it.trim() }
+                      ?.filter { it.isNotEmpty() }
+                      ?.toSet()
+                    ?: return false
+    return actualEnv.containsAll(requiredEnv)
+  }
 }
 
 object ExactMatcher : ToolchainMatcher {

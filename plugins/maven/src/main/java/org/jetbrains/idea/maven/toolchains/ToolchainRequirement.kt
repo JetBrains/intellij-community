@@ -7,6 +7,8 @@ import com.intellij.openapi.util.NlsSafe
 class ToolchainRequirement private constructor(
   val type: String,
   paramsMap: Map<String, String>,
+  val useImporterJdkIfMatches: Boolean,
+  val discoverJdks: Boolean,
 ) {
   val params: Map<String, String> = HashMap(paramsMap)
   val description: @NlsSafe String = "$type ${paramsMap.entries.joinToString { "${it.key}=${it.value}" }}"
@@ -14,12 +16,25 @@ class ToolchainRequirement private constructor(
 
   class Builder(val type: String) {
     private val map = HashMap<String, String>()
+    private var useImporterJdkIfMatches = false
+    private var discoverJdks = false
+
     fun set(name: String, value: String): Builder {
       map[name] = value
       return this
     }
 
-    fun build(): ToolchainRequirement = ToolchainRequirement(type, map)
+    fun useImporterJdkIfMatches(value: Boolean): Builder {
+      useImporterJdkIfMatches = value
+      return this
+    }
+
+    fun discoverJdks(value: Boolean): Builder {
+      discoverJdks = value
+      return this
+    }
+
+    fun build(): ToolchainRequirement = ToolchainRequirement(type, map, useImporterJdkIfMatches, discoverJdks)
   }
 
   companion object {
@@ -33,6 +48,8 @@ class ToolchainRequirement private constructor(
 
     if (type != other.type) return false
     if (params != other.params) return false
+    if (useImporterJdkIfMatches != other.useImporterJdkIfMatches) return false
+    if (discoverJdks != other.discoverJdks) return false
 
     return true
   }
@@ -40,6 +57,8 @@ class ToolchainRequirement private constructor(
   override fun hashCode(): Int {
     var result = type.hashCode()
     result = 31 * result + params.hashCode()
+    result = 31 * result + useImporterJdkIfMatches.hashCode()
+    result = 31 * result + discoverJdks.hashCode()
     return result
   }
 
