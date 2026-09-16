@@ -95,7 +95,13 @@ public class PluginsAdvertiserDialogPluginInstaller {
       }
     }
     else if (!pluginsToEnable.isEmpty()) {
-      notifyRunnable.run();
+      boolean enabled = PluginEnabler.getInstance().enable(pluginsToEnable);
+      if (!enabled) {
+        PluginManagerMain.notifyPluginsUpdated(myProject);
+      }
+      if (myFinishFunction != null) {
+        myFinishFunction.accept(enabled);
+      }
     }
     return true;
   }
