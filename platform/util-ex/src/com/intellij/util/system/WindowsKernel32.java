@@ -89,12 +89,7 @@ public final class WindowsKernel32 {
   /** {@code HANDLE GetCurrentProcess()}: a pseudo handle of the current process. It needs no close. */
   @ApiStatus.Internal
   public static @NotNull MemorySegment currentProcess() {
-    try {
-      return (MemorySegment)Handles.GET_CURRENT_PROCESS.invokeExact();
-    }
-    catch (Throwable t) {
-      throw new IllegalStateException(t);
-    }
+    return Downcalls.callSegment(() -> (MemorySegment)Handles.GET_CURRENT_PROCESS.invokeExact());
   }
 
   /**
@@ -104,14 +99,13 @@ public final class WindowsKernel32 {
    */
   @ApiStatus.Internal
   public static @Nullable Integer exitCode(@NotNull MemorySegment process) {
-    try (var arena = Arena.ofConfined()) {
-      var exitCode = arena.allocate(JAVA_INT);
-      var succeeded = (int)Handles.GET_EXIT_CODE_PROCESS.invokeExact(process, exitCode);
-      return succeeded != 0 ? exitCode.get(JAVA_INT, 0) : null;
-    }
-    catch (Throwable t) {
-      throw new IllegalStateException(t);
-    }
+    return Downcalls.call(() -> {
+      try (var arena = Arena.ofConfined()) {
+        var exitCode = arena.allocate(JAVA_INT);
+        var succeeded = (int)Handles.GET_EXIT_CODE_PROCESS.invokeExact(process, exitCode);
+        return succeeded != 0 ? exitCode.get(JAVA_INT, 0) : null;
+      }
+    });
   }
 
   /**
@@ -125,13 +119,8 @@ public final class WindowsKernel32 {
   public static @NotNull MemorySegment createFile(
     @NotNull MemorySegment callState, @NotNull MemorySegment name, int access, int shareMode, int disposition, int flags
   ) {
-    try {
-      return (MemorySegment)Handles.CREATE_FILE.invokeExact(
-        callState, name, access, shareMode, MemorySegment.NULL, disposition, flags, MemorySegment.NULL);
-    }
-    catch (Throwable t) {
-      throw new IllegalStateException(t);
-    }
+    return Downcalls.callSegment(() -> (MemorySegment)Handles.CREATE_FILE.invokeExact(
+      callState, name, access, shareMode, MemorySegment.NULL, disposition, flags, MemorySegment.NULL));
   }
 
   /**
@@ -141,12 +130,7 @@ public final class WindowsKernel32 {
    */
   @ApiStatus.Internal
   public static @NotNull MemorySegment openProcess(@NotNull MemorySegment callState, int access, long pid) {
-    try {
-      return (MemorySegment)Handles.OPEN_PROCESS.invokeExact(callState, access, 0, (int)pid);
-    }
-    catch (Throwable t) {
-      throw new IllegalStateException(t);
-    }
+    return Downcalls.callSegment(() -> (MemorySegment)Handles.OPEN_PROCESS.invokeExact(callState, access, 0, (int)pid));
   }
 
   /**
@@ -160,23 +144,14 @@ public final class WindowsKernel32 {
     @NotNull MemorySegment callState, @NotNull MemorySegment process, @NotNull MemorySegment address,
     @NotNull MemorySegment buffer, long size
   ) {
-    try {
-      return (int)Handles.READ_PROCESS_MEMORY.invokeExact(callState, process, address, buffer, size, MemorySegment.NULL) != 0;
-    }
-    catch (Throwable t) {
-      throw new IllegalStateException(t);
-    }
+    return Downcalls.callInt(
+      () -> (int)Handles.READ_PROCESS_MEMORY.invokeExact(callState, process, address, buffer, size, MemorySegment.NULL)) != 0;
   }
 
   /** {@code BOOL CloseHandle(HANDLE)}. @return {@code true} when the call closed the handle */
   @ApiStatus.Internal
   public static boolean closeHandle(@NotNull MemorySegment handle) {
-    try {
-      return (int)Handles.CLOSE_HANDLE.invokeExact(handle) != 0;
-    }
-    catch (Throwable t) {
-      throw new IllegalStateException(t);
-    }
+    return Downcalls.callInt(() -> (int)Handles.CLOSE_HANDLE.invokeExact(handle)) != 0;
   }
 
   /**
@@ -186,23 +161,13 @@ public final class WindowsKernel32 {
    */
   @ApiStatus.Internal
   public static boolean closeHandle(@NotNull MemorySegment callState, @NotNull MemorySegment handle) {
-    try {
-      return (int)Handles.CLOSE_HANDLE_WITH_ERROR.invokeExact(callState, handle) != 0;
-    }
-    catch (Throwable t) {
-      throw new IllegalStateException(t);
-    }
+    return Downcalls.callInt(() -> (int)Handles.CLOSE_HANDLE_WITH_ERROR.invokeExact(callState, handle)) != 0;
   }
 
   /** {@code HLOCAL LocalFree(HLOCAL)}. @return {@code true} when the call released the block */
   @ApiStatus.Internal
   public static boolean localFree(@NotNull MemorySegment block) {
-    try {
-      return ((MemorySegment)Handles.LOCAL_FREE.invokeExact(block)).address() == 0;
-    }
-    catch (Throwable t) {
-      throw new IllegalStateException(t);
-    }
+    return Downcalls.callSegment(() -> (MemorySegment)Handles.LOCAL_FREE.invokeExact(block)).address() == 0;
   }
 
   /** The library and the handles load on the first call, so a class of this package stays readable on another operating system. */

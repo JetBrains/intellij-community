@@ -143,12 +143,8 @@ public final class WindowsNtDll {
   public static int queryInformationFile(
     @NotNull MemorySegment file, @NotNull MemorySegment statusBlock, @NotNull MemorySegment information, int length, int informationClass
   ) {
-    try {
-      return (int)Handles.QUERY_INFORMATION_FILE.invokeExact(file, statusBlock, information, length, informationClass);
-    }
-    catch (Throwable t) {
-      throw new IllegalStateException(t);
-    }
+    return Downcalls.callInt(
+      () -> (int)Handles.QUERY_INFORMATION_FILE.invokeExact(file, statusBlock, information, length, informationClass));
   }
 
   /**
@@ -161,12 +157,8 @@ public final class WindowsNtDll {
   public static int queryInformationProcess(
     @NotNull MemorySegment process, int informationClass, @NotNull MemorySegment information, int length
   ) {
-    try {
-      return (int)Handles.QUERY_INFORMATION_PROCESS.invokeExact(process, informationClass, information, length, MemorySegment.NULL);
-    }
-    catch (Throwable t) {
-      throw new IllegalStateException(t);
-    }
+    return Downcalls.callInt(
+      () -> (int)Handles.QUERY_INFORMATION_PROCESS.invokeExact(process, informationClass, information, length, MemorySegment.NULL));
   }
 
   /** The library and the handles load on the first call, so the layouts above stay readable on another operating system. */

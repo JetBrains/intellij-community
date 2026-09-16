@@ -21,41 +21,38 @@ public final class WindowsShellOperations {
   private WindowsShellOperations() { }
 
   public static void openDirectory(@NotNull Path directory) throws IOException {
-    try {
-      WindowsCom.withApartment(() -> {
-        try (var arena = Arena.ofConfined()) {
-          var result = (MemorySegment)Handles.EXECUTE.invokeExact(
-            MemorySegment.NULL, arena.allocateFrom("explore", UTF_16LE), arena.allocateFrom(directory.toString(), UTF_16LE),
-            MemorySegment.NULL, MemorySegment.NULL, 1);
-          if (result.address() <= 32) throw new IOException("ShellExecuteW(" + directory + ") failed with code " + result.address());
-        }
-        return null;
-      });
-    }
-    catch (IOException | RuntimeException | Error failure) {
-      throw failure;
-    }
-    catch (Throwable failure) {
-      throw new IllegalStateException(failure);
-    }
+    inApartment(() -> {
+      try (var arena = Arena.ofConfined()) {
+        var result = (MemorySegment)Handles.EXECUTE.invokeExact(
+          MemorySegment.NULL, arena.allocateFrom("explore", UTF_16LE), arena.allocateFrom(directory.toString(), UTF_16LE),
+          MemorySegment.NULL, MemorySegment.NULL, 1);
+        if (result.address() <= 32) throw new IOException("ShellExecuteW(" + directory + ") failed with code " + result.address());
+      }
+      return null;
+    });
   }
 
   public static void selectFile(@NotNull Path file) throws IOException {
-    try {
-      WindowsCom.withApartment(() -> {
-        try (var arena = Arena.ofConfined()) {
-          var item = (MemorySegment)Handles.CREATE_ITEM.invokeExact(arena.allocateFrom(file.toString(), UTF_16LE));
-          if (item.address() == 0) throw new IOException("ILCreateFromPathW(" + file + ") failed");
-          try {
-            WindowsCom.checkResult("SHOpenFolderAndSelectItems(" + file + ")",
-                                   (int)Handles.SELECT_ITEM.invokeExact(item, 0, MemorySegment.NULL, 0));
-          }
-          finally {
-            Handles.FREE_ITEM.invokeExact(item);
-          }
+    inApartment(() -> {
+      try (var arena = Arena.ofConfined()) {
+        var item = (MemorySegment)Handles.CREATE_ITEM.invokeExact(arena.allocateFrom(file.toString(), UTF_16LE));
+        if (item.address() == 0) throw new IOException("ILCreateFromPathW(" + file + ") failed");
+        try {
+          WindowsCom.checkResult("SHOpenFolderAndSelectItems(" + file + ")",
+                                 (int)Handles.SELECT_ITEM.invokeExact(item, 0, MemorySegment.NULL, 0));
         }
-        return null;
-      });
+        finally {
+          Handles.FREE_ITEM.invokeExact(item);
+        }
+      }
+      return null;
+    });
+  }
+
+  /** Runs {@code action} in a COM apartment. An {@link IOException} passes through; another throwable is a defect. */
+  private static void inApartment(@NotNull WindowsCom.Operation<Void> action) throws IOException {
+    try {
+      WindowsCom.withApartment(action);
     }
     catch (IOException | RuntimeException | Error failure) {
       throw failure;
