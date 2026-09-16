@@ -9,6 +9,7 @@ import com.intellij.compose.ide.plugin.resources.getResourceItem
 import com.intellij.compose.ide.plugin.resources.isComposeResourceProperty
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.refactoring.rename.DelegatingHeadlessRenamePsiElementProcessor
 import com.intellij.refactoring.rename.RenamePsiElementProcessor
 import org.jetbrains.kotlin.psi.KtProperty
 
@@ -16,7 +17,7 @@ import org.jetbrains.kotlin.psi.KtProperty
  * Given a Compose resource declaration, we rename the associated Kotlin property through the [RenameKotlinPropertyProcessor]
  * and the PSI file/xml attribute value we gather inside [prepareRenaming]
  * */
-internal class ComposeResourcesRenameProcessor : RenamePsiElementProcessor() {
+internal class ComposeResourcesRenameProcessor : RenamePsiElementProcessor(), DelegatingHeadlessRenamePsiElementProcessor {
   override fun canProcessElement(element: PsiElement): Boolean {
     val property = element as? KtProperty ?: return false
     return property.isComposeResourceProperty

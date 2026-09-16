@@ -97,7 +97,11 @@
                    order="first"/>
     <renamePsiElementProcessor implementation="de.plushnikov.intellij.plugin.extension.LombokRenameMethodProcessor"
                                order="first"/>
+    <headlessRenamePsiElementProcessor implementation="de.plushnikov.intellij.plugin.extension.LombokRenameMethodProcessor"
+                                       order="first"/>
     <renamePsiElementProcessor
+      implementation="de.plushnikov.intellij.plugin.extension.LombokRenameFieldReferenceProcessor"/>
+    <headlessRenamePsiElementProcessor
       implementation="de.plushnikov.intellij.plugin.extension.LombokRenameFieldReferenceProcessor"/>
 
     <java.elementFinder implementation="de.plushnikov.intellij.plugin.extension.LombokElementFinder" order="last"/>

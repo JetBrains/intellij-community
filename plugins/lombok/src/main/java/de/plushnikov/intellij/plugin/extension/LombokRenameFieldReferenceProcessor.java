@@ -1,3 +1,4 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package de.plushnikov.intellij.plugin.extension;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -11,6 +12,7 @@ import com.intellij.psi.PsiRecordComponent;
 import com.intellij.psi.PsiTypes;
 import com.intellij.psi.PsiVariable;
 import com.intellij.psi.impl.light.LightRecordField;
+import com.intellij.refactoring.rename.DelegatingHeadlessRenamePsiElementProcessor;
 import com.intellij.refactoring.rename.RenameJavaVariableProcessor;
 import com.intellij.util.containers.ContainerUtil;
 import de.plushnikov.intellij.plugin.LombokClassNames;
@@ -30,7 +32,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-public final class LombokRenameFieldReferenceProcessor extends RenameJavaVariableProcessor {
+public final class LombokRenameFieldReferenceProcessor extends RenameJavaVariableProcessor
+  implements DelegatingHeadlessRenamePsiElementProcessor {
 
   @Override
   public boolean canProcessElement(@NotNull PsiElement element) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.refactoring;
 
 import com.intellij.openapi.project.Project;
@@ -14,6 +14,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.XmlRecursiveElementVisitor;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.refactoring.rename.DelegatingHeadlessRenamePsiElementProcessor;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,7 +25,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
-public final class JavaFxRenameFxIdFieldProcessor extends RenamePsiElementProcessor {
+public final class JavaFxRenameFxIdFieldProcessor extends RenamePsiElementProcessor
+  implements DelegatingHeadlessRenamePsiElementProcessor {
   @Override
   public boolean canProcessElement(@NotNull PsiElement element) {
     final NestedControllerCandidate nestedControllerCandidate = findNestedControllerCandidate(element);

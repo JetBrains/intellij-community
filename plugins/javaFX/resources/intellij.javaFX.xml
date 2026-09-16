@@ -56,6 +56,7 @@
     <colorProvider implementation="org.jetbrains.plugins.javaFX.fxml.codeInsight.JavaFxColorProvider"/>
     <useScopeEnlarger implementation="org.jetbrains.plugins.javaFX.fxml.refs.JavaFxScopeEnlarger"/>
     <renamePsiElementProcessor implementation="org.jetbrains.plugins.javaFX.refactoring.JavaFxRenameFxIdFieldProcessor" order="first"/>
+    <headlessRenamePsiElementProcessor implementation="org.jetbrains.plugins.javaFX.refactoring.JavaFxRenameFxIdFieldProcessor" order="first"/>
 
     <localInspection language="XML" shortName="JavaFxDefaultTag" groupKey="group.name.javafx"
                      enabledByDefault="true" level="WARNING" implementationClass="org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxDefaultTagInspection"

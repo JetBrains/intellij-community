@@ -1,8 +1,10 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package de.plushnikov.intellij.plugin.extension;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElement;
+import com.intellij.refactoring.rename.DelegatingHeadlessRenamePsiElementProcessor;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import de.plushnikov.intellij.plugin.psi.LombokLightFieldBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
@@ -12,7 +14,8 @@ import org.jetbrains.annotations.Nullable;
 /**
  * RenameProcessor for replacement of lombok virtual methods/fields with root elements
  */
-public final class LombokRenameMethodProcessor extends RenamePsiElementProcessor {
+public final class LombokRenameMethodProcessor extends RenamePsiElementProcessor
+  implements DelegatingHeadlessRenamePsiElementProcessor {
 
   @Override
   public boolean canProcessElement(@NotNull PsiElement elem) {
