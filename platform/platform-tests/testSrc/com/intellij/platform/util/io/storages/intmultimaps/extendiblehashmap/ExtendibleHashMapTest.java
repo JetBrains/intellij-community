@@ -128,6 +128,26 @@ public class ExtendibleHashMapTest extends DurableIntToMultiIntMapTestBase<Exten
     );
   }
 
+  @Test
+  public void removeReplaceAndClear_markMapAsDirty() throws IOException {
+    multimap.put(1, 10);
+    multimap.flush();
+    assertFalse(multimap.isDirty(), "A successful flush must mark the map as clean");
+
+    assertTrue(multimap.remove(1, 10));
+    assertTrue(multimap.isDirty(), "Removing an entry must mark the map as dirty");
+    multimap.flush();
+
+    multimap.put(1, 10);
+    multimap.flush();
+    assertTrue(multimap.replace(1, 10, 20));
+    assertTrue(multimap.isDirty(), "Replacing an entry must mark the map as dirty");
+    multimap.flush();
+
+    multimap.clear();
+    assertTrue(multimap.isDirty(), "Clearing a non-empty map must mark the map as dirty");
+  }
+
   //===================== infrastructure ===============================================================
 
   private Path storagePath;
@@ -188,4 +208,5 @@ public class ExtendibleHashMapTest extends DurableIntToMultiIntMapTestBase<Exten
       });
     }
   }
+
 }

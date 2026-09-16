@@ -241,7 +241,11 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
                                      int value) throws IOException {
     HashMapSegmentLayout segment = segmentForKey(key);
 
-    return hashMapAlgo.remove(segment, key, value);
+    boolean removed = hashMapAlgo.remove(segment, key, value);
+    if (removed) {
+      markModified();
+    }
+    return removed;
   }
 
   @Override
@@ -250,7 +254,11 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
                                       int newValue) throws IOException {
     HashMapSegmentLayout segment = segmentForKey(key);
 
-    return hashMapAlgo.replace(segment, key, oldValue, newValue);
+    boolean replaced = hashMapAlgo.replace(segment, key, oldValue, newValue);
+    if (replaced) {
+      markModified();
+    }
+    return replaced;
   }
 
   @Override
@@ -319,24 +327,14 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
     //          on disk. Better having something like storage.truncate() -- but it is hard to implement cross-platform for memory-mapped
     //          files
     initEmptyMap(segmentSize);
-    dirty = true;
+    dirty = false;
+    markModified();
   }
 
 
   @Override
   public synchronized void flush() throws IOException {
-    if (MARK_SAFELY_CLOSED_ON_FLUSH) {
-      //RC: Since EHMap is non-concurrent (sync-ed), it seems safe to set .fileStatus(PROPERLY_CLOSED) in
-      //    .flush(): nobody could modify EHMap content until .flush() finishes, which creates kind of
-      //    'safepoint'.
-      //    (On the contrary: data structures with concurrent updates don't have this property: their
-      //    content could be modified in between .flush() sets .dirty=false and .fileStatus=PROPERLY_CLOSED)
-
-      if (dirty) {
-        dirty = false;
-        header.fileStatus(HeaderLayout.FILE_STATUS_PROPERLY_CLOSED);
-      }
-    }
+    flushStorage(MARK_SAFELY_CLOSED_ON_FLUSH);
   }
 
   public synchronized boolean isDirty() {
@@ -346,9 +344,7 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
   @Override
   public synchronized void close() throws IOException {
     if (storage.isOpen()) {
-      if (dirty) {
-        header.fileStatus(HeaderLayout.FILE_STATUS_PROPERLY_CLOSED);
-      }
+      flushStorage( /*markPropertyClosed: */ true);
       storage.close();
 
       //Clear all references to mapped memory segments so the storage can unmap them.
@@ -397,6 +393,28 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
     if (!dirty) {
       dirty = true;
       header.fileStatus(HeaderLayout.FILE_STATUS_OPENED);
+    }
+  }
+
+  //@GuardedBy(this)
+  private void flushStorage(boolean markProperlyClosed) throws IOException {
+    var publishProperlyClosed = markProperlyClosed && dirty;
+    if (publishProperlyClosed) {
+      header.fileStatus(HeaderLayout.FILE_STATUS_PROPERLY_CLOSED);
+    }
+    try {
+      storage.flush();
+    }
+    catch (IOException | RuntimeException | Error failure) {
+      if (publishProperlyClosed) {
+        //fileStatus _must_ be FILE_STATUS_OPENED before since [publishProperlyClosed:true  =(implies)=>  dirty:true]
+        header.fileStatus(HeaderLayout.FILE_STATUS_OPENED);
+      }
+      throw failure;
+    }
+
+    if (publishProperlyClosed) {
+      dirty = false;
     }
   }
 
