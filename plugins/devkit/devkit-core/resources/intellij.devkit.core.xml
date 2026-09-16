@@ -788,6 +788,15 @@
                      projectType="INTELLIJ_PLUGIN"
                      enabledByDefault="true"
                      level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.eel.TargetGeneralCommandLineInspection"
+                     groupPathKey="inspections.group.path"
+                     groupKey="inspections.group.code"
+                     key="inspection.target.general.command.line.display.name"/>
+
+    <localInspection language="UAST"
+                     projectType="INTELLIJ_PLUGIN"
+                     enabledByDefault="true"
+                     level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.eel.TargetSystemInfoInspection"
                      groupPathKey="inspections.group.path"
                      groupKey="inspections.group.code"
