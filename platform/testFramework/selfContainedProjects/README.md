@@ -124,3 +124,47 @@ println("Port: ${proxy.port}")
 |----------|----------|-------------|
 | `SELF_CONTAINED_PROXY_URL` | Yes | Proxy base URL (no trailing slash) |
 | `SELF_CONTAINED_VERBOSE` | No | Enable verbose logging (default: true) |
+# Self-Contained Bazel Projects: Offline Bazel Fixtures
+
+The `bazel` package holds the framework for a Bazel workspace a test imports with no network. The LS `inSaneBazel`
+fixture (`language-server/integration-tests/kotlin-standalone/testData/bazel/inSaneBazel`) is the first consumer.
+
+## Parts
+
+- **`HermeticBazelFixture`**: a checked-in workspace. Its package files are checked in as `BUILD.txt`, so the IntelliJ
+  repository does not load them. `materialize` copies the sources and renames them back to `BUILD`.
+- **`HermeticBazelCache`**: the unpacked offline cache, shared and read-only. Layout:
+  `bazelisk-home/downloads/bazelbuild/bazel/<version>/<os>_<arch>/bazel-<version>-<os>-<arch>`, `repo-cache/`, `bcr/`.
+- **`HermeticBazelWorkspace.configure`**: writes the offline `.bazelrc` (`--registry=file://<bcr>`,
+  `--repository_cache=<repo-cache>`, the remote JDK flags, `--output_base` under a writable root). `close` runs
+  `bazel shutdown`, so the caller can delete the output root.
+- **`HermeticBazelCacheBuilder`**: regenerates the cache with the network on. Downloads Bazel for every platform,
+  runs the caller's warm-up, prefetches the per-platform toolchain repositories with `bazel fetch --repo=`, mirrors
+  the registry files the lockfile names, and stages `self-contained/` for the upload.
+
+## Cache key
+
+The archive is named `<prefix>-cache-<key>.zip`, where `key` is the first 12 hex chars of
+`sha256(MODULE.bazel.lock + "\n" + .bazelversion)`. The mirror inside the archive is the lockfile's registry file set,
+so a lockfile change is the event that needs a new archive. The fixture lockfile changes only with a `MODULE.bazel`
+edit or a Bazel bump. The builder fails when Bazel rewrote the lockfile during the warm-up and stages the rewritten
+copy next to the cache; commit it into the fixture and run the regeneration again.
+
+## How the offline run stays offline
+
+- The lockfile records registry hashes by the original `https://bcr.bazel.build/` URL. With the registry swapped to
+  `file://`, Bazel re-reads every `MODULE.bazel` and `source.json` from the mirror and fetches every archive from the
+  repository cache by sha256. `--lockfile_mode=error` is no guard here: the `file://` URLs are not in the lockfile.
+- The cache holds only the remote JDK, so the `.bazelrc` forces `--java_runtime_version=remotejdk_21`. `local_jdk`
+  does not help: the aspect build still analyses the registered remote JDK toolchains and fetches them.
+- The consumer copies the bundled binary to where the code under test looks for Bazel (`installBazelBinary`). The
+  IntelliJ Bazel plugin reads `<system>/bazel-plugin/bazelisk`, but only when `forceBazeliskDownload` is on;
+  otherwise a `bazel` on `PATH` wins. The LS sets the flag; the plugin's own tests do not.
+
+## Limits
+
+- POSIX only. The heavy tests are disabled on Windows.
+- The cache layout is not the layout of a real bazelisk home, so a `.bazeliskrc` with `BAZELISK_HOME=` does not find
+  the binary. A consumer must install the binary explicitly.
+- The archive label and its `BazelTestDependencyHttpFileDownloader` stay with each consumer; each module owns its
+  `*_dependencies.bzl`.
