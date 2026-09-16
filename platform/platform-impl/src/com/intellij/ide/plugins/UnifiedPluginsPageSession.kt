@@ -41,6 +41,7 @@ import com.intellij.ide.plugins.unified.UnifiedPluginMarketplaceSourceCoordinato
 import com.intellij.ide.plugins.unified.UnifiedPluginRepositoryCache
 import com.intellij.ide.plugins.unified.UnifiedPluginRepositoryDataProvider
 import com.intellij.ide.plugins.unified.UnifiedPluginRepositorySourceCoordinator
+import com.intellij.ide.plugins.unified.UnifiedPluginSearchControlIntent
 import com.intellij.ide.plugins.unified.UnifiedPluginUpdateAllButton
 import com.intellij.ide.plugins.unified.UnifiedPluginUpdateAllController
 import com.intellij.ide.plugins.unified.UnifiedPluginUpdateAllExecutor
@@ -69,6 +70,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurationException
+import com.intellij.openapi.options.newEditor.SpotlightPainter
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.WelcomeScreen
@@ -104,7 +106,7 @@ import kotlin.time.TimeMark
 import kotlin.time.TimeSource
 
 internal class UnifiedPluginsPageSession @RequiresEdt(generateAssertion = false /* IJPL-115548 */) constructor(
-  searchQuery: String?,
+  initialNavigation: PluginsPageInitialNavigation?,
   openSource: PluginManagerOpenSourceEnum,
   private val isStandaloneConfigurable: Boolean = false,
   localDataProviderFactory: (LegacyPluginUiHost) -> UnifiedPluginLocalDataProvider = ::DefaultUnifiedPluginLocalDataProvider,
@@ -153,7 +155,7 @@ internal class UnifiedPluginsPageSession @RequiresEdt(generateAssertion = false 
     loadErrorMessage = IdeBundle.message("plugins.configurable.local.plugins.not.loaded"),
     hostEventObserver = { event -> updateAllOperationEventSink(event) },
   )
-  private val initialQueryState = initialPluginsQueryState(searchQuery.orEmpty())
+  private val initialQueryState = initialNavigation.toQueryState()
   private val marketplaceDataProvider = marketplaceDataProviderFactory(host, repositoryCache)
     .withEnrichmentReadiness(enrichmentReadiness)
   private val internalSource = UnifiedPluginInternalSourceCoordinator(
@@ -181,7 +183,7 @@ internal class UnifiedPluginsPageSession @RequiresEdt(generateAssertion = false 
   )
   private val pageSource = UnifiedPluginsPageSourceCoordinator(
     pageScope,
-    searchQuery.orEmpty(),
+    initialQueryState,
     localSource,
     internalSource,
     marketplaceSource,
@@ -218,6 +220,9 @@ internal class UnifiedPluginsPageSession @RequiresEdt(generateAssertion = false 
   private var renderedRepositoryContentRevision = -1L
   private var pageReadyReported = false
   private var reportedSourceFailures: Set<UnifiedPluginSourceFailure> = emptySet()
+  private var spotlightSearchActive = false
+  private var queryIntentRevision = 0L
+  private var settingsRequestRevision = 0L
 
   init {
     val searchListener = LinkListener<Any> { _, data ->
@@ -226,19 +231,19 @@ internal class UnifiedPluginsPageSession @RequiresEdt(generateAssertion = false 
         is TagComponent -> SearchQueryParser.getTagQuery(data.text)
         else -> return@LinkListener
       }
-      setQuery(query, requestFocus = true)
+      applyQueryIntent(query, requestFocus = true)
     }
     val rowFactory = LegacyPluginRowFactory(host, listModel, searchListener, ::selectOccurrences)
     val detailsPresenter = LegacyPluginDetailsPresenter(host, searchListener)
     view = UnifiedPluginsPageView(
-      onSearchChanged = { query -> setQuery(query, requestFocus = false) },
+      onSearchChanged = { query -> applyQueryIntent(query, requestFocus = false) },
       onSelectionChanged = ::selectOccurrences,
       onSectionExpansionChanged = { sectionId, expanded ->
         controller.setSectionExpanded(sectionId, expanded)
         renderControllerState()
       },
       onSectionRetryRequested = pageSource::retry,
-      onSearchControl = pageSource::applySearchControl,
+      onSearchControl = ::applySearchControl,
       onBundledCategoryAction = { category ->
         val models = eligibleBundledCategoryPluginModels(controller.state.value.sections, category)
         host.changeAllPluginsState(category.action == BundledPluginCategoryAction.EnableAll, models)
@@ -437,19 +442,47 @@ internal class UnifiedPluginsPageSession @RequiresEdt(generateAssertion = false 
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun enableSearch(option: String?, ignoreTagMarketplaceTab: Boolean): Runnable? {
     val query = option.orEmpty()
-    if (query.isEmpty() && controller.state.value.query.rawQuery.isEmpty()) return null
-    return Runnable { setQuery(query, requestFocus = true) }
+    val calledFromSpotlight = isCalledFromSpotlightPainter()
+    // SpotlightPainter calls enableSearch("") when Settings opens. Ignore this refresh before it invalidates a pending navigation request.
+    // After Spotlight applies a user query, the same call clears that query normally.
+    if (query.isEmpty() && calledFromSpotlight && !spotlightSearchActive) return null
+
+    val requestRevision = ++settingsRequestRevision
+    val intentRevision = queryIntentRevision
+    if (query.isEmpty() && pageSource.state.value.query.rawQuery.isEmpty()) {
+      spotlightSearchActive = false
+      return null
+    }
+    val scope = if (ignoreTagMarketplaceTab) PluginsQueryScope.Installed else PluginsQueryScope.Unified
+    return Runnable {
+      if (disposed || requestRevision != settingsRequestRevision || intentRevision != queryIntentRevision) return@Runnable
+      applyQueryIntent(query, requestFocus = true, scope = scope)
+      if (calledFromSpotlight || query.isEmpty()) spotlightSearchActive = query.isNotEmpty()
+    }
   }
 
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun openMarketplaceTab(option: String) {
-    val query = option.takeUnless { it.trim() == "/suggested" }.orEmpty()
-    setQuery(query, requestFocus = true, scope = PluginsQueryScope.Marketplace)
+    applyQueryIntent(
+      normalizeMarketplaceNavigationQuery(option),
+      requestFocus = true,
+      scope = PluginsQueryScope.Marketplace,
+    )
   }
 
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun openInstalledTab(option: String) {
-    setQuery(option, requestFocus = true, scope = PluginsQueryScope.Installed)
+    applyQueryIntent(
+      option,
+      requestFocus = true,
+      scope = PluginsQueryScope.Installed,
+    )
+  }
+
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  override fun openInstalledTabWithSearch(option: String): Runnable? {
+    openInstalledTab(option)
+    return null
   }
 
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
@@ -611,18 +644,25 @@ internal class UnifiedPluginsPageSession @RequiresEdt(generateAssertion = false 
     }
   }
 
-  private fun setQuery(
+  private fun applyQueryIntent(
     query: String,
     requestFocus: Boolean,
     scope: PluginsQueryScope = PluginsQueryScope.Unified,
   ) {
     if (disposed) return
+    queryIntentRevision++
     view.setSearchQuery(query)
     val previousRevision = pageSource.state.value.query.revision
     pageSource.setQuery(query, scope)
     val updatedQuery = pageSource.state.value.query
     if (updatedQuery.revision != previousRevision) startUnifiedSearch(updatedQuery)
     if (requestFocus) view.requestSearchFocus()
+  }
+
+  private fun applySearchControl(intent: UnifiedPluginSearchControlIntent) {
+    if (disposed) return
+    queryIntentRevision++
+    pageSource.applySearchControl(intent)
   }
 
   private fun selectOccurrences(occurrenceIds: List<PluginOccurrenceId>) {
@@ -750,6 +790,31 @@ private data class PendingUnifiedSearch(
   val searchIndex: Int,
   val start: TimeMark,
 )
+
+private fun PluginsPageInitialNavigation?.toQueryState(): PluginsQueryState {
+  if (this == null) return initialPluginsQueryState("")
+  val scope = when (target) {
+    PluginsPageInitialNavigationTarget.Marketplace -> PluginsQueryScope.Marketplace
+    PluginsPageInitialNavigationTarget.Installed -> PluginsQueryScope.Installed
+  }
+  val normalizedQuery = when (target) {
+    PluginsPageInitialNavigationTarget.Marketplace -> normalizeMarketplaceNavigationQuery(query)
+    PluginsPageInitialNavigationTarget.Installed -> query
+  }
+  return initialPluginsQueryState(normalizedQuery, scope)
+}
+
+private fun normalizeMarketplaceNavigationQuery(query: String): String {
+  return query.takeUnless { it.trim() == "/suggested" }.orEmpty()
+}
+
+private fun isCalledFromSpotlightPainter(): Boolean {
+  return SEARCH_CALLER_WALKER.walk { frames ->
+    frames.anyMatch { SpotlightPainter::class.java.isAssignableFrom(it.declaringClass) }
+  }
+}
+
+private val SEARCH_CALLER_WALKER = StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE)
 
 private val UnifiedPluginsPageSourceState.sourcesSettled: Boolean
   get() = internalDescriptorSettled && repositoryPlugins != null && sections.none { it.status is PluginSectionStatus.Loading }

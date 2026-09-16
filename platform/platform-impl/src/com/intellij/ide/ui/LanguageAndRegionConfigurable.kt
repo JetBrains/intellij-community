@@ -235,7 +235,7 @@ object LanguageAndRegionUi {
 
     if (settings == null) {
       ShowSettingsUtil.getInstance().showSettingsDialog(ProjectManager.getInstance().defaultProject, PluginManagerConfigurable::class.java) {
-        it.enableSearch(tag)
+        it.navigateToMarketplace(tag)
       }
     }
     else {

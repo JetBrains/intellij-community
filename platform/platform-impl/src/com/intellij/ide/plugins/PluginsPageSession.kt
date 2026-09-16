@@ -48,6 +48,22 @@ internal interface PluginsPageSession : Disposable {
 
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun openInstalledTab(option: String)
+
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  fun openInstalledTabWithSearch(option: String): Runnable? {
+    openInstalledTab("")
+    return enableSearch(option, ignoreTagMarketplaceTab = true)
+  }
+}
+
+internal data class PluginsPageInitialNavigation(
+  val query: String,
+  val target: PluginsPageInitialNavigationTarget,
+)
+
+internal enum class PluginsPageInitialNavigationTarget {
+  Marketplace,
+  Installed,
 }
 
 @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
@@ -55,9 +71,10 @@ internal fun createPluginsPageSession(
   searchQuery: String?,
   openSource: PluginManagerOpenSourceEnum,
   isStandaloneConfigurable: Boolean = false,
+  initialNavigation: PluginsPageInitialNavigation? = null,
 ): PluginsPageSession {
   return if (UnifiedPluginsPageFeature.isEnabled()) {
-    UnifiedPluginsPageSession(searchQuery, openSource, isStandaloneConfigurable = isStandaloneConfigurable)
+    UnifiedPluginsPageSession(initialNavigation, openSource, isStandaloneConfigurable = isStandaloneConfigurable)
   }
   else {
     PluginManagerConfigurablePanel(searchQuery, openSource)

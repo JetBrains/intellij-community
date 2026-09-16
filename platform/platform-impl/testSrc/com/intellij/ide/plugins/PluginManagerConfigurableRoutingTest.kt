@@ -7,17 +7,23 @@ import com.intellij.ide.ui.LafManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.options.Configurable
+import com.intellij.openapi.options.SearchableConfigurable
+import com.intellij.openapi.options.newEditor.SettingsFilter
+import com.intellij.openapi.options.newEditor.SpotlightPainter
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.ui.SearchTextField
 import com.intellij.ui.components.DarculaSearchFieldWithExtensionBorder
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.SearchFieldWithExtension
+import com.intellij.ui.treeStructure.SimpleNode
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
@@ -63,6 +69,106 @@ internal class PluginManagerConfigurableRoutingTest {
       Disposer.dispose(session)
     }
   }
+
+  @Test
+  @RegistryKey(key = UnifiedPluginsPageFeature.REGISTRY_KEY, value = "true")
+  fun `unified enableSearch applies only when its action runs`(): Unit =
+    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+      val configurable = PluginManagerConfigurable()
+      try {
+        val action = settingsSearchAction(configurable, "Settings query")!!
+        val searchField = searchField(configurable)
+
+        assertThat(searchField.text).isEmpty()
+
+        action.run()
+
+        assertThat(searchField.text).isEqualTo("Settings query")
+      }
+      finally {
+        configurable.disposeUIResources()
+      }
+    }
+
+  @Test
+  @RegistryKey(key = UnifiedPluginsPageFeature.REGISTRY_KEY, value = "true")
+  fun `unified navigation ignores Spotlight refresh until Settings search starts`(): Unit =
+    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+      val configurable = PluginManagerConfigurable()
+      try {
+        configurable.navigateToMarketplace("Marketplace query")
+        val spotlight = SpotlightSearchDriver(configurable, this)
+
+        spotlight.update("")
+        spotlight.update("")
+
+        assertThat(searchField(configurable).text).isEqualTo("Marketplace query")
+
+        spotlight.update("Settings query")
+        assertThat(searchField(configurable).text).isEqualTo("Settings query")
+
+        spotlight.update("")
+
+        assertThat(searchField(configurable).text).isEmpty()
+      }
+      finally {
+        configurable.disposeUIResources()
+      }
+    }
+
+  @Test
+  @RegistryKey(key = UnifiedPluginsPageFeature.REGISTRY_KEY, value = "true")
+  fun `unified Installed navigation applies immediately`(): Unit =
+    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+      val configurable = PluginManagerConfigurable()
+      try {
+        configurable.navigateToInstalled("Installed query")
+
+        assertThat(searchField(configurable).text).isEqualTo("Installed query")
+      }
+      finally {
+        configurable.disposeUIResources()
+      }
+    }
+
+  @Test
+  @RegistryKey(key = UnifiedPluginsPageFeature.REGISTRY_KEY, value = "true")
+  fun `action from a disposed unified session does not affect a new session`(): Unit =
+    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+      val configurable = PluginManagerConfigurable()
+      try {
+        val oldAction = settingsSearchAction(configurable, "Old query")!!
+        configurable.disposeUIResources()
+        val newSearchField = searchField(configurable)
+
+        oldAction.run()
+
+        assertThat(newSearchField.text).isEmpty()
+      }
+      finally {
+        configurable.disposeUIResources()
+      }
+    }
+
+  @Test
+  @RegistryKey(key = UnifiedPluginsPageFeature.REGISTRY_KEY, value = "false")
+  fun `legacy Installed search remains deferred`(): Unit =
+    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+      val configurable = PluginManagerConfigurable()
+      try {
+        val action = configurable.openInstalledTabWithSearch("Installed query")!!
+
+        assertThat(configurable.isInstalledTabShowing()).isTrue()
+        assertThat(settingsSearchAction(configurable, "")).isNull()
+
+        action.run()
+
+        assertThat(settingsSearchAction(configurable, "")).isNotNull()
+      }
+      finally {
+        configurable.disposeUIResources()
+      }
+    }
 
   @Test
   fun `registry changes do not replace an open session`(@TestDisposable disposable: Disposable): Unit =
@@ -199,6 +305,35 @@ internal class PluginManagerConfigurableRoutingTest {
     }
     finally {
       configurable.disposeUIResources()
+    }
+  }
+
+  private fun searchField(configurable: PluginManagerConfigurable): SearchTextField {
+    return checkNotNull(UIUtil.uiTraverser(configurable.topComponent).filter(SearchTextField::class.java).single())
+  }
+
+  private fun settingsSearchAction(configurable: PluginManagerConfigurable, query: String): Runnable? {
+    return (configurable as SearchableConfigurable).enableSearch(query)
+  }
+
+  private class SpotlightSearchDriver(
+    private val configurable: PluginManagerConfigurable,
+    coroutineScope: CoroutineScope,
+  ) {
+    private val component = configurable.createComponent()
+    private val search = SearchTextField()
+    private val filter = object : SettingsFilter(null, emptyList(), search, coroutineScope) {
+      override fun getConfigurable(node: SimpleNode?): Configurable? = null
+
+      override fun findNode(configurable: Configurable?): SimpleNode? = null
+
+      override fun updateSpotlight(now: Boolean) = Unit
+    }
+    private val painter = SpotlightPainter(component) {}
+
+    fun update(query: String) {
+      filter.setFilterText(query)
+      painter.update(filter, configurable, component)
     }
   }
 

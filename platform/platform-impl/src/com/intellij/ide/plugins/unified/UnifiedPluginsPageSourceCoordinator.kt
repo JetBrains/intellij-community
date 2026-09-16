@@ -69,7 +69,7 @@ internal data class UnifiedPluginsSourceRoute(
  */
 internal class UnifiedPluginsPageSourceCoordinator(
   private val scope: CoroutineScope,
-  initialQuery: String,
+  initialQuery: PluginsQueryState,
   private val localSource: UnifiedPluginLocalSourceCoordinator,
   private val internalSource: UnifiedPluginInternalSourceCoordinator,
   private val marketplaceSource: UnifiedPluginMarketplaceSourceCoordinator,
@@ -78,7 +78,7 @@ internal class UnifiedPluginsPageSourceCoordinator(
   private val projectionDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) : AutoCloseable {
   private val lock = Any()
-  private var query = initialPluginsQueryState(initialQuery)
+  private var query = initialQuery
   private var localState = localSource.state.value
   private var internalState = internalSource.state.value
   private var marketplaceState = marketplaceSource.state.value

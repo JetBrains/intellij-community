@@ -98,8 +98,14 @@ class InlineCompletionConfigurable : BoundCompositeConfigurable<UnnamedConfigura
     } ?: return
     val settings = Settings.KEY.getData(data) ?: return
     val configurable = settings.find(PluginManagerConfigurable::class.java) ?: return
-    settings.select(configurable)
-    configurable.enableSearch(filter, !includingMarketplace)?.run()
+    if (includingMarketplace) {
+      settings.select(configurable, filter)
+    }
+    else {
+      settings.select(configurable).doWhenDone {
+        configurable.navigateToInstalled(filter)
+      }
+    }
   }
 
   companion object {

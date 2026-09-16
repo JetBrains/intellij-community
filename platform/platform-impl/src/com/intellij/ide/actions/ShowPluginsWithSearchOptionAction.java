@@ -26,7 +26,7 @@ public class ShowPluginsWithSearchOptionAction extends DumbAwareAction {
     PluginManagerOpenSourceEnum openSource = PluginManagerOpenSourceEnum.fromActionPlace(e.getPlace());
     ShowSettingsUtil.getInstance().showSettingsDialog(e.getProject(), PluginManagerConfigurable.class, c -> {
       c.setOpenSource(openSource);
-      c.enableSearch(mySearchOption);
+      c.navigateToMarketplace(mySearchOption);
     });
   }
 
