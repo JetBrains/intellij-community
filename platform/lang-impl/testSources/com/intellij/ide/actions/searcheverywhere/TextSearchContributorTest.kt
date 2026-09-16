@@ -1,13 +1,16 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere
 
+import com.intellij.find.FindManager
 import com.intellij.find.impl.SearchEverywhereItem
 import com.intellij.find.impl.TextSearchContributor
+import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.PlatformTestUtil.waitForFuture
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.usages.UsageInfo2UsageAdapter
@@ -15,6 +18,17 @@ import junit.framework.TestCase
 import java.awt.Font.BOLD
 
 class TextSearchContributorTest : BasePlatformTestCase() {
+  fun testSelectingProjectScopeClearsDirectory() {
+    val model = FindManager.getInstance(project).findInProjectModel
+    model.directoryName = "previous-directory"
+
+    val contributor = TextSearchContributor(createEvent(project))
+    Disposer.register(testRootDisposable, contributor)
+    contributor.scope = ScopeDescriptor(GlobalSearchScope.projectScope(project))
+
+    assertNull(model.directoryName)
+  }
+
   fun testPresentation() {
     SearchEverywhereFeature.allRegistryKeys.forEach { setRegistryPropertyForTest(it, "false") }
 
