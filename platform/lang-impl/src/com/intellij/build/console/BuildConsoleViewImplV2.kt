@@ -21,8 +21,11 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.ComponentInlayAlignment
+import com.intellij.openapi.editor.ComponentInlayRenderer
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.InlayProperties
+import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.editor.ex.EditorEx
@@ -37,6 +40,8 @@ import java.awt.event.ComponentEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.util.concurrent.ConcurrentHashMap
+import com.intellij.util.Alarm
+import javax.swing.JComponent
 import javax.swing.SwingUtilities
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlinx.html.HTML
@@ -74,6 +79,10 @@ internal class BuildConsoleViewImplV2(
   /** User intent to follow the tail. Only a user scroll gesture changes it, not content growth. Read and written on EDT. */
   private var autoScroll = true
   private var followListenersAttached = false
+
+  /** Restores the component that the last click flashed. Read and written on EDT. */
+  private val flashAlarm = Alarm(Alarm.ThreadToUse.SWING_THREAD, this)
+  private var flashRestore: (() -> Unit)? = null
 
 
   init {
@@ -208,12 +217,43 @@ internal class BuildConsoleViewImplV2(
 
   override fun scrollToNodeOutput(nodeId: Any) {
     state.access {
+      // Many inlays can share one offset, so an offset scroll shows a wrong callout. Scroll to the inlay itself.
+      val inlay = nodeInlays(nodeId).firstOrNull()
+      val bounds = inlay?.bounds
+      if (inlay != null && bounds != null) {
+        editor.caretModel.moveToOffset(inlay.offset)
+        editor.scrollingModel.scrollVertically(bounds.y)
+        flashInlayComponent(editor, inlay.renderer.component)
+        return@access
+      }
       val outputMarker = sortedOutputMarkers(nodeId).firstOrNull()
       if (outputMarker != null) {
         editor.caretModel.moveToOffset(outputMarker.startOffset)
         editor.scrollingModel.scrollToCaret(ScrollType.MAKE_VISIBLE)
       }
     }
+  }
+
+  /** Flashes the inlay component background, so the user finds the clicked callout among similar ones. */
+  private fun flashInlayComponent(editor: Editor, component: JComponent) {
+    val flashColor = editor.colorsScheme.getColor(EditorColors.SELECTION_BACKGROUND_COLOR) ?: return
+    flashAlarm.cancelAllRequests()
+    flashRestore?.invoke()
+    val originalOpaque = component.isOpaque
+    val originalBackground = component.background
+    component.isOpaque = true
+    component.background = flashColor
+    component.repaint()
+    val restore = {
+      component.isOpaque = originalOpaque
+      component.background = originalBackground
+      component.repaint()
+    }
+    flashRestore = restore
+    flashAlarm.addRequest({
+      restore()
+      flashRestore = null
+    }, 700)
   }
 
   override fun selectProgressOutput(nodeId: Any) {
@@ -293,7 +333,10 @@ internal class BuildConsoleViewImplV2(
         else -> BuildConsoleViewInlay.comment(editor.colorsScheme, inlayInfo.text, inlayInfo.hyperlinkListener)
       }
       val inlayOffset = sortedOutputMarkers(nodeId).firstOrNull()?.startOffset ?: return@access
-      editor.addComponentInlay(inlayOffset, inlayProperties, inlayComponent, ComponentInlayAlignment.FIT_VIEWPORT_WIDTH)
+      val inlay = editor.addComponentInlay(inlayOffset, inlayProperties, inlayComponent, ComponentInlayAlignment.FIT_VIEWPORT_WIDTH)
+      if (inlay != null) {
+        addNodeInlay(nodeId, inlay)
+      }
       // An inlay adds height outside the document, so the native console auto-follow does not fire, and the inlay gets
       // its height only after its component is laid out. Follow the tail on that first layout, honoring the user intent.
       // requestScrollingToEnd flushes any pending text first, so text that follows an inlay is included.
@@ -336,6 +379,7 @@ internal class BuildConsoleViewImplV2(
 
     private val outputMarkers = HashMap<Any, RangeMarker>()
     private val nodeToOutputMarkers = HashMap<Any, MutableSet<RangeMarker>>()
+    private val nodeToInlays = HashMap<Any, MutableList<Inlay<ComponentInlayRenderer<JComponent>>>>()
 
     fun access(action: ConsoleViewStateAccessor.() -> Unit) {
       invokeAndWaitIfNeeded {
@@ -361,6 +405,16 @@ internal class BuildConsoleViewImplV2(
       fun addNodeOutputMarkers(nodeId: Any, outputIds: Collection<Any>) {
         nodeToOutputMarkers.computeIfAbsent(nodeId) { HashSet() }
           .addAll(outputIds.mapNotNull { outputMarkers[it] })
+      }
+
+      fun addNodeInlay(nodeId: Any, inlay: Inlay<ComponentInlayRenderer<JComponent>>) {
+        nodeToInlays.computeIfAbsent(nodeId) { ArrayList() }.add(inlay)
+      }
+
+      // ponytail: the invalid inlays stay in the map and are filtered on read, like the markers above.
+      fun nodeInlays(nodeId: Any): Sequence<Inlay<ComponentInlayRenderer<JComponent>>> {
+        return nodeToInlays[nodeId].orEmpty().asSequence()
+          .filter { it.isValid }
       }
 
       fun sortedOutputMarkers(nodeId: Any): Sequence<RangeMarker> {
