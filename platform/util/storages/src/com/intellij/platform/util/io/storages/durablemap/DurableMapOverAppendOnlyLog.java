@@ -101,7 +101,7 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V>, Unma
       long logRecordId = convertStoredIdToLogId(recordId);
       return keyValuesLog.read(logRecordId, recordBuffer -> {
         K recordKey = entryExternalizer.readKey(recordBuffer);
-        return recordKey != null;
+        return recordKey != null && keyEquality.isEqual(key, recordKey);
       });
     });
 

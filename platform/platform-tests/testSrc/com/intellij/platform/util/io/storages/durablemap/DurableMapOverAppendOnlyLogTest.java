@@ -5,8 +5,13 @@ import com.intellij.platform.util.io.storages.DataExternalizerEx;
 import com.intellij.platform.util.io.storages.KeyDescriptorEx;
 import com.intellij.platform.util.io.storages.StorageFactory;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
+
+import java.io.IOException;
 
 import static com.intellij.platform.util.io.storages.CommonKeyDescriptors.stringAsUTF8;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 public class DurableMapOverAppendOnlyLogTest extends DurableMapTestBase<String, String, DurableMapOverAppendOnlyLog<String, String>> {
 
@@ -27,6 +32,14 @@ public class DurableMapOverAppendOnlyLogTest extends DurableMapTestBase<String, 
   @Override
   protected boolean isAppendOnly() {
     return true;
+  }
+
+  @Test
+  public void containsMappingChecksTheKeyWhenHashesCollide() throws IOException {
+    assertEquals("FB".hashCode(), "Ea".hashCode());
+    storage.put("FB", "value");
+
+    assertFalse(storage.containsMapping("Ea"));
   }
 
 }
