@@ -4,13 +4,14 @@ package com.intellij.platform.util.io.storages.database.storages.durablemap;
 import com.intellij.openapi.util.Ref;
 import com.intellij.platform.util.io.storages.DataExternalizerEx.KnownSizeRecordWriter;
 import com.intellij.platform.util.io.storages.database.spi.BlocksStore;
+import com.intellij.platform.util.io.storages.database.storages.extendiblehashmap.ExtendibleHashMapStorageOverBlocksStore;
 import com.intellij.platform.util.io.storages.durablemap.DurableMap;
 import com.intellij.platform.util.io.storages.durablemap.EntryExternalizer;
 import com.intellij.platform.util.io.storages.durablemap.EntryExternalizer.Entry;
 import com.intellij.platform.util.io.storages.intmultimaps.Durable;
 import com.intellij.platform.util.io.storages.intmultimaps.HashUtils;
 import com.intellij.platform.util.io.storages.intmultimaps.IntToMultiLongMap;
-import com.intellij.platform.util.io.storages.intmultimaps.InMemoryIntToMultiLongMap;
+import com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleHashMapInt32ToInt64;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.hash.EqualityPolicy;
 import com.intellij.util.io.CorruptedException;
@@ -22,10 +23,12 @@ import java.io.IOException;
 import java.util.function.BiPredicate;
 
 import static com.intellij.platform.util.io.storages.intmultimaps.IntToMultiLongMap.NO_VALUE;
+import static com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleHashMapInt32ToInt64.DEFAULT_SEGMENT_SIZE;
 import static com.intellij.util.io.IOUtil.KiB;
 
-/// Stores key-value entries in database `DATA` blocks.
-/// The in-memory hash index is disposable and rebuilds from committed entries when the map opens.
+/// Stores
+/// - key-value entries in `DATA` blocks
+/// - hash lookup in `LOOKUP` blocks
 @ApiStatus.Internal
 public final class DurableMapOverBlocks<K, V> implements DurableMap<K, V> {
   public static final int DEFAULT_DATA_BLOCK_CONTENT_LENGTH = 64 * KiB;
@@ -61,21 +64,62 @@ public final class DurableMapOverBlocks<K, V> implements DurableMap<K, V> {
     this.entryExternalizer = entryExternalizer;
   }
 
-  /// Opens the map with an in-memory lookup and rebuilds it from the committed DATA records
-  public static <K, V> @NotNull DurableMapOverBlocks<K, V> open(@NotNull BlocksStore store,
+  /// Opens the map with a persistent lookup in `LOOKUP` blocks
+  public static <K, V> @NotNull DurableMapOverBlocks<K, V> open(@NotNull BlocksStore blocksStore,
                                                                 int preferredBlockContentLength,
                                                                 @NotNull EqualityPolicy<? super K> keyEquality,
                                                                 @NotNull EntryExternalizer<K, V> entryExternalizer) throws IOException {
-    return open(store, preferredBlockContentLength, new InMemoryIntToMultiLongMap(), keyEquality, null, entryExternalizer);
+    return open(blocksStore, preferredBlockContentLength, keyEquality, null, entryExternalizer);
   }
 
-  /// Opens the map with an in-memory lookup and rebuilds it from the committed DATA records
-  public static <K, V> @NotNull DurableMapOverBlocks<K, V> open(@NotNull BlocksStore store,
+  /// Opens the map with a persistent lookup in `LOOKUP` blocks
+  public static <K, V> @NotNull DurableMapOverBlocks<K, V> open(@NotNull BlocksStore blocksStore,
                                                                 int preferredBlockContentLength,
                                                                 @NotNull EqualityPolicy<? super K> keyEquality,
                                                                 @Nullable EqualityPolicy<? super V> valueEquality,
                                                                 @NotNull EntryExternalizer<K, V> entryExternalizer) throws IOException {
-    return open(store, preferredBlockContentLength, new InMemoryIntToMultiLongMap(), keyEquality, valueEquality, entryExternalizer);
+    var lookupStorage = new ExtendibleHashMapStorageOverBlocksStore(
+      blocksStore,
+      DurableMapBlockCatalog.DurableMapBlockRole.LOOKUP.persistentCode(),
+      DEFAULT_SEGMENT_SIZE * 2 // need large indexes!
+    );
+    var rebuildLookup = lookupStorage.isEmpty();
+    ExtendibleHashMapInt32ToInt64 lookup;
+    try {
+      lookup = new ExtendibleHashMapInt32ToInt64(lookupStorage);
+    }
+    catch (IOException | RuntimeException | Error failure) {
+      try {
+        lookupStorage.closeAndClean();
+      }
+      catch (RuntimeException | Error closeFailure) {
+        failure.addSuppressed(closeFailure);
+      }
+      throw failure;
+    }
+
+
+    try {
+      if (!rebuildLookup && !lookup.wasProperlyClosed()) {
+        rebuildLookup = true;
+        lookup.clear();
+      }
+      return open(blocksStore, preferredBlockContentLength, lookup, rebuildLookup, keyEquality, valueEquality, entryExternalizer);
+    }
+    catch (IOException | RuntimeException | Error failure) {
+      try {
+        if (rebuildLookup) {
+          lookup.closeAndClean();
+        }
+        else {
+          lookup.close();
+        }
+      }
+      catch (IOException | RuntimeException | Error closeFailure) {
+        failure.addSuppressed(closeFailure);
+      }
+      throw failure;
+    }
   }
 
   /// Opens the map with the specified lookup.
@@ -96,13 +140,22 @@ public final class DurableMapOverBlocks<K, V> implements DurableMap<K, V> {
                                                                 @NotNull EqualityPolicy<? super K> keyEquality,
                                                                 @Nullable EqualityPolicy<? super V> valueEquality,
                                                                 @NotNull EntryExternalizer<K, V> entryExternalizer) throws IOException {
-    var rebuildLookup = !(lookup instanceof Durable);
+    return open(store, preferredBlockContentLength, lookup, !(lookup instanceof Durable), keyEquality, valueEquality, entryExternalizer);
+  }
+
+  private static <K, V> @NotNull DurableMapOverBlocks<K, V> open(@NotNull BlocksStore blocksStore,
+                                                                 int preferredBlockContentLength,
+                                                                 @NotNull IntToMultiLongMap lookup,
+                                                                 boolean rebuildLookup,
+                                                                 @NotNull EqualityPolicy<? super K> keyEquality,
+                                                                 @Nullable EqualityPolicy<? super V> valueEquality,
+                                                                 @NotNull EntryExternalizer<K, V> entryExternalizer) throws IOException {
     if (rebuildLookup && !lookup.isEmpty()) {
       throw new IllegalArgumentException("The lookup must be empty before recovery");
     }
-    var blockCatalog = DurableMapBlockCatalog.open(store);
+    var blockCatalog = DurableMapBlockCatalog.open(blocksStore);
     var mapEntries = RecordStorageOverBlocks.open(blockCatalog, preferredBlockContentLength);
-    var durableMapImpl = new DurableMapOverBlocks<>(store, mapEntries, lookup, keyEquality, valueEquality, entryExternalizer);
+    var durableMapImpl = new DurableMapOverBlocks<>(blocksStore, mapEntries, lookup, keyEquality, valueEquality, entryExternalizer);
     if (rebuildLookup) {
       durableMapImpl.rebuildLookupFromRecords();
     }
@@ -139,6 +192,8 @@ public final class DurableMapOverBlocks<K, V> implements DurableMap<K, V> {
           return;
         }
       }
+      // TODO A crash after DATA commit and before the lookup update leaves a stale lookup marked as properly closed.
+      //      Mark the durable lookup as dirty before appendEntry().
       var newRecordRef = appendEntry(key, value);
 
       if (value == null) {
