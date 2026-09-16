@@ -365,7 +365,7 @@ private class JavaThreadContainerItem(private val containerName: String, overrid
     get() = SimpleTextAttributes.REGULAR_ATTRIBUTES
 
   override val stackTrace: @NlsSafe String
-    get() = ""
+    get() = name
   override val interestLevel: Int
     get() = Int.MAX_VALUE // todo dependent on the number of children, for now kept on top
   override val icon: Icon
