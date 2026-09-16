@@ -37,7 +37,7 @@
     <python.lsp.typeEngineConfigurable implementation="com.intellij.python.lsp.core.typeEngine.BuiltInPyTypeEngineProvider"/>
 
     <registryKey key="python.lsp.type.engine.notebooks"
-                 defaultValue="false"
+                 defaultValue="true"
                  description="Enable Python LSP-backed type engines in notebooks"/>
 
     <registryKey key="pycharm.type.engine.multi.module"
