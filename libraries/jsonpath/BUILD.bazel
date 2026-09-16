@@ -22,7 +22,12 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-jsonpath-jsonpath"],
-    runtime_deps = ["@lib//:libraries-jsonpath-jsonpath"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:libraries-jsonpath-jsonpath",
+        "//libraries/jackson/jackson",
+        "//libraries/jackson/databind",
+    ],
 )
 
 jvm_library(
@@ -36,7 +41,12 @@ jvm_library(
     module_name = "intellij.libraries.jsonpath",
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-jsonpath-jsonpath"],
-    runtime_deps = [":jsonpath"],
+    runtime_deps = [
+        # do not sort,
+        ":jsonpath",
+        "//libraries/jackson/jackson:jackson_test_lib",
+        "//libraries/jackson/databind:databind_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.libraries.jsonpath` end
 

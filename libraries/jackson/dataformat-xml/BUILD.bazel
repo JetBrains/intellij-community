@@ -26,6 +26,7 @@ jvm_library(
         # do not sort,
         "@lib//:libraries-jackson-dataformat-xml-jackson-dataformat-xml",
         "//libraries/jackson/jackson",
+        "//libraries/jackson/databind",
     ],
 )
 
@@ -44,6 +45,7 @@ jvm_library(
         # do not sort,
         ":libraries-jackson-dataformat-xml",
         "//libraries/jackson/jackson:jackson_test_lib",
+        "//libraries/jackson/databind:databind_test_lib",
     ],
 )
 ### auto-generated section `build intellij.libraries.jackson.dataformat.xml` end

@@ -26,6 +26,7 @@ jvm_library(
         # do not sort,
         "@lib//:libraries-jackson-datatype-jdk8-jackson-datatype-jdk8",
         "//libraries/jackson/jackson",
+        "//libraries/jackson/databind",
     ],
 )
 
@@ -44,6 +45,7 @@ jvm_library(
         # do not sort,
         ":libraries-jackson-datatype-jdk8",
         "//libraries/jackson/jackson:jackson_test_lib",
+        "//libraries/jackson/databind:databind_test_lib",
     ],
 )
 ### auto-generated section `build intellij.libraries.jackson.datatype.jdk8` end

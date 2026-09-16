@@ -598,8 +598,7 @@ val COMMUNITY_LICENSES_LIST: List<LibraryLicense> = listOf(
     .apache("https://github.com/FasterXML/jackson-databind/blob/2.16/LICENSE")
     .suppliedByPersons("Tatu Saloranta", "Christopher Currie", "Paul Brown"),
 
-  LibraryLicense("Jackson Dataformat CBOR", libraryName = "jackson-dataformat-cbor", url = "https://github.com/FasterXML/jackson-dataformats-binary")
-    .additionalLibraryNames("jackson3-dataformat-cbor")
+  LibraryLicense("Jackson Dataformat CBOR", libraryName = "jackson3-dataformat-cbor", url = "https://github.com/FasterXML/jackson-dataformats-binary")
     .apache("https://github.com/FasterXML/jackson-dataformats-binary/blob/2.14/pom.xml")
     .suppliedByPersons("Tatu Saloranta", "Christopher Currie", "Paul Brown"),
 

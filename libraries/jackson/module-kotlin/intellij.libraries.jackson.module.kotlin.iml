@@ -26,5 +26,6 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="intellij.libraries.jackson" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson.databind" scope="RUNTIME" />
   </component>
 </module>
