@@ -1,3 +1,5 @@
+// COMPILER_PLUGIN_PRESET: SERIALIZATION
+
 package test
 
 fun usage() {

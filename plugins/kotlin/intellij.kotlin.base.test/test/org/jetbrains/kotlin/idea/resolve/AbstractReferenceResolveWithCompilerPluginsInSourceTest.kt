@@ -3,29 +3,17 @@ package org.jetbrains.kotlin.idea.resolve
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.roots.OrderRootType
-import com.intellij.util.ThrowableRunnable
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.addRoot
-import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import java.nio.file.Path
 import kotlin.io.path.absolutePathString
 
 /**
- * Variant of [AbstractReferenceResolveWithCompilerPluginsWithLibTest] which keeps
- * compiler-plugin-annotated declarations in project sources (not in a compiled library),
- * so that references between source files are exercised with the plugin enabled.
- *
- * Each test directory is laid out as a flat folder. The main file (`<testName>.kt`)
- * holds carets and `// REF:` directives; sibling files matching the `.Data.kt` suffix
- * are configured into the same fixture via
- * [org.jetbrains.kotlin.idea.completion.test.configureByFilesWithSuffixes].
- *
- * The kotlinx.serialization runtime is added as a module library to make
- * `@Serializable` and friends visible, and the bundled kotlinx.serialization
- * compiler plugin is enabled via the standard
- * `// COMPILER_ARGUMENTS: -Xplugin=...` mechanism.
+ * Tests reference resolution for declarations that source compiler plugins generate.
+ * Use `// COMPILER_PLUGIN_PRESET: <plugin>` in the main test file to select a plugin.
  */
 abstract class AbstractReferenceResolveWithCompilerPluginsInSourceTest : AbstractReferenceResolveTest() {
 
@@ -36,47 +24,64 @@ abstract class AbstractReferenceResolveWithCompilerPluginsInSourceTest : Abstrac
         return "$testDirectoryPath/${getTestName(true)}.kt"
     }
 
-    override fun setUp() {
-        super.setUp()
-
-        val serializationCoreJar = project.loadSingleJarFromMaven(KOTLINX_SERIALIZATION_CORE_JVM_MAVEN_COORDINATES)
-        ConfigLibraryUtil.addLibrary(module, SERIALIZATION_LIB_NAME) {
-            addRoot(serializationCoreJar, OrderRootType.CLASSES)
-        }
-    }
-
-    override fun tearDown() {
-        runAll(
-            ThrowableRunnable { ConfigLibraryUtil.removeLibrary(module, SERIALIZATION_LIB_NAME) },
-            ThrowableRunnable { super.tearDown() },
-        )
-    }
-
     override fun doTest(path: String) {
-        val pluginArgument = "-Xplugin=${KOTLINX_SERIALIZATION_COMPILER_PLUGIN_PATH.absolutePathString()}"
-        withCustomCompilerOptions(
-            "// COMPILER_ARGUMENTS: $pluginArgument",
-            project,
-            module,
-        ) {
-            super.doTest(path)
+        val fileText = dataFile().readText()
+        val compilerPlugin = parseCompilerPlugin(fileText)
+        var libraryConfigured = false
+
+        try {
+            val libraryJar = project.loadSingleJarFromMaven(compilerPlugin.libraryCoordinates)
+            ConfigLibraryUtil.addLibrary(module, compilerPlugin.libraryCoordinates) {
+                addRoot(libraryJar, OrderRootType.CLASSES)
+            }
+            libraryConfigured = true
+
+            val pluginArgument = "-Xplugin=${compilerPlugin.jarPath.absolutePathString()}"
+            withCustomCompilerOptions(
+                "$fileText\n// COMPILER_ARGUMENTS: $pluginArgument",
+                project,
+                module,
+            ) {
+                super.doTest(path)
+            }
         }
+        finally {
+            if (libraryConfigured) {
+                check(ConfigLibraryUtil.removeLibrary(module, compilerPlugin.libraryCoordinates))
+            }
+        }
+    }
+
+    private fun parseCompilerPlugin(fileText: String): CompilerPlugin {
+        val pluginNames = InTextDirectivesUtils.findLinesWithPrefixesRemoved(fileText, COMPILER_PLUGIN_PRESET_DIRECTIVE)
+        val pluginName = pluginNames.singleOrNull()
+            ?: error("Specify exactly one $COMPILER_PLUGIN_PRESET_DIRECTIVE directive")
+        return CompilerPlugin.entries.singleOrNull { it.name == pluginName }
+            ?: error("Unknown compiler plugin: $pluginName. Available values: ${CompilerPlugin.entries.joinToString { it.name }}")
+    }
+
+    private enum class CompilerPlugin(
+        private val registrarClassName: String,
+        val libraryCoordinates: String,
+    ) {
+        LOMBOK(
+            "org.jetbrains.kotlin.lombok.LombokComponentRegistrar",
+            "org.projectlombok:lombok:1.18.26",
+        ),
+
+        SERIALIZATION(
+            "org.jetbrains.kotlinx.serialization.compiler.extensions.SerializationComponentRegistrar",
+            KOTLINX_SERIALIZATION_CORE_JVM_MAVEN_COORDINATES,
+        );
+
+        val jarPath: Path
+            get() {
+                val registrarClass = Class.forName(registrarClassName)
+                return PathManager.getJarForClass(registrarClass) ?: error("Jar file for $registrarClass not found")
+            }
     }
 
     companion object {
-        private const val SERIALIZATION_LIB_NAME = "kotlinx-serialization-core"
-
-        /**
-         * Dynamically resolves the location of the `SerializationComponentRegistrar` class
-         * to determine the associated plugin jar path.
-         *
-         * Mirrors [AbstractReferenceResolveWithCompilerPluginsWithLibTest]; kept here to
-         * avoid depending on the bundled-compiler-plugins module from this base.
-         */
-        private val KOTLINX_SERIALIZATION_COMPILER_PLUGIN_PATH: Path
-            get() {
-                val registrarClass = Class.forName("org.jetbrains.kotlinx.serialization.compiler.extensions.SerializationComponentRegistrar")
-                return PathManager.getJarForClass(registrarClass) ?: error("Jar file for $registrarClass not found")
-            }
+        private const val COMPILER_PLUGIN_PRESET_DIRECTIVE = "// COMPILER_PLUGIN_PRESET:"
     }
 }
