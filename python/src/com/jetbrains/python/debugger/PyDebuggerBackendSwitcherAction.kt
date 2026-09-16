@@ -119,7 +119,9 @@ internal class PyDebuggerBackendSwitcherAction : ComboBoxAction(), DumbAware {
     e.presentation.isEnabledAndVisible = true
 
     val storedBackend = PyDebuggerOptionsProvider.getInstance(project).selectedBackend
-    val effectiveBackend = resolveEffectiveBackend(storedBackend, isDebugpyAvailableInProject(project))
+    val availableBackends = getAvailableBackends(e)
+    val effectiveBackend = if (availableBackends != null) resolveEffectiveBackend(storedBackend, availableBackends)
+    else resolveEffectiveBackend(storedBackend, isDebugpyAvailableInProject(project))
 
     e.presentation.setText(
       buildModeText(PyBundle.message("debugger.backend.switcher.label"),
@@ -162,22 +164,33 @@ internal class PyDebuggerBackendSwitcherAction : ComboBoxAction(), DumbAware {
     override fun update(e: AnActionEvent) {
       val project = e.project ?: return
       val storedBackend = PyDebuggerOptionsProvider.getInstance(project).selectedBackend
-      val effectiveBackend = resolveEffectiveBackend(storedBackend, isDebugpyAvailableInProject(project))
-      e.presentation.isEnabled = true
+      val availableBackends = getAvailableBackends(e)
+      val pydevdAvailable = availableBackends?.contains(PyDebuggerBackend.PYDEVD) != false
+      val debugpyAvailable = availableBackends?.contains(PyDebuggerBackend.DEBUGPY) ?: isDebugpyAvailableInProject(project)
+      val effectiveBackend = if (availableBackends != null) resolveEffectiveBackend(storedBackend, availableBackends)
+      else resolveEffectiveBackend(storedBackend, debugpyAvailable)
+      e.presentation.isEnabled = when (backend) {
+        PyDebuggerBackend.PYDEVD -> pydevdAvailable
+        PyDebuggerBackend.DEBUGPY -> debugpyAvailable
+      }
+      val disabledMsg = when {
+        backend == PyDebuggerBackend.PYDEVD && !pydevdAvailable ->
+          PyBundle.message("debugger.backend.pydevd.disabled.remote.notebook.tooltip")
+        backend == PyDebuggerBackend.DEBUGPY && !debugpyAvailable -> debugpyDisabledMessage(project)
+        else -> null
+      }
+      e.presentation.description = disabledMsg
       e.presentation.putClientProperty(
         ActionUtil.TOOLTIP_TEXT,
-        PyBundle.message(if (backend == PyDebuggerBackend.DEBUGPY) "debugger.backend.debugpy.description" else "debugger.backend.pydevd.description")
+        disabledMsg ?: PyBundle.message(
+          if (backend == PyDebuggerBackend.DEBUGPY) "debugger.backend.debugpy.description" else "debugger.backend.pydevd.description")
       )
-      if (backend == PyDebuggerBackend.DEBUGPY && !isDebugpyAvailableInProject(project)) {
-        e.presentation.isEnabled = false
-        val disabledMsg = debugpyDisabledMessage(project)
-        e.presentation.description = disabledMsg
-        e.presentation.putClientProperty(ActionUtil.TOOLTIP_TEXT, disabledMsg)
-      }
       e.presentation.icon = if (effectiveBackend == backend) AllIcons.Actions.Checked else null
     }
 
     override fun actionPerformed(e: AnActionEvent) {
+      val availableBackends = getAvailableBackends(e)
+      if (availableBackends != null && (backend !in availableBackends || availableBackends.size == 1)) return
       if (backend == PyDebuggerBackend.DEBUGPY && !isPythonDapPluginInstalledAndEnabled()) return
       e.project?.let { switchBackend(it, backend) }
     }
@@ -245,6 +258,12 @@ internal class PyDebuggerBackendSwitcherAction : ComboBoxAction(), DumbAware {
   }
 
 }
+
+private fun getAvailableBackends(e: AnActionEvent): Set<PyDebuggerBackend>? =
+  PyDebuggerBackendSwitchHandler.EP_NAME.computeSafeIfAny { it.getAvailableBackends(e) }
+
+private fun resolveEffectiveBackend(storedBackend: PyDebuggerBackend, availableBackends: Set<PyDebuggerBackend>): PyDebuggerBackend =
+  storedBackend.takeIf { it in availableBackends } ?: availableBackends.first()
 
 /**
  * Whether this IDE process can host the backend switcher at all.
