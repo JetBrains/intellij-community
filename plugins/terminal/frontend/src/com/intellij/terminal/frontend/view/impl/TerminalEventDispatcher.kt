@@ -179,6 +179,12 @@ private class TerminalEventDispatcher(
     if (OS.CURRENT == OS.macOS) {
       actionIds.add("CheckinProject")
     }
+    else {
+      // IJAI-2166: the default keymap of Windows and Linux binds these actions to Alt+Left and Alt+Right,
+      // and a shell uses those keys to move the cursor by a word.
+      actionIds.remove("NextTab")
+      actionIds.remove("PreviousTab")
+    }
     TerminalAllowedActionsProvider.EP_NAME.extensionList.flatMapTo(actionIds) { it.getActionIds() }
     return actionIds.toList()
   }
