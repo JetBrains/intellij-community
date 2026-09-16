@@ -834,9 +834,9 @@
         DumpLookupElementWeights
         IdeScriptingConsole
         UiDebugger
+        com.intellij.searchEverywhereMl.ranking.core.actions.OpenFeaturesInScratchFileAction
         com.intellij.searchEverywhereMl.typos.actions.DumpDictionaryToFileAction
         com.intellij.searchEverywhereMl.typos.actions.CorpusToFileAction
-        com.intellij.searchEverywhereMl.ranking.core.actions.OpenFeaturesInScratchFileAction
       Internal.HeapAnalysis
         UserInvokedFullAnalysis
         SilentHeapDumpSnapshot
@@ -933,9 +933,6 @@
       Internal.Python
         PyUpdateProjectSdk
         PySetPropertyAction
-      tasks.internal
-        show.certificate
-        deadlock.with.certificate.dialog
       UastInternal
         DumpUastLog
         DumpUastLogByElement
@@ -963,6 +960,9 @@
           CreateIncrementalCompilationBackup
           ReactivePostOpenProjectActionsAction
         <separator>
+      tasks.internal
+        show.certificate
+        deadlock.with.certificate.dialog
       Maven.Internal
         Maven.PrintStatistics
         Maven.ResetReadStatistic
@@ -1877,7 +1877,6 @@
   Code.Review.Editor.Show.Diff
   Code.Review.Editor.New.Comment
   Gradle.ImportExternalProject
-  JsonPathEvaluateAction
   XmlGenerateToolsGroup
   OpenInSceneBuilder
   Git.Stage.Index.File.Menu
@@ -1885,6 +1884,7 @@
   Github.Create.Gist
   Github.PullRequest.Changed.MarkViewed.Toggle
   Mermaid.ExportDiagram
+  JsonPathEvaluateAction
   Maven.AddFileAsMavenProject
   Maven.GlobalProjectMenu
   ChangeTemplateDataLanguage
