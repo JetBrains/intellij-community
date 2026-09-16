@@ -13,9 +13,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 import static java.lang.foreign.ValueLayout.ADDRESS;
-import static java.lang.foreign.ValueLayout.JAVA_BYTE;
 import static java.lang.foreign.ValueLayout.JAVA_INT;
-import static java.lang.foreign.ValueLayout.JAVA_SHORT;
 
 /** Known folder paths through {@code SHGetKnownFolderPath} downcalls into {@code shell32.dll}. Windows only: the first call loads the DLLs. */
 @ApiStatus.Internal
@@ -34,7 +32,7 @@ public final class WindowsShell {
   public static @Nullable String knownFolderPath(@NotNull UUID folderId) {
     try (var arena = Arena.ofConfined()) {
       var path = arena.allocate(ADDRESS);
-      var hresult = (int)Handles.SH_GET_KNOWN_FOLDER_PATH.invokeExact(guid(arena, folderId), 0, MemorySegment.NULL, path);
+      var hresult = (int)Handles.SH_GET_KNOWN_FOLDER_PATH.invokeExact(WindowsCom.guid(arena, folderId), 0, MemorySegment.NULL, path);
       var text = path.get(ADDRESS, 0);
       if (text.address() == 0) {
         return null;
@@ -49,20 +47,6 @@ public final class WindowsShell {
     catch (Throwable t) {
       throw new IllegalStateException(t);
     }
-  }
-
-  /** A {@code GUID} in memory: {@code Data1}, {@code Data2} and {@code Data3} in native order, then the eight {@code Data4} bytes as written. */
-  private static MemorySegment guid(Arena arena, UUID id) {
-    var guid = arena.allocate(16);
-    var high = id.getMostSignificantBits();
-    guid.set(JAVA_INT, 0, (int)(high >>> 32));
-    guid.set(JAVA_SHORT, 4, (short)(high >>> 16));
-    guid.set(JAVA_SHORT, 6, (short)high);
-    var low = id.getLeastSignificantBits();
-    for (int i = 0; i < 8; i++) {
-      guid.set(JAVA_BYTE, 8 + i, (byte)(low >>> (56 - 8 * i)));
-    }
-    return guid;
   }
 
   private static final class Handles {

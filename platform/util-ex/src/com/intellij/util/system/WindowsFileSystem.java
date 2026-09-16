@@ -14,13 +14,11 @@ import java.lang.foreign.MemorySegment;
 import java.lang.foreign.StructLayout;
 import java.lang.foreign.SymbolLookup;
 import java.lang.invoke.MethodHandle;
-import java.lang.invoke.VarHandle;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 
 import static java.lang.foreign.ValueLayout.ADDRESS;
 import static java.lang.foreign.ValueLayout.JAVA_INT;
-import static java.lang.foreign.ValueLayout.JAVA_LONG;
 
 /**
  * File system queries through {@code kernel32.dll} and {@code ntdll.dll} downcalls. Windows only: the first call loads the handles.
@@ -34,14 +32,8 @@ public final class WindowsFileSystem {
   private static final int INVALID_FILE_ATTRIBUTES = -1;
   private static final int FILE_ATTRIBUTE_REPARSE_POINT = 0x400;
 
-  private static final long INVALID_HANDLE_VALUE = -1L;
-  private static final int FILE_SHARE_ALL = 0x1 | 0x2 | 0x4;  // FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE
-  private static final int OPEN_EXISTING = 3;
-  private static final int FILE_FLAG_BACKUP_SEMANTICS = 0x02000000;
-
   private static final int FILE_CASE_SENSITIVE_INFORMATION = 71;  // FILE_INFORMATION_CLASS::FileCaseSensitiveInformation
   private static final int FILE_CS_FLAG_CASE_SENSITIVE_DIR = 1;
-  private static final int FILE_READ_ATTRIBUTES = 0x80;
   private static final int FSCTL_QUERY_PERSISTENT_VOLUME_STATE = 0x9023C;
   private static final int PERSISTENT_VOLUME_STATE_DEV_VOLUME = 0x2000;
   private static final int PERSISTENT_VOLUME_STATE_TRUSTED_VOLUME = 0x4000;
@@ -51,12 +43,12 @@ public final class WindowsFileSystem {
 
   public static boolean isOnDevDrive(@NotNull Path path) {
     try (var arena = Arena.ofConfined()) {
-      var callState = arena.allocate(Handles.CALL_STATE_LAYOUT);
+      var callState = arena.allocate(WindowsKernel32.CALL_STATE);
       var name = arena.allocateFrom(path.toString(), StandardCharsets.UTF_16LE);
-      var handle = (MemorySegment)Handles.CREATE_FILE.invokeExact(
-        callState, name, FILE_READ_ATTRIBUTES, 0x3, MemorySegment.NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, MemorySegment.NULL);
-      if (handle.address() == INVALID_HANDLE_VALUE) {
-        LOG.warn("CreateFile(" + path + "): " + Handles.LAST_ERROR.get(callState, 0L));
+      var handle = WindowsKernel32.createFile(
+        callState, name, WindowsKernel32.FILE_READ_ATTRIBUTES, 0x3, WindowsKernel32.OPEN_EXISTING, WindowsKernel32.FILE_FLAG_BACKUP_SEMANTICS);
+      if (handle.address() == WindowsKernel32.INVALID_HANDLE_VALUE) {
+        LOG.warn("CreateFile(" + path + "): " + WindowsKernel32.lastError(callState));
         return false;
       }
       try {
@@ -68,7 +60,7 @@ public final class WindowsFileSystem {
         var success = (int)Handles.DEVICE_IO_CONTROL.invokeExact(
           callState, handle, FSCTL_QUERY_PERSISTENT_VOLUME_STATE, information, size, information, size, returned, MemorySegment.NULL);
         if (success == 0) {
-          if (LOG.isDebugEnabled()) LOG.debug("DeviceIoControl(" + path + "): " + Handles.LAST_ERROR.get(callState, 0L));
+          if (LOG.isDebugEnabled()) LOG.debug("DeviceIoControl(" + path + "): " + WindowsKernel32.lastError(callState));
           return false;
         }
         var flags = information.get(JAVA_INT, 0);
@@ -76,7 +68,7 @@ public final class WindowsFileSystem {
         return returned.get(JAVA_INT, 0) >= size && flags == TRUSTED_DEV_VOLUME;
       }
       finally {
-        var _ = (int)Handles.CLOSE_HANDLE.invokeExact(handle);
+        WindowsKernel32.closeHandle(handle);
       }
     }
     catch (Throwable failure) {
@@ -105,21 +97,21 @@ public final class WindowsFileSystem {
   public static FileAttributes.@NotNull CaseSensitivity caseSensitivity(@NotNull String absolutePath) {
     try (var arena = Arena.ofConfined()) {
       var name = arena.allocateFrom("\\\\?\\" + absolutePath, StandardCharsets.UTF_16LE);
-      var callState = arena.allocate(Handles.CALL_STATE_LAYOUT);
-      var handle = (MemorySegment)Handles.CREATE_FILE.invokeExact(
-        callState, name, 0, FILE_SHARE_ALL, MemorySegment.NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, MemorySegment.NULL);
-      if (handle.address() == INVALID_HANDLE_VALUE) {
+      var callState = arena.allocate(WindowsKernel32.CALL_STATE);
+      var handle = WindowsKernel32.createFile(
+        callState, name, 0, WindowsKernel32.FILE_SHARE_ALL, WindowsKernel32.OPEN_EXISTING, WindowsKernel32.FILE_FLAG_BACKUP_SEMANTICS);
+      if (handle.address() == WindowsKernel32.INVALID_HANDLE_VALUE) {
         if (LOG.isDebugEnabled()) {
-          LOG.debug("CreateFile(" + absolutePath + "): 0x" + Integer.toHexString((int)Handles.LAST_ERROR.get(callState, 0L)));
+          LOG.debug("CreateFile(" + absolutePath + "): 0x" + Integer.toHexString(WindowsKernel32.lastError(callState)));
         }
         return FileAttributes.CaseSensitivity.UNKNOWN;
       }
       try {
-        var ioStatusBlock = arena.allocate(Handles.IO_STATUS_BLOCK);
+        var ioStatusBlock = arena.allocate(WindowsNtDll.IO_STATUS_BLOCK);
         // FILE_CASE_SENSITIVE_INFORMATION { ULONG Flags; }, preset to a value the kernel never writes
         var information = arena.allocate(JAVA_INT);
         information.set(JAVA_INT, 0, -1);
-        var status = (int)Handles.NT_QUERY_INFORMATION_FILE.invokeExact(
+        var status = WindowsNtDll.queryInformationFile(
           handle, ioStatusBlock, information, (int)information.byteSize(), FILE_CASE_SENSITIVE_INFORMATION);
         if (status != 0) {
           // https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-erref/596a1078-e883-4972-9bbc-49e60bebca55
@@ -137,7 +129,7 @@ public final class WindowsFileSystem {
         return FileAttributes.CaseSensitivity.UNKNOWN;
       }
       finally {
-        var _ = (int)Handles.CLOSE_HANDLE.invokeExact(handle);
+        WindowsKernel32.closeHandle(handle);
       }
     }
     catch (Throwable t) {
@@ -145,46 +137,26 @@ public final class WindowsFileSystem {
     }
   }
 
-  /** Downcalls into {@code kernel32.dll} and {@code ntdll.dll}. {@code HANDLE} is an address; {@code DWORD}, {@code BOOL} and {@code NTSTATUS} are {@code int}. */
+  /**
+   * The {@code kernel32.dll} downcalls that only this class needs. {@link WindowsKernel32} and {@link WindowsNtDll}
+   * hold the shared ones. {@code HANDLE} is an address; {@code DWORD} and {@code BOOL} are {@code int}.
+   */
   private static final class Handles {
     private static final Linker LINKER = Linker.nativeLinker();
     private static final SymbolLookup KERNEL32 = WindowsSystemLibraries.lookup("kernel32.dll");
-    private static final SymbolLookup NTDLL = WindowsSystemLibraries.lookup("ntdll.dll");
 
     /** {@code DWORD GetFileAttributesW(LPCWSTR fileName)} */
     static final MethodHandle GET_FILE_ATTRIBUTES = LINKER.downcallHandle(
       KERNEL32.findOrThrow("GetFileAttributesW"),
       FunctionDescriptor.of(JAVA_INT, ADDRESS));
 
-    private static final Linker.Option CAPTURE_LAST_ERROR = Linker.Option.captureCallState("GetLastError");
-    static final StructLayout CALL_STATE_LAYOUT = Linker.Option.captureStateLayout();
-    static final VarHandle LAST_ERROR = CALL_STATE_LAYOUT.varHandle(MemoryLayout.PathElement.groupElement("GetLastError"));
-
     /**
-     * {@code HANDLE CreateFileW(LPCWSTR name, DWORD access, DWORD shareMode, LPSECURITY_ATTRIBUTES, DWORD disposition, DWORD flags, HANDLE template)},
-     * with {@code GetLastError} captured into the leading call-state argument
+     * {@code BOOL DeviceIoControl(HANDLE device, DWORD code, LPVOID inBuffer, DWORD inSize, LPVOID outBuffer, DWORD outSize,
+     * LPDWORD returned, LPOVERLAPPED)}, with {@code GetLastError} captured into the leading call-state argument
      */
-    static final MethodHandle CREATE_FILE = LINKER.downcallHandle(
-      KERNEL32.findOrThrow("CreateFileW"),
-      FunctionDescriptor.of(ADDRESS, ADDRESS, JAVA_INT, JAVA_INT, ADDRESS, JAVA_INT, JAVA_INT, ADDRESS),
-      CAPTURE_LAST_ERROR);
-
-    /** {@code BOOL CloseHandle(HANDLE)} */
-    static final MethodHandle CLOSE_HANDLE = LINKER.downcallHandle(
-      KERNEL32.findOrThrow("CloseHandle"),
-      FunctionDescriptor.of(JAVA_INT, ADDRESS));
-
     static final MethodHandle DEVICE_IO_CONTROL = LINKER.downcallHandle(
       KERNEL32.findOrThrow("DeviceIoControl"),
       FunctionDescriptor.of(JAVA_INT, ADDRESS, JAVA_INT, ADDRESS, JAVA_INT, ADDRESS, JAVA_INT, ADDRESS, ADDRESS),
-      CAPTURE_LAST_ERROR);
-
-    /** {@code IO_STATUS_BLOCK { union { NTSTATUS Status; PVOID Pointer; }; ULONG_PTR Information; }}, 16 bytes on x64 and ARM64 */
-    static final StructLayout IO_STATUS_BLOCK = MemoryLayout.structLayout(ADDRESS.withName("Pointer"), JAVA_LONG.withName("Information"));
-
-    /** {@code NTSTATUS NtQueryInformationFile(HANDLE file, PIO_STATUS_BLOCK, PVOID information, ULONG length, FILE_INFORMATION_CLASS class)} */
-    static final MethodHandle NT_QUERY_INFORMATION_FILE = LINKER.downcallHandle(
-      NTDLL.findOrThrow("NtQueryInformationFile"),
-      FunctionDescriptor.of(JAVA_INT, ADDRESS, ADDRESS, ADDRESS, JAVA_INT, JAVA_INT));
+      Linker.Option.captureCallState("GetLastError"));
   }
 }
