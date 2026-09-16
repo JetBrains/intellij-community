@@ -2,6 +2,7 @@
 package com.jetbrains.python.debugger;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -15,6 +16,7 @@ import com.intellij.xdebugger.frame.XCompositeNode;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,6 +26,25 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class PyVariableViewSettings {
+  /**
+   * Fills the debugger toolwindow's "Debugger Settings" gear popup with the actions shared by pydevd and debugpy.
+   * {@code supportsSyncVariablesLoading} controls the only structural difference between the two: debugpy always
+   * loads variables asynchronously, so it has no "Synchronously" option in {@link VariablesPolicyGroup}.
+   */
+  @ApiStatus.Internal
+  public static void registerSettingsActions(@NotNull DefaultActionGroup settings,
+                                              @NotNull XDebugProcess process,
+                                              @NotNull WatchReturnValuesAction watchReturnValuesAction,
+                                              boolean supportsSyncVariablesLoading) {
+    settings.removeAll();
+    settings.add(ActionManager.getInstance().getAction("XDebugger.Inline"));
+    settings.add(ActionManager.getInstance().getAction("XDebugger.UnmuteOnStop"));
+    settings.add(watchReturnValuesAction);
+    settings.add(new SimplifiedView(process));
+    settings.add(new VariablesPolicyGroup(supportsSyncVariablesLoading));
+    settings.add(new QuotingPolicyGroup());
+  }
+
   public static final class SimplifiedView extends ToggleAction {
     private final XDebugProcess myProcess;
     private volatile boolean mySimplifiedView;
@@ -108,16 +129,29 @@ public final class PyVariableViewSettings {
 
   public static final class VariablesPolicyGroup extends AbstractPolicyGroup<ValuesPolicy, VariablePolicyAction> {
     public VariablesPolicyGroup() {
+      this(true);
+    }
+
+    /**
+     * @param supportsSyncLoading whether to offer the "Synchronously" option; debugpy always loads variables
+     *                             asynchronously, so it never offers this option.
+     */
+    @ApiStatus.Internal
+    public VariablesPolicyGroup(boolean supportsSyncLoading) {
       super(PyBundle.message("debugger.variables.loading.policy"));
-      addPolicyActions(new VariablePolicyAction(PyBundle.message("debugger.variables.loading.synchronously.text"),
-                                                PyBundle.message("debugger.variables.loading.synchronously.description"),
-                                                ValuesPolicy.SYNC, this),
-                       new VariablePolicyAction(PyBundle.message("debugger.variables.loading.asynchronously.text"),
-                                                PyBundle.message("debugger.variables.loading.asynchronously.description"),
-                                                ValuesPolicy.ASYNC, this),
-                       new VariablePolicyAction(PyBundle.message("debugger.variables.loading.on.demand.text"),
-                                                PyBundle.message("debugger.variables.loading.on.demand.description"),
-                                                ValuesPolicy.ON_DEMAND, this));
+      List<VariablePolicyAction> actions = new ArrayList<>();
+      if (supportsSyncLoading) {
+        actions.add(new VariablePolicyAction(PyBundle.message("debugger.variables.loading.synchronously.text"),
+                                              PyBundle.message("debugger.variables.loading.synchronously.description"),
+                                              ValuesPolicy.SYNC, this));
+      }
+      actions.add(new VariablePolicyAction(PyBundle.message("debugger.variables.loading.asynchronously.text"),
+                                            PyBundle.message("debugger.variables.loading.asynchronously.description"),
+                                            ValuesPolicy.ASYNC, this));
+      actions.add(new VariablePolicyAction(PyBundle.message("debugger.variables.loading.on.demand.text"),
+                                            PyBundle.message("debugger.variables.loading.on.demand.description"),
+                                            ValuesPolicy.ON_DEMAND, this));
+      addPolicyActions(actions.toArray(new VariablePolicyAction[0]));
     }
 
     @Override
