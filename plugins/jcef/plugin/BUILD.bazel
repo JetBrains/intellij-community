@@ -1,11 +1,18 @@
-load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_DESCRIPTORS", "MODULE_TARGETS")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `dev intellij.jcef.plugin` start
 dev_dist_plugin(
+    content_modules = [
+        # do not sort,
+        "intellij.libraries.jcef",
+        "intellij.platform.ui.jcef",
+        "intellij.platform.ide.impl.jcef",
+        "intellij.platform.ide.newUiOnboarding.jcef",
+        "intellij.jcef.frontend",
+        "intellij.internal.jcef",
+    ],
     descriptor = "resources/META-INF/plugin.xml",
-    descriptor_index = MODULE_DESCRIPTORS,
     descriptor_modules = [
         "intellij.internal.jcef",
         "intellij.jcef.frontend",
@@ -15,16 +22,6 @@ dev_dist_plugin(
         "intellij.platform.ui.jcef",
     ],
     main_module = "intellij.jcef.plugin",
-    module_targets = MODULE_TARGETS,
-    prepacked_content_modules = [
-        # do not sort,
-        "intellij.libraries.jcef",
-        "intellij.platform.ide.newUiOnboarding.jcef",
-        "intellij.internal.jcef",
-        "intellij.platform.ide.impl.jcef",
-        "intellij.platform.ui.jcef",
-        "intellij.jcef.frontend",
-    ],
     variants = [
         "darwin_aarch64",
         "darwin_x64",

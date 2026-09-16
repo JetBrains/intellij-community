@@ -1,33 +1,24 @@
-load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_TARGETS")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `dev intellij.gradle.java.plugin` start
 dev_dist_plugin(
-    jars = {
-        "gradle-jps.jar": {
-            "libraries": ["@lib//:gradle-jps-ant"],
-            "modules": ["intellij.gradle.jps"],
-        },
-    },
-    main_module = "intellij.gradle.java.plugin",
-    module_targets = MODULE_TARGETS,
-    prepacked_content_modules = [
+    content_modules = [
         # do not sort,
+        "intellij.gradle.java",
         "intellij.gradle.java.maven",
-        "intellij.gradle.dependencyUpdater",
         "intellij.gradle.analysis",
-        "intellij.gradle.java.coverage",
-        "intellij.gradle.java.groovy.ml",
-        "intellij.gradle.java.groovy.toml",
-        "intellij.gradle.java.groovy",
+        "intellij.gradle.dependencyUpdater",
         "intellij.gradle.java.performance",
-        "intellij.gradle.java.properties",
         "intellij.gradle.java.toml",
+        "intellij.gradle.java.groovy",
+        "intellij.gradle.java.groovy.toml",
+        "intellij.gradle.java.groovy.ml",
+        "intellij.gradle.java.coverage",
+        "intellij.gradle.java.properties",
+        "intellij.gradle.jps",
     ],
-    prepacked_jars = {
-        "intellij.gradle.java": "intellij.gradle.java.jar",
-    },
+    main_module = "intellij.gradle.java.plugin",
 )
 ### auto-generated section `dev intellij.gradle.java.plugin` end
 

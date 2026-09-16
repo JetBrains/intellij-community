@@ -16,6 +16,7 @@ import org.jetbrains.intellij.build.classPath.DescriptorSearchScope
 import org.jetbrains.intellij.build.classPath.XIncludeElementResolverImpl
 import org.jetbrains.intellij.build.classPath.descriptorResolveContext
 import org.jetbrains.intellij.build.classPath.getEmbeddedContentModulesOfPluginsWithUseIdeaClassloader
+import org.jetbrains.intellij.build.testDistFileSpec
 import org.jetbrains.jps.model.JpsElementFactory
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JavaResourceRootType
@@ -52,8 +53,8 @@ class PluginsCollectorTest {
       </content></idea-plugin>
     """.trimIndent())
     project.findModuleByName(properties.applicationInfoModule)!!.dependenciesList.addModuleDependency(includes)
-    properties.ijentDistributionRegistrar = { error("Source derivation must not register IJent files.") }
     properties.productLayout.addPlatformSpec { layout ->
+      layout.withDistFiles(OsFamily.LINUX, JvmArchitecture.x64, testDistFileSpec("guard")) { error("Source derivation must not register dist files.") }
       layout.withProductModuleOutputFile("demo.product.embedded", "custom.jar")
       layout.withResourceFromModule(properties.applicationInfoModule, "missing-resource", "resource")
       layout.withPatch { _, _ -> error("Source derivation must not run a module patch.") }

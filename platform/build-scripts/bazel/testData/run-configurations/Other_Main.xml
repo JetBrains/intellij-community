@@ -1,0 +1,10 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Other Main" type="Application" factoryName="Application">
+    <option name="MAIN_CLASS_NAME" value="com.example.OtherMainKt" />
+    <module name="intellij.platform.bootstrap.dev" />
+    <option name="VM_PARAMETERS" value="-Didea.platform.prefix=idea -Dadditional.modules=intellij.other" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

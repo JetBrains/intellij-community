@@ -13,7 +13,6 @@ import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.LibcImpl
-import org.jetbrains.intellij.build.NativeBinaryDownloader
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import org.jetbrains.intellij.build.executeStep
@@ -48,15 +47,6 @@ internal fun copyNativeBinDir(
   return copyDir(sourceDir, binDir, overwrite = true, dirFilter = dirFilter, fileFilter = fileFilter)
 }
 
-/**
- * Copies the downloaded restart helper into [binDir] and returns where it landed, for the
- * [OsSpecificDistributionBuilder.copyNativeBinFiles] implementations - the one part of that step which is the
- * same for every OS.
- */
-internal fun copyRestarterToDir(binDir: Path, os: OsFamily, arch: JvmArchitecture, context: BuildContext): Path {
-  return copyNativeBinFileToDir(NativeBinaryDownloader.getRestarter(context, os, arch), binDir)
-}
-
 interface OsSpecificDistributionBuilder {
   companion object {
     @Internal
@@ -69,8 +59,9 @@ interface OsSpecificDistributionBuilder {
   fun copyFilesForOsDistribution(targetPath: Path, arch: JvmArchitecture)
 
   /**
-   * Copies into [binDir] the native files a distribution's `bin` directory needs for this OS and [arch] -
-   * the ones committed under `community/bin` and the downloaded restarter.
+   * Copies into [binDir] the native files a distribution's `bin` directory needs for this OS and [arch]: the ones
+   * committed under `community/bin`. A downloaded file is a platform layout declaration instead, see
+   * [copyDeclaredOsSpecificFiles].
    *
    * Shared with the dev-mode assembly, which builds its own `bin` rather than going through
    * [copyFilesForOsDistribution]: a dev IDE that lacks these silently loses everything the platform resolves
@@ -84,6 +75,15 @@ interface OsSpecificDistributionBuilder {
    * must be replaced with the current sources. It must not delete unrelated entries; the caller owns stale-file cleanup.
    */
   fun copyNativeBinFiles(binDir: Path, arch: JvmArchitecture): List<Path>
+
+  /**
+   * Copies the files the platform layout declares for this OS and [arch] with `PlatformLayout.withOsSpecificFiles` into
+   * [distributionDir], and returns the files it wrote. The same contract as [copyNativeBinFiles]: repeatable, replaces
+   * an earlier copy, deletes nothing.
+   */
+  fun copyDeclaredOsSpecificFiles(distributionDir: Path, arch: JvmArchitecture, platformLayout: PlatformLayout, context: BuildContext): List<Path> {
+    return copyDeclaredOsSpecificFiles(platformLayout = platformLayout, distributionDir = distributionDir, os = targetOs, arch = arch, context = context)
+  }
 
   fun buildArtifacts(osAndArchSpecificDistPath: Path, arch: JvmArchitecture)
 

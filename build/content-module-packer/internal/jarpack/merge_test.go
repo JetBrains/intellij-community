@@ -3,11 +3,185 @@
 package jarpack
 
 import (
+	"archive/zip"
+	"bytes"
+	"io"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 )
+
+func TestPatchPrecedenceAndCollision(t *testing.T) {
+	patch := filepath.Join(t.TempDir(), "plugin.xml")
+	if err := os.WriteFile(patch, []byte("patched"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	module := writeZipJar(t, "main.jar", sourceEntry{name: "META-INF/plugin.xml", data: "original"})
+	patched := Source{Path: patch, Name: "META-INF/plugin.xml", Patch: true}
+	archive := Source{Path: module, Filter: ModuleOutputNameFilter}
+	data, _ := pack(t, MergeSpec{Output: "plugin.jar", Sources: []Source{patched, archive}})
+	if got := packedEntry(t, data, patched.Name); got != "patched" {
+		t.Fatalf("descriptor is %q", got)
+	}
+	_, err := (MergeSpec{Output: filepath.Join(t.TempDir(), "bad.jar"), Sources: []Source{archive, patched}}).Pack()
+	if err == nil || !strings.Contains(err.Error(), "must precede") {
+		t.Fatalf("expected a patch collision, got %v", err)
+	}
+}
+
+func TestEntityMergeKeepsSourceOrder(t *testing.T) {
+	first := writeZipJar(t, "first.jar", sourceEntry{name: "META-INF/listOfEntities.txt", data: "  First\n"})
+	second := writeZipJar(t, "second.jar", sourceEntry{name: "META-INF/listOfEntities.txt", data: "\nSecond  "})
+	sources := []Source{{Path: first, Filter: LibraryNameFilter}, {Path: second, Filter: ModuleOutputNameFilter}}
+	data, duplicates := pack(t, MergeSpec{Output: "entities.jar", Sources: sources, MergeEntities: true, VerifyCRC: true})
+	if len(duplicates) != 0 || packedEntry(t, data, "META-INF/listOfEntities.txt") != "First\nSecond" {
+		t.Fatalf("entity merge did not preserve the source order: %v", duplicates)
+	}
+	legacy, _ := pack(t, MergeSpec{Output: "legacy.jar", Sources: sources})
+	if packedEntry(t, legacy, "META-INF/listOfEntities.txt") != "  First\n" {
+		t.Fatal("changed the existing recipe behavior")
+	}
+}
+
+func packedEntry(t *testing.T, data []byte, name string) string {
+	t.Helper()
+	reader, err := zip.NewReader(bytes.NewReader(data), int64(len(data)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, entry := range reader.File {
+		if entry.Name != name {
+			continue
+		}
+		stream, err := entry.Open()
+		if err != nil {
+			t.Fatal(err)
+		}
+		content, err := io.ReadAll(stream)
+		stream.Close()
+		if err != nil {
+			t.Fatal(err)
+		}
+		return string(content)
+	}
+	t.Fatalf("missing entry %s", name)
+	return ""
+}
+
+func TestManifestPolicyBelongsToTheSource(t *testing.T) {
+	first := writeZipJar(t, "unrelated.jar", sourceEntry{name: ManifestEntryName, data: "Boot-Class-Path: unrelated.jar\r\n"})
+	agent := writeZipJar(t, "agent.jar", sourceEntry{name: ManifestEntryName, data: "Boot-Class-Path: intellij-coverage-agent-1.2.3.jar\r\nOther: unchanged\r\n"})
+	for _, test := range []struct {
+		mode ManifestMode
+		want string
+	}{
+		{ManifestKeep, "Boot-Class-Path: intellij-coverage-agent-1.2.3.jar\r\nOther: unchanged\r\n"},
+		{ManifestRewriteBootClassPath, "Boot-Class-Path: renamed.jar\r\nOther: unchanged\r\n"},
+		{ManifestCoverageAgent, "Boot-Class-Path: intellij.platform.coverage.agent.jar\r\nOther: unchanged\r\n"},
+	} {
+		t.Run(string(test.mode), func(t *testing.T) {
+			filter := ModuleOutputNameFilter
+			if test.mode == ManifestCoverageAgent {
+				filter = func(string) bool { return false }
+			}
+			data, _ := pack(t, MergeSpec{Output: "renamed.jar", KeepManifest: true, Sources: []Source{
+				{Path: first, Filter: ModuleOutputNameFilter, Manifest: ManifestDrop},
+				{Path: agent, Filter: filter, Manifest: test.mode},
+			}})
+			if got := packedEntry(t, data, ManifestEntryName); got != test.want {
+				t.Fatalf("manifest is %q, want %q", got, test.want)
+			}
+		})
+	}
+}
+
+func TestCoverageRewriteUsesTheProductionPattern(t *testing.T) {
+	input := []byte("Boot-Class-Path: custom-agent.jar\r\nBoot-Class-Path: intellij-coverage-agent-1.jar\r\n")
+	want := "Boot-Class-Path: custom-agent.jar\r\nBoot-Class-Path: intellij.platform.coverage.agent.jar\r\n"
+	if got := string(rewriteSourceManifest(input, ManifestCoverageAgent, "different.jar")); got != want {
+		t.Fatalf("manifest is %q", got)
+	}
+}
+
+func TestNativeChangesRetainOriginalSourcePositions(t *testing.T) {
+	first := writeZipJar(t, "first.jar",
+		sourceEntry{name: "before.class", data: "before"},
+		sourceEntry{name: "native/lib.so", data: "unsigned"},
+		sourceEntry{name: "native/extract.so", data: "extract"},
+		sourceEntry{name: "after.class", data: "after"},
+	)
+	second := writeZipJar(t, "second.jar", sourceEntry{name: "native/extract.so", data: "must not reappear"})
+	replacement := filepath.Join(t.TempDir(), "signed")
+	if err := os.WriteFile(replacement, []byte("signed"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	spec := MergeSpec{Output: "plugin.jar", ValidateEntryNames: true, Sources: []Source{
+		{Path: first, Filter: ModuleOutputNameFilter, EntryOverrides: map[string]EntryOverride{
+			"native/lib.so": {Path: replacement}, "native/extract.so": {Reserve: true},
+		}},
+		{Path: second, Filter: ModuleOutputNameFilter},
+	}}
+	data, duplicates := pack(t, spec)
+	if !slices.Equal(entryNames(t, data), []string{"before.class", "native/lib.so", "after.class", "__index__"}) ||
+		packedEntry(t, data, "native/lib.so") != "signed" || !slices.Equal(duplicates, []string{"native/extract.so"}) {
+		t.Fatalf("native changes moved: %v, duplicates=%v", entryNames(t, data), duplicates)
+	}
+	var expected bytes.Buffer
+	writer := NewWriter(&expected)
+	for _, entry := range []sourceEntry{{name: "before.class", data: "before"}, {name: "native/lib.so", data: "signed"}, {name: "after.class", data: "after"}} {
+		if err := writer.Add(entry.name, []byte(entry.data), crc32Of([]byte(entry.data)), true); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := writer.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(data, expected.Bytes()) {
+		t.Fatal("native replacements changed the expected jar bytes")
+	}
+}
+
+func TestPreparedReservationsAndEntitiesFollowSourceOrder(t *testing.T) {
+	root := t.TempDir()
+	file := filepath.Join(root, "prepared")
+	if err := os.WriteFile(file, []byte("\u001c Prepared \u001f"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	archive := writeZipJar(t, "module.jar", sourceEntry{name: "reserved.txt", data: "must not appear"}, sourceEntry{name: "META-INF/listOfEntities.txt", data: " Archive "})
+	data, _ := pack(t, MergeSpec{Output: "entities.jar", MergeEntities: true, Sources: []Source{
+		{Name: "reserved.txt", Reserve: true},
+		{Path: file, Name: "META-INF/listOfEntities.txt"},
+		{Path: archive, Filter: ModuleOutputNameFilter},
+	}})
+	if packedEntry(t, data, "META-INF/listOfEntities.txt") != "Prepared\nArchive" || slices.Contains(entryNames(t, data), "reserved.txt") {
+		t.Fatalf("prepared source order changed: %v", entryNames(t, data))
+	}
+	if got := trimEntityList([]byte("\u0085keep\u0085")); got != "\u0085keep\u0085" {
+		t.Fatalf("trim differs from Kotlin whitespace rules: %q", got)
+	}
+}
+
+func TestMergeRejectsUnsafeOrStaleSourceOperations(t *testing.T) {
+	archive := writeZipJar(t, "module.jar", sourceEntry{name: "present.so", data: "native"}, sourceEntry{name: "icon-robots.txt", data: "excluded"})
+	for _, source := range []Source{
+		{Path: archive},
+		{Path: archive, Filter: ModuleOutputNameFilter, Manifest: "unknown"},
+		{Path: archive, Name: "entry", Reserve: true},
+		{Name: "entry", Reserve: true, Patch: true},
+		{Path: archive, Name: "../escape"},
+		{Path: archive, Filter: ModuleOutputNameFilter, EntryOverrides: map[string]EntryOverride{"missing.so": {Reserve: true}}},
+		{Path: archive, Filter: ModuleOutputNameFilter, EntryOverrides: map[string]EntryOverride{"icon-robots.txt": {Reserve: true}}},
+		{Path: archive, Filter: ModuleOutputNameFilter, EntryOverrides: map[string]EntryOverride{"present.so": {}}},
+		{Path: archive, Filter: ModuleOutputNameFilter, EntryOverrides: map[string]EntryOverride{"present.so": {Path: archive, Reserve: true}}},
+	} {
+		spec := MergeSpec{Output: filepath.Join(t.TempDir(), "invalid.jar"), ValidateEntryNames: true, Sources: []Source{source}}
+		if _, err := spec.Pack(); err == nil {
+			t.Fatalf("accepted invalid source: %+v", source)
+		}
+	}
+}
 
 // The digests below are the bytes this packer produced when it was proved byte-identical to the Kotlin
 // `@rules_jvm//content-module-packer` over 192 real jars, 26 real recipes and 4 constructed ones. They are the gate,
@@ -141,9 +315,8 @@ func TestPackRewritesBootClassPathToNameTheJarItEndsUpIn(t *testing.T) {
 		sourceEntry{name: ManifestEntryName, data: "Manifest-Version: 1.0\r\nBoot-Class-Path: intellij.coverage.jar\r\n\r\n"},
 	)
 	data, _ := pack(t, MergeSpec{
-		Output:               "intellij.platform.coverage.jar",
-		Sources:              []Source{{Path: source, Filter: ModuleOutputNameFilter}},
-		RewriteBootClassPath: true,
+		Output:  "intellij.platform.coverage.jar",
+		Sources: []Source{{Path: source, Filter: ModuleOutputNameFilter, Manifest: ManifestRewriteBootClassPath}},
 	})
 	manifest := readEntry(t, data, ManifestEntryName)
 	if want := "Boot-Class-Path: intellij.platform.coverage.jar"; !strings.Contains(manifest, want) {
@@ -182,6 +355,22 @@ func TestPackRefusesARecipeWithNoSources(t *testing.T) {
 	spec := MergeSpec{Output: "intellij.example.jar"}
 	if _, err := spec.Pack(); err == nil {
 		t.Error("packing a recipe with no source succeeded")
+	}
+}
+
+func TestResidualPackingRejectsNativeEntries(t *testing.T) {
+	for _, name := range []string{"lib/native.so", "lib/native.dylib", "bin/native.dll", "bin/native.exe", "bin/pty4j-unix-spawn-helper", "lib/icudtl.dat"} {
+		t.Run(name, func(t *testing.T) {
+			source := writeZipJar(t, "native.jar", sourceEntry{name: name, data: "native"})
+			spec := MergeSpec{
+				Output:              filepath.Join(t.TempDir(), "result.jar"),
+				Sources:             []Source{{Path: source, Filter: ModuleOutputNameFilter}},
+				RejectNativeEntries: true,
+			}
+			if _, err := spec.Pack(); err == nil || !strings.Contains(err.Error(), "Kotlin packer") {
+				t.Fatalf("expected a native holdout, got %v", err)
+			}
+		})
 	}
 }
 

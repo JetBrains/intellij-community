@@ -8,14 +8,19 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"slices"
 	"strings"
+
+	"jetbrains.com/content-module-packer/internal/filemetadata"
 )
 
 type localLayoutFile struct {
-	Path          string `json:"path"`
-	Runfile       string `json:"runfile"`
-	SymlinkTarget string `json:"symlinkTarget"`
-	Executable    bool   `json:"executable"`
+	Path          string  `json:"path"`
+	Runfile       string  `json:"runfile"`
+	SymlinkTarget string  `json:"symlinkTarget"`
+	Executable    bool    `json:"executable"`
+	Mode          *uint32 `json:"mode,omitempty"`
+	Kind          string  `json:"kind,omitempty"`
 }
 
 type localLayout struct {
@@ -69,6 +74,8 @@ func materializeLocalHome(layoutFile, outputDir string, lookup func(string) (str
 		return fmt.Errorf("unsupported local layout version: %d", layout.Version)
 	}
 	paths := map[string]bool{"local-layout.json": true}
+	directories := make(map[string]bool)
+	entries := []filemetadata.Entry{{RelativePath: "local-layout.json", Type: "file"}}
 	for _, name := range layout.Metadata {
 		if name != "core-classpath.txt" && name != "fingerprint.txt" && name != "plugins/plugin-classpath.txt" {
 			return fmt.Errorf("unknown local metadata file: %s", name)
@@ -77,6 +84,7 @@ func materializeLocalHome(layoutFile, outputDir string, lookup func(string) (str
 			return fmt.Errorf("duplicate local path: %s", name)
 		}
 		paths[name] = true
+		entries = append(entries, filemetadata.Entry{RelativePath: name, Type: "file"})
 	}
 	for _, file := range layout.Files {
 		if err := validateLocalPath(file.Path); err != nil {
@@ -86,8 +94,23 @@ func materializeLocalHome(layoutFile, outputDir string, lookup func(string) (str
 			return fmt.Errorf("duplicate local path: %s", file.Path)
 		}
 		paths[file.Path] = true
+		if file.Kind == "directory" {
+			if file.Runfile != "" || file.SymlinkTarget != "" || file.Executable || file.Mode == nil || *file.Mode > 0777 {
+				return fmt.Errorf("invalid directory metadata for %s", file.Path)
+			}
+			directories[file.Path] = true
+			entries = append(entries, filemetadata.Entry{RelativePath: file.Path, Type: "directory", Mode: *file.Mode})
+			continue
+		}
+		if file.Kind != "" && file.Kind != "file" {
+			return fmt.Errorf("unknown local entry kind %q", file.Kind)
+		}
+		entries = append(entries, filemetadata.Entry{RelativePath: file.Path, Type: "file"})
 		if (file.Runfile == "") == (file.SymlinkTarget == "") {
 			return fmt.Errorf("%s requires exactly one runfile or symbolic link target", file.Path)
+		}
+		if file.Mode != nil && (*file.Mode > 0777 || (*file.Mode&0111 != 0) != file.Executable || file.SymlinkTarget != "") {
+			return fmt.Errorf("invalid mode metadata for %s", file.Path)
 		}
 		if file.Runfile != "" {
 			if err := validateLocalPath(file.Runfile); err != nil {
@@ -103,10 +126,22 @@ func materializeLocalHome(layoutFile, outputDir string, lookup func(string) (str
 	}
 	for name := range paths {
 		for parent := path.Dir(name); parent != "."; parent = path.Dir(parent) {
-			if paths[parent] {
+			if paths[parent] && !directories[parent] {
 				return fmt.Errorf("local path %s is below another entry: %s", name, parent)
 			}
 		}
+	}
+	if _, err := filemetadata.Merge(entries); err != nil {
+		return err
+	}
+	links := make(map[string]string)
+	for _, file := range layout.Files {
+		if file.SymlinkTarget != "" {
+			links[file.Path] = file.SymlinkTarget
+		}
+	}
+	if err := filemetadata.ValidateLinks(links); err != nil {
+		return err
 	}
 	if info, err := os.Lstat(outputDir); err == nil && !info.IsDir() {
 		return fmt.Errorf("the local home must be a directory: %s", outputDir)
@@ -121,6 +156,12 @@ func materializeLocalHome(layoutFile, outputDir string, lookup func(string) (str
 	}
 	for _, file := range layout.Files {
 		destination := filepath.Join(outputDir, filepath.FromSlash(file.Path))
+		if file.Kind == "directory" {
+			if err := os.MkdirAll(destination, 0755); err != nil {
+				return err
+			}
+			continue
+		}
 		if err := os.MkdirAll(filepath.Dir(destination), 0755); err != nil {
 			return err
 		}
@@ -145,8 +186,12 @@ func materializeLocalHome(layoutFile, outputDir string, lookup func(string) (str
 		if !info.Mode().IsRegular() {
 			return fmt.Errorf("the runfile for %s is not a regular file: %s", file.Path, source)
 		}
-		if file.Executable && info.Mode().Perm()&0111 == 0 {
-			err = copyLocalFile(source, destination, file.Executable)
+		exactMode := file.Mode
+		if exactMode != nil && (*exactMode == 0644 || *exactMode == 0755) {
+			exactMode = nil
+		}
+		if (exactMode != nil && uint32(info.Mode().Perm()) != *exactMode) || (file.Executable && info.Mode().Perm()&0111 == 0) {
+			err = copyLocalFile(source, destination, file.Executable, exactMode)
 		} else {
 			err = os.Symlink(source, destination)
 		}
@@ -159,8 +204,17 @@ func materializeLocalHome(layoutFile, outputDir string, lookup func(string) (str
 		if err := os.MkdirAll(filepath.Dir(destination), 0755); err != nil {
 			return err
 		}
-		if err := copyLocalFile(filepath.Join(filepath.Dir(layoutFile), filepath.FromSlash(name)), destination, false); err != nil {
+		if err := copyLocalFile(filepath.Join(filepath.Dir(layoutFile), filepath.FromSlash(name)), destination, false, nil); err != nil {
 			return err
+		}
+	}
+	ordered := slices.Clone(layout.Files)
+	slices.SortFunc(ordered, func(first, second localLayoutFile) int { return strings.Compare(second.Path, first.Path) })
+	for _, file := range ordered {
+		if file.Kind == "directory" {
+			if err := os.Chmod(filepath.Join(outputDir, filepath.FromSlash(file.Path)), os.FileMode(*file.Mode)); err != nil {
+				return err
+			}
 		}
 	}
 	return nil
@@ -178,7 +232,7 @@ func validateLocalPath(name string) error {
 	return nil
 }
 
-func copyLocalFile(source, destination string, executable bool) error {
+func copyLocalFile(source, destination string, executable bool, exactMode *uint32) error {
 	input, err := os.Open(source)
 	if err != nil {
 		return err
@@ -188,11 +242,17 @@ func copyLocalFile(source, destination string, executable bool) error {
 	if executable {
 		mode = 0755
 	}
+	if exactMode != nil {
+		mode = os.FileMode(*exactMode)
+	}
 	output, err := os.OpenFile(destination, os.O_CREATE|os.O_EXCL|os.O_WRONLY, mode)
 	if err != nil {
 		return err
 	}
 	_, copyError := io.Copy(output, input)
+	if copyError == nil && exactMode != nil {
+		copyError = output.Chmod(mode)
+	}
 	closeError := output.Close()
 	if copyError != nil {
 		return copyError

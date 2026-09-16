@@ -1,6 +1,5 @@
-load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_DESCRIPTORS", "MODULE_TARGETS")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `dev intellij.groovy.scripting` start
@@ -12,19 +11,27 @@ dev_dist_plugin(
         "intellij.libraries.ivy",
     ],
     descriptor = "resources/META-INF/plugin.xml",
-    descriptor_index = MODULE_DESCRIPTORS,
     descriptor_modules = [
         "intellij.libraries.groovy",
         "intellij.libraries.groovy.jsr223",
         "intellij.libraries.ivy",
     ],
-    libraries = [
-        "@lib//:libraries-groovy-groovy",
-        "@lib//:libraries-groovy-jsr223-groovy-jsr223",
-        "@lib//:libraries-ivy-ivy",
-    ],
+    jars = {
+        "lib/intellij.libraries.groovy.jar": [
+            "intellij.libraries.groovy",
+            "@lib//:libraries-groovy-groovy",
+        ],
+        "lib/intellij.libraries.groovy.jsr223.jar": [
+            "intellij.libraries.groovy.jsr223",
+            "@lib//:libraries-groovy-jsr223-groovy-jsr223",
+        ],
+        "lib/intellij.libraries.ivy.jar": [
+            "intellij.libraries.ivy",
+            "@lib//:libraries-ivy-ivy",
+        ],
+        "lib/groovy-scripting.jar": ["intellij.groovy.scripting"],
+    },
     main_module = "intellij.groovy.scripting",
-    module_targets = MODULE_TARGETS,
 )
 ### auto-generated section `dev intellij.groovy.scripting` end
 

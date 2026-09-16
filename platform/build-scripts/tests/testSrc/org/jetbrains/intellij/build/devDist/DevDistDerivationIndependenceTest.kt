@@ -4,7 +4,6 @@ package org.jetbrains.intellij.build.devDist
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import org.junit.jupiter.api.Test
-import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.extension
 import kotlin.io.path.readText
@@ -26,13 +25,13 @@ class DevDistDerivationIndependenceTest {
   @Test
   fun `the derivation does not call the placement code of the distribution build`() {
     val root = COMMUNITY_ROOT.communityRoot
-    val derivationDir = root.resolve(DERIVATION_DIR_UNDER_COMMUNITY)
-    // the directory may not exist yet, and an empty scan passes
-    val sources = if (Files.isDirectory(derivationDir)) {
-      derivationDir.walk().filter { it.extension == "kt" }.sorted().toList()
-    }
-    else {
-      emptyList()
+    val sources = listOf(
+      DERIVATION_DIR_UNDER_COMMUNITY,
+      "platform/build-scripts/plugin-preparation/src/devDist",
+    ).flatMap { directory ->
+      val derivationDir = root.resolve(directory)
+      assertThat(derivationDir).isDirectory()
+      derivationDir.walk().filter { it.extension == "kt" }.sorted().toList().also { assertThat(it).isNotEmpty() }
     }
 
     val violations = sources.flatMap { file -> findViolations(file, root) }

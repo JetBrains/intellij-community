@@ -1,20 +1,17 @@
-load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_TARGETS")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `dev intellij.editorconfig.plugin` start
 dev_dist_plugin(
-    content_modules = ["intellij.libraries.ec4j.core"],
-    libraries = ["@lib//:libraries-ec4j-core-ec4j-core"],
-    main_module = "intellij.editorconfig.plugin",
-    module_targets = MODULE_TARGETS,
-    prepacked_content_modules = [
+    content_modules = [
         # do not sort,
-        "intellij.editorconfig.backend.spellchecking",
-        "intellij.editorconfig.backend",
         "intellij.editorconfig.common",
         "intellij.editorconfig.frontend",
+        "intellij.editorconfig.backend",
+        "intellij.editorconfig.backend.spellchecking",
+        "intellij.libraries.ec4j.core",
     ],
+    main_module = "intellij.editorconfig.plugin",
 )
 ### auto-generated section `dev intellij.editorconfig.plugin` end
 

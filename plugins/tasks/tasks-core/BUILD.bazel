@@ -1,30 +1,47 @@
-load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_TARGETS")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `dev intellij.tasks.core` start
 dev_dist_plugin(
     content_modules = [
         # do not sort,
-        "intellij.tasks",
-        "intellij.tasks.compatibility",
-        "intellij.tasks.core.libraries.commonsDiscovery",
-    ],
-    libraries = [
-        "//plugins/tasks/tasks-core/lib:tasks-core-axis-1-4",
-        "@lib//:tasks-compatibility-http-client-3-1",
-        "@lib//:tasks-core-libraries-commons_discovery-commons-discovery",
-    ],
-    main_module = "intellij.tasks.core",
-    module_targets = MODULE_TARGETS,
-    prepacked_content_modules = [
-        # do not sort,
-        "intellij.libraries.xml.rpc",
+        "intellij.tasks.trac",
         "intellij.tasks.bugzilla",
         "intellij.tasks.jira",
-        "intellij.tasks.trac",
         "intellij.tasks.java",
+        "intellij.libraries.xml.rpc",
+        "intellij.tasks.core.libraries.commonsDiscovery",
+        "intellij.tasks",
+        "intellij.tasks.compatibility",
     ],
+    descriptor = "resources/META-INF/plugin.xml",
+    descriptor_modules = [
+        "intellij.libraries.xml.rpc",
+        "intellij.tasks.bugzilla",
+        "intellij.tasks.core.libraries.commonsDiscovery",
+        "intellij.tasks.java",
+        "intellij.tasks.jira",
+        "intellij.tasks.trac",
+    ],
+    directory_name = "tasks",
+    jars = {
+        "lib/modules/intellij.libraries.xml.rpc.jar": [
+            "intellij.libraries.xml.rpc",
+            "@lib//:libraries-xml-rpc-xml-rpc",
+        ],
+        "lib/intellij.tasks.core.libraries.commonsDiscovery.jar": [
+            "intellij.tasks.core.libraries.commonsDiscovery",
+            "@lib//:tasks-core-libraries-commons_discovery-commons-discovery",
+        ],
+        "lib/tasks-core.jar": [
+            "intellij.tasks.core",
+            "intellij.tasks",
+            "intellij.tasks.compatibility",
+        ],
+        "lib/http-client.jar": ["@lib//:tasks-compatibility-http-client-3-1"],
+        "lib/axis.jar": ["//plugins/tasks/tasks-core/lib:tasks-core-axis-1-4"],
+    },
+    main_module = "intellij.tasks.core",
 )
 ### auto-generated section `dev intellij.tasks.core` end
 

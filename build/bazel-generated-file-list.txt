@@ -713,6 +713,7 @@ platform/build-scripts/dev-server
 platform/build-scripts/downloader
 platform/build-scripts/icons
 platform/build-scripts/licenses
+platform/build-scripts/plugin-preparation
 platform/build-scripts/product-dsl
 platform/build-scripts/product-dsl/plugin-graph
 platform/build-scripts/testFramework

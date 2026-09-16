@@ -145,6 +145,7 @@ use_repo(
     "dev_launch_libwebp",
     "dev_launch_maven",
     "dev_launch_restarter",
+    "dev_launch_restarter_extracted",
 )
 
 [use_repo(
@@ -203,8 +204,11 @@ go_sdk.download(version = "1.27.0")
 
 # XXH3-64 keys the `__index__` of every jar the packer writes, and it has to be the reference algorithm bit for bit or
 # those jars differ from the ones `JarPackager` produces - which is what the 2 050 reference vectors in
-# //build/content-module-packer/internal/xxh3 hold it to. cpuid is its only dependency, for runtime CPU dispatch, and
-# both versions come from the packer's `go.mod`, which is also what the IDE and a plain `go build` read.
+# //build/content-module-packer/internal/xxh3 hold it to. cpuid is its only dependency, for runtime CPU dispatch.
+# klauspost/compress supplies the zstd decoder of the `.zip.zst` layout reader in
+# //build/content-module-packer/internal/pluginpack and its test. It is pure Go. plugin-remainder-packer and
+# dev-dist-collector link it through pluginpack. content-module-packer does not, so the frozen packer binary is
+# unchanged. Every version comes from the packer's `go.mod`, which is also what the IDE and a plain `go build` read.
 go_deps = use_extension("@gazelle//:extensions.bzl", "go_deps")
 go_deps.from_file(go_mod = "//build/content-module-packer:go.mod")
 
@@ -328,8 +332,10 @@ go_deps.module(
 )
 use_repo(
     go_deps,
+    "com_github_klauspost_compress",
     "com_github_kunchenguid_treehouse",
     "com_github_zeebo_xxh3",
+    "org_golang_x_text",
 )
 
 include("//:fleet/kmp.MODULE.bazel")

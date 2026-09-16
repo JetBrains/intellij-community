@@ -24,8 +24,19 @@ class PluginJarDerivationTest {
     // The closure decides which of the two lists a member reaches, the same split an offered jar takes.
     assertThat(jar.modules).containsExactly("intellij.demo.rt")
     assertThat(jar.contentModules).containsExactly("intellij.demo.core")
-    assertThat(jar.isHandedOver).isFalse()
     assertThat(derived.single { it.isMainJar }.modules).containsExactly("intellij.demo")
+  }
+
+  @Test
+  fun `a custom jar uses the source layout order`() {
+    val derived = derive(
+      memberNames = listOf("intellij.demo.a", "intellij.demo.b"),
+      memberJars = mapOf("intellij.demo.a" to setOf("shared.jar"), "intellij.demo.b" to setOf("shared.jar")),
+      layoutJarMembers = mapOf("shared.jar" to listOf("intellij.demo.b", "intellij.demo.a")),
+    )
+
+    assertThat(derived.single { it.relativeOutputFile == "shared.jar" }.members)
+      .containsExactly("intellij.demo.b", "intellij.demo.a")
   }
 
   @Test
@@ -37,8 +48,6 @@ class PluginJarDerivationTest {
       derivedJars = mapOf("intellij.demo.aia" to "modules/intellij.demo.aia.jar"),
       memberJars = mapOf("intellij.demo.mcp" to setOf("modules/intellij.demo.aia.jar")),
       closureMembers = setOf("intellij.demo.aia"),
-      handedOverMembers = setOf("intellij.demo.aia"),
-      memberLibraries = mapOf("intellij.demo.aia" to setOf("alpha"), "intellij.demo.mcp" to setOf("beta")),
     )
 
     assertThat(derived.map { it.relativeOutputFile }).containsExactly("modules/intellij.demo.aia.jar", "demo.jar")
@@ -47,20 +56,6 @@ class PluginJarDerivationTest {
     assertThat(jar.members).containsExactly("intellij.demo.aia", "intellij.demo.mcp")
     assertThat(jar.contentModules).containsExactly("intellij.demo.aia")
     assertThat(jar.modules).containsExactly("intellij.demo.mcp")
-    // The member's own packing target cannot pack the layout member, so the member channel hands nothing over.
-    assertThat(jar.isHandedOver).isFalse()
-    assertThat(jar.libraries).isNull()
-
-    val handedOver = derive(
-      memberNames = listOf("intellij.demo.aia", "intellij.demo.mcp"),
-      derivedJars = mapOf("intellij.demo.aia" to "modules/intellij.demo.aia.jar"),
-      memberJars = mapOf("intellij.demo.mcp" to setOf("modules/intellij.demo.aia.jar")),
-      closureMembers = setOf("intellij.demo.aia"),
-      handedOverJars = setOf("modules/intellij.demo.aia.jar"),
-      memberLibraries = mapOf("intellij.demo.aia" to setOf("beta"), "intellij.demo.mcp" to setOf("alpha")),
-    ).single { !it.isMainJar }
-    assertThat(handedOver.isHandedOver).isTrue()
-    assertThat(handedOver.libraries).containsExactly("alpha", "beta")
   }
 
   @Test
@@ -153,35 +148,16 @@ class PluginJarDerivationTest {
   }
 
   @Test
-  fun `a jar the layout names reads its own destination, and never its members`() {
-    // The plugin's own packing target packs such a jar, and that target states a destination. The members answer
-    // another question, and the two answers differ for the case below.
-    val members = listOf(MEMBER, "intellij.demo.extra")
-    val statedJar = mapOf(MEMBER to setOf("rt/demo-rt.jar"), "intellij.demo.extra" to setOf("rt/demo-rt.jar"))
-
-    assertThat(derive(memberNames = members, memberJars = statedJar).single { !it.isMainJar }.isHandedOver).isFalse()
-    // Every member handed over through the member channel, and no target of this plugin.
-    assertThat(
-      derive(memberNames = members, memberJars = statedJar, handedOverMembers = members.toSet())
-        .single { !it.isMainJar }.isHandedOver
-    ).isFalse()
-    assertThat(
-      derive(memberNames = members, memberJars = statedJar, handedOverJars = setOf("rt/demo-rt.jar"))
-        .single { !it.isMainJar }.isHandedOver
-    ).isTrue()
-  }
-
-  @Test
-  fun `a member of two jars the layout names moves both jars and keeps its declaration`() {
+  fun `a member of two jars the layout names keeps both jars`() {
     // `intellij.maven.server.telemetry` is the case: the residue gives it two nested jars.
     val statedJars = mapOf(MEMBER to setOf("server3/telemetry.jar", "server4/telemetry.jar"))
     val jars = derive(
       memberNames = listOf(MEMBER),
       memberJars = statedJars,
-      handedOverJars = setOf("server3/telemetry.jar", "server4/telemetry.jar"),
     )
 
-    assertThat(jars.filter { !it.isMainJar }.map { it.isHandedOver }).containsExactly(true, true)
+    assertThat(jars.filter { !it.isMainJar }.map { it.relativeOutputFile })
+      .containsExactly("server3/telemetry.jar", "server4/telemetry.jar")
     // The residue states the member's whole jar set and no row of it names the main jar, so the main jar holds the
     // plugin's own module alone.
     assertThat(jars.single { it.isMainJar }.members).containsExactly("intellij.demo")
@@ -216,36 +192,6 @@ class PluginJarDerivationTest {
     val coPacked = derive(memberNames = listOf(MEMBER), derivedJars = mapOf(MEMBER to "demo.jar"), closureMembers = setOf(MEMBER), mainModuleJar = "intellij.demo.jar")
     assertThat(coPacked.map { it.relativeOutputFile }).containsExactly("intellij.demo.jar", "demo.jar")
     assertThat(coPacked.single { it.isMainJar }.members).containsExactly(MEMBER)
-  }
-
-  @Test
-  fun `a handed-over jar states the union of its members' libraries and an unknown set states none`() {
-    val known = derive(
-      memberNames = listOf(MEMBER),
-      derivedJars = mapOf(MEMBER to "modules/$MEMBER.jar"),
-      closureMembers = setOf(MEMBER),
-      handedOverMembers = setOf(MEMBER),
-      memberLibraries = mapOf(MEMBER to setOf("beta", "alpha")),
-    )
-    assertThat(known.single { !it.isMainJar }.libraries).containsExactly("alpha", "beta")
-
-    val unknown = derive(
-      memberNames = listOf(MEMBER),
-      derivedJars = mapOf(MEMBER to "modules/$MEMBER.jar"),
-      closureMembers = setOf(MEMBER),
-      handedOverMembers = setOf(MEMBER),
-      memberLibraries = mapOf(MEMBER to null),
-    )
-    assertThat(unknown.single { !it.isMainJar }.libraries).isNull()
-
-    // A jar no packing target packs states no library set, whatever the members declare.
-    val kept = derive(
-      memberNames = listOf(MEMBER),
-      derivedJars = mapOf(MEMBER to "modules/$MEMBER.jar"),
-      closureMembers = setOf(MEMBER),
-      memberLibraries = mapOf(MEMBER to setOf("alpha")),
-    )
-    assertThat(kept.single { !it.isMainJar }.libraries).isNull()
   }
 
   @Test
@@ -299,22 +245,18 @@ class PluginJarDerivationTest {
     memberJars: Map<String, Set<String>> = emptyMap(),
     derivedJars: Map<String, String> = emptyMap(),
     closureMembers: Set<String> = emptySet(),
-    handedOverMembers: Set<String> = emptySet(),
-    handedOverJars: Set<String> = emptySet(),
-    memberLibraries: Map<String, Set<String>?> = emptyMap(),
     mainModuleJar: String? = null,
+    layoutJarMembers: Map<String, List<String>> = emptyMap(),
   ): List<DerivedPluginJar> = composeDerivedPluginJars(
     libDir = "plugins/demo/lib/",
     mainJarName = "demo.jar",
     mainModule = "intellij.demo",
     memberNames = memberNames,
     derivedJars = derivedJars,
-    handedOverMembers = handedOverMembers,
     closureMembers = closureMembers,
     memberJars = memberJars,
-    handedOverJars = handedOverJars,
-    memberLibraries = memberLibraries,
     mainModuleJar = mainModuleJar,
+    layoutJarMembers = layoutJarMembers,
   )
 
   /** [deriveMemberJar] for [MEMBER] under the demo plugin's `demo.jar`. */

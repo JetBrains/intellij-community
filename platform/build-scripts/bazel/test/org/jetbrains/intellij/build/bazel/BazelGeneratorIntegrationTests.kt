@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build.bazel
 
 import org.assertj.core.api.JUnitSoftAssertions
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -57,6 +58,175 @@ class BazelGeneratorIntegrationTests {
 
   @Test fun ijPluginTarget() = doTest("ij-plugin-target")
   @Test fun ijPluginTargetWithNonClasspathData() = doTest("ij-plugin-target-with-non-classpath-data", allowBuildBazelFilesInTestDataProject = true)
+
+  @Test
+  fun `modules in the same package do not generate BUILD metadata`() {
+    val projectDir = createMetadataProject()
+    addMetadataModule(projectDir, "module", "intellij.second")
+    generateMetadataProject(projectDir)
+
+    val buildFile = projectDir.resolve("module/BUILD.bazel")
+    val firstContent = buildFile.readText()
+    softly.assertThat(firstContent)
+      .contains("### auto-generated section `iml intellij.module` start")
+      .contains("### auto-generated section `iml intellij.second` start")
+    val targets = projectDir.resolve("build/bazel-targets.json").readText()
+
+    generateMetadataProject(projectDir)
+    assertEquals(firstContent, buildFile.readText())
+    assertEquals(targets, projectDir.resolve("build/bazel-targets.json").readText())
+    if (softly.wasSuccess()) projectDir.deleteRecursively()
+  }
+
+  @Test
+  fun `skipped compilation and source exports do not generate BUILD metadata`() {
+    val projectDir = createMetadataProject()
+    val buildFile = projectDir.resolve("module/BUILD.bazel")
+    val handwritten = """
+      ### skip generation section `build intellij.module`
+      ### skip generation section `iml intellij.module`
+      ### skip generation section `test intellij.module`
+      exports_files(["BUILD.bazel"], visibility = ["//allowed:__pkg__"])
+      filegroup(name = "module", srcs = ["module.jar"])
+    """.trimIndent()
+    buildFile.writeText(handwritten + "\n")
+
+    generateMetadataProject(projectDir)
+
+    assertEquals(handwritten + "\n", buildFile.readText())
+    projectDir.deleteRecursively()
+  }
+
+  @Test
+  fun `community ultimate and nested package labels do not need BUILD metadata`() {
+    val projectDir = Files.createTempDirectory("build-metadata-ultimate")
+    projectDir.resolve(".ultimate.root.marker").writeText("")
+    projectDir.resolve("build/dev_server_run_configurations.bzl").createParentDirectories().writeText("def dev_server_run_configurations():\n    pass\n")
+    val communityDir = projectDir.resolve("community")
+    getTestDataPath("MRI-4552").resolve("project").copyToRecursively(communityDir, followLinks = true, overwrite = false)
+    communityDir.resolve(".idea").copyToRecursively(projectDir.resolve(".idea"), followLinks = true, overwrite = false)
+    communityDir.resolve("module").copyToRecursively(projectDir.resolve("module"), followLinks = true, overwrite = false)
+    val modulesFile = projectDir.resolve(".idea/modules.xml")
+    modulesFile.writeText(modulesFile.readText().replace("\$/module/", "\$/community/module/"))
+    projectDir.resolve("module/intellij.module.iml").deleteExisting()
+    addMetadataModule(projectDir, "module", "intellij.ultimate.module", communityDir)
+    val standaloneModules = listOf(
+      "community/platform/build-scripts/bazel" to "intellij.platform.buildScripts.bazel",
+      "community/build/jvm-rules/jvm-inc-builder" to "intellij.tools.build.bazel.jvmIncBuilder",
+      "community/build/jvm-rules/jvm-inc-builder" to "intellij.tools.build.bazel.jvmIncBuilderTests",
+    )
+    for ((directory, moduleName) in standaloneModules) {
+      addMetadataModule(projectDir, directory, moduleName, communityDir)
+      projectDir.resolve("$directory/BUILD.bazel").writeText("filegroup(name = \"handwritten\")\n")
+    }
+
+    generateMetadataProject(projectDir, communityOnly = false)
+
+    val index = projectDir.resolve("build/bazel-targets.json").readText()
+    softly.assertThat(index)
+      .contains("@community//module:intellij.module.iml")
+      .contains("//module:intellij.ultimate.module.iml")
+      .contains("@jps_to_bazel//:intellij.platform.buildScripts.bazel.iml")
+      .contains("@rules_jvm//jvm-inc-builder:intellij.tools.build.bazel.jvmIncBuilder.iml")
+    val generatedFileList = communityDir.resolve(BAZEL_GENERATED_FILE_LIST_RELATIVE_PATH).readText()
+    for (directory in standaloneModules.map { it.first }.distinct()) {
+      assertEquals("filegroup(name = \"handwritten\")\n", projectDir.resolve("$directory/BUILD.bazel").readText())
+      softly.assertThat(generatedFileList).doesNotContain(directory.removePrefix("community/"))
+    }
+    softly.assertThat(communityDir.resolve("module/BUILD.bazel").readText()).contains("### auto-generated section `iml intellij.module` start")
+    softly.assertThat(projectDir.resolve("module/BUILD.bazel").readText()).contains("### auto-generated section `iml intellij.ultimate.module` start")
+    if (softly.wasSuccess()) projectDir.deleteRecursively()
+  }
+
+  @Test
+  fun `missing skipped module owner is rejected before saving`() {
+    val projectDir = createMetadataProject()
+    addMetadataModule(projectDir, "platform/build-scripts/bazel", "intellij.platform.buildScripts.bazel")
+    val exception = assertThrows(IllegalStateException::class.java) {
+      generateMetadataProject(projectDir)
+    }
+    softly.assertThat(exception.message)
+      .contains("Missing original BUILD.bazel owner for skipped module intellij.platform.buildScripts.bazel")
+      .contains(projectDir.resolve("platform/build-scripts/bazel/BUILD.bazel").toString())
+    assertTrue("The generator must not save module files when a skipped owner is missing", !Files.exists(projectDir.resolve("module/BUILD.bazel")))
+    if (softly.wasSuccess()) projectDir.deleteRecursively()
+  }
+
+  @Test
+  fun `BUILD cleanup retains a skipped owner from a stale manifest`() {
+    val projectDir = createMetadataProject()
+    val directory = "platform/build-scripts/bazel"
+    addMetadataModule(projectDir, directory, "intellij.platform.buildScripts.bazel")
+    val owner = projectDir.resolve("$directory/BUILD.bazel")
+    owner.writeText("filegroup(name = \"handwritten\")\n")
+    repeat(3) {
+      generateMetadataProject(projectDir)
+      assertEquals("filegroup(name = \"handwritten\")\n", owner.readText())
+    }
+
+    val obsoleteOwner = projectDir.resolve("obsolete/BUILD.bazel")
+    obsoleteOwner.createParentDirectories().writeText("filegroup(name = \"obsolete\")\n")
+    val manifest = projectDir.resolve(BAZEL_GENERATED_FILE_LIST_RELATIVE_PATH)
+    manifest.writeText("module\n$directory\nobsolete\n")
+    repeat(2) {
+      generateMetadataProject(projectDir)
+      assertEquals("filegroup(name = \"handwritten\")\n", owner.readText())
+      assertEquals("module", manifest.readText())
+      assertTrue("The generator must still delete an obsolete owner", !Files.exists(obsoleteOwner))
+    }
+    projectDir.deleteRecursively()
+  }
+
+  @Test
+  fun `BUILD cleanup retains an owner that changes from generated to skipped`() {
+    val projectDir = createMetadataProject()
+    generateMetadataProject(projectDir)
+    val owner = projectDir.resolve("module/BUILD.bazel")
+    val original = owner.readText()
+    val manifest = projectDir.resolve(BAZEL_GENERATED_FILE_LIST_RELATIVE_PATH)
+    assertEquals("module", manifest.readText())
+
+    val newName = "intellij.platform.buildScripts.bazel.iml"
+    projectDir.resolve("module/intellij.module.iml").moveTo(projectDir.resolve("module/$newName"))
+    val modules = projectDir.resolve(".idea/modules.xml")
+    modules.writeText(modules.readText().replace("intellij.module.iml", newName))
+    repeat(2) {
+      generateMetadataProject(projectDir)
+      assertEquals(original, owner.readText())
+      assertEquals("", manifest.readText())
+    }
+    projectDir.deleteRecursively()
+  }
+
+  private fun createMetadataProject(): Path {
+    val projectDir = Files.createTempDirectory("build-metadata")
+    getTestDataPath("MRI-4552").resolve("project").copyToRecursively(projectDir, followLinks = true, overwrite = false)
+    return projectDir
+  }
+
+  private fun addMetadataModule(projectDir: Path, directory: String, moduleName: String, templateDir: Path = projectDir) {
+    val relativePath = "$directory/$moduleName.iml"
+    projectDir.resolve(relativePath).createParentDirectories().writeText(templateDir.resolve("module/intellij.module.iml").readText())
+    val modulesFile = projectDir.resolve(".idea/modules.xml")
+    val entry = "<module fileurl=\"file://\$PROJECT_DIR\$/$relativePath\" filepath=\"\$PROJECT_DIR\$/$relativePath\" />"
+    modulesFile.writeText(modulesFile.readText().replace("</modules>", "$entry\n    </modules>"))
+  }
+
+  private fun generateMetadataProject(projectDir: Path, communityOnly: Boolean = true) {
+    JpsModuleToBazel.main(
+      arrayOf(
+        "--workspace_directory=$projectDir",
+        "--run_without_ultimate_root=$communityOnly",
+        "--default-custom-modules=false",
+        "--m2-repo=${projectDir.resolve("m2-repo")}",
+      )
+    )
+    for (buildFile in projectDir.walk().filter { it.name == "BUILD.bazel" }) {
+      softly.assertThat(buildFile.readText())
+        .describedAs("No BUILD metadata helper or section in $buildFile")
+        .doesNotContain("jps_model_build_file", "### auto-generated section `jps model build file`")
+    }
+  }
 
   /**
    * The content modules of an `ij_plugin` plugin, with and without module libraries to pack.

@@ -1,29 +1,22 @@
 load("@community//build:tests-options.bzl", "jps_test")
-load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_TARGETS")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `dev intellij.vcs.git` start
 dev_dist_plugin(
-    content_modules = ["intellij.vcs.git.backend"],
-    jars = {
-        "git4idea-rt.jar": {
-            "modules": ["intellij.vcs.git.rt"],
-        },
-    },
-    libraries = ["@lib//:cucumber-testing"],
-    main_module = "intellij.vcs.git",
-    module_targets = MODULE_TARGETS,
-    prepacked_content_modules = [
+    content_modules = [
         # do not sort,
-        "intellij.vcs.git.frontend",
-        "intellij.vcs.git.coverage",
+        "intellij.vcs.git.backend",
         "intellij.vcs.git.localHistory",
-        "intellij.vcs.git.performanceTesting",
-        "intellij.vcs.git.shared",
         "intellij.vcs.git.terminal",
+        "intellij.vcs.git.coverage",
+        "intellij.vcs.git.shared",
+        "intellij.vcs.git.frontend",
+        "intellij.vcs.git.performanceTesting",
+        "intellij.vcs.git.rt",
     ],
+    main_module = "intellij.vcs.git",
 )
 ### auto-generated section `dev intellij.vcs.git` end
 

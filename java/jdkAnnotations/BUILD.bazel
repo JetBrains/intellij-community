@@ -1,17 +1,16 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
-# The IDE plugin layout copies this checkout directory into a distribution verbatim (`withResourceArchive`).
-# It is resolved against the module content root, so a dev assembly that materializes its own project tree
-# has to declare it. Consumed through `ULTIMATE_EXTRA_PROJECT_FILES` and through `//java:mockJDK` for tests.
-filegroup(
-    name = "dev_dist_resources",
-    srcs = glob(["resources/**"]),
-    visibility = ["//visibility:public"],
-)
-
 ### auto-generated section `dev intellij.java.jdkAnnotations` start
 content_module_jar(module = ":jdkAnnotations")
+
+filegroup(
+    name = "dev_dist_resources",
+    srcs = glob(
+        ["resources/**"],
+    ),
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `dev intellij.java.jdkAnnotations` end
 
 ### auto-generated section `build intellij.java.jdkAnnotations` start

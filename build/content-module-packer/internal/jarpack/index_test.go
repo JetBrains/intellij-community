@@ -80,3 +80,17 @@ func TestPayloadSizeMatchesWhatPayloadWrites(t *testing.T) {
 		t.Errorf("payload is %d bytes, payloadSize says %d", got, want)
 	}
 }
+
+func TestAllDirectoriesIncludeClassAncestorsInJavaOrder(t *testing.T) {
+	builder := newIndexBuilder()
+	builder.directoryMode = DirectoriesAll
+	for _, name := range []string{"z/\ufffd/Value.class", "z/\U00010437/Value.class", "META-INF/MANIFEST.MF", "ignored/package.html"} {
+		builder.addFile(name)
+	}
+	if got := strings.Join(builder.sortedDirectories(), ","); got != "z,z/\U00010437,z/\ufffd" {
+		t.Fatalf("class directory order is %q", got)
+	}
+	if _, exists := builder.resourcePackages[0]; !exists {
+		t.Fatal("missing root resource package")
+	}
+}

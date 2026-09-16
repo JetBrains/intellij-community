@@ -1,39 +1,28 @@
-load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_TARGETS")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
-# Checkout directories that plugin layouts copy into a distribution verbatim (`withResource*`). They are
-# resolved against the module content root and exist in no jar, so a dev assembly that materializes its own
-# project tree has to declare them. Consumed through `ULTIMATE_EXTRA_PROJECT_FILES`.
+### auto-generated section `dev intellij.terminal` start
 filegroup(
     name = "dev_dist_resources",
-    srcs = glob(["resources/shell-integrations/**"]),
+    srcs = glob(
+        ["resources/shell-integrations/**"],
+    ),
     visibility = ["//visibility:public"],
 )
 
-### auto-generated section `dev intellij.terminal` start
 dev_dist_plugin(
     content_modules = [
         # do not sort,
-        "intellij.libraries.completion.ranking.sh",
-        "intellij.terminal.completion",
-        "intellij.terminal.libraries.completionDbWithExtensions",
-    ],
-    libraries = [
-        "@lib//:libraries-completion-ranking-sh-completion-ranking-sh",
-        "@lib//:terminal-completion-terminal-completion-spec",
-        "@lib//:terminal-libraries-completion_db_with_extensions-terminal-completion-db-with-extensions",
-    ],
-    main_module = "intellij.terminal",
-    module_targets = MODULE_TARGETS,
-    prepacked_content_modules = [
-        # do not sort,
         "intellij.terminal.backend",
-        "intellij.terminal.cloud",
         "intellij.terminal.emulator",
         "intellij.terminal.frontend",
+        "intellij.terminal.cloud",
         "intellij.terminal.sh",
+        "intellij.libraries.completion.ranking.sh",
+        "intellij.terminal.libraries.completionDbWithExtensions",
+        "intellij.terminal.completion",
     ],
+    main_module = "intellij.terminal",
 )
 ### auto-generated section `dev intellij.terminal` end
 

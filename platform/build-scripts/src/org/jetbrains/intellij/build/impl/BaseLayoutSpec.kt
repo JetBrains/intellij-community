@@ -88,6 +88,10 @@ sealed class BaseLayoutSpec(private val layout: BaseLayout) {
     layout.withProjectLibrary(libraryName, jarName)
   }
 
+  fun withPatch(patcher: LayoutPatcher) {
+    layout.withPatch(patcher)
+  }
+
   fun withPatch(patcher: (ModuleOutputPatcher, BuildContext) -> Unit) {
     layout.withPatch { moduleOutputPatcher, _, buildContext -> patcher(moduleOutputPatcher, buildContext) }
   }

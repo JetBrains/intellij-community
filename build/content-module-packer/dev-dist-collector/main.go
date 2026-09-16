@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 	"runtime"
 	"strings"
 
@@ -12,16 +11,19 @@ import (
 )
 
 type options struct {
-	manifest       string
-	kind           string
-	platformPrefix string
-	os             string
-	arch           string
-	jarsFile       string
-	pluginJarsFile string
-	placements     []string
-	filesFile      string
-	traceFile      string
+	manifest          string
+	kind              string
+	platformPrefix    string
+	os                string
+	arch              string
+	jarsFile          string
+	filesFile         string
+	traceFile         string
+	metadataCatalogue string
+	pluginComponent   string
+	pluginClasspath   string
+	// platformNeutral leaves the manifest's os and arch empty: the component fits every target platform.
+	platformNeutral bool
 }
 
 func main() {
@@ -36,6 +38,9 @@ func run(args []string, output, errors io.Writer) (exitCode int) {
 	if err != nil {
 		fmt.Fprintf(errors, "ERROR: %v\n", err)
 		return 2
+	}
+	if opts.pluginComponent != "" {
+		return runPluginComponent(opts, output, errors)
 	}
 	jobName := "collect packed jars"
 	if opts.filesFile != "" {
@@ -71,18 +76,21 @@ func run(args []string, output, errors io.Writer) (exitCode int) {
 	return 0
 }
 
-func parseOptions(args []string) (options, error) {
-	var opts options
+func parseOptions(args []string) (opts options, err error) {
+	var platformNeutral string
 	singles := map[string]*string{
-		"--component-manifest": &opts.manifest,
-		"--kind":               &opts.kind,
-		"--platform-prefix":    &opts.platformPrefix,
-		"--os":                 &opts.os,
-		"--arch":               &opts.arch,
-		"--jars-file":          &opts.jarsFile,
-		"--plugin-jars-file":   &opts.pluginJarsFile,
-		"--files-file":         &opts.filesFile,
-		"--trace-file":         &opts.traceFile,
+		"--platform-neutral":      &platformNeutral,
+		"--component-manifest":    &opts.manifest,
+		"--kind":                  &opts.kind,
+		"--platform-prefix":       &opts.platformPrefix,
+		"--os":                    &opts.os,
+		"--arch":                  &opts.arch,
+		"--jars-file":             &opts.jarsFile,
+		"--files-file":            &opts.filesFile,
+		"--trace-file":            &opts.traceFile,
+		"--metadata-catalogue":    &opts.metadataCatalogue,
+		"--plugin-component":      &opts.pluginComponent,
+		"--plugin-classpath-part": &opts.pluginClasspath,
 	}
 	seen := make(map[string]bool)
 	for _, arg := range args {
@@ -92,12 +100,6 @@ func parseOptions(args []string) (options, error) {
 		name, value, hasValue := strings.Cut(arg, "=")
 		if !hasValue {
 			value = "true"
-		}
-		if name == "--plugin-placement" {
-			if value != "" {
-				opts.placements = append(opts.placements, value)
-			}
-			continue
 		}
 		destination, known := singles[name]
 		if !known {
@@ -115,16 +117,32 @@ func parseOptions(args []string) (options, error) {
 		}
 	}
 	modes := 0
-	for _, file := range []string{opts.jarsFile, opts.pluginJarsFile, opts.filesFile} {
+	for _, file := range []string{opts.jarsFile, opts.filesFile, opts.pluginComponent} {
 		if file != "" {
 			modes++
 		}
 	}
 	if modes != 1 {
-		return opts, fmt.Errorf("exactly one of --jars-file, --plugin-jars-file and --files-file is required")
+		return opts, fmt.Errorf("exactly one of --jars-file, --files-file and --plugin-component is required")
 	}
-	if opts.pluginJarsFile == "" && len(opts.placements) != 0 {
-		return opts, fmt.Errorf("--plugin-placement is only valid with --plugin-jars-file")
+	if (opts.pluginComponent != "") != (opts.pluginClasspath != "") {
+		return opts, fmt.Errorf("--plugin-component and --plugin-classpath-part are required together")
+	}
+	if opts.pluginComponent != "" && opts.metadataCatalogue != "" {
+		return opts, fmt.Errorf("--plugin-component cannot use --metadata-catalogue")
+	}
+	switch platformNeutral {
+	case "", "false":
+	case "true":
+		opts.platformNeutral = true
+	default:
+		return opts, fmt.Errorf("--platform-neutral accepts only true or false, but got %q", platformNeutral)
+	}
+	if opts.platformNeutral {
+		if opts.os != "" || opts.arch != "" {
+			return opts, fmt.Errorf("--platform-neutral cannot be combined with --os or --arch")
+		}
+		return opts, nil
 	}
 	if opts.os == "" {
 		opts.os = runtime.GOOS
@@ -153,7 +171,5 @@ func parseOptions(args []string) (options, error) {
 	default:
 		return opts, fmt.Errorf("unknown --arch value %q, expected one of x64, aarch64", opts.arch)
 	}
-	var err error
-	opts.manifest, err = filepath.Abs(opts.manifest)
-	return opts, err
+	return opts, nil
 }

@@ -235,6 +235,7 @@ private fun layoutShared(context: BuildContext) {
       Files.copy(from, to, StandardCopyOption.REPLACE_EXISTING)
     }
     context.productProperties.copyAdditionalFiles(context.paths.distAllDir, context)
+    registerPlatformDistFiles(context.distributionState().platformLayout, context)
     context.productProperties.registerDistFiles(context)
   }
   checkClassFiles(root = context.paths.distAllDir, isDistAll = true, context)
@@ -1201,6 +1202,41 @@ internal fun setLastModifiedTime(directory: Path, context: BuildContext) {
         return FileVisitResult.CONTINUE
       }
     })
+  }
+}
+
+/**
+ * Registers the dist files the platform layout declares with a [PlatformDistFilePlacement.RegisteredDistFiles]
+ * placement, once per declaration and in declaration order. Production packaging and a complete dev build call it
+ * before they copy dist files. A split fragment does not: its distribution gets the same files from the component
+ * the dev-distribution plan derives from the declarations.
+ */
+internal fun registerPlatformDistFiles(platformLayout: PlatformLayout, context: BuildContext) {
+  for (declarations in platformLayout.distFileDeclarations.values) {
+    for (declaration in declarations) {
+      val placement = declaration.placement as? PlatformDistFilePlacement.RegisteredDistFiles ?: continue
+      for (file in placement.distFiles(context)) {
+        context.addDistFile(file)
+      }
+    }
+  }
+}
+
+/**
+ * Copies the files the platform layout declares with a [PlatformDistFilePlacement.OsSpecificFiles] placement for
+ * [os] and [arch] into [distributionDir], and returns the files it wrote. The OS builders call it beside their `bin`
+ * copy in production; a complete dev build calls it through [OsSpecificDistributionBuilder.copyDeclaredOsSpecificFiles].
+ */
+internal fun copyDeclaredOsSpecificFiles(
+  platformLayout: PlatformLayout,
+  distributionDir: Path,
+  os: OsFamily,
+  arch: JvmArchitecture,
+  context: BuildContext,
+): List<Path> {
+  val declarations = platformLayout.distFileDeclarations[os to arch] ?: return emptyList()
+  return declarations.flatMap { declaration ->
+    (declaration.placement as? PlatformDistFilePlacement.OsSpecificFiles)?.copy?.invoke(distributionDir, context) ?: emptyList()
   }
 }
 

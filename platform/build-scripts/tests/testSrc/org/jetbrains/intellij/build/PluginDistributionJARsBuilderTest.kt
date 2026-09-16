@@ -22,7 +22,9 @@ class PluginDistributionJARsBuilderTest {
           error("Source layout must not register distribution files")
         }
       }
-      properties.ijentDistributionRegistrar = { error("Source layout must not register IJent files") }
+      properties.productLayout.addPlatformSpec { layout ->
+        layout.withDistFiles(OsFamily.LINUX, JvmArchitecture.x64, testDistFileSpec("guard")) { error("Source layout must not register dist files") }
+      }
       val context = createBuildContext(COMMUNITY_ROOT.communityRoot, properties, lifetime = lifetime)
 
       val layout = createPlatformLayout(productProperties = properties, outputProvider = context.outputProvider)

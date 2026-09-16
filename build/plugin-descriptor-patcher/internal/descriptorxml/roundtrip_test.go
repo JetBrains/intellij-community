@@ -12,9 +12,9 @@ import (
 // The curated round-trip cases: one construct each, and every expectation is the text the platform wrote.
 //
 // Every `want` below was produced by `JDOMUtil.write(JDOMUtil.load(source))` on a real classpath, not by reading this
-// port's own output back. `internal/stamps/population_test.go` proves the same pair over a whole product's 163
-// descriptors, and these cases say which rule each byte comes from so that a failure names the rule rather than a
-// plugin.
+// port's own output back. `./build/dev-dist.cmd snapshot diff` guards the population: it compares every plugin main
+// jar of a composed distribution against a baseline. These cases say which rule each byte comes from, so that a
+// failure names the rule rather than a plugin.
 func TestTheRoundTripReproducesTheSerializer(t *testing.T) {
 	cases := []struct {
 		name   string

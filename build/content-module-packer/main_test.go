@@ -8,9 +8,12 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strconv"
 	"strings"
 	"testing"
+
+	"jetbrains.com/content-module-packer/internal/filemetadata"
 )
 
 // These cover the argument surface and the one output that is not a jar. The jars themselves are gated in
@@ -94,6 +97,188 @@ func TestARunWithoutATraceFileWritesOnlyItsJar(t *testing.T) {
 	}
 	if len(entries) != 1 || entries[0].Name() != "example.jar" {
 		t.Errorf("the output directory holds %v, want the jar alone", entries)
+	}
+}
+
+func TestPackingProducesMetadataOutsideThePayload(t *testing.T) {
+	baseDir := packOneJar(t, "metadata-file=example.metadata.json\n")
+	var out strings.Builder
+	if code := pack(context.Background(), []string{"--flagfile=" + filepath.Join(baseDir, "recipe.txt")}, baseDir, &out); code != 0 {
+		t.Fatalf("exit %d: %s", code, out.String())
+	}
+	entries, err := filemetadata.Read(filepath.Join(baseDir, "example.metadata.json"))
+	if err != nil || len(entries) != 1 || entries[0].RelativePath != "example.jar" {
+		t.Fatalf("entries = %#v, error = %v", entries, err)
+	}
+	expected, err := filemetadata.Inspect(filepath.Join(baseDir, "out/example.jar"), "example.jar")
+	if err != nil || entries[0] != expected {
+		t.Fatalf("metadata = %#v, expected %#v, error = %v", entries[0], expected, err)
+	}
+	files, err := os.ReadDir(filepath.Join(baseDir, "out"))
+	if err != nil || len(files) != 1 || files[0].Name() != "example.jar" {
+		t.Fatalf("payload contains metadata: %v, error = %v", files, err)
+	}
+}
+
+func TestMetadataFailureFailsPacking(t *testing.T) {
+	baseDir := packOneJar(t, "metadata-file=module.jar/metadata.json\n")
+	var out strings.Builder
+	if code := pack(context.Background(), []string{"--flagfile=" + filepath.Join(baseDir, "recipe.txt")}, baseDir, &out); code == 0 {
+		t.Fatal("packing succeeded without its declared metadata")
+	}
+}
+
+func packingFileSnapshot(t *testing.T, baseDir string) map[string]string {
+	t.Helper()
+	files := make(map[string]string)
+	err := filepath.Walk(baseDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if info.IsDir() {
+			return nil
+		}
+		content, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		files[path] = string(content)
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return files
+}
+
+func TestPackingRejectsAbsoluteMetadataAliasesBeforeWriting(t *testing.T) {
+	for _, alias := range []string{"./", "unused/../"} {
+		for _, destination := range []string{"out/example.jar", "module.jar"} {
+			t.Run(alias+destination, func(t *testing.T) {
+				baseDir := packOneJar(t, "")
+				if err := os.Mkdir(filepath.Join(baseDir, "unused"), 0o755); err != nil {
+					t.Fatal(err)
+				}
+				if err := os.Mkdir(filepath.Join(baseDir, "out"), 0o755); err != nil {
+					t.Fatal(err)
+				}
+				if err := os.WriteFile(filepath.Join(baseDir, "out/example.jar"), []byte("existing jar"), 0o644); err != nil {
+					t.Fatal(err)
+				}
+				recipe := "output=" + filepath.Join(baseDir, "out/example.jar") + "\nmetadata-file=" + baseDir + "/" + alias + destination +
+					"\ntrace-file=safe.spans.json\nmodule=" + filepath.Join(baseDir, "module.jar") + "\n"
+				flagFile := filepath.Join(baseDir, "recipe.txt")
+				if err := os.WriteFile(flagFile, []byte(recipe), 0o644); err != nil {
+					t.Fatal(err)
+				}
+				before := packingFileSnapshot(t, baseDir)
+				var out strings.Builder
+				code := pack(context.Background(), []string{"--flagfile=" + flagFile}, baseDir, &out)
+				if code != 3 || !strings.Contains(out.String(), "metadata destination") {
+					t.Errorf("expected a metadata collision, got exit %d: %s", code, out.String())
+				}
+				if after := packingFileSnapshot(t, baseDir); !reflect.DeepEqual(before, after) {
+					t.Error("rejected metadata alias changed the packing files")
+				}
+			})
+		}
+	}
+}
+
+func TestPackingRejectsEffectiveTraceCollisionsBeforeWriting(t *testing.T) {
+	for _, destination := range []string{
+		"out/example.jar", "example.metadata.json", "module.jar",
+		"out/other.jar", "other.metadata.json", "library.jar", "resource.txt", "plugin.xml",
+	} {
+		for _, variant := range []string{"relative", "absolute dot", "absolute parent", "recipe"} {
+			t.Run(destination+"/"+variant, func(t *testing.T) {
+				baseDir := packOneJar(t, "")
+				if err := os.Mkdir(filepath.Join(baseDir, "unused"), 0o755); err != nil {
+					t.Fatal(err)
+				}
+				module, err := os.ReadFile(filepath.Join(baseDir, "module.jar"))
+				if err != nil {
+					t.Fatal(err)
+				}
+				for name, content := range map[string][]byte{
+					"library.jar": module, "resource.txt": []byte("resource"), "plugin.xml": []byte("<idea-plugin/>"),
+					"example.metadata.json": []byte("existing metadata"),
+				} {
+					if err := os.WriteFile(filepath.Join(baseDir, name), content, 0o644); err != nil {
+						t.Fatal(err)
+					}
+				}
+				traceFile := destination
+				if variant == "absolute dot" {
+					traceFile = baseDir + "/./" + destination
+				} else if variant == "absolute parent" {
+					traceFile = baseDir + "/unused/../" + destination
+				}
+				flagFile := filepath.Join(baseDir, "recipe.txt")
+				arguments := []string{"--flagfile=" + flagFile}
+				recipeTrace := "safe.spans.json"
+				if variant == "recipe" {
+					recipeTrace = traceFile
+				} else {
+					arguments = append(arguments, "--trace-file="+traceFile)
+				}
+				recipe := "output=out/example.jar\nmetadata-file=example.metadata.json\ntrace-file=" + recipeTrace +
+					"\nmodule=module.jar\noutput=out/other.jar\nmetadata-file=other.metadata.json\nlibrary=library.jar\n" +
+					"file=resource.txt=resource.txt\npatch=META-INF/plugin.xml=plugin.xml\n"
+				if err := os.WriteFile(flagFile, []byte(recipe), 0o644); err != nil {
+					t.Fatal(err)
+				}
+				before := packingFileSnapshot(t, baseDir)
+				var out strings.Builder
+				code := pack(context.Background(), arguments, baseDir, &out)
+				if code != 3 || (!strings.Contains(out.String(), "trace destination") && !strings.Contains(out.String(), "conflicting metadata destination")) {
+					t.Errorf("expected a trace collision, got exit %d: %s", code, out.String())
+				}
+				if after := packingFileSnapshot(t, baseDir); !reflect.DeepEqual(before, after) {
+					t.Error("rejected trace destination changed the packing files")
+				}
+			})
+		}
+	}
+}
+
+func TestPackingMetadataReadMetrics(t *testing.T) {
+	baseDir := packOneJar(t, "metadata-file=example.metadata.json\ntrace-file=example.spans.json\n")
+	var out strings.Builder
+	if code := pack(context.Background(), []string{"--flagfile=" + filepath.Join(baseDir, "recipe.txt")}, baseDir, &out); code != 0 {
+		t.Fatalf("exit %d: %s", code, out.String())
+	}
+	content, err := os.ReadFile(filepath.Join(baseDir, "example.spans.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var document struct {
+		Data []struct {
+			Spans []struct {
+				OperationName string `json:"operationName"`
+				Tags          []struct {
+					Key   string `json:"key"`
+					Value string `json:"value"`
+				} `json:"tags"`
+			} `json:"spans"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(content, &document); err != nil {
+		t.Fatal(err)
+	}
+	if len(document.Data) != 1 || len(document.Data[0].Spans) != 3 || document.Data[0].Spans[2].OperationName != "inventory packing output" {
+		t.Fatalf("missing producer inventory span: %s", content)
+	}
+	tags := make(map[string]string)
+	for _, tag := range document.Data[0].Spans[2].Tags {
+		tags[tag.Key] = tag.Value
+	}
+	info, err := os.Stat(filepath.Join(baseDir, "out/example.jar"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if tags["byteCount"] != strconv.FormatInt(info.Size(), 10) || tags["hashedFileCount"] != "1" || tags["fileCount"] != "1" {
+		t.Fatalf("producer inventory counters = %v", tags)
 	}
 }
 

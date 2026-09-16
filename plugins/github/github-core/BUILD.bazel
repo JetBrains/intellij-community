@@ -1,6 +1,5 @@
 load("@community//build:tests-options.bzl", "jps_test")
-load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_TARGETS")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "resourcegroup")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -16,16 +15,14 @@ jps_test(
 content_module_jar(module = ":vcs-github")
 
 dev_dist_plugin(
-    libraries = ["@lib//:vcs-github-apollographql-apollo-ast-jvm"],
-    main_module = "intellij.vcs.github",
-    module_targets = MODULE_TARGETS,
-    prepacked_content_modules = [
+    content_modules = [
         # do not sort,
         "intellij.vcs.github.git",
-        "intellij.vcs.github.json",
-        "intellij.vcs.github.tracker",
         "intellij.vcs.github.ultimatePromo",
+        "intellij.vcs.github.tracker",
+        "intellij.vcs.github.json",
     ],
+    main_module = "intellij.vcs.github",
 )
 ### auto-generated section `dev intellij.vcs.github` end
 

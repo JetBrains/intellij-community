@@ -26,6 +26,7 @@ import (
 	"strings"
 	"sync"
 
+	"jetbrains.com/content-module-packer/internal/filemetadata"
 	"jetbrains.com/content-module-packer/internal/jarpack"
 	"jetbrains.com/content-module-packer/internal/span"
 	"jetbrains.com/content-module-packer/internal/worker"
@@ -126,6 +127,10 @@ func pack(ctx context.Context, arguments []string, baseDir string, out io.Writer
 	// Nil when no destination was named, and a nil tracer is a no-op down to the leaves, so nothing below asks whether
 	// tracing is on.
 	traceFile := traceDestination(opts, specs, baseDir)
+	if err := validateTraceDestination(traceFile, specs); err != nil {
+		fmt.Fprintf(out, "ERROR: %v\n", err)
+		return 3
+	}
 	var tracer *span.Tracer
 	if traceFile != "" {
 		tracer = span.NewTracer("content-module-packer")
@@ -169,7 +174,7 @@ func pack(ctx context.Context, arguments []string, baseDir string, out io.Writer
 func traceDestination(opts options, specs []jarpack.MergeSpec, baseDir string) string {
 	if opts.traceFile != "" {
 		if filepath.IsAbs(opts.traceFile) {
-			return opts.traceFile
+			return filepath.Clean(opts.traceFile)
 		}
 		return filepath.Join(baseDir, opts.traceFile)
 	}
@@ -179,6 +184,26 @@ func traceDestination(opts options, specs []jarpack.MergeSpec, baseDir string) s
 		}
 	}
 	return ""
+}
+
+func validateTraceDestination(traceFile string, specs []jarpack.MergeSpec) error {
+	if traceFile == "" {
+		return nil
+	}
+	for _, spec := range specs {
+		if traceFile == spec.Output {
+			return fmt.Errorf("trace destination is a jar output: %s", traceFile)
+		}
+		if traceFile == spec.MetadataFile {
+			return fmt.Errorf("trace destination is a metadata output: %s", traceFile)
+		}
+		for _, source := range spec.Sources {
+			if traceFile == source.Path {
+				return fmt.Errorf("trace destination is an input: %s", traceFile)
+			}
+		}
+	}
+	return nil
 }
 
 func startCPUProfile(path string) (func(), error) {
@@ -253,6 +278,21 @@ func packOne(ctx context.Context, spec jarpack.MergeSpec, verifyCRC bool, tracer
 
 	spec.VerifyCRC = verifyCRC
 	duplicates, err := spec.Pack()
+	if err == nil && spec.MetadataFile != "" {
+		inventory := tracer.Start("inventory packing output", jar)
+		var entry filemetadata.Entry
+		entry, err = filemetadata.Inspect(spec.Output, filepath.Base(spec.Output))
+		if err == nil {
+			err = filemetadata.Write(spec.MetadataFile, []filemetadata.Entry{entry})
+			inventory.SetInt("fileCount", 1)
+			inventory.SetInt("hashedFileCount", 1)
+			inventory.SetInt("byteCount", entry.Size)
+		}
+		if err != nil {
+			inventory.Fail(err)
+		}
+		inventory.End()
+	}
 	if err != nil {
 		jar.Fail(err)
 	} else if jar != nil {

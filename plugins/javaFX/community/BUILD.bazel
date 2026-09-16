@@ -1,6 +1,5 @@
 load("@community//build:tests-options.bzl", "jps_test")
-load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_TARGETS")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jps_test(
@@ -16,24 +15,13 @@ jps_test(
 dev_dist_plugin(
     content_modules = [
         # do not sort,
-        "intellij.javaFX.sceneBuilder",
+        "intellij.javaFX",
         "intellij.javaFX.properties",
+        "intellij.javaFX.common",
+        "intellij.javaFX.jps",
+        "intellij.javaFX.sceneBuilder",
     ],
-    jars = {
-        "javaFX-common.jar": {
-            "modules": ["intellij.javaFX.common"],
-        },
-        "javaFX-jps.jar": {
-            "modules": ["intellij.javaFX.jps"],
-        },
-        "rt/sceneBuilderBridge.jar": {
-            "modules": ["intellij.javaFX.sceneBuilder"],
-        },
-    },
-    libraries = ["@lib//:java_f_x-scene_builder-_scene_builder_kit11"],
     main_module = "intellij.javaFX.community",
-    module_targets = MODULE_TARGETS,
-    prepacked_content_modules = ["intellij.javaFX"],
 )
 ### auto-generated section `dev intellij.javaFX.community` end
 

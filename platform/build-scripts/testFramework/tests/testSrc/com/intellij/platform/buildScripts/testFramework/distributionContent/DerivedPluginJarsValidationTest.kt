@@ -3,7 +3,6 @@ package com.intellij.platform.buildScripts.testFramework.distributionContent
 
 import com.intellij.platform.distributionContent.FileEntry
 import com.intellij.platform.distributionContent.ModuleEntry
-import com.intellij.platform.distributionContent.ModuleLibraryFile
 import com.intellij.platform.distributionContent.PluginContentReport
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -18,12 +17,12 @@ class DerivedPluginJarsValidationTest {
     return PluginContentReport(mainModule = plugin, os = os, content = entries.toList())
   }
 
-  private fun module(name: String, vararg libraries: String): ModuleEntry {
-    return ModuleEntry(name = name, libraries = libraries.associateWith { listOf(ModuleLibraryFile(name = "$it.jar")) })
+  private fun module(name: String): ModuleEntry {
+    return ModuleEntry(name = name)
   }
 
-  private fun jar(path: String, vararg members: String, libraries: List<String>? = null): DerivedJar {
-    return DerivedJar(relativeOutputFile = path, members = members.toList(), libraries = libraries)
+  private fun jar(path: String, vararg members: String): DerivedJar {
+    return DerivedJar(relativeOutputFile = path, members = members.toList())
   }
 
   @Test
@@ -31,11 +30,11 @@ class DerivedPluginJarsValidationTest {
     val comparison = compareDerivedPluginJars(
       records = record(
         jar("sample.jar", plugin),
-        jar("modules/intellij.sample.a.jar", "intellij.sample.a", libraries = listOf("lib-a")),
+        jar("modules/intellij.sample.a.jar", "intellij.sample.a"),
       ),
       reports = listOf(report(
         FileEntry(name = "lib/sample.jar", modules = listOf(module(plugin))),
-        FileEntry(name = "lib/modules/intellij.sample.a.jar", contentModules = listOf(module("intellij.sample.a", "lib-a"))),
+        FileEntry(name = "lib/modules/intellij.sample.a.jar", contentModules = listOf(module("intellij.sample.a"))),
         // A bare library jar names no module, so the derivation states none and the comparison skips it.
         FileEntry(name = "lib/some-library.jar", library = "some-library"),
       )),
@@ -118,23 +117,6 @@ class DerivedPluginJarsValidationTest {
       records = record(jar("sample.jar", "intellij.libraries.x", plugin)),
       reports = reports,
     ).failures).isEmpty()
-  }
-
-  @Test
-  fun `a library difference is reported only where the record states the set`() {
-    val comparison = compareDerivedPluginJars(
-      records = record(
-        jar("sample.jar", plugin),
-        jar("modules/intellij.sample.a.jar", "intellij.sample.a", libraries = listOf("lib-a")),
-      ),
-      reports = listOf(report(
-        FileEntry(name = "lib/sample.jar", modules = listOf(module(plugin, "main-lib"))),
-        FileEntry(name = "lib/modules/intellij.sample.a.jar", contentModules = listOf(module("intellij.sample.a", "lib-a", "lib-b"))),
-      )),
-    )
-    assertThat(comparison.failures.single().error.message)
-      .contains("modules/intellij.sample.a.jar: libraries only derived: ; only packed: lib-b")
-      .doesNotContain("main-lib")
   }
 
   @Test

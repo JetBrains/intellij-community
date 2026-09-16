@@ -194,11 +194,13 @@ def intellij_dev_prebuilt_binary(
         system_path = None,
         program_args = [],
         visibility = None,
-        local_home_tool = None):
+        local_home_tool = None,
+        data = []):
     """Launches a built distribution or a linked local home without packaging it.
 
     The distribution declares its product and additional modules.
     When it supplies local metadata, local_home_tool prepares a temporary home from its component runfiles.
+    `data` is the launcher's extra runfiles, on top of the distribution and its config.
     """
     ide_config = name + "_ide_config"
 
@@ -214,7 +216,7 @@ def intellij_dev_prebuilt_binary(
         visibility = visibility,
         runtime_deps = ["@community//platform/bootstrap/dev"],
         main_class = "org.jetbrains.intellij.build.devServer.PreBuiltDevMain",
-        data = [dist_target, ide_config] + local_home_data,
+        data = data + [dist_target, ide_config] + local_home_data,
         jvm_flags = _runtime_jvm_flags(name, jvm_flags, platform_prefix, config_path, system_path) + local_home_flags + [
             "-D%s=$(rlocationpath %s)" % (DEV_IDE_CONFIG_PATH_PROPERTY, ide_config),
             # Not a build-time input: `AppMode.getDevIdeaProjectDir` and the webview native bridge read it at runtime,

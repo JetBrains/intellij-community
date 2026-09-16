@@ -142,7 +142,7 @@ object DevDistRecipe {
    *
    * The packer is not the fragment's only writer, and a recipe that listed only jars would report the rest as absent
    * rather than as unexplained. `bin/` and its natives, `build.txt`, `product-info.json`, `idea.properties`, the
-   * `DistFile`s (IJent, and the natives lifted out of a jar to be signed), the OS-specific copied files, and the jars a
+   * `DistFile`s (the declared platform dist files, and the natives lifted out of a jar to be signed), the OS-specific copied files, and the jars a
    * `resourceGenerator` builds with its own `buildJar` call are all placed outside [record]'s reach - and the last of
    * those appears in no content report at all today, so nothing else in the repository names it either.
    *

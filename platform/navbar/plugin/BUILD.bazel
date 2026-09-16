@@ -1,27 +1,27 @@
-load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_DESCRIPTORS", "MODULE_TARGETS")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `dev intellij.platform.navbar.plugin` start
 dev_dist_plugin(
+    content_modules = [
+        # do not sort,
+        "intellij.platform.navbar",
+        "intellij.platform.navbar.backend",
+        "intellij.platform.navbar.frontend",
+        "intellij.platform.navbar.monolith",
+    ],
     descriptor = "resources/META-INF/plugin.xml",
-    descriptor_index = MODULE_DESCRIPTORS,
     descriptor_modules = [
         "intellij.platform.navbar",
         "intellij.platform.navbar.backend",
         "intellij.platform.navbar.frontend",
         "intellij.platform.navbar.monolith",
     ],
+    jars = {
+        "lib/platform-navbar-plugin.jar": ["intellij.platform.navbar.plugin"],
+    },
     main_module = "intellij.platform.navbar.plugin",
-    module_targets = MODULE_TARGETS,
-    prepacked_content_modules = [
-        # do not sort,
-        "intellij.platform.navbar.backend",
-        "intellij.platform.navbar.frontend",
-        "intellij.platform.navbar.monolith",
-        "intellij.platform.navbar",
-    ],
 )
 ### auto-generated section `dev intellij.platform.navbar.plugin` end
 

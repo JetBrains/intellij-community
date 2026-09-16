@@ -1,6 +1,5 @@
 load("@community//build:tests-options.bzl", "jps_test")
-load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_DESCRIPTORS", "MODULE_TARGETS")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jps_test(
@@ -15,13 +14,15 @@ jps_test(
 dev_dist_plugin(
     content_modules = [
         # do not sort,
-        "intellij.libraries.assertj.core",
-        "intellij.libraries.assertj.swing",
         "intellij.vcs.git.featuresTrainer",
         "intellij.featuresTrainer.onboarding",
+        "intellij.kotlin.onboarding.promoter",
+        "intellij.featuresTrainer.tips",
+        "intellij.libraries.assertj.core",
+        "intellij.libraries.assertj.swing",
+        "intellij.libraries.git.learning.project",
     ],
     descriptor = "res/META-INF/plugin.xml",
-    descriptor_index = MODULE_DESCRIPTORS,
     descriptor_modules = [
         "intellij.featuresTrainer.onboarding",
         "intellij.featuresTrainer.tips",
@@ -31,18 +32,26 @@ dev_dist_plugin(
         "intellij.libraries.git.learning.project",
         "intellij.vcs.git.featuresTrainer",
     ],
-    libraries = [
-        "@lib//:libraries-assertj-core-assert_j",
-        "@lib//:libraries-assertj-swing-assertj-swing",
-    ],
+    jars = {
+        "lib/featuresTrainer.jar": [
+            "intellij.featuresTrainer",
+            "intellij.vcs.git.featuresTrainer",
+            "intellij.featuresTrainer.onboarding",
+        ],
+        "lib/intellij.libraries.assertj.core.jar": [
+            "intellij.libraries.assertj.core",
+            "@lib//:libraries-assertj-core-assert_j",
+        ],
+        "lib/intellij.libraries.assertj.swing.jar": [
+            "intellij.libraries.assertj.swing",
+            "@lib//:libraries-assertj-swing-assertj-swing",
+        ],
+        "lib/modules/intellij.libraries.git.learning.project.jar": [
+            "intellij.libraries.git.learning.project",
+            "@lib//:libraries-git-learning-project-git-learning-project",
+        ],
+    },
     main_module = "intellij.featuresTrainer",
-    module_targets = MODULE_TARGETS,
-    prepacked_content_modules = [
-        # do not sort,
-        "intellij.libraries.git.learning.project",
-        "intellij.featuresTrainer.tips",
-        "intellij.kotlin.onboarding.promoter",
-    ],
 )
 ### auto-generated section `dev intellij.featuresTrainer` end
 

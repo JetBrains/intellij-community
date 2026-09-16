@@ -1,3 +1,0 @@
-- name: dist.all/lib/intellij.platform.ide.osCertificates.jar
-  modules:
-  - name: intellij.platform.ide.osCertificates

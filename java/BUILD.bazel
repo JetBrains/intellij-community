@@ -8,6 +8,10 @@ filegroup(
             "mockJDK-1.9/**",
         ],
         allow_empty = False,
-    ) + ["//java/jdkAnnotations:dev_dist_resources"],
+    ) + [
+        # Written by plugin-model-tool into the `dev intellij.java.jdkAnnotations` section, because the Java plugin
+        # layout declares the directory with `withResourceArchiveFromModule`.
+        "//java/jdkAnnotations:dev_dist_resources",
+    ],
     visibility = ["//visibility:public"],
 )

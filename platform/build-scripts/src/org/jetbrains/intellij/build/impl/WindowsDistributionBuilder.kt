@@ -78,14 +78,9 @@ internal class WindowsDistributionBuilder(
 
   override fun copyNativeBinFiles(binDir: Path, arch: JvmArchitecture): List<Path> {
     val sourceBinDir = context.paths.communityHomeDir.resolve("bin/win")
-    // `add`, not `+`: `Path` is an `Iterable<Path>` of its own name elements, so `List<Path> + Path` appends
-    // those elements instead of the path
-    return buildList {
-      addAll(copyNativeBinDir(sourceBinDir.resolve(arch.dirName), binDir))
-      // the top-level files of `bin/win` only - the other architecture's directory is not ours
-      addAll(copyNativeBinDir(sourceBinDir, binDir, dirFilter = { it == sourceBinDir }))
-      add(copyRestarterToDir(binDir, OsFamily.WINDOWS, arch, context))
-    }
+    return copyNativeBinDir(sourceBinDir.resolve(arch.dirName), binDir) +
+           // the top-level files of `bin/win` only - the other architecture's directory is not ours
+           copyNativeBinDir(sourceBinDir, binDir, dirFilter = { it == sourceBinDir })
   }
 
   override fun copyFilesForOsDistribution(targetPath: Path, arch: JvmArchitecture) {
@@ -94,6 +89,7 @@ internal class WindowsDistributionBuilder(
 
     context.executeStep(spanBuilder("copy product bin files"), BuildOptions.PRODUCT_BIN_DIR_STEP) {
       copyNativeBinFiles(distBinDir, arch)
+      copyDeclaredOsSpecificFiles(targetPath, arch, context.distributionState().platformLayout, context)
 
       context.getEmbeddedFrontendProductContext()?.let { clientContext ->
         writeWindowsVmOptions(distBinDir, clientContext)

@@ -118,6 +118,8 @@ class ModuleOutputPatcher {
   /** Every patched path of [moduleName], in the order it was stated. */
   internal fun getPatchedSources(moduleName: String): Map<String, Source> = patches.get(moduleName) ?: emptyMap()
 
+  internal fun getPatchedModuleNames(): Set<String> = patches.keys.toSet()
+
   internal fun getPatchedContent(moduleName: String): Map<String, ByteArray> {
     val pathToSource = patches.get(moduleName) ?: return emptyMap()
     val result = LinkedHashMap<String, ByteArray>(pathToSource.size)

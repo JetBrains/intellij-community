@@ -19,6 +19,7 @@ import org.jetbrains.intellij.build.UTIL_RT_JAR
 import org.jetbrains.intellij.build.classPath.descriptorResolveContext
 import org.jetbrains.intellij.build.classPath.getEmbeddedContentModulesOfPluginsWithUseIdeaClassloader
 import org.jetbrains.intellij.build.forEachConcurrent
+import org.jetbrains.intellij.build.withRestarter
 import org.jetbrains.intellij.build.impl.PlatformJarNames.TEST_FRAMEWORK_JAR
 import org.jetbrains.intellij.build.productLayout.ProductModulesLayout
 import org.jetbrains.intellij.build.readDescriptor
@@ -58,6 +59,7 @@ fun createPlatformLayout(
   validateImplicitPlatformModule: Boolean = false,
   useModularLoader: Boolean = false,
   isEmbeddedFrontendEnabled: Boolean = productProperties.embeddedFrontendRootModule != null,
+  bundledPluginModules: List<String> = getBundledPluginModules(productProperties, outputProvider),
 ): PlatformLayout {
   return createPlatformLayout(
     productProperties = productProperties,
@@ -66,7 +68,7 @@ fun createPlatformLayout(
     useModularLoader = useModularLoader,
     isEmbeddedFrontendEnabled = isEmbeddedFrontendEnabled,
     runtimeDependencyResolver = RuntimeDependencyIndex(JarPackagerDependencyHelper(outputProvider)),
-    bundledPluginModules = getBundledPluginModules(productProperties, outputProvider),
+    bundledPluginModules = bundledPluginModules,
     sourceOnly = true,
     embedContentModuleDescriptors = false,
     markModuleForScrambling = { _, _ -> false },
@@ -87,6 +89,7 @@ private fun createPlatformLayout(
 ): PlatformLayout {
   val productLayout = productProperties.productLayout
   val layout = PlatformLayout()
+  layout.withRestarter()
   for (customizer in productLayout.platformLayoutSpec) {
     customizer(layout)
   }

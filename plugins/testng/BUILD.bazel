@@ -1,6 +1,5 @@
 load("@community//build:tests-options.bzl", "jps_test")
-load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_DESCRIPTORS", "MODULE_TARGETS")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 jps_test(
@@ -13,23 +12,27 @@ jps_test(
 
 ### auto-generated section `dev intellij.testng` start
 dev_dist_plugin(
-    content_modules = ["intellij.libraries.testng"],
+    content_modules = [
+        # do not sort,
+        "intellij.libraries.testng",
+        "intellij.testng.langInjection",
+        "intellij.testng.rt",
+    ],
     descriptor = "resources/META-INF/plugin.xml",
-    descriptor_index = MODULE_DESCRIPTORS,
     descriptor_modules = [
         "intellij.libraries.testng",
         "intellij.testng.langInjection",
     ],
     jars = {
-        "testng-rt.jar": {
-            "modules": ["intellij.testng.rt"],
-        },
+        "lib/intellij.libraries.testng.jar": [
+            "intellij.libraries.testng",
+            "@lib//:libraries-testng-_test_n_g",
+        ],
+        "lib/testng-rt.jar": ["intellij.testng.rt"],
+        "lib/testng-plugin.jar": ["intellij.testng"],
     },
-    libraries = ["@lib//:libraries-testng-_test_n_g"],
     main_jar_name = "testng-plugin.jar",
     main_module = "intellij.testng",
-    module_targets = MODULE_TARGETS,
-    prepacked_content_modules = ["intellij.testng.langInjection"],
 )
 ### auto-generated section `dev intellij.testng` end
 

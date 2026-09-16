@@ -1,27 +1,27 @@
-load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_DESCRIPTORS", "MODULE_TARGETS")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `dev intellij.platform.tasks.plugin` start
 dev_dist_plugin(
+    content_modules = [
+        # do not sort,
+        "intellij.platform.tasks",
+        "intellij.platform.tasks.impl",
+        "intellij.platform.tasks.impl.bookmarks",
+        "intellij.platform.tasks.impl.debugger",
+    ],
     descriptor = "resources/META-INF/plugin.xml",
-    descriptor_index = MODULE_DESCRIPTORS,
     descriptor_modules = [
         "intellij.platform.tasks",
         "intellij.platform.tasks.impl",
         "intellij.platform.tasks.impl.bookmarks",
         "intellij.platform.tasks.impl.debugger",
     ],
+    jars = {
+        "lib/platform-tasks-plugin.jar": ["intellij.platform.tasks.plugin"],
+    },
     main_module = "intellij.platform.tasks.plugin",
-    module_targets = MODULE_TARGETS,
-    prepacked_content_modules = [
-        # do not sort,
-        "intellij.platform.tasks",
-        "intellij.platform.tasks.impl.bookmarks",
-        "intellij.platform.tasks.impl.debugger",
-        "intellij.platform.tasks.impl",
-    ],
 )
 ### auto-generated section `dev intellij.platform.tasks.plugin` end
 

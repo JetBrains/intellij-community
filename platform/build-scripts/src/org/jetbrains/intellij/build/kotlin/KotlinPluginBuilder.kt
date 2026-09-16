@@ -3,7 +3,6 @@
 
 package org.jetbrains.intellij.build.kotlin
 
-import com.intellij.util.io.Decompressor
 import io.opentelemetry.api.trace.Span
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.ProductProperties
@@ -12,9 +11,9 @@ import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.impl.DataPluginVersionEvaluator
 import org.jetbrains.intellij.build.impl.DescriptorMarker
 import org.jetbrains.intellij.build.impl.DescriptorMarkerPatcher
+import org.jetbrains.intellij.build.impl.LibraryEntriesLayoutPatcher
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.PluginVersionEvaluatorResult
-import org.jetbrains.intellij.build.impl.consumeDataByPrefix
 import org.jetbrains.intellij.build.impl.createBuildContext
 import java.nio.file.Path
 
@@ -147,16 +146,12 @@ private fun withKotlincKotlinCompilerCommonLibrary(spec: PluginLayout.PluginLayo
   val kotlincKotlinCompilerCommon = "kotlinc.kotlin-compiler-common"
   spec.withModule(KOTLINC_KOTLIN_COMPILER_COMMON_MODULE, KOTLINC_KOTLIN_COMPILER_COMMON_JAR)
 
-  spec.withPatch { patcher, context ->
-    val jars = context.outputProvider.findLibraryRoots(kotlincKotlinCompilerCommon, moduleLibraryModuleName = KOTLINC_KOTLIN_COMPILER_COMMON_MODULE)
-    if (jars.size != 1) {
-      throw IllegalStateException("$kotlincKotlinCompilerCommon is expected to have only one jar")
-    }
-
-    consumeDataByPrefix(jars[0], "META-INF/extensions/") { name, data ->
-      patcher.patchModuleOutput(moduleName = mainPluginModule, path = name, content = data)
-    }
-  }
+  spec.withPatch(LibraryEntriesLayoutPatcher(
+    libraryName = kotlincKotlinCompilerCommon,
+    libraryModuleName = KOTLINC_KOTLIN_COMPILER_COMMON_MODULE,
+    prefix = "META-INF/extensions/",
+    targetModuleName = mainPluginModule,
+  ))
 }
 
 private const val KOTLINC_KOTLIN_COMPILER_COMMON_MODULE = "intellij.libraries.kotlinc.kotlin.compiler.common"
@@ -164,13 +159,7 @@ private const val KOTLINC_KOTLIN_COMPILER_COMMON_JAR = "intellij.libraries.kotli
 
 private fun withKotlincInPluginDirectory(libName: String = "kotlin-dist", target: String = "kotlinc", spec: PluginLayout.PluginLayoutSpec) {
   val distLibName = "kotlinc.$libName"
-  spec.withGeneratedResources(inputProjectLibraries = listOf(distLibName)) { targetDir, context ->
-    val jars = context.outputProvider.findLibraryRoots(distLibName, moduleLibraryModuleName = null)
-    if (jars.size != 1) {
-      throw IllegalStateException("$distLibName is expected to have only one jar")
-    }
-    Decompressor.Zip(jars[0]).extract(targetDir.resolve(target))
-  }
+  spec.withLibraryResources(libraryName = distLibName, relativeOutputPath = target)
 }
 
 object CommunityKotlinPluginBuilder : KotlinPluginBuilder()

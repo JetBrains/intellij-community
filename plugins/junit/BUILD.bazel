@@ -1,39 +1,38 @@
-load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_DESCRIPTORS", "MODULE_TARGETS")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `dev intellij.junit` start
 dev_dist_plugin(
     content_modules = [
         # do not sort,
+        "intellij.junit.properties",
         "intellij.libraries.hamcrest",
         "intellij.libraries.junit4",
+        "intellij.junit.rt",
+        "intellij.junit.v5.rt",
+        "intellij.junit.v6.rt",
     ],
     descriptor = "resources/META-INF/plugin.xml",
-    descriptor_index = MODULE_DESCRIPTORS,
     descriptor_modules = [
         "intellij.junit.properties",
         "intellij.libraries.hamcrest",
         "intellij.libraries.junit4",
     ],
     jars = {
-        "junit-rt.jar": {
-            "modules": ["intellij.junit.rt"],
-        },
-        "junit5-rt.jar": {
-            "modules": ["intellij.junit.v5.rt"],
-        },
-        "junit6-rt.jar": {
-            "modules": ["intellij.junit.v6.rt"],
-        },
+        "lib/intellij.libraries.hamcrest.jar": [
+            "intellij.libraries.hamcrest",
+            "@lib//:libraries-hamcrest-hamcrest",
+        ],
+        "lib/intellij.libraries.junit4.jar": [
+            "intellij.libraries.junit4",
+            "@lib//:libraries-junit4-_j_unit4",
+        ],
+        "lib/junit.jar": ["intellij.junit"],
+        "lib/junit-rt.jar": ["intellij.junit.rt"],
+        "lib/junit5-rt.jar": ["intellij.junit.v5.rt"],
+        "lib/junit6-rt.jar": ["intellij.junit.v6.rt"],
     },
-    libraries = [
-        "@lib//:libraries-hamcrest-hamcrest",
-        "@lib//:libraries-junit4-_j_unit4",
-    ],
     main_module = "intellij.junit",
-    module_targets = MODULE_TARGETS,
-    prepacked_content_modules = ["intellij.junit.properties"],
 )
 ### auto-generated section `dev intellij.junit` end
 

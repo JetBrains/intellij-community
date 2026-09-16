@@ -1,0 +1,290 @@
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
+
+package org.jetbrains.intellij.build.devDist
+
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.intellij.build.impl.SupportedDistribution
+import org.jetbrains.intellij.build.impl.assembleOrderedJarSources
+
+/** An input identity, not an opened archive. Equal physical library files must use the same [id]. */
+@ApiStatus.Internal
+data class PluginSymbolicArtifact(
+  @JvmField val id: String,
+  @JvmField val kind: String,
+  @JvmField val fileName: String,
+  @JvmField val preparationKey: String? = null,
+)
+
+/**
+ * The files of one JPS library in the order returned by the output provider.
+ * [id] is the canonical container label. A complete unchanged library keeps this identity and its ordered expansion in the recipe.
+ */
+@ApiStatus.Internal
+data class PluginSymbolicLibrary(
+  @JvmField val libraryName: String,
+  @JvmField val moduleName: String? = null,
+  @JvmField val files: List<String>,
+  @JvmField val id: String? = null,
+)
+
+/** Module roots and library files are declared even when their contents have not been built. */
+@ApiStatus.Internal
+data class PluginSymbolicArtifactCatalogue(
+  @JvmField val artifacts: List<PluginSymbolicArtifact>,
+  @JvmField val moduleRoots: Map<String, List<String>>,
+  @JvmField val libraries: List<PluginSymbolicLibrary>,
+  @JvmField val testModules: Set<String> = emptySet(),
+)
+
+/**
+ * Descriptor text must reflect the selected variant, resolved includes, and descriptor preparation.
+ * A null value in [moduleXml] states that the descriptor is absent. An omitted key states that the fact is unknown.
+ */
+@ApiStatus.Internal
+data class PluginSymbolicDescriptorFacts(
+  @JvmField val pluginXml: String?,
+  @JvmField val pluginXmlInput: String,
+  @JvmField val moduleXml: Map<String, String?>,
+  @JvmField val frontendRoots: Set<String> = emptySet(),
+  @JvmField val packedElsewhere: Set<String> = emptySet(),
+  /** The input already contains all descriptor callbacks and version patches. */
+  @JvmField val isPluginXmlFinal: Boolean = false,
+)
+
+/** One development distribution. A null [distribution] projects the common part only. */
+@ApiStatus.Internal
+data class PluginSymbolicVariant(
+  @JvmField val id: String,
+  @JvmField val distribution: SupportedDistribution? = null,
+  @JvmField val searchableOptions: Boolean = false,
+  @JvmField val skipCustomResourceGenerators: Boolean = false,
+  @JvmField val scramble: Boolean = false,
+)
+
+/**
+ * Declares an opaque operation and all its contributions without running its callback.
+ * [sources] replace a filtered root or supply a custom jar. [assets] declare generated files outside that jar.
+ * [sourceContributions] maps each original root to its own ordered sources when multiple roots share an operation.
+ * Such contributions must not share a source: a merged bundle cannot stand in for separate source positions.
+ */
+@ApiStatus.Internal
+data class PluginSymbolicPreparedEffect(
+  @JvmField val preparation: PluginPackingPreparation,
+  @JvmField val sources: List<JarSourceRecipe> = emptyList(),
+  @JvmField val assets: List<PluginPackingAsset> = emptyList(),
+  @JvmField val sourceContributions: Map<String, List<JarSourceRecipe>> = emptyMap(),
+)
+
+/** One retained source slot after original source assembly. [ordinal] distinguishes repeated uses of the same input, destination, and channel. */
+@ApiStatus.Internal
+data class PluginSymbolicNativeOccurrence(
+  @JvmField val destination: String,
+  @JvmField val input: String,
+  @JvmField val channel: PluginSymbolicNativeSourceChannel,
+  @JvmField val ordinal: Int,
+)
+
+/** A native requirement derived before replacement and bound to the original jar context. No archive has been opened. */
+@ApiStatus.Internal
+data class PluginSymbolicNativeUse(
+  @JvmField val occurrence: PluginSymbolicNativeOccurrence,
+  @JvmField val handling: PluginSymbolicNativeHandling,
+  @JvmField val distributionPrefix: String?,
+  @JvmField val preparationKeys: List<String>,
+  @JvmField val modelSignature: String,
+)
+
+/** Binds one occurrence to an existing effect. Its signature must match the derived requirement, including source filters. */
+@ApiStatus.Internal
+data class PluginSymbolicNativeBinding(
+  @JvmField val effectKey: String,
+  @JvmField val requirementSignature: String,
+)
+
+/**
+ * Keys name layout slots: `layout-patcher:N`, `custom-asset:N`, `resource:N`, `resource-generator:N`,
+ * `platform-resource-generator:N`, `platform-custom-asset:N`, `module-filter:MODULE`, `searchable-options:MODULE`,
+ * or an artifact's preparation key. A `platform-*` index counts only the callbacks that serve the variant's distribution.
+ * [modulePatches] gives the final patch order, including the descriptor, after every declared patcher runs.
+ * [preparedSourceManifests] is keyed by prepared output ID and records original counts and concrete execution policies.
+ * A descriptor callback uses `descriptor`; scrambling reports a gap rather than an unsafe replacement.
+ * [nativeBindings] selects occurrence-specific effects. Native effects must consume any preceding generic or Java-filter outputs.
+ */
+@ApiStatus.Internal
+data class PluginSymbolicPreparationFacts(
+  @JvmField val effects: Map<String, PluginSymbolicPreparedEffect> = emptyMap(),
+  @JvmField val modulePatches: Map<String, List<JarSourceRecipe>> = emptyMap(),
+  @JvmField val dependencies: List<PluginPackingPreparation> = emptyList(),
+  @JvmField val preparedSourceManifests: Map<String, PluginSymbolicPreparedSourceManifest> = emptyMap(),
+  @JvmField val nativeBindings: Map<PluginSymbolicNativeOccurrence, PluginSymbolicNativeBinding> = emptyMap(),
+  /** Declared assets that need no Kotlin preparation. Keys use the same layout slots as [effects]. */
+  @JvmField val declaredAssets: Map<String, List<PluginPackingAsset>> = emptyMap(),
+  /** Selected layout callback slots that intentionally contribute nothing to this development variant. */
+  @JvmField val omittedSlots: Set<String> = emptySet(),
+)
+
+@ApiStatus.Internal
+data class PluginSymbolicLayoutGap(
+  @JvmField val key: String,
+  @JvmField val detail: String,
+)
+
+/** Assets retain insertion order. A result with gaps cannot select producers or become a serialized projection. */
+@ApiStatus.Internal
+class PluginSymbolicLayout internal constructor(
+  @JvmField val plugin: String,
+  @JvmField val variant: String,
+  @JvmField val assets: List<PluginPackingAsset>,
+  @JvmField val preparations: List<PluginPackingPreparation>,
+  @JvmField val preparationRoots: List<String>,
+  @JvmField val gaps: List<PluginSymbolicLayoutGap>,
+  @JvmField val nativeRequirements: List<PluginSymbolicNativeUse> = emptyList(),
+) {
+  fun projection(artifacts: Collection<ReusableJarArtifact> = emptyList()): PluginPackingProjection {
+    check(gaps.isEmpty()) {
+      "Plugin '$plugin' lacks symbolic facts: ${gaps.joinToString { "${it.key}: ${it.detail}" }}"
+    }
+    val plan = planPluginPacking(
+      plugin = plugin,
+      variant = variant,
+      assets = assets,
+      preparations = preparations,
+      preparationRoots = preparationRoots,
+      artifacts = artifacts,
+    )
+    return PluginPackingProjection(
+      version = pluginPackingExecutionVersion(assets),
+      plugin = plugin,
+      variant = variant,
+      layoutSignature = plan.layoutSignature,
+      assets = assets,
+      preparations = preparations,
+      preparationRoots = preparationRoots,
+      reusableArtifacts = plan.assets.mapNotNull { it.artifact }.distinct(),
+    )
+  }
+}
+
+internal class PluginSymbolicJarSource(
+  @JvmField val identity: Any,
+  @JvmField val library: PluginSymbolicLibraryGroup? = null,
+  @JvmField val resolve: () -> List<JarSourceRecipe>,
+) {
+  constructor(recipe: JarSourceRecipe) : this(recipe, resolve = { listOf(recipe) })
+
+  override fun equals(other: Any?): Boolean = other is PluginSymbolicJarSource && identity == other.identity
+
+  override fun hashCode(): Int = identity.hashCode()
+}
+
+internal class PluginSymbolicLibraryGroup(@JvmField val recipe: JarSourceRecipe)
+
+internal data class PluginSymbolicLibrarySourceIdentity(
+  @JvmField val input: String,
+  @JvmField val presignedCandidate: Boolean?,
+)
+
+/** Keeps original source identities until assembly. Recipe grouping and preparation follow the writer's source deduplication. */
+@ApiStatus.Internal
+class PluginSymbolicJarAssembly {
+  private val jars = LinkedHashMap<String, SymbolicJar>()
+
+  fun addModule(destination: String, sources: List<JarSourceRecipe>, testOutput: Boolean = false, descriptorModule: Boolean = false) {
+    addOriginalModule(destination, sources.map(::PluginSymbolicJarSource), testOutput, descriptorModule)
+  }
+
+  /** [descriptorModule] marks the module that holds the plugin descriptor. Its sources lead the jar, as in the writer. */
+  internal fun addOriginalModule(
+    destination: String,
+    sources: List<PluginSymbolicJarSource>,
+    testOutput: Boolean = false,
+    descriptorModule: Boolean = false,
+  ) {
+    val jar = jars.computeIfAbsent(destination) { SymbolicJar() }
+    jar.modules.add(sources)
+    if (descriptorModule) {
+      jar.descriptorModuleSources = sources
+    }
+    jar.testOutput = jar.testOutput || testOutput
+  }
+
+  fun addSources(destination: String, sources: List<JarSourceRecipe>, separate: Boolean = false) {
+    addOriginalSources(destination, sources.map(::PluginSymbolicJarSource), separate)
+  }
+
+  internal fun addOriginalSources(destination: String, sources: List<PluginSymbolicJarSource>, separate: Boolean = false) {
+    require(!separate || !jars.containsKey(destination)) { "Custom asset conflicts with '$destination'" }
+    jars.computeIfAbsent(destination) { SymbolicJar() }.sources.addAll(sources)
+  }
+
+  fun assets(
+    preparedSourceManifests: Map<String, PluginSymbolicPreparedSourceManifest> = emptyMap(),
+    reportGap: (PluginSymbolicLayoutGap) -> Unit = { error("${it.key}: ${it.detail}") },
+  ): List<PluginPackingAsset> {
+    return jars.mapNotNull { (destination, jar) ->
+      if (jar.modules.isNotEmpty()) {
+        val libraries = jar.sources.map { it.identity }.filterIsInstance<PluginSymbolicLibrarySourceIdentity>().groupBy { it.input }
+        for ((input, identities) in libraries) {
+          if (identities.any { it.presignedCandidate == null } && identities.any { it.presignedCandidate != null }) {
+            reportGap(PluginSymbolicLayoutGap("source-identity:$destination:$input", "Native policy is required to compare the original library sources"))
+          }
+        }
+      }
+      val ordered = try {
+        assembleOrderedJarSources(jar.sources, jar.modules, jar.descriptorModuleSources).toList()
+      }
+      catch (error: IllegalArgumentException) {
+        reportGap(PluginSymbolicLayoutGap("source-identity:$destination", checkNotNull(error.message)))
+        return@mapNotNull null
+      }
+      val sources = resolveSources(ordered)
+      if (sources.isEmpty()) {
+        null
+      }
+      else {
+        val asset = PluginPackingAsset(
+          destination = destination,
+          inputs = sources.map { it.input }.distinct(),
+          recipe = CanonicalJarRecipe(sources = sources, writer = JarWriterRecipe(mergeEntities = true, directoryEntries = jar.testOutput)),
+        )
+        resolvePluginSymbolicManifest(asset, preparedSourceManifests, reportGap)
+      }
+    }
+  }
+
+  private fun resolveSources(ordered: List<PluginSymbolicJarSource>): List<JarSourceRecipe> {
+    val result = ArrayList<JarSourceRecipe>()
+    var index = 0
+    while (index < ordered.size) {
+      val source = ordered.get(index)
+      val group = source.library
+      if (group == null) {
+        result.addAll(source.resolve())
+        index++
+        continue
+      }
+      val resolved = ArrayList<JarSourceRecipe>()
+      var count = 0
+      while (index < ordered.size && ordered.get(index).library === group) {
+        resolved.addAll(ordered.get(index).resolve())
+        count++
+        index++
+      }
+      val expansion = group.recipe.expansion
+      if (count == expansion.size && resolved == expansion.map { JarSourceRecipe(it, "archive", "library-v1") }) {
+        result.add(group.recipe)
+      }
+      else {
+        result.addAll(resolved)
+      }
+    }
+    return result
+  }
+
+  private class SymbolicJar {
+    val sources = ArrayList<PluginSymbolicJarSource>()
+    val modules = ArrayList<List<PluginSymbolicJarSource>>()
+    var descriptorModuleSources: List<PluginSymbolicJarSource>? = null
+    var testOutput = false
+  }
+}

@@ -1,0 +1,27 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "planfile",
+    srcs = [
+        "compile.go",
+        "planfile.go",
+    ],
+    importpath = "jetbrains.com/content-module-packer/internal/planfile",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//build/content-module-packer/internal/pluginclasspath",
+        "//build/content-module-packer/internal/pluginpack",
+    ],
+)
+
+go_test(
+    name = "planfile_test",
+    srcs = ["planfile_test.go"],
+    embed = [":planfile"],
+    pure = "on",
+    deps = [
+        "//build/content-module-packer/internal/filemetadata",
+        "//build/content-module-packer/internal/pluginclasspath",
+        "//build/content-module-packer/internal/pluginpack",
+    ],
+)

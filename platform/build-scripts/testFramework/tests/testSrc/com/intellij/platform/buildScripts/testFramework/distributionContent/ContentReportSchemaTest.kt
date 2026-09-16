@@ -10,15 +10,13 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertAll
 
 /**
- * One canonical class states what a build packs: [FileEntry] states one file of a distribution. The checked-in
- * `module-content.yaml` reports and the executed plan a dev-distribution fragment writes both come from it.
+ * One canonical class states what a build packs: [FileEntry] states one file of a distribution. The executed plan a
+ * dev-distribution fragment writes comes from it.
  *
  * The JPS-to-Bazel converter reads it back through a narrow schema of its own: `ExecutedPlanEntry` in
  * `community/platform/build-scripts/bazel/src/org/jetbrains/intellij/build/bazel/devDistPluginJarPlan.kt` mirrors
  * [FileEntry], and `RecipeModule`/`RecipeNamed` in `contentModuleJar.kt` of the same directory mirror the two nested
  * entry classes.
- *
- * The converter no longer reads a checked-in `module-content.yaml`: the dev-dist tables state a content module's jar.
  *
  * The narrow schemas decode with `recipeYaml`, which sets `strictMode = false`. A field a narrow schema fails to declare
  * is dropped in silence instead of reported. That is how `module:` once went missing from the converter's view of a
@@ -29,9 +27,7 @@ import org.junit.jupiter.api.assertAll
  * narrow schema stop agreeing. A *rename* also fails here. A canonical reader survives a rename, because the same code
  * writes and reads the report, while the narrow schema's now-dead field reads nothing.
  *
- * It compares field-name sets, and it scans no report. A rename fails on the first run whatever the corpus holds. The 784
- * checked-in `module-content.yaml` reports also carry no `productModules` and no `productEmbeddedModules`, so a scan would
- * enforce nothing about those two.
+ * It compares field-name sets, and it scans no report. A rename fails on the first run whatever the corpus holds.
  *
  * ### Why a narrow schema is mirrored here rather than compared descriptor-to-descriptor
  *

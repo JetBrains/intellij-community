@@ -9,12 +9,12 @@ import (
 	"io"
 )
 
-// Writer writes a distribution-shaped jar: every entry STORED, no directory entries, one generated `__index__` last,
-// and a 5-byte end-of-central-directory comment pointing into it.
+// Writer writes a distribution-shaped jar with STORED entries and a generated `__index__` last.
+// The default omits directory entries. A 5-byte end-record comment points into the index.
 //
 // It is not a general zip writer and deliberately cannot become one. The Kotlin `//zip` it reproduces carries a
-// deflate path, three directory-entry modes, a memory-mapped data writer and unknown-size entries because it serves
-// several callers; this serves one, so the whole layout is a pure function of (name, size, crc) per entry. Every
+// deflate path, a memory-mapped data writer and unknown-size entries because it serves
+// several callers. This writer uses known entries, so its layout is a pure function of (name, size, crc). Every
 // header field that a general writer would fill in - version needed, general-purpose flags, modification time, extra
 // fields - is a hard zero here, which is what `archive/zip` cannot be made to emit and why these headers are written
 // by hand.
@@ -44,8 +44,30 @@ const (
 	maxEntries = 65535
 )
 
+// DirectoryMode controls which directories receive archive records, as well as index records.
+type DirectoryMode string
+
+const (
+	DirectoriesNone      DirectoryMode = "none"
+	DirectoriesResources DirectoryMode = "resources"
+	DirectoriesAll       DirectoryMode = "all"
+)
+
+func (mode DirectoryMode) valid() bool {
+	return mode == "" || mode == DirectoriesNone || mode == DirectoriesResources || mode == DirectoriesAll
+}
+
 func NewWriter(out io.Writer) *Writer {
 	return &Writer{w: bufio.NewWriterSize(out, 1<<20), index: newIndexBuilder()}
+}
+
+func NewWriterWithDirectoryMode(out io.Writer, mode DirectoryMode) (*Writer, error) {
+	if !mode.valid() {
+		return nil, fmt.Errorf("unknown directory mode %q", mode)
+	}
+	writer := NewWriter(out)
+	writer.index.directoryMode = mode
+	return writer, nil
 }
 
 // Add appends one STORED entry.
@@ -64,6 +86,9 @@ func (w *Writer) Add(name string, data []byte, crc uint32, addToPackageIndex boo
 	}
 	if len(data) > 1<<31-1 {
 		return w.fail(fmt.Errorf("%s: entry is %d bytes, past what a 32-bit zip field holds", name, len(data)))
+	}
+	if len(name) > 65535 {
+		return w.fail(fmt.Errorf("entry name exceeds the zip field limit"))
 	}
 	nameBytes := []byte(name)
 	headerOffset := w.offset
@@ -95,8 +120,23 @@ func (w *Writer) Close() error {
 	if w.err != nil {
 		return w.err
 	}
-	if err := w.index.finish(); err != nil {
-		return w.fail(err)
+	if w.index.directoryMode == "" || w.index.directoryMode == DirectoriesNone {
+		if err := w.index.finish(); err != nil {
+			return w.fail(err)
+		}
+	} else {
+		for _, directory := range w.index.sortedDirectories() {
+			nameBytes := []byte(directory + "/")
+			headerOffset := w.offset
+			if err := w.writeLocalHeader(nameBytes, 0, 0); err != nil {
+				return err
+			}
+			keyBytes := []byte(directory)
+			if err := w.index.add(ikvEntry{key: hashName(keyBytes), offset: -1, size: 0}, keyBytes); err != nil {
+				return w.fail(err)
+			}
+			w.entries = append(w.entries, cdEntry{nameBytes: nameBytes, headerOffset: headerOffset})
+		}
 	}
 
 	indexDataEnd := int32(-1)
@@ -162,9 +202,9 @@ const indexFormatVersion = 4
 func (w *Writer) writeLocalHeader(nameBytes []byte, crc, size uint32) error {
 	var h []byte
 	h = appendUint32(h, 0x04034b50)
-	h = append(h, 0, 0) // version needed to extract
-	h = append(h, 0, 0) // general purpose flags: no data descriptor, and no UTF-8 flag even though names are UTF-8
-	h = append(h, 0, 0) // method: STORED
+	h = append(h, 0, 0)       // version needed to extract
+	h = append(h, 0, 0)       // general purpose flags: no data descriptor, and no UTF-8 flag even though names are UTF-8
+	h = append(h, 0, 0)       // method: STORED
 	h = append(h, 0, 0, 0, 0) // modification time and date
 	h = appendUint32(h, crc)
 	h = appendUint32(h, size) // compressed size, equal to the uncompressed size

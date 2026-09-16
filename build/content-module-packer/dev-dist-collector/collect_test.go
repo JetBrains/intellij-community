@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -24,6 +25,20 @@ func writeText(t *testing.T, name, text string) string {
 	return writeTestFile(t, name, []byte(text))
 }
 
+// The jar records the packing rule writes for a jar that keeps its own name, which is every jar these tests pack.
+func writeJarRecords(t *testing.T, name string, sources ...string) string {
+	t.Helper()
+	records := make([]map[string]string, 0, len(sources))
+	for _, source := range sources {
+		records = append(records, map[string]string{"source": source, "relativePath": filepath.Base(source)})
+	}
+	data, err := json.Marshal(records)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return writeTestFile(t, name, data)
+}
+
 func requireError(t *testing.T, err error, message string) {
 	t.Helper()
 	if err == nil || !strings.Contains(err.Error(), message) {
@@ -33,94 +48,62 @@ func requireError(t *testing.T, err error, message string) {
 
 func TestPlatformJars(t *testing.T) {
 	t.Chdir(t.TempDir())
-	writeText(t, "jars.list", "\r\n \t\rinputs/z.jar\r\ninputs/a.jar\n")
-	actual, err := collectPlatformJars("jars.list")
+	writeText(t, "jars.json", `[
+  {"source":"inputs/z.jar", "relativePath":"z.jar"},
+  {"source":"inputs/a.jar", "relativePath":"ext/a.jar"}
+]`)
+	actual, err := collectPlatformJars("jars.json")
 	if err != nil {
 		t.Fatal(err)
 	}
 	expected := []sourcedFile{
 		{Source: "inputs/z.jar", RelativePath: "lib/z.jar"},
-		{Source: "inputs/a.jar", RelativePath: "lib/a.jar"},
+		{Source: "inputs/a.jar", RelativePath: "lib/ext/a.jar"},
 	}
 	if !reflect.DeepEqual(actual, expected) {
 		t.Fatalf("files = %#v, want %#v", actual, expected)
 	}
-	writeText(t, "jars.list", "inputs/shared.jar\nother/shared.jar")
-	_, err = collectPlatformJars("jars.list")
-	requireError(t, err, "two packed jars are named 'shared.jar'")
-	writeText(t, "jars.list", " \t\n")
-	_, err = collectPlatformJars("jars.list")
+	// The same jar name under two destinations is what the nested destinations are for, so it must stay legal.
+	writeText(t, "jars.json", `[
+  {"source":"inputs/shared.jar", "relativePath":"shared.jar"},
+  {"source":"other/shared.jar", "relativePath":"ext/shared.jar"}
+]`)
+	if _, err := collectPlatformJars("jars.json"); err != nil {
+		t.Fatal(err)
+	}
+	writeText(t, "jars.json", "[]")
+	_, err = collectPlatformJars("jars.json")
 	requireError(t, err, "names no jar")
 }
 
-func TestPluginRelations(t *testing.T) {
-	t.Chdir(t.TempDir())
-	writeText(t, "jars.tsv", "plugin.two\tmodules/shared.jar\tinputs/shared.jar\n"+
-		"plugin.one\tcustom.jar\tinputs/custom.jar\nplugin.one\tmodules/shared.jar\tinputs/shared.jar\n")
-	writeText(t, "one.tsv", "plugin.one\tmodules/shared.jar\tplugins/one/lib/modules/shared.jar\n")
-	writeText(t, "two.tsv", "plugin.two\tmodules/shared.jar\tplugins/two/lib/modules/shared.jar\n"+
-		"plugin.one\tcustom.jar\tplugins/one/lib/custom.jar\n")
-	actual, err := collectPluginJars("jars.tsv", []string{"one.tsv", "two.tsv"})
-	if err != nil {
-		t.Fatal(err)
+func TestInvalidPlatformJars(t *testing.T) {
+	cases := []struct{ text, message string }{
+		{`null`, "expected an array"},
+		{`[{"relativePath":"a.jar"}]`, "requires source and relativePath"},
+		{`[{"source":"in","relativePath":" "}]`, "requires source and relativePath"},
+		{`[{"source":"in","relativePath":"a.jar","executable":true}]`, "states executable"},
+		{`[{"source":"in","relativePath":"../a.jar"}]`, "escapes the distribution"},
+		{`[{"source":"in","relativePath":"/a.jar"}]`, "escapes the distribution"},
+		{`[{"source":"in","relativePath":"a.jar","extra":1}]`, "unknown field"},
 	}
-	expected := []sourcedFile{
-		{Source: "inputs/custom.jar", RelativePath: "plugins/one/lib/custom.jar"},
-		{Source: "inputs/shared.jar", RelativePath: "plugins/one/lib/modules/shared.jar"},
-		{Source: "inputs/shared.jar", RelativePath: "plugins/two/lib/modules/shared.jar"},
-	}
-	if !reflect.DeepEqual(actual, expected) {
-		t.Fatalf("files = %#v, want %#v", actual, expected)
-	}
-	writeText(t, "empty.tsv", "")
-	empty, err := collectPluginJars("empty.tsv", nil)
-	if err != nil || len(empty) != 0 {
-		t.Fatalf("empty plugin records: files = %#v, error = %v", empty, err)
+	for _, test := range cases {
+		t.Run(test.text, func(t *testing.T) {
+			file := writeText(t, filepath.Join(t.TempDir(), "jars.json"), test.text)
+			_, err := collectPlatformJars(file)
+			requireError(t, err, test.message)
+		})
 	}
 }
 
-func TestInvalidPluginRelations(t *testing.T) {
-	const jar = "plugin.one\tmodules/content.jar\tinput.jar\n"
-	const placement = "plugin.one\tmodules/content.jar\tplugins/one/lib/modules/content.jar\n"
-	cases := []struct {
-		name       string
-		jars       string
-		placements []string
-		message    string
-	}{
-		{"missing placement", jar, nil, "missing placements [plugin.one/modules/content.jar]"},
-		{"unknown placement", "", []string{placement}, "unknown placements [plugin.one/modules/content.jar]"},
-		{"duplicate jar", jar + jar, nil, "duplicate plugin jar relation"},
-		{"duplicate placement", jar, []string{placement, placement}, "duplicate placement"},
-		{"few fields", "plugin.one\tcontent.jar", nil, "expected 3 tab-separated fields, got 2"},
-		{"extra fields", jar + "plugin.two\tcontent.jar\tinput.jar\tmore", nil, "expected 3 tab-separated fields, got 4"},
-		{"blank field", "plugin.one\t \tinput.jar", nil, "fields must not be blank"},
-		{"trailing field", "plugin.one\tcontent.jar\t", nil, "fields must not be blank"},
-		{"output escape", "plugin.one\t../content.jar\tinput.jar", nil, "escapes plugin lib"},
-		{"absolute output", "plugin.one\t/content.jar\tinput.jar", nil, "escapes plugin lib"},
-		{"unnormalized output", "plugin.one\tmodules/./content.jar\tinput.jar", nil, "escapes plugin lib"},
-		{"placement escape", jar, []string{"plugin.one\tmodules/content.jar\t../outside.jar"}, "escapes the distribution"},
-		{"absolute placement", jar, []string{"plugin.one\tmodules/content.jar\t/plugins/one/lib/modules/content.jar"}, "escapes the distribution"},
-		{"wrong suffix", jar, []string{"plugin.one\tmodules/content.jar\tplugins/one/lib/modules/other.jar"}, "expected plugins/<directory>/lib/modules/content.jar"},
-		{"partial suffix", jar, []string{"plugin.one\tmodules/content.jar\tplugins/one/notlib/modules/content.jar"}, "expected plugins/<directory>"},
-		{"partial prefix", jar, []string{"plugin.one\tmodules/content.jar\tplugins-other/one/lib/modules/content.jar"}, "expected plugins/<directory>"},
-		{"collision", jar + "plugin.two\tmodules/content.jar\tother.jar", []string{
-			placement + "plugin.two\tmodules/content.jar\tplugins/one/lib/modules/content.jar",
-		}, "both claim plugins/one/lib/modules/content.jar"},
-		{"invalid UTF-8", jar + "\xff", nil, "not valid UTF-8"},
+// A repeated destination and a destination that holds another are refused by `validateDestinations`, which both
+// collection modes share, so the jar mode keeps no check of its own.
+func TestConflictingPlatformJarDestinations(t *testing.T) {
+	cases := []struct{ files []sourcedFile; message string }{
+		{[]sourcedFile{{Source: "one", RelativePath: "lib/a.jar"}, {Source: "two", RelativePath: "lib/a.jar"}}, "conflicting destination: lib/a.jar"},
+		{[]sourcedFile{{Source: "one", RelativePath: "lib/ext.jar"}, {Source: "two", RelativePath: "lib/ext.jar/a.jar"}}, "contains"},
 	}
 	for _, test := range cases {
-		t.Run(test.name, func(t *testing.T) {
-			t.Chdir(t.TempDir())
-			writeText(t, "jars.tsv", test.jars)
-			var placements []string
-			for index, text := range test.placements {
-				name := strings.Repeat("part-", index+1) + ".tsv"
-				placements = append(placements, writeText(t, name, text))
-			}
-			_, err := collectPluginJars("jars.tsv", placements)
-			requireError(t, err, test.message)
-		})
+		requireError(t, validateDestinations(test.files), test.message)
 	}
 }
 

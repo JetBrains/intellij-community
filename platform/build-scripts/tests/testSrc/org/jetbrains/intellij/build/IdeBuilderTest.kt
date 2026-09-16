@@ -14,8 +14,6 @@ import org.jetbrains.intellij.build.dev.DevBuildOutput
 import org.jetbrains.intellij.build.dev.IdeFingerprintEntry
 import org.jetbrains.intellij.build.dev.PlatformJarSelector
 import org.jetbrains.intellij.build.dev.PluginFragmentSelector
-import org.jetbrains.intellij.build.dev.accepts
-import org.jetbrains.intellij.build.dev.checkNamesAreKnown
 import org.jetbrains.intellij.build.dev.computeIdeFingerprintFromComponents
 import org.jetbrains.intellij.build.dev.configureDevModeBuildOptions
 import org.jetbrains.intellij.build.dev.configureTargetPlatform
@@ -88,13 +86,6 @@ class IdeBuilderTest {
 
   @Test
   fun componentOutputRejectsIncompleteComponentContracts() {
-    val pluginFragment = DevBuildFragment(
-      name = "plugins_air",
-      platform = null,
-      platformResources = false,
-      plugins = PluginFragmentSelector.Named(setOf("intellij.air.plugin")),
-    )
-
     assertThatThrownBy {
       DevBuildOutput.Component(
         fragment = DevBuildFragment.COMPLETE,
@@ -103,14 +94,6 @@ class IdeBuilderTest {
     }
       .isInstanceOf(IllegalArgumentException::class.java)
       .hasMessageContaining("must use DevBuildOutput.Complete")
-    assertThatThrownBy {
-      DevBuildOutput.Component(
-        fragment = pluginFragment,
-        manifestFile = tempDir.resolve("plugins.json"),
-      )
-    }
-      .isInstanceOf(IllegalArgumentException::class.java)
-      .hasMessageContaining("plugin-classpath part file")
   }
 
   @Test
@@ -155,27 +138,6 @@ class IdeBuilderTest {
     assertThatThrownBy { PlatformJarSelector(jars = emptySet(), mode = PlatformJarSelector.Mode.ONLY) }
       .isInstanceOf(IllegalArgumentException::class.java)
       .hasMessageContaining("must name at least one")
-  }
-
-  @Test
-  fun pluginSelectorRejectsAPluginTheProductDoesNotBundle() {
-    assertThatThrownBy {
-      PluginFragmentSelector.Named(setOf("intellij.air.plugn")).checkNamesAreKnown(setOf("intellij.air.plugin"), "plugins_air")
-    }
-      .isInstanceOf(IllegalStateException::class.java)
-      .hasMessageContaining("intellij.air.plugn")
-  }
-
-  @Test
-  fun pluginSelectorsPartitionBundledPlugins() {
-    val named = PluginFragmentSelector.Named(setOf("intellij.air.plugin"))
-    val remaining = PluginFragmentSelector.Remaining(setOf("intellij.air.plugin"))
-
-    assertThat(named.accepts("intellij.air.plugin")).isTrue()
-    assertThat(named.accepts("intellij.vcs.git")).isFalse()
-    assertThat(remaining.accepts("intellij.air.plugin")).isFalse()
-    assertThat(remaining.accepts("intellij.vcs.git")).isTrue()
-    assertThat(PluginFragmentSelector.All.accepts("intellij.air.plugin")).isTrue()
   }
 
   @Test
@@ -769,7 +731,6 @@ class IdeBuilderTest {
       output = if (fragment.isComplete) DevBuildOutput.Complete else DevBuildOutput.Component(
         fragment = fragment,
         manifestFile = tempDir.resolve("${fragment.name}.component.json"),
-        pluginClasspathPartFile = if (fragment.ownsPlugins) tempDir.resolve("${fragment.name}.plugin-classpath-part") else null,
         pluginClasspathPrefixFile = pluginClasspathPrefixFile,
       ),
     )

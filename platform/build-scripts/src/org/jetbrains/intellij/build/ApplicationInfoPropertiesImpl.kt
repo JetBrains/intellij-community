@@ -63,8 +63,9 @@ internal class ApplicationInfoPropertiesImpl(
   init {
     val appInfoXml = Files.readString(findApplicationInfoInSources(project, productProperties))
     val replacedAppInfoXml = productProperties.appInfoXmlReplacements
-      ?.let { BuildUtils.replaceAll(appInfoXml, it) } ?: appInfoXml
+                               ?.let { BuildUtils.replaceAll(appInfoXml, it) } ?: appInfoXml
     val root = readXmlAsModel(replacedAppInfoXml.encodeToByteArray())
+
     @Suppress("DEPRECATION")
     val applicationInfoOverrides = productProperties.applicationInfoOverride(project)
     val versionTag = root.getChild("version")!!
@@ -99,8 +100,8 @@ internal class ApplicationInfoPropertiesImpl(
     this.productCode = productCode!!
     this.majorReleaseDate = run {
       val majorReleaseDate = (System.getProperty(BuildOptions.INTELLIJ_BUILD_OVERRIDE_APPLICATION_VERSION_MAJOR_RELEASE_DATE)
-                             ?: applicationInfoOverrides?.majorReleaseDate
-                             ?: buildTag.getAttributeValue("majorReleaseDate"))?.takeIf { it.isNotEmpty() }
+                              ?: applicationInfoOverrides?.majorReleaseDate
+                              ?: buildTag.getAttributeValue("majorReleaseDate"))?.takeIf { it.isNotEmpty() }
       when {
         isEAP -> {
           // A dev distribution stamps no build date at all (see `computeAppInfoXml`), so its `buildDateInSeconds` -
@@ -185,7 +186,7 @@ internal fun computeAppInfoXml(appInfo: ApplicationInfoProperties, context: Buil
   @Suppress("DEPRECATION")
   val appInfoOverride = context.productProperties.applicationInfoOverride(context.project)
   if (isEapOverride != null || suffixOverride != null || appInfoOverride != null || (context.isNightlyBuild && !isBranchDefault && branchName != null)) {
-    patchedAppInfo = withAppInfoOverride(
+    patchedAppInfo = applyApplicationInfoOverrides(
       originalPatchedAppInfo = patchedAppInfo,
       isEapOverride = isEapOverride,
       suffixOverride = suffixOverride,
@@ -197,7 +198,7 @@ internal fun computeAppInfoXml(appInfo: ApplicationInfoProperties, context: Buil
   return patchedAppInfo
 }
 
-private fun withAppInfoOverride(
+internal fun applyApplicationInfoOverrides(
   originalPatchedAppInfo: String,
   isEapOverride: String?,
   suffixOverride: String?,

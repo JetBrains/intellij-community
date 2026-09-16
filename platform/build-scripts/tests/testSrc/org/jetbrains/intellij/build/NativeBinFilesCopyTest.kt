@@ -3,9 +3,17 @@ package org.jetbrains.intellij.build
 
 import com.intellij.testFramework.common.timeoutRunBlocking
 import org.assertj.core.api.Assertions.assertThat
+import org.jetbrains.intellij.build.dev.DevPluginLayoutAsset
+import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetMapping
+import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetSource
+import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetSpec
+import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetTransform
+import org.jetbrains.intellij.build.impl.PlatformLayout
+import org.jetbrains.intellij.build.impl.copyDeclaredOsSpecificFiles
 import org.jetbrains.intellij.build.impl.copyDistFiles
 import org.jetbrains.intellij.build.impl.copyNativeBinDir
 import org.jetbrains.intellij.build.impl.copyNativeBinFileToDir
+import org.jetbrains.intellij.build.impl.registerPlatformDistFiles
 import org.jetbrains.intellij.build.productLayout.ProductModulesContentSpec
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
@@ -23,10 +31,11 @@ import kotlin.io.path.writeText
 class NativeBinFilesCopyTest {
   @Test
   @Timeout(30)
-  fun `a product without an IJent registrar registers no files`() {
+  fun `a product without dist files registers none`() {
     timeoutRunBlocking {
       val context = mock(BuildContext::class.java)
 
+      registerPlatformDistFiles(PlatformLayout(), context)
       TestProductProperties().registerDistFiles(context)
 
       verifyNoInteractions(context)
@@ -35,22 +44,21 @@ class NativeBinFilesCopyTest {
 
   @Test
   @Timeout(30)
-  fun `registered files include IJent executables`(@TempDir tempDir: Path) {
+  fun `declared platform dist files are registered before the product files`(@TempDir tempDir: Path) {
     timeoutRunBlocking {
-      val source = tempDir.resolve("ijent").also { it.writeText("ijent bytes") }
-      val binaryFile = DistFile(LocalDistFileContent(source, isExecutable = true), "lib/ijent/ijent-test")
+      val source = tempDir.resolve("binary-test").also { it.writeText("binary bytes") }
+      val binaryFile = DistFile(LocalDistFileContent(source, isExecutable = true), "lib/test/binary-test")
       val configFile = DistFile(InMemoryDistFileContent("config bytes".encodeToByteArray()), "bin/test.properties")
       val context = mock(BuildContext::class.java)
       val properties = object : TestProductProperties() {
         override fun registerDistFiles(context: BuildContext) {
-          super.registerDistFiles(context)
           context.addDistFile(configFile)
         }
       }
-      properties.ijentDistributionRegistrar = { buildContext ->
-        buildContext.addDistFile(binaryFile)
-      }
+      val platformLayout = PlatformLayout()
+      platformLayout.withDistFiles(OsFamily.LINUX, JvmArchitecture.x64, testDistFileSpec("binary-test")) { listOf(binaryFile) }
 
+      registerPlatformDistFiles(platformLayout, context)
       properties.registerDistFiles(context)
 
       val registrationOrder = inOrder(context)
@@ -62,18 +70,40 @@ class NativeBinFilesCopyTest {
 
       copyDistFiles(runDir, OsFamily.LINUX, JvmArchitecture.x64, LinuxLibcImpl.GLIBC, context)
 
-      val binary = runDir.resolve("lib/ijent/ijent-test")
-      assertThat(binary).hasContent("ijent bytes")
+      val binary = runDir.resolve("lib/test/binary-test")
+      assertThat(binary).hasContent("binary bytes")
       assertThat(runDir.resolve("bin/test.properties")).hasContent("config bytes")
       if (Files.getFileStore(binary).supportsFileAttributeView("posix")) {
         assertThat(Files.isExecutable(binary)).isTrue()
       }
 
-      source.writeText("updated ijent bytes")
+      source.writeText("updated binary bytes")
       copyDistFiles(runDir, OsFamily.LINUX, JvmArchitecture.x64, LinuxLibcImpl.GLIBC, context)
 
-      assertThat(binary).hasContent("updated ijent bytes")
+      assertThat(binary).hasContent("updated binary bytes")
     }
+  }
+
+  @Test
+  fun `declared os-specific files are copied for their platform only and reported`(@TempDir tempDir: Path) {
+    val source = tempDir.resolve("download/restarter").also {
+      it.parent.createDirectories()
+      it.writeText("restarter bytes")
+    }
+    val distributionDir = tempDir.resolve("dist").createDirectories()
+    val context = mock(BuildContext::class.java)
+    val platformLayout = PlatformLayout()
+    platformLayout.withOsSpecificFiles(OsFamily.LINUX, JvmArchitecture.x64, testDistFileSpec("restarter")) { dir, _ ->
+      listOf(copyNativeBinFileToDir(source, dir.resolve("bin").createDirectories()))
+    }
+
+    val copied = copyDeclaredOsSpecificFiles(platformLayout, distributionDir, OsFamily.LINUX, JvmArchitecture.x64, context)
+    val otherPlatform = copyDeclaredOsSpecificFiles(platformLayout, distributionDir, OsFamily.MACOS, JvmArchitecture.x64, context)
+
+    assertThat(copied).containsExactly(distributionDir.resolve("bin/restarter"))
+    assertThat(distributionDir.resolve("bin/restarter")).hasContent("restarter bytes")
+    assertThat(otherPlatform).isEmpty()
+    verifyNoInteractions(context)
   }
 
   @Test
@@ -101,6 +131,19 @@ class NativeBinFilesCopyTest {
     assertThat(binDir.resolve("fsnotifier")).hasContent("second watcher")
     assertThat(binDir.resolve("excluded")).doesNotExist()
   }
+}
+
+/** One executable named [fileName] out of a test archive, at `lib/test/<fileName>`: the smallest valid platform dist file declaration. */
+internal fun testDistFileSpec(fileName: String): DevPluginLayoutAssetSpec {
+  return DevPluginLayoutAssetSpec(
+    sources = listOf(DevPluginLayoutAssetSource.BazelTarget(label = "@dev_launch_test//:files", kind = "archive", fileName = "test.tar.gz")),
+    assets = listOf(DevPluginLayoutAsset(
+      destination = "lib/test",
+      sources = listOf(0),
+      transform = DevPluginLayoutAssetTransform.archiveTree(mappings = listOf(DevPluginLayoutAssetMapping(pattern = fileName))),
+      mode = 493,
+    )),
+  )
 }
 
 private open class TestProductProperties : ProductProperties() {

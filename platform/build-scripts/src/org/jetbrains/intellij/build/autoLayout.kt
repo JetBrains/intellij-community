@@ -136,15 +136,6 @@ internal fun computeModuleSourcesByContent(
       continue
     }
 
-    if (jarPackager.handOffPluginJarMember(
-        pluginLayout = pluginLayout,
-        moduleName = moduleName,
-        relativeOutputFile = relativeOutputFile,
-        searchableOptionSet = searchableOptionSet,
-      )) {
-      continue
-    }
-
     jarPackager.computeSourcesForModule(
       item = ModuleItem(
         moduleName = moduleName,

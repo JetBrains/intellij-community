@@ -5,84 +5,24 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.impl.ModuleItem
 
 /**
- * Stable key of one plugin jar handed from JarPackager to a Bazel packing action.
- *
- * One jar of one plugin, because the jar is what a packing action produces and what the composer places. A plugin puts
- * one member's jar under `lib/modules/` and another plugin puts the same bytes directly in `lib/`, so the destination
- * belongs to the relation - and it identifies the relation, while the member alone cannot: a jar may hold a name no
- * member gives it, and a jar may hold more than one member.
- */
-@ApiStatus.Internal
-data class PrepackedPluginContentKey(
-  @JvmField val pluginMainModule: String,
-  /** Path below the plugin's `lib/` directory. */
-  @JvmField val relativeOutputFile: String,
-)
-
-/**
- * The product-independent jar relation. Placement is validated against the product layout before it is used.
- *
- * [key] is the relation's identity. [contentModules] is the payload: every member this jar holds, in the order the
- * packing target merged them. A list and not one name, because a plugin's layout names a jar freely: `tomee-specifics.jar`
- * holds two members, and a jar the layout names after neither of them holds one. `JarPackager` offers the members one at
- * a time, so the list is what says when the offer is complete - see `validatePrepackedPluginContent`.
- */
-@ApiStatus.Internal
-data class PrepackedPluginContentJar(
-  @JvmField val pluginMainModule: String,
-  @JvmField val contentModules: List<String>,
-  /** Path below the plugin's `lib/` directory. */
-  @JvmField val relativeOutputFile: String,
-) {
-  val key: PrepackedPluginContentKey
-    get() = PrepackedPluginContentKey(pluginMainModule = pluginMainModule, relativeOutputFile = relativeOutputFile)
-}
-
-/**
- * One handed-off jar as a single assembly saw it: the relation, and where in that assembly the jar belongs.
- *
- * A type of its own, because [assetOrdinal] is not part of the relation. The relation is product-independent and comes
- * from Bazel; the ordinal is a fact about one `JarPackager` run and cannot be read from a checked-in file.
- */
-@ApiStatus.Internal
-data class AssembledPrepackedPluginContentJar(
-  @JvmField val jar: PrepackedPluginContentJar,
-  /**
-   * How many assets the assembly had created when it handed this jar over, which is the index the jar's own asset
-   * would have had.
-   *
-   * The plugin classpath needs it. `generatePluginClassPath` orders a plugin's jars with
-   * `putMoreLikelyPluginJarsFirst`, a stable sort whose last tiebreak is the file name *length* - so two jars with
-   * equally long names keep the order they were added in. Appending the handed-off jars after the assembled ones would
-   * therefore let the *producer* of a jar decide the classpath order, and handing a jar over would reorder
-   * `plugin-classpath.txt` without changing a byte of any jar. With the ordinal the merge puts each handed-off jar back
-   * where `computeSourcesForModule` would have put its asset, so the sort sees the same input either way.
-   *
-   * A jar of several members has one asset, and the **first** member the assembly offers is the one that would have
-   * created it. So the ordinal is recorded at that first offer and the later members of the same jar add none.
-   */
-  @JvmField val assetOrdinal: Int,
-)
-
-/**
  * Which independently cacheable slice of a dev distribution one assembly produces.
  *
  * A complete distribution is [COMPLETE] - one assembly, everything in it. Anything else is a fragment: a caller
  * assembles several of them, each cached and invalidated on its own, and composes the results with
- * `composeDevBuildComponents`. The producers of one distribution must partition it exactly, so what nobody claimed is
- * assembled by a complement instead of being silently dropped: [PlatformJarSelector.Mode.EXCLUDE] takes every
- * `lib/` jar the per-module packing actions do not pack, and [PluginFragmentSelector.Remaining] every bundled plugin
- * the named plugin fragments did not claim.
+ * `composeDevBuildComponents`. The producers of one distribution must partition it exactly. A complement assembles
+ * what nobody claimed, so nothing is silently dropped: [PlatformJarSelector.Mode.EXCLUDE] takes every `lib/` jar the
+ * per-module packing actions do not pack. The plugin directories come from the packed plugin components, so no
+ * fragment owns one.
  */
 @ApiStatus.Internal
 data class DevBuildFragment(
-  /** Identifies the fragment in its component manifest and in diagnostics; `platform_lib`, `platform_resources`, `plugins_air`. */
+  /** Identifies the fragment in its component manifest and in diagnostics; `platform_lib`, `platform_resources`. */
   @JvmField val name: String,
   /** The `lib/` jars this fragment owns, or `null` if it owns none. */
   @JvmField val platform: PlatformJarSelector?,
   /** Whether this fragment owns `bin`, the product metadata, the launchers and the copied product files. */
   @JvmField val platformResources: Boolean,
-  /** The bundled plugin directories this fragment owns, or `null` if it owns none. */
+  /** The bundled plugin directories this assembly owns: [PluginFragmentSelector.All] for a complete one, `null` for a fragment. */
   @JvmField val plugins: PluginFragmentSelector?,
 ) {
   companion object {
@@ -194,22 +134,11 @@ data class PlatformJarSelector(
   }
 }
 
-/** Which bundled plugin directories a fragment owns. */
+/** Which bundled plugin directories an assembly owns. */
 @ApiStatus.Internal
 sealed interface PluginFragmentSelector {
   /** Every bundled plugin, and the prebuilt plugin directories a product copies in. */
   data object All : PluginFragmentSelector
-
-  /** The plugins with these main modules. */
-  data class Named(@JvmField val mainModules: Set<String>) : PluginFragmentSelector
-
-  /**
-   * Every bundled plugin that [claimedMainModules] does not cover.
-   *
-   * This fragment also owns the prebuilt plugin directories from `ProductProperties.getAdditionalPluginPaths`, which
-   * are not plugin layouts and so cannot be claimed by name.
-   */
-  data class Remaining(@JvmField val claimedMainModules: Set<String>) : PluginFragmentSelector
 }
 
 /**
@@ -226,34 +155,3 @@ internal fun PlatformJarSelector.selectModules(includedModules: Collection<Modul
   }
   return includedModules.filter { accepts(it.relativeOutputFile) }
 }
-
-/** Whether the plugin with [mainModule] belongs to this fragment. */
-internal fun PluginFragmentSelector.accepts(mainModule: String): Boolean {
-  return when (this) {
-    PluginFragmentSelector.All -> true
-    is PluginFragmentSelector.Named -> mainModules.contains(mainModule)
-    is PluginFragmentSelector.Remaining -> !claimedMainModules.contains(mainModule)
-  }
-}
-
-/**
- * Fails when this selector names a plugin the product does not bundle. A misspelled name is otherwise invisible: its
- * fragment assembles nothing, the plugin it was meant to name returns to [PluginFragmentSelector.Remaining], and the
- * distribution is still complete - only the caching intent is quietly lost. [candidateMainModules] is the product's
- * whole bundled set, which every plugin fragment computes.
- */
-internal fun PluginFragmentSelector.checkNamesAreKnown(candidateMainModules: Set<String>, fragmentName: String) {
-  val named = when (this) {
-    is PluginFragmentSelector.Named -> mainModules
-    is PluginFragmentSelector.Remaining -> claimedMainModules
-    else -> return
-  }
-  val unknown = named.filterNot(candidateMainModules::contains)
-  check(unknown.isEmpty()) {
-    "Fragment '$fragmentName' names plugins this product does not bundle: ${unknown.sorted().joinToString()}"
-  }
-}
-
-/** Whether this fragment owns the prebuilt plugin directories a product copies in verbatim. */
-internal val PluginFragmentSelector.ownsPrebuiltPluginDirs: Boolean
-  get() = this is PluginFragmentSelector.All || this is PluginFragmentSelector.Remaining

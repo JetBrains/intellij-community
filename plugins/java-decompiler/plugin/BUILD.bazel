@@ -1,15 +1,18 @@
 load("@community//build:tests-options.bzl", "jps_test")
-load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_TARGETS")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `dev intellij.java.decompiler` start
 dev_dist_plugin(
     content_modules = ["intellij.java.decompiler.engine"],
     descriptor = "resources/META-INF/plugin.xml",
-    libraries = ["@lib//:eclipse"],
+    jars = {
+        "lib/java-decompiler.jar": [
+            "intellij.java.decompiler",
+            "intellij.java.decompiler.engine",
+        ],
+    },
     main_module = "intellij.java.decompiler",
-    module_targets = MODULE_TARGETS,
 )
 ### auto-generated section `dev intellij.java.decompiler` end
 

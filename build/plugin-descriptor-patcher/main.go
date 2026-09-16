@@ -20,11 +20,12 @@
 // layout states one is held out of this rule's population by the generated plan. `reserialized` is the round trip of
 // `internal/descriptorxml`, `stamps` is `internal/stamps`, and the two structural stages are `internal/structural`.
 //
-// ### The reference producer
+// ### The guards
 //
-// `@community//platform/build-scripts/bazel-rules/dev-dist-plugin-descriptor` is the JVM tool this binary replaced. It
-// stays, and it takes the same request: `./build/dev-dist.cmd descriptors --two-producer` runs both over the same
-// declared inputs and compares their bytes per plugin. That is the gate that makes a second implementation safe.
+// This binary is the one producer of the text. The curated cases of `internal/descriptorxml`, `internal/stamps` and
+// `internal/structural` are the committed gate, and every expectation in them is a text the platform produced.
+// `//build:idea_dev_descriptor_leaf_build_test` builds a sample group of leaves. `./build/dev-dist.cmd snapshot diff`
+// compares every plugin main jar of a composed distribution against a recorded baseline.
 package main
 
 import (
@@ -49,14 +50,15 @@ func main() {
 
 // request is one plugin's request, as the rule states it.
 //
-// It is `DevDistPluginDescriptorRequest` (`DevDistPluginDescriptorMain.kt`), field for field and option for
-// option. The two binaries take one request spelling, so the rule's executable is the only thing the swap changed.
+// Every field is a string, a boolean, a path or a list of those. Nothing here can reach a layout or a build context.
+// `dev_dist_plugin_descriptor` states the request, and this parser is its one reader.
 type request struct {
 	output          string
 	mainModule      string
 	directoryName   string
 	mainJarName     string
 	source          string
+	sourceEntry     string
 	buildNumberFile string
 	releaseDate     string
 	releaseVersion  string
@@ -64,6 +66,8 @@ type request struct {
 	exactVersion    bool
 	retainProduct   bool
 	embedsContent   bool
+	// reserializeBeforeContentEmbedding finishes ordinary XML normalization before embedded descriptors add CDATA.
+	reserializeBeforeContentEmbedding bool
 	// refusedContentModules are the content modules the product's filter refuses. Normally empty.
 	refusedContentModules []string
 	separateJar           map[string]bool
@@ -80,6 +84,9 @@ type request struct {
 	markers []string
 	// versionSuffix is what the layout appends to the IDE build version, empty for a layout that stamps it unchanged.
 	versionSuffix string
+	// reserializedOutput, when set, receives the final descriptor after one more `descriptorxml` round trip. That is
+	// the form the plugin classpath record embeds (`generatePluginClassPathFromOrderedAssets` of `orderedAssets.kt`).
+	reserializedOutput string
 }
 
 func run(arguments []string) int {
@@ -98,19 +105,42 @@ func run(arguments []string) int {
 		fmt.Fprintf(os.Stderr, "ERROR: could not patch the descriptor (module=%s): %v\n", parsed.mainModule, err)
 		return 1
 	}
-	if err := os.MkdirAll(filepath.Dir(parsed.output), 0o755); err != nil {
-		fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
-		return 1
+	outputs := map[string]string{parsed.output: content}
+	if parsed.reserializedOutput != "" {
+		reserialized, err := reserialize(content)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "ERROR: could not reserialize the descriptor (module=%s): %v\n", parsed.mainModule, err)
+			return 1
+		}
+		outputs[parsed.reserializedOutput] = reserialized
 	}
-	if err := os.WriteFile(parsed.output, []byte(content), 0o644); err != nil {
-		fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
-		return 1
+	for file, text := range outputs {
+		if err := writeOutput(file, text); err != nil {
+			fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
+			return 1
+		}
 	}
 	return 0
 }
 
-// patch is `patchPluginDescriptorFromPlan` and the body it calls
-// (`DevDistPluginDescriptorMain.kt`, `applyPluginDescriptorPatch` of `PluginXmlPatcher.kt`).
+// reserialize is the `JDOMUtil.load` and `JDOMUtil.write` pair the classpath writer applies to a descriptor.
+func reserialize(content string) (string, error) {
+	element, err := descriptorxml.Read(content)
+	if err != nil {
+		return "", err
+	}
+	return descriptorxml.Write(element), nil
+}
+
+func writeOutput(file string, content string) error {
+	if err := os.MkdirAll(filepath.Dir(file), 0o755); err != nil {
+		return err
+	}
+	return os.WriteFile(file, []byte(content), 0o644)
+}
+
+// patch is the port of `applyPluginDescriptorPatch` (`PluginXmlPatcher.kt`), the body the assembly runs, driven by
+// the plan instead of by the product layout.
 func patch(parsed request) (string, error) {
 	buildNumberContent, err := os.ReadFile(parsed.buildNumberFile)
 	if err != nil {
@@ -131,7 +161,12 @@ func patch(parsed request) (string, error) {
 	}
 	sinceBuild, untilBuild := stamps.CompatiblePlatformVersionRange(compatibleBuildRange, buildNumber)
 
-	source, err := os.ReadFile(parsed.source)
+	var source []byte
+	if parsed.sourceEntry == "" {
+		source, err = os.ReadFile(parsed.source)
+	} else {
+		source, err = readFirstZipEntry([]string{parsed.source}, parsed.sourceEntry)
+	}
 	if err != nil {
 		return "", err
 	}
@@ -165,14 +200,19 @@ func patch(parsed request) (string, error) {
 		UntilBuild:     untilBuild,
 		ReleaseDate:    parsed.releaseDate,
 		ReleaseVersion: parsed.releaseVersion,
-		// A dev distribution publishes no plugin: `PluginBuilder` passes an empty set on this path
-		// (`patchPluginDescriptorFromPlan` of `DevDistPluginDescriptorMain.kt`).
+		// A dev distribution publishes no plugin: `PluginBuilder` passes an empty set on this path.
 		ToPublish:                               false,
 		RetainProductDescriptorForBundledPlugin: parsed.retainProduct,
 		IsEap:                                   parsed.isEap,
 	})
 	if err := structural.ResolveIncludes(element, resolver); err != nil {
 		return "", err
+	}
+	if parsed.reserializeBeforeContentEmbedding {
+		element, err = descriptorxml.Read(descriptorxml.Write(element))
+		if err != nil {
+			return "", err
+		}
 	}
 	err = structural.EmbedContentModules(element, structural.ContentRequest{
 		MainModule:  parsed.mainModule,
@@ -268,10 +308,10 @@ func readArgumentLines(arguments []string) ([]string, error) {
 	return arguments, nil
 }
 
-// parseRequest is `parseDevDistPluginDescriptorRequest` (`DevDistPluginDescriptorMain.kt`).
+// parseRequest reads the parameter file `dev_dist_plugin_descriptor` writes, one option per line.
 //
-// An option the parser does not know fails the run. That is the platform's rule too, and it is what keeps the two
-// producers on one spelling: a rule that grows an option reaches both binaries or neither.
+// An option the parser does not know fails the run. That is the platform's rule too, and it keeps the rule and this
+// binary on one spelling: a rule that grows an option reaches this parser or fails here.
 func parseRequest(lines []string) (request, error) {
 	parsed := request{
 		embedsContent:          true,
@@ -292,12 +332,22 @@ func parseRequest(lines []string) (request, error) {
 		case "--main-module":
 			parsed.mainModule = value
 		case "--directory-name":
-			// Reported by `DevDistPatchedDescriptors` only, so this binary reads it and writes it nowhere.
+			// This binary reads the value and writes it nowhere.
 			parsed.directoryName = value
 		case "--main-jar-name":
 			parsed.mainJarName = value
 		case "--source":
+			if parsed.source != "" {
+				err = fmt.Errorf("the descriptor source is declared more than once")
+				break
+			}
 			parsed.source = value
+		case "--source-in-jar":
+			if parsed.source != "" {
+				err = fmt.Errorf("the descriptor source is declared more than once")
+				break
+			}
+			parsed.sourceEntry, parsed.source, err = parseDescriptorJar(value)
 		case "--build-number-file":
 			parsed.buildNumberFile = value
 		case "--release-date":
@@ -312,6 +362,8 @@ func parseRequest(lines []string) (request, error) {
 			parsed.retainProduct, err = parseBooleanStrict(value)
 		case "--embed-content-modules":
 			parsed.embedsContent, err = parseBooleanStrict(value)
+		case "--reserialize-before-content-embedding":
+			parsed.reserializeBeforeContentEmbedding, err = parseBooleanStrict(value)
 		case "--refused-content-module":
 			parsed.refusedContentModules = append(parsed.refusedContentModules, value)
 		case "--separate-jar":
@@ -324,6 +376,8 @@ func parseRequest(lines []string) (request, error) {
 			parsed.markers = append(parsed.markers, value)
 		case "--version-suffix":
 			parsed.versionSuffix = value
+		case "--reserialized-output":
+			parsed.reserializedOutput = value
 		case "--platform-descriptor":
 			err = putDescriptor(parsed.platformDescriptors, value)
 		case "--plugin-module":
@@ -353,6 +407,14 @@ func parseRequest(lines []string) (request, error) {
 	// `--release-date` and `--release-version` are mandatory on the rule, so an empty one is a request the rule cannot
 	// state. They reach `<product-descriptor>` alone, and 1 of the 163 plugins states one.
 	return parsed, nil
+}
+
+func parseDescriptorJar(value string) (string, string, error) {
+	entry, jar, found := strings.Cut(value, "=")
+	if !found || entry == "" || jar == "" {
+		return "", "", fmt.Errorf("a jar descriptor is '<entry>=<jar>', and '%s' is not", value)
+	}
+	return entry, jar, nil
 }
 
 // parseBooleanStrict is Kotlin's `String.toBooleanStrict`, which accepts exactly `true` and `false`.

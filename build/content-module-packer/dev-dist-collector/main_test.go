@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"os"
-	"reflect"
 	"strings"
 	"testing"
 )
@@ -20,12 +19,11 @@ func TestOptions(t *testing.T) {
 		for _, archAlias := range []struct{ input, expected string }{
 			{"x64", "x64"}, {"X86_64", "x64"}, {"amd64", "x64"}, {"AArch64", "aarch64"}, {"arm64", "aarch64"},
 		} {
-			args := baseArgs("--plugin-jars-file=jars.tsv")
+			args := baseArgs("--jars-file=jars.json")
 			args[3] = "--os=" + osAlias.input
 			args[4] = "--arch=" + archAlias.input
-			opts, err := parseOptions(append(args, "--plugin-placement=one.tsv", "--plugin-placement=two.tsv", "--trace-file="))
-			if err != nil || opts.os != osAlias.expected || opts.arch != archAlias.expected ||
-				!reflect.DeepEqual(opts.placements, []string{"one.tsv", "two.tsv"}) {
+			opts, err := parseOptions(append(args, "--trace-file="))
+			if err != nil || opts.os != osAlias.expected || opts.arch != archAlias.expected {
 				t.Fatalf("options = %#v, error = %v", opts, err)
 			}
 		}
@@ -42,19 +40,17 @@ func TestInvalidOptions(t *testing.T) {
 		message string
 	}{
 		{[]string{"--files-file=files.json"}, "exactly one"},
-		{[]string{"--plugin-jars-file=jars.tsv"}, "exactly one"},
 		{[]string{"--jars-file=other"}, "at most once"},
 		{[]string{"--kind="}, "at most once"},
-		{[]string{"--plugin-placement=placements.tsv"}, "only valid with --plugin-jars-file"},
 		{[]string{"--unknown="}, "unknown option"},
 		{[]string{"file"}, "--key=value"},
 	}
 	for _, test := range cases {
-		_, err := parseOptions(append(baseArgs("--jars-file=jars.list"), test.extra...))
+		_, err := parseOptions(append(baseArgs("--jars-file=jars.json"), test.extra...))
 		requireError(t, err, test.message)
 	}
 	for _, index := range []int{0, 1, 2, 3, 4, 5} {
-		args := baseArgs("--jars-file=jars.list")
+		args := baseArgs("--jars-file=jars.json")
 		if index < 3 || index == 5 {
 			args[index] = strings.Split(args[index], "=")[0] + "="
 		} else {
@@ -167,4 +163,62 @@ func readTrace(t *testing.T, file string) traceDocument {
 		t.Fatal(err)
 	}
 	return trace
+}
+
+func TestPlatformNeutralOptions(t *testing.T) {
+	neutral := []string{"--component-manifest=component.json", "--kind=files", "--platform-prefix=idea", "--files-file=files.json"}
+	for _, flag := range []string{"--platform-neutral", "--platform-neutral=true"} {
+		opts, err := parseOptions(append(neutral, flag))
+		if err != nil || !opts.platformNeutral || opts.os != "" || opts.arch != "" {
+			t.Fatalf("%s: options = %#v, error = %v", flag, opts, err)
+		}
+	}
+	opts, err := parseOptions(append(neutral, "--platform-neutral=false"))
+	if err != nil || opts.platformNeutral || opts.os == "" || opts.arch == "" {
+		t.Fatalf("options = %#v, error = %v", opts, err)
+	}
+	for _, extra := range [][]string{
+		{"--platform-neutral", "--os=linux"},
+		{"--platform-neutral", "--arch=x64"},
+		{"--platform-neutral", "--os=linux", "--arch=x64"},
+	} {
+		_, err := parseOptions(append(neutral, extra...))
+		requireError(t, err, "cannot be combined")
+	}
+	_, err = parseOptions(append(neutral, "--platform-neutral=yes"))
+	requireError(t, err, "only true or false")
+}
+
+// The collector validates the manifest path as an output. Bazel declares it in slash form, and an absolute
+// form would carry backslashes on Windows, so the parser keeps the declared value in every mode.
+func TestOptionsKeepTheDeclaredManifestPath(t *testing.T) {
+	base := []string{"--component-manifest=out/component.json", "--kind=files", "--platform-prefix=idea", "--files-file=files.json"}
+	for _, extra := range [][]string{{"--platform-neutral"}, {"--os=linux", "--arch=x64"}, {}} {
+		opts, err := parseOptions(append(append([]string{}, base...), extra...))
+		if err != nil || opts.manifest != "out/component.json" {
+			t.Fatalf("%v: manifest = %q, error = %v", extra, opts.manifest, err)
+		}
+	}
+}
+
+func TestPlatformNeutralManifest(t *testing.T) {
+	t.Chdir(t.TempDir())
+	writeText(t, "inputs/shared.jar", "jar bytes")
+	writeText(t, "files.json", `[{"source":"inputs/shared.jar","relativePath":"lib/shared.jar","executable":false}]`)
+	args := []string{"--component-manifest=component.json", "--kind=files", "--platform-prefix=idea", "--platform-neutral", "--files-file=files.json"}
+	var output, errors bytes.Buffer
+	if code := run(args, &output, &errors); code != 0 {
+		t.Fatalf("exit = %d: %s", code, &errors)
+	}
+	data, err := os.ReadFile("component.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var manifest map[string]json.RawMessage
+	if err := json.Unmarshal(data, &manifest); err != nil {
+		t.Fatal(err)
+	}
+	if string(manifest["os"]) != `""` || string(manifest["arch"]) != `""` {
+		t.Fatalf("manifest = %s", data)
+	}
 }

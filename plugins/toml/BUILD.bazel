@@ -1,21 +1,17 @@
-load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_TARGETS")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `dev intellij.toml` start
 dev_dist_plugin(
-    content_modules = ["intellij.toml.grazie"],
-    main_module = "intellij.toml",
-    module_targets = MODULE_TARGETS,
-    prepacked_content_modules = [
+    content_modules = [
         # do not sort,
+        "intellij.toml.core",
         "intellij.toml.backend",
         "intellij.toml.frontend",
         "intellij.toml.json",
+        "intellij.toml.grazie",
     ],
-    prepacked_jars = {
-        "intellij.toml.core": "intellij.toml.core.jar",
-    },
+    main_module = "intellij.toml",
 )
 ### auto-generated section `dev intellij.toml` end
 

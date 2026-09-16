@@ -62,5 +62,6 @@
     <orderEntry type="module" module-name="intellij.libraries.teamcity.service.messages" />
     <orderEntry type="module" module-name="intellij.libraries.opentelemetry.extension.kotlin" />
     <orderEntry type="module" module-name="intellij.idea.community.build.zip" />
+    <orderEntry type="module" module-name="intellij.platform.buildScripts.pluginPreparation" />
   </component>
 </module>

@@ -1,17 +1,15 @@
-load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_TARGETS")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `dev intellij.dotenv` start
 dev_dist_plugin(
     content_modules = [
         # do not sort,
-        "intellij.dotenv.java",
         "intellij.dotenv.kotlin",
+        "intellij.dotenv.java",
         "intellij.dotenv.python",
     ],
     main_module = "intellij.dotenv",
-    module_targets = MODULE_TARGETS,
 )
 ### auto-generated section `dev intellij.dotenv` end
 

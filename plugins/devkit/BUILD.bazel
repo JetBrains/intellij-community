@@ -1,45 +1,39 @@
-load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_TARGETS")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `dev intellij.devkit` start
 dev_dist_plugin(
-    jars = {
-        "devkit-jps.jar": {
-            "modules": ["intellij.devkit.jps"],
-        },
-    },
-    main_module = "intellij.devkit",
-    module_targets = MODULE_TARGETS,
-    prepacked_content_modules = [
+    content_modules = [
         # do not sort,
-        "intellij.libraries.workspace.model.codegen",
-        "intellij.platform.jewel.samples.showcase",
-        "intellij.devkit.apiDump.lang",
-        "intellij.devkit.apiDump",
         "intellij.devkit.core",
         "intellij.devkit.compose",
-        "intellij.devkit.debugger",
         "intellij.devkit.experiments",
-        "intellij.devkit.gradle.tooling",
         "intellij.devkit.gradle",
+        "intellij.devkit.gradle.tooling",
         "intellij.devkit.i18n",
         "intellij.devkit.intelliLang",
-        "intellij.devkit.mcp.inspections",
-        "intellij.devkit.mcp",
-        "intellij.devkit.modules",
-        "intellij.devkit.scaffolding",
-        "intellij.devkit.smartupdate",
-        "intellij.devkit.stacktrace",
         "intellij.devkit.themes",
-        "intellij.devkit.threading",
         "intellij.devkit.uiDesigner",
         "intellij.devkit.uiDsl",
-        "intellij.devkit.workspaceModel.k2",
         "intellij.devkit.workspaceModel",
-        "intellij.kotlin.devkit.k2",
+        "intellij.devkit.workspaceModel.k2",
         "intellij.kotlin.devkit",
+        "intellij.kotlin.devkit.k2",
+        "intellij.devkit.debugger",
+        "intellij.devkit.stacktrace",
+        "intellij.devkit.apiDump",
+        "intellij.devkit.apiDump.lang",
+        "intellij.devkit.scaffolding",
+        "intellij.devkit.modules",
+        "intellij.devkit.mcp",
+        "intellij.devkit.mcp.inspections",
+        "intellij.devkit.threading",
+        "intellij.devkit.smartupdate",
+        "intellij.platform.jewel.samples.showcase",
+        "intellij.libraries.workspace.model.codegen",
+        "intellij.devkit.jps",
     ],
+    main_module = "intellij.devkit",
 )
 ### auto-generated section `dev intellij.devkit` end
 

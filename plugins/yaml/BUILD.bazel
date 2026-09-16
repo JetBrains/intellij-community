@@ -1,6 +1,5 @@
 load("@community//build:tests-options.bzl", "jps_test")
-load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_TARGETS")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -20,12 +19,12 @@ jps_test(
 content_module_jar(module = ":yaml")
 
 dev_dist_plugin(
+    content_modules = [
+        # do not sort,
+        "intellij.yaml.backend",
+        "intellij.yaml.syntax",
+    ],
     main_module = "intellij.yaml",
-    module_targets = MODULE_TARGETS,
-    prepacked_content_modules = ["intellij.yaml.backend"],
-    prepacked_jars = {
-        "intellij.yaml.syntax": "intellij.yaml.syntax.jar",
-    },
 )
 ### auto-generated section `dev intellij.yaml` end
 

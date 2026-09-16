@@ -122,12 +122,7 @@ class MacDistributionBuilder(
   }
 
   override fun copyNativeBinFiles(binDir: Path, arch: JvmArchitecture): List<Path> {
-    // `add`, not `+`: `Path` is an `Iterable<Path>` of its own name elements, so `List<Path> + Path` appends
-    // those elements instead of the path
-    return buildList {
-      addAll(copyNativeBinDir(context.paths.communityHomeDir.resolve("bin/mac"), binDir, fileFilter = customizer.binFilesFilter))
-      add(copyRestarterToDir(binDir, OsFamily.MACOS, arch, context))
-    }
+    return copyNativeBinDir(context.paths.communityHomeDir.resolve("bin/mac"), binDir, fileFilter = customizer.binFilesFilter)
   }
 
   private fun doCopyFilesForOsDistribution(targetPath: Path, arch: JvmArchitecture, copyDistFiles: Boolean) {
@@ -136,6 +131,7 @@ class MacDistributionBuilder(
 
     context.executeStep(spanBuilder("copy product bin files"), BuildOptions.PRODUCT_BIN_DIR_STEP) {
       copyNativeBinFiles(macBinDir, arch)
+      copyDeclaredOsSpecificFiles(targetPath, arch, context.distributionState().platformLayout, context)
 
       context.getEmbeddedFrontendProductContext()?.let { clientContext ->
         writeMacOsVmOptions(macBinDir, clientContext)

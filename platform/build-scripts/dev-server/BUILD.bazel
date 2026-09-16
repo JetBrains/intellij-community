@@ -21,6 +21,7 @@ jvm_library(
     runtime_deps = ["//libraries/xz"],
     deps = [
         # do not sort,
+        "//platform/build-scripts/plugin-preparation",
         "@lib//:kotlin-stdlib",
         "//platform/build-scripts",
         "//libraries/kotlinx/serialization/core",
@@ -61,6 +62,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":buildScripts-devBuildServer",
+        "//platform/build-scripts/plugin-preparation:plugin-preparation_test_lib",
         "//platform/build-scripts:build-scripts_test_lib",
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//libraries/kotlinx/serialization/json:json_test_lib",

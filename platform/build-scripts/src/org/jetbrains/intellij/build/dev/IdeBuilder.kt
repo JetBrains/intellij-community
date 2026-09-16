@@ -29,7 +29,6 @@ import org.jetbrains.intellij.build.ProprietaryBuildTools
 import org.jetbrains.intellij.build.ScrambleTool
 import org.jetbrains.intellij.build.SearchableOptionSetDescriptor
 import org.jetbrains.intellij.build.WindowsDistributionCustomizer
-import org.jetbrains.intellij.build.classPath.PluginBuildResult
 import org.jetbrains.intellij.build.classPath.contentModuleJarCoreClasspathEntries
 import org.jetbrains.intellij.build.classPath.generateClassPathByLayoutReport
 import org.jetbrains.intellij.build.classPath.generateCoreClasspathFromPlugins
@@ -58,6 +57,7 @@ import org.jetbrains.intellij.build.impl.normalizeCompilationContextForBuild
 import org.jetbrains.intellij.build.impl.productInfo.PRODUCT_INFO_FILE_NAME
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ContentReport
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
+import org.jetbrains.intellij.build.impl.registerPlatformDistFiles
 import org.jetbrains.intellij.build.jarCache.LocalDiskJarCacheManager
 import org.jetbrains.intellij.build.jarCache.NonCachingJarCacheManager
 import org.jetbrains.intellij.build.normalizeCompiledClassesOptions
@@ -100,18 +100,10 @@ sealed interface DevBuildOutput {
   data class Component(
     @JvmField val fragment: DevBuildFragment,
     @JvmField val manifestFile: Path,
-    @JvmField val pluginClasspathPartFile: Path? = null,
     @JvmField val pluginClasspathPrefixFile: Path? = null,
-    @JvmField val prepackedPluginContentPlacementFile: Path? = null,
   ) : DevBuildOutput {
     init {
       require(!fragment.isComplete) { "A complete dev distribution must use DevBuildOutput.Complete" }
-      require(!fragment.ownsPlugins || pluginClasspathPartFile != null) {
-        "The '$fragment' fragment owns plugins, so it requires a plugin-classpath part file"
-      }
-      require(!fragment.ownsPlugins || prepackedPluginContentPlacementFile != null) {
-        "The '$fragment' fragment owns plugins, so it requires a prepacked-plugin-content placement file"
-      }
     }
   }
 }
@@ -181,8 +173,6 @@ data class BuildRequest(
 
   /** Complete distribution, or one fully specified independently cacheable component. */
   @JvmField val output: DevBuildOutput = DevBuildOutput.Complete,
-  /** Relation-only plan; the jar files themselves are deliberately not inputs of the fragment action. */
-  @JvmField val prepackedPluginContent: Map<PrepackedPluginContentKey, PrepackedPluginContentJar> = emptyMap(),
 ) {
   internal val fragment: DevBuildFragment
     get() = (output as? DevBuildOutput.Component)?.fragment ?: DevBuildFragment.COMPLETE
@@ -290,7 +280,10 @@ internal fun buildProduct(request: BuildRequest, createBuildContext: (buildDir: 
             val productInfoFile = osDistributionBuilder.writeProductInfoFile(productInfoDir, request.arch)
             oldFiles.remove(productInfoFile.moveTo(binDir.resolve(PRODUCT_INFO_FILE_NAME), overwrite = true))
             NioFiles.deleteRecursively(productInfoDir)
-            oldFiles.removeAll(layOutNativeBinFiles(osDistributionBuilder, binDir, runDir, request.arch))
+            // The declared OS-specific files belong to a complete build only. A split fragment has no platform layout,
+            // and the `platform_assets` component places those files in its distribution.
+            val declaredIn = if (request.fragment.isComplete) checkNotNull(platformLayout).await() else null
+            oldFiles.removeAll(layOutNativeBinFiles(osDistributionBuilder, binDir, runDir, request.arch, declaredIn, context))
           }
 
           val ideaPropertyFile = binDir.resolve(PathManager.PROPERTIES_FILE_NAME)
@@ -377,7 +370,6 @@ internal fun buildProduct(request: BuildRequest, createBuildContext: (buildDir: 
       else fork("scramble plugins") {
         if (pluginBuildStrategy == DevModePluginBuildStrategy.LAYOUT_BEFORE_PLATFORM_SCRAMBLE) {
           scrambleAlreadyLaidOutPluginsForDevMode(
-            request = request,
             descriptors = checkNotNull(pluginsBuildResultsDeferred).await(),
             context = context,
             runDir = runDir,
@@ -425,13 +417,6 @@ internal fun buildProduct(request: BuildRequest, createBuildContext: (buildDir: 
           val platformFileEntries = platformScrambleResultDeferred.await().distributionEntries
           // ensure plugin dist files added to the list
           val pluginDistributionEntries = pluginDistributionEntriesDeferred.await()
-          request.componentOutput?.prepackedPluginContentPlacementFile?.let { placementFile ->
-            writePrepackedPluginContentPlacement(
-              file = placementFile,
-              plugins = pluginDistributionEntries.pluginEntries,
-              runDir = runDir,
-            )
-          }
           val platformLayoutAwaited = platformLayout?.await()
 
           val pluginClasspathJob = if (request.fragment.ownsPlugins) fork("generate plugin classpath") {
@@ -462,12 +447,7 @@ internal fun buildProduct(request: BuildRequest, createBuildContext: (buildDir: 
               out.write(mainData)
               additionalData?.let { out.write(it) }
               out.close()
-              val target = if (request.fragment.isComplete) {
-                runDir.resolve(PLUGIN_CLASSPATH)
-              }
-              else {
-                checkNotNull(request.componentOutput).pluginClasspathPartFile!!
-              }
+              val target = runDir.resolve(PLUGIN_CLASSPATH)
               target.parent?.createDirectories()
               Files.write(target, byteOut.toByteArray())
             }
@@ -524,6 +504,7 @@ internal fun buildProduct(request: BuildRequest, createBuildContext: (buildDir: 
           }
 
           if (request.fragment.isComplete) {
+            registerPlatformDistFiles(checkNotNull(platformLayoutAwaited) { "A complete build lays out the platform" }, context)
             context.productProperties.registerDistFiles(context)
           }
 
@@ -575,34 +556,6 @@ internal fun buildProduct(request: BuildRequest, createBuildContext: (buildDir: 
     // close debug logging to prevent locking of the output directory on Windows
     contextToClose?.messages?.close()
   }
-}
-
-/**
- * Where this assembly put every jar it took from a packing action, as
- * `<plugin main module>\t<`lib/`-relative destination>\t<distribution-relative path>`.
- *
- * The first two columns are the relation's key, so the composer joins these lines to the jar records on the same pair.
- * `collectPrepackedPluginContentJars` is the one reader.
- */
-private fun writePrepackedPluginContentPlacement(file: Path, plugins: List<PluginBuildResult>, runDir: Path) {
-  val placements = LinkedHashMap<PrepackedPluginContentKey, String>()
-  for (plugin in plugins.sortedBy(PluginBuildResult::mainModule)) {
-    for (jar in plugin.prepackedContentJars.map { it.jar }.sortedBy(PrepackedPluginContentJar::relativeOutputFile)) {
-      val finalPath = runDir.relativize(plugin.dir.resolve("lib").resolve(jar.relativeOutputFile)).invariantSeparatorsPathString
-      val previous = placements.put(jar.key, finalPath)
-      check(previous == null) {
-        "Prepacked plugin content ${jar.pluginMainModule}/${jar.relativeOutputFile} was placed twice: $previous and $finalPath"
-      }
-    }
-  }
-  file.parent?.createDirectories()
-  Files.writeString(file, buildString {
-    for ((key, finalPath) in placements) {
-      append(key.pluginMainModule).append('\t')
-        .append(key.relativeOutputFile).append('\t')
-        .append(finalPath).append('\n')
-    }
-  })
 }
 
 @VisibleForTesting
@@ -708,8 +661,11 @@ private fun layOutNativeBinFiles(
   binDir: Path,
   runDir: Path,
   arch: JvmArchitecture,
+  declaredIn: PlatformLayout?,
+  context: BuildContext,
 ): List<Path> {
-  val copied = osDistributionBuilder.copyNativeBinFiles(binDir, arch)
+  val copied = osDistributionBuilder.copyNativeBinFiles(binDir, arch) +
+               (declaredIn?.let { osDistributionBuilder.copyDeclaredOsSpecificFiles(runDir, arch, it, context) } ?: emptyList())
   val executableMatchers = osDistributionBuilder.generateExecutableFilesMatchers(includeRuntime = false, arch = arch).keys
   for (file in copied) {
     val relativePath = runDir.relativize(file)

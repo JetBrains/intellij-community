@@ -23,7 +23,7 @@ and nowhere earlier:
   describe its data.
 - **4 constructed recipes** covering what the real sample could not reach, because every library-merging recipe in it
   pointed at an `http_file` repo that was not materialised: library+module merge, the full library drop-filter,
-  DEFLATED→inflate, first-source-wins duplicates, `keep-manifest`, and `rewrite-boot-class-path` with its index
+  DEFLATED→inflate, first-source-wins duplicates, `keep-manifest`, and the Boot-Class-Path rewrite with its index
   asymmetry. Both packers run on the same recipe; output compared byte for byte.
 - The `__index__` hashes against the **2 050 reference vectors** in `internal/xxh3`, which are the same C reference
   values `XxHash3Test.java` holds the platform's own implementation to.

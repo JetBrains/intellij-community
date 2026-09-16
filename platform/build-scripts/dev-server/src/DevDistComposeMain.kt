@@ -10,6 +10,7 @@ import org.jetbrains.intellij.build.dev.DevBuildComponent
 import org.jetbrains.intellij.build.dev.composeDevBuildComponents
 import org.jetbrains.intellij.build.dev.readDevBuildComponentManifest
 import org.jetbrains.intellij.build.dev.readDevBuildCompositionSpec
+import org.jetbrains.intellij.build.dev.readDevBuildSourceBindings
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.ExperimentalPathApi
@@ -32,6 +33,9 @@ private fun composeDevDistribution(options: CommandLineOptions) {
   options.checkNoUnknownOptions()
   Span.current().setAttribute("componentCount", spec.components.size.toLong())
 
+  check(spec.sourceRunfiles == null || spec.sourceBindings == null) { "Local launch metadata must not expand source bindings" }
+  val sourceBindings = spec.sourceBindings?.let { readDevBuildSourceBindings(Path.of(it), spec.components) }
+
   val components = spec.components.map { component ->
     val manifest = readDevBuildComponentManifest(Path.of(component.manifest).toAbsolutePath().normalize())
     DevBuildComponent(
@@ -40,6 +44,7 @@ private fun composeDevDistribution(options: CommandLineOptions) {
       root = component.root?.let { Path.of(it).toAbsolutePath().normalize() },
       manifest = manifest,
       pluginClasspathPart = component.pluginClasspathPart?.let { Path.of(it).toAbsolutePath().normalize() },
+      sourceBindings = sourceBindings?.getValue(component.manifest),
     )
   }
 
@@ -51,6 +56,7 @@ private fun composeDevDistribution(options: CommandLineOptions) {
     expectedFragments = spec.expectedFragments,
     additionalModules = spec.additionalModules,
     sourceRunfiles = spec.sourceRunfiles?.mapKeys { Path.of(it.key).toAbsolutePath().normalize() },
+    sourceDirectoryRunfiles = spec.sourceDirectoryRunfiles.mapKeys { Path.of(it.key).toAbsolutePath().normalize() },
   )
   Files.writeString(outputDir.resolve("core-classpath.txt"), result.coreClassPath.joinToString(separator = "\n"))
   Files.writeString(outputDir.resolve("fingerprint.txt"), result.fingerprint)

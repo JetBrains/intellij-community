@@ -1,0 +1,22 @@
+# kotlin-module-filter: the Kotlin preparer's materialization, golden-2026-09-13, recorded by pluginpack_test -record-kotlin-goldens.
+# fixture	path	kind (directory, file, symlink, or a jar entry when the jar order follows the host)	mode	sha256 or link target
+a jar with directory entries with manifest drop	lib	directory	0755	-
+a jar with directory entries with manifest drop	lib/main.jar	file	0644	0f4e353e94e4c9bc0dc41f6a03377d25c92a913c3fd38ff4e44da2e58888ce71
+a jar with directory entries with manifest keep	lib	directory	0755	-
+a jar with directory entries with manifest keep	lib/main.jar	file	0644	1ae56c3aeffcd8e3147e385342cb0f90dae17303bdb764ccffd40c3a7c02dfbf
+a nested glob with manifest drop	lib	directory	0755	-
+a nested glob with manifest drop	lib/main.jar	file	0644	6b647dac5905c148b352698b5e1f3cde0c364ebe6984d24c48eaf8b328121f6a
+a nested glob with manifest keep	lib	directory	0755	-
+a nested glob with manifest keep	lib/main.jar	file	0644	c70d7de29584622a0c3240e4a25841934c56f6bf65c5e1f99d6742285ff4946f
+an anchored prefix glob with manifest drop	lib	directory	0755	-
+an anchored prefix glob with manifest drop	lib/main.jar	file	0644	0f4e353e94e4c9bc0dc41f6a03377d25c92a913c3fd38ff4e44da2e58888ce71
+an anchored prefix glob with manifest keep	lib	directory	0755	-
+an anchored prefix glob with manifest keep	lib/main.jar	file	0644	1ae56c3aeffcd8e3147e385342cb0f90dae17303bdb764ccffd40c3a7c02dfbf
+listOfEntities under an excluded prefix with manifest drop	lib	directory	0755	-
+listOfEntities under an excluded prefix with manifest drop	lib/main.jar	file	0644	8702acd30ad61bbeda2bdfeacfe70165efe0bc9e8940b132c826768bef8c5987
+listOfEntities under an excluded prefix with manifest keep	lib	directory	0755	-
+listOfEntities under an excluded prefix with manifest keep	lib/main.jar	file	0644	8702acd30ad61bbeda2bdfeacfe70165efe0bc9e8940b132c826768bef8c5987
+no declared excludes with manifest drop	lib	directory	0755	-
+no declared excludes with manifest drop	lib/main.jar	file	0644	989e80567f9f2272ccb1d774c4ea72cd3606a1809d367748aa478d836437434e
+no declared excludes with manifest keep	lib	directory	0755	-
+no declared excludes with manifest keep	lib/main.jar	file	0644	73a3d24ca3ed9bc481c2d8cef075a64bb01ad4a706de72c4a1683327c50b6cb5

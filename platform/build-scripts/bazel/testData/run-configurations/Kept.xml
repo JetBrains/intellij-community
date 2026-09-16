@@ -1,0 +1,10 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Kept" type="Application" factoryName="Application">
+    <option name="MAIN_CLASS_NAME" value="org.jetbrains.intellij.build.devServer.DevMainKt" />
+    <module name="intellij.platform.bootstrap.dev" />
+    <option name="VM_PARAMETERS" value="-Didea.platform.prefix=idea -Didea.dev.mode.custom.command=true -Dadditional.modules=intellij.kept" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

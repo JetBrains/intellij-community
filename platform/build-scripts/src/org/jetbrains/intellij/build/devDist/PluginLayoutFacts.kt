@@ -36,9 +36,9 @@ class PluginLayoutFacts(
   @JvmField val projectLibraries: Map<String, String?> = emptyMap(),
   /** Module libraries the layout packs as jars of their own; `withModuleLibrary`. */
   @JvmField val moduleLibraries: List<LayoutModuleLibrary> = emptyList(),
-  /** Project libraries an opaque resource generator reads; `withGeneratedResources(inputProjectLibraries, ...)`. */
+  /** Project libraries the layout unpacks into the plugin directory; `withLibraryResources`. */
   @JvmField val generatorLibraries: Set<String> = emptySet(),
-  /** Whether a layout scrambles a path of this plugin. A scrambled plugin embeds no content module jar. */
+  /** Whether a layout scrambles a path of this plugin; `pathsToScramble`. */
   @JvmField val noEmbedding: Boolean = false,
   /**
    * Whether a layout of this plugin is `auto`, which packs the main module's own dependency group; see [autoLayoutChildren].
@@ -46,6 +46,10 @@ class PluginLayoutFacts(
    * A plugin with no layout is `auto`, because the build gives such a plugin an `auto` layout.
    */
   @JvmField val auto: Boolean = false,
+  /** The explicit members of each custom jar in layout order, independent of descriptor order. */
+  @JvmField val layoutJarMembers: Map<String, List<String>> = emptyMap(),
+  /** The original variants, captured separately before their facts are combined. */
+  @JvmField val layoutVariants: List<PluginLayoutFacts> = emptyList(),
 )
 
 /** One `withModuleLibrary` call: the owning module, the library, and the path the layout gives the jar, or `null`. */
@@ -84,8 +88,8 @@ fun pluginJarPlacementConvention(mainModule: String): PluginJarPlacement {
  * The union of every layout of [mainModule] over the products and the bundling variants, as one [PluginLayoutFacts].
  *
  * A `PluginLayout` is a fact about a plugin, and a product that states one more member states one more fact. So the
- * member and library sets are unions, in sorted order. Two layouts that disagree on the directory name or the main
- * jar name fail with an [IllegalStateException] that names the plugin: the derivation needs one placement.
+ * member and library sets are unions, in sorted order. Custom jar members retain the order constraints of every layout.
+ * Conflicting member orders or placements fail with an [IllegalStateException] that names the plugin.
  *
  * An empty [layouts] gives [pluginJarPlacementConvention], no member, and an `auto` layout.
  */
@@ -104,6 +108,7 @@ fun pluginLayoutFacts(mainModule: String, layouts: List<PluginLayout>): PluginLa
     "Plugin `$mainModule`: its layouts disagree on the main jar name (${mainJarNames.joinToString { "`$it`" }})"
   }
   val memberJars = TreeMap<String, TreeSet<String>>()
+  val layoutJarOrders = TreeMap<String, MutableList<List<String>>>()
   val unmergedMembers = TreeSet<String>()
   val excludedModuleLibraries = TreeMap<String, TreeSet<String>>()
   val projectLibraries = TreeMap<String, String?>()
@@ -117,6 +122,11 @@ fun pluginLayoutFacts(mainModule: String, layouts: List<PluginLayout>): PluginLa
     for (item in layout.includedModules) {
       if (item.moduleName != mainModule) {
         memberJars.computeIfAbsent(item.moduleName) { TreeSet() }.add(item.relativeOutputFile)
+      }
+    }
+    for ((path, items) in layout.includedModules.groupBy { it.relativeOutputFile }) {
+      if (path != mainJarNames.single()) {
+        layoutJarOrders.computeIfAbsent(path) { ArrayList() }.add(items.map { it.moduleName })
       }
     }
     unmergedMembers.addAll(layout.getModulesWithExcludedModuleLibraries())
@@ -154,7 +164,46 @@ fun pluginLayoutFacts(mainModule: String, layouts: List<PluginLayout>): PluginLa
     generatorLibraries = generatorLibraries,
     noEmbedding = noEmbedding,
     auto = layouts.any { it.auto },
+    layoutJarMembers = mergeLayoutJarOrders(mainModule, layoutJarOrders),
+    layoutVariants = if (layouts.size == 1) emptyList() else layouts.distinct().map { pluginLayoutFacts(mainModule, listOf(it)) },
   )
+}
+
+internal fun mergeLayoutJarOrders(mainModule: String, ordersByJar: Map<String, List<List<String>>>): Map<String, List<String>> {
+  val result = LinkedHashMap<String, List<String>>()
+  for ((path, orders) in ordersByJar) {
+    val successors = TreeMap<String, TreeSet<String>>()
+    val predecessorCounts = HashMap<String, Int>()
+    for (order in orders) {
+      for (member in order) {
+        successors.computeIfAbsent(member) { TreeSet() }
+        predecessorCounts.putIfAbsent(member, 0)
+      }
+      for ((before, after) in order.zipWithNext()) {
+        if (successors.getValue(before).add(after)) {
+          predecessorCounts.put(after, predecessorCounts.getValue(after) + 1)
+        }
+      }
+    }
+    val ready = predecessorCounts.keys.filterTo(TreeSet()) { predecessorCounts.getValue(it) == 0 }
+    val members = ArrayList<String>(predecessorCounts.size)
+    while (ready.isNotEmpty()) {
+      val member = requireNotNull(ready.pollFirst())
+      members.add(member)
+      for (successor in successors.getValue(member)) {
+        val count = predecessorCounts.getValue(successor) - 1
+        predecessorCounts.put(successor, count)
+        if (count == 0) {
+          ready.add(successor)
+        }
+      }
+    }
+    check(members.size == predecessorCounts.size) {
+      "Plugin `$mainModule`: its layouts disagree on the member order in `$path`"
+    }
+    result.put(path, members)
+  }
+  return result
 }
 
 /** The sorted order of [PluginLayoutFacts.moduleLibraries]: owner, library, then path. */

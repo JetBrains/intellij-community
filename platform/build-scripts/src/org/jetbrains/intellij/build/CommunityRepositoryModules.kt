@@ -8,17 +8,24 @@ import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesExtractOptions
+import org.jetbrains.intellij.build.dev.DevPluginLayoutAsset
+import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetMapping
+import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetSource
+import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetSpec
+import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetTransform
 import org.jetbrains.intellij.build.impl.BundledMavenDownloader
+import org.jetbrains.intellij.build.impl.DescriptorPluginVersion
 import org.jetbrains.intellij.build.impl.LibraryPackMode
 import org.jetbrains.intellij.build.impl.ModuleItem
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.PluginLayout.Companion.plugin
 import org.jetbrains.intellij.build.impl.PluginLayout.Companion.pluginAuto
+import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.PluginLayout.Companion.pluginAutoWithCustomDirName
-import org.jetbrains.intellij.build.impl.PluginVersionEvaluatorResult
 import org.jetbrains.intellij.build.impl.ProjectLibraryData
 import org.jetbrains.intellij.build.impl.SUPPORTED_DISTRIBUTIONS
 import org.jetbrains.intellij.build.impl.SupportedDistribution
+import org.jetbrains.intellij.build.impl.copyNativeBinFileToDir
 import org.jetbrains.intellij.build.impl.osArchPluginVersion
 import org.jetbrains.intellij.build.impl.patchOsSpecificPluginXml
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
@@ -57,14 +64,14 @@ fun getCommunityRepositoryPlugins(): PersistentList<PluginLayout> {
     },
     plugin("intellij.webp") { spec ->
       for ((os, arch, libc) in SUPPORTED_DISTRIBUTIONS) {
-        spec.withGeneratedPlatformResources(os, arch, libc, allowInDevMode = true) { targetDir, context ->
+        spec.withGeneratedPlatformResources(os, arch, libc, webpLayoutAssetSpec(os, arch)) { targetDir, context ->
           copyFileToDir(NativeBinaryDownloader.getLibWebp(context, os, arch), targetDir.resolve("lib/libwebp/${os.dirName}/${arch.dirName}"))
         }
       }
     },
     plugin("intellij.webp") { spec ->
       spec.bundlingRestrictions.marketplace = true
-      spec.withGeneratedResources { targetDir, context ->
+      spec.withGeneratedResources(allWebpLayoutAssetSpec()) { targetDir, context ->
         for ((os, arch, _) in SUPPORTED_DISTRIBUTIONS) {
           copyFileToDir(NativeBinaryDownloader.getLibWebp(context, os, arch), targetDir.resolve("lib/libwebp/${os.dirName}/${arch.dirName}"))
         }
@@ -110,7 +117,7 @@ fun getCommunityRepositoryPlugins(): PersistentList<PluginLayout> {
         )
       )
 
-      spec.withGeneratedResources { targetDir, context ->
+      spec.withGeneratedResources(mavenDistributionLayoutAssetSpec()) { targetDir, context ->
         val targetLib = targetDir.resolve("lib")
 
         val mavenDist = BundledMavenDownloader.downloadMavenDistribution(context.paths.communityHomeDirRoot, context.httpSession)
@@ -123,7 +130,7 @@ fun getCommunityRepositoryPlugins(): PersistentList<PluginLayout> {
         spec.withModule("intellij.maven.server.telemetry", "$this/maven-server-telemetry.jar")
 
 
-        spec.withGeneratedResources { targetDir, context ->
+        spec.withGeneratedResources(maven3LibrariesLayoutAssetSpec()) { targetDir, context ->
           val targetLib = targetDir.resolve("lib")
           val maven3Libs = BundledMavenDownloader.resolveMaven3Libs(context.paths.communityHomeDirRoot, context.httpSession)
           copyMavenLibraries(maven3Libs, targetLib.resolve(this))
@@ -141,7 +148,7 @@ fun getCommunityRepositoryPlugins(): PersistentList<PluginLayout> {
         spec.withModule("intellij.maven.server.telemetry", "$this/maven-server-telemetry.jar")
 
 
-        spec.withGeneratedResources { targetDir, context ->
+        spec.withGeneratedResources(maven4LibrariesLayoutAssetSpec()) { targetDir, context ->
           val targetLib = targetDir.resolve("lib")
           val maven4Libs = BundledMavenDownloader.resolveMaven4Libs(context.paths.communityHomeDirRoot, context.httpSession)
           copyMavenLibraries(maven4Libs, targetLib.resolve(this))
@@ -232,8 +239,8 @@ fun getCommunityRepositoryPlugins(): PersistentList<PluginLayout> {
       // bundle the libghostty-vt native library
       for ((os, arch, libc) in SUPPORTED_DISTRIBUTIONS) {
         val dirName = os.osName.lowercase() + "-" + arch.archName.lowercase()
-        // `allowInDevMode = true`: load libghostty-vt when running from a dev build
-        spec.withGeneratedPlatformResources(os, arch, libc, allowInDevMode = true) { targetDir, context ->
+        // a declared generator also runs from a dev build, which loads libghostty-vt there
+        spec.withGeneratedPlatformResources(os, arch, libc, terminalLayoutAssetSpec(os, arch)) { targetDir, context ->
           copyFileToDir(NativeBinaryDownloader.getLibGhosttyVt(context, os, arch), targetDir.resolve("libghostty-vt/$dirName"))
         }
       }
@@ -364,7 +371,7 @@ private fun jcefPlugin(os: OsFamily, arch: JvmArchitecture): PluginLayout {
     // be careful, Marketplace expects linux/macos/windows for os and x86_64/x86/arm64/arm32 for arch
     spec.withCustomVersion(osArchPluginVersion(os = os, arch = arch))
 
-    spec.withGeneratedResources { targetDir, context ->
+    spec.withGeneratedResources(jcefLayoutAssetSpec(os, arch)) { targetDir, context ->
       val communityRoot = context.paths.communityHomeDirRoot
       val properties = BuildDependenciesDownloader.getDependencyProperties(communityRoot)
       val jcefBuildNumber = properties.property("jcefBuild")
@@ -464,18 +471,7 @@ private fun createAndroidPluginLayout(
 
       patchOsSpecificPluginXml(spec, os, arch)
 
-      spec.withCustomVersion { pluginXmlSupplier, ideBuildVersion, _ ->
-        // be careful, Marketplace expects linux/macos/windows for os and x86_64/x86/arm64/arm32 for arch
-        val osArchSuffix = "-${os.osId}-${arch.marketplaceName}"
-        val pluginXml = pluginXmlSupplier()
-        if (pluginXml.indexOf("<version>") != -1) {
-          val declaredVersion = pluginXml.substring(pluginXml.indexOf("<version>") + "<version>".length, pluginXml.indexOf("</version>"))
-          PluginVersionEvaluatorResult(pluginVersion = "$declaredVersion.$ideBuildVersion$osArchSuffix")
-        }
-        else {
-          PluginVersionEvaluatorResult(pluginVersion = "$ideBuildVersion$osArchSuffix")
-        }
-      }
+      spec.withCustomVersion(DescriptorPluginVersion("-${os.osId}-${arch.marketplaceName}"))
     }
     else {
       spec.bundlingRestrictions.includeInDistribution = PluginDistribution.CROSS_PLATFORM_DIST_ONLY
@@ -780,11 +776,169 @@ fun groovyPlugin(additionalModules: List<String> = emptyList(), addition: ((Plug
     spec.withModules(additionalModules)
 
     spec.excludeFromModule("intellij.groovy.psi", "standardDsls/**")
-    spec.withResource("groovy-psi/resources/standardDsls", "lib/standardDsls")
+    spec.withResourceFromModule("intellij.groovy.psi", "resources/standardDsls", "lib/standardDsls")
     spec.withResource("hotswap/gragent.jar", "lib/agent")
-    spec.withResource("groovy-psi/resources/conf", "lib")
+    spec.withResourceFromModule("intellij.groovy.psi", "resources/conf", "lib")
     addition?.invoke(spec)
   }
+}
+
+private const val MAVEN_DOWNLOADS_LABEL: String = "@dev_launch_maven//:files"
+
+private fun webpLayoutAssetSpec(os: OsFamily, arch: JvmArchitecture): DevPluginLayoutAssetSpec {
+  return DevPluginLayoutAssetSpec(
+    sources = listOf(downloadArchive("@dev_launch_libwebp//:files", "libwebp.tar.gz")),
+    assets = listOf(webpLayoutAsset(os, arch)),
+  )
+}
+
+private fun allWebpLayoutAssetSpec(): DevPluginLayoutAssetSpec {
+  return DevPluginLayoutAssetSpec(
+    sources = listOf(downloadArchive("@dev_launch_libwebp//:files", "libwebp.tar.gz")),
+    assets = SUPPORTED_DISTRIBUTIONS.map { (os, arch, _) -> webpLayoutAsset(os, arch) },
+  )
+}
+
+private fun webpLayoutAsset(os: OsFamily, arch: JvmArchitecture): DevPluginLayoutAsset {
+  return DevPluginLayoutAsset(
+    destination = "lib/libwebp/${os.dirName}/${arch.dirName}",
+    sources = listOf(0),
+    transform = DevPluginLayoutAssetTransform.archiveTree(
+      mappings = listOf(DevPluginLayoutAssetMapping(
+        pattern = "${os.osName}-${arch.archName}/${os.libraryName("webp_jni")}",
+        stripComponents = 1,
+      )),
+    ),
+  )
+}
+
+private fun terminalLayoutAssetSpec(os: OsFamily, arch: JvmArchitecture): DevPluginLayoutAssetSpec {
+  val platformDirectory = "${os.osName.lowercase()}-${arch.archName.lowercase()}"
+  return DevPluginLayoutAssetSpec(
+    sources = listOf(downloadArchive("@dev_launch_libghostty//:files", "libghostty-vt.zip.zst")),
+    assets = listOf(DevPluginLayoutAsset(
+      destination = "libghostty-vt/$platformDirectory",
+      sources = listOf(0),
+      transform = DevPluginLayoutAssetTransform.archiveTree(
+        mappings = listOf(DevPluginLayoutAssetMapping(
+          pattern = "$platformDirectory/${os.libraryName("ghostty-vt")}",
+          stripComponents = 1,
+        )),
+      ),
+    )),
+  )
+}
+
+private fun jcefLayoutAssetSpec(os: OsFamily, arch: JvmArchitecture): DevPluginLayoutAssetSpec {
+  return DevPluginLayoutAssetSpec(
+    sources = listOf(downloadArchive("@dev_launch_${devLaunchPlatform(os, arch)}_jcef//:files", "jcef.tar.gz")),
+    assets = listOf(DevPluginLayoutAsset(
+      destination = "jcef",
+      sources = listOf(0),
+      transform = DevPluginLayoutAssetTransform.archiveTree(
+        stripComponents = 1,
+        mappings = listOf(
+          DevPluginLayoutAssetMapping(pattern = "jcef/**", stripComponents = 1),
+          DevPluginLayoutAssetMapping(),
+        ),
+      ),
+    )),
+  )
+}
+
+private fun mavenDistributionLayoutAssetSpec(): DevPluginLayoutAssetSpec {
+  return DevPluginLayoutAssetSpec(
+    sources = listOf(
+      DevPluginLayoutAssetSource.BazelTarget(
+        label = MAVEN_DOWNLOADS_LABEL,
+        kind = "archive",
+        fileName = "apache-maven-\${bundledMavenVersion}-bin.zip",
+        prefix = "",
+      ),
+      DevPluginLayoutAssetSource.DependencyProperty("bundledMavenVersion"),
+    ),
+    assets = listOf(DevPluginLayoutAsset(
+      destination = "lib/maven3",
+      sources = listOf(0),
+      transform = DevPluginLayoutAssetTransform.archiveTree(stripComponents = 1),
+    )),
+  )
+}
+
+private fun maven3LibrariesLayoutAssetSpec(): DevPluginLayoutAssetSpec {
+  return DevPluginLayoutAssetSpec(
+    sources = listOf(
+      mavenDownloadsDirectory(),
+      DevPluginLayoutAssetSource.DependencyProperty("bundledMaven3Libraries", format = "maven-coordinates"),
+      DevPluginLayoutAssetSource.DependencyProperty("bundledMavenTelemetryLibraries", format = "maven-coordinates"),
+    ),
+    assets = listOf(DevPluginLayoutAsset(
+      destination = "lib/intellij.maven.server3",
+      sources = listOf(1, 2),
+      mode = 420,
+    )),
+  )
+}
+
+private fun maven4LibrariesLayoutAssetSpec(): DevPluginLayoutAssetSpec {
+  return DevPluginLayoutAssetSpec(
+    sources = listOf(mavenDownloadsDirectory()),
+    assets = listOf(DevPluginLayoutAsset(
+      destination = "lib/intellij.maven.server4",
+      sources = listOf(0),
+      transform = DevPluginLayoutAssetTransform.treeMap(
+        listOf(DevPluginLayoutAssetMapping(pattern = "jackson-core-*.jar")),
+      ),
+      mode = 420,
+    )),
+  )
+}
+
+private fun mavenDownloadsDirectory(): DevPluginLayoutAssetSource.BazelTarget {
+  return DevPluginLayoutAssetSource.BazelTarget(
+    label = MAVEN_DOWNLOADS_LABEL,
+    kind = "directory",
+    fileName = "maven-downloads",
+    prefix = "",
+  )
+}
+
+private fun downloadArchive(label: String, fileName: String): DevPluginLayoutAssetSource.BazelTarget {
+  return DevPluginLayoutAssetSource.BazelTarget(label = label, kind = "archive", fileName = fileName)
+}
+
+/**
+ * Declares the restart helper at `bin/restarter` for every target platform. The dev distribution packs it out of
+ * the `restarter` archive; production and a complete dev build copy it beside the other `bin` files, where the
+ * cross-platform zip leaves it out and the mac signing pass covers it.
+ */
+fun PlatformLayout.withRestarter() {
+  for (os in OsFamily.entries) {
+    for (arch in JvmArchitecture.entries) {
+      withOsSpecificFiles(os, arch, restarterLayoutAssetSpec(os, arch)) { distributionDir, context ->
+        listOf(copyNativeBinFileToDir(NativeBinaryDownloader.getRestarter(context, os, arch), distributionDir.resolve("bin")))
+      }
+    }
+  }
+}
+
+private fun restarterLayoutAssetSpec(os: OsFamily, arch: JvmArchitecture): DevPluginLayoutAssetSpec {
+  return DevPluginLayoutAssetSpec(
+    sources = listOf(downloadArchive("@dev_launch_restarter//:files", "restarter.tar.gz")),
+    assets = listOf(DevPluginLayoutAsset(
+      destination = "bin",
+      sources = listOf(0),
+      transform = DevPluginLayoutAssetTransform.archiveTree(
+        mappings = listOf(DevPluginLayoutAssetMapping(pattern = NativeBinaryDownloader.restarterArchivePath(os, arch), stripComponents = 1)),
+      ),
+      mode = 493, // 0755: an executable
+    )),
+  )
+}
+
+private fun devLaunchPlatform(os: OsFamily, arch: JvmArchitecture): String {
+  val osName = if (os == OsFamily.MACOS) "darwin" else os.osId
+  return "${osName}_${arch.name}"
 }
 
 private fun copyMavenLibraries(libraries: List<BundledMavenDownloader.MavenLibraryFile>, targetDir: Path) {

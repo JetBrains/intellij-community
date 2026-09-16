@@ -1,11 +1,34 @@
-load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_DESCRIPTORS", "MODULE_TARGETS")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `dev intellij.xml.plugin` start
 dev_dist_plugin(
+    content_modules = [
+        # do not sort,
+        "intellij.xml.dom",
+        "intellij.xml.dom.impl",
+        "intellij.xml.structureView",
+        "intellij.xml.structureView.impl",
+        "intellij.xml.psi",
+        "intellij.xml.psi.impl",
+        "intellij.xml.analysis",
+        "intellij.xml.emmet",
+        "intellij.xml.emmet.shared",
+        "intellij.xml.emmet.backend",
+        "intellij.xml.emmet.frontend",
+        "intellij.xml.ui.common",
+        "intellij.xml.parser",
+        "intellij.xml.syntax",
+        "intellij.relaxng",
+        "intellij.libraries.isorelax",
+        "intellij.libraries.jing",
+        "intellij.libraries.xerces",
+        "intellij.libraries.xml.resolver",
+        "intellij.xml.impl",
+        "intellij.xml.analysis.impl",
+        "intellij.xml.langInjection",
+    ],
     descriptor = "resources/META-INF/plugin.xml",
-    descriptor_index = MODULE_DESCRIPTORS,
     descriptor_modules = [
         "intellij.libraries.isorelax",
         "intellij.libraries.jing",
@@ -30,33 +53,31 @@ dev_dist_plugin(
         "intellij.xml.syntax",
         "intellij.xml.ui.common",
     ],
+    jars = {
+        "lib/modules/intellij.relaxng.jar": [
+            "intellij.relaxng",
+            "//xml/relaxng/lib:relaxng-rngom-20051226-patched",
+            "//xml/relaxng/lib:relaxng-trang-core",
+        ],
+        "lib/modules/intellij.libraries.isorelax.jar": [
+            "intellij.libraries.isorelax",
+            "@lib//:libraries-isorelax-isorelax",
+        ],
+        "lib/modules/intellij.libraries.jing.jar": [
+            "intellij.libraries.jing",
+            "@lib//:libraries-jing-jing",
+        ],
+        "lib/modules/intellij.libraries.xerces.jar": [
+            "intellij.libraries.xerces",
+            "@lib//:libraries-xerces-_xerces",
+        ],
+        "lib/modules/intellij.libraries.xml.resolver.jar": [
+            "intellij.libraries.xml.resolver",
+            "@lib//:libraries-xml-resolver-xml-resolver",
+        ],
+        "lib/xml-plugin.jar": ["intellij.xml.plugin"],
+    },
     main_module = "intellij.xml.plugin",
-    module_targets = MODULE_TARGETS,
-    prepacked_content_modules = [
-        # do not sort,
-        "intellij.libraries.isorelax",
-        "intellij.libraries.jing",
-        "intellij.libraries.xerces",
-        "intellij.libraries.xml.resolver",
-        "intellij.xml.dom.impl",
-        "intellij.xml.dom",
-        "intellij.xml.emmet.backend",
-        "intellij.xml.emmet.frontend",
-        "intellij.xml.emmet.shared",
-        "intellij.xml.emmet",
-        "intellij.xml.impl",
-        "intellij.xml.langInjection",
-        "intellij.relaxng",
-        "intellij.xml.analysis",
-        "intellij.xml.analysis.impl",
-        "intellij.xml.parser",
-        "intellij.xml.psi",
-        "intellij.xml.psi.impl",
-        "intellij.xml.structureView",
-        "intellij.xml.structureView.impl",
-        "intellij.xml.syntax",
-        "intellij.xml.ui.common",
-    ],
 )
 ### auto-generated section `dev intellij.xml.plugin` end
 

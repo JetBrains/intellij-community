@@ -11,8 +11,7 @@ import org.jetbrains.jps.model.module.JpsModule
 /**
  * One jar of a plugin, as the project model states it before any build runs.
  *
- * Three facts, and every one of them is what a per-jar packing action has to declare: where the jar goes, and whose
- * module output it holds.
+ * These facts define the jar path and its ordered module content.
  */
 @ApiStatus.Internal
 class DerivedPluginJar(
@@ -36,26 +35,11 @@ class DerivedPluginJar(
   /** The members that come from the plugin's own `<content>`. */
   @JvmField val contentModules: List<String>,
   /**
-   * Whether a packing target packs this jar, so no fragment packs it.
-   *
-   * Two producers, two keys. A jar named after one member is read by that member. A jar the layout names itself is
-   * read by its own destination. The keys cannot be swapped: one member can be a member of two jars the layout names,
-   * and it then keeps its declaration while a packing target owns both jars.
-   */
-  @JvmField val isHandedOver: Boolean,
-  /**
    * Whether this is the plugin's main jar, which is where the derivation co-packs a member with no jar of its own.
    *
    * A member the layout names a jar for is not co-packed, so it leaves this jar; see [PluginContentResidue.memberJars].
    */
   @JvmField val isMainJar: Boolean = false,
-  /**
-   * The module libraries a packing target merges into this jar, or `null` where no packing target packs it.
-   *
-   * The union over [members] of [DerivedPluginCandidacy.memberLibraries], stated for a handed-over jar alone. `null`
-   * as well for a handed-over jar with a member the derivation states no library set for.
-   */
-  @JvmField val libraries: List<String>? = null,
 )
 
 /** What [derivePluginContent] produced: the plugin's members and the facts the jar composition reads. */
@@ -70,24 +54,8 @@ class DerivedPluginContent(
    * derivable jar at all, and the plugin's main jar holds it.
    */
   @JvmField val memberPaths: Map<String, String>,
-  /**
-   * Where this plugin offers each member's jar to the member's own packing target, by module name.
-   *
-   * The eligible half of [memberPaths], with the raw members taken out. A raw member keeps the jar it derives, because
-   * a jar the layout names holds the module's raw output; see [layoutJarMembers].
-   */
-  @JvmField val prepackedPaths: Map<String, String>,
-  /**
-   * The members of [prepackedPaths] whose own packing target really packs their jar.
-   *
-   * Whether a target exists is a fact the caller states through the `isPrepackedContentModule` predicate of
-   * [derivePluginPacking]. The default predicate hands every offered member over.
-   */
-  @JvmField val handedOverMembers: Set<String>,
   /** The members the plugin's own `<content>` names, which is what splits `contentModules` from `modules`. */
   @JvmField val closureMembers: Set<String>,
-  /** See [DerivedPluginCandidacy.memberLibraries]. */
-  @JvmField val memberLibraries: Map<String, Set<String>?>,
   /**
    * The jar the main module's own output goes to when the plugin's `<content>` names the main module itself, or `null`.
    *
@@ -108,16 +76,14 @@ class DerivedPluginPacking(
 /**
  * Every jar the plugin [mainModule] puts in its own directory, derived from the project model and [facts].
  *
- * Five derivations meet here:
+ * Four derivations meet here:
  *
  * 1. [derivePluginContent] gives the members, from the plugin's own `<content>` with every `xi:include` followed plus
  *    the members [facts] merge, and where the plugin puts each member's jar;
  * 2. [facts] gives the plugin's directory and main jar name;
  * 3. [autoLayoutChildren] gives the members an `auto` layout takes from the main module's dependency group.
  *    [isPackedElsewhere] answers which candidate the platform or another plugin layout packs already;
- * 4. [isPrepackedContentModule] says which member's own jar a packing target already packs. The default hands every
- *    offered member over;
- * 5. [PluginContentResidue.memberJars] gives the jars the layout names itself. A row states the member's whole jar set,
+ * 4. [PluginContentResidue.memberJars] gives the jars the layout names itself. A row states the member's whole jar set,
  *    so it wins over the path of 1 and over the main-jar co-pack.
  *
  * A member with neither a row nor a jar of its own is co-packed into the plugin's main jar.
@@ -135,7 +101,6 @@ fun derivePluginPacking(
   project: JpsProject,
   outputProvider: ModuleOutputProvider,
   frontendRoots: List<String>,
-  isPrepackedContentModule: (String) -> Boolean = { true },
   isPackedElsewhere: (String) -> Boolean = { false },
 ): DerivedPluginPacking? {
   val module = outputProvider.findModule(mainModule) ?: return null
@@ -167,12 +132,9 @@ fun derivePluginPacking(
   )
   val content = derivePluginContent(
     module = module,
-    mainJarName = facts.mainJarName,
     closure = closure,
     candidacy = candidacy,
     residue = effectiveResidue,
-    findModule = findModule,
-    isPrepackedContentModule = isPrepackedContentModule,
   )
   // The jar of each member this project holds a module for.
   val derivedJars = LinkedHashMap<String, String>()
@@ -180,6 +142,28 @@ fun derivePluginPacking(
     if (findModule(memberName) != null) {
       derivedJars.put(memberName, relativeOutputFile)
     }
+  }
+  val layoutJarMembers = if (facts.layoutVariants.isEmpty()) {
+    facts.layoutJarMembers
+  }
+  else {
+    val orders = LinkedHashMap<String, MutableList<List<String>>>()
+    for (variant in facts.layoutVariants) {
+      val packing = requireNotNull(derivePluginPacking(
+        mainModule = mainModule,
+        facts = variant,
+        project = project,
+        outputProvider = outputProvider,
+        frontendRoots = frontendRoots,
+        isPackedElsewhere = isPackedElsewhere,
+      ))
+      for (jar in packing.jars) {
+        if (jar.relativeOutputFile in facts.layoutJarMembers) {
+          orders.computeIfAbsent(jar.relativeOutputFile) { ArrayList() }.add(jar.members)
+        }
+      }
+    }
+    mergeLayoutJarOrders(mainModule, orders)
   }
   val jars = composeDerivedPluginJars(
     libDir = "plugins/${facts.directoryName}/lib/",
@@ -189,11 +173,10 @@ fun derivePluginPacking(
     // path with no module behind it, and the plugin's main jar does not hold the member either.
     memberNames = content.memberNames.filter { it !in content.memberPaths || it in derivedJars },
     derivedJars = derivedJars,
-    handedOverMembers = content.handedOverMembers,
     closureMembers = content.closureMembers,
     memberJars = effectiveResidue.memberJars,
-    memberLibraries = content.memberLibraries,
     mainModuleJar = content.mainModuleJar,
+    layoutJarMembers = layoutJarMembers,
   )
   return DerivedPluginPacking(jars = jars, content = content, candidacy = candidacy)
 }
@@ -240,17 +223,13 @@ private fun autoLayoutResidue(mainModule: String, mainJarName: String, children:
  * The producer of a plugin's dev-distribution content, from the project model.
  *
  * The members come from the plugin's own resolved `<content>` plus the layout members of [residue]. The jar of each
- * member comes from [candidacy], which holds the one derivation of that question. A member with no offer keeps its
- * path and loses only the hand-off.
+ * member comes from [candidacy], which holds the one derivation of that question.
  */
 private fun derivePluginContent(
   module: JpsModule,
-  mainJarName: String,
   closure: WalkedContentModules,
   candidacy: DerivedPluginCandidacy,
   residue: PluginContentResidue,
-  findModule: (String) -> JpsModule?,
-  isPrepackedContentModule: (String) -> Boolean,
 ): DerivedPluginContent {
   val moduleName = module.name
   // A module shipped under another descriptor names one member, by the module name before the `/`.
@@ -259,21 +238,10 @@ private fun derivePluginContent(
   memberNames.remove(moduleName)
   val memberPaths = candidacy.memberPaths.filterKeys { it in memberNames }
   val closureMembers = closure.moduleNames.mapTo(HashSet()) { it.substringBeforeLast('/') }
-  // The hand-off is the narrow half. A raw member keeps the jar it derives above, and only its hand-off goes, because
-  // a jar the layout names holds the module's raw output.
-  val rawMembers = layoutJarMembers(residue = residue, closureMembers = closureMembers, mainJarName = mainJarName)
-  val prepackedPaths = candidacy.offers.asSequence()
-    .filterNot { it.moduleName in rawMembers }
-    .filter { it.moduleName in memberNames }
-    .associate { it.moduleName to it.relativeOutputFile }
-  val handedOverMembers = prepackedPaths.keys.filterTo(LinkedHashSet()) { findModule(it) != null && isPrepackedContentModule(it) }
   return DerivedPluginContent(
     memberNames = memberNames.toList(),
     memberPaths = memberPaths,
-    prepackedPaths = prepackedPaths,
-    handedOverMembers = handedOverMembers,
     closureMembers = closureMembers,
-    memberLibraries = candidacy.memberLibraries,
     mainModuleJar = selfEmbeddedMainModuleJar(module = module, closure = closure),
   )
 }
@@ -298,8 +266,7 @@ private fun selfEmbeddedMainModuleJar(module: JpsModule, closure: WalkedContentM
  * The whole rule, and it reads no project model. Every fact is a parameter, so a caller states them directly.
  *
  * Member order. The main jar holds the co-packed members in `<content>` order, and the main module comes last. A jar
- * the layout names holds its members in [memberNames] order, which is `<content>` order first and then the layout
- * members in the sorted order [PluginLayoutFacts.memberJars] gives them. A member-named jar holds one member.
+ * the layout names holds its members in [layoutJarMembers] order. A member-named jar holds one member.
  *
  * One jar per path. The build packs one jar at a path, so a member-named jar and a jar the layout names at the same
  * path are one jar. The member the jar is named after comes first, and the layout members follow. Such a jar reads its
@@ -322,31 +289,15 @@ fun composeDerivedPluginJars(
    * the map has no derivable jar, and the main jar holds it too.
    */
   derivedJars: Map<String, String>,
-  /** The members whose own packing target packs their jar; see [DerivedPluginJar.isHandedOver]. */
-  handedOverMembers: Set<String>,
   /** The members the plugin's own `<content>` names, which is what splits `contentModules` from `modules`. */
   closureMembers: Set<String>,
   /** See [PluginContentResidue.memberJars]. */
   memberJars: Map<String, Set<String>>,
-  /**
-   * The destinations the plugin's own packing targets pack, the second key of [DerivedPluginJar.isHandedOver].
-   *
-   * A Bazel fact. The platform derivation states none, and the converter that emits the targets supplies it.
-   */
-  handedOverJars: Set<String> = emptySet(),
-  /** See [DerivedPluginJar.libraries]; a member absent here has an unknown set. */
-  memberLibraries: Map<String, Set<String>?> = emptyMap(),
   /** See [DerivedPluginContent.mainModuleJar]: the main module's own jar where its `<content>` embeds it, else `null`. */
   mainModuleJar: String? = null,
+  /** The custom jar members in source layout order. This does not change the order of the jars. */
+  layoutJarMembers: Map<String, List<String>> = emptyMap(),
 ): List<DerivedPluginJar> {
-  fun librariesOf(members: List<String>): List<String>? {
-    val libraries = sortedSetOf<String>()
-    for (member in members) {
-      libraries.addAll(memberLibraries.get(member) ?: return null)
-    }
-    return libraries.toList()
-  }
-
   val result = ArrayList<DerivedPluginJar>()
   val mainJarContentModules = ArrayList<String>()
   val mainJarModules = ArrayList<String>()
@@ -366,10 +317,6 @@ fun composeDerivedPluginJars(
     members = members,
     modules = members.filter { it !in closureMembers },
     contentModules = members.filter { it in closureMembers },
-    // The destination's key. The plugin's own packing target is the producer of a jar the layout names, and that
-    // target states a destination.
-    isHandedOver = path in handedOverJars,
-    libraries = if (path in handedOverJars) librariesOf(members) else null,
   )
   for (memberName in memberNames) {
     val statedJars = memberJars.get(memberName)
@@ -399,6 +346,15 @@ fun composeDerivedPluginJars(
     }
     memberNamedJars.put(relativeOutputFile, memberName)
   }
+  for ((path, members) in statedJarMembers) {
+    val layoutOrder = layoutJarMembers.get(path) ?: continue
+    val orderedMembers = layoutOrder.filter { it in members }
+    check(orderedMembers.size == members.size) {
+      "Plugin `$mainModule`: the layout does not state every member order in `$path`"
+    }
+    members.clear()
+    members.addAll(orderedMembers)
+  }
   for ((path, memberName) in memberNamedJars) {
     val statedMembers = statedJarMembers.remove(path)
     if (statedMembers == null) {
@@ -409,9 +365,6 @@ fun composeDerivedPluginJars(
           members = listOf(memberName),
           modules = if (memberName in closureMembers) emptyList() else listOf(memberName),
           contentModules = if (memberName in closureMembers) listOf(memberName) else emptyList(),
-          // The member's key. This jar is the member's own, so the member's own packing target is the producer.
-          isHandedOver = memberName in handedOverMembers,
-          libraries = if (memberName in handedOverMembers) librariesOf(listOf(memberName)) else null,
         )
       )
     }
@@ -434,7 +387,6 @@ fun composeDerivedPluginJars(
         members = listOf(mainModule),
         modules = emptyList(),
         contentModules = listOf(mainModule),
-        isHandedOver = false,
         isMainJar = mainJarMembers.isEmpty(),
       )
     )
@@ -446,7 +398,6 @@ fun composeDerivedPluginJars(
           members = mainJarMembers,
           modules = mainJarModules.filter { it != mainModule },
           contentModules = mainJarContentModules,
-          isHandedOver = false,
           isMainJar = true,
         )
       )
@@ -460,8 +411,6 @@ fun composeDerivedPluginJars(
       members = mainJarMembers + mainModule,
       modules = mainJarModules,
       contentModules = mainJarContentModules,
-      // The plugin's main jar holds the plugin's own descriptor, so it is a jar only a fragment packs.
-      isHandedOver = false,
       isMainJar = true,
     )
   )

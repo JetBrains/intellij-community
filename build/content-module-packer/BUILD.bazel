@@ -18,6 +18,7 @@ go_binary(
     pure = "on",
     visibility = ["//visibility:public"],
     deps = [
+        "//build/content-module-packer/internal/filemetadata",
         "//build/content-module-packer/internal/jarpack",
         "//build/content-module-packer/internal/span",
         "//build/content-module-packer/internal/worker",
@@ -37,6 +38,7 @@ go_test(
     ],
     pure = "on",
     deps = [
+        "//build/content-module-packer/internal/filemetadata",
         "//build/content-module-packer/internal/jarpack",
         "//build/content-module-packer/internal/span",
         "//build/content-module-packer/internal/worker",

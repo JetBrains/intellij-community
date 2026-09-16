@@ -11,8 +11,8 @@ import (
 
 // What this file covers is the request surface: the option spelling the rule states, the scalars this binary computes
 // from the build number, and the failure of a request the rule cannot state. The bytes are gated in
-// `internal/descriptorxml`, `internal/stamps` and `internal/structural`, and over a whole product by
-// `./build/dev-dist.cmd descriptors`.
+// `internal/descriptorxml`, `internal/stamps` and `internal/structural`, and over a composed distribution by
+// `./build/dev-dist.cmd snapshot diff`.
 
 // requestFile writes a parameter file of the shape `dev_dist_plugin_descriptor` passes, and returns its path.
 func requestFile(t *testing.T, dir string, lines ...string) string {
@@ -66,9 +66,8 @@ func TestTheWholeRequestIsPatched(t *testing.T) {
 	}
 
 	// `263.SNAPSHOT` with the pinned build date gives the version. The range is computed from the **build number** and
-	// not from that version (`patchPluginDescriptorFromPlan` of `DevDistPluginDescriptorMain.kt`), and `263.SNAPSHOT`
-	// matches no numeric shape, so
-	// both ends are the build number itself. That is what `//build:idea_air_dist` stamps today.
+	// not from that version, the way the assembly calls `getCompatiblePlatformVersionRange`. `263.SNAPSHOT` matches no
+	// numeric shape, so both ends are the build number itself. That is what `//build:idea_air_dist` stamps today.
 	want := `<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
   <id>a</id>
   <version>263.99999999.0</version>
@@ -81,6 +80,110 @@ func TestTheWholeRequestIsPatched(t *testing.T) {
 </idea-plugin>`
 	if got := read(t, output); got != want {
 		t.Errorf("got:\n%s\nwant:\n%s", got, want)
+	}
+}
+
+func TestReserializationPrecedesContentEmbedding(t *testing.T) {
+	dir := t.TempDir()
+	source := filepath.Join(dir, "plugin.xml")
+	output := filepath.Join(dir, "out", "plugin.xml")
+	descriptor := filepath.Join(dir, "a.b.xml")
+	write(t, source, `<idea-plugin><description><![CDATA[<b>x</b>]]></description>`+
+		`<content><module name="a.b"/></content></idea-plugin>`)
+	write(t, descriptor, `<idea-plugin package="a.b"/>`)
+
+	code := run([]string{"--flagfile=" + requestFile(t, dir,
+		"--out="+output,
+		"--main-module=intellij.example",
+		"--source="+source,
+		"--build-number-file="+buildNumberFile(t, dir, "263.100.5"),
+		"--release-date=20260101",
+		"--release-version=2026300",
+		"--embed-content-modules=true",
+		"--reserialize-before-content-embedding=true",
+		"--plugin-descriptor=a.b.xml="+descriptor,
+		"--plugin-module=intellij.example",
+	)})
+	if code != 0 {
+		t.Fatalf("exit %d", code)
+	}
+
+	got := read(t, output)
+	if !strings.Contains(got, `<description>&lt;b&gt;x&lt;/b&gt;</description>`) {
+		t.Errorf("the source CDATA was not normalized before embedding:\n%s", got)
+	}
+	if !strings.Contains(got, `<module name="a.b"><![CDATA[<idea-plugin package="a.b" />]]></module>`) {
+		t.Errorf("the embedded descriptor did not retain CDATA:\n%s", got)
+	}
+}
+
+// `--reserialized-output` adds the descriptor after one more round trip, which is what the plugin classpath record
+// embeds (`generatePluginClassPathFromOrderedAssets` of `orderedAssets.kt`). The main output stays as it was.
+func TestAReserializedOutputIsWrittenNextToTheDescriptor(t *testing.T) {
+	dir := t.TempDir()
+	source := filepath.Join(dir, "plugin.xml")
+	output := filepath.Join(dir, "out", "plugin.xml")
+	reserialized := filepath.Join(dir, "reserialized", "plugin.xml")
+	descriptor := filepath.Join(dir, "a.b.xml")
+	write(t, source, `<idea-plugin><id>a</id><content><module name="a.b"/></content></idea-plugin>`)
+	write(t, descriptor, `<idea-plugin package="a.b"><description><![CDATA[<b>x</b>]]></description></idea-plugin>`)
+
+	code := run([]string{
+		"--out=" + output,
+		"--reserialized-output=" + reserialized,
+		"--main-module=intellij.example",
+		"--source=" + source,
+		"--build-number-file=" + buildNumberFile(t, dir, "263.100.5"),
+		"--release-date=20260101",
+		"--release-version=2026300",
+		"--embed-content-modules=true",
+		"--plugin-descriptor=a.b.xml=" + descriptor,
+		"--plugin-module=intellij.example",
+	})
+	if code != 0 {
+		t.Fatalf("exit %d", code)
+	}
+
+	got := read(t, output)
+	if !strings.Contains(got, `<module name="a.b"><![CDATA[<idea-plugin package="a.b">`) {
+		t.Errorf("the main output lost its embedded CDATA:\n%s", got)
+	}
+	want := `<idea-plugin>
+  <id>a</id>
+  <version>263.100.5</version>
+  <idea-version since-build="263.100" until-build="263.*" />
+  <content>
+    <module name="a.b">&lt;idea-plugin package=&quot;a.b&quot;&gt;
+  &lt;description&gt;&amp;lt;b&amp;gt;x&amp;lt;/b&amp;gt;&lt;/description&gt;
+&lt;/idea-plugin&gt;</module>
+  </content>
+</idea-plugin>`
+	if gotReserialized := read(t, reserialized); gotReserialized != want {
+		t.Errorf("got:\n%s\nwant:\n%s", gotReserialized, want)
+	}
+}
+
+// Without the option, no second file is written.
+func TestNoReserializedOutputIsWrittenByDefault(t *testing.T) {
+	dir := t.TempDir()
+	source := filepath.Join(dir, "plugin.xml")
+	output := filepath.Join(dir, "plugin.out.xml")
+	write(t, source, "<idea-plugin><id>a</id></idea-plugin>")
+
+	code := run([]string{
+		"--out=" + output, "--main-module=intellij.example", "--source=" + source,
+		"--build-number-file=" + buildNumberFile(t, dir, "263.100.5"),
+		"--release-date=20260101", "--release-version=2026300",
+	})
+	if code != 0 {
+		t.Fatalf("exit %d", code)
+	}
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(entries) != 3 {
+		t.Errorf("unexpected outputs: %v", entries)
 	}
 }
 
@@ -133,9 +236,8 @@ func TestAnExactVersionPinsBothEnds(t *testing.T) {
 	}
 }
 
-// An option the parser does not know fails the run, which is what keeps the two producers on one spelling: a rule that
-// grows an option reaches both binaries or neither (`parseDevDistPluginDescriptorRequest` of
-// `DevDistPluginDescriptorMain.kt`).
+// An option the parser does not know fails the run. That keeps the rule and this binary on one spelling: a rule that
+// grows an option reaches this parser or fails here.
 func TestAnUnknownOptionIsRefused(t *testing.T) {
 	if code := run([]string{"--not-an-option=1"}); code != 2 {
 		t.Errorf("exit %d, want 2", code)

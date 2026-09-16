@@ -7,6 +7,9 @@ go_binary(
         "local_home.go",
         "main.go",
         "manifest.go",
+        "metadata.go",
+        "plugin_classpath.go",
+        "plugin_component.go",
     ],
     gc_linkopts = [
         "-s",
@@ -16,8 +19,10 @@ go_binary(
     pure = "on",
     visibility = ["//visibility:public"],
     deps = [
+        "//build/content-module-packer/internal/filemetadata",
+        "//build/content-module-packer/internal/pluginclasspath",
+        "//build/content-module-packer/internal/pluginpack",
         "//build/content-module-packer/internal/span",
-        "@com_github_zeebo_xxh3//:xxh3",
     ],
 )
 
@@ -32,11 +37,19 @@ go_test(
         "main_test.go",
         "manifest.go",
         "manifest_test.go",
+        "metadata.go",
+        "metadata_test.go",
+        "plugin_classpath.go",
+        "plugin_classpath_test.go",
+        "plugin_component.go",
+        "plugin_component_test.go",
     ],
     data = glob(["testdata/*"]),
     pure = "on",
     deps = [
+        "//build/content-module-packer/internal/filemetadata",
+        "//build/content-module-packer/internal/pluginclasspath",
+        "//build/content-module-packer/internal/pluginpack",
         "//build/content-module-packer/internal/span",
-        "@com_github_zeebo_xxh3//:xxh3",
     ],
 )

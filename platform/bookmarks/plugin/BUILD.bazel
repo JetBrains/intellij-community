@@ -1,17 +1,17 @@
-load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_DESCRIPTORS", "MODULE_TARGETS")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `dev intellij.platform.bookmarks.plugin` start
 dev_dist_plugin(
     content_modules = [
         # do not sort,
+        "intellij.platform.bookmarks",
         "intellij.platform.bookmarks.backend",
         "intellij.platform.bookmarks.frontend",
         "intellij.platform.debugger.impl.bookmarks",
+        "intellij.platform.vcs.log.impl.bookmarks",
     ],
     descriptor = "resources/META-INF/plugin.xml",
-    descriptor_index = MODULE_DESCRIPTORS,
     descriptor_modules = [
         "intellij.platform.bookmarks",
         "intellij.platform.bookmarks.backend",
@@ -19,13 +19,15 @@ dev_dist_plugin(
         "intellij.platform.debugger.impl.bookmarks",
         "intellij.platform.vcs.log.impl.bookmarks",
     ],
+    jars = {
+        "lib/platform-bookmarks-plugin.jar": [
+            "intellij.platform.bookmarks.plugin",
+            "intellij.platform.bookmarks.backend",
+            "intellij.platform.bookmarks.frontend",
+            "intellij.platform.debugger.impl.bookmarks",
+        ],
+    },
     main_module = "intellij.platform.bookmarks.plugin",
-    module_targets = MODULE_TARGETS,
-    prepacked_content_modules = [
-        # do not sort,
-        "intellij.platform.bookmarks",
-        "intellij.platform.vcs.log.impl.bookmarks",
-    ],
 )
 ### auto-generated section `dev intellij.platform.bookmarks.plugin` end
 

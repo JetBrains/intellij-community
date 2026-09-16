@@ -1,21 +1,18 @@
-load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_TARGETS")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `dev intellij.textmate.plugin` start
 dev_dist_plugin(
-    content_modules = ["intellij.libraries.joni"],
-    libraries = ["@lib//:libraries-joni-joni"],
-    main_module = "intellij.textmate.plugin",
-    module_targets = MODULE_TARGETS,
-    prepacked_content_modules = [
+    content_modules = [
         # do not sort,
-        "intellij.textmate.backend",
+        "intellij.textmate",
         "intellij.textmate.common",
         "intellij.textmate.core",
         "intellij.textmate.joni",
-        "intellij.textmate",
+        "intellij.textmate.backend",
+        "intellij.libraries.joni",
     ],
+    main_module = "intellij.textmate.plugin",
 )
 ### auto-generated section `dev intellij.textmate.plugin` end
 

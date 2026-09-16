@@ -456,6 +456,7 @@ internal class BazelBuildFileGenerator(
   data class ModuleGenerationResult(
     val moduleBuildFiles: Map<Path, BazelFileUpdater>,
     val moduleTargets: List<ModuleTargets>,
+    val generatedBuildFileDirs: Set<Path>,
   )
 
   private fun validateCustomModules(list: ModuleList) {
@@ -555,9 +556,21 @@ internal class BazelBuildFileGenerator(
       }
     }
 
+    val generatedBuildFileDirs = fileToUpdater.keys.toSet()
+    for (module in list.skipped.filter { it.isCommunity == isCommunity }) {
+      fileToUpdater.computeIfAbsent(module.bazelBuildFileDir) {
+        val buildFile = it.resolve("BUILD.bazel")
+        check(buildFile.isRegularFile()) {
+          "Missing original BUILD.bazel owner for skipped module ${module.module.name}: $buildFile"
+        }
+        BazelFileUpdater(buildFile)
+      }
+    }
+
     return ModuleGenerationResult(
       moduleBuildFiles = fileToUpdater.mapValues { it.value },
       moduleTargets = targetsPerModule,
+      generatedBuildFileDirs = generatedBuildFileDirs,
     )
   }
 

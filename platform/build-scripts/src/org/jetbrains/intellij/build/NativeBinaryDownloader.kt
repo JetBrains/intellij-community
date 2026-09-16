@@ -73,8 +73,11 @@ object NativeBinaryDownloader {
    */
   fun getRestarter(context: BuildContext, os: OsFamily, arch: JvmArchitecture): Path {
     val (archiveFile, unpackedDir) = downloadAndUnpack(context, "restarterBuild", RESTARTER_ID)
-    return findFile(archiveFile, unpackedDir, binName(os, arch, "restarter"))
+    return findFile(archiveFile, unpackedDir, restarterArchivePath(os, arch))
   }
+
+  /** The path of the restart helper inside its archive, `<os>-<arch>/restarter[.exe]`, at the archive root. */
+  fun restarterArchivePath(os: OsFamily, arch: JvmArchitecture): String = binName(os, arch, "restarter")
 
   /**
    * Downloads and unpacks the WebP tarball and returns a path to a library for the given platform.

@@ -1,5 +1,4 @@
-load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_TARGETS")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
@@ -7,30 +6,16 @@ load("//build:compiler-options.bzl", "create_kotlinc_options")
 dev_dist_plugin(
     content_modules = [
         # do not sort,
-        "intellij.libraries.kotlin.tooling.core",
-        "intellij.libraries.kotlinc.kotlin.compiler.common",
-        "intellij.libraries.kotlinc.kotlin.compiler.fe10",
+        "intellij.kotlin.jsr223",
         "intellij.libraries.kotlinc.kotlin.script.runtime",
         "intellij.libraries.kotlinc.kotlin.scripting.common",
         "intellij.libraries.kotlinc.kotlin.scripting.jvm",
-    ],
-    libraries = [
-        "@lib//:kotlinc-kotlin-build-tools-api",
-        "@lib//:kotlinc-kotlin-build-tools-impl",
-        "@lib//:kotlinc-kotlin-dist",
-        "@lib//:libraries-kotlin-tooling-core-kotlin-tooling-core",
-        "@lib//:libraries-kotlinc-kotlin-compiler-common-kotlinc-kotlin-compiler-common",
-        "@lib//:libraries-kotlinc-kotlin-compiler-fe10-kotlinc-kotlin-compiler-fe10",
-        "@lib//:libraries-kotlinc-kotlin-script-runtime-kotlinc-kotlin-script-runtime",
-        "@lib//:libraries-kotlinc-kotlin-scripting-common-kotlinc-kotlin-scripting-common",
-        "@lib//:libraries-kotlinc-kotlin-scripting-jvm-kotlinc-kotlin-scripting-jvm",
+        "intellij.kotlin.buildToolsRuntime",
+        "intellij.libraries.kotlin.tooling.core",
+        "intellij.libraries.kotlinc.kotlin.compiler.common",
+        "intellij.libraries.kotlinc.kotlin.compiler.fe10",
     ],
     main_module = "intellij.kotlin.jsr223.plugin",
-    module_targets = MODULE_TARGETS,
-    prepacked_jars = {
-        "intellij.kotlin.buildToolsRuntime": "intellij.kotlin.buildToolsRuntime.jar",
-        "intellij.kotlin.jsr223": "intellij.kotlin.jsr223.jar",
-    },
 )
 ### auto-generated section `dev intellij.kotlin.jsr223.plugin` end
 

@@ -1,6 +1,5 @@
 load("@community//build:tests-options.bzl", "jps_test")
-load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_TARGETS")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 jps_test(
@@ -177,38 +176,27 @@ jvm_library(
 dev_dist_plugin(
     content_modules = [
         # do not sort,
+        "intellij.performanceTesting.remoteDriver",
+        "intellij.performanceTesting.remoteDriver.jcef",
+        "intellij.performanceTesting.remoteDriver.compose",
+        "intellij.performanceTesting.vcs",
+        "intellij.performanceTesting.debugger",
+        "intellij.performanceTesting.frontend",
+        "intellij.performanceTesting.frontend.base",
+        "intellij.performanceTesting.problemsView",
+        "intellij.performanceTesting.structureView",
+        "intellij.performanceTesting.backend",
+        "intellij.performanceTesting.rdct",
+        "intellij.tools.ide.starter.bus",
+        "intellij.driver.model",
+        "intellij.driver.impl",
+        "intellij.driver.client",
+        "intellij.performanceTesting.freezes",
+        "intellij.libraries.oshi.core",
         "intellij.libraries.assertj.core",
         "intellij.libraries.assertj.swing",
-        "intellij.libraries.oshi.core",
-    ],
-    libraries = [
-        "@lib//:libraries-assertj-core-assert_j",
-        "@lib//:libraries-assertj-swing-assertj-swing",
-        "@lib//:libraries-oshi-core-github-oshi-core",
     ],
     main_module = "intellij.performanceTesting",
-    module_targets = MODULE_TARGETS,
-    prepacked_content_modules = [
-        # do not sort,
-        "intellij.performanceTesting.backend",
-        "intellij.performanceTesting.debugger",
-        "intellij.performanceTesting.freezes",
-        "intellij.performanceTesting.frontend.base",
-        "intellij.performanceTesting.frontend",
-        "intellij.performanceTesting.problemsView",
-        "intellij.performanceTesting.rdct",
-        "intellij.performanceTesting.remoteDriver.compose",
-        "intellij.performanceTesting.remoteDriver.jcef",
-        "intellij.performanceTesting.remoteDriver",
-        "intellij.performanceTesting.structureView",
-        "intellij.performanceTesting.vcs",
-    ],
-    prepacked_jars = {
-        "intellij.driver.client": "intellij.driver.client.jar",
-        "intellij.driver.impl": "intellij.driver.impl.jar",
-        "intellij.driver.model": "intellij.driver.model.jar",
-        "intellij.tools.ide.starter.bus": "intellij.tools.ide.starter.bus.jar",
-    },
 )
 ### auto-generated section `dev intellij.performanceTesting` end
 

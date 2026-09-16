@@ -13,8 +13,7 @@ the build's critical path, which is what the ADR rules out.
 
 ## The state of the port
 
-The patch has seven stages. `DevDistDescriptorStage` names them, and a dev assembly records the size and the text of
-each one per plugin.
+The patch has seven stages, in the order `applyPluginDescriptorPatch` runs them.
 
 | stage | here |
 |---|---|
@@ -78,105 +77,23 @@ wrong produces the wrong bytes for every plugin.
 The curated cases are the committed gate. Every expectation in them is a text the platform produced on a real
 classpath, one construct a case.
 
-The whole-population gate is `internal/stamps/population_test.go`. **It reads the artifact a dev-distribution
-assembly writes**, and skips unless `IJ_DESCRIPTOR_CASES` names a `*.patched-descriptors.json` or a directory of them.
-`DevDistPatchedDescriptors` holds the text of every stage of the patch, so a change to `JDOMUtil` or to
-`doPatchPluginXml` reaches this gate through the assembly that produced the file.
+## Where the structural stages are proved
 
-Refresh the fixture, and copy the files out at once, because a later Bazel run with the flag off prunes them:
+The curated cases of `internal/structural` and `internal/descriptorxml` are the committed gate. Each case states one
+rule, with a negative control per branch, so a failure names the rule. Two more guards run over real descriptors.
+`//build:idea_dev_descriptor_leaf_build_test` builds a sample group of leaves, so a request the rule cannot state fails
+before a distribution builds. `./build/dev-dist.cmd snapshot diff` compares every plugin main jar of a composed
+distribution against a recorded baseline. That guard runs over one producer. It is a regression guard, not a second
+producer.
 
-    ./bazel.cmd build //build:idea_air_dist \
-      --@community//platform/build-scripts/bazel-rules:dev_dist_patched_descriptors \
-      --output_groups=+dev_dist_patched_descriptors
-    cp out/bazel-bin/build/*.patched-descriptors.json <dir>/
+**The snapshot is also the control for a wrong marker row.** The assembly computes the text in the arm that does not
+read the produced descriptor (`fragment_reads` of the plan). A row that names `linux`/`x86_64` where the darwin variant
+should name `mac`/`arm64` moves three files of the snapshot, and the diff names them.
 
-    bazel test @community//build/plugin-descriptor-patcher/internal/stamps:stamps_test \
-      --test_env=IJ_DESCRIPTOR_CASES=<dir> --test_arg=-test.v
-
-Write `<dir>/request.txt` too. The artifact carries no stamp scalar, so a fixture without that file runs with the
-arbitrary defaults of `defaultRequest`, and the stamps arm then reports every record differing on its `<version>`. The
-scalars of `//build:idea_air_dist` are in the `defaultRequest` doc comment.
-
-The artifact is not committed, because it is megabytes of one product's descriptors.
-
-**Which arm you build decides what this gate can cover.** A fragment that is handed a produced descriptor reads that
-file and runs no stage of the patch, so its record states `"origin": "produced"` and holds no stage text. The gate
-skips such a record by name and prints the count. Every fragment of `//build:idea_air_dist` now reads, so that is 162
-of the 163, and the arms cover the one record the assembly still computes. Measured on 2026-08-28:
-
-    skipped                        162 records, which the fragment read from a produced descriptor
-    rawTextPatcher -> reserialized   1 identical, 0 differing, 0 absent of 1
-    reserialized -> stamps           1 identical, 0 differing, 0 absent of 1
-    stamps against patched           0 identical, 0 differing, 0 absent of 0
-    the structural stages inert      0 identical, 0 differing, 0 absent of 0
-    structural elsewhere             1 records, whose structural stages moved bytes
-
-That one is `intellij.devkit`, the additional plugin the plan does not cover. `intellij.dev` left this set when its
-descriptor got a label - see `containingBazelPackageLabel` in `platform/buildScripts/src/productLayout/devDistPluginDescriptorPlan.kt`.
-
-To cover all 163, build the fixture from the arm that computes every descriptor. Set `fragment_reads` of the product
-entry in `build/dev_dist_plugin_descriptors.bzl` to `"none"`, build, copy the files out, and restore the file. That one
-key is the switch: it keeps every producer and takes only the declaration away, so the fragments run every stage of every
-descriptor and the artifact holds every stage text. Emptying `descriptor_targets` instead removes the producer, and the two-producer
-gate below then has nothing to compare. Measured on 2026-08-27 over one artifact of that shape, the gate reports 163 of
-163 for `rawTextPatcher` to `reserialized`, 163 of 163 for `reserialized` to `stamps`, and 43 of 43 for the class (a)
-stamps text against `patched`. That last text is what the assembly put in the plugin's main jar. Keep the artifact you
-build there: the declaring arm overwrites it.
-
-An artifact of that arm also needs a `version@<main module>` line for every plugin whose layout appends a version
-suffix, because the record then carries the computed version and the gate's scalars are the plan's.
-
-**The two structural stages have no byte arm in this gate, by construction.** They read other descriptors, and the
-artifact records one plugin's stage texts and no descriptor closure. So a record whose structural stages moved bytes is
-counted and skipped here. The fourth arm proves inertness only. Over a descriptor the platform's own stages did not
-change, the Go stages must change nothing either.
-
-`<dir>/request.txt` states the stamp scalars, one `key=value` a line, because the artifact records no scalar. A
-`key@<main module>=value` line states one plugin's deviation. Three plugins of this product need one, for a per-layout
-version suffix. A wrong scalar is loud: it moves the `<version>` of every recorded plugin.
-
-An artifact of the older schema recorded a byte count and no text. The gate then reports the stages it cannot answer
-as absent and fails, rather than passing a case against nothing.
-
-## The two-producer gate, which is where the structural stages are proved
-
-    ./build/dev-dist.cmd descriptors --two-producer
-
-Every `dev_dist_plugin_descriptor` target runs both producers over one parameter file, and the mode compares their
-bytes per plugin. It reads no artifact and assembles no distribution. So **every** plugin of the population is
-compared, the ones whose fragment now reads the produced file included. Those are the ones the artifact gate can only
-hold out. A plugin whose descriptor differs by operating system or architecture has one entry per layout variant, and
-each variant is a pair of its own: the two files are joined by the whole path, not by the name they share. On 2026-08-28
-it reported **173 of 173 byte-identical, 0 differing**, over all 163 bundled plugins.
-
-**This gate cannot catch a wrong marker row**, because both producers read the same row. The control for the table is a
-two-arm whole-distribution snapshot: the assembly computes the text in the arm that does not read. A row that names
-`linux`/`x86_64` where the darwin variant should name `mac`/`arm64` moves three files of the snapshot, and the diff
-names them.
-
-That is the coverage the produced-descriptor switch had taken away, and it is back. The earlier statement here, that no
-arm could give it back, was wrong about the mechanism. The missing piece was a second producer inside the rule, not a
-fragment that computes the text anyway.
-
-Two negative controls of that gate, each proved both ways. An include placed at position 0 rather than at its own
-position makes the content-order assertion refuse `intellij.database.plugin` outright, and the build fails. An embedded
-descriptor written as text rather than as CDATA gives 43 identical and 115 differing. That is exactly the split between
-the plugins that embed no content module and the ones that embed at least one.
-
-## The artifact gate, and what it now compares
-
-    ./build/dev-dist.cmd descriptors
-
-It compares the descriptor a `dev_dist_plugin_descriptor` action wrote against the text a dev assembly recorded for the
-same plugin. Every fragment now reads the produced file, so on 2026-08-28 it reported **0 compared** and held all 163
-plugins out by name and reason, 161 of them under "the fragment read the produced descriptor". That is the state the
-gate exists to reach, and it says so and names the two-producer mode. The gate still fails on a dropped declaration,
-which puts its plugin straight back into `compared`, and on an over-declared one, which shows up as a target the
-artifact does not claim.
-
-A plugin bundled for one operating system alone is neither. `intellij.wsl.remoteSdk` has a target and no record in a
-macOS artifact, and the gate reports it under "built for another platform" rather than as over-declaration. The file's
-own directory depth states whether the plan restricted its entry, so the gate keeps no platform vocabulary of its own.
+Until 2026-09-14 the rule also ran a JVM reference producer over the same parameter file, and
+`./build/dev-dist.cmd descriptors --two-producer` compared the two byte for byte. Its last figures are 174 of 174
+byte-identical on two consecutive runs, recorded in `Item 5: the three removal conditions` of
+`build/dev-dist-measurements.md`. IJAI-955 deleted the reference producer and the command together.
 
 ## Per-action cost, and why there is no worker
 

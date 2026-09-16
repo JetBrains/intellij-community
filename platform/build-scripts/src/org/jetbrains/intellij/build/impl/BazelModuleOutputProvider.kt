@@ -221,8 +221,8 @@ internal class ExplicitBazelInputResolver private constructor(
         // under two keys - a module target and the library container that exports it - is named by the first.
         labelByPath.putIfAbsent(input.absolutePath, label)
         // A repeated label is how a multi-jar library states its jars, so appending is the normal case and order is
-        // preserved. What is still a defect is the *same* file twice under one key: the writer deduplicates
-        // (`_collect_libraries`, first-wins), so a repeat here means two producers disagreed about the same key.
+        // preserved. What is still a defect is the *same* file twice under one key: the producer of `library_jars`
+        // deduplicates first-wins, so a repeat here means two producers disagreed about the same key.
         for (key in listOfNotNull(label, apparentRepositoryLabel(label))) {
           val declared = inputs.getOrPut(key) { mutableListOf() }
           check(declared.none { it.execPath == execPath }) { "Duplicate Bazel input '$key' -> '$execPath' in $file" }
@@ -422,15 +422,14 @@ internal class BazelModuleOutputProvider(
   }
 
   /**
-   * A declared library's files, by the container key or - for the one producer that cannot write one - its jar keys.
+   * A declared library's files, by the container key or, for the one producer that cannot write one, by its jar keys.
    *
-   * Every declaration a *generator* writes keys a library by its container target
-   * (`computeLibraryContainerLabels`, `addMemberLibraries`), because that label carries no artifact version and so
-   * stays out of a Maven bump's diff. Test plugins are the exception, as they are for content generally: they are
-   * outside the content population, so the bridge derives their payload from library XML while loading, and
-   * what a library XML yields is jar file labels - a container's target name comes from the library's *name* through the
-   * branchy derivation in `dependency.kt:130-290`, which is not worth mirroring in Starlark for a payload that is
-   * checked into nothing and therefore causes no churn either way.
+   * A generator keys a library by its container target. `libraryContainerLabel` of the plan generator and a library
+   * token of `jars` write that key. The label carries no artifact version, so a Maven bump does not change it. The
+   * platform payload is the exception. The bridge derives its project and module libraries from library XML while
+   * loading, in `_add_payload_input_targets`, and a library XML yields jar file labels. A container's target name comes
+   * from the library's *name* through the branchy derivation in `dependency.kt:130-290`. A payload that lives in no
+   * checked-in file causes no churn, so a Starlark mirror of that derivation is not worth its cost.
    *
    * So each producer has exactly one convention and this picks between them, container first. Under-declaration stays
    * loud: neither key declared is an error naming the library.

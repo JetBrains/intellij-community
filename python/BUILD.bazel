@@ -1,16 +1,17 @@
 load("@community//build:tests-options.bzl", "jps_test")
-load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_TARGETS")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `dev intellij.pycharm.community.customization` start
 dev_dist_plugin(
-    content_modules = ["intellij.pycharm.community.customization.shared"],
+    content_modules = [
+        # do not sort,
+        "intellij.pycharm.community.ide.impl.promotion",
+        "intellij.pycharm.community.customization.shared",
+    ],
     main_module = "intellij.pycharm.community.customization",
-    module_targets = MODULE_TARGETS,
-    prepacked_content_modules = ["intellij.pycharm.community.ide.impl.promotion"],
 )
 ### auto-generated section `dev intellij.pycharm.community.customization` end
 
