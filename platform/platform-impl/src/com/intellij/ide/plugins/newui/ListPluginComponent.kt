@@ -99,7 +99,7 @@ internal data class PluginRowRenderKey(
   val groupType: PluginsGroupType,
   val marketplace: Boolean,
   val name: @NlsSafe String?,
-  val firstTag: @Nls String?,
+  val tags: List<@Nls String>,
   val downloads: @NlsSafe String?,
   val rating: @NlsSafe String?,
   val installedCounterpartPresent: Boolean,
@@ -617,11 +617,10 @@ class ListPluginComponent private constructor(
 
   private fun createTag() {
     val tag: @NlsSafe String = if (myUseBadgeTags) {
-      val candidates = if (myIsNotFreeInFreeMode) listOfNotNull(myRenderKey.firstTag) else myPlugin.calculateTags()
-      candidates.firstOrNull(PluginTagBadge::isColored) ?: return
+      myRenderKey.tags.firstOrNull(PluginTagBadge::isColored) ?: return
     }
     else {
-      myRenderKey.firstTag ?: return
+      myRenderKey.tags.firstOrNull() ?: return
     }
     val tagComponent = if (myUseBadgeTags) PluginTagBadge.create(tag, mySearchListener) else createTagComponent(tag)
     if (myIsNotFreeInFreeMode) {
@@ -2193,13 +2192,12 @@ class ListPluginComponent private constructor(
     ): PluginRowRenderKey {
       val compatible = !plugin.isIncompatibleWithCurrentPlatform
       val available = (compatible || installationState.fullyInstalled && pluginEnabled) && plugin.canBeEnabled
-
       @Suppress("HardCodedStringLiteral")
-      val firstTag = if (restrictedByProduct) {
-        if (PlatformUtils.isPyCharmPro()) Tags.Pro.name else Tags.Ultimate.name
+      val tags = if (restrictedByProduct) {
+        listOf(if (PlatformUtils.isPyCharmPro()) Tags.Pro.name else Tags.Ultimate.name)
       }
       else {
-        plugin.calculateTags().firstOrNull()
+        plugin.calculateTags().toList()
       }
       val versionModel = if (marketplace) installedPlugin else plugin
       val version = versionModel?.version?.takeUnless(StringUtil::isEmptyOrSpaces)
@@ -2214,7 +2212,7 @@ class ListPluginComponent private constructor(
         groupType = groupType,
         marketplace = marketplace,
         name = plugin.name,
-        firstTag = firstTag,
+        tags = tags,
         downloads = if (marketplace) plugin.presentableDownloads() else null,
         rating = if (marketplace) plugin.presentableRating() else null,
         installedCounterpartPresent = installedPlugin != null,

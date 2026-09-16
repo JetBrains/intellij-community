@@ -15,6 +15,7 @@ import com.intellij.ide.plugins.newui.LinkComponent
 import com.intellij.ide.plugins.newui.ListPluginComponent
 import com.intellij.ide.plugins.newui.PluginDetailsPageComponent
 import com.intellij.ide.plugins.newui.PluginDetailsPageLayout
+import com.intellij.ide.plugins.newui.PluginInstallationCustomization
 import com.intellij.ide.plugins.newui.PluginInstallationState
 import com.intellij.ide.plugins.newui.PluginNodeModelBuilderFactory
 import com.intellij.ide.plugins.newui.PluginPreparedUpdateState
@@ -32,9 +33,11 @@ import com.intellij.ide.ui.LafManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.UiWithModelAccess
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.common.waitUntilAssertSucceeds
 import com.intellij.testFramework.junit5.TestApplication
@@ -674,6 +677,54 @@ internal class LegacyPluginRowFactoryTest {
           val badge = badges.single().icon as Badge
           assertThat(badge.text).isIn(Tags.Paid.name, Tags.Freemium.name)
           assertThat(badge.colorType).isNotEqualTo(Badge.ColorType.GRAY_SECONDARY)
+        }
+      }
+      finally {
+        host.dispose(closeSession = false)
+      }
+    }
+
+  @Test
+  fun `unified row uses tags captured by its render key`(): Unit =
+    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+      val host = LegacyPluginUiHost(parentScope = this, operationScope = this)
+      try {
+        val pluginId = PluginId.getId("customized.tag.plugin")
+        var customizationCalls = 0
+        val customization = object : PluginInstallationCustomization {
+          override val pluginId: PluginId = pluginId
+
+          override fun createLicensePanel(isMarketplace: Boolean, update: Boolean): JComponent? = null
+
+          override fun beforeInstallOrUpdate(update: Boolean) = Unit
+
+          override fun customizeTags(tags: List<String>): List<String> {
+            customizationCalls++
+            return tags + Tags.Paid.name
+          }
+        }
+        ExtensionTestUtil.maskExtensions(
+          ExtensionPointName.create("com.intellij.pluginInstallationCustomization"),
+          listOf(customization),
+          disposable,
+        )
+        val model = PluginNodeModelBuilderFactory.createBuilder(pluginId)
+          .setName("Customized Tag Plugin")
+          .setTags(listOf(Tags.EAP.name))
+          .build()
+        val item = PluginItemState(pluginId, model.name, modelHandle = PluginItemModelHandle(model))
+        val section = PluginSectionState(PluginSectionId.Installed, items = listOf(item))
+        val factory = LegacyPluginRowFactory(host, ListPluginModel(), LinkListener { _, _ -> }, onSelectionChanged = {})
+        val specification = factory.specification(section, item)
+
+        assertThat(customizationCalls).isOne()
+        (factory.createRow(specification.occurrenceId, specification.item, specification.renderKey) as LegacyPluginRow).use { row ->
+          val badge = componentsOfType(row.component, LinkComponent::class.java)
+            .single { it.icon is Badge }
+            .icon as Badge
+
+          assertThat(badge.text).isEqualTo(Tags.Paid.name)
+          assertThat(customizationCalls).isOne()
         }
       }
       finally {

@@ -45,6 +45,22 @@ internal class PluginRowRenderKeyTest {
   }
 
   @Test
+  fun `all tags are constructor presentation`() {
+    val beforePlugin = pluginModel("Plugin", "1.0", listOf(Tags.EAP.name, Tags.Paid.name))
+    val before = renderKey(
+      beforePlugin,
+      PluginInstallationState(false),
+    )
+    val after = renderKey(
+      pluginModel("Plugin", "1.0", listOf(Tags.EAP.name, Tags.Freemium.name)),
+      PluginInstallationState(false),
+    )
+
+    assertThat(before.tags).containsExactlyElementsOf(beforePlugin.calculateTags())
+    assertThat(after).isNotEqualTo(before)
+  }
+
+  @Test
   fun `marketplace installed counterpart version requires row replacement`() {
     val marketplacePlugin = pluginModel("Plugin", "2.0")
     val before = renderKey(
@@ -103,11 +119,11 @@ internal class PluginRowRenderKeyTest {
     )
   }
 
-  private fun pluginModel(name: String, version: String): PluginUiModel {
+  private fun pluginModel(name: String, version: String, tags: List<String> = listOf("Tag")): PluginUiModel {
     val node = PluginNode(PluginId.getId("plugin.id"), name, "0")
     node.version = version
     node.vendor = "Vendor"
-    node.tags = listOf("Tag")
+    node.tags = tags
     return PluginUiModelAdapter(node)
   }
 }
