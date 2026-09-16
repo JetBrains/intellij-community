@@ -26,5 +26,5 @@ sealed interface RequestedEditor {
   /**
    * [editor] is reused, provided it is not disposed and displays the target file; otherwise the platform chooses the editor.
    */
-  class Specific(@JvmField val editor: Editor) : RequestedEditor
+  data class Specific(@JvmField val editor: Editor) : RequestedEditor
 }

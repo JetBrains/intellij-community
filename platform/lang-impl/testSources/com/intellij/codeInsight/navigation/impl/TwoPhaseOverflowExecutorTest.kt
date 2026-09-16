@@ -4,11 +4,13 @@ package com.intellij.codeInsight.navigation.impl
 import com.intellij.platform.ide.navigation.impl.TwoPhaseOverflowExecutor
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.common.waitUntil
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.ensureActive
@@ -22,6 +24,8 @@ import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.EnumSource
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Semantics: a task enters the race only once its `prepare`
@@ -74,6 +78,224 @@ class TwoPhaseOverflowExecutorTest {
   }
 
   @Test
+  fun `a newer task cancels an older preparation of the same target`(): Unit = timeoutRunBlocking {
+    val older = submitParkedInPrepare(preparationKey = "target")
+    older.awaitParked()
+    val newer = submitParkedInPrepare(preparationKey = "target")
+    newer.awaitParked()
+
+    assertThat(older.awaitWasDroppedForNewer()).isTrue()
+    assertThat(older.actionCalls.get()).isEqualTo(0)
+    assertThat(newer.isRunning).isTrue()
+    newer.release()
+    assertThat(newer.awaitApplied()).isEqualTo(Applied.TOKEN)
+  }
+
+  @Test
+  fun `a replaced preparation cannot apply after it returns without a cancellation check`(): Unit = timeoutRunBlocking {
+    val parked = CompletableDeferred<Unit>()
+    val release = CompletableDeferred<Unit>()
+    val actionCalls = AtomicInteger()
+    val older = async {
+      executor.submit(prepare = {
+        assertThat(addKey("target")).isTrue()
+        withContext(NonCancellable) {
+          parked.complete(Unit)
+          release.await()
+          Applied.TOKEN
+        }
+      }) {
+        actionCalls.incrementAndGet()
+        it
+      }
+    }
+    try {
+      parked.await()
+      // The replacement cancels without taking a turn
+      assertThat(executor.submit<String, String>(prepare = {
+        assertThat(addKey("target")).isTrue()
+        null
+      }) { error("The replacement prepares nothing") }).isNull()
+
+      release.complete(Unit)
+      older.join()
+      assertThat(older.isCancelled).isTrue()
+      assertThat(actionCalls.get()).isEqualTo(0)
+    }
+    finally {
+      release.complete(Unit)
+    }
+  }
+
+  @Test
+  fun `a different key cancels an older preparation only after applying`(): Unit = timeoutRunBlocking {
+    val older = submitParkedInPrepare(preparationKey = "first target")
+    older.awaitParked()
+    val newer = submitParkedInPrepare(preparationKey = "second target")
+    newer.awaitParked()
+
+    assertThat(older.isRunning).isTrue()
+    newer.release()
+    assertThat(newer.awaitApplied()).isEqualTo(Applied.TOKEN)
+    assertThat(older.awaitWasDroppedForNewer()).isTrue()
+    assertThat(older.actionCalls.get()).isEqualTo(0)
+  }
+
+  @Test
+  fun `a released key lets an unresolved older task prepare the target`(): Unit = timeoutRunBlocking {
+    val resolving = CompletableDeferred<Unit>()
+    val resolved = CompletableDeferred<Unit>()
+    val older = async {
+      executor.submit(prepare = {
+        resolving.complete(Unit)
+        resolved.await()
+        assertThat(addKey("target")).isTrue()
+        "older"
+      }) { it }
+    }
+    resolving.await()
+    val newer = submitParkedInPrepare(preparationKey = "target")
+    newer.awaitParked()
+    newer.cancel()
+
+    resolved.complete(Unit)
+    assertThat(older.await()).isEqualTo("older")
+  }
+
+  @Test
+  fun `a replacement cancels the owner of any of its aliases`(): Unit = timeoutRunBlocking {
+    val ready = CompletableDeferred<Unit>()
+    val owner = async {
+      executor.submit(prepare = {
+        assertThat(addKey("initial target")).isTrue()
+        assertThat(addKey("resolved target")).isTrue()
+        ready.complete(Unit)
+        CompletableDeferred<Unit>().await()
+      }) { error("The replaced owner must not apply") }
+    }
+    ready.await()
+    val replacement = submitParkedInPrepare(preparationKey = "resolved target")
+    replacement.awaitParked()
+    owner.join()
+    assertThat(owner.isCancelled).isTrue()
+
+    val otherAlias = submitParkedInPrepare(preparationKey = "initial target")
+    otherAlias.awaitParked()
+    assertThat(replacement.isRunning).isTrue()
+    otherAlias.cancel()
+    replacement.release()
+    assertThat(replacement.awaitApplied()).isEqualTo(Applied.TOKEN)
+  }
+
+  @Test
+  fun `the latest target wins across an intervening unresolved submission`(): Unit = timeoutRunBlocking {
+    val first = submitParkedInPrepare(preparationKey = "A")
+    first.awaitParked()
+    val resolving = CompletableDeferred<Unit>()
+    val resolved = CompletableDeferred<Unit>()
+    val other = async {
+      executor.submit(prepare = {
+        resolving.complete(Unit)
+        resolved.await()
+        assertThat(addKey("B")).isTrue()
+        "B"
+      }) { it }
+    }
+    resolving.await()
+    val latest = submitParkedInPrepare(preparationKey = "A")
+    latest.awaitParked()
+    assertThat(first.awaitWasDroppedForNewer()).isTrue()
+
+    resolved.complete(Unit)
+    assertThat(other.await()).isEqualTo("B")
+    assertThat(latest.isRunning).isTrue()
+    latest.release()
+    assertThat(latest.awaitApplied()).isEqualTo(Applied.TOKEN)
+  }
+
+  @ParameterizedTest
+  @EnumSource(Phase::class)
+  fun `a keyed no-op preserves an older preparation of another target`(emptyPhase: Phase): Unit = timeoutRunBlocking {
+    val older = submitParkedInPrepare(preparationKey = "user target")
+    older.awaitParked()
+    assertThat(executor.submit(prepare = {
+      assertThat(addKey("autoscroll target")).isTrue()
+      "prepared".takeUnless { emptyPhase == Phase.PREPARE }
+    }) { it.takeUnless { emptyPhase == Phase.ACTION } }).isNull()
+
+    assertThat(older.isRunning).isTrue()
+    older.release()
+    assertThat(older.awaitApplied()).isEqualTo(Applied.TOKEN)
+  }
+
+  @Test
+  fun `a cancelled replacement leaves the executor usable for the same key`(): Unit = timeoutRunBlocking {
+    val first = submitParkedInPrepare(preparationKey = "target")
+    first.awaitParked()
+    val second = submitParkedInPrepare(preparationKey = "target")
+    second.awaitParked()
+    assertThat(first.awaitWasDroppedForNewer()).isTrue()
+    // The first owner's cleanup must preserve the second owner's entry.
+    val third = submitParkedInPrepare(preparationKey = "target")
+    third.awaitParked()
+    assertThat(second.awaitWasDroppedForNewer()).isTrue()
+    third.cancel()
+
+    assertThat(executor.submit(prepare = {
+      assertThat(addKey("target")).isTrue()
+      42
+    }) { it }).isEqualTo(42)
+  }
+
+  @Test
+  @Timeout(30)
+  fun `a newer submission of the same target drops one which waits for its turn`(): Unit = timeoutRunBlocking {
+    val stuck = submitStuckInApply()
+    try {
+      stuck.awaitParked()
+      val waiting = submitPreparedFor("target")
+      waiting.awaitParked()
+      val newest = submitPreparedFor("target")
+      newest.awaitParked()
+
+      // the queue behind a stuck apply must not grow by one submission per request of the same target
+      waitUntil("a newer submission of the same target must drop the queued one", QUEUE_TIMEOUT) { !waiting.isRunning }
+      assertThat(waiting.awaitWasDroppedForNewer()).isTrue()
+      assertThat(waiting.actionCalls.get()).isEqualTo(0)
+      assertThat(newest.isRunning).isTrue()
+
+      stuck.release()
+      assertThat(newest.awaitApplied()).isEqualTo(Applied.TOKEN)
+    }
+    finally {
+      stuck.release()
+    }
+  }
+
+  @Test
+  @Timeout(30)
+  fun `a submission which lost the turn does not wait for a stuck apply`(): Unit = timeoutRunBlocking {
+    val stuck = submitStuckInApply()
+    try {
+      stuck.awaitParked()
+      val superseded = submitPreparedFor("second target")
+      superseded.awaitParked()
+      val newest = submitPreparedFor("third target")
+      newest.awaitParked()
+
+      waitUntil("a submission which cannot apply must not wait for the stuck one", QUEUE_TIMEOUT) { !superseded.isRunning }
+      assertThat(superseded.awaitWasDroppedForNewer()).isTrue()
+      assertThat(superseded.actionCalls.get()).isEqualTo(0)
+
+      stuck.release()
+      assertThat(newest.awaitApplied()).isEqualTo(Applied.TOKEN)
+    }
+    finally {
+      stuck.release()
+    }
+  }
+
+  @Test
   @Timeout(30)
   fun `an apply which produced nothing allows an older active preparation to still apply`(): Unit = timeoutRunBlocking {
     val older = submitParkedInPrepare()
@@ -121,6 +343,7 @@ class TwoPhaseOverflowExecutorTest {
     val failure = object : Throwable() {}
     val thrown = assertThrows<Throwable> {
       executor.submit(prepare = {
+        assertThat(addKey("target")).isTrue()
         if (failingPhase == Phase.PREPARE) throw failure
         "prepared"
       }) {
@@ -130,7 +353,10 @@ class TwoPhaseOverflowExecutorTest {
     }
     assertSame(failure, thrown)
 
-    assertThat(executor.submit(prepare = { "next" }) { it }).isEqualTo("next")
+    assertThat(executor.submit(prepare = {
+      assertThat(addKey("target")).isTrue()
+      "next"
+    }) { it }).isEqualTo("next")
   }
 
   @Test
@@ -140,7 +366,10 @@ class TwoPhaseOverflowExecutorTest {
     cancelled.awaitParked()
     cancelled.cancel()
 
-    assertThat(executor.submit(prepare = { "next" }) { it }).isEqualTo("next")
+    assertThat(executor.submit(prepare = {
+      assertThat(addKey("target")).isTrue()
+      "next"
+    }) { it }).isEqualTo("next")
   }
 
   @Test
@@ -157,12 +386,15 @@ class TwoPhaseOverflowExecutorTest {
    * Parks inside its `prepare`, so the executor sees it
    * as a preparation which an apply may or may not drop
    */
-  private fun CoroutineScope.submitParkedInPrepare(): ParkedTask {
+  private fun CoroutineScope.submitParkedInPrepare(preparationKey: Any? = null): ParkedTask {
     val parked = CompletableDeferred<Unit>()
     val release = CompletableDeferred<Unit>()
     val actionCalls = AtomicInteger()
     val result = async {
       executor.submit(prepare = {
+        if (preparationKey != null && !addKey(preparationKey)) {
+          return@submit null
+        }
         parked.complete(Unit)
         release.await()
         Applied.TOKEN
@@ -190,6 +422,48 @@ class TwoPhaseOverflowExecutorTest {
       }
     }
     return ParkedTask(result, parked, release, actionCalls)
+  }
+
+  /**
+   * Starts a task which holds the turn and then holds the apply phase even after a cancellation,
+   * which is how a slow editor opening keeps the apply phase busy
+   */
+  private fun CoroutineScope.submitStuckInApply(): ParkedTask {
+    val parked = CompletableDeferred<Unit>()
+    val release = CompletableDeferred<Unit>()
+    val actionCalls = AtomicInteger()
+    val result = async {
+      executor.submit(prepare = { Applied.TOKEN }) {
+        actionCalls.incrementAndGet()
+        withContext(NonCancellable) {
+          parked.complete(Unit)
+          release.await()
+          it
+        }
+      }
+    }
+    return ParkedTask(result, parked, release, actionCalls)
+  }
+
+  /**
+   * Claims [preparationKey], finishes its prepare, and then waits for its turn to apply
+   */
+  private fun CoroutineScope.submitPreparedFor(preparationKey: Any): ParkedTask {
+    val prepared = CompletableDeferred<Unit>()
+    val actionCalls = AtomicInteger()
+    val result = async {
+      executor.submit(prepare = {
+        if (!addKey(preparationKey)) {
+          return@submit null
+        }
+        prepared.complete(Unit)
+        Applied.TOKEN
+      }) {
+        actionCalls.incrementAndGet()
+        it
+      }
+    }
+    return ParkedTask(result, prepared, CompletableDeferred(), actionCalls)
   }
 
   /**
@@ -276,6 +550,6 @@ class TwoPhaseOverflowExecutorTest {
 
   companion object {
     private const val REQUESTS_COUNT: Int = 200
+    private val QUEUE_TIMEOUT: Duration = 10.seconds
   }
 }
-

@@ -50,7 +50,15 @@ internal class NavigationRequestsImpl : NavigationRequests {
       null
     }
 
-    return SharedSourceNavigationRequest(file, context, offsetMarker, elementRangeMarker)
+    return SharedSourceNavigationRequest(
+      file = file,
+      context = context,
+      offsetMarker = offsetMarker,
+      elementRangeMarker = elementRangeMarker,
+      initialOffset = offset.takeIf { it >= 0 },
+      initialFileStamp = file.modificationStamp,
+      initialDocumentStamp = FileDocumentManager.getInstance().getCachedDocument(file)?.modificationStamp,
+    )
   }
 
   override fun directoryNavigationRequest(directory: PsiDirectory): NavigationRequest? {

@@ -1,10 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.navigation.impl
 
-import com.intellij.codeInsight.multiverse.CodeInsightContext
-import com.intellij.codeWithMe.ClientId
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.projectView.impl.nodes.BasePsiNode
 import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.openapi.application.EDT
@@ -14,7 +11,6 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -38,7 +34,6 @@ import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.INativeFileType
 import com.intellij.openapi.fileTypes.UnknownFileType
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findPsiFile
@@ -46,7 +41,6 @@ import com.intellij.openapi.wm.StatusBar
 import com.intellij.platform.backend.navigation.NavigationRequest
 import com.intellij.platform.backend.navigation.impl.DirectoryNavigationRequest
 import com.intellij.platform.backend.navigation.impl.RawNavigationRequest
-import com.intellij.platform.backend.navigation.impl.SharedSourceNavigationRequest
 import com.intellij.platform.backend.navigation.impl.SourceNavigationRequest
 import com.intellij.platform.ide.navigation.CaretPlacement
 import com.intellij.platform.ide.navigation.NavigationOptions
@@ -61,8 +55,6 @@ import com.intellij.platform.util.progress.reportSequentialProgress
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.SmartPointerManager
-import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.sequenceOfNotNull
 import kotlinx.coroutines.CancellationException
@@ -88,12 +80,12 @@ internal class IdeNavigationService(private val project: Project) : NavigationSe
 
   override suspend fun navigate(options: NavigationOptions, supplier: suspend () -> Collection<Navigatable>): Boolean {
     return doExclusively(options) {
-      withContext(Dispatchers.Default) { supplier() }.toNavigationRequests()
+      withContext(Dispatchers.Default) { supplier() }.toNavigationRequests(this, options)
     }
   }
 
   override suspend fun navigate(navigatables: List<Navigatable>, options: NavigationOptions): Boolean {
-    return navigatables.isNotEmpty() && doExclusively(options) { navigatables.toNavigationRequests() }
+    return navigatables.isNotEmpty() && doExclusively(options) { navigatables.toNavigationRequests(this, options) }
   }
 
   override suspend fun navigate(request: NavigationRequest, options: NavigationOptions): Boolean {
@@ -104,7 +96,13 @@ internal class IdeNavigationService(private val project: Project) : NavigationSe
     return requests.isNotEmpty() && doExclusively(options) { requests }
   }
 
-  private suspend fun Collection<Navigatable>.toNavigationRequests(): List<NavigationRequest> {
+  private suspend fun Collection<Navigatable>.toNavigationRequests(
+    preparation: TwoPhaseOverflowExecutor.Preparation,
+    options: NavigationOptions,
+  ): List<NavigationRequest> {
+    if (!preparation.registerTargetKey(singleOrNull(), options)) {
+      return emptyList()
+    }
     return mapWithProgress { navigatable ->
       // Progress needed if we want to navigate in ProjectView and keep "Decompiling file <N>..."
       // Keep reporter outside the RA to survive restarts
@@ -123,7 +121,7 @@ internal class IdeNavigationService(private val project: Project) : NavigationSe
    */
   private suspend inline fun doExclusively(
     options: NavigationOptions,
-    crossinline action: suspend () -> Collection<NavigationRequest>,
+    crossinline action: suspend TwoPhaseOverflowExecutor.Preparation.() -> Collection<NavigationRequest>,
   ): Boolean {
     if (isInNavigation.get()) {
       LOG.error("Navigation is already running: use `NavigationRequest` instead of starting a navigation from `navigate()`")
@@ -134,6 +132,7 @@ internal class IdeNavigationService(private val project: Project) : NavigationSe
       withContext(isInNavigation.asContextElement(true)) {
         twoPhaseExecutor.submit(
           prepare = {
+            val currentPreparation = this
             prepareWithProgressIfNeeded(options) {
               // keep the visible progress as one task
               reportSequentialProgress { reporter ->
@@ -141,6 +140,9 @@ internal class IdeNavigationService(private val project: Project) : NavigationSe
                   limitRequestsToNavigate(action())
                 }.takeIf { it.isNotEmpty() }
                 requests?.let {
+                  if (!currentPreparation.registerTargetKey(it, options)) {
+                    return@reportSequentialProgress null
+                  }
                   it to reporter.indeterminateStep {
                     preloadTargetDocuments(it)
                   }

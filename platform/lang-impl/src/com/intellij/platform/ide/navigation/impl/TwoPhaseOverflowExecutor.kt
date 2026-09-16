@@ -2,9 +2,11 @@
 package com.intellij.platform.ide.navigation.impl
 
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.job
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -12,6 +14,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
 
 /**
  * Helper logic to separate states of "Prepare" and "Compute" steps.
@@ -20,6 +23,10 @@ import java.util.concurrent.atomic.AtomicInteger
  * A task enters the race only once its `prepare` produced something to apply: one which prepared nothing is no-op.
  * Among the tasks which do have something to apply, the one submitted last wins.
  * If task took a turn and then failed to apply anything, turn is given to the one of older on the state of `prepare`.
+ * A task which lost the turn stops at once, so a slow apply does not collect a queue of tasks which cannot win.
+ *
+ * A preparation can register its target with [Preparation.addKey].
+ * The newest submission for the same target cancels the older one immediately, even if that one already waits for its turn.
  *
  * NB: used as a temporary step before clean async editor open separation, so that there is only `one` critical section
  * on `EDT`.
@@ -30,101 +37,153 @@ class TwoPhaseOverflowExecutor {
 
   private val lastTaskId: AtomicInteger = AtomicInteger()
   /**
-   * The task which is currently inside its "apply" phase
+   * The task which is currently inside its "apply" phase, waits for it or has already left it.
+   * Only the task which holds the turn is allowed to apply.
    */
-  @Volatile
-  private var activeTask: RunningTask? = null
+  private val activeTask: AtomicReference<RunningTask> = AtomicReference(NO_TASK)
 
   /**
    * Tasks which are still at "prepare" phase.
-   * A task which missed the cancellation loses the race later on [latestPreparedId] anyway.
    */
-  private val preparingTasks: ConcurrentMap<Int, Job> = ConcurrentHashMap()
+  private val preparingTasks: ConcurrentMap<Int, Preparation> = ConcurrentHashMap()
 
   /**
-   * The highest id which has something to apply. Only the submission holding it is allowed to apply.
+   * Target keys owned by running preparations.
    */
-  private val latestPreparedId: AtomicInteger = AtomicInteger()
+  private val keyOwners = ArrayList<KeyOwner>()
 
   /**
    * Runs [prepare] concurrently with the currently applied task, then applies its result as the latest task.
-   * `null` in [prepare] means there is nothing to invoke at all, `null` in [action] means it applied nothing:
-   * both give the turn back instead of taking it away from an older task.
+   * Claim the target key with [Preparation.addKey] as the preparation resolves it.
+   *
+   * @return the result of [action], or `null` if either phase produces nothing or a newer submission holds the turn.
+   * A preparation which stops because a newer submission owns its key also returns `null`.
+   * A submission which applies nothing preserves preparations for other targets.
    */
-  suspend fun <T : Any, R : Any> submit(prepare: suspend () -> T?, action: suspend (T) -> R?): R? = coroutineScope {
+  suspend fun <T : Any, R : Any> submit(prepare: suspend Preparation.() -> T?, action: suspend (T) -> R?): R? = coroutineScope {
     val id = lastTaskId.incrementAndGet()
-    val prepared = try {
-      preparingTasks[id] = currentCoroutineContext().job
-      prepare()
-    }
-    finally {
-      preparingTasks.remove(id)
-    }
-
-    if (prepared == null) {
-      return@coroutineScope null
-    }
-    val supersededId = tryClaimTurnIfNewest(id) ?: return@coroutineScope null
-    val applying = activeTask
-    if (applying != null && applying.id < id) {
-      applying.job.cancel("Superseded by a newer submission")
-    }
-
-    var applied = false
+    val preparation = Preparation(id, currentCoroutineContext().job)
     try {
-      val result = doExclusively(id, prepared, action)
-      applied = result != null
-      result
+      val prepared = try {
+        preparingTasks[id] = preparation
+        preparation.prepare()
+      }
+      finally {
+        preparingTasks.remove(id)
+      }
+
+      ensureActive()
+      if (prepared == null) {
+        return@coroutineScope null
+      }
+      val turn = RunningTask(id, currentCoroutineContext().job)
+      val replaced = tryClaimTurnIfNewest(turn) ?: return@coroutineScope null
+      // the replaced task cannot win anymore, and it must not wait behind a slow 'apply' phase
+      replaced.job.cancel("Superseded by a newer submission")
+
+      var applied = false
+      try {
+        val result = doExclusively(turn, prepared, action)
+        applied = result != null
+        result
+      }
+      finally {
+        if (applied) {
+          dropOlderPreparations(id)
+        }
+        else {
+          // the turn was taken but nothing was applied: give it back, so that an older submission can still win with its own result
+          activeTask.compareAndSet(turn, replaced)
+        }
+      }
     }
     finally {
-      if (applied) {
-        dropOlderPreparations(id)
-      }
-      else {
-        // the turn was taken but nothing was applied: give it back, so that an older submission can still win with its own result
-        latestPreparedId.compareAndSet(id, supersededId)
-      }
+      preparation.releaseKeys()
     }
   }
 
   /**
-   * @return the id which was holding the turn before, or `null` if a newer submission already holds it
+   * @return the task which was holding the turn before, or `null` if a newer submission already holds it
    */
-  private fun tryClaimTurnIfNewest(id: Int): Int? {
+  private fun tryClaimTurnIfNewest(turn: RunningTask): RunningTask? {
     while (true) {
-      val claimedId = latestPreparedId.get()
-      if (claimedId > id) {
+      val holder = activeTask.get()
+      if (holder.id > turn.id) {
         return null
       }
-      if (latestPreparedId.compareAndSet(claimedId, id)) {
-        return claimedId
+      if (activeTask.compareAndSet(holder, turn)) {
+        return holder
       }
     }
   }
 
   private fun dropOlderPreparations(id: Int) {
-    for ((preparingId, job) in preparingTasks) {
+    for ((preparingId, task) in preparingTasks) {
       if (preparingId < id) {
-        job.cancel("Superseded by a newer submission")
+        task.job.cancel("Superseded by a newer submission")
       }
     }
   }
 
-  private suspend fun <T : Any, R : Any> doExclusively(id: Int, prepared: T, action: suspend (T) -> R?): R? {
+  private suspend fun <T : Any, R : Any> doExclusively(turn: RunningTask, prepared: T, action: suspend (T) -> R?): R? {
+    if (activeTask.get().id != turn.id) {
+      // a later submission got something to apply, so there is no reason to wait for the lock
+      return null
+    }
     return applyMutex.withLock {
-      if (latestPreparedId.get() != id) {
+      if (activeTask.get().id != turn.id) {
         // a later submission got something to apply while this one was waiting for the lock
         return@withLock null
       }
-      activeTask = RunningTask(id, currentCoroutineContext().job)
-      try {
-        action(prepared)
-      }
-      finally {
-        activeTask = null
-      }
+      action(prepared)
     }
   }
 
   private class RunningTask(@JvmField val id: Int, @JvmField val job: Job)
+  private class KeyOwner(val key: Any, val preparation: Preparation)
+
+  private companion object {
+    /**
+     * Turn which nobody holds: older than any submission, and it has nothing to cancel.
+     */
+    private val NO_TASK: RunningTask = RunningTask(id = 0, job = NonCancellable)
+  }
+
+  /**
+   * Each task's key remains claimed until the whole submission finishes, so a newer submission of the same target
+   * also cancels one which already waits for its turn.
+   */
+  inner class Preparation internal constructor(private val id: Int, internal val job: Job) {
+
+    /**
+     * Puts [key] as the target of this preparation.
+     * If successful, cancels the older preparation of the same target.
+     * Repeated claims by this preparation succeed without cancellation.
+     *
+     * @return `false` when a newer submission owns the key. The caller must stop preparing in this case.
+     */
+    fun addKey(key: Any): Boolean {
+      job.ensureActive()
+      val previous = synchronized(keyOwners) {
+        val index = keyOwners.indexOfFirst { it.key == key }
+        if (index < 0) {
+          keyOwners.add(KeyOwner(key, this))
+          return true
+        }
+        val owner = keyOwners[index].preparation
+        if (owner === this) return true
+        if (owner.id > id) return false
+        keyOwners[index] = KeyOwner(key, this)
+        owner
+      }
+      previous.job.cancel("Superseded by a newer preparation of the same target")
+      return true
+    }
+
+    internal fun releaseKeys() {
+      synchronized(keyOwners) {
+        keyOwners.removeAll { it.preparation === this }
+      }
+    }
+  }
 }
