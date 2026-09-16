@@ -6,10 +6,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.impl.local.windows.WindowsBufferedDirectoryStream;
 import com.intellij.platform.core.nio.fs.BasicFileAttributesHolder2.FetchAttributesFilter;
 import com.intellij.platform.eel.EelOsFamily;
-import com.intellij.platform.eel.provider.EelProviderUtil;
-import com.intellij.platform.eel.provider.LocalEelMachine;
 import com.intellij.platform.eel.provider.utils.JEelUtils;
-import com.intellij.util.system.OS;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,8 +32,8 @@ public final class PlatformNioHelper {
 
     @SuppressWarnings("unchecked")
     public V get() throws IOException {
-      if (value instanceof RuntimeException) throw (RuntimeException)value;
-      if (value instanceof IOException) throw (IOException)value;
+      if (value instanceof RuntimeException re) throw re;
+      if (value instanceof IOException ioe) throw ioe;
       return (V)value;
     }
   }
@@ -64,11 +61,10 @@ public final class PlatformNioHelper {
     if (filter != null && filter.isEmpty()) return;  // nothing to read
 
     if (useWindowsBufferedDirectoryStream(directory)) {
-      try (final var dirStream = new WindowsBufferedDirectoryStream(directory)) {
-        for (final var pathAttrs : dirStream) {
-          final var path = pathAttrs.getFirst();
-          final var attrs = pathAttrs.getSecond();
-
+      try (var dirStream = new WindowsBufferedDirectoryStream(directory)) {
+        for (var pathAttrs : dirStream) {
+          var path = pathAttrs.getFirst();
+          var attrs = pathAttrs.getSecond();
           if (!consumer.test(path, new Result<>(attrs))) {
             break;
           }
