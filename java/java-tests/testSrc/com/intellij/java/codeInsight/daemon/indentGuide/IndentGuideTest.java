@@ -4,6 +4,7 @@ package com.intellij.java.codeInsight.daemon.indentGuide;
 import com.intellij.codeInsight.daemon.impl.indentGuide.IndentGuidePass;
 import com.intellij.codeInsight.daemon.impl.indentGuide.IndentGuidePassFilter;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.IndentGuideDescriptor;
 import com.intellij.openapi.editor.IndentsModel;
@@ -11,6 +12,7 @@ import com.intellij.openapi.editor.impl.IndentsModelImpl;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
@@ -25,6 +27,11 @@ public class IndentGuideTest extends BaseIndentGuideTest {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+  }
+
+  @Override
+  protected boolean runInDispatchThread() {
+    return !getName().endsWith("_Async");
   }
 
   public void testIndentGuidesWhichCrossCommentedCodeBetweenCommentMarkAndCommentText() {
@@ -203,7 +210,7 @@ public class IndentGuideTest extends BaseIndentGuideTest {
     }
   }
 
-  public void testIndexNotReadyDuringCollectDoesNotThrowOnApply() {
+  public void testIndexNotReadyDuringCollectDoesNotThrowOnApply_Async() {
     myFixture.configureByText(getTestName(false) + ".java", """
       class C {
         void m() {
@@ -233,14 +240,14 @@ public class IndentGuideTest extends BaseIndentGuideTest {
 
     boolean indexNotReadyThrown = false;
     try {
-      pass.doCollectInformation(new EmptyProgressIndicator());
+      ReadAction.run(() -> pass.doCollectInformation(new EmptyProgressIndicator()));
     }
     catch (IndexNotReadyException ignored) {
       indexNotReadyThrown = true;
     }
     assertTrue("collect should fail with IndexNotReadyException to emulate daemon behavior", indexNotReadyThrown);
 
-    pass.doApplyInformationToEditor();
+    EdtTestUtil.runInEdtAndWait(() -> pass.doApplyInformationToEditor());
 
     IndentsModelImpl model = (IndentsModelImpl)myFixture.getEditor().getIndentsModel();
     assertTrue("indents model should stay empty when collect fails with IndexNotReadyException", model.getIndents().isEmpty());

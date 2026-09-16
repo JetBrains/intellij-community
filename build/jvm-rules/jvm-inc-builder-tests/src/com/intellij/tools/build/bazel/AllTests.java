@@ -3,6 +3,7 @@ package com.intellij.tools.build.bazel;
 import com.google.devtools.build.runfiles.Runfiles;
 import com.intellij.tools.build.bazel.impl.BazelIncBuildTest;
 import com.intellij.tools.build.bazel.tmh.TMHAssertionGenerator2Test;
+import com.intellij.tools.build.bazel.tmh.TMHInstrumenterTest;
 import org.junit.BeforeClass;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
@@ -25,7 +26,8 @@ import static org.junit.Assert.fail;
   WarningLevelTests.class,
   BuildContextKotlinOptionsTest.class,
   BuildContextJavaOptionsTest.class,
-  TMHAssertionGenerator2Test.class
+  TMHAssertionGenerator2Test.class,
+  TMHInstrumenterTest.class
 })
 public class AllTests {
 

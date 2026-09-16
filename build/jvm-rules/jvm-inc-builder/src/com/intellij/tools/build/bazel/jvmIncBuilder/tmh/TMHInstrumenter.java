@@ -4,7 +4,9 @@ package com.intellij.tools.build.bazel.jvmIncBuilder.tmh;
 import com.intellij.tools.build.bazel.jvmIncBuilder.instrumentation.FailSafeMethodVisitor;
 import org.jetbrains.org.objectweb.asm.*;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -48,7 +50,8 @@ public final class TMHInstrumenter {
           for (TMHAssertionGenerator assertionGenerator : assertionGenerators) {
             if (assertionGenerator.isMyAnnotation(annotationDescriptor) && assertionGenerator.isApplicableMethod(methodDescriptor)) {
               return assertionGenerator.getAnnotationChecker(Opcodes.API_VERSION, () -> {
-                annotatedMethods.put(methodKey, new InstrumentationInfo(assertionGenerator));
+                annotatedMethods.computeIfAbsent(methodKey, k -> new InstrumentationInfo())
+                  .assertionGenerators.add(assertionGenerator);
                 annotated = true;
               });
             }
@@ -85,7 +88,9 @@ public final class TMHInstrumenter {
       return new FailSafeMethodVisitor(Opcodes.API_VERSION, super.visitMethod(access, name, descriptor, signature, exceptions)) {
         @Override
         public void visitCode() {
-          instrumentationInfo.assertionGenerator.generateAssertion(mv, instrumentationInfo.methodStartLineNumber);
+          for (TMHAssertionGenerator generator : instrumentationInfo.assertionGenerators) {
+            generator.generateAssertion(mv, instrumentationInfo.methodStartLineNumber);
+          }
           super.visitCode();
         }
       };
@@ -117,9 +122,7 @@ public final class TMHInstrumenter {
   }
 
   private static final class InstrumentationInfo {
-    final TMHAssertionGenerator assertionGenerator;
+    final List<TMHAssertionGenerator> assertionGenerators = new ArrayList<>();
     int methodStartLineNumber = -1;
-
-    private InstrumentationInfo(TMHAssertionGenerator generator) {assertionGenerator = generator;}
   }
 }

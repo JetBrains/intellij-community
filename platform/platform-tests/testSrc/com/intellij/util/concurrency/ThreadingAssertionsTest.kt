@@ -19,7 +19,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.EnumSource
 import kotlin.coroutines.Continuation
@@ -51,6 +50,18 @@ internal class ThreadingAssertionsTest {
   fun kotlinThreadingAnnotation(annotation: ThreadingAnnotation): Unit = timeoutRunBlocking {
     inInvalidContext(annotation) {
       assertLoggedError(annotation, annotation.kotlinCall)
+    }
+  }
+
+  @Test
+  fun doubleThreadingAnnotation(): Unit = timeoutRunBlocking {
+    val edtAnnotation = ThreadingAnnotation.EDT
+    val backgroundAnnotation = ThreadingAnnotation.BACKGROUND_THREAD
+    inInvalidContext(edtAnnotation) {
+      assertLoggedError(edtAnnotation, KotlinThreadingAnnotationChecks::severalAnnotations)
+    }
+    inInvalidContext(backgroundAnnotation) {
+      assertLoggedError(backgroundAnnotation, KotlinThreadingAnnotationChecks::severalAnnotations)
     }
   }
 
@@ -275,6 +286,12 @@ private object KotlinThreadingAnnotationChecks {
 
   @RequiresReadLockAbsence
   fun readLockAbsence(): Boolean = true
+
+  // These two annotation together don't make sense
+  // But it is useful to test that both of them are instrumented
+  @RequiresEdt
+  @RequiresBackgroundThread
+  fun severalAnnotations(): Boolean = true
 }
 
 private object KotlinSuspendThreadingAnnotationChecks {
