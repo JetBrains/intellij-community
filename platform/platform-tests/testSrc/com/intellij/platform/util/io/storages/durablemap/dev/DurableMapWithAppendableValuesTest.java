@@ -2,18 +2,17 @@
 package com.intellij.platform.util.io.storages.durablemap.dev;
 
 import com.intellij.platform.util.io.storages.CommonKeyDescriptors;
+import com.intellij.platform.util.io.storages.KeyValueStoreScenarios.StringKeyScenarios;
 import com.intellij.platform.util.io.storages.StorageFactory;
 import com.intellij.platform.util.io.storages.appendonlylog.dev.ChunkedAppendOnlyLogOverMMappedFile;
 import com.intellij.platform.util.io.storages.durablemap.DurableMapTestBase;
+import com.intellij.platform.util.io.storages.durablemap.DurableMapScenarios.BasicScenarios;
+import com.intellij.platform.util.io.storages.durablemap.DurableMapScenarios.LookupCorruptionRecoveryScenarios;
 import com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleHashMap;
 import com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleMapFactory;
 import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorageFactory;
 import org.jetbrains.annotations.NotNull;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.io.TempDir;
 
-import java.io.IOException;
-import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -21,8 +20,12 @@ import java.util.function.IntFunction;
 
 import static com.intellij.platform.util.io.storages.CommonKeyDescriptors.stringAsUTF8;
 
+@SuppressWarnings("JUnitTestCaseWithNoTests")
 public class DurableMapWithAppendableValuesTest
-  extends DurableMapTestBase<String, Set<Integer>, DurableMapWithAppendableValues<String, Integer>> {
+  extends DurableMapTestBase<String, Set<Integer>, DurableMapWithAppendableValues<String, Integer>>
+  implements BasicScenarios<String, Set<Integer>, DurableMapWithAppendableValues<String, Integer>>,
+             StringKeyScenarios<Set<Integer>, DurableMapWithAppendableValues<String, Integer>>,
+             LookupCorruptionRecoveryScenarios<String, Set<Integer>, DurableMapWithAppendableValues<String, Integer>> {
 
   public static final @NotNull IntFunction<Map.Entry<String, Set<Integer>>> SUBSTRATE_DECODER = substrate -> {
     String key = String.valueOf(substrate);
@@ -60,25 +63,5 @@ public class DurableMapWithAppendableValuesTest
   @Override
   protected boolean isAppendOnly() {
     return false;
-  }
-
-
-
-  @Override
-  @Disabled("Compaction is not implemented yet for this implementation")
-  public void compactionReturnsMapWithSameMapping_afterManyDifferentMappingsPut(@TempDir Path tempDir) throws Exception {
-    super.compactionReturnsMapWithSameMapping_afterManyDifferentMappingsPut(tempDir);
-  }
-
-  @Override
-  @Disabled("Compaction is not implemented yet for this implementation")
-  public void compactionReturnsMapWithLastMapping_afterManyManyValuesWereOverwritten(@TempDir Path tempDir) throws Exception {
-    super.compactionReturnsMapWithLastMapping_afterManyManyValuesWereOverwritten(tempDir);
-  }
-
-  @Override
-  @Disabled("Recovery is not yet implemented for this implementation")
-  public void mapContent_WithManyMappingsAddedAndRemoved_CouldBeRestored_ifHashToIdMapping_IsLost() throws IOException {
-    super.mapContent_WithManyMappingsAddedAndRemoved_CouldBeRestored_ifHashToIdMapping_IsLost();
   }
 }
