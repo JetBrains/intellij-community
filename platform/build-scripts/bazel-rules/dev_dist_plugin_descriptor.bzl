@@ -18,7 +18,6 @@ that both caches keep is the property ADR 0006 asks for.
 
 load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
 load("@rules_java//java:defs.bzl", "JavaInfo")
-load("@rules_kotlin//kotlin/internal:defs.bzl", _KtJvmInfo = "KtJvmInfo")
 load("//build:dev_launch_dependencies.bzl", "HOST_PLATFORMS", "platform_parts")
 
 DevDistPluginDescriptorInfo = provider(
@@ -334,9 +333,14 @@ def _descriptor_request(ctx, module_name, output):
     return args, inputs
 
 def _dev_dist_plugin_descriptor_impl(ctx):
-    module_name = ctx.attr.descriptor_module[_KtJvmInfo].module_name
+    if ctx.attr.unresolved_descriptor_modules:
+        fail("Missing selected descriptors for %s: %s. Regenerate the dev sections." % (
+            ctx.attr.main_module,
+            ctx.attr.unresolved_descriptor_modules,
+        ), attr = "unresolved_descriptor_modules")
+    module_name = ctx.attr.main_module
     if not module_name:
-        fail("%s is the plugin's main module but states no module name" % ctx.attr.descriptor_module.label, attr = "descriptor_module")
+        fail("The plugin must state its main module", attr = "main_module")
 
     # Fail closed. The flag's default states no product, and a descriptor stamped from it would carry an empty release
     # date and an empty release version. A product's set target sets the flag on the way down. A leaf built on its own
@@ -421,14 +425,11 @@ _dev_dist_plugin_descriptor = rule(
     doc = "Patches one plugin's `META-INF/plugin.xml` the way a dev-distribution assembly does.",
     implementation = _dev_dist_plugin_descriptor_impl,
     attrs = {
-        "descriptor_module": attr.label(
-            doc = """The plugin's main module - the one whose resources carry `META-INF/plugin.xml`.
-
-The same key `dev_dist_plugin_content.descriptor_module` uses, so one plugin is named by one target in both places.
-`KtJvmInfo.module_name` is what carries the name, which both compile backends set.""",
+        "main_module": attr.string(
+            doc = "The main JPS module that identifies this descriptor.",
             mandatory = True,
-            providers = [_KtJvmInfo],
         ),
+        "unresolved_descriptor_modules": attr.string_list(),
         "descriptor": attr.label(
             doc = """The plugin's own `META-INF/plugin.xml`, as the exported source file.
 
@@ -723,7 +724,7 @@ def dev_dist_plugin_descriptor(main_module, descriptor_module, descriptor, varia
 
     Args:
         main_module: the plugin's main JPS module, which names the target.
-        descriptor_module: the plugin's main module target - see the rule's own `descriptor_module`.
+        descriptor_module: The main target label, used only to resolve the descriptor's package.
         descriptor: the descriptor's path inside that module's Bazel package, normally `<resource root>/META-INF/plugin.xml`.
         variant: the layout variant, which joins the target's name and the output's directory.
         tags: extra tags. `manual` is added.
@@ -732,7 +733,7 @@ def dev_dist_plugin_descriptor(main_module, descriptor_module, descriptor, varia
     """
     _dev_dist_plugin_descriptor(
         name = dev_dist_plugin_descriptor_target_name(main_module, variant),
-        descriptor_module = descriptor_module,
+        main_module = main_module,
         descriptor = descriptor_module.rpartition(":")[0] + ":" + descriptor,
         variant = variant,
         tags = tags + ["manual"],

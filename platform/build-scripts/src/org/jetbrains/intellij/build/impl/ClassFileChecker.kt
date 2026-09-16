@@ -38,7 +38,7 @@ import kotlin.io.path.invariantSeparatorsPathString
  * <p>Example: <code>["": "1.8", "lib/idea_rt.jar": "1.3"]</code>.</p>
  */
 @ApiStatus.Internal
-suspend fun checkClassFiles(
+fun checkClassFiles(
   versionCheckConfig: Map<String, String>,
   forbiddenSubPaths: List<String>,
   forbiddenSubPathExceptions: List<String>,

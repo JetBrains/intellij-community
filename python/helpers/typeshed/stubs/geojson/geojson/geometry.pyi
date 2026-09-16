@@ -1,13 +1,13 @@
 from collections.abc import Sequence
 from decimal import Decimal
-from typing import Literal, TypeAlias
+from typing import TypeAlias
 
 from geojson.base import GeoJSON
 
 _InputCoord: TypeAlias = float | Decimal | Geometry | Sequence[_InputCoord]
 _CleanCoord: TypeAlias = float | Decimal | list[_CleanCoord]
 
-DEFAULT_PRECISION: Literal[6]
+DEFAULT_PRECISION: int
 
 class Geometry(GeoJSON):
     def __init__(

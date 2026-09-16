@@ -43,8 +43,8 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
   public Configurable @NotNull [] getConfigurables() {
     compute();
 
-    if (myChildren.length == 0 && myRootConfigurable instanceof SearchableConfigurable.Parent) {
-      return ((Parent)myRootConfigurable).getConfigurables();
+    if (myChildren.length == 0 && myRootConfigurable instanceof Parent parent) {
+      return parent.getConfigurables();
     }
     else {
       return myChildren;
@@ -72,7 +72,7 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
       myChildren = EMPTY_CONFIGURABLES;
     }
     else if (configurables.size() == 1) {
-      Configurable firstConfigurable = configurables.get(0);
+      Configurable firstConfigurable = configurables.getFirst();
       if (mergedGeneralConfigurable == null) {
         myRootConfigurable = firstConfigurable;
         myChildren = EMPTY_CONFIGURABLES;
@@ -80,7 +80,7 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
       else {
         Configurable[] mergedArray = ArrayUtil.append(mergedGeneralConfigurable.children, firstConfigurable);
         myRootConfigurable = new MergedCompositeConfigurable(getId(), getDisplayName(), null, mergedArray);
-        myChildren = firstConfigurable instanceof SearchableConfigurable.Parent ? ((Parent)firstConfigurable).getConfigurables() : EMPTY_CONFIGURABLES;
+        myChildren = firstConfigurable instanceof Parent parent ? parent.getConfigurables() : EMPTY_CONFIGURABLES;
       }
     }
     else {

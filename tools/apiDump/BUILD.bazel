@@ -21,7 +21,7 @@ jvm_library(
         "//libraries/asm-tools",
         "//libraries/kotlinx/bcv",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
-        "@lib//:kotlin-metadata",
+        "//libraries/kotlin/metadata",
     ],
 )
 
@@ -46,6 +46,7 @@ jvm_library(
         "//libraries/asm-tools:asm-tools_test_lib",
         "//libraries/kotlinx/bcv:bcv_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+        "//libraries/kotlin/metadata:metadata_test_lib",
     ],
 )
 ### auto-generated section `build intellij.tools.apiDump` end

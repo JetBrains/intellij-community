@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.jsp.base` start
+content_module_jar(module = ":jsp-base")
+### auto-generated section `dev intellij.jsp.base` end
+
 ### auto-generated section `build intellij.jsp.base` start
 jvm_library(
     name = "jsp-base",
@@ -28,8 +32,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":jsp-base")
-
 jvm_library(
     name = "jsp-base_test_lib",
     testonly = True,
@@ -56,7 +58,6 @@ exports_files(
     [
         "intellij.jsp.base.iml",
         "resources/intellij.jsp.base.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -1,7 +1,7 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
+load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_TARGETS")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
-load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "dev_dist_plugin_jar")
 
 # Checkout directories that plugin layouts copy into a distribution verbatim (`withResource*`). They are
 # resolved against the module content root and exist in no jar, so a dev assembly that materializes its own
@@ -11,6 +11,54 @@ filegroup(
     srcs = ["hotswap/gragent.jar"],
     visibility = ["//visibility:public"],
 )
+
+### auto-generated section `dev intellij.groovy` start
+dev_dist_plugin(
+    content_modules = [
+        # do not sort,
+        "intellij.libraries.hamcrest",
+        "intellij.libraries.junit4",
+        "intellij.libraries.opentest4j",
+        "intellij.groovy.git",
+        "intellij.groovy.psi",
+    ],
+    jars = {
+        "groovy-constants-rt.jar": {
+            "modules": ["intellij.groovy.constants.rt"],
+        },
+        "groovy-jps.jar": {
+            "modules": ["intellij.groovy.jps"],
+        },
+        "groovy-rt-class-loader.jar": {
+            "modules": ["intellij.groovy.rt.classLoader"],
+        },
+        "groovy-rt.jar": {
+            "modules": ["intellij.groovy.rt"],
+        },
+        "groovy-spock-rt.jar": {
+            "modules": ["intellij.groovy.spock.rt"],
+        },
+    },
+    libraries = [
+        "@lib//:eclipse",
+        "@lib//:groovy-spock-rt-spockframework-spock-core",
+        "@lib//:libraries-hamcrest-hamcrest",
+        "@lib//:libraries-junit4-_j_unit4",
+        "@lib//:libraries-opentest4j-opentest4j",
+    ],
+    main_module = "intellij.groovy",
+    module_targets = MODULE_TARGETS,
+    prepacked_content_modules = [
+        # do not sort,
+        "intellij.groovy.ant",
+        "intellij.groovy.byteCodeViewer",
+        "intellij.groovy.copyright",
+        "intellij.groovy.langInjection",
+        "intellij.groovy.spock",
+        "intellij.groovy.structuralSearch",
+    ],
+)
+### auto-generated section `dev intellij.groovy` end
 
 ### auto-generated section `build intellij.groovy` start
 jvm_library(
@@ -218,71 +266,6 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.groovy` end
-
-### auto-generated section `dev intellij.groovy` start
-dev_dist_plugin(
-    content_modules = [
-        "//libraries/hamcrest",
-        "//libraries/junit4",
-        "//libraries/opentest4j",
-        "//plugins/groovy/git",
-        "//plugins/groovy/groovy-psi:psi",
-    ],
-    descriptor_module = ":groovy",
-    libraries = [
-        "@lib//:eclipse",
-        "@lib//:groovy-spock-rt-spockframework-spock-core",
-        "@lib//:libraries-hamcrest-hamcrest",
-        "@lib//:libraries-junit4-_j_unit4",
-        "@lib//:libraries-opentest4j-opentest4j",
-    ],
-    prepacked_content_modules = [
-        "//plugins/groovy/ant:ant_content_module_jar",
-        "//plugins/groovy/byteCodeViewer:byteCodeViewer_content_module_jar",
-        "//plugins/groovy/intellij.groovy.copyright:copyright_content_module_jar",
-        "//plugins/groovy/langInjection:langInjection_content_module_jar",
-        "//plugins/groovy/spock:spock_content_module_jar",
-        "//plugins/groovy/structuralsearch-groovy:structuralSearch_content_module_jar",
-    ],
-    prepacked_layout_jars = [
-        ":groovy-constants-rt_dev_dist_plugin_jar",
-        ":groovy-jps_dev_dist_plugin_jar",
-        ":groovy-rt-class-loader_dev_dist_plugin_jar",
-        ":groovy-rt_dev_dist_plugin_jar",
-        ":groovy-spock-rt_dev_dist_plugin_jar",
-    ],
-)
-
-dev_dist_plugin_jar(
-    modules = ["//plugins/groovy/rt-constants:constants-rt"],
-    plugin_main_module = "intellij.groovy",
-    relative_output_file = "groovy-constants-rt.jar",
-)
-
-dev_dist_plugin_jar(
-    modules = ["//plugins/groovy/jps-plugin:jps"],
-    plugin_main_module = "intellij.groovy",
-    relative_output_file = "groovy-jps.jar",
-)
-
-dev_dist_plugin_jar(
-    modules = ["//plugins/groovy/rt/classLoader"],
-    plugin_main_module = "intellij.groovy",
-    relative_output_file = "groovy-rt-class-loader.jar",
-)
-
-dev_dist_plugin_jar(
-    modules = ["//plugins/groovy/rt"],
-    plugin_main_module = "intellij.groovy",
-    relative_output_file = "groovy-rt.jar",
-)
-
-dev_dist_plugin_jar(
-    modules = ["//plugins/groovy/spock-rt"],
-    plugin_main_module = "intellij.groovy",
-    relative_output_file = "groovy-spock-rt.jar",
-)
-### auto-generated section `dev intellij.groovy` end
 
 ### auto-generated section `build intellij.groovy.tests` start
 jvm_library(
@@ -492,6 +475,8 @@ jvm_library(
         "//java/java-frontback-psi-api:frontback-psi_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+        "//plugins/groovy/testFramework",
+        "//plugins/groovy/testFramework:testFramework_test_lib",
         "//plugins/groovy-scripting",
         "//plugins/groovy-scripting:groovy-scripting_test_lib",
         "//plugins/groovy-live-templates",

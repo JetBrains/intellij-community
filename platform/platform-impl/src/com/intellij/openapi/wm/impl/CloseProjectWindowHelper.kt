@@ -66,7 +66,7 @@ open class CloseProjectWindowHelper {
     return frame.rootPane.getClientProperty(WindowTabsComponent.CLOSE_TAB_KEY) == true
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   open fun windowClosing(project: Project?) {
     WriteIntentReadAction.run {
 
@@ -92,7 +92,7 @@ open class CloseProjectWindowHelper {
 
   protected open fun getNumberOfOpenedProjects(): Int = ProjectManager.getInstance().openProjects.size
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   protected open fun closeProjectAndShowWelcomeFrameIfNoProjectOpened(project: Project?) {
     if (project != null && project.isOpen && getNumberOfOpenedProjects() == 1) {
       val transitionHandler = findProjectClosingTransitionHandler(project)

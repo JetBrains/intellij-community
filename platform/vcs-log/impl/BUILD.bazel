@@ -2,6 +2,10 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.platform.vcs.log.impl` start
+content_module_jar(module = ":impl")
+### auto-generated section `dev intellij.platform.vcs.log.impl` end
+
 ### auto-generated section `build intellij.platform.vcs.log.impl` start
 jvm_library(
     name = "impl",
@@ -71,8 +75,6 @@ jvm_library(
         "//platform/util:util-ui",
     ],
 )
-
-content_module_jar(module = ":impl")
 
 jvm_library(
     name = "impl_test_lib",
@@ -152,7 +154,6 @@ exports_files(
     [
         "intellij.platform.vcs.log.impl.iml",
         "resources/intellij.platform.vcs.log.impl.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

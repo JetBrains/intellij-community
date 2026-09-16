@@ -215,20 +215,17 @@ class TerminalEmulatorOutputProjector(private val emulator: TerminalEmulator) {
       }
     }
 
-    // Cursor lives on the active screen, which begins at index newHistoryRows within `rows`.
+    // The active screen begins at index newHistoryRows within `rows`: the rows before it are the history
+    // this update finalized. The cursor lives on that screen.
     val cursor = emulator.cursor
-    var line = (newHistoryRows + cursor.row).coerceIn(0, maxOf(0, rows.size - 1))
-    var column = cursor.column
-    while (line - 1 >= 0 && rows[line - 1].wrapped) {
-      line--
-      column += rowTexts[line].text.length
-    }
-    val cursorLine = startLogical + completedLogicalLines(rows, line)
+    val cursorRow = (newHistoryRows + cursor.row).coerceIn(0, maxOf(0, rows.size - 1))
+    val (cursorLine, column) = logicalPositionOf(rows, { rowTexts[it].text }, cursorRow, cursor.column, startLogical)
+    val (screenTopLine, screenTopColumn) = logicalPositionOf(rows, { rowTexts[it].text }, newHistoryRows, 0, startLogical)
 
     // The finalized history rows move the screen top forward by their logical-line count. The mark is
     // already re-anchored above; this starts the next emit's window here. Primary screen only.
     if (!onAlternateScreen) {
-      screenTopLogical = startLogical + completedLogicalLines(rows, newHistoryRows)
+      screenTopLogical = screenTopLine
       lastScrollbackRows = curScrollbackRows
       lastEmulatorSize = emulator.size
     }
@@ -239,6 +236,8 @@ class TerminalEmulatorOutputProjector(private val emulator: TerminalEmulator) {
       startLineLogicalIndex = startLogical,
       cursorLogicalLineIndex = cursorLine,
       cursorColumnIndex = column,
+      screenTopLogicalLineIndex = screenTopLine,
+      screenTopColumnIndex = screenTopColumn,
       osc8Hyperlinks = linkRuns.map { Osc8HyperlinkDto(it.start.toLong(), it.end.toLong(), it.value) },
     )
   }
@@ -255,17 +254,42 @@ class TerminalEmulatorOutputProjector(private val emulator: TerminalEmulator) {
    */
   fun computeCursor(): Pair<Long, Int> {
     val cursor = emulator.cursor
-    var line = cursor.row.coerceIn(0, maxOf(0, emulator.size.rows - 1))
-    var column = cursor.column
-    val rowsAbove = ArrayList<TerminalRow>(line)
-    for (y in 0 until line) rowsAbove.add(emulator.screenLine(y))
-    while (line - 1 >= 0 && rowsAbove[line - 1].wrapped) {
-      line--
-      column += rowsAbove[line].toStyledText().text.length
-    }
+    val cursorRow = cursor.row.coerceIn(0, maxOf(0, emulator.size.rows - 1))
+    val rows = ArrayList<TerminalRow>(cursorRow + 1)
+    for (y in 0 until cursorRow) rows.add(emulator.screenLine(y))
+    rows.add(emulator.screenLine(cursorRow))
     // The alternate screen has no scrollback, so its logical lines start at 0
     val anchor = if (emulator.usingAlternateScreen) 0L else screenTopLogical
-    return anchor + completedLogicalLines(rowsAbove, line) to column
+    return logicalPositionOf(rows, { rows[it].toStyledText().text }, cursorRow, cursor.column, anchor)
+  }
+
+  /**
+   * The absolute logical position of the cell at [row] and [column] of [rows], where [anchor] is the
+   * logical line index of `rows[0]`.
+   *
+   * [column] is a grid column, so `rows[row]` must be present: [TerminalRow.charOffsetOfColumn] compacts it
+   * to the offset [TerminalRow.toStyledText] would give it first, dropping the padding half of any
+   * double-width cell before it — using [column] itself here would land one column too far right for every
+   * such cell.
+   *
+   * A soft-wrapped row continues the logical line above it, so this backs up to the row that starts the
+   * line and extends the column by the text of every row it passes. [textAt] supplies a row's text, so a
+   * caller can read rows lazily.
+   */
+  private fun logicalPositionOf(
+    rows: List<TerminalRow>,
+    textAt: (Int) -> String,
+    row: Int,
+    column: Int,
+    anchor: Long,
+  ): Pair<Long, Int> {
+    var line = row
+    var resolvedColumn = rows[row].charOffsetOfColumn(column)
+    while (line - 1 >= 0 && rows[line - 1].wrapped) {
+      line--
+      resolvedColumn += textAt(line).length
+    }
+    return anchor + completedLogicalLines(rows, line) to resolvedColumn
   }
 
   /** Logical lines completed by rows `[0, untilRow)`: each row that does not soft-wrap ends one. */

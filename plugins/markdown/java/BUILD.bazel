@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.markdown.java` start
+content_module_jar(module = ":java")
+### auto-generated section `dev intellij.markdown.java` end
+
 ### auto-generated section `build intellij.markdown.java` start
 jvm_library(
     name = "java",
@@ -35,8 +39,6 @@ jvm_library(
         "//platform/analysis-impl",
     ],
 )
-
-content_module_jar(module = ":java")
 
 jvm_library(
     name = "java_test_lib",

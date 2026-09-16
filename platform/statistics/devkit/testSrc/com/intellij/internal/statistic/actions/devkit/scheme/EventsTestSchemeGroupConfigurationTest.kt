@@ -41,7 +41,7 @@ class EventsTestSchemeGroupConfigurationTest : BasePlatformTestCase() {
     val validationInfo = EventsTestSchemeGroupConfiguration.validateCustomValidationRules(project, rules, null)
     assertSize(1, validationInfo)
     assertTrue("Validation info should contains incorrect eventId",
-                        validationInfo.first().message.contains(StatisticsBundle.message("stats.unable.to.parse.validation.rules")))
+               validationInfo.first().message.contains(StatisticsBundle.message("stats.unable.to.parse.validation.rules")))
   }
 
   fun testValidation() {
@@ -96,7 +96,7 @@ class EventsTestSchemeGroupConfigurationTest : BasePlatformTestCase() {
     val validationInfo = EventsTestSchemeGroupConfiguration.validateCustomValidationRules(project, rules, null)
     assertSize(1, validationInfo)
     assertTrue("Validation info should contains error",
-                        validationInfo.first().message.contains("Line 4"))
+               validationInfo.first().message.contains("Line 4"))
   }
 
   fun testValidateEventId() {
@@ -111,7 +111,44 @@ class EventsTestSchemeGroupConfigurationTest : BasePlatformTestCase() {
     val validationInfo = EventsTestSchemeGroupConfiguration.validateCustomValidationRules(project, rules, null)
     assertSize(1, validationInfo)
     assertTrue("Validation info should contains incorrect eventId",
-                        validationInfo.first().message.contains("Line 2"))
+               validationInfo.first().message.contains("Line 2"))
+  }
+
+  fun testValidateMissingEventId() {
+    val rules = """
+      {
+        "event_data": {}
+      }
+    """.trimIndent()
+    val validationInfo = EventsTestSchemeGroupConfiguration.validateCustomValidationRules(project, rules, null)
+    assertSize(1, validationInfo)
+    assertTrue(validationInfo.first().message.contains("event_id"))
+  }
+
+  fun testValidateEventDataRuleType() {
+    val rules = """
+      {
+        "event_id": ["testEvent"],
+        "event_data": {
+          "data": [1]
+        }
+      }
+    """.trimIndent()
+    val validationInfo = EventsTestSchemeGroupConfiguration.validateCustomValidationRules(project, rules, null)
+    assertSize(1, validationInfo)
+    assertTrue(validationInfo.first().message.contains("Line 4"))
+  }
+
+  fun testValidateEventDataObject() {
+    val rules = """
+      {
+        "event_id": ["testEvent"],
+        "event_data": []
+      }
+    """.trimIndent()
+    val validationInfo = EventsTestSchemeGroupConfiguration.validateCustomValidationRules(project, rules, null)
+    assertSize(1, validationInfo)
+    assertTrue(validationInfo.first().message.contains("Line 3"))
   }
 
   fun testEventsSchemeIncludesDefaultValueRule() {

@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.execution.test.events
 
 import com.intellij.execution.executors.DefaultRunExecutor
+import com.intellij.execution.testframework.JavaAwareTestConsoleProperties
 import com.intellij.execution.testframework.JavaSMTRunnerTestTreeView
 import com.intellij.execution.testframework.sm.runner.MockRuntimeConfiguration
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties
@@ -57,11 +58,15 @@ class GradleSuiteWallTimeTest : GradleTestExecutionTestCase() {
     }
   }
 
-  private class WallTimeAwareConsoleProperties internal constructor(project: Project) :
+  private class WallTimeAwareConsoleProperties(project: Project) :
     SMTRunnerConsoleProperties(MockRuntimeConfiguration(project), "JUnit", DefaultRunExecutor.getRunExecutorInstance()),
     SMTRunnerTestTreeViewProvider {
     override fun createSMTRunnerTestTreeView(): SMTRunnerTestTreeView {
-      return JavaSMTRunnerTestTreeView(this)
+      return JavaSMTRunnerTestTreeView()
+    }
+
+    override fun getCustomizedDurationProvider(): SMTRunnerTestTreeViewProvider.CustomizedDurationProvider {
+      return JavaAwareTestConsoleProperties.createCustomizedDurationProvider(this)
     }
   }
 }

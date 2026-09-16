@@ -6,7 +6,7 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.editor.impl.DocumentImpl;
-import com.intellij.openapi.editor.impl.RangeMarkerStorageImpl;
+import com.intellij.openapi.editor.impl.RangeMarkersImpl;
 import com.intellij.util.Processor;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
@@ -64,7 +64,7 @@ public class DocumentRangeMarkerBenchmark {
   public long create50KRangeMarkers(CreateState state) {
     long[] checksum = {0L};
 
-    RangeMarkerStorageImpl.usePMarkerImplementationIn(false, () -> {
+    RangeMarkersImpl.usePMarkerImplementationIn(false, () -> {
       for (int index = 0; index < MARKER_COUNT; index++) {
         int startOffset = markerStart(index);
         RangeMarker marker = state.document.createRangeMarker(startOffset, startOffset + MARKER_LENGTH);
@@ -88,7 +88,7 @@ public class DocumentRangeMarkerBenchmark {
     int[] resolveOrder = state.resolveOrder;
     long[] checksum = {0L};
 
-    RangeMarkerStorageImpl.usePMarkerImplementationIn(false, () -> {
+    RangeMarkersImpl.usePMarkerImplementationIn(false, () -> {
       for (int index = 0; index < RESOLVE_CALLS; index++) {
         RangeMarker marker = markers[resolveOrder[index]];
         checksum[0] += (long)marker.getStartOffset() + marker.getEndOffset();
@@ -113,7 +113,7 @@ public class DocumentRangeMarkerBenchmark {
     RangeMarkerAccumulator accumulator = state.accumulator;
     accumulator.reset();
 
-    RangeMarkerStorageImpl.usePMarkerImplementationIn(false, () -> {
+    RangeMarkersImpl.usePMarkerImplementationIn(false, () -> {
       for (int index = 0; index < INTERSECTION_CALLS; index++) {
         boolean completed = document.processRangeMarkersOverlappingWith(
           queryStarts[index],
@@ -150,7 +150,7 @@ public class DocumentRangeMarkerBenchmark {
     RangeMarkerIdAccumulator accumulator = state.idAccumulator;
     accumulator.reset();
 
-    RangeMarkerStorageImpl.usePMarkerImplementationIn(false, () -> {
+    RangeMarkersImpl.usePMarkerImplementationIn(false, () -> {
       for (int index = 0; index < INTERSECTION_CALLS; index++) {
         boolean completed = document.processRangeMarkersOverlappingWith(
           queryStarts[index],
@@ -181,7 +181,7 @@ public class DocumentRangeMarkerBenchmark {
     /** A new mutable document is required for every measured marker-creation batch. */
     @Setup(Level.Invocation)
     public void setUp() {
-      RangeMarkerStorageImpl.usePMarkerImplementationIn(false, () -> {
+      RangeMarkersImpl.usePMarkerImplementationIn(false, () -> {
         document = new DocumentImpl(BENCHMARK_TEXT);
         createdMarkers = new RangeMarker[MARKER_COUNT];
       });
@@ -197,7 +197,7 @@ public class DocumentRangeMarkerBenchmark {
     /** Builds the 50,000-marker population once per fork, outside measured invocations. */
     @Setup(Level.Trial)
     public void setUp() {
-      RangeMarkerStorageImpl.usePMarkerImplementationIn(false, () -> {
+      RangeMarkersImpl.usePMarkerImplementationIn(false, () -> {
         document = new DocumentImpl(BENCHMARK_TEXT);
         markers = new RangeMarker[MARKER_COUNT];
 
@@ -226,7 +226,7 @@ public class DocumentRangeMarkerBenchmark {
     /** Builds the 50,000-marker population and deterministic query workload once per parameter value and fork. */
     @Setup(Level.Trial)
     public void setUp() {
-      RangeMarkerStorageImpl.usePMarkerImplementationIn(false, () -> {
+      RangeMarkersImpl.usePMarkerImplementationIn(false, () -> {
         document = new DocumentImpl(BENCHMARK_TEXT);
         markers = new RangeMarker[MARKER_COUNT];
         for (int index = 0; index < MARKER_COUNT; index++) {

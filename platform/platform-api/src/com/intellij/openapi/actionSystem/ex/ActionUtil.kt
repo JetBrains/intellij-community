@@ -32,6 +32,7 @@ import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.DumbUtil
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -250,22 +251,30 @@ object ActionUtil {
   @JvmStatic
   fun getUnavailableMessage(action: String, plural: Boolean): @NlsContexts.PopupContent String {
     if (plural) {
-      return IdeBundle.dumbModeMessage("popup.content.actions.not.available.while.updating.indices",
-                                       "popup.content.actions.not.available.in.light.mode", action)
+      return DumbUtil.dumbModeMessage(
+        IdeBundle.message("popup.content.actions.not.available.while.updating.indices", action),
+        IdeBundle.message("popup.content.actions.not.available.in.light.mode", action)
+      )
     }
-    return IdeBundle.dumbModeMessage("popup.content.action.not.available.while.updating.indices",
-                                     "popup.content.action.not.available.in.light.mode", action)
+    return DumbUtil.dumbModeMessage(
+      IdeBundle.message("popup.content.action.not.available.while.updating.indices", action),
+      IdeBundle.message("popup.content.action.not.available.in.light.mode", action)
+    )
   }
 
   @ApiStatus.Internal
   @JvmStatic
   fun getActionUnavailableMessage(@ActionText action: String?): @NlsContexts.PopupContent String {
     if (action == null) {
-      return IdeBundle.dumbModeMessage("popup.content.this.action.not.available.while.updating.indices",
-                                       "popup.content.this.action.not.available.in.light.mode")
+      return DumbUtil.dumbModeMessage(
+        IdeBundle.message("popup.content.this.action.not.available.while.updating.indices"),
+        IdeBundle.message("popup.content.this.action.not.available.in.light.mode")
+      )
     }
-    return IdeBundle.dumbModeMessage("popup.content.action.not.available.while.updating.indices",
-                                     "popup.content.action.not.available.in.light.mode", action)
+    return DumbUtil.dumbModeMessage(
+      IdeBundle.message("popup.content.action.not.available.while.updating.indices", action),
+      IdeBundle.message("popup.content.action.not.available.in.light.mode", action)
+    )
   }
 
   @JvmStatic
@@ -273,9 +282,13 @@ object ActionUtil {
     return when {
       actionNames.isEmpty() -> getActionUnavailableMessage(null)
       actionNames.size == 1 -> getActionUnavailableMessage(actionNames[0])
-      else -> IdeBundle.dumbModeMessage("popup.content.none.of.following.actions.are.available.while.updating.indices",
-                                        "popup.content.none.of.following.actions.are.available.in.light.mode",
-                                        actionNames.joinToString(", "))
+      else -> {
+        val actionNamesAsString = actionNames.joinToString(", ")
+        DumbUtil.dumbModeMessage(
+          IdeBundle.message("popup.content.none.of.following.actions.are.available.while.updating.indices", actionNamesAsString),
+          IdeBundle.message("popup.content.none.of.following.actions.are.available.in.light.mode", actionNamesAsString)
+        )
+      }
     }
   }
 
@@ -345,9 +358,13 @@ object ActionUtil {
       presentation.putClientProperty(WOULD_BE_VISIBLE_IF_NOT_DUMB_MODE, !allowed && presentation.isVisible)
       presentation.isEnabled = presentation.isEnabled && (allowed || !e.isFromContextMenu)
       if (!allowed) {
-        presentation.putClientProperty(TOOLTIP_TEXT, IdeBundle.dumbModeMessage("ide.action.waits.for.analysis.message",
-                                                                               "ide.action.is.not.available.in.light.mode",
-                                                                               presentation.text))
+        presentation.putClientProperty(
+          TOOLTIP_TEXT,
+          DumbUtil.dumbModeMessage(
+            IdeBundle.message("ide.action.waits.for.analysis.message", presentation.text),
+            IdeBundle.message("ide.action.is.not.available.in.light.mode", presentation.text)
+          )
+        )
       }
     }
     catch (@Suppress("IncorrectCancellationExceptionHandling") ex: SlowOperationCanceledException) {

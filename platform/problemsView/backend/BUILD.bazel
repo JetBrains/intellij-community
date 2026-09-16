@@ -11,6 +11,10 @@ jps_test(
 
 ### skip generation section `test intellij.platform.problemView.backend.tests`
 
+### auto-generated section `dev intellij.platform.problemView.backend` start
+content_module_jar(module = ":backend")
+### auto-generated section `dev intellij.platform.problemView.backend` end
+
 ### auto-generated section `build intellij.platform.problemView.backend` start
 jvm_library(
     name = "backend",
@@ -61,8 +65,6 @@ jvm_library(
         "//platform/core-impl",
     ],
 )
-
-content_module_jar(module = ":backend")
 
 jvm_library(
     name = "backend_test_lib",
@@ -117,7 +119,6 @@ exports_files(
     [
         "intellij.platform.problemView.backend.iml",
         "resources/intellij.platform.problemView.backend.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

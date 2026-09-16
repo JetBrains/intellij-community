@@ -78,8 +78,6 @@ jvm_library(
         "//platform/testFramework:testFramework_test_lib",
         "//libraries/assertj-core",
         "//libraries/assertj-core:assertj-core_test_lib",
-        "//libraries/misc/plugin",
-        "//libraries/misc/plugin:plugin_test_lib",
         "//libraries/lucene.common",
         "//libraries/lucene.common:lucene.common_test_lib",
         "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",

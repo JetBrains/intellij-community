@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.ktor.io` start
+content_module_jar(
+    libraries = ["@lib//:libraries-ktor-io-ktor-io"],
+    module = ":io",
+)
+### auto-generated section `dev intellij.libraries.ktor.io` end
+
 ### auto-generated section `build intellij.libraries.ktor.io` start
 jvm_library(
     name = "io",
@@ -20,11 +27,6 @@ jvm_library(
         "@lib//:libraries-ktor-io-ktor-io",
         "//libraries/io",
     ],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-ktor-io-ktor-io"],
-    module = ":io",
 )
 
 jvm_library(
@@ -51,7 +53,6 @@ exports_files(
     [
         "intellij.libraries.ktor.io.iml",
         "resources/intellij.libraries.ktor.io.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

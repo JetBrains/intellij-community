@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.commons.compress` start
+content_module_jar(
+    libraries = ["@lib//:libraries-commons-compress-commons-compress"],
+    module = ":compress",
+)
+### auto-generated section `dev intellij.libraries.commons.compress` end
+
 ### auto-generated section `build intellij.libraries.commons.compress` start
 jvm_library(
     name = "compress",
@@ -22,11 +29,6 @@ jvm_library(
         "//libraries/commons/codec",
         "//libraries/commons/io",
     ],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-commons-compress-commons-compress"],
-    module = ":compress",
 )
 
 jvm_library(
@@ -55,7 +57,6 @@ exports_files(
     [
         "intellij.libraries.commons.compress.iml",
         "resources/intellij.libraries.commons.compress.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

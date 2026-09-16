@@ -1,5 +1,0 @@
-- name: dist.all/lib/intellij.platform.projectModel.impl.jar
-  modules:
-  - name: intellij.platform.eel.provider
-  - name: intellij.platform.projectModel.impl
-  - name: intellij.platform.util.annotations

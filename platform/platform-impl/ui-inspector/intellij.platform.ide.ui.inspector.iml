@@ -14,7 +14,10 @@
           </stringArguments>
           <arrayArguments>
             <arrayArg name="pluginClasspaths">
-              <args>$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar</args>
+              <args>
+                <arg>$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar</arg>
+                <arg>$KOTLIN_COMPOSE_COMPILER_PLUGIN$</arg>
+              </args>
             </arrayArg>
           </arrayArguments>
         </compilerArguments>
@@ -51,5 +54,9 @@
     <orderEntry type="module" module-name="intellij.platform.execution" />
     <orderEntry type="module" module-name="intellij.platform.concurrency" />
     <orderEntry type="module" module-name="intellij.platform.frontend" />
+    <orderEntry type="module" module-name="intellij.platform.indexing" />
+    <orderEntry type="module" module-name="intellij.libraries.compose.runtime.desktop" />
+    <orderEntry type="module" module-name="intellij.libraries.compose.swing" />
+    <orderEntry type="module" module-name="intellij.platform.compose.swing" />
   </component>
 </module>

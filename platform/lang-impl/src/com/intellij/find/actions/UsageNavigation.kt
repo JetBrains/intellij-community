@@ -2,6 +2,7 @@
 package com.intellij.find.actions
 
 import com.intellij.ide.DataManager
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeIntentReadAction
@@ -11,7 +12,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.navigation.NavigationRequest
 import com.intellij.platform.ide.navigation.NavigationOptions
 import com.intellij.platform.ide.navigation.NavigationService
+import com.intellij.platform.ide.navigation.requestNavigate
 import com.intellij.platform.ide.navigation.toNavigationOptions
+import com.intellij.platform.util.progress.mapWithProgress
+import com.intellij.pom.Navigatable
 import com.intellij.usageView.UsageInfo
 import com.intellij.usages.Usage
 import com.intellij.usages.impl.UsageViewStatisticsCollector
@@ -48,20 +52,26 @@ internal class UsageNavigation(private val project: Project, private val cs: Cor
     }
   }
 
-  fun navigate(infos: List<UsageInfo>, requestFocus: Boolean) {
-    cs.launch {
-      NavigationService.getInstance(project).navigateRequests(NavigationOptions.defaultOptions().requestFocus(requestFocus)) {
+  fun navigate(usages: List<*>, requestFocus: Boolean, dataContext: DataContext?) {
+    requestNavigate(
+      project,
+      options = NavigationOptions.defaultOptions().requestFocus(requestFocus),
+      dataContext = dataContext,
+    ) {
+      usages.mapWithProgress { usage ->
         readAction {
-          infos.mapNotNull { info ->
-            val offset = info.navigationOffset
-            val project = info.project
-            val file = info.virtualFile
-                       ?: return@mapNotNull null
-            UsageViewStatisticsCollector.logUsageNavigate(project, info)
-            NavigationRequest.sourceNavigationRequest(project, file, offset)
+          when (usage) {
+            is UsageInfo -> {
+              val file = usage.virtualFile
+                         ?: return@readAction null
+              UsageViewStatisticsCollector.logUsageNavigate(usage.project, usage)
+              NavigationRequest.sourceNavigationRequest(usage.project, file, usage.navigationOffset)
+            }
+            is Navigatable -> usage.navigationRequest()
+            else -> null
           }
         }
-      }
+      }.filterNotNull()
     }
   }
 }

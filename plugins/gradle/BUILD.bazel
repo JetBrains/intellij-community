@@ -2,6 +2,10 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "resourcegroup")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.gradle` start
+content_module_jar(module = ":gradle")
+### auto-generated section `dev intellij.gradle` end
+
 ### auto-generated section `build intellij.gradle` start
 resourcegroup(
     name = "gradle_resources",
@@ -118,8 +122,6 @@ jvm_library(
         ":libraries_groovy_ant_provided",
     ],
 )
-
-content_module_jar(module = ":gradle")
 
 jvm_library(
     name = "gradle_test_lib",
@@ -461,8 +463,8 @@ jvm_library(
         "//platform/util/concurrency:concurrency_test_lib",
         "//platform/testRunner",
         "//platform/testRunner:testRunner_test_lib",
-        "//plugins/groovy:groovy-tests",
-        "//plugins/groovy:groovy-tests_test_lib",
+        "//plugins/groovy/testFramework",
+        "//plugins/groovy/testFramework:testFramework_test_lib",
         "//platform/statistics",
         "//platform/statistics:statistics_test_lib",
         "//libraries/junit5",

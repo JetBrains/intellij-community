@@ -585,7 +585,7 @@ class FileStructurePopup(
    * from the selected path. If the previous popup selection is no longer visible, the current editor selection is selected when
    * possible; otherwise [TreeUtil.ensureSelection] provides a fallback selection.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun rebuildVisibleTree(reason: RebuildReason) {
     val rebuildId = rebuildCounter.incrementAndGet()
     val rebuildStartTime = System.nanoTime()

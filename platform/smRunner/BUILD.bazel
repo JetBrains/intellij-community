@@ -11,6 +11,10 @@ jps_test(
 
 ### skip generation section `test intellij.platform.smRunner.tests`
 
+### auto-generated section `dev intellij.platform.smRunner` start
+content_module_jar(module = ":smRunner")
+### auto-generated section `dev intellij.platform.smRunner` end
+
 ### auto-generated section `build intellij.platform.smRunner` start
 jvm_library(
     name = "smRunner",
@@ -56,8 +60,6 @@ jvm_library(
         "//platform/code-style-api:codeStyle",
     ],
 )
-
-content_module_jar(module = ":smRunner")
 
 jvm_library(
     name = "smRunner_test_lib",
@@ -120,7 +122,6 @@ exports_files(
     [
         "intellij.platform.smRunner.iml",
         "resources/intellij.platform.smRunner.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )
@@ -136,6 +137,7 @@ jvm_library(
     module_name = "intellij.platform.smRunner.tests",
     visibility = ["//visibility:public"],
     exports = ["//libraries/teamcity/service-messages:libraries-teamcity-service-messages"],
+    runtime_deps = ["//xml/plugin"],
 )
 
 jvm_library(
@@ -167,6 +169,7 @@ jvm_library(
         "//platform/ide-core-impl:ide-core-impl_test_lib",
         "//platform/ide-core:ide-core_test_lib",
         "//platform/platform-util-io:ide-util-io_test_lib",
+        "//xml/plugin:plugin_test_lib",
     ],
     deps = [
         # do not sort,

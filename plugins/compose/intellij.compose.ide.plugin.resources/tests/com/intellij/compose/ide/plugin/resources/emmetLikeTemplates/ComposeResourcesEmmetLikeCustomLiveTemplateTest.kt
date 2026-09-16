@@ -1,92 +1,98 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compose.ide.plugin.resources.emmetLikeTemplates
 
-import com.intellij.compose.ide.plugin.resources.ComposeResourcesTestCase
-import com.intellij.compose.ide.plugin.resources.TARGET_GRADLE_VERSION
+import com.intellij.compose.ide.plugin.resources.ComposeResourcesCommonMainOnly
+import com.intellij.compose.ide.plugin.resources.ComposeResourcesCodeInsightTestCase
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.testFramework.EditorTestUtil.CARET_TAG
 import com.intellij.testFramework.common.timeoutRunBlocking
 import kotlinx.coroutines.Dispatchers
-import org.jetbrains.kotlin.test.TestMetadata
-import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 
-class ComposeResourcesEmmetLikeCustomLiveTemplateTest : ComposeResourcesTestCase() {
+private const val STRINGS_FILE_PATH = "composeApp/src/commonMain/composeResources/values/strings.xml"
+private const val QUALIFIED_STRINGS_FILE_PATH = "composeApp/src/commonMain/composeResources/values-ro/strings.xml"
+private const val DRAWABLE_FILE_PATH = "composeApp/src/commonMain/composeResources/drawable/compose-multiplatform.xml"
 
-  @TargetVersions(TARGET_GRADLE_VERSION)
+@ComposeResourcesCommonMainOnly
+class ComposeResourcesEmmetLikeCustomLiveTemplateTest : ComposeResourcesCodeInsightTestCase() {
+
   @Test
-  @TestMetadata("ComposeResources")
-  fun `test emmet-like template applies only in values xml files`() {
-    val files = importProjectFromTestData()
+  fun `test emmet-like template applies only in values xml files`() = testComposeResourcesProject {
     timeoutRunBlocking(context = Dispatchers.EDT) {
-      assertTabExpansion(
-        file = files.findStringsXmlFile(),
-        before = xmlWithAbbreviation("resources"),
-        after = """
-          <resources>
-              <string name="greeting">Hello</string>
-              
-          </resources>
-        """
-      )
+      try {
+        assertTabExpansion(
+          relativePath = STRINGS_FILE_PATH,
+          before = xmlWithAbbreviation("resources"),
+          after = """
+            <resources>
+                <string name="greeting">Hello</string>
+                
+            </resources>
+          """
+        )
 
-      assertTabExpansion(
-        file = files.findQualifiedStringsXmlFile(),
-        before = xmlWithAbbreviation("resources"),
-        after = """
-          <resources>
-              <string name="greeting">Hello</string>
-              
-          </resources>
-        """
-      )
+        assertTabExpansion(
+          relativePath = QUALIFIED_STRINGS_FILE_PATH,
+          before = xmlWithAbbreviation("resources"),
+          after = """
+            <resources>
+                <string name="greeting">Hello</string>
+                
+            </resources>
+          """
+        )
 
-      assertTabExpansion(
-        file = files.findComposeResourcesXmlFile(),
-        before = xmlWithAbbreviation("vector"),
-        after = """
-          <vector>
-            greeting{Hello}
-          </vector>
-        """
-      )
+        assertTabExpansion(
+          relativePath = DRAWABLE_FILE_PATH,
+          before = xmlWithAbbreviation("vector"),
+          after = """
+            <vector>
+              greeting{Hello}
+            </vector>
+          """
+        )
 
-      assertTabExpansion(
-        file = files.findQualifiedStringsXmlFile(),
-        before = """
-          <resources>
-              <string name="greeting">Hello</string>$CARET_TAG
-              
-          </resources>
-        """.trimIndent(),
-        after = """
-          <resources>
-              <string name="greeting">Hello</string>
-              
-          </resources>
-        """
-      )
-
+        assertTabExpansion(
+          relativePath = QUALIFIED_STRINGS_FILE_PATH,
+          before = """
+            <resources>
+                <string name="greeting">Hello</string>$CARET_TAG
+                
+            </resources>
+          """.trimIndent(),
+          after = """
+            <resources>
+                <string name="greeting">Hello</string>
+                
+            </resources>
+          """
+        )
+      }
+      finally {
+        revertUnsavedDocuments()
+      }
     }
   }
 
-  private fun assertTabExpansion(file: VirtualFile, before: String, after: String) {
-    codeInsightTestFixture.openFileInEditor(file)
+  private fun assertTabExpansion(relativePath: String, before: String, after: String) {
+    codeInsightFixture.configureFromExistingVirtualFile(canonicalProjectFile(relativePath))
     setEditorTextWithCaret(before)
 
     val actual = before.replace(CARET_TAG, "").trimIndent()
     val expected = after.trimIndent()
     if (actual == expected) {
       val action = ActionManager.getInstance().getAction(IdeActions.ACTION_EXPAND_LIVE_TEMPLATE_BY_TAB)
-      val presentation = codeInsightTestFixture.testAction(action)
-      assertFalse("Live template expansion action should not be available in this context", presentation.isEnabledAndVisible)
+      val presentation = codeInsightFixture.testAction(action)
+      assertFalse(presentation.isEnabledAndVisible, "Live template expansion action should not be available in this context")
     }
     else {
-      codeInsightTestFixture.performEditorAction(IdeActions.ACTION_EXPAND_LIVE_TEMPLATE_BY_TAB)
-      codeInsightTestFixture.checkResult(expected)
+      codeInsightFixture.performEditorAction(IdeActions.ACTION_EXPAND_LIVE_TEMPLATE_BY_TAB)
+      codeInsightFixture.checkResult(expected)
     }
   }
 
@@ -99,20 +105,11 @@ class ComposeResourcesEmmetLikeCustomLiveTemplateTest : ComposeResourcesTestCase
 
   private fun setEditorTextWithCaret(text: String) {
     val caretOffset = text.indexOf(CARET_TAG)
-    assertTrue("Test text should contain $CARET_TAG", caretOffset >= 0)
+    assertTrue(caretOffset >= 0, "Test text should contain $CARET_TAG")
 
-    runWriteAction {
-      codeInsightTestFixture.editor.document.setText(text.replace(CARET_TAG, ""))
-      codeInsightTestFixture.editor.caretModel.moveToOffset(caretOffset)
+    WriteCommandAction.runWriteCommandAction(project) {
+      codeInsightFixture.editor.document.setText(text.replace(CARET_TAG, ""))
+      codeInsightFixture.editor.caretModel.moveToOffset(caretOffset)
     }
   }
-
-  private fun List<VirtualFile>.findStringsXmlFile(): VirtualFile =
-    first { it.path.endsWith("composeApp/src/commonMain/composeResources/values/strings.xml") }
-
-  private fun List<VirtualFile>.findQualifiedStringsXmlFile(): VirtualFile =
-    first { it.path.endsWith("composeApp/src/commonMain/composeResources/values-ro/strings.xml") }
-
-  private fun List<VirtualFile>.findComposeResourcesXmlFile(): VirtualFile =
-    first { it.path.endsWith("composeApp/src/commonMain/composeResources/drawable/compose-multiplatform.xml") }
 }

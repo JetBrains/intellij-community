@@ -12,14 +12,17 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
+import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
+import org.jetbrains.kotlin.analysis.api.types.KaIntersectionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.abbreviationOrSelf
+import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.base.analysis.KotlinK2CodeFragmentUtils
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.buildClassTypeWithStarProjections
@@ -38,6 +41,7 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.CallableInsertionOpt
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.FunctionCallLookupObject
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.FunctionLookupElementFactory
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.KotlinFirLookupElementFactory
+import org.jetbrains.kotlin.idea.completion.impl.k2.smartCastTypeForSymbol
 import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.CallableWeigher.callableWeight
 import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.Weighers.applyWeighs
 import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.WeighingContext
@@ -67,7 +71,10 @@ internal fun createCallableLookupElements(
     } ?: return emptySequence()
 
     val shortName = namedSymbol.name
+    val expectedType = context.weighingContext.expectedType
     val symbolWithOrigin = KtSymbolWithOrigin(callableSymbol, scopeKind)
+
+    val smartCastType = getSmartCastTypeForPresentation(signature, expectedType, scopeKind)
 
     return sequence {
         KotlinFirLookupElementFactory.createCallableLookupElement(
@@ -76,6 +83,7 @@ internal fun createCallableLookupElements(
             options = options,
             expectedType = context.weighingContext.expectedType,
             aliasName = aliasName,
+            smartCastType = smartCastType,
         ).let { yield(it) }
 
         if (withTrailingLambda && signature is KaFunctionSignature<*>) {
@@ -112,6 +120,31 @@ internal fun createCallableLookupElements(
             .addRequiredTypeArgumentsIfNecessary(context.positionContext)
             .qualifyContextSensitiveResolutionIfNecessary(context.positionContext)
             .applyKindToPresentation()
+    }
+}
+
+/**
+ * The smart cast type returned by [smartCastTypeForSymbol] potentially returns an intersection type, which
+ * is not suitable to be displayed to the user.
+ * This function attempts to return the most relevant conjunct of the intersection type
+ * given the [expectedType] that needs to be matched.
+ *
+ * If the [signature]'s type is already a type matching the [expectedType], no smart cast is necessary
+ * and null will be returned.
+ */
+context(_: KaSession, context: K2CompletionSectionContext<*>)
+private fun getSmartCastTypeForPresentation(
+    signature: KaCallableSignature<*>,
+    expectedType: KaType?,
+    scopeKind: KaScopeKind?,
+): KaType? {
+    if (signature !is KaVariableSignature<*> || expectedType == null) return null
+    if (signature.returnType.isSubtypeOf(expectedType)) return null
+
+    val type = smartCastTypeForSymbol(signature.symbol, signature.returnType, scopeKind) ?: return null
+    return when (type) {
+        is KaIntersectionType -> type.conjuncts.firstOrNull { it.isSubtypeOf(expectedType) }
+        else -> type.takeIf { it.isSubtypeOf(expectedType) }
     }
 }
 

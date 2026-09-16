@@ -356,7 +356,7 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
     }
     if (target instanceof PsiDirectory && source instanceof PsiDirectory) {
       final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory)source);
-      if (aPackage != null && !MoveClassesOrPackagesImpl.checkNesting(target.getProject(), aPackage, target, false)) return true;
+      if (aPackage != null && !MoveClassesOrPackagesImpl.checkNesting(aPackage, target)) return true;
     }
     return super.isMoveRedundant(source, target);
   }

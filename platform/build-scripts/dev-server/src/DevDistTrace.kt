@@ -1,10 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("RAW_RUN_BLOCKING")
 package org.jetbrains.intellij.build.devServer
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.coroutineScope
-import org.jetbrains.intellij.build.runBlockingOnVirtualThreads
 import org.jetbrains.intellij.build.telemetry.TraceManager
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
@@ -19,18 +15,11 @@ import java.nio.file.Path
  * A trace file is a pure side output: nothing reads it while the build runs, so a producer that is not given one must
  * behave exactly as it did before it could be.
  *
- * **The rule for work done only to fill a span attribute**, since the two halves of this change look like they
- * disagree about it and do not: take it where it is dominated by adjacent work on the same bytes, gate it where it is
- * not. Every `Files.size` added here for a `byteCount` sits immediately before a whole-file copy of that same file
- * (`DevDistPackedJarsMain.collectPlatformJars`, `PrepackedPluginContentCollector`,
- * `DevBuildComponentComposer.composeDevBuildComponents`), so one `stat` cannot be measurable against it and a branch
- * would only add a way to get it wrong. The packer's equivalent *is* gated
- * (`content-module-packer/main.go`, "only when tracing") because there it is an extra syscall beside about a
- * millisecond of packing, repeated across ~2 500 actions, with no copy of those bytes to hide behind. Same rule, two
- * answers, because the surrounding work differs - not two rules.
+ * Reuse metadata needed by adjacent file operations for span attributes. Gate extra work that serves only tracing.
+ * The Go sourced collector counts source bytes during collection and inventory. The composer counts bytes beside
+ * file copies. The jar packer collects extra file statistics only when tracing is enabled.
  *
- * `DevBuildComponentManifest`'s `Files.size` is not in that category at all: it feeds the entry's content hash, so it
- * is load-bearing and would be taken with or without a span.
+ * The Kotlin manifest inventory needs file sizes for hashing, with or without tracing.
  */
 internal const val TRACE_FILE_OPTION: String = "--trace-file"
 
@@ -43,24 +32,22 @@ internal const val TRACE_FILE_OPTION: String = "--trace-file"
  * its file. That is also why the root span is opened here rather than by whatever the producer calls - a producer that
  * opened two of them would be two unrelated traces in one file.
  *
- * With a [traceFile], [withTracer] owns the exporter lifecycle: its span processor runs in a scope that is a child of
- * the `runBlocking` job, so the trace file is written, closed and complete by the time this returns, before the process
- * reports success. It also pins the exporter set to the console and the trace file - unlike `TraceManager`'s default
+ * With a [traceFile], [withTracer] owns the exporter lifecycle: it closes its span processor when the block returns,
+ * so the trace file is written, closed and complete by the time this returns, before the process reports success. It also pins the exporter set to the console and the trace file - unlike `TraceManager`'s default
  * initializer, which adds an OTLP exporter as soon as `OTLP_ENDPOINT` is set, and these actions run with no network.
  *
  * Without one, each producer keeps the tracer it had before it could write a trace file - see
  * [consoleSpansWhenNotMeasuring]. Either way no root span is opened, because a root span exists only to structure a
  * trace file and there is none to structure.
  *
- * @param consoleSpansWhenNotMeasuring `true` for a producer that already had a tracer, and so already printed a
- * console span dump, before this option existed - which is only `DevDistMain`. It then keeps `TraceManager`'s default
- * initializer. `false` installs no tracer at all: the spans are non-recording, so nothing is exported, nothing is
- * printed, and no exporter coroutine is started - which is what the three producers that never had a tracer did.
+ * @param consoleSpansWhenNotMeasuring `true` preserves `DevDistMain` console tracing through the default
+ * `TraceManager` initializer when no trace file is requested. `false` disables tracing, console spans, and the exporter
+ * thread in that case.
  *
  * What that branch preserves is *same outputs, same stdout, same exit code* - not "byte for byte what the main did
- * before". Wrapping the whole body widened `DevDistMain`'s `runBlockingOnVirtualThreads` from
- * `buildProductInProcess` to everything around it, so `materializeProjectModelTree`, the `println` and
- * `writeUnusedInputs` now run on a virtual thread rather than on the main thread. Nothing there is
+ * before". Wrapping the whole body widened the traced region of `DevDistMain` from `buildProductInProcess` to
+ * everything around it, so `materializeProjectModelTree`, the `println` and `writeUnusedInputs` now run inside the
+ * root span as well. Nothing there is
  * thread-affine, which is why it is fine; the stronger claim is not true and should not be repeated.
  *
  * The invariant is *unchanged when not measuring*, per producer, not *silent when not measuring*. Do not collapse the
@@ -77,16 +64,14 @@ internal fun runDevDistJob(
   traceFile: Path?,
   jobName: String,
   consoleSpansWhenNotMeasuring: Boolean = false,
-  block: suspend CoroutineScope.() -> Unit,
+  block: () -> Unit,
 ) {
   if (traceFile != null) {
     withTracer(serviceName = jobName, traceFile = traceFile) {
       spanBuilder(jobName).use { block() }
-      // The root span has ended by now, and this is what puts it in the file. `withTracer` closes the file by
-      // cancelling the exporter's scope, which is a shutdown path: it reports nothing, and until
-      // `BatchSpanProcessor` learned to drain its queue there it dropped whatever had not reached the current batch
-      // yet - which is exactly a span that ended last. Flushing here instead makes the file complete while the
-      // processor is still running, before the process reports success, and leaves the cancellation nothing to do.
+      // The root span has ended by now, and this is what puts it in the file. `withTracer` closes the file through the
+      // shutdown of its span processor, and a shutdown reports nothing. Flushing here instead makes the file complete
+      // while the processor is still running, before the process reports success, and leaves the shutdown nothing to do.
       //
       // This flushes the *right* processor only because nothing has touched `TraceManager` before now. That object
       // runs `traceManagerInitializer` once, at first access, and `withTracer` installs its own initializer before
@@ -100,14 +85,9 @@ internal fun runDevDistJob(
     return
   }
 
-  runBlockingOnVirtualThreads {
-    if (consoleSpansWhenNotMeasuring) {
-      block()
-    }
-    else {
-      withoutTracer {
-        coroutineScope { block() }
-      }
-    }
+  if (consoleSpansWhenNotMeasuring) {
+    block()
+    return
   }
+  withoutTracer(block)
 }

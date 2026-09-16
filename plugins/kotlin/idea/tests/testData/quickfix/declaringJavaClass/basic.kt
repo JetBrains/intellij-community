@@ -5,4 +5,3 @@
 fun <E : Enum<E>> foo(enum: E) {
     enum.<caret>declaringClass
 }
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.DeclaringJavaClassMigrationFix

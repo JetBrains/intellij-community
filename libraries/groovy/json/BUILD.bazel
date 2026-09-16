@@ -1,5 +1,4 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
-load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.libraries.groovy.json` start
 jvm_library(
@@ -16,11 +15,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-groovy-json-groovy-json"],
     runtime_deps = ["@lib//:libraries-groovy-json-groovy-json"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-groovy-json-groovy-json"],
-    module = ":json",
 )
 
 jvm_library(
@@ -43,7 +37,6 @@ exports_files(
     [
         "intellij.libraries.groovy.json.iml",
         "resources/intellij.libraries.groovy.json.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

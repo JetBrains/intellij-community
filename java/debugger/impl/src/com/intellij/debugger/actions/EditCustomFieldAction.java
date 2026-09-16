@@ -39,14 +39,14 @@ public class EditCustomFieldAction extends XDebuggerTreeActionBase {
     boolean enabled = false;
     List<JavaValue> values = ViewAsGroup.getSelectedValues(e);
     if (values.size() == 1) {
-      enabled = getParentEnumerationRenderer(values.get(0).getDescriptor()) != null;
+      enabled = getParentEnumerationRenderer(values.getFirst().getDescriptor()) != null;
     }
     e.getPresentation().setEnabledAndVisible(enabled);
   }
 
   static @Nullable EnumerationChildrenRenderer getParentEnumerationRenderer(ValueDescriptorImpl descriptor) {
-    if (descriptor instanceof UserExpressionDescriptorImpl) {
-      return EnumerationChildrenRenderer.getCurrent(((UserExpressionDescriptorImpl)descriptor).getParentDescriptor());
+    if (descriptor instanceof UserExpressionDescriptorImpl expressionDescriptor) {
+      return EnumerationChildrenRenderer.getCurrent(expressionDescriptor.getParentDescriptor());
     }
     return null;
   }

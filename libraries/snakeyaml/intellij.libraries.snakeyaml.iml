@@ -9,19 +9,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="snakeyaml" type="repository">
-        <properties maven-id="org.yaml:snakeyaml:2.4">
+        <properties maven-id="org.yaml:snakeyaml:2.7">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/yaml/snakeyaml/2.4/snakeyaml-2.4.jar">
-              <sha256sum>ef779af5d29a9dde8cc70ce0341f5c6f7735e23edff9685ceaa9d35359b7bb7f</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/yaml/snakeyaml/2.7/snakeyaml-2.7.jar">
+              <sha256sum>2e194eba45a67dee19a4e272f4a04b18de8054e9f598b094382f6dae0b0e4b5e</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/yaml/snakeyaml/2.4/snakeyaml-2.4.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/yaml/snakeyaml/2.7/snakeyaml-2.7.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/yaml/snakeyaml/2.4/snakeyaml-2.4-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/yaml/snakeyaml/2.7/snakeyaml-2.7-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

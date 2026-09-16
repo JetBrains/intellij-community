@@ -1,7 +1,7 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
+load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_DESCRIPTORS", "MODULE_TARGETS")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
-load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "dev_dist_plugin_jar")
 
 jps_test(
     name = "xpath-tests_test",
@@ -10,6 +10,23 @@ jps_test(
     runtime_deps = [":xpath-tests_test_lib"],
 )
 ### skip generation section `test intellij.xpath.tests`
+
+### auto-generated section `dev intellij.xpath` start
+dev_dist_plugin(
+    content_modules = ["intellij.xpath.rt"],
+    descriptor = "xpath-lang/resources/META-INF/plugin.xml",
+    descriptor_index = MODULE_DESCRIPTORS,
+    descriptor_modules = ["intellij.xml.langInjection.xpath"],
+    jars = {
+        "rt/xslt-rt.jar": {
+            "modules": ["intellij.xpath.rt"],
+        },
+    },
+    main_module = "intellij.xpath",
+    module_targets = MODULE_TARGETS,
+    prepacked_content_modules = ["intellij.xml.langInjection.xpath"],
+)
+### auto-generated section `dev intellij.xpath` end
 
 ### auto-generated section `build intellij.xpath` start
 jvm_library(
@@ -148,21 +165,6 @@ exports_files(
 )
 ### auto-generated section `iml intellij.xpath` end
 
-### auto-generated section `dev intellij.xpath` start
-dev_dist_plugin(
-    descriptor = "xpath-lang/resources/META-INF/plugin.xml",
-    descriptor_module = ":xpath",
-    main_module = "intellij.xpath",
-    prepacked_layout_jars = [":rt_xslt-rt_dev_dist_plugin_jar"],
-)
-
-dev_dist_plugin_jar(
-    modules = ["//plugins/xpath/xslt-rt:rt"],
-    plugin_main_module = "intellij.xpath",
-    relative_output_file = "rt/xslt-rt.jar",
-)
-### auto-generated section `dev intellij.xpath` end
-
 ### auto-generated section `build intellij.xpath.tests` start
 jvm_library(
     name = "xpath-tests",
@@ -176,6 +178,7 @@ jvm_library(
         # do not sort,
         "//platform/platform-impl/internal",
         "//xml/dom-impl",
+        "//xml/plugin",
     ],
 )
 
@@ -206,6 +209,7 @@ jvm_library(
         "//platform/platform-impl/concurrency:concurrency_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
         "//xml/dom-impl:dom-impl_test_lib",
+        "//xml/plugin:plugin_test_lib",
         "//platform/platform-util-io:ide-util-io_test_lib",
     ],
     deps = [

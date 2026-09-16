@@ -4,7 +4,7 @@
 #end
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
-import com.intellij.configurationStore.Property
+import com.intellij.util.xmlb.annotations.Property
 
 #parse("File Header.java")
 @Service(Service.Level.PROJECT)
@@ -24,5 +24,5 @@ internal class ${NAME}(private val project: Project): SerializablePersistentStat
 }
 
 internal data class ${NAME}State(
-    @JvmField @Property val storeValue: String? = null // @Property required for primitives
+    @JvmField @Property val storeValue: String? = null // @Property makes the store save this read-only property
 )

@@ -3,11 +3,11 @@ package com.intellij.python.venv
 
 import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.community.common.tools.spi.ToolIdToIconMapper
-import com.intellij.python.venv.icons.PythonVenvIcons
+import com.intellij.python.venv.common.icons.PythonVenvCommonIcons
 import javax.swing.Icon
 
 internal class PyReqToolIdToIconMapper  : ToolIdToIconMapper {
   override val id: ToolId = PY_REQ_TOOL_ID
-  override val icon: Icon = PythonVenvIcons.VirtualEnv
-  override val clazz: Class<*> = PythonVenvIcons::class.java
+  override val icon: Icon = PythonVenvCommonIcons.VirtualEnv
+  override val clazz: Class<*> = PythonVenvCommonIcons::class.java
 }

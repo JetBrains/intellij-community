@@ -16,12 +16,14 @@
  * To disable the instrumentation, use the {@code tmh.generate.assertions.for.annotations} key in the Registry.
  * <h3>Limitations</h3>
  * <ul>
- * <li>Only Java code is instrumented.
- * <a href="https://youtrack.jetbrains.com/issue/IDEA-263465">Kotlin instrumentation is planned</a>.
+ * <li>Kotlin instrumentation produces soft asserts.</li>
  * <li>Does not instrument parameters. Consider calling the corresponding assertion method manually.</li>
  * <li>Does not instrument overriding methods. If the overriding method has the same threading contract as the supermethod,
  * annotate it again.</li>
  * <li>Does not instrument abstract methods, as there is no method body.</li>
+ * <li>Does not instrument suspend functions.</li>
+ * <li>Does not add assertions to calls inlined before instrumentation.</li>
+ * <li>May omit assertions when targeting older platform versions.</li>
  * </ul>
  *
  */

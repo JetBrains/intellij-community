@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.ApiStatus.Internal;
@@ -10,7 +9,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.concurrent.ExecutorService;
 
 /**
  * A builder helper for {@link PersistentHashMap}
@@ -32,8 +30,6 @@ public final class PersistentMapBuilder<Key, Value> {
   private Boolean myIsReadOnly;
   private Boolean myHasChunks;
   private Boolean myCompactOnClose;
-  private @NotNull ExecutorService myWalExecutor;
-  private boolean myEnableWal;
 
   private PersistentMapBuilder(final @NotNull Path file,
                                final @NotNull KeyDescriptor<Key> keyDescriptor,
@@ -44,9 +40,7 @@ public final class PersistentMapBuilder<Key, Value> {
                                final Boolean inlineValues,
                                final Boolean isReadOnly,
                                final Boolean hasChunks,
-                               final Boolean compactOnClose,
-                               final @NotNull ExecutorService walExecutor,
-                               final boolean enableWal) {
+                               final Boolean compactOnClose) {
     myFile = file;
     myKeyDescriptor = keyDescriptor;
     myValueExternalizer = valueExternalizer;
@@ -57,17 +51,13 @@ public final class PersistentMapBuilder<Key, Value> {
     myIsReadOnly = isReadOnly;
     myHasChunks = hasChunks;
     myCompactOnClose = compactOnClose;
-    myWalExecutor = walExecutor;
-    myEnableWal = enableWal;
   }
 
   private PersistentMapBuilder(@NotNull Path file,
                                @NotNull KeyDescriptor<Key> keyDescriptor,
                                @NotNull DataExternalizer<Value> valueExternalizer) {
     this(file, keyDescriptor, valueExternalizer,
-         null, null, null, null, null, null, null,
-         ConcurrencyUtil.newSameThreadExecutorService(),
-         false);
+         null, null, null, null, null, null, null);
   }
 
   public @NotNull PersistentHashMap<Key, Value> build() throws IOException {
@@ -135,16 +125,6 @@ public final class PersistentMapBuilder<Key, Value> {
     return withReadonly(true);
   }
 
-  public @NotNull PersistentMapBuilder<Key, Value> withWal(boolean enableWal) {
-    myEnableWal = enableWal;
-    return this;
-  }
-
-  public @NotNull PersistentMapBuilder<Key, Value> withWalExecutor(@NotNull ExecutorService service) {
-    myWalExecutor = service;
-    return this;
-  }
-
   public @NotNull PersistentMapBuilder<Key, Value> inlineValues(boolean inlineValues) {
     if (inlineValues && !(myValueExternalizer instanceof IntInlineKeyDescriptor)) {
       throw new IllegalStateException("can't inline values for externalizer " + myValueExternalizer.getClass());
@@ -207,14 +187,6 @@ public final class PersistentMapBuilder<Key, Value> {
     return defaultCompactOnClose;
   }
 
-  public boolean isEnableWal() {
-    return myEnableWal;
-  }
-
-  public @NotNull ExecutorService getWalExecutor() {
-    return myWalExecutor;
-  }
-
   @Internal
   public @Nullable StorageLockContext getLockContext() {
     return myLockContext;
@@ -228,16 +200,14 @@ public final class PersistentMapBuilder<Key, Value> {
   public PersistentMapBuilder<Key, Value> copy() {
     return new PersistentMapBuilder<>(
       myFile, myKeyDescriptor, myValueExternalizer,
-      myInitialSize, myVersion, myLockContext, myInlineValues, myIsReadOnly, myHasChunks, myCompactOnClose,
-      myWalExecutor, myEnableWal
+      myInitialSize, myVersion, myLockContext, myInlineValues, myIsReadOnly, myHasChunks, myCompactOnClose
     );
   }
 
   public @NotNull PersistentMapBuilder<Key, Value> copyWithFile(final @NotNull Path file) {
     return new PersistentMapBuilder<>(
       file, myKeyDescriptor, myValueExternalizer,
-      myInitialSize, myVersion, myLockContext, myInlineValues, myIsReadOnly, myHasChunks, myCompactOnClose,
-      myWalExecutor, myEnableWal
+      myInitialSize, myVersion, myLockContext, myInlineValues, myIsReadOnly, myHasChunks, myCompactOnClose
     );
   }
 }

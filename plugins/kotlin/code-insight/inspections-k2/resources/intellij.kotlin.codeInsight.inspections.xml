@@ -1637,6 +1637,19 @@
     />
 
     <localInspection
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.ConvertDataClassToValueClassInspection"
+            shortName="ConvertDataClassToValueClass"
+            groupPath="Kotlin"
+            groupBundle="messages.KotlinBundle"
+            groupKey="group.names.style.issues"
+            enabledByDefault="true"
+            level="INFORMATION"
+            language="kotlin"
+            bundle="messages.KotlinBundle"
+            key="inspection.convert.to.value.class.display.name"
+    />
+
+    <localInspection
             implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.UnnecessaryOptInAnnotationInspection"
             groupPath="Kotlin"
             groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
@@ -2291,6 +2304,14 @@
                      level="WARNING"
                      language="kotlin"
                      key="inspection.suspicious.mutable.collection.in.state.flow.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.coroutines.SuppressedCancellationExceptionInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.coroutine"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     language="kotlin"
+                     key="inspection.suppressed.cancellation.exception.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.RedundantEnumConstructorInvocationInspection"
                      groupPath="Kotlin"

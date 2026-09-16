@@ -58,11 +58,7 @@ import com.intellij.platform.pluginGraph.unpackPluginDepFormats
 import com.intellij.platform.pluginGraph.unpackPluginDepHasConfigFile
 import com.intellij.platform.pluginGraph.unpackPluginDepOptional
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
 import org.jetbrains.intellij.build.ModuleOutputProvider
-import org.jetbrains.intellij.build.productLayout.LIB_MODULE_PREFIX
 import org.jetbrains.intellij.build.productLayout.ModuleSet
 import org.jetbrains.intellij.build.productLayout.contentName
 import org.jetbrains.intellij.build.productLayout.dependency.ModuleDescriptorCache
@@ -72,11 +68,10 @@ import org.jetbrains.intellij.build.productLayout.isModuleSetPluginModuleName
 import org.jetbrains.intellij.build.productLayout.model.ErrorSink
 import org.jetbrains.intellij.build.productLayout.model.error.MissingPluginInGraphError
 import org.jetbrains.intellij.build.productLayout.validator.rule.isTestPlugin
+import org.jetbrains.intellij.build.mapConcurrent
 import org.jetbrains.jps.model.java.JpsJavaDependencyScope
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
-import org.jetbrains.jps.model.module.JpsLibraryDependency
 import org.jetbrains.jps.model.module.JpsModuleDependency
-import org.jetbrains.jps.model.module.JpsModuleReference
 
 /**
  * Builder for [PluginGraph] using AndroidX primitive collections.
@@ -768,11 +763,10 @@ internal class PluginGraphBuilder(
   /**
    * Add JPS dependency edges for all targets in the graph.
    */
-  fun addJpsDependencies(outputProvider: ModuleOutputProvider, projectLibraryToModuleMap: Map<String, String>) {
+  fun addJpsDependencies(outputProvider: ModuleOutputProvider) {
     val javaExtensionService = JpsJavaExtensionService.getInstance()
     val processedTargets = HashSet<String>()
     val targetsToProcess = ArrayDeque<String>()
-    val libraryMap = projectLibraryToModuleMap.ifEmpty { outputProvider.getProjectLibraryToModuleMap() }
 
     // Get initial targets from existing nodes
     val targetIndex = store.nameIndex[NODE_TARGET]
@@ -786,49 +780,23 @@ internal class PluginGraphBuilder(
       if (targetId < 0) continue
       val jpsModule = outputProvider.findModule(targetName) ?: continue
 
+      // a library dependency adds no edge: a library reaches a module only through its wrapper module, which is a module dependency
       for (element in jpsModule.dependenciesList.dependencies) {
-        when (element) {
-          is JpsModuleDependency -> {
-            val depName = element.moduleReference.moduleName
-            val depTargetId = addTarget(depName)
-            if (depName !in processedTargets) {
-              targetsToProcess.addLast(depName)
-            }
-
-            val jpsScope = javaExtensionService.getDependencyExtension(element)?.scope ?: JpsJavaDependencyScope.COMPILE
-            val scope = jpsScope.toTargetDependencyScope()
-            addTargetDependencyEdge(targetId, depTargetId, scope)
-          }
-          is JpsLibraryDependency -> {
-            if (libraryMap.isEmpty()) continue
-            val libRef = element.libraryReference
-            if (libRef.parentReference is JpsModuleReference) {
-              continue
-            }
-            val libraryModuleName = libraryMap.get(libRef.libraryName) ?: continue
-            val depTargetId = addTarget(libraryModuleName)
-            ensureLibraryModuleNode(ContentModuleName(libraryModuleName))
-            if (libraryModuleName !in processedTargets) {
-              targetsToProcess.addLast(libraryModuleName)
-            }
-            val jpsScope = javaExtensionService.getDependencyExtension(element)?.scope ?: JpsJavaDependencyScope.COMPILE
-            val scope = jpsScope.toTargetDependencyScope()
-            addTargetDependencyEdge(targetId, depTargetId, scope)
-          }
-          else -> Unit
+        if (element !is JpsModuleDependency) {
+          continue
         }
+
+        val depName = element.moduleReference.moduleName
+        val depTargetId = addTarget(depName)
+        if (depName !in processedTargets) {
+          targetsToProcess.addLast(depName)
+        }
+
+        val jpsScope = javaExtensionService.getDependencyExtension(element)?.scope ?: JpsJavaDependencyScope.COMPILE
+        val scope = jpsScope.toTargetDependencyScope()
+        addTargetDependencyEdge(targetId, depTargetId, scope)
       }
     }
-  }
-
-  private fun ensureLibraryModuleNode(moduleName: ContentModuleName) {
-    if (!moduleName.value.startsWith(LIB_MODULE_PREFIX)) {
-      return
-    }
-    val moduleId = addModule(moduleName)
-    val targetName = TargetName(moduleName.baseModuleName().value)
-    val targetId = addTarget(targetName)
-    addEdge(moduleId, targetId, EDGE_BACKED_BY)
   }
 
   /**
@@ -849,7 +817,7 @@ internal class PluginGraphBuilder(
    * @param pluginContentCache Cache for extracting plugin info from modules
    * @return Map of newly discovered plugin modules to their extracted content
    */
-  suspend fun registerReferencedPlugins(pluginContentCache: PluginContentProvider): Map<TargetName, PluginContentInfo> {
+  fun registerReferencedPlugins(pluginContentCache: PluginContentProvider): Map<TargetName, PluginContentInfo> {
     val targetIndex = store.nameIndex[NODE_TARGET]
     val candidates = ArrayList<TargetName>()
 
@@ -866,14 +834,10 @@ internal class PluginGraphBuilder(
       candidates.add(TargetName(targetName))
     }
 
-    val discoveredInfos = coroutineScope {
-      candidates.map { pluginModule ->
-        async {
-          val pluginInfo = pluginContentCache.getOrExtract(pluginModule) ?: return@async null
-          pluginModule to pluginInfo
-        }
-      }.awaitAll().filterNotNull()
-    }
+    val discoveredInfos = candidates.mapConcurrent { pluginModule ->
+      val pluginInfo = pluginContentCache.getOrExtract(pluginModule) ?: return@mapConcurrent null
+      pluginModule to pluginInfo
+    }.filterNotNull()
 
     val discovered = LinkedHashMap<TargetName, PluginContentInfo>(discoveredInfos.size)
     for ((pluginModule, pluginInfo) in discoveredInfos) {

@@ -26,7 +26,7 @@ internal class GradleComposeResourcesData(
   override val isCustomDirectory: Boolean get() = composeResourcesDir.isCustom
   override val accessorsQualifier: String get() = composeResourcesDir.sourceSetName
 
-  @get:RequiresReadLock
+  @get:RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   override val accessorsDirectory: VirtualFile?
     // android's ResourceAccessors source root isn't created by default -- in that case we temporarily store them in the ResourceCollectors one
     get() = findResourcesDir(RESOURCES_ACCESSORS_SUFFIX) ?: findResourcesDir(RESOURCES_COLLECTORS_SUFFIX)

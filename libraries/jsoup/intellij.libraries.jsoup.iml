@@ -9,10 +9,10 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="jsoup" type="repository">
-        <properties maven-id="org.jsoup:jsoup:1.22.1">
+        <properties maven-id="org.jsoup:jsoup:1.23.2">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jsoup/jsoup/1.22.1/jsoup-1.22.1.jar">
-              <sha256sum>cfd3298d8720cddfb0545109ccc6ea0ef39eff7e9c40a10ad95c93a65f01c916</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jsoup/jsoup/1.23.2/jsoup-1.23.2.jar">
+              <sha256sum>e9d8c856856680427f096d156f02a414289985c930998fcb519ce5be39b42003</sha256sum>
             </artifact>
           </verification>
         </properties>
@@ -20,11 +20,11 @@
           <root url="file://$MODULE_DIR$/../../lib/annotations/jsoup" />
         </ANNOTATIONS>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jsoup/jsoup/1.22.1/jsoup-1.22.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jsoup/jsoup/1.23.2/jsoup-1.23.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jsoup/jsoup/1.22.1/jsoup-1.22.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jsoup/jsoup/1.23.2/jsoup-1.23.2-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

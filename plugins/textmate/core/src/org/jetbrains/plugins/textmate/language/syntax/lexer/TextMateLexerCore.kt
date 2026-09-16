@@ -9,7 +9,6 @@ import org.jetbrains.plugins.textmate.language.syntax.InjectionNodeDescriptor
 import org.jetbrains.plugins.textmate.language.syntax.SyntaxNodeDescriptor
 import org.jetbrains.plugins.textmate.language.syntax.TextMateCapture
 import org.jetbrains.plugins.textmate.language.syntax.lexer.SyntaxMatchUtils.replaceGroupsWithMatchDataInCaptures
-import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateLexerState.Companion.notMatched
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateWeigh
 import org.jetbrains.plugins.textmate.regex.MatchData
 import org.jetbrains.plugins.textmate.regex.TextMateByteOffset
@@ -50,8 +49,38 @@ class TextMateLexerCore(
   fun init(text: CharSequence, startCharOffset: TextMateCharOffset) {
     myText = text
     myCurrentOffset = startCharOffset
-    myStackFrames = persistentListOf(TextMateStackFrame(state = notMatched(languageDescriptor.rootSyntaxNode),
-                                                        scopes = TextMateScopeStack(TextMateScope(languageDescriptor.rootScopeName, null))))
+    myStackFrames = rootContinuation().frames
+  }
+
+  /**
+   * Restarts the lexer at [startCharOffset] with the rule stack kept in [continuation].
+   *
+   * [startCharOffset] must be the beginning of a line. [advanceLine] treats the current offset as a line start,
+   * and [parseLine] derives the `^`, `\A` and `\G` anchors from it.
+   */
+  fun init(text: CharSequence, startCharOffset: Int, continuation: TextMateLexerContinuation) {
+    myText = text
+    myCurrentOffset = startCharOffset.charOffset()
+    myStackFrames = continuation.frames
+  }
+
+  /**
+   * The rule stack a file starts with. [TextMateLexerContinuation.equals] reports it equal to any other
+   * root continuation of the same language.
+   */
+  fun rootContinuation(): TextMateLexerContinuation {
+    val rootFrame = TextMateStackFrame(
+      state = TextMateLexerState.notMatched(syntaxRule = languageDescriptor.rootSyntaxNode),
+      scopes = TextMateScopeStack(rootScope = TextMateScope(languageDescriptor.rootScopeName, null))
+    )
+    return TextMateLexerContinuation(persistentListOf(rootFrame))
+  }
+
+  /**
+   * The rule stack at [getCurrentOffset]. Give it back to [init] to continue the file from this offset.
+   */
+  fun getContinuation(): TextMateLexerContinuation {
+    return TextMateLexerContinuation(myStackFrames)
   }
 
   fun advanceLine(checkCancelledCallback: Runnable?): List<TextmateToken> {
@@ -234,7 +263,10 @@ class TextMateLexerCore(
 
             val contentName = getStringAttribute(Constants.StringKey.CONTENT_NAME, currentRule, string, currentMatch)
             scopes = openScopeSelector(output, scopesWithName, contentName, endPosition + lineStartOffset)
-            stackFrames = stackFrames.adding(TextMateStackFrame(currentState, scopes))
+            val textDerived = currentState.capturedTexts != null ||
+                              currentRule.hasBackReference(Constants.StringKey.NAME) ||
+                              currentRule.hasBackReference(Constants.StringKey.CONTENT_NAME)
+            stackFrames = stackFrames.adding(TextMateStackFrame(currentState, scopes, textDerived))
           }
           else if (currentRule.getStringAttribute(Constants.StringKey.MATCH) != null) {
             val name = getStringAttribute(Constants.StringKey.NAME, currentRule, string, currentMatch)
@@ -502,13 +534,84 @@ class TextMateLexerCore(
  * Equality is defined by [state] alone ([scopes] are derived from the states of the frames below on the stack):
  * the looping protection in [TextMateLexerCore.parseLine] relies on it when comparing stack snapshots.
  */
-private class TextMateStackFrame(val state: TextMateLexerState, val scopes: TextMateScopeStack) {
+internal class TextMateStackFrame(
+  val state: TextMateLexerState,
+  val scopes: TextMateScopeStack,
+  /**
+   * True when the frame holds text that the lexer matched in the document, and not only the grammar.
+   * The captured texts of a back-reference are such a text, and so is a scope name that a back-reference
+   * builds. An edit makes a new text, so a frame like this cannot occur again after the edit,
+   * see [TextMateLexerContinuation.isStable].
+   */
+  val textDerived: Boolean = state.capturedTexts != null,
+) {
   override fun equals(other: Any?): Boolean {
     return this === other || other is TextMateStackFrame && state == other.state
   }
 
   override fun hashCode(): Int {
     return state.hashCode()
+  }
+
+  /**
+   * Compares the part of the frame that decides how the following lines are lexed.
+   *
+   * [equals] cannot serve here. [TextMateLexerState.equals] includes the identity of the line the rule
+   * matched on, so two frames built by two runs over the same text are never equal. A continuation must
+   * stay equal across runs, otherwise the editor highlighter never re-synchronises after an edit.
+   * [TextMateLexerState.enterByteOffset] and the raw match offsets stay out as well. They are per-line loop
+   * protection. [TextMateLexerCore.parseLine] reads them only for a frame that the same line pushed, so they
+   * never decide how a later line is lexed. They must stay out. An edit before the rule moves them, and every
+   * line below the edit would then get a new state.
+   */
+  fun continuationEquals(other: TextMateStackFrame): Boolean {
+    return state.syntaxRule == other.state.syntaxRule &&
+           state.matchedEOL == other.state.matchedEOL &&
+           state.capturedTexts == other.state.capturedTexts &&
+           scopes == other.scopes
+  }
+
+  fun continuationHashCode(): Int {
+    var result = state.syntaxRule.hashCode()
+    result = 31 * result + state.matchedEOL.hashCode()
+    result = 31 * result + state.capturedTexts.hashCode()
+    result = 31 * result + scopes.hashCode()
+    return result
+  }
+}
+
+/**
+ * An immutable snapshot of the lexer rule stack at a line boundary.
+ *
+ * Two continuations are equal when they continue a file the same way, whatever line or lexer run they
+ * come from. [org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateLexerCore.getContinuation]
+ * produces one, and `TextMateLexerCore.init` consumes one.
+ */
+class TextMateLexerContinuation internal constructor(
+  internal val frames: PersistentList<TextMateStackFrame>
+) {
+  private val hashCode: Int = frames.fold(1) { acc, frame -> 31 * acc + frame.continuationHashCode() }
+
+  /**
+   * True when a later lexer run over the same text can produce this continuation again.
+   * A frame keeps the scopes of the frames below it, so one [TextMateStackFrame.textDerived] frame
+   * makes the whole stack depend on the text the lexer matched, and an edit then makes a new continuation.
+   * A caller that keeps a continuation for later use must keep a stable one only.
+   */
+  val isStable: Boolean = frames.none { it.textDerived }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is TextMateLexerContinuation) return false
+    if (hashCode != other.hashCode || frames.size != other.frames.size) return false
+    for (i in frames.indices) {
+      if (!frames[i].continuationEquals(other.frames[i])) return false
+    }
+    return true
+  }
+
+  override fun hashCode(): Int {
+    return hashCode
   }
 }
 
@@ -518,11 +621,34 @@ private class TextMateStackFrame(val state: TextMateLexerState, val scopes: Text
  * Each stack node corresponds to one pushed selector: a selector like `foo bar` contributes
  * several scope names, but still one stack node, so popping it drops all its names at once.
  */
-private class TextMateScopeStack private constructor(
+internal class TextMateScopeStack private constructor(
   val currentScope: TextMateScope,
   private val parent: TextMateScopeStack?,
 ) {
   constructor(rootScope: TextMateScope) : this(rootScope, null)
+
+  private val depth: Int = (parent?.depth ?: 0) + 1
+
+  /**
+   * Compares the whole chain, not only [currentScope]. Two stacks can share a [currentScope] and still
+   * pop differently: the selector `a b` makes one node with two names, while `a` then `b` makes two nodes.
+   */
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is TextMateScopeStack || depth != other.depth) return false
+    var left: TextMateScopeStack? = this
+    var right: TextMateScopeStack? = other
+    while (left !== right) {
+      if (left == null || right == null || left.currentScope != right.currentScope) return false
+      left = left.parent
+      right = right.parent
+    }
+    return true
+  }
+
+  override fun hashCode(): Int {
+    return 31 * depth + currentScope.hashCode()
+  }
 
   fun push(name: CharSequence?): TextMateScopeStack {
     var scope = currentScope

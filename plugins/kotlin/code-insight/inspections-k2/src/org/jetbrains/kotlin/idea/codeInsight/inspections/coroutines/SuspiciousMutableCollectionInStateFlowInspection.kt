@@ -10,10 +10,10 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.expressions.expectedType
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.allSupertypes
@@ -110,7 +110,7 @@ internal class SuspiciousMutableCollectionInStateFlowInspection : KotlinApplicab
         val calleeName = calleeExpression.text
         if (!calleeName.startsWith("mutable")) return null
 
-        val call = calleeExpression.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
+        val call = calleeExpression.resolveSuccessfulCall()?.function ?: return null
         val callableId = call.symbol.callableId ?: return null
         val isMutableFactory = callableId in StandardKotlinNames.Collections.mutableFactories
         if (!isMutableFactory) return null

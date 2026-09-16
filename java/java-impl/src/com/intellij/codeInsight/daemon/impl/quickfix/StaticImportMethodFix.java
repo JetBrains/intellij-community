@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -12,7 +12,6 @@ import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
@@ -59,6 +58,14 @@ public class StaticImportMethodFix extends StaticImportMemberFix<PsiMethod, PsiM
   }
 
   @Override
+  boolean hasCompatibleSignature(@NotNull PsiMethod method) {
+    ProgressManager.checkCanceled();
+    PsiMethodCallExpression call = myReferencePointer.getElement();
+    if (call == null) return false;
+    return MethodCallSignature.canMatchCall(method, call.getArgumentList());
+  }
+
+  @Override
   boolean toAddStaticImports() {
     return true;
   }
@@ -95,9 +102,7 @@ public class StaticImportMethodFix extends StaticImportMemberFix<PsiMethod, PsiM
     protected ApplicableType isApplicable(@NotNull PsiMethod method, @NotNull PsiElement place) {
       ProgressManager.checkCanceled();
       PsiExpressionList argumentList = ((PsiMethodCallExpression)place).getArgumentList();
-      MethodCandidateInfo candidateInfo =
-        new MethodCandidateInfo(method, PsiSubstitutor.EMPTY, false, false, argumentList, null, argumentList.getExpressionTypes(), null);
-      PsiSubstitutor substitutorForMethod = candidateInfo.getSubstitutor();
+      PsiSubstitutor substitutorForMethod = MethodCallSignature.inferSubstitutor(method, argumentList);
       if (PsiUtil.isApplicable(method, substitutorForMethod, argumentList)) {
         PsiType returnType = substitutorForMethod.substitute(method.getReturnType());
         if (returnType == null) return ApplicableType.APPLICABLE;

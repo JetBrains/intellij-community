@@ -191,11 +191,9 @@ under a test source root), not on the name suffix — see
 
 ### Source of Truth and Transitive Closure
 
-Auto-add uses **PluginGraph** as the single source of truth for module descriptors and resolvable modules, but reads JPS dependencies from the declared content modules. Project library dependencies are mapped to library modules via `ModuleSetGenerationConfig.projectLibraryToModuleMap` (built from JPS library modules, not the graph), so library modules don't need to be present in module sets to be discovered.
+Auto-add uses **PluginGraph** as the single source of truth for module descriptors and resolvable modules, but reads JPS dependencies from the declared content modules. A JPS library dependency adds nothing to the closure: a library reaches a module only through its wrapper module (`intellij.libraries.*`), which is a module dependency.
 
 - Walk **transitive** dependencies (A -> B -> C) for test plugin content.
-- For JPS **library** dependencies, map library name -> library module via `projectLibraryToModuleMap` and include those library modules in the closure.
-- For DSL test plugins, ignore `libraryModuleFilter`: the test plugin is a container for all required modules in dev mode, so needed library modules must be included even if products filter them elsewhere.
 - Auto-added modules are merged into the generated test plugin content (written under the `<!-- region additional -->` block), so a second generator run stays clean.
 
 ### Why Module Sets Don't Need Special Handling

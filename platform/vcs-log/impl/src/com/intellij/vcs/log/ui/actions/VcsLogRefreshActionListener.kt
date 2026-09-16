@@ -15,7 +15,7 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 interface VcsLogRefreshActionListener {
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun beforeRefresh(project: Project, roots: Collection<VirtualFile>)
 
   companion object {

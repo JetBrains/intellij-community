@@ -23,30 +23,30 @@ interface LockReqPsiOps {
     fun forLanguageOrNull(language: Language): LockReqPsiOps? = LockReqPsiOpsProvider.forLanguage(language)
   }
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun getMethodCallees(method: PsiMethod): List<PsiMethod>
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun findInheritors(method: PsiMethod, scope: GlobalSearchScope, maxImpl: Int, handler: (PsiMethod) -> Unit)
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun findImplementations(interfaceClass: PsiClass, scope: GlobalSearchScope, maxImpl: Int, handler: (PsiClass) -> Unit)
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun inheritsFromAny(psiClass: PsiClass, baseClassNames: Collection<String>): Boolean
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun isInPackages(className: String, packagePrefixes: Collection<String>): Boolean
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun resolveReturnType(method: PsiMethod): PsiClass?
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun extractTypeArguments(type: PsiType): List<PsiType>
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun extractSignature(element: PsiElement): MethodSignature
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun extractTargetElement(file: PsiFile, caretOffset: Int): PsiMethod?
 }

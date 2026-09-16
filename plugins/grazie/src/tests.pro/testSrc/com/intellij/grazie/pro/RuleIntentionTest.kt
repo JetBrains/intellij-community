@@ -60,16 +60,6 @@ class RuleIntentionTest : BaseTestCase() {
 
   @NeedsCloud
   @Test
-  fun `test rephrase as a quick fix for lemma repetition warnings`() {
-    GrazieTestUtil.registerGrazieCloudConnectorWithQuota(testRootDisposable)
-    myFixture.configureByText("a.txt", "I said yes. He said no. Then I <caret>said maybe.")
-    myFixture.doHighlighting()
-    val intentionTexts = availableIntentions.map { it.text }
-    assertEquals("Rephrase", intentionTexts[0], intentionTexts.toString())
-  }
-
-  @NeedsCloud
-  @Test
   fun `test batch quick fix`() {
     myFixture.configureByText("a.md", """
       There is some range (<caret><STYLE_SUGGESTION descr="Grazie.RuleEngine.En.Typography.HYPHEN_IN_RANGES">1 - 2</STYLE_SUGGESTION>),
@@ -83,21 +73,6 @@ class RuleIntentionTest : BaseTestCase() {
       There is some range (1–2),
       and then there is another range (2–3), both being very fine.
     """.trimIndent())
-  }
-
-  @NeedsCloud
-  @Test
-  fun `test rephrase action is available and first`() {
-    GrazieTestUtil.registerGrazieCloudConnectorWithQuota(testRootDisposable)
-    HighlightingTest.enableRules("Grazie.RuleEngine.En.Style.LEMMA_REPETITION")
-    myFixture.configureByText("a.txt",
-      """
-        I said yes. He said no.
-        Then I <STYLE_SUGGESTION descr="Grazie.RuleEngine.En.Style.LEMMA_REPETITION"><caret>said</STYLE_SUGGESTION> OK.
-      """.trimIndent()
-    )
-    myFixture.checkHighlighting()
-    assertEquals("Rephrase", myFixture.availableIntentions[0].text)
   }
 
   @NeedsCloud

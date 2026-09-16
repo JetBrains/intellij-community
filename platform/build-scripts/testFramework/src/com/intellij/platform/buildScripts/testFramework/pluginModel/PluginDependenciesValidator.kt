@@ -35,6 +35,7 @@ import com.intellij.ide.plugins.loadPluginSubDescriptors
 import com.intellij.ide.plugins.sequenceAllDescriptors
 import com.intellij.ide.plugins.sequenceDescriptorExclusionChain
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.platform.buildScripts.concurrency.withLockInterruptibly
 import com.intellij.platform.ide.bootstrap.ZipFilePoolImpl
 import com.intellij.platform.pluginSystem.parser.impl.LoadPathUtil
 import com.intellij.platform.pluginSystem.parser.impl.LoadedXIncludeReference
@@ -53,9 +54,10 @@ import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.util.SmartList
 import com.intellij.util.SystemProperties
 import com.intellij.util.lang.UrlClassLoader
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
+import java.util.concurrent.locks.ReentrantLock
 import org.jetbrains.intellij.build.BuildPaths
+import org.jetbrains.intellij.build.impl.moduleBased.JpsProductModeMatcher
+import org.jetbrains.intellij.build.productLayout.util.getProductionModuleDependencies
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaDependencyScope
@@ -78,13 +80,15 @@ class PluginDependenciesValidator private constructor(
   private val tempDir: Path,
   private val project: JpsProject,
   private val productMode: ProductMode,
-  pluginLayoutProvider: PluginLayoutProvider,
+  private val pluginLayoutProvider: PluginLayoutProvider,
   private val options: PluginDependenciesValidationOptions,
 ) {
-  companion object {
-    private val pluginSetBuildMutex = Mutex()
+  private val productModeMatcher = JpsProductModeMatcher(productMode)
 
-    suspend fun validatePluginDependencies(
+  companion object {
+    private val pluginSetBuildLock = ReentrantLock()
+
+    fun validatePluginDependencies(
       project: JpsProject,
       productMode: ProductMode,
       pluginLayoutProvider: PluginLayoutProvider,
@@ -93,7 +97,7 @@ class PluginDependenciesValidator private constructor(
     ): List<PluginModuleConfigurationError> {
       val validator = PluginDependenciesValidator(tempDir = tempDir, project = project, productMode = productMode, pluginLayoutProvider = pluginLayoutProvider, options = options)
       val pluginSetTestBuilder = validator.createPluginSet()
-      val pluginSet = pluginSetBuildMutex.withLock { pluginSetTestBuilder.build() }
+      val pluginSet = pluginSetBuildLock.withLockInterruptibly { pluginSetTestBuilder.build() }
       validator.reportPluginLoadingErrors(pluginSet)
       validator.checkPluginSet(pluginSet)
       return validator.errors
@@ -595,6 +599,14 @@ class PluginDependenciesValidator private constructor(
     override fun toString(): String {
       return "PluginMainModuleFromSourceXIncludeLoader(plugin=${layout.mainJpsModule})"
     }
+
+    fun loadXIncludeReferenceFromLibraries(path: String, moduleName: String): LoadedXIncludeReference? {
+      val roots = pluginLayoutProvider.findModuleLibraryRoots(moduleName)
+      return loadXIncludeReferenceFromResolvedRoots(
+        path = path,
+        roots = roots.asSequence(),
+      )
+    }
   }
   
   private inner class PluginContentModuleFromSourceXIncludeLoader(
@@ -606,6 +618,25 @@ class PluginDependenciesValidator private constructor(
       if (file != null) {
         return LoadedXIncludeReference(Files.readAllBytes(file), file.pathString)
       }
+
+      val moduleName = jpsModule.name
+      if (moduleName.startsWith("intellij.libraries.kotlinc.")) {
+        val selfAndDependentLibraries = buildList {
+          add(moduleName)
+          addAll(jpsModule.getProductionModuleDependencies().mapNotNull { dependency -> dependency.module?.name?.takeIf { it.startsWith("intellij.libraries.kotlinc.") } })
+        }
+        val xIncludeReference = selfAndDependentLibraries.firstNotNullOfOrNull {
+          parentXIncludeLoader.loadXIncludeReferenceFromLibraries(path, it)
+        }
+        if (xIncludeReference != null) {
+          return xIncludeReference
+        }
+
+        if (!productModeMatcher.matches(jpsModule)) {
+          return LoadedXIncludeReference("<idea-plugin/>".encodeToByteArray(), "ignored include from incompatible module '$moduleName'")
+        }
+      }
+
       return parentXIncludeLoader.loadXIncludeReference(path)
     }
 

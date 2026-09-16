@@ -5,6 +5,7 @@ import com.intellij.execution.filters.Filter
 import com.intellij.openapi.vfs.VirtualFile
 import java.util.regex.Pattern
 
+@Suppress("SplitModeApiUsage")
 internal class StatisticsEventLogFilter(private val file: VirtualFile,
                                         private val groupIdToLine: HashMap<String, Int>) : Filter {
 

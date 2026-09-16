@@ -10,7 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.options.BoundCompositeSearchableConfigurable;
-import com.intellij.openapi.options.ConfigurableBuilder;
+import com.intellij.openapi.options.CompositeConfigurableKt;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.ui.DialogPanel;
 import com.intellij.openapi.ui.InputValidatorEx;
@@ -60,7 +60,7 @@ public class ConsoleConfigurable extends BoundCompositeSearchableConfigurable<Co
   @NotNull
   public List<ConsoleOptionsProvider> createConfigurables() {
     return ContainerUtil.sorted(ConfigurableWrapper.createConfigurables(ConsoleOptionsProviderEP.EP_NAME),
-                                Comparator.comparing(ConfigurableBuilder::getConfigurableTitle));
+                                Comparator.comparing(CompositeConfigurableKt::getConfigurableTitle));
   }
 
   @Override

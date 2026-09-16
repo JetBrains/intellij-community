@@ -2,10 +2,15 @@
 
 package com.intellij.ide.starters.shared
 
+import com.intellij.ide.IdeBundle
+import com.intellij.openapi.GitRepositoryInitializer
+import com.intellij.openapi.progress.runBackgroundableTask
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts.DialogTitle
 import com.intellij.openapi.util.NlsContexts.Label
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.UserDataHolderBase
+import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.Nls
 
 data class StarterLanguage(
@@ -148,6 +153,17 @@ open class CommonStarterContext : UserDataHolderBase() {
   var applicationType: StarterAppType? = null
   var testFramework: StarterTestRunner? = null
   var includeExamples: Boolean = true
+}
+
+/**
+ * Creates the Git repository in [contentRoot] if the user enabled it in the wizard.
+ */
+internal fun CommonStarterContext.initGitRepository(project: Project, contentRoot: VirtualFile) {
+  if (!gitIntegration || !isCreatingNewProject) return
+
+  runBackgroundableTask(IdeBundle.message("progress.title.creating.git.repository"), project) {
+    GitRepositoryInitializer.getInstance()?.initRepository(project, contentRoot, true)
+  }
 }
 
 const val ENTITY_NAME_PROPERTY: String = "entityName"

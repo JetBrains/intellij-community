@@ -30,7 +30,11 @@ jvm_library(
         "//libraries/allure/java-commons:libraries-allure-java-commons",
         "//libraries/system-stubs-jupiter",
     ],
-    runtime_deps = ["//python/pluginCore:community-plugin"],
+    runtime_deps = [
+        # do not sort,
+        "//python/pluginCore:community-plugin",
+        "//xml/plugin",
+    ],
 )
 
 jvm_library(
@@ -64,6 +68,7 @@ jvm_library(
         "//platform/ide-core:ide-core_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
         "//python/pluginCore:community-plugin_test_lib",
+        "//xml/plugin:plugin_test_lib",
     ],
     deps = [
         # do not sort,
@@ -124,8 +129,6 @@ jvm_library(
         "//platform/util/coroutines:coroutines_test_lib",
         "//python/openapi:community",
         "//python/openapi:community_test_lib",
-        "//libraries/misc/plugin",
-        "//libraries/misc/plugin:plugin_test_lib",
         "//plugins/jcef/plugin",
         "//plugins/jcef/plugin:plugin_test_lib",
         "//platform/testRunner/plugin",

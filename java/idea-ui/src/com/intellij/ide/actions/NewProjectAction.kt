@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.impl.createNewProjectAsync
 import com.intellij.ide.projectWizard.NewProjectWizard
+import com.intellij.idea.ActionsBundle
 import com.intellij.lang.IdeLanguageCustomization
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.actionSystem.ActionPlaces
@@ -19,6 +20,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider
 import com.intellij.openapi.wm.impl.welcomeScreen.NewWelcomeScreen
+import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenActionsUtil
 import com.intellij.platform.ProjectGeneratorManager
 import com.intellij.ui.ExperimentalUI
 import kotlinx.coroutines.CoroutineScope
@@ -84,6 +86,10 @@ open class NewProjectAction : AnAction(), DumbAware, NewProjectOrModuleAction {
     e.presentation.isEnabled = !service<NewProjectActionService>().isActionInProgress()
     updateActionIcon(e)
     updateActionText(this, e)
+    if (e.getData(WelcomeScreenActionsUtil.NON_MODAL_WELCOME_SCREEN) == true) {
+      e.presentation.icon = AllIcons.Nodes.Folder
+      e.presentation.text = ActionsBundle.message("action.NewDirectoryProject.welcome.text")
+    }
   }
 
   override fun getActionUpdateThread() = ActionUpdateThread.BGT

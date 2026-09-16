@@ -22,14 +22,14 @@ interface ChangeListManagerStatusProvider {
   /**
    * @return the component representing the status or `null`
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun getStatusComponent(project: Project): JComponent?
 
   companion object {
     /**
      * Subscribe to the status updates in [project]
      */
-    suspend fun consumeStatusComponents(project: Project, @RequiresEdt componentsConsumer: (List<JComponent>) -> Unit): Nothing {
+    suspend fun consumeStatusComponents(project: Project, @RequiresEdt(generateAssertion = false /* IJPL-115548 */) componentsConsumer: (List<JComponent>) -> Unit): Nothing {
       fun update() {
         val components = EP_NAME.extensionList.mapNotNull {
           it.getStatusComponent(project)

@@ -4,15 +4,16 @@
 package org.jetbrains.intellij.build.productLayout
 
 import com.intellij.platform.pluginGraph.PluginGraph
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.coroutineScope
 import kotlinx.serialization.json.Json
+import org.jetbrains.intellij.build.BuildLifetime
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.impl.BazelModuleOutputProvider
 import org.jetbrains.intellij.build.impl.JpsModuleOutputProvider
 import org.jetbrains.intellij.build.impl.bazelOutputRoot
 import org.jetbrains.intellij.build.productLayout.discovery.GenerationResult
 import org.jetbrains.intellij.build.productLayout.discovery.ModuleSetGenerationConfig
+import org.jetbrains.intellij.build.productLayout.discovery.ModuleSetSourceLabels
+import org.jetbrains.intellij.build.productLayout.discovery.discoverModuleSets
 import org.jetbrains.intellij.build.productLayout.discovery.findProductPropertiesSourceFile
 import org.jetbrains.intellij.build.productLayout.json.buildPluginGraphForJson
 import org.jetbrains.intellij.build.productLayout.json.streamModuleAnalysisJson
@@ -37,6 +38,23 @@ data class DiscoveredModuleSetSource(
   @JvmField val moduleSets: List<ModuleSet>,
   @JvmField val sourceFile: String,
 )
+
+fun discoverCommunityModuleSetSources(): Map<String, DiscoveredModuleSetSource> {
+  return mapOf(
+    ModuleSetSourceLabels.COMMUNITY to DiscoveredModuleSetSource(
+      moduleSets = discoverModuleSets(CommunityModuleSets),
+      sourceFile = "community/platform/build-scripts/src/org/jetbrains/intellij/build/productLayout/CommunityModuleSets.kt",
+    ),
+    ModuleSetSourceLabels.CORE to DiscoveredModuleSetSource(
+      moduleSets = discoverModuleSets(CoreModuleSets),
+      sourceFile = "community/platform/build-scripts/src/org/jetbrains/intellij/build/productLayout/CoreModuleSets.kt",
+    ),
+    ModuleSetSourceLabels.LIBRARIES to DiscoveredModuleSetSource(
+      moduleSets = discoverModuleSets(LibraryModuleSets),
+      sourceFile = "community/platform/build-scripts/src/org/jetbrains/intellij/build/productLayout/LibraryModuleSets.kt",
+    ),
+  )
+}
 
 /**
  * Determines product category based on module sets included in the content spec.
@@ -77,22 +95,22 @@ private fun determineProductCategory(contentSpec: ProductModulesContentSpec?): P
  * @param generateXmlImpl Lambda to generate XML files, returns generation result with errors and diffs
  * @param graphConfigProvider Optional provider for building ModuleSetGenerationConfig when JSON analysis needs PluginGraph
  */
-suspend fun runModuleSetMain(
+fun runModuleSetMain(
   args: Array<String>,
   communityModuleSetSources: Map<String, DiscoveredModuleSetSource>,
   ultimateModuleSets: List<ModuleSet>,
   testProducts: List<Pair<String, ProductModulesContentSpec>> = emptyList(),
   ultimateSourceFile: String?,
   projectRoot: Path,
-  generateXmlImpl: suspend (outputProvider: ModuleOutputProvider, options: GeneratorRunOptions) -> GenerationResult,
-  graphConfigProvider: (suspend (outputProvider: ModuleOutputProvider, options: GeneratorRunOptions) -> ModuleSetGenerationConfig)? = null,
+  generateXmlImpl: (outputProvider: ModuleOutputProvider, options: GeneratorRunOptions) -> GenerationResult,
+  graphConfigProvider: ((outputProvider: ModuleOutputProvider, options: GeneratorRunOptions) -> ModuleSetGenerationConfig)? = null,
 ) {
   withoutTracer {
     val options = parseGeneratorOptions(args)
     setProductDslLogFilter(options.logFilter)
 
-    coroutineScope {
-      val outputProvider = createModuleOutputProvider(projectRoot = projectRoot, scope = this)
+    BuildLifetime().use { lifetime ->
+      val outputProvider = createModuleOutputProvider(projectRoot = projectRoot, lifetime = lifetime)
       if (options.jsonFilter != null) {
         val filter = try {
           parseJsonArgument(options.jsonFilter)
@@ -137,7 +155,7 @@ suspend fun runModuleSetMain(
   }
 }
 
-private suspend fun jsonResponse(
+private fun jsonResponse(
   communityModuleSetSources: Map<String, DiscoveredModuleSetSource>,
   ultimateSourceFile: String?,
   ultimateModuleSets: List<ModuleSet>,
@@ -258,7 +276,7 @@ internal fun parseJsonArgument(
   }
 }
 
-private fun createModuleOutputProvider(projectRoot: Path, scope: CoroutineScope): ModuleOutputProvider {
+private fun createModuleOutputProvider(projectRoot: Path, lifetime: BuildLifetime): ModuleOutputProvider {
   val useTestCompilationOutput = true
   val project = JpsSerializationManager.getInstance().loadProject(
     projectRoot.toString(),
@@ -270,7 +288,7 @@ private fun createModuleOutputProvider(projectRoot: Path, scope: CoroutineScope)
     modules = project.modules,
     projectHome = projectRoot,
     bazelOutputRoot = bazelOutputRoot,
-    scope = scope,
+    lifetime = lifetime,
     useTestCompilationOutput = useTestCompilationOutput,
   )
 }

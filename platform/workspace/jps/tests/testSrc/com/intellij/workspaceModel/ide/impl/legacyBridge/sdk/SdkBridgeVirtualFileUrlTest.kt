@@ -70,20 +70,20 @@ class SdkBridgeVirtualFileUrlTest {
     SdkEntity(
       name = SDK_NAME,
       type = SDK_TYPE,
-      roots = listOf(SdkRoot(manager.getOrCreateFromUrl(CLASSES_URL), SdkRootTypeId("classPath"))),
+      roots = listOf(SdkRoot(manager.storeAndGet(CLASSES_URL), SdkRootTypeId("classPath"))),
       additionalData = "",
       entitySource = SdkBridgeImpl.createEntitySourceForSdk(InternalEnvironmentName.Local),
     ) {
-      homePath = manager.getOrCreateFromUrl(HOME_URL)
+      homePath = manager.storeAndGet(HOME_URL)
     }
 
   private fun assertUrlsBelongTo(manager: VirtualFileUrlManager, sdk: SdkEntityBuilder) {
     assertSame(
-      manager.getOrCreateFromUrl(CLASSES_URL), sdk.roots.single().url,
+      manager.storeAndGet(CLASSES_URL), sdk.roots.single().url,
       "the URL of the SDK root must be the instance from the given manager",
     )
     assertSame(
-      manager.getOrCreateFromUrl(HOME_URL), sdk.homePath,
+      manager.storeAndGet(HOME_URL), sdk.homePath,
       "the home path must be the instance from the given manager",
     )
   }

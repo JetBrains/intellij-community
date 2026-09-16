@@ -1,6 +1,17 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.platform.statistics.uploader` start
+content_module_jar(
+    libraries = [
+        # do not sort,
+        "@lib//:com-jetbrains-fus-reporting-fus-api",
+        "@lib//:jetbrains-fus-reporting-api-jvm",
+    ],
+    module = ":uploader",
+)
+### auto-generated section `dev intellij.platform.statistics.uploader` end
+
 ### auto-generated section `build intellij.platform.statistics.uploader` start
 jvm_library(
     name = "uploader",
@@ -36,15 +47,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(
-    libraries = [
-        # do not sort,
-        "@lib//:com-jetbrains-fus-reporting-fus-api",
-        "@lib//:jetbrains-fus-reporting-api-jvm",
-    ],
-    module = ":uploader",
-)
-
 jvm_library(
     name = "uploader_test_lib",
     testonly = True,
@@ -76,7 +78,6 @@ exports_files(
     [
         "intellij.platform.statistics.uploader.iml",
         "resources/intellij.platform.statistics.uploader.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

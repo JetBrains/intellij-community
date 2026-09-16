@@ -8,7 +8,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.EventDispatcher
 import com.intellij.util.asDisposable
-import com.intellij.util.asSafely
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.MessageBusFactory
 import com.intellij.util.messages.MessageBusOwner
@@ -30,10 +29,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import org.jetbrains.plugins.github.api.data.GHIssueComment
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReview
-import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRBranchesRefs
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRChangesDataProviderImpl
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRCommentsDataProviderImpl
@@ -42,6 +38,7 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProviderImpl
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataProviderImpl
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProviderImpl
+import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRTimelineDataProviderImpl
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRViewedStateDataProviderImpl
 import org.jetbrains.plugins.github.pullrequest.data.provider.detailsComputationFlow
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRChangesService
@@ -50,6 +47,7 @@ import org.jetbrains.plugins.github.pullrequest.data.service.GHPRDetailsService
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRFilesService
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRReviewService
+import org.jetbrains.plugins.github.pullrequest.data.service.GHPRTimelineService
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRBranchesViewModel.Companion.getHeadRemoteDescriptor
 import org.jetbrains.plugins.github.util.AcquirableScopedValueOwner
 import java.util.EventListener
@@ -59,18 +57,18 @@ internal class GHPRDataProviderRepositoryImpl(
   parentCs: CoroutineScope,
   private val repositoryService: GHPRRepositoryDataService,
   private val detailsService: GHPRDetailsService,
+  private val timelineService: GHPRTimelineService,
   private val reviewService: GHPRReviewService,
   private val filesService: GHPRFilesService,
   private val commentService: GHPRCommentService,
   private val changesService: GHPRChangesService,
-  private val timelineLoaderFactory: CoroutineScope.(GHPRIdentifier) -> GHListLoader<GHPRTimelineItem>,
 ) : GHPRDataProviderRepository {
   private val cs = parentCs.childScope(javaClass.name)
 
   private val cache = mutableMapOf<GHPRIdentifier, AcquirableScopedValueOwner<GHPRDataProvider>>()
   private val providerDetailsLoadedEventDispatcher = EventDispatcher.create(DetailsLoadedListener::class.java)
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun getDataProvider(id: GHPRIdentifier, hostCs: CoroutineScope): GHPRDataProvider =
     cache.getOrPut(id) {
       AcquirableScopedValueOwner(cs) {
@@ -78,7 +76,7 @@ internal class GHPRDataProviderRepositoryImpl(
       }
     }.acquireValue(hostCs)
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun findDataProvider(id: GHPRIdentifier): GHPRDataProvider? = cache[id]?.value
 
   private fun CoroutineScope.createDataProvider(id: GHPRIdentifier): GHPRDataProvider {
@@ -102,6 +100,7 @@ internal class GHPRDataProviderRepositoryImpl(
       detailsData.launchDetailsReloadOnHeadRevChange(repositoryService.remoteCoordinates)
     }
 
+    val timelineData = GHPRTimelineDataProviderImpl(providerCs, timelineService, messageBus, id)
     val changesData = GHPRChangesDataProviderImpl(providerCs, changesService, { detailsData.loadDetails().refs }, id)
     val reviewData = GHPRReviewDataProviderImpl(providerCs, reviewService, changesData, id, messageBus)
     val viewedStateData = GHPRViewedStateDataProviderImpl(providerCs, filesService, id)
@@ -116,37 +115,6 @@ internal class GHPRDataProviderRepositoryImpl(
       }
     }
 
-    val timelineLoaderHolder = AcquirableScopedValueOwner(providerCs) {
-      val cs = this
-      timelineLoaderFactory(id).also { loader ->
-        messageBus.connect(cs).subscribe(GHPRDataOperationsListener.TOPIC, object : GHPRDataOperationsListener {
-          override fun onMetadataChanged() = loader.loadMore(true)
-
-          override fun onCommentAdded() = loader.loadMore(true)
-          override fun onCommentUpdated(commentId: String, newBody: String) {
-            loader.updateData { item ->
-              item.asSafely<GHIssueComment>()?.takeIf { it.id == commentId }?.copy(body = newBody)
-            }
-            loader.loadMore(true)
-          }
-
-          override fun onCommentDeleted(commentId: String) {
-            loader.removeData { it is GHIssueComment && it.id == commentId }
-            loader.loadMore(true)
-          }
-
-          override fun onReviewsChanged() = loader.loadMore(true)
-
-          override fun onReviewUpdated(reviewId: String, newBody: String) {
-            loader.updateData { item ->
-              item.asSafely<GHPullRequestReview>()?.takeIf { it.id == reviewId }?.copy(body = newBody)
-            }
-            loader.loadMore(true)
-          }
-        })
-      }
-    }
-
     messageBus.connect(providerCs.nestedDisposable()).subscribe(GHPRDataOperationsListener.TOPIC, object : GHPRDataOperationsListener {
       override fun onReviewsChanged() {
         providerCs.launch {
@@ -157,7 +125,7 @@ internal class GHPRDataProviderRepositoryImpl(
     })
 
     return GHPRDataProviderImpl(
-      id, detailsData, changesData, commentsData, reviewData, viewedStateData, timelineLoaderHolder
+      id, detailsData, timelineData, changesData, commentsData, reviewData, viewedStateData
     )
   }
 

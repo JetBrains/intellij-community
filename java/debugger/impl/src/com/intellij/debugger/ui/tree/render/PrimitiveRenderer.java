@@ -66,23 +66,23 @@ public class PrimitiveRenderer extends NodeRendererImpl {
     if (value == null) {
       return "null";
     }
-    else if (value instanceof PrimitiveValue) {
+    else if (value instanceof PrimitiveValue primitiveValue) {
       String label;
-      if (value instanceof CharValue) {
+      if (value instanceof CharValue charValue) {
         StringBuilder buf = new StringBuilder();
-        appendCharValue((CharValue)value, buf);
+        appendCharValue(charValue, buf);
         if (SHOW_HEX_VALUE) {
-          appendHexValue((CharValue)value, buf);
+          appendHexValue(charValue, buf);
         }
         else {
-          buf.append(' ').append(((PrimitiveValue)value).longValue());
+          buf.append(' ').append(primitiveValue.longValue());
         }
         label = buf.toString();
       }
       else if (SHOW_HEX_VALUE) {
         StringBuilder buf = new StringBuilder();
         buf.append(value);
-        appendHexValue((PrimitiveValue)value, buf);
+        appendHexValue(primitiveValue, buf);
         label = buf.toString();
       }
       else {

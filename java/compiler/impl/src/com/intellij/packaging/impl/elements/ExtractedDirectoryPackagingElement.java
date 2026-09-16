@@ -2,6 +2,7 @@
 package com.intellij.packaging.impl.elements;
 
 import com.intellij.java.workspace.entities.ExtractedDirectoryPackagingElementEntity;
+import com.intellij.java.workspace.entities.ExtractedDirectoryPackagingElementEntityModifications;
 import com.intellij.java.workspace.entities.PackagingElementEntity;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -109,9 +110,10 @@ public class ExtractedDirectoryPackagingElement extends FileOrDirectoryCopyPacka
     VirtualFileUrlManager fileUrlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager();
     Objects.requireNonNull(this.myFilePath, "filePath is not specified");
     Objects.requireNonNull(this.myPathInJar, "pathInJar is not specified");
-    VirtualFileUrl fileUrl = fileUrlManager.getOrCreateFromUrl(VfsUtilCore.pathToUrl(this.myFilePath));
-
-    ExtractedDirectoryPackagingElementEntity addedEntity = diff.addEntity(ExtractedDirectoryPackagingElementEntity.create(fileUrl, this.myPathInJar, source));
+    VirtualFileUrl fileUrl = fileUrlManager.storeAndGet(VfsUtilCore.pathToUrl(this.myFilePath));
+    ExtractedDirectoryPackagingElementEntity addedEntity = diff.addEntity(
+      ExtractedDirectoryPackagingElementEntityModifications.createExtractedDirectoryPackagingElementEntity(fileUrl, this.myPathInJar,
+                                                                                                           source));
     diff.getMutableExternalMapping(PackagingExternalMapping.key).addMapping(addedEntity, this);
     return getBuilder(diff, addedEntity);
   }

@@ -11,6 +11,10 @@ jps_test(
 
 ### skip generation section `test intellij.platform.threadDumpParser.tests`
 
+### auto-generated section `dev intellij.platform.threadDumpParser` start
+content_module_jar(module = ":threadDumpParser")
+### auto-generated section `dev intellij.platform.threadDumpParser` end
+
 ### auto-generated section `build intellij.platform.threadDumpParser` start
 jvm_library(
     name = "threadDumpParser",
@@ -41,8 +45,6 @@ jvm_library(
         "//libraries/kotlinx/serialization/json",
     ],
 )
-
-content_module_jar(module = ":threadDumpParser")
 
 jvm_library(
     name = "threadDumpParser_test_lib",
@@ -79,7 +81,6 @@ exports_files(
     [
         "intellij.platform.threadDumpParser.iml",
         "resources/intellij.platform.threadDumpParser.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

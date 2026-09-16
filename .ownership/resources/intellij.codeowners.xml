@@ -3,6 +3,7 @@
   <dependencies>
     <module name="intellij.libraries.kaml"/>
     <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.squareup.okio.jvm"/>
   </dependencies>
   <!-- endregion -->
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->

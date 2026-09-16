@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.markdown.figmaAdvertiser` start
+content_module_jar(module = ":figmaAdvertiser")
+### auto-generated section `dev intellij.markdown.figmaAdvertiser` end
+
 ### auto-generated section `build intellij.markdown.figmaAdvertiser` start
 jvm_library(
     name = "figmaAdvertiser",
@@ -34,8 +38,6 @@ jvm_library(
         "//platform/util",
     ],
 )
-
-content_module_jar(module = ":figmaAdvertiser")
 
 jvm_library(
     name = "figmaAdvertiser_test_lib",

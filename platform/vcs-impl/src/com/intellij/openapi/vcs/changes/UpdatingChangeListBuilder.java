@@ -4,43 +4,39 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.util.Factory;
-import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsKey;
-import com.intellij.openapi.vcs.changes.ChangeListWorker.ChangeListUpdater;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.function.Supplier;
 
 final class UpdatingChangeListBuilder implements ChangelistBuilder {
   private static final Logger LOG = Logger.getInstance(UpdatingChangeListBuilder.class);
 
   private final @NotNull VcsDirtyScope myScope;
-  private final @NotNull ChangeListUpdater myChangeListUpdater;
+  private final @NotNull ChangeListWorker.ForUpdate myChangeListUpdater;
   private final @NotNull FileHolderComposite myComposite;
   private final @NotNull Supplier<Boolean> myDisposedGetter;
 
   private final @NotNull ProjectLevelVcsManager myVcsManager;
   private final @NotNull FoldersCutDownWorker myFoldersCutDownWorker;
 
-  UpdatingChangeListBuilder(@NotNull VcsDirtyScope scope,
-                            @NotNull ChangeListUpdater changeListUpdater,
+  UpdatingChangeListBuilder(@NotNull Project project,
+                            @NotNull VcsDirtyScope scope,
+                            @NotNull ChangeListWorker.ForUpdate changeListUpdater,
                             @NotNull FileHolderComposite composite,
                             @NotNull Supplier<Boolean> disposedGetter) {
     myScope = scope;
     myChangeListUpdater = changeListUpdater;
     myComposite = composite;
     myDisposedGetter = disposedGetter;
-    myVcsManager = ProjectLevelVcsManager.getInstance(changeListUpdater.getProject());
+    myVcsManager = ProjectLevelVcsManager.getInstance(project);
     myFoldersCutDownWorker = new FoldersCutDownWorker();
   }
 
@@ -94,7 +90,7 @@ final class UpdatingChangeListBuilder implements ChangelistBuilder {
   }
 
   @Override
-  public void removeRegisteredChangeFor(FilePath path) {
+  public void removeRegisteredChangeFor(@NotNull FilePath path) {
     myChangeListUpdater.removeRegisteredChangeFor(path);
   }
 

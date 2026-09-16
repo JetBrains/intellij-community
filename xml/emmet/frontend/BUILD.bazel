@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.xml.emmet.frontend` start
+content_module_jar(module = ":frontend")
+### auto-generated section `dev intellij.xml.emmet.frontend` end
+
 ### auto-generated section `build intellij.xml.emmet.frontend` start
 jvm_provided_library(
     name = "platform_core-ui_provided",
@@ -84,8 +88,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":frontend")
-
 jvm_library(
     name = "frontend_test_lib",
     testonly = True,
@@ -132,7 +134,6 @@ exports_files(
     [
         "intellij.xml.emmet.frontend.iml",
         "resources/intellij.xml.emmet.frontend.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

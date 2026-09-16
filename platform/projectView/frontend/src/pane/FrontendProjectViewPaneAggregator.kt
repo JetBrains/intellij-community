@@ -44,7 +44,7 @@ internal class FrontendProjectViewPaneAggregator(
   }
 
   private val backendServiceDeferred = coroutineScope.async(CoroutineName("Waiting for the Project View backend")) {
-    BackendDelegatingProjectViewPaneService(project, ProjectViewRpc.getInstance())
+    BackendDelegatingProjectViewPaneService(project, ProjectViewRpc.awaitConnectionAndGetInstance())
   }
   
   // null means "not loaded yet", as opposed to "loaded, but there are no panes"
@@ -120,7 +120,7 @@ internal class FrontendProjectViewPaneAggregator(
     }.distinctUntilChanged()
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun createPane(descriptor: ProjectViewPaneDescriptorImpl): FrontendProjectViewPane? {
     return when (descriptor.kind) {
       ProjectViewPaneKind.BACKEND -> TreeBasedFrontendProjectViewPane(project, descriptor)

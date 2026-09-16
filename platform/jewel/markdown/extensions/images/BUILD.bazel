@@ -12,6 +12,10 @@ jps_test(
 
 ### skip generation section `test intellij.platform.jewel.markdown.extensions.images.tests`
 
+### auto-generated section `dev intellij.platform.jewel.markdown.extensions.images` start
+content_module_jar(module = ":images")
+### auto-generated section `dev intellij.platform.jewel.markdown.extensions.images` end
+
 ### auto-generated section `build intellij.platform.jewel.markdown.extensions.images` start
 create_kotlinc_options(
     name = "custom_images",
@@ -57,8 +61,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":images")
-
 jvm_library(
     name = "images_test_lib",
     testonly = True,
@@ -96,7 +98,6 @@ exports_files(
     [
         "intellij.platform.jewel.markdown.extensions.images.iml",
         "src/main/resources/intellij.platform.jewel.markdown.extensions.images.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

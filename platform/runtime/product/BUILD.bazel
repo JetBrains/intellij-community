@@ -2,6 +2,10 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.platform.runtime.product` start
+content_module_jar(module = ":product")
+### auto-generated section `dev intellij.platform.runtime.product` end
+
 ### auto-generated section `build intellij.platform.runtime.product` start
 create_kotlinc_options(
     name = "custom_product",
@@ -35,8 +39,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":product")
-
 jvm_library(
     name = "product_test_lib",
     testonly = True,
@@ -62,7 +64,6 @@ exports_files(
     [
         "intellij.platform.runtime.product.iml",
         "resources/intellij.platform.runtime.product.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

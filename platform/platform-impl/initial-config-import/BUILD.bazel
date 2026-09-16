@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.platform.ide.initialConfigImport` start
+content_module_jar(module = ":initial-config-import")
+### auto-generated section `dev intellij.platform.ide.initialConfigImport` end
+
 ### auto-generated section `build intellij.platform.ide.initialConfigImport` start
 jvm_library(
     name = "initial-config-import",
@@ -39,8 +43,6 @@ jvm_library(
         "//platform/util/concurrency",
     ],
 )
-
-content_module_jar(module = ":initial-config-import")
 
 jvm_library(
     name = "initial-config-import_test_lib",
@@ -81,7 +83,6 @@ exports_files(
         "intellij.platform.ide.initialConfigImport.iml",
         "resources/intellij.platform.ide.initialConfigImport.actions.xml",
         "resources/intellij.platform.ide.initialConfigImport.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

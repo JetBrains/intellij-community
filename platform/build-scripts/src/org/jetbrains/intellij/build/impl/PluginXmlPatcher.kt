@@ -90,11 +90,11 @@ internal class PluginDescriptorPatchRequest(
  *   the assembly decides which `<module/>` survives with a filter that reads the JPS project model.
  * @param patchText the last stage. It is not data for the same reason: it runs over the text this body produced.
  */
-internal suspend fun applyPluginDescriptorPatch(
+internal fun applyPluginDescriptorPatch(
   request: PluginDescriptorPatchRequest,
   xIncludeResolver: XIncludeElementResolverImpl,
   stages: DevDistDescriptorStages?,
-  embedContentModules: suspend (rootElement: Element) -> Unit,
+  embedContentModules: (rootElement: Element) -> Unit,
   patchText: (text: String) -> String,
 ): String {
   stages?.add(DevDistDescriptorStage.SOURCE, request.sourceContent)
@@ -181,7 +181,7 @@ internal fun checkProducedPluginDescriptor(
  * are is the fragment's `patched_descriptors` declaration, and a plugin it does not name takes the computed path
  * unchanged. What the two paths publish, and how, is the same - see [publishPatchedPluginXml].
  */
-internal suspend fun patchPluginXml(
+internal fun patchPluginXml(
   moduleOutputPatcher: ModuleOutputPatcher,
   platformLayout: PlatformLayout,
   pluginLayout: PluginLayout,

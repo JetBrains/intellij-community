@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.vcs.git.performanceTesting` start
+content_module_jar(module = ":performanceTesting")
+### auto-generated section `dev intellij.vcs.git.performanceTesting` end
+
 ### auto-generated section `build intellij.vcs.git.performanceTesting` start
 jvm_library(
     name = "performanceTesting",
@@ -41,8 +45,6 @@ jvm_library(
         "//plugins/git4idea/shared",
     ],
 )
-
-content_module_jar(module = ":performanceTesting")
 
 jvm_library(
     name = "performanceTesting_test_lib",

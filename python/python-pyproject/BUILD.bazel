@@ -11,6 +11,10 @@ jps_test(
 )
 ### skip generation section `test intellij.python.pyproject.tests`
 
+### auto-generated section `dev intellij.python.pyproject` start
+content_module_jar(module = ":pyproject")
+### auto-generated section `dev intellij.python.pyproject` end
+
 ### auto-generated section `build intellij.python.pyproject` start
 create_kotlinc_options(
     name = "custom_pyproject",
@@ -43,7 +47,6 @@ jvm_library(
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//python/openapi:community",
-        "//python/python-psi-impl:psi-impl",
         "//platform/core-api:core",
         "//python/python-sdk/backend",
         "//platform/util",
@@ -71,10 +74,9 @@ jvm_library(
         "//jps/model-api:model",
         "//platform/util:util-ui",
         "//python/python-requirements/backend",
+        "//python/python-sdk/common",
     ],
 )
-
-content_module_jar(module = ":pyproject")
 
 jvm_library(
     name = "pyproject_test_lib",
@@ -95,7 +97,6 @@ jvm_library(
         # do not sort,
         ":pyproject",
         "//python/openapi:community_test_lib",
-        "//python/python-psi-impl:psi-impl_test_lib",
         "//platform/core-api:core_test_lib",
         "//python/python-sdk/backend:backend_test_lib",
         "//platform/util:util_test_lib",
@@ -123,6 +124,7 @@ jvm_library(
         "//jps/model-api:model_test_lib",
         "//platform/util:util-ui_test_lib",
         "//python/python-requirements/backend:backend_test_lib",
+        "//python/python-sdk/common:common_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.pyproject` end
@@ -152,6 +154,7 @@ jvm_library(
     ),
     module_name = "intellij.python.pyproject.tests",
     visibility = ["//visibility:public"],
+    runtime_deps = ["//xml/plugin"],
 )
 
 jvm_library(
@@ -181,6 +184,7 @@ jvm_library(
         "//platform/ide-core:ide-core_test_lib",
         "//platform/progress/shared:ide-progress_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
+        "//xml/plugin:plugin_test_lib",
     ],
     deps = [
         # do not sort,

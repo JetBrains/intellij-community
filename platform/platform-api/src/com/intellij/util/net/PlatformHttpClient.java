@@ -31,6 +31,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpHeaders;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.net.http.WebSocket;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -379,6 +380,36 @@ public final class PlatformHttpClient {
     @Override
     public Optional<Executor> executor() {
       return delegate.executor();
+    }
+
+    @Override
+    public WebSocket.Builder newWebSocketBuilder() {
+      return delegate.newWebSocketBuilder();
+    }
+
+    @Override
+    public void shutdown() {
+      delegate.shutdown();
+    }
+
+    @Override
+    public boolean awaitTermination(Duration duration) throws InterruptedException {
+      return delegate.awaitTermination(duration);
+    }
+
+    @Override
+    public boolean isTerminated() {
+      return delegate.isTerminated();
+    }
+
+    @Override
+    public void shutdownNow() {
+      delegate.shutdownNow();
+    }
+
+    @Override
+    public void close() {
+      delegate.close();
     }
 
     @Override

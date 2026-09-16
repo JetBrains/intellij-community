@@ -74,9 +74,9 @@ internal class WorkspaceFolderImporter(
 
     for (root in ContentRootCollector.collect(moduleType, projectRoot, allFolders)) {
       val excludes = root.excludeFolders
-        .map { exclude -> virtualFileUrlManager.getOrCreateFromUrl(VfsUtilCore.pathToUrl(exclude.path)) }
+        .map { exclude -> virtualFileUrlManager.storeAndGet(VfsUtilCore.pathToUrl(exclude.path)) }
         .map { ExcludeUrlEntity(it, module.entitySource) }
-      val newContentRootEntity = ContentRootEntity(virtualFileUrlManager.getOrCreateFromUrl(VfsUtilCore.pathToUrl(root.path)),
+      val newContentRootEntity = ContentRootEntity(virtualFileUrlManager.storeAndGet(VfsUtilCore.pathToUrl(root.path)),
                                                    emptyList(), module.entitySource) {
         this.excludedUrls = excludes
       }
@@ -134,8 +134,8 @@ internal class WorkspaceFolderImporter(
       else -> error("${folder.type} doesn't  match to maven root item")
     }
 
-    val sourceRootEntity = SourceRootEntity(virtualFileUrlManager.getOrCreateFromUrl(VfsUtilCore.pathToUrl(folder.path)), rootTypeId,
-                                                              contentRootEntity.entitySource)
+    val sourceRootEntity = SourceRootEntity(virtualFileUrlManager.storeAndGet(VfsUtilCore.pathToUrl(folder.path)), rootTypeId,
+                                            contentRootEntity.entitySource)
 
     val isResource = JAVA_RESOURCE_ROOT_ENTITY_TYPE_ID == rootTypeId
                      || JAVA_TEST_RESOURCE_ROOT_ENTITY_TYPE_ID == rootTypeId

@@ -52,7 +52,6 @@
     <orderEntry type="module" module-name="intellij.java.guiForms.jps" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.structuralSearch.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.json.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.json.performance.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.json.networknt.wrapper.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.tests" scope="TEST" />
@@ -74,6 +73,7 @@
     <orderEntry type="module" module-name="intellij.properties.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.properties.propertyBased.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.execution.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide.util.io.native.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.commander" scope="TEST" />
     <orderEntry type="module" module-name="intellij.configurationScript" scope="TEST" />
     <orderEntry type="module" module-name="intellij.configurationScript.test.java" scope="TEST" />
@@ -331,11 +331,13 @@
     <orderEntry type="module" module-name="intellij.mermaid.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.discoverability.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.dev.leakDetection.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.dev.pluginLoading.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.mcpserver.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.mcpserver.terminal.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.mcpserver.terminal.frontend.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testExtensions" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.rpc.tests" scope="TEST" />
   </component>
 </module>

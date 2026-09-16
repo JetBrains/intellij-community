@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.ThrottledLogger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.IndexExtension;
@@ -17,6 +18,7 @@ import com.intellij.util.indexing.impl.forward.ForwardIndex;
 import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor;
 import com.intellij.util.indexing.impl.forward.IntForwardIndex;
 import com.intellij.util.indexing.impl.forward.IntForwardIndexAccessor;
+import com.intellij.util.io.ClosedStorageException;
 import com.intellij.util.io.MeasurableIndexStore;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.ApiStatus.Internal;
@@ -464,7 +466,12 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
       }
     }
     catch (CancellationException e) {
-      LOG.error("CancellationException is not expected here! (" + e + ")");
+      if (!myDisposed) {
+        //RC: actually, AlreadyDisposedException and alike are perfectly legal here: NCS doesn't prohibit 'it is impossible
+        //    to continue the task'-like (P)CE, it only prohibits (P)CE due to explicit task cancellation. But AlreadyDisposedException
+        //    is unaccessible from this module, so we can't filter it
+        LOG.error("CancellationException is not expected here! (" + e + ")");
+      }
       throw e;
     }
     catch (Throwable e) { // e.g. IOException, AssertionError
@@ -500,9 +507,16 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
         MapReduceIndex.this.updateWith(updateData);
       }
       catch (StorageException | CancellationException ex) {
-        logStorageUpdateException(ex);
+        if (ExceptionUtil.causedBy(ex, ClosedStorageException.class)) {
+          //TODO RC: here we skipping the rebuild because closing index storage on shutdown is considered benign.
+          //         But this is not 100% true: index storages are not atomic/transactional, so the close may break
+          //         logical operation in the middle, some parts persisted, some not -- which is a corrupted state
+          //         and needs a rebuild. But to always rebuild here is just too many index rebuilds -- so the problem
+          //         is left for future generations to think about
+          return false;
+        }
 
-        //MAYBE RC: ClosedStorageException could legally happen (e.g., during indexes' shutdown), maybe ignore it here?
+        logStorageUpdateException(ex);
         MapReduceIndex.this.requestRebuild(ex);
         return false;
       }

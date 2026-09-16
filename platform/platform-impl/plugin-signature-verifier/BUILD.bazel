@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.platform.ide.pluginSignatureVerifier` start
+content_module_jar(module = ":plugin-signature-verifier")
+### auto-generated section `dev intellij.platform.ide.pluginSignatureVerifier` end
+
 ### auto-generated section `build intellij.platform.ide.pluginSignatureVerifier` start
 jvm_library(
     name = "plugin-signature-verifier",
@@ -34,8 +38,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":plugin-signature-verifier")
-
 jvm_library(
     name = "plugin-signature-verifier_test_lib",
     testonly = True,
@@ -67,7 +69,6 @@ exports_files(
     [
         "intellij.platform.ide.pluginSignatureVerifier.iml",
         "resources/intellij.platform.ide.pluginSignatureVerifier.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

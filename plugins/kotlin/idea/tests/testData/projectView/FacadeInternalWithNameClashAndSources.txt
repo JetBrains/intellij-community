@@ -1,7 +1,7 @@
 Node: Mix__FacadeFile1Kt
 User object class: KtInternalFileTreeNode
 
-Value: KtLightClassForDecompiledDeclaration of PsiFile:Mix__FacadeFile1Kt.class
+Value: KtLightClassForDecompiledFacade of PsiFile:Mix__FacadeFile1Kt.class
 Value file: kotlinMockLibrary.jar!/one/two/Mix__FacadeFile1Kt.class
 
 Navigation item #0: KtFile: facadeFile1.kt

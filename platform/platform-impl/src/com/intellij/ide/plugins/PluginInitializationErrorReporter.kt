@@ -4,6 +4,7 @@ package com.intellij.ide.plugins
 import com.intellij.core.CoreBundle
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.plugins.marketplace.statistics.enums.PluginManagerOpenSourceEnum
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
@@ -110,7 +111,7 @@ internal class PluginInitializationErrorStartupReporter : AppLifecycleListener {
 
   internal fun prepareEditAction(): AnAction {
     return NotificationAction.createSimpleExpiring(CoreBundle.message("link.text.open.plugin.manager")) {
-      PluginManagerConfigurableUtils.showInstalledTabWithSearch(null, "/invalid")
+      PluginManagerConfigurableUtils.showInstalledTabWithSearch(null, "/invalid", PluginManagerOpenSourceEnum.NOTIFICATION)
     }
   }
 }

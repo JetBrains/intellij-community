@@ -4,7 +4,7 @@ package com.jetbrains.python.packaging.toolwindow.ui
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.community.execService.Args
 import com.intellij.python.pyproject.model.api.getPyProjectTomlFile
-import com.intellij.python.pytools.PyTool
+import com.intellij.python.pytools.backend.PyTool
 import com.intellij.python.pytools.executeOn
 import com.jetbrains.python.Result as PyR
 import com.jetbrains.python.packaging.PyPackageName
@@ -125,7 +125,7 @@ internal sealed interface CliCommandResult {
 internal suspend fun runCliCommand(
   moduleOrProject: ModuleOrProject,
   service: PyPackagingToolWindowService,
-  tool: PyTool,
+  tool: PyTool<*>,
   args: List<String>,
 ): CliCommandResult =
   when (val result = tool.executeOn(moduleOrProject, Args(*args.toTypedArray()))) {

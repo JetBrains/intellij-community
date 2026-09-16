@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.commons.cli` start
+content_module_jar(
+    libraries = ["@lib//:libraries-commons-cli-commons-cli"],
+    module = ":cli",
+)
+### auto-generated section `dev intellij.libraries.commons.cli` end
+
 ### auto-generated section `build intellij.libraries.commons.cli` start
 jvm_library(
     name = "cli",
@@ -16,11 +23,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-commons-cli-commons-cli"],
     runtime_deps = ["@lib//:libraries-commons-cli-commons-cli"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-commons-cli-commons-cli"],
-    module = ":cli",
 )
 
 jvm_library(
@@ -43,7 +45,6 @@ exports_files(
     [
         "intellij.libraries.commons.cli.iml",
         "resources/intellij.libraries.commons.cli.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

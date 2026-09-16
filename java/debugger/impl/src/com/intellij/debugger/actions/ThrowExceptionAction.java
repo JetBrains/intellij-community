@@ -105,8 +105,8 @@ public class ThrowExceptionAction extends DebuggerAction {
                          new XDebuggerEvaluator.XEvaluationCallback() {
                            @Override
                            public void evaluated(@NotNull XValue result) {
-                             if (result instanceof JavaValue) {
-                               throwException(((JavaValue)result).getDescriptor().getValue(),
+                             if (result instanceof JavaValue value) {
+                               throwException(value.getDescriptor().getValue(),
                                               stackFrame.getDescriptor().getFrameProxy().threadProxy(), debugProcess, dialog);
                              }
                            }

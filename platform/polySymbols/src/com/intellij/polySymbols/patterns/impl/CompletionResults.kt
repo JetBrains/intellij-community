@@ -2,13 +2,16 @@
 package com.intellij.polySymbols.patterns.impl
 
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
+import org.jetbrains.annotations.ApiStatus
 
-internal data class CompletionResults(
+@ApiStatus.Internal
+@ConsistentCopyVisibility
+data class CompletionResults internal constructor(
   val items: List<PolySymbolCodeCompletionItem>,
   val required: Boolean = true,
 ) {
 
-  constructor(
+  internal constructor(
     item: PolySymbolCodeCompletionItem,
     required: Boolean = true,
     stop: Boolean = false,

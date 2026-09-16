@@ -24,7 +24,7 @@ jvm_library(
         "//libraries/lsp4j",
         "//libraries/lsp4j/jsonrpc",
         "//platform/testRunner",
-        "//libraries/misc/plugin",
+        "//xml/plugin",
     ],
 )
 
@@ -54,11 +54,11 @@ jvm_library(
         "//libraries/lsp4j:lsp4j_test_lib",
         "//libraries/lsp4j/jsonrpc:jsonrpc_test_lib",
         "//platform/testRunner:testRunner_test_lib",
-        "//libraries/misc/plugin:plugin_test_lib",
         "//platform/ide-core:ide-core_test_lib",
         "//platform/platform-util-io:ide-util-io_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
         "//platform/platform-impl/internal:internal_test_lib",
+        "//xml/plugin:plugin_test_lib",
     ],
     deps = [
         # do not sort,

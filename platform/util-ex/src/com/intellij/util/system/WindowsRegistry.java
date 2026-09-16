@@ -96,21 +96,21 @@ public final class WindowsRegistry {
     if (view == View.DEFAULT) {
       return getString(hive, key, value);
     }
-    try (Arena arena = Arena.ofConfined()) {
-      MemorySegment openedKey = arena.allocate(JAVA_LONG);
-      int status = openKey(hive.handle, arena.allocateFrom(key, StandardCharsets.UTF_16LE), KEY_READ | view.accessRight, openedKey);
+    try (var arena = Arena.ofConfined()) {
+      var openedKey = arena.allocate(JAVA_LONG);
+      var status = openKey(hive.handle, arena.allocateFrom(key, StandardCharsets.UTF_16LE), KEY_READ | view.accessRight, openedKey);
       if (status == ERROR_FILE_NOT_FOUND) {
         return null;
       }
       if (status != ERROR_SUCCESS) {
         throw new RegistryException("RegOpenKeyExW(" + key + ")", status);
       }
-      long handle = openedKey.get(JAVA_LONG, 0);
+      var handle = openedKey.get(JAVA_LONG, 0);
       try {
         return toString(getValue(handle, MemorySegment.NULL, arena.allocateFrom(value, StandardCharsets.UTF_16LE), RRF_RT_REG_SZ | RRF_RT_REG_EXPAND_SZ | RRF_NOEXPAND, arena, key + '\\' + value));
       }
       finally {
-        int ignored = closeKey(handle);
+        var _ = closeKey(handle);
       }
     }
   }
@@ -119,28 +119,28 @@ public final class WindowsRegistry {
    * @return the names of the direct subkeys, or {@code null} when the key does not exist
    */
   public static @NotNull String @Nullable [] subKeys(@NotNull Hive hive, @NotNull String key) throws RegistryException {
-    try (Arena arena = Arena.ofConfined()) {
-      MemorySegment openedKey = arena.allocate(JAVA_LONG);
-      int status = openKey(hive.handle, arena.allocateFrom(key, StandardCharsets.UTF_16LE), KEY_READ, openedKey);
+    try (var arena = Arena.ofConfined()) {
+      var openedKey = arena.allocate(JAVA_LONG);
+      var status = openKey(hive.handle, arena.allocateFrom(key, StandardCharsets.UTF_16LE), KEY_READ, openedKey);
       if (status == ERROR_FILE_NOT_FOUND) {
         return null;
       }
       if (status != ERROR_SUCCESS) {
         throw new RegistryException("RegOpenKeyExW(" + key + ")", status);
       }
-      long handle = openedKey.get(JAVA_LONG, 0);
+      var handle = openedKey.get(JAVA_LONG, 0);
       try {
-        MemorySegment count = arena.allocate(JAVA_INT);
-        MemorySegment maxNameLength = arena.allocate(JAVA_INT);
+        var count = arena.allocate(JAVA_INT);
+        var maxNameLength = arena.allocate(JAVA_INT);
         status = (int)Handles.REG_QUERY_INFO_KEY.invokeExact(handle, MemorySegment.NULL, MemorySegment.NULL, MemorySegment.NULL, count, maxNameLength,
                                                              MemorySegment.NULL, MemorySegment.NULL, MemorySegment.NULL, MemorySegment.NULL, MemorySegment.NULL, MemorySegment.NULL);
         if (status != ERROR_SUCCESS) {
           throw new RegistryException("RegQueryInfoKeyW(" + key + ")", status);
         }
-        int capacity = maxNameLength.get(JAVA_INT, 0) + 1;
-        MemorySegment name = arena.allocate(2L * capacity);
-        MemorySegment nameLength = arena.allocate(JAVA_INT);
-        String[] result = new String[count.get(JAVA_INT, 0)];
+        var capacity = maxNameLength.get(JAVA_INT, 0) + 1;
+        var name = arena.allocate(2L * capacity);
+        var nameLength = arena.allocate(JAVA_INT);
+        var result = new String[count.get(JAVA_INT, 0)];
         for (int i = 0; i < result.length; i++) {
           nameLength.set(JAVA_INT, 0, capacity);
           status = (int)Handles.REG_ENUM_KEY_EX.invokeExact(handle, i, name, nameLength, MemorySegment.NULL, MemorySegment.NULL, MemorySegment.NULL, MemorySegment.NULL);
@@ -158,7 +158,7 @@ public final class WindowsRegistry {
         throw new IllegalStateException(t);
       }
       finally {
-        int ignored = closeKey(handle);
+        var _ = closeKey(handle);
       }
     }
   }
@@ -167,8 +167,8 @@ public final class WindowsRegistry {
     if (data == null) {
       return null;
     }
-    String text = new String(data, StandardCharsets.UTF_16LE);
-    int terminator = text.indexOf('\0');
+    var text = new String(data, StandardCharsets.UTF_16LE);
+    var terminator = text.indexOf('\0');
     return terminator >= 0 ? text.substring(0, terminator) : text;
   }
 
@@ -176,7 +176,7 @@ public final class WindowsRegistry {
    * @return a {@code REG_DWORD} value, or {@code null} when the key or the value does not exist
    */
   public static @Nullable Integer getInt(@NotNull Hive hive, @NotNull String key, @NotNull String value) throws RegistryException {
-    byte[] data = getValue(hive, key, value, RRF_RT_REG_DWORD);
+    var data = getValue(hive, key, value, RRF_RT_REG_DWORD);
     if (data == null) {
       return null;
     }
@@ -189,23 +189,23 @@ public final class WindowsRegistry {
 
   /** Reads the raw bytes of a value with {@code RegGetValueW}: one call for the size, one for the data. */
   private static byte @Nullable [] getValue(@NotNull Hive hive, @NotNull String key, @NotNull String value, int flags) throws RegistryException {
-    try (Arena arena = Arena.ofConfined()) {
-      MemorySegment subKey = arena.allocateFrom(key, StandardCharsets.UTF_16LE);
-      MemorySegment valueName = arena.allocateFrom(value, StandardCharsets.UTF_16LE);
+    try (var arena = Arena.ofConfined()) {
+      var subKey = arena.allocateFrom(key, StandardCharsets.UTF_16LE);
+      var valueName = arena.allocateFrom(value, StandardCharsets.UTF_16LE);
       return getValue(hive.handle, subKey, valueName, flags, arena, key + '\\' + value);
     }
   }
 
   private static byte @Nullable [] getValue(long key, MemorySegment subKey, MemorySegment valueName, int flags, Arena arena, String path) throws RegistryException {
-    MemorySegment size = arena.allocate(JAVA_INT);
-    int status = getValue(key, subKey, valueName, flags, MemorySegment.NULL, size);
+    var size = arena.allocate(JAVA_INT);
+    var status = getValue(key, subKey, valueName, flags, MemorySegment.NULL, size);
     if (status == ERROR_FILE_NOT_FOUND) {
       return null;
     }
     if (status != ERROR_SUCCESS) {
       throw new RegistryException("RegGetValueW(" + path + ")", status);
     }
-    MemorySegment data = arena.allocate(size.get(JAVA_INT, 0));
+    var data = arena.allocate(size.get(JAVA_INT, 0));
     status = getValue(key, subKey, valueName, flags, data, size);
     if (status != ERROR_SUCCESS) {
       throw new RegistryException("RegGetValueW(" + path + ")", status);

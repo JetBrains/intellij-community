@@ -25,10 +25,12 @@ import com.intellij.debugger.jdi.VirtualMachineProxyImpl
 import com.intellij.debugger.requests.ClassPrepareRequestor
 import com.intellij.debugger.ui.breakpoints.Breakpoint
 import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.smartReadAction
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.DumbService
@@ -73,6 +75,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.expressions.functionType
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
@@ -132,6 +135,7 @@ import org.jetbrains.kotlin.idea.debugger.core.isInsideInlineArgument
 import org.jetbrains.kotlin.idea.debugger.core.isInsideProjectWithCompose
 import org.jetbrains.kotlin.idea.debugger.core.stackFrame.InlineStackTraceCalculator
 import org.jetbrains.kotlin.idea.debugger.core.stackFrame.KotlinStackFrame
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.FqName
@@ -158,6 +162,8 @@ import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
 import java.util.concurrent.CompletableFuture
 import kotlin.coroutines.resume
+
+private val LOG = logger<KotlinPositionManager>()
 
 class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiRequestPositionManager, PositionManagerWithMultipleStackFrames,
                                                                       PositionManagerAsync {
@@ -415,11 +421,36 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         if (allReferenceExpressions.isEmpty()) return null
         val (inlinedReference, notInlined) = allReferenceExpressions.separateInlinedAndNonInlinedElements(location)
         if (inlinedReference != null) return inlinedReference
+        val adapterMethodName = location.safeMethod()?.takeIf { it.isPrivate && it.isStatic }?.name()
         return readAction {
             notInlined.firstOrNull {
-                it.calculatedClassNameMatches(currentLocationClassName, false)
+                it.calculatedClassNameMatches(currentLocationClassName, false) ||
+                        adapterMethodName != null && it.matchesIndyCallableReference(adapterMethodName, currentLocationClassName)
             }
         }
+    }
+
+    /**
+     * Matches an indy adapter named '<enclosing functions>$<referenced function>[$<index>]' in the enclosing class.
+     * The enclosing function names are joined with '$'.
+     * These are source names, even when `@JvmName` changes the JVM method names.
+     */
+    private fun KtCallableReferenceExpression.matchesIndyCallableReference(methodName: String, className: String): Boolean {
+        val containingFunction = getContainingMethod() as? KtNamedFunction ?: return false
+        if (!containingFunction.calculatedClassNameMatches(className, false)) return false
+        val enclosingNames = generateSequence(containingFunction) {
+            if (it.isLocal) it.getContainingMethod() as? KtNamedFunction else null
+        }.toList().asReversed().map { it.name ?: return false }
+        val enclosingName = enclosingNames.joinToString("$")
+        if (!methodName.startsWith("$enclosingName\$")) return false
+
+        val targetName = runDumbAnalyze(this, fallback = null) {
+            (callableReference.mainReference.resolveToSymbol() as? KaNamedFunctionSymbol)?.name?.asString()
+        } ?: return false
+        val adapterName = "$enclosingName\$$targetName"
+        if (methodName == adapterName) return true
+        if (!methodName.startsWith("$adapterName\$")) return false
+        return methodName.substring(adapterName.length + 1).toIntOrNull() != null
     }
 
     private suspend fun getLambdaOrFunOnLineIfInside(location: Location, file: KtFile, lineNumber: Int): KtFunction? {
@@ -449,8 +480,15 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         val notInlined = mutableListOf<T>()
         var innermostInlinedElement: T? = null
         for (expression in this) {
-            val isCrossinline = dumbAnalyze(expression, fallback = false) {
-                getInlineArgumentSymbol(expression)?.isCrossinline
+            val isCrossinline = try {
+                dumbAnalyze(expression, fallback = false) {
+                    getInlineArgumentSymbol(expression)?.isCrossinline
+                }
+            } catch (e: Throwable) {
+                rethrowControlFlowException(e)
+                // one broken analysis must not drop the source position of the whole line
+                LOG.warn("Cannot resolve the inline argument of a lambda, treated as not inlined: ${readAction { expression.containingFile.name }}", e)
+                null
             }
             if (isCrossinline != null && (!isCrossinline || isInlinedArgument(expression, location))) {
                 if (isInsideInlineArgument(expression, location)) {
@@ -669,7 +707,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         throw NoDataException.INSTANCE
     }
 
-    @RequiresReadLock
+    @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
     private fun getCandidates(sourcePosition: SourcePosition): List<ClassNameProvider.ClassNameCandidateInfo> =
         ClassNameProvider().getCandidatesInfo(sourcePosition)
 
@@ -700,7 +738,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         return futures.mapNotNull { it.get() }
     }
 
-    @RequiresReadLockAbsence
+    @RequiresReadLockAbsence(generateAssertion = false /* IJPL-115548 */)
     private fun findTargetClasses(candidates: List<ReferenceType>, sourcePosition: SourcePosition): List<ReferenceType> =
         wrapIncompatibleThreadStateException {
             val matchingCandidates = candidates
@@ -797,7 +835,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         }
     }
 
-    @RequiresReadLock
+    @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
     private fun getKotlinClassPrepareRequests(requestor: ClassPrepareRequestor, position: SourcePosition): List<PrepareRequest> {
         val refinedPosition = when (requestor) {
             is SourcePositionRefiner -> requestor.refineSourcePosition(position)

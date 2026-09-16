@@ -615,7 +615,7 @@ public final class DebuggerUIUtil {
   }
 
   public static boolean isObsolete(Object object) {
-    return object instanceof Obsolescent && ((Obsolescent)object).isObsolete();
+    return object instanceof Obsolescent obsolescent && obsolescent.isObsolete();
   }
 
   public static void setTreeNodeValue(XValueNodeImpl valueNode, XExpression text, Consumer<? super String> errorConsumer) {

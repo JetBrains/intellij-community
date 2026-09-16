@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.kotlinc.lombok.compiler.plugin.jar
+  modules:
+  - name: intellij.libraries.kotlinc.lombok.compiler.plugin
+    libraries:
+      kotlinc.lombok-compiler-plugin:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/lombok-compiler-plugin-for-ide/2/lombok-compiler-plugin-for-ide-2.jar

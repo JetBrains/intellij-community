@@ -58,6 +58,7 @@ import com.intellij.openapi.editor.markup.UIController
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.project.DumbService.Companion.isDumb
+import com.intellij.openapi.project.DumbUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.registry.Registry
@@ -156,13 +157,13 @@ open class TrafficLightRenderer private constructor(
     @JvmField val shouldHighlight: Boolean,
   )
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   private fun getPsiFile(): PsiFile? {
     val context = getContext()
     return PsiDocumentManager.getInstance(project).getPsiFile(document, context)
   }
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   private fun getContext(): CodeInsightContext {
     return if (editor != null) {
       EditorContextManager.getEditorContext(editor, project)
@@ -179,13 +180,13 @@ open class TrafficLightRenderer private constructor(
      * `errorCount[index]` equals to a number of highlighters of severity with index `idx` in this markup model.
      * Severity index can be obtained via [SeverityRegistrar.getSeverityIdx].
      */
-    @RequiresReadLock
+    @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
     get() {
+      // the position in the list is the severity index, so do not read the registrar again
       val severities = severityRegistrar.allSeverities
       val cachedErrors = IntArray(severities.size)
       val context = getContext()
-      for (severity in severities) {
-        val severityIndex = severityRegistrar.getSeverityIdx(severity)
+      for ((severityIndex, severity) in severities.withIndex()) {
         cachedErrors[severityIndex] = errorCount.getErrorCount(severity, context)
       }
       return cachedErrors
@@ -194,10 +195,10 @@ open class TrafficLightRenderer private constructor(
   val errorCountsForFus: IntArray
     @ApiStatus.Internal
     get() {
+      // the position in the list is the severity index, so do not read the registrar again
       val severities = severityRegistrar.allSeverities
       val cachedErrors = IntArray(severities.size)
-      for (severity in severities) {
-        val severityIndex = severityRegistrar.getSeverityIdx(severity)
+      for ((severityIndex, severity) in severities.withIndex()) {
         cachedErrors[severityIndex] = errorCount.getErrorCountsForAllContexts(severity)
       }
       return cachedErrors
@@ -277,8 +278,8 @@ open class TrafficLightRenderer private constructor(
       return getDaemonCodeAnalyzerStatus(this.severityRegistrar)
     }
 
-  @RequiresBackgroundThread
-  @RequiresReadLock
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   protected open fun getDaemonCodeAnalyzerStatus(severityRegistrar: SeverityRegistrar): DaemonCodeAnalyzerStatus {
     // this method is rather expensive and PSI-related, need to execute in BGT and cache the result to show in EDT later
     ThreadingAssertions.assertBackgroundThread()
@@ -391,8 +392,10 @@ open class TrafficLightRenderer private constructor(
     if (status.errorAnalyzingFinished) {
       if (isDumb) {
         title = DaemonBundle.message("shallow.analysis.completed")
-        details = DaemonBundle.dumbModeMessage("shallow.analysis.completed.details",
-                                               "shallow.analysis.completed.in.light.mode.details")
+        details = DumbUtil.dumbModeMessage(
+          DaemonBundle.message("shallow.analysis.completed.details"),
+          DaemonBundle.message("shallow.analysis.completed.in.light.mode.details")
+        )
         state = InspectionsState.SHALLOW_ANALYSIS_COMPLETE
       }
       else if (fileHighlightingSettings.containsValue(FileHighlightingSetting.ESSENTIAL)) {
@@ -676,7 +679,7 @@ open class TrafficLightRenderer private constructor(
       }
     }
 
-    @RequiresReadLock
+    @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
     private fun doComputeTrafficLightRendererInfo(
       psiFile: PsiFile,
       project: Project,

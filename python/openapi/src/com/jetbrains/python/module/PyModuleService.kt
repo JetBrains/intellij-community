@@ -40,7 +40,7 @@ interface PyModuleService {
    * Do not use it directly, use `Module.pythonSdk = ` instead
    */
   @ApiStatus.Internal
-  @RequiresWriteLock
+  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
   @PyInternalExecApi
   fun setPythonSdk(module: Module, sdk: Sdk?)
 

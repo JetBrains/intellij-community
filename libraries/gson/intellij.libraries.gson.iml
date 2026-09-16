@@ -9,10 +9,10 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="gson" type="repository">
-        <properties include-transitive-deps="false" maven-id="com.google.code.gson:gson:2.13.2">
+        <properties include-transitive-deps="false" maven-id="com.google.code.gson:gson:2.14.0">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/com/google/code/gson/gson/2.13.2/gson-2.13.2.jar">
-              <sha256sum>dd0ce1b55a3ed2080cb70f9c655850cda86c206862310009dcb5e5c95265a5e0</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/google/code/gson/gson/2.14.0/gson-2.14.0.jar">
+              <sha256sum>2cbd119bf1961c28788310963dc80ba65f58cdeec1dd139c8bdb1240faa2c36f</sha256sum>
             </artifact>
           </verification>
         </properties>
@@ -20,11 +20,11 @@
           <root url="file://$MODULE_DIR$/../../lib/annotations/gson" />
         </ANNOTATIONS>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/google/code/gson/gson/2.13.2/gson-2.13.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/google/code/gson/gson/2.14.0/gson-2.14.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/google/code/gson/gson/2.13.2/gson-2.13.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/google/code/gson/gson/2.14.0/gson-2.14.0-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

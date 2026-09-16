@@ -67,7 +67,6 @@ import org.jetbrains.kotlin.analysis.api.types.typeCreation.typeCreator
 import org.jetbrains.kotlin.asJava.classes.lazyPub
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.asJava.findFacadeClass
-import org.jetbrains.kotlin.asJava.getAccessorLightMethods
 import org.jetbrains.kotlin.asJava.getRepresentativeLightMethod
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toLightElements
@@ -98,6 +97,7 @@ import org.jetbrains.uast.kotlin.PsiTypeConversionConfiguration
 import org.jetbrains.uast.kotlin.TypeOwnerKind
 import org.jetbrains.uast.kotlin.convertUnitToVoidIfNeeded
 import org.jetbrains.uast.kotlin.getContainingLightClass
+import org.jetbrains.uast.kotlin.toAccessorLightElement
 import org.jetbrains.uast.kotlin.psi.UastFakeDeserializedSourceLightMethod
 import org.jetbrains.uast.kotlin.psi.UastFakeDeserializedSymbolLightMethod
 import org.jetbrains.uast.kotlin.psi.UastFakeSourceLightMethod
@@ -613,20 +613,7 @@ internal fun KtElement.toPsiElementAsLightElement(
     sourcePsi: KtExpression? = null
 ): PsiElement? {
     if (this is KtProperty) {
-        with(getAccessorLightMethods()) {
-            // Weigh [PsiField]
-            backingField?.let { return it }
-            val readWriteAccess = sourcePsi?.readWriteAccess()
-            when {
-                readWriteAccess?.isWrite == true -> {
-                    setter?.let { return it }
-                }
-                readWriteAccess?.isRead == true -> {
-                    getter?.let { return it }
-                }
-                else -> {}
-            }
-        }
+        toAccessorLightElement(sourcePsi)?.let { return it }
     }
     return toLightElements().firstOrNull()
 }

@@ -56,6 +56,7 @@
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.projectModel.impl"/>
     <module name="intellij.platform.refactoring"/>
+    <module name="intellij.platform.smRunner"/>
     <module name="intellij.platform.statistics"/>
     <module name="intellij.platform.testRunner"/>
     <module name="intellij.platform.usageView"/>
@@ -430,6 +431,11 @@
     <registryKey key="maven.use.scripts.debug.agent" defaultValue="true"
                  description="Use instrumentation agent when debugging with maven"/>
 
+    <advancedSetting id="maven.delegate.build.phase" default="PROCESS_TEST_CLASSES"
+                     enumClass="org.jetbrains.idea.maven.execution.build.MavenDelegateBuildPhase"
+                     bundle="messages.MavenConfigurableBundle"
+                     groupKey="group.advanced.settings.maven"/>
+
     <registryKey key="maven.dedicated.indexer.vmargs" defaultValue="-Xmx1024m"
                  description="Dedicated maven indexer VM arguments, restart maven server or IDEA after changing this parameter"/>
 
@@ -766,6 +772,7 @@
     <log.spy.parser implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.InvalidTargetReleaseQuickFix"/>
     <log.spy.parser implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.Maven4ModelVersionErrorParser"/>
 
+    <mavenRemoteConnectionCreator implementation="org.jetbrains.idea.maven.execution.SurefireRemoteConnectionCreator"/>
     <mavenRemoteConnectionCreator implementation="org.jetbrains.idea.maven.execution.ExecRemoteConnectionCreator" order="last"/>
 
   </extensions>

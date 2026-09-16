@@ -25,7 +25,7 @@ import javax.swing.JComponent
  * IMPORTANT. The provided `disposable` should be disposed on EDT.
  */
 @ApiStatus.Internal
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 fun JComponent.setupTransfer(disposable: Disposable): ComponentDirectTransferId {
   val localValue = ComponentWithDisposable(this, disposable)
   return ComponentDirectTransferId(serializeToRpc(localValue), localValue)
@@ -39,7 +39,7 @@ fun JComponent.setupTransfer(disposable: Disposable): ComponentDirectTransferId 
  * @see JComponent.setupTransfer
  */
 @ApiStatus.Internal
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 fun ComponentDirectTransferId.getComponent(): JComponent? {
   return localValue?.let {
     Wrapper().apply {

@@ -10,7 +10,7 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.util.progress.withProgressText
 import com.intellij.python.hatch.HatchPyTool
-import com.intellij.python.pytools.PyTool
+import com.intellij.python.pytools.backend.PyTool
 import com.intellij.python.hatch.HatchVirtualEnvironment
 import com.intellij.python.hatch.getHatchService
 import com.intellij.ui.dsl.builder.Panel
@@ -37,7 +37,8 @@ internal class HatchNewEnvironmentCreator<P : PathHolder>(
   errorSink: ErrorSink,
 ) : CustomNewEnvironmentCreator<P>(model, errorSink) {
   override val interpreterType: InterpreterType = InterpreterType.HATCH
-  override val pyTool: PyTool = HatchPyTool.getInstance()
+  override val pyTool: PyTool<*> = HatchPyTool.getInstance()
+  override val pyToolPresentableName: String = "Hatch"
   override val toolValidator: ToolValidator<P> = model.hatchViewModel.toolValidator
   private lateinit var hatchFormFields: HatchFormFields<P>
   override val toolExecutable: ObservableProperty<ValidatedPath.Executable<P>?> = model.hatchViewModel.hatchExecutable

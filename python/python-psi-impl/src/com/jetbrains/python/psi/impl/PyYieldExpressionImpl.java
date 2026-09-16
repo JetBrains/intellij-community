@@ -9,10 +9,13 @@ import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyYieldExpression;
 import com.jetbrains.python.psi.types.PyAnyType;
+import com.jetbrains.python.psi.types.PyExpectedTypeJudgement;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import static com.jetbrains.python.psi.types.PyTypeUtilKt.isUnknown;
 
 
 public class PyYieldExpressionImpl extends PyElementImpl implements PyYieldExpression {
@@ -62,6 +65,11 @@ public class PyYieldExpressionImpl extends PyElementImpl implements PyYieldExpre
           return generatorDesc.sendType;
         }
       }
+    }
+
+    final PyType expectedType = PyExpectedTypeJudgement.getExpectedType(this, context);
+    if (expectedType != null && !isUnknown(expectedType)) {
+      return expectedType;
     }
 
     if (isDelegating()) {

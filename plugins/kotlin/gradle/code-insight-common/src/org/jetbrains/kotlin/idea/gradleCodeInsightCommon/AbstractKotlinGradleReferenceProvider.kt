@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.gradleCodeInsightCommon
 import com.intellij.model.psi.ImplicitReferenceProvider
 import com.intellij.model.psi.PsiSymbolReference
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.resolution.function
@@ -46,7 +45,7 @@ abstract class AbstractKotlinGradleReferenceProvider: ImplicitReferenceProvider 
             ?.text
     }
     
-    @OptIn(KaExperimentalApi::class, KaAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     protected fun analyzeSurroundingCallExpression(element: PsiElement?) : CallableId? {
         val callExpression = element?.getParentOfType<KtCallExpression>(true, KtDeclarationWithBody::class.java) ?: return null
         return allowAnalysisOnEdt {

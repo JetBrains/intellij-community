@@ -37,7 +37,7 @@ abstract class PyCharmPropertiesBase(enlargeWelcomeScreen: Boolean) : JetBrainsP
       persistentListOf("intellij.java.plugin"))
   }
 
-  override suspend fun copyAdditionalFiles(targetDir: Path, context: BuildContext) {
+  override fun copyAdditionalFiles(targetDir: Path, context: BuildContext) {
     zipSourcesOfModules(
       modules = listOf("intellij.python.community", "intellij.python.psi"),
       targetFile = Path.of("$targetDir/lib/src/pycharm-openapi-src.zip"),

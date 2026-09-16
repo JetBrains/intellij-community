@@ -112,6 +112,7 @@ enum class Lang(val displayName: String, val className: String, val iso: Languag
 
   @Volatile
   private var _jLanguage: Language? = null
+  private val lock = Any()
   val jLanguage: Language?
     get() {
       if (_jLanguage != null) return _jLanguage
@@ -120,17 +121,20 @@ enum class Lang(val displayName: String, val className: String, val iso: Languag
       if (app.isDispatchThread || !app.isReadAccessAllowed) {
         return _jLanguage ?: loadJLanguage()
       }
-
       return runWithCheckCanceled { _jLanguage ?: loadJLanguage() }
     }
 
   private fun loadJLanguage(): Language? {
-    GrazieDynamic.loadLang(this)?.also {
-      if (shouldDisableChunker(it)) {
-        it.chunker = NoopChunker()
+    if (_jLanguage != null) return _jLanguage
+    synchronized(lock) {
+      if (_jLanguage != null) return _jLanguage
+      GrazieDynamic.loadLang(this)?.also {
+        if (shouldDisableChunker(it)) {
+          it.chunker = NoopChunker()
+        }
+        it.disambiguator = LazyCachingConcurrentDisambiguator(it)
+        _jLanguage = it
       }
-      it.disambiguator = LazyCachingConcurrentDisambiguator(it)
-      _jLanguage = it
     }
     return _jLanguage
   }

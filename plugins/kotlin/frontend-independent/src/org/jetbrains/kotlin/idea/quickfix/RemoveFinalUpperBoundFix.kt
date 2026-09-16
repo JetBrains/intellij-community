@@ -5,10 +5,11 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.util.elementType
 import com.intellij.psi.util.siblings
+import org.jetbrains.kotlin.idea.base.psi.EditCommaSeparatedListHelper
+import org.jetbrains.kotlin.idea.base.psi.setTypeParameterExtendsBound
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.EditCommaSeparatedListHelper
 import org.jetbrains.kotlin.psi.KtTypeConstraint
 import org.jetbrains.kotlin.psi.KtTypeConstraintList
 import org.jetbrains.kotlin.psi.KtTypeParameter
@@ -24,7 +25,7 @@ class RemoveFinalUpperBoundFix(element: KtTypeReference) : KotlinPsiUpdateModCom
     ) {
         val parent = element.getParentOfTypes(strict = true, KtTypeParameter::class.java, KtTypeConstraint::class.java)
         when (parent) {
-            is KtTypeParameter -> parent.extendsBound = null
+            is KtTypeParameter -> parent.setTypeParameterExtendsBound(null)
             is KtTypeConstraint -> {
                 val constraintList = parent.parent as KtTypeConstraintList
                 if (constraintList.constraints.size == 1) {

@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.platform.execution` start
+content_module_jar(module = ":execution")
+### auto-generated section `dev intellij.platform.execution` end
+
 ### auto-generated section `build intellij.platform.execution` start
 jvm_library(
     name = "execution",
@@ -45,8 +49,6 @@ jvm_library(
         "//fleet/rhizomedb",
     ],
 )
-
-content_module_jar(module = ":execution")
 
 jvm_library(
     name = "execution_test_lib",
@@ -93,7 +95,6 @@ exports_files(
     [
         "intellij.platform.execution.iml",
         "resources/intellij.platform.execution.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

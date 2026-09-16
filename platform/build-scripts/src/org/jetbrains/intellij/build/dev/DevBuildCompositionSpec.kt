@@ -38,6 +38,7 @@ data class DevBuildCompositionSpec(
   @JvmField val additionalModules: List<String> = emptyList(),
   @JvmField val components: List<DevBuildCompositionComponent>,
   @JvmField val pluginClasspathPrefix: String? = null,
+  @JvmField val sourceRunfiles: Map<String, String>? = null,
 )
 
 private val compositionSpecJson = Json { ignoreUnknownKeys = false }

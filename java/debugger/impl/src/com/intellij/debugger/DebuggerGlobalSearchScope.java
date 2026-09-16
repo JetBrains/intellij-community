@@ -34,7 +34,7 @@ public class DebuggerGlobalSearchScope extends DelegatingGlobalSearchScope {
   }
 
   public @Nullable Module getModuleIfAny() {
-    return myBaseScope instanceof ModuleWithDependenciesScope ? ((ModuleWithDependenciesScope)myBaseScope).getModule() : null;
+    return myBaseScope instanceof ModuleWithDependenciesScope scope ? scope.getModule() : null;
   }
 
   public @Nullable GlobalSearchScope fallbackAllScope() {

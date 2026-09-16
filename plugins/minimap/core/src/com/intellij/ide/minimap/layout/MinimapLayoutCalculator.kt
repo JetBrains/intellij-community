@@ -1,12 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.minimap.layout
 
-import com.intellij.ide.minimap.model.MinimapStructureMarker
+import com.intellij.ide.minimap.model.MinimapStructureMarkerSnapshot
 import com.intellij.ide.minimap.render.MinimapRenderContext
 import com.intellij.ide.minimap.render.MinimapRenderEntry
 import com.intellij.ide.minimap.render.MinimapTokenRenderPolicy
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.util.TextRange
 import java.awt.geom.Rectangle2D
 import kotlin.math.ceil
 
@@ -26,7 +25,7 @@ class MinimapLayoutCalculator(private val editor: Editor) {
 
   fun buildLayout(
     context: MinimapRenderContext,
-    structureMarkers: List<MinimapStructureMarker>,
+    structureMarkers: List<MinimapStructureMarkerSnapshot>,
     mode: MinimapLayoutMode,
   ): MinimapLayoutBuildResult = when (mode) {
     MinimapLayoutMode.EXACT -> buildExactLayout(context, structureMarkers)
@@ -35,7 +34,7 @@ class MinimapLayoutCalculator(private val editor: Editor) {
 
   private fun buildExactLayout(
     context: MinimapRenderContext,
-    structureMarkers: List<MinimapStructureMarker>,
+    structureMarkers: List<MinimapStructureMarkerSnapshot>,
   ): MinimapLayoutBuildResult {
     val prepared = prepareLayout(context, structureMarkers) ?: return MinimapLayoutBuildResult.EMPTY
     appendTokenFillers(prepared)
@@ -45,7 +44,7 @@ class MinimapLayoutCalculator(private val editor: Editor) {
 
   private fun buildDenseLayout(
     context: MinimapRenderContext,
-    structureMarkers: List<MinimapStructureMarker>,
+    structureMarkers: List<MinimapStructureMarkerSnapshot>,
   ): MinimapLayoutBuildResult {
     val prepared = prepareLayout(context, structureMarkers) ?: return MinimapLayoutBuildResult.EMPTY
     appendDenseFillers(prepared)
@@ -55,7 +54,7 @@ class MinimapLayoutCalculator(private val editor: Editor) {
 
   private fun prepareLayout(
     context: MinimapRenderContext,
-    structureMarkers: List<MinimapStructureMarker>,
+    structureMarkers: List<MinimapStructureMarkerSnapshot>,
   ): LayoutBuildState? {
     val geometry = context.geometry
     val panelWidth = context.panelWidth
@@ -235,7 +234,7 @@ class MinimapLayoutCalculator(private val editor: Editor) {
   }
 
   private fun appendStructureMarkers(prepared: LayoutBuildState,
-                                     structureMarkers: List<MinimapStructureMarker>) {
+                                     structureMarkers: List<MinimapStructureMarkerSnapshot>) {
     if (structureMarkers.isEmpty()) return
 
     val result = prepared.structureEntries
@@ -246,9 +245,7 @@ class MinimapLayoutCalculator(private val editor: Editor) {
     val pxPerColumn = context.metrics.pxPerColumn
     val projectedLineCount = context.metrics.lineCount
 
-    for (marker in structureMarkers) {
-      val range = resolveRange(marker) ?: continue
-
+    for ((elementReference, range) in structureMarkers) {
       val startOffset = range.startOffset.coerceIn(0, documentLength)
       val endOffset = range.endOffset.coerceIn(startOffset, documentLength)
       val startLine = document.getLineNumber(startOffset)
@@ -262,7 +259,7 @@ class MinimapLayoutCalculator(private val editor: Editor) {
       val startColumn = (startOffset - lineStartOffset).coerceAtLeast(0)
       val endColumn = (endOffsetInLine - lineStartOffset).coerceAtLeast(startColumn + 1)
       val rect2d = rectForColumns(startColumn, endColumn, band, context, pxPerColumn)
-      result.add(MinimapRenderEntry.forStructureElement(marker.elementReference, rect2d, startOffset))
+      result.add(MinimapRenderEntry.forStructureElement(elementReference, rect2d, startOffset))
     }
   }
 
@@ -298,13 +295,6 @@ class MinimapLayoutCalculator(private val editor: Editor) {
         context,
       )
     }
-  }
-
-  private fun resolveRange(structureMarker: MinimapStructureMarker): TextRange? {
-    val rangeMarker = structureMarker.rangeMarker ?: return null
-    if (!rangeMarker.isValid) return null
-
-    return rangeMarker.textRange
   }
 
   // TODO: definitely there must be a platform solution for such ops

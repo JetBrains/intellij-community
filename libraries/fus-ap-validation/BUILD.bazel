@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.fus.ap.validation` start
+content_module_jar(
+    libraries = ["@lib//:libraries-fus-ap-validation-com-jetbrains-fus-reporting-ap-validation-all"],
+    module = ":fus-ap-validation",
+)
+### auto-generated section `dev intellij.libraries.fus.ap.validation` end
+
 ### auto-generated section `build intellij.libraries.fus.ap.validation` start
 jvm_library(
     name = "fus-ap-validation",
@@ -16,11 +23,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-fus-ap-validation-com-jetbrains-fus-reporting-ap-validation-all"],
     runtime_deps = ["@lib//:libraries-fus-ap-validation-com-jetbrains-fus-reporting-ap-validation-all"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-fus-ap-validation-com-jetbrains-fus-reporting-ap-validation-all"],
-    module = ":fus-ap-validation",
 )
 
 jvm_library(
@@ -43,7 +45,6 @@ exports_files(
     [
         "intellij.libraries.fus.ap.validation.iml",
         "resources/intellij.libraries.fus.ap.validation.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

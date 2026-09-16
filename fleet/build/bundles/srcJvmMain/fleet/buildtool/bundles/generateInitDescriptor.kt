@@ -51,13 +51,13 @@ suspend fun generateInitDescriptor(
       val uniqueJarsDir = temporaryDir.resolve("unique-jars")
       uniqueJarsDir.deleteIfExists()
       uniqueJarsDir.createDirectories()
-      val alreadyIncludedJarNames = alreadyIncludedJars.map { it.moduleName }
+      // An empty jar leaves before its module name is derived: see the KDoc of `Path.moduleName`.
+      val alreadyIncludedJarNames = alreadyIncludedJars.filterNot(::isEmptyJar).map { it.moduleName }
 
-      val uniqueJarsClassPath = runtimeClasspath.mapNotNull { jar ->
+      val uniqueJarsClassPath = runtimeClasspath.filterNot(::isEmptyJar).mapNotNull { jar ->
         val jarModuleName = jar.moduleName
         when {
           jarModuleName in alreadyIncludedJarNames -> null
-          isEmptyJar(jar) -> null
           else -> copyJarToOutputDirectory(jar, uniqueJarsDir, "$jarModuleName.jar")
         }
       }

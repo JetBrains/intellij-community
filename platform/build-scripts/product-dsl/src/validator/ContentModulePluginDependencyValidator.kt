@@ -46,7 +46,7 @@ internal object ContentModulePluginDependencyValidator : PipelineNode {
 
   override val requires: Set<DataSlot<*>> get() = setOf(Slots.CONTENT_MODULE_PLAN)
 
-  override suspend fun execute(ctx: ComputeContext) {
+  override fun execute(ctx: ComputeContext) {
     val model = ctx.model
     val plans = ctx.get(Slots.CONTENT_MODULE_PLAN).plans
     val dslDeclaredModules = HashSet<ContentModuleName>()

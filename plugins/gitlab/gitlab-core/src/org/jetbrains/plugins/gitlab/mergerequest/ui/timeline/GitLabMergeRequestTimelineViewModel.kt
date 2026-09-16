@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gitlab.mergerequest.ui.timeline
 
 import com.intellij.collaboration.async.childScope
+import com.intellij.collaboration.async.computationStateFlow
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.mapDataToModel
 import com.intellij.collaboration.async.modelFlow
@@ -27,6 +28,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
@@ -140,6 +142,12 @@ internal class LoadAllGitLabMergeRequestTimelineViewModel(
           flowOf(Result.success(emptyList()))
         }
         else {
+          val stateEvents = computationStateFlow(stateEventsChangedSignal.withInitial(Unit)) { loadStateEvents() }
+            .mapNotNull { it.result }
+          val labelEvents = computationStateFlow(labelEventsChangedSignal.withInitial(Unit)) { loadLabelEvents() }
+            .mapNotNull { it.result }
+          val milestoneEvents = computationStateFlow(milestoneEventsChangedSignal.withInitial(Unit)) { loadMilestoneEvents() }
+            .mapNotNull { it.result }
           combine(stateEvents, labelEvents, milestoneEvents, systemNotes) { stateResult, labelsResult, milesResult, systemNotesResult ->
             val state = stateResult.getOrElse { return@combine Result.failure(it) }
             val labels = labelsResult.getOrElse { return@combine Result.failure(it) }

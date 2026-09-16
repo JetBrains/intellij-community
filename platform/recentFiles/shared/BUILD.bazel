@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.platform.recentFiles` start
+content_module_jar(module = ":recentFiles")
+### auto-generated section `dev intellij.platform.recentFiles` end
+
 ### auto-generated section `build intellij.platform.recentFiles` start
 jvm_library(
     name = "recentFiles",
@@ -41,8 +45,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":recentFiles")
-
 jvm_library(
     name = "recentFiles_test_lib",
     testonly = True,
@@ -81,7 +83,6 @@ exports_files(
     [
         "intellij.platform.recentFiles.iml",
         "resources/intellij.platform.recentFiles.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

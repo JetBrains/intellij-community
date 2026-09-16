@@ -6,9 +6,9 @@ import com.intellij.python.community.execService.DownloadConfig
 import com.intellij.python.community.execService.ProcessOutputTransformer
 import com.intellij.python.community.execService.UploadConfig
 import com.intellij.python.community.execService.ZeroCodeStdoutTransformer
-import com.intellij.python.pytools.PyExecutable
-import com.intellij.python.pytools.PyExecutableCache
-import com.intellij.python.pytools.pyExecutable
+import com.intellij.python.pytools.backend.PyExecutable
+import com.intellij.python.pytools.backend.PyExecutableCache
+import com.intellij.python.pytools.backend.pyExecutable
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder

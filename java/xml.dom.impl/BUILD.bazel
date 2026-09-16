@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.java.xml.dom.impl` start
+content_module_jar(module = ":xml.dom.impl")
+### auto-generated section `dev intellij.java.xml.dom.impl` end
+
 ### auto-generated section `build intellij.java.xml.dom.impl` start
 jvm_library(
     name = "xml.dom.impl",
@@ -47,8 +51,6 @@ jvm_library(
         "//xml/xml-psi-api:psi",
     ],
 )
-
-content_module_jar(module = ":xml.dom.impl")
 
 jvm_library(
     name = "xml.dom.impl_test_lib",

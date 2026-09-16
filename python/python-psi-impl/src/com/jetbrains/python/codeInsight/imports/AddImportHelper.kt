@@ -5,6 +5,7 @@ import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.roots.ProjectRootManager
+import com.jetbrains.python.psi.resolve.mainPythonSdk
 import com.intellij.openapi.util.registry.Registry.Companion.intValue
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiComment
@@ -390,7 +391,7 @@ object AddImportHelper {
       )
     }
     val module = ModuleUtilCore.findModuleForPsiElement(importLocation)
-    val pythonSdk = if (module != null) PythonSdkUtil.findPythonSdk(module) else projectRootManager.projectSdk
+    val pythonSdk = if (module != null) PythonSdkUtil.findPythonSdk(module) else toImport.project.mainPythonSdk()
 
     if (PySkeletonUtil.isStdLib(vFile, pythonSdk)) {
       return ImportPriorityChoice(

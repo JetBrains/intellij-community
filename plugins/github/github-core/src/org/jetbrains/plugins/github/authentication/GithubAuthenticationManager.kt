@@ -25,7 +25,7 @@ class GithubAuthenticationManager internal constructor() {
   @CalledInAny
   fun hasAccounts() = accountManager.accountsState.value.isNotEmpty()
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   @JvmOverloads
   fun ensureHasAccounts(project: Project?, parentComponent: Component? = null): Boolean {
     if (accountManager.accountsState.value.isNotEmpty()) return true

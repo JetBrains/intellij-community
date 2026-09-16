@@ -2,7 +2,7 @@
 package com.intellij.python.hatch.cli
 
 import com.intellij.python.community.execService.ZeroCodeStdoutTransformer
-import com.intellij.python.pytools.runtime.PyToolRuntime
+import com.intellij.python.pytools.backend.runtime.PyToolRuntime
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.add.v2.PathHolder
 

@@ -4,18 +4,16 @@ package com.intellij.platform.compose.swing.components
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import org.jetbrains.compose.swing.components.Label
 import org.jetbrains.compose.swing.test.onNodeOfType
 import org.jetbrains.compose.swing.test.runComposeSwingTest
 import org.junit.jupiter.api.Test
 import java.awt.Component
-import javax.swing.DefaultComboBoxModel
 import javax.swing.JLabel
 import javax.swing.JList
 import javax.swing.ListCellRenderer
 import kotlin.test.assertEquals
-import kotlin.test.assertNotSame
 import kotlin.test.assertNull
-import kotlin.test.assertSame
 import com.intellij.openapi.ui.ComboBox as IdeaComboBox
 
 class ComboBoxTest {
@@ -100,49 +98,30 @@ class ComboBoxTest {
   }
 
   @Test
-  fun comboBoxShowsAndReportsTheCallerOwnedModel() = runComposeSwingTest {
-    val model = DefaultComboBoxModel(arrayOf("Gradle", "Maven"))
-    var picked: String? = null
-
-    setContent {
-      ComboBox(model = model, onSelectedItemChange = { picked = it })
-    }
-
-    val comboBox = onNodeOfType<IdeaComboBox<String>>().fetch()
-    assertSame(model, comboBox.model)
-    assertEquals("Gradle", comboBox.selectedItem)
-
-    comboBox.selectedItem = "Maven"
-    awaitIdle()
-
-    assertEquals("Maven", picked)
-    assertEquals("Maven", model.selectedItem)
-  }
-
-  @Test
-  fun comboBoxRendersItemsThroughTheSuppliedRenderer() = runComposeSwingTest {
-    val cell = JLabel("cell")
-    var renderer by mutableStateOf<ListCellRenderer<in String>?>(null)
-
+  fun comboBoxRendersItemsThroughTheComposableCell() = runComposeSwingTest {
     setContent {
       ComboBox(
         items = listOf("Gradle"),
         selectedItem = "Gradle",
         onSelectedItemChange = {},
-        renderer = renderer,
+        itemContent = { item -> Label("[$item]") },
       )
     }
 
     val comboBox = onNodeOfType<IdeaComboBox<String>>().fetch()
-    assertNotSame(cell, comboBox.renderRow("Gradle"))
 
-    renderer = ListCellRenderer<String> { _, _, _, _, _ -> cell }
-    awaitIdle()
-    assertSame(cell, comboBox.renderRow("Gradle"))
+    assertEquals("[Gradle]", (comboBox.renderRow("Gradle") as JLabel).text)
+  }
 
-    renderer = null
-    awaitIdle()
-    assertNotSame(cell, comboBox.renderRow("Gradle"))
+  @Test
+  fun comboBoxWithoutACellRendersThroughTheLookAndFeel() = runComposeSwingTest {
+    setContent {
+      ComboBox(items = listOf("Gradle"), selectedItem = "Gradle", onSelectedItemChange = {})
+    }
+
+    val comboBox = onNodeOfType<IdeaComboBox<String>>().fetch()
+
+    assertEquals("Gradle", (comboBox.renderRow("Gradle") as JLabel).text)
   }
 
   /** The items the combo box offers, in the order its popup lists them. */

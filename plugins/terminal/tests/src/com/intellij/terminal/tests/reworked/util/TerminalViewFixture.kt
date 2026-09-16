@@ -71,7 +71,7 @@ internal class TerminalViewFixture(private val project: Project, emulatorType: T
    *
    * Does not wait for the session to apply it. Use [resizeAndAwait] to assert a model state afterward.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun resize(columns: Int, rows: Int) {
     val editor = if (view.isAlternateScreenBuffer) view.alternateBufferEditor else view.outputEditor
     val characterGrid = checkNotNull(editor.characterGrid) { "Character grid is not initialized" }
@@ -89,7 +89,7 @@ internal class TerminalViewFixture(private val project: Project, emulatorType: T
     dispatchAllEventsInIdeEventQueue()
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun invokeAction(actionId: String) {
     val action = ActionManager.getInstance().getAction(actionId) ?: error("Unknown action: $actionId")
     val editor = if (view.isAlternateScreenBuffer) view.alternateBufferEditor else view.outputEditor

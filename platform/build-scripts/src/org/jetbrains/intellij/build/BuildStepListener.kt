@@ -20,10 +20,8 @@ open class BuildStepListener {
       append("'$stepId' build step failed")
       append(" (Please don't mute this problem!") // mute scope may be too broad muting similar failures in other build configuration
       append(" If you really need to ignore it, you may either mark this build as green or add '$stepId' to 'system.${BUILD_STEPS_TO_SKIP_PROPERTY}')")
-      append(":\n")
-      append(failure.stackTraceToString())
     }
-    messages.reportBuildProblem(description = description, identity = stepId)
+    messages.reportBuildProblem(description = description, identity = stepId, cause = failure)
   }
 
   open fun onCompletion(stepId: String, messages: BuildMessages) {}

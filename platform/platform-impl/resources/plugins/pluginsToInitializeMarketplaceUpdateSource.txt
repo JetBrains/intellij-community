@@ -472,7 +472,6 @@ intellij.navbar.plugin
 intellij.structureView.plugin
 intellij.execution.serviceView.plugin
 intellij.ssh.plugin
-intellij.libraries.misc.plugin
 de.espend.idea.php.phpunit
 com.intellij.plugins.xwinkeymap
 Jenkins Control Plugin

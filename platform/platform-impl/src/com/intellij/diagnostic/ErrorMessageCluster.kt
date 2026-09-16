@@ -2,8 +2,12 @@
 package com.intellij.diagnostic
 
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter
+import com.intellij.openapi.diagnostic.IdeaLoggingEvent
 import com.intellij.openapi.diagnostic.ProblematicPluginInfo
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
+
+private val LOG = logger<ErrorMessageCluster>()
 
 /**
  * Describes a group of errors with the same stacktrace in [IdeErrorsDialog].
@@ -33,8 +37,21 @@ internal class ErrorMessageCluster(
 
   val canSubmit: Boolean get() = submitter != null && isUnsent
 
+  /**
+   * The event for a report that a user sends.
+   * Returns `null` if the text no longer holds a stacktrace that [decouple] can read.
+   */
+  fun toUserLoggingEvent(): IdeaLoggingEvent? {
+    val (comment, throwable) = decouple() ?: return null
+    return first.toLoggingEvent(AbstractMessage.ReportKind.USER, pluginInfo, comment, throwable)
+  }
+
   fun decouple(): Pair<String?, Throwable>? {
-    val detailsText = detailsText!!
+    val detailsText = detailsText ?: run {
+      // The dialog disables the "Submit" button for an empty text, so a caller must not reach this line.
+      LOG.warn("The cluster of ${first.throwable.javaClass.name} holds no text, so no report can go out")
+      return null
+    }
     val originalThrowableText = first.throwableText
     val originalThrowableClass = first.throwable.javaClass.name
 

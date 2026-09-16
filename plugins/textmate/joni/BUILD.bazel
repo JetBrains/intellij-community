@@ -10,6 +10,10 @@ jps_test(
 )
 ### skip generation section `test intellij.textmate.joni.tests`
 
+### auto-generated section `dev intellij.textmate.joni` start
+content_module_jar(module = ":joni")
+### auto-generated section `dev intellij.textmate.joni` end
+
 ### auto-generated section `build intellij.textmate.joni` start
 jvm_library(
     name = "joni",
@@ -35,8 +39,6 @@ jvm_library(
         "@lib//:slf4j-api",
     ],
 )
-
-content_module_jar(module = ":joni")
 
 jvm_library(
     name = "joni_test_lib",

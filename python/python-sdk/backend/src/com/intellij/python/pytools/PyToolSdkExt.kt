@@ -5,6 +5,8 @@ import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.BinaryToExec
 import com.intellij.python.community.execService.ExecOptions
 import com.intellij.python.community.execService.ProcessSemiInteractiveFun
+import com.intellij.python.pytools.backend.PyTool
+import com.intellij.python.pytools.backend.Version
 import com.intellij.python.sdk.backend.executeTool
 import com.intellij.python.sdk.backend.executeToolInteractive
 import com.intellij.python.sdk.backend.findToolExecutable
@@ -28,7 +30,7 @@ import java.nio.file.Path
     "com.intellij.python.sdk.backend.toolExecutableWithBaseArgs",
   ),
 )
-suspend fun PyTool.getExecutableWithBaseArgs(
+suspend fun PyTool<*>.getExecutableWithBaseArgs(
   moduleOrProject: ModuleOrProject,
   executableName: String = packageName.name,
   workingDir: Path? = null,
@@ -38,7 +40,7 @@ suspend fun PyTool.getExecutableWithBaseArgs(
   "Use ModuleOrProject.executeTool instead",
   ReplaceWith("moduleOrProject.executeTool(this, args, execOptions)", "com.intellij.python.sdk.backend.executeTool"),
 )
-suspend fun PyTool.executeOn(
+suspend fun PyTool<*>.executeOn(
   moduleOrProject: ModuleOrProject,
   args: Args,
   execOptions: ExecOptions = ExecOptions(),
@@ -51,7 +53,7 @@ suspend fun PyTool.executeOn(
     "com.intellij.python.sdk.backend.executeToolInteractive",
   ),
 )
-suspend fun <T> PyTool.executeInteractiveOn(
+suspend fun <T> PyTool<*>.executeInteractiveOn(
   moduleOrProject: ModuleOrProject,
   args: Args,
   workingDir: Path? = null,
@@ -63,7 +65,7 @@ suspend fun <T> PyTool.executeInteractiveOn(
   "Use ModuleOrProject.resolveToolVersion instead",
   ReplaceWith("moduleOrProject.resolveToolVersion(this)", "com.intellij.python.sdk.backend.resolveToolVersion"),
 )
-suspend fun PyTool.resolveVersion(moduleOrProject: ModuleOrProject): PyResult<Version> =
+suspend fun PyTool<*>.resolveVersion(moduleOrProject: ModuleOrProject): PyResult<Version> =
   moduleOrProject.resolveToolVersion(this)
 
 @Deprecated(
@@ -73,5 +75,5 @@ suspend fun PyTool.resolveVersion(moduleOrProject: ModuleOrProject): PyResult<Ve
     "com.intellij.python.sdk.backend.findToolExecutable",
   ),
 )
-fun PyTool.findExecutableInSdk(pythonInterpreter: PythonInterpreter, executableName: String = packageName.name): Path? =
+fun PyTool<*>.findExecutableInSdk(pythonInterpreter: PythonInterpreter, executableName: String = packageName.name): Path? =
   pythonInterpreter.findToolExecutable(this, executableName)

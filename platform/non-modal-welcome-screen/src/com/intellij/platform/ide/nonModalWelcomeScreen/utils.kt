@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.nonModalWelcomeScreen
 
+import com.intellij.ide.welcomeScreen.WelcomeAccessPoint
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.options.advanced.AdvancedSettings
@@ -26,6 +27,10 @@ suspend fun Project.isWelcomeExperienceProject(): Boolean {
 fun Project.isWelcomeExperienceProjectSync(): Boolean {
   @Suppress("DEPRECATION")
   return ProjectFrameCapabilitiesService.getInstanceSync().has(this, ProjectFrameCapability.WELCOME_EXPERIENCE)
+}
+
+internal class NonModalWelcomeAccessPoint : WelcomeAccessPoint {
+  override fun isAvailable() = isNonModalWelcomeScreenEnabled
 }
 
 @Internal

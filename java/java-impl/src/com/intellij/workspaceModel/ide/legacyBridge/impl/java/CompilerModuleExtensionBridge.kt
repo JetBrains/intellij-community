@@ -2,6 +2,7 @@
 package com.intellij.workspaceModel.ide.legacyBridge.impl.java
 
 import com.intellij.java.workspace.entities.JavaModuleSettingsEntity
+import com.intellij.java.workspace.entities.JavaModuleSettingsEntityBuilder
 import com.intellij.java.workspace.entities.javaSettings
 import com.intellij.openapi.roots.CompilerModuleExtension
 import com.intellij.openapi.roots.CompilerProjectExtension
@@ -9,7 +10,7 @@ import com.intellij.openapi.roots.ModuleExtension
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.platform.backend.workspace.WorkspaceModel
-import com.intellij.platform.backend.workspace.toVirtualFileUrl
+import com.intellij.platform.backend.workspace.storeAndGet
 import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -38,7 +39,7 @@ internal class CompilerModuleExtensionBridge(
   private fun getCompilerOutput(): VirtualFileUrl? = when {
     isCompilerOutputPathInherited -> {
       val url = CompilerProjectExtension.getInstance(module.project)?.compilerOutputUrl
-      if (url != null) virtualFileManager.getOrCreateFromUrl(url + "/" + PRODUCTION + "/" + getSanitizedModuleName()) else null
+      if (url != null) virtualFileManager.storeAndGet(url + "/" + PRODUCTION + "/" + getSanitizedModuleName()) else null
     }
     else -> javaSettings?.compilerOutput
   }
@@ -46,7 +47,7 @@ internal class CompilerModuleExtensionBridge(
   private fun getCompilerOutputForTests(): VirtualFileUrl? = when {
     isCompilerOutputPathInherited -> {
       val url = CompilerProjectExtension.getInstance(module.project)?.compilerOutputUrl
-      if (url != null) virtualFileManager.getOrCreateFromUrl(url + "/" + TEST + "/" + getSanitizedModuleName()) else null
+      if (url != null) virtualFileManager.storeAndGet(url + "/" + TEST + "/" + getSanitizedModuleName()) else null
     }
     else -> javaSettings?.compilerOutputForTests
   }
@@ -67,7 +68,7 @@ internal class CompilerModuleExtensionBridge(
   override fun commit(): Unit = Unit
   override fun isChanged(): Boolean = changed
 
-  private fun updateJavaSettings(updater: JavaModuleSettingsEntity.Builder.() -> Unit) {
+  private fun updateJavaSettings(updater: JavaModuleSettingsEntityBuilder.() -> Unit) {
     if (diff == null) {
       error("Read-only $javaClass")
     }
@@ -85,28 +86,28 @@ internal class CompilerModuleExtensionBridge(
       updatedEntity.javaSettings!!
     }
 
-    diff.modifyEntity(JavaModuleSettingsEntity.Builder::class.java, oldJavaSettings, updater)
+    diff.modifyEntity(JavaModuleSettingsEntityBuilder::class.java, oldJavaSettings, updater)
     changed = true
   }
 
   override fun setCompilerOutputPath(file: VirtualFile?) {
     if (compilerOutputPath == file) return
-    updateJavaSettings { compilerOutput = file?.toVirtualFileUrl(virtualFileManager) }
+    updateJavaSettings { compilerOutput = file?.let { virtualFileManager.storeAndGet(it) } }
   }
 
   override fun setCompilerOutputPath(url: String?) {
     if (compilerOutputUrl == url) return
-    updateJavaSettings { compilerOutput = url?.let { virtualFileManager.getOrCreateFromUrl(it) } }
+    updateJavaSettings { compilerOutput = url?.let { virtualFileManager.storeAndGet(it) } }
   }
 
   override fun setCompilerOutputPathForTests(file: VirtualFile?) {
     if (compilerOutputPathForTests == file) return
-    updateJavaSettings { compilerOutputForTests = file?.toVirtualFileUrl(virtualFileManager) }
+    updateJavaSettings { compilerOutputForTests = file?.let { virtualFileManager.storeAndGet(it) } }
   }
 
   override fun setCompilerOutputPathForTests(url: String?) {
     if (compilerOutputUrlForTests == url) return
-    updateJavaSettings { compilerOutputForTests = url?.let { virtualFileManager.getOrCreateFromUrl(it) } }
+    updateJavaSettings { compilerOutputForTests = url?.let { virtualFileManager.storeAndGet(it) } }
   }
 
   override fun inheritCompilerOutputPath(inherit: Boolean) {

@@ -1,6 +1,5 @@
 // WITH_STDLIB
-// COMPILER_ARGUMENTS: -XXLanguage:+CustomEqualsInValueClasses
+// COMPILER_ARGUMENTS: -XXLanguage:+FullValueClasses
 // PROBLEM: none
 
-@JvmInline
 value class A(val <caret>a: String)

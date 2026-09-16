@@ -296,9 +296,9 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
             }
           }
         }
-        else if (lType instanceof PsiClassType && rType instanceof PsiPrimitiveType && !PsiTypes.nullType().equals(rType)) {
+        else if (lType instanceof PsiClassType type && rType instanceof PsiPrimitiveType primitiveType && !PsiTypes.nullType().equals(rType)) {
           final PsiClassType rightBoxed =
-            ((PsiPrimitiveType)rType).getBoxedType(PsiManager.getInstance(project), ((PsiClassType)lType).getResolveScope());
+            primitiveType.getBoxedType(PsiManager.getInstance(project), type.getResolveScope());
           if (rightBoxed != null && TypeConversionUtil.isAssignable(lType, rightBoxed)) {
             rEvaluator = new BoxingEvaluator(rEvaluator);
           }
@@ -326,7 +326,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
               myCurrentFragmentEvaluator.setStatements(visitStatements(catchBlock.getStatements()));
               PsiType type = parameter.getType();
               List<PsiType> types =
-                type instanceof PsiDisjunctionType ? ((PsiDisjunctionType)type).getDisjunctions() : Collections.singletonList(type);
+                type instanceof PsiDisjunctionType disjunctionType ? disjunctionType.getDisjunctions() : Collections.singletonList(type);
               for (PsiType psiType : types) {
                 evaluators.add(new CatchEvaluator(psiType.getCanonicalText(), parameter.getName(), myCurrentFragmentEvaluator));
               }
@@ -1032,8 +1032,8 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
         }
 
         if (qualifier != null) {
-          final PsiElement qualifierTarget = qualifier instanceof PsiReferenceExpression
-                                             ? ((PsiReferenceExpression)qualifier).resolve() : null;
+          final PsiElement qualifierTarget = qualifier instanceof PsiReferenceExpression referenceExpression
+                                             ? referenceExpression.resolve() : null;
           if (qualifierTarget instanceof PsiClass psiClass) {
             // this is a call to a 'static' field
             final JVMName typeName = JVMNameUtil.getJVMQualifiedName(psiClass);
@@ -1116,13 +1116,13 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
     private CaptureTraverser createTraverser(PsiElement targetClass, String name, boolean checkInheritance) {
       PsiClass fromClass = getPositionClass();
-      if (!(targetClass instanceof PsiClass) || fromClass == null) {
+      if (!(targetClass instanceof PsiClass aClass) || fromClass == null) {
         throw evaluateException(JavaDebuggerBundle.message("evaluation.error.invalid.expression", name));
       }
       try {
-        CaptureTraverser traverser = CaptureTraverser.create((PsiClass)targetClass, fromClass, checkInheritance);
+        CaptureTraverser traverser = CaptureTraverser.create(aClass, fromClass, checkInheritance);
         if (!traverser.isValid() && !fromClass.equals(myContextPsiClass)) { // do not check twice
-          traverser = CaptureTraverser.create((PsiClass)targetClass, myContextPsiClass, checkInheritance);
+          traverser = CaptureTraverser.create(aClass, myContextPsiClass, checkInheritance);
         }
 
         if (!traverser.isValid()) {
@@ -1190,7 +1190,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
       else {
         variableEvaluator = null;
       }
-      if (pattern instanceof PsiDeconstructionPattern) {
+      if (pattern instanceof PsiDeconstructionPattern deconstructionPattern) {
         PsiClass recordClass = PsiUtil.resolveClassInClassTypeOnly(type);
         if (recordClass == null) {
           throw evaluateException(JavaDebuggerBundle.message("evaluation.error.unknown.type", type.getCanonicalText()));
@@ -1199,7 +1199,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
           throw evaluateException(JavaErrorBundle.message("deconstruction.pattern.requires.record", JavaHighlightUtil.formatType(type)));
         }
         List<PatternEvaluator> componentEvaluators = new ArrayList<>();
-        PsiPattern[] components = ((PsiDeconstructionPattern)pattern).getDeconstructionList().getDeconstructionComponents();
+        PsiPattern[] components = deconstructionPattern.getDeconstructionList().getDeconstructionComponents();
         for (PsiPattern component : components) {
           componentEvaluators.add(createPatternEvaluator(component));
         }
@@ -1363,8 +1363,8 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
         else {
           CaptureTraverser traverser = CaptureTraverser.direct();
           PsiElement currentFileResolveScope = resolveResult.getCurrentFileResolveScope();
-          if (currentFileResolveScope instanceof PsiClass) {
-            traverser = createTraverser(currentFileResolveScope, ((PsiClass)currentFileResolveScope).getName(), false);
+          if (currentFileResolveScope instanceof PsiClass aClass) {
+            traverser = createTraverser(currentFileResolveScope, aClass.getName(), false);
           }
           objectEvaluator = new ThisEvaluator(traverser);
         }
@@ -1378,10 +1378,10 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
             contextClass = JVMNameUtil.getJVMQualifiedName(type);
           }
 
-          if (qualifier instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifier).resolve() instanceof PsiClass) {
+          if (qualifier instanceof PsiReferenceExpression referenceExpression && referenceExpression.resolve() instanceof PsiClass) {
             // this is a call to a 'static' method but class is not available, try to evaluate by qname
             if (contextClass == null) {
-              contextClass = JVMNameUtil.getJVMRawText(((PsiReferenceExpression)qualifier).getQualifiedName());
+              contextClass = JVMNameUtil.getJVMRawText(referenceExpression.getQualifiedName());
             }
             objectEvaluator = new TypeEvaluator(contextClass);
           }
@@ -1481,8 +1481,8 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
       // handle numeric promotion
       final PsiType _unboxedIndexType = unboxedType != null ? unboxedType : operandExpressionType;
-      if (_unboxedIndexType instanceof PsiPrimitiveType) {
-        final PsiType promotionType = calcUnaryNumericPromotionType((PsiPrimitiveType)_unboxedIndexType);
+      if (_unboxedIndexType instanceof PsiPrimitiveType type) {
+        final PsiType promotionType = calcUnaryNumericPromotionType(type);
         if (promotionType != null) {
           operandEvaluator = createTypeCastEvaluator(operandEvaluator, promotionType);
         }
@@ -1551,8 +1551,8 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
     public void visitClassObjectAccessExpression(@NotNull PsiClassObjectAccessExpression expression) {
       PsiType type = expression.getOperand().getType();
 
-      if (type instanceof PsiPrimitiveType) {
-        final JVMName typeName = JVMNameUtil.getJVMRawText(((PsiPrimitiveType)type).getBoxedTypeName());
+      if (type instanceof PsiPrimitiveType primitiveType) {
+        final JVMName typeName = JVMNameUtil.getJVMRawText(primitiveType.getBoxedTypeName());
         myResult = new FieldEvaluator(new TypeEvaluator(typeName), FieldEvaluator.TargetClassFilter.ALL, "TYPE");
       }
       else {
@@ -1596,8 +1596,8 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
                 }
                 else {
                   find = "findVirtual(" + find;
-                  if (qualifier instanceof PsiReference) {
-                    PsiElement resolve = ((PsiReference)qualifier).resolve();
+                  if (qualifier instanceof PsiReference reference) {
+                    PsiElement resolve = reference.resolve();
                     if (!(resolve instanceof PsiClass)) {
                       bind = true;
                     }
@@ -1704,8 +1704,8 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
           initializerEvaluator
         );
       }
-      else if (expressionPsiType instanceof PsiClassType) { // must be a class ref
-        PsiClass aClass = CompilingEvaluatorTypesUtil.getClass((PsiClassType)expressionPsiType);
+      else if (expressionPsiType instanceof PsiClassType type) { // must be a class ref
+        PsiClass aClass = CompilingEvaluatorTypesUtil.getClass(type);
         if (aClass instanceof PsiAnonymousClass) {
           throw unsupportedExpression(JavaDebuggerBundle.message("evaluation.error.anonymous.class.evaluation.not.supported"));
         }
@@ -1756,7 +1756,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
         }
 
         JVMName signature = JVMNameUtil.getJVMConstructorSignature(constructor, aClass);
-        PsiType instanceType = CompilingEvaluatorTypesUtil.getClassType((PsiClassType)expressionPsiType);
+        PsiType instanceType = CompilingEvaluatorTypesUtil.getClassType(type);
         myResult = new NewClassInstanceEvaluator(
           new TypeEvaluator(JVMNameUtil.getJVMQualifiedName(instanceType)),
           signature,
@@ -1778,7 +1778,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
       PsiExpression[] initializers = expression.getInitializers();
       Evaluator[] evaluators = new Evaluator[initializers.length];
       final PsiType type = expression.getType();
-      boolean primitive = type instanceof PsiArrayType && ((PsiArrayType)type).getComponentType() instanceof PsiPrimitiveType;
+      boolean primitive = type instanceof PsiArrayType arrayType && arrayType.getComponentType() instanceof PsiPrimitiveType;
       for (int idx = 0; idx < initializers.length; idx++) {
         PsiExpression initializer = initializers[idx];
         initializer.accept(this);
@@ -1854,8 +1854,8 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
         PsiType declaredParamType;
         if (idx < declaredParams.length) {
           declaredParamType = methodResolveSubstitutor.substitute(declaredParams[idx].getType());
-          if (declaredParamType instanceof PsiEllipsisType) {
-            declaredParamType = varargType = ((PsiEllipsisType)declaredParamType).getComponentType();
+          if (declaredParamType instanceof PsiEllipsisType type) {
+            declaredParamType = varargType = type.getComponentType();
           }
         }
         else if (varargType != null) {

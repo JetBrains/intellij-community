@@ -37,7 +37,7 @@ public final class WindowsCryptUtils {
    */
   public static byte @NotNull [] protect(byte @NotNull [] data) {
     if (data.length == 0) return data;
-    try (Arena arena = Arena.ofConfined()) {
+    try (var arena = Arena.ofConfined()) {
       return call(Handles.CRYPT_PROTECT_DATA, "CryptProtectData", arena, data, arena.allocateFrom("Master Key", StandardCharsets.UTF_16LE));
     }
   }
@@ -50,30 +50,30 @@ public final class WindowsCryptUtils {
    */
   public static byte @NotNull [] unprotect(byte @NotNull [] data) {
     if (data.length == 0) return data;
-    try (Arena arena = Arena.ofConfined()) {
+    try (var arena = Arena.ofConfined()) {
       return call(Handles.CRYPT_UNPROTECT_DATA, "CryptUnprotectData", arena, data, MemorySegment.NULL);
     }
   }
 
   /** Both functions share the shape {@code BOOL f(DATA_BLOB *in, LPWSTR description, DATA_BLOB *entropy, PVOID, PROMPTSTRUCT *, DWORD flags, DATA_BLOB *out)}. */
   private static byte[] call(MethodHandle function, String functionName, Arena arena, byte[] data, MemorySegment description) {
-    MemorySegment input = arena.allocateFrom(JAVA_BYTE, data);
+    var input = arena.allocateFrom(JAVA_BYTE, data);
     try {
-      MemorySegment in = arena.allocate(Handles.DATA_BLOB);
+      var in = arena.allocate(Handles.DATA_BLOB);
       in.set(JAVA_INT, 0, data.length);
       in.set(ADDRESS, 8, input);
-      MemorySegment out = arena.allocate(Handles.DATA_BLOB);
-      MemorySegment callState = arena.allocate(Handles.CALL_STATE_LAYOUT);
-      int succeeded = (int)function.invokeExact(callState, in, description, MemorySegment.NULL, MemorySegment.NULL, MemorySegment.NULL, 0, out);
+      var out = arena.allocate(Handles.DATA_BLOB);
+      var callState = arena.allocate(Handles.CALL_STATE_LAYOUT);
+      var succeeded = (int)function.invokeExact(callState, in, description, MemorySegment.NULL, MemorySegment.NULL, MemorySegment.NULL, 0, out);
       if (succeeded == 0) {
         throw new RuntimeException(functionName + " failed: " + (int)Handles.LAST_ERROR.get(callState, 0L));
       }
-      MemorySegment outData = out.get(ADDRESS, 8);
+      var outData = out.get(ADDRESS, 8);
       try {
         return outData.reinterpret(out.get(JAVA_INT, 0)).toArray(JAVA_BYTE);
       }
       finally {
-        MemorySegment ignored = (MemorySegment)Handles.LOCAL_FREE.invokeExact(outData);
+        var _ = (MemorySegment)Handles.LOCAL_FREE.invokeExact(outData);
       }
     }
     catch (RuntimeException e) {

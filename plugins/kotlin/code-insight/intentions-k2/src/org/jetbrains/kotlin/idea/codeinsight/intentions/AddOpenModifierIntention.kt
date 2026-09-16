@@ -8,6 +8,7 @@ import com.intellij.modcommand.Presentation
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.idea.base.psi.addModifierKeyword
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
@@ -55,6 +56,6 @@ internal class AddOpenModifierIntention :
       elementContext: Unit,
       updater: ModPsiUpdater,
     ) {
-        element.addModifier(KtTokens.OPEN_KEYWORD)
+        element.addModifierKeyword(KtTokens.OPEN_KEYWORD)
     }
 }

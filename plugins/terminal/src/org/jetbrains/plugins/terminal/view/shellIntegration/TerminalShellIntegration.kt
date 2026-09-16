@@ -50,7 +50,7 @@ interface TerminalShellIntegration {
    * either the loaded file history or an empty fallback are not retained. After that, commands started in the current
    * session are appended to the same history.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun commandHistory(): List<String>
 
   /**

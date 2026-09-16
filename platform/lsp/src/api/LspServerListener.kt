@@ -15,8 +15,8 @@ interface LspServerListener {
    * it sends the [initialized](https://microsoft.github.io/language-server-protocol/specification/#initialized)
    * notification to the server and calls this function.
    */
-  @RequiresBackgroundThread
-  @RequiresReadLockAbsence
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  @RequiresReadLockAbsence(generateAssertion = false /* IJPL-115548 */)
   fun serverInitialized(params: InitializeResult) {
   }
 
@@ -30,8 +30,8 @@ interface LspServerListener {
    * request has not arrived
    * - the LSP server process has terminated
    */
-  @RequiresBackgroundThread
-  @RequiresReadLockAbsence
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  @RequiresReadLockAbsence(generateAssertion = false /* IJPL-115548 */)
   fun serverStopped(shutdownNormally: Boolean) {
   }
 }

@@ -11,7 +11,7 @@ import com.intellij.util.io.bytesToHex
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
-import org.jetbrains.intellij.build.telemetry.blockingUse
+import org.jetbrains.intellij.build.telemetry.use
 import java.nio.file.Files
 import java.nio.file.Path
 import java.security.MessageDigest
@@ -71,7 +71,7 @@ class Checksums private constructor(
 
   fun verifyOrWriteChecksumFile(algorithm: Algorithm, withFileName: Boolean = true): Path {
     val extension = algorithm.name.lowercase()
-    return spanBuilder("checksum").setAttribute("file", "$path").setAttribute("extension", extension).blockingUse {
+    return spanBuilder("checksum").setAttribute("file", "$path").setAttribute("extension", extension).use {
       val checksum = getChecksumValue(algorithm)
       val checksumFile = path.resolveSibling("${path.name}.$extension")
       if (Files.exists(checksumFile)) {

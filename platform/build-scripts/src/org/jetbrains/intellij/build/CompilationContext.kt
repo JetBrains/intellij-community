@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
-import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.dependencies.DependenciesProperties
 import org.jetbrains.intellij.build.impl.BundledRuntime
@@ -12,6 +11,9 @@ import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Path
 
 interface CompilationContext {
+  val httpSession: BuildHttpSession?
+    get() = null
+
   val options: BuildOptions
   val messages: BuildMessages
   val paths: BuildPaths
@@ -36,14 +38,14 @@ interface CompilationContext {
   /**
    * Stable JDK used to compile a project and run utilities
    */
-  suspend fun getStableJdkHome(): Path
+  fun getStableJdkHome(): Path
 
   /**
    * @return directory with compiled project classes, 'url' attribute value of 'output' tag from .idea/misc.xml by default
    */
   val classesOutputDirectory: Path
 
-  suspend fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean = false): Collection<Path>
+  fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean = false): Collection<Path>
 
   fun findFileInModuleSources(moduleName: String, relativePath: String, forTests: Boolean = false): Path?
 
@@ -51,20 +53,21 @@ interface CompilationContext {
 
   fun notifyArtifactBuilt(artifactPath: Path)
 
+  /** [lifetime] owns the caches of the copy; `null` keeps the lifetime of this context. */
   @Internal
-  fun createCopy(messages: BuildMessages, options: BuildOptions, paths: BuildPaths, scope: CoroutineScope? = null): CompilationContext
+  fun createCopy(messages: BuildMessages, options: BuildOptions, paths: BuildPaths, lifetime: BuildLifetime? = null): CompilationContext
 
   @Internal
-  suspend fun prepareForBuild()
+  fun prepareForBuild()
 
-  suspend fun compileModules(moduleNames: Collection<String>?, includingTestsInModules: List<String>? = emptyList())
+  fun compileModules(moduleNames: Collection<String>?, includingTestsInModules: List<String>? = emptyList())
 
-  suspend fun compileProductionModules() {
+  fun compileProductionModules() {
     compileModules(moduleNames = null, includingTestsInModules = emptyList())
   }
 
   @Internal
-  suspend fun withCompilationLock(block: suspend () -> Unit)
+  fun withCompilationLock(block: () -> Unit)
 }
 
 interface CompilationTasks {
@@ -72,7 +75,7 @@ interface CompilationTasks {
     fun create(context: CompilationContext): CompilationTasks = CompilationTasksImpl(context)
   }
 
-  suspend fun compileAllModulesAndTests()
+  fun compileAllModulesAndTests()
 
-  suspend fun resolveProjectDependencies()
+  fun resolveProjectDependencies()
 }

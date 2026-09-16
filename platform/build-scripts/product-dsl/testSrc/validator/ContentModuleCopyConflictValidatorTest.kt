@@ -701,16 +701,18 @@ private fun descriptorPluginDependencies(module: String, vararg pluginIds: Strin
  * [suppressionConfig] reaches the node through the model, because the node reads
  * `contentModuleCopyConflicts` itself.
  */
-private suspend fun runCopyConflictRule(
+private fun runCopyConflictRule(
   graph: PluginGraph,
   plans: List<ContentModuleDependencyPlan> = emptyList(),
   suppressionConfig: SuppressionConfig = SuppressionConfig(),
 ): List<ValidationError> {
-  return runValidationRule(
-    ContentModuleCopyConflictValidator,
-    testGenerationModel(graph, suppressionConfig = suppressionConfig),
-    slotOverrides = mapOf(Slots.CONTENT_MODULE_PLAN to ContentModuleDependencyPlanOutput(plans = plans)),
-  )
+  return com.intellij.platform.buildScripts.concurrency.SharedTaskOwner("validation").use { owner ->
+    runValidationRule(
+      ContentModuleCopyConflictValidator,
+      testGenerationModel(graph, suppressionConfig = suppressionConfig, owner = owner),
+      slotOverrides = mapOf(Slots.CONTENT_MODULE_PLAN to ContentModuleDependencyPlanOutput(plans = plans)),
+    )
+  }
 }
 
 /** The conflicts of the one product of the graph. */

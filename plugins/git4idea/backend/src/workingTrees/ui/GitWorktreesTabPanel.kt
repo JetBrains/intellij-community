@@ -44,8 +44,8 @@ import javax.swing.SwingConstants
 internal class GitWorktreesTabPanel(private val project: Project, cs: CoroutineScope) {
   private val viewModel = GitWorktreesViewModel(project, cs)
   private val listModel = CollectionListModel<GitWorkingTreesListEntry>()
-  private val list = JBList<GitWorkingTreesListEntry>(listModel).apply {
-    selectionMode = ListSelectionModel.SINGLE_SELECTION
+  private val list = JBList(listModel).apply {
+    selectionMode = ListSelectionModel.MULTIPLE_INTERVAL_SELECTION
     cellRenderer = GitWorkingTreesListRenderer(project)
     accessibleContext.accessibleName = GitBundle.message("toolwindow.working.trees.tab.name")
     putClientProperty(AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED, true)
@@ -99,7 +99,12 @@ internal class GitWorktreesTabPanel(private val project: Project, cs: CoroutineS
     override fun invokePopup(comp: Component, x: Int, y: Int) {
       val index = list.locationToIndex(Point(x, y))
       if (index == -1 || !list.getCellBounds(index, index).contains(x, y)) return
-      list.selectedIndex = index
+      /* An unconditional assignment collapses the selection to one row on every right-click — including a right-click inside
+      the multi-selection. So "select 3 worktrees → right-click → Delete Worktrees" would delete exactly one,
+      and the multi-select delete would only ever be reachable from the toolbar. */
+      if (!list.isSelectedIndex(index)) {
+        list.selectedIndex = index
+      }
 
       val actionGroup = ActionManager.getInstance().getAction("Git.WorkingTrees.ToolwindowGroup.Popup") as ActionGroup
       val popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.POPUP, actionGroup)
@@ -109,15 +114,18 @@ internal class GitWorktreesTabPanel(private val project: Project, cs: CoroutineS
   }
 
   private fun applyEntries(entries: List<GitWorkingTreesListEntry>) {
-    val previouslySelectedPath = (list.selectedValue as? GitWorktreeRow)?.gitWorkingTree?.path
+    val previouslySelectedPaths = list.selectedValuesList
+      .filterIsInstance<GitWorktreeRow>()
+      .map { it.gitWorkingTree.path }
+      .toSet()
 
     listModel.replaceAll(entries)
 
-    val indexToSelect = (0 until listModel.size).firstOrNull { i ->
-      (listModel.getElementAt(i) as? GitWorktreeRow)?.gitWorkingTree?.path == previouslySelectedPath
+    val indicesToSelect = (0 until listModel.size).filter { i ->
+      (listModel.getElementAt(i) as? GitWorktreeRow)?.gitWorkingTree?.path in previouslySelectedPaths
     }
-    if (indexToSelect != null) {
-      list.selectedIndex = indexToSelect
+    if (indicesToSelect.isNotEmpty()) {
+      list.selectedIndices = indicesToSelect.toIntArray()
     }
     else {
       selectDefaultEntry()

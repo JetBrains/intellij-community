@@ -31,7 +31,7 @@ abstract class HuggingFaceCache(private val maxSize: Int) : PersistentStateCompo
     }
 
   @Synchronized
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun saveEntities(entitiesMap: Map<String, HuggingFaceEntityBasicApiData>) {
     cacheMap.putAll(entitiesMap)
     entitiesMap.keys.forEach { key ->
@@ -40,7 +40,7 @@ abstract class HuggingFaceCache(private val maxSize: Int) : PersistentStateCompo
   }
 
   @Synchronized
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun saveEntity(entityData: HuggingFaceEntityBasicApiData) {
     cacheMap[entityData.itemId] = entityData
     nameSet.add(entityData.itemId)

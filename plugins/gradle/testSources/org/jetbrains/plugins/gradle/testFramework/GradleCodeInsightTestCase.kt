@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.testFramework
 
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction
+import com.intellij.groovy.testFramework.ExpressionTest
 import com.intellij.openapi.externalSystem.util.runReadAction
 import com.intellij.openapi.externalSystem.util.runWriteActionAndWait
 import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions
@@ -10,7 +11,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import com.intellij.testFramework.runInEdtAndWait
 import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleProjectTestApplication
-import org.jetbrains.plugins.groovy.util.ExpressionTest
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 

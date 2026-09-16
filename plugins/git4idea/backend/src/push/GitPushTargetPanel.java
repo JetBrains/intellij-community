@@ -72,18 +72,15 @@ import java.awt.event.MouseEvent;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
 import static git4idea.push.GitPushTarget.findRemote;
-import static java.util.stream.Collectors.toList;
 
 public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
 
   private static final Logger LOG = Logger.getInstance(GitPushTargetPanel.class);
 
-  private static final Comparator<GitRemoteBranch> REMOTE_BRANCH_COMPARATOR = new MyRemoteBranchComparator();
   private static final String SEPARATOR = " : ";
 
   private final @NotNull GitPushSupport myPushSupport;
@@ -118,7 +115,6 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
     myProject = myRepository.getProject();
 
     myTargetRenderer = new VcsEditableTextComponent("", null);
-    myTargetEditor = new PushTargetTextField(repository.getProject(), getTargetNames(myRepository), "");
 
     myRemoteRenderer = new VcsLinkedTextComponent("", new VcsLinkListener() {
       @Override
@@ -134,6 +130,10 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
         }
       }
     });
+
+    GitPushTargetCompletionProvider completionProvider =
+      new GitPushTargetCompletionProvider(myRepository, mySource, () -> myRemoteRenderer.getText());
+    myTargetEditor = new PushTargetTextField(repository.getProject(), completionProvider, "");
 
     setOpaque(false);
 
@@ -454,31 +454,6 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
   @Override
   public void setFireOnChangeAction(@NotNull Runnable action) {
     myFireOnChangeAction = action;
-  }
-
-  private static @NotNull List<String> getTargetNames(@NotNull GitRepository repository) {
-    return repository.getBranches().getRemoteBranches().stream().
-      sorted(REMOTE_BRANCH_COMPARATOR).
-      map(GitRemoteBranch::getNameForRemoteOperations).collect(toList());
-  }
-
-  private static class MyRemoteBranchComparator implements Comparator<GitRemoteBranch> {
-    @Override
-    public int compare(@NotNull GitRemoteBranch o1, @NotNull GitRemoteBranch o2) {
-      String remoteName1 = o1.getRemote().getName();
-      String remoteName2 = o2.getRemote().getName();
-      int remoteComparison = remoteName1.compareTo(remoteName2);
-      if (remoteComparison != 0) {
-        if (remoteName1.equals(GitRemote.ORIGIN)) {
-          return -1;
-        }
-        if (remoteName2.equals(GitRemote.ORIGIN)) {
-          return 1;
-        }
-        return remoteComparison;
-      }
-      return o1.getNameForLocalOperations().compareTo(o2.getNameForLocalOperations());
-    }
   }
 
   @Override

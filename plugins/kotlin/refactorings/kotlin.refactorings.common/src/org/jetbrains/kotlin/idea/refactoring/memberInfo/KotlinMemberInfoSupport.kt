@@ -11,9 +11,9 @@ interface KotlinMemberInfoSupport {
         fun getInstance(): KotlinMemberInfoSupport = service()
     }
 
-    @RequiresBackgroundThread
+    @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
     fun getOverrides(member: KtNamedDeclaration): Boolean?
 
-    @RequiresBackgroundThread
+    @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
     fun renderMemberInfo(member: KtNamedDeclaration): String
 }

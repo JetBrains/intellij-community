@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -13,7 +13,6 @@ import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Assert;
 
 import java.util.HashMap;
 
@@ -37,10 +36,9 @@ public class RenameCollisionsTest extends LightJavaCodeInsightTestCase {
     doTest("String");
   }
 
-  //Fails due to IDEADEV-25194.
-  //public void testRenameClassLocalToAlienNoImports() throws Exception {
-  //  doTest("String");
-  //}
+  public void testRenameClassLocalToAlienNoImports() {
+    doTest("String");
+  }
 
   public void testRenameClassLocalToInner() {
     doTest("StaticInnerClass");
@@ -158,47 +156,23 @@ public class RenameCollisionsTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testRenameLocalVariableHidesFieldInAnonymous() {
-    try {
-      doTest("y");
-    }
-    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      Assert.assertEquals("An existing field <b><code>y</code></b> has the same name", e.getMessage());
-      return;
-    }
-    fail("Conflicts were not found");
+    doTestConflict("y", "An existing field <b><code>y</code></b> has the same name");
+  }
+  
+  public void testLocalVariableCollisionWithLambdaParameter() {
+    doTestConflict("x", "An existing parameter <b><code>x</code></b> has the same name");
   }
 
   public void testRenameMethodCollisionWithOtherSignature() {
-    try {
-      doTest("foo2");
-    }
-    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      Assert.assertEquals("Different method <b><code>RenameTest.foo2(Long)</code></b> will be called after rename", e.getMessage());
-      return;
-    }
-    fail("Conflicts were not found");
+    doTestConflict("foo2", "Different method <b><code>RenameTest.foo2(Long)</code></b> will be called after rename");
   }
 
   public void testRenameMethodCollisionSameSignature() {
-    try {
-      doTest("foo1");
-    }
-    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      Assert.assertEquals("Method with the same erasure is already defined in class <b><code>RenameTest</code></b>", e.getMessage());
-      return;
-    }
-    fail("Conflicts were not found");
+    doTestConflict("foo1", "Method with the same erasure is already defined in class <b><code>RenameTest</code></b>");
   }
 
   public void testFieldHidesLocal() {
-    try {
-      doTest("b");
-    }
-    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      Assert.assertEquals("Renamed field will hide local variable <b><code>b</code></b>", e.getMessage());
-      return;
-    }
-    fail("Conflicts were not found");
+    doTestConflict("b", "Renamed field will hide local variable <b><code>b</code></b>");
   }
 
   public void testRenameMethodNoCollisionWithOtherSignature() {
@@ -245,11 +219,7 @@ public class RenameCollisionsTest extends LightJavaCodeInsightTestCase {
   }
 
   private void doTestImpossibleToRename() {
-    configureByFile(BASE_PATH + getTestName(false) + ".java");
-    PsiElement element = TargetElementUtil
-      .findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
-    assertNotNull(element);
-    assertTrue(PsiElementRenameHandler.isVetoed(element));
+    assertTrue(PsiElementRenameHandler.isVetoed(getTarget()));
   }
 
   public void testNotAvailableForValueOf() {
@@ -261,31 +231,34 @@ public class RenameCollisionsTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testNotAvailableForArrayLength() {
+    doTestConflict("val", "Cannot perform refactoring.\nThis element cannot be renamed");
+  }
+  
+  private void doTestConflict(String newName, String conflictText) {
     try {
-      doTest("val");
-      fail("Should be impossible to rename");
+      new RenameProcessor(getProject(), getTarget(), newName, true, true).run();
+      fail("No conflicts found");
     }
-    catch (CommonRefactoringUtil.RefactoringErrorHintException e) {
-      assertEquals("Cannot perform refactoring.\n" +
-                   "This element cannot be renamed", e.getMessage());
+    catch (BaseRefactoringProcessor.ConflictsInTestsException | CommonRefactoringUtil.RefactoringErrorHintException e) {
+      assertEquals(conflictText, e.getMessage());
     }
   }
 
-  private void doTest(final String newName) {
-    configureByFile(BASE_PATH + getTestName(false) + ".java");
-    PsiElement element = TargetElementUtil
-        .findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
-    assertNotNull(element);
-    new RenameProcessor(getProject(), element, newName, true, true).run();
+  private void doTest(String newName) {
+    new RenameProcessor(getProject(), getTarget(), newName, true, true).run();
     checkResultByFile(BASE_PATH + getTestName(false) + ".java.after");
   }
 
-  public void testAllUsagesInCode() {
+  private @NotNull PsiElement getTarget() {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
     PsiElement element = TargetElementUtil
-        .findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
+      .findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
     assertNotNull(element);
-    final UsageInfo[] usageInfos = RenameUtil.findUsages(element, "newName", true, true, new HashMap<>());
+    return element;
+  }
+
+  public void testAllUsagesInCode() {
+    final UsageInfo[] usageInfos = RenameUtil.findUsages(getTarget(), "newName", true, true, new HashMap<>());
     assertSize(1, usageInfos);
     for (UsageInfo usageInfo : usageInfos) {
       assertTrue(usageInfo instanceof MoveRenameUsageInfo);

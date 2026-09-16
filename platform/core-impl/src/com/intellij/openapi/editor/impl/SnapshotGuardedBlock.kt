@@ -22,7 +22,7 @@ internal class SnapshotGuardedBlock private constructor(
     @JvmStatic
     fun create(document: DocumentImpl, startOffset: Int, endOffset: Int): SnapshotGuardedBlock {
       val snapshot = document.core.snapshot()
-      val spec = MarkerSpec(false, false, policy = PersistentMarkerPolicy)
+      val spec = MarkerSpec(isGreedyToLeft = false, isGreedyToRight = false, policy = PersistentMarkerPolicy)
       val initialRange = TextRange(startOffset, endOffset)
       return SnapshotMarkerEngineImpl.createRangeMarker(
         document,

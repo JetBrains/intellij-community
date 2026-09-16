@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.platform.navbar` start
+content_module_jar(module = ":navbar")
+### auto-generated section `dev intellij.platform.navbar` end
+
 ### auto-generated section `build intellij.platform.navbar` start
 jvm_library(
     name = "navbar",
@@ -31,8 +35,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":navbar")
-
 jvm_library(
     name = "navbar_test_lib",
     testonly = True,
@@ -61,7 +63,6 @@ exports_files(
     [
         "intellij.platform.navbar.iml",
         "resources/intellij.platform.navbar.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

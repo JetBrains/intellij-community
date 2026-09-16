@@ -30,7 +30,7 @@ interface PythonEnvironmentProvider {
    * Null and a failure mean different things. Null says "another provider owns this layout". A failure says "this
    * layout is mine and it is broken", which stops the search.
    */
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun detect(pythonBinary: PythonBinary): PyResult<PythonEnvironment>?
 
   companion object {

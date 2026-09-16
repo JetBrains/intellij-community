@@ -158,7 +158,7 @@ object TerminalShellsDetectionUtil {
     return createShellInfo(CMDER_NAME, cmd.toString(), listOf("/k", cmderInitBat.toString()), eelApi.descriptor)
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun detectWslDistributions(): List<DetectedShellInfo> {
     return if (WSLDistribution.findWslExe() != null) {
       WslDistributionManager.getInstance()

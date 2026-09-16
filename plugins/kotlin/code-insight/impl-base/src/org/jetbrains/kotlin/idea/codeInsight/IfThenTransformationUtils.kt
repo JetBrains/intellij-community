@@ -20,7 +20,6 @@ import org.jetbrains.kotlin.analysis.api.diagnostics.diagnostics
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaUnstableDiagnosticApi
 import org.jetbrains.kotlin.analysis.api.resolution.KaReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.resolution.simple
@@ -102,7 +101,7 @@ enum class TransformIfThenReceiverMode {
 
 @ApiStatus.Internal
 object IfThenTransformationUtils {
-    @RequiresWriteLock
+    @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
     fun transformBaseClause(data: IfThenTransformationData, strategy: IfThenTransformationStrategy): KtExpression {
         val factory = KtPsiFactory(data.baseClause.project)
 
@@ -181,7 +180,6 @@ object IfThenTransformationUtils {
     }
 
 
-    @OptIn(KaUnstableDiagnosticApi::class)
     context(_: KaSession)
     private fun conditionIsSenseless(data: IfThenTransformationData): Boolean =
         data.condition

@@ -336,8 +336,9 @@ class SePopupContentPane(
             resultListModel.invalidate()
             searchStatePublisher.searchStarted(searchId, textField.text, vm.currentTab.tabId)
 
-            if (vm.searchPattern.value.isNotEmpty()) {
+            if (searchContext.searchPattern.isNotEmpty()) {
               hintHelper.setSearchInProgress(true)
+              resultList.emptyText.clear()
             }
           }
 
@@ -390,7 +391,6 @@ class SePopupContentPane(
             }
           }.collect { events ->
             withContext(Dispatchers.EDT) {
-              hintHelper.setSearchInProgress(false)
               val wasFrozen = resultListModel.freezer.isEnabled
 
               if (events.size > 1) {
@@ -405,9 +405,6 @@ class SePopupContentPane(
                 }
               }
 
-              if (hasResultsUpdates) {
-                SeMlService.getInstanceIfEnabled()?.notifySearchResultsUpdated()
-              }
               semanticWarning.value = resultListModel.isValidAndHasOnlySemantic
 
               // Freeze back if it was frozen before
@@ -417,8 +414,12 @@ class SePopupContentPane(
               }
               updateFrozenCount()
 
-              updateViewMode()
-              autoSelectIndex(searchContext.searchPattern, false)
+              if (hasResultsUpdates) {
+                hintHelper.setSearchInProgress(false)
+                SeMlService.getInstanceIfEnabled()?.notifySearchResultsUpdated()
+                updateViewMode()
+                autoSelectIndex(searchContext.searchPattern, false)
+              }
             }
           }
         }
@@ -638,7 +639,7 @@ class SePopupContentPane(
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private suspend fun elementsSelected(indexes: IntArray, modifiers: Int) {
     ThreadingAssertions.assertEventDispatchThread()
     if (indexes.isEmpty() || indexes.max() >= resultListModel.size) return
@@ -878,7 +879,7 @@ class SePopupContentPane(
     })
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun onFocusLost(e: FocusEvent) {
     ThreadingAssertions.assertEventDispatchThread()
     if (isWaylandToolkit()) {

@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
+load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_DESCRIPTORS", "MODULE_TARGETS")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jps_test(
@@ -9,6 +10,22 @@ jps_test(
     runtime_deps = [":settingsSync-tests_test_lib"],
 )
 ### skip generation section `test intellij.settingsSync.tests`
+
+### auto-generated section `dev intellij.settingsSync` start
+dev_dist_plugin(
+    content_modules = ["intellij.libraries.cloud.config.client"],
+    descriptor = "resources/META-INF/plugin.xml",
+    descriptor_index = MODULE_DESCRIPTORS,
+    descriptor_modules = [
+        "intellij.libraries.cloud.config.client",
+        "intellij.settingsSync.performanceTesting",
+    ],
+    libraries = ["@lib//:libraries-cloud-config-client-cloud-config-client"],
+    main_module = "intellij.settingsSync",
+    module_targets = MODULE_TARGETS,
+    prepacked_content_modules = ["intellij.settingsSync.performanceTesting"],
+)
+### auto-generated section `dev intellij.settingsSync` end
 
 ### auto-generated section `build intellij.settingsSync` start
 jvm_library(
@@ -94,21 +111,6 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.settingsSync` end
-
-### auto-generated section `dev intellij.settingsSync` start
-dev_dist_plugin(
-    content_modules = ["//libraries/cloud-config-client"],
-    descriptor = "resources/META-INF/plugin.xml",
-    descriptor_module = ":settingsSync",
-    descriptors = {
-        "@community//libraries/cloud-config-client:resources/intellij.libraries.cloud.config.client.xml": "intellij.libraries.cloud.config.client.xml",
-        "@community//plugins/settings-sync/settingsSync.performanceTesting:resources/intellij.settingsSync.performanceTesting.xml": "intellij.settingsSync.performanceTesting.xml",
-    },
-    libraries = ["@lib//:libraries-cloud-config-client-cloud-config-client"],
-    main_module = "intellij.settingsSync",
-    prepacked_content_modules = ["//plugins/settings-sync/settingsSync.performanceTesting:settingsSync.performanceTesting_content_module_jar"],
-)
-### auto-generated section `dev intellij.settingsSync` end
 
 ### auto-generated section `build intellij.settingsSync.tests` start
 jvm_library(

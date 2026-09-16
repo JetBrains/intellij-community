@@ -99,7 +99,7 @@ object DebuggerUtils {
         return chooseApplicableFile(files, location)
     }
 
-    @RequiresReadLock
+    @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
     internal fun findSourceFilesForClass(
         project: Project,
         scopes: List<GlobalSearchScope>,
@@ -226,7 +226,7 @@ object DebuggerUtils {
         return localVariableImpl.scopeStart..localVariableImpl.scopeEnd
     }
 
-    @RequiresReadLock
+    @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
     @ApiStatus.Internal
     fun getLocationsOfInlinedLine(type: ReferenceType, position: SourcePosition, sourceSearchScope: GlobalSearchScope): List<Location> {
         val line = position.line

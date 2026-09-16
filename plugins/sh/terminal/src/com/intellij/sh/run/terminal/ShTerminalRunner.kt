@@ -95,8 +95,8 @@ open class ShTerminalRunner : ShRunner {
     return otherContents.firstNotNullOfOrNull { getSuitableProcess(project, it, workingDirectory) }
   }
 
-  @RequiresReadLockAbsence
-  @RequiresBackgroundThread
+  @RequiresReadLockAbsence(generateAssertion = false /* IJPL-115548 */)
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   protected open fun getSuitableProcess(
     project: Project,
     content: Content,

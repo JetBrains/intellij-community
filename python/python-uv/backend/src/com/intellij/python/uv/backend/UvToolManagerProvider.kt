@@ -3,11 +3,11 @@ package com.intellij.python.uv.backend
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.platform.eel.EelApi
-import com.intellij.python.pytools.InstalledInfo
-import com.intellij.python.pytools.PyExecutableCache
-import com.intellij.python.pytools.PyTool
-import com.intellij.python.pytools.GenericPyToolManager
-import com.intellij.python.pytools.GenericPyToolManagerProvider
+import com.intellij.python.pytools.backend.InstalledInfo
+import com.intellij.python.pytools.backend.PyExecutableCache
+import com.intellij.python.pytools.backend.PyTool
+import com.intellij.python.pytools.backend.GenericPyToolManager
+import com.intellij.python.pytools.backend.GenericPyToolManagerProvider
 import com.intellij.python.uv.backend.runtime.createUvToolRuntime
 import com.intellij.python.uv.backend.runtime.uvCli
 import com.jetbrains.python.Result
@@ -44,9 +44,9 @@ private class UvToolManager(
   private val fileSystem: FileSystem<PathHolder.Eel>,
   private val uv: Path,
 ) : GenericPyToolManager {
-  override suspend fun install(tool: PyTool): PyResult<Path> = run(tool, reinstall = false)
+  override suspend fun install(tool: PyTool<*>): PyResult<Path> = run(tool, reinstall = false)
 
-  override suspend fun upgrade(tool: PyTool): PyResult<Path> = run(tool, reinstall = true)
+  override suspend fun upgrade(tool: PyTool<*>): PyResult<Path> = run(tool, reinstall = true)
 
   /**
    * All uv-installed tools, from `uv tool list --show-paths`, with latest versions overlaid from
@@ -54,7 +54,7 @@ private class UvToolManager(
    * up to date). Tools uv installed that the IDE does not know as a [PyTool], or whose executable path
    * is missing, are skipped.
    */
-  override suspend fun list(): Map<PyTool, InstalledInfo> {
+  override suspend fun list(): Map<PyTool<*>, InstalledInfo> {
     val tool = createUvToolRuntime(uv).uvCli().tool()
     val installed = tool.list(showPaths = true).getOr { return emptyMap() }
     val latestByName = tool.list(outdated = true).getOrNull().orEmpty()
@@ -71,7 +71,7 @@ private class UvToolManager(
     }.toMap()
   }
 
-  private suspend fun run(tool: PyTool, reinstall: Boolean): PyResult<Path> {
+  private suspend fun run(tool: PyTool<*>, reinstall: Boolean): PyResult<Path> {
     val name = tool.packageName.name
     val uvTool = createUvToolRuntime(uv).uvCli().tool()
     uvTool.install(name, reinstall = reinstall).getOr { return it }

@@ -60,7 +60,6 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.impl.frame.XStandaloneVariablesView;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.console.actions.CommandQueueForPythonConsoleService;
 import com.jetbrains.python.console.actions.CommandQueueListener;
@@ -83,7 +82,6 @@ import com.jetbrains.python.testing.PyTestsSharedKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
@@ -120,7 +118,7 @@ public final class PythonConsoleView extends LanguageConsoleImpl implements Obse
 
   private final Map<String, Map<String, PyDebugValueDescriptor>> myDescriptorsCache = Maps.newConcurrentMap();
 
-  private final PythonCommandQueuePanel myCommandQueuePanel = new PythonCommandQueuePanel(this);
+  private final PythonCommandQueuePanel myCommandQueuePanel;
   private JBPopup myCommandQueue;
   private Dimension commandQueueDimension;
   private boolean isShowQueue;
@@ -136,7 +134,7 @@ public final class PythonConsoleView extends LanguageConsoleImpl implements Obse
   /**
    * Context psi file for Python Console Editor. Needs for static code completion.
    */
-  private final PsiFile myHistoryPsiFile = new PyExpressionCodeFragmentImpl(getProject(), "dummy.py", "", true);
+  private final PsiFile myHistoryPsiFile;
 
   public PsiFile getHistoryPsiFile() {
     return myHistoryPsiFile;
@@ -152,34 +150,55 @@ public final class PythonConsoleView extends LanguageConsoleImpl implements Obse
    */
   public PythonConsoleView(final Project project, final String title, final @Nullable Sdk sdk, final boolean testMode) {
     super(createHelper(project, title));
-    if (PsiUtilCore.getPsiFile(project, getVirtualFile()) instanceof PyExpressionCodeFragmentImpl codeFragment) {
-      codeFragment.setContext(myHistoryPsiFile);
-    }
-
-    getConsoleEditor().setFile(getVirtualFile());
-    myTestMode = testMode;
-    isShowVars = PyConsoleOptions.getInstance(project).isShowVariableByDefault();
-    VirtualFile virtualFile = getVirtualFile();
-    PythonLanguageLevelPusher.specifyFileLanguageLevel(virtualFile, PySdkUtil.getLanguageLevelForSdk(sdk));
-    virtualFile.putUserData(CONSOLE_KEY, true);
-    // Mark editor as console one, to prevent autopopup completion if runtime completion is enabled
-    if (PyConsoleOptions.getInstance(getProject()).isRuntimeCodeCompletion()) {
-      getConsoleEditor().putUserData(PythonConsoleAutopopupBlockingHandler.REPL_KEY, new Object());
-    }
-    getHistoryViewer().putUserData(ConsoleViewUtil.EDITOR_IS_CONSOLE_HISTORY_VIEW, true);
-    getHistoryViewer().putUserData(COUNTER_LINE_NUMBER, new HashMap<>());
-    super.setPrompt(null);
-    setUpdateFoldingsEnabled(false);
-    LanguageLevel languageLevel = LanguageLevel.getDefault();
-    if (sdk != null) {
-      final PythonSdkFlavor<?> sdkFlavor = PythonSdkFlavor.getFlavor(sdk);
-      if (sdkFlavor != null) {
-        languageLevel = sdkFlavor.getLanguageLevel(sdk);
+    try {
+      myCommandQueuePanel = new PythonCommandQueuePanel(this);
+      myHistoryPsiFile = new PyExpressionCodeFragmentImpl(project, "dummy.py", "", true);
+      if (PsiUtilCore.getPsiFile(project, getVirtualFile()) instanceof PyExpressionCodeFragmentImpl codeFragment) {
+        codeFragment.setContext(myHistoryPsiFile);
       }
-      mySdkHomePath = sdk.getHomePath();
+
+      getConsoleEditor().setFile(getVirtualFile());
+      myTestMode = testMode;
+      isShowVars = PyConsoleOptions.getInstance(project).isShowVariableByDefault();
+      VirtualFile virtualFile = getVirtualFile();
+      PythonLanguageLevelPusher.specifyFileLanguageLevel(virtualFile, PySdkUtil.getLanguageLevelForSdk(sdk));
+      virtualFile.putUserData(CONSOLE_KEY, true);
+      // Mark editor as console one, to prevent autopopup completion if runtime completion is enabled
+      if (PyConsoleOptions.getInstance(getProject()).isRuntimeCodeCompletion()) {
+        getConsoleEditor().putUserData(PythonConsoleAutopopupBlockingHandler.REPL_KEY, new Object());
+      }
+      getHistoryViewer().putUserData(ConsoleViewUtil.EDITOR_IS_CONSOLE_HISTORY_VIEW, true);
+      getHistoryViewer().putUserData(COUNTER_LINE_NUMBER, new HashMap<>());
+      super.setPrompt(null);
+      setUpdateFoldingsEnabled(false);
+      LanguageLevel languageLevel = LanguageLevel.getDefault();
+      if (sdk != null) {
+        final PythonSdkFlavor<?> sdkFlavor = PythonSdkFlavor.getFlavor(sdk);
+        if (sdkFlavor != null) {
+          languageLevel = sdkFlavor.getLanguageLevel(sdk);
+        }
+        mySdkHomePath = sdk.getHomePath();
+      }
+      myPyHighlighter = new PyHighlighter(languageLevel);
+      addToolwindowPositionListener(project);
     }
-    myPyHighlighter = new PyHighlighter(languageLevel);
-    addToolwindowPositionListener(project);
+    catch (Throwable e) {
+      releaseHalfBuiltConsole(e);
+      throw e;
+    }
+  }
+
+  /**
+   * Releases a console whose constructor did not finish.
+   * The caller sees the first cause, so a failure of the release only adds itself to it.
+   */
+  private void releaseHalfBuiltConsole(@NotNull Throwable cause) {
+    try {
+      Disposer.dispose(this);
+    }
+    catch (Throwable releaseError) {
+      cause.addSuppressed(releaseError);
+    }
   }
 
   public void setCommandQueueTitle(String title) {
@@ -745,10 +764,12 @@ public final class PythonConsoleView extends LanguageConsoleImpl implements Obse
       }
     }
 
-    var editor = myCommandQueuePanel.getQueueEditor();
     commandQueueDimension = null;
-    if (!editor.isDisposed()) {
-      EditorFactory.getInstance().releaseEditor(editor);
+    if (myCommandQueuePanel != null) {
+      var editor = myCommandQueuePanel.getQueueEditor();
+      if (!editor.isDisposed()) {
+        EditorFactory.getInstance().releaseEditor(editor);
+      }
     }
   }
 

@@ -15,7 +15,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.psi.PsiFile
@@ -207,6 +206,10 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
   @ApiStatus.Internal
   open suspend fun reloadPackages(): PyResult<List<PythonPackage>> {
     treeProvider?.invalidateCache()
+    // [dependencyCache] is keyed by the modification stamp of each dependency file, so a sync that
+    // writes only a lock file does not change that key. Without this the manager keeps a failure
+    // that the sync just fixed (PY-90174).
+    dependencyCache.invalidate()
     return loadPackagesImpl(isInit = false)
   }
 
@@ -574,6 +577,11 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
     /** Refreshes if needed and awaits the entry's deferred; `await()` starts the LAZY async on first call. */
     suspend fun awaitLatest(): PyResult<List<PythonPackage>>? = ensureFreshEntry().deferred.await()
 
+    /** Forces the next [awaitLatest] to recompute, whatever the dependency files' stamps say. */
+    fun invalidate() {
+      entry = null
+    }
+
     /**
      * Non-blocking view of the dependency files the latest cache entry tracks (root plus, e.g., uv
      * workspace members). Empty until the cache has been seeded by [initInstalledPackages] or a
@@ -602,7 +610,6 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
     @Topic.AppLevel
     val PACKAGE_MANAGEMENT_TOPIC: Topic<PythonPackageManagementListener> =
       Topic(PythonPackageManagementListener::class.java, Topic.BroadcastDirection.TO_DIRECT_CHILDREN)
-    val RUNNING_PACKAGING_TASKS: Key<Boolean> = Key.create("PyPackageRequirementsInspection.RunningPackagingTasks")
 
     @ApiStatus.Internal
     data class PackageManagerErrorMessage(
@@ -618,7 +625,7 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
  * Returns null by default — this manager doesn't support dependency extraction.
  */
 @ApiStatus.Internal
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 fun PythonPackageManager.listDeclaredPackagesAsync(): List<PythonPackage>? = runBlockingMaybeCancellable {
   listDeclaredPackagesCached()
 }?.getOrNull()
@@ -632,7 +639,7 @@ fun PythonPackageManager.listDeclaredPackagesAsync(): List<PythonPackage>? = run
  * "requirement is not satisfied" diagnostics right after PPTW package operations
  * (PY-89774).
  */
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 internal fun PythonPackageManager.listInstalledPackagesAsync(): List<PythonPackage> = runBlockingMaybeCancellable {
   listInstalledPackages()
 }
@@ -646,7 +653,7 @@ value class PyWorkspaceMember(val name: String)
  */
 @ApiStatus.Internal
 interface DependenciesExporter {
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun export(file: PsiFile)
 }
 

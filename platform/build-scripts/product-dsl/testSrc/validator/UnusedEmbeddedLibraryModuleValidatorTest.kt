@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.productLayout.validator
 
+import com.intellij.platform.buildScripts.concurrency.SharedTaskOwner
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue.EMBEDDED
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue.OPTIONAL
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue.REQUIRED
@@ -20,6 +21,13 @@ import org.junit.jupiter.api.extension.ExtendWith
 
 @ExtendWith(TestFailureLogger::class)
 class UnusedEmbeddedLibraryModuleValidatorTest {
+  private val owner = SharedTaskOwner("UnusedEmbeddedLibraryModuleValidatorTest")
+
+  @org.junit.jupiter.api.AfterEach
+  fun closeSharedTasks() {
+    owner.close()
+  }
+
   @Test
   fun `keeps library chain reachable from embedded platform content`() {
     val graph = pluginGraph {
@@ -53,7 +61,7 @@ class UnusedEmbeddedLibraryModuleValidatorTest {
       linkContentModuleDeps("second.plugin.impl", "first.plugin.impl")
     }
 
-    val errors = runValidationRule(UnusedEmbeddedLibraryModuleValidator, testGenerationModel(graph))
+    val errors = runValidationRule(UnusedEmbeddedLibraryModuleValidator, testGenerationModel(graph, owner = owner))
 
     assertThat(errors).hasSize(1)
     val violation = (errors.single() as UnusedEmbeddedLibraryModuleError).violations.single()
@@ -74,7 +82,7 @@ class UnusedEmbeddedLibraryModuleValidatorTest {
       }
     }
 
-    val errors = runValidationRule(UnusedEmbeddedLibraryModuleValidator, testGenerationModel(graph))
+    val errors = runValidationRule(UnusedEmbeddedLibraryModuleValidator, testGenerationModel(graph, owner = owner))
 
     val violation = (errors.single() as UnusedEmbeddedLibraryModuleError).violations.single()
     assertThat(violation.productionPluginConsumers).containsExactly("consumer.plugin")

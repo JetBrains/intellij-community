@@ -45,15 +45,15 @@ final class UiThreadPriority {
     var debug = Boolean.getBoolean("ide.set.qos.for.edt.debug");
     var currentThread = Thread.currentThread();
 
-    int jvmPriorityBefore = currentThread.getPriority();
-    int nativePriorityBefore = debug ? WindowsThread.currentPriority() : -1;
+    var jvmPriorityBefore = currentThread.getPriority();
+    var nativePriorityBefore = debug ? WindowsThread.currentPriority() : -1;
 
     currentThread.setPriority(Thread.MAX_PRIORITY);  // the actual work
 
     if (debug) {
-      int nativeThreadId = WindowsThread.currentId();
-      int nativePriorityAfter = WindowsThread.currentPriority();
-      int jvmPriorityAfter = currentThread.getPriority();
+      var nativeThreadId = WindowsThread.currentId();
+      var nativePriorityAfter = WindowsThread.currentPriority();
+      var jvmPriorityAfter = currentThread.getPriority();
 
       /*
        * Expected output:
@@ -110,7 +110,7 @@ final class UiThreadPriority {
 
     static int currentPriority() {
       try {
-        MemorySegment thread = (MemorySegment)GET_CURRENT_THREAD.invokeExact();
+        var thread = (MemorySegment)GET_CURRENT_THREAD.invokeExact();
         return (int)GET_THREAD_PRIORITY.invokeExact(thread);
       }
       catch (Throwable t) {

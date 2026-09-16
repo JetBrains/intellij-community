@@ -113,8 +113,8 @@ public final class SourceCodeChecker {
           PsiElement psiMethod = DebuggerUtilsEx.getContainingMethod(position);
           if (psiMethod != null) {
             TextRange range = psiMethod.getTextRange();
-            if (psiMethod instanceof PsiDocCommentOwner) {
-              PsiDocComment comment = ((PsiDocCommentOwner)psiMethod).getDocComment();
+            if (psiMethod instanceof PsiDocCommentOwner owner) {
+              PsiDocComment comment = owner.getDocComment();
               if (comment != null) {
                 range = new TextRange(comment.getTextRange().getEndOffset() + 1, range.getEndOffset());
               }
@@ -138,8 +138,8 @@ public final class SourceCodeChecker {
               AppUIUtil.invokeOnEdt(() -> {
                 if (!project.isDisposed()) {
                   FileEditor editor = FileEditorManager.getInstance(project).getSelectedEditor(virtualFile);
-                  if (editor instanceof TextEditor) {
-                    HintManager.getInstance().showErrorHint(((TextEditor)editor).getEditor(),
+                  if (editor instanceof TextEditor textEditor) {
+                    HintManager.getInstance().showErrorHint(textEditor.getEditor(),
                                                             JavaDebuggerBundle.message("warning.source.code.not.match"));
                   }
                   else {

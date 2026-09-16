@@ -13,6 +13,6 @@ import org.jetbrains.annotations.ApiStatus
  * To be used by [PythonCommandLineState] only
  */
 @ApiStatus.Internal
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 fun PyRunToolProvider.getRunToolParametersForJvm(sdk: Sdk, inlineScriptTarget: Path?): PyRunToolParameters =
   runBlockingMaybeCancellable { getRunToolParameters(sdk, inlineScriptTarget) }

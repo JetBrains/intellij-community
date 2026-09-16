@@ -7,18 +7,18 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 interface TransparentComponent {
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun isComponentOnHold(): Boolean
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun setOpacity(opacity: Float)
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun showComponent()
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun hideComponent()
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun repaintComponent()
 }

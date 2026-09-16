@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.asm.tools` start
+content_module_jar(
+    libraries = ["@lib//:libraries-asm-tools-asm-tools"],
+    module = ":asm-tools",
+)
+### auto-generated section `dev intellij.libraries.asm.tools` end
+
 ### auto-generated section `build intellij.libraries.asm.tools` start
 jvm_library(
     name = "asm-tools",
@@ -16,11 +23,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-asm-tools-asm-tools"],
     runtime_deps = ["@lib//:libraries-asm-tools-asm-tools"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-asm-tools-asm-tools"],
-    module = ":asm-tools",
 )
 
 jvm_library(
@@ -43,7 +45,6 @@ exports_files(
     [
         "intellij.libraries.asm.tools.iml",
         "resources/intellij.libraries.asm.tools.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

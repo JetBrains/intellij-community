@@ -10,6 +10,10 @@ jps_test(
 )
 ### skip generation section `test intellij.platform.lvcs.impl.tests`
 
+### auto-generated section `dev intellij.platform.lvcs.impl` start
+content_module_jar(module = ":lvcs-impl")
+### auto-generated section `dev intellij.platform.lvcs.impl` end
+
 ### auto-generated section `build intellij.platform.lvcs.impl` start
 jvm_library(
     name = "lvcs-impl",
@@ -60,8 +64,6 @@ jvm_library(
         "//platform/util:util-ui",
     ],
 )
-
-content_module_jar(module = ":lvcs-impl")
 
 jvm_library(
     name = "lvcs-impl_test_lib",
@@ -121,7 +123,6 @@ exports_files(
     [
         "intellij.platform.lvcs.impl.iml",
         "resources/intellij.platform.lvcs.impl.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

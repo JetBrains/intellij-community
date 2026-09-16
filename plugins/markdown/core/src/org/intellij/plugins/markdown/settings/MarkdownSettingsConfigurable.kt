@@ -45,6 +45,7 @@ import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.ui.treeStructure.ProjectViewUpdateCause
 import com.intellij.util.application
 import org.intellij.plugins.markdown.MarkdownBundle
+import org.intellij.plugins.markdown.editor.tables.ui.alignment.MarkdownTableAlignmentSettingsListener
 import org.intellij.plugins.markdown.extensions.MarkdownBrowserPreviewExtension
 import org.intellij.plugins.markdown.extensions.MarkdownConfigurableExtension
 import org.intellij.plugins.markdown.extensions.MarkdownExtensionWithDownloadableFiles
@@ -68,6 +69,9 @@ internal class MarkdownSettingsConfigurable(private val project: Project) : Boun
 ) {
   private val settings
     get() = MarkdownSettings.getInstance(project)
+
+  private val appSettings
+    get() = MarkdownApplicationSettings.getInstance()
 
   private var customStylesheetEditor: EditorTextField? = null
 
@@ -116,7 +120,18 @@ internal class MarkdownSettingsConfigurable(private val project: Project) : Boun
       }
       row {
         checkBox(MarkdownBundle.message("markdown.settings.enable.live.preview"))
-          .bindSelected(settings::enableLivePreview)
+          .bindSelected(appSettings::enableLivePreview)
+      }
+      row {
+        checkBox(MarkdownBundle.message("markdown.settings.align.table.cells.visually"))
+          .bindSelected(
+            getter = { appSettings.alignTableCellsVisually },
+            setter = {
+              appSettings.alignTableCellsVisually = it
+              MarkdownTableAlignmentSettingsListener.fireChanged()
+            }
+          )
+          .comment(MarkdownBundle.message("markdown.settings.align.table.cells.visually.comment"))
       }
       row {
         checkBox(MarkdownBundle.message("markdown.settings.enable.injections"))
@@ -309,8 +324,10 @@ internal class MarkdownSettingsConfigurable(private val project: Project) : Boun
   }
 
   override fun apply() {
-    settings.update {
-      super.apply()
+    appSettings.update {
+      settings.update {
+        super.apply()
+      }
     }
   }
 

@@ -104,18 +104,18 @@ abstract class FloatingToolbar(
 
   open fun hideByOtherHints(): Boolean = false
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun isShown(): Boolean {
     return hint?.isVisible == true
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun hide() {
     hint?.hide()
     hint = null
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private suspend fun showIfHidden() {
     preventHintFromShowing = true
     val enabled = writeIntentReadAction(::isEnabled)
@@ -167,7 +167,7 @@ abstract class FloatingToolbar(
     check(hintRequests.tryEmit(HintRequest.Hide))
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun updateLocationIfShown() {
     hint?.let(::showHint)
   }
@@ -220,7 +220,7 @@ abstract class FloatingToolbar(
     onHintShown()
   }
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun canBeShownAtCurrentSelection(): Boolean {
     if (!isEnabled()) return false
     val selectionModel = editor.selectionModel
@@ -249,7 +249,7 @@ abstract class FloatingToolbar(
     preventHintFromShowing = false
   }
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   protected open fun hasIgnoredParent(element: PsiElement): Boolean {
     return false
   }

@@ -14,15 +14,15 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 import java.awt.Color
 
 internal class FilePresentationServiceImpl(private val project: Project) : FilePresentationService {
-  @RequiresReadLock
-  @RequiresBackgroundThread
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   override fun getFileBackgroundColor(file: VirtualFile): Color? {
     require(file.isValid)
     return VfsPresentationUtil.getFileBackgroundColor(project, file)
   }
 
-  @RequiresReadLock
-  @RequiresBackgroundThread
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   override fun getFileBackgroundColor(element: PsiElement): Color? {
     PsiUtilCore.ensureValid(element)
     val file = PsiUtilCore.getVirtualFile(element)

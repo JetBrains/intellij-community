@@ -86,7 +86,7 @@ object DocMarkdownToHtmlConverter {
    */
   @Contract(pure = true)
   @JvmStatic
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   @JvmOverloads
   fun convert(project: Project, @Nls markdownText: String, defaultLanguage: Language? = null): @Nls String {
     val lines = markdownText.lines()

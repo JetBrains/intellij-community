@@ -74,7 +74,7 @@ import java.util.function.Supplier
 import javax.swing.JComponent
 import kotlin.time.TimeSource
 
-internal class MarketplacePluginsTab @RequiresEdt constructor(
+internal class MarketplacePluginsTab @RequiresEdt(generateAssertion = false /* IJPL-115548 */) constructor(
   facade: PluginModelFacade,
   scope: CoroutineScope,
   customizer: PluginManagerCustomizer?,
@@ -106,7 +106,7 @@ internal class MarketplacePluginsTab @RequiresEdt constructor(
     customizeSearchTextField()
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun createPluginsPanel(): JComponent {
     val project = ProjectUtil.getActiveProject()
     computeAndApplyMarketplacePanelModel(selectionListener, project)
@@ -188,6 +188,7 @@ internal class MarketplacePluginsTab @RequiresEdt constructor(
     val pluginIds = marketplaceData.flatMap { it.value.getPlugins().map { plugin -> plugin.pluginId } }.toSet() +
                     customRepositoriesMap.flatMap { it.value.map { plugin -> plugin.pluginId } }.toSet()
     val installedPlugins = pluginManager.findInstalledPlugins(pluginIds)
+    pluginManagerCustomizer?.awaitPluginStatesLoaded()
 
     return CreateMarketplacePanelModel(
       marketplaceData,
@@ -231,7 +232,7 @@ internal class MarketplacePluginsTab @RequiresEdt constructor(
     return marketplaceData
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun applyMarketplacePanelModel(
     project: Project?,
     model: CreateMarketplacePanelModel,
@@ -336,9 +337,6 @@ internal class MarketplacePluginsTab @RequiresEdt constructor(
             model.installationStates,
           )
         }
-      }
-      if (pluginManagerCustomizer != null) {
-        pluginManagerCustomizer.ensurePluginStatesLoaded()
       }
     }
     finally {

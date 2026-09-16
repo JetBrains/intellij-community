@@ -190,8 +190,8 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
         Object contents = CopyPasteManager.getInstance().getContents(XWatchTransferable.EXPRESSIONS_FLAVOR);
         if (contents instanceof List list) {
           for (Object item : list) {
-            if (item instanceof XExpression) {
-              addWatchExpression(((XExpression)item), -1, true);
+            if (item instanceof XExpression expression) {
+              addWatchExpression(expression, -1, true);
             }
           }
         }
@@ -702,22 +702,22 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
   public boolean update(final DnDEvent aEvent) {
     Object object = aEvent.getAttachedObject();
     boolean possible = false;
-    if (object instanceof XValueNodeImpl[]) {
+    if (object instanceof XValueNodeImpl[] nodes) {
       possible = true;
       // do not add new watch if node is dragged to itself
-      if (((XValueNodeImpl[])object).length == 1) {
+      if (nodes.length == 1) {
         Point point = aEvent.getPoint();
         XDebuggerTree tree = getTree();
         TreePath path = tree.getClosestPathForLocation(point.x, point.y);
-        if (path != null && path.getLastPathComponent() == ((XValueNodeImpl[])object)[0]) {
+        if (path != null && path.getLastPathComponent() == nodes[0]) {
           // the same item is under pointer, filter out place below the tree
           Rectangle pathBounds = tree.getPathBounds(path);
           possible = pathBounds != null && pathBounds.y + pathBounds.height < point.y;
         }
       }
     }
-    else if (object instanceof EventInfo) {
-      possible = ((EventInfo)object).getTextForFlavor(DataFlavor.stringFlavor) != null;
+    else if (object instanceof EventInfo info) {
+      possible = info.getTextForFlavor(DataFlavor.stringFlavor) != null;
     }
 
     aEvent.setDropPossible(possible, XDebuggerBundle.message("xdebugger.drop.text.add.to.watches"));
@@ -728,13 +728,13 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
   @Override
   public void drop(DnDEvent aEvent) {
     Object object = aEvent.getAttachedObject();
-    if (object instanceof XValueNodeImpl[]) {
-      for (XValueNodeImpl node : (XValueNodeImpl[])object) {
+    if (object instanceof XValueNodeImpl[] nodes) {
+      for (XValueNodeImpl node : nodes) {
         DebuggerUIUtil.addToWatches(this, node);
       }
     }
-    else if (object instanceof EventInfo) {
-      String text = ((EventInfo)object).getTextForFlavor(DataFlavor.stringFlavor);
+    else if (object instanceof EventInfo info) {
+      String text = info.getTextForFlavor(DataFlavor.stringFlavor);
       if (text != null) {
         addWatchExpression(XExpressionImpl.fromText(text), -1, false);
       }

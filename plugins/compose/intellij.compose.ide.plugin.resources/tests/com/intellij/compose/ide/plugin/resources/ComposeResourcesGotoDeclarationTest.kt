@@ -4,27 +4,23 @@ package com.intellij.compose.ide.plugin.resources
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction
 import com.intellij.compose.ide.plugin.resources.psi.asUnderscoredIdentifier
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.util.parentOfType
 import com.intellij.psi.xml.XmlTag
 import com.intellij.testFramework.common.timeoutRunBlocking
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.daemon.common.trimQuotes
-import org.jetbrains.kotlin.test.TestMetadata
-import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 
-class ComposeResourcesGotoDeclarationTest : ComposeResourcesTestCase() {
+@ComposeResourcesAllSourceSets
+class ComposeResourcesGotoDeclarationTest : ComposeResourcesCodeInsightTestCase() {
 
-  @TargetVersions(TARGET_GRADLE_VERSION)
   @Test
-  @TestMetadata("ComposeResources")
-  fun `test common composeResources are accessible`() {
-    val files = importProjectFromTestData()
-
+  fun `test composeResources are accessible`() = testComposeResourcesProject {
     timeoutRunBlocking(context = Dispatchers.EDT) {
-      files.openInEditor(sourceSetName = sourceSetName)
+      openInEditor()
 
       doTestNavigation(qualifiedName = "Res.drawable.test", expectedSize = 1, expectedType = ResourceType.DRAWABLE)
       doTestNavigation(qualifiedName = "Res.drawable.compose_multiplatform", expectedSize = 2, expectedType = ResourceType.DRAWABLE)
@@ -35,18 +31,20 @@ class ComposeResourcesGotoDeclarationTest : ComposeResourcesTestCase() {
 
       doTestNavigation(qualifiedName = "Res.font.test", expectedSize = 1, expectedType = ResourceType.FONT)
     }
-
   }
 
-  private fun List<VirtualFile>.openInEditor(sourceSetName: String) =
-    codeInsightTestFixture.openFileInEditor(first { it.path.endsWith("composeApp/src/$sourceSetName/kotlin/org/example/project/test.$sourceSetName.kt") })
+  private fun openInEditor() {
+    codeInsightFixture.configureFromExistingVirtualFile(
+      canonicalProjectFile("composeApp/src/$sourceSetName/kotlin/org/example/project/test.$sourceSetName.kt")
+    )
+  }
 
   private fun doTestNavigation(qualifiedName: String, expectedSize: Int, expectedType: ResourceType) {
-    codeInsightTestFixture.editor.caretModel.moveToOffset(codeInsightTestFixture.file.text.indexOf(qualifiedName) + qualifiedName.length)
+    codeInsightFixture.editor.caretModel.moveToOffset(codeInsightFixture.file.text.indexOf(qualifiedName) + qualifiedName.length)
 
-    val targetElements = GotoDeclarationAction.findAllTargetElements(myProject, codeInsightTestFixture.editor, codeInsightTestFixture.caretOffset)
+    val targetElements = GotoDeclarationAction.findAllTargetElements(project, codeInsightFixture.editor, codeInsightFixture.caretOffset)
 
-    assertSize(expectedSize, targetElements)
+    assertEquals(expectedSize, targetElements.size, "$qualifiedName in ${codeInsightFixture.file.virtualFile.path}")
     targetElements.forEach {
       val actualName = if (expectedType.isStringType) it.text.trimQuotes() else it.namedUnwrappedElement?.name?.substringBefore('.')?.asUnderscoredIdentifier()
       assertEquals(qualifiedName.substringAfterLast('.'), actualName)

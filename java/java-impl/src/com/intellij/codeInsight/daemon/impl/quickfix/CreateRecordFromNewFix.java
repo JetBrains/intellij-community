@@ -6,7 +6,6 @@ import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.TemplateBuilder;
-import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
@@ -52,13 +51,14 @@ public class CreateRecordFromNewFix extends CreateClassFromNewFix {
     return CreateClassKind.RECORD;
   }
 
-  @NotNull
   @Override
-  TemplateBuilderImpl createConstructorTemplate(PsiClass aClass, PsiNewExpression newExpression, PsiExpressionList argList) {
-    TemplateBuilderImpl templateBuilder = new TemplateBuilderImpl(aClass);
+  @Nullable PsiElement setupConstructor(@NotNull PsiClass aClass,
+                                        @NotNull PsiNewExpression newExpression,
+                                        @NotNull PsiExpressionList argList,
+                                        @NotNull TemplateBuilder builder) {
     PsiRecordHeader header = aClass.getRecordHeader();
-    setupRecordComponents(header, templateBuilder, argList, getTargetSubstitutor(newExpression));
-    return templateBuilder;
+    setupRecordComponents(header, builder, argList, getTargetSubstitutor(newExpression));
+    return null;
   }
 
   static void setupRecordComponents(@Nullable PsiRecordHeader header, @NotNull TemplateBuilder builder,

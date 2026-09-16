@@ -1,9 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.dependencies
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.intellij.build.BuildHttpSession
 import org.jetbrains.intellij.build.resolveAndExtractToCacheLocation
 import java.nio.file.Files
 import java.nio.file.Path
@@ -11,37 +10,39 @@ import java.util.concurrent.TimeUnit
 import java.util.logging.Logger
 
 /**
- * Provides a current JBR SDK
+ * Provides a current JBR SDK. Every download blocks the calling thread.
  */
 object JdkDownloader {
   @Deprecated("Use getJdkHome(communityRoot, jdkBuildNumber, variation, infoLog)", level = DeprecationLevel.WARNING)
   fun blockingGetJdkHome(communityRoot: BuildDependenciesCommunityRoot, jdkBuildNumber: String? = null, variation: String? = null, infoLog: (String) -> Unit): Path {
-    return runBlocking(Dispatchers.IO) {
-      getJdkHome(communityRoot = communityRoot, jdkBuildNumber = jdkBuildNumber, variation = variation, infoLog = infoLog)
-    }
+    return getJdkHome(communityRoot = communityRoot, jdkBuildNumber = jdkBuildNumber, variation = variation, infoLog = infoLog)
   }
 
-  suspend fun getJdkHome(communityRoot: BuildDependenciesCommunityRoot, jdkBuildNumber: String? = null, variation: String? = null, infoLog: (String) -> Unit): Path {
+  fun getJdkHome(communityRoot: BuildDependenciesCommunityRoot, jdkBuildNumber: String? = null, variation: String? = null, infoLog: (String) -> Unit): Path {
+    return getJdkHome(communityRoot, jdkBuildNumber, variation, null, infoLog)
+  }
+
+  fun getJdkHome(communityRoot: BuildDependenciesCommunityRoot, jdkBuildNumber: String? = null, variation: String? = null, session: BuildHttpSession?, infoLog: (String) -> Unit): Path {
     return getJdkHome(
       communityRoot = communityRoot,
       os = OS.current,
       arch = Arch.current,
       infoLog = infoLog,
       jdkBuildNumber = jdkBuildNumber,
-      variation = variation
+      variation = variation,
+      session = session,
     )
   }
 
-  suspend fun getJdkHomeAndLog(communityRoot: BuildDependenciesCommunityRoot, jdkBuildNumber: String? = null, variation: String? = null): Path {
+  fun getJdkHomeAndLog(communityRoot: BuildDependenciesCommunityRoot, jdkBuildNumber: String? = null, variation: String? = null): Path {
     return getJdkHome(communityRoot = communityRoot, jdkBuildNumber = jdkBuildNumber, variation = variation, infoLog = {
       Logger.getLogger(JdkDownloader::class.java.name).info(it)
     })
   }
 
+  @Deprecated("getJdkHomeAndLog blocks too", ReplaceWith("getJdkHomeAndLog(communityRoot, jdkBuildNumber, variation)"))
   fun blockingGetJdkHomeAndLog(communityRoot: BuildDependenciesCommunityRoot, jdkBuildNumber: String? = null, variation: String? = null): Path {
-    return runBlocking(Dispatchers.IO) {
-      getJdkHomeAndLog(communityRoot, jdkBuildNumber, variation)
-    }
+    return getJdkHomeAndLog(communityRoot, jdkBuildNumber, variation)
   }
 
   /**
@@ -50,16 +51,14 @@ object JdkDownloader {
   @Suppress("unused")
   @JvmStatic
   fun getRuntimeHome(communityRoot: BuildDependenciesCommunityRoot): Path {
-    return runBlocking(Dispatchers.IO) {
-      val dependenciesProperties = BuildDependenciesDownloader.getDependencyProperties(communityRoot)
-      val runtimeBuild = dependenciesProperties.property("runtimeBuild")
-      getJdkHome(communityRoot, jdkBuildNumber = runtimeBuild, variation = "jbr_jcef") {
-        Logger.getLogger(JdkDownloader::class.java.name).info(it)
-      }
+    val dependenciesProperties = BuildDependenciesDownloader.getDependencyProperties(communityRoot)
+    val runtimeBuild = dependenciesProperties.property("runtimeBuild")
+    return getJdkHome(communityRoot, jdkBuildNumber = runtimeBuild, variation = "jbr_jcef") {
+      Logger.getLogger(JdkDownloader::class.java.name).info(it)
     }
   }
 
-  suspend fun getJdkHome(
+  fun getJdkHome(
     communityRoot: BuildDependenciesCommunityRoot,
     os: OS,
     arch: Arch,
@@ -68,9 +67,22 @@ object JdkDownloader {
     variation: String? = null,
     infoLog: (String) -> Unit,
   ): Path {
+    return getJdkHome(communityRoot, os, arch, isMusl, jdkBuildNumber, variation, null, infoLog)
+  }
+
+  fun getJdkHome(
+    communityRoot: BuildDependenciesCommunityRoot,
+    os: OS,
+    arch: Arch,
+    isMusl: Boolean = false,
+    jdkBuildNumber: String? = null,
+    variation: String? = null,
+    session: BuildHttpSession?,
+    infoLog: (String) -> Unit,
+  ): Path {
     val effectiveVariation = if (isMusl) null else variation
     val jdkUrl = getUrl(communityRoot = communityRoot, os = os, arch = arch, isMusl = isMusl, jdkBuildNumber = jdkBuildNumber, variation = effectiveVariation)
-    val jdkExtracted = resolveAndExtractToCacheLocation(jdkUrl, communityRoot, BuildDependenciesExtractOptions.STRIP_ROOT)
+    val jdkExtracted = resolveAndExtractToCacheLocation(jdkUrl, communityRoot, session, BuildDependenciesExtractOptions.STRIP_ROOT)
     val jdkHome = if (os == OS.MACOSX) jdkExtracted.resolve("Contents").resolve("Home") else jdkExtracted
     infoLog("JPS-bootstrap JDK (jdkHome=$jdkHome, executable=${getJavaExecutable(jdkHome)})")
     return jdkHome

@@ -46,10 +46,6 @@ class ConcurrentWeakVersionedValueHashMap<K: Any, V: Any> : ConcurrentMap<K, V>,
   // but it is more optimal to track and cleanup the entire map instead of each versioned reference.
   private val actualMap: ConcurrentMap<K, VersionedPayloadMap> = ConcurrentHashMap()
 
-  init {
-    InternalPsiVersioning.PsiVersionRegistry.instance.registerCleanable(this)
-  }
-
   override val entries: MutableSet<MutableMap.MutableEntry<K, V>>
     get() = entrySnapshotForCurrentVersion().mapTo(LinkedHashSet()) { (key, value) -> Entry(key, value) }
 
@@ -361,7 +357,11 @@ class ConcurrentWeakVersionedValueHashMap<K: Any, V: Any> : ConcurrentMap<K, V>,
    * Inserts [payload] to [this]
    */
   private fun VersionedPayloadMap.withPayload(version: Long, payload: WeakValueReference<K, V>?): VersionedPayloadMap {
-    return insert(version, payload) ?: this
+    val result = insert(version, payload) ?: return this
+    if (result.size() > 1) {
+      InternalPsiVersioning.recordVersionedChange(this@ConcurrentWeakVersionedValueHashMap)
+    }
+    return result
   }
 
   private fun VersionedPayloadMap.getLiveValue(): V? {

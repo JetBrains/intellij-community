@@ -6,7 +6,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
-import oshi.SystemInfo
+import oshi.ffm.SystemInfo
 import oshi.software.os.OSProcess
 import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
@@ -46,8 +46,8 @@ class ProcessInfo private constructor(
     fun create(p: OSProcess, portThatIsUsedByProcess: Int? = null): ProcessInfo = ProcessInfo(
       pid = p.processID.toLong(),
       parentPid = p.parentProcessID.toLong(),
-      name = p.name ?: "Not Available",
-      argumentsProvider = { p.arguments ?: emptyList() },
+      name = p.name,
+      argumentsProvider = { p.arguments },
       startTime = p.startTime.let(Instant::ofEpochMilli),
       userProvider = { p.user },
       processHandle = ProcessHandle.of(p.processID.toLong()).getOrNull(),

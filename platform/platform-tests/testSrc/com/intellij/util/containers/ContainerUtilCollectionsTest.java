@@ -935,6 +935,11 @@ public class ContainerUtilCollectionsTest extends Assert {
   }
 
   @Test
+  public void testKeyEvictionListenerWorksInConcurrentWeakIdentityMap() {
+    assertKeyEvictionListenerWorks(HashingStrategy.identity(), CollectionFactory::createConcurrentWeakIdentityMap);
+  }
+
+  @Test
   public void testKeyEvictionListenerWorksInConcurrentSoftMap() {
     // canonical strategy in createConcurrentSoftMap slightly differs from Object.hashCode()
     assertKeyEvictionListenerWorks((HashingStrategy<Object>)CollectionFactory.createConcurrentSoftMap(), evictionListener -> CollectionFactory.createConcurrentSoftMap(evictionListener));

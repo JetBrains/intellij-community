@@ -4,6 +4,7 @@ package git4idea.remote.hosting
 import com.intellij.collaboration.api.ServerPath
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.util.UriUtil
 import com.intellij.util.io.URLUtil
 import git4idea.remote.GitRemoteUrlCoordinates
@@ -12,6 +13,21 @@ import java.net.URI
 import java.net.URISyntaxException
 
 object GitHostingUrlUtil {
+  @JvmStatic
+  fun isSshUrl(url: String): Boolean {
+    val schemeSeparator = url.indexOf(URLUtil.SCHEME_SEPARATOR)
+    if (schemeSeparator >= 0) {
+      return when (url.substring(0, schemeSeparator)) {
+        "ssh", "git+ssh", "ssh+git" -> true
+        else -> false
+      }
+    }
+
+    val colon = url.indexOf(':')
+    val slash = url.indexOf('/')
+    return colon >= 0 && (slash !in 0..<colon) && !OSAgnosticPathUtil.startsWithWindowsDrive(url)
+  }
+
   @JvmStatic
   @NlsSafe
   fun removeProtocolPrefix(url: String): String {

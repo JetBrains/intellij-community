@@ -2,6 +2,8 @@
 package com.intellij.openapi.vcs.merge
 
 import com.intellij.diff.DiffManagerEx
+import com.intellij.diff.InvalidDiffRequestException
+import com.intellij.diff.comparison.DiffTooBigException
 import com.intellij.diff.merge.IterativeResolveSupport
 import com.intellij.diff.merge.LangSpecificMergeConflictResolverWrapper
 import com.intellij.diff.merge.MergeConflictModel
@@ -23,8 +25,9 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 
-@org.jetbrains.annotations.ApiStatus.Internal
+@ApiStatus.Internal
 class MergeConflictIterativeDataHolder(
   private val project: Project?,
   parentDisposable: Disposable,
@@ -35,27 +38,27 @@ class MergeConflictIterativeDataHolder(
     Disposer.register(parentDisposable, this)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun getMergeConflictModel(file: VirtualFile): MergeConflictModel? = mergeConflictModels[file]
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun isFileResolved(file: VirtualFile): Boolean {
     val mergeConflictModel = mergeConflictModels[file] ?: return false
     return mergeConflictModel.getAllChanges().all { change -> change.isResolved }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun isFileReviewed(file: VirtualFile): Boolean {
     val mergeConflictModel = mergeConflictModels[file] ?: return false
     return mergeConflictModel.wasReviewed
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun getResolvedFilesAndModels(): Map<VirtualFile, MergeConflictModel> {
     return mergeConflictModels.filter { it.value.getUnresolvedChanges().isEmpty() }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun removeFiles(files: List<VirtualFile>) {
     val removedModels = files.mapNotNull { mergeConflictModels.remove(it) }
     runWriteAction {
@@ -73,21 +76,39 @@ class MergeConflictIterativeDataHolder(
     removedModels.forEach(Disposer::dispose)
   }
 
+  /**
+   * Prepares the iterative resolution model for the [file] from an already built [request].
+   * Returns `null` when an external tool or a non-text request handles the file.
+   *
+   * @throws DiffTooBigException when the diff is too big to compute. It is a `ProcessCanceledException`, so the
+   *   caller must let it propagate.
+   * @throws InvalidDiffRequestException when the model cannot write the output.
+   */
+  @Throws(DiffTooBigException::class, InvalidDiffRequestException::class)
   suspend fun prepareModelIfSupported(file: VirtualFile, request: MergeRequest): MergeConflictModel? =
     withContext(Dispatchers.EDT) {
       if (request !is TextMergeRequest || !isMergeRequestSupported(request)) return@withContext null
       val model = mergeConflictModels.getOrPut(file) {
         val conflictResolver = LangSpecificMergeConflictResolverWrapper(project, request.contents)
         val settings = service<TextDiffSettingsHolder>().getSettings(DiffPlaces.MERGE)
-        MergeConflictModel(project, request, conflictResolver).apply {
-          rediff(settings.ignorePolicy, settings.isAutoResolveImportConflicts)
+        val created = MergeConflictModel(project, request, conflictResolver)
+        var initialized = false
+        try {
+          created.rediff(settings.ignorePolicy, settings.isAutoResolveImportConflicts)
+          initialized = true
+          created
+        }
+        finally {
+          // The model registers a document listener in its constructor. If rediff fails (for example with
+          // DiffTooBigException), dispose it, or it stays a Disposer root and pins the project.
+          if (!initialized) Disposer.dispose(created)
         }
       }
       IterativeResolveSupport.setData(request, model)
       model
     }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun getAiFileSnapshot(file: VirtualFile): MergeConflictAiFileSnapshot? {
     val model = mergeConflictModels[file] ?: return null
     val changes = model.getAllChanges()
@@ -98,7 +119,7 @@ class MergeConflictIterativeDataHolder(
     )
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun resolveAutoResolvableConflicts(file: VirtualFile): Boolean {
     val model = mergeConflictModels[file] ?: return false
     if (model.getAutoResolvableChanges().isEmpty()) return false
@@ -109,7 +130,7 @@ class MergeConflictIterativeDataHolder(
     return true
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun dispose() {
     mergeConflictModels.values.forEach {
       Disposer.dispose(it)
@@ -123,10 +144,9 @@ class MergeConflictIterativeDataHolder(
       is MergeRequestHandler.UserConfiguredExternalToolHandler, is MergeRequestHandler.ExtensionBasedHandler -> false
     }
   }
-
 }
 
-@org.jetbrains.annotations.ApiStatus.Internal
+@ApiStatus.Internal
 data class MergeConflictAiFileSnapshot(
   @JvmField val totalConflicts: Int,
   @JvmField val resolvedConflicts: Int,

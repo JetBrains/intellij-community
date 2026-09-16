@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet", "ReplaceJavaStaticMethodWithKotlinAnalog")
+@file:Suppress("ReplaceGetOrSet", "ReplaceJavaStaticMethodWithKotlinAnalog", "DestructuringDeclaration")
 
 package org.jetbrains.intellij.build.classPath
 
@@ -10,7 +10,10 @@ import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.ContentModuleFilter
+import org.jetbrains.intellij.build.DescriptorSearchPass
 import org.jetbrains.intellij.build.JvmArchitecture
+import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.PLATFORM_LOADER_JAR
 import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
@@ -18,6 +21,7 @@ import org.jetbrains.intellij.build.UTIL_8_JAR
 import org.jetbrains.intellij.build.UTIL_JAR
 import org.jetbrains.intellij.build.dev.AssembledPrepackedPluginContentJar
 import org.jetbrains.intellij.build.getUnprocessedPluginXmlContent
+import org.jetbrains.intellij.build.readDescriptor
 import org.jetbrains.intellij.build.impl.DescriptorCacheContainer
 import org.jetbrains.intellij.build.impl.LIB_DIRECTORY
 import org.jetbrains.intellij.build.impl.ModuleIncludeReasons
@@ -42,14 +46,15 @@ import java.nio.file.Path
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.relativeToOrSelf
 
-fun generateClassPathByLayoutReport(libDir: Path, entries: List<DistributionFileEntry>, skipNioFs: Boolean, includeProductModule: (String) -> Boolean = { false }): Set<Path> {
+/**
+ * [includeProductModules] keeps the jars that hold a product content module. The module system loads them, so a
+ * launch leaves them out; a scramble classpath takes every jar of the platform.
+ */
+fun generateClassPathByLayoutReport(libDir: Path, entries: List<DistributionFileEntry>, skipNioFs: Boolean, includeProductModules: Boolean = false): Set<Path> {
   val classPath = LinkedHashSet<Path>()
   for (entry in entries) {
-    if (entry is ModuleOwnedFileEntry) {
-      val owner = entry.owner
-      if (owner != null && owner.reason == ModuleIncludeReasons.PRODUCT_MODULES && !includeProductModule(owner.moduleName)) {
-        continue
-      }
+    if (!includeProductModules && entry is ModuleOwnedFileEntry && entry.owner?.reason == ModuleIncludeReasons.PRODUCT_MODULES) {
+      continue
     }
 
     // exclude files like ext/platform-main.jar - if a file in lib, take only direct children in an account
@@ -177,7 +182,7 @@ fun orderCoreClasspathEntries(entries: Collection<String>): List<String> {
  * This generation is based on the plugins' distribution,
  * so we would like to include all distribution entities of **embedded** modules (and their libraries) from plugins marked with `use-idea-classloader`.
  */
-internal suspend fun generateCoreClasspathFromPlugins(
+internal fun generateCoreClasspathFromPlugins(
   platformLayout: PlatformLayout,
   pluginBuildResults: List<PluginBuildResult>,
   context: BuildContext,
@@ -207,13 +212,32 @@ internal suspend fun generateCoreClasspathFromPlugins(
  * Provides a set of content modules ("embedded" ones) and the module of the plugin itself, if it uses `use-idea-classloader`.
  * These modules should be included in the core classpath, also their libraries should be treated as platform libraries.
  */
-internal suspend fun getEmbeddedContentModulesOfPluginsWithUseIdeaClassloader(
+internal fun getEmbeddedContentModulesOfPluginsWithUseIdeaClassloader(
   pluginMainModule: String,
   cacheContainer: ScopedCachedDescriptorContainer?,
   context: BuildContext,
 ): Set<String> {
-  val pluginModule = context.outputProvider.findRequiredModule(pluginMainModule)
-  val pluginXmlBytes = cacheContainer?.getCachedFileData(PLUGIN_XML_RELATIVE_PATH) ?: getUnprocessedPluginXmlContent(pluginModule, context.outputProvider)
+  return getEmbeddedContentModulesOfPluginsWithUseIdeaClassloader(
+    pluginMainModule, cacheContainer, context.outputProvider, context.getContentModuleFilter(), sourceOnly = false,
+  )
+}
+
+internal fun getEmbeddedContentModulesOfPluginsWithUseIdeaClassloader(
+  pluginMainModule: String,
+  cacheContainer: ScopedCachedDescriptorContainer?,
+  outputProvider: ModuleOutputProvider,
+  contentModuleFilter: ContentModuleFilter,
+  sourceOnly: Boolean,
+): Set<String> {
+  val pluginModule = outputProvider.findRequiredModule(pluginMainModule)
+  val pluginXmlBytes = cacheContainer?.getCachedFileData(PLUGIN_XML_RELATIVE_PATH) ?: if (sourceOnly) {
+    requireNotNull(readDescriptor(pluginModule, PLUGIN_XML_RELATIVE_PATH, outputProvider, DescriptorSearchPass.PRODUCTION_SOURCES)) {
+      "Cannot find the source plugin descriptor in $pluginMainModule"
+    }
+  }
+  else {
+    getUnprocessedPluginXmlContent(pluginModule, outputProvider)
+  }
   val pluginXmlContent = pluginXmlBytes.decodeToString()
   val rootElement = JDOMUtil.load(pluginXmlContent)
   if (rootElement.getAttribute("use-idea-classloader")?.value?.toBoolean() != true) {
@@ -222,7 +246,7 @@ internal suspend fun getEmbeddedContentModulesOfPluginsWithUseIdeaClassloader(
 
   val embeddedModules = LinkedHashSet<String>()
   embeddedModules.add(pluginMainModule)
-  filterAndProcessContentModules(rootElement, pluginMainModule, context) { _, moduleName, loadingRule ->
+  filterAndProcessContentModules(rootElement, pluginMainModule, contentModuleFilter) { _, moduleName, loadingRule ->
     if (loadingRule == "embedded") {
       embeddedModules.add(moduleName)
     }
@@ -254,8 +278,7 @@ data class PluginBuildDescriptor(
 )
 
 /**
- * Writes everything in `plugin-classpath.txt` that precedes the plugin count: the format version, the `jarOnly` flag
- * and the product descriptor.
+ * Writes everything in `plugin-classpath.txt` that precedes the plugin count: the format version and the product descriptor.
  *
  * The count is not written here because it is not always known to whoever knows the descriptor. A split dev assembly
  * has the platform fragment produce this prefix while each plugin fragment produces only its own records, so the count
@@ -264,15 +287,11 @@ data class PluginBuildDescriptor(
 @Suppress("BlockingMethodInNonBlockingContext")
 internal fun writePluginClassPathPrefix(
   out: DataOutputStream,
-  isJarOnly: Boolean,
   platformLayout: PlatformLayout,
   descriptorCacheContainer: DescriptorCacheContainer,
   context: BuildContext,
 ) {
-  // format version
-  out.write(2)
-  // jarOnly
-  out.write(if (isJarOnly) 1 else 0)
+  out.write(PLUGIN_CLASSPATH_FORMAT_VERSION)
 
   val mainPluginDescriptorContent = BufferExposingByteArrayOutputStream().use {
     JDOMUtil.write(createCachedProductDescriptor(platformLayout, descriptorCacheContainer.forPlatform(platformLayout), context), it)
@@ -282,6 +301,12 @@ internal fun writePluginClassPathPrefix(
   out.writeInt(mainPluginDescriptorContent.size())
   out.write(mainPluginDescriptorContent.internalBuffer, 0, mainPluginDescriptorContent.size())
 }
+
+/**
+ * The first byte of `plugin-classpath.txt`. The reader is `com.intellij.ide.plugins.PluginDescriptorLoader`, and it
+ * falls back to the plugin directory scan when the byte does not match.
+ */
+private const val PLUGIN_CLASSPATH_FORMAT_VERSION = 3
 
 /** Writes the bundled plugin count, which separates the prefix written by [writePluginClassPathPrefix] from the per-plugin records. */
 internal fun writePluginClassPathCount(out: DataOutputStream, pluginCount: Int) {
@@ -331,10 +356,9 @@ fun createCachedProductDescriptor(
  * immediately before the asset at index `n`. Two jars recorded at one ordinal keep the order the assembly recorded them
  * in.
  *
- * Two shapes would make the count lag: an asset that produces no entry at all, and two assets whose `effectiveFile`
- * is one file. No flag rules either out - a dev distribution is the unpacked one, so `buildJars` may point an asset at
- * its cache entry - and nothing here detects them. Both would move a handed-off jar later and never earlier, and the
- * whole-distribution comparison in `dev-dist.cmd snapshot diff` is what says neither happens.
+ * One shape would make the count lag: an asset that produces no entry at all. Nothing here detects it. It would move
+ * a handed-off jar later and never earlier, and the whole-distribution comparison in `dev-dist.cmd snapshot diff` is
+ * what says it does not happen.
  *
  * A jar in a subdirectory of `lib/` is never on the classpath. That is the same rule the `relativeOutputFile` test below
  * applies to an assembled entry.
@@ -384,7 +408,7 @@ internal fun mergePrepackedIntoAssetOrder(
 }
 
 @Suppress("BlockingMethodInNonBlockingContext")
-internal suspend fun generatePluginClassPath(
+internal fun generatePluginClassPath(
   pluginEntries: List<PluginBuildResult>,
   descriptorFileProvider: DescriptorCacheContainer,
   platformLayout: PlatformLayout,

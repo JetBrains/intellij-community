@@ -54,7 +54,7 @@ import javax.swing.event.HyperlinkEvent
 object MergeConflictResolveUtil {
   private val ACTIVE_MERGE_WINDOW = Key.create<WindowWrapper>("ResolveConflictsWindow")
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun showMergeWindow(project: Project,
                       file: VirtualFile?,
                       lock: BackgroundableActionLock,

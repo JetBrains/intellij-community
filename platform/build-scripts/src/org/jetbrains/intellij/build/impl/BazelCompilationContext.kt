@@ -8,12 +8,12 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.platform.bazel.runfiles.BazelRunfiles
 import com.intellij.util.io.URLUtil
 import io.opentelemetry.api.trace.Span
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.intellij.build.BuildLifetime
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildPaths
@@ -36,7 +36,7 @@ import kotlin.io.path.pathString
 @Internal
 class BazelCompilationContext(
   private val delegate: CompilationContext,
-  private val scope: CoroutineScope?,
+  private val lifetime: BuildLifetime?,
   @JvmField val outputProviderState: BazelModuleOutputProviderState = BazelModuleOutputProviderState(
     modules = delegate.project.modules,
     projectHome = computeProjectHomeForModuleOutputs(delegate.paths.projectHome),
@@ -45,7 +45,7 @@ class BazelCompilationContext(
   override val outputProvider: ModuleOutputProvider by lazy {
     BazelModuleOutputProvider(
       state = outputProviderState,
-      scope = scope,
+      lifetime = lifetime,
       useTestCompilationOutput = options.useTestCompilationOutput,
       testCompilationOutputModules = options.testCompilationOutputModules,
     )
@@ -70,12 +70,12 @@ class BazelCompilationContext(
   override val stableJavaExecutable: Path
     get() = delegate.stableJavaExecutable
 
-  override suspend fun getStableJdkHome(): Path = delegate.getStableJdkHome()
+  override fun getStableJdkHome(): Path = delegate.getStableJdkHome()
 
   override val classesOutputDirectory: Path
     get() = delegate.classesOutputDirectory
 
-  override suspend fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean): Collection<Path> {
+  override fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean): Collection<Path> {
     val enumerator = JpsJavaExtensionService.dependencies(module).recursively()
       .also {
         if (forTests) {
@@ -110,21 +110,21 @@ class BazelCompilationContext(
     delegate.notifyArtifactBuilt(artifactPath)
   }
 
-  override fun createCopy(messages: BuildMessages, options: BuildOptions, paths: BuildPaths, scope: CoroutineScope?): CompilationContext {
-    val effectiveScope = scope ?: this.scope
-    return BazelCompilationContext(delegate = delegate.createCopy(messages, options, paths, effectiveScope), scope = effectiveScope, outputProviderState = outputProviderState)
+  override fun createCopy(messages: BuildMessages, options: BuildOptions, paths: BuildPaths, lifetime: BuildLifetime?): CompilationContext {
+    val effectiveLifetime = lifetime ?: this.lifetime
+    return BazelCompilationContext(delegate = delegate.createCopy(messages, options, paths, effectiveLifetime), lifetime = effectiveLifetime, outputProviderState = outputProviderState)
   }
 
-  override suspend fun prepareForBuild() {
+  override fun prepareForBuild() {
     delegate.prepareForBuild()
   }
 
-  override suspend fun compileModules(moduleNames: Collection<String>?, includingTestsInModules: List<String>?) {
+  override fun compileModules(moduleNames: Collection<String>?, includingTestsInModules: List<String>?) {
     // Be sure to call ./bazel-build-all.cmd
     // Later we will add all required Bazel dependencies to the build scripts target
   }
 
-  override suspend fun withCompilationLock(block: suspend () -> Unit): Unit = delegate.withCompilationLock(block)
+  override fun withCompilationLock(block: () -> Unit): Unit = delegate.withCompilationLock(block)
 }
 
 private fun computeProjectHomeForModuleOutputs(projectHome: Path): Path {
@@ -156,8 +156,6 @@ class BazelTargetsInfo {
     @JvmField val testJars: List<String>,
     @JvmField val exports: List<String>,
     @JvmField val moduleLibraries: Map<String, LibraryDescription>,
-    /** The label of this module's `content_module_jar` target, or empty when it packs no `lib/` jar. */
-    @JvmField val contentModuleJarTarget: String = "",
   )
 
   @Serializable
@@ -169,61 +167,15 @@ class BazelTargetsInfo {
   )
 
   /**
-   * What Bazel offers for one plugin, by its main module name.
+   * The `ij_plugin` target of one plugin, by its main module name.
    *
-   * Every field is optional because the two halves are independent: a plugin whose descriptor opted into `ij_plugin`
-   * has a packaging target and a distribution directory, a plugin whose content report names something beyond its own
-   * main module has a content target, and today those are almost disjoint sets. A consumer tests the field it needs
-   * for emptiness.
+   * An entry exists only for a plugin whose `META-INF/plugin.xml` carries the `BUILD_USING_BAZEL_MARKER` comment.
+   * Written by `JpsModuleToBazel.PluginDistributionTargetDescription`.
    */
   @Serializable
   data class PluginDistributionTargetDescription(
-    @JvmField val target: String = "",
-    @JvmField val distributionDirectory: String = "",
-    /**
-     * The plugin's `dev_dist_plugin_content` target - what a dev distribution declares to get this plugin's jars.
-     *
-     * Empty when the plugin's content report names nothing beyond its own main module, because then the target would
-     * restate what naming that module's `jvm_library` already says: such a plugin contributes its module target
-     * directly instead. Also empty for a `bazel-targets.json` written before the converter emitted these, so a
-     * consumer that needs it reports the empty value against the file it came from.
-     */
-    @JvmField val contentTarget: String = "",
-    /**
-     * The `dev_dist_plugin_descriptor` target the plugin's own Bazel package declares, keyed by layout variant.
-     *
-     * A map and not one label, because a plugin whose descriptor differs by operating system or architecture declares
-     * one target per layout variant. The empty key is the variant of a plugin whose one layout serves every platform.
-     *
-     * A variant absent here is a variant no package beside the plugin can declare, and the dev-distribution plan
-     * generator writes a package of its own for it - see `collectCrossHalfDescriptorPackages`.
-     */
-    @JvmField val descriptorTargets: Map<String, String> = emptyMap(),
-    /**
-     * Prepack-eligible content modules of this plugin that its own [contentTarget] could not name.
-     *
-     * Non-empty only for a community plugin that packs ultimate modules: the community repository cannot name an
-     * ultimate label, so the completion set in `//build/dev-dist-content` is what turns these into
-     * `prepacked_content_modules`. Written by `JpsModuleToBazel.PluginDistributionTargetDescription`.
-     */
-    @JvmField val crossRepositoryPrepackedContentModules: List<String> = emptyList(),
-    /**
-     * Members of this plugin that its own [contentTarget] could not name and that no packing target serves.
-     *
-     * The other half of [crossRepositoryPrepackedContentModules]. Both are ultimate members of a community plugin, and
-     * the split is whether a packed jar exists: a prepack-eligible member keeps its packed jar, and a member like this
-     * one stays a raw input. The completion set in `//build/dev-dist-content` names it in `modules`, because that
-     * package is the one that sees both repositories.
-     */
-    @JvmField val crossRepositoryRawContentModules: List<String> = emptyList(),
-    /**
-     * Library container targets this plugin packs that its own [contentTarget] could not name.
-     *
-     * A community package cannot name an ultimate library, so the converter drops these and records them here. The
-     * completion set declares them. The label is the library's **container** target, which carries no artifact version,
-     * so a Maven bump leaves this record alone.
-     */
-    @JvmField val crossRepositoryLibraryContainers: List<String> = emptyList(),
+    @JvmField val target: String,
+    @JvmField val distributionDirectory: String,
   )
 
   @Serializable
@@ -232,19 +184,6 @@ class BazelTargetsInfo {
     @JvmField val imlTargets: List<String> = emptyList(),
     @JvmField val projectLibraries: Map<String, LibraryDescription>,
     @JvmField val pluginDistributionTargets: Map<String, PluginDistributionTargetDescription>,
-    /**
-     * The rows `dev_dist_plugin_content_candidate_overrides.txt` has to state, as the converter derives them.
-     *
-     * The prepacked-candidate fold is repo-global, and the converter is its one implementation: a community-only
-     * conversion cannot see the ultimate half's verdict, so the file tells it. The dev-distribution plan generator
-     * writes the file out of this list rather than folding the checked-in content reports a second time, because the
-     * converter's Kotlin is unreachable from here - it is the standalone Bazel module `jps_to_bazel`, built from
-     * published platform artifacts.
-     *
-     * Empty from a `bazel-targets.json` a community-only run wrote, and empty from one written before the converter
-     * recorded these.
-     */
-    @JvmField val devDistPluginContentCandidateOverrides: List<String> = emptyList(),
   )
 }
 
@@ -294,11 +233,11 @@ private inline fun cutBazelOutputRoot(realPath: Path, message: (Path) -> String)
 }
 
 val CompilationContextImpl.asBazelIfNeeded: CompilationContext
-  get() = toBazelIfNeeded(scope = null)
+  get() = toBazelIfNeeded(lifetime = null)
 
-fun CompilationContextImpl.toBazelIfNeeded(scope: CoroutineScope?, isBazelBacked: Boolean = isRunningFromBazelOut()): CompilationContext {
+fun CompilationContextImpl.toBazelIfNeeded(lifetime: BuildLifetime?, isBazelBacked: Boolean = isRunningFromBazelOut()): CompilationContext {
   return when {
-    isBazelBacked -> BazelCompilationContext(delegate = this, scope = scope)
+    isBazelBacked -> BazelCompilationContext(delegate = this, lifetime = lifetime)
     else -> this
   }
 }

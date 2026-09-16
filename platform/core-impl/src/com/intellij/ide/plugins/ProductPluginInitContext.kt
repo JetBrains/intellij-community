@@ -18,6 +18,7 @@ import com.intellij.openapi.util.BuildNumber
 import com.intellij.ui.IconManager
 import com.intellij.ui.PlatformIcons
 import com.intellij.util.PlatformUtils
+import com.intellij.util.SystemProperties
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.GraphicsEnvironment
@@ -250,6 +251,7 @@ class ProductPluginInitContext(
       when {
         productMode.isLight -> {
           val rpc = PluginModuleId("intellij.platform.rpc", PluginModuleId.JETBRAINS_NAMESPACE)
+          val debugger = PluginModuleId("intellij.platform.debugger", PluginModuleId.JETBRAINS_NAMESPACE)
           val platformSplitConnection = PluginModuleId("intellij.platform.split.connection", PluginModuleId.JETBRAINS_NAMESPACE)
           val rdClient = PluginModuleId("intellij.rd.client", PluginModuleId.JETBRAINS_NAMESPACE)
           val cwmPluginCommon = PluginModuleId("intellij.cwm.plugin.common", PluginModuleId.JETBRAINS_NAMESPACE)
@@ -259,6 +261,8 @@ class ProductPluginInitContext(
           for (moduleId in listOf(frontendSplit, platformSplit, rpc, rdClient, cwmPluginCommon)) {
             setModuleAvailability(moduleId, false)
           }
+          val enableDebugger = SystemProperties.getBooleanProperty("intellij.platform.light.mode.enable.debugger", false)
+          setModuleAvailability(debugger, enableDebugger)
 
           for (moduleId in listOf(platformSplitConnection)) {
             setModuleAvailability(moduleId, productMode == ProductModes.LIGHT_WITH_RD_CONNECTION)
@@ -521,8 +525,11 @@ private val contentModulesExtractedInCorePluginWhichCanBeUsedFromExternalPlugins
   "intellij.platform.debugger.impl",
   "intellij.platform.debugger.impl.shared",
   "intellij.platform.debugger.impl.ui",
+  "intellij.platform.externalSystem",
+  "intellij.platform.externalSystem.impl",
   "intellij.platform.tasks",
   "intellij.platform.tasks.impl",
+  "intellij.platform.remoteServers",
   "intellij.platform.remoteServers.impl",
   "intellij.platform.scriptDebugger.ui",
   "intellij.platform.scriptDebugger.backend",

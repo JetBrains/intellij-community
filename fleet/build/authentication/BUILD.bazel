@@ -34,8 +34,8 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinx-serialization-core",
-        "@lib//:kotlinx-serialization-json",
+        "//libraries/kotlinx/serialization/core",
+        "//libraries/kotlinx/serialization/json",
         "@lib//:slf4j-api",
         "@lib//:fleet-io-github-pdvrieze-xmlutil-serialization-jvm",
         "@lib//:fleet-io-github-pdvrieze-xmlutil-core",
@@ -52,7 +52,12 @@ jvm_library(
     kotlinc_opts = ":custom_authentication",
     module_name = "fleet.build.authentication",
     visibility = ["//visibility:public"],
-    runtime_deps = [":authentication"],
+    runtime_deps = [
+        # do not sort,
+        ":authentication",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//libraries/kotlinx/serialization/json:json_test_lib",
+    ],
 )
 ### auto-generated section `build fleet.build.authentication` end
 

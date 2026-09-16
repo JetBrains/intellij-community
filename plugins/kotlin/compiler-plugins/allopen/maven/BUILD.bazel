@@ -1,7 +1,29 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.kotlin.compilerPlugins.allopen.maven` start
+content_module_jar(module = ":maven")
+### auto-generated section `dev intellij.kotlin.compilerPlugins.allopen.maven` end
+
 ### auto-generated section `build intellij.kotlin.compilerPlugins.allopen.maven` start
+create_kotlinc_options(
+    name = "custom_maven",
+    opt_in = [
+        "org.jetbrains.kotlin.psi.KtExperimentalApi",
+        "org.jetbrains.kotlin.psi.KtNonPublicApi",
+        "org.jetbrains.kotlin.psi.KtIdeApi",
+        "org.jetbrains.kotlin.analysis.api.KaExperimentalApi",
+        "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+        "org.jetbrains.kotlin.analysis.api.KaPlatformInterface",
+        "org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaUnstableDiagnosticApi",
+        "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
+        "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+        "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+    ],
+    x_context_parameters = True,
+)
+
 jvm_library(
     name = "maven",
     srcs = glob(
@@ -12,6 +34,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    kotlinc_opts = ":custom_maven",
     module_name = "intellij.kotlin.compilerPlugins.allopen.maven",
     resource_strip_prefix = "resources",
     resources = glob(
@@ -22,7 +45,7 @@ jvm_library(
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
-        "@lib//:kotlinc-allopen-compiler-plugin",
+        "//libraries/kotlinc/allopen-compiler-plugin:libraries-kotlinc-allopen-compiler-plugin",
         "//plugins/kotlin/base/plugin",
         "//plugins/kotlin/base/jps",
         "//plugins/kotlin/maven",
@@ -33,8 +56,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":maven")
-
 jvm_library(
     name = "maven_test_lib",
     testonly = True,
@@ -42,12 +63,14 @@ jvm_library(
         [],
         allow_empty = True,
     ),
+    kotlinc_opts = ":custom_maven",
     module_name = "intellij.kotlin.compilerPlugins.allopen.maven",
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
         ":maven",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/kotlinc/allopen-compiler-plugin:libraries-kotlinc-allopen-compiler-plugin_test_lib",
         "//plugins/kotlin/base/plugin:plugin_test_lib",
         "//plugins/kotlin/base/jps:jps_test_lib",
         "//plugins/kotlin/maven:maven_test_lib",

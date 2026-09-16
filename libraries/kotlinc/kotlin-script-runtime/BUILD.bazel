@@ -1,5 +1,4 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
-load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.libraries.kotlinc.kotlin.script.runtime` start
 jvm_library(
@@ -16,11 +15,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-kotlinc-kotlin-script-runtime-kotlinc-kotlin-script-runtime"],
     runtime_deps = ["@lib//:libraries-kotlinc-kotlin-script-runtime-kotlinc-kotlin-script-runtime"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-kotlinc-kotlin-script-runtime-kotlinc-kotlin-script-runtime"],
-    module = ":libraries-kotlinc-kotlin-script-runtime",
 )
 
 jvm_library(
@@ -43,7 +37,6 @@ exports_files(
     [
         "intellij.libraries.kotlinc.kotlin.script.runtime.iml",
         "resources/intellij.libraries.kotlinc.kotlin.script.runtime.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

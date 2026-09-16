@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.commons.logging` start
+content_module_jar(
+    libraries = ["@lib//:libraries-commons-logging-commons-logging"],
+    module = ":logging",
+)
+### auto-generated section `dev intellij.libraries.commons.logging` end
+
 ### auto-generated section `build intellij.libraries.commons.logging` start
 jvm_library(
     name = "logging",
@@ -16,11 +23,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-commons-logging-commons-logging"],
     runtime_deps = ["@lib//:libraries-commons-logging-commons-logging"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-commons-logging-commons-logging"],
-    module = ":logging",
 )
 
 jvm_library(
@@ -43,7 +45,6 @@ exports_files(
     [
         "intellij.libraries.commons.logging.iml",
         "resources/intellij.libraries.commons.logging.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

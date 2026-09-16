@@ -5,14 +5,20 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfoRt;
-import com.sun.jna.Native;
-import com.sun.jna.win32.StdCallLibrary;
+import com.intellij.util.system.WindowsSystemLibraries;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.foreign.FunctionDescriptor;
+import java.lang.foreign.Linker;
+import java.lang.invoke.MethodHandle;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
+
+import static java.lang.foreign.ValueLayout.JAVA_INT;
 
 @ApiStatus.Internal
 public final class JBAnimatorHelper {
@@ -36,10 +42,7 @@ public final class JBAnimatorHelper {
   @ApiStatus.Experimental
   public static void requestHighPrecisionTimer(@NotNull JBAnimator requestor) {
     if (isAvailable()) {
-      var helper = getInstance();
-      if (helper.requestors.add(requestor)) {
-        helper.lib.timeBeginPeriod(PERIOD);
-      }
+      getInstance().request(requestor);
     }
   }
 
@@ -49,10 +52,7 @@ public final class JBAnimatorHelper {
   @ApiStatus.Experimental
   public static void cancelHighPrecisionTimer(@NotNull JBAnimator requestor) {
     if (isAvailable()) {
-      var helper = getInstance();
-      if (helper.requestors.remove(requestor)) {
-        helper.lib.timeEndPeriod(PERIOD);
-      }
+      getInstance().cancel(requestor);
     }
   }
 
@@ -71,15 +71,12 @@ public final class JBAnimatorHelper {
       throw new IllegalArgumentException("This option can be set only on Windows");
     }
     PropertiesComponent.getInstance().setValue(PROPERTY_NAME, value, DEFAULT_VALUE);
-    var helper = getInstance();
-    if (!helper.requestors.isEmpty()) {
-      helper.requestors.clear();
-      helper.lib.timeEndPeriod(PERIOD);
-    }
+    getInstance().reset();
   }
 
-  private interface WinMM extends StdCallLibrary {
+  interface WinMM {
     int timeBeginPeriod(int period);
+
     int timeEndPeriod(int period);
   }
 
@@ -88,26 +85,87 @@ public final class JBAnimatorHelper {
   }
 
   private JBAnimatorHelper() {
+    this(loadWinMM());
+  }
+
+  private static @NotNull WinMM loadWinMM() {
+    return loadWinMM(SystemInfoRt.isWindows, JBAnimatorHelper::createWinMM, failure -> exceptionInInitialization = failure);
+  }
+
+  JBAnimatorHelper(@NotNull WinMM library) {
     requestors = ConcurrentHashMap.newKeySet();
-    WinMM library = null;
-    try {
-      if (SystemInfoRt.isWindows) {
-        library = Native.load("winmm", WinMM.class);
-      }
-    } catch (Throwable t) {
-      //should be called only once
-      //noinspection AssignmentToStaticFieldFromInstanceMethod,InstanceofCatchParameter
-      exceptionInInitialization = new RuntimeException(
-        "Cannot load 'winmm.dll' library",
-        t instanceof UnsatisfiedLinkError ? null : t
-      );
+    lib = library;
+  }
+
+  void request(@NotNull JBAnimator requestor) {
+    if (requestors.add(requestor)) {
+      lib.timeBeginPeriod(PERIOD);
     }
-    lib = library != null ? library : new WinMM() {
+  }
+
+  void cancel(@NotNull JBAnimator requestor) {
+    if (requestors.remove(requestor)) {
+      lib.timeEndPeriod(PERIOD);
+    }
+  }
+
+  void reset() {
+    if (!requestors.isEmpty()) {
+      requestors.clear();
+      lib.timeEndPeriod(PERIOD);
+    }
+  }
+
+  static @NotNull WinMM loadWinMM(boolean windows, @NotNull Supplier<? extends WinMM> loader, @NotNull Consumer<Throwable> failureHandler) {
+    try {
+      if (windows) {
+        return loader.get();
+      }
+    }
+    catch (UnsatisfiedLinkError failure) {
+      failureHandler.accept(new RuntimeException("Cannot load 'winmm.dll' library"));
+    }
+    catch (Throwable failure) {
+      failureHandler.accept(new RuntimeException("Cannot load 'winmm.dll' library", failure));
+    }
+    return new WinMM() {
       @Override
       public int timeBeginPeriod(int period) { return 0; }
 
       @Override
       public int timeEndPeriod(int period) { return 0; }
     };
+  }
+
+  static @NotNull WinMM createWinMM() {
+    var library = WindowsSystemLibraries.lookup("winmm.dll");
+    var linker = Linker.nativeLinker();
+    var descriptor = FunctionDescriptor.of(JAVA_INT, JAVA_INT);
+    return new FfmWinMM(linker.downcallHandle(library.findOrThrow("timeBeginPeriod"), descriptor),
+                       linker.downcallHandle(library.findOrThrow("timeEndPeriod"), descriptor));
+  }
+
+  private record FfmWinMM(MethodHandle beginPeriod, MethodHandle endPeriod) implements WinMM {
+    @Override
+    public int timeBeginPeriod(int period) {
+      return invoke(beginPeriod, period);
+    }
+
+    @Override
+    public int timeEndPeriod(int period) {
+      return invoke(endPeriod, period);
+    }
+
+    private static int invoke(MethodHandle handle, int period) {
+      try {
+        return (int)handle.invokeExact(period);
+      }
+      catch (RuntimeException | Error failure) {
+        throw failure;
+      }
+      catch (Throwable failure) {
+        throw new IllegalStateException(failure);
+      }
+    }
   }
 }

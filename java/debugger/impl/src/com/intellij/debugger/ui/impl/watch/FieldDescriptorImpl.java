@@ -136,8 +136,8 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
   private boolean populateExceptionStackTraceIfNeeded(Value value, EvaluationContextImpl evaluationContext) {
     if ("stackTrace".equals(getName()) &&
         ViewsGeneralSettings.getInstance().POPULATE_THROWABLE_STACKTRACE &&
-        value instanceof ArrayReference &&
-        ((ArrayReference)value).length() == 0 &&
+        value instanceof ArrayReference reference &&
+        reference.length() == 0 &&
         DebuggerUtils.instanceOf(myObject.type(), CommonClassNames.JAVA_LANG_THROWABLE)) {
       try {
         DebuggerUtilsImpl.invokeThrowableGetStackTrace(myObject, evaluationContext, false);

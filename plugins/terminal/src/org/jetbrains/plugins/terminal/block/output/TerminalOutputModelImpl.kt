@@ -55,7 +55,7 @@ class TerminalOutputModelImpl(override val editor: EditorEx) : TerminalOutputMod
   /**
    * @param terminalWidth number of columns at the moment of block creation. It is used to properly position the right prompt.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun createBlock(command: String?, prompt: TerminalPromptRenderingInfo?, terminalWidth: Int): CommandBlock {
     // Execute document insertions in bulk to make sure that EditorHighlighter
     // is not requesting the highlightings before we set them.
@@ -93,14 +93,14 @@ class TerminalOutputModelImpl(override val editor: EditorEx) : TerminalOutputMod
     return block
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun finalizeBlock(activeBlock: CommandBlock) {
     // restrict block expansion
     (activeBlock as CommandBlockImpl).range.isGreedyToRight = false
     listeners.forEach { it.blockFinalized(activeBlock) }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun removeBlock(block: CommandBlock) {
     val startBlockInd = blocks.indexOf(block)
     check(startBlockInd >= 0)
@@ -138,7 +138,7 @@ class TerminalOutputModelImpl(override val editor: EditorEx) : TerminalOutputMod
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun clearBlocks() {
     val blocksCopy = blocks.reversed()
     for (block in blocksCopy) {
@@ -147,7 +147,7 @@ class TerminalOutputModelImpl(override val editor: EditorEx) : TerminalOutputMod
     editor.document.setText("")
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun getHighlightingsSnapshot(): TerminalOutputHighlightingsSnapshot {
     var snapshot = highlightingsSnapshot
     if (snapshot == null) {
@@ -157,29 +157,29 @@ class TerminalOutputModelImpl(override val editor: EditorEx) : TerminalOutputMod
     return snapshot
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun getHighlightings(block: CommandBlock): List<HighlightingInfo> {
     return highlightings[block] ?: emptyList()
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun putHighlightings(block: CommandBlock, highlightings: List<HighlightingInfo>) {
     this.highlightings[block] = highlightings
     highlightingsSnapshot = null
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun setBlockInfo(block: CommandBlock, info: CommandBlockInfo) {
     blockInfos[block] = info
     listeners.forEach { it.blockInfoUpdated(block, info) }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun getBlockInfo(block: CommandBlock): CommandBlockInfo? {
     return blockInfos[block]
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun trimOutput() {
     val maxCapacity = TerminalUiUtils.getDefaultMaxOutputLength()
     val textLength = document.textLength
@@ -215,7 +215,7 @@ class TerminalOutputModelImpl(override val editor: EditorEx) : TerminalOutputMod
     return firstRetainedBlockInd.coerceAtLeast(0)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun deleteDocumentRange(block: CommandBlock, deleteRange: TextRange) {
     val startBlockInd = blocks.indexOf(block)
     check(startBlockInd >= 0)

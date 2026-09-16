@@ -5,16 +5,16 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.util.messages.Topic
 import org.intellij.plugins.markdown.editor.tables.ui.MarkdownTableInlayProvider
-import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings
+import org.intellij.plugins.markdown.settings.MarkdownApplicationSettings
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 fun isMarkdownTableVisualAlignmentEnabled(editor: Editor): Boolean {
-  return MarkdownCodeInsightSettings.getInstance().state.alignTableCellsVisually &&
+  return MarkdownApplicationSettings.getInstance().alignTableCellsVisually &&
          editor.getUserData(MarkdownTableInlayProvider.DISABLE_TABLE_INLAYS) != true
 }
 
-/** Fired when [MarkdownCodeInsightSettings.State.alignTableCellsVisually] changes. */
+/** Fired when [MarkdownApplicationSettings.alignTableCellsVisually] changes. */
 @ApiStatus.Internal
 fun interface MarkdownTableAlignmentSettingsListener {
   fun alignTableCellsSettingChanged()

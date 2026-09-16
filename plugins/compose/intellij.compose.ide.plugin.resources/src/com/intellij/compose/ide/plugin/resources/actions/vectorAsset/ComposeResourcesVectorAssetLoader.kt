@@ -9,7 +9,7 @@ import com.intellij.compose.ide.plugin.resources.actions.vectorAsset.ComposeReso
 import com.intellij.compose.ide.plugin.resources.actions.vectorAsset.ComposeResourcesVectorAssetDialogComponents.Validation
 import com.intellij.compose.ide.plugin.resources.actions.vectorAsset.ComposeResourcesVectorAssetDialogComponents.ValidationSeverity
 import com.intellij.compose.ide.plugin.resources.vectorDrawable.preview.BaseVectorDrawablePreviewRenderer
-import com.intellij.openapi.diagnostic.rethrowControlFlowException
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

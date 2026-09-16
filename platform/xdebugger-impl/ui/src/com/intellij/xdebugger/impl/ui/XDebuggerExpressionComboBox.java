@@ -5,27 +5,23 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.InternalUICustomization;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.EditorComboBoxEditor;
 import com.intellij.ui.EditorComboBoxRenderer;
 import com.intellij.ui.EditorTextField;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -137,24 +133,13 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
     myModel.replaceAll(getRecentExpressions());
   }
 
-  private static final Key<Boolean> DUMMY_DOCUMENT = Key.create("DummyDocument");
-
   @Override
   protected void doSetText(XExpression text) {
     myExpression = text;
-    // set a dummy document immediately
-    DocumentImpl dummyDocument = new DocumentImpl(text.getExpression());
-    dummyDocument.putUserData(DUMMY_DOCUMENT, true);
-    myEditor.getEditorTextField().setNewDocumentAndFileType(getFileType(text), dummyDocument);
-    // schedule the real document creation
-    ReadAction.nonBlocking(() -> createDocument(text))
-      .inSmartMode(getProject())
-      .finishOnUiThread(ModalityState.any(), document -> {
-        myEditor.getEditorTextField().setNewDocumentAndFileType(getFileType(text), document);
-        getEditorsProvider().afterEditorCreated(getEditor());
-      })
-      .coalesceBy(this)
-      .submit(AppExecutorUtil.getAppExecutorService());
+    FileType fileType = getFileType(text);
+    createDocumentAsync(text, document -> {
+      myEditor.getEditorTextField().setNewDocumentAndFileType(fileType, document);
+    });
   }
 
   @Override
@@ -284,8 +269,8 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
     @Override
     public XExpression getItem() {
       Object item = myDelegate.getItem();
-      if (item instanceof Document document && !Boolean.TRUE.equals(document.getUserData(DUMMY_DOCUMENT))) { // sometimes null on Mac
-        return getEditorsProvider().createExpression(getProject(), document, myExpression.getLanguage(), myExpression.getMode());
+      if (item instanceof Document document) { // sometimes null on Mac
+        return getOrCreateExpressionWithLatestText(document, myExpression);
       }
       return null;
     }

@@ -19,7 +19,7 @@ import kotlin.io.path.invariantSeparatorsPathString
 /**
  * @param pluginDirs List of OS-specific plugin directories, with appended `plugin.directoryName` already
  */
-internal suspend fun buildPlatformSpecificPluginResources(
+internal fun buildPlatformSpecificPluginResources(
   plugin: PluginLayout,
   pluginDirs: List<Pair<SupportedDistribution, Path>>,
   context: BuildContext,
@@ -51,7 +51,7 @@ internal suspend fun buildPlatformSpecificPluginResources(
   return distEntries
 }
 
-private suspend fun handlePlatformResourceGenerator(
+private fun handlePlatformResourceGenerator(
   dist: SupportedDistribution,
   generators: PersistentList<ResourceGenerator>,
   pluginDirs: List<Pair<SupportedDistribution, Path>>,
@@ -70,7 +70,7 @@ private suspend fun handlePlatformResourceGenerator(
   }
 }
 
-internal suspend fun handleCustomPlatformSpecificAssets(
+internal fun handleCustomPlatformSpecificAssets(
   layout: PluginLayout,
   targetPlatform: SupportedDistribution?,
   context: BuildContext,

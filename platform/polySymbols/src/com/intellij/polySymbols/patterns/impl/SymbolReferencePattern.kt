@@ -14,8 +14,10 @@ import com.intellij.polySymbols.query.PolySymbolQueryStack
 import com.intellij.polySymbols.utils.nameSegments
 import com.intellij.util.applyIf
 import kotlin.math.max
+import org.jetbrains.annotations.ApiStatus
 
-internal class SymbolReferencePattern(val displayName: String?) : PolySymbolPattern() {
+@ApiStatus.Internal
+class SymbolReferencePattern(val displayName: String?) : PolySymbolPattern() {
   override fun getStaticPrefixes(): Sequence<String> = sequenceOf("")
 
   override fun isStaticAndRequired(): Boolean = false

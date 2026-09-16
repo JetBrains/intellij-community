@@ -4,10 +4,12 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.IntentionActionWithModCommandFallback;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.ide.scratch.ScratchUtil;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -51,7 +53,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class CreateClassFromUsageBaseFix extends BaseIntentionAction {
+public abstract class CreateClassFromUsageBaseFix extends BaseIntentionAction implements IntentionActionWithModCommandFallback {
   protected static final Logger LOG = Logger.getInstance(CreateClassFromUsageBaseFix.class);
   protected CreateClassKind myKind;
   private final SmartPsiElementPointer<PsiJavaCodeReferenceElement> myRefElement;
@@ -59,6 +61,11 @@ public abstract class CreateClassFromUsageBaseFix extends BaseIntentionAction {
   public CreateClassFromUsageBaseFix(CreateClassKind kind, final PsiJavaCodeReferenceElement refElement) {
     myKind = kind;
     myRefElement = SmartPointerManager.getInstance(refElement.getProject()).createSmartPsiElementPointer(refElement);
+  }
+
+  @Override
+  public @Nullable ModCommandAction getFallbackModCommandAction() {
+    return null;
   }
 
   @Override
@@ -157,36 +164,47 @@ public abstract class CreateClassFromUsageBaseFix extends BaseIntentionAction {
   @Override
   public boolean isAvailable(final @NotNull Project project, final Editor editor, final PsiFile psiFile) {
     final PsiJavaCodeReferenceElement element = getRefElement();
-    if (element == null ||
-        (!element.getManager().isInProject(element) && !ScratchUtil.isScratch(PsiUtilCore.getVirtualFile(element)))) {
-      return false;
+    if (element == null) return false;
+    String text = getAvailableText(element, editor.getCaretModel().getOffset());
+    if (text == null) return false;
+    setText(text);
+    return true;
+  }
+
+  /**
+   * @param element the reference which needs the new class
+   * @param offset  the offset of the caret
+   * @return the text of the fix when the fix applies at the offset, or null when it does not apply
+   */
+  protected @IntentionName @Nullable String getAvailableText(@NotNull PsiJavaCodeReferenceElement element, int offset) {
+    if (!element.getManager().isInProject(element) && !ScratchUtil.isScratch(PsiUtilCore.getVirtualFile(element))) {
+      return null;
     }
     JavaResolveResult[] results = element.multiResolve(true);
     if (results.length > 0 && results[0].getElement() instanceof PsiClass) {
-      return false;
+      return null;
     }
     final String refName = element.getReferenceName();
     if (refName == null ||
-        PsiTreeUtil.getParentOfType(element, PsiTypeElement.class, PsiReferenceList.class) == null && !checkClassName(refName)) return false;
+        PsiTreeUtil.getParentOfType(element, PsiTypeElement.class, PsiReferenceList.class) == null && !checkClassName(refName)) return null;
     PsiElement nameElement = element.getReferenceNameElement();
-    if (nameElement == null) return false;
+    if (nameElement == null) return null;
     PsiElement parent = element.getParent();
-    if (parent instanceof PsiExpression && !(parent instanceof PsiReferenceExpression)) return false;
-    if (!isAvailableInContext(element)) return false;
+    if (parent instanceof PsiExpression && !(parent instanceof PsiReferenceExpression)) return null;
+    if (!isAvailableInContext(element)) return null;
     final String superClassName = getSuperClassName(element);
     if (superClassName != null) {
-      if (superClassName.equals(CommonClassNames.JAVA_LANG_ENUM) && myKind != CreateClassKind.ENUM) return false;
-      if (superClassName.equals(CommonClassNames.JAVA_LANG_RECORD) && myKind != CreateClassKind.RECORD) return false;
+      if (superClassName.equals(CommonClassNames.JAVA_LANG_ENUM) && myKind != CreateClassKind.ENUM) return null;
+      if (superClassName.equals(CommonClassNames.JAVA_LANG_RECORD) && myKind != CreateClassKind.RECORD) return null;
+      Project project = element.getProject();
       final PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(superClassName, GlobalSearchScope.allScope(project));
-      if (psiClass != null && psiClass.hasModifierProperty(PsiModifier.FINAL)) return false;
+      if (psiClass != null && psiClass.hasModifierProperty(PsiModifier.FINAL)) return null;
     }
-    final int offset = editor.getCaretModel().getOffset();
     if (CreateFromUsageUtils.shouldShowTag(offset, nameElement, element)) {
-      setText(getText(nameElement.getText()));
-      return true;
+      return getText(nameElement.getText());
     }
 
-    return false;
+    return null;
   }
 
   @Override

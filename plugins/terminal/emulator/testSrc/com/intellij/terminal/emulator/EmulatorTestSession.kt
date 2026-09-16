@@ -207,6 +207,8 @@ internal class EmulatorTestSession(width: Int, height: Int, maxScrollbackBytes: 
   val cursor: Cursor get() = emulator.cursor
   val cursorShape: CursorShape get() = emulator.cursorShape
   val cursorBlinking: Boolean get() = emulator.cursorBlinking
+  fun setDefaultCursorShape(shape: CursorShape): Unit = emulator.setDefaultCursorShape(shape)
+  fun setDefaultCursorBlinking(blinking: Boolean): Unit = emulator.setDefaultCursorBlinking(blinking)
   fun paletteColor(index: Int): TerminalColor.Rgb = emulator.paletteColor(index)
   val title: String get() = emulator.title
   val progress: TerminalProgress? get() = emulator.progress

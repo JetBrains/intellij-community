@@ -55,7 +55,7 @@ internal interface ComputeContext {
    * @return The value published to this slot
    * @throws IllegalStateException if the slot was never published to
    */
-  suspend fun <T> get(slot: DataSlot<T>): T
+  fun <T> get(slot: DataSlot<T>): T
 
   /**
    * Publishes a value to a slot for downstream nodes.
@@ -122,7 +122,7 @@ internal interface ComputeContext {
  *   override val id = NodeIds.PLUGIN_XML_DEPS
  *   override val produces = setOf(Slots.PLUGIN_XML)
  *
- *   override suspend fun execute(ctx: ComputeContext) {
+ *   override fun execute(ctx: ComputeContext) {
  *     val results = generatePluginXmlDeps(ctx.model)
  *     ctx.publish(Slots.PLUGIN_XML, PluginXmlOutput(results))
  *   }
@@ -166,5 +166,5 @@ internal interface PipelineNode {
    *
    * @param ctx The compute context for this execution
    */
-  suspend fun execute(ctx: ComputeContext)
+  fun execute(ctx: ComputeContext)
 }

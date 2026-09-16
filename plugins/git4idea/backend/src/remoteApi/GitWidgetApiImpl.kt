@@ -99,7 +99,7 @@ internal class GitWidgetApiImpl : GitWidgetApi {
   companion object {
     private val LOG = Logger.getInstance(GitWidgetApiImpl::class.java)
 
-    @RequiresBackgroundThread
+    @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
     fun getWidgetState(project: Project, selectedFile: VirtualFile?): GitWidgetState {
       val vcsManager = ProjectLevelVcsManager.getInstance(project)
       if (!vcsManager.areVcsesActivated()) return GitWidgetState.DoNotShow

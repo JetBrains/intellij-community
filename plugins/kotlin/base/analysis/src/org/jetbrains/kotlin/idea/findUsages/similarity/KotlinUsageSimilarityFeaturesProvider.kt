@@ -20,8 +20,8 @@ import org.jetbrains.kotlin.psi.KtStatementExpression
 import org.jetbrains.kotlin.psi.KtTypeReference
 
 class KotlinUsageSimilarityFeaturesProvider : UsageSimilarityFeaturesProvider {
-    @RequiresReadLock
-    @RequiresBackgroundThread
+    @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+    @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
     override fun getFeatures(usage: PsiElement): Bag {
         val features = Bag()
         if (!Registry.`is`("similarity.find.usages.kotlin.clustering.enable")) {

@@ -17,7 +17,6 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.util.containers.ConcurrentLongObjectMap
 import com.intellij.util.containers.Java11Shim
 import it.unimi.dsi.fastutil.longs.LongList
-import java.util.concurrent.atomic.AtomicReference
 
 /** Stores the snapshot custom wraps for one editor. */
 internal class SnapshotCustomWrapStorage(
@@ -25,10 +24,10 @@ internal class SnapshotCustomWrapStorage(
   val document: DocumentImpl,
 ) {
   private val wrapsById: ConcurrentLongObjectMap<SnapshotCustomWrap> = Java11Shim.createConcurrentLongObjectMap()
-  private val rootStore = SnapshotMarkerRootStore(document, onMarkersInvalidated = ::processInvalidatedWraps)
+  val rootStore: SnapshotMarkerRootStore = SnapshotMarkerRootStore(document, onMarkersInvalidated = ::processInvalidatedWraps)
 
   fun dispose() {
-    rootStore.dispose()
+    rootStore.dispose(document.snapshotMarkerStores)
     wrapsById.clear()
   }
 
@@ -74,10 +73,6 @@ internal class SnapshotCustomWrapStorage(
     return found
   }
 
-  fun rootReference(snapshot: DocumentSnapshot): AtomicReference<PMarkerRoot> {
-    return rootStore.rootReference(snapshot)
-  }
-
   fun currentSnapshot(): DocumentSnapshot = document.core.snapshot()
 
   fun afterDisposed(wrap: SnapshotCustomWrap) {
@@ -112,13 +107,9 @@ internal class SnapshotCustomWrap(
   initialRange: TextRange,
   override val indent: Int,
   override val priority: Int,
-) : SnapshotRangeMarkerImpl(storage.document, markerId, spec, initialRange), CustomWrap {
+) : SnapshotRangeMarkerImpl(storage.document, storage.rootStore, markerId, spec, initialRange), CustomWrap {
   override val offset: Int
     get() = startOffset
-
-  override fun currentRootReference(): AtomicReference<PMarkerRoot> = storage.rootReference(storage.currentSnapshot())
-
-  override fun rootReference(snapshot: DocumentSnapshot): AtomicReference<PMarkerRoot> = storage.rootReference(snapshot)
 
   override fun afterDispose() {
     storage.afterDisposed(this)
@@ -134,9 +125,12 @@ private object CustomWrapMarkerPolicy : MarkerPolicy {
     beforeText: DocumentText,
     afterText: DocumentText,
   ): MarkerTransformResult {
-    return when (val transformed = DefaultMarkerPolicy.transform(entry, patch, beforeText, afterText)) {
-      is MarkerTransformResult.Invalid -> transformed
-      is MarkerTransformResult.Valid -> validateOffset(transformed.entry, afterText)
+    val transformed = DefaultMarkerPolicy.transform(entry, patch, beforeText, afterText)
+    return if (transformed.errorReason != null) {
+      transformed
+    }
+    else {
+      validateOffset(transformed.entry, afterText)
     }
   }
 
@@ -145,13 +139,13 @@ private object CustomWrapMarkerPolicy : MarkerPolicy {
   }
 
   private fun validateOffset(entry: PMarkerRoot.MarkerEntry, text: DocumentText): MarkerTransformResult {
-    return if (isValidCustomWrapOffset(entry.startOffset, text)) {
-      MarkerTransformResult.Valid(entry)
+    return if (isValidCustomWrapOffset(entry.nodeStart, text)) {
+      MarkerTransformResult(entry)
     }
     else {
-      MarkerTransformResult.Invalid(
-        reason = "The custom wrap reached an invalid offset",
-        entry = entry,
+      MarkerTransformResult(
+        entry,
+        "The custom wrap reached an invalid offset",
       )
     }
   }

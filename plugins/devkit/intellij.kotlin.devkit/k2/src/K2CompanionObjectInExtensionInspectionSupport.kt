@@ -12,6 +12,7 @@ import com.intellij.psi.util.PsiEditorUtil
 import org.jetbrains.idea.devkit.kotlin.inspections.CompanionObjectInExtensionInspectionSupport
 import org.jetbrains.idea.devkit.kotlin.inspections.CompanionObjectInExtensionInspectionSupport.CreateObjectAndMoveProhibitedDeclarationsQuickFixBase
 import org.jetbrains.idea.devkit.kotlin.inspections.CompanionObjectInExtensionInspectionSupport.MoveProhibitedDeclarationsToTopLevelFixBase
+import org.jetbrains.kotlin.idea.base.psi.removeModifierKeyword
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveOperationDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveSourceDescriptor
@@ -87,8 +88,8 @@ private fun removeJvmStaticAnnotationIfPresent(declaration: KtNamedDeclaration):
 
 private fun removeProtectedModifierIfPresent(declaration: KtNamedDeclaration): KtNamedDeclaration {
   return declaration.apply {
-    removeModifier(KtTokens.PROTECTED_KEYWORD)
-    if (this is KtProperty) this.setter?.removeModifier(KtTokens.PROTECTED_KEYWORD)
+    removeModifierKeyword(KtTokens.PROTECTED_KEYWORD)
+    if (this is KtProperty) this.setter?.removeModifierKeyword(KtTokens.PROTECTED_KEYWORD)
   }
 }
 

@@ -26,11 +26,6 @@ import com.intellij.util.containers.ConcurrentLongObjectMap
 import com.intellij.util.containers.Java11Shim
 import it.unimi.dsi.fastutil.longs.LongList
 import it.unimi.dsi.fastutil.longs.LongLists
-import java.util.concurrent.atomic.AtomicReference
-
-private const val INLINE_FLAVOR: Int = 1
-private const val AFTER_LINE_END_FLAVOR: Int = 2
-private const val BLOCK_FLAVOR: Int = 4
 
 /** Stores inline, after-line-end, and block inlays for one editor. */
 internal class SnapshotInlayStorage(
@@ -39,7 +34,7 @@ internal class SnapshotInlayStorage(
   val document: DocumentImpl,
 ) {
   private val markersById: ConcurrentLongObjectMap<SnapshotInlayMarker<*>> = Java11Shim.createConcurrentLongObjectMap()
-  private val rootStore = SnapshotMarkerRootStore(
+  val rootStore: SnapshotMarkerRootStore = SnapshotMarkerRootStore(
     document,
     onMarkersInvalidated = ::saveInvalidatedMarkers,
     onDocumentChanged = ::processInvalidatedMarkers,
@@ -177,11 +172,9 @@ internal class SnapshotInlayStorage(
 
   fun dispose() {
     allInlays().forEach(Disposer::dispose)
-    rootStore.dispose()
+    rootStore.dispose(document.snapshotMarkerStores)
     markersById.clear()
   }
-
-  fun rootReference(snapshot: DocumentSnapshot): AtomicReference<PMarkerRoot> = rootStore.rootReference(snapshot)
 
   fun currentSnapshot(): DocumentSnapshot = document.core.snapshot()
 
@@ -243,7 +236,7 @@ internal class SnapshotInlayStorage(
       if (marker != null) markers.add(marker)
       true
     }
-    markers.sortWith(compareBy<SnapshotInlayMarker<*>>({ it.startOffset }, { it.iterationOrder }))
+    markers.sortWith(compareBy({ it.startOffset }, { it.iterationOrder }))
     return markers.mapNotNull(convert)
   }
 
@@ -258,7 +251,7 @@ internal abstract class SnapshotInlayMarker<R : EditorCustomElementRenderer>(
   initialRange: TextRange,
   private val relatesToPrecedingText: Boolean,
   private val renderer: R,
-) : SnapshotRangeMarkerImpl(storage.document, markerId, spec, initialRange), EditorInlay<R> {
+) : SnapshotRangeMarkerImpl(storage.document, storage.rootStore, markerId, spec, initialRange), EditorInlay<R> {
   private var widthInPixels: Int = 0
 
   @Volatile
@@ -277,10 +270,6 @@ internal abstract class SnapshotInlayMarker<R : EditorCustomElementRenderer>(
   }
 
   override fun isValid(): Boolean = !editor.isDisposed && super.isValid()
-
-  final override fun currentRootReference(): AtomicReference<PMarkerRoot> = storage.rootReference(storage.currentSnapshot())
-
-  final override fun rootReference(snapshot: DocumentSnapshot): AtomicReference<PMarkerRoot> = storage.rootReference(snapshot)
 
   final override fun afterDispose() {
     storage.afterDisposed(this)
@@ -426,9 +415,12 @@ private object InlineInlayMarkerPolicy : MarkerPolicy {
     beforeText: DocumentText,
     afterText: DocumentText,
   ): MarkerTransformResult {
-    return when (val transformed = DefaultMarkerPolicy.transform(entry, patch, beforeText, afterText)) {
-      is MarkerTransformResult.Invalid -> transformed
-      is MarkerTransformResult.Valid -> validateOffset(transformed.entry, afterText)
+    val transformed = DefaultMarkerPolicy.transform(entry, patch, beforeText, afterText)
+    return if (transformed.errorReason != null) {
+      transformed
+    }
+    else {
+      validateOffset(transformed.entry, afterText)
     }
   }
 
@@ -437,14 +429,18 @@ private object InlineInlayMarkerPolicy : MarkerPolicy {
   }
 
   private fun validateOffset(entry: PMarkerRoot.MarkerEntry, text: DocumentText): MarkerTransformResult {
-    val offset = entry.startOffset
-    if (offset <= 0 || offset >= text.length()) return MarkerTransformResult.Valid(entry)
+    val offset = entry.nodeStart
+    if (offset <= 0 || offset >= text.length()) return MarkerTransformResult(entry)
     val chars = text.cachedChars()
     return if (Character.isHighSurrogate(chars[offset - 1]) && Character.isLowSurrogate(chars[offset])) {
-      MarkerTransformResult.Invalid("The inline inlay reached a surrogate pair", entry)
+      MarkerTransformResult(entry, "The inline inlay reached a surrogate pair")
     }
     else {
-      MarkerTransformResult.Valid(entry)
+      MarkerTransformResult(entry)
     }
   }
 }
+
+private const val INLINE_FLAVOR: Int = 1
+private const val AFTER_LINE_END_FLAVOR: Int = 2
+private const val BLOCK_FLAVOR: Int = 4

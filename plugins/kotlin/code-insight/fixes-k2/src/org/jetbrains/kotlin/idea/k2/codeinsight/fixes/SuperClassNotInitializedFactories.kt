@@ -34,6 +34,7 @@ import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.defaultValue
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
+import org.jetbrains.kotlin.idea.base.psi.appendParameter
 import org.jetbrains.kotlin.idea.base.psi.getOrCreatePrimaryConstructorParameterList
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -169,7 +170,7 @@ internal object SuperClassNotInitializedFactories {
                 .map { it.parameterGenerationInfo }
                 .filterIsInstance<ParameterGenerationInfo.New>()
                 .map { newParamInfo -> psiFactory.createParameter(newParamInfo.parameterText) }
-                .forEach { constructorParameterList.addParameter(it) }
+                .forEach { constructorParameterList.appendParameter(it) }
 
             val delegatorCallArgumentsText = elementContext.parametersInfo.joinToString(separator = ", ") { info ->
                 "*".takeIf { info.varargInfo == VarargInfo.VarargWithSpread }.orEmpty() + info.renderedName

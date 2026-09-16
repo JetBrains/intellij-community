@@ -190,6 +190,25 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
   }
 
   /**
+   * The frontend tracks the highlight range of a breakpoint with a range marker.
+   * After a document edit, it sends the tracked range to the backend with a position request.
+   * The backend calls this method with that range before it fires the change event.
+   * <p>
+   * A position request can carry a stale request id.
+   * The frontend debounces the position requests, while the other setters send their requests at once.
+   * So a later request can complete before the position request arrives.
+   * A stale request id suppresses the change event.
+   * <p>
+   * A type that stores the position in its properties updates them here.
+   * It returns {@code true} when a property changed.
+   * The change event then fires even for a stale request id.
+   * The default changes nothing and returns {@code false}.
+   */
+  public boolean highlightRangeMoved(@NotNull XLineBreakpoint<P> breakpoint, @NotNull TextRange range) {
+    return false;
+  }
+
+  /**
    * Return the list of variants if there can be more than one breakpoint on the line.
    */
   public @NotNull List<? extends XLineBreakpointVariant> computeVariants(@NotNull Project project, @NotNull XSourcePosition position) {

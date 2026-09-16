@@ -3,7 +3,7 @@ package com.jetbrains.python.uv.sdk.evolution
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.pyproject.PY_PROJECT_TOML
-import com.intellij.python.pytools.PyTool
+import com.intellij.python.pytools.backend.PyTool
 import com.intellij.python.sdk.backend.PySdkBundle
 import com.intellij.python.sdk.backend.evolution.DiscoveredVenv
 import com.intellij.python.sdk.backend.evolution.EvoPyProject
@@ -28,6 +28,7 @@ import com.intellij.python.uv.backend.UvPyTool
 import com.intellij.python.uv.backend.UvSystemPythonService
 import com.intellij.python.uv.backend.cli.uv.UvPythonEntry
 import com.intellij.python.uv.common.UV_TOOL_ID
+import com.intellij.python.uv.common.icons.PythonUvCommonIcons
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyVersionSpecifiers
 import com.jetbrains.python.sdk.add.v2.FileSystem
@@ -47,7 +48,9 @@ import kotlin.io.path.pathString
 private const val VERSIONS_KEY: String = "uv.supportedPythonVersions"
 
 internal class UvEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
-  override val tool: PyTool get() = UvPyTool.getInstance()
+  override val tool: PyTool<*> get() = UvPyTool.getInstance()
+  override val label: String get() = PySdkBundle.message("evolution.node.label.uv")
+  override val icon get() = PythonUvCommonIcons.UV
   override val toolId: ToolId get() = UV_TOOL_ID
 
   /** An interpreter of this node's environments carries this flavor, which is what names this node as the active one. */
@@ -71,7 +74,7 @@ internal class UvEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
   override suspend fun loadSections(pyProject: EvoPyProject, fileSystem: FileSystem<PathHolder.Eel>, discovered: List<DiscoveredVenv>): EvoLoadResultDto {
     return EvoLoadResultDto.Ok(discovered.toInProjectAndOtherSections(
       owner = this,
-      baseDir = pyProject.baseDir,
+      baseDir = pyProject.workspace.baseDir,
       icon = icon,
       label = PySdkBundle.message("evolution.section.in.project"),
     ))
@@ -86,7 +89,7 @@ internal class UvEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
     return setupExistingEnvAndSdk(
       pythonBinary = PathHolder.Eel(homePath),
       uvPath = uvPath,
-      workingDir = context.pyProject.baseDir,
+      workingDir = context.pyProject.workspace.baseDir,
       fileSystem = context.fileSystem,
       usePip = false,
     )
@@ -103,7 +106,7 @@ internal class UvEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
     val version = parseVersion(ref.token).getOr { return it }
     return setupNewUvSdkAndEnv(
       uvExecutable = uvExecutable,
-      workingDir = context.pyProject.baseDir,
+      workingDir = context.pyProject.workspace.baseDir,
       venvPath = PathHolder.Eel(venvDir),
       fileSystem = context.fileSystem,
       version = version,
@@ -137,7 +140,7 @@ internal class UvEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
   override suspend fun recreateSpecFor(context: EvoToolContext, leaf: EvoLeafDto): EvoRecreateDto? {
     val versions = context.cached(VERSIONS_KEY) { supportedPythonVersions(context) }.takeIf { it.isNotEmpty() } ?: return null
     // Without a `pyproject.toml` there is no project for `uv sync` to read, so the rebuilt env can only come back empty.
-    return EvoRecreateDto(options = versions, canSyncPackages = context.pyProject.baseDir.resolve(PY_PROJECT_TOML).exists())
+    return EvoRecreateDto(options = versions, canSyncPackages = context.pyProject.workspace.baseDir.resolve(PY_PROJECT_TOML).exists())
   }
 
   /**
@@ -152,7 +155,7 @@ internal class UvEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
     val version = parseVersion(spec.baseToken).getOr { return it }
     return setupNewUvSdkAndEnv(
       uvExecutable = uvExecutable,
-      workingDir = context.pyProject.baseDir,
+      workingDir = context.pyProject.workspace.baseDir,
       venvPath = PathHolder.Eel(VirtualEnvReader().resolvePythonHomeFromPythonBinary(homePath)),
       fileSystem = context.fileSystem,
       version = version,
@@ -172,7 +175,7 @@ internal class UvEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
   override suspend fun addNewEnvSpec(context: EvoToolContext, section: EvoSectionDto): EvoAddNewDto? {
     // Probed once per request, not once per section: a node with several folders offers the same versions in each.
     val versions = context.cached(VERSIONS_KEY) { supportedPythonVersions(context) }.takeIf { it.isNotEmpty() } ?: return null
-    val container = section.addNewFolderPath?.let { Path.of(it) } ?: context.pyProject.baseDir
+    val container = section.addNewFolderPath?.let { Path.of(it) } ?: context.pyProject.workspace.baseDir
     val taken = listEntryNames(container)
     return EvoAddNewDto(
       name = firstFreeVenvDir(container).fileName.toString(),
@@ -194,7 +197,7 @@ internal class UvEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
    * uv's to make, not the user's.
    */
   private suspend fun supportedPythonVersions(context: EvoToolContext): List<EvoAddNewOptionDto> {
-    val baseDir = context.pyProject.baseDir
+    val baseDir = context.pyProject.workspace.baseDir
     // The listing every node shares, taken once per project — see [UvSystemPythonService]. This node used to ask uv
     // again with the project's `requires-python` as uv's own positional request, which cost a second scan of the
     // machine for a list the first one already held.
@@ -229,7 +232,7 @@ internal class UvEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
     if (result !is EvoLoadResultDto.Ok) return result
     val versions = context.cached(VERSIONS_KEY) { supportedPythonVersions(context) }
     if (versions.isEmpty()) {
-      val requiresPython = requiresPython(context.pyProject.baseDir)
+      val requiresPython = requiresPython(context.pyProject.workspace.baseDir)
       return EvoLoadResultDto.Warning(
         if (requiresPython == null) PyUvBundle.message("evolution.uv.no.pythons")
         else PyUvBundle.message("evolution.uv.no.pythons.for.requires", requiresPython)

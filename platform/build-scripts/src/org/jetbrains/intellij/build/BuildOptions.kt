@@ -33,8 +33,12 @@ data class BuildOptions(
   @JvmField val buildDateInSeconds: Long = computeBuildDateInSeconds(),
   @Internal @JvmField val printFreeSpace: Boolean = true,
   @Internal @JvmField val validateImplicitPlatformModule: Boolean = true,
-  @JvmField var skipDependencySetup: Boolean = false,
-  @JvmField var skipCheckOutputOfPluginModules: Boolean = false,
+  /**
+   * If `true`, the plugin builder checks that the `intellij.java.guiForms.rt` output holds no GUI designer runtime class.
+   * The IDE compile setting "Automatically copy form runtime classes" puts them there, so a dev build runs the check, and
+   * a production build does not.
+   */
+  @JvmField var checkOutputOfPluginModules: Boolean = false,
 
   /**
    * If `true`, the build is running in the 'Development mode', i.e., its artifacts aren't supposed to be used in production.
@@ -112,8 +116,6 @@ data class BuildOptions(
   @JvmField val unpackCompiledClassesArchives: Boolean = getBooleanProperty(INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_UNPACK, true),
 
   @JvmField internal val validateModuleStructure: Boolean = getBooleanProperty(VALIDATE_MODULES_STRUCTURE_PROPERTY),
-
-  @JvmField internal val isUnpackedDist: Boolean = false,
 
   /**
    * If `true`, the assembled distribution is a disposable dev build that is only ever launched - from a run
@@ -566,7 +568,9 @@ data class BuildOptions(
   var storeGitRevision: Boolean = getBooleanProperty("intellij.build.store.git.revision", true)
 
   /**
-   * Specifies an additional list of compatible plugin names which should not be built, see [org.jetbrains.intellij.build.productLayout.ProductModulesLayout.compatiblePluginsToIgnore]
+   * The additional main modules of the compatible plugins that the build must not build.
+   *
+   * @see org.jetbrains.intellij.build.productLayout.ProductModulesLayout.compatiblePluginsToIgnore
    */
   var compatiblePluginsToIgnore: Set<String> = getSetProperty("intellij.build.compatible.plugins.to.ignore")
 

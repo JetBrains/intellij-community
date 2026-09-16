@@ -3,16 +3,14 @@ package com.intellij.openapi.editor.impl.marker
 
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.ex.DocumentSnapshot
-import com.intellij.openapi.editor.ex.DocumentTextPatch
 import com.intellij.openapi.editor.ex.RangeMarkerEx
 import com.intellij.util.Processor
 
 /**
  * Mutable marker engine for immutable document snapshots.
  *
- * Each supported [DocumentSnapshot] instance owns a reference to one [PMarkerRoot].
- * Distinct snapshot instances remain independent even when they have the same
- * modification sequence.
+ * Each range marker storage owns marker roots for its [DocumentSnapshot] instances. Distinct snapshot instances remain
+ * independent even when they have the same modification sequence.
  *
  * [SnapshotMarkerEngine] is mutable, while every [PMarkerRoot] is an immutable,
  * persistent value.
@@ -24,33 +22,6 @@ import com.intellij.util.Processor
  * of its parent.
  */
 interface SnapshotMarkerEngine {
-  /**
-   * Derives and stores the marker root for [afterSnapshot].
-   *
-   * The implementation obtains the current root associated with
-   * [beforeSnapshot], calls [PMarkerRoot.applyPatch], and stores the returned
-   * root in [afterSnapshot].
-   *
-   * The root associated with [beforeSnapshot] is not changed.
-   *
-   * [patch] must describe exactly the transformation from [beforeSnapshot]
-   * to [afterSnapshot]. Its offsets use coordinates from [beforeSnapshot].
-   *
-   * Marker creation, marker removal, and child-snapshot creation from the
-   * same snapshot must be linearized.
-   *
-   * @param beforeSnapshot parent text snapshot
-   * @param afterSnapshot child text snapshot created by the edit
-   * @param patch text patch describing the change
-   */
-  fun applyPatch(beforeSnapshot: DocumentSnapshot, afterSnapshot: DocumentSnapshot, patch: DocumentTextPatch)
-
-  /**
-   * Stores an independent marker root for [afterSnapshot] by capturing the current root of [beforeSnapshot].
-   * Both snapshots must share the same text instance.
-   */
-  fun inherit(beforeSnapshot: DocumentSnapshot, afterSnapshot: DocumentSnapshot)
-
   /**
    * Creates an engine-global marker ID and inserts the marker into the
    * current root associated with [snapshot].
@@ -77,25 +48,28 @@ interface SnapshotMarkerEngine {
     endOffset: Int,
     spec: MarkerSpec,
     retainStrong: Boolean = false,
-  ): PMarker
+  ): SnapshotMarker
 
   /**
-   * Disposes [marker] and removes it from the current root associated with [snapshot].
+   * Disposes [marker] and removes it from its current root.
    *
-   * Existing descendant roots remain unchanged, but resolution through the disposed handle is invalid. Future
-   * children created from [snapshot] inherit the root without the marker.
-   *
-   * @return `true` if the marker was present and removed, or `false` if it
-   * was already absent or disposed
+   * @return `true` if the marker was present and removed
    */
-  fun removeRangeMarker(snapshot: DocumentSnapshot, marker: PMarker): Boolean
+  fun removeRangeMarker(marker: SnapshotMarker): Boolean
 
   /**
-   * Resolves [marker] using the current root associated with [snapshot].
+   * Processes valid markers that non-strictly intersect the requested range.
+   *
+   * Each marker must contain every flavor bit in [tastePreference]. A zero value matches every marker.
+   * Collected weak marker references are purged. Disposed markers are skipped.
+   *
+   * @param rootStore supplies the marker root for [snapshot]
+   * @param snapshot selects the marker root
+   * @param processor receives each matching marker
+   * @return `false` when [processor] stops processing; otherwise, `true`
    */
-  fun resolveRangeMarker(marker: PMarker, snapshot: DocumentSnapshot): PMarkerResolution
-
   fun processRangeMarkersOverlappingWith(
+    rootStore: SnapshotMarkerRootStore,
     snapshot: DocumentSnapshot,
     startOffset: Int,
     endOffset: Int,

@@ -18,7 +18,6 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.IgnoredFileContentProvider;
 import com.intellij.openapi.vcs.changes.IgnoredFileGenerator;
@@ -123,7 +122,7 @@ public final class VcsImplUtil {
     return ReadAction.computeBlocking(() -> {
       if (project.isDisposed()) return false;
       @SystemIndependent String projectFilePath = project.getProjectFilePath();
-      ChangeListManagerEx changeListManager = ChangeListManagerEx.getInstanceEx(project);
+      ChangeListManager changeListManager = ChangeListManager.getInstance(project);
       return !changeListManager.isInUpdate()
              && (projectFilePath != null && isFileSharedInVcs(project, changeListManager, projectFilePath));
     });

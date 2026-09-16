@@ -2,8 +2,6 @@
 package org.jetbrains.intellij.build
 
 import com.intellij.openapi.util.io.NioFiles
-import kotlinx.coroutines.NonCancellable
-import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.impl.BaseLayout
 import org.jetbrains.intellij.build.impl.JarPackager
 import org.jetbrains.intellij.build.impl.LibraryPackMode
@@ -18,7 +16,7 @@ import java.nio.file.Path
 /**
  * Creates JARs containing classes required to run the external build for IDEA project without IDE.
  */
-suspend fun buildCommunityStandaloneJpsBuilder(
+fun buildCommunityStandaloneJpsBuilder(
   targetDir: Path,
   context: BuildContext,
   dryRun: Boolean = false,
@@ -87,6 +85,8 @@ suspend fun buildCommunityStandaloneJpsBuilder(
   layout.withModuleLibrary("jetbrains-annotations", "intellij.libraries.jetbrains.annotations", "")
   layout.withModuleLibrary("zstd-jni", "intellij.libraries.zstd.jni", "")
   layout.withModuleLibrary("jps-javac-extension", "intellij.libraries.jps.javac.extension", "")
+  layout.withModuleLibrary("kotlin-metadata", "intellij.libraries.kotlin.metadata", "")
+  layout.withModuleLibrary("kotlinx-coroutines-core", "intellij.libraries.kotlinx.coroutines.core", "")
 
   // layout of groovy jars must be consistent with GroovyBuilder.getGroovyRtRoots method
   layout.withModule("intellij.libraries.groovy", "groovy.jar")
@@ -112,8 +112,6 @@ suspend fun buildCommunityStandaloneJpsBuilder(
     "Eclipse",
     "slf4j-api",
     "kotlin-stdlib",
-    "kotlinx-coroutines-core",
-    "kotlin-metadata",
   )) {
     layout.withProjectLibrary(it, LibraryPackMode.STANDALONE_MERGED)
   }
@@ -154,8 +152,6 @@ suspend fun buildCommunityStandaloneJpsBuilder(
     context.notifyArtifactBuilt(targetFile)
   }
   finally {
-    withContext(NonCancellable) {
-      NioFiles.deleteRecursively(tempDir)
-    }
+    NioFiles.deleteRecursively(tempDir)
   }
 }

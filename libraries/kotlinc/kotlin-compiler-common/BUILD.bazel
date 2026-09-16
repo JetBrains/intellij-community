@@ -1,5 +1,4 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
-load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.libraries.kotlinc.kotlin.compiler.common` start
 jvm_library(
@@ -15,16 +14,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-kotlinc-kotlin-compiler-common-kotlinc-kotlin-compiler-common"],
-    runtime_deps = [
-        # do not sort,
-        "@lib//:libraries-kotlinc-kotlin-compiler-common-kotlinc-kotlin-compiler-common",
-        "//java/java-frontback-psi-api:frontback-psi",
-    ],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-kotlinc-kotlin-compiler-common-kotlinc-kotlin-compiler-common"],
-    module = ":libraries-kotlinc-kotlin-compiler-common",
+    runtime_deps = ["@lib//:libraries-kotlinc-kotlin-compiler-common-kotlinc-kotlin-compiler-common"],
 )
 
 jvm_library(
@@ -38,11 +28,7 @@ jvm_library(
     module_name = "intellij.libraries.kotlinc.kotlin.compiler.common",
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-kotlinc-kotlin-compiler-common-kotlinc-kotlin-compiler-common"],
-    runtime_deps = [
-        # do not sort,
-        ":libraries-kotlinc-kotlin-compiler-common",
-        "//java/java-frontback-psi-api:frontback-psi_test_lib",
-    ],
+    runtime_deps = [":libraries-kotlinc-kotlin-compiler-common"],
 )
 ### auto-generated section `build intellij.libraries.kotlinc.kotlin.compiler.common` end
 
@@ -51,7 +37,6 @@ exports_files(
     [
         "intellij.libraries.kotlinc.kotlin.compiler.common.iml",
         "resources/intellij.libraries.kotlinc.kotlin.compiler.common.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -1,0 +1,3 @@
+- name: dist.all/lib/intellij.platform.ide.util.io.native.jar
+  modules:
+  - name: intellij.platform.ide.util.io.native

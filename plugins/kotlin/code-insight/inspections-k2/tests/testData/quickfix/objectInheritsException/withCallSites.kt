@@ -10,5 +10,4 @@ fun foo() {
     throw MyException
 }
 
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.inspections.shared.ObjectInheritsExceptionInspection$ChangeObjectToClassQuickFix
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.inspections.ObjectInheritsExceptionInspection$ChangeObjectToClassQuickFix

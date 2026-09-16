@@ -3,11 +3,10 @@ package com.intellij.find.ngrams;
 
 import com.intellij.find.TextSearchService;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectCoreUtil;
 import com.intellij.openapi.util.text.TrigramBuilder;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -31,7 +30,7 @@ public final class TrigramTextSearchService implements TextSearchService {
   public @NotNull TextSearchResult processFilesWithText(@NotNull String text,
                                                         @NotNull Processor<? super VirtualFile> processor,
                                                         @NotNull GlobalSearchScope scope) {
-    IntSet keys = TrigramBuilder.getTrigrams(text);
+    IntSet keys = TrigramBuilder.getTrigrams(text, () -> ProgressManager.checkCanceled());
     if (keys.isEmpty()) {
       return TextSearchResult.NO_TRIGRAMS;
     }
@@ -49,11 +48,19 @@ public final class TrigramTextSearchService implements TextSearchService {
   @Override
   public boolean isInSearchableScope(@NotNull VirtualFile file,
                                      @NotNull Project project) {
-    FileType fileType = file.getFileType();
     return !file.isDirectory()
            && isIndexable(file, project)
-           && !ProjectCoreUtil.isProjectOrWorkspaceFile(file, fileType)
+           && !isProjectOrWorkspaceFile(file)
            && !SingleRootFileViewProvider.isTooLargeForIntelligence(file);
+  }
+
+  // Checks the extension instead of file.getFileType(), to avoid file type detection.
+  private static boolean isProjectOrWorkspaceFile(@NotNull VirtualFile file) {
+    String extension = file.getExtension();
+    return "iml".equalsIgnoreCase(extension) ||
+           "ipr".equalsIgnoreCase(extension) ||
+           "iws".equalsIgnoreCase(extension) ||
+           VfsUtilCore.findContainingDirectory(file, Project.DIRECTORY_STORE_FOLDER) != null;
   }
 
   /** @return true if search by index available */

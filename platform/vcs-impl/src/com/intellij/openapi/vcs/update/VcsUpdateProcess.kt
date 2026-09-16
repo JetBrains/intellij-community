@@ -30,7 +30,7 @@ private val LOG = logger<VcsUpdateProcess>()
 
 @ApiStatus.Experimental
 object VcsUpdateProcess {
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun launchUpdate(
     project: Project,
     actionInfo: ActionInfo,
@@ -44,7 +44,7 @@ object VcsUpdateProcess {
   }
 
   @ApiStatus.Internal
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun launchUpdate(
     project: Project,
     actionInfo: ActionInfo,
@@ -52,7 +52,7 @@ object VcsUpdateProcess {
     context: DataContext,
     showUpdateOptions: Boolean,
     @Nls actionName: String,
-    @RequiresEdt onSuccess: () -> Unit = {},
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */) onSuccess: () -> Unit = {},
   ) {
     LOG.debug { "project: $project, show update options: $showUpdateOptions" }
 
@@ -85,7 +85,7 @@ object VcsUpdateProcess {
     updateSpec: List<VcsUpdateSpecification>,
     actionInfo: ActionInfo,
     @Nls actionName: String,
-    @RequiresEdt onSuccess: () -> Unit = {},
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */) onSuccess: () -> Unit = {},
   ) {
     project.service<ProjectVcsUpdateTaskExecutor>().launchUpdate(roots, updateSpec, actionInfo, actionName, onSuccess)
   }
@@ -251,7 +251,7 @@ private class ProjectVcsUpdateTaskExecutor(private val project: Project, private
     updateSpec: List<VcsUpdateSpecification>,
     actionInfo: ActionInfo,
     @Nls actionName: String,
-    @RequiresEdt onSuccess: () -> Unit = {},
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */) onSuccess: () -> Unit = {},
   ) {
     cs.launch {
       try {

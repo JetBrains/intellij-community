@@ -44,7 +44,8 @@ interface BuildMessages {
 
   fun reportStatisticValue(key: String, value: String)
 
-  fun reportBuildProblem(description: String, identity: String? = null)
+  /** [cause] keeps the failure chain: the console logger rethrows it, the TeamCity logger appends its trace. */
+  fun reportBuildProblem(description: String, identity: String? = null, cause: Throwable? = null)
 
   fun reportBuildNumber(value: String)
 

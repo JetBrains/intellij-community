@@ -24,6 +24,7 @@ import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.environmentVariables
+import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.localEel
@@ -44,9 +45,9 @@ import com.intellij.python.community.services.shared.VanillaPythonWithPythonInfo
 import com.intellij.python.community.services.systemPython.SysPythonRegisterError
 import com.intellij.python.community.services.systemPython.SystemPython
 import com.intellij.python.community.services.systemPython.SystemPythonService
-import com.intellij.python.pytools.ToolCommandSpec
-import com.intellij.python.pytools.ToolSearchPath
-import com.intellij.python.pytools.impl.detectExecutableOnEel
+import com.intellij.python.pytools.backend.ToolCommandSpec
+import com.intellij.python.pytools.backend.ToolSearchPath
+import com.intellij.python.pytools.backend.impl.detectExecutableOnEel
 import com.intellij.python.sdk.backend.PySdkBundle
 import com.intellij.python.sdk.backend.resolvePythonBinary
 import com.intellij.python.venv.sdk.flavors.VirtualEnvSdkFlavor
@@ -117,12 +118,23 @@ data class EelFileSystem(
   override val eelDescriptor: EelDescriptor = eelApi.descriptor
 
   override fun getBinaryToExec(path: PathHolder.Eel, workingDir: Path?): BinaryToExec {
-    return BinOnEel(path.path, workingDir)
+    // Only an absolute path names a directory on the eel. A relative one would resolve against the current directory
+    // of the IDE process, so it is dropped. A caller with no work directory must pass null.
+    val eelWorkingDir = workingDir?.let {
+      if (it.isAbsolute) {
+        it.asEelPath()
+      }
+      else {
+        LOG.warn("Dropped the relative work directory '$it' of $path")
+        null
+      }
+    }
+    return BinOnEel(path.path, eelWorkingDir)
   }
 
   override fun createTargetRequest(): TargetEnvironmentRequest = LocalTargetEnvironmentRequest()
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun <T> configureFileBrowseEditor(
     fieldAccessor: TextComponentAccessor<ComboBox<T>>,
     comboBox: ComboBox<T>,
@@ -382,7 +394,7 @@ data class TargetFileSystem(
   override fun createTargetRequest(): TargetEnvironmentRequest =
     targetEnvironmentConfiguration.createEnvironmentRequest(project = null)
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun <T> configureFileBrowseEditor(
     fieldAccessor: TextComponentAccessor<ComboBox<T>>,
     comboBox: ComboBox<T>,

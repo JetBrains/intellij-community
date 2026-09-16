@@ -20,13 +20,13 @@ public open class ConcurrentVirtualFileUrlManager : VirtualFileUrlManagerEx {
 
   private val name2Canonical = ConcurrentHashMap<String, String>()
 
-  override fun getOrCreateFromUrl(uri: String): VirtualFileUrl {
-    if (uri.isEmpty()) return emptyUrl
-    return insertPath(uri)
+  override fun storeAndGet(url: String): VirtualFileUrl {
+    if (url.isEmpty()) return emptyUrl
+    return insertPath(url)
   }
 
-  override fun findByUrl(uri: String): VirtualFileUrl? {
-    val node = findNode(uri) ?: return null
+  override fun get(url: String): VirtualFileUrl? {
+    val node = findNode(url) ?: return null
     // Return the node only if this exact URL was registered via getOrCreateFromUrl
     return if (node.isRegistered()) node else null
   }
@@ -52,7 +52,7 @@ public open class ConcurrentVirtualFileUrlManager : VirtualFileUrlManagerEx {
 
   /**
    * Every trie node is itself a [VirtualFileUrl], so this returns the nodes which were explicitly requested
-   * via [getOrCreateFromUrl] or [append], skipping the intermediate ones created along the way.
+   * via [storeAndGet] or [append], skipping the intermediate ones created along the way.
    */
   override fun getCachedVirtualFileUrls(): List<VirtualFileUrl> {
     val result = ArrayList<VirtualFileUrl>()
@@ -65,7 +65,7 @@ public open class ConcurrentVirtualFileUrlManager : VirtualFileUrlManagerEx {
 
   override fun fromPath(path: String): VirtualFileUrl {
     val url = URLUtil.FILE_PROTOCOL + URLUtil.SCHEME_SEPARATOR + FileUtil.toSystemIndependentName(path)
-    return getOrCreateFromUrl(url)
+    return storeAndGet(url)
   }
 
   /**

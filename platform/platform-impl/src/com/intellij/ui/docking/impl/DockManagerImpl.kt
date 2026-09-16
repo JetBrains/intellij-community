@@ -66,6 +66,7 @@ import java.awt.Image
 import java.awt.Rectangle
 import java.awt.Window
 import java.awt.event.MouseEvent
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.function.Predicate
 import javax.swing.Icon
 import javax.swing.JDialog
@@ -81,6 +82,7 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
   private val containers = HashSet<DockContainer>()
   private val containerToWindow = HashMap<DockContainer, DockWindow>()
   private var currentDragSession: MyDragSession? = null
+  private val dragSessionListeners = CopyOnWriteArrayList<DockDragSessionListener>()
 
   private val busyObject: BusyObject.Impl = object : BusyObject.Impl() {
     override fun isReady(): Boolean = currentDragSession == null
@@ -121,6 +123,11 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
 
   internal fun removeContainer(container: DockContainer) {
     containers.remove(container)
+  }
+
+  internal fun addDragSessionListener(listener: DockDragSessionListener, parentDisposable: Disposable) {
+    dragSessionListeners.add(listener)
+    Disposer.register(parentDisposable) { dragSessionListeners.remove(listener) }
   }
 
   override fun register(container: DockContainer, parentDisposable: Disposable) {
@@ -186,15 +193,22 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
         containerToWindow.get(container)?.setTransparent(true)
       }
     }
-    return MyDragSession(mouseEvent, content).also { currentDragSession = it }
+    val session = MyDragSession(mouseEvent, content)
+    currentDragSession = session
+    for (listener in dragSessionListeners) {
+      listener.sessionStarted(content)
+    }
+    return session
   }
 
   fun stopCurrentDragSession() {
-    if (currentDragSession == null) {
-      return
+    val session = currentDragSession ?: return
+
+    for (listener in dragSessionListeners) {
+      listener.sessionFinished(session.content)
     }
 
-    currentDragSession!!.cancelSession()
+    session.cancelSession()
     currentDragSession = null
     busyObject.onReady()
     for (container in getAllContainers()) {
@@ -207,7 +221,7 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
   internal val ready: ActionCallback
     get() = busyObject.getReady(this)
 
-  private inner class MyDragSession(mouseEvent: MouseEvent, private val content: DockableContent<*>) : DragSession {
+  private inner class MyDragSession(mouseEvent: MouseEvent, val content: DockableContent<*>) : DragSession {
     private val view: DragImageView
     private var dragImage: Image?
     private val defaultDragImage: Image
@@ -589,4 +603,13 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
       }
     }
   }
+}
+
+/**
+ * Register it with [DockManagerImpl.addDragSessionListener].
+ */
+internal interface DockDragSessionListener {
+  fun sessionStarted(content: DockableContent<*>)
+
+  fun sessionFinished(content: DockableContent<*>)
 }

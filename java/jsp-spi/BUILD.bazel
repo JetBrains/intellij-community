@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.jsp.spi` start
+content_module_jar(module = ":jsp-spi")
+### auto-generated section `dev intellij.jsp.spi` end
+
 ### auto-generated section `build intellij.jsp.spi` start
 jvm_library(
     name = "jsp-spi",
@@ -38,8 +42,6 @@ jvm_library(
         "//java/java-psi-api:psi",
     ],
 )
-
-content_module_jar(module = ":jsp-spi")
 
 jvm_library(
     name = "jsp-spi_test_lib",

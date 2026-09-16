@@ -86,13 +86,13 @@ public final class MethodBytecodeUtil {
     ClassWriter writer = new ClassWriter(reader, 0);
     String superName = null;
     String[] interfaces = null;
-    if (type instanceof ClassType) {
-      ClassType superClass = ((ClassType)type).superclass();
+    if (type instanceof ClassType classType) {
+      ClassType superClass = classType.superclass();
       superName = superClass != null ? superClass.name() : null;
-      interfaces = ((ClassType)type).interfaces().stream().map(ReferenceType::name).toArray(String[]::new);
+      interfaces = classType.interfaces().stream().map(ReferenceType::name).toArray(String[]::new);
     }
-    else if (type instanceof InterfaceType) {
-      interfaces = ((InterfaceType)type).superinterfaces().stream().map(ReferenceType::name).toArray(String[]::new);
+    else if (type instanceof InterfaceType interfaceType) {
+      interfaces = interfaceType.superinterfaces().stream().map(ReferenceType::name).toArray(String[]::new);
     }
     writer.visit(Opcodes.V1_8, Opcodes.ACC_PUBLIC, type.name(), type.signature(), superName, interfaces);
     Attribute bootstrapMethods = createBootstrapMethods(reader, writer);
@@ -102,8 +102,8 @@ public final class MethodBytecodeUtil {
     MethodVisitor mv = writer.visitMethod(Opcodes.ACC_PUBLIC, method.name(), method.signature(), method.signature(), null);
     mv.visitAttribute(createCode(writer, method, bytecodes, withLineNumbers));
 
-    InstructionOffsetReader insnOffsReader = methodVisitor instanceof InstructionOffsetReader
-                                             ? (InstructionOffsetReader)methodVisitor
+    InstructionOffsetReader insnOffsReader = methodVisitor instanceof InstructionOffsetReader offsetReader
+                                             ? offsetReader
                                              : null;
 
     new ClassReader(writer.toByteArray()) {
@@ -233,7 +233,7 @@ public final class MethodBytecodeUtil {
     if (DebuggerUtilsEx.isLambdaClassName(clsType.name())) {
       List<Method> applicableMethods = ContainerUtil.filter(clsType.methods(), m -> m.isPublic() && !m.isBridge());
       if (applicableMethods.size() == 1) {
-        return getTargetMethod(applicableMethods.get(0), classesByName);
+        return getTargetMethod(applicableMethods.getFirst(), classesByName);
       }
     }
     return null;
@@ -322,7 +322,7 @@ public final class MethodBytecodeUtil {
       return locations;
     }
 
-    int lineNumber = locations.get(0).lineNumber();
+    int lineNumber = locations.getFirst().lineNumber();
     List<Boolean> mask = new ArrayList<>(locationsSize);
     visit(method, new MethodVisitor(Opcodes.API_VERSION) {
       boolean myNewBlock = true;

@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.python.syntax.core` start
+content_module_jar(module = ":syntax-core")
+### auto-generated section `dev intellij.python.syntax.core` end
+
 ### auto-generated section `build intellij.python.syntax.core` start
 jvm_library(
     name = "syntax-core",
@@ -40,8 +44,6 @@ jvm_library(
         "//platform/util/jdom",
     ],
 )
-
-content_module_jar(module = ":syntax-core")
 
 jvm_library(
     name = "syntax-core_test_lib",

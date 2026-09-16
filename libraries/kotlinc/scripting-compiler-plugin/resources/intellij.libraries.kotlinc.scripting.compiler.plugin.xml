@@ -1,8 +1,12 @@
 <idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
-    <module name="intellij.libraries.kotlinc.kotlin.scripting.common"/>
     <module name="intellij.libraries.kotlinc.kotlin.compiler.fir"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.ir"/>
+    <module name="intellij.libraries.kotlinc.kotlin.scripting.common"/>
     <module name="intellij.libraries.kotlinc.kotlin.scripting.compiler.impl"/>
+    <module name="intellij.libraries.kotlinc.kotlin.scripting.jvm"/>
   </dependencies>
+  <!-- endregion -->
 </idea-plugin>

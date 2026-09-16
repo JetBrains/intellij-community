@@ -10,9 +10,8 @@ import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS
-import org.jetbrains.kotlin.analysis.api.components.collectDiagnostics
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
+import org.jetbrains.kotlin.analysis.api.diagnostics.diagnostics
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.AddExclExclCallFix
@@ -34,7 +33,7 @@ internal class K2DiagnosticBasedPostProcessingGroup(
     ): PostProcessingApplier = analyze(file) {
         // TODO: for copy-paste conversion, try to restrict the analysis range, like in K1 J2K
         //  (see org.jetbrains.kotlin.idea.j2k.post.processing.DiagnosticBasedPostProcessingGroup.analyzeFileRange)
-        val diagnostics = file.collectDiagnostics(filter = ONLY_COMMON_CHECKERS)
+        val diagnostics = file.diagnostics()
         val processingDataList = mutableListOf<ProcessingData>()
 
         for (diagnostic in diagnostics) {

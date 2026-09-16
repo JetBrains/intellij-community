@@ -101,6 +101,24 @@ open class JListUiComponent(data: ComponentData) : UiComponent(data) {
   }
 
 
+  /**
+   * Selects the item which contains or equals [itemText], and presses no mouse button.
+   * A robot click can go to another component, and the macOS agent loses it.
+   */
+  fun selectItem(itemText: String, fullMatch: Boolean = true, trimmed: Boolean = false) {
+    val index = findItemIndex(itemText, fullMatch, trimmed)
+                ?: throw IllegalArgumentException("item with text $itemText not found, all items: ${items.joinToString(", ")}")
+    selectItemAtIndex(index)
+  }
+
+  /** Selects the item at [index] on the EDT, and presses no mouse button. */
+  fun selectItemAtIndex(index: Int) {
+    driver.withContext(OnDispatcher.EDT) {
+      listComponent.setSelectedIndex(index)
+      listComponent.ensureIndexIsVisible(index)
+    }
+  }
+
   fun clickItemAtIndex(index: Int, offset: Point? = null) {
     if (offset == null) {
       fixture.clickItemAtIndex(index)
@@ -160,4 +178,6 @@ interface JListFixtureRef {
 interface JListComponent {
   fun getCellBounds(index0: Int, index1: Int): Rectangle
   fun isSelectedIndex(index: Int): Boolean
+  fun setSelectedIndex(index: Int)
+  fun ensureIndexIsVisible(index: Int)
 }

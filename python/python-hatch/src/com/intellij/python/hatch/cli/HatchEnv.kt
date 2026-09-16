@@ -6,7 +6,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.eel.provider.utils.stderrString
 import com.intellij.platform.eel.provider.utils.stdoutString
 import com.intellij.python.hatch.PyHatchBundle
-import com.intellij.python.pytools.runtime.PyToolRuntime
+import com.intellij.python.pytools.backend.runtime.PyToolRuntime
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.ExecError
 import com.jetbrains.python.errorProcessing.PyResult

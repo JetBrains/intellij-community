@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.opentelemetry` start
+content_module_jar(
+    libraries = ["@lib//:libraries-opentelemetry-opentelemetry"],
+    module = ":opentelemetry",
+)
+### auto-generated section `dev intellij.libraries.opentelemetry` end
+
 ### auto-generated section `build intellij.libraries.opentelemetry` start
 jvm_library(
     name = "opentelemetry",
@@ -16,11 +23,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-opentelemetry-opentelemetry"],
     runtime_deps = ["@lib//:libraries-opentelemetry-opentelemetry"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-opentelemetry-opentelemetry"],
-    module = ":opentelemetry",
 )
 
 jvm_library(
@@ -43,7 +45,6 @@ exports_files(
     [
         "intellij.libraries.opentelemetry.iml",
         "resources/intellij.libraries.opentelemetry.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

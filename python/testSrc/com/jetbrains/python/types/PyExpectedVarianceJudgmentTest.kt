@@ -357,8 +357,9 @@ class PyExpectedVarianceJudgmentTest : PyCodeInsightTestCase() {
   fun `Type alias use for generic class invariant`() = test("""
     from typing import TypeVar, Generic, TypeAlias
     T1 = TypeVar("T1")
+    T2 = TypeVar("T2")
     class Box(Generic[T1]): ...
-    Box_TA: TypeAlias = Box[T1]
+    Box_TA: TypeAlias = Box[T2]
     #                       └ EXPECTED_VARIANCE INVARIANT
     my_box: Box_TA[int]
     #              └ EXPECTED_VARIANCE INVARIANT
@@ -372,14 +373,13 @@ class PyExpectedVarianceJudgmentTest : PyCodeInsightTestCase() {
     
     T = TypeVar("T")
     A_Alias_1: TypeAlias = ClassA[T]
-    #                             └ EXPECTED_VARIANCE INVARIANT FIXME COVARIANT
+    #                             └ EXPECTED_VARIANCE COVARIANT
     
     obj: A_Alias_1[int] #
     #              └ EXPECTED_VARIANCE COVARIANT
     """.trimIndent())
 
   // Expect test error when targeting non-PyReferenceExpression
-
   @Test
   fun `Test assertion error on non PyReferenceExpression`() = test("""
     class A[T]:
@@ -387,55 +387,71 @@ class PyExpectedVarianceJudgmentTest : PyCodeInsightTestCase() {
     #                                    └ EXPECTED_VARIANCE Expected variance only available for PyReferenceExpressions
     """.trimIndent())
 
-  // Expect NONE to avoid variance compatibility inspection check
-
-  @Test
-  fun `Type argument of self type`() = test("""
-    class K[T]:
-        def m1(self: "K[T]", x: T) -> None: ...
-    #                   └ EXPECTED_VARIANCE NONE
-    """.trimIndent())
-
+  // Provide variance also for locations where inspections do not check variance
   @Test
   fun `Generic class dunder init special case`() = test("""
     class A[T]:
         def __init__(self, value: T): pass
-    #                             └ EXPECTED_VARIANCE NONE # actually bivariant
+    #                             └ EXPECTED_VARIANCE CONTRAVARIANT
+    """.trimIndent())
+
+  @Test
+  fun `Attribute declaration in dunder init is invariant`() = test("""
+    class A[T]:
+        def __init__(self, value: T) -> None:
+            self.attr: T
+    #                  └ EXPECTED_VARIANCE INVARIANT
+    """.trimIndent())
+
+  @Test
+  fun `Final attribute assignment in dunder init is covariant`() = test("""
+    from typing import Final
+    class A[T]:
+        def __init__(self, value: T) -> None:
+            self.attr: Final[T] = value
+    #                        └ EXPECTED_VARIANCE COVARIANT
     """.trimIndent())
 
   @Test
   fun `Generic class dunder new special case`() = test("""
     class A[T]:
         def __new__(self, value: T): pass
-    #                            └ EXPECTED_VARIANCE NONE # actually bivariant
+    #                            └ EXPECTED_VARIANCE CONTRAVARIANT
     """.trimIndent())
 
   @Test
   fun `Private attributes are ignored`() = test("""
     class A[T]:
         __t: T  # private
-    #        └ EXPECTED_VARIANCE NONE
+    #        └ EXPECTED_VARIANCE INVARIANT
+    """.trimIndent())
+
+  @Test
+  fun `Private initialized attributes are ignored`() = test("""
+    class A[T]:
+        __t: T|None = None
+    #        └ EXPECTED_VARIANCE INVARIANT
     """.trimIndent())
 
   @Test
   fun `Private methods are ignored`() = test("""
     class A[T]:
         def __foo(self, t:T) -> T: pass  # private
-    #                     └ EXPECTED_VARIANCE NONE
+    #                     └ EXPECTED_VARIANCE CONTRAVARIANT
     """.trimIndent())
 
   @Test
   fun `Protected attributes are ignored`() = test("""
     class A[T]:
         _t: T  # protected
-    #       └ EXPECTED_VARIANCE NONE
+    #       └ EXPECTED_VARIANCE INVARIANT
     """.trimIndent())
 
   @Test
   fun `Protected methods are ignored`() = test("""
     class A[T]:
         def _foo(self, t:T) -> T: pass  # private
-    #                    └ EXPECTED_VARIANCE NONE
+    #                    └ EXPECTED_VARIANCE CONTRAVARIANT
     """.trimIndent())
 
   @Test
@@ -443,13 +459,13 @@ class PyExpectedVarianceJudgmentTest : PyCodeInsightTestCase() {
     from typing import TypeVar
     T = TypeVar("T", covariant=True)
     def fn() -> T: pass
-    #           └ EXPECTED_VARIANCE NONE
+    #           └ EXPECTED_VARIANCE COVARIANT
     """.trimIndent())
 
   @Test
   fun `Null when bound to function return 2`() = test("""
     def fn[T]() -> T: pass
-    #              └ EXPECTED_VARIANCE NONE
+    #              └ EXPECTED_VARIANCE COVARIANT
     """.trimIndent())
 
   @Test
@@ -457,41 +473,41 @@ class PyExpectedVarianceJudgmentTest : PyCodeInsightTestCase() {
     from typing import TypeVar
     T = TypeVar("T", covariant=True)
     def fn(t: T): pass
-    #         └ EXPECTED_VARIANCE NONE
+    #         └ EXPECTED_VARIANCE CONTRAVARIANT
     """.trimIndent())
 
   @Test
   fun `Null when bound to function param 2`() = test("""
     def fn[T](t: T): pass
-    #            └ EXPECTED_VARIANCE NONE
+    #            └ EXPECTED_VARIANCE CONTRAVARIANT
     """.trimIndent())
 
   @Test
   fun `Null when bound to function parameter nesting callable parameter`() = test("""
     from typing import Callable
     def fn[T](t: Callable[[T], None]): pass
-    #                      └ EXPECTED_VARIANCE NONE
+    #                      └ EXPECTED_VARIANCE COVARIANT
     """.trimIndent())
 
   @Test
   fun `Null when bound to function parameter nesting callable return`() = test("""
     from typing import Callable
     def fn[T](t: Callable[[], T]): pass
-    #                         └ EXPECTED_VARIANCE NONE
+    #                         └ EXPECTED_VARIANCE CONTRAVARIANT
     """.trimIndent())
 
   @Test
   fun `Null when bound to function return nesting callable parameter`() = test("""
     from typing import Callable
     def fn[T]() -> Callable[[T], None]: pass
-    #                        └ EXPECTED_VARIANCE NONE
+    #                        └ EXPECTED_VARIANCE CONTRAVARIANT
     """.trimIndent())
 
   @Test
   fun `Null when bound to function return nesting callable return`() = test("""
     from typing import Callable
     def fn[T]() -> Callable[[], T]: pass
-    #                           └ EXPECTED_VARIANCE NONE
+    #                           └ EXPECTED_VARIANCE COVARIANT
     """.trimIndent())
 
   @Test
@@ -499,7 +515,7 @@ class PyExpectedVarianceJudgmentTest : PyCodeInsightTestCase() {
     from typing import TypeVar
     B_co = TypeVar("B_co", covariant=True)
     def func(x: list[B_co]) -> B_co:
-    #                └ EXPECTED_VARIANCE NONE
+    #                └ EXPECTED_VARIANCE INVARIANT
         ...
     """.trimIndent())
 
@@ -508,7 +524,7 @@ class PyExpectedVarianceJudgmentTest : PyCodeInsightTestCase() {
     from typing import TypeVar, Generic
     T = TypeVar("T", covariant=True)
     def fn() -> T: pass
-    #           └ EXPECTED_VARIANCE NONE
+    #           └ EXPECTED_VARIANCE COVARIANT
     """.trimIndent())
 
   @Test
@@ -517,7 +533,7 @@ class PyExpectedVarianceJudgmentTest : PyCodeInsightTestCase() {
     T = TypeVar("T", covariant=True)
     class C(Generic[T]):
         def fn() -> T: pass
-    #               └ EXPECTED_VARIANCE NONE
+    #               └ EXPECTED_VARIANCE COVARIANT
     """.trimIndent())
 
   @Test
@@ -527,7 +543,7 @@ class PyExpectedVarianceJudgmentTest : PyCodeInsightTestCase() {
     class C(Generic[T]):
         @classmethod
         def fn(cls) -> T: pass
-    #                  └ EXPECTED_VARIANCE NONE
+    #                  └ EXPECTED_VARIANCE COVARIANT
     """.trimIndent())
 
   @Test
@@ -537,7 +553,32 @@ class PyExpectedVarianceJudgmentTest : PyCodeInsightTestCase() {
     class C(Generic[T]):
         @staticmethod
         def fn() -> T: pass
-    #               └ EXPECTED_VARIANCE NONE
+    #               └ EXPECTED_VARIANCE COVARIANT
+    """.trimIndent())
+
+  @Test
+  fun `Contravariant arguments in nested functions`() = test("""
+    class B[T]:
+        def f1(self):
+            def f2(a: T): # nested uses of T are ignored by variance expectation
+    #                 └ EXPECTED_VARIANCE CONTRAVARIANT
+                ...
+    """.trimIndent())
+
+  // Expect NONE at unrelated locations
+
+  @Test
+  fun `Type argument of self type`() = test("""
+    class K[T]:
+        def m1(self: K[T], x: T) -> None: ...
+    #                  └ EXPECTED_VARIANCE NONE
+    """.trimIndent())
+
+  @Test
+  fun `Type argument of quoted self type`() = test("""
+    class K[T]:
+        def m1(self: "K[T]", x: T) -> None: ...
+    #                   └ EXPECTED_VARIANCE NONE
     """.trimIndent())
 
   @Test
@@ -548,14 +589,24 @@ class PyExpectedVarianceJudgmentTest : PyCodeInsightTestCase() {
     #              └ EXPECTED_VARIANCE NONE
     """.trimIndent())
 
-  @TestFor(issues = ["PY-88800"])
   @Test
-  fun `Contravariant arguments in nested functions`() = test("""
-    class B[T]:
-        def f1(self):
-            def f2(a: T): # nested uses of T are ignored by variance expectation
-    #                 └ EXPECTED_VARIANCE NONE
-                ...
+  fun `Local variable declaration in dunder init is none`() = test("""
+    class A[T]:
+        def __init__(self, value: T) -> None:
+            tmp1: T
+    #             └ EXPECTED_VARIANCE NONE
+            tmp2: T = value
+    #             └ EXPECTED_VARIANCE NONE
+    """.trimIndent())
+
+  @Test
+  fun `Local variable declaration in regular method is none`() = test("""
+    class A[T]:
+        def method(self, value: T) -> None:
+            tmp1: T
+    #             └ EXPECTED_VARIANCE NONE
+            tmp2: T = value
+    #             └ EXPECTED_VARIANCE NONE
     """.trimIndent())
 
 }

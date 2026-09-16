@@ -88,7 +88,7 @@ class StackTraceFileEditor(private val project: Project, private val file: Virtu
     coroutineScope.cancel()
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private suspend fun updateStacktracePane() {
     if (!file.isValid) return
     val contentManager = myContentManager ?: return

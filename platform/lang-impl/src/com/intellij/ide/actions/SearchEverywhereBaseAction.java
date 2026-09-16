@@ -14,6 +14,8 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.ide.actions.GotoActionBase.getInitialText;
@@ -26,8 +28,20 @@ public abstract class SearchEverywhereBaseAction extends AnAction implements Act
     final DataContext dataContext = event.getDataContext();
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     boolean hasContributors = hasContributors(dataContext);
-    presentation.setEnabled((!requiresProject() || project != null) && hasContributors);
-    presentation.setVisible(true);
+    boolean isWelcomeScreenProject = project != null && WelcomeScreenProjectProvider.Companion.isWelcomeScreenProject(project);
+
+    if (isWelcomeScreenProject && !isVisibleOnWelcomeScreen()) {
+      presentation.setEnabledAndVisible(false);
+    }
+    else {
+      presentation.setEnabled((!requiresProject() || project != null) && hasContributors);
+      presentation.setVisible(true);
+    }
+  }
+
+  @ApiStatus.Internal
+  protected boolean isVisibleOnWelcomeScreen() {
+    return true;
   }
 
   @Override

@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.jackson3.databind` start
+content_module_jar(
+    libraries = ["@lib//:libraries-jackson3-databind-jackson3-databind"],
+    module = ":databind",
+)
+### auto-generated section `dev intellij.libraries.jackson3.databind` end
+
 ### auto-generated section `build intellij.libraries.jackson3.databind` start
 jvm_library(
     name = "databind",
@@ -25,11 +32,6 @@ jvm_library(
         "//libraries/jackson/annotations",
         "//libraries/jackson3/jackson:libraries-jackson3",
     ],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-jackson3-databind-jackson3-databind"],
-    module = ":databind",
 )
 
 jvm_library(
@@ -62,7 +64,6 @@ exports_files(
     [
         "intellij.libraries.jackson3.databind.iml",
         "resources/intellij.libraries.jackson3.databind.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

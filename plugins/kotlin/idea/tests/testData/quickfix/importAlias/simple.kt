@@ -7,4 +7,3 @@
 fun foo() {
     listOf("a", "b", "c").<caret>forEach { }
 }
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.intentions.IntroduceImportAliasIntention

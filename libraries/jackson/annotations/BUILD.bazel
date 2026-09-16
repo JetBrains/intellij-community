@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.jackson.annotations` start
+content_module_jar(
+    libraries = ["@lib//:libraries-jackson-annotations-jackson-annotations"],
+    module = ":annotations",
+)
+### auto-generated section `dev intellij.libraries.jackson.annotations` end
+
 ### auto-generated section `build intellij.libraries.jackson.annotations` start
 jvm_library(
     name = "annotations",
@@ -16,11 +23,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-jackson-annotations-jackson-annotations"],
     runtime_deps = ["@lib//:libraries-jackson-annotations-jackson-annotations"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-jackson-annotations-jackson-annotations"],
-    module = ":annotations",
 )
 
 jvm_library(
@@ -43,7 +45,6 @@ exports_files(
     [
         "intellij.libraries.jackson.annotations.iml",
         "resources/intellij.libraries.jackson.annotations.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

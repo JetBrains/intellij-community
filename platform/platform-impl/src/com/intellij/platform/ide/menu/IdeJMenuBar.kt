@@ -235,7 +235,7 @@ open class IdeJMenuBar internal constructor(@JvmField internal val coroutineScop
 
   // it contradicts to our principle of avoiding EDT, but for the sake of simplicity and a reliable implementation, we do exclusion here,
   // it is an internal method, and we do control all implementations
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   internal open fun onToggleFullScreen(isFullScreen: Boolean) {}
 }
 

@@ -2,17 +2,26 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev kotlin.jvm.shared` start
+content_module_jar(module = ":shared")
+### auto-generated section `dev kotlin.jvm.shared` end
+
 ### auto-generated section `build kotlin.jvm.shared` start
 create_kotlinc_options(
     name = "custom_shared",
     opt_in = [
-        "org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi",
-        "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
-        "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
-        "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+        "org.jetbrains.kotlin.psi.KtExperimentalApi",
+        "org.jetbrains.kotlin.psi.KtNonPublicApi",
+        "org.jetbrains.kotlin.psi.KtIdeApi",
         "org.jetbrains.kotlin.analysis.api.KaExperimentalApi",
         "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+        "org.jetbrains.kotlin.analysis.api.KaPlatformInterface",
+        "org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaUnstableDiagnosticApi",
+        "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
+        "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+        "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
     ],
+    x_context_parameters = True,
 )
 
 jvm_library(
@@ -100,8 +109,6 @@ jvm_library(
         "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
     ],
 )
-
-content_module_jar(module = ":shared")
 
 jvm_library(
     name = "shared_test_lib",

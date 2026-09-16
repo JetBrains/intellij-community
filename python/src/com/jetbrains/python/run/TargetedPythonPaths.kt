@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.remote.RemoteSdkProperties
 import com.intellij.util.PlatformUtils
+import com.jetbrains.python.PYTHONPATH
 import com.jetbrains.python.facet.LibraryContributingFacet
 import com.jetbrains.python.library.PythonLibraryType
 import com.jetbrains.python.remote.PyRemotePathMapper
@@ -47,14 +48,14 @@ internal fun initPythonPath(envs: MutableMap<String, TargetEnvironmentFunction<S
                    checkPythonPathInEnvs: Boolean = true) {
   // TODO [Targets API] Passing parent envs logic should be moved somewhere else
   if (passParentEnvs && targetEnvironmentRequest is LocalTargetEnvironmentRequest &&
-      !(checkPythonPathInEnvs && envs.containsKey(PythonEnvUtil.PYTHONPATH))) {
+      !(checkPythonPathInEnvs && envs.containsKey(PYTHONPATH))) {
     appendSystemPythonPath(pythonPathList)
   }
   appendToPythonPath(envs, pythonPathList, targetEnvironmentRequest.targetPlatform)
 }
 
 private fun appendSystemPythonPath(pythonPath: MutableCollection<TargetEnvironmentFunction<String>>) {
-  val syspath = System.getenv(PythonEnvUtil.PYTHONPATH)
+  val syspath = System.getenv(PYTHONPATH)
   if (syspath != null) {
     pythonPath.addAll(syspath.split(File.pathSeparator).dropLastWhile(String::isEmpty).map(::constant))
   }

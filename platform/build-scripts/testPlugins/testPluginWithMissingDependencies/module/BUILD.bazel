@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies.module` start
+content_module_jar(module = ":module")
+### auto-generated section `dev intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies.module` end
+
 ### auto-generated section `build intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies.module` start
 jvm_library(
     name = "module",
@@ -30,8 +34,6 @@ jvm_library(
         "//tools/launcher-generator",
     ],
 )
-
-content_module_jar(module = ":module")
 
 jvm_library(
     name = "module_test_lib",

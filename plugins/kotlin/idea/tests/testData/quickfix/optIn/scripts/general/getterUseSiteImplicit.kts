@@ -11,5 +11,4 @@ class Foo(val value: Int) {
         <caret>@SomeOptInAnnotation get() = value > 0
 }
 
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.MoveOptInRequirementToPropertyFix
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.MoveOptInRequirementToPropertyFix

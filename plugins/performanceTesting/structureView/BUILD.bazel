@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.performanceTesting.structureView` start
+content_module_jar(module = ":structureView")
+### auto-generated section `dev intellij.performanceTesting.structureView` end
+
 ### auto-generated section `build intellij.performanceTesting.structureView` start
 jvm_library(
     name = "structureView",
@@ -32,8 +36,6 @@ jvm_library(
         "//libraries/opentelemetry",
     ],
 )
-
-content_module_jar(module = ":structureView")
 
 jvm_library(
     name = "structureView_test_lib",

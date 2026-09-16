@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
+import com.intellij.platform.buildScripts.concurrency.taskScope
 import io.opentelemetry.api.common.AttributeKey
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
@@ -21,7 +22,7 @@ data class FileSource(
   @JvmField val relativePath: String,
   @JvmField val size: Int,
   @JvmField val hash: Long,
-  @JvmField  @Contextual val file: Path,
+  @JvmField @Contextual val file: Path,
 ) : Source {
   init {
     assert(Files.isRegularFile(file)) { "'$file' is not a file" }
@@ -54,13 +55,13 @@ internal fun readSearchableOptionIndex(baseDir: Path): SearchableOptionSetDescri
   }
 }
 
-suspend fun buildSearchableOptions(context: BuildContext, systemProperties: VmProperties = VmProperties(emptyMap())): SearchableOptionSetDescriptor? =
+fun buildSearchableOptions(context: BuildContext, systemProperties: VmProperties = VmProperties(emptyMap())): SearchableOptionSetDescriptor? =
   buildSearchableOptions(context.createProductRunner(), context, systemProperties)
 
 /**
  * Build index which is used to search options in the Settings dialog.
  */
-internal suspend fun buildSearchableOptions(
+internal fun buildSearchableOptions(
   productRunner: IntellijProductRunner,
   context: BuildContext,
   systemProperties: VmProperties = VmProperties(emptyMap()),
@@ -72,17 +73,18 @@ internal suspend fun buildSearchableOptions(
     // The nested group ends before the product starts.
     taskScope {
       fork("resolve maven4 libs") {
-        BundledMavenDownloader.resolveMaven4Libs(context.paths.communityHomeDirRoot)
+        BundledMavenDownloader.resolveMaven4Libs(context.paths.communityHomeDirRoot, context.httpSession)
       }
       fork("resolve maven3 libs") {
-        BundledMavenDownloader.resolveMaven3Libs(context.paths.communityHomeDirRoot)
+        BundledMavenDownloader.resolveMaven3Libs(context.paths.communityHomeDirRoot, context.httpSession)
       }
       fork("download maven distribution") {
-        BundledMavenDownloader.downloadMavenDistribution(context.paths.communityHomeDirRoot)
+        BundledMavenDownloader.downloadMavenDistribution(context.paths.communityHomeDirRoot, context.httpSession)
       }
       fork("resolve maven telemetry dependencies") {
-        BundledMavenDownloader.resolveMavenTelemetryDependencies(context.paths.communityHomeDirRoot)
+        BundledMavenDownloader.resolveMavenTelemetryDependencies(context.paths.communityHomeDirRoot, context.httpSession)
       }
+      join()
     }
 
     // Start the product in headless mode using com.intellij.ide.ui.search.TraverseUIStarter.

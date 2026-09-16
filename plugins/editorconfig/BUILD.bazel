@@ -1,5 +1,22 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
+load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_TARGETS")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `dev intellij.editorconfig.plugin` start
+dev_dist_plugin(
+    content_modules = ["intellij.libraries.ec4j.core"],
+    libraries = ["@lib//:libraries-ec4j-core-ec4j-core"],
+    main_module = "intellij.editorconfig.plugin",
+    module_targets = MODULE_TARGETS,
+    prepacked_content_modules = [
+        # do not sort,
+        "intellij.editorconfig.backend.spellchecking",
+        "intellij.editorconfig.backend",
+        "intellij.editorconfig.common",
+        "intellij.editorconfig.frontend",
+    ],
+)
+### auto-generated section `dev intellij.editorconfig.plugin` end
 
 ### auto-generated section `build intellij.editorconfig.plugin` start
 jvm_library(
@@ -38,20 +55,6 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.editorconfig.plugin` end
-
-### auto-generated section `dev intellij.editorconfig.plugin` start
-dev_dist_plugin(
-    content_modules = ["//libraries/ec4j/core"],
-    descriptor_module = ":editorconfig-plugin",
-    libraries = ["@lib//:libraries-ec4j-core-ec4j-core"],
-    prepacked_content_modules = [
-        "//plugins/editorconfig/backend.spellchecking:backend.spellchecking_content_module_jar",
-        "//plugins/editorconfig/backend:backend_content_module_jar",
-        "//plugins/editorconfig/common:common_content_module_jar",
-        "//plugins/editorconfig/frontend:frontend_content_module_jar",
-    ],
-)
-### auto-generated section `dev intellij.editorconfig.plugin` end
 
 ### auto-generated section `build intellij.editorconfig.plugin.main` start
 jvm_library(

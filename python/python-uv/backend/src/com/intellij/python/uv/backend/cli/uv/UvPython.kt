@@ -3,7 +3,7 @@ package com.intellij.python.uv.backend.cli.uv
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.python.community.execService.ZeroCodeStdoutTransformer
-import com.intellij.python.pytools.runtime.PyToolRuntime
+import com.intellij.python.pytools.backend.runtime.PyToolRuntime
 import com.intellij.python.uv.backend.PyUvBundle
 import com.jetbrains.python.errorProcessing.PyResult
 import kotlinx.serialization.SerialName

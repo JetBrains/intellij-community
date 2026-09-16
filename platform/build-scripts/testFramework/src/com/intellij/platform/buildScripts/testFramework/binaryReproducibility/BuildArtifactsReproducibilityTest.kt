@@ -3,20 +3,20 @@ package com.intellij.platform.buildScripts.testFramework.binaryReproducibility
 
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.platform.buildScripts.testFramework.binaryReproducibility.BuildArtifactsReproducibilityTest.Companion.isEnabled
-import kotlinx.coroutines.channels.Channel
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.reproducibleBuilds.diffTool.FileTreeContentComparison
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.Random
+import java.util.concurrent.SynchronousQueue
 import kotlin.io.path.extension
 import kotlin.io.path.name
 import kotlin.io.path.writeText
 
 internal class BuildArtifactsReproducibilityTest {
   private val randomSeedNumber = Random().nextLong()
-  private val iterationChannel = Channel<BuildContext>()
+  private val iterationQueue = SynchronousQueue<BuildContext>()
   val iterations: Int
     get() = if (isEnabled) 2 else 1
 
@@ -35,23 +35,23 @@ internal class BuildArtifactsReproducibilityTest {
     options.buildUnixSnaps = true
   }
 
-  suspend fun iterationFinished(iterationNumber: Int, build: BuildContext) {
+  fun iterationFinished(iterationNumber: Int, build: BuildContext) {
     if (!isEnabled) {
       return
     }
 
     cleanBuildOutput(build)
     if (iterationNumber == 1) {
-      iterationChannel.send(build)
+      iterationQueue.put(build)
       /**
        * Waiting for [compare] to complete not to clean up [BuildPaths.buildOutputDir] of a [build]
        */
-      iterationChannel.receive()
+      iterationQueue.take()
     }
     else {
-      val otherBuild = iterationChannel.receive()
+      val otherBuild = iterationQueue.take()
       compare(build, otherBuild)
-      iterationChannel.send(build)
+      iterationQueue.put(build)
     }
   }
 }

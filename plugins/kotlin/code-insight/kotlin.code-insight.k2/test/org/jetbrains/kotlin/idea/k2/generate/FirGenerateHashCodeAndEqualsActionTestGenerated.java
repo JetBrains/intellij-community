@@ -68,6 +68,11 @@ public class FirGenerateHashCodeAndEqualsActionTestGenerated extends AbstractFir
         runTest("../../idea/tests/testData/codeInsight/generate/equalsWithHashCode/explicitDefaultAccessors.kt");
     }
 
+    @TestMetadata("fullValueClass.kt")
+    public void testFullValueClass() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/generate/equalsWithHashCode/fullValueClass.kt");
+    }
+
     @TestMetadata("genericClass.kt")
     public void testGenericClass() throws Exception {
         runTest("../../idea/tests/testData/codeInsight/generate/equalsWithHashCode/genericClass.kt");

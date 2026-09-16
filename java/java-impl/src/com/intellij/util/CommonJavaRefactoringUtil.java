@@ -21,7 +21,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.ImplicitVariable;
-import com.intellij.psi.JavaCodeFragmentFactory;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.JavaRecursiveElementVisitor;
 import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
@@ -80,7 +79,6 @@ import com.intellij.psi.PsiSwitchLabelStatement;
 import com.intellij.psi.PsiSwitchLabeledRuleStatement;
 import com.intellij.psi.PsiSwitchStatement;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiTypeCodeFragment;
 import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.PsiTypeParameterList;
 import com.intellij.psi.PsiTypes;
@@ -896,19 +894,10 @@ public final class CommonJavaRefactoringUtil {
       return field;
     }
     else {
-      if (forwardReference != null &&forwardReference.getParent() == destClass) {
-        return (PsiField)destClass.addAfter(psiField, forwardReference);
-      }
-      return (PsiField)destClass.add(psiField);
+      return forwardReference != null && forwardReference.getParent() == destClass
+             ? (PsiField)destClass.addAfter(psiField, forwardReference)
+             : (PsiField)destClass.add(psiField);
     }
-  }
-
-  public static PsiTypeCodeFragment createTableCodeFragment(@Nullable PsiClassType type,
-                                                            @NotNull PsiElement context,
-                                                            @NotNull JavaCodeFragmentFactory factory,
-                                                            boolean allowConjunctions) {
-    int flags = (allowConjunctions && PsiUtil.isLanguageLevel8OrHigher(context)) ? JavaCodeFragmentFactory.ALLOW_INTERSECTION : 0;
-    return factory.createTypeCodeFragment(type == null ? "" : type.getCanonicalText(), context, true, flags);
   }
 
   /**
@@ -940,7 +929,7 @@ public final class CommonJavaRefactoringUtil {
     final PsiType arrayType = resolveResult.getSubstitutor().substitute(ellipsis.getComponentType());
     final PsiExpression[] result = new PsiExpression[parameters.length];
     System.arraycopy(arguments, 0, result, 0, parameters.length - 1);
-    
+
     final StringBuilder varargs = new StringBuilder();
     for (int i = parameters.length - 1; i < arguments.length; i++) {
       if (!varargs.isEmpty()) varargs.append(',');

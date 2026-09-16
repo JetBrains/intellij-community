@@ -7,6 +7,7 @@ import com.intellij.ide.starter.report.ErrorReporter.Companion.SYNTHETIC_TESTNAM
 import com.intellij.ide.starter.runner.IDEReportingData
 import com.intellij.ide.starter.runner.IDERunContext
 import com.intellij.platform.testFramework.teamCity.TeamCityReporter
+import com.intellij.platform.testFramework.teamCity.TeamCityReporter.TestMetadata
 import com.intellij.util.SystemProperties
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Files
@@ -150,6 +151,7 @@ object ErrorReporterToCI : ErrorReporter {
     urlToLogs: String? = null,
     allureContextName: String? = null,
     kind: TeamCityReporter.SyntheticTestKind = TeamCityReporter.SyntheticTestKind.IDE_EXCEPTION,
+    additionalMetadata: List<TestMetadata> = emptyList(),
   ) {
     val messageText = error.messageText
     val stackTraceContent = error.stackTraceContent
@@ -174,7 +176,8 @@ object ErrorReporterToCI : ErrorReporter {
                                           message = failureDetailsMessage + linkToMuteArticle,
                                           details = stackTraceContent,
                                           linkToLogs = urlToLogs,
-                                          kind = kind)
+                                          kind = kind,
+                                          additionalMetadata = additionalMetadata)
       if (allureContextName != null) {
         AllureReport.reportFailure(allureContextName, messageText + linkToMuteArticle,
                                    stackTraceContent,

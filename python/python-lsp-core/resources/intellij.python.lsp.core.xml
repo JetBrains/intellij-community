@@ -20,8 +20,9 @@
     <module name="intellij.platform.util.ui"/>
     <module name="intellij.python.community.execService"/>
     <module name="intellij.python.community.impl"/>
-    <module name="intellij.python.pytools"/>
-    <module name="intellij.python.pytools.ui"/>
+    <module name="intellij.python.lsp.core.common"/>
+    <module name="intellij.python.pytools.backend"/>
+    <module name="intellij.python.pytools.common"/>
   </dependencies>
   <!-- endregion -->
   <extensionPoints>
@@ -38,6 +39,11 @@
     <registryKey key="python.lsp.type.engine.notebooks"
                  defaultValue="false"
                  description="Enable Python LSP-backed type engines in notebooks"/>
+
+    <registryKey key="pycharm.type.engine.multi.module"
+                 defaultValue="false"
+                 restartRequired="true"
+                 description="Offer the external type engine to a project with more than one module"/>
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.python.lsp.core.typeEngine.PyTypeEngineUsageCollector"/>
     <projectSettings service="com.intellij.python.lsp.core.typeEngine.PyTypeEngineProjectSettings"/>

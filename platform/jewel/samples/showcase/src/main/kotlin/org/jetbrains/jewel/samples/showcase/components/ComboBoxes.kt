@@ -143,13 +143,14 @@ private fun ListComboBoxes() {
 
         Column(Modifier.weight(1f).widthIn(min = 125.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("Speed Search API")
+            val speedSearchItems = listOf("one", "two", "three")
             var selectedIndex by remember { mutableIntStateOf(2) }
-            val selectedItemText = if (selectedIndex >= 0) stringItems[selectedIndex] else "[none]"
+            val selectedItemText = if (selectedIndex >= 0) speedSearchItems[selectedIndex] else "[none]"
             InfoText(text = "Selected item: $selectedItemText")
 
             SpeedSearchArea(Modifier.widthIn(max = 200.dp)) {
                 SpeedSearchableComboBox(
-                    items = listOf("one", "two", "three"),
+                    items = speedSearchItems,
                     selectedIndex = selectedIndex,
                     onSelectedItemChange = { index -> selectedIndex = index },
                     modifier = Modifier.widthIn(max = 200.dp).fillMaxWidth(),

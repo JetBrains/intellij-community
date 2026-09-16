@@ -5,8 +5,6 @@ package org.jetbrains.intellij.build.dev
 
 import com.intellij.platform.buildData.productInfo.CustomCommandLaunchData
 import com.intellij.platform.buildData.productInfo.ProductInfoData
-import kotlinx.coroutines.NonCancellable
-import kotlinx.coroutines.withContext
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
@@ -14,7 +12,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.VmProperties
-import org.jetbrains.intellij.build.closeKtorClient
 import org.jetbrains.intellij.build.impl.productInfo.PRODUCT_INFO_FILE_NAME
 import org.jetbrains.intellij.build.productLayout.discovery.PRODUCT_REGISTRY_PATH
 import org.jetbrains.intellij.build.productLayout.discovery.ProductConfiguration
@@ -153,26 +150,15 @@ fun readCustomCommand(runDir: Path, command: String): CustomCommandLaunchData? {
 fun CustomCommandLaunchData.resolveAdditionalJvmArguments(runDir: Path): List<String> =
   additionalJvmArguments.map { resolveIdeHomeMacro(it, runDir) }
 
-// returns IDE installation directory
-suspend fun buildProductInProcess(request: BuildRequest): Path {
+fun buildProductInProcess(request: BuildRequest): DevBuildResult {
   request.tracer?.let {
     TraceManager.setTracer(it)
   }
   return TraceManager.spanBuilder("build ide").setAttribute("request", request.toString()).use {
-    try {
-      val buildOptionsTemplate = BuildOptions()
-      val configuration = createConfiguration(homePath = request.projectDir)
-      val productConfiguration = getProductConfiguration(configuration, request.platformPrefix, request.baseIdePlatformPrefixForFrontend)
-      buildProductFromProject(request = request, productConfiguration = productConfiguration, buildOptionsTemplate = buildOptionsTemplate)
-    }
-    finally {
-      // otherwise, a thread leak in tests
-      if (!request.keepHttpClient) {
-        withContext(NonCancellable) {
-          closeKtorClient()
-        }
-      }
-    }
+    val buildOptionsTemplate = BuildOptions()
+    val configuration = createConfiguration(homePath = request.projectDir)
+    val productConfiguration = getProductConfiguration(configuration, request.platformPrefix, request.baseIdePlatformPrefixForFrontend)
+    buildProductFromProject(request = request, productConfiguration = productConfiguration, buildOptionsTemplate = buildOptionsTemplate)
   }
 }
 

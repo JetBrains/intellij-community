@@ -56,9 +56,27 @@ internal class RegistryManagerImpl(coroutineScope: CoroutineScope) : PersistentS
 
   override fun stringValue(key: String): @NlsSafe String = Registry._getWithoutStateCheck(key).asString()
 
+  override fun `is`(key: String, defaultValue: Boolean): Boolean {
+    try {
+      return Registry._getWithoutStateCheck(key).asBoolean()
+    }
+    catch (_: MissingResourceException) {
+      return defaultValue
+    }
+  }
+
   override fun intValue(key: String, defaultValue: Int): Int {
     try {
       return Registry._getWithoutStateCheck(key).asInteger()
+    }
+    catch (_: MissingResourceException) {
+      return defaultValue
+    }
+  }
+
+  override fun stringValue(key: String, defaultValue: String): @NlsSafe String {
+    try {
+      return Registry._getWithoutStateCheck(key).asString()
     }
     catch (_: MissingResourceException) {
       return defaultValue

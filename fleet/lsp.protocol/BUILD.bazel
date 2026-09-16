@@ -1,6 +1,7 @@
 load("@community//fleet/build:fleet.bzl", "fleet_wasmjs_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 fleet_wasmjs_module(
     name = "wasmjs_module",
@@ -18,6 +19,10 @@ fleet_wasmjs_module(
         "@kmp_deps//:org_jetbrains_kotlinx_kotlinx_serialization_json",
     ],
 )
+
+### auto-generated section `dev fleet.lsp.protocol` start
+content_module_jar(module = ":lsp.protocol")
+### auto-generated section `dev fleet.lsp.protocol` end
 
 ### auto-generated section `build fleet.lsp.protocol` start
 create_kotlinc_options(
@@ -55,12 +60,12 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinx-coroutines-core",
-        "@lib//:kotlinx-serialization-core",
-        "@lib//:kotlinx-serialization-json",
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/kotlinx/serialization/core",
+        "//libraries/kotlinx/serialization/json",
         "//fleet/util/core",
         "//libraries/jetbrains/annotations",
-        "@lib//:kotlinx-io-core",
+        "//libraries/io",
     ],
 )
 
@@ -77,8 +82,12 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":lsp.protocol",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//libraries/kotlinx/serialization/json:json_test_lib",
         "//fleet/util/core:core_test_lib",
         "//libraries/jetbrains/annotations:annotations_test_lib",
+        "//libraries/io:io_test_lib",
     ],
 )
 ### auto-generated section `build fleet.lsp.protocol` end
@@ -87,6 +96,7 @@ jvm_library(
 exports_files(
     [
         "fleet.lsp.protocol.iml",
+        "resources/fleet.lsp.protocol.xml",
     ],
     visibility = ["//visibility:public"],
 )

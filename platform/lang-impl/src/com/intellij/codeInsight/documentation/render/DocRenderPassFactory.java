@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbUtil;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -127,7 +128,8 @@ public final class DocRenderPassFactory implements TextEditorHighlightingPassFac
       return text == null ? CodeInsightBundle.message("doc.render.not.available.text") : preProcess(text);
     }
     catch (IndexNotReadyException e) {
-      return CodeInsightBundle.dumbModeMessage("doc.render.dumb.mode.text", "doc.render.light.mode.text");
+      return DumbUtil.dumbModeMessage(CodeInsightBundle.message("doc.render.dumb.mode.text"),
+                                      CodeInsightBundle.message("doc.render.light.mode.text"));
     }
   }
 

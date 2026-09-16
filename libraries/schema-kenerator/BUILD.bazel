@@ -1,5 +1,4 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
-load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.libraries.schema.kenerator` start
 jvm_library(
@@ -28,16 +27,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(
-    libraries = [
-        # do not sort,
-        "@lib//:libraries-schema-kenerator-io-github-smiley4-schema-kenerator-core",
-        "@lib//:libraries-schema-kenerator-io-github-smiley4-schema-kenerator-jsonschema",
-        "@lib//:libraries-schema-kenerator-io-github-smiley4-schema-kenerator-serialization",
-    ],
-    module = ":schema-kenerator",
-)
-
 jvm_library(
     name = "schema-kenerator_test_lib",
     testonly = True,
@@ -62,7 +51,6 @@ exports_files(
     [
         "intellij.libraries.schema.kenerator.iml",
         "resources/intellij.libraries.schema.kenerator.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -481,7 +481,7 @@ internal class GitLabMetricsLoader(private val project: Project) {
 
       val api = getApi(chosenRepoMapping.repository.serverPath) ?: return null
       val currentUser = api.graphQL.getCurrentUser()
-      return api.graphQL.getMergeRequestMetrics(chosenRepoMapping.repository.projectPath, currentUser.username).body()
+      return api.graphQL.getMergeRequestMetrics(chosenRepoMapping.repository.projectPath, currentUser.username)
     }
     catch (e: Exception) {
       rethrowControlFlowException(e)

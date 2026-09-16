@@ -31,7 +31,7 @@ object ReflectionCallClassPatcher {
             Registry.get("kotlin.debugger.evaluator.enable.reflection.patching").setValue(newValue)
         }
 
-    @RequiresReadLock
+    @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
     fun patch(bytes: ByteArray, project: Project, scope: GlobalSearchScope): ByteArray {
         val reader = ClassReader(bytes)
         val writer = ClassWriter(reader, ClassWriter.COMPUTE_MAXS)

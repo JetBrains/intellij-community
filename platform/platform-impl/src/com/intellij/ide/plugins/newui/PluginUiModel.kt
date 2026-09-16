@@ -246,8 +246,12 @@ fun PluginUiModel.calculateTags(): List<String> {
 
 @ApiStatus.Internal
 fun PluginUiModel.calculateTags(sessionId: String): List<String> {
+  return calculateTags(getInstance().isPluginRequiresUltimateButItIsDisabled(sessionId, pluginId))
+}
+
+internal fun PluginUiModel.calculateTags(requiresUltimateButDisabled: Boolean): List<String> {
   val result = this.getDescriptor().getTags()
-  if (getInstance().isPluginRequiresUltimateButItIsDisabled(sessionId, pluginId)) {
+  if (requiresUltimateButDisabled) {
     return buildList {
       addAll(result)
       if (PlatformUtils.isPyCharmPro()) {

@@ -3,6 +3,8 @@
 
 package org.jetbrains.intellij.build.productLayout.pipeline
 
+import com.intellij.platform.buildScripts.concurrency.SharedCache
+import com.intellij.platform.buildScripts.concurrency.SharedTaskOwner
 import com.intellij.platform.pluginGraph.ContentModuleName
 import com.intellij.platform.pluginGraph.EDGE_ALLOWS_MISSING
 import com.intellij.platform.pluginGraph.EDGE_BUNDLES
@@ -15,10 +17,6 @@ import com.intellij.platform.pluginGraph.isSlashNotation
 import com.intellij.platform.pluginGraph.isTestDescriptor
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
 import com.intellij.platform.pluginSystem.parser.impl.parseContentAndXIncludes
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
 import org.jetbrains.intellij.build.findFileInModuleSources
@@ -51,7 +49,6 @@ import org.jetbrains.intellij.build.productLayout.stats.SuppressionUsage
 import org.jetbrains.intellij.build.productLayout.stats.recordGenerationTiming
 import org.jetbrains.intellij.build.productLayout.traversal.collectPluginContentModules
 import org.jetbrains.intellij.build.productLayout.traversal.collectProductModuleNames
-import org.jetbrains.intellij.build.productLayout.util.AsyncCache
 import org.jetbrains.intellij.build.productLayout.util.DeferredFileUpdater
 import org.jetbrains.intellij.build.productLayout.util.GeneratedArtifactWritePolicy
 import org.jetbrains.intellij.build.productLayout.util.resolveXIncludeBytes
@@ -102,20 +99,19 @@ internal object ModelBuildingStage {
    * after a label would mislabel itself. A step that runs twice gets a `#2` suffix, so a reader can compare the two
    * runs.
    *
-   * The top level of this method is sequential, so a plain list is correct. This method also takes a [CoroutineScope].
-   * A timing recorded inside a `scope.launch` would race, so never put one there.
+   * The top level of this method is sequential, so a plain list is correct. A timing recorded inside a fork would
+   * race, so never put one there.
    *
    * @param discovery Results from discovery stage
    * @param config Generation configuration
-   * @param scope Coroutine scope for async operations
    * @param errorSink Sink for errors discovered during model building (e.g., xi:include resolution)
    * @param phaseTimings Collects one timing per step of this stage
    * @return Fully initialized generation model
    */
-  suspend fun execute(
+  fun execute(
     discovery: DiscoveryResult,
     config: ModuleSetGenerationConfig,
-    scope: CoroutineScope,
+    owner: SharedTaskOwner,
     updateSuppressions: Boolean,
     commitChanges: Boolean,
     errorSink: ErrorSink,
@@ -150,7 +146,7 @@ internal object ModelBuildingStage {
     val generatedArtifactWritePolicy = GeneratedArtifactWritePolicy(generationMode, fileUpdater)
 
     // Create xi:include cache (shared across plugin content extraction)
-    val xIncludeCache = AsyncCache<String, ByteArray?>()
+    val xIncludeCache = SharedCache<String, ByteArray?>(owner)
 
     // Create plugin content cache
     // ErrorSink is used to emit xi:include errors during plugin content extraction
@@ -198,7 +194,7 @@ internal object ModelBuildingStage {
       .toSet()
 
     // Create descriptor cache
-    val descriptorCache = ModuleDescriptorCache(outputProvider = outputProvider)
+    val descriptorCache = ModuleDescriptorCache(outputProvider = outputProvider, owner = owner)
 
     // Build unified graph model for plugin/module/product relationships
     // Graph is the single source of truth - built DURING extraction
@@ -209,14 +205,13 @@ internal object ModelBuildingStage {
       val dslOwnedPluginXmlPaths = dslTestPluginsByProduct.values.asSequence()
         .flatten()
         .mapTo(HashSet()) { config.projectRoot.resolve(it.pluginXmlPath).normalize() }
-      // The span covers `readDevDistContentPluginPopulation` too, because the call reads a file.
       // `config.includeTestPluginDescriptorsFromSources` guards the step, so no span means the flag was off.
       recordGenerationTiming("discoverPluginDescriptorsFromSources", phaseTimings) {
         discoverPluginDescriptorsFromSources(
           outputProvider = outputProvider,
           testFrameworkContentModules = config.testFrameworkContentModules,
           dslOwnedPluginXmlPaths = dslOwnedPluginXmlPaths,
-          contentPluginPopulation = readDevDistContentPluginPopulation(projectRoot),
+          contentPluginPopulation = config.contentPluginPopulation,
         )
       }
     }
@@ -225,7 +220,7 @@ internal object ModelBuildingStage {
     }
     val testPluginModuleNames = config.testPluginsByProduct.values.flatten().toHashSet()
     testPluginModuleNames.addAll(extraPluginDescriptors.testPluginModules)
-    recordGenerationTiming("seedPluginsForExtraction", phaseTimings) {
+    val declaredPluginModules = recordGenerationTiming("seedPluginsForExtraction", phaseTimings) {
       seedPluginsForExtraction(
         discovery = discovery,
         config = config,
@@ -248,13 +243,14 @@ internal object ModelBuildingStage {
         pluginContentCache = pluginContentCache,
         builder = builder,
         pluginInfos = pluginInfos,
+        declaredPluginModules = declaredPluginModules,
         testPluginModuleNames = testPluginModuleNames,
         testFrameworkContentModules = config.testFrameworkContentModules,
       )
     }
 
-    val includeAliasCache = AsyncCache<String, Set<PluginId>>()
-    val moduleDescriptorAliasCache = AsyncCache<ContentModuleName, Set<PluginId>>()
+    val includeAliasCache = SharedCache<String, Set<PluginId>>(owner)
+    val moduleDescriptorAliasCache = SharedCache<ContentModuleName, Set<PluginId>>(owner)
     recordGenerationTiming("linkProductsAndBundledPlugins", phaseTimings) { linkProductsAndBundledPlugins(discovery, builder) }
     recordGenerationTiming("linkTestPluginsByProduct", phaseTimings) { linkTestPluginsByProduct(config, builder) }
     recordGenerationTiming("addModuleSets", phaseTimings) { addModuleSets(discovery, builder) }
@@ -274,7 +270,7 @@ internal object ModelBuildingStage {
     }
     recordGenerationTiming("seedDslTestPluginTargets", phaseTimings) { seedDslTestPluginTargets(builder, dslTestPluginsByProduct) }
     recordGenerationTiming("addJpsDependencies", phaseTimings) {
-      addJpsDependencies(builder, outputProvider, config.projectLibraryToModuleMap)
+      addJpsDependencies(builder, outputProvider)
     }
     recordGenerationTiming("registerReferencedPlugins", phaseTimings) {
       registerReferencedPlugins(builder, pluginContentCache, pluginInfos)
@@ -298,7 +294,7 @@ internal object ModelBuildingStage {
       )
     }
     recordGenerationTiming("addJpsDependencies #2", phaseTimings) {
-      addJpsDependencies(builder, outputProvider, config.projectLibraryToModuleMap)
+      addJpsDependencies(builder, outputProvider)
     }
     recordGenerationTiming("registerReferencedPlugins #2", phaseTimings) {
       registerReferencedPlugins(builder, pluginContentCache, pluginInfos)
@@ -312,7 +308,7 @@ internal object ModelBuildingStage {
     val productAllowedMissing = (
       discovery.products.mapNotNull { d -> d.spec?.allowedMissingDependencies?.let { d.name to it } } +
       discovery.testProductSpecs.mapNotNull { (name, spec) -> spec.allowedMissingDependencies.takeIf { it.isNotEmpty() }?.let { name to it } }
-    )
+                                )
       .toMap()
 
     return GenerationModel(
@@ -324,7 +320,6 @@ internal object ModelBuildingStage {
       pluginContentCache = pluginContentCache,
       fileUpdater = fileUpdater,
       generatedArtifactWritePolicy = generatedArtifactWritePolicy,
-      scope = scope,
       pluginGraph = pluginGraph,
       dslTestPluginsByProduct = dslTestPluginExpansion.pluginsByProduct,
       dslTestPluginDependencyChains = dslTestPluginExpansion.dependencyChains,
@@ -342,11 +337,12 @@ internal object ModelBuildingStage {
     val dependencyChains: Map<PluginId, Map<ContentModuleName, List<ContentModuleName>>>,
   )
 
-  private suspend fun extractPlugins(
+  private fun extractPlugins(
     pluginTargets: List<TargetName>,
     pluginContentCache: PluginContentCache,
     builder: PluginGraphBuilder,
     pluginInfos: MutableMap<TargetName, PluginContentInfo>,
+    declaredPluginModules: Set<TargetName>,
     testPluginModuleNames: Set<TargetName>,
     testFrameworkContentModules: Set<ContentModuleName>,
   ) {
@@ -369,7 +365,12 @@ internal object ModelBuildingStage {
     // `mapConcurrent` bounds the fan-out. One coroutine per plugin target oversubscribes the dispatcher,
     // and every extraction can sweep the output archive of each module of the project.
     val extractedPlugins = pluginTargets.mapConcurrent { plugin ->
-      val info = pluginContentCache.extract(plugin = plugin, isTest = plugin in testPluginModuleNames)
+      val info = if (plugin in declaredPluginModules) {
+        pluginContentCache.extract(plugin = plugin, isTest = plugin in testPluginModuleNames)
+      }
+      else {
+        pluginContentCache.getOrExtract(plugin)
+      }
       info?.let { plugin to it }
     }.filterNotNull()
     for ((pluginModule, info) in extractedPlugins) {
@@ -609,10 +610,14 @@ internal object ModelBuildingStage {
 
   /** Counts what one run of the descriptor pre-check spends, for the `timings` debug tag. */
   internal class XIncludeProbeStats {
-    @JvmField var resolveRequests: Int = 0
-    @JvmField var resolveMisses: Int = 0
-    @JvmField var parseCalls: Int = 0
-    @JvmField var resolveNano: Long = 0
+    @JvmField
+    var resolveRequests: Int = 0
+    @JvmField
+    var resolveMisses: Int = 0
+    @JvmField
+    var parseCalls: Int = 0
+    @JvmField
+    var resolveNano: Long = 0
   }
 
   /** What a product's on-disk descriptor gets wrong, or nothing at all when it is healthy. */
@@ -794,15 +799,15 @@ internal object ModelBuildingStage {
     }
   }
 
-  private suspend fun linkProductAliases(
+  private fun linkProductAliases(
     discovery: DiscoveryResult,
     config: ModuleSetGenerationConfig,
     builder: PluginGraphBuilder,
     graphView: PluginGraph,
     outputProvider: ModuleOutputProvider,
     descriptorCache: ModuleDescriptorCache,
-    includeAliasCache: AsyncCache<String, Set<PluginId>>,
-    moduleDescriptorAliasCache: AsyncCache<ContentModuleName, Set<PluginId>>,
+    includeAliasCache: SharedCache<String, Set<PluginId>>,
+    moduleDescriptorAliasCache: SharedCache<ContentModuleName, Set<PluginId>>,
     pluginInfos: Map<TargetName, PluginContentInfo>,
   ) {
     // ═══════════════════════════════════════════════════════════════════════════════
@@ -824,48 +829,46 @@ internal object ModelBuildingStage {
       val aliases: Set<PluginId>,
     )
 
-    val aliasResults = coroutineScope {
-      discovery.products.map { product ->
-        async {
-          val spec = product.spec ?: return@async null
+    val aliasResults = discovery.products.mapConcurrent { product ->
+      run {
+        val spec = product.spec ?: return@mapConcurrent null
 
-          val aliasIds = LinkedHashSet<PluginId>()
-          aliasIds.addAll(OS_MODULE_ALIASES)
-          val moduleSetAliases = buildContentBlocksAndChainMapping(spec, collectModuleSetAliases = true).aliasToSource
-          aliasIds.addAll(collectAndValidateAliases(spec, moduleSetAliases))
-          aliasIds.addAll(
-            collectAliasesFromDeprecatedIncludes(
-              spec,
-              outputProvider,
-              includeAliasCache,
-              config.xIncludePrefixFilter,
-              config.skipXIncludePaths,
-            )
+        val aliasIds = LinkedHashSet<PluginId>()
+        aliasIds.addAll(OS_MODULE_ALIASES)
+        val moduleSetAliases = buildContentBlocksAndChainMapping(spec, collectModuleSetAliases = true).aliasToSource
+        aliasIds.addAll(collectAndValidateAliases(spec, moduleSetAliases))
+        aliasIds.addAll(
+          collectAliasesFromDeprecatedIncludes(
+            spec,
+            outputProvider,
+            includeAliasCache,
+            config.xIncludePrefixFilter,
+            config.skipXIncludePaths,
           )
+        )
 
-          val productModuleNames = collectProductModuleNames(graphView, product.name)
-            .toCollection(LinkedHashSet())
-          aliasIds.addAll(collectAliasesFromModuleDescriptors(productModuleNames, descriptorCache, moduleDescriptorAliasCache))
+        val productModuleNames = collectProductModuleNames(graphView, product.name)
+          .toCollection(LinkedHashSet())
+        aliasIds.addAll(collectAliasesFromModuleDescriptors(productModuleNames, descriptorCache, moduleDescriptorAliasCache))
 
-          for (pluginModule in spec.bundledPlugins) {
-            val info = pluginInfos[pluginModule]
-            if (info != null) {
-              if (info.pluginAliases.isNotEmpty()) {
-                aliasIds.addAll(info.pluginAliases)
-              }
-              if (info.contentModules.isNotEmpty()) {
-                val pluginModuleNames = info.contentModules.mapTo(LinkedHashSet()) { it.moduleId.contentName() }
-                aliasIds.addAll(collectAliasesFromModuleDescriptors(pluginModuleNames, descriptorCache, moduleDescriptorAliasCache))
-              }
+        for (pluginModule in spec.bundledPlugins) {
+          val info = pluginInfos[pluginModule]
+          if (info != null) {
+            if (info.pluginAliases.isNotEmpty()) {
+              aliasIds.addAll(info.pluginAliases)
+            }
+            if (info.contentModules.isNotEmpty()) {
+              val pluginModuleNames = info.contentModules.mapTo(LinkedHashSet()) { it.moduleId.contentName() }
+              aliasIds.addAll(collectAliasesFromModuleDescriptors(pluginModuleNames, descriptorCache, moduleDescriptorAliasCache))
             }
           }
-          if (aliasIds.isNotEmpty()) {
-            debug("aliasGraph") { "product=${product.name} aliases=${aliasIds.joinToString { it.value }}" }
-          }
-          ProductAliasResult(product.name, aliasIds)
         }
-      }.awaitAll().filterNotNull()
-    }
+        if (aliasIds.isNotEmpty()) {
+          debug("aliasGraph") { "product=${product.name} aliases=${aliasIds.joinToString { it.value }}" }
+        }
+        ProductAliasResult(product.name, aliasIds)
+      }
+    }.filterNotNull()
 
     for (result in aliasResults) {
       for (alias in result.aliases) {
@@ -1023,11 +1026,7 @@ internal object ModelBuildingStage {
     )
   }
 
-  private fun addJpsDependencies(
-    builder: PluginGraphBuilder,
-    outputProvider: ModuleOutputProvider,
-    projectLibraryToModuleMap: Map<String, String>,
-  ) {
+  private fun addJpsDependencies(builder: PluginGraphBuilder, outputProvider: ModuleOutputProvider) {
     // ═══════════════════════════════════════════════════════════════════════════════
     // Phase 6: JPS Dependencies
     // ═══════════════════════════════════════════════════════════════════════════════
@@ -1043,7 +1042,7 @@ internal object ModelBuildingStage {
     //
     // @see classifyTarget for how these edges are used in dependency classification
     // ───────────────────────────────────────────────────────────────────────────────
-    builder.addJpsDependencies(outputProvider, projectLibraryToModuleMap)
+    builder.addJpsDependencies(outputProvider)
   }
 
   private fun seedDslTestPluginTargets(
@@ -1068,7 +1067,7 @@ internal object ModelBuildingStage {
     }
   }
 
-  private suspend fun registerReferencedPlugins(
+  private fun registerReferencedPlugins(
     builder: PluginGraphBuilder,
     pluginContentCache: PluginContentCache,
     pluginInfos: MutableMap<TargetName, PluginContentInfo>,
@@ -1126,12 +1125,16 @@ internal object ModelBuildingStage {
     dslTestPluginAdditionalBundles: Set<TargetName>,
     testPluginModuleNames: Set<TargetName>,
     extraPluginModules: Set<TargetName>,
-  ) {
+  ): Set<TargetName> {
+    val declaredPluginModules = LinkedHashSet<TargetName>()
     // Compare by string value since TargetName (JPS module) and PluginId are different semantic types.
     val dslTestPluginIdStrings = dslTestPluginIds.mapTo(HashSet()) { it.value }
-    fun addPlugin(target: TargetName, pluginId: PluginId? = null) {
+    fun addPlugin(target: TargetName, declared: Boolean = true) {
       if (target.value in dslTestPluginIdStrings) return
-      builder.addPlugin(name = target, isTest = false, pluginId = pluginId)
+      builder.addPlugin(name = target, isTest = false)
+      if (declared) {
+        declaredPluginModules.add(target)
+      }
     }
 
     for (product in discovery.products) {
@@ -1139,12 +1142,13 @@ internal object ModelBuildingStage {
       product.spec?.bundledPlugins?.forEach(::addPlugin)
     }
     for (nonBundled in config.nonBundledPlugins.values) {
-      nonBundled.forEach(::addPlugin)
+      nonBundled.forEach { addPlugin(it, declared = false) }
     }
-    config.knownPlugins.forEach(::addPlugin)
+    config.knownPlugins.forEach { addPlugin(it, declared = false) }
     testPluginModuleNames.forEach(::addPlugin)
     dslTestPluginAdditionalBundles.forEach(::addPlugin)
-    extraPluginModules.forEach(::addPlugin)
+    extraPluginModules.forEach { addPlugin(it, declared = false) }
+    return declaredPluginModules
   }
 
   private fun collectSeededPluginTargets(graph: PluginGraph): List<TargetName> {
@@ -1163,8 +1167,8 @@ internal object ModelBuildingStage {
   /**
    * The plugin main modules to seed into the graph, read off the module sources.
    *
-   * @param contentPluginPopulation the plugin main modules the dev distribution states content for.
-   * [readDevDistContentPluginPopulation] reads it. A name this project does not hold is a name nothing matches.
+   * @param contentPluginPopulation the plugin main modules the dev distribution states content for; see
+   * [org.jetbrains.intellij.build.productLayout.discovery.ModuleSetGenerationConfig.contentPluginPopulation].
    */
   internal fun discoverPluginDescriptorsFromSources(
     outputProvider: ModuleOutputProvider,
@@ -1268,7 +1272,7 @@ internal object ModelBuildingStage {
   private fun collectAliasesFromDeprecatedIncludes(
     spec: ProductModulesContentSpec,
     outputProvider: ModuleOutputProvider,
-    includeAliasCache: AsyncCache<String, Set<PluginId>>,
+    includeAliasCache: SharedCache<String, Set<PluginId>>,
     prefixFilter: (String) -> String?,
     skipXIncludePaths: Set<String>,
   ): Set<PluginId> {
@@ -1297,7 +1301,7 @@ internal object ModelBuildingStage {
   private fun collectAliasesFromModuleDescriptors(
     moduleNames: Set<ContentModuleName>,
     descriptorCache: ModuleDescriptorCache,
-    aliasCache: AsyncCache<ContentModuleName, Set<PluginId>>,
+    aliasCache: SharedCache<ContentModuleName, Set<PluginId>>,
   ): Set<PluginId> {
     if (moduleNames.isEmpty()) {
       return emptySet()
@@ -1393,44 +1397,4 @@ internal object ModelBuildingStage {
 
     return allAliases
   }
-}
-
-/**
- * The population file, relative to the project root.
- *
- * Under `community/build/`, so a community-only checkout reads the same file. A line naming a plugin that checkout does
- * not have is a line it never matches.
- */
-const val DEV_DIST_CONTENT_PLUGIN_POPULATION_PATH: String = "community/build/dev_dist_plugin_content_population.txt"
-
-/**
- * The plugin main modules the dev distribution states content for, one name per line.
- *
- * This answers "is this module a shipped plugin's main module", which the graph needs to seed a plugin the product specs
- * do not name. The earlier signal was a `plugin-content.yaml` beside the module, and that file goes away: it enumerated
- * what a distribution build really packed, and the dev distribution now derives that from the project model. The
- * population is the one part of it the derivation cannot answer, so it stays as a plain checked-in list. Read
- * `build/decisions/0007-the-descriptor-leaf-follows-the-content-leaf.md` for why the hand-off is a text file.
- *
- * A `#` line is a comment. An empty result on an absent file, the same fail-open the converter's reader takes: a
- * throwaway project holds no such file, and this enrichment runs in the analysis-only flow alone.
- *
- * Public, because the dev-distribution plan generator reads the same file to decide whether a plugin has a content
- * target to point at. That generator is in the main repository and it depends on this module, so the two share one
- * spelling of the path and one parse. The JPS-to-Bazel converter is the third reader and it cannot share: it is a
- * standalone Bazel module that takes the platform as published artifacts.
- */
-fun readDevDistContentPluginPopulation(projectRoot: Path): Set<String> {
-  val file = projectRoot.resolve(DEV_DIST_CONTENT_PLUGIN_POPULATION_PATH)
-  if (Files.notExists(file)) {
-    return emptySet()
-  }
-  val result = LinkedHashSet<String>()
-  for (raw in Files.readAllLines(file)) {
-    val line = raw.trim()
-    if (line.isNotEmpty() && !line.startsWith('#')) {
-      result.add(line)
-    }
-  }
-  return result
 }

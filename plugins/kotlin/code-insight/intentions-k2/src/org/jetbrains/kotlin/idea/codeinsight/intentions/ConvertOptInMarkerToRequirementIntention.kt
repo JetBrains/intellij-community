@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
+import org.jetbrains.kotlin.idea.base.psi.deleteValueArgument
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.name.ClassId
@@ -58,7 +59,7 @@ internal class ConvertOptInMarkerToRequirementIntention :
         if (optInAnnotation.valueArgumentList?.arguments?.size == 1)
             optInAnnotation.delete()
         else
-            optInAnnotation.valueArgumentList?.removeArgument(elementContext.element)
+            optInAnnotation.valueArgumentList?.deleteValueArgument(elementContext.element)
     }
 
     override fun getFamilyName(): @IntentionFamilyName String =

@@ -26,6 +26,7 @@ jvm_library(
         # do not sort,
         "//libraries/kotlinx/coroutines/core",
         "//platform/ide-core-impl",
+        "//xml/plugin",
     ],
 )
 
@@ -51,6 +52,7 @@ jvm_library(
         ":tests",
         "//platform/ide-core-impl:ide-core-impl_test_lib",
         "//platform/ide-core:ide-core_test_lib",
+        "//xml/plugin:plugin_test_lib",
     ],
     deps = [
         # do not sort,
@@ -82,8 +84,6 @@ jvm_library(
         "//json/backend/regexp:regexp_test_lib",
         "//spellchecker",
         "//spellchecker:spellchecker_test_lib",
-        "//libraries/misc/plugin",
-        "//libraries/misc/plugin:plugin_test_lib",
         "//libraries/lucene.common",
         "//libraries/lucene.common:lucene.common_test_lib",
         "//plugins/grazie/src:core",

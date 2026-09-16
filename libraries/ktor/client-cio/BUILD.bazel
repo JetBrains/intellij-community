@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.ktor.client.cio` start
+content_module_jar(
+    libraries = ["@lib//:libraries-ktor-client-cio-ktor-client-cio-internal"],
+    module = ":libraries-ktor-client-cio",
+)
+### auto-generated section `dev intellij.libraries.ktor.client.cio` end
+
 ### auto-generated section `build intellij.libraries.ktor.client.cio` start
 jvm_library(
     name = "libraries-ktor-client-cio",
@@ -26,11 +33,6 @@ jvm_library(
         "//libraries/ktor/client",
         "//libraries/ktor/network-tls:libraries-ktor-network-tls",
     ],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-ktor-client-cio-ktor-client-cio-internal"],
-    module = ":libraries-ktor-client-cio",
 )
 
 jvm_library(
@@ -65,7 +67,6 @@ exports_files(
     [
         "intellij.libraries.ktor.client.cio.iml",
         "resources/intellij.libraries.ktor.client.cio.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -2,9 +2,15 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "dependencyDashboard": true,
   "suppressNotifications": ["prEditedNotification"],
-  "extends": ["config:recommended", "helpers:pinGitHubActionDigests"],
+  "extends": [
+    "config:recommended",
+    "helpers:pinGitHubActionDigestsToSemver",
+    "replacements:all",
+    "abandonments:recommended"
+  ],
+  "configMigration": true,
   "labels": ["bot: dependencies"],
-  "rebaseLabel": ["bot: rebase"],
+  "rebaseLabel": "bot: rebase",
   "semanticCommits": "disabled",
   "separateMajorMinor": false,
   "prHourlyLimit": 10,
@@ -15,7 +21,13 @@
   "pre-commit": {
     "enabled": true
   },
+  "minimumReleaseAge": "7 days",
   "packageRules": [
+    {
+      // Pin versions already in use without waiting for the upgrade cooldown.
+      "matchUpdateTypes": ["pinDigest"],
+      "minimumReleaseAge": null
+    },
     {
       groupName: "GitHub Actions",
       matchManagers: ["github-actions"],

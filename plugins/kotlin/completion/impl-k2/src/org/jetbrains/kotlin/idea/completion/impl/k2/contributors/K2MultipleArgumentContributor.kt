@@ -21,10 +21,12 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSetupScope
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2ContributorSectionPriority
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2SimpleCompletionContributor
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.KtSymbolWithOrigin
 import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.K2SmartCompletionTailOffsetProviderImpl
 import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.Tail
 import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.tryGetOffset
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.KotlinFirLookupElementFactory
+import org.jetbrains.kotlin.idea.completion.impl.k2.smartCastTypeForSymbol
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtArrayAccessExpression
@@ -126,18 +128,21 @@ internal class K2MultipleArgumentContributor : K2SimpleCompletionContributor<Kot
      * or until all arguments have been matched and return the resulting matching variables.
      * Note that this function only returns the longest possible match unlike in K1 to avoid cluttering up completion too much.
      */
-    context(_: KaSession)
+    context(_: KaSession, context: K2CompletionSectionContext<KotlinNameReferencePositionContext>)
     private fun matchVariablesWithMissingArguments(
-        variableSymbols: Map<Name, KaVariableSymbol>,
+        variableSymbols: Map<Name, KtSymbolWithOrigin<KaVariableSymbol>>,
         missingArgumentData: MissingArgumentData,
         callParent: KtElement,
     ): MultiArgumentSignatureData? {
         val matchingVariableSymbols = mutableListOf<KaVariableSymbol>()
         for ((name, type) in missingArgumentData.missingArguments) {
             val correspondingVariable = variableSymbols[name] ?: break
+            val originalType = correspondingVariable.symbol.returnType
+            val typeWithSmartCast = smartCastTypeForSymbol(correspondingVariable.symbol, originalType, correspondingVariable.scopeKind)
+                ?: originalType
             // We use isPossiblySubTypeOf until KT-84184 is fixed to avoid false-negatives
-            if (!correspondingVariable.returnType.isPossiblySubTypeOf(type)) break
-            matchingVariableSymbols.add(correspondingVariable)
+            if (!typeWithSmartCast.isPossiblySubTypeOf(type)) break
+            matchingVariableSymbols.add(correspondingVariable.symbol)
         }
 
         val matchingVariableCount = matchingVariableSymbols.size
@@ -217,7 +222,10 @@ internal class MultipleArgumentsInsertHandler : SerializableInsertHandler {
  * for each name.
  */
 context(_: KaSession)
-internal fun getNonImportedAvailableVariables(allNamesToFind: Set<Name>, scopeContext: KaScopeContext): Map<Name, KaVariableSymbol> {
+internal fun getNonImportedAvailableVariables(
+    allNamesToFind: Set<Name>,
+    scopeContext: KaScopeContext
+): Map<Name, KtSymbolWithOrigin<KaVariableSymbol>> {
     // We do not want to consider variables that are imported
     val scopes = scopeContext.scopes.filterNot { it.kind is KaScopeKind.ImportingScope }
 
@@ -226,7 +234,7 @@ internal fun getNonImportedAvailableVariables(allNamesToFind: Set<Name>, scopeCo
     val variables = scopes.reversed().flatMap { scopeWithKind ->
         scopeWithKind.scope.callables(allNamesToFind)
             .filterIsInstance<KaVariableSymbol>()
-            .map { it.name to it }
+            .map { it.name to KtSymbolWithOrigin(it, scopeWithKind.kind) }
     }.toMap()
 
     return variables

@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.java.performancePlugin` start
+content_module_jar(module = ":performancePlugin")
+### auto-generated section `dev intellij.java.performancePlugin` end
+
 ### auto-generated section `build intellij.java.performancePlugin` start
 jvm_library(
     name = "performancePlugin",
@@ -46,8 +50,6 @@ jvm_library(
         "//java/java-frontback-psi-api:frontback-psi",
     ],
 )
-
-content_module_jar(module = ":performancePlugin")
 
 jvm_library(
     name = "performancePlugin_test_lib",

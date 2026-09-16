@@ -7,7 +7,6 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.psi.tree.IElementType
-import org.jetbrains.kotlin.analysis.api.KaNonPublicApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.dataflow.implicitReceiverSmartCasts
 import org.jetbrains.kotlin.analysis.api.dataflow.smartCastInfo
@@ -549,7 +548,6 @@ private fun hasNullCheckFor(expression: KtExpression?): Boolean {
  * Determines if the target chunk has smart cast information available.
  * Checks various sources of smart cast info including explicit smart casts and contextual smart casting.
  */
-@OptIn(KaNonPublicApi::class)
 context(session: KaSession)
 private fun hasSmartCast(chunk: TargetChunk): Boolean {
     return when (val expression = chunk.expression) {

@@ -11,7 +11,7 @@ class PosixIdsTest {
   @Test void readsTheUserIds() {
     assumeTrue(OS.CURRENT != OS.Windows);
 
-    int uid = PosixIds.getuid();
+    var uid = PosixIds.getuid();
     assertThat(uid).isNotNegative();
     assertThat(PosixIds.geteuid()).isEqualTo(uid);
   }

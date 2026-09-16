@@ -62,6 +62,7 @@ c:com.intellij.ui.jcef.JBCefBrowserBuilder
 - setOSRHandlerFactory(com.intellij.ui.jcef.JBCefOSRHandlerFactory):com.intellij.ui.jcef.JBCefBrowserBuilder
 - setOffScreenRendering(Z):com.intellij.ui.jcef.JBCefBrowserBuilder
 - setUrl(java.lang.String):com.intellij.ui.jcef.JBCefBrowserBuilder
+- setUseCertificateManager(Z):com.intellij.ui.jcef.JBCefBrowserBuilder
 f:com.intellij.ui.jcef.JBCefBrowserJsCallError
 - java.lang.IllegalStateException
 f:com.intellij.ui.jcef.JBCefClient

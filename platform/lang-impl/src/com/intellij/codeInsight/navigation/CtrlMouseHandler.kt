@@ -45,6 +45,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerListener.FILE_EDITOR_MAN
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.project.DumbModeBlockedFunctionality
 import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.DumbUtil
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
@@ -242,8 +243,10 @@ class CtrlMouseHandler2(
     }
     catch (e: IndexNotReadyException) {
       DumbService.getInstance(project).showDumbModeNotificationForFunctionalityWithCoalescing(
-        CodeInsightBundle.dumbModeMessage("notification.element.information.is.not.available.during.index.update",
-                                          "notification.element.information.is.not.available.in.light.mode"),
+        DumbUtil.dumbModeMessage(
+          CodeInsightBundle.message("notification.element.information.is.not.available.during.index.update"),
+          CodeInsightBundle.message("notification.element.information.is.not.available.in.light.mode")
+        ),
         DumbModeBlockedFunctionality.CtrlMouseHandler,
         Pair(request.action.javaClass.name, request.editor.virtualFile?.path)
       )

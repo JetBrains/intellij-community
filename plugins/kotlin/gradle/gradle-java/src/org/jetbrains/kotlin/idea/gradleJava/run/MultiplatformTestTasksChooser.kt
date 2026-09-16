@@ -29,6 +29,7 @@ class MultiplatformTestTasksChooser : TestTasksChooser() {
 
     private enum class PlatformTaskPriority {
         ANDROID,
+        IOS,
         JVM,
         JS,
         WASM,
@@ -38,6 +39,7 @@ class MultiplatformTestTasksChooser : TestTasksChooser() {
     private fun ExternalSystemTestRunTask.platformTaskPriority(): PlatformTaskPriority =
         when (kotlinPlatformId) {
             KotlinPlatform.ANDROID.id -> PlatformTaskPriority.ANDROID
+            KotlinPlatform.NATIVE.id if targetName.startsWith("ios", ignoreCase = true) -> PlatformTaskPriority.IOS
             KotlinPlatform.JVM.id -> PlatformTaskPriority.JVM
             KotlinPlatform.JS.id -> PlatformTaskPriority.JS
             KotlinPlatform.WASM.id -> PlatformTaskPriority.WASM

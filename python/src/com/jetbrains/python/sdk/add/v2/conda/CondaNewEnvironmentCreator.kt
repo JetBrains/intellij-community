@@ -23,7 +23,7 @@ import com.jetbrains.python.sdk.add.v2.PythonMutableTargetAddInterpreterModel
 import com.jetbrains.python.sdk.add.v2.PythonNewEnvironmentCreator
 import com.jetbrains.python.sdk.add.v2.ValidatedPath
 import com.jetbrains.python.sdk.add.v2.ValidatedPathField
-import com.intellij.python.pytools.Version
+import com.intellij.python.pytools.backend.Version
 import com.jetbrains.python.sdk.add.v2.createInstallCondaFix
 import com.jetbrains.python.sdk.add.v2.toStatisticsField
 import com.jetbrains.python.sdk.add.v2.validatablePathField

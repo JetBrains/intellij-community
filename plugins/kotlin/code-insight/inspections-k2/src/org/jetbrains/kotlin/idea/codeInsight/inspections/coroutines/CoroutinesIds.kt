@@ -31,6 +31,14 @@ object CoroutinesIds {
         val ID: ClassId = ClassId(PACKAGE, Name.identifier("NonCancellable"))
     }
 
+    /**
+     * Note: This is the typealias in the coroutines API (not stdlib).
+     * It should be preferred for imports.
+     */
+    object CancellationException {
+        val ID: ClassId = ClassId(PACKAGE, Name.identifier("CancellationException"))
+    }
+
     val joinAll: CallableId = CallableId(PACKAGE, Name.identifier("joinAll"))
 
     object Deferred {
@@ -144,6 +152,7 @@ object CoroutinesIds {
 
     val currentCoroutineContext: CallableId = CallableId(PACKAGE, Name.identifier("currentCoroutineContext"))
     val suspendCancellableCoroutine: CallableId = CallableId(PACKAGE, Name.identifier("suspendCancellableCoroutine"))
+    val ensureActive: CallableId = CallableId(PACKAGE, Name.identifier("ensureActive"))
     
     val withContext: CallableId = CallableId(PACKAGE, Name.identifier("withContext"))
     
@@ -161,7 +170,18 @@ object CoroutinesIds {
 
     object Stdlib {
         val PACKAGE: FqName = FqName("kotlin.coroutines")
-        
+
+        object Cancellation {
+            val PACKAGE: FqName = FqName("kotlin.coroutines.cancellation")
+
+            /**
+             * Note: This is the typealias contained in the stdlib, available without the coroutines library.
+             */
+            object CancellationException {
+                val ID: ClassId = ClassId(PACKAGE, Name.identifier("CancellationException"))
+            }
+        }
+
         object CoroutineContext {
             val ID: ClassId = ClassId(PACKAGE, Name.identifier("CoroutineContext"))
             

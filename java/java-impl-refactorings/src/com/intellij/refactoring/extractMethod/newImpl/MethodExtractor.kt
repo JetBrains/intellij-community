@@ -380,7 +380,7 @@ class MethodExtractor {
     data class Context(val elements: List<PsiElement>, val analyzer: CodeFragmentAnalyzer) : ContextOrError
 
     companion object {
-      @RequiresReadLock
+      @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
       fun create(file: PsiFile, range: TextRange): ContextOrError {
         val elements = ExtractSelector().suggestElementsToExtract(file, range)
         if (elements.isEmpty()) {

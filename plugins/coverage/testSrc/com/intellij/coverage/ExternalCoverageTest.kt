@@ -24,23 +24,25 @@ class ExternalCoverageTest : CoverageIntegrationBaseTest() {
     openSuiteAndWait(ijSuite)
     ExternalCoverageWatchManager.getInstance(myProject).addRootsToWatch(ijSuite.suites.toList())
 
-    waitSuiteProcessing {
-      // modify coverage data and overwrite existing
-      val projectData = ProjectDataLoader.load(ijSuiteFile)
+    for (status in listOf(LineCoverage.FULL, LineCoverage.NONE)) {
+      waitSuiteProcessing {
+        // modify coverage data and overwrite existing
+        val projectData = ProjectDataLoader.load(ijSuiteFile)
+        val classData = projectData.getClassData("foo.bar.BarClass")
+        val lineData = classData.getLineData(9)
+        lineData.hits = if (status == LineCoverage.FULL) 1 else 0
+        lineData.setStatus(status)
+        CoverageReport.save(projectData, InstrumentationOptions.Builder().setDataFile(ijSuiteFile).build())
+
+        // does not work without force refreshing
+        VirtualFileManager.getInstance().asyncRefresh()
+      }
+
+      val projectData = ijSuite.coverageData!!
       val classData = projectData.getClassData("foo.bar.BarClass")
       val lineData = classData.getLineData(9)
-      lineData.hits = 1
-      lineData.setStatus(LineCoverage.FULL)
-      CoverageReport.save(projectData, InstrumentationOptions.Builder().setDataFile(ijSuiteFile).build())
-
-      // does not work without force refreshing
-      VirtualFileManager.getInstance().asyncRefresh()
+      Assert.assertEquals(status, lineData.status.toByte())
     }
-
-    val projectData = ijSuite.coverageData!!
-    val classData = projectData.getClassData("foo.bar.BarClass")
-    val lineData = classData.getLineData(9)
-    Assert.assertEquals(LineCoverage.FULL, lineData.status.toByte())
 
     closeSuite(ijSuite)
     assertNoSuites()

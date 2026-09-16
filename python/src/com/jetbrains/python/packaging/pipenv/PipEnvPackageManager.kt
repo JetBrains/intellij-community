@@ -1,12 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.pipenv
 
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.jetbrains.python.sdk.pipenv.PIP_FILE_LOCK
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.orLogException
+import com.jetbrains.python.packaging.packageRequirements.cachedDependencyTree
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
@@ -17,7 +17,6 @@ import com.jetbrains.python.packaging.management.PyWorkspaceMember
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonRepositoryManager
-import com.jetbrains.python.packaging.packageRequirements.CachedDependencyTreeProvider
 import com.jetbrains.python.packaging.packageRequirements.DependencyTreeProvider
 import com.jetbrains.python.packaging.packageRequirements.PackageTreeNode
 import com.jetbrains.python.packaging.pip.PipRepositoryManager
@@ -29,10 +28,13 @@ import com.jetbrains.python.sdk.pipenv.PipEnvParser as SdkPipEnvParser
 internal class PipEnvPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(project, sdk) {
   override val repositoryManager: PythonRepositoryManager = PipRepositoryManager.getInstance(project)
 
-  override val treeProvider: DependencyTreeProvider = CachedDependencyTreeProvider(
-    fetchOutput = { runPipEnvWithSdk(sdk, "graph", "--json").orLogException(thisLogger()) },
+  override val treeProvider: DependencyTreeProvider = cachedDependencyTree(
+    lockFileName = PIP_FILE_LOCK,
     parse = { json -> PipEnvParser.parsePipEnvGraph(json).map { it.toTreeNode() } },
+    dependencyFiles = { resolveDependencyFilesTree() },
+    fetchOutput = { runPipEnvWithSdk(sdk, "graph", "--json") },
   )
+
 
   override suspend fun syncLockedCommand(): PyResult<Unit> {
     return runPipEnvWithSdk(sdk, "install", "--dev").mapSuccess { }

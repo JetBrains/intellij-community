@@ -322,7 +322,7 @@ class InlineBreakpointInlayManager(private val project: Project, parentScope: Co
     val line: Int,
   )
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   context(_: RedrawSnapshot)
   private fun collectInlayData(
     document: Document,
@@ -365,7 +365,7 @@ class InlineBreakpointInlayManager(private val project: Project, parentScope: Co
     return breakpointRange?.startOffset?.coerceIn(lineRange) ?: lineRange.first
   }
 
-  @RequiresWriteLock
+  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
   private fun insertInlays(
     document: Document,
     onlyEditor: Editor?,
@@ -382,7 +382,7 @@ class InlineBreakpointInlayManager(private val project: Project, parentScope: Co
     }
   }
 
-  @RequiresWriteLock
+  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
   private fun insertInlays(
     document: Document,
     inlayModel: InlayModel,

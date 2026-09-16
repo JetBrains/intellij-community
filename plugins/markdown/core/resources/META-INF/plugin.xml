@@ -73,12 +73,12 @@
     <module name="intellij.markdown.compose.preview"/>
     <module name="intellij.markdown.frontend"/>
     <module name="intellij.markdown.frontend.split"/>
-    <module name="intellij.markdown.backend.split"/>
     <module name="intellij.markdown.backend"/>
     <module name="intellij.markdown.java"/>
     <module name="intellij.markdown.fenceInjector.textMate"/>
     <module name="intellij.markdown.projectView"/>
     <module name="intellij.markdown.figmaAdvertiser"/>
+    <module name="intellij.markdown.vcs"/>
   </content>
 
   <description><![CDATA[
@@ -244,11 +244,11 @@
     <editorSmartKeysConfigurable instance="org.intellij.plugins.markdown.settings.MarkdownSmartKeysConfigurable"
                                  id="editor.preferences.markdownOptions"/>
 
-    <applicationService serviceImplementation="org.intellij.plugins.markdown.ui.preview.html.MarkdownCodeFenceHtmlCache"/>
     <applicationService serviceImplementation="org.intellij.plugins.markdown.settings.MarkdownCodeFoldingSettings" />
     <applicationService serviceImplementation="org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings" />
     <applicationService serviceImplementation="org.intellij.plugins.markdown.settings.MarkdownExtensionsSettings" />
 
+    <applicationSettings service="org.intellij.plugins.markdown.settings.MarkdownApplicationSettings"/>
     <applicationSettings service="org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings"/>
     <applicationSettings service="org.intellij.plugins.markdown.settings.MarkdownPreviewSettings"/>
     <applicationSettings service="org.intellij.plugins.markdown.settings.MarkdownExtensionsSettings"/>
@@ -515,6 +515,9 @@
     </action>
 
     <group id="Markdown.Toolbar.Floating">
+      <!-- enables AI actions -->
+      <reference ref="Floating.CodeToolbar.Extensions"/>
+
       <action id="Markdown.Styling.SetHeaderLevel"
               class="org.intellij.plugins.markdown.ui.actions.styling.SetHeaderLevelAction"/>
       <separator/>

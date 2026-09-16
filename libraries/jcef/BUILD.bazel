@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.jcef` start
+content_module_jar(
+    libraries = ["@lib//:libraries-jcef-jcef"],
+    module = ":jcef",
+)
+### auto-generated section `dev intellij.libraries.jcef` end
+
 ### auto-generated section `build intellij.libraries.jcef` start
 jvm_library(
     name = "jcef",
@@ -16,11 +23,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-jcef-jcef"],
     runtime_deps = ["@lib//:libraries-jcef-jcef"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-jcef-jcef"],
-    module = ":jcef",
 )
 
 jvm_library(
@@ -43,7 +45,6 @@ exports_files(
     [
         "intellij.libraries.jcef.iml",
         "resources/intellij.libraries.jcef.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

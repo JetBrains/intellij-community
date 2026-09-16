@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.jackson.dataformat.xml` start
+content_module_jar(
+    libraries = ["@lib//:libraries-jackson-dataformat-xml-jackson-dataformat-xml"],
+    module = ":libraries-jackson-dataformat-xml",
+)
+### auto-generated section `dev intellij.libraries.jackson.dataformat.xml` end
+
 ### auto-generated section `build intellij.libraries.jackson.dataformat.xml` start
 jvm_library(
     name = "libraries-jackson-dataformat-xml",
@@ -20,11 +27,6 @@ jvm_library(
         "@lib//:libraries-jackson-dataformat-xml-jackson-dataformat-xml",
         "//libraries/jackson/jackson",
     ],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-jackson-dataformat-xml-jackson-dataformat-xml"],
-    module = ":libraries-jackson-dataformat-xml",
 )
 
 jvm_library(
@@ -51,7 +53,6 @@ exports_files(
     [
         "intellij.libraries.jackson.dataformat.xml.iml",
         "resources/intellij.libraries.jackson.dataformat.xml.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

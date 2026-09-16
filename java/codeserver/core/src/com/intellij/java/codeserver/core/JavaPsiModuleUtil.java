@@ -220,7 +220,7 @@ public final class JavaPsiModuleUtil {
     JavaSourceRootType rootType = inTests ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE;
     ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
     Set<VirtualFile> excludeRoots = ContainerUtil.newHashSet(ModuleRootManager.getInstance(module).getExcludeRoots());
-    List<VirtualFile> sourceRoots = ContainerUtil.filter(rootManager.getSourceRoots(rootType), root -> !excludeRoots.contains(root));
+    List<VirtualFile> sourceRoots = ContainerUtil.filter(rootManager.getSourceRoots(rootType), root -> root.isValid() && !excludeRoots.contains(root));
 
     List<VirtualFile> files = ContainerUtil.mapNotNull(sourceRoots, root -> root.findChild(PsiJavaModule.MODULE_INFO_FILE));
     if (files.isEmpty()) {

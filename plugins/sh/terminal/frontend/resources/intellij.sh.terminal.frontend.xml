@@ -1,0 +1,20 @@
+<idea-plugin visibility="internal">
+  <dependencies>
+    <module name="intellij.sh.core"/>
+    <plugin id="org.jetbrains.plugins.terminal"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.frontend"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.terminal.frontend"/>
+  </dependencies>
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceInterface="com.intellij.sh.run.ShSelectedTerminalRunner"
+                    serviceImplementation="com.intellij.sh.terminal.frontend.ShFrontendTerminalRunner"/>
+  </extensions>
+</idea-plugin>

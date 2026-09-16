@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.netty.codec.protobuf` start
+content_module_jar(
+    libraries = ["@lib//:libraries-netty-codec-protobuf-netty-codec-protobuf"],
+    module = ":libraries-netty-codec-protobuf",
+)
+### auto-generated section `dev intellij.libraries.netty.codec.protobuf` end
+
 ### auto-generated section `build intellij.libraries.netty.codec.protobuf` start
 jvm_library(
     name = "libraries-netty-codec-protobuf",
@@ -22,11 +29,6 @@ jvm_library(
         "//libraries/netty/buffer",
         "//libraries/netty/codec-http:libraries-netty-codec-http",
     ],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-netty-codec-protobuf-netty-codec-protobuf"],
-    module = ":libraries-netty-codec-protobuf",
 )
 
 jvm_library(
@@ -55,7 +57,6 @@ exports_files(
     [
         "intellij.libraries.netty.codec.protobuf.iml",
         "resources/intellij.libraries.netty.codec.protobuf.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

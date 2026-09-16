@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.sqlite` start
+content_module_jar(
+    libraries = ["@lib//:libraries-sqlite-sqlite"],
+    module = ":sqlite",
+)
+### auto-generated section `dev intellij.libraries.sqlite` end
+
 ### auto-generated section `build intellij.libraries.sqlite` start
 jvm_library(
     name = "sqlite",
@@ -16,11 +23,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-sqlite-sqlite"],
     runtime_deps = ["@lib//:libraries-sqlite-sqlite"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-sqlite-sqlite"],
-    module = ":sqlite",
 )
 
 jvm_library(
@@ -43,7 +45,6 @@ exports_files(
     [
         "intellij.libraries.sqlite.iml",
         "resources/intellij.libraries.sqlite.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

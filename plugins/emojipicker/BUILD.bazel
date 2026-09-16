@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.emojipicker` start
+content_module_jar(module = ":emojipicker")
+### auto-generated section `dev intellij.emojipicker` end
+
 ### auto-generated section `build intellij.emojipicker` start
 jvm_library(
     name = "emojipicker",
@@ -36,8 +40,6 @@ jvm_library(
         "//platform/util/xmlDom",
     ],
 )
-
-content_module_jar(module = ":emojipicker")
 
 jvm_library(
     name = "emojipicker_test_lib",
@@ -104,7 +106,6 @@ exports_files(
         "resources/data/cldr/annotationsDerived/ko.xml",
         "resources/data/cldr/annotationsDerived/zh.xml",
         "resources/intellij.emojipicker.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

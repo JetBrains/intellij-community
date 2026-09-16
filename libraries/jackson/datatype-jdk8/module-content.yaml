@@ -1,6 +1,0 @@
-- name: dist.all/lib/intellij.libraries.jackson.datatype.jdk8.jar
-  modules:
-  - name: intellij.libraries.jackson.datatype.jdk8
-    libraries:
-      jackson-datatype-jdk8:
-      - name: $MAVEN_REPOSITORY$/com/fasterxml/jackson/datatype/jackson-datatype-jdk8/2/jackson-datatype-jdk8-2.jar

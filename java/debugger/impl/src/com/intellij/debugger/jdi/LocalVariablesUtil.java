@@ -213,8 +213,8 @@ public final class LocalVariablesUtil {
                                                                      List<? extends DecompiledLocalVariable> vars,
                                                                      StackFrame frame) throws Exception {
     final Value[] values;
-    if (frame instanceof StackFrameImpl) {
-      values = ((StackFrameImpl)frame).getSlotsValues(vars);
+    if (frame instanceof StackFrameImpl stackFrame) {
+      values = stackFrame.getSlotsValues(vars);
     }
     else {
       final Long frameId = ReflectionUtil.getField(frame.getClass(), frame, long.class, "id");
@@ -249,8 +249,8 @@ public final class LocalVariablesUtil {
 
   public static void setValue(StackFrame frame, SlotLocalVariable variable, Value value) throws EvaluateException {
     try {
-      if (frame instanceof StackFrameImpl) {
-        ((StackFrameImpl)frame).setSlotValue(variable, value);
+      if (frame instanceof StackFrameImpl stackFrame) {
+        stackFrame.setSlotValue(variable, value);
       }
       else {
         final Long frameId = ReflectionUtil.getField(frame.getClass(), frame, long.class, "id");

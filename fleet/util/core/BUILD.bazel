@@ -30,6 +30,10 @@ fleet_wasmjs_module(
     ],
 )
 
+### auto-generated section `dev fleet.util.core` start
+content_module_jar(module = ":core")
+### auto-generated section `dev fleet.util.core` end
+
 ### auto-generated section `build fleet.util.core` start
 create_kotlinc_options(
     name = "custom_core",
@@ -68,18 +72,18 @@ jvm_library(
     exports = [
         # do not sort,
         "//fleet/util/logging/api",
-        "@lib//:kotlinx-collections-immutable",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//fleet/multiplatform.shims",
         "//fleet/util/serialization",
     ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinx-coroutines-core",
-        "@lib//:kotlinx-serialization-core",
-        "@lib//:kotlinx-serialization-json",
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/kotlinx/serialization/core",
+        "//libraries/kotlinx/serialization/json",
         "//fleet/util/logging/api",
-        "@lib//:kotlinx-collections-immutable",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//fleet/reporting/api",
         "//fleet/reporting/shared",
         "//fleet/multiplatform.shims",
@@ -87,8 +91,6 @@ jvm_library(
         ":fleet_util_multiplatform_provided",
     ],
 )
-
-content_module_jar(module = ":core")
 
 jvm_library(
     name = "core_test_lib",
@@ -104,7 +106,8 @@ jvm_library(
         # do not sort,
         "//fleet/util/logging/api",
         "//fleet/util/logging/api:api_test_lib",
-        "@lib//:kotlinx-collections-immutable",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
         "//fleet/multiplatform.shims",
         "//fleet/multiplatform.shims:multiplatform.shims_test_lib",
         "//fleet/util/serialization",
@@ -113,7 +116,11 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":core",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//libraries/kotlinx/serialization/json:json_test_lib",
         "//fleet/util/logging/api:api_test_lib",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
         "//fleet/reporting/api:api_test_lib",
         "//fleet/reporting/shared:shared_test_lib",
         "//fleet/multiplatform.shims:multiplatform.shims_test_lib",
@@ -129,7 +136,6 @@ exports_files(
     [
         "fleet.util.core.iml",
         "resources/fleet.util.core.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

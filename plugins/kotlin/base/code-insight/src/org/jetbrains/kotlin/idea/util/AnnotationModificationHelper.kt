@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.util
 
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
+import org.jetbrains.kotlin.idea.base.psi.addAnnotation
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtAnnotated
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
@@ -30,7 +31,7 @@ object AnnotationModificationHelper {
         val modifierList = element.modifierList
 
         if (modifierList == null) {
-            val addedAnnotation = element.addAnnotationEntry(psiFactory.createAnnotationEntry(annotationText))
+            val addedAnnotation = element.addAnnotation(psiFactory.createAnnotationEntry(annotationText))
             ShortenReferencesFacility.getInstance().shorten(addedAnnotation)
             if (element !is KtScriptInitializer) return true
 

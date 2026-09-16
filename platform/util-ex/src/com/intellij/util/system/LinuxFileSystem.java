@@ -10,7 +10,6 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.foreign.Arena;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.Linker;
-import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.SymbolLookup;
 import java.lang.invoke.MethodHandle;
@@ -48,14 +47,14 @@ public final class LinuxFileSystem {
    * @return the case sensitivity, or {@link FileAttributes.CaseSensitivity#UNKNOWN} for every other file system or on failure
    */
   public static FileAttributes.@NotNull CaseSensitivity caseSensitivity(@NotNull String path) {
-    try (Arena arena = Arena.ofConfined()) {
-      MemorySegment pathSegment = arena.allocateFrom(path);
-      MemorySegment buffer = arena.allocate(STATFS_BUFFER_SIZE);
+    try (var arena = Arena.ofConfined()) {
+      var pathSegment = arena.allocateFrom(path);
+      var buffer = arena.allocate(STATFS_BUFFER_SIZE);
       if ((int)Handles.STATFS.invokeExact(pathSegment, buffer) != 0) {
         if (LOG.isDebugEnabled()) LOG.debug("statfs(" + path + "): error");
         return FileAttributes.CaseSensitivity.UNKNOWN;
       }
-      long type = buffer.get(JAVA_LONG, 0);
+      var type = buffer.get(JAVA_LONG, 0);
       if (type == BTRFS_SUPER_MAGIC || type == XFS_SUPER_MAGIC) {
         return FileAttributes.CaseSensitivity.SENSITIVE;
       }
@@ -73,11 +72,11 @@ public final class LinuxFileSystem {
   }
 
   private static FileAttributes.CaseSensitivity inodeCaseSensitivity(String path, MemorySegment pathSegment, Arena arena) throws Throwable {
-    MethodHandle fgetflags = E2pHandles.FGETFLAGS;
+    var fgetflags = E2pHandles.FGETFLAGS;
     if (fgetflags == null) {
       return FileAttributes.CaseSensitivity.UNKNOWN;
     }
-    MemorySegment flags = arena.allocate(JAVA_LONG);
+    var flags = arena.allocate(JAVA_LONG);
     if ((int)fgetflags.invokeExact(pathSegment, flags) != 0) {
       if (LOG.isDebugEnabled()) LOG.debug("fgetflags(" + path + "): error");
       return FileAttributes.CaseSensitivity.UNKNOWN;
@@ -92,7 +91,7 @@ public final class LinuxFileSystem {
     static final MethodHandle STATFS;
 
     static {
-      MemoryLayout nativeLong = LINKER.canonicalLayouts().get("long");
+      var nativeLong = LINKER.canonicalLayouts().get("long");
       if (nativeLong.byteSize() != JAVA_LONG.byteSize()) {
         throw new IllegalStateException("Unexpected long: " + nativeLong);
       }
@@ -107,7 +106,7 @@ public final class LinuxFileSystem {
 
     private static @Nullable MethodHandle load() {
       try {
-        SymbolLookup e2p = SymbolLookup.libraryLookup("libe2p.so.2", Arena.global());
+        var e2p = SymbolLookup.libraryLookup("libe2p.so.2", Arena.global());
         return Linker.nativeLinker().downcallHandle(e2p.findOrThrow("fgetflags"), FunctionDescriptor.of(JAVA_INT, ADDRESS, ADDRESS));
       }
       catch (Throwable t) {

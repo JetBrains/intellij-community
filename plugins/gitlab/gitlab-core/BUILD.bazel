@@ -24,6 +24,10 @@ jps_test(
 )
 ### skip generation section `test intellij.vcs.gitlab.tests`
 
+### auto-generated section `dev intellij.vcs.gitlab.backend` start
+content_module_jar(module = ":vcs-gitlab-backend")
+### auto-generated section `dev intellij.vcs.gitlab.backend` end
+
 ### auto-generated section `build intellij.vcs.gitlab.backend` start
 resourcegroup(
     name = "vcs-gitlab-backend_resources",
@@ -115,8 +119,6 @@ jvm_library(
         ":libraries_kotlinc_libraries-kotlinc-kotlinx-serialization-compiler-plugin_provided",
     ],
 )
-
-content_module_jar(module = ":vcs-gitlab-backend")
 
 jvm_library(
     name = "vcs-gitlab-backend_test_lib",
@@ -225,7 +227,11 @@ jvm_library(
     ),
     module_name = "intellij.vcs.gitlab.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = ["//libraries/lucene.common"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/lucene.common",
+        "//xml/plugin",
+    ],
 )
 
 jvm_library(
@@ -259,6 +265,7 @@ jvm_library(
         "//platform/ide-core-impl:ide-core-impl_test_lib",
         "//platform/observable:observable_test_lib",
         "//libraries/lucene.common:lucene.common_test_lib",
+        "//xml/plugin:plugin_test_lib",
     ],
     deps = [
         # do not sort,
@@ -313,6 +320,7 @@ jvm_library(
         "//libraries/kotlinx/coroutines/test:test_test_lib",
         "//libraries/assertj-core",
         "//libraries/assertj-core:assertj-core_test_lib",
+        "@lib//:app-cash-turbine-jvm",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
         "//plugins/git4idea/backend",
@@ -365,8 +373,6 @@ jvm_library(
         "//platform/testFramework/junit5/codeInsight:codeInsight_test_lib",
         "//libraries/junit5",
         "//libraries/junit5:junit5_test_lib",
-        "//libraries/misc/plugin",
-        "//libraries/misc/plugin:plugin_test_lib",
         "//platform/vcs/plugin",
         "//platform/vcs/plugin:plugin_test_lib",
         "//plugins/git4idea:vcs-git",

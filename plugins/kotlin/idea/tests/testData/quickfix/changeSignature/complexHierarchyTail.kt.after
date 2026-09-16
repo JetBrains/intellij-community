@@ -57,5 +57,4 @@ fun usage(o: OOOB) {
     o.f(3, "asdv")
 }
 
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddFunctionParametersFix
 // IGNORE_K2

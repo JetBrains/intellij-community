@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.commons.imaging` start
+content_module_jar(
+    libraries = ["@lib//:libraries-commons-imaging-commons-imaging"],
+    module = ":imaging",
+)
+### auto-generated section `dev intellij.libraries.commons.imaging` end
+
 ### auto-generated section `build intellij.libraries.commons.imaging` start
 jvm_library(
     name = "imaging",
@@ -16,11 +23,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-commons-imaging-commons-imaging"],
     runtime_deps = ["@lib//:libraries-commons-imaging-commons-imaging"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-commons-imaging-commons-imaging"],
-    module = ":imaging",
 )
 
 jvm_library(
@@ -43,7 +45,6 @@ exports_files(
     [
         "intellij.libraries.commons.imaging.iml",
         "resources/intellij.libraries.commons.imaging.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

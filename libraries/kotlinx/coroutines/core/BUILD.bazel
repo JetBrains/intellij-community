@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.kotlinx.coroutines.core` start
+content_module_jar(
+    libraries = ["@lib//:libraries-kotlinx-coroutines-core-kotlinx-coroutines-core"],
+    module = ":core",
+)
+### auto-generated section `dev intellij.libraries.kotlinx.coroutines.core` end
+
 ### auto-generated section `build intellij.libraries.kotlinx.coroutines.core` start
 jvm_library(
     name = "core",
@@ -14,13 +21,8 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    exports = ["@lib//:kotlinx-coroutines-core"],
-    runtime_deps = ["@lib//:kotlinx-coroutines-core"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:kotlinx-coroutines-core"],
-    module = ":core",
+    exports = ["@lib//:libraries-kotlinx-coroutines-core-kotlinx-coroutines-core"],
+    runtime_deps = ["@lib//:libraries-kotlinx-coroutines-core-kotlinx-coroutines-core"],
 )
 
 jvm_library(
@@ -33,7 +35,7 @@ jvm_library(
     kotlinc_opts = "@community//:k8",
     module_name = "intellij.libraries.kotlinx.coroutines.core",
     visibility = ["//visibility:public"],
-    exports = ["@lib//:kotlinx-coroutines-core"],
+    exports = ["@lib//:libraries-kotlinx-coroutines-core-kotlinx-coroutines-core"],
     runtime_deps = [":core"],
 )
 ### auto-generated section `build intellij.libraries.kotlinx.coroutines.core` end
@@ -43,7 +45,6 @@ exports_files(
     [
         "intellij.libraries.kotlinx.coroutines.core.iml",
         "resources/intellij.libraries.kotlinx.coroutines.core.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -60,6 +60,7 @@ import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.psi.impl.file.PsiFileImplUtil;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ObjectUtils;
@@ -139,7 +140,7 @@ final class PsiUpdateImpl {
         PsiFile hostFile = host.getContainingFile();
         FileTracker hostTracker = changedFiles.get(hostFile);
         PsiFile hostFileCopy = hostTracker != null ? hostTracker.myTargetFile : createCopyOfPsiFile(hostFile);
-        PsiFile injectedFileCopy = getInjectedFileCopy(host, hostFileCopy, origFile.getLanguage());
+        PsiFile injectedFileCopy = getInjectedFileCopy(hostCopy(host, hostFileCopy), origFile.getLanguage());
         Disposable disposable = ApplicationManager.getApplication().getService(InjectionEditService.class)
           .synchronizeWithFragment(injectedFileCopy, myDocument);
         myDocument.addDocumentListener(new DocumentListener() {
@@ -258,11 +259,21 @@ final class PsiUpdateImpl {
     }
   }
 
-  private static @NotNull PsiFile getInjectedFileCopy(@NotNull PsiLanguageInjectionHost host,
-                                                      @NotNull PsiFile hostFileCopy,
-                                                      @NotNull Language injectedLanguage) {
-    InjectedLanguageManager injectionManager = InjectedLanguageManager.getInstance(hostFileCopy.getProject());
+  /**
+   * @return the copy of the host inside {@code hostFileCopy}, linked to the original host
+   */
+  private static @NotNull PsiLanguageInjectionHost hostCopy(@NotNull PsiLanguageInjectionHost host,
+                                                            @NotNull PsiFile hostFileCopy) {
     PsiLanguageInjectionHost hostCopy = PsiTreeUtil.findSameElementInCopy(host, hostFileCopy);
+    if (hostCopy.getCopyableUserData(InjectedLanguageUtil.FORCE_INJECTED_COPY_ELEMENT_KEY) == null) {
+      hostCopy.putCopyableUserData(InjectedLanguageUtil.FORCE_INJECTED_COPY_ELEMENT_KEY, host);
+    }
+    return hostCopy;
+  }
+
+  private static @NotNull PsiFile getInjectedFileCopy(@NotNull PsiLanguageInjectionHost hostCopy,
+                                                      @NotNull Language injectedLanguage) {
+    InjectedLanguageManager injectionManager = InjectedLanguageManager.getInstance(hostCopy.getProject());
     var visitor = new PsiLanguageInjectionHost.InjectedPsiVisitor() {
       private final Language origLanguage = injectedLanguage;
       PsiFile injectedFileCopy = null;
@@ -594,8 +605,7 @@ final class PsiUpdateImpl {
               // just-inserted field, then recalculate type bindings. Otherwise, types end up fully qualified.
               RangeMarker marker = tracker.myDocument.createRangeMarker(start, start + fieldValue.length());
               try {
-                shortenAndRecalc(tracker, recalc, marker);
-                range = mapRange(marker.getTextRange());
+                range = mapRange(shortenAndRecalc(tracker, recalc, marker));
               }
               finally {
                 marker.dispose();
@@ -963,22 +973,40 @@ final class PsiUpdateImpl {
      * inserted template field: runs the ModCommand-aware optional processors (e.g. FQN shortening and import insertion) over
      * the field range, then recalculates type bindings. Without this step results such as {@code PsiTypeResult} keep their
      * fully qualified canonical text in the resulting command (and in the IDEA preview).
+     *
+     * @return the range of the field after the processors ran. A processor can move text into the field from the
+     * left, and the document then keeps that text outside of {@code marker}.
      */
-    private void shortenAndRecalc(@NotNull FileTracker tracker,
-                                  @NotNull RecalculatableResult recalc,
-                                  @NotNull RangeMarker marker) {
+    private @NotNull TextRange shortenAndRecalc(@NotNull FileTracker tracker,
+                                                @NotNull RecalculatableResult recalc,
+                                                @NotNull RangeMarker marker) {
       Document document = tracker.myDocument;
       PsiFile psiFile = tracker.myCopyFile;
       Project project = getProject();
       TemplateImpl stubTemplate = new TemplateImpl("", "", "");
       stubTemplate.setToShortenLongNames(true);
-      for (TemplateOptionalProcessor processor : TemplateOptionalProcessor.EP_NAME.getExtensionList()) {
-        if (processor instanceof ModCommandAwareTemplateOptionalProcessor modProcessor) {
-          modProcessor.processText(stubTemplate, this, marker);
+      RangeMarker fieldMarker = null;
+      try {
+        for (TemplateOptionalProcessor processor : TemplateOptionalProcessor.EP_NAME.getExtensionList()) {
+          if (processor instanceof ModCommandAwareTemplateOptionalProcessor modProcessor) {
+            TextRange processed = modProcessor.processText(stubTemplate, this, marker);
+            if (!processed.equals(marker.getTextRange())) {
+              if (fieldMarker != null) {
+                fieldMarker.dispose();
+              }
+              fieldMarker = document.createRangeMarker(processed);
+            }
+          }
+        }
+        PsiDocumentManager.getInstance(project).commitDocument(document);
+        recalc.handleRecalc(psiFile, document, marker.getStartOffset(), marker.getEndOffset());
+        return fieldMarker != null && fieldMarker.isValid() ? fieldMarker.getTextRange() : marker.getTextRange();
+      }
+      finally {
+        if (fieldMarker != null) {
+          fieldMarker.dispose();
         }
       }
-      PsiDocumentManager.getInstance(project).commitDocument(document);
-      recalc.handleRecalc(psiFile, document, marker.getStartOffset(), marker.getEndOffset());
     }
   }
 }

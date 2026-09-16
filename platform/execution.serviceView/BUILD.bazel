@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.platform.execution.serviceView` start
+content_module_jar(module = ":execution.serviceView")
+### auto-generated section `dev intellij.platform.execution.serviceView` end
+
 ### auto-generated section `build intellij.platform.execution.serviceView` start
 jvm_library(
     name = "execution.serviceView",
@@ -53,8 +57,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":execution.serviceView")
-
 jvm_library(
     name = "execution.serviceView_test_lib",
     testonly = True,
@@ -106,7 +108,6 @@ exports_files(
     [
         "intellij.platform.execution.serviceView.iml",
         "resources/intellij.platform.execution.serviceView.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

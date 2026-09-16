@@ -9,19 +9,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="commons-codec" type="repository">
-        <properties maven-id="commons-codec:commons-codec:1.21.0">
+        <properties maven-id="commons-codec:commons-codec:1.22.1">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/commons-codec/commons-codec/1.21.0/commons-codec-1.21.0.jar">
-              <sha256sum>4da851cb6abfb98bfe9eb77c5e5fc47f5414fa28b94e21b7fd9a646705dc167f</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/commons-codec/commons-codec/1.22.1/commons-codec-1.22.1.jar">
+              <sha256sum>78a5d732fbd715e2d10bd7150d2f8030bae57267f8aacc5c88f642cb6c2e5d3f</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/commons-codec/commons-codec/1.21.0/commons-codec-1.21.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/commons-codec/commons-codec/1.22.1/commons-codec-1.22.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/commons-codec/commons-codec/1.21.0/commons-codec-1.21.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/commons-codec/commons-codec/1.22.1/commons-codec-1.22.1-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

@@ -13,7 +13,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.test" />
-    <orderEntry type="library" name="kotlin-test" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinTest" />
     <orderEntry type="module" module-name="intellij.platform.eel.provider" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.concurrency" scope="TEST" />

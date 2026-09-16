@@ -17,19 +17,18 @@ import com.intellij.mcpserver.util.projectDirectory
 import com.intellij.mcpserver.util.resolveInProject
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.ChangeListManagerEx
 import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.vcsUtil.VcsUtil
 import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
-import kotlin.coroutines.resume
 import kotlin.io.path.pathString
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -305,12 +304,10 @@ class ChangeListToolset : McpToolset {
   )
 }
 
-/** Waits for the running [ChangeListManagerEx] update to finish; the callback fires immediately when no update is running. */
-private suspend fun awaitChangeListUpdate(changeListManager: ChangeListManagerEx) {
+/** Waits for the running [ChangeListManager] update to finish; the callback fires immediately when no update is running. */
+private suspend fun awaitChangeListUpdate(changeListManager: ChangeListManager) {
   withTimeoutOrNull(Constants.MEDIUM_TIMEOUT_MILLISECONDS_VALUE.milliseconds) {
-    suspendCancellableCoroutine { continuation ->
-      changeListManager.invokeAfterUpdate(false) { continuation.resume(Unit) }
-    }
+    changeListManager.awaitUpdate()
   }
 }
 

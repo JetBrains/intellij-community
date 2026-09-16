@@ -1,4 +1,0 @@
-- name: dist.all/lib/intellij.platform.ide.core.impl.jar
-  modules:
-  - name: intellij.platform.backend.observation
-  - name: intellij.platform.ide.core.impl

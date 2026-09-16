@@ -1,3 +1,0 @@
-- name: dist.all/lib/intellij.jsp.base.jar
-  modules:
-  - name: intellij.jsp.base

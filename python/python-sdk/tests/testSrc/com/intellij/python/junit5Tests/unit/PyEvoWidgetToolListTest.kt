@@ -65,7 +65,8 @@ class PyEvoWidgetToolListTest {
       // Never used by this: only a lazy tool node needs it, and nothing here opens one.
       scope = @OptIn(DelicateCoroutinesApi::class) GlobalScope,
       expandTools = {},
-    ).buildTree(DataContext.EMPTY_CONTEXT)
+      packageManagerActionIds = emptyList(),
+    ).buildTree()
 
   /**
    * Every row the popup lists, in order.

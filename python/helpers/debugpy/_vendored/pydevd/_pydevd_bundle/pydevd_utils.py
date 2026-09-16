@@ -515,3 +515,123 @@ def import_attr_from_module(import_with_attr_access):
                 return mod
             except:
                 raise ImportError("Unable to import module with attr access: %s" % (import_with_attr_access,))
+
+
+# JetBrains extension: "Drop into debugger on failed tests" (PY-88218).
+# The helpers below decide whether an exception made a test fail. They keep the
+# behaviour of the pydevd backend, see `helpers/pydev/_pydevd_bundle/pydevd_utils.py`.
+
+# The `unittest` methods that call the set up and the tear down code. `pytest` shares them.
+_UNITTEST_SET_UP_AND_TEAR_DOWN_METHODS = ("_callSetUp", "_callTearDown")
+
+# The `unittest` methods that call a test method.
+_UNITTEST_CALLER_NAMES = ("_callTestMethod", "runTest", "run", "subTest")
+
+# The `pytest` functions that call a test item or a fixture.
+_PYTEST_CALLER_NAMES = ("pytest_pyfunc_call", "call_fixture_func", "_eval_scope_callable", "_teardown_yield_fixture")
+
+
+def _is_next_stack_trace_in_project_scope(py_db, trace):
+    if trace and trace.tb_next and trace.tb_next.tb_frame:
+        return py_db.in_project_scope(trace.tb_next.tb_frame)
+    return False
+
+
+def is_test_item_or_set_up_caller(py_db, trace):
+    """Check if the frame is the test item or the set up caller.
+
+    A test function caller is a function that calls the actual test code. The test code can be,
+    for example, a `unittest.TestCase` test method, or a function that `pytest` assumes to be a
+    test. The caller is the frame we want to trace to catch a failed test. We cannot trace the
+    test function itself, because the test code can catch some exceptions. We are interested
+    only in an exception that reaches the test framework.
+
+    :param py_db: the debugger.
+    :param trace: the traceback object of the current frame.
+    :return: `True` if the frame is a test item caller or a set up caller.
+    """
+    if not trace:
+        return False
+
+    frame = trace.tb_frame
+
+    if py_db.in_project_scope(frame):
+        # We are interested in an exception that reached the test framework scope.
+        return False
+
+    if not trace.tb_next:
+        # The exception was raised inside the test item caller or the set up caller.
+        return False
+
+    if not _is_next_stack_trace_in_project_scope(py_db, trace):
+        # The next frame must belong to the project. Several test framework functions we look
+        # for can appear in the stack, and without this check we can stop on one line twice.
+        return False
+
+    if frame.f_code.co_name in _UNITTEST_SET_UP_AND_TEAR_DOWN_METHODS:
+        return True
+
+    # Check `pytest` first, because `pytest` can run `unittest` code. Without this order we can
+    # stop on one broken test twice: once in the `pytest` runner and once in the `unittest` one.
+    is_pytest = False
+    f = frame
+    while f:
+        if f.f_code.co_name == "pytest_cmdline_main":
+            is_pytest = True
+            break
+        f = f.f_back
+
+    if is_pytest:
+        if frame.f_code.co_name in _PYTEST_CALLER_NAMES:
+            return True
+        return frame.f_code.co_name in _UNITTEST_CALLER_NAMES
+
+    import unittest
+
+    test_case_obj = frame.f_locals.get("self")
+
+    # A `_FailedTest` instance means the test could not run at all. An import error in the test
+    # module is one example. We must not stop in that case.
+    if isinstance(test_case_obj, getattr(getattr(unittest, "loader", None), "_FailedTest", None)):
+        return False
+
+    return frame.f_code.co_name in _UNITTEST_CALLER_NAMES
+
+
+def should_stop_on_failed_test(exc_info):
+    """Check if the debugger must stop on a failed test.
+
+    A test can be marked as an expected failure. We must ignore such a test.
+
+    :param exc_info: the exception type, the value, and the traceback.
+    :return: `False` if the test is an expected failure, `True` otherwise.
+    """
+    exc_type, _, trace = exc_info
+
+    # unittest
+    test_item = trace.tb_frame.f_locals.get("method")
+    if test_item:
+        return not getattr(test_item, "__unittest_expecting_failure__", False)
+
+    # pytest
+    testfunction = trace.tb_frame.f_locals.get("testfunction")
+    if testfunction and hasattr(testfunction, "pytestmark"):
+        try:
+            for attr in testfunction.pytestmark:
+                if attr.name == "xfail":
+                    exc_to_ignore = attr.kwargs.get("raises")
+                    if not exc_to_ignore:
+                        # Ignore every exception, because the mark names no type.
+                        return False
+                    elif hasattr(exc_to_ignore, "__iter__"):
+                        return exc_type not in exc_to_ignore
+                    else:
+                        return exc_type is not exc_to_ignore
+        except BaseException:
+            pydev_log.exception()
+
+    return True
+
+
+def is_exception_in_test_unit_can_be_ignored(exception):
+    return exception.__name__ == "SkipTest"

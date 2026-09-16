@@ -6,6 +6,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
+import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.project.Project
@@ -83,7 +84,7 @@ class ToolWindowEditorTabManager(
    * @param content the tool window content being moved to the editor
    * @return the file representing [content] in the editor
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   internal fun createEditorTabFileForContent(
     toolWindowId: String,
     content: Content,
@@ -128,7 +129,7 @@ class ToolWindowEditorTabManager(
    * @param state the persisted editor-tab state containing the serialized tool window content
    * @return `true` if the content was successfully restored and attached; `false` otherwise
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   internal fun restoreEditorTabFileContent(
     file: ToolWindowEditorTabFile,
     state: ToolWindowEditorTabState,
@@ -153,7 +154,7 @@ class ToolWindowEditorTabManager(
    *
    * The newly created session is registered in [sessionByFile].
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun attachContentToFile(
     file: ToolWindowEditorTabFile,
     content: Content,
@@ -171,7 +172,7 @@ class ToolWindowEditorTabManager(
   /**
    * Attaches [content] to [file] with its presentation driven by [presentationFlow].
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun attachContentToFile(
     file: ToolWindowEditorTabFile,
     content: Content,
@@ -211,7 +212,7 @@ class ToolWindowEditorTabManager(
    * while its tool window has no support registered.
    */
   @TestOnly
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   internal fun createTransientEditorTabFileForTest(
     toolWindowId: String,
     content: Content,
@@ -232,7 +233,7 @@ class ToolWindowEditorTabManager(
    * @param releaseContent whether the session's content should also be released;
    * false when ownership of the content is transferred elsewhere
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   internal fun closeEditorTabFile(file: ToolWindowEditorTabFile, releaseContent: Boolean) {
     if (file.getUserData(FileEditorManagerKeys.CLOSING_TO_REOPEN) == true) {
       return
@@ -242,10 +243,22 @@ class ToolWindowEditorTabManager(
     sessionByFile.remove(file)?.close(releaseContent)
 
     // remove file from recent files
-    // TODO: fix: After restoring the file to the tool window, recent files does not update immediately
     EditorHistoryManager.getInstance(project).removeFile(file)
-
     file.invalidate()
+
+    // When the tab is moved from the editor to the tool window,
+    // ToolWindowEditorTabFileEditor.dispose() is called. It closes the file via
+    // FileEditorManager.closeFile(), which in turn publishes FileEditorManagerListener.fileClosed().
+    //
+    // RecentlySelectedEditorListener.fileClosed() calls applyFrontendChanges() only when
+    // isAllowedInRecentFilesModel() returns false. That result depends on the file's validity
+    // and on isIncludedInDocumentHistory().
+    //
+    // When we drag and drop, the file is still valid, and we don't have enough information to return
+    // the correct value from isIncludedInDocumentHistory(). Therefore, publish fileClosed() once
+    // more after the required state is available.
+    project.messageBus.syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER)
+      .fileClosed(FileEditorManager.getInstance(project), file)
   }
 
   companion object {

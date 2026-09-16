@@ -12,9 +12,11 @@ import com.intellij.openapi.editor.impl.InterLineBreakpointProperties
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.registry.Registry.Companion.`is`
+import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointManagerProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
 import com.intellij.util.ThreeState
 import com.intellij.xdebugger.breakpoints.XLineBreakpointVerticalPlacement
+import com.intellij.xdebugger.impl.XEditorSourcePosition
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler
 import com.intellij.xdebugger.impl.actions.ToggleLineBreakpointAction
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUIUtil
@@ -38,20 +40,8 @@ class XToggleLineBreakpointActionHandler @JvmOverloads constructor(
       return false
     }
     val breakpointManager = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project)
-    val breakpointTypes = breakpointManager.getLineBreakpointTypes()
     val breakpointPositions = ToggleLineBreakpointAction.getAllPositionsForBreakpoints(project, event.dataContext)
-    for (position in breakpointPositions) {
-      for (breakpointType in breakpointTypes) {
-        val file = position.getFile()
-        val line = position.getLine()
-        if ((XBreakpointUIUtil.supportsPlacement(breakpointType, defaultVerticalPlacement) &&
-             breakpointType.canPutAtFast(position.editor, line, project).isAtLeast(ThreeState.UNSURE)) ||
-            breakpointManager.findBreakpointAtLine(breakpointType, file, line, defaultVerticalPlacement) != null) {
-          return true
-        }
-      }
-    }
-    return false
+    return breakpointPositions.any { isPlacementAvailable(project, breakpointManager, it, defaultVerticalPlacement) }
   }
 
   override fun perform(project: Project, event: AnActionEvent) {
@@ -68,38 +58,41 @@ class XToggleLineBreakpointActionHandler @JvmOverloads constructor(
     val canCreateInterLineBreakpointFromGutter = EditorUtil.isBreakPointsOnLineNumbers()
     val isShiftClickForInterLine = isShiftClick && canCreateInterLineBreakpointFromGutter
     val canRemove = !isFromGutterClick || (!isShiftClickForInterLine && !`is`("debugger.click.disable.breakpoints"))
-    val interLineRequestedFromGutterClick = event.getData(XLineBreakpointManager.INTER_LINE_BREAKPOINT_KEY)
-    val placement = when (interLineRequestedFromGutterClick) {
-      true -> XLineBreakpointVerticalPlacement.INTER_LINE
-      false -> XLineBreakpointVerticalPlacement.ON_LINE
-      null -> defaultVerticalPlacement
-    }
-    val isInterlineLogging =
-      editor != null && (isInterLineAction(inputEvent, placement) || isInterLineMouseClick(inputEvent,
-                                                                                           canCreateInterLineBreakpointFromGutter,
-                                                                                           event))
+    val requestedPlacement = getRequestedPlacement(event)
     val isMouseClick = inputEvent is MouseEvent
-    val isLoggingBreakpoint = isInterlineLogging ||
-                              isFromGutterClick && editor != null && isMouseClick && !isAltClick && isShiftClick
+    val explicitLoggingRequested = isFromGutterClick && editor != null && isMouseClick && !isAltClick && isShiftClick
+    val interLineLoggingRequested = editor != null &&
+                                    (isInterLineAction(inputEvent, requestedPlacement) ||
+                                     isInterLineMouseClick(inputEvent, canCreateInterLineBreakpointFromGutter, event))
     val logExpression = (event.dataContext as? UserDataHolder)?.getUserData(XLineBreakpointManager.LOG_EXPRESSION)
-                        ?: editor?.getSelectionModel()?.selectedText.takeIf { isLoggingBreakpoint }
+    val balloonPointX = (inputEvent as? MouseEvent)?.getPoint()?.x
+    val breakpointManager = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project)
 
     // do not toggle more than once on the same line
     val processedLines = hashSetOf<Int>()
     val futures = mutableListOf<CompletableFuture<*>>()
     for (position in ToggleLineBreakpointAction.getAllPositionsForBreakpoints(project, event.dataContext)) {
       if (processedLines.add(position.getLine())) {
+        val mode = getLineBreakpointToggleMode(
+          requestedPlacement = requestedPlacement,
+          allowOnLineFallback = isFromGutterClick && isMouseClick,
+          explicitLoggingRequested = explicitLoggingRequested,
+          interLineLoggingRequested = interLineLoggingRequested,
+          canShowPopup = isMouseClick,
+          isInterLinePlacementAvailable = {
+            isPlacementAvailable(project, breakpointManager, position, XLineBreakpointVerticalPlacement.INTER_LINE)
+          },
+        )
+        val selectedText = editor?.getSelectionModel()?.selectedText.takeIf { mode.isLogging }
         val future = XBreakpointUIUtil.toggleLineBreakpointAsync(
           project, position, !isFromGutterClick, position.editor, isAltClick || myTemporary,
-          !isFromGutterClick, canRemove, isLoggingBreakpoint, logExpression, placement
+          !isFromGutterClick, canRemove, mode.isLogging, logExpression ?: selectedText, mode.placement
         ).thenAccept { breakpoint ->
-          // isMouseClick is always `true`, but its usage here enables smart cast for nullable `inputEvent`
-          @Suppress("KotlinConstantConditions")
-          if (breakpoint != null && isLoggingBreakpoint && !isInterlineLogging && isMouseClick) {
+          if (breakpoint != null && mode.showPopup && balloonPointX != null && editor != null) {
             runInEdt {
               // edit breakpoint
-              val position = LogicalPosition(breakpoint.getLine() + 1, 0)
-              val point = Point(inputEvent.getPoint().x, editor.logicalPositionToXY(position).y)
+              val logicalPosition = LogicalPosition(breakpoint.getLine() + 1, 0)
+              val point = Point(balloonPointX, editor.logicalPositionToXY(logicalPosition).y)
               DebuggerUIUtil.showXBreakpointEditorBalloon(project, point, (editor as EditorEx).getGutterComponentEx(), false, breakpoint)
             }
           }
@@ -119,4 +112,76 @@ class XToggleLineBreakpointActionHandler @JvmOverloads constructor(
 
   private fun isInterLineAction(inputEvent: InputEvent?, placement: XLineBreakpointVerticalPlacement): Boolean =
     inputEvent !is MouseEvent && placement == XLineBreakpointVerticalPlacement.INTER_LINE
+
+  private fun getRequestedPlacement(event: AnActionEvent): XLineBreakpointVerticalPlacement {
+    return when (event.getData(XLineBreakpointManager.INTER_LINE_BREAKPOINT_KEY)) {
+      true -> XLineBreakpointVerticalPlacement.INTER_LINE
+      false -> XLineBreakpointVerticalPlacement.ON_LINE
+      null -> defaultVerticalPlacement
+    }
+  }
+
+  /**
+   * Tells if the [placement] is available at the [position], either because a breakpoint type accepts the line,
+   * or because a breakpoint with that placement is already there.
+   *
+   * The hover in `XDebuggerLineChangeHandler` must apply the same rule. If the two rules differ, the gutter icon
+   * announces one breakpoint and the click creates another.
+   */
+  private fun isPlacementAvailable(
+    project: Project,
+    breakpointManager: XBreakpointManagerProxy,
+    position: XEditorSourcePosition,
+    placement: XLineBreakpointVerticalPlacement,
+  ): Boolean {
+    val file = position.getFile()
+    val line = position.getLine()
+    return breakpointManager.getLineBreakpointTypes().any { breakpointType ->
+      (XBreakpointUIUtil.supportsPlacement(breakpointType, placement) &&
+       breakpointType.canPutAtFast(position.editor, line, project).isAtLeast(ThreeState.UNSURE)) ||
+      breakpointManager.findBreakpointAtLine(breakpointType, file, line, placement) != null
+    }
+  }
+}
+
+@VisibleForTesting
+internal data class LineBreakpointToggleMode(
+  val placement: XLineBreakpointVerticalPlacement,
+  val isLogging: Boolean,
+  val showPopup: Boolean,
+)
+
+/**
+ * @param isInterLinePlacementAvailable evaluated only when the fallback can apply, because it scans every line
+ *   breakpoint type and analyses the PSI of the line
+ */
+@VisibleForTesting
+internal fun getLineBreakpointToggleMode(
+  requestedPlacement: XLineBreakpointVerticalPlacement,
+  allowOnLineFallback: Boolean,
+  explicitLoggingRequested: Boolean,
+  interLineLoggingRequested: Boolean,
+  canShowPopup: Boolean,
+  isInterLinePlacementAvailable: () -> Boolean,
+): LineBreakpointToggleMode {
+  val placement = getActualPlacement(requestedPlacement, allowOnLineFallback, isInterLinePlacementAvailable)
+  val isInterLineLogging = placement == XLineBreakpointVerticalPlacement.INTER_LINE && interLineLoggingRequested
+  val isLogging = explicitLoggingRequested || isInterLineLogging
+  val showPopup = canShowPopup && isLogging && !isInterLineLogging
+  return LineBreakpointToggleMode(placement, isLogging, showPopup)
+}
+
+private fun getActualPlacement(
+  requestedPlacement: XLineBreakpointVerticalPlacement,
+  allowOnLineFallback: Boolean,
+  isInterLinePlacementAvailable: () -> Boolean,
+): XLineBreakpointVerticalPlacement {
+  return if (allowOnLineFallback &&
+             requestedPlacement == XLineBreakpointVerticalPlacement.INTER_LINE &&
+             !isInterLinePlacementAvailable()) {
+    XLineBreakpointVerticalPlacement.ON_LINE
+  }
+  else {
+    requestedPlacement
+  }
 }

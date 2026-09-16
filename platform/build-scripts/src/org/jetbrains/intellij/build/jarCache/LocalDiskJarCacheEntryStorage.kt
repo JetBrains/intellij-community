@@ -4,8 +4,6 @@ package org.jetbrains.intellij.build.jarCache
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
-import kotlinx.coroutines.delay
-import org.jetbrains.intellij.build.Source
 import org.jetbrains.intellij.build.SourceAndCacheStrategy
 import org.jetbrains.intellij.build.ZipSource
 import java.io.IOException
@@ -15,76 +13,63 @@ import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.FileTime
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.random.Random
-import kotlin.time.Duration.Companion.milliseconds
 
 private const val metadataTouchThrottleMaxEntries = 200_000
 private const val metadataPublishReconciliationAttempts = 3
 private const val metadataPublishReconciliationDelayMs = 20L
 private const val metadataTouchFailureGraceMinMs = 60 * 60 * 1000L
 
+/**
+ * Copies the cache payload into [targetFile] when the entry is valid, and answers whether it did.
+ *
+ * [underLock] says whether the caller holds the per-key lock. Without it the call is a fast optimistic probe: it skips
+ * a marked entry, leaves an invalid entry in place, and reports an I/O error as a miss so that the caller retries under
+ * the lock. Under the lock it deletes an invalid entry, throws on an I/O error, and clears the mark of a reaccessed entry.
+ */
 internal fun tryUseCacheEntry(
   key: String,
   paths: CacheEntryPaths,
   targetFile: Path,
-  sources: Collection<Source>,
   items: List<SourceAndCacheStrategy>,
   nativeFiles: MutableMap<ZipSource, List<String>>?,
   span: Span,
   producer: SourceBuilder,
   metadataTouchTracker: MetadataTouchTracker,
   cleanupCandidateIndex: CleanupCandidateIndex,
-  deleteInvalidEntry: Boolean,
-  failOnCacheIoErrors: Boolean,
-): Path? {
-  // Lock-free path is only safe for materializing into an external target file.
-  // If the caller wants cache file as target, keep lock-protected path to avoid
-  // returning a path that can be concurrently cleaned up.
-  if (!failOnCacheIoErrors) {
-    if (producer.useCacheAsTargetFile) {
-      return null
-    }
-
-    if (Files.exists(paths.markFile)) {
-      return null
-    }
+  underLock: Boolean,
+): Boolean {
+  // The lock-free path is safe because the payload is copied into the target file, which the cleanup never touches.
+  // A marked entry is a cleanup candidate, so it goes through the lock-protected path.
+  if (!underLock && Files.exists(paths.markFile)) {
+    return false
   }
 
   val savedSources = readValidCacheMetadata(
     paths = paths,
-    sources = sources,
     items = items,
     decodeNativeFiles = nativeFiles != null,
     span = span,
-    onInvalidEntry = if (deleteInvalidEntry) {
+    onInvalidEntry = if (underLock) {
       { deleteEntryFiles(paths) }
     }
     else {
       null
     },
-  ) ?: return null
+  ) ?: return false
 
-  val resolvedTarget = if (producer.useCacheAsTargetFile) {
-    if (Files.notExists(paths.payloadFile)) {
-      return null
-    }
-    paths.payloadFile
+  try {
+    copyCacheEntryPayload(targetFile = targetFile, cacheFile = paths.payloadFile)
   }
-  else {
-    try {
-      copyCacheEntryPayload(targetFile = targetFile, cacheFile = paths.payloadFile)
-      targetFile
+  catch (e: IOException) {
+    if (underLock) {
+      throw e
     }
-    catch (e: IOException) {
-      if (failOnCacheIoErrors) {
-        throw e
-      }
-      span.addEvent("cache hit materialization failed, will retry under lock: $e")
-      return null
-    }
+    span.addEvent("cache hit materialization failed, will retry under lock: $e")
+    return false
   }
 
   val metadataTouchUpdated = touchMetadataFileIfRequired(paths = paths, span = span, metadataTouchTracker = metadataTouchTracker)
-  if (failOnCacheIoErrors && metadataTouchUpdated) {
+  if (underLock && metadataTouchUpdated) {
     clearMarkFileIfPresent(paths = paths, span = span)
   }
   cleanupCandidateIndex.register(paths.entryStem, paths.entryShardDir.fileName.toString())
@@ -94,10 +79,10 @@ internal fun tryUseCacheEntry(
     "use cache",
     Attributes.of(AttributeKey.stringKey("file"), targetFile.toString(), AttributeKey.stringKey("cacheKey"), key),
   )
-  return resolvedTarget
+  return true
 }
 
-internal suspend fun produceAndCache(
+internal fun produceAndCache(
   paths: CacheEntryPaths,
   producer: SourceBuilder,
   targetFile: Path,
@@ -106,7 +91,7 @@ internal suspend fun produceAndCache(
   tempFilePrefix: String,
   metadataTouchTracker: MetadataTouchTracker,
   cleanupCandidateIndex: CleanupCandidateIndex,
-): Path {
+) {
   Files.createDirectories(paths.entryShardDir)
   val tempPayloadFileName = buildTempSiblingFileName(
     baseFileName = paths.payloadFile.fileName.toString(),
@@ -150,24 +135,17 @@ internal suspend fun produceAndCache(
   metadataTouchTracker.recordTouch(paths.entryStem, System.currentTimeMillis())
   cleanupCandidateIndex.register(paths.entryStem, paths.entryShardDir.fileName.toString())
   notifyAboutMetadata(sources = sourceCacheItems, items = items, nativeFiles = nativeFiles, producer = producer)
-
-  if (!producer.useCacheAsTargetFile) {
-    copyCacheEntryPayload(targetFile = targetFile, cacheFile = paths.payloadFile)
-  }
-
-  return if (producer.useCacheAsTargetFile) paths.payloadFile else targetFile
+  copyCacheEntryPayload(targetFile = targetFile, cacheFile = paths.payloadFile)
 }
 
-private suspend fun reconcileMetadataPublishFailure(
+private fun reconcileMetadataPublishFailure(
   paths: CacheEntryPaths,
   items: List<SourceAndCacheStrategy>,
   decodeNativeFiles: Boolean,
 ): Boolean {
-  val sources = items.map { it.source }
   repeat(metadataPublishReconciliationAttempts) { attempt ->
     if (readValidCacheMetadata(
         paths = paths,
-        sources = sources,
         items = items,
         decodeNativeFiles = decodeNativeFiles,
         span = Span.getInvalid(),
@@ -178,7 +156,7 @@ private suspend fun reconcileMetadataPublishFailure(
     }
 
     if (attempt != metadataPublishReconciliationAttempts - 1) {
-      delay(metadataPublishReconciliationDelayMs.milliseconds)
+      Thread.sleep(metadataPublishReconciliationDelayMs)
     }
   }
 
@@ -194,10 +172,6 @@ private suspend fun reconcileMetadataPublishFailure(
  * APFS or a reflinking Linux filesystem. Dropping it would make every dev build write the whole jar set again.
  */
 private fun copyCacheEntryPayload(targetFile: Path, cacheFile: Path) {
-  if (targetFile == cacheFile) {
-    return
-  }
-
   Files.createDirectories(targetFile.parent)
   Files.copy(cacheFile, targetFile, StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING)
 }

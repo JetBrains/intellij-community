@@ -2,6 +2,7 @@
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
@@ -310,7 +311,7 @@ public abstract class StubIndexEx extends StubIndex {
         PsiManager psiManager = PsiManager.getInstance(project);
         psiManager.dropPsiCaches();
         psiManager.dropResolveCaches();
-      }), project.getDisposed());
+      }), ModalityState.nonModal(), project.getDisposed());
     }
   }
 

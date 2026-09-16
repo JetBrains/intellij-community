@@ -42,7 +42,7 @@ class EditorComponentInlaysManager(val editor: EditorImpl) : Disposable {
   /**
    * @param priority impacts the visual order in which inlays are displayed. Components with higher priority will be shown higher
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun insertAfter(lineIndex: Int, component: JComponent, priority: Int = 0, rendererFactory: RendererFactory? = null): Inlay<*>? {
     if (Disposer.isDisposed(this)) return null
 

@@ -39,7 +39,6 @@ import com.intellij.util.EnvironmentUtil
 import com.intellij.util.ShellEnvironmentReader
 import com.intellij.util.fastutil.skip
 import com.intellij.util.system.LowLevelLocalMachineAccess
-import com.pty4j.PtyProcess
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -75,10 +74,8 @@ class EelLocalExecPosixApi(
     val process = executeImpl(generatedBuilder)
     // `create` suspends, so cancellation here would leave a running process that no caller can kill.
     val r = try {
-      if (process is PtyProcess)
-        LocalEelPosixProcess.create(process, process::setWinSize, platform)
-      else
-        LocalEelPosixProcess.create(process, null, platform)
+      val control = LocalProcessService.getInstance().getPtyControl(process)
+      LocalEelPosixProcess.create(process, control?.let { it::setWindowSize }, platform)
     }
     catch (e: Throwable) {
       destroyUndeliveredProcess(process, e)
@@ -262,10 +259,8 @@ class EelLocalExecWindowsApi : EelExecWindowsApi, LocalEelExecApi {
     val commandLineForDebug = generatedBuilder.commandLineForDebug
     // `create` suspends, so cancellation here would leave a running process that no caller can kill.
     val r = try {
-      if (process is PtyProcess)
-        LocalEelWindowsProcess.create(process, process::setWinSize, commandLineForDebug)
-      else
-        LocalEelWindowsProcess.create(process, null, commandLineForDebug)
+      val control = LocalProcessService.getInstance().getPtyControl(process)
+      LocalEelWindowsProcess.create(process, control?.let { it::setWindowSize }, commandLineForDebug)
     }
     catch (e: Throwable) {
       destroyUndeliveredProcess(process, e)
@@ -417,7 +412,7 @@ private suspend fun startProcessImpl(
             it.initialRows(p.rows)
           }.build(),
           false,
-        ) as PtyProcess
+        )
       }
       is EelExecApi.RedirectStdErr, null -> {
         ProcessBuilder(escapedCommandLine).apply {

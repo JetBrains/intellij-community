@@ -92,7 +92,7 @@ class MachOUuid(private val executable: Path, private val customizer: MacDistrib
     return buffer.getInt()
   }
 
-  suspend fun patch() {
+  fun patch() {
     patchFile()
     if (canBeSignedLocally) {
       runProcess(listOf("codesign", "--sign", "-", "--force", executable.toString()), inheritOut = true)

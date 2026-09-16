@@ -31,7 +31,7 @@ suspend fun waitNoError(delay: Duration = 100.milliseconds, repeat: Int = 50, ch
   checkCondition()
 }
 
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 fun PythonHomePath.resolvePythonTool(name: String): Path = when (getEelDescriptor().osFamily) {
   EelOsFamily.Windows -> resolve("Scripts/$name.exe")
   EelOsFamily.Posix -> resolve("bin/$name")

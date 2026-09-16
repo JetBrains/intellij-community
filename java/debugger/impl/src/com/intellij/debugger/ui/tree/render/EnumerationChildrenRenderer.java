@@ -79,7 +79,7 @@ public final class EnumerationChildrenRenderer extends ReferenceRenderer impleme
     List<Element> children = element.getChildren(CHILDREN_EXPRESSION);
     for (Element item : children) {
       String name = item.getAttributeValue(CHILD_NAME);
-      TextWithImports text = DebuggerUtils.getInstance().readTextWithImports(item.getChildren().get(0));
+      TextWithImports text = DebuggerUtils.getInstance().readTextWithImports(item.getChildren().getFirst());
       boolean onDemand = Boolean.parseBoolean(item.getAttributeValue(CHILD_ONDEMAND));
 
       myChildren.add(new ChildInfo(name, text, onDemand));
@@ -159,11 +159,11 @@ public final class EnumerationChildrenRenderer extends ReferenceRenderer impleme
 
   public static @Nullable EnumerationChildrenRenderer getCurrent(ValueDescriptorImpl valueDescriptor) {
     Renderer renderer = valueDescriptor.getLastRenderer();
-    if (renderer instanceof CompoundReferenceRenderer &&
+    if (renderer instanceof CompoundReferenceRenderer referenceRenderer &&
         NodeRendererSettings.getInstance().getCustomRenderers().contains((NodeRenderer)renderer)) {
-      ChildrenRenderer childrenRenderer = ((CompoundReferenceRenderer)renderer).getChildrenRenderer();
-      if (childrenRenderer instanceof EnumerationChildrenRenderer) {
-        return (EnumerationChildrenRenderer)childrenRenderer;
+      ChildrenRenderer childrenRenderer = referenceRenderer.getChildrenRenderer();
+      if (childrenRenderer instanceof EnumerationChildrenRenderer enumerationChildrenRenderer) {
+        return enumerationChildrenRenderer;
       }
     }
     return null;

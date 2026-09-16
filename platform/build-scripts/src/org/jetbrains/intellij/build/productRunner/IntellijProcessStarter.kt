@@ -21,7 +21,6 @@ import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
-import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.createDirectories
 import kotlin.io.path.exists
 import kotlin.io.path.name
@@ -31,7 +30,7 @@ import kotlin.time.Duration.Companion.minutes
 
 @Internal
 @Deprecated("Use IntellijProductRunner.runProduct instead")
-suspend fun runApplicationStarter(
+fun runApplicationStarter(
   context: BuildContext,
   classpath: Collection<String>,
   args: List<String>,
@@ -61,7 +60,7 @@ suspend fun runApplicationStarter(
  * Internal function which runs IntelliJ process. Use [IntellijProductRunner.runProduct] instead.
  */
 @Internal
-suspend fun doRunApplicationStarter(
+fun doRunApplicationStarter(
   appStarterId: String,
   tempDir: Path,
   classpath: Collection<String>,
@@ -102,7 +101,7 @@ suspend fun doRunApplicationStarter(
 
   val effectiveIdeClasspath = if (isFinalClassPath) classpath else prepareFlatClasspath(classpath = classpath, tempDir = tempDir, context = context)
   try {
-    val task = suspend {
+    val task = {
       runJava(
         mainClass = context.ideMainClassName,
         args = args,
@@ -150,7 +149,7 @@ suspend fun doRunApplicationStarter(
   }
 }
 
-private suspend fun prepareFlatClasspath(classpath: Collection<String>, tempDir: Path, context: BuildContext): LinkedHashSet<String> {
+private fun prepareFlatClasspath(classpath: Collection<String>, tempDir: Path, context: BuildContext): LinkedHashSet<String> {
   val effectiveIdeClasspath = LinkedHashSet(classpath)
 
   val additionalPluginPaths = context.productProperties.getAdditionalPluginPaths(context)
@@ -171,7 +170,6 @@ private suspend fun prepareFlatClasspath(classpath: Collection<String>, tempDir:
   return effectiveIdeClasspath
 }
 
-@OptIn(ExperimentalPathApi::class)
 private fun findLogFile(systemDir: Path): Path? {
   val logDir = systemDir.resolve("log")
   val defaultLog = logDir.resolve("idea.log")
@@ -219,7 +217,7 @@ private fun disableCompatibleIgnoredPlugins(context: BuildContext, configDir: Pa
  *
  * Use [IntellijProductRunner.runProduct] to run an actual IntelliJ product with special command line arguments.
  */
-suspend fun runJavaForIntellijModule(
+fun runJavaForIntellijModule(
   context: CompilationContext,
   mainClass: String,
   args: List<String>,
@@ -232,7 +230,12 @@ suspend fun runJavaForIntellijModule(
   runJava(
     mainClass = mainClass,
     args = args,
-    jvmArgs = getCommandLineArgumentsForOpenPackages(context) + jvmArgs + listOf("-Dij.dir.lock.debug=true", "-Dintellij.log.to.json.stdout=true"),
+    jvmArgs = buildList {
+      addAll(getCommandLineArgumentsForOpenPackages(context))
+      addAll(jvmArgs)
+      add("-Dij.dir.lock.debug=true")
+      add("-Dintellij.log.to.json.stdout=true")
+    },
     classPath = classPath,
     javaExe = context.stableJavaExecutable,
     timeout = timeout,

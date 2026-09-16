@@ -37,7 +37,6 @@ public final class JUnitDevMainKt {
     System.setProperty("idea.vendor.name", "JetBrains");
     System.setProperty("idea.use.dev.build.server", "true");
     System.setProperty("idea.build.pack.test.source.enabled", "true");
-    if (jUnitStarterModule != null) System.setProperty("idea.dev.build.unpacked", "true");
     // idea.platform.prefix should be set
     if (System.getProperty("idea.platform.prefix") == null) {
       System.err.println("'idea.platform.prefix' is not set");

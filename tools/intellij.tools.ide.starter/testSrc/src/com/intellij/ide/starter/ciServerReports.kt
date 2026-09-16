@@ -3,6 +3,7 @@ package com.intellij.ide.starter
 import com.intellij.ide.starter.ci.CIServer
 import com.intellij.ide.starter.di.di
 import com.intellij.platform.testFramework.teamCity.TeamCityReporter.SyntheticTestKind
+import com.intellij.platform.testFramework.teamCity.TeamCityReporter.TestMetadata
 import org.kodein.di.DI
 import org.kodein.di.bindSingleton
 import java.nio.file.Path
@@ -42,7 +43,7 @@ private class RecordingCIServer(override val isBuildRunningOnCI: Boolean) : CISe
 
   override fun reportTestFailure(
     testName: String, message: String, details: String, linkToLogs: String?,
-    kind: SyntheticTestKind, generifyTestName: Boolean,
+    kind: SyntheticTestKind, generifyTestName: Boolean, additionalMetadata: List<TestMetadata>,
   ) {
     reportedFailures += ReportedFailure(testName, message, details, kind)
   }

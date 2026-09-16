@@ -30,7 +30,7 @@ object DistributedTestModel : Ext(TestRoot) {
 
   private val RdProductType = enum {
     +"REMOTE_DEVELOPMENT"
-    +"CODE_WITH_ME"
+    +"MONOLITH"
   }
 
   private val RdTestSessionStackTraceElement = structdef {

@@ -24,12 +24,12 @@ import org.jetbrains.annotations.ApiStatus
  * @return filtered commits
  */
 @ApiStatus.Experimental
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 fun VcsLogData.filter(filters: VcsLogFilterCollection, commitCount: CommitCountStage = CommitCountStage.ALL): IntSet {
   return VcsLogFiltererImpl(this).filter(graphData, filters, commitCount)
 }
 
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 private fun VcsLogFiltererImpl.filter(
   dataPack: VcsLogGraphData,
   filters: VcsLogFilterCollection,

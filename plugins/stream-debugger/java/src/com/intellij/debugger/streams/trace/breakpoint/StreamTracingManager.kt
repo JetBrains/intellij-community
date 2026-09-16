@@ -346,7 +346,7 @@ internal class StreamTracingManager(
     catchLocation: Location?,
     streamCallerFrameCount: Int,
   ): Boolean {
-    catchLocation ?: return true
+    if (catchLocation == null) return true
     val thread = suspendContext.thread ?: return false
     // ignore exceptions from evaluation - they will be reported by the debugger engine as EvaluateException
     if (thread.isEvaluating) return false

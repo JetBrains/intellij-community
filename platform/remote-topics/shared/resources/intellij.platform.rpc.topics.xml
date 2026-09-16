@@ -12,9 +12,10 @@
   </dependencies>
   <!-- endregion -->
   <extensionPoints>
+    <!-- `hasAttributes` exposes the `topicId` attribute to the listener index, so a listener is constructed on the first event of its topic -->
     <extensionPoint qualifiedName="com.intellij.platform.rpc.applicationRemoteTopicListener"
-                    interface="com.intellij.platform.rpc.topics.ApplicationRemoteTopicListener" dynamic="true"/>
+                    interface="com.intellij.platform.rpc.topics.ApplicationRemoteTopicListener" hasAttributes="true" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.platform.rpc.projectRemoteTopicListener"
-                    interface="com.intellij.platform.rpc.topics.ProjectRemoteTopicListener" dynamic="true"/>
+                    interface="com.intellij.platform.rpc.topics.ProjectRemoteTopicListener" hasAttributes="true" dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

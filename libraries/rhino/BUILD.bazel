@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.rhino` start
+content_module_jar(
+    libraries = ["@lib//:libraries-rhino-rhino"],
+    module = ":rhino",
+)
+### auto-generated section `dev intellij.libraries.rhino` end
+
 ### auto-generated section `build intellij.libraries.rhino` start
 jvm_library(
     name = "rhino",
@@ -16,11 +23,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-rhino-rhino"],
     runtime_deps = ["@lib//:libraries-rhino-rhino"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-rhino-rhino"],
-    module = ":rhino",
 )
 
 jvm_library(
@@ -43,7 +45,6 @@ exports_files(
     [
         "intellij.libraries.rhino.iml",
         "resources/intellij.libraries.rhino.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

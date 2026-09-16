@@ -11,7 +11,11 @@ import com.jetbrains.python.psi.PySequenceExpression
 import com.jetbrains.python.psi.PySetLiteralExpression
 import com.jetbrains.python.psi.PyStarExpression
 import com.jetbrains.python.psi.PyStringLiteralExpression
+import com.jetbrains.python.psi.PyTupleExpression
 import com.jetbrains.python.psi.impl.PyBuiltinCache
+import com.jetbrains.python.psi.impl.PyPsiUtils
+import com.jetbrains.python.psi.types.PyTypeChecker.GenericSubstitutions
+import com.jetbrains.python.psi.types.PyTypeChecker.expandTupleTypeParameters
 
 object PyCollectionTypeUtil {
 
@@ -19,45 +23,110 @@ object PyCollectionTypeUtil {
 
   @JvmStatic
   fun getListLiteralType(expression: PyListLiteralExpression, context: TypeEvalContext): PyType? {
-    return getListOrSetLiteralType(expression, "list", context)
+    return getSequenceLiteralType(expression, context)
   }
 
   @JvmStatic
   fun getSetLiteralType(expression: PySetLiteralExpression, context: TypeEvalContext): PyType? {
-    return getListOrSetLiteralType(expression, "set", context)
-  }
-
-  private fun getListOrSetLiteralType(expression: PySequenceExpression, className: String, context: TypeEvalContext): PyType? {
-    val cls = PyBuiltinCache.getInstance(expression).getClass(className) ?: return PyAnyType.unknown
-    val substitutions = PyTypeInferenceCspFactory.unifySequenceExpression(expression, cls, context)
-    val genericListType = PyTypeChecker.findGenericDefinitionType(cls, context)
-    val concreteListType = PyTypeChecker.substitute(genericListType, substitutions, context)
-    return concreteListType
+    return getSequenceLiteralType(expression, context)
   }
 
   @JvmStatic
-  fun getListOrSetIteratedValueType(sequence: PySequenceExpression, context: TypeEvalContext): PyType? {
-    val elements = sequence.elements
-    val analyzedElementsType = PyUnionType.union(
-      elements.take(MAX_ANALYZED_ELEMENTS_OF_LITERALS).map { element ->
-        if (element is PyStarExpression) {
-          val innerExpr = element.expression ?: return@map null
-          val innerType = context.getType(innerExpr)
-          // Resolve the element via the context-aware entry point: the context-less `iteratedItemType`
-          // can't upcast a local generic subclass (e.g. `class A[T](list[str])`) to `Iterable`.
-          val elementType = (innerType as? PyClassType)?.let { PyTypeChecker.getIteratedItemType(it, context) }
-          PyTypeUtil.widenLiteralAndNumeric(elementType)
-        }
-        else {
-          PyTypeUtil.widenLiteralAndNumeric(context.getType(element))
-        }
+  fun getTupleLiteralType(expression: PyTupleExpression, context: TypeEvalContext): PyType? {
+    return getSequenceLiteralType(expression, context)
+  }
+
+  private fun getSequenceLiteralType(expression: PySequenceExpression, context: TypeEvalContext): PyType? {
+    val genericType = findGenericDefinitionTypeOfSequence(expression, context) ?: return PyAnyType.unknown
+    val substitutions = PyTypeInferenceCspFactory.unifySequenceExpression(expression, context)
+    val concreteType = PyTypeChecker.substitute(genericType, substitutions, context)
+    return concreteType
+  }
+
+  internal fun getSequenceSubstitutionsFallback(sequence: PySequenceExpression, context: TypeEvalContext) : GenericSubstitutions {
+    val genericType = findGenericDefinitionTypeOfSequence(sequence, context) ?: return GenericSubstitutions()
+    when (sequence) {
+      is PyListLiteralExpression,
+      is PySetLiteralExpression -> {
+        val typeVar = genericType.typeArguments.firstOrNull() as? PyTypeParameterType ?: return GenericSubstitutions()
+        val typeArgument = getListOrSetIteratedValueType(sequence, context)
+        return GenericSubstitutions(mapOf(typeVar to typeArgument))
       }
-    )
-    return if (elements.size > MAX_ANALYZED_ELEMENTS_OF_LITERALS) {
+      is PyTupleExpression -> {
+        val typeArgs = getTupleElementTypes(sequence, context)
+        val typeParams = genericType.typeArguments.filterIsInstance<PyTypeParameterType>()
+        val typeParamsMap = typeParams.zip(typeArgs).toMap()
+        return GenericSubstitutions(typeParamsMap)
+      }
+      else -> return GenericSubstitutions()
+    }
+  }
+
+  internal fun findGenericDefinitionTypeOfSequence(sequence: PySequenceExpression, context: TypeEvalContext): PyClassType? {
+    val className = when (sequence) {
+      is PyListLiteralExpression -> PyNames.FQN.LIST
+      is PySetLiteralExpression -> PyNames.FQN.SET
+      is PyTupleExpression -> PyNames.FQN.TUPLE
+      else -> return null
+    }
+    val pyClass = PyBuiltinCache.getInstance(sequence).getClass(className) ?: return null
+    val genericDefinitionType = PyTypeChecker.findGenericDefinitionType(pyClass, context) ?: return null
+
+    if (sequence is PyTupleExpression) {
+      val flattenedElemsCount = flattenSequenceElements(sequence).size
+      if (flattenedElemsCount == 0) {
+        return PyTupleType.create(sequence, emptyList())
+      }
+      val expandedTypeParameters = expandTupleTypeParameters(genericDefinitionType.typeArguments, flattenedElemsCount)
+                                   ?: genericDefinitionType.typeArguments
+      return PyTupleType.create(sequence, expandedTypeParameters)
+    }
+
+    return genericDefinitionType
+  }
+
+  private fun getListOrSetIteratedValueType(sequence: PySequenceExpression, context: TypeEvalContext): PyType? {
+    val elementTypes = getTupleElementTypes(sequence, context)
+    val iteratedItemType = PyTupleType.create(sequence, elementTypes)?.iteratedItemType ?: return PyAnyType.unknown
+    if (iteratedItemType is PyNeverType) return PyAnyType.unknown
+    // widen since used in invariant list/set
+    val analyzedElementsType = PyTypeUtil.widenLiteralAndNumeric(iteratedItemType)
+    return if (sequence.elements.size > MAX_ANALYZED_ELEMENTS_OF_LITERALS) {
       PyUnionType.createWeakType(analyzedElementsType)
     }
     else {
       analyzedElementsType
+    }
+  }
+
+  private fun getTupleElementTypes(sequence: PySequenceExpression, context: TypeEvalContext): List<PyType?> {
+    val flattenedElements = flattenSequenceElements(sequence).take(MAX_ANALYZED_ELEMENTS_OF_LITERALS)
+    val elementTypes = flattenedElements.map { context.getNarrowedType(it) }
+    return elementTypes
+  }
+
+  internal fun flattenSequenceElements(expression: PySequenceExpression): List<PyExpression> {
+    val result = mutableListOf<PyExpression>()
+    collectFlattenedElements(expression.elements, result)
+    return result
+  }
+
+  private fun collectFlattenedElements(elements: Array<out PyExpression>, result: MutableList<PyExpression>) {
+    for (element in elements) {
+      val starOperand = (element as? PyStarExpression)?.expression
+      if (starOperand != null) {
+        val unwrappedStarOperand = PyPsiUtils.flattenParens(starOperand)
+        when (unwrappedStarOperand) {
+          // `(1, *(2, 3))` and `(1, *[2, 3])` splice their elements in directly.
+          is PyTupleExpression -> collectFlattenedElements(unwrappedStarOperand.elements, result)
+          is PyListLiteralExpression -> collectFlattenedElements(unwrappedStarOperand.elements, result)
+          // Any other starred operand cannot be flattened syntactically; keep the star expression as-is.
+          else -> result.add(element)
+        }
+      }
+      else {
+        result.add(element)
+      }
     }
   }
 

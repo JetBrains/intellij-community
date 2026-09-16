@@ -7,49 +7,49 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="netty-tcnative-boringssl" type="repository">
-        <properties maven-id="io.netty:netty-tcnative-boringssl-static:2.0.78.Final">
+        <properties maven-id="io.netty:netty-tcnative-boringssl-static:2.0.84.Final">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-tcnative-boringssl-static/2.0.78.Final/netty-tcnative-boringssl-static-2.0.78.Final.jar">
-              <sha256sum>0e21ede32de7363affc2ae1bc412ed612853957c7081d87ca5320281db3f30bf</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-tcnative-boringssl-static/2.0.84.Final/netty-tcnative-boringssl-static-2.0.84.Final.jar">
+              <sha256sum>15fe111906d28b1075da6362db6b76590b232dd400e1401cf4af36fc4f321add</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-tcnative-classes/2.0.78.Final/netty-tcnative-classes-2.0.78.Final.jar">
-              <sha256sum>3ca66d8c6c0f003242f954cc1822a32445109ac25b8582840ba3d8e3c92f0a3e</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-tcnative-classes/2.0.84.Final/netty-tcnative-classes-2.0.84.Final.jar">
+              <sha256sum>7a4437abf98b0cec053af4443fe321177d2cfccfec7bcad4e7d8b75571bbec4d</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-tcnative-boringssl-static/2.0.78.Final/netty-tcnative-boringssl-static-2.0.78.Final-linux-x86_64.jar">
-              <sha256sum>bb830d661dc70fac2df8d147ffb64d61566211455272bb75d09d1662ec843aae</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-tcnative-boringssl-static/2.0.84.Final/netty-tcnative-boringssl-static-2.0.84.Final-linux-x86_64.jar">
+              <sha256sum>19d7cd7c3081c80ebe417af870e2fe62be1ca5969683d9cd402bb3ebc754d257</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-tcnative-boringssl-static/2.0.78.Final/netty-tcnative-boringssl-static-2.0.78.Final-linux-aarch_64.jar">
-              <sha256sum>85f6e25942df7308c9a6e66015a5ba87589d6f239231fb5b175138afe451b592</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-tcnative-boringssl-static/2.0.84.Final/netty-tcnative-boringssl-static-2.0.84.Final-linux-aarch_64.jar">
+              <sha256sum>610f92fa30ee2a4f5022ddb005728b6914b53101de195a99266f526ce1aeda1e</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-tcnative-boringssl-static/2.0.78.Final/netty-tcnative-boringssl-static-2.0.78.Final-osx-x86_64.jar">
-              <sha256sum>6c6c574bf9ee85b53f176d7de1101d348cf4374014df2ea26b691e7f335d69ba</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-tcnative-boringssl-static/2.0.84.Final/netty-tcnative-boringssl-static-2.0.84.Final-osx-x86_64.jar">
+              <sha256sum>06131177483011b3fc5c7a6636da89df53551cca0ea0f843b3f2fbf932c147ec</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-tcnative-boringssl-static/2.0.78.Final/netty-tcnative-boringssl-static-2.0.78.Final-osx-aarch_64.jar">
-              <sha256sum>29019bf2e3045acaf4fd17b9e4033536141c8971939cd78cc82a12fe74fe24c1</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-tcnative-boringssl-static/2.0.84.Final/netty-tcnative-boringssl-static-2.0.84.Final-osx-aarch_64.jar">
+              <sha256sum>00e078d2296c987206a10a40bcc2328800e2233b1517a8254ed324a223301206</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-tcnative-boringssl-static/2.0.78.Final/netty-tcnative-boringssl-static-2.0.78.Final-windows-x86_64.jar">
-              <sha256sum>c720390d4733fa4997f4648327fcb63a688a72afd3ddd05d368759c6c65aef6b</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-tcnative-boringssl-static/2.0.84.Final/netty-tcnative-boringssl-static-2.0.84.Final-windows-x86_64.jar">
+              <sha256sum>1aed01f988166b8c9c16381f885e5c521652167789b9d822e84f9992f9c1bae0</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-tcnative-boringssl-static/2.0.78.Final/netty-tcnative-boringssl-static-2.0.78.Final.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-tcnative-classes/2.0.78.Final/netty-tcnative-classes-2.0.78.Final.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-tcnative-boringssl-static/2.0.78.Final/netty-tcnative-boringssl-static-2.0.78.Final-linux-x86_64.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-tcnative-boringssl-static/2.0.78.Final/netty-tcnative-boringssl-static-2.0.78.Final-linux-aarch_64.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-tcnative-boringssl-static/2.0.78.Final/netty-tcnative-boringssl-static-2.0.78.Final-osx-x86_64.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-tcnative-boringssl-static/2.0.78.Final/netty-tcnative-boringssl-static-2.0.78.Final-osx-aarch_64.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-tcnative-boringssl-static/2.0.78.Final/netty-tcnative-boringssl-static-2.0.78.Final-windows-x86_64.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-tcnative-boringssl-static/2.0.84.Final/netty-tcnative-boringssl-static-2.0.84.Final.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-tcnative-classes/2.0.84.Final/netty-tcnative-classes-2.0.84.Final.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-tcnative-boringssl-static/2.0.84.Final/netty-tcnative-boringssl-static-2.0.84.Final-linux-x86_64.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-tcnative-boringssl-static/2.0.84.Final/netty-tcnative-boringssl-static-2.0.84.Final-linux-aarch_64.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-tcnative-boringssl-static/2.0.84.Final/netty-tcnative-boringssl-static-2.0.84.Final-osx-x86_64.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-tcnative-boringssl-static/2.0.84.Final/netty-tcnative-boringssl-static-2.0.84.Final-osx-aarch_64.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-tcnative-boringssl-static/2.0.84.Final/netty-tcnative-boringssl-static-2.0.84.Final-windows-x86_64.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-tcnative-boringssl-static/2.0.78.Final/netty-tcnative-boringssl-static-2.0.78.Final-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-tcnative-classes/2.0.78.Final/netty-tcnative-classes-2.0.78.Final-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-tcnative-boringssl-static/2.0.78.Final/netty-tcnative-boringssl-static-2.0.78.Final-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-tcnative-boringssl-static/2.0.78.Final/netty-tcnative-boringssl-static-2.0.78.Final-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-tcnative-boringssl-static/2.0.78.Final/netty-tcnative-boringssl-static-2.0.78.Final-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-tcnative-boringssl-static/2.0.78.Final/netty-tcnative-boringssl-static-2.0.78.Final-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-tcnative-boringssl-static/2.0.78.Final/netty-tcnative-boringssl-static-2.0.78.Final-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-tcnative-boringssl-static/2.0.84.Final/netty-tcnative-boringssl-static-2.0.84.Final-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-tcnative-classes/2.0.84.Final/netty-tcnative-classes-2.0.84.Final-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-tcnative-boringssl-static/2.0.84.Final/netty-tcnative-boringssl-static-2.0.84.Final-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-tcnative-boringssl-static/2.0.84.Final/netty-tcnative-boringssl-static-2.0.84.Final-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-tcnative-boringssl-static/2.0.84.Final/netty-tcnative-boringssl-static-2.0.84.Final-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-tcnative-boringssl-static/2.0.84.Final/netty-tcnative-boringssl-static-2.0.84.Final-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-tcnative-boringssl-static/2.0.84.Final/netty-tcnative-boringssl-static-2.0.84.Final-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

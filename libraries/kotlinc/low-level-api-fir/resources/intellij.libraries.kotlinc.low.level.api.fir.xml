@@ -1,14 +1,15 @@
-<idea-plugin visibility="internal">
+<idea-plugin visibility="public">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <module name="intellij.libraries.kotlinc.analysis.api"/>
+    <module name="intellij.libraries.kotlinc.analysis.api.impl.base"/>
     <module name="intellij.libraries.kotlinc.analysis.api.platform.interface"/>
+    <module name="intellij.libraries.kotlinc.assignment.compiler.plugin"/>
     <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
     <module name="intellij.libraries.kotlinc.kotlin.compiler.fir"/>
     <module name="intellij.libraries.kotlinc.kotlin.scripting.common"/>
     <module name="intellij.libraries.kotlinc.kotlin.scripting.compiler.impl"/>
-    <module name="intellij.libraries.kotlinc.kotlin.scripting.jvm"/>
     <module name="intellij.libraries.kotlinc.scripting.compiler.plugin"/>
-    <module name="intellij.libraries.kotlinc.assignment.compiler.plugin"/>
     <module name="intellij.platform.backend"/>
   </dependencies>
   <!-- endregion -->

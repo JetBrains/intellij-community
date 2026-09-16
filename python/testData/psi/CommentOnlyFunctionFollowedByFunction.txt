@@ -1,0 +1,27 @@
+PyFile:CommentOnlyFunctionFollowedByFunction.py
+  PyFunction('f')
+    PsiElement(Py:DEF_KEYWORD)('def')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:IDENTIFIER)('f')
+    PyParameterList
+      PsiElement(Py:LPAR)('(')
+      PsiElement(Py:RPAR)(')')
+    PsiElement(Py:COLON)(':')
+    PsiWhiteSpace('\n    ')
+    PyStatementList
+      PsiComment(Py:END_OF_LINE_COMMENT)('# TODO')
+      PsiErrorElement:Indent expected
+        <empty list>
+  PsiWhiteSpace('\n\n\n')
+  PyFunction('g')
+    PsiElement(Py:DEF_KEYWORD)('def')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:IDENTIFIER)('g')
+    PyParameterList
+      PsiElement(Py:LPAR)('(')
+      PsiElement(Py:RPAR)(')')
+    PsiElement(Py:COLON)(':')
+    PsiWhiteSpace('\n    ')
+    PyStatementList
+      PyPassStatement
+        PsiElement(Py:PASS_KEYWORD)('pass')

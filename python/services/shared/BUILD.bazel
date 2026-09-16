@@ -11,6 +11,10 @@ jps_test(
 )
 ### skip generation section `test intellij.python.community.services.shared.tests`
 
+### auto-generated section `dev intellij.python.community.services.shared` start
+content_module_jar(module = ":shared")
+### auto-generated section `dev intellij.python.community.services.shared` end
+
 ### auto-generated section `build intellij.python.community.services.shared` start
 create_kotlinc_options(
     name = "custom_shared",
@@ -45,8 +49,6 @@ jvm_library(
         "//platform/util",
     ],
 )
-
-content_module_jar(module = ":shared")
 
 jvm_library(
     name = "shared_test_lib",

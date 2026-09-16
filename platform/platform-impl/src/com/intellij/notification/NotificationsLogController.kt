@@ -6,12 +6,12 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 interface NotificationsLogController {
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun show()
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun activate(focus: Boolean = true)
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun toggle()
 }

@@ -61,6 +61,7 @@
     <orderEntry type="module" module-name="intellij.platform.vcs.impl.lang" scope="TEST" />
     <orderEntry type="module" module-name="intellij.xml.dom.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.relaxng" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.xml.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.spellchecker" />
     <orderEntry type="module" module-name="intellij.grazie.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl" scope="RUNTIME" />
@@ -70,7 +71,7 @@
     <orderEntry type="library" scope="TEST" name="kotlin-stdlib" level="project" />
     <orderEntry type="library" scope="TEST" name="easymock" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.assertj.core" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="kotlin-test" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinTest" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.configurationStore.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testExtensions" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.snakeyaml" scope="TEST" />
@@ -186,17 +187,11 @@
     <orderEntry type="module" module-name="intellij.platform.eel.impl.base" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit5.params" scope="TEST" />
     <orderEntry type="module" module-name="intellij.webp.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.structuralSearch.plugin" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.platform.structuralSearch" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.maven.plugin" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.maven" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.gradle.plugin" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.gradle" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.searchEverywhere.backend" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.aetherDependencyResolver.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.backend" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.lucene.common" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.misc.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.smRunner" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.smRunner.vcs" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.structureView.plugin" scope="TEST" />

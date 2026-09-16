@@ -10,6 +10,21 @@ jps_test(
 )
 ### skip generation section `test intellij.searchEverywhereMl.ranking.core.tests`
 
+### auto-generated section `dev intellij.searchEverywhereMl.ranking.core` start
+content_module_jar(
+    libraries = [
+        # do not sort,
+        "@lib//:search_everywhere_ml-ranking-core-find-action-model",
+        "@lib//:search_everywhere_ml-ranking-core-find-action-model-experimental",
+        "@lib//:search_everywhere_ml-ranking-core-find-file-model",
+        "@lib//:search_everywhere_ml-ranking-core-find-file-model-experimental",
+        "@lib//:search_everywhere_ml-ranking-core-find-classes-model",
+        "@lib//:search_everywhere_ml-ranking-core-find-classes-model-experimental",
+    ],
+    module = ":core",
+)
+### auto-generated section `dev intellij.searchEverywhereMl.ranking.core` end
+
 ### auto-generated section `build intellij.searchEverywhereMl.ranking.core` start
 jvm_library(
     name = "core",
@@ -68,19 +83,6 @@ jvm_library(
         "//platform/searchEverywhere/frontend",
         "//platform/util:util-ui",
     ],
-)
-
-content_module_jar(
-    libraries = [
-        # do not sort,
-        "@lib//:search_everywhere_ml-ranking-core-find-action-model",
-        "@lib//:search_everywhere_ml-ranking-core-find-action-model-experimental",
-        "@lib//:search_everywhere_ml-ranking-core-find-file-model",
-        "@lib//:search_everywhere_ml-ranking-core-find-file-model-experimental",
-        "@lib//:search_everywhere_ml-ranking-core-find-classes-model",
-        "@lib//:search_everywhere_ml-ranking-core-find-classes-model-experimental",
-    ],
-    module = ":core",
 )
 
 jvm_library(

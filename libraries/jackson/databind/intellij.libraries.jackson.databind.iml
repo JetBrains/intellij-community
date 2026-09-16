@@ -9,10 +9,10 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="jackson-databind" type="repository">
-        <properties maven-id="com.fasterxml.jackson.core:jackson-databind:2.19.0">
+        <properties maven-id="com.fasterxml.jackson.core:jackson-databind:2.22.2">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-databind/2.19.0/jackson-databind-2.19.0.jar">
-              <sha256sum>ceda311f476c3b18e1d2b240c94e2dcb9c8d44e70f8afa9facab88bac4ddc03a</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-databind/2.22.2/jackson-databind-2.22.2.jar">
+              <sha256sum>d0da14c12b16b5d54719aa172d83b542ff4abeb8b0fb7db476fde8ceece760ca</sha256sum>
             </artifact>
           </verification>
           <exclude>
@@ -22,11 +22,11 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-databind/2.19.0/jackson-databind-2.19.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-databind/2.22.2/jackson-databind-2.22.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-databind/2.19.0/jackson-databind-2.19.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-databind/2.22.2/jackson-databind-2.22.2-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

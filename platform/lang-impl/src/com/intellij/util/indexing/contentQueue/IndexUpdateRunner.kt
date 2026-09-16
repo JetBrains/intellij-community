@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.contentQueue
 
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.application.readActionUndispatched
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.ThrottledLogger
@@ -26,6 +27,8 @@ import com.intellij.platform.diagnostic.telemetry.Indexes
 import com.intellij.platform.diagnostic.telemetry.Scope
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
+import com.intellij.serviceContainer.AlreadyDisposedException
+import com.intellij.util.ExceptionUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.SystemProperties.getBooleanProperty
@@ -44,6 +47,7 @@ import com.intellij.util.indexing.diagnostic.IndexStatisticGroup
 import com.intellij.util.indexing.diagnostic.IndexingFileSetStatistics
 import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl
 import com.intellij.util.indexing.events.FileIndexingRequest
+import com.intellij.util.io.ClosedStorageException
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineName
@@ -214,6 +218,7 @@ class IndexUpdateRunner(
               LOG.debug("Coroutine $workerNo has finished gracefully")
             }
             catch (e: Throwable) {
+              rethrowControlFlowException(e)
               if (!Logger.shouldRethrow(e)) {
                 LOG.warn("Coroutine $workerNo finished exceptionally", e)
               }
@@ -269,6 +274,10 @@ class IndexUpdateRunner(
       logFailedToLoadContentException(e)
     }
     catch (e: Throwable) {
+      rethrowControlFlowException(e)
+      if (indexer.isShutdownStarted() && ExceptionUtil.causedBy(e, ClosedStorageException::class.java)) {
+        throw AlreadyDisposedException("File-based index is shutting down")
+      }
       FileBasedIndexImpl.LOG.error("""
   Error while indexing ${fileIndexingRequest.file.presentableUrl}
   To reindex this file IDE has to be restarted
@@ -281,6 +290,9 @@ class IndexUpdateRunner(
     private val fileBasedIndex: FileBasedIndexImpl,
     private val indexingRequest: IndexingRequestToken,
   ) {
+    /** Stops file processing after the file-based index starts to close. */
+    fun isShutdownStarted(): Boolean = fileBasedIndex.isShutdownStarted
+
     companion object {
       private val badFileCounter = AtomicInteger(0)
     }

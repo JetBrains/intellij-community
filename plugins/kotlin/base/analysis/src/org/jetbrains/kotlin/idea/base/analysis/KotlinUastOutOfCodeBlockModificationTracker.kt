@@ -8,7 +8,6 @@ import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.psi.PsiManager
 import kotlinx.coroutines.CoroutineScope
-import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
 import org.jetbrains.kotlin.analysis.api.platform.analysisMessageBus
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinGlobalSourceModuleStateModificationEvent
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinGlobalSourceOutOfBlockModificationEvent
@@ -18,7 +17,6 @@ import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModuleOutOf
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.uast.UastLanguagePlugin
 
-@OptIn(KaPlatformInterface::class)
 @Service(Service.Level.PROJECT)
 class KotlinUastOutOfCodeBlockModificationTracker internal constructor(private val project: Project, coroutineScope: CoroutineScope) : ModificationTracker {
     private val modificationTracker = SimpleModificationTracker()

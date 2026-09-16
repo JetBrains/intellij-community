@@ -14,7 +14,9 @@ import com.intellij.openapi.editor.event.SelectionEvent;
 import com.intellij.openapi.editor.event.SelectionListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
+import com.intellij.openapi.editor.ex.RangeMarkers;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.impl.marker.SnapshotMarkerRootStore;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -31,6 +33,7 @@ import com.intellij.util.SmartList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.awt.AWTEvent;
 import java.awt.Color;
@@ -50,13 +53,13 @@ public final class FocusModeModel implements Disposable {
   private RangeMarker myFocusModeRange;
 
   private final List<FocusModeModelListener> mySegmentListeners = new SmartList<>();
-  private final RangeMarkerTree<RangeMarkerEx> myFocusMarkerTree;
+  private final @Nullable RangeMarkerTree<RangeMarkerEx> myFocusMarkerTree;
   private volatile @Nullable SnapshotFocusRegionStorage mySnapshotFocusRegionStorage;
 
   @ApiStatus.Internal
   public FocusModeModel(@NotNull EditorImpl editor) {
     myEditor = editor;
-    myFocusMarkerTree = new RangeMarkerTree<>(editor.getElfDocument());
+    myFocusMarkerTree = RangeMarkers.Holder.USE_PMARKER_IMPLEMENTATION ? null : new RangeMarkerTree<>(editor.getElfDocument());
 
     myEditor.getScrollingModel().addVisibleAreaListener(_ -> {
       AWTEvent event = IdeEventQueue.getInstance().getTrueCurrentEvent();
@@ -147,12 +150,13 @@ public final class FocusModeModel implements Disposable {
   @ApiStatus.Internal
   public @NotNull RangeMarker createFocusRegion(int start, int end) {
     RangeMarkerEx marker;
-    if (RangeMarkerStorageImpl.Holder.USE_PMARKER_IMPLEMENTATION) {
+    RangeMarkerTree<RangeMarkerEx> markerTree = myFocusMarkerTree;
+    if (markerTree == null) {
       marker = getOrCreateSnapshotFocusRegionStorage().create(start, end);
     }
     else {
       marker = new RangeMarkerImpl(myEditor.getElfDocument(), start, end, false, false);
-      myFocusMarkerTree.addInterval(marker, start, end, false, false, true, 0);
+      markerTree.addInterval(marker, start, end, false, false, true, 0);
     }
     mySegmentListeners.forEach(l -> l.focusRegionAdded(marker));
     return marker;
@@ -179,23 +183,30 @@ public final class FocusModeModel implements Disposable {
       removed = storage != null && storage.remove(snapshotRegion);
     }
     else {
-      removed = myFocusMarkerTree.removeInterval((RangeMarkerEx)marker);
+      RangeMarkerTree<RangeMarkerEx> markerTree = myFocusMarkerTree;
+      removed = markerTree != null && markerTree.removeInterval((RangeMarkerEx)marker);
     }
     if (removed) mySegmentListeners.forEach(l -> l.focusRegionRemoved(marker));
   }
 
   private boolean processFocusRegionsContaining(int offset, @NotNull Processor<? super RangeMarkerEx> processor) {
+    RangeMarkerTree<RangeMarkerEx> markerTree = myFocusMarkerTree;
+    if (markerTree != null) {
+      return markerTree.processContaining(offset, processor);
+    }
     SnapshotFocusRegionStorage storage = mySnapshotFocusRegionStorage;
-    return myFocusMarkerTree.processContaining(offset, processor) &&
-           (storage == null || storage.processContaining(offset, processor));
+    return storage == null || storage.processContaining(offset, processor);
   }
 
   private boolean processFocusRegionsOverlappingWith(int start,
                                                      int end,
                                                      @NotNull Processor<? super RangeMarkerEx> processor) {
+    RangeMarkerTree<RangeMarkerEx> markerTree = myFocusMarkerTree;
+    if (markerTree != null) {
+      return markerTree.processOverlappingWith(start, end, processor);
+    }
     SnapshotFocusRegionStorage storage = mySnapshotFocusRegionStorage;
-    return myFocusMarkerTree.processOverlappingWith(start, end, processor) &&
-           (storage == null || storage.processOverlapping(start, end, processor));
+    return storage == null || storage.processOverlapping(start, end, processor);
   }
 
   private synchronized @NotNull SnapshotFocusRegionStorage getOrCreateSnapshotFocusRegionStorage() {
@@ -205,6 +216,11 @@ public final class FocusModeModel implements Disposable {
       mySnapshotFocusRegionStorage = storage;
     }
     return storage;
+  }
+
+  @TestOnly
+  @NotNull SnapshotMarkerRootStore rootStore() {
+    return getOrCreateSnapshotFocusRegionStorage().getRootStore();
   }
 
   @ApiStatus.Internal
@@ -253,9 +269,14 @@ public final class FocusModeModel implements Disposable {
 
   @Override
   public void dispose() {
-    myFocusMarkerTree.dispose(myEditor.getElfDocument());
-    SnapshotFocusRegionStorage storage = mySnapshotFocusRegionStorage;
-    if (storage != null) storage.dispose();
+    RangeMarkerTree<RangeMarkerEx> markerTree = myFocusMarkerTree;
+    if (markerTree != null) {
+      markerTree.dispose(myEditor.getElfDocument());
+    }
+    else {
+      SnapshotFocusRegionStorage storage = mySnapshotFocusRegionStorage;
+      if (storage != null) storage.dispose();
+    }
   }
 
   private static boolean intersects(RangeMarker a, RangeMarker b) {

@@ -27,12 +27,12 @@ internal object CancellationCheckProviders : LanguageExtension<CancellationCheck
 @ApiStatus.Internal
 interface CancellationCheckProvider {
 
-  @RequiresReadLock
-  @RequiresBackgroundThread
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun findCancellationCheckCall(element: PsiElement): String
 
-  @RequiresReadLock
-  @RequiresBackgroundThread
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun isCancellationCheckCall(element: PsiElement, cancellationCheckFqn: String): Boolean
 
 }

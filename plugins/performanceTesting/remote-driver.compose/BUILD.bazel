@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.performanceTesting.remoteDriver.compose` start
+content_module_jar(module = ":remote-driver.compose")
+### auto-generated section `dev intellij.performanceTesting.remoteDriver.compose` end
+
 ### auto-generated section `build intellij.performanceTesting.remoteDriver.compose` start
 jvm_library(
     name = "remote-driver.compose",
@@ -30,8 +34,6 @@ jvm_library(
         "//plugins/performanceTesting/remote-driver",
     ],
 )
-
-content_module_jar(module = ":remote-driver.compose")
 
 jvm_library(
     name = "remote-driver.compose_test_lib",

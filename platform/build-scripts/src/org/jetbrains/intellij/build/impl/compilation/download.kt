@@ -7,17 +7,18 @@ import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withTimeout
-import org.jetbrains.intellij.build.forEachConcurrent
 import org.jetbrains.intellij.build.http2Client.DownloadResult
 import org.jetbrains.intellij.build.http2Client.Http2ClientConnection
 import org.jetbrains.intellij.build.http2Client.Http2ClientConnectionFactory
 import org.jetbrains.intellij.build.http2Client.ZstdDecompressContextPool
 import org.jetbrains.intellij.build.http2Client.checkMirrorAndConnect
 import org.jetbrains.intellij.build.http2Client.download
+import org.jetbrains.intellij.build.http2Client.forEachConcurrentSuspending
 import org.jetbrains.intellij.build.io.ZipEntryProcessorResult
 import org.jetbrains.intellij.build.io.readZipFile
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
+import org.jetbrains.intellij.build.telemetry.useSuspending
 import java.io.IOException
 import java.net.URI
 import java.nio.channels.FileChannel
@@ -42,9 +43,9 @@ internal suspend fun downloadCompilationCache(
 ) {
   checkMirrorAndConnect(initialServerUri = serverUrl, client = client) { connection, urlPathPrefix ->
     val zstdDecompressContextPool = ZstdDecompressContextPool()
-    toDownload.forEachConcurrent(concurrency = downloadParallelism) { item ->
+    toDownload.forEachConcurrentSuspending(concurrency = downloadParallelism) { item ->
       val urlPath = "$urlPathPrefix/${item.name}/${item.file.fileName}"
-      spanBuilder("download").setAttribute("name", item.name).setAttribute("urlPath", urlPath).use { span ->
+      spanBuilder("download").setAttribute("name", item.name).setAttribute("urlPath", urlPath).useSuspending { span ->
         try {
           val (downloaded, digest) = doDownloadWithTimeout(
             item = item,

@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.gradle.codeInsight.kotlin` start
+content_module_jar(module = ":kotlin")
+### auto-generated section `dev intellij.gradle.codeInsight.kotlin` end
+
 ### auto-generated section `build intellij.gradle.codeInsight.kotlin` start
 jvm_library(
     name = "kotlin",
@@ -20,8 +24,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = ["@lib//:kotlin-stdlib"],
 )
-
-content_module_jar(module = ":kotlin")
 
 jvm_library(
     name = "kotlin_test_lib",

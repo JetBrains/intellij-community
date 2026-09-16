@@ -1,9 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.productLayout.generator
 
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
 import org.jetbrains.intellij.build.productLayout.doGenerateAllModuleSetsInternal
 import org.jetbrains.intellij.build.productLayout.pipeline.ComputeContext
 import org.jetbrains.intellij.build.productLayout.pipeline.DataSlot
@@ -11,6 +8,7 @@ import org.jetbrains.intellij.build.productLayout.pipeline.ModuleSetsOutput
 import org.jetbrains.intellij.build.productLayout.pipeline.NodeIds
 import org.jetbrains.intellij.build.productLayout.pipeline.PipelineNode
 import org.jetbrains.intellij.build.productLayout.pipeline.Slots
+import org.jetbrains.intellij.build.mapConcurrent
 import java.nio.file.Path
 
 /**
@@ -30,22 +28,20 @@ internal object ModuleSetXmlGenerator : PipelineNode {
   override val id get() = NodeIds.MODULE_SET_XML
   override val produces: Set<DataSlot<*>> get() = setOf(Slots.MODULE_SETS)
 
-  override suspend fun execute(ctx: ComputeContext) {
-    coroutineScope {
+  override fun execute(ctx: ComputeContext) {
+    run {
       val model = ctx.model
       // Generate module sets for all configured sources in parallel
-      val results = model.discovery.moduleSetSources.map { (label, source) ->
+      val results = model.discovery.moduleSetSources.entries.mapConcurrent { (label, source) ->
         val (sourceObj, outputDir) = source
-        async {
-          doGenerateAllModuleSetsInternal(
-            obj = sourceObj,
-            outputDir = outputDir,
-            label = label,
-            outputProvider = model.outputProvider,
-            strategy = model.generatedArtifactWritePolicy,
-          )
-        }
-      }.awaitAll()
+        doGenerateAllModuleSetsInternal(
+          obj = sourceObj,
+          outputDir = outputDir,
+          label = label,
+          outputProvider = model.outputProvider,
+          strategy = model.generatedArtifactWritePolicy,
+        )
+      }
 
       // Aggregate tracking maps across all labels
       val aggregatedTrackingMaps = HashMap<Path, MutableSet<String>>()

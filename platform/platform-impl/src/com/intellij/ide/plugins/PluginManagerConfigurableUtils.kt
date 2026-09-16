@@ -4,7 +4,6 @@ package com.intellij.ide.plugins
 import com.intellij.ide.plugins.marketplace.statistics.enums.PluginManagerOpenSourceEnum
 import com.intellij.ide.plugins.newui.TabbedPaneHeaderComponent
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogBuilder
 import com.intellij.openapi.util.NlsSafe
@@ -45,17 +44,12 @@ object PluginManagerConfigurableUtils {
     searchQuery: @NlsSafe String,
     openSource: PluginManagerOpenSourceEnum? = null,
   ) {
-    val configurable = PluginManagerConfigurable().apply {
-      if (openSource != null) {
-        setOpenSource(openSource)
-      }
-    }
-    ShowSettingsUtil.getInstance().editConfigurable(project, configurable, Runnable {
+    PluginManagerConfigurable.showPluginManagerDialog(project, openSource ?: PluginManagerOpenSourceEnum.OTHER) { configurable ->
       configurable.openInstalledTab("")
       val search = configurable.enableSearch(searchQuery, true)
       if (search != null) {
         ApplicationManager.getApplication().invokeLater(search)
       }
-    })
+    }
   }
 }

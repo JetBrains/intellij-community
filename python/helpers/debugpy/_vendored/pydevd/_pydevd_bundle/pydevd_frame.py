@@ -13,7 +13,11 @@ from _pydevd_bundle.pydevd_constants import (
     PYDEVD_USE_SYS_MONITORING,
 )
 from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame, just_raised, remove_exception_from_frame, ignore_exception_trace
-from _pydevd_bundle.pydevd_utils import get_clsname_for_code
+from _pydevd_bundle.pydevd_utils import (
+    get_clsname_for_code,
+    is_exception_in_test_unit_can_be_ignored,
+    should_stop_on_failed_test,
+)
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame
 from _pydevd_bundle.pydevd_comm_constants import constant_to_str, CMD_SET_FUNCTION_BREAK
 import sys
@@ -368,7 +372,12 @@ class PyDBFrame:
 
             plugin_manager = py_db.plugin
             has_exception_breakpoints = (
-                py_db.break_on_caught_exceptions or py_db.break_on_user_uncaught_exceptions or py_db.has_plugin_exception_breaks
+                py_db.break_on_caught_exceptions
+                or py_db.break_on_user_uncaught_exceptions
+                or py_db.has_plugin_exception_breaks
+                # JetBrains extension (PY-88218): a unit test session must trace an
+                # exception even when the user set no breakpoint.
+                or py_db.stop_on_failed_tests
             )
 
             stop_frame = info.pydev_step_stop
@@ -1079,6 +1088,14 @@ def should_stop_on_exception(py_db, info, frame, thread, arg, prev_user_uncaught
                     result = py_db.plugin.exception_break(py_db, frame, thread, arg, is_unwind)
                     if result:
                         should_stop, frame = result
+
+                # JetBrains extension (PY-88218): stop when an exception makes a test fail.
+                if not should_stop and py_db.stop_on_failed_tests:
+                    if py_db.is_test_item_or_set_up_caller(trace) and not is_exception_in_test_unit_can_be_ignored(exception):
+                        # `handle_exception` adds the exception to the frame it suspends in.
+                        should_stop = should_stop_on_failed_test(arg)
+                        if should_stop:
+                            info.pydev_message = "python-AssertionError"
             except:
                 pydev_log.exception()
 
@@ -1215,7 +1232,9 @@ def handle_exception(py_db, thread, frame, arg, exception_type):
             while trace_obj.tb_next is not None:
                 trace_obj = trace_obj.tb_next
 
-        if py_db.ignore_exceptions_thrown_in_lines_with_ignore_exception:
+        # JetBrains extension (PY-88218): a unit test session ignores the
+        # `# @IgnoreException` comment, because the test result is what matters.
+        if py_db.ignore_exceptions_thrown_in_lines_with_ignore_exception and not py_db.stop_on_failed_tests:
             for check_trace_obj in (initial_trace_obj, trace_obj):
                 abs_real_path_and_base = get_abs_path_real_path_and_base_from_frame(check_trace_obj.tb_frame)
                 absolute_filename = abs_real_path_and_base[0]
@@ -1281,6 +1300,25 @@ def handle_exception(py_db, thread, frame, arg, exception_type):
                 frame_id_to_frame[id(f)] = f
                 f = f.f_back
             f = None
+
+            if py_db.stop_on_failed_tests:
+                # JetBrains extension (PY-88218): the exception reached the test framework, so
+                # find the deepest frame that still belongs to the project and suspend there.
+                f = trace_obj.tb_frame
+                while f is not None:
+                    if py_db.in_project_scope(f):
+                        frame = f
+                        break
+                    f = f.f_back
+                f = None
+
+                trace_obj = initial_trace_obj
+                while trace_obj is not None:
+                    if trace_obj.tb_frame is frame:
+                        break
+                    trace_obj = trace_obj.tb_next
+
+                add_exception_to_frame(frame, (arg[0], arg[1], trace_obj))
 
             stopped = True
             py_db.send_caught_exception_stack(thread, arg, id(frame))

@@ -42,6 +42,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.DumbUtil;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -300,7 +301,8 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
 
   private void addDefaultAdvertisements(@NotNull CompletionParameters parameters) {
     if (DumbService.isDumb(getProject())) {
-      addAdvertisement(IdeBundle.dumbModeMessage("dumb.mode.analyzing.project", "dumb.mode.light.analyzing.project"),
+      addAdvertisement(DumbUtil.dumbModeMessage(IdeBundle.message("dumb.mode.analyzing.project"),
+                                                IdeBundle.message("dumb.mode.light.analyzing.project")),
                        AnimatedIcon.Default.INSTANCE);
       return;
     }

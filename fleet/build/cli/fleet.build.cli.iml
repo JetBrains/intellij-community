@@ -25,10 +25,10 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
-    <orderEntry type="library" name="kotlinx-io-core" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.io" />
     <orderEntry type="library" name="slf4j-api" level="project" />
     <orderEntry type="library" name="fleet:logback-classic" level="project" />
-    <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
     <orderEntry type="library" name="fleet:google.devtools.ksp.symbol.processing.api" level="project" />
     <orderEntry type="library" name="fleet:google.devtools.ksp.symbol.processing.aa.embeddable" level="project" />
     <orderEntry type="library" name="fleet:google.devtools.ksp.symbol.processing.common.deps" level="project" />

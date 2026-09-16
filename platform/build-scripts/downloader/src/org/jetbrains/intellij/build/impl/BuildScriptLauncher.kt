@@ -43,17 +43,25 @@ object BuildScriptLauncher {
       exitProcess(0)
     }
     catch (t: Throwable) {
+      val cause = (t as? BuildCancellationException)?.cause ?: t
+
+      // BuildLifetime installs a failure reporter on this thread;
+      // it stops the span export, prints the stack trace once, and prints the failure summary
+      val reporter = Thread.currentThread().uncaughtExceptionHandler.takeUnless { it is ThreadGroup }
+      reporter?.uncaughtException(Thread.currentThread(), cause)
+
       val message = StringWriter().apply {
         PrintWriter(this).use { printWriter ->
-          val cause = (t as? BuildCancellationException)?.cause ?: t
           cause.printStackTrace(printWriter)
         }
       }.toString()
 
       if (TeamCityHelper.isUnderTeamCity) {
-        message.chunked(MESSAGE_SPLIT_THRESHOLD).forEach { chunk ->
-          // Under TeamCity non-zero exit code will be displayed as a separate build error
-          println(Message(chunk, "FAILURE", null).asString())
+        if (reporter == null) {
+          message.chunked(MESSAGE_SPLIT_THRESHOLD).forEach { chunk ->
+            // Under TeamCity non-zero exit code will be displayed as a separate build error
+            println(Message(chunk, "FAILURE", null).asString())
+          }
         }
 
         if (t is BuildCancellationException) {
@@ -67,7 +75,9 @@ object BuildScriptLauncher {
         exitProcess(0)
       }
       else {
-        System.err.println("\nFATAL: $message")
+        if (reporter == null) {
+          System.err.println("\nFATAL: $message")
+        }
         exitProcess(1)
       }
     }

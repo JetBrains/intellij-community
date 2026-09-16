@@ -15,6 +15,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.SelectionModel;
@@ -82,6 +83,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.IntroduceHandlerBase;
 import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.refactoring.IntroduceVariableUtil;
+import com.intellij.refactoring.IntroduceVariableUtil.IntroduceVariableCandidates;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.chainCall.ChainCallExtractor;
@@ -89,6 +91,7 @@ import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser.ReplaceChoice;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase.ErrorOrContainer.Container;
+import com.intellij.refactoring.introduceVariable.IntroduceVariableBase.IntroduceVariableResult.Context;
 import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.listeners.RefactoringEventListener;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
@@ -128,15 +131,6 @@ import java.util.TreeSet;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
-import static com.intellij.refactoring.IntroduceVariableUtil.IntroduceVariableCandidates;
-import static com.intellij.refactoring.IntroduceVariableUtil.LOG;
-import static com.intellij.refactoring.IntroduceVariableUtil.findExpressionInRange;
-import static com.intellij.refactoring.IntroduceVariableUtil.findStatementsAtOffset;
-import static com.intellij.refactoring.IntroduceVariableUtil.getErrorMessage;
-import static com.intellij.refactoring.IntroduceVariableUtil.getIntroduceVariableCandidates;
-import static com.intellij.refactoring.IntroduceVariableUtil.preferredSelection;
-import static com.intellij.refactoring.introduceVariable.IntroduceVariableBase.IntroduceVariableResult.Context;
 
 @ApiStatus.Internal
 public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
@@ -184,9 +178,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       return formatDescription(0);
     }
 
-    private static @NotNull IntroduceVariableBase.JavaReplaceChoice allOccurrencesInside(PsiElement parent,
-                                                                                         int sameKeywordCount,
-                                                                                         String finalKeyword) {
+    private static @NotNull JavaReplaceChoice allOccurrencesInside(PsiElement parent, int sameKeywordCount, String finalKeyword) {
       return new JavaReplaceChoice(ReplaceChoice.ALL, null, false) {
         @Override
         public PsiExpression[] filter(ExpressionOccurrenceManager manager) {
@@ -203,6 +195,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     }
   }
 
+  private static final Logger LOG = Logger.getInstance(IntroduceVariableBase.class);
   private static final @NonNls String REFACTORING_ID = "refactoring.extractVariable";
 
   private JavaVariableInplaceIntroducer myInplaceIntroducer;
@@ -212,14 +205,13 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     final SelectionModel selectionModel = editor.getSelectionModel();
     if (!selectionModel.hasSelection()) {
       final int offset = editor.getCaretModel().getOffset();
-      IntroduceVariableCandidates
-        info = getIntroduceVariableCandidates(project, editor, file, offset);
+      IntroduceVariableCandidates info = IntroduceVariableUtil.getIntroduceVariableCandidates(project, editor, file, offset);
       TextRange suggestedSelection = info.bestRangeToExtractFrom();
       if (suggestedSelection != null) {
         selectionModel.setSelection(suggestedSelection.getStartOffset(), suggestedSelection.getEndOffset());
       }
       else {
-        final PsiElement[] statementsInRange = findStatementsAtOffset(editor, file, offset);
+        final PsiElement[] statementsInRange = IntroduceVariableUtil.findStatementsAtOffset(editor, file, offset);
         List<PsiExpression> expressions = info.expressions();
         IntroduceTargetChooser.showChooser(editor, expressions,
                                            new Pass<>() {
@@ -231,7 +223,8 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
                                            },
                                            new PsiExpressionTrimRenderer.RenderFunction(),
                                            RefactoringBundle.message("introduce.target.chooser.expressions.title"),
-                                           preferredSelection(statementsInRange, expressions), ScopeHighlighter.NATURAL_RANGER);
+                                           IntroduceVariableUtil.preferredSelection(statementsInRange, expressions),
+                                           ScopeHighlighter.NATURAL_RANGER);
         return;
       }
     }
@@ -250,8 +243,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
                                                                                                                  @NotNull Editor editor,
                                                                                                                  @NotNull PsiFile file,
                                                                                                                  int offset) {
-    IntroduceVariableCandidates
-      info = getIntroduceVariableCandidates(project, editor, file, offset);
+    IntroduceVariableCandidates info = IntroduceVariableUtil.getIntroduceVariableCandidates(project, editor, file, offset);
     return new Pair<>(info.bestRangeToExtractFrom(), info.expressions());
   }
 
@@ -259,7 +251,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     FeatureUsageTracker.getInstance().triggerFeatureUsed(ProductivityFeatureNames.REFACTORING_INTRODUCE_VARIABLE);
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    return invokeImpl(project, findExpressionInRange(project, file, startOffset, endOffset), editor);
+    return invokeImpl(project, IntroduceVariableUtil.findExpressionInRange(project, file, startOffset, endOffset), editor);
   }
 
   private static @Nullable JavaReplaceChoice findChoice(@NotNull LinkedHashMap<JavaReplaceChoice, List<PsiExpression>> occurrencesMap,
@@ -341,11 +333,11 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
   /**
    * @return the context necessary for performing "Introduce Variable" refactoring.
    */
-  public static @NotNull IntroduceVariableBase.IntroduceVariableResult getIntroduceVariableContext(@NotNull Project project,
-                                                                                                   @Nullable PsiExpression expr,
-                                                                                                   @Nullable Editor editor) {
+  public static @NotNull IntroduceVariableResult getIntroduceVariableContext(@NotNull Project project,
+                                                                             @Nullable PsiExpression expr,
+                                                                             @Nullable Editor editor) {
     if (expr != null) {
-      String message = getErrorMessage(expr);
+      String message = IntroduceVariableUtil.getErrorMessage(expr);
       if (message != null) {
         return new IntroduceVariableResult.Error(message);
       }
@@ -450,7 +442,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
   }
 
   /**
-   * @see IntroduceVariableBase#getAnchor(PsiExpression[])
+   * @see #getAnchor(PsiExpression[])
    */
   public static @Nullable PsiElement getAnchor(PsiElement place) {
     place = getPhysicalElement(place);
@@ -497,7 +489,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     final PsiElement tempContainer = anchorStatement.getParent();
     if (!(tempContainer instanceof PsiCodeBlock)
         && !CommonJavaRefactoringUtil.isLoopOrIf(tempContainer)
-        && !(tempContainer instanceof PsiLambdaExpression) 
+        && !(tempContainer instanceof PsiLambdaExpression)
         && (tempContainer.getParent() instanceof PsiLambdaExpression)) {
       return new ErrorOrContainer.Error(
         JavaRefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", getRefactoringName())
@@ -557,7 +549,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     return parent3 instanceof JspHolderMethod;
   }
 
-  static boolean isFinalVariableOnLHS(PsiExpression expr) {
+  private static boolean isFinalVariableOnLHS(PsiExpression expr) {
     if (expr instanceof PsiReferenceExpression ref
         && RefactoringUtil.isAssignmentLHS(expr)
         && ref.resolve() instanceof PsiVariable var
@@ -833,9 +825,11 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       for (PsiExpression occurrence : myOccurrences) {
         if (!RefactoringUtil.isAssignmentLHS(occurrence)) {
           myNonWrite.add(occurrence);
-        } else if (isFinalVariableOnLHS(occurrence)) {
+        }
+        else if (isFinalVariableOnLHS(occurrence)) {
           myCantReplaceAll = true;
-        } else if (!myNonWrite.isEmpty()) {
+        }
+        else if (!myNonWrite.isEmpty()) {
           myCantReplaceAllButWrite = true;
           myCantReplaceAll = true;
         }
@@ -994,7 +988,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
 
     @Override
     public void accept(JavaReplaceChoice choice) {
-      Consumer<JavaReplaceChoice> dialogIntroduce = 
+      Consumer<JavaReplaceChoice> dialogIntroduce =
         c -> CommandProcessor.getInstance().executeCommand(project, () -> introduce(c), getRefactoringName(), null);
       if (choice == null) {
         dialogIntroduce.accept(null);
@@ -1009,20 +1003,15 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       if (!context.anchorStatement.isValid()) {
         return;
       }
-      final Editor topLevelEditor;
-      if (!InjectedLanguageManager.getInstance(project).isInjectedFragment(context.file())) {
-        topLevelEditor = InjectedLanguageUtil.getTopLevelEditor(editor);
-      }
-      else {
-        topLevelEditor = editor;
-      }
-
+      final Editor topLevelEditor = !InjectedLanguageManager.getInstance(project).isInjectedFragment(context.file())
+                                    ? InjectedLanguageUtil.getTopLevelEditor(editor)
+                                    : editor;
       PsiVariable variable = null;
       try {
         boolean hasWriteAccess = context.occurrencesInfo.myHasWriteAccess;
         final InputValidator validator = new InputValidator(IntroduceVariableBase.this, project, context.occurrenceManager);
 
-        final TypeSelectorManagerImpl typeSelectorManager = 
+        final TypeSelectorManagerImpl typeSelectorManager =
           new TypeSelectorManagerImpl(project, context.originalType, context.expression, context.occurrenceManager.getOccurrences());
         boolean inFinalContext = context.occurrenceManager.isInFinalContext();
         final IntroduceVariableSettings settings =

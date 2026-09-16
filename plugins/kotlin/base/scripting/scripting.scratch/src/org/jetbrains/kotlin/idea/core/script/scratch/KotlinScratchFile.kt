@@ -19,14 +19,14 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.util.SystemProperties
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.kotlin.idea.base.psi.getTopmostElementAtOffset
 import org.jetbrains.kotlin.idea.base.util.sdk
-import org.jetbrains.kotlin.idea.core.script.k2.configurations.KotlinScriptService
-import org.jetbrains.kotlin.idea.core.script.v1.ScratchFileOptions
-import org.jetbrains.kotlin.idea.core.script.v1.ScratchFileOptionsByFile
+import org.jetbrains.kotlin.idea.core.script.ScratchFileOptions
+import org.jetbrains.kotlin.idea.core.script.ScratchFileOptionsByFile
+import org.jetbrains.kotlin.idea.core.script.configurations.KotlinScriptService
+import org.jetbrains.kotlin.idea.core.script.configurations.defaultJavaHome
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtImportDirective
@@ -42,7 +42,7 @@ class KotlinScratchFile(val project: Project, val virtualFile: VirtualFile, val 
     val jdk: Sdk?
         get() {
             module?.let { return it.sdk }
-            val jdkPath = options.selectedJdkHome ?: defaultScratchJavaHome
+            val jdkPath = options.selectedJdkHome ?: defaultJavaHome
             return jdkPath?.let { findJavaByJavaHome(it) }
         }
 
@@ -142,14 +142,6 @@ private fun findJavaByJavaHome(jdkHome: String): Sdk? {
     } ?: javaSdk.takeIf { it.isValidSdkHome(jdkHome) }
         ?.createJdk(javaSdk.suggestSdkName(null, jdkHome).ifBlank { KOTLIN_SCRATCH_JDK_NAME }, jdkHome, false)
 }
-
-val defaultScratchJavaHome: String?
-    get() = sequenceOf(System.getenv("JAVA_HOME"), SystemProperties.getJavaHome())
-        .filterNotNull()
-        .map(String::trim)
-        .filter(String::isNotEmpty)
-        .distinct()
-        .firstOrNull { JavaSdk.getInstance().isValidSdkHome(it) }
 
 fun scratchModuleSdkHome(project: Project, virtualFile: VirtualFile): String? {
     val moduleName = ScratchFileOptionsByFile[project, virtualFile].selectedModule ?: return null

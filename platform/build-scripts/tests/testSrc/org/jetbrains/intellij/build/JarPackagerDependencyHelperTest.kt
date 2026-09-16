@@ -115,8 +115,6 @@ private object EmptyModuleOutputProvider : ModuleOutputProvider {
 
   override fun findLibraryRoots(libraryName: String, moduleLibraryModuleName: String?): List<Path> = emptyList()
 
-  override fun getProjectLibraryToModuleMap(): Map<String, String> = emptyMap()
-
   override fun getModuleOutputRoots(module: JpsModule, forTests: Boolean): List<Path> = emptyList()
 
   override fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? = null

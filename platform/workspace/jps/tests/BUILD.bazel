@@ -26,6 +26,7 @@ jvm_library(
         "//platform/lang-impl:lang-tests",
         "//platform/core-ui",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+        "//xml/plugin",
     ],
 )
 
@@ -55,6 +56,7 @@ jvm_library(
         # do not sort,
         ":tests",
         "//platform/ide-core:ide-core_test_lib",
+        "//xml/plugin:plugin_test_lib",
     ],
     deps = [
         # do not sort,
@@ -98,7 +100,8 @@ jvm_library(
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//platform/testFramework/junit5",
         "//platform/testFramework/junit5:junit5_test_lib",
-        "@lib//:kotlin-test",
+        "//libraries/kotlin/test:libraries-kotlinTest",
+        "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
         "//platform/backend/workspace",
         "//platform/backend/workspace:workspace_test_lib",
         "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",

@@ -5,12 +5,12 @@ import com.intellij.platform.eel.EelApi
 import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.community.services.systemPython.SystemPython
 import com.intellij.python.community.services.systemPython.SystemPythonService
-import com.intellij.python.pytools.InstalledInfo
-import com.intellij.python.pytools.PyTool
-import com.intellij.python.pytools.GenericPyToolManager
-import com.intellij.python.pytools.GenericPyToolManagerProvider
-import com.intellij.python.pytools.PackagePyToolManager
-import com.intellij.python.pytools.getToolVersion
+import com.intellij.python.pytools.backend.InstalledInfo
+import com.intellij.python.pytools.backend.PyTool
+import com.intellij.python.pytools.backend.GenericPyToolManager
+import com.intellij.python.pytools.backend.GenericPyToolManagerProvider
+import com.intellij.python.pytools.backend.PackagePyToolManager
+import com.intellij.python.pytools.backend.getToolVersion
 import com.intellij.python.requirements.PyPackageVersionNormalizer
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrNull
@@ -43,7 +43,7 @@ private class SystemPythonToolManager(
   private val fileSystem: FileSystem<PathHolder.Eel>,
   private val systemPython: SystemPython,
 ) : GenericPyToolManager {
-  override suspend fun install(tool: PyTool): PyResult<Path> {
+  override suspend fun install(tool: PyTool<*>): PyResult<Path> {
     // The pip helper drops the launcher into a per-user scripts directory that is frequently not on PATH
     // (e.g. %APPDATA%\Python\Scripts on Windows), so trust the path it reports rather than re-detecting the
     // tool on PATH, which would spuriously fail with "cannot find executable" (PY-91493).
@@ -51,14 +51,14 @@ private class SystemPythonToolManager(
   }
 
   /** The pip helper always installs the latest release, so an upgrade is just a fresh install. */
-  override suspend fun upgrade(tool: PyTool): PyResult<Path> = install(tool)
+  override suspend fun upgrade(tool: PyTool<*>): PyResult<Path> = install(tool)
 
   /**
    * Every configurable tool that is actually installed (resolved on [fileSystem]), with its `--version`
    * probed and the latest release looked up from PyPI. When PyPI is unreachable the latest version falls
    * back to the installed one (i.e. reported as up to date).
    */
-  override suspend fun list(): Map<PyTool, InstalledInfo> {
+  override suspend fun list(): Map<PyTool<*>, InstalledInfo> {
     return PyTool.EP_NAME.extensionList.filter { it.manager is PackagePyToolManager }.mapNotNull { tool ->
       val name = tool.packageName.name
       // Resolve on PATH and in the per-user scripts dirs the pip helper installs into (e.g.

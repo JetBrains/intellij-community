@@ -1,5 +1,4 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
-load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.terminal.libraries.completionDbWithExtensions` start
 jvm_library(
@@ -16,11 +15,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:terminal-libraries-completion_db_with_extensions-terminal-completion-db-with-extensions"],
     runtime_deps = ["@lib//:terminal-libraries-completion_db_with_extensions-terminal-completion-db-with-extensions"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:terminal-libraries-completion_db_with_extensions-terminal-completion-db-with-extensions"],
-    module = ":libraries-completionDbWithExtensions",
 )
 
 jvm_library(
@@ -42,7 +36,6 @@ exports_files(
     [
         "intellij.terminal.libraries.completionDbWithExtensions.iml",
         "resources/intellij.terminal.libraries.completionDbWithExtensions.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

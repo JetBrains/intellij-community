@@ -16,18 +16,18 @@ interface ActiveChangeListTracker {
     fun getInstance(project: Project): ActiveChangeListTracker = project.service()
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun getActiveChangeListId(): String?
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun isActiveChangeList(changeList: LocalChangeList): Boolean
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun runUnderChangeList(changelistId: String, task: Runnable)
 }
 
 @ApiStatus.Internal
-open class ActiveChangeListTrackerImpl(val project: Project) : ActiveChangeListTracker {
+class ActiveChangeListTrackerImpl(val project: Project) : ActiveChangeListTracker {
   companion object {
     private val LOG = logger<ActiveChangeListTracker>()
   }
@@ -65,7 +65,7 @@ open class ActiveChangeListTrackerImpl(val project: Project) : ActiveChangeListT
 
     var success = false
     val changeListManager = ChangeListManagerImpl.getInstanceImpl(project)
-    changeListManager.executeUnderDataLock {
+    changeListManager.executeUnderReadActionDataLock {
       if (changeListManager.getChangeList(changelistId) != null) {
         forcedChangeListId = changelistId
         try {

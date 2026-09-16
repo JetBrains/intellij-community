@@ -24,6 +24,7 @@
     />
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
-    <platform.rpc.applicationRemoteTopicListener implementation="com.intellij.python.processOutput.common.ProcessOutputTopicListener"/>
+    <platform.rpc.applicationRemoteTopicListener implementation="com.intellij.python.processOutput.common.ProcessOutputTopicListener"
+                                                 topicId="PythonProcessOutputTopic"/>
   </extensions>
 </idea-plugin>

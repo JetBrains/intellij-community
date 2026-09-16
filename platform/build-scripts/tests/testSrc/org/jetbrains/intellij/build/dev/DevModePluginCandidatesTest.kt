@@ -153,7 +153,7 @@ class DevModePluginCandidatesTest {
     bundledPluginModules: List<String> = emptyList(),
   ): BuildContext {
     val productLayout = mock(ProductModulesLayout::class.java)
-    `when`(productLayout.pluginLayouts).thenReturn(variants.toPersistentList())
+    `when`(productLayout.pluginLayouts).thenReturn(lazyOf(variants.toPersistentList()))
 
     val productProperties = mock(ProductProperties::class.java)
     `when`(productProperties.productLayout).thenReturn(productLayout)

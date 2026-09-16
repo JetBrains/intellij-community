@@ -1406,6 +1406,44 @@ public abstract class SharedK2IntentionTestGenerated extends AbstractSharedK2Int
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/intentions/generateCopyFunction")
+    public static class GenerateCopyFunction extends AbstractSharedK2IntentionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("existingBody.kt")
+        public void testExistingBody() throws Exception {
+            runTest("testData/intentions/generateCopyFunction/existingBody.kt");
+        }
+
+        @TestMetadata("generic.kt")
+        public void testGeneric() throws Exception {
+            runTest("testData/intentions/generateCopyFunction/generic.kt");
+        }
+
+        @TestMetadata("notApplicable_copyAlreadyExists.kt")
+        public void testNotApplicable_copyAlreadyExists() throws Exception {
+            runTest("testData/intentions/generateCopyFunction/notApplicable_copyAlreadyExists.kt");
+        }
+
+        @TestMetadata("notApplicable_jvmInline.kt")
+        public void testNotApplicable_jvmInline() throws Exception {
+            runTest("testData/intentions/generateCopyFunction/notApplicable_jvmInline.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("testData/intentions/generateCopyFunction/simple.kt");
+        }
+
+        @TestMetadata("singleProperty.kt")
+        public void testSingleProperty() throws Exception {
+            runTest("testData/intentions/generateCopyFunction/singleProperty.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/indentRawString")
     public static class IndentRawString extends AbstractSharedK2IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {

@@ -62,7 +62,7 @@ abstract class VscodeForkMcpClientTest {
   /**
    * Factory method to create the specific client implementation being tested.
    */
-  protected abstract fun createClient(scope: McpClientInfo.Scope, configPath: Path): McpClient
+  protected abstract fun createClient(scope: McpClientInfo.McpClientScope, configPath: Path): McpClient
 
   /**
    * Returns the test override key used for server configuration.
@@ -127,7 +127,7 @@ abstract class VscodeForkMcpClientTest {
       """.trimIndent()
     )
 
-    val client = createClient(McpClientInfo.Scope.Global, configPath)
+    val client = createClient(McpClientInfo.McpClientScope.McpClientGlobalScope, configPath)
     assertThat(client.isConfigured()).isTrue()
   }
 
@@ -138,7 +138,7 @@ abstract class VscodeForkMcpClientTest {
 
     McpClient.overrideProductSpecificServerKeyForTests(getTestOverrideKey())
 
-    val client = createClient(McpClientInfo.Scope.Global, configPath)
+    val client = createClient(McpClientInfo.McpClientScope.McpClientGlobalScope, configPath)
     runBlocking(Dispatchers.Default) {
       client.configure(getStreamableHttpConfigOrThrow(client))
     }
@@ -157,7 +157,7 @@ abstract class VscodeForkMcpClientTest {
 
     McpClient.overrideProductSpecificServerKeyForTests(getTestOverrideKey())
 
-    val client = createClient(McpClientInfo.Scope.Global, configPath)
+    val client = createClient(McpClientInfo.McpClientScope.McpClientGlobalScope, configPath)
     val sseConfig = runBlocking(Dispatchers.Default) { client.getSSEConfig() } ?: error("SSE config is null")
     runBlocking(Dispatchers.Default) { client.configure(sseConfig) }
 
@@ -175,7 +175,7 @@ abstract class VscodeForkMcpClientTest {
 
     McpClient.overrideProductSpecificServerKeyForTests(getTestOverrideKey())
 
-    val client = createClient(McpClientInfo.Scope.Global, configPath)
+    val client = createClient(McpClientInfo.McpClientScope.McpClientGlobalScope, configPath)
     runBlocking(Dispatchers.Default) { client.configure(client.getStdioConfig()) }
 
     val servers = readServers(client, configPath)
@@ -204,7 +204,7 @@ abstract class VscodeForkMcpClientTest {
     McpClient.overrideProductSpecificServerKeyForTests(getTestOverrideKey())
     McpClient.overrideWriteLegacyForTests(false)
 
-    val client = createClient(McpClientInfo.Scope.Global, configPath)
+    val client = createClient(McpClientInfo.McpClientScope.McpClientGlobalScope, configPath)
     runBlocking(Dispatchers.Default) { client.configure(getStreamableHttpConfigOrThrow(client)) }
 
     val result = configPath.readText()
@@ -219,7 +219,7 @@ abstract class VscodeForkMcpClientTest {
 
     McpClient.overrideProductSpecificServerKeyForTests(getTestOverrideKey())
 
-    val client = createClient(McpClientInfo.Scope.Global, configPath)
+    val client = createClient(McpClientInfo.McpClientScope.McpClientGlobalScope, configPath)
     runBlocking(Dispatchers.Default) { client.autoConfigure() }
 
     val result = configPath.readText()

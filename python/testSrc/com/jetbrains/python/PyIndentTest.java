@@ -5,6 +5,7 @@ import com.jetbrains.python.allure.Layers;
 import com.jetbrains.python.allure.Subsystems;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.idea.TestFor;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -444,5 +445,112 @@ public class PyIndentTest extends PyTestCase {
                          ...
                      <caret>""")
     );
+  }
+
+  @TestFor(issues = "PY-78251")
+  public void testIndentAfterOnlyCommentInBlock() {
+    doTest(
+      """
+        if True:
+            if False:
+                # Comment<caret>""",
+      """
+        if True:
+            if False:
+                # Comment
+                <caret>""");
+  }
+
+  @TestFor(issues = "PY-78251")
+  public void testIndentAfterOnlyCommentInFunctionFollowedByFunction() {
+    doTest(
+      """
+        def f():
+            # TODO<caret>
+
+
+        def g():
+            pass
+        """,
+      """
+        def f():
+            # TODO
+            <caret>
+
+
+        def g():
+            pass
+        """);
+  }
+
+  @TestFor(issues = "PY-78251")
+  public void testIndentAfterOnlyCommentInBlockFollowedByDedentedStatement() {
+    doTest(
+      """
+        if True:
+            if False:
+                # Comment<caret>
+        print(1)
+        """,
+      """
+        if True:
+            if False:
+                # Comment
+                <caret>
+        print(1)
+        """);
+  }
+
+  @TestFor(issues = "PY-78251")
+  public void testIndentAfterOnlyCommentInBlockAfterTrailingSpace() {
+    doTest(
+      "if True: \n    # Comment<caret>\nprint(1)\n",
+      "if True: \n    # Comment\n    <caret>\nprint(1)\n");
+  }
+
+  @TestFor(issues = "PY-78251")
+  public void testIndentAfterSecondCommentInBlock() {
+    doTest(
+      """
+        if True:
+            # First
+            # Second<caret>
+        print(1)
+        """,
+      """
+        if True:
+            # First
+            # Second
+            <caret>
+        print(1)
+        """);
+  }
+
+  @TestFor(issues = "PY-78251")
+  public void testIndentBeforeCommentInBlockOnSameLine() {
+    doTest(
+      """
+        if True:
+            if False:<caret> # Space before
+        """,
+      """
+        if True:
+            if False:
+                <caret># Space before
+        """);
+  }
+
+  @TestFor(issues = "PY-78251")
+  public void testIndentAfterCommentInBlockOnSameLine() {
+    doTest(
+      """
+        if True:
+            if False: # Comment<caret>
+        """,
+      """
+        if True:
+            if False: # Comment
+                <caret>
+        """);
   }
 }

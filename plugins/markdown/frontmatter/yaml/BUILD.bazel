@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.markdown.frontmatter.yaml` start
+content_module_jar(module = ":yaml")
+### auto-generated section `dev intellij.markdown.frontmatter.yaml` end
+
 ### auto-generated section `build intellij.markdown.frontmatter.yaml` start
 jvm_library(
     name = "yaml",
@@ -31,8 +35,6 @@ jvm_library(
         "@lib//:kotlin-stdlib",
     ],
 )
-
-content_module_jar(module = ":yaml")
 
 jvm_library(
     name = "yaml_test_lib",

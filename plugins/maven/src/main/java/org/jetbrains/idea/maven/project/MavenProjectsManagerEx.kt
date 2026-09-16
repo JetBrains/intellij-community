@@ -274,7 +274,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
     }
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private suspend fun doImportMavenProjects(
     projectsToImport: List<MavenProject>,
     optionalModelsProvider: IdeModifiableModelsProvider?,

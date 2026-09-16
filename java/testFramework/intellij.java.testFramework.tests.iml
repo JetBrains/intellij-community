@@ -24,7 +24,6 @@
     <orderEntry type="module" module-name="intellij.platform.util" exported="" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.aetherDependencyResolver.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.misc.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.lang" exported="" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.backend.workspace" scope="TEST" />
@@ -71,6 +70,7 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.concurrency" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.xml.plugin" scope="RUNTIME" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.java.testFramework" />
   <component name="copyright">

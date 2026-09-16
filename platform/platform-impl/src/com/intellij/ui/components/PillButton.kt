@@ -95,15 +95,8 @@ class PillButton(text: @NlsContexts.Button String? = null) : JComponent() {
   fun setColorState(colorState: ColorState) {
     if (colorState != this.colorState) {
       this.colorState = colorState
-      applyColors()
+      repaint()
     }
-  }
-
-  private fun applyColors() {
-    foreground = colorState.foreground
-    background = colorState.background
-
-    repaint()
   }
 
   init {
@@ -136,12 +129,6 @@ class PillButton(text: @NlsContexts.Button String? = null) : JComponent() {
         }
       }
     })
-  }
-
-  override fun updateUI() {
-    super.updateUI()
-
-    applyColors()
   }
 
   override fun setEnabled(enabled: Boolean) {
@@ -187,7 +174,7 @@ class PillButton(text: @NlsContexts.Button String? = null) : JComponent() {
       val background = when {
         !isEnabled -> null
         hovered -> colorState.hoverBackground
-        else -> background
+        else -> colorState.background
       }
       if (borderColor == null || borderColor.alpha == 0 || background == borderColor) {
         // Don't paint border separately
@@ -210,7 +197,7 @@ class PillButton(text: @NlsContexts.Button String? = null) : JComponent() {
         g2.color = when {
           !isEnabled -> DISABLED_FOREGROUND
           hovered -> colorState.hoverForeground
-          else -> foreground
+          else -> colorState.foreground
         }
         g2.font = font
         g2.drawString(it, x, TEXT_GAPS.top + offset + fontMetrics.ascent)

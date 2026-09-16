@@ -1,6 +1,18 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.coil` start
+content_module_jar(
+    libraries = [
+        # do not sort,
+        "@lib//:libraries-coil-io-coil-kt-coil3-network-ktor3-jvm",
+        "@lib//:libraries-coil-io-coil-kt-coil3-svg-jvm",
+        "@lib//:libraries-coil-io-coil-kt-coil3-compose-jvm",
+    ],
+    module = ":coil",
+)
+### auto-generated section `dev intellij.libraries.coil` end
+
 ### auto-generated section `build intellij.libraries.coil` start
 jvm_library(
     name = "coil",
@@ -29,16 +41,6 @@ jvm_library(
         "@lib//:libraries-coil-io-coil-kt-coil3-svg-jvm",
         "@lib//:libraries-coil-io-coil-kt-coil3-compose-jvm",
     ],
-)
-
-content_module_jar(
-    libraries = [
-        # do not sort,
-        "@lib//:libraries-coil-io-coil-kt-coil3-network-ktor3-jvm",
-        "@lib//:libraries-coil-io-coil-kt-coil3-svg-jvm",
-        "@lib//:libraries-coil-io-coil-kt-coil3-compose-jvm",
-    ],
-    module = ":coil",
 )
 
 jvm_library(
@@ -72,7 +74,6 @@ exports_files(
     [
         "intellij.libraries.coil.iml",
         "resources/intellij.libraries.coil.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

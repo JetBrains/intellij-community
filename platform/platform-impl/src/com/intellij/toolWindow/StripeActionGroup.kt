@@ -256,12 +256,12 @@ private class ButtonsRepaintService(project: Project, coroutineScope: CoroutineS
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun trackButton(btn: ActionButton) {
     buttons.add(btn)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun unTrackButton(btn: ActionButton) {
     buttons.remove(btn)
   }

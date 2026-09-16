@@ -16,6 +16,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JComponent;
@@ -66,6 +67,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
   private JComponent myFocusRequestor;
 
   private boolean myForceHideShadow = false;
+  private boolean myDismissedByEscape;
 
   public LightweightHint(final @NotNull JComponent component) {
     myComponent = component;
@@ -394,6 +396,28 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
     return myShouldReopenPopup;
   }
 
+  /**
+   * @return true when the user hid this hint with the Escape key
+   */
+  @ApiStatus.Internal
+  public boolean isDismissedByEscape() {
+    return myDismissedByEscape;
+  }
+
+  /**
+   * Remembers that the user hid this hint with the Escape key.
+   * Every hide route sets this before it hides the hint, so a listener needs no other source:
+   * <ul>
+   *   <li>the Escape key binding of this hint, which runs when no action gets the key</li>
+   *   <li>{@link com.intellij.codeInsight.hint.HintManager}, for the Escape action</li>
+   *   <li>the backend in split mode, because the client owns the key press there</li>
+   * </ul>
+   */
+  @ApiStatus.Internal
+  public void setDismissedByEscape() {
+    myDismissedByEscape = true;
+  }
+
   @Override
   @RequiresEdt
   public void hide() {
@@ -599,6 +623,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
   private final class MyEscListener implements ActionListener {
     @Override
     public void actionPerformed(final ActionEvent e) {
+      setDismissedByEscape();
       hide();
     }
   }

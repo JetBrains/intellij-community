@@ -24,7 +24,7 @@ import kotlin.math.abs
 import kotlin.time.Duration
 
 internal object InlineCompletionContextLogs {
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun getFor(request: InlineCompletionRequest): List<EventPair<*>> {
     val element = if (request.startOffset == 0) null else request.file.findElementAt(request.startOffset - 1)
     val simple = captureSimple(request.file, request.editor, request.startOffset, element)

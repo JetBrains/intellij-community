@@ -1,3 +1,0 @@
-- name: dist.all/lib/intellij.xml.emmet.frontend.jar
-  modules:
-    - name: intellij.xml.emmet.frontend

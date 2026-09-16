@@ -42,7 +42,7 @@ data class LazyTargetWithPresentation internal constructor(
 @Internal
 fun interface NavigationRequestor {
 
-  @RequiresReadLock
-  @RequiresBackgroundThread
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun navigationRequest(): NavigationRequest?
 }

@@ -108,7 +108,7 @@ private class FileNotInSourceRootService(
     }
   }
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   private fun highlightEditorInBackground(virtualFile: VirtualFile, editor: Editor): Pair<HighlightInfo, PsiFile>? {
     if (project.isDisposed || editor.isDisposed) return null
     if (!JavaFileType.INSTANCE.equals(virtualFile.fileType)) return null

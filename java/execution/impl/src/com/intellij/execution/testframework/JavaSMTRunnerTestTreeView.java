@@ -5,7 +5,6 @@ import com.intellij.execution.testframework.actions.TestFrameworkActions;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.sm.runner.events.TestDurationStrategy;
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerTestTreeView;
-import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerTestTreeViewProvider;
 import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm;
 import com.intellij.execution.testframework.sm.runner.ui.TestResultsViewer;
 import com.intellij.execution.testframework.sm.runner.ui.TestTreeRenderer;
@@ -26,14 +25,8 @@ import java.util.concurrent.TimeUnit;
 
 @ApiStatus.Experimental
 @ApiStatus.Internal
-public class JavaSMTRunnerTestTreeView extends SMTRunnerTestTreeView implements SMTRunnerTestTreeViewProvider.CustomizedDurationProvider {
+public class JavaSMTRunnerTestTreeView extends SMTRunnerTestTreeView {
   private static final Key<Long> FIRST_CHILD_START = Key.create("JavaSMTRunnerTestTreeView.FIRST_CHILD_START");
-
-  private final @NotNull TestConsoleProperties myTestConsoleProperties;
-
-  public JavaSMTRunnerTestTreeView(@NotNull TestConsoleProperties testConsoleProperties) {
-    myTestConsoleProperties = testConsoleProperties;
-  }
 
   @Override
   public void setTestResultsViewer(TestResultsViewer resultsViewer) {
@@ -157,19 +150,4 @@ public class JavaSMTRunnerTestTreeView extends SMTRunnerTestTreeView implements 
     return null;
   }
 
-  @Override
-  public Long getCustomizedDuration(@NotNull SMTestProxy proxy) {
-    if (!proxy.isSuite() || !JavaAwareTestConsoleProperties.USE_WALL_TIME.value(myTestConsoleProperties)) {
-      return proxy.getDuration();
-    }
-    Long startTime = proxy.getStartTimeMillis();
-    Long endTime = proxy.getEndTimeMillis();
-    if (endTime == null && proxy.isInProgress()) {
-      endTime = System.currentTimeMillis();
-    }
-    if (startTime == null || endTime == null || startTime >= endTime) {
-      return null;
-    }
-    return endTime - startTime;
-  }
 }

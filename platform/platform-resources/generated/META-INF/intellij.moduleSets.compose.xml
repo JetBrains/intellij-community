@@ -4,6 +4,7 @@
 <!-- Note: Files are kept under VCS to support running products without dev mode (deprecated) -->
 <idea-plugin>
   <content namespace="jetbrains">
+    <module name="intellij.libraries.jspecify"/>
     <module name="intellij.libraries.skiko"/>
     <module name="intellij.libraries.coil"/>
     <module name="intellij.libraries.compose.swing"/>

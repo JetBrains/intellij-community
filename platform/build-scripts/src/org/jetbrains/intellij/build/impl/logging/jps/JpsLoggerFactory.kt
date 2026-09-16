@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit
 import java.util.function.BiConsumer
 
 @Internal
-internal suspend fun withJpsLogging(context: CompilationContext, span: Span, action: suspend (JpsMessageHandler) -> Unit) {
+internal fun withJpsLogging(context: CompilationContext, span: Span, action: (JpsMessageHandler) -> Unit) {
   val messageHandler = JpsMessageHandler(context, span)
   JpsLoggerFactory.messageHandler = messageHandler
   if (context.options.compilationLogEnabled) {

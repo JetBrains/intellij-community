@@ -74,7 +74,7 @@ class ClassNameProvider(private val configuration: Configuration = Configuration
     fun getCandidates(position: SourcePosition): List<String> = getCandidatesInfo(position).map { it.name }
 
     @ApiStatus.Internal
-    @RequiresReadLock
+    @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
     fun getCandidatesInfo(position: SourcePosition): List<ClassNameCandidateInfo> {
         val regularClassNames = position.elementAt?.let(::getCandidatesForElementInternal) ?: emptyList()
         val lambdaClassNames = getLambdasAtLineIfAny(position).flatMap(::getCandidatesForElementInternal)

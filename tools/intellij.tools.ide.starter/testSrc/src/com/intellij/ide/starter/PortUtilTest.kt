@@ -125,6 +125,56 @@ class PortUtilTest {
   }
 
   @Test
+  fun getProcessesUsingPort_omitsClient_whenListeningOnly(): Unit = timeoutRunBlocking {
+    val port = findFreePort()
+    val listener = startListeningProcess(port)
+    val client = startConnectingProcess(port)
+    val listenerPid = listener.pid().toInt()
+    val clientPid = client.pid().toInt()
+    try {
+      val all = PortUtil.getProcessesUsingPort(port) ?: error("Expected non-null list of processes using port $port")
+      assertTrue(all.map { it.pid.toInt() }.contains(clientPid),
+                 "Expected client PID $clientPid to be listed for port $port, got ${all.map { it.pid.toInt() }}")
+
+      val listening = PortUtil.getProcessesUsingPort(port, listeningOnly = true)
+                      ?: error("Expected non-null list of processes listening on port $port")
+      val pids = listening.map { it.pid.toInt() }
+      assertTrue(pids.contains(listenerPid), "Expected listener PID $listenerPid to be listed for port $port, got $pids")
+      assertTrue(!pids.contains(clientPid), "Expected client PID $clientPid to be absent for port $port, got $pids")
+    }
+    finally {
+      listener.destroyForcibly()
+      client.destroyForcibly()
+    }
+  }
+
+  @Test
+  fun killProcessesUsingPort_keepsClientAlive_whenListeningOnly(): Unit = timeoutRunBlocking {
+    val port = findFreePort()
+    val listener = startListeningProcess(port)
+    val client = startConnectingProcess(port)
+    try {
+      val killed = PortUtil.killProcessesUsingPort(port, listeningOnly = true)
+      assertTrue(killed, "Expected killProcessesUsingPort($port, listeningOnly = true) to finish successfully")
+
+      val exitedListener = listener.waitFor(7, java.util.concurrent.TimeUnit.SECONDS)
+      assertTrue(exitedListener, "Listener process did not exit after kill")
+      assertTrue(client.isAlive, "Client process must survive a kill which targets the listener only")
+    }
+    finally {
+      listener.destroyForcibly()
+      client.destroyForcibly()
+    }
+  }
+
+  @Test
+  fun killProcessesUsingPort_returnsFalse_whenPortIsFree(): Unit = timeoutRunBlocking {
+    val port = findFreePort()
+    val killed = PortUtil.killProcessesUsingPort(port, listeningOnly = true)
+    assertTrue(!killed, "Expected killProcessesUsingPort to report no kill for the free port $port")
+  }
+
+  @Test
   fun killProcessesUsingPort_killsAllChildProcesses_whenListenerAndTwoClientsUsePort(): Unit = timeoutRunBlocking {
     val port = findFreePort()
     val listener = startListeningProcess(port)

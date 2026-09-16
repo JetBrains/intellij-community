@@ -308,7 +308,7 @@ final class ReturnReplacementContext {
       myReturnStatement = BlockUtils.expandSingleStatementToBlockStatement(myReturnStatement);
     }
     PsiStatement[] newStatements = ContainerUtil.map2Array(
-      myReplacements, PsiStatement.class, text -> myFactory.createStatementFromText(text, null));
+      myReplacements, PsiStatement.class, text -> myFactory.createStatementFromText(text, myReturnStatement));
     if (newStatements.length > 0) {
       BlockUtils.addBefore(myReturnStatement, newStatements);
     }

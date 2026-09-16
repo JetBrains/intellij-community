@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.devkit.apiDump` start
+content_module_jar(module = ":api-dump")
+### auto-generated section `dev intellij.devkit.apiDump` end
+
 ### auto-generated section `build intellij.devkit.apiDump` start
 jvm_library(
     name = "api-dump",
@@ -34,8 +38,6 @@ jvm_library(
         "//platform/projectModel-impl",
     ],
 )
-
-content_module_jar(module = ":api-dump")
 
 jvm_library(
     name = "api-dump_test_lib",

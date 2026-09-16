@@ -61,7 +61,7 @@ class KotlinExpandNodeProjectViewProvider : TreeStructureProvider, DumbAware {
 
     private fun Any.asKtFile(): KtFile? = when (this) {
         is KtFile -> this
-        is KtLightClassForFacade -> files.singleOrNull()
+        is KtLightClassForFacade -> files.singleOrNull()?.takeUnless { it.isCompiled }
         is KtLightClass -> kotlinOrigin?.containingFile as? KtFile
         else -> null
     }

@@ -219,7 +219,7 @@ class TerminalPromptView(
   }
 
   /** After completion of the returned future, toolbar preferred size is guaranteed to be valid. */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun scheduleToolbarUpdate(toolbar: ActionToolbar): CompletableFuture<*> {
     val disposable = Disposer.newCheckedDisposable(this)
     val future = CompletableFuture<Unit>()

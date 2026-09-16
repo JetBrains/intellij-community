@@ -334,7 +334,7 @@ open class TabLabel @Internal constructor(
       if (tabs.dropSide == -1) {
         g.color = JBUI.CurrentTheme.DragAndDrop.Area.BACKGROUND
 
-        if (IslandsPainterProvider.getInstance()?.isRoundedTabDuringDrag() == true) {
+        if (UIThemeCustomization.getInstance()?.isRoundedTabDuringDrag == true) {
           val arc = getDropTargetArc()
           val offsetTop = getDropTargetTopOffset()
           val offsetBottom = getDropTargetBottomOffset()
@@ -387,7 +387,7 @@ open class TabLabel @Internal constructor(
       if (contentRect.width < labelPlaceholder.preferredSize.width + tabs.tabHGap) {
         val rightRect = Rectangle(contentRect.x + contentRect.width - width, borderThickness, width, rect.height - 2 * borderThickness)
         if (isIslands) {
-          val composedBg = IslandsPainterProvider.getInstance()?.getEditorTabComposedBgColor(
+          val composedBg = UIThemeCustomization.getInstance()?.getEditorTabComposedBgColor(
             tabs, tabs.tabPainter, info.tabColor, tabs.isActiveTabs(info), isHovered, isSelected)
           if (composedBg != null) {
             val labelCoord = SwingUtilities.convertPoint(label, 0, 0, this)

@@ -184,8 +184,8 @@ public class JavaDebugProcess extends XDebugProcess {
                 if (item != null) {
                   XBreakpoint xBreakpoint = item.getFirst().getXBreakpoint();
                   Event second = item.getSecond();
-                  if (xBreakpoint != null && second instanceof LocatableEvent &&
-                      threadProxy != null && ((LocatableEvent)second).thread() == threadProxy.getThreadReference()) {
+                  if (xBreakpoint != null && second instanceof LocatableEvent locatableEvent &&
+                      threadProxy != null && locatableEvent.thread() == threadProxy.getThreadReference()) {
                     ((XDebugSessionImpl)getSession()).breakpointReachedNoProcessing(xBreakpoint, newSuspendContext);
                     SourceCodeChecker.checkSource(newContext);
                     return;
@@ -214,9 +214,9 @@ public class JavaDebugProcess extends XDebugProcess {
       @Override
       public void stackFrameChanged() {
         XStackFrame frame = session.getCurrentStackFrame();
-        if (frame instanceof JavaStackFrame) {
+        if (frame instanceof JavaStackFrame stackFrame) {
           showAlternativeNotification(frame);
-          StackFrameProxyImpl frameProxy = ((JavaStackFrame)frame).getStackFrameProxy();
+          StackFrameProxyImpl frameProxy = stackFrame.getStackFrameProxy();
           DebuggerContextUtil.setStackFrame(javaSession.getContextManager(), frameProxy);
           saveNodeHistory(frameProxy);
         }
@@ -420,8 +420,8 @@ public class JavaDebugProcess extends XDebugProcess {
       @Override
       public @NotNull Content registerConsoleContent(@NotNull RunnerLayoutUi ui, @NotNull ExecutionConsole console) {
         Content content = null;
-        if (console instanceof ExecutionConsoleEx) {
-          ((ExecutionConsoleEx)console).buildUi(ui);
+        if (console instanceof ExecutionConsoleEx ex) {
+          ex.buildUi(ui);
           content = ui.findContent(DebuggerContentInfo.CONSOLE_CONTENT);
         }
         if (content == null) {
@@ -576,8 +576,8 @@ public class JavaDebugProcess extends XDebugProcess {
     XDebugSession session = DebuggerUIUtil.getSession(e);
     if (session != null) {
       XDebugProcess process = session.getDebugProcess();
-      if (process instanceof JavaDebugProcess) {
-        return ((JavaDebugProcess)process).getDebuggerSession().getProcess();
+      if (process instanceof JavaDebugProcess debugProcess) {
+        return debugProcess.getDebuggerSession().getProcess();
       }
     }
     return null;

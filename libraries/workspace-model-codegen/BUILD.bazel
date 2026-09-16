@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.workspace.model.codegen` start
+content_module_jar(
+    libraries = ["@lib//:libraries-workspace-model-codegen-workspace-model-codegen"],
+    module = ":workspace-model-codegen",
+)
+### auto-generated section `dev intellij.libraries.workspace.model.codegen` end
+
 ### auto-generated section `build intellij.libraries.workspace.model.codegen` start
 jvm_library(
     name = "workspace-model-codegen",
@@ -16,11 +23,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-workspace-model-codegen-workspace-model-codegen"],
     runtime_deps = ["@lib//:libraries-workspace-model-codegen-workspace-model-codegen"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-workspace-model-codegen-workspace-model-codegen"],
-    module = ":workspace-model-codegen",
 )
 
 jvm_library(
@@ -42,7 +44,6 @@ exports_files(
     [
         "intellij.libraries.workspace.model.codegen.iml",
         "resources/intellij.libraries.workspace.model.codegen.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

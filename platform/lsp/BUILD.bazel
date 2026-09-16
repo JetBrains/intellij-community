@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.platform.lsp` start
+content_module_jar(module = ":lsp")
+### auto-generated section `dev intellij.platform.lsp` end
+
 ### auto-generated section `build intellij.platform.lsp` start
 jvm_library(
     name = "lsp",
@@ -32,7 +36,6 @@ jvm_library(
         "//platform/ide-core",
         "//platform/projectModel-api:projectModel",
         "//platform/util:util-ui",
-        "//platform/execution",
         "//platform/markdown-utils",
         "//platform/core-ui",
         "//platform/eel",
@@ -40,8 +43,6 @@ jvm_library(
         "//platform/eel-nioFs",
     ],
 )
-
-content_module_jar(module = ":lsp")
 
 jvm_library(
     name = "lsp_test_lib",
@@ -66,7 +67,6 @@ jvm_library(
         "//platform/ide-core:ide-core_test_lib",
         "//platform/projectModel-api:projectModel_test_lib",
         "//platform/util:util-ui_test_lib",
-        "//platform/execution:execution_test_lib",
         "//platform/markdown-utils:markdown-utils_test_lib",
         "//platform/core-ui:core-ui_test_lib",
         "//platform/eel:eel_test_lib",
@@ -82,7 +82,6 @@ exports_files(
         "intellij.platform.lsp.iml",
         "resources/META-INF/intellij.moduleSets.libraries.lsp4j.xml",
         "resources/intellij.platform.lsp.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

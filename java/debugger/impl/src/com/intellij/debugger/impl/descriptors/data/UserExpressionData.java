@@ -30,9 +30,10 @@ public class UserExpressionData extends DescriptorData<UserExpressionDescriptor>
 
   @Override
   public boolean equals(Object object) {
-    if (!(object instanceof UserExpressionData)) return false;
-
-    return myName.equals(((UserExpressionData)object).myName);
+    if (object instanceof UserExpressionData data) {
+      return myName.equals(data.myName);
+    }
+    return false;
   }
 
   @Override

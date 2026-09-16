@@ -2,6 +2,10 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.python.community.impl.conda` start
+content_module_jar(module = ":conda")
+### auto-generated section `dev intellij.python.community.impl.conda` end
+
 ### auto-generated section `build intellij.python.community.impl.conda` start
 create_kotlinc_options(
     name = "custom_conda",
@@ -17,8 +21,6 @@ jvm_library(
     name = "conda",
     srcs = glob(
         [
-            "gen/**/*.kt",
-            "gen/**/*.java",
             "src/**/*.kt",
             "src/**/*.java",
             "src/**/*.form",
@@ -34,6 +36,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
+        "//python/conda/common",
         "@lib//:kotlin-stdlib",
         "//libraries/jetbrains/annotations",
         "//platform/core-api:core",
@@ -45,7 +48,7 @@ jvm_library(
         "//python/python-sdk/backend",
         "//platform/analysis-api:analysis",
         "//platform/platform-util-io:ide-util-io",
-        "//python/python-pytools:pytools",
+        "//python/python-pytools/backend",
         "//python/installer",
         "//platform/eel",
         "//platform/eel-provider",
@@ -57,8 +60,6 @@ jvm_library(
         "//json/backend",
     ],
 )
-
-content_module_jar(module = ":conda")
 
 jvm_library(
     name = "conda_test_lib",
@@ -73,6 +74,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":conda",
+        "//python/conda/common:common_test_lib",
         "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/util:util_test_lib",
@@ -83,7 +85,7 @@ jvm_library(
         "//python/python-sdk/backend:backend_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/platform-util-io:ide-util-io_test_lib",
-        "//python/python-pytools:pytools_test_lib",
+        "//python/python-pytools/backend:backend_test_lib",
         "//python/installer:installer_test_lib",
         "//platform/eel:eel_test_lib",
         "//platform/eel-provider:eel-provider_test_lib",

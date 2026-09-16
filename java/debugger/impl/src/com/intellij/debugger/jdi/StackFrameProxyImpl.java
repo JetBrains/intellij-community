@@ -88,7 +88,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxyEx {
       })
       .exceptionally(throwable -> {
         Throwable exception = DebuggerUtilsAsync.unwrap(throwable);
-        if (exception instanceof InternalException && ((InternalException)exception).errorCode() == JvmtiError.INVALID_METHODID) {
+        if (exception instanceof InternalException internalException && internalException.errorCode() == JvmtiError.INVALID_METHODID) {
           myIsObsolete = ThreeState.YES;
           return true;
         }
@@ -394,8 +394,8 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxyEx {
 
   @Override
   public Value getVariableValue(@NotNull LocalVariableProxy localVariable) throws EvaluateException {
-    if (localVariable instanceof LocalVariableProxyImpl) {
-      return getValue((LocalVariableProxyImpl)localVariable);
+    if (localVariable instanceof LocalVariableProxyImpl proxy) {
+      return getValue(proxy);
     }
     throw new EvaluateException("Variable doesn't belong to this frame: " + localVariable);
   }

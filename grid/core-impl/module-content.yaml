@@ -1,3 +1,0 @@
-- name: dist.all/lib/intellij.grid.core.impl.jar
-  modules:
-  - name: intellij.grid.core.impl

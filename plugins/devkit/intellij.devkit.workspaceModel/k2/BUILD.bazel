@@ -18,6 +18,10 @@ jps_test(
 
 ### skip generation section `test intellij.devkit.workspaceModel.k2.tests`
 
+### auto-generated section `dev intellij.devkit.workspaceModel.k2` start
+content_module_jar(module = ":k2")
+### auto-generated section `dev intellij.devkit.workspaceModel.k2` end
+
 ### auto-generated section `build intellij.devkit.workspaceModel.k2` start
 create_kotlinc_options(
     name = "custom_k2",
@@ -61,8 +65,6 @@ jvm_library(
         "//platform/analysis-api:analysis",
     ],
 )
-
-content_module_jar(module = ":k2")
 
 jvm_library(
     name = "k2_test_lib",

@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderEnumerator
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.compose.ComposePreviewClassLoaderProvider
+import com.intellij.platform.compose.swing.ComposeSwingSearchableConfigurable
 import com.intellij.psi.PsiManager
 import com.intellij.task.ProjectTaskContext
 import com.intellij.task.ProjectTaskManager
@@ -23,6 +24,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import org.jetbrains.uast.UFile
+import org.jetbrains.uast.UMethod
 import org.jetbrains.uast.findSourceAnnotation
 import org.jetbrains.uast.toUElement
 import java.lang.reflect.InvocationTargetException
@@ -41,7 +43,16 @@ internal class ComposeLocalContextException(cause: Throwable): RuntimeException(
 
 private val COMPOSITION_LOCAL_NOT_PROVIDED_PATTERN = Regex("CompositionLocal named (\\w*) not provided")
 
-internal data class ContentProvider(val function: Method, val classLoader: URLClassLoader) {
+/** Which composition a preview emits into, and so which runtime mounts it. */
+internal enum class PreviewKind {
+  /** Emits Compose UI nodes, rendered through the Jewel bridge. */
+  MULTIPLATFORM,
+
+  /** Emits Swing components, mounted with `compose-swing-ui`. */
+  SWING,
+}
+
+internal data class ContentProvider(val function: Method, val classLoader: URLClassLoader, val kind: PreviewKind) {
   fun build(currentComposer: Composer, currentCompositeKeyHashCode: Long) {
     val contextClassLoader = Thread.currentThread().contextClassLoader
     Thread.currentThread().contextClassLoader = classLoader
@@ -91,11 +102,20 @@ internal suspend fun compileCode(fileToCompile: VirtualFile, project: Project): 
     .mapNotNull { p -> Path(p).takeIf { Files.exists(it) }?.toUri()?.toURL() }
     .toTypedArray()
 
-  val loader = ComposeUIPreviewClassLoader(diskPaths, ComposePreviewClassLoaderProvider.getClassLoader())
-  val functions = ComposableFunctionFinder(loader).findPreviewFunctions(analysis.targetClassName, analysis.composableMethodNames)
+  for (kind in analysis.previewKinds.values.distinct()) {
+    val names = analysis.previewKinds.filterValues { it == kind }.keys
+    val loader = ComposeUIPreviewClassLoader(diskPaths, previewParentClassLoader(kind))
+    val method = ComposableFunctionFinder(loader).findPreviewFunctions(analysis.targetClassName, names).firstOrNull()?.method
+    if (method != null) return ContentProvider(method, loader, kind)
+    loader.close()
+  }
 
-  return functions.firstOrNull()?.method
-    ?.let { ContentProvider(it, loader) }
+  return null
+}
+
+private fun previewParentClassLoader(kind: PreviewKind): ClassLoader = when (kind) {
+  PreviewKind.MULTIPLATFORM -> ComposePreviewClassLoaderProvider.getClassLoader()
+  PreviewKind.SWING -> ComposeSwingSearchableConfigurable::class.java.classLoader
 }
 
 internal class ComposeUIPreviewClassLoader(urls: Array<URL>, parent: ClassLoader)
@@ -127,7 +147,7 @@ private suspend fun compileFiles(fileToCompile: VirtualFile, project: Project): 
 internal data class FileAnalysisResult(
   val file: VirtualFile,
   val targetClassName: String,
-  val composableMethodNames: Collection<String>,
+  val previewKinds: Map<String, PreviewKind>,
 )
 
 private fun analyzeClass(project: Project, vFile: VirtualFile): FileAnalysisResult? {
@@ -146,16 +166,19 @@ private fun analyzeClass(project: Project, vFile: VirtualFile): FileAnalysisResu
 
   val className = if (packageName.isEmpty()) baseName else "$packageName.$baseName"
 
-  val annotatedMethodNames = uFile.classes.asSequence()
+  val previewKinds = uFile.classes.asSequence()
     .flatMap { it.methods.asSequence() }
-    .filter {
-      AnnotationUtil.isAnnotated(it.javaPsi, PREVIEW_ANNOTATIONS, 0)
-      || it.uAnnotations.any { a -> a.qualifiedName?.endsWith(".Preview") == true }
-    }
-    .map { it.name }
-    .toSet()
+    .mapNotNull { method -> previewKindOf(method)?.let { method.name to it } }
+    .toMap()
 
-  if (annotatedMethodNames.isEmpty()) return null // nothing to show here
+  if (previewKinds.isEmpty()) return null // nothing to show here
 
-  return FileAnalysisResult(vFile, className, annotatedMethodNames)
+  return FileAnalysisResult(vFile, className, previewKinds)
+}
+
+/** Which composition [method] emits into. Returns `null` when [method] is not a preview. */
+private fun previewKindOf(method: UMethod): PreviewKind? = when {
+  AnnotationUtil.isAnnotated(method.javaPsi, SWING_PREVIEW_ANNOTATIONS, 0) -> PreviewKind.SWING
+  AnnotationUtil.isAnnotated(method.javaPsi, MULTIPLATFORM_PREVIEW_ANNOTATIONS, 0) -> PreviewKind.MULTIPLATFORM
+  else -> null
 }

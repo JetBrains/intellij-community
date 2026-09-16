@@ -14,6 +14,7 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.execution.stacktrace.StackTraceLine;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
+import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerTestTreeView;
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerTestTreeViewProvider;
 import com.intellij.java.JavaBundle;
@@ -150,7 +151,49 @@ public abstract class JavaAwareTestConsoleProperties<T extends ModuleBasedConfig
 
   @Override
   public @NotNull SMTRunnerTestTreeView createSMTRunnerTestTreeView() {
-    return Registry.is("java.test.enable.tree.live.time") ? new JavaSMTRunnerTestTreeView(this) : new SMTRunnerTestTreeView();
+    return Registry.is("java.test.enable.tree.live.time") ? new JavaSMTRunnerTestTreeView() : new SMTRunnerTestTreeView();
+  }
+
+  @Override
+  public SMTRunnerTestTreeViewProvider.@Nullable CustomizedDurationProvider getCustomizedDurationProvider() {
+    return Registry.is("java.test.enable.tree.live.time") ? createCustomizedDurationProvider(this) : null;
+  }
+
+  /**
+   * Creates the wall-time duration logic for a Java-style test console.
+   * <p>
+   * The result holds no Swing component. The test tree sort can call it off the EDT. See IJPL-254402.
+   *
+   * @param properties the test console properties that hold the wall-time setting
+   * @return the customized-duration logic
+   */
+  public static SMTRunnerTestTreeViewProvider.@NotNull CustomizedDurationProvider createCustomizedDurationProvider(@NotNull TestConsoleProperties properties) {
+    return proxy -> getCustomizedDuration(properties, proxy);
+  }
+
+  /**
+   * Computes the customized duration of a test proxy.
+   * <p>
+   * A suite reports the wall time (endTime - startTime) when {@link #USE_WALL_TIME} is on.
+   * A test, or a suite with the setting off, reports the sum of the child durations.
+   *
+   * @param properties the test console properties that hold the wall-time setting
+   * @param proxy the test proxy
+   * @return the duration in milliseconds, or null if it is unknown
+   */
+  public static @Nullable Long getCustomizedDuration(@NotNull TestConsoleProperties properties, @NotNull SMTestProxy proxy) {
+    if (!proxy.isSuite() || !USE_WALL_TIME.value(properties)) {
+      return proxy.getDuration();
+    }
+    Long startTime = proxy.getStartTimeMillis();
+    Long endTime = proxy.getEndTimeMillis();
+    if (endTime == null && proxy.isInProgress()) {
+      endTime = System.currentTimeMillis();
+    }
+    if (startTime == null || endTime == null || startTime >= endTime) {
+      return null;
+    }
+    return endTime - startTime;
   }
 
   @Override

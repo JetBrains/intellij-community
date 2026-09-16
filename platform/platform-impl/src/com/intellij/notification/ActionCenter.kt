@@ -27,20 +27,20 @@ object ActionCenter {
   val toolwindowName: @Nls String
     get() = IdeBundle.message("toolwindow.stripe.Notifications")
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   @JvmStatic
   fun showLog(project: Project) {
     project.service<NotificationsLogController>().show()
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   @JvmStatic
   @JvmOverloads
   fun activateLog(project: Project, focus: Boolean = true) {
     project.service<NotificationsLogController>().activate(focus)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   @JvmStatic
   fun toggleLog(project: Project) {
     project.service<NotificationsLogController>().toggle()

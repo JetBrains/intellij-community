@@ -402,6 +402,43 @@ def compute_iml_target(module_name, build_dir_parts, iml_rel_path, is_community,
         community_root_parts = community_root_parts,
     )
 
+def compute_module_descriptor_target(module_name, build_dir_parts, resource_roots, descriptor_rel_paths, is_community, community_root_parts):
+    """Return the first conventional descriptor label inside the module's package, or None."""
+    package_info = _compute_package_info(module_name, build_dir_parts, is_community, community_root_parts)
+    for root in resource_roots:
+        if root.relative_output_path:
+            continue
+        path = (root.path + "/" if root.path else "") + module_name + ".xml"
+        if path not in descriptor_rel_paths:
+            continue
+        parts = path.split("/")
+        if _all_start_with([parts], community_root_parts) != is_community:
+            continue
+        if not _all_start_with([parts], package_info.effective_build_dir_parts):
+            continue
+        return compute_project_file_target(module_name, build_dir_parts, path, is_community, community_root_parts)
+    return None
+
+def module_rule_label(module_name, production_by_module):
+    """Return the module rule label, or None when the model no longer has the module."""
+    targets = production_by_module.get(module_name)
+    if targets == None:
+        return None
+    if type(targets) != "list" or len(targets) != 1:
+        fail("Module '%s' must have one production target: %s" % (module_name, targets))
+    production = targets[0]
+    if type(production) != "string" or not production.endswith(".jar"):
+        fail("Production target '%s' of module '%s' is not a jar output" % (production, module_name))
+    return production.removesuffix(".jar")
+
+def format_module_descriptor_index(descriptors_by_module):
+    """Render the conventional descriptor index shared by both JPS bridges."""
+    lines = ["MODULE_DESCRIPTORS = {"]
+    for module_name in sorted(descriptors_by_module):
+        lines.append('    "%s": "%s",' % (module_name, descriptors_by_module[module_name]))
+    lines.append("}\n")
+    return "\n".join(lines)
+
 def compute_plugin_distribution_target(module_name, build_dir_parts, target_name, is_community, community_root_parts):
     """Compute the Bazel label for a module's ij_plugin distribution target."""
     package_prefix = _compute_package_info(module_name, build_dir_parts, is_community, community_root_parts).package_prefix

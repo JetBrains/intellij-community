@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.productLayout.dependency
 
+import com.intellij.platform.buildScripts.concurrency.SharedCache
+import com.intellij.platform.buildScripts.concurrency.SharedTaskOwner
 import com.intellij.platform.pluginGraph.TargetName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -9,7 +11,6 @@ import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.productLayout.TestFailureLogger
 import org.jetbrains.intellij.build.productLayout.discovery.PluginXmlOverride
 import org.jetbrains.intellij.build.productLayout.model.ErrorSink
-import org.jetbrains.intellij.build.productLayout.util.AsyncCache
 import org.jetbrains.jps.model.module.JpsModule
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -19,6 +20,13 @@ import java.nio.file.Path
 
 @ExtendWith(TestFailureLogger::class)
 class PluginContentCacheTest {
+  private val owner = SharedTaskOwner("PluginContentCacheTest")
+
+  @org.junit.jupiter.api.AfterEach
+  fun closeSharedTasks() {
+    owner.close()
+  }
+
   @Test
   fun `extract uses plugin xml override instead of stale source descriptor`(@TempDir tempDir: Path) {
     runBlocking(Dispatchers.Default) {
@@ -50,7 +58,7 @@ class PluginContentCacheTest {
       val staleErrorSink = ErrorSink()
       val staleCache = PluginContentCache(
         outputProvider = outputProvider,
-        xIncludeCache = AsyncCache(),
+        xIncludeCache = SharedCache(owner = owner),
         skipXIncludePaths = emptySet(),
         xIncludePrefixFilter = { null },
         errorSink = staleErrorSink,
@@ -63,7 +71,7 @@ class PluginContentCacheTest {
       val overrideErrorSink = ErrorSink()
       val overrideCache = PluginContentCache(
         outputProvider = outputProvider,
-        xIncludeCache = AsyncCache(),
+        xIncludeCache = SharedCache(owner = owner),
         skipXIncludePaths = emptySet(),
         xIncludePrefixFilter = { null },
         errorSink = overrideErrorSink,

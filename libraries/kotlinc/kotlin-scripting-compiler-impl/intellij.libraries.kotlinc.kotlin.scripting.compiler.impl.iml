@@ -35,6 +35,7 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.compiler.common" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.compiler.ir" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.scripting.common" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.scripting.jvm" scope="RUNTIME" />
   </component>

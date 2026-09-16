@@ -11,7 +11,7 @@ interface MicroservicesFeaturesAvailabilityProvider {
   /**
    * Decides whether Search Everywhere should have a separate tab for URL search in this project
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun searchEverywhereTabAvailableFor(project: Project): Boolean
 }
 

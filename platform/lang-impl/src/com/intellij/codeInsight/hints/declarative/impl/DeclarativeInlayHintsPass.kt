@@ -110,7 +110,7 @@ class DeclarativeInlayHintsPass(
     @ApiStatus.Internal
     val passSourceId: String = DeclarativeInlayHintsPass::class.java.name
 
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     @ApiStatus.Internal
     fun applyInlayData(
       editor: Editor,
@@ -148,7 +148,7 @@ class DeclarativeInlayHintsPass(
      * [document] must be unchanged from when [inlayData] were collected
      */
     @ApiStatus.Internal
-    @RequiresReadLock
+    @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
     fun preprocessCollectedInlayData(inlayData: List<InlayData>, document: Document): PreprocessedInlayData {
       val inlinePlans = mutableListOf<Plan.Inline>()
       val eolPlans = mutableListOf<Plan.Eol>()

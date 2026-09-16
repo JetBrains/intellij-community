@@ -11,6 +11,10 @@ jps_test(
 )
 ### skip generation section `test intellij.execution.process.mediator.common.tests`
 
+### auto-generated section `dev intellij.execution.process.mediator.common` start
+content_module_jar(module = ":common")
+### auto-generated section `dev intellij.execution.process.mediator.common` end
+
 ### auto-generated section `build intellij.execution.process.mediator.common` start
 jvm_library(
     name = "common",
@@ -42,8 +46,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":common")
-
 jvm_library(
     name = "common_test_lib",
     testonly = True,
@@ -74,7 +76,6 @@ exports_files(
     [
         "intellij.execution.process.mediator.common.iml",
         "resources/intellij.execution.process.mediator.common.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

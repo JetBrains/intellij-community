@@ -1,0 +1,17 @@
+// WITH_COROUTINES
+// PROBLEM: 'catch' clause suppresses 'CancellationException' and breaks coroutine cancellation
+// FIX: Check for cancellation with 'ensureActive()'
+package test
+
+import kotlinx.coroutines.delay
+import java.io.IOException
+
+// 'IOException' never matches a 'CancellationException', the 'Exception' clause is the one that swallows it
+suspend fun compute() {
+    try {
+        delay(100)
+    } catch (e: IOException) {
+        throw e
+    } catch (<caret>e: Exception) {
+    }
+}

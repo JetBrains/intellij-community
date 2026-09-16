@@ -5,6 +5,7 @@ import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate
 import com.intellij.injected.editor.EditorWindow
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorModificationUtilEx
 import com.intellij.psi.PsiFile
@@ -23,7 +24,8 @@ internal class KDocSectionEnterHandlerDelegate: EnterHandlerDelegate {
     }
 
     override fun postProcessEnter(file: PsiFile, editor: Editor, dataContext: DataContext): EnterHandlerDelegate.Result {
-        if (getHost(file, editor) == null) return EnterHandlerDelegate.Result.Continue
+        if (getHost(file, editor) == null)
+            return EnterHandlerDelegate.Result.Continue
 
         val hostEditor = (editor as EditorWindow).getDelegate()
         val hostDocument = hostEditor.getDocument()
@@ -34,21 +36,45 @@ internal class KDocSectionEnterHandlerDelegate: EnterHandlerDelegate {
         val text = hostDocument.text
         // at this point `\n` is already inserted
         val lineStartOffset = DocumentUtil.getLineStartOffset(caretOffsetHost, hostDocument)
-        val lineEndOffset = DocumentUtil.getLineEndOffset(caretOffsetHost, hostDocument)
         val firstNonWsLineOffset = CharArrayUtil.shiftForward(text, lineStartOffset, " \t")
 
-        if (text[firstNonWsLineOffset] != '*') {
+        val charAt = text[firstNonWsLineOffset]
+        if (charAt != '}' && charAt != ')') {
             val lineNumber = hostDocument.getLineNumber(caretOffsetHost)
             val lineTextRange = DocumentUtil.getLineTextRange(hostDocument, lineNumber - 1)
 
-            val newLinePrefixWithOffset = calculateNewLinePrefixWithOffset(text, lineTextRange.startOffset)
+            val calculatedNewLinePrefixWithOffset = calculateNewLinePrefixWithOffset(text, lineTextRange.startOffset)
+            val isEmptyNewLinePrefix = calculatedNewLinePrefixWithOffset.isEmpty()
+            val (lineStartOffsetWithPrefix, baseNewLinePrefixWithOffset) =
+                if (isEmptyNewLinePrefix) lineStartOffset - 1 to " *"
+                else lineStartOffset to calculatedNewLinePrefixWithOffset
 
-            hostDocument.replaceString(lineStartOffset, lineEndOffset, newLinePrefixWithOffset)
-            caretModelHost.moveToOffset(caretOffsetHost + newLinePrefixWithOffset.length)
+            val hasTrailingSpace = charAt == '\n'
+            val newLinePrefixWithOffset =
+                if (hasTrailingSpace) "$baseNewLinePrefixWithOffset "
+                else baseNewLinePrefixWithOffset
+
+            if (hasTrailingSpace) {
+                hostDocument.deleteString(lineStartOffset, firstNonWsLineOffset)
+            }
+            hostDocument.insertString(lineStartOffsetWithPrefix, newLinePrefixWithOffset)
+            val newOffset = newOffset(hostDocument, lineStartOffsetWithPrefix + newLinePrefixWithOffset.length + (if (hasTrailingSpace) 0 else 1))
+            caretModelHost.moveToOffset(newOffset)
             EditorModificationUtilEx.scrollToCaret(editor)
         }
 
         return EnterHandlerDelegate.Result.Default
+    }
+
+    private fun newOffset(document: Document, offset: Int): Int {
+        val text = document.text
+        var currentOffset = offset
+        while (currentOffset < text.length) {
+            val ch = text[currentOffset]
+            if (ch == '\n' || !ch.isWhitespace()) break
+            currentOffset++
+        }
+        return currentOffset
     }
 
     private fun calculateNewLinePrefixWithOffset(text: String, lineStartOffset: Int): String {
@@ -57,12 +83,23 @@ internal class KDocSectionEnterHandlerDelegate: EnterHandlerDelegate {
         while (offset < text.length) {
             val char = text[offset]
             if (char == '\n' || !char.isWhitespace() && char != '*') {
-                endOffset = offset
+                endOffset = offset - (if (char == '\n') 0 else 1)
                 break
             }
             offset++
         }
+        if (text[offset] == '\n') {
+            while (offset > lineStartOffset) {
+                val char = text[offset]
+                if (!char.isWhitespace()) {
+                    endOffset = offset + 1
+                    break
+                }
+                offset--
+            }
+        }
 
-        return text.substring(lineStartOffset, endOffset)
+        val substring = text.substring(lineStartOffset, endOffset)
+        return substring
     }
 }

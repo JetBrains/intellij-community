@@ -74,15 +74,15 @@ private interface BridgeCheckboxMetrics {
 }
 
 private object ClassicUiCheckboxMetrics : BridgeCheckboxMetrics {
-    override val outlineSize = DpSize(14.dp, 14.dp)
-    override val outlineFocusedSize = DpSize(15.dp, 15.dp)
+    override val outlineSize = DpSize(15.dp, 15.dp)
+    override val outlineFocusedSize = outlineSize
     override val outlineSelectedSize = outlineSize
-    override val outlineSelectedFocusedSize = outlineFocusedSize
+    override val outlineSelectedFocusedSize = outlineSize
 
-    override val outlineCornerSize = 2.dp
-    override val outlineFocusedCornerSize = 3.dp
+    override val outlineCornerSize = 3.dp
+    override val outlineFocusedCornerSize = outlineCornerSize
     override val outlineSelectedCornerSize = outlineCornerSize
-    override val outlineSelectedFocusedCornerSize = outlineFocusedCornerSize
+    override val outlineSelectedFocusedCornerSize = outlineCornerSize
 
     override val checkboxSize = DpSize(20.dp, 19.dp)
     override val iconContentGap = 4.dp
@@ -91,13 +91,13 @@ private object ClassicUiCheckboxMetrics : BridgeCheckboxMetrics {
 private object NewUiCheckboxMetrics : BridgeCheckboxMetrics {
     override val outlineSize = DpSize(16.dp, 16.dp)
     override val outlineFocusedSize = outlineSize
-    override val outlineSelectedSize = DpSize(20.dp, 20.dp)
-    override val outlineSelectedFocusedSize = outlineSelectedSize
+    override val outlineSelectedSize = outlineSize
+    override val outlineSelectedFocusedSize = outlineSize
 
     override val outlineCornerSize = 3.dp
     override val outlineFocusedCornerSize = outlineCornerSize
-    override val outlineSelectedCornerSize = 4.5.dp
-    override val outlineSelectedFocusedCornerSize = outlineSelectedCornerSize
+    override val outlineSelectedCornerSize = outlineCornerSize
+    override val outlineSelectedFocusedCornerSize = outlineCornerSize
 
     override val checkboxSize = DpSize(24.dp, 24.dp)
     override val iconContentGap = 5.dp

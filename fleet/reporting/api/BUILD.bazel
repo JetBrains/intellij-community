@@ -14,6 +14,10 @@ fleet_wasmjs_module(
     ],
 )
 
+### auto-generated section `dev fleet.reporting.api` start
+content_module_jar(module = ":api")
+### auto-generated section `dev fleet.reporting.api` end
+
 ### auto-generated section `build fleet.reporting.api` start
 create_kotlinc_options(
     name = "custom_api",
@@ -43,11 +47,9 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinx-coroutines-core",
+        "//libraries/kotlinx/coroutines/core",
     ],
 )
-
-content_module_jar(module = ":api")
 
 jvm_library(
     name = "api_test_lib",
@@ -59,7 +61,11 @@ jvm_library(
     kotlinc_opts = ":custom_api",
     module_name = "fleet.reporting.api",
     visibility = ["//visibility:public"],
-    runtime_deps = [":api"],
+    runtime_deps = [
+        # do not sort,
+        ":api",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+    ],
 )
 ### auto-generated section `build fleet.reporting.api` end
 
@@ -68,7 +74,6 @@ exports_files(
     [
         "fleet.reporting.api.iml",
         "resources/fleet.reporting.api.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -5,8 +5,8 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.runInEdtAndWait
-import org.jetbrains.kotlin.idea.core.script.k2.configurations.KotlinScriptService
-import org.jetbrains.kotlin.idea.core.script.v1.alwaysVirtualFile
+import org.jetbrains.kotlin.idea.core.script.configurations.KotlinScriptService
+import org.jetbrains.kotlin.idea.core.script.alwaysVirtualFile
 import org.jetbrains.kotlin.idea.fir.K2DirectiveBasedActionUtils
 import org.jetbrains.kotlin.idea.quickfix.AbstractQuickFixTest
 import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils

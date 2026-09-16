@@ -54,7 +54,7 @@ class EntityStorageSerializationTest {
   @Test
   fun `simple model serialization`() {
     val builder = createEmptyBuilder()
-    builder addEntity SampleEntity(false, "MyEntity", ArrayList(), HashMap(), virtualFileManager.getOrCreateFromUrl("file:///tmp"),
+    builder addEntity SampleEntity(false, "MyEntity", ArrayList(), HashMap(), virtualFileManager.storeAndGet("file:///tmp"),
                                    SampleEntitySource("test"))
 
     SerializationRoundTripChecker.verifyPSerializationRoundTrip(builder.toSnapshot(), virtualFileManager)
@@ -67,7 +67,7 @@ class EntityStorageSerializationTest {
     ConcurrentVirtualFileUrlManager()
     builder addEntity SampleEntity(false, stringProperty = "MyEntity",
                                    stringListProperty = mutableListOf("a", "b"),
-                                   stringMapProperty = HashMap(), fileProperty = virtualFileManager.getOrCreateFromUrl("file:///tmp"),
+                                   stringMapProperty = HashMap(), fileProperty = virtualFileManager.storeAndGet("file:///tmp"),
                                    entitySource = SampleEntitySource("test"))
 
     SerializationRoundTripChecker.verifyPSerializationRoundTrip(builder.toSnapshot(), virtualFileManager)
@@ -86,7 +86,7 @@ class EntityStorageSerializationTest {
       put("bc", "ce")
     }
     val entity = SampleEntity(false, "MyEntity", stringListProperty,
-                              stringMapProperty, virtualFileManager.getOrCreateFromUrl("file:///tmp"), SampleEntitySource("test"))
+                              stringMapProperty, virtualFileManager.storeAndGet("file:///tmp"), SampleEntitySource("test"))
     builder.addEntity(entity)
 
     val setProperty = buildSet {
@@ -146,7 +146,7 @@ class EntityStorageSerializationTest {
     val virtualFileManager: VirtualFileUrlManager = ConcurrentVirtualFileUrlManager()
     val builder = createEmptyBuilder()
     val entity = SampleEntity(false, "MyEntity", emptyList(),
-                              emptyMap(), virtualFileManager.getOrCreateFromUrl("file:///tmp"), SampleEntitySource("test")) {
+                              emptyMap(), virtualFileManager.storeAndGet("file:///tmp"), SampleEntitySource("test")) {
       randomUUID = UUID.fromString("58e0a7d7-eebc-11d8-9669-0800200c9a66")
     }
     builder.addEntity(entity)
@@ -157,7 +157,7 @@ class EntityStorageSerializationTest {
   @Test
   fun `serialization with version changing`() {
     val builder = createEmptyBuilder()
-    builder addEntity SampleEntity(false, "MyEntity", ArrayList(), HashMap(), ConcurrentVirtualFileUrlManager().getOrCreateFromUrl("file:///tmp"),
+    builder addEntity SampleEntity(false, "MyEntity", ArrayList(), HashMap(), ConcurrentVirtualFileUrlManager().storeAndGet("file:///tmp"),
                                    SampleEntitySource("test"))
 
     val serializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, ConcurrentVirtualFileUrlManager(), ijBuildVersion = "")
@@ -180,7 +180,8 @@ class EntityStorageSerializationTest {
     }
 
     val serializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, ConcurrentVirtualFileUrlManager(), ijBuildVersion = "One")
-    val deserializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, ConcurrentVirtualFileUrlManager(), ijBuildVersion = "Two")
+    val deserializer =
+      EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, ConcurrentVirtualFileUrlManager(), ijBuildVersion = "Two")
 
     withTempFile { file ->
       serializer.serializeCache(file, builder.toSnapshot())
@@ -204,7 +205,7 @@ class EntityStorageSerializationTest {
     for ((writerManager, readerManager) in managerPairs) {
       val builder = createEmptyBuilder()
       builder addEntity SampleEntity(false, "MyEntity", ArrayList(), HashMap(),
-                                     writerManager.getOrCreateFromUrl("file:///tmp/some/dir"), SampleEntitySource("test"))
+                                     writerManager.storeAndGet("file:///tmp/some/dir"), SampleEntitySource("test"))
 
       val serializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, writerManager, ijBuildVersion = "")
       val deserializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, readerManager, ijBuildVersion = "")
@@ -227,7 +228,8 @@ class EntityStorageSerializationTest {
     }
 
     val serializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, ConcurrentVirtualFileUrlManager(), ijBuildVersion = "One")
-    val deserializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, ConcurrentVirtualFileUrlManager(), ijBuildVersion = "One")
+    val deserializer =
+      EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, ConcurrentVirtualFileUrlManager(), ijBuildVersion = "One")
 
     withTempFile { file ->
       builder.refs.oneToOneContainer.clear()
@@ -256,7 +258,8 @@ class EntityStorageSerializationTest {
     }
 
     val serializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, ConcurrentVirtualFileUrlManager(), ijBuildVersion = "One")
-    val deserializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, ConcurrentVirtualFileUrlManager(), ijBuildVersion = "Two")
+    val deserializer =
+      EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, ConcurrentVirtualFileUrlManager(), ijBuildVersion = "Two")
 
     withTempFile { file ->
       builder.refs.oneToOneContainer.clear()
@@ -337,7 +340,7 @@ class EntityStorageSerializationTest {
 
     val builder = createEmptyBuilder()
 
-    builder addEntity SampleEntity(false, "myString", ArrayList(), HashMap(), ConcurrentVirtualFileUrlManager().getOrCreateFromUrl("file:///tmp"),
+    builder addEntity SampleEntity(false, "myString", ArrayList(), HashMap(), ConcurrentVirtualFileUrlManager().storeAndGet("file:///tmp"),
                                    SampleEntitySource("test"))
 
     withTempFile { file ->
@@ -368,7 +371,7 @@ class EntityStorageSerializationTest {
 
     val builder = createEmptyBuilder()
 
-    builder addEntity SampleEntity(false, "myString", ArrayList(), HashMap(), ConcurrentVirtualFileUrlManager().getOrCreateFromUrl("file:///tmp"),
+    builder addEntity SampleEntity(false, "myString", ArrayList(), HashMap(), ConcurrentVirtualFileUrlManager().storeAndGet("file:///tmp"),
                                    SampleEntitySource("test"))
 
     withTempFile { file ->
@@ -388,7 +391,7 @@ class EntityStorageSerializationTest {
     val entity = builder addEntity SampleEntity(
       false, stringProperty = "MyEntity",
       stringListProperty = mutableListOf("a", "b"),
-      stringMapProperty = HashMap(), fileProperty = virtualFileManager.getOrCreateFromUrl("file:///tmp"),
+      stringMapProperty = HashMap(), fileProperty = virtualFileManager.storeAndGet("file:///tmp"),
       entitySource = SampleEntitySource("test")
     )
 

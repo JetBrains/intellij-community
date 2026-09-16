@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.ModNavigator;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -23,14 +24,16 @@ import org.jetbrains.annotations.NotNull;
 public final class CodeBlockReformattingProcessor implements ModCommandAwareTemplateOptionalProcessor, DumbAware {
 
   @Override
-  public void processText(@NotNull Template template, @NotNull ModNavigator navigator, @NotNull RangeMarker templateRange) {
-    if (!template.isToReformat()) return;
+  public @NotNull TextRange processText(@NotNull Template template,
+                                        @NotNull ModNavigator navigator,
+                                        @NotNull RangeMarker templateRange) {
+    if (!template.isToReformat()) return templateRange.getTextRange();
     Project project = navigator.getProject();
     Document document = navigator.getDocument();
 
     PsiDocumentManager.getInstance(project).commitDocument(document);
     PsiFile file = PsiUtilBase.getPsiFileInModNavigator(navigator);
-    if (!(file instanceof PsiJavaFile)) return;
+    if (!(file instanceof PsiJavaFile)) return templateRange.getTextRange();
 
     CharSequence text = document.getImmutableCharSequence();
     int prevChar = CharArrayUtil.shiftBackward(text, templateRange.getStartOffset() - 1, " \t");
@@ -44,6 +47,7 @@ public final class CodeBlockReformattingProcessor implements ModCommandAwareTemp
         }
       }
     }
+    return templateRange.getTextRange();
   }
 
   @Override

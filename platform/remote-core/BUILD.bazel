@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.platform.remote.core` start
+content_module_jar(module = ":remote-core")
+### auto-generated section `dev intellij.platform.remote.core` end
+
 ### auto-generated section `build intellij.platform.remote.core` start
 jvm_library(
     name = "remote-core",
@@ -39,8 +43,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":remote-core")
-
 jvm_library(
     name = "remote-core_test_lib",
     testonly = True,
@@ -72,7 +74,6 @@ exports_files(
     [
         "intellij.platform.remote.core.iml",
         "resources/intellij.platform.remote.core.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

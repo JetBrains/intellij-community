@@ -1,3 +1,0 @@
-- name: dist.all/lib/intellij.platform.ui.jcef.jar
-  modules:
-  - name: intellij.platform.ui.jcef

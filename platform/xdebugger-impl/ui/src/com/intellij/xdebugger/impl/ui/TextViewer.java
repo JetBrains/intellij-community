@@ -65,8 +65,8 @@ public final class TextViewer extends EditorTextField {
       if (needSlashRSupport(text, isViewer())) {
         if (!((DocumentImpl)getDocument()).setAcceptSlashR(true)) {
           Editor editor = getEditor();
-          if (editor instanceof EditorEx) {
-            ((EditorEx)editor).reinitSettings();
+          if (editor instanceof EditorEx ex) {
+            ex.reinitSettings();
           }
         }
       }

@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.sdk.backend.evolution
 
-import com.intellij.python.pytools.PyTool
+import com.intellij.python.pytools.backend.PyTool
 import com.intellij.python.sdk.common.evolution.EvoNodeKind
 import com.intellij.python.pytools.resolveExecutable
 import com.jetbrains.python.sdk.add.v2.FileSystem
@@ -11,8 +11,7 @@ import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
 /**
- * Base class for an Evo widget node backed by a [PyTool]: the node's label, icon and availability all come from the
- * tool, so a provider only has to declare its identity and its environment layout.
+ * Base class for an Evo widget node backed by a [PyTool].
  *
  * Availability is "the tool's executable resolves on this machine" for every such tool — and it is what decides whether
  * the node appears at all — so it belongs here rather than being restated per provider. Resolution goes through
@@ -31,11 +30,11 @@ abstract class PyToolEvoEnvironmentProvider : PyEvoEnvironmentProvider {
    * The tool behind this node. A property rather than a constructor parameter so the lookup stays lazy: providers are
    * instantiated when the extension list is first read, which is not a good time to reach for a service.
    */
-  protected abstract val tool: PyTool
+  protected abstract val tool: PyTool<*>
 
-  override val label: @Nls String get() = tool.presentableName
+  abstract override val label: @Nls String
 
-  override val icon: Icon get() = tool.icon
+  abstract override val icon: Icon
 
   override val nodeKind: EvoNodeKind get() = EvoNodeKind.TOOL
 

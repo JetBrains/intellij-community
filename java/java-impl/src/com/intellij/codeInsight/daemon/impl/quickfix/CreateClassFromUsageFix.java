@@ -6,6 +6,11 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.util.PsiNavigationSupport;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
@@ -16,6 +21,7 @@ import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDeconstructionPattern;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
@@ -23,6 +29,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public final class CreateClassFromUsageFix extends CreateClassFromUsageBaseFix {
   public CreateClassFromUsageFix(PsiJavaCodeReferenceElement refElement, CreateClassKind kind) {
@@ -96,5 +103,55 @@ public final class CreateClassFromUsageFix extends CreateClassFromUsageBaseFix {
   @Override
   public boolean startInWriteAction() {
     return false;
+  }
+
+  @Override
+  public @Nullable ModCommandAction getFallbackModCommandAction() {
+    PsiJavaCodeReferenceElement element = getRefElement();
+    return element == null ? null : new CreateClassFromUsageModCommandAction(element);
+  }
+
+  /**
+   * Creates the class in the directory of the current file. The fix which the user starts in the editor
+   * asks for the directory, which a {@link ModCommandAction} cannot do.
+   */
+  private final class CreateClassFromUsageModCommandAction extends PsiUpdateModCommandAction<PsiJavaCodeReferenceElement> {
+    private CreateClassFromUsageModCommandAction(@NotNull PsiJavaCodeReferenceElement element) {
+      super(element);
+    }
+
+    @Override
+    public @NotNull String getFamilyName() {
+      return CreateClassFromUsageFix.this.getFamilyName();
+    }
+
+    @Override
+    protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiJavaCodeReferenceElement element) {
+      if (element.getQualifier() != null) return null;
+      String text = getAvailableText(element, context.offset());
+      if (text == null) return null;
+      String name = element.getReferenceName();
+      if (name == null || CreateFromUsageUtils.findClassDirectory(context.file(), name) == null) return null;
+      return Presentation.of(text);
+    }
+
+    @Override
+    protected void invoke(@NotNull ActionContext context,
+                          @NotNull PsiJavaCodeReferenceElement element,
+                          @NotNull ModPsiUpdater updater) {
+      String name = element.getReferenceName();
+      if (name == null) return;
+      PsiDirectory directory = CreateFromUsageUtils.findClassDirectory(context.file(), name);
+      if (directory == null) return;
+      PsiClass aClass = CreateFromUsageUtils.createClassInDirectory(
+        myKind, updater.getWritable(directory), name, element, element.getContainingFile(), getSuperClassName(element));
+      if (aClass == null) return;
+      PsiDeconstructionPattern pattern = getDeconstructionPattern(element);
+      if (pattern != null) {
+        CreateRecordFromNewFix.setupRecordComponentsFromPattern(aClass.getRecordHeader(), DummyTemplateBuilder.INSTANCE,
+                                                                pattern.getDeconstructionList());
+      }
+      updater.moveCaretTo(aClass.getContainingFile());
+    }
   }
 }

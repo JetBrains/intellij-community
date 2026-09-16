@@ -1,6 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.transformations;
 
+import com.intellij.groovy.testFramework.GroovyAssertions;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiType;
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -91,6 +92,6 @@ public class GrAutoCloneTransformationSupportTest extends LightGroovyTestCase {
     PsiFile file = myFixture.configureByText("_.groovy", text);
     GrReferenceExpression ref =(GrReferenceExpression) file.findReferenceAt(myFixture.getEditor().getCaretModel().getOffset());
     PsiType actual = ref.getType();
-    LightGroovyTestCase.assertType(expectedType, actual);
+    GroovyAssertions.assertType(expectedType, actual);
   }
 }

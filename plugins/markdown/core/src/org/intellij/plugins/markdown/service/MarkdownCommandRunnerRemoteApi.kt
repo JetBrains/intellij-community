@@ -7,6 +7,7 @@ import com.intellij.platform.rpc.lite.LiteRemoteApiProviderService
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor
+import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -34,11 +35,17 @@ interface MarkdownCommandRunnerRemoteApi : RemoteApi<Unit> {
     workingDirectory: String,
   ): Boolean
 
+  suspend fun frontendRunnerRequests(): Flow<MarkdownFrontendRunnerRequest>
+
   suspend fun isProjectTrusted(projectId: ProjectId): Boolean
 
   suspend fun setProjectTrusted(projectId: ProjectId)
 
   companion object {
+    suspend fun getInstance(): MarkdownCommandRunnerRemoteApi {
+      return LiteRemoteApiProviderService.awaitConnectionAndResolve(remoteApiDescriptor<MarkdownCommandRunnerRemoteApi>())
+    }
+
     @JvmStatic
     fun tryGetInstance(): MarkdownCommandRunnerRemoteApi? {
       return LiteRemoteApiProviderService.tryResolve(remoteApiDescriptor<MarkdownCommandRunnerRemoteApi>())

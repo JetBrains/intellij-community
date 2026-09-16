@@ -161,11 +161,12 @@ class TeamCityBuildMessageLogger : BuildMessageLogger() {
         check(message is BuildProblemLogMessage) {
           "Unexpected build problem message type: ${message::class.java.canonicalName}"
         }
+        val description = message.cause?.let { "${message.text}:\n${it.stackTraceToString()}" } ?: message.text
         if (message.identity != null) {
-          print(ServiceMessageTypes.BUILD_PROBLEM, "description" to message.text, "identity" to message.identity)
+          print(ServiceMessageTypes.BUILD_PROBLEM, "description" to description, "identity" to message.identity)
         }
         else {
-          print(ServiceMessageTypes.BUILD_PROBLEM, "description" to message.text)
+          print(ServiceMessageTypes.BUILD_PROBLEM, "description" to description)
         }
       }
       BUILD_CANCEL -> {

@@ -31,7 +31,7 @@ public class XEditWatchAction extends XWatchesTreeActionBase implements SplitDeb
     List<? extends WatchNodeImpl> watchNodes = getSelectedNodes(tree, WatchNodeImpl.class);
     if (watchNodes.size() != 1) return;
 
-    WatchNodeImpl node = watchNodes.get(0);
+    WatchNodeImpl node = watchNodes.getFirst();
     XDebuggerTreeNode root = tree.getRoot();
     if (root instanceof WatchesRootNode watchesRootNode) {
       watchesRootNode.editWatch(node);

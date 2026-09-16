@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.codereview.diff.viewer
 
-import com.intellij.collaboration.async.cancelAndJoinSilently
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
@@ -34,6 +33,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -200,7 +200,7 @@ suspend fun DiffViewerBase.showCodeReview(editorRenderer: EditorCodeReviewRender
     supervisorScope {
       var prevJob: Job? = null
       viewerReadyFlow().collect {
-        prevJob?.cancelAndJoinSilently()
+        prevJob?.cancelAndJoin()
         if (!it) return@collect
 
         when (viewer) {

@@ -1,8 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
-import kotlinx.coroutines.CoroutineScope
 import org.assertj.core.api.Assertions.assertThat
+import org.jetbrains.intellij.build.BuildLifetime
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildPaths
@@ -59,7 +59,7 @@ internal class BazelCompilationContextTest {
 
     val baseContext = BazelCompilationContext(
       delegate = testCompilationContext(project = project, tempDir = tempDir, options = BuildOptions()),
-      scope = null,
+      lifetime = null,
       outputProviderState = state,
     )
     val productionCopy = baseContext.createCopy(
@@ -139,7 +139,7 @@ internal class BazelCompilationContextTest {
     // classpath there is no `bazel-out` to derive one from, and under runfiles every path comes from a label
     state.bazelTargetsMap
     state.findRequiredModule(moduleName)
-    assertThat(BazelModuleOutputProvider(state, scope = null, useTestCompilationOutput = false).toString())
+    assertThat(BazelModuleOutputProvider(state, lifetime = null, useTestCompilationOutput = false).toString())
       .contains("bazelOutputRoot=<not resolved>")
     assertThat(resolveCounter.get()).isEqualTo(0)
 
@@ -200,9 +200,9 @@ internal class BazelCompilationContextTest {
     override val outputProvider: ModuleOutputProvider
       get() = error("Test delegate output provider should not be used")
 
-    override suspend fun getStableJdkHome(): Path = stableJavaExecutable.parent.parent
+    override fun getStableJdkHome(): Path = stableJavaExecutable.parent.parent
 
-      override suspend fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean): Collection<Path> = emptyList()
+      override fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean): Collection<Path> = emptyList()
 
     override fun findFileInModuleSources(moduleName: String, relativePath: String, forTests: Boolean): Path? = null
 
@@ -210,7 +210,7 @@ internal class BazelCompilationContextTest {
 
     override fun notifyArtifactBuilt(artifactPath: Path) = Unit
 
-    override fun createCopy(messages: BuildMessages, options: BuildOptions, paths: BuildPaths, scope: CoroutineScope?): CompilationContext {
+    override fun createCopy(messages: BuildMessages, options: BuildOptions, paths: BuildPaths, lifetime: BuildLifetime?): CompilationContext {
       return TestCompilationContext(
         messages = messages,
         options = options,
@@ -225,10 +225,10 @@ internal class BazelCompilationContextTest {
       )
     }
 
-    override suspend fun prepareForBuild() = Unit
+    override fun prepareForBuild() = Unit
 
-    override suspend fun compileModules(moduleNames: Collection<String>?, includingTestsInModules: List<String>?) = Unit
+    override fun compileModules(moduleNames: Collection<String>?, includingTestsInModules: List<String>?) = Unit
 
-    override suspend fun withCompilationLock(block: suspend () -> Unit) = block()
+    override fun withCompilationLock(block: () -> Unit) = block()
   }
 }

@@ -60,9 +60,9 @@ public class DefaultDebugEnvironment implements DebugEnvironment {
   @Override
   public ExecutionResult createExecutionResult() throws ExecutionException {
     // debug port may have changed, reinit parameters just in case
-    if (myNeedParametersSet && state instanceof JavaCommandLine) {
+    if (myNeedParametersSet && state instanceof JavaCommandLine line) {
       new RemoteConnectionBuilder(true, DebuggerSettings.SOCKET_TRANSPORT, myRemoteConnection.getApplicationAddress())
-        .create(((JavaCommandLine)state).getJavaParameters());
+        .create(line.getJavaParameters());
     }
     return state.execute(environment.getExecutor(), environment.getRunner());
   }
@@ -117,9 +117,9 @@ public class DefaultDebugEnvironment implements DebugEnvironment {
 
   @Override
   public @Nullable Sdk getRunJre() {
-    if (state instanceof JavaCommandLine) {
+    if (state instanceof JavaCommandLine line) {
       try {
-        return ((JavaCommandLine)state).getJavaParameters().getJdk();
+        return line.getJavaParameters().getJdk();
       }
       catch (ExecutionException ignore) {
       }

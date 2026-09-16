@@ -12,7 +12,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.python.processOutput.common.sendOpenToolWindowByTraceUuidEvent
+import com.intellij.python.processOutput.common.ProcessOutputTopic
 import com.intellij.python.requirements.pyRequirement
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.ClientProperty
@@ -21,6 +21,7 @@ import com.intellij.ui.render.RenderingHelper
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.TraceContext
+import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.management.PyPackageScope
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.statistics.PyInstallDialogSource
@@ -39,6 +40,7 @@ import com.jetbrains.python.packaging.toolwindow.packages.tree.PyPackagesTree.Co
 import com.jetbrains.python.packaging.toolwindow.packages.tree.renderers.PyPackageTreeCellRenderer
 import com.jetbrains.python.packaging.toolwindow.packages.tree.renderers.TrailingIconKind
 import com.jetbrains.python.packaging.toolwindow.packages.tree.renderers.asInstalledPackageOrNull
+import com.jetbrains.python.packaging.toolwindow.packages.tree.renderers.installedFromTooltip
 import com.jetbrains.python.packaging.toolwindow.packages.tree.renderers.trailingIconTooltip
 import com.jetbrains.python.packaging.toolwindow.ui.PyInstallPackageDialog
 import com.jetbrains.python.packaging.toolwindow.ui.showChangeVersionPopup
@@ -58,6 +60,7 @@ import javax.swing.event.TreeExpansionEvent
 import javax.swing.event.TreeExpansionListener
 import javax.swing.event.TreeSelectionListener
 import javax.swing.plaf.basic.BasicTreeUI
+import javax.swing.JTree
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreeCellRenderer
@@ -80,7 +83,7 @@ internal class PyPackagesTree(
   private val rootNode = DefaultMutableTreeNode()
   private val myTreeModel = DefaultTreeModel(rootNode)
 
-  @set:RequiresEdt
+  @set:RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   var items: List<DisplayablePackage> = emptyList()
     set(value) {
       field = value
@@ -93,14 +96,14 @@ internal class PyPackagesTree(
    * Service-side seeded sorted match list (cross-repo merge + global priority sort). Tree's
    * [loadMore] paginates this list visually so the on-scroll order matches the install dialog.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun primeSortedMatches(sortedAll: List<DisplayablePackage>) {
     sortedAllMatches = sortedAll
   }
 
   /** How many more packages the repository can still produce for the current query. */
-  @get:RequiresEdt
-  @set:RequiresEdt
+  @get:RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @set:RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   var pendingMore: Int = 0
 
   /**
@@ -229,7 +232,12 @@ internal class PyPackagesTree(
     val trailingIcon = renderer.trailingIcon
     val trailingIconKind = renderer.trailingIconKind
     val overTrailingIcon = trailingIconX > 0 && trailingIcon != null && relativeX in trailingIconX..(trailingIconX + trailingIcon.iconWidth)
-    if (!overTrailingIcon) return null
+    if (!overTrailingIcon) {
+      // The documentation popup covers the name, and it already names where a local package lives.
+      // Serving this tooltip there too puts one over the other (PY-90174).
+      if (renderer.findFragmentAt(relativeX) == NAME_FRAGMENT) return null
+      return pkg.rowTooltip()
+    }
     return when (trailingIconKind) {
       TrailingIconKind.PROGRESS -> installSpinnerTooltip(pkg)
       TrailingIconKind.ACTION -> pkg.trailingIconTooltip()
@@ -267,16 +275,8 @@ internal class PyPackagesTree(
 
   private fun updateTreeModel() {
     rootNode.removeAllChildren()
-    items.forEach { pkg -> rootNode.add(createNodeRecursively(pkg)) }
+    items.forEach { pkg -> rootNode.add(pkg.toTreeNode()) }
     myTreeModel.reload()
-  }
-
-  private fun createNodeRecursively(pkg: DisplayablePackage): DefaultMutableTreeNode {
-    val node = DefaultMutableTreeNode(pkg)
-    pkg.getRequirements().forEach { requirement ->
-      node.add(createNodeRecursively(requirement))
-    }
-    return node
   }
 
   private fun setupTreeInteractions() {
@@ -435,7 +435,7 @@ internal class PyPackagesTree(
   private fun showInstallOutput(pkg: DisplayablePackage) {
     val traceUuid = installTraceUuid(pkg) ?: return
     PyPackageCoroutine.launch(project, Dispatchers.Default) {
-      sendOpenToolWindowByTraceUuidEvent(traceUuid)
+      ProcessOutputTopic.sendOpenToolWindowByTraceUuidEvent(traceUuid)
     }
   }
 
@@ -480,7 +480,7 @@ internal class PyPackagesTree(
       val trace = TraceContext(PyBundle.message("python.toolwindow.packages.tooltip.change.version"), null)
       val details = withContext(trace) { packagingService.detailsForPackage(pkg) }
       if (details == null) {
-        sendOpenToolWindowByTraceUuidEvent(trace.uuid)
+        ProcessOutputTopic.sendOpenToolWindowByTraceUuidEvent(trace.uuid)
         return@launch
       }
       withContext(Dispatchers.EDT) {
@@ -501,7 +501,7 @@ internal class PyPackagesTree(
    * [primeSortedMatches]. No network round-trip, no re-sort — items appear in the exact order
    * the install dialog shows them.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun loadMore() {
     if (pendingMore <= 0) return
     val sorted = sortedAllMatches ?: return
@@ -537,9 +537,12 @@ internal class PyPackagesTree(
     }
   }
 
-  fun expandAll() {
-    for (i in 0 until rowCount) expandRow(i)
-  }
+  /**
+   * Expanding a row adds the rows below it, so the count has to be read again on every step. A
+   * fixed bound taken before the first expansion stops at the rows that were already visible, which
+   * leaves everything below the first few matches closed.
+   */
+  fun expandAll() = expandAllRows()
 
   fun selectedItems(): List<DisplayablePackage> =
     selectionRows?.toList()?.mapNotNull { row -> packageAtRow(row) } ?: emptyList()
@@ -568,6 +571,57 @@ internal class PyPackagesTree(
 
 internal fun interface PyPackagesTreeListener {
   /** Called on EDT when the visible tree row layout changes (items set, expanded, collapsed). */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun onTreeStructureChanged()
 }
+
+/**
+ * Builds the rows for a package and its dependencies.
+ *
+ * [path] holds the packages between this row and the top of the tree. A package that repeats on its
+ * own path becomes a leaf, which ends the walk where the dependency graph has a cycle. A package
+ * that merely appears again elsewhere keeps its dependencies, or a row would lose the dependencies
+ * the tool listed for it (PY-90174).
+ *
+ * The set holds packages by identity, since [DisplayablePackage] does not define equality.
+ */
+internal fun DisplayablePackage.toTreeNode(
+  path: MutableSet<DisplayablePackage> = mutableSetOf(),
+): DefaultMutableTreeNode {
+  val node = DefaultMutableTreeNode(this)
+  if (!path.add(this)) return node
+  getRequirements().forEach { requirement ->
+    node.add(requirement.toTreeNode(path))
+  }
+  path.remove(this)
+  return node
+}
+
+/**
+ * Expands every row, including the ones expanding adds.
+ *
+ * The count has to be read again on every step. A bound taken before the first expansion stops at
+ * the rows that were already visible, which leaves everything below the first few matches closed
+ * (PY-90174).
+ */
+internal fun JTree.expandAllRows() {
+  var row = 0
+  while (row < rowCount) {
+    expandRow(row)
+    row++
+  }
+}
+
+/** The renderer paints the package name first, and the documentation popup covers that fragment. */
+internal const val NAME_FRAGMENT: Int = 0
+
+/** The installed package a row stands for, or `null` for a row that stands for none. */
+internal fun DisplayablePackage.installedPackage(): PythonPackage? = when (this) {
+  is InstalledPackage -> instance
+  is RequirementPackage -> instance
+  is WorkspaceMember -> instance
+  else -> null
+}
+
+/** Where the package on this row was installed from, in the same words on every row that has one. */
+internal fun DisplayablePackage.rowTooltip(): String? = installedPackage()?.installedFromTooltip()

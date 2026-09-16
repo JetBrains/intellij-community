@@ -53,7 +53,7 @@ internal class KotlinSuspendFunctionWrapper(
             COROUTINE_CONTEXT_FQ_NAME.asString()
 
     private val KtCodeFragment.needsTransforming: Boolean
-        @RequiresReadLock
+        @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
         get() {
             if (this !is KtBlockCodeFragment && this !is KtExpressionCodeFragment) return false
             return analyze(this) {
@@ -69,7 +69,7 @@ internal class KotlinSuspendFunctionWrapper(
             }
         }
 
-    @RequiresReadLock
+    @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
     override fun transformIfNeeded(codeFragment: KtCodeFragment) {
         if (stats.startAndMeasureAnalysisUnderReadAction { codeFragment.needsTransforming }.getOrNull() != true) return
 
@@ -146,7 +146,7 @@ internal class KotlinSuspendFunctionWrapper(
             append("\n}")
         }
 
-    @RequiresReadLock
+    @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
     private fun isCoroutineContextAvailable(from: PsiElement): Boolean {
         return analyze(from.parentOfType<KtElement>(withSelf = true) ?: return false) {
             from.parentsOfType<KtNamedFunction>().any {

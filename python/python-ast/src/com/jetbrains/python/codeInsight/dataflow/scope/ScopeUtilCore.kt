@@ -36,8 +36,16 @@ object ScopeUtilCore {
       return null
     }
     if (element is PyAstExpressionCodeFragment) {
-      val context = element.context
-      return context as? AstScopeOwner ?: getScopeOwner(context)
+      // A fragment holds the text of an annotation or a type comment that a stub keeps. As in calculateScopeOwner, these are
+      // resolved outside of the function, so a name such as `type` in `type: type` does not resolve to the parameter itself.
+      return when (val context = element.context) {
+        is PyAstNamedParameter -> {
+          val function = getScopeOwner(context)
+          if (function is PyAstFunction && function.typeParameterList == null) getScopeOwner(function) else function
+        }
+        is PyAstFunction -> if (context.typeParameterList == null) getScopeOwner(context) else context
+        else -> context as? AstScopeOwner ?: getScopeOwner(context)
+      }
     }
     return getCachedValueStubBuildOptimized(element, GET_SCOPE_OWNER_PROVIDER)
   }

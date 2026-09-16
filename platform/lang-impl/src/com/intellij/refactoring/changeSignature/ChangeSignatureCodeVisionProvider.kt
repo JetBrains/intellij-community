@@ -75,7 +75,7 @@ class ChangeSignatureCodeVisionProvider : CodeVisionProvider<Unit> {
     }
   }
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   private fun getCodeVisionState(editor: Editor, project: Project): CodeVisionState {
     val context = getInstance(project).getEditorContexts(editor).mainContext
     val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document, context)

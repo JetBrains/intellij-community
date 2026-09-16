@@ -53,7 +53,7 @@ internal object GitRebaseStagingAreaHelper {
    * @return true if the staging area was successfully updated
    */
   @JvmStatic
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun tryStagePartiallyStaged(repository: GitRepository): Boolean {
     val stagingAreaHolder = repository.stagingAreaHolder
     val update = StagingAreaUpdate()

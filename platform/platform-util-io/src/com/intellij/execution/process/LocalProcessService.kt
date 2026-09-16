@@ -41,6 +41,20 @@ interface LocalProcessService {
 
   fun hasControllingTerminal(process: Process): Boolean
 
+  fun getPtyControl(process: Process): PtyProcessControl? {
+    if (process is PtyProcessControl) {
+      return process
+    }
+    if (process !is PtyBasedProcess || !process.hasPty()) {
+      return null
+    }
+    return object : PtyProcessControl {
+      override fun setWindowSize(columns: Int, rows: Int) {
+        process.setWindowSize(columns, rows)
+      }
+    }
+  }
+
   /**
    * @return the command line of the process
    */

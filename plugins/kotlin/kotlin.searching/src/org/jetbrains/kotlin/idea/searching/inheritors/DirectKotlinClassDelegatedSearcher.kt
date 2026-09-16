@@ -22,7 +22,7 @@ private val EVERYTHING_BUT_KOTLIN by lazy(LazyThreadSafetyMode.PUBLICATION) {
 }
 
 internal class DirectKotlinClassDelegatedSearcher : Searcher<DirectKotlinClassInheritorsSearch.SearchParameters, PsiElement> {
-    @RequiresReadLock
+    @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
     override fun collectSearchRequest(parameters: DirectKotlinClassInheritorsSearch.SearchParameters): Query<out PsiElement>? {
         val baseClass = parameters.ktClass
         if (baseClass.isEnum()) {

@@ -14,7 +14,7 @@ sealed class FeedbackSurveyType<T : NotificationBasedFeedbackSurveyConfig> {
     return feedbackSurveyConfig.surveyId
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   internal fun isSuitableToShow(project: Project): Boolean {
     return isSuitableToShow(feedbackSurveyConfig, project)
   }

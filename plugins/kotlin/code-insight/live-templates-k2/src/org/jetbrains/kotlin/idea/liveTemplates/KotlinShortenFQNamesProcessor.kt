@@ -18,18 +18,19 @@ import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.psi.KtFile
 
 class KotlinShortenFQNamesProcessor : ModCommandAwareTemplateOptionalProcessor {
-    override fun processText(template: Template, navigator: ModNavigator, templateRange: RangeMarker) {
-        if (!template.isToShortenLongNames) return
+    override fun processText(template: Template, navigator: ModNavigator, templateRange: RangeMarker): TextRange {
+        if (!template.isToShortenLongNames) return templateRange.textRange
 
         val project = navigator.project
         val document = navigator.document
         PsiDocumentManager.getInstance(project).commitDocument(document)
 
         val file = PsiUtilBase.getPsiFileInModNavigator(navigator)
-        val (ktFile, range) = getMaybeInjectedRange(file, templateRange.textRange) ?: return
+        val (ktFile, range) = getMaybeInjectedRange(file, templateRange.textRange) ?: return templateRange.textRange
         ShortenReferencesFacility.getInstance().shorten(ktFile, range)
 
         PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document)
+        return templateRange.textRange
     }
 
     override fun getOptionName(): String {

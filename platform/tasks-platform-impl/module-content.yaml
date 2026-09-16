@@ -1,3 +1,0 @@
-- name: dist.all/lib/intellij.platform.tasks.impl.jar
-  modules:
-  - name: intellij.platform.tasks.impl

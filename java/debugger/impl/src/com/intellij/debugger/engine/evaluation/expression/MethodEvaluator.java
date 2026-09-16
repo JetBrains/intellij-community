@@ -101,9 +101,9 @@ public class MethodEvaluator implements Evaluator {
     try {
       ReferenceType referenceType = null;
 
-      if (object instanceof ObjectReference) {
+      if (object instanceof ObjectReference reference) {
         // it seems that if we have an object of the class, the class must be ready, so no need to use findClass here
-        referenceType = ((ObjectReference)object).referenceType();
+        referenceType = reference.referenceType();
       }
       else if (isInvokableType(object)) {
         referenceType = (ReferenceType)object;
@@ -116,8 +116,8 @@ public class MethodEvaluator implements Evaluator {
       }
       final String signature = myMethodSignature != null ? myMethodSignature.getName(debugProcess) : null;
 
-      if (requiresSuperObject && (referenceType instanceof ClassType)) {
-        referenceType = ((ClassType)referenceType).superclass();
+      if (requiresSuperObject && (referenceType instanceof ClassType classType)) {
+        referenceType = classType.superclass();
         String className = myClassName != null ? myClassName.getName(debugProcess) : null;
         if (referenceType == null || (className != null && !className.equals(referenceType.name()))) {
           referenceType = debugProcess.findClass(context, className, context.getClassLoader());
@@ -160,8 +160,8 @@ public class MethodEvaluator implements Evaluator {
       if (isInvokableType(object)) {
         if (isInvokableType(referenceType)) {
           if (jdiMethod.isStatic()) {
-            if (referenceType instanceof ClassType) {
-              return debugProcess.invokeMethod(context, (ClassType)referenceType, jdiMethod, args);
+            if (referenceType instanceof ClassType type) {
+              return debugProcess.invokeMethod(context, type, jdiMethod, args);
             }
             else {
               return debugProcess.invokeMethod(context, (InterfaceType)referenceType, jdiMethod, args);
@@ -263,15 +263,15 @@ public class MethodEvaluator implements Evaluator {
         if (expectedArgType.equals(argType)) {
           continue;
         }
-        if (expectedArgType instanceof ReferenceType) {
+        if (expectedArgType instanceof ReferenceType type) {
           if (argType == null) {
             continue;
           }
           else if (argType instanceof PrimitiveType) {
             // TODO: boxing-unboxing
           }
-          else if (argType instanceof ReferenceType &&
-                   DebuggerUtilsImpl.instanceOf((ReferenceType)argType, (ReferenceType)expectedArgType)) {
+          else if (argType instanceof ReferenceType referenceType &&
+                   DebuggerUtilsImpl.instanceOf(referenceType, type)) {
             continue;
           }
         }

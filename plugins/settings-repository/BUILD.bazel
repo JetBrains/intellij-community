@@ -1,6 +1,26 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
+load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_TARGETS")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `dev intellij.settingsRepository` start
+dev_dist_plugin(
+    content_modules = [
+        # do not sort,
+        "intellij.libraries.jgit.ssh",
+        "intellij.libraries.sshd.osgi",
+    ],
+    libraries = [
+        "@lib//:libraries-jgit-ssh-eclipse-jgit-ssh-apache",
+        "@lib//:libraries-jgit-ssh-eclipse-jgit-ssh-apache-agent",
+        "@lib//:libraries-sshd-osgi-apache-sshd-osgi",
+        "@lib//:slf4j-api",
+        "@lib//:slf4j-jdk14",
+    ],
+    main_module = "intellij.settingsRepository",
+    module_targets = MODULE_TARGETS,
+)
+### auto-generated section `dev intellij.settingsRepository` end
 
 ### auto-generated section `build intellij.settingsRepository` start
 jvm_library(
@@ -124,23 +144,6 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.settingsRepository` end
-
-### auto-generated section `dev intellij.settingsRepository` start
-dev_dist_plugin(
-    content_modules = [
-        "//libraries/jgit-ssh",
-        "//libraries/sshd-osgi",
-    ],
-    descriptor_module = ":settings-repository",
-    libraries = [
-        "@lib//:libraries-jgit-ssh-eclipse-jgit-ssh-apache",
-        "@lib//:libraries-jgit-ssh-eclipse-jgit-ssh-apache-agent",
-        "@lib//:libraries-sshd-osgi-apache-sshd-osgi",
-        "@lib//:slf4j-api",
-        "@lib//:slf4j-jdk14",
-    ],
-)
-### auto-generated section `dev intellij.settingsRepository` end
 
 ### auto-generated section `build intellij.settingsRepository.tests` start
 jvm_library(

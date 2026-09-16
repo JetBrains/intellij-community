@@ -2,10 +2,11 @@
 package com.intellij.python.junit5Tests.env.tests.uv
 
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.community.execService.ExecOptions
 import com.intellij.python.junit5Tests.framework.resolvePythonTool
-import com.intellij.python.pytools.runtime.PyToolRuntime
+import com.intellij.python.pytools.backend.runtime.PyToolRuntime
 import com.intellij.python.uv.backend.runtime.UvConstants
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.jetbrains.python.PythonBinary
@@ -55,7 +56,7 @@ internal data class UvContext(
       )
 
       val runtime = PyToolRuntime(
-        binary = BinOnEel(uvExecutablePath, realTempDir),
+        binary = BinOnEel(uvExecutablePath, realTempDir.asEelPath()),
         execOptions = ExecOptions(env = envVars),
       )
 

@@ -38,6 +38,7 @@ import org.jetbrains.kotlin.analysis.api.types.isSuspendFunctionType
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinOptimizeImportsFacility
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
+import org.jetbrains.kotlin.idea.base.psi.deleteValueArgument
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KtPsiClassWrapper
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -213,7 +214,7 @@ fun KtCallExpression.moveFunctionLiteralOutsideParentheses(moveCaretTo: ((Int) -
         argumentList.delete()
         calleeExpression?.let { moveCaretTo?.invoke(it.endOffset) }
     } else {
-        argumentList.removeArgument(argument)
+        argumentList.deleteValueArgument(argument)
         if (arguments.size > 1) {
             arguments[arguments.size - 2]?.let { moveCaretTo?.invoke(it.endOffset) }
         }

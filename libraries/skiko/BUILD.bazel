@@ -48,7 +48,6 @@ exports_files(
     [
         "intellij.libraries.skiko.iml",
         "resources/intellij.libraries.skiko.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

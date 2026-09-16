@@ -128,7 +128,7 @@ internal class McpToolsListProvider(private val scope: CoroutineScope, initialTo
     /**
      * Sequential fallback for the synchronous API. Prefer [computeAllMcpToolsAsync].
      */
-    @RequiresBackgroundThread
+    @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
     fun computeAllMcpTools(alreadyConverted: Map<McpToolsProvider, List<McpTool>> = emptyMap()): ProviderTools {
       return collectTools(alreadyConverted) { provider -> provider.getTools() }
     }

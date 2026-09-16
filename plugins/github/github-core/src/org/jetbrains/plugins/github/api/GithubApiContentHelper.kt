@@ -12,7 +12,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.JavaType
 import com.fasterxml.jackson.databind.MapperFeature
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.PropertyNamingStrategy
+import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.databind.introspect.VisibilityChecker
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
@@ -33,10 +33,10 @@ object GithubApiContentHelper {
   const val V3_DIFF_JSON_MIME_TYPE = "application/vnd.github.v3.diff+json"
 
   private val jackson: ObjectMapper = jacksonObjectMapper().genericConfig()
-    .setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE)
+    .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
 
   private val gqlJackson: ObjectMapper = jacksonObjectMapper().genericConfig()
-    .setPropertyNamingStrategy(PropertyNamingStrategy.LOWER_CAMEL_CASE)
+    .setPropertyNamingStrategy(PropertyNamingStrategies.LOWER_CAMEL_CASE)
 
   private fun ObjectMapper.genericConfig(): ObjectMapper = apply {
     setDateFormat(SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX"))

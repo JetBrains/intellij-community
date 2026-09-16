@@ -1,0 +1,74 @@
+<html>
+<body>
+Reports a property of a persistent state class that the store does not save.
+<p>Write each setting in one of these two forms.</p>
+<ul>
+  <li><b>An immutable state.</b> Keep the property read-only, and put a store annotation from
+    <code>com.intellij.util.xmlb.annotations</code> on the field, for example
+    <code>@Property</code>, <code>@OptionTag</code>, <code>@Attribute</code>, <code>@XCollection</code>, or <code>@XMap</code>.
+    Add <code>@JvmField</code> in Kotlin, so the annotation lands on the field.
+    Use this form with <code>SerializablePersistentStateComponent</code> and a <code>data class</code>.
+  </li>
+  <li><b>A mutable state.</b> Make the property public and mutable. Use <code>var</code> in Kotlin, or a public
+    non-final field in Java. The store binds such a property with no annotation.
+    Use this form with <code>BaseState</code>.
+  </li>
+</ul>
+<p>Put a store annotation on the field, not on the getter. An annotation on a getter alone does not create
+  a binding, because the store needs a setter to load the value back.
+</p>
+<p>Choose the annotation by the type of the property. Use <code>@XCollection</code> for a collection and
+  <code>@XMap</code> for a map, because each one states the shape of the XML. <code>@Property</code> fits
+  every other type.
+</p>
+<p>When the store must skip the property, mark it with <code>@Transient</code>
+  from <code>com.intellij.util.xmlb.annotations</code>.
+</p>
+<p>A property in any other form looks correct, but the store writes nothing for it.
+  The property takes its default value again after each IDE restart, and the user loses the setting.
+  The store gives no warning, so this defect stays hidden until a user reports the data loss.
+</p>
+<p><b>Note:</b> <code>com.intellij.configurationStore.Property</code> is a different annotation. It holds a description, and the store
+  does not save a property because of it.</p>
+<p>Example (Kotlin):</p>
+<pre><code lang="kotlin">
+@State(name = "MySettings", storages = [Storage("my.xml")])
+class MySettings : SerializablePersistentStateComponent&lt;MySettings.State&gt;(State()) {
+  data class State(
+    @JvmField val showTimestamp: Boolean = true,            // bad: no store annotation
+    @JvmField @Property val showSource: Boolean = true,      // good: an immutable state
+  )
+}
+</code></pre>
+<pre><code lang="kotlin">
+class MyState : BaseState() {
+  var showTimestamp: Boolean = true // good: a mutable state
+}
+</code></pre>
+<p>Example (Java):</p>
+<pre><code lang="java">
+public final class State {
+  public final boolean showTimestamp = true; // bad: final, and no store annotation
+  public boolean showSource = true;          // good
+}
+</code></pre>
+<p>The inspection accepts two more forms, because the rules above do not apply to them:</p>
+<ul>
+  <li>A read-only property of a class that carries <code>@kotlinx.serialization.Serializable</code>.
+    <code>kotlinx.serialization</code> replaces the bean binding of such a class, and it saves a read-only property.
+    Do not add this annotation to an existing state class only to keep a read-only property.
+    It writes the state as JSON, so the store cannot read a settings file that a user already saved.
+  </li>
+  <li>A member that holds a dependency of the component, for example a <code>Project</code>, a <code>CoroutineScope</code>
+    or a <code>Flow</code>. The store cannot write a value of such a type, so leave the member read-only.
+  </li>
+</ul>
+<p>
+  The inspection reports only a member that the store can see.
+  It does not report a Kotlin <code>private var</code> or <code>protected var</code> property.
+</p>
+
+<!-- tooltip end -->
+<p><small>New in 2026.3</small>
+</body>
+</html>

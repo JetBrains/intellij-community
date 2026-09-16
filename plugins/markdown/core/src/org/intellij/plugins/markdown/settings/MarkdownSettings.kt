@@ -13,13 +13,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.messages.Topic
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanelProvider
 
-@Service(Service.Level.PROJECT)
-@State(name = "MarkdownSettings", storages = [(Storage("markdown.xml"))])
-class MarkdownSettings(internal val project: Project): SimplePersistentStateComponent<MarkdownSettingsState>(MarkdownSettingsState()) {
-  var enableLivePreview: Boolean
-    get() = state.enableLivePreview
-    set(value) { state.enableLivePreview = value }
+const val MARKDOWN_SETTINGS_FILE_NAME: String = "markdown.xml"
 
+@Service(Service.Level.PROJECT)
+@State(name = "MarkdownSettings", storages = [(Storage(MARKDOWN_SETTINGS_FILE_NAME))])
+class MarkdownSettings(internal val project: Project): SimplePersistentStateComponent<MarkdownSettingsState>(MarkdownSettingsState()) {
   var areInjectionsEnabled: Boolean
     get() = state.areInjectionsEnabled
     set(value) { state.areInjectionsEnabled = value }

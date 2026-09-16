@@ -1,3 +1,0 @@
-- name: dist.all/lib/intellij.grid.csv.core.impl.jar
-  modules:
-  - name: intellij.grid.csv.core.impl

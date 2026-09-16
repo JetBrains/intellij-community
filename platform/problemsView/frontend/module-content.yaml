@@ -1,3 +1,0 @@
-- name: dist.all/lib/intellij.platform.problemView.frontend.jar
-  modules:
-  - name: intellij.platform.problemView.frontend

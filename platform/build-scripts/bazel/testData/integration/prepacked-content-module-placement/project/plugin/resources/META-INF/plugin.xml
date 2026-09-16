@@ -1,9 +1,0 @@
-<!-- BUILD_USING_BAZEL_MARKER -->
-<idea-plugin>
-  <id>my.plugin</id>
-  <content>
-    <module name="intellij.libraries.embedded" loading="embedded"/>
-    <module name="intellij.libraries.conventional"/>
-    <module name="intellij.libraries.conflicting"/>
-  </content>
-</idea-plugin>

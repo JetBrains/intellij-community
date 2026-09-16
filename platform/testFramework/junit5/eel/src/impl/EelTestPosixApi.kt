@@ -5,6 +5,7 @@ import com.intellij.platform.eel.EelArchiveApi
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelExecPosixApi
+import com.intellij.platform.eel.EelHttpApi
 import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.EelPosixApi
 import com.intellij.platform.eel.EelProcessManagementPosixApi
@@ -31,6 +32,7 @@ internal class EelTestPosixApi(override val descriptor: EelTestDescriptor, fileS
   override val fs: PosixNioBasedEelFileSystemApi = EelTestFileSystemPosixApi(descriptor, fileSystem)
 
   override val archive: EelArchiveApi = LocalEelArchiveApiImpl
+  override val http: EelHttpApi get() = TODO()
   override val tunnels: EelTunnelsPosixApi
     get() = TODO()
   override val exec: EelExecPosixApi

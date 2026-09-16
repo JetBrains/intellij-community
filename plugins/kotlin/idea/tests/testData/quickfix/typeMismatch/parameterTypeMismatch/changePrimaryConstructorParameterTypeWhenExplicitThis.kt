@@ -8,4 +8,3 @@ fun <T> Foo<T>.bar(x: T) {
     foo(<caret>this.x)
 }
 
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeParameterTypeFix

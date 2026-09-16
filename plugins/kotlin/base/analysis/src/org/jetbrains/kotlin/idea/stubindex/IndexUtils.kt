@@ -28,13 +28,12 @@ import org.jetbrains.kotlin.psi.stubs.KotlinPlaceHolderStub
 import org.jetbrains.kotlin.psi.stubs.KotlinPropertyAccessorStub
 import org.jetbrains.kotlin.psi.stubs.KotlinPropertyStub
 import org.jetbrains.kotlin.psi.stubs.KotlinTypeAliasStub
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-fun <TDeclaration : KtCallableDeclaration> indexTopLevelExtension(stub: KotlinCallableStubBase<TDeclaration>, sink: IndexSink) {
+internal fun <TDeclaration : KtCallableDeclaration> indexTopLevelExtension(stub: KotlinCallableStubBase<TDeclaration>, sink: IndexSink) {
     KotlinTopLevelExtensionsByReceiverTypeIndex.indexExtension(stub, sink)
 }
 
-fun <TDeclaration : KtCallableDeclaration> indexExtensionInObject(stub: KotlinCallableStubBase<TDeclaration>, sink: IndexSink) {
+internal fun <TDeclaration : KtCallableDeclaration> indexExtensionInObject(stub: KotlinCallableStubBase<TDeclaration>, sink: IndexSink) {
     KotlinExtensionsInObjectsByReceiverTypeIndex.indexExtension(stub, sink)
 }
 
@@ -53,7 +52,7 @@ private fun <TDeclaration : KtCallableDeclaration> KotlinExtensionsByReceiverTyp
     }
 }
 
-fun indexTypeAliasExpansion(stub: KotlinTypeAliasStub, sink: IndexSink) {
+internal fun indexTypeAliasExpansion(stub: KotlinTypeAliasStub, sink: IndexSink) {
     val declaration = stub.psi
     val typeReference = declaration.getTypeReference() ?: return
     val typeElement = typeReference.typeElement ?: return
@@ -122,7 +121,7 @@ private fun KtTypeElement.index(
     indexWithVisited(declaration, containingTypeReference, mutableSetOf(), occurrence)
 }
 
-fun indexJvmNameAnnotation(stub: KotlinAnnotationEntryStub, sink: IndexSink) {
+internal fun indexJvmNameAnnotation(stub: KotlinAnnotationEntryStub, sink: IndexSink) {
     if (stub.shortName != JvmFileClassUtil.JVM_NAME_SHORT) return
     val jvmName = JvmFileClassUtil.getLiteralStringFromAnnotation(stub.psi) ?: return
     val annotatedElementName = stub.parentStub.parentStub.annotatedJvmNameElementName ?: return
@@ -136,12 +135,12 @@ private val StubElement<*>.annotatedJvmNameElementName: String?
     get() = when (this) {
         is KotlinFileStub -> psi.name
         is NamedStub -> name ?: ""
-        is KotlinPropertyAccessorStub -> parentStub.safeAs<KotlinPropertyStub>()?.name ?: ""
+        is KotlinPropertyAccessorStub -> (parentStub as? KotlinPropertyStub)?.name ?: ""
         is KotlinPlaceHolderStub -> parentStub?.annotatedJvmNameElementName
         else -> null
     }
 
-fun <TDeclaration : KtCallableDeclaration> KotlinCallableStubBase<TDeclaration>.isDeclaredInObject(): Boolean {
+internal fun <TDeclaration : KtCallableDeclaration> KotlinCallableStubBase<TDeclaration>.isDeclaredInObject(): Boolean {
     if (isTopLevel) return false
     val containingDeclaration = parentStub?.parentStub?.psi
 

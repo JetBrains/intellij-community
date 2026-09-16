@@ -2,6 +2,10 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.java.syntax` start
+content_module_jar(module = ":syntax")
+### auto-generated section `dev intellij.java.syntax` end
+
 ### auto-generated section `build intellij.java.syntax` start
 create_kotlinc_options(
     name = "custom_syntax",
@@ -45,8 +49,6 @@ jvm_library(
         "//platform/syntax/syntax-extensions:extensions",
     ],
 )
-
-content_module_jar(module = ":syntax")
 
 jvm_library(
     name = "syntax_test_lib",

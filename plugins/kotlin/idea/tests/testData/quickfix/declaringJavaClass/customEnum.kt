@@ -10,4 +10,3 @@ enum class CustomEnum { A; }
 fun foo() {
     CustomEnum.A.<caret>declaringClass
 }
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.DeclaringJavaClassMigrationFix

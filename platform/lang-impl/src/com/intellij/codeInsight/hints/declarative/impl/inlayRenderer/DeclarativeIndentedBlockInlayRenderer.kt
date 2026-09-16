@@ -91,7 +91,7 @@ class DeclarativeIndentedBlockInlayRenderer(
     }
 }
 
-@RequiresReadLock
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 private fun calcViewIndentMargin(offset: Int, editor: Editor): Int {
   val document = editor.document
   val text = document.immutableCharSequence

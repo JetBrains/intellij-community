@@ -33,7 +33,6 @@ jvm_library(
         "//libraries/jetbrains/annotations",
         "//platform/util/base",
         "//platform/util-rt",
-        "//libraries/pty4j",
         "//platform/util/annotations",
     ],
 )
@@ -65,7 +64,6 @@ jvm_library(
         "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/util/base:base_test_lib",
         "//platform/util-rt:util-rt_test_lib",
-        "//libraries/pty4j:pty4j_test_lib",
         "//platform/util/annotations:annotations_test_lib",
     ],
 )
@@ -123,6 +121,8 @@ jvm_library(
         "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm_test_lib",
         "//platform/core-api:core",
         "//platform/core-api:core_test_lib",
+        "//platform/core-nio-fs",
+        "//platform/core-nio-fs:core-nio-fs_test_lib",
         "//platform/util",
         "//platform/util:util_test_lib",
         "//libraries/kotlinx/coroutines/core",

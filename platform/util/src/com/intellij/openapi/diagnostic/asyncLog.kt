@@ -24,6 +24,8 @@ internal data class LogEvent @Async.Schedule constructor(
   val level: LogLevel,
   val message: String?,
   val throwable: Throwable?,
+  /** See [IdeaLogRecord.unhandledExceptionKind]. */
+  val unhandledExceptionKind: UnhandledExceptionKind,
 ) : LogQueueItem
 
 private class AwaitQueueEvent(
@@ -41,8 +43,20 @@ internal fun LogEvent.log() {
 
 // It should not be an extension function, it's a workaround for IDEA-373525.
 private fun logNow(@Async.Execute event: LogEvent) {
-  val (julLogger, level, message, throwable) = event
-  if (throwable != null) {
+  val (julLogger, level, message, throwable, unhandledExceptionKind) = event
+  val unhandled = when (unhandledExceptionKind) {
+    UnhandledExceptionKind.INTERACTIVE, UnhandledExceptionKind.BACKGROUND -> true
+    UnhandledExceptionKind.HANDLED -> false
+  }
+  if (unhandled) {
+    // `LogRecord` has no field for the kind, so build an `IdeaLogRecord`. See IJPL-254578.
+    // `Logger.log(LogRecord)` sets no name, so set it here.
+    val record = IdeaLogRecord(level.level, message, unhandledExceptionKind)
+    record.loggerName = julLogger.name
+    record.thrown = throwable
+    julLogger.log(record)
+  }
+  else if (throwable != null) {
     julLogger.log(level.level, message, throwable)
   }
   else {

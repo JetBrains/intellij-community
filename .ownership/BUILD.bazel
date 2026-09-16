@@ -21,7 +21,7 @@ jvm_library(
         "//libraries/kotlinx/serialization/core",
         "@lib//:slf4j-api",
         "//libraries/kaml",
-        "@lib//:squareup-okio-jvm",
+        "//libraries/okio:squareup-okio-jvm",
         "@lib//:slf4j-jdk14",
     ],
 )
@@ -41,6 +41,7 @@ jvm_library(
         ":codeowners",
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//libraries/kaml:kaml_test_lib",
+        "//libraries/okio:squareup-okio-jvm_test_lib",
     ],
 )
 ### auto-generated section `build intellij.codeowners` end

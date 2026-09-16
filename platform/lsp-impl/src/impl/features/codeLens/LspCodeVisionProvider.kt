@@ -48,11 +48,11 @@ internal class LspCodeVisionProvider : CodeVisionProvider<Unit>, DumbAware {
       val command = lens.command ?: continue
       val title = command.title ?: continue
 
-
       val handler = { mouseEvent: MouseEvent?, _: Editor ->
         customizer.codeLensClicked(client as LspClient, virtualFile, command, mouseEvent)
       }
-      val entry = ClickableTextCodeVisionEntry(title, id, handler)
+      val presentation = parseCodeLensTitle(title)
+      val entry = ClickableTextCodeVisionEntry(presentation.text, id, handler, presentation.icon)
 
       entries.add(cachedLens.textRange to entry)
     }

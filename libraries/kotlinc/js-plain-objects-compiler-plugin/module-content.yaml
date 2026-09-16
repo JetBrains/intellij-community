@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.kotlinc.js.plain.objects.compiler.plugin.jar
+  modules:
+  - name: intellij.libraries.kotlinc.js.plain.objects.compiler.plugin
+    libraries:
+      kotlinc.js-plain-objects-compiler-plugin:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/js-plain-objects-compiler-plugin-for-ide/2/js-plain-objects-compiler-plugin-for-ide-2.jar

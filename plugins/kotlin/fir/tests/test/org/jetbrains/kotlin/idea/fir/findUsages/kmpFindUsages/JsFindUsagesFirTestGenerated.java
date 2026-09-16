@@ -58,6 +58,11 @@ public abstract class JsFindUsagesFirTestGenerated extends AbstractFindUsagesFir
             runTest("../../idea/tests/testData/findUsages/kotlin/companionObject/namedWithInvoke.0.kt");
         }
 
+        @TestMetadata("namedWithSuperType.0.kt")
+        public void testNamedWithSuperType() throws Exception {
+            runTest("../../idea/tests/testData/findUsages/kotlin/companionObject/namedWithSuperType.0.kt");
+        }
+
         @TestMetadata("simple.0.kt")
         public void testSimple() throws Exception {
             runTest("../../idea/tests/testData/findUsages/kotlin/companionObject/simple.0.kt");

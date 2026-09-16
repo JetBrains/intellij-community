@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.platform.editor.ui` start
+content_module_jar(module = ":editor-ui")
+### auto-generated section `dev intellij.platform.editor.ui` end
+
 ### auto-generated section `build intellij.platform.editor.ui` start
 jvm_library(
     name = "editor-ui",
@@ -38,8 +42,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":editor-ui")
-
 jvm_library(
     name = "editor-ui_test_lib",
     testonly = True,
@@ -75,7 +77,6 @@ exports_files(
     [
         "intellij.platform.editor.ui.iml",
         "resources/intellij.platform.editor.ui.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

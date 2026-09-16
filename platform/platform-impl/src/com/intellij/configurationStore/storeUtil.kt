@@ -69,7 +69,7 @@ object StoreUtil {
    * Save all unsaved documents and project settings. Must be called from EDT.
    * Use with care because it blocks EDT. Any new usage should be reviewed.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   @JvmStatic
   fun saveDocumentsAndProjectSettings(project: Project) {
     runInAutoSaveDisabledMode {
@@ -86,7 +86,7 @@ object StoreUtil {
    *
    * @param forceSavingAllSettings if `true` [Storage.useSaveThreshold] attribute will be ignored and settings of all components will be saved
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   @JvmStatic
   @Internal
   fun saveDocumentsAndProjectsAndApp(forceSavingAllSettings: Boolean) {
@@ -266,7 +266,7 @@ inline fun runInAllowSaveMode(isSaveAllowed: Boolean = true, task: () -> Unit) {
   }
 }
 
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 @Internal
 fun forPoorJavaClientOnlySaveProjectIndEdtDoNotUseThisMethod(project: Project, forceSavingAllSettings: Boolean = false) {
   runInAutoSaveDisabledMode {

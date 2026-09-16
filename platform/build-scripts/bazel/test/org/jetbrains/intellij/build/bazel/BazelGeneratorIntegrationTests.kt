@@ -56,50 +56,33 @@ class BazelGeneratorIntegrationTests {
   @Test fun compileExcludes() = doTest("compile-excludes")
 
   @Test fun ijPluginTarget() = doTest("ij-plugin-target")
+  @Test fun ijPluginTargetWithNonClasspathData() = doTest("ij-plugin-target-with-non-classpath-data", allowBuildBazelFilesInTestDataProject = true)
 
   /**
-   * A plugin content module whose jar merges its module libraries, and one whose recipe the model refuses.
+   * The content modules of an `ij_plugin` plugin, with and without module libraries to pack.
    *
-   * `intellij.libraries.example` declares four module libraries and its recipe records three, so
-   * `content_module_jar` names those three in `orderEntry` order and the plugin declares the module as prepacked
-   * instead of declaring its raw jar and its libraries. The fourth library is TEST-scope: this is the
-   * `intellij.libraries.coil` case in miniature.
-   *
-   * `intellij.libraries.refused` is the other side of the same comparison. Its recipe records the TEST-scope library,
-   * which the production-runtime walk cannot reach, so it keeps no packing target, stays a raw `content_modules`
-   * member, and the plugin keeps declaring its library. That is the scope filter shown as a refusal rather than as a
-   * silently smaller jar.
+   * `intellij.libraries.example` declares three production module libraries and one TEST-scope library. The three
+   * become the `packed_deps` of its `ij_plugin_module`, in `orderEntry` order, and the TEST-scope library stays a
+   * runtime dependency of the test target alone. `intellij.libraries.refused` declares only the TEST-scope library, so
+   * it has nothing to pack and stays a plain `jvm_library`.
    */
-  @Test fun prepackedContentModuleLibraries() = doTest("prepacked-content-module-libraries")
-
-  /**
-   * The three destinations a plugin can give one content module's jar, and what each one generates.
-   *
-   * `intellij.libraries.conventional` sits at `lib/modules/<module>.jar`, so the relation is a plain
-   * `prepacked_content_modules` label and the rule derives the destination from the module name.
-   * `intellij.libraries.embedded` sits at `lib/<module>.jar`, which the rule cannot derive, so the relation carries it
-   * in `prepacked_jars`.
-   *
-   * `intellij.libraries.conflicting` is the veto: this one report puts its jar at *both* destinations. One packed jar
-   * cannot satisfy both, and a relation is keyed by *(plugin, module)*, so there is no second relation to carry the
-   * second path. It stays a raw `content_modules` member and `JarPackager` keeps packing both jars. It keeps a
-   * `content_module_jar` target that nobody names, which is correct: the repo-global fold still agrees on the jar, and
-   * only this plugin's relation is impossible.
-   */
-  @Test fun prepackedContentModulePlacement() = doTest("prepacked-content-module-placement")
+  @Test fun ijPluginModulePackedDeps() = doTest("ij-plugin-module-packed-deps")
 
   private fun doTest(
     testName: String,
     runWithoutUltimateRoot: Boolean = true,
     defaultCustomModules: Boolean = false,
+    allowBuildBazelFilesInTestDataProject: Boolean = false,
   ) {
     val testDataPath = getTestDataPath(testName)
 
     val projectDataPath = testDataPath.resolve("project")
     assertTrue("$projectDataPath is not a directory", projectDataPath.isDirectory())
-    for (path in projectDataPath.walk()) {
-      check(!path.name.startsWith(TILDE_BUILD_PREFIX)) {
-        "Initial project dir is not expected to contain $TILDE_BUILD_PREFIX files, but $path is"
+    if (!allowBuildBazelFilesInTestDataProject) {
+      for (path in projectDataPath.walk()) {
+        check(!path.name.startsWith(TILDE_BUILD_PREFIX)) {
+          "Initial project dir is not expected to contain $TILDE_BUILD_PREFIX files, but $path is"
+        }
       }
     }
 
@@ -123,7 +106,15 @@ class BazelGeneratorIntegrationTests {
     )
 
     compareDirectoriesWithoutMutation(projectDataPath, tempDir, "targets-only must not modify the project tree")
-  
+
+    if (allowBuildBazelFilesInTestDataProject) {
+      for (path in tempDir.walk()) {
+        if (path.name.startsWith(TILDE_BUILD_PREFIX)) {
+          path.moveTo(path.resolveSibling(path.name.removePrefix(TILDE_BUILD_PREFIX)))
+        }
+      }
+    }
+
     JpsModuleToBazel.main(
       arrayOf(
         "--workspace_directory=$tempDir",
@@ -150,7 +141,7 @@ class BazelGeneratorIntegrationTests {
       )
     )
 
-    assertAndRemoveSameFiles(projectDataPath, tempDir)
+    assertAndRemoveSameFiles(projectDataPath, tempDir, allowBuildBazelFilesInTestDataProject)
     compareDirectories(expectedDataPath, tempDir)
 
     val bazelTargetsFromGenerator = tempDir.resolve("build").resolve("bazel-targets.json")
@@ -506,7 +497,7 @@ class BazelGeneratorIntegrationTests {
     else -> "'$this'"
   }
 
-  private fun assertAndRemoveSameFiles(initialProjectDir: Path, testOutputDir: Path) {
+  private fun assertAndRemoveSameFiles(initialProjectDir: Path, testOutputDir: Path, allowBuildBazelFilesInTestDataProject: Boolean) {
     for (initialProjectChildPath in initialProjectDir.listDirectoryEntries()) {
       val outputChildPath = testOutputDir.resolve(initialProjectChildPath.name)
       if (initialProjectChildPath.isDirectory()) {
@@ -514,12 +505,12 @@ class BazelGeneratorIntegrationTests {
            "$outputChildPath is not a directory, but $initialProjectChildPath is"
         }
 
-        assertAndRemoveSameFiles(initialProjectChildPath, outputChildPath)
+        assertAndRemoveSameFiles(initialProjectChildPath, outputChildPath, allowBuildBazelFilesInTestDataProject)
       }
       else if (outputChildPath.readText() == initialProjectChildPath.readText()) {
         outputChildPath.deleteExisting()
       }
-      else {
+      else if (!(allowBuildBazelFilesInTestDataProject && initialProjectChildPath.name.startsWith(TILDE_BUILD_PREFIX))) {
         assertFilesEqual(outputChildPath, initialProjectChildPath,
                          "Generator should not modify existing project model files")
       }

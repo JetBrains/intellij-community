@@ -42,7 +42,7 @@ internal class Dokka(private val context: CompilationContext) {
   /**
    * @return [outputDir] containing all the docs generated
    */
-  suspend fun generateDocumentation(
+  fun generateDocumentation(
     modules: List<JpsModule>,
     outputDir: Path = context.paths.tempDir.resolve("${modules.joinToString(separator = "-") { it.name }}-dokka"),
   ): Path {

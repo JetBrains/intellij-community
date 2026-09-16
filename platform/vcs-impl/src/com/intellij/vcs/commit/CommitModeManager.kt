@@ -77,7 +77,7 @@ class CommitModeManager(private val project: Project, private val coroutineScope
     getApplication().invokeLater(::updateCommitMode, ModalityState.nonModal(), project.disposed)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun updateCommitMode() {
     val newCommitMode = getNewCommitMode()
     if (_commitModeState.value == newCommitMode) {
@@ -163,7 +163,7 @@ class CommitModeManager(private val project: Project, private val coroutineScope
   }
 
   fun interface CommitModeListener : EventListener {
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     fun commitModeChanged()
   }
 

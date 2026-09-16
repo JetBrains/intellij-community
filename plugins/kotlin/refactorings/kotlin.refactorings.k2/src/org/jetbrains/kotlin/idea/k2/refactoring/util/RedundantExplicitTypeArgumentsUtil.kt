@@ -3,12 +3,9 @@ package org.jetbrains.kotlin.idea.k2.refactoring.util
 
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.psi.util.isAncestor
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
-import org.jetbrains.kotlin.analysis.api.components.collectDiagnostics
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.diagnostics.diagnostics
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
@@ -159,15 +156,15 @@ private fun areAllTypesEqual(
 
 context(_: KaSession)
 private fun hasNewDiagnostics(originalCallExpression: KtCallExpression, newCallExpression: KtCallExpression): Boolean {
-    val newDiagnostics = newCallExpression.nestedDiagnostics
-    if (newDiagnostics.isEmpty()) return false
+    val newDiagnosticsCount = newCallExpression.nestedDiagnostics.count()
+    if (newDiagnosticsCount == 0) return false
 
-    val oldDiagnostics = originalCallExpression.nestedDiagnostics
+    val oldDiagnosticsCount = originalCallExpression.nestedDiagnostics.count()
 
     // Diagnostics cannot be compared directly since they have only identity equals/hashCode
     // Also, original call expression and new call expression files have a different set of psi instances since
     // they effectively in different files
-    return newDiagnostics.size != oldDiagnostics.size
+    return newDiagnosticsCount != oldDiagnosticsCount
 }
 
 @OptIn(KaImplementationDetail::class)
@@ -176,7 +173,7 @@ private fun restoreTypes(typePointers: List<KaTypePointer<KaType>>): List<KaType
     typePointers.map { it.restore(session) ?: return null }
 
 context(_: KaSession)
-private val KtCallExpression.nestedDiagnostics: List<KaDiagnosticWithPsi<*>>
+private val KtCallExpression.nestedDiagnostics: Sequence<KaDiagnosticWithPsi<*>>
     get() = diagnostics().filter { diagnostic ->
             when (diagnostic) {
                 is KaFirDiagnostic.UnresolvedReference,
@@ -187,7 +184,7 @@ private val KtCallExpression.nestedDiagnostics: List<KaDiagnosticWithPsi<*>>
 
                 else -> false
             }
-        }.toList()
+        }
 
 context(session: KaSession)
 private fun areTypesEqual(

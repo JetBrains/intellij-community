@@ -5,6 +5,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.ExecService
+import com.intellij.python.community.execService.python.PyHelper
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.sdk.executeHelper
@@ -97,7 +98,7 @@ internal object PythonPackageMetadataParser {
 @ApiStatus.Internal
 suspend fun Sdk.loadInstalledPackagesMetadata(): PyResult<Map<PyPackageName, PythonPackageMetadata>> {
   val output = ExecService()
-    .executeHelper(this, PythonPackageMetadataParser.HELPER_SCRIPT, Args())
+    .executeHelper(this, PyHelper(PythonPackageMetadataParser.HELPER_SCRIPT), Args())
     .getOr { return it }
   return PythonPackageMetadataParser.parse(output)
 }

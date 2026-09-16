@@ -33,7 +33,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.runBlockingCancellable
@@ -48,7 +47,6 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.Strings
-import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.ide.impl.feedback.PlatformFeedbackDialogs
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.util.coroutines.sync.OverflowSemaphore
@@ -77,6 +75,7 @@ import com.intellij.ui.dsl.builder.components.DslLabel
 import com.intellij.ui.dsl.builder.components.DslLabelType
 import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.ui.scale.JBUIScale.scale
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.system.OS
 import com.intellij.util.ui.AsyncProcessIcon.BigCentered
 import com.intellij.util.ui.HTMLEditorKitBuilder
@@ -92,6 +91,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -122,7 +122,9 @@ import javax.swing.JTextField
 import javax.swing.ScrollPaneConstants
 import javax.swing.SwingConstants
 import javax.swing.UIManager
+import javax.swing.plaf.InsetsUIResource
 import javax.swing.plaf.TabbedPaneUI
+import javax.swing.plaf.UIResource
 import javax.swing.text.View
 import javax.swing.text.html.ImageView
 import javax.swing.text.html.ParagraphView
@@ -130,12 +132,45 @@ import kotlin.coroutines.coroutineContext
 import kotlin.time.TimeSource
 
 @Internal
-class PluginDetailsPageComponent @JvmOverloads constructor(
+class PluginDetailsPageComponent private constructor(
   private val pluginModel: PluginModelFacade,
   private val searchListener: LinkListener<Any>,
   private val isMarketplace: Boolean,
-  private val customizationStrategy: PluginDetailsPageCustomizationStrategy = DefaultPluginDetailsPageCustomizationStrategy,
+  private val customizationStrategy: PluginDetailsPageCustomizationStrategy,
+  operationLauncherOverride: OperationLauncherOverride?,
+  internal val useSecondaryButtons: Boolean,
+  internal val useBadgeTags: Boolean,
+  internal val layout: PluginDetailsPageLayout,
 ) : MultiPanel() {
+  @JvmOverloads
+  constructor(
+    pluginModel: PluginModelFacade,
+    searchListener: LinkListener<Any>,
+    isMarketplace: Boolean,
+    customizationStrategy: PluginDetailsPageCustomizationStrategy = DefaultPluginDetailsPageCustomizationStrategy,
+  ) : this(pluginModel, searchListener, isMarketplace, customizationStrategy, null, false, false, PluginDetailsPageLayout.Legacy)
+
+  internal constructor(
+    pluginModel: PluginModelFacade,
+    searchListener: LinkListener<Any>,
+    isMarketplace: Boolean,
+    customizationStrategy: PluginDetailsPageCustomizationStrategy,
+    operationLauncher: PluginOperationLauncher,
+    operationUiBridge: PluginOperationUiBridge? = null,
+    secondaryButtons: Boolean = false,
+    badgeTags: Boolean = false,
+    layout: PluginDetailsPageLayout = PluginDetailsPageLayout.Legacy,
+  ) : this(
+    pluginModel,
+    searchListener,
+    isMarketplace,
+    customizationStrategy,
+    OperationLauncherOverride(operationLauncher, operationUiBridge),
+    secondaryButtons,
+    badgeTags,
+    layout,
+  )
+
   @Suppress("OPT_IN_USAGE")
   private val limitedDispatcher = Dispatchers.IO.limitedParallelism(2)
 
@@ -208,6 +243,9 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   private var reviewPanel: ReviewCommentListContainer? = null
   private var reviewNextPageButton: JButton? = null
   private var indicator: OneLineProgressIndicator? = null
+  private var readOnlyProgressRequested: PluginProgressState? = null
+  private var readOnlyIndicator: OneLineProgressIndicator? = null
+  private var readOnlyPreparedUpdate: PluginPreparedUpdateState? = null
 
   private var plugin: PluginUiModel? = null
   private var isPluginAvailable = false
@@ -223,14 +261,19 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
   private val pluginManagerCustomizer: PluginManagerCustomizer?
   private val notificationsUpdateSemaphore = OverflowSemaphore(overflow = BufferOverflow.DROP_OLDEST)
-  private val coroutineScope = pluginModel.getModel().coroutineScope
+  private val coroutineScope = pluginModel.getModel().coroutineScope.childScope("Plugin details")
+  private val operationLauncher = operationLauncherOverride?.launcher ?: PluginOperationLauncher(coroutineScope)
+  private val operationUi = operationLauncherOverride?.operationUiBridge?.createHandle(this) ?: PluginOperationUiHandle(this)
   private val showPluginSemaphore = OverflowSemaphore(overflow = BufferOverflow.DROP_OLDEST)
   private var buttonsLoadedDeferred: Deferred<Unit>? = null
+  private var detached = false
 
   private val tracker: PluginManagerUiTracker = PluginManagerUiTracker()
 
   init {
-    nameAndButtons = BaselinePanel(12, false)
+    nameAndButtons = BaselinePanel(12, false).apply {
+      setLeadingVisualInset(this@PluginDetailsPageComponent.layout.actionButtonLeadingVisualInset)
+    }
     customizer = try {
       getPluginsViewCustomizer().getPluginDetailsCustomizer(pluginModel.getModel())
     }
@@ -294,8 +337,36 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     }
   }
 
+  private class OperationLauncherOverride(
+    val launcher: PluginOperationLauncher,
+    val operationUiBridge: PluginOperationUiBridge?,
+  )
+
   val descriptorForActions: PluginUiModel?
     get() = if (!isMarketplace || installedDescriptorForMarketplace == null) plugin else installedDescriptorForMarketplace
+
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  fun detach() {
+    if (detached) return
+    detached = true
+
+    pluginModel.getModel().removeDetailPanel(this)
+    operationUi.detach()
+
+    val currentDescriptor = descriptorForActions
+    val currentIndicator = indicator
+    if (currentDescriptor != null && currentIndicator != null) {
+      PluginModelFacade.removeProgress(currentDescriptor, currentIndicator)
+    }
+    setReadOnlyProgress(null)
+    hideProgress()
+
+    showComponent = null
+    plugin = null
+    updateDescriptor = null
+    installedDescriptorForMarketplace = null
+    coroutineScope.cancel()
+  }
 
   fun setPlugin(pluginDescriptor: IdeaPluginDescriptor?) {
     if (pluginDescriptor != null) {
@@ -358,10 +429,10 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     panel = OpaquePanel(BorderLayout(), PluginManagerConfigurable.MAIN_BG_COLOR)
 
     val topPanel = OpaquePanel(VerticalLayout(JBUI.scale(8)), PluginManagerConfigurable.MAIN_BG_COLOR)
-    topPanel.border = createMainBorder()
+    topPanel.border = createMainBorder(layout.contentHorizontalInset)
     panel!!.add(topPanel, BorderLayout.NORTH)
 
-    topPanel.add(TagPanel(searchListener).also { tagPanel = it })
+    topPanel.add(TagPanel(searchListener, useBadgeTags).also { tagPanel = it })
     topPanel.add(nameComponent)
 
     val linkPanel = NonOpaquePanel(HorizontalLayout(JBUI.scale(12)))
@@ -502,9 +573,9 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
   private fun createButtons() {
     val nameAndButtons = nameAndButtons!!
-    nameAndButtons.addButtonComponent(RestartButton(pluginModel).also { restartButton = it })
+    nameAndButtons.addButtonComponent(RestartButton(pluginModel, useSecondaryButtons).also { restartButton = it })
 
-    nameAndButtons.addButtonComponent(UpdateButton().also { updateButton = it })
+    nameAndButtons.addButtonComponent(UpdateButton(useSecondaryButtons).also { updateButton = it })
     updateButton!!.addActionListener {
       updatePlugin()
     }
@@ -536,30 +607,21 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   }
 
   private fun updatePlugin() {
-    coroutineScope.launch {
-      val pluginUpdateSourceApplier = PluginUpdateSourceApplier.createApplier(updateDescriptor ?: descriptorForActions!!, pluginModel)
-      pluginUpdateSourceApplier.runWithRevertOnException {
-        val modalityState = ModalityState.stateForComponent(updateButton!!)
-        val customizedAction = pluginManagerCustomizer?.getUpdateButtonCustomizationModel(pluginModel,
-                                                                                          descriptorForActions!!,
-                                                                                          updateDescriptor,
-                                                                                          modalityState)?.action
-
-        withContext(Dispatchers.EDT + ModalityState.stateForComponent(this@PluginDetailsPageComponent).asContextElement()) {
-          if (customizedAction != null) {
-            customizedAction()
-          }
-          else {
-            val result = pluginModel.installOrUpdatePlugin(
-              this@PluginDetailsPageComponent,
-              descriptorForActions!!, updateDescriptor,
-              modalityState,
-            )
-            pluginUpdateSourceApplier.applyPluginUpdateSourcesBasedOnResult(result)
-          }
-        }
-      }
-    }
+    val operation = capturePluginDetailsUpdateOperation(
+      descriptorForActions,
+      updateDescriptor,
+      operationUi,
+      updateButton ?: return,
+    ) ?: return
+    PluginModelAsyncOperationsExecutor.updatePlugin(
+      operationLauncher,
+      pluginModel,
+      operation.plugin,
+      operation.updateDescriptor,
+      pluginManagerCustomizer,
+      operation.operationUi,
+      operation.updateDescriptor,
+    )
   }
 
   private fun createScrollPane(component: JComponent): JBScrollPane {
@@ -659,12 +721,33 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
         putClientProperty("TabbedPane.hoverColor", ListPluginComponent.HOVER_COLOR)
 
         val contentOpaque = UIManager.getBoolean("TabbedPane.contentOpaque")
+        val defaults = UIManager.getDefaults()
+        val tabAreaInsets = defaults["TabbedPane.tabAreaInsets"]
+        val tabStripLeftInset = this@PluginDetailsPageComponent.layout.tabStripLeftInset
         UIManager.getDefaults()["TabbedPane.contentOpaque"] = false
+        if (tabStripLeftInset > 0) {
+          val insets = tabAreaInsets as? Insets ?: JBUI.emptyInsets()
+          val left = insets.left + JBUI.scale(tabStripLeftInset)
+          defaults["TabbedPane.tabAreaInsets"] = if (insets is UIResource) {
+            InsetsUIResource(insets.top, left, insets.bottom, insets.right)
+          }
+          else {
+            Insets(insets.top, left, insets.bottom, insets.right)
+          }
+        }
         try {
           super.setUI(ui)
         }
         finally {
-          UIManager.getDefaults()["TabbedPane.contentOpaque"] = contentOpaque
+          defaults["TabbedPane.contentOpaque"] = contentOpaque
+          if (tabStripLeftInset > 0) {
+            if (tabAreaInsets == null) {
+              defaults.remove("TabbedPane.tabAreaInsets")
+            }
+            else {
+              defaults["TabbedPane.tabAreaInsets"] = tabAreaInsets
+            }
+          }
         }
         setTabContainerBorder(this)
       }
@@ -692,10 +775,10 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     descriptionComponent = createDescriptionComponent(createHtmlImageViewHandler())
 
     myImagesComponent = PluginImagesComponent()
-    myImagesComponent!!.border = JBUI.Borders.emptyRight(16)
+    myImagesComponent!!.border = JBUI.Borders.emptyRight(layout.overviewImagesRightInset)
 
     val parent: JPanel = OpaquePanel(BorderLayout(), PluginManagerConfigurable.MAIN_BG_COLOR)
-    parent.border = JBUI.Borders.empty(16, 16, 0, 0)
+    parent.border = JBUI.Borders.empty(16, 16, 0, layout.overviewRightInset)
     parent.add(myImagesComponent, BorderLayout.NORTH)
     parent.add(descriptionComponent)
 
@@ -725,7 +808,8 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     val parent = JBPanelWithEmptyText(BorderLayout())
     parent.isOpaque = true
     parent.background = PluginManagerConfigurable.MAIN_BG_COLOR
-    parent.border = JBUI.Borders.emptyLeft(12)
+    parent.border = layout.tabContentHorizontalInset?.let { JBUI.Borders.empty(0, it, 0, it) }
+                    ?: JBUI.Borders.emptyLeft(12)
     parent.add(changeNotes)
     myChangeNotesEmptyState = parent
     pane.add(IdeBundle.message("plugins.configurable.whats.new.tab.name"), createScrollPane(parent))
@@ -797,7 +881,13 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
   private fun createAdditionalInfoTab(pane: JBTabbedPane) {
     val infoPanel: JPanel = OpaquePanel(VerticalLayout(JBUI.scale(16)), PluginManagerConfigurable.MAIN_BG_COLOR)
-    infoPanel.border = JBUI.Borders.empty(16, 12, 0, 0)
+    val horizontalInset = layout.tabContentHorizontalInset
+    infoPanel.border = if (horizontalInset == null) {
+      JBUI.Borders.empty(16, 12, 0, 0)
+    }
+    else {
+      JBUI.Borders.empty(16, horizontalInset, 0, horizontalInset)
+    }
 
     documentationUrl = LinkPanel(infoPanel, false)
     bugtrackerUrl = LinkPanel(infoPanel, false)
@@ -836,7 +926,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   private fun initializePluginSourceIdDropDownLink(infoPanel: JPanel) {
     val dropDownLink = object : DropDownLink<PluginUpdateSourceId?>(null, { link -> createPopup(link) }) {
       override fun itemToString(item: PluginUpdateSourceId?): String {
-        return item.getPresentableName()
+        return item.getShortenedPresentableName()
       }
     }
     dropDownLink.foreground = ListPluginComponent.GRAY_COLOR
@@ -852,15 +942,21 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     myPluginUpdateSourceId = dropDownLink
   }
 
+  private fun PluginUpdateSourceId?.getShortenedPresentableName(): @Nls(capitalization = Nls.Capitalization.Sentence) String {
+    return StringUtil.shortenTextWithEllipsis(getPresentableName(), 40, 20)
+  }
+
   private fun createPopup(link: DropDownLink<PluginUpdateSourceId?>): JBPopup {
-    val initialItems: List<PluginUpdateSourceId?> = PluginUpdateSourceService.getInstance().getAllSources().sortedWith { first, second ->
-      when {
-        first.isMarketplace && second.isMarketplace -> 0
-        first.isMarketplace -> -1
-        second.isMarketplace -> 1
-        else -> first.host.compareTo(second.host)
+    val initialItems: List<PluginUpdateSourceId?> = PluginUpdateSourceService.getInstance().getAllSources()
+      .filter { it.isMarketplace || it.host.isNotBlank() }
+      .sortedWith { first, second ->
+        when {
+          first.isMarketplace && second.isMarketplace -> 0
+          first.isMarketplace -> -1
+          second.isMarketplace -> 1
+          else -> first.host.compareTo(second.host)
+        }
       }
-    }
 
     val builder = JBPopupFactory.getInstance()
       .createPopupChooserBuilder(initialItems)
@@ -869,12 +965,12 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
       }
       .setRenderer(listCellRenderer {
         val sourceId = value
-        text(sourceId.getPresentableName())
+        text(sourceId.getShortenedPresentableName())
       })
       .setItemChosenCallback { pluginUpdateSource ->
         val pluginToHandle = plugin
         if (pluginToHandle != null) {
-          link.text = pluginUpdateSource.getPresentableName()
+          link.text = pluginUpdateSource.getShortenedPresentableName()
           link.selectedItem = pluginUpdateSource
           coroutineScope.launch(Dispatchers.IO) {
             pluginModel.setPendingPluginUpdateSourceInSession(pluginToHandle.pluginId, pluginUpdateSource)
@@ -887,10 +983,18 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   }
 
   fun showPlugins(selection: List<ListPluginComponent?>) {
+    showPlugins(selection, readOnlyProgress = null, preparedUpdate = null)
+  }
+
+  fun showPlugins(
+    selection: List<ListPluginComponent?>,
+    readOnlyProgress: PluginProgressState?,
+    preparedUpdate: PluginPreparedUpdateState?,
+  ) {
     coroutineScope.launch(Dispatchers.EDT + ModalityState.stateForComponent(this).asContextElement()) {
       showPluginSemaphore.withPermit {
         val size = selection.size
-        showPlugin(if (size == 1) selection[0] else null, size > 1)
+        showPlugin(if (size == 1) selection[0] else null, size > 1, readOnlyProgress, preparedUpdate)
       }
     }
   }
@@ -898,15 +1002,31 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   fun showPlugin(component: ListPluginComponent?) {
     coroutineScope.launch(Dispatchers.EDT + ModalityState.stateForComponent(this).asContextElement()) {
       showPluginSemaphore.withPermit {
-        showPlugin(component, false)
+        showPlugin(component, false, readOnlyProgress = null, preparedUpdate = null)
       }
     }
   }
 
-  private suspend fun showPlugin(component: ListPluginComponent?, multiSelection: Boolean) {
-    if (showComponent == component && (component == null || updateDescriptor === component.getUpdatePluginDescriptor())) {
+  private suspend fun showPlugin(
+    component: ListPluginComponent?,
+    multiSelection: Boolean,
+    readOnlyProgress: PluginProgressState?,
+    preparedUpdate: PluginPreparedUpdateState?,
+  ) {
+    if (showComponent == component &&
+        (component == null || updateDescriptor === component.getUpdatePluginDescriptor()) &&
+        readOnlyPreparedUpdate == preparedUpdate) {
+      setReadOnlyProgress(readOnlyProgress)
       return
     }
+    setReadOnlyProgress(null)
+    if (readOnlyPreparedUpdate != null && preparedUpdate == null) {
+      updateButton?.apply {
+        text = IdeBundle.message("plugins.configurable.update.button")
+        isEnabled = true
+      }
+    }
+    readOnlyPreparedUpdate = preparedUpdate
     showComponent = component
 
     if (indicator != null) {
@@ -994,15 +1114,16 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
         pluginCardOpened(component.getPluginModel().getDescriptor(), component.getGroup())
       }
     }
+    setReadOnlyProgress(readOnlyProgress)
   }
 
   private fun doLoad(component: ListPluginComponent, task: suspend () -> Unit) {
     startLoading()
     val loadStart = TimeSource.Monotonic.markNow()
-    val coroutineScope = service<CoreUiCoroutineScopeHolder>().coroutineScope
+    val modalityState = ModalityState.stateForComponent(component)
     coroutineScope.launch(limitedDispatcher) {
       task()
-      coroutineScope.launch(Dispatchers.EDT + ModalityState.stateForComponent(component).asContextElement()) {
+      withContext(Dispatchers.EDT + modalityState.asContextElement()) {
         if (showComponent == component) {
           stopLoading()
           showPluginImpl(component.getPluginModel(), component.getUpdatePluginDescriptor())
@@ -1052,6 +1173,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     if (!this@PluginDetailsPageComponent.pluginModel.isPluginInstallingOrUpdating(pluginUiModel)) {
       applyCustomization()
     }
+    applyReadOnlyPreparedUpdate()
   }
 
   private enum class EmptyState {
@@ -1260,7 +1382,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   internal fun updatePluginUpdateSource(pluginUpdateSource: PluginUpdateSourceId?) {
     myPluginUpdateSourceId?.apply {
       selectedItem = pluginUpdateSource
-      text = pluginUpdateSource.getPresentableName()
+      text = pluginUpdateSource.getShortenedPresentableName()
     }
   }
 
@@ -1342,15 +1464,13 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
   private fun createUninstallAction(): UninstallAction<PluginDetailsPageComponent> {
     return UninstallAction(
-      coroutineScope,
-      pluginModel, false, this, java.util.List.of(this),
+      operationLauncher,
+      pluginModel,
+      false,
+      operationUi,
+      java.util.List.of(this),
       { obj: PluginDetailsPageComponent -> obj.descriptorForActions },
-      {
-        scheduleNotificationsUpdate()
-        descriptorForActions?.let {
-          PluginUpdateSourceService.getInstance().erasePluginUpdateSourceId(it.pluginId)
-        }
-      })
+    )
   }
 
   private val isPluginFromMarketplace: Boolean
@@ -1610,6 +1730,10 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   }
 
   fun showProgress(storeIndicator: Boolean, installationScope: CoroutineScope, cancelRunnable: suspend () -> Unit) {
+    if (readOnlyIndicator != null) {
+      readOnlyIndicator = null
+      nameAndButtons?.removeProgressComponent()
+    }
     indicator = OneLineProgressIndicatorWithAsyncCallback(installationScope, false, cancelRunnable)
     nameAndButtons!!.setProgressComponent(null, indicator!!.createBaselineWrapper())
     if (storeIndicator) {
@@ -1672,6 +1796,57 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   fun hideProgress() {
     indicator = null
     nameAndButtons?.removeProgressComponent()
+    updateReadOnlyProgress()
+  }
+
+  private fun setReadOnlyProgress(progress: PluginProgressState?) {
+    readOnlyProgressRequested = progress
+    updateReadOnlyProgress()
+  }
+
+  private fun updateReadOnlyProgress() {
+    val progress = readOnlyProgressRequested?.takeIf { indicator == null }
+    val shouldShow = progress != null
+    if (shouldShow && readOnlyIndicator == null) {
+      readOnlyIndicator = OneLineProgressIndicator(false, false)
+      val updateAction = checkNotNull(updateButton)
+      updateAction.isVisible = true
+      nameAndButtons?.setProgressDisabledButton(updateAction)
+      nameAndButtons?.setProgressComponent(null, readOnlyIndicator!!.createBaselineWrapper())
+      fullRepaint()
+    }
+    if (progress != null) {
+      when (progress) {
+        PluginProgressState.Indeterminate -> readOnlyIndicator?.isIndeterminate = true
+        is PluginProgressState.Determinate -> {
+          readOnlyIndicator?.isIndeterminate = false
+          readOnlyIndicator?.fraction = progress.fraction
+        }
+      }
+    }
+    else if (readOnlyIndicator != null) {
+      readOnlyIndicator = null
+      if (indicator == null) {
+        nameAndButtons?.removeProgressComponent()
+      }
+      fullRepaint()
+    }
+  }
+
+  private fun applyReadOnlyPreparedUpdate() {
+    val preparedUpdate = readOnlyPreparedUpdate ?: return
+    val restartRequired = preparedUpdate.restartRequired
+    restartButton?.isVisible = restartRequired && isPluginAvailable
+    installButton?.setVisible(false)
+    updateButton?.apply {
+      isVisible = !restartRequired && isPluginAvailable
+      isEnabled = false
+      text = IdeBundle.message("plugin.status.installed")
+    }
+    gearButton?.isVisible = false
+    myUninstallButton?.isVisible = false
+    myEnableDisableButton?.isVisible = false
+    fullRepaint()
   }
 
   suspend fun finishInstall(success: Boolean, restartRequired: Boolean, pluginId: PluginId? = null, installedPlugin: PluginUiModel? = null) {
@@ -1697,6 +1872,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
                                                          installedPlugin?.isBundledUpdate ?: false)
                 myVersion1!!.isVisible = true
                 updateEnabledState()
+                applyReadOnlyPreparedUpdate()
                 return
               }
             }
@@ -1710,12 +1886,13 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
       }
     }
 
+    applyReadOnlyPreparedUpdate()
     fullRepaint()
   }
 
   private fun createInstallButton(): PluginInstallButton {
-    if (UiPluginManager.isCombinedPluginManagerEnabled()) {
-      val button = InstallOptionButton()
+    if (requiresInstallOptionButton(useSecondaryButtons, UiPluginManager.isCombinedPluginManagerEnabled())) {
+      val button = InstallOptionButton(useNaturalWidth = layout.useNaturalInstallButtonWidth)
       setDefaultInstallAction(button)
       return button
     }
@@ -1739,14 +1916,15 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   }
 
   private fun installOrUpdatePlugin() {
-    coroutineScope.launch(Dispatchers.EDT + ModalityState.stateForComponent(this).asContextElement()) {
-      val pluginUpdateSourceApplier = PluginUpdateSourceApplier.createApplier(plugin!!, pluginModel)
-      pluginUpdateSourceApplier.runWithRevertOnException {
-        val modalityState = ModalityState.stateForComponent(installButton!!.getComponent())
-        val result = pluginModel.installOrUpdatePlugin(this@PluginDetailsPageComponent, plugin!!, null, modalityState)
-        pluginUpdateSourceApplier.applyPluginUpdateSourcesBasedOnResult(result)
-      }
-    }
+    val descriptor = plugin ?: return
+    val operationUi = operationUi.captureContext(installButton?.getComponent() ?: return)
+    PluginModelAsyncOperationsExecutor.performAutoInstall(
+      operationLauncher,
+      pluginModel,
+      descriptor,
+      pluginManagerCustomizer,
+      operationUi,
+    )
   }
 
   private fun updateEnableForNameAndIcon() {
@@ -1790,6 +1968,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   suspend fun updateAfterUninstall(showRestart: Boolean) {
     if (pluginManagerCustomizer != null) {
       updateButtonsAndApplyCustomization()
+      scheduleNotificationsUpdate()
       return
     }
     installButton!!.setVisible(false)
@@ -1806,9 +1985,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
       installButton!!.setEnabled(false, IdeBundle.message("plugins.configurable.uninstalled"))
     }
 
-    if (!showRestart) {
-      scheduleNotificationsUpdate()
-    }
+    scheduleNotificationsUpdate()
     fullRepaint()
   }
 
@@ -1878,6 +2055,10 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
     override fun getAccessibleRole(): AccessibleRole = AccessibilityUtils.GROUPED_ELEMENTS
   }
+}
+
+internal fun requiresInstallOptionButton(useSecondaryButtons: Boolean, combinedPluginManagerEnabled: Boolean): Boolean {
+  return useSecondaryButtons || combinedPluginManagerEnabled
 }
 
 @ApiStatus.Internal
@@ -1955,8 +2136,7 @@ private suspend fun getDeletedState(pluginUiModel: PluginUiModel): BooleanArray 
   val state = UiPluginManager.getInstance().getPluginInstallationState(pluginId)
   val uninstalledWithoutRestart = state.status == PluginStatus.UNINSTALLED_WITHOUT_RESTART
   if (!uninstalled) {
-    uninstalled =
-      state.status in listOf(PluginStatus.INSTALLED_AND_REQUIRED_RESTART, PluginStatus.UPDATED, PluginStatus.UPDATED_WITH_RESTART)
+    uninstalled = state.status.isRestartRequired()
   }
 
   return booleanArrayOf(uninstalled, uninstalledWithoutRestart)
@@ -1990,6 +2170,26 @@ private fun createNotificationPanel(icon: Icon, message: @Nls String): BorderLay
   return panel
 }
 
+internal data class PluginDetailsUpdateOperation(
+  val plugin: PluginUiModel,
+  val updateDescriptor: PluginUiModel,
+  val operationUi: PluginOperationUiContext,
+)
+
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+internal fun capturePluginDetailsUpdateOperation(
+  plugin: PluginUiModel?,
+  updateDescriptor: PluginUiModel?,
+  operationUi: PluginOperationUiHandle,
+  modalityComponent: JComponent,
+): PluginDetailsUpdateOperation? {
+  return PluginDetailsUpdateOperation(
+    plugin ?: return null,
+    updateDescriptor ?: return null,
+    operationUi.captureContext(modalityComponent),
+  )
+}
+
 private fun createBaseNotificationPanel(): BorderLayoutPanel {
   val panel = BorderLayoutPanel()
   val customLine = JBUI.Borders.customLine(JBUI.CurrentTheme.Banner.INFO_BACKGROUND, 1, 0, 1, 0)
@@ -1998,9 +2198,40 @@ private fun createBaseNotificationPanel(): BorderLayoutPanel {
   return panel
 }
 
-private fun createMainBorder(): CustomLineBorder {
+internal data class PluginDetailsPageLayout(
+  val contentHorizontalInset: Int,
+  val tabStripLeftInset: Int,
+  val overviewRightInset: Int,
+  val overviewImagesRightInset: Int,
+  val tabContentHorizontalInset: Int?,
+  val actionButtonLeadingVisualInset: Int,
+  val useNaturalInstallButtonWidth: Boolean,
+) {
+  companion object {
+    val Legacy = PluginDetailsPageLayout(
+      contentHorizontalInset = 20,
+      tabStripLeftInset = 0,
+      overviewRightInset = 0,
+      overviewImagesRightInset = 16,
+      tabContentHorizontalInset = null,
+      actionButtonLeadingVisualInset = 0,
+      useNaturalInstallButtonWidth = false,
+    )
+    val Unified = PluginDetailsPageLayout(
+      contentHorizontalInset = 16,
+      tabStripLeftInset = 12,
+      overviewRightInset = 16,
+      overviewImagesRightInset = 0,
+      tabContentHorizontalInset = 16,
+      actionButtonLeadingVisualInset = 3,
+      useNaturalInstallButtonWidth = true,
+    )
+  }
+}
+
+private fun createMainBorder(horizontalInset: Int): CustomLineBorder {
   return object : CustomLineBorder(PluginManagerConfigurable.SEARCH_FIELD_BORDER_COLOR, JBUI.insetsTop(1)) {
-    override fun getBorderInsets(c: Component): Insets = JBUI.insets(15, 20, 0, 20)
+    override fun getBorderInsets(c: Component): Insets = JBUI.insets(15, horizontalInset, 0, horizontalInset)
   }
 }
 

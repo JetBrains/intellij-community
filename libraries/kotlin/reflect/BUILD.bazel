@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.kotlin.reflect` start
+content_module_jar(
+    libraries = ["@lib//:libraries-kotlin-reflect-kotlin-reflect"],
+    module = ":reflect",
+)
+### auto-generated section `dev intellij.libraries.kotlin.reflect` end
+
 ### auto-generated section `build intellij.libraries.kotlin.reflect` start
 jvm_library(
     name = "reflect",
@@ -14,13 +21,8 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    exports = ["@lib//:kotlin-reflect"],
-    runtime_deps = ["@lib//:kotlin-reflect"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:kotlin-reflect"],
-    module = ":reflect",
+    exports = ["@lib//:libraries-kotlin-reflect-kotlin-reflect"],
+    runtime_deps = ["@lib//:libraries-kotlin-reflect-kotlin-reflect"],
 )
 
 jvm_library(
@@ -33,7 +35,7 @@ jvm_library(
     kotlinc_opts = "@community//:k8",
     module_name = "intellij.libraries.kotlin.reflect",
     visibility = ["//visibility:public"],
-    exports = ["@lib//:kotlin-reflect"],
+    exports = ["@lib//:libraries-kotlin-reflect-kotlin-reflect"],
     runtime_deps = [":reflect"],
 )
 ### auto-generated section `build intellij.libraries.kotlin.reflect` end
@@ -43,7 +45,6 @@ exports_files(
     [
         "intellij.libraries.kotlin.reflect.iml",
         "resources/intellij.libraries.kotlin.reflect.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

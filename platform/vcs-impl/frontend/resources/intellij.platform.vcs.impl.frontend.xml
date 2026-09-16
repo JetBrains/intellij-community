@@ -41,7 +41,8 @@
     <recentFiles.excluder implementation="com.intellij.platform.vcs.impl.frontend.diff.DiffRecentFilesExcluder"/>
     <projectSettings service="com.intellij.platform.vcs.impl.frontend.VcsFrontendConfiguration"/>
 
-    <platform.rpc.projectRemoteTopicListener implementation="com.intellij.platform.vcs.impl.frontend.codeSmells.CodeSmellRemoteTopicListener"/>
+    <platform.rpc.projectRemoteTopicListener implementation="com.intellij.platform.vcs.impl.frontend.codeSmells.CodeSmellRemoteTopicListener"
+                                             topicId="vcs.codeSmell.show"/>
   </extensions>
 
   <actions resource-bundle="messages.ActionsBundle">

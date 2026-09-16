@@ -51,7 +51,7 @@ internal class ComposeResourcesGenerationService(private val project: Project, p
         }
         catch (e: IllegalStateException) {
           notificationService.notifyError(
-            ComposeIdeBundle.message("compose.resources.notification.title"), e.message ?: "Unknown error. Please rebuild the project.",
+            ComposeIdeBundle.message("compose.resources.name"), e.message ?: "Unknown error. Please rebuild the project.",
           )
         }
       }

@@ -17,7 +17,7 @@ import org.junit.runner.RunWith;
 @TestRoot("refactorings/kotlin.refactorings.tests.k2")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../../idea/tests/testData/refactoring/introduceTypeAlias")
+@TestMetadata("testData/introduceTypeAlias")
 public class K2IntroduceTypeAliasTestGenerated extends AbstractK2IntroduceTypeAliasTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doIntroduceTypeAliasTest, this, testDataFilePath);
@@ -25,166 +25,166 @@ public class K2IntroduceTypeAliasTestGenerated extends AbstractK2IntroduceTypeAl
 
     @TestMetadata("callableReference.kt")
     public void testCallableReference() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/introduceTypeAlias/callableReference.kt");
+        runTest("testData/introduceTypeAlias/callableReference.kt");
     }
 
     @TestMetadata("callableReferenceSelector.kt")
     public void testCallableReferenceSelector() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/introduceTypeAlias/callableReferenceSelector.kt");
+        runTest("testData/introduceTypeAlias/callableReferenceSelector.kt");
     }
 
     @TestMetadata("classLiteral.kt")
     public void testClassLiteral() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/introduceTypeAlias/classLiteral.kt");
+        runTest("testData/introduceTypeAlias/classLiteral.kt");
     }
 
     @TestMetadata("constructorCalls.kt")
     public void testConstructorCalls() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/introduceTypeAlias/constructorCalls.kt");
+        runTest("testData/introduceTypeAlias/constructorCalls.kt");
     }
 
     @TestMetadata("deeplyNestedClass.kt")
     public void testDeeplyNestedClass() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/introduceTypeAlias/deeplyNestedClass.kt");
+        runTest("testData/introduceTypeAlias/deeplyNestedClass.kt");
     }
 
     @TestMetadata("emptyName.kt")
     public void testEmptyName() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/introduceTypeAlias/emptyName.kt");
+        runTest("testData/introduceTypeAlias/emptyName.kt");
     }
 
     @TestMetadata("entireTypeExtracted.kt")
     public void testEntireTypeExtracted() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/introduceTypeAlias/entireTypeExtracted.kt");
+        runTest("testData/introduceTypeAlias/entireTypeExtracted.kt");
     }
 
     @TestMetadata("equivalentNestedTypeElements.kt")
     public void testEquivalentNestedTypeElements() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/introduceTypeAlias/equivalentNestedTypeElements.kt");
+        runTest("testData/introduceTypeAlias/equivalentNestedTypeElements.kt");
     }
 
     @TestMetadata("existingTypeClash.kt")
     public void testExistingTypeClash() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/introduceTypeAlias/existingTypeClash.kt");
+        runTest("testData/introduceTypeAlias/existingTypeClash.kt");
     }
 
     @TestMetadata("functionTypeDuplicatesNoTypeParameters.kt")
     public void testFunctionTypeDuplicatesNoTypeParameters() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/introduceTypeAlias/functionTypeDuplicatesNoTypeParameters.kt");
+        runTest("testData/introduceTypeAlias/functionTypeDuplicatesNoTypeParameters.kt");
     }
 
     @TestMetadata("functionTypeDuplicatesWithTypeParameters.kt")
     public void testFunctionTypeDuplicatesWithTypeParameters() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/introduceTypeAlias/functionTypeDuplicatesWithTypeParameters.kt");
+        runTest("testData/introduceTypeAlias/functionTypeDuplicatesWithTypeParameters.kt");
     }
 
     @TestMetadata("functionTypeWithTypeParameters.kt")
     public void testFunctionTypeWithTypeParameters() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/introduceTypeAlias/functionTypeWithTypeParameters.kt");
+        runTest("testData/introduceTypeAlias/functionTypeWithTypeParameters.kt");
     }
 
     @TestMetadata("functionalType.kt")
     public void testFunctionalType() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/introduceTypeAlias/functionalType.kt");
+        runTest("testData/introduceTypeAlias/functionalType.kt");
     }
 
     @TestMetadata("localTypeExtracted.kt")
     public void testLocalTypeExtracted() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/introduceTypeAlias/localTypeExtracted.kt");
+        runTest("testData/introduceTypeAlias/localTypeExtracted.kt");
     }
 
     @TestMetadata("localWithVisibility.kt")
     public void testLocalWithVisibility() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/introduceTypeAlias/localWithVisibility.kt");
+        runTest("testData/introduceTypeAlias/localWithVisibility.kt");
     }
 
     @TestMetadata("nestedClass.kt")
     public void testNestedClass() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/introduceTypeAlias/nestedClass.kt");
+        runTest("testData/introduceTypeAlias/nestedClass.kt");
     }
 
     @TestMetadata("nestedTypesExtracted.kt")
     public void testNestedTypesExtracted() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/introduceTypeAlias/nestedTypesExtracted.kt");
+        runTest("testData/introduceTypeAlias/nestedTypesExtracted.kt");
     }
 
     @TestMetadata("noTypeElement.kt")
     public void testNoTypeElement() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/introduceTypeAlias/noTypeElement.kt");
+        runTest("testData/introduceTypeAlias/noTypeElement.kt");
     }
 
     @TestMetadata("nonIdentifierName.kt")
     public void testNonIdentifierName() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/introduceTypeAlias/nonIdentifierName.kt");
+        runTest("testData/introduceTypeAlias/nonIdentifierName.kt");
     }
 
     @TestMetadata("nullableType.kt")
     public void testNullableType() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/introduceTypeAlias/nullableType.kt");
+        runTest("testData/introduceTypeAlias/nullableType.kt");
     }
 
     @TestMetadata("privateTypeAlias.kt")
     public void testPrivateTypeAlias() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/introduceTypeAlias/privateTypeAlias.kt");
+        runTest("testData/introduceTypeAlias/privateTypeAlias.kt");
     }
 
     @TestMetadata("protectedInFile.kt")
     public void testProtectedInFile() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/introduceTypeAlias/protectedInFile.kt");
+        runTest("testData/introduceTypeAlias/protectedInFile.kt");
     }
 
     @TestMetadata("singleTypeParameters.kt")
     public void testSingleTypeParameters() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/introduceTypeAlias/singleTypeParameters.kt");
+        runTest("testData/introduceTypeAlias/singleTypeParameters.kt");
     }
 
     @TestMetadata("skipQualifiers.kt")
     public void testSkipQualifiers() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/introduceTypeAlias/skipQualifiers.kt");
+        runTest("testData/introduceTypeAlias/skipQualifiers.kt");
     }
 
     @TestMetadata("suggestedName.kt")
     public void testSuggestedName() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/introduceTypeAlias/suggestedName.kt");
+        runTest("testData/introduceTypeAlias/suggestedName.kt");
     }
 
     @TestMetadata("suspendFunctionType.kt")
     public void testSuspendFunctionType() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/introduceTypeAlias/suspendFunctionType.kt");
+        runTest("testData/introduceTypeAlias/suspendFunctionType.kt");
     }
 
     @TestMetadata("topLevelTypeAlias.kt")
     public void testTopLevelTypeAlias() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/introduceTypeAlias/topLevelTypeAlias.kt");
+        runTest("testData/introduceTypeAlias/topLevelTypeAlias.kt");
     }
 
     @TestMetadata("typeConstructor.kt")
     public void testTypeConstructor() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/introduceTypeAlias/typeConstructor.kt");
+        runTest("testData/introduceTypeAlias/typeConstructor.kt");
     }
 
     @TestMetadata("typeParameters.kt")
     public void testTypeParameters() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/introduceTypeAlias/typeParameters.kt");
+        runTest("testData/introduceTypeAlias/typeParameters.kt");
     }
 
     @TestMetadata("typesExtractedWithFunctionalType.kt")
     public void testTypesExtractedWithFunctionalType() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/introduceTypeAlias/typesExtractedWithFunctionalType.kt");
+        runTest("testData/introduceTypeAlias/typesExtractedWithFunctionalType.kt");
     }
 
     @TestMetadata("unmatchedNullability.kt")
     public void testUnmatchedNullability() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/introduceTypeAlias/unmatchedNullability.kt");
+        runTest("testData/introduceTypeAlias/unmatchedNullability.kt");
     }
 
     @TestMetadata("userTypeDuplicatesNoTypeParameters.kt")
     public void testUserTypeDuplicatesNoTypeParameters() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/introduceTypeAlias/userTypeDuplicatesNoTypeParameters.kt");
+        runTest("testData/introduceTypeAlias/userTypeDuplicatesNoTypeParameters.kt");
     }
 
     @TestMetadata("userTypeDuplicatesWithTypeParameters.kt")
     public void testUserTypeDuplicatesWithTypeParameters() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/introduceTypeAlias/userTypeDuplicatesWithTypeParameters.kt");
+        runTest("testData/introduceTypeAlias/userTypeDuplicatesWithTypeParameters.kt");
     }
 }

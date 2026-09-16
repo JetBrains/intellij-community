@@ -35,7 +35,16 @@ internal class TerminalCursorPositionTrackerTest {
     val contentUpdate = contentChangesTracker.getContentUpdate() ?: error("Content update is null")
     val cursorUpdate = cursorPositionTracker.getCursorPositionUpdate() ?: error("Cursor update is null")
 
-    assertThat(contentUpdate).isEqualTo(TerminalContentUpdate("", emptyList(), 1, emptyList()))
+    assertThat(contentUpdate).isEqualTo(
+      TerminalContentUpdate(
+        text = "",
+        styles = emptyList(),
+        startLineLogicalIndex = 1,
+        screenTopLogicalLineIndex = 0,
+        screenTopColumnIndex = 0,
+        osc8Hyperlinks = emptyList(),
+      )
+    )
     assertThat(cursorUpdate).isEqualTo(TerminalCursorPosition(1, 0))
   }
 

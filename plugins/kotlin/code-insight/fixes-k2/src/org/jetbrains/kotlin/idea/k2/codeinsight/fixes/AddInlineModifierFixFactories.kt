@@ -5,7 +5,9 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.idea.base.psi.addModifierKeyword
 import org.jetbrains.kotlin.idea.base.psi.findParameterWithName
+import org.jetbrains.kotlin.idea.base.psi.removeModifierKeyword
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
@@ -52,9 +54,9 @@ internal object AddInlineModifierFixFactories {
             elementContext: ElementContext,
             updater: ModPsiUpdater,
         ) {
-            element.addModifier(elementContext.modifier)
+            element.addModifierKeyword(elementContext.modifier)
             if (elementContext.modifier === KtTokens.NOINLINE_KEYWORD) {
-                element.removeModifier(KtTokens.CROSSINLINE_KEYWORD)
+                element.removeModifierKeyword(KtTokens.CROSSINLINE_KEYWORD)
             }
         }
 

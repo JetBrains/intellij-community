@@ -32,8 +32,8 @@ internal abstract class PyProjectActionImpl protected constructor(private val fo
     templatePresentation.icon = PythonPyprojectIcons.Model.PyProjectModule
   }
 
-  @RequiresReadLock
-  @RequiresEdt
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     val presenter = e.projectCreationPresenter(forNewProject) ?: return
@@ -49,8 +49,8 @@ internal abstract class PyProjectActionImpl protected constructor(private val fo
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
-  @RequiresBackgroundThread
-  @RequiresReadLock
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   override fun update(e: AnActionEvent) {
     val projectCreationModel = e.projectCreationPresenter(forNewProject)
     e.presentation.isEnabledAndVisible = projectCreationModel != null
@@ -60,7 +60,7 @@ internal abstract class PyProjectActionImpl protected constructor(private val fo
   }
 }
 
-@RequiresReadLock
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 @VisibleForTesting
 internal fun AnActionEvent.projectCreationPresenter(forNewProject: Boolean): PyProjectPresenter? {
   if (project == null) {

@@ -3,15 +3,24 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.kotlin.projectStructure` start
+content_module_jar(module = ":project-structure")
+### auto-generated section `dev intellij.kotlin.projectStructure` end
+
 ### auto-generated section `build intellij.kotlin.projectStructure` start
 create_kotlinc_options(
     name = "custom_project-structure",
     opt_in = [
+        "org.jetbrains.kotlin.psi.KtExperimentalApi",
+        "org.jetbrains.kotlin.psi.KtNonPublicApi",
+        "org.jetbrains.kotlin.psi.KtIdeApi",
         "org.jetbrains.kotlin.analysis.api.KaExperimentalApi",
         "org.jetbrains.kotlin.analysis.api.KaIdeApi",
         "org.jetbrains.kotlin.analysis.api.KaPlatformInterface",
-        "org.jetbrains.kotlin.analysis.api.KaImplementationDetail",
+        "org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaUnstableDiagnosticApi",
+        "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
         "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+        "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
     ],
     x_context_parameters = True,
 )
@@ -57,11 +66,9 @@ jvm_library(
         "//libraries/kotlinc/kotlin-jps-common:libraries-kotlinc-kotlin-jps-common",
         "//libraries/fastutil",
         "//java/openapi:java",
-        "//plugins/kotlin/base/scripting/scripting.k2:kotlin-base-scripting",
+        "//plugins/kotlin/base/scripting/scripting",
     ],
 )
-
-content_module_jar(module = ":project-structure")
 
 jvm_library(
     name = "project-structure_test_lib",
@@ -97,7 +104,7 @@ jvm_library(
         "//libraries/kotlinc/kotlin-jps-common:libraries-kotlinc-kotlin-jps-common_test_lib",
         "//libraries/fastutil:fastutil_test_lib",
         "//java/openapi:java_test_lib",
-        "//plugins/kotlin/base/scripting/scripting.k2:kotlin-base-scripting_test_lib",
+        "//plugins/kotlin/base/scripting/scripting:scripting_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.projectStructure` end
@@ -116,11 +123,16 @@ exports_files(
 create_kotlinc_options(
     name = "custom_kotlin-projectStructure-tests",
     opt_in = [
-        "org.jetbrains.kotlin.analysis.api.KaPlatformInterface",
+        "org.jetbrains.kotlin.psi.KtExperimentalApi",
+        "org.jetbrains.kotlin.psi.KtNonPublicApi",
+        "org.jetbrains.kotlin.psi.KtIdeApi",
         "org.jetbrains.kotlin.analysis.api.KaExperimentalApi",
         "org.jetbrains.kotlin.analysis.api.KaIdeApi",
-        "org.jetbrains.kotlin.analysis.api.KaImplementationDetail",
+        "org.jetbrains.kotlin.analysis.api.KaPlatformInterface",
+        "org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaUnstableDiagnosticApi",
+        "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
         "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+        "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
     ],
     x_context_parameters = True,
 )
@@ -242,8 +254,8 @@ jvm_library(
         "//java/openapi:java_test_lib",
         "//java/java-psi-api:psi",
         "//java/java-psi-api:psi_test_lib",
-        "//plugins/kotlin/base/scripting/scripting.k2:kotlin-base-scripting",
-        "//plugins/kotlin/base/scripting/scripting.k2:kotlin-base-scripting_test_lib",
+        "//plugins/kotlin/base/scripting/scripting",
+        "//plugins/kotlin/base/scripting/scripting:scripting_test_lib",
         "//plugins/kotlin/intellij.kotlin.base.test:base-test",
         "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
         "//plugins/kotlin/base/pluginTestFramework:kotlin-base-plugin-testFramework",

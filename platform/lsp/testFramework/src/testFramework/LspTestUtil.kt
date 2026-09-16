@@ -27,7 +27,7 @@ import java.util.concurrent.atomic.AtomicInteger
  */
 @RequiresBlockingContext(ReplaceWith("awaitFileOpenedByLspServer(project, file)",
                                      "com.intellij.platform.lsp.testFramework.awaitFileOpenedByLspServer"))
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 fun waitUntilFileOpenedByLspServer(project: Project, file: VirtualFile) {
   val topLevelFile = (file as? VirtualFileWindow)?.delegate ?: file
   val disposable = Disposer.newDisposable()
@@ -67,14 +67,14 @@ fun waitUntilFileOpenedByLspServer(project: Project, file: VirtualFile) {
 @RequiresBlockingContext(ReplaceWith("awaitDiagnosticsFromLspServer(project, file)",
                                      "com.intellij.platform.lsp.testFramework.awaitDiagnosticsFromLspServer"))
 @JvmOverloads
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 fun waitForDiagnosticsFromLspServer(project: Project, file: VirtualFile, timeout: Int = 30) {
   withDiagnosticsReceivedCounter(project, file) { diagnosticsReceivedCounter ->
     doWaitForDiagnosticsFromLspServer(diagnosticsReceivedCounter, timeout)
   }
 }
 
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 private fun doWaitForDiagnosticsFromLspServer(
   diagnosticsReceivedCounter: DiagnosticsReceivedCounter,
   timeout: Int,
@@ -100,7 +100,7 @@ private fun doWaitForDiagnosticsFromLspServer(
  */
 @RequiresBlockingContext(ReplaceWith("checkHighlightingRetrying()",
                                      "com.intellij.platform.lsp.testFramework.checkHighlightingRetrying"))
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 fun CodeInsightTestFixture.checkLspHighlighting() {
   val document = editor.document.let { (it as? DocumentWindow)?.delegate ?: it }
   val data = ExpectedHighlightingData(document, true, true, false)
@@ -113,7 +113,7 @@ fun CodeInsightTestFixture.checkLspHighlighting() {
  */
 @RequiresBlockingContext(ReplaceWith("checkHighlightingRetrying(data)",
                                      "com.intellij.platform.lsp.testFramework.checkHighlightingRetrying"))
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 fun CodeInsightTestFixture.checkLspHighlightingForData(data: ExpectedHighlightingData) {
   withDiagnosticsReceivedCounter(project, file.virtualFile) { diagnosticsReceivedCounter ->
     doWaitForDiagnosticsFromLspServer(diagnosticsReceivedCounter, timeout = 30, attemptNumber = 1)
@@ -145,7 +145,7 @@ private fun <T> withDiagnosticsReceivedCounter(project: Project, file: VirtualFi
  * So this function makes up to three attempts to call `fixture.collectAndCheckHighlighting`,
  * waiting for a new `diagnosticsReceived` notification from the server after each unlucky attempt.
  */
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 private fun doCheckExpectedHighlightingData(
   fixture: CodeInsightTestFixtureImpl,
   data: ExpectedHighlightingData,

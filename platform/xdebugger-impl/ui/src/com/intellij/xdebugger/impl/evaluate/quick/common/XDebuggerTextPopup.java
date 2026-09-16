@@ -17,7 +17,6 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.AbstractPopup;
@@ -48,7 +47,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.Icon;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
-import java.awt.Font;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Window;
@@ -258,9 +256,9 @@ public class XDebuggerTextPopup<D> extends XDebuggerPopupPanel {
   }
 
   private @Nullable XValueNodeImpl getValueNode() {
-    if (myTree instanceof XDebuggerTree) {
-      XDebuggerTreeNode node = ((XDebuggerTree)myTree).getRoot();
-      return node instanceof XValueNodeImpl ? (XValueNodeImpl)node : null;
+    if (myTree instanceof XDebuggerTree tree) {
+      XDebuggerTreeNode node = tree.getRoot();
+      return node instanceof XValueNodeImpl valueNode ? valueNode : null;
     }
     return null;
   }
@@ -323,8 +321,8 @@ public class XDebuggerTextPopup<D> extends XDebuggerPopupPanel {
   }
 
   protected static void registerTreeDisposable(Disposable disposable, Tree tree) {
-    if (tree instanceof Disposable) {
-      Disposer.register(disposable, (Disposable)tree);
+    if (tree instanceof Disposable disposable1) {
+      Disposer.register(disposable, disposable1);
     }
   }
 

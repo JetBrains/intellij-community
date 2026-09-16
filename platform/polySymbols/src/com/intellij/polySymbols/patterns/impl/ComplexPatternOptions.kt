@@ -5,8 +5,10 @@ import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolApiStatus
 import com.intellij.polySymbols.patterns.PolySymbolPatternSymbolsResolver
 import com.intellij.polySymbols.query.PolySymbolScope
+import org.jetbrains.annotations.ApiStatus
 
-internal data class ComplexPatternOptions(
+@ApiStatus.Internal
+data class ComplexPatternOptions(
   val additionalScope: List<PolySymbolScope> = emptyList(),
   val apiStatus: PolySymbolApiStatus? = null,
   val isRequired: Boolean = true,

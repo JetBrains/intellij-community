@@ -379,7 +379,7 @@ object ExtractMethodHelper {
 
   private data class PsiRange(val parent: PsiElement, val firstChild: PsiElement, val lastChild: PsiElement)
 
-  @RequiresWriteLock
+  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
   fun renameTemplate(templateState: TemplateState?, name: String) {
     if (templateState == null) return
     val range = templateState.currentVariableRange ?: return

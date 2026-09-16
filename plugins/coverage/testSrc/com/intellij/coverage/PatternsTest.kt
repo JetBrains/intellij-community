@@ -14,6 +14,8 @@ import java.util.regex.Pattern
 
 @RunWith(JUnit4::class)
 class PatternsTest : HeavyPlatformTestCase() {
+  override fun runInDispatchThread() = false
+
   @Test
   fun `test class patterns should persist in a report file and suite`() = test(listOf("c.C", "a.*"), listOf(), false)
 

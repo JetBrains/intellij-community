@@ -5,8 +5,10 @@ package org.jetbrains.kotlin.j2k.conversions
 import com.intellij.psi.PsiField
 import com.intellij.psi.PsiMethod
 import org.jetbrains.kotlin.j2k.ConverterContext
+import org.jetbrains.kotlin.j2k.MUTABLE_FIELD_ANNOTATIONS
+import org.jetbrains.kotlin.j2k.NON_PERSISTENT_FIELD_ANNOTATIONS
 import org.jetbrains.kotlin.j2k.Nullability.NotNull
-import org.jetbrains.kotlin.j2k.MUTABLE_ANNOTATIONS
+import org.jetbrains.kotlin.j2k.PERSISTENT_CLASS_ANNOTATIONS
 import org.jetbrains.kotlin.j2k.RecursiveConversion
 import org.jetbrains.kotlin.j2k.hasUsages
 import org.jetbrains.kotlin.j2k.isLocalClass
@@ -14,6 +16,7 @@ import org.jetbrains.kotlin.j2k.isTopLevel
 import org.jetbrains.kotlin.j2k.jvmAnnotation
 import org.jetbrains.kotlin.j2k.psi
 import org.jetbrains.kotlin.j2k.throwsAnnotation
+import org.jetbrains.kotlin.j2k.tree.JKAnnotationListOwner
 import org.jetbrains.kotlin.j2k.tree.JKClass
 import org.jetbrains.kotlin.j2k.tree.JKDeclaration
 import org.jetbrains.kotlin.j2k.tree.JKField
@@ -27,6 +30,7 @@ import org.jetbrains.kotlin.j2k.tree.Modality.FINAL
 import org.jetbrains.kotlin.j2k.tree.Mutability.IMMUTABLE
 import org.jetbrains.kotlin.j2k.tree.Mutability.MUTABLE
 import org.jetbrains.kotlin.j2k.tree.Mutability.UNKNOWN
+import org.jetbrains.kotlin.j2k.tree.OtherModifier.LATEINIT
 import org.jetbrains.kotlin.j2k.tree.OtherModifier.STATIC
 import org.jetbrains.kotlin.j2k.tree.Visibility.PRIVATE
 import org.jetbrains.kotlin.j2k.tree.elementByModifier
@@ -100,10 +104,11 @@ class ClassMemberConversion(context: ConverterContext) : RecursiveConversion(con
 
     private fun JKField.convert() {
         removeStaticModifierFromAnonymousClassMember()
-        val hasMutableAnnotation = annotationList.annotations.any { MUTABLE_ANNOTATIONS.contains(it.classSymbol.fqName) }
         mutability = when {
+            hasOtherModifier(LATEINIT) -> MUTABLE
+            isPersistentField() -> MUTABLE
             modality == FINAL -> IMMUTABLE
-            hasMutableAnnotation -> MUTABLE
+            hasAnnotation(MUTABLE_FIELD_ANNOTATIONS) -> MUTABLE
             mutability != UNKNOWN -> mutability
             else -> UNKNOWN
         }
@@ -114,6 +119,15 @@ class ClassMemberConversion(context: ConverterContext) : RecursiveConversion(con
             context.externalCodeProcessor.registerField(psiField)
         }
     }
+
+    private fun JKField.isPersistentField(): Boolean {
+        if (hasOtherModifier(STATIC) || hasAnnotation(NON_PERSISTENT_FIELD_ANNOTATIONS)) return false
+        val containingClass = parentOfType<JKClass>() ?: return false
+        return containingClass.hasAnnotation(PERSISTENT_CLASS_ANNOTATIONS)
+    }
+
+    private fun JKAnnotationListOwner.hasAnnotation(fqNames: Set<String>): Boolean =
+        annotationList.annotations.any { it.classSymbol.fqName in fqNames }
 
     private fun JKDeclaration.isExternallyAccessible(): Boolean {
         require(this is JKVisibilityOwner)

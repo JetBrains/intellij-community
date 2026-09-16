@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk
 
+import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.community.execService.BinaryToExec
@@ -97,7 +98,7 @@ suspend fun <T> runExecutableWithProgress(
   transformer: ProcessOutputTransformer<T>,
 ): PyResult<T> {
   return runExecutableWithProgress(
-    binaryToExec = BinOnEel(path = executable, workDir = workDir),
+    binaryToExec = BinOnEel(path = executable, workDir = workDir?.asEelPath()),
     timeout = timeout,
     env = env,
     args = args,

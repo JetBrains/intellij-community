@@ -5,8 +5,8 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.resolution.KaCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleOrMultiCall
 import org.jetbrains.kotlin.analysis.api.resolution.collectCallCandidates
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
@@ -84,7 +84,7 @@ private fun namedArgumentTail(
  * Returns a single tail if a tail could be determined, or null otherwise.
  */
 context(_: KaSession)
-private fun calculateTailForCall(argumentExpression: KtExpression, call: KaCall): Tail? {
+private fun calculateTailForCall(argumentExpression: KtExpression, call: KaSimpleOrMultiCall): Tail? {
     if (call !is KaFunctionCall<*>) return null
     if (call.valueArgumentMapping.isEmpty()) return null
 
@@ -165,7 +165,7 @@ private fun calculateTailForCalls(
     if (callCandidates.isEmpty()) return emptySet()
 
     return callCandidates.mapNotNullTo(mutableSetOf()) {
-        val candidate = it.candidate as? KaCall ?: return@mapNotNullTo null
+        val candidate = it.candidate ?: return@mapNotNullTo null
         calculateTailForCall(expression, candidate)
     }
 }

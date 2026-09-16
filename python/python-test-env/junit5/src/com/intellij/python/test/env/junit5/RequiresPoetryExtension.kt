@@ -5,7 +5,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.community.impl.poetry.backend.PoetryPyTool
 import com.intellij.python.junit5Tests.framework.resolvePythonTool
-import com.intellij.python.pytools.setCustomExecutablePath
+import com.intellij.python.pytools.backend.setCustomExecutablePath
 import com.intellij.python.test.env.core.LATEST_PYTHON_VERSION
 import com.intellij.python.test.env.core.PyEnvironment
 import com.intellij.python.test.env.plain.pythonEnvironment

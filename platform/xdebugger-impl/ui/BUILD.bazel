@@ -12,6 +12,10 @@ jps_test(
 
 ### skip generation section `test intellij.platform.debugger.impl.ui.tests`
 
+### auto-generated section `dev intellij.platform.debugger.impl.ui` start
+content_module_jar(module = ":ui")
+### auto-generated section `dev intellij.platform.debugger.impl.ui` end
+
 ### auto-generated section `build intellij.platform.debugger.impl.ui` start
 create_kotlinc_options(
     name = "custom_ui",
@@ -86,8 +90,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":ui")
-
 jvm_library(
     name = "ui_test_lib",
     testonly = True,
@@ -156,7 +158,6 @@ exports_files(
         "intellij.platform.debugger.impl.ui.iml",
         "resources/intellij.platform.debugger.impl.ui.actions.xml",
         "resources/intellij.platform.debugger.impl.ui.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -16,7 +16,7 @@ internal object UnusedEmbeddedLibraryModuleValidator : PipelineNode {
   override val id get() = NodeIds.UNUSED_EMBEDDED_LIBRARY_MODULE_VALIDATION
   override val requires: Set<DataSlot<*>> get() = setOf(Slots.CONTENT_MODULE_PLAN)
 
-  override suspend fun execute(ctx: ComputeContext) {
+  override fun execute(ctx: ComputeContext) {
     val productSpecsByName = ctx.model.discovery.products.mapNotNull { product ->
       product.spec?.let { product.name to it }
     }.toMap()

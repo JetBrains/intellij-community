@@ -470,7 +470,7 @@ internal fun writeProductTracePathQuery(
   ))
 }
 
-internal suspend fun writeParameterizedModuleSetOverlap(
+internal fun writeParameterizedModuleSetOverlap(
   gen: JsonGenerator,
   allModuleSets: List<ModuleSetMetadata>,
   pluginGraph: PluginGraph,
@@ -481,7 +481,7 @@ internal suspend fun writeParameterizedModuleSetOverlap(
   writeModuleSetOverlapAnalysis(gen, overlaps.take(filter.resultLimit()), filter.minOverlapPercent)
 }
 
-internal suspend fun writeParameterizedProductSimilarity(
+internal fun writeParameterizedProductSimilarity(
   gen: JsonGenerator,
   products: List<ProductSpec>,
   pluginGraph: PluginGraph,
@@ -492,7 +492,7 @@ internal suspend fun writeParameterizedProductSimilarity(
   writeProductSimilarityAnalysis(gen, pairs.take(filter.resultLimit()), filter.threshold)
 }
 
-internal suspend fun writeParameterizedUnificationSuggestions(
+internal fun writeParameterizedUnificationSuggestions(
   gen: JsonGenerator,
   allModuleSets: List<ModuleSetMetadata>,
   products: List<ProductSpec>,

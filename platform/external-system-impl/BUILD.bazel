@@ -14,6 +14,10 @@ jps_test(
 )
 ### skip generation section `test intellij.platform.externalSystem.tests`
 
+### auto-generated section `dev intellij.platform.externalSystem.impl` start
+content_module_jar(module = ":externalSystem-impl")
+### auto-generated section `dev intellij.platform.externalSystem.impl` end
+
 ### auto-generated section `build intellij.platform.externalSystem.impl` start
 jvm_library(
     name = "externalSystem-impl",
@@ -86,8 +90,6 @@ jvm_library(
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     ],
 )
-
-content_module_jar(module = ":externalSystem-impl")
 
 jvm_library(
     name = "externalSystem-impl_test_lib",
@@ -162,7 +164,6 @@ exports_files(
         "resources/META-INF/ExternalSystemExtensionPoints.xml",
         "resources/META-INF/ExternalSystemExtensions.xml",
         "resources/intellij.platform.externalSystem.impl.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )
@@ -185,6 +186,7 @@ jvm_library(
         "//platform/core-ui",
         "//platform/workspace/storage",
         "//platform/forms_rt:java-guiForms-rt",
+        "//xml/plugin",
     ],
 )
 
@@ -216,6 +218,7 @@ jvm_library(
         "//platform/observable:observable_test_lib",
         "//platform/platform-util-io:ide-util-io_test_lib",
         "//platform/ide-core:ide-core_test_lib",
+        "//xml/plugin:plugin_test_lib",
     ],
     deps = [
         # do not sort,
@@ -264,8 +267,6 @@ jvm_library(
         "//aether-dependency-resolver/plugin:plugin_test_lib",
         "//libraries/lucene.common",
         "//libraries/lucene.common:lucene.common_test_lib",
-        "//libraries/misc/plugin",
-        "//libraries/misc/plugin:plugin_test_lib",
         "//platform/structure-view-impl:structureView",
         "//platform/structure-view-impl:structureView_test_lib",
         "//platform/structure-view-impl/plugin",

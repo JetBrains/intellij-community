@@ -11,6 +11,10 @@ jps_test(
 
 ### skip generation section `test intellij.platform.diagnostic.telemetry.agent.extension.tests`
 
+### auto-generated section `dev intellij.platform.diagnostic.telemetry.agent.extension` start
+content_module_jar(module = ":diagnostic-telemetry-agent-extension")
+### auto-generated section `dev intellij.platform.diagnostic.telemetry.agent.extension` end
+
 ### auto-generated section `build intellij.platform.diagnostic.telemetry.agent.extension` start
 jvm_provided_library(
     name = "libraries_opentelemetry-sdk-autoconfigure-spi_provided",
@@ -45,8 +49,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":diagnostic-telemetry-agent-extension")
-
 jvm_library(
     name = "diagnostic-telemetry-agent-extension_test_lib",
     testonly = True,
@@ -79,7 +81,6 @@ exports_files(
     [
         "intellij.platform.diagnostic.telemetry.agent.extension.iml",
         "resources/intellij.platform.diagnostic.telemetry.agent.extension.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

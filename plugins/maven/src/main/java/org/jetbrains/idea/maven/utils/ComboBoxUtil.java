@@ -56,10 +56,6 @@ public final class ComboBoxUtil {
     }
   }
 
-  public static @Nullable String getSelectedString(DefaultComboBoxModel model) {
-    return String.valueOf(getSelectedValue(model));
-  }
-
   public static @Nullable Object getSelectedValue(DefaultComboBoxModel model) {
     final Object item = model.getSelectedItem();
     return item != null ? ((Item)item).getValue() : null;

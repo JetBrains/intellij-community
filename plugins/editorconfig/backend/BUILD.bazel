@@ -10,6 +10,10 @@ jps_test(
 )
 ### skip generation section `test intellij.editorconfig.backend.tests`
 
+### auto-generated section `dev intellij.editorconfig.backend` start
+content_module_jar(module = ":backend")
+### auto-generated section `dev intellij.editorconfig.backend` end
+
 ### auto-generated section `build intellij.editorconfig.backend` start
 resourcegroup(
     name = "backend_resources",
@@ -76,8 +80,6 @@ jvm_library(
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     ],
 )
-
-content_module_jar(module = ":backend")
 
 jvm_library(
     name = "backend_test_lib",
@@ -154,6 +156,7 @@ jvm_library(
     ),
     module_name = "intellij.editorconfig.backend.tests",
     visibility = ["//visibility:public"],
+    runtime_deps = ["//xml/plugin"],
 )
 
 jvm_library(
@@ -178,6 +181,7 @@ jvm_library(
         "//platform/platform-impl:ide-impl_test_lib",
         "//platform/ide-core-impl:ide-core-impl_test_lib",
         "//platform/ide-core:ide-core_test_lib",
+        "//xml/plugin:plugin_test_lib",
     ],
     deps = [
         # do not sort,
@@ -256,8 +260,6 @@ jvm_library(
         "//plugins/editorconfig:editorconfig-plugin-main_test_lib",
         "//plugins/editorconfig/backend.spellchecking",
         "//plugins/editorconfig/backend.spellchecking:backend.spellchecking_test_lib",
-        "//libraries/misc/plugin",
-        "//libraries/misc/plugin:plugin_test_lib",
         "//java/java-backend:backend",
         "//java/java-backend:backend_test_lib",
         "//java/plugin",

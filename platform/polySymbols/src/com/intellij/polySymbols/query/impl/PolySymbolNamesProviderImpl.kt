@@ -6,10 +6,8 @@ import com.intellij.openapi.util.ModificationTracker
 import com.intellij.polySymbols.PolySymbolKind
 import com.intellij.polySymbols.PolySymbolQualifiedName
 import com.intellij.polySymbols.context.PolyContext
-import com.intellij.polySymbols.css.NAMESPACE_CSS
 import com.intellij.polySymbols.framework.PolySymbolFramework
 import com.intellij.polySymbols.framework.framework
-import com.intellij.polySymbols.html.NAMESPACE_HTML
 import com.intellij.polySymbols.query.PolySymbolNameConversionRules
 import com.intellij.polySymbols.query.PolySymbolNameConverter
 import com.intellij.polySymbols.query.PolySymbolNamesProvider
@@ -83,7 +81,7 @@ class PolySymbolNamesProviderImpl(
       ?.getNames(qualifiedName, target)
       ?.takeIf { it.isNotEmpty() }
     ?: if (target != CODE_COMPLETION_VARIANTS &&
-           (qualifiedName.namespace == NAMESPACE_CSS || qualifiedName.namespace == NAMESPACE_HTML))
+           (qualifiedName.namespace == "css" || qualifiedName.namespace == "html"))
       listOf(qualifiedName.name.lowercase(Locale.US))
     else
       listOf(qualifiedName.name)

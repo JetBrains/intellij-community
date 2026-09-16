@@ -28,8 +28,8 @@ public final class StepOutOfBlockActionUtils {
 
   private static void doStepOutOfBlock(@NotNull XDebugSession xSession) {
     XDebugProcess process = xSession.getDebugProcess();
-    if (process instanceof JavaDebugProcess) {
-      DebuggerContextImpl debuggerContext = ((JavaDebugProcess)process).getDebuggerSession().getContextManager().getContext();
+    if (process instanceof JavaDebugProcess debugProcess) {
+      DebuggerContextImpl debuggerContext = debugProcess.getDebuggerSession().getContextManager().getContext();
       DebuggerSession session = debuggerContext.getDebuggerSession();
       SourcePosition position = debuggerContext.getSourcePosition();
       if (position != null && session != null) {

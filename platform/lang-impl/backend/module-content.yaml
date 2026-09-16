@@ -1,3 +1,0 @@
-- name: dist.all/lib/intellij.platform.lang.impl.backend.jar
-  modules:
-  - name: intellij.platform.lang.impl.backend

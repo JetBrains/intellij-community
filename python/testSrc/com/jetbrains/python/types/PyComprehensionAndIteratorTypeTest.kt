@@ -7,6 +7,7 @@ import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.psi.impl.PyYieldExpressionImpl
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
@@ -27,7 +28,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
       # └ TYPE set[int]
       """.trimIndent())
 
-    // PY-7020
+    @TestFor(issues = ["PY-7020"])
     @Test
     @TestCaseOptions(assertRecursionPrevention = false)
     fun `list comprehension type`() = test("""
@@ -35,7 +36,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
       # └ TYPE list[str]
       """.trimIndent())
 
-    // PY-7021
+    @TestFor(issues = ["PY-7021"])
     @Test
     @TestCaseOptions(assertRecursionPrevention = false)
     fun `generator comprehension type`() = test("""
@@ -43,7 +44,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
       # └ TYPE Generator[str, Unknown, None]
       """.trimIndent())
 
-    // PY-7021
+    @TestFor(issues = ["PY-7021"])
     @Test
     @TestCaseOptions(assertRecursionPrevention = false)
     fun `iterate over generator comprehension`() = test("""
@@ -749,11 +750,70 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
       def g(x):
           return x.lower()
       """.trimIndent())
+
+    @TestFor(issues = ["PY-90570"])
+    @Test
+    @TestCaseOptions(assertRecursionPrevention = false)
+    fun `dict from enumerate`() = test("""
+      from string import ascii_lowercase
+      expr = dict(enumerate(ascii_lowercase))
+      # └ TYPE dict[int, str]
+      """.trimIndent())
+
+    @TestFor(issues = ["PY-90570"])
+    @Test
+    @TestCaseOptions(assertRecursionPrevention = false)
+    fun `list from enumerate`() = test("""
+      from string import ascii_lowercase
+      expr = list(enumerate(ascii_lowercase))
+      # └ TYPE list[tuple[int, str]]
+      """.trimIndent())
+
+    @TestFor(issues = ["PY-90570"])
+    @Test
+    @TestCaseOptions(assertRecursionPrevention = false)
+    fun `dict from zip`() = test("""
+      def f(a: list[int], b: list[str]):
+          expr = dict(zip(a, b))
+      #   └ TYPE dict[int, str]
+      """.trimIndent())
+
+    @TestFor(issues = ["PY-90570"])
+    @Test
+    @TestCaseOptions(assertRecursionPrevention = false)
+    fun `list from user-defined structural iterator`() = test("""
+      from typing import Self
+
+      class Countdown[T]:
+          def __iter__(self) -> Self: ...
+          def __next__(self) -> T: ...
+
+      def f(c: Countdown[str]):
+          expr = list(c)
+      #   └ TYPE list[str]
+      """.trimIndent())
+
+    @TestFor(issues = ["PY-90570"])
+    @Test
+    @TestCaseOptions(assertRecursionPrevention = false)
+    fun `list from structural iterator with inherited Self`() = test("""
+      from typing import Self
+
+      class Base[T]:
+          def __iter__(self) -> Self: ...
+          def __next__(self) -> T: ...
+
+      class Sub(Base[int]): ...
+
+      def f(s: Sub):
+          expr = list(s)
+      #   └ TYPE list[int]
+      """.trimIndent())
   }
 
   @Nested
   inner class GeneratorsAndYield {
-    // PY-5831
+    @TestFor(issues = ["PY-5831"])
     @Test
     fun `yield expression type`() = test("""
       def f():
@@ -761,7 +821,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
       #   └ TYPE Unknown
       """.trimIndent())
 
-    // PY-9590
+    @TestFor(issues = ["PY-9590"])
     @Test
     fun `parenthesized yield expression type`() = test("""
       def f():
@@ -769,7 +829,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
       #   └ TYPE Unknown
       """.trimIndent())
 
-    // PY-7215
+    @TestFor(issues = ["PY-7215"])
     @Test
     fun `function with nested generator`() = test("""
       def f():
@@ -841,6 +901,67 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
       #   └ TYPE int
       """.trimIndent())
 
+    @TestFor(issues = ["PY-47487", "PY-89154"], classes = [PyYieldExpressionImpl::class])
+    @Test
+    fun `generator send type from yield expression expected type`() = test("""
+      def g():
+          received: int = yield "foo"
+
+      expr = g()
+      # └ TYPE Generator[Literal["foo"], int, None]
+      """.trimIndent())
+
+    @TestFor(issues = ["PY-47487"], classes = [PyYieldExpressionImpl::class])
+    @Test
+    fun `generator send type inference does not recurse through generic call`() = test("""
+      def consume[T](value: T, fallback: T) -> None:
+          pass
+
+      def g():
+          consume((yield "foo"), 42)
+
+      expr = g()
+      # └ TYPE Generator[Literal["foo"], int, None]
+      """.trimIndent())
+
+    @TestFor(issues = ["PY-47487"], classes = [PyYieldExpressionImpl::class])
+    @Test
+    fun `generator send type from assignment target`() = test("""
+      def complex_foo():
+          bar = (yield 1) or None
+      #   └ TYPE Unknown | None
+      def foo():
+          typed: bool
+          typed = yield 0
+      #   └ TYPE bool
+          return 'a'
+      def use_foo():
+          gg = foo()
+      #   └ TYPE Generator[Literal[0], bool, Literal["a"]]
+          next(gg)
+          gg.send('wrong')
+      #           ^^^^^^^ WARNING Expected type 'bool', got 'Literal["wrong"]' instead
+      """.trimIndent())
+
+    @TestFor(issues = ["PY-89154"], classes = [PyYieldExpressionImpl::class])
+    @Test
+    fun `generator send type from bare yield assignment`() = test("""
+      def f():
+          a: int = yield
+      expr = f()
+      # └ TYPE Generator[None, int, None]
+      """.trimIndent())
+
+    @TestFor(issues = ["PY-47487"], classes = [PyYieldExpressionImpl::class])
+    @Test
+    fun `generator send type unifies multiple expected types`() = test("""
+      def g():
+          received1: int = yield 1
+          received2: str = yield 2
+      expr = g()
+      # └ TYPE Generator[Literal[1, 2], int | str, None]
+      """.trimIndent())
+
     @TestFor(issues = ["PY-20710"])
     @Test
     fun `yield from expression type from generator return type hint`() = test("""
@@ -873,7 +994,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
       # └ TYPE Generator[int | Literal["str"], str | Unknown, bool | Literal[True]]
       """.trimIndent())
 
-    // PY-6702
+    @TestFor(issues = ["PY-6702"])
     @Test
     fun `yield from type`() = test("""
       def subgen():
@@ -1030,7 +1151,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
       #   └ TYPE C
       """.trimIndent())
 
-    // PY-6729
+    @TestFor(issues = ["PY-6729"])
     @Test
     @TestCaseOptions(assertRecursionPrevention = false)
     fun `yield from non-iterable`() = test(

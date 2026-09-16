@@ -236,7 +236,7 @@ object GitFileUtils {
    * @throws VcsException if there is a problem with running git
    */
   @JvmStatic
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   @Throws(VcsException::class)
   fun getFileContent(project: Project, root: VirtualFile, @NonNls revisionOrBranch: String, @NonNls relativePath: String): ByteArray {
     val h = GitBinaryHandler(project, root, GitCommand.CAT_FILE)

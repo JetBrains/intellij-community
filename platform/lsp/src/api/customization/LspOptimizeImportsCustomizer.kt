@@ -49,7 +49,7 @@ open class LspOptimizeImportsSupport : LspOptimizeImportsCustomizer() {
    * @param ideCanOptimizeImportsInThisFileItself `true` if the IDE has its own [com.intellij.lang.ImportOptimizer]
    *        that supports the given file
    */
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   open fun shouldOptimizeImportsInThisFileExclusivelyByServer(
     lspClient: LspClient,
     file: VirtualFile,
@@ -62,7 +62,7 @@ open class LspOptimizeImportsSupport : LspOptimizeImportsCustomizer() {
     "Override or call shouldOptimizeImportsInThisFileExclusivelyByServer(lspClient, file, ideCanOptimizeImportsInThisFileItself) — the LspClient overload",
     ReplaceWith("shouldOptimizeImportsInThisFileExclusivelyByServer(lspServer as LspClient, file, ideCanOptimizeImportsInThisFileItself)"),
   )
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   @Suppress("DEPRECATION")
   open fun shouldOptimizeImportsInThisFileExclusivelyByServer(
     lspServer: LspServer,

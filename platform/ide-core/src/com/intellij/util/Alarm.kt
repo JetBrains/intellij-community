@@ -265,7 +265,7 @@ open class Alarm @Internal constructor(
     }
   }
 
-  @get:RequiresEdt
+  @get:RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private val isActivationComponentShowing: Boolean
     get() = activationComponent!!.isShowing
 

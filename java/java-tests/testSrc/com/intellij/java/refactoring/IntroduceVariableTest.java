@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -33,9 +33,8 @@ import java.util.regex.Pattern;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 
 public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
-  @NotNull
   @Override
-  protected String getTestDataPath() {
+  protected @NotNull String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
@@ -81,12 +80,12 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
   public void testParenthesizedOccurrence2() { doTest("s", true, true, true, JAVA_LANG_STRING); }
   public void testAfterSemicolon() {
     UiInterceptors.register(new ChooserInterceptor(null, StringUtil.escapeToRegexp("new Runnable() {...}")));
-    doTest("s", true, true, true, CommonClassNames.JAVA_LANG_RUNNABLE); 
+    doTest("s", true, true, true, CommonClassNames.JAVA_LANG_RUNNABLE);
   }
   public void testConflictingField() { doTest("name", true, false, true, JAVA_LANG_STRING); }
   public void testConflictingFieldInExpression() {
     UiInterceptors.register(new ChooserInterceptor(null, Pattern.quote("Replace this occurrence only")));
-    doTest("name", false, false, true, "int"); 
+    doTest("name", false, false, true, "int");
   }
   public void testStaticConflictingField() { doTest("name", false, false, true, "int"); }
   public void testNonConflictingField() { doTest("name", false, false, true, "int"); }
@@ -195,7 +194,7 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
   public void testVarTypeExtractedJava10() {
     doTestWithVarType(new MockIntroduceVariableHandler("temp", true, false, false, "java.util.ArrayList<java.lang.String>"));
   }
-  
+
   public void testVarTypeArrayExtractedJava10() {
     doTestWithVarType(new MockIntroduceVariableHandler("temp", true, false, false, "int[]"));
   }
@@ -285,7 +284,7 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
   public void testAssignmentToUnresolvedReference() { doTest("collection", true, true, true, "java.util.List<? extends java.util.Collection<?>>"); }
   public void testSubstringInSwitch() { doTest("ba", false, false, false, JAVA_LANG_STRING);}
   public void testEnumValues() { doTest("vs", false, false, false, "E[]"); }
-  
+
   public void testNameSuggestion() {
     String expectedTypeName = "Path";
     doTest(new MockIntroduceVariableHandler("path", true, false, false, expectedTypeName) {
@@ -296,7 +295,7 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
                                                    boolean declareFinalIfAll,
                                                    boolean anyAssignmentLHS,
                                                    InputValidator validator,
-                                                   PsiElement anchor, final JavaReplaceChoice replaceChoice) {
+                                                   PsiElement anchor, JavaReplaceChoice replaceChoice) {
         final PsiType type = typeSelectorManager.getDefaultType();
         assertEquals(type.getPresentableText(), expectedTypeName, type.getPresentableText());
         assertEquals("path", CommonJavaRefactoringUtil.getSuggestedName(type, expr).names[0]);
@@ -318,7 +317,7 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
                                                    boolean declareFinalIfAll,
                                                    boolean anyAssignmentLHS,
                                                    InputValidator validator,
-                                                   PsiElement anchor, final JavaReplaceChoice replaceChoice) {
+                                                   PsiElement anchor, JavaReplaceChoice replaceChoice) {
         final PsiType type = typeSelectorManager.getDefaultType();
         assertEquals("parentName1", CommonJavaRefactoringUtil.getSuggestedName(type, expr).names[0]);
         return super.getSettings(project, editor, expr, occurrences, typeSelectorManager, declareFinalIfAll, anyAssignmentLHS,
@@ -337,7 +336,7 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
                                                    boolean declareFinalIfAll,
                                                    boolean anyAssignmentLHS,
                                                    InputValidator validator,
-                                                   PsiElement anchor, final JavaReplaceChoice replaceChoice) {
+                                                   PsiElement anchor, JavaReplaceChoice replaceChoice) {
         final PsiType type = typeSelectorManager.getDefaultType();
         assertEquals(type.getPresentableText(), "B", type.getPresentableText());
         return super.getSettings(project, editor, expr, occurrences, typeSelectorManager, declareFinalIfAll, anyAssignmentLHS,
@@ -394,6 +393,10 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testDisallowInInterface() {
+    doTestWithFailure("", "", "Cannot extract variable in an interface.");
+  }
+
+  public void testDisallowInInterfaceAnonymous() {
     doTestWithFailure("", "", "Cannot extract variable in an interface.");
   }
 
@@ -459,7 +462,7 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
                                                    boolean declareFinalIfAll,
                                                    boolean anyAssignmentLHS,
                                                    InputValidator validator,
-                                                   PsiElement anchor, final JavaReplaceChoice replaceChoice) {
+                                                   PsiElement anchor, JavaReplaceChoice replaceChoice) {
         final PsiType[] types = typeSelectorManager.getTypesForAll();
         assertEquals(types[0].getPresentableText(), "B", types[0].getPresentableText());
         assertEquals(types[1].getPresentableText(), "A", types[1].getPresentableText());
@@ -475,11 +478,11 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
   public void testChooseTypeExpressionWhenNotDenotable1() { doTest("m", false, false, false, "Foo<?>"); }
 
   public void testNullabilityAnnotationConflict() {
-    doTest("x", true, false, false, "java.lang.@org.eclipse.jdt.annotation.Nullable String"); 
+    doTest("x", true, false, false, "java.lang.@org.eclipse.jdt.annotation.Nullable String");
   }
 
   public void testNullabilityAnnotationNoConflict() {
-    doTest("x", true, false, false, "java.lang.@org.eclipse.jdt.annotation.NonNull String"); 
+    doTest("x", true, false, false, "java.lang.@org.eclipse.jdt.annotation.NonNull String");
   }
 
   public void testAllButWriteNoRead() {

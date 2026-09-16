@@ -6,13 +6,18 @@ import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
 import com.intellij.java.workspace.entities.javaResourceRoots
 import com.intellij.java.workspace.entities.javaSourceRoots
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.roots.SourceFolder
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.SourceRootEntity
+import com.intellij.platform.workspace.jps.entities.SourceRootTypeId
 import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
+import com.intellij.platform.workspace.jps.entities.sourceRoots
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.workspaceModel.update
@@ -20,6 +25,7 @@ import com.intellij.workspaceModel.ide.NonPersistentEntitySource
 import com.intellij.workspaceModel.ide.legacyBridge.findModuleEntity
 import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_RESOURCE_ROOT_ENTITY_TYPE_ID
 import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_SOURCE_ROOT_ENTITY_TYPE_ID
+import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_TEST_ROOT_ENTITY_TYPE_ID
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
@@ -148,5 +154,64 @@ class JavaSourceRootPropertiesTest {
     }
     val folder = ModuleRootManager.getInstance(module).contentEntries.single().sourceFolders.single()
     assertThat(folder.jpsElement.properties).isInstanceOf(JavaResourceRootProperties::class.java)
+  }
+
+  @Test
+  fun `add source folder for a bare java source root returns the existing root`() {
+    checkBareRootIsReused(JAVA_SOURCE_ROOT_ENTITY_TYPE_ID) { entry, dir -> entry.addSourceFolder(dir, false) }
+  }
+
+  @Test
+  fun `add test source folder for a bare java test root returns the existing root`() {
+    checkBareRootIsReused(JAVA_TEST_ROOT_ENTITY_TYPE_ID) { entry, dir -> entry.addSourceFolder(dir, true) }
+  }
+
+  @Test
+  fun `add resource folder for a bare java resource root returns the existing root`() {
+    checkBareRootIsReused(JAVA_RESOURCE_ROOT_ENTITY_TYPE_ID) { entry, dir -> entry.addSourceFolder(dir, JavaResourceRootType.RESOURCE) }
+  }
+
+  /**
+   * Writes a [SourceRootEntity] of [rootTypeId] with no properties child.
+   * Then it marks the same directory with [addSourceFolder] and expects one root everywhere.
+   */
+  private fun checkBareRootIsReused(rootTypeId: SourceRootTypeId, addSourceFolder: (ContentEntry, VirtualFile) -> SourceFolder) {
+    val contentDir = projectModel.baseProjectDir.newVirtualDirectory("content")
+    val srcDir = projectModel.baseProjectDir.newVirtualDirectory("content/src")
+    val workspaceModel = projectModel.project.workspaceModel
+    val urlManager = workspaceModel.getVirtualFileUrlManager()
+    runBlocking {
+      workspaceModel.update { storage ->
+        storage.modifyModuleEntity(module.findModuleEntity()!!) {
+          val contentRootEntity = ContentRootEntity(
+            url = contentDir.toVirtualFileUrl(urlManager),
+            excludedPatterns = emptyList(),
+            entitySource = NonPersistentEntitySource,
+          )
+          contentRootEntity.sourceRoots += SourceRootEntity(
+            url = srcDir.toVirtualFileUrl(urlManager),
+            rootTypeId = rootTypeId,
+            entitySource = NonPersistentEntitySource,
+          )
+          contentRoots += contentRootEntity
+        }
+      }
+    }
+
+    ModuleRootModificationUtil.updateModel(module) { model ->
+      val contentEntry = model.contentEntries.single()
+      val existing = contentEntry.sourceFolders.single()
+      val returned = addSourceFolder(contentEntry, srcDir)
+      assertThat(returned).isEqualTo(existing)
+      assertThat(contentEntry.sourceFolders).hasSize(1)
+    }
+
+    val committed = ModuleRootManager.getInstance(module).contentEntries.single().sourceFolders
+    assertThat(committed).hasSize(1)
+    assertThat(committed.single().url).isEqualTo(srcDir.url)
+
+    val sourceRoots = module.findModuleEntity()!!.sourceRoots.filter { it.url.url == srcDir.url }
+    assertThat(sourceRoots).hasSize(1)
+    assertThat(sourceRoots.single().rootTypeId).isEqualTo(rootTypeId)
   }
 }

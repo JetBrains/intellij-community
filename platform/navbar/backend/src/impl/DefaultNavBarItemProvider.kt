@@ -29,8 +29,8 @@ import org.jetbrains.annotations.VisibleForTesting
  */
 internal class DefaultNavBarItemProvider : NavBarItemProvider {
 
-  @RequiresReadLock
-  @RequiresBackgroundThread
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   override fun findParent(item: NavBarItem): NavBarItem? {
     if (item !is PsiNavBarItem) return null
 
@@ -95,8 +95,8 @@ internal class DefaultNavBarItemProvider : NavBarItemProvider {
     }
   }
 
-  @RequiresReadLock
-  @RequiresBackgroundThread
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   override fun iterateChildren(item: NavBarItem): Iterable<NavBarItem> {
     if (item !is DefaultNavBarItem<*>) {
       return emptyList()

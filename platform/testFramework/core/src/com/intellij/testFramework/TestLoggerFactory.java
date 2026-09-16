@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.IdeaLogRecordFormatter;
 import com.intellij.openapi.diagnostic.JulLogger;
 import com.intellij.openapi.diagnostic.LogLevel;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.UnhandledException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.LineTokenizer;
@@ -559,6 +560,7 @@ public final class TestLoggerFactory implements Logger.Factory {
 
     @Override
     public void error(String message, @Nullable Throwable t, String @NotNull ... details) {
+      t = t != null ? UnhandledException.unwrapIfUnhandled(t).getRealCause() : t;
       var actions = LoggedErrorProcessor.getInstance().processError(getLoggerName(), requireNonNullElse(message, ""), details, t);
 
       var errorLog = TestLoggerKt.getErrorLog();

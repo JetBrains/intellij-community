@@ -18,13 +18,13 @@ class SingleValueModel<T>(initialValue: T) {
       changeEventDispatcher.multicaster.eventOccurred()
     }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun addAndInvokeListener(listener: (newValue: T) -> Unit) {
     addListener(listener)
     listener(value)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun addListener(listener: (newValue: T) -> Unit) {
     SimpleEventListener.addListener(changeEventDispatcher) {
       listener(value)

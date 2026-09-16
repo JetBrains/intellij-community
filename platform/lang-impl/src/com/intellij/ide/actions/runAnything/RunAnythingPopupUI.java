@@ -46,6 +46,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.DumbUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
@@ -402,8 +403,8 @@ public final class RunAnythingPopupUI extends BigPopupUI implements UiDataProvid
     myResultsList.getEmptyText().setText(FindBundle.message("empty.text.searching"));
 
     if (DumbService.getInstance(myProject).isDumb()) {
-      myResultsList.setEmptyText(IdeBundle.dumbModeMessage("run.anything.indexing.mode.not.supported",
-                                                          "run.anything.light.mode.not.supported"));
+      myResultsList.setEmptyText(DumbUtil.dumbModeMessage(IdeBundle.message("run.anything.indexing.mode.not.supported"),
+                                                          IdeBundle.message("run.anything.light.mode.not.supported")));
       return;
     }
 

@@ -197,6 +197,9 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
     <registryKey key="performance.watcher.enable.smoke.and.mirrors.compensation" defaultValue="true"
                  description="Enable UI freezes reporting for long-running background tasks that may impale UI interactions without a visible impact on UI rendering"/>
     <registryKey key="performance.watcher.pooled.enabled" defaultValue="true"
+                 description="Watch `Default` and `IO` pools for thread starvation.
+                  `performance.watcher.pooled.dump.threads.enabled` and `performance.watcher.pooled.compensation.enabled` have to be enabled separately"/>
+    <registryKey key="performance.watcher.pooled.dump.threads.enabled" defaultValue="true"
                  description="Write thread dumps if none pooled threads are available."/>
     <registryKey key="performance.watcher.pooled.unresponsive.interval.ms" defaultValue="15000"
                  description="Log if none pooled threads are available for longer than the specified time interval in ms"/>
@@ -204,6 +207,16 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
                  description="Increase unresponsive interval after each recorded dump"/>
     <registryKey key="performance.watcher.pooled.maximum.dumps" defaultValue="10"
                  description="Stop recording thread dumps after specified amount. Use '-1' to keep writing the thread dumps."/>
+    <registryKey key="performance.watcher.pooled.compensation.enabled" defaultValue="true"
+                 description="Grant extra parallelism to a pooled dispatcher when it becomes unresponsive, and revoke it once responsive again, independent of thread dump reporting."/>
+    <registryKey key="performance.watcher.pooled.compensation.interval.ms" defaultValue="2000"
+                 description="Grant additional pool parallelism if no pooled threads are available for longer than the specified time interval in ms"/>
+    <registryKey key="performance.watcher.pooled.compensation.checks.for.revoke" defaultValue="5"
+                 description="Number of consecutive healthy checks required before a parallelism revoke is attempted"/>
+    <registryKey key="performance.watcher.pooled.compensation.checks.to.confirm.revoke" defaultValue="3"
+                 description="Number of consecutive healthy checks required to confirm a tentative parallelism revoke"/>
+    <registryKey key="performance.watcher.pooled.compensation.max.grants" defaultValue="100"
+                 description="Maximum number of pooled-thread parallelism grants allowed"/>
     <registryKey key="popup.advertiser.speed.search" defaultValue="false" description="Shows speed search advertiser in popups"/>
     <registryKey key="popup.menu.drag.distance.threshold.mac" defaultValue="10" description="The drag distance required to trigger a menu item by dragging with the right mouse button (macOS)"/>
     <registryKey key="popup.menu.drag.distance.threshold.linux" defaultValue="10" description="The drag distance required to trigger a menu item by dragging with the right mouse button (Linux)"/>

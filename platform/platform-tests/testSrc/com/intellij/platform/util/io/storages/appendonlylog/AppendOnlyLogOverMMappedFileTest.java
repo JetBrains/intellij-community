@@ -173,6 +173,24 @@ public class AppendOnlyLogOverMMappedFileTest {
     checkRecordsReadBack_ViaForEach(recordsIds, stringsToWrite);
   }
 
+  @Test
+  public void userDefinedHeaderFields_AreRestoredAfterReopen() throws Exception {
+    int userFieldsCount = 6;
+    for (int fieldNo = 0; fieldNo < userFieldsCount; fieldNo++) {
+      appendOnlyLog.setUserDefinedHeaderField(fieldNo, fieldNo + 1);
+    }
+
+    Path storagePath = appendOnlyLog.storagePath();
+    appendOnlyLog.close();
+    appendOnlyLog = openLog(storagePath);
+
+    for (int fieldNo = 0; fieldNo < userFieldsCount; fieldNo++) {
+      assertEquals(fieldNo + 1, appendOnlyLog.getUserDefinedHeaderField(fieldNo));
+    }
+    assertThrows(IndexOutOfBoundsException.class, () -> appendOnlyLog.getUserDefinedHeaderField(-1));
+    assertThrows(IndexOutOfBoundsException.class, () -> appendOnlyLog.getUserDefinedHeaderField(userFieldsCount));
+  }
+
 
   @Test
   public void hugeRecordsWritten_CouldBeReadBackAsIs() throws Exception {
@@ -286,6 +304,23 @@ public class AppendOnlyLogOverMMappedFileTest {
     assertFalse(
       Files.exists(appendOnlyLog.storagePath()),
       "Storage file [" + appendOnlyLog.storagePath() + "] must not exist after .closeAndClean()"
+    );
+  }
+
+  @Test
+  public void customMagicWord_MakesLogReusableInsideAnotherFileFormat() throws IOException {
+    int customMagicWord = IOUtil.asciiToMagicWord("TEST");
+    Path storagePath = temporaryFolder.newFile("customFormat").toPath();
+
+    AppendOnlyLogOverMMappedFile customLog = openLog(storagePath, customMagicWord);
+    customLog.append("data".getBytes(UTF_8));
+    customLog.close();
+
+    openLog(storagePath, customMagicWord);
+    assertThrows(
+      "The default marker must not accept a file owned by another format",
+      IOException.class,
+      () -> openLog(storagePath)
     );
   }
 
@@ -455,6 +490,21 @@ public class AppendOnlyLogOverMMappedFileTest {
     AppendOnlyLogOverMMappedFile appendOnlyLog = AppendOnlyLogFactory
       .withDefaults()
       .pageSize(PAGE_SIZE)
+      .ignoreDataFormatVersion()
+      .open(storageFile);
+
+    openedLogs.add(appendOnlyLog);
+
+    return appendOnlyLog;
+  }
+
+  /** Opens a log with a marker that belongs to its containing file format. */
+  private static @NotNull AppendOnlyLogOverMMappedFile openLog(@NotNull Path storageFile,
+                                                               int magicWord) throws IOException {
+    AppendOnlyLogOverMMappedFile appendOnlyLog = AppendOnlyLogFactory
+      .withDefaults()
+      .pageSize(PAGE_SIZE)
+      .magicWord(magicWord)
       .ignoreDataFormatVersion()
       .open(storageFile);
 

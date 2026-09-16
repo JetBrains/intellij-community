@@ -43,7 +43,7 @@ fun VirtualFile.readText(): String {
   return VfsUtilCore.loadText(this)
 }
 
-@RequiresWriteLock
+@RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
 fun VirtualFile.writeText(content: String) {
   VfsUtilCore.saveText(this, content)
 }
@@ -52,7 +52,7 @@ fun VirtualFile.readBytes(): ByteArray {
   return inputStream.use { it.readBytes() }
 }
 
-@RequiresWriteLock
+@RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
 fun VirtualFile.writeBytes(content: ByteArray) {
   setBinaryContent(content)
 }
@@ -77,12 +77,12 @@ fun VirtualFile.toNioPathOrNull(): Path? =
     null
   }
 
-@RequiresReadLock
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 fun VirtualFile.findDocument(): Document? {
   return FileDocumentManager.getInstance().getDocument(this)
 }
 
-@RequiresReadLock
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 fun VirtualFile.findPsiFile(project: Project): PsiFile? {
   return PsiManager.getInstance(project).findFile(this)
 }
@@ -92,7 +92,7 @@ fun VirtualFile.findPsiFile(project: Project): PsiFile? {
  * If the [VirtualFile] is a directory itself, the method will return null.
  *
  */
-@RequiresReadLock
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 fun VirtualFile.findPsiDirectory(project: Project): PsiDirectory? {
   return PsiManager.getInstance(project).findDirectory(this)
 }
@@ -158,7 +158,7 @@ private inline fun VirtualFile.getResolvedVirtualFile(
   return virtualFile
 }
 
-@RequiresReadLock
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 fun VirtualFile.findFileOrDirectory(relativePath: @SystemIndependent String): VirtualFile? {
   if(!isValid) return null
   return getResolvedVirtualFile(relativePath) { name, _ ->
@@ -166,7 +166,7 @@ fun VirtualFile.findFileOrDirectory(relativePath: @SystemIndependent String): Vi
   }
 }
 
-@RequiresReadLock
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 fun VirtualFile.findFile(relativePath: @SystemIndependent String): VirtualFile? {
   val file = findFileOrDirectory(relativePath) ?: return null
   if (!file.isFile) {
@@ -179,7 +179,7 @@ fun VirtualFile.findFile(relativePath: @SystemIndependent String): VirtualFile? 
   return file
 }
 
-@RequiresReadLock
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 fun VirtualFile.findDirectory(relativePath: @SystemIndependent String): VirtualFile? {
   val directory = findFileOrDirectory(relativePath) ?: return null
   if (!directory.isDirectory) {
@@ -192,7 +192,7 @@ fun VirtualFile.findDirectory(relativePath: @SystemIndependent String): VirtualF
   return directory
 }
 
-@RequiresWriteLock
+@RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
 fun VirtualFile.findOrCreateFile(relativePath: @SystemIndependent String): VirtualFile {
   val file = getResolvedVirtualFile(relativePath) { name, isLast ->
     findChild(name) ?: when (isLast) {
@@ -210,7 +210,7 @@ fun VirtualFile.findOrCreateFile(relativePath: @SystemIndependent String): Virtu
   return file
 }
 
-@RequiresWriteLock
+@RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
 fun VirtualFile.findOrCreateDirectory(relativePath: @SystemIndependent String): VirtualFile {
   val directory = getResolvedVirtualFile(relativePath) { name, _ ->
     findChild(name) ?: createChildDirectory(fileSystem, name)

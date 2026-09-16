@@ -166,8 +166,8 @@ public abstract class DebuggerUtils {
 
     Method method = null;
     // speedup the search by not gathering all methods through the class hierarchy
-    if (refType instanceof ClassType) {
-      method = concreteMethodByName((ClassType)refType, methodName, methodSignature);
+    if (refType instanceof ClassType type) {
+      method = concreteMethodByName(type, methodName, methodSignature);
     }
     if (method == null) {
       //noinspection SSBasedInspection
@@ -198,16 +198,16 @@ public abstract class DebuggerUtils {
     Set<ReferenceType> checkedInterfaces = new HashSet<>();
     ReferenceType t;
     while ((t = types.poll()) != null) {
-      if (t instanceof ClassType) {
-        types.addAll(0, ((ClassType)t).interfaces());
+      if (t instanceof ClassType classType) {
+        types.addAll(0, classType.interfaces());
       }
-      else if (t instanceof InterfaceType && checkedInterfaces.add(t)) {
+      else if (t instanceof InterfaceType interfaceType && checkedInterfaces.add(t)) {
         for (Method candidate : t.methods()) {
           if (candidate.name().equals(name) && signatureChecker.process(candidate) && !candidate.isAbstract()) {
             return candidate;
           }
         }
-        types.addAll(0, ((InterfaceType)t).superinterfaces());
+        types.addAll(0, interfaceType.superinterfaces());
       }
     }
     return null;
@@ -233,16 +233,16 @@ public abstract class DebuggerUtils {
     Set<ReferenceType> checkedInterfaces = new HashSet<>();
     ReferenceType t;
     while ((t = types.poll()) != null) {
-      if (t instanceof ClassType) {
-        types.addAll(0, ((ClassType)t).interfaces());
+      if (t instanceof ClassType classType) {
+        types.addAll(0, classType.interfaces());
       }
-      else if (t instanceof InterfaceType && checkedInterfaces.add(t)) {
+      else if (t instanceof InterfaceType interfaceType && checkedInterfaces.add(t)) {
         for (Field candidate : t.fields()) {
           if (candidate.name().equals(name)) {
             return candidate;
           }
         }
-        types.addAll(0, ((InterfaceType)t).superinterfaces());
+        types.addAll(0, interfaceType.superinterfaces());
       }
     }
     return null;
@@ -373,9 +373,8 @@ public abstract class DebuggerUtils {
     }
 
     Type result;
-    if (subType instanceof ClassType) {
+    if (subType instanceof ClassType clsType) {
       try {
-        ClassType clsType = (ClassType)subType;
         result = getSuperType(clsType.superclass(), superType);
         if (result != null) {
           return result;
@@ -394,9 +393,9 @@ public abstract class DebuggerUtils {
       return null;
     }
 
-    if (subType instanceof InterfaceType) {
+    if (subType instanceof InterfaceType interfaceType) {
       try {
-        for (InterfaceType iface : ((InterfaceType)subType).superinterfaces()) {
+        for (InterfaceType iface : interfaceType.superinterfaces()) {
           result = getSuperType(iface, superType);
           if (result != null) {
             return result;
@@ -407,11 +406,11 @@ public abstract class DebuggerUtils {
         LOG.info(e);
       }
     }
-    else if (subType instanceof ArrayType) {
+    else if (subType instanceof ArrayType type) {
       if (superType.endsWith("[]")) {
         try {
           String superTypeItem = superType.substring(0, superType.length() - 2);
-          Type subTypeItem = ((ArrayType)subType).componentType();
+          Type subTypeItem = type.componentType();
           return instanceOf(subTypeItem, superTypeItem) ? subType : null;
         }
         catch (ClassNotLoadedException e) {
@@ -518,9 +517,9 @@ public abstract class DebuggerUtils {
       @Override
       public void visitReferenceExpression(final @NotNull PsiReferenceExpression expression) {
         final PsiElement psiElement = expression.resolve();
-        if (psiElement instanceof PsiLocalVariable) {
+        if (psiElement instanceof PsiLocalVariable variable) {
           if (visibleLocalVariables != null) {
-            if (!visibleLocalVariables.contains(((PsiLocalVariable)psiElement).getName())) {
+            if (!visibleLocalVariables.contains(variable.getName())) {
               rv.set(Boolean.TRUE);
             }
           }
@@ -599,8 +598,8 @@ public abstract class DebuggerUtils {
     final Field messageField = findField(type, "detailMessage");
     if (messageField == null) return null;
     final Value message = exception.getValue(messageField);
-    if (message instanceof StringReference) {
-      return ((StringReference)message).value();
+    if (message instanceof StringReference reference) {
+      return reference.value();
     }
 
     return null;

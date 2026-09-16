@@ -37,7 +37,7 @@ public class JavaChainTransformerImpl implements ChainTransformer.Java {
   @Override
   public @NotNull StreamChain transform(@NotNull List<PsiMethodCallExpression> streamExpressions,
                                         @NotNull PsiElement context) {
-    final PsiMethodCallExpression firstCall = streamExpressions.get(0);
+    final PsiMethodCallExpression firstCall = streamExpressions.getFirst();
 
     final PsiExpression qualifierExpression = firstCall.getMethodExpression().getQualifierExpression();
     final PsiType qualifierType = qualifierExpression == null ? null : qualifierExpression.getType();
@@ -52,8 +52,8 @@ public class JavaChainTransformerImpl implements ChainTransformer.Java {
       createIntermediateCalls(typeAfterQualifier, streamExpressions.subList(0, streamExpressions.size() - 1));
 
     final GenericType typeBefore =
-      intermediateCalls.isEmpty() ? qualifier.getTypeAfter() : intermediateCalls.get(intermediateCalls.size() - 1).getTypeAfter();
-    final TerminatorStreamCall terminationCall = createTerminationCall(typeBefore, streamExpressions.get(streamExpressions.size() - 1));
+      intermediateCalls.isEmpty() ? qualifier.getTypeAfter() : intermediateCalls.getLast().getTypeAfter();
+    final TerminatorStreamCall terminationCall = createTerminationCall(typeBefore, streamExpressions.getLast());
 
     return new StreamChainImpl(qualifier, intermediateCalls, terminationCall, context);
   }

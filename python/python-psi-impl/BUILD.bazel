@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.python.psi.impl` start
+content_module_jar(module = ":psi-impl")
+### auto-generated section `dev intellij.python.psi.impl` end
+
 ### auto-generated section `build intellij.python.psi.impl` start
 jvm_library(
     name = "psi-impl",
@@ -66,13 +70,12 @@ jvm_library(
         "//libraries/hdr-histogram",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//python/python-requirements/backend",
+        "//python/python-pyproject:pyproject",
         "//plugins/toml",
         "//plugins/toml/core",
         "//libraries/markdown",
     ],
 )
-
-content_module_jar(module = ":psi-impl")
 
 jvm_library(
     name = "psi-impl_test_lib",
@@ -133,6 +136,7 @@ jvm_library(
         "//libraries/hdr-histogram:hdr-histogram_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
         "//python/python-requirements/backend:backend_test_lib",
+        "//python/python-pyproject:pyproject_test_lib",
         "//plugins/toml:toml_test_lib",
         "//plugins/toml/core:core_test_lib",
         "//libraries/markdown:markdown_test_lib",

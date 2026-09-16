@@ -6,6 +6,7 @@ import com.intellij.ide.structureView.logical.model.LogicalPsiDescription
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiClassOwner
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UClass
 import org.jetbrains.uast.toUElement
@@ -21,7 +22,7 @@ class ClassOwnerLogicalStructureElementsProvider: LogicalStructureElementsProvid
         .filterIsInstance<PsiClassLogicalElementProvider<Any>>()
         .mapNotNull { it.convert(psiClass) }
         .toList()
-      val methodModels = psiClass.methods.flatMap { method ->
+      val methodModels = psiClass.methodsWithNested().flatMap { method ->
         val providers = LogicalStructureElementsProvider.getProviders(method).toList()
         providers.flatMap { it.getElements(method) }
       }
@@ -44,3 +45,10 @@ class ClassOwnerLogicalStructureElementsProvider: LogicalStructureElementsProvid
     return true
   }
 }
+
+/**
+ * Collects the methods of the class and of every nested class.
+ * A Kotlin companion object is a nested class, and it holds the methods of the outer class.
+ */
+private fun PsiClass.methodsWithNested(): List<PsiMethod> =
+  methods.asList() + innerClasses.flatMap { it.methodsWithNested() }

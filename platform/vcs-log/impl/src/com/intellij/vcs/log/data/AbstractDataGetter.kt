@@ -82,7 +82,7 @@ abstract class AbstractDataGetter<T : VcsShortCommitDetails> internal constructo
     runInBackgroundThread(indicator, task)
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   @Throws(VcsException::class)
   fun loadCommitsDataSynchronously(commits: Iterable<VcsLogCommitStorageIndex>,
                                    indicator: ProgressIndicator,
@@ -108,7 +108,7 @@ abstract class AbstractDataGetter<T : VcsShortCommitDetails> internal constructo
     }
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   @Throws(VcsException::class)
   protected open fun doLoadCommitsData(commits: IntSet, consumer: Consumer<in T>) {
     val hashesGroupedByRoot = storage.getCommitIds(commits).values
@@ -130,7 +130,7 @@ abstract class AbstractDataGetter<T : VcsShortCommitDetails> internal constructo
 
   protected open fun cacheCommits(commits: IntOpenHashSet) = Unit
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   @Throws(VcsException::class)
   protected abstract fun doLoadCommitsDataFromProvider(logProvider: VcsLogProvider,
                                                        root: VirtualFile,
@@ -160,7 +160,7 @@ abstract class AbstractDataGetter<T : VcsShortCommitDetails> internal constructo
       }
     }
 
-    @RequiresBackgroundThread
+    @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
     @Throws(VcsException::class)
     @JvmStatic
     fun <T : VcsShortCommitDetails> AbstractDataGetter<T>.getCommitDetails(commits: List<VcsLogCommitStorageIndex>): List<T> {
@@ -172,7 +172,7 @@ abstract class AbstractDataGetter<T : VcsShortCommitDetails> internal constructo
       return commits.mapNotNull { commitToDetailsMap[it] }
     }
 
-    @RequiresBackgroundThread
+    @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
     @Throws(VcsException::class)
     @JvmStatic
     fun <T : VcsShortCommitDetails> AbstractDataGetter<T>.getCommitDetails(hash: Hash, root: VirtualFile): T {

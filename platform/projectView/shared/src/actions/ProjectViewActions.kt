@@ -60,7 +60,7 @@ internal class SortByTimeAscending : SortKeyAction(NodeSortKey.BY_TIME_ASCENDING
 internal class FoldersAlwaysOnTop : OptionAction(ProjectViewPaneOptionDTO.FOLDERS_ALWAYS_ON_TOP)
 internal class ManualOrder : OptionAction(ProjectViewPaneOptionDTO.MANUAL_ORDER)
 
-internal abstract class OptionAction(
+internal abstract class OptionAction private constructor(
   legacyActionSupplier: () -> ProjectViewImpl.Action,
   frontendOptionSupplier: (AnActionEvent) -> Option,
 ) : ToggleOptionAction(optionSupplier(legacyActionSupplier, frontendOptionSupplier)), DumbAware, ActionRemoteBehaviorSpecification {
@@ -144,8 +144,8 @@ internal abstract class SortKeyAction(
 
 private fun optionSupplier(
   legacyActionSupplier: () -> ProjectViewImpl.Action,
-  optionSupplier: (AnActionEvent) -> Option,
-): Function<in AnActionEvent, out Option> {
+  optionSupplier: (AnActionEvent) -> Option?,
+): Function<in AnActionEvent, out Option?> {
   return Function { event ->
     if (isProjectViewSplit()) {
       optionSupplier(event)

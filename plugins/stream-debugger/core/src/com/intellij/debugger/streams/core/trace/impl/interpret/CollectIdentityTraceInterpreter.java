@@ -55,10 +55,10 @@ public class CollectIdentityTraceInterpreter implements CallTraceInterpreter {
 
   public static int extractTime(@NotNull ArrayReference value) {
     final Value timeArray = value.getValue(1);
-    if (timeArray instanceof ArrayReference) {
-      final Value time = ((ArrayReference)timeArray).getValue(0);
-      if (time instanceof IntegerValue) {
-        return ((IntegerValue)time).value();
+    if (timeArray instanceof ArrayReference reference) {
+      final Value time = reference.getValue(0);
+      if (time instanceof IntegerValue integerValue) {
+        return integerValue.value();
       }
     }
 

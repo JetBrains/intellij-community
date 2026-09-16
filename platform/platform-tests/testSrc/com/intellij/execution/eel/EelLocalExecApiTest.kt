@@ -9,15 +9,17 @@ import com.intellij.execution.eel.processOutputReader.OutStream.STDERR
 import com.intellij.execution.eel.processOutputReader.OutStream.STDOUT
 import com.intellij.execution.eel.processOutputReader.OutputType
 import com.intellij.execution.eel.processOutputReader.ProcessOutputReader
-import com.intellij.execution.process.UnixSignal
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.platform.eel.EelExecApi.Pty
+import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.EelPosixProcess
 import com.intellij.platform.eel.EelProcess
 import com.intellij.platform.eel.EelWindowsProcess
 import com.intellij.platform.eel.ExecuteProcessException
 import com.intellij.platform.eel.ThrowsChecked
+import com.intellij.platform.eel.UnixSignal
+import com.intellij.platform.eel.convertToJVMProcess
 import com.intellij.platform.eel.getShell
 import com.intellij.platform.eel.impl.local.getShellFromPasswdRecords
 import com.intellij.platform.eel.isPosix
@@ -25,6 +27,7 @@ import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.eel.provider.utils.sendWholeText
 import com.intellij.platform.eel.spawnProcess
+import com.intellij.platform.eel.terminate
 import com.intellij.platform.eel.where
 import com.intellij.platform.tests.eelHelpers.EelHelper
 import com.intellij.platform.tests.eelHelpers.ttyAndExit.Command
@@ -251,14 +254,16 @@ class EelLocalExecApiTest {
         assertNotEquals(0, exitCode) //Brutal kill is never 0
       }
       ExitType.TERMINATE -> {
-        if (SystemInfoRt.isWindows) { // We provide 0 as `ExitProcess` on Windows
-          assertEquals(0, exitCode)
-        }
-        else {
-          val sigCode = UnixSignal.SIGTERM.getSignalNumber(SystemInfoRt.isMac)
-          assertThat("Exit code must be signal code or +128 (if run using shell)",
-                     exitCode,
-                     anyOf(`is`(sigCode), `is`(sigCode + UnixSignal.EXIT_CODE_OFFSET)))
+        when (val platform = localEel.platform) {
+          is EelPlatform.Posix -> {
+            val sigCode = UnixSignal.SIGTERM.getSignalNumber(UnixSignal.PlatformHint.FromEelPlatform(platform))
+            assertThat("Exit code must be signal code or +128 (if run using shell)",
+                       exitCode,
+                       anyOf(`is`(sigCode), `is`(sigCode + UnixSignal.EXIT_CODE_OFFSET)))
+          }
+          is EelPlatform.Windows -> {
+            assertEquals(0, exitCode) // We provide 0 as `ExitProcess` on Windows
+          }
         }
       }
       ExitType.INTERRUPT -> {
@@ -409,7 +414,7 @@ class EelLocalExecApiTest {
   }
 
   private val EelProcess.isWinConPtyProcess: Boolean
-    get() = this is EelWindowsProcess && convertToJavaProcess()::class.java.name == "com.pty4j.windows.conpty.WinConPtyProcess"
+    get() = this is EelWindowsProcess && convertToJVMProcess()::class.java.name == "com.pty4j.windows.conpty.WinConPtyProcess"
 }
 
 private val DROP_HELLO = Regex("^.*$HELLO")

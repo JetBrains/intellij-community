@@ -1,3 +1,0 @@
-- name: dist.all/lib/intellij.platform.statistics.config.jar
-  modules:
-  - name: intellij.platform.statistics.config

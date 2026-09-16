@@ -85,16 +85,13 @@ object DevDistRecipe {
   /**
    * Records one output of the assembly.
    *
-   * @param outputFile where the output is - inside [Recording.distRoot] for a jar this assembly wrote, outside it for a
-   *   file or directory the assembly put on the classpath as it already was.
-   * @param isDir whether the output is a directory rather than a file.
+   * @param outputFile the jar this assembly wrote, inside [Recording.distRoot].
    * @param sources the merged, ordered source list the packer consumed, exactly as it consumed it.
    * @param includedModules the modules this output holds the output of.
    * @param layout the layout being packed, which is what tells a plugin's content modules from its other members.
    */
   internal fun record(
     outputFile: Path,
-    isDir: Boolean,
     sources: Collection<Source>,
     includedModules: Collection<ModuleItem>,
     layout: BaseLayout?,
@@ -107,11 +104,7 @@ object DevDistRecipe {
     recording.entries.add(
       FileEntry(
         name = recording.nameOf(outputFile),
-        kind = when {
-          isDir -> "dir"
-          outputFile.startsWith(recording.distRoot) -> "jar"
-          else -> "reused"
-        },
+        kind = "jar",
         // Names only. Sizes are a measurement of the run rather than part of a recipe, and a module's merged libraries
         // are already in `sources` under their own labels - which is where an executor has to read them anyway.
         modules = members[false].orEmpty().map { ModuleEntry(name = it.moduleName) },
@@ -179,12 +172,8 @@ object DevDistRecipe {
   }
 
   private fun Recording.nameOf(file: Path): String {
-    if (file.startsWith(distRoot)) {
-      return distRoot.relativize(file).invariantSeparatorsPathString
-    }
-    // An output the assembly did not write has no place in the distribution to be named by, so it is named by what it
-    // is: the declared input it reuses.
-    return BazelBuildInputs.labelOf(file) ?: shorten(file)
+    check(file.startsWith(distRoot)) { "Output $file is outside of the distribution $distRoot" }
+    return distRoot.relativize(file).invariantSeparatorsPathString
   }
 
   private fun Recording.describe(source: Source): RecipeSource {

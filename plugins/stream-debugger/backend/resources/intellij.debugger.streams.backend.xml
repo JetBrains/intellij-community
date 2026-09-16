@@ -18,6 +18,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <platform.rpc.backend.remoteApiProvider
-      implementation="com.intellij.debugger.streams.backend.BackendStreamDebuggerRemoteApiProvider"/>
+      implementation="com.intellij.debugger.streams.backend.BackendStreamDebuggerRemoteApiProvider"
+      apiInterfaces="com.intellij.debugger.streams.shared.StreamDebuggerApi"/>
   </extensions>
 </idea-plugin>

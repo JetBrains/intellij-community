@@ -11,6 +11,10 @@ jps_test(
 
 ### skip generation section `test intellij.platform.coverage.tests`
 
+### auto-generated section `dev intellij.platform.coverage` start
+content_module_jar(module = ":coverage")
+### auto-generated section `dev intellij.platform.coverage` end
+
 ### auto-generated section `build intellij.platform.coverage` start
 jvm_library(
     name = "coverage",
@@ -64,8 +68,6 @@ jvm_library(
         "//jps/model-api:model",
     ],
 )
-
-content_module_jar(module = ":coverage")
 
 jvm_library(
     name = "coverage_test_lib",
@@ -122,7 +124,6 @@ exports_files(
     [
         "intellij.platform.coverage.iml",
         "resources/intellij.platform.coverage.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

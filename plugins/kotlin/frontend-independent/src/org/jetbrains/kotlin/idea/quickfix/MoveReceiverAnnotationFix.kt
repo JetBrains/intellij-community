@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
+import org.jetbrains.kotlin.idea.base.psi.addAnnotation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
@@ -23,7 +24,7 @@ class MoveReceiverAnnotationFix private constructor(element: KtAnnotationEntry) 
         val declaration = element.getParentOfType<KtCallableDeclaration>(true) ?: return
         val receiverTypeRef = declaration.receiverTypeReference ?: return
 
-        receiverTypeRef.addAnnotationEntry(element)
+        receiverTypeRef.addAnnotation(element)
         element.delete()
     }
 

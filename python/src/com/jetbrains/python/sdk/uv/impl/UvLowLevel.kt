@@ -44,7 +44,7 @@ private const val SUPPORTED_SYNC_SCHEMA_VERSION = "preview"
 private val versionRegex = Regex("(\\d+\\.\\d+)\\.\\d+-.+\\s")
 
 private class UvLowLevelImpl<P : PathHolder>(
-  private val cwd: Path,
+  private val cwd: Path?,
   private val venvPath: P?,
   private val uvCli: UvCli<P>,
   private val fileSystem: FileSystem<P>,
@@ -55,6 +55,8 @@ private class UvLowLevelImpl<P : PathHolder>(
     clearExisting: Boolean,
     inheritSitePackages: Boolean,
   ): PyResult<P> {
+    // Every other command only forwards the directory to uv. This one reads it, so it needs a real one.
+    val cwd = cwd ?: return PyResult.localizedError(PyBundle.message("python.sdk.uv.failed.to.initialize.uv.environment"))
     val addPythonArg: (MutableList<String>) -> Unit = { args ->
       version?.let {
         args.add("--python")
@@ -182,7 +184,9 @@ private class UvLowLevelImpl<P : PathHolder>(
   }
 
   override suspend fun listProjectStructureTree(): PyResult<String> {
-    val out = uvCli.runUv(cwd, venvPath, false, "tree", "--frozen", "--no-dedupe", "--all-groups")
+    // Deduplicated: uv prints a package's dependencies under the first parent that needs it. Asking
+    // it to expand every repeat instead does not finish on a large workspace (PY-90174).
+    val out = uvCli.runUv(cwd, venvPath, false, "tree", "--frozen", "--all-groups")
       .getOr { return it }
 
     return PyExecResult.success(out)
@@ -386,13 +390,17 @@ internal fun constructSyncArgs(inexact: Boolean): MutableList<String> {
   return args
 }
 
-internal fun createUvLowLevelLocal(cwd: Path, uvCli: UvCli<PathHolder.Eel>): UvLowLevel<PathHolder.Eel> =
+internal fun createUvLowLevelLocal(cwd: Path?, uvCli: UvCli<PathHolder.Eel>): UvLowLevel<PathHolder.Eel> =
   createUvLowLevel(cwd, uvCli, EelFileSystem(localEel), null)
 
-internal fun <P : PathHolder> createUvLowLevel(cwd: Path, uvCli: UvCli<P>, fileSystem: FileSystem<P>, venvPath: P?): UvLowLevel<P> =
+/**
+ * [cwd] is the directory uv runs in. Pass `null` for a caller that only queries uv and needs no directory.
+ * [UvLowLevel.initializeEnvironment] needs a real one.
+ */
+internal fun <P : PathHolder> createUvLowLevel(cwd: Path?, uvCli: UvCli<P>, fileSystem: FileSystem<P>, venvPath: P?): UvLowLevel<P> =
   UvLowLevelImpl(cwd, venvPath, uvCli, fileSystem)
 
-internal suspend fun createUvLowLevelLocal(cwd: Path): PyResult<UvLowLevel<PathHolder.Eel>> =
+internal suspend fun createUvLowLevelLocal(cwd: Path?): PyResult<UvLowLevel<PathHolder.Eel>> =
   validateAndCreateUvCli(null, EelFileSystem(localEel)).mapSuccess { createUvLowLevelLocal(cwd, it) }
 
 private fun tryExtractStderr(err: PyError): String? =

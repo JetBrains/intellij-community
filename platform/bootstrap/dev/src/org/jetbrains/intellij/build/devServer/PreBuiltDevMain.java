@@ -10,8 +10,11 @@ import java.io.IOException;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -24,6 +27,7 @@ import java.util.Map;
  * <p>
  * Reads configuration from a file specified by the "idea.ide.config.path" system property. The value is either a path or,
  * under Bazel, a runfiles-relative one - see {@link DevIdeConfig#resolveConfigFile}.
+ * Local metadata selects a temporary linked home. The launcher removes that home at shutdown.
  */
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 @ApiStatus.Internal
@@ -46,8 +50,9 @@ public final class PreBuiltDevMain {
       throw new IllegalStateException("'" + DevIdeConfig.MAIN_CLASS_NAME_KEY + "' is missing from " + configFile);
     }
 
-    Map<String, String> properties = readProperties(lookup, classLoader, ideConfig.homePath());
-    List<Path> classpath = readClasspath(ideConfig.homePath());
+    Path homePath = prepareLocalHome(ideConfig.homePath());
+    Map<String, String> properties = readProperties(lookup, classLoader, homePath);
+    List<Path> classpath = readClasspath(homePath);
 
     classLoader.reset(classpath);
 
@@ -55,7 +60,7 @@ public final class PreBuiltDevMain {
 
     System.setProperty("idea.vendor.name", "JetBrains");
     System.setProperty("idea.use.dev.build.server", "true");
-    System.setProperty("idea.home.path", ideConfig.homePath().toAbsolutePath().toString());
+    System.setProperty("idea.home.path", homePath.toAbsolutePath().toString());
     properties.forEach((key, value) -> {
       if (!isCallerOwnedProperty(key) || System.getProperty(key) == null) {
         System.setProperty(key, value);
@@ -64,6 +69,64 @@ public final class PreBuiltDevMain {
 
     //noinspection ConfusingArgumentToVarargsMethod
     lookup.findStatic(mainClass, "main", MethodType.methodType(void.class, String[].class)).invoke(args);
+  }
+
+  private static Path prepareLocalHome(Path home) throws IOException, InterruptedException {
+    Path layout = home.resolve("local-layout.json");
+    if (!Files.exists(layout)) {
+      return home;
+    }
+    Path tool = DevIdeConfig.resolveConfigFile(System.getProperty("idea.dev.local.home.tool"));
+    Path localHome = Files.createTempDirectory("idea-dev-home-");
+    Runnable cleanup = localHomeCleanup(localHome);
+    boolean prepared = false;
+    try {
+      Process process = new ProcessBuilder(tool.toAbsolutePath().toString(), "local-home",
+                                           "--layout=" + layout.toAbsolutePath(), "--output-dir=" + localHome)
+        .inheritIO().start();
+      int exitCode;
+      try {
+        exitCode = process.waitFor();
+      }
+      catch (InterruptedException error) {
+        process.destroyForcibly().onExit().join();
+        throw error;
+      }
+      if (exitCode != 0) {
+        throw new IOException("Cannot prepare the local dev home. The tool exits with code " + exitCode);
+      }
+      Runtime.getRuntime().addShutdownHook(new Thread(cleanup, "delete-local-dev-home"));
+      prepared = true;
+      return localHome;
+    }
+    finally {
+      if (!prepared) cleanup.run();
+    }
+  }
+
+  private static Runnable localHomeCleanup(Path localHome) {
+    SimpleFileVisitor<Path> visitor = new SimpleFileVisitor<>() {
+      @Override
+      public FileVisitResult visitFile(Path file, BasicFileAttributes attributes) throws IOException {
+        Files.delete(file);
+        return FileVisitResult.CONTINUE;
+      }
+
+      @Override
+      public FileVisitResult postVisitDirectory(Path directory, IOException error) throws IOException {
+        if (error != null) throw error;
+        Files.delete(directory);
+        return FileVisitResult.CONTINUE;
+      }
+    };
+    return () -> {
+      try {
+        Files.walkFileTree(localHome, visitor);
+      }
+      catch (IOException error) {
+        System.err.println("Cannot remove the local dev home: " + error.getMessage());
+      }
+    };
   }
 
   private static List<Path> readClasspath(Path ideHomePath) throws IOException {
@@ -102,5 +165,4 @@ public final class PreBuiltDevMain {
            name.equals("idea.suppressed.plugins.set.selector") ||
            name.equals("awt.toolkit.name");
   }
-
 }

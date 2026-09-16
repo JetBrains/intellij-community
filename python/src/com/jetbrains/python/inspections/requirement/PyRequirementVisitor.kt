@@ -25,6 +25,7 @@ import com.jetbrains.python.psi.PyQualifiedExpression
 import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.sdk.isReadOnly
+import com.jetbrains.python.sdk.isSdkConfigurationInProgress
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.pythonSdk
 import org.jetbrains.annotations.ApiStatus
@@ -43,7 +44,7 @@ internal class PyRequirementVisitor(
     node.importElements.mapNotNull { it.importReferenceExpression }.forEach { checkPackageNameInRequirements(it) }
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private fun checkPackageNameInRequirements(importedExpression: PyQualifiedExpression) {
     if (PyInspectionExtension.EP_NAME.extensionList.any { it.ignorePackageNameInRequirements(importedExpression) }) {
       return
@@ -54,6 +55,11 @@ internal class PyRequirementVisitor(
     val module: Module = ModuleUtilCore.findModuleForPsiElement(packageReferenceExpression) ?: return
 
     if (PyPackageManagerModuleHelpers.isLocalModule(packageReferenceExpression, module)) {
+      return
+    }
+
+    // An interpreter is still being configured, so what it holds is not decided yet.
+    if (module.project.isSdkConfigurationInProgress.value) {
       return
     }
 
@@ -82,9 +88,9 @@ internal class PyRequirementVisitor(
     checkPackagesHaveBeenInstalled(node, module)
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private fun checkPackagesHaveBeenInstalled(file: PsiElement, module: Module) {
-    if (PyPackageManagerModuleHelpers.isRunningPackagingTasks(module))
+    if (module.project.isSdkConfigurationInProgress.value)
       return
     val sdk = PythonSdkUtil.findPythonSdk(module) ?: return
     val manager = PythonPackageManager.forSdk(module.project, sdk)

@@ -38,7 +38,6 @@ import org.jetbrains.kotlin.psi.KtUnaryExpression
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 object RecursivePropertyAccessUtil {
     fun isRecursivePropertyAccess(element: KtElement, anyRecursionTypes: Boolean): Boolean {
@@ -121,7 +120,7 @@ object RecursivePropertyAccessUtil {
 
     context(session: KaSession)
     fun isInsidePropertyAccessorWithBackingField(simpleNameExpression: KtSimpleNameExpression): Boolean =
-        simpleNameExpression.getContainingPropertyAccessor()?.property?.symbol?.safeAs<KaPropertySymbol>()?.hasBackingField == true
+        (simpleNameExpression.getContainingPropertyAccessor()?.property?.symbol as? KaPropertySymbol)?.hasBackingField == true
 
     context(session: KaSession)
     private fun getSymbolFor(receiverValue: KaReceiverValue?): KaSymbol? = when (receiverValue) {

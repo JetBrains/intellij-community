@@ -559,8 +559,9 @@ public class ImportHelperTest extends ProductionDaemonAnalyzerTestCase {
 
     EditorTestUtil.executeAction(getEditor(), IdeActions.ACTION_COMMENT_BLOCK);
 
-    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getFile(), HighlightSeverity.ERROR));
+    myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getFile(), HighlightSeverity.ERROR);
     waitForAutoOptimizeImports();
+    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getFile(), HighlightSeverity.ERROR));
 
     assertSize(2, ((PsiJavaFile)getFile()).getImportList().getAllImportStatements());
   }
@@ -749,8 +750,9 @@ public class ImportHelperTest extends ProductionDaemonAnalyzerTestCase {
     configureByText(text);
     CodeInsightWorkspaceSettings.getInstance(getProject()).setOptimizeImportsOnTheFly(true, getTestRootDisposable());
     EditorTestUtil.executeAction(getEditor(), IdeActions.ACTION_COMMENT_LINE);
-    List<HighlightInfo> errors = myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getFile(), HighlightSeverity.ERROR);
+    myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getFile(), HighlightSeverity.ERROR);
     waitForAutoOptimizeImports();
+    List<HighlightInfo> errors = myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getFile(), HighlightSeverity.ERROR);
     assertEmpty(errors);
     assertEquals("""
                    final class UndoTestJava {
@@ -760,8 +762,9 @@ public class ImportHelperTest extends ProductionDaemonAnalyzerTestCase {
                    }
                    """, getFile().getText());
     EditorTestUtil.executeAction(getEditor(), IdeActions.ACTION_UNDO);
-    errors = myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getFile(), HighlightSeverity.ERROR);
+    myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getFile(), HighlightSeverity.ERROR);
     waitForAutoOptimizeImports();
+    errors = myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getFile(), HighlightSeverity.ERROR);
     assertEmpty(errors);
     assertEquals("""
                    import java.util.*;

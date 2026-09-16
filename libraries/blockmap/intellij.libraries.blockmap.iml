@@ -9,10 +9,10 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="blockmap" type="repository">
-        <properties maven-id="org.jetbrains.intellij:blockmap:1.0.7">
+        <properties maven-id="org.jetbrains.intellij:blockmap:1.0.10">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/blockmap/1.0.7/blockmap-1.0.7.jar">
-              <sha256sum>7e3f98d3370551fea909ceb952e4797108a3a5ef67a1d7b5fb03a036eab24df9</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/blockmap/1.0.10/blockmap-1.0.10.jar">
+              <sha256sum>2342f50c3bf64773d270ddb41eeccb763f74f95ad1ee9f5640ed00a0d231a432</sha256sum>
             </artifact>
           </verification>
           <exclude>
@@ -24,11 +24,11 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/blockmap/1.0.7/blockmap-1.0.7.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/blockmap/1.0.10/blockmap-1.0.10.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/blockmap/1.0.7/blockmap-1.0.7-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/blockmap/1.0.10/blockmap-1.0.10-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

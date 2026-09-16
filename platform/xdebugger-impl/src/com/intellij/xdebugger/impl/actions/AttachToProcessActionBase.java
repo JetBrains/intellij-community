@@ -143,8 +143,8 @@ public abstract class AttachToProcessActionBase extends AnAction implements Dumb
               item = mainList.getSelectedValue();
             }
 
-            if (item instanceof AttachToProcessItem) {
-              popup.setCaption(((AttachToProcessItem)item).getSelectedDebugger().getDebuggerSelectedTitle());
+            if (item instanceof AttachToProcessItem processItem) {
+              popup.setCaption(processItem.getSelectedDebugger().getDebuggerSelectedTitle());
             }
 
             if (item instanceof AttachHostItem hostItem) {
@@ -188,7 +188,7 @@ public abstract class AttachToProcessActionBase extends AnAction implements Dumb
       return;
     }
 
-    items.get(0).makeFirstInGroup();
+    items.getFirst().makeFirstInGroup();
 
     for (int i = 1; i < items.size(); i++) {
       if (items.get(i).getGroup() != items.get(i - 1).getGroup()) {
@@ -410,17 +410,12 @@ public abstract class AttachToProcessActionBase extends AnAction implements Dumb
 
   public abstract static class AttachItem<T> implements Comparable<AttachItem<T>> {
 
-    @NotNull
-    XAttachPresentationGroup<T> myGroup;
+    @NotNull final XAttachPresentationGroup<T> myGroup;
     boolean myIsFirstInGroup;
-    @NotNull @NlsContexts.Separator
-    String myGroupName;
-    @NotNull
-    Project myProject;
-    @NotNull
-    UserDataHolder myDataHolder;
-    @NotNull
-    T myInfo;
+    @NotNull @NlsContexts.Separator final String myGroupName;
+    @NotNull final Project myProject;
+    @NotNull final UserDataHolder myDataHolder;
+    @NotNull final T myInfo;
 
     public AttachItem(@NotNull XAttachPresentationGroup<T> group,
                       boolean isFirstInGroup,

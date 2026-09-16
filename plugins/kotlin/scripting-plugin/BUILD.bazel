@@ -1,7 +1,57 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
+load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_TARGETS")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+### auto-generated section `dev intellij.kotlin.jsr223.plugin` start
+dev_dist_plugin(
+    content_modules = [
+        # do not sort,
+        "intellij.libraries.kotlin.tooling.core",
+        "intellij.libraries.kotlinc.kotlin.compiler.common",
+        "intellij.libraries.kotlinc.kotlin.compiler.fe10",
+        "intellij.libraries.kotlinc.kotlin.script.runtime",
+        "intellij.libraries.kotlinc.kotlin.scripting.common",
+        "intellij.libraries.kotlinc.kotlin.scripting.jvm",
+    ],
+    libraries = [
+        "@lib//:kotlinc-kotlin-build-tools-api",
+        "@lib//:kotlinc-kotlin-build-tools-impl",
+        "@lib//:kotlinc-kotlin-dist",
+        "@lib//:libraries-kotlin-tooling-core-kotlin-tooling-core",
+        "@lib//:libraries-kotlinc-kotlin-compiler-common-kotlinc-kotlin-compiler-common",
+        "@lib//:libraries-kotlinc-kotlin-compiler-fe10-kotlinc-kotlin-compiler-fe10",
+        "@lib//:libraries-kotlinc-kotlin-script-runtime-kotlinc-kotlin-script-runtime",
+        "@lib//:libraries-kotlinc-kotlin-scripting-common-kotlinc-kotlin-scripting-common",
+        "@lib//:libraries-kotlinc-kotlin-scripting-jvm-kotlinc-kotlin-scripting-jvm",
+    ],
+    main_module = "intellij.kotlin.jsr223.plugin",
+    module_targets = MODULE_TARGETS,
+    prepacked_jars = {
+        "intellij.kotlin.buildToolsRuntime": "intellij.kotlin.buildToolsRuntime.jar",
+        "intellij.kotlin.jsr223": "intellij.kotlin.jsr223.jar",
+    },
+)
+### auto-generated section `dev intellij.kotlin.jsr223.plugin` end
 
 ### auto-generated section `build intellij.kotlin.jsr223.plugin` start
+create_kotlinc_options(
+    name = "custom_jsr223-plugin",
+    opt_in = [
+        "org.jetbrains.kotlin.psi.KtExperimentalApi",
+        "org.jetbrains.kotlin.psi.KtNonPublicApi",
+        "org.jetbrains.kotlin.psi.KtIdeApi",
+        "org.jetbrains.kotlin.analysis.api.KaExperimentalApi",
+        "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+        "org.jetbrains.kotlin.analysis.api.KaPlatformInterface",
+        "org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaUnstableDiagnosticApi",
+        "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
+        "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+        "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+    ],
+    x_context_parameters = True,
+)
+
 jvm_provided_library(
     name = "libraries_kotlinc_libraries-kotlinc-kotlin-compiler-common_provided",
     lib = "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
@@ -17,6 +67,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    kotlinc_opts = ":custom_jsr223-plugin",
     module_name = "intellij.kotlin.jsr223.plugin",
     resource_strip_prefix = "resources",
     resources = glob(
@@ -27,6 +78,7 @@ jvm_library(
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//plugins/kotlin/jsr223",
+        "//plugins/kotlin/build-tools-runtime",
         "//platform/util",
         ":libraries_kotlinc_libraries-kotlinc-kotlin-compiler-common_provided",
     ],
@@ -39,12 +91,14 @@ jvm_library(
         [],
         allow_empty = True,
     ),
+    kotlinc_opts = ":custom_jsr223-plugin",
     module_name = "intellij.kotlin.jsr223.plugin",
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
         ":jsr223-plugin",
         "//plugins/kotlin/jsr223:jsr223_test_lib",
+        "//plugins/kotlin/build-tools-runtime:build-tools-runtime_test_lib",
         "//platform/util:util_test_lib",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
@@ -61,25 +115,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.kotlin.jsr223.plugin` end
-
-### auto-generated section `dev intellij.kotlin.jsr223.plugin` start
-dev_dist_plugin(
-    content_modules = [
-        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
-        "//libraries/kotlinc/kotlin-script-runtime:libraries-kotlinc-kotlin-script-runtime",
-        "//libraries/kotlinc/kotlin-scripting-common:libraries-kotlinc-kotlin-scripting-common",
-        "//libraries/kotlinc/kotlin-scripting-jvm:libraries-kotlinc-kotlin-scripting-jvm",
-    ],
-    descriptor_module = ":jsr223-plugin",
-    libraries = [
-        "@lib//:kotlinc-kotlin-compiler-fe10",
-        "@lib//:libraries-kotlinc-kotlin-compiler-common-kotlinc-kotlin-compiler-common",
-        "@lib//:libraries-kotlinc-kotlin-script-runtime-kotlinc-kotlin-script-runtime",
-        "@lib//:libraries-kotlinc-kotlin-scripting-common-kotlinc-kotlin-scripting-common",
-        "@lib//:libraries-kotlinc-kotlin-scripting-jvm-kotlinc-kotlin-scripting-jvm",
-    ],
-    prepacked_jars = {
-        "//plugins/kotlin/jsr223:jsr223_content_module_jar": "intellij.kotlin.jsr223.jar",
-    },
-)
-### auto-generated section `dev intellij.kotlin.jsr223.plugin` end

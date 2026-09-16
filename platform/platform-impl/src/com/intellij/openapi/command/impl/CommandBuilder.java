@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Objects;
+import java.util.function.BooleanSupplier;
 
 final class CommandBuilder {
 
@@ -64,6 +65,18 @@ final class CommandBuilder {
   boolean hasActions() {
     assertInsideCommand();
     return !undoableActions.isEmpty();
+  }
+
+  /**
+   * @return a capture of this command's actions for a deferred check after a builder resets
+   */
+  @NotNull BooleanSupplier captureHasActions() {
+    assertInsideCommand();
+    Collection<UndoableAction> actions = undoableActions;
+    if (cmdEvent.isTransparent()) {
+      return () -> false;
+    }
+    return () -> !actions.isEmpty();
   }
 
   void commandStarted(@NotNull CmdEvent cmdStartEvent, @NotNull CurrentEditorProvider editorProvider) {

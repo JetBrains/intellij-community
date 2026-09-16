@@ -42,7 +42,6 @@ exports_files(
     [
         "intellij.libraries.jna.iml",
         "resources/intellij.libraries.jna.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

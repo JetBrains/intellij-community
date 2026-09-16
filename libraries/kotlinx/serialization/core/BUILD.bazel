@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.kotlinx.serialization.core` start
+content_module_jar(
+    libraries = ["@lib//:libraries-kotlinx-serialization-core-kotlinx-serialization-core"],
+    module = ":core",
+)
+### auto-generated section `dev intellij.libraries.kotlinx.serialization.core` end
+
 ### auto-generated section `build intellij.libraries.kotlinx.serialization.core` start
 jvm_library(
     name = "core",
@@ -14,13 +21,8 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    exports = ["@lib//:kotlinx-serialization-core"],
-    runtime_deps = ["@lib//:kotlinx-serialization-core"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:kotlinx-serialization-core"],
-    module = ":core",
+    exports = ["@lib//:libraries-kotlinx-serialization-core-kotlinx-serialization-core"],
+    runtime_deps = ["@lib//:libraries-kotlinx-serialization-core-kotlinx-serialization-core"],
 )
 
 jvm_library(
@@ -33,7 +35,7 @@ jvm_library(
     kotlinc_opts = "@community//:k8",
     module_name = "intellij.libraries.kotlinx.serialization.core",
     visibility = ["//visibility:public"],
-    exports = ["@lib//:kotlinx-serialization-core"],
+    exports = ["@lib//:libraries-kotlinx-serialization-core-kotlinx-serialization-core"],
     runtime_deps = [":core"],
 )
 ### auto-generated section `build intellij.libraries.kotlinx.serialization.core` end
@@ -43,7 +45,6 @@ exports_files(
     [
         "intellij.libraries.kotlinx.serialization.core.iml",
         "resources/intellij.libraries.kotlinx.serialization.core.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

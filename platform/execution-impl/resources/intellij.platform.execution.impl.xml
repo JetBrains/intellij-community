@@ -13,7 +13,6 @@
     <module name="intellij.libraries.kotlinx.serialization.core"/>
     <module name="intellij.libraries.kotlinx.serialization.json"/>
     <module name="intellij.libraries.miglayout.swing"/>
-    <module name="intellij.libraries.pty4j"/>
     <module name="intellij.libraries.rd.core"/>
     <module name="intellij.libraries.stream"/>
     <module name="intellij.platform.analysis"/>
@@ -167,13 +166,6 @@
                     dynamic="true"
                     qualifiedName="com.intellij.execution.displayDescriptorChooser" />
 
-    <!-- Multi-Launch: Extension points -->
-    <extensionPoint qualifiedName="com.intellij.multilaunch.task.definition"
-                    interface="com.intellij.execution.multilaunch.execution.executables.TaskExecutableTemplate"
-                    dynamic="true" />
-    <extensionPoint qualifiedName="com.intellij.multilaunch.condition.template"
-                    interface="com.intellij.execution.multilaunch.execution.conditions.ConditionTemplate"
-                    dynamic="true" />
     <extensionPoint qualifiedName="com.intellij.execution.impl.runSessionService"
                     interface="com.intellij.execution.RunSessionService"
                     dynamic="true" />

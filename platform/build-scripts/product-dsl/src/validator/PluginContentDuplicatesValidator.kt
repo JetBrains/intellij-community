@@ -42,7 +42,7 @@ internal object PluginContentDuplicatesValidator : PipelineNode {
   override val id get() = NodeIds.PLUGIN_CONTENT_DUPLICATE_VALIDATION
   override val requires: Set<DataSlot<*>> get() = emptySet()
 
-  override suspend fun execute(ctx: ComputeContext) {
+  override fun execute(ctx: ComputeContext) {
     val model = ctx.model
     ctx.emitErrorsPerProduct(model.pluginGraph) { product ->
       validateDuplicatePluginContentModulesForProduct(product, model.pluginGraph)

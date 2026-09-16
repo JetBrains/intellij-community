@@ -1,3 +1,0 @@
-- name: dist.all/lib/intellij.platform.feedback.jar
-  modules:
-  - name: intellij.platform.feedback

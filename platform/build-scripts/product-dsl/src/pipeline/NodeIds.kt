@@ -100,9 +100,6 @@ internal object NodeIds {
   /** Product module set validation */
   @JvmField val PRODUCT_MODULE_SET_VALIDATION = NodeId("productModuleSetValidation", NodeCategory.VALIDATION)
 
-  /** Library module validation (auto-fixes .iml files) */
-  @JvmField val LIBRARY_MODULE_VALIDATION = NodeId("libraryModuleValidation", NodeCategory.VALIDATION)
-
   /** Plugin content module JPS dependency validation */
   @JvmField val PLUGIN_CONTENT_MODULE_VALIDATION = NodeId("pluginContentModuleValidation", NodeCategory.VALIDATION)
 

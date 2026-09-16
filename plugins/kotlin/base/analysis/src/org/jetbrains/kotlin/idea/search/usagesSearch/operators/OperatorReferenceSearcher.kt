@@ -48,7 +48,6 @@ import org.jetbrains.kotlin.resolve.DataClassResolver
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.utils.addToStdlib.ifTrue
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 abstract class OperatorReferenceSearcher<TReferenceElement : KtElement>(
     protected val targetDeclaration: PsiElement,
@@ -270,7 +269,7 @@ abstract class OperatorReferenceSearcher<TReferenceElement : KtElement>(
                             }.ifEmpty { return@runReadAction }
 
                             // resolve all references at once
-                            element.containingFile.safeAs<KtFile>()?.forceResolveReferences(elements)
+                            (element.containingFile as? KtFile)?.forceResolveReferences(elements)
 
                             for (ref in refs) {
                                 progress?.checkCanceled()
@@ -316,7 +315,7 @@ abstract class OperatorReferenceSearcher<TReferenceElement : KtElement>(
                             if (file.isValid) {
                                 progress?.fraction = index / files.size.toDouble()
                                 progress?.text2 = file.path
-                                psiManager.findFile(file).safeAs<KtFile>()?.let {
+                                (psiManager.findFile(file) as? KtFile)?.let {
                                     doPlainSearch(LocalSearchScope(it))
                                 }
                             }

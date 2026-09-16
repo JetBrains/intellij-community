@@ -41,7 +41,8 @@ jvm_library(
         "//platform/projectModel-api:projectModel",
         "//platform/execution",
         "//libraries/junit5",
-        "//python/python-pytools:pytools",
+        "//python/python-pytools/backend",
+        "//xml/plugin",
     ],
 )
 
@@ -74,7 +75,11 @@ jvm_library(
         "//python/python-test-env/core",
         "//python/python-test-env/core:core_test_lib",
     ],
-    runtime_deps = [":junit5"],
+    runtime_deps = [
+        # do not sort,
+        ":junit5",
+        "//xml/plugin:plugin_test_lib",
+    ],
     deps = [
         # do not sort,
         "//libraries/jetbrains/annotations",
@@ -130,16 +135,18 @@ jvm_library(
         "//platform/testFramework/common:common_test_lib",
         "//python/services/system-python",
         "//python/services/system-python:system-python_test_lib",
-        "//python/python-pytools:pytools",
-        "//python/python-pytools:pytools_test_lib",
-        "//libraries/misc/plugin",
-        "//libraries/misc/plugin:plugin_test_lib",
+        "//python/python-pytools/backend",
+        "//python/python-pytools/backend:backend_test_lib",
         "//plugins/jcef/plugin",
         "//plugins/jcef/plugin:plugin_test_lib",
         "//platform/testRunner/plugin",
         "//platform/testRunner/plugin:plugin_test_lib",
         "//platform/structure-view-impl/plugin",
         "//platform/structure-view-impl/plugin:plugin_test_lib",
+        "//platform/testFramework",
+        "//platform/testFramework:testFramework_test_lib",
+        "//python/python-requirements/backend",
+        "//python/python-requirements/backend:backend_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.test.env.junit5` end

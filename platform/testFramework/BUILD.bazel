@@ -193,7 +193,6 @@ jvm_library(
         "//libraries/jackson3/databind:databind_test_lib",
         "//libraries/jackson3/module-kotlin:libraries-jackson3-module-kotlin",
         "//libraries/jackson3/module-kotlin:libraries-jackson3-module-kotlin_test_lib",
-        "@lib//:okhttp",
         "//community-resources:customization",
         "//community-resources:customization_test_lib",
         "//java/java-runtime:rt_test_lib",
@@ -259,7 +258,6 @@ jvm_library(
         "//platform/workspace/storage:storage_test_lib",
         "//platform/testFramework/bootstrap:tools-testsBootstrap",
         "//platform/testFramework/bootstrap:tools-testsBootstrap_test_lib",
-        "@lib//:platform-test_framework-okhttp3-mockwebserver",
         "//platform/runtime/product:product_test_lib",
         "//platform/pluginSystem/parser/impl:impl_test_lib",
         "//platform/execution:execution_test_lib",
@@ -310,6 +308,7 @@ jvm_library(
         "//images",
         "//RegExpSupport:regexp",
         "//xml/dom-impl",
+        "//xml/plugin",
     ],
 )
 
@@ -353,6 +352,7 @@ jvm_library(
         "//images:images_test_lib",
         "//RegExpSupport:regexp_test_lib",
         "//xml/dom-impl:dom-impl_test_lib",
+        "//xml/plugin:plugin_test_lib",
     ],
     deps = [
         # do not sort,
@@ -377,7 +377,6 @@ jvm_library(
         "//libraries/jackson3/databind:databind_test_lib",
         "//libraries/jackson3/module-kotlin:libraries-jackson3-module-kotlin",
         "//libraries/jackson3/module-kotlin:libraries-jackson3-module-kotlin_test_lib",
-        "@lib//:okhttp",
         "//community-resources:customization",
         "//community-resources:customization_test_lib",
         "//java/java-runtime:rt",
@@ -483,7 +482,6 @@ jvm_library(
         "//platform/workspace/storage:storage_test_lib",
         "//platform/testFramework/bootstrap:tools-testsBootstrap",
         "//platform/testFramework/bootstrap:tools-testsBootstrap_test_lib",
-        "@lib//:platform-test_framework-tests-okhttp3-mockwebserver",
         "//platform/runtime/product",
         "//platform/runtime/product:product_test_lib",
         "//platform/pluginSystem/parser/impl",

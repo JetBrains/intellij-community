@@ -29,8 +29,10 @@ public class TableScrollPositionManager implements GridScrollPositionManager {
     Point p = visibleRect.getLocation();
     p.x += 1;
     p.y += 1;
-    int row = myResultView.rowAtPoint(p);
-    int column = myResultView.columnAtPoint(p);
+    // At the very edge remember the first row or column, not the one the point lands in: a pinned column has zero
+    // width here, so the point lands in the next one and unpinning would scroll the column that came back away.
+    int row = visibleRect.y == 0 ? 0 : myResultView.rowAtPoint(p);
+    int column = visibleRect.x == 0 ? 0 : myResultView.columnAtPoint(p);
     int modelRow = myResultView.getRawIndexConverter().row2Model().applyAsInt(myResultView.isTransposed() ? column : row);
     int modelColumn = myResultView.getRawIndexConverter().column2Model().applyAsInt(myResultView.isTransposed() ? row : column);
     return new GridScrollPosition(ModelIndex.forRow(myGrid, modelRow), ModelIndex.forColumn(myGrid, modelColumn));

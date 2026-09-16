@@ -13,36 +13,117 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import fleet.rpc.client.RpcClientDisconnectedException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.util.function.Consumer
 import java.util.function.Function
 import javax.swing.JComponent
+import kotlin.coroutines.CoroutineContext
+
+internal class PluginOperationUiBridge {
+  private val handles = mutableSetOf<PluginOperationUiHandle>()
+
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  fun createHandle(parentComponent: JComponent): PluginOperationUiHandle {
+    return PluginOperationUiHandle(parentComponent) { handle ->
+      handles.remove(handle)
+    }.also(handles::add)
+  }
+
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  fun detach() {
+    handles.toList().forEach(PluginOperationUiHandle::detach)
+  }
+}
+
+internal class PluginOperationUiHandle(
+  parentComponent: JComponent,
+  private val onDetached: (PluginOperationUiHandle) -> Unit = {},
+) {
+  private var parentComponent: JComponent? = parentComponent
+  private var detached = false
+
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  fun captureContext(modalityComponent: JComponent? = parentComponent): PluginOperationUiContext {
+    if (modalityComponent == null) return PluginOperationUiContext.withoutParent()
+    val modalityState = ModalityState.stateForComponent(modalityComponent)
+    return PluginOperationUiContext(modalityState, ::getParentComponent)
+  }
+
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  fun detach() {
+    if (detached) return
+    detached = true
+    parentComponent = null
+    onDetached(this)
+  }
+
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  private fun getParentComponent(): JComponent? = parentComponent
+}
+
+internal class PluginOperationUiContext(
+  val modalityState: ModalityState,
+  private val parentComponent: () -> JComponent?,
+) {
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  fun getParentComponent(): JComponent? = parentComponent()
+
+  companion object {
+    fun withoutParent(modalityState: ModalityState = ModalityState.defaultModalityState()): PluginOperationUiContext {
+      return PluginOperationUiContext(modalityState) { null }
+    }
+  }
+}
+
+internal class PluginOperationLauncher(
+  private val coroutineScope: CoroutineScope,
+  private val onOperationSubmitted: () -> Unit = {},
+  private val onOperationCompleted: () -> Unit = {},
+) {
+  fun launch(context: CoroutineContext, operation: suspend CoroutineScope.() -> Unit): Job {
+    onOperationSubmitted()
+    val job = try {
+      coroutineScope.launch(context, block = operation)
+    }
+    catch (t: Throwable) {
+      onOperationCompleted()
+      throw t
+    }
+    job.invokeOnCompletion { onOperationCompleted() }
+    return job
+  }
+}
 
 internal object PluginModelAsyncOperationsExecutor {
   fun performAutoInstall(
-    cs: CoroutineScope,
+    operationLauncher: PluginOperationLauncher,
     modelFacade: PluginModelFacade,
     descriptor: PluginUiModel,
     customizer: PluginManagerCustomizer?,
-    component: JComponent,
+    operationUi: PluginOperationUiContext,
   ) {
-    cs.launch(Dispatchers.IO) {
+    operationLauncher.launch(Dispatchers.IO) {
       val pluginUpdateSourceApplier = PluginUpdateSourceApplier.createApplier(descriptor, modelFacade)
       pluginUpdateSourceApplier.runWithRevertOnException {
-        val stateForComponent = ModalityState.stateForComponent(component)
-        val customizationModel = customizer?.getInstallButonCustomizationModel(modelFacade, descriptor, stateForComponent)
-        withContext(Dispatchers.EDT + stateForComponent.asContextElement()) {
+        val customizationModel = customizer?.getInstallButonCustomizationModel(modelFacade, descriptor, operationUi.modalityState)
+        withContext(Dispatchers.EDT + operationUi.modalityState.asContextElement()) {
           val customAction = customizationModel?.mainAction
           if (customAction != null) {
             customAction()
             return@withContext
           }
-          val result = modelFacade.installOrUpdatePlugin(component, descriptor, null, stateForComponent)
+          val result = modelFacade.installOrUpdatePlugin(
+            operationUi,
+            descriptor,
+            null,
+          )
           pluginUpdateSourceApplier.applyPluginUpdateSourcesBasedOnResult(result)
         }
       }
@@ -111,26 +192,40 @@ internal object PluginModelAsyncOperationsExecutor {
   }
 
   fun updatePlugin(
-    cs: CoroutineScope,
+    operationLauncher: PluginOperationLauncher,
     modelFacade: PluginModelFacade,
     plugin: PluginUiModel,
     updateDescriptor: PluginUiModel?,
     pluginManagerCustomizer: PluginManagerCustomizer?,
-    modalityState: ModalityState,
-    component: JComponent?,
+    operationUi: PluginOperationUiContext,
     pluginDescriptorForPluginUpdateSourceApplier: PluginUiModel,
-  ) {
-    cs.launch(Dispatchers.IO) {
+    operationContext: PluginOperationContext? = null,
+  ): Job {
+    return operationLauncher.launch(Dispatchers.IO) {
       val pluginUpdateSourceApplier = PluginUpdateSourceApplier.createApplier(pluginDescriptorForPluginUpdateSourceApplier, modelFacade)
       pluginUpdateSourceApplier.runWithRevertOnException {
-        val model = pluginManagerCustomizer?.getUpdateButtonCustomizationModel(modelFacade, plugin, updateDescriptor, modalityState)
-        withContext(Dispatchers.EDT + modalityState.asContextElement()) {
+        val model = pluginManagerCustomizer?.getUpdateButtonCustomizationModel(
+          modelFacade, plugin, updateDescriptor, operationUi.modalityState
+        )
+        withContext(Dispatchers.EDT + operationUi.modalityState.asContextElement()) {
           if (model != null) {
-            model.action()
+            model.action(operationContext)
           }
           else {
-            val result = modelFacade.installOrUpdatePlugin(component, plugin, updateDescriptor, modalityState)
-            pluginUpdateSourceApplier.applyPluginUpdateSourcesBasedOnResult(result)
+            try {
+              val result = modelFacade.installOrUpdatePlugin(
+                operationUi,
+                plugin,
+                updateDescriptor,
+                operationContext = operationContext,
+              )
+              pluginUpdateSourceApplier.applyPluginUpdateSourcesBasedOnResult(result)
+            }
+            finally {
+              if (operationContext != null) {
+                modelFacade.finishOperation(operationContext)
+              }
+            }
           }
         }
       }
@@ -148,7 +243,7 @@ internal object PluginModelAsyncOperationsExecutor {
       return
     }
     val modelFacade = component.getModelFacade()
-    component.getCoroutineScope().launch(Dispatchers.IO) {
+    component.getUiCoroutineScope().launch(Dispatchers.IO) {
       val stateForComponent = ModalityState.stateForComponent(component)
       val popupSelection = selection.map {
         PluginPopupMenuActionData(it.getPluginModel(), it.getInstalledDescriptorForMarketplace(), it.getDescriptorForActions())
@@ -223,6 +318,23 @@ internal object PluginModelAsyncOperationsExecutor {
           }
         }
         callback(models)
+      }
+      catch (_: RpcClientDisconnectedException) {
+        // Bulk plugin switch refresh can race with remote plugin manager disconnect.
+      }
+    }
+  }
+
+  fun switchPlugins(
+    coroutineScope: CoroutineScope,
+    pluginModelFacade: PluginModelFacade,
+    installedPlugins: List<PluginUiModel>,
+    enable: Boolean,
+    callback: (List<PluginUiModel>) -> Unit,
+  ) {
+    coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      try {
+        callback(installedPlugins.filter { pluginModelFacade.isEnabled(it) != enable })
       }
       catch (_: RpcClientDisconnectedException) {
         // Bulk plugin switch refresh can race with remote plugin manager disconnect.

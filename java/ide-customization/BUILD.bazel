@@ -1,7 +1,26 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
+load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_DESCRIPTORS", "MODULE_TARGETS")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `dev intellij.java.ide.customization` start
+dev_dist_plugin(
+    descriptor = "resources/META-INF/plugin.xml",
+    descriptor_index = MODULE_DESCRIPTORS,
+    descriptor_modules = [
+        "intellij.java.ide.customization.backend",
+        "intellij.java.ide.customization.training",
+    ],
+    main_module = "intellij.java.ide.customization",
+    module_targets = MODULE_TARGETS,
+    prepacked_content_modules = [
+        # do not sort,
+        "intellij.java.ide.customization.backend",
+        "intellij.java.ide.customization.training",
+    ],
+)
+### auto-generated section `dev intellij.java.ide.customization` end
 
 ### auto-generated section `build intellij.java.ide.customization` start
 jvm_library(
@@ -94,22 +113,6 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.java.ide.customization` end
-
-### auto-generated section `dev intellij.java.ide.customization` start
-dev_dist_plugin(
-    descriptor = "resources/META-INF/plugin.xml",
-    descriptor_module = ":ide-customization",
-    descriptors = {
-        "@community//java/ide-customization/backend:resources/intellij.java.ide.customization.backend.xml": "intellij.java.ide.customization.backend.xml",
-        "@community//java/ide-customization/training:resources/intellij.java.ide.customization.training.xml": "intellij.java.ide.customization.training.xml",
-    },
-    main_module = "intellij.java.ide.customization",
-    prepacked_content_modules = [
-        "//java/ide-customization/backend:backend_content_module_jar",
-        "//java/ide-customization/training:training_content_module_jar",
-    ],
-)
-### auto-generated section `dev intellij.java.ide.customization` end
 
 ### auto-generated section `build intellij.java.ide.customization.tests` start
 jvm_library(

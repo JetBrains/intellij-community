@@ -4,15 +4,14 @@ package com.intellij.python.junit5Tests.env.tests.black
 import com.intellij.python.black.BlackPyTool
 import com.intellij.python.black.configuration.BlackFormatterConfiguration
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
-import com.intellij.python.pytools.PyToolsState
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 
 /**
- * Verifies the one-way migration of Black's pre-[PyToolsState] settings. The old
- * [BlackFormatterConfiguration] fields must be imported into a [PyToolsState.ToolEntry] and then
+ * Verifies the one-way migration of Black's legacy settings. The old
+ * [BlackFormatterConfiguration] fields must be imported and then
  * cleared, so that re-running the migration (the reset-then-reopen path) imports nothing and cannot
  * resurrect the old values. The `black.formatter.support.enabled` registry key defaults to `true`.
  */
@@ -30,15 +29,12 @@ internal class BlackMigrationTest {
       pathToExecutable = "/usr/local/bin/black"
     }
 
-    assertEquals(
-      PyToolsState.ToolEntry(enabled = true),
-      BlackPyTool.getInstance().migrateLegacyState(project),
-    )
+    assertEquals(true, BlackPyTool.getInstance().migrateLegacyState(project).enabled)
 
     // old settings are wiped, so a second migration (e.g. after the file was emptied on reset) imports nothing
     assertEquals(false, cfg.enabledOnReformat)
     assertEquals(BlackFormatterConfiguration.ExecutionMode.PACKAGE, cfg.executionMode)
     assertNull(cfg.pathToExecutable)
-    assertEquals(PyToolsState.ToolEntry(), BlackPyTool.getInstance().migrateLegacyState(project))
+    assertEquals(false, BlackPyTool.getInstance().migrateLegacyState(project).enabled)
   }
 }

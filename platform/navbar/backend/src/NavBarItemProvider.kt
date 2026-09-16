@@ -24,15 +24,15 @@ interface NavBarItemProvider {
   /**
    * Finds a known parent of this item if any.
    */
-  @RequiresReadLock
-  @RequiresBackgroundThread
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun findParent(item: NavBarItem): NavBarItem? = null
 
   /**
    * Lists known item's children if any.
    */
-  @RequiresReadLock
-  @RequiresBackgroundThread
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun iterateChildren(item: NavBarItem): Iterable<NavBarItem> = emptyList()
 
 }

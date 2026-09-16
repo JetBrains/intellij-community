@@ -1,5 +1,4 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
-load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.libraries.groovy.templates` start
 jvm_library(
@@ -16,11 +15,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-groovy-templates-groovy-templates"],
     runtime_deps = ["@lib//:libraries-groovy-templates-groovy-templates"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-groovy-templates-groovy-templates"],
-    module = ":templates",
 )
 
 jvm_library(
@@ -43,7 +37,6 @@ exports_files(
     [
         "intellij.libraries.groovy.templates.iml",
         "resources/intellij.libraries.groovy.templates.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

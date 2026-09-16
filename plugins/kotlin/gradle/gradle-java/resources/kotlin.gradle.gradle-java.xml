@@ -21,6 +21,7 @@
     <module name="intellij.kotlin.base.plugin"/>
     <module name="intellij.kotlin.base.projectModel"/>
     <module name="intellij.kotlin.base.projectStructure"/>
+    <module name="intellij.kotlin.base.psi"/>
     <module name="intellij.kotlin.base.statistics"/>
     <module name="intellij.kotlin.base.util"/>
     <module name="intellij.kotlin.codeInsight.utils"/>
@@ -40,6 +41,7 @@
     <module name="intellij.libraries.kotlin.gradle.plugin.idea"/>
     <module name="intellij.libraries.kotlin.gradle.plugin.idea.proto"/>
     <module name="intellij.libraries.kotlin.tooling.core"/>
+    <module name="intellij.libraries.kotlinc.allopen.compiler.plugin"/>
     <module name="intellij.libraries.kotlinc.analysis.api"/>
     <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
     <module name="intellij.libraries.kotlinc.kotlin.jps.common"/>
@@ -122,6 +124,7 @@
 
     <taskManager implementation="org.jetbrains.kotlin.idea.gradleJava.testing.KotlinTestGradleTaskManagerExtension"/>
     <taskManager implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinCoroutineDebugGradleTaskManagerExtension"/>
+    <testLocator implementation="org.jetbrains.kotlin.idea.gradleJava.testing.KotlinMppGradleTestLocator"/>
 
     <orderEnumerationHandlerFactory implementation="org.jetbrains.kotlin.idea.gradleJava.execution.KotlinGradleOrderEnumerationHandler$Factory" order="first"/>
 

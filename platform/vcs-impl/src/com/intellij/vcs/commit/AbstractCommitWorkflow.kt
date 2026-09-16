@@ -198,7 +198,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
     commitContext = CommitContext()
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   internal fun startExecution(block: suspend () -> Boolean) {
     check(!isExecuting) { "Commit session is already started" }
     isExecuting = true
@@ -228,7 +228,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   internal fun endExecution() {
     check(isExecuting) { "Commit session has already finished" }
 

@@ -22,6 +22,6 @@ interface VcsSharedChecker {
    *
    * [path] - The path (e.g., directory) to check
    */
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun isPathSharedInVcs(project: Project, path: Path): Boolean
 }

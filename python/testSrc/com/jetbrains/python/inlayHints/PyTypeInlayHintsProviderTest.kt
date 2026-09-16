@@ -237,7 +237,7 @@ class PyTypeInlayHintsProviderTest : DeclarativeInlayHintsProviderTestCase() {
     doTest("""
       def f[T](t: T) -> T: ...
 
-      f/*<# [int] #>*/(1)
+      f/*<# [Literal[1]] #>*/(1)
     """, SOLVED_FUNCTION_TYPE_PARAMETERS_OPTION_ID)
   }
 

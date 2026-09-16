@@ -5,8 +5,15 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
+import org.jetbrains.kotlin.idea.base.psi.addMemberDeclaration
+import org.jetbrains.kotlin.idea.base.psi.addSuperType
+import org.jetbrains.kotlin.idea.base.psi.appendParameter
+import org.jetbrains.kotlin.idea.base.psi.deleteParameter
 import org.jetbrains.kotlin.idea.base.psi.getOrCreateCompanionObject
 import org.jetbrains.kotlin.idea.base.psi.getSingleUnwrappedStatementOrThis
+import org.jetbrains.kotlin.idea.base.psi.removeSuperType
+import org.jetbrains.kotlin.idea.base.psi.setCallableReceiverTypeReference
+import org.jetbrains.kotlin.idea.base.psi.setModifierList
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
@@ -27,10 +34,8 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtReturnExpression
 import org.jetbrains.kotlin.psi.KtSuperTypeListEntry
 import org.jetbrains.kotlin.psi.KtTypeReference
-import org.jetbrains.kotlin.psi.addRemoveModifier.setModifierList
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
-import org.jetbrains.kotlin.psi.typeRefHelpers.setReceiverTypeReference
 
 class ParcelMigrateToParcelizeQuickFixApplicator<CONTEXT>(
     private val resolver: ParcelMigrateToParcelizeResolver<CONTEXT>,
@@ -245,10 +250,10 @@ class ParcelMigrateToParcelizeQuickFixApplicator<CONTEXT>(
 
             if (shouldAddParcelerSupertype) {
                 val entryText = "${ParcelizeNames.PARCELER_FQN.asString()}<$parcelerTypeArg>"
-                shortenReferences(parcelerObject.addSuperTypeListEntry(ktPsiFactory.createSuperTypeEntry(entryText)))
+                shortenReferences(parcelerObject.addSuperType(ktPsiFactory.createSuperTypeEntry(entryText)))
             }
 
-            parcelerSupertypesToRemove.mapNotNull { it.element }.forEach { parcelerObject.removeSuperTypeListEntry(it) }
+            parcelerSupertypesToRemove.mapNotNull { it.element }.forEach { parcelerObject.removeSuperType(it) }
 
             if (parcelerObject.name == ParcelizeNames.CREATOR_NAME.identifier) {
                 parcelerObject.nameIdentifier?.delete()
@@ -263,24 +268,24 @@ class ParcelMigrateToParcelizeQuickFixApplicator<CONTEXT>(
 
                 newFunction.setName(PARCELER_WRITE_FUNCTION_NAME.asString())
                 newFunction.setModifierList(ktPsiFactory.createModifierList(KtTokens.OVERRIDE_KEYWORD))
-                newFunction.setReceiverTypeReference(ktPsiFactory.createType(parcelerTypeArg))
+                newFunction.setCallableReceiverTypeReference(ktPsiFactory.createType(parcelerTypeArg))
                 newFunction.valueParameterList?.apply {
                     assert(parameters.size == 2)
                     val parcelParameterName = parameters[0].name ?: ParcelizeNames.DEST_NAME.identifier
                     val flagsParameterName = parameters[1].name ?: ParcelizeNames.FLAGS_NAME.identifier
 
-                    repeat(parameters.size) { removeParameter(0) }
-                    addParameter(ktPsiFactory.createParameter("$parcelParameterName : ${ParcelizeNames.PARCEL_ID.asFqNameString()}"))
-                    addParameter(ktPsiFactory.createParameter("$flagsParameterName : Int"))
+                    repeat(parameters.size) { deleteParameter(0) }
+                    appendParameter(ktPsiFactory.createParameter("$parcelParameterName : ${ParcelizeNames.PARCEL_ID.asFqNameString()}"))
+                    appendParameter(ktPsiFactory.createParameter("$flagsParameterName : Int"))
                 }
 
-                parcelerObject.addDeclaration(newFunction).valueParameterList?.let { shortenReferences(it) }
+                parcelerObject.addMemberDeclaration(newFunction).valueParameterList?.let { shortenReferences(it) }
             } else if (parcelerWriteFunction == null) {
                 val writeFunction =
                     "fun $parcelerTypeArg.write(" +
                         "${ParcelizeNames.DEST_NAME.identifier}: ${ParcelizeNames.PARCEL_ID.asFqNameString()}, " +
                         "${ParcelizeNames.FLAGS_NAME.identifier}: Int) = TODO()"
-                parcelerObject.addDeclaration(ktPsiFactory.createFunction(writeFunction)).valueParameterList?.let { shortenReferences(it) }
+                parcelerObject.addMemberDeclaration(ktPsiFactory.createFunction(writeFunction)).valueParameterList?.let { shortenReferences(it) }
             }
 
             if (createFromParcelFunction != null) {
@@ -294,19 +299,19 @@ class ParcelMigrateToParcelizeQuickFixApplicator<CONTEXT>(
 
                 newFunction.setName(PARCELER_CREATE_FUNCTION_NAME.asString())
                 newFunction.setModifierList(ktPsiFactory.createModifierList(KtTokens.OVERRIDE_KEYWORD))
-                newFunction.setReceiverTypeReference(null)
+                newFunction.setCallableReceiverTypeReference(null)
                 newFunction.valueParameterList?.apply {
                     assert(parameters.size == 1)
                     val parcelParameterName = parameters[0].name ?: "parcel"
 
-                    removeParameter(0)
-                    addParameter(ktPsiFactory.createParameter("$parcelParameterName : ${ParcelizeNames.PARCEL_ID.asFqNameString()}"))
+                    deleteParameter(0)
+                    appendParameter(ktPsiFactory.createParameter("$parcelParameterName : ${ParcelizeNames.PARCEL_ID.asFqNameString()}"))
                 }
 
-                parcelerObject.addDeclaration(newFunction).valueParameterList?.let { shortenReferences(it) }
+                parcelerObject.addMemberDeclaration(newFunction).valueParameterList?.let { shortenReferences(it) }
             } else if (parcelerCreateFunction == null) {
                 val createFunction = "override fun create(parcel: ${ParcelizeNames.PARCEL_ID.asFqNameString()}): $parcelerTypeArg = TODO()"
-                parcelerObject.addDeclaration(ktPsiFactory.createFunction(createFunction)).valueParameterList?.let { shortenReferences(it) }
+                parcelerObject.addMemberDeclaration(ktPsiFactory.createFunction(createFunction)).valueParameterList?.let { shortenReferences(it) }
             }
 
             // Always use the default newArray() implementation

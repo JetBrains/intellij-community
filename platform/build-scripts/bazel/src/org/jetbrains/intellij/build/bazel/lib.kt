@@ -147,7 +147,8 @@ internal fun BuildFile.generateMavenLib(
 
     target("jvm_import") {
       option("name", targetName)
-      if (targetName == "kotlinx-serialization-core") {
+      if (lib.target.jpsName == "kotlinx-serialization-core") {
+        // a module library of intellij.libraries.kotlinx.serialization.core; the wrapper re-exports the plugin through `exports`
         option("exported_compiler_plugins", listOf("@lib//:kotlin-serialization-plugin"))
       }
       option("jar", "@${fileToHttpRuleFile(jar.mavenCoordinates)}")
@@ -206,7 +207,7 @@ internal fun BuildFile.generateProvidedMavenLib(
     return
   }
 
-  val exportedCompilerPlugins = when (targetName) {
+  val exportedCompilerPlugins = when (lib.target.jpsName) {
     "kotlinx-serialization-core" -> listOf("@lib//:kotlin-serialization-plugin")
     else -> emptyList()
   }

@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.markdown.backend.editor.livepreview
 
+import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.ide.vfs.rpcId
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Editor
@@ -56,6 +57,12 @@ internal class MarkdownLivePreviewImageManager(
     publishSource(destination, source)
   }
 
+  /** The already loaded source of [destination] and its modification stamp, or null when none is loaded. */
+  fun findImageData(destination: String): Pair<VirtualFileId, Long>? {
+    val source = loadedSources[destination]?.takeIf { it.isValid } ?: return null
+    return source.rpcId() to source.modificationStamp
+  }
+
   private fun startLoading(destination: String): Deferred<VirtualFile?> {
     return loadingSources.computeIfAbsent(destination) {
       coroutineScope.async(Dispatchers.IO, start = CoroutineStart.LAZY) { loadImage(destination) }
@@ -88,20 +95,15 @@ internal class MarkdownLivePreviewImageManager(
   }
 
   private fun publishSource(destination: String, source: VirtualFile?) {
-    val sourceId = source?.rpcId()
     editor.livePreviewSpecSetFlow().update { specSet ->
       if (specSet == null) return@update null
       val elements = specSet.elements.map { spec ->
-        if (spec is MarkdownLivePreviewSpec.Image && spec.destination == destination) spec.copy(source = sourceId) else spec
+        if (spec is MarkdownLivePreviewSpec.Image && spec.destination == destination) {
+          spec.copy(source = source?.rpcId(), stamp = source?.modificationStamp)
+        } else spec
       }
-      MarkdownLivePreviewSpecSet(specSet.documentVersion.withElements(elements, sourceHash(elements)), elements)
+      MarkdownLivePreviewSpecSet(specSet.documentVersion, elements)
     }
-  }
-
-  private fun sourceHash(elements: List<MarkdownLivePreviewSpec>): Int {
-    return elements.filterIsInstance<MarkdownLivePreviewSpec.Image>()
-      .map { it.destination to loadedSources[it.destination]?.modificationStamp }
-      .hashCode()
   }
 
   override fun dispose() {

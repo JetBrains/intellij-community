@@ -4,23 +4,23 @@ import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
-import com.intellij.util.containers.addIfNotNull
 import com.jetbrains.python.psi.PyArgumentList
 import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyCallSiteExpression
 import com.jetbrains.python.psi.PyCallSiteOwner
-import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyDecoratorList
 import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyKeywordArgument
 import com.jetbrains.python.psi.PyListLiteralExpression
+import com.jetbrains.python.psi.PyParenthesizedExpression
 import com.jetbrains.python.psi.PySequenceExpression
 import com.jetbrains.python.psi.PySetLiteralExpression
 import com.jetbrains.python.psi.PyStarExpression
+import com.jetbrains.python.psi.PyTupleExpression
 import com.jetbrains.python.psi.PyTypedElement
-import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper
 import com.jetbrains.python.psi.resolve.PyResolveContext
+import com.jetbrains.python.psi.types.PyCollectionTypeUtil.flattenSequenceElements
 import com.jetbrains.python.psi.types.PyExpectedTypeJudgement.getExpectedType
 import com.jetbrains.python.psi.types.PyLiteralType.Companion.promoteToLiteral
 import com.jetbrains.python.psi.types.PyTypeChecker.GenericSubstitutions
@@ -28,6 +28,7 @@ import com.jetbrains.python.psi.types.PyTypeChecker.collectGenerics
 import com.jetbrains.python.psi.types.PyTypeChecker.hasGenerics
 import com.jetbrains.python.psi.types.PyTypeInferenceCspFactory.enterCsp
 import org.jetbrains.annotations.ApiStatus
+import kotlin.collections.set
 
 
 @ApiStatus.Experimental
@@ -35,17 +36,9 @@ object PyTypeInferenceCspFactory {
   private val recursionGuard = RecursionManager.createGuard<PyExpression>("PyTypeInferenceCsp")
 
   @JvmStatic
-  fun unifySequenceExpression(expression: PySequenceExpression, cls: PyClass, context: TypeEvalContext): GenericSubstitutions {
+  fun unifySequenceExpression(expression: PySequenceExpression, context: TypeEvalContext): GenericSubstitutions {
     val solution = enterCsp(SubstitutionsIdentifier(expression), context )
-    if (solution != null) {
-      return solution
-    }
-    else {
-      val genericType = PyTypeChecker.findGenericDefinitionType(cls, context)
-      val typeVar = genericType?.typeArguments?.firstOrNull() as PyTypeParameterType
-      val typeArgument = PyCollectionTypeUtil.getListOrSetIteratedValueType(expression, context)
-      return GenericSubstitutions(mapOf(typeVar to typeArgument))
-    }
+    return solution ?: PyCollectionTypeUtil.getSequenceSubstitutionsFallback(expression, context)
   }
 
   @JvmStatic
@@ -181,7 +174,7 @@ object PyTypeInferenceCspFactory {
     val actualCspAnchor = findChildCsp(expression)
     if (!isCsp(actualCspAnchor)) {
       if (actualCspAnchor is PyTypedElement) {
-        val anchorType = context.getType(actualCspAnchor)
+        val anchorType = context.getNarrowedType(actualCspAnchor)
         return normalizeType(anchorType, context)
       }
       else {
@@ -196,43 +189,74 @@ object PyTypeInferenceCspFactory {
     }
   }
 
-  private fun buildSequenceExpressionCsp(si: SubstitutionsIdentifier, builder: CspBuilder, context: TypeEvalContext) : PyType? {
-    val sequenceTypeName = when (si.expression) {
-      is PyListLiteralExpression -> "list"
-      is PySetLiteralExpression -> "set"
+  private fun buildSequenceExpressionCsp(si: SubstitutionsIdentifier, builder: CspBuilder, context: TypeEvalContext) : PyType {
+    val seqExpr = si.expression as? PySequenceExpression ?: throw NotSupportedException()
+    val genericType = PyCollectionTypeUtil.findGenericDefinitionTypeOfSequence(seqExpr, context)
+    val sequenceType = normalizeType(genericType, context) as? PyClassType ?: throw NotSupportedException()
+    val cspSubstitutions = PyTypeChecker.unifyReceiver(sequenceType, context)
+    builder.putSubstitutions(si, cspSubstitutions)
+
+    val elementsPerTypeVar = mapElementsToTypeVars(seqExpr, sequenceType, cspSubstitutions)
+    val typeArgumentIVs = mutableListOf<PyType?>()
+    for ((typeVar, elements) in elementsPerTypeVar) {
+      val iv = builder.addInferenceVariable(typeVar, si)
+      typeArgumentIVs.add(iv)
+      val elementTypes = elements.map { element -> buildNestedCspAndUnpack(seqExpr, element, builder, context) }
+      builder.addConstraint(iv, PyUnionType.union(elementTypes), PyVariance.CONTRAVARIANT, ConstraintPriority.MEDIUM)
+    }
+
+    if (seqExpr is PyTupleExpression) {
+      return PyTupleType.create(seqExpr, typeArgumentIVs) ?: throw NotSupportedException()
+    }
+    return PyCollectionTypeImpl(sequenceType.pyClass, false, typeArgumentIVs)
+  }
+
+  private fun buildNestedCspAndUnpack(expression: PySequenceExpression,
+                                      element: PyExpression,
+                                      builder: CspBuilder,
+                                      context: TypeEvalContext
+  ) : PyType? {
+    val nestedReturnType = buildNestedCsp(element, builder, context)
+    if (nestedReturnType is PyUnpackedTupleType && expression !is PyTupleExpression) {
+      return PyUnionType.union(nestedReturnType.elementTypes)
+    }
+    return nestedReturnType
+  }
+
+  /**
+   * Maps the element expressions of a sequence literal to the type variables retrieved from the receiver [substitutions].
+   *
+   * List and set literals have only a single type variable to which all (unpacked) elements are mapped.
+   * Tuple literals are flattened via [PyCollectionTypeUtil.flattenSequenceElements]; the flattened element expressions appear
+   * in the same positional order in which the tuple's type parameter is expanded to positional copies `_T_co#i`
+   * (see [PyTypeChecker.expandTupleTypeParameters]), so the element at position `i` maps to the type variable of position `i`.
+   */
+  private fun mapElementsToTypeVars(
+    expression: PySequenceExpression,
+    sequenceType: PyClassType,
+    substitutions: GenericSubstitutions,
+  ): List<Pair<PyTypeVarType, List<PyExpression>>> {
+    val ownTypeVars = substitutions.typeVars.keys.filter { it.scopeOwner == sequenceType.pyClass }
+    when (expression) {
+      is PyTupleExpression -> {
+        val flattenedElements = flattenSequenceElements(expression)
+        if (flattenedElements.isEmpty() || flattenedElements.size > 10) throw NotSupportedException()
+        // An unflattenable splice (`*iterable`) breaks the positional mapping between expressions and type variables
+        if (flattenedElements.any { it is PyStarExpression }) throw NotSupportedException()
+        // TypeVars of tuples are expanded into `_T_co#i` for each position `i`
+        val positionalTypeVars = sequenceType.typeArguments.filterIsInstance<PyTypeVarType>()
+        if (positionalTypeVars.size != flattenedElements.size) throw NotSupportedException()
+        return positionalTypeVars.zip(flattenedElements) { tv, element -> tv to listOf(element) }
+      }
+      is PyListLiteralExpression,
+      is PySetLiteralExpression -> {
+        // lists and sets have only a single type variable
+        val typeVar = ownTypeVars.singleOrNull() ?: throw NotSupportedException()
+        val elements = flattenSequenceElements(expression).take(10)
+        return listOf(typeVar to elements)
+      }
       else -> throw NotSupportedException()
     }
-    val sequenceClass = PyBuiltinCache.getInstance(si.expression).getClass(sequenceTypeName) ?: throw NotSupportedException()
-    val sequenceTypeGenericUnnormalized = sequenceClass.getType(context)?.toInstance() ?: throw NotSupportedException()
-    val sequenceTypeGeneric = normalizeType(sequenceTypeGenericUnnormalized, context) as? PyClassType ?: throw NotSupportedException()
-    val sequenceTypeVar = sequenceTypeGeneric.typeArguments.getOrNull(0) as? PyTypeVarType ?: throw NotSupportedException()
-    val iv = builder.addInferenceVariable(sequenceTypeVar, si) // sequences have only a single type variable
-
-    val cspSubstitutions = PyTypeChecker.unifyReceiver(sequenceTypeGeneric, context)
-    builder.putSubstitutions(si, cspSubstitutions)
-    val ivSubstitutions = GenericSubstitutions(mapOf(sequenceTypeVar to iv))
-    val sequenceTypeIV = PyTypeChecker.substitutePlainly(sequenceTypeGeneric, ivSubstitutions, context)
-
-    // not calling ensureBoundsAndConstraints since sequences have no bounds/constraints
-
-    val sequenceElements = unpackStarredListLiterals(si.expression.elements).take(10)
-    val elementTypes = sequenceElements.map { element ->
-      // A star element that survived unpacking (its operand isn't a list/set literal) contributes its
-      // iterated item type, not the type of the iterable itself (mirrors getListOrSetIteratedValueType).
-      val starOperand = (element as? PyStarExpression)?.expression
-      if (starOperand != null) {
-        (context.getType(starOperand) as? PyClassType)?.let { PyTypeChecker.getIteratedItemType(it, context) }
-      }
-      else {
-        buildNestedCsp(element, builder, context)
-      }
-    }
-    val sequenceTypeArg = PyUnionType.union(elementTypes)
-
-    // Literal element types as union
-    builder.addConstraint(iv, sequenceTypeArg, PyVariance.CONTRAVARIANT, ConstraintPriority.MEDIUM)
-
-    return sequenceTypeIV
   }
 
   private fun buildCallSiteExpressionCsp(callSite: PyCallSiteExpression, builder: CspBuilder, context: TypeEvalContext) : PyType? {
@@ -272,8 +296,8 @@ object PyTypeInferenceCspFactory {
     // type arguments
     for ((key, value) in cspSubstitutions.typeVars) {
       if (value != null) {
-        val keyIV = PyTypeChecker.substitutePlainly(key, ivSubstitutions, context)
-        val valueIV = PyTypeChecker.substitutePlainly(value.get(), ivSubstitutions, context)
+        val keyIV = PyTypeChecker.substitute(key, ivSubstitutions, context)
+        val valueIV = PyTypeChecker.substitute(value.get(), ivSubstitutions, context)
         builder.addConstraint(keyIV, valueIV, PyVariance.INVARIANT, ConstraintPriority.HIGH)
       }
     }
@@ -291,15 +315,15 @@ object PyTypeInferenceCspFactory {
       if (!expectedParameterType.isUnknown
           && (hasGenericsOrIVs(expectedParameterType, context) || hasGenericsOrIVs(passedArgumentType, context))
       ) {
-        val expectedParamTypeSelfIV = PyTypeChecker.substitutePlainly(expectedParameterType, ivSubstitutions, context)
-        val passedArgumentTypeIV = PyTypeChecker.substitutePlainly(passedArgumentType, ivSubstitutions, context)
+        val expectedParamTypeSelfIV = PyTypeChecker.substitute(expectedParameterType, ivSubstitutions, context)
+        val passedArgumentTypeIV = PyTypeChecker.substitute(passedArgumentType, ivSubstitutions, context)
         // semantics: Actual <: TV
         builder.addConstraint(expectedParamTypeSelfIV, passedArgumentTypeIV, PyVariance.CONTRAVARIANT, ConstraintPriority.MEDIUM)
       }
     }
 
     // return type
-    return PyTypeChecker.substitutePlainly(declaredReturn, ivSubstitutions, context)
+    return PyTypeChecker.substitute(declaredReturn, ivSubstitutions, context)
   }
 
   fun hasGenericsOrIVs(type: PyType?, context: TypeEvalContext): Boolean {
@@ -338,7 +362,7 @@ object PyTypeInferenceCspFactory {
 
     // bounds
     if (tv.bound != null && !tv.bound.isAnyOrUnknown) {
-      val typeVarBoundIV = PyTypeChecker.substitutePlainly(tv.bound, ivGenericSubstitutions, context)
+      val typeVarBoundIV = PyTypeChecker.substitute(tv.bound, ivGenericSubstitutions, context)
       // semantics: TV <: Bound
       builder.addConstraint(iv, typeVarBoundIV, PyVariance.COVARIANT, ConstraintPriority.HIGH, false)
     }
@@ -351,7 +375,7 @@ object PyTypeInferenceCspFactory {
       // Only at the very end, during instantiation, an actual set of remaining tv-constraints is chosen.
       // Note that both of these bounds are necessary to ensure that the TV will be instantiated as exactly one of the given tv-constraints
       // and not as a subtype of one of the given tv-constraints.
-      val constraintsIV = tv.getConstraints().map { PyTypeChecker.substitutePlainly(it, ivGenericSubstitutions, context) }
+      val constraintsIV = tv.getConstraints().map { PyTypeChecker.substitute(it, ivGenericSubstitutions, context) }
       val intersectionOfConstraints = PyIntersectionType.intersection(constraintsIV)
       val unionOfConstraints = PyUnionType.union(constraintsIV)
       // semantics: TV approximates CV_1 ⊕ CV_2 ⊕ ... ⊕ CV_n by
@@ -361,8 +385,10 @@ object PyTypeInferenceCspFactory {
     }
   }
 
-  fun findChildCsp(expression: PyExpression) : PyExpression? {
+  fun findChildCsp(expression: PyExpression?) : PyExpression? {
     when (expression) {
+      is PyParenthesizedExpression
+        -> return findChildCsp(expression.containedExpression)
       is PyKeywordArgument
         -> return expression.valueExpression
       else
@@ -383,7 +409,8 @@ object PyTypeInferenceCspFactory {
         }
       }
       is PyArgumentList,
-      is PyKeywordArgument
+      is PyKeywordArgument,
+      is PyParenthesizedExpression
         -> return findParentCsp(parent)
       else if (isCsp(parent))
         -> return parent
@@ -418,7 +445,9 @@ object PyTypeInferenceCspFactory {
     when (expression) {
       is PyCallExpression,
       is PyDecoratorList,
-      is PySequenceExpression,
+      is PyListLiteralExpression,
+      is PySetLiteralExpression,
+      is PyTupleExpression,
         -> {
         return true
       }
@@ -443,16 +472,6 @@ fun normalizeType(type: PyType?, context: TypeEvalContext): PyType? {
   return normalizedType
 }
 
-fun unpackStarredListLiterals(elements: Array<out PyExpression?>): List<PyExpression> {
-  val result = mutableListOf<PyExpression>()
-  for (element in elements) {
-    val starred = element as? PyStarExpression
-    val sequenceLiteral = starred?.expression
-    when (sequenceLiteral) {
-      is PyListLiteralExpression -> result.addAll(sequenceLiteral.elements)
-      is PySetLiteralExpression -> result.addAll(sequenceLiteral.elements)
-      else -> result.addIfNotNull(element)
-    }
-  }
-  return result
+fun TypeEvalContext.getNarrowedType(element: PyExpression): PyType? {
+  return PyLiteralType.getLiteralType (element, this) ?: this.getType(element)
 }

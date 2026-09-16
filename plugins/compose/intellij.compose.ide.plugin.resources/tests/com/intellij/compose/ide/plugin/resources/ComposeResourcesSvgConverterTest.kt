@@ -506,7 +506,7 @@ internal class ComposeResourcesSvgConverterTest : BasePlatformTestCase() {
 
   private fun loadSvgResource(testCase: String): Path {
     val fileName = "$testCase.svg"
-    val path = "plugins/compose/intellij.compose.ide.plugin.resources/testData/vectordrawable/$fileName"
+    val path = "$COMPOSE_RESOURCES_TEST_DATA_RELATIVE_PATH/vectordrawable/$fileName"
     val file = File(PlatformTestUtil.getCommunityPath(), path)
     if (file.exists()) return file.toPath()
 

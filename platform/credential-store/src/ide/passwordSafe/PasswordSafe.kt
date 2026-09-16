@@ -26,8 +26,8 @@ abstract class PasswordSafe : CredentialStore, PasswordStorage {
 
   abstract val isMemoryOnly: Boolean
 
-  @RequiresBackgroundThread
-  @RequiresReadLockAbsence
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  @RequiresReadLockAbsence(generateAssertion = false /* IJPL-115548 */)
   abstract operator fun set(attributes: CredentialAttributes, credentials: Credentials?, memoryOnly: Boolean)
 
   abstract fun isPasswordStoredOnlyInMemory(attributes: CredentialAttributes, credentials: Credentials): Boolean

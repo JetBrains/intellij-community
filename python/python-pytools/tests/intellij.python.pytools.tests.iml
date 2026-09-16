@@ -46,7 +46,9 @@
     <orderEntry type="module" module-name="intellij.platform.util" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.python.pytools" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.lsp.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.pytools.backend" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.pytools.common" scope="TEST" />
   </component>
-  <component name="TestModuleProperties" production-module="intellij.python.pytools" />
+  <component name="TestModuleProperties" production-module="intellij.python.pytools.backend" />
 </module>

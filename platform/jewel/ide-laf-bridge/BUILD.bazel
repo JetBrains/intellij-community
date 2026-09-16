@@ -12,6 +12,10 @@ jps_test(
 
 ### skip generation section `test intellij.platform.jewel.ideLafBridge.tests`
 
+### auto-generated section `dev intellij.platform.jewel.ideLafBridge` start
+content_module_jar(module = ":ide-laf-bridge")
+### auto-generated section `dev intellij.platform.jewel.ideLafBridge` end
+
 ### auto-generated section `build intellij.platform.jewel.ideLafBridge` start
 create_kotlinc_options(
     name = "custom_ide-laf-bridge",
@@ -72,8 +76,6 @@ jvm_library(
         "//platform/editor-ui-ex:editor-ex",
     ],
 )
-
-content_module_jar(module = ":ide-laf-bridge")
 
 jvm_library(
     name = "ide-laf-bridge_test_lib",
@@ -136,7 +138,6 @@ exports_files(
     [
         "intellij.platform.jewel.ideLafBridge.iml",
         "src/main/resources/intellij.platform.jewel.ideLafBridge.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )
@@ -169,6 +170,7 @@ jvm_library(
         "//platform/jewel/ui",
         "//libraries/compose-foundation-desktop",
     ],
+    runtime_deps = ["//xml/plugin"],
 )
 
 jvm_library(
@@ -204,6 +206,7 @@ jvm_library(
         # do not sort,
         ":ideLafBridge-tests",
         "//platform/platform-impl:ide-impl_test_lib",
+        "//xml/plugin:plugin_test_lib",
     ],
     deps = [
         # do not sort,

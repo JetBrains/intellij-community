@@ -80,7 +80,7 @@ internal class GitInteractiveRebaseDialog<T : GitRebaseEntry>(
   }
   private val modalityState = window?.let { ModalityState.stateForComponent(it) } ?: ModalityState.current()
   private val fullCommitDetailsListPanel = object : FullCommitDetailsListPanel(project, disposable, modalityState) {
-    @RequiresBackgroundThread
+    @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
     @Throws(VcsException::class)
     override fun loadChanges(commits: List<VcsCommitMetadata>): List<Change> {
       val changes = mutableListOf<Change>()

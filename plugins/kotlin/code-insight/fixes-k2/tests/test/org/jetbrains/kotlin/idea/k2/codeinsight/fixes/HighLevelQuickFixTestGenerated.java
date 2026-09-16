@@ -8672,6 +8672,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/destructingShortForm/fullFormLambdaNameMismatch.kt");
         }
 
+        @TestMetadata("fullFormValueClasses.kt")
+        public void testFullFormValueClasses() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingShortForm/fullFormValueClasses.kt");
+        }
+
         @TestMetadata("fullFormWithAllUnusedVariable.kt")
         public void testFullFormWithAllUnusedVariable() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/destructingShortForm/fullFormWithAllUnusedVariable.kt");
@@ -10938,6 +10943,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/modifiers/openObject.kt");
             }
 
+            @TestMetadata("openValueClass.kt")
+            public void testOpenValueClass() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/modifiers/openValueClass.kt");
+            }
+
             @TestMetadata("openVarWithPrivateSetter1.kt")
             public void testOpenVarWithPrivateSetter1() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/modifiers/openVarWithPrivateSetter1.kt");
@@ -11006,6 +11016,16 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             @TestMetadata("packageMemberCannotBeProtected.kt")
             public void testPackageMemberCannotBeProtected() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/modifiers/packageMemberCannotBeProtected.kt");
+            }
+
+            @TestMetadata("privateConstInInterfaceRemoveConst.kt")
+            public void testPrivateConstInInterfaceRemoveConst() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/modifiers/privateConstInInterfaceRemoveConst.kt");
+            }
+
+            @TestMetadata("privateConstInInterfaceRemovePrivate.kt")
+            public void testPrivateConstInInterfaceRemovePrivate() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/modifiers/privateConstInInterfaceRemovePrivate.kt");
             }
 
             @TestMetadata("redundantOpenInInterface.kt")
@@ -11414,6 +11434,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         public static class Uncategorized extends AbstractHighLevelQuickFixTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("removeCompanionExtensionNullableReceiver.kt")
+            public void testRemoveCompanionExtensionNullableReceiver() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/nullables/removeCompanionExtensionNullableReceiver.kt");
             }
 
             @TestMetadata("removeRedundantNullable.kt")
@@ -12279,6 +12304,76 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/receiverShadowedByContextParameter/anonymousType.kt");
         }
 
+        @TestMetadata("callableReferenceAddContextOf.kt")
+        public void testCallableReferenceAddContextOf() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/receiverShadowedByContextParameter/callableReferenceAddContextOf.kt");
+        }
+
+        @TestMetadata("callableReferenceAddContextParameterName.kt")
+        public void testCallableReferenceAddContextParameterName() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/receiverShadowedByContextParameter/callableReferenceAddContextParameterName.kt");
+        }
+
+        @TestMetadata("callableReferenceAddLabeledThis.kt")
+        public void testCallableReferenceAddLabeledThis() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/receiverShadowedByContextParameter/callableReferenceAddLabeledThis.kt");
+        }
+
+        @TestMetadata("callableReferenceAddThis.kt")
+        public void testCallableReferenceAddThis() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/receiverShadowedByContextParameter/callableReferenceAddThis.kt");
+        }
+
+        @TestMetadata("callableReferenceContextOfGenericType.kt")
+        public void testCallableReferenceContextOfGenericType() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/receiverShadowedByContextParameter/callableReferenceContextOfGenericType.kt");
+        }
+
+        @TestMetadata("callableReferenceMultipleContextParameters.kt")
+        public void testCallableReferenceMultipleContextParameters() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/receiverShadowedByContextParameter/callableReferenceMultipleContextParameters.kt");
+        }
+
+        @TestMetadata("callableReferenceQualifiedChain.kt")
+        public void testCallableReferenceQualifiedChain() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/receiverShadowedByContextParameter/callableReferenceQualifiedChain.kt");
+        }
+
+        @TestMetadata("callableReferenceToProperty.kt")
+        public void testCallableReferenceToProperty() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/receiverShadowedByContextParameter/callableReferenceToProperty.kt");
+        }
+
+        @TestMetadata("labeledThisAmbiguousNestedWith.kt")
+        public void testLabeledThisAmbiguousNestedWith() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/receiverShadowedByContextParameter/labeledThisAmbiguousNestedWith.kt");
+        }
+
+        @TestMetadata("labeledThisClassDispatch.kt")
+        public void testLabeledThisClassDispatch() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/receiverShadowedByContextParameter/labeledThisClassDispatch.kt");
+        }
+
+        @TestMetadata("labeledThisExplicitLambdaLabel.kt")
+        public void testLabeledThisExplicitLambdaLabel() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/receiverShadowedByContextParameter/labeledThisExplicitLambdaLabel.kt");
+        }
+
+        @TestMetadata("labeledThisImplicitLambdaLabel.kt")
+        public void testLabeledThisImplicitLambdaLabel() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/receiverShadowedByContextParameter/labeledThisImplicitLambdaLabel.kt");
+        }
+
+        @TestMetadata("labeledThisUnavailableAnonymousObject.kt")
+        public void testLabeledThisUnavailableAnonymousObject() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/receiverShadowedByContextParameter/labeledThisUnavailableAnonymousObject.kt");
+        }
+
+        @TestMetadata("labeledThisWithGeneric.kt")
+        public void testLabeledThisWithGeneric() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/receiverShadowedByContextParameter/labeledThisWithGeneric.kt");
+        }
+
         @TestMetadata("memberExtensionAddContextOf.kt")
         public void testMemberExtensionAddContextOf() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/receiverShadowedByContextParameter/memberExtensionAddContextOf.kt");
@@ -12292,6 +12387,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         @TestMetadata("memberExtensionAddThis.kt")
         public void testMemberExtensionAddThis() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/receiverShadowedByContextParameter/memberExtensionAddThis.kt");
+        }
+
+        @TestMetadata("memberExtensionLabeledThis.kt")
+        public void testMemberExtensionLabeledThis() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/receiverShadowedByContextParameter/memberExtensionLabeledThis.kt");
         }
 
         @TestMetadata("propertyAddThis.kt")
@@ -18179,6 +18279,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             @TestMetadata("parameterWithComment.kt")
             public void testParameterWithComment() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/variables/removeValVarFromParameter/parameterWithComment.kt");
+            }
+
+            @TestMetadata("sealedValueClassConstructorParameter.kt")
+            public void testSealedValueClassConstructorParameter() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/variables/removeValVarFromParameter/sealedValueClassConstructorParameter.kt");
             }
 
             @TestMetadata("secondaryConstructorParameter.kt")

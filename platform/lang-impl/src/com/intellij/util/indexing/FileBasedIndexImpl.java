@@ -435,6 +435,13 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     return myRegisteredIndexes;
   }
 
+  /** @return true when the index shutdown has started, so new index operations must stop */
+  @Internal
+  public boolean isShutdownStarted() {
+    var registeredIndexes = myRegisteredIndexes;
+    return registeredIndexes != null && registeredIndexes.isShutdownPerformed();
+  }
+
   void setUpShutDownTask() {
     myShutDownTask = new ShutDownIndexesTask(/*byShutDownHook: */ true);
     ShutDownTracker.getInstance().registerCacheShutdownTask(myShutDownTask);

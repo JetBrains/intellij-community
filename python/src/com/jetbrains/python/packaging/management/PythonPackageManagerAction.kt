@@ -45,7 +45,7 @@ internal abstract class PythonPackageManagerAction<T : PythonPackageManager, V> 
    *
    * @return the manager instance of type [T] associated with the action event, or null if there is no [T]-manager associated.
    */
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   protected abstract fun getManager(e: AnActionEvent): T?
 
   /**

@@ -13,7 +13,9 @@ import com.fasterxml.jackson.databind.introspect.VisibilityChecker
 import com.fasterxml.jackson.module.kotlin.jacksonMapperBuilder
 import com.intellij.collaboration.api.json.JsonDataDeserializer
 import com.intellij.collaboration.api.json.JsonDataSerializer
+import java.io.InputStream
 import java.io.Reader
+import java.nio.charset.Charset
 import java.text.SimpleDateFormat
 import java.util.TimeZone
 
@@ -55,4 +57,37 @@ object GitLabRestJsonDataDeSerializer : JsonDataSerializer, JsonDataDeserializer
       .readValueAsTree<JsonNode>()
       ?.let { mapper.treeToValue(it, type) }
   }
+
+  override fun <T : Any> readJson(stream: InputStream, charset: Charset, clazz: Class<T>): T? {
+    return if (isCharsetAllowed(charset)) {
+      mapper.createParser(stream)
+        .readValueAsTree<JsonNode>()
+        ?.let { mapper.treeToValue(it, clazz) }
+    }
+    else {
+      fromJson(stream.reader(charset), clazz)
+    }
+  }
+
+  override fun <T : Any> readJson(
+    stream: InputStream,
+    charset: Charset,
+    clazz: Class<T>,
+    vararg classArgs: Class<*>,
+  ): T? {
+    return if (isCharsetAllowed(charset)) {
+      val type = mapper.typeFactory.constructParametricType(clazz, *classArgs)
+      mapper.createParser(stream)
+        .readValueAsTree<JsonNode>()
+        ?.let { mapper.treeToValue(it, type) }
+    }
+    else {
+      fromJson(stream.reader(charset), clazz, *classArgs)
+    }
+  }
 }
+
+private fun isCharsetAllowed(charset: Charset): Boolean =
+  charset == Charsets.UTF_8
+  || charset == Charsets.UTF_16
+  || charset == Charsets.UTF_32

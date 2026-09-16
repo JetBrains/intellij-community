@@ -223,10 +223,10 @@ public class JavaExecutionStack extends XExecutionStack {
 
   private void markCallerFrame(StackFrameDescriptorImpl descriptor) {
     XStackFrame topFrame = getTopFrame();
-    if (descriptor.getUiIndex() == 1 && topFrame instanceof JavaStackFrame) {
+    if (descriptor.getUiIndex() == 1 && topFrame instanceof JavaStackFrame frame) {
       Method method = descriptor.getMethod();
       if (method != null) {
-        ((JavaStackFrame)topFrame).getDescriptor().putUserData(BreakpointIntentionAction.CALLER_KEY, DebuggerUtilsEx.methodKey(method));
+        frame.getDescriptor().putUserData(BreakpointIntentionAction.CALLER_KEY, DebuggerUtilsEx.methodKey(method));
       }
     }
   }
@@ -421,8 +421,8 @@ public class JavaExecutionStack extends XExecutionStack {
         framesAsync.thenAccept(frames -> {
           for (XStackFrame frame : ContainerUtil.notNullize(frames)) {
             if (first || showFrame(frame)) {
-              if (frame instanceof JavaStackFrame) {
-                ((JavaStackFrame)frame).getDescriptor().updateRepresentationNoNotify(null, () -> {
+              if (frame instanceof JavaStackFrame stackFrame) {
+                stackFrame.getDescriptor().updateRepresentationNoNotify(null, () -> {
                   // repaint on icon change
                   addStackFrames(Collections.emptyList(), !myStackFramesIterator.hasNext());
                 });
@@ -573,8 +573,8 @@ public class JavaExecutionStack extends XExecutionStack {
     }
     CompletableFuture<String> nameFuture = threadReference.nameAsync();
     CompletableFuture<String> groupNameFuture = threadReference.threadGroupAsync().thenCompose(gr -> {
-      if (gr instanceof ThreadGroupReferenceImpl) {
-        return ((ThreadGroupReferenceImpl)gr).nameAsync();
+      if (gr instanceof ThreadGroupReferenceImpl reference) {
+        return reference.nameAsync();
       }
       return CompletableFuture.completedFuture(null);
     });

@@ -31,27 +31,27 @@ public final class WindowsDrives {
    * @return the roots of the fixed drives, for example {@code C:\\}, from {@code GetLogicalDriveStringsW} filtered by {@code GetDriveTypeW}
    */
   public static @NotNull List<String> fixedDriveRoots() {
-    try (Arena arena = Arena.ofConfined()) {
-      int length = (int)Handles.GET_LOGICAL_DRIVE_STRINGS.invokeExact(0, MemorySegment.NULL);
+    try (var arena = Arena.ofConfined()) {
+      var length = (int)Handles.GET_LOGICAL_DRIVE_STRINGS.invokeExact(0, MemorySegment.NULL);
       if (length <= 0) {
         return List.of();
       }
-      MemorySegment buffer = arena.allocate(2L * (length + 1));
-      int copied = (int)Handles.GET_LOGICAL_DRIVE_STRINGS.invokeExact(length + 1, buffer);
+      var buffer = arena.allocate(2L * (length + 1));
+      var copied = (int)Handles.GET_LOGICAL_DRIVE_STRINGS.invokeExact(length + 1, buffer);
       if (copied <= 0) {
         return List.of();
       }
       // the buffer holds "C:\\", "D:\\", ... each ended by a NUL, then a final NUL
-      String block = new String(buffer.asSlice(0, 2L * copied).toArray(JAVA_BYTE), StandardCharsets.UTF_16LE);
-      List<String> result = new ArrayList<>();
-      int start = 0;
+      var block = new String(buffer.asSlice(0, 2L * copied).toArray(JAVA_BYTE), StandardCharsets.UTF_16LE);
+      var result = new ArrayList<String>();
+      var start = 0;
       while (start < block.length()) {
-        int end = block.indexOf('\0', start);
+        var end = block.indexOf('\0', start);
         if (end < 0) end = block.length();
-        String root = block.substring(start, end);
+        var root = block.substring(start, end);
         start = end + 1;
         if (root.isEmpty()) continue;
-        int type = (int)Handles.GET_DRIVE_TYPE.invokeExact(arena.allocateFrom(root, StandardCharsets.UTF_16LE));
+        var type = (int)Handles.GET_DRIVE_TYPE.invokeExact(arena.allocateFrom(root, StandardCharsets.UTF_16LE));
         if (type == DRIVE_FIXED) {
           result.add(root);
         }

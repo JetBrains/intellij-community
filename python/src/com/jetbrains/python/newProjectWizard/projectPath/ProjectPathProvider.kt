@@ -26,7 +26,7 @@ interface ProjectPathProvider {
    * Calls [code] as long as project path field is visible on each project path change.
    * this code accepts project path name
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun onProjectFileNameChanged(code: suspend (projectFileName: @NlsSafe String) -> Unit)
 
   /**
@@ -41,7 +41,7 @@ interface ProjectPathProvider {
      * [deniedChars] are added to validation and replaced with `_`
      */
     @JvmOverloads
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     fun Cell<JTextField>.bindProjectName(projectPathProvider: ProjectPathProvider, property: KMutableProperty0<@NlsSafe String>, deniedChars: Regex? = null) = apply {
       trimmedTextValidation(CHECK_NON_EMPTY, CHECK_NO_WHITESPACES)
       deniedChars?.let {

@@ -1,5 +1,4 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
-load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.libraries.kotlinc.kotlin.compiler.fir` start
 jvm_library(
@@ -19,12 +18,8 @@ jvm_library(
         # do not sort,
         "@lib//:libraries-kotlinc-kotlin-compiler-fir-kotlinc-kotlin-compiler-fir",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-ir:libraries-kotlinc-kotlin-compiler-ir",
     ],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-kotlinc-kotlin-compiler-fir-kotlinc-kotlin-compiler-fir"],
-    module = ":libraries-kotlinc-kotlin-compiler-fir",
 )
 
 jvm_library(
@@ -42,6 +37,7 @@ jvm_library(
         # do not sort,
         ":libraries-kotlinc-kotlin-compiler-fir",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-ir:libraries-kotlinc-kotlin-compiler-ir_test_lib",
     ],
 )
 ### auto-generated section `build intellij.libraries.kotlinc.kotlin.compiler.fir` end
@@ -51,7 +47,6 @@ exports_files(
     [
         "intellij.libraries.kotlinc.kotlin.compiler.fir.iml",
         "resources/intellij.libraries.kotlinc.kotlin.compiler.fir.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

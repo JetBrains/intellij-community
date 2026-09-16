@@ -36,6 +36,10 @@ internal class PyDapPluginInstallGotItListener : XDebuggerManagerListener {
   override fun processStarted(debugProcess: XDebugProcess) {
     val session = debugProcess.session
     if (session.runProfile !is AbstractPythonRunConfiguration<*>) return
+    // The tooltip points at the switcher, which the frontend does not show, and it offers to install a
+    // plugin that has to sit on the backend. Without this the promotion pins an empty header toolbar open
+    // and then polls half a minute for a button that never appears.
+    if (!isPyDebuggerBackendSwitcherSupported()) return
     if (isPythonDapPluginInstalledAndEnabled()) return
     if (isAcked()) return
 

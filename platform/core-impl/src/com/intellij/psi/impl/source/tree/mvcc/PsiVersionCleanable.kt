@@ -6,11 +6,11 @@ import org.jetbrains.annotations.ApiStatus
 /**
  * An interface for objects that need to react to changes in the set of live PSI versions.
  *
- * An example is an object that keeps track of several references. Such an object likely needs to remove obsolete versions to improve memory usage.
+ * An example is an object that keeps track of several references (e.g. [VersionedPsiReference] or [ConcurrentWeakVersionedValueHashMap]).
+ * Such an object likely needs to remove obsolete versions to improve memory usage.
  *
- * The registration happens with [InternalPsiVersioning.PsiVersionRegistry.registerCleanable].
- * Cleanup procedure is called as long as the object that implements this interface is [strongly reachable][java.lang.ref].
- * Hence, it is advised to implement this interface by the objects that hold versioned state.
+ * An implementation registers a successful change through [InternalPsiVersioning.recordVersionedChange] when this object is modified.
+ * The collector keeps a weak reference until it processes that change.
  */
 @ApiStatus.Internal
 interface PsiVersionCleanable {

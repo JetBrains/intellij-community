@@ -51,7 +51,7 @@ interface KotlinBuildSystemDependencyManager {
      *
      * @return a [Job] that completes when the dependency is added.
      */
-    @RequiresBackgroundThread
+    @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
     @Deprecated("Use addDependencyModCommand instead", ReplaceWith("addDependencyModCommand(context, module, libraryDescriptor)"))
     fun addDependency(module: Module, libraryDescriptor: ExternalLibraryDescriptor): Job
 

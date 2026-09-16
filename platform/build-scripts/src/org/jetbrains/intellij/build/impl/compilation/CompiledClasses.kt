@@ -8,9 +8,6 @@ import com.intellij.util.io.Decompressor
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
-import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.withTimeout
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.impl.JpsCompilationRunner
@@ -23,7 +20,9 @@ import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.jps.api.CanceledStatus
 import org.jetbrains.jps.incremental.storage.ProjectStamps
 import java.nio.file.Path
+import java.util.concurrent.TimeoutException
 import kotlin.io.path.exists
+import kotlin.time.TimeSource
 
 internal fun checkCompilationOptions(context: CompilationContext) {
   val options = context.options
@@ -120,7 +119,7 @@ internal fun keepCompilationState(options: BuildOptions): Boolean {
           options.incrementalCompilation)
 }
 
-internal suspend fun reuseOrCompile(
+internal fun reuseOrCompile(
   moduleNames: Collection<String>?,
   includingTestsInModules: List<String>?,
   span: Span,
@@ -190,12 +189,12 @@ internal fun isIncrementalCompilationDataAvailable(context: CompilationContext):
   return context.options.incrementalCompilation && context.compilationData.isIncrementalCompilationDataAvailable()
 }
 
-internal suspend fun doCompile(
+internal fun doCompile(
   moduleNames: Collection<String>? = null,
   includingTestsInModules: List<String>? = null,
   availableCommitDepth: Int,
   context: CompilationContext,
-  handleCompilationFailureBeforeRetry: (suspend (successMessage: String) -> String)?,
+  handleCompilationFailureBeforeRetry: ((successMessage: String) -> String)?,
 ) {
   check(currentJavaVersion().isAtLeast(17)) {
     "Build script must be executed under Java 17 to compile intellij project but it's executed under Java ${currentJavaVersion()}"
@@ -227,15 +226,17 @@ internal suspend fun doCompile(
 
     val incrementalCompilationTimeout = context.options.incrementalCompilationTimeout
     if (isIncrementalCompilation && incrementalCompilationTimeout != null) {
-      // workaround for KT-55695
-      withTimeout(incrementalCompilationTimeout) {
-        compile(
-          jpsCompilationRunner = runner,
-          moduleNames = moduleNames,
-          includingTestsInModules = includingTestsInModules,
-          context = context,
-          canceledStatus = CanceledStatus { !isActive },
-        )
+      // workaround for KT-55695: the compiler polls the status, so a deadline cancels it as a coroutine timeout did
+      val deadline = TimeSource.Monotonic.markNow() + incrementalCompilationTimeout
+      compile(
+        jpsCompilationRunner = runner,
+        moduleNames = moduleNames,
+        includingTestsInModules = includingTestsInModules,
+        context = context,
+        canceledStatus = CanceledStatus { deadline.hasPassedNow() },
+      )
+      if (deadline.hasPassedNow()) {
+        throw TimeoutException("Incremental compilation did not end in $incrementalCompilationTimeout")
       }
     }
     else {
@@ -255,7 +256,7 @@ internal suspend fun doCompile(
   }
 }
 
-private suspend fun unpackCompiledClasses(classOutput: Path, context: CompilationContext) {
+private fun unpackCompiledClasses(classOutput: Path, context: CompilationContext) {
   spanBuilder("unpack compiled classes archive").use {
     NioFiles.deleteRecursively(classOutput)
     Decompressor.Zip(context.options.pathToCompiledClassesArchive ?: error("intellij.build.compiled.classes.archive is not set"))
@@ -263,13 +264,13 @@ private suspend fun unpackCompiledClasses(classOutput: Path, context: Compilatio
   }
 }
 
-private suspend fun retryCompilation(
+private fun retryCompilation(
   context: CompilationContext,
   runner: JpsCompilationRunner,
   moduleNames: Collection<String>?,
   includingTestsInModules: List<String>?,
   e: Exception,
-  handleCompilationFailureBeforeRetry: (suspend (successMessage: String) -> String)?,
+  handleCompilationFailureBeforeRetry: ((successMessage: String) -> String)?,
 ) {
   if (!context.options.incrementalCompilation) {
     throw e
@@ -282,7 +283,7 @@ private suspend fun retryCompilation(
 
   var successMessage = "Clean build retry"
   when {
-    e is TimeoutCancellationException -> {
+    e is TimeoutException -> {
       context.messages.reportBuildProblem("Incremental compilation timed out. Re-trying with clean build.")
       successMessage = "$successMessage after timeout"
       cleanOutput(context = context, keepCompilationState = false)
@@ -306,7 +307,7 @@ private suspend fun retryCompilation(
   context.messages.reportStatisticValue("Incremental compilation failures", "1")
 }
 
-private suspend fun compile(
+private fun compile(
   jpsCompilationRunner: JpsCompilationRunner,
   moduleNames: Collection<String>?,
   includingTestsInModules: List<String>?,

@@ -173,7 +173,7 @@ public abstract class NodeRendererImpl implements NodeRenderer {
 
     @Override
     public boolean equals(Object obj) {
-      return obj instanceof Overhead && myRenderer.equals(((Overhead)obj).myRenderer);
+      return obj instanceof Overhead overhead && myRenderer.equals(overhead.myRenderer);
     }
   }
 

@@ -17,7 +17,7 @@ import org.junit.runner.RunWith;
 @TestRoot("refactorings/kotlin.refactorings.tests.k2")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../../idea/tests/testData/refactoring/moveToClassWithConversion")
+@TestMetadata("testData/moveToClassWithConversion")
 public class K2MoveToClassWithConversionTestGenerated extends AbstractK2MoveToClassWithConversionTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -25,101 +25,101 @@ public class K2MoveToClassWithConversionTestGenerated extends AbstractK2MoveToCl
 
     @TestMetadata("conflicts/contextParamNameClash/contextParamNameClash.test")
     public void testConflicts_contextParamNameClash_ContextParamNameClash() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/moveToClassWithConversion/conflicts/contextParamNameClash/contextParamNameClash.test");
+        runTest("testData/moveToClassWithConversion/conflicts/contextParamNameClash/contextParamNameClash.test");
     }
 
     @TestMetadata("conflicts/fromInnerToNestedClass/fromInnerToNestedClass.test")
     public void testConflicts_fromInnerToNestedClass_FromInnerToNestedClass() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/moveToClassWithConversion/conflicts/fromInnerToNestedClass/fromInnerToNestedClass.test");
+        runTest("testData/moveToClassWithConversion/conflicts/fromInnerToNestedClass/fromInnerToNestedClass.test");
     }
 
     @TestMetadata("conflicts/targetHasSameSignature/targetHasSameSignature.test")
     public void testConflicts_targetHasSameSignature_TargetHasSameSignature() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/moveToClassWithConversion/conflicts/targetHasSameSignature/targetHasSameSignature.test");
+        runTest("testData/moveToClassWithConversion/conflicts/targetHasSameSignature/targetHasSameSignature.test");
     }
 
     @TestMetadata("conflicts/usesPrivateMemberOfSource/usesPrivateMemberOfSource.test")
     public void testConflicts_usesPrivateMemberOfSource_UsesPrivateMemberOfSource() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/moveToClassWithConversion/conflicts/usesPrivateMemberOfSource/usesPrivateMemberOfSource.test");
+        runTest("testData/moveToClassWithConversion/conflicts/usesPrivateMemberOfSource/usesPrivateMemberOfSource.test");
     }
 
     @TestMetadata("decl/contextParameter/topLevelFunction/topLevelFunction.test")
     public void testDecl_contextParameter_topLevelFunction_TopLevelFunction() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/moveToClassWithConversion/decl/contextParameter/topLevelFunction/topLevelFunction.test");
+        runTest("testData/moveToClassWithConversion/decl/contextParameter/topLevelFunction/topLevelFunction.test");
     }
 
     @TestMetadata("decl/contextParameter/withOtherParams/withOtherParams.test")
     public void testDecl_contextParameter_withOtherParams_WithOtherParams() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/moveToClassWithConversion/decl/contextParameter/withOtherParams/withOtherParams.test");
+        runTest("testData/moveToClassWithConversion/decl/contextParameter/withOtherParams/withOtherParams.test");
     }
 
     @TestMetadata("decl/extensionReceiver/topLevelFunction/topLevelFunction.test")
     public void testDecl_extensionReceiver_topLevelFunction_TopLevelFunction() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/moveToClassWithConversion/decl/extensionReceiver/topLevelFunction/topLevelFunction.test");
+        runTest("testData/moveToClassWithConversion/decl/extensionReceiver/topLevelFunction/topLevelFunction.test");
     }
 
     @TestMetadata("decl/extensionReceiver/withThisLabel/withThisLabel.test")
     public void testDecl_extensionReceiver_withThisLabel_WithThisLabel() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/moveToClassWithConversion/decl/extensionReceiver/withThisLabel/withThisLabel.test");
+        runTest("testData/moveToClassWithConversion/decl/extensionReceiver/withThisLabel/withThisLabel.test");
     }
 
     @TestMetadata("decl/multipleCandidates/pickExtensionReceiver/pickExtensionReceiver.test")
     public void testDecl_multipleCandidates_pickExtensionReceiver_PickExtensionReceiver() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/moveToClassWithConversion/decl/multipleCandidates/pickExtensionReceiver/pickExtensionReceiver.test");
+        runTest("testData/moveToClassWithConversion/decl/multipleCandidates/pickExtensionReceiver/pickExtensionReceiver.test");
     }
 
     @TestMetadata("decl/multipleCandidates/pickValueParam/pickValueParam.test")
     public void testDecl_multipleCandidates_pickValueParam_PickValueParam() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/moveToClassWithConversion/decl/multipleCandidates/pickValueParam/pickValueParam.test");
+        runTest("testData/moveToClassWithConversion/decl/multipleCandidates/pickValueParam/pickValueParam.test");
     }
 
     @TestMetadata("decl/valueParameter/classMember/classMember.test")
     public void testDecl_valueParameter_classMember_ClassMember() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/moveToClassWithConversion/decl/valueParameter/classMember/classMember.test");
+        runTest("testData/moveToClassWithConversion/decl/valueParameter/classMember/classMember.test");
     }
 
     @TestMetadata("decl/valueParameter/topLevelFunction/topLevelFunction.test")
     public void testDecl_valueParameter_topLevelFunction_TopLevelFunction() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/moveToClassWithConversion/decl/valueParameter/topLevelFunction/topLevelFunction.test");
+        runTest("testData/moveToClassWithConversion/decl/valueParameter/topLevelFunction/topLevelFunction.test");
     }
 
     @TestMetadata("useSite/callWithExplicitReceiver/callWithExplicitReceiver.test")
     public void testUseSite_callWithExplicitReceiver_CallWithExplicitReceiver() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/moveToClassWithConversion/useSite/callWithExplicitReceiver/callWithExplicitReceiver.test");
+        runTest("testData/moveToClassWithConversion/useSite/callWithExplicitReceiver/callWithExplicitReceiver.test");
     }
 
     @TestMetadata("useSite/companionCallWithImport/companionCallWithImport.test")
     public void testUseSite_companionCallWithImport_CompanionCallWithImport() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/moveToClassWithConversion/useSite/companionCallWithImport/companionCallWithImport.test");
+        runTest("testData/moveToClassWithConversion/useSite/companionCallWithImport/companionCallWithImport.test");
     }
 
     @TestMetadata("useSite/companionCall/companionCall.test")
     public void testUseSite_companionCall_CompanionCall() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/moveToClassWithConversion/useSite/companionCall/companionCall.test");
+        runTest("testData/moveToClassWithConversion/useSite/companionCall/companionCall.test");
     }
 
     @TestMetadata("useSite/crossFileCaller/crossFileCaller.test")
     public void testUseSite_crossFileCaller_CrossFileCaller() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/moveToClassWithConversion/useSite/crossFileCaller/crossFileCaller.test");
+        runTest("testData/moveToClassWithConversion/useSite/crossFileCaller/crossFileCaller.test");
     }
 
     @TestMetadata("useSite/implicitDispatchReceiver/implicitDispatchReceiver.test")
     public void testUseSite_implicitDispatchReceiver_ImplicitDispatchReceiver() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/moveToClassWithConversion/useSite/implicitDispatchReceiver/implicitDispatchReceiver.test");
+        runTest("testData/moveToClassWithConversion/useSite/implicitDispatchReceiver/implicitDispatchReceiver.test");
     }
 
     @TestMetadata("useSite/implicitReceiverWith/implicitReceiverWith.test")
     public void testUseSite_implicitReceiverWith_ImplicitReceiverWith() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/moveToClassWithConversion/useSite/implicitReceiverWith/implicitReceiverWith.test");
+        runTest("testData/moveToClassWithConversion/useSite/implicitReceiverWith/implicitReceiverWith.test");
     }
 
     @TestMetadata("useSite/nestedLambdasReceivers/nestedLambdasReceivers.test")
     public void testUseSite_nestedLambdasReceivers_NestedLambdasReceivers() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/moveToClassWithConversion/useSite/nestedLambdasReceivers/nestedLambdasReceivers.test");
+        runTest("testData/moveToClassWithConversion/useSite/nestedLambdasReceivers/nestedLambdasReceivers.test");
     }
 
     @TestMetadata("useSite/simpleCall/simpleCall.test")
     public void testUseSite_simpleCall_SimpleCall() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/moveToClassWithConversion/useSite/simpleCall/simpleCall.test");
+        runTest("testData/moveToClassWithConversion/useSite/simpleCall/simpleCall.test");
     }
 }

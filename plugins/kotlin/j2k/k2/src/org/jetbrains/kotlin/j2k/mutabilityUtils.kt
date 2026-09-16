@@ -36,7 +36,6 @@ import com.intellij.util.JavaPsiConstructorUtil
 import com.intellij.util.MathUtil
 import com.siyeh.ig.psiutils.FinalUtils
 import com.siyeh.ig.psiutils.VariableAccessUtils
-import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.j2k.tree.JKFieldAccessExpression
 import org.jetbrains.kotlin.j2k.tree.JKKtAssignmentStatement
 import org.jetbrains.kotlin.j2k.tree.JKOperatorToken.Companion.MINUSMINUS
@@ -313,5 +312,16 @@ fun JKVariable.hasWritableUsages(scope: JKTreeElement, context: ConverterContext
     findWritableUsages(scope, context).isNotEmpty()
 
 
+private fun jpaAnnotations(vararg simpleNames: String): Set<String> =
+    simpleNames.flatMapTo(mutableSetOf()) { listOf("javax.persistence.$it", "jakarta.persistence.$it") }
+
 // JPA and @Volatile fields should always be mutable
-val MUTABLE_ANNOTATIONS = setOf("kotlin.concurrent.Volatile", "javax.persistence.Column", "jakarta.persistence.Column")
+val MUTABLE_FIELD_ANNOTATIONS: Set<String> = setOf("kotlin.concurrent.Volatile") + jpaAnnotations(
+    "Basic", "Column", "ElementCollection", "Embedded", "GeneratedValue", "Id",
+    "JoinColumn", "ManyToMany", "ManyToOne", "OneToMany", "OneToOne", "Version",
+)
+
+// JPA writes every persistent field of these classes after construction
+val PERSISTENT_CLASS_ANNOTATIONS: Set<String> = jpaAnnotations("Entity", "Embeddable", "MappedSuperclass")
+
+val NON_PERSISTENT_FIELD_ANNOTATIONS: Set<String> = jpaAnnotations("Transient") + "kotlin.jvm.Transient"

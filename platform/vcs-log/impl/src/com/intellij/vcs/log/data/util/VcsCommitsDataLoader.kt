@@ -7,7 +7,7 @@ import com.intellij.vcs.log.CommitId
 
 interface VcsCommitsDataLoader<T> : Disposable {
 
-  @RequiresEdt
-  fun loadData(commits: List<CommitId>, @RequiresEdt onChange: (Map<CommitId, T>) -> Unit)
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  fun loadData(commits: List<CommitId>, @RequiresEdt(generateAssertion = false /* IJPL-115548 */) onChange: (Map<CommitId, T>) -> Unit)
 
 }

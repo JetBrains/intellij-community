@@ -2,6 +2,7 @@ package com.intellij.tools.build.bazel;
 
 import com.google.devtools.build.runfiles.Runfiles;
 import com.intellij.tools.build.bazel.impl.BazelIncBuildTest;
+import com.intellij.tools.build.bazel.tmh.TMHAssertionGenerator2Test;
 import org.junit.BeforeClass;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
@@ -11,6 +12,7 @@ import static org.junit.Assert.fail;
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
   JvmIncBuilderTest.class,
+  CrashRecoveryTest.class,
   KotlinTests.class,
   JavaTests.class,
   ZipBuilderTest.class,
@@ -22,7 +24,8 @@ import static org.junit.Assert.fail;
   JavaAnnotationProcessorTests.class,
   WarningLevelTests.class,
   BuildContextKotlinOptionsTest.class,
-  BuildContextJavaOptionsTest.class
+  BuildContextJavaOptionsTest.class,
+  TMHAssertionGenerator2Test.class
 })
 public class AllTests {
 

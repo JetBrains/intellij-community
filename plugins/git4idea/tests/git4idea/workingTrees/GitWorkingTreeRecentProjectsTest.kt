@@ -31,10 +31,18 @@ internal class GitWorkingTreeRecentProjectsTest {
     val workingTree = repo.workingTreeHolder.getWorkingTrees().first { it.path.path.endsWith(treeRoot) }
 
     val recentProjectsManager = RecentProjectsManagerBase.getInstanceEx()
-    recentProjectsManager.addRecentPath(workingTree.path.path, RecentProjectMetaInfo())
-    assertThat(recentProjectsManager.hasPath(workingTree.path.path)).isTrue()
+    val worktreeProjectPaths = listOf(
+      workingTree.path.path,
+      "${workingTree.path.path}/MODULE.bazel",
+      "${workingTree.path.path}/toolbox/toolbox.bazelproject",
+    )
+    val siblingProjectPath = "${workingTree.path.path}-other/MODULE.bazel"
+    val recentPaths = worktreeProjectPaths + siblingProjectPath
 
     try {
+      recentPaths.forEach { recentProjectsManager.addRecentPath(it, RecentProjectMetaInfo()) }
+      assertThat(recentProjectsManager.getRecentPaths()).containsAll(recentPaths)
+
       val holder = GitRepositoriesHolder.getAndInit(project)
       holder.expectEvent(
         { GitWorkingTreesService.getInstance(project).deleteWorkingTree(project, workingTree, repo) },
@@ -42,10 +50,12 @@ internal class GitWorkingTreeRecentProjectsTest {
       )
 
       assertThat(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(newWorkingTreeRootPath)).isNull()
-      assertThat(recentProjectsManager.hasPath(workingTree.path.path)).isFalse()
+      assertThat(recentProjectsManager.getRecentPaths())
+        .doesNotContainAnyElementsOf(worktreeProjectPaths)
+        .contains(siblingProjectPath)
     }
     finally {
-      recentProjectsManager.removePath(workingTree.path.path)
+      recentPaths.forEach(recentProjectsManager::removePath)
     }
   }
 }

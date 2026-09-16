@@ -1,3 +1,0 @@
-- name: dist.all/lib/intellij.platform.ide.newUiOnboarding.jar
-  modules:
-  - name: intellij.platform.ide.newUiOnboarding

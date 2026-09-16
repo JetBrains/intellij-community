@@ -17,6 +17,10 @@ jps_test(
 )
 ### skip generation section `test intellij.java.ui.tests`
 
+### auto-generated section `dev intellij.java.ui` start
+content_module_jar(module = ":ui")
+### auto-generated section `dev intellij.java.ui` end
+
 ### auto-generated section `build intellij.java.ui` start
 jvm_library(
     name = "ui",
@@ -59,12 +63,12 @@ jvm_library(
         "//platform/projectModel-api:projectModel",
         "//platform/refactoring",
         "//platform/util/diff",
+        "//platform/util-ex",
         "//platform/util/progress",
         "//aether-dependency-resolver",
         "//platform/observable",
         "//platform/diff-api:diff",
         "//libraries/guava",
-        "//libraries/jna",
         "//platform/external-system-api:externalSystem",
         "//platform/external-system-impl:externalSystem-impl",
         "//libraries/stream",
@@ -101,8 +105,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":ui")
-
 jvm_library(
     name = "ui_test_lib",
     testonly = True,
@@ -136,12 +138,12 @@ jvm_library(
         "//platform/projectModel-api:projectModel_test_lib",
         "//platform/refactoring:refactoring_test_lib",
         "//platform/util/diff:diff_test_lib",
+        "//platform/util-ex:util-ex_test_lib",
         "//platform/util/progress:progress_test_lib",
         "//aether-dependency-resolver:aether-dependency-resolver_test_lib",
         "//platform/observable:observable_test_lib",
         "//platform/diff-api:diff_test_lib",
         "//libraries/guava:guava_test_lib",
-        "//libraries/jna:jna_test_lib",
         "//platform/external-system-api:externalSystem_test_lib",
         "//platform/external-system-impl:externalSystem-impl_test_lib",
         "//libraries/stream:stream_test_lib",
@@ -205,7 +207,7 @@ jvm_library(
         "//platform/structure-view-impl/plugin",
         "//platform/todo/plugin",
         "//platform/ide-core-impl",
-        "@lib//:kotlin-test",
+        "//libraries/kotlin/test:libraries-kotlinTest",
         "//platform/forms_rt:java-guiForms-rt",
     ],
 )
@@ -293,7 +295,8 @@ jvm_library(
         "//platform/backend/workspace:workspace_test_lib",
         "//platform/testFramework/junit5",
         "//platform/testFramework/junit5:junit5_test_lib",
-        "@lib//:kotlin-test",
+        "//libraries/kotlin/test:libraries-kotlinTest",
+        "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
         "//platform/util",
         "//platform/util:util_test_lib",
         "//platform/util:util-ui",
@@ -325,8 +328,6 @@ jvm_library(
         "//libraries/junit5:junit5_test_lib",
         "//libraries/junit5-params",
         "//libraries/junit5-params:junit5-params_test_lib",
-        "//libraries/misc/plugin",
-        "//libraries/misc/plugin:plugin_test_lib",
         "//libraries/lucene.common",
         "//libraries/lucene.common:lucene.common_test_lib",
         "//spellchecker/xml",

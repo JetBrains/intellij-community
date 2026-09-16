@@ -11,6 +11,10 @@ jps_test(
 
 ### skip generation section `test intellij.platform.inspect.tests`
 
+### auto-generated section `dev intellij.platform.inspect` start
+content_module_jar(module = ":inspect")
+### auto-generated section `dev intellij.platform.inspect` end
+
 ### auto-generated section `build intellij.platform.inspect` start
 jvm_library(
     name = "inspect",
@@ -66,8 +70,6 @@ jvm_library(
         "//platform/backend/observation",
     ],
 )
-
-content_module_jar(module = ":inspect")
 
 jvm_library(
     name = "inspect_test_lib",
@@ -134,7 +136,6 @@ exports_files(
     [
         "intellij.platform.inspect.iml",
         "resources/intellij.platform.inspect.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )
@@ -237,8 +238,6 @@ jvm_library(
         "//libraries/jackson3/databind:databind_test_lib",
         "//libraries/jsoup",
         "//libraries/jsoup:jsoup_test_lib",
-        "//libraries/misc/plugin",
-        "//libraries/misc/plugin:plugin_test_lib",
         "//libraries/jackson3/jackson:libraries-jackson3",
         "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
         "//platform/testFramework",

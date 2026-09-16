@@ -90,7 +90,7 @@ interface LspClient {
    *
    * @see LspClientDescriptor.lsp4jServerClass
    */
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun <Lsp4jResponse> sendRequestSync(
     timeoutMs: Int = DEFAULT_REQUEST_TIMEOUT_MS,
     lsp4jSender: (Lsp4jServer) -> CompletableFuture<Lsp4jResponse>,

@@ -28,7 +28,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.ui.jcef.JBCefApp
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.PyRequirement
@@ -42,6 +41,7 @@ import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.findPackageSpecification
 import com.jetbrains.python.packaging.repository.PyPiPackageRepository
 import com.jetbrains.python.packaging.repository.PyPackageRepository
+import com.jetbrains.python.ui.PyEmbeddedBrowserProvider
 import com.intellij.python.requirements.parser.psi.NameReq
 import com.intellij.python.requirements.parser.psi.UrlReq
 import java.net.URLDecoder
@@ -314,7 +314,7 @@ internal class RequirementDocumentationLinkHandler : DocumentationLinkHandler {
       url.startsWith(BROWSE_URL_PREFIX) -> {
         val target = URLDecoder.decode(url.removePrefix(BROWSE_URL_PREFIX), StandardCharsets.UTF_8)
         ApplicationManager.getApplication().invokeLater {
-          if (JBCefApp.isSupported()) {
+          if (PyEmbeddedBrowserProvider.isSupported()) {
             HTMLEditorProvider.openEditor(project, target, HTMLEditorProvider.Request.url(target))
           }
           else {

@@ -1,0 +1,15 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.libraries.jvm.native.trusted.roots"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.projectModel"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.util.net.ssl.OsCertificatesService"
+                        serviceImplementation="com.intellij.util.net.ssl.OsCertificatesServiceImpl"/>
+  </extensions>
+</idea-plugin>

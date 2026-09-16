@@ -2,6 +2,7 @@
 package com.intellij.util.io
 
 import com.intellij.ide.IdeCoreBundle
+import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.StreamUtil
 import com.intellij.testFramework.junit5.fixture.TestFixtures
@@ -15,6 +16,7 @@ import org.assertj.core.api.Condition
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.io.TempDir
+import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.io.InputStreamReader
 import java.net.HttpURLConnection
@@ -145,6 +147,29 @@ class HttpRequestsTest {
     }
     assertThat(HttpRequests.request(server.url).readString(null)).isEqualTo("hello кодировочки")
     assertThat(HttpRequests.request(server.url).gzip(false).readBytes(null)).startsWith(0x1f, 0x8b) // GZIP magic
+  }
+
+  @Test fun gzippedContentProgress() {
+    val content = "content".repeat(100)
+    val compressedContent = ByteArrayOutputStream().use { output ->
+      GZIPOutputStream(output).use { it.write(content.toByteArray()) }
+      output.toByteArray()
+    }
+    server.createContext("/") { ex ->
+      ex.responseHeaders.add("Content-Encoding", "gzip")
+      ex.sendResponseHeaders(HttpURLConnection.HTTP_OK, compressedContent.size.toLong())
+      ex.responseBody.use { it.write(compressedContent) }
+    }
+    val indicator = object : ProgressIndicatorBase() {
+      override fun setFraction(fraction: Double) {
+        assertThat(fraction).isBetween(0.0, 1.0)
+        super.setFraction(fraction)
+      }
+    }.apply { isIndeterminate = false }
+
+    val actual = HttpRequests.request(server.url).connect { request -> request.getReader(indicator).readText() }
+    assertThat(actual).isEqualTo(content)
+    assertThat(indicator.fraction).isEqualTo(1.0)
   }
 
   @Test fun tuning() {

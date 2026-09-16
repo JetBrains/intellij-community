@@ -94,10 +94,14 @@ interface PyProjectSdkConfigurationExtension {
      * what most callers want.
      */
     suspend fun findAllSortedForModule(module: Module, venvsInModule: List<PythonBinary>): List<CreateSdkInfoWithTool> {
-      return EP_NAME.extensionsIfPointIsRegistered
+      val offered = EP_NAME.extensionsIfPointIsRegistered
         .concurrentMapNotNull { e ->
-          e.checkEnvironmentAndPrepareSdkCreator(module, venvsInModule)?.let { CreateSdkInfoWithTool(it, e.toolId) }
-        }.sortedBy { it.createSdkInfo }
+          e.checkEnvironmentAndPrepareSdkCreator(module, venvsInModule)?.let { e to CreateSdkInfoWithTool(it, e.toolId) }
+        }
+      // A configurator that owns this module's setup leaves no room for the others — see [isExclusiveFor]. Only one
+      // that actually offered something can claim it, so a tool that is missing from the machine blanks no list.
+      val claimed = offered.filter { (extension, _) -> extension.isExclusiveFor(module) }
+      return claimed.ifEmpty { offered }.map { it.second }.sortedBy { it.createSdkInfo }
     }
 
     suspend fun findAllSortedForModule(module: Module): List<CreateSdkInfoWithTool> {
@@ -139,6 +143,21 @@ interface PyProjectSdkConfigurationExtension {
    * @param module module to inspect and derive configuration from
    * @return descriptor to create/register a suitable SDK, or null if this extension cannot configure the project
    */
+  /**
+   * Whether this configurator owns the setup of [module] outright, so that no other configurator's option applies.
+   *
+   * `false` for almost everything: a project can usually be set up with whichever tool the machine has, and the
+   * choice is the user's. `true` only where the project has already made that choice and another tool would build an
+   * environment beside the one the project declares.
+   *
+   * A uv workspace is the case today. It declares one environment, at its root, and a poetry or plain-venv
+   * environment made for a member is one uv ignores, along with every run configuration that uses it.
+   *
+   * [findAllSortedForModule] keeps only the claimants when any configurator claims a module. Answer without running
+   * the tool: this is asked for every configurator on the busiest path into them.
+   */
+  suspend fun isExclusiveFor(module: Module): Boolean = false
+
   @CheckReturnValue
   suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module, venvsInModule: List<PythonBinary>): CreateSdkInfo?
 

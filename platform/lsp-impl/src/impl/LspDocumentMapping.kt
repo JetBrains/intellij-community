@@ -54,7 +54,7 @@ class LspDocumentMapping(private val lspClient: LspClientImpl) {
     return getAdapterForFile(file).toLspDocumentPosition(lspClient, file, document, offset)
   }
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun getDocumentRangesSync(file: VirtualFile, document: Document, range: Range): List<LspDocumentRange> {
     return getAdapterForFile(file).toLspDocumentRangeSync(lspClient, file, document, range)
   }
@@ -83,8 +83,8 @@ class LspDocumentMapping(private val lspClient: LspClientImpl) {
    * @param file might be an injected VirtualFileWindow
    * @param offset might be an offset in the injected file
    */
-  @RequiresReadLock
-  @RequiresBackgroundThread
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun <T> withDocumentAtFileOffset(file: VirtualFile, offset: Int, block: (LspDocument, Position) -> T): T? {
     val host = unwrapInjection(file, offset) ?: return null
     return withDocumentAtOffset(host.hostFile, host.hostDocument, host.hostOffset, block)
@@ -107,8 +107,8 @@ class LspDocumentMapping(private val lspClient: LspClientImpl) {
    * Unwraps language injection, returning the host file, document, and offset.
    * If [file] is not injected, returns it as-is.
    */
-  @RequiresReadLock
-  @RequiresBackgroundThread
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun unwrapInjection(file: VirtualFile, offset: Int): HostCoordinates? {
     ProgressManager.checkCanceled()
     val document = FileDocumentManager.getInstance().getDocument(file)

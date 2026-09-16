@@ -7,6 +7,7 @@ import com.intellij.modcommand.PsiUpdateModCommandQuickFix
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
+import org.jetbrains.kotlin.idea.base.psi.addMemberDeclaration
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
@@ -17,6 +18,6 @@ abstract class GenerateFunctionFix(private val functionDefinitionText: String) :
     override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
         val klass = element.getNonStrictParentOfType<KtClass>() ?: return
         val function = KtPsiFactory.contextual(klass).createFunction(functionDefinitionText)
-        shortenReferences(klass.addDeclaration(function))
+        shortenReferences(klass.addMemberDeclaration(function))
     }
 }

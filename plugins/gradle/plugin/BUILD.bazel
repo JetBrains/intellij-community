@@ -1,6 +1,65 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
+load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_TARGETS")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
-load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "dev_dist_plugin_jar")
+
+### auto-generated section `dev intellij.gradle.plugin` start
+dev_dist_plugin(
+    content_modules = [
+        # do not sort,
+        "intellij.libraries.gradle",
+        "intellij.gradle.common",
+    ],
+    jars = {
+        "gradle-tooling-extension-api.jar": {
+            "modules": ["intellij.gradle.toolingExtension"],
+        },
+        "gradle-tooling-extension-impl.jar": {
+            "modules": ["intellij.gradle.toolingExtension.impl"],
+        },
+        "gradle-tooling-proxy.jar": {
+            "modules": ["intellij.gradle.toolingProxy"],
+        },
+        "groovy-ant.jar": {
+            "libraries": ["@lib//:libraries-groovy-ant-groovy-ant"],
+            "modules": ["intellij.libraries.groovy.ant"],
+        },
+        "groovy.jar": {
+            "libraries": ["@lib//:libraries-groovy-groovy"],
+            "modules": ["intellij.libraries.groovy"],
+        },
+    },
+    libraries = [
+        "@lib//:libraries-gradle-_gradle",
+        "@lib//:slf4j-api",
+        "@lib//:slf4j-jdk14",
+        "@lib//ant/lib:ant",
+    ],
+    main_module = "intellij.gradle.plugin",
+    module_targets = MODULE_TARGETS,
+    prepacked_content_modules = [
+        # do not sort,
+        "intellij.gradle.backend",
+        "intellij.gradle.codeInsight.backend",
+        "intellij.gradle.codeInsight.groovy.backend",
+        "intellij.gradle.codeInsight.groovy",
+        "intellij.gradle.codeInsight.kotlin.backend",
+        "intellij.gradle.codeInsight.kotlin",
+        "intellij.gradle.codeInsight.properties.backend",
+        "intellij.gradle.codeInsight.properties",
+        "intellij.gradle.codeInsight.toml.backend",
+        "intellij.gradle.codeInsight.toml",
+        "intellij.gradle.codeInsight",
+        "intellij.gradle.completion.kotlin",
+        "intellij.gradle.completion.toml",
+        "intellij.gradle.completion",
+        "intellij.gradle.properties",
+    ],
+    prepacked_jars = {
+        "intellij.gradle.settings": "intellij.gradle.settings.jar",
+        "intellij.gradle": "intellij.gradle.jar",
+    },
+)
+### auto-generated section `dev intellij.gradle.plugin` end
 
 ### auto-generated section `build intellij.gradle.plugin` start
 jvm_library(
@@ -39,61 +98,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.gradle.plugin` end
-
-### auto-generated section `dev intellij.gradle.plugin` start
-dev_dist_plugin(
-    content_modules = [
-        "//libraries/gradle",
-        "//plugins/gradle/tooling-extension-api:toolingExtension",
-        "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
-        "//plugins/gradle/tooling-proxy",
-        "//plugins/gradle:gradle-common",
-    ],
-    descriptor_module = ":plugin",
-    libraries = [
-        "@lib//:libraries-gradle-_gradle",
-        "@lib//:slf4j-api",
-        "@lib//:slf4j-jdk14",
-        "@lib//ant/lib:ant",
-    ],
-    prepacked_content_modules = [
-        "//plugins/gradle/backend:backend_content_module_jar",
-        "//plugins/gradle/codeInsight/backend:backend_content_module_jar",
-        "//plugins/gradle/codeInsight/groovy/backend:backend_content_module_jar",
-        "//plugins/gradle/codeInsight/groovy:groovy_content_module_jar",
-        "//plugins/gradle/codeInsight/kotlin/backend:backend_content_module_jar",
-        "//plugins/gradle/codeInsight/kotlin:kotlin_content_module_jar",
-        "//plugins/gradle/codeInsight/properties/backend:backend_content_module_jar",
-        "//plugins/gradle/codeInsight/properties:properties_content_module_jar",
-        "//plugins/gradle/codeInsight/toml/backend:backend_content_module_jar",
-        "//plugins/gradle/codeInsight/toml:toml_content_module_jar",
-        "//plugins/gradle/codeInsight:codeInsight_content_module_jar",
-        "//plugins/gradle/completion/kotlin:kotlin_content_module_jar",
-        "//plugins/gradle/completion/toml:toml_content_module_jar",
-        "//plugins/gradle/completion:completion_content_module_jar",
-        "//plugins/gradle/properties:properties_content_module_jar",
-    ],
-    prepacked_jars = {
-        "//plugins/gradle/settings:settings_content_module_jar": "intellij.gradle.settings.jar",
-        "//plugins/gradle:gradle_content_module_jar": "intellij.gradle.jar",
-    },
-    prepacked_layout_jars = [
-        ":groovy-ant_dev_dist_plugin_jar",
-        ":groovy_dev_dist_plugin_jar",
-    ],
-)
-
-dev_dist_plugin_jar(
-    libraries = ["@lib//:libraries-groovy-ant-groovy-ant"],
-    modules = ["//libraries/groovy/ant"],
-    plugin_main_module = "intellij.gradle.plugin",
-    relative_output_file = "groovy-ant.jar",
-)
-
-dev_dist_plugin_jar(
-    libraries = ["@lib//:libraries-groovy-groovy"],
-    modules = ["//libraries/groovy"],
-    plugin_main_module = "intellij.gradle.plugin",
-    relative_output_file = "groovy.jar",
-)
-### auto-generated section `dev intellij.gradle.plugin` end

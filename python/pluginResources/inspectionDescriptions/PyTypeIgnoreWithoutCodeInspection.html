@@ -1,0 +1,11 @@
+<html>
+<body>
+<p>Reports a <code># type: ignore</code> comment that names no known inspection code.</p>
+<p>Such a comment suppresses <b>every</b> inspection on its line. A comment in the leading comments of the
+  file suppresses every inspection in the file. It can therefore hide a problem that appears there later.</p>
+<p>A code of another type checker, such as mypy's <code>attr-defined</code>, names no inspection of this
+  IDE. Such a comment gets the same report.</p>
+<p>Name the inspection codes in brackets to suppress only the problems that you accept. For example, write
+  <code># type: ignore[PyTypeChecker]</code> or <code># type: ignore[pycharm:PyTypeChecker]</code>.</p>
+</body>
+</html>

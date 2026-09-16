@@ -13,7 +13,7 @@ class SettingsSyncUpdateChecker() {
     private val LOG = logger<SettingsSyncUpdateChecker>()
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun scheduleUpdateFromServer() : UpdateResult {
     val updateResult = RemoteCommunicatorHolder.getRemoteCommunicator()?.receiveUpdates() ?: run {
       val errorMsg = "Cannot get update from server - no communicator provider"

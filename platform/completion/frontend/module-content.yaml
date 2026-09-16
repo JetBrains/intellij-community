@@ -1,3 +1,0 @@
-- name: dist.all/lib/intellij.platform.completion.frontend.jar
-  modules:
-  - name: intellij.platform.completion.frontend

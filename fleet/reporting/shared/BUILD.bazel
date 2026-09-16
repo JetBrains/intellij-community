@@ -19,6 +19,10 @@ fleet_wasmjs_module(
     ],
 )
 
+### auto-generated section `dev fleet.reporting.shared` start
+content_module_jar(module = ":shared")
+### auto-generated section `dev fleet.reporting.shared` end
+
 ### auto-generated section `build fleet.reporting.shared` start
 create_kotlinc_options(
     name = "custom_shared",
@@ -49,15 +53,13 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinx-coroutines-core",
-        "@lib//:kotlinx-serialization-core",
-        "@lib//:kotlinx-serialization-json",
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/kotlinx/serialization/core",
+        "//libraries/kotlinx/serialization/json",
         "//fleet/reporting/api",
         "//fleet/multiplatform.shims",
     ],
 )
-
-content_module_jar(module = ":shared")
 
 jvm_library(
     name = "shared_test_lib",
@@ -72,6 +74,9 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":shared",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//libraries/kotlinx/serialization/json:json_test_lib",
         "//fleet/reporting/api:api_test_lib",
         "//fleet/multiplatform.shims:multiplatform.shims_test_lib",
     ],
@@ -83,7 +88,6 @@ exports_files(
     [
         "fleet.reporting.shared.iml",
         "resources/fleet.reporting.shared.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

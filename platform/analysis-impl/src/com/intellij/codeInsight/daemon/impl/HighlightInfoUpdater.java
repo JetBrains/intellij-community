@@ -28,7 +28,7 @@ public abstract class HighlightInfoUpdater {
    *               {@code String}: the tool is a {@link LocalInspectionTool} with its {@link LocalInspectionTool#getShortName()}==toolId
    *               {@code Class<? extends Annotator>}: the tool is an {@link com.intellij.lang.annotation.Annotator} of the corresponding class
    *               {@code Class<? extends HighlightVisitor>}: the tool is a {@link HighlightVisitor} of the corresponding class
-   *               {@code Object: Injection background and syntax from InjectedGeneralHighlightingPass#INJECTION_BACKGROUND_ID }
+   *               {@code Object}: injection or chameleon syntax
    */
   @ApiStatus.Internal
   public abstract void psiElementVisited(@NotNull Object toolId,

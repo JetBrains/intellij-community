@@ -111,6 +111,15 @@ class PatchReaderTest : HeavyPlatformTestCase() {
   }
 
   @Throws(Exception::class)
+  fun testWindowsPathInPatch() {
+    val actual = read()
+    val patch = actual.allPatches.single()
+
+    assertEquals("C:\\Users\\test\\AppData\\a.yaml", patch.beforeName)
+    assertEquals("C:\\Users\\test\\AppData\\a.yaml", patch.afterName)
+  }
+
+  @Throws(Exception::class)
   fun testOriginalLineNumbers() {
     val actual = read()
     val patch = actual.allPatches.single() as TextFilePatch

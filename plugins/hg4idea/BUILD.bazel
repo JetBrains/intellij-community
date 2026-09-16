@@ -1,4 +1,5 @@
 load("@community//build:tests-options.bzl", "jps_test")
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.vcs.hg` start
@@ -108,6 +109,12 @@ jvm_library(
         "//platform/util-ex:util-ex_test_lib",
         "//platform/lvcs-impl:lvcs-impl_test_lib",
     ],
+)
+
+ij_plugin(
+    name = "vcs-hg_plugin",
+    descriptor_module = ":vcs-hg",
+    visibility = ["//visibility:public"],
 )
 ### auto-generated section `build intellij.vcs.hg` end
 

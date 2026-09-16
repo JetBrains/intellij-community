@@ -7,9 +7,124 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" exported="" name="grpc-core" level="project" />
-    <orderEntry type="library" exported="" name="grpc-stub" level="project" />
-    <orderEntry type="library" exported="" name="grpc-kotlin-stub" level="project" />
-    <orderEntry type="library" exported="" name="grpc-protobuf" level="project" />
+    <orderEntry type="module-library" exported="">
+      <library name="grpc-core" type="repository">
+        <properties maven-id="io.grpc:grpc-core:1.73.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/grpc/grpc-core/1.73.0/grpc-core-1.73.0.jar">
+              <sha256sum>cffb55f1e7268e160647e88da142c09c6175ff72970c64f7cb411d78eb661663</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/grpc/grpc-api/1.73.0/grpc-api-1.73.0.jar">
+              <sha256sum>bae13d4e4716a0955d316b5fcb75582504325e5b11ac946b13b64b4fce19bc6e</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/google/android/annotations/4.1.1.4/annotations-4.1.1.4.jar">
+              <sha256sum>ba734e1e84c09d615af6a09d33034b4f0442f8772dec120efb376d86a565ae15</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/codehaus/mojo/animal-sniffer-annotations/1.24/animal-sniffer-annotations-1.24.jar">
+              <sha256sum>c720e6e5bcbe6b2f48ded75a47bccdb763eede79d14330102e0d352e3d89ed92</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/perfmark/perfmark-api/0.27.0/perfmark-api-0.27.0.jar">
+              <sha256sum>c7b478503ec524e55df19b424d46d27c8a68aeb801664fadd4f069b71f52d0f6</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/grpc/grpc-context/1.73.0/grpc-context-1.73.0.jar">
+              <sha256sum>d8d6911e225b55501692651272ce961ba5be1f76662ceb7f0aa79ecce8f63f25</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="com.google.code.findbugs:jsr305" />
+            <dependency maven-id="com.google.errorprone:error_prone_annotations" />
+            <dependency maven-id="com.google.guava:guava" />
+            <dependency maven-id="com.google.code.gson:gson" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-core/1.73.0/grpc-core-1.73.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-api/1.73.0/grpc-api-1.73.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/google/android/annotations/4.1.1.4/annotations-4.1.1.4.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/mojo/animal-sniffer-annotations/1.24/animal-sniffer-annotations-1.24.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/perfmark/perfmark-api/0.27.0/perfmark-api-0.27.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-context/1.73.0/grpc-context-1.73.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-core/1.73.0/grpc-core-1.73.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-api/1.73.0/grpc-api-1.73.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/google/android/annotations/4.1.1.4/annotations-4.1.1.4-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/mojo/animal-sniffer-annotations/1.24/animal-sniffer-annotations-1.24-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/perfmark/perfmark-api/0.27.0/perfmark-api-0.27.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-context/1.73.0/grpc-context-1.73.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" exported="">
+      <library name="grpc-stub" type="repository">
+        <properties include-transitive-deps="false" maven-id="io.grpc:grpc-stub:1.73.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/grpc/grpc-stub/1.73.0/grpc-stub-1.73.0.jar">
+              <sha256sum>050fe139de47d8937e6b0080e8dff3d0f42df6782f147c10bb298c0e9cd94b2f</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-stub/1.73.0/grpc-stub-1.73.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-stub/1.73.0/grpc-stub-1.73.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" exported="">
+      <library name="grpc-kotlin-stub" type="repository">
+        <properties include-transitive-deps="false" maven-id="io.grpc:grpc-kotlin-stub:1.4.3">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/grpc/grpc-kotlin-stub/1.4.3/grpc-kotlin-stub-1.4.3.jar">
+              <sha256sum>4b5705f8cabd07e82c81dbce36f1554aa9d1740f03e369fd049a71f375dac2f0</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-kotlin-stub/1.4.3/grpc-kotlin-stub-1.4.3.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-kotlin-stub/1.4.3/grpc-kotlin-stub-1.4.3-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" exported="">
+      <library name="grpc-protobuf" type="repository">
+        <properties maven-id="io.grpc:grpc-protobuf:1.73.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/grpc/grpc-protobuf/1.73.0/grpc-protobuf-1.73.0.jar">
+              <sha256sum>5c0ca9e321c02845c47dc6edcef9f22e49015cef7753c54012f5398425163c08</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/google/api/grpc/proto-google-common-protos/2.51.0/proto-google-common-protos-2.51.0.jar">
+              <sha256sum>0b27938f3d28ccd6884945d7e4f75f4e26a677bbf3cd39bbcb694f130f782aa9</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/grpc/grpc-protobuf-lite/1.73.0/grpc-protobuf-lite-1.73.0.jar">
+              <sha256sum>de8ce5309713e72bb57d5ff2dabdb4c173ae4872bd1439b9c3d3f93430b407d9</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="io.grpc:grpc-api" />
+            <dependency maven-id="com.google.code.findbugs:jsr305" />
+            <dependency maven-id="com.google.protobuf:protobuf-java" />
+            <dependency maven-id="com.google.guava:guava" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-protobuf/1.73.0/grpc-protobuf-1.73.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/google/api/grpc/proto-google-common-protos/2.51.0/proto-google-common-protos-2.51.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-protobuf-lite/1.73.0/grpc-protobuf-lite-1.73.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-protobuf/1.73.0/grpc-protobuf-1.73.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/google/api/grpc/proto-google-common-protos/2.51.0/proto-google-common-protos-2.51.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-protobuf-lite/1.73.0/grpc-protobuf-lite-1.73.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
   </component>
 </module>

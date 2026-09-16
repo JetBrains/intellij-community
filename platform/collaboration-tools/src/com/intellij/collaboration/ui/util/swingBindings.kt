@@ -346,7 +346,7 @@ fun Document.bindTextIn(cs: CoroutineScope, textFlow: StateFlow<String>, setter:
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun doSetText(newText: String) {
     backSyncListener.isActive = false
     try {

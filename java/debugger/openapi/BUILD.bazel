@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.java.debugger` start
+content_module_jar(module = ":java-debugger")
+### auto-generated section `dev intellij.java.debugger` end
+
 ### auto-generated section `build intellij.java.debugger` start
 jvm_library(
     name = "java-debugger",
@@ -43,8 +47,6 @@ jvm_library(
         "//platform/util/base",
     ],
 )
-
-content_module_jar(module = ":java-debugger")
 
 jvm_library(
     name = "java-debugger_test_lib",

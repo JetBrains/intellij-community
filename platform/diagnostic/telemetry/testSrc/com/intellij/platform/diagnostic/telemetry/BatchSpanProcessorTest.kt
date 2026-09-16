@@ -8,10 +8,13 @@ import io.opentelemetry.sdk.trace.SdkTracerProvider
 import io.opentelemetry.sdk.trace.data.SpanData
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Files
 import java.nio.file.Path
@@ -29,6 +32,7 @@ class BatchSpanProcessorTest {
   fun `explicit flush finalizes the json file even when no spans are pending`(@TempDir directory: Path): Unit = runBlocking {
     val file = directory.resolve("trace.json")
     val exporter = JaegerJsonSpanExporter(file = file, serviceName = "test")
+
     @Suppress("RAW_SCOPE_CREATION")
     val processor = BatchSpanProcessor(coroutineScope = CoroutineScope(SupervisorJob()), spanExporters = listOf(exporter))
     try {
@@ -91,7 +95,7 @@ class BatchSpanProcessorTest {
    * The shutdown closes the queue. A span that ends later must not stay in the queue, because a queued span keeps its
    * whole coroutine chain reachable. A flush after the shutdown must return at once, because no worker serves it.
    */
-  @Test
+  @RepeatedTest(50)
   fun `a span that ends after the shutdown is dropped and a flush returns at once`(): Unit = runBlocking {
     val exported = Collections.synchronizedList(ArrayList<String>())
     val exporter = object : AsyncSpanExporter {
@@ -105,8 +109,6 @@ class BatchSpanProcessorTest {
     val tracer = SdkTracerProvider.builder().addSpanProcessor(processor).build().get("test")
 
     tracer.spanBuilder("before").startSpan().end()
-    // a cancellation that reaches the worker before its first dispatch skips its body, so the flush starts the worker first
-    processor.flush()
     processor.forceShutdown()
     exported shouldBe listOf("before")
 
@@ -116,5 +118,37 @@ class BatchSpanProcessorTest {
     }
 
     exported shouldBe listOf("before")
+  }
+
+  @RepeatedTest(50)
+  fun `shutdown completes a flush whose receiver is cancelled`(): Unit = runBlocking {
+    @Suppress("RAW_SCOPE_CREATION")
+    val processor = BatchSpanProcessor(coroutineScope = CoroutineScope(SupervisorJob()), spanExporters = emptyList())
+    val flush = async(start = CoroutineStart.UNDISPATCHED) { processor.flush() }
+    processor.forceShutdown()
+    withTimeout(5.seconds) {
+      flush.await()
+    }
+  }
+
+  @Test
+  fun `a cancelled scope still closes the exporter`(): Unit = runBlocking {
+    var closed = 0
+    val exporter = object : AsyncSpanExporter {
+      override suspend fun export(spans: Collection<SpanData>) {}
+
+      override suspend fun shutdown() {
+        closed++
+      }
+    }
+    val job = SupervisorJob().apply { cancel() }
+
+    @Suppress("RAW_SCOPE_CREATION")
+    val processor = BatchSpanProcessor(coroutineScope = CoroutineScope(job), spanExporters = listOf(exporter))
+    processor.forceShutdown()
+    closed shouldBe 1
+    withTimeout(5.seconds) {
+      processor.flush()
+    }
   }
 }

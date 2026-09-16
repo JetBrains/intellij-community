@@ -19,7 +19,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.python.pyproject.PY_PROJECT_TOML
-import com.intellij.python.pytools.statistics.PyToolUsagesCollector
+import com.intellij.python.pytools.backend.statistics.PyToolUsagesCollector
 import com.intellij.python.ruff.RuffBundle
 import com.intellij.util.IncorrectOperationException
 import org.toml.lang.psi.TomlArray

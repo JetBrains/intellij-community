@@ -28,11 +28,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.job
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
@@ -44,6 +42,7 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
+import java.util.Base64
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.io.path.fileSize
 import kotlin.time.Duration
@@ -79,12 +78,39 @@ abstract class IjentDeployingOverShellProcessStrategy(
     }
   }
 
+  /** Starts a deployment shell through a command when the target shell is unknown. */
+  abstract class WithShellBootstrap(scope: ParentOfIjentScopes, currentDispatcher: CoroutineDispatcher) :
+    IjentDeployingOverShellProcessStrategy(scope, currentDispatcher) {
+    private val shellBootstrap by lazy { createShellBootstrap() }
+
+    /** Runs [script] as the initial command and keeps the process streams open. */
+    protected abstract suspend fun createShellProcessFacade(
+      ijentProcessScope: IjentScope,
+      script: String,
+    ): IjentSessionProcessMediator.ProcessFacade
+
+    final override suspend fun createShellProcessFacade(ijentProcessScope: IjentScope): IjentSessionProcessMediator.ProcessFacade =
+      createShellProcessFacade(ijentProcessScope, shellBootstrap.command)
+
+    final override suspend fun getShellDialect(process: IjentSessionProcessMediator.ProcessFacade): ShellDialect {
+      val result = runCatching { detectBootstrappedShell(process, shellBootstrap.marker) }
+      result.exceptionOrNull()?.let { failure ->
+        withContext(NonCancellable) {
+          runCatching { process.destroyForcibly() }.exceptionOrNull()?.let(failure::addSuppressed)
+        }
+      }
+      return when (result.getOrThrow()) {
+        DetectedShell.Posix -> ShellDialect.POSIX
+        DetectedShell.PowerShell -> ShellDialect.POWERSHELL
+      }
+    }
+  }
+
   protected sealed interface ExecutionStrategy {
     data object Default : ExecutionStrategy
 
     /**
-     * [tlsCertificates] intentionally has no default value: every deployer must state explicitly whether the TCP socket
-     * of IJent is protected with mutual TLS or is left plaintext and unauthenticated.
+     * [tlsCertificates] protect the TCP socket of IJent with mutual TLS. A plaintext TCP socket is not an option.
      *
      * [noShutdownOnDisconnect] makes IJent outlive the death of its gRPC peer; in exchange, an explicit close asks it
      * to terminate in-band (the flag is mirrored into [IjentConnectionContext.noShutdownOnDisconnect]). Only a deployer
@@ -93,7 +119,7 @@ abstract class IjentDeployingOverShellProcessStrategy(
      */
     data class Tcp(
       val deployInfo: TcpDeployInfo,
-      val tlsCertificates: MutualTlsCertificates?,
+      val tlsCertificates: MutualTlsCertificates,
       val noShutdownOnDisconnect: Boolean = false,
     ) : ExecutionStrategy
   }
@@ -108,7 +134,7 @@ abstract class IjentDeployingOverShellProcessStrategy(
 
   protected enum class ShellDialect { POSIX, POWERSHELL }
 
-  protected open suspend fun getShellDialect(): ShellDialect = ShellDialect.POSIX
+  protected open suspend fun getShellDialect(process: IjentSessionProcessMediator.ProcessFacade): ShellDialect = ShellDialect.POSIX
 
   /**
    * Interruption strategy for the initial shell setup.
@@ -155,7 +181,7 @@ abstract class IjentDeployingOverShellProcessStrategy(
       currentCoroutineContext().ensureActive()
     }
     withShellInitializationInterruption {
-      val shellIo = when (getShellDialect()) {
+      val shellIo = when (getShellDialect(processFacade)) {
         ShellDialect.POSIX -> PosixShellIo(shell)
         ShellDialect.POWERSHELL -> PowerShellIo(shell)
       }
@@ -362,18 +388,17 @@ private class ShellProcessWrapper(
   }
 
   private fun terminateProcessScope(error: IjentUnavailableException) {
-    mediator.ijentProcessScope.s.launch(start = CoroutineStart.UNDISPATCHED) {
-      currentCoroutineContext()[IjentScope.IjentContext.Key]!!
-        .completeExitReason(error)
-      throw error
-    }
+    mediator.ijentProcessScope.destroy(error, isRootCause = true)
   }
 
   fun processForConnection(): IjentSessionProcessMediator = mediator
 
   fun close() {
     if (cleanupStarted.compareAndSet(false, true)) {
-      mediator.ijentProcessScope.s.cancel(CancellationException("Deployment closed before process handoff"))
+      mediator.ijentProcessScope.destroy(
+        IjentUnavailableException.ClosedByApplication("Deployment closed before process handoff", null),
+        isRootCause = true,
+      )
     }
   }
 }
@@ -510,7 +535,7 @@ private sealed interface IjentLaunchOptions {
 
   data class Tcp(
     val deployInfo: TcpDeployInfo,
-    val tlsCertificates: MutualTlsCertificates?,
+    val tlsCertificates: MutualTlsCertificates,
     val noShutdownOnDisconnect: Boolean,
   ) : IjentLaunchOptions
 }
@@ -532,7 +557,7 @@ private fun IjentLaunchOptions.command(remoteBinaryPath: String): IjentLaunchCom
         selfDeleteOnExit = true,
         noShutdownOnDisconnect = noShutdownOnDisconnect,
         deployInfo = deployInfo,
-        useTLS = tlsCertificates != null,
+        useTLS = true,
       ),
       tlsCertificates = tlsCertificates,
     )
@@ -591,6 +616,8 @@ internal data class DeployingContext(
 
   /** Although `id` is defined by POSIX, there's no guarantee that a stripped down system has it. */
   val id: String?,
+
+  val cacheCommands: IjentBinaryCache.PosixCommands? = null,
 )
 
 /**
@@ -634,6 +661,12 @@ internal suspend fun createDeployingContext(filterAvailableBinariesCmd: suspend 
   val optionalCommands: Set<String> = setOf(
     "getent",
     "id",
+    "mkdir",
+    "mv",
+    "sha256sum",
+    "shasum",
+    "touch",
+    "ls",
   )
 
   val outputOfWhich = mutableListOf<String>()
@@ -672,6 +705,15 @@ internal suspend fun createDeployingContext(filterAvailableBinariesCmd: suspend 
     whoami = getCommandPath("whoami"),
     getent = getOptionalCommandPath("getent"),
     id = getOptionalCommandPath("id"),
+    cacheCommands = run {
+      IjentBinaryCache.PosixCommands(
+        mkdir = getOptionalCommandPath("mkdir") ?: return@run null,
+        mv = getOptionalCommandPath("mv") ?: return@run null,
+        checksum = getOptionalCommandPath("sha256sum") ?: getOptionalCommandPath("shasum")?.let { "$it -a 256" } ?: return@run null,
+        touch = getOptionalCommandPath("touch") ?: return@run null,
+        ls = getOptionalCommandPath("ls") ?: return@run null,
+      )
+    },
   )
 }
 
@@ -711,21 +753,29 @@ private class PosixShellSession(
   }
 
   override suspend fun uploadBinary(localBinary: Path, mappedPath: String?): String {
-    // TODO Don't upload a new binary every time if the binary is already on the server. However, hashes must be checked.
     val ijentBinarySize = localBinary.fileSize()
+    val cache = if (mappedPath == null && context.cacheCommands != null) IjentBinaryCache.forBinary(localBinary) else null
 
     // This trap owns the temporary directory until IJent is launched. It also cleans up when upload or shell setup fails midway.
     io.process.write(context.run {
       "BINARY_DIR=\"\$($mktemp -d)\"; BINARY=\"\$BINARY_DIR/ijent\"; trap '$rm -rf \"\$BINARY_DIR\"' 0;\n"
     })
 
-    val chmodAndEcho = context.run {
-      "$chmod 500 \"\$BINARY\"; echo \"\$BINARY\";\n"
+    if (cache != null) {
+      io.executeCommand(cache.posixRestore(context)).lastOrNull { it.isNotBlank() }?.let { return it }
+    }
+
+    val finishUpload = context.run {
+      $$"""
+      $$chmod 500 "$BINARY";
+      $${cache?.posixPublish(this).orEmpty()}
+      echo "$BINARY";
+      """.trimIndent()
     }
 
     if (mappedPath != null) {
       io.process.write(context.run {
-        "$cp ${posixQuote(mappedPath)} \$BINARY; $chmodAndEcho"
+        "$cp ${posixQuote(mappedPath)} \$BINARY; $finishUpload"
       })
     }
     else {
@@ -746,11 +796,13 @@ private class PosixShellSession(
         // is also unreliable, macOS can make this buffer for Unix sockets bigger.
         // Therefore, exploiting the trick with BUGGY_DASH_BUFFER_FILLER again would be unreliable.
         $$"""
+        {
         $$head -c $${ijentBinarySize + BUGGY_DASH_BUFFER_FILLER.length} > $BINARY.tmp; \
         BYTES_TO_SKIP=$(LC_ALL=C $$sed -n -e '/./{=;q;}' $BINARY.tmp | LC_ALL=C $$head -n1); \
         LC_ALL=C $$tail -c+$BYTES_TO_SKIP $BINARY.tmp | LC_ALL=C $$head -c $$ijentBinarySize > $BINARY; \
         $$rm -f $BINARY.tmp; \
-        $$chmodAndEcho
+        $$finishUpload
+        }
         """.trimIndent()
       })
 
@@ -833,54 +885,54 @@ private class PowerShellSession(
     if (mappedPath != null) return mappedPath
 
     val binarySize = localBinary.fileSize()
-    val readyBoundary = randomBoundary()
+    val cache = IjentBinaryCache.forBinary(localBinary)
     val pathMarker = randomBoundary()
     val directoryMarker = randomBoundary()
     val doneBoundary = randomBoundary()
-    io.process.write(
+    val paths = io.executeCommand(
       "\$ijentDir = Join-Path ([IO.Path]::GetTempPath()) ('ijent-' + [Guid]::NewGuid().ToString('N')); " +
       "[IO.Directory]::CreateDirectory(\$ijentDir) | Out-Null; " +
       "\$ijentBinary = Join-Path \$ijentDir 'ijent.exe'; " +
       "Write-Output ('$directoryMarker' + \$ijentDir); " +
       "Write-Output ('$pathMarker' + \$ijentBinary); " +
-      "Write-Output '$readyBoundary'; " +
-      "\$ijentInput = [Console]::OpenStandardInput(); " +
-      "try { \$ijentOutput = [IO.File]::Open(\$ijentBinary, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::None); " +
-      "try { \$ijentRemaining = [long]$binarySize; \$ijentBuffer = New-Object byte[] 65536; " +
-      "while (\$ijentRemaining -gt 0) { \$ijentToRead = [int][Math]::Min(\$ijentBuffer.Length, \$ijentRemaining); " +
-      "\$ijentRead = \$ijentInput.Read(\$ijentBuffer, 0, \$ijentToRead); " +
-      "if (\$ijentRead -eq 0) { throw 'Unexpected end of IJent binary stream' }; " +
-      "\$ijentOutput.Write(\$ijentBuffer, 0, \$ijentRead); \$ijentRemaining -= \$ijentRead } } " +
-      "finally { \$ijentOutput.Dispose() } } " +
-      "catch { Remove-Item -LiteralPath \$ijentDir -Recurse -Force -ErrorAction SilentlyContinue; throw }; " +
-      "Write-Output '$doneBoundary'"
+      cache.powerShellRestore()
     )
-
-    var remoteBinaryDirectory: String? = null
-    var remoteBinaryPath: String? = null
-    while (remoteBinaryPath == null) {
-      val line = io.readLine()
-      if (line.startsWith(directoryMarker)) {
-        remoteBinaryDirectory = line.removePrefix(directoryMarker)
-        continue
-      }
-      if (line.startsWith(pathMarker)) {
-        remoteBinaryPath = line.removePrefix(pathMarker)
-      }
-      else {
-        LOG.debug { "Dropped shell output while waiting for the uploaded IJent binary path: $line" }
-      }
-    }
-    uploadedBinaryDirectory = remoteBinaryDirectory
+    uploadedBinaryDirectory = paths.singleOrNull { it.startsWith(directoryMarker) }?.removePrefix(directoryMarker)
       ?: throw CommunicationFailure("PowerShell did not report the uploaded IJent binary directory", null)
+    val remoteBinaryPath = paths.singleOrNull { it.startsWith(pathMarker) }?.removePrefix(pathMarker)
+      ?: throw CommunicationFailure("PowerShell did not report the uploaded IJent binary path", null)
+    if (paths.any { it == remoteBinaryPath }) {
+      return remoteBinaryPath
+    }
 
-    // Only raw bytes follow the ready marker. PowerShell has parsed the complete command and is already waiting in its binary reader.
-    io.dropOutputUntil(readyBoundary)
+    val abortUpload =
+      $$"if ($null -ne $ijentOutput) { $ijentOutput.Dispose() }; " +
+      $$"Remove-Item -LiteralPath $ijentDir -Recurse -Force -ErrorAction SilentlyContinue; " +
+      $$"[Console]::Error.WriteLine($_.Exception.ToString()); exit 1"
+    io.process.write(
+      $$"try { $ijentOutput = [IO.File]::Open($ijentBinary, [IO.FileMode]::Create, [IO.FileAccess]::Write, [IO.FileShare]::None) } " +
+      "catch { $abortUpload }"
+    )
     withContext(Dispatchers.IO) {
-      Files.newByteChannel(localBinary, StandardOpenOption.READ).use { stream ->
-        io.process.copyDataFrom(stream)
+      Files.newInputStream(localBinary).use { stream ->
+        val buffer = ByteArray(48 * 1024)
+        val encoder = Base64.getEncoder()
+        while (true) {
+          val bytesRead = stream.read(buffer)
+          if (bytesRead < 0) break
+          val encoded = encoder.encodeToString(buffer.copyOf(bytesRead))
+          io.process.writeUnlogged(
+            $$"try { $ijentChunk = [Convert]::FromBase64String('$$encoded'); $ijentOutput.Write($ijentChunk, 0, $ijentChunk.Length) } " +
+            "catch { $abortUpload }"
+          )
+        }
       }
     }
+    io.process.write(
+      $$"try { $ijentOutput.Dispose(); " +
+      $$"if ((Get-Item -LiteralPath $ijentBinary).Length -ne $$binarySize) { throw 'Unexpected IJent binary size' }; " +
+      cache.powerShellPublish() + "; Write-Output '$doneBoundary' } catch { $abortUpload }"
+    )
     io.dropOutputUntil(doneBoundary)
     return remoteBinaryPath
   }
@@ -890,15 +942,17 @@ private class PowerShellSession(
     launchOptions: IjentLaunchOptions,
   ): IjentSessionProcessMediator {
     val launchCommand = launchOptions.command(remoteBinaryPath)
-    if (launchCommand.tlsCertificates != null) {
-      throw CommunicationFailure("Mutual TLS is not supported for PowerShell targets", null)
-    }
     val command = launchCommand.argv.joinToString(" ") { powerShellQuote(it) }
+    val tlsBootstrap = launchCommand.tlsCertificates?.let {
+      val encoded = Base64.getEncoder().encodeToString(it.serverBootstrapPem().toByteArray(StandardCharsets.UTF_8))
+      "[Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('$encoded')) | "
+    }.orEmpty()
     val cleanupCommand = uploadedBinaryDirectory?.let { "Remove-Item -LiteralPath ${powerShellQuote(it)} -Recurse -Force -ErrorAction SilentlyContinue; " }.orEmpty()
     io.startProcess(
-      "try { & $command; \$ijentExitCode = \$LASTEXITCODE } " +
-      "catch { \$ijentExitCode = 1; [Console]::Error.WriteLine(\$_.Exception.ToString()) } " +
-      "finally { $cleanupCommand" + "exit \$ijentExitCode }"
+      $$"try { $$tlsBootstrap& $$command; $ijentExitCode = $LASTEXITCODE } " +
+      $$"catch { $ijentExitCode = 1; [Console]::Error.WriteLine($_.Exception.ToString()) } " +
+      $$"finally { $${cleanupCommand}exit $ijentExitCode }",
+      sensitive = launchCommand.tlsCertificates != null,
     )
     return io.process.processForConnection()
   }

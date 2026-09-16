@@ -1,5 +1,27 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
+load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_DESCRIPTORS", "MODULE_TARGETS")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `dev intellij.platform.todo.plugin` start
+dev_dist_plugin(
+    descriptor = "resources/META-INF/plugin.xml",
+    descriptor_index = MODULE_DESCRIPTORS,
+    descriptor_modules = [
+        "intellij.platform.todo",
+        "intellij.platform.todo.backend",
+        "intellij.platform.vcs.impl.lang.todo",
+    ],
+    main_module = "intellij.platform.todo.plugin",
+    module_targets = MODULE_TARGETS,
+    prepacked_content_modules = [
+        # do not sort,
+        "intellij.platform.todo.backend",
+        "intellij.platform.todo",
+        "intellij.platform.vcs.impl.lang.todo",
+    ],
+)
+### auto-generated section `dev intellij.platform.todo.plugin` end
 
 ### auto-generated section `build intellij.platform.todo.plugin` start
 jvm_library(
@@ -27,6 +49,18 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = [":plugin"],
 )
+
+ij_plugin(
+    name = "plugin_plugin",
+    descriptor_module = ":plugin",
+    content_modules = [
+        # do not sort,
+        "//platform/todo",
+        "//platform/todo/backend",
+        "//platform/vcs-impl/lang/todo",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `build intellij.platform.todo.plugin` end
 
 ### auto-generated section `iml intellij.platform.todo.plugin` start
@@ -38,21 +72,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.todo.plugin` end
-
-### auto-generated section `dev intellij.platform.todo.plugin` start
-dev_dist_plugin(
-    descriptor = "resources/META-INF/plugin.xml",
-    descriptor_module = ":plugin",
-    descriptors = {
-        "@community//platform/todo/backend:resources/intellij.platform.todo.backend.xml": "intellij.platform.todo.backend.xml",
-        "@community//platform/todo:resources/intellij.platform.todo.xml": "intellij.platform.todo.xml",
-        "@community//platform/vcs-impl/lang/todo:resources/intellij.platform.vcs.impl.lang.todo.xml": "intellij.platform.vcs.impl.lang.todo.xml",
-    },
-    main_module = "intellij.platform.todo.plugin",
-    prepacked_content_modules = [
-        "//platform/todo/backend:backend_content_module_jar",
-        "//platform/todo:todo_content_module_jar",
-        "//platform/vcs-impl/lang/todo:todo_content_module_jar",
-    ],
-)
-### auto-generated section `dev intellij.platform.todo.plugin` end

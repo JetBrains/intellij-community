@@ -1,5 +1,4 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
-load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.libraries.tuweni.toml` start
 jvm_library(
@@ -16,11 +15,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-tuweni-toml-tuweni-toml"],
     runtime_deps = ["@lib//:libraries-tuweni-toml-tuweni-toml"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-tuweni-toml-tuweni-toml"],
-    module = ":toml",
 )
 
 jvm_library(
@@ -43,7 +37,6 @@ exports_files(
     [
         "intellij.libraries.tuweni.toml.iml",
         "resources/intellij.libraries.tuweni.toml.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

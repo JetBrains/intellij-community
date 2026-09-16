@@ -41,7 +41,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 // Project import / sync orchestration.
 
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 suspend fun MavenTestFixture.awaitConfiguration() {
   val isEdt = ApplicationManager.getApplication().isDispatchThread
   if (isEdt) {
@@ -62,7 +62,7 @@ private fun logConfigurationMessage(message: String) {
  * Runs [action] and waits for the Maven import it triggers to finish, then asserts the import actually ran.
  * Ported from `MavenTestCase.waitForImportWithinTimeout`.
  */
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 suspend fun MavenImportingTestFixture.waitForImportWithinTimeout(action: suspend () -> Unit) {
   MavenLog.LOG.warn("waitForImportWithinTimeout started")
   val importStarted = AtomicBoolean(false)
@@ -239,7 +239,7 @@ suspend fun MavenImportingTestFixture.assertNoPendingProjectForReload() {
   assertFalse(projectWithMavenNotificationExists)
 }
 
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 suspend fun MavenImportingTestFixture.scheduleProjectImportAndWait() {
   // otherwise all imports will be skipped
   assertHasPendingProjectForReload()

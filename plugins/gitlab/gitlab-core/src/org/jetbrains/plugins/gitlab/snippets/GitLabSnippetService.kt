@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.snippets
 
-import com.intellij.collaboration.async.cancelAndJoinSilently
+import com.intellij.collaboration.async.cancelAndJoin
 import com.intellij.collaboration.async.childScope
 import com.intellij.collaboration.snippets.PathHandlingMode
 import com.intellij.collaboration.snippets.PathHandlingMode.Companion.getFileNameExtractor
@@ -291,7 +291,7 @@ internal class GitLabSnippetService(private val project: Project, private val se
       }
 
       val result = vm.toResult()
-      vmCs.cancelAndJoinSilently()
+      vmCs.cancelAndJoin()
 
       result
     }

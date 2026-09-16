@@ -17,6 +17,7 @@
   </dependencies>
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
-    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.scopes.backend.ScopesStateApiProvider"/>
+    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.scopes.backend.ScopesStateApiProvider"
+                                            apiInterfaces="com.intellij.platform.scopes.ScopeModelApi"/>
   </extensions>
 </idea-plugin>

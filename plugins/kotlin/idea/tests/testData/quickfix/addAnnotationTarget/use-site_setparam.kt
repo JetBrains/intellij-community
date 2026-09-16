@@ -7,4 +7,3 @@ class Bar {
     var foo = 1
         set(value) {}
 }
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddAnnotationTargetFix

@@ -4,37 +4,18 @@ package org.jetbrains.kotlin.idea.codeinsight.intentions
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor
-import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtClass
-import org.jetbrains.kotlin.psi.KtClassOrObject
-import org.jetbrains.kotlin.psi.KtEnumEntry
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
-import org.jetbrains.kotlin.psi.KtNamedFunction
-import org.jetbrains.kotlin.psi.KtProperty
-import org.jetbrains.kotlin.psi.psiUtil.allChildren
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
-import org.jetbrains.kotlin.psi.psiUtil.endOffset
-import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 internal class MoveMemberToCompanionObjectIntention : MoveMemberIntention(
     textGetter = KotlinBundle.messagePointer("move.to.companion.object")
 ) {
     override fun applicabilityRange(element: KtNamedDeclaration): TextRange? {
-        if (element !is KtNamedFunction && element !is KtProperty && element !is KtClassOrObject) return null
-        if (element is KtEnumEntry) return null
-        if (element is KtNamedFunction && element.bodyExpression == null) return null
-        if (element is KtNamedFunction && element.valueParameterList == null) return null
-        if ((element is KtNamedFunction || element is KtProperty) && element.hasModifier(KtTokens.ABSTRACT_KEYWORD)) return null
-        if (element.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return null
-        val containingClass = element.containingClassOrObject as? KtClass ?: return null
-        if (containingClass.isLocal || containingClass.isInner()) return null
-
-        val nameIdentifier = element.nameIdentifier ?: return null
-        if (element is KtProperty && element.hasModifier(KtTokens.CONST_KEYWORD) && !element.isVar) {
-            val constElement = element.modifierList?.allChildren?.find { it.node.elementType == KtTokens.CONST_KEYWORD }
-            if (constElement != null) return TextRange(constElement.startOffset, nameIdentifier.endOffset)
-        }
-        return nameIdentifier.textRange
+        if (!isApplicableForMoveMember(element)) return null
+        if (element.containingClassOrObject is KtObjectDeclaration) return null
+        return findTextRangeForMoveMemberIntention(element)
     }
 
     override fun getTarget(element: KtNamedDeclaration): K2MoveTargetDescriptor.Declaration<*>? {

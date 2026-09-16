@@ -39,7 +39,7 @@ import java.nio.file.Path
  * ends up without an interpreter. The project SDK and explicit module SDK references are then re-pointed to the renamed SDK.
  */
 @Internal
-@RequiresWriteLock
+@RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
 fun Project.renameSdk(oldName: String, newName: String): PyResult<Unit> {
   val jdkTable = ProjectJdkTable.getInstance()
   val sdk = jdkTable.findJdk(oldName)

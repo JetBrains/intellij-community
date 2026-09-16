@@ -1,5 +1,4 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
-load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.tasks.core.libraries.commonsDiscovery` start
 jvm_library(
@@ -16,11 +15,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:tasks-core-libraries-commons_discovery-commons-discovery"],
     runtime_deps = ["@lib//:tasks-core-libraries-commons_discovery-commons-discovery"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:tasks-core-libraries-commons_discovery-commons-discovery"],
-    module = ":tasks-core-libraries-commonsDiscovery",
 )
 
 jvm_library(
@@ -42,7 +36,6 @@ exports_files(
     [
         "intellij.tasks.core.libraries.commonsDiscovery.iml",
         "resources/intellij.tasks.core.libraries.commonsDiscovery.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

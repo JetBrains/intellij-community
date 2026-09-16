@@ -10,6 +10,7 @@ class TerminalExecutionConsoleBuilder(private val project: Project) {
   private var initialTermSize: TermSize = DEFAULT_INITIAL_TERM_SIZE
   private var settingsProvider: JBTerminalSystemSettingsProviderBase? = null
   private var convertLfToCrlfForProcessWithoutPty: Boolean = DEFAULT_CONVERT_LF_TO_CRLF_FOR_PROCESS_WITHOUT_PTY
+  private var keepLastLineOnClear: Boolean = DEFAULT_KEEP_LAST_LINE_ON_CLEAR
 
   fun initialTermSize(initialTermSize: TermSize): TerminalExecutionConsoleBuilder = apply {
     this.initialTermSize = initialTermSize
@@ -23,12 +24,18 @@ class TerminalExecutionConsoleBuilder(private val project: Project) {
     this.convertLfToCrlfForProcessWithoutPty = convertLfToCrlfForProcessWithoutPty
   }
 
+  /** Whether clearing the console should keep the last line. */
+  fun keepLastLineOnClear(keepLastLineOnClear: Boolean): TerminalExecutionConsoleBuilder = apply {
+    this.keepLastLineOnClear = keepLastLineOnClear
+  }
+
   fun build(): TerminalExecutionConsole {
     return TerminalExecutionConsole(
       project,
       initialTermSize,
       settingsProvider ?: createDefaultConsoleSettingsProvider(),
       convertLfToCrlfForProcessWithoutPty,
+      keepLastLineOnClear,
       null
     )
   }
@@ -38,6 +45,8 @@ class TerminalExecutionConsoleBuilder(private val project: Project) {
 internal val DEFAULT_INITIAL_TERM_SIZE: TermSize = TermSize(200, 24)
 
 internal const val DEFAULT_CONVERT_LF_TO_CRLF_FOR_PROCESS_WITHOUT_PTY: Boolean = false
+
+internal const val DEFAULT_KEEP_LAST_LINE_ON_CLEAR: Boolean = false
 
 internal fun createDefaultConsoleSettingsProvider(): JBTerminalSystemSettingsProviderBase {
   return object : JBTerminalSystemSettingsProviderBase() {

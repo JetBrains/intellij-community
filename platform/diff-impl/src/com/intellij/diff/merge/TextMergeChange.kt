@@ -30,7 +30,7 @@ class TextMergeChange(
   var isResolvedWithAI: Boolean = false
     private set
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun setResolved(side: Side, value: Boolean) {
     resolved[side.index] = value
   }

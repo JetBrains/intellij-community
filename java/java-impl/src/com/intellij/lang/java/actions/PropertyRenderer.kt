@@ -95,8 +95,7 @@ internal abstract class PropertyRenderer(
 
   private fun TemplateBuilderImpl.createTemplateContext(): TemplateContext {
     val substitutor = request.targetSubstitutor.toPsiSubstitutor(project)
-    val guesser = GuessTypeParameters(project, factory, this, substitutor)
-    return TemplateContext(project, factory, target, this, guesser, javaUsage?.context)
+    return templateContext(project, factory, target, this, substitutor, javaUsage?.context)
   }
 
   protected fun TemplateBuilderImpl.setupInput(input: AccessorTemplateData): RangeExpression {

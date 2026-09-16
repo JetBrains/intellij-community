@@ -57,7 +57,7 @@ internal class IterateContentUnderExcludedDirectoryTest {
       }
       val m = storage.addEntity(moduleEntity)
     }
-    assertThat(project.workspaceModel.getVirtualFileUrlManager().findByUrl(excludedByPattern.url)).isNull()
+    assertThat(project.workspaceModel.getVirtualFileUrlManager().get(excludedByPattern.url)).isNull()
 
     val files = mutableSetOf<VirtualFile>()
     val processor = ContentIteratorEx { file ->

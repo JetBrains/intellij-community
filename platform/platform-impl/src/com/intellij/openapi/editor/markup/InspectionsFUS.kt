@@ -4,6 +4,10 @@ package com.intellij.openapi.editor.markup
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionRuleValidator
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.EventId1
+import com.intellij.internal.statistic.eventLog.events.EventId2
+import com.intellij.internal.statistic.eventLog.events.EventId3
+import com.intellij.internal.statistic.eventLog.events.StringEventField
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
@@ -47,31 +51,31 @@ object InspectionsFUS : CounterUsagesCollector() {
 
   private val eventLogGroup: EventLogGroup = EventLogGroup("new.inspections.widget", 5)
 
-  private val actionIdField = EventFields.StringValidatedByCustomRule("action_id", ActionRuleValidator::class.java)
-  private val startAction = eventLogGroup.registerEvent("action_started", EventFields.Int("tabId"), actionIdField)
+  private val actionIdField: StringEventField = EventFields.StringValidatedByCustomRule("action_id", ActionRuleValidator::class.java)
+  private val startAction: EventId2<Int, String?> = eventLogGroup.registerEvent("action_started", EventFields.Int("tabId"), actionIdField)
 
-  private val infoState = eventLogGroup.registerEvent("info_state_changed", EventFields.Int("tabId"), EventFields.Enum(("type"), InspectionsState::class.java))
-  private val hints = eventLogGroup.registerEvent("hints_availability_changed", EventFields.Int("tabId"), EventFields.Enabled)
-  private val currentFileLevelChanged = eventLogGroup.registerEvent("current_file_level_changed", EventFields.Int("tabId"), EventFields.Enum(("level"), InspectionsLevel::class.java))
+  private val infoState: EventId2<Int, InspectionsState> = eventLogGroup.registerEvent("info_state_changed", EventFields.Int("tabId"), EventFields.Enum(("type"), InspectionsState::class.java))
+  private val hints: EventId2<Int, Boolean> = eventLogGroup.registerEvent("hints_availability_changed", EventFields.Int("tabId"), EventFields.Enabled)
+  private val currentFileLevelChanged: EventId2<Int, InspectionsLevel> = eventLogGroup.registerEvent("current_file_level_changed", EventFields.Int("tabId"), EventFields.Enum(("level"), InspectionsLevel::class.java))
 
-  private val event = eventLogGroup.registerEvent("action_occurred", EventFields.Int("tabId"), EventFields.Enum(("event"), InspectionsEvent::class.java))
+  private val event: EventId2<Int, InspectionsEvent> = eventLogGroup.registerEvent("action_occurred", EventFields.Int("tabId"), EventFields.Enum(("event"), InspectionsEvent::class.java))
 
-  private val segmentClickedEvent = eventLogGroup.registerEvent("segment_clicked",
-                                                                       EventFields.Enum(("type"), InspectionSegmentType::class.java),
-                                                                       EventFields.Int("count"),
-                                                                       EventFields.Boolean("forward"))
+  private val segmentClickedEvent: EventId3<InspectionSegmentType, Int, Boolean> = eventLogGroup.registerEvent("segment_clicked",
+                                                                                                               EventFields.Enum(("type"), InspectionSegmentType::class.java),
+                                                                                                               EventFields.Int("count"),
+                                                                                                               EventFields.Boolean("forward"))
 
-  private val actionNotFound = eventLogGroup.registerEvent("inspection_action_not_found", EventFields.Int("tabId"), EventFields.Enum(("event"), InspectionsActions::class.java))
+  private val actionNotFound: EventId2<Int, InspectionsActions> = eventLogGroup.registerEvent("inspection_action_not_found", EventFields.Int("tabId"), EventFields.Enum(("event"), InspectionsActions::class.java))
 
 
   /*--------------*/
 
-  private val inSolution = eventLogGroup.registerEvent("rider_solution_level_changed", EventFields.Enum(("event"), RiderSeverityFilters::class.java))
-  private val configureInspections = eventLogGroup.registerEvent("rider_configuration_edited", EventFields.Int("tabId"))
-  private val styleInspections = eventLogGroup.registerEvent("rider_style_edited", EventFields.Int("tabId"),
-                                                     EventFields.String("pencilsFilterGroup", listOf(
+  private val inSolution: EventId1<RiderSeverityFilters> = eventLogGroup.registerEvent("rider_solution_level_changed", EventFields.Enum(("event"), RiderSeverityFilters::class.java))
+  private val configureInspections: EventId1<Int> = eventLogGroup.registerEvent("rider_configuration_edited", EventFields.Int("tabId"))
+  private val styleInspections: EventId3<Int, String?, Boolean> = eventLogGroup.registerEvent("rider_style_edited", EventFields.Int("tabId"),
+                                                                                              EventFields.String("pencilsFilterGroup", listOf(
                                                                          "CodeVision", "SpellingFilter", "NamingFilter", "CodeStyle", "InlayHints")),
-                                                     EventFields.Boolean("isEnabled"))
+                                                                                              EventFields.Boolean("isEnabled"))
   fun infoStateDetected(project: Project?, id: Int, state: InspectionsState) {
     infoState.log(project, id, state)
   }

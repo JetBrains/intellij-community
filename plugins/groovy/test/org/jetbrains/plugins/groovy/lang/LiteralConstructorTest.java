@@ -1,6 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang;
 
+import com.intellij.groovy.testFramework.ResolveTest;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -17,7 +18,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyConstructorResult;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyPropertyWriteReference;
 import org.jetbrains.plugins.groovy.util.HighlightingTest;
 import org.jetbrains.plugins.groovy.util.LightProjectTest;
-import org.jetbrains.plugins.groovy.util.ResolveTest;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 import org.junit.Assert;
 import org.junit.Before;

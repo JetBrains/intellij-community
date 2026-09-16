@@ -33,9 +33,9 @@
     <orderEntry type="library" scope="TEST" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="fleet.test.runtime" scope="TEST" />
     <orderEntry type="module" module-name="fleet.codecache" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="kotlinx-coroutines-core" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" scope="TEST" />
     <orderEntry type="module" module-name="fleet.bundles" scope="TEST" />
     <orderEntry type="module" module-name="fleet.ktor.client.core" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="kotlinx-serialization-core" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" scope="TEST" />
   </component>
 </module>

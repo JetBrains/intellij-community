@@ -64,7 +64,7 @@ public class JumpToTypeSourceAction extends ClassesActionBase {
     final VirtualMachine vm = ref.virtualMachine();
     final List<ReferenceType> referenceTypes = vm.classesByName(elementTypeName);
     if (referenceTypes.size() == 1) {
-      return referenceTypes.get(0);
+      return referenceTypes.getFirst();
     }
 
     return null;

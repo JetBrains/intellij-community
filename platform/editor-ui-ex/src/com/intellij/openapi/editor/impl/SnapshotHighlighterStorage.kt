@@ -17,7 +17,6 @@ import java.lang.ref.ReferenceQueue
 import java.lang.ref.WeakReference
 import java.util.Comparator
 import java.util.NoSuchElementException
-import java.util.concurrent.atomic.AtomicReference
 
 /**
  * Stores and updates the snapshot highlighters for one markup model.
@@ -42,14 +41,10 @@ internal class SnapshotHighlighterStorage(
   /** A positive value prevents nested changes during removal notifications on the current thread. */
   private val removalDepth: ThreadLocal<Int> = ThreadLocal.withInitial { 0 }
 
-  private val rootStore = SnapshotMarkerRootStore(
-    document,
-    emptyRoot = CompoundPMarkerRoot.empty(),
-    onMarkersInvalidated = ::highlightersChanged,
-  )
+  val rootStore: SnapshotMarkerRootStore = SnapshotMarkerRootStore(document, onMarkersInvalidated = ::highlightersChanged)
 
   fun dispose() {
-    rootStore.dispose()
+    rootStore.dispose(document.snapshotMarkerStores)
     highlightersById.clear()
   }
 
@@ -61,20 +56,16 @@ internal class SnapshotHighlighterStorage(
     val previous = highlightersById.putIfAbsent(markerId, HighlighterReference(highlighter, highlighterQueue))
     check(previous == null) { "Highlighter $markerId is already registered" }
     val markerReference = SnapshotMarkerEngineImpl.createMarkerReference(highlighter, retainStrong = true)
-    rootStore.updateRoot(snapshot) {
+    rootStore.updateRoot(snapshot, CompoundPMarkerRoot.empty()) {
       it.insert(markerId, startOffset, endOffset, spec, highlighter.flavorFlags, markerReference)
     }
     model.invalidateHighlighterCache()
   }
 
-  fun rootReference(snapshot: DocumentSnapshot): AtomicReference<PMarkerRoot> {
-    return rootStore.rootReference(snapshot)
-  }
-
   fun currentSnapshot(): DocumentSnapshot = document.core.snapshot()
 
   fun updateFlavor(highlighter: SnapshotRangeHighlighterImpl) {
-    rootStore.updateRoot(currentSnapshot()) {
+    rootStore.updateRoot(currentSnapshot(), CompoundPMarkerRoot.empty()) {
       it.updateFlavor(highlighter.idForStorage(), highlighter.flavorFlags)
     }
   }
@@ -128,11 +119,10 @@ internal class SnapshotHighlighterStorage(
 
   fun collectAll(): List<RangeHighlighterEx> {
     processHighlighterQueue()
-    val snapshot = currentSnapshot()
     val result = ArrayList<RangeHighlighterEx>()
     for (reference in highlightersById.values()) {
       val highlighter = reference.get() ?: continue
-      if (highlighter.resolve(snapshot).isValid) result.add(highlighter)
+      if (highlighter.isValid) result.add(highlighter)
     }
     result.sortWith(SNAPSHOT_HIGHLIGHTER_COMPARATOR)
     return result
@@ -240,7 +230,7 @@ internal class SnapshotHighlighterStorage(
   }
 
   companion object {
-    private val SNAPSHOT_HIGHLIGHTER_COMPARATOR = Comparator<RangeHighlighterEx> { first, second ->
+    private val SNAPSHOT_HIGHLIGHTER_COMPARATOR: Comparator<RangeHighlighterEx> = Comparator<RangeHighlighterEx> { first, second ->
       val byStartOffset = first.affectedAreaStartOffset.compareTo(second.affectedAreaStartOffset)
       if (byStartOffset != 0) return@Comparator byStartOffset
       val byLayer = second.layer.compareTo(first.layer)

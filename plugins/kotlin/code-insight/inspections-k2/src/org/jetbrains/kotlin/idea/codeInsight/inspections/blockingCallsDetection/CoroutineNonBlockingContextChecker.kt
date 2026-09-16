@@ -10,12 +10,10 @@ import com.intellij.codeInspection.blockingCallsDetection.NonBlockingContextChec
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiRecursiveElementVisitor
-import com.intellij.psi.util.parentsOfType
 import com.intellij.util.asSafely
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.scopes.memberScope
 import org.jetbrains.kotlin.analysis.api.session.analyze
@@ -45,23 +43,18 @@ import org.jetbrains.kotlin.idea.codeInsight.inspections.blockingCallsDetection.
 import org.jetbrains.kotlin.idea.codeInsight.inspections.blockingCallsDetection.CoroutineBlockingCallInspectionUtils.MAIN_DISPATCHER_FQN
 import org.jetbrains.kotlin.idea.codeInsight.inspections.blockingCallsDetection.CoroutineBlockingCallInspectionUtils.NONBLOCKING_EXECUTOR_ANNOTATION
 import org.jetbrains.kotlin.idea.codeInsight.inspections.blockingCallsDetection.CoroutineBlockingCallInspectionUtils.findFlowOnCall
+import org.jetbrains.kotlin.idea.codeInsight.inspections.coroutines.getContainingSuspendContext
+import org.jetbrains.kotlin.idea.util.resolveSuccessfulExpressionCall
 import org.jetbrains.kotlin.idea.util.resolveSuccessfulExpressionSymbol
-import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallExpression
-import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtLambdaExpression
-import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtFunctionLiteral
 import org.jetbrains.kotlin.psi.KtProperty
-import org.jetbrains.kotlin.psi.KtValueArgument
-import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
-import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypes
-import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
-import org.jetbrains.kotlin.psi.psiUtil.parents
+import org.jetbrains.kotlin.psi.KtPsiUtil
 
 internal class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
 
@@ -76,53 +69,86 @@ internal class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
         val element = elementContext.element
         if (element !is KtCallExpression) return Unsure
 
-        val containingLambda = element.parents
-            .filterIsInstance<KtLambdaExpression>()
-            .firstOrNull()
-        val containingArgument = containingLambda?.getParentOfType<KtValueArgument>(true, KtCallableDeclaration::class.java)
-        if (containingArgument != null) {
-            analyze(element) {
-                val callExpression = containingArgument.getStrictParentOfType<KtCallExpression>() ?: return Blocking
-                val call = callExpression.resolveSuccessfulCall() ?: return Blocking
-
-                val blockingFriendlyDispatcherUsed = checkBlockingFriendlyDispatcherUsed(call, callExpression)
-                if (blockingFriendlyDispatcherUsed.isDefinitelyKnown) return blockingFriendlyDispatcherUsed
-
-                val parameterForArgument = call.valueArgumentMapping[containingLambda] ?: return Blocking
-                val type = parameterForArgument.returnType
-
-                if (type is KaFunctionType) {
-                    val hasRestrictSuspensionAnnotation = type.receiverType?.isRestrictsSuspensionReceiver() == true
-                    return if (!hasRestrictSuspensionAnnotation && type.isSuspend) Unsure else Blocking
-                }
-            }
-        }
-
         val defaultSuspendContextStatus =
             if (elementContext.inspectionSettings.considerSuspendContextNonBlocking) NonBlocking.INSTANCE else Unsure
-        if (containingLambda == null) {
-            val isInSuspendFunctionBody = element.parentsOfType<KtNamedFunction>()
-                .take(2)
-                .firstOrNull { function -> function.nameIdentifier != null }
-                ?.hasModifier(KtTokens.SUSPEND_KEYWORD) ?: false
-            return if (isInSuspendFunctionBody) defaultSuspendContextStatus else Blocking
+
+        analyze(element) {
+            val containingSuspendContext = getContainingSuspendContext(element)
+            if (containingSuspendContext == null) return Blocking
+            if (containingSuspendContext !is KtFunctionLiteral) {
+                return defaultSuspendContextStatus
+            }
+
+            // For lambdas/anonymous functions, it could be the case that we have a suspend call that should allow blocking calls
+            // like `withContext(Dispatchers.IO) { ... }`.
+            // This needs to be checked separately, see `getDispatcherType`.
+            val lambdaContainer = containingSuspendContext.parent as? KtExpression ?: return defaultSuspendContextStatus
+            val callExpression = KtPsiUtil.getParentCallIfPresent(containingSuspendContext) ?: return defaultSuspendContextStatus
+            val call = callExpression.resolveSuccessfulExpressionCall() as? KaFunctionCall<*> ?: return Blocking
+
+            // Restricted suspend blocks are always considered blocking.
+            if (isRestrictedSuspend(call, lambdaContainer)) return Blocking
+
+            val dispatcherType = getDispatcherType(call, callExpression)
+            return dispatcherType.toContextType(defaultSuspendContextStatus)
         }
-        val containingPropertyOrFunction: KtCallableDeclaration? =
-            containingLambda.getParentOfTypes(true, KtProperty::class.java, KtNamedFunction::class.java)
-        if (containingPropertyOrFunction?.typeReference?.hasModifier(KtTokens.SUSPEND_KEYWORD) == true) return defaultSuspendContextStatus
-        return if (containingPropertyOrFunction?.hasModifier(KtTokens.SUSPEND_KEYWORD) == true) defaultSuspendContextStatus else Blocking
     }
 
     context(_: KaSession)
-    private fun checkBlockingFriendlyDispatcherUsed(
+    private fun isRestrictedSuspend(call: KaFunctionCall<*>, lambdaContainer: KtExpression): Boolean {
+        val parameterForArgument = call.valueArgumentMapping[lambdaContainer] ?: return false
+        val type = parameterForArgument.returnType
+
+        // This ensures that sequences can use blocking code
+        return type is KaFunctionType && type.receiverType?.isRestrictsSuspensionReceiver() == true
+    }
+
+    private enum class DispatcherType {
+        // There is no information about the dispatcher, either because we have nothing to check,
+        // or there is no dispatcher in the scope
+        NO_INFORMATION,
+
+        // There is a dispatcher in scope, but we do not know whether it is blocking or non-blocking
+        UNKNOWN,
+
+        // We have a dispatcher that is definitely non-blocking
+        NON_BLOCKING,
+
+        // We have a dispatcher that definitely supports blocking
+        BLOCKING;
+
+        fun isDefinite(): Boolean = this == NON_BLOCKING || this == BLOCKING
+
+        fun combine(other: DispatcherType): DispatcherType {
+            return maxOf(this, other)
+        }
+
+        fun toContextType(defaultType: ContextType): ContextType = when (this) {
+            NO_INFORMATION -> defaultType
+            UNKNOWN -> Unsure
+            NON_BLOCKING -> NonBlocking.INSTANCE
+            BLOCKING -> Blocking
+        }
+    }
+
+    context(_: KaSession)
+    private fun getDispatcherType(
         call: KaFunctionCall<*>,
-        callExpression: KtCallExpression
-    ): ContextType {
-        return union(
-            { checkBlockFriendlyDispatcherParameter(call) },
-            { checkFunctionWithDefaultDispatcher(callExpression) },
-            { checkFlowChainElementWithIODispatcher(call, callExpression) }
-        )
+        callExpression: KtExpression
+    ): DispatcherType {
+        val foundTypes = sequence {
+            // Use sequence for laziness
+            yield(getContextArgumentDispatcherType(call))
+            yield(getCoroutineScopeDispatcherType(callExpression))
+            yield(getFlowOnDispatcherType(call, callExpression))
+        }
+
+        var computedType = DispatcherType.NO_INFORMATION
+        for (type in foundTypes) {
+            computedType = computedType.combine(type)
+            if (computedType.isDefinite()) return computedType
+        }
+        return computedType
     }
 
     private fun getLanguageVersionSettings(psiElement: PsiElement): LanguageVersionSettings =
@@ -134,18 +160,18 @@ internal class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
     }
 
     context(_: KaSession)
-    private fun checkBlockFriendlyDispatcherParameter(call: KaFunctionCall<*>): ContextType {
+    private fun getContextArgumentDispatcherType(call: KaFunctionCall<*>): DispatcherType {
         val firstArgument = call.getFirstArgumentExpression()
         val resultArgumentResolvedSymbol =
-            firstArgument?.resolveSuccessfulExpressionSymbol() as? KaCallableSymbol ?: return Unsure
+            firstArgument?.resolveSuccessfulExpressionSymbol() as? KaCallableSymbol ?: return DispatcherType.NO_INFORMATION
 
-        val blockingType = resultArgumentResolvedSymbol.isBlockFriendlyDispatcher()
-        if (blockingType != Unsure) return blockingType
+        val dispatcherType = resultArgumentResolvedSymbol.toDispatcherType()
+        if (dispatcherType != DispatcherType.UNKNOWN) return dispatcherType
 
         if (isCoroutineContextPlus(resultArgumentResolvedSymbol)) {
-            return firstArgument.hasBlockFriendlyDispatcher()
+            return firstArgument.findNestedDispatcherType()
         }
-        return Unsure
+        return DispatcherType.UNKNOWN
     }
 
     context(_: KaSession)
@@ -159,74 +185,77 @@ internal class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
 
     // TODO add testdata to check this function
     context(_: KaSession)
-    private fun checkFunctionWithDefaultDispatcher(callExpression: KtCallExpression): ContextType {
+    private fun getCoroutineScopeDispatcherType(callExpression: KtExpression): DispatcherType {
         val receiverType =
-            (callExpression.resolveSuccessfulCall()?.run { dispatchReceiver ?: extensionReceiver } as? KaImplicitReceiverValue)?.type
-                ?: return Unsure
+            ((callExpression.resolveSuccessfulExpressionCall() as? KaFunctionCall<*>)
+                ?.run { dispatchReceiver ?: extensionReceiver } as? KaImplicitReceiverValue)?.type
+                ?: return DispatcherType.NO_INFORMATION
 
         val coroutineScopeClassId = ClassId.topLevel(COROUTINE_SCOPE)
-        if (!receiverType.isSubtypeOf(coroutineScopeClassId)) return Unsure
+        if (!receiverType.isSubtypeOf(coroutineScopeClassId)) return DispatcherType.NO_INFORMATION
 
-        val classSymbol = receiverType.symbol as? KaClassSymbol ?: return Unsure
+        val classSymbol = receiverType.symbol as? KaClassSymbol ?: return DispatcherType.UNKNOWN
         val propertySymbol = classSymbol.memberScope
             .callables()
             .filterIsInstance<KaPropertySymbol>()
             .singleOrNull { symbol ->
                 // TODO isOverridable?
                 symbol.returnType.isCoroutineContext()
-            } ?: return Unsure
+            } ?: return DispatcherType.UNKNOWN
 
-        val initializer = propertySymbol.psi?.asSafely<KtProperty>()?.initializer ?: return Unsure
-        return initializer.hasBlockFriendlyDispatcher()
+        val initializer = propertySymbol.psi?.asSafely<KtProperty>()?.initializer ?: return DispatcherType.UNKNOWN
+        return initializer.findNestedDispatcherType()
     }
 
     context(_: KaSession)
-    private fun checkFlowChainElementWithIODispatcher(
+    private fun getFlowOnDispatcherType(
         call: KaFunctionCall<*>,
-        callExpression: KtCallExpression
-    ): ContextType {
+        callExpression: KtExpression
+    ): DispatcherType {
         val symbol = call.symbol
         val isInsideFlow = symbol.callableId?.asSingleFqName()?.startsWith(FLOW_PACKAGE_FQN) ?: false
-        if (!isInsideFlow) return Unsure
-        val flowOnCall = callExpression.findFlowOnCall() ?: return NonBlocking.INSTANCE
-        return checkBlockFriendlyDispatcherParameter(flowOnCall)
+        if (!isInsideFlow) return DispatcherType.NO_INFORMATION
+        val flowOnCall = callExpression.findFlowOnCall() ?: return DispatcherType.NON_BLOCKING
+        return getContextArgumentDispatcherType(flowOnCall)
     }
 
     context(_: KaSession)
-    private fun KtExpression.hasBlockFriendlyDispatcher(): ContextType {
+    private fun KtExpression.findNestedDispatcherType(): DispatcherType {
         class RecursiveExpressionVisitor : PsiRecursiveElementVisitor() {
-            var allowsBlocking: ContextType = Unsure
+            var dispatcherType: DispatcherType = DispatcherType.NO_INFORMATION
 
             override fun visitElement(element: PsiElement) {
                 if (element is KtExpression) {
                     val callableSymbol = element.resolveSuccessfulExpressionSymbol() as? KaCallableSymbol
-                    val allowsBlocking = callableSymbol?.isBlockFriendlyDispatcher()
-                    if (allowsBlocking != null && allowsBlocking != Unsure) {
-                        this.allowsBlocking = allowsBlocking
-                        return
+                    val newDispatcherType = callableSymbol?.toDispatcherType()
+                    if (newDispatcherType != null) {
+                        dispatcherType = maxOf(dispatcherType, newDispatcherType)
+                        if (dispatcherType.isDefinite()) {
+                            return
+                        }
                     }
                 }
                 super.visitElement(element)
             }
         }
 
-        return RecursiveExpressionVisitor().also(this::accept).allowsBlocking
+        return RecursiveExpressionVisitor().also(this::accept).dispatcherType
     }
 
     context(_: KaSession)
-    private fun KaCallableSymbol.isBlockFriendlyDispatcher(): ContextType {
+    private fun KaCallableSymbol.toDispatcherType(): DispatcherType {
         val returnType = returnType
 
-        if (isTypeOrUsageAnnotatedWith(returnType, BLOCKING_EXECUTOR_ANNOTATION)) return Blocking
-        if (isTypeOrUsageAnnotatedWith(returnType, NONBLOCKING_EXECUTOR_ANNOTATION)) return NonBlocking.INSTANCE
+        if (isTypeOrUsageAnnotatedWith(returnType, BLOCKING_EXECUTOR_ANNOTATION)) return DispatcherType.BLOCKING
+        if (isTypeOrUsageAnnotatedWith(returnType, NONBLOCKING_EXECUTOR_ANNOTATION)) return DispatcherType.NON_BLOCKING
 
-        if (this is KaConstructorSymbol && containingClassId?.asSingleFqName() == COROUTINE_NAME) return Unsure
+        if (this is KaConstructorSymbol && containingClassId?.asSingleFqName() == COROUTINE_NAME) return DispatcherType.UNKNOWN
 
-        val fqnOrNull = callableId?.asSingleFqName() ?: return Unsure
-        return when(fqnOrNull) {
-            IO_DISPATCHER_FQN -> Blocking
-            MAIN_DISPATCHER_FQN, DEFAULT_DISPATCHER_FQN -> NonBlocking.INSTANCE
-            else -> Unsure
+        val fqnOrNull = callableId?.asSingleFqName() ?: return DispatcherType.UNKNOWN
+        return when (fqnOrNull) {
+            IO_DISPATCHER_FQN -> DispatcherType.BLOCKING
+            MAIN_DISPATCHER_FQN, DEFAULT_DISPATCHER_FQN -> DispatcherType.NON_BLOCKING
+            else -> DispatcherType.UNKNOWN
         }
     }
 
@@ -234,17 +263,10 @@ internal class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
     private fun isTypeOrUsageAnnotatedWith(type: KaType, annotationFqn: ClassId): Boolean {
         return type.typeOrClassIsAnnotated(annotationFqn)
     }
-
-    private fun union(vararg checks: () -> ContextType): ContextType {
-        for (check in checks) {
-            val iterationResult = check()
-            if (iterationResult != Unsure) return iterationResult
-        }
-        return Unsure
-    }
 }
 
-private val RESTRICTS_SUSPENSION_ID: ClassId = ClassId.topLevel(StandardNames.COROUTINES_PACKAGE_FQ_NAME.child(Name.identifier("RestrictsSuspension")))
+private val RESTRICTS_SUSPENSION_ID: ClassId =
+    ClassId.topLevel(StandardNames.COROUTINES_PACKAGE_FQ_NAME.child(Name.identifier("RestrictsSuspension")))
 
 context(_: KaSession)
 private fun KaType.isRestrictsSuspensionReceiver(): Boolean {

@@ -1252,6 +1252,20 @@ class PyQuickFixTest : PyTestCase() {
     )
   }
 
+  @TestFor(issues = ["PY-53074"])
+  fun testImplementAbstractAsyncMethodsInEmptyClass() {
+    runWithLanguageLevel(LanguageLevel.getLatest()) {
+      doInspectionTest(PyAbstractClassInspection::class.java, PyBundle.message("QFIX.NAME.implement.methods"), true, true)
+    }
+  }
+
+  @TestFor(issues = ["PY-53074"])
+  fun testImplementAbstractAsyncMethodsInEmptyNestedClass() {
+    runWithLanguageLevel(LanguageLevel.getLatest()) {
+      doInspectionTest(PyAbstractClassInspection::class.java, PyBundle.message("QFIX.NAME.implement.methods"), true, true)
+    }
+  }
+
   fun testRemovingUnderscoresInNumericLiterals() {
     myFixture.configureByText(PythonFileType.INSTANCE, "1_0_0")
 

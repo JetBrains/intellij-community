@@ -328,6 +328,7 @@
 
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.k2.codeinsight.generate.KotlinEqualsHashCodeTemplatesManager"/>
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.k2.codeinsight.generate.KotlinToStringTemplatesManager"/>
+    <applicationService serviceImplementation="org.jetbrains.kotlin.idea.k2.codeinsight.generate.valueClasses.KotlinFullValueClassesTemplateManager"/>
 
     <testGenerator id="kotlinTestGenerator" language="kotlin" implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.generate.KotlinTestGenerator"/>
     <registryKey key="enable.kotlin.code.vision.inlay"
@@ -335,6 +336,7 @@
                  description="Allows to disable usages and inheritors code vision for kotlin" />
     <applicationSettings service="org.jetbrains.kotlin.idea.k2.codeinsight.generate.KotlinEqualsHashCodeTemplatesManager"/>
     <applicationSettings service="org.jetbrains.kotlin.idea.k2.codeinsight.generate.KotlinToStringTemplatesManager"/>
+    <applicationSettings service="org.jetbrains.kotlin.idea.k2.codeinsight.generate.valueClasses.KotlinFullValueClassesTemplateManager"/>
     <intentionAction>
       <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertFunctionTypeReceiverToParameterIntention</className>
@@ -370,6 +372,7 @@
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <codeinsight.quickfix.registrar implementation="org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFromUsageQuickFixesRegistrar"/>
     <supportAvailability implementation="org.jetbrains.kotlin.idea.k2.codeinsight.WasmMultiplatformSupportAvailability"/>
+    <equalsHashCodeGeneratorExtension implementation="org.jetbrains.kotlin.idea.k2.codeinsight.generate.valueClasses.KotlinFullValueClassEqualsHashCodeGeneratorExtension"/>
   </extensions>
   <resource-bundle>messages.KotlinBundle</resource-bundle>
 </idea-plugin>

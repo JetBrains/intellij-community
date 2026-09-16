@@ -11,7 +11,8 @@ import org.jetbrains.intellij.build.io.PackageIndexBuilder
 import org.jetbrains.intellij.build.io.ZipArchiver
 import org.jetbrains.intellij.build.io.ZipFileWriter
 import org.jetbrains.intellij.build.io.archiveDir
-import org.jetbrains.intellij.build.io.suspendAwareReadZipFile
+import org.jetbrains.intellij.build.io.ZipEntryProcessorResult
+import org.jetbrains.intellij.build.io.readZipFile
 import org.jetbrains.intellij.build.io.zipWriter
 import org.jetbrains.intellij.build.productLayout.LIB_MODULE_PREFIX
 import java.io.IOException
@@ -23,8 +24,9 @@ import java.util.zip.Deflater
 
 private const val listOfEntitiesFileName = "META-INF/listOfEntities.txt"
 
+/** Describes the distribution entry of a library jar once the asset that holds it is packed. */
 fun interface DistributionFileEntryProducer {
-  fun consume(size: Int, hash: Long, targetFile: Path): DistributionFileEntry
+  fun produce(): DistributionFileEntry
 }
 
 internal interface NativeFileHandler {
@@ -34,19 +36,14 @@ internal interface NativeFileHandler {
 
   fun isCompatibleWithTargetPlatform(name: String): Boolean
 
-  suspend fun sign(name: String, dataSupplier: () -> ByteBuffer): Path?
+  fun sign(name: String, dataSupplier: () -> ByteBuffer): Path?
 }
 
-suspend fun buildUncompressJarWithDirEntries(targetFile: Path, sources: List<Source>) {
-  // addDirEntries=true has no effect when compress=true
-  buildJar(targetFile = targetFile, sources = sources, nativeFileHandler = null, addDirEntries = true, compress = false)
-}
-
-suspend fun buildJar(targetFile: Path, sources: List<Source>, compress: Boolean = false) {
+fun buildJar(targetFile: Path, sources: List<Source>, compress: Boolean = false) {
   buildJar(targetFile = targetFile, sources = sources, nativeFileHandler = null, addDirEntries = false, compress = compress)
 }
 
-internal suspend fun buildJar(
+internal fun buildJar(
   targetFile: Path,
   sources: Collection<Source>,
   nativeFileHandler: NativeFileHandler?,
@@ -83,7 +80,7 @@ internal suspend fun buildJar(
   }
 }
 
-private suspend fun writeSource(
+private fun writeSource(
   source: Source,
   zipCreator: ZipFileWriter,
   uniqueNames: HashMap<String, Path>,
@@ -161,12 +158,6 @@ private suspend fun writeSource(
           throw IOException("Failed to include $sourceFile to $targetFile", e)
         }
       }
-      finally {
-        @Suppress("KotlinConstantConditions")
-        if (sourceFile !== source.file) {
-          Files.deleteIfExists(sourceFile)
-        }
-      }
     }
 
     is LazySource -> {
@@ -196,7 +187,7 @@ private suspend fun writeSource(
   }
 }
 
-private suspend fun handleZipSource(
+private fun handleZipSource(
   source: ZipSource,
   sourceFile: Path,
   nativeFileHandler: NativeFileHandler?,
@@ -219,10 +210,10 @@ private suspend fun handleZipSource(
     }
   }
 
-  suspendAwareReadZipFile(sourceFile) { name, dataSupplier ->
+  readZipFile(sourceFile) { name, dataSupplier ->
     if (name == listOfEntitiesFileName) {
       filesToMerge.add(Charsets.UTF_8.decode(dataSupplier()))
-      return@suspendAwareReadZipFile
+      return@readZipFile ZipEntryProcessorResult.CONTINUE
     }
 
     fun writeZipData(data: ByteBuffer) {
@@ -235,14 +226,14 @@ private suspend fun handleZipSource(
     }
 
     if (checkCoverageAgentManifest(name = name, sourceFile = sourceFile, targetFile = targetFile, dataSupplier = dataSupplier, writeData = ::writeZipData)) {
-      return@suspendAwareReadZipFile
+      return@readZipFile ZipEntryProcessorResult.CONTINUE
     }
 
     val includeManifest = sources.count { !isLibModuleSource(it) } == 1
     val isIncluded = source.filter(name) && (includeManifest || name != "META-INF/MANIFEST.MF")
 
     if (!isIncluded || isDuplicated(uniqueNames = uniqueNames, name = name, sourceFile = sourceFile)) {
-      return@suspendAwareReadZipFile
+      return@readZipFile ZipEntryProcessorResult.CONTINUE
     }
 
     if (nativeFileHandler?.isNative(name) == true) {
@@ -268,6 +259,7 @@ private suspend fun handleZipSource(
       packageIndexBuilder?.addFile(name)
       writeZipData(dataSupplier())
     }
+    ZipEntryProcessorResult.CONTINUE
   }
 }
 

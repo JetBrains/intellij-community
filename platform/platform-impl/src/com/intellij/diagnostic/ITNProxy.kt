@@ -12,7 +12,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent
-import com.intellij.openapi.diagnostic.UnhandledException
+import com.intellij.openapi.diagnostic.UnhandledExceptionKind
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
 import com.intellij.openapi.util.SystemInfo
@@ -32,6 +32,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import tools.jackson.core.JsonToken
 import tools.jackson.core.ObjectReadContext
 import tools.jackson.core.json.JsonFactory
@@ -302,7 +303,8 @@ object ITNProxy {
   }
 
   @Throws(Exception::class)
-  private fun createRequest(event: IdeaLoggingEvent, errorBean: ErrorBean?): BufferExposingByteArrayOutputStream {
+  @VisibleForTesting
+  internal fun createRequest(event: IdeaLoggingEvent, errorBean: ErrorBean?): BufferExposingByteArrayOutputStream {
     val compressed = BufferExposingByteArrayOutputStream(8192)
 
     TrackingStreamWriter(OutputStreamWriter(GZIPOutputStream(compressed), StandardCharsets.UTF_8)).use { builder ->
@@ -323,8 +325,14 @@ object ITNProxy {
 
       append(builder, "error.message", event.message?.trim { it <= ' ' } ?: "")
       append(builder, "error.stacktrace", event.throwableText)
-      (event.throwable as? UnhandledException)?.let {
-        append(builder, "error.unhandled.interactive", it.isInteractive.toString())
+      // The event carries the kind, because an entry hands over the cause and drops the wrapper. See IJPL-254578.
+      val interactiveKey = when (event.unhandledExceptionKind) {
+        UnhandledExceptionKind.INTERACTIVE -> true
+        UnhandledExceptionKind.BACKGROUND -> false
+        UnhandledExceptionKind.HANDLED -> null
+      }
+      interactiveKey?.let {
+        append(builder, "error.unhandled.interactive", "$it")
       }
       if (event.throwable is RecoveredThrowable) {
         append(builder, "error.redacted", "true")

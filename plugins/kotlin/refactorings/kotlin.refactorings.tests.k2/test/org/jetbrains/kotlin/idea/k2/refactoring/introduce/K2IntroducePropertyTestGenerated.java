@@ -17,10 +17,10 @@ import org.junit.runner.RunWith;
 @TestRoot("refactorings/kotlin.refactorings.tests.k2")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../../idea/tests/testData/refactoring/introduceProperty")
+@TestMetadata("testData/introduceProperty")
 public abstract class K2IntroducePropertyTestGenerated extends AbstractK2IntroducePropertyTest {
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../idea/tests/testData/refactoring/introduceProperty/script")
+    @TestMetadata("testData/introduceProperty/script")
     public static class Script extends AbstractK2IntroducePropertyTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doIntroducePropertyTest, this, testDataFilePath);
@@ -28,22 +28,22 @@ public abstract class K2IntroducePropertyTestGenerated extends AbstractK2Introdu
 
         @TestMetadata("ClassInScript.kts")
         public void testClassInScript() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceProperty/script/ClassInScript.kts");
+            runTest("testData/introduceProperty/script/ClassInScript.kts");
         }
 
         @TestMetadata("ExpressionPart.kts")
         public void testExpressionPart() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceProperty/script/ExpressionPart.kts");
+            runTest("testData/introduceProperty/script/ExpressionPart.kts");
         }
 
         @TestMetadata("TopLevelExpression.kts")
         public void testTopLevelExpression() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceProperty/script/TopLevelExpression.kts");
+            runTest("testData/introduceProperty/script/TopLevelExpression.kts");
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../idea/tests/testData/refactoring/introduceProperty/stringTemplates")
+    @TestMetadata("testData/introduceProperty/stringTemplates")
     public static class StringTemplates extends AbstractK2IntroducePropertyTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doIntroducePropertyTest, this, testDataFilePath);
@@ -51,87 +51,87 @@ public abstract class K2IntroducePropertyTestGenerated extends AbstractK2Introdu
 
         @TestMetadata("brokenEntryWithBlockExpr.kt")
         public void testBrokenEntryWithBlockExpr() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceProperty/stringTemplates/brokenEntryWithBlockExpr.kt");
+            runTest("testData/introduceProperty/stringTemplates/brokenEntryWithBlockExpr.kt");
         }
 
         @TestMetadata("brokenEntryWithExpr.kt")
         public void testBrokenEntryWithExpr() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceProperty/stringTemplates/brokenEntryWithExpr.kt");
+            runTest("testData/introduceProperty/stringTemplates/brokenEntryWithExpr.kt");
         }
 
         @TestMetadata("brokenEscapeEntry.kt")
         public void testBrokenEscapeEntry() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceProperty/stringTemplates/brokenEscapeEntry.kt");
+            runTest("testData/introduceProperty/stringTemplates/brokenEscapeEntry.kt");
         }
 
         @TestMetadata("extractFalse.kt")
         public void testExtractFalse() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceProperty/stringTemplates/extractFalse.kt");
+            runTest("testData/introduceProperty/stringTemplates/extractFalse.kt");
         }
 
         @TestMetadata("extractIntegerLiteral.kt")
         public void testExtractIntegerLiteral() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceProperty/stringTemplates/extractIntegerLiteral.kt");
+            runTest("testData/introduceProperty/stringTemplates/extractIntegerLiteral.kt");
         }
 
         @TestMetadata("extractTrue.kt")
         public void testExtractTrue() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceProperty/stringTemplates/extractTrue.kt");
+            runTest("testData/introduceProperty/stringTemplates/extractTrue.kt");
         }
 
         @TestMetadata("fullContent.kt")
         public void testFullContent() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceProperty/stringTemplates/fullContent.kt");
+            runTest("testData/introduceProperty/stringTemplates/fullContent.kt");
         }
 
         @TestMetadata("fullEntryWithBlockExpr.kt")
         public void testFullEntryWithBlockExpr() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceProperty/stringTemplates/fullEntryWithBlockExpr.kt");
+            runTest("testData/introduceProperty/stringTemplates/fullEntryWithBlockExpr.kt");
         }
 
         @TestMetadata("fullEntryWithSimpleName.kt")
         public void testFullEntryWithSimpleName() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceProperty/stringTemplates/fullEntryWithSimpleName.kt");
+            runTest("testData/introduceProperty/stringTemplates/fullEntryWithSimpleName.kt");
         }
 
         @TestMetadata("multipleEntriesWithPrefix.kt")
         public void testMultipleEntriesWithPrefix() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceProperty/stringTemplates/multipleEntriesWithPrefix.kt");
+            runTest("testData/introduceProperty/stringTemplates/multipleEntriesWithPrefix.kt");
         }
 
         @TestMetadata("multipleEntriesWithSubstring.kt")
         public void testMultipleEntriesWithSubstring() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceProperty/stringTemplates/multipleEntriesWithSubstring.kt");
+            runTest("testData/introduceProperty/stringTemplates/multipleEntriesWithSubstring.kt");
         }
 
         @TestMetadata("multipleEntriesWithSuffix.kt")
         public void testMultipleEntriesWithSuffix() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceProperty/stringTemplates/multipleEntriesWithSuffix.kt");
+            runTest("testData/introduceProperty/stringTemplates/multipleEntriesWithSuffix.kt");
         }
 
         @TestMetadata("rawTemplateWithSubstring.kt")
         public void testRawTemplateWithSubstring() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceProperty/stringTemplates/rawTemplateWithSubstring.kt");
+            runTest("testData/introduceProperty/stringTemplates/rawTemplateWithSubstring.kt");
         }
 
         @TestMetadata("singleEntryPrefix.kt")
         public void testSingleEntryPrefix() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceProperty/stringTemplates/singleEntryPrefix.kt");
+            runTest("testData/introduceProperty/stringTemplates/singleEntryPrefix.kt");
         }
 
         @TestMetadata("singleEntrySubstring.kt")
         public void testSingleEntrySubstring() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceProperty/stringTemplates/singleEntrySubstring.kt");
+            runTest("testData/introduceProperty/stringTemplates/singleEntrySubstring.kt");
         }
 
         @TestMetadata("singleEntrySuffix.kt")
         public void testSingleEntrySuffix() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceProperty/stringTemplates/singleEntrySuffix.kt");
+            runTest("testData/introduceProperty/stringTemplates/singleEntrySuffix.kt");
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../idea/tests/testData/refactoring/introduceProperty")
+    @TestMetadata("testData/introduceProperty")
     public static class Uncategorized extends AbstractK2IntroducePropertyTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doIntroducePropertyTest, this, testDataFilePath);
@@ -139,192 +139,192 @@ public abstract class K2IntroducePropertyTestGenerated extends AbstractK2Introdu
 
         @TestMetadata("conflictWithParentClass.kt")
         public void testConflictWithParentClass() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceProperty/conflictWithParentClass.kt");
+            runTest("testData/introduceProperty/conflictWithParentClass.kt");
         }
 
         @TestMetadata("extractExtensionWithInitializer.kt")
         public void testExtractExtensionWithInitializer() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceProperty/extractExtensionWithInitializer.kt");
+            runTest("testData/introduceProperty/extractExtensionWithInitializer.kt");
         }
 
         @TestMetadata("extractFromAnnotationArg.kt")
         public void testExtractFromAnnotationArg() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceProperty/extractFromAnnotationArg.kt");
+            runTest("testData/introduceProperty/extractFromAnnotationArg.kt");
         }
 
         @TestMetadata("extractFromDefaultValueInConstructor.kt")
         public void testExtractFromDefaultValueInConstructor() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceProperty/extractFromDefaultValueInConstructor.kt");
+            runTest("testData/introduceProperty/extractFromDefaultValueInConstructor.kt");
         }
 
         @TestMetadata("extractFromDefaultValueInFun.kt")
         public void testExtractFromDefaultValueInFun() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceProperty/extractFromDefaultValueInFun.kt");
+            runTest("testData/introduceProperty/extractFromDefaultValueInFun.kt");
         }
 
         @TestMetadata("extractLazyExtension.kt")
         public void testExtractLazyExtension() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceProperty/extractLazyExtension.kt");
+            runTest("testData/introduceProperty/extractLazyExtension.kt");
         }
 
         @TestMetadata("extractLazyMultipleExpressions.kt")
         public void testExtractLazyMultipleExpressions() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceProperty/extractLazyMultipleExpressions.kt");
+            runTest("testData/introduceProperty/extractLazyMultipleExpressions.kt");
         }
 
         @TestMetadata("extractLazyToClass.kt")
         public void testExtractLazyToClass() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceProperty/extractLazyToClass.kt");
+            runTest("testData/introduceProperty/extractLazyToClass.kt");
         }
 
         @TestMetadata("extractLazyToFile.kt")
         public void testExtractLazyToFile() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceProperty/extractLazyToFile.kt");
+            runTest("testData/introduceProperty/extractLazyToFile.kt");
         }
 
         @TestMetadata("extractLazyToInterface.kt")
         public void testExtractLazyToInterface() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceProperty/extractLazyToInterface.kt");
+            runTest("testData/introduceProperty/extractLazyToInterface.kt");
         }
 
         @TestMetadata("extractLazyWithBlock.kt")
         public void testExtractLazyWithBlock() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceProperty/extractLazyWithBlock.kt");
+            runTest("testData/introduceProperty/extractLazyWithBlock.kt");
         }
 
         @TestMetadata("extractLazyWithCallSiteReturn.kt")
         public void testExtractLazyWithCallSiteReturn() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceProperty/extractLazyWithCallSiteReturn.kt");
+            runTest("testData/introduceProperty/extractLazyWithCallSiteReturn.kt");
         }
 
         @TestMetadata("extractToClassWithNameClash.kt")
         public void testExtractToClassWithNameClash() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceProperty/extractToClassWithNameClash.kt");
+            runTest("testData/introduceProperty/extractToClassWithNameClash.kt");
         }
 
         @TestMetadata("extractToClassWithNameClashAndAnonymousInitializer.kt")
         public void testExtractToClassWithNameClashAndAnonymousInitializer() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceProperty/extractToClassWithNameClashAndAnonymousInitializer.kt");
+            runTest("testData/introduceProperty/extractToClassWithNameClashAndAnonymousInitializer.kt");
         }
 
         @TestMetadata("extractToFileWithNameClash.kt")
         public void testExtractToFileWithNameClash() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceProperty/extractToFileWithNameClash.kt");
+            runTest("testData/introduceProperty/extractToFileWithNameClash.kt");
         }
 
         @TestMetadata("extractToFunction.kt")
         public void testExtractToFunction() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceProperty/extractToFunction.kt");
+            runTest("testData/introduceProperty/extractToFunction.kt");
         }
 
         @TestMetadata("extractUnit.kt")
         public void testExtractUnit() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceProperty/extractUnit.kt");
+            runTest("testData/introduceProperty/extractUnit.kt");
         }
 
         @TestMetadata("extractWithGetterMultipleExpressions.kt")
         public void testExtractWithGetterMultipleExpressions() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceProperty/extractWithGetterMultipleExpressions.kt");
+            runTest("testData/introduceProperty/extractWithGetterMultipleExpressions.kt");
         }
 
         @TestMetadata("extractWithGetterToClass.kt")
         public void testExtractWithGetterToClass() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceProperty/extractWithGetterToClass.kt");
+            runTest("testData/introduceProperty/extractWithGetterToClass.kt");
         }
 
         @TestMetadata("extractWithGetterToFile.kt")
         public void testExtractWithGetterToFile() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceProperty/extractWithGetterToFile.kt");
+            runTest("testData/introduceProperty/extractWithGetterToFile.kt");
         }
 
         @TestMetadata("extractWithGetterToInterface.kt")
         public void testExtractWithGetterToInterface() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceProperty/extractWithGetterToInterface.kt");
+            runTest("testData/introduceProperty/extractWithGetterToInterface.kt");
         }
 
         @TestMetadata("extractWithInitializerAndBlock.kt")
         public void testExtractWithInitializerAndBlock() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceProperty/extractWithInitializerAndBlock.kt");
+            runTest("testData/introduceProperty/extractWithInitializerAndBlock.kt");
         }
 
         @TestMetadata("extractWithInitializerAndCallSiteReturn.kt")
         public void testExtractWithInitializerAndCallSiteReturn() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceProperty/extractWithInitializerAndCallSiteReturn.kt");
+            runTest("testData/introduceProperty/extractWithInitializerAndCallSiteReturn.kt");
         }
 
         @TestMetadata("extractWithInitializerAndSingleElementBlock.kt")
         public void testExtractWithInitializerAndSingleElementBlock() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceProperty/extractWithInitializerAndSingleElementBlock.kt");
+            runTest("testData/introduceProperty/extractWithInitializerAndSingleElementBlock.kt");
         }
 
         @TestMetadata("extractWithInitializerMultipleExpressions.kt")
         public void testExtractWithInitializerMultipleExpressions() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceProperty/extractWithInitializerMultipleExpressions.kt");
+            runTest("testData/introduceProperty/extractWithInitializerMultipleExpressions.kt");
         }
 
         @TestMetadata("extractWithInitializerToClass.kt")
         public void testExtractWithInitializerToClass() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceProperty/extractWithInitializerToClass.kt");
+            runTest("testData/introduceProperty/extractWithInitializerToClass.kt");
         }
 
         @TestMetadata("extractWithInitializerToFile.kt")
         public void testExtractWithInitializerToFile() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceProperty/extractWithInitializerToFile.kt");
+            runTest("testData/introduceProperty/extractWithInitializerToFile.kt");
         }
 
         @TestMetadata("extractWithInitializerToInterface.kt")
         public void testExtractWithInitializerToInterface() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceProperty/extractWithInitializerToInterface.kt");
+            runTest("testData/introduceProperty/extractWithInitializerToInterface.kt");
         }
 
         @TestMetadata("extractWithParams.kt")
         public void testExtractWithParams() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceProperty/extractWithParams.kt");
+            runTest("testData/introduceProperty/extractWithParams.kt");
         }
 
         @TestMetadata("fromTopLevel.kt")
         public void testFromTopLevel() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceProperty/fromTopLevel.kt");
+            runTest("testData/introduceProperty/fromTopLevel.kt");
         }
 
         @TestMetadata("functionalType.kt")
         public void testFunctionalType() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceProperty/functionalType.kt");
+            runTest("testData/introduceProperty/functionalType.kt");
         }
 
         @TestMetadata("kt21530.kt")
         public void testKt21530() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceProperty/kt21530.kt");
+            runTest("testData/introduceProperty/kt21530.kt");
         }
 
         @TestMetadata("kt24615.kt")
         public void testKt24615() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceProperty/kt24615.kt");
+            runTest("testData/introduceProperty/kt24615.kt");
         }
 
         @TestMetadata("primaryConstructorParameterReference.kt")
         public void testPrimaryConstructorParameterReference() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceProperty/primaryConstructorParameterReference.kt");
+            runTest("testData/introduceProperty/primaryConstructorParameterReference.kt");
         }
 
         @TestMetadata("replaceDuplicates.kt")
         public void testReplaceDuplicates() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceProperty/replaceDuplicates.kt");
+            runTest("testData/introduceProperty/replaceDuplicates.kt");
         }
 
         @TestMetadata("syntaxErrors.kt")
         public void testSyntaxErrors() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceProperty/syntaxErrors.kt");
+            runTest("testData/introduceProperty/syntaxErrors.kt");
         }
 
         @TestMetadata("typeParameterNotResolvableInTargetScope.kt")
         public void testTypeParameterNotResolvableInTargetScope() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceProperty/typeParameterNotResolvableInTargetScope.kt");
+            runTest("testData/introduceProperty/typeParameterNotResolvableInTargetScope.kt");
         }
 
         @TestMetadata("typeParameterResolvableInTargetScope.kt")
         public void testTypeParameterResolvableInTargetScope() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceProperty/typeParameterResolvableInTargetScope.kt");
+            runTest("testData/introduceProperty/typeParameterResolvableInTargetScope.kt");
         }
     }
 }

@@ -2,7 +2,7 @@
 
 package org.jetbrains.jewel.intui.standalone.icon
 
-import com.intellij.platform.icons.Icon
+import com.intellij.platform.icons.IconDescriptor
 import com.intellij.platform.icons.impl.rendering.CoroutineBasedMutableIconUpdateFlow
 import com.intellij.platform.icons.impl.rendering.DefaultIconRendererManager
 import com.intellij.platform.icons.impl.rendering.DefaultImageModifiers
@@ -46,7 +46,7 @@ private class EmptyMutableIconUpdateFlow : MutableIconUpdateFlow {
         // Do nothing
     }
 
-    override fun collectDynamic(flow: Flow<Icon>, handler: (Icon) -> Unit) {
+    override fun collectDynamic(flow: Flow<IconDescriptor>, handler: (IconDescriptor) -> Unit) {
         // Do nothing
     }
 }

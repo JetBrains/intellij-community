@@ -12,6 +12,17 @@ fun ChangesBrowserNode<*>.findChangeListNode(): ChangesBrowserChangeListNode? = 
 @ApiStatus.Internal
 fun ChangesBrowserNode<*>.findAmendNode(): EditedCommitNode? = findParentOfType()
 
+/**
+ * The node that defines the group of this node for the diff file counter and the "Go to Changed File" pop-up: the
+ * changelist node or the unversioned files node it belongs to.
+ *
+ * `null` when there is none, e.g. for a change under the amend commit node, or for any change when no changelist node
+ * is built. Callers are expected to fall back to the current selection then.
+ */
+@ApiStatus.Internal
+fun ChangesBrowserNode<*>.findDiffGroupNode(): ChangesBrowserNode<*>? =
+  findParent { it is ChangesBrowserChangeListNode || it is ChangesBrowserUnversionedFilesNode }
+
 val ChangesListView.selectedDiffableNode: Any?
   @ApiStatus.Internal
   get() = selectedChanges.firstOrNull() ?: selectedUnversionedFiles.firstOrNull()

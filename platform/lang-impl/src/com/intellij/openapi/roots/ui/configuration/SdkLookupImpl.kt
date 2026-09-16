@@ -138,7 +138,7 @@ class SdkLookupImpl : SdkLookup {
     SdkLookupContextEx(lookup).lookup()
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   override fun lookupBlocking(lookup: SdkLookupParameters) {
     object : SdkLookupContextEx(lookup) {
       override fun doWaitSdkDownloadToComplete(sdk: Sdk, rootProgressIndicator: ProgressIndicator): () -> Boolean {

@@ -47,14 +47,6 @@ fun buildDevMain(rawArgs: Array<String>): java.util.AbstractMap.SimpleImmutableE
     systemProperties.setProperty(name, value)
   }
 
-  // obsolete, safe to delete in 263
-  systemProperties.computeIfAbsent(PathManager.PROPERTY_PLUGINS_PATH) {
-    systemProperties[PathManager.PROPERTY_CONFIG_PATH]?.let { "${it}/plugins" }
-  }
-  systemProperties.computeIfAbsent(PathManager.PROPERTY_LOG_PATH) {
-    systemProperties[PathManager.PROPERTY_SYSTEM_PATH]?.let { "${it}/log" }
-  }
-
   return java.util.AbstractMap.SimpleImmutableEntry(info.mainClassName, info.classPath)
 }
 
@@ -74,27 +66,20 @@ private fun buildDevImpl(rawArgs: Array<String>): BuildDevInfo {
       println("Warning: property '$baseIdeForFrontendPropertyName' must be specified in VM Options of the run configuration to select which variant of JetBrains Client should be started")
     }
 
-    lateinit var platformMainClassName: String
-    lateinit var platformClassPath: Set<Path>
     val request = BuildRequest(
       platformPrefix = platformPrefix,
       baseIdePlatformPrefixForFrontend = baseIdePlatformPrefixForFrontend,
       additionalModules = getAdditionalPluginMainModules(),
       projectDir = ideaProjectRoot,
-      keepHttpClient = false,
-      platformClassPathConsumer = { actualMainClassName, classPath, runDir ->
-        platformMainClassName = actualMainClassName
-        platformClassPath = classPath
-      },
       // we should use a binary launcher for dev-mode
       isBootClassPathCorrect = System.getProperty("idea.dev.mode.in.process.build.boot.classpath.correct", "false").toBoolean(),
       generateRuntimeModuleRepository = System.getProperty("intellij.build.generate.runtime.module.repository").toBoolean(),
     )
-    val runDir = buildProductInProcess(request)
+    val build = buildProductInProcess(request)
+    val runDir = build.runDir
 
-
-    val newClassPath = LinkedHashSet<Path>(platformClassPath.size + additionalClassPaths.size).also {
-      it.addAll(platformClassPath)
+    val newClassPath = LinkedHashSet<Path>(build.coreClassPath.size + additionalClassPaths.size).also {
+      it.addAll(build.coreClassPath)
       it.addAll(additionalClassPaths)
     }
 
@@ -119,7 +104,7 @@ private fun buildDevImpl(rawArgs: Array<String>): BuildDevInfo {
     }
     else {
       BuildDevInfo(
-        mainClassName = platformMainClassName,
+        mainClassName = build.mainClass,
         classPath = newClassPath,
         systemProperties = systemProperties.map
       )

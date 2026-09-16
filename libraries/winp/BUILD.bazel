@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.winp` start
+content_module_jar(
+    libraries = ["@lib//:libraries-winp-winp"],
+    module = ":winp",
+)
+### auto-generated section `dev intellij.libraries.winp` end
+
 ### auto-generated section `build intellij.libraries.winp` start
 jvm_library(
     name = "winp",
@@ -16,11 +23,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-winp-winp"],
     runtime_deps = ["@lib//:libraries-winp-winp"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-winp-winp"],
-    module = ":winp",
 )
 
 jvm_library(
@@ -43,7 +45,6 @@ exports_files(
     [
         "intellij.libraries.winp.iml",
         "resources/intellij.libraries.winp.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

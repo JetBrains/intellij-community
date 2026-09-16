@@ -23,7 +23,7 @@ internal object PluginDescriptorIdConflictValidator : PipelineNode {
   override val id get() = NodeIds.PLUGIN_DESCRIPTOR_ID_CONFLICT_VALIDATION
   override val requires: Set<DataSlot<*>> get() = emptySet()
 
-  override suspend fun execute(ctx: ComputeContext) {
+  override fun execute(ctx: ComputeContext) {
     val model = ctx.model
     ctx.emitErrorsPerProduct(model.pluginGraph) { product ->
       validateDescriptorIdConflictsForProduct(product, model.pluginGraph, model.dslTestPluginsByProduct)

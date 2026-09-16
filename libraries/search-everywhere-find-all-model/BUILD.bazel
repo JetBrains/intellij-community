@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.search.everywhere.find.all.model` start
+content_module_jar(
+    libraries = ["@lib//:libraries-search-everywhere-find-all-model-find-all-model-experimental"],
+    module = ":search-everywhere-find-all-model",
+)
+### auto-generated section `dev intellij.libraries.search.everywhere.find.all.model` end
+
 ### auto-generated section `build intellij.libraries.search.everywhere.find.all.model` start
 jvm_library(
     name = "search-everywhere-find-all-model",
@@ -16,11 +23,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-search-everywhere-find-all-model-find-all-model-experimental"],
     runtime_deps = ["@lib//:libraries-search-everywhere-find-all-model-find-all-model-experimental"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-search-everywhere-find-all-model-find-all-model-experimental"],
-    module = ":search-everywhere-find-all-model",
 )
 
 jvm_library(
@@ -42,7 +44,6 @@ exports_files(
     [
         "intellij.libraries.search.everywhere.find.all.model.iml",
         "resources/intellij.libraries.search.everywhere.find.all.model.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

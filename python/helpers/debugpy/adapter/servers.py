@@ -122,7 +122,20 @@ class Connection(object):
         parent_session = sessions.get(self.ppid)
         if parent_session is None:
             parent_session = sessions.get(self.pid)
-        if parent_session is None:
+        if parent_session is not None and not parent_session.client:
+            # The session of the parent process exists, but no client has attached to it yet. A notification
+            # sent to it raises on the missing component and is lost, and this subprocess then runs before
+            # its breakpoints reach it. A session that has a client reports it instead.
+            log.info(
+                "The session of the parent process of {0} has no client yet; looking for another one.",
+                self,
+            )
+            parent_session = None
+        if parent_session is None and not is_first_server:
+            # The first connection is the root process itself: the session that started
+            # it claims it via wait_for_connection(). Reporting it would start a second
+            # session for the same process, and one of the two "attach" requests then
+            # fails with "already being debugged".
             parent_session = sessions.get_primary()
             if parent_session is not None:
                 log.info(
@@ -150,6 +163,18 @@ class Connection(object):
                 log.swallow_exception(
                     "Failed to notify parent session about {0}:", self
                 )
+            # A subprocess no client hears about is unblocked below and then runs without breakpoints, so
+            # another session that has a client is asked before it comes to that.
+            primary_session = sessions.get_primary()
+            if primary_session is not None and primary_session is not parent_session:
+                log.info("Reporting {0} to {1} instead.", self, primary_session)
+                try:
+                    primary_session.client.notify_of_subprocess(self)
+                    return
+                except Exception:
+                    log.swallow_exception(
+                        "Failed to notify {0} about {1}:", primary_session, self
+                    )
 
         # If we got to this point, the subprocess notification was either not sent,
         # or not delivered successfully. For the first server, this is expected, since

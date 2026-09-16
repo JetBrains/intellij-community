@@ -1,3 +1,0 @@
-- name: dist.all/lib/intellij.java.guiForms.compiler.jar
-  modules:
-  - name: intellij.java.guiForms.compiler

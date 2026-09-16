@@ -6,7 +6,7 @@ import com.android.ide.common.vectordrawable.VdIcon
 import com.android.ide.common.vectordrawable.VdOverrideInfo
 import com.android.ide.common.vectordrawable.VdPreview
 import com.intellij.compose.ide.plugin.resources.vectorDrawable.preview.BaseVectorDrawablePreviewRenderer
-import com.intellij.openapi.diagnostic.rethrowControlFlowException
+import com.intellij.diagnostic.rethrowControlFlowException
 import org.kxml2.io.KXmlParser
 import org.w3c.dom.Document
 import org.xmlpull.v1.XmlPullParser

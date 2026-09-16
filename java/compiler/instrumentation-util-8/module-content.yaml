@@ -1,3 +1,0 @@
-- name: dist.all/lib/intellij.java.compiler.instrumentationUtil.java8.jar
-  modules:
-  - name: intellij.java.compiler.instrumentationUtil.java8

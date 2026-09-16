@@ -11,7 +11,7 @@ import com.intellij.python.community.impl.poetry.backend.PoetryPyTool
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
 import com.intellij.python.junit5Tests.framework.env.RunOnEnvironments
 import com.intellij.python.junit5Tests.framework.resolvePythonTool
-import com.intellij.python.pytools.setCustomExecutablePath
+import com.intellij.python.pytools.backend.setCustomExecutablePath
 import com.intellij.python.test.env.core.PyEnvironment
 import com.intellij.python.test.env.core.PyEnvironmentSpec
 import com.intellij.python.uv.backend.UvPyTool

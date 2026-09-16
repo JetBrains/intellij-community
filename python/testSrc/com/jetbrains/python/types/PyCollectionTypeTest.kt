@@ -35,6 +35,13 @@ class PyCollectionTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
+    fun `list literal splicing list does not keep unpacked tuple in fallback`() = test("""
+        def f(xs: list[int]):
+            x: list[str] = [*xs]
+        #                  ^^^^^ WARNING Expected type 'list[str]', got 'list[int]' instead
+        """.trimIndent())
+
+    @Test
     fun `list literal of mixed values`() = test("""
       expr = ['1', 1, 1]
       # └ TYPE list[str | int]

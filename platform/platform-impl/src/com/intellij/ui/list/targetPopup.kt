@@ -18,7 +18,7 @@ import java.util.function.Function
 import java.util.function.Predicate
 import javax.swing.ListCellRenderer
 
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 fun <T> createTargetPopup(
   @PopupTitle title: String,
   items: List<T>,
@@ -34,7 +34,7 @@ fun <T> createTargetPopup(
 }
 
 @Internal
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 fun <T> createTargetPopup(
   @PopupTitle title: String,
   items: List<T>,
@@ -46,7 +46,7 @@ fun <T> createTargetPopup(
     .createPopup()
 }
 
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 fun <T> buildTargetPopup(
   items: List<T>,
   presentationProvider: Function<in T, out TargetPresentation>,
@@ -58,7 +58,7 @@ fun <T> buildTargetPopup(
   return buildTargetPopupWithMultiSelect(items, presentationProvider, Predicate { processor.accept(it); return@Predicate false })
 }
 
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 fun <T> buildTargetPopupWithMultiSelect(
   items: List<T>,
   presentationProvider: Function<in T, out TargetPresentation>,

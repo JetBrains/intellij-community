@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.performanceTesting.frontend.base` start
+content_module_jar(module = ":frontend-base")
+### auto-generated section `dev intellij.performanceTesting.frontend.base` end
+
 ### auto-generated section `build intellij.performanceTesting.frontend.base` start
 jvm_library(
     name = "frontend-base",
@@ -26,8 +30,6 @@ jvm_library(
         "@lib//:kotlin-stdlib",
     ],
 )
-
-content_module_jar(module = ":frontend-base")
 
 jvm_library(
     name = "frontend-base_test_lib",

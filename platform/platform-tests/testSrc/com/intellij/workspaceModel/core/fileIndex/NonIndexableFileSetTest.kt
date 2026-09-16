@@ -100,7 +100,7 @@ class NonIndexableFileSetTest {
     val workspaceModel = projectModel.project.serviceAsync<WorkspaceModel>()
     val rootUrl = VfsUtilCore.pathToUrl(baseNonProjectDir.rootPath.resolve("nonIndexableRoot").invariantSeparatorsPathString)
     workspaceModel.update {
-      val url = workspaceModel.getVirtualFileUrlManager().getOrCreateFromUrl(rootUrl)
+      val url = workspaceModel.getVirtualFileUrlManager().storeAndGet(rootUrl)
       it.addEntity(NonIndexableTestEntity(url, NonPersistentEntitySource))
     }
 

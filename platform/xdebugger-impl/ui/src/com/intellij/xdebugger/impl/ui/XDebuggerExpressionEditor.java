@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
@@ -57,7 +58,7 @@ public class XDebuggerExpressionEditor extends XDebuggerEditorBase {
           psiContext, null);
     myExpression = XExpressionImpl.changeMode(text, getMode());
     myEditorTextField = new EditorTextField(
-      createDocument(myExpression), project, debuggerEditorsProvider.getFileType(), false, !multiline) {
+      null, project, debuggerEditorsProvider.getFileType(), false, !multiline) {
       @Override
       protected @NotNull EditorEx createEditor() {
         final EditorEx editor = super.createEditor();
@@ -115,12 +116,15 @@ public class XDebuggerExpressionEditor extends XDebuggerEditorBase {
   @Override
   protected void doSetText(XExpression text) {
     myExpression = text;
-    myEditorTextField.setNewDocumentAndFileType(getFileType(text), createDocument(text));
+    FileType fileType = getFileType(text);
+    createDocumentAsync(text, document -> {
+      myEditorTextField.setNewDocumentAndFileType(fileType, document);
+    });
   }
 
   @Override
   public XExpression getExpression() {
-    return getEditorsProvider().createExpression(getProject(), myEditorTextField.getDocument(), myExpression.getLanguage(), myExpression.getMode());
+    return getOrCreateExpressionWithLatestText(myEditorTextField.getDocument(), myExpression);
   }
 
   @Override

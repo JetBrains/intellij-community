@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.fastutil` start
+content_module_jar(
+    libraries = ["@lib//:libraries-fastutil-fastutil-min"],
+    module = ":fastutil",
+)
+### auto-generated section `dev intellij.libraries.fastutil` end
+
 ### auto-generated section `build intellij.libraries.fastutil` start
 jvm_library(
     name = "fastutil",
@@ -16,11 +23,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-fastutil-fastutil-min"],
     runtime_deps = ["@lib//:libraries-fastutil-fastutil-min"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-fastutil-fastutil-min"],
-    module = ":fastutil",
 )
 
 jvm_library(
@@ -43,7 +45,6 @@ exports_files(
     [
         "intellij.libraries.fastutil.iml",
         "resources/intellij.libraries.fastutil.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -212,7 +212,7 @@ public class DebuggerDfaRunner {
     DfaMemoryState state = new JvmDfaMemoryStateImpl(factory);
     List<DfaVariableValue> distinctValues = new ArrayList<>();
     valueMap.forEach((jdiValue, vars) -> {
-      DfaVariableValue canonical = vars.get(0);
+      DfaVariableValue canonical = vars.getFirst();
       if (!TypeConstraint.fromDfType(canonical.getDfType()).isComparedByEquals()) {
         distinctValues.add(canonical);
       }

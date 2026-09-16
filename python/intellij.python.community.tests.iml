@@ -46,8 +46,9 @@
     <orderEntry type="module" module-name="intellij.platform.structureView.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.todo.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.testRunner.plugin" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.libraries.misc.plugin" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.python.pytools" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.xml.plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.pytools.backend" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.pytools.frontend" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.debugger" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.guava" />
     <orderEntry type="module" module-name="intellij.spellchecker" scope="TEST" />
@@ -138,7 +139,6 @@
     <orderEntry type="module" module-name="intellij.python.community.services.shared" />
     <orderEntry type="module" module-name="intellij.python.venv" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.services.systemPython" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.python.community.interpreters" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.caffeine" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5.eel.tests" scope="TEST" />

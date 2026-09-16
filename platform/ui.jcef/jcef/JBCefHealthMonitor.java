@@ -137,9 +137,8 @@ public final class JBCefHealthMonitor {
     if (myGPUCrashCounter < GPUCrashLimit)
       return;
 
-    JBCefNotifications.showGPUCrashes(myJcefStarter);
-
     if (myStatus.compareAndSet(Status.OK, Status.GPU_PROCESS_FAILED)) {
+      JBCefNotifications.showGPUCrashes(myJcefStarter);
       ApplicationManager.getApplication().getMessageBus().syncPublisher(JBCefHealthCheckTopic.TOPIC).onHealthHealthStatusChanged(Status.GPU_PROCESS_FAILED);
     }
   }

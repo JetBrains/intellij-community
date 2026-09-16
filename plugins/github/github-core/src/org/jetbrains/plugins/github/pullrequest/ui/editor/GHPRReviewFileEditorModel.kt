@@ -48,7 +48,7 @@ internal class GHPRReviewFileEditorModel internal constructor(
   private val settings: GithubPullRequestsProjectUISettings,
   private val fileVm: GHPRReviewFileEditorViewModel,
   private val changesModel: MutableCodeReviewEditorGutterChangesModel = MutableCodeReviewEditorGutterChangesModel(),
-  @RequiresEdt private val showEditor: (RefComparisonChange, Int) -> Unit,
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */) private val showEditor: (RefComparisonChange, Int) -> Unit,
 ) : CodeReviewEditorGutterChangesModel by changesModel,
     CodeReviewEditorGutterActionableChangesModel,
     CodeReviewEditorModel<GHPREditorMappedComponentModel>,
@@ -136,31 +136,31 @@ internal class GHPRReviewFileEditorModel internal constructor(
   override fun canGotoPreviousComment(threadId: String): Boolean = fileVm.lookupPreviousComment(threadId) != null
   override fun canGotoPreviousComment(line: Int): Boolean = fileVm.lookupPreviousComment(line.shiftLineToBefore()) != null
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun gotoNextComment(threadId: String) {
     val commentId = fileVm.lookupNextComment(threadId) ?: return
     gotoComment(commentId)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun gotoNextComment(line: Int) {
     val commentId = fileVm.lookupNextComment(line.shiftLineToBefore()) ?: return
     gotoComment(commentId)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun gotoPreviousComment(threadId: String) {
     val commentId = fileVm.lookupPreviousComment(threadId) ?: return
     gotoComment(commentId)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun gotoPreviousComment(line: Int) {
     val commentId = fileVm.lookupPreviousComment(line.shiftLineToBefore()) ?: return
     gotoComment(commentId)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun gotoComment(threadId: String) {
     val (change, unmappedLine) = fileVm.getThreadPosition(threadId) ?: return
     val line = if (change == fileVm.change) {

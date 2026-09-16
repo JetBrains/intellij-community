@@ -1,6 +1,4 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment")
-
 package org.jetbrains.intellij.build
 
 import com.dynatrace.hash4j.hashing.HashStream64
@@ -188,7 +186,7 @@ private class FileSourceCacheStrategy(source: FileSource) : BaseSourceAndCacheSt
   }
 }
 
-internal fun computeHashForModuleOutput(source: DirSource): Long {
+private fun computeHashForModuleOutput(source: DirSource): Long {
   val markFile = source.dir.resolve(UNMODIFIED_MARK_FILE_NAME)
   try {
     return Files.getLastModifiedTime(markFile).toMillis()

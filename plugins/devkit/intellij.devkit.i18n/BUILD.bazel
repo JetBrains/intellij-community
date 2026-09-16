@@ -10,6 +10,10 @@ jps_test(
 )
 ### skip generation section `test intellij.devkit.i18n.tests`
 
+### auto-generated section `dev intellij.devkit.i18n` start
+content_module_jar(module = ":i18n")
+### auto-generated section `dev intellij.devkit.i18n` end
+
 ### auto-generated section `build intellij.devkit.i18n` start
 jvm_library(
     name = "i18n",
@@ -54,8 +58,6 @@ jvm_library(
         "//platform/core-impl",
     ],
 )
-
-content_module_jar(module = ":i18n")
 
 jvm_library(
     name = "i18n_test_lib",

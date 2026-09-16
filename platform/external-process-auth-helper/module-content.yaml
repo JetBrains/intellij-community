@@ -1,3 +1,0 @@
-- name: dist.all/lib/intellij.platform.externalProcessAuthHelper.jar
-  modules:
-  - name: intellij.platform.externalProcessAuthHelper

@@ -60,7 +60,7 @@ import org.jetbrains.kotlin.psi.KtValueArgumentList
  * @return true if the element is in a library source; false otherwise.
  */
 @ApiStatus.Internal
-@RequiresReadLock
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 fun isElementInLibrarySource(element: PsiElement): Boolean {
   val virtualFile = element.containingFile.virtualFile ?: return false
 

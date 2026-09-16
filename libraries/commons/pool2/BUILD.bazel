@@ -1,5 +1,4 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
-load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.libraries.commons.pool2` start
 jvm_library(
@@ -16,11 +15,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-commons-pool2-commons-pool2"],
     runtime_deps = ["@lib//:libraries-commons-pool2-commons-pool2"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-commons-pool2-commons-pool2"],
-    module = ":pool2",
 )
 
 jvm_library(
@@ -42,7 +36,6 @@ exports_files(
     [
         "intellij.libraries.commons.pool2.iml",
         "resources/intellij.libraries.commons.pool2.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

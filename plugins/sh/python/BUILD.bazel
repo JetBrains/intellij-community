@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.sh.python` start
+content_module_jar(module = ":python")
+### auto-generated section `dev intellij.sh.python` end
+
 ### auto-generated section `build intellij.sh.python` start
 jvm_library(
     name = "python",
@@ -27,8 +31,6 @@ jvm_library(
         "//platform/backend",
     ],
 )
-
-content_module_jar(module = ":python")
 
 jvm_library(
     name = "python_test_lib",

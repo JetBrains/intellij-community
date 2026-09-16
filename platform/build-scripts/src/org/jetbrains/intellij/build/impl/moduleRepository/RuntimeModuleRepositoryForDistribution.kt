@@ -40,7 +40,7 @@ import kotlin.io.path.reader
  * Currently, this function uses information from [DistributionFileEntry] to determine which resources were copied to the distribution and
  * how they are organized.
  */
-internal suspend fun generateRuntimeModuleRepositoryForDistribution(
+internal fun generateRuntimeModuleRepositoryForDistribution(
   contentReport: ContentReport,
   context: BuildContext,
   platformLayout: PlatformLayout,
@@ -97,7 +97,7 @@ internal suspend fun generateRuntimeModuleRepositoryForDistribution(
  * A variant of [generateRuntimeModuleRepositoryForDistribution] which should be used for 'dev build', when all entries correspond to the current OS,
  * and distribution files are generated under [targetDirectory].
  */
-internal suspend fun generateRuntimeModuleRepositoryForDevBuild(
+internal fun generateRuntimeModuleRepositoryForDevBuild(
   contentReport: ContentReport,
   targetDirectory: Path,
   context: BuildContext,
@@ -119,7 +119,7 @@ internal suspend fun generateRuntimeModuleRepositoryForDevBuild(
  * Generates a runtime module repository for modules and plugins included in the cross-platform distribution.
  * @return path to the directory with the generated repository file or `null` if `distAllPath` already contains a common module repository file which is used for all OSes
  */
-internal suspend fun generateCrossPlatformRepository(
+internal fun generateCrossPlatformRepository(
   contentReport: ContentReport,
   context: BuildContext,
   platformLayout: PlatformLayout,
@@ -158,7 +158,7 @@ internal suspend fun generateCrossPlatformRepository(
  * Generates and saves the runtime module repository for a distribution.
  * @param entryPathRelativizer converts an absolute path to a path relative to the distribution root
  */
-private suspend fun generateRepositoryForDistribution(
+private fun generateRepositoryForDistribution(
   targetDirectory: Path,
   platformEntries: List<DistributionFileEntry>,
   context: BuildContext,
@@ -234,7 +234,7 @@ private fun removeDataForSuppressedPlugins(originalPluginDescriptorsData: List<P
  * To be able to run the frontend process from a regular IDE, we need to include information about its modules to the runtime module repository.
  * Use [BuildContext.getLayoutOfAdditionalFrontendOnlyPlugins] to get the cached value instead of calling this method directly.
  */
-internal suspend fun computeDescriptorsForAdditionalFrontendPlugins(
+internal fun computeDescriptorsForAdditionalFrontendPlugins(
   context: BuildContext,
   platformLayout: PlatformLayout,
 ): List<PluginBuildResult> {

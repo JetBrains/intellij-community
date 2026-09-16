@@ -3,24 +3,23 @@ package org.jetbrains.intellij.build.io
 
 import com.fasterxml.jackson.jr.ob.JSON
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.platform.buildScripts.concurrency.TaskContext
+import com.intellij.platform.buildScripts.concurrency.TaskFailedException
+import com.intellij.platform.buildScripts.concurrency.taskScope
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
+import java.io.ByteArrayOutputStream
+import java.io.IOException
 import java.io.InputStream
 import java.lang.ProcessBuilder.Redirect
 import java.nio.charset.MalformedInputException
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.Collections
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
@@ -28,9 +27,12 @@ import kotlin.time.Duration.Companion.minutes
 val DEFAULT_TIMEOUT: Duration = 10.minutes
 
 /**
- * Executes a Java class in a forked JVM.
+ * Executes a Java class in a forked JVM, and blocks the calling thread until the process ends.
+ *
+ * A process that runs longer than [timeout] gets a thread dump and is killed. An interrupt of the calling thread kills
+ * the process and is rethrown.
  */
-suspend fun runJava(
+fun runJava(
   mainClass: String,
   args: List<String>,
   jvmArgs: List<String> = emptyList(),
@@ -54,22 +56,24 @@ suspend fun runJava(
     .setAttribute(AttributeKey.stringArrayKey("jvmArgs"), jvmArgs)
     .setAttribute("workingDir", "$workingDir")
     .setAttribute("timeoutMillis", "$timeout")
-    .use(Dispatchers.IO) { span ->
+    .use { span ->
       val toDelete = ArrayList<Path>(3)
       var process: Process? = null
+      var failure: Throwable? = null
       fun processRedirect(customRedirect: Redirect?, prefix: String): Pair<Path?, Redirect?> {
         var outputFile: Path? = null
         val outputRedirect = if (customRedirect != null) {
           if (customRedirect != Redirect.DISCARD && (customRedirect.type() == Redirect.Type.WRITE || customRedirect.type() == Redirect.Type.APPEND)) {
-            customRedirect.file()?.parentFile?.let { Files.createDirectories(it.toPath()) }
             outputFile = customRedirect.file()?.toPath()
+            outputFile?.parent?.let { Files.createDirectories(it) }
           }
           customRedirect
         }
         else {
-          val file = Files.createTempFile(prefix, ".txt").also(toDelete::add).toFile()
-          outputFile = file.toPath()
-          Redirect.to(file)
+          val file = Files.createTempFile(prefix, ".txt").also(toDelete::add)
+          outputFile = file
+          @Suppress("IO_FILE_USAGE")
+          Redirect.to(file.toFile())
         }
         return Pair(outputFile, outputRedirect)
       }
@@ -82,6 +86,7 @@ suspend fun runJava(
         val (outputFile, outputRedirect) = processRedirect(customOutput, "out-")
         val (errorOutputFile, errorRedirect) = processRedirect(customError, "error-out-")
         logFreeDiskSpace(workingDir, "before $commandLine")
+        @Suppress("IO_FILE_USAGE")
         process = ProcessBuilder(processArgs)
           .directory(workingDir.toFile())
           .redirectError(errorRedirect)
@@ -110,23 +115,19 @@ suspend fun runJava(
           throw RuntimeException(errorMessage.toString())
         }
 
-        try {
-          withTimeout(timeout) {
-            while (process.isAlive) {
-              delay(5.milliseconds)
-            }
-          }
-        }
-        catch (e: TimeoutCancellationException) {
+        if (!process.waitFor(timeout.inWholeMilliseconds, TimeUnit.MILLISECONDS)) {
           try {
             dumpThreads(pid = process.pid(), javaExe = javaExe)
+          }
+          catch (error: InterruptedException) {
+            throw error
           }
           catch (e: Exception) {
             span.addEvent("cannot dump threads: ${e.message}")
           }
 
           process.destroyForcibly().waitFor()
-          javaRunFailed(e.message!!)
+          javaRunFailed("Timed out waiting for $timeout")
         }
 
         val exitCode = process.exitValue()
@@ -138,12 +139,18 @@ suspend fun runJava(
           checkOutput(outputFile, span, errorConsumer = ::javaRunFailed)
         }
       }
+      catch (error: Throwable) {
+        failure = error
+        throw error
+      }
       finally {
-        if (process?.waitFor(timeout.inWholeSeconds, TimeUnit.SECONDS) == false) {
-          process.destroyForcibly()
+        try {
+          closeProcess(process, emptyList(), failure)
         }
-        toDelete.forEach(FileUtilRt::deleteRecursively)
-        logFreeDiskSpace(workingDir, "after $commandLine")
+        finally {
+          toDelete.forEach(FileUtilRt::deleteRecursively)
+          logFreeDiskSpace(workingDir, "after $commandLine")
+        }
       }
     }
 }
@@ -219,13 +226,19 @@ private fun createClassPathFile(classPath: Collection<String>, classpathFile: Pa
 
 @JvmOverloads
 @ApiStatus.Obsolete
+@Deprecated("Use runProcess, which blocks too", ReplaceWith("runProcess(args, workingDir, timeoutMillis.milliseconds)"))
 fun runProcessBlocking(args: List<String>, workingDir: Path? = null, timeoutMillis: Long = DEFAULT_TIMEOUT.inWholeMilliseconds) {
-  runBlocking {
-    runProcess(args, workingDir, timeoutMillis.milliseconds)
-  }
+  runProcess(args, workingDir, timeoutMillis.milliseconds)
 }
 
-suspend fun runProcess(
+/**
+ * Runs a process and blocks the calling thread until it ends.
+ *
+ * Two virtual threads read the output unless [inheritOut] is set. The timeout includes execution and output consumption.
+ * A timeout, an interrupt, or a consumer failure kills the process and stops both readers before this function throws.
+ * Consumers must respond to interruption. Output available when the direct process exits is drained without waiting for its descendants.
+ */
+fun runProcess(
   args: List<String>,
   workingDir: Path? = null,
   timeout: Duration = DEFAULT_TIMEOUT,
@@ -241,74 +254,245 @@ suspend fun runProcess(
   spanBuilder(commandLine)
     .setAttribute("workingDir", "$workingDir")
     .setAttribute("timeoutMillis", "$timeout")
-    .use(Dispatchers.IO) { span ->
-        var process: Process? = null
-        val phase = args.joinToString(separator = " ")
-        try {
-          logFreeDiskSpace(workingDir, "before $phase")
-          process = ProcessBuilder(args)
-            .directory(workingDir.toFile())
-            .also { builder ->
-              if (additionalEnvVariables.isNotEmpty()) {
+    .use { span ->
+      var process: Process? = null
+      val pumps = ArrayList<ProcessOutputPump>(2)
+      var failure: Throwable? = null
+      try {
+        taskScope(name = commandLine, timeout = timeout.takeIf { it.isFinite() }) {
+          try {
+            checkCancelled()
+            logFreeDiskSpace(workingDir, "before $commandLine")
+            @Suppress("IO_FILE_USAGE")
+            val running = ProcessBuilder(args)
+              .directory(workingDir.toFile())
+              .also { builder ->
                 builder.environment().putAll(additionalEnvVariables)
-              }
-              if (inheritOut) {
-                builder.inheritIO()
-                builder.redirectErrorStream(inheritErrToOut)
-              }
-            }.start()
-          val outputLines = Collections.synchronizedList(ArrayList<String>())
-          if (!inheritOut) {
-            launch(Dispatchers.Default) {
-              withTimeout(timeout) {
-                process.inputStream.consume(process) {
-                  span.addEvent(it)
-                  stdOutConsumer(it)
-                  if (attachStdOutToException) {
-                    outputLines += it
+                if (inheritOut) {
+                  if (inheritErrToOut) {
+                    builder.inheritIO()
+                    builder.redirectErrorStream(true)
+                  }
+                  else {
+                    // stderr stays piped, so a failure message can carry its tail
+                    builder.redirectInput(Redirect.INHERIT)
+                    builder.redirectOutput(Redirect.INHERIT)
                   }
                 }
-              }
+              }.start()
+            process = running
+            val outputTail = OutputTail()
+            if (!inheritOut) {
+              pumps.add(ProcessOutputPump("stdout of $commandLine", running, running.inputStream) {
+                span.addEvent(it)
+                stdOutConsumer(it)
+                if (attachStdOutToException) outputTail.add(it)
+              })
+              pumps.add(ProcessOutputPump("stderr of $commandLine", running, running.errorStream) {
+                span.addEvent(it)
+                stdErrConsumer(it)
+                outputTail.add(it)
+              })
             }
-            launch(Dispatchers.Default) {
-              withTimeout(timeout) {
-                process.errorStream.consume(process) {
-                  span.addEvent(it)
-                  stdErrConsumer(it)
-                  outputLines += it
-                }
-              }
+            else if (!inheritErrToOut) {
+              pumps.add(ProcessOutputPump("stderr of $commandLine", running, running.errorStream) {
+                System.err.println(it)
+                stdErrConsumer(it)
+                outputTail.add(it)
+              })
+            }
+            val pid = running.pid()
+            span.setAttribute("pid", pid)
+            for (pump in pumps) fork(pump.name) { pump.run(this) }
+            val exit = fork("wait for $commandLine") { running.waitFor() }
+            try {
+              join()
+            }
+            catch (error: TaskFailedException) {
+              throw error.cause ?: error
+            }
+            catch (_: TimeoutException) {
+              throw TimeoutException("Process '$commandLine' (pid=$pid) failed to complete in $timeout" + outputTail.format())
+            }
+            val exitCode = exit.get()
+            if (exitCode != 0) {
+              throw RuntimeException("Process '$commandLine' (pid=$pid) finished with exitCode $exitCode" + outputTail.format())
             }
           }
-
-          val pid = process.pid()
-          span.setAttribute("pid", pid)
-
+          catch (error: Throwable) {
+            failure = error
+            throw error
+          }
+          finally {
+            closeProcess(process, pumps, failure)
+          }
+        }
+      }
+      catch (error: Throwable) {
+        failure = error
+        throw error
+      }
+      finally {
+        for (pump in pumps) {
+          val cleanupFailure = pump.failure
+          val primary = failure
+          if (primary != null && cleanupFailure != null && primary !== cleanupFailure &&
+              cleanupFailure !is InterruptedException && cleanupFailure !is java.util.concurrent.CancellationException) {
+            primary.addSuppressed(cleanupFailure)
+          }
           try {
-            withTimeout(timeout) {
-              while (process.isAlive) {
-                delay(5.milliseconds)
-              }
-            }
+            pump.stream.close()
           }
-          catch (e: TimeoutCancellationException) {
-            throw e.apply {
-              addSuppressed(RuntimeException("Process '$commandLine' (pid=$pid) failed to complete in $timeout" + merge(outputLines)))
-            }
-          }
-
-          val exitCode = process.exitValue()
-          if (exitCode != 0) {
-            throw RuntimeException("Process '$commandLine' (pid=$pid) finished with exitCode $exitCode" + merge(outputLines))
+          catch (error: Throwable) {
+            val primary = failure ?: throw error
+            if (primary !== error) primary.addSuppressed(error)
           }
         }
-        finally {
-          if (process?.waitFor(timeout.inWholeSeconds, TimeUnit.SECONDS) == false) {
-            process.destroyForcibly()
-          }
-          logFreeDiskSpace(workingDir, "after $phase")
-        }
+        logFreeDiskSpace(workingDir, "after $commandLine")
+      }
     }
+}
+
+/** Owns one output reader. Only stream errors caused by an explicit stop are ignored. */
+private class ProcessOutputPump(
+  val name: String,
+  private val process: Process,
+  val stream: InputStream,
+  private val consume: (String) -> Unit,
+) {
+  @Volatile
+  private var stopping = false
+
+  @Volatile
+  var failure: Throwable? = null
+    private set
+
+  fun run(context: TaskContext) {
+    try {
+      stream.use { readLines(context) }
+    }
+    catch (error: Throwable) {
+      failure = error
+      throw error
+    }
+  }
+
+  fun stop() {
+    stopping = true
+  }
+
+  private fun checkActive(context: TaskContext) {
+    if (stopping || context.isCancelled || Thread.interrupted()) {
+      throw InterruptedException()
+    }
+  }
+
+  private fun readLines(context: TaskContext) {
+    val buffer = ByteArray(8192)
+    val line = ByteArrayOutputStream()
+    var previousWasCarriageReturn = false
+    while (true) {
+      checkActive(context)
+      var count = readAvailable(buffer)
+      if (count == 0 && !process.isAlive) {
+        count = readAvailable(buffer)
+        if (count == 0) {
+          break
+        }
+      }
+      if (count < 0) {
+        break
+      }
+      if (count == 0) {
+        Thread.sleep(5)
+        continue
+      }
+      for (index in 0 until count) {
+        val value = buffer[index].toInt() and 0xff
+        if (value == '\r'.code || value == '\n'.code) {
+          if (value != '\n'.code || !previousWasCarriageReturn) {
+            checkActive(context)
+            consume(line.toString(Charsets.UTF_8))
+            line.reset()
+          }
+          previousWasCarriageReturn = value == '\r'.code
+        }
+        else {
+          line.write(value)
+          previousWasCarriageReturn = false
+        }
+      }
+    }
+    if (line.size() > 0) {
+      checkActive(context)
+      consume(line.toString(Charsets.UTF_8))
+    }
+  }
+
+  private fun readAvailable(buffer: ByteArray): Int {
+    try {
+      val available = stream.available()
+      return if (available == 0) 0 else stream.read(buffer, 0, minOf(available, buffer.size))
+    }
+    catch (error: IOException) {
+      if (stopping) {
+        return -1
+      }
+      throw error
+    }
+  }
+}
+
+private fun closeProcess(process: Process?, pumps: List<ProcessOutputPump>, primaryFailure: Throwable?) {
+  var interrupted = Thread.interrupted() || primaryFailure is InterruptedException
+  var failure = primaryFailure
+  fun recordFailure(error: Throwable) {
+    val previous = failure
+    if (previous == null) {
+      failure = error
+    }
+    else {
+      previous.addSuppressed(error)
+    }
+  }
+
+  fun awaitTermination(action: () -> Unit) {
+    while (true) {
+      try {
+        action()
+        return
+      }
+      catch (_: InterruptedException) {
+        interrupted = true
+      }
+    }
+  }
+  try {
+    for (pump in pumps) {
+      pump.stop()
+    }
+    try {
+      if (process != null) {
+        if (process.isAlive) {
+          process.destroyForcibly()
+        }
+        awaitTermination { process.waitFor() }
+        process.outputStream.close()
+      }
+    }
+    catch (error: Throwable) {
+      recordFailure(error)
+    }
+
+  }
+  finally {
+    if (interrupted) {
+      Thread.currentThread().interrupt()
+    }
+  }
+  if (primaryFailure == null) {
+    failure?.let { throw it }
+  }
 }
 
 private fun appendArg(value: String, builder: StringBuilder) {
@@ -338,7 +522,7 @@ private fun appendArg(value: String, builder: StringBuilder) {
  * state to the `jstack` output through the JBR hook. See `ApplicationLoader.enableJstack`. The Attach API gives the
  * same dump, but it needs `--add-opens=jdk.attach/sun.tools.attach=ALL-UNNAMED`, which the build JVM does not have.
  */
-internal suspend fun dumpThreads(pid: Long, javaExe: Path) {
+internal fun dumpThreads(pid: Long, javaExe: Path) {
   val jstackName = if (javaExe.fileName.toString().endsWith(".exe")) "jstack.exe" else "jstack"
   val jstack = javaExe.resolveSibling(jstackName).takeIf { Files.isRegularFile(it) }?.toString()
                ?: System.getenv("JAVA_HOME")
@@ -349,30 +533,26 @@ internal suspend fun dumpThreads(pid: Long, javaExe: Path) {
   runProcess(args = listOf(jstack, pid.toString()), inheritOut = true)
 }
 
-private suspend fun InputStream.consume(process: Process, consume: suspend (line: String) -> Unit) {
-  bufferedReader().use { reader ->
-    var isLine = false
-    var linesBuffer = StringBuilder()
-    while (process.isAlive || reader.ready()) {
-      if (reader.ready()) {
-        val char = reader.read().takeIf { it != -1 }?.toChar()
-        when {
-          char == '\n' || char == '\r' -> isLine = true
-          char != null -> linesBuffer.append(char)
-        }
-        if (char == null || !reader.ready() || isLine) {
-          consume(linesBuffer.toString())
-          linesBuffer = StringBuilder()
-          isLine = false
-        }
-      }
-      else {
-        delay(5.milliseconds)
-      }
-    }
-  }
-}
+private const val ATTACHED_OUTPUT_TAIL_LINES = 100
 
-private fun merge(lines: List<String>): String = synchronized(lines) {
-  if (lines.any()) lines.joinToString(prefix = ":\n", separator = "\n") else ""
+/** Keeps the last [ATTACHED_OUTPUT_TAIL_LINES] lines, so a verbose process does not grow the heap. */
+private class OutputTail {
+  private val lines = ArrayDeque<String>()
+  private var omitted = 0
+
+  @Synchronized
+  fun add(line: String) {
+    if (lines.size == ATTACHED_OUTPUT_TAIL_LINES) {
+      lines.removeFirst()
+      omitted++
+    }
+    lines.add(line)
+  }
+
+  @Synchronized
+  fun format(): String {
+    if (lines.isEmpty()) return ""
+    val prefix = if (omitted > 0) ":\n[$omitted earlier output lines omitted]\n" else ":\n"
+    return lines.joinToString(prefix = prefix, separator = "\n")
+  }
 }

@@ -18,6 +18,10 @@ fleet_wasmjs_module(
     ],
 )
 
+### auto-generated section `dev fleet.openmap` start
+content_module_jar(module = ":openmap")
+### auto-generated section `dev fleet.openmap` end
+
 ### auto-generated section `build fleet.openmap` start
 create_kotlinc_options(
     name = "custom_openmap",
@@ -45,18 +49,16 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    exports = ["@lib//:kotlinx-collections-immutable"],
+    exports = ["//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinx-serialization-core",
-        "@lib//:kotlinx-serialization-json",
-        "@lib//:kotlinx-collections-immutable",
+        "//libraries/kotlinx/serialization/core",
+        "//libraries/kotlinx/serialization/json",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//fleet/util/serialization",
     ],
 )
-
-content_module_jar(module = ":openmap")
 
 jvm_library(
     name = "openmap_test_lib",
@@ -68,10 +70,17 @@ jvm_library(
     kotlinc_opts = ":custom_openmap",
     module_name = "fleet.openmap",
     visibility = ["//visibility:public"],
-    exports = ["@lib//:kotlinx-collections-immutable"],
+    exports = [
+        # do not sort,
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    ],
     runtime_deps = [
         # do not sort,
         ":openmap",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//libraries/kotlinx/serialization/json:json_test_lib",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
         "//fleet/util/serialization:serialization_test_lib",
     ],
 )
@@ -82,7 +91,6 @@ exports_files(
     [
         "fleet.openmap.iml",
         "resources/fleet.openmap.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

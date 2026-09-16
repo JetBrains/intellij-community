@@ -26,7 +26,7 @@ internal object ContentModuleXmlWriter : PipelineNode {
   override val requires: Set<DataSlot<*>> get() = setOf(Slots.CONTENT_MODULE_PLAN)
   override val produces: Set<DataSlot<*>> get() = setOf(Slots.CONTENT_MODULE)
 
-  override suspend fun execute(ctx: ComputeContext) {
+  override fun execute(ctx: ComputeContext) {
     val model = ctx.model
     val plans = ctx.get(Slots.CONTENT_MODULE_PLAN).plans
     if (plans.isEmpty()) {

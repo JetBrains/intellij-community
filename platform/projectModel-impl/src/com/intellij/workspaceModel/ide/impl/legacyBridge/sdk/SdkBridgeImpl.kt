@@ -233,7 +233,7 @@ class SdkBridgeImpl(
     ): SdkEntityBuilder {
       val sdkEntitySource = createEntitySourceForSdk(environmentName)
       val virtualFileUrlManager = getVirtualFileUrlManager()
-      val homePathVfu = virtualFileUrlManager.getOrCreateFromUrl(homePath)
+      val homePathVfu = virtualFileUrlManager.storeAndGet(homePath)
       return SdkEntity(name, type, emptyList(), "", sdkEntitySource) {
         this.homePath = homePathVfu
         this.version = version
@@ -248,7 +248,7 @@ class SdkBridgeImpl(
         is InternalEnvironmentName.Custom -> optionsDir.resolve(environmentName.name)
       }
       val sdkFile = environmentDir.resolve(JpsGlobalEntitiesSerializers.SDK_FILE_NAME + PathManager.DEFAULT_EXT)
-      return JpsGlobalFileEntitySource(virtualFileUrlManager.getOrCreateFromUrl(sdkFile.toAbsolutePath().toString()))
+      return JpsGlobalFileEntitySource(virtualFileUrlManager.storeAndGet(sdkFile.toAbsolutePath().toString()))
     }
   }
 }
@@ -301,7 +301,7 @@ fun SdkEntityBuilder.applyChangesFrom(fromSdk: SdkEntity) {
  * Therefore, if a builder comes from a different storage, you must make its URLs again in that manager.
  * If you do not do this, `roots` keeps instances from two managers.
  */
-private fun VirtualFileUrl.copyAtManager(manager: VirtualFileUrlManager): VirtualFileUrl = manager.getOrCreateFromUrl(url)
+private fun VirtualFileUrl.copyAtManager(manager: VirtualFileUrlManager): VirtualFileUrl = manager.storeAndGet(url)
 
 private fun getVirtualFileUrlManager(): VirtualFileUrlManager {
   // here we can use LocalEelMachine, as we simply need to get the virtual file url manager

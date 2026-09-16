@@ -10,7 +10,8 @@ import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.community.impl.conda.CondaPyTool
 import com.intellij.python.community.impl.conda.PyCondaBundle
-import com.intellij.python.pytools.PyTool
+import com.intellij.python.community.impl.conda.common.icons.PythonCommunityImplCondaCommonIcons
+import com.intellij.python.pytools.backend.PyTool
 import com.intellij.python.pytools.runTool
 import com.intellij.python.sdk.backend.evolution.DiscoveredVenv
 import com.intellij.python.sdk.backend.evolution.EvoPyProject
@@ -50,7 +51,9 @@ import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 private const val DEFAULT_ENV_NAME: String = "conda"
 
 internal class CondaEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
-  override val tool: PyTool get() = CondaPyTool.getInstance()
+  override val tool: PyTool<*> get() = CondaPyTool.getInstance()
+  override val label: String get() = PySdkBundle.message("evolution.node.label.conda")
+  override val icon get() = PythonCommunityImplCondaCommonIcons.Anaconda
   override val toolId: ToolId get() = CONDA_TOOL_ID
 
   /** An interpreter of this node's environments carries this flavor, which is what names this node as the active one. */
@@ -79,7 +82,7 @@ internal class CondaEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
     // the modal dialog. addNewFolderPath carries the proposed name here.
     // Named after the project, and offered only while nothing carries that name: the row stands for the environment
     // this project would get, so where that one already exists it is in the list above and there is nothing to add.
-    val proposedName = pyProject.baseDir.fileName?.toString() ?: DEFAULT_ENV_NAME
+    val proposedName = pyProject.workspace.baseDir.fileName?.toString() ?: DEFAULT_ENV_NAME
     val addNewSection = proposedName
       .takeIf { name -> envs.none { it.name == name } }
       ?.let {
@@ -110,7 +113,7 @@ internal class CondaEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
         is PyCondaEnvIdentity.NamedEnv -> envDir.fileName?.toString() == identity.envName
       }
     } ?: return PyResult.localizedError(PySdkBundle.message("evolution.error.env.not.found", envDir.toString()))
-    return env.createSdkFromThisEnv(null, PythonSdkUtil.getAllSdks(), context.pyProject.baseDir)
+    return env.createSdkFromThisEnv(null, PythonSdkUtil.getAllSdks(), context.pyProject.workspace.baseDir)
   }
 
   /**
@@ -129,7 +132,7 @@ internal class CondaEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
       .createCondaSdkAlongWithNewEnv(
         NewCondaEnvRequest.EmptyNamedEnv(languageLevel, envName),
         PythonSdkUtil.getAllSdks(),
-        context.pyProject.baseDir,
+        context.pyProject.workspace.baseDir,
       )
   }
 
@@ -200,7 +203,7 @@ internal class CondaEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
   override suspend fun addNewEnvSpec(context: EvoToolContext, section: EvoSectionDto): EvoAddNewDto? {
     val options = condaSupportedLanguages.map { EvoAddNewOptionDto(title = it.toPythonVersion(), token = it.toPythonVersion()) }
     if (options.isEmpty()) return null
-    val envName = section.addNewFolderPath ?: context.pyProject.baseDir.fileName?.toString() ?: DEFAULT_ENV_NAME
+    val envName = section.addNewFolderPath ?: context.pyProject.workspace.baseDir.fileName?.toString() ?: DEFAULT_ENV_NAME
     // The name is proposed and shown, never typed: every tool now names its own environment, so the widget offers one
     // choice per step — which Python — instead of a form.
     return EvoAddNewDto(name = envName, path = "", options = options)

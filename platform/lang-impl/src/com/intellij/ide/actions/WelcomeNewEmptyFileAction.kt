@@ -7,6 +7,8 @@ import com.intellij.ide.scratch.RootType
 import com.intellij.ide.scratch.ScratchFileActions
 import com.intellij.ide.scratch.ScratchFileActions.ChangeLanguageAction
 import com.intellij.ide.scratch.ScratchFileCreationHelper
+import com.intellij.ide.trustedProjects.TrustedProjects
+import com.intellij.ide.trustedProjects.TrustedProjectsLocator
 import com.intellij.ide.util.DeleteHandler
 import com.intellij.ide.welcomeScreen.WelcomeUtils
 import com.intellij.idea.ActionsBundle
@@ -26,6 +28,7 @@ import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessExtension
+import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider
 import com.intellij.openapi.fileEditor.impl.tabActions.CloseTab
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -34,6 +37,7 @@ import com.intellij.openapi.ui.MessageConstants.YesNoCancelResult
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Condition
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFilePreCloseCheck
@@ -60,7 +64,13 @@ internal class WelcomeNewEmptyFileAction : DumbAwareAction() {
     val context = ScratchFileCreationHelper.Context()
     context.defaultRootType = WelcomeFilesRootType.Util.instance
     context.filePrefix = "Untitled"
-    context.fileExtension = "txt"
+    context.language = CommonDataKeys.LANGUAGE.getData(e.dataContext)
+    if (context.language == null) {
+      context.fileExtension = "txt"
+    }
+    else {
+      context.prepareText = false
+    }
     ScratchFileActions.doCreateNewScratch(project, context, e.dataContext)
   }
 }
@@ -81,7 +91,8 @@ internal class WelcomeChangeLanguageAction : ChangeLanguageAction() {
   }
 }
 
-internal class WelcomeFilesRootType : RootType("welcomeFiles", "") {
+@ApiStatus.Internal
+class WelcomeFilesRootType : RootType("HomeFiles", "") {
   object Util {
     val instance: WelcomeFilesRootType
       get() = findByClass(WelcomeFilesRootType::class.java)
@@ -139,7 +150,7 @@ class WelcomeSaveFileAction : DumbAwareAction() {
 
   override fun update(event: AnActionEvent) {
     val project = event.project
-    event.presentation.isEnabledAndVisible = project != null && getFile(project, event) != null
+    event.presentation.isEnabledAndVisible = project != null && isWelcomeFile(project, event)
     event.presentation.text = ActionsBundle.message("action.WelcomeSaveFileAction.text")
   }
 
@@ -148,6 +159,9 @@ class WelcomeSaveFileAction : DumbAwareAction() {
     val file = getFile(project, event) ?: return
     doSaveFile(project, file, true)
   }
+
+  @ApiStatus.Internal
+  fun isWelcomeFile(project: Project, event: AnActionEvent): Boolean = getFile(project, event) != null
 
   private fun getFile(project: Project, event: AnActionEvent): VirtualFile? {
     if (!WelcomeUtils.isWelcomeProject(project)) {
@@ -244,13 +258,7 @@ private fun doSaveFile(project: Project, file: VirtualFile, closeCurrentTab: Boo
   ApplicationManager.getApplication().invokeLater(
     {
       ApplicationManager.getApplication().runWriteAction(Runnable {
-        val manager = FileDocumentManager.getInstance()
-        val source = manager.getDocument(file)!!
-        val target = manager.getDocument(targetFile)!!
-
-        targetFile.refresh(false, false)
-        target.setText(source.charsSequence)
-        manager.saveDocument(target)
+        writeFile(FileDocumentManager.getInstance(), file, targetFile)
 
         ApplicationManager.getApplication().invokeLater(
           {
@@ -273,13 +281,7 @@ private fun doSaveFileOnExit(project: Project, file: VirtualFile): Boolean {
   val targetFile = showSaveFileDialog(project, file) ?: return false
 
   ApplicationManager.getApplication().runWriteAction(Runnable {
-    val manager = FileDocumentManager.getInstance()
-    val source = manager.getDocument(file)!!
-    val target = manager.getDocument(targetFile)!!
-
-    targetFile.refresh(false, false)
-    target.setText(source.charsSequence)
-    manager.saveDocument(target)
+    writeFile(FileDocumentManager.getInstance(), file, targetFile)
   })
 
   deleteFilesOnExit(project, listOf(file))
@@ -301,29 +303,39 @@ private fun doSaveFilesOnExit(project: Project, files: List<VirtualFile>): Boole
   val dialog = FileChooserFactory.getInstance().createPathChooser(FileChooserDescriptorFactory.singleDir(), project, null)
   dialog.choose(VfsUtil.getUserHomeDir(), Consumer { targetDirRef = it.firstOrNull() })
 
-  val targetDir = targetDirRef
-  if (targetDir == null) {
-    return false
-  }
+  val targetDir = targetDirRef ?: return false
 
   ApplicationManager.getApplication().runWriteAction(Runnable {
     val manager = FileDocumentManager.getInstance()
 
     for (file in files) {
-      val targetFile = targetDir.findOrCreateFile(file.name)
-
-      val source = manager.getDocument(file)!!
-      val target = manager.getDocument(targetFile)!!
-
-      targetFile.refresh(false, false)
-      target.setText(source.charsSequence)
-      manager.saveDocument(target)
+      writeFile(manager, file, targetDir.findOrCreateFile(file.name))
     }
   })
 
   deleteFilesOnExit(project, files)
 
   return true
+}
+
+private fun writeFile(manager: FileDocumentManager, file: VirtualFile, targetFile: VirtualFile) {
+  val source = manager.getDocument(file)!!
+  val target = manager.getDocument(targetFile)
+
+  if (target == null || !target.isWritable) {
+    // binary file format
+    FileUtil.copy(file.toNioPath().toFile(), targetFile.toNioPath().toFile())
+  }
+  else {
+    targetFile.refresh(false, false)
+    target.setText(source.charsSequence)
+    manager.saveDocument(target)
+
+    NonProjectFileWritingAccessProvider.allowWriting(listOf(targetFile))
+
+    val locatedProject = TrustedProjectsLocator.locateProject(targetFile.fileSystem.getNioPath(targetFile) ?: return, null)
+    TrustedProjects.setProjectTrusted(locatedProject, true)
+  }
 }
 
 private fun deleteFile(project: Project, file: VirtualFile) {

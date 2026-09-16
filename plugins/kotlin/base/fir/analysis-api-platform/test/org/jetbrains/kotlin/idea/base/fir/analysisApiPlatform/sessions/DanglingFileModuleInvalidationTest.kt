@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProject
 import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirInternals
 import org.jetbrains.kotlin.analysis.low.level.api.fir.LLResolutionFacadeService
 import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirSession
+import org.jetbrains.kotlin.idea.base.psi.appendTypeArgument
 import org.jetbrains.kotlin.idea.base.test.ensureFilesResolved
 import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
@@ -14,7 +15,6 @@ import org.jetbrains.kotlin.psi.KtBlockCodeFragment
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.psiUtil.addTypeArgument
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import java.io.File
 
@@ -54,7 +54,7 @@ class DanglingFileModuleInvalidationTest : AbstractMultiModuleTest() {
         ensureFilesResolved(codeFragment, fakeFile)
 
         val (sessionBefore, sessionAfter) = performModification(codeFragment) {
-            fakeBarCall.addTypeArgument(ktPsiFactory.createTypeArgument("Any"))
+            fakeBarCall.appendTypeArgument(ktPsiFactory.createTypeArgument("Any"))
         }
 
         assert(!sessionBefore.isValid)
@@ -89,7 +89,7 @@ class DanglingFileModuleInvalidationTest : AbstractMultiModuleTest() {
 
         val (sessionBefore, sessionAfter) = performModification(codeFragment) {
             val fakeBarCall = fakeFile.findDescendantOfType<KtCallExpression> { it.text == "bar()" }!!
-            fakeBarCall.addTypeArgument(ktPsiFactory.createTypeArgument("Any"))
+            fakeBarCall.appendTypeArgument(ktPsiFactory.createTypeArgument("Any"))
         }
 
         assertEquals(sessionBefore, sessionAfter)

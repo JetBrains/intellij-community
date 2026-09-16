@@ -34,7 +34,7 @@ fun interface BlockingDocumentationContentFlow {
    * To support cancellation [ProgressManager.checkCanceled()][com.intellij.openapi.progress.ProgressManager.checkCanceled]
    * must be called regularly.
    */
-  @RequiresReadLockAbsence
-  @RequiresBackgroundThread
+  @RequiresReadLockAbsence(generateAssertion = false /* IJPL-115548 */)
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun collectBlocking(consumer: Consumer<in DocumentationContent>)
 }

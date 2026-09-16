@@ -44,7 +44,7 @@ internal object TestPluginPluginDependencyValidator : PipelineNode {
       Slots.TEST_PLUGINS,
     )
 
-  override suspend fun execute(ctx: ComputeContext) {
+  override fun execute(ctx: ComputeContext) {
     val model = ctx.model
     val testPluginsByProduct = model.dslTestPluginsByProduct
     if (testPluginsByProduct.isEmpty()) return

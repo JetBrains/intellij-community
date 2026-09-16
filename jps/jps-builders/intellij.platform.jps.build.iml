@@ -79,7 +79,7 @@
     <orderEntry type="module" module-name="intellij.libraries.netty.codec.protobuf" />
     <orderEntry type="module" module-name="intellij.libraries.netty.codec.http" />
     <orderEntry type="module" module-name="intellij.libraries.netty.buffer" />
-    <orderEntry type="library" name="kotlin-metadata" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlin.metadata" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
     <orderEntry type="module" module-name="intellij.platform.eel" />
     <orderEntry type="module" module-name="intellij.platform.eel.nioFs" />

@@ -73,7 +73,7 @@ abstract class LicenseRelatedStatusBarWidget(private val factory: LicenseRelated
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   protected open fun onComponentCreated(label: JLabel) {
   }
 
@@ -108,7 +108,7 @@ abstract class LicenseRelatedStatusBarWidget(private val factory: LicenseRelated
 
   protected abstract fun createClickListener(): ClickListener
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun updateWidget() {
     if (!lazyLabel.isInitialized()) return
 

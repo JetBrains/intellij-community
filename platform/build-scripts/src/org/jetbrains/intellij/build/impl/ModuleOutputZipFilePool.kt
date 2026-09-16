@@ -1,18 +1,17 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.platform.buildScripts.concurrency.SharedCache
 import com.intellij.util.lang.ImmutableZipFile
 import com.intellij.util.lang.ZipFile
 import com.sun.management.HotSpotDiagnosticMXBean
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.job
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.intellij.build.productLayout.util.AsyncCache
+import org.jetbrains.intellij.build.BuildLifetime
 import java.io.IOException
 import java.lang.management.ManagementFactory
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.concurrent.CancellationException
 import java.util.concurrent.TimeoutException
 import kotlin.io.path.deleteIfExists
 import kotlin.io.path.readText
@@ -21,29 +20,23 @@ import kotlin.time.Duration.Companion.minutes
 
 /**
  * Pool of opened [ImmutableZipFile] instances for efficient O(1) lookups.
- * Uses [AsyncCache] to deduplicate concurrent requests for the same file.
+ * Uses [SharedCache] to deduplicate concurrent requests for the same file.
  *
- * If [scope] is provided, caching is enabled and all cached files are closed when the scope is canceled/completed.
- * If [scope] is null, no caching is performed - each call loads the file directly.
+ * If [lifetime] is provided, caching is enabled and all cached files are closed when the lifetime is closed.
+ * If [lifetime] is null, no caching is performed - each call loads the file directly.
  */
 @ApiStatus.Internal
 class ModuleOutputZipFilePool(
-  scope: CoroutineScope?,
+  lifetime: BuildLifetime?,
   private val cacheReadTimeout: Duration = 2.minutes,
   private val zipFileLoader: (Path) -> ZipFile? = { loadZipFile(it) },
 ) {
-  private val cache: AsyncCache<Path, ZipFile?>? = scope?.let {
-    AsyncCache<Path, ZipFile?>().also { cache ->
-      scope.coroutineContext.job.invokeOnCompletion {
-        cache.close { zipFile -> zipFile?.close() }
-      }
-    }
+  private val cache = lifetime?.let {
+    SharedCache<Path, ZipFile?>(it.sharedTasks) { zipFile -> zipFile?.close() }
   }
 
   fun getData(file: Path, entryPath: String): ByteArray? {
     try {
-      // `AsyncCache` runs the load on a virtual thread. Without a cache the load runs inline, and a build caller is
-      // on a virtual thread too.
       if (cache == null) {
         return zipFileLoader(file)?.use { it.getData(entryPath) }
       }
@@ -64,6 +57,9 @@ class ModuleOutputZipFilePool(
       )
     }
     catch (e: CancellationException) {
+      throw e
+    }
+    catch (e: InterruptedException) {
       throw e
     }
     catch (e: Exception) {

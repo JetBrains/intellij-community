@@ -9,10 +9,10 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="Velocity" type="repository">
-        <properties maven-id="org.apache.velocity:velocity-engine-core:2.3">
+        <properties maven-id="org.apache.velocity:velocity-engine-core:2.4.1">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/velocity/velocity-engine-core/2.3/velocity-engine-core-2.3.jar">
-              <sha256sum>b086cee8fd8183e240b4afcf54fe38ec33dd8eb0da414636e5bf7aa4d9856629</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/velocity/velocity-engine-core/2.4.1/velocity-engine-core-2.4.1.jar">
+              <sha256sum>1c19157d1171d560088e485be97c93a7a2f7e9f56e517f0a30273c5c39df6231</sha256sum>
             </artifact>
           </verification>
           <exclude>
@@ -24,11 +24,11 @@
           <root url="file://$MODULE_DIR$/../../lib/annotations/velocity" />
         </ANNOTATIONS>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/velocity/velocity-engine-core/2.3/velocity-engine-core-2.3.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/velocity/velocity-engine-core/2.4.1/velocity-engine-core-2.4.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/velocity/velocity-engine-core/2.3/velocity-engine-core-2.3-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/velocity/velocity-engine-core/2.4.1/velocity-engine-core-2.4.1-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

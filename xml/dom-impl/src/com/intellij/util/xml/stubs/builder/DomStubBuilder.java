@@ -68,7 +68,7 @@ final class DomStubBuilder implements BinaryFileStubBuilder.CompositeBinaryFileS
 
   @Override
   public @NotNull String getSubBuilderVersion(@Nullable DomFileMetaData data) {
-    return data == null ? "<no-stub>" : data.rootTagName + ":" + data.rootTagName + ":" + data.implementation;
+    return data == null ? "<no-stub>" : data.rootTagName + ":" + data.stubVersion + ":" + data.implementation;
   }
 
   @Override

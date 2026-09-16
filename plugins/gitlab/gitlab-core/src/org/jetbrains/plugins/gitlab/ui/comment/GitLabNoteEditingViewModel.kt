@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.ui.comment
 
-import com.intellij.collaboration.async.cancelAndJoinSilently
+import com.intellij.collaboration.async.cancelAndJoin
 import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.ui.FocusableViewModel
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewSubmittableTextViewModel
@@ -100,7 +100,7 @@ abstract class AbstractGitLabNoteEditingViewModel(
   parentCs: CoroutineScope,
   initialText: String
 ) : CodeReviewSubmittableTextViewModelBase(project, parentCs, initialText), GitLabNoteEditingViewModel {
-  override suspend fun destroy() = cs.cancelAndJoinSilently()
+  override suspend fun destroy() = cs.cancelAndJoin()
 
   private val _uploadFinishedSignal = Channel<FileUploadResult>(1, BufferOverflow.DROP_OLDEST)
   override val uploadFinishedSignal: Flow<FileUploadResult> = _uploadFinishedSignal.receiveAsFlow()

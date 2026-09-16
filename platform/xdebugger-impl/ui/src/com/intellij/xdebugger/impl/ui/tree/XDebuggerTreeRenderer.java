@@ -81,9 +81,9 @@ public class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
     else {
       int visibleRectRightX = treeVisibleRect.x + treeVisibleRect.width;
       int notFittingWidth = rowX + super.getPreferredSize().width - visibleRectRightX;
-      if (node instanceof XValueNodeImpl && notFittingWidth > 0) {
+      if (node instanceof XValueNodeImpl valueNode && notFittingWidth > 0) {
         // text does not fit visible area - show link
-        String rawValue = DebuggerUIUtil.getNodeRawValue((XValueNodeImpl)node);
+        String rawValue = DebuggerUIUtil.getNodeRawValue(valueNode);
         if (!StringUtil.isEmpty(rawValue) && tree.isShowing()) {
           Point treeRightSideOnScreen = new Point(visibleRectRightX, treeVisibleRect.y);
           SwingUtilities.convertPointToScreen(treeRightSideOnScreen, tree);
@@ -136,9 +136,9 @@ public class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
   }
 
   private void updateIcon(XDebuggerTreeNode node) {
-    Icon icon = node instanceof XValueNodeImpl &&
+    Icon icon = node instanceof XValueNodeImpl valueNode &&
                 node.getTree().getPinToTopManager().isEnabled() &&
-                node.getTree().getPinToTopManager().isItemPinned((XValueNodeImpl)node) ?
+                node.getTree().getPinToTopManager().isItemPinned(valueNode) ?
                 AllIcons.Debugger.PinToTop.PinnedItem : node.getIcon();
     setIcon(icon);
   }

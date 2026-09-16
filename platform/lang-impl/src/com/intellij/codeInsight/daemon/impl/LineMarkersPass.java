@@ -23,7 +23,6 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
@@ -38,7 +37,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.InjectionUtils;
-import com.intellij.util.PairConsumer;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.NotNullList;
@@ -55,6 +53,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
+import java.util.function.BiConsumer;
 
 public final class LineMarkersPass extends TextEditorHighlightingPass implements DumbAware {
   private static final Logger LOG = Logger.getInstance(LineMarkersPass.class);
@@ -177,7 +176,7 @@ public final class LineMarkersPass extends TextEditorHighlightingPass implements
   private void queryProviders(@NotNull List<? extends PsiElement> elements,
                               @NotNull PsiFile containingFile,
                               @NotNull List<? extends LineMarkerProvider> providers,
-                              @NotNull PairConsumer<? super PsiElement, ? super LineMarkerInfo<?>> consumer) {
+                              @NotNull BiConsumer<? super PsiElement, ? super LineMarkerInfo<?>> consumer) {
     ThreadingAssertions.assertReadAccess();
 
     if (myMode != Mode.SLOW) {
@@ -211,7 +210,7 @@ public final class LineMarkersPass extends TextEditorHighlightingPass implements
                           " document length: " + getDocument().getTextLength());
               LOG.error(PluginException.createByClass(exception, provider.getClass()));
             }
-            consumer.consume(element, info);
+            consumer.accept(element, info);
           }
         }
       }
@@ -231,6 +230,7 @@ public final class LineMarkersPass extends TextEditorHighlightingPass implements
     }
 
     List<LineMarkerInfo<?>> slowLineMarkers = new NotNullList<>();
+    //noinspection ForLoopReplaceableByForEach
     for (int j = 0; j < providers.size(); j++) {
       ProgressManager.checkCanceled();
       LineMarkerProvider provider = providers.get(j);
@@ -240,10 +240,10 @@ public final class LineMarkersPass extends TextEditorHighlightingPass implements
       catch (IndexNotReadyException e) {
         continue;
       }
-      catch (ProcessCanceledException e) {
-        throw e;
-      }
       catch (Throwable e) {
+        if (Logger.shouldRethrow(e)) {
+          throw e;
+        }
         LOG.error(e);
         continue;
       }
@@ -253,7 +253,7 @@ public final class LineMarkersPass extends TextEditorHighlightingPass implements
         for (int k = 0; k < slowLineMarkers.size(); k++) {
           LineMarkerInfo<?> slowInfo = slowLineMarkers.get(k);
           PsiElement element = slowInfo.getElement();
-          consumer.consume(element, slowInfo);
+          consumer.accept(element, slowInfo);
         }
         slowLineMarkers.clear();
       }
@@ -263,11 +263,11 @@ public final class LineMarkersPass extends TextEditorHighlightingPass implements
   private void queryLineMarkersForInjected(@NotNull PsiElement element,
                                            @NotNull PsiFile containingFile,
                                            @NotNull Set<? super PsiFile> visitedInjectedFiles,
-                                           @NotNull PairConsumer<? super PsiElement, ? super LineMarkerInfo<?>> consumer) {
+                                           @NotNull BiConsumer<? super PsiElement, ? super LineMarkerInfo<?>> consumer) {
     InjectedLanguageManager manager = InjectedLanguageManager.getInstance(containingFile.getProject());
     if (manager.isInjectedFragment(containingFile)) return;
 
-    InjectedLanguageManager.getInstance(containingFile.getProject()).enumerateEx(element, containingFile, false, (injectedPsi, places) -> {
+    InjectedLanguageManager.getInstance(containingFile.getProject()).enumerateEx(element, containingFile, false, (injectedPsi, _) -> {
       if (!visitedInjectedFiles.add(injectedPsi)) return; // there may be several concatenated literals making the one injected file
       Project project = injectedPsi.getProject();
       Document document = PsiDocumentManager.getInstance(project).getCachedDocument(injectedPsi);
@@ -287,10 +287,10 @@ public final class LineMarkersPass extends TextEditorHighlightingPass implements
           LineMarkerInfo<PsiElement> converted = icon == null
                                                  ? new LineMarkerInfo<>(injectedElement, hostRange)
                                                  : new LineMarkerInfo<>(injectedElement, hostRange, icon,
-                                                                        e -> injectedMarkerInfo.getLineMarkerTooltip(),
+                                                                        _ -> injectedMarkerInfo.getLineMarkerTooltip(),
                                                                         navigationHandler, GutterIconRenderer.Alignment.RIGHT,
                                                                         () -> gutterRenderer.getAccessibleName());
-          consumer.consume(injectedElement, converted);
+          consumer.accept(injectedElement, converted);
         }
       });
     });
@@ -330,7 +330,7 @@ public final class LineMarkersPass extends TextEditorHighlightingPass implements
      */
     SLOW,
     /**
-     * No any constraints, collect all <code>{@link LineMarkerInfo}</code>s
+     * No constraints, collect all <code>{@link LineMarkerInfo}</code>s
      */
     ALL
   }

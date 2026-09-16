@@ -420,6 +420,8 @@ com.intellij.platform.workspace.storage.url.VirtualFileUrl
 com.intellij.platform.workspace.storage.url.VirtualFileUrlIndex
 - a:findEntitiesByUrl(com.intellij.platform.workspace.storage.url.VirtualFileUrl):kotlin.sequences.Sequence
 com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
-- a:findByUrl(java.lang.String):com.intellij.platform.workspace.storage.url.VirtualFileUrl
+- findByUrl(java.lang.String):com.intellij.platform.workspace.storage.url.VirtualFileUrl
 - a:fromPath(java.lang.String):com.intellij.platform.workspace.storage.url.VirtualFileUrl
-- a:getOrCreateFromUrl(java.lang.String):com.intellij.platform.workspace.storage.url.VirtualFileUrl
+- a:get(java.lang.String):com.intellij.platform.workspace.storage.url.VirtualFileUrl
+- getOrCreateFromUrl(java.lang.String):com.intellij.platform.workspace.storage.url.VirtualFileUrl
+- a:storeAndGet(java.lang.String):com.intellij.platform.workspace.storage.url.VirtualFileUrl

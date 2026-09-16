@@ -41,8 +41,8 @@ open class LspCompletionSupport : LspCompletionCustomizer() {
    * Implementations may override this function and return `false` to ignore the presence of the typed character
    * in the server's `CompletionOptions.triggerCharacters`.
    */
-  @RequiresEdt
-  @RequiresWriteLock
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
   open fun isTriggerCharacterRespected(charTyped: Char): Boolean = true
 
   /**
@@ -51,7 +51,7 @@ open class LspCompletionSupport : LspCompletionCustomizer() {
    * or by typing a 'trigger' character (see [isTriggerCharacterRespected]).
    * This function controls whether the LSP server should be asked for code completion items at the given location.
    */
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   open fun shouldRunCodeCompletion(parameters: CompletionParameters): Boolean = true
 
   /**
@@ -82,8 +82,8 @@ open class LspCompletionSupport : LspCompletionCustomizer() {
    * @param defaultPrefix completion prefix calculated by the IDE using the [CompletionService.suggestPrefix] method
    */
   @ApiStatus.Experimental
-  @RequiresReadLock
-  @RequiresBackgroundThread
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   open fun getCompletionPrefix(parameters: CompletionParameters, defaultPrefix: String): String = defaultPrefix
 
   /**

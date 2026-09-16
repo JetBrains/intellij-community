@@ -7,11 +7,17 @@ import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.lineMarker.RunLineMarkerContributor
 import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.icons.AllIcons
+import com.intellij.markdown.backend.services.MarkdownFrontendRunnerRequestService
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.impl.editorId
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.project.projectId
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.CachedValueProvider
@@ -19,7 +25,6 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.nextLeaf
 import org.intellij.plugins.markdown.MarkdownBundle
-import org.intellij.plugins.markdown.MarkdownUsageCollector.RUNNER_EXECUTED
 import org.intellij.plugins.markdown.extensions.MarkdownCodeSpanConfigurationContextSearcher
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension.Companion.execute
@@ -27,9 +32,9 @@ import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunner
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension.Companion.trimPrompt
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.MarkdownRunner
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.RunnerPlace
-import org.intellij.plugins.markdown.extensions.jcef.commandRunner.RunnerType
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.TrustedProjectUtil
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.getMarkdownCommandWorkingDirectories
+import org.intellij.plugins.markdown.extensions.jcef.commandRunner.getMarkdownCommandWorkingDirectoryPaths
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.withMarkdownCommandWorkingDirectory
 import org.intellij.plugins.markdown.injection.aliases.CodeFenceLanguageGuesser
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
@@ -37,6 +42,7 @@ import org.intellij.plugins.markdown.lang.MarkdownLanguage
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
 import org.intellij.plugins.markdown.lang.psi.util.hasType
+import org.intellij.plugins.markdown.service.MarkdownFrontendRunnerRequest
 import java.awt.event.MouseEvent
 import javax.swing.Icon
 
@@ -89,21 +95,46 @@ internal class MarkdownRunLineMarkersProvider: RunLineMarkerContributor(), DumbA
 
   private fun processBlock(lang: String, element: PsiElement): Info? {
     val language = CodeFenceLanguageGuesser.guessLanguageForInjection(lang)
-    val runner = MarkdownRunner.EP_NAME.extensionList.firstOrNull { it.isApplicable(language) } ?: return null
+    val runnerTitle = MarkdownRunner.EP_NAME.extensionList.firstOrNull { it.isApplicable(language) }?.title()
+                      ?: if (language?.id == "Shell Script") MarkdownBundle.message("markdown.runner.launch.shell") else return null
     val text = (element.parent as? MarkdownCodeFence)?.let(this::collectFenceText) ?: return null
-    val runAction = object : AnAction({ runner.title() }, AllIcons.RunConfigurations.TestState.Run_run) {
-      override fun actionPerformed(event: AnActionEvent) {
-        val project = event.getData(CommonDataKeys.PROJECT) ?: return
-        val inputEvent = event.inputEvent as? MouseEvent ?: return
-        withMarkdownCommandWorkingDirectory(project, element.containingFile.virtualFile, inputEvent.component, inputEvent.x, inputEvent.y) { workingDirectory ->
-          TrustedProjectUtil.executeIfTrusted(project) {
-            RUNNER_EXECUTED.log(project, RunnerPlace.EDITOR, RunnerType.BLOCK, runner.javaClass)
-            runner.run(text, project, workingDirectory, DefaultRunExecutor.getRunExecutorInstance())
-          }
+    val runAction = object : AnAction({ runnerTitle }, AllIcons.RunConfigurations.TestState.Run_run) {
+      override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
+      override fun update(event: AnActionEvent) {
+        event.presentation.text = if (event.place == ActionPlaces.EDITOR_GUTTER_POPUP) {
+          MarkdownBundle.message("markdown.runner.choose.terminal")
+        }
+        else {
+          runnerTitle
         }
       }
+
+      override fun actionPerformed(event: AnActionEvent) {
+        val project = event.getData(CommonDataKeys.PROJECT) ?: return
+        val sourceFile = element.containingFile.virtualFile
+        val workingDirectoryPaths = getMarkdownCommandWorkingDirectoryPaths(project, sourceFile) ?: return
+        val mouseEvent = event.inputEvent as? MouseEvent
+        val screenPoint = mouseEvent?.locationOnScreen?.let { MarkdownFrontendRunnerRequest.ScreenPoint(it.x, it.y) }
+        val editor = event.getData(CommonDataKeys.EDITOR) ?: return
+        service<MarkdownFrontendRunnerRequestService>().request(
+          MarkdownFrontendRunnerRequest(
+            projectId = project.projectId(),
+            languageId = language?.id,
+            command = text,
+            sourceFileUrl = sourceFile.url,
+            showTargetChooser = event.place == ActionPlaces.EDITOR_GUTTER_POPUP,
+            offset = element.textOffset,
+            workingDirectoryPaths = workingDirectoryPaths,
+            screenPoint = screenPoint,
+            editorId = editor.editorId(),
+          )
+        )
+      }
     }
-    return Info(AllIcons.RunConfigurations.TestState.Run_run, arrayOf(runAction)) { runner.title() }
+    return Info(AllIcons.RunConfigurations.TestState.Run_run, arrayOf(runAction)) {
+      MarkdownBundle.message("markdown.runner.launch.block.tooltip", runnerTitle)
+    }
   }
 
   private fun processCodeSpan(element: PsiElement, elementText: String): Info? {

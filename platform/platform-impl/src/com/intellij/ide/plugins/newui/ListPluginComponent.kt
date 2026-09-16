@@ -9,6 +9,7 @@ import com.intellij.ide.plugins.ListPluginModel
 import com.intellij.ide.plugins.PluginEnableDisableAction
 import com.intellij.ide.plugins.PluginEnabledState
 import com.intellij.ide.plugins.PluginManagerConfigurable
+import com.intellij.ide.plugins.PluginsGroupType
 import com.intellij.ide.plugins.getUiInspectorContextFor
 import com.intellij.internal.inspector.PropertyBean
 import com.intellij.internal.inspector.UiInspectorContextProvider
@@ -20,26 +21,30 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceService
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.Strings
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
 import com.intellij.ui.LicensingFacade
 import com.intellij.ui.RelativeFont
 import com.intellij.ui.components.JBLabel
+import com.intellij.ui.components.OnOffButton
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.ui.components.panels.NonOpaquePanel
+import com.intellij.ui.popup.list.SelectablePanel
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.IconUtil
 import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.containers.ContainerUtil
@@ -51,6 +56,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancel
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
@@ -77,30 +83,160 @@ import javax.swing.JCheckBox
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
+import javax.swing.JToggleButton
 import javax.swing.SwingConstants
 import javax.swing.UIManager
 import javax.swing.plaf.ButtonUI
 import javax.swing.text.BadLocationException
 
+/** Constructor-time row semantics which do not have a complete in-place update operation. */
+internal data class PluginRowRenderKey(
+  val pluginId: PluginId,
+  val groupType: PluginsGroupType,
+  val marketplace: Boolean,
+  val name: @NlsSafe String?,
+  val firstTag: @Nls String?,
+  val downloads: @NlsSafe String?,
+  val rating: @NlsSafe String?,
+  val installedCounterpartPresent: Boolean,
+  val version: @NlsSafe String?,
+  val versionIsBundledUpdate: Boolean,
+  val vendor: @NlsSafe String?,
+  val licenseProductCode: String?,
+  val licenseOptional: Boolean,
+  val bundled: Boolean,
+  val requiresUpgrade: Boolean,
+  val compatible: Boolean,
+  val available: Boolean,
+  val disableAllowed: Boolean,
+  val restrictedByProduct: Boolean,
+  val listCustomizerClassName: String,
+  val pluginManagerCustomizerClassName: String?,
+  val preparedUpdate: PluginPreparedUpdateState?,
+)
+
 @ApiStatus.Internal
-class ListPluginComponent(
+class ListPluginComponent private constructor(
   pluginModelFacade: PluginModelFacade,
   pluginUiModel: PluginUiModel,
   group: PluginsGroup,
   listModel: ListPluginModel,
   searchListener: LinkListener<Any>,
   coroutineScope: CoroutineScope,
+  private val myOperationLauncher: PluginOperationLauncher,
+  operationUiBridge: PluginOperationUiBridge?,
   marketplace: Boolean,
-) : JPanel() {
+  precomputedRenderKey: PluginRowRenderKey?,
+  registerInstallingWithoutGroup: Boolean,
+  private val myUseSecondaryButtons: Boolean,
+  private val myUseBadgeTags: Boolean,
+  private val myUseIslandSelection: Boolean,
+  private val myUseToggleForEnablement: Boolean,
+  private val myPluginIconScale: Float,
+  @Suppress("UNUSED_PARAMETER") constructorMarker: Unit,
+) : SelectablePanel() {
+  internal constructor(
+    pluginModelFacade: PluginModelFacade,
+    pluginUiModel: PluginUiModel,
+    group: PluginsGroup,
+    listModel: ListPluginModel,
+    searchListener: LinkListener<Any>,
+    coroutineScope: CoroutineScope,
+    operationLauncher: PluginOperationLauncher,
+    operationUiBridge: PluginOperationUiBridge?,
+    marketplace: Boolean,
+    secondaryButtons: Boolean = false,
+    badgeTags: Boolean = false,
+    islandSelection: Boolean = false,
+    toggleForEnablement: Boolean = false,
+    pluginIconScale: Float = 1.0f,
+  ) : this(
+    pluginModelFacade,
+    pluginUiModel,
+    group,
+    listModel,
+    searchListener,
+    coroutineScope,
+    operationLauncher,
+    operationUiBridge,
+    marketplace,
+    null,
+    false,
+    secondaryButtons,
+    badgeTags,
+    islandSelection,
+    toggleForEnablement,
+    pluginIconScale,
+    Unit,
+  )
+
+  internal constructor(
+    pluginModelFacade: PluginModelFacade,
+    pluginUiModel: PluginUiModel,
+    group: PluginsGroup,
+    listModel: ListPluginModel,
+    searchListener: LinkListener<Any>,
+    coroutineScope: CoroutineScope,
+    operationLauncher: PluginOperationLauncher,
+    operationUiBridge: PluginOperationUiBridge?,
+    marketplace: Boolean,
+    renderKey: PluginRowRenderKey,
+    registerInstallingWithoutGroup: Boolean = false,
+    secondaryButtons: Boolean = false,
+    badgeTags: Boolean = false,
+    islandSelection: Boolean = false,
+    toggleForEnablement: Boolean = false,
+    pluginIconScale: Float = 1.0f,
+  ) : this(
+    pluginModelFacade,
+    pluginUiModel,
+    group,
+    listModel,
+    searchListener,
+    coroutineScope,
+    operationLauncher,
+    operationUiBridge,
+    marketplace,
+    renderKey,
+    registerInstallingWithoutGroup,
+    secondaryButtons,
+    badgeTags,
+    islandSelection,
+    toggleForEnablement,
+    pluginIconScale,
+    Unit,
+  )
+
+  constructor(
+    pluginModelFacade: PluginModelFacade,
+    pluginUiModel: PluginUiModel,
+    group: PluginsGroup,
+    listModel: ListPluginModel,
+    searchListener: LinkListener<Any>,
+    coroutineScope: CoroutineScope,
+    marketplace: Boolean,
+  ) : this(
+    pluginModelFacade,
+    pluginUiModel,
+    group,
+    listModel,
+    searchListener,
+    coroutineScope,
+    PluginOperationLauncher(coroutineScope),
+    null,
+    marketplace,
+  )
+
   private val myModelFacade: PluginModelFacade = pluginModelFacade
   private val mySearchListener: LinkListener<Any> = searchListener
   private val myMarketplace: Boolean = marketplace
   private val myGroup: PluginsGroup = group
-  private val myIsAvailable: Boolean
+  private val myRenderKey = precomputedRenderKey ?: createRenderKey(pluginModelFacade, pluginUiModel, group, listModel, marketplace)
+  private val myIsAvailable: Boolean = myRenderKey.available
 
   /** FIXME value logic is duplicated with {@link com.intellij.ide.plugins.newui.PluginDetailsPageComponent} */
-  private val myIsDisableAllowed: Boolean
-  private val myIsNotFreeInFreeMode: Boolean
+  private val myIsDisableAllowed: Boolean = myRenderKey.disableAllowed
+  private val myIsNotFreeInFreeMode: Boolean = myRenderKey.restrictedByProduct
   private var myPlugin: PluginUiModel = pluginUiModel
   private var myInstalledPluginMarketplaceNode: PluginUiModel? = null
   private var myOnlyUpdateMode = false
@@ -113,7 +249,7 @@ class ListPluginComponent(
   var myInstalledDescriptorForMarketplace: PluginUiModel? = null
 
   private val myNameComponent = JBLabel()
-  private val myIconComponent = JLabel(AllIcons.Plugins.PluginLogo)
+  private val myIconComponent = JLabel(scalePluginIcon(AllIcons.Plugins.PluginLogo))
   private val myLayout = BaselineLayout()
   private var successfullyFinishedOnce = false
 
@@ -125,7 +261,7 @@ class ListPluginComponent(
 
   @JvmField
   var myUpdateButton: JButton? = null
-  private var myEnableDisableButton: JComponent? = null
+  private var myEnableDisableButton: JToggleButton? = null
   private var myChooseUpdateButton: JCheckBox? = null
   private var myAlignButton: JComponent? = null
   private var myMetricsPanel: JPanel? = null
@@ -138,32 +274,33 @@ class ListPluginComponent(
   private var myErrorPanel: JPanel? = null
   private var myErrorComponent: ErrorComponent? = null
   private var myIndicator: ProgressIndicatorEx? = null
+  private var myIndicatorReadOnly = false
   private var myEventHandler: EventHandler? = null
   private var myCustomizer: PluginManagerCustomizer? = null
-  private val myCoroutineScope: CoroutineScope = coroutineScope
+  private val myUiCoroutineScope: CoroutineScope = coroutineScope.childScope("Plugin row ${pluginUiModel.pluginId}")
+  private val myOperationUi = operationUiBridge?.createHandle(this) ?: PluginOperationUiHandle(this)
   private var mySelection: EventHandler.SelectionType = EventHandler.SelectionType.NONE
+  private var myClosed = false
 
   init {
     myInstalledDescriptorForMarketplace = listModel.installedModels.get(pluginUiModel.pluginId)
     val pluginId = myPlugin.pluginId
-    val compatible = !myPlugin.isIncompatibleWithCurrentPlatform
     val pluginInstallationState = listModel.pluginInstallationStates.get(pluginId)
-    myIsAvailable = (compatible || isInstalledAndEnabled(pluginInstallationState!!)) && pluginUiModel.canBeEnabled
-    val pluginManager = UiPluginManager.getInstance()
-    myIsNotFreeInFreeMode =
-      pluginManager.isPluginRequiresUltimateButItIsDisabled(pluginModelFacade.getModel().sessionId, pluginUiModel.pluginId)
-    myIsDisableAllowed = pluginUiModel.isDisableAllowed && !myIsNotFreeInFreeMode
-    pluginModelFacade.addComponent(this)
+    pluginModelFacade.addComponent(this, registerInstallingWithoutGroup)
     myCustomizer = if (UiPluginManager.isCombinedPluginManagerEnabled()) PluginManagerCustomizer.getInstance() else null
     isOpaque = true
-    border = JBUI.Borders.empty(10)
+    border = if (myUseIslandSelection) JBUI.Borders.empty(12, 16) else JBUI.Borders.empty(10)
+    if (myUseIslandSelection) {
+      selectionArc = JBUI.scale(8)
+      selectionInsets = JBUI.insets(0, 8)
+    }
     layout = myLayout
 
     myIconComponent.verticalAlignment = SwingConstants.TOP
     myIconComponent.isOpaque = false
     myLayout.setIconComponent(myIconComponent)
 
-    myNameComponent.setText(pluginUiModel.name)
+    myNameComponent.setText(myRenderKey.name)
     myLayout.setNameComponent(RelativeFont.BOLD.install(myNameComponent))
 
     createTag()
@@ -174,7 +311,7 @@ class ListPluginComponent(
       createLicensePanel()
     }
     else {
-      createNotAvailableMarker(compatible)
+      createNotAvailableMarker(myRenderKey.compatible)
     }
 
     if (marketplace && myInstalledDescriptorForMarketplace == null) {
@@ -188,7 +325,7 @@ class ListPluginComponent(
     }
     updateColors(EventHandler.SelectionType.NONE)
 
-    putClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY, pluginUiModel.name)
+    putClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY, myRenderKey.name)
 
     UiInspectorUtil.registerProvider(this, PluginIdUiInspectorContextProvider())
 
@@ -287,7 +424,7 @@ class ListPluginComponent(
     }
     if (myMarketplace) {
       if (installationState.status == PluginStatus.INSTALLED_AND_REQUIRED_RESTART) {
-        myRestartButton = RestartButton(myModelFacade)
+        myRestartButton = RestartButton(myModelFacade, myUseSecondaryButtons)
         myLayout.addButtonComponent(myRestartButton!!)
       }
       else {
@@ -297,11 +434,12 @@ class ListPluginComponent(
         myLayout.addButtonComponent(myInstallButton!!)
 
         myInstallButton!!.addActionListener {
-          PluginModelAsyncOperationsExecutor.performAutoInstall(myCoroutineScope,
+          val operationUi = myOperationUi.captureContext(myInstallButton!!)
+          PluginModelAsyncOperationsExecutor.performAutoInstall(myOperationLauncher,
                                                                 myModelFacade,
                                                                 myPlugin,
                                                                 myCustomizer,
-                                                                this)
+                                                                operationUi)
         }
         myInstallButton!!.setEnabled(showInstall, IdeBundle.message("plugin.status.installed"))
 
@@ -318,7 +456,7 @@ class ListPluginComponent(
             myAfterUpdate = true
           }
           else {
-            myRestartButton = RestartButton(myModelFacade)
+            myRestartButton = RestartButton(myModelFacade, myUseSecondaryButtons)
             myLayout.addButtonComponent(myRestartButton!!)
 
             myModelFacade.addUninstalled(myInstalledDescriptorForMarketplace!!.pluginId)
@@ -341,7 +479,7 @@ class ListPluginComponent(
           myAfterUpdate = true
         }
         else {
-          myRestartButton = RestartButton(myModelFacade)
+          myRestartButton = RestartButton(myModelFacade, myUseSecondaryButtons)
           myLayout.addButtonComponent(myRestartButton!!)
 
           myModelFacade.addUninstalled(myPlugin.pluginId)
@@ -350,7 +488,7 @@ class ListPluginComponent(
       else {
         if (installationState.status == PluginStatus.INSTALLED_AND_REQUIRED_RESTART ||
             installationState.status == PluginStatus.UPDATED_WITH_RESTART) {
-          myRestartButton = RestartButton(myModelFacade)
+          myRestartButton = RestartButton(myModelFacade, myUseSecondaryButtons)
           myLayout.addButtonComponent(myRestartButton!!)
         }
         else if (installedModel == null && installationState.status == PluginStatus.INSTALLED_WITHOUT_RESTART) {
@@ -364,7 +502,7 @@ class ListPluginComponent(
 
       myAlignButton = object : JComponent() {
         override fun getPreferredSize(): Dimension {
-          return if (myEnableDisableButton is JCheckBox) {
+          return if (myEnableDisableButton != null) {
             myEnableDisableButton!!.preferredSize
           }
           else {
@@ -389,7 +527,7 @@ class ListPluginComponent(
   }
 
   private fun createInstallButton(): InstallButton {
-    return InstallButton(false, myPlugin.requiresUpgrade)
+    return InstallButton(false, myRenderKey.requiresUpgrade, myUseSecondaryButtons)
   }
 
   private fun createEnableDisableButton(modelFunction: Supplier<PluginUiModel>) {
@@ -402,7 +540,7 @@ class ListPluginComponent(
         PluginEnableDisableAction.DISABLE_GLOBALLY
       }
       myModelFacade.setEnabledState(Collections.singletonList(pluginToSwitch), action)
-    })
+    }, myUseToggleForEnablement)
 
     myLayout.addButtonComponent(myEnableDisableButton!!)
     myEnableDisableButton!!.isOpaque = false
@@ -415,54 +553,40 @@ class ListPluginComponent(
     myMetricsPanel!!.border = JBUI.Borders.emptyTop(5)
     myLayout.addLineComponent(myMetricsPanel!!)
     if (myMarketplace) {
-      val downloads = myPlugin.presentableDownloads()
+      val downloads = myRenderKey.downloads
       if (downloads != null) {
         myDownloads = createRatingLabel(myMetricsPanel!!, downloads, AllIcons.Plugins.Downloads)
       }
 
-      val rating = myPlugin.presentableRating()
+      val rating = myRenderKey.rating
       if (rating != null) {
         myRating = createRatingLabel(myMetricsPanel!!, rating, AllIcons.Plugins.Rating)
       }
-      val version = if (myInstalledDescriptorForMarketplace == null) "" else myInstalledDescriptorForMarketplace!!.version
-      myVersion = createVersionLabel(myMetricsPanel!!, version, false)
-      myVersion!!.isVisible = !StringUtil.isEmptyOrSpaces(version)
+      val version = myRenderKey.version
+      val displayVersion: @NlsSafe String = version ?: ""
+      myVersion = createVersionLabel(myMetricsPanel!!, displayVersion, myRenderKey.versionIsBundledUpdate)
+      myVersion!!.isVisible = version != null
     }
     else {
-      val version = myPlugin.version
-      if (!StringUtil.isEmptyOrSpaces(version)) {
-        myVersion = createVersionLabel(myMetricsPanel!!, version, myPlugin.isBundledUpdate)
+      val version = myRenderKey.version
+      if (version != null) {
+        myVersion = createVersionLabel(myMetricsPanel!!, version, myRenderKey.versionIsBundledUpdate)
       }
     }
 
-    if (!myPlugin.isBundled) {
-      val vendor = StringUtil.defaultIfEmpty(Strings.trim(myPlugin.vendor), Strings.trim(myPlugin.organization))
-      if (!StringUtil.isEmptyOrSpaces(vendor)) {
-        myVendor = createRatingLabel(myMetricsPanel!!, TextHorizontalLayout.FIX_LABEL, vendor, null, null, true)
-      }
+    val vendor = myRenderKey.vendor
+    if (vendor != null) {
+      myVendor = createRatingLabel(myMetricsPanel!!, TextHorizontalLayout.FIX_LABEL, vendor, null, null, true)
     }
   }
 
   private fun createTag() {
-    var tags = myPlugin.calculateTags()
-    var tooltip: String? = null
-
+    val tag: @NlsSafe String = myRenderKey.firstTag ?: return
+    val tagComponent = if (myUseBadgeTags) PluginTagBadge.create(tag, mySearchListener) else createTagComponent(tag)
     if (myIsNotFreeInFreeMode) {
-      if (PlatformUtils.isPyCharmPro()) {
-        tags = Collections.singletonList(Tags.Pro.name)
-      }
-      else {
-        tags = Collections.singletonList(Tags.Ultimate.name)
-      }
-      tooltip = UnavailableWithoutSubscriptionComponent.getHelpTooltip()
+      tagComponent.toolTipText = UnavailableWithoutSubscriptionComponent.getHelpTooltip()
     }
-    if (!tags.isEmpty()) {
-      val tagComponent = createTagComponent(tags[0])
-      if (tooltip != null) {
-        tagComponent.toolTipText = tooltip
-      }
-      myLayout.setTagComponent(PluginManagerConfigurable.setTinyFont(tagComponent))
-    }
+    myLayout.setTagComponent(if (myUseBadgeTags) tagComponent else PluginManagerConfigurable.setTinyFont(tagComponent))
   }
 
   private fun createTagComponent(tag: @Nls String): TagComponent {
@@ -479,9 +603,9 @@ class ListPluginComponent(
   }
 
   private fun createLicensePanel() {
-    val productCode = myPlugin.productCode
+    val productCode = myRenderKey.licenseProductCode
     val instance = LicensingFacade.getInstance()
-    if (myMarketplace || productCode == null || instance == null || myPlugin.isBundled || LicensePanel.isEA2Product(productCode)) {
+    if (productCode == null || instance == null || LicensePanel.isEA2Product(productCode)) {
       return
     }
 
@@ -495,7 +619,7 @@ class ListPluginComponent(
         return
       }
 
-      if (myPlugin.isLicenseOptional) {
+      if (myRenderKey.licenseOptional) {
         return // do not show "No License" for Freemium plugins
       }
 
@@ -615,7 +739,7 @@ class ListPluginComponent(
         )
       }
       if (myUpdateButton == null) {
-        myUpdateButton = UpdateButton()
+        myUpdateButton = UpdateButton(myUseSecondaryButtons)
         myLayout.addButtonComponent(myUpdateButton!!, 0)
         myUpdateButton!!.addActionListener { updatePlugin(descriptorForActions, updateDescriptor) }
       }
@@ -648,12 +772,24 @@ class ListPluginComponent(
       SELECTION_COLOR
     }
 
-    updateColors(GRAY_COLOR, JBColor.lazy { ColorUtil.alphaBlending(foreground, background) })
+    val rowColor = JBColor.lazy { ColorUtil.alphaBlending(foreground, background) }
+    if (myUseIslandSelection) {
+      setBackground(background)
+      selectionColor = rowColor.takeIf { type != EventHandler.SelectionType.NONE }
+      updateForegroundColors(GRAY_COLOR)
+    }
+    else {
+      selectionColor = null
+      updateColors(rowColor)
+    }
   }
 
-  private fun updateColors(grayedFg: Color, background: Color) {
+  private fun updateColors(background: Color) {
     setBackground(background)
+    updateForegroundColors(GRAY_COLOR)
+  }
 
+  private fun updateForegroundColors(grayedFg: Color) {
     var nameForeground: Color? = null
     var otherForeground: Color = grayedFg
     var calcColor = true
@@ -753,38 +889,54 @@ class ListPluginComponent(
       updateErrors(emptyList())
     }
     else {
-      PluginModelAsyncOperationsExecutor.updateErrors(myCoroutineScope, myModelFacade.getModel().sessionId, plugin.pluginId) { res ->
+      PluginModelAsyncOperationsExecutor.updateErrors(myUiCoroutineScope, myModelFacade.getModel().sessionId, plugin.pluginId) { res ->
         updateErrors(res)
       }
     }
   }
 
   private fun updatePlugin(descriptorForActions: PluginUiModel, updateDescriptor: PluginUiModel) {
+    val operationUi = myOperationUi.captureContext(myUpdateButton!!)
     PluginModelAsyncOperationsExecutor.updatePlugin(
-      myCoroutineScope,
+      myOperationLauncher,
       myModelFacade,
       descriptorForActions,
       updateDescriptor,
       myCustomizer,
-      ModalityState.stateForComponent(myUpdateButton!!),
-      this,
+      operationUi,
       updateDescriptor,
     )
   }
 
   private fun updateIcon(errors: Boolean, disabled: Boolean) {
-    myIconComponent.icon = myModelFacade.getIcon(myPlugin, false, errors, disabled)
+    myIconComponent.icon = scalePluginIcon(myModelFacade.getIcon(myPlugin, false, errors, disabled))
+  }
+
+  private fun scalePluginIcon(icon: Icon): Icon {
+    return if (myPluginIconScale == 1.0f) icon else IconUtil.scale(icon, null, myPluginIconScale)
   }
 
   fun showProgress() {
-    showProgress(true)
+    showProgress(true, readOnly = false)
   }
 
-  private fun showProgress(repaint: Boolean) {
+  internal fun showReadOnlyProgress() {
+    showProgress(true, readOnly = true)
+  }
+
+  private fun showProgress(repaint: Boolean, readOnly: Boolean = false) {
     ThreadingAssertions.softAssertAwtOperationsThread()
 
     if (successfullyFinishedOnce) return
+    if (myIndicator != null) {
+      if (!readOnly && myIndicatorReadOnly) {
+        PluginModelFacade.addProgress(getDescriptorForActions(), myIndicator!!)
+        myIndicatorReadOnly = false
+      }
+      return
+    }
     myIndicator = AbstractProgressIndicatorExBase()
+    myIndicatorReadOnly = readOnly
     myLayout.setProgressComponent(object : AsyncProcessIcon("PluginListComponentIconProgress") {
       override fun getBaseline(width: Int, height: Int): Int {
         return (height * 0.85).toInt()
@@ -798,7 +950,9 @@ class ListPluginComponent(
       }
     })
 
-    PluginModelFacade.addProgress(getDescriptorForActions(), myIndicator!!)
+    if (!readOnly) {
+      PluginModelFacade.addProgress(getDescriptorForActions(), myIndicator!!)
+    }
 
     if (repaint) {
       fullRepaint()
@@ -808,6 +962,7 @@ class ListPluginComponent(
   fun hideProgress() {
     if (successfullyFinishedOnce) return
     myIndicator = null
+    myIndicatorReadOnly = false
     myLayout.removeProgressComponent()
   }
 
@@ -879,6 +1034,7 @@ class ListPluginComponent(
 
   fun clearProgress() {
     myIndicator = null
+    myIndicatorReadOnly = false
   }
 
   fun enableRestart() {
@@ -899,7 +1055,7 @@ class ListPluginComponent(
       myEnableDisableButton = null
     }
     if (myIsAvailable && showRestart && myRestartButton == null) {
-      myRestartButton = RestartButton(myModelFacade)
+      myRestartButton = RestartButton(myModelFacade, myUseSecondaryButtons)
       myLayout.addButtonComponent(myRestartButton!!, 0)
     }
     if (myAlignButton != null) {
@@ -958,9 +1114,7 @@ class ListPluginComponent(
   }
 
   private fun updateEnabledStateUI() {
-    if (myEnableDisableButton is JCheckBox) {
-      (myEnableDisableButton as JCheckBox).isSelected = myModelFacade.isEnabled(getDescriptorForActions()) && !myIsNotFreeInFreeMode
-    }
+    myEnableDisableButton?.isSelected = myModelFacade.isEnabled(getDescriptorForActions()) && !myIsNotFreeInFreeMode
   }
 
   fun updateAfterUninstall(needRestartForUninstall: Boolean, pluginInstallationState: PluginInstallationState) {
@@ -1015,11 +1169,17 @@ class ListPluginComponent(
   }
 
   fun close() {
-    if (myIndicator != null) {
+    if (myClosed) return
+    myClosed = true
+
+    if (myIndicator != null && !myIndicatorReadOnly) {
       PluginModelFacade.removeProgress(getDescriptorForActions(), myIndicator!!)
-      myIndicator = null
     }
+    myIndicator = null
+    myIndicatorReadOnly = false
     myModelFacade.removeComponent(this)
+    myOperationUi.detach()
+    myUiCoroutineScope.cancel()
   }
 
   fun createPopupMenu(group: DefaultActionGroup, selection: List<ListPluginComponent>) {
@@ -1293,8 +1453,8 @@ class ListPluginComponent(
     myInstalledPluginMarketplaceNode = model
   }
 
-  fun getCoroutineScope(): CoroutineScope {
-    return myCoroutineScope
+  fun getUiCoroutineScope(): CoroutineScope {
+    return myUiCoroutineScope
   }
 
   fun getModelFacade(): PluginModelFacade {
@@ -1346,9 +1506,7 @@ class ListPluginComponent(
     selection: MutableList<ListPluginComponent>,
     function: Function<ListPluginComponent, PluginUiModel?>,
   ): UninstallAction<ListPluginComponent> {
-    return UninstallAction(myCoroutineScope, myModelFacade, true, this, selection, function) {
-      selection.forEach { PluginUpdateSourceService.getInstance().erasePluginUpdateSourceId(it.myPlugin.pluginId) }
-    }
+    return UninstallAction(myOperationLauncher, myModelFacade, true, myOperationUi, selection, function)
   }
 
   fun getFocusableComponents(): List<JComponent> {
@@ -1488,7 +1646,13 @@ class ListPluginComponent(
 
         if (myTagComponent != null) {
           val size = myTagComponent!!.preferredSize
-          setBaselineBounds(nextX, baseline, myTagComponent!!, size)
+          if (myUseBadgeTags) {
+            val nameBounds = myNameComponent!!.bounds
+            myTagComponent!!.setBounds(nextX, nameBounds.y + (nameBounds.height - size.height) / 2, size.width, size.height)
+          }
+          else {
+            setBaselineBounds(nextX, baseline, myTagComponent!!, size)
+          }
           nextX += size.width
         }
 
@@ -1563,11 +1727,13 @@ class ListPluginComponent(
     }
 
     private fun setBaselineBounds(x: Int, y: Int, component: Component, size: Dimension) {
-      if (component is ActionToolbar) {
-        component.setBounds(x, insets.top - JBUI.scale(1), size.width, size.height)
-      }
-      else {
-        component.setBounds(x, y - component.getBaseline(size.width, size.height), size.width, size.height)
+      when (component) {
+        is ActionToolbar -> component.setBounds(x, insets.top - JBUI.scale(1), size.width, size.height)
+        is OnOffButton -> {
+          val nameBounds = myNameComponent!!.bounds
+          component.setBounds(x, nameBounds.y + (nameBounds.height - size.height) / 2, size.width, size.height)
+        }
+        else -> component.setBounds(x, y - component.getBaseline(size.width, size.height), size.width, size.height)
       }
     }
 
@@ -1691,10 +1857,6 @@ class ListPluginComponent(
     }
   }
 
-  private fun isInstalledAndEnabled(pluginInstallationState: PluginInstallationState): Boolean {
-    return pluginInstallationState.fullyInstalled && !myModelFacade.getState(myPlugin).isDisabled
-  }
-
   override fun getAccessibleContext(): AccessibleContext {
     if (accessibleContext == null) {
       accessibleContext = AccessibleListPluginComponent()
@@ -1724,8 +1886,8 @@ class ListPluginComponent(
         }
       }
 
-      if (isNotNullAndVisible(myEnableDisableButton) && myEnableDisableButton is JCheckBox) {
-        val key = if ((myEnableDisableButton as JCheckBox).isSelected) "plugins.configurable.enabled" else "plugins.configurable.disabled"
+      if (isNotNullAndVisible(myEnableDisableButton)) {
+        val key = if (myEnableDisableButton!!.isSelected) "plugins.configurable.enabled" else "plugins.configurable.disabled"
         description.add(IdeBundle.message(key))
       }
 
@@ -1780,6 +1942,90 @@ class ListPluginComponent(
   }
 
   companion object {
+    internal fun createRenderKey(
+      pluginModelFacade: PluginModelFacade,
+      plugin: PluginUiModel,
+      group: PluginsGroup,
+      listModel: ListPluginModel,
+      marketplace: Boolean,
+    ): PluginRowRenderKey {
+      val installedPlugin = listModel.installedModels[plugin.pluginId]
+      val installationState = listModel.getPluginInstallationState(plugin.pluginId)
+      val restrictedByProduct = UiPluginManager.getInstance()
+        .isPluginRequiresUltimateButItIsDisabled(pluginModelFacade.getModel().sessionId, plugin.pluginId)
+      val pluginManagerCustomizerClassName = if (UiPluginManager.isCombinedPluginManagerEnabled()) {
+        PluginManagerCustomizer.getInstance()?.javaClass?.name
+      }
+      else {
+        null
+      }
+      return createRenderKey(
+        plugin = plugin,
+        installedPlugin = installedPlugin,
+        installationState = installationState,
+        groupType = group.type,
+        marketplace = marketplace,
+        pluginEnabled = !pluginModelFacade.getState(plugin).isDisabled,
+        restrictedByProduct = restrictedByProduct,
+        listCustomizerClassName = getListPluginComponentCustomizer().javaClass.name,
+        pluginManagerCustomizerClassName = pluginManagerCustomizerClassName,
+      )
+    }
+
+    internal fun createRenderKey(
+      plugin: PluginUiModel,
+      installedPlugin: PluginUiModel?,
+      installationState: PluginInstallationState,
+      groupType: PluginsGroupType,
+      marketplace: Boolean,
+      pluginEnabled: Boolean,
+      restrictedByProduct: Boolean,
+      listCustomizerClassName: String,
+      pluginManagerCustomizerClassName: String?,
+      preparedUpdate: PluginPreparedUpdateState? = null,
+    ): PluginRowRenderKey {
+      val compatible = !plugin.isIncompatibleWithCurrentPlatform
+      val available = (compatible || installationState.fullyInstalled && pluginEnabled) && plugin.canBeEnabled
+      @Suppress("HardCodedStringLiteral")
+      val firstTag = if (restrictedByProduct) {
+        if (PlatformUtils.isPyCharmPro()) Tags.Pro.name else Tags.Ultimate.name
+      }
+      else {
+        plugin.calculateTags().firstOrNull()
+      }
+      val versionModel = if (marketplace) installedPlugin else plugin
+      val version = versionModel?.version?.takeUnless(StringUtil::isEmptyOrSpaces)
+      val vendor = if (plugin.isBundled) null else {
+        StringUtil.defaultIfEmpty(Strings.trim(plugin.vendor), Strings.trim(plugin.organization))
+          ?.takeUnless(StringUtil::isEmptyOrSpaces)
+      }
+
+      return PluginRowRenderKey(
+        pluginId = plugin.pluginId,
+        groupType = groupType,
+        marketplace = marketplace,
+        name = plugin.name,
+        firstTag = firstTag,
+        downloads = if (marketplace) plugin.presentableDownloads() else null,
+        rating = if (marketplace) plugin.presentableRating() else null,
+        installedCounterpartPresent = installedPlugin != null,
+        version = version,
+        versionIsBundledUpdate = !marketplace && versionModel?.isBundledUpdate == true,
+        vendor = vendor,
+        licenseProductCode = if (!marketplace && !plugin.isBundled) plugin.productCode else null,
+        licenseOptional = !marketplace && !plugin.isBundled && plugin.isLicenseOptional,
+        bundled = plugin.isBundled,
+        requiresUpgrade = plugin.requiresUpgrade,
+        compatible = compatible,
+        available = available,
+        disableAllowed = plugin.isDisableAllowed && !restrictedByProduct,
+        restrictedByProduct = restrictedByProduct,
+        listCustomizerClassName = listCustomizerClassName,
+        pluginManagerCustomizerClassName = pluginManagerCustomizerClassName,
+        preparedUpdate = preparedUpdate,
+      )
+    }
+
     @JvmField
     val DisabledColor: Color = JBColor.namedColor("Plugins.disabledForeground", JBColor(0xB1B1B1, 0x696969))
 
@@ -1801,7 +2047,12 @@ class ListPluginComponent(
       }
     }
 
-    private fun createEnableDisableButton(listener: ActionListener): JCheckBox {
+    private fun createEnableDisableButton(listener: ActionListener, useToggle: Boolean): JToggleButton {
+      if (useToggle) {
+        return OnOffButton().apply {
+          addActionListener(listener)
+        }
+      }
       return object : JCheckBox() {
         private var myBaseline = -1
 

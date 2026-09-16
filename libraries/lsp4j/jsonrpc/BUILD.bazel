@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.eclipse.lsp4j.jsonrpc` start
+content_module_jar(
+    libraries = ["@lib//:libraries-eclipse-lsp4j-jsonrpc-eclipse-lsp4j-jsonrpc"],
+    module = ":jsonrpc",
+)
+### auto-generated section `dev intellij.libraries.eclipse.lsp4j.jsonrpc` end
+
 ### auto-generated section `build intellij.libraries.eclipse.lsp4j.jsonrpc` start
 jvm_library(
     name = "jsonrpc",
@@ -16,11 +23,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-eclipse-lsp4j-jsonrpc-eclipse-lsp4j-jsonrpc"],
     runtime_deps = ["@lib//:libraries-eclipse-lsp4j-jsonrpc-eclipse-lsp4j-jsonrpc"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-eclipse-lsp4j-jsonrpc-eclipse-lsp4j-jsonrpc"],
-    module = ":jsonrpc",
 )
 
 jvm_library(
@@ -43,7 +45,6 @@ exports_files(
     [
         "intellij.libraries.eclipse.lsp4j.jsonrpc.iml",
         "resources/intellij.libraries.eclipse.lsp4j.jsonrpc.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -96,4 +96,86 @@ class CursorTest {
     session.write(csi("?12h")) // start again
     session.assertCursorStyle(CursorShape.BLOCK, blinking = true)
   }
+
+  // ---- embedder-configured default shape/blink (setDefaultCursorShape / setDefaultCursorBlinking) ----
+
+  @Test
+  fun customDefaultShapeAppliesImmediatelyBeforeAnyProgramActivity() = session(20, 3) { session ->
+    session.setDefaultCursorShape(CursorShape.BAR)
+    session.assertCursorStyle(CursorShape.BAR, blinking = false)
+  }
+
+  @Test
+  fun customDefaultBlinkAppliesImmediatelyBeforeAnyProgramActivity() = session(20, 3) { session ->
+    session.setDefaultCursorBlinking(true)
+    session.assertCursorStyle(CursorShape.BLOCK, blinking = true)
+  }
+
+  @Test
+  fun shapeAndBlinkDefaultsCombineIndependently() = session(20, 3) { session ->
+    session.setDefaultCursorShape(CursorShape.UNDERLINE)
+    session.assertCursorStyle(CursorShape.UNDERLINE, blinking = false)
+
+    session.setDefaultCursorBlinking(true)
+    session.assertCursorStyle(CursorShape.UNDERLINE, blinking = true) // shape untouched by the blink call
+  }
+
+  /**
+   * A default change must never clobber a shape/blink the program is currently showing via
+   * DECSCUSR — `setDefaultCursorShape` / `setDefaultCursorBlinking` only take effect while the
+   * cursor is still following the default, i.e. before the first DECSCUSR of the session.
+   */
+  @Test
+  fun decscusrOverrideSurvivesALaterDefaultChange() = session(20, 3) { session ->
+    session.setDefaultCursorShape(CursorShape.BAR)
+    session.setDefaultCursorBlinking(true)
+
+    session.write(csi("2 q")) // steady block, explicit
+    session.assertCursorStyle(CursorShape.BLOCK, blinking = false)
+
+    session.setDefaultCursorShape(CursorShape.UNDERLINE)
+    session.setDefaultCursorBlinking(true)
+    session.assertCursorStyle(CursorShape.BLOCK, blinking = false) // the override still wins
+  }
+
+  @Test
+  fun decscusrZeroResetsToTheCurrentlyConfiguredDefault() = session(20, 3) { session ->
+    session.setDefaultCursorShape(CursorShape.UNDERLINE)
+    session.setDefaultCursorBlinking(true)
+
+    session.write(csi("2 q")) // steady block, explicit
+    session.assertCursorStyle(CursorShape.BLOCK, blinking = false)
+
+    // Changing the default while an override is active has no visible effect yet.
+    session.setDefaultCursorShape(CursorShape.BAR)
+    session.setDefaultCursorBlinking(false)
+    session.assertCursorStyle(CursorShape.BLOCK, blinking = false)
+
+    session.write(csi("0 q")) // reset -> the *latest* configured default, not the original one
+    session.assertCursorStyle(CursorShape.BAR, blinking = false)
+  }
+
+  /** RIS (full reset) restores the cursor to its default the same way `CSI 0 SP q` does. */
+  @Test
+  fun risFullResetRestoresTheCurrentlyConfiguredDefault() = session(20, 3) { session ->
+    session.setDefaultCursorShape(CursorShape.UNDERLINE)
+    session.setDefaultCursorBlinking(true)
+
+    session.write(csi("2 q")) // steady block, explicit
+    session.setDefaultCursorShape(CursorShape.BAR)
+    session.setDefaultCursorBlinking(false)
+    session.assertCursorStyle(CursorShape.BLOCK, blinking = false) // still the override
+
+    session.write(esc("c")) // RIS: full reset
+    session.assertCursorStyle(CursorShape.BAR, blinking = false) // the latest configured default
+  }
+
+  @Test
+  fun settingDefaultToItsCurrentValueIsHarmless() = session(20, 3) { session ->
+    session.setDefaultCursorShape(CursorShape.BLOCK)
+    session.setDefaultCursorBlinking(false)
+    session.setDefaultCursorShape(CursorShape.BLOCK)
+    session.setDefaultCursorBlinking(false)
+    session.assertCursorStyle(CursorShape.BLOCK, blinking = false)
+  }
 }

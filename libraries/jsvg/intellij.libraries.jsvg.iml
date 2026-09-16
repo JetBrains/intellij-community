@@ -9,19 +9,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="jsvg" type="repository">
-        <properties include-transitive-deps="false" maven-id="com.github.weisj:jsvg:2.1.0">
+        <properties include-transitive-deps="false" maven-id="com.github.weisj:jsvg:2.2.0">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/com/github/weisj/jsvg/2.1.0/jsvg-2.1.0.jar">
-              <sha256sum>a538142d27c57c55066da02a535cc8eee3afd0d37b3daff8eba6344bd0ffc1b6</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/github/weisj/jsvg/2.2.0/jsvg-2.2.0.jar">
+              <sha256sum>abc17a201f9cba7f690f1f68e9c0e9dacf225a8727922226b2b480c0d11c99e9</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/github/weisj/jsvg/2.1.0/jsvg-2.1.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/github/weisj/jsvg/2.2.0/jsvg-2.2.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/github/weisj/jsvg/2.1.0/jsvg-2.1.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/github/weisj/jsvg/2.2.0/jsvg-2.2.0-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

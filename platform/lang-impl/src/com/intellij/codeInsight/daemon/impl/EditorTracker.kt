@@ -19,10 +19,10 @@ interface EditorTracker {
     fun getInstance(project: Project): EditorTracker = project.service<EditorTracker>()
   }
 
-  @get:RequiresEdt
+  @get:RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   val activeEditors: List<Editor>
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   @TestOnly
   fun setActiveEditorsInTests(editors: List<Editor>)
 }

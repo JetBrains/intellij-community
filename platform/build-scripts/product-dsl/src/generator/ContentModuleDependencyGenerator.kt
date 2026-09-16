@@ -4,6 +4,8 @@
 
 package org.jetbrains.intellij.build.productLayout.generator
 
+import com.intellij.platform.buildScripts.concurrency.Subtask
+import com.intellij.platform.buildScripts.concurrency.taskScope
 import com.intellij.platform.pluginGraph.ContentModuleName
 import com.intellij.platform.pluginGraph.DependencyClassification
 import com.intellij.platform.pluginGraph.EDGE_CONTENT_MODULE_DEPENDS_ON
@@ -13,10 +15,6 @@ import com.intellij.platform.pluginGraph.PluginGraph
 import com.intellij.platform.pluginGraph.PluginId
 import com.intellij.platform.pluginGraph.TargetDependencyScope
 import com.intellij.platform.pluginGraph.isSlashNotation
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.productLayout.config.SuppressionConfig
 import org.jetbrains.intellij.build.productLayout.debug
@@ -34,9 +32,7 @@ import org.jetbrains.intellij.build.productLayout.stats.SuppressionType
 import org.jetbrains.intellij.build.productLayout.stats.SuppressionUsage
 import org.jetbrains.intellij.build.productLayout.util.isProductionRuntimeDependency
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
-import org.jetbrains.jps.model.module.JpsLibraryDependency
 import org.jetbrains.jps.model.module.JpsModuleDependency
-import org.jetbrains.jps.model.module.JpsModuleReference
 import java.nio.file.Path
 
 /**
@@ -77,8 +73,8 @@ internal object ContentModuleDependencyPlanner : PipelineNode {
   override val id get() = NodeIds.CONTENT_MODULE_DEPS
   override val produces: Set<DataSlot<*>> get() = setOf(Slots.CONTENT_MODULE_PLAN)
 
-  override suspend fun execute(ctx: ComputeContext) {
-    coroutineScope {
+  override fun execute(ctx: ComputeContext) {
+    taskScope {
       val model = ctx.model
 
       // Process all content modules in parallel
@@ -92,8 +88,8 @@ internal object ContentModuleDependencyPlanner : PipelineNode {
       // hasContentSource filters to modules declared in plugins/products/module-sets or test plugins
       // Each content module has ONE descriptor: regular modules have moduleName.xml,
       // test descriptor modules (foo._test) have foo._test.xml - these are separate content modules
-      val mainDescriptorJobs = ArrayList<Deferred<GenerationOutput>>()
-      val testDescriptorJobs = ArrayList<Deferred<GenerationOutput>>()
+      val mainDescriptorJobs = ArrayList<Subtask<GenerationOutput>>()
+      val testDescriptorJobs = ArrayList<Subtask<GenerationOutput>>()
 
       model.pluginGraph.query {
         contentModules { contentModule ->
@@ -106,12 +102,11 @@ internal object ContentModuleDependencyPlanner : PipelineNode {
           val isTestDescriptorModule = contentModule.isTestDescriptor
 
           // Each content module has ONE descriptor - process uniformly
-          val job = async {
+          val job = fork("plan content module ${moduleName.value}") {
             val (plan, suppressibleError) = planContentModuleDependenciesWithBothSets(
               contentModuleName = moduleName,
               descriptorCache = model.descriptorCache,
               outputProvider = model.outputProvider,
-              projectLibraryToModuleMap = model.config.projectLibraryToModuleMap,
               pluginGraph = model.pluginGraph,
               isTestDescriptor = isTestDescriptorModule,
               suppressionConfig = model.suppressionConfig,
@@ -130,11 +125,12 @@ internal object ContentModuleDependencyPlanner : PipelineNode {
         }
       }
 
-      val mainOutputs = mainDescriptorJobs.awaitAll()
+      join()
+      val mainOutputs = mainDescriptorJobs.map { it.get() }
       val mainPlans = mainOutputs.mapNotNull { it.plan }
       val mainErrors = mainOutputs.mapNotNull { it.suppressibleError }
 
-      val testOutputs = testDescriptorJobs.awaitAll()
+      val testOutputs = testDescriptorJobs.map { it.get() }
       val testDescriptorPlans = testOutputs.mapNotNull { it.plan }
       val testErrors = testOutputs.mapNotNull { it.suppressibleError }
 
@@ -189,7 +185,6 @@ internal fun planContentModuleDependenciesWithBothSets(
   contentModuleName: ContentModuleName,
   descriptorCache: ModuleDescriptorCache,
   outputProvider: ModuleOutputProvider? = null,
-  projectLibraryToModuleMap: Map<String, String> = emptyMap(),
   pluginGraph: PluginGraph,
   isTestDescriptor: Boolean,
   suppressionConfig: SuppressionConfig,
@@ -214,7 +209,6 @@ internal fun planContentModuleDependenciesWithBothSets(
     contentModuleName = contentModuleName,
     prodInfo = prodInfo,
     outputProvider = outputProvider,
-    projectLibraryToModuleMap = projectLibraryToModuleMap,
     graph = pluginGraph,
     suppressionConfig = suppressionConfig,
     updateSuppressions = updateSuppressions,
@@ -225,7 +219,7 @@ internal fun planContentModuleDependenciesWithBothSets(
 
 /**
  * Core implementation that computes BOTH production and test dependencies.
- * 
+ *
  * - Production deps: Written to XML, used for [EDGE_CONTENT_MODULE_DEPENDS_ON]
  * - Test deps: Stored in result.testDependencies, used for [EDGE_CONTENT_MODULE_DEPENDS_ON_TEST]
  *
@@ -242,7 +236,6 @@ private fun buildContentModuleDependencyPlanFromInfoWithBothSets(
   contentModuleName: ContentModuleName,
   prodInfo: ModuleDescriptorCache.DescriptorInfo,
   outputProvider: ModuleOutputProvider?,
-  projectLibraryToModuleMap: Map<String, String>,
   graph: PluginGraph,
   suppressionConfig: SuppressionConfig,
   updateSuppressions: Boolean,
@@ -299,7 +292,6 @@ private fun buildContentModuleDependencyPlanFromInfoWithBothSets(
     moduleName = contentModuleName,
     includeTestScope = includeTestScopeForWrittenDeps,
     outputProvider = outputProvider,
-    projectLibraryToModuleMap = projectLibraryToModuleMap,
   )
   val prodGraphModuleDeps = prodGraphDeps.moduleDeps
   val prodGraphPluginDeps = prodGraphDeps.pluginDeps
@@ -308,7 +300,6 @@ private fun buildContentModuleDependencyPlanFromInfoWithBothSets(
     moduleName = contentModuleName,
     includeTestScope = true,
     outputProvider = outputProvider,
-    projectLibraryToModuleMap = projectLibraryToModuleMap,
   ).moduleDeps
   val nonProductionGraphModuleDeps = testGraphModuleDeps - prodGraphModuleDeps
   val xmlOnlySuppressionCandidateModuleDeps = existingXmlModulesAsContentModuleName.filterTo(LinkedHashSet()) {
@@ -456,7 +447,6 @@ private fun isTestSupportContentModule(moduleName: ContentModuleName, descriptor
          name.endsWith("TestFramework") ||
          name.endsWith(".testGuiFramework") ||
          name.contains(".test.framework") ||
-         name.startsWith("intellij.rider.test.framework") ||
          name == "intellij.tools.testsBootstrap" ||
          name == "intellij.idea.tools.launch" ||
          name.startsWith("intellij.ide.starter.") ||
@@ -589,13 +579,11 @@ internal fun computeJpsDeps(
   moduleName: ContentModuleName,
   includeTestScope: Boolean,
   outputProvider: ModuleOutputProvider? = null,
-  projectLibraryToModuleMap: Map<String, String> = emptyMap(),
 ): JpsDeps {
   val allowedModuleDeps = computeDirectJpsRuntimeModuleDeps(
     outputProvider = outputProvider,
     moduleName = moduleName,
     includeTestScope = includeTestScope,
-    projectLibraryToModuleMap = projectLibraryToModuleMap,
   )
   val moduleDeps = HashSet<ContentModuleName>()
   val pluginDeps = HashSet<PluginId>()
@@ -634,27 +622,15 @@ private fun computeDirectJpsRuntimeModuleDeps(
   outputProvider: ModuleOutputProvider?,
   moduleName: ContentModuleName,
   includeTestScope: Boolean,
-  projectLibraryToModuleMap: Map<String, String>,
 ): Set<ContentModuleName>? {
   val module = outputProvider?.findModule(moduleName.value) ?: return null
   val javaExtensionService = JpsJavaExtensionService.getInstance()
-  val libraryToModuleMap = projectLibraryToModuleMap.ifEmpty { outputProvider.getProjectLibraryToModuleMap() }
   val result = HashSet<ContentModuleName>()
 
+  // a library dependency adds nothing: a library reaches a module only through its wrapper module, which is a module dependency
   for (element in module.dependenciesList.dependencies) {
-    if (!isProductionRuntimeDependency(element, javaExtensionService, withTests = includeTestScope)) {
-      continue
-    }
-    when (element) {
-      is JpsModuleDependency -> result.add(ContentModuleName(element.moduleReference.moduleName))
-      is JpsLibraryDependency -> {
-        val libraryReference = element.libraryReference
-        if (libraryReference.parentReference is JpsModuleReference) {
-          continue
-        }
-        val libraryModuleName = libraryToModuleMap.get(libraryReference.libraryName) ?: continue
-        result.add(ContentModuleName(libraryModuleName))
-      }
+    if (element is JpsModuleDependency && isProductionRuntimeDependency(element, javaExtensionService, withTests = includeTestScope)) {
+      result.add(ContentModuleName(element.moduleReference.moduleName))
     }
   }
 

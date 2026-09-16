@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.eclipse.lsp4j.debug` start
+content_module_jar(
+    libraries = ["@lib//:libraries-eclipse-lsp4j-debug-eclipse-lsp4j-debug"],
+    module = ":debug",
+)
+### auto-generated section `dev intellij.libraries.eclipse.lsp4j.debug` end
+
 ### auto-generated section `build intellij.libraries.eclipse.lsp4j.debug` start
 jvm_library(
     name = "debug",
@@ -20,11 +27,6 @@ jvm_library(
         "@lib//:libraries-eclipse-lsp4j-debug-eclipse-lsp4j-debug",
         "//libraries/lsp4j/jsonrpc-debug:libraries-eclipse-lsp4j-jsonrpc-debug",
     ],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-eclipse-lsp4j-debug-eclipse-lsp4j-debug"],
-    module = ":debug",
 )
 
 jvm_library(
@@ -51,7 +53,6 @@ exports_files(
     [
         "intellij.libraries.eclipse.lsp4j.debug.iml",
         "resources/intellij.libraries.eclipse.lsp4j.debug.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

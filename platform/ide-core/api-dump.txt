@@ -816,7 +816,9 @@ com.intellij.openapi.options.Configurable$TopComponentController
 - sf:EMPTY:com.intellij.openapi.options.Configurable$TopComponentController
 - a:setLeftComponent(java.awt.Component):V
 - a:showProgress(Z):V
+- showProgressIndicator(Z):V
 - a:showProject(Z):V
+- showResetAction(Z):V
 com.intellij.openapi.options.Configurable$TopComponentProvider
 - a:getCenterComponent(com.intellij.openapi.options.Configurable$TopComponentController):java.awt.Component
 - isAvailable():Z

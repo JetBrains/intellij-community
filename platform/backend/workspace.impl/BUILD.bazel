@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.platform.backend.workspace.impl` start
+content_module_jar(module = ":workspace.impl")
+### auto-generated section `dev intellij.platform.backend.workspace.impl` end
+
 ### auto-generated section `build intellij.platform.backend.workspace.impl` start
 jvm_library(
     name = "workspace.impl",
@@ -39,8 +43,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":workspace.impl")
-
 jvm_library(
     name = "workspace.impl_test_lib",
     testonly = True,
@@ -77,7 +79,6 @@ exports_files(
     [
         "intellij.platform.backend.workspace.impl.iml",
         "resources/intellij.platform.backend.workspace.impl.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -155,6 +155,23 @@ class DirectoryContentSpecTest {
   }
 
   @Test
+  fun `archive files with unspecified content`() {
+    val dir = directoryContent {
+      zip("a.zip") {
+        file("a.txt", "zip content")
+      }
+      zip("b.jar") {
+        file("b.txt", "jar content")
+      }
+    }.generateInTempDir()
+
+    dir.assertMatches(directoryContent {
+      file("a.zip")
+      file("b.jar")
+    })
+  }
+
+  @Test
   fun `merge directory definitions inside directoryContent`() {
     val dir = directoryContent {
       dir("foo") {

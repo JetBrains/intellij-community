@@ -1,5 +1,4 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
-load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.libraries.maven.resolver.provider` start
 jvm_library(
@@ -14,17 +13,12 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    exports = ["@lib//:maven-resolver-provider"],
+    exports = ["@lib//:libraries-maven-resolver-provider-maven-resolver-provider"],
     runtime_deps = [
         # do not sort,
-        "@lib//:maven-resolver-provider",
+        "@lib//:libraries-maven-resolver-provider-maven-resolver-provider",
         "//libraries/plexus-utils",
     ],
-)
-
-content_module_jar(
-    libraries = ["@lib//:maven-resolver-provider"],
-    module = ":maven-resolver-provider",
 )
 
 jvm_library(
@@ -37,7 +31,7 @@ jvm_library(
     kotlinc_opts = "@community//:k8",
     module_name = "intellij.libraries.maven.resolver.provider",
     visibility = ["//visibility:public"],
-    exports = ["@lib//:maven-resolver-provider"],
+    exports = ["@lib//:libraries-maven-resolver-provider-maven-resolver-provider"],
     runtime_deps = [
         # do not sort,
         ":maven-resolver-provider",
@@ -51,7 +45,6 @@ exports_files(
     [
         "intellij.libraries.maven.resolver.provider.iml",
         "resources/intellij.libraries.maven.resolver.provider.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

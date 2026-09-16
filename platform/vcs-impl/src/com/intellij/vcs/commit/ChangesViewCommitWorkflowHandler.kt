@@ -26,7 +26,6 @@ import com.intellij.openapi.vcs.merge.MergeConflictManager
 import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.CollectionFactory
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.concurrency.await
 import java.util.EventListener
 
 private fun Collection<Change>.toPartialAwareSet() =
@@ -310,7 +309,7 @@ class ChangesViewCommitWorkflowHandler(
 
   private suspend fun refreshLocalChanges() {
     withBackgroundProgressIndicator(project, VcsBundle.message("commit.progress.title")) {
-      ChangeListManagerEx.getInstanceEx(project).promiseWaitForUpdate().await()
+      ChangeListManager.getInstance(project).awaitUpdate()
       ui.refreshChangesViewBeforeCommit()
     }
   }

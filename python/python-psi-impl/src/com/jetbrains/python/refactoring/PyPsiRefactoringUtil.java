@@ -1,6 +1,5 @@
 package com.jetbrains.python.refactoring;
 
-import com.google.common.collect.Collections2;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.intellij.lang.ASTNode;
@@ -19,7 +18,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.NotNullPredicate;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.ast.impl.PyUtilCore;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
@@ -35,6 +33,7 @@ import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyExpressionStatement;
 import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFromImportStatement;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyImportElement;
 import com.jetbrains.python.psi.PyIndentUtil;
@@ -57,7 +56,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -323,7 +321,7 @@ public final class PyPsiRefactoringUtil {
     generator.createFromText(LanguageLevel.PYTHON34, PyClass.class, "class foo(object, metaclass=Foo): pass").getSuperClassExpressionList();
     if (paramExpressions != null) {
       for (final String paramExpression : paramExpressions) {
-        superClassExpressionList.addArgument(generator.createParameter(paramExpression));
+        superClassExpressionList.addArgument(generator.createExpressionFromText(languageLevel, paramExpression));
       }
     }
 
@@ -397,17 +395,60 @@ public final class PyPsiRefactoringUtil {
                                      final @NotNull PyClass clazz,
                                      final PyClass @NotNull ... superClasses) {
 
-    final Collection<String> superClassNames = new ArrayList<>();
+    final Collection<String> superClassExpressions = new ArrayList<>();
 
+    for (final PyClass superClass : superClasses) {
+      if (superClass == null) continue;
+      final String superClassName = superClass.getName();
+      if (superClassName == null) continue;
 
-    for (final PyClass superClass : Collections2.filter(Arrays.asList(superClasses), NotNullPredicate.INSTANCE)) {
-      if (superClass.getName() != null) {
-        superClassNames.add(superClass.getName());
+      final String existingReference = findReferenceThroughExistingImport(clazz, superClass, superClassName);
+      if (existingReference != null) {
+        superClassExpressions.add(existingReference);
+      }
+      else {
+        superClassExpressions.add(superClassName);
         insertImport(clazz, superClass);
       }
     }
 
-    addSuperClassExpressions(project, clazz, superClassNames, null);
+    addSuperClassExpressions(project, clazz, superClassExpressions, null);
+  }
+
+  /**
+   * Finds a reference to the top-level class {@code superClass} through an existing top-level import in the file of {@code anchor}.
+   * <p>
+   * For {@code from abc import ABC as Base}, the reference is {@code Base}.
+   * For {@code import abc as a}, the reference is {@code a.ABC}.
+   *
+   * @return the reference text, or {@code null} if the file has no such import
+   */
+  private static @Nullable String findReferenceThroughExistingImport(@NotNull PsiElement anchor,
+                                                                     @NotNull PyClass superClass,
+                                                                     @NotNull String superClassName) {
+    if (!(anchor.getContainingFile() instanceof PyFile file) || superClass.getContainingFile() == file || !PyUtil.isTopLevel(superClass)) {
+      return null;
+    }
+    final QualifiedName moduleQName = QualifiedNameFinder.findCanonicalImportPath(superClass, anchor);
+    if (moduleQName == null || !isValidQualifiedName(moduleQName)) return null;
+
+    final QualifiedName superClassQName = QualifiedName.fromComponents(superClassName);
+    for (PyFromImportStatement fromImport : file.getFromImports()) {
+      if (fromImport.getRelativeLevel() != 0 || !moduleQName.equals(fromImport.getImportSourceQName())) continue;
+      for (PyImportElement importElement : fromImport.getImportElements()) {
+        if (superClassQName.equals(importElement.getImportedQName())) {
+          final String asName = importElement.getAsName();
+          return asName != null ? asName : superClassName;
+        }
+      }
+    }
+    for (PyImportElement importElement : file.getImportTargets()) {
+      if (moduleQName.equals(importElement.getImportedQName())) {
+        final String asName = importElement.getAsName();
+        return (asName != null ? asName : moduleQName.toString()) + "." + superClassName;
+      }
+    }
+    return null;
   }
 
   public static boolean shouldCopyAnnotations(@NotNull PsiElement copiedElement, @NotNull PsiFile destFile) {

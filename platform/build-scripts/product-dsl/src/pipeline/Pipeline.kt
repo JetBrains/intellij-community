@@ -3,9 +3,7 @@
 
 package org.jetbrains.intellij.build.productLayout.pipeline
 
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
+import com.intellij.platform.buildScripts.concurrency.SharedTaskOwner
 import org.jetbrains.intellij.build.productLayout.cleanupOrphanedModuleSetFiles
 import org.jetbrains.intellij.build.productLayout.discovery.GenerationResult
 import org.jetbrains.intellij.build.productLayout.discovery.ModuleSetGenerationConfig
@@ -41,7 +39,6 @@ import org.jetbrains.intellij.build.productLayout.validator.ContentModulePluginD
 import org.jetbrains.intellij.build.productLayout.validator.EmbeddedContentModuleDependencyValidator
 import org.jetbrains.intellij.build.productLayout.validator.ImplicitEmbeddedContentModuleValidator
 import org.jetbrains.intellij.build.productLayout.validator.LibraryLicenseValidator
-import org.jetbrains.intellij.build.productLayout.validator.LibraryModuleValidator
 import org.jetbrains.intellij.build.productLayout.validator.PluginContentDependencyValidator
 import org.jetbrains.intellij.build.productLayout.validator.PluginContentDuplicatesValidator
 import org.jetbrains.intellij.build.productLayout.validator.PluginContentStructureValidator
@@ -55,6 +52,7 @@ import org.jetbrains.intellij.build.productLayout.validator.TestLibraryScopeVali
 import org.jetbrains.intellij.build.productLayout.validator.TestPluginPluginDependencyValidator
 import org.jetbrains.intellij.build.productLayout.validator.UnusedEmbeddedLibraryModuleValidator
 import org.jetbrains.intellij.build.productLayout.validator.UnusedSharedLibraryModuleValidator
+import org.jetbrains.intellij.build.forEachConcurrent
 import java.nio.file.Path
 
 /**
@@ -142,7 +140,7 @@ internal class GenerationPipeline(
    *        Generation nodes always run. Pass empty set to skip all validation.
    * @return Result with errors, diffs, and statistics
    */
-  suspend fun execute(
+  fun execute(
     config: ModuleSetGenerationConfig,
     commitChanges: Boolean = true,
     updateSuppressions: Boolean = false,
@@ -155,7 +153,7 @@ internal class GenerationPipeline(
     val stageTimings = ArrayList<GenerationTiming>(5)
     // The steps of the BUILD_MODEL stage. They nest inside the `build model` stage, so they travel in their own list.
     val phaseTimings = ArrayList<GenerationTiming>(23)
-    return coroutineScope {
+    return SharedTaskOwner("product model").use { owner ->
       // Stage 1: DISCOVER - Scan DSL definitions
       val discovery = recordGenerationTiming("discover", stageTimings) { discover(config) }
 
@@ -164,9 +162,9 @@ internal class GenerationPipeline(
       val modelBuildingErrorSink = ErrorSink()
       val model = recordGenerationTiming("build model", stageTimings) {
         ModelBuildingStage.execute(
+          owner = owner,
           discovery = discovery,
           config = config,
-          scope = this,
           updateSuppressions = updateSuppressions,
           commitChanges = commitChanges,
           errorSink = modelBuildingErrorSink,
@@ -199,7 +197,7 @@ internal class GenerationPipeline(
    *
    * Delegates to [DiscoveryStage] for actual implementation.
    */
-  private suspend fun discover(config: ModuleSetGenerationConfig): DiscoveryResult {
+  private fun discover(config: ModuleSetGenerationConfig): DiscoveryResult {
     return DiscoveryStage.execute(config)
   }
 
@@ -216,11 +214,11 @@ internal class GenerationPipeline(
    *        Generation nodes always run. Pass empty set to skip all validation.
    * @return The compute context containing all slot values and errors
    */
-  private suspend fun executeNodes(
+  private fun executeNodes(
     model: GenerationModel,
     validationFilter: Set<String>?,
   ): ComputeContextImpl {
-    return coroutineScope {
+    return run {
       // Filter nodes based on validationFilter
       val activeNodes = nodes.filter { node ->
         node.id.category != NodeCategory.VALIDATION ||
@@ -239,8 +237,8 @@ internal class GenerationPipeline(
 
       for (level in levels) {
         // Run all nodes at this level in parallel
-        level.map { node ->
-          async {
+        level.forEachConcurrent { node ->
+          run {
             val nodeCtx = ctx.forNode(node.id)
             val startEpochMs = System.currentTimeMillis()
             val startNano = System.nanoTime()
@@ -249,15 +247,17 @@ internal class GenerationPipeline(
             }
             finally {
               // in a `finally`, so a node that throws still reports how long it took before it did
-              ctx.nodeTimings.add(GenerationTiming(
-                name = node.id.name,
-                startEpochMs = startEpochMs,
-                durationMs = (System.nanoTime() - startNano) / 1_000_000,
-              ))
+              ctx.nodeTimings.add(
+                GenerationTiming(
+                  name = node.id.name,
+                  startEpochMs = startEpochMs,
+                  durationMs = (System.nanoTime() - startNano) / 1_000_000,
+                )
+              )
             }
             ctx.finalizeNodeErrors(node.id)
           }
-        }.awaitAll()
+        }
       }
 
       ctx
@@ -450,10 +450,10 @@ internal class GenerationPipeline(
     // Get errors for specific nodes
     val productModuleDepErrors = ctx.getNodeErrors(NodeIds.PRODUCT_MODULE_DEPS)
     val pluginValidationErrors = ctx.getNodeErrors(NodeIds.PLUGIN_VALIDATION) +
-      ctx.getNodeErrors(NodeIds.PLUGIN_CONTENT_STRUCTURE_VALIDATION) +
-      ctx.getNodeErrors(NodeIds.CONTENT_MODULE_PLUGIN_DEPENDENCY_VALIDATION) +
-      ctx.getNodeErrors(NodeIds.PLUGIN_PLUGIN_VALIDATION) +
-      ctx.getNodeErrors(NodeIds.PLUGIN_DEPENDENCY_DECLARATION_VALIDATION)
+                                 ctx.getNodeErrors(NodeIds.PLUGIN_CONTENT_STRUCTURE_VALIDATION) +
+                                 ctx.getNodeErrors(NodeIds.CONTENT_MODULE_PLUGIN_DEPENDENCY_VALIDATION) +
+                                 ctx.getNodeErrors(NodeIds.PLUGIN_PLUGIN_VALIDATION) +
+                                 ctx.getNodeErrors(NodeIds.PLUGIN_DEPENDENCY_DECLARATION_VALIDATION)
 
     // Build module set results grouped by label
     val moduleSetResults = moduleSetsOutput?.let { output ->
@@ -578,7 +578,6 @@ internal class GenerationPipeline(
           PluginDescriptorIdConflictValidator,
           ContentModuleDependencyValidator,
           ContentModuleDependencyDeclarationValidator,
-          LibraryModuleValidator,
           ImplicitEmbeddedContentModuleValidator,
         )
       )

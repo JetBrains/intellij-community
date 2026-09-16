@@ -46,6 +46,19 @@ public interface ResultView extends CoreResultView, GridModel.Listener<GridRow, 
 
   boolean isEditing();
 
+  /**
+   * Whether the view has an active editor anywhere, including a region it renders as a separate component.
+   * {@link #isEditing()} answers for one component only, because Swing requires it to match that component's editor.
+   */
+  default boolean isEditingAnywhere() {
+    return isEditing();
+  }
+
+  /** Whether {@code component} is one of the components this view renders cells in. */
+  default boolean isCellComponent(@Nullable Component component) {
+    return component == getComponent();
+  }
+
   boolean isMultiEditingAllowed();
 
   @NotNull

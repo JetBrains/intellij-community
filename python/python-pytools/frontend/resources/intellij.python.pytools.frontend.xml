@@ -1,0 +1,50 @@
+<idea-plugin visibility="internal">
+  <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.frontend"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.progress"/>
+    <module name="intellij.platform.kernel"/>
+    <module name="intellij.platform.project"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.rpc"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.util.ui"/>
+    <module name="intellij.python.pytools.common"/>
+    <!-- endregion -->
+  </dependencies>
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.python.pytools.pyToolFrontend"
+                    interface="com.intellij.python.pytools.frontend.PyToolFrontend"
+                    dynamic="true"/>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <postStartupActivity implementation="com.intellij.python.pytools.frontend.PyToolsFrontendStateStartupActivity"/>
+    <groupConfigurable id="python.tools.group.settings"
+                       parentId="python.group.settings"
+                       weight="72"
+                       bundle="messages.PyToolsUiBundle"
+                       displayNameKey="settings.python.tools.group.title"
+                       descriptionKey="settings.python.tools.group.description"/>
+    <projectConfigurable parentId="python.tools.group.settings"
+                         id="python.external.tools.group.settings"
+                         bundle="messages.PyToolsUiBundle"
+                         key="settings.external.tools.title"
+                         instance="com.intellij.python.pytools.frontend.ui.configuration.PyExternalToolsConfigurable"/>
+    <search.optionContributor
+      implementation="com.intellij.python.pytools.frontend.ui.PyExternalToolsSearchableOptionContributor"/>
+    <projectConfigurable parentId="python.tools.group.settings"
+                         id="python.package.managers.group.settings"
+                         bundle="messages.PyToolsUiBundle"
+                         key="settings.package.managers.title"
+                         instance="com.intellij.python.pytools.frontend.ui.packagemanagers.PyPackageManagersConfigurable"/>
+    <search.optionContributor
+      implementation="com.intellij.python.pytools.frontend.ui.packagemanagers.PyPackageManagersSearchableOptionContributor"/>
+  </extensions>
+</idea-plugin>

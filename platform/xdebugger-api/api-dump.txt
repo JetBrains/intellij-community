@@ -119,6 +119,7 @@ com.intellij.xdebugger.XDebugSession
 - a:stepOut():V
 - a:stepOver(Z):V
 - a:stop():V
+- updateBreakpointPresentation(com.intellij.xdebugger.breakpoints.XBreakpoint,javax.swing.Icon,java.lang.String):V
 - a:updateBreakpointPresentation(com.intellij.xdebugger.breakpoints.XLineBreakpoint,javax.swing.Icon,java.lang.String):V
 - a:updateExecutionPosition():V
 com.intellij.xdebugger.XDebugSessionBuilder
@@ -355,6 +356,7 @@ a:com.intellij.xdebugger.breakpoints.XLineBreakpointType
 - getShortText(com.intellij.xdebugger.breakpoints.XLineBreakpoint):java.lang.String
 - getSourcePosition(com.intellij.xdebugger.breakpoints.XBreakpoint):com.intellij.xdebugger.XSourcePosition
 - getTemporaryIcon():javax.swing.Icon
+- highlightRangeMoved(com.intellij.xdebugger.breakpoints.XLineBreakpoint,com.intellij.openapi.util.TextRange):Z
 - isTemporaryBreakpointSupported():Z
 - variantAndBreakpointMatch(com.intellij.xdebugger.breakpoints.XLineBreakpoint,com.intellij.xdebugger.breakpoints.XLineBreakpointType$XLineBreakpointVariant):Z
 c:com.intellij.xdebugger.breakpoints.XLineBreakpointType$XLineBreakpointAllVariant

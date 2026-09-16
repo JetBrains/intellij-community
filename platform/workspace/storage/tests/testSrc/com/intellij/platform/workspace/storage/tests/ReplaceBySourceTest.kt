@@ -1146,9 +1146,9 @@ class ReplaceBySourceTest {
     // two different managers are never the same instance and won't be matched by replaceBySource.
     val virtualFileManager = ConcurrentVirtualFileUrlManager()
     val targetEntity = builder addEntity SampleEntity(false, "data", ArrayList(), HashMap(),
-                                                      virtualFileManager.getOrCreateFromUrl("file:///tmp"), MySource)
+                                                      virtualFileManager.storeAndGet("file:///tmp"), MySource)
     val replaceWithEntity = replacement addEntity SampleEntity(false, "data", ArrayList(), HashMap(),
-                                                               virtualFileManager.getOrCreateFromUrl("file:///tmp"), MySource)
+                                                               virtualFileManager.storeAndGet("file:///tmp"), MySource)
 
     rbsMySources()
 

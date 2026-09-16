@@ -8,6 +8,23 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
-    <orderEntry type="library" exported="" name="kotlinx-coroutines-debug" level="project" />
+    <orderEntry type="module-library" exported="">
+      <library name="kotlinx-coroutines-debug" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.kotlinx:kotlinx-coroutines-debug:1.10.2-intellij-3">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/kotlinx/kotlinx-coroutines-debug/1.10.2-intellij-3/kotlinx-coroutines-debug-1.10.2-intellij-3.jar">
+              <sha256sum>26218ba6b2c619bd309ae5fe7235a3b4fce3070fda373181108aec5e54f382cf</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/kotlinx/kotlinx-coroutines-debug/1.10.2-intellij-3/kotlinx-coroutines-debug-1.10.2-intellij-3.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/kotlinx/kotlinx-coroutines-debug/1.10.2-intellij-3/kotlinx-coroutines-debug-1.10.2-intellij-3-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
   </component>
 </module>

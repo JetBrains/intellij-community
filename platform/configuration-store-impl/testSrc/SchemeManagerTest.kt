@@ -592,6 +592,44 @@ class SchemeManagerTest {
     }
   }
 
+  @Test
+  fun `iterator retains its snapshot before bundled loading`() {
+    val dir = tempDirManager.newPath()
+    val schemeManager = createSchemeManager(dir)
+
+    val first = TestScheme("first")
+    val second = TestScheme("second")
+    schemeManager.addScheme(first)
+    val iterator1 = schemeManager.allSchemes.iterator()
+
+    schemeManager.addScheme(second)
+    schemeManager.removeScheme(first)
+    val iterator2 = schemeManager.allSchemes.iterator()
+
+    assertThat(iterator1.asSequence().toList()).containsExactly(first)
+    assertThat(iterator2.asSequence().toList()).containsExactly(second)
+  }
+
+  @Test
+  fun `iterator retains its snapshot after bundled loading`() {
+    val dir = tempDirManager.newPath()
+    val schemeManager = createSchemeManager(dir)
+
+    schemeManager.loadBundledSchemes(emptySequence())
+
+    val first = TestScheme("first")
+    val second = TestScheme("second")
+    schemeManager.addScheme(first)
+    val iterator1 = schemeManager.allSchemes.iterator()
+
+    schemeManager.addScheme(second)
+    schemeManager.removeScheme(first)
+    val iterator2 = schemeManager.allSchemes.iterator()
+
+    assertThat(iterator1.asSequence().toList()).containsExactly(first)
+    assertThat(iterator2.asSequence().toList()).containsExactly(second)
+  }
+
   private fun createSchemeManager(dir: Path): SchemeManagerImpl<TestScheme, TestScheme> =
     SchemeManagerImpl(projectRule.project, FILE_SPEC, TestSchemeProcessor(), provider = null, dir)
 

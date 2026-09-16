@@ -74,7 +74,7 @@ class ProjectSettingsSerializer(
 
       val pathElement: Element? = projectRootManager.getChild(TAG_OUTPUT)
       pathElement?.getAttributeValue(ATTR_URL)?.also { outputPath ->
-        val outputUrl = virtualFileManager.getOrCreateFromUrl(outputPath)
+        val outputUrl = virtualFileManager.storeAndGet(outputPath)
         javaProjectSettingsEntityBuilder.compilerOutput = outputUrl
       }
     }

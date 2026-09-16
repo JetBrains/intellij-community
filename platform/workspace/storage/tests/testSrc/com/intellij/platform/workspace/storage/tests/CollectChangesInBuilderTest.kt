@@ -44,7 +44,7 @@ class CollectChangesInBuilderTest {
                                   "initial",
                                   ArrayList(),
                                   HashMap(),
-                                  ConcurrentVirtualFileUrlManager().getOrCreateFromUrl("file:///tmp"),
+                                  ConcurrentVirtualFileUrlManager().storeAndGet("file:///tmp"),
                                   SampleEntitySource("test"))
       addEntity(SecondSampleEntity(1, SampleEntitySource("test")))
     }.toSnapshot()
@@ -57,7 +57,7 @@ class CollectChangesInBuilderTest {
                                    "added",
                                    ArrayList(),
                                    HashMap(),
-                                   ConcurrentVirtualFileUrlManager().getOrCreateFromUrl("file:///tmp"),
+        ConcurrentVirtualFileUrlManager().storeAndGet("file:///tmp"),
                                    SampleEntitySource("test"))
     builder.addEntity(SecondSampleEntity(2, SampleEntitySource("test")))
     builder.removeEntity(initialStorage.singleSampleEntity())
@@ -113,7 +113,7 @@ class CollectChangesInBuilderTest {
                                                "added",
                                                ArrayList(),
                                                HashMap(),
-                                               ConcurrentVirtualFileUrlManager().getOrCreateFromUrl("file:///tmp"),
+        ConcurrentVirtualFileUrlManager().storeAndGet("file:///tmp"),
                                                SampleEntitySource("test"))
     builder.removeEntity(added)
     assertChangelogSize(0)
@@ -126,7 +126,7 @@ class CollectChangesInBuilderTest {
                                                "added",
                                                ArrayList(),
                                                HashMap(),
-                                               ConcurrentVirtualFileUrlManager().getOrCreateFromUrl("file:///tmp"),
+        ConcurrentVirtualFileUrlManager().storeAndGet("file:///tmp"),
                                                SampleEntitySource("test"))
     builder.modifySampleEntity(added) {
       stringProperty = "changed"
@@ -141,7 +141,7 @@ class CollectChangesInBuilderTest {
                                                "added",
                                                ArrayList(),
                                                HashMap(),
-                                               ConcurrentVirtualFileUrlManager().getOrCreateFromUrl("file:///tmp"),
+        ConcurrentVirtualFileUrlManager().storeAndGet("file:///tmp"),
                                                SampleEntitySource("test"))
     val modified = builder.modifySampleEntity(added) {
       stringProperty = "changed"

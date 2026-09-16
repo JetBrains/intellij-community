@@ -7,7 +7,7 @@ interface SoftwareBillOfMaterials {
   /**
    * Generates Software Bill Of Materials (SBOM) for each distribution file in [SPDX format](https://spdx.github.io/spdx-spec)
    */
-  suspend fun generate()
+  fun generate()
 
   companion object {
     const val STEP_ID: String = "sbom"

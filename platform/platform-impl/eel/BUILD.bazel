@@ -2,6 +2,10 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.platform.ide.impl.wsl` start
+content_module_jar(module = ":ide-impl-wsl")
+### auto-generated section `dev intellij.platform.ide.impl.wsl` end
+
 ### auto-generated section `build intellij.platform.ide.impl.wsl` start
 create_kotlinc_options(
     name = "custom_ide-impl-wsl",
@@ -30,7 +34,6 @@ jvm_library(
         # do not sort,
         "//libraries/jetbrains/annotations",
         "@lib//:kotlin-stdlib",
-        "//libraries/pty4j",
         "//platform/core-api:core",
         "//libraries/caffeine",
         "//platform/core-nio-fs",
@@ -51,8 +54,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":ide-impl-wsl")
-
 jvm_library(
     name = "ide-impl-wsl_test_lib",
     testonly = True,
@@ -67,7 +68,6 @@ jvm_library(
         # do not sort,
         ":ide-impl-wsl",
         "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//libraries/pty4j:pty4j_test_lib",
         "//platform/core-api:core_test_lib",
         "//libraries/caffeine:caffeine_test_lib",
         "//platform/core-nio-fs:core-nio-fs_test_lib",
@@ -94,7 +94,6 @@ exports_files(
     [
         "intellij.platform.ide.impl.wsl.iml",
         "resources/intellij.platform.ide.impl.wsl.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

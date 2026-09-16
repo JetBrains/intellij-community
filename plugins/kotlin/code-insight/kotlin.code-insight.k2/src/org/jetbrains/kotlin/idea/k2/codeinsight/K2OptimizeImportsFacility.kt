@@ -1,15 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight
 
-import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaNotUnderContentRootModule
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinOptimizeImportsFacility
 import org.jetbrains.kotlin.idea.k2.codeinsight.imports.UsedReferencesCollector
 import org.jetbrains.kotlin.idea.k2.codeinsight.imports.buildOptimizedImports
@@ -51,7 +50,6 @@ internal class K2OptimizeImportsFacility : KotlinOptimizeImportsFacility {
         return K2ImportData(unusedImports.toList(), importAnalysis)
     }
 
-    @OptIn(KaPlatformInterface::class)
     private fun canOptimizeImports(file: KtFile): Boolean {
         val module = KotlinProjectStructureProvider.getModule(file.project, file, useSiteModule = null)
 

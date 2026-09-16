@@ -533,7 +533,7 @@ object ProjectUtil {
    * behavior and should only be used in special cases, when we know that the user definitely expects it.
    */
   @JvmStatic
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun focusProjectWindow(project: Project?, stealFocusIfAppInactive: Boolean = false) {
     LOG.trace { "focusProjectWindow: project=$project stealFocusIfAppInactive=$stealFocusIfAppInactive" }
 
@@ -670,7 +670,7 @@ object ProjectUtil {
   }
 
   @JvmStatic
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun openOrCreateProject(name: String, file: Path): Project? = runWithModalProgressBlocking(ModalTaskOwner.guess(), "") {
     openOrCreateProjectInner(name, file)
   }

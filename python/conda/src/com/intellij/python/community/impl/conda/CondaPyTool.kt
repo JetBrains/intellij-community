@@ -8,19 +8,17 @@ import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.LocalEelMachine
 import com.intellij.platform.eel.provider.getResolvedEelMachine
 import com.intellij.platform.eel.provider.localEel
-import com.intellij.python.community.impl.conda.icons.PythonCommunityImplCondaIcons
 import com.intellij.python.community.impl.installer.CondaInstallManager
-import com.intellij.python.pytools.PackageManagerPyTool
-import com.intellij.python.pytools.PyExecutableCache
-import com.intellij.python.pytools.PyTool
-import com.intellij.python.pytools.PyToolManager
-import com.intellij.python.pytools.ToolCommandSpec
-import com.intellij.python.pytools.ToolSearchPath
-import com.intellij.python.pytools.pyExecutableSpec
+import com.intellij.python.pytools.backend.PackageManagerPyTool
+import com.intellij.python.pytools.backend.PyExecutableCache
+import com.intellij.python.pytools.backend.PyTool
+import com.intellij.python.pytools.backend.PyToolManager
+import com.intellij.python.pytools.backend.ToolCommandSpec
+import com.intellij.python.pytools.backend.ToolSearchPath
+import com.intellij.python.pytools.backend.pyExecutableSpec
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackageName
 import java.nio.file.Path
-import javax.swing.Icon
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -30,11 +28,8 @@ import kotlinx.coroutines.withContext
  * pip/uv-installable tools it is not a Python package: it installs via its own [CondaInstallManager]
  * (see [CondaPyToolManager]), and shows only on the Package Managers page (it is not an `ExternalPyTool`).
  */
-class CondaPyTool : PyTool, PackageManagerPyTool {
-  override val presentableName: String = "Conda"
+class CondaPyTool : PackageManagerPyTool {
   override val packageName: PyPackageName = PyPackageName.from("conda")
-  override val description: String get() = PyCondaBundle.message("python.conda.tool.description")
-  override val icon: Icon get() = PythonCommunityImplCondaIcons.Anaconda
   override val manager: PyToolManager = CondaPyToolManager
 
   override val toolCommandSpec: ToolCommandSpec = pyExecutableSpec(fusId, listOf(
@@ -65,7 +60,7 @@ class CondaPyTool : PyTool, PackageManagerPyTool {
  * freshly installed executable through [PyExecutableCache]. Updating conda from the IDE is not supported.
  */
 private object CondaPyToolManager : PyToolManager {
-  override suspend fun install(tool: PyTool, eel: EelApi): PyResult<Path> {
+  override suspend fun install(tool: PyTool<*>, eel: EelApi): PyResult<Path> {
     withContext(Dispatchers.EDT) {
       CondaInstallManager.installLatest(project = null)
     }
@@ -75,7 +70,7 @@ private object CondaPyToolManager : PyToolManager {
            ?: PyResult.localizedError(PyCondaBundle.message("python.conda.install.not.detected"))
   }
 
-  override suspend fun upgrade(tool: PyTool, eel: EelApi): PyResult<Path> =
+  override suspend fun upgrade(tool: PyTool<*>, eel: EelApi): PyResult<Path> =
     PyResult.localizedError(PyCondaBundle.message("python.conda.update.not.supported"))
 
   /** The Miniconda installer only targets the local machine, so Install is offered on local eels only. */

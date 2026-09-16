@@ -32,7 +32,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
-import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Ref
 import com.intellij.platform.debugger.impl.rpc.XDebugSessionDataId
@@ -53,7 +52,6 @@ import com.intellij.util.EventDispatcher
 import com.intellij.util.SmartList
 import com.intellij.util.application
 import com.intellij.util.asDisposable
-import com.intellij.util.progress.withLockMaybeCancellable
 import com.intellij.xdebugger.DapMode
 import com.intellij.xdebugger.SplitDebuggerMode
 import com.intellij.xdebugger.XAlternativeSourceHandler
@@ -63,25 +61,19 @@ import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebugSessionListener
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.XDebuggerManager
-import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
 import com.intellij.xdebugger.breakpoints.XBreakpoint
-import com.intellij.xdebugger.breakpoints.XBreakpointHandler
-import com.intellij.xdebugger.breakpoints.XBreakpointListener
-import com.intellij.xdebugger.breakpoints.XBreakpointType
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.impl.XDebuggerPerformanceCollector.logBreakpointReached
 import com.intellij.xdebugger.impl.actions.XDebuggerActions
-import com.intellij.xdebugger.impl.breakpoints.BreakpointsUsageCollector.reportBreakpointVerified
 import com.intellij.xdebugger.impl.breakpoints.CustomizedBreakpointPresentation
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil.getShortText
-import com.intellij.xdebugger.impl.breakpoints.XDependentBreakpointListener
-import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl
+import com.intellij.xdebugger.impl.breakpoints.XDebugSessionBreakpointManager
 import com.intellij.xdebugger.impl.evaluate.ValueLookupManagerController
 import com.intellij.xdebugger.impl.frame.XValueMarkers
 import com.intellij.xdebugger.impl.inline.DebuggerInlayListener
@@ -92,7 +84,6 @@ import com.intellij.xdebugger.impl.rpc.models.XDebugSessionAdditionalTabComponen
 import com.intellij.xdebugger.impl.rpc.models.XDebugTabLayouterModel
 import com.intellij.xdebugger.impl.rpc.models.XSuspendContextModel
 import com.intellij.xdebugger.impl.rpc.models.storeGlobally
-import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl
 import com.intellij.xdebugger.impl.ui.XDebugSessionData
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab
 import com.intellij.xdebugger.impl.ui.allowFramesViewCustomization
@@ -125,7 +116,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.Collections
 import java.util.concurrent.atomic.AtomicReference
-import java.util.concurrent.locks.ReentrantLock
 import java.util.function.Consumer
 import javax.swing.Icon
 import javax.swing.event.HyperlinkEvent
@@ -145,19 +135,9 @@ class XDebugSessionImpl @JvmOverloads constructor(
   val tabCoroutineScope: CoroutineScope = debuggerManager.coroutineScope.childScope("XDebugger session tab $sessionName")
 
   val id: XDebugSessionId = storeGlobally(coroutineScope)
-  private val myLock = ReentrantLock()
+  private val sessionBreakpointManager = XDebugSessionBreakpointManager(this, debuggerManager.breakpointManager)
 
   private var myDebugProcess: XDebugProcess? = null
-
-  // protected with this
-  private val myRegisteredBreakpoints: MutableMap<XBreakpoint<*>, CustomizedBreakpointPresentation?> = HashMap()
-  private val myInactiveSlaveBreakpoints: MutableSet<XBreakpoint<*>> = Collections.synchronizedSet(HashSet())
-
-  // protected with myLock
-  private var myBreakpointsDisabled = false
-
-  // protected with myLock
-  private var myBreakpointListenerDisposable: Disposable? = null
 
   private var myAlternativeSourceHandler: XAlternativeSourceHandler? = null
   private var myIsTopFrame = false
@@ -205,9 +185,6 @@ class XDebugSessionImpl @JvmOverloads constructor(
   var currentExecutionStack: XExecutionStack? = null
   private val suspendContextModel = AtomicReference<XSuspendContextModel?>(null)
   private val sessionInitializedDeferred = CompletableDeferred<Unit>()
-
-  // protected with myLock
-  private var breakpointsInitialized = false
 
   private var myUserRequestStart: Long = 0
   private var myUserRequestAction: String? = null
@@ -487,32 +464,14 @@ class XDebugSessionImpl @JvmOverloads constructor(
   }
 
   fun reset() {
-    myLock.withLockMaybeCancellable {
-      breakpointsInitialized = false
-    }
-    removeBreakpointListeners()
+    sessionBreakpointManager.reset()
     myPaused.value = false
     clearPausedData()
     rebuildViews()
   }
 
   override fun initBreakpoints() {
-    myLock.withLockMaybeCancellable {
-      LOG.assertTrue(!breakpointsInitialized)
-      breakpointsInitialized = true
-      var breakpointListenerDisposable = myBreakpointListenerDisposable
-      if (breakpointListenerDisposable == null) {
-        breakpointListenerDisposable = Disposer.newDisposable()
-        myBreakpointListenerDisposable = breakpointListenerDisposable
-        Disposer.register(myProject, breakpointListenerDisposable)
-        val busConnection = myProject.getMessageBus().connect(breakpointListenerDisposable)
-        busConnection.subscribe(XBreakpointListener.TOPIC, MyBreakpointListener())
-        busConnection.subscribe(XDependentBreakpointListener.TOPIC, MyDependentBreakpointListener())
-      }
-    }
-
-    disableSlaveBreakpoints()
-    processAllBreakpoints(true, false)
+    sessionBreakpointManager.initBreakpoints()
   }
 
   override fun getConsoleView(): ConsoleView? {
@@ -696,23 +655,6 @@ class XDebugSessionImpl @JvmOverloads constructor(
     mySessionTab.complete(sessionTab as? XDebugSessionTab)
   }
 
-  private fun disableSlaveBreakpoints() {
-    val slaveBreakpoints = debuggerManager.breakpointManager.dependentBreakpointManager.allSlaveBreakpoints
-    if (slaveBreakpoints.isEmpty()) {
-      return
-    }
-
-    val breakpointTypes: MutableSet<XBreakpointType<*, *>?> = HashSet()
-    for (handler in debugProcess.breakpointHandlers) {
-      breakpointTypes.add(getBreakpointTypeClass(handler))
-    }
-    for (slaveBreakpoint in slaveBreakpoints) {
-      if (breakpointTypes.contains(slaveBreakpoint.getType())) {
-        myInactiveSlaveBreakpoints.add(slaveBreakpoint)
-      }
-    }
-  }
-
   fun showSessionTab() {
     myShowTabDeferred.complete(Unit)
   }
@@ -734,80 +676,20 @@ class XDebugSessionImpl @JvmOverloads constructor(
     return valueMarkers
   }
 
-  private fun <B : XBreakpoint<*>> processBreakpoints(
-    handler: XBreakpointHandler<*>,
-    register: Boolean,
-    temporary: Boolean,
-  ) {
-    @Suppress("UNCHECKED_CAST")
-    handler as XBreakpointHandler<B>
-    val breakpoints = debuggerManager.breakpointManager.getBreakpoints<B>(handler.getBreakpointTypeClass())
-    for (b in breakpoints) {
-      handleBreakpoint(handler, b, register, temporary)
-    }
-  }
-
-  private fun <B : XBreakpoint<*>> handleBreakpoint(
-    handler: XBreakpointHandler<B>, b: B, register: Boolean,
-    temporary: Boolean,
-  ) {
-    if (register) {
-      val active = isBreakpointActive(b)
-      if (active) {
-        synchronized(myRegisteredBreakpoints) {
-          myRegisteredBreakpoints[b] = CustomizedBreakpointPresentation()
-          if (b is XLineBreakpoint<*>) {
-            updateBreakpointPresentation(b, b.getType().pendingIcon, null)
-          }
-        }
-        handler.registerBreakpoint(b)
-      }
-    }
-    else {
-      val removed: Boolean
-      synchronized(myRegisteredBreakpoints) {
-        removed = myRegisteredBreakpoints.remove(b) != null
-      }
-      if (removed) {
-        handler.unregisterBreakpoint(b, temporary)
-      }
-    }
-  }
-
   fun getBreakpointPresentation(breakpoint: XBreakpoint<*>): CustomizedBreakpointPresentation? {
-    synchronized(myRegisteredBreakpoints) {
-      return myRegisteredBreakpoints[breakpoint]
-    }
-  }
-
-  private fun processAllHandlers(breakpoint: XBreakpoint<*>, register: Boolean) {
-    for (handler in debugProcess.breakpointHandlers) {
-      processBreakpoint(breakpoint, handler, register)
-    }
-  }
-
-  private fun <B : XBreakpoint<*>> processBreakpoint(
-    breakpoint: B,
-    handler: XBreakpointHandler<*>,
-    register: Boolean,
-  ) {
-    val type = breakpoint.getType()
-    if (handler.getBreakpointTypeClass() == type.javaClass) {
-      @Suppress("UNCHECKED_CAST")
-      handleBreakpoint(handler as XBreakpointHandler<B>, breakpoint, register, false)
-    }
+    return sessionBreakpointManager.getBreakpointPresentation(breakpoint)
   }
 
   fun isBreakpointActive(b: XBreakpoint<*>): Boolean {
-    return !areBreakpointsMuted() && b.isEnabled() && !isInactiveSlaveBreakpoint(b) && !(b as XBreakpointBase<*, *, *>).isDisposed
+    return sessionBreakpointManager.isBreakpointActive(b)
   }
 
   override fun areBreakpointsMuted(): Boolean {
-    return sessionData.isBreakpointsMuted
+    return sessionBreakpointManager.areBreakpointsMuted()
   }
 
   fun getBreakpointsMutedFlow(): StateFlow<Boolean> {
-    return sessionData.breakpointsMutedFlow
+    return sessionBreakpointManager.getBreakpointsMutedFlow()
   }
 
   override fun addSessionListener(listener: XDebugSessionListener, parentDisposable: Disposable) {
@@ -822,15 +704,10 @@ class XDebugSessionImpl @JvmOverloads constructor(
     myDispatcher.removeListener(listener)
   }
 
-  private fun areBreakpointDisabled() = myLock.withLockMaybeCancellable { myBreakpointsDisabled }
-
   override fun setBreakpointMuted(muted: Boolean) {
-    if (areBreakpointsMuted() == muted) return
-    sessionData.isBreakpointsMuted = muted
-    if (!areBreakpointDisabled()) {
-      processAllBreakpoints(!muted, muted)
+    if (sessionBreakpointManager.setBreakpointMuted(muted)) {
+      myDispatcher.getMulticaster().breakpointsMuted(muted)
     }
-    myDispatcher.getMulticaster().breakpointsMuted(muted)
   }
 
   override fun stepOver(ignoreBreakpoints: Boolean) {
@@ -838,7 +715,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
     if (!debugProcess.checkCanPerformCommands()) return
 
     if (ignoreBreakpoints) {
-      setBreakpointsDisabledTemporarily(true)
+      sessionBreakpointManager.setBreakpointsDisabledTemporarily(true)
     }
     debugProcess.startStepOver(doResume())
   }
@@ -877,7 +754,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
     if (!debugProcess.checkCanPerformCommands()) return
 
     if (ignoreBreakpoints) {
-      setBreakpointsDisabledTemporarily(true)
+      sessionBreakpointManager.setBreakpointsDisabledTemporarily(true)
     }
     debugProcess.runToPosition(position, doResume())
   }
@@ -887,23 +764,6 @@ class XDebugSessionImpl @JvmOverloads constructor(
     if (!debugProcess.checkCanPerformCommands()) return
 
     debugProcess.startPausing()
-  }
-
-  private fun processAllBreakpoints(register: Boolean, temporary: Boolean) {
-    for (handler in debugProcess.breakpointHandlers) {
-      processBreakpoints<XBreakpoint<*>>(handler, register, temporary)
-    }
-  }
-
-  private fun setBreakpointsDisabledTemporarily(disabled: Boolean) {
-    val changed = myLock.withLockMaybeCancellable {
-      if (myBreakpointsDisabled == disabled) return@withLockMaybeCancellable false
-      myBreakpointsDisabled = disabled
-      true
-    }
-    if (changed && !areBreakpointsMuted()) {
-      processAllBreakpoints(!disabled, disabled)
-    }
   }
 
   override fun resume() {
@@ -1001,29 +861,15 @@ class XDebugSessionImpl @JvmOverloads constructor(
     icon: Icon?,
     errorMessage: String?,
   ) {
-    val presentation: CustomizedBreakpointPresentation?
-    synchronized(myRegisteredBreakpoints) {
-      presentation = myRegisteredBreakpoints[breakpoint]
-      if (presentation == null ||
-          (Comparing.equal<Icon?>(presentation.icon, icon) && Comparing.strEqual(presentation.errorMessage, errorMessage))
-      ) {
-        return
-      }
+    sessionBreakpointManager.updateBreakpointPresentation(breakpoint, icon, errorMessage)
+  }
 
-      presentation.errorMessage = errorMessage
-      presentation.icon = icon
-
-      val timestamp = presentation.timestamp
-      if (timestamp != 0L && XDebuggerUtilImpl.getVerifiedIcon(breakpoint) == icon) {
-        val delay = System.currentTimeMillis() - timestamp
-        presentation.timestamp = 0
-        reportBreakpointVerified(breakpoint, delay)
-      }
-    }
-    if (breakpoint is XLineBreakpointImpl<*>) {
-      // for useFeProxy we call update directly since visual presentation is disabled on the backend
-      breakpoint.fireBreakpointPresentationUpdated(this)
-    }
+  override fun updateBreakpointPresentation(
+    breakpoint: XBreakpoint<*>,
+    icon: Icon?,
+    errorMessage: String?,
+  ) {
+    sessionBreakpointManager.updateBreakpointPresentation(breakpoint, icon, errorMessage)
   }
 
   override fun setBreakpointVerified(breakpoint: XLineBreakpoint<*>) {
@@ -1090,44 +936,13 @@ class XDebugSessionImpl @JvmOverloads constructor(
     positionReachedInternal(suspendContext, true)
 
     if (doProcessing && breakpoint is XBreakpointBase<*, *, *> && breakpoint.isTemporary) {
-      handleTemporaryBreakpointHit(breakpoint)
+      sessionBreakpointManager.handleTemporaryBreakpointHit(breakpoint)
     }
     return true
   }
 
-  private fun handleTemporaryBreakpointHit(breakpoint: XBreakpoint<*>?) {
-    addSessionListener(object : XDebugSessionListener {
-      fun removeBreakpoint() {
-        XDebuggerUtil.getInstance().removeBreakpoint(myProject, breakpoint)
-        removeSessionListener(this)
-      }
-
-      override fun sessionResumed() {
-        removeBreakpoint()
-      }
-
-      override fun sessionStopped() {
-        removeBreakpoint()
-      }
-    })
-  }
-
   fun processDependencies(breakpoint: XBreakpoint<*>) {
-    val dependentBreakpointManager = debuggerManager.breakpointManager.dependentBreakpointManager
-    if (!dependentBreakpointManager.isMasterOrSlave(breakpoint)) return
-
-    val breakpoints = dependentBreakpointManager.getSlaveBreakpoints(breakpoint)
-    breakpoints.forEach { o -> myInactiveSlaveBreakpoints.remove(o) }
-    for (slaveBreakpoint in breakpoints) {
-      processAllHandlers(slaveBreakpoint, true)
-    }
-
-    if (dependentBreakpointManager.getMasterBreakpoint(breakpoint) != null && !dependentBreakpointManager.isLeaveEnabled(breakpoint)) {
-      val added = myInactiveSlaveBreakpoints.add(breakpoint)
-      if (added) {
-        processAllHandlers(breakpoint, false)
-      }
-    }
+    sessionBreakpointManager.processDependencies(breakpoint)
   }
 
   private fun printMessage(message: String, hyperLinkText: String?, info: HyperlinkInfo?) {
@@ -1150,7 +965,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
       return
     }
 
-    setBreakpointsDisabledTemporarily(false)
+    sessionBreakpointManager.setBreakpointsDisabledTemporarily(false)
     updateSuspendContext(suspendContext)
 
     val topFramePosition = getTopFramePosition()
@@ -1209,7 +1024,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
     }
 
     try {
-      removeBreakpointListeners()
+      sessionBreakpointManager.removeBreakpointListeners()
     }
     finally {
       debugProcess.stopAsync().onSuccess { processStopped() }
@@ -1228,36 +1043,21 @@ class XDebugSessionImpl @JvmOverloads constructor(
     clearPausedData()
 
     myValueMarkers?.clear()
-    if (XDebuggerSettingManagerImpl.getInstanceImpl().generalSettings.isUnmuteOnStop) {
-      sessionData.isBreakpointsMuted = false
-    }
+    sessionBreakpointManager.unmuteOnStop()
     debuggerManager.removeSession(this)
     myDispatcher.getMulticaster().sessionStopped()
     myDispatcher.getListeners().clear()
 
     myProject.putUserData(InlineDebugRenderer.LinePainter.CACHE, null)
 
-    synchronized(myRegisteredBreakpoints) {
-      myRegisteredBreakpoints.clear()
-    }
+    sessionBreakpointManager.clearRegisteredBreakpoints()
 
     coroutineScope.cancel(null)
     cancelTabScopeIfNeeded()
   }
 
-  private fun removeBreakpointListeners() {
-    val breakpointListenerDisposable = myLock.withLockMaybeCancellable {
-      val current = myBreakpointListenerDisposable
-      myBreakpointListenerDisposable = null
-      current
-    }
-    if (breakpointListenerDisposable != null) {
-      Disposer.dispose(breakpointListenerDisposable)
-    }
-  }
-
   fun isInactiveSlaveBreakpoint(breakpoint: XBreakpoint<*>): Boolean {
-    return myInactiveSlaveBreakpoints.contains(breakpoint)
+    return sessionBreakpointManager.isInactiveSlaveBreakpoint(breakpoint)
   }
 
   override fun stop() {
@@ -1286,60 +1086,6 @@ class XDebugSessionImpl @JvmOverloads constructor(
       })
     }
     notification.notify(myProject)
-  }
-
-  private inner class MyBreakpointListener : XBreakpointListener<XBreakpoint<*>> {
-    override fun breakpointAdded(breakpoint: XBreakpoint<*>) {
-      if (processAdd(breakpoint)) {
-        val presentation = getBreakpointPresentation(breakpoint)
-        if (presentation != null) {
-          if (XDebuggerUtilImpl.getVerifiedIcon(breakpoint) == presentation.icon) {
-            reportBreakpointVerified(breakpoint, 0)
-          }
-          else {
-            presentation.timestamp = System.currentTimeMillis()
-          }
-        }
-      }
-    }
-
-    override fun breakpointRemoved(breakpoint: XBreakpoint<*>) {
-      checkActiveNonLineBreakpointOnRemoval(breakpoint)
-      processRemove(breakpoint)
-    }
-
-    fun processRemove(breakpoint: XBreakpoint<*>) {
-      processAllHandlers(breakpoint, false)
-    }
-
-    fun processAdd(breakpoint: XBreakpoint<*>): Boolean {
-      if (!areBreakpointDisabled()) {
-        processAllHandlers(breakpoint, true)
-        return true
-      }
-      return false
-    }
-
-    override fun breakpointChanged(breakpoint: XBreakpoint<*>) {
-      processRemove(breakpoint)
-      processAdd(breakpoint)
-    }
-  }
-
-  private inner class MyDependentBreakpointListener : XDependentBreakpointListener {
-    override fun dependencySet(slave: XBreakpoint<*>, master: XBreakpoint<*>) {
-      val added = myInactiveSlaveBreakpoints.add(slave)
-      if (added) {
-        processAllHandlers(slave, false)
-      }
-    }
-
-    override fun dependencyCleared(breakpoint: XBreakpoint<*>) {
-      val removed = myInactiveSlaveBreakpoints.remove(breakpoint)
-      if (removed) {
-        processAllHandlers(breakpoint, true)
-      }
-    }
   }
 
   /**
@@ -1389,10 +1135,5 @@ class XDebugSessionImpl @JvmOverloads constructor(
 
     // TODO[eldar] needed to workaround nullable myAlternativeSourceHandler.
     private val ALWAYS_FALSE_STATE = MutableStateFlow(false).asStateFlow()
-
-    //need to compile under 1.8, please do not remove before checking
-    private fun getBreakpointTypeClass(handler: XBreakpointHandler<*>): XBreakpointType<*, *>? {
-      return XDebuggerUtil.getInstance().findBreakpointType(handler.getBreakpointTypeClass())
-    }
   }
 }

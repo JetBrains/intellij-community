@@ -9,7 +9,7 @@ import com.intellij.testFramework.runInEdtAndWait
 import org.assertj.core.api.Assertions.assertThat
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.K2GradleCodeInsightTestCase
-import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntityProvider
+import org.jetbrains.kotlin.idea.core.script.modules.KotlinScriptEntityProvider
 import org.jetbrains.kotlin.idea.testFramework.gradle.KotlinGradleProjectTestCase
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
 import org.jetbrains.plugins.gradle.testFramework.util.assertThatKotlinDslScriptsModelImportIsSupported

@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.xml.rpc` start
+content_module_jar(
+    libraries = ["@lib//:libraries-xml-rpc-xml-rpc"],
+    module = ":xml-rpc",
+)
+### auto-generated section `dev intellij.libraries.xml.rpc` end
+
 ### auto-generated section `build intellij.libraries.xml.rpc` start
 jvm_library(
     name = "xml-rpc",
@@ -16,11 +23,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-xml-rpc-xml-rpc"],
     runtime_deps = ["@lib//:libraries-xml-rpc-xml-rpc"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-xml-rpc-xml-rpc"],
-    module = ":xml-rpc",
 )
 
 jvm_library(
@@ -43,7 +45,6 @@ exports_files(
     [
         "intellij.libraries.xml.rpc.iml",
         "resources/intellij.libraries.xml.rpc.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -112,7 +112,7 @@ class MergeConflictModel(
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private suspend fun setInitialOutputContent(document: Document, content: CharSequence): Boolean = withContext(Dispatchers.EDT) {
     DiffUtil.executeWriteCommand(document, project, DiffBundle.message("message.init.merge.content.command")) {
       document.setText(content)
@@ -151,7 +151,7 @@ class MergeConflictModel(
     canResolveChangeAutomatically(change.index, ThreeSide.BASE)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun ignoreChange(index: Int, side: Side, resolveChange: Boolean) {
     val change = getByIndex(index)
     if (!change.isConflict || resolveChange) {
@@ -169,7 +169,7 @@ class MergeConflictModel(
    * the output, for example the multi-file merge dialog, must save only when this returns true. Otherwise it would write the
    * seeded merge base back to the file. See `MultipleFileMergeDialog.resolveAutomatically`.
    */
-  @RequiresWriteLock
+  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
   fun resolveAllChangesAutomatically(): Boolean {
     val autoResolvableChanges = getAutoResolvableChanges()
     if (autoResolvableChanges.isEmpty()) return false
@@ -207,7 +207,7 @@ class MergeConflictModel(
     wasReviewed = true
   }
 
-  @RequiresWriteLock
+  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
   fun resolveChangeAutomatically(index: Int, side: ThreeSide): LineRange? {
     val change = getByIndex(index)
 
@@ -232,7 +232,7 @@ class MergeConflictModel(
     }
   }
 
-  @RequiresWriteLock
+  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
   fun replaceChangeWithAi(index: Int, newContentLines: List<String>): LineRange? {
     val change = getByIndex(index)
     if (change.isResolved) return null
@@ -252,7 +252,7 @@ class MergeConflictModel(
    * @param force If true, resets the change regardless of its resolved state. If false,
    *              only resets the change if it is already marked as resolved.
    */
-  @RequiresWriteLock
+  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
   fun resetResolvedChange(index: Int, force: Boolean = false) {
     val change = getByIndex(index)
     if (!force && !change.isResolved) return
@@ -269,7 +269,7 @@ class MergeConflictModel(
     resultModel.invalidateChange(change.index)
   }
 
-  @RequiresWriteLock
+  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
   private fun replaceWithNewContent(index: Int, newContent: CharSequence): LineRange {
     val change = getByIndex(index)
     val newContentLines: Array<String> = LineTokenizer.tokenize(newContent, false)
@@ -278,7 +278,7 @@ class MergeConflictModel(
     return LineRange(resultModel.getLineStart(change.index), resultModel.getLineEnd(change.index))
   }
 
-  @RequiresWriteLock
+  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
   fun replaceChange(index: Int, side: Side, resolveChange: Boolean): LineRange? {
     val change = getByIndex(index)
     if (change.isResolved(side)) return null
@@ -324,24 +324,24 @@ class MergeConflictModel(
     return LineRange(newLineStart, newLineEnd)
   }
 
-  @RequiresWriteLock
+  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
   fun resetAllChanges() {
     getAllChanges().forEach { change: TextMergeChange -> resetResolvedChange(change.index, force = true) }
     mergeRequest.resetOutputContent()
   }
 
-  @RequiresWriteLock
+  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
   private fun replaceAllChanges(side: Side) {
     getAllChanges().forEach { change: TextMergeChange -> replaceChange(change.index, side, true) }
     chosenSide = side
   }
 
-  @RequiresWriteLock
+  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
   fun markAllChangesResolved() {
     getAllChanges().forEach { change: TextMergeChange -> markChangeResolved(change.index) }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun markChangeResolved(change: TextMergeChange, side: Side) {
     if (change.isResolved) return
     change.setResolved(side, true)
@@ -352,7 +352,7 @@ class MergeConflictModel(
     resultModel.invalidateChange(change.index)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun markChangeResolved(changeIndex: Int) {
     val change = getByIndex(changeIndex)
     if (change.isResolved) return

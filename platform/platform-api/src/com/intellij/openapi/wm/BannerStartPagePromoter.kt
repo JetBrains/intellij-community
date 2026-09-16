@@ -131,7 +131,7 @@ abstract class BannerStartPagePromoter : StartPagePromoter {
 
   protected open val closeAction: ((promoPanel: JPanel) -> Unit)? = null
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   protected abstract fun runAction()
 
   protected open fun onBannerShown() {}

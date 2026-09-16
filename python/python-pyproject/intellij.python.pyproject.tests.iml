@@ -65,6 +65,7 @@
     <orderEntry type="module" module-name="intellij.platform.editor.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.requirements.common" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.xml.plugin" scope="RUNTIME" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.python.pyproject" />
 </module>

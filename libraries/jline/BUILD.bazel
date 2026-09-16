@@ -1,5 +1,4 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
-load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.libraries.jline` start
 jvm_library(
@@ -16,11 +15,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-jline-jline"],
     runtime_deps = ["@lib//:libraries-jline-jline"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-jline-jline"],
-    module = ":jline",
 )
 
 jvm_library(
@@ -43,7 +37,6 @@ exports_files(
     [
         "intellij.libraries.jline.iml",
         "resources/intellij.libraries.jline.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

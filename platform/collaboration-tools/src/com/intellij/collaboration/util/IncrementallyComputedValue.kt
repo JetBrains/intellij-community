@@ -13,30 +13,101 @@ import org.jetbrains.annotations.ApiStatus
 class IncrementallyComputedValue<T> private constructor(
   @PublishedApi
   internal val value: Value<T>?,
-  internal val complete: Boolean,
-  internal val exception: Exception?,
+  private val complete: Boolean,
+  private val loading: Boolean,
+  private val exception: Exception?,
 ) {
-  val isLoading: Boolean get() = !complete && exception == null
+  val isLoading: Boolean get() = loading
   val isComplete: Boolean get() = complete
   val isValueAvailable: Boolean get() = value != null
   val valueOrNull: T? get() = value?.value
   val exceptionOrNull: Exception? get() = exception
 
   companion object {
-    fun <T> loading(): IncrementallyComputedValue<T> =
-      IncrementallyComputedValue(null, false, null)
+    fun <T> initial(): IncrementallyComputedValue<T> =
+      IncrementallyComputedValue(
+        value = null,
+        complete = false,
+        loading = false,
+        exception = null
+      )
 
-    fun <T> partialSuccess(value: T): IncrementallyComputedValue<T> =
-      IncrementallyComputedValue(Value(value), false, null)
+    fun <T> loading(): IncrementallyComputedValue<T> =
+      IncrementallyComputedValue(
+        value = null,
+        complete = false,
+        loading = true,
+        exception = null
+      )
+
+    fun <T> partialSuccess(value: T, loading: Boolean = true): IncrementallyComputedValue<T> =
+      IncrementallyComputedValue(
+        value = Value(value),
+        complete = false,
+        loading = loading,
+        exception = null
+      )
 
     fun <T> success(value: T): IncrementallyComputedValue<T> =
-      IncrementallyComputedValue(Value(value), true, null)
+      IncrementallyComputedValue(
+        value = Value(value),
+        complete = true,
+        loading = false,
+        exception = null
+      )
 
     fun <T> partialFailure(value: T, error: Exception): IncrementallyComputedValue<T> =
-      IncrementallyComputedValue(Value(value), false, error)
+      IncrementallyComputedValue(
+        value = Value(value),
+        complete = false,
+        loading = false,
+        exception = error
+      )
 
     fun <T> failure(error: Exception): IncrementallyComputedValue<T> =
-      IncrementallyComputedValue(null, false, error)
+      IncrementallyComputedValue(
+        value = null,
+        complete = false,
+        loading = false,
+        exception = error
+      )
+
+    fun <T> IncrementallyComputedValue<T>.complete(ifEmpty: () -> T): IncrementallyComputedValue<T> =
+      IncrementallyComputedValue(
+        value = value ?: Value(ifEmpty()),
+        complete = true,
+        loading = loading,
+        exception = exception
+      )
+
+    fun <T> IncrementallyComputedValue<T>.withLoading(loading: Boolean): IncrementallyComputedValue<T> =
+      IncrementallyComputedValue(
+        value = value,
+        complete = complete,
+        loading = loading,
+        exception = exception
+      )
+
+    fun <T> IncrementallyComputedValue<T>.appendPart(
+      lastPart: Boolean,
+      append: (T?) -> T,
+    ): IncrementallyComputedValue<T> {
+      val newValue = append(value?.value)
+      return IncrementallyComputedValue(
+        value = Value(newValue),
+        complete = lastPart,
+        loading = loading,
+        exception = exception
+      )
+    }
+
+    fun <T> IncrementallyComputedValue<T>.withException(exception: Exception): IncrementallyComputedValue<T> =
+      IncrementallyComputedValue(
+        value = value,
+        complete = complete,
+        loading = loading,
+        exception = exception
+      )
   }
 
   @PublishedApi

@@ -144,7 +144,7 @@ class ArtifactModifiableModelBridge(
       }
     }
 
-    val outputUrl = outputPath?.let { fileManager.getOrCreateFromUrl(VfsUtilCore.pathToUrl(it)) }
+    val outputUrl = outputPath?.let { fileManager.storeAndGet(VfsUtilCore.pathToUrl(it)) }
     val artifactEntity = diff addEntity ArtifactEntity(uniqueName, artifactType.id, false, source) {
       this.outputUrl = outputUrl
       this.rootElement = rootElementEntity
@@ -213,7 +213,7 @@ class ArtifactModifiableModelBridge(
     return (diff as MutableEntityStorageInstrumentation).hasChanges()
   }
 
-  @RequiresWriteLock
+  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
   override fun commit() = commitMs.addMeasuredTime {
     // XXX @RequiresReadLock annotation doesn't work for kt now
     ApplicationManager.getApplication().assertWriteAccessAllowed()

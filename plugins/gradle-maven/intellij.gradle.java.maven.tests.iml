@@ -3,7 +3,7 @@
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$/testSources">
-      <sourceFolder url="file://$MODULE_DIR$/testSources" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/testSources" isTestSource="true" packagePrefix="org.jetbrains.plugins.gradle" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -27,7 +27,6 @@
     <orderEntry type="module" module-name="intellij.java.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.unscramble" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.aetherDependencyResolver.plugin" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.misc.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.analysis" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle" scope="TEST" />

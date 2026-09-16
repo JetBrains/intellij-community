@@ -2,6 +2,7 @@
 package com.jetbrains.python.sdk.add.v2
 
 import com.google.gson.JsonParser
+import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.community.execService.ExecService
@@ -41,7 +42,7 @@ class ToolVersionProbeTest {
 
     val helper = requireNotNull(PythonHelpersLocator.findPathInHelpersPossibleNull("tool_version_probe.sh"))
     val output = ExecService().execGetStdout(
-      BinOnEel(Path.of("/bin/sh"), workingDirectory),
+      BinOnEel(Path.of("/bin/sh"), workingDirectory.asEelPath()),
       Args(helper.toString(), "--python", "", "--detect-environments", workingDirectory.toString()),
     ).getOrThrow()
 
@@ -72,7 +73,7 @@ class ToolVersionProbeTest {
 
     val helper = requireNotNull(PythonHelpersLocator.findPathInHelpersPossibleNull("tool_version_probe.sh"))
     val output = ExecService().execGetStdout(
-      BinOnEel(Path.of("/bin/sh"), processWorkingDirectory),
+      BinOnEel(Path.of("/bin/sh"), processWorkingDirectory.asEelPath()),
       Args(helper.toString(), "--python", "", "--detect-environments", requestedWorkingDirectory.toString()),
     ).getOrThrow()
 

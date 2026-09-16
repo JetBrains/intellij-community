@@ -37,10 +37,10 @@
     <orderEntry type="library" exported="" name="fleet:io.ktor.http.cio" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
-    <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
-    <orderEntry type="library" name="kotlinx-coroutines-slf4j" level="project" />
-    <orderEntry type="library" name="kotlinx-io-core" level="project" />
-    <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.slf4j" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.io" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" />
     <orderEntry type="library" name="slf4j-api" level="project" />
   </component>
 </module>

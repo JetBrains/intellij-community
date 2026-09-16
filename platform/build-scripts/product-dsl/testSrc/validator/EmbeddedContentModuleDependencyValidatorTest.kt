@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.productLayout.validator
 
+import com.intellij.platform.buildScripts.concurrency.SharedTaskOwner
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue.EMBEDDED
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue.OPTIONAL
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue.REQUIRED
@@ -17,6 +18,13 @@ import org.junit.jupiter.api.extension.ExtendWith
 
 @ExtendWith(TestFailureLogger::class)
 class EmbeddedContentModuleDependencyValidatorTest {
+  private val owner = SharedTaskOwner("EmbeddedContentModuleDependencyValidatorTest")
+
+  @org.junit.jupiter.api.AfterEach
+  fun closeSharedTasks() {
+    owner.close()
+  }
+
   @Test
   fun `reports embedded module dependency on bundled plugin content`(): Unit = runBlocking(Dispatchers.Default) {
     val graph = pluginGraph {
@@ -33,7 +41,7 @@ class EmbeddedContentModuleDependencyValidatorTest {
       linkContentModuleDeps("core.embedded", "structure.impl")
     }
 
-    val errors = runValidationRule(EmbeddedContentModuleDependencyValidator, testGenerationModel(graph))
+    val errors = runValidationRule(EmbeddedContentModuleDependencyValidator, testGenerationModel(graph, owner = owner))
 
     assertThat(errors).hasSize(1)
     val error = errors.single() as EmbeddedContentModuleDependencyError
@@ -57,7 +65,7 @@ class EmbeddedContentModuleDependencyValidatorTest {
       linkContentModuleDeps("core.embedded", "core.required")
     }
 
-    val errors = runValidationRule(EmbeddedContentModuleDependencyValidator, testGenerationModel(graph))
+    val errors = runValidationRule(EmbeddedContentModuleDependencyValidator, testGenerationModel(graph, owner = owner))
 
     assertThat(errors).isEmpty()
   }
@@ -75,7 +83,7 @@ class EmbeddedContentModuleDependencyValidatorTest {
       linkContentModuleDeps("core.embedded", "core.embedded.dep")
     }
 
-    val errors = runValidationRule(EmbeddedContentModuleDependencyValidator, testGenerationModel(graph))
+    val errors = runValidationRule(EmbeddedContentModuleDependencyValidator, testGenerationModel(graph, owner = owner))
 
     assertThat(errors).isEmpty()
   }
@@ -96,7 +104,7 @@ class EmbeddedContentModuleDependencyValidatorTest {
       linkContentModuleDeps("core.required", "structure.impl")
     }
 
-    val errors = runValidationRule(EmbeddedContentModuleDependencyValidator, testGenerationModel(graph))
+    val errors = runValidationRule(EmbeddedContentModuleDependencyValidator, testGenerationModel(graph, owner = owner))
 
     assertThat(errors).isEmpty()
   }
@@ -116,7 +124,7 @@ class EmbeddedContentModuleDependencyValidatorTest {
       linkContentModuleDeps("core.embedded", "external.impl")
     }
 
-    val errors = runValidationRule(EmbeddedContentModuleDependencyValidator, testGenerationModel(graph))
+    val errors = runValidationRule(EmbeddedContentModuleDependencyValidator, testGenerationModel(graph, owner = owner))
 
     assertThat(errors).isEmpty()
   }

@@ -95,7 +95,7 @@ internal class TerminalDocumentationManager(private val project: Project, privat
     currentPopup = WeakReference(popup)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun autoShowDocumentationOnItemChange(lookup: LookupEx, parentDisposable: Disposable) {
     if (!TerminalUiSettingsManager.getInstance().autoShowDocumentationPopup) {
       return
@@ -115,7 +115,7 @@ internal class TerminalDocumentationManager(private val project: Project, privat
    * @param [allowEmpty] whether to show "No documentation" popup when documentation is not found for initial [element].
    * @param [hideLookupOnCancel] when true, the lookup will be hidden if doc popup is canceled by explicit action of the user.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun showDocumentationForItem(lookup: LookupEx,
                                element: LookupElement,
                                parentDisposable: Disposable,

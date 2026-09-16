@@ -23,7 +23,7 @@ class ListListenerCollapsedActionGroupExpander private constructor(
 
   companion object {
     @JvmStatic
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     fun expandCollapsableGroupsOnClick(list: JList<AnAction>, model: DefaultListModel<AnAction>) {
       val instance = ListListenerCollapsedActionGroupExpander(list, model)
       list.addMouseListener(instance)

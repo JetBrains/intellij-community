@@ -15,7 +15,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.diagnostic.rethrowControlFlowException
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.Disposer
@@ -191,15 +190,14 @@ class MarkdownJCEFHtmlPanel(private val project: Project?, private val virtualFi
           }
           catch (e: Exception) {
             rethrowControlFlowException(e)
-            thisLogger().error(e)
+            logger.error("Failed to update the Markdown preview", e)
           }
         }
       }
       catch (e: Throwable) {
         initialization.completeExceptionally(e)
         rethrowControlFlowException(e)
-        thisLogger().error("Failed to initialize the Markdown preview", e)
-        throw e
+        logger.error("Failed to initialize the Markdown preview", e)
       }
     }
   }
@@ -253,6 +251,27 @@ class MarkdownJCEFHtmlPanel(private val project: Project?, private val virtualFi
 
   override fun reloadWithOffset(offset: Int) {
     updateHandler.reloadWithOffset(offset)
+  }
+
+  override fun reloadStyles() {
+    coroutineScope.launch {
+      initialization.await()
+      // language=JavaScript
+      val code = """
+      |(function() {
+      |  const token = Date.now();
+      |  for (const link of document.querySelectorAll('link[rel="stylesheet"]')) {
+      |    const fresh = link.cloneNode(false);
+      |    fresh.href = link.href.split("?")[0] + "?v=" + token;
+      |    const dropStale = () => link.remove();
+      |    fresh.addEventListener("load", dropStale, { once: true });
+      |    fresh.addEventListener("error", dropStale, { once: true });
+      |    link.insertAdjacentElement("afterend", fresh);
+      |  }
+      |})();
+      """.trimMargin()
+      runJavaScript(code)
+    }
   }
 
   override fun dispose() {

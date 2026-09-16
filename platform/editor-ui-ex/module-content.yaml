@@ -1,5 +1,0 @@
-- name: dist.all/lib/intellij.platform.editor.ex.jar
-  modules:
-  - name: intellij.platform.editor.ex
-  - name: intellij.platform.indexing.impl
-  - name: intellij.platform.util.io.storages

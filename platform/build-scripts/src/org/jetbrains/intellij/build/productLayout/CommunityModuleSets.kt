@@ -5,6 +5,9 @@ package org.jetbrains.intellij.build.productLayout
 
 import org.jetbrains.intellij.build.productLayout.CoreModuleSets.coreLang
 import org.jetbrains.intellij.build.productLayout.CoreModuleSets.rpcBackend
+import org.jetbrains.intellij.build.productLayout.LibraryModuleSets.librariesGrpc
+import org.jetbrains.intellij.build.productLayout.LibraryModuleSets.librariesIdeCommon
+import org.jetbrains.intellij.build.productLayout.LibraryModuleSets.librariesLsp4j
 
 /**
  * Community module sets for IDE features that build on CoreModuleSets.
@@ -15,9 +18,10 @@ import org.jetbrains.intellij.build.productLayout.CoreModuleSets.rpcBackend
  * - **vcs**: Version control support
  * - **xml**: XML support
  * - **compose**: Compose UI
+ * - **spellchecker/settingsSync/ml**: one feature with the library it needs
  * - **ideCommon**: Full IDE common modules
  *
- * Has a one-way dependency on CoreModuleSets (libraries, platform infrastructure, RPC).
+ * Has a one-way dependency on CoreModuleSets (platform infrastructure, RPC) and LibraryModuleSets (library wrappers).
  *
  * **How to regenerate XML files:**
  * - IDE: Run configuration "Generate Product Layouts"
@@ -26,7 +30,8 @@ import org.jetbrains.intellij.build.productLayout.CoreModuleSets.rpcBackend
  * For comprehensive documentation:
  * - [Module Sets](../product-dsl/docs/module-sets.md) - How module sets work and best practices
  *
- * @see CoreModuleSets for platform infrastructure (libraries, corePlatform, coreIde, coreLang, rpc, fleet)
+ * @see CoreModuleSets for platform infrastructure (corePlatform, coreIde, coreLang, rpc, fleet)
+ * @see LibraryModuleSets for the library wrapper sets
  */
 object CommunityModuleSets {
   // region Essential and Debugger
@@ -106,7 +111,7 @@ object CommunityModuleSets {
 
     embeddedModule("intellij.platform.ide.initialConfigImport")
     embeddedModule("intellij.platform.markdown.utils")
-    embeddedModule("intellij.platform.ml")
+    module("intellij.platform.ml")
   }
 
   /**
@@ -147,13 +152,14 @@ object CommunityModuleSets {
     module("intellij.platform.completion.backend")
 
     embeddedModule("intellij.platform.polySymbols")
+    module("intellij.platform.polySymbols.web")
 
     // Platform language modules (moved from platformLangBase for consolidation)
     // These provide core IDE functionality needed by all full IDE products
     embeddedModule("intellij.platform.builtInServer.impl")
-    embeddedModule("intellij.platform.externalSystem.dependencyUpdater")
-    embeddedModule("intellij.platform.externalSystem.impl")
-    embeddedModule("intellij.platform.externalProcessAuthHelper")
+    module("intellij.platform.externalSystem.dependencyUpdater")
+    module("intellij.platform.externalSystem.impl")
+    module("intellij.platform.externalProcessAuthHelper")
 
     module("intellij.platform.util.commonsLangV2Shim")
   }
@@ -178,9 +184,11 @@ object CommunityModuleSets {
   /**
    * VCS (Version Control System) shared anchor modules.
    * Implementation, log, DVCS, and sqlite content is bundled via intellij.platform.vcs.plugin.
+   * The microba date picker is a dependency of `intellij.platform.vcs.impl` in that plugin.
    */
   fun vcs(): ModuleSet = moduleSet("vcs") {
-    embeddedModule("intellij.platform.vcs")
+    module("intellij.platform.vcs")
+    module("intellij.libraries.microba")
 
     moduleSet(vcsShared())
   }
@@ -199,7 +207,7 @@ object CommunityModuleSets {
    * Language Server Protocol (LSP) support modules.
    */
   fun lsp(): ModuleSet = moduleSet("lsp") {
-    moduleSet(CoreModuleSets.librariesLsp4j())
+    moduleSet(librariesLsp4j())
     embeddedModule("intellij.platform.lsp")
     embeddedModule("intellij.platform.lsp.impl")
     module("intellij.platform.lsp.impl.structureView")
@@ -215,39 +223,8 @@ object CommunityModuleSets {
   }
 
   /**
-   * XML support modules.
-   */
-  fun xml(): ModuleSet = moduleSet("xml", alias = "com.intellij.modules.xml") {
-    module("intellij.xml.dom")
-    module("intellij.xml.dom.impl")
-    module("intellij.xml.structureView")
-    module("intellij.xml.structureView.impl")
-    module("intellij.xml.psi")
-    module("intellij.xml.psi.impl")
-    module("intellij.xml.analysis")
-    module("intellij.xml.emmet")
-    module("intellij.xml.emmet.shared")
-    module("intellij.xml.emmet.backend")
-    module("intellij.xml.emmet.frontend")
-    module("intellij.xml.ui.common")
-    module("intellij.xml.parser")
-    module("intellij.xml.syntax")
-    module("intellij.relaxng")
-    // kept embedded (i.e. loaded by the core classloader): `AdvancedEnhancer.getDefaultClassLoader()` defines each
-    // generated DOM proxy in the `PluginClassLoader` of one of the proxied interfaces, so `net.sf.cglib.proxy.Factory`
-    // has to be resolvable from any plugin classloader - a set the layout cannot enumerate.
-    embeddedModule("intellij.libraries.cglib")
-    module("intellij.libraries.isorelax")
-    module("intellij.libraries.jing")
-    module("intellij.libraries.xerces")
-    module("intellij.xml.impl")
-    module("intellij.xml.analysis.impl")
-    module("intellij.xml.langInjection")
-    module("intellij.xml.langInjection.xpath")
-  }
-
-  /**
    * XML support modules without Structure View UI.
+   * The other products bundle the `intellij.xml.plugin` wrapper plugin instead.
    */
   fun xmlWithoutStructureView(): ModuleSet = moduleSet("xml.without.structureView", alias = "com.intellij.modules.xml") {
     module("intellij.xml.dom")
@@ -270,6 +247,7 @@ object CommunityModuleSets {
     module("intellij.libraries.isorelax")
     module("intellij.libraries.jing")
     module("intellij.libraries.xerces")
+    module("intellij.libraries.xml.resolver")
     module("intellij.xml.impl")
     module("intellij.xml.analysis.impl")
     module("intellij.xml.langInjection")
@@ -295,8 +273,10 @@ object CommunityModuleSets {
 
   /**
    * Compose UI modules.
+   * `intellij.libraries.compose.runtime.desktop` depends on the jspecify annotations.
    */
   fun compose(): ModuleSet = moduleSet("compose") {
+    module("intellij.libraries.jspecify")
     module("intellij.libraries.skiko")
     module("intellij.libraries.coil")
     module("intellij.libraries.compose.swing")
@@ -373,26 +353,44 @@ object CommunityModuleSets {
   }
 
   /**
-   * Popular applied libraries, required for many plugins.
+   * The spellchecker core module and its Lucene dictionary index.
+   * The VCS and XML spellchecker strategies stay in [ideCommon], because lean products bundle the core without them.
    */
-  fun librariesIdeCommon(): ModuleSet = moduleSet("libraries.ide.common") {
-    module("intellij.libraries.javax.activation")
-    module("intellij.libraries.opencsv")
+  fun spellchecker(): ModuleSet = moduleSet("spellchecker") {
+    module("intellij.spellchecker")
     module("intellij.libraries.lucene.common")
-    module("intellij.libraries.jettison")
-    module("intellij.libraries.oshi.core")
-    module("intellij.libraries.xstream")
-    module("intellij.libraries.commons.text")
   }
 
   /**
-   * IDE common modules (includes essential, compose, vcs, xml, duplicates).
+   * Settings Sync core and the JGit library it stores settings with.
+   */
+  fun settingsSync(): ModuleSet = moduleSet("settings.sync") {
+    module("intellij.settingsSync.core")
+    module("intellij.libraries.jgit")
+  }
+
+  /**
+   * ML platform implementation, consumed only by the ML ranking plugins.
+   * The `intellij.platform.ml` API stays embedded in [essentialMinimal].
+   */
+  fun ml(): ModuleSet = moduleSet("ml") {
+    module("intellij.platform.ml.impl")
+  }
+
+  /**
+   * IDE common modules.
+   * Nests essential, compose, spellchecker, settings.sync, ml, vcs, lsp, duplicates, and the
+   * libraries.ide.common and libraries.grpc sets from [LibraryModuleSets].
    */
   fun ideCommon(): ModuleSet = moduleSet("ide.common") {
     // Include essential first (which includes coreLang from CoreModuleSets)
     moduleSet(essential())
     moduleSet(compose())
     moduleSet(librariesIdeCommon())
+    moduleSet(librariesGrpc())
+    moduleSet(spellchecker())
+    moduleSet(settingsSync())
+    moduleSet(ml())
 
     // Additional IDE-specific modules
     module("intellij.platform.lvcs.impl")
@@ -403,15 +401,9 @@ object CommunityModuleSets {
     module("intellij.platform.scriptDebugger.backend")
     module("intellij.platform.scriptDebugger.protocolReaderRuntime")
 
-    module("intellij.platform.ml.impl")
-
-    module("intellij.libraries.microba")
     module("intellij.platform.diagnostic.freezeAnalyzer")
     module("intellij.platform.warmup")
     module("intellij.platform.inspect")
-    module("intellij.libraries.jgit")
-    module("intellij.settingsSync.core")
-    module("intellij.spellchecker")
     module("intellij.spellchecker.vcs")
     module("intellij.spellchecker.xml")
     module("intellij.platform.buildView")
@@ -428,16 +420,15 @@ object CommunityModuleSets {
     module("intellij.regexp")
     module("intellij.platform.langInjection")
     module("intellij.platform.langInjection.backend")
-    module("intellij.libraries.grpc")
-    module("intellij.libraries.grpc.netty.shaded")
-    module("intellij.libraries.jspecify")
 
-    embeddedModule("intellij.platform.vcs")
-    moduleSet(vcsShared())
+    moduleSet(vcs())
     moduleSet(lsp())
-    moduleSet(xml())
+    // the other xml modules live in the `intellij.xml.plugin` wrapper plugin; cglib is kept embedded
+    // (i.e. loaded by the core classloader): `AdvancedEnhancer.getDefaultClassLoader()` defines each
+    // generated DOM proxy in the `PluginClassLoader` of one of the proxied interfaces, so `net.sf.cglib.proxy.Factory`
+    // has to be resolvable from any plugin classloader - a set the layout cannot enumerate.
+    embeddedModule("intellij.libraries.cglib")
     moduleSet(duplicates())
-    embeddedModule("intellij.libraries.batik")
 
     // Note: rd.common is intentionally NOT included in ide.common
     // Reason: Rider uses custom module loading mode due to early backend startup requirements.

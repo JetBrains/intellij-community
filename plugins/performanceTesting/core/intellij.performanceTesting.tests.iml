@@ -50,8 +50,6 @@
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.fastutil" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.debugger" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.debugger.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.caffeine" scope="TEST" />
     <orderEntry type="module" module-name="intellij.driver.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.netty.codec.http" scope="TEST" />
@@ -66,8 +64,6 @@
     <orderEntry type="module" module-name="intellij.libraries.oshi.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.execution" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.guiForms.rt" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.debugger.impl.shared" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.debugger.impl.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.structureView" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.teamCity" scope="TEST" />
     <orderEntry type="module" module-name="intellij.performanceTesting" scope="TEST" />
@@ -75,7 +71,6 @@
     <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit5.params" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.misc.plugin" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.performanceTesting" />
 </module>

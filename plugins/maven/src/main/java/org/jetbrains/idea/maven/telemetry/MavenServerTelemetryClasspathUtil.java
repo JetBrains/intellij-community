@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.telemetry;
 
 import com.intellij.platform.diagnostic.telemetry.rt.PlatformTelemetryRtClass;
+import io.opentelemetry.common.ComponentLoader;
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.context.propagation.TextMapPropagator;
 import io.opentelemetry.sdk.OpenTelemetrySdk;
@@ -23,6 +24,7 @@ public final class MavenServerTelemetryClasspathUtil {
     Clock.class,
     SdkMeterProvider.class,
     SdkLoggerProvider.class,
+    ComponentLoader.class,
     PlatformTelemetryRtClass.class
   );
 }

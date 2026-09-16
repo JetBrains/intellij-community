@@ -1,5 +1,4 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
-load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.libraries.jgit.ssh` start
 jvm_library(
@@ -26,15 +25,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(
-    libraries = [
-        # do not sort,
-        "@lib//:libraries-jgit-ssh-eclipse-jgit-ssh-apache",
-        "@lib//:libraries-jgit-ssh-eclipse-jgit-ssh-apache-agent",
-    ],
-    module = ":jgit-ssh",
-)
-
 jvm_library(
     name = "jgit-ssh_test_lib",
     testonly = True,
@@ -58,7 +48,6 @@ exports_files(
     [
         "intellij.libraries.jgit.ssh.iml",
         "resources/intellij.libraries.jgit.ssh.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -42,7 +42,7 @@ enum class TargetClassCandidateKind {
     CONTEXT_PARAMETER,
 }
 
-@RequiresReadLock
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 @ApiStatus.Internal
 fun findTargetClassCandidates(declaration: KtCallableDeclaration): List<TargetClassCandidateParameter> {
     val result = mutableListOf<TargetClassCandidateParameter>()

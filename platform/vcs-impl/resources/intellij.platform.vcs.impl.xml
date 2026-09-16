@@ -112,7 +112,6 @@
       <language/>
       <className>com.intellij.openapi.vcs.intentions.SelectedBlockHistoryIntention</className>
     </intentionAction>
-    <vcs.fileStatusProvider implementation="com.intellij.openapi.options.newEditor.settings.SettingsFileEditorProvider"/>
   </extensions>
 
   <projectListeners>

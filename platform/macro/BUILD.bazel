@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.platform.macro` start
+content_module_jar(module = ":macro")
+### auto-generated section `dev intellij.platform.macro` end
+
 ### auto-generated section `build intellij.platform.macro` start
 jvm_library(
     name = "macro",
@@ -39,8 +43,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":macro")
-
 jvm_library(
     name = "macro_test_lib",
     testonly = True,
@@ -78,7 +80,6 @@ exports_files(
     [
         "intellij.platform.macro.iml",
         "resources/intellij.platform.macro.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

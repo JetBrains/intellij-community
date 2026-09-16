@@ -24,6 +24,7 @@ import com.intellij.rt.coverage.util.ProjectDataLoader;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PathUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
@@ -120,6 +121,7 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
     final @Nullable CoverageSuite coverageSuite,
     final @NotNull CoverageLoadErrorReporter reporter
   ) {
+    ThreadingAssertions.assertBackgroundThread();
     ProjectData projectData;
     try (var input = new BufferedInputStream(Files.newInputStream(sessionDataFile))) {
       projectData = ProjectDataLoader.load(input);

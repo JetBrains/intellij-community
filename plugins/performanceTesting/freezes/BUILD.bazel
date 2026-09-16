@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.performanceTesting.freezes` start
+content_module_jar(module = ":freezes")
+### auto-generated section `dev intellij.performanceTesting.freezes` end
+
 ### auto-generated section `build intellij.performanceTesting.freezes` start
 jvm_library(
     name = "freezes",
@@ -41,8 +45,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":freezes")
-
 jvm_library(
     name = "freezes_test_lib",
     testonly = True,
@@ -81,7 +83,6 @@ exports_files(
     [
         "intellij.performanceTesting.freezes.iml",
         "resources/intellij.performanceTesting.freezes.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

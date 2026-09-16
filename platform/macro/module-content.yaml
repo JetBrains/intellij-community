@@ -1,3 +1,0 @@
-- name: dist.all/lib/intellij.platform.macro.jar
-  modules:
-  - name: intellij.platform.macro

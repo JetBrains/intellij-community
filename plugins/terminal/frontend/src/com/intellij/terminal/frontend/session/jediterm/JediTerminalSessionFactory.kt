@@ -8,7 +8,6 @@ import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.TerminalExecutorServiceManagerImpl
 import com.intellij.terminal.frontend.session.ObservableTtyConnector
 import com.intellij.terminal.frontend.session.TerminalShellIntegrationController
-import com.intellij.terminal.frontend.session.TerminalShellIntegrationStatisticsListener
 import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.awaitCancellationAndInvoke
 import com.jediterm.core.typeahead.TerminalTypeAheadManager
@@ -45,9 +44,6 @@ internal fun createJediTerminalSession(
   val outputScope = coroutineScope.childScope("Terminal output forwarding")
   val shellIntegrationController = TerminalShellIntegrationController()
   services.controller.addCustomCommandListener { shellIntegrationController.processCustomCommand(it) }
-  if (project != null) {
-    shellIntegrationController.addListener(TerminalShellIntegrationStatisticsListener(project))
-  }
   val outputFlow = createTerminalOutputFlow(
     services,
     shellIntegrationController,

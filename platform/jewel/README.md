@@ -359,7 +359,7 @@ In your holders, you can choose which implementation of `IconKey` to use:
 
 ### Painter hints
 
-Jewel has an API to influence the loading and drawing of icons, called `PainterHint`. `Icon` composables have overloads
+Jewel has an API to influence the loading and drawing of icons, called `PainterHint`. `IconDescriptor` composables have overloads
 that take zero, one or more `PainterHint`s that will be used to compute the end result that shows up on screen.
 
 `PainterHint`s can change the icon path (by adding a prefix/suffix, or changing it completely), tweak the contents of an

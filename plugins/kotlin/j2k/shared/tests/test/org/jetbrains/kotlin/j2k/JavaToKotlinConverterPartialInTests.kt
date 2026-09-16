@@ -28,6 +28,9 @@ import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.idea.base.psi.addMemberDeclaration
+import org.jetbrains.kotlin.idea.base.psi.setPropertyInitializer
+import org.jetbrains.kotlin.idea.base.psi.setPropertyTypeReference
 import org.jetbrains.kotlin.j2k.PostProcessingTarget.MultipleFilesPostProcessingTarget
 import org.jetbrains.kotlin.j2k.externalCodeProcessing.J2kMemberKey
 import org.jetbrains.kotlin.j2k.externalCodeProcessing.OriginalJavaPsiContext
@@ -190,26 +193,26 @@ private suspend fun rewriteToPartialSemantics(
     edtWriteAction {
         for (property in propertiesToStub) {
             if (property.typeReference == null) {
-                property.typeReference = psiFactory.createType(propertyTypes.getValue(property))
+                property.setPropertyTypeReference(psiFactory.createType(propertyTypes.getValue(property)))
             }
-            property.initializer = psiFactory.createExpression("TODO()")
+            property.setPropertyInitializer(psiFactory.createExpression("TODO()"))
         }
 
         for (property in propertiesNeedingImplicitInitializer) {
             val (typeText, initializerText) = implicitInitializers.getValue(property)
             if (property.typeReference?.text != typeText) {
-                property.typeReference = psiFactory.createType(typeText)
+                property.setPropertyTypeReference(psiFactory.createType(typeText))
             }
-            property.initializer = psiFactory.createExpression(initializerText)
+            property.setPropertyInitializer(psiFactory.createExpression(initializerText))
         }
 
         for ((property, initializerText) in selectedFieldInitializersToRestore) {
-            property.initializer = psiFactory.createExpression(initializerText)
+            property.setPropertyInitializer(psiFactory.createExpression(initializerText))
         }
 
         for ((property, parameterName) in selectedParameterShadowProperties) {
-            property.typeReference = null
-            property.initializer = psiFactory.createExpression(parameterName)
+            property.setPropertyTypeReference(null)
+            property.setPropertyInitializer(psiFactory.createExpression(parameterName))
         }
 
         for (function in functionsToStub) {
@@ -234,7 +237,7 @@ private suspend fun rewriteToPartialSemantics(
                     val initializer = if (companionObject != null) {
                         body.addBefore(psiFactory.createAnonymousInitializer(), companionObject)
                     } else {
-                        klass.addDeclaration(psiFactory.createAnonymousInitializer())
+                        klass.addMemberDeclaration(psiFactory.createAnonymousInitializer())
                     }
                     (initializer as? KtAnonymousInitializer)?.body?.replace(psiFactory.createBlock("TODO()"))
                 }
@@ -250,8 +253,8 @@ private suspend fun rewriteVarargShadowPropertiesForPartialTests(ktFile: KtFile)
     val selectedVarargShadowProperties = readAction { ktFile.collectParameterShadowPropertiesForPartialTests() }
     edtWriteAction {
         for ((property, parameterName) in selectedVarargShadowProperties) {
-            property.typeReference = null
-            property.initializer = psiFactory.createExpression(parameterName)
+            property.setPropertyTypeReference(null)
+            property.setPropertyInitializer(psiFactory.createExpression(parameterName))
         }
         CodeStyleManager.getInstance(ktFile.project).reformat(ktFile)
     }

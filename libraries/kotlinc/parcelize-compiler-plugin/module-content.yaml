@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.kotlinc.parcelize.compiler.plugin.jar
+  modules:
+  - name: intellij.libraries.kotlinc.parcelize.compiler.plugin
+    libraries:
+      kotlinc.parcelize-compiler-plugin:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/parcelize-compiler-plugin-for-ide/2/parcelize-compiler-plugin-for-ide-2.jar

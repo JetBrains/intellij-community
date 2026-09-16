@@ -27,7 +27,6 @@ import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.grazie.GrazieBundle
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.detection.toAvailableLang
-import com.intellij.grazie.ide.inspection.ai.RephraseAction
 import com.intellij.grazie.ide.inspection.auto.AutoFix
 import com.intellij.grazie.ide.ui.configurable.StyleConfigurable.Companion.ruleEngineLanguages
 import com.intellij.grazie.jlanguage.Lang
@@ -627,7 +626,6 @@ class TreeRuleChecker private constructor() {
               ConfigureSuggestedParameter(suggestion, domain, match.rule().language().toAvailableLang(), suggestion.quickFixText)
             }
           }
-          ActionSuggestion.RephraseAround -> RephraseAction()
           else -> null
         }
       }

@@ -22,5 +22,5 @@ open class ComponentInlayRenderer<out T : Component>(val component: T,
 
   final override fun calcHeightInPixels(inlay: Inlay<*>): Int = inlaySize.height
 
-  final override fun paint(inlay: Inlay<*>, g: Graphics, targetRegion: Rectangle, textAttributes: TextAttributes) = Unit
+  final override fun paint(inlay: Inlay<*>, g: Graphics, targetRegion: Rectangle, textAttributes: TextAttributes): Unit = Unit
 }

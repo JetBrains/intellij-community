@@ -56,30 +56,35 @@ jobs:
           # Use the daily.yml workflow to run stubtest on all third party stubs.
           function find_stubs {
             git diff --name-only "origin/${GITHUB_BASE_REF}" HEAD | \
-            egrep ^stubs/ | cut -d "/" -f 2 | sort -u | \
-            (while read stub; do [ -d "stubs/$stub" ] && echo -n "$stub " || true; done)
+            grep -E ^stubs/ | cut -d "/" -f 2 | sort -u | \
+            (while IFS= read -r stub; do [ -d "stubs/$stub" ] && echo -n "$stub " || true; done)
           }
           STUBS=$(find_stubs || echo '')
           echo "Changed stubs: $STUBS"
-          echo "STUBS=$STUBS" >> $GITHUB_ENV
+          echo "STUBS=$STUBS" >> "$GITHUB_ENV"
       - name: Install required system packages
         shell: bash
         run: |
+          # System package and stub directory names contain no whitespace or glob characters; split both lists into arguments.
+          # shellcheck disable=SC2086
           if [ -n "$STUBS" ]; then
             PACKAGES=$(python tests/get_stubtest_system_requirements.py $STUBS)
             if [ "${{ runner.os }}" = "Linux" ]; then
               if [ -n "$PACKAGES" ]; then
-                printf "Installing APT packages:\n  $(echo $PACKAGES | sed 's/ /\n  /g')\n"
+                printf 'Installing APT packages:\n'
+                printf '  %s\n' $PACKAGES
                 sudo apt-get update -q && sudo apt-get install -qy $PACKAGES
               fi
             else
               if [ "${{ runner.os }}" = "macOS" ] && [ -n "$PACKAGES" ]; then
-                printf "Installing Homebrew packages:\n  $(echo $PACKAGES | sed 's/ /\n  /g')\n"
+                printf 'Installing Homebrew packages:\n'
+                printf '  %s\n' $PACKAGES
                 brew install -q $PACKAGES
               fi
 
               if [ "${{ runner.os }}" = "Windows" ] && [ -n "$PACKAGES" ]; then
-                printf "Installing Chocolatey packages:\n  $(echo $PACKAGES | sed 's/ /\n  /g')\n"
+                printf 'Installing Chocolatey packages:\n'
+                printf '  %s\n' $PACKAGES
                 choco install -y $PACKAGES
               fi
             fi
@@ -96,6 +101,8 @@ jobs:
               PYTHON_EXECUTABLE="python"
             fi
 
+            # Stub directory names contain no whitespace or glob characters, so word splitting is intentional.
+            # shellcheck disable=SC2086
             $PYTHON_EXECUTABLE tests/stubtest_third_party.py --ci-platforms-only $STUBS
           else
             echo "Nothing to test"

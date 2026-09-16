@@ -30,7 +30,7 @@ internal fun findMostSpecificExistingFileOrNewDefault(
     fileExists = { this.exists() }
 )
 
-internal fun findMostSpecificExistingFileOrNewDefault(
+fun findMostSpecificExistingFileOrNewDefault(
     checkerClassifier: String,
     testDataDir: File,
     testDataClassifiersFromMostSpecific: Sequence<List<String>>,

@@ -66,7 +66,7 @@ internal open class InlineErrorNotifier(private val inlineComponent: InlineCompo
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun executeTask(@Nls(capitalization = Title) title: String, cancellable: Boolean, action: () -> Unit) {
     val pi = inlineComponent.showProgress(title)
     isTaskInProgress = true

@@ -2,10 +2,9 @@
 package org.jetbrains.plugins.gitlab.api.request
 
 import com.intellij.collaboration.api.graphql.loadResponse
-import com.intellij.collaboration.api.httpclient.HttpClientUtil.inflateAndReadWithErrorHandlingAndLogging
 import com.intellij.collaboration.api.json.loadJsonValue
+import com.intellij.collaboration.api.sendAndReadBody
 import com.intellij.collaboration.util.resolveRelative
-import com.intellij.openapi.diagnostic.logger
 import kotlinx.coroutines.CancellationException
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabEdition
@@ -18,9 +17,6 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabServerMetadataDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabServerVersionDTO
 import org.jetbrains.plugins.gitlab.api.gitLabQuery
 import org.jsoup.Jsoup
-import java.net.http.HttpResponse
-
-private val LOG = logger<GitLabApi>()
 
 /**
  * Checks whether the given server looks like and acts like a GitLab server.
@@ -38,10 +34,9 @@ suspend fun GitLabApi.Rest.checkIsGitLabServer(): Boolean {
   val request = request(uri).GET().build()
   return try {
     // Skip error reporting done in JsonHttpApiHelper
-    val bodyHandler = inflateAndReadWithErrorHandlingAndLogging(LOG, request) { reader, _ ->
-       GitLabRestJsonDataDeSerializer.fromJson(reader, List::class.java)
-    }
-    sendAndAwaitCancellable(request, bodyHandler).body() != null
+    sendAndReadBody(request) { _, charset ->
+      GitLabRestJsonDataDeSerializer.readJson(this, charset ?: Charsets.UTF_8, List::class.java)
+    } != null
   }
   catch (e: CancellationException) {
     throw e
@@ -56,27 +51,26 @@ suspend fun GitLabApi.Rest.checkIsGitLabServer(): Boolean {
 suspend fun GitLabApi.Rest.guessServerEdition(): GitLabEdition? {
   val uri = server.toURI().resolveRelative("help")
   val request = request(uri).GET().build()
-  val bodyHandler = inflateAndReadWithErrorHandlingAndLogging(LOG, request) { reader, _ ->
+  return sendAndReadBody(request) { _, charset ->
     // Parses the /help page and attempts to find and parse the header containing edition info
-    val titleText = Jsoup.parse(reader.readText()).select("h1").text()
-    if (!titleText.contains("GitLab", true)) return@inflateAndReadWithErrorHandlingAndLogging null
+    val titleText = Jsoup.parse(this, charset.toString(), uri.toString()).select("h1").text()
+    if (!titleText.contains("GitLab", true)) return@sendAndReadBody null
     if (titleText.contains("Enterprise", true)) Enterprise else Community
   }
-  return sendAndAwaitCancellable(request, bodyHandler).body()
 }
 
 // Authenticated
 // should not have statistics to avoid recursion
 @SinceGitLab("15.6")
-suspend fun GitLabApi.GraphQL.getServerMetadata(): HttpResponse<out GitLabServerMetadataDTO?> {
-  val request = gitLabQuery(GitLabGQLQuery.GET_METADATA)
-  return loadResponse(request, "metadata")
-}
+suspend fun GitLabApi.GraphQL.getServerMetadata(): GitLabServerMetadataDTO? =
+  gitLabQuery(GitLabGQLQuery.GET_METADATA)
+    .loadResponse<GitLabServerMetadataDTO>("metadata")
+    .body()
 
 // Authenticated
 @SinceGitLab("8.13", deprecatedIn = "15.5")
-suspend fun GitLabApi.Rest.getServerVersion(): HttpResponse<out GitLabServerVersionDTO> {
+suspend fun GitLabApi.Rest.getServerVersion(): GitLabServerVersionDTO {
   val uri = server.restApiUri.resolveRelative("version")
-  val request = request(uri).GET().build()
-  return loadJsonValue(request)
+  return request(uri).GET().build()
+    .loadJsonValue<GitLabServerVersionDTO>().body()
 }

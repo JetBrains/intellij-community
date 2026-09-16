@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.execution.process.elevation` start
+content_module_jar(module = ":execution-process-elevation")
+### auto-generated section `dev intellij.execution.process.elevation` end
+
 ### auto-generated section `build intellij.execution.process.elevation` start
 jvm_library(
     name = "execution-process-elevation",
@@ -37,8 +41,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":execution-process-elevation")
-
 jvm_library(
     name = "execution-process-elevation_test_lib",
     testonly = True,
@@ -73,7 +75,6 @@ exports_files(
     [
         "intellij.execution.process.elevation.iml",
         "resources/intellij.execution.process.elevation.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

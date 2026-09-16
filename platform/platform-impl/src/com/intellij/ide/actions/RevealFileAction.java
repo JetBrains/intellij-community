@@ -7,7 +7,6 @@ import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.jna.JnaLoader;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
@@ -28,17 +27,7 @@ import com.intellij.platform.eel.provider.EelProviderUtil;
 import com.intellij.platform.eel.provider.LocalEelMachine;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.system.OS;
-import com.sun.jna.Native;
-import com.sun.jna.Pointer;
-import com.sun.jna.platform.win32.Kernel32;
-import com.sun.jna.platform.win32.Ole32;
-import com.sun.jna.platform.win32.Shell32;
-import com.sun.jna.platform.win32.WinDef;
-import com.sun.jna.platform.win32.WinError;
-import com.sun.jna.platform.win32.WinNT;
-import com.sun.jna.platform.win32.WinUser;
-import com.sun.jna.win32.StdCallLibrary;
-import com.sun.jna.win32.W32APIOptions;
+import com.intellij.util.system.WindowsShellOperations;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -210,12 +199,7 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
     String fmApp;
 
     if (OS.CURRENT == OS.Windows) {
-      if (JnaLoader.isLoaded()) {
-        openViaShellApi(dir, toSelect);
-      }
-      else {
-        openViaExplorerCall(dir, toSelect);
-      }
+      openViaShellApi(dir, toSelect);
     }
     else if (OS.CURRENT == OS.macOS) {
       if (toSelect != null) {
@@ -258,30 +242,17 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
     if (LOG.isDebugEnabled()) LOG.debug("shell open: dir=" + dir + " toSelect=" + toSelect);
 
     ProcessIOExecutorService.INSTANCE.execute(() -> {
-      Ole32.INSTANCE.CoInitializeEx(null, Ole32.COINIT_APARTMENTTHREADED);
-
-      if (toSelect == null) {
-        var res = Shell32.INSTANCE.ShellExecute(null, "explore", dir, null, null, WinUser.SW_NORMAL);
-        if (res.intValue() <= 32) {
-          LOG.warn("ShellExecute(" + dir + "): " + res.intValue() + " GetLastError=" + Kernel32.INSTANCE.GetLastError());
-          openViaExplorerCall(dir, null);
+      try {
+        if (toSelect == null) {
+          WindowsShellOperations.openDirectory(Path.of(dir));
+        }
+        else {
+          WindowsShellOperations.selectFile(Path.of(toSelect));
         }
       }
-      else {
-        var pIdl = Shell32Ex.INSTANCE.ILCreateFromPath(dir);
-        var apIdl = new Pointer[]{Shell32Ex.INSTANCE.ILCreateFromPath(toSelect)};
-        var cIdl = new WinDef.UINT(apIdl.length);
-        try {
-          var res = Shell32Ex.INSTANCE.SHOpenFolderAndSelectItems(pIdl, cIdl, apIdl, new WinDef.DWORD(0));
-          if (!WinError.S_OK.equals(res)) {
-            LOG.warn("SHOpenFolderAndSelectItems(" + dir + ',' + toSelect + "): 0x" + Integer.toHexString(res.intValue()));
-            openViaExplorerCall(dir, toSelect);
-          }
-        }
-        finally {
-          Shell32Ex.INSTANCE.ILFree(pIdl);
-          Shell32Ex.INSTANCE.ILFree(apIdl[0]);
-        }
+      catch (Throwable failure) {
+        LOG.warn("Windows shell open failed: " + dir + ", " + toSelect, failure);
+        openViaExplorerCall(dir, toSelect);
       }
     });
   }
@@ -300,14 +271,6 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
 
   private static void openViaExplorerCall(String dir, @Nullable String toSelect) {
     spawn("explorer", toSelect != null ? "/select,\"" + toSelect + '"' : "/root,\"" + dir + '"');
-  }
-
-  private interface Shell32Ex extends StdCallLibrary {
-    Shell32Ex INSTANCE = Native.load("shell32", Shell32Ex.class, W32APIOptions.DEFAULT_OPTIONS);
-
-    Pointer ILCreateFromPath(String path);
-    void ILFree(Pointer pIdl);
-    WinNT.HRESULT SHOpenFolderAndSelectItems(Pointer pIdlFolder, WinDef.UINT cIdl, Pointer[] apIdl, WinDef.DWORD dwFlags);
   }
 
   private static void spawn(String... command) {

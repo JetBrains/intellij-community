@@ -5,7 +5,6 @@
     <module name="fleet.rhizomedb"/>
     <module name="intellij.libraries.hash4j"/>
     <module name="intellij.libraries.jbr"/>
-    <module name="intellij.libraries.jna"/>
     <module name="intellij.libraries.netty.codec.http"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.core"/>

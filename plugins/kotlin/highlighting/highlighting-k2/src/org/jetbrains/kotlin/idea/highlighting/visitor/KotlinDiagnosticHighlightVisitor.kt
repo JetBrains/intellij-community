@@ -29,8 +29,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
-import org.jetbrains.kotlin.analysis.api.components.collectDiagnostics
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnostic
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaSeverity
@@ -105,7 +103,7 @@ internal class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRan
             triggerCollectingDiagnostics(file)
         }
 
-        val analysis = file.collectDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+        val analysis = file.diagnostics()
         val filteredAnalysisResult = analysis
             .filterOutCodeFragmentVisibilityErrors(file)
             .filterOutUnusedExpressionWarnings()
@@ -128,15 +126,16 @@ internal class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRan
                          emptyList()
                      })
             }
+            .toList()
 
         // psi elements in the list can duplicate, but infrequently
         val destination = HashMap<PsiElement, List<HighlightInfo.Builder>>(builders.size)
-        for (pair in builders) {
-            destination.compute(pair.first) { _, oldList -> if (oldList == null) pair.second else oldList + pair.second }
+        for ((psiElement, builders) in builders) {
+            destination.compute(psiElement) { _, oldList -> if (oldList == null) builders else oldList + builders }
         }
 
         KotlinCompilationErrorFrequencyStatsCollector.recordCompilationErrorsHappened(
-            analysis.asSequence().filter { it.severity == KaSeverity.ERROR }.mapNotNull(KaDiagnosticWithPsi<*>::factoryName), file
+            analysis.filter { it.severity == KaSeverity.ERROR }.mapNotNull(KaDiagnosticWithPsi<*>::factoryName), file
         )
 
         destination
@@ -165,7 +164,7 @@ internal class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRan
      * [org.jetbrains.kotlin.analysis.api.diagnostics.diagnostics] will resolve the corresponding
      * non-local declaration and calculate diagnostics.
      *
-     * The following [org.jetbrains.kotlin.analysis.api.components.KaDiagnosticProvider.collectDiagnostics]
+     * The following [org.jetbrains.kotlin.analysis.api.diagnostics.diagnostics] call
      * may see already cached results.
      *
      * In the ideal scenario, most of the declarations should be resolved via [triggerCollectingDiagnostics] on other threads
@@ -194,7 +193,7 @@ internal class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRan
         declarations?.forEach(::triggerCollectingDiagnostics)
     }
 
-    private fun <PSI : PsiElement> Collection<KaDiagnosticWithPsi<PSI>>.filterOutCodeFragmentVisibilityErrors(file: KtFile): Collection<KaDiagnosticWithPsi<PSI>> {
+    private fun <PSI : PsiElement> Sequence<KaDiagnosticWithPsi<PSI>>.filterOutCodeFragmentVisibilityErrors(file: KtFile): Sequence<KaDiagnosticWithPsi<PSI>> {
         if (file !is KtCodeFragment) return this
         return filterNot { diagnostic ->
             diagnostic.diagnosticClass == KaFirDiagnostic.InvisibleReference::class
@@ -202,7 +201,7 @@ internal class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRan
         }
     }
 
-    private fun <PSI : PsiElement> Collection<KaDiagnosticWithPsi<PSI>>.filterOutUnusedExpressionWarnings(): Collection<KaDiagnosticWithPsi<PSI>> {
+    private fun <PSI : PsiElement> Sequence<KaDiagnosticWithPsi<PSI>>.filterOutUnusedExpressionWarnings(): Sequence<KaDiagnosticWithPsi<PSI>> {
         // Remove unused expression diagnostics as they already exist as inspections.
         // TODO(KTIJ-38323): remove this filter entirely once inspection is converted to quickfix.
         return filterNot { diagnostic ->

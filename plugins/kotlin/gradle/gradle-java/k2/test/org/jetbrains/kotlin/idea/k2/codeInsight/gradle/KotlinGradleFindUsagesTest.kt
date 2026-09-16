@@ -14,143 +14,161 @@ import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
-import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
+import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
 import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleProjectTestApplication
+import org.jetbrains.plugins.gradle.testFramework.util.CONFIGURATION_CACHE_SUPPORTED_VERSIONS
+import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.params.ParameterizedTest
 import kotlin.test.assertTrue
 
 
 @GradleProjectTestApplication
 @TestRoot("idea/tests/testData/")
-@TestDataPath("\$CONTENT_ROOT")
+@TestDataPath($$"$CONTENT_ROOT")
 @TestMetadata("../../../idea/tests/testData/gradle/findUsages/")
 class KotlinGradleFindUsagesTest : AbstractGradleCodeInsightTest() {
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
+    @TargetVersions(CONFIGURATION_CACHE_SUPPORTED_VERSIONS)
     @TestMetadata("versionCatalog/tomlVersionUsageInBuildGradleKts.test")
     fun testTomlVersionUsageInBuildGradleKts(gradleVersion: GradleVersion) {
         verifyFindUsages(gradleVersion, GRADLE_VERSION_CATALOGS_FIXTURE)
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
+    @TargetVersions(CONFIGURATION_CACHE_SUPPORTED_VERSIONS)
     @TestMetadata("versionCatalog/tomlLibraryUsageInBuildGradleKts.test")
     fun testTomlLibraryUsageInBuildGradleKts(gradleVersion: GradleVersion) {
         verifyFindUsages(gradleVersion, GRADLE_VERSION_CATALOGS_FIXTURE)
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
+    @TargetVersions(CONFIGURATION_CACHE_SUPPORTED_VERSIONS)
     @TestMetadata("versionCatalog/tomlLibraryUsageInTomlAndBuildGradleKts.test")
     fun testTomlLibraryUsageInTomlAndBuildGradleKts(gradleVersion: GradleVersion) {
         verifyFindUsages(gradleVersion, GRADLE_VERSION_CATALOGS_FIXTURE)
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
+    @TargetVersions(CONFIGURATION_CACHE_SUPPORTED_VERSIONS)
     @TestMetadata("versionCatalog/tomlPluginLibraryUsageBuildGradleKts.test")
     fun testTomlPluginLibraryUsageBuildGradleKts(gradleVersion: GradleVersion) {
         verifyFindUsages(gradleVersion, GRADLE_VERSION_CATALOGS_FIXTURE)
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
+    @TargetVersions(CONFIGURATION_CACHE_SUPPORTED_VERSIONS)
     @TestMetadata("versionCatalog/includedBuild/tomlVersionUsageInBuildGradleKts.test")
     fun testIncludedBuildTomlVersionUsageInBuildGradleKts(gradleVersion: GradleVersion) {
         verifyFindUsages(gradleVersion, GRADLE_VERSION_CATALOGS_FIXTURE)
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
+    @TargetVersions(CONFIGURATION_CACHE_SUPPORTED_VERSIONS)
     @TestMetadata("versionCatalog/includedBuild/tomlLibraryUsageInBuildGradleKts.test")
     fun testIncludedBuildTomlLibraryUsageInBuildGradleKts(gradleVersion: GradleVersion) {
         verifyFindUsages(gradleVersion, GRADLE_VERSION_CATALOGS_FIXTURE)
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
+    @TargetVersions(CONFIGURATION_CACHE_SUPPORTED_VERSIONS)
     @TestMetadata("versionCatalog/includedBuild/tomlLibraryUsageInTomlAndBuildGradleKts.test")
     fun testIncludedBuildTomlLibraryUsageInTomlAndBuildGradleKts(gradleVersion: GradleVersion) {
         verifyFindUsages(gradleVersion, GRADLE_VERSION_CATALOGS_FIXTURE)
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
+    @TargetVersions(CONFIGURATION_CACHE_SUPPORTED_VERSIONS)
     @TestMetadata("versionCatalog/includedBuild/tomlPluginLibraryUsageBuildGradleKts.test")
     fun testIncludedBuildTomlPluginLibraryUsageBuildGradleKts(gradleVersion: GradleVersion) {
         verifyFindUsages(gradleVersion, GRADLE_VERSION_CATALOGS_FIXTURE)
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
+    @TargetVersions(CONFIGURATION_CACHE_SUPPORTED_VERSIONS)
     @TestMetadata("versionCatalog/includedBuildWithoutSettings/tomlLibraryUsageInBuildGradleKts.test")
     fun testIncludedBuildWithoutSettingsTomlLibraryUsageInBuildGradleKts(gradleVersion: GradleVersion) {
         verifyFindUsages(gradleVersion, GRADLE_VERSION_CATALOGS_FIXTURE)
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
+    @TargetVersions(CONFIGURATION_CACHE_SUPPORTED_VERSIONS)
     @TestMetadata("versionCatalog/subprojectIncludedDynamically/tomlLibraryUsageInBuildGradleKts.test")
     fun testSubprojectIncludedDynamicallyTomlLibraryUsageInBuildGradleKts(gradleVersion: GradleVersion) {
         verifyFindUsages(gradleVersion, GRADLE_VERSION_CATALOGS_FIXTURE)
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
+    @TargetVersions(CONFIGURATION_CACHE_SUPPORTED_VERSIONS)
     @TestMetadata("topLevelPropertyNoUsage.test")
     fun testTopLevelPropertyNoUsage(gradleVersion: GradleVersion) {
         verifyFindUsages(gradleVersion)
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
+    @TargetVersions(CONFIGURATION_CACHE_SUPPORTED_VERSIONS)
     @TestMetadata("topLevelPropertyUsageInBuildGradleKts.test")
     fun testTopLevelPropertyUsageInBuildGradleKts(gradleVersion: GradleVersion) {
         verifyFindUsages(gradleVersion)
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
+    @TargetVersions(CONFIGURATION_CACHE_SUPPORTED_VERSIONS)
     @TestMetadata("topLevelFunctionUsageInBuildGradleKts.test")
     fun testTopLevelFunctionUsageInBuildGradleKts(gradleVersion: GradleVersion) {
         verifyFindUsages(gradleVersion)
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
+    @TargetVersions(CONFIGURATION_CACHE_SUPPORTED_VERSIONS)
     @TestMetadata("classUsageInBuildGradleKts.test")
     fun testClassUsageInBuildGradleKts(gradleVersion: GradleVersion) {
         verifyFindUsages(gradleVersion)
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
+    @TargetVersions(CONFIGURATION_CACHE_SUPPORTED_VERSIONS)
     @TestMetadata("propertyByProjectUsageInBuildGradleKts.test")
     fun testPropertyByProjectUsageInBuildGradleKts(gradleVersion: GradleVersion) {
         verifyFindUsages(gradleVersion)
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
+    @TargetVersions(CONFIGURATION_CACHE_SUPPORTED_VERSIONS)
     @TestMetadata("propertyBySettingsUsageInSettingsGradleKts.test")
     fun testPropertyBySettingsUsageInSettingsGradleKts(gradleVersion: GradleVersion) {
         verifyFindUsages(gradleVersion)
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
+    @TargetVersions(CONFIGURATION_CACHE_SUPPORTED_VERSIONS)
     @TestMetadata("propertyByExtraUsageInBuildGradleKts.test")
     fun testPropertyByExtraUsageInBuildGradleKts(gradleVersion: GradleVersion) {
         verifyFindUsages(gradleVersion)
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
+    @TargetVersions(CONFIGURATION_CACHE_SUPPORTED_VERSIONS)
     @TestMetadata("classFromBuildSrcUsageInBuildGradleKts.test")
-    @Disabled("TODO: find usage from gradle plugin source module works, test should be reviewed end enabled")
     fun testClassFromBuildSrcUsageInBuildGradleKts(gradleVersion: GradleVersion) {
         verifyFindUsages(gradleVersion)
     }

@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.importableFqName
+import org.jetbrains.kotlin.idea.base.psi.removeQualifier
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
@@ -89,7 +90,7 @@ internal class ReplaceWithImportAliasInspection :
             element.getQualifiedElement().let { qualifiedElement ->
                 if (qualifiedElement is KtUserType) {
                     qualifiedElement.referenceExpression?.replace(element)
-                    qualifiedElement.deleteQualifier()
+                    qualifiedElement.removeQualifier()
                 } else {
                     qualifiedElement.replace(element.parent.safeAs<KtCallExpression>() ?: element)
                 }

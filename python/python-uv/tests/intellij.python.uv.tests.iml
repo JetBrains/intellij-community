@@ -39,7 +39,7 @@
     <orderEntry type="module" module-name="intellij.python.community.junit5Tests.framework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.test.env.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.pyproject" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.python.pytools" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.pytools.backend" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.sdk.backend" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.uv.backend" scope="TEST" />
   </component>

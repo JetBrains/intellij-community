@@ -55,10 +55,6 @@ class KotlinSourceFilterScope private constructor(
             create(delegate, project, RootKindFilter.everything.copy(includeScriptsOutsideSourceRoots = true))
 
         @JvmStatic
-        fun projectSourcesAndLibraryClasses(delegate: GlobalSearchScope, project: Project) =
-            create(delegate, project, RootKindFilter.projectSourcesAndLibraryClasses.copy(includeScriptsOutsideSourceRoots = true))
-
-        @JvmStatic
         fun projectFiles(delegate: GlobalSearchScope, project: Project) =
             create(delegate, project, RootKindFilter.projectFiles.copy(includeScriptsOutsideSourceRoots = true))
 
@@ -80,7 +76,7 @@ class KotlinSourceFilterScope private constructor(
 
         @JvmStatic
         fun projectAndLibrarySources(delegate: GlobalSearchScope, project: Project) =
-            create(delegate, project, RootKindFilter.projectAndLibrarySourcesWithScripts.copy(includeScriptsOutsideSourceRoots = true))
+            create(delegate, project, RootKindFilter.projectAndLibrarySources.copy(includeScriptsOutsideSourceRoots = true))
 
         private fun create(
             delegate: GlobalSearchScope,

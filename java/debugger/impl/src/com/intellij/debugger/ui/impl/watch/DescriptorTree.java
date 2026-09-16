@@ -53,8 +53,8 @@ public class DescriptorTree {
       children = myChildrenMap.computeIfAbsent(parent, c -> new ArrayList<>());
     }
     children.add(child);
-    if (myInitial && child instanceof LocalVariableDescriptorImpl) {
-      ((LocalVariableDescriptorImpl)child).setNewLocal(false);
+    if (myInitial && child instanceof LocalVariableDescriptorImpl descriptor) {
+      descriptor.setNewLocal(false);
     }
   }
 

@@ -792,7 +792,6 @@ class TarInfo:
         "_link_target",
     )
     name: str
-    path: str
     size: int
     mtime: int | float
     chksum: int
@@ -822,6 +821,11 @@ class TarInfo:
     def frombuf(cls, buf: bytes | bytearray, encoding: str, errors: str) -> Self: ...
     @classmethod
     def fromtarfile(cls, tarfile: TarFile) -> Self: ...
+
+    @property
+    def path(self) -> str: ...
+    @path.setter
+    def path(self, name: str) -> None: ...
 
     @property
     def linkpath(self) -> str: ...

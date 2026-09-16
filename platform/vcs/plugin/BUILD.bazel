@@ -1,5 +1,34 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
+load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_TARGETS")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `dev intellij.platform.vcs.plugin` start
+dev_dist_plugin(
+    content_modules = [
+        # do not sort,
+        "intellij.libraries.sqlite.native",
+        "intellij.platform.sqlite",
+    ],
+    libraries = ["@lib//:libraries-sqlite-native-sqlite-native"],
+    main_module = "intellij.platform.vcs.plugin",
+    module_targets = MODULE_TARGETS,
+    prepacked_content_modules = [
+        # do not sort,
+        "intellij.platform.vcs.dvcs",
+        "intellij.platform.vcs.dvcs.impl",
+        "intellij.platform.vcs.impl.debugger",
+        "intellij.platform.vcs.impl.exec",
+        "intellij.platform.vcs.impl.frontend",
+        "intellij.platform.vcs.impl.lang.actions",
+        "intellij.platform.vcs.impl.lang",
+        "intellij.platform.vcs.impl",
+        "intellij.platform.vcs.log",
+        "intellij.platform.vcs.log.graph",
+        "intellij.platform.vcs.log.graph.impl",
+        "intellij.platform.vcs.log.impl",
+    ],
+)
+### auto-generated section `dev intellij.platform.vcs.plugin` end
 
 ### auto-generated section `build intellij.platform.vcs.plugin` start
 jvm_library(
@@ -38,28 +67,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.vcs.plugin` end
-
-### auto-generated section `dev intellij.platform.vcs.plugin` start
-dev_dist_plugin(
-    content_modules = [
-        "//libraries/sqlite-native",
-        "//platform/sqlite",
-    ],
-    descriptor_module = ":plugin",
-    libraries = ["@lib//:libraries-sqlite-native-sqlite-native"],
-    prepacked_content_modules = [
-        "//platform/dvcs-api:vcs-dvcs_content_module_jar",
-        "//platform/dvcs-impl:vcs-dvcs-impl_content_module_jar",
-        "//platform/vcs-impl/debugger:debugger_content_module_jar",
-        "//platform/vcs-impl/exec:exec_content_module_jar",
-        "//platform/vcs-impl/frontend:frontend_content_module_jar",
-        "//platform/vcs-impl/lang/actions:actions_content_module_jar",
-        "//platform/vcs-impl/lang:lang_content_module_jar",
-        "//platform/vcs-impl:vcs-impl_content_module_jar",
-        "//platform/vcs-log/api:vcs-log_content_module_jar",
-        "//platform/vcs-log/graph-api:vcs-log-graph_content_module_jar",
-        "//platform/vcs-log/graph:vcs-log-graph-impl_content_module_jar",
-        "//platform/vcs-log/impl:impl_content_module_jar",
-    ],
-)
-### auto-generated section `dev intellij.platform.vcs.plugin` end

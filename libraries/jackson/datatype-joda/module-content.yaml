@@ -1,7 +1,0 @@
-- name: dist.all/lib/intellij.libraries.jackson.datatype.joda.jar
-  modules:
-  - name: intellij.libraries.jackson.datatype.joda
-    libraries:
-      jackson-datatype-joda:
-      - name: $MAVEN_REPOSITORY$/com/fasterxml/jackson/datatype/jackson-datatype-joda/2/jackson-datatype-joda-2.jar
-      - name: $MAVEN_REPOSITORY$/joda-time/joda-time/2/joda-time-2.jar

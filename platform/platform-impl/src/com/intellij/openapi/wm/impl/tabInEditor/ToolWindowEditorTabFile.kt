@@ -62,6 +62,10 @@ class ToolWindowEditorTabFile internal constructor(
     isWritable = false
   }
 
+  override fun getName(): @NlsSafe String {
+    return presentableName
+  }
+
   /**
    * Returns the serialized persistent path for a persistent tab.
    *

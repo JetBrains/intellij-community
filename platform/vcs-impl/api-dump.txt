@@ -560,25 +560,21 @@ a:com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
 - com.intellij.platform.vcs.impl.shared.changes.DiffPreviewUpdateProcessor
 - <init>(com.intellij.openapi.project.Project,java.lang.String):V
 - clear():V
-- collectDiffProducers(Z):com.intellij.openapi.ListSelection
 - p:createGoToChangeAction():com.intellij.openapi.actionSystem.AnAction
 - forceKeepCurrentFileWhileFocused():Z
-- getAllChanges():java.util.stream.Stream
 - getCurrentChange():com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor$Wrapper
+- getCurrentChangeIndex():I
 - getCurrentChangeName():java.lang.String
 - p:getCurrentRequestProvider():com.intellij.diff.chains.DiffRequestProducer
-- p:getGoToChangePopupMenuActions():java.util.List
-- p:getGoToChangeToolbarActions():java.util.List
 - getProject():com.intellij.openapi.project.Project
-- getSelectedChanges():java.util.stream.Stream
 - p:goToNextChange(Z):V
 - p:goToPrevChange(Z):V
 - p:hasNextChange(Z):Z
 - p:hasPrevChange(Z):Z
 - p:isNavigationEnabled():Z
 - isWindowFocused():Z
-- iterateAllChanges():java.lang.Iterable
-- iterateSelectedChanges():java.lang.Iterable
+- p:iterateAllChanges():java.lang.Iterable
+- p:iterateSelectedChanges():java.lang.Iterable
 - p:loadRequestFast(com.intellij.diff.chains.DiffRequestProducer):com.intellij.diff.requests.DiffRequest
 - refresh(Z):V
 - pa:selectChange(com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor$Wrapper):V
@@ -2402,9 +2398,6 @@ c:com.intellij.openapi.vcs.changes.ui.SimpleChangesBrowser
 - setChangeNodeDecorator(com.intellij.openapi.vcs.changes.ui.ChangeNodeDecorator):V
 - setChangesToDisplay(java.util.Collection):V
 - setIncludedChanges(java.util.Collection):V
-f:com.intellij.openapi.vcs.changes.ui.SimpleTreeDiffRequestProcessor
-- com.intellij.openapi.vcs.changes.ui.TreeHandlerDiffRequestProcessor
-- <init>(com.intellij.openapi.project.Project,java.lang.String,com.intellij.openapi.vcs.changes.ui.ChangesTree,com.intellij.openapi.Disposable):V
 c:com.intellij.openapi.vcs.changes.ui.TreeActionsToolbarPanel
 - javax.swing.JPanel
 - <init>(com.intellij.openapi.actionSystem.ActionToolbar,com.intellij.openapi.actionSystem.ActionGroup,javax.swing.JComponent):V
@@ -2436,8 +2429,8 @@ c:com.intellij.openapi.vcs.changes.ui.TreeHandlerDiffRequestProcessor
 - pf:getHandler():com.intellij.openapi.vcs.changes.ui.ChangesTreeDiffPreviewHandler
 - pf:getTree():com.intellij.openapi.vcs.changes.ui.ChangesTree
 - f:iterateAllChanges():java.lang.Iterable
-- f:iterateChangesInSameGroup(com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor$Wrapper):java.lang.Iterable
-- f:iterateSelectedChanges():java.lang.Iterable
+- pf:iterateChangesInSameGroup(com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor$Wrapper):java.lang.Iterable
+- pf:iterateSelectedChanges():java.lang.Iterable
 - pf:selectChange(com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor$Wrapper):V
 - p:showAllChangesForEmptySelection():Z
 a:com.intellij.openapi.vcs.changes.ui.TreeHandlerEditorDiffPreview

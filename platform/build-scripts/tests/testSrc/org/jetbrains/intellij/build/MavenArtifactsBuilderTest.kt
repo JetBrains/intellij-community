@@ -16,12 +16,19 @@ import org.junit.Assert
 import org.junit.Test
 
 class MavenArtifactsBuilderTest {
+  private val lifetime = BuildLifetime()
+
+  @org.junit.After
+  fun closeBuildLifetime() {
+    lifetime.close()
+  }
+
   private val context by lazy {
     runBlocking {
       createBuildContext(
         projectHome = ULTIMATE_HOME,
         productProperties = IdeaCommunityProperties(COMMUNITY_ROOT.communityRoot),
-        setupTracer = false,
+        setupTracer = false, lifetime = lifetime,
       )
     }
   }

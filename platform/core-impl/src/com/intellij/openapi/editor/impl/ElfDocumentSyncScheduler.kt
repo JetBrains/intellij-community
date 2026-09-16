@@ -115,7 +115,7 @@ abstract class ElfDocumentSyncScheduler {
      * reconciliation into the real document runs asynchronously and coalesced via `schedule`. The EDT is never blocked
      * waiting for the write lock, so typing does not freeze.
      */
-    fun invokeLaterWithWriteAccess(@RequiresEdt @RequiresWriteLock action: Runnable) {
+    fun invokeLaterWithWriteAccess(@RequiresEdt(generateAssertion = false /* IJPL-115548 */) @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */) action: Runnable) {
       service<MyService>().cs.launch(DISPATCHER) {
         backgroundWriteAction {
           val application = ApplicationManager.getApplication()

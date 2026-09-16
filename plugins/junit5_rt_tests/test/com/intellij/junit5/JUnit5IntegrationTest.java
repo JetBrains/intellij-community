@@ -2,7 +2,10 @@
 package com.intellij.junit5;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.junit.JUnitParameterCollector;
+import com.intellij.execution.junit.JUnitParameterCollector.Parameter;
 import com.intellij.java.execution.AbstractTestFrameworkCompilingIntegrationTest;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
@@ -13,6 +16,7 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.rt.junit.JUnitStarter;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -328,6 +332,79 @@ public class JUnit5IntegrationTest extends AbstractTestFrameworkCompilingIntegra
   }
 
   /**
+   * A method of a {@code @ParameterizedClass} runs once per parameter set of that class, so the runner reports its parameters that many
+   * times. The IDE has to offer each of them once, running it for every parameter set, and has to offer the sets themselves for the class.
+   */
+  public void testCollectParametersOfMethodOfParameterizedClass() throws Exception {
+    PsiClass aClass =
+      JavaPsiFacade.getInstance(myProject).findClass("collect.CollectClassParametersTests", GlobalSearchScope.projectScope(myProject));
+    assertNotNull("Test class not found", aClass);
+    RunnerAndConfigurationSettings ofMethod = createContext(aClass.findMethodsByName("parameterized", false)[0]).getConfiguration();
+    RunnerAndConfigurationSettings ofClass = createContext(aClass).getConfiguration();
+    assertNotNull("Run configuration of the method is null", ofMethod);
+    assertNotNull("Run configuration of the class is null", ofClass);
+
+    File marker = FileUtil.createTempFile("junit-collect-marker", ".txt", true);
+    try {
+      ProcessOutput output = doStartTestsProcess(ofMethod.getConfiguration(), parameters -> {
+        parameters.getVMParametersList().addProperty("junit.jupiter.extensions.autodetection.enabled", "true");
+        parameters.getVMParametersList().addProperty(JUnitStarter.DRY_RUN_PROPERTY, "true");
+        parameters.getVMParametersList().addProperty("idea.junit.test.marker.file", marker.getAbsolutePath());
+      });
+      assertEmpty(output.err);
+      assertEquals("test bodies must NOT run during the collect pass", "", FileUtil.loadFile(marker).trim());
+
+      List<String> messages = ContainerUtil.map(output.messages, ServiceMessage::asString);
+      // one collector answers for one test, so the two questions over the same messages take two collectors
+      List<Parameter> parametersOfMethod = new JUnitParameterCollector(ofMethod, "parameterized").parse(messages);
+      assertEquals(List.of("[1] 1", "[2] -3"), ContainerUtil.map(parametersOfMethod, Parameter::displayName));
+      for (Parameter parameter : parametersOfMethod) {
+        assertEquals("run for every parameter set of the class: " + parameter, 2, parameter.ids().size());
+      }
+
+      List<Parameter> parametersOfClass =
+        new JUnitParameterCollector(ofClass, "CollectClassParametersTests").parse(messages);
+      // exactly as jupiter presents the parameter sets of a class in the pinned version, see JUnitRtConstants
+      assertEquals(List.of("[1] candidate=radar", "[2] candidate=level"),
+                   ContainerUtil.map(parametersOfClass, Parameter::displayName));
+    }
+    finally {
+      FileUtil.delete(marker);
+    }
+  }
+
+  /**
+   * A test of a parameterized class that has no parameters of its own still runs once per parameter set of that class. A dry run must
+   * not run its body either: the fork is started to read the tree, and a test body may do anything.
+   */
+  public void testDryRunOfAParameterizedClassRunsNoBody() throws Exception {
+    PsiClass aClass =
+      JavaPsiFacade.getInstance(myProject).findClass("collect.CollectClassParametersTests", GlobalSearchScope.projectScope(myProject));
+    assertNotNull("Test class not found", aClass);
+    RunnerAndConfigurationSettings ofClass = createContext(aClass).getConfiguration();
+    assertNotNull("Run configuration of the class is null", ofClass);
+
+    File marker = FileUtil.createTempFile("junit-collect-marker", ".txt", true);
+    try {
+      ProcessOutput output = doStartTestsProcess(ofClass.getConfiguration(), parameters -> {
+        parameters.getVMParametersList().addProperty("junit.jupiter.extensions.autodetection.enabled", "true");
+        parameters.getVMParametersList().addProperty(JUnitStarter.DRY_RUN_PROPERTY, "true");
+        parameters.getVMParametersList().addProperty("idea.junit.test.marker.file", marker.getAbsolutePath());
+      });
+      assertEmpty(output.err);
+      assertEquals("no test body may run during a dry run", "", FileUtil.loadFile(marker).trim());
+
+      List<Parameter> parametersOfClass = new JUnitParameterCollector(ofClass, "CollectClassParametersTests")
+        .parse(ContainerUtil.map(output.messages, ServiceMessage::asString));
+      assertEquals("the parameter sets the IDE offers for the class", List.of("[1] candidate=radar", "[2] candidate=level"),
+                   ContainerUtil.map(parametersOfClass, Parameter::displayName));
+    }
+    finally {
+      FileUtil.delete(marker);
+    }
+  }
+
+  /**
    * Runs the given data-driven method of {@code collect.CollectParametersTests} in "collect" mode (the flags the IDE
    * injects for the "run a single parameter" feature) and verifies both halves of the contract: every invocation is
    * reported, but no test body runs — the latter proven by the test bodies appending to a marker file that must stay empty.
@@ -337,21 +414,33 @@ public class JUnit5IntegrationTest extends AbstractTestFrameworkCompilingIntegra
       JavaPsiFacade.getInstance(myProject).findClass("collect.CollectParametersTests", GlobalSearchScope.projectScope(myProject));
     assertNotNull("Test class not found", aClass);
     PsiMethod method = aClass.findMethodsByName(methodName, false)[0];
-    RunConfiguration configuration = createConfiguration(method);
-    assertNotNull("Run configuration is null", configuration);
+    RunnerAndConfigurationSettings settings = createContext(method).getConfiguration();
+    assertNotNull("Run configuration is null", settings);
 
     File marker = FileUtil.createTempFile("junit-collect-marker", ".txt", true);
     try {
-      ProcessOutput output = doStartTestsProcess(configuration, parameters -> {
+      ProcessOutput output = doStartTestsProcess(settings.getConfiguration(), parameters -> {
         parameters.getVMParametersList().addProperty("junit.jupiter.extensions.autodetection.enabled", "true");
-        parameters.getVMParametersList().addProperty("idea.junit.collect.parameters", "true");
+        parameters.getVMParametersList().addProperty(JUnitStarter.DRY_RUN_PROPERTY, "true");
         parameters.getVMParametersList().addProperty("idea.junit.test.marker.file", marker.getAbsolutePath());
       });
 
       assertEmpty(output.err);
-      List<String> res = output.messages.stream().filter(TestStarted.class::isInstance).map(m -> m.getAttributes().get("name")).toList();
+      List<ServiceMessage> started = output.messages.stream()
+        .filter(m -> m instanceof TestStarted || m instanceof TestSuiteStarted)
+        .toList();
+      List<String> res = started.stream().filter(TestStarted.class::isInstance).map(m -> m.getAttributes().get("name")).toList();
       assertEquals("all invocations should be reported during collect", params, res);
       assertEquals("test bodies must NOT run during the collect pass", "", FileUtil.loadFile(marker).trim());
+
+      // the IDE reads the collected tree out of these attributes, see JUnitParameterCollector
+      for (ServiceMessage message : started) {
+        assertNotNull(message.asString(), message.getAttributes().get("nodeId"));
+        assertNotNull(message.asString(), message.getAttributes().get("parentNodeId"));
+      }
+      List<Parameter> collected = new JUnitParameterCollector(settings, methodName)
+        .parse(ContainerUtil.map(output.messages, ServiceMessage::asString));
+      assertEquals("the parameters the IDE offers", params, ContainerUtil.map(collected, Parameter::displayName));
     }
     finally {
       FileUtil.delete(marker);

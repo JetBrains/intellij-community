@@ -178,7 +178,7 @@ abstract class AutoScrollToSourceHandler {
     return !file.isTooLargeForIntellijSense()
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   protected open fun scrollToSource(tree: Component) {
     AutoScrollToSourceTaskManager.getInstance()
       .scheduleScrollToSource(handler = this, dataContext = DataManager.getInstance().getDataContext(tree))

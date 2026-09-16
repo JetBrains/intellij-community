@@ -11,13 +11,27 @@ jps_test(
 )
 ### skip generation section `test kotlin.gradle.gradle-java.tests`
 
+### auto-generated section `dev kotlin.gradle.gradle-java` start
+content_module_jar(module = ":gradle-java")
+### auto-generated section `dev kotlin.gradle.gradle-java` end
+
 ### auto-generated section `build kotlin.gradle.gradle-java` start
 create_kotlinc_options(
     name = "custom_gradle-java",
     opt_in = [
-        "org.jetbrains.kotlin.gradle.ExperimentalGradleToolingApi",
+        "org.jetbrains.kotlin.psi.KtExperimentalApi",
+        "org.jetbrains.kotlin.psi.KtNonPublicApi",
+        "org.jetbrains.kotlin.psi.KtIdeApi",
+        "org.jetbrains.kotlin.analysis.api.KaExperimentalApi",
+        "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+        "org.jetbrains.kotlin.analysis.api.KaPlatformInterface",
+        "org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaUnstableDiagnosticApi",
+        "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
+        "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+        "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
         "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
     ],
+    x_context_parameters = True,
 )
 
 jvm_library(
@@ -115,11 +129,10 @@ jvm_library(
         "//platform/util:util-ui",
         "//platform/statistics",
         "//platform/testRunner",
-        "@lib//:kotlinc-allopen-compiler-plugin",
+        "//libraries/kotlinc/allopen-compiler-plugin:libraries-kotlinc-allopen-compiler-plugin",
+        "//plugins/kotlin/base/psi",
     ],
 )
-
-content_module_jar(module = ":gradle-java")
 
 jvm_library(
     name = "gradle-java_test_lib",
@@ -213,6 +226,8 @@ jvm_library(
         "//platform/util:util-ui_test_lib",
         "//platform/statistics:statistics_test_lib",
         "//platform/testRunner:testRunner_test_lib",
+        "//libraries/kotlinc/allopen-compiler-plugin:libraries-kotlinc-allopen-compiler-plugin_test_lib",
+        "//plugins/kotlin/base/psi:psi_test_lib",
     ],
 )
 ### auto-generated section `build kotlin.gradle.gradle-java` end
@@ -231,9 +246,18 @@ exports_files(
 create_kotlinc_options(
     name = "custom_kotlin-gradle-gradle-java-tests",
     opt_in = [
-        "org.jetbrains.kotlin.gradle.ExperimentalGradleToolingApi",
-        "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+        "org.jetbrains.kotlin.psi.KtExperimentalApi",
+        "org.jetbrains.kotlin.psi.KtNonPublicApi",
+        "org.jetbrains.kotlin.psi.KtIdeApi",
+        "org.jetbrains.kotlin.analysis.api.KaExperimentalApi",
+        "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+        "org.jetbrains.kotlin.analysis.api.KaPlatformInterface",
+        "org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaUnstableDiagnosticApi",
+        "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
+        "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+        "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
     ],
+    x_context_parameters = True,
 )
 
 jvm_library(

@@ -7,8 +7,10 @@ import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.patterns.PolySymbolPattern
 import com.intellij.polySymbols.patterns.PolySymbolPatternSymbolsResolver
 import com.intellij.polySymbols.query.PolySymbolQueryStack
+import org.jetbrains.annotations.ApiStatus
 
-internal class StaticPattern(val content: String) : PolySymbolPattern() {
+@ApiStatus.Internal
+class StaticPattern(val content: String) : PolySymbolPattern() {
   override fun getStaticPrefixes(): Sequence<String> = sequenceOf(content)
 
   override fun match(

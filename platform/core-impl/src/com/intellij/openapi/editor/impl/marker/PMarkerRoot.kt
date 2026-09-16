@@ -10,14 +10,17 @@ import java.util.function.LongConsumer
 /**
  * Immutable persistent marker-state root.
  *
- * A root represents the complete marker state associated with one immutable document snapshot instance. Each
- * snapshot stores an atomic reference to its current root.
+ * A root represents the complete marker state associated with one immutable document snapshot instance. A marker
+ * store holds the atomic reference to the current root.
  *
  * None of the operations in this interface mutate the receiver. Operations
  * that change marker state return a new root that may structurally share data
  * with the receiver.
  */
 interface PMarkerRoot {
+  /** Returns an empty root with the same implementation and configuration as this root. */
+  fun emptyRoot(): PMarkerRoot
+
   /**
    * Resolves [markerId] in this root.
    *
@@ -42,12 +45,14 @@ interface PMarkerRoot {
    *
    * Already-invalid markers normally remain invalid.
    * [invalidatedMarkerConsumer] receives each marker ID that changes from valid to invalid.
+   * [affectedMarkerConsumer] receives each marker ID that remains valid after its marker policy processes the patch.
    */
   fun applyPatch(
     patch: DocumentTextPatch,
     beforeText: DocumentText,
     afterText: DocumentText,
     invalidatedMarkerConsumer: LongConsumer = EMPTY_LONG_CONSUMER,
+    affectedMarkerConsumer: LongConsumer = EMPTY_LONG_CONSUMER,
   ): PMarkerRoot
 
   /**
@@ -122,17 +127,20 @@ interface PMarkerRoot {
   /**
    * Contains the immutable state of one valid marker.
    *
-   * Root operations expose the offsets in the coordinate space of the root's document snapshot.
+   * The tree maintains these invariants, where `ancestorDelta` is the sum of pending shifts in ancestor nodes:
+   *
+   *     nodeStart + ancestorDelta == resolve(markerId).startOffset
+   *     nodeEnd + ancestorDelta == resolve(markerId).endOffset
    */
   data class MarkerEntry(
     /** Identifies the marker across roots and snapshots. */
     val markerId: Long,
 
-    /** Gives the inclusive start offset. */
-    val startOffset: Int,
+    /** Gives the inclusive start stored in the tree node. */
+    val nodeStart: Int,
 
-    /** Gives the exclusive end offset. */
-    val endOffset: Int,
+    /** Gives the exclusive end stored in the tree node. */
+    val nodeEnd: Int,
 
     /** Defines how document edits transform the marker. */
     val spec: MarkerSpec,
@@ -147,7 +155,7 @@ interface PMarkerRoot {
     val measure: Int = 0,
   ) {
     init {
-      require(measure == 0 || startOffset == endOffset) {
+      require(measure == 0 || nodeStart == nodeEnd) {
         "Only zero-length markers can have a non-zero measure"
       }
     }
@@ -159,6 +167,9 @@ interface PMarkerRoot {
   /**
    * Processes valid markers that non-strictly intersect the requested range and contain every bit in [tastePreference].
    * A zero preference matches every marker.
+   *
+   * The processor receives the stored entry. Its node range can exclude a lazy shift from an ancestor node. Call [resolve]
+   * when the processor needs actual offsets in the document snapshot.
    */
   fun processRangeMarkersOverlappingWith(
     startOffset: Int,

@@ -1,6 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.dynamic;
 
+import com.intellij.groovy.testFramework.BaseTest;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
@@ -13,7 +14,6 @@ import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnr
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.util.BaseTest;
 import org.jetbrains.plugins.groovy.util.GroovyLatestTest;
 import org.junit.Assert;
 import org.junit.Test;

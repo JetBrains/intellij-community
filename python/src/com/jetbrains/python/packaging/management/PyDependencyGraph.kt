@@ -3,7 +3,9 @@ package com.jetbrains.python.packaging.management
 
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.packaging.PyPackageName
+import com.jetbrains.python.getOrNull
 import com.jetbrains.python.packaging.packageRequirements.PackageTreeNode
+import java.util.IdentityHashMap
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -12,7 +14,7 @@ import org.jetbrains.annotations.ApiStatus
  * managers (pip/venv).
  */
 @ApiStatus.Internal
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 suspend fun PythonPackageManager.installedDependencyGraph(): List<PackageTreeNode> {
   val provider = treeProvider
                  ?: return listInstalledPackages().map { PackageTreeNode(PyPackageName.from(it.name), version = it.version) }
@@ -21,7 +23,8 @@ suspend fun PythonPackageManager.installedDependencyGraph(): List<PackageTreeNod
   val installedVersions = listInstalledPackages().associate {
     PyPackageName.normalizePackageName(it.name) to it.version
   }
-  return provider.getDependencyTrees().map { it.withResolvedVersions(installedVersions) }
+  val copies = IdentityHashMap<PackageTreeNode, PackageTreeNode>()
+  return provider.getDependencyTrees().getOrNull().orEmpty().map { it.withResolvedVersions(installedVersions, copies) }
 }
 
 /** Non-blocking flat snapshot (no edges) from the cached list; empty until seeded. */
@@ -29,8 +32,14 @@ suspend fun PythonPackageManager.installedDependencyGraph(): List<PackageTreeNod
 fun PythonPackageManager.installedDependencyGraphSnapshot(): List<PackageTreeNode> =
   listInstalledPackagesSnapshot().map { PackageTreeNode(PyPackageName.from(it.name), version = it.version) }
 
-private fun PackageTreeNode.withResolvedVersions(installedVersions: Map<String, String>): PackageTreeNode =
-  copy(
-    version = installedVersions[PyPackageName.normalizePackageName(name.name)] ?: version,
-    children = children.mapTo(mutableListOf()) { it.withResolvedVersions(installedVersions) },
-  )
+/** Copies each node once, keeping the sharing, so a graph with a cycle ends. */
+private fun PackageTreeNode.withResolvedVersions(
+  installedVersions: Map<String, String>,
+  copies: MutableMap<PackageTreeNode, PackageTreeNode>,
+): PackageTreeNode {
+  copies[this]?.let { return it }
+  val copy = PackageTreeNode(name, mutableListOf(), group, installedVersions[PyPackageName.normalizePackageName(name.name)] ?: version)
+  copies[this] = copy
+  children.mapTo(copy.children) { it.withResolvedVersions(installedVersions, copies) }
+  return copy
+}

@@ -104,9 +104,9 @@ public final class RootVisitorHost {
       }
     }
 
-    // out-of-project file or non-file(e.g. console) - use roots of SDK assigned to project
+    // out-of-project file or non-file(e.g. console) - use roots of the main PyProject's interpreter
     if (orderEntries == null) {
-      final Sdk sdk = ProjectRootManager.getInstance(file.getProject()).getProjectSdk();
+      final Sdk sdk = MainPythonSdkKt.mainPythonSdk(file.getProject());
       if (sdk != null) {
         visitSdkRoots(sdk, visitor);
       }

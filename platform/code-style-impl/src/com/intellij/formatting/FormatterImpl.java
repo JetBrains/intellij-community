@@ -745,15 +745,4 @@ public final class FormatterImpl extends FormatterEx
   public @NotNull FormattingModel createDummyFormattingModel(@NotNull PsiElement element) {
     return new DummyFormattingModel(element);
   }
-
-  @Override
-  public boolean isEligibleForVirtualFormatting(@NotNull PsiElement context) {
-    return VirtualFormattingImplKt.isEligibleForVirtualFormatting(context);
-  }
-
-  @Override
-  public @Nullable FormattingModelBuilder wrapForVirtualFormatting(@NotNull PsiElement context,
-                                                                   @Nullable FormattingModelBuilder originalModel) {
-    return VirtualFormattingImplKt.wrapForVirtualFormatting(context, originalModel);
-  }
 }

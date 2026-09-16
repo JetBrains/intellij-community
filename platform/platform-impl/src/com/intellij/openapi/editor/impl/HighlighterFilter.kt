@@ -21,7 +21,7 @@ internal class HighlighterFilter private constructor(
   /**
    * @return null if the state has not changed, or the old state otherwise
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun updatePredicate(predicate: EditorHighlightingPredicate, oldPredicate: EditorHighlightingPredicate?): HighlighterFilter? {
     if (oldPredicate == null) {
       if (predicate in predicates) {
@@ -51,7 +51,7 @@ internal class HighlighterFilter private constructor(
   /**
    * @return null if the state has not changed, or the old state otherwise
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun removePredicate(predicate: EditorHighlightingPredicate): HighlighterFilter? {
     val oldPredicates = predicates
     predicates = predicates.remove(predicate)

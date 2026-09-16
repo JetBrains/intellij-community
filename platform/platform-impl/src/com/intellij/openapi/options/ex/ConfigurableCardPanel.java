@@ -22,6 +22,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.GradientViewport;
 import com.intellij.ui.dsl.gridLayout.GridLayout;
+import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -145,6 +146,16 @@ public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configu
 
   private static @NotNull JComponent decorate(@NotNull Configurable configurable, @NotNull JComponent component) {
     if (ConfigurableWrapper.cast(MasterDetails.class, configurable) != null) return component;
+
+    if (UIUtil.getDeprecatedBackground() != null) {
+      UIUtil.uiTraverser(component)
+        .filter(JComponent.class)
+        .forEach(c -> {
+          if (c.getLayout() instanceof GridLayoutManager) {
+            UIUtil.applyDeprecatedBackground(c);
+          }
+        });
+    }
 
     if (ConfigurableWrapper.cast(Configurable.NoMargin.class, configurable) == null) {
       if (!component.getClass().equals(JPanel.class) && !component.getClass().equals(DialogPanel.class)) {

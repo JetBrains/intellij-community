@@ -11,6 +11,7 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.EditorCoreUtil
@@ -78,7 +79,7 @@ class EditorSettingsState(private val editor: EditorImpl?,
                                    internal val project: Project?,
                                    private val softWrapAppliancePlace: SoftWrapAppliancePlaces) : ObservableState() {
   companion object {
-    private val LOG = logger<EditorSettingsState>()
+    private val LOG: Logger = logger<EditorSettingsState>()
   }
 
   // Use for code-style-derived properties: their defaults depend on backend-side data (e.g. .clang-format, .editorconfig)
@@ -89,7 +90,7 @@ class EditorSettingsState(private val editor: EditorImpl?,
   // This group of settings does not have a UI
   var myAdditionalLinesCount: Int by property(Registry.intValue("editor.virtual.lines", 5))
   var myAdditionalColumnsCount: Int by property(3)
-  var myLineCursorWidth by property(EditorUtil.getDefaultCaretWidth())
+  var myLineCursorWidth: Int by property(EditorUtil.getDefaultCaretWidth())
   var myLineMarkerAreaShown: Boolean by property(true)
   var myAllowSingleLogicalLineFolding: Boolean by property(false)
   var myAutoCodeFoldingEnabled: Boolean by property(true)
@@ -229,7 +230,7 @@ class EditorSettingsState(private val editor: EditorImpl?,
       field = value
       recalculateLanguage()
     }
-  private val calcLangReadActionRef = AtomicReference<Job?>()
+  private val calcLangReadActionRef: AtomicReference<Job?> = AtomicReference<Job?>()
   private var language: Language? = null
 
 

@@ -11,6 +11,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.LspCommunicationChannel
 import com.intellij.platform.lsp.api.ProjectWideLspClientDescriptor
 import com.intellij.platform.lsp.api.customization.LspCustomization
+import com.intellij.platform.lsp.api.customization.LspInheritanceMarkersCustomizer
+import com.intellij.platform.lsp.api.customization.LspInheritanceMarkersSupport
 import com.intellij.platform.lsp.api.customization.LspSemanticTokensCustomizer
 import com.intellij.platform.lsp.api.customization.LspSemanticTokensSupport
 import com.intellij.psi.PsiFile
@@ -70,6 +72,10 @@ internal class ConfigurableLspClientDescriptor(
     override val semanticTokensCustomizer: LspSemanticTokensCustomizer = object : LspSemanticTokensSupport() {
       override fun shouldAskServerForSemanticTokens(psiFile: PsiFile): Boolean = true
     }
+
+    // A user attaches this server on purpose, so the override/implement gutter icons are on.
+    // A plugin integration opts in through its own customization instead.
+    override val inheritanceMarkersCustomizer: LspInheritanceMarkersCustomizer = LspInheritanceMarkersSupport()
   }
 
   override fun createInitializationOptions(): Any? {

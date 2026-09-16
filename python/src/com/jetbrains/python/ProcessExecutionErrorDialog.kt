@@ -5,14 +5,14 @@ import com.intellij.platform.eel.provider.utils.stderrString
 import com.intellij.platform.eel.provider.utils.stdoutString
 import com.intellij.python.processOutput.common.ExecErrorDto
 import com.intellij.python.processOutput.common.ExecErrorReasonDto
-import com.intellij.python.processOutput.common.sendExecErrorEvent
+import com.intellij.python.processOutput.common.ProcessOutputTopic
 import com.jetbrains.python.errorProcessing.ExecError
 import com.jetbrains.python.errorProcessing.ExecErrorReason
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 fun showProcessExecutionErrorDialog(execError: ExecError) {
-  sendExecErrorEvent(
+  ProcessOutputTopic.sendExecErrorEvent(
     execErrorDto = ExecErrorDto(
       message = execError.message,
       command = execError.asCommand,

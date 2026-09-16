@@ -92,7 +92,7 @@ class HighlightingProblemsBackendService(private val project: Project) : Disposa
     return readAction { FileDocumentManager.getInstance().getDocument(file) }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun removeFile(file: VirtualFile) {
     val root = fileRootCache.remove(file) ?: return
     Disposer.dispose(root.panel)

@@ -24,7 +24,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 internal class AutoScrollToSourceTaskManagerImpl : AutoScrollToSourceTaskManager {
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun scheduleScrollToSource(handler: AutoScrollToSourceHandler, dataContext: DataContext) {
     val asyncDataContext = createAsyncDataContext(dataContext)
     val project = dataContext.getData(PlatformDataKeys.PROJECT)

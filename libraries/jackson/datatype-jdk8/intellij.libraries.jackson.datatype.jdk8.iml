@@ -9,19 +9,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="jackson-datatype-jdk8" type="repository">
-        <properties include-transitive-deps="false" maven-id="com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.19.0">
+        <properties include-transitive-deps="false" maven-id="com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.22.2">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/com/fasterxml/jackson/datatype/jackson-datatype-jdk8/2.19.0/jackson-datatype-jdk8-2.19.0.jar">
-              <sha256sum>04f1a3f9da8155995dd00098d6847cdb9b7af67f4a3028c94031eff017c8e3e5</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/fasterxml/jackson/datatype/jackson-datatype-jdk8/2.22.2/jackson-datatype-jdk8-2.22.2.jar">
+              <sha256sum>5a767cc4bcb04034497422551ad5005b3affa3c8d691bda26d1e7f473485dc15</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/datatype/jackson-datatype-jdk8/2.19.0/jackson-datatype-jdk8-2.19.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/datatype/jackson-datatype-jdk8/2.22.2/jackson-datatype-jdk8-2.22.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/datatype/jackson-datatype-jdk8/2.19.0/jackson-datatype-jdk8-2.19.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/datatype/jackson-datatype-jdk8/2.22.2/jackson-datatype-jdk8-2.22.2-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

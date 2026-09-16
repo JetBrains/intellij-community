@@ -1,6 +1,0 @@
-- name: dist.all/lib/intellij.libraries.fastutil.jar
-  modules:
-  - name: intellij.libraries.fastutil
-    libraries:
-      fastutil-min:
-      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/fastutil/intellij-deps-fastutil/8/intellij-deps-fastutil-8.jar

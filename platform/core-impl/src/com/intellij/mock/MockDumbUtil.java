@@ -2,13 +2,20 @@
 package com.intellij.mock;
 
 import com.intellij.openapi.project.DumbUtil;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.Internal
 public class MockDumbUtil implements DumbUtil {
 
   @Override
-  public boolean mayUseIndices() {
+  public boolean mayUseIndices(@NotNull Project project) {
     return true;
+  }
+
+  @Override
+  public String chooseDumbModeMessage(@NotNull String nonLightModeMessage, @NotNull String lightModeMessage) {
+    return nonLightModeMessage;
   }
 }

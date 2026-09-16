@@ -16,16 +16,16 @@ import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.util.ui.accessibility.ScreenReader
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.compose.swing.modifier.SwingModifier
-import org.jetbrains.compose.swing.modifier.applyModifier
+import org.jetbrains.compose.swing.modifier.listener.CallbackRegistration
+import org.jetbrains.compose.swing.modifier.listener.ListenerRegistration
 import org.jetbrains.compose.swing.modifier.listener.actionListener
 import org.jetbrains.compose.swing.modifier.listener.listener
 import org.jetbrains.compose.swing.node.SwingNode
 import org.jetbrains.compose.swing.node.declare
-import org.jetbrains.compose.swing.node.rememberAppliedValue
-import java.awt.event.ActionListener
+import org.jetbrains.compose.swing.node.rememberMirrorState
 import java.util.Vector
 import javax.swing.DefaultComboBoxModel
-import javax.swing.JComboBox
+import javax.swing.event.ChangeEvent
 import javax.swing.event.ChangeListener
 import com.intellij.openapi.ui.ComboBox as IdeaComboBox
 import com.intellij.ui.dsl.builder.SegmentedButton as IdeaSegmentedButton
@@ -77,19 +77,8 @@ private fun <T> SegmentedButtons(
   renderer: (T) -> @NlsContexts.Button String,
 ) {
   val declaredSelection = selectionAmong(items, selectedItem)
-  val applied = rememberAppliedValue(declaredSelection)
-  val currentItems = rememberUpdatedState(items)
+  val mirror = rememberMirrorState(declaredSelection)
   val currentRenderer = rememberUpdatedState(renderer)
-  val currentOnSelectedItemChange = rememberUpdatedState(onSelectedItemChange)
-  val listener = remember(applied) {
-    ChangeListener { event ->
-      val component = event.source as SegmentedButtonComponent<*>
-      // The event carries no item, and its source is untyped, so what the component holds is matched
-      // against the declared items rather than cast to one of them.
-      val selected = currentItems.value.firstOrNull { it == component.selectedItem }
-      if (applied.observed(selected)) currentOnSelectedItemChange.value(selected)
-    }
-  }
   val labels = items.map(renderer)
   SwingNode(
     factory = {
@@ -100,21 +89,45 @@ private fun <T> SegmentedButtons(
         spacing = IntelliJSpacingConfiguration()
       }
     },
+    modifier = modifier.listener(
+      { event: ChangeEvent ->
+        val component = event.source as SegmentedButtonComponent<*>
+        // The event carries no item, and its source is untyped, so what the component holds is matched
+        // against the declared items rather than cast to one of them.
+        mirror.report(items.firstOrNull { it == component.selectedItem }, onSelectedItemChange)
+      },
+      SEGMENTED_BUTTON_CHANGE,
+    ),
     update = {
       // Presentations are derived when the items are assigned, so the labels ride with them: a renderer
       // that returns new text for items that did not themselves change still refreshes the buttons.
       set(items to labels) { (declaredItems, _) -> this.items = declaredItems }
-      declare(declaredSelection, applied, read = { this.selectedItem }, write = { this.selectedItem = it })
-      applyModifier(
-        modifier.listener<SegmentedButtonComponent<T>, ChangeListener>(
-          listener,
-          { component, changeListener -> component.addChangeListener(changeListener) },
-          { component, changeListener -> component.removeChangeListener(changeListener) },
-        )
-      )
+      declare(declaredSelection, mirror, read = { this.selectedItem }, write = { this.selectedItem = it })
     },
   )
 }
+
+/**
+ * The segmented button's own change add/remove pair. The library's `changeListener` narrows to a fixed set
+ * of widgets, and `SegmentedButtonComponent` is not one of them. The item type never reaches the pair, so
+ * one registration serves every `T`.
+ */
+private val SEGMENTED_BUTTON_CHANGE_PAIR =
+  ListenerRegistration<SegmentedButtonComponent<*>, ChangeListener>(
+    name = "segmentedButtonChange",
+    attach = { component, changeListener -> component.addChangeListener(changeListener) },
+    detach = { component, changeListener -> component.removeChangeListener(changeListener) },
+  )
+
+/**
+ * [SEGMENTED_BUTTON_CHANGE_PAIR] driven by a callback the library reads as the event fires, so a fresh
+ * lambda on every pass registers nothing again.
+ */
+private val SEGMENTED_BUTTON_CHANGE =
+  CallbackRegistration<SegmentedButtonComponent<*>, (ChangeEvent) -> Unit, ChangeListener>(
+    adapter = { current -> ChangeListener { event -> current()(event) } },
+    registration = SEGMENTED_BUTTON_CHANGE_PAIR,
+  )
 
 /**
  * The combo box the control falls back to, set up as the Kotlin UI DSL sets its own fallback up: as wide as
@@ -130,17 +143,8 @@ private fun <T> SegmentedComboBox(
   renderer: (T) -> @NlsContexts.Button String,
 ) {
   val declaredSelection = selectionAmong(items, selectedItem)
-  val applied = rememberAppliedValue(declaredSelection)
-  val currentItems = rememberUpdatedState(items)
+  val mirror = rememberMirrorState(declaredSelection)
   val currentRenderer = rememberUpdatedState(renderer)
-  val currentOnSelectedItemChange = rememberUpdatedState(onSelectedItemChange)
-  val listener = remember(applied) {
-    ActionListener { event ->
-      val comboBox = event.source as JComboBox<*>
-      val selected = currentItems.value.getOrNull(comboBox.selectedIndex)
-      if (applied.observed(selected)) currentOnSelectedItemChange.value(selected)
-    }
-  }
   val labels = items.map(renderer)
   SwingNode(
     factory = {
@@ -151,6 +155,9 @@ private fun <T> SegmentedComboBox(
         // handed an item.
         this.renderer = textListCellRenderer<T>("") { item -> currentRenderer.value(item) }
       }
+    },
+    modifier = modifier.actionListener<IdeaComboBox<*>> {
+      mirror.report(items.getOrNull(this.selectedIndex), onSelectedItemChange)
     },
     update = {
       set(items) { declaredItems ->
@@ -165,11 +172,10 @@ private fun <T> SegmentedComboBox(
       set(labels) { repaint() }
       declare(
         declaredSelection,
-        applied,
+        mirror,
         read = { items.getOrNull(selectedIndex) },
         write = { item -> this.selectedItem = item },
       )
-      applyModifier(modifier.actionListener(listener))
     },
   )
 }

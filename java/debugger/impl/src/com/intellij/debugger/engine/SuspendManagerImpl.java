@@ -419,7 +419,7 @@ public class SuspendManagerImpl implements SuspendManager {
       } else if (DebugProcessImpl.isResumeOnlyCurrentThread() && suspendAllContexts.size() == 1) {
         boolean isCorrect = checkResumeOnlyCurrentThreadStepping(eventSet, suspendAllContexts);
         if (!isCorrect) {
-          logError("Incorrect resume only current thread stepping, for " + eventSet + " in " + suspendAllContexts.get(0));
+          logError("Incorrect resume only current thread stepping, for " + eventSet + " in " + suspendAllContexts.getFirst());
         }
       } else {
         logError("There were " + suspendAllContexts.size() + " suspend all context(s) and new suspend all event set " + eventSet + " arrived");
@@ -433,7 +433,7 @@ public class SuspendManagerImpl implements SuspendManager {
   }
 
   private static boolean checkResumeOnlyCurrentThreadStepping(@NotNull EventSet eventSet, @NotNull List<SuspendContextImpl> suspendAllContexts) {
-    ThreadReferenceProxyImpl resumeOneSteppingIn = suspendAllContexts.get(0).mySteppingThreadForResumeOneSteppingCurrentMode;
+    ThreadReferenceProxyImpl resumeOneSteppingIn = suspendAllContexts.getFirst().mySteppingThreadForResumeOneSteppingCurrentMode;
     if (resumeOneSteppingIn == null) {
       return false;
     }

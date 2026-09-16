@@ -41,6 +41,7 @@ jvm_library(
         "//platform/structuralsearch:structuralSearch",
         "//platform/structuralsearch/plugin",
         "//platform/vcs/plugin",
+        "//xml/plugin",
     ],
 )
 
@@ -72,6 +73,7 @@ jvm_library(
         "//platform/structuralsearch:structuralSearch_test_lib",
         "//platform/structuralsearch/plugin:plugin_test_lib",
         "//platform/vcs/plugin:plugin_test_lib",
+        "//xml/plugin:plugin_test_lib",
     ],
     deps = [
         # do not sort,
@@ -135,7 +137,8 @@ jvm_library(
         "//platform/platform-tests:tests_test_lib",
         "//platform/ide-core-impl",
         "//platform/ide-core",
-        "@lib//:xml-resolver",
+        "//libraries/xml-resolver",
+        "//libraries/xml-resolver:xml-resolver_test_lib",
         "//RegExpSupport:regexp",
         "//RegExpSupport:regexp_test_lib",
         "//platform/util/nanoxml",
@@ -190,8 +193,6 @@ jvm_library(
         "//platform/structure-view-impl/plugin:plugin_test_lib",
         "//platform/todo/plugin",
         "//platform/todo/plugin:plugin_test_lib",
-        "//libraries/misc/plugin",
-        "//libraries/misc/plugin:plugin_test_lib",
         "//java/plugin",
         "//java/plugin:plugin_test_lib",
         "//plugins/java-i18n",

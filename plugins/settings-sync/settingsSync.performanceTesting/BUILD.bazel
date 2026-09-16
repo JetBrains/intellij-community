@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.settingsSync.performanceTesting` start
+content_module_jar(module = ":settingsSync.performanceTesting")
+### auto-generated section `dev intellij.settingsSync.performanceTesting` end
+
 ### auto-generated section `build intellij.settingsSync.performanceTesting` start
 jvm_library(
     name = "settingsSync.performanceTesting",
@@ -28,8 +32,6 @@ jvm_library(
         "//platform/projectModel-api:projectModel",
     ],
 )
-
-content_module_jar(module = ":settingsSync.performanceTesting")
 
 jvm_library(
     name = "settingsSync.performanceTesting_test_lib",

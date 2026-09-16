@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.jaxen` start
+content_module_jar(
+    libraries = ["@lib//:libraries-jaxen-_jaxen"],
+    module = ":jaxen",
+)
+### auto-generated section `dev intellij.libraries.jaxen` end
+
 ### auto-generated section `build intellij.libraries.jaxen` start
 jvm_library(
     name = "jaxen",
@@ -16,11 +23,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-jaxen-_jaxen"],
     runtime_deps = ["@lib//:libraries-jaxen-_jaxen"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-jaxen-_jaxen"],
-    module = ":jaxen",
 )
 
 jvm_library(
@@ -43,7 +45,6 @@ exports_files(
     [
         "intellij.libraries.jaxen.iml",
         "resources/intellij.libraries.jaxen.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

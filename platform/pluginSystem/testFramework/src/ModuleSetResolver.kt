@@ -4,8 +4,6 @@ package com.intellij.platform.pluginSystem.testFramework
 import com.intellij.openapi.util.JDOMUtil
 import java.nio.file.Path
 import kotlin.io.path.exists
-import kotlin.io.path.invariantSeparatorsPathString
-import kotlin.io.path.relativeTo
 
 class MissingModuleSetDescriptorException(
   val moduleSetName: String,
@@ -16,24 +14,6 @@ class MissingModuleSetDescriptorException(
   "Cannot resolve module set '$moduleSetName': generated descriptor '$descriptorFileName' " +
   "was not found in '$communityPath' or '$licenseCommonPath'."
 )
-
-fun MissingModuleSetDescriptorException.buildStalePackagingDataMessage(
-  contentYamlPath: Path,
-  projectRoot: Path,
-  generatorTestName: String,
-): String {
-  val displayYamlPath = contentYamlPath.toDisplayPath(projectRoot)
-  return buildString {
-    appendLine("Cannot resolve module set '$moduleSetName' referenced from '$displayYamlPath'.")
-    appendLine(
-      "The generated descriptor '$descriptorFileName' is missing, so the packaging data is out of date."
-    )
-    appendLine("Run '$generatorTestName' to regenerate the packaging data, then re-run this test.")
-    appendLine("Checked descriptor paths:")
-    appendLine("  ${communityPath.toDisplayPath(projectRoot)}")
-    appendLine("  ${licenseCommonPath.toDisplayPath(projectRoot)}")
-  }.trimEnd()
-}
 
 private data class ModuleSetDescriptorPaths(
   val communityPath: Path,
@@ -141,9 +121,4 @@ private fun ModuleSetDescriptorPaths.findExistingPath(moduleSetName: String, des
     communityPath = communityPath,
     licenseCommonPath = licenseCommonPath,
   )
-}
-
-private fun Path.toDisplayPath(projectRoot: Path): String {
-  return runCatching { relativeTo(projectRoot).invariantSeparatorsPathString }
-    .getOrElse { invariantSeparatorsPathString }
 }

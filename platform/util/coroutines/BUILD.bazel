@@ -11,6 +11,10 @@ jps_test(
 
 ### skip generation section `test intellij.platform.util.coroutines.tests`
 
+### auto-generated section `dev intellij.platform.util.coroutines` start
+content_module_jar(module = ":coroutines")
+### auto-generated section `dev intellij.platform.util.coroutines` end
+
 ### auto-generated section `build intellij.platform.util.coroutines` start
 jvm_library(
     name = "coroutines",
@@ -38,8 +42,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":coroutines")
-
 jvm_library(
     name = "coroutines_test_lib",
     testonly = True,
@@ -65,7 +67,6 @@ exports_files(
     [
         "intellij.platform.util.coroutines.iml",
         "resources/intellij.platform.util.coroutines.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

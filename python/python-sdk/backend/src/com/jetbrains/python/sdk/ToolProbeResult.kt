@@ -8,7 +8,7 @@ import org.jetbrains.annotations.ApiStatus
 /**
  * One tool probe's outcome: where the executable was found, and what it printed for its version.
  *
- * Stays in this module — unlike [com.intellij.python.pytools.ToolCommandSpec], which describes how to *look* for a tool
+ * Stays in this module — unlike [com.intellij.python.pytools.backend.ToolCommandSpec], which describes how to *look* for a tool
  * — because it is parameterized by [PathHolder], the path abstraction `FileSystem` is built on.
  */
 @ApiStatus.Internal

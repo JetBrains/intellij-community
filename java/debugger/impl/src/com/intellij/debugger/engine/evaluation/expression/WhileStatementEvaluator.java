@@ -20,11 +20,11 @@ public class WhileStatementEvaluator extends LoopEvaluator {
     Object value;
     while (true) {
       value = myConditionEvaluator.evaluate(context);
-      if (!(value instanceof BooleanValue)) {
+      if (!(value instanceof BooleanValue booleanValue)) {
         throw EvaluateExceptionUtil.BOOLEAN_EXPECTED;
       }
       else {
-        if (!((BooleanValue)value).booleanValue()) {
+        if (!booleanValue.booleanValue()) {
           break;
         }
       }

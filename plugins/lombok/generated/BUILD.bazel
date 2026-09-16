@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.lombok.generated` start
+content_module_jar(module = ":generated")
+### auto-generated section `dev intellij.lombok.generated` end
+
 ### auto-generated section `build intellij.lombok.generated` start
 jvm_library(
     name = "generated",
@@ -18,8 +22,6 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
 )
-
-content_module_jar(module = ":generated")
 
 jvm_library(
     name = "generated_test_lib",

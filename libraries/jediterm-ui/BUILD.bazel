@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.jediterm.ui` start
+content_module_jar(
+    libraries = ["@lib//:libraries-jediterm-ui-jediterm-ui"],
+    module = ":jediterm-ui",
+)
+### auto-generated section `dev intellij.libraries.jediterm.ui` end
+
 ### auto-generated section `build intellij.libraries.jediterm.ui` start
 jvm_library(
     name = "jediterm-ui",
@@ -16,11 +23,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-jediterm-ui-jediterm-ui"],
     runtime_deps = ["@lib//:libraries-jediterm-ui-jediterm-ui"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-jediterm-ui-jediterm-ui"],
-    module = ":jediterm-ui",
 )
 
 jvm_library(
@@ -43,7 +45,6 @@ exports_files(
     [
         "intellij.libraries.jediterm.ui.iml",
         "resources/intellij.libraries.jediterm.ui.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

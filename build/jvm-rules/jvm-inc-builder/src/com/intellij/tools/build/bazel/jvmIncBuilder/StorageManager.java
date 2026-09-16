@@ -97,12 +97,16 @@ public class StorageManager implements CloseableExt {
 
     closeDataStorages(false);
 
+    // ensure the config state is always deleted first
+    // => if build process crashes or gets killed, the missing build state will effectively cause full target rebuild next time the build is triggered
+    deleteOrTrashRecursively(DataPaths.getConfigStateStoreFile(myContext));
+
     Utils.deleteIfExists(output);
     if (abiOutput != null) {
       Utils.deleteIfExists(abiOutput);
     }
 
-    deleteOrMoveRecursively(myContext.getDataDir(), DataPaths.getTrashDir(myContext));
+    deleteOrTrashRecursively(myContext.getDataDir());
   }
 
   public void cleanTrashDir() throws IOException {
@@ -354,6 +358,10 @@ public class StorageManager implements CloseableExt {
       Path tempFile = Files.createTempFile(trash, null, null);
       Files.move(backup, tempFile, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
     }
+  }
+
+  public final void deleteOrTrashRecursively(Path fileOrDir) throws IOException {
+    deleteOrMoveRecursively(fileOrDir, DataPaths.getTrashDir(myContext));
   }
 
   private static void deleteOrMoveRecursively(Path dataDir, Path trashDir) throws IOException {

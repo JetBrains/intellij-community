@@ -8,6 +8,7 @@ export SOURCE_DATE_EPOCH="${SOURCE_DATE_EPOCH:-%buildDateInSeconds%}"
 staple="${STAPLE:-%staple%}"
 appName="${APP_NAME:-%appName%}"
 contentSigned="${CONTENT_SIGNED:-%contentSigned%}"
+dmgFormat="${DMG_FORMAT:-%dmgFormat%}"
 explodedSitDir='exploded'
 cleanUpExploded='true'
 
@@ -30,7 +31,7 @@ function buildDmg() {
     trap 'cd .. && rm -rf "$buildDir"' EXIT
     # set -e doesn't have any effect in here
     bash ./staple.sh $explodedSitDir "$staple" &&
-      bash ./makedmg.sh "$dmgName" "$appName" "$dmg" $explodedSitDir $cleanUpExploded "$contentSigned" &&
+      DMG_FORMAT="$dmgFormat" bash ./makedmg.sh "$dmgName" "$appName" "$dmg" $explodedSitDir $cleanUpExploded "$contentSigned" &&
       mv "$dmg" "../$dmg"
   )
 }

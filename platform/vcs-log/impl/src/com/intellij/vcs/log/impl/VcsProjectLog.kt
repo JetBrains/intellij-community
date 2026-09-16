@@ -53,7 +53,7 @@ abstract class VcsProjectLog internal constructor() { // not an interface due to
   /**
    * Open a new log tab with the given filters applied.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   open fun openLogTab(filters: VcsLogFilterCollection): MainVcsLogUi? = null
 
   /**
@@ -87,7 +87,7 @@ abstract class VcsProjectLog internal constructor() { // not an interface due to
    * Executes the given action if and when the main log has been initialized.
    */
   @Internal
-  protected abstract fun runInMainUi(@RequiresEdt consumer: (MainVcsLogUi) -> Unit)
+  protected abstract fun runInMainUi(@RequiresEdt(generateAssertion = false /* IJPL-115548 */) consumer: (MainVcsLogUi) -> Unit)
 
   /**
    * Creates and initializes the [logManager] if [isAvailable]
@@ -103,10 +103,10 @@ abstract class VcsProjectLog internal constructor() { // not an interface due to
   internal abstract suspend fun invalidateCaches()
 
   interface ProjectLogListener {
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     fun logCreated(manager: VcsLogManager)
 
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     fun logDisposed(manager: VcsLogManager)
   }
 
@@ -136,7 +136,7 @@ abstract class VcsProjectLog internal constructor() { // not an interface due to
     /**
      * @see VcsProjectLog.runWhenLogIsReady
      */
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     fun runWhenLogIsReady(project: Project, action: (VcsLogManager) -> Unit) {
       getInstance(project).runWhenLogIsReady(action)
     }
@@ -145,8 +145,8 @@ abstract class VcsProjectLog internal constructor() { // not an interface due to
      * @see VcsProjectLog.runInMainUi
      */
     @JvmStatic
-    @RequiresEdt
-    fun runInMainLog(project: Project, @RequiresEdt consumer: (MainVcsLogUi) -> Unit) {
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    fun runInMainLog(project: Project, @RequiresEdt(generateAssertion = false /* IJPL-115548 */) consumer: (MainVcsLogUi) -> Unit) {
       if (!isAvailable(project)) {
         VcsLogContentUtil.showLogIsNotAvailableMessage(project)
         return
@@ -156,7 +156,7 @@ abstract class VcsProjectLog internal constructor() { // not an interface due to
     }
 
     @JvmStatic
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     fun showRevisionInMainLog(project: Project, root: VirtualFile, hash: Hash) {
       if (!isAvailable(project)) return
       getInstance(project).showRevisionInMainLog(root, hash)
@@ -165,7 +165,7 @@ abstract class VcsProjectLog internal constructor() { // not an interface due to
     /**
      * Consider using [showRevisionInMainLog] when the root is known
      */
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     @JvmStatic
     fun showRevisionInMainLog(project: Project, hash: Hash) {
       if (!isAvailable(project)) return
@@ -175,7 +175,7 @@ abstract class VcsProjectLog internal constructor() { // not an interface due to
     suspend fun awaitLogIsReady(project: Project): VcsLogManager? = project.serviceAsync<VcsProjectLog>().init(true)
 
     @Internal
-    @RequiresBackgroundThread
+    @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
     fun ensureLogCreated(project: Project): Boolean {
       ApplicationManager.getApplication().assertIsNonDispatchThread()
       return runBlockingMaybeCancellable {

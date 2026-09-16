@@ -19,7 +19,7 @@ class GradientTextureCache: Disposable {
   private var x: Int = 0
   private var y: Int = 0
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun getHorizontalTexture(graphics: Graphics2D, width: Int, colorStart: Color, colorEnd: Color, x: Int = 0, y: Int = 0): TexturePaint {
     val realWidth = floor(JBUIScale.sysScale(graphics) * width).toInt()
 
@@ -31,7 +31,7 @@ class GradientTextureCache: Disposable {
     else texture!!
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun getVerticalTexture(graphics: Graphics2D, height: Int, colorStart: Color, colorEnd: Color, x: Int = 0, y: Int = 0): TexturePaint {
     val realHeight = floor(JBUIScale.sysScale(graphics) * height).toInt()
 

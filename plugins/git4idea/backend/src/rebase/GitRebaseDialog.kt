@@ -317,7 +317,7 @@ internal class GitRebaseDialog(private val project: Project,
       })
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private fun loadTags(root: VirtualFile): List<GitTag> {
     try {
       return GitBranchUtil.getAllTags(project, root).map { GitTag(it) }

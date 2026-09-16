@@ -21,6 +21,10 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
+import org.jetbrains.kotlin.idea.base.psi.addMemberDeclaration
+import org.jetbrains.kotlin.idea.base.psi.appendParameter
+import org.jetbrains.kotlin.idea.base.psi.getOrCreatePrimaryConstructor
+import org.jetbrains.kotlin.idea.base.psi.setPropertyInitializer
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
@@ -45,7 +49,6 @@ import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
 import org.jetbrains.kotlin.psi.KtUserType
 import org.jetbrains.kotlin.psi.KtVisitor
 import org.jetbrains.kotlin.psi.KtVisitorVoid
-import org.jetbrains.kotlin.psi.createPrimaryConstructorIfAbsent
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 
 /**
@@ -242,14 +245,14 @@ internal class ConvertSecondaryConstructorToPrimaryInspection :
                 }
             }
 
-            val replacedConstructor = klass.createPrimaryConstructorIfAbsent().replace(constructor)
+            val replacedConstructor = klass.getOrCreatePrimaryConstructor().replace(constructor)
             constructorCommentSaver.restore(replacedConstructor)
 
             val initializer = context.initializer
             if ((initializer.body as? KtBlockExpression)?.statements?.isNotEmpty() == true) {
                 if (context.hasPropertyAfterInitializer) {
                     // In this case we must move init {} down, because it uses a property declared below
-                    klass.addDeclaration(initializer)
+                    klass.addMemberDeclaration(initializer)
                     writableSecondaryConstructor.delete()
                 } else {
                     writableSecondaryConstructor.replace(initializer)
@@ -283,10 +286,10 @@ internal class ConvertSecondaryConstructorToPrimaryInspection :
                         }
                         property.delete()
                     } else {
-                        property.initializer = factory.createSimpleName(parameterName)
+                        property.setPropertyInitializer(factory.createSimpleName(parameterName))
                     }
                 }
-                val addedParameter = parameterList.addParameter(newParameter)
+                val addedParameter = parameterList.appendParameter(newParameter)
                 propertyCommentSaver?.restore(addedParameter)
             }
         }

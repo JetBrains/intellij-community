@@ -2,12 +2,23 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.kotlin.codeInsight.utils` start
+content_module_jar(module = ":utils")
+### auto-generated section `dev intellij.kotlin.codeInsight.utils` end
+
 ### auto-generated section `build intellij.kotlin.codeInsight.utils` start
 create_kotlinc_options(
     name = "custom_utils",
     opt_in = [
+        "org.jetbrains.kotlin.psi.KtExperimentalApi",
+        "org.jetbrains.kotlin.psi.KtNonPublicApi",
+        "org.jetbrains.kotlin.psi.KtIdeApi",
         "org.jetbrains.kotlin.analysis.api.KaExperimentalApi",
         "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+        "org.jetbrains.kotlin.analysis.api.KaPlatformInterface",
+        "org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaUnstableDiagnosticApi",
+        "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
+        "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
         "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
     ],
     x_context_parameters = True,
@@ -54,8 +65,6 @@ jvm_library(
         "//platform/core-ui",
     ],
 )
-
-content_module_jar(module = ":utils")
 
 jvm_library(
     name = "utils_test_lib",

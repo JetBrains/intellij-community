@@ -1,3 +1,0 @@
-- name: dist.all/lib/intellij.platform.codeStyle.jar
-  modules:
-  - name: intellij.platform.codeStyle

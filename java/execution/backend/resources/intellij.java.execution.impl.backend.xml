@@ -27,6 +27,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <postStartupActivity implementation="com.intellij.java.execution.impl.backend.JavaAutoRunTrackerActivity"/>
-    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.java.execution.impl.backend.JavaTestDiscoveryRemoteApiProvider"/>
+    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.java.execution.impl.backend.JavaTestDiscoveryRemoteApiProvider"
+                                            apiInterfaces="com.intellij.java.execution.impl.shared.JavaAutoRunFloatingToolbarApi"/>
   </extensions>
 </idea-plugin>

@@ -3,5 +3,4 @@
 // K2_ERROR: RETURN_TYPE_MISMATCH
 fun test(): UInt = <caret>1
 
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.WrongPrimitiveLiteralFix
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.WrongPrimitiveLiteralFix

@@ -24,5 +24,4 @@ val foo: MockLibrary = MockLibrary();
         @OptIn(Library::class) val t = foo.bar {}
     }
 }
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$UseOptInAnnotationFix
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$UseOptInAnnotationFix

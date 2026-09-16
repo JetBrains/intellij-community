@@ -15,7 +15,7 @@ import kotlin.io.path.readText
 
 private const val DEFAULT_PLUGIN_VERIFIER_VERSION = "1.410"
 
-suspend fun createPluginVerifier(
+fun createPluginVerifier(
   pluginVerifierVersion: String = DEFAULT_PLUGIN_VERIFIER_VERSION,
   compatibilityExceptions: List<String> = emptyList(),
   exceptionHandler: (exception: String) -> Unit = {},
@@ -50,7 +50,7 @@ class PluginVerifier internal constructor(
   val errorHandler: (exception: String) -> Unit,
 ) {
 
-  suspend fun verify(
+  fun verify(
     homeDir: Path,
     reportDir: Path,
     plugin: VerifierPluginInfo,

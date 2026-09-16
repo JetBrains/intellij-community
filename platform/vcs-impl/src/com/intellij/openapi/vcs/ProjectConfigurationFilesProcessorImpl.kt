@@ -6,16 +6,19 @@ import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vcs.changes.ChangeListListener
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.VcsIgnoreManager
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VfsUtilCore.isAncestor
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.project.isDirectoryBased
 import com.intellij.project.stateStore
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcsUtil.VcsImplUtil
+import com.intellij.vcsUtil.VcsUtil
+import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
 
 private val LOG = Logger.getInstance(ProjectConfigurationFilesProcessorImpl::class.java)
@@ -50,7 +53,7 @@ internal class ProjectConfigurationFilesProcessorImpl(
    * Schedule notification or silent addition instead.
    */
   fun filterNotProjectConfigurationFiles(files: List<VirtualFile>): List<VirtualFile> {
-    val projectConfigurationFiles = doFilterFiles(files)
+    val projectConfigurationFiles = filterProjectConfigurationFiles(files)
 
     if (projectConfigurationFiles.isNotEmpty()) {
       if (foundProjectConfigurationFiles.compareAndSet(false, true)) {
@@ -63,22 +66,39 @@ internal class ProjectConfigurationFilesProcessorImpl(
 
   override fun unchangedFileStatusChanged(upToDate: Boolean) {
     if (upToDate && foundProjectConfigurationFiles.compareAndSet(true, false)) {
-      val unversionedFiles = ChangeListManager.getInstance(project).unversionedFilesPaths.mapNotNull { it.virtualFile }
-      val unversionedProjectConfigurationFiles = doFilterFiles(unversionedFiles)
+      val unversionedProjectConfigurationFiles = getUnversionedConfigurationFiles().mapNotNull { it.virtualFile }
       if (unversionedProjectConfigurationFiles.isNotEmpty()) {
         setForCurrentProject(VcsImplUtil.isProjectSharedInVcs(project))
-        processFiles(unversionedProjectConfigurationFiles.toList())
+        processFiles(unversionedProjectConfigurationFiles)
       }
     }
   }
 
-  override fun doFilterFiles(files: Collection<VirtualFile>): Collection<VirtualFile> {
-    val projectConfigDir = getProjectConfigDir(project)
+  private fun filterProjectConfigurationFiles(files: Collection<VirtualFile>): Set<VirtualFile> {
+    val projectConfigDir = getProjectConfigDirPath(project)?.let {
+      LocalFileSystem.getInstance().findFileByNioFile(it)
+    }
 
     return files
       .asSequence()
       .filter {
-        configurationFilesExtensionsOutsideStoreDirectory.contains(it.extension) || isProjectConfigurationFile(projectConfigDir, it)
+        configurationFilesExtensionsOutsideStoreDirectory.contains(it.extension)
+        || projectConfigDir != null && isAncestor(projectConfigDir, it, true)
+      }
+      .filterNot(vcsIgnoreManager::isPotentiallyIgnoredFile)
+      .toSet()
+  }
+
+  private fun getUnversionedConfigurationFiles(): Set<FilePath> {
+    val projectConfigDirPath = getProjectConfigDirPath(project)?.let {
+      VcsUtil.getFilePath(it, true)
+    }
+
+    return ChangeListManager.getInstance(project).unversionedFilesPaths
+      .asSequence()
+      .filter {
+        configurationFilesExtensionsOutsideStoreDirectory.contains(FileUtilRt.getExtension(it.name))
+        || projectConfigDirPath != null && it.isUnder(projectConfigDirPath, true)
       }
       .filterNot(vcsIgnoreManager::isPotentiallyIgnoredFile)
       .toSet()
@@ -105,16 +125,12 @@ internal class ProjectConfigurationFilesProcessorImpl(
   override val viewFilesDialogTitle: String = VcsBundle.message("project.configuration.files.view.dialog.title", vcs.displayName)
 }
 
-private fun isProjectConfigurationFile(configDir: VirtualFile?, file: VirtualFile): Boolean {
-  return configDir != null && VfsUtilCore.isAncestor(configDir, file, true)
-}
-
-private fun getProjectConfigDir(project: Project): VirtualFile? {
+private fun getProjectConfigDirPath(project: Project): Path? {
   if (!project.isDirectoryBased || project.isDefault) {
     return null
   }
 
-  val projectConfigDir = project.stateStore.directoryStorePath?.let(LocalFileSystem.getInstance()::findFileByNioFile)
+  val projectConfigDir = project.stateStore.directoryStorePath
   if (projectConfigDir == null) {
     LOG.warn("Cannot find project config directory for non-default and non-directory based project ${project.name}")
   }

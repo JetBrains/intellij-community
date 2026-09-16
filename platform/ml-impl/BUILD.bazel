@@ -11,6 +11,13 @@ jps_test(
 
 ### skip generation section `test intellij.platform.ml.impl.tests`
 
+### auto-generated section `dev intellij.platform.ml.impl` start
+content_module_jar(
+    libraries = ["@lib//:ngram-slp"],
+    module = ":ml-impl",
+)
+### auto-generated section `dev intellij.platform.ml.impl` end
+
 ### auto-generated section `build intellij.platform.ml.impl` start
 jvm_library(
     name = "ml-impl",
@@ -51,11 +58,6 @@ jvm_library(
         "//libraries/kotlin/reflect",
         "//platform/ide-core-impl",
     ],
-)
-
-content_module_jar(
-    libraries = ["@lib//:ngram-slp"],
-    module = ":ml-impl",
 )
 
 jvm_library(
@@ -105,7 +107,6 @@ exports_files(
     [
         "intellij.platform.ml.impl.iml",
         "resources/intellij.platform.ml.impl.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

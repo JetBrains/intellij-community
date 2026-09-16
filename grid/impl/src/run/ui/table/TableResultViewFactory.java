@@ -47,7 +47,7 @@ public class TableResultViewFactory implements ResultViewFactory {
 
   @Override
   public @NotNull ResultView createResultView(@NotNull DataGrid resultPanel, @NotNull ActionGroup columnHeaderActions, @NotNull ActionGroup rowHeaderActions) {
-    TableResultView table = new TableResultView(resultPanel, columnHeaderActions, rowHeaderActions);
+    TableResultView table = new PrimaryTableResultView(resultPanel, columnHeaderActions, rowHeaderActions);
     table.getEmptyText().setText(""); //DatabaseMessages.message("table.result.data.loading"));
     table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     table.setCellSelectionEnabled(true);

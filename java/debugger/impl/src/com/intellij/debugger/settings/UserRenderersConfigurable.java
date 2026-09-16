@@ -103,7 +103,7 @@ public final class UserRenderersConfigurable extends JPanel implements Configura
       setCurrentRenderer(null);
     }
     else {
-      setCurrentRenderer(selectedElements.get(0));
+      setCurrentRenderer(selectedElements.getFirst());
     }
   }
 

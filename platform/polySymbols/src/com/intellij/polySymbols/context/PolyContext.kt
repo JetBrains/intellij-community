@@ -46,7 +46,7 @@ interface PolyContext {
       findPolyContext(kind, location, project)
 
     @JvmStatic
-    @RequiresReadLock
+    @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
     fun get(kind: PolyContextKind, location: PsiElement): PolyContextName? =
       findPolyContext(kind, location)
 

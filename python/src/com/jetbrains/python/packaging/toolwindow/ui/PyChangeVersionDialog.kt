@@ -3,7 +3,7 @@ package com.jetbrains.python.packaging.toolwindow.ui
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.project.Project
-import com.intellij.python.processOutput.common.sendOpenToolWindowByTraceUuidEvent
+import com.intellij.python.processOutput.common.ProcessOutputTopic
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.ui.EmptyIcon
 import com.jetbrains.python.PyBundle.message
@@ -35,7 +35,7 @@ internal fun showChangeVersionPopup(
     if (specification == null) {
       val trace = TraceContext(message("python.packaging.change.version.dialog.title"), null)
       PyPackageCoroutine.launch(project, Dispatchers.IO) {
-        sendOpenToolWindowByTraceUuidEvent(trace.uuid)
+        ProcessOutputTopic.sendOpenToolWindowByTraceUuidEvent(trace.uuid)
       }
       return@buildVersionChooserPopup
     }

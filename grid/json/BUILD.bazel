@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.grid.json.impl` start
+content_module_jar(module = ":json-impl")
+### auto-generated section `dev intellij.grid.json.impl` end
+
 ### auto-generated section `build intellij.grid.json.impl` start
 jvm_library(
     name = "json-impl",
@@ -27,8 +31,6 @@ jvm_library(
         "//json/backend",
     ],
 )
-
-content_module_jar(module = ":json-impl")
 
 jvm_library(
     name = "json-impl_test_lib",

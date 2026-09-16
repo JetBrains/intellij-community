@@ -20,7 +20,7 @@ interface TestingTasks {
    * @param rootExcludeCondition if not `null`, tests from modules which sources are fit this predicate will be skipped
    */
   @Deprecated(message = "the `defaultMainModule` should be passed via `TestingOptions#mainModule`")
-  suspend fun runTests(
+  fun runTests(
     additionalJvmOptions: List<String> = emptyList(),
     additionalSystemProperties: Map<String, String> = emptyMap(),
     defaultMainModule: String? = null,
@@ -30,7 +30,7 @@ interface TestingTasks {
   /**
    * @param rootExcludeCondition if not `null`, tests from modules which sources are fit this predicate will be skipped
    */
-  suspend fun runTests(
+  fun runTests(
     additionalJvmOptions: List<String> = emptyList(),
     additionalSystemProperties: Map<String, String> = emptyMap(),
     rootExcludeCondition: ((Path) -> Boolean)? = null,
@@ -39,7 +39,7 @@ interface TestingTasks {
   /**
    * Run all tests annotated with [com.intellij.testFramework.SkipInHeadlessEnvironment]
    */
-  suspend fun runTestsSkippedInHeadlessEnvironment()
+  fun runTestsSkippedInHeadlessEnvironment()
 
   fun createSnapshotsDirectory(): Path
 
@@ -54,7 +54,7 @@ interface TestingTasks {
    *
    * Mutates incoming collections.
    */
-  suspend fun prepareEnvForTestRun(
+  fun prepareEnvForTestRun(
     jvmArgs: MutableList<String>,
     systemProperties: MutableMap<String, String>,
     classPath: MutableList<String>,

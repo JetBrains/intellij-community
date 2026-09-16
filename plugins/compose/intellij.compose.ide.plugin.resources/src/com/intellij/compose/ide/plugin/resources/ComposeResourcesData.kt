@@ -55,7 +55,7 @@ interface ComposeResourcesData {
    * file system on PSI updates (to save on calling external processes to generate accessors).
    * This could be removed if the generation is replaced with light classes (similar to how Android Res classes support works).
    */
-  @get:RequiresReadLock
+  @get:RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   val accessorsDirectory: VirtualFile?
 
   /**

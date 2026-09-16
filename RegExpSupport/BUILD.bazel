@@ -10,6 +10,10 @@ jps_test(
 )
 ### skip generation section `test intellij.regexp.tests`
 
+### auto-generated section `dev intellij.regexp` start
+content_module_jar(module = ":regexp")
+### auto-generated section `dev intellij.regexp` end
+
 ### auto-generated section `build intellij.regexp` start
 jvm_library(
     name = "regexp",
@@ -54,8 +58,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":regexp")
-
 jvm_library(
     name = "regexp_test_lib",
     testonly = True,
@@ -97,7 +99,6 @@ exports_files(
     [
         "intellij.regexp.iml",
         "resources/intellij.regexp.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )
@@ -112,6 +113,7 @@ jvm_library(
     ),
     module_name = "intellij.regexp.tests",
     visibility = ["//visibility:public"],
+    runtime_deps = ["//xml/plugin"],
 )
 
 jvm_library(
@@ -135,6 +137,7 @@ jvm_library(
         ":regexp-tests",
         "//platform/platform-impl:ide-impl_test_lib",
         "//platform/ide-core-impl:ide-core-impl_test_lib",
+        "//xml/plugin:plugin_test_lib",
     ],
     deps = [
         # do not sort,

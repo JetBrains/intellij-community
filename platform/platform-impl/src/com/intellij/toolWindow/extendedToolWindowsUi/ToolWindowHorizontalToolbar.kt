@@ -139,6 +139,7 @@ private class HorizontalStripe(toolBar: ToolWindowToolbar, paneId: String, ancho
     if (toolBar.isShowing && Rectangle(toolBar.locationOnScreen, toolBar.size).contains(screenPoint)) {
       return true
     }
+    getDropArea()?.let { return it.containsPoint(screenPoint) }
 
     val depth = max(getFirstVisibleToolWindowSize(false), JBUI.scale(40))
     val pane = bottomAnchorDropAreaComponent ?: rootPane
@@ -151,6 +152,7 @@ private class HorizontalStripe(toolBar: ToolWindowToolbar, paneId: String, ancho
   }
 
   override fun getToolWindowDropAreaScreenBounds(): Rectangle {
+    getDropArea()?.let { return it.bounds }
     val pane = bottomAnchorDropAreaComponent ?: rootPane
     val bounds = Rectangle(pane.locationOnScreen, pane.size)
     val toolWindowHeight = getFirstVisibleToolWindowSize(false)

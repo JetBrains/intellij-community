@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.platform.ide.newUsersOnboarding` start
+content_module_jar(module = ":new-users-onboarding")
+### auto-generated section `dev intellij.platform.ide.newUsersOnboarding` end
+
 ### auto-generated section `build intellij.platform.ide.newUsersOnboarding` start
 jvm_library(
     name = "new-users-onboarding",
@@ -37,8 +41,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":new-users-onboarding")
-
 jvm_library(
     name = "new-users-onboarding_test_lib",
     testonly = True,
@@ -73,7 +75,6 @@ exports_files(
     [
         "intellij.platform.ide.newUsersOnboarding.iml",
         "resources/intellij.platform.ide.newUsersOnboarding.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -52,7 +52,7 @@ class RootsToWorkingCopies(private val project: Project) : VcsMappingListener, D
     })
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun getMatchingCopy(url: Url?): WorkingCopy? {
     ApplicationManager.getApplication().assertIsNonDispatchThread()
     if (url == null) return null
@@ -69,7 +69,7 @@ class RootsToWorkingCopies(private val project: Project) : VcsMappingListener, D
     return null
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun getWcRoot(root: VirtualFile): WorkingCopy? {
     ApplicationManager.getApplication().assertIsNonDispatchThread()
 

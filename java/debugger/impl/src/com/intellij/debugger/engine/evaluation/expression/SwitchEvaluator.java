@@ -61,8 +61,8 @@ public class SwitchEvaluator implements Evaluator {
           else {
             caseFound = true;
             Evaluator e = DisableGC.unwrap(evaluator);
-            if (e instanceof SwitchCaseEvaluator) {
-              res = ((SwitchCaseEvaluator)e).match(unboxedSwitchValue, context);
+            if (e instanceof SwitchCaseEvaluator caseEvaluator) {
+              res = caseEvaluator.match(unboxedSwitchValue, context);
               if (res instanceof Value) {
                 return res;
               }
@@ -120,14 +120,14 @@ public class SwitchEvaluator implements Evaluator {
       if (val1 == null || val2 == null) {
         return val1 == val2;
       }
-      if (val1 instanceof StringReference && val2 instanceof StringReference) {
-        return ((StringReference)val1).value().equals(((StringReference)val2).value());
+      if (val1 instanceof StringReference stringReference && val2 instanceof StringReference reference) {
+        return stringReference.value().equals(reference.value());
       }
       return val1.equals(val2);
     }
 
     @Override
-    public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
+    public Object evaluate(EvaluationContextImpl context) {
       return null;
     }
   }

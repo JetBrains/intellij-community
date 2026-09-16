@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.night.config.toml` start
+content_module_jar(
+    libraries = ["@lib//:libraries-night-config-toml-night-config-toml"],
+    module = ":night-config-toml",
+)
+### auto-generated section `dev intellij.libraries.night.config.toml` end
+
 ### auto-generated section `build intellij.libraries.night.config.toml` start
 jvm_library(
     name = "night-config-toml",
@@ -16,11 +23,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-night-config-toml-night-config-toml"],
     runtime_deps = ["@lib//:libraries-night-config-toml-night-config-toml"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-night-config-toml-night-config-toml"],
-    module = ":night-config-toml",
 )
 
 jvm_library(
@@ -42,7 +44,6 @@ exports_files(
     [
         "intellij.libraries.night.config.toml.iml",
         "resources/intellij.libraries.night.config.toml.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

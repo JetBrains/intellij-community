@@ -343,9 +343,9 @@ private fun RadioButtonImpl(
                 alignment = Stroke.Alignment.Center,
             )
 
+    val iconState = if (outline != Outline.None) radioButtonState.copy(focused = false) else radioButtonState
     val radioButtonPainterProvider = rememberResourcePainterProvider(style.icons.radioButton)
-    val radioButtonPainter by
-        radioButtonPainterProvider.getPainter(Selected(radioButtonState), Stateful(radioButtonState))
+    val radioButtonPainter by radioButtonPainterProvider.getPainter(Selected(iconState), Stateful(iconState))
 
     val radioButtonBoxModifier = Modifier.size(metrics.radioButtonSize)
 

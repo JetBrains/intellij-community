@@ -4,7 +4,7 @@ from typing import Any
 from typing_extensions import LiteralString, Self
 
 from jwcrypto import common
-from jwcrypto.common import JWException, JWSEHeaderParameter, JWSEHeaderRegistry
+from jwcrypto.common import JWSEHeaderParameter, JWSEHeaderRegistry
 from jwcrypto.jwk import JWK, JWKSet
 
 default_max_compressed_size: int
@@ -14,10 +14,8 @@ JWEHeaderRegistry: dict[LiteralString, JWSEHeaderParameter]
 
 default_allowed_algs: list[LiteralString]
 
-class InvalidJWEData(JWException):
-    def __init__(self, message: str | None = None, exception: BaseException | None = None) -> None: ...
-
 InvalidCEKeyLength = common.InvalidCEKeyLength
+InvalidJWEData = common.InvalidJWEData
 InvalidJWEKeyLength = common.InvalidJWEKeyLength
 InvalidJWEKeyType = common.InvalidJWEKeyType
 InvalidJWEOperation = common.InvalidJWEOperation

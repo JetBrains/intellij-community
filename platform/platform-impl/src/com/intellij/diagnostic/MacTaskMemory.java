@@ -7,7 +7,6 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.foreign.Arena;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.Linker;
-import java.lang.foreign.MemorySegment;
 import java.lang.invoke.MethodHandle;
 
 import static java.lang.foreign.ValueLayout.ADDRESS;
@@ -34,12 +33,12 @@ final class MacTaskMemory {
 
   /** @return the statistics, or {@code null} when the call fails */
   static @Nullable Info read() {
-    try (Arena arena = Arena.ofConfined()) {
-      MemorySegment info = arena.allocate(TASK_VM_INFO_SIZE);
-      MemorySegment count = arena.allocate(JAVA_INT);
+    try (var arena = Arena.ofConfined()) {
+      var info = arena.allocate(TASK_VM_INFO_SIZE);
+      var count = arena.allocate(JAVA_INT);
       count.set(JAVA_INT, 0, TASK_VM_INFO_SIZE / Integer.BYTES);
-      int task = (int)Handles.MACH_TASK_SELF.invokeExact();
-      int result = (int)Handles.TASK_INFO.invokeExact(task, TASK_VM_INFO, info, count);
+      var task = (int)Handles.MACH_TASK_SELF.invokeExact();
+      var result = (int)Handles.TASK_INFO.invokeExact(task, TASK_VM_INFO, info, count);
       if (result != 0) {
         return null;
       }

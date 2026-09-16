@@ -1,5 +1,4 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
-load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.libraries.kotlinc.low.level.api.fir` start
 jvm_library(
@@ -20,19 +19,15 @@ jvm_library(
         "@lib//:libraries-kotlinc-low-level-api-fir-kotlinc-low-level-api-fir",
         "//platform/backend",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
         "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface",
         "//libraries/kotlinc/kotlin-compiler-fir:libraries-kotlinc-kotlin-compiler-fir",
         "//libraries/kotlinc/kotlin-scripting-common:libraries-kotlinc-kotlin-scripting-common",
         "//libraries/kotlinc/assignment-compiler-plugin:libraries-kotlinc-assignment-compiler-plugin",
-        "//libraries/kotlinc/kotlin-scripting-jvm:libraries-kotlinc-kotlin-scripting-jvm",
         "//libraries/kotlinc/kotlin-scripting-compiler-impl:libraries-kotlinc-kotlin-scripting-compiler-impl",
+        "//libraries/kotlinc/analysis-api-impl-base:libraries-kotlinc-analysis-api-impl-base",
         "//libraries/kotlinc/scripting-compiler-plugin:libraries-kotlinc-scripting-compiler-plugin",
     ],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-kotlinc-low-level-api-fir-kotlinc-low-level-api-fir"],
-    module = ":libraries-kotlinc-low-level-api-fir",
 )
 
 jvm_library(
@@ -51,12 +46,13 @@ jvm_library(
         ":libraries-kotlinc-low-level-api-fir",
         "//platform/backend:backend_test_lib",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
         "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface_test_lib",
         "//libraries/kotlinc/kotlin-compiler-fir:libraries-kotlinc-kotlin-compiler-fir_test_lib",
         "//libraries/kotlinc/kotlin-scripting-common:libraries-kotlinc-kotlin-scripting-common_test_lib",
         "//libraries/kotlinc/assignment-compiler-plugin:libraries-kotlinc-assignment-compiler-plugin_test_lib",
-        "//libraries/kotlinc/kotlin-scripting-jvm:libraries-kotlinc-kotlin-scripting-jvm_test_lib",
         "//libraries/kotlinc/kotlin-scripting-compiler-impl:libraries-kotlinc-kotlin-scripting-compiler-impl_test_lib",
+        "//libraries/kotlinc/analysis-api-impl-base:libraries-kotlinc-analysis-api-impl-base_test_lib",
         "//libraries/kotlinc/scripting-compiler-plugin:libraries-kotlinc-scripting-compiler-plugin_test_lib",
     ],
 )
@@ -67,7 +63,6 @@ exports_files(
     [
         "intellij.libraries.kotlinc.low.level.api.fir.iml",
         "resources/intellij.libraries.kotlinc.low.level.api.fir.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

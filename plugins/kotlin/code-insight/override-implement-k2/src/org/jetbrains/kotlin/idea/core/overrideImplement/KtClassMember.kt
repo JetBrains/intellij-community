@@ -63,6 +63,10 @@ import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
+import org.jetbrains.kotlin.idea.base.psi.addMemberDeclaration
+import org.jetbrains.kotlin.idea.base.psi.addModifierKeyword
+import org.jetbrains.kotlin.idea.base.psi.getOrCreateClassBody
+import org.jetbrains.kotlin.idea.base.psi.getOrCreatePrimaryConstructor
 import org.jetbrains.kotlin.idea.base.util.names.FqNames.OptInFqNames.isRequiresOptInFqName
 import org.jetbrains.kotlin.idea.core.TemplateKind
 import org.jetbrains.kotlin.idea.core.getFunctionBodyTextFromTemplate
@@ -85,9 +89,7 @@ import org.jetbrains.kotlin.psi.KtPropertyAccessor
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtPsiUtil
 import org.jetbrains.kotlin.psi.KtTypeParameter
-import org.jetbrains.kotlin.psi.createPrimaryConstructorIfAbsent
 import org.jetbrains.kotlin.psi.findDocComment.findDocComment
-import org.jetbrains.kotlin.psi.getOrCreateBody
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
 import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
@@ -188,9 +190,9 @@ fun generateMember(
     }
 
     when (mode) {
-        MemberGenerateMode.ACTUAL -> newMember.addModifier(KtTokens.ACTUAL_KEYWORD)
+        MemberGenerateMode.ACTUAL -> newMember.addModifierKeyword(KtTokens.ACTUAL_KEYWORD)
         MemberGenerateMode.EXPECT -> if (targetClass == null) {
-            newMember.addModifier(KtTokens.EXPECT_KEYWORD)
+            newMember.addModifierKeyword(KtTokens.EXPECT_KEYWORD)
         }
 
         MemberGenerateMode.OVERRIDE -> {
@@ -250,28 +252,28 @@ fun generateClassWithMembers(
 
     when (mode) {
         MemberGenerateMode.ACTUAL -> {
-            newClass.addModifier(KtTokens.ACTUAL_KEYWORD)
+            newClass.addModifierKeyword(KtTokens.ACTUAL_KEYWORD)
             newClass.forEachDescendantOfType<KtDeclaration> { declaration ->
                 if (!(declaration is KtParameter && !declaration.isPropertyParameter()) &&
                     declaration !is KtPropertyAccessor &&
                     declaration !is KtTypeParameter &&
                     declaration !is KtEnumEntry) {
-                    declaration.addModifier(KtTokens.ACTUAL_KEYWORD)
+                    declaration.addModifierKeyword(KtTokens.ACTUAL_KEYWORD)
                 }
             }
 
             val primaryConstructor = if ((symbol.psi as? KtClass)?.primaryConstructor != null) {
                 // renderer skips constructors without parameters/annotations
                 // though they are required to have explicit actual modifier
-                (newClass as? KtClass)?.createPrimaryConstructorIfAbsent()
+                (newClass as? KtClass)?.getOrCreatePrimaryConstructor()
             } else {
                 newClass.primaryConstructor
             }
-            primaryConstructor?.addModifier(KtTokens.ACTUAL_KEYWORD)
+            primaryConstructor?.addModifierKeyword(KtTokens.ACTUAL_KEYWORD)
         }
         MemberGenerateMode.EXPECT -> {
             if (targetClass == null) {
-                newClass.addModifier(KtTokens.EXPECT_KEYWORD)
+                newClass.addModifierKeyword(KtTokens.EXPECT_KEYWORD)
             }
 
             val actuals = mutableSetOf<String>()
@@ -672,11 +674,11 @@ private fun generateClass(
             }
 
             if (klass is KtClass && klass.isEnum() && !hasEnumConstants && declaration !is KtEnumEntry) {
-                val body = klass.getOrCreateBody()
+                val body = klass.getOrCreateClassBody()
                 body.addBefore(factory.createSemicolon(), body.rBrace)
             }
 
-            klass.addDeclaration(declaration)
+            klass.addMemberDeclaration(declaration)
         }
     }
 

@@ -7,6 +7,7 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
+import org.jetbrains.kotlin.idea.base.psi.appendValueArgument
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.quickfix.AddAnnotationFix.Kind
@@ -64,7 +65,7 @@ class OptInFixes {
         override fun invoke(context: ActionContext, element: KtAnnotationEntry, updater: ModPsiUpdater) {
             val annotationInnerText = argumentClassFqName.asClassLiteral()
             val psiFactory = KtPsiFactory(element.project)
-            element.valueArgumentList?.addArgument(psiFactory.createArgument(annotationInnerText))
+            element.valueArgumentList?.appendValueArgument(psiFactory.createArgument(annotationInnerText))
                 ?: element.addAfter(psiFactory.createCallArguments("($annotationInnerText)"), element.lastChild)
             ShortenReferencesFacility.getInstance().shorten(element)
         }

@@ -9,7 +9,7 @@ import java.awt.Component
 
 @ApiStatus.Internal
 interface ShelveSilentlyGotItTooltipProvider {
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun showGotItTooltip(project: Project, contextComponent: Component): Boolean
 
   companion object {

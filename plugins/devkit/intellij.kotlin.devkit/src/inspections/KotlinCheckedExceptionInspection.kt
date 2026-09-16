@@ -39,6 +39,7 @@ import org.jetbrains.kotlin.analysis.api.types.fullyExpandedType
 import org.jetbrains.kotlin.analysis.api.types.receiverType
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
+import org.jetbrains.kotlin.idea.base.psi.appendValueArgument
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.StandardKotlinNames
 import org.jetbrains.kotlin.idea.codeinsight.utils.getFqNameIfPackageOrNonLocal
@@ -264,7 +265,7 @@ class KotlinCheckedExceptionInspection : AbstractKotlinInspection() {
         args.arguments.isEmpty() -> // replace '()' with a new argument list
           args.replace(newArgList)
         args.arguments.none { it.textMatches(argument) } ->
-          args.addArgument(newArgList.arguments[0])
+          args.appendValueArgument(newArgList.arguments[0])
       }
 
       return true

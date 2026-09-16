@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.platform.lang.core` start
+content_module_jar(module = ":lang-core")
+### auto-generated section `dev intellij.platform.lang.core` end
+
 ### auto-generated section `build intellij.platform.lang.core` start
 jvm_library(
     name = "lang-core",
@@ -42,8 +46,6 @@ jvm_library(
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     ],
 )
-
-content_module_jar(module = ":lang-core")
 
 jvm_library(
     name = "lang-core_test_lib",
@@ -87,7 +89,6 @@ exports_files(
     [
         "intellij.platform.lang.core.iml",
         "resources/intellij.platform.lang.core.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

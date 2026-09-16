@@ -1,4 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
+
 package org.jetbrains.intellij.build
 
 import com.intellij.platform.buildScripts.licenses.SoftwareBillOfMaterials
@@ -33,7 +35,7 @@ fun isCommunityModule(module: JpsModule, context: BuildContext): Boolean {
   }
 }
 
-val knownMissingModuleDependencies: List<String> = listOf(
+val knownMissingModuleDependencies: List<String> = java.util.List.of(
   "intellij.rider.plugins.fsharp",
   // conditional xi-include
   "kotlin.base.scripting.k1",
@@ -45,18 +47,16 @@ val knownMissingModuleDependencies: List<String> = listOf(
   "intellij.python.frontend",
 )
 
+private val ALLOWED_PLUGIN_VENDORS: Set<String> = java.util.Set.of(
+  "JetBrains", "JetBrains s.r.o.",
+  "JetBrains, Google",
+  "JetBrains Experimental", "JetBrains-Experimental",
+)
+
 /**
  * Describes a distribution of an IntelliJ-based IDE hosted in the IntelliJ repository.
  */
 abstract class JetBrainsProductProperties : ProductProperties() {
-  private companion object {
-    val ALLOWED_PLUGIN_VENDORS: Set<String> = setOf(
-      "JetBrains", "JetBrains s.r.o.",
-      "JetBrains, Google",
-      "JetBrains Experimental", "JetBrains-Experimental",
-    )
-  }
-
   init {
     scrambleMainJar = true
     presignedNativeLibs = mapOf(
@@ -70,7 +70,7 @@ abstract class JetBrainsProductProperties : ProductProperties() {
     sbomOptions.creator = "Organization: ${Suppliers.JETBRAINS}"
     sbomOptions.license = SoftwareBillOfMaterials.Options.DistributionLicense.JETBRAINS
 
-    productLayout.addPlatformSpec { layout, _ -> layout.withModule(IJENT_BOOT_CLASSPATH_MODULE, PLATFORM_CORE_NIO_FS) }
+    productLayout.addPlatformSpec { layout -> layout.withModule(IJENT_BOOT_CLASSPATH_MODULE, PLATFORM_CORE_NIO_FS) }
   }
 
   final override fun validatePlugin(pluginId: String?, result: PluginCreationResult<IdePlugin>): List<PluginProblem> {
@@ -93,7 +93,8 @@ abstract class JetBrainsProductProperties : ProductProperties() {
 }
 
 private class InvalidPluginDescriptorError(message: String) : InvalidDescriptorProblem(detailedMessage = message, descriptorPath = "") {
-  override val level = Level.ERROR
+  override val level: Level
+    get() = Level.ERROR
 }
 
 private fun isIntentionallyIgnored(problem: PluginProblem, pluginId: String?): Boolean {

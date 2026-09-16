@@ -10,6 +10,13 @@ jps_test(
 )
 ### skip generation section `test intellij.searchEverywhereMl.typos.tests`
 
+### auto-generated section `dev intellij.searchEverywhereMl.typos` start
+content_module_jar(
+    libraries = ["@lib//:search_everywhere_ml-typos-ai-grazie-spell-gec-engine-local-jvm"],
+    module = ":typos",
+)
+### auto-generated section `dev intellij.searchEverywhereMl.typos` end
+
 ### auto-generated section `build intellij.searchEverywhereMl.typos` start
 jvm_library(
     name = "typos",
@@ -49,11 +56,6 @@ jvm_library(
         "//platform/ml-impl",
         "@lib//:search_everywhere_ml-typos-ai-grazie-spell-gec-engine-local-jvm",
     ],
-)
-
-content_module_jar(
-    libraries = ["@lib//:search_everywhere_ml-typos-ai-grazie-spell-gec-engine-local-jvm"],
-    module = ":typos",
 )
 
 jvm_library(

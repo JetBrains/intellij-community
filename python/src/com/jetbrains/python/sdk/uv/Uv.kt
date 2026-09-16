@@ -16,13 +16,17 @@ import java.nio.file.Path
 
 @ApiStatus.Internal
 internal interface UvCli<P : PathHolder> {
-  suspend fun runUv(workingDir: Path, venvPath: P?, canChangeTomlOrLock: Boolean, vararg args: String): PyResult<String>
+  /**
+   * [workingDir] is the directory uv runs in. It is `null` for a command that needs none, such as a query of the uv
+   * Python list. It must be absolute, because a relative path names no directory on the machine that runs uv.
+   */
+  suspend fun runUv(workingDir: Path?, venvPath: P?, canChangeTomlOrLock: Boolean, vararg args: String): PyResult<String>
 
   /**
    * Runs uv with arguments that may name local files, so that a file reaches the machine uv runs on rather than being
    * passed as a path that means nothing there.
    */
-  suspend fun runUv(workingDir: Path, venvPath: P?, canChangeTomlOrLock: Boolean, args: Args): PyResult<String>
+  suspend fun runUv(workingDir: Path?, venvPath: P?, canChangeTomlOrLock: Boolean, args: Args): PyResult<String>
 }
 
 @ApiStatus.Internal

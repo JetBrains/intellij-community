@@ -5,6 +5,7 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
+import org.jetbrains.kotlin.idea.base.psi.setTypeParameterExtendsBound
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -33,7 +34,7 @@ class AddGenericUpperBoundFix(
         assert(element.extendsBound == null) { "Don't know what to do with existing bounds" }
 
         val typeReference = KtPsiFactory(context.project).createType(fqName)
-        val insertedTypeReference = element.setExtendsBound(typeReference)!!
+        val insertedTypeReference = element.setTypeParameterExtendsBound(typeReference)!!
 
         ShortenReferencesFacility.getInstance().shorten(insertedTypeReference)
     }

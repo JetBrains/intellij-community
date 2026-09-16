@@ -1,3 +1,0 @@
-- name: dist.all/lib/fleet.reporting.api.jar
-  modules:
-  - name: fleet.reporting.api

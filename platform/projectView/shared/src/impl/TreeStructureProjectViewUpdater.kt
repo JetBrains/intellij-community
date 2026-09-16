@@ -388,24 +388,24 @@ private class UpdateSession(
     }
   }
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   private fun matchesFile(node: AbstractTreeNode<*>, file: VirtualFile): Boolean {
     return node.canRepresent(file)
   }
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   private fun containsFile(node: AbstractTreeNode<*>, file: VirtualFile): Boolean {
     if (node is ProjectViewNode<*> && file.isValid && node.contains(file)) return true
     val content = (node.value as? PsiElement)?.let { PsiUtilCore.getVirtualFile(it) } ?: return false
     return VfsUtilCore.isAncestor(content, file, true)
   }
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   private fun matchesElement(node: AbstractTreeNode<*>, element: PsiElement): Boolean {
     return node.canRepresent(element)
   }
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   private fun containsElement(node: AbstractTreeNode<*>, element: PsiElement): Boolean {
     if (node is ProjectViewNode<*>) {
       val file = PsiUtilCore.getVirtualFile(element)

@@ -80,7 +80,7 @@ internal fun getTargetNameFromEntryStem(entryStem: String): String? {
 internal fun parseLeastSignificantBitsFromKey(key: String): Long? {
   // Keys are persisted as "<lsb>-<msb>" with unsigned radix-36 numbers.
   // Cleanup does not have original hashValue128, so it must decode the stored lsb prefix
-  // and feed it directly into StripedMutex.getLockByHash.
+  // and feed it directly into StripedLock.withLockByHash.
   val separatorIndex = key.indexOf('-')
   if (separatorIndex <= 0) {
     return null

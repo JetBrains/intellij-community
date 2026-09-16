@@ -78,6 +78,14 @@ interface TerminalOutputModel {
   val cursorOffset: TerminalOffset
 
   /**
+   * The offset where the terminal screen starts. Everything between [startOffset] and this offset is
+   * the history that has scrolled off the screen.
+   *
+   * Guaranteed to be between [startOffset] and [endOffset] (inclusive), and at or before [cursorOffset].
+   */
+  val screenTopOffset: TerminalOffset
+
+  /**
    * The current offset of the start of the available part of the output.
    *
    * Anything before this index has been already trimmed and no longer available.

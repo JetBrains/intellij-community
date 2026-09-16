@@ -5,16 +5,12 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
-import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.CloseProjectWindowHelper
-import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenRightTabVirtualFile
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenTabFocusState
 import com.intellij.util.application
 import com.intellij.util.asSafely
@@ -33,7 +29,6 @@ internal class WelcomeScreenProjectActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     if (project.isWelcomeExperienceProject()) {
       dropModalWelcomeScreenOnClose(project)
-      subscribeToWelcomeScreenTabClose(project)
       settleStartupFocus(project)
     }
   }
@@ -83,20 +78,6 @@ internal class WelcomeScreenProjectActivity : ProjectActivity {
                      }
                      else {
                        WelcomeScreenTabUsageCollector.logWelcomeScreenTabDisabled()
-                     }
-                   }
-                 })
-  }
-
-  private suspend fun subscribeToWelcomeScreenTabClose(project: Project) {
-    project
-      .messageBus
-      .connect(WelcomeScreenProjectScopeHolder.getInstanceAsync(project).coroutineScope)
-      .subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER,
-                 object : FileEditorManagerListener {
-                   override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
-                     if (file is WelcomeScreenRightTabVirtualFile) {
-                       WelcomeScreenTabUsageCollector.logWelcomeScreenTabClosed()
                      }
                    }
                  })

@@ -142,8 +142,8 @@ public final class InlineDebugRenderer extends InlineDebugRendererBase {
   public static @NotNull Pair<XValue, String> getXValueDescriptor(@NotNull XValueNodeImpl xValueNode) {
     String name = "valueName";
     XValue container = xValueNode.getValueContainer();
-    if (container instanceof XNamedValue) {
-      name = ((XNamedValue)container).getName();
+    if (container instanceof XNamedValue value) {
+      name = value.getName();
     }
     return Pair.create(container, name);
   }
@@ -263,8 +263,8 @@ public final class InlineDebugRenderer extends InlineDebugRendererBase {
       final XValuePresentation presentation = value.getValuePresentation();
       if (presentation == null) return null;
       try {
-        if (presentation instanceof XValueCompactPresentation && !value.getTree().isUnderRemoteDebug()) {
-          ((XValueCompactPresentation)presentation).renderValue(renderer, value);
+        if (presentation instanceof XValueCompactPresentation compactPresentation && !value.getTree().isUnderRemoteDebug()) {
+          compactPresentation.renderValue(renderer, value);
         }
         else {
           presentation.renderValue(renderer);

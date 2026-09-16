@@ -3,8 +3,8 @@
 
 package org.jetbrains.intellij.build.dev
 
+import com.intellij.platform.buildScripts.concurrency.Subtask
 import io.opentelemetry.api.common.AttributeKey
-import kotlinx.coroutines.Deferred
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.JvmArchitecture
@@ -51,14 +51,14 @@ internal fun selectDevModePluginBuildStrategy(request: BuildRequest, context: Bu
   }
 }
 
-internal suspend fun buildPluginsForDevMode(
+internal fun buildPluginsForDevMode(
   request: BuildRequest,
   pluginLayouts: List<PluginLayout>,
   context: BuildContext,
   runDir: Path,
-  platformLayout: Deferred<PlatformLayout>,
+  platformLayout: Subtask<PlatformLayout>,
   searchableOptionSet: SearchableOptionSetDescriptor?,
-  platformEntriesProvider: suspend () -> List<DistributionFileEntry>,
+  platformEntriesProvider: () -> List<DistributionFileEntry>,
 ): PluginsLayoutResult {
   val descriptors = buildPluginDescriptorsForDevMode(
     os = request.os,
@@ -88,12 +88,12 @@ internal suspend fun buildPluginsForDevMode(
  * run via `coScrambleEntriesProvider` / `classpathDirsProvider`, then per-plugin scramble runs
  * after platform scramble via [scrambleAlreadyLaidOutPluginsForDevMode].
  */
-internal suspend fun layoutAllPluginsForDevMode(
+internal fun layoutAllPluginsForDevMode(
   request: BuildRequest,
   pluginLayouts: List<PluginLayout>,
   context: BuildContext,
   runDir: Path,
-  platformLayout: Deferred<PlatformLayout>,
+  platformLayout: Subtask<PlatformLayout>,
   searchableOptionSet: SearchableOptionSetDescriptor?,
 ): List<PluginBuildResult> {
   return buildPluginDescriptorsForDevMode(
@@ -110,15 +110,15 @@ internal suspend fun layoutAllPluginsForDevMode(
   )
 }
 
-private suspend fun buildPluginDescriptorsForDevMode(
+private fun buildPluginDescriptorsForDevMode(
   os: OsFamily,
   arch: JvmArchitecture,
   plugins: List<PluginLayout>,
   context: BuildContext,
   runDir: Path,
-  platformLayout: Deferred<PlatformLayout>,
+  platformLayout: Subtask<PlatformLayout>,
   searchableOptionSet: SearchableOptionSetDescriptor?,
-  platformEntriesProvider: (suspend () -> List<DistributionFileEntry>)?,
+  platformEntriesProvider: (() -> List<DistributionFileEntry>)?,
   layoutOnly: Boolean,
   prepackedPluginContent: Map<PrepackedPluginContentKey, PrepackedPluginContentJar>,
 ): List<PluginBuildResult> {
@@ -153,14 +153,14 @@ private suspend fun buildPluginDescriptorsForDevMode(
 }
 
 /** Per-plugin scramble for non-co-scramble plugins after platform scramble has completed (dev mode). */
-internal suspend fun scrambleAlreadyLaidOutPluginsForDevMode(
+internal fun scrambleAlreadyLaidOutPluginsForDevMode(
   request: BuildRequest,
   descriptors: List<PluginBuildResult>,
   context: BuildContext,
   runDir: Path,
-  platformLayout: Deferred<PlatformLayout>,
+  platformLayout: Subtask<PlatformLayout>,
   layoutsOfPluginsToScramble: Map<String, PluginLayout>,
-  platformEntriesProvider: suspend () -> List<DistributionFileEntry>,
+  platformEntriesProvider: () -> List<DistributionFileEntry>,
 ): PluginsLayoutResult {
   val platform = platformLayout.await()
   val state = DistributionBuilderState(platformLayout = platform, pluginsToPublish = emptySet(), context = context)

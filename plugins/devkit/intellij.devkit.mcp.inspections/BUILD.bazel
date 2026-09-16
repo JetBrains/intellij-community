@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.devkit.mcp.inspections` start
+content_module_jar(module = ":mcp-inspections")
+### auto-generated section `dev intellij.devkit.mcp.inspections` end
+
 ### auto-generated section `build intellij.devkit.mcp.inspections` start
 jvm_library(
     name = "mcp-inspections",
@@ -32,8 +36,6 @@ jvm_library(
         "//java/java-psi-api:psi",
     ],
 )
-
-content_module_jar(module = ":mcp-inspections")
 
 jvm_library(
     name = "mcp-inspections_test_lib",

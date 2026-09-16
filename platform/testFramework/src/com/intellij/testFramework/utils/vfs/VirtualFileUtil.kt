@@ -21,19 +21,19 @@ import org.jetbrains.annotations.SystemIndependent
 import java.io.IOException
 import java.nio.file.Path
 
-@RequiresReadLock
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 fun VirtualFile.getDocument(): Document {
   return checkNotNull(findDocument()) {
     "Cannot find document for $path"
   }
 }
 
-@RequiresReadLock
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 fun VirtualFile.getPsiFile(project: Project): PsiFile {
   return PsiUtilCore.getPsiFile(project, this)
 }
 
-@RequiresReadLock
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 fun VirtualFile.getFile(relativePath: @SystemIndependent String): VirtualFile {
   val file = findFile(relativePath)
   if (file == null) {
@@ -46,7 +46,7 @@ fun VirtualFile.getFile(relativePath: @SystemIndependent String): VirtualFile {
   return file
 }
 
-@RequiresReadLock
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 fun VirtualFile.getDirectory(relativePath: @SystemIndependent String): VirtualFile {
   val directory = findDirectory(relativePath)
   if (directory == null) {
@@ -59,7 +59,7 @@ fun VirtualFile.getDirectory(relativePath: @SystemIndependent String): VirtualFi
   return directory
 }
 
-@RequiresWriteLock
+@RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
 fun VirtualFile.createFile(relativePath: @SystemIndependent String): VirtualFile {
   val file = findFile(relativePath)
   if (file != null) {
@@ -72,7 +72,7 @@ fun VirtualFile.createFile(relativePath: @SystemIndependent String): VirtualFile
   return findOrCreateFile(relativePath)
 }
 
-@RequiresWriteLock
+@RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
 fun VirtualFile.createDirectory(relativePath: @SystemIndependent String): VirtualFile {
   val directory = findDirectory(relativePath)
   if (directory != null) {
@@ -85,22 +85,22 @@ fun VirtualFile.createDirectory(relativePath: @SystemIndependent String): Virtua
   return findOrCreateDirectory(relativePath)
 }
 
-@RequiresWriteLock
+@RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
 fun VirtualFile.deleteRecursively() {
   delete(fileSystem)
 }
 
-@RequiresWriteLock
+@RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
 fun VirtualFile.deleteChildrenRecursively(predicate: (VirtualFile) -> Boolean) {
   children.filter(predicate).forEach { it.delete(fileSystem) }
 }
 
-@RequiresWriteLock
+@RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
 fun VirtualFile.deleteRecursively(relativePath: @SystemIndependent String) {
   findFileOrDirectory(relativePath)?.deleteRecursively()
 }
 
-@RequiresWriteLock
+@RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
 fun VirtualFile.deleteChildrenRecursively(relativePath: @SystemIndependent String, predicate: (VirtualFile) -> Boolean) {
   findFileOrDirectory(relativePath)?.deleteChildrenRecursively(predicate)
 }

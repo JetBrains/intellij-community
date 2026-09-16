@@ -84,7 +84,7 @@ class ModuleDependencyIndexTest {
       edtWriteAction {
         GlobalWorkspaceModel.getInstance(LocalEelMachine).updateModel("Test") {
           val manager = GlobalWorkspaceModel.getInstance(LocalEelMachine).getVirtualFileUrlManager()
-          val globalEntitySource = JpsGlobalFileEntitySource(manager.getOrCreateFromUrl("/url"))
+          val globalEntitySource = JpsGlobalFileEntitySource(manager.storeAndGet("/url"))
           it addEntity LibraryEntity("GlobalLib", LibraryTableId.GlobalLibraryTableId("application"), emptyList(), globalEntitySource)
         }
       }
@@ -147,7 +147,7 @@ class ModuleDependencyIndexTest {
       edtWriteAction {
         GlobalWorkspaceModel.getInstance(LocalEelMachine).updateModel("Test") {
           val manager = GlobalWorkspaceModel.getInstance(LocalEelMachine).getVirtualFileUrlManager()
-          val globalEntitySource = JpsGlobalFileEntitySource(manager.getOrCreateFromUrl("/url"))
+          val globalEntitySource = JpsGlobalFileEntitySource(manager.storeAndGet("/url"))
           it addEntity LibraryEntity("GlobalLib", LibraryTableId.GlobalLibraryTableId("application"), emptyList(), globalEntitySource)
         }
       }

@@ -11,6 +11,10 @@ jps_test(
 
 ### skip generation section `test intellij.platform.discoverability.tests`
 
+### auto-generated section `dev intellij.platform.discoverability` start
+content_module_jar(module = ":discoverability")
+### auto-generated section `dev intellij.platform.discoverability` end
+
 ### auto-generated section `build intellij.platform.discoverability` start
 jvm_library(
     name = "discoverability",
@@ -46,8 +50,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":discoverability")
-
 jvm_library(
     name = "discoverability_test_lib",
     testonly = True,
@@ -81,7 +83,6 @@ exports_files(
     [
         "intellij.platform.discoverability.iml",
         "resources/intellij.platform.discoverability.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

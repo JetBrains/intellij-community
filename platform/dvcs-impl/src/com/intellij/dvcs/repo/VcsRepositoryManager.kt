@@ -170,7 +170,7 @@ class VcsRepositoryManager @ApiStatus.Internal constructor(
     waiter.join()
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun getRepositoryForFile(file: VirtualFile?): Repository? = getRepositoryForFile(file = file, quick = false)
 
   @CalledInAny
@@ -342,7 +342,7 @@ class VcsRepositoryManager @ApiStatus.Internal constructor(
     }
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private fun checkAndUpdateRepositoryCollection(checkedRoot: VirtualFile?) {
     updateScheduled.set(false)
 

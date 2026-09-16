@@ -22,8 +22,8 @@
     <module name="intellij.platform.statistics"/>
     <module name="intellij.platform.util.ui"/>
     <module name="intellij.python.lsp.core"/>
-    <module name="intellij.python.pytools"/>
-    <module name="intellij.python.pytools.ui"/>
+    <module name="intellij.python.pyrefly.common"/>
+    <module name="intellij.python.pytools.backend"/>
     <module name="intellij.xml.parser"/>
   </dependencies>
   <!-- endregion -->

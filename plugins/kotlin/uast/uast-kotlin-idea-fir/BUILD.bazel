@@ -2,15 +2,26 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.kotlin.uast.idea` start
+content_module_jar(module = ":kotlin-uast-idea")
+### auto-generated section `dev intellij.kotlin.uast.idea` end
+
 ### auto-generated section `build intellij.kotlin.uast.idea` start
 create_kotlinc_options(
     name = "custom_kotlin-uast-idea",
     opt_in = [
+        "org.jetbrains.kotlin.psi.KtExperimentalApi",
+        "org.jetbrains.kotlin.psi.KtNonPublicApi",
+        "org.jetbrains.kotlin.psi.KtIdeApi",
+        "org.jetbrains.kotlin.analysis.api.KaExperimentalApi",
         "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+        "org.jetbrains.kotlin.analysis.api.KaPlatformInterface",
+        "org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaUnstableDiagnosticApi",
         "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
         "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
-        "org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi",
+        "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
     ],
+    x_context_parameters = True,
 )
 
 jvm_library(
@@ -54,8 +65,6 @@ jvm_library(
         "//plugins/kotlin/references",
     ],
 )
-
-content_module_jar(module = ":kotlin-uast-idea")
 
 jvm_library(
     name = "kotlin-uast-idea_test_lib",

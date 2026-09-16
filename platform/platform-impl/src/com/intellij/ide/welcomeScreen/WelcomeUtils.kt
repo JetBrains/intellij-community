@@ -2,7 +2,6 @@
 package com.intellij.ide.welcomeScreen
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -12,11 +11,9 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getOpenedProjects
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
 import com.intellij.openapi.wm.ex.ProjectFrameCapability
 import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
-import com.intellij.openapi.wm.ex.WelcomeScreenTabService
 import com.intellij.openapi.wm.ex.getWelcomeScreenProjectProvider
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
@@ -44,12 +41,15 @@ object WelcomeUtils {
     group.add(ActionManager.getInstance().getAction("NonModalWelcomeScreen.LeftTabActions.New"), Constraints.FIRST)
   }
 
-  fun getGotoWelcomeProjectAction(project: Project?): AnAction? {
-    if (project != null && isWelcomeProject(project)) {
+  fun getGotoWelcomeProjectAction(): AnAction? {
+    if (!WelcomeAccessPoint.isAvailable()) {
       return null
     }
 
     val provider = getWelcomeScreenProjectProvider() ?: return null
+    if (!provider.showHomeActionInProjectWidget()) {
+      return null
+    }
     val path = WelcomeScreenProjectProvider.getWelcomeScreenProjectPath() ?: return null
 
     val name = provider.getWelcomeScreenProjectName()
@@ -60,42 +60,19 @@ object WelcomeUtils {
   @JvmStatic
   fun isSingleWelcomeProjectWithoutConfirmation(): Boolean {
     val project = getOpenedProjects().singleOrNull()
-    if (project == null) {
-      return false
-    }
-    if (isWelcomeProject(project)) {
-      return isNoUserDataOpened(FileEditorManager.getInstance(project))
-    }
-    return false
+    return project != null && isWelcomeProject(project) && isNoUserDataOpened(FileEditorManager.getInstance(project))
   }
 
   suspend fun noCheckOpenConfirmation(project: Project): Boolean {
     return isWelcomeProject(project) && isNoUserDataOpened(project.serviceAsync<FileEditorManager>())
   }
 
-  @JvmStatic
-  fun addGotoHomeToConfirmationDialog(): Boolean {
-    if (SystemInfo.isMac) {
-      return false
-    }
-    val project = ProjectUtil.getActiveProject() ?: return false
-    return !isWelcomeProject(project)
-  }
-
   private fun isNoUserDataOpened(manager: FileEditorManager): Boolean {
-    val editors = manager.getAllEditors()
-    if (editors.size == 0) {
-      return true
-    }
-    if (editors.size == 1) {
-      val marker = editors[0].getFile()?.getUserData(WelcomeScreenTabService.WELCOME_TAB_FILE_MARKER)
-      return marker != null && marker
-    }
-    return false
+    return manager.getAllEditors().isEmpty()
   }
 
   fun getWelcomeProjectIcon(project: Project): Icon? {
-    if (isWelcomeProject(project)) {
+    if (WelcomeAccessPoint.isAvailable() && isWelcomeProject(project)) {
       return AllIcons.Nodes.HomeFolder
     }
     return null

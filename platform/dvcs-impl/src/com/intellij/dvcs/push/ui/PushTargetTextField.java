@@ -7,6 +7,7 @@ import com.intellij.util.textCompletion.DefaultTextCompletionValueDescriptor;
 import com.intellij.util.textCompletion.TextCompletionProvider;
 import com.intellij.util.textCompletion.TextFieldWithCompletion;
 import com.intellij.util.textCompletion.ValuesCompletionProvider.ValuesCompletionProviderDumbAware;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.FocusAdapter;
@@ -15,7 +16,12 @@ import java.util.List;
 
 public class PushTargetTextField extends TextFieldWithCompletion {
   public PushTargetTextField(@NotNull Project project, @NotNull List<String> targetVariants, @NotNull String defaultTargetName) {
-    super(project, getCompletionProvider(targetVariants), defaultTargetName, true, true, true);
+    this(project, getCompletionProvider(targetVariants), defaultTargetName);
+  }
+
+  @ApiStatus.Internal
+  public PushTargetTextField(@NotNull Project project, @NotNull TextCompletionProvider completionProvider, @NotNull String defaultTargetName) {
+    super(project, completionProvider, defaultTargetName, true, true, true);
     addFocusListener(new FocusAdapter() {
       @Override
       public void focusGained(FocusEvent e) {

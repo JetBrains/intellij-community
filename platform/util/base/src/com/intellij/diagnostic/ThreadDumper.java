@@ -83,6 +83,11 @@ public final class ThreadDumper {
       writer.write("\n");
       writer.write(actionsLocksDump);
     }
+    String scanningWorkDump = ScanningWorkDumper.INSTANCE.dumpScanningWorkStateOrNull();
+    if (scanningWorkDump != null) {
+      writer.write("\n");
+      writer.write(scanningWorkDump);
+    }
     return new ThreadDump(writer.toString(), edtStack, threadInfos);
   }
 

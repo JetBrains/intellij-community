@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.python.parser` start
+content_module_jar(module = ":parser")
+### auto-generated section `dev intellij.python.parser` end
+
 ### auto-generated section `build intellij.python.parser` start
 jvm_library(
     name = "parser",
@@ -37,8 +41,6 @@ jvm_library(
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     ],
 )
-
-content_module_jar(module = ":parser")
 
 jvm_library(
     name = "parser_test_lib",

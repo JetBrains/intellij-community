@@ -5,6 +5,8 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
+import org.jetbrains.kotlin.idea.base.psi.addMemberDeclaration
+import org.jetbrains.kotlin.idea.base.psi.addModifierKeyword
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -68,11 +70,11 @@ class ReplaceProtectedToPublishedApiCallFix(
                                 "internal " + newSignature +
                                 " = $originalName(${paramNames.joinToString(", ")})"
                     ).apply {
-                        if (element is KtOperationReferenceExpression) addModifier(KtTokens.INFIX_KEYWORD)
+                        if (element is KtOperationReferenceExpression) addModifierKeyword(KtTokens.INFIX_KEYWORD)
                     }
                 }
 
-            ShortenReferencesFacility.getInstance().shorten(classOwner.addDeclaration(newMember))
+            ShortenReferencesFacility.getInstance().shorten(classOwner.addMemberDeclaration(newMember))
         }
         if (element is KtOperationReferenceExpression) {
             element.replace(psiFactory.createOperationName(originalName.newNameQuoted))

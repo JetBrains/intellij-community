@@ -8,8 +8,10 @@ import com.intellij.polySymbols.patterns.PolySymbolPattern
 import com.intellij.polySymbols.patterns.PolySymbolPatternSymbolsResolver
 import com.intellij.polySymbols.query.PolySymbolQueryStack
 import com.intellij.polySymbols.utils.hideFromCompletion
+import org.jetbrains.annotations.ApiStatus
 
-internal class CompletionAutoPopupPattern(val isSticky: Boolean) : PolySymbolPattern() {
+@ApiStatus.Internal
+class CompletionAutoPopupPattern(val isSticky: Boolean) : PolySymbolPattern() {
 
   override fun getStaticPrefixes(): Sequence<String> = sequenceOf("")
 

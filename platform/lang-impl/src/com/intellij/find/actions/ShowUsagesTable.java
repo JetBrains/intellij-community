@@ -11,8 +11,6 @@ import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
-import com.intellij.platform.ide.navigation.NavigationOptions;
-import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.IconManager;
@@ -34,7 +32,6 @@ import com.intellij.usages.impl.UsageAdapter;
 import com.intellij.usages.impl.UsageNode;
 import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.usages.impl.UsageViewStatisticsCollector;
-import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
@@ -58,8 +55,6 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
-
-import static com.intellij.platform.ide.navigation.NavigateUtil.requestNavigate;
 
 @ApiStatus.Internal
 public final class ShowUsagesTable extends JBTable implements UiDataProvider {
@@ -193,8 +188,6 @@ public final class ShowUsagesTable extends JBTable implements UiDataProvider {
       if (usages != null) {
         DataContext dataContext = parameters.editor != null ?
                                   DataManager.getInstance().getDataContext(parameters.editor.getContentComponent()) : null;
-        var usageInfosToNavigate = new SmartList<UsageInfo>();
-        var navigatablesToNavigate = new SmartList<Navigatable>();
         for (Object usage : usages) {
           if (usage instanceof UsageInfo usageInfo) {
             PsiElement selectedElement = usageInfo.getElement();
@@ -211,18 +204,13 @@ public final class ShowUsagesTable extends JBTable implements UiDataProvider {
                                                          numberOfLettersTyped,
                                                          selectedElement.getLanguage(), false);
             }
-            usageInfosToNavigate.add(usageInfo);
-          }
-          else if (usage instanceof Navigatable navigatable) {
-            navigatablesToNavigate.add(navigatable);
           }
         }
         var popup = PopupUtil.getPopupContainerFor(this);
         if (popup instanceof AbstractPopup abstractPopup) {
           abstractPopup.setForceCancelOnFocusLoss(true); // Disable the Wayland focus workaround and allow it to close.
         }
-        requestNavigate(parameters.project, navigatablesToNavigate, NavigationOptions.requestFocus(), dataContext); // remdev (mostly?)
-        UsageNavigation.getInstance(parameters.project).navigate(usageInfosToNavigate, true);
+        UsageNavigation.getInstance(parameters.project).navigate(usages, true, dataContext);
       }
     };
   }

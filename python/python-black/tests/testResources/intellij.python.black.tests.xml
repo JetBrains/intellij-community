@@ -25,8 +25,8 @@
     <module name="intellij.python.community.impl"/>
     <module name="intellij.python.psi"/>
     <module name="intellij.python.pyproject"/>
-    <module name="intellij.python.pytools"/>
-    <module name="intellij.python.pytools.ui"/>
+    <module name="intellij.python.pytools.backend"/>
+    <module name="intellij.python.pytools.frontend"/>
     <module name="intellij.python.sdk.backend"/>
     <module name="intellij.python.test.env.junit5"/>
   </dependencies>

@@ -1,7 +1,33 @@
 load("@community//build:tests-options.bzl", "jps_test")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
+load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_TARGETS")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.pycharm.community.customization` start
+dev_dist_plugin(
+    content_modules = ["intellij.pycharm.community.customization.shared"],
+    main_module = "intellij.pycharm.community.customization",
+    module_targets = MODULE_TARGETS,
+    prepacked_content_modules = ["intellij.pycharm.community.ide.impl.promotion"],
+)
+### auto-generated section `dev intellij.pycharm.community.customization` end
+
+### auto-generated section `dev intellij.python.community.impl` start
+content_module_jar(
+    libraries = [
+        # do not sort,
+        "@lib//:python-community-impl-ml-completion-prev-exprs-models",
+        "@lib//:python-community-impl-completion-ranking-python-with-full-line",
+    ],
+    module = ":python-community-impl",
+)
+### auto-generated section `dev intellij.python.community.impl` end
+
+### auto-generated section `dev intellij.python.pydev` start
+content_module_jar(module = ":python-pydev")
+### auto-generated section `dev intellij.python.pydev` end
 
 ### auto-generated section `build intellij.pycharm.community` start
 resourcegroup(
@@ -386,6 +412,10 @@ jvm_library(
         # do not sort,
         "//json",
         "//plugins/yaml",
+        "//python/pipenv/common",
+        "//python/conda/common",
+        "//python/python-venv/common",
+        "//python/python-hatch/common",
         "//platform/analysis-api:analysis",
         "//platform/code-style-api:codeStyle",
         "//platform/util/concurrency",
@@ -452,7 +482,6 @@ jvm_library(
         "//platform/code-style-impl:codeStyle-impl",
         "//libraries/fastutil",
         "//libraries/kotlinx/coroutines/core",
-        "//libraries/jcef",
         "//libraries/jna",
         "//plugins/toml",
         "//plugins/toml/core",
@@ -477,7 +506,6 @@ jvm_library(
         "//platform/ml-api:ml",
         "//platform/util/coroutines",
         "//python/python-syntax:syntax",
-        "//platform/ui.jcef",
         "//libraries/io",
         "//platform/util/progress",
         "//platform/util:util-ui",
@@ -503,7 +531,6 @@ jvm_library(
         "//libraries/commons/lang3",
         "//python/impl.helperLocator:community-helpersLocator",
         "//python/python-exec-service/execService.python",
-        "//python/interpreters",
         "//python/python-poetry/common",
         "//python/python-uv/common",
         "//python/common",
@@ -517,7 +544,8 @@ jvm_library(
         "//python/conda",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//python/python-requirements/backend",
-        "//python/python-pytools:pytools",
+        "//python/python-pytools/common",
+        "//python/python-pytools/backend",
         "//python/python-uv/backend",
         "//platform/testIntegration",
         "//platform/testIntegration-ui",
@@ -554,6 +582,10 @@ jvm_library(
         ":python-community-impl",
         "//json:json_test_lib",
         "//plugins/yaml:yaml_test_lib",
+        "//python/pipenv/common:common_test_lib",
+        "//python/conda/common:common_test_lib",
+        "//python/python-venv/common:common_test_lib",
+        "//python/python-hatch/common:common_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/code-style-api:codeStyle_test_lib",
         "//platform/util/concurrency:concurrency_test_lib",
@@ -618,7 +650,6 @@ jvm_library(
         "//platform/code-style-impl:codeStyle-impl_test_lib",
         "//libraries/fastutil:fastutil_test_lib",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
-        "//libraries/jcef:jcef_test_lib",
         "//libraries/jna:jna_test_lib",
         "//plugins/toml:toml_test_lib",
         "//plugins/toml/core:core_test_lib",
@@ -642,7 +673,6 @@ jvm_library(
         "//platform/util/coroutines:coroutines_test_lib",
         "//commandInterface:commandInterface_test_lib",
         "//python/python-syntax:syntax_test_lib",
-        "//platform/ui.jcef:ui.jcef_test_lib",
         "//libraries/io:io_test_lib",
         "//platform/util/progress:progress_test_lib",
         "//platform/util:util-ui_test_lib",
@@ -668,7 +698,6 @@ jvm_library(
         "//libraries/commons/lang3:lang3_test_lib",
         "//python/impl.helperLocator:community-helpersLocator_test_lib",
         "//python/python-exec-service/execService.python:execService.python_test_lib",
-        "//python/interpreters:interpreters_test_lib",
         "//python/python-poetry/common:common_test_lib",
         "//python/python-uv/common:common_test_lib",
         "//python/common:common_test_lib",
@@ -682,7 +711,8 @@ jvm_library(
         "//python/conda:conda_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
         "//python/python-requirements/backend:backend_test_lib",
-        "//python/python-pytools:pytools_test_lib",
+        "//python/python-pytools/common:common_test_lib",
+        "//python/python-pytools/backend:backend_test_lib",
         "//python/python-uv/backend:backend_test_lib",
         "//platform/testIntegration:testIntegration_test_lib",
         "//platform/testIntegration-ui:testIntegration-ui_test_lib",
@@ -732,6 +762,7 @@ jvm_library(
         "//platform/testRunner/plugin",
         "//python:python-helpers",
         "//commandInterface",
+        "//xml/plugin",
     ],
 )
 
@@ -980,8 +1011,6 @@ jvm_library(
         "//python/impl.helperLocator:community-helpersLocator_test_lib",
         "//python/python-exec-service/execService.python",
         "//python/python-exec-service/execService.python:execService.python_test_lib",
-        "//python/interpreters",
-        "//python/interpreters:interpreters_test_lib",
         "//python/python-poetry/common",
         "//python/python-poetry/common:common_test_lib",
         "//python/python-uv/common",
@@ -1008,6 +1037,7 @@ jvm_library(
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
         "//python:python-community-impl",
         "//python:python-community-impl_test_lib",
+        "//xml/plugin:plugin_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.community.impl.tests` end
@@ -1150,7 +1180,7 @@ jvm_library(
         "//platform/structure-view-impl/plugin",
         "//platform/todo/plugin",
         "//platform/testRunner/plugin",
-        "//libraries/misc/plugin",
+        "//xml/plugin",
         "//libraries/guava",
         "//platform/editor-ui-ex:editor-ex",
         "//platform/util/progress",
@@ -1201,7 +1231,7 @@ jvm_library(
         "//platform/structure-view-impl/plugin:plugin_test_lib",
         "//platform/todo/plugin:plugin_test_lib",
         "//platform/testRunner/plugin:plugin_test_lib",
-        "//libraries/misc/plugin:plugin_test_lib",
+        "//xml/plugin:plugin_test_lib",
         "//platform/observable:observable_test_lib",
         "//platform/platform-impl/internal:internal_test_lib",
         "//python/pluginCore/impl:impl_test_lib",
@@ -1252,8 +1282,10 @@ jvm_library(
         "//platform/workspace/storage:storage_test_lib",
         "//python/python-psi-api:psi",
         "//python/python-psi-api:psi_test_lib",
-        "//python/python-pytools:pytools",
-        "//python/python-pytools:pytools_test_lib",
+        "//python/python-pytools/backend",
+        "//python/python-pytools/backend:backend_test_lib",
+        "//python/python-pytools/frontend",
+        "//python/python-pytools/frontend:frontend_test_lib",
         "//platform/xdebugger-api:debugger",
         "//platform/xdebugger-api:debugger_test_lib",
         "//libraries/guava",
@@ -1413,8 +1445,6 @@ jvm_library(
         "//python/python-venv:venv_test_lib",
         "//python/services/system-python",
         "//python/services/system-python:system-python_test_lib",
-        "//python/interpreters",
-        "//python/interpreters:interpreters_test_lib",
         "//libraries/caffeine",
         "//libraries/caffeine:caffeine_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
@@ -1616,8 +1646,6 @@ jvm_library(
         "//platform/ide-core",
     ],
 )
-
-content_module_jar(module = ":python-pydev")
 
 jvm_library(
     name = "python-pydev_test_lib",

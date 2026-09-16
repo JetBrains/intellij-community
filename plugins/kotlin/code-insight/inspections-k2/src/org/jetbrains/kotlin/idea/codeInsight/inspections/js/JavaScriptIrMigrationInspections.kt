@@ -15,6 +15,8 @@ import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
+import org.jetbrains.kotlin.idea.base.psi.addModifierKeyword
+import org.jetbrains.kotlin.idea.base.psi.removeModifierKeyword
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
@@ -83,7 +85,7 @@ private class AddExternalKeywordFix : KotlinModCommandQuickFix<KtClassOrObject>(
     override fun getFamilyName(): String = KotlinBundle.message("add.external.keyword")
 
     override fun applyFix(project: Project, element: KtClassOrObject, updater: ModPsiUpdater) {
-        element.addModifier(KtTokens.EXTERNAL_KEYWORD)
+        element.addModifierKeyword(KtTokens.EXTERNAL_KEYWORD)
     }
 }
 
@@ -95,7 +97,7 @@ private class ChangeToVarFix : KotlinModCommandQuickFix<KtProperty>() {
         val newKeyword = factory.createVarKeyword()
         element.valOrVarKeyword.replace(newKeyword)
         if (element.hasModifier(KtTokens.CONST_KEYWORD)) {
-            element.removeModifier(KtTokens.CONST_KEYWORD)
+            element.removeModifierKeyword(KtTokens.CONST_KEYWORD)
         }
     }
 }

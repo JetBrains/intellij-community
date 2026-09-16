@@ -146,7 +146,7 @@ object GHAccountsUtil {
   }
 
   @JvmStatic
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   @JvmOverloads
   @ApiStatus.Internal
   fun requestNewToken(
@@ -168,7 +168,7 @@ object GHAccountsUtil {
     return model.authData?.token
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   @JvmOverloads
   @JvmStatic
   fun requestReLogin(
@@ -185,7 +185,7 @@ object GHAccountsUtil {
     return model.authData
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   @JvmOverloads
   @JvmStatic
   fun requestNewAccount(
@@ -204,7 +204,7 @@ object GHAccountsUtil {
     return model.authData
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   @JvmStatic
   @ApiStatus.Internal
   fun login(model: GHLoginModel, request: GHLoginRequest, project: Project?, parentComponent: Component?) {

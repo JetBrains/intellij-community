@@ -3,10 +3,8 @@ package com.intellij.python.pyright
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.python.pytools.PyTool
-import com.intellij.python.pytools.lsp.PyLspTool
-import com.intellij.python.pytools.ExternalPyTool
-import com.intellij.python.pytools.ui.pyLspToolFeaturesSummary
+import com.intellij.python.lsp.core.PyLspTool
+import com.intellij.python.pytools.backend.PyTool
 import com.jetbrains.python.packaging.PyPackageName
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
@@ -16,22 +14,15 @@ import javax.swing.Icon
  * Microsoft, providing type checking and language-server features such as completions and hovers.
  */
 @ApiStatus.Internal
-class PyrightPyTool : PyLspTool<PyrightConfiguration>(), ExternalPyTool {
-  override val presentableName: String = "Pyright"
-  override val description: String get() = PyrightBundle.message("pyright.tool.description")
+class PyrightPyTool : PyLspTool<PyrightConfiguration>() {
+  override val lspServerName: String = "Pyright"
+  override val icon: Icon = PyrightUtil.getDefaultPyrightIcon()
   override val packageName: PyPackageName = PyPackageName.from("pyright")
 
-  override fun configuration(project: Project): PyrightConfiguration = project.service<PyrightConfiguration>()
-
-  override val icon: Icon = PyrightUtil.getDefaultPyrightIcon()
-
-  override fun createConfigurable(project: Project): PyrightConfigurable = PyrightConfigurable(project)
-
-  override fun summaryFor(project: Project): String = pyLspToolFeaturesSummary(configuration(project))
+  override fun configuration(project: Project): PyrightConfiguration = project.service()
 
   override fun onEnabledChanged(project: Project, enabled: Boolean): Unit = restartOrStopPyrightProvider(project)
 
-  @Suppress("CompanionObjectInExtension")
   companion object {
     fun getInstance(): PyrightPyTool = PyTool.EP_NAME.findExtensionOrFail(PyrightPyTool::class.java)
   }

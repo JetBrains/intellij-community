@@ -11,9 +11,9 @@ import com.intellij.platform.lsp.api.stopAndRestartClientsIfNeeded
 import com.intellij.platform.lsp.api.stopClients
 import com.intellij.python.lsp.core.PyLspToolDescriptor
 import com.intellij.python.lsp.core.PyLspToolIntegrationProvider
-import com.intellij.python.pytools.isEnabledOn
-import com.intellij.python.pytools.lsp.PyLspTool
-import com.intellij.python.pytools.lsp.PyLspToolSettings
+import com.intellij.python.lsp.core.PyLspTool
+import com.intellij.python.lsp.core.PyLspToolSettings
+import com.intellij.python.pytools.backend.isEnabledOn
 import com.jetbrains.python.PythonPluginDisposable
 import org.eclipse.lsp4j.DidChangeConfigurationParams
 
@@ -43,6 +43,8 @@ internal fun restartOrStopPyrightProvider(project: Project) {
 class PyrightLspIntegrationProvider : PyLspToolIntegrationProvider() {
   override fun getDescriptor(module: Module): PyLspToolDescriptor =
     PyrightLspClientDescriptor(module)
+
+  override fun pyTool(project: Project): PyLspTool<*> = activePyrightTool(project)
 }
 
 class PyrightLspClientDescriptor(module: Module) : PyLspToolDescriptor(

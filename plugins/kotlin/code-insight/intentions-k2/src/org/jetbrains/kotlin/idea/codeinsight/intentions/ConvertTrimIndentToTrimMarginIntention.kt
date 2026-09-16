@@ -18,7 +18,6 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtStringTemplateEntry
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 internal class ConvertTrimIndentToTrimMarginIntention :
     KotlinApplicableModCommandAction<KtCallExpression, Unit>(KtCallExpression::class) {
@@ -80,5 +79,5 @@ private fun KtStringTemplateExpression.calculateIndent(): String =
 
 private fun KtStringTemplateEntry.isStartOfLine(): Boolean =
     this.text != "\n" &&
-            prevSibling.safeAs<KtStringTemplateEntry>()?.text == "\n" &&
-            nextSibling.safeAs<KtStringTemplateEntry>() != null
+            (prevSibling as? KtStringTemplateEntry)?.text == "\n" &&
+            (nextSibling as? KtStringTemplateEntry) != null

@@ -944,7 +944,7 @@ public final class JBCefApp {
   }
 
   private static boolean isLinuxLibcSupported() {
-    String libcVersionString = GlibcVersion.INSTANCE.getCurrent();
+    var libcVersionString = GlibcVersion.INSTANCE.getCurrent();
     if (libcVersionString == null) {
       LOG.warn("Failed to get the glibc version");
       return false;

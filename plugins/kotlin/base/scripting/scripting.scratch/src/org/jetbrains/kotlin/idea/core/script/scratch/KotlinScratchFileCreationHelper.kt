@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileResoluti
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.session.analyzeCopy
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.core.script.v1.ScratchFileOptionsByFile
+import org.jetbrains.kotlin.idea.core.script.ScratchFileOptionsByFile
 import org.jetbrains.kotlin.idea.k2.codeinsight.copyPaste.KotlinReferenceRestoringHelper
 import org.jetbrains.kotlin.idea.refactoring.createTempCopy
 import org.jetbrains.kotlin.idea.statistics.KotlinCreateFileFUSCollector

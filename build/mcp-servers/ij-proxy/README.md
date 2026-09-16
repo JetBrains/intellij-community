@@ -93,12 +93,12 @@ The proxy exposes a small, client-shaped search and IDE tool set. File operation
 - `search_text`, `search_regex`, `search_file` (container sessions only): Route the search into the container instead of the host project. See `search.md`.
 - `bash` (container sessions only): Runs a shell command inside the container via `container_exec`.
 
-Example `.mcp.toml` entry (Codex):
+Example project `.codex/config.toml` entry (Codex):
 
 ```toml
 [mcp_servers.ijproxy]
 type = "stdio"
-command = "bun"
+command = "node"
 args = ["community/build/mcp-servers/ij-proxy/dist/ij-mcp-proxy.mjs"]
 ```
 

@@ -56,7 +56,7 @@ open class TreeHandlerDiffRequestProcessor(
     return handler.iterateSelectedChanges(tree)
   }
 
-  final override fun iterateAllChanges(): Iterable<Wrapper> {
+  public final override fun iterateAllChanges(): Iterable<Wrapper> {
     return handler.iterateAllChanges(tree)
   }
 

@@ -24,6 +24,8 @@ data class TerminalContentUpdatedEvent(
   val startLineLogicalIndex: Long,
   val cursorLogicalLineIndex: Long,
   val cursorColumnIndex: Int,
+  val screenTopLogicalLineIndex: Long,
+  val screenTopColumnIndex: Int,
   /** OSC8 hyperlinks found in [text]; offsets are relative to [text]. */
   val osc8Hyperlinks: List<Osc8HyperlinkDto> = emptyList(),
   /** This value is used only on Backend. It is always null on the Frontend. */

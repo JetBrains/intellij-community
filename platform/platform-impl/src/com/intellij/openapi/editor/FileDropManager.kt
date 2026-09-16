@@ -7,6 +7,7 @@ import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -33,7 +34,7 @@ fun containsFileDropTargets(transferFlavors: Array<DataFlavor>): Boolean {
   return FileCopyPasteUtil.isFileListFlavorAvailable(transferFlavors)
 }
 
-private val LOG = logger<FileDropManager>()
+private val LOG: Logger = logger<FileDropManager>()
 
 private val EP_NAME: ExtensionPointName<FileDropHandler> = ExtensionPointName("com.intellij.fileDropHandler")
 

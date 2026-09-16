@@ -9,19 +9,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="opentelemetry-extension-kotlin" type="repository">
-        <properties include-transitive-deps="false" maven-id="io.opentelemetry:opentelemetry-extension-kotlin:1.48.0">
+        <properties include-transitive-deps="false" maven-id="io.opentelemetry:opentelemetry-extension-kotlin:1.66.0">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-extension-kotlin/1.48.0/opentelemetry-extension-kotlin-1.48.0.jar">
-              <sha256sum>2285ebfe8e0fd38e186b7033f6f6c542324c9bab23260b914b1b73eaf4492c5d</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-extension-kotlin/1.66.0/opentelemetry-extension-kotlin-1.66.0.jar">
+              <sha256sum>1d1a31774bb5da15515723064f315163454038f41000158527199841c6a54c07</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-extension-kotlin/1.48.0/opentelemetry-extension-kotlin-1.48.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-extension-kotlin/1.66.0/opentelemetry-extension-kotlin-1.66.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-extension-kotlin/1.48.0/opentelemetry-extension-kotlin-1.48.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-extension-kotlin/1.66.0/opentelemetry-extension-kotlin-1.66.0-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

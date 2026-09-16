@@ -12,6 +12,13 @@ jps_test(
 
 ### skip generation section `test intellij.platform.settings.local.tests`
 
+### auto-generated section `dev intellij.platform.settings.local` start
+content_module_jar(
+    libraries = ["@lib//:platform-settings-local-jackson-dataformat-cbor"],
+    module = ":settings-local",
+)
+### auto-generated section `dev intellij.platform.settings.local` end
+
 ### auto-generated section `build intellij.platform.settings.local` start
 create_kotlinc_options(
     name = "custom_settings-local",
@@ -64,11 +71,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(
-    libraries = ["@lib//:platform-settings-local-jackson-dataformat-cbor"],
-    module = ":settings-local",
-)
-
 jvm_library(
     name = "settings-local_test_lib",
     testonly = True,
@@ -113,7 +115,6 @@ exports_files(
     [
         "intellij.platform.settings.local.iml",
         "resources/intellij.platform.settings.local.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

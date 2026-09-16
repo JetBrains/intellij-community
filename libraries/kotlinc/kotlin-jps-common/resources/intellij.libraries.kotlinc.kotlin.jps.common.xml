@@ -1,1 +1,5 @@
-<idea-plugin visibility="internal"/>
+<idea-plugin visibility="internal">
+  <dependencies>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+  </dependencies>
+</idea-plugin>

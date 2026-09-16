@@ -1,3 +1,0 @@
-- name: dist.all/lib/intellij.xml.structureView.impl.jar
-  modules:
-  - name: intellij.xml.structureView.impl

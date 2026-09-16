@@ -1,5 +1,10 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.pycharm.community.ide.impl` start
+content_module_jar(module = ":impl")
+### auto-generated section `dev intellij.pycharm.community.ide.impl` end
 
 ### auto-generated section `build intellij.pycharm.community.ide.impl` start
 jvm_library(

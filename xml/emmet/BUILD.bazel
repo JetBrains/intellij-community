@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.xml.emmet` start
+content_module_jar(module = ":emmet")
+### auto-generated section `dev intellij.xml.emmet` end
+
 ### auto-generated section `build intellij.xml.emmet` start
 jvm_provided_library(
     name = "platform_core_provided",
@@ -165,8 +169,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":emmet")
-
 jvm_library(
     name = "emmet_test_lib",
     testonly = True,
@@ -241,7 +243,6 @@ exports_files(
         "resources/liveTemplates/html_xml.xml",
         "resources/liveTemplates/zen_html.xml",
         "resources/liveTemplates/zen_xsl.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

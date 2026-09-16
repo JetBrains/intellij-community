@@ -596,7 +596,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
 
       a: Address | None = {"street": "Pine"}
       b: Address | None = {"color": "red"}
-      #                   ^^^^^^^^^^^^^^^^ WARNING Expected type 'Address | None', got 'dict[Literal["color"], Literal["red"]]' instead
+      #                   ^^^^^^^^^^^^^^^^ WARNING Expected type 'Address | None', got 'dict[str, str]' instead
       """.trimIndent())
 
     @Test
@@ -616,7 +616,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       first: A | B | C = {"a": "x"}
       last:  A | B | C = {"c": 1}
       none:  A | B | C = {"z": 1}
-      #                  ^^^^^^^^ WARNING Expected type 'A | B | C', got 'dict[Literal["z"], Literal[1]]' instead
+      #                  ^^^^^^^^ WARNING Expected type 'A | B | C', got 'dict[str, int]' instead
       """.trimIndent())
 
     @Test
@@ -647,13 +647,13 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       foo: Foo = {"foo": "bar"}
       foo_list1: list[Foo] = [{"foo": bar} for bar in ["bar"]]
       foo_list2: list[Foo] = [{"foo": bar, "buz": "qux"} for bar in ["bar"]]
-      #                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'list[Foo]', got 'list[dict[Literal["foo", "buz"], str | Literal["qux"]]]' instead
+      #                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'list[Foo]', got 'list[dict[str, str]]' instead
       foo_set1: set[Foo] = {{"foo": bar} for bar in ["bar"]}
       foo_set2: set[Foo] = {{"foo": bar, "buz": "qux"} for bar in ["bar"]}
-      #                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'set[Foo]', got 'set[dict[Literal["foo", "buz"], str | Literal["qux"]]]' instead
+      #                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'set[Foo]', got 'set[dict[str, str]]' instead
       foo_dict1: dict[str, Foo] = {bar: {"foo": bar} for bar in ["bar"]}
       foo_dict2: dict[str, Foo] = {bar: {"foo": bar, "buz": "qux"} for bar in ["bar"]}
-      #                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'dict[str, Foo]', got 'dict[str, dict[Literal["foo", "buz"], str | Literal["qux"]]]' instead
+      #                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'dict[str, Foo]', got 'dict[str, dict[str, str]]' instead
       """.trimIndent())
 
     @Test
@@ -931,12 +931,12 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
           year: int
 
       movies1: list[Movie] = [
-      #                      └ WARNING Expected type 'list[Movie]', got 'list[Movie | dict[Literal["title"], Literal["The Matrix"]]]' instead
+      #                      └ WARNING Expected type 'list[Movie]', got 'list[dict[str, str | int] | dict[str, str]]' instead
           {"title": "Blade Runner", "year": 1982}, # OK
           {"title": "The Matrix"},
       ]
       movies2: list[Movie] = [
-      #                      └ WARNING Expected type 'list[Movie]', got 'list[dict[Literal["title"], Literal["The Matrix"]]]' instead
+      #                      └ WARNING Expected type 'list[Movie]', got 'list[dict[str, str]]' instead
           {"title": "The Matrix"},
       ]
 

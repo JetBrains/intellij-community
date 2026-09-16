@@ -109,6 +109,8 @@ jvm_library(
         "//platform/forms_rt:java-guiForms-rt",
         "//fleet/rhizomedb",
         "//platform/eel-nioFs",
+        "//platform/searchEverywhere/shared:searchEverywhere",
+        "//platform/scopes",
     ],
 )
 
@@ -249,6 +251,8 @@ jvm_library(
         "//platform/vcs-impl:vcs-impl-tests_test_lib",
         "//fleet/rhizomedb:rhizomedb_test_lib",
         "//platform/eel-nioFs:eel-nioFs_test_lib",
+        "//platform/searchEverywhere/shared:searchEverywhere_test_lib",
+        "//platform/scopes:scopes_test_lib",
     ],
 )
 ### auto-generated section `build intellij.vcs.git.backend` end

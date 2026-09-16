@@ -69,7 +69,7 @@ import kotlin.time.TimeSource
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 internal class StateAwareTerminalSession(
-  private val delegate: TerminalSession,
+  val delegate: TerminalSession,
   private val startupOptions: TerminalStartupOptions,
   override val coroutineScope: CoroutineScope,
 ) : TerminalSession {

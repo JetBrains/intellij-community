@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.platform.analysis.impl` start
+content_module_jar(module = ":analysis-impl")
+### auto-generated section `dev intellij.platform.analysis.impl` end
+
 ### auto-generated section `build intellij.platform.analysis.impl` start
 jvm_library(
     name = "analysis-impl",
@@ -65,8 +69,6 @@ jvm_library(
         "//libraries/caffeine",
     ],
 )
-
-content_module_jar(module = ":analysis-impl")
 
 jvm_library(
     name = "analysis-impl_test_lib",
@@ -134,7 +136,6 @@ exports_files(
         "intellij.platform.analysis.impl.iml",
         "resources/META-INF/AnalysisImpl.analyzer.xml",
         "resources/intellij.platform.analysis.impl.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

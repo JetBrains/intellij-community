@@ -67,11 +67,14 @@ import java.net.URI
 import java.net.URLConnection
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
+import java.nio.file.AtomicMoveNotSupportedException
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.nio.file.StandardCopyOption
 import java.util.concurrent.Callable
+import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
@@ -99,7 +102,9 @@ private val objectMapper: ObjectMapper by lazy {
 @ApiStatus.Internal
 class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginInfoProvider {
   companion object {
-    private val cacheFilesLocks = ContainerUtil.createConcurrentWeakValueMap<String, Any>()
+    private val cacheFileUpdateLocks = ContainerUtil.createConcurrentWeakValueMap<String, Any>()
+      .takeIf { System.getProperty("revert.IJPL244583") == null }
+    private val cacheFilePublicationLocks = ContainerUtil.createConcurrentWeakValueMap<String, Any>()
       .takeIf { System.getProperty("revert.IJPL244583") == null }
 
     @JvmStatic
@@ -134,8 +139,8 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
     }
 
     @Deprecated("use #loadLastCompatiblePluginModels(Set<PluginId>, BuildNumber, Boolean)")
-    @RequiresBackgroundThread
-    @RequiresReadLockAbsence
+    @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+    @RequiresReadLockAbsence(generateAssertion = false /* IJPL-115548 */)
     @JvmStatic
     @JvmOverloads
     fun loadLastCompatiblePluginDescriptors(
@@ -146,8 +151,8 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
       return loadLastCompatiblePluginModels(pluginIds, buildNumber, throwExceptions).mapNotNull { it.getDescriptor() as? PluginNode }
     }
 
-    @RequiresBackgroundThread
-    @RequiresReadLockAbsence
+    @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+    @RequiresReadLockAbsence(generateAssertion = false /* IJPL-115548 */)
     @JvmStatic
     @JvmOverloads
     fun loadLastCompatiblePluginModels(
@@ -219,8 +224,8 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
       }
     }
 
-    @RequiresBackgroundThread
-    @RequiresReadLockAbsence
+    @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+    @RequiresReadLockAbsence(generateAssertion = false /* IJPL-115548 */)
     @JvmStatic
     @JvmOverloads
     fun getLastCompatiblePluginUpdate(
@@ -283,8 +288,8 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
       }
     }
 
-    @RequiresBackgroundThread
-    @RequiresReadLockAbsence
+    @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+    @RequiresReadLockAbsence(generateAssertion = false /* IJPL-115548 */)
     @JvmStatic
     @JvmOverloads
     fun getNearestUpdate(
@@ -315,8 +320,8 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
       }
     }
 
-    @RequiresBackgroundThread
-    @RequiresReadLockAbsence
+    @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+    @RequiresReadLockAbsence(generateAssertion = false /* IJPL-115548 */)
     @JvmStatic
     @JvmOverloads
     @Throws(IOException::class)
@@ -469,18 +474,15 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
       @Nls indicatorMessage: String,
       parser: (InputStream) -> T,
     ): T {
-      // FIXME this is a quick fix for concurrent access of the same files IJPL-244583,
-      //  reimplement this later properly when this class will be refactored to coroutines
-      val lock = if (file == null || cacheFilesLocks == null) {
-        Any()
-      }
-      else {
-        cacheFilesLocks.getOrPut(file.absolutePathString()) { Any() }
-      }
-      synchronized(lock) {
-        val eTag = if (file == null) null else loadETagForFile(file)
+      return withCacheFileUpdateLock(file) {
+        val eTag = withCacheFilePublicationLock(file) {
+          file
+            ?.takeIf { it.exists() && Files.size(it) > 0 }
+            ?.let(::loadETagForFile)
+            ?.takeUnless(String::isEmpty)
+        }
         LOG.debug { "Cached response $file for $url has eTag=$eTag" }
-        return HttpRequests.request(url)
+        HttpRequests.request(url)
           .tuner { connection ->
             if (eTag != null) {
               connection.setRequestProperty("If-None-Match", eTag)
@@ -498,7 +500,8 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
               val connection = request.connection
               if (file != null && isNotModified(connection, file)) {
                 LOG.debug { "Response $file from Marketplace is not modified" }
-                return@connect Files.newInputStream(file).use(parser)
+                return@connect readCacheFile(file, parser)
+                               ?: throw IOException("Cannot read cached Marketplace response from '$file'")
               }
 
               if (indicator != null) {
@@ -509,16 +512,13 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
                 return@connect request.inputStream.use(parser)
               }
 
-              synchronized(this) {
-                LOG.debug { "Downloading new $file from Marketplace for $url" }
-                request.saveToFile(file, indicator)
-                val newEtag = connection.getHeaderField("ETag")
-                LOG.debug { "Downloaded new $file from Marketplace for $url, new etag=$newEtag" }
-                if (newEtag != null) {
-                  saveETagForFile(file, newEtag)
-                }
+              LOG.debug { "Downloading new $file from Marketplace for $url" }
+              val newEtag = connection.getHeaderField("ETag")
+              val result = updateCacheFileUnderUpdateLock(file, { request.saveToFile(it, indicator) }, parser) {
+                updateETagForFile(file, newEtag)
               }
-              return@connect Files.newInputStream(file).use(parser)
+              LOG.debug { "Downloaded new $file from Marketplace for $url, new etag=$newEtag" }
+              return@connect result
             }
             catch (pce: ProcessCanceledException) {
               throw pce
@@ -541,13 +541,108 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
           }
       }
     }
+
+    @VisibleForTesting
+    internal fun <T> updateCacheFile(
+      file: Path,
+      downloader: (Path) -> Unit,
+      parser: (InputStream) -> T,
+    ): T = withCacheFileUpdateLock(file) {
+      updateCacheFileUnderUpdateLock(file, downloader, parser)
+    }
+
+    @VisibleForTesting
+    internal fun <T> readCacheFile(file: Path, parser: (InputStream) -> T): T? = withCacheFilePublicationLock(file) {
+      readCacheFileUnderLock(file, parser)
+    }
+
+    private fun <T> updateCacheFileUnderUpdateLock(
+      file: Path,
+      downloader: (Path) -> Unit,
+      parser: (InputStream) -> T,
+      onPublished: () -> Unit = {},
+    ): T {
+      val targetFile = file.toAbsolutePath()
+      val parent = targetFile.parent
+      Files.createDirectories(parent)
+      val temporaryFile = Files.createTempFile(parent, ".${targetFile.fileName}.", ".tmp")
+      try {
+        downloader(temporaryFile)
+        val result = Files.newInputStream(temporaryFile).use(parser)
+        withCacheFilePublicationLock(file) {
+          replaceCacheFile(temporaryFile, targetFile)
+          onPublished()
+        }
+        return result
+      }
+      finally {
+        try {
+          Files.deleteIfExists(temporaryFile)
+        }
+        catch (e: IOException) {
+          LOG.warn("Cannot delete temporary Marketplace cache file '$temporaryFile'", e)
+        }
+      }
+    }
+
+    private fun <T> readCacheFileUnderLock(file: Path, parser: (InputStream) -> T): T? {
+      try {
+        if (!file.exists()) return null
+        if (Files.size(file) == 0L) {
+          invalidateCacheFile(file)
+          return null
+        }
+        return Files.newInputStream(file).use(parser)
+      }
+      catch (e: Exception) {
+        if (e !is IOException && e !is JacksonException) throw e
+
+        LOG.infoOrDebug("Cannot read Marketplace cache file '$file'", e)
+        invalidateCacheFile(file)
+        return null
+      }
+    }
+
+    private fun <T> withCacheFileUpdateLock(file: Path?, action: () -> T): T {
+      return withCacheFileLock(file, cacheFileUpdateLocks, action)
+    }
+
+    private fun <T> withCacheFilePublicationLock(file: Path?, action: () -> T): T {
+      return withCacheFileLock(file, cacheFilePublicationLocks, action)
+    }
+
+    private fun <T> withCacheFileLock(file: Path?, locks: ConcurrentMap<String, Any>?, action: () -> T): T {
+      val lock = if (file == null || locks == null) {
+        Any()
+      }
+      else {
+        locks.getOrPut(file.absolutePathString()) { Any() }
+      }
+      return synchronized(lock, action)
+    }
+
+    private fun replaceCacheFile(source: Path, target: Path) {
+      try {
+        Files.move(source, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
+      }
+      catch (_: AtomicMoveNotSupportedException) {
+        Files.move(source, target, StandardCopyOption.REPLACE_EXISTING)
+      }
+    }
+
+    private fun invalidateCacheFile(file: Path) {
+      deleteFile(file, "invalid Marketplace cache file")
+      deleteFile(getETagFile(file), "Marketplace cache ETag")
+    }
   }
 
   private val mutex: Mutex = Mutex()
 
-  val marketplaceTagsSupplier: Supplier<Set<String>> = TimeoutCachedValue(1, TimeUnit.HOURS) {
-    getAllPluginsTags()
+  val marketplaceTagCountsSupplier: Supplier<Map<String, Int>> = TimeoutCachedValue(24, TimeUnit.HOURS) {
+    getMarketplaceTagCounts()
   }
+
+  val marketplaceTagsSupplier: Supplier<Set<String>> = Supplier { marketplaceTagCountsSupplier.get().keys }
 
   val marketplaceVendorsSupplier: Supplier<Set<String>> = TimeoutCachedValue(1, TimeUnit.HOURS) {
     getAllPluginsVendors()
@@ -593,7 +688,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
     return getFeatures(param)
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   @JvmOverloads
   fun getMarketplacePlugins(indicator: ProgressIndicator? = null): Set<PluginId> {
     try {
@@ -622,15 +717,18 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
   }
 
   override fun loadCachedPlugins(): Set<PluginId>? {
-    val pluginXmlIdsFile = Paths.get(PathManager.getPluginTempPath(), MarketplaceUrls.FULL_PLUGINS_XML_IDS_FILENAME)
     try {
-      if (Files.size(pluginXmlIdsFile) > 0) {
-        return Files.newInputStream(pluginXmlIdsFile).use(::parseXmlIds)
-      }
+      val pluginXmlIdsFile = Paths.get(PathManager.getPluginTempPath(), MarketplaceUrls.FULL_PLUGINS_XML_IDS_FILENAME)
+      return readCacheFile(pluginXmlIdsFile, ::parseXmlIds)
     }
-    catch (_: IOException) {
+    catch (e: IOException) {
+      LOG.error("Cannot get plugin ids from Marketplace", e)
+      return null
     }
-    return null
+    catch (e: JacksonException) {
+      LOG.error("Cannot get plugin ids from Marketplace", e)
+      return null
+    }
   }
 
   @Deprecated("Compatibility method for external usages. Use executePluginSearch")
@@ -748,7 +846,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
     }
   }
 
-  private fun getAllPluginsTags(): Set<String> {
+  private fun getMarketplaceTagCounts(): Map<String, Int> {
     try {
       return HttpRequests
         .request(MarketplaceUrls.getSearchAggregationUrl("tags"))
@@ -756,18 +854,18 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
         .productNameAsUserAgent()
         .throwStatusCodeException(false)
         .connect {
-          objectMapper.readValue(it.inputStream, AggregationSearchResponse::class.java).aggregations.keys.toSet()
+          objectMapper.readValue(it.inputStream, AggregationSearchResponse::class.java).aggregations.toMap()
         }
     }
     catch (e: Exception) {
       LOG.infoOrDebug("Can not get tags from Marketplace", e)
-      return emptySet()
+      return emptyMap()
     }
   }
 
   @Deprecated("Compatibility method for external usages. Use loadPluginDetails(PluginUiModel, ProgressIndicator?)")
-  @RequiresBackgroundThread
-  @RequiresReadLockAbsence
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  @RequiresReadLockAbsence(generateAssertion = false /* IJPL-115548 */)
   @JvmOverloads
   fun loadPluginDetails(
     pluginNode: PluginNode,
@@ -776,8 +874,8 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
     return loadPluginDetails(PluginUiModelAdapter(pluginNode), indicator)?.getDescriptor() as? PluginNode
   }
 
-  @RequiresBackgroundThread
-  @RequiresReadLockAbsence
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  @RequiresReadLockAbsence(generateAssertion = false /* IJPL-115548 */)
   @JvmOverloads
   fun loadPluginDetails(
     pluginUiModel: PluginUiModel,
@@ -808,15 +906,15 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
     }
   }
 
-  @RequiresBackgroundThread
-  @RequiresReadLockAbsence
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  @RequiresReadLockAbsence(generateAssertion = false /* IJPL-115548 */)
   internal fun loadPluginMetadata(pluginNode: PluginNode): IntellijPluginMetadata? {
     val externalPluginId = pluginNode.externalPluginId ?: return null
     return loadPluginMetadata(externalPluginId)
   }
 
-  @RequiresBackgroundThread
-  @RequiresReadLockAbsence
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  @RequiresReadLockAbsence(generateAssertion = false /* IJPL-115548 */)
   internal fun loadPluginMetadata(externalPluginId: String): IntellijPluginMetadata? {
     try {
       return readOrUpdateFile(
@@ -833,8 +931,8 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
   }
 
   @Deprecated("use #getLastCompatiblePluginUpdateModel(PluginId, BuildNumber, ProgressIndicator)")
-  @RequiresBackgroundThread
-  @RequiresReadLockAbsence
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  @RequiresReadLockAbsence(generateAssertion = false /* IJPL-115548 */)
   @JvmOverloads
   fun getLastCompatiblePluginUpdate(
     pluginId: PluginId,
@@ -844,8 +942,8 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
     return getLastCompatiblePluginUpdateModel(pluginId, buildNumber, indicator)?.getDescriptor() as? PluginNode
   }
 
-  @RequiresBackgroundThread
-  @RequiresReadLockAbsence
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  @RequiresReadLockAbsence(generateAssertion = false /* IJPL-115548 */)
   @JvmOverloads
   fun getLastCompatiblePluginUpdateModel(
     pluginId: PluginId,
@@ -888,7 +986,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
 
   private val jetbrainsPluginsIds: AtomicReference<Set<PluginId>?> = AtomicReference(null)
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private fun loadJetBrainsMarketplacePlugins(indicator: ProgressIndicator? = null) {
     if (jetbrainsPluginsIds.get() != null) return
 
@@ -923,13 +1021,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
 
     val pluginIds = try {
       DiskQueryRelay.compute<Set<PluginId>?, IOException> {
-        val pluginXmlIdsPath = getPluginXmlIdsPath()
-        if (pluginXmlIdsPath.exists() && Files.size(pluginXmlIdsPath) > 0) {
-          Files.newInputStream(pluginXmlIdsPath).use(::parseXmlIds)
-        }
-        else {
-          null
-        }
+        readCacheFile(getPluginXmlIdsPath(), ::parseXmlIds)
       }
     }
     catch (t: IOException) {
@@ -1023,8 +1115,8 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
       .mapTo(HashSet()) { PluginId.getId(it) }
   }
 
-  @RequiresBackgroundThread
-  @RequiresReadLockAbsence
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  @RequiresReadLockAbsence(generateAssertion = false /* IJPL-115548 */)
   fun loadPluginReviews(pluginId: PluginId, page: Int): List<PluginReviewComment>? {
     try {
       return HttpRequests.request(MarketplaceUrls.getPluginReviewsUrl(pluginId, page))
@@ -1088,6 +1180,24 @@ private fun saveETagForFile(file: Path, eTag: String) {
   }
   catch (e: IOException) {
     LOG.warn("Can't save ETag to '$eTagFile'", e)
+  }
+}
+
+private fun updateETagForFile(file: Path, eTag: String?) {
+  if (eTag != null) {
+    saveETagForFile(file, eTag)
+  }
+  else {
+    deleteFile(getETagFile(file), "obsolete Marketplace cache ETag")
+  }
+}
+
+private fun deleteFile(file: Path, description: String) {
+  try {
+    Files.deleteIfExists(file)
+  }
+  catch (e: IOException) {
+    LOG.warn("Cannot delete $description '$file'", e)
   }
 }
 

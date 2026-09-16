@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.ion` start
+content_module_jar(
+    libraries = ["@lib//:libraries-ion-ion"],
+    module = ":ion",
+)
+### auto-generated section `dev intellij.libraries.ion` end
+
 ### auto-generated section `build intellij.libraries.ion` start
 jvm_library(
     name = "ion",
@@ -16,11 +23,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-ion-ion"],
     runtime_deps = ["@lib//:libraries-ion-ion"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-ion-ion"],
-    module = ":ion",
 )
 
 jvm_library(
@@ -43,7 +45,6 @@ exports_files(
     [
         "intellij.libraries.ion.iml",
         "resources/intellij.libraries.ion.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

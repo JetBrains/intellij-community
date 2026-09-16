@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.jgoodies.common` start
+content_module_jar(
+    libraries = ["@lib//:libraries-jgoodies-common-jgoodies-common"],
+    module = ":common",
+)
+### auto-generated section `dev intellij.libraries.jgoodies.common` end
+
 ### auto-generated section `build intellij.libraries.jgoodies.common` start
 jvm_library(
     name = "common",
@@ -16,11 +23,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-jgoodies-common-jgoodies-common"],
     runtime_deps = ["@lib//:libraries-jgoodies-common-jgoodies-common"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-jgoodies-common-jgoodies-common"],
-    module = ":common",
 )
 
 jvm_library(
@@ -43,7 +45,6 @@ exports_files(
     [
         "intellij.libraries.jgoodies.common.iml",
         "resources/intellij.libraries.jgoodies.common.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

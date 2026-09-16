@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.jspecify` start
+content_module_jar(
+    libraries = ["@lib//:libraries-jspecify-jspecify"],
+    module = ":jspecify",
+)
+### auto-generated section `dev intellij.libraries.jspecify` end
+
 ### auto-generated section `build intellij.libraries.jspecify` start
 jvm_library(
     name = "jspecify",
@@ -14,13 +21,8 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    exports = ["@lib//:jspecify"],
-    runtime_deps = ["@lib//:jspecify"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:jspecify"],
-    module = ":jspecify",
+    exports = ["@lib//:libraries-jspecify-jspecify"],
+    runtime_deps = ["@lib//:libraries-jspecify-jspecify"],
 )
 
 jvm_library(
@@ -33,7 +35,7 @@ jvm_library(
     kotlinc_opts = "@community//:k8",
     module_name = "intellij.libraries.jspecify",
     visibility = ["//visibility:public"],
-    exports = ["@lib//:jspecify"],
+    exports = ["@lib//:libraries-jspecify-jspecify"],
     runtime_deps = [":jspecify"],
 )
 ### auto-generated section `build intellij.libraries.jspecify` end
@@ -43,7 +45,6 @@ exports_files(
     [
         "intellij.libraries.jspecify.iml",
         "resources/intellij.libraries.jspecify.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

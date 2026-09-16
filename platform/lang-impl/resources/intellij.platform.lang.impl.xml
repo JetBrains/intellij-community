@@ -25,7 +25,6 @@
     <module name="intellij.libraries.opentelemetry"/>
     <module name="intellij.libraries.opentelemetry.semconv"/>
     <module name="intellij.libraries.oro.matcher"/>
-    <module name="intellij.libraries.pty4j"/>
     <module name="intellij.libraries.rd.core"/>
     <module name="intellij.libraries.rd.swing"/>
     <module name="intellij.libraries.stream"/>
@@ -50,7 +49,6 @@
     <module name="intellij.platform.execution"/>
     <module name="intellij.platform.execution.impl"/>
     <module name="intellij.platform.experiment"/>
-    <module name="intellij.platform.feedback"/>
     <module name="intellij.platform.ide.concurrency"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.core.impl"/>
@@ -490,6 +488,12 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <directorySearchEngine implementation="com.intellij.find.impl.DefaultDirectorySearchEngine"/>
+
+    <directorySearchEngine implementation="com.intellij.find.impl.EelDirectorySearchEngine"/>
+    <registryKey defaultValue="false" key="find.in.files.eel.remote.search" restartRequired="false"
+                 description="Search remote directories through EEL in Find in Files"/>
+
     <applicationService serviceInterface="com.intellij.ide.RecentProjectsManager" open="true"
                         serviceImplementation="com.intellij.ide.AttachedModuleAwareRecentProjectsManager" preload="notHeadless"/>
     <applicationService serviceInterface="com.intellij.openapi.module.ModuleTypeManager" open="true"
@@ -858,6 +862,23 @@
     <postStartupActivity implementation="com.intellij.ide.scratch.workspace.ScratchWorkspaceStartupActivity"/>
     <workspaceModel.fileIndexContributor implementation="com.intellij.ide.scratch.workspace.ScratchRootsEntityWorkspaceFileIndexContributor"/>
     <workspaceModel.entityLifecycleSupporter implementation="com.intellij.ide.scratch.workspace.ScratchEntityLifecycleSupporter"/>
+
+    <registryKey key="ide.analysisignore.file.enabled" defaultValue="true" restartRequired="true"
+                 description="Enable the '.analysisignore' file: a list of files and directories excluded from the IDE analysis."/>
+    <workspaceModel.fileIndexContributor implementation="com.intellij.ide.analysisignore.AnalysisIgnoreWorkspaceFileIndexContributor"/>
+    <projectFileScanner implementation="com.intellij.ide.analysisignore.AnalysisIgnoreIndexableFileScanner"/>
+    <vfs.asyncListenerBackgroundable implementation="com.intellij.ide.analysisignore.AnalysisIgnoreVfsListener"/>
+    <editorFactoryDocumentListener implementation="com.intellij.ide.analysisignore.AnalysisIgnoreDocumentListener"/>
+    <fileType name="AnalysisIgnore" language="AnalysisIgnore" fileNames=".analysisignore" fieldName="INSTANCE"
+              implementationClass="com.intellij.ide.analysisignore.lang.AnalysisIgnoreFileType"/>
+    <lang.parserDefinition language="AnalysisIgnore"
+                           implementationClass="com.intellij.ide.analysisignore.lang.AnalysisIgnoreParserDefinition"/>
+    <lang.syntaxHighlighterFactory language="AnalysisIgnore"
+                                   implementationClass="com.intellij.ide.analysisignore.lang.AnalysisIgnoreSyntaxHighlighterFactory"/>
+    <lang.commenter language="AnalysisIgnore" implementationClass="com.intellij.ide.analysisignore.lang.AnalysisIgnoreCommenter"/>
+    <editorNotificationProvider implementation="com.intellij.ide.analysisignore.AnalysisIgnoreEditorNotificationProvider"/>
+    <statistics.projectUsagesCollector implementation="com.intellij.ide.analysisignore.AnalysisIgnoreUsagesCollector"/>
+
     <projectService serviceImplementation="com.intellij.openapi.file.exclude.ProjectPlainTextFileTypeManager" preload="true"/>
     <fileTypeOverrider implementation="com.intellij.openapi.file.exclude.UserFileTypeOverrider"/>
     <fileTypeDetector implementation="com.intellij.ide.scratch.ScratchFileServiceImpl$Detector"/>
@@ -1122,6 +1143,10 @@
                           id="afterUnmatchedBrace"/>
     <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.enter.EnterBetweenBracesFinalHandler"
                           id="EnterBetweenBracesHandler"/>
+    <enterHandlerDelegate
+      implementation="com.intellij.codeInsight.editorActions.enter.EnterBetweenBracesFinalHandler$InjectedIndentPostProcessor"
+      id="EnterBetweenBracesInjectedIndentPostProcessor"
+      order="last"/>
     <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.enter.EnterAfterJavadocTagHandler"/>
     <backspaceHandlerDelegate implementation="com.intellij.codeInsight.editorActions.SimpleIndentingBackspaceHandler"/>
     <backspaceHandlerDelegate implementation="com.intellij.codeInsight.editorActions.SmartIndentingBackspaceHandler"
@@ -1377,6 +1402,7 @@
     <statistics.projectUsagesCollector
       implementation="com.intellij.internal.statistic.editor.EditorSettingsStatisticsCollector$ProjectUsages"/>
     <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.projectView.ProjectViewCollector"/>
+    <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.project.ProjectSizeUsagesCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.projectView.impl.ProjectViewPerformanceCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.InspectionUsageFUSCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.codeInsight.hints.InlayProviderUsageCollector"/>

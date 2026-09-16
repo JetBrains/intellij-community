@@ -6,13 +6,14 @@ import com.intellij.psi.JavaRecursiveElementVisitor;
 import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiEnumConstantInitializer;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiExpressionList;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.ParameterizedCachedValue;
 import com.intellij.psi.util.ParameterizedCachedValueProvider;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +28,7 @@ public final class JavaAnonymousClassesHelper {
   private static final AnonClassProvider ANON_CLASS_PROVIDER = new AnonClassProvider();
 
   public static @Nullable String getName(@NotNull PsiAnonymousClass cls) {
-    final PsiClass upper = PsiTreeUtil.getParentOfType(cls, PsiClass.class);
+    final PsiClass upper = PsiUtil.getContainingClass(cls);
     if (upper == null) {
       return null;
     }
@@ -52,16 +53,14 @@ public final class JavaAnonymousClassesHelper {
             super.visitAnonymousClass(aClass);
             return;
           }
+          collectAnonymousClass(aClass);
+        }
+
+        private void collectAnonymousClass(PsiAnonymousClass aClass) {
           final PsiExpressionList arguments = aClass.getArgumentList();
-          if (arguments != null) {
+          if (!(aClass instanceof PsiEnumConstantInitializer) && arguments != null) {
             for (PsiExpression expression : arguments.getExpressions()) {
-              expression.acceptChildren(new JavaRecursiveElementVisitor() {
-                @Override
-                public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) {
-                  index++;
-                  map.put(aClass, "$" + index);
-                }
-              });
+              collectArgumentClasses(expression);
             }
           }
 
@@ -69,10 +68,29 @@ public final class JavaAnonymousClassesHelper {
           map.put(aClass, "$" + index);
         }
 
+        private void collectArgumentClasses(PsiExpression expression) {
+          expression.accept(new JavaRecursiveElementVisitor() {
+            @Override
+            public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) {
+              collectAnonymousClass(aClass);
+            }
+
+            @Override
+            public void visitClass(@NotNull PsiClass aClass) { }
+          });
+        }
+
         @Override
         public void visitClass(@NotNull PsiClass aClass) {
           if (aClass == upper) {
             super.visitClass(aClass);
+          }
+        }
+
+        @Override
+        public void visitExpressionList(@NotNull PsiExpressionList list) {
+          if (!(upper instanceof PsiAnonymousClass) || list != ((PsiAnonymousClass)upper).getArgumentList()) {
+            super.visitExpressionList(list);
           }
         }
       });

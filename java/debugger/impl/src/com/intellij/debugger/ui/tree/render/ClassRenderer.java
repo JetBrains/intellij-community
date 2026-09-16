@@ -150,20 +150,19 @@ public class ClassRenderer extends NodeRendererImpl {
 
   protected static String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext) throws EvaluateException {
     Value value = descriptor.getValue();
-    if (value instanceof ObjectReference) {
-      if (value instanceof StringReference) {
-        DebuggerUtils.ensureNotInsideObjectConstructor((ObjectReference)value, evaluationContext);
-        return ((StringReference)value).value();
+    if (value instanceof ObjectReference objectReference) {
+      if (value instanceof StringReference stringReference) {
+        DebuggerUtils.ensureNotInsideObjectConstructor(objectReference, evaluationContext);
+        return stringReference.value();
       }
-      else if (value instanceof ClassObjectReference) {
-        ReferenceType type = ((ClassObjectReference)value).reflectedType();
+      else if (value instanceof ClassObjectReference reference) {
+        ReferenceType type = reference.reflectedType();
         return (type != null) ? type.name() : "{...}";
       }
       else {
-        final ObjectReference objRef = (ObjectReference)value;
-        final Type type = objRef.type();
-        if (type instanceof ClassType && ((ClassType)type).isEnum()) {
-          final String name = getEnumConstantName(objRef, (ClassType)type);
+        Type type = objectReference.type();
+        if (type instanceof ClassType classType && classType.isEnum()) {
+          final String name = getEnumConstantName(objectReference, classType);
           if (name != null) {
             return name;
           }
@@ -350,8 +349,8 @@ public class ClassRenderer extends NodeRendererImpl {
   @Override
   public CompletableFuture<Boolean> isExpandableAsync(Value value, EvaluationContext evaluationContext, NodeDescriptor parentDescriptor) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    if (value instanceof ArrayReference) {
-      return DebuggerUtilsAsync.length((ArrayReference)value).thenApply(r -> r > 0).exceptionally(throwable -> true);
+    if (value instanceof ArrayReference reference) {
+      return DebuggerUtilsAsync.length(reference).thenApply(r -> r > 0).exceptionally(_ -> true);
     }
     else if (value instanceof ObjectReference) {
       return CompletableFuture.completedFuture(true); // if object has no fields, it contains a child-message about that
@@ -392,9 +391,9 @@ public class ClassRenderer extends NodeRendererImpl {
       return null;
     }
     final Value value = objRef.getValue(field);
-    if (!(value instanceof StringReference)) {
+    if (!(value instanceof StringReference reference)) {
       return null;
     }
-    return ((StringReference)value).value();
+    return reference.value();
   }
 }

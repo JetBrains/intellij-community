@@ -185,5 +185,5 @@ class MappingScopedItemsContainer<T, V> internal constructor(
 }
 
 private data class ScopingWrapper<T>(val scope: CoroutineScope, val value: T) {
-  suspend fun cancel() = scope.cancelAndJoinSilently()
+  suspend fun cancel() = scope.cancelAndJoin()
 }

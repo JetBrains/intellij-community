@@ -45,6 +45,7 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointListener;
@@ -144,7 +145,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
                                                  @NotNull ReferenceType baseType) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     RequestManagerImpl requestsManager = debugProcess.getRequestsManager();
-    ClassPrepareRequest request = requestsManager.createClassPrepareRequest((debuggerProcess, referenceType) -> {
+    ClassPrepareRequest request = requestsManager.createClassPrepareRequest((_, referenceType) -> {
       if (DebuggerUtilsImpl.instanceOf(referenceType, baseType)) {
         createRequestForPreparedClassEmulated(breakpoint, debugProcess, referenceType, false);
       }
@@ -372,15 +373,15 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
 
   static @Nls String getEventMessage(@NotNull LocatableEvent event, @NotNull String defaultFileName) {
     Location location = event.location();
-    if (event instanceof MethodEntryEvent) {
-      return getEventMessage(true, ((MethodEntryEvent)event).method(), location, defaultFileName);
+    if (event instanceof MethodEntryEvent entryEvent) {
+      return getEventMessage(true, entryEvent.method(), location, defaultFileName);
     }
-    if (event instanceof MethodExitEvent) {
-      return getEventMessage(false, ((MethodExitEvent)event).method(), location, defaultFileName);
+    if (event instanceof MethodExitEvent exitEvent) {
+      return getEventMessage(false, exitEvent.method(), location, defaultFileName);
     }
     Object entryProperty = event.request().getProperty(METHOD_ENTRY_KEY);
-    if (entryProperty instanceof Boolean) {
-      return getEventMessage((Boolean)entryProperty, location.method(), location, defaultFileName);
+    if (entryProperty instanceof Boolean b) {
+      return getEventMessage(b, location.method(), location, defaultFileName);
     }
     return "";
   }
@@ -522,7 +523,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
   }
 
   static @Nullable <T extends EventRequest> T findRequest(@NotNull DebugProcessImpl debugProcess, Class<T> requestClass, Requestor requestor) {
-    return StreamEx.of(debugProcess.getRequestsManager().findRequests(requestor)).select(requestClass).findFirst().orElse(null);
+    return ContainerUtil.findInstance(debugProcess.getRequestsManager().findRequests(requestor), requestClass);
   }
 
   @Override
@@ -589,7 +590,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
       this.methodName = methodName;
       this.methodSignature = new JVMName() {
         @Override
-        public String getName(DebugProcessImpl process) throws EvaluateException {
+        public String getName(DebugProcessImpl process) {
           return signature;
         }
 
@@ -684,7 +685,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     private final Method method;
     private final long codeIndex;
 
-    public LocationCodeIndexOnly(Method method, long codeIndex) {
+    LocationCodeIndexOnly(Method method, long codeIndex) {
       assert !method.isNative() && !method.isAbstract();
       assert codeIndex >= 0;
 

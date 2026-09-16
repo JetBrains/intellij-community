@@ -16,6 +16,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableGroup
 import com.intellij.openapi.options.NonModalSettingsPolicy
+import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.options.TabbedConfigurable
 import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil
@@ -23,6 +24,7 @@ import com.intellij.openapi.options.ex.ConfigurableVisitor
 import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.options.newEditor.SettingsDialogFactory
 import com.intellij.openapi.options.newEditor.SettingsDialogPerformanceTracker
+import com.intellij.openapi.options.newEditor.SettingsNonModalDialog
 import com.intellij.openapi.options.newEditor.SettingsNonModalDialogFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -64,6 +66,13 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
     }
 
     /**
+     * Builds the whole configurable tree. **This is a heavy operation**, mostly class loading, so it
+     * must not run on the UI thread.
+     *
+     * Do not call this to open the settings dialog. Use `showSettingsDialog` with an id, or
+     * `ShowSettingsUtilEx.showSettingsDialog`, which reuses an open settings window and builds no tree.
+     * Do not call this to test whether a page exists either.
+     *
      * @param project         a project used to load project settings or `null`
      * @param withIdeSettings specifies whether to load application settings or not
      * @return an array with the root-configurable group
@@ -118,13 +127,9 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
 
     @JvmStatic
     fun showSettingsDialog(project: Project?, idToSelect: String?, filter: String?) {
-      SettingsDialogPerformanceTracker.markOpeningStarted()
-
-      val group = ConfigurableExtensionPointUtil.getConfigurableGroup(project, /* withIdeSettings = */true)
-        .takeIf { !it.configurables.isEmpty() }
-      val configurableToSelect = if (idToSelect == null) null else ConfigurableVisitor.findById(idToSelect, listOf(group))
-
-      (getInstance() as ShowSettingsUtilImpl).doShow(project, listOf(group!!), configurableToSelect, filter)
+      (getInstance() as ShowSettingsUtilImpl).showSettingsDialogLazily(project, filter) { groups ->
+        if (idToSelect == null) null else ConfigurableVisitor.findById(idToSelect, groups)
+      }
     }
 
     @JvmStatic
@@ -133,19 +138,62 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
     }
   }
 
+  /**
+   * Shows the settings dialog, and builds the configurable tree only when a dialog must be created.
+   *
+   * An open non-modal window of the same project holds its own tree, so it selects [toSelect] there.
+   * A tree that is built for such a call is discarded, which costs a full tree build on every repeat open.
+   *
+   * [toSelect] receives the groups that the dialog uses, because the tree selects a node by the
+   * [Configurable] instance.
+   */
   @ApiStatus.Internal
-  protected open fun doShow(project: Project?, groups: List<ConfigurableGroup>, toSelect: Configurable?, filter: String?) {
-    val isModal = !(project != null &&
-                    project != ProjectManager.getInstance().defaultProject &&
-                    NonModalSettingsPolicy.isNonModalSettingsEnabledByAllPolicies() &&
-                    ModalityState.current() == ModalityState.nonModal())
+  fun showSettingsDialogLazily(
+    project: Project?,
+    filter: String?,
+    toSelect: (List<ConfigurableGroup>) -> Configurable?,
+  ) {
+    SettingsDialogPerformanceTracker.markOpeningStarted()
+    doShow(project, { buildConfigurableGroups(project) }, toSelect, filter)
+  }
 
-    val filteredGroups = filterEmptyGroups(groups)
+  private fun buildConfigurableGroups(project: Project?): List<ConfigurableGroup> {
+    return listOf(ConfigurableExtensionPointUtil.getConfigurableGroup(project, /* withIdeSettings = */true))
+  }
+
+  private fun isModalRequired(project: Project?): Boolean {
+    return !(project != null &&
+             project != ProjectManager.getInstance().defaultProject &&
+             NonModalSettingsPolicy.isNonModalSettingsEnabledByAllPolicies() &&
+             ModalityState.current() == ModalityState.nonModal())
+  }
+
+  @ApiStatus.Internal
+  fun doShow(project: Project?, groups: List<ConfigurableGroup>, toSelect: Configurable?, filter: String?) {
+    doShow(project, { groups }, { toSelect }, filter)
+  }
+
+  /**
+   * Shows the settings dialog, and builds the configurable tree only when a dialog must be created.
+   *
+   * An open non-modal window of the same project holds its own tree, so [groups] is not called for
+   * such a call. [toSelect] receives the groups that the dialog shows, because the tree selects a
+   * node by the [Configurable] instance.
+   */
+  @ApiStatus.Internal
+  protected open fun doShow(
+    project: Project?,
+    groups: () -> List<ConfigurableGroup>,
+    toSelect: (List<ConfigurableGroup>) -> Configurable?,
+    filter: String?,
+  ) {
+    val isModal = isModalRequired(project)
 
     if (!isModal) {
-      SettingsNonModalDialogFactory.getInstance().show(project, filteredGroups, toSelect, filter)
+      SettingsNonModalDialogFactory.getInstance().show(project!!, { filterEmptyGroups(groups()) }, toSelect, filter)
     } else {
-      createDialogWrapper(project, filteredGroups, toSelect, filter).show()
+      val filteredGroups = filterEmptyGroups(groups())
+      createDialogWrapper(project, filteredGroups, toSelect(filteredGroups), filter).show()
     }
   }
 
@@ -156,18 +204,35 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
   }
 
   @ApiStatus.Internal
+  override suspend fun showSettingsDialog(project: Project) {
+    // We want to ensure that clients don’t simply replace one API with another,
+    // but actually rework the invocation to be performed not in EDT.
+    ThreadingAssertions.assertBackgroundThread()/**/
+    SettingsDialogPerformanceTracker.markOpeningStarted()
+
+    // an open window of the same project already holds a tree, so no tree is built for this call
+    if (withContext(Dispatchers.EDT) { SettingsNonModalDialog.navigateOpenDialog(project, null) { null } }) {
+      return
+    }
+
+    showSettingsDialog(project, buildConfigurableGroups(project))
+  }
+
+  @ApiStatus.Internal
   override suspend fun showSettingsDialog(project: Project, groups: List<ConfigurableGroup>) {
     // We want to ensure that clients don’t simply replace one API with another,
     // but actually rework the invocation to be performed not in EDT.
     ThreadingAssertions.assertBackgroundThread()
  
     val isModal = project.isDefault || !NonModalSettingsPolicy.isNonModalSettingsEnabledByAllPolicies()
+    // the filter reads `configurables` of every group, so it stays on the background thread
+    val filteredGroups = filterEmptyGroups(groups)
     withContext(Dispatchers.EDT) {
       if (!isModal) {
-        SettingsNonModalDialogFactory.getInstance().show(project, filterEmptyGroups(groups), null, null)
+        SettingsNonModalDialogFactory.getInstance().show(project, { filteredGroups }, { null }, null)
       } else {
         val settingsDialogFactory = serviceAsync<SettingsDialogFactory>()
-        settingsDialogFactory.create(project, filterEmptyGroups(groups), null, null).show()
+        settingsDialogFactory.create(project, filteredGroups, null, null).show()
       }
     }
   }
@@ -196,23 +261,26 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
     predicate: Predicate<in Configurable>,
     additionalConfiguration: Consumer<in Configurable>?,
   ) {
-    SettingsDialogPerformanceTracker.markOpeningStarted()
-
-    val groups = getConfigurableGroups(project, true)
-    val config = ConfigurableVisitor.find(predicate, groups.asList()) ?: error("Cannot find configurable for specified predicate")
-    additionalConfiguration?.accept(config)
-    showSettings(project, groups.asList(), config)
+    showSettingsDialogLazily(project, filter = null) { groups ->
+      val config = ConfigurableVisitor.find(predicate, groups) ?: error("Cannot find configurable for specified predicate")
+      additionalConfiguration?.accept(config)
+      config
+    }
   }
 
   override fun showSettingsDialog(project: Project?, nameToSelect: String) {
-    val group = ConfigurableExtensionPointUtil.getConfigurableGroup(project,  /* withIdeSettings = */true)
-    val groups = if (group.configurables.isEmpty()) emptyList() else listOf(group)
-    showSettings(project, groups, toSelect = findPreselectedByDisplayName(nameToSelect, groups))
+    showSettingsDialogLazily(project, filter = null) { groups -> findPreselectedByDisplayName(nameToSelect, groups) }
   }
 
   override fun showSettingsDialog(project: Project, toSelect: Configurable?) {
-    val groups = listOf(ConfigurableExtensionPointUtil.getConfigurableGroup(project,  /* withIdeSettings = */true))
-    showSettings(project, groups, toSelect)
+    // the id keeps the target findable in any tree, so an open dialog needs no new one
+    val id = (toSelect as? SearchableConfigurable)?.id
+    if (id == null) {
+      val groups = listOf(ConfigurableExtensionPointUtil.getConfigurableGroup(project,  /* withIdeSettings = */true))
+      showSettings(project, groups, toSelect)
+      return
+    }
+    showSettingsDialogLazily(project, filter = null) { groups -> ConfigurableVisitor.findById(id, groups) ?: toSelect }
   }
 
   override fun editConfigurable(project: Project?, configurable: Configurable): Boolean {
@@ -321,6 +389,11 @@ private fun findPreselectedByDisplayName(preselectedConfigurableDisplayName: Str
   return null
 }
 
+/**
+ * Drops a group that holds no configurable.
+ *
+ * This reads `configurables` of every group, so it builds the tree when it is not built yet.
+ */
 private fun filterEmptyGroups(group: List<ConfigurableGroup>): List<ConfigurableGroup> {
   return group.filter { it.configurables.isNotEmpty() }
 }
@@ -374,15 +447,15 @@ internal fun scheduleDoShowSettingsDialogWithACheckThatProjectIsInitialized(proj
       (serviceAsync<SearchableOptionsRegistrar>() as? SearchableOptionsRegistrarImpl)?.initialize()
     }
 
-    fun createConfigurableGroups(): List<ConfigurableGroup> = listOf(ConfigurableExtensionPointUtil.doGetConfigurableGroup(project, true))
+    // an open window of the same project already holds a tree, so no tree is built for this call
+    if (withContext(Dispatchers.EDT) { SettingsNonModalDialog.navigateOpenDialog(project, null) { null } }) {
+      return@launch
+    }
 
-    if (project.isDefault) {
-      serviceAsync<ShowSettingsUtil>().showSettingsDialog(project, createConfigurableGroups())
-    }
-    else {
+    if (!project.isDefault) {
       (project.serviceAsync<StartupManager>() as StartupManagerEx).waitForInitProjectActivities(IdeBundle.message("settings.modal.opening.message"))
-      serviceAsync<ShowSettingsUtil>().showSettingsDialog(project, createConfigurableGroups())
     }
+    serviceAsync<ShowSettingsUtil>().showSettingsDialog(project)
 
     if (LOG.isDebugEnabled()) {
       val startTime = System.nanoTime()

@@ -18,7 +18,7 @@ import kotlin.io.path.exists
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
 
-open class CodexClient(scope: McpClientInfo.Scope, configPath: Path) : McpClient(
+open class CodexClient(scope: McpClientInfo.McpClientScope, configPath: Path) : McpClient(
   mcpClientInfo = McpClientInfo(McpClientInfo.Name.CODEX, scope),
   configPath
 ) {

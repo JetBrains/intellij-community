@@ -10,7 +10,7 @@ import java.nio.file.Path
 abstract class ConversionService {
   abstract suspend fun convertSilently(projectPath: Path, conversionListener: ConversionListener): ConversionResult
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun blockingConvertSilently(projectPath: Path, conversionListener: ConversionListener): ConversionResult {
     return runBlockingMaybeCancellable {
       convertSilently(projectPath, conversionListener)

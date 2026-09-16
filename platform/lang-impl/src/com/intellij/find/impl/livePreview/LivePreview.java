@@ -33,6 +33,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.usages.impl.UsagePreviewPanel;
+import com.intellij.util.SingleEdtTaskScheduler;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.PositionTracker;
 import org.jetbrains.annotations.ApiStatus;
@@ -44,14 +45,18 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 public final class LivePreview implements SearchResults.SearchResultsListener, SelectionListener, DocumentListener, EditorColorsListener {
   private static final Key<RangeHighlighter> IN_SELECTION_KEY = Key.create("LivePreview.IN_SELECTION_KEY");
 
   private final Disposable myDisposable = Disposer.newDisposable("livePreview");
   private boolean mySuppressedUpdate = false;
+  /** Set by {@link #cursorMoved} so that the general update it is paired with does not redo the occurrence highlighting. */
+  private boolean myCursorMoveOnly = false;
 
   private static final Key<Boolean> MARKER_USED = Key.create("LivePreview.MARKER_USED");
   private static final Key<Boolean> SEARCH_MARKER = Key.create("LivePreview.SEARCH_MARKER");
@@ -61,6 +66,19 @@ public final class LivePreview implements SearchResults.SearchResultsListener, S
   private static boolean NotFound;
 
   private final List<RangeHighlighter> myHighlighters = new ArrayList<>();
+  /**
+   * The occurrences that currently carry an {@link #IN_SELECTION_KEY} companion. Tracking them is what lets a selection
+   * change touch only the occurrences it can actually affect, instead of asking every match on screen.
+   */
+  private final Set<RangeHighlighter> myInSelectionHighlighters = new HashSet<>();
+  /**
+   * Coalesces the in-selection refresh, which several listeners ask for in a row over one gesture and only the last
+   * result of which is ever painted. One mouse-moved event of a drag selection asks for it five times: the drag sets
+   * the selection, {@link SearchResults#caretPositionChanged} then collapses it onto the occurrence under the caret and
+   * clears it again, each of which is a selection change, and the cursor it moved is reported twice over.
+   */
+  private final SingleEdtTaskScheduler myInSelectionUpdateAlarm = SingleEdtTaskScheduler.createSingleEdtTaskScheduler();
+  private boolean myInSelectionUpdatePending;
   private RangeHighlighter myCursorHighlighter;
   private VisibleAreaListener myVisibleAreaListener;
   private Delegate myDelegate;
@@ -70,7 +88,33 @@ public final class LivePreview implements SearchResults.SearchResultsListener, S
 
   @Override
   public void selectionChanged(@NotNull SelectionEvent e) {
+    requestInSelectionUpdate();
+  }
+
+  /**
+   * Asks for the in-selection highlighting to be brought up to date once the gesture that changed the selection is over,
+   * rather than once per change it makes along the way.
+   */
+  private void requestInSelectionUpdate() {
+    myInSelectionUpdatePending = true;
+    // Throttled, not debounced: a gesture that keeps changing the selection must still be caught up with promptly.
+    myInSelectionUpdateAlarm.request(0, this::applyPendingInSelectionUpdate);
+  }
+
+  private void applyPendingInSelectionUpdate() {
+    if (!myInSelectionUpdatePending) return;
+    myInSelectionUpdatePending = false;
     updateInSelectionHighlighters();
+  }
+
+  /**
+   * Applies a pending {@link #requestInSelectionUpdate} right now, for when the highlighting has to be up to date
+   * before the end of the event it was requested in. Kept separate from the task the alarm runs, which must not cancel
+   * the job it is itself running under.
+   */
+  private void flushInSelectionUpdate() {
+    myInSelectionUpdateAlarm.cancel();
+    applyPendingInSelectionUpdate();
   }
 
   public static void processNotFound() {
@@ -87,6 +131,11 @@ public final class LivePreview implements SearchResults.SearchResultsListener, S
   public void searchResultsUpdated(@NotNull SearchResults sr) {
     if (mySuppressedUpdate) {
       mySuppressedUpdate = false;
+      return;
+    }
+    if (myCursorMoveOnly) {
+      // Everything this update would do has just been done by cursorMoved, which is the only thing that changed.
+      myCursorMoveOnly = false;
       return;
     }
     highlightUsages();
@@ -113,6 +162,7 @@ public final class LivePreview implements SearchResults.SearchResultsListener, S
 
   private void dumpState() {
     if (ApplicationManager.getApplication().isUnitTestMode() && ourTestOutput != null) {
+      flushInSelectionUpdate(); // the dump is of the markup model, so everything owed to it has to be in place first
       dumpEditorMarkupAndSelection(ourTestOutput);
     }
   }
@@ -196,6 +246,7 @@ public final class LivePreview implements SearchResults.SearchResultsListener, S
 
   private void removeHighlighterWithDependent(@NotNull RangeHighlighter highlighter) {
     removeHighlighter(highlighter);
+    myInSelectionHighlighters.remove(highlighter);
     RangeHighlighter additionalHighlighter = highlighter.getUserData(IN_SELECTION_KEY);
     if (additionalHighlighter != null) {
       removeHighlighter(additionalHighlighter);
@@ -204,8 +255,14 @@ public final class LivePreview implements SearchResults.SearchResultsListener, S
 
   @Override
   public void cursorMoved() {
-    updateInSelectionHighlighters();
+    requestInSelectionUpdate();
     updateCursorHighlighting();
+    // SearchResults.notifyCursorMoved reports a cursor move to each listener as a cursor move and then, immediately, as
+    // a general update. Redoing the occurrence highlighting for the second of those is pure waste: a cursor move cannot
+    // change which occurrences exist, and with a whole file's matches highlighted rederiving them is the most expensive
+    // thing a caret move does. This relies on the two notifications staying adjacent, which is the only way
+    // notifyCursorMoved issues them.
+    myCursorMoveOnly = true;
   }
 
   @Override
@@ -262,6 +319,9 @@ public final class LivePreview implements SearchResults.SearchResultsListener, S
   public void dispose() {
     hideBalloon();
 
+    myInSelectionUpdatePending = false;
+    myInSelectionUpdateAlarm.dispose();
+
     dropHighlighters();
 
     if (myCursorHighlighter != null) {
@@ -275,11 +335,14 @@ public final class LivePreview implements SearchResults.SearchResultsListener, S
   }
 
   private void highlightUsages() {
+    // Only the in-selection tail is deferred: addNewHighlighters marks the highlighters it reused and
+    // clearUnusedHighlighters drops the ones it did not, so those two have to stay together and stay synchronous, or a
+    // chunk appended in between would be taken for a leftover of the previous search and removed.
     List<RangeHighlighter> newHighlighters = isBelowMatchesLimit()
                                              ? addNewHighlighters(mySearchResults.getOccurrences()) : Collections.emptyList();
     clearUnusedHighlighters();
     myHighlighters.addAll(newHighlighters);
-    updateInSelectionHighlighters();
+    requestInSelectionUpdate();
   }
 
   private boolean isBelowMatchesLimit() {
@@ -291,6 +354,7 @@ public final class LivePreview implements SearchResults.SearchResultsListener, S
       removeHighlighterWithDependent(h);
     }
     myHighlighters.clear();
+    myInSelectionHighlighters.clear();
   }
 
   private List<RangeHighlighter> addNewHighlighters(@NotNull List<FindResult> occurrences) {
@@ -341,43 +405,103 @@ public final class LivePreview implements SearchResults.SearchResultsListener, S
     return existing[0];
   }
 
+  /**
+   * Brings the in-selection highlighting in line with a selection that has just changed.
+   * <p>
+   * Only two kinds of occurrence can need anything done to them: the ones the new selection covers, which the markup
+   * model can hand over directly, and the ones that were covered by the previous selection, which are the ones already
+   * tracked in {@link #myInSelectionHighlighters}. Everything else is left alone, so a selection change costs what the
+   * selection covers rather than a walk over every match in the document - a mouse drag over a file with tens of
+   * thousands of matches highlighted fires this on every mouse-moved event.
+   */
   private void updateInSelectionHighlighters() {
-    updateInSelectionHighlighters(myHighlighters);
-  }
-
-  private void updateInSelectionHighlighters(@NotNull List<RangeHighlighter> highlighters) {
-    final SelectionModel selectionModel = mySearchResults.getEditor().getSelectionModel();
+    MarkupModelEx markupModel = (MarkupModelEx)mySearchResults.getEditor().getMarkupModel();
+    SelectionModel selectionModel = mySearchResults.getEditor().getSelectionModel();
     int[] starts = selectionModel.getBlockSelectionStarts();
     int[] ends = selectionModel.getBlockSelectionEnds();
+    TextRange cursor = mySearchResults.getCursor();
+
+    // Collected rather than acted on inside the processor: that runs under the markup model lock, which forbids both
+    // touching the model and doing any real work.
+    Set<RangeHighlighter> covered = new HashSet<>();
+    for (int i = 0; i < starts.length; ++i) {
+      int selectionStart = starts[i];
+      int selectionEnd = ends[i];
+      markupModel.processRangeHighlightersOverlappingWith(selectionStart, selectionEnd, highlighter -> {
+        if (highlighter.getUserData(SEARCH_MARKER) != null && isInSelection(highlighter, cursor, selectionStart, selectionEnd)) {
+          covered.add(highlighter);
+        }
+        return true;
+      });
+    }
+
+    // Over a copy: dropping the highlighting writes back to the tracking set.
+    for (RangeHighlighter highlighter : new ArrayList<>(myInSelectionHighlighters)) {
+      if (!covered.contains(highlighter)) {
+        dropInSelectionHighlighting(highlighter);
+      }
+    }
+    for (RangeHighlighter highlighter : covered) {
+      addInSelectionHighlighting(highlighter);
+    }
+  }
+
+  /**
+   * The same update for a set of occurrences known up front, which is what a still running search appends. The
+   * selection cannot have changed under a search - it is the occurrences that are new - so the ones already on screen
+   * keep whatever they were given.
+   */
+  private void updateInSelectionHighlighters(@NotNull List<RangeHighlighter> highlighters) {
+    SelectionModel selectionModel = mySearchResults.getEditor().getSelectionModel();
+    int[] starts = selectionModel.getBlockSelectionStarts();
+    int[] ends = selectionModel.getBlockSelectionEnds();
+    TextRange cursor = mySearchResults.getCursor();
 
     for (RangeHighlighter highlighter : highlighters) {
       if (!highlighter.isValid()) continue;
       boolean needsAdditionalHighlighting = false;
-      TextRange cursor = mySearchResults.getCursor();
-      if (cursor == null ||
-          highlighter.getStartOffset() != cursor.getStartOffset() || highlighter.getEndOffset() != cursor.getEndOffset()) {
-        for (int i = 0; i < starts.length; ++i) {
-          TextRange selectionRange = new TextRange(starts[i], ends[i]);
-          needsAdditionalHighlighting = selectionRange.intersects(highlighter.getStartOffset(), highlighter.getEndOffset()) &&
-                           selectionRange.getEndOffset() != highlighter.getStartOffset() &&
-                           highlighter.getEndOffset() != selectionRange.getStartOffset();
-          if (needsAdditionalHighlighting) break;
-        }
+      for (int i = 0; i < starts.length && !needsAdditionalHighlighting; ++i) {
+        needsAdditionalHighlighting = isInSelection(highlighter, cursor, starts[i], ends[i]);
       }
-
-      RangeHighlighter inSelectionHighlighter = highlighter.getUserData(IN_SELECTION_KEY);
-      if (inSelectionHighlighter != null) {
-        if (!needsAdditionalHighlighting) {
-          removeHighlighter(inSelectionHighlighter);
-          highlighter.putUserData(IN_SELECTION_KEY, null);
-        }
-      } else if (needsAdditionalHighlighting) {
-        RangeHighlighter additionalHighlighter = addHighlighter(highlighter.getStartOffset(), highlighter.getEndOffset(),
-                                                                myPresentation.getSelectionAttributes(),
-                                                                myPresentation.getDefaultLayer());
-        highlighter.putUserData(IN_SELECTION_KEY, additionalHighlighter);
+      if (needsAdditionalHighlighting) {
+        addInSelectionHighlighting(highlighter);
+      }
+      else {
+        dropInSelectionHighlighting(highlighter);
       }
     }
+  }
+
+  /**
+   * Whether an occurrence lies inside one selection range and so has to be shown as selected. The cursor is shown as
+   * the cursor instead, and an occurrence that merely touches the edge of the selection is not inside it.
+   */
+  private static boolean isInSelection(@NotNull RangeHighlighter highlighter,
+                                       @Nullable TextRange cursor,
+                                       int selectionStart,
+                                       int selectionEnd) {
+    int start = highlighter.getStartOffset();
+    int end = highlighter.getEndOffset();
+    if (cursor != null && start == cursor.getStartOffset() && end == cursor.getEndOffset()) return false;
+    return Math.max(selectionStart, start) <= Math.min(selectionEnd, end) && selectionEnd != start && end != selectionStart;
+  }
+
+  private void addInSelectionHighlighting(@NotNull RangeHighlighter highlighter) {
+    if (highlighter.getUserData(IN_SELECTION_KEY) != null) return;
+    RangeHighlighter additionalHighlighter = addHighlighter(highlighter.getStartOffset(), highlighter.getEndOffset(),
+                                                            myPresentation.getSelectionAttributes(),
+                                                            myPresentation.getDefaultLayer());
+    if (additionalHighlighter == null) return; // the project is gone; nothing to track and nothing to remove later
+    highlighter.putUserData(IN_SELECTION_KEY, additionalHighlighter);
+    myInSelectionHighlighters.add(highlighter);
+  }
+
+  private void dropInSelectionHighlighting(@NotNull RangeHighlighter highlighter) {
+    RangeHighlighter additionalHighlighter = highlighter.getUserData(IN_SELECTION_KEY);
+    myInSelectionHighlighters.remove(highlighter);
+    if (additionalHighlighter == null) return;
+    removeHighlighter(additionalHighlighter);
+    highlighter.putUserData(IN_SELECTION_KEY, null);
   }
 
   private void showReplacementPreview() {

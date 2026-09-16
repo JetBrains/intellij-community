@@ -1,11 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.utils
 
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.ide.plugins.PluginInfoProvider
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginUtils
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.openapi.application.ex.ApplicationInfoEx
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.TimeoutCachedValue
@@ -210,8 +212,14 @@ private val builtFromSources = PluginInfo(PluginType.FROM_SOURCES, null, null)
 private val pluginIdsFromOfficialJbPluginRepo: Supplier<Set<PluginId>> = TimeoutCachedValue(1, TimeUnit.HOURS) {
   // before loading default repository plugins lets check it's not changed, and is really official JetBrains repository
   val infoProvider = PluginInfoProvider.getInstance()
-  infoProvider.loadCachedPlugins()
-  ?: emptySet<PluginId?>().also { infoProvider.loadPlugins(null) } // schedule plugins loading, report nothing until repo plugins loaded
+  try {
+    infoProvider.loadCachedPlugins()
+  }
+  catch (e: Throwable) {
+    rethrowControlFlowException(e)
+    fileLogger().error("Failed to load cached plugins", e)
+    null
+  } ?: emptySet<PluginId>().also { infoProvider.loadPlugins(null) } // schedule plugins loading, report nothing until repo plugins loaded
 }
 
 /**

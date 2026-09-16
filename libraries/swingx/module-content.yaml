@@ -1,3 +1,0 @@
-- name: dist.all/lib/intellij.libraries.swingx.jar
-  modules:
-  - name: intellij.libraries.swingx

@@ -10,7 +10,7 @@ import com.intellij.util.io.Compressor
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
-import org.jetbrains.intellij.build.telemetry.blockingBlock
+import org.jetbrains.intellij.build.telemetry.block
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
@@ -197,7 +197,7 @@ internal class CoverageImpl(
   }
 
   override fun generateReport() {
-    blockingBlock("Generating a coverage report") {
+    block("Generating a coverage report") {
       generateReport(outputRoots = outputRoots, sourceRoots = sourceRoots)
       publishReport()
     }
@@ -207,7 +207,7 @@ internal class CoverageImpl(
     require(dataToMerge.any()) {
       "No coverage data files to merge"
     }
-    blockingBlock("Merging coverage data files") {
+    block("Merging coverage data files") {
       @Suppress("IO_FILE_USAGE")
       AggregatorApi.merge(
         dataToMerge.map { it.toFile() },

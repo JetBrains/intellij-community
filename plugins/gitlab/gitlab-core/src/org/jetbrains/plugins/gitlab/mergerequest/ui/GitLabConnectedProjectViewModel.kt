@@ -69,7 +69,7 @@ interface GitLabConnectedProjectViewModel {
   fun viewMergeRequestList()
   fun closeNewMergeRequestDetails()
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun openMergeRequestTimeline(mrIid: String, focus: Boolean)
 }
 
@@ -108,7 +108,7 @@ abstract class GitLabConnectedProjectViewModelBase(
       filterVm = filterVm,
       repository = projectName,
       avatarIconsProvider = avatarIconProvider,
-      loaderSupplier = { cs, filtersValue -> connection.projectData.mergeRequests.getListLoaderIn(cs, filtersValue.toSearchQuery()) }
+      loaderSupplier = { filtersValue -> connection.projectData.mergeRequests.getListLoader(filtersValue.toSearchQuery()) }
     )
   }
 
@@ -180,7 +180,7 @@ abstract class GitLabConnectedProjectViewModelBase(
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   abstract fun openMergeRequestDiff(mrIid: String, focus: Boolean)
 
   companion object {

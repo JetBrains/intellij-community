@@ -55,7 +55,7 @@ class ChangePageSizeAction(private val myPageSize: Int, isDefault: Boolean = fal
     return grid?.dataHookup?.pageModel?.pageSize ?: GridPagingModel.UNLIMITED_PAGE_SIZE
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private fun formatPageSize(pageSize: Int, isDefault: Boolean, defaultText: @Nls String): @Nls String {
     // This method might be quite heavy to run on EDT
     ThreadingAssertions.assertBackgroundThread()

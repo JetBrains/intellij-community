@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.ide.ui.UISettings;
@@ -6,7 +6,6 @@ import com.intellij.ide.ui.UISettingsUtils;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.SelectionModel;
@@ -357,10 +356,8 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
 
     @Override
     protected void paintChildren(Graphics g) {
-      ReadAction.runBlocking(() -> {
-        updateText(g.getClipBounds());
-        super.paintChildren(g);
-      });
+      updateText(g.getClipBounds());
+      super.paintChildren(g);
     }
 
     private void updateText(Rectangle clip) {

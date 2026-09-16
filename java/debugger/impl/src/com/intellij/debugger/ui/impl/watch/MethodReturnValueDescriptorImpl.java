@@ -54,8 +54,8 @@ public class MethodReturnValueDescriptorImpl extends ValueDescriptorImpl {
   @Override
   public PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException {
     Value value = getValue();
-    if (value instanceof ObjectReference) {
-      throw new NeedMarkException((ObjectReference)value);
+    if (value instanceof ObjectReference reference) {
+      throw new NeedMarkException(reference);
     }
     return null;
   }

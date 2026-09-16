@@ -65,4 +65,11 @@ public final class PlatformIdeImplIcons {
     /** 11x9 */ public static final @NotNull Icon TreeExpanded = load("com/intellij/ide/ui/laf/icons/intellij/treeExpanded.svg", -2127369491, 0);
     /** 11x9 */ public static final @NotNull Icon TreeExpandedSelected = load("com/intellij/ide/ui/laf/icons/intellij/treeExpandedSelected.svg", 309492109, 0);
   }
+
+  /** 32x22 */ public static final @NotNull Icon ToggleOff = load("com/intellij/ide/ui/laf/icons/toggleOff.svg", 1769074829, 0);
+  /** 32x22 */ public static final @NotNull Icon ToggleOffDisabled = load("com/intellij/ide/ui/laf/icons/toggleOffDisabled.svg", 1101254453, 0);
+  /** 32x22 */ public static final @NotNull Icon ToggleOffFocused = load("com/intellij/ide/ui/laf/icons/toggleOffFocused.svg", -1242597557, 0);
+  /** 32x22 */ public static final @NotNull Icon ToggleOn = load("com/intellij/ide/ui/laf/icons/toggleOn.svg", -1347920486, 0);
+  /** 32x22 */ public static final @NotNull Icon ToggleOnDisabled = load("com/intellij/ide/ui/laf/icons/toggleOnDisabled.svg", 815033466, 0);
+  /** 32x22 */ public static final @NotNull Icon ToggleOnFocused = load("com/intellij/ide/ui/laf/icons/toggleOnFocused.svg", -648862775, 0);
 }

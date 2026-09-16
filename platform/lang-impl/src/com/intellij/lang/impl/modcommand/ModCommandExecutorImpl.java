@@ -399,6 +399,7 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
         TemplateManager.getInstance(context.project()).startTemplate(finalEditor, tmpl, new TemplateEditingAdapter() {
           @Override
           public void templateFinished(@NotNull Template tmpl, boolean brokenOff) {
+            PsiDocumentManager.getInstance(context.project()).commitDocument(finalEditor.getDocument());
             ModCommandExecutor.executeInteractively(
               context,
               name,

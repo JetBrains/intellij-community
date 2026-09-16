@@ -6,7 +6,9 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.psi.codeStyle.CodeStyleManager
+import org.jetbrains.kotlin.idea.base.psi.addMemberDeclarationBefore
 import org.jetbrains.kotlin.idea.base.psi.getOrCreateCompanionObject
+import org.jetbrains.kotlin.idea.base.psi.removeModifierKeyword
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.utils.getAddJvmStaticApplicabilityRange
 import org.jetbrains.kotlin.idea.util.addAnnotation
@@ -35,14 +37,14 @@ internal class MakeMemberStaticFix(
     ) {
         var declaration = element
         if (declaration is KtClass) {
-            if (declaration.hasModifier(KtTokens.INNER_KEYWORD)) declaration.removeModifier(KtTokens.INNER_KEYWORD)
+            if (declaration.hasModifier(KtTokens.INNER_KEYWORD)) declaration.removeModifierKeyword(KtTokens.INNER_KEYWORD)
         } else {
             val containingClass = declaration.containingClassOrObject ?: return
             if (containingClass is KtClass) {
                 val companionObject = containingClass.getOrCreateCompanionObject()
 
                 val declarationCopy = declaration.copy() as KtNamedDeclaration
-                val movedDeclaration = companionObject.addDeclarationBefore(declarationCopy, null)
+                val movedDeclaration = companionObject.addMemberDeclarationBefore(declarationCopy, null)
 
                 declaration.delete()
                 declaration = movedDeclaration

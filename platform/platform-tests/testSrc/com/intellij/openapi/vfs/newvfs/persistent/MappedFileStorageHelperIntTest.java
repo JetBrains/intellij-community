@@ -114,6 +114,18 @@ public class MappedFileStorageHelperIntTest {
   }
 
   @Test
+  public void updateIntField_AtomicallyReplacesValue() throws Exception {
+    int fileId = vfs.createRecord();
+    storageHelper.writeIntField(fileId, FIELD_1_OFFSET_IN_ROW, 41);
+
+    int previousValue = storageHelper.updateIntField(fileId, FIELD_1_OFFSET_IN_ROW, value -> value + 1);
+
+    assertEquals(41, previousValue, "The update must return the previous value");
+    assertEquals(42, storageHelper.readIntField(fileId, FIELD_1_OFFSET_IN_ROW),
+                 "The update must store the new value");
+  }
+
+  @Test
   public void notYetWrittenValue_ReadsBackAsZero() throws Exception {
     int fileId = vfs.createRecord();
     int valueReadBack = storageHelper.readIntField(fileId, FIELD_1_OFFSET_IN_ROW);

@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.toolingExtension.impl.modelAction
 
+import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions.assertEmpty
 import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions.assertEqualsOrdered
 import org.gradle.tooling.model.BuildModel
 import org.gradle.tooling.model.gradle.BasicGradleProject
@@ -15,8 +16,24 @@ internal class TestModelConsumer : GradleModelConsumer {
     assertEqualsOrdered(expectedBuildModels, buildModels)
   }
 
+  fun assertBuildModels(vararg expectedBuildModels: TestConsumedModel) {
+    assertBuildModels(expectedBuildModels.asList())
+  }
+
+  fun assertNoBuildModels() {
+    assertEmpty(buildModels)
+  }
+
   fun assertProjectModels(expectedProjectModels: List<TestConsumedModel>) {
     assertEqualsOrdered(expectedProjectModels, projectModels)
+  }
+
+  fun assertProjectModels(vararg expectedProjectModels: TestConsumedModel) {
+    assertProjectModels(expectedProjectModels.asList())
+  }
+
+  fun assertNoProjectModels() {
+    assertEmpty(projectModels)
   }
 
   override fun consumeBuildModel(buildModel: BuildModel, `object`: Any, clazz: Class<*>) {

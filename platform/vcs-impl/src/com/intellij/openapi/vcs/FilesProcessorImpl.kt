@@ -11,23 +11,19 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
 @ApiStatus.Internal
-abstract class FilesProcessorImpl(protected val project: Project, parentDisposable: Disposable) : FilesProcessor {
+abstract class FilesProcessorImpl(protected val project: Project, parentDisposable: Disposable) : Disposable {
   private val files = mutableSetOf<VirtualFile>()
 
   abstract fun doActionOnChosenFiles(files: Collection<VirtualFile>)
-
-  abstract fun doFilterFiles(files: Collection<VirtualFile>): Collection<VirtualFile>
 
   init {
     Disposer.register(parentDisposable, this)
   }
 
-  override fun processFiles(files: Collection<VirtualFile>) {
-    val filteredFiles = doFilterFiles(files)
+  protected fun processFiles(files: Collection<VirtualFile>) {
+    if (files.isEmpty()) return
 
-    if (filteredFiles.isEmpty()) return
-
-    addNewFiles(filteredFiles)
+    addNewFiles(files)
 
     if (needDoForCurrentProject()) {
       doActionOnChosenFiles(acquireValidFiles())

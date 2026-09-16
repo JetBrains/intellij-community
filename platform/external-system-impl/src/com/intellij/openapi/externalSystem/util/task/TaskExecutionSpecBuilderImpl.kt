@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.util.task
 
+import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
@@ -12,6 +13,7 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.util.ThreeState
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.CompletableFuture
+import java.util.function.Consumer
 
 @ApiStatus.Internal
 class TaskExecutionSpecBuilderImpl : TaskExecutionSpecBuilder {
@@ -22,6 +24,7 @@ class TaskExecutionSpecBuilderImpl : TaskExecutionSpecBuilder {
   override var executorId: String = DefaultRunExecutor.EXECUTOR_ID
   private var progressExecutionMode: ProgressExecutionMode = ProgressExecutionMode.IN_BACKGROUND_ASYNC
   private var callback: TaskCallback? = null
+  private var runConfigConsumer: Consumer<RunnerAndConfigurationSettings>? = null
   private var listener: ExternalSystemTaskNotificationListener? = null
   private var userData: UserDataHolderBase? = null
   private var activateToolWindowBeforeRun: Boolean = false
@@ -59,6 +62,11 @@ class TaskExecutionSpecBuilderImpl : TaskExecutionSpecBuilder {
       override fun onSuccess() { future.complete(true) }
       override fun onFailure() { future.complete(false) }
     }
+  }
+
+  override fun withRunConfigurationConsumer(consumer: Consumer<RunnerAndConfigurationSettings>): TaskExecutionSpecBuilder {
+    this.runConfigConsumer = consumer
+    return this
   }
 
   override fun withListener(listener: ExternalSystemTaskNotificationListener?): TaskExecutionSpecBuilder {
@@ -99,6 +107,7 @@ class TaskExecutionSpecBuilderImpl : TaskExecutionSpecBuilder {
       settings = settings,
       progressExecutionMode = progressExecutionMode,
       callback = callback,
+      runConfigConsumer = runConfigConsumer,
       listener = listener,
       userData = userData,
       activateToolWindowBeforeRun = activateToolWindowBeforeRun,

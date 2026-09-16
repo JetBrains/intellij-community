@@ -4,9 +4,9 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.jetbrains.python.psi.resolve.MainPythonSdkKt;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.util.QualifiedName;
@@ -63,7 +63,7 @@ public final class PySearchScopeBuilder {
   /**
    * Creates a new builder, deducing Python SDK from the given element.
    * <p>
-   * Both module-level and project-level SDKs are considered.
+   * The element's own module answers first, then {@link MainPythonSdkKt#mainPythonSdk}.
    */
   public static @NotNull PySearchScopeBuilder forPythonSdkOf(@NotNull PsiElement element) {
     return new PySearchScopeBuilder(element.getProject(), findPythonSdkForElement(element));
@@ -149,6 +149,6 @@ public final class PySearchScopeBuilder {
         return sdk;
       }
     }
-    return ProjectRootManager.getInstance(project).getProjectSdk();
+    return MainPythonSdkKt.mainPythonSdk(project);
   }
 }

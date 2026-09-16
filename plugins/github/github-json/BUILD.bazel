@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.vcs.github.json` start
+content_module_jar(module = ":vcs-github-json")
+### auto-generated section `dev intellij.vcs.github.json` end
+
 ### auto-generated section `build intellij.vcs.github.json` start
 jvm_library(
     name = "vcs-github-json",
@@ -28,8 +32,6 @@ jvm_library(
         "//platform/analysis-api:analysis",
     ],
 )
-
-content_module_jar(module = ":vcs-github-json")
 
 jvm_library(
     name = "vcs-github-json_test_lib",

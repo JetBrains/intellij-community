@@ -24,7 +24,7 @@ class OutlineTest {
   @Test
   fun anErrorOutlineIsTheOneTheIdePaints() = runComposeSwingTest {
     setContent {
-      TextField(value = "", modifier = SwingModifier.outline(Outline.ERROR))
+      TextField(value = "", onValueChange = {}, modifier = SwingModifier.outline(Outline.ERROR))
     }
 
     assertEquals("error", onNodeOfType<JTextField>().fetch().outlineProperty())
@@ -33,7 +33,7 @@ class OutlineTest {
   @Test
   fun aWarningOutlineIsItsOwnValue() = runComposeSwingTest {
     setContent {
-      TextField(value = "", modifier = SwingModifier.outline(Outline.WARNING))
+      TextField(value = "", onValueChange = {}, modifier = SwingModifier.outline(Outline.WARNING))
     }
 
     assertEquals("warning", onNodeOfType<JTextField>().fetch().outlineProperty())
@@ -44,7 +44,7 @@ class OutlineTest {
     var rejected by mutableStateOf(true)
 
     setContent {
-      TextField(value = "", modifier = SwingModifier.errorOutline(rejected))
+      TextField(value = "", onValueChange = {}, modifier = SwingModifier.errorOutline(rejected))
     }
 
     assertEquals("error", onNodeOfType<JTextField>().fetch().outlineProperty())

@@ -3,10 +3,8 @@
   <dependencies>
     <module name="intellij.libraries.jetbrains.annotations"/>
     <module name="intellij.platform.core"/>
-    <module name="intellij.python.community"/>
     <module name="intellij.python.community.common"/>
     <module name="intellij.python.processOutput.common"/>
-    <module name="intellij.python.pytools"/>
   </dependencies>
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">

@@ -63,7 +63,7 @@ abstract class FullCommitDetailsListPanel(
     changesLoadingController.request(selectedCommits)
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   @Throws(VcsException::class)
   protected abstract fun loadChanges(commits: List<VcsCommitMetadata>): List<Change>
 

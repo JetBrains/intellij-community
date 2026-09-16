@@ -2,6 +2,7 @@
 package com.intellij.platform.lang.lsWidget.impl
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.ui.LafManager
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.actionSystem.ActionGroup
@@ -10,6 +11,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -36,6 +38,7 @@ import javax.swing.Icon
 import javax.swing.JPanel
 
 private const val maxIconsInStatusBar = 4
+private const val LANGUAGE_SERVER_PLUGIN_SEARCH_TAG = "/tag:\"Language Server\""
 
 internal class LanguageServiceWidget(project: Project, scope: CoroutineScope) : EditorBasedStatusBarPopup(project, false, scope) {
   /**
@@ -147,8 +150,18 @@ internal class LanguageServiceWidget(project: Project, scope: CoroutineScope) : 
 
     group.addSeparator(LangBundle.message("language.services.widget.section.running.on.other.files"))
     otherItems.forEach { group.add(it.createWidgetAction()) }
+    group.addSeparator()
+    group.add(MoreLanguagesAction())
 
     return group
+  }
+
+  private inner class MoreLanguagesAction : AnAction(LangBundle.message("language.services.widget.more.languages")), DumbAware {
+    override fun actionPerformed(e: AnActionEvent) {
+      ShowSettingsUtil.getInstance().showSettingsDialog(project, PluginManagerConfigurable::class.java) {
+        it.enableSearch(LANGUAGE_SERVER_PLUGIN_SEARCH_TAG)
+      }
+    }
   }
 
   private object NoServices : AnAction(LangBundle.messagePointer("language.services.widget.no.services")), DumbAware {

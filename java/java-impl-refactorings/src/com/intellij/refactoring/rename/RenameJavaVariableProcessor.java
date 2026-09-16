@@ -1,9 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.JavaResolveResult;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiElement;
@@ -36,6 +37,7 @@ import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -98,7 +100,7 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
           }
         }
       }
-      }
+    }
     // do actual rename
     variable.setName(newName);
     if (listener != null) {
@@ -226,10 +228,9 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
 
   @Override
   public boolean isToSearchInComments(@NotNull PsiElement element) {
-    if (element instanceof PsiField) {
-      return JavaRefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_FIELD;
-    }
-    return JavaRefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_VARIABLE;
+    return element instanceof PsiField
+           ? JavaRefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_FIELD
+           : JavaRefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_VARIABLE;
   }
 
   @Override
@@ -244,10 +245,9 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
 
   @Override
   public boolean isToSearchForTextOccurrences(@NotNull PsiElement element) {
-    if (element instanceof PsiField) {
-      return JavaRefactoringSettings.getInstance().RENAME_SEARCH_FOR_TEXT_FOR_FIELD;
-    }
-    return JavaRefactoringSettings.getInstance().RENAME_SEARCH_FOR_TEXT_FOR_VARIABLE;
+    return element instanceof PsiField
+           ? JavaRefactoringSettings.getInstance().RENAME_SEARCH_FOR_TEXT_FOR_FIELD
+           : JavaRefactoringSettings.getInstance().RENAME_SEARCH_FOR_TEXT_FOR_VARIABLE;
   }
 
   @Override
@@ -285,7 +285,7 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
   }
 
   private static void findLocalHidesFieldCollisions(PsiElement element, String newName, Map<? extends PsiElement, String> allRenames,
-                                                    List<? super UsageInfo> result) {
+                                                    List<? super UsageInfo> collisions) {
     PsiElement scopeElement;
     if (element instanceof PsiLocalVariable local) {
       scopeElement = CommonJavaRefactoringUtil.getVariableScope(local);
@@ -305,18 +305,20 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
       @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
         if (!expression.isQualified()) {
-          PsiElement resolved = expression.resolve();
-          if (resolved instanceof PsiField field) {
+          JavaResolveResult result = expression.advancedResolve(false);
+          if (result.isValidResult() && result.getElement() instanceof PsiField field) {
             String fieldNewName = allRenames.containsKey(field) ? allRenames.get(field) : field.getName();
             if (newName.equals(fieldNewName)) {
-              result.add(new LocalHidesFieldUsageInfo(expression, element));
+              collisions.add(ExpressionUtils.getEffectiveQualifier(expression) == null
+                         ? new UnresolvableLocalCollisionUsageInfo(field, element)
+                         : new LocalHidesFieldUsageInfo(expression, element));
             }
           }
         }
       }
     });
   }
-  
+
   @Override
   public String getQualifiedNameAfterRename(@NotNull PsiElement element, @NotNull String newName, boolean nonJava) {
     if (!nonJava || !(element instanceof PsiField field)) return null;

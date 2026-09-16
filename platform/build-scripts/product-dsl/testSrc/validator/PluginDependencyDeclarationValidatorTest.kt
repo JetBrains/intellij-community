@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.productLayout.validator
 
+import com.intellij.platform.buildScripts.concurrency.SharedTaskOwner
 import com.intellij.platform.pluginGraph.ContentModuleName
 import com.intellij.platform.pluginGraph.PluginId
 import kotlinx.coroutines.Dispatchers
@@ -20,20 +21,27 @@ import java.nio.file.Path
 
 @ExtendWith(TestFailureLogger::class)
 class PluginDependencyDeclarationValidatorTest {
+  private val owner = SharedTaskOwner("PluginDependencyDeclarationValidatorTest")
+
+  @org.junit.jupiter.api.AfterEach
+  fun closeSharedTasks() {
+    owner.close()
+  }
+
   @Test
   fun `duplicate legacy and modern plugin deps report error`(): Unit = runBlocking(Dispatchers.Default) {
-      val graph = pluginGraph {
-        plugin("plugin.a") {
-          pluginId("com.a")
-          dependsOnPlugin("com.b")
-          dependsOnLegacyPlugin("com.b")
-        }
-        plugin("plugin.b") {
-          pluginId("com.b")
+    val graph = pluginGraph {
+      plugin("plugin.a") {
+        pluginId("com.a")
+        dependsOnPlugin("com.b")
+        dependsOnLegacyPlugin("com.b")
+      }
+      plugin("plugin.b") {
+        pluginId("com.b")
       }
     }
 
-    val model = testGenerationModel(graph)
+    val model = testGenerationModel(graph, owner = owner)
     val plan = PluginDependencyPlan(
       pluginContentModuleName = ContentModuleName("plugin.a"),
       pluginXmlPath = Path.of("plugin.a/META-INF/plugin.xml"),
@@ -56,8 +64,8 @@ class PluginDependencyDeclarationValidatorTest {
       slotOverrides = mapOf(Slots.PLUGIN_DEPENDENCY_PLAN to PluginDependencyPlanOutput(plans = listOf(plan))),
     )
 
-      val dupErrors = errors.filterIsInstance<DuplicatePluginDependencyDeclarationError>()
-      assertThat(dupErrors).hasSize(1)
-      assertThat(dupErrors.first().duplicatePluginIds).containsExactly(PluginId("com.b"))
+    val dupErrors = errors.filterIsInstance<DuplicatePluginDependencyDeclarationError>()
+    assertThat(dupErrors).hasSize(1)
+    assertThat(dupErrors.first().duplicatePluginIds).containsExactly(PluginId("com.b"))
   }
 }

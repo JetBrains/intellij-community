@@ -2,6 +2,10 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.python.community.impl.poetry.common` start
+content_module_jar(module = ":common")
+### auto-generated section `dev intellij.python.community.impl.poetry.common` end
+
 ### auto-generated section `build intellij.python.community.impl.poetry.common` start
 create_kotlinc_options(
     name = "custom_common",
@@ -35,13 +39,9 @@ jvm_library(
         "//platform/core-api:core",
         "//platform/util",
         "//python/common",
-        "//python/openapi:community",
         "//python/python-process-output/common",
-        "//python/python-pytools:pytools",
     ],
 )
-
-content_module_jar(module = ":common")
 
 jvm_library(
     name = "common_test_lib",
@@ -60,9 +60,7 @@ jvm_library(
         "//platform/core-api:core_test_lib",
         "//platform/util:util_test_lib",
         "//python/common:common_test_lib",
-        "//python/openapi:community_test_lib",
         "//python/python-process-output/common:common_test_lib",
-        "//python/python-pytools:pytools_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.community.impl.poetry.common` end

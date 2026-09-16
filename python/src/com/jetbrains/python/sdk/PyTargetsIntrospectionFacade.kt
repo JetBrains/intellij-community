@@ -60,7 +60,7 @@ class PyTargetsIntrospectionFacade(val sdk: Sdk, val project: Project) {
     return cmd.execute(environment, indicator).stdoutLines
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   @Throws(ExecutionException::class)
   fun synchronizeRemoteSourcesAndSetupMappings(indicator: ProgressIndicator) {
     if (isLocalTarget()) return

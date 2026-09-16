@@ -17,6 +17,8 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import kotlinx.coroutines.isActive
 import org.jetbrains.annotations.ApiStatus
@@ -131,16 +133,18 @@ private suspend fun getQuickFixesOfProblem(problem: HighlightingProblem): List<I
   val editor = ProblemsViewEditorUtils.getEditor(psiFile, showEditor = false)
   if (editor == null) return@readAction emptyList()
 
+  val info = problem.info ?: return@readAction emptyList()
+  val problemElement = findProblemElement(info, psiFile)
   val intentionActionsWithOptions = mutableListOf<IntentionActionWithOptions>()
 
-  problem.info?.findRegisteredQuickFix { intentionAction, _ ->
+  info.findRegisteredQuickFix { intentionAction, _ ->
     val action = intentionAction.action
     val isActionAvailable = runCatching {
       action.isAvailable(psiFile.project, editor, psiFile)
     }.getOrDefault(false)
 
     if (isActionAvailable) {
-      val options = intentionAction.getOptions(psiFile, editor).toList()
+      val options = intentionAction.getOptions(problemElement, editor).toList()
       intentionActionsWithOptions.add(
         IntentionActionWithOptions(
           descriptor = intentionAction,
@@ -154,6 +158,13 @@ private suspend fun getQuickFixesOfProblem(problem: HighlightingProblem): List<I
   }
 
   return@readAction intentionActionsWithOptions
+}
+
+private fun findProblemElement(info: HighlightInfo, psiFile: PsiFile): PsiElement {
+  val offset = info.actualStartOffset
+  val textLength = psiFile.textLength
+  if (textLength == 0 || offset >= textLength) return psiFile
+  return psiFile.viewProvider.findElementAt(offset, psiFile.language) ?: psiFile
 }
 
 private fun logMissingIdErrorWithDiagnostic(problem: Problem, lifetime: ProblemLifetime){

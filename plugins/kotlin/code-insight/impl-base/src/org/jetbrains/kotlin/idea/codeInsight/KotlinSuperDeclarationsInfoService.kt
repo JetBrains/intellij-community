@@ -48,7 +48,7 @@ sealed class SuperDeclaration {
 
 @ApiStatus.Internal
 object SuperDeclarationProvider {
-    @RequiresReadLock
+    @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
     @ApiStatus.Internal
     @OptIn(KaAllowAnalysisOnEdt::class)
     fun findSuperDeclarations(declaration: KtDeclaration): List<SuperDeclaration> {

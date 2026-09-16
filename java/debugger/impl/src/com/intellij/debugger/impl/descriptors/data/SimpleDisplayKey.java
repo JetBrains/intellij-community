@@ -12,8 +12,8 @@ public class SimpleDisplayKey<T extends NodeDescriptor> implements DisplayKey<T>
 
   @Override
   public boolean equals(Object o) {
-    if (!(o instanceof SimpleDisplayKey)) return false;
-    return ((SimpleDisplayKey<?>)o).myKey.equals(myKey);
+    if (!(o instanceof SimpleDisplayKey<?> key)) return false;
+    return key.myKey.equals(myKey);
   }
 
   @Override

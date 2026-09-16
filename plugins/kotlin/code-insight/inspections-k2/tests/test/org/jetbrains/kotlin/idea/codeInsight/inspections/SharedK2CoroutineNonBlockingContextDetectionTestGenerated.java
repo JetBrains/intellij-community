@@ -39,6 +39,11 @@ public class SharedK2CoroutineNonBlockingContextDetectionTestGenerated extends A
         runTest("testData/inspections/blockingCallsDetection/DispatchersTypeCheckUnsure.kt");
     }
 
+    @TestMetadata("DispatchersTypeCheck_unknownAsBlocking.kt")
+    public void testDispatchersTypeCheck_unknownAsBlocking() throws Exception {
+        runTest("testData/inspections/blockingCallsDetection/DispatchersTypeCheck_unknownAsBlocking.kt");
+    }
+
     @TestMetadata("FlowOn.kt")
     public void testFlowOn() throws Exception {
         runTest("testData/inspections/blockingCallsDetection/FlowOn.kt");

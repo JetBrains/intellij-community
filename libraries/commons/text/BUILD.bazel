@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.commons.text` start
+content_module_jar(
+    libraries = ["@lib//:libraries-commons-text-commons-text"],
+    module = ":text",
+)
+### auto-generated section `dev intellij.libraries.commons.text` end
+
 ### auto-generated section `build intellij.libraries.commons.text` start
 jvm_library(
     name = "text",
@@ -16,11 +23,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-commons-text-commons-text"],
     runtime_deps = ["@lib//:libraries-commons-text-commons-text"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-commons-text-commons-text"],
-    module = ":text",
 )
 
 jvm_library(
@@ -43,7 +45,6 @@ exports_files(
     [
         "intellij.libraries.commons.text.iml",
         "resources/intellij.libraries.commons.text.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

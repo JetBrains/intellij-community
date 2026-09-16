@@ -102,6 +102,17 @@ public final class CollectionFactory {
   }
 
   /**
+   * Concurrent weak key:K -> strong value:V map with identity hashing strategy.
+   * When a key is garbage-collected, the {@code evictionListener} eventually receives its associated value.
+   */
+  @Contract(value = "_ -> new", pure = true)
+  @ApiStatus.Experimental
+  public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentWeakIdentityMap(@NotNull EvictionListener<K, V, ? super V> keyEvictionListener) {
+    return new ConcurrentWeakHashMap<>(ConcurrentRefHashMap.DEFAULT_CAPACITY, ConcurrentRefHashMap.DEFAULT_LOAD_FACTOR,
+                                       ConcurrentRefHashMap.DEFAULT_CONCURRENCY_LEVEL, HashingStrategy.identity(), keyEvictionListener);
+  }
+
+  /**
    * @deprecated use {@link java.util.WeakHashMap} instead
    */
   @Contract(value = " -> new", pure = true)

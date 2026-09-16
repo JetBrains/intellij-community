@@ -2,6 +2,10 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.settingsSync.core` start
+content_module_jar(module = ":settingsSync-core")
+### auto-generated section `dev intellij.settingsSync.core` end
+
 ### auto-generated section `build intellij.settingsSync.core` start
 jvm_library(
     name = "settingsSync-core",
@@ -66,8 +70,6 @@ jvm_library(
         "//platform/diff-impl",
     ],
 )
-
-content_module_jar(module = ":settingsSync-core")
 
 jvm_library(
     name = "settingsSync-core_test_lib",
@@ -163,7 +165,6 @@ exports_files(
     [
         "intellij.settingsSync.core.iml",
         "resources/intellij.settingsSync.core.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

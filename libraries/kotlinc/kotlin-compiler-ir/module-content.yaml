@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.kotlinc.kotlin.compiler.ir.jar
+  modules:
+  - name: intellij.libraries.kotlinc.kotlin.compiler.ir
+    libraries:
+      kotlinc.kotlin-compiler-ir:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-ir-for-ide/2/kotlin-compiler-ir-for-ide-2.jar

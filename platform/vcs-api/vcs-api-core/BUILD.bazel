@@ -11,6 +11,10 @@ jps_test(
 
 ### skip generation section `test intellij.platform.vcs.core.tests`
 
+### auto-generated section `dev intellij.platform.vcs.core` start
+content_module_jar(module = ":vcs-core")
+### auto-generated section `dev intellij.platform.vcs.core` end
+
 ### auto-generated section `build intellij.platform.vcs.core` start
 jvm_library(
     name = "vcs-core",
@@ -42,8 +46,6 @@ jvm_library(
         "//libraries/kotlinx/serialization/core",
     ],
 )
-
-content_module_jar(module = ":vcs-core")
 
 jvm_library(
     name = "vcs-core_test_lib",
@@ -81,7 +83,6 @@ exports_files(
     [
         "intellij.platform.vcs.core.iml",
         "resources/intellij.platform.vcs.core.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

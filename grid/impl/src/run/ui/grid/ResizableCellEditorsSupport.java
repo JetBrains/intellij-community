@@ -29,13 +29,14 @@ import java.beans.PropertyChangeListener;
 
 public class ResizableCellEditorsSupport implements PropertyChangeListener, TableColumnModelListener {
   private static final String CLIENT_PROPERTY_KEY = "ResizableCellEditorsSupport";
+  private static final int NO_SAVED_ROW_HEIGHT = -1;
 
   private final JBTable myGrid;
 
   private final Timer myResetEditingCellSizeTimer;
   private final Timer myCellEditorUpdateTimer;
 
-  private int myRowHeightBeforeEditing;
+  private int myRowHeightBeforeEditing = NO_SAVED_ROW_HEIGHT;
   private int myCalculatedRowHeight;
 
   public ResizableCellEditorsSupport(@NotNull JBTable grid) {
@@ -104,6 +105,8 @@ public class ResizableCellEditorsSupport implements PropertyChangeListener, Tabl
   }
 
   private void editingStarted() {
+    // Never reuse a previous edit's height if this cell cannot be resolved.
+    myRowHeightBeforeEditing = NO_SAVED_ROW_HEIGHT;
     int editingColumn = myGrid.getEditingColumn();
     int editingRow = myGrid.getEditingRow();
 
@@ -233,7 +236,8 @@ public class ResizableCellEditorsSupport implements PropertyChangeListener, Tabl
 
   private void setCellSize(int row, int height) {
     hideExpansionHint();
-    if (row != -1 && height != -1) {
+    // Unresolved edits have no saved height; Swing requires positive row heights.
+    if (row != -1 && height >= 1) {
       myGrid.setRowHeight(row, height);
     }
   }

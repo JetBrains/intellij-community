@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
+load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_DESCRIPTORS", "MODULE_TARGETS")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jps_test(
@@ -9,6 +10,41 @@ jps_test(
     runtime_deps = [":featuresTrainer-tests_test_lib"],
 )
 ### skip generation section `test intellij.featuresTrainer.tests`
+
+### auto-generated section `dev intellij.featuresTrainer` start
+dev_dist_plugin(
+    content_modules = [
+        # do not sort,
+        "intellij.libraries.assertj.core",
+        "intellij.libraries.assertj.swing",
+        "intellij.vcs.git.featuresTrainer",
+        "intellij.featuresTrainer.onboarding",
+    ],
+    descriptor = "res/META-INF/plugin.xml",
+    descriptor_index = MODULE_DESCRIPTORS,
+    descriptor_modules = [
+        "intellij.featuresTrainer.onboarding",
+        "intellij.featuresTrainer.tips",
+        "intellij.kotlin.onboarding.promoter",
+        "intellij.libraries.assertj.core",
+        "intellij.libraries.assertj.swing",
+        "intellij.libraries.git.learning.project",
+        "intellij.vcs.git.featuresTrainer",
+    ],
+    libraries = [
+        "@lib//:libraries-assertj-core-assert_j",
+        "@lib//:libraries-assertj-swing-assertj-swing",
+    ],
+    main_module = "intellij.featuresTrainer",
+    module_targets = MODULE_TARGETS,
+    prepacked_content_modules = [
+        # do not sort,
+        "intellij.libraries.git.learning.project",
+        "intellij.featuresTrainer.tips",
+        "intellij.kotlin.onboarding.promoter",
+    ],
+)
+### auto-generated section `dev intellij.featuresTrainer` end
 
 ### auto-generated section `build intellij.featuresTrainer` start
 jvm_library(
@@ -155,38 +191,6 @@ exports_files(
 )
 ### auto-generated section `iml intellij.featuresTrainer` end
 
-### auto-generated section `dev intellij.featuresTrainer` start
-dev_dist_plugin(
-    content_modules = [
-        "//libraries/assertj-core",
-        "//libraries/assertj-swing",
-        "//plugins/git-features-trainer:vcs-git-featuresTrainer",
-        "//plugins/ide-features-trainer/onboarding",
-    ],
-    descriptor = "res/META-INF/plugin.xml",
-    descriptor_module = ":featuresTrainer",
-    descriptors = {
-        "@community//libraries/assertj-core:resources/intellij.libraries.assertj.core.xml": "intellij.libraries.assertj.core.xml",
-        "@community//libraries/assertj-swing:resources/intellij.libraries.assertj.swing.xml": "intellij.libraries.assertj.swing.xml",
-        "@community//libraries/git-learning-project:resources/intellij.libraries.git.learning.project.xml": "intellij.libraries.git.learning.project.xml",
-        "@community//plugins/git-features-trainer:resources/intellij.vcs.git.featuresTrainer.xml": "intellij.vcs.git.featuresTrainer.xml",
-        "@community//plugins/ide-features-trainer/onboarding:resources/intellij.featuresTrainer.onboarding.xml": "intellij.featuresTrainer.onboarding.xml",
-        "@community//plugins/ide-features-trainer/tips:resources/intellij.featuresTrainer.tips.xml": "intellij.featuresTrainer.tips.xml",
-        "@community//plugins/kotlin/onboarding-promoter:resources/intellij.kotlin.onboarding.promoter.xml": "intellij.kotlin.onboarding.promoter.xml",
-    },
-    libraries = [
-        "@lib//:libraries-assertj-core-assert_j",
-        "@lib//:libraries-assertj-swing-assertj-swing",
-    ],
-    main_module = "intellij.featuresTrainer",
-    prepacked_content_modules = [
-        "//libraries/git-learning-project:git-learning-project_content_module_jar",
-        "//plugins/ide-features-trainer/tips:tips_content_module_jar",
-        "//plugins/kotlin/onboarding-promoter:onboarding-promoter_content_module_jar",
-    ],
-)
-### auto-generated section `dev intellij.featuresTrainer` end
-
 ### auto-generated section `build intellij.featuresTrainer.tests` start
 jvm_library(
     name = "featuresTrainer-tests",
@@ -197,6 +201,7 @@ jvm_library(
     module_name = "intellij.featuresTrainer.tests",
     visibility = ["//visibility:public"],
     exports = ["//libraries/assertj-swing"],
+    runtime_deps = ["//xml/plugin"],
 )
 
 jvm_library(
@@ -230,6 +235,7 @@ jvm_library(
         "//platform/platform-impl:ide-impl_test_lib",
         "//platform/ide-core-impl:ide-core-impl_test_lib",
         "//platform/ide-core:ide-core_test_lib",
+        "//xml/plugin:plugin_test_lib",
     ],
     deps = [
         # do not sort,

@@ -28,6 +28,7 @@ interface LocalEelApi : EelApi
  * - [fs] — a view of the environment's file system (also reachable through NIO `Path` operations on routed paths);
  * - [exec] — process execution inside the environment (use it instead of `ProcessBuilder`);
  * - [tunnels] — TCP and Unix-socket tunnels into and out of the environment;
+ * - [http] — HTTP downloads that run inside the environment;
  * - [platform] and [userInfo] — OS, architecture, and user info; use [platform] instead of host-side `SystemInfo`.
  *
  * Most operations are `suspend` functions and must be called from a coroutine.
@@ -63,6 +64,10 @@ interface EelApi {
   /** Extraction of archives within the environment. See [EelArchiveApi]. */
   @get:ApiStatus.Internal
   val archive: EelArchiveApi
+
+  /** HTTP downloads that run inside the environment. See [EelHttpApi]. */
+  @get:ApiStatus.Internal
+  val http: EelHttpApi
 
   /**
    * Basic information about the user that operations in this environment run as.

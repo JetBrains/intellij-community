@@ -34,7 +34,7 @@ object NamedArgumentUtils {
             prevSibling.delete()
         }
 
-        val newArgument = KtPsiFactory(element).createArgument(argumentExpression, argumentName, element.getSpreadElement() != null)
+        val newArgument = KtPsiFactory(element.project).createArgument(argumentExpression, argumentName, element.getSpreadElement() != null)
         element.replace(newArgument)
     }
 
@@ -82,8 +82,8 @@ object NamedArgumentUtils {
     context(_: KaSession)
     fun getStableNameFor(argument: KtValueArgument): Name? {
         val callElement: KtCallElement = getCallElement(argument) ?: return null
-        val resolveToCall = callElement.tryResolveCall()
-        val functionCall = resolveToCall?.single?.function ?: return null
+        val resolutionAttempt = callElement.tryResolveCall()
+        val functionCall = resolutionAttempt?.single?.function ?: return null
         if (!functionCall.symbol.hasStableParameterNames) return null
         return getNameForNameableArgument(argument, callElement, functionCall)
     }

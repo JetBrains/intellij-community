@@ -15,9 +15,13 @@ internal class IjPluginBuildSettingsTest {
   @Test
   fun generatesPluginXmlAccordingToBuildSettings() {
     val defaultBuildNumber = resolveRunfile("ij.plugin.packager.test.build-number-file").readText().trim()
+    var snapshotVersion = defaultBuildNumber.replace("SNAPSHOT", "99999999")
+    if (snapshotVersion.count { it == '.' } < 2) {
+      snapshotVersion += ".0"
+    }
     assertPluginDescriptor(
       configuration = "default",
-      expectedVersion = defaultBuildNumber.substringBefore('.') + ".99999999.0",
+      expectedVersion = snapshotVersion,
       expectedSinceBuild = defaultBuildNumber,
       expectedUntilBuild = defaultBuildNumber,
     )

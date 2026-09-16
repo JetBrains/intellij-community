@@ -5,8 +5,10 @@
     <module name="intellij.platform.kernel.backend"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.ide"/>
     <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.impl"/>
     <module name="intellij.platform.ide.nonModalWelcomeScreen"/>
     <module name="intellij.platform.project"/>
     <module name="intellij.platform.rpc.backend"/>
@@ -19,6 +21,7 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.ide.nonModalWelcomeScreen.backend.BackendWelcomeScreenFeatureApiProvider"/>
+    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.ide.nonModalWelcomeScreen.backend.BackendWelcomeScreenFeatureApiProvider"
+                                            apiInterfaces="com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenFeatureApi"/>
   </extensions>
 </idea-plugin>

@@ -2,6 +2,10 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.python.hatch` start
+content_module_jar(module = ":hatch")
+### auto-generated section `dev intellij.python.hatch` end
+
 ### auto-generated section `build intellij.python.hatch` start
 create_kotlinc_options(
     name = "custom_hatch",
@@ -17,8 +21,6 @@ jvm_library(
     name = "hatch",
     srcs = glob(
         [
-            "gen/**/*.kt",
-            "gen/**/*.java",
             "src/**/*.kt",
             "src/**/*.java",
             "src/**/*.form",
@@ -34,6 +36,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
+        "//python/python-hatch/common",
         "@lib//:kotlin-stdlib",
         "//platform/util",
         "//platform/platform-util-io:ide-util-io",
@@ -47,7 +50,7 @@ jvm_library(
         "//python/python-exec-service:community-execService",
         "//python/python-sdk/backend",
         "//python/python-pyproject:pyproject",
-        "//python/python-pytools:pytools",
+        "//python/python-pytools/backend",
         "//libraries/kotlinx/serialization/json",
         "//libraries/kotlinx/serialization/core",
         "//libraries/semver",
@@ -59,8 +62,6 @@ jvm_library(
         "//platform/util/jdom",
     ],
 )
-
-content_module_jar(module = ":hatch")
 
 jvm_library(
     name = "hatch_test_lib",
@@ -75,6 +76,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":hatch",
+        "//python/python-hatch/common:common_test_lib",
         "//platform/util:util_test_lib",
         "//platform/platform-util-io:ide-util-io_test_lib",
         "//platform/eel-provider:eel-provider_test_lib",
@@ -87,7 +89,7 @@ jvm_library(
         "//python/python-exec-service:community-execService_test_lib",
         "//python/python-sdk/backend:backend_test_lib",
         "//python/python-pyproject:pyproject_test_lib",
-        "//python/python-pytools:pytools_test_lib",
+        "//python/python-pytools/backend:backend_test_lib",
         "//libraries/kotlinx/serialization/json:json_test_lib",
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//libraries/semver:semver_test_lib",

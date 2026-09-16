@@ -5,7 +5,7 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.runInEdtAndWait
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.kotlin.idea.core.script.k2.configurations.KotlinScriptService
+import org.jetbrains.kotlin.idea.core.script.configurations.KotlinScriptService
 import org.jetbrains.kotlin.idea.k2.AbstractScriptGotoDeclarationMultifileTest
 import org.jetbrains.kotlin.idea.k2.EXPECTED_TEXT
 import org.jetbrains.kotlin.idea.test.Directives

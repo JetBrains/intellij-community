@@ -15,6 +15,10 @@ jps_test(
 )
 ### skip generation section `test intellij.platform.util.tests`
 
+### auto-generated section `dev intellij.platform.util.ui` start
+content_module_jar(module = ":util-ui")
+### auto-generated section `dev intellij.platform.util.ui` end
+
 ### auto-generated section `build intellij.platform.util` start
 jvm_provided_library(
     name = "platform_util_troveCompileOnly_provided",
@@ -168,7 +172,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         "//libraries/kotlinx/coroutines/test",
-        "@lib//:kotlin-test",
+        "//libraries/kotlin/test:libraries-kotlinTest",
         "//platform/eel-provider",
         "//platform/core-impl",
         "//libraries/kotlinx/coroutines/debug",
@@ -202,7 +206,8 @@ jvm_library(
         # do not sort,
         "//libraries/kotlinx/coroutines/test",
         "//libraries/kotlinx/coroutines/test:test_test_lib",
-        "@lib//:kotlin-test",
+        "//libraries/kotlin/test:libraries-kotlinTest",
+        "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
         "//platform/eel-provider",
         "//platform/eel-provider:eel-provider_test_lib",
         "//platform/util/concurrency",
@@ -341,7 +346,6 @@ jvm_library(
         "@lib//:mac-provided",
         "//platform/util",
         "//libraries/imgscalr",
-        "//libraries/jna",
         "//libraries/java-compatibility",
         "@lib//:kotlin-stdlib",
         "//libraries/fastutil",
@@ -366,8 +370,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":util-ui")
-
 jvm_library(
     name = "util-ui_test_lib",
     testonly = True,
@@ -384,7 +386,6 @@ jvm_library(
         "@lib//:mac-provided",
         "//platform/util:util_test_lib",
         "//libraries/imgscalr:imgscalr_test_lib",
-        "//libraries/jna:jna_test_lib",
         "//libraries/java-compatibility:java-compatibility_test_lib",
         "//libraries/fastutil:fastutil_test_lib",
         "//platform/util-ex:util-ex_test_lib",
@@ -414,7 +415,6 @@ exports_files(
     [
         "intellij.platform.util.ui.iml",
         "ui/resources/intellij.platform.util.ui.xml",
-        "ui/module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -734,7 +734,7 @@ class MavenProjectsManagerAutoImportTest(mavenVersion: String, modelVersion: Str
    * Because there is no information who deleted the import file or the other user action
    * problem in MavenProjectsAware#collectSettingsFiles() / yieldAll(projectsTree.projectsFiles.map { it.path })
    */
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private suspend fun scheduleProjectImportAndWaitWithoutCheckFloatingBar() {
     maven.waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {
@@ -743,7 +743,7 @@ class MavenProjectsManagerAutoImportTest(mavenVersion: String, modelVersion: Str
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun scheduleProjectImportAndWaitWithoutCheckFloatingBarEdt() {
     ExternalSystemProjectTracker.getInstance(maven.project).scheduleProjectRefresh()
   }

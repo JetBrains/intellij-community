@@ -40,7 +40,7 @@
     <registryKey key="terminal.new.ui.reworked" defaultValue="false"
                  description="No-op, use Terminal Engine option in Terminal settings instead"/>
 
-    <registryKey key="terminal.use.ghostty.emulator" defaultValue="false"
+    <registryKey key="terminal.use.ghostty.emulator" defaultValue="true"
                  description="Experimental: drive the reworked terminal session with the Ghostty VT emulator instead of JediTerm, unless specified explicitly. Requires the bundled libghostty-vt native library."/>
 
     <registryKey key="terminal.new.ui.option.visible" defaultValue="false"

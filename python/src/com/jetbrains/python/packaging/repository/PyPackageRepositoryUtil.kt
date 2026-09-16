@@ -50,15 +50,15 @@ object PyPiPackageRepository : PyPackageRepository("PyPI", PyPIPackageUtil.PYPI_
     get() = service<PyPackageRepositories>().isDefaultRepoEnabled(name)
     set(value) { service<PyPackageRepositories>().setDefaultRepoEnabled(name, value) }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   override fun search(needle: String, pageSize: Int): PythonPackageSearchResult =
     service<PyPiPackageCache>().search(needle, pageSize)
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   override fun hasPackage(name: String): Boolean =
     name in service<PyPiPackageCache>()
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   override fun getSize(): Int =
     service<PyPiPackageCache>().size
   

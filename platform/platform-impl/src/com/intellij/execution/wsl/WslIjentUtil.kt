@@ -31,7 +31,7 @@ import org.jetbrains.annotations.ApiStatus
 /**
  * An adapter for [com.intellij.platform.ijent.IjentExecApi.fetchLoginShellEnvVariables] for Java.
  */
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 @RequiresBlockingContext
 fun fetchLoginShellEnv(
   wslIjentManager: WslIjentManager,
@@ -58,7 +58,7 @@ fun fetchLoginShellEnv(
  * [ProcessBuilder.directory] is a Windows path, and the constructor of [java.io.File] can corrupt the path. Therefore,
  * [WSLCommandLineOptions.getRemoteWorkingDirectory] is preferred over [ProcessBuilder.directory].
  */
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 @RequiresBlockingContext
 fun runProcessBlocking(
   wslIjentManager: WslIjentManager,

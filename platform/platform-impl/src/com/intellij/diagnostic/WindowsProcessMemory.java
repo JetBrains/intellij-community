@@ -30,11 +30,11 @@ final class WindowsProcessMemory {
 
   /** @return the counters, or {@code null} when the call fails */
   static @Nullable Counters read() {
-    try (Arena arena = Arena.ofConfined()) {
-      MemorySegment counters = arena.allocate(Handles.PROCESS_MEMORY_COUNTERS_EX2);
+    try (var arena = Arena.ofConfined()) {
+      var counters = arena.allocate(Handles.PROCESS_MEMORY_COUNTERS_EX2);
       counters.set(JAVA_INT, 0, (int)Handles.PROCESS_MEMORY_COUNTERS_EX2.byteSize());
-      MemorySegment process = (MemorySegment)Handles.GET_CURRENT_PROCESS.invokeExact();
-      int succeeded = (int)Handles.GET_PROCESS_MEMORY_INFO.invokeExact(process, counters, (int)Handles.PROCESS_MEMORY_COUNTERS_EX2.byteSize());
+      var process = (MemorySegment)Handles.GET_CURRENT_PROCESS.invokeExact();
+      var succeeded = (int)Handles.GET_PROCESS_MEMORY_INFO.invokeExact(process, counters, (int)Handles.PROCESS_MEMORY_COUNTERS_EX2.byteSize());
       if (succeeded == 0) {
         return null;
       }

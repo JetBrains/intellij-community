@@ -18,7 +18,7 @@ internal object EmbeddedContentModuleDependencyValidator : PipelineNode {
   override val id get() = NodeIds.EMBEDDED_CONTENT_MODULE_DEPENDENCY_VALIDATION
   override val requires: Set<DataSlot<*>> get() = setOf(Slots.CONTENT_MODULE_PLAN)
 
-  override suspend fun execute(ctx: ComputeContext) {
+  override fun execute(ctx: ComputeContext) {
     val result = analyzeEmbeddedDependencyClosure(ctx.model.pluginGraph, pluginSourceOnly = true)
     for ((productName, violations) in result.violations.groupBy { it.product }) {
       ctx.emitError(EmbeddedContentModuleDependencyError(

@@ -1,5 +1,4 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
-load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.libraries.memoryfilesystem` start
 jvm_library(
@@ -16,11 +15,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-memoryfilesystem-memoryfilesystem"],
     runtime_deps = ["@lib//:libraries-memoryfilesystem-memoryfilesystem"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-memoryfilesystem-memoryfilesystem"],
-    module = ":memoryfilesystem",
 )
 
 jvm_library(
@@ -42,7 +36,6 @@ exports_files(
     [
         "intellij.libraries.memoryfilesystem.iml",
         "resources/intellij.libraries.memoryfilesystem.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

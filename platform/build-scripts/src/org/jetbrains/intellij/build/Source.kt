@@ -29,20 +29,20 @@ sealed interface Source {
 class LazySource(
   @JvmField internal val name: String,
   @JvmField val precomputedHash: Long,
-  private val sourceSupplier: suspend () -> Sequence<Source>,
+  private val sourceSupplier: () -> Sequence<Source>,
 ) : Source {
-  suspend fun getSources(): Sequence<Source> = sourceSupplier()
+  fun getSources(): Sequence<Source> = sourceSupplier()
 
   override fun toString(): String = "LazySource(name=$name, precomputedHash=$precomputedHash)"
 }
 
-data class UnpackedZipSource(
+class UnpackedZipSource(
   @JvmField val file: Path,
   override val filter: ((String) -> Boolean)? = null,
 ) : Source {
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
-    if (other !is ZipSource) return false
+    if (other !is UnpackedZipSource) return false
 
     if (file != other.file) return false
     if (filter != other.filter) return false
@@ -58,7 +58,7 @@ data class UnpackedZipSource(
 }
 
 class CustomAssetShimSource(
-  @JvmField val task: suspend (pluginDir: Path, context: BuildContext) -> List<DistributionFileEntry>,
+  @JvmField val task: (pluginDir: Path, context: BuildContext) -> List<DistributionFileEntry>,
 ) : Source
 
 data class ZipSource(

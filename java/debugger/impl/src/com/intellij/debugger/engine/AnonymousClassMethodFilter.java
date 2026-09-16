@@ -21,8 +21,8 @@ public class AnonymousClassMethodFilter extends BasicStepMethodFilter implements
     SourcePosition firstStatementPosition = null;
     SourcePosition lastStatementPosition = null;
     PsiElement navigationElement = psiMethod.getNavigationElement();
-    if (navigationElement instanceof PsiMethod) {
-      psiMethod = (PsiMethod)navigationElement;
+    if (navigationElement instanceof PsiMethod method) {
+      psiMethod = method;
     }
     final PsiCodeBlock body = psiMethod.getBody();
     if (body != null) {

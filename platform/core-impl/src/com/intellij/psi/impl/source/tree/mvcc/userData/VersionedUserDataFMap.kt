@@ -99,6 +99,13 @@ sealed interface VersionedUserDataFMap : KeyFMap {
 
   fun isStorageEmpty(): Boolean = storageSize() == 0
 
+  fun isEligibleForAsyncCleanup(): Boolean {
+    for (i in 0 until storageSize()) {
+      if (payloadMapAt(i).size() > 1) return true
+    }
+    return false
+  }
+
   @Suppress("unused") // used in `@Debug.Renderer`
   fun arrayOfEntries(): Array<VersionedUserDataEntry> {
     return Array(storageSize()) { VersionedUserDataEntry(keyAt(it), payloadMapAt(it)) }

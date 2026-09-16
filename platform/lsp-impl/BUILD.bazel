@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.platform.lsp.impl` start
+content_module_jar(module = ":lsp-impl")
+### auto-generated section `dev intellij.platform.lsp.impl` end
+
 ### auto-generated section `build intellij.platform.lsp.impl` start
 jvm_library(
     name = "lsp-impl",
@@ -58,8 +62,6 @@ jvm_library(
         "//platform/refactoring",
     ],
 )
-
-content_module_jar(module = ":lsp-impl")
 
 jvm_library(
     name = "lsp-impl_test_lib",
@@ -121,7 +123,6 @@ exports_files(
     [
         "intellij.platform.lsp.impl.iml",
         "resources/intellij.platform.lsp.impl.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -44,6 +44,7 @@ import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.keymap.impl.keyGestures.KeyboardGestureProcessor
 import com.intellij.openapi.keymap.impl.ui.ShortcutTextField
 import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.DumbUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.popup.JBPopup
@@ -909,17 +910,23 @@ private fun getActionUnavailableMessage(actions: List<AnAction>): @Nls String {
   val actionNames = actions.asSequence().mapNotNull { action -> action.templateText?.takeIf { it.isNotEmpty() } }.distinct().toList()
   return when {
     actionNames.isEmpty() -> {
-      IdeBundle.dumbModeMessage("dumb.balloon.this.action.is.not.available.during.indexing",
-                                "dumb.balloon.this.action.is.not.available.in.light.mode")
+      DumbUtil.dumbModeMessage(
+        IdeBundle.message("dumb.balloon.this.action.is.not.available.during.indexing"),
+        IdeBundle.message("dumb.balloon.this.action.is.not.available.in.light.mode")
+      )
     }
     actionNames.size == 1 -> {
-      IdeBundle.dumbModeMessage("dumb.balloon.0.is.not.available.while.indexing",
-                                "dumb.balloon.0.is.not.available.in.light.mode", actionNames[0])
+      DumbUtil.dumbModeMessage(
+        IdeBundle.message("dumb.balloon.0.is.not.available.while.indexing", actionNames[0]),
+        IdeBundle.message("dumb.balloon.0.is.not.available.in.light.mode", actionNames[0])
+      )
     }
     else -> {
       val join: @NlsSafe String = actionNames.joinToString(separator = ", ")
-      IdeBundle.dumbModeMessage("dumb.balloon.none.of.the.following.actions.are.available.during.indexing.0",
-                                "dumb.balloon.none.of.the.following.actions.are.available.in.light.mode.0", join)
+      DumbUtil.dumbModeMessage(
+        IdeBundle.message("dumb.balloon.none.of.the.following.actions.are.available.during.indexing.0", join),
+        IdeBundle.message("dumb.balloon.none.of.the.following.actions.are.available.in.light.mode.0", join)
+      )
     }
   }
 }

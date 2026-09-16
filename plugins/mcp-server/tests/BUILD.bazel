@@ -28,6 +28,7 @@ jvm_library(
     ),
     module_name = "intellij.mcpserver.tests",
     visibility = ["//visibility:public"],
+    runtime_deps = ["//xml/plugin"],
 )
 
 jvm_library(
@@ -56,6 +57,7 @@ jvm_library(
         "//platform/platform-util-io:ide-util-io_test_lib",
         "//platform/ide-core:ide-core_test_lib",
         "//platform/progress/shared:ide-progress_test_lib",
+        "//xml/plugin:plugin_test_lib",
     ],
     deps = [
         # do not sort,
@@ -75,8 +77,6 @@ jvm_library(
         "//libraries/kotlinx/serialization/json:json_test_lib",
         "//libraries/ktor/client",
         "//libraries/ktor/client:client_test_lib",
-        "//libraries/misc/plugin",
-        "//libraries/misc/plugin:plugin_test_lib",
         "//libraries/lucene.common",
         "//libraries/lucene.common:lucene.common_test_lib",
         "//plugins/mcp-server/mcpserver.plugin",
@@ -103,6 +103,8 @@ jvm_library(
         "//aether-dependency-resolver/plugin:plugin_test_lib",
         "//platform/analysis-api:analysis",
         "//platform/analysis-api:analysis_test_lib",
+        "//platform/lang-api:lang",
+        "//platform/lang-api:lang_test_lib",
         "//platform/code-style-api:codeStyle",
         "//platform/code-style-api:codeStyle_test_lib",
         "//platform/core-api:core",
@@ -147,6 +149,8 @@ jvm_library(
         "//platform/execution:execution_test_lib",
         "//platform/execution-impl",
         "//platform/execution-impl:execution-impl_test_lib",
+        "//platform/external-system-impl:externalSystem-impl",
+        "//platform/external-system-impl:externalSystem-impl_test_lib",
         "//platform/testRunner/plugin",
         "//platform/testRunner/plugin:plugin_test_lib",
         "//platform/util:util-ui",

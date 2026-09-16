@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.java.indexing.impl` start
+content_module_jar(module = ":indexing-impl")
+### auto-generated section `dev intellij.java.indexing.impl` end
+
 ### auto-generated section `build intellij.java.indexing.impl` start
 jvm_library(
     name = "indexing-impl",
@@ -55,8 +59,6 @@ jvm_library(
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     ],
 )
-
-content_module_jar(module = ":indexing-impl")
 
 jvm_library(
     name = "indexing-impl_test_lib",

@@ -17,16 +17,16 @@ import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackages
 import com.intellij.refactoring.move.moveClassesOrPackages.SingleSourceRootMoveDestination
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.PlatformTestUtil
-import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
+import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 
 /**
  * Regression test for KTIJ-37556: Move Java class from one module to another doesn't update import statements in Kotlin files.
  */
 class K2MoveJavaClassToAnotherModuleTest : MultiFileTestCase() {
 
-    override fun getTestRoot(): String = "/refactoring/moveClassToAnotherModule/"
+    override fun getTestRoot(): String = "/moveClassToAnotherModule/"
 
-    override fun getTestDataPath(): String = IDEA_TEST_DATA_DIR.path
+    override fun getTestDataPath(): String = KotlinRoot.DIR.resolve("refactorings/kotlin.refactorings.tests.k2/testData").path
 
     override fun prepareProject(rootDir: VirtualFile) {
         val model = ModuleManager.getInstance(project).getModifiableModel()

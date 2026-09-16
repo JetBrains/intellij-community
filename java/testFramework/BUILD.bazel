@@ -251,6 +251,7 @@ jvm_library(
         # do not sort,
         "//java/plugin",
         "//platform/external-system-impl:externalSystem-impl",
+        "//xml/plugin",
     ],
 )
 
@@ -292,6 +293,7 @@ jvm_library(
         "//java/plugin:plugin_test_lib",
         "//platform/external-system-impl:externalSystem-impl_test_lib",
         "//platform/platform-util-io:ide-util-io_test_lib",
+        "//xml/plugin:plugin_test_lib",
     ],
     deps = [
         # do not sort,
@@ -329,8 +331,6 @@ jvm_library(
         "//aether-dependency-resolver/plugin:plugin_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
-        "//libraries/misc/plugin",
-        "//libraries/misc/plugin:plugin_test_lib",
         "//platform/util/jdom",
         "//platform/util/jdom:jdom_test_lib",
         "//platform/lang-api:lang",

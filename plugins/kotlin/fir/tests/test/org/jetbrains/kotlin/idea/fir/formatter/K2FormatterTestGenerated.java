@@ -115,6 +115,44 @@ public abstract class K2FormatterTestGenerated extends AbstractK2FormatterTest {
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../idea/tests/testData/formatter/companionBlocks")
+        public static class CompanionBlocks extends AbstractK2FormatterTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("AfterEnumEntry.after.kt")
+            public void testAfterEnumEntry() throws Exception {
+                runTest("../../idea/tests/testData/formatter/companionBlocks/AfterEnumEntry.after.kt");
+            }
+
+            @TestMetadata("AfterFunction.after.kt")
+            public void testAfterFunction() throws Exception {
+                runTest("../../idea/tests/testData/formatter/companionBlocks/AfterFunction.after.kt");
+            }
+
+            @TestMetadata("BlankLinesAfterClassHeader.after.kt")
+            public void testBlankLinesAfterClassHeader() throws Exception {
+                runTest("../../idea/tests/testData/formatter/companionBlocks/BlankLinesAfterClassHeader.after.kt");
+            }
+
+            @TestMetadata("FirstMember.after.kt")
+            public void testFirstMember() throws Exception {
+                runTest("../../idea/tests/testData/formatter/companionBlocks/FirstMember.after.kt");
+            }
+
+            @TestMetadata("MultilineDeclarations.after.kt")
+            public void testMultilineDeclarations() throws Exception {
+                runTest("../../idea/tests/testData/formatter/companionBlocks/MultilineDeclarations.after.kt");
+            }
+
+            @TestMetadata("SingleLineDeclarations.after.kt")
+            public void testSingleLineDeclarations() throws Exception {
+                runTest("../../idea/tests/testData/formatter/companionBlocks/SingleLineDeclarations.after.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/formatter/fileAnnotations")
         public static class FileAnnotations extends AbstractK2FormatterTest {
             private void runTest(String testDataFilePath) throws Exception {

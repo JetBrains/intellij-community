@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.gradle.codeInsight` start
+content_module_jar(module = ":codeInsight")
+### auto-generated section `dev intellij.gradle.codeInsight` end
+
 ### auto-generated section `build intellij.gradle.codeInsight` start
 jvm_library(
     name = "codeInsight",
@@ -25,8 +29,6 @@ jvm_library(
         "//platform/util",
     ],
 )
-
-content_module_jar(module = ":codeInsight")
 
 jvm_library(
     name = "codeInsight_test_lib",

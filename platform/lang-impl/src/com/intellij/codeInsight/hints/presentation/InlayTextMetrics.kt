@@ -31,11 +31,11 @@ class InlayTextMetricsStorage(val editor: Editor) {
   private var isInsideCheckpoint = false
 
   private val smallTextSize: Float
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     get() = max(1f, normalTextSize - 1f)
 
   private val normalTextSize: Float
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     get() = editor.colorsScheme.editorFontSize2D
 
   /** Indicates that checking whether cached metrics are actual can be safely skipped inside [block].
@@ -48,7 +48,7 @@ class InlayTextMetricsStorage(val editor: Editor) {
    *  This leads to excessive checks whether they are actual ([getCurrentStamp])
    *  and performance problems.
    *  */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun <T> checkpoint(block: () -> T): T {
     if (isInsideCheckpoint) {
       return block()
@@ -63,7 +63,7 @@ class InlayTextMetricsStorage(val editor: Editor) {
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun getCurrentStamp(): InlayTextMetricsStamp {
     val lastStamp = lastStamp
     if (isInsideCheckpoint) return checkNotNull(lastStamp)
@@ -81,7 +81,7 @@ class InlayTextMetricsStorage(val editor: Editor) {
     return lastStamp
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun doGetCurrentStamp(): InlayTextMetricsStamp {
     return InlayTextMetricsStamp(
       // smallTextSize is derived from normalTextSize, so it can serve as a stamp for both metrics
@@ -92,7 +92,7 @@ class InlayTextMetricsStorage(val editor: Editor) {
     )
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun getFontMetrics(small: Boolean): InlayTextMetrics {
     val currentStamp = getCurrentStamp()
 

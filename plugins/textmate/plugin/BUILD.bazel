@@ -1,5 +1,23 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
+load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_TARGETS")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `dev intellij.textmate.plugin` start
+dev_dist_plugin(
+    content_modules = ["intellij.libraries.joni"],
+    libraries = ["@lib//:libraries-joni-joni"],
+    main_module = "intellij.textmate.plugin",
+    module_targets = MODULE_TARGETS,
+    prepacked_content_modules = [
+        # do not sort,
+        "intellij.textmate.backend",
+        "intellij.textmate.common",
+        "intellij.textmate.core",
+        "intellij.textmate.joni",
+        "intellij.textmate",
+    ],
+)
+### auto-generated section `dev intellij.textmate.plugin` end
 
 ### auto-generated section `build intellij.textmate.plugin` start
 jvm_library(
@@ -38,18 +56,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.textmate.plugin` end
-
-### auto-generated section `dev intellij.textmate.plugin` start
-dev_dist_plugin(
-    content_modules = ["//libraries/joni"],
-    descriptor_module = ":plugin",
-    libraries = ["@lib//:libraries-joni-joni"],
-    prepacked_content_modules = [
-        "//plugins/textmate/backend:backend_content_module_jar",
-        "//plugins/textmate/common:common_content_module_jar",
-        "//plugins/textmate/core:core_content_module_jar",
-        "//plugins/textmate/joni:joni_content_module_jar",
-        "//plugins/textmate:textmate_content_module_jar",
-    ],
-)
-### auto-generated section `dev intellij.textmate.plugin` end

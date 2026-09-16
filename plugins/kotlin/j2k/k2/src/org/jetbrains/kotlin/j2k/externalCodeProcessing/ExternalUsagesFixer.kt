@@ -2,7 +2,9 @@
 
 package org.jetbrains.kotlin.j2k.externalCodeProcessing
 
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethodReferenceExpression
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.session.analyze
@@ -10,6 +12,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
+import org.jetbrains.kotlin.idea.base.psi.addAnnotation
 import org.jetbrains.kotlin.idea.base.psi.isConstructorDeclaredProperty
 import org.jetbrains.kotlin.j2k.AccessorKind.GETTER
 import org.jetbrains.kotlin.j2k.AccessorKind.SETTER
@@ -27,12 +30,19 @@ class ExternalUsagesFixer(private val usages: List<JKMemberInfoWithUsages>) {
     private val jvmFieldAnnotatedDeclarations: MutableSet<KtNamedDeclaration> = mutableSetOf()
     private val jvmStaticAnnotatedDeclarations: MutableSet<KtNamedDeclaration> = mutableSetOf()
 
-    fun fix() {
+    /** Returns the files the usages live in, not the edits that landed: [JKExternalConversion.apply] skips what it cannot rewrite. */
+    fun fix(): Set<VirtualFile> {
         for (usage in usages) {
             usage.fix()
         }
         conversions.sort()
+        // Read the containing files before applying: a conversion replaces the element it was built from.
+        val changedFiles = conversions.mapNotNullTo(LinkedHashSet()) { it.usage.containingFile?.virtualFile }
         conversions.forEach(JKExternalConversion::apply)
+        for (declaration in jvmFieldAnnotatedDeclarations + jvmStaticAnnotatedDeclarations) {
+            declaration.containingFile?.virtualFile?.let(changedFiles::add)
+        }
+        return changedFiles
     }
 
     private fun JKMemberInfoWithUsages.fix() {
@@ -71,7 +81,7 @@ class ExternalUsagesFixer(private val usages: List<JKMemberInfoWithUsages>) {
 
         if (javaUsages.isNotEmpty()) {
             when {
-                element.canBeAnnotatedWithJvmField(member.isEffectivelyFinal) ->
+                element.canBeAnnotatedWithJvmField(member.isEffectivelyFinal) && javaUsages.none { it is PsiMethodReferenceExpression } ->
                     element.addJvmFieldAnnotationIfThereAreNoJvmAnnotations()
 
                 isStatic && !element.isConstProperty() ->
@@ -130,7 +140,7 @@ class ExternalUsagesFixer(private val usages: List<JKMemberInfoWithUsages>) {
     }
 
     private fun KtNamedDeclaration.addAnnotation(fqName: String) {
-        val annotation = addAnnotationEntry(KtPsiFactory(project).createAnnotationEntry("@$fqName"))
+        val annotation = addAnnotation(KtPsiFactory(project).createAnnotationEntry("@$fqName"))
         ShortenReferencesFacility.getInstance().shorten(annotation)
     }
 

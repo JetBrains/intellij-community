@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
+load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_TARGETS")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "resourcegroup")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -10,6 +11,23 @@ jps_test(
     runtime_deps = [":vcs-github-tests_test_lib"],
 )
 ### skip generation section `test intellij.vcs.github.tests`
+
+### auto-generated section `dev intellij.vcs.github` start
+content_module_jar(module = ":vcs-github")
+
+dev_dist_plugin(
+    libraries = ["@lib//:vcs-github-apollographql-apollo-ast-jvm"],
+    main_module = "intellij.vcs.github",
+    module_targets = MODULE_TARGETS,
+    prepacked_content_modules = [
+        # do not sort,
+        "intellij.vcs.github.git",
+        "intellij.vcs.github.json",
+        "intellij.vcs.github.tracker",
+        "intellij.vcs.github.ultimatePromo",
+    ],
+)
+### auto-generated section `dev intellij.vcs.github` end
 
 ### auto-generated section `build intellij.vcs.github` start
 resourcegroup(
@@ -111,8 +129,6 @@ jvm_library(
         ":libraries_kotlinc_libraries-kotlinc-kotlinx-serialization-compiler-plugin_provided",
     ],
 )
-
-content_module_jar(module = ":vcs-github")
 
 jvm_library(
     name = "vcs-github_test_lib",
@@ -229,19 +245,6 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.vcs.github` end
-
-### auto-generated section `dev intellij.vcs.github` start
-dev_dist_plugin(
-    descriptor_module = ":vcs-github",
-    libraries = ["@lib//:vcs-github-apollographql-apollo-ast-jvm"],
-    prepacked_content_modules = [
-        "//plugins/github/github-git:vcs-github-git_content_module_jar",
-        "//plugins/github/github-json:vcs-github-json_content_module_jar",
-        "//plugins/github/github-tracker:vcs-github-tracker_content_module_jar",
-        "//plugins/github/ultimate-promo:ultimate-promo_content_module_jar",
-    ],
-)
-### auto-generated section `dev intellij.vcs.github` end
 
 ### auto-generated section `build intellij.vcs.github.tests` start
 jvm_library(
@@ -421,8 +424,8 @@ jvm_library(
         "//platform/lang-api:lang_test_lib",
         "//platform/util/concurrency",
         "//platform/util/concurrency:concurrency_test_lib",
-        "//plugins/git4idea:vcs-git-backend-tests",
-        "//plugins/git4idea:vcs-git-backend-tests_test_lib",
+        "//plugins/git4idea/testFramework",
+        "//plugins/git4idea/testFramework:testFramework_test_lib",
         "//platform/collaboration-tools:collaborationTools-tests",
         "//platform/collaboration-tools:collaborationTools-tests_test_lib",
         "//platform/testFramework/junit5/codeInsight",

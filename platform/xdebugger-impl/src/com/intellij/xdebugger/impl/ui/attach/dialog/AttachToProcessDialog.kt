@@ -553,7 +553,7 @@ open class AttachToProcessDialog(
   private inner class AttachAction : AbstractAction(), OptionAction, DumbAware {
 
     init {
-      putValue(DEFAULT_ACTION, java.lang.Boolean.TRUE)
+      putValue(DEFAULT_ACTION, true)
     }
 
     private var debuggers: List<AttachDebuggerAction> = emptyList()

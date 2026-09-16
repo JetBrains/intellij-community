@@ -22,6 +22,10 @@ fleet_wasmjs_module(
     ],
 )
 
+### auto-generated section `dev fleet.rhizomedb` start
+content_module_jar(module = ":rhizomedb")
+### auto-generated section `dev fleet.rhizomedb` end
+
 ### auto-generated section `build fleet.rhizomedb` start
 create_kotlinc_options(
     name = "custom_rhizomedb",
@@ -60,16 +64,14 @@ jvm_library(
         "//fleet/multiplatform.shims",
         "//fleet/radixTrie",
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinx-collections-immutable",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//libraries/jetbrains/annotations",
-        "@lib//:kotlinx-serialization-core",
-        "@lib//:kotlinx-serialization-json",
+        "//libraries/kotlinx/serialization/core",
+        "//libraries/kotlinx/serialization/json",
         "//fleet/fastutil",
         "//fleet/openmap",
     ],
 )
-
-content_module_jar(module = ":rhizomedb")
 
 jvm_library(
     name = "rhizomedb_test_lib",
@@ -87,7 +89,10 @@ jvm_library(
         "//fleet/util/core:core_test_lib",
         "//fleet/multiplatform.shims:multiplatform.shims_test_lib",
         "//fleet/radixTrie:radixTrie_test_lib",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
         "//libraries/jetbrains/annotations:annotations_test_lib",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//libraries/kotlinx/serialization/json:json_test_lib",
         "//fleet/fastutil:fastutil_test_lib",
         "//fleet/openmap:openmap_test_lib",
     ],
@@ -99,7 +104,6 @@ exports_files(
     [
         "fleet.rhizomedb.iml",
         "resources/fleet.rhizomedb.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

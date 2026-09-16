@@ -173,7 +173,7 @@ open class McpServerService(val cs: CoroutineScope) {
    * Synchronous fallback for the non-suspend API. Converting the tools is slow, so this must not be called on the EDT;
    * prefer [toolsStateProviderAsync], which also converts them concurrently.
    */
-  @get:RequiresBackgroundThread
+  @get:RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   internal val toolsStateProvider: McpToolsListProvider
     get() = toolsStateProviderOrNull ?: publishToolsStateProvider(McpToolsListProvider.computeAllMcpTools())
 

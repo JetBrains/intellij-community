@@ -130,53 +130,19 @@ abstract class AbstractKotlinProjectViewTest : KotlinMultiFileHeavyProjectTestCa
     private fun String.isSkippedLinesMarker(): Boolean = trim() == Holder.SKIPPED_LINES_MARKER
 
     private fun matchesWithSkippedLines(expectedLines: List<String>, actualLines: List<String>): Boolean {
-        val startsWithSkippedLines = expectedLines.firstOrNull()?.isSkippedLinesMarker() == true
-        val endsWithSkippedLines = expectedLines.lastOrNull()?.isSkippedLinesMarker() == true
-        val expectedSegments = buildList {
-            val currentSegment = mutableListOf<String>()
-            for (line in expectedLines) {
-                if (line.isSkippedLinesMarker()) {
-                    if (currentSegment.isNotEmpty()) {
-                        add(currentSegment.toList())
-                        currentSegment.clear()
-                    }
-                } else {
-                    currentSegment.add(line)
-                }
-            }
-            if (currentSegment.isNotEmpty()) {
-                add(currentSegment)
+        val matches = mutableMapOf<Pair<Int, Int>, Boolean>()
+
+        fun match(expectedIndex: Int, actualIndex: Int): Boolean = matches.getOrPut(expectedIndex to actualIndex) {
+            when {
+                expectedIndex == expectedLines.size -> actualIndex == actualLines.size
+                expectedLines[expectedIndex].isSkippedLinesMarker() ->
+                    (actualIndex..actualLines.size).any { match(expectedIndex + 1, it) }
+                actualIndex == actualLines.size -> false
+                else -> expectedLines[expectedIndex] == actualLines[actualIndex] && match(expectedIndex + 1, actualIndex + 1)
             }
         }
-        if (expectedSegments.isEmpty()) return true
 
-        val failedMatches = mutableSetOf<Pair<Int, Int>>()
-
-        fun matchSegment(segmentIndex: Int, actualStart: Int): Boolean {
-            if (!failedMatches.add(segmentIndex to actualStart)) return false
-            if (segmentIndex == expectedSegments.size) {
-                return endsWithSkippedLines || actualStart == actualLines.size
-            }
-
-            val expectedSegment = expectedSegments[segmentIndex]
-            if (segmentIndex == 0 && !startsWithSkippedLines) {
-                return actualLines.matchesAt(0, expectedSegment) && matchSegment(1, expectedSegment.size)
-            }
-
-            val maxStart = actualLines.size - expectedSegment.size
-            for (start in actualStart..maxStart) {
-                if (actualLines.matchesAt(start, expectedSegment) && matchSegment(segmentIndex + 1, start + expectedSegment.size)) {
-                    return true
-                }
-            }
-            return false
-        }
-
-        return matchSegment(0, 0)
-    }
-
-    private fun List<String>.matchesAt(start: Int, expectedSegment: List<String>): Boolean {
-        return start + expectedSegment.size <= size && expectedSegment.indices.all { index -> this[start + index] == expectedSegment[index] }
+        return match(0, 0)
     }
 
     private fun filePath(element: Any?): String? {

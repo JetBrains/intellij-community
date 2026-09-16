@@ -20,16 +20,16 @@ interface SignTool {
 
   val signNativeFileMode: SignNativeFileMode
 
-  suspend fun signFiles(files: List<Path>, context: BuildContext?, options: PersistentMap<String, String>)
+  fun signFiles(files: List<Path>, context: BuildContext?, options: PersistentMap<String, String>)
 
-  suspend fun signFilesWithGpg(files: List<Path>, context: BuildContext)
+  fun signFilesWithGpg(files: List<Path>, context: BuildContext)
 
   /**
    * Returns `null` if failed to download and error is not fatal.
    */
-  suspend fun getPresignedLibraryFile(path: String, libName: String, libVersion: String, context: BuildContext): Path?
+  fun getPresignedLibraryFile(path: String, libName: String, libVersion: String, context: BuildContext): Path?
 
-  suspend fun commandLineClient(context: BuildContext, os: OsFamily, arch: JvmArchitecture): Path?
+  fun commandLineClient(context: BuildContext, os: OsFamily, arch: JvmArchitecture): Path?
 }
 
 enum class SignNativeFileMode {

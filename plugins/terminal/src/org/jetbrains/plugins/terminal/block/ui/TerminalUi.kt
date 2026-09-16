@@ -47,6 +47,7 @@ object TerminalUi {
   const val terminalTopInlayPriority: Int = 200
   const val blockBottomInlayPriority: Int = 100
   const val terminalBottomInlayPriority: Int = 0
+  const val terminalScrollPaddingInlayPriority: Int = -100
 
   fun defaultBackgroundLazy(): JBColor {
     return JBColor.lazy { defaultBackground() }

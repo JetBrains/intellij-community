@@ -42,7 +42,7 @@ abstract class MergeModelBase<S : MergeModelBase.State>(
   private val changesToUpdate: IntSet = IntOpenHashSet()
   private var bulkChangeUpdateDepth = 0
 
-  @get:RequiresEdt
+  @get:RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private var isInsideCommand = false
 
   private var isDisposed = false
@@ -51,7 +51,7 @@ abstract class MergeModelBase<S : MergeModelBase.State>(
     document.addDocumentListener(DocumentListener(), this)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun dispose() {
     if (isDisposed) return
     isDisposed = true
@@ -90,7 +90,7 @@ abstract class MergeModelBase<S : MergeModelBase.State>(
   //
   // Repaint
   //
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun invalidateChange(index: Int) {
     if (bulkChangeUpdateDepth > 0) {
       changesToUpdate.add(index)
@@ -100,12 +100,12 @@ abstract class MergeModelBase<S : MergeModelBase.State>(
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun enterBulkChangeUpdateBlock() {
     bulkChangeUpdateDepth++
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun exitBulkChangeUpdateBlock() {
     bulkChangeUpdateDepth--
     LOG.assertTrue(bulkChangeUpdateDepth >= 0)
@@ -119,10 +119,10 @@ abstract class MergeModelBase<S : MergeModelBase.State>(
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   protected abstract fun onChangeUpdated(index: Int)
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   protected open fun onBulkUpdateFinished() {
 
   }
@@ -130,16 +130,16 @@ abstract class MergeModelBase<S : MergeModelBase.State>(
   //
   // Undo
   //
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   protected abstract fun storeChangeState(index: Int): S
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   protected open fun restoreChangeState(state: S) {
     setLineStart(state.index, state.startLine)
     setLineEnd(state.index, state.endLine)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   protected open fun processDocumentChange(index: Int, oldLine1: Int, oldLine2: Int, shift: Int): S? {
     val line1 = getLineStart(index)
     val line2 = getLineEnd(index)
@@ -285,7 +285,7 @@ abstract class MergeModelBase<S : MergeModelBase.State>(
   //
   // Actions
   //
-  @RequiresWriteLock
+  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
   fun replaceChange(index: Int, newContent: List<CharSequence>) {
     LOG.assertTrue(isInsideCommand)
     val outputStartLine = getLineStart(index)
@@ -299,7 +299,7 @@ abstract class MergeModelBase<S : MergeModelBase.State>(
     }
   }
 
-  @RequiresWriteLock
+  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
   fun appendChange(index: Int, newContent: List<CharSequence>) {
     LOG.assertTrue(isInsideCommand)
     val outputStartLine = getLineStart(index)
@@ -354,7 +354,7 @@ abstract class MergeModelBase<S : MergeModelBase.State>(
   /*
    * Nearby changes could be affected as well (ex: by moveChangesAfterInsertion)
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun collectAffectedChanges(directChanges: IntList): IntList {
     val result: IntList = IntArrayList(directChanges.size)
 

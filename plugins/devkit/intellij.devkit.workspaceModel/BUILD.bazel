@@ -2,6 +2,10 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.devkit.workspaceModel` start
+content_module_jar(module = ":workspaceModel")
+### auto-generated section `dev intellij.devkit.workspaceModel` end
+
 ### auto-generated section `build intellij.devkit.workspaceModel` start
 create_kotlinc_options(
     name = "custom_workspaceModel",
@@ -89,8 +93,6 @@ jvm_library(
         ":libraries_kotlinc_libraries-kotlinc-kotlin-jps-common_provided",
     ],
 )
-
-content_module_jar(module = ":workspaceModel")
 
 jvm_library(
     name = "workspaceModel_test_lib",

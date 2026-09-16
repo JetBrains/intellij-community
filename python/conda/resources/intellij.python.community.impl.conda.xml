@@ -11,9 +11,10 @@
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.python.community"/>
+    <module name="intellij.python.community.impl.conda.common"/>
     <module name="intellij.python.community.impl.installer"/>
     <module name="intellij.python.processOutput.common"/>
-    <module name="intellij.python.pytools"/>
+    <module name="intellij.python.pytools.backend"/>
     <module name="intellij.python.requirements.backend"/>
     <module name="intellij.python.sdk.backend"/>
     <module name="intellij.yaml"/>

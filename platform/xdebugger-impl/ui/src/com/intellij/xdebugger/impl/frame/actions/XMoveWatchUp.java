@@ -31,9 +31,9 @@ public class XMoveWatchUp extends XWatchesTreeActionBase implements SplitDebugge
     List<? extends WatchNodeImpl> nodes = getSelectedNodes(tree, WatchNodeImpl.class);
     if (nodes.size() == 1) {
       XDebuggerTreeNode root = tree.getRoot();
-      if (root instanceof WatchesRootNode) {
-        int firstWatchIndex = ((WatchesRootNode)root).headerNodesCount();
-        return root.getIndex(nodes.get(0)) > firstWatchIndex;
+      if (root instanceof WatchesRootNode node) {
+        int firstWatchIndex = node.headerNodesCount();
+        return root.getIndex(nodes.getFirst()) > firstWatchIndex;
       }
     }
     return false;
@@ -41,8 +41,8 @@ public class XMoveWatchUp extends XWatchesTreeActionBase implements SplitDebugge
 
   @Override
   protected void perform(@NotNull AnActionEvent e, @NotNull XDebuggerTree tree, @NotNull XWatchesView watchesView) {
-    if (watchesView instanceof XWatchesViewImpl) {
-      ((XWatchesViewImpl)watchesView).moveWatchUp(ContainerUtil.getFirstItem(getSelectedNodes(tree, WatchNodeImpl.class)));
+    if (watchesView instanceof XWatchesViewImpl view) {
+      view.moveWatchUp(ContainerUtil.getFirstItem(getSelectedNodes(tree, WatchNodeImpl.class)));
     }
   }
 }

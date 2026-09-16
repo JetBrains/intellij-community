@@ -17,7 +17,7 @@ import org.junit.runner.RunWith;
 @TestRoot("refactorings/rename.k2")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../../idea/tests/testData/refactoring/renameMultiModule")
+@TestMetadata("testData/renameMultiModule")
 public class FirMultiModuleRenameTestGenerated extends AbstractFirMultiModuleRenameTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -25,151 +25,151 @@ public class FirMultiModuleRenameTestGenerated extends AbstractFirMultiModuleRen
 
     @TestMetadata("fileNotUnderSourceRootWithNamesakeUnderSourceRoot/fileNotUnderSourceRootWithNamesakeUnderSourceRoot.test")
     public void testFileNotUnderSourceRootWithNamesakeUnderSourceRoot_FileNotUnderSourceRootWithNamesakeUnderSourceRoot() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/renameMultiModule/fileNotUnderSourceRootWithNamesakeUnderSourceRoot/fileNotUnderSourceRootWithNamesakeUnderSourceRoot.test");
+        runTest("testData/renameMultiModule/fileNotUnderSourceRootWithNamesakeUnderSourceRoot/fileNotUnderSourceRootWithNamesakeUnderSourceRoot.test");
     }
 
     @TestMetadata("headerAndImplClassByImplTypeAlias/headerAndImplClassByImplTypeAlias.test")
     public void testHeaderAndImplClassByImplTypeAlias_HeaderAndImplClassByImplTypeAlias() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/renameMultiModule/headerAndImplClassByImplTypeAlias/headerAndImplClassByImplTypeAlias.test");
+        runTest("testData/renameMultiModule/headerAndImplClassByImplTypeAlias/headerAndImplClassByImplTypeAlias.test");
     }
 
     @TestMetadata("headerAndImplTypeAliasByImplClass/headerAndImplTypeAliasByImplClass.test")
     public void testHeaderAndImplTypeAliasByImplClass_HeaderAndImplTypeAliasByImplClass() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/renameMultiModule/headerAndImplTypeAliasByImplClass/headerAndImplTypeAliasByImplClass.test");
+        runTest("testData/renameMultiModule/headerAndImplTypeAliasByImplClass/headerAndImplTypeAliasByImplClass.test");
     }
 
     @TestMetadata("headersAndImplsByHeaderClassMemberFunParameter/headersAndImplsByHeaderClassMemberFunParameter.test")
     public void testHeadersAndImplsByHeaderClassMemberFunParameter_HeadersAndImplsByHeaderClassMemberFunParameter() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/renameMultiModule/headersAndImplsByHeaderClassMemberFunParameter/headersAndImplsByHeaderClassMemberFunParameter.test");
+        runTest("testData/renameMultiModule/headersAndImplsByHeaderClassMemberFunParameter/headersAndImplsByHeaderClassMemberFunParameter.test");
     }
 
     @TestMetadata("headersAndImplsByHeaderClassMemberFun/headersAndImplsByHeaderClassMemberFun.test")
     public void testHeadersAndImplsByHeaderClassMemberFun_HeadersAndImplsByHeaderClassMemberFun() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/renameMultiModule/headersAndImplsByHeaderClassMemberFun/headersAndImplsByHeaderClassMemberFun.test");
+        runTest("testData/renameMultiModule/headersAndImplsByHeaderClassMemberFun/headersAndImplsByHeaderClassMemberFun.test");
     }
 
     @TestMetadata("headersAndImplsByHeaderClassMemberVal/headersAndImplsByHeaderClassMemberVal.test")
     public void testHeadersAndImplsByHeaderClassMemberVal_HeadersAndImplsByHeaderClassMemberVal() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/renameMultiModule/headersAndImplsByHeaderClassMemberVal/headersAndImplsByHeaderClassMemberVal.test");
+        runTest("testData/renameMultiModule/headersAndImplsByHeaderClassMemberVal/headersAndImplsByHeaderClassMemberVal.test");
     }
 
     @TestMetadata("headersAndImplsByHeaderClassPrimaryConstructorParameter/headersAndImplsByHeaderClassPrimaryConstructorParameter.test")
     public void testHeadersAndImplsByHeaderClassPrimaryConstructorParameter_HeadersAndImplsByHeaderClassPrimaryConstructorParameter() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/renameMultiModule/headersAndImplsByHeaderClassPrimaryConstructorParameter/headersAndImplsByHeaderClassPrimaryConstructorParameter.test");
+        runTest("testData/renameMultiModule/headersAndImplsByHeaderClassPrimaryConstructorParameter/headersAndImplsByHeaderClassPrimaryConstructorParameter.test");
     }
 
     @TestMetadata("headersAndImplsByHeaderClassSecondaryConstructorParameter/headersAndImplsByHeaderClassSecondaryConstructorParameter.test")
     public void testHeadersAndImplsByHeaderClassSecondaryConstructorParameter_HeadersAndImplsByHeaderClassSecondaryConstructorParameter() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/renameMultiModule/headersAndImplsByHeaderClassSecondaryConstructorParameter/headersAndImplsByHeaderClassSecondaryConstructorParameter.test");
+        runTest("testData/renameMultiModule/headersAndImplsByHeaderClassSecondaryConstructorParameter/headersAndImplsByHeaderClassSecondaryConstructorParameter.test");
     }
 
     @TestMetadata("headersAndImplsByHeaderClassWithFileNames/headersAndImplsByHeaderClassWithFileNames.test")
     public void testHeadersAndImplsByHeaderClassWithFileNames_HeadersAndImplsByHeaderClassWithFileNames() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/renameMultiModule/headersAndImplsByHeaderClassWithFileNames/headersAndImplsByHeaderClassWithFileNames.test");
+        runTest("testData/renameMultiModule/headersAndImplsByHeaderClassWithFileNames/headersAndImplsByHeaderClassWithFileNames.test");
     }
 
     @TestMetadata("headersAndImplsByHeaderClass/headersAndImplsByHeaderClass.test")
     public void testHeadersAndImplsByHeaderClass_HeadersAndImplsByHeaderClass() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/renameMultiModule/headersAndImplsByHeaderClass/headersAndImplsByHeaderClass.test");
+        runTest("testData/renameMultiModule/headersAndImplsByHeaderClass/headersAndImplsByHeaderClass.test");
     }
 
     @TestMetadata("headersAndImplsByHeaderFunParameter/headersAndImplsByHeaderFunParameter.test")
     public void testHeadersAndImplsByHeaderFunParameter_HeadersAndImplsByHeaderFunParameter() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/renameMultiModule/headersAndImplsByHeaderFunParameter/headersAndImplsByHeaderFunParameter.test");
+        runTest("testData/renameMultiModule/headersAndImplsByHeaderFunParameter/headersAndImplsByHeaderFunParameter.test");
     }
 
     @TestMetadata("headersAndImplsByHeaderFun/headersAndImplsByHeaderFun.test")
     public void testHeadersAndImplsByHeaderFun_HeadersAndImplsByHeaderFun() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/renameMultiModule/headersAndImplsByHeaderFun/headersAndImplsByHeaderFun.test");
+        runTest("testData/renameMultiModule/headersAndImplsByHeaderFun/headersAndImplsByHeaderFun.test");
     }
 
     @TestMetadata("headersAndImplsByHeaderVal/headersAndImplsByHeaderVal.test")
     public void testHeadersAndImplsByHeaderVal_HeadersAndImplsByHeaderVal() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/renameMultiModule/headersAndImplsByHeaderVal/headersAndImplsByHeaderVal.test");
+        runTest("testData/renameMultiModule/headersAndImplsByHeaderVal/headersAndImplsByHeaderVal.test");
     }
 
     @TestMetadata("headersAndImplsByImplClassMemberFunParameter/headersAndImplsByImplClassMemberFunParameter.test")
     public void testHeadersAndImplsByImplClassMemberFunParameter_HeadersAndImplsByImplClassMemberFunParameter() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/renameMultiModule/headersAndImplsByImplClassMemberFunParameter/headersAndImplsByImplClassMemberFunParameter.test");
+        runTest("testData/renameMultiModule/headersAndImplsByImplClassMemberFunParameter/headersAndImplsByImplClassMemberFunParameter.test");
     }
 
     @TestMetadata("headersAndImplsByImplClassMemberFun/headersAndImplsByImplClassMemberFun.test")
     public void testHeadersAndImplsByImplClassMemberFun_HeadersAndImplsByImplClassMemberFun() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/renameMultiModule/headersAndImplsByImplClassMemberFun/headersAndImplsByImplClassMemberFun.test");
+        runTest("testData/renameMultiModule/headersAndImplsByImplClassMemberFun/headersAndImplsByImplClassMemberFun.test");
     }
 
     @TestMetadata("headersAndImplsByImplClassMemberVal/headersAndImplsByImplClassMemberVal.test")
     public void testHeadersAndImplsByImplClassMemberVal_HeadersAndImplsByImplClassMemberVal() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/renameMultiModule/headersAndImplsByImplClassMemberVal/headersAndImplsByImplClassMemberVal.test");
+        runTest("testData/renameMultiModule/headersAndImplsByImplClassMemberVal/headersAndImplsByImplClassMemberVal.test");
     }
 
     @TestMetadata("headersAndImplsByImplClassPrimaryConstructorParameter/headersAndImplsByImplClassPrimaryConstructorParameter.test")
     public void testHeadersAndImplsByImplClassPrimaryConstructorParameter_HeadersAndImplsByImplClassPrimaryConstructorParameter() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/renameMultiModule/headersAndImplsByImplClassPrimaryConstructorParameter/headersAndImplsByImplClassPrimaryConstructorParameter.test");
+        runTest("testData/renameMultiModule/headersAndImplsByImplClassPrimaryConstructorParameter/headersAndImplsByImplClassPrimaryConstructorParameter.test");
     }
 
     @TestMetadata("headersAndImplsByImplClassSecondaryConstructorParameter/headersAndImplsByImplClassSecondaryConstructorParameter.test")
     public void testHeadersAndImplsByImplClassSecondaryConstructorParameter_HeadersAndImplsByImplClassSecondaryConstructorParameter() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/renameMultiModule/headersAndImplsByImplClassSecondaryConstructorParameter/headersAndImplsByImplClassSecondaryConstructorParameter.test");
+        runTest("testData/renameMultiModule/headersAndImplsByImplClassSecondaryConstructorParameter/headersAndImplsByImplClassSecondaryConstructorParameter.test");
     }
 
     @TestMetadata("headersAndImplsByImplClassWithFileNames/headersAndImplsByImplClassWithFileNames.test")
     public void testHeadersAndImplsByImplClassWithFileNames_HeadersAndImplsByImplClassWithFileNames() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/renameMultiModule/headersAndImplsByImplClassWithFileNames/headersAndImplsByImplClassWithFileNames.test");
+        runTest("testData/renameMultiModule/headersAndImplsByImplClassWithFileNames/headersAndImplsByImplClassWithFileNames.test");
     }
 
     @TestMetadata("headersAndImplsByImplClass/headersAndImplsByImplClass.test")
     public void testHeadersAndImplsByImplClass_HeadersAndImplsByImplClass() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/renameMultiModule/headersAndImplsByImplClass/headersAndImplsByImplClass.test");
+        runTest("testData/renameMultiModule/headersAndImplsByImplClass/headersAndImplsByImplClass.test");
     }
 
     @TestMetadata("headersAndImplsByImplFunParameter/headersAndImplsByImplFunParameter.test")
     public void testHeadersAndImplsByImplFunParameter_HeadersAndImplsByImplFunParameter() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/renameMultiModule/headersAndImplsByImplFunParameter/headersAndImplsByImplFunParameter.test");
+        runTest("testData/renameMultiModule/headersAndImplsByImplFunParameter/headersAndImplsByImplFunParameter.test");
     }
 
     @TestMetadata("headersAndImplsByImplFun/headersAndImplsByImplFun.test")
     public void testHeadersAndImplsByImplFun_HeadersAndImplsByImplFun() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/renameMultiModule/headersAndImplsByImplFun/headersAndImplsByImplFun.test");
+        runTest("testData/renameMultiModule/headersAndImplsByImplFun/headersAndImplsByImplFun.test");
     }
 
     @TestMetadata("headersAndImplsByImplVal/headersAndImplsByImplVal.test")
     public void testHeadersAndImplsByImplVal_HeadersAndImplsByImplVal() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/renameMultiModule/headersAndImplsByImplVal/headersAndImplsByImplVal.test");
+        runTest("testData/renameMultiModule/headersAndImplsByImplVal/headersAndImplsByImplVal.test");
     }
 
     @TestMetadata("implClassAndTypeAliasByHeaderClass/implClassAndTypeAliasByHeaderClass.test")
     public void testImplClassAndTypeAliasByHeaderClass_ImplClassAndTypeAliasByHeaderClass() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/renameMultiModule/implClassAndTypeAliasByHeaderClass/implClassAndTypeAliasByHeaderClass.test");
+        runTest("testData/renameMultiModule/implClassAndTypeAliasByHeaderClass/implClassAndTypeAliasByHeaderClass.test");
     }
 
     @TestMetadata("overrideFunctionsByCommonModuleFromOverrider/overrideFunctionsByCommonModuleFromOverrider.test")
     public void testOverrideFunctionsByCommonModuleFromOverrider_OverrideFunctionsByCommonModuleFromOverrider() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/renameMultiModule/overrideFunctionsByCommonModuleFromOverrider/overrideFunctionsByCommonModuleFromOverrider.test");
+        runTest("testData/renameMultiModule/overrideFunctionsByCommonModuleFromOverrider/overrideFunctionsByCommonModuleFromOverrider.test");
     }
 
     @TestMetadata("overrideFunctionsByCommonModule/overrideFunctionsByCommonModule.test")
     public void testOverrideFunctionsByCommonModule_OverrideFunctionsByCommonModule() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/renameMultiModule/overrideFunctionsByCommonModule/overrideFunctionsByCommonModule.test");
+        runTest("testData/renameMultiModule/overrideFunctionsByCommonModule/overrideFunctionsByCommonModule.test");
     }
 
     @TestMetadata("overrideFunctionsByPlatformModule/overrideFunctionsByPlatformModule.test")
     public void testOverrideFunctionsByPlatformModule_OverrideFunctionsByPlatformModule() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/renameMultiModule/overrideFunctionsByPlatformModule/overrideFunctionsByPlatformModule.test");
+        runTest("testData/renameMultiModule/overrideFunctionsByPlatformModule/overrideFunctionsByPlatformModule.test");
     }
 
     @TestMetadata("overrideInternalPropertyByCommonModule/overrideFunctionsByCommonModule.test")
     public void testOverrideInternalPropertyByCommonModule_OverrideFunctionsByCommonModule() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/renameMultiModule/overrideInternalPropertyByCommonModule/overrideFunctionsByCommonModule.test");
+        runTest("testData/renameMultiModule/overrideInternalPropertyByCommonModule/overrideFunctionsByCommonModule.test");
     }
 
     @TestMetadata("suspendFunImplInImplModule/suspendFunImplInImplModule.test")
     public void testSuspendFunImplInImplModule_SuspendFunImplInImplModule() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/renameMultiModule/suspendFunImplInImplModule/suspendFunImplInImplModule.test");
+        runTest("testData/renameMultiModule/suspendFunImplInImplModule/suspendFunImplInImplModule.test");
     }
 
     @TestMetadata("suspendFunInCommonModule/suspendFunInCommonModule.test")
     public void testSuspendFunInCommonModule_SuspendFunInCommonModule() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/renameMultiModule/suspendFunInCommonModule/suspendFunInCommonModule.test");
+        runTest("testData/renameMultiModule/suspendFunInCommonModule/suspendFunInCommonModule.test");
     }
 }

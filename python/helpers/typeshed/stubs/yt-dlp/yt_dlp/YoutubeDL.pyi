@@ -11,7 +11,7 @@ from yt_dlp.cookies import YoutubeDLCookieJar
 from yt_dlp.networking import RequestDirector, RequestHandler, Response
 from yt_dlp.utils import Namespace
 
-from . import _Params
+from . import _YoutubeDLOptions
 from .extractor.common import InfoExtractor, _InfoDict
 from .postprocessor.common import PostProcessor
 from .utils._utils import _ProgressState
@@ -19,11 +19,11 @@ from .utils._utils import _ProgressState
 _FormatSelector: TypeAlias = Callable[[Mapping[str, Any]], Iterator[Any]]
 
 class YoutubeDL:
-    params: _Params
+    params: _YoutubeDLOptions
     cache: Cache
     format_selector: _FormatSelector
     archive: set[str]
-    def __init__(self, params: _Params | None = None, auto_init: bool = True) -> None: ...
+    def __init__(self, params: _YoutubeDLOptions | None = None, auto_init: bool = True) -> None: ...
     def warn_if_short_id(self, argv: list[str]) -> None: ...
     def add_info_extractor(self, ie: InfoExtractor) -> None: ...
     def get_info_extractor(self, ie_key: str) -> InfoExtractor: ...

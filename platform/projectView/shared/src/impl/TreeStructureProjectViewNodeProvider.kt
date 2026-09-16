@@ -42,12 +42,12 @@ private data class TreeStructureProjectViewNodeImpl(
   override val elementDescriptor: NodeDescriptor<*>,
   val isRoot: Boolean,
 ) : TreeStructureProjectViewNode {
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun canNavigate(): Boolean {
     return (elementDescriptor as? Navigatable)?.canNavigate() == true
   }
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun canNavigateToSource(): Boolean {
     return (elementDescriptor as? Navigatable)?.canNavigateToSource() == true
   }

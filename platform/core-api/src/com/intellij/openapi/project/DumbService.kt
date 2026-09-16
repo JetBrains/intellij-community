@@ -499,10 +499,10 @@ abstract class DumbService {
    * @see [DUMB_MODE]
    */
   interface DumbModeListener {
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     fun enteredDumbMode() {}
 
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     fun exitDumbMode() {}
   }
 
@@ -522,8 +522,8 @@ abstract class DumbService {
    * or the current context is smart and the file is indexable; return false otherwise
    */
   @ApiStatus.Internal
-  @RequiresBackgroundThread
-  @RequiresReadLock
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun isUsableInCurrentContext(thing: Any, file: VirtualFile?) : Boolean {
     if (file == null || !file.isInLocalFileSystem) return isUsableInCurrentContext(thing)
     return (!isDumb && FileIndexFacade.getInstance(project).isIndexable(file)) || isDumbAware(thing, project is LightEditCompatible)

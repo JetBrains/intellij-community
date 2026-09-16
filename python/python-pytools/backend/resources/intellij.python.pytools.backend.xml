@@ -1,0 +1,38 @@
+<idea-plugin visibility="internal">
+  <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.libraries.caffeine"/>
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.kernel.backend"/>
+    <module name="intellij.platform.project"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.rpc.backend"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.python.community"/>
+    <module name="intellij.python.community.execService"/>
+    <module name="intellij.python.pytools.common"/>
+    <module name="intellij.python.requirements.backend"/>
+    <!-- endregion -->
+  </dependencies>
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.python.pytools.pyTool"
+                    interface="com.intellij.python.pytools.backend.PyTool"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.python.pytools.genericPyToolManagerProvider"
+                    interface="com.intellij.python.pytools.backend.GenericPyToolManagerProvider"
+                    dynamic="true"/>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.python.pytools.backend.PyExecutableCache"
+                        serviceImplementation="com.intellij.python.pytools.backend.services.PyExecutableCacheImpl"/>
+    <applicationService serviceInterface="com.intellij.python.pytools.backend.PyToolProbeCache"
+                        serviceImplementation="com.intellij.python.pytools.backend.services.PyToolProbeCacheImpl"/>
+    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.python.pytools.backend.PyToolApiProvider"
+                                            apiInterfaces="com.intellij.python.pytools.common.PyToolApi"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.python.pytools.backend.statistics.PyToolUsagesCollector"/>
+  </extensions>
+</idea-plugin>

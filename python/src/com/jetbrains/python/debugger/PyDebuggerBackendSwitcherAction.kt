@@ -49,6 +49,7 @@ import com.jetbrains.python.sdk.findPythonSdk
 import kotlinx.coroutines.launch
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter
+import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebugSessionListener
 import com.intellij.xdebugger.XDebuggerManager
@@ -246,6 +247,21 @@ internal class PyDebuggerBackendSwitcherAction : ComboBoxAction(), DumbAware {
 }
 
 /**
+ * Whether this IDE process can host the backend switcher at all.
+ *
+ * The frontend loads its own copy of this module, and everything the switcher needs stays on the backend:
+ * the project SDKs, the [PyDebuggerBackendSwitchHandler] extensions of the PythonDAP plugin, and the
+ * [PyDebuggerOptionsProvider] copy that decides which backend starts a session. A frontend that answered
+ * from its own state showed pydevd whatever the session ran, and a switch there never reached the process
+ * that starts the debuggee (PY-88602).
+ *
+ * The switcher is therefore hidden in the frontend, and Settings | Build, Execution, Deployment |
+ * Python Debugger | Mode stays the way to choose the backend there. That page is served by the backend, so
+ * it reads and writes the copy the session uses.
+ */
+internal fun isPyDebuggerBackendSwitcherSupported(): Boolean = !IdeProductMode.isFrontend
+
+/**
  * Whether the backend switcher belongs on the Debug tool window tab the [e] context points at.
  *
  * The switcher lives in the tool window header, which is shared by every tab of every product that
@@ -253,6 +269,9 @@ internal class PyDebuggerBackendSwitcherAction : ComboBoxAction(), DumbAware {
  * JavaScript session must not be told which Python debugger backend it runs on (CPP-51572).
  */
 internal fun isPyDebuggerBackendSwitcherVisible(project: Project, e: AnActionEvent): Boolean {
+  // Checked before the pin, so the promotion cannot bring the switcher back on the frontend.
+  if (!isPyDebuggerBackendSwitcherSupported()) return false
+
   if (PyDebuggerBackendSwitcherVisibilityPin.isPinned(project)) return true
 
   // A handler that recognizes the tab decides for it.

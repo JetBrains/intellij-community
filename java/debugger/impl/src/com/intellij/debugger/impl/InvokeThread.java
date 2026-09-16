@@ -19,7 +19,7 @@ import kotlin.Unit;
 import kotlin.coroutines.CoroutineContext;
 import kotlinx.coroutines.CompletableJob;
 import kotlinx.coroutines.Job;
-import kotlinx.coroutines.JobKt;
+import kotlinx.coroutines.SupervisorKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Async;
 import org.jetbrains.annotations.NotNull;
@@ -40,17 +40,14 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
 
   public static final class WorkerThreadRequest<E extends PrioritizedTask> implements ContextAwareRunnable {
     private final InvokeThread<E> myOwner;
-    private final Job myWorkJob;
-    // keeps the work job in the completing state while this worker lives, so drain-time spawns still attach
-    private final CompletableJob myLifetimeJob;
+    private final CompletableJob myWorkerJob;
     private final ProgressIndicator myProgressIndicator = new EmptyProgressIndicator();
     private volatile Future<?> myRequestFuture;
     private final int myId = ourWorkerCounter.getAndIncrement();
 
     WorkerThreadRequest(InvokeThread<E> owner, @NotNull Job workJob) {
       myOwner = owner;
-      myWorkJob = workJob;
-      myLifetimeJob = JobKt.Job(workJob);
+      myWorkerJob = SupervisorKt.SupervisorJob(workJob);
     }
 
     @Override
@@ -75,14 +72,13 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
       }
       finally {
         ourWorkerRequest.remove();
-        myLifetimeJob.complete();
+        myWorkerJob.complete();
         boolean b = Thread.interrupted(); // reset interrupted status to return into pool
       }
     }
 
-    // spawned work must attach to the owner's work job, never to the thread that started the worker
     private @NotNull CoroutineContext workerContext() {
-      return ambientContextWithoutJobs().plus(new BlockingJob(myWorkJob));
+      return ambientContextWithoutJobs().plus(new BlockingJob(myWorkerJob));
     }
 
     public void requestStop() {
@@ -144,22 +140,20 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
   }
 
   protected final EventQueue<E> myEvents;
+  private final Job myWorkJob;
 
   private WorkerThreadRequest<E> myCurrentRequest = null;
 
-  /** The subclass must call {@link #startNewWorkerThread()} when its state is ready for {@link #getWorkJob()}. */
-  public InvokeThread() {
+  /**
+   * Creates a manager with the process job shared by all workers. The owner completes this job after final disposal.
+   * The subclass starts the first worker after its initialization.
+   */
+  protected InvokeThread(@NotNull Job workJob) {
+    myWorkJob = workJob;
     myEvents = new EventQueue<>(PrioritizedTask.Priority.values().length);
   }
 
   protected abstract void processEvent(@NotNull E e);
-
-  /**
-   * The job that owns work spawned from a worker; read again on each worker start.
-   * Each worker holds a child of it for its lifetime, so the job completes only after every worker has exited
-   * and all spawned work has finished.
-   */
-  protected abstract @NotNull Job getWorkJob();
 
   private static @NotNull CoroutineContext ambientContextWithoutJobs() {
     return ThreadContext.currentThreadContext().minusKey(Job.Key).minusKey(BlockingJob.Companion);
@@ -171,7 +165,7 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
     synchronized (this) {
       assertCurrentThreadIsActive();
 
-      final WorkerThreadRequest<E> workerRequest = new WorkerThreadRequest<>(this, getWorkJob());
+      final WorkerThreadRequest<E> workerRequest = new WorkerThreadRequest<>(this, myWorkJob);
       WorkerThreadRequest<E> oldRequest = myCurrentRequest; // just for logging
       myCurrentRequest = workerRequest;
       if (LOG.isDebugEnabled()) {

@@ -21,4 +21,8 @@ class IndexUpdateAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.BGT
   }
+
+  override fun update(e: AnActionEvent) {
+    e.presentation.isEnabledAndVisible = e.project != null && e.getData(MavenDataKeys.MAVEN_REPOSITORY) != null
+  }
 }

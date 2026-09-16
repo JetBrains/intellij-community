@@ -268,7 +268,7 @@ private suspend fun caretShift(project: Project, request: SourceNavigationReques
 /**
  * @return the offset in the coordinates of [SourceNavigationRequest.file], or `-1` when the request carries no offset
  */
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 private fun SourceNavigationRequest.targetOffset(caretShift: Int): Int {
   val marker = offsetMarker?.takeIf { it.isValid } ?: return -1
   return (marker.startOffset + caretShift).coerceAtMost(marker.document.textLength)

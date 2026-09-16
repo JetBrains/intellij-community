@@ -20,8 +20,9 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
+import com.intellij.openapi.editor.ex.RangeMarkers;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
-import com.intellij.openapi.editor.impl.marker.PMarker;
+import com.intellij.openapi.editor.impl.marker.SnapshotMarker;
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngineImpl;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.MarkupModel;
@@ -51,6 +52,7 @@ import com.intellij.testFramework.Timings;
 import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.CommonProcessors;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.TestTimeOut;
 import com.intellij.util.ref.GCUtil;
 import com.intellij.util.ui.EDT;
@@ -592,6 +594,25 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     });
   }
 
+  public void testMarkersShiftAfterBulkMultiReplaceAtDescendingOffsets() {
+    RangeMarker markerA = createMarker("xxxx mmmm yyyy nnnn zzzz tail", 5, 9);
+    Document document = markerA.getDocument();
+    RangeMarker markerB = document.createRangeMarker(15, 19);
+    RangeMarker markerC = document.createRangeMarker(25, 29);
+
+    WriteCommandAction.runWriteCommandAction(getProject(), () ->
+      DocumentUtil.executeInBulk(document, () -> {
+        document.replaceString(20, 24, "zzzzTT");
+        document.replaceString(10, 14, "yyyyTT");
+        document.replaceString(0, 4, "xxxxTT");
+      }));
+
+    assertEquals("xxxxTT mmmm yyyyTT nnnn zzzzTT tail", document.getText());
+    assertValidMarker(markerA, 7, 11);
+    assertValidMarker(markerB, 19, 23);
+    assertValidMarker(markerC, 31, 35);
+  }
+
   private static void assertValidMarker(@NotNull RangeMarker marker, int start, int end) {
     assertTrue(marker.isValid());
     assertEquals(start, marker.getStartOffset());
@@ -1100,7 +1121,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
   public void testInvalidMarkerIsPurgedAfterGc() {
     Ref<RangeMarkerEx> markerRef = new Ref<>(createMarker("0123456789", 2, 5));
     long markerId = markerRef.get().getId();
-    boolean snapshotMarker = markerRef.get() instanceof PMarker;
+    boolean snapshotMarker = markerRef.get() instanceof SnapshotMarker;
     deleteString(document, 1, 6);
     assertFalse(markerRef.get().isValid());
 
@@ -1118,7 +1139,8 @@ public class RangeMarkerTest extends LightPlatformTestCase {
       return true;
     });
     if (snapshotMarker) {
-      assertFalse(SnapshotMarkerEngineImpl.INSTANCE.containsMarkerId(((DocumentImpl)document).getCore().snapshot(), markerId));
+      var documentImpl = (DocumentImpl)document;
+      assertFalse(documentImpl.getRangeMarkers().rootStore().containsMarkerId(documentImpl.getCore().snapshot(), markerId));
     }
   }
 
@@ -1990,6 +2012,18 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     assertThrows(IllegalArgumentException.class, () -> createMarker("xxxx", 2, 1));
     assertThrows(IllegalArgumentException.class, () -> createMarker("xxxx", -1, 1));
     assertThrows(IllegalArgumentException.class, () -> createMarker("xxxx", 1, 5));
+  }
+
+  public void testRangeMarkerImplThrowsWhenSnapshotEngineIsEnabled() {
+    DocumentEx document = (DocumentEx)EditorFactory.getInstance().createDocument("");
+    if (RangeMarkers.Holder.USE_PMARKER_IMPLEMENTATION) {
+      assertThrows(AssertionError.class, () -> new RangeMarkerImpl(document, 0, 0, true, false));
+    }
+    else {
+      RangeMarkerImpl marker = new RangeMarkerImpl(document, 0, 0, true, false);
+      assertTrue(marker.isValid());
+      marker.dispose();
+    }
   }
 
   public void testUnderlyingTextDeletionMustLeadToInvalidation() {

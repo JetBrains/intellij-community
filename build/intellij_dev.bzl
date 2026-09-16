@@ -102,14 +102,18 @@ def _runtime_jvm_flags(name, jvm_flags, platform_prefix, config_path, system_pat
     `$${...}` is a literal `${...}` the java stub expands at launch; `BUILD_WORKSPACE_DIRECTORY` is set by `bazel run`,
     so a launcher started any other way must export it itself.
     """
-    all_jvm_flags = DEFAULT_JVM_FLAGS + jvm_flags
-
-    if platform_prefix:
-        all_jvm_flags = all_jvm_flags + ["-Didea.platform.prefix=" + platform_prefix]
 
     # Use provided paths or defaults based on target name
     effective_config_path = config_path if config_path else "$${BUILD_WORKSPACE_DIRECTORY}/out/dev-data/" + name + "/config"
     effective_system_path = system_path if system_path else "$${BUILD_WORKSPACE_DIRECTORY}/out/dev-data/" + name + "/system"
+
+    all_jvm_flags = DEFAULT_JVM_FLAGS + [
+        "-Didea.plugins.path=" + effective_config_path + "/plugins",
+        "-Didea.log.path=" + effective_system_path + "/log",
+    ] + jvm_flags
+
+    if platform_prefix:
+        all_jvm_flags = all_jvm_flags + ["-Didea.platform.prefix=" + platform_prefix]
 
     return all_jvm_flags + [
         "-Didea.config.path=" + effective_config_path,
@@ -189,27 +193,29 @@ def intellij_dev_prebuilt_binary(
         config_path = None,
         system_path = None,
         program_args = [],
-        visibility = None):
-    """Launches an already-assembled dev distribution, instead of assembling one first.
+        visibility = None,
+        local_home_tool = None):
+    """Launches a built distribution or a linked local home without packaging it.
 
-    The counterpart of [intellij_dev_binary]: same runtime vocabulary, but the layout was computed once by the dist's
-    action rather than on every `bazel run`. So none of the build's inputs appear here - no module jars, no
-    `bazel-targets.json`, no preloaded downloads, and no `additional.modules`, which the distribution was assembled with
-    and therefore already contains. What is left is the distribution itself, and nothing in it is product-specific.
+    The distribution declares its product and additional modules.
+    When it supplies local metadata, local_home_tool prepares a temporary home from its component runfiles.
     """
     ide_config = name + "_ide_config"
 
-    intellij_dev_dist_config(name = ide_config, dist = dist, visibility = ["//visibility:private"])
+    dist_target = name + "_distribution"
+    native.alias(name = dist_target, actual = dist, visibility = ["//visibility:private"])
+    intellij_dev_dist_config(name = ide_config, dist = dist_target, visibility = ["//visibility:private"])
+
+    local_home_data = [local_home_tool] if local_home_tool else []
+    local_home_flags = ["-Didea.dev.local.home.tool=$(rlocationpath %s)" % local_home_tool] if local_home_tool else []
 
     java_binary(
         name = name,
         visibility = visibility,
         runtime_deps = ["@community//platform/bootstrap/dev"],
         main_class = "org.jetbrains.intellij.build.devServer.PreBuiltDevMain",
-        # Both outputs, and they must stay siblings: the config names the home relatively, so that the pair survives
-        # being read from a different path than it was written to.
-        data = [dist, ide_config],
-        jvm_flags = _runtime_jvm_flags(name, jvm_flags, platform_prefix, config_path, system_path) + [
+        data = [dist_target, ide_config] + local_home_data,
+        jvm_flags = _runtime_jvm_flags(name, jvm_flags, platform_prefix, config_path, system_path) + local_home_flags + [
             "-D%s=$(rlocationpath %s)" % (DEV_IDE_CONFIG_PATH_PROPERTY, ide_config),
             # Not a build-time input: `AppMode.getDevIdeaProjectDir` and the webview native bridge read it at runtime,
             # and a dev launch has it only because `DevMainImpl` sets it from the project root it just built against.

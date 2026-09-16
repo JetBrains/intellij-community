@@ -2,153 +2,310 @@
 package com.intellij.openapi.editor.impl.caret
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.UI
-import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.getOrHandleException
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.editor.impl.caret.blink.CaretBlinkMachine
-import com.intellij.openapi.editor.impl.caret.model.CaretClock
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.editor.impl.caret.model.CaretCursorSnapshot
+import com.intellij.openapi.editor.impl.caret.model.CaretFrameInterval
 import com.intellij.openapi.editor.impl.caret.model.CaretTick
-import com.intellij.openapi.editor.impl.caret.model.TICK_MS
-import com.intellij.openapi.editor.impl.caret.motion.CaretMotionMachine
-import com.intellij.platform.util.coroutines.childScope
+import com.intellij.openapi.editor.impl.view.animation.AnimationClock
+import com.intellij.openapi.editor.impl.view.animation.AnimationTimeMark
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.ui.EDT
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.getAndUpdate
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
+import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration
 
-@Service(Service.Level.APP)
-internal class EditorCaretMutatorFactory(private val scope: CoroutineScope) {
-  companion object {
-    @JvmStatic
-    fun getInstance(): EditorCaretMutatorFactory = service()
-
-    @JvmStatic
-    fun createMutator(host: CaretAnimationHost, debugName: String): EditorCaretMutator =
-      getInstance().doCreateMutator(host, debugName)
-  }
-
-  private fun doCreateMutator(host: CaretAnimationHost, debugName: String) =
-    EditorCaretMutator(scope.childScope("Caret animation for $debugName"), host)
-}
-
+//   caretMoved() |> state.updateAndGet { retarget } |> ensureLoop()
+//                                                        v
+//         loop() |> advanceStep(prefetching = true) |> current.advance(tick) |> propagateStep()
+//           ^                                                                    |> editor.prefetchCaretFrames()
+//           |                                                                    |> editor.view.repaintCarets()
+//           +--- wait for nextDelay, or for a state change, while !step.isIdle
+//
+//   A settled move has no motion left. It skips the loop:
+//   caretMoved() |> state.updateAndGet { retarget } |> advanceNow(tick) |> advanceStep(prefetching = false)
+//                                                                       |> propagateStep() |> repaintCarets()
 internal class EditorCaretMutator internal constructor(
-  private val coroutineScope: CoroutineScope,
-  private val host: CaretAnimationHost,
+  private val editor: EditorImpl,
 ) : Disposable {
-  private val motion = CaretMotionMachine()
-  private val blink = CaretBlinkMachine()
-  private val wakeUps = Channel<Unit>(Channel.CONFLATED)
+  private val coroutineScope: CoroutineScope = editor.coroutineScope
+  private val state = MutableStateFlow(CaretAnimationState.initial())
+  private val settings = AtomicReference(editor.caretAnimationSettings())
+  private val disposed = AtomicBoolean(false)
 
-  private var settings = host.conditions.settings()
-  private var lastFrameAt = CaretClock.monotonicMillis()
-  private var loop: Job? = null
+  init {
+    editor.document.addDocumentListener(BulkUpdateListener(), this)
+  }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun caretMoved() {
-    val tick = tick(TICK_MS.toDouble())
-    motion.retarget(host.geometry.placements(), tick)
-    if (motion.isSettled) showNow(tick) else wakeUp()
+    val placements = editor.caretPlacements()
+    val isCaretShown = editor.isCaretShown(snapshot())
+    val repaintMetrics = editor.view.caretRepaintMetrics
+    val tick = tick(CaretFrameInterval.MOVEMENT)
+    val next = state.updateAndGet {
+      it.retarget(placements, tick, isCaretShown, repaintMetrics)
+    }
+    if (next.isMotionSettled) {
+      advanceNow(tick)
+    } else {
+      ensureLoop()
+    }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun caretMovedImmediately() {
-    val tick = tick(TICK_MS.toDouble())
-    motion.snapTo(host.geometry.placements(), tick)
-    showNow(tick)
+    val placements = editor.caretPlacements()
+    val repaintMetrics = editor.view.caretRepaintMetrics
+    val tick = tick(CaretFrameInterval.MOVEMENT)
+    state.update {
+      it.snapTo(placements, tick, repaintMetrics)
+    }
+    advanceNow(tick)
   }
 
-  @RequiresEdt
-  fun bulkUpdateStarting() {
-    val tick = tick(TICK_MS.toDouble())
-    motion.settle(tick)
-    showNow(tick)
+  /**
+   * Adopts the settings and the caret measurements of the editor. The view has to reinit its own settings first,
+   * because it measures the caret from a font cache that only its own reinit drops.
+   */
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  fun reinitSettings() {
+    settings.set(editor.caretAnimationSettings())
+    val repaintMetrics = editor.view.caretRepaintMetrics
+    state.update {
+      it.restartBlink().withRepaintMetrics(repaintMetrics)
+    }
+    ensureLoop()
   }
 
-  fun setBlinking(visible: Boolean) = onEdt {
-    if (visible) blink.start() else blink.stop()
-    wakeUp()
+  fun snapshot(): CaretCursorSnapshot {
+    return state.value.snapshot
   }
 
-  fun reinitSettings() = onEdt {
-    settings = host.conditions.settings()
-    blink.restart()
-    wakeUp()
+  fun setEnabled(enabled: Boolean): Boolean {
+    val previous: CaretCursorSnapshot = state.getAndUpdate {
+      it.withEnabled(enabled)
+    }.snapshot
+    if (previous.isEnabled != enabled) {
+      repaint(previous)
+    }
+    return previous.isEnabled
+  }
+
+  fun setVisible(visible: Boolean): Boolean {
+    val previousState = state.getAndUpdate {
+      it.withShown(visible, AnimationClock.markAnimationNow())
+    }
+    val previous = previousState.snapshot
+    val visibilityChanged = previous.isShown != visible
+    val becomesFullyOpaque = visible && !previous.isFullyOpaque
+    if (visibilityChanged || becomesFullyOpaque) {
+      repaint(previous)
+    }
+    ensureLoop()
+    return previous.isShown
+  }
+
+  fun setBlinking(blinking: Boolean) {
+    state.updateAndGet {
+      if (blinking) {
+        it.startBlink()
+      } else {
+        it.stopBlink()
+      }
+    }
+    ensureLoop()
+  }
+
+  /**
+   * Shows the caret at full opacity, without restarting the quiet period.
+   */
+  fun showFullyOpaque() {
+    state.update(CaretAnimationState::showFullyOpaque)
+  }
+
+  /**
+   * Marks the caret as active now, which holds the blink off for one quiet period.
+   */
+  fun recordActivity() {
+    state.update {
+      it.withActivityAt(AnimationClock.markAnimationNow())
+    }
   }
 
   override fun dispose() {
-    coroutineScope.cancel()
+    disposed.set(true)
+    state.update {
+      it.withRunning(false)
+    }
   }
 
-  @RequiresEdt
-  private fun showNow(tick: CaretTick) {
-    lastFrameAt = tick.now
-    val frame = nextFrame(tick, prefetching = false)
-    frame.applyTo(host)
-    if (frame.nextDelay != Duration.INFINITE) ensureLoop()
-  }
-
-  private fun wakeUp() {
-    ensureLoop()
-    wakeUps.trySend(Unit)
+  /**
+   * Produces one step on the calling thread, so that a settled move appears without waiting for the loop.
+   */
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  private fun advanceNow(tick: CaretTick) {
+    val step = advanceStep(prefetching = false, stopWhenIdle = false) {
+      tick
+    }
+    if (!step.isIdle) {
+      ensureLoop()
+    }
   }
 
   private fun ensureLoop() {
-    loop = loop?.takeIf { it.isActive } ?: launchLoop()
-  }
-
-  private fun launchLoop(): Job =
-    coroutineScope.launch(Dispatchers.UI + ModalityState.any().asContextElement()) {
-      runCatching { run() }.getOrHandleException { LOG.error("Caret animation failed", it) }
+    if (disposed.get()) {
+      return
     }
-
-  private suspend fun run() {
-    while (currentCoroutineContext().isActive) {
-      val now = CaretClock.monotonicMillis()
-      val frameMs = (now - lastFrameAt).coerceAtLeast(TICK_MS.toLong()).toDouble()
-      lastFrameAt = now
-
-      val frame = nextFrame(tick(frameMs), prefetching = true)
-      frame.applyTo(host)
-
-      if (frame.nextDelay == Duration.INFINITE) break
-      withTimeoutOrNull(frame.nextDelay) { wakeUps.receive() }
+    val wasRunning = state.getAndUpdate {
+      it.withRunning(true)
+    }.isRunning
+    if (wasRunning) {
+      return
     }
-  }
-
-  private fun nextFrame(tick: CaretTick, prefetching: Boolean): CaretFrame = when {
-    host.conditions.isFrozen() -> CaretFrame.IDLE
-    else -> CaretFrame(motion.advance(tick, prefetching), blink.advance(tick, prefetching))
-  }
-
-  private fun tick(frameMs: Double): CaretTick = CaretTick(
-    now = CaretClock.monotonicMillis(),
-    frameMs = frameMs,
-    settings = settings,
-    isCaretShown = host.conditions.isCaretShown(),
-    quietMs = host.conditions.millisSinceActivity(),
-  )
-
-  private inline fun onEdt(crossinline block: () -> Unit) {
-    if (EDT.isCurrentThreadEdt()) {
-      block()
-    } else {
-      coroutineScope.launch(Dispatchers.UI + ModalityState.any().asContextElement()) {
-        block()
+    coroutineScope.launch(DISPATCHER) {
+      runCatching {
+        loop()
+      }.getOrHandleException {
+        LOG.error("Caret animation failed", it)
       }
     }
   }
-}
 
-private val LOG = logger<EditorCaretMutator>()
+  private suspend fun loop() {
+    var isRunning = true
+    try {
+      while (currentCoroutineContext().isActive) {
+        val step = advanceStep(prefetching = true, stopWhenIdle = true) {
+          loopTick()
+        }
+        isRunning = !step.isIdle
+        if (!isRunning) {
+          break
+        }
+        // Wake up when the next frame is due, or as soon as somebody else changes the state.
+        withTimeoutOrNull(step.nextDelay) {
+          state.first {
+            it.version != step.version
+          }
+        }
+      }
+    }
+    finally {
+      if (isRunning) {
+        state.update {
+          it.withRunning(false)
+        }
+      }
+    }
+  }
+
+  /**
+   * Advances the state by one step and publishes the result. Retries until its own write wins, so that a concurrent
+   * editor request is never lost.
+   */
+  private inline fun advanceStep(
+    prefetching: Boolean,
+    stopWhenIdle: Boolean,
+    computeTick: CaretAnimationState.() -> CaretTick,
+  ): CaretStep {
+    while (true) {
+      val current = state.value
+      val tick = current.computeTick()
+      val isFrozen = disposed.get() || editor.document.isInBulkUpdate
+      val (advanced: CaretAnimationState, step: CaretStep) = if (isFrozen) {
+        current.freeze(tick.now)
+      } else {
+        current.advance(tick, prefetching)
+      }
+      val shouldStopLoop = stopWhenIdle && step.isIdle
+      val next: CaretAnimationState = if (shouldStopLoop) {
+        advanced.withRunning(false)
+      } else {
+        advanced
+      }
+      if (state.compareAndSet(current, next)) {
+        propagateStep(current, next, step)
+        return step
+      }
+    }
+  }
+
+  private fun propagateStep(
+    previousState: CaretAnimationState,
+    nextState: CaretAnimationState,
+    step: CaretStep,
+  ) {
+    if (disposed.get()) {
+      return
+    }
+    val prefetch = step.prefetch
+    if (prefetch != null) {
+      editor.prefetchCaretFrames(prefetch)
+    }
+    // Erasing the previous locations also erases the carets that were removed, because the snapshot still holds them.
+    if (step.moved) {
+      repaint(previousState.snapshot)
+    }
+    val needsRedraw = step.moved || step.opacityChanged
+    if (needsRedraw) {
+      repaint(nextState.snapshot)
+    }
+  }
+
+  private fun repaint(snapshot: CaretCursorSnapshot) {
+    if (disposed.get()) {
+      return
+    }
+    editor.view.repaintCarets(snapshot)
+  }
+
+  /**
+   * The tick of a loop frame, whose duration is however long the previous frame actually took.
+   */
+  private fun CaretAnimationState.loopTick(): CaretTick {
+    val now = AnimationClock.markAnimationNow()
+    return tick(frameDurationAt(now), now)
+  }
+
+  private fun tick(
+    frameDuration: Duration,
+    now: AnimationTimeMark = AnimationClock.markAnimationNow(),
+  ): CaretTick {
+    return CaretTick(
+      now = now,
+      frameDuration = frameDuration,
+      settings = settings.get(),
+      elapsedQuietTime = snapshot().quietTimeAt(now),
+    )
+  }
+
+  private inner class BulkUpdateListener : DocumentListener {
+    override fun bulkUpdateStarting(document: Document) {
+      val tick = tick(CaretFrameInterval.MOVEMENT)
+      state.update {
+        it.settle(tick)
+      }
+      advanceNow(tick)
+    }
+  }
+
+  companion object {
+    private val LOG = logger<EditorCaretMutator>()
+    private val DISPATCHER: CoroutineContext = Dispatchers.Default.limitedParallelism(1, "EditorCaretMutator")
+  }
+}

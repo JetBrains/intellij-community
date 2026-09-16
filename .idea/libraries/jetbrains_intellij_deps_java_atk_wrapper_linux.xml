@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="jetbrains.intellij.deps.java.atk.wrapper.linux" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps:intellij-deps-java-atk-wrapper:263.33">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps:intellij-deps-java-atk-wrapper:263.34">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/intellij-deps-java-atk-wrapper/263.33/intellij-deps-java-atk-wrapper-263.33.jar">
-          <sha256sum>effd191bd2589daa12c1d6a11dbdd84529ad290808c8effbb02e86d758d069a3</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/intellij-deps-java-atk-wrapper/263.34/intellij-deps-java-atk-wrapper-263.34.jar">
+          <sha256sum>c849a1704e1b77ef4a29c9b8897a73e946b98dd4c3193010a79c4eaa78eef5d7</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/intellij-deps-java-atk-wrapper/263.33/intellij-deps-java-atk-wrapper-263.33.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/intellij-deps-java-atk-wrapper/263.34/intellij-deps-java-atk-wrapper-263.34.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/intellij-deps-java-atk-wrapper/263.33/intellij-deps-java-atk-wrapper-263.33-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/intellij-deps-java-atk-wrapper/263.34/intellij-deps-java-atk-wrapper-263.34-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

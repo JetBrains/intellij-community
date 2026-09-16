@@ -102,7 +102,7 @@ internal class MultiverseFileViewProviderCache(
     return reanimated[context]
   }
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   private fun reanimateIfNecessary(
     vFile: VirtualFile,
     fileMap: FileProviderMap,
@@ -253,7 +253,7 @@ internal class MultiverseFileViewProviderCache(
     return effectiveContext
   }
 
-  @RequiresWriteLock
+  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
   override fun markPossiblyInvalidated() {
     SmartPointerManagerEx.getInstanceEx(project).possiblyInvalidationModCounter.incModificationCount()
     doIfInitialized { map ->

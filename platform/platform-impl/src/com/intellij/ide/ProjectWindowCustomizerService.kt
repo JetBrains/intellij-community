@@ -173,7 +173,7 @@ object RecentProjectColorPalette {
 
 @Internal
 interface ProjectColorChangeListener {
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun projectColorChanged(projectPath: @SystemIndependent String)
 }
 

@@ -13,6 +13,10 @@ jps_test(
 )
 ### skip generation section `test intellij.platform.vcs.impl.shared.tests`
 
+### auto-generated section `dev intellij.platform.vcs.impl.shared` start
+content_module_jar(module = ":shared")
+### auto-generated section `dev intellij.platform.vcs.impl.shared` end
+
 ### auto-generated section `build intellij.platform.vcs.impl.shared` start
 jvm_library(
     name = "shared",
@@ -66,8 +70,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":shared")
-
 jvm_library(
     name = "shared_test_lib",
     testonly = True,
@@ -119,7 +121,6 @@ exports_files(
     [
         "intellij.platform.vcs.impl.shared.iml",
         "resources/intellij.platform.vcs.impl.shared.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )
@@ -211,7 +212,8 @@ jvm_library(
         "//platform/diagnostic/telemetry:telemetry_test_lib",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
-        "@lib//:mockito",
+        "//libraries/mockito",
+        "//libraries/mockito:mockito_test_lib",
         "//platform/core-impl",
         "//platform/core-impl:core-impl_test_lib",
         "//fleet/rhizomedb",

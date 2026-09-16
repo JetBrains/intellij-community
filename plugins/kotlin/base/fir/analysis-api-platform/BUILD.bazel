@@ -3,15 +3,27 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.kotlin.analysis.platform` start
+content_module_jar(
+    libraries = ["@lib//:kotlin-analysis-platform-ehcache-sizeof"],
+    module = ":kotlin-analysis-platform",
+)
+### auto-generated section `dev intellij.kotlin.analysis.platform` end
+
 ### auto-generated section `build intellij.kotlin.analysis.platform` start
 create_kotlinc_options(
     name = "custom_kotlin-analysis-platform",
     opt_in = [
-        "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
-        "org.jetbrains.kotlin.analysis.api.KaPlatformInterface",
-        "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+        "org.jetbrains.kotlin.psi.KtExperimentalApi",
+        "org.jetbrains.kotlin.psi.KtNonPublicApi",
+        "org.jetbrains.kotlin.psi.KtIdeApi",
         "org.jetbrains.kotlin.analysis.api.KaExperimentalApi",
         "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+        "org.jetbrains.kotlin.analysis.api.KaPlatformInterface",
+        "org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaUnstableDiagnosticApi",
+        "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
+        "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+        "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
     ],
     x_context_parameters = True,
 )
@@ -67,11 +79,6 @@ jvm_library(
         "//plugins/kotlin/kotlin.searching",
         "//java/java-psi-impl:psi-impl",
     ],
-)
-
-content_module_jar(
-    libraries = ["@lib//:kotlin-analysis-platform-ehcache-sizeof"],
-    module = ":kotlin-analysis-platform",
 )
 
 jvm_library(
@@ -134,11 +141,16 @@ exports_files(
 create_kotlinc_options(
     name = "custom_kotlin-analysis-platform-tests",
     opt_in = [
-        "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
-        "org.jetbrains.kotlin.analysis.api.KaPlatformInterface",
-        "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+        "org.jetbrains.kotlin.psi.KtExperimentalApi",
+        "org.jetbrains.kotlin.psi.KtNonPublicApi",
+        "org.jetbrains.kotlin.psi.KtIdeApi",
         "org.jetbrains.kotlin.analysis.api.KaExperimentalApi",
         "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+        "org.jetbrains.kotlin.analysis.api.KaPlatformInterface",
+        "org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaUnstableDiagnosticApi",
+        "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
+        "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+        "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
     ],
     x_context_parameters = True,
 )

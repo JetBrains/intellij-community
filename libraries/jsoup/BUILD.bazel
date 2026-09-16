@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.jsoup` start
+content_module_jar(
+    libraries = ["@lib//:libraries-jsoup-jsoup"],
+    module = ":jsoup",
+)
+### auto-generated section `dev intellij.libraries.jsoup` end
+
 ### auto-generated section `build intellij.libraries.jsoup` start
 jvm_library(
     name = "jsoup",
@@ -16,11 +23,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-jsoup-jsoup"],
     runtime_deps = ["@lib//:libraries-jsoup-jsoup"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-jsoup-jsoup"],
-    module = ":jsoup",
 )
 
 jvm_library(
@@ -43,7 +45,6 @@ exports_files(
     [
         "intellij.libraries.jsoup.iml",
         "resources/intellij.libraries.jsoup.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

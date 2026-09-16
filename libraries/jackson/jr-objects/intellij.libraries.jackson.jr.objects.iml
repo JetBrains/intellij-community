@@ -9,19 +9,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="jackson-jr-objects" type="repository">
-        <properties include-transitive-deps="false" maven-id="com.fasterxml.jackson.jr:jackson-jr-objects:2.19.0">
+        <properties include-transitive-deps="false" maven-id="com.fasterxml.jackson.jr:jackson-jr-objects:2.22.2">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/com/fasterxml/jackson/jr/jackson-jr-objects/2.19.0/jackson-jr-objects-2.19.0.jar">
-              <sha256sum>1fbd56f47b0a35031585fa0444b81f1f284ebe4a8752a86f42d0c092c4d693e7</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/fasterxml/jackson/jr/jackson-jr-objects/2.22.2/jackson-jr-objects-2.22.2.jar">
+              <sha256sum>965f3394ad70f72bb1cabfd43ded75e4080437d54b1193f8f295871a5359ba6c</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/jr/jackson-jr-objects/2.19.0/jackson-jr-objects-2.19.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/jr/jackson-jr-objects/2.22.2/jackson-jr-objects-2.22.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/jr/jackson-jr-objects/2.19.0/jackson-jr-objects-2.19.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/jr/jackson-jr-objects/2.22.2/jackson-jr-objects-2.22.2-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

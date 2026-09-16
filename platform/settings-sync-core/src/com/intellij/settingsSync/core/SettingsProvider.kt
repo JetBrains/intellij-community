@@ -36,20 +36,20 @@ interface SettingsProvider<T: Any> {
    * Returns current state of the settings as they are in the IDE, or `null` if current settings are equal to default.
    * Returning null for default settings is necessary, to avoid creating a file on disk when it is not needed.
    */
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun collectCurrentSettings(): T?
 
   /**
    * Applies settings received from the cloud, to the IDE.
    */
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun applyNewSettings(newSettings: T)
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   @Throws(Exception::class)
   fun serialize(settings: T) : String
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   @Throws(Exception::class)
   fun deserialize(text: String): T
 
@@ -70,7 +70,7 @@ interface SettingsProvider<T: Any> {
    * @return the resulting state which will be used as the conflict resolution and will be recorded to the settings sync and propagated
    * both to the local IDE and to the cloud (and then to other machines).
    */
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun mergeStates(base: T?, older: T, newer: T): T
 
 }

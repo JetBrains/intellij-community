@@ -178,7 +178,7 @@ final class XDebuggerTreeSpeedSearch extends TreeSpeedSearchInsideCollapsedNodes
 
     ApplicationManager.getApplication().invokeLater(() -> {
       final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-      hint.show(component, point.x, point.y, owner instanceof JComponent ? (JComponent)owner : null, hintHint);
+      hint.show(component, point.x, point.y, owner instanceof JComponent jComponent ? jComponent : null, hintHint);
     });
 
 

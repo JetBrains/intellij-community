@@ -51,7 +51,7 @@ class CallReplacementInfo(val name: String, val returnType: PsiType? = null, var
 /**
  * Replaces a [UCallExpression] with a call as described by [CallChainReplacementInfo].
  */
-@RequiresWriteLock
+@RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
 fun UCallExpression.replaceWithCallChain(callChainReplacementInfo: CallChainReplacementInfo) {
   val element = sourcePsi ?: return
   val project = element.project

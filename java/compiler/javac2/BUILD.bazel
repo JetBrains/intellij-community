@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.java.compiler.antTasks` start
+content_module_jar(module = ":java-compiler-antTasks")
+### auto-generated section `dev intellij.java.compiler.antTasks` end
+
 ### auto-generated section `build intellij.java.compiler.antTasks` start
 jvm_library(
     name = "java-compiler-antTasks",
@@ -29,8 +33,6 @@ jvm_library(
         "//java/compiler/instrumentation-util",
     ],
 )
-
-content_module_jar(module = ":java-compiler-antTasks")
 
 jvm_library(
     name = "java-compiler-antTasks_test_lib",

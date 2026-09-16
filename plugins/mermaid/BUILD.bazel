@@ -1,5 +1,7 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
+load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_DESCRIPTORS", "MODULE_TARGETS")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jps_test(
@@ -10,6 +12,28 @@ jps_test(
 )
 
 ### skip generation section `test intellij.mermaid.tests`
+
+### auto-generated section `dev intellij.mermaid` start
+dev_dist_plugin(
+    descriptor = "resources/META-INF/plugin.xml",
+    descriptor_index = MODULE_DESCRIPTORS,
+    descriptor_modules = [
+        "intellij.mermaid.frontend",
+        "intellij.mermaid.json",
+        "intellij.mermaid.markdown",
+        "intellij.mermaid.spellchecker",
+    ],
+    main_module = "intellij.mermaid",
+    module_targets = MODULE_TARGETS,
+    prepacked_content_modules = [
+        # do not sort,
+        "intellij.mermaid.frontend",
+        "intellij.mermaid.json",
+        "intellij.mermaid.markdown",
+        "intellij.mermaid.spellchecker",
+    ],
+)
+### auto-generated section `dev intellij.mermaid` end
 
 ### auto-generated section `build intellij.mermaid` start
 jvm_library(
@@ -119,6 +143,19 @@ jvm_library(
         "//platform/util/coroutines:coroutines_test_lib",
     ],
 )
+
+ij_plugin(
+    name = "mermaid_plugin",
+    descriptor_module = ":mermaid",
+    content_modules = [
+        # do not sort,
+        "//plugins/mermaid/markdown",
+        "//plugins/mermaid/frontend",
+        "//plugins/mermaid/json",
+        "//plugins/mermaid/spellchecker",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `build intellij.mermaid` end
 
 ### auto-generated section `iml intellij.mermaid` start
@@ -133,26 +170,6 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.mermaid` end
-
-### auto-generated section `dev intellij.mermaid` start
-dev_dist_plugin(
-    descriptor = "resources/META-INF/plugin.xml",
-    descriptor_module = ":mermaid",
-    descriptors = {
-        "@community//plugins/mermaid/frontend:resources/intellij.mermaid.frontend.xml": "intellij.mermaid.frontend.xml",
-        "@community//plugins/mermaid/json:resources/intellij.mermaid.json.xml": "intellij.mermaid.json.xml",
-        "@community//plugins/mermaid/markdown:resources/intellij.mermaid.markdown.xml": "intellij.mermaid.markdown.xml",
-        "@community//plugins/mermaid/spellchecker:resources/intellij.mermaid.spellchecker.xml": "intellij.mermaid.spellchecker.xml",
-    },
-    main_module = "intellij.mermaid",
-    prepacked_content_modules = [
-        "//plugins/mermaid/frontend:frontend_content_module_jar",
-        "//plugins/mermaid/json:json_content_module_jar",
-        "//plugins/mermaid/markdown:markdown_content_module_jar",
-        "//plugins/mermaid/spellchecker:spellchecker_content_module_jar",
-    ],
-)
-### auto-generated section `dev intellij.mermaid` end
 
 ### auto-generated section `build intellij.mermaid.tests` start
 jvm_library(

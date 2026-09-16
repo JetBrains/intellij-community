@@ -36,7 +36,7 @@ import kotlin.io.path.name
 @OptIn(LowLevelLocalMachineAccess::class)
 object LogPacker {
   @JvmStatic
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   @Throws(IOException::class)
   suspend fun packLogs(project: Project?): Path = withContext(Dispatchers.IO) {
     val logs = PathManager.getLogDir()

@@ -43,6 +43,8 @@ import com.intellij.lang.jvm.actions.CreateMethodRequest
 import com.intellij.lang.jvm.actions.JvmElementActionsFactory
 import com.intellij.lang.jvm.actions.annotationRequest
 import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModCommandAction
+import com.intellij.modcommand.ModCommandService
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.modcommand.PsiUpdateModCommandAction
@@ -50,6 +52,7 @@ import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.pom.java.JavaFeature
 import com.intellij.psi.CommonClassNames
 import com.intellij.psi.PsiAnnotation
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiField
 import com.intellij.psi.PsiJavaFile
@@ -66,6 +69,18 @@ import com.intellij.util.ThreeState
 import com.intellij.util.asSafely
 import org.jetbrains.uast.UDeclaration
 import java.util.Locale
+
+/**
+ * Adapts a create-member action to the old API.
+ *
+ * The wrapper is both an [IntentionAction] and a [com.intellij.codeInspection.LocalQuickFix], and it
+ * takes its name from the [Presentation]. A caller which turns the action into a quick fix with
+ * `IntentionWrapper.wrapToQuickFix` therefore still sees the full name, e.g. *Create field 'btn'*.
+ * A plain [com.intellij.modcommand.ModCommandAction.asIntention] wrapper is no `LocalQuickFix`, so
+ * such a caller would fall back to the family name.
+ */
+private fun ModCommandAction.asMemberIntention(target: PsiClass): IntentionAction =
+  ModCommandService.getInstance().wrapToLocalQuickFixAndIntentionActionOnPsiElement(this, target)
 
 public class JavaElementActionsFactory : JvmElementActionsFactory() {
   override fun createChangeModifierActions(target: JvmModifiersOwner, request: ChangeModifierRequest): List<IntentionAction> {
@@ -160,14 +175,14 @@ public class JavaElementActionsFactory : JvmElementActionsFactory() {
         InheritanceUtil.isInheritorOrSelf(javaClass, it, true)
       }
       if (typesAgree) {
-        result += CreateEnumConstantAction(javaClass, request)
+        result += CreateEnumConstantAction(javaClass, request).asMemberIntention(javaClass)
       }
     }
     if (constantRequested || request.fieldName.uppercase(Locale.ENGLISH) == request.fieldName) {
-      result += CreateConstantAction(javaClass, request)
+      result += CreateConstantAction(javaClass, request).asMemberIntention(javaClass)
     }
     if (!constantRequested) {
-      result += CreateFieldAction(javaClass, request)
+      result += CreateFieldAction(javaClass, request).asMemberIntention(javaClass)
     }
     return result
   }
@@ -188,9 +203,9 @@ public class JavaElementActionsFactory : JvmElementActionsFactory() {
     }
 
     val result = ArrayList<IntentionAction>()
-    result += CreateMethodAction(javaClass, request, false)
+    result += CreateMethodAction(javaClass, request, false).asMemberIntention(javaClass)
     if (!staticMethodRequested && javaClass.hasModifierProperty(PsiModifier.ABSTRACT) && !javaClass.isInterface) {
-      result += CreateMethodAction(javaClass, request, true)
+      result += CreateMethodAction(javaClass, request, true).asMemberIntention(javaClass)
     }
     if (!javaClass.isInterface) {
       result += CreatePropertyAction(javaClass, request)
@@ -202,7 +217,7 @@ public class JavaElementActionsFactory : JvmElementActionsFactory() {
 
   override fun createAddConstructorActions(targetClass: JvmClass, request: CreateConstructorRequest): List<IntentionAction> {
     val javaClass = targetClass.toJavaClassOrNull() ?: return emptyList()
-    return listOf(CreateConstructorAction(javaClass, request))
+    return listOf(CreateConstructorAction(javaClass, request).asMemberIntention(javaClass))
   }
 
   override fun createChangeParametersActions(target: JvmMethod, request: ChangeParametersRequest): List<IntentionAction> {

@@ -1,6 +1,0 @@
-- name: dist.all/lib/intellij.libraries.java.compatibility.jar
-  modules:
-  - name: intellij.libraries.java.compatibility
-    libraries:
-      java-compatibility:
-      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/java-compatibility/1/java-compatibility-1.jar

@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.protobuf.kotlin` start
+content_module_jar(
+    libraries = ["@lib//:libraries-protobuf-kotlin-google-protobuf-kotlin"],
+    module = ":protobuf-kotlin",
+)
+### auto-generated section `dev intellij.libraries.protobuf.kotlin` end
+
 ### auto-generated section `build intellij.libraries.protobuf.kotlin` start
 jvm_library(
     name = "protobuf-kotlin",
@@ -16,11 +23,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-protobuf-kotlin-google-protobuf-kotlin"],
     runtime_deps = ["@lib//:libraries-protobuf-kotlin-google-protobuf-kotlin"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-protobuf-kotlin-google-protobuf-kotlin"],
-    module = ":protobuf-kotlin",
 )
 
 jvm_library(
@@ -42,7 +44,6 @@ exports_files(
     [
         "intellij.libraries.protobuf.kotlin.iml",
         "resources/intellij.libraries.protobuf.kotlin.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

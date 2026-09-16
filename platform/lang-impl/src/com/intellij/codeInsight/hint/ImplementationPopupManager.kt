@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint
 
 import com.intellij.codeInsight.documentation.DocumentationManager
@@ -7,7 +7,6 @@ import com.intellij.codeInsight.navigation.BackgroundUpdaterTaskBase
 import com.intellij.codeInsight.navigation.ImplementationSearcher
 import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -90,9 +89,7 @@ class ImplementationPopupManager {
   ): JBPopup {
     val updateProcessor: PopupUpdateProcessor = object : PopupUpdateProcessor(session.project) {
       override fun updatePopup(lookupItemObject: Any?) {
-        WriteIntentReadAction.run {
-          updatePopup(lookupItemObject)
-        }
+        updatePopup(lookupItemObject)
       }
 
       override fun onClosed(event: LightweightWindowEvent) {

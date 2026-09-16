@@ -11,6 +11,8 @@ import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.project.Project
 import com.intellij.platform.scopes.SearchScopeData
 import com.intellij.platform.scopes.SearchScopesInfo
+import com.intellij.platform.searchEverywhere.providers.target.SeScopeById
+import com.intellij.platform.searchEverywhere.providers.target.SeScopeByIdMap
 import com.intellij.platform.searchEverywhere.utils.SuspendLazyProperty
 import com.intellij.platform.searchEverywhere.utils.suspendLazy
 import com.intellij.psi.PsiElement
@@ -18,7 +20,6 @@ import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import java.util.UUID
 
 @ApiStatus.Internal
 class ScopeChooserActionProviderDelegate private constructor(private val contributorWrapper: SeAsyncContributorWrapper<Any>) {
@@ -50,7 +51,7 @@ class ScopeChooserActionProviderDelegate private constructor(private val contrib
       scopeChooserAction.scopesWithSeparators
     }.mapNotNull { scope ->
       val key = scope.displayName?.let {
-        "${UUID.randomUUID()}$SCOPE_ID_SEPARATOR${ScopeIdMapper.instance.getScopeSerializationId(it)}"
+        SeScopeById.generateScopeId(it)
       } ?: return@mapNotNull null
 
       val data = SearchScopeData.from(scope, key)
@@ -116,25 +117,6 @@ class ScopeChooserActionProviderDelegate private constructor(private val contrib
   }
 }
 
-private const val SCOPE_ID_SEPARATOR = '_'
-
-@ApiStatus.Internal
-interface SeScopeById {
-  operator fun get(isEverywhere: Boolean): ScopeDescriptor?
-  operator fun get(scopeId: String): ScopeDescriptor?
-}
-
-private class SeScopeByIdMap(
-  private val scopeIdToScope: Map<String, ScopeDescriptor>,
-  private val everywhereScopeId: String?,
-  private val projectScopeId: String?,
-) : SeScopeById {
-  override fun get(isEverywhere: Boolean): ScopeDescriptor? =
-    (if (isEverywhere) everywhereScopeId else projectScopeId)?.let { scopeIdToScope[it] }
-
-  override fun get(scopeId: String): ScopeDescriptor? = scopeIdToScope[scopeId]
-}
-
 @ApiStatus.Internal
 class SeScopeByIdFiles(val project: Project, val psiContext: SmartPsiElementPointer<PsiElement?>?): SeScopeById {
   private val scopes = runReadActionBlocking {
@@ -153,5 +135,5 @@ class SeScopeByIdFiles(val project: Project, val psiContext: SmartPsiElementPoin
   }
 
   override fun get(isEverywhere: Boolean): ScopeDescriptor? = (if (isEverywhere) everywhereScopeId else projectScopeId).let { scopes[it] }
-  override fun get(scopeId: String): ScopeDescriptor? = scopes[scopeId.substringAfter(SCOPE_ID_SEPARATOR)]
+  override fun get(scopeId: String): ScopeDescriptor? = scopes[SeScopeById.extractSerializationId(scopeId)]
 }

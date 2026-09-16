@@ -564,14 +564,10 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           {
             panel {
               row {
-                checkBox(cdShowToolWindowBars).apply {
-                  enabled(!NotRoamableUiSettings.getInstance().xNextStripe)
-                  if (NotRoamableUiSettings.getInstance().xNextStripe) {
-                    comment(message("xnext.comment.unavailable"))
+                checkBox(cdShowToolWindowBars)
+                  .onChanged { cb ->
+                    findDiagramPanel(cb)?.showToolWindowBars = cb.isSelected
                   }
-                }.onChanged { cb ->
-                  findDiagramPanel(cb)?.showToolWindowBars = cb.isSelected
-                }
               }
               if (ExperimentalUI.isNewUI()) {
                 val extension = ToolWindowStripeExtension.getInstance()

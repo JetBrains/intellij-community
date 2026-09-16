@@ -48,9 +48,9 @@ public class JavaTypeInfo implements TypeInfo {
 
   @Override
   public boolean equals(Object obj) {
-    if (!(obj instanceof JavaTypeInfo)) {
+    if (!(obj instanceof JavaTypeInfo info)) {
       return false;
     }
-    return ((JavaTypeInfo)obj).referenceType.equals(referenceType);
+    return info.referenceType.equals(referenceType);
   }
 }

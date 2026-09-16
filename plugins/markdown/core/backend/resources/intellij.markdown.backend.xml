@@ -7,6 +7,7 @@
       <module name="intellij.libraries.markdown"/>
       <module name="intellij.platform.analysis"/>
       <module name="intellij.platform.backend"/>
+      <module name="intellij.platform.builtInServer.impl"/>
       <module name="intellij.platform.core"/>
       <module name="intellij.platform.core.impl"/>
       <module name="intellij.platform.core.ui"/>
@@ -35,17 +36,22 @@
       <action id="CopyReference" class="com.intellij.markdown.backend.reference.headers.MarkdownHeaderCopyAction" overrides="true"/>
     </actions>
     <extensions defaultExtensionNs="com.intellij">
+      <applicationService serviceImplementation="com.intellij.markdown.backend.services.MarkdownFrontendRunnerRequestService" client="all"/>
       <highlightingPassFactory implementation="com.intellij.markdown.backend.editor.livepreview.MarkdownLivePreviewPassFactory"/>
       <platform.rpc.backend.remoteApiProvider
-        implementation="com.intellij.markdown.backend.editor.livepreview.MarkdownLivePreviewRemoteApiProvider"/>
+        implementation="com.intellij.markdown.backend.editor.livepreview.MarkdownLivePreviewRemoteApiProvider"
+        apiInterfaces="org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewRemoteApi"/>
       <completion.contributor
         language="Markdown" implementationClass="com.intellij.markdown.backend.completion.MarkdownAtPathCompletionContributor"/>
       <platform.rpc.backend.remoteApiProvider
-        implementation="com.intellij.markdown.backend.providers.MarkdownLinkOpenerApiProvider"/>
+        implementation="com.intellij.markdown.backend.providers.MarkdownLinkOpenerApiProvider"
+        apiInterfaces="org.intellij.plugins.markdown.service.MarkdownLinkOpenerRemoteApi"/>
       <platform.rpc.backend.remoteApiProvider
-        implementation="com.intellij.markdown.backend.providers.VirtualFileAccessorProvider"/>
+        implementation="com.intellij.markdown.backend.providers.VirtualFileAccessorProvider"
+        apiInterfaces="org.intellij.plugins.markdown.service.VirtualFileAccessor"/>
       <platform.rpc.backend.remoteApiProvider
-        implementation="com.intellij.markdown.backend.providers.MarkdownCommandRunnerApiProvider"/>
+        implementation="com.intellij.markdown.backend.providers.MarkdownCommandRunnerApiProvider"
+        apiInterfaces="org.intellij.plugins.markdown.service.MarkdownCommandRunnerRemoteApi"/>
       <stubElementRegistryExtension implementation="com.intellij.markdown.backend.index.MarkdownStubRegistryExtension"/>
 
       <longLineInspectionPolicy implementation="org.intellij.plugins.markdown.editor.MarkdownLongLineInspectionPolicy"/>

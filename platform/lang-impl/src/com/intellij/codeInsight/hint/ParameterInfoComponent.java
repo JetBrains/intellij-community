@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.DumbUtil;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
@@ -94,8 +95,8 @@ public final class ParameterInfoComponent extends JPanel {
   private JLabel myShortcutLabel;
   private final JPanel myBottomPanel;
   private JComponent myCustomBottomComponent;
-  private final JLabel myDumbLabel = new JLabel(IdeBundle.dumbModeMessage("dumb.mode.analyzing.project",
-                                                                         "dumb.mode.light.analyzing.project"));
+  private final JLabel myDumbLabel = new JLabel(DumbUtil.dumbModeMessage(IdeBundle.message("dumb.mode.analyzing.project"),
+                                                                         IdeBundle.message("dumb.mode.light.analyzing.project")));
   private final boolean myAllowSwitchLabel;
 
   private final Font NORMAL_FONT;

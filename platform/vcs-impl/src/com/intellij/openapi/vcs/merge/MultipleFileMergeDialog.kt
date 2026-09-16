@@ -243,7 +243,7 @@ open class MultipleFileMergeDialog(
    *
    * IJPL-251324 Merge Revisions viewer: cancelling overwrites the conflicted file and marks it resolved
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun revertAbandonedDocuments() {
     val fileDocumentManager = FileDocumentManager.getInstance()
     for (file in unresolvedFiles) {
@@ -273,7 +273,7 @@ open class MultipleFileMergeDialog(
 
   @Throws(ProcessCanceledException::class)
   @RequiresBlockingContext
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun resolveAutomatically(
     project: Project,
     iterativeDataHolder: MergeConflictIterativeDataHolder,
@@ -290,7 +290,7 @@ open class MultipleFileMergeDialog(
           reportSequentialProgress(files.size) { reporter ->
             for ((index, file) in files.withIndex()) {
               reporter.itemStep(VcsBundle.message("multiple.file.merge.modal.progress.resolving.file", index + 1, files.size)) {
-                val request = mergeRequestBuilder(file).build()
+                val request = mergeRequestBuilder(file).build().getOrNull() ?: return@itemStep
                 val model = iterativeDataHolder.prepareModelIfSupported(file, request) ?: return@itemStep
 
                 edtWriteAction {
@@ -309,7 +309,7 @@ open class MultipleFileMergeDialog(
     updateTree(SetDefaultTreeStateStrategy())
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun acceptForResolution(resolution: MergeSession.Resolution, from: SideAppliedFrom) {
     assert(resolution.yoursOrTheirs())
     val files = table.selectedFiles
@@ -328,9 +328,10 @@ open class MultipleFileMergeDialog(
           val iterativeFilesWithModels = mutableListOf<Pair<VirtualFile, MergeConflictModel>>()
           val nonIterativeFiles = mutableListOf<VirtualFile>()
           for (file in textFiles) {
-            val request = mergeRequestBuilder(file).build()
-            // Need to make sure that the iterative is actually possible for that given request
-            val model = iterativeDataHolder.prepareModelIfSupported(file, request)
+            // A file the iterative resolution cannot take (too big to load or to diff) falls back to the
+            // content resolution, which opens no viewer.
+            val request = mergeRequestBuilder(file).build().getOrNull()
+            val model = request?.let { iterativeDataHolder.prepareModelIfSupported(file, it) }
             if (model != null) {
               iterativeFilesWithModels.add(file to model)
             }
@@ -388,7 +389,7 @@ open class MultipleFileMergeDialog(
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun acceptRevisionForIterativeResolution(
     filesWithModel: List<Pair<VirtualFile, MergeConflictModel>>,
     resolution: MergeSession.Resolution,
@@ -418,7 +419,7 @@ open class MultipleFileMergeDialog(
   }
 
   @RequiresBlockingContext
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun acceptRevisionForFileIterativeResolution(
     file: VirtualFile,
     mergeConflictModel: MergeConflictModel,
@@ -430,7 +431,7 @@ open class MultipleFileMergeDialog(
     checkMarkModifiedProject(project, file)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun resolveFileViaContent(file: VirtualFile, resolution: MergeSession.Resolution, data: MergeData) {
     if (!DiffUtil.makeWritable(project, file)) {
       throw IOException(UIBundle.message("file.is.read.only.message.text", file.presentableUrl))
@@ -450,7 +451,7 @@ open class MultipleFileMergeDialog(
 
   // Under the hood this is calling [com.intellij.dvcs.repo.VcsRepositoryManager.getRepositoryForRoot(com.intellij.openapi.vfs.VirtualFile)]
   // that needs to be done in a background thread
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private fun markFilesProcessed(files: List<VirtualFile>, resolution: MergeSession.Resolution) {
     unresolvedFiles.removeAll(files)
     if (mergeSession is MergeSessionEx) {
@@ -471,12 +472,12 @@ open class MultipleFileMergeDialog(
     if (project != null) VcsDirtyScopeManager.getInstance(project).filesDirty(files, emptyList())
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private fun markFileProcessed(file: VirtualFile, resolution: MergeSession.Resolution) {
     markFilesProcessed(listOf(file), resolution)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun updateModelFromFiles() {
     if (unresolvedFiles.isEmpty()) {
       doCancelAction()
@@ -518,7 +519,7 @@ open class MultipleFileMergeDialog(
   }
 
   @RequiresBlockingContext
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun showMergeDialog(from: FileOpenedFrom) {
     // Only the files the user explicitly selected count as "intentionally" opened;
     // the rest are auto-advanced to by the dialog.
@@ -541,7 +542,7 @@ open class MultipleFileMergeDialog(
   }
 
   @RequiresBlockingContext
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun showMergeDialogForFile(file: VirtualFile, from: FileOpenedFrom, howOpened: FileOpenedHow): MergeResult {
     var mergeResult: MergeResult? = null
     val request = runWithModalProgressBlocking(getModalTaskOwner(),
@@ -572,9 +573,9 @@ open class MultipleFileMergeDialog(
             }
           }
         }
-      }.build().also { request ->
-        iterativeDataHolder?.prepareModelIfSupported(file, request)
-      }
+      }.build()
+        .getOrThrow()
+        .also { request -> iterativeDataHolder?.prepareModelIfSupported(file, request) }
     }
 
     val times = fileOpenCounts.getOrDefault(file, 0) + 1
@@ -610,7 +611,7 @@ open class MultipleFileMergeDialog(
   private fun getUnresolvedFiles(): List<VirtualFile> = unresolvedFiles - getResolvedFiles()
   private fun getResolvedFiles(): Set<VirtualFile> = (iterativeDataHolder?.getResolvedFilesAndModels()?.keys ?: emptySet())
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun runWithErrorHandling(block: () -> Unit) {
     try {
       block()
@@ -664,19 +665,26 @@ open class MultipleFileMergeDialog(
 
     fun withCallback(cb: (MergeResult) -> Unit) = apply { callback = cb }
 
-    fun build(requestFactory: DiffRequestFactory = DiffRequestFactory.getInstance()): MergeRequest {
+    fun build(requestFactory: DiffRequestFactory = DiffRequestFactory.getInstance()): Result<MergeRequest> {
       val byteContents = listOf(mergeData.CURRENT, mergeData.ORIGINAL, mergeData.LAST)
-      return if (mergeProvider.isBinary(file)) {
-        requestFactory.createBinaryMergeRequest(project, file, byteContents, title, contentTitles, callback)
-      }
-      else {
-        requestFactory.createMergeRequest(project, file, byteContents, mergeData.CONFLICT_TYPE, title, contentTitles, callback)
-      }.also {
-        MergeUtils.putRevisionInfos(it, mergeData)
-        titleCustomizers?.run {
-          DiffUtil.addTitleCustomizers(it, listOf(leftTitleCustomizer, centerTitleCustomizer, rightTitleCustomizer))
+      val request = try {
+        if (mergeProvider.isBinary(file)) {
+          requestFactory.createBinaryMergeRequest(project, file, byteContents, title, contentTitles, callback)
+        }
+        else {
+          requestFactory.createMergeRequest(project, file, byteContents, mergeData.CONFLICT_TYPE, title, contentTitles, callback)
         }
       }
+      catch (e: InvalidDiffRequestException) {
+        LOG.warn("Cannot build the merge request for ${file.presentableUrl}. The file cannot load into the merge dialog.", e)
+        return Result.failure(e)
+      }
+
+      MergeUtils.putRevisionInfos(request, mergeData)
+      titleCustomizers?.run {
+        DiffUtil.addTitleCustomizers(request, listOf(leftTitleCustomizer, centerTitleCustomizer, rightTitleCustomizer))
+      }
+      return Result.success(request)
     }
   }
 

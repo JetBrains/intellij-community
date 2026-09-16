@@ -3,9 +3,9 @@
 
 package org.jetbrains.intellij.build.productLayout.pipeline
 
-import kotlinx.coroutines.CompletableDeferred
 import org.jetbrains.intellij.build.productLayout.model.error.ValidationError
 import org.jetbrains.intellij.build.productLayout.stats.GenerationTiming
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.CopyOnWriteArrayList
@@ -14,7 +14,7 @@ import java.util.concurrent.CopyOnWriteArrayList
  * Implementation that manages slot registry and error collection.
  *
  * **Thread safety:** Uses [ConcurrentHashMap] for all registries to support concurrent
- * node execution. Each slot uses [CompletableDeferred] for safe publish-once semantics.
+ * node execution. Each slot uses [CompletableFuture] for safe publish-once semantics.
  *
  * **Lifecycle:**
  * 1. Pipeline creates context with [GenerationModel]
@@ -25,8 +25,8 @@ import java.util.concurrent.CopyOnWriteArrayList
 internal class ComputeContextImpl(
   val model: GenerationModel,
 ) {
-  /** Slot registry: DataSlot → CompletableDeferred holding the value */
-  private val slots = ConcurrentHashMap<DataSlot<*>, CompletableDeferred<*>>()
+  /** Slot registry: DataSlot → CompletableFuture holding the value */
+  private val slots = ConcurrentHashMap<DataSlot<*>, CompletableFuture<*>>()
 
   /** Error registry: NodeId → list of errors emitted by that node */
   private val errorsByNode = ConcurrentHashMap<NodeId, MutableList<ValidationError>>()
@@ -44,7 +44,7 @@ internal class ComputeContextImpl(
    * @param slot The slot to initialize
    */
   fun initSlot(slot: DataSlot<*>) {
-    val previous = slots.putIfAbsent(slot, CompletableDeferred<Any?>())
+    val previous = slots.putIfAbsent(slot, CompletableFuture<Any?>())
     check(previous == null) { "Slot '${slot.name}' already initialized" }
   }
 
@@ -71,7 +71,7 @@ internal class ComputeContextImpl(
     override val model: GenerationModel
       get() = this@ComputeContextImpl.model
 
-    override suspend fun <T> get(slot: DataSlot<T>): T {
+    override fun <T> get(slot: DataSlot<T>): T {
       return this@ComputeContextImpl.get(slot)
     }
 
@@ -92,20 +92,20 @@ internal class ComputeContextImpl(
   fun finalizeNodeErrors(nodeId: NodeId) {
     val errors = errorsByNode.get(nodeId) ?: emptyList()
     val errorSlot = ErrorSlot(nodeId)
-    val deferred = slots.get(errorSlot) as? CompletableDeferred<List<ValidationError>>
+    val deferred = slots.get(errorSlot) as? CompletableFuture<List<ValidationError>>
     deferred?.complete(errors)
   }
 
   // ============ ComputeContext Delegate Methods ============
 
-  suspend fun <T> get(slot: DataSlot<T>): T {
-    val deferred = slots.get(slot) as? CompletableDeferred<T>
+  fun <T> get(slot: DataSlot<T>): T {
+    val deferred = slots.get(slot) as? CompletableFuture<T>
       ?: error("Slot '${slot.name}' not initialized. Did you declare it in 'requires'?")
-    return deferred.await()
+    return deferred.get()
   }
 
   fun <T> publish(slot: DataSlot<T>, value: T) {
-    val deferred = slots.get(slot) as? CompletableDeferred<T>
+    val deferred = slots.get(slot) as? CompletableFuture<T>
       ?: error("Slot '${slot.name}' not initialized. Did you declare it in 'produces'?")
     val completed = deferred.complete(value)
     check(completed) { "Slot '${slot.name}' already published" }
@@ -118,9 +118,9 @@ internal class ComputeContextImpl(
    * Used by the pipeline to collect results after execution.
    */
   fun <T> tryGet(slot: DataSlot<T>): T? {
-    val deferred = slots.get(slot) as? CompletableDeferred<T> ?: return null
-    return if (deferred.isCompleted) {
-      deferred.getCompleted()
+    val deferred = slots.get(slot) as? CompletableFuture<T> ?: return null
+    return if (deferred.isDone) {
+      deferred.get()
     }
     else {
       null

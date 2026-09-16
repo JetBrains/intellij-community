@@ -67,7 +67,7 @@ internal fun showNotification(feedbackSurveyType: FeedbackSurveyType<*>, project
   }
 }
 
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 internal fun isSuitableToShow(feedbackSurveyConfig: NotificationBasedFeedbackSurveyConfig, project: Project): Boolean {
   val commonConditionsForAllSurveys = if (Registry.`is`("platform.feedback.ignore.common.conditions.for.all.surveys", false)) {
     true

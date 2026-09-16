@@ -43,7 +43,7 @@ fun VcsLogIndex.isIndexingScheduled(): Boolean {
 /**
  * Pause VCS Log indexing if it is scheduled for any of the [VcsLogIndex.getIndexingRoots], try to resume it otherwise.
  */
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 internal fun VcsLogModifiableIndex.toggleIndexing() {
   if (isIndexingScheduled()) {
     indexingRoots.filter { !isIndexingPausedFor(it) }.forEach { VcsLogBigRepositoriesList.getInstance().addRepository(it) }

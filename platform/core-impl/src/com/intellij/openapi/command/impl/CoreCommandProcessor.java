@@ -19,10 +19,13 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.ThreadingAssertions;
-import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.BooleanSupplier;
 
 
 public class CoreCommandProcessor extends CommandProcessorEx {
@@ -31,8 +34,9 @@ public class CoreCommandProcessor extends CommandProcessorEx {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.openapi.command.impl");
 
   private final CommandPublisher eventPublisher = new CommandPublisher();
-  private final Stack<@Nullable CommandDescriptor> interruptedCommands = new Stack<>();
-  private @Nullable CommandDescriptor currentCommand;
+  /** null means no command was active before modal interrupted the command. */
+  private final List<@Nullable CommandState> interruptedCommands = new ArrayList<>();
+  private @Nullable CommandState currentCommand;
   private int undoTransparentCount;
   private int allowMergeGlobalCommandsCount;
 
@@ -110,7 +114,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
         command,
         name,
         groupId,
-        currentCommand == null ? "<null>" : currentCommand.getName(),
+        currentCommand == null ? "<null>" : currentCommand.descriptor.getName(),
         isUndoTransparentActionInProgress()
       ));
     }
@@ -134,7 +138,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
       shouldRecordCommandForActiveDocument,
       document
     );
-    currentCommand = descriptor;
+    currentCommand = new CommandState(descriptor);
     Runnable commandTask = () -> {
       Throwable throwable = null;
       try {
@@ -176,7 +180,8 @@ public class CoreCommandProcessor extends CommandProcessorEx {
     if (currentCommand != null) {
       if (LOG.isDebugEnabled()) {
         LOG.debug("startCommand failed: name = " + name + ", groupId = " + groupId + ". " +
-                  "Another command is already running: name = " + currentCommand.getName() + ", groupId = " + currentCommand.getGroupId());
+                  "Another command is already running: name = " + currentCommand.descriptor.getName() +
+                  ", groupId = " + currentCommand.descriptor.getGroupId());
       }
       return null;
     }
@@ -190,7 +195,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
       true,
       getDocumentFromGroupId(groupId)
     );
-    currentCommand = descriptor;
+    currentCommand = new CommandState(descriptor);
     fireCommandStarted();
     return descriptor;
   }
@@ -205,7 +210,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
   @Override
   public void enterModal() {
     ThreadingAssertions.assertEventDispatchThread();
-    interruptedCommands.push(currentCommand);
+    interruptedCommands.add(currentCommand);
     if (currentCommand != null) {
       fireCommandFinished();
     }
@@ -215,9 +220,13 @@ public class CoreCommandProcessor extends CommandProcessorEx {
   public void leaveModal() {
     ThreadingAssertions.assertEventDispatchThread();
     if (currentCommand != null) {
-      LOG.error("Command must not run: " + currentCommand);
+      LOG.error("Command must not run: " + currentCommand.descriptor);
     }
-    currentCommand = interruptedCommands.pop();
+    int size = interruptedCommands.size();
+    if (size == 0) {
+      throw new IllegalStateException("`leaveModal` without matching `enterModal`");
+    }
+    currentCommand = interruptedCommands.remove(size - 1);
     if (currentCommand != null) {
       fireCommandStarted();
     }
@@ -227,46 +236,40 @@ public class CoreCommandProcessor extends CommandProcessorEx {
   public void setCurrentCommandName(String name) {
     ThreadingAssertions.assertEventDispatchThread();
     LOG.assertTrue(currentCommand != null);
-    currentCommand = currentCommand.withName(name);
+    currentCommand.descriptor = currentCommand.descriptor.withName(name);
   }
 
   @Override
   public void setCurrentCommandGroupId(Object groupId) {
     ThreadingAssertions.assertEventDispatchThread();
     LOG.assertTrue(currentCommand != null);
-    currentCommand = currentCommand.withGroupId(groupId);
+    currentCommand.descriptor = currentCommand.descriptor.withGroupId(groupId);
   }
 
   @Override
   public @Nullable Runnable getCurrentCommand() {
-    return ObjectUtils.doIfNotNull(currentCommand, command -> command.getCommand());
+    return ObjectUtils.doIfNotNull(currentCommand, command -> command.descriptor.getCommand());
   }
 
   @Override
   public @Nullable String getCurrentCommandName() {
     if (currentCommand != null) {
-      return currentCommand.getName();
+      return currentCommand.descriptor.getName();
     }
-    if (!interruptedCommands.isEmpty()) {
-      return ObjectUtils.doIfNotNull(interruptedCommands.peek(), command -> command.getName());
-    }
-    return null;
+    return ObjectUtils.doIfNotNull(peekInterruptedCommand(), command -> command.descriptor.getName());
   }
 
   @Override
   public @Nullable Object getCurrentCommandGroupId() {
     if (currentCommand != null) {
-      return currentCommand.getGroupId();
+      return currentCommand.descriptor.getGroupId();
     }
-    if (!interruptedCommands.isEmpty()) {
-      return ObjectUtils.doIfNotNull(interruptedCommands.peek(), command -> command.getGroupId());
-    }
-    return null;
+    return ObjectUtils.doIfNotNull(peekInterruptedCommand(), command -> command.descriptor.getGroupId());
   }
 
   @Override
   public @Nullable Project getCurrentCommandProject() {
-    return ObjectUtils.doIfNotNull(currentCommand, command -> command.getProject());
+    return ObjectUtils.doIfNotNull(currentCommand, command -> command.descriptor.getProject());
   }
 
   @Override
@@ -333,7 +336,12 @@ public class CoreCommandProcessor extends CommandProcessorEx {
 
   @ApiStatus.Internal
   protected boolean isCommandTokenActive(@NotNull CommandToken command) {
-    return command.equals(currentCommand);
+    return command.equals(currentCommand == null ? null : currentCommand.descriptor);
+  }
+
+  @ApiStatus.Internal
+  protected final @Nullable CommandState getCurrentCommandState() {
+    return currentCommand;
   }
 
   private void startUndoTransparentAction() {
@@ -375,11 +383,16 @@ public class CoreCommandProcessor extends CommandProcessorEx {
   }
 
   private @NotNull CommandEvent createCurrentCommandEvent() {
-    CommandDescriptor command = currentCommand;
+    CommandState command = currentCommand;
     if (command == null) {
       throw new IllegalStateException("No current command in progress");
     }
-    return command.toCommandEvent(this);
+    return command.descriptor.toCommandEvent(this);
+  }
+
+  private @Nullable CommandState peekInterruptedCommand() {
+    int size = interruptedCommands.size();
+    return size == 0 ? null : interruptedCommands.get(size - 1);
   }
 
   private static @Nullable Document getDocumentFromGroupId(@Nullable Object groupId) {
@@ -393,6 +406,29 @@ public class CoreCommandProcessor extends CommandProcessorEx {
       }
     }
     return null;
+  }
+
+  /** Holds a command and its action check across modal segments. */
+  @ApiStatus.Internal
+  protected static final class CommandState {
+    private @NotNull CommandDescriptor descriptor;
+    private @Nullable BooleanSupplier interruptedActions;
+
+    private CommandState(@NotNull CommandDescriptor descriptor) {
+      this.descriptor = descriptor;
+    }
+
+    public @NotNull CommandToken getToken() {
+      return descriptor;
+    }
+
+    public void rememberActions(@NotNull BooleanSupplier actions) {
+      interruptedActions = hasActions() ? () -> true : actions;
+    }
+
+    public boolean hasActions() {
+      return interruptedActions != null && interruptedActions.getAsBoolean();
+    }
   }
 
   private static void runCommandTask(Runnable commandTask) {

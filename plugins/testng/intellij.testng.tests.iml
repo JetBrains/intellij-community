@@ -61,7 +61,6 @@
     <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.aetherDependencyResolver.plugin" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.misc.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.lucene.common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.structureView.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.todo.plugin" scope="TEST" />
@@ -69,6 +68,7 @@
     <orderEntry type="module" module-name="intellij.platform.structuralSearch.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.structuralSearch" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.langInjection" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.xml.plugin" scope="RUNTIME" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.testng" />
   <component name="copyright">

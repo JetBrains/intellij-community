@@ -15,7 +15,7 @@ import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.util.progress.withProgressText
 import com.intellij.python.community.impl.poetry.backend.PoetryPyTool
-import com.intellij.python.pytools.PyTool
+import com.intellij.python.pytools.backend.PyTool
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindSelected
 import com.jetbrains.python.PyBundle.message
@@ -56,7 +56,8 @@ internal class EnvironmentCreatorPoetry<P : PathHolder>(
   errorSink: ErrorSink,
 ) : CustomNewEnvironmentCreator<P>(model, errorSink) {
   override val interpreterType: InterpreterType = InterpreterType.POETRY
-  override val pyTool: PyTool = PoetryPyTool.getInstance()
+  override val pyTool: PyTool<*> = PoetryPyTool.getInstance()
+  override val pyToolPresentableName: String = "Poetry"
   override val toolValidator: ToolValidator<P> = model.poetryViewModel.toolValidator
   override val toolExecutable: ObservableProperty<ValidatedPath.Executable<P>?> = model.poetryViewModel.poetryExecutable
   override val toolExecutablePersister: suspend (P) -> Unit = { pathHolder ->

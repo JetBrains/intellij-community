@@ -2,6 +2,13 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.platform.workspace.jps` start
+content_module_jar(
+    module = ":jps",
+    modules_after = ["//platform/workspace/storage"],
+)
+### auto-generated section `dev intellij.platform.workspace.jps` end
+
 ### auto-generated section `build intellij.platform.workspace.jps` start
 create_kotlinc_options(
     name = "custom_jps",
@@ -50,11 +57,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(
-    module = ":jps",
-    modules_after = ["//platform/workspace/storage"],
-)
-
 jvm_library(
     name = "jps_test_lib",
     testonly = True,
@@ -93,7 +95,6 @@ exports_files(
     [
         "intellij.platform.workspace.jps.iml",
         "resources/intellij.platform.workspace.jps.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

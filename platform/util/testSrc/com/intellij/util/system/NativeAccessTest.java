@@ -21,7 +21,7 @@ class NativeAccessTest {
   @Test void signalZeroReachesThisProcess() {
     assumeTrue(OS.CURRENT != OS.Windows);
 
-    long pid = ProcessHandle.current().pid();
+    var pid = ProcessHandle.current().pid();
     assertThat(NativeAccess.getInstance().kill((int)pid, 0)).isEqualTo(0);
     assertThat(PosixSignals.kill((int)pid, 0)).isEqualTo(0);
   }
@@ -41,7 +41,7 @@ class NativeAccessTest {
 
   /// A missing directory is "unknown", not an error, because the caller falls back to Java I/O.
   @Test void missingDirectoryIsUnknown(@TempDir Path tempDir) {
-    Path missing = tempDir.resolve("missing");
+    var missing = tempDir.resolve("missing");
     assertThat(NativeAccess.getInstance().getDirectoryCaseSensitivity(missing)).isEqualTo(FileAttributes.CaseSensitivity.UNKNOWN);
   }
 
@@ -87,7 +87,7 @@ class NativeAccessTest {
 
   /// The probes stay silent off their platform, because the callers treat `null` as "unknown".
   @Test void foreignProbesStayNull() {
-    NativeAccess access = NativeAccess.getInstance();
+    var access = NativeAccess.getInstance();
     if (OS.CURRENT != OS.Windows) {
       assertThat(access.getWindowsBuildNumber()).isNull();
       assertThat(access.getWindowsNativeArch()).isNull();

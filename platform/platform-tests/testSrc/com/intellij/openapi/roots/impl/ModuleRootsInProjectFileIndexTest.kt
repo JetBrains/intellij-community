@@ -407,10 +407,10 @@ class ModuleRootsInProjectFileIndexTest {
       workspaceModel.updateProjectModel {
         val module = it.resolve(ModuleId(module.name))!!
         it.modifyModuleEntity(module) {
-          this.contentRoots += ContentRootEntity(urlManager.getOrCreateFromUrl(rootUrl),
+          this.contentRoots += ContentRootEntity(urlManager.storeAndGet(rootUrl),
                                                  emptyList<@NlsSafe String>(),
                                                  module.entitySource) {
-            excludedUrls = listOf(urlManager.getOrCreateFromUrl(excludedUrl)).map {
+            excludedUrls = listOf(urlManager.storeAndGet(excludedUrl)).map {
               ExcludeUrlEntity(it, module.entitySource)
             }
           }

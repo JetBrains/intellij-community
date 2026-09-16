@@ -14,7 +14,7 @@ import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.util.SystemProperties
 import com.intellij.util.applyIf
 import com.intellij.util.io.delete
-import com.intellij.ui.win.WindowsShell
+import com.intellij.util.system.WindowsShell
 import kotlinx.coroutines.CoroutineScope
 import java.io.File
 import java.nio.file.Path

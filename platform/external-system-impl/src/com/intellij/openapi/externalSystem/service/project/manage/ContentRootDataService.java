@@ -263,7 +263,7 @@ public final class ContentRootDataService extends AbstractProjectDataService<Con
     if (modelsProvider instanceof IdeModifiableModelsProviderImpl impl) {
       MutableEntityStorage diff = impl.getActualStorageBuilder();
 
-      VirtualFileUrl vfu = WorkspaceModel.getInstance(project).getVirtualFileUrlManager().getOrCreateFromUrl(contentEntry.getUrl());
+      VirtualFileUrl vfu = WorkspaceModel.getInstance(project).getVirtualFileUrlManager().storeAndGet(contentEntry.getUrl());
       WorkspaceEntity workspaceEntity = ContainerUtil.find(diff.getVirtualFileUrlIndex().findEntitiesByUrl(vfu).iterator(), entity -> {
         return entity instanceof ContentRootEntity;
       });

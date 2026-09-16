@@ -9,7 +9,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 @JvmDefaultWithCompatibility
 interface NewProjectOnboardingTips {
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun installTips(project: Project, info: OnboardingTipsInstallationInfo)
 
   companion object {

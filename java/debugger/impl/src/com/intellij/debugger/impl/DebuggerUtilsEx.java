@@ -182,8 +182,8 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       if (element instanceof PsiClass || element instanceof PsiLambdaExpression) {
         return null;
       }
-      if (element instanceof PsiMethod) {
-        return (PsiMethod)element;
+      if (element instanceof PsiMethod method) {
+        return method;
       }
     }
     return null;
@@ -304,8 +304,8 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
         List<Pair<Breakpoint, Event>> eventDescriptors = new SmartList<>();
         for (Event event : events) {
           Requestor requestor = RequestManagerImpl.findRequestor(event.request());
-          if (requestor instanceof Breakpoint) {
-            eventDescriptors.add(Pair.create((Breakpoint)requestor, event));
+          if (requestor instanceof Breakpoint breakpoint) {
+            eventDescriptors.add(Pair.create(breakpoint, event));
           }
           if (requestor instanceof StepRequestor stepRequestor) {
             Requestor originalRequestor = stepRequestor.getOriginalRequestor();
@@ -328,10 +328,10 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
 
   public static void addCollectionHistoryTab(@NotNull XDebugSession session, @NotNull XValueNodeImpl node) {
     XValueContainer container = node.getValueContainer();
-    if (container instanceof JavaValue) {
-      ValueDescriptorImpl descriptor = ((JavaValue)container).getDescriptor();
-      if (descriptor instanceof FieldDescriptor) {
-        Field field = ((FieldDescriptor)descriptor).getField();
+    if (container instanceof JavaValue value) {
+      ValueDescriptorImpl descriptor = value.getDescriptor();
+      if (descriptor instanceof FieldDescriptor fieldDescriptor) {
+        Field field = fieldDescriptor.getField();
         String clsName = field.declaringType().name().replace("$", ".");
         String fieldName = field.name();
         addCollectionHistoryTab(session, clsName, fieldName, node);
@@ -475,8 +475,8 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
 
     // The comment below is a workaround for QD-10948.
     //noinspection ConstantValue
-    if (array instanceof ArrayReferenceImpl) {
-      ((ArrayReferenceImpl)array).setValues(0, values, 0, -1, checkAssignable);
+    if (array instanceof ArrayReferenceImpl reference) {
+      reference.setValues(0, values, 0, -1, checkAssignable);
     }
     else {
       array.setValues(values);
@@ -521,8 +521,8 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       Field field = DebuggerUtils.findField(type, "$assertionsDisabled");
       if (field != null && field.isStatic() && field.isSynthetic()) {
         Value value = type.getValue(field);
-        if (value instanceof BooleanValue) {
-          return ThreeState.fromBoolean(!((BooleanValue)value).value());
+        if (value instanceof BooleanValue booleanValue) {
+          return ThreeState.fromBoolean(!booleanValue.value());
         }
       }
     }
@@ -805,8 +805,8 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
 
   public static @Nullable SourcePosition toSourcePosition(@Nullable XSourcePosition position, Project project) {
     if (position != null) {
-      if (position instanceof JavaXSourcePosition) {
-        return ((JavaXSourcePosition)position).mySourcePosition;
+      if (position instanceof JavaXSourcePosition sourcePosition) {
+        return sourcePosition.mySourcePosition;
       }
       PsiFile psiFile = getPsiFile(position, project);
       if (psiFile != null) {
@@ -1015,35 +1015,35 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     }
     // add initial lambda if we're inside already
     PsiElement method = getContainingMethod(element);
-    if (method instanceof PsiLambdaExpression && !lambdas.contains(method)) {
-      lambdas.add((PsiLambdaExpression)method);
+    if (method instanceof PsiLambdaExpression expression && !lambdas.contains(method)) {
+      lambdas.add(expression);
     }
     return lambdas;
   }
 
   public static @Nullable PsiElement getBody(PsiElement method) {
-    if (method instanceof PsiParameterListOwner) {
-      return ((PsiParameterListOwner)method).getBody();
+    if (method instanceof PsiParameterListOwner owner) {
+      return owner.getBody();
     }
-    else if (method instanceof PsiClassInitializer) {
-      return ((PsiClassInitializer)method).getBody();
+    else if (method instanceof PsiClassInitializer initializer) {
+      return initializer.getBody();
     }
     return null;
   }
 
   public static PsiParameter @NotNull [] getParameters(PsiElement method) {
-    if (method instanceof PsiParameterListOwner) {
-      return ((PsiParameterListOwner)method).getParameterList().getParameters();
+    if (method instanceof PsiParameterListOwner owner) {
+      return owner.getParameterList().getParameters();
     }
     return PsiParameter.EMPTY_ARRAY;
   }
 
   public static boolean evaluateBoolean(ExpressionEvaluator evaluator, EvaluationContextImpl context) throws EvaluateException {
     Object value = UnBoxingEvaluator.unbox(evaluator.evaluate(context), context);
-    if (!(value instanceof BooleanValue)) {
+    if (!(value instanceof BooleanValue booleanValue)) {
       throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.boolean.expected"));
     }
-    return ((BooleanValue)value).booleanValue();
+    return booleanValue.booleanValue();
   }
 
   public static boolean intersects(@NotNull TextRange range, @NotNull PsiElement elem) {
@@ -1058,8 +1058,8 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     PsiElement body = lambda.getBody();
     if (body == null || !intersects(lineRange, body)) return null;
 
-    if (body instanceof PsiCodeBlock) {
-      PsiStatement[] statements = ((PsiCodeBlock)body).getStatements();
+    if (body instanceof PsiCodeBlock block) {
+      PsiStatement[] statements = block.getStatements();
       if (statements.length == 0) {
         // empty lambda
         LOG.assertTrue(lineRange.contains(body.getTextOffset()));
@@ -1155,8 +1155,8 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
   public static void enableCollection(ObjectReference reference) {
-    if (reference instanceof ObjectReferenceImpl) {
-      ((ObjectReferenceImpl)reference).enableCollectionAsync();
+    if (reference instanceof ObjectReferenceImpl objectReference) {
+      objectReference.enableCollectionAsync();
     }
     else {
       try {

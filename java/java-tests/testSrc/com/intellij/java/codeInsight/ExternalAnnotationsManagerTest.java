@@ -108,7 +108,7 @@ public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
   }
 
   public void testBundledAnnotationXmlSyntax() {
-    findAnnotationsXmlAndCheckSyntax(PathManagerEx.getCommunityHomePath() + "/java/jdkAnnotations");
+    findAnnotationsXmlAndCheckSyntax(PathManagerEx.getCommunityHomePath() + "/java/jdkAnnotations/resources");
   }
 
   private void findAnnotationsXmlAndCheckSyntax(String root) {

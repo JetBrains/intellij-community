@@ -55,7 +55,7 @@ interface ReaderModeSettings : Disposable {
       project.getService(ReaderModeSettingsImpl::class.java)
       ?: throw IllegalStateException("Cannot find ReaderModeSettingsImpl service for ${ClientId.currentOrNull}")
 
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     fun applyReaderMode(project: Project,
                         editor: Editor,
                         file: VirtualFile,
@@ -113,7 +113,7 @@ interface ReaderModeSettings : Disposable {
       this.putUserData(MATCHES_READER_MODE_KEY, value)
     }
 
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     private fun applyModeChanged(project: Project, editor: Editor, matchMode: Boolean, fileIsOpenAlready: Boolean) {
       if (editor.isDisposed) {
         return
@@ -128,7 +128,7 @@ interface ReaderModeSettings : Disposable {
       }
     }
 
-    @RequiresReadLock
+    @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
     fun matchMode(project: Project, file: VirtualFile, editor: Editor? = null): Boolean {
       if (PsiManager.getInstance(project).findFile(file) == null || (editor != null && editor.isDisposed)) {
         return false
@@ -138,7 +138,7 @@ interface ReaderModeSettings : Disposable {
       }
     }
 
-    @RequiresReadLock
+    @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
     private fun matchMode(project: Project, file: VirtualFile, editor: Editor?, mode: ReaderMode): Boolean {
       if (ApplicationManager.getApplication().isHeadlessEnvironment) {
         return false

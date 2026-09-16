@@ -41,7 +41,7 @@ data class UnattendedHostStatus(
   val httpLink: String?,
   val gatewayLink: String?,
 
-  val projects: List<UnattendedHostPerProjectStatus>? = null
+  val projects: List<UnattendedHostPerProjectStatus>? = null,
 ) {
 
   fun toJson(): String {

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -24,6 +24,8 @@ import static com.intellij.python.community.helpersLocator.PythonHelpersLocator.
 import static com.intellij.python.community.helpersLocator.PythonHelpersLocator.findPathStringInHelpers;
 import static com.intellij.python.community.helpersLocator.PythonHelpersLocator.getCommunityHelpersRoot;
 import static com.intellij.python.venv.VenvKt.VIRTUALENV_ZIPAPP_NAME;
+import static com.jetbrains.python.impl.HelperConstsKt.PY2_HELPER_DEPENDENCIES_DIR;
+import static com.jetbrains.python.impl.HelperConstsKt.PY3_HELPER_DEPENDENCIES_DIR;
 import static com.jetbrains.python.packaging.pip.PipPackageManagerEngine.PACKAGING_TOOL_NAME;
 
 public enum PythonHelper implements HelperPackage {
@@ -78,8 +80,6 @@ public enum PythonHelper implements HelperPackage {
 
   // Compatible with 3.8+
   PYCODESTYLE("pycodestyle.py"),
-  // Compatible with 3.6+
-  PYCODESTYLE_2_10_0("pycodestyle-2.10.0.py"),
   // Compatible with 2.7 and 3.5+
   PYCODESTYLE_2_8_0("pycodestyle-2.8.0.py"),
 
@@ -89,10 +89,11 @@ public enum PythonHelper implements HelperPackage {
 
   JUPYTER("pycharm", "jupyter");
 
-  public static final String PY3_HELPER_DEPENDENCIES_DIR = "py3only";
-  public static final String PY2_HELPER_DEPENDENCIES_DIR = "py2only";
 
-  private static @NotNull PathHelperPackage findModule(String moduleEntryPoint, String path, boolean asModule, String[] thirdPartyDependencies) {
+  private static @NotNull PathHelperPackage findModule(String moduleEntryPoint,
+                                                       String path,
+                                                       boolean asModule,
+                                                       String[] thirdPartyDependencies) {
     List<HelperDependency> dependencies = HelperDependency.findThirdPartyDependencies(thirdPartyDependencies);
 
     if (findPathInHelpersPossibleNull(path + ".zip") != null) {
@@ -238,7 +239,7 @@ public enum PythonHelper implements HelperPackage {
 
     private HelperDependency(@NotNull String pythonPath) { myPythonPath = pythonPath; }
 
-    public void addToPythonPath(@NotNull Map<String, String> environment) {
+    private void addToPythonPath(@NotNull Map<String, String> environment) {
       PythonEnvUtil.addToPythonPath(environment, myPythonPath);
     }
 

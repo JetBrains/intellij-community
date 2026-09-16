@@ -8,6 +8,7 @@ import java.lang.ref.WeakReference
 /** Provides access to a snapshot marker with weak or strong ownership. */
 @ApiStatus.Internal
 interface SnapshotMarkerReference {
+  /** Returns the marker handle, or `null` after a weak reference is collected. */
   fun get(): SnapshotRangeMarkerImpl?
 }
 

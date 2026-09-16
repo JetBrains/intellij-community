@@ -1,0 +1,1 @@
+println (/Hi <caret>\/ there/)

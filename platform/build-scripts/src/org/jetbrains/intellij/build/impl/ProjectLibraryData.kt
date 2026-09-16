@@ -9,10 +9,8 @@ enum class LibraryPackMode {
 }
 
 /**
- * @param owner content module ([ModuleItem]) which brings the project library to distribution
- * (commonly when "intellij.libraries.*" content module brings the project library).
- * Or `null` if content modules that hold the project library are not used.
- * So, this library is brought as an `iml` dependency or through custom layout.
+ * @param owner the platform product module ([ModuleItem]) whose jar carries the project library, in most cases a library
+ * module (`intellij.libraries.*`) that exports it. `null` when a layout call packs the library.
  */
 class ProjectLibraryData(
   @JvmField val libraryName: String,

@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.productLayout.validator
 
+import com.intellij.platform.buildScripts.concurrency.SharedTaskOwner
 import com.intellij.platform.pluginGraph.ContentModuleName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -19,6 +20,13 @@ import java.nio.file.Path
 
 @ExtendWith(TestFailureLogger::class)
 class ContentModuleBackingValidatorTest {
+  private val owner = SharedTaskOwner("ContentModuleBackingValidatorTest")
+
+  @org.junit.jupiter.api.AfterEach
+  fun closeSharedTasks() {
+    owner.close()
+  }
+
   @Test
   fun `reports missing JPS module for declared content module`(@TempDir tempDir: Path): Unit = runBlocking(Dispatchers.Default) {
     val jps = jpsProject(tempDir) {
@@ -37,7 +45,7 @@ class ContentModuleBackingValidatorTest {
       moduleWithDeps("module.missing")
     }
 
-    val model = testGenerationModel(graph, outputProvider = jps.outputProvider)
+    val model = testGenerationModel(graph, outputProvider = jps.outputProvider, owner = owner)
     val errors = runValidationRule(ContentModuleBackingValidator, model)
 
     assertThat(errors).hasSize(1)
@@ -62,7 +70,7 @@ class ContentModuleBackingValidatorTest {
         moduleWithDeps("module.exists")
       }
 
-      val model = testGenerationModel(graph, outputProvider = jps.outputProvider)
+      val model = testGenerationModel(graph, outputProvider = jps.outputProvider, owner = owner)
       val errors = runValidationRule(ContentModuleBackingValidator, model)
 
       assertThat(errors).isEmpty()

@@ -1,6 +1,18 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.compose.foundation.desktop` start
+content_module_jar(
+    libraries = [
+        # do not sort,
+        "@lib//:libraries-compose-foundation-desktop-compose-foundation-desktop",
+        "@lib//:libraries-compose-foundation-desktop-androidx-navigationevent-navigationevent-desktop",
+        "@lib//:libraries-compose-foundation-desktop-androidx-navigationevent-navigationevent-compose-desktop",
+    ],
+    module = ":compose-foundation-desktop",
+)
+### auto-generated section `dev intellij.libraries.compose.foundation.desktop` end
+
 ### auto-generated section `build intellij.libraries.compose.foundation.desktop` start
 jvm_library(
     name = "compose-foundation-desktop",
@@ -29,16 +41,6 @@ jvm_library(
         "@lib//:libraries-compose-foundation-desktop-androidx-navigationevent-navigationevent-desktop",
         "@lib//:libraries-compose-foundation-desktop-androidx-navigationevent-navigationevent-compose-desktop",
     ],
-)
-
-content_module_jar(
-    libraries = [
-        # do not sort,
-        "@lib//:libraries-compose-foundation-desktop-compose-foundation-desktop",
-        "@lib//:libraries-compose-foundation-desktop-androidx-navigationevent-navigationevent-desktop",
-        "@lib//:libraries-compose-foundation-desktop-androidx-navigationevent-navigationevent-compose-desktop",
-    ],
-    module = ":compose-foundation-desktop",
 )
 
 jvm_library(
@@ -72,7 +74,6 @@ exports_files(
     [
         "intellij.libraries.compose.foundation.desktop.iml",
         "resources/intellij.libraries.compose.foundation.desktop.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

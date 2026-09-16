@@ -124,7 +124,7 @@ internal fun writeProductInfoJson(targetFile: Path, json: String, context: Build
   Files.setLastModifiedTime(targetFile, FileTime.from(context.options.buildDateInSeconds, TimeUnit.SECONDS))
 }
 
-internal suspend fun generateEmbeddedFrontendLaunchData(
+internal fun generateEmbeddedFrontendLaunchData(
   arch: JvmArchitecture,
   os: OsFamily,
   ideContext: BuildContext,
@@ -141,7 +141,7 @@ internal suspend fun generateEmbeddedFrontendLaunchData(
   )
 }
 
-internal suspend fun generateIjLightLaunchData(
+internal fun generateIjLightLaunchData(
   arch: JvmArchitecture,
   os: OsFamily,
   ideContext: BuildContext,

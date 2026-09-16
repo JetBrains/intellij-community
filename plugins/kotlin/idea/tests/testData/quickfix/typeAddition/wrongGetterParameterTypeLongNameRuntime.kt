@@ -6,5 +6,4 @@ class A() {
         get(): <caret>Any = java.util.LinkedHashSet<Int>()
 }
 
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeAccessorTypeFix
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeAccessorTypeFix

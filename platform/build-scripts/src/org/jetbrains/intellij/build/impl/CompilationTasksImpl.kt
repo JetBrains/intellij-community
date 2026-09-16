@@ -5,11 +5,11 @@ import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.CompilationTasks
 
 internal class CompilationTasksImpl(private val context: CompilationContext) : CompilationTasks {
-  override suspend fun resolveProjectDependencies() {
+  override fun resolveProjectDependencies() {
     resolveProjectDependencies(context)
   }
 
-  override suspend fun compileAllModulesAndTests() {
+  override fun compileAllModulesAndTests() {
     context.compileModules(moduleNames = null, includingTestsInModules = null)
   }
 }

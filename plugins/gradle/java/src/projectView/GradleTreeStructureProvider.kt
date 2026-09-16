@@ -113,10 +113,11 @@ class GradleTreeStructureProvider : TreeStructureProvider, DumbAware {
             }
             parentNodePair = when {
                                parentNodePair == null -> Pair(virtualFile, node)
-                               VfsUtilCore.isAncestor(virtualFile, parentNodePair.first, false) -> parentNodePair
+                               VfsUtilCore.isAncestor(virtualFile, parentNodePair.first, false) -> Pair(virtualFile, node)
                                !VfsUtilCore.isAncestor(parentNodePair.first, virtualFile, false) -> null
                                else -> parentNodePair
-                             } ?: break
+                             }
+            if (parentNodePair == null) break
           }
           else {
             parentNodePair = null

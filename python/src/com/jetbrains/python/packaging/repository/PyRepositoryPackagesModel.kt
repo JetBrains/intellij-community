@@ -6,6 +6,7 @@ import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.packageRequirements.FlatPackageStructureNode
 import com.jetbrains.python.packaging.packageRequirements.PackageCollectionPackageStructureNode
 import com.jetbrains.python.packaging.packageRequirements.PackageStructureNode
+import com.jetbrains.python.packaging.packageRequirements.PackagesUnavailableNode
 import com.jetbrains.python.packaging.packageRequirements.PackageTreeNode
 import com.jetbrains.python.packaging.packageRequirements.WorkspaceMemberPackageStructureNode
 import org.jetbrains.annotations.ApiStatus
@@ -71,7 +72,8 @@ internal data class PyRepositoryPackagesModel(
 
     private fun extractTreeNodes(structure: PackageStructureNode): List<PackageTreeNode> {
       return when (structure) {
-        is FlatPackageStructureNode -> emptyList()
+        // Neither names a package: one has no tree, the other means the tool could not report one.
+        is FlatPackageStructureNode, is PackagesUnavailableNode -> emptyList()
         is PackageCollectionPackageStructureNode -> structure.declaredPackages + structure.undeclaredPackages
         is WorkspaceMemberPackageStructureNode -> extractFromWorkspace(structure)
       }

@@ -11,4 +11,3 @@ fun test(s: String?): String? {
 }
 
 fun notNull(name: String): String = name
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.WrapWithSafeLetCallFix

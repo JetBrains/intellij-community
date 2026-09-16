@@ -1,5 +1,10 @@
 f:com.intellij.collaboration.api.HttpApiHelperKt
 - sf:logName(java.net.http.HttpRequest):java.lang.String
+- sf:request(com.intellij.collaboration.api.HttpApiHelper,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
+- sf:sendAndAwait(com.intellij.collaboration.api.HttpApiHelper,java.net.http.HttpRequest,kotlin.coroutines.Continuation):java.lang.Object
+- sf:sendAndRead(com.intellij.collaboration.api.HttpApiHelper,java.net.http.HttpRequest,java.lang.String,kotlin.jvm.functions.Function3,kotlin.coroutines.Continuation):java.lang.Object
+- bs:sendAndRead$default(com.intellij.collaboration.api.HttpApiHelper,java.net.http.HttpRequest,java.lang.String,kotlin.jvm.functions.Function3,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- sf:sendAndReadBody(com.intellij.collaboration.api.HttpApiHelper,java.net.http.HttpRequest,kotlin.jvm.functions.Function3,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.collaboration.api.HttpStatusErrorException
 - java.lang.RuntimeException
 - <init>(java.lang.String,I,java.lang.String):V
@@ -88,11 +93,6 @@ a:com.intellij.collaboration.api.httpclient.AuthorizationConfigurer
 - <init>():V
 - f:configureSuspend(java.net.http.HttpRequest$Builder,kotlin.coroutines.Continuation):java.lang.Object
 - pa:getAuthorizationHeaderValue():java.lang.String
-f:com.intellij.collaboration.api.httpclient.ByteArrayProducingBodyPublisher
-- java.net.http.HttpRequest$BodyPublisher
-- <init>(kotlin.jvm.functions.Function0):V
-- contentLength():J
-- subscribe(java.util.concurrent.Flow$Subscriber):V
 c:com.intellij.collaboration.api.httpclient.CommonHeadersConfigurer
 - com.intellij.collaboration.api.httpclient.HttpRequestConfigurer
 - <init>():V
@@ -116,21 +116,25 @@ f:com.intellij.collaboration.api.httpclient.HttpClientUtil
 - sf:ACCEPT_HEADER:java.lang.String
 - sf:CONTENT_ENCODING_GZIP:java.lang.String
 - sf:CONTENT_ENCODING_HEADER:java.lang.String
-- sf:CONTENT_TYPE_ENCODED_FORM:java.lang.String
 - sf:CONTENT_TYPE_HEADER:java.lang.String
-- sf:CONTENT_TYPE_JSON:java.lang.String
+- sf:ETAG_HEADER:java.lang.String
+- sf:IF_NONE_MATCH_HEADER:java.lang.String
 - sf:INSTANCE:com.intellij.collaboration.api.httpclient.HttpClientUtil
+- sf:MIME_TYPE_APPLICATION_PREFIX:java.lang.String
+- sf:MIME_TYPE_ENCODED_FORM:java.lang.String
+- sf:MIME_TYPE_JSON:java.lang.String
+- sf:MIME_TYPE_JSON_SUFFIX:java.lang.String
+- sf:MIME_TYPE_TEXT_PREFIX:java.lang.String
+- sf:MIME_TYPE_XML_SUFFIX:java.lang.String
 - sf:USER_AGENT_HEADER:java.lang.String
-- f:checkStatusCodeWithLogging(com.intellij.openapi.diagnostic.Logger,java.lang.String,I,java.io.InputStream):V
+- f:getRequestName(java.lang.String,java.net.URI):java.lang.String
+- f:getRequestName(java.net.http.HttpRequest):java.lang.String
 - f:getUserAgentValue(java.lang.String):java.lang.String
-- f:inflateAndReadWithErrorHandlingAndLogging(com.intellij.openapi.diagnostic.Logger,java.net.http.HttpRequest,kotlin.jvm.functions.Function2):java.net.http.HttpResponse$BodyHandler
+- f:isJsonMimeType(java.lang.String):Z
+f:com.intellij.collaboration.api.httpclient.HttpClientUtilKt
 com.intellij.collaboration.api.httpclient.HttpRequestConfigurer
 - configure(java.net.http.HttpRequest$Builder):java.net.http.HttpRequest$Builder
 - configureSuspend(java.net.http.HttpRequest$Builder,kotlin.coroutines.Continuation):java.lang.Object
-f:com.intellij.collaboration.api.httpclient.InflatedStreamReadingBodyHandler
-- java.net.http.HttpResponse$BodyHandler
-- <init>(kotlin.jvm.functions.Function2):V
-- apply(java.net.http.HttpResponse$ResponseInfo):java.net.http.HttpResponse$BodySubscriber
 c:com.intellij.collaboration.api.httpclient.RequestTimeoutConfigurer
 - com.intellij.collaboration.api.httpclient.HttpRequestConfigurer
 - <init>():V
@@ -430,6 +434,7 @@ f:com.intellij.collaboration.util.CollectionDelta
 - f:getNewItems():java.util.Collection
 - f:getRemovedItems():java.util.Collection
 - f:isEmpty():Z
+f:com.intellij.collaboration.util.ComputableSequenceKt
 f:com.intellij.collaboration.util.ComputedResult
 - sf:Companion:com.intellij.collaboration.util.ComputedResult$Companion
 - bsf:box-impl(kotlin.Result):com.intellij.collaboration.util.ComputedResult
@@ -476,11 +481,17 @@ f:com.intellij.collaboration.util.IncrementallyComputedValue
 - f:isLoading():Z
 - f:isValueAvailable():Z
 f:com.intellij.collaboration.util.IncrementallyComputedValue$Companion
+- f:appendPart(com.intellij.collaboration.util.IncrementallyComputedValue,Z,kotlin.jvm.functions.Function1):com.intellij.collaboration.util.IncrementallyComputedValue
+- f:complete(com.intellij.collaboration.util.IncrementallyComputedValue,kotlin.jvm.functions.Function0):com.intellij.collaboration.util.IncrementallyComputedValue
 - f:failure(java.lang.Exception):com.intellij.collaboration.util.IncrementallyComputedValue
+- f:initial():com.intellij.collaboration.util.IncrementallyComputedValue
 - f:loading():com.intellij.collaboration.util.IncrementallyComputedValue
 - f:partialFailure(java.lang.Object,java.lang.Exception):com.intellij.collaboration.util.IncrementallyComputedValue
-- f:partialSuccess(java.lang.Object):com.intellij.collaboration.util.IncrementallyComputedValue
+- f:partialSuccess(java.lang.Object,Z):com.intellij.collaboration.util.IncrementallyComputedValue
+- bs:partialSuccess$default(com.intellij.collaboration.util.IncrementallyComputedValue$Companion,java.lang.Object,Z,I,java.lang.Object):com.intellij.collaboration.util.IncrementallyComputedValue
 - f:success(java.lang.Object):com.intellij.collaboration.util.IncrementallyComputedValue
+- f:withException(com.intellij.collaboration.util.IncrementallyComputedValue,java.lang.Exception):com.intellij.collaboration.util.IncrementallyComputedValue
+- f:withLoading(com.intellij.collaboration.util.IncrementallyComputedValue,Z):com.intellij.collaboration.util.IncrementallyComputedValue
 f:com.intellij.collaboration.util.IncrementallyComputedValue$Value
 - bsf:box-impl(java.lang.Object):com.intellij.collaboration.util.IncrementallyComputedValue$Value
 - s:constructor-impl(java.lang.Object):java.lang.Object
@@ -506,6 +517,7 @@ f:com.intellij.collaboration.util.ResultUtil
 - sf:INSTANCE:com.intellij.collaboration.util.ResultUtil
 - f:processErrorAndGet(java.lang.Object,kotlin.jvm.functions.Function1):java.lang.Object
 - f:runCatchingUser-IoAF18A(kotlin.jvm.functions.Function0):java.lang.Object
+f:com.intellij.collaboration.util.SequenceItemKt
 f:com.intellij.collaboration.util.SingleCoroutineLauncher
 - <init>(kotlinx.coroutines.CoroutineScope):V
 - f:cancel():V

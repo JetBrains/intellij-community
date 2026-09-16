@@ -13,7 +13,7 @@ import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
 import com.intellij.openapi.ui.validation.and
 import com.intellij.python.hatch.HatchVirtualEnvironment
 import com.intellij.python.hatch.PythonVirtualEnvironment
-import com.intellij.python.pytools.Version
+import com.intellij.python.pytools.backend.Version
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.ActionLink

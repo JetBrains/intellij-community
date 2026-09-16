@@ -60,7 +60,7 @@ import java.time.Instant
  * @param projectRoot Project root path for resolving .idea/modules.xml
  * @param filter Optional filter: null (full), or JsonFilter object with filter type and optional value
  */
-suspend fun streamModuleAnalysisJson(
+fun streamModuleAnalysisJson(
   allModuleSets: List<ModuleSetMetadata>,
   products: List<ProductSpec>,
   projectRoot: Path,
@@ -102,7 +102,7 @@ suspend fun streamModuleAnalysisJson(
 /**
  * Dispatches filter handling to appropriate handler functions.
  */
-private suspend fun applyFilter(
+private fun applyFilter(
   gen: JsonGenerator,
   filter: JsonFilter?,
   allModuleSets: List<ModuleSetMetadata>,
@@ -361,7 +361,7 @@ private fun handleEmbeddedDependencyClosureFilter(
 /**
  * Writes all sections of the analysis JSON (used when no filter is specified).
  */
-private suspend fun writeAllSections(
+private fun writeAllSections(
   gen: JsonGenerator,
   allModuleSets: List<ModuleSetMetadata>,
   products: List<ProductSpec>,

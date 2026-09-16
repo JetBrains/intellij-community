@@ -9,6 +9,7 @@ import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelArchiveApi
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelExecPosixApi
+import com.intellij.platform.eel.EelHttpApi
 import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.EelResult
 import com.intellij.platform.eel.EelTunnelsPosixApi
@@ -19,6 +20,7 @@ import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.fs.EelFileSystemApi.CreateTemporaryEntryError
 import com.intellij.platform.eel.fs.LocalEelFileSystemPosixApi
 import com.intellij.platform.eel.fs.LocalEelFileSystemWindowsApi
+import com.intellij.platform.eel.impl.base.CurlEelHttpApi
 import com.intellij.platform.eel.impl.base.fs.EelFsResultImpl.Ok
 import com.intellij.platform.eel.impl.base.fs.EelUserPosixInfoImpl
 import com.intellij.platform.eel.impl.base.fs.EelUserWindowsInfoImpl
@@ -53,6 +55,7 @@ internal class LocalWindowsEelApiImpl(nioFs: FileSystem = FileSystems.getDefault
   override val tunnels: EelTunnelsWindowsApi get() = EelLocalWindowsTunnelsApiImpl
   override val descriptor: EelDescriptor get() = LocalEelDescriptor
   override val exec: EelLocalExecWindowsApi = EelLocalExecWindowsApi()
+  override val http: EelHttpApi = CurlEelHttpApi(exec)
   override val userInfo: EelUserWindowsInfo = EelUserWindowsInfoImpl(getLocalUserHome())
   override val archive: EelArchiveApi = LocalEelArchiveApiImpl
 
@@ -94,6 +97,8 @@ class LocalPosixEelApiImpl(private val nioFs: FileSystem = FileSystems.getDefaul
   }
 
   override val exec: EelExecPosixApi = EelLocalExecPosixApi(platform, userInfo)
+
+  override val http: EelHttpApi = CurlEelHttpApi(exec)
 
   override val fs: LocalEelFileSystemPosixApi = object : PosixNioBasedEelFileSystemApi(nioFs, userInfo) {
     override val descriptor: EelDescriptor get() = LocalEelDescriptor

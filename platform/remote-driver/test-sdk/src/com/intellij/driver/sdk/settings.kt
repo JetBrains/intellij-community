@@ -5,6 +5,7 @@ import com.intellij.driver.client.Remote
 import com.intellij.driver.client.service
 import com.intellij.driver.client.utility
 import com.intellij.driver.model.RdTarget
+import com.intellij.driver.sdk.ui.components.common.waitForIdeFrameReady
 
 @Remote("com.intellij.ide.GeneralSettings")
 interface GeneralSettingsRef {
@@ -35,10 +36,12 @@ interface UpdateSettings {
 }
 
 fun Driver.setOpenNewProjectsInSameWindow() {
+  waitForIdeFrameReady()
   updateGeneralSettings(RdTarget.BACKEND) { setConfirmOpenNewProject(1) }
 }
 
 fun Driver.setOpenNewProjectsInNewWindow() {
+  waitForIdeFrameReady()
   updateGeneralSettings(RdTarget.BACKEND) { setConfirmOpenNewProject(0) }
 }
 
@@ -47,10 +50,12 @@ fun Driver.advancedSettings(rdTarget: RdTarget = RdTarget.DEFAULT): AdvancedSett
 }
 
 fun Driver.setAdvancedSetting(id: String, value: Boolean, rdTarget: RdTarget = RdTarget.DEFAULT) {
+  waitForIdeFrameReady()
   advancedSettings(rdTarget).setBoolean(id, value)
 }
 
 fun Driver.setAdvancedSetting(id: String, value: Int, rdTarget: RdTarget = RdTarget.DEFAULT) {
+  waitForIdeFrameReady()
   advancedSettings(rdTarget).setInt(id, value)
 }
 

@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.conda
 
-import com.intellij.python.community.impl.conda.icons.PythonCommunityImplCondaIcons
+import com.intellij.python.community.impl.conda.common.icons.PythonCommunityImplCondaCommonIcons
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.toolwindow.packages.tree.renderers.PyPackageInstalledIconProvider
 import javax.swing.Icon
@@ -14,6 +14,6 @@ import javax.swing.Icon
  */
 internal class CondaPackageInstalledIconProvider : PyPackageInstalledIconProvider {
   override fun iconFor(pkg: PythonPackage): Icon? {
-    return if (pkg is CondaPackage && !pkg.installedWithPip) PythonCommunityImplCondaIcons.Anaconda else null
+    return if (pkg is CondaPackage && !pkg.installedWithPip) PythonCommunityImplCondaCommonIcons.Anaconda else null
   }
 }

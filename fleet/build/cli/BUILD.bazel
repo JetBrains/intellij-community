@@ -47,10 +47,10 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinx-io-core",
+        "//libraries/io",
         "@lib//:slf4j-api",
         "@lib//:fleet-logback-classic",
-        "@lib//:kotlinx-coroutines-core",
+        "//libraries/kotlinx/coroutines/core",
         "@lib//:fleet-google-devtools-ksp-symbol-processing-api",
         "@lib//:fleet-google-devtools-ksp-symbol-processing-aa-embeddable",
         "@lib//:fleet-google-devtools-ksp-symbol-processing-common-deps",
@@ -74,7 +74,12 @@ jvm_library(
         "@lib//:fleet-clikt-core",
         "@lib//:fleet-clikt",
     ],
-    runtime_deps = [":cli"],
+    runtime_deps = [
+        # do not sort,
+        ":cli",
+        "//libraries/io:io_test_lib",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+    ],
 )
 ### auto-generated section `build fleet.build.cli` end
 

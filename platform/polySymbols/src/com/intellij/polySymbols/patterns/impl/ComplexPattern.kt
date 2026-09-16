@@ -20,12 +20,14 @@ import com.intellij.util.containers.Stack
 import com.intellij.util.text.CharSequenceSubSequence
 import kotlin.math.max
 import kotlin.math.min
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Complex pattern matches any of the provided patterns
  * and allows for high level of customization.
  */
-internal class ComplexPattern(private val configProvider: ComplexPatternConfigProvider) : PolySymbolPattern() {
+@ApiStatus.Internal
+class ComplexPattern(private val configProvider: ComplexPatternConfigProvider) : PolySymbolPattern() {
 
   private val patterns: List<PolySymbolPattern>
     get() = configProvider.getPatterns()

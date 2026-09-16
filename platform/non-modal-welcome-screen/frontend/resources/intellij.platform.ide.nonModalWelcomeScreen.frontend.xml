@@ -3,7 +3,6 @@
   <dependencies>
     <module name="intellij.platform.frontend"/>
     <module name="intellij.platform.analysis"/>
-    <module name="intellij.platform.compose"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.editor.ui"/>
@@ -18,10 +17,6 @@
   </dependencies>
   <!-- endregion -->
 
-  <projectListeners>
-    <listener class="com.intellij.platform.ide.nonModalWelcomeScreen.frontend.WelcomeScreenLeftTabListener"
-              topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
-  </projectListeners>
   <extensions defaultExtensionNs="com.intellij">
     <project.view.pane.pure.ui
       implementation="com.intellij.platform.ide.nonModalWelcomeScreen.frontend.leftPanel.FrontendWelcomeScreenLeftPanelProvider"

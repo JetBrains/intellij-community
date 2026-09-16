@@ -59,5 +59,6 @@
         </SOURCES>
       </library>
     </orderEntry>
+    <orderEntry type="module" module-name="intellij.libraries.kotlin.logging" scope="RUNTIME" />
   </component>
 </module>

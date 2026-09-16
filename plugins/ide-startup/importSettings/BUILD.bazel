@@ -10,6 +10,10 @@ jps_test(
 )
 ### skip generation section `test intellij.ide.startup.importSettings.tests`
 
+### auto-generated section `dev intellij.ide.startup.importSettings` start
+content_module_jar(module = ":importSettings")
+### auto-generated section `dev intellij.ide.startup.importSettings` end
+
 ### auto-generated section `build intellij.ide.startup.importSettings` start
 jvm_library(
     name = "importSettings",
@@ -69,8 +73,6 @@ jvm_library(
         "//platform/pluginSystem/parser/impl",
     ],
 )
-
-content_module_jar(module = ":importSettings")
 
 jvm_library(
     name = "importSettings_test_lib",
@@ -134,7 +136,6 @@ exports_files(
     [
         "intellij.ide.startup.importSettings.iml",
         "resources/intellij.ide.startup.importSettings.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

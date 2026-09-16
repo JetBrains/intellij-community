@@ -62,7 +62,7 @@ internal object KotlinPostfixTemplatePsiInfo : PostfixTemplatePsiInfo() {
         }
     }
 
-    @RequiresReadLock
+    @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
     @OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
     private fun negateExpression(element: KtElement, factory: KtPsiFactory): PsiElement {
         fun replaceChild(parent: PsiElement, old: PsiElement, newText: String): KtExpression {

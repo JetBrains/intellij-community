@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.platform.diff.impl` start
+content_module_jar(module = ":diff-impl")
+### auto-generated section `dev intellij.platform.diff.impl` end
+
 ### auto-generated section `build intellij.platform.diff.impl` start
 jvm_library(
     name = "diff-impl",
@@ -54,8 +58,6 @@ jvm_library(
         "//platform/progress/shared:ide-progress",
     ],
 )
-
-content_module_jar(module = ":diff-impl")
 
 jvm_library(
     name = "diff-impl_test_lib",
@@ -111,7 +113,6 @@ exports_files(
         "intellij.platform.diff.impl.iml",
         "resources/intellij.platform.diff.impl.actions.xml",
         "resources/intellij.platform.diff.impl.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

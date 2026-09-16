@@ -9,8 +9,7 @@ import com.intellij.python.community.services.shared.PythonInfoWithUiComparator
 import com.intellij.python.community.services.shared.PythonWithUi
 import com.intellij.python.community.services.shared.VanillaPythonWithPythonInfo
 import com.intellij.python.community.services.systemPython.impl.PySystemPythonBundle
-import com.intellij.python.community.services.systemPython.impl.asSysPythonRegisterError
-import com.intellij.python.community.services.systemPython.impl.ensureSystemPython
+import com.intellij.python.community.services.systemPython.impl.isSystemPython
 import com.intellij.python.venv.createVenv
 import com.jetbrains.python.PyToolUIInfo
 import com.jetbrains.python.PythonBinary
@@ -18,7 +17,6 @@ import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyError
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.mapError
 import com.jetbrains.python.packaging.PyVersionSpecifiers
 import com.jetbrains.python.venvReader.Directory
 import com.jetbrains.python.venvReader.VirtualEnvReader
@@ -96,15 +94,11 @@ class SystemPython private constructor(private val delegate: VanillaPythonWithPy
 
   internal companion object {
     val comparator = PythonInfoWithUiComparator<SystemPython>()
-    internal suspend fun create(delegate: VanillaPythonWithPythonInfo, ui: PyToolUIInfo?): Result<SystemPython, SysPythonRegisterError> {
-      val isSystemPython = ensureSystemPython(delegate).mapError { it.asSysPythonRegisterError() }.getOr { return it }
-      return if (isSystemPython) {
-        Result.success(SystemPython(delegate, ui))
-      }
-      else {
-        Result.failure(SysPythonRegisterError.NotASystemPython(delegate))
-      }
-    }
+
+    /**
+     * The caller decides that [delegate] is a system python, with [isSystemPython] of its environment.
+     */
+    internal fun create(delegate: VanillaPythonWithPythonInfo, ui: PyToolUIInfo?): SystemPython = SystemPython(delegate, ui)
   }
 
   override fun equals(other: Any?): Boolean {

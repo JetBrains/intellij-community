@@ -8,9 +8,11 @@ import com.intellij.codeInsight.lookup.LookupEvent;
 import com.intellij.codeInsight.lookup.LookupListener;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -19,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.JComponent;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
@@ -120,6 +123,20 @@ public final class LookupPreviewHandler<T> implements LookupListener {
   @RequiresEdt
   private void update(@Nullable T action) {
     if (!shown.get()) {
+      return;
+    }
+    // The preview copies PSI and maps offsets that come from the document, so the two must agree.
+    // The lookup asks for a preview while the user still types, when the document is not committed yet.
+    Document document = myLookup.getTopLevelEditor().getDocument();
+    PsiDocumentManager.getInstance(myLookup.getProject()).performForCommittedDocument(document, () -> updateCommitted(action));
+  }
+
+  @RequiresEdt
+  private void updateCommitted(@Nullable T action) {
+    if (!shown.get() || myLookup.isLookupDisposed()) {
+      return;
+    }
+    if (!Objects.equals(action, myMapper.apply(myLookup.getCurrentItem()))) {
       return;
     }
     Integer index = counterHolder.computeIfAbsent(action, _ -> counterValue.getAndIncrement());

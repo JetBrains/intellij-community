@@ -38,9 +38,9 @@ public final class UnixUtil {
   }
 
   private static void leadSession() throws NativeCallException {
-    try (Arena arena = Arena.ofConfined()) {
-      MemorySegment errno = LibC.newErrnoState(arena);
-      int sid = setsid(errno);
+    try (var arena = Arena.ofConfined()) {
+      var errno = LibC.newErrnoState(arena);
+      var sid = setsid(errno);
       if (sid == -1) {
         throw libcCallError("setsid", errno);
       }
@@ -48,9 +48,9 @@ public final class UnixUtil {
   }
 
   private static void setupSignals() throws NativeCallException {
-    try (Arena arena = Arena.ofConfined()) {
-      MemorySegment errno = LibC.newErrnoState(arena);
-      MemorySegment sigset = arena.allocate(LibCConstants.MAX_SIZEOF_SIGSET_T);
+    try (var arena = Arena.ofConfined()) {
+      var errno = LibC.newErrnoState(arena);
+      var sigset = arena.allocate(LibCConstants.MAX_SIZEOF_SIGSET_T);
       if (sigfillset(errno, sigset) == -1) {
         throw libcCallError("sigfillset", errno);
       }
@@ -77,9 +77,9 @@ public final class UnixUtil {
   }
 
   private static void resetSignal(int signo) throws NativeCallException {
-    try (Arena arena = Arena.ofConfined()) {
-      MemorySegment errno = LibC.newErrnoState(arena);
-      MemorySegment sa = arena.allocate(LibCConstants.MAX_SIZEOF_STRUCT_SIGACTION);
+    try (var arena = Arena.ofConfined()) {
+      var errno = LibC.newErrnoState(arena);
+      var sa = arena.allocate(LibCConstants.MAX_SIZEOF_STRUCT_SIGACTION);
       if (readSigaction(errno, signo, sa) == -1) {
         throw libcCallError("sigaction(" + signo + ")", errno);
       }
@@ -101,7 +101,7 @@ public final class UnixUtil {
   }
 
   private static @NotNull NativeCallException libcCallError(@NotNull String message, @NotNull MemorySegment errnoState) {
-    int lastError = LibC.errno(errnoState);
+    var lastError = LibC.errno(errnoState);
     if (lastError != 0) {
       message += ": " + strerror(lastError);
     }
@@ -157,7 +157,7 @@ public final class UnixUtil {
 
   private static String strerror(int errno) {
     try {
-      MemorySegment text = (MemorySegment)LibC.STRERROR.invokeExact(errno);
+      var text = (MemorySegment)LibC.STRERROR.invokeExact(errno);
       return text.reinterpret(LibCConstants.MAX_STRERROR_LENGTH).getString(0);
     }
     catch (Throwable t) {

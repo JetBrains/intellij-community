@@ -106,6 +106,11 @@ class MacCustomizerBuilder @PublishedApi internal constructor(private val projec
   var minOSXVersion: String = "10.13"
 
   /**
+   * The UDIF format of the .dmg artifact. See [MacDistributionCustomizer.dmgImageFormat].
+   */
+  var dmgImageFormat: String = "ULFO"
+
+  /**
    * String with declarations of additional file types that should be automatically opened by the application.
    */
   var additionalDocTypes: String = ""
@@ -142,7 +147,7 @@ class MacCustomizerBuilder @PublishedApi internal constructor(private val projec
   var extraExecutables: PersistentList<String> = persistentListOf()
 
   // Method override handlers (stored as lambdas)
-  private var copyAdditionalFilesHandler: (suspend (Path, JvmArchitecture, BuildContext) -> Unit)? = null
+  private var copyAdditionalFilesHandler: ((Path, JvmArchitecture, BuildContext) -> Unit)? = null
   private var rootDirectoryNameHandler: ((ApplicationInfoProperties, String) -> String)? = null
   private var customIdeaPropertiesHandler: ((ApplicationInfoProperties) -> Map<String, String>)? = null
   private var binariesToSignHandler: ((BuildContext, JvmArchitecture) -> List<String>)? = null
@@ -153,7 +158,7 @@ class MacCustomizerBuilder @PublishedApi internal constructor(private val projec
    * Gets the current copyAdditionalFiles handler for wrapping purposes.
    * @return the current handler, or `null` if none is set
    */
-  fun getCopyAdditionalFilesHandler(): (suspend (Path, JvmArchitecture, BuildContext) -> Unit)? = copyAdditionalFilesHandler
+  fun getCopyAdditionalFilesHandler(): ((Path, JvmArchitecture, BuildContext) -> Unit)? = copyAdditionalFilesHandler
 
   /**
    * Gets the current distributionUUID handler for checking if one is set.
@@ -167,7 +172,7 @@ class MacCustomizerBuilder @PublishedApi internal constructor(private val projec
    *
    * @see [ProductProperties.copyAdditionalOsSpecificFiles]
    */
-  fun copyAdditionalFiles(handler: suspend (targetDir: Path, arch: JvmArchitecture, context: BuildContext) -> Unit) {
+  fun copyAdditionalFiles(handler: (targetDir: Path, arch: JvmArchitecture, context: BuildContext) -> Unit) {
     copyAdditionalFilesHandler = handler
   }
 
@@ -239,6 +244,7 @@ class MacCustomizerBuilder @PublishedApi internal constructor(private val projec
       @Suppress("DEPRECATION")
       builder.dmgImagePathForEAP?.let { dmgImagePathForEAP = projectHome.resolve(it) }
       minOSXVersion = builder.minOSXVersion
+      dmgImageFormat = builder.dmgImageFormat
       additionalDocTypes = builder.additionalDocTypes
       fileAssociations = builder.fileAssociations
       urlSchemes = builder.urlSchemes
@@ -248,7 +254,7 @@ class MacCustomizerBuilder @PublishedApi internal constructor(private val projec
       extraExecutables = builder.extraExecutables
     }
 
-    override suspend fun copyAdditionalFiles(context: BuildContext, targetDir: Path, arch: JvmArchitecture) {
+    override fun copyAdditionalFiles(context: BuildContext, targetDir: Path, arch: JvmArchitecture) {
       super.copyAdditionalFiles(context = context, targetDir = targetDir, arch = arch)
       context.productProperties.copyAdditionalOsSpecificFiles(targetDir, OsFamily.MACOS, arch, context)
       builder.copyAdditionalFilesHandler?.invoke(targetDir, arch, context)
@@ -339,6 +345,13 @@ open class MacDistributionCustomizer {
   var minOSXVersion: String = "10.13"
 
   /**
+   * The UDIF format of the .dmg artifact, as `hdiutil convert -format` accepts it.
+   * The default ULFO (lzfse) mounts fast. ULMO (lzma) is about 20% smaller, and it mounts on macOS 10.15 or later only.
+   * External tools that parse the .dmg, such as Toolbox Lite-Gen and the patch builder, read only the ULFO format.
+   */
+  var dmgImageFormat: String = "ULFO"
+
+  /**
    * String with declarations of additional file types that should be automatically opened by the application.
    * Example:
    * ```
@@ -414,7 +427,7 @@ open class MacDistributionCustomizer {
   /**
    * Override this method to copy additional files to the macOS distribution of the product.
    */
-  open suspend fun copyAdditionalFiles(context: BuildContext, targetDir: Path, arch: JvmArchitecture) {
+  open fun copyAdditionalFiles(context: BuildContext, targetDir: Path, arch: JvmArchitecture) {
     bundleRepairUtility(os = OsFamily.MACOS, arch = arch, distributionDir = targetDir, context = context)
   }
 

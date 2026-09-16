@@ -121,10 +121,12 @@ internal class GitLabOAuthService(private val cs: CoroutineScope) {
         "refresh_token" eq refreshToken
         "redirect_uri" eq redirectUri
       }
-      .header(HttpClientUtil.ACCEPT_HEADER, HttpClientUtil.CONTENT_TYPE_JSON)
+      .header(HttpClientUtil.ACCEPT_HEADER, HttpClientUtil.MIME_TYPE_JSON)
       .build()
     return withContext(Dispatchers.IO) {
-      api.rest.loadJsonValue<GitLabOAuthResponseDTO>(request).body()
+      with(api.rest) {
+        request.loadJsonValue<GitLabOAuthResponseDTO>()
+      }.body()
     }.let {
       GitLabCredentials.OAuth.fromDTO(it, clientId)
     }
@@ -187,11 +189,13 @@ internal class GitLabOAuthService(private val cs: CoroutineScope) {
         "code_verifier" eq codeVerifier
         "redirect_uri" eq redirectUri
       }
-      .header(HttpClientUtil.ACCEPT_HEADER, HttpClientUtil.CONTENT_TYPE_JSON)
+      .header(HttpClientUtil.ACCEPT_HEADER, HttpClientUtil.MIME_TYPE_JSON)
       .build()
 
     return withContext(Dispatchers.IO) {
-      api.rest.loadJsonValue<GitLabOAuthResponseDTO>(request).body()
+      with(api.rest) {
+        request.loadJsonValue<GitLabOAuthResponseDTO>()
+      }.body()
     }.let {
       GitLabCredentials.OAuth.fromDTO(it, clientId)
     }
@@ -309,6 +313,6 @@ private data class PendingLoginWithRequest(
 
 private fun HttpRequest.Builder.postForm(buildQuery: GitLabApiUriQueryBuilder.() -> Unit): HttpRequest.Builder {
   val body = GitLabApiUriQueryBuilder.build(buildQuery)
-  return header(HttpClientUtil.CONTENT_TYPE_HEADER, HttpClientUtil.CONTENT_TYPE_ENCODED_FORM)
+  return header(HttpClientUtil.CONTENT_TYPE_HEADER, HttpClientUtil.MIME_TYPE_ENCODED_FORM)
     .POST(HttpRequest.BodyPublishers.ofString(body))
 }

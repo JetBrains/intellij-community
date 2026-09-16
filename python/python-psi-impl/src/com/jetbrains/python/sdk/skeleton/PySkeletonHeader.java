@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.sdk.skeleton;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,7 +15,8 @@ import java.nio.file.Path;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class PySkeletonHeader {
+@ApiStatus.Internal
+public final class PySkeletonHeader {
   public static final @NonNls String BUILTIN_NAME = "(built-in)"; // version required for built-ins
   public static final @NonNls String PREGENERATED = "(pre-generated)"; // pre-generated skeleton
 

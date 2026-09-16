@@ -10,6 +10,10 @@ jps_test(
 )
 ### skip generation section `test intellij.searchEverywhereLucene.backend.tests`
 
+### auto-generated section `dev intellij.searchEverywhereLucene.backend` start
+content_module_jar(module = ":backend")
+### auto-generated section `dev intellij.searchEverywhereLucene.backend` end
+
 ### auto-generated section `build intellij.searchEverywhereLucene.backend` start
 jvm_library(
     name = "backend",
@@ -50,8 +54,6 @@ jvm_library(
         "//platform/util/text-matching",
     ],
 )
-
-content_module_jar(module = ":backend")
 
 jvm_library(
     name = "backend_test_lib",

@@ -57,7 +57,7 @@ import kotlin.reflect.jvm.kotlinFunction
  * val tools = myToolset.asTools()
  * ```
  */
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 fun McpToolset.asTools(json: Json = McpServerJson): List<ReflectionCallableMcpTool> {
   return this::class.asTools(json = json, thisRef = this)
 }
@@ -79,7 +79,7 @@ suspend fun McpToolset.asToolsAsync(json: Json = McpServerJson): List<Reflection
 
  * @see [asTool]
  */
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 fun <T : McpToolset> KClass<out T>.asTools(json: Json = McpServerJson, thisRef: T? = null): List<ReflectionCallableMcpTool> {
   return toolConversions(json = json, thisRef = thisRef).map { it() }.requireAnyTool(this)
 }

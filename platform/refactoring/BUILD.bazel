@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.platform.refactoring` start
+content_module_jar(module = ":refactoring")
+### auto-generated section `dev intellij.platform.refactoring` end
+
 ### auto-generated section `build intellij.platform.refactoring` start
 jvm_library(
     name = "refactoring",
@@ -47,8 +51,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":refactoring")
-
 jvm_library(
     name = "refactoring_test_lib",
     testonly = True,
@@ -93,7 +95,6 @@ exports_files(
     [
         "intellij.platform.refactoring.iml",
         "resources/intellij.platform.refactoring.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

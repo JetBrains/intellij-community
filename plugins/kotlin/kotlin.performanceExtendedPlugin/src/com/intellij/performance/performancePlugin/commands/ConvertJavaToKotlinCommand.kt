@@ -3,6 +3,7 @@ package com.intellij.performance.performancePlugin.commands
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.platform.diagnostic.telemetry.Scope
@@ -13,7 +14,7 @@ import com.jetbrains.performancePlugin.commands.OpenFileCommand
 import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.kotlin.j2k.actions.JavaToKotlinActionHandler
+import org.jetbrains.kotlin.j2k.JavaToKotlinService
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 
 class ConvertJavaToKotlinCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
@@ -32,12 +33,10 @@ class ConvertJavaToKotlinCommand(text: String, line: Int) : PerformanceCommandCo
                 ?: throw IllegalArgumentException("There is no file $filePath")
 
             TelemetryManager.getTracer(Scope("javaToKotlin")).spanBuilder(NAME).use {
-                JavaToKotlinActionHandler.convertFiles(
+                project.service<JavaToKotlinService>().convert(
                     files = listOf(javaFile),
-                    project = project,
                     module = module,
-                    enableExternalCodeProcessing = false,
-                    askExternalCodeProcessing = false
+                    updateExternalUsages = false,
                 )
             }
         }

@@ -577,6 +577,46 @@ public final class PsiTypeNullabilityTest extends LightJavaCodeInsightFixtureTes
     return ((PsiCapturedWildcardType)argument).getUpperBound().getNullability().nullability();
   }
 
+  public void testCaptureInMethodReference() {
+    setupJSpecifyAnnotations();
+    PsiFile file = myFixture.configureByText("Test.java", """
+      import org.jspecify.annotations.NullMarked;
+
+      @NullMarked
+      class Test {
+        interface Sup<T> {
+          T get();
+        }
+
+        interface Box<V> {}
+
+        static class Src<T> {
+          void to(Object target) {}
+        }
+
+        static class Mapper {
+          <T> Src<T> from(T value) { return new Src<>(); }
+
+          <T> Src<T> from(Sup<? extends T> supplier) { return new Src<>(); }
+        }
+
+        static class Props {
+          Box<?> getKeySerializer() { return null; }
+        }
+
+        void test(Mapper map, Props props) {
+          map.from(props::getKeySerializer).to("x");
+        }
+      }
+      """);
+    List<PsiMethodCallExpression> calls = new ArrayList<>(PsiTreeUtil.findChildrenOfType(file, PsiMethodCallExpression.class));
+    PsiMethodCallExpression outerCall = calls.getFirst();
+    assertEquals("to", outerCall.getMethodExpression().getReferenceName());
+    PsiMethod resolved = outerCall.resolveMethod();
+    assertNotNull(resolved);
+    assertEquals("to", resolved.getName());
+  }
+
   public void testInstantiateWithNullable() {
     addJSpecifyNullMarked(myFixture);
     setupTypeUseAnnotations("org.jspecify.annotations", myFixture);

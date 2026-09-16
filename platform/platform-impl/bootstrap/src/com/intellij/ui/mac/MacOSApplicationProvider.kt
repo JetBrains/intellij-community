@@ -11,7 +11,6 @@ import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.startup.StartupManagerEx
 import com.intellij.idea.IdeStarter.Companion.openFilesOnLoading
 import com.intellij.idea.IdeStarter.Companion.openUriOnLoading
-import com.intellij.jna.JnaLoader
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.Application
@@ -26,9 +25,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher
-import com.intellij.openapi.options.ConfigurableGroup
 import com.intellij.openapi.options.ShowSettingsUtil
-import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.startup.StartupManager
@@ -38,9 +35,9 @@ import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.ui.AppIcon
 import com.intellij.ui.mac.foundation.Foundation
 import com.intellij.ui.mac.foundation.ID
+import com.intellij.ui.mac.foundation.Selector
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.EDT
-import com.sun.jna.Callback
 import io.netty.handler.codec.http.QueryStringDecoder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -50,6 +47,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Desktop
 import java.awt.event.MouseEvent
 import java.net.URLDecoder
+import java.util.UUID
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.JOptionPane
 import javax.swing.SwingUtilities
@@ -87,7 +85,7 @@ fun initMacApplication(mainScope: CoroutineScope) {
       if (project == null || project.isDefault) {
         LOG.debug("MacMenu: no opened project frame, use default project instead")
         val defaultProject = project ?: serviceAsync<ProjectManager>().defaultProject
-        showSettingsUtil.showSettingsDialog(defaultProject, createConfigurableGroups(defaultProject))
+        showSettingsUtil.showSettingsDialog(defaultProject)
       }
       else {
         // Execute in the project coroutine scope to ensure that,
@@ -95,7 +93,7 @@ fun initMacApplication(mainScope: CoroutineScope) {
         // Still, we `.join` to ensure that mac menu actions is disabled for the entire duration of the task (contract of `submit`).
         project.serviceAsync<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
           (project.serviceAsync<StartupManager>() as StartupManagerEx).waitForInitProjectActivities(IdeBundle.message("settings.modal.opening.message"))
-          showSettingsUtil.showSettingsDialog(project, createConfigurableGroups(project))
+          showSettingsUtil.showSettingsDialog(project)
         }.join()
       }
 
@@ -134,14 +132,10 @@ fun initMacApplication(mainScope: CoroutineScope) {
     }
     desktop.requestForeground(true)
   }
-  if (JnaLoader.isLoaded()) {
+  if (Foundation.isAvailable()) {
     Foundation.executeOnMainThread(false, false, Runnable { installAutoUpdateMenu() })
     installProtocolHandler(desktop, mainScope)
   }
-}
-
-private fun createConfigurableGroups(project: Project): List<ConfigurableGroup> {
-  return listOf(ConfigurableExtensionPointUtil.doGetConfigurableGroup(project, true))
 }
 
 private suspend fun reportActionUsed(project: Project?, actionId: String) {
@@ -154,10 +148,11 @@ private fun installAutoUpdateMenu() {
   val menu = Foundation.invoke(app, Foundation.createSelector("menu"))
   val item = Foundation.invoke(menu, Foundation.createSelector("itemAtIndex:"), 0)
   val appMenu = Foundation.invoke(item, Foundation.createSelector("submenu"))
-  val checkForUpdateClass = Foundation.allocateObjcClassPair(Foundation.getObjcClass("NSMenuItem"), "NSCheckForUpdates")
-  val impl = object : Callback {
+  val checkForUpdateClass = Foundation.allocateObjcClassPair(Foundation.getObjcClass("NSMenuItem"),
+                                                             "NSCheckForUpdates_" + UUID.randomUUID().toString().replace("-", ""))
+  val impl = object {
     @Suppress("unused", "UNUSED_PARAMETER")
-    fun callback(self: ID?, selector: String?) {
+    fun callback(self: ID?, selector: Selector?) {
       SwingUtilities.invokeLater {
         val mouseEvent = MouseEvent(JOptionPane.getRootFrame(), MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(), 0, 0, 0, 1, false)
         val actionManager = ApplicationManager.getApplication()?.getServiceIfCreated(ActionManager::class.java) ?: return@invokeLater
@@ -167,9 +162,10 @@ private fun installAutoUpdateMenu() {
   }
   // prevents the callback from being collected
   UPDATE_CALLBACK_REF = impl
-  Foundation.addMethod(checkForUpdateClass, Foundation.createSelector("checkForUpdates"), impl, "v")
+  Foundation.addMethod(checkForUpdateClass, Foundation.createSelector("checkForUpdates"),
+                       Foundation.callback(impl, "callback", ID::class.java, Selector::class.java), "v@:")
   Foundation.registerObjcClassPair(checkForUpdateClass)
-  val checkForUpdates = Foundation.invoke("NSCheckForUpdates", "alloc")
+  val checkForUpdates = Foundation.invoke(checkForUpdateClass, "alloc")
   Foundation.invoke(checkForUpdates, Foundation.createSelector("initWithTitle:action:keyEquivalent:"),
                     Foundation.nsString("Check for Updates..."), Foundation.createSelector("checkForUpdates"), Foundation.nsString(""))
   Foundation.invoke(checkForUpdates, Foundation.createSelector("setTarget:"), checkForUpdates)
@@ -178,7 +174,7 @@ private fun installAutoUpdateMenu() {
   Foundation.invoke(pool, Foundation.createSelector("release"))
 }
 
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 private fun getNonDefaultProject(): Project? {
   @Suppress("DEPRECATION")
   var project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().dataContext)

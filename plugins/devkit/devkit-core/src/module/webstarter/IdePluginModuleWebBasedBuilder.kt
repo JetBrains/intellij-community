@@ -173,7 +173,7 @@ internal open class IdePluginModuleWebBasedBuilder : WebStarterModuleBuilder() {
       PACK_GROUPS_ORDER.indexOf(category.id).takeIf { it >= 0 } ?: Int.MAX_VALUE
     }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   override fun downloadResult(progressIndicator: ProgressIndicator, tempFile: File): DownloadResult {
     val payload = objectMapper.createObjectNode().apply {
       put("group", starterContext.group) // ignored for themes on the generator side but required by KASTLE
@@ -234,7 +234,7 @@ internal open class IdePluginModuleWebBasedBuilder : WebStarterModuleBuilder() {
     return Urls.newFromEncoded(starterContext.serverUrl + "/api/generate/download")
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   override fun extractGeneratorResult(tempZipFile: File, contentEntryDir: File) {
     ZipUtil.extract(tempZipFile, contentEntryDir, null)
   }

@@ -7,7 +7,7 @@ import com.intellij.openapi.wm.IdeGlassPane.TopComponent;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scroll.TouchScrollUtil;
-import com.intellij.ui.tabs.impl.IslandsPainterProvider;
+import com.intellij.ui.tabs.impl.UIThemeCustomization;
 import com.intellij.util.ui.JdkConstants;
 import com.intellij.util.ui.RegionPainter;
 import org.jetbrains.annotations.ApiStatus;
@@ -120,8 +120,8 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
    */
   @SuppressWarnings("UnusedParameters")
   public static @NotNull ScrollBarUI createUI(JComponent c, boolean isThin) {
-    IslandsPainterProvider provider = IslandsPainterProvider.getInstance();
-    if (SystemInfo.isMac || (provider != null && provider.useMacScrollBar())) {
+    UIThemeCustomization provider = UIThemeCustomization.getInstance();
+    if (SystemInfo.isMac || (provider != null && provider.isMacScrollBar())) {
       return isThin ? new ThinMacScrollBarUI() : new MacScrollBarUI();
     }
     else {

@@ -79,6 +79,8 @@
     <applicationService serviceImplementation="com.intellij.ide.ui.NotRoamableUiSettings" />
     <applicationService serviceImplementation="com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorCustomizer" open="true"/>
     <applicationSettings service="com.intellij.ide.ui.NotRoamableUiSettings"/>
+    <applicationService serviceImplementation="com.intellij.openapi.editor.EditorCoroutineScopeService"/>
+    <projectService serviceImplementation="com.intellij.openapi.editor.EditorCoroutineScopeService"/>
   </extensions>
   <applicationListeners>
     <listener class="com.intellij.openapi.vcs.FileStatusCleaner"

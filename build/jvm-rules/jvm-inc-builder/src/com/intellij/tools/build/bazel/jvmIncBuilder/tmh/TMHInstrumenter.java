@@ -46,7 +46,7 @@ public final class TMHInstrumenter {
         @Override
         public AnnotationVisitor visitAnnotation(String annotationDescriptor, boolean visible) {
           for (TMHAssertionGenerator assertionGenerator : assertionGenerators) {
-            if (assertionGenerator.isMyAnnotation(annotationDescriptor)) {
+            if (assertionGenerator.isMyAnnotation(annotationDescriptor) && assertionGenerator.isApplicableMethod(methodDescriptor)) {
               return assertionGenerator.getAnnotationChecker(Opcodes.API_VERSION, () -> {
                 annotatedMethods.put(methodKey, new InstrumentationInfo(assertionGenerator));
                 annotated = true;

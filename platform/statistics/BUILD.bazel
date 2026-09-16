@@ -11,6 +11,17 @@ jps_test(
 
 ### skip generation section `test intellij.platform.statistics.tests`
 
+### auto-generated section `dev intellij.platform.statistics` start
+content_module_jar(
+    libraries = [
+        # do not sort,
+        "@lib//:com-jetbrains-fus-reporting-fus-api",
+        "@lib//:jetbrains-fus-reporting-api-jvm",
+    ],
+    module = ":statistics",
+)
+### auto-generated section `dev intellij.platform.statistics` end
+
 ### auto-generated section `build intellij.platform.statistics` start
 jvm_library(
     name = "statistics",
@@ -73,15 +84,6 @@ jvm_library(
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "@lib//:jetbrains-fus-reporting-api-jvm",
     ],
-)
-
-content_module_jar(
-    libraries = [
-        # do not sort,
-        "@lib//:com-jetbrains-fus-reporting-fus-api",
-        "@lib//:jetbrains-fus-reporting-api-jvm",
-    ],
-    module = ":statistics",
 )
 
 jvm_library(
@@ -149,7 +151,6 @@ exports_files(
     [
         "intellij.platform.statistics.iml",
         "resources/intellij.platform.statistics.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

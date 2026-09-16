@@ -1,0 +1,106 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.platform.polySymbols.web` start
+content_module_jar(module = ":polySymbols-web")
+### auto-generated section `dev intellij.platform.polySymbols.web` end
+
+### auto-generated section `build intellij.platform.polySymbols.web` start
+jvm_library(
+    name = "polySymbols-web",
+    srcs = glob(
+        [
+            "gen/**/*.kt",
+            "gen/**/*.java",
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.polySymbols.web",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//platform/polySymbols",
+        "//platform/ide-core",
+        "//platform/analysis-api:analysis",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/indexing-api:indexing",
+        "//platform/lang-impl",
+        "//platform/platform-impl:ide-impl",
+        "//platform/ide-core-impl",
+        "//platform/core-ui",
+        "//platform/util-ex",
+        "//platform/editor-ui-ex:editor-ex",
+        "//platform/core-api:core",
+        "//libraries/jackson/databind",
+        "//libraries/jackson/jackson",
+        "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
+        "//libraries/fastutil",
+        "//libraries/commons/compress",
+        "//libraries/markdown",
+        "//libraries/gson",
+        "//platform/projectModel-api:projectModel",
+        "//platform/markdown-utils",
+        "//platform/indexing-impl",
+        "//platform/core-impl",
+        "//platform/util:util-ui",
+    ],
+)
+
+jvm_library(
+    name = "polySymbols-web_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.polySymbols.web",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":polySymbols-web",
+        "//platform/polySymbols:polySymbols_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/indexing-api:indexing_test_lib",
+        "//platform/lang-impl:lang-impl_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/ide-core-impl:ide-core-impl_test_lib",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/util-ex:util-ex_test_lib",
+        "//platform/editor-ui-ex:editor-ex_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//libraries/jackson/databind:databind_test_lib",
+        "//libraries/jackson/jackson:jackson_test_lib",
+        "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin_test_lib",
+        "//libraries/fastutil:fastutil_test_lib",
+        "//libraries/commons/compress:compress_test_lib",
+        "//libraries/markdown:markdown_test_lib",
+        "//libraries/gson:gson_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/markdown-utils:markdown-utils_test_lib",
+        "//platform/indexing-impl:indexing-impl_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/util:util-ui_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.polySymbols.web` end
+
+### auto-generated section `iml intellij.platform.polySymbols.web` start
+exports_files(
+    [
+        "intellij.platform.polySymbols.web.iml",
+        "resources/intellij.platform.polySymbols.web.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.polySymbols.web` end

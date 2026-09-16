@@ -17,7 +17,6 @@ import org.jetbrains.intellij.build.hasModuleOutputPath
 import org.jetbrains.intellij.build.impl.SUPPORTED_DISTRIBUTIONS
 import org.jetbrains.intellij.build.impl.getOsAndArchSpecificDistDirectory
 import org.jetbrains.intellij.build.impl.moduleRepository.MODULE_DESCRIPTORS_COMPACT_PATH
-import org.jetbrains.intellij.build.runBlockingOnVirtualThreads
 import java.io.IOException
 import kotlin.io.path.exists
 import kotlin.io.path.pathString
@@ -119,6 +118,9 @@ class RuntimeModuleRepositoryChecker private constructor(
 
           //todo: remove when PY-89477 is fixed (`intellij.pycharm.community` module contains two classes and some resources only, adding it to two classpaths shouldn't cause problems)
           if (pluginModule.moduleId.name == "intellij.pycharm.community") continue
+
+          //todo remove when IJPL-255167 is fixed (`intellij.libraries.kotlin.logging` is included in the core plugin and other plugins with different namespaces)
+          if (pluginModule.moduleId.name == "intellij.libraries.kotlin.logging") continue
 
           for (resourcePath in pluginModule.ownClasspath) {
             val corePluginModules = corePluginResourceRoots[resourcePath]
@@ -318,8 +320,7 @@ private fun loadProductModules(productModulesModule: String, outputProvider: Mod
   val relativePath = "META-INF/$productModulesModule/product-modules.xml"
   val debugName = "($relativePath file in $productModulesModule)"
 
-  @Suppress("RAW_RUN_BLOCKING")
-  val content = runBlockingOnVirtualThreads {
+  val content = run {
     outputProvider.readFileContentFromModuleOutput(outputProvider.findRequiredModule(productModulesModule), relativePath)
   } ?: throw MalformedRepositoryException("File '$relativePath' is not found in module $productModulesModule output")
   try {

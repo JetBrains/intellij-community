@@ -1,5 +1,4 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
-load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.platform.projectModel.impl` start
 jvm_library(
@@ -54,12 +53,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(
-    module = ":projectModel-impl",
-    modules_after = ["//platform/util/annotations"],
-    modules_before = ["//platform/eel-provider"],
-)
-
 jvm_library(
     name = "projectModel-impl_test_lib",
     testonly = True,
@@ -109,7 +102,6 @@ exports_files(
     [
         "intellij.platform.projectModel.impl.iml",
         "resources/intellij.platform.projectModel.impl.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

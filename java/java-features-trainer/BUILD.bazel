@@ -2,6 +2,10 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.java.featuresTrainer` start
+content_module_jar(module = ":featuresTrainer")
+### auto-generated section `dev intellij.java.featuresTrainer` end
+
 ### auto-generated section `build intellij.java.featuresTrainer` start
 jvm_library(
     name = "featuresTrainer",
@@ -54,8 +58,6 @@ jvm_library(
         "//platform/util:util-ui",
     ],
 )
-
-content_module_jar(module = ":featuresTrainer")
 
 jvm_library(
     name = "featuresTrainer_test_lib",

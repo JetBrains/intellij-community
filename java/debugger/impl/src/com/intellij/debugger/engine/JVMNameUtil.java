@@ -71,9 +71,9 @@ public final class JVMNameUtil {
       return;
     }
     final PsiType psiType = TypeConversionUtil.erasure(type);
-    if (psiType instanceof PsiArrayType) {
+    if (psiType instanceof PsiArrayType arrayType) {
       buffer.append(new JVMRawText("["));
-      appendJVMSignature(buffer, ((PsiArrayType)psiType).getComponentType());
+      appendJVMSignature(buffer, arrayType.getComponentType());
     }
     else if (psiType instanceof PsiClassType) {
       final JVMName jvmName = getJVMQualifiedName(psiType);
@@ -89,8 +89,8 @@ public final class JVMNameUtil {
 
   private static void appendJvmClassQualifiedName(JVMNameBuffer buffer, final JVMName jvmName) {
     buffer.append("L");
-    if (jvmName instanceof JVMRawText) {
-      buffer.append(((JVMRawText)jvmName).getName().replace('.', '/'));
+    if (jvmName instanceof JVMRawText text) {
+      buffer.append(text.getName().replace('.', '/'));
     }
     else {
       buffer.append(new JVMName() {
@@ -454,8 +454,8 @@ public final class JVMNameUtil {
         }
       }
 
-      if (positionFile instanceof PsiClassOwner) {
-        String name = ((PsiClassOwner)positionFile).getPackageName();
+      if (positionFile instanceof PsiClassOwner owner) {
+        String name = owner.getPackageName();
         if (!StringUtil.isEmpty(name)) {
           return name;
         }

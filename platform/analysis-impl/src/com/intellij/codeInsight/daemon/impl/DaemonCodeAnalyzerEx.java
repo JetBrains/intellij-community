@@ -95,24 +95,6 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
     return processHighlights(model, project, minSeverity, startOffset, endOffset, CodeInsightContexts.anyContext(), processor);
   }
 
-  /**
-   * Do not perform any meaningful work inside the processor because iteration is performed under MarkupModel lock
-   */
-  static boolean processHighlightsOverlappingOutside(@NotNull MarkupModelEx model,
-                                                     int startOffset,
-                                                     int endOffset,
-                                                     @NotNull CodeInsightContext context,
-                                                     @NotNull Processor<? super HighlightInfo> processor) {
-    ThreadingAssertions.softAssertReadAccess();
-    return model.processRangeHighlightersOutside(startOffset, endOffset, marker -> {
-      HighlightInfo info = HighlightInfo.fromRangeHighlighter(marker);
-      return info == null ||
-             info.getHighlighter() != marker ||
-             !CodeInsightContextHighlightingUtil.acceptRangeHighlighter(context, marker) ||
-             processor.process(info);
-    });
-  }
-
   public abstract boolean hasVisibleLightBulbOrPopup();
 
   @ApiStatus.Internal

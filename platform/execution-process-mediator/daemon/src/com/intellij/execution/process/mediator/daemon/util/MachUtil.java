@@ -42,21 +42,21 @@ public final class MachUtil {
    * Every {@code mach_port_t} and {@code kern_return_t} is a 32-bit integer.
    */
   private static void machMoveToUserNamespace(int uid) throws NativeCallException {
-    MemorySegment bootstrapPort = LibSystem.BOOTSTRAP_PORT;
-    try (Arena arena = Arena.ofConfined()) {
-      int bootstrap = bootstrapPort.get(JAVA_INT, 0);
+    var bootstrapPort = LibSystem.BOOTSTRAP_PORT;
+    try (var arena = Arena.ofConfined()) {
+      var bootstrap = bootstrapPort.get(JAVA_INT, 0);
 
-      MemorySegment rootPort = arena.allocate(JAVA_INT);
+      var rootPort = arena.allocate(JAVA_INT);
       if (bootstrapGetRoot(bootstrap, rootPort) != LibSystem.KERN_SUCCESS) {
         throw new NativeCallException("bootstrap_get_root");
       }
 
-      MemorySegment userPort = arena.allocate(JAVA_INT);
+      var userPort = arena.allocate(JAVA_INT);
       if (bootstrapLookUpPerUser(bootstrap, uid, userPort) != LibSystem.KERN_SUCCESS) {
         throw new NativeCallException("bootstrap_look_up_per_user");
       }
 
-      int task = machTaskSelf();
+      var task = machTaskSelf();
       if (taskSetBootstrapPort(task, userPort.get(JAVA_INT, 0)) != LibSystem.KERN_SUCCESS) {
         throw new NativeCallException("task_set_bootstrap_port");
       }

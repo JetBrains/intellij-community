@@ -10,6 +10,7 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateEditingListener;
 import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.application.ApplicationManager;
@@ -75,18 +76,29 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    return getAvailableText(project, editor.getCaretModel().getOffset()) != null;
+  }
+
+  /**
+   * @param project the project of the file
+   * @param offset  the offset of the caret
+   * @return the text of the fix when the fix applies at the offset, or null when it does not apply
+   */
+  protected final @IntentionName @Nullable String getAvailableText(@NotNull Project project, int offset) {
     PsiElement element = getElement();
     if (element == null || isValidElement(element)) {
-      return false;
+      return null;
     }
 
-    int offset = editor.getCaretModel().getOffset();
     if (!isAvailableImpl(offset)) {
-      return false;
+      return null;
     }
 
     List<PsiClass> targetClasses = filterTargetClasses(element, project);
-    return !targetClasses.isEmpty();
+    if (targetClasses.isEmpty()) {
+      return null;
+    }
+    return getText();
   }
 
   protected abstract boolean isAvailableImpl(int offset);

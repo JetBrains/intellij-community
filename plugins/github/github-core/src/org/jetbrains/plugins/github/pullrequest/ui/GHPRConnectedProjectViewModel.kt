@@ -143,7 +143,7 @@ abstract class GHPRConnectedProjectViewModelBase(
     pullRequestsVms[id].acquireValue(hostCs).timelineVm
 
   override fun findDetails(id: GHPRIdentifier): GHPullRequestShort? =
-    dataContext.listLoader.loadedData.value.find { it.id == id.id }
+    listVm.loadedData.value.find { it.id == id.id }
     ?: dataContext.dataProviderRepository.findDataProvider(id)?.detailsData?.loadedDetails
 
   override val canCheckoutInNewWorktree: Boolean
@@ -177,7 +177,7 @@ abstract class GHPRConnectedProjectViewModelBase(
 
   // Re-run the lookup on an explicit refresh and whenever the PR list is reloaded/refreshed, so a PR opened outside
   // the IDE (or otherwise missed by the initial lookup) is picked up on the next refresh without switching branches.
-  private val prOnCurrentBranchRefresh = merge(prOnCurrentBranchRefreshSignal, dataContext.listLoader.listUpdated)
+  private val prOnCurrentBranchRefresh = merge(prOnCurrentBranchRefreshSignal, listVm.reloadSignal)
 
   override val prOnCurrentBranch: StateFlow<ComputedResult<GHPRIdentifier?>?> =
     repoManager.findHostedRemoteBranchTrackedByCurrent(connection.repo.gitRepository)

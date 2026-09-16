@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.search.refIndex.bta
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
 import com.intellij.maven.testFramework.fixtures.importProjectAsync
 import com.intellij.testFramework.junit5.TestApplication
-import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -17,7 +17,7 @@ import org.junit.jupiter.params.provider.ArgumentsSource
 class MavenCompilerReferenceIndexInstallOnFirstImportTest(mavenVersion: String, modelVersion: String) :
     AbstractMavenCompilerReferenceIndexTest(mavenVersion, modelVersion) {
     @Test
-    fun `test BTA file watcher is installed after Maven import when CRI generation property is enabled`() = runTest {
+    fun `test BTA file watcher is installed after Maven import when CRI generation property is enabled`() = runBlocking {
         val service = preloadCriService()
         assertFalse(service.isBtaFileWatcherInstalled)
 
@@ -27,7 +27,7 @@ class MavenCompilerReferenceIndexInstallOnFirstImportTest(mavenVersion: String, 
     }
 
     @Test
-    fun `test BTA file watcher is not installed after Maven import when CRI generation property is absent`() = runTest {
+    fun `test BTA file watcher is not installed after Maven import when CRI generation property is absent`() = runBlocking {
         val service = preloadCriService()
         assertFalse(service.isBtaFileWatcherInstalled)
 
@@ -37,7 +37,7 @@ class MavenCompilerReferenceIndexInstallOnFirstImportTest(mavenVersion: String, 
     }
 
     @Test
-    fun `test BTA file watcher is not installed after Maven import when CRI generation property is disabled`() = runTest {
+    fun `test BTA file watcher is not installed after Maven import when CRI generation property is disabled`() = runBlocking {
         val service = preloadCriService()
         assertFalse(service.isBtaFileWatcherInstalled)
 

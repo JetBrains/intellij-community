@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.mcpserver.toolsets` start
+content_module_jar(module = ":mcpserver.toolsets")
+### auto-generated section `dev intellij.mcpserver.toolsets` end
+
 ### auto-generated section `build intellij.mcpserver.toolsets` start
 jvm_library(
     name = "mcpserver.toolsets",
@@ -47,13 +51,12 @@ jvm_library(
         "//platform/util-ex",
         "//platform/core-impl",
         "//platform/execution-impl",
+        "//platform/external-system-impl:externalSystem-impl",
         "//platform/execution",
         "//platform/platform-impl:ide-impl",
         "//platform/util/coroutines",
     ],
 )
-
-content_module_jar(module = ":mcpserver.toolsets")
 
 jvm_library(
     name = "mcpserver.toolsets_test_lib",
@@ -93,6 +96,7 @@ jvm_library(
         "//platform/util-ex:util-ex_test_lib",
         "//platform/core-impl:core-impl_test_lib",
         "//platform/execution-impl:execution-impl_test_lib",
+        "//platform/external-system-impl:externalSystem-impl_test_lib",
         "//platform/execution:execution_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
         "//platform/util/coroutines:coroutines_test_lib",

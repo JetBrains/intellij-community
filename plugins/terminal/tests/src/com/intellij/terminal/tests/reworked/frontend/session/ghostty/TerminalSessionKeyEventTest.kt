@@ -53,6 +53,45 @@ internal class TerminalSessionKeyEventTest : GhosttyTerminalSessionTestCase() {
   }
 
   @Test
+  fun `AltGr text is left for KEY_TYPED, not swallowed as a Ctrl-Alt chord`() = runSessionTest { session, _, _ ->
+    // Windows AWT reports AltGr as Ctrl+Alt(+AltGraph) down, with keyChar already the AltGr symbol.
+    val altGr = InputEvent.CTRL_DOWN_MASK or InputEvent.ALT_DOWN_MASK or InputEvent.ALT_GRAPH_DOWN_MASK
+    assertThat(session.processKeyEvent(pressed(KeyEvent.VK_5, '[', altGr))).isEqualTo(KeyEventProcessingResultDto.Unhandled)
+    assertThat(session.processKeyEvent(pressed(KeyEvent.VK_0, '@', altGr))).isEqualTo(KeyEventProcessingResultDto.Unhandled)
+
+    val result = session.processKeyEvent(typed('[', altGr))
+    assertThat(result).isInstanceOf(KeyEventProcessingResultDto.StringResult::class.java)
+    assertThat((result as KeyEventProcessingResultDto.StringResult).string).isEqualTo("[")
+  }
+
+  @Test
+  fun `AltGraph alone, without Ctrl, is also AltGr text`() = runSessionTest { session, _, _ ->
+    // Linux reports a dedicated AltGr key as AltGraph alone, without synthesizing Ctrl.
+    assertThat(session.processKeyEvent(pressed(KeyEvent.VK_5, '[', InputEvent.ALT_GRAPH_DOWN_MASK)))
+      .isEqualTo(KeyEventProcessingResultDto.Unhandled)
+
+    val result = session.processKeyEvent(typed('[', InputEvent.ALT_GRAPH_DOWN_MASK))
+    assertThat(result).isInstanceOf(KeyEventProcessingResultDto.StringResult::class.java)
+    assertThat((result as KeyEventProcessingResultDto.StringResult).string).isEqualTo("[")
+  }
+
+  @Test
+  fun `a real Ctrl+Alt chord with a control keyChar is not mistaken for AltGr text`() = runSessionTest { session, _, _ ->
+    val result = session.processKeyEvent(pressed(KeyEvent.VK_A, Char(1), InputEvent.CTRL_DOWN_MASK or InputEvent.ALT_DOWN_MASK))
+    assertThat(result).isInstanceOf(KeyEventProcessingResultDto.BytesResult::class.java)
+  }
+
+  @Test
+  fun `a real Ctrl+Alt chord with a printable keyChar is a chord, outside Windows`() {
+    // Only Windows synthesizes AltGr as Ctrl+Alt; elsewhere isAltGraphDown alone carries it.
+    Assume.assumeFalse(SystemInfoRt.isWindows)
+    runSessionTest { session, _, _ ->
+      val result = session.processKeyEvent(pressed(KeyEvent.VK_A, 'a', InputEvent.CTRL_DOWN_MASK or InputEvent.ALT_DOWN_MASK))
+      assertThat(result).isInstanceOf(KeyEventProcessingResultDto.BytesResult::class.java)
+    }
+  }
+
+  @Test
   fun `typed characters are sent as text`() = runSessionTest { session, _, _ ->
     val result = session.processKeyEvent(typed('ф'))
     assertThat(result).isInstanceOf(KeyEventProcessingResultDto.StringResult::class.java)
@@ -77,6 +116,15 @@ internal class TerminalSessionKeyEventTest : GhosttyTerminalSessionTestCase() {
         .isEqualTo(Char(27) + "b") // backward-word
       assertThat(bytesOf(session.processKeyEvent(pressed(KeyEvent.VK_RIGHT, modifiers = InputEvent.ALT_DOWN_MASK))))
         .isEqualTo(Char(27) + "f") // forward-word
+    }
+  }
+
+  @Test
+  fun `cmd+backspace kills the line`() {
+    Assume.assumeTrue(SystemInfoRt.isMac)
+    runSessionTest { session, _, _ ->
+      assertThat(bytesOf(session.processKeyEvent(pressed(KeyEvent.VK_BACK_SPACE, '\b', InputEvent.META_DOWN_MASK))))
+        .isEqualTo(Char(21).toString()) // Ctrl+U: kill line, not plain Backspace
     }
   }
 

@@ -1,14 +1,23 @@
 // CONSIDER_UNKNOWN_AS_BLOCKING: false
 // CONSIDER_SUSPEND_CONTEXT_NON_BLOCKING: true
-@file:Suppress("UNUSED_VARIABLE")
+@file:Suppress("UNUSED_VARIABLE", "UNUSED_PARAMETER")
 
 import kotlin.coroutines.*
 import java.lang.Thread.sleep
 
 class LambdaAssignmentCheck {
+    val returnSuspendProperty: suspend () -> Unit = {
+        Thread.<warning descr="Possibly blocking call in non-blocking context could lead to thread starvation">sleep</warning>(1)
+    }
+
     fun returnSuspend(): suspend () -> Unit = {
         Thread.<warning descr="Possibly blocking call in non-blocking context could lead to thread starvation">sleep</warning>(1)
     }
+
+    val returnSuspendPropertyAccessor: suspend () -> Unit
+        get() = {
+            Thread.<warning descr="Possibly blocking call in non-blocking context could lead to thread starvation">sleep</warning>(1)
+        }
 
     fun assignToSuspendType() {
         val suspendType: suspend () -> Unit = {
@@ -16,8 +25,104 @@ class LambdaAssignmentCheck {
         }
     }
 
+    fun assignToSuspendTypeParenthesized() {
+        val parenthesized: suspend () -> Unit = ({
+            Thread.<warning descr="Possibly blocking call in non-blocking context could lead to thread starvation">sleep</warning>(4)
+        })
+    }
+
+    fun assignToSuspendTypeLabeled() {
+        val labeled: suspend () -> Unit = lambda@{
+            Thread.<warning descr="Possibly blocking call in non-blocking context could lead to thread starvation">sleep</warning>(5)
+        }
+    }
+
+    fun suspendTypedParameterDefault(
+        action: suspend () -> Unit = {
+            Thread.<warning descr="Possibly blocking call in non-blocking context could lead to thread starvation">sleep</warning>(6)
+        }
+    ) {
+    }
+
+    fun assignToSuspendTypeWithInlineWrapper() {
+        val withWrapper: suspend () -> Unit = {
+            run {
+                Thread.<warning descr="Possibly blocking call in non-blocking context could lead to thread starvation">sleep</warning>(7)
+            }
+        }
+    }
+
+    fun assignToSuspendTypeWithNonInlineLambda() {
+        //no warning should be present, the inner lambda is neither inlined nor of a suspend type
+        val withInnerLambda: suspend () -> Unit = {
+            customFunction {
+                Thread.sleep(8)
+            }
+        }
+    }
+
+    fun assignToNonSuspendType() {
+        //no warning should be present, the target type is not a suspend function type
+        val plain: () -> Unit = {
+            Thread.sleep(9)
+        }
+    }
+
+    fun returnNonSuspend(): () -> Unit = {
+        //no warning should be present, the return type is not a suspend function type
+        Thread.sleep(10)
+    }
+
+    fun nonSuspendTypedParameterDefault(
+        //no warning should be present, the parameter type is not a suspend function type
+        action: () -> Unit = {
+            Thread.sleep(11)
+        }
+    ) {
+    }
+
+    fun returnSuspendFromBlockBody(): suspend () -> Unit {
+        return {
+            Thread.<warning descr="Possibly blocking call in non-blocking context could lead to thread starvation">sleep</warning>(12)
+        }
+    }
+
+    val returnSuspendFromAccessorBlockBody: suspend () -> Unit
+        get() {
+            return {
+                Thread.<warning descr="Possibly blocking call in non-blocking context could lead to thread starvation">sleep</warning>(13)
+            }
+        }
+
+    fun assignToSuspendTypeLocal() {
+        val handler: suspend () -> Unit = {
+            Thread.<warning descr="Possibly blocking call in non-blocking context could lead to thread starvation">sleep</warning>(14)
+        }
+    }
+
+    fun suspendLocalInsideUnrelatedCall() {
+        customFunction {
+            val handler: suspend () -> Unit = {
+                Thread.<warning descr="Possibly blocking call in non-blocking context could lead to thread starvation">sleep</warning>(15)
+            }
+        }
+    }
+
+    fun nonSuspendLocalInsideUnrelatedCall() {
+        //no warning should be present, the target type is not a suspend function type
+        customFunction {
+            val plain: () -> Unit = {
+                Thread.sleep(16)
+            }
+        }
+    }
+
     suspend fun lambdaNotInvoked() {
         //no warning should be present
         val fn1 = { Thread.sleep(3) }
     }
+}
+
+fun customFunction(action: () -> Unit) {
+    action()
 }

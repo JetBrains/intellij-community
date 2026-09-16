@@ -1,7 +1,0 @@
-- name: dist.all/lib/intellij.libraries.jackson.validator.jar
-  modules:
-  - name: intellij.libraries.jackson.validator
-    libraries:
-      jackson-validator:
-      - name: $MAVEN_REPOSITORY$/com/worldturner/medeia/medeia-validator-jackson/1/medeia-validator-jackson-1.jar
-      - name: $MAVEN_REPOSITORY$/com/worldturner/medeia/medeia-validator-core/1/medeia-validator-core-1.jar

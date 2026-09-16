@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.python.ml.features` start
+content_module_jar(
+    libraries = ["@lib//:python-ml-features-jetbrains-ml-models-python-imports-ranking-model"],
+    module = ":ml-features",
+)
+### auto-generated section `dev intellij.python.ml.features` end
+
 ### auto-generated section `build intellij.python.ml.features` start
 jvm_library(
     name = "ml-features",
@@ -40,11 +47,6 @@ jvm_library(
         "@lib//:python-ml-features-jetbrains-ml-models-python-imports-ranking-model",
         "//libraries/mlapi/catboost",
     ],
-)
-
-content_module_jar(
-    libraries = ["@lib//:python-ml-features-jetbrains-ml-models-python-imports-ranking-model"],
-    module = ":ml-features",
 )
 
 jvm_library(

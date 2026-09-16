@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.validation;
 
 import com.intellij.psi.PsiElement;
@@ -7,7 +7,7 @@ import com.jetbrains.python.psi.PyTypeParameter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class Pep8TypeParameterProblemSuppressor implements Pep8ProblemSuppressor {
+class Pep8TypeParameterProblemSuppressor implements Pep8ProblemSuppressor {
 
   public static final String UNEXPECTED_SPACES_AROUND_KEYWORD = "E251";
   public static final String MISSING_WHITESPACE_AROUND_OPERATOR = "E225";

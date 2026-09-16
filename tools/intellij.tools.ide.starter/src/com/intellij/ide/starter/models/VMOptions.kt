@@ -188,6 +188,8 @@ data class VMOptions(
 
   fun enableVerboseOpenTelemetry(): Unit = addSystemProperty("idea.diagnostic.opentelemetry.verbose", true)
 
+  fun enableFocusRequestsLog(): Unit = configureLoggers(LogLevel.TRACE, "jb.focus.requests")
+
   /**
    * [categories] - Could be packages, classes ...
    */

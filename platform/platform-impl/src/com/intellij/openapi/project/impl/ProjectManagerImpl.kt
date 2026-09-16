@@ -58,6 +58,7 @@ import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.getOrLogException
+import com.intellij.openapi.diagnostic.isControlFlowException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginDescriptor
@@ -66,6 +67,7 @@ import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.progress.runBlockingCancellable
@@ -78,6 +80,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.project.VetoableProjectManagerListener
 import com.intellij.openapi.project.ex.ProjectEx
+import com.intellij.openapi.project.ex.PreparedProjectCloseBatch
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.getProjectDataPathRoot
 import com.intellij.openapi.project.impl.ProjectImpl.Companion.LIGHT_PROJECT_NAME
@@ -269,7 +272,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
   override fun loadProject(path: Path): Project = loadProject(path = path, preloadServices = true)
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun loadProject(path: Path, preloadServices: Boolean): Project {
     @Suppress("DEPRECATION")
     val modalityState = CoreProgressManager.getCurrentThreadProgressModality()
@@ -375,18 +378,61 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     }
   }
 
-  // return true if successful
   final override fun closeAndDisposeAllProjects(checkCanClose: Boolean): Boolean {
-    var projects = openProjects
-    LightEditUtil.getProjectIfCreated()?.let {
-      projects += it
+    val batch = prepareProjectsForExit(checkCanClose) ?: return false
+    serviceIfCreated<FileDocumentManager>()?.saveAllDocuments()
+    val saveFailure = runCatching { SaveAndSyncHandler.getInstance().saveSettingsUnderModalProgress(batch.projects) }.exceptionOrNull()
+    if (saveFailure != null) {
+      // the caller's own cancellation is not a save failure
+      Cancellation.checkCancelled()
+      LOG.warn("Failed to save the projects before closing", loggable(saveFailure))
     }
-    for (project in projects) {
-      if (!closeProject(project = project, checkCanClose = checkCanClose)) {
-        return false
+    if (checkCanClose && !batch.confirmCloseAfterSave()) {
+      return false
+    }
+    batch.close()
+    return true
+  }
+
+  @Suppress("TestOnlyProblems")
+  override fun prepareProjectsForExit(checkCanClose: Boolean): PreparedProjectCloseBatch? {
+    ThreadingAssertions.assertWriteIntentReadAccess()
+    check(!ApplicationManager.getApplication().isWriteAccessAllowed)
+    val projects = (openProjects.toList() + listOfNotNull(LightEditUtil.getProjectIfCreated())).distinct()
+    // a light project is closed by `closeProject` without a save, so it has no veto and no preparation
+    val heavyProjects = projects.filter { !it.isDisposed && !isLight(it) }
+    if (checkCanClose && !heavyProjects.all { canClose(it) }) {
+      return null
+    }
+    val started = System.currentTimeMillis()
+    for (project in heavyProjects) {
+      // a cancelled caller stops before the next project; the application exit runs without a job and never stops
+      Cancellation.checkCancelled()
+      val failure = runCatching { prepareProjectClose(project) }.exceptionOrNull() ?: continue
+      // the caller's own cancellation is not a listener failure
+      Cancellation.checkCancelled()
+      LOG.warn("Failed to prepare $project for closing", loggable(failure))
+    }
+    return object : PreparedProjectCloseBatch {
+      override val projects: List<Project> = projects
+
+      override fun confirmCloseAfterSave(): Boolean = heavyProjects.all { it.isDisposed || ensureCouldCloseIfUnableToSave(it) }
+
+      override fun close() {
+        runSuppressing(*projects.map { project ->
+          {
+            if (!project.isDisposed) {
+              if (isLight(project)) {
+                closeProject(project, saveProject = false, checkCanClose = false)
+              }
+              else {
+                closePreparedProject(project, dispose = true, projectCloseStartedMs = started, projectSaveSettingsDurationMs = 0)
+              }
+            }
+          }
+        }.toTypedArray())
       }
     }
-    return true
   }
 
   private fun closeProjectWithConfirmation(project: Project): Boolean {
@@ -445,11 +491,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       return false
     }
 
-    if (project is ComponentManagerEx) {
-      project.stopServicePreloading()
-    }
-    closePublisher.projectClosingBeforeSave(project)
-    publisher.projectClosingBeforeSave(project)
+    prepareProjectClose(project)
 
     val projectSaveSettingsDurationMs = measureTimeMillis {
       tracer.spanBuilder("save project settings on close").use {
@@ -464,51 +506,72 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       return false
     }
 
-    val projectClosingDurationMs = measureTimeMillis {
-      tracer.spanBuilder("project closing").use {
-        // somebody can start progress here, do not wrap in write action
-        fireProjectClosing(project)
-        if (project is ProjectImpl) {
-          if (Registry.`is`("ide.await.project.scope.completion")) {
-            cancelAndJoinBlocking(project)
-          }
-          else {
-            cancelAndTryJoin(project)
-          }
-        }
-      }
-    }
+    closePreparedProject(project, dispose, projectCloseStartedMs, projectSaveSettingsDurationMs)
+    return true
+  }
 
-    app.runWriteAction {
-      removeFromOpened(project)
-      if (project is ProjectImpl) {
-        // ignore a dispose flag (dispose is passed only via deprecated API that used only by some 3d-party plugins)
-        project.disposeEarlyDisposable()
-        if (dispose) {
-          project.startDispose()
+  private fun prepareProjectClose(project: Project) {
+    if (project is ComponentManagerEx) {
+      project.stopServicePreloading()
+    }
+    closePublisher.projectClosingBeforeSave(project)
+    publisher.projectClosingBeforeSave(project)
+  }
+
+  private fun closePreparedProject(
+    project: Project,
+    dispose: Boolean,
+    projectCloseStartedMs: Long,
+    projectSaveSettingsDurationMs: Long,
+  ) {
+    val app = ApplicationManager.getApplication()
+    // the caller's thread context can carry a job of this project's scope; the scope cancellation below must not cancel the close
+    Cancellation.withNonCancelableSection().use {
+      val projectClosingDurationMs = measureTimeMillis {
+        tracer.spanBuilder("project closing").use {
+          // somebody can start progress here, do not wrap in write action
+          fireProjectClosing(project)
+          if (project is ProjectImpl) {
+            if (Registry.`is`("ide.await.project.scope.completion")) {
+              cancelAndJoinBlocking(project)
+            }
+            else {
+              cancelAndTryJoin(project)
+            }
+          }
         }
       }
-      fireProjectClosed(project)
-      if (!ApplicationManagerEx.getApplicationEx().isExitInProgress) {
-        runSuppressing(
-          { TimedZipHandler.closeOpenZipReferences() },
-          { ZipHandler.clearFileAccessorCache() }
+
+      app.runWriteAction {
+        removeFromOpened(project)
+        if (project is ProjectImpl) {
+          // ignore a dispose flag (dispose is passed only via deprecated API that used only by some 3d-party plugins)
+          project.disposeEarlyDisposable()
+          if (dispose) {
+            project.startDispose()
+          }
+        }
+        fireProjectClosed(project)
+        if (!ApplicationManagerEx.getApplicationEx().isExitInProgress) {
+          runSuppressing(
+            { TimedZipHandler.closeOpenZipReferences() },
+            { ZipHandler.clearFileAccessorCache() }
+          )
+        }
+        LaterInvocator.purgeExpiredItems()
+
+        val projectDisposeDurationMs = measureTimeMillis {
+          tracer.spanBuilder("dispose project").use {
+            if (dispose) {
+              Disposer.dispose(project)
+            }
+          }
+        }
+        LifecycleUsageTriggerCollector.onProjectClosedAndDisposed(
+          project, projectCloseStartedMs, projectSaveSettingsDurationMs, projectClosingDurationMs, projectDisposeDurationMs
         )
       }
-      LaterInvocator.purgeExpiredItems()
-
-      val projectDisposeDurationMs = measureTimeMillis {
-        tracer.spanBuilder("dispose project").use {
-          if (dispose) {
-            Disposer.dispose(project)
-          }
-        }
-      }
-      LifecycleUsageTriggerCollector.onProjectClosedAndDisposed(
-        project, projectCloseStartedMs, projectSaveSettingsDurationMs, projectClosingDurationMs, projectDisposeDurationMs
-      )
     }
-    return true
   }
 
   override fun closeAndDispose(project: Project): Boolean = closeProject(project, checkCanClose = true)
@@ -602,7 +665,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   }
 
   @Suppress("OVERRIDE_DEPRECATION")
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   final override fun createProject(name: String?, path: String): Project {
     @Suppress("DEPRECATION")
     return runUnderModalProgressIfIsEdt {
@@ -1564,4 +1627,11 @@ fun CoroutineScope.runInitProjectActivities(project: Project, logger: Logger) {
       }.getOrLogException(logger)
     }
   }
+}
+
+/**
+ * Wraps a control-flow exception so that a logger accepts it. Returns any other failure as is.
+ */
+private fun loggable(failure: Throwable): Throwable {
+  return if (failure.isControlFlowException) RuntimeException("The operation was cancelled", failure) else failure
 }

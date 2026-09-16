@@ -11,6 +11,10 @@ jps_test(
 
 ### skip generation section `test intellij.platform.searchEverywhere.frontend.tests`
 
+### auto-generated section `dev intellij.platform.searchEverywhere.frontend` start
+content_module_jar(module = ":frontend")
+### auto-generated section `dev intellij.platform.searchEverywhere.frontend` end
+
 ### auto-generated section `build intellij.platform.searchEverywhere.frontend` start
 jvm_library(
     name = "frontend",
@@ -43,6 +47,7 @@ jvm_library(
         "//platform/kernel/shared:kernel",
         "//platform/editor-ui-api:editor-ui",
         "//platform/ide-core",
+        "//platform/runtime/product",
         "//platform/platform-impl:ide-impl",
         "//platform/core-ui",
         "//platform/lang-api:lang",
@@ -61,8 +66,6 @@ jvm_library(
         "//platform/welcome-screen",
     ],
 )
-
-content_module_jar(module = ":frontend")
 
 jvm_library(
     name = "frontend_test_lib",
@@ -92,6 +95,7 @@ jvm_library(
         "//platform/kernel/shared:kernel_test_lib",
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/ide-core:ide-core_test_lib",
+        "//platform/runtime/product:product_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
         "//platform/core-ui:core-ui_test_lib",
         "//platform/lang-api:lang_test_lib",
@@ -117,7 +121,6 @@ exports_files(
     [
         "intellij.platform.searchEverywhere.frontend.iml",
         "resources/intellij.platform.searchEverywhere.frontend.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -14,7 +14,6 @@ import com.intellij.util.TimeoutUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import com.jediterm.core.util.TermSize;
 import com.jediterm.terminal.TtyConnector;
-import com.pty4j.PtyProcess;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,7 +41,7 @@ import static org.jetbrains.plugins.terminal.TerminalStartupKt.startLocalProcess
 import static org.jetbrains.plugins.terminal.TerminalStartupKt.startProcess;
 import static org.jetbrains.plugins.terminal.util.TerminalUtilKt.toExistentNioDirectory;
 
-public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess> {
+public class LocalTerminalDirectRunner extends AbstractTerminalRunner<Process> {
   private static final Logger LOG = Logger.getInstance(LocalTerminalDirectRunner.class);
   @ApiStatus.Internal
   public static final String LOGIN_CLI_OPTION = "--login";
@@ -103,7 +102,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   @SuppressWarnings("removal")
   @Deprecated(forRemoval = true)
   @Override
-  public @NotNull PtyProcess createProcess(@NotNull ShellStartupOptions options) throws ExecutionException {
+  public @NotNull Process createProcess(@NotNull ShellStartupOptions options) throws ExecutionException {
     return doCreateProcess(options).getPtyProcess();
   }
 
@@ -198,7 +197,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   @SuppressWarnings("removal")
   @Deprecated(forRemoval = true)
   @Override
-  public @NotNull TtyConnector createTtyConnector(@NotNull PtyProcess process) {
+  public @NotNull TtyConnector createTtyConnector(@NotNull Process process) {
     return new PtyProcessTtyConnector(process, myDefaultCharset);
   }
 

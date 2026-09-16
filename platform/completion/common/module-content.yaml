@@ -1,3 +1,0 @@
-- name: dist.all/lib/intellij.platform.completion.common.jar
-  modules:
-  - name: intellij.platform.completion.common

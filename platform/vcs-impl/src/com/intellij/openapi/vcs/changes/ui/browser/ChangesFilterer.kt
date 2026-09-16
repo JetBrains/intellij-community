@@ -65,7 +65,7 @@ class ChangesFilterer(val project: Project?, val listener: Listener) : Disposabl
     resetFilter()
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun setChanges(changes: List<Change>?) {
     val oldChanges = rawChanges
     if (oldChanges == null && changes == null) return
@@ -76,7 +76,7 @@ class ChangesFilterer(val project: Project?, val listener: Listener) : Disposabl
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun getFilteredChanges(): FilteredState {
     synchronized(LOCK) {
       val processed = processedChanges
@@ -89,7 +89,7 @@ class ChangesFilterer(val project: Project?, val listener: Listener) : Disposabl
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun getProgress(): Float {
     val pendingCount = synchronized(LOCK) { pendingChanges?.size }
     val totalCount = rawChanges?.size

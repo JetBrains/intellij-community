@@ -24,6 +24,10 @@ import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.CONSTRUCTOR_PARAMETER
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.FIELD
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics.findAnnotation
+import org.jetbrains.kotlin.idea.base.psi.addAnnotation
+import org.jetbrains.kotlin.idea.base.psi.addModifierKeyword
+import org.jetbrains.kotlin.idea.base.psi.removeModifierKeyword
+import org.jetbrains.kotlin.idea.base.psi.setPropertyInitializer
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.j2k.ElementsBasedPostProcessing
@@ -177,7 +181,7 @@ private class Applier(private val context: Map<KtClass, List<Initialization<*>>>
 
             is LiteralInitialization -> {
                 val (property, initializer, _) = initialization
-                property.initializer = initializer
+                property.setPropertyInitializer(initializer)
                 restoreCommentsTarget = property
             }
         }
@@ -196,7 +200,7 @@ private class Applier(private val context: Map<KtClass, List<Initialization<*>>>
 
         val visibilityModifier = property.visibilityModifierType()
         if (visibilityModifier != null) {
-            parameter.addModifier(visibilityModifier)
+            parameter.addModifierKeyword(visibilityModifier)
         }
 
         // CommentSaver(property) alone only captures comments that are descendants of `property`. Other
@@ -211,14 +215,14 @@ private class Applier(private val context: Map<KtClass, List<Initialization<*>>>
             if (it.useSiteTarget == null) it.addUseSiteTarget(CONSTRUCTOR_PARAMETER)
         }
         property.annotationEntries.forEach { propertyAnnotation ->
-            val entry = parameter.addAnnotationEntry(propertyAnnotation)
+            val entry = parameter.addAnnotation(propertyAnnotation)
             if (entry.useSiteTarget == null && propertyAnnotation in annotationsNeedingFieldTarget) {
                 entry.addUseSiteTarget(FIELD)
             }
         }
         property.typeReference?.annotationEntries?.forEach { entry ->
             if (parameter.typeReference?.annotationEntries?.all { it.shortName != entry.shortName } == true) {
-                parameter.typeReference?.addAnnotationEntry(entry)
+                parameter.typeReference?.addAnnotation(entry)
             }
         }
 
@@ -282,7 +286,7 @@ private class Applier(private val context: Map<KtClass, List<Initialization<*>>>
         if (primaryConstructorParameters.isEmpty() ||
             primaryConstructorParameters.any { it.isVarArg || !it.hasValOrVar() }
         ) {
-            removeModifier(DATA_KEYWORD)
+            removeModifierKeyword(DATA_KEYWORD)
             findAnnotation(declaration = this, FqName("kotlin.jvm.JvmRecord"))?.delete()
         }
     }

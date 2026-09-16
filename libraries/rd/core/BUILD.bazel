@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.rd.core` start
+content_module_jar(
+    libraries = ["@lib//:libraries-rd-core-rd-core"],
+    module = ":core",
+)
+### auto-generated section `dev intellij.libraries.rd.core` end
+
 ### auto-generated section `build intellij.libraries.rd.core` start
 jvm_library(
     name = "core",
@@ -16,11 +23,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-rd-core-rd-core"],
     runtime_deps = ["@lib//:libraries-rd-core-rd-core"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-rd-core-rd-core"],
-    module = ":core",
 )
 
 jvm_library(
@@ -43,7 +45,6 @@ exports_files(
     [
         "intellij.libraries.rd.core.iml",
         "resources/intellij.libraries.rd.core.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

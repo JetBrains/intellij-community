@@ -1,6 +1,22 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.ktor.client` start
+content_module_jar(
+    libraries = [
+        # do not sort,
+        "@lib//:libraries-ktor-client-ktor-client-core",
+        "@lib//:libraries-ktor-client-ktor-client-java",
+        "@lib//:libraries-ktor-client-ktor-client-encoding",
+        "@lib//:libraries-ktor-client-ktor-client-content-negotiation",
+        "@lib//:libraries-ktor-client-ktor-serialization-kotlinx-json",
+        "@lib//:libraries-ktor-client-ktor-client-auth",
+        "@lib//:libraries-ktor-client-ktor-client-logging",
+    ],
+    module = ":client",
+)
+### auto-generated section `dev intellij.libraries.ktor.client` end
+
 ### auto-generated section `build intellij.libraries.ktor.client` start
 jvm_library(
     name = "client",
@@ -16,12 +32,12 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        "@lib//:ktor-client-core",
-        "@lib//:ktor-client-java",
+        "@lib//:libraries-ktor-client-ktor-client-core",
+        "@lib//:libraries-ktor-client-ktor-client-java",
         "@lib//:libraries-ktor-client-ktor-client-encoding",
         "@lib//:libraries-ktor-client-ktor-client-content-negotiation",
-        "@lib//:ktor-serialization-kotlinx-json",
-        "@lib//:kotlinx-serialization-json-io",
+        "@lib//:libraries-ktor-client-ktor-serialization-kotlinx-json",
+        "//libraries/kotlinx/serialization/json-io:libraries-kotlinx-serialization-json-io",
         "@lib//:libraries-ktor-client-ktor-client-auth",
         "@lib//:libraries-ktor-client-ktor-client-logging",
         "//libraries/ktor/utils",
@@ -29,33 +45,18 @@ jvm_library(
     ],
     runtime_deps = [
         # do not sort,
-        "@lib//:ktor-client-core",
-        "@lib//:ktor-client-java",
+        "@lib//:libraries-ktor-client-ktor-client-core",
+        "@lib//:libraries-ktor-client-ktor-client-java",
         "@lib//:libraries-ktor-client-ktor-client-encoding",
         "@lib//:libraries-ktor-client-ktor-client-content-negotiation",
-        "@lib//:ktor-serialization-kotlinx-json",
-        "@lib//:kotlinx-serialization-json-io",
+        "@lib//:libraries-ktor-client-ktor-serialization-kotlinx-json",
+        "//libraries/kotlinx/serialization/json-io:libraries-kotlinx-serialization-json-io",
         "@lib//:libraries-ktor-client-ktor-client-auth",
         "@lib//:libraries-ktor-client-ktor-client-logging",
         "//libraries/ktor/utils",
         "//libraries/ktor/io",
         "//libraries/kotlinx/coroutines/slf4j",
     ],
-)
-
-content_module_jar(
-    libraries = [
-        # do not sort,
-        "@lib//:ktor-client-core",
-        "@lib//:ktor-client-java",
-        "@lib//:libraries-ktor-client-ktor-client-encoding",
-        "@lib//:libraries-ktor-client-ktor-client-content-negotiation",
-        "@lib//:ktor-serialization-kotlinx-json",
-        "@lib//:kotlinx-serialization-json-io",
-        "@lib//:libraries-ktor-client-ktor-client-auth",
-        "@lib//:libraries-ktor-client-ktor-client-logging",
-    ],
-    module = ":client",
 )
 
 jvm_library(
@@ -70,12 +71,13 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        "@lib//:ktor-client-core",
-        "@lib//:ktor-client-java",
+        "@lib//:libraries-ktor-client-ktor-client-core",
+        "@lib//:libraries-ktor-client-ktor-client-java",
         "@lib//:libraries-ktor-client-ktor-client-encoding",
         "@lib//:libraries-ktor-client-ktor-client-content-negotiation",
-        "@lib//:ktor-serialization-kotlinx-json",
-        "@lib//:kotlinx-serialization-json-io",
+        "@lib//:libraries-ktor-client-ktor-serialization-kotlinx-json",
+        "//libraries/kotlinx/serialization/json-io:libraries-kotlinx-serialization-json-io",
+        "//libraries/kotlinx/serialization/json-io:libraries-kotlinx-serialization-json-io_test_lib",
         "@lib//:libraries-ktor-client-ktor-client-auth",
         "@lib//:libraries-ktor-client-ktor-client-logging",
         "//libraries/ktor/utils",
@@ -86,6 +88,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":client",
+        "//libraries/kotlinx/serialization/json-io:libraries-kotlinx-serialization-json-io_test_lib",
         "//libraries/ktor/utils:utils_test_lib",
         "//libraries/ktor/io:io_test_lib",
         "//libraries/kotlinx/coroutines/slf4j:slf4j_test_lib",
@@ -98,7 +101,6 @@ exports_files(
     [
         "intellij.libraries.ktor.client.iml",
         "resources/intellij.libraries.ktor.client.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

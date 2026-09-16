@@ -8,6 +8,7 @@ import org.jetbrains.intellij.build.io.readZipFile
 import org.jetbrains.intellij.build.io.zipWriter
 import java.nio.ByteBuffer
 import java.nio.file.Path
+import kotlin.io.path.pathString
 
 /**
  * Provides a way to create a plugin jar by including entries from different sources.
@@ -15,7 +16,8 @@ import java.nio.file.Path
 internal class PluginJarPackager(private val outputJarPath: Path) : AutoCloseable {
   private val packageIndexBuilder = PackageIndexBuilder(AddDirEntriesMode.NONE)
   private val zipWriter = ZipFileWriter(zipWriter(outputJarPath, packageIndexBuilder))
-  private val addedFilePaths = HashSet<String>()
+  /** relative path added to the JAR -> presentable description of its origin */
+  private val addedFilePaths = HashMap<String, String>()
 
   internal fun interface ZipEntryPatcher {
     /**
@@ -24,8 +26,8 @@ internal class PluginJarPackager(private val outputJarPath: Path) : AutoCloseabl
     fun patchEntry(filePath: String, dataFetcher: () -> ByteBuffer): ByteBuffer?
   }
 
-  fun addFile(relativePath: String, content: ByteArray) {
-    checkAddedFile(relativePath)
+  fun addFile(relativePath: String, content: ByteArray, presentableOrigin: String) {
+    checkAddedFile(relativePath, presentableOrigin)
     packageIndexBuilder.addFile(relativePath)
     zipWriter.uncompressedData(relativePath, content)
   }
@@ -34,7 +36,7 @@ internal class PluginJarPackager(private val outputJarPath: Path) : AutoCloseabl
     readZipFile(inputJar) { filePath, dataFetcher ->
       val patchedData = entryPatcher.patchEntry(filePath, dataFetcher)
       if (patchedData != null) {
-        checkAddedFile(filePath)
+        checkAddedFile(filePath, inputJar.pathString)
         packageIndexBuilder.addFile(filePath)
         zipWriter.uncompressedData(filePath, patchedData)
       }
@@ -42,9 +44,10 @@ internal class PluginJarPackager(private val outputJarPath: Path) : AutoCloseabl
     }
   }
 
-  private fun checkAddedFile(relativePath: String) {
-    if (!addedFilePaths.add(relativePath)) {
-      throw IllegalStateException("File $relativePath was added twice to $outputJarPath")
+  private fun checkAddedFile(relativePath: String, presentableOrigin: String) {
+    val oldOrigin = addedFilePaths.put(relativePath, presentableOrigin)
+    if (oldOrigin != null) {
+      throw IjPluginPackagingException("File $relativePath was added twice to $outputJarPath: from $oldOrigin and from $presentableOrigin")
     }
   }
 

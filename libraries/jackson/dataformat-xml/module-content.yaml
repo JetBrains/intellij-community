@@ -1,6 +1,0 @@
-- name: dist.all/lib/intellij.libraries.jackson.dataformat.xml.jar
-  modules:
-  - name: intellij.libraries.jackson.dataformat.xml
-    libraries:
-      jackson-dataformat-xml:
-      - name: $MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-xml/2/jackson-dataformat-xml-2.jar

@@ -18,7 +18,7 @@ class WindowFocusFrontendService {
    * [LxNonLuxWindowRef] is provided as its parent, which means the latest focused window
    * will be used as a parent for newly appearing Lux-ed windows.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun <T> performActionWithFocus(frontendFocused: Boolean, action: (() -> T?)? = null): T? {
     ThreadingAssertions.assertEventDispatchThread()
     val previousValue = isFrontendWindowFocused
@@ -31,7 +31,7 @@ class WindowFocusFrontendService {
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun isFrontendFocused(): Boolean {
     ThreadingAssertions.assertEventDispatchThread()
     return isFrontendWindowFocused

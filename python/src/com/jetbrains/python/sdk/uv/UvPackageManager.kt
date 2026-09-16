@@ -21,7 +21,9 @@ import com.intellij.python.uv.common.UV_TOOL_ID
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.getOrNull
+import com.jetbrains.python.uv.UV_LOCK
+import com.jetbrains.python.packaging.packageRequirements.packagesUnavailable
+import com.jetbrains.python.packaging.packageRequirements.cachedDependencyTree
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
@@ -40,7 +42,6 @@ import com.jetbrains.python.packaging.packageRequirements.CachedDependencyTreePr
 import com.jetbrains.python.packaging.packageRequirements.PackageCollectionPackageStructureNode
 import com.jetbrains.python.packaging.packageRequirements.PackageStructureNode
 import com.jetbrains.python.packaging.packageRequirements.PackageTreeNode
-import com.jetbrains.python.packaging.packageRequirements.TreeParser
 import com.jetbrains.python.packaging.packageRequirements.WorkspaceMemberPackageStructureNode
 import com.jetbrains.python.packaging.packageRequirements.collectAllNames
 import com.jetbrains.python.packaging.packageRequirements.extractDeclaredDependencies
@@ -53,7 +54,6 @@ import com.jetbrains.python.sdk.findModuleForSdk
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
 internal class UvPackageManager internal constructor(
@@ -67,8 +67,21 @@ internal class UvPackageManager internal constructor(
   override val cliSpecs: List<PythonManagerCliSpec> = listOf(
     PythonManagerCliSpec("uv", { UvPyTool.getInstance().resolveExecutable(EelFileSystem(localEel))?.path })
   )
-  override val treeProvider = CachedDependencyTreeProvider(fetchOutput = {
-    withUv { uv -> uv.listProjectStructureTree() }.orLogException(thisLogger())
+  override val treeProvider = cachedDependencyTree(
+    lockFileName = UV_LOCK.value,
+    dependencyFiles = { resolveDependencyFilesTree() },
+  ) { withUv { uv -> uv.listProjectStructureTree() } }
+
+  /**
+   * What the environment holds, which is not the same as what the project declares. A package here
+   * and missing from [treeProvider] was installed into the environment on its own.
+   *
+   * Cached like the project tree: the tool window refreshes several times over a session, and every
+   * refresh would otherwise run `uv pip tree` again. Not through [cachedDependencyTree], because this tree is what
+   * the environment holds and the dependency files do not say when that changes.
+   */
+  private val installedTreeProvider = CachedDependencyTreeProvider(fetchOutput = {
+    withUv { uv -> uv.listAllPackagesTree() }
   })
   override val dependenciesFilesRelativePaths: List<Path>
     get() = listOf(
@@ -144,80 +157,43 @@ internal class UvPackageManager internal constructor(
     }
   }
 
-  override suspend fun listDeclaredPackages(): PyResult<List<PythonPackage>> {
-    return declaredPackagesFromTrees(treeProvider.getDependencyTrees())
-  }
+  override suspend fun listDeclaredPackages(): PyResult<List<PythonPackage>> =
+    treeProvider.getDependencyTrees().mapSuccess { extractDeclaredDependencies(it) }
 
-  private fun declaredPackagesFromTrees(trees: List<PackageTreeNode>): PyResult<List<PythonPackage>> {
-    if (trees.isEmpty()) return PyResult.success(emptyList())
-    return PyResult.success(extractDeclaredDependencies(trees))
-  }
-
+  /**
+   * Shows the `uv tree` output as uv prints it: one row per root, which is one row per project in
+   * the workspace, and under each root exactly the dependencies uv listed for it.
+   *
+   * The declared set is not flattened into the top level. Doing that put a package that is only a
+   * dependency of one member, such as `a2wsgi`, next to the members themselves (PY-90174).
+   */
   override suspend fun getPackageTree(): PackageStructureNode {
-    val allTrees = treeProvider.getDependencyTrees()
-    val declaredPackageNames = declaredPackagesFromTrees(allTrees).getOrNull()
-                                 ?.mapTo(mutableSetOf()) { it.name } ?: emptySet()
+    val roots = treeProvider.getDependencyTrees().getOr { return packagesUnavailable(it.error) }
+    if (roots.isEmpty()) return PackageCollectionPackageStructureNode(emptyList(), emptyList())
 
-    val workspaceTree = buildWorkspaceStructure(allTrees, declaredPackageNames)
-    if (workspaceTree != null) return workspaceTree
+    // Every package the output names. What is installed and missing from it is undeclared.
+    val shownPackageNames = roots.flatMapTo(mutableSetOf()) { it.collectAllNames() }
+    val undeclared = extractUndeclaredPackages(shownPackageNames)
+    val projectNames = roots.mapTo(mutableSetOf()) { it.name.name }
 
-    val undeclaredRoots = extractUndeclaredPackages(declaredPackageNames)
-    return buildNonWorkspacePackageStructure(allTrees, declaredPackageNames, undeclaredRoots)
-  }
-
-  private suspend fun buildWorkspaceStructure(
-    allTrees: List<PackageTreeNode>,
-    declaredPackageNames: Set<String>,
-  ): WorkspaceMemberPackageStructureNode? {
-    val (rootName, subMemberNames) = getWorkspaceLayout() ?: return null
-
-    val allMemberNames = (setOf(rootName) + subMemberNames).mapTo(mutableSetOf()) { PyPackageName.from(it).name }
-
-    val treesByName = allTrees.associateBy { it.name.name }
-    val rootTree = (treesByName[PyPackageName.from(rootName).name] ?: createLeafNode(rootName)).filterOutMembers(allMemberNames)
-    val subMembers = subMemberNames.map { name ->
-      val tree = (treesByName[PyPackageName.from(name).name] ?: createLeafNode(name)).filterOutMembers(allMemberNames)
-      WorkspaceMemberPackageStructureNode(name, emptyList(), tree)
+    // A single project has nothing to group by, so its dependencies stay at the top level. Giving it
+    // a row of its own would put every package one level down.
+    val singleProject = roots.singleOrNull()
+    if (singleProject != null) {
+      return PackageCollectionPackageStructureNode(singleProject.children, undeclared, projectNames)
     }
 
-    val shownPackageNames = collectAllPackageNames(rootTree, subMembers)
-    val undeclared = extractUndeclaredPackages(declaredPackageNames)
-      .filter { it.name.name !in shownPackageNames && it.name.name !in allMemberNames }
-
-    return WorkspaceMemberPackageStructureNode(rootName, subMembers, rootTree, undeclared)
+    return WorkspaceMemberPackageStructureNode(
+      name = roots.first().name.name,
+      subMembers = roots.drop(1).map { WorkspaceMemberPackageStructureNode(it.name.name, emptyList(), it) },
+      packageTree = roots.first(),
+      undeclaredPackages = undeclared,
+    )
   }
 
-  private fun PackageTreeNode.filterOutMembers(memberNames: Set<String>): PackageTreeNode {
-    val filteredChildren = children
-      .filter { it.name.name !in memberNames }
-      .map { it.filterOutMembers(memberNames) }
-    return PackageTreeNode(name, filteredChildren.toMutableList(), group, version)
-  }
-
-  private suspend fun getWorkspaceLayout(): Pair<String, List<String>>? {
-    val uvWorkingDirectory = uvExecutionContextDeferred.await().workingDir
-    val layout = readAction {
-      val module = ModuleManager.getInstance(project).modules.firstOrNull { module ->
-        ModuleRootManager.getInstance(module).contentRoots.any { it.toNioPath() == uvWorkingDirectory }
-      } ?: return@readAction null
-      module.getToolWorkspaceLayout(UV_TOOL_ID)
-    } ?: return null
-
-    val rootName = resolvePackageName(layout.rootModule)
-    val memberNames = layout.memberModules.map { resolvePackageName(it) }
-    return rootName to memberNames
-  }
-
-  private fun collectAllPackageNames(rootTree: PackageTreeNode?, subMembers: List<WorkspaceMemberPackageStructureNode>): Set<String> {
-    val trees = listOfNotNull(rootTree) + subMembers.mapNotNull { it.packageTree }
-    return trees.flatMapTo(mutableSetOf()) { it.collectAllNames() }
-  }
-
-  private suspend fun extractUndeclaredPackages(declaredPackageNames: Set<String>): List<PackageTreeNode> {
-    val output = withUv { uv -> uv.listAllPackagesTree() }.getOrNull() ?: return emptyList()
-    return TreeParser.parseTrees(output.lines())
-      .filter { it.name.name !in declaredPackageNames }
-  }
+  private suspend fun extractUndeclaredPackages(shownPackageNames: Set<String>): List<PackageTreeNode> =
+    installedTreeProvider.getDependencyTrees().orLogException(thisLogger()).orEmpty()
+      .filter { it.name.name !in shownPackageNames }
 
   /**
    * Categorizes packages into standalone packages and pyproject.toml declared packages.
@@ -278,6 +254,11 @@ internal class UvPackageManager internal constructor(
       message("python.uv.lockfile.out.of.sync"),
       message("python.uv.update.lock")
     )
+
+  override suspend fun reloadPackages(): PyResult<List<PythonPackage>> {
+    installedTreeProvider.invalidateCache()
+    return super.reloadPackages()
+  }
 
   suspend fun lock(): PyResult<Unit> {
     return withUv { uv ->
@@ -388,35 +369,3 @@ internal class UvPackageManagerProvider : PythonPackageManagerProvider {
   }
 }
 
-/**
- * Builds the non-workspace package structure: keeps declared depth-1 dependencies with their
- * transitive subtrees, and filters out any `uv pip tree` root that either matches a project root
- * name or already appears inside a declared subtree (transitive of a declared package).
- */
-@ApiStatus.Internal
-fun buildNonWorkspacePackageStructure(
-  allTrees: List<PackageTreeNode>,
-  declaredPackageNames: Set<String>,
-  undeclaredRoots: List<PackageTreeNode>,
-): PackageCollectionPackageStructureNode {
-  val rootProjectNames = allTrees.mapTo(mutableSetOf()) { it.name.name }
-  val declaredPackages = extractDeclaredPackagesFromParsedTrees(allTrees, declaredPackageNames)
-  val shownPackageNames = declaredPackages.flatMapTo(mutableSetOf()) { it.collectAllNames() }
-  val filtered = undeclaredRoots.filter {
-    it.name.name !in shownPackageNames && it.name.name !in rootProjectNames
-  }
-  return PackageCollectionPackageStructureNode(declaredPackages, filtered)
-}
-
-private fun extractDeclaredPackagesFromParsedTrees(
-  allTrees: List<PackageTreeNode>,
-  declaredPackageNames: Set<String>,
-): List<PackageTreeNode> {
-  val projectRoot = allTrees.firstOrNull()
-                    ?: return declaredPackageNames.map { createLeafNode(it) }
-  val childrenByName = projectRoot.children.associateBy { it.name.name }
-  return declaredPackageNames.map { name -> childrenByName[name] ?: createLeafNode(name) }
-}
-
-private fun createLeafNode(packageName: String): PackageTreeNode =
-  PackageTreeNode(PyPackageName.from(packageName))

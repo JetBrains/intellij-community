@@ -28,24 +28,24 @@ final class MachineIdNative {
    * @return the {@code IOPlatformUUID} property of {@code IOPlatformExpertDevice}, or {@code null} when the registry has none
    */
   static @Nullable String macOsPlatformUuid() {
-    try (Arena arena = Arena.ofConfined()) {
+    try (var arena = Arena.ofConfined()) {
       // IOServiceGetMatchingService consumes one reference of the matching dictionary.
-      MemorySegment matching = (MemorySegment)IOKit.IO_SERVICE_MATCHING.invokeExact(arena.allocateFrom("IOPlatformExpertDevice"));
-      int service = (int)IOKit.IO_SERVICE_GET_MATCHING_SERVICE.invokeExact(0, matching);
+      var matching = (MemorySegment)IOKit.IO_SERVICE_MATCHING.invokeExact(arena.allocateFrom("IOPlatformExpertDevice"));
+      var service = (int)IOKit.IO_SERVICE_GET_MATCHING_SERVICE.invokeExact(0, matching);
       if (service == 0) {
         return null;
       }
       try {
-        MemorySegment key = (MemorySegment)IOKit.CF_STRING_CREATE_WITH_C_STRING.invokeExact(
+        var key = (MemorySegment)IOKit.CF_STRING_CREATE_WITH_C_STRING.invokeExact(
           MemorySegment.NULL, arena.allocateFrom("IOPlatformUUID"), KCF_STRING_ENCODING_UTF8);
         try {
-          MemorySegment uuid = (MemorySegment)IOKit.IO_REGISTRY_ENTRY_CREATE_CF_PROPERTY.invokeExact(service, key, MemorySegment.NULL, 0);
+          var uuid = (MemorySegment)IOKit.IO_REGISTRY_ENTRY_CREATE_CF_PROPERTY.invokeExact(service, key, MemorySegment.NULL, 0);
           if (uuid.equals(MemorySegment.NULL)) {
             return null;
           }
           try {
-            MemorySegment buffer = arena.allocate(UUID_BUFFER_SIZE);
-            byte copied = (byte)IOKit.CF_STRING_GET_C_STRING.invokeExact(uuid, buffer, UUID_BUFFER_SIZE, KCF_STRING_ENCODING_UTF8);
+            var buffer = arena.allocate(UUID_BUFFER_SIZE);
+            var copied = (byte)IOKit.CF_STRING_GET_C_STRING.invokeExact(uuid, buffer, UUID_BUFFER_SIZE, KCF_STRING_ENCODING_UTF8);
             return copied != 0 ? buffer.getString(0) : null;
           }
           finally {
@@ -57,7 +57,7 @@ final class MachineIdNative {
         }
       }
       finally {
-        int ignored = (int)IOKit.IO_OBJECT_RELEASE.invokeExact(service);
+        var _ = (int)IOKit.IO_OBJECT_RELEASE.invokeExact(service);
       }
     }
     catch (Throwable t) {

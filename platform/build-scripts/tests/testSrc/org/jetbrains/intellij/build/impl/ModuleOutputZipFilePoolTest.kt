@@ -2,14 +2,14 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.util.lang.ZipFile
-import kotlinx.coroutines.CancellationException
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
-import org.jetbrains.intellij.build.runBlockingOnVirtualThreads
+import org.jetbrains.intellij.build.BuildLifetime
 import org.junit.jupiter.api.Test
 import java.io.InputStream
 import java.nio.ByteBuffer
 import java.nio.file.Path
+import java.util.concurrent.CancellationException
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
@@ -26,9 +26,9 @@ internal class ModuleOutputZipFilePoolTest {
 
     try {
       assertThatThrownBy {
-        runBlockingOnVirtualThreads {
+        BuildLifetime().use { lifetime ->
           val pool = ModuleOutputZipFilePool(
-            scope = this,
+            lifetime = lifetime,
             cacheReadTimeout = 100.milliseconds,
             zipFileLoader = {
               release.await()
@@ -59,11 +59,11 @@ internal class ModuleOutputZipFilePoolTest {
     val entryPath = "META-INF/plugin.xml"
     val expectedData = "<idea-plugin/>".encodeToByteArray()
 
-    runBlockingOnVirtualThreads {
+    BuildLifetime().use { lifetime ->
       val callerThread = Thread.currentThread()
       val loaderThread = arrayOfNulls<Thread>(1)
       val pool = ModuleOutputZipFilePool(
-        scope = this,
+        lifetime = lifetime,
         zipFileLoader = {
           loaderThread[0] = Thread.currentThread()
           zipFile(mapOf(entryPath to expectedData))
@@ -74,7 +74,7 @@ internal class ModuleOutputZipFilePoolTest {
       val loader = loaderThread[0]!!
       assertThat(loader).isNotSameAs(callerThread)
       assertThat(loader.isVirtual).isTrue()
-      assertThat(loader.name).startsWith("AsyncCache: ")
+      assertThat(loader.name).startsWith("build: ")
     }
   }
 
@@ -86,7 +86,7 @@ internal class ModuleOutputZipFilePoolTest {
 
     val loaderThread = arrayOfNulls<Thread>(1)
     val pool = ModuleOutputZipFilePool(
-      scope = null,
+      lifetime = null,
       zipFileLoader = {
         loaderThread[0] = Thread.currentThread()
         zipFile(mapOf(entryPath to expectedData))
@@ -102,9 +102,9 @@ internal class ModuleOutputZipFilePoolTest {
     val file = Path.of("module-output.zip")
 
     assertThatThrownBy {
-      runBlockingOnVirtualThreads {
+      BuildLifetime().use { lifetime ->
         val pool = ModuleOutputZipFilePool(
-          scope = this,
+          lifetime = lifetime,
           zipFileLoader = {
             throw CancellationException("stop")
           },
@@ -118,17 +118,35 @@ internal class ModuleOutputZipFilePoolTest {
   }
 
   @Test
+  fun `the lifetime closes the cached files`() {
+    val file = Path.of("module-output.zip")
+    val entryPath = "META-INF/plugin.xml"
+    val closed = AtomicInteger()
+
+    BuildLifetime().use { lifetime ->
+      val pool = ModuleOutputZipFilePool(
+        lifetime = lifetime,
+        zipFileLoader = { zipFile(mapOf(entryPath to "<idea-plugin/>".encodeToByteArray()), onClose = { closed.incrementAndGet() }) },
+      )
+      pool.getData(file, entryPath)
+      assertThat(closed.get()).isEqualTo(0)
+    }
+
+    assertThat(closed.get()).isEqualTo(1)
+  }
+
+  @Test
   fun `timeout of one reader does not cancel the shared load`() {
     val file = Path.of("module-output.zip")
     val entryPath = "META-INF/plugin.xml"
     val expectedData = "<idea-plugin/>".encodeToByteArray()
 
-    runBlockingOnVirtualThreads {
+    BuildLifetime().use { lifetime ->
       val started = CountDownLatch(1)
       val release = CountDownLatch(1)
       val loadCount = AtomicInteger(0)
       val pool = ModuleOutputZipFilePool(
-        scope = this,
+        lifetime = lifetime,
         cacheReadTimeout = 100.milliseconds,
         zipFileLoader = {
           loadCount.incrementAndGet()
@@ -162,7 +180,7 @@ internal class ModuleOutputZipFilePoolTest {
     }
   }
 
-  private fun zipFile(entries: Map<String, ByteArray>): ZipFile {
+  private fun zipFile(entries: Map<String, ByteArray>, onClose: () -> Unit = {}): ZipFile {
     return object : ZipFile {
       override fun getInputStream(path: String): InputStream? = entries[path]?.inputStream()
 
@@ -178,7 +196,7 @@ internal class ModuleOutputZipFilePoolTest {
         consumer: BiConsumer<in String, in InputStream>,
       ) = Unit
 
-      override fun close() = Unit
+      override fun close() = onClose()
     }
   }
 }

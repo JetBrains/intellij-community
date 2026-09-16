@@ -10,7 +10,6 @@ import com.intellij.ide.projectView.impl.ProjectViewPane
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProjectCollectors
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectFilteringTree
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectPanelComponentFactory
@@ -53,7 +52,7 @@ class WelcomeScreenLeftPanel(private val project: Project, private val scope: Co
   override fun isInitiallyVisible(): Boolean = project.isWelcomeExperienceProjectSync() && isNonModalWelcomeScreenEnabled
 
   override fun isDefaultPane(project: Project): Boolean {
-    return !Registry.`is`("ide.welcome.screen.change.project.view.depending.on.opened.file", false) && project.isWelcomeExperienceProjectSync()
+    return project.isWelcomeExperienceProjectSync()
   }
 
   override fun getWeight(): Int = -10 // TODO: Increase weight?

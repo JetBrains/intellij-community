@@ -9,8 +9,10 @@ import com.intellij.polySymbols.patterns.PolySymbolPatternSymbolsResolver
 import com.intellij.polySymbols.query.PolySymbolQueryStack
 import com.intellij.util.text.CharSequenceSubSequence
 import java.util.regex.Pattern
+import org.jetbrains.annotations.ApiStatus
 
-internal class RegExpPattern(private val regex: String, private val caseSensitive: Boolean = false) : PolySymbolPattern() {
+@ApiStatus.Internal
+class RegExpPattern(private val regex: String, private val caseSensitive: Boolean = false) : PolySymbolPattern() {
   private val pattern: Pattern by lazy(LazyThreadSafetyMode.NONE) {
     if (caseSensitive)
       Pattern.compile(regex)

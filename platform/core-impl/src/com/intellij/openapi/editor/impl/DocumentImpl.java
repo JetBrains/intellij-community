@@ -10,7 +10,9 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditReadOnlyListener;
 import com.intellij.openapi.editor.ex.LineIterator;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
+import com.intellij.openapi.editor.ex.RangeMarkers;
 import com.intellij.openapi.editor.impl.marker.FileMarkerRoot;
+import com.intellij.openapi.editor.impl.marker.SnapshotMarkerStores;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -41,7 +43,7 @@ public final class DocumentImpl extends VersionedUserDataHolderBase implements D
    * Actual document implementation hidden behind an interface
    */
   private final DocumentCore impl;
-  private final RangeMarkerStorageImpl rangeMarkers;
+  private final RangeMarkers rangeMarkers;
   private final GuardedBlocks guardedBlocks;
 
   /**
@@ -79,8 +81,8 @@ public final class DocumentImpl extends VersionedUserDataHolderBase implements D
 
   public DocumentImpl(@NotNull CharSequence chars, boolean acceptSlashR, boolean forUseInNonAWTThread) {
     this(forUseInNonAWTThread
-         ? DocumentCoreImpl.createCore(chars, acceptSlashR, forUseInNonAWTThread)
-         : DocumentMagicCoreImpl.createCore(chars, acceptSlashR, forUseInNonAWTThread));
+         ? DocumentCoreImpl.createCore(chars, acceptSlashR, true)
+         : DocumentMagicCoreImpl.createCore(chars, acceptSlashR, false));
   }
 
   private DocumentImpl(@NotNull DocumentCore impl) {
@@ -89,14 +91,14 @@ public final class DocumentImpl extends VersionedUserDataHolderBase implements D
 
   /**
    * @param hostDocument null if this document is the host,
-   *                     non-null if this document is a "view" over the corresponding host document
+   *                     non-null if this document is a view over the corresponding host document
    */
   @ApiStatus.Internal
   public DocumentImpl(@NotNull DocumentCore impl, @Nullable DocumentImpl hostDocument) {
     this.impl = impl;
     this.hostDocument = hostDocument;
-    rangeMarkers = new RangeMarkerStorageImpl(impl.dispatcher(), hostDocument());
-    guardedBlocks = new GuardedBlocksImpl(rangeMarkers, impl.dispatcher());
+    rangeMarkers = new RangeMarkersImpl(impl.dispatcher(), this, hostDocument);
+    guardedBlocks = new GuardedBlocksImpl(rangeMarkers);
   }
 
   @Override
@@ -449,6 +451,18 @@ public final class DocumentImpl extends VersionedUserDataHolderBase implements D
   @ApiStatus.Internal
   public @NotNull DocumentCore getCore() {
     return impl;
+  }
+
+  @ApiStatus.Internal
+  public @NotNull SnapshotMarkerStores getSnapshotMarkerStores() {
+    return hostDocument == null
+           ? ((DocumentMutatorImpl)impl.mutator()).getSnapshotMarkerStores()
+           : hostDocument.getSnapshotMarkerStores();
+  }
+
+  @ApiStatus.Internal
+  public @NotNull RangeMarkersImpl getRangeMarkers() {
+    return (RangeMarkersImpl)rangeMarkers;
   }
 
   @TestOnly

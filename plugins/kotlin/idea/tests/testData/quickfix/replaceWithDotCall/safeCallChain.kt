@@ -9,5 +9,4 @@ fun test(foo: Foo) {
     foo?<caret>.bar?.baz?.qux()
 }
 
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ReplaceWithDotCallFix
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ReplaceWithDotCallFix

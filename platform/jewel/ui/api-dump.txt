@@ -415,7 +415,7 @@ f:org.jetbrains.jewel.ui.component.IconButtonState$Companion
 - bs:of-3OtLUoY$default(org.jetbrains.jewel.ui.component.IconButtonState$Companion,Z,Z,Z,Z,Z,I,java.lang.Object):J
 f:org.jetbrains.jewel.ui.component.IconKt
 - sf:Icon(androidx.compose.ui.graphics.painter.Painter,java.lang.String,androidx.compose.ui.graphics.ColorFilter,androidx.compose.ui.Modifier,androidx.compose.runtime.Composer,I,I):V
-- sf:Icon(com.intellij.platform.icons.Icon,java.lang.String,androidx.compose.ui.Modifier,com.intellij.platform.icons.scale.IconScale,androidx.compose.runtime.Composer,I,I):V
+- sf:Icon(com.intellij.platform.icons.IconDescriptor,java.lang.String,androidx.compose.ui.Modifier,com.intellij.platform.icons.scale.IconScale,androidx.compose.runtime.Composer,I,I):V
 - sf:Icon(java.lang.String,androidx.compose.ui.Modifier,com.intellij.platform.icons.scale.IconScale,kotlin.jvm.functions.Function1,androidx.compose.runtime.Composer,I,I):V
 - sf:Icon(org.jetbrains.jewel.ui.icon.IconKey,java.lang.String,androidx.compose.ui.Modifier,java.lang.Class,androidx.compose.ui.graphics.ColorFilter,org.jetbrains.jewel.ui.painter.PainterHint,androidx.compose.runtime.Composer,I,I):V
 - sf:Icon(org.jetbrains.jewel.ui.icon.IconKey,java.lang.String,androidx.compose.ui.Modifier,java.lang.Class,androidx.compose.ui.graphics.ColorFilter,org.jetbrains.jewel.ui.painter.PainterHint[],androidx.compose.runtime.Composer,I,I):V
@@ -2652,9 +2652,13 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Actions
 - sf:MoveToBottomLeft:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:MoveToBottomRight:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:MoveToButton:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:MoveToLeft:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:MoveToLeftBottom:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:MoveToLeftSideBySide:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:MoveToLeftTop:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:MoveToRight:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:MoveToRightBottom:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:MoveToRightSideBySide:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:MoveToRightTop:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:MoveToTopLeft:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:MoveToTopRight:org.jetbrains.jewel.ui.icon.IntelliJIconKey
@@ -3170,6 +3174,7 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$General
 - sf:ShowInfos:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:ShowWarning:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Show_to_implement:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:SortBy:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:SuccessDialog:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:SuccessLogin:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:TbHidden:org.jetbrains.jewel.ui.icon.IntelliJIconKey

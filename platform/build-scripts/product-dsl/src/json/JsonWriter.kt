@@ -4,9 +4,6 @@
 package org.jetbrains.intellij.build.productLayout.json
 
 import com.intellij.platform.pluginGraph.PluginGraph
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.jetbrains.intellij.build.productLayout.tooling.ModuleSetMetadata
@@ -17,6 +14,7 @@ import org.jetbrains.intellij.build.productLayout.traversal.collectModuleSetDire
 import org.jetbrains.intellij.build.productLayout.traversal.collectModuleSetModuleNames
 import org.jetbrains.intellij.build.productLayout.traversal.collectProductModuleNames
 import org.jetbrains.intellij.build.productLayout.traversal.collectProductModuleSetNames
+import org.jetbrains.intellij.build.mapConcurrent
 import tools.jackson.core.JsonGenerator
 
 // kotlinx.serialization Json instance for serializing data structures
@@ -63,13 +61,12 @@ private fun <S, P> collectModuleUsageMaps(
  * Enriches products with calculated metrics (parallelized).
  * Calculates totalModuleCount, directModuleCount, and moduleSetCount for each product.
  */
-internal suspend fun enrichProductsWithMetrics(
+internal fun enrichProductsWithMetrics(
   products: List<ProductSpec>,
   pluginGraph: PluginGraph
 ): List<ProductSpec> {
-  return coroutineScope {
-    products.map { product ->
-      async {
+  return products.mapConcurrent { product ->
+      run {
         val contentSpec = product.contentSpec
         if (contentSpec == null) {
           product // Return as-is if no contentSpec
@@ -100,8 +97,7 @@ internal suspend fun enrichProductsWithMetrics(
           )
         }
       }
-    }.awaitAll()
-  }
+    }
 }
 
 /**

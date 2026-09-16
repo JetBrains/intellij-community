@@ -1,6 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("KotlinPsiModificationUtils")
-@file:OptIn(org.jetbrains.kotlin.psi.KtNonPublicApi::class)
 @file:Suppress("unused")
 
 package org.jetbrains.kotlin.idea.base.psi
@@ -27,6 +26,7 @@ import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassBody
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtCommonFile
+import org.jetbrains.kotlin.psi.KtCompanionBlock
 import org.jetbrains.kotlin.psi.KtConstructorDelegationCall
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtDestructuringDeclarationEntry
@@ -148,14 +148,40 @@ fun KtClass.getOrCreateCompanionObject(): KtObjectDeclaration {
     return appendDeclaration(KtPsiFactory(project).createCompanionObject())
 }
 
-inline fun <reified T : KtDeclaration> KtClass.appendDeclaration(declaration: T): T {
-    val body = getOrCreateClassBody()
-    val anchor = PsiTreeUtil.skipSiblingsBackward(body.rBrace ?: body.lastChild!!, PsiWhiteSpace::class.java)
+// TODO: replace with an appropriate compiler API calls once available (KT-89032)
+fun KtClass.getOrCreateCompanionBlock(): KtCompanionBlock {
+    companionBlocks.firstOrNull()?.let { return it }
+    val companionBlock = KtPsiFactory(project).createClass("class Cls { companion {} }").companionBlocks.single()
+    return appendElementToClassBody(companionBlock)
+}
+
+inline fun <reified T : KtDeclaration> KtClass.appendDeclaration(declaration: T, skipWhiteSpaces: Boolean = true): T {
+    return appendElementToClassBody(declaration, skipWhiteSpaces)
+}
+
+inline fun <reified T : PsiElement> KtClassOrObject.appendElementToClassBody(element: T, skipWhiteSpaces: Boolean = true): T {
+    return appendElementToClassBody(getOrCreateClassBody(), element, skipWhiteSpaces)
+}
+
+/**
+ * Adds [element] to the end of the target class [body].
+ *
+ * If [skipWhiteSpaces] is `true`, the selected anchor element is the last non-whitespace element.
+ * If it's `false` the trailing body whitespaces are allowed as the anchor.
+ */
+inline fun <reified T : PsiElement> appendElementToClassBody(body: KtClassBody, element: T, skipWhiteSpaces: Boolean = true): T {
+    val lastBodyElement = body.rBrace ?: body.lastChild!!
+    val anchor = if (skipWhiteSpaces) {
+        PsiTreeUtil.skipSiblingsBackward(lastBodyElement, PsiWhiteSpace::class.java)
+    } else {
+        lastBodyElement.prevSibling
+    }
+
     val newDeclaration =
         if (anchor?.nextSibling is PsiErrorElement)
-            body.addBefore(declaration, anchor)
+            body.addBefore(element, anchor)
         else
-            body.addAfter(declaration, anchor)
+            body.addAfter(element, anchor)
 
     return newDeclaration as T
 }
@@ -400,9 +426,15 @@ fun KtModifierListOwner.replaceModifierList(modifierList: KtModifierList?): KtMo
 
 /**
  * Adds [modifier] to this declaration's modifier list.
+ *
+ * A primary constructor also gains the `constructor` keyword, because a modifier requires it.
  */
 fun KtModifierListOwner.addModifierKeyword(modifier: KtModifierKeywordToken) {
-    KtPsiMutationService.getInstance().addModifierKeyword(this, modifier)
+    if (this is KtPrimaryConstructor) {
+        KtPsiMutationService.getInstance().addModifierKeyword(this, modifier)
+    } else {
+        KtPsiMutationService.getInstance().addModifierKeyword(this, modifier)
+    }
 }
 
 /**
@@ -414,9 +446,15 @@ fun KtPrimaryConstructor.addModifierKeyword(modifier: KtModifierKeywordToken) {
 
 /**
  * Removes [modifier] from this declaration's modifier list.
+ *
+ * A primary constructor also loses the `constructor` keyword, because the keyword is redundant without a modifier.
  */
 fun KtModifierListOwner.removeModifierKeyword(modifier: KtModifierKeywordToken) {
-    KtPsiMutationService.getInstance().removeModifierKeyword(this, modifier)
+    if (this is KtPrimaryConstructor) {
+        KtPsiMutationService.getInstance().removeModifierKeyword(this, modifier)
+    } else {
+        KtPsiMutationService.getInstance().removeModifierKeyword(this, modifier)
+    }
 }
 
 /**
@@ -428,9 +466,15 @@ fun KtPrimaryConstructor.removeModifierKeyword(modifier: KtModifierKeywordToken)
 
 /**
  * Adds [annotationEntry] to this declaration's modifier list.
+ *
+ * A primary constructor also gains the `constructor` keyword, because an annotation requires it.
  */
 fun KtModifierListOwner.addAnnotation(annotationEntry: KtAnnotationEntry): KtAnnotationEntry {
-    return KtPsiMutationService.getInstance().addAnnotation(this, annotationEntry)
+    return if (this is KtPrimaryConstructor) {
+        KtPsiMutationService.getInstance().addAnnotation(this, annotationEntry)
+    } else {
+        KtPsiMutationService.getInstance().addAnnotation(this, annotationEntry)
+    }
 }
 
 /**
@@ -499,6 +543,21 @@ fun KtCallableDeclaration.setCallableTypeReference(
     typeRef: KtTypeReference?,
 ): KtTypeReference? {
     return KtPsiMutationService.getInstance().setCallableTypeReference(this, addAfter, typeRef)
+}
+
+/**
+ * Replaces this callable's explicit return type reference, adds it if missing, or removes it when [typeRef] is `null`.
+ *
+ * A missing type reference goes after the value parameter list of a function, and after the name of a property, a parameter or a
+ * destructuring entry. This function picks that position from the declaration kind, so use it when the kind is unknown. Call the
+ * declaration-specific function when the kind is known.
+ */
+fun KtCallableDeclaration.setCallableTypeReference(typeRef: KtTypeReference?): KtTypeReference? = when (this) {
+    is KtNamedFunction -> setFunctionTypeReference(typeRef)
+    is KtProperty -> setPropertyTypeReference(typeRef)
+    is KtParameter -> setParameterTypeReference(typeRef)
+    is KtDestructuringDeclarationEntry -> setDestructuringDeclarationEntryTypeReference(typeRef)
+    else -> setCallableTypeReference(addAfter = null, typeRef = typeRef)
 }
 
 /**

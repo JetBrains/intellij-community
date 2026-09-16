@@ -18,7 +18,7 @@
 package com.intellij.compose.ide.plugin.resources.completion
 
 import com.intellij.compose.ide.plugin.resources.vectorDrawable.preview.BaseVectorDrawablePreviewRenderer
-import com.intellij.openapi.diagnostic.rethrowControlFlowException
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.Gray
 import com.intellij.ui.scale.ScaleContext

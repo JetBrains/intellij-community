@@ -19,14 +19,14 @@ interface TerminalTextSelectionModel {
    *
    * Null value means that there is no selection.
    */
-  @get:RequiresEdt
+  @get:RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   val selection: TerminalTextSelection?
 
   /**
    * Updates the selection range in the currently active output model
    * ([org.jetbrains.plugins.terminal.view.TerminalOutputModelsSet.active]).
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun updateSelection(newSelection: TerminalTextSelection?)
 
   fun addListener(parentDisposable: Disposable, listener: TerminalTextSelectionListener)

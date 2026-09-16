@@ -27,8 +27,8 @@ internal class WelcomeScreenAwareActionsCustomizer : ActionConfigurationCustomiz
       replaceExistingAction("NewDir") { hideActionOnWelcomeScreen(it) }
       replaceExistingAction("NewFile") { WelcomeScreenProxyAction(it, CreateEmptyFileAction()) }
       if (!ApplicationManager.getApplication().isUnitTestMode) {
-        replaceExistingAction("SaveAll") { WelcomeFileProxyAction(it, WelcomeSaveFileAction()) }
-        replaceExistingAction("SaveDocument") { WelcomeFileProxyAction(it, WelcomeSaveFileAction()) }
+        replaceExistingAction("SaveAll") { WelcomeFileProxyAction(it) }
+        replaceExistingAction("SaveDocument") { WelcomeFileProxyAction(it) }
       }
       if (!PlatformUtils.isPyCharm() && !PlatformUtils.isDataGrip()) {
         replaceExistingAction("NewElement") { WelcomeScreenProxyAction(it, WelcomeScreenLeftTabActionNew(), false) }
@@ -111,9 +111,8 @@ internal open class WelcomeScreenProxyAction(
   }
 }
 
-internal class WelcomeFileProxyAction(action: AnAction, welcomeScreenBehaviour: AnAction) :
-  WelcomeScreenProxyAction(action, welcomeScreenBehaviour) {
+internal class WelcomeFileProxyAction(action: AnAction) : WelcomeScreenProxyAction(action, WelcomeSaveFileAction()) {
   override fun isWelcomeAction(project: Project, e: AnActionEvent): Boolean {
-    return WelcomeUtils.isWelcomeProject(project) // TODO: check welcome file??
+    return WelcomeUtils.isWelcomeProject(project) && (welcomeScreenBehaviour as WelcomeSaveFileAction).isWelcomeFile(project, e)
   }
 }

@@ -3,6 +3,10 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.compose.ide.plugin.shared` start
+content_module_jar(module = ":ide-plugin-shared")
+### auto-generated section `dev intellij.compose.ide.plugin.shared` end
+
 ### auto-generated section `build intellij.compose.ide.plugin.shared` start
 create_kotlinc_options(
     name = "custom_ide-plugin-shared",
@@ -51,14 +55,10 @@ jvm_library(
         "//java/java-psi-api:psi",
         "//plugins/kotlin/code-insight/api",
         "//platform/lang-impl",
-        "//plugins/kotlin/code-insight/utils",
-        "//plugins/kotlin/base/psi",
         "//plugins/kotlin/base/facet",
         "//plugins/kotlin/base/util",
     ],
 )
-
-content_module_jar(module = ":ide-plugin-shared")
 
 jvm_library(
     name = "ide-plugin-shared_test_lib",
@@ -96,8 +96,6 @@ jvm_library(
         "//java/java-psi-api:psi_test_lib",
         "//plugins/kotlin/code-insight/api:api_test_lib",
         "//platform/lang-impl:lang-impl_test_lib",
-        "//plugins/kotlin/code-insight/utils:utils_test_lib",
-        "//plugins/kotlin/base/psi:psi_test_lib",
         "//plugins/kotlin/base/facet:facet_test_lib",
         "//plugins/kotlin/base/util:util_test_lib",
     ],
@@ -188,7 +186,8 @@ jvm_library(
         "//libraries/mockk:mockk_test_lib",
         "//libraries/mockk/jvm",
         "//libraries/mockk/jvm:jvm_test_lib",
-        "@lib//:kotlin-test",
+        "//libraries/kotlin/test:libraries-kotlinTest",
+        "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
         "//plugins/kotlin/code-insight/api",
         "//plugins/kotlin/code-insight/api:api_test_lib",
         "//platform/editor-ui-ex:editor-ex",
@@ -206,6 +205,10 @@ jvm_library(
         "//plugins/kotlin/base/compiler-configuration:compiler-configuration_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
+        "//android/android-plugin:plugin",
+        "//android/android-plugin:plugin_test_lib",
+        "//libraries/kotlinc/compose-compiler-plugin:libraries-kotlinc-compose-compiler-plugin",
+        "//libraries/kotlinc/compose-compiler-plugin:libraries-kotlinc-compose-compiler-plugin_test_lib",
     ],
 )
 ### auto-generated section `build intellij.compose.ide.plugin.shared.tests` end

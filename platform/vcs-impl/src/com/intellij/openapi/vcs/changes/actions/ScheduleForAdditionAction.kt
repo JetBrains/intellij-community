@@ -171,7 +171,7 @@ open class ScheduleForAdditionAction : AnAction(), DumbAware {
     }
 
     @JvmStatic
-    @RequiresBackgroundThread
+    @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
     fun addUnversionedFilesToVcsInSync(project: Project,
                                        targetChangeList: LocalChangeList?,
                                        files: List<VirtualFile>,

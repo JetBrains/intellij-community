@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.productLayout.validator
 
+import com.intellij.platform.buildScripts.concurrency.SharedTaskOwner
 import com.intellij.platform.pluginGraph.ContentModuleName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -24,6 +25,13 @@ class SuppressionConfigValidatorTest {
 
   @Nested
   inner class MisplacedKeyDetection {
+    private val owner = SharedTaskOwner("MisplacedKeyDetection")
+
+    @org.junit.jupiter.api.AfterEach
+    fun closeSharedTasks() {
+      owner.close()
+    }
+
 
     @Test
     fun `detects content module wrongly placed in plugins section`(): Unit = runBlocking(Dispatchers.Default) {
@@ -42,7 +50,7 @@ class SuppressionConfigValidatorTest {
         ),
       )
 
-      val model = testGenerationModel(graph, suppressionConfig = suppressionConfig)
+      val model = testGenerationModel(graph, suppressionConfig = suppressionConfig, owner = owner)
       val errors = runValidationRule(SuppressionConfigValidator, model)
 
       assertThat(errors).hasSize(1)
@@ -73,7 +81,7 @@ class SuppressionConfigValidatorTest {
         ),
       )
 
-      val model = testGenerationModel(graph, suppressionConfig = suppressionConfig)
+      val model = testGenerationModel(graph, suppressionConfig = suppressionConfig, owner = owner)
       val errors = runValidationRule(SuppressionConfigValidator, model)
 
       assertThat(errors).hasSize(1)

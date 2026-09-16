@@ -353,7 +353,8 @@ public final class StartupErrorReporter {
   public static void processException(Throwable t) {
     if (LoadingState.COMPONENTS_LOADED.isOccurred() && !(t instanceof StartupAbortedException)) {
       if (!(t instanceof ControlFlowException)) {
-        PluginManagerCore.getLogger().error(t);
+        // `processUnhandledException` writes the log itself. A second write of the same exception is muted,
+        // and then the message pool never gets the `UnhandledException`. See IJPL-254578.
         ExceptionsKt.processUnhandledException(t, null);
       }
       return;

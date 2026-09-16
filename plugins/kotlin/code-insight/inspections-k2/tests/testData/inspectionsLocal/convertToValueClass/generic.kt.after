@@ -1,0 +1,9 @@
+// PROBLEM: Data class can be converted to value class
+// FIX: Convert to value class
+// CHOSEN_OPTION: Generate 'copy' and 'componentN' functions
+// COMPILER_ARGUMENTS: -XXLanguage:+FullValueClasses
+
+value class Box<T>(val value: T) {
+    operator fun component1(): T = value
+    fun copy(value: T = this.value): Box<T> = Box<T>(value)
+}

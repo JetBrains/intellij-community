@@ -40,9 +40,8 @@ final class ColorObjectRenderer extends CompoundRendererProvider {
   protected ValueIconRenderer getIconRenderer() {
     return (descriptor, evaluationContext, listener) -> {
       Value value = descriptor.getValue();
-      if (value instanceof ObjectReference) {
+      if (value instanceof ObjectReference objRef) {
         try {
-          ObjectReference objRef = (ObjectReference)value;
           ReferenceType refType = objRef.referenceType();
           if (refType instanceof ClassType) {
             Value rgbValue = null;
@@ -55,8 +54,8 @@ final class ColorObjectRenderer extends CompoundRendererProvider {
                   rgbValue = objRef.getValue(valueField);
                 }
               }
-              if (rgbValue instanceof IntegerValue) {
-                return createIcon((IntegerValue)rgbValue);
+              if (rgbValue instanceof IntegerValue integerValue) {
+                return createIcon(integerValue);
               }
               else {
                 EvaluationContextImpl evalContext = ((EvaluationContextImpl)evaluationContext);
@@ -66,8 +65,8 @@ final class ColorObjectRenderer extends CompoundRendererProvider {
                   public void contextAction(@NotNull SuspendContextImpl suspendContext) {
                     try {
                       Value rgbValue = debugProcess.invokeMethod(evaluationContext, objRef, getRGBMethod, Collections.emptyList());
-                      if (rgbValue instanceof IntegerValue) {
-                        descriptor.setValueIcon(createIcon((IntegerValue)rgbValue));
+                      if (rgbValue instanceof IntegerValue integerValue) {
+                        descriptor.setValueIcon(createIcon(integerValue));
                         listener.labelChanged();
                       }
                     }

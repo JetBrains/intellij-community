@@ -1,13 +1,15 @@
 class OrderProcessor:
     def process_order(self):
         order_total = 0
+        total = order_total
         if True:
-            if order_total > 100:
-                order_total += 25
+            if total > 100:
+                total += 25
             else:
-                order_total += 15
+                total += 15
         else:
-            order_total += 8.50
+            total += 8.50
+        order_total = total
         return order_total
 
     def add_shipping(self, expedited, order_total):

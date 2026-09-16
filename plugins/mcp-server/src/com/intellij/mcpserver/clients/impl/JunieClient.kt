@@ -6,7 +6,7 @@ import com.intellij.mcpserver.clients.configs.JunieNetworkConfig
 import com.intellij.mcpserver.clients.configs.ServerConfig
 import java.nio.file.Path
 
-class JunieClient(scope: McpClientInfo.Scope, configPath: Path) : McpClient(
+class JunieClient(scope: McpClientInfo.McpClientScope, configPath: Path) : McpClient(
   mcpClientInfo = McpClientInfo(McpClientInfo.Name.JUNIE, scope),
   configPath = configPath
 ) {

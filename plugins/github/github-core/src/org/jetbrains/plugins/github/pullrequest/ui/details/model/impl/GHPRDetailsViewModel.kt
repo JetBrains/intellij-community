@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.details.model.impl
 
-import com.intellij.collaboration.async.cancelAndJoinSilently
+import com.intellij.collaboration.async.cancelAndJoin
 import com.intellij.collaboration.ui.codereview.details.data.ReviewRequestState
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewDetailsViewModel
 import com.intellij.collaboration.ui.codereview.issues.processIssueIdsHtml
@@ -112,5 +112,5 @@ internal class GHPRDetailsViewModelImpl(
     vm.connectedProjectVm.value?.openPullRequestInfoAndTimeline(number)
   }
 
-  suspend fun destroy() = cs.cancelAndJoinSilently()
+  suspend fun destroy() = cs.cancelAndJoin()
 }

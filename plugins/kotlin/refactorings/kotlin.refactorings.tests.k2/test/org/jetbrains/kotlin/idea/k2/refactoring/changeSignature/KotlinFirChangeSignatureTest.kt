@@ -9,8 +9,7 @@ import com.intellij.psi.impl.source.PsiMethodImpl
 import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.util.CommonRefactoringUtil
-import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
-import org.jetbrains.kotlin.analysis.api.components.collectDiagnostics
+import org.jetbrains.kotlin.analysis.api.diagnostics.diagnostics
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.session.analyze
@@ -162,7 +161,7 @@ class KotlinFirChangeSignatureTest :
         assertTrue(
             allowAnalysisOnEdt {
                 analyze(fragment) {
-                    fragment.collectDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS).isNotEmpty()
+                    fragment.diagnostics().any()
                 }
             }
         )
@@ -174,8 +173,9 @@ class KotlinFirChangeSignatureTest :
         val fragment = KtPsiFactory(project).createTypeCodeFragment("", psiFile)
         val diagnostics = allowAnalysisOnEdt {
             analyze(fragment) {
-                fragment.collectDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
-                    .map { it.defaultMessage}
+                fragment.diagnostics()
+                    .map { it.defaultMessage }
+                    .toList()
             }
         }
         assertNotEmpty(diagnostics)
@@ -190,7 +190,7 @@ class KotlinFirChangeSignatureTest :
         assertTrue(
             allowAnalysisOnEdt {
                 analyze(fragment) {
-                    fragment.collectDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS).isEmpty()
+                    fragment.diagnostics().none()
                 }
             }
         )

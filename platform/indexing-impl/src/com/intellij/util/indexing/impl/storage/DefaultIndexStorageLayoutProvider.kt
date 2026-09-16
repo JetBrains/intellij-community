@@ -202,8 +202,7 @@ private fun <K, V> createDefaultFactories(
       extension.cacheSize,
       extension.keyIsUniqueForIndexedFile(),
       extension.traceKeyHashToVirtualFileMapping(),
-      extension.enableWal(),
-      storageLockContext
+      storageLockContext,
     )
   }
   val forwardFactory = ThrowableNotNullFunction<Int, ForwardIndex, IOException> { shardNo ->
@@ -333,7 +332,6 @@ private fun <K, V> createIndexStorage(
     extension.cacheSize,
     extension.keyIsUniqueForIndexedFile(),
     extension.traceKeyHashToVirtualFileMapping(),
-    extension.enableWal(),
     storageLockContext
   )
 }

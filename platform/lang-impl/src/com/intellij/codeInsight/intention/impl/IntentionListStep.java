@@ -18,6 +18,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbModeBlockedFunctionality;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.DumbUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.ListSeparator;
@@ -142,8 +143,8 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
 
       if (!DumbService.getInstance(myProject).isUsableInCurrentContext(cachedAction)) {
         DumbService.getInstance(myProject).showDumbModeNotificationForFunctionality(
-          CodeInsightBundle.dumbModeMessage("notification.0.is.not.available.during.indexing",
-                                            "notification.0.is.not.available.in.light.mode", cachedAction.getText()),
+          DumbUtil.dumbModeMessage(CodeInsightBundle.message("notification.0.is.not.available.during.indexing", cachedAction.getText()),
+                                   CodeInsightBundle.message("notification.0.is.not.available.in.light.mode", cachedAction.getText())),
           DumbModeBlockedFunctionality.Intentions);
         return;
       }

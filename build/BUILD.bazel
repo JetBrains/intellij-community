@@ -1,4 +1,4 @@
-load("@jps_dynamic_deps_community//:targets.bzl", "ALL_COMMUNITY_CONTENT_MODULE_RECIPE_FILES", "ALL_COMMUNITY_IML_TARGETS", "ALL_COMMUNITY_MODULE_DESCRIPTOR_TARGETS", "ALL_COMMUNITY_PLUGIN_DISTRIBUTION_TARGETS", "ALL_COMMUNITY_TARGETS", "ALL_LIBRARY_COMMUNITY_TARGETS", "ALL_PRODUCTION_COMMUNITY_TARGETS", "ALL_TEST_COMMUNITY_TARGETS", "BAZEL_TARGETS_JSON_COMMUNITY", "JPS_TO_BAZEL_TREAT_KOTLIN_DEV_VERSION_AS_SNAPSHOT")
+load("@jps_dynamic_deps_community//:targets.bzl", "ALL_COMMUNITY_IML_TARGETS", "ALL_COMMUNITY_MODULE_DESCRIPTOR_TARGETS", "ALL_COMMUNITY_PLUGIN_DISTRIBUTION_TARGETS", "ALL_COMMUNITY_TARGETS", "ALL_LIBRARY_COMMUNITY_TARGETS", "ALL_PRODUCTION_COMMUNITY_TARGETS", "ALL_TEST_COMMUNITY_TARGETS", "BAZEL_TARGETS_JSON_COMMUNITY", "JPS_TO_BAZEL_TREAT_KOTLIN_DEV_VERSION_AS_SNAPSHOT")
 load("@rules_java//java:defs.bzl", "java_binary")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:intellij_dev.bzl", "INTELLIJ_ADD_OPENS")
@@ -27,37 +27,6 @@ exports_files(
 
 jps_library_derivation_pipeline_test_suite(name = "jps_library_derivation_pipeline_test")
 
-# Every table the JPS-to-Bazel converter reads besides the project model: which plugins get a content leaf at all,
-# which (plugin, layout variant) gets a descriptor leaf, the layout exclusions that make a module output unpackable,
-# and the candidacy a community-only checkout cannot fold for itself.
-#
-# One group, because a hermetic run that does not materialize a table is not the checkout run - it decides that
-# table's question the other way, in silence. The content population was such a table: the run answered the
-# population question from the checked-in reports for months, and the shrink looked like the intended shrink. So
-# both targets-json generators name this one group, and a new table joins a file that is already here.
-#
-# Three files, split by producer. `plugin-model-tool` states the sections of `dev_dist_plugin_model_tables.txt`. The
-# converter's own residue-writing run states the population and the merged members, off a distribution build's
-# `content-report.zip`, and `plugin-model-tool` only reads them. One writer per file is what keeps a
-# `plugin-model-tool` run from ever stating a population it cannot derive.
-#
-# The merged members are the one content-residue field that is not on the plugin's own `dev_dist_plugin` call. Only
-# that field has a reader outside the converter, and neither of those readers parses Starlark.
-#
-# The population is the table that decides whether a plugin gets a leaf. Without it a hermetic run states content for
-# no plugin, `contentTarget` empties for every one of them, and the dev-distribution plan then declares one input
-# less per plugin than its assembly reads.
-filegroup(
-    name = "dev_dist_plugin_tables",
-    srcs = [
-        "dev_dist_plugin_content_population.txt",
-        "dev_dist_plugin_content_residue.txt",
-        "dev_dist_plugin_extra_members.txt",
-        "dev_dist_plugin_model_tables.txt",
-    ],
-    visibility = ["//visibility:public"],
-)
-
 # Which product a `dev_dist_plugin_descriptor` action stamps for. One plugin's patched descriptor differs between two
 # products in three scalars only, so the scalars are a configuration and one descriptor target serves every product.
 #
@@ -75,13 +44,10 @@ label_flag(
 jps_to_bazel_targets_json(
     name = "community_bazel_targets_json",
     srcs = [
-               ":dev_dist_plugin_tables",
-               "//:jps_to_bazel_community_model_root_files",
-           ] + ALL_COMMUNITY_IML_TARGETS + ALL_COMMUNITY_MODULE_DESCRIPTOR_TARGETS +
-           ALL_COMMUNITY_CONTENT_MODULE_RECIPE_FILES,
+        "//:jps_to_bazel_community_model_root_files",
+    ] + ALL_COMMUNITY_IML_TARGETS + ALL_COMMUNITY_MODULE_DESCRIPTOR_TARGETS,
     jps_to_bazel_treat_kotlin_dev_version_as_snapshot = JPS_TO_BAZEL_TREAT_KOTLIN_DEV_VERSION_AS_SNAPSHOT,
     mode = "community",
-    starlark_content_module_recipe_files = ALL_COMMUNITY_CONTENT_MODULE_RECIPE_FILES,
     starlark_iml_targets = ALL_COMMUNITY_IML_TARGETS,
     starlark_library_targets = ALL_LIBRARY_COMMUNITY_TARGETS,
     starlark_plugin_distribution_targets = ALL_COMMUNITY_PLUGIN_DISTRIBUTION_TARGETS,
@@ -196,9 +162,23 @@ intellij_dev_binary_community(
 )
 
 intellij_dev_binary_community(
+    name = "idea_community_devkit",
+    additional_modules = "intellij.devkit",
+    platform_prefix = "community",
+)
+
+intellij_dev_binary_community(
     name = "android_studio",
     platform_prefix = "AndroidStudio",
 )
+
+### auto-generated section `dev intellij.platform.jps.build.dependencyGraph` start
+content_module_jar(module = ":dependency-graph")
+### auto-generated section `dev intellij.platform.jps.build.dependencyGraph` end
+
+### auto-generated section `dev intellij.platform.jps.build.javac.rt` start
+content_module_jar(module = ":build-javac-rt")
+### auto-generated section `dev intellij.platform.jps.build.javac.rt` end
 
 ### auto-generated section `build intellij.idea.community.build` start
 jvm_library(
@@ -332,18 +312,13 @@ jvm_library(
         # do not sort,
         "@community//build:build-javac-rt",
         "//libraries/jetbrains/annotations",
-        "@lib//:kotlin-metadata",
+        "//libraries/kotlin/metadata",
         "//libraries/caffeine",
         "//libraries/asm",
         "//libraries/hash4j",
         "//libraries/fastutil",
         "@lib//:kotlin-stdlib-provided",
     ],
-)
-
-content_module_jar(
-    libraries = ["@lib//:kotlin-metadata"],
-    module = ":dependency-graph",
 )
 
 jvm_library(
@@ -361,6 +336,7 @@ jvm_library(
         ":dependency-graph",
         "@community//build:build-javac-rt_test_lib",
         "//libraries/jetbrains/annotations:annotations_test_lib",
+        "//libraries/kotlin/metadata:metadata_test_lib",
         "//libraries/caffeine:caffeine_test_lib",
         "//libraries/asm:asm_test_lib",
         "//libraries/hash4j:hash4j_test_lib",
@@ -375,7 +351,6 @@ exports_files(
     [
         "jvm-rules/dependency-graph/intellij.platform.jps.build.dependencyGraph.iml",
         "jvm-rules/dependency-graph/resources/intellij.platform.jps.build.dependencyGraph.xml",
-        "jvm-rules/dependency-graph/module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )
@@ -400,8 +375,6 @@ jvm_library(
         "//libraries/netty/buffer",
     ],
 )
-
-content_module_jar(module = ":build-javac-rt")
 
 jvm_library(
     name = "build-javac-rt_test_lib",
@@ -432,7 +405,6 @@ exports_files(
     [
         "jvm-rules/jps-builders-6/intellij.platform.jps.build.javac.rt.iml",
         "jvm-rules/jps-builders-6/resources/intellij.platform.jps.build.javac.rt.xml",
-        "jvm-rules/jps-builders-6/module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

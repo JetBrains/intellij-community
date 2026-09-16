@@ -11,7 +11,9 @@ import com.intellij.collaboration.api.graphql.GraphQLDataDeserializer
 import com.intellij.collaboration.api.json.JsonDataSerializer
 import org.jetbrains.plugins.gitlab.api.GitLabRestJsonDataDeSerializer.genericConfig
 import org.jetbrains.plugins.gitlab.api.GitLabRestJsonDataDeSerializer.gitlabJacksonMapper
+import java.io.InputStream
 import java.io.Reader
+import java.nio.charset.Charset
 import java.text.SimpleDateFormat
 
 object GitLabGQLDataDeSerializer : JsonDataSerializer, GraphQLDataDeserializer {
@@ -29,9 +31,22 @@ object GitLabGQLDataDeSerializer : JsonDataSerializer, GraphQLDataDeserializer {
       mapper.readValue(bodyReader, it)
     }
 
-  private fun <T> readAndMapGQLResponse(pathFromData: Array<out String>,
-                                        clazz: Class<T>,
-                                        responseSupplier: (JavaType) -> GraphQLResponseDTO<out JsonNode, GraphQLErrorDTO>)
+  override fun <T : Any> readAndMapGQLResponse(
+    stream: InputStream,
+    charset: Charset,
+    pathFromData: Array<out String>,
+    clazz: Class<T>,
+  ): GraphQLResponseDTO<T?, GraphQLErrorDTO> {
+    return readAndMapGQLResponse(pathFromData, clazz) {
+      mapper.readValue(stream, it)
+    }
+  }
+
+  private fun <T> readAndMapGQLResponse(
+    pathFromData: Array<out String>,
+    clazz: Class<T>,
+    responseSupplier: (JavaType) -> GraphQLResponseDTO<out JsonNode, GraphQLErrorDTO>,
+  )
     : GraphQLResponseDTO<T?, GraphQLErrorDTO> {
     val responseType = mapper.typeFactory
       .constructParametricType(GraphQLResponseDTO::class.java, JsonNode::class.java, GraphQLErrorDTO::class.java)
@@ -39,9 +54,11 @@ object GitLabGQLDataDeSerializer : JsonDataSerializer, GraphQLDataDeserializer {
     return mapGQLResponse(gqlResponse, pathFromData, clazz)
   }
 
-  private fun <T> mapGQLResponse(result: GraphQLResponseDTO<out JsonNode, GraphQLErrorDTO>,
-                                 pathFromData: Array<out String>,
-                                 clazz: Class<T>): GraphQLResponseDTO<T?, GraphQLErrorDTO> {
+  private fun <T> mapGQLResponse(
+    result: GraphQLResponseDTO<out JsonNode, GraphQLErrorDTO>,
+    pathFromData: Array<out String>,
+    clazz: Class<T>,
+  ): GraphQLResponseDTO<T?, GraphQLErrorDTO> {
     val data = result.data
     if (data != null && !data.isNull) {
       var node: JsonNode = data

@@ -28,7 +28,7 @@ internal object ProductXmlGenerator : PipelineNode {
   override val id get() = NodeIds.PRODUCT_XML
   override val produces: Set<DataSlot<*>> get() = setOf(Slots.PRODUCTS)
 
-  override suspend fun execute(ctx: ComputeContext) {
+  override fun execute(ctx: ComputeContext) {
     val model = ctx.model
     val result = generateAllProductXmlFiles(
       discoveredProducts = model.discovery.products,

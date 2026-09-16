@@ -51,7 +51,7 @@ internal class GpgAgentConfigurationNotificator(private val project: Project) {
     }
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun proposeCustomPinentryAgentConfigurationSync(type: NotificationType = NotificationType.INFORMATION) {
     if (!isEnabled()) return
     if (!GpgAgentConfigurator.getInstance(project).canBeConfigured()) return

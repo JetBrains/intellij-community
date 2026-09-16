@@ -19,8 +19,8 @@ public class JavaValueMarker extends XValueMarkerProvider<JavaValue, ObjectRefer
   @Override
   public ObjectReference getMarker(@NotNull JavaValue value) {
     Value obj = value.getDescriptor().getValue();
-    if (obj instanceof ObjectReference) {
-      return ((ObjectReference)obj);
+    if (obj instanceof ObjectReference reference) {
+      return reference;
     }
     return null;
   }

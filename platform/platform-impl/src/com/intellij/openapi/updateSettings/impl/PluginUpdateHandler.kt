@@ -4,6 +4,7 @@ package com.intellij.openapi.updateSettings.impl
 import com.intellij.ide.plugins.api.PluginDto
 import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.openapi.components.service
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
@@ -21,7 +22,13 @@ import javax.swing.JComponent
 @ApiStatus.Internal
 interface PluginUpdateHandler {
   suspend fun loadAndStorePluginUpdates(buildNumber: String?, indicator: ProgressIndicator? = null): PluginUpdatesModel
-  suspend fun installUpdates(updates: Collection<PluginUiModel>, component: JComponent?, finishCallback: Runnable?, customRestarter: Consumer<Boolean>? = null)
+  suspend fun installUpdates(
+    updates: Collection<PluginUiModel>,
+    component: JComponent?,
+    finishCallback: Runnable?,
+    customRestarter: Consumer<Boolean>? = null,
+    progressSink: PluginUpdateProgressSink = PluginUpdateProgressSink.NONE,
+  )
 
   suspend fun ignorePluginUpdates()
 
@@ -47,6 +54,16 @@ interface PluginUpdateHandler {
         getInstance().loadAndStorePluginUpdates(buildNumber, indicator)
       }
     }
+  }
+}
+
+@ApiStatus.Internal
+fun interface PluginUpdateProgressSink {
+  fun downloadProgressChanged(pluginId: PluginId, fraction: Double?)
+
+  companion object {
+    @JvmField
+    val NONE: PluginUpdateProgressSink = PluginUpdateProgressSink { _, _ -> }
   }
 }
 

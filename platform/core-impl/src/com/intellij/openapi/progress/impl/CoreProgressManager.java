@@ -1199,12 +1199,20 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   }
 
   /**
+   * The maximum number of links that a chain walk follows. A thread dump must not hang on a cyclic chain.
+   */
+  private static final int MAX_INDICATOR_CHAIN_LENGTH = 64;
+
+  /**
    * A utility method for diagnosing state of progress indicator in monitoring facilities, like JStack
    */
   private static @NotNull String getProgressStateRepresentation() {
     synchronized (threadsUnderIndicator) {
-      int totalIndicators = threadsUnderIndicator.size();
-      String result = totalIndicators+" indicators registered:\n";
+      StringBuilder result = new StringBuilder();
+      result.append("ProgressManager.checkCanceled behavior: ").append(ourCheckCanceledBehavior.name()).append('\n')
+        .append("  with NONE or ONLY_HOOKS checkCanceled never consults the thread indicator\n")
+        .append("threads marked under a canceled indicator: ").append(threadsUnderCanceledIndicator.size()).append('\n')
+        .append(threadsUnderIndicator.size()).append(" indicators registered:\n");
       MultiMap<Thread, ProgressIndicator> threadIndicators = new MultiMap<>();
       for (Map.Entry<ProgressIndicator, Set<Thread>> entry : threadsUnderIndicator.entrySet()) {
         ProgressIndicator indicator = entry.getKey();
@@ -1224,23 +1232,109 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
         ProgressIndicator current = currentIndicators.get(threadId);
         ProgressIndicator topLevel = threadTopLevelIndicators.get(threadId);
         List<String> readActionStatus = threadingSupport == null ? Collections.emptyList() : threadingSupport.dumpSomeDiagnosticInfo(thread);
-        result += readableThreadInfo(threadInfos.get(threadId)) + "\n" +
-                  (readActionStatus.isEmpty() && !writeActionPending && !writeActionInProgress ? "" :
-                  "    rw action status:" + readActionStatus + (writeActionPending || writeActionInProgress ? "(writeActionPending:"+writeActionPending+", writeActionInProgress:"+writeActionInProgress+")" : "") + "\n") +
-                  (current == null ? "" :
-                  "    current indicator: " + current+"\n") +
-                  (current == topLevel ? "" :
-                  "    top level indicator: " + topLevel + "\n") +
-                  (indicators.isEmpty() ? "" :
-                  "    owns " + indicators.size() + " indicators:"+"\n");
+        // Membership in `threadsUnderCanceledIndicator` is what lets ProgressManager.checkCanceled() throw here.
+        // A thread that owns a canceled indicator without that membership cannot observe its own cancellation.
+        boolean canThrow = threadsUnderCanceledIndicator.contains(thread);
+        boolean ownsCanceledIndicator = false;
         for (ProgressIndicator indicator : indicators) {
-          result +=
-                  "       " + indicator + "("+indicator.getClass()+" canceled: " + indicator.isCanceled() + ", running:" + indicator.isRunning() + ")" + "\n";
+          if (indicator.isCanceled()) {
+            ownsCanceledIndicator = true;
+            break;
+          }
+        }
+        result.append(readableThreadInfo(threadInfos.get(threadId))).append('\n');
+        if (!readActionStatus.isEmpty() || writeActionPending || writeActionInProgress) {
+          result.append("    rw action status:").append(readActionStatus);
+          if (writeActionPending || writeActionInProgress) {
+            result.append("(writeActionPending:").append(writeActionPending)
+              .append(", writeActionInProgress:").append(writeActionInProgress).append(')');
+          }
+          result.append('\n');
+        }
+        if (current != null) {
+          result.append("    current indicator: ").append(current).append('\n');
+        }
+        if (current != topLevel) {
+          result.append("    top level indicator: ").append(topLevel).append('\n');
+        }
+        if (current instanceof WrappedProgressIndicator) {
+          result.append("    current indicator chain: ").append(indicatorChain(current)).append('\n');
+        }
+        result.append("    checkCanceled can throw here: ").append(canThrow).append('\n');
+        if (ownsCanceledIndicator && !canThrow) {
+          result.append("    !!! ").append(CANCELLATION_UNOBSERVED_MARKER).append('\n');
+        }
+        if (!indicators.isEmpty()) {
+          result.append("    owns ").append(indicators.size()).append(" indicators:\n");
+        }
+        for (ProgressIndicator indicator : indicators) {
+          result.append("       ").append(indicator).append('(').append(indicator.getClass())
+            .append(" canceled: ").append(indicator.isCanceled())
+            .append(", running:").append(indicator.isRunning())
+            .append(", on the current chain: ").append(isOnCurrentChain(threadId, indicator))
+            .append(")\n");
         }
       }
-      return result;
+      return result.toString();
     }
   }
+
+  /**
+   * The text that marks a thread which owns a canceled indicator and still cannot observe the cancellation.
+   * It uses the same term as {@code ScanningStallKind.CANCELLATION_UNOBSERVED}.
+   */
+  @ApiStatus.Internal
+  public static final String CANCELLATION_UNOBSERVED_MARKER =
+    "CANCELLATION_UNOBSERVED: the thread owns a canceled indicator and is not marked";
+
+  /**
+   * Renders the wrapper chain of {@code indicator} in the order that {@link #indicatorCanceled} walks it.
+   * <p>
+   * Each link shows its identity only. A per-link canceled flag would mislead the reader, because
+   * {@code ProgressWrapper.isCanceled()} walks the whole chain. Every link reports true once the root
+   * indicator is canceled.
+   */
+  @ApiStatus.Internal
+  public static @NotNull String indicatorChain(@Nullable ProgressIndicator indicator) {
+    if (indicator == null) {
+      return "null";
+    }
+    StringBuilder result = new StringBuilder();
+    ProgressIndicator current = indicator;
+    for (int i = 0; current != null && i < MAX_INDICATOR_CHAIN_LENGTH; i++) {
+      if (i != 0) {
+        result.append(" -> ");
+      }
+      Class<?> indicatorClass = current.getClass();
+      String name = indicatorClass.getSimpleName();
+      result.append(name.isEmpty() ? indicatorClass.getName() : name).append('@').append(System.identityHashCode(current));
+      current = nextInChain(current);
+    }
+    if (current != null) {
+      result.append(" -> ...");
+    }
+    return result.toString();
+  }
+
+  /**
+   * Whether {@code indicator} is on the chain that {@link #indicatorCanceled} walks for this thread.
+   * The cancellation of an indicator that is off the chain leaves the thread unmarked.
+   */
+  private static boolean isOnCurrentChain(long threadId, @NotNull ProgressIndicator indicator) {
+    ProgressIndicator current = currentIndicators.get(threadId);
+    for (int i = 0; current != null && i < MAX_INDICATOR_CHAIN_LENGTH; i++) {
+      if (current == indicator) {
+        return true;
+      }
+      current = nextInChain(current);
+    }
+    return false;
+  }
+
+  private static @Nullable ProgressIndicator nextInChain(@NotNull ProgressIndicator indicator) {
+    return indicator instanceof WrappedProgressIndicator ? ((WrappedProgressIndicator)indicator).getOriginalProgressIndicator() : null;
+  }
+
   private static String readableThreadInfo(@Nullable ThreadInfo info) {
     if (info == null) return "";
     String sb = info.getThreadName() + " Id=" + info.getThreadId() + " " + info.getThreadState();

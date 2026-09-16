@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.bouncy.castle.pgp` start
+content_module_jar(
+    libraries = ["@lib//:libraries-bouncy-castle-pgp-bouncy-castle-pgp"],
+    module = ":bouncy-castle-pgp",
+)
+### auto-generated section `dev intellij.libraries.bouncy.castle.pgp` end
+
 ### auto-generated section `build intellij.libraries.bouncy.castle.pgp` start
 jvm_library(
     name = "bouncy-castle-pgp",
@@ -16,11 +23,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-bouncy-castle-pgp-bouncy-castle-pgp"],
     runtime_deps = ["@lib//:libraries-bouncy-castle-pgp-bouncy-castle-pgp"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-bouncy-castle-pgp-bouncy-castle-pgp"],
-    module = ":bouncy-castle-pgp",
 )
 
 jvm_library(
@@ -43,7 +45,6 @@ exports_files(
     [
         "intellij.libraries.bouncy.castle.pgp.iml",
         "resources/intellij.libraries.bouncy.castle.pgp.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -24,5 +24,4 @@ com/jediterm/terminal/ui/settings/DefaultSettingsProvider
 com/jediterm/terminal/ui/settings/SettingsProvider
 com/jetbrains/rd/util/lifetime/Lifetime
 com/jetbrains/rd/util/lifetime/SequentialLifetimes
-com/pty4j/PtyProcess
 kotlin/jvm/internal/DefaultConstructorMarker

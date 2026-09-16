@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.opencsv` start
+content_module_jar(
+    libraries = ["@lib//:libraries-opencsv-opencsv"],
+    module = ":opencsv",
+)
+### auto-generated section `dev intellij.libraries.opencsv` end
+
 ### auto-generated section `build intellij.libraries.opencsv` start
 jvm_library(
     name = "opencsv",
@@ -16,11 +23,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-opencsv-opencsv"],
     runtime_deps = ["@lib//:libraries-opencsv-opencsv"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-opencsv-opencsv"],
-    module = ":opencsv",
 )
 
 jvm_library(
@@ -43,7 +45,6 @@ exports_files(
     [
         "intellij.libraries.opencsv.iml",
         "resources/intellij.libraries.opencsv.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

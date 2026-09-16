@@ -4,13 +4,22 @@ package com.intellij.python.community.execService.python.advancedApi
 import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.ExecOptions
 import com.intellij.python.community.execService.ExecService
+import com.intellij.python.community.execService.FileReporter
+import com.intellij.python.community.execService.HowToReportFile
 import com.intellij.python.community.execService.ProcessInteractiveHandler
 import com.intellij.python.community.execService.ProcessOutputTransformer
 import com.intellij.python.community.execService.PyProcessListener
 import com.intellij.python.community.execService.impl.transformerToHandler
-import com.intellij.python.community.execService.python.HelperName
-import com.intellij.python.community.execService.python.addHelper
+import com.intellij.python.community.execService.python.PyHelper
+import com.intellij.python.community.execService.python.StdInProvider
+import com.intellij.python.community.execService.python.impl.asChannelConsumer
+import com.intellij.python.community.execService.reportOutputAsProgress
+import com.intellij.python.community.helpersLocator.PythonHelpersLocator
+import com.jetbrains.python.PYTHONPATH
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.impl.PY3_HELPER_DEPENDENCIES_DIR
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 // This in advanced API, most probably you need "api.kt"
 
@@ -32,15 +41,37 @@ suspend fun <T> ExecService.executePythonAdvanced(
 
 /**
  * Execute [helper] on [python]. For remote eels, [helper] is copied (but only one file!).
+ * To write something into the `stdin` of [helper], use [stdInProvider].
+ * The process output is reported as progress.
  */
 suspend fun <T> ExecService.executeHelperAdvanced(
   python: ExecutablePython,
-  helper: HelperName,
-  args: List<String> = emptyList(),
+  helper: PyHelper,
+  args: Args = Args(),
   options: ExecOptions = ExecOptions(),
   procListener: PyProcessListener? = null,
+  stdInProvider: StdInProvider? = null,
   processOutputTransformer: ProcessOutputTransformer<T>,
-): PyResult<T> = executePythonAdvanced(
-  python,
-  Args().addHelper(helper).addArgs(args),
-  options, transformerToHandler(procListener, processOutputTransformer))
+): PyResult<T> = reportOutputAsProgress(procListener) { listener ->
+  executePythonAdvanced(
+    python,
+    Args().addHelper(helper).add(args),
+    options,
+    transformerToHandler(listener, stdInProvider?.asChannelConsumer(), processOutputTransformer))
+}
+
+/**
+ * Adds helper by copying it to the remote system (if needed)
+ */
+private suspend fun Args.addHelper(helper: PyHelper): Args =
+  withContext(Dispatchers.IO) {
+    if (helper.addDependency) {
+      // Helper needs a dependency
+      val additionalDir = PythonHelpersLocator.findPathInHelpers(PY3_HELPER_DEPENDENCIES_DIR)
+      addLocalFile(additionalDir, FileReporter { it to HowToReportFile.EnvVar(PYTHONPATH) })
+    }
+
+    val helper = PythonHelpersLocator.findPathInHelpers(helper.name)
+    addLocalFile(helper)
+    this@addHelper
+  }

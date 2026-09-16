@@ -15,15 +15,15 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.OverrideOnly
 interface CodeInsightContextProvider {
-  @RequiresReadLock
-  @RequiresBackgroundThread
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun getContexts(file: VirtualFile, project: Project): List<CodeInsightContext>
 
   fun subscribeToChanges(project: Project, invalidator: Invalidator)
 
   @ApiStatus.NonExtendable
   fun interface Invalidator {
-    @RequiresWriteLock
+    @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
     fun requestInvalidation()
   }
 }

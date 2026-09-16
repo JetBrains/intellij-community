@@ -79,7 +79,7 @@ public class PyMakeFunctionReturnTypeQuickFixTest extends PyQuickFixTestCase {
   // PY-20710
   public void testMakeGenerator() {
     doQuickFixTest(PyTypeCheckerInspection.class,
-                   PyPsiBundle.message("QFIX.make.function.return.type", "gen", "AsyncGenerator[str | float, Any]"),
+                   PyPsiBundle.message("QFIX.make.function.return.type", "gen", "AsyncGenerator[str | float, bool]"),
                    LanguageLevel.getLatest());
   }
 }

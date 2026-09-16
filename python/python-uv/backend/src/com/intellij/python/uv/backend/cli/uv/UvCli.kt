@@ -4,9 +4,9 @@ package com.intellij.python.uv.backend.cli.uv
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.python.community.execService.ProcessOutputTransformer
 import com.intellij.python.community.execService.ZeroCodeStdoutTransformer
-import com.intellij.python.pytools.runtime.PyToolRuntime
-import com.intellij.python.pytools.runtime.executeAndHandleErrors
-import com.intellij.python.pytools.runtime.executeAndMatch
+import com.intellij.python.pytools.backend.runtime.PyToolRuntime
+import com.intellij.python.pytools.backend.runtime.executeAndHandleErrors
+import com.intellij.python.pytools.backend.runtime.executeAndMatch
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 

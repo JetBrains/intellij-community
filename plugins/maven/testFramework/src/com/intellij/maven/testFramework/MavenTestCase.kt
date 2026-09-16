@@ -755,7 +755,7 @@ abstract class MavenTestCase : UsefulTestCase() {
     assumeTrue("Unable to run the test in non-local environment: $cause", LocalEelDescriptor == project.getEelDescriptor())
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   protected suspend fun waitForImportWithinTimeout(action: suspend () -> Unit) {
     MavenLog.LOG.warn("waitForImportWithinTimeout started")
     val importStarted = AtomicBoolean(false)
@@ -802,7 +802,7 @@ abstract class MavenTestCase : UsefulTestCase() {
     MavenLog.LOG.warn("waitForImportWithinTimeout finished")
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   protected suspend fun awaitConfiguration() {
     val isEdt = ApplicationManager.getApplication().isDispatchThread
     if (isEdt) {

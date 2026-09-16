@@ -59,7 +59,7 @@ interface WorkspaceFileIndex {
    * is supposed to be used only if the file and its possible parent file sets aren't created yet, in other cases [isInContent] should be 
    * used instead.
    */
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun isUrlInContent(url: String): ThreeState
 
   /**

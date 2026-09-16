@@ -5,14 +5,12 @@ import com.intellij.codeInsight.multiverse.CodeInsightContextManager;
 import com.intellij.codeInsight.multiverse.CodeInsightContextManagerImpl;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.mock.MockDumbService;
-import com.intellij.mock.MockDumbUtil;
 import com.intellij.mock.MockFileIndexFacade;
 import com.intellij.mock.MockProject;
 import com.intellij.mock.MockResolveScopeManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.DumbUtil;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiDocumentManager;
@@ -75,7 +73,6 @@ public class CoreProjectEnvironment {
     project.registerService(PsiDirectoryFactory.class, new PsiDirectoryFactoryImpl(project));
     project.registerService(ProjectScopeBuilder.class, createProjectScopeBuilder());
     project.registerService(DumbService.class, new MockDumbService(project));
-    project.registerService(DumbUtil.class, new MockDumbUtil());
     project.registerService(CoreEncodingProjectManager.class, CoreEncodingProjectManager.class);
     project.registerService(InjectedLanguageManager.class, new CoreInjectedLanguageManager());
   }

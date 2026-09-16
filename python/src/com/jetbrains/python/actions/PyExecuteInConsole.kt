@@ -7,7 +7,7 @@ import com.intellij.execution.target.value.TargetEnvironmentFunction
 import com.intellij.execution.ui.ExecutionConsole
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.runReadActionBlocking
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.project.Project
@@ -22,13 +22,16 @@ import com.jetbrains.python.console.PyCodeExecutor
 import com.jetbrains.python.console.PyExecuteConsoleCustomizer
 import com.jetbrains.python.console.PyTargetedCodeExecutor
 import com.jetbrains.python.console.PydevConsoleRunner
-import com.jetbrains.python.console.PythonConsoleRunnerFactory
+import com.jetbrains.python.console.PyConsoleRunnerFactoryAsync
 import com.jetbrains.python.console.PythonConsoleToolWindow
 import com.jetbrains.python.console.PythonConsoleView
 import com.jetbrains.python.console.PythonDebugLanguageConsoleView
 import com.jetbrains.python.run.PythonRunConfiguration
 import org.jetbrains.annotations.ApiStatus
 import java.util.function.Consumer
+import com.jetbrains.python.run.asyncPromise
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.util.function.Function
 
 fun executeCodeInConsole(
@@ -103,7 +106,10 @@ private fun executeCodeInConsole(
   }
   else {
     if (!executeInStartingConsole.apply(virtualFile)) {
-      startNewConsoleInstance(project, virtualFile, executeInConsole, config, newConsoleListener, isRequestFocus = requestFocusToConsole)
+      asyncPromise(project) {
+        startNewConsoleInstance(project, virtualFile, executeInConsole, config, newConsoleListener,
+                                isRequestFocus = requestFocusToConsole)
+      }
     }
   }
 }
@@ -174,7 +180,7 @@ private fun isAlive(dom: RunContentDescriptor): Boolean {
   return processHandler != null && !processHandler.isProcessTerminated
 }
 
-private fun startNewConsoleInstance(
+private suspend fun startNewConsoleInstance(
   project: Project,
   virtualFile: VirtualFile?,
   executeInConsole: Consumer<ExecutionConsole>?,
@@ -182,28 +188,30 @@ private fun startNewConsoleInstance(
   listener: PydevConsoleRunner.ConsoleListener?,
   isRequestFocus: Boolean = false,
 ) {
-  val consoleRunnerFactory = PythonConsoleRunnerFactory.getInstance()
-  val runner: PydevConsoleRunner = runReadActionBlocking {
+  val consoleRunnerFactory = PyConsoleRunnerFactoryAsync.getInstance()
+  val runner =
     if (executeInConsole == null || config == null) {
-      consoleRunnerFactory.createConsoleRunner(project, null)
+      consoleRunnerFactory.createConsoleRunnerAsync(project, null)
     }
     else {
-      consoleRunnerFactory.createConsoleRunnerWithFile(project, config)
+      consoleRunnerFactory.createConsoleRunnerWithFileAsync(project, config)
     }
-  }
-  runner.addConsoleListener { consoleView ->
-    if (consoleView is PyCodeExecutor) {
-      executeInConsole?.accept(consoleView)
-      PythonConsoleToolWindow.getInstance(project)?.toolWindow?.show(null)
+
+  withContext(Dispatchers.EDT) {
+    runner.addConsoleListener { consoleView ->
+      if (consoleView is PyCodeExecutor) {
+        executeInConsole?.accept(consoleView)
+        PythonConsoleToolWindow.getInstance(project)?.toolWindow?.show(null)
+      }
     }
+    if (listener != null) {
+      runner.addConsoleListener(listener)
+    }
+    virtualFile?.let {
+      PyExecuteConsoleCustomizer.instance.notifyRunnerStart(it, runner)
+    }
+    runner.run(isRequestFocus)
   }
-  if (listener != null) {
-    runner.addConsoleListener(listener)
-  }
-  virtualFile?.let {
-    PyExecuteConsoleCustomizer.instance.notifyRunnerStart(it, runner)
-  }
-  runner.run(isRequestFocus)
 }
 
 private fun showConsole(

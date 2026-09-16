@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.kotlinc.allopen.compiler.plugin.jar
+  modules:
+  - name: intellij.libraries.kotlinc.allopen.compiler.plugin
+    libraries:
+      kotlinc.allopen-compiler-plugin:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/allopen-compiler-plugin-for-ide/2/allopen-compiler-plugin-for-ide-2.jar

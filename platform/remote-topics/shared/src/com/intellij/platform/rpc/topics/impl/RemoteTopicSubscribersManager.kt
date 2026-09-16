@@ -2,8 +2,10 @@
 package com.intellij.platform.rpc.topics.impl
 
 import com.intellij.codeWithMe.ClientId
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProjectOrNull
@@ -23,6 +25,8 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.ConcurrentHashMap
+
+private val LOG = logger<RemoteTopicSubscribersManager>()
 
 /**
  * Backend's side manager that handles [RemoteTopicApi] subscriptions and send events to them.
@@ -56,27 +60,32 @@ class RemoteTopicSubscribersManager(cs: CoroutineScope) {
 
   private fun registerLocalClient() {
     clients[ClientId.localId] = { eventDto ->
+      val index = RemoteTopicListenerIndex.getInstance()
       if (eventDto.projectId != null) {
         val project = eventDto.projectId.findProjectOrNull()
         if (project != null) {
-          // Handle ProjectRemoteTopicListener
-          ProjectRemoteTopicListener.EP_NAME.forEachExtensionSafe { listener ->
-            if (listener.topic.id == eventDto.topicId) {
-              listener.handleEventWithProjectLocally(project, eventDto)
-            }
+          for (listener in index.projectListeners(eventDto.topicId)) {
+            handleLocally(listener, eventDto) { listener.handleEventWithProjectLocally(project, eventDto) }
           }
         }
       }
       else {
-        // Handle ApplicationRemoteTopicListener
-        ApplicationRemoteTopicListener.EP_NAME.forEachExtensionSafe { listener ->
-          if (listener.topic.id == eventDto.topicId) {
-            listener.handleEventLocally(eventDto)
-          }
+        for (listener in index.applicationListeners(eventDto.topicId)) {
+          handleLocally(listener, eventDto) { listener.handleEventLocally(eventDto) }
         }
       }
     }
     connectedClientsStateFlow.value = clients.keys.toSet()
+  }
+
+  private inline fun handleLocally(listener: Any, event: RemoteTopicEventDto, handle: () -> Unit) {
+    try {
+      handle()
+    }
+    catch (e: Throwable) {
+      rethrowControlFlowException(e)
+      LOG.error("Error during local remote topic event handling by $listener. Event dto: $event", e)
+    }
   }
 
   private fun <E : Any> ApplicationRemoteTopicListener<E>.handleEventLocally(event: RemoteTopicEventDto) {

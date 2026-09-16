@@ -5,7 +5,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.python.ty.icons.PythonTYIcons
+import com.intellij.python.ty.common.icons.PythonTyCommonIcons
 import com.intellij.util.IconUtil
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.system.CpuArch
@@ -24,7 +24,7 @@ object TyUtil {
   private val LOG = logger<TyUtil>()
 
   fun getDefaultTyIcon(): Icon {
-    return IconUtil.downscaleIconToSize(PythonTYIcons.TY, 16, 16)
+    return IconUtil.downscaleIconToSize(PythonTyCommonIcons.TY, 16, 16)
   }
 
   /**

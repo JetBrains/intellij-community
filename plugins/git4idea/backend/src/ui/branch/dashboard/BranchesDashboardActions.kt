@@ -98,7 +98,7 @@ internal object BranchesDashboardActions {
 
   object BranchActionsBuilder {
 
-    @RequiresBackgroundThread
+    @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
     fun build(e: AnActionEvent?): ActionGroup? {
       val selection = e?.getData(GIT_BRANCHES_TREE_SELECTION) ?: return null
 

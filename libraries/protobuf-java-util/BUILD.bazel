@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.protobuf.java.util` start
+content_module_jar(
+    libraries = ["@lib//:libraries-protobuf-java-util-google-protobuf-java-util"],
+    module = ":protobuf-java-util",
+)
+### auto-generated section `dev intellij.libraries.protobuf.java.util` end
+
 ### auto-generated section `build intellij.libraries.protobuf.java.util` start
 jvm_library(
     name = "protobuf-java-util",
@@ -16,11 +23,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-protobuf-java-util-google-protobuf-java-util"],
     runtime_deps = ["@lib//:libraries-protobuf-java-util-google-protobuf-java-util"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-protobuf-java-util-google-protobuf-java-util"],
-    module = ":protobuf-java-util",
 )
 
 jvm_library(
@@ -42,7 +44,6 @@ exports_files(
     [
         "intellij.libraries.protobuf.java.util.iml",
         "resources/intellij.libraries.protobuf.java.util.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

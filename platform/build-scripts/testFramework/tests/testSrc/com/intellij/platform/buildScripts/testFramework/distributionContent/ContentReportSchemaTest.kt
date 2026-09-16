@@ -3,7 +3,6 @@ package com.intellij.platform.buildScripts.testFramework.distributionContent
 
 import com.intellij.platform.distributionContent.FileEntry
 import com.intellij.platform.distributionContent.ModuleEntry
-import com.intellij.platform.distributionContent.PluginContentReport
 import com.intellij.platform.distributionContent.ProjectLibraryEntry
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.descriptors.elementNames
@@ -11,22 +10,17 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertAll
 
 /**
- * Two canonical classes state what a build packs. [FileEntry] states one file of a distribution, and
- * [PluginContentReport] states one plugin's layout. The checked-in `module-content.yaml` reports and a distribution
- * build's `content-report.zip` both come from them.
+ * One canonical class states what a build packs: [FileEntry] states one file of a distribution. The checked-in
+ * `module-content.yaml` reports and the executed plan a dev-distribution fragment writes both come from it.
  *
- * The JPS-to-Bazel converter reads them back through two narrow schemas of its own:
+ * The JPS-to-Bazel converter reads it back through a narrow schema of its own: `ExecutedPlanEntry` in
+ * `community/platform/build-scripts/bazel/src/org/jetbrains/intellij/build/bazel/devDistPluginJarPlan.kt` mirrors
+ * [FileEntry], and `RecipeModule`/`RecipeNamed` in `contentModuleJar.kt` of the same directory mirror the two nested
+ * entry classes.
  *
- * - `RecipeEntry`/`RecipeModule`/`RecipeNamed` in
- *   `community/platform/build-scripts/bazel/src/org/jetbrains/intellij/build/bazel/contentModuleJar.kt` mirror the three
- *   entry classes.
- * - `ReportedPlugin` in `pluginContentReportZip.kt` of the same directory mirrors [PluginContentReport]. That class is the
- *   envelope of one per-plugin report in the zip.
- * - `ExecutedPlanEntry` in `devDistPluginJarPlan.kt` of the same directory mirrors [FileEntry] a second time, for the
- *   executed recipe a dev-distribution fragment writes. Two schemas over one canonical class, because the two read two
- *   different artifacts and ignore two different halves of it.
+ * The converter no longer reads a checked-in `module-content.yaml`: the dev-dist tables state a content module's jar.
  *
- * Both narrow schemas decode with `recipeYaml`, which sets `strictMode = false`. A field a narrow schema fails to declare
+ * The narrow schemas decode with `recipeYaml`, which sets `strictMode = false`. A field a narrow schema fails to declare
  * is dropped in silence instead of reported. That is how `module:` once went missing from the converter's view of a
  * plugin's members. The converter then under-declared the dev-distribution input manifest, and `//build:idea_air_dist`
  * failed at assembly time.
@@ -38,11 +32,6 @@ import org.junit.jupiter.api.assertAll
  * It compares field-name sets, and it scans no report. A rename fails on the first run whatever the corpus holds. The 784
  * checked-in `module-content.yaml` reports also carry no `productModules` and no `productEmbeddedModules`, so a scan would
  * enforce nothing about those two.
- *
- * The plugin envelope has no checked-in corpus to scan at all. IJAI-955 retired `plugin-content.yaml`, and a per-plugin
- * report now reaches the converter only in `content-report.zip`, which a distribution build writes. So a field-name
- * comparison is the only enforcement a test can give that envelope. `readPluginContentReportZips` adds a second layer at
- * run time. It refuses a zip that names no plugin, and a plugin that carries no main module.
  *
  * ### Why a narrow schema is mirrored here rather than compared descriptor-to-descriptor
  *
@@ -61,10 +50,8 @@ class ContentReportSchemaTest {
   @Test
   fun `narrow schemas cover every canonical report field`() {
     assertAll(
-      { checkSchema(FILE_ENTRY) },
       { checkSchema(MODULE_ENTRY) },
       { checkSchema(PROJECT_LIBRARY_ENTRY) },
-      { checkSchema(PLUGIN_CONTENT_REPORT) },
       { checkSchema(EXECUTED_PLAN_ENTRY) },
     )
   }
@@ -112,46 +99,6 @@ private class NarrowSchema(
   @JvmField val ignored: Map<String, String>,
 )
 
-private val FILE_ENTRY = NarrowSchema(
-  canonical = FileEntry.serializer(),
-  canonicalName = "FileEntry",
-  narrowName = "RecipeEntry",
-  narrowFile = "contentModuleJar.kt",
-  // `os`/`arch`/`libc` are modeled rather than ignored although no report the converter reads carries one on an entry: a
-  // report is an OS superset (`collectPluginContentCategoryFailures` and `readPluginContentReportZips` both union the
-  // per-OS variants of one main module), so an entry that did carry one would be read as unconditional, and
-  // `simplePluginContentEntry` hands only unconditional jars off to a Bazel target. Declaring them turns that from a
-  // silent misread into a veto.
-  modeled = setOf("name", "os", "arch", "libc", "modules", "contentModules", "projectLibraries", "library", "module"),
-  ignored = mapOf(
-    // Written only onto the synthetic `name: plugins` entry of a *product platform* content report
-    // (`writeProductModules`), where they list the product layout's own modules and its `intellij.moduleSets.*`
-    // references. The plan generator reads them from that baseline into the platform fragment's payload
-    // (`devDistPlanGenerator.kt`, the `entry.name == "plugins"` branch), not into any plugin's content. They are
-    // product-level membership, not plugin membership, so a plugin's content target must not claim them; 0 of the 784
-    // checked-in `module-content.yaml` reports carry either field.
-    "productModules" to "product-level modules and module-set references of a platform report, not plugin content",
-    "productEmbeddedModules" to "product-level embedded modules of a platform report, not plugin content",
-    // The jar file names and sizes behind `library:`. The converter derives a library's jars from the JPS model and the
-    // converted target graph (`getLibraryByJpsIdentity` -> `libraryJarTargets`), because a file name is not a label.
-    "files" to "jar file names and sizes; jars are derived from the JPS model, not from the report",
-    // Why the build included something. Provenance for the human reviewing a report diff; it names no member and no jar.
-    "reason" to "inclusion provenance for review, names no member and no jar",
-    // Written only onto the synthetic `name: plugins` entry of a platform content report, as the plugin index. A single
-    // `PluginContentReport` is the unit the converter reads, one target per plugin, and `ReportedPlugin` mirrors it.
-    "bundled" to "plugin index of a platform report; one PluginContentReport is the unit read here",
-    "nonBundled" to "plugin index of a platform report; one PluginContentReport is the unit read here",
-    // Both are written only by the executed-recipe report of a dev-distribution fragment (`DevDistRecipe`), never by
-    // `buildJarContentReport`, so 0 of the reports the converter reads carry either. `kind` says how the
-    // build produced an output - jar written, directory referenced, file reused - and `sources` states the one ordered
-    // cross-kind source list, both of which are properties of an *assembly run*. The converter's question is the
-    // opposite one: given a report, which Bazel target may pack this jar. It answers that from `modules`,
-    // `contentModules` and the JPS model, and a recipe field would tell it about a run it never took.
-    "kind" to "how a dev fragment produced an output; written by no report read here",
-    "sources" to "the executed ordered source list of a dev fragment; written by no report read here",
-  ),
-)
-
 private val MODULE_ENTRY = NarrowSchema(
   canonical = ModuleEntry.serializer(),
   canonicalName = "ModuleEntry",
@@ -177,15 +124,9 @@ private val PROJECT_LIBRARY_ENTRY = NarrowSchema(
   ),
 )
 
-// The envelope of one per-plugin report, and the only one of the four with no checked-in corpus behind it: the converter
-// reads it from `content-report.zip`, which a distribution build writes. `ReportedPlugin` declares every field, so the
-// `ignored` map is empty. A rename on this side is the expensive one. `readPluginContentReportZips` writes
-// `dev_dist_plugin_content_population.txt` from `mainModule`, so a `mainModule` that read as absent would empty that file
-// and drop every content leaf with it. That reader now refuses an empty main module at run time, and this row is the check
-// that fails first, before any build reaches the reader.
-// The second narrow schema over `FileEntry`, for a dev-distribution fragment's executed `<fragment>.plan.yaml`. Its
-// question is where a jar went and whose module output it holds, so it declares `kind` - which `RecipeEntry` ignores,
-// because a content report carries none - and it ignores the whole membership detail a content target needs.
+// The narrow schema over `FileEntry`, for a dev-distribution fragment's executed `<fragment>.plan.yaml`. Its question is
+// where a jar went and whose module output it holds, so it declares `kind` and ignores the membership detail a content
+// target gets from the dev-dist tables.
 private val EXECUTED_PLAN_ENTRY = NarrowSchema(
   canonical = FileEntry.serializer(),
   canonicalName = "FileEntry",
@@ -213,13 +154,4 @@ private val EXECUTED_PLAN_ENTRY = NarrowSchema(
     "bundled" to "plugin index of a platform report; a fragment plan carries none",
     "nonBundled" to "plugin index of a platform report; a fragment plan carries none",
   ),
-)
-
-private val PLUGIN_CONTENT_REPORT = NarrowSchema(
-  canonical = PluginContentReport.serializer(),
-  canonicalName = "PluginContentReport",
-  narrowName = "ReportedPlugin",
-  narrowFile = "pluginContentReportZip.kt",
-  modeled = setOf("mainModule", "os", "arch", "content"),
-  ignored = emptyMap(),
 )

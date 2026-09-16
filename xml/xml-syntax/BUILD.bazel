@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.xml.syntax` start
+content_module_jar(module = ":syntax")
+### auto-generated section `dev intellij.xml.syntax` end
+
 ### auto-generated section `build intellij.xml.syntax` start
 jvm_library(
     name = "syntax",
@@ -31,8 +35,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":syntax")
-
 jvm_library(
     name = "syntax_test_lib",
     testonly = True,
@@ -59,7 +61,6 @@ exports_files(
     [
         "intellij.xml.syntax.iml",
         "resources/intellij.xml.syntax.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

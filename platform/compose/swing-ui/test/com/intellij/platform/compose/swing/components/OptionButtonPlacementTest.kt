@@ -36,7 +36,7 @@ class OptionButtonPlacementTest {
       runComposeSwingTest {
         setContent {
           FormPanel(modifier = SwingModifier.testTag(TAG)) {
-            FormRow { OptionButton(text = "Auto-Configure", options = options(withOptions)) }
+            FormRow { OptionButton(text = "Auto-Configure", onClick = {}, options = options(withOptions)) }
           }
         }
         val form = onNodeWithTag(TAG).fetch<JComponent>()

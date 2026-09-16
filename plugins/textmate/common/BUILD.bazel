@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.textmate.common` start
+content_module_jar(module = ":common")
+### auto-generated section `dev intellij.textmate.common` end
+
 ### auto-generated section `build intellij.textmate.common` start
 jvm_library(
     name = "common",
@@ -17,8 +21,6 @@ jvm_library(
     exports = ["//plugins/textmate"],
     runtime_deps = ["//plugins/textmate"],
 )
-
-content_module_jar(module = ":common")
 
 jvm_library(
     name = "common_test_lib",

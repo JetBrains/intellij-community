@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.kryo5` start
+content_module_jar(
+    libraries = ["@lib//:libraries-kryo5-kryo"],
+    module = ":kryo5",
+)
+### auto-generated section `dev intellij.libraries.kryo5` end
+
 ### auto-generated section `build intellij.libraries.kryo5` start
 jvm_library(
     name = "kryo5",
@@ -16,11 +23,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-kryo5-kryo"],
     runtime_deps = ["@lib//:libraries-kryo5-kryo"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-kryo5-kryo"],
-    module = ":kryo5",
 )
 
 jvm_library(
@@ -43,7 +45,6 @@ exports_files(
     [
         "intellij.libraries.kryo5.iml",
         "resources/intellij.libraries.kryo5.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

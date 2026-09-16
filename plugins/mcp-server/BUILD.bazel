@@ -1,4 +1,9 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.mcpserver` start
+content_module_jar(module = ":mcpserver")
+### auto-generated section `dev intellij.mcpserver` end
 
 ### auto-generated section `build intellij.mcpserver` start
 jvm_library(
@@ -148,7 +153,6 @@ exports_files(
     [
         "intellij.mcpserver.iml",
         "resources/intellij.mcpserver.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -7,6 +7,27 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" exported="" name="jetbrains.markdown" level="project" />
+    <orderEntry type="module-library" exported="">
+      <library name="jetbrains.markdown" type="repository">
+        <properties maven-id="org.jetbrains:markdown-jvm:0.7.13">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/markdown-jvm/0.7.13/markdown-jvm-0.7.13.jar">
+              <sha256sum>31c20c5aedfece5e04bd3906e23bb18879b953224b76c367f8bb78f54768712c</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="it.unimi.dsi:fastutil-core" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/markdown-jvm/0.7.13/markdown-jvm-0.7.13.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/markdown-jvm/0.7.13/markdown-jvm-0.7.13-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
   </component>
 </module>

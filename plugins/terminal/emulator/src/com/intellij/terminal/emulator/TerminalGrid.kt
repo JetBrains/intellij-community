@@ -149,17 +149,33 @@ class TerminalRow(
       val style = if (cell.codePoint == 0 || cell.style == CellStyle.Default) null else cell.style
       styleRanges.update(chars.length, style)
       hyperlinks.update(chars.length, cell.hyperlink)
-      if (cell.codePoint == 0) {
-        chars.append(' ')
-        continue
+      chars.appendCellText(cell)
+      if (cell.codePoint != 0) {
+        writtenLength = chars.length
       }
-      chars.appendCodePoint(cell.codePoint)
-      for (trailingCodePoint in cell.trailingCodePoints) {
-        chars.appendCodePoint(trailingCodePoint)
-      }
-      writtenLength = chars.length
     }
     return StyledText(chars.substring(0, writtenLength), styleRanges.finish(writtenLength), hyperlinks.finish(writtenLength))
+  }
+
+  fun charOffsetOfColumn(column: Int): Int {
+    require(column in cells.indices)
+    val chars = StringBuilder()
+    for (cell in cells.subList(0, column)) {
+      if (cell.width == CellWidth.SPACER) continue
+      chars.appendCellText(cell)
+    }
+    return chars.length
+  }
+
+  private fun StringBuilder.appendCellText(cell: Cell) {
+    if (cell.codePoint == 0) {
+      append(' ')
+      return
+    }
+    appendCodePoint(cell.codePoint)
+    for (trailingCodePoint in cell.trailingCodePoints) {
+      appendCodePoint(trailingCodePoint)
+    }
   }
 
   /** Coalesces per-cell attribute values into maximal ranges: a range stays open while the value repeats. */

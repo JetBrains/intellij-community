@@ -235,7 +235,7 @@ public class RequestHint {
           return StepRequest.STEP_INTO;
         }
         boolean proxyMatch =
-          (myMethodFilter instanceof BasicStepMethodFilter && ((BasicStepMethodFilter)myMethodFilter).proxyCheck(location, context, this));
+          (myMethodFilter instanceof BasicStepMethodFilter filter && filter.proxyCheck(location, context, this));
         if (proxyMatch || myMethodFilter.locationMatches(context.getDebugProcess(), location, context.getFrameProxy())) {
           if (myMethodFilter.getSkipCount() <= myFilterMatchedCount++) {
             myTargetMethodMatched = true;

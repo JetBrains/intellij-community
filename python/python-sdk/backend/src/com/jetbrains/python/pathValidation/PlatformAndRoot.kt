@@ -28,7 +28,7 @@ class PlatformAndRoot private constructor(val root: Path?, val platform: Platfor
      * Creates [PlatformAndRoot] for [TargetEnvironmentConfiguration]. If null then returns either [local] or [platform] only depending
      * on [defaultIsLocal]
      */
-    @RequiresBackgroundThread
+    @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
     fun TargetEnvironmentConfiguration?.getPlatformAndRoot(defaultIsLocal: Boolean = true): PlatformAndRoot {
       val unknownTarget = PlatformAndRoot(null, Platform.UNIX)
       return when {

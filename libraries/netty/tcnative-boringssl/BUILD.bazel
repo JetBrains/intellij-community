@@ -1,5 +1,4 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
-load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.libraries.netty.tcnative.boringssl` start
 jvm_library(
@@ -12,11 +11,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-netty-tcnative-boringssl-netty-tcnative-boringssl"],
     runtime_deps = ["@lib//:libraries-netty-tcnative-boringssl-netty-tcnative-boringssl"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-netty-tcnative-boringssl-netty-tcnative-boringssl"],
-    module = ":libraries-netty-tcnative-boringssl",
 )
 
 jvm_library(
@@ -38,7 +32,6 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.netty.tcnative.boringssl.iml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

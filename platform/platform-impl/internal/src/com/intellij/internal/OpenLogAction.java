@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.ide.bootstrap.StartupUtil;
+import com.intellij.platform.ide.productMode.IdeProductMode;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -46,14 +47,17 @@ public class OpenLogAction
     Project project = e.getProject();
     if (project == null) return;
 
-    openLogInEditor(project);
+    openLogInEditor(project, e);
   }
 
-  public static void openLogInEditor(@NotNull Project project) {
+  public static void openLogInEditor(@NotNull Project project, @NotNull AnActionEvent event) {
     VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(LoggerFactory.getLogFilePath());
     if (file != null) {
       VfsUtil.markDirtyAndRefresh(true, false, false, file);
       final FileEditor[] editors = FileEditorManager.getInstance(project).openFile(file, true);
+      if (editors.length > 0 && IdeProductMode.isFrontend()) {
+        ClientLogFileBackendMirrorBinder.bindToBackendMirror(event, project, file);
+      }
       if (editors.length > 0 && editors[0] instanceof TextEditor te) {
         scrollToLastIDEStart(te);
       }

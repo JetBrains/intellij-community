@@ -1,6 +1,20 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
+load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_TARGETS")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `dev intellij.vcs.svn` start
+dev_dist_plugin(
+    content_modules = ["intellij.libraries.sqlite"],
+    libraries = [
+        "@lib//:jaxb-api",
+        "@lib//:jaxb-runtime",
+        "@lib//:libraries-sqlite-sqlite",
+    ],
+    main_module = "intellij.vcs.svn",
+    module_targets = MODULE_TARGETS,
+)
+### auto-generated section `dev intellij.vcs.svn` end
 
 ### auto-generated section `build intellij.vcs.svn` start
 jvm_library(
@@ -127,18 +141,6 @@ exports_files(
 )
 ### auto-generated section `iml intellij.vcs.svn` end
 
-### auto-generated section `dev intellij.vcs.svn` start
-dev_dist_plugin(
-    content_modules = ["//libraries/sqlite"],
-    descriptor_module = ":vcs-svn",
-    libraries = [
-        "@lib//:jaxb-api",
-        "@lib//:jaxb-runtime",
-        "@lib//:libraries-sqlite-sqlite",
-    ],
-)
-### auto-generated section `dev intellij.vcs.svn` end
-
 ### auto-generated section `build intellij.vcs.svn.tests` start
 jvm_library(
     name = "vcs-svn-tests",
@@ -217,7 +219,8 @@ jvm_library(
         "//platform/vcs-tests:vcs-testFramework_test_lib",
         "//libraries/hamcrest",
         "//libraries/hamcrest:hamcrest_test_lib",
-        "@lib//:kotlin-test",
+        "//libraries/kotlin/test:libraries-kotlinTest",
+        "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
         "//libraries/stream",
         "//libraries/stream:stream_test_lib",
         "//platform/core-ui",

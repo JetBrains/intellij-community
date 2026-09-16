@@ -5,7 +5,6 @@ import com.intellij.credentialStore.Credentials;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.util.Disposer;
@@ -19,7 +18,7 @@ import com.intellij.ui.scale.ScaleContextCache;
 import com.intellij.util.IconUtil;
 import com.intellij.util.LazyInitializer;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.net.ssl.CertificateListener;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.net.ssl.CertificateManager;
 import com.intellij.util.ui.UIUtil;
 import org.cef.CefBrowserSettings;
@@ -72,7 +71,6 @@ import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.nio.charset.StandardCharsets;
 import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 import java.util.Base64;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -133,7 +131,11 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   private final @NotNull AtomicBoolean myIsCreateStarted = new AtomicBoolean(false);
   private @Nullable CefRequestHandler myHrefProcessingRequestHandler;
 
-  private final @NotNull CertificateListener myCertificateListener;
+  /**
+   * Obtaining the {@link CertificateManager} instance is a heavy-weight operation see IJPL-236137
+   */
+  private static final LazyInitializer.LazyValue<@NotNull CompletableFuture<@NotNull CertificateManager>> ourCertificateManager =
+    LazyInitializer.create(() -> CompletableFuture.supplyAsync(CertificateManager::getInstance, AppExecutorUtil.getAppExecutorService()));
 
   private static final LazyInitializer.LazyValue<@NotNull String> ERROR_PAGE_READER = LazyInitializer.create(() -> {
     try {
@@ -179,6 +181,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   protected final @NotNull CefBrowser myCefBrowser;
   private final boolean myIsOffScreenRendering;
   private final boolean myEnableOpenDevToolsMenuItem;
+  private final boolean myUseCertManager;
   private final @Nullable CefLoadHandler myLoadHandler;
   private final @Nullable CefRequestHandler myRequestHandler;
   private final @Nullable CefContextMenuHandler myContextMenuHandler;
@@ -207,6 +210,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
 
     myIsOffScreenRendering = builder.myIsOffScreenRendering;
     myEnableOpenDevToolsMenuItem = builder.myEnableOpenDevToolsMenuItem;
+    myUseCertManager = builder.myUseCertManager;
     boolean isDefaultBrowserCreated = false;
     CefBrowser cefBrowser = builder.myCefBrowser;
 
@@ -306,16 +310,19 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
                                           String request_url,
                                           CefSSLInfo sslInfo,
                                           CefCallback callback) {
-          ApplicationManager.getApplication().invokeLater(() -> {
-            try {
-              CertificateManager.getInstance().getTrustManager().checkServerTrusted(sslInfo.certificate.getCertificatesChain(), "UNKNOWN");
-              callback.Continue();
-            }
-            catch (CertificateException e) {
-              callback.cancel();
-            }
-          });
-          return true;
+          if (myUseCertManager) {
+            ourCertificateManager.get().thenAcceptAsync(certificateManager -> {
+              try {
+                certificateManager.getTrustManager().checkServerTrusted(sslInfo.certificate.getCertificatesChain(), "UNKNOWN");
+                callback.Continue();
+              }
+              catch (CertificateException e) {
+                callback.cancel();
+              }
+            }, AppExecutorUtil.getAppExecutorService());
+            return true;
+          }
+          return false;
         }
       }, getCefBrowser());
 
@@ -328,32 +335,6 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
     }
 
     if (builder.myCreateImmediately) createImmediately();
-
-    myCertificateListener = new CertificateListener() {
-      @Override
-      public void certificateAdded(X509Certificate certificate) { }
-
-      @Override
-      public void certificateRemoved(X509Certificate certificate) {
-        CefRequestContext context = getCefBrowser().getRequestContext();
-        if (context != null) {
-          context.ClearCertificateExceptions(null);
-          context.CloseAllConnections(null);
-        }
-        else {
-          getCefBrowser().createImmediately();
-          // It's a trick to wait until the browser is ready. TODO: introduce CefBrowser#getRequestContextAsync
-          CompletableFuture<String> browserReadyFuture = getCefBrowser().getDevToolsClient().executeDevToolsMethod("");
-          browserReadyFuture.thenRun(() -> {
-            CefRequestContext context1 = Objects.requireNonNull(getCefBrowser().getRequestContext());
-            context1.ClearCertificateExceptions(null);
-            context1.CloseAllConnections(null);
-          });
-        }
-      }
-    };
-
-    CertificateManager.getInstance().getCustomTrustManager().addListener(myCertificateListener);
 
     myCefClient.addKeyboardHandler(myKeyboardHandler = new CefKeyboardHandlerAdapter() {
       @Override
@@ -631,8 +612,6 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
       if (myHrefProcessingRequestHandler != null) getJBCefClient().removeRequestHandler(myHrefProcessingRequestHandler, getCefBrowser());
       if (myContextMenuHandler != null) getJBCefClient().removeContextMenuHandler(myContextMenuHandler, getCefBrowser());
       // There is also a CefLifeSpanHandler(see the class constructor) that has to remove himself at onBeforeClose()
-
-      CertificateManager.getInstance().getCustomTrustManager().removeListener(myCertificateListener);
 
       myCefBrowser.stopLoad();
       myCefBrowser.setCloseAllowed();

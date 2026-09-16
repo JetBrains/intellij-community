@@ -13,7 +13,9 @@
   </dependencies>
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
-    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.buildView.backend.BuildTreeApiProvider"/>
-    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.buildView.backend.BuildViewApiProvider"/>
+    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.buildView.backend.BuildTreeApiProvider"
+                                            apiInterfaces="com.intellij.platform.buildView.BuildTreeApi"/>
+    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.buildView.backend.BuildViewApiProvider"
+                                            apiInterfaces="com.intellij.platform.buildView.BuildViewApi"/>
   </extensions>
 </idea-plugin>

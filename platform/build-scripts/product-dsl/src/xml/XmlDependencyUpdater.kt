@@ -58,6 +58,7 @@ internal data class ParsedDependenciesEntries(
   @JvmField val pluginIds: List<String>,
   @JvmField val managedModuleNames: List<String>,
   @JvmField val managedPluginIds: List<String>,
+  @JvmField val hasManagedRegion: Boolean,
 )
 
 private class DependenciesInfo(
@@ -335,6 +336,7 @@ internal fun extractDependenciesEntries(content: String): ParsedDependenciesEntr
     pluginIds = info.entries.mapNotNull { (it.entry as? DepEntry.Plugin)?.id },
     managedModuleNames = managedEntries.mapNotNull { (it.entry as? DepEntry.Module)?.name },
     managedPluginIds = managedEntries.mapNotNull { (it.entry as? DepEntry.Plugin)?.id },
+    hasManagedRegion = info.regionType != RegionType.NONE,
   )
 }
 

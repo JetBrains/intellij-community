@@ -64,7 +64,7 @@ open class OnboardingLessonPromoter(@NonNls protected val lessonId: String,
   override val description: String
     get() = LearnBundle.message("welcome.promo.description", LessonUtil.productName)
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   protected fun startOnboardingLessonWithSdk(lessonId: String, languageId: String) {
     resetPrimaryLanguage(languageId)
     val lesson = CourseManager.instance.lessonsForModules.find { it.id == lessonId }

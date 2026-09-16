@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.PlatformPatterns.psiElement
+import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.repository.search.completion.api.DependencyArtifactCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyCompletionEvent
@@ -33,6 +34,8 @@ import org.jetbrains.idea.maven.model.MavenRepoArtifactInfo
 import org.jetbrains.plugins.groovy.lang.completion.GrDummyIdentifierProvider.DUMMY_IDENTIFIER_DECAPITALIZED
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrNamedArgumentsOwner
@@ -53,16 +56,20 @@ class MavenDependenciesGradleCompletionContributor : AbstractGradleGroovyComplet
         context: ProcessingContext,
         result: CompletionResultSet,
       ) {
-        val parent = params.position.parent?.parent
-        if (parent !is GrNamedArgument || parent.parent !is GrNamedArgumentsOwner) {
-          return
-        }
+        val namedArgument = params.position.parent?.parent
+        if (namedArgument !is GrNamedArgument) return
+        val argumentsOwner = namedArgument.parent
+        if (argumentsOwner !is GrNamedArgumentsOwner) return
+        // Named arguments of nested calls like project(path: ':path') are not
+        // dependency coordinates; leave them to other completion contributors.
+        if (isNonCoordinateNotation(argumentsOwner.parent)) return
+
         result.stopHere()
         result.restartCompletionOnAnyPrefixChange()
 
         val completionContext = params.getCompletionContext()
-        if (GROUP_LABEL == parent.labelName) {
-          val groupId = trimDummy(findNamedArgumentValue(parent.parent as GrNamedArgumentsOwner, GROUP_LABEL))
+        if (GROUP_LABEL == namedArgument.labelName) {
+          val groupId = trimDummy(findNamedArgumentValue(argumentsOwner, GROUP_LABEL))
           runBlockingCancellable {
             val seen = mutableSetOf<String>()
             service<DependencyCompletionService>()
@@ -80,9 +87,9 @@ class MavenDependenciesGradleCompletionContributor : AbstractGradleGroovyComplet
               }
           }
         }
-        else if (NAME_LABEL == parent.labelName) {
-          val groupId = trimDummy(findNamedArgumentValue(parent.parent as GrNamedArgumentsOwner, GROUP_LABEL))
-          val artifactId = trimDummy(findNamedArgumentValue(parent.parent as GrNamedArgumentsOwner, NAME_LABEL))
+        else if (NAME_LABEL == namedArgument.labelName) {
+          val groupId = trimDummy(findNamedArgumentValue(argumentsOwner, GROUP_LABEL))
+          val artifactId = trimDummy(findNamedArgumentValue(argumentsOwner, NAME_LABEL))
           runBlockingCancellable {
             if (groupId.isBlank()) {
               service<DependencyCompletionService>()
@@ -112,9 +119,9 @@ class MavenDependenciesGradleCompletionContributor : AbstractGradleGroovyComplet
             }
           }
         }
-        else if (VERSION_LABEL == parent.labelName) {
-          val groupId = trimDummy(findNamedArgumentValue(parent.parent as GrNamedArgumentsOwner, GROUP_LABEL))
-          val artifactId = trimDummy(findNamedArgumentValue(parent.parent as GrNamedArgumentsOwner, NAME_LABEL))
+        else if (VERSION_LABEL == namedArgument.labelName) {
+          val groupId = trimDummy(findNamedArgumentValue(argumentsOwner, GROUP_LABEL))
+          val artifactId = trimDummy(findNamedArgumentValue(argumentsOwner, NAME_LABEL))
           val newResult = result.withRelevanceSorter(CompletionService.getCompletionService().emptySorter().weigh(MavenVersionNegatingWeigher()))
           runBlockingCancellable {
             service<DependencyCompletionService>()
@@ -139,11 +146,17 @@ class MavenDependenciesGradleCompletionContributor : AbstractGradleGroovyComplet
         result: CompletionResultSet,
       ) {
         val element = params.position.parent
-        if (element !is GrLiteral || element.parent !is GrArgumentList) {
-          //try
+        val literal = if (element is GrLiteral && element.parent is GrArgumentList) {
+          element
+        }
+        else {
           val parent = element?.parent
           if (parent !is GrLiteral || parent.parent !is GrArgumentList) return
+          parent
         }
+        // Arguments of nested calls like project(':path') or files('libs/dep.jar') are not
+        // dependency coordinates; leave them to other completion contributors.
+        if (isNonCoordinateNotation(literal.parent.parent)) return
 
         result.stopHere()
 
@@ -230,6 +243,19 @@ class MavenDependenciesGradleCompletionContributor : AbstractGradleGroovyComplet
     private val IN_METHOD_DEPENDENCY_NOTATION = psiElement()
       .and(GRADLE_FILE_PATTERN)
       .and(DEPENDENCIES_CALL_PATTERN)
+
+    /**
+     * Method calls nested inside a dependencies block whose arguments are project paths or
+     * file paths rather than maven coordinates, e.g. `project(':path')` or `files('libs/dep.jar')`.
+     */
+    private val NON_COORDINATE_NOTATION_METHODS = setOf("project", "files", "fileTree", "file")
+
+    private fun isNonCoordinateNotation(call: PsiElement?): Boolean {
+      if (call !is GrMethodCall) return false
+      val invoked = call.invokedExpression
+      val methodName = (invoked as? GrReferenceExpression)?.referenceName ?: invoked.text
+      return methodName in NON_COORDINATE_NOTATION_METHODS
+    }
 
     private fun trimDummy(value: String?): String {
       return if (value == null) {

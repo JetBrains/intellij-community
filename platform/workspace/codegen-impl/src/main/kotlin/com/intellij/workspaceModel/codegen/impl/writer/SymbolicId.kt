@@ -48,9 +48,21 @@ private data class SymbolicIdRepresentation(val javaType: QualifiedName, val arg
   }
 }
 
-private fun GeneratorContext.symbolicIdPropertyToRepresentation(property: OwnProperty<*, *>): SymbolicIdRepresentation {
+private fun isModuleEntitySymbolicId(property: ObjProperty<*, *>): Boolean {
+  return property.receiver.name == "ModuleEntity" && property.receiver.module.name == "com.intellij.platform.workspace.jps.entities"
+}
+
+private fun GeneratorContext.symbolicIdPropertyToRepresentation(property: OwnProperty<*, *>): SymbolicIdRepresentation? {
   val symbolicIdType = getJavaType(property)
-  val expression = (property.valueKind as ObjProperty.ValueKind.Computable).expression.trim()
+  if (isModuleEntitySymbolicId(property)) {
+    return SymbolicIdRepresentation(javaType = symbolicIdType, args = listOf("name"))
+  }
+  val propertyAsComputable = property.valueKind as? ObjProperty.ValueKind.Computable ?: run {
+    val errorMessage = "${property.receiver.name}#${property.name} is expected to be a computable symbolicId"
+    reportPropertyError(errorMessage, property)
+    return null
+  }
+  val expression = propertyAsComputable.expression.trim()
   val args = expression.dropWhile { it != '(' }.drop(1).dropLast(1)
     .split(",").map { it.trim() }
   return SymbolicIdRepresentation(javaType = symbolicIdType, args = args)
@@ -70,24 +82,26 @@ fun CodeContext.symbolicIdReferenceCode(referencesInSymbolicId: Set<OwnProperty<
   }
   val argNameInUpdateSymbolicId = "parent"
   val parentBuilderType = getJavaBuilderTypeWithGeneric(changedReferenceProperty)
-  val newRefSymbolicIdValue = symbolicIdPropertyToRepresentation(referencedSymbolicId).constructorUsingReceiver(argNameInUpdateSymbolicId)
+  val newRefSymbolicIdValue = symbolicIdPropertyToRepresentation(referencedSymbolicId)?.constructorUsingReceiver(argNameInUpdateSymbolicId) ?: return
   +"$argNameInUpdateSymbolicId as $parentBuilderType"
   +"getEntityData(true).${syntheticName} = $newRefSymbolicIdValue"
   +"changedProperty.add(\"${syntheticName}\")"
 
 }
 
-fun GeneratorContext.symbolicIdImplCode(objClass: ObjClass<*>): String {
+// TODO: return no string
+fun CodeContext.symbolicIdImplCode(objClass: ObjClass<*>): String {
   val theProperty = objClass.symbolicIdField ?: return ""
   val referencesInSymbolicId = referencesInSymbolicId(objClass)
-  if (referencesInSymbolicId.isNullOrEmpty())
+  if (referencesInSymbolicId.isNullOrEmpty()) {
     return "override val symbolicId: ${getJavaType(theProperty)} = super.symbolicId\n"
+  }
   val referencesNamesInSymbolicId = referencesInSymbolicId.map { it.name }.toSet()
-  val symbolicIdImpl = symbolicIdPropertyToRepresentation(theProperty).constructorUsingReceiver("dataSource") {
+  val symbolicIdImpl = symbolicIdPropertyToRepresentation(theProperty)?.constructorUsingReceiver("dataSource") {
     val receiver = it.split(".").firstOrNull()
     if (receiver == null || receiver !in referencesNamesInSymbolicId) it
     else referenceNameToSyntheticSymbolicIdFieldName(receiver)
-  }
+  } ?: return ""
   return "override val symbolicId: ${getJavaType(theProperty)} = $symbolicIdImpl\n"
 }
 

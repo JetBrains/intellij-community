@@ -55,16 +55,20 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.AsyncFileListener;
+import com.intellij.openapi.vfs.PersistentFSConstants;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.SafeWriteRequestor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
+import com.intellij.openapi.vfs.limits.FileSizeLimit;
+import com.intellij.openapi.vfs.newvfs.FileSystemInterface;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFsConnectionListener;
 import com.intellij.openapi.vfs.newvfs.persistent.executor.AsyncFileContentWriteRequestor;
 import com.intellij.pom.core.impl.PomModelImpl;
@@ -117,6 +121,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -687,13 +692,26 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     return BinaryFileTypeDecompilers.getInstance().hasDecompiler(file);
   }
 
+  /// We try to preload content in read part of VFS refreshes in order to not stall write part with IO
+  private record PrefetchedContent(byte @NotNull [] content, long expectedModificationStamp) {
+    boolean stillMakesSenseFor(@NotNull VirtualFile file) {
+      return file.getModificationStamp() == expectedModificationStamp;
+    }
+  }
+
   static final class MyAsyncFileListener implements AsyncFileListener {
+    /// The listener reads no more content than this in one event batch. Without the limit a large batch, such as a branch
+    /// switch, holds every changed file in memory until the write action runs.
+    private static final long MAX_PREFETCHED_CONTENT_BYTES = 50L * FileUtilRt.MEGABYTE;
+
     private final FileDocumentManagerImpl myFileDocumentManager = (FileDocumentManagerImpl)getInstance();
 
     @Override
     public ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
       List<VirtualFile> toRecompute = new ArrayList<>();
       Map<VirtualFile, Document> strongRefsToDocuments = new HashMap<>();
+      Map<VirtualFile, PrefetchedContent> prefetchedContents = new HashMap<>();
+      long prefetchBudget = MAX_PREFETCHED_CONTENT_BYTES;
       List<VFileContentChangeEvent> contentChanges = ContainerUtil.findAll(events, VFileContentChangeEvent.class);
       for (VFileContentChangeEvent event : contentChanges) {
         ProgressManager.checkCanceled();
@@ -709,6 +727,8 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
         }
 
         prepareForRangeMarkerUpdate(strongRefsToDocuments, virtualFile);
+        // read the new content here, in a read action, to keep the disk read out of the write action below
+        prefetchBudget -= prefetchContent(prefetchedContents, event, toRecompute, prefetchBudget);
       }
 
       return new ChangeApplier() {
@@ -733,16 +753,80 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
         public void afterVfsChange() {
           for (VFileEvent event : events) {
             switch (event) {
-              case VFileContentChangeEvent changeEvent when changeEvent.getFile().isValid() -> myFileDocumentManager.contentsChanged(changeEvent);
+              case VFileContentChangeEvent changeEvent when changeEvent.getFile().isValid() ->
+                myFileDocumentManager.contentsChanged(changeEvent, prefetchedContents.get(changeEvent.getFile()));
               case VFileDeleteEvent deleteEvent -> myFileDocumentManager.fileDeleted(deleteEvent.getFile());
               case VFilePropertyChangeEvent propEvent when propEvent.getFile().isValid() -> myFileDocumentManager.propertyChanged(propEvent);
               default -> {
               }
             }
           }
+          prefetchedContents.clear();
           Reference.reachabilityFence(strongRefsToDocuments);
         }
       };
+    }
+
+    /// Reads the new content of {@code event.getFile()} and puts it into {@code prefetchedContents}.
+    ///
+    /// The method reads through the file system, because the VFS content cache still holds the old content at this point.
+    ///
+    /// @return the number of bytes it read. Useful for keeping the budget
+    private long prefetchContent(@NotNull Map<? super VirtualFile, ? super PrefetchedContent> prefetchedContents,
+                                 @NotNull VFileContentChangeEvent event,
+                                 @NotNull List<? extends VirtualFile> toRecompute,
+                                 long budget) {
+      if (budget <= 0 || event.isFromSave()) {
+        return 0;
+      }
+      if (!event.isFromRefresh()) {
+        // this listener can be invoked via VfsUtil.saveText, which modifies disk content only after firing `before` events.
+        // in this case, content preload is meaningless
+        return 0;
+      }
+      VirtualFile file = event.getFile();
+      Document document = myFileDocumentManager.getCachedDocument(file);
+      if (document == null) {
+        // document is not strongly reachable; no need to read
+        return 0;
+      }
+      if (toRecompute.contains(file)) {
+        // the file type changes together with the content, so the reload path is still unknown
+        return 0;
+      }
+      if (file.getFileType().isBinary()) {
+        // a decompiler loads its own text; we shall decompile asynchronously later
+        return 0;
+      }
+      // the event carries UNDEFINED_TIMESTAMP_OR_LENGTH when it doesn't know the new length
+      long newLength = event.getNewLength();
+      boolean newLengthKnown = newLength != VFileContentChangeEvent.UNDEFINED_TIMESTAMP_OR_LENGTH;
+      long expectedLength = newLengthKnown ? newLength : file.getLength();
+      if (expectedLength > budget) {
+        return 0;
+      }
+      if (FileSizeLimit.isTooLargeForContentLoading(expectedLength, file.getExtension())) {
+        return 0;
+      }
+      if (expectedLength > PersistentFSConstants.MAX_FILE_LENGTH_TO_CACHE) {
+        return 0;
+      }
+      if (!(file.getFileSystem() instanceof FileSystemInterface fileSystem)) {
+        return 0;
+      }
+      try {
+        byte[] content = fileSystem.contentsToByteArray(file);
+        if (newLengthKnown && content.length != newLength) {
+          // the file changed again after the event appeared; let the write action read it
+          return 0;
+        }
+        prefetchedContents.put(file, new PrefetchedContent(content, event.getModificationStamp()));
+        return content.length;
+      }
+      catch (IOException e) {
+        LOG.debug(e);
+        return 0;
+      }
     }
 
     private void prepareForRangeMarkerUpdate(@NotNull Map<? super VirtualFile, ? super Document> strongRefsToDocuments,
@@ -762,6 +846,10 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
   }
 
   public void contentsChanged(@NotNull VFileContentChangeEvent event) {
+    contentsChanged(event, null);
+  }
+
+  private void contentsChanged(@NotNull VFileContentChangeEvent event, @Nullable PrefetchedContent prefetchedContent) {
     VirtualFile virtualFile = event.getFile();
     Document document = getCachedDocument(virtualFile);
 
@@ -795,15 +883,24 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
       }
 
       if (document.getModificationStamp() == event.getOldModificationStamp() || !isDocumentUnsaved(document)) {
-        reloadFromDisk(document);
+        reloadFromDisk(document, prefetchedContent);
       }
     }
   }
 
+  private void reloadFromDisk(@NotNull Document document, @Nullable PrefetchedContent prefetchedContent) {
+    VirtualFile file = Objects.requireNonNull(getFile(document));
+    reloadFromDisk(document, ProjectLocator.getInstance().guessProjectForFile(file), prefetchedContent);
+  }
+
   @Override
   public void reloadFromDisk(@NotNull Document document, @Nullable Project project) {
+    reloadFromDisk(document, project, null);
+  }
+
+  private void reloadFromDisk(@NotNull Document document, @Nullable Project project, @Nullable PrefetchedContent prefetchedContent) {
     ThreadContext.installThreadContext(ThreadContext.currentThreadContext().minusKey(ClientIdContextElement.Key), true, () -> {
-      ThreadingAssertions.assertEventDispatchThread();
+      ThreadingAssertions.assertWriteIntentReadAccess();
 
       VirtualFile file = getFile(document);
       assert file != null;
@@ -816,13 +913,21 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
         return null;
       }
 
-      boolean[] isReloadable = {isReloadable(file, document, project)};
-      if (isReloadable[0]) {
+      boolean isReloadable = isReloadable(file, document, project);
+      if (isReloadable) {
         // Special handling for files with decompiler - run decompilation in background with progress
         if (isBinaryWithDecompiler(file)) {
           reloadFromDiskWithDecompiler(document, project, file);
         }
         else {
+          if (prefetchedContent != null && prefetchedContent.stillMakesSenseFor(file)) {
+            // We need to put the content that prepareChange read into the VFS content cache.
+            // Some clients (e.g. local history) rely on the content changes being reflected in the vfs cache
+            boolean cached = ((PersistentFSImpl)PersistentFS.getInstance()).cacheFileContent(file, prefetchedContent.content());
+            if (!cached && LOG.isDebugEnabled()) {
+              LOG.debug("reloadFromDisk: the VFS refused the prefetched content of " + file + "; loadText reads the file here");
+            }
+          }
           CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(
             ExternalChangeActionUtil.externalDocumentChangeAction(() -> {
               if (!isBinaryWithoutDecompiler(file)) {
@@ -835,7 +940,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
           ), UIBundle.message("file.cache.conflict.action"), null, UndoConfirmationPolicy.REQUEST_CONFIRMATION);
         }
       }
-      if (isReloadable[0]) {
+      if (isReloadable) {
         ApplicationManager.getApplication().getMessageBus().syncPublisher(FileDocumentManagerListenerBackgroundable.TOPIC)
           .fileContentReloaded(file, document);
       }

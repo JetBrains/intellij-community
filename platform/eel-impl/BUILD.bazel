@@ -2,9 +2,17 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.platform.eel.impl` start
+content_module_jar(
+    module = ":eel-impl",
+    modules_after = ["//platform/eel-impl-base"],
+)
+### auto-generated section `dev intellij.platform.eel.impl` end
+
 ### auto-generated section `build intellij.platform.eel.impl` start
 create_kotlinc_options(
     name = "custom_eel-impl",
+    opt_in = ["com.intellij.platform.eel.channels.EelDelicateApi"],
     warn = "error",
     x_warning_level = ["DEPRECATION:warning"],
 )
@@ -39,7 +47,6 @@ jvm_library(
         "//platform/util/coroutines",
         "//platform/util/multiplatform",
         "//platform/core-api:core",
-        "//libraries/pty4j",
         "//platform/ide-core",
         "//platform/eel",
         "//platform/eel-provider",
@@ -48,11 +55,6 @@ jvm_library(
         "//platform/eel-impl-base",
         "//platform/external-process-auth-helper/rt",
     ],
-)
-
-content_module_jar(
-    module = ":eel-impl",
-    modules_after = ["//platform/eel-impl-base"],
 )
 
 jvm_library(
@@ -78,7 +80,6 @@ jvm_library(
         "//platform/util/coroutines:coroutines_test_lib",
         "//platform/util/multiplatform:multiplatform_test_lib",
         "//platform/core-api:core_test_lib",
-        "//libraries/pty4j:pty4j_test_lib",
         "//platform/ide-core:ide-core_test_lib",
         "//platform/eel:eel_test_lib",
         "//platform/eel-provider:eel-provider_test_lib",
@@ -95,7 +96,6 @@ exports_files(
     [
         "intellij.platform.eel.impl.iml",
         "resources/intellij.platform.eel.impl.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

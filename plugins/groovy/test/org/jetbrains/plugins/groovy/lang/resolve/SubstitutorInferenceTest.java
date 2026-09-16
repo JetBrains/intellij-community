@@ -1,13 +1,15 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve;
 
+import com.intellij.groovy.testFramework.GroovyAssertions;
+import com.intellij.groovy.testFramework.ResolveTest;
+import com.intellij.groovy.testFramework.TypingTest;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.PsiTypeParameterListOwner;
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
-import org.jetbrains.plugins.groovy.LightGroovyTestCase;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
@@ -18,8 +20,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCa
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.util.LightProjectTest;
-import org.jetbrains.plugins.groovy.util.ResolveTest;
-import org.jetbrains.plugins.groovy.util.TypingTest;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -83,10 +83,10 @@ public class SubstitutorInferenceTest extends LightProjectTest implements Typing
   @Test
   public void diamondInVariableInitializer() {
     GrNewExpression expression = elementUnderCaret("I<PG> l = <caret>new C<>()", GrNewExpression.class);
-    LightGroovyTestCase.assertType("C<PG>", expression.getType());
+    GroovyAssertions.assertType("C<PG>", expression.getType());
     MethodResolveResult resolved = (MethodResolveResult)expression.advancedResolve();
     PsiTypeParameter typeParameter = resolved.getElement().getContainingClass().getTypeParameters()[0];
-    LightGroovyTestCase.assertType("PG", resolved.getSubstitutor().substitute(typeParameter));
+    GroovyAssertions.assertType("PG", resolved.getSubstitutor().substitute(typeParameter));
   }
 
   @Test
@@ -341,7 +341,7 @@ public class SubstitutorInferenceTest extends LightProjectTest implements Typing
     Assert.assertEquals(typeParameters.length, expectedTypes.length);
     PsiSubstitutor substitutor = result.getSubstitutor();
     for (int i = 0; i < expectedTypes.length; i++) {
-      LightGroovyTestCase.assertType(expectedTypes[i], substitutor.substitute(typeParameters[i]));
+      GroovyAssertions.assertType(expectedTypes[i], substitutor.substitute(typeParameters[i]));
     }
   }
 }

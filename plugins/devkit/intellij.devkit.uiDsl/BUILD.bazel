@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.devkit.uiDsl` start
+content_module_jar(module = ":uiDsl")
+### auto-generated section `dev intellij.devkit.uiDsl` end
+
 ### auto-generated section `build intellij.devkit.uiDsl` start
 jvm_library(
     name = "uiDsl",
@@ -39,8 +43,6 @@ jvm_library(
         "//platform/platform-impl/concurrency",
     ],
 )
-
-content_module_jar(module = ":uiDsl")
 
 jvm_library(
     name = "uiDsl_test_lib",

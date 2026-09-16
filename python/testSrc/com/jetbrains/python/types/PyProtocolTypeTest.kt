@@ -610,6 +610,44 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
       f(C, 3)
       # └ WARNING Expected type 'Type[T ≤: Union[A, B]]', got 'Type[C]' instead
       """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-90570"])
+    fun `Self return of instance member binds protocol type parameter`() = test("""
+      from typing import Protocol, Self
+
+      class Clones[T](Protocol):
+          def clone(self) -> T: ...
+
+      class Box[V]:
+          def clone(self) -> Self: ...
+
+      def first_clone[T](x: Clones[T]) -> T: ...
+
+      def f(b: Box[int]):
+          expr = first_clone(b)
+      #   └ TYPE Box[int]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-90570"])
+    fun `Self return of enum member binds protocol type parameter to enum class`() = test("""
+      from enum import Enum
+      from typing import Protocol, Self
+
+      class Shifts[T](Protocol):
+          def shifted(self) -> T: ...
+
+      def shift[T](x: Shifts[T]) -> T: ...
+
+      class Colour(Enum):
+          RED = 1
+
+          def shifted(self) -> Self: ...
+
+      expr = shift(Colour.RED)
+      # └ TYPE Colour
+      """.trimIndent())
   }
 
   @Nested
@@ -1067,6 +1105,27 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
           ...
       f(Bar())
       """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-90570"])
+    fun `Self parameter of instance member against protocol`() = test("""
+      from typing import Protocol, Self
+
+      class Mergeable(Protocol):
+          def merge(self, other: Self) -> Self: ...
+
+      class Box:
+          def merge(self, other: Self) -> Self: ...
+
+      class Bad:
+          def merge(self, other: int) -> Bad: ...
+
+      def use(m: Mergeable): ...
+
+      use(Box())
+      use(Bad())
+      #   ^^^^^ WARNING Expected type 'Mergeable', got 'Bad' instead
+      """.trimIndent())
   }
 
   @Nested
@@ -1367,6 +1426,23 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
       foo(C())
       foo(C)
       #   └ WARNING Expected type 'P', got 'type[C]' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-90570"])
+    fun `class object with Self classmethod against protocol`() = test("""
+      from typing import Protocol, Self
+
+      class Factory(Protocol):
+          def create(self) -> Widget: ...
+
+      class Widget:
+          @classmethod
+          def create(cls) -> Self: ...
+
+      def build(f: Factory): ...
+
+      build(Widget)
       """.trimIndent())
   }
 

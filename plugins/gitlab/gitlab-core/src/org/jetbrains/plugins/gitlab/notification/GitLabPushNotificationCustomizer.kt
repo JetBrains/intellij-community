@@ -130,7 +130,7 @@ internal class GitLabPushNotificationCustomizer(private val project: Project) : 
 
   private suspend fun getRepositoryInfo(api: GitLabApi, projectFullPath: GitLabProjectPath) =
     try {
-      api.graphQL.findProject(projectFullPath).body()?.repository
+      api.graphQL.findProject(projectFullPath)?.repository
     }
     catch (ce: CancellationException) {
       throw ce
@@ -152,7 +152,7 @@ internal class GitLabPushNotificationCustomizer(private val project: Project) : 
 
     return withContext(Dispatchers.IO) {
       try {
-        val mrs = api.graphQL.findMergeRequestsByBranch(targetProjectPath, GitLabMergeRequestState.OPENED, remoteBranchName).body()!!.nodes
+        val mrs = api.graphQL.findMergeRequestsByBranch(targetProjectPath, GitLabMergeRequestState.OPENED, remoteBranchName)!!.nodes
         mrs.filter { it.targetProject.fullPath == targetProjectPath.fullPath() && it.sourceProject?.fullPath == targetProjectPath.fullPath() }
       }
       catch (ce: CancellationException) {

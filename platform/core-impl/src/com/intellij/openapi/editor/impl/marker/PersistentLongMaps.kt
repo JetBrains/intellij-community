@@ -22,14 +22,17 @@ internal interface PersistentLongMap<V : Any> {
 
   fun builder(): PersistentLongMapBuilder<V> = CopyingPersistentLongMapBuilder(this)
 
+  /** Calls [action] for each entry in ascending key order. */
+  fun forEachEntry(action: (Long, V) -> Unit)
+
   companion object {
-    private val EMPTY_MAP_16 = PersistentLongMap16<Any>()
-    private val EMPTY_VECTOR_32 = PersistentVector32<Any>()
-    private val EMPTY_VECTOR_64 = PersistentVector64<Any>()
-    private val EMPTY_PAGED_VECTOR_128 = PersistentPagedVector128<Any>()
-    private val EMPTY_PAGED_VECTOR_256 = PersistentPagedVector256<Any>()
-    private val EMPTY_CHAMP = PersistentLongChampMap<Any>()
-    private val EMPTY_CHAMP_64 = PersistentLongChampMap<Any>(bitsPerLevel = 6)
+    private val EMPTY_MAP_16: PersistentLongMap16<Any> = PersistentLongMap16()
+    private val EMPTY_VECTOR_32: PersistentVector32<Any> = PersistentVector32()
+    private val EMPTY_VECTOR_64: PersistentVector64<Any> = PersistentVector64()
+    private val EMPTY_PAGED_VECTOR_128: PersistentPagedVector128<Any> = PersistentPagedVector128()
+    private val EMPTY_PAGED_VECTOR_256: PersistentPagedVector256<Any> = PersistentPagedVector256()
+    private val EMPTY_CHAMP: PersistentLongChampMap<Any> = PersistentLongChampMap()
+    private val EMPTY_CHAMP_64: PersistentLongChampMap<Any> = PersistentLongChampMap(bitsPerLevel = 6)
 
     @Suppress("UNCHECKED_CAST")
     fun <V : Any> empty(implementation: PersistentLongMapImplementation): PersistentLongMap<V> = when (implementation) {
@@ -66,7 +69,7 @@ internal interface PersistentLongMapBuilder<V : Any> {
 private class CopyingPersistentLongMapBuilder<V : Any>(
   private var map: PersistentLongMap<V>,
 ) : PersistentLongMapBuilder<V> {
-  private var active = true
+  private var active: Boolean = true
 
   override fun get(key: Long): V? {
     checkActive()
@@ -115,6 +118,15 @@ private fun requireNonNegativeKey(key: Long): Long {
   return key
 }
 
+private fun <V : Any> PersistentLongMap<V>.mapToString(): String {
+  val result = StringBuilder("{")
+  forEachEntry { key, value ->
+    if (result.length > 1) result.append(", ")
+    result.append(key).append('=').append(value)
+  }
+  return result.append('}').toString()
+}
+
 /**
  * Fixed-height 16-way radix trie consuming four key bits per level.
  *
@@ -154,15 +166,37 @@ internal class PersistentLongMap16<V : Any> private constructor(private val root
 
   override fun builder(): PersistentLongMapBuilder<V> = Builder(this)
 
+  override fun forEachEntry(action: (Long, V) -> Unit) {
+    forEachEntry(root, 0, 0L, action)
+  }
+
+  override fun toString(): String = mapToString()
+
+  private fun forEachEntry(branch: Branch?, depth: Int, prefix: Long, action: (Long, V) -> Unit) {
+    branch ?: return
+    val shift = (LEVELS - depth - 1) * BITS
+    for (index in branch.children.indices) {
+      val child = branch.children[index] ?: continue
+      val key = prefix or (index.toLong() shl shift)
+      if (depth == LEVELS - 1) {
+        @Suppress("UNCHECKED_CAST")
+        action(key, child as V)
+      }
+      else {
+        forEachEntry(child as Branch, depth + 1, key, action)
+      }
+    }
+  }
+
   private class Branch(val children: Array<Any?>, val owner: Any? = null)
 
   private data class Removal(val branch: Branch?, val removed: Boolean)
 
   private class Builder<V : Any>(private val source: PersistentLongMap16<V>) : PersistentLongMapBuilder<V> {
-    private val owner = Any()
-    private var root = source.root
-    private var dirty = false
-    private var active = true
+    private val owner: Any = Any()
+    private var root: Branch? = source.root
+    private var dirty: Boolean = false
+    private var active: Boolean = true
 
     override fun get(key: Long): V? {
       checkActive()
@@ -334,6 +368,27 @@ internal class PersistentLongChampMap<V : Any> private constructor(
 
   override fun builder(): PersistentLongMapBuilder<V> = Builder(this)
 
+  override fun forEachEntry(action: (Long, V) -> Unit) {
+    val entries = java.util.TreeMap<Long, V>()
+    collectEntries(root, entries)
+    for ((key, value) in entries) {
+      action(key, value)
+    }
+  }
+
+  override fun toString(): String = mapToString()
+
+  private fun collectEntries(node: Node?, entries: MutableMap<Long, V>) {
+    node ?: return
+    for (index in node.keys.indices) {
+      @Suppress("UNCHECKED_CAST")
+      entries[node.keys[index]] = node.content[index] as V
+    }
+    for (index in 0 until java.lang.Long.bitCount(node.nodeMap)) {
+      collectEntries(node.content[node.keys.size + index] as Node, entries)
+    }
+  }
+
   private class Node(
     /** Bitmap of branches represented by direct entries in [keys] and the value prefix of [content]. */
     var dataMap: Long,
@@ -357,10 +412,10 @@ internal class PersistentLongChampMap<V : Any> private constructor(
   private data class Removal(val node: Node?, val removed: Boolean)
 
   private class Builder<V : Any>(private val source: PersistentLongChampMap<V>) : PersistentLongMapBuilder<V> {
-    private val owner = Any()
-    private var root = source.root
-    private var dirty = false
-    private var active = true
+    private val owner: Any = Any()
+    private var root: Node? = source.root
+    private var dirty: Boolean = false
+    private var active: Boolean = true
 
     override fun get(key: Long): V? {
       checkActive()
@@ -744,6 +799,27 @@ internal class PersistentVector32<V : Any> private constructor(
 
   override fun builder(): PersistentLongMapBuilder<V> = Builder(this)
 
+  override fun forEachEntry(action: (Long, V) -> Unit) {
+    forEachEntry(root, shift, 0L, action)
+  }
+
+  override fun toString(): String = mapToString()
+
+  private fun forEachEntry(node: Node?, shift: Int, prefix: Long, action: (Long, V) -> Unit) {
+    node ?: return
+    for (slot in node.slots.indices) {
+      val element = node.slots[slot] ?: continue
+      val key = prefix or (slot.toLong() shl shift)
+      if (shift == 0) {
+        @Suppress("UNCHECKED_CAST")
+        action(key, element as V)
+      }
+      else {
+        forEachEntry(element as Node, shift - BITS, key, action)
+      }
+    }
+  }
+
   private class Node(val slots: Array<Any?>, val owner: Any? = null)
 
   private data class RootState(val root: Node?, val shift: Int)
@@ -753,11 +829,11 @@ internal class PersistentVector32<V : Any> private constructor(
   private data class NodeRemoval(val node: Node?, val removed: Boolean)
 
   private class Builder<V : Any>(private val source: PersistentVector32<V>) : PersistentLongMapBuilder<V> {
-    private val owner = Any()
-    private var root = source.root
-    private var shift = source.shift
-    private var dirty = false
-    private var active = true
+    private val owner: Any = Any()
+    private var root: Node? = source.root
+    private var shift: Int = source.shift
+    private var dirty: Boolean = false
+    private var active: Boolean = true
 
     override fun get(key: Long): V? {
       checkActive()
@@ -847,9 +923,9 @@ internal class PersistentVector32<V : Any> private constructor(
   }
 
   companion object {
-    private const val BITS = 5
-    private const val WIDTH = 1 shl BITS
-    private const val MASK = WIDTH - 1
+    private const val BITS: Int = 5
+    private const val WIDTH: Int = 1 shl BITS
+    private const val MASK: Int = WIDTH - 1
 
     private fun requiredShift(index: Long): Int {
       if (index == 0L) return 0
@@ -989,6 +1065,27 @@ internal class PersistentVector64<V : Any> private constructor(
 
   override fun builder(): PersistentLongMapBuilder<V> = Builder(this)
 
+  override fun forEachEntry(action: (Long, V) -> Unit) {
+    forEachEntry(root, shift, 0L, action)
+  }
+
+  override fun toString(): String = mapToString()
+
+  private fun forEachEntry(node: Node?, shift: Int, prefix: Long, action: (Long, V) -> Unit) {
+    node ?: return
+    for (slot in node.slots.indices) {
+      val element = node.slots[slot] ?: continue
+      val key = prefix or (slot.toLong() shl shift)
+      if (shift == 0) {
+        @Suppress("UNCHECKED_CAST")
+        action(key, element as V)
+      }
+      else {
+        forEachEntry(element as Node, shift - BITS, key, action)
+      }
+    }
+  }
+
   private class Node(val slots: Array<Any?>, val owner: Any? = null)
 
   private data class RootState(val root: Node?, val shift: Int)
@@ -998,11 +1095,11 @@ internal class PersistentVector64<V : Any> private constructor(
   private data class NodeRemoval(val node: Node?, val removed: Boolean)
 
   private class Builder<V : Any>(private val source: PersistentVector64<V>) : PersistentLongMapBuilder<V> {
-    private val owner = Any()
-    private var root = source.root
-    private var shift = source.shift
-    private var dirty = false
-    private var active = true
+    private val owner: Any = Any()
+    private var root: Node? = source.root
+    private var shift: Int = source.shift
+    private var dirty: Boolean = false
+    private var active: Boolean = true
 
     override fun get(key: Long): V? {
       checkActive()
@@ -1250,13 +1347,26 @@ internal class PersistentPagedVector128<V : Any> private constructor(
 
   override fun builder(): PersistentLongMapBuilder<V> = Builder(this)
 
+  override fun forEachEntry(action: (Long, V) -> Unit) {
+    pages.forEachEntry { pageKey, page ->
+      val prefix = pageKey shl PAGE_BITS
+      for (slot in page.values.indices) {
+        val value = page.values[slot] ?: continue
+        @Suppress("UNCHECKED_CAST")
+        action(prefix or slot.toLong(), value as V)
+      }
+    }
+  }
+
+  override fun toString(): String = mapToString()
+
   private class Page<V : Any>(val values: Array<Any?>, var size: Int, val owner: Any? = null)
 
   private class Builder<V : Any>(private val source: PersistentPagedVector128<V>) : PersistentLongMapBuilder<V> {
-    private val owner = Any()
-    private val pages = source.pages.builder()
-    private var dirty = false
-    private var active = true
+    private val owner: Any = Any()
+    private val pages: PersistentLongMapBuilder<Page<V>> = source.pages.builder()
+    private var dirty: Boolean = false
+    private var active: Boolean = true
 
     override fun get(key: Long): V? {
       checkActive()
@@ -1378,13 +1488,26 @@ internal class PersistentPagedVector256<V : Any> private constructor(
 
   override fun builder(): PersistentLongMapBuilder<V> = Builder(this)
 
+  override fun forEachEntry(action: (Long, V) -> Unit) {
+    pages.forEachEntry { pageKey, page ->
+      val prefix = pageKey shl PAGE_BITS
+      for (slot in page.values.indices) {
+        val value = page.values[slot] ?: continue
+        @Suppress("UNCHECKED_CAST")
+        action(prefix or slot.toLong(), value as V)
+      }
+    }
+  }
+
+  override fun toString(): String = mapToString()
+
   private class Page<V : Any>(val values: Array<Any?>, var size: Int, val owner: Any? = null)
 
   private class Builder<V : Any>(private val source: PersistentPagedVector256<V>) : PersistentLongMapBuilder<V> {
-    private val owner = Any()
-    private val pages = source.pages.builder()
-    private var dirty = false
-    private var active = true
+    private val owner: Any = Any()
+    private val pages: PersistentLongMapBuilder<Page<V>> = source.pages.builder()
+    private var dirty: Boolean = false
+    private var active: Boolean = true
 
     override fun get(key: Long): V? {
       checkActive()

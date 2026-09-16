@@ -59,7 +59,7 @@ class VirtualEnvReader private constructor(
   /**
    * Dir with virtual envs
    */
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun getVEnvRootDir(eel: EelApi? = getLocalEelIfApp()): Directory {
     return resolveDirFromEnvOrElseGetDirInHomePath(eel, "WORKON_HOME", DEFAULT_VIRTUALENVS_DIR)
   }
@@ -67,23 +67,23 @@ class VirtualEnvReader private constructor(
   /**
    * Pythons from virtualenvs
    */
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun findVEnvInterpreters(): List<PythonBinary> =
     findVenvsInDir(getVEnvRootDir())
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun getPyenvRootDir(eel: EelApi? = getLocalEelIfApp()): Directory {
     return resolveDirFromEnvOrElseGetDirInHomePath(eel, "PYENV_ROOT", PYENV_DEFAULT_DIR_NAME)
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun findPyenvInterpreters(): List<PythonBinary> =
     findVenvsInDir(getPyenvVersionsDir())
 
   /**
    * List contents of [root] looking for envs there, returns all pythons it were able to find
    */
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun findVenvsInDir(root: Directory): List<PythonBinary> {
     val children = try {
       root.listDirectoryEntries()
@@ -104,7 +104,7 @@ class VirtualEnvReader private constructor(
       .map { it.second }
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun isPyenvSdk(path: String?): Boolean {
     if (path.isNullOrEmpty()) {
       return false
@@ -114,18 +114,18 @@ class VirtualEnvReader private constructor(
     return isPyenvSdk(path)
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun isPyenvSdk(path: Path): Boolean {
     val real = tryReadLink(path) ?: return false
     return real.startsWith(getPyenvRootDir().toCanonicalPath())
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private fun getPyenvVersionsDir(): Directory {
     return getPyenvRootDir().resolve("versions")
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private fun tryReadLink(path: Path): Path? {
     try {
       // `toRealPath` throws exception if file doesn't exist
@@ -140,13 +140,13 @@ class VirtualEnvReader private constructor(
   /**
    * [pathOrDir] is either a direct path to a Python binary or a root directory of python installation or virtualenv
    */
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun findPythonInPythonRoot(pathOrDir: PythonHomePath): PythonBinary? {
     val layout = getLayout(forcedOs ?: pathOrDir.osFamily)
     return findPythonInPythonRoot(pathOrDir, layout)
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private fun findPythonInPythonRoot(pathOrDir: PythonHomePath, layout: PythonOsLayout): PythonBinary? {
     if (layout.isPythonBinaryName(pathOrDir.name) && pathOrDir.isRegularFile()) {
       return pathOrDir
@@ -253,7 +253,7 @@ class VirtualEnvReader private constructor(
    * since virtual environments create multiple symlinks (python, python3, python3.12)
    * and Files.newDirectoryStream() order is undefined.
    */
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private fun findInterpreter(dir: Path, layout: PythonOsLayout): PythonBinary? =
     try {
       Files.newDirectoryStream(dir).use { stream ->
@@ -272,7 +272,7 @@ class VirtualEnvReader private constructor(
       return null
     }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private fun resolveDirFromEnvOrElseGetDirInHomePath(eel: EelApi?, env: String, dirName: String): Path {
     if (EDT.isCurrentThreadEdt()) {
       // This check should have been done by @RequiresBackgroundThread

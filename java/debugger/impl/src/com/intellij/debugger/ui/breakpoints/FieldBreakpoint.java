@@ -135,14 +135,14 @@ public final class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBr
 
   @Override
   protected ObjectReference getThisObject(SuspendContextImpl context, LocatableEvent event) throws EvaluateException {
-    if (event instanceof ModificationWatchpointEvent) {
-      ObjectReference reference = ((ModificationWatchpointEvent)event).object();
+    if (event instanceof ModificationWatchpointEvent modificationWatchpointEvent) {
+      ObjectReference reference = modificationWatchpointEvent.object();
       if (reference != null) {  // non-static
         return reference;
       }
     }
-    else if (event instanceof AccessWatchpointEvent) {
-      ObjectReference reference = ((AccessWatchpointEvent)event).object();
+    else if (event instanceof AccessWatchpointEvent watchpointEvent) {
+      ObjectReference reference = watchpointEvent.object();
       if (reference != null) { // non-static
         return reference;
       }

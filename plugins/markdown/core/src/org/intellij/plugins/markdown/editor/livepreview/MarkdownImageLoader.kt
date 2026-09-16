@@ -20,7 +20,7 @@ import javax.imageio.ImageIO
 object MarkdownImageLoader {
   private val LOG = Logger.getInstance(MarkdownImageLoader::class.java)
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   suspend fun load(project: Project, file: VirtualFile, destination: String): VirtualFile? {
     ThreadingAssertions.assertBackgroundThread()
     return try {

@@ -13,5 +13,4 @@ interface A {
     fun <caret>foo() = ""
 }
 
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.SpecifyTypeExplicitlyFix
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils$SpecifyExplicitTypeQuickFix

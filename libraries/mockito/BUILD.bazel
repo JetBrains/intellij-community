@@ -9,11 +9,12 @@ jvm_library(
     ),
     module_name = "intellij.libraries.mockito",
     visibility = ["//visibility:public"],
-    exports = ["@lib//:mockito"],
+    exports = ["@lib//:libraries-mockito-mockito"],
     runtime_deps = [
         # do not sort,
-        "@lib//:mockito",
+        "@lib//:libraries-mockito-mockito",
         "//libraries/byte-buddy",
+        "//libraries/byte-buddy/agent",
     ],
 )
 
@@ -26,11 +27,12 @@ jvm_library(
     ),
     module_name = "intellij.libraries.mockito",
     visibility = ["//visibility:public"],
-    exports = ["@lib//:mockito"],
+    exports = ["@lib//:libraries-mockito-mockito"],
     runtime_deps = [
         # do not sort,
         ":mockito",
         "//libraries/byte-buddy:byte-buddy_test_lib",
+        "//libraries/byte-buddy/agent:agent_test_lib",
     ],
 )
 ### auto-generated section `build intellij.libraries.mockito` end

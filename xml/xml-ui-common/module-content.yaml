@@ -1,3 +1,0 @@
-- name: dist.all/lib/intellij.xml.ui.common.jar
-  modules:
-  - name: intellij.xml.ui.common

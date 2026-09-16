@@ -11,6 +11,8 @@
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.externalSystem"/>
+    <module name="intellij.platform.externalSystem.impl"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.ide.progress"/>
@@ -24,8 +26,8 @@
     <module name="intellij.platform.testFramework.junit5"/>
     <module name="intellij.platform.testFramework.junit5.projectStructure"/>
     <module name="intellij.platform.util.ex"/>
-    <module name="intellij.python.requirements.common"/>
     <module name="intellij.platform.workspace.jps"/>
+    <module name="intellij.python.requirements.common"/>
     <module name="intellij.python.test.env.common"/>
     <module name="intellij.python.test.env.junit5"/>
     <module name="intellij.toml.core"/>

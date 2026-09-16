@@ -11,7 +11,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 
 @Suppress("RAW_RUN_BLOCKING")
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 internal fun saveSettings(project: Project,
                           modalityState: ModalityState,
                           isUnitTestMode: Boolean) {

@@ -38,12 +38,12 @@ import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 
 public final class PyArgumentListInspection extends PyInspection {
@@ -159,20 +159,42 @@ public final class PyArgumentListInspection extends PyInspection {
                                                @NotNull ProblemsHolder holder,
                                                @NotNull List<PyCallExpression.PyArgumentsMapping> mappings,
                                                @NotNull TypeEvalContext context) {
-    if (!mappings.isEmpty()) {
-      boolean specificMismatchKindReported = false;
-      if (ContainerUtil.all(mappings, mapping -> !mapping.getUnmappedArguments().isEmpty())) {
-        highlightUnexpectedArguments(node, holder, mappings, context);
-        specificMismatchKindReported = true;
+    if (mappings.isEmpty()) return;
+
+    if (mappings.size() == 1) {
+      // A single mapping is incomplete exactly when it has unmapped arguments or unmapped parameters,
+      // so the two checks below cover every incomplete mapping.
+      final PyCallExpression.PyArgumentsMapping mapping = mappings.getFirst();
+      if (!mapping.getUnmappedArguments().isEmpty()) {
+        highlightUnexpectedArguments(node, holder, mapping);
       }
-      if (ContainerUtil.all(mappings, mapping -> !mapping.getUnmappedParameters().isEmpty())) {
-        highlightUnfilledParameters(node, holder, mappings, context);
-        specificMismatchKindReported = true;
-      }
-      if (!specificMismatchKindReported && ContainerUtil.all(mappings, mapping -> !mapping.isComplete())) {
-        highlightIncorrectArguments(node, holder, mappings, context);
+      if (!mapping.getUnmappedParameters().isEmpty()) {
+        highlightUnfilledParameters(node, holder, mapping, context);
       }
     }
+    else {
+      if (ContainerUtil.all(mappings, mapping -> !mapping.isComplete())) {
+        boolean anchorOnClosingParen = ContainerUtil.all(mappings, mapping -> !mapping.getUnmappedParameters().isEmpty()) &&
+                                       ContainerUtil.exists(mappings, mapping -> mapping.getUnmappedArguments().isEmpty());
+        if (anchorOnClosingParen) {
+          final PsiElement closingParen = findClosingParen(node);
+          // An unterminated call is still being typed, so report nothing rather than falling back to the whole list
+          if (closingParen == null) return;
+          registerCallMismatchProblem(holder, closingParen, node, mappings, context);
+        }
+        else {
+          registerCallMismatchProblem(holder, node, node, mappings, context);
+        }
+      }
+    }
+  }
+
+  private static @Nullable PsiElement findClosingParen(@NotNull PyArgumentList node) {
+    final ASTNode astNode = node.getNode();
+    if (astNode == null) return null;
+    final ASTNode rparNode = astNode.findChildByType(PyTokenTypes.RPAR);
+    if (rparNode == null) return null;
+    return rparNode.getPsi();
   }
 
   private static void checkKnownSizeTupleSpreadInCall(@NotNull PyStarArgument node,
@@ -299,76 +321,53 @@ public final class PyArgumentListInspection extends PyInspection {
 
   private static void highlightUnexpectedArguments(@NotNull PyArgumentList node,
                                                    @NotNull ProblemsHolder holder,
-                                                   @NotNull List<PyCallExpression.PyArgumentsMapping> mappings,
-                                                   @NotNull TypeEvalContext context) {
-    if (mappings.size() == 1) {
-      // if there is only one mapping, we could suggest quick fixes
-      final Set<String> duplicateKeywords = getDuplicateKeywordArguments(node);
+                                                   @NotNull PyCallExpression.PyArgumentsMapping mapping) {
+    final Set<String> duplicateKeywords = getDuplicateKeywordArguments(node);
 
-      final PyCallExpression.PyArgumentsMapping mapping = mappings.get(0);
-      if (holder.isOnTheFly() && !mapping.getUnmappedArguments().isEmpty() && mapping.getUnmappedParameters().isEmpty()) {
-        final PyCallableType callableType = mapping.getCallableType();
-        if (callableType != null) {
-          final PyCallable callable = callableType.getCallable();
-          final Project project = node.getProject();
-          if (callable instanceof PyFunction && !PyPsiIndexUtil.isNotUnderSourceRoot(project, callable.getContainingFile())) {
-            final String message = PyPsiBundle.message("INSP.unexpected.arg(s)");
-            holder.registerProblem(node, message, ProblemHighlightType.INFORMATION,
-                                   PythonUiService.getInstance().createPyChangeSignatureQuickFixForMismatchedCall(mapping));
-          }
+    if (holder.isOnTheFly() && !mapping.getUnmappedArguments().isEmpty() && mapping.getUnmappedParameters().isEmpty()) {
+      final PyCallableType callableType = mapping.getCallableType();
+      if (callableType != null) {
+        final PyCallable callable = callableType.getCallable();
+        final Project project = node.getProject();
+        if (callable instanceof PyFunction && !PyPsiIndexUtil.isNotUnderSourceRoot(project, callable.getContainingFile())) {
+          final String message = PyPsiBundle.message("INSP.unexpected.arg(s)");
+          holder.registerProblem(node, message, ProblemHighlightType.INFORMATION,
+                                 PythonUiService.getInstance().createPyChangeSignatureQuickFixForMismatchedCall(mapping));
         }
-      }
-
-
-      for (PyExpression argument : mapping.getUnmappedArguments()) {
-        final List<LocalQuickFix> quickFixes = Lists.newArrayList(new PyRemoveArgumentQuickFix());
-        if (argument instanceof PyKeywordArgument) {
-          if (duplicateKeywords.contains(((PyKeywordArgument)argument).getKeyword())) {
-            continue;
-          }
-          quickFixes.add(new PyRenameArgumentQuickFix());
-        }
-        registerProblem(holder, argument,
-                        PyPsiBundle.message("INSP.unexpected.arg"),
-                        quickFixes.toArray(new LocalQuickFix[quickFixes.size() - 1]));
       }
     }
-    else {
-      // all mappings have unmapped arguments so we couldn't determine desired argument list and suggest appropriate quick fixes
-      registerCallMismatchProblem(holder, node, node, mappings, context);
+
+    for (PyExpression argument : mapping.getUnmappedArguments()) {
+      final List<LocalQuickFix> quickFixes = Lists.newArrayList(new PyRemoveArgumentQuickFix());
+      if (argument instanceof PyKeywordArgument) {
+        if (duplicateKeywords.contains(((PyKeywordArgument)argument).getKeyword())) {
+          continue;
+        }
+        quickFixes.add(new PyRenameArgumentQuickFix());
+      }
+      registerProblem(holder, argument,
+                      PyPsiBundle.message("INSP.unexpected.arg"),
+                      quickFixes.toArray(new LocalQuickFix[quickFixes.size() - 1]));
     }
   }
 
   private static void highlightUnfilledParameters(@NotNull PyArgumentList node,
                                                   @NotNull ProblemsHolder holder,
-                                                  @NotNull List<PyCallExpression.PyArgumentsMapping> mappings,
+                                                  @NotNull PyCallExpression.PyArgumentsMapping mapping,
                                                   @NotNull TypeEvalContext context) {
-    Optional
-      .ofNullable(node.getNode())
-      .map(astNode -> astNode.findChildByType(PyTokenTypes.RPAR))
-      .map(ASTNode::getPsi)
-      .ifPresent(
-        psi -> {
-          if (mappings.size() != 1 ||
-              ContainerUtil.exists(mappings.get(0).getUnmappedParameters(), parameter -> parameter.getName() == null)) {
-            registerCallMismatchProblem(holder, psi, node, mappings, context);
-          }
-          else {
-            StreamEx
-              .of(mappings.get(0).getUnmappedParameters())
-              .map(PyCallableParameter::getName)
-              .filter(Objects::nonNull)
-              .forEach(name -> registerProblem(holder, psi, PyPsiBundle.problemMessage("INSP.parameter.unfilled", name)));
-          }
-        }
-      );
-  }
+    PsiElement psi = findClosingParen(node);
+    if (psi == null) return;
 
-  private static void highlightIncorrectArguments(@NotNull PyArgumentList node,
-                                                  @NotNull ProblemsHolder holder,
-                                                  @NotNull List<PyCallExpression.PyArgumentsMapping> mappings,
-                                                  @NotNull TypeEvalContext context) {
-    registerCallMismatchProblem(holder, node, node, mappings, context);
+    if (ContainerUtil.exists(mapping.getUnmappedParameters(), parameter -> parameter.getName() == null)) {
+      registerCallMismatchProblem(holder, psi, node, List.of(mapping), context);
+    }
+    else {
+      StreamEx
+        .of(mapping.getUnmappedParameters())
+        .map(PyCallableParameter::getName)
+        .filter(Objects::nonNull)
+        .forEach(name -> registerProblem(holder, psi, PyPsiBundle.problemMessage("INSP.parameter.unfilled", name)));
+    }
   }
 
   /**

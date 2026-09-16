@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.java.unscramble` start
+content_module_jar(module = ":unscramble")
+### auto-generated section `dev intellij.java.unscramble` end
+
 ### auto-generated section `build intellij.java.unscramble` start
 jvm_library(
     name = "unscramble",
@@ -39,8 +43,6 @@ jvm_library(
         "//platform/util/concurrency",
     ],
 )
-
-content_module_jar(module = ":unscramble")
 
 jvm_library(
     name = "unscramble_test_lib",

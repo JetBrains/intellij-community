@@ -37,7 +37,7 @@ LocalDiskJarCacheCommon.kt
 
 ```
 <cacheDir>/
-  v0/
+  v1/
     entries/
       <shard2>/
         <key>__<target-file-name>.jar
@@ -46,7 +46,7 @@ LocalDiskJarCacheCommon.kt
     .last.cleanup.marker
     .cleanup.scan.cursor
 
-  .legacy-format-purged.0
+  .legacy-format-purged.1
 ```
 
 `<shard2>` is `key.take(2)` to spread entries across directories.
@@ -91,7 +91,6 @@ computeIfAbsent
   +-- build key + entry paths
   |
   +-- optimistic hit (no file lock)
-  |     - allowed only if useCacheAsTargetFile == false
   |     - skipped if `<key>__<name>.jar.mark` exists
   |     - validate metadata + payload
   |     - materialize target (copy)
@@ -104,9 +103,9 @@ computeIfAbsent
 
 ## Locking Model
 
-Per key, one in-process striped mutex layer (`StripedMutex`) is used.
+Per key, one in-process striped lock layer (`StripedLock`, 256 stripes) is used.
 
-`keySlot = leastSignificantBits(hash128) mod 4096`. This serializes operations per key slot inside one process.
+`keySlot = leastSignificantBits(hash128) mod 256`. This serializes operations per key slot inside one process.
 
 Cross-process writes are lock-free: duplicate producers for the same key are allowed. Publication is `payload -> metadata`, where metadata is the commit marker.
 

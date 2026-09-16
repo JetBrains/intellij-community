@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.xml.ui.common` start
+content_module_jar(module = ":ui-common")
+### auto-generated section `dev intellij.xml.ui.common` end
+
 ### auto-generated section `build intellij.xml.ui.common` start
 jvm_library(
     name = "ui-common",
@@ -42,8 +46,6 @@ jvm_library(
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     ],
 )
-
-content_module_jar(module = ":ui-common")
 
 jvm_library(
     name = "ui-common_test_lib",
@@ -89,7 +91,6 @@ exports_files(
         "resources/colorSchemes/XmlHighContrast.xml",
         "resources/colorSchemes/XmlIntelliJLight.xml",
         "resources/intellij.xml.ui.common.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

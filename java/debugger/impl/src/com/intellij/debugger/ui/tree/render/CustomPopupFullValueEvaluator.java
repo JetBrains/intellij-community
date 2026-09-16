@@ -40,8 +40,8 @@ public abstract class CustomPopupFullValueEvaluator<T> extends JavaValue.JavaFul
       Dimension frameSize = frame.getSize();
       Dimension size = new Dimension(frameSize.width / 2, frameSize.height / 2);
       popup.setSize(size);
-      if (comp instanceof Disposable) {
-        Disposer.register(popup, (Disposable)comp);
+      if (comp instanceof Disposable disposable) {
+        Disposer.register(popup, disposable);
       }
       callback.evaluated("");
       popup.show(new RelativePoint(frame, new Point(size.width / 2, size.height / 2)));

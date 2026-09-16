@@ -60,7 +60,8 @@ open class TeamCityCIServer(
 
   override fun reportTestFailure(
     testName: String, message: String, details: String, linkToLogs: String?,
-    kind: SyntheticTestKind, generifyTestName: Boolean
+    kind: SyntheticTestKind, generifyTestName: Boolean,
+    additionalMetadata: List<TestMetadata>
   ) {
     val metadata = buildList {
       linkToLogs?.let { add(TestMetadata(name = "Link to Logs and artifacts", value = it, type = TeamCityReporter.MetadataType.LINK)) }
@@ -68,6 +69,7 @@ open class TeamCityCIServer(
       if (isJetbrainsBuildserver) {
         add(bisectMetadata())
       }
+      addAll(additionalMetadata)
     }
     TeamCityReporter.reportTestLifecycle(testName, TestOutcome.FAILED, message, details,
                                          owner = codeOwnerResolver.getOwnerGroupName(),
@@ -192,8 +194,11 @@ open class TeamCityCIServer(
     return@lazy di.direct.instance<URI>(tag = "teamcity.uri")
   }
 
-  val userName: String by lazy { getBuildParam("teamcity.auth.userId")!! }
-  val password: String by lazy { getBuildParam("teamcity.auth.password")!! }
+  val userName: String by lazy { getBuildParamOrThrow("teamcity.auth.userId") }
+  val password: String by lazy { getBuildParamOrThrow("teamcity.auth.password") }
+
+  private fun getBuildParamOrThrow(paramName: String) = getBuildParam(paramName)
+                                                        ?: error("TeamCity mandatory parameter is missing. To resolve: set '$paramName' build parameter, or provide it via system properties.")
 
   private val isDefaultBranch by lazy {
     //see https://www.jetbrains.com/help/teamcity/predefined-build-parameters.html#PredefinedBuildParameters-Branch-RelatedParameters

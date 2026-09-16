@@ -11,7 +11,8 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectFileIndex
-import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.python.pyproject.model.evolution.findMainPythonInterpreter
+import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -66,7 +67,7 @@ class PyPartialStubMarkersInvalidator(
     }, parentDisposable)
   }
 
-  private fun clearPathCaches(project: Project) {
+  private suspend fun clearPathCaches(project: Project) {
     if (project.isDisposed) return
     val sdks = linkedSetOf<Sdk>()
 
@@ -75,9 +76,9 @@ class PyPartialStubMarkersInvalidator(
       PythonSdkUtil.findPythonSdk(module)?.let(sdks::add)
     }
 
-    ProjectRootManager.getInstance(project).projectSdk
-      ?.takeIf(PythonSdkUtil::isPythonSdk)
-      ?.let(sdks::add)
+    // Debounced on a coroutine, so it can await the structure rather than miss the main interpreter.
+    @Suppress("DEPRECATION")
+    project.findMainPythonInterpreter()?.getSdkAPI()?.let(sdks::add)
 
     for (sdk in sdks) {
       PythonSdkPathCache.getInstance(project, sdk).clearCache()

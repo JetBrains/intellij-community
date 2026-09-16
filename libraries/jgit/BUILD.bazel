@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.jgit` start
+content_module_jar(
+    libraries = ["@lib//:libraries-jgit-jetbrains-intellij-deps-eclipse-jgit"],
+    module = ":jgit",
+)
+### auto-generated section `dev intellij.libraries.jgit` end
+
 ### auto-generated section `build intellij.libraries.jgit` start
 jvm_library(
     name = "jgit",
@@ -16,11 +23,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-jgit-jetbrains-intellij-deps-eclipse-jgit"],
     runtime_deps = ["@lib//:libraries-jgit-jetbrains-intellij-deps-eclipse-jgit"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-jgit-jetbrains-intellij-deps-eclipse-jgit"],
-    module = ":jgit",
 )
 
 jvm_library(
@@ -42,7 +44,6 @@ exports_files(
     [
         "intellij.libraries.jgit.iml",
         "resources/intellij.libraries.jgit.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

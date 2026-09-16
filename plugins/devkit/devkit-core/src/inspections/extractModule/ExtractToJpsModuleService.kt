@@ -325,7 +325,7 @@ internal class ExtractToJpsModuleService(private val project: Project, private v
 
   private suspend fun createModule(data: ExtractToJpsModuleData) {
     project.workspaceModel.update("Extract JPS module from content module") { builder ->
-      val moduleDir = project.workspaceModel.getVirtualFileUrlManager().getOrCreateFromUrl(VfsUtil.pathToUrl(data.newModuleDirectoryPath))
+      val moduleDir = project.workspaceModel.getVirtualFileUrlManager().storeAndGet(VfsUtil.pathToUrl(data.newModuleDirectoryPath))
       val entitySource = LegacyBridgeJpsEntitySourceFactory.getInstance(project)
         .createEntitySourceForModule(baseModuleDir = moduleDir, externalSource = null)
       builder.addEntity(ModuleEntity(

@@ -6,11 +6,8 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ComponentUtil
-import com.intellij.ui.mac.foundation.Foundation
-import com.intellij.ui.mac.foundation.ID
 import com.intellij.util.ui.EdtInvocationManager
-import com.sun.jna.Callback
-import com.sun.jna.Pointer
+import com.intellij.util.ui.MacScrollbarPreferences
 import java.awt.AWTEvent
 import java.awt.Component
 import java.awt.Graphics2D
@@ -56,7 +53,7 @@ internal open class MacScrollBarUI : DefaultScrollBarUI {
       }
 
       override fun invoke(): MacScrollbarStyle {
-        val style = Foundation.invoke(Foundation.getObjcClass("NSScroller"), "preferredScrollerStyle")
+        val style = MacScrollbarPreferences.getPreferredStyle()
         val value = if (1 == style.toInt()) MacScrollbarStyle.Overlay else MacScrollbarStyle.Legacy
         Logger.getInstance(MacScrollBarUI::class.java).debug("scroll bar style ", value, " from ", style)
         return value
@@ -64,18 +61,8 @@ internal open class MacScrollBarUI : DefaultScrollBarUI {
 
       override fun toString(): String = "scroll bar style"
 
-      override fun initialize(): ID {
-        if (!SystemInfoRt.isMac) {
-          return ID.NIL
-        }
-        return Foundation.invoke(Foundation.invoke("NSNotificationCenter", "defaultCenter"),
-                                 "addObserver:selector:name:object:",
-                                 createDelegate("JBScrollBarStyleObserver", Foundation.createSelector("handleScrollerStyleChanged:"),
-                                                this),
-                                 Foundation.createSelector("handleScrollerStyleChanged:"),
-                                 Foundation.nsString("NSPreferredScrollerStyleDidChangeNotification"),
-                                 ID.NIL
-        )
+      override fun initialize() {
+        MacScrollbarPreferences.observeStyleChanges(this)
       }
     }
 
@@ -207,31 +194,19 @@ private enum class Behavior {
   companion object {
     val CURRENT_BEHAVIOR = object : MacScrollbarNative<Behavior>() {
       override fun invoke(): Behavior {
-        val defaults = Foundation.invoke("NSUserDefaults", "standardUserDefaults")
-        Foundation.invoke(defaults, "synchronize")
-        val behavior = Foundation.invoke(defaults, "boolForKey:", Foundation.nsString("AppleScrollerPagingBehavior"))
-        val value = if (behavior.toInt() == 1) JumpToSpot else NextPage
-        //Logger.getInstance(MacScrollBarUI::class.java).debug("scroll bar behavior ", value, " from ", behavior)
-        return value
+        return if (MacScrollbarPreferences.isJumpToSpot()) JumpToSpot else NextPage
       }
 
       override fun toString(): String = "scroll bar behavior"
 
-      override fun initialize(): ID {
-        return Foundation.invoke(Foundation.invoke("NSDistributedNotificationCenter", "defaultCenter"),
-                                 "addObserver:selector:name:object:",
-                                 createDelegate("JBScrollBarBehaviorObserver", Foundation.createSelector("handleBehaviorChanged:"), this),
-                                 Foundation.createSelector("handleBehaviorChanged:"),
-                                 Foundation.nsString("AppleNoRedisplayAppearancePreferenceChanged"),
-                                 ID.NIL,
-                                 2 // NSNotificationSuspensionBehaviorCoalesce
-        )
+      override fun initialize() {
+        MacScrollbarPreferences.observeBehaviorChanges(this)
       }
     }
   }
 }
 
-private abstract class MacScrollbarNative<T> : Callback, Runnable, () -> T? {
+private abstract class MacScrollbarNative<T> : Runnable, () -> T? {
   private var value: T? = null
 
   init {
@@ -240,14 +215,9 @@ private abstract class MacScrollbarNative<T> : Callback, Runnable, () -> T? {
     EdtInvocationManager.invokeLaterIfNeeded(this)
   }
 
-  abstract fun initialize(): ID
+  abstract fun initialize()
 
   override fun invoke() = value
-
-  @Suppress("UNUSED_PARAMETER")
-  fun callback(self: ID?, selector: Pointer?, event: ID?) {
-    EdtInvocationManager.invokeLaterIfNeeded(this)
-  }
 
   override fun run() {
     value = callMac(this)
@@ -286,31 +256,16 @@ private fun processReferences(toAdd: MacScrollBarUI?, toRemove: MacScrollBarUI?,
   }
 }
 
-private fun createDelegate(name: String, pointer: Pointer, callback: Callback): ID {
-  val delegateClass = Foundation.allocateObjcClassPair(Foundation.getObjcClass("NSObject"), name)
-  if (ID.NIL != delegateClass) {
-    if (!Foundation.addMethod(delegateClass, pointer, callback, "v@")) {
-      throw RuntimeException("Cannot add observer method")
-    }
-    Foundation.registerObjcClassPair(delegateClass)
-  }
-  return Foundation.invoke(name, "new")
-}
-
 private fun <T : Any> callMac(producer: () -> T?): T? {
   if (!SystemInfoRt.isMac) {
     return null
   }
 
-  val pool = Foundation.NSAutoreleasePool()
   try {
     return producer()
   }
   catch (e: Throwable) {
     logger<MacScrollBarUI>().warn(e)
-  }
-  finally {
-    pool.drain()
   }
   return null
 }

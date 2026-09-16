@@ -101,8 +101,8 @@ public abstract class XSourcePositionImpl implements XSourcePosition {
           return myDelegate.getValue().createNavigatable(project);
         }
         PsiElement elem = pointer.getElement();
-        if (elem instanceof Navigatable) {
-          return ((Navigatable)elem);
+        if (elem instanceof Navigatable navigatable) {
+          return navigatable;
         }
         return NonNavigatable.INSTANCE;
       }

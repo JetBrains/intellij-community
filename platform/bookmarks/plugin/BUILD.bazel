@@ -1,5 +1,33 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
+load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_DESCRIPTORS", "MODULE_TARGETS")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `dev intellij.platform.bookmarks.plugin` start
+dev_dist_plugin(
+    content_modules = [
+        # do not sort,
+        "intellij.platform.bookmarks.backend",
+        "intellij.platform.bookmarks.frontend",
+        "intellij.platform.debugger.impl.bookmarks",
+    ],
+    descriptor = "resources/META-INF/plugin.xml",
+    descriptor_index = MODULE_DESCRIPTORS,
+    descriptor_modules = [
+        "intellij.platform.bookmarks",
+        "intellij.platform.bookmarks.backend",
+        "intellij.platform.bookmarks.frontend",
+        "intellij.platform.debugger.impl.bookmarks",
+        "intellij.platform.vcs.log.impl.bookmarks",
+    ],
+    main_module = "intellij.platform.bookmarks.plugin",
+    module_targets = MODULE_TARGETS,
+    prepacked_content_modules = [
+        # do not sort,
+        "intellij.platform.bookmarks",
+        "intellij.platform.vcs.log.impl.bookmarks",
+    ],
+)
+### auto-generated section `dev intellij.platform.bookmarks.plugin` end
 
 ### auto-generated section `build intellij.platform.bookmarks.plugin` start
 jvm_library(
@@ -38,27 +66,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.bookmarks.plugin` end
-
-### auto-generated section `dev intellij.platform.bookmarks.plugin` start
-dev_dist_plugin(
-    content_modules = [
-        "//platform/bookmarks/backend",
-        "//platform/bookmarks/frontend",
-        "//platform/xdebugger-impl/bookmarks",
-    ],
-    descriptor = "resources/META-INF/plugin.xml",
-    descriptor_module = ":plugin",
-    descriptors = {
-        "@community//platform/bookmarks/backend:resources/intellij.platform.bookmarks.backend.xml": "intellij.platform.bookmarks.backend.xml",
-        "@community//platform/bookmarks/frontend:resources/intellij.platform.bookmarks.frontend.xml": "intellij.platform.bookmarks.frontend.xml",
-        "@community//platform/bookmarks:resources/intellij.platform.bookmarks.xml": "intellij.platform.bookmarks.xml",
-        "@community//platform/vcs-log/impl/bookmarks:resources/intellij.platform.vcs.log.impl.bookmarks.xml": "intellij.platform.vcs.log.impl.bookmarks.xml",
-        "@community//platform/xdebugger-impl/bookmarks:resources/intellij.platform.debugger.impl.bookmarks.xml": "intellij.platform.debugger.impl.bookmarks.xml",
-    },
-    main_module = "intellij.platform.bookmarks.plugin",
-    prepacked_content_modules = [
-        "//platform/bookmarks:bookmarks_content_module_jar",
-        "//platform/vcs-log/impl/bookmarks:bookmarks_content_module_jar",
-    ],
-)
-### auto-generated section `dev intellij.platform.bookmarks.plugin` end

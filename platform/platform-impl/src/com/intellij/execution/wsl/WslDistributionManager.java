@@ -269,7 +269,7 @@ public abstract class WslDistributionManager implements Disposable {
         return;
       }
       if (keys != null) {
-        Set<String> guids = Set.of(keys);
+        var guids = Set.of(keys);
         synchronized (LOCK) {
           if (!myCurrentGuids.equals(guids)) {
             incModificationCount();

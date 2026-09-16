@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.marker
 
-import com.intellij.openapi.editor.impl.RangeMarkerStorageImpl
+import com.intellij.openapi.editor.impl.RangeMarkersImpl
 import org.jetbrains.annotations.TestOnly
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.ExtensionContext
@@ -19,7 +19,7 @@ class UsePMarkerImplementationExtension : InvocationInterceptor {
     val annotation = invocationContext.executable.getAnnotation(UsePMarkerImplementation::class.java)
                      ?: invocationContext.targetClass.getAnnotation(UsePMarkerImplementation::class.java)
                      ?: error("The range marker implementation annotation is missing")
-    RangeMarkerStorageImpl.usePMarkerImplementationIn<RuntimeException>(annotation.usePMarkerImplementation) {
+    RangeMarkersImpl.usePMarkerImplementationIn<RuntimeException>(annotation.usePMarkerImplementation) {
       super.interceptTestMethod(invocation, invocationContext, extensionContext)
     }
   }

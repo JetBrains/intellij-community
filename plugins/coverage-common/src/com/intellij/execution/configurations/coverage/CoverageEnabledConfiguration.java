@@ -53,6 +53,7 @@ public abstract class CoverageEnabledConfiguration implements JDOMExternalizable
   protected @NonNls String myCoverageFilePath;
   private @NonNls String myCoverageFilePathOverride;
   private CoverageSuite myCurrentCoverageSuite;
+  private CoverageEngine myEngine;
 
   /**
    *
@@ -291,11 +292,17 @@ public abstract class CoverageEnabledConfiguration implements JDOMExternalizable
   }
 
   public static @Nullable CoverageEnabledConfiguration getOrCreateIfApplicable(@NotNull RunConfigurationBase<?> runConfiguration) {
-    var existingConfiguration = getOrNull(runConfiguration);
-    if (existingConfiguration != null) return existingConfiguration;
     var suitableEngine = getSuitableEngine(runConfiguration);
+    var existingConfiguration = getOrNull(runConfiguration);
+    if (existingConfiguration != null
+        && (suitableEngine == null
+            || existingConfiguration.myEngine == null
+            || existingConfiguration.myEngine == suitableEngine)) {
+      return existingConfiguration;
+    }
     if (suitableEngine == null) return null;
     var configuration = suitableEngine.createCoverageEnabledConfiguration(runConfiguration);
+    configuration.myEngine = suitableEngine;
     runConfiguration.putCopyableUserData(COVERAGE_KEY, configuration);
     return configuration;
   }

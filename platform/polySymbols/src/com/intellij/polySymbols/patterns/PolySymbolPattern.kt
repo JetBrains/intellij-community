@@ -19,7 +19,8 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.NonExtendable
 abstract class PolySymbolPattern internal constructor() {
 
-  internal abstract fun getStaticPrefixes(): Sequence<String>
+  @ApiStatus.Internal
+  abstract fun getStaticPrefixes(): Sequence<String>
 
   internal open fun isStaticAndRequired(): Boolean = true
 
@@ -49,21 +50,24 @@ abstract class PolySymbolPattern internal constructor() {
     complete(owner, stack.copy(), null,
              CompletionParameters(name, params), 0, name.length).items
 
-  internal abstract fun match(
+  @ApiStatus.Internal
+  abstract fun match(
     owner: PolySymbol?,
     stack: PolySymbolQueryStack,
     symbolsResolver: PolySymbolPatternSymbolsResolver?,
     params: MatchParameters, start: Int, end: Int,
   ): List<MatchResult>
 
-  internal abstract fun list(
+  @ApiStatus.Internal
+  abstract fun list(
     owner: PolySymbol?,
     stack: PolySymbolQueryStack,
     symbolsResolver: PolySymbolPatternSymbolsResolver?,
     params: ListParameters,
   ): List<ListResult>
 
-  internal abstract fun complete(
+  @ApiStatus.Internal
+  abstract fun complete(
     owner: PolySymbol?,
     stack: PolySymbolQueryStack,
     symbolsResolver: PolySymbolPatternSymbolsResolver?,

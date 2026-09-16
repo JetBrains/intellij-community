@@ -9,7 +9,7 @@ _R = TypeVar("_R")
 class Settings:
     # Next attributes are optional and may be missing.
     # Please keep in sync with _Settings TypedDict
-    DATE_ORDER: str
+    DATE_ORDER: Literal["DMY", "DYM", "MDY", "MYD", "YDM", "YMD"]
     PREFER_LOCALE_DATE_ORDER: bool
     TIMEZONE: str
     TO_TIMEZONE: str

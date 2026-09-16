@@ -3,6 +3,7 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.ex.MarkupIterator;
@@ -13,6 +14,7 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
@@ -207,6 +209,33 @@ public class MarkupModelTest extends AbstractEditorTest {
     finally {
       highlighter.dispose();
     }
+  }
+
+  public void testHighlightersShiftAfterBulkMultiReplaceAtDescendingOffsets() {
+    initText("xxxx mmmm yyyy nnnn zzzz tail");
+    Document document = getDocument(getFile());
+    MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, getProject(), true);
+    RangeHighlighter highlighterA = markupModel.addRangeHighlighter(5, 9, 0, null, HighlighterTargetArea.EXACT_RANGE);
+    RangeHighlighter highlighterB = markupModel.addRangeHighlighter(15, 19, 0, null, HighlighterTargetArea.EXACT_RANGE);
+    RangeHighlighter highlighterC = markupModel.addRangeHighlighter(25, 29, 0, null, HighlighterTargetArea.EXACT_RANGE);
+
+    WriteCommandAction.runWriteCommandAction(getProject(), () ->
+      DocumentUtil.executeInBulk(document, () -> {
+        document.replaceString(20, 24, "zzzzTT");
+        document.replaceString(10, 14, "yyyyTT");
+        document.replaceString(0, 4, "xxxxTT");
+      }));
+
+    assertEquals("xxxxTT mmmm yyyyTT nnnn zzzzTT tail", document.getText());
+    assertValidHighlighter(highlighterA, 7, 11);
+    assertValidHighlighter(highlighterB, 19, 23);
+    assertValidHighlighter(highlighterC, 31, 35);
+  }
+
+  private static void assertValidHighlighter(@NotNull RangeHighlighter highlighter, int start, int end) {
+    assertTrue(highlighter.isValid());
+    assertEquals(start, highlighter.getStartOffset());
+    assertEquals(end, highlighter.getEndOffset());
   }
 
 }

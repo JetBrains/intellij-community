@@ -1,23 +1,32 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.support
 
+import com.intellij.platform.buildScripts.concurrency.TaskFailedException
+import com.intellij.platform.buildScripts.concurrency.taskScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.BuildLifetime
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.AfterEach
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.`when`
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 internal class RepairUtilityBinaryCacheTest {
+  private val lifetime = BuildLifetime()
+
+  @AfterEach
+  fun closeLifetime() {
+    lifetime.close()
+  }
+
   @Test
   fun `concurrent requests for the same context share computation`() {
     runBlocking(Dispatchers.Default) {
@@ -25,7 +34,7 @@ internal class RepairUtilityBinaryCacheTest {
       val context = buildContext()
       val cache = BuildContextSingleFlightCache("repair utility test") {
         invocationCount.incrementAndGet()
-        delay(20.milliseconds)
+        Thread.sleep(20)
         42
       }
 
@@ -115,14 +124,15 @@ internal class RepairUtilityBinaryCacheTest {
   }
 
   @Test
-  fun `recursive await from child coroutine fails fast`() {
+  fun `recursive await from child task fails fast`() {
     val context = buildContext()
     lateinit var cache: BuildContextSingleFlightCache<Int>
     cache = BuildContextSingleFlightCache("repair utility test") {
-      coroutineScope {
-        async {
+      taskScope {
+        val scopeResult = fork("recursive load") {
           cache.getOrLoad(it)
         }.await()
+        join { scopeResult }
       }
     }
 
@@ -131,9 +141,11 @@ internal class RepairUtilityBinaryCacheTest {
     }
   }
 
-  private fun buildContext(): BuildContext = mock(BuildContext::class.java)
+  private fun buildContext(): BuildContext = mock(BuildContext::class.java).also {
+    `when`(it.lifetime).thenReturn(lifetime)
+  }
 
-  private fun assertFailsFast(block: suspend () -> Unit) {
+  private fun assertFailsFast(block: () -> Unit) {
     assertThatThrownBy {
       runBlocking(Dispatchers.Default) {
         withTimeout(1.seconds) {
@@ -141,7 +153,10 @@ internal class RepairUtilityBinaryCacheTest {
         }
       }
     }
-      .isInstanceOf(IllegalStateException::class.java)
-      .hasMessageContaining("Recursive await")
+      .satisfies({ failure ->
+        assertThat((failure as? TaskFailedException)?.cause ?: failure)
+          .isInstanceOf(IllegalStateException::class.java)
+          .hasMessageContaining("Recursive await")
+      })
   }
 }

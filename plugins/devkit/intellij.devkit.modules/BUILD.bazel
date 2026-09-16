@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.devkit.modules` start
+content_module_jar(module = ":modules")
+### auto-generated section `dev intellij.devkit.modules` end
+
 ### auto-generated section `build intellij.devkit.modules` start
 jvm_library(
     name = "modules",
@@ -34,8 +38,6 @@ jvm_library(
         "//platform/lang-impl",
     ],
 )
-
-content_module_jar(module = ":modules")
 
 jvm_library(
     name = "modules_test_lib",

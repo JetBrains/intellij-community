@@ -19,6 +19,8 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
 import fleet.rpc.client.RpcClientDisconnectedException
+import kotlinx.collections.immutable.PersistentMap
+import kotlinx.collections.immutable.persistentHashMapOf
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -28,6 +30,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.util.UUID
+import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Consumer
 
 @ApiStatus.Internal
@@ -40,7 +43,9 @@ open class InstalledPluginsTableModel @JvmOverloads constructor(
 
   @JvmField
   protected val view: MutableList<PluginUiModel> = mutableListOf()
-  protected val enabledMap: MutableMap<PluginId, PluginEnabledState?> = mutableMapOf()
+  private val enabledStates = PluginEnabledStateStore()
+  protected val enabledMap: Map<PluginId, PluginEnabledState?>
+    get() = enabledStates.snapshot()
   private val sessionInitializedDeferred = CompletableDeferred<Unit>()
   private val modificationTracker = getModificationTracker()
 
@@ -86,13 +91,13 @@ open class InstalledPluginsTableModel @JvmOverloads constructor(
   private fun initSessionPlugins(initSessionResult: InitSessionResult, pluginsToEnable: Set<PluginId>) {
     try {
       view.addAll(initSessionResult.getVisiblePluginsList())
-      initSessionResult.pluginStates.forEach { (pluginId, pluginState) ->
-        enabledMap[pluginId] = when (pluginState) {
+      enabledStates.putAll(initSessionResult.pluginStates.mapValues { (_, pluginState) ->
+        when (pluginState) {
           true -> PluginEnabledState.ENABLED
           false -> PluginEnabledState.DISABLED
           null -> null
         }
-      }
+      })
       setStatesByIds(pluginsToEnable, true)
     }
     finally {
@@ -104,7 +109,9 @@ open class InstalledPluginsTableModel @JvmOverloads constructor(
     sessionInitializedDeferred.await()
   }
 
-  fun updatePlugin(pluginId: PluginId){
+  internal fun enabledStateSnapshot(): Map<PluginId, PluginEnabledState?> = enabledStates.snapshot()
+
+  fun updatePlugin(pluginId: PluginId) {
     myInstalledPluginComponentMap[pluginId]?.firstOrNull()?.updatePlugin()
   }
 
@@ -138,11 +145,12 @@ open class InstalledPluginsTableModel @JvmOverloads constructor(
     pluginId: PluginId,
     enabled: PluginEnabledState?,
   ) {
-    enabledMap[pluginId] = enabled
+    enabledStates.put(pluginId, enabled)
   }
 
   protected open fun setStatesByIds(ids: Set<PluginId>, enabled: Boolean) {
     val newState = if (enabled) PluginEnabledState.ENABLED else PluginEnabledState.DISABLED
+    enabledStates.putAll(ids.associateWith { newState })
     ids.forEach(Consumer { id: PluginId -> setEnabled(id, newState) })
     updateAfterEnableDisable()
   }
@@ -170,7 +178,7 @@ open class InstalledPluginsTableModel @JvmOverloads constructor(
     @JvmStatic
     protected fun isEnabled(
       pluginId: PluginId,
-      enabledMap: MutableMap<PluginId, PluginEnabledState?>,
+      enabledMap: Map<PluginId, PluginEnabledState?>,
     ): Boolean {
       val state = enabledMap[pluginId]
       return state?.isEnabled != false
@@ -179,7 +187,7 @@ open class InstalledPluginsTableModel @JvmOverloads constructor(
     @ApiStatus.Internal
     fun isDisabled(
       pluginId: PluginId,
-      enabledMap: MutableMap<PluginId, PluginEnabledState?>,
+      enabledMap: Map<PluginId, PluginEnabledState?>,
     ): Boolean {
       val state = enabledMap[pluginId]
       return state?.isDisabled ?: true
@@ -187,7 +195,7 @@ open class InstalledPluginsTableModel @JvmOverloads constructor(
 
     protected fun isLoaded(
       pluginId: PluginId,
-      enabledMap: MutableMap<PluginId, PluginEnabledState?>,
+      enabledMap: Map<PluginId, PluginEnabledState?>,
     ): Boolean {
       return pluginId in enabledMap
     }
@@ -251,6 +259,23 @@ open class InstalledPluginsTableModel @JvmOverloads constructor(
     @Suppress("RAW_RUN_BLOCKING") //will take little time for the old implementation, it was always blocking before
     override fun isModified(): Boolean {
       return runBlocking { UiPluginManager.getInstance().isModified() }
+    }
+  }
+}
+
+internal class PluginEnabledStateStore {
+  private val state = AtomicReference<PersistentMap<PluginId, PluginEnabledState?>>(persistentHashMapOf())
+
+  fun snapshot(): Map<PluginId, PluginEnabledState?> = state.get()
+
+  fun put(pluginId: PluginId, enabled: PluginEnabledState?) {
+    state.updateAndGet { current -> current.putting(pluginId, enabled) }
+  }
+
+  fun putAll(changes: Map<PluginId, PluginEnabledState?>) {
+    if (changes.isEmpty()) return
+    state.updateAndGet { current ->
+      current.builder().apply { putAll(changes) }.build()
     }
   }
 }

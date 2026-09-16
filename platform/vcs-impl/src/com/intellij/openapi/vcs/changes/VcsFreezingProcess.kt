@@ -97,7 +97,7 @@ open class VcsFreezingProcess(private val myProject: Project, private val myOper
       LOG.debug("finished.")
     }
 
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     @JvmStatic
     @ApiStatus.Internal
     fun saveAndBlock(project: Project) {
@@ -109,7 +109,7 @@ open class VcsFreezingProcess(private val myProject: Project, private val myOper
       saveAndSyncHandler.blockSyncOnFrameActivation()
     }
 
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     @JvmStatic
     @ApiStatus.Internal
     fun unblock(project: Project) {

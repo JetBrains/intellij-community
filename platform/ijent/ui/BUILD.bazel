@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.platform.ijent.community.ui` start
+content_module_jar(module = ":ui")
+### auto-generated section `dev intellij.platform.ijent.community.ui` end
+
 ### auto-generated section `build intellij.platform.ijent.community.ui` start
 jvm_library(
     name = "ui",
@@ -47,14 +51,11 @@ jvm_library(
         "//platform/lang-api:lang",
         "//platform/execution",
         "//platform/execution-impl",
-        "//libraries/pty4j",
         "//platform/ide-core-impl",
         "//platform/core-impl",
         "//platform/util/progress",
     ],
 )
-
-content_module_jar(module = ":ui")
 
 jvm_library(
     name = "ui_test_lib",
@@ -94,7 +95,6 @@ jvm_library(
         "//platform/lang-api:lang_test_lib",
         "//platform/execution:execution_test_lib",
         "//platform/execution-impl:execution-impl_test_lib",
-        "//libraries/pty4j:pty4j_test_lib",
         "//platform/ide-core-impl:ide-core-impl_test_lib",
         "//platform/core-impl:core-impl_test_lib",
         "//platform/util/progress:progress_test_lib",
@@ -107,7 +107,6 @@ exports_files(
     [
         "intellij.platform.ijent.community.ui.iml",
         "resources/intellij.platform.ijent.community.ui.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

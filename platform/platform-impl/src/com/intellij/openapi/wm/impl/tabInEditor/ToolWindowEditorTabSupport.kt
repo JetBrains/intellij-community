@@ -31,13 +31,13 @@ interface ToolWindowEditorTabSupport {
    * 1. All items in [contents] belong to the same tool window as this [ToolWindowEditorTabSupport].
    * 2. Every item in [contents] was accepted by [canBeMovedToEditor] when it was moved to the editor.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun filterTabsToClose(project: Project, contents: List<Content>): List<Content> = contents
 
   /**
    * Returns whether the given tool window tab [content] may be moved to the editor area.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun canBeMovedToEditor(content: Content): Boolean
 
   /**

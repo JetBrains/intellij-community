@@ -140,7 +140,7 @@ internal sealed interface FileViewProviderCache {
   /**
    * see documentation of [FileManagerEx.possiblyInvalidatePhysicalPsi]
    */
-  @RequiresWriteLock
+  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
   fun markPossiblyInvalidated()
 
   /**
@@ -151,7 +151,7 @@ internal sealed interface FileViewProviderCache {
    * @return true if [viewProvider] is still valid, false otherwise.
    */
   @Contract(pure = false)
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun evaluateValidity(viewProvider: AbstractFileViewProvider): Boolean
 
   /**

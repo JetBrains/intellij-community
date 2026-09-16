@@ -38,6 +38,8 @@ class RuffImportOptimizer : ImportOptimizer {
   override fun processFile(psiFile: PsiFile): Runnable {
     val noResult = Runnable { }
     val virtualFile = psiFile.virtualFile ?: return noResult
+    // Remove this guard after PY-85408.
+    if (virtualFile.extension.equals("ipynb", ignoreCase = true)) return noResult
     val project = psiFile.project
 
     val lspServerManager = LspClientManager.getInstance(project)

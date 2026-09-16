@@ -998,7 +998,7 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
       
       @dataclass
       class E:
-          a: int = field(default_factory=(lambda: "")) # WARNING Expected type 'int', got 'str' instead
+          a: int = field(default_factory=(lambda: "")) # WARNING Expected type 'int', got 'Literal[""]' instead
       """.trimIndent())
 
     @Test

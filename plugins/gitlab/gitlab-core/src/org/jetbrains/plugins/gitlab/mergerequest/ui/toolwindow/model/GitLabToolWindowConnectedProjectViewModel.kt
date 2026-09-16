@@ -79,12 +79,12 @@ internal class GitLabToolWindowConnectedProjectViewModel(
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun openMergeRequestTimeline(mrIid: String, focus: Boolean) {
     filesController.openTimeline(mrIid, focus)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun openMergeRequestDiff(mrIid: String, focus: Boolean) {
     filesController.openDiff(mrIid, focus)
   }

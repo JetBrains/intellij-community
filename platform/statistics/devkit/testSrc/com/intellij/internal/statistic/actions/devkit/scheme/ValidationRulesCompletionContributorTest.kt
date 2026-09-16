@@ -5,6 +5,7 @@ import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.platform.statistics.devkit.actions.scheme.EVENTS_TEST_SCHEME_VALIDATION_RULES_KEY
 import com.intellij.platform.statistics.devkit.actions.scheme.EventsTestSchemeGroupConfiguration
 import com.intellij.platform.statistics.devkit.actions.scheme.PREFIXES
+import com.intellij.platform.statistics.devkit.actions.scheme.TOP_LEVEL_PROPERTIES
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
@@ -36,7 +37,6 @@ class ValidationRulesCompletionContributorTest : BasePlatformTestCase() {
     val strings = myFixture.lookupElementStrings!!
     UsefulTestCase.assertContainsElements(strings, PREFIXES)
   }
-
 
 
   fun testPrefixInsert() {
@@ -85,7 +85,7 @@ class ValidationRulesCompletionContributorTest : BasePlatformTestCase() {
     """.trimIndent())
   }
 
-  fun testNoCompletionInEventIdPropertyKey() {
+  fun testTopLevelPropertyCompletion() {
     val file = myFixture.configureByText("event-log-validation-rules.json", """
       {
         "<caret>": ["eventId"]
@@ -94,7 +94,7 @@ class ValidationRulesCompletionContributorTest : BasePlatformTestCase() {
     markValidationRulesFile(file)
     myFixture.completeBasic()
     val strings = myFixture.lookupElementStrings!!
-    UsefulTestCase.assertEmpty(strings)
+    UsefulTestCase.assertContainsElements(strings, TOP_LEVEL_PROPERTIES)
   }
 
 

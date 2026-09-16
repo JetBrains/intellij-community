@@ -1,52 +1,61 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac.foundation;
 
-import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ImageLoader;
-import com.sun.jna.Callback;
-import com.sun.jna.Function;
-import com.sun.jna.Library;
-import com.sun.jna.Memory;
-import com.sun.jna.Native;
-import com.sun.jna.NativeLibrary;
-import com.sun.jna.Pointer;
-import com.sun.jna.PointerType;
-import com.sun.jna.Structure;
-import com.sun.jna.ptr.PointerByReference;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.Image;
 import java.io.File;
-import java.lang.reflect.Proxy;
+import java.lang.foreign.Arena;
+import java.lang.foreign.FunctionDescriptor;
+import java.lang.foreign.MemoryLayout;
+import java.lang.foreign.MemorySegment;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 import java.nio.CharBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static java.lang.foreign.ValueLayout.ADDRESS;
+import static java.lang.foreign.ValueLayout.JAVA_BYTE;
+import static java.lang.foreign.ValueLayout.JAVA_CHAR;
+import static java.lang.foreign.ValueLayout.JAVA_INT;
+import static java.lang.foreign.ValueLayout.JAVA_LONG;
+
 /**
  * see <a href="http://developer.apple.com/documentation/Cocoa/Reference/ObjCRuntimeRef/Reference/reference.html">Documentation</a>
  */
 public final @NonNls class Foundation {
-  private static final FoundationLibrary myFoundationLibrary;
-  private static final Function myObjcMsgSend;
-
-  static {
-    assert JnaLoader.isLoaded() : "JNA library is not available";
-    myFoundationLibrary = Native.load("Foundation", FoundationLibrary.class, Collections.singletonMap("jna.encoding", "UTF8"));
-    NativeLibrary nativeLibrary = ((Library.Handler)Proxy.getInvocationHandler(myFoundationLibrary)).getNativeLibrary();
-    myObjcMsgSend = nativeLibrary.getFunction("objc_msgSend");
+  public static void init() {
+    FoundationNative.init();
   }
 
-  public static void init() { /* fake method to init foundation */ }
+  public static boolean isAvailable() {
+    if (!SystemInfoRt.isMac) return false;
+    try {
+      init();
+      return true;
+    }
+    catch (LinkageError | RuntimeException ignored) {
+      return false;
+    }
+  }
+
+  private static ID nativeID(Object value) {
+    return value instanceof MemorySegment segment
+           ? new ID(segment.address())
+           : value == null ? ID.NIL : new ID(((Number)value).longValue());
+  }
 
   private Foundation() { }
 
@@ -54,52 +63,29 @@ public final @NonNls class Foundation {
    * Get the ID of the NSClass with className
    */
   public static ID getObjcClass(String className) {
-    return myFoundationLibrary.objc_getClass(className);
+    return nativeID(FoundationNative.call("objc_getClass", FunctionDescriptor.of(ADDRESS, ADDRESS), className));
   }
 
   public static ID getProtocol(String name) {
-    return myFoundationLibrary.objc_getProtocol(name);
+    return nativeID(FoundationNative.call("objc_getProtocol", FunctionDescriptor.of(ADDRESS, ADDRESS), name));
   }
 
-  public static Pointer createSelector(String s) {
-    return myFoundationLibrary.sel_registerName(s);
+  public static Selector createSelector(String name) {
+    var value = (MemorySegment)FoundationNative.call("sel_registerName", FunctionDescriptor.of(ADDRESS, ADDRESS), name);
+    return new Selector(name, value.address());
   }
 
-  private static Object @NotNull [] prepInvoke(ID id, Pointer selector, Object[] args) {
-    Object[] invokArgs = new Object[args.length + 2];
-    invokArgs[0] = id;
-    invokArgs[1] = selector;
-    System.arraycopy(args, 0, invokArgs, 2, args.length);
-    return invokArgs;
-  }
-
-  public static @NotNull ID invoke(final ID id, final Pointer selector, Object... args) {
-    // objc_msgSend is called with the calling convention of the target method
-    // on x86_64 this does not make a difference, but arm64 uses a different calling convention for varargs
-    // it is therefore important to not call objc_msgSend as a vararg function
-    return new ID(myObjcMsgSend.invokeLong(prepInvoke(id, selector, args)));
-  }
-
-  /**
-   * Invokes the given vararg selector.
-   * Expects `NSArray arrayWithObjects:(id), ...` like signature, i.e. exactly one fixed argument, followed by varargs.
-   */
-  public static ID invokeVarArg(final ID id, final Pointer selector, Object... args) {
-    // c functions and objc methods have at least 1 fixed argument, we therefore need to separate out the first argument
-    return myFoundationLibrary.objc_msgSend(id, selector, args[0], Arrays.copyOfRange(args, 1, args.length));
+  public static @NotNull ID invoke(final ID id, final Selector selector, Object... args) {
+    return nativeID(FoundationNative.invoke(id, selector, args));
   }
 
   public static ID invoke(final String cls, final String selector, Object... args) {
     return invoke(getObjcClass(cls), createSelector(selector), args);
   }
 
-  public static ID invokeVarArg(final String cls, final String selector, Object... args) {
-    return invokeVarArg(getObjcClass(cls), createSelector(selector), args);
-  }
-
   public static ID safeInvoke(final String stringCls, final String stringSelector, Object... args) {
     ID cls = getObjcClass(stringCls);
-    Pointer selector = createSelector(stringSelector);
+    Selector selector = createSelector(stringSelector);
     if (!invoke(cls, "respondsToSelector:", selector).booleanValue()) {
       throw new RuntimeException(String.format("Missing selector %s for %s", stringSelector, stringCls));
     }
@@ -110,8 +96,9 @@ public final @NonNls class Foundation {
     return invoke(id, createSelector(selector), args);
   }
 
-  public static double invoke_fpret(ID receiver, Pointer selector, Object... args) {
-    return myObjcMsgSend.invokeDouble(prepInvoke(receiver, selector, args));
+  public static double invoke_fpret(ID receiver, Selector selector, Object... args) {
+    var result = FoundationNative.invoke(receiver, selector, args);
+    return result == null ? 0 : ((Number)result).doubleValue();
   }
 
   public static double invoke_fpret(ID receiver, String selector, Object... args) {
@@ -123,7 +110,7 @@ public final @NonNls class Foundation {
   }
 
   public static ID safeInvoke(final ID id, final String stringSelector, Object... args) {
-    Pointer selector = createSelector(stringSelector);
+    Selector selector = createSelector(stringSelector);
     if (!id.equals(ID.NIL) && !invoke(id, "respondsToSelector:", selector).booleanValue()) {
       throw new RuntimeException(String.format("Missing selector %s for %s", stringSelector, toStringViaUTF8(invoke(id, "description"))));
     }
@@ -131,15 +118,17 @@ public final @NonNls class Foundation {
   }
 
   public static ID allocateObjcClassPair(ID superCls, String name) {
-    return myFoundationLibrary.objc_allocateClassPair(superCls, name, 0);
+    return nativeID(
+      FoundationNative.call("objc_allocateClassPair", FunctionDescriptor.of(ADDRESS, ADDRESS, ADDRESS, JAVA_LONG), superCls, name, 0L));
   }
 
   public static void registerObjcClassPair(ID cls) {
-    myFoundationLibrary.objc_registerClassPair(cls);
+    FoundationNative.call("objc_registerClassPair", FunctionDescriptor.ofVoid(ADDRESS), cls);
   }
 
-  public static boolean isClassRespondsToSelector(ID cls, Pointer selectorName) {
-    return myFoundationLibrary.class_respondsToSelector(cls, selectorName);
+  public static boolean isClassRespondsToSelector(ID cls, Selector selectorName) {
+    return (byte)FoundationNative.call("class_respondsToSelector", FunctionDescriptor.of(JAVA_BYTE, ADDRESS, ADDRESS), cls, selectorName) !=
+           0;
   }
 
   /**
@@ -150,46 +139,66 @@ public final @NonNls class Foundation {
    *                     See <a href="https://developer.apple.com/library/IOs/documentation/Cocoa/Conceptual/ObjCRuntimeGuide/Articles/ocrtTypeEncodings.html#//apple_ref/doc/uid/TP40008048-CH100"></a>
    * @return true if the method was added successfully, otherwise false (for example, the class already contains a method implementation with that name).
    */
-  public static boolean addMethod(ID cls, Pointer selectorName, Callback impl, String types) {
-    return myFoundationLibrary.class_addMethod(cls, selectorName, impl, types);
+  public static boolean addMethod(ID cls, Selector selectorName, MethodHandle impl, String types) {
+    return addMethodByID(cls, selectorName, new ID(createNativeCallback(impl, types, Arena.global()).address()), types);
+  }
+
+  public static MemorySegment createNativeCallback(MethodHandle target, String types, Arena arena) {
+    return FoundationNative.callback(target, types, arena);
+  }
+
+  public static MethodHandle callback(Object target, String methodName, Class<?>... parameterTypes) {
+    var owner = target instanceof Class<?> targetClass ? targetClass : target.getClass();
+    try {
+      var methods = Arrays.stream(owner.getDeclaredMethods()).filter(method -> method.getName().equals(methodName)).toList();
+      var method =
+        parameterTypes.length == 0 && methods.size() == 1 ? methods.getFirst() : owner.getDeclaredMethod(methodName, parameterTypes);
+      var handle = MethodHandles.privateLookupIn(owner, MethodHandles.lookup()).unreflect(method);
+      return target instanceof Class<?> ? handle : handle.bindTo(target);
+    }
+    catch (ReflectiveOperationException exception) {
+      throw new IllegalArgumentException("Cannot bind the native callback: " + methodName, exception);
+    }
   }
 
   public static boolean addProtocol(ID aClass, ID protocol) {
-    return myFoundationLibrary.class_addProtocol(aClass, protocol);
+    return (byte)FoundationNative.call("class_addProtocol", FunctionDescriptor.of(JAVA_BYTE, ADDRESS, ADDRESS), aClass, protocol) != 0;
   }
 
-  public static boolean addMethodByID(ID cls, Pointer selectorName, ID impl, String types) {
-    return myFoundationLibrary.class_addMethod(cls, selectorName, impl, types);
+  public static boolean addMethodByID(ID cls, Selector selectorName, ID impl, String types) {
+    return (byte)FoundationNative.call("class_addMethod", FunctionDescriptor.of(JAVA_BYTE, ADDRESS, ADDRESS, ADDRESS, ADDRESS), cls,
+                                       selectorName, impl, types) != 0;
   }
 
   public static boolean isMetaClass(ID cls) {
-    return myFoundationLibrary.class_isMetaClass(cls);
+    return (byte)FoundationNative.call("class_isMetaClass", FunctionDescriptor.of(JAVA_BYTE, ADDRESS), cls) != 0;
   }
 
-  public static @Nullable String stringFromSelector(Pointer selector) {
-    ID id = myFoundationLibrary.NSStringFromSelector(selector);
+  public static @Nullable String stringFromSelector(Selector selector) {
+    ID id = nativeID(FoundationNative.call("NSStringFromSelector", FunctionDescriptor.of(ADDRESS, ADDRESS), selector));
     return ID.NIL.equals(id) ? null : toStringViaUTF8(id);
   }
 
   public static @Nullable String stringFromClass(ID aClass) {
-    ID id = myFoundationLibrary.NSStringFromClass(aClass);
+    ID id = nativeID(FoundationNative.call("NSStringFromClass", FunctionDescriptor.of(ADDRESS, ADDRESS), aClass));
     return ID.NIL.equals(id) ? null : toStringViaUTF8(id);
   }
 
-  public static Pointer getClass(Pointer clazz) {
-    return myFoundationLibrary.objc_getClass(clazz);
+  public static MemorySegment getClass(MemorySegment clazz) {
+    return (MemorySegment)FoundationNative.call("objc_getClass", FunctionDescriptor.of(ADDRESS, ADDRESS), clazz);
   }
 
   public static String fullUserName() {
-    return toStringViaUTF8(myFoundationLibrary.NSFullUserName());
+    return toStringViaUTF8(nativeID(FoundationNative.call("NSFullUserName", FunctionDescriptor.of(ADDRESS))));
   }
 
-  public static ID class_replaceMethod(ID cls, Pointer selector, Callback impl, String types) {
-    return myFoundationLibrary.class_replaceMethod(cls, selector, impl, types);
+  public static ID class_replaceMethod(ID cls, Selector selector, MethodHandle impl, String types) {
+    return nativeID(FoundationNative.call("class_replaceMethod", FunctionDescriptor.of(ADDRESS, ADDRESS, ADDRESS, ADDRESS, ADDRESS),
+                                          cls, selector, createNativeCallback(impl, types, Arena.global()), types));
   }
 
   public static ID getMetaClass(String className) {
-    return myFoundationLibrary.objc_getMetaClass(className);
+    return nativeID(FoundationNative.call("objc_getMetaClass", FunctionDescriptor.of(ADDRESS, ADDRESS), className));
   }
 
   public static boolean isPackageAtPath(final @NotNull String path) {
@@ -206,15 +215,13 @@ public final @NonNls class Foundation {
 
   private static final class NSString {
     private static final ID nsStringCls = getObjcClass("NSString");
-    private static final Pointer stringSel = createSelector("string");
-    private static final Pointer allocSel = createSelector("alloc");
-    private static final Pointer autoreleaseSel = createSelector("autorelease");
-    private static final Pointer initWithBytesLengthEncodingSel = createSelector("initWithBytes:length:encoding:");
+    private static final Selector stringSel = createSelector("string");
+    private static final Selector allocSel = createSelector("alloc");
+    private static final Selector autoreleaseSel = createSelector("autorelease");
+    private static final Selector initWithBytesLengthEncodingSel = createSelector("initWithBytes:length:encoding:");
     private static final long nsEncodingUTF16LE = convertCFEncodingToNS(FoundationLibrary.kCFStringEncodingUTF16LE);
 
     public static @NotNull ID create(@NotNull String s) {
-      // Use a byte[] rather than letting jna do the String -> char* marshalling itself.
-      // Turns out about 10% quicker for long strings.
       if (s.isEmpty()) {
         return invoke(nsStringCls, stringSel);
       }
@@ -231,7 +238,9 @@ public final @NonNls class Foundation {
         return invoke(nsStringCls, stringSel);
       }
 
-      byte[] utf16Bytes = StandardCharsets.UTF_16LE.encode(CharBuffer.wrap(cs)).array();
+      var buffer = StandardCharsets.UTF_16LE.encode(CharBuffer.wrap(cs));
+      byte[] utf16Bytes = new byte[buffer.remaining()];
+      buffer.get(utf16Bytes);
       return create(utf16Bytes);
     }
 
@@ -261,17 +270,21 @@ public final @NonNls class Foundation {
   public static @Nullable String toStringViaUTF8(ID cfString) {
     if (ID.NIL.equals(cfString)) return null;
 
-    int lengthInChars = myFoundationLibrary.CFStringGetLength(cfString);
-    int potentialLengthInBytes = 3 * lengthInChars + 1; // UTF8 fully escaped 16 bit chars, plus nul
-
-    byte[] buffer = new byte[potentialLengthInBytes];
-    byte ok = myFoundationLibrary.CFStringGetCString(cfString, buffer, buffer.length, FoundationLibrary.kCFStringEncodingUTF8);
-    if (ok == 0) throw new RuntimeException("Could not convert string");
-    return Native.toString(buffer);
+    long length = (long)FoundationNative.call("CFStringGetLength", FunctionDescriptor.of(JAVA_LONG, ADDRESS), cfString);
+    if (length == 0) return "";
+    try (var arena = Arena.ofConfined()) {
+      var rangeLayout = MemoryLayout.structLayout(JAVA_LONG, JAVA_LONG);
+      var range = arena.allocate(rangeLayout);
+      range.set(JAVA_LONG, 0, 0L);
+      range.set(JAVA_LONG, JAVA_LONG.byteSize(), length);
+      var buffer = arena.allocate(JAVA_CHAR, Math.toIntExact(length));
+      FoundationNative.call("CFStringGetCharacters", FunctionDescriptor.ofVoid(ADDRESS, rangeLayout, ADDRESS), cfString, range, buffer);
+      return new String(buffer.toArray(JAVA_CHAR));
+    }
   }
 
   public static @NlsSafe @Nullable String getNSErrorText(@Nullable ID error) {
-    if (error == null || error.intValue() == 0) return null;
+    if (isNil(error)) return null;
 
     String description = toStringViaUTF8(invoke(error, "localizedDescription"));
     String recovery = toStringViaUTF8(invoke(error, "localizedRecoverySuggestion"));
@@ -280,8 +293,10 @@ public final @NonNls class Foundation {
   }
 
   public static @Nullable String getEncodingName(long nsStringEncoding) {
-    long cfEncoding = myFoundationLibrary.CFStringConvertNSStringEncodingToEncoding(nsStringEncoding);
-    ID pointer = myFoundationLibrary.CFStringConvertEncodingToIANACharSetName(cfEncoding);
+    int cfEncoding =
+      (int)FoundationNative.call("CFStringConvertNSStringEncodingToEncoding", FunctionDescriptor.of(JAVA_INT, JAVA_LONG), nsStringEncoding);
+    ID pointer =
+      nativeID(FoundationNative.call("CFStringConvertEncodingToIANACharSetName", FunctionDescriptor.of(ADDRESS, JAVA_INT), cfEncoding));
     String name = toStringViaUTF8(pointer);
     if ("macintosh".equals(name)) name = "MacRoman"; // JDK8 does not recognize IANA's "macintosh" alias
     return name;
@@ -291,26 +306,29 @@ public final @NonNls class Foundation {
     if (StringUtil.isEmptyOrSpaces(encodingName)) return -1;
 
     ID converted = nsString(encodingName);
-    long cfEncoding = myFoundationLibrary.CFStringConvertIANACharSetNameToEncoding(converted);
+    int cfEncoding =
+      (int)FoundationNative.call("CFStringConvertIANACharSetNameToEncoding", FunctionDescriptor.of(JAVA_INT, ADDRESS), converted);
 
-    ID restored = myFoundationLibrary.CFStringConvertEncodingToIANACharSetName(cfEncoding);
+    ID restored =
+      nativeID(FoundationNative.call("CFStringConvertEncodingToIANACharSetName", FunctionDescriptor.of(ADDRESS, JAVA_INT), cfEncoding));
     if (ID.NIL.equals(restored)) return -1;
 
     return convertCFEncodingToNS(cfEncoding);
   }
 
   private static long convertCFEncodingToNS(long cfEncoding) {
-    return myFoundationLibrary.CFStringConvertEncodingToNSStringEncoding(cfEncoding) & 0xffffffffffL;  // trim to C-type limits
+    return (long)FoundationNative.call("CFStringConvertEncodingToNSStringEncoding", FunctionDescriptor.of(JAVA_LONG, JAVA_INT),
+                                       (int)cfEncoding);
   }
 
   public static void cfRetain(ID id) {
-    myFoundationLibrary.CFRetain(id);
+    FoundationNative.call("CFRetain", FunctionDescriptor.of(ADDRESS, ADDRESS), id);
   }
 
   public static void cfRelease(ID... ids) {
     for (ID id : ids) {
-      if (id != null) {
-        myFoundationLibrary.CFRelease(id);
+      if (!isNil(id)) {
+        FoundationNative.call("CFRelease", FunctionDescriptor.ofVoid(ADDRESS), id);
       }
     }
   }
@@ -323,7 +341,8 @@ public final @NonNls class Foundation {
     return invoke("NSThread", "isMainThread").booleanValue();
   }
 
-  private static Callback ourRunnableCallback;
+  private static MethodHandle ourRunnableCallback;
+  private static final String RUNNABLE_CLASS_NAME = "IdeaRunnable_" + UUID.randomUUID().toString().replace("-", "");
   private static final Map<String, RunnableInfo> ourMainThreadRunnables = new HashMap<>();
   private static long ourCurrentRunnableCount = 0;
   private static final Object RUNNABLE_LOCK = new Object();
@@ -347,13 +366,33 @@ public final @NonNls class Foundation {
       ourMainThreadRunnables.put(runnableCountString, new RunnableInfo(runnable, withAutoreleasePool));
     }
 
-    // fixme: Use Grand Central Dispatch instead?
-    final ID ideaRunnable = getObjcClass("IdeaRunnable");
-    final ID runnableObject = invoke(invoke(ideaRunnable, "alloc"), "init");
-    final ID keyObject = invoke(nsString(runnableCountString), "retain");
-    invoke(runnableObject, "performSelectorOnMainThread:withObject:waitUntilDone:", createSelector("run:"),
-           keyObject, Boolean.valueOf(waitUntilDone));
-    invoke(runnableObject, "release");
+    NSAutoreleasePool pool = null;
+    ID runnableObject = ID.NIL;
+    ID keyObject = ID.NIL;
+    var scheduled = false;
+    try {
+      pool = new NSAutoreleasePool();
+      runnableObject = invoke(getObjcClass(RUNNABLE_CLASS_NAME), "new");
+      if (isNil(runnableObject)) throw new IllegalStateException("Cannot create the main thread runnable");
+      keyObject = invoke(nsString(runnableCountString), "retain");
+      invoke(runnableObject, "performSelectorOnMainThread:withObject:waitUntilDone:", createSelector("run:"), keyObject, waitUntilDone);
+      scheduled = true;
+    }
+    finally {
+      try {
+        if (!scheduled) {
+          RunnableInfo pending;
+          synchronized (RUNNABLE_LOCK) {
+            pending = ourMainThreadRunnables.remove(runnableCountString);
+          }
+          if (pending != null) invoke(keyObject, "release");
+        }
+        invoke(runnableObject, "release");
+      }
+      finally {
+        if (pool != null) pool.drain();
+      }
+    }
   }
 
   /**
@@ -363,12 +402,10 @@ public final @NonNls class Foundation {
    */
   private static void initRunnableSupport() {
     if (ourRunnableCallback == null) {
-      final ID runnableClass = allocateObjcClassPair(getObjcClass("NSObject"), "IdeaRunnable");
-      registerObjcClassPair(runnableClass);
-
-      final Callback callback = new Callback() {
-        @SuppressWarnings("UnusedDeclaration")
-        public void callback(ID self, String selector, ID keyObject) {
+      final ID runnableClass = allocateObjcClassPair(getObjcClass("NSObject"), RUNNABLE_CLASS_NAME);
+      var runnableCallback = new Object() {
+        @SuppressWarnings("unused")
+        public void callback(ID self, Selector selector, ID keyObject) {
           final String key = toStringViaUTF8(keyObject);
           invoke(keyObject, "release");
 
@@ -396,9 +433,11 @@ public final @NonNls class Foundation {
           }
         }
       };
-      if (!addMethod(runnableClass, createSelector("run:"), callback, "v@:*")) {
+      var callback = callback(runnableCallback, "callback", ID.class, Selector.class, ID.class);
+      if (!addMethod(runnableClass, createSelector("run:"), callback, "v@:@")) {
         throw new RuntimeException("Unable to add method to objective-c runnableClass class!");
       }
+      registerObjcClassPair(runnableClass);
       ourRunnableCallback = callback;
     }
   }
@@ -484,12 +523,12 @@ public final @NonNls class Foundation {
     }
 
     public int length() {
-      return invoke(myDelegate, "length").intValue();
+      return Math.toIntExact(invoke(myDelegate, "length").longValue());
     }
 
     public byte @NotNull [] bytes() {
-      Pointer data = new Pointer(invoke(myDelegate, "bytes").longValue());
-      return data.getByteArray(0, length());
+      int length = length();
+      return length == 0 ? new byte[0] : invoke(myDelegate, "bytes").asMemorySegment().reinterpret(length).toArray(JAVA_BYTE);
     }
 
     public @NotNull Image createImageFromBytes() {
@@ -509,8 +548,7 @@ public final @NonNls class Foundation {
     }
   }
 
-  @Structure.FieldOrder({"origin", "size"})
-  public static final class NSRect extends Structure implements Structure.ByValue {
+  public static final class NSRect {
     public NSPoint origin;
     public NSSize size;
 
@@ -520,8 +558,7 @@ public final @NonNls class Foundation {
     }
   }
 
-  @Structure.FieldOrder({"x", "y"})
-  public static final class NSPoint extends Structure implements Structure.ByValue {
+  public static final class NSPoint {
     public CoreGraphics.CGFloat x;
     public CoreGraphics.CGFloat y;
 
@@ -536,8 +573,7 @@ public final @NonNls class Foundation {
     }
   }
 
-  @Structure.FieldOrder({"width", "height"})
-  public static final class NSSize extends Structure implements Structure.ByValue {
+  public static final class NSSize {
     public CoreGraphics.CGFloat width;
     public CoreGraphics.CGFloat height;
 
@@ -562,19 +598,32 @@ public final @NonNls class Foundation {
   }
 
   public static ID createDict(final String @NotNull [] keys, final Object @NotNull [] values) {
-    final ID nsKeys = invokeVarArg("NSArray", "arrayWithObjects:", convertTypes(keys));
-    final ID nsData = invokeVarArg("NSArray", "arrayWithObjects:", convertTypes(values));
+    if (keys.length != values.length) throw new IllegalArgumentException("Dictionary keys and values must have the same length");
+    final ID nsKeys = createArray(keys);
+    final ID nsData = createArray(values);
     return invoke("NSDictionary", "dictionaryWithObjects:forKeys:", nsData, nsKeys);
   }
 
-  public static @NotNull PointerType createPointerReference() {
-    PointerType reference = new PointerByReference(new Memory(Native.POINTER_SIZE));
-    reference.getPointer().clear(Native.POINTER_SIZE);
-    return reference;
+  public static ID createArray(Object... values) {
+    try (var arena = Arena.ofConfined()) {
+      var buffer = arena.allocate(ADDRESS, values.length);
+      for (int index = 0; index < values.length; index++) {
+        var value = convertType(values[index]);
+        var pointer = value instanceof ID id ? id.asMemorySegment() : (MemorySegment)value;
+        if (pointer.address() == 0) throw new IllegalArgumentException("An NSArray cannot contain nil");
+        if (pointer.address() == 0) throw new IllegalArgumentException("An NSArray cannot contain nil");
+        buffer.setAtIndex(ADDRESS, index, pointer);
+      }
+      return invoke("NSArray", "arrayWithObjects:count:", buffer, (long)values.length);
+    }
   }
 
-  public static @NotNull ID castPointerToNSError(@NotNull PointerType pointerType) {
-    return new ID(pointerType.getPointer().getLong(0));
+  public static @NotNull MemorySegment createPointerReference(@NotNull Arena arena) {
+    return arena.allocate(ADDRESS);
+  }
+
+  public static @NotNull ID castPointerToNSError(@NotNull MemorySegment pointer) {
+    return new ID(pointer.get(ADDRESS, 0).address());
   }
 
   public static Object[] convertTypes(Object @NotNull [] v) {
@@ -587,7 +636,7 @@ public final @NonNls class Foundation {
   }
 
   private static Object convertType(@NotNull Object o) {
-    if (o instanceof Pointer || o instanceof ID) {
+    if (o instanceof MemorySegment || o instanceof ID) {
       return o;
     }
     else if (o instanceof String) {

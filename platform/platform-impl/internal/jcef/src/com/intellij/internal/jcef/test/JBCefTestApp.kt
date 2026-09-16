@@ -3,6 +3,7 @@ package com.intellij.internal.jcef.test
 
 import com.intellij.internal.jcef.test.aggrtest.AggressiveRouterTest
 import com.intellij.internal.jcef.test.cases.ContextMenu
+import com.intellij.internal.jcef.test.cases.BadSslCertificateTest
 import com.intellij.internal.jcef.test.cases.DetailedFrame
 import com.intellij.internal.jcef.test.cases.DevToolsTest
 import com.intellij.internal.jcef.test.cases.FullscreenDemo
@@ -108,7 +109,18 @@ internal class JBCefTestAppFrame : JFrame() {
   private val contentPanel: JPanel = JPanel(cardLayout)
 
   private val testCases: List<TestCase> = listOf(
-    KeyboardEvents(), ContextMenu(), ResourceHandler(), PerformanceTest(), DetailedFrame(), MessageRouterTests(), RequestHandlingRESTApiTest(), AggressiveRouterTest(), ScrollbarsDemo(), FullscreenDemo(), DevToolsTest())
+    KeyboardEvents(),
+    ContextMenu(),
+    ResourceHandler(),
+    PerformanceTest(),
+    DetailedFrame(),
+    MessageRouterTests(),
+    RequestHandlingRESTApiTest(),
+    AggressiveRouterTest(),
+    ScrollbarsDemo(),
+    FullscreenDemo(),
+    DevToolsTest(),
+    BadSslCertificateTest())
 
   private val tabsList = JBList(testCases.map { it.getDisplayName() })
 

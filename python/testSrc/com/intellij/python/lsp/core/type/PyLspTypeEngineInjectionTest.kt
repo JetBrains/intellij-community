@@ -3,9 +3,12 @@ package com.intellij.python.lsp.core.type
 
 import com.intellij.idea.TestFor
 import com.intellij.lang.injection.InjectedLanguageManager
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.Ref
+import com.intellij.platform.lsp.api.LspClient
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.python.lsp.core.fakePyToolClient
 import com.intellij.testFramework.runInEdtAndWait
 import com.jetbrains.python.PythonLanguage
 import com.jetbrains.python.documentation.doctest.PyDoctestFile
@@ -32,16 +35,23 @@ import org.junit.jupiter.api.Test
 @TestFor(classes = [PyLspTypeEngine::class], issues = ["PY-91410"])
 class PyLspTypeEngineInjectionTest : PyCodeInsightTestCase() {
 
-  private object TestTypeEngine : PyLspTypeEngine {
+  private class TestTypeEngine(
+    override val module: Module,
+    override val lspClient: LspClient,
+  ) : PyLspTypeEngine {
     override val name: String get() = "test"
     override fun resolveType(pyTypedElement: PyTypedElement, isLibrary: Boolean, isUserInitiated: Boolean): Ref<PyType?>? = null
   }
+
+  /** An engine whose server serves the module of the fixture, so only the two guards can reject an element. */
+  private fun testTypeEngine(): TestTypeEngine =
+    TestTypeEngine(myFixture.module, fakePyToolClient(myFixture.module))
 
   @Test
   fun `element of a regular file is supported`() = runInEdtAndWait {
     myFixture.configureByText("a.py", "x = 1")
     val target = PsiTreeUtil.findChildOfType(myFixture.file, PyTargetExpression::class.java)!!
-    assertTrue(TestTypeEngine.isSupportedForResolve(target))
+    assertTrue(testTypeEngine().isSupportedForResolve(target))
   }
 
   /** Only the injection guard rejects this one: a code-block is injected as plain [PythonLanguage]. */
@@ -62,7 +72,7 @@ class PyLspTypeEngineInjectionTest : PyCodeInsightTestCase() {
     assertFalse(injectedFile is PyExpressionCodeFragment, "A code-block is a plain Python file, not a code fragment")
 
     val target = PsiTreeUtil.findChildOfType(injectedFile, PyTargetExpression::class.java)!!
-    assertFalse(TestTypeEngine.isSupportedForResolve(target))
+    assertFalse(testTypeEngine().isSupportedForResolve(target))
   }
 
   /**
@@ -86,7 +96,7 @@ class PyLspTypeEngineInjectionTest : PyCodeInsightTestCase() {
                "Rejected by the injection guard as well")
 
     val target = PsiTreeUtil.findChildOfType(injectedFile, PyTargetExpression::class.java)!!
-    assertFalse(TestTypeEngine.isSupportedForResolve(target))
+    assertFalse(testTypeEngine().isSupportedForResolve(target))
   }
 
   private fun injectedDocstringFiles(): List<PsiFile> {

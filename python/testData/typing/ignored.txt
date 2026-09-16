@@ -13,7 +13,6 @@ directives_disjoint_base.py
 directives_version_platform.py
 enums_expansion.py
 generics_basic.py
-generics_mixed_variance_inference.py
 generics_paramspec_semantics.py
 generics_paramspec_variance.py
 generics_syntax_infer_variance.py
@@ -41,5 +40,3 @@ specialtypes_promotions.py
 specialtypes_sentinels.py
 specialtypes_type.py
 typeforms_typeform.py
-generics_base_class.py
-narrowing_typeis.py

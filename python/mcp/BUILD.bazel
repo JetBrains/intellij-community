@@ -10,6 +10,10 @@ jps_test(
 )
 ### skip generation section `test intellij.python.mcp.tests`
 
+### auto-generated section `dev intellij.python.mcp` start
+content_module_jar(module = ":mcp")
+### auto-generated section `dev intellij.python.mcp` end
+
 ### auto-generated section `build intellij.python.mcp` start
 jvm_library(
     name = "mcp",
@@ -44,8 +48,6 @@ jvm_library(
         "//python/python-uv/backend",
     ],
 )
-
-content_module_jar(module = ":mcp")
 
 jvm_library(
     name = "mcp_test_lib",

@@ -7,6 +7,7 @@ import com.intellij.platform.eel.EelArchiveApi
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelExecPosixApi
+import com.intellij.platform.eel.EelHttpApi
 import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.EelPathBoundDescriptor
 import com.intellij.platform.eel.EelPlatform
@@ -197,6 +198,7 @@ private class FakeEelApi(
   override val fs: EelFileSystemApi get() = unused("fs")
   override val tunnels: EelTunnelsApi get() = unused("tunnels")
   override val archive: EelArchiveApi get() = unused("archive")
+  override val http: EelHttpApi get() = unused("http")
 
   private fun unused(what: String): Nothing =
     throw AssertionError("EelApi.$what is not implemented for EelSystemFolderTest")

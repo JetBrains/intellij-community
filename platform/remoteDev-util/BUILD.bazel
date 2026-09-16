@@ -10,6 +10,13 @@ jps_test(
 )
 ### skip generation section `test intellij.remoteDev.util.tests`
 
+### auto-generated section `dev intellij.remoteDev.util` start
+content_module_jar(
+    libraries = ["@lib//:rd-gen"],
+    module = ":remoteDev-util",
+)
+### auto-generated section `dev intellij.remoteDev.util` end
+
 ### auto-generated section `build intellij.remoteDev.util` start
 jvm_library(
     name = "remoteDev-util",
@@ -78,11 +85,6 @@ jvm_library(
         "//platform/execution",
         "//platform/util/coroutines",
     ],
-)
-
-content_module_jar(
-    libraries = ["@lib//:rd-gen"],
-    module = ":remoteDev-util",
 )
 
 jvm_library(
@@ -156,7 +158,6 @@ exports_files(
     [
         "intellij.remoteDev.util.iml",
         "resources/intellij.remoteDev.util.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

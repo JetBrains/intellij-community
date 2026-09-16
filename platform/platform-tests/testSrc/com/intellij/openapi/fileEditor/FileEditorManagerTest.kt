@@ -72,9 +72,11 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
+import java.awt.EventQueue
 import java.io.IOException
 import java.nio.file.Path
 import javax.swing.JComponent
@@ -120,6 +122,22 @@ class FileEditorManagerTest {
     uiSettings.editorTabLimit = template.editorTabLimit
     uiSettings.reuseNotModifiedTabs = template.reuseNotModifiedTabs
     uiSettings.editorTabPlacement = template.editorTabPlacement
+  }
+
+  @Test
+  @Timeout(30)
+  fun testInitFromBackgroundThread(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
+    assertThat(EventQueue.isDispatchThread()).isFalse()
+    val fileEditorManager = manager
+    fileEditorManager.loadState(JDOMUtil.load(getXMLText()))
+
+    val (editorComponent, editorState) = fileEditorManager.init()
+    assertThat(editorComponent).isSameAs(fileEditorManager.mainSplitters)
+    assertThat(editorState).isNotNull()
+
+    val (repeatedEditorComponent, consumedEditorState) = fileEditorManager.init()
+    assertThat(repeatedEditorComponent).isSameAs(editorComponent)
+    assertThat(consumedEditorState).isNull()
   }
 
   @Test

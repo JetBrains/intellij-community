@@ -10,6 +10,10 @@ jps_test(
 )
 ### skip generation section `test intellij.devkit.apiDump.lang.tests`
 
+### auto-generated section `dev intellij.devkit.apiDump.lang` start
+content_module_jar(module = ":apiDump-lang")
+### auto-generated section `dev intellij.devkit.apiDump.lang` end
+
 ### auto-generated section `build intellij.devkit.apiDump.lang` start
 jvm_library(
     name = "apiDump-lang",
@@ -51,8 +55,6 @@ jvm_library(
         "//java/java-psi-api:psi",
     ],
 )
-
-content_module_jar(module = ":apiDump-lang")
 
 jvm_library(
     name = "apiDump-lang_test_lib",

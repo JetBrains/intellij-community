@@ -42,7 +42,7 @@ internal class AddNamesInCommentToJavaCallArgumentsIntention :
       updater: ModPsiUpdater,
     ) {
         val nameCommentsMap = elementContext.nameCommentsByArgument.dereferenceValidKeys()
-        val psiFactory = KtPsiFactory(element)
+        val psiFactory = KtPsiFactory(element.project)
         element.valueArguments.filterIsInstance<KtValueArgument>().forEach { argument ->
             // If the argument already has a name comment (regardless of whether it has the correct argument name), don't add another
             // comment to it. Note that wrong argument names are covered by `InconsistentCommentForJavaParameterInspection`.

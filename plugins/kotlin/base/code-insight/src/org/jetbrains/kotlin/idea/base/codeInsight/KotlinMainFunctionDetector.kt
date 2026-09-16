@@ -69,7 +69,7 @@ interface KotlinMainFunctionDetector {
      * Service implementations perform resolution.
      * See 'PsiOnlyKotlinMainFunctionDetector' for PSI-only heuristic-based checker.
      */
-    @RequiresReadLock
+    @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
     fun isMain(function: KtNamedFunction, configuration: Configuration = Configuration.DEFAULT): Boolean
 
     companion object {
@@ -85,22 +85,22 @@ interface KotlinMainFunctionDetector {
     }
 }
 
-@RequiresReadLock
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 fun KotlinMainFunctionDetector.hasMain(file: KtFile, configuration: Configuration = Configuration.DEFAULT): Boolean {
     return findMain(file, configuration) != null
 }
 
-@RequiresReadLock
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 fun KotlinMainFunctionDetector.findMain(file: KtFile, configuration: Configuration = Configuration.DEFAULT): KtNamedFunction? {
     return findMainInContainer(file, configuration)
 }
 
-@RequiresReadLock
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 fun KotlinMainFunctionDetector.hasMain(declaration: KtClassOrObject, configuration: Configuration = Configuration.DEFAULT): Boolean {
     return findMain(declaration, configuration) != null
 }
 
-@RequiresReadLock
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 fun KotlinMainFunctionDetector.findMain(
     declaration: KtClassOrObject,
     configuration: Configuration = Configuration.DEFAULT
@@ -161,7 +161,7 @@ private fun KotlinMainFunctionDetector.findAllMainsInContainer(
  *
  * @return Main function container.
  */
-@RequiresReadLock
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 fun KotlinMainFunctionDetector.findMainOwner(element: PsiElement): KtDeclarationContainer? {
     val containingFile = element.containingFile as? KtFile ?: return null
     if (!RootKindFilter.projectSources.matches(containingFile)) {

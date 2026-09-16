@@ -15,7 +15,6 @@ import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.xdebugger.impl.hotswap.SourceFileChangeCompatibilityChecker
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.KaNonPublicApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileResolutionMode
 import org.jetbrains.kotlin.analysis.api.projectStructure.copyOrigin
@@ -390,7 +389,6 @@ class KotlinHotSwapSourceChangeCompatibilityChecker(project: Project) :
         }
     }
 
-    @OptIn(KaNonPublicApi::class)
     context(session: KaSession)
     private fun KaType.renderTypeSignature(typeDescription: String): String {
         val errorType = findErrorType()

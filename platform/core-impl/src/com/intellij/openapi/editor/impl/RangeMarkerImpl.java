@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
+import com.intellij.openapi.editor.ex.RangeMarkers;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerBase;
@@ -70,6 +71,9 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
                           boolean register,
                           boolean greedyToLeft,
                           boolean greedyToRight) {
+    if (RangeMarkers.Holder.USE_PMARKER_IMPLEMENTATION) {
+      throw new AssertionError(getClass().getName() + " cannot be created while the snapshot marker engine is enabled");
+    }
     if (end > documentTextLength) {
       throw new IllegalArgumentException("Invalid offsets: start=" +start+ "; end=" + end + "; document length=" + documentTextLength);
     }

@@ -4,13 +4,16 @@ package com.intellij.markdown.backend.services
 import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.ide.vfs.virtualFile
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProjectOrNull
+import kotlinx.coroutines.flow.Flow
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.RunnerPlace
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.getMarkdownCommandWorkingDirectories
 import org.intellij.plugins.markdown.service.MarkdownCommandRunnerRemoteApi
+import org.intellij.plugins.markdown.service.MarkdownFrontendRunnerRequest
 
 internal class MarkdownCommandRunnerRemoteApiImpl : MarkdownCommandRunnerRemoteApi {
   override suspend fun filterRunnable(
@@ -53,6 +56,10 @@ internal class MarkdownCommandRunnerRemoteApiImpl : MarkdownCommandRunnerRemoteA
       return false
     }
     return CommandRunnerExtension.launchBlockRunner(project, command, executorId, workingDirectory)
+  }
+
+  override suspend fun frontendRunnerRequests(): Flow<MarkdownFrontendRunnerRequest> {
+    return service<MarkdownFrontendRunnerRequestService>().requests()
   }
 
   override suspend fun isProjectTrusted(projectId: ProjectId): Boolean {

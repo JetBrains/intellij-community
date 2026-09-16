@@ -690,6 +690,12 @@ def kill_thread(thread):
     if not thread.is_alive():
         return
 
+    # Marked before the exception is raised, so that the thread knows the SystemExit below is the one the
+    # debugger asked for and keeps its traceback off stderr.
+    do_kill = getattr(thread, 'do_kill_pydev_thread', None)
+    if do_kill is not None:
+        do_kill()
+
     thread_id = thread.ident
 
     if IS_PY37_OR_GREATER:

@@ -489,7 +489,7 @@ abstract class ProjectFrameHelper internal constructor(
   }
 
   @Internal
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun setInitBounds(bounds: Rectangle?) {
     if (bounds != null && frame.isInFullScreen) {
       checkForNonsenseBounds("ProjectFrameHelper.setInitBounds.bounds", bounds)

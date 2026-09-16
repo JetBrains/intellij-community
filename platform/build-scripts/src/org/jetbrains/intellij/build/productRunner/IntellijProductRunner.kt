@@ -10,7 +10,7 @@ import kotlin.time.Duration
  * This can be used to collect some resources and include them in the distribution.
  */
 sealed interface IntellijProductRunner {
-  suspend fun runProduct(
+  fun runProduct(
     args: List<String>,
     additionalVmProperties: VmProperties = VmProperties(emptyMap()),
     timeout: Duration = DEFAULT_TIMEOUT,

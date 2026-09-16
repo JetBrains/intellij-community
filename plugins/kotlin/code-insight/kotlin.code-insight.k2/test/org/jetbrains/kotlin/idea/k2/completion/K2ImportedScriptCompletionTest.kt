@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.k2.completion
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.runInEdtAndWait
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.kotlin.idea.core.script.k2.configurations.KotlinScriptService
+import org.jetbrains.kotlin.idea.core.script.configurations.KotlinScriptService
 import org.jetbrains.kotlin.idea.k2.AbstractScriptGotoDeclarationMultifileTest
 import org.jetbrains.kotlin.idea.test.Directives
 import org.jetbrains.kotlin.psi.KtFile

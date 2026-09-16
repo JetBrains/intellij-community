@@ -3,6 +3,8 @@
 
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.platform.buildScripts.concurrency.TaskScope
+import com.intellij.platform.buildScripts.concurrency.taskScope
 import com.intellij.util.PathUtilRt
 import com.intellij.util.lang.ZipFile
 import kotlinx.collections.immutable.PersistentList
@@ -17,14 +19,12 @@ import org.jetbrains.intellij.build.LocalDistFileContent
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.SignNativeFileMode
 import org.jetbrains.intellij.build.SignTool
-import org.jetbrains.intellij.build.TaskScope
 import org.jetbrains.intellij.build.ZipSource
 import org.jetbrains.intellij.build.impl.NativeFileArchitecture.AARCH_64
 import org.jetbrains.intellij.build.impl.NativeFileArchitecture.UNIVERSAL
 import org.jetbrains.intellij.build.impl.NativeFileArchitecture.X_64
 import org.jetbrains.intellij.build.io.W_CREATE_NEW
 import org.jetbrains.intellij.build.isWindows
-import org.jetbrains.intellij.build.taskScope
 import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.Path
@@ -50,7 +50,8 @@ object OsFamilyDetector {
   private val windowsRegex = "(windows|win32-|win)".toRegex(RegexOption.IGNORE_CASE)
   private val linuxRegex = "linux".toRegex(RegexOption.IGNORE_CASE)
 
-  private val regex = "(^|-|/)((?<macos>(darwin|mac|macos)[-/])|(?<win>win32-|(win|windows)[-/])|(?<android>Linux-(Android|Musl)/)|(?<linux>linux[-/]))".toRegex(RegexOption.IGNORE_CASE)
+  private val regex =
+    "(^|-|/)((?<macos>(darwin|mac|macos)[-/])|(?<win>win32-|(win|windows)[-/])|(?<android>Linux-(Android|Musl)/)|(?<linux>linux[-/]))".toRegex(RegexOption.IGNORE_CASE)
 
 
   fun detectOsFamily(path: String): Pair<OsFamily, String>? {
@@ -155,7 +156,7 @@ internal fun TaskScope.packNativePresignedFiles(
   }
 }
 
-private suspend fun unpackNativeLibraries(
+private fun unpackNativeLibraries(
   sourceFile: Path,
   paths: List<String>,
   dryRun: Boolean,
@@ -250,12 +251,13 @@ private suspend fun unpackNativeLibraries(
           @Suppress("SpellCheckingInspection")
           context.signFiles(
             it, BuildOptions.WIN_SIGN_OPTIONS + versionOption + persistentMapOf(
-            "contentType" to "application/x-exe",
-            "jsign_replace" to "true"
-          )
+              "contentType" to "application/x-exe",
+              "jsign_replace" to "true"
+            )
           )
         }
       }
+      join()
     }
   }
 }

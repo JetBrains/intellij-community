@@ -35,7 +35,7 @@ abstract class Lesson(@NonNls val id: String, @Nls val name: String) {
   open val sampleFilePath: String? = null
 
   /** This method is called for all project-based lessons before the start of any project-based lesson */
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   open fun prepare(project: Project) = Unit
 
   open val properties: LessonProperties = LessonProperties()

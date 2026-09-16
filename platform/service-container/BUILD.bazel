@@ -11,6 +11,10 @@ jps_test(
 
 ### skip generation section `test intellij.platform.serviceContainer.tests`
 
+### auto-generated section `dev intellij.platform.serviceContainer` start
+content_module_jar(module = ":service-container")
+### auto-generated section `dev intellij.platform.serviceContainer` end
+
 ### auto-generated section `build intellij.platform.serviceContainer` start
 jvm_library(
     name = "service-container",
@@ -48,8 +52,6 @@ jvm_library(
         "//platform/util/base",
     ],
 )
-
-content_module_jar(module = ":service-container")
 
 jvm_library(
     name = "service-container_test_lib",
@@ -93,7 +95,6 @@ exports_files(
     [
         "intellij.platform.serviceContainer.iml",
         "resources/intellij.platform.serviceContainer.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

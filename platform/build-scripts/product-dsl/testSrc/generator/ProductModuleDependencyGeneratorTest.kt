@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.productLayout.generator
 
+import com.intellij.platform.buildScripts.concurrency.SharedTaskOwner
 import com.intellij.platform.pluginGraph.ContentModuleName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -21,6 +22,13 @@ import java.nio.file.Path
 
 @ExtendWith(TestFailureLogger::class)
 class ProductModuleDependencyGeneratorTest {
+  private val owner = SharedTaskOwner("ProductModuleDependencyGeneratorTest")
+
+  @org.junit.jupiter.api.AfterEach
+  fun closeSharedTasks() {
+    owner.close()
+  }
+
   @Test
   fun `product module written deps exclude self dependency`(@TempDir tempDir: Path) {
     runBlocking(Dispatchers.Default) {
@@ -35,7 +43,7 @@ class ProductModuleDependencyGeneratorTest {
       val model = testGenerationModel(
         pluginGraph = setup.pluginGraph,
         outputProvider = setup.jps.outputProvider,
-        fileUpdater = setup.strategy,
+        fileUpdater = setup.strategy, owner = owner,
       ).copy(
         discovery = DiscoveryResult(
           moduleSetsByLabel = mapOf(
@@ -93,7 +101,7 @@ class ProductModuleDependencyGeneratorTest {
         pluginGraph = setup.pluginGraph,
         outputProvider = setup.jps.outputProvider,
         fileUpdater = setup.strategy,
-        updateSuppressions = true,
+        updateSuppressions = true, owner = owner,
       ).copy(
         discovery = DiscoveryResult(
           moduleSetsByLabel = mapOf(

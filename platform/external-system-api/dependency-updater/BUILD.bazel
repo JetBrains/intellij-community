@@ -10,6 +10,10 @@ jps_test(
 )
 ### skip generation section `test intellij.platform.externalSystem.dependencyUpdater.tests`
 
+### auto-generated section `dev intellij.platform.externalSystem.dependencyUpdater` start
+content_module_jar(module = ":dependency-updater")
+### auto-generated section `dev intellij.platform.externalSystem.dependencyUpdater` end
+
 ### auto-generated section `build intellij.platform.externalSystem.dependencyUpdater` start
 jvm_library(
     name = "dependency-updater",
@@ -40,8 +44,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":dependency-updater")
-
 jvm_library(
     name = "dependency-updater_test_lib",
     testonly = True,
@@ -70,7 +72,6 @@ exports_files(
     [
         "intellij.platform.externalSystem.dependencyUpdater.iml",
         "resources/intellij.platform.externalSystem.dependencyUpdater.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

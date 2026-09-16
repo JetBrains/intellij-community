@@ -3,7 +3,7 @@ package com.intellij.python.test.env.junit5
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.platform.eel.provider.localEel
-import com.intellij.python.pytools.setCustomExecutablePath
+import com.intellij.python.pytools.backend.setCustomExecutablePath
 import com.intellij.python.uv.backend.UvPyTool
 import com.intellij.python.test.env.core.LATEST_PYTHON_VERSION
 import com.intellij.python.test.env.core.PyEnvironment

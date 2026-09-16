@@ -16,6 +16,7 @@
   </dependencies>
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
-    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.managed.cache.backend.RemoteManagedCacheApiImplProvider"/>
+    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.managed.cache.backend.RemoteManagedCacheApiImplProvider"
+                                            apiInterfaces="com.intellij.platform.managed.cache.RemoteManagedCacheApi"/>
   </extensions>
 </idea-plugin>

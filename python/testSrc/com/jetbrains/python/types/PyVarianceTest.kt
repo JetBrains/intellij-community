@@ -373,4 +373,67 @@ class PyVarianceTest : PyCodeInsightTestCase() {
     #                            ^^^^^^^^^^^^^^^^^^^^^^^^ WARNING A covariant type variable cannot be used in this contravariant position
     """.trimIndent())
 
+  @Test
+  fun `Quoted type in init parameter is ignored like unquoted one`() = test("""
+    from typing import TypeVar, Generic
+    
+    T_co = TypeVar("T_co", covariant=True)
+    
+    class Box(Generic[T_co]):
+        def __init__(self, xs: "list[T_co]", ys: list[T_co]) -> None: ...  # both allowed in __init__
+    """.trimIndent())
+
+  @Test
+  fun `Quoted type in private method parameter is ignored`() = test("""
+    from typing import TypeVar, Generic
+    
+    T_co = TypeVar("T_co", covariant=True)
+    
+    class Box(Generic[T_co]):
+        def _method(self, xs: "list[T_co]") -> None: ...  # private methods are ignored
+    """.trimIndent())
+
+  @Test
+  fun `Quoted type in public method parameter is still reported`() = test("""
+    from typing import TypeVar, Generic
+    
+    T_co = TypeVar("T_co", covariant=True)
+    
+    class Box(Generic[T_co]):
+        def method(self, xs: "list[T_co]") -> None: ...
+    #                        ^^^^^^^^^^^^ WARNING A covariant type variable cannot be used in this invariant position
+    """.trimIndent())
+
+  @Test
+  fun `Quoted type on non-public attribute is ignored`() = test("""
+    from typing import TypeVar, Generic
+    
+    T_co = TypeVar("T_co", covariant=True)
+    
+    class Box(Generic[T_co]):
+        _items: "list[T_co]"  # protected attributes are ignored
+    """.trimIndent())
+
+  @Test
+  fun `Local variable declaration in init is not reported`() = test("""
+    from typing import TypeVar, Generic
+    
+    T_co = TypeVar("T_co", covariant=True)
+    
+    class Box(Generic[T_co]):
+        def __init__(self, x: T_co) -> None:
+            tmp: T_co  # a plain local variable does not constrain the variance
+    """.trimIndent())
+
+  @Test
+  fun `Local variable assignment in init is not a variance location`() = test("""
+    from typing import TypeVar, Generic
+    
+    T_co = TypeVar("T_co", covariant=True)
+    
+    class Box(Generic[T_co]):
+        def __init__(self, x: T_co) -> None:
+            tmp: T_co = x # expect no error
+    """.trimIndent())
+
 }

@@ -17,7 +17,7 @@ import kotlin.reflect.KProperty
  * This will tell tests' infrastructure to substitute all occurrences of {{my_property}}
  * in the test data with "my-default-value".
  */
-internal fun SimpleProperties(
+fun SimpleProperties(
     gradleVersion: GradleVersion,
     kotlinVersion: KotlinToolingVersion,
     agpVersion: String? = null

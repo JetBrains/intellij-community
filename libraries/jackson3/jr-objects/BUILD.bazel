@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.jackson3.jr.objects` start
+content_module_jar(
+    libraries = ["@lib//:libraries-jackson3-jr-objects-jackson3-jr-objects"],
+    module = ":libraries-jackson3-jr-objects",
+)
+### auto-generated section `dev intellij.libraries.jackson3.jr.objects` end
+
 ### auto-generated section `build intellij.libraries.jackson3.jr.objects` start
 jvm_library(
     name = "libraries-jackson3-jr-objects",
@@ -16,11 +23,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-jackson3-jr-objects-jackson3-jr-objects"],
     runtime_deps = ["@lib//:libraries-jackson3-jr-objects-jackson3-jr-objects"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-jackson3-jr-objects-jackson3-jr-objects"],
-    module = ":libraries-jackson3-jr-objects",
 )
 
 jvm_library(
@@ -43,7 +45,6 @@ exports_files(
     [
         "intellij.libraries.jackson3.jr.objects.iml",
         "resources/intellij.libraries.jackson3.jr.objects.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

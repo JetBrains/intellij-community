@@ -1,6 +1,7 @@
 package com.intellij.ide.starter.ci
 
 import com.intellij.platform.testFramework.teamCity.TeamCityReporter.SyntheticTestKind
+import com.intellij.platform.testFramework.teamCity.TeamCityReporter.TestMetadata
 import com.intellij.tools.ide.util.common.logError
 import java.nio.file.Path
 
@@ -20,7 +21,7 @@ object NoCIServer : CIServer {
 
   override fun reportTestFailure(
     testName: String, message: String, details: String, linkToLogs: String?,
-    kind: SyntheticTestKind, generifyTestName: Boolean,
+    kind: SyntheticTestKind, generifyTestName: Boolean, additionalMetadata: List<TestMetadata>,
   ) {
     logError("""
       No logic for reporting test failure has been implemented.

@@ -1,5 +1,7 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
+load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_TARGETS")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jps_test(
@@ -10,6 +12,14 @@ jps_test(
 )
 
 ### skip generation section `test intellij.html.tools.tests`
+
+### auto-generated section `dev intellij.html.tools` start
+dev_dist_plugin(
+    descriptor = "resources/META-INF/plugin.xml",
+    main_module = "intellij.html.tools",
+    module_targets = MODULE_TARGETS,
+)
+### auto-generated section `dev intellij.html.tools` end
 
 ### auto-generated section `build intellij.html.tools` start
 jvm_library(
@@ -87,6 +97,12 @@ jvm_library(
         "//platform/util:util-ui_test_lib",
     ],
 )
+
+ij_plugin(
+    name = "html-tools_plugin",
+    descriptor_module = ":html-tools",
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `build intellij.html.tools` end
 
 ### auto-generated section `iml intellij.html.tools` start
@@ -98,14 +114,6 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.html.tools` end
-
-### auto-generated section `dev intellij.html.tools` start
-dev_dist_plugin(
-    descriptor = "resources/META-INF/plugin.xml",
-    descriptor_module = ":html-tools",
-    main_module = "intellij.html.tools",
-)
-### auto-generated section `dev intellij.html.tools` end
 
 ### auto-generated section `build intellij.html.tools.tests` start
 jvm_library(
@@ -192,8 +200,6 @@ jvm_library(
         "//xml/xml-analysis-api:analysis_test_lib",
         "//libraries/fastutil",
         "//libraries/fastutil:fastutil_test_lib",
-        "//libraries/misc/plugin",
-        "//libraries/misc/plugin:plugin_test_lib",
         "//platform/util/concurrency",
         "//platform/util/concurrency:concurrency_test_lib",
         "//platform/ide-core",

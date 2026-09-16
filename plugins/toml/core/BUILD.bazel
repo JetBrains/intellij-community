@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.toml.core` start
+content_module_jar(module = ":core")
+### auto-generated section `dev intellij.toml.core` end
+
 ### auto-generated section `build intellij.toml.core` start
 jvm_library(
     name = "core",
@@ -37,8 +41,6 @@ jvm_library(
         "//platform/lang-api:lang",
     ],
 )
-
-content_module_jar(module = ":core")
 
 jvm_library(
     name = "core_test_lib",

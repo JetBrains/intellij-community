@@ -53,6 +53,8 @@
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.projectModel.impl"/>
     <module name="intellij.platform.rpc.backend"/>
+    <module name="intellij.platform.scopes"/>
+    <module name="intellij.platform.searchEverywhere"/>
     <module name="intellij.platform.statistics"/>
     <module name="intellij.platform.util.coroutines"/>
     <module name="intellij.platform.util.diff"/>
@@ -269,6 +271,8 @@
 
     <action id="Git.FindMergedLocalBranches" class="git4idea.branch.FindMergedLocalBranchesAction" internal="true"/>
 
+    <action id="Git.PrefillRecentPushTargets" class="git4idea.push.GitPrefillRecentPushTargetsAction" internal="true"/>
+
     <group id="Git.Ongoing.Rebase.Actions" popup="false">
       <reference ref="Git.Rebase.Abort"/>
       <reference ref="Git.Merge.Abort"/>
@@ -289,6 +293,7 @@
     <group id="Git.Branches.List">
       <reference ref="Git.Ongoing.Rebase.Actions"/>
       <reference ref="Git.CreateNewBranch"/>
+      <reference ref="Git.CreateNewWorkingTree"/>
       <action class="git4idea.actions.branch.GitCheckoutFromInputAction"/>
     </group>
 
@@ -857,6 +862,7 @@
     <openapi.vcs.changes.vcsPreservingExecutor implementation="git4idea.util.GitPreservingExecutor"/>
     <editorNotificationProvider implementation="git4idea.conflicts.MergeConflictResolveUtil$NotificationProvider"/>
     <codeInsight.linkHandler prefix="#git_commit/" handlerClass="git4idea.log.GitCommitTooltipLinkHandler"/>
+    <searchEverywhere.itemsProviderFactory implementation="git4idea.search.SeGitProviderFactory"/>
 
     <!-- Git ignore lang -->
     <fileType language="GitIgnore" extensions="gitignore" fieldName="INSTANCE" name="GitIgnore file"
@@ -1025,7 +1031,12 @@
 
     <troubleInfoCollector implementation="git4idea.troubleshooting.GitTroubleInfoCollector"/>
 
-    <platform.rpc.backend.remoteApiProvider implementation="git4idea.remoteApi.GitApiProvider"/>
+    <platform.rpc.backend.remoteApiProvider implementation="git4idea.remoteApi.GitApiProvider"
+                                            apiInterfaces="com.intellij.vcs.git.rpc.GitWidgetApi,
+                                                           com.intellij.vcs.git.rpc.GitRepositoryApi,
+                                                           com.intellij.vcs.git.rpc.GitIncomingOutgoingStateApi,
+                                                           com.intellij.vcs.git.rpc.GitUiSettingsApi,
+                                                           com.intellij.vcs.git.rpc.GitOperationsApi"/>
 
     <uiDataRule implementation="git4idea.actions.branch.GitBackendBranchesWidgetUiDataRule"/>
 
@@ -1072,6 +1083,9 @@
                     qualifiedName="Git4Idea.gitPushNotificationCustomizer"
                     dynamic="true"
                     area="IDEA_PROJECT"/>
+    <extensionPoint interface="git4idea.workingTrees.GitWorktreeOpenPathProvider"
+                    qualifiedName="Git4Idea.gitWorktreeOpenPathProvider"
+                    dynamic="true"/>
   </extensionPoints>
 
   <projectListeners>

@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
+import com.intellij.platform.buildScripts.concurrency.TaskFailedException
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.jetbrains.intellij.build.dev.materializeProjectModelTree
@@ -44,7 +45,8 @@ class ProjectModelManifestTest {
     val missing = tempDir.resolve("sources/gone.iml")
 
     assertThatThrownBy { materialize("copy\t$missing\tgone.iml") }
-      .isInstanceOf(NoSuchFileException::class.java)
+      .isInstanceOf(TaskFailedException::class.java)
+      .hasCauseInstanceOf(NoSuchFileException::class.java)
   }
 
   @Test
@@ -66,7 +68,8 @@ class ProjectModelManifestTest {
   @Test
   fun anUnknownActionIsRejected() {
     assertThatThrownBy { materialize("link\t\tsomewhere") }
-      .isInstanceOf(IllegalStateException::class.java)
+      .isInstanceOf(TaskFailedException::class.java)
+      .hasCauseInstanceOf(IllegalStateException::class.java)
       .hasMessageContaining("link")
   }
 

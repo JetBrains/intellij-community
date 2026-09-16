@@ -87,13 +87,13 @@ internal const val BYSTANDER_PYTHON = "_bystander_python"
 
 
 /** Creates or modifies a `pyproject.toml` with the given `[project].name` inside this directory. */
-@RequiresWriteLock
+@RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
 internal fun VirtualFile.writePyprojectTomlWithProject(projectName: String) {
   writePyprojectToml("[project]\nname = \"$projectName\"")
 }
 
 /** Creates a `pyproject.toml` with the given  [content] this directory. */
-@RequiresWriteLock
+@RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
 internal fun VirtualFile.writePyprojectToml(content: String) {
   val tomlFile = findChild(PY_PROJECT_TOML) ?: createFile(PY_PROJECT_TOML)
   tomlFile.writeText(content)
@@ -103,7 +103,7 @@ internal fun VirtualFile.writePyprojectToml(content: String) {
 /**
  * Given [this] is a dir, creates uv workspace out of it. Returns names of children.
  */
-@RequiresWriteLock
+@RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
 internal fun VirtualFile.convertDirToUvWorkspace(workspaceName: String = name): List<String> {
   val member1Name = "${workspaceName}_one"
   val member2Name = "${workspaceName}_two"

@@ -9,10 +9,10 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="tuweni-toml" type="repository">
-        <properties maven-id="io.consensys.tuweni:tuweni-toml:2.7.1">
+        <properties maven-id="io.consensys.tuweni:tuweni-toml:2.8.0">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/consensys/tuweni/tuweni-toml/2.7.1/tuweni-toml-2.7.1.jar">
-              <sha256sum>00cfcc187ff46ce8d702a0f2cb98d6a4f2a67f8f41242b5901e46efdcb7c84b7</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/consensys/tuweni/tuweni-toml/2.8.0/tuweni-toml-2.8.0.jar">
+              <sha256sum>74671f0645b77a2037d817c48d3ce7a47f6b1d3112527979e00bb133a3db8b5a</sha256sum>
             </artifact>
             <artifact url="file://$MAVEN_REPOSITORY$/org/antlr/antlr4-runtime/4.13.0/antlr4-runtime-4.13.0.jar">
               <sha256sum>bd7f7b5d07bc0b047f10915b32ca4bb1de9e57d8049098882e4453c88c076a5d</sha256sum>
@@ -24,12 +24,12 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/consensys/tuweni/tuweni-toml/2.7.1/tuweni-toml-2.7.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/consensys/tuweni/tuweni-toml/2.8.0/tuweni-toml-2.8.0.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/antlr/antlr4-runtime/4.13.0/antlr4-runtime-4.13.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/consensys/tuweni/tuweni-toml/2.7.1/tuweni-toml-2.7.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/consensys/tuweni/tuweni-toml/2.8.0/tuweni-toml-2.8.0-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/antlr/antlr4-runtime/4.13.0/antlr4-runtime-4.13.0-sources.jar!/" />
         </SOURCES>
       </library>

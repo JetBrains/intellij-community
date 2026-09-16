@@ -2,21 +2,25 @@
 package com.intellij.util.text;
 
 import com.intellij.DynamicBundle;
-import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.UtilBundle;
 import com.intellij.util.system.OS;
+import com.intellij.util.system.WindowsSystemLibraries;
 import com.intellij.util.text.DateTimeFormatManager.Formats;
-import com.sun.jna.Library;
-import com.sun.jna.Native;
-import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
-import com.sun.jna.win32.StdCallLibrary;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.foreign.Arena;
+import java.lang.foreign.FunctionDescriptor;
+import java.lang.foreign.Linker;
+import java.lang.foreign.MemoryLayout;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.StructLayout;
+import java.lang.foreign.SymbolLookup;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.VarHandle;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
@@ -30,6 +34,10 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 
+import static java.lang.foreign.ValueLayout.ADDRESS;
+import static java.lang.foreign.ValueLayout.JAVA_CHAR;
+import static java.lang.foreign.ValueLayout.JAVA_INT;
+import static java.lang.foreign.ValueLayout.JAVA_LONG;
 import static java.util.Objects.requireNonNullElse;
 
 /**
@@ -270,8 +278,8 @@ public final class DateFormatUtil {
 
     if (locale == null) {
       try {
-        if (OS.CURRENT == OS.macOS && JnaLoader.isLoaded()) return getMacFormats();
-        if (OS.CURRENT == OS.Windows && JnaLoader.isLoaded()) return getWindowsFormats();
+        if (OS.CURRENT == OS.macOS) return getMacFormats();
+        if (OS.CURRENT == OS.Windows) return getWindowsFormats();
       }
       catch (Throwable t) {
         LOG.error(t);
@@ -295,65 +303,72 @@ public final class DateFormatUtil {
     return locale.equals(Locale.ENGLISH) ? null : locale;
   }
 
-  private interface CF extends Library {
-    long kCFDateFormatterNoStyle = 0;
-    long kCFDateFormatterShortStyle = 1;
-    long kCFDateFormatterMediumStyle = 2;
+  private static final class CF {
+    static final long kCFDateFormatterNoStyle = 0;
+    static final long kCFDateFormatterShortStyle = 1;
+    static final long kCFDateFormatterMediumStyle = 2;
 
-    @Structure.FieldOrder({"location", "length"})
-    final class CFRange extends Structure implements Structure.ByValue {
-      public long location, length;
-
-      public CFRange(long location, long length) {
-        this.location = location;
-        this.length = length;
-      }
-    }
-
-    Pointer CFLocaleCopyCurrent();
-    Pointer CFLocaleGetIdentifier(Pointer locale);
-    Pointer CFDateFormatterCreate(Pointer allocator, Pointer locale, long dateStyle, long timeStyle);
-    Pointer CFDateFormatterGetFormat(Pointer formatter);
-    long CFStringGetLength(Pointer str);
-    void CFStringGetCharacters(Pointer str, CFRange range, char[] buffer);
-    void CFRelease(Pointer p);
+    static final StructLayout RANGE = MemoryLayout.structLayout(JAVA_LONG, JAVA_LONG);
+    private static final Linker LINKER = Linker.nativeLinker();
+    private static final SymbolLookup LIBRARY =
+      SymbolLookup.libraryLookup("/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation", Arena.global());
+    static final MethodHandle LOCALE_COPY_CURRENT =
+      LINKER.downcallHandle(LIBRARY.findOrThrow("CFLocaleCopyCurrent"), FunctionDescriptor.of(ADDRESS));
+    static final MethodHandle LOCALE_GET_IDENTIFIER =
+      LINKER.downcallHandle(LIBRARY.findOrThrow("CFLocaleGetIdentifier"), FunctionDescriptor.of(ADDRESS, ADDRESS));
+    static final MethodHandle DATE_FORMATTER_CREATE = LINKER.downcallHandle(
+      LIBRARY.findOrThrow("CFDateFormatterCreate"), FunctionDescriptor.of(ADDRESS, ADDRESS, ADDRESS, JAVA_LONG, JAVA_LONG));
+    static final MethodHandle DATE_FORMATTER_GET_FORMAT =
+      LINKER.downcallHandle(LIBRARY.findOrThrow("CFDateFormatterGetFormat"), FunctionDescriptor.of(ADDRESS, ADDRESS));
+    static final MethodHandle STRING_GET_LENGTH =
+      LINKER.downcallHandle(LIBRARY.findOrThrow("CFStringGetLength"), FunctionDescriptor.of(JAVA_LONG, ADDRESS));
+    static final MethodHandle STRING_GET_CHARACTERS =
+      LINKER.downcallHandle(LIBRARY.findOrThrow("CFStringGetCharacters"), FunctionDescriptor.ofVoid(ADDRESS, RANGE, ADDRESS));
+    static final MethodHandle RELEASE =
+      LINKER.downcallHandle(LIBRARY.findOrThrow("CFRelease"), FunctionDescriptor.ofVoid(ADDRESS));
   }
 
-  private static Formats getMacFormats() {
-    var cf = Native.load("CoreFoundation", CF.class);
-    var localeRef = cf.CFLocaleCopyCurrent();
+  static Formats getMacFormats() throws Throwable {
+    var localeRef = (MemorySegment)CF.LOCALE_COPY_CURRENT.invokeExact();
+    if (localeRef.address() == 0) throw new IllegalStateException("CFLocaleCopyCurrent: null");
     try {
-      var date = getMacFormat(cf, localeRef, CF.kCFDateFormatterShortStyle, CF.kCFDateFormatterNoStyle);
-      var timeShort = getMacFormat(cf, localeRef, CF.kCFDateFormatterNoStyle, CF.kCFDateFormatterShortStyle);
-      var timeMedium = getMacFormat(cf, localeRef, CF.kCFDateFormatterNoStyle, CF.kCFDateFormatterMediumStyle);
-      var dateTime = getMacFormat(cf, localeRef, CF.kCFDateFormatterShortStyle, CF.kCFDateFormatterShortStyle);
-      var localeId = getMacString(cf, cf.CFLocaleGetIdentifier(localeRef));
+      var date = getMacFormat(localeRef, CF.kCFDateFormatterShortStyle, CF.kCFDateFormatterNoStyle);
+      var timeShort = getMacFormat(localeRef, CF.kCFDateFormatterNoStyle, CF.kCFDateFormatterShortStyle);
+      var timeMedium = getMacFormat(localeRef, CF.kCFDateFormatterNoStyle, CF.kCFDateFormatterMediumStyle);
+      var dateTime = getMacFormat(localeRef, CF.kCFDateFormatterShortStyle, CF.kCFDateFormatterShortStyle);
+      var localeId = getMacString((MemorySegment)CF.LOCALE_GET_IDENTIFIER.invokeExact(localeRef));
       if (LOG.isTraceEnabled()) LOG.trace("id=" + localeId);
       var locale = getLocaleById(localeId);
       return makeFormats(date, timeShort, timeMedium, dateTime, locale);
     }
     finally {
-      cf.CFRelease(localeRef);
+      CF.RELEASE.invokeExact(localeRef);
     }
   }
 
-  private static String getMacFormat(CF cf, Pointer localeRef, long dateStyle, long timeStyle) {
-    var formatter = cf.CFDateFormatterCreate(null, localeRef, dateStyle, timeStyle);
-    if (formatter == null) throw new IllegalStateException("CFDateFormatterCreate: null");
+  private static String getMacFormat(MemorySegment localeRef, long dateStyle, long timeStyle) throws Throwable {
+    var formatter = (MemorySegment)CF.DATE_FORMATTER_CREATE.invokeExact(MemorySegment.NULL, localeRef, dateStyle, timeStyle);
+    if (formatter.address() == 0) throw new IllegalStateException("CFDateFormatterCreate: null");
     try {
-      var format = cf.CFDateFormatterGetFormat(formatter);
-      return getMacString(cf, format);
+      return getMacString((MemorySegment)CF.DATE_FORMATTER_GET_FORMAT.invokeExact(formatter));
     }
     finally {
-      cf.CFRelease(formatter);
+      CF.RELEASE.invokeExact(formatter);
     }
   }
 
-  private static String getMacString(CF cf, Pointer ref) {
-    var length = (int)cf.CFStringGetLength(ref);
-    var buffer = new char[length];
-    cf.CFStringGetCharacters(ref, new CF.CFRange(0, length), buffer);
-    return new String(buffer);
+  static String getMacString(MemorySegment ref) throws Throwable {
+    if (ref.address() == 0) throw new IllegalStateException("CFString: null");
+    var length = Math.toIntExact((long)CF.STRING_GET_LENGTH.invokeExact(ref));
+    if (length == 0) return "";
+    try (var arena = Arena.ofConfined()) {
+      var range = arena.allocate(CF.RANGE);
+      range.set(JAVA_LONG, 0, 0L);
+      range.set(JAVA_LONG, JAVA_LONG.byteSize(), length);
+      var buffer = arena.allocate(JAVA_CHAR, length);
+      CF.STRING_GET_CHARACTERS.invokeExact(ref, range, buffer);
+      return new String(buffer.toArray(JAVA_CHAR));
+    }
   }
 
   private static @Nullable Locale getUnixLocale() {
@@ -371,35 +386,35 @@ public final class DateFormatUtil {
     return p < 0 ? Locale.of(localeStr) : Locale.of(localeStr.substring(0, p), localeStr.substring(p + 1));
   }
 
-  @SuppressWarnings("SpellCheckingInspection")
-  private interface Kernel32 extends StdCallLibrary {
-    int LOCALE_SSHORTDATE  = 0x0000001F;
-    int LOCALE_SSHORTTIME  = 0x00000079;
-    int LOCALE_STIMEFORMAT = 0x00001003;
+  private static final class Kernel32 {
+    static final int LOCALE_SSHORTDATE = 0x0000001F;
+    static final int LOCALE_SSHORTTIME = 0x00000079;
+    static final int LOCALE_STIMEFORMAT = 0x00001003;
 
-    int GetLocaleInfoEx(String localeName, int lcType, char[] lcData, int dataSize);
-    int GetLastError();
+    static final StructLayout CALL_STATE_LAYOUT = Linker.Option.captureStateLayout();
+    static final VarHandle LAST_ERROR = CALL_STATE_LAYOUT.varHandle(MemoryLayout.PathElement.groupElement("GetLastError"));
+    static final MethodHandle GET_LOCALE_INFO_EX = Linker.nativeLinker().downcallHandle(
+      WindowsSystemLibraries.lookup("kernel32.dll").findOrThrow("GetLocaleInfoEx"),
+      FunctionDescriptor.of(JAVA_INT, ADDRESS, JAVA_INT, ADDRESS, JAVA_INT), Linker.Option.captureCallState("GetLastError"));
   }
 
-  private static Formats getWindowsFormats() {
-    var kernel32 = Native.load("Kernel32", Kernel32.class);
-    int bufferSize = 128, rv;
-    var buffer = new char[bufferSize];
+  static Formats getWindowsFormats() throws Throwable {
+    try (var arena = Arena.ofConfined()) {
+      var callState = arena.allocate(Kernel32.CALL_STATE_LAYOUT);
+      var buffer = arena.allocate(JAVA_CHAR, 128);
+      var shortDate = getWindowsFormat(Kernel32.LOCALE_SSHORTDATE, callState, buffer);
+      var shortTime = getWindowsFormat(Kernel32.LOCALE_SSHORTTIME, callState, buffer);
+      var mediumTime = getWindowsFormat(Kernel32.LOCALE_STIMEFORMAT, callState, buffer);
+      var locale = Locale.getDefault(Locale.Category.FORMAT);
+      return makeFormats(shortDate, shortTime, mediumTime, locale);
+    }
+  }
 
-    rv = kernel32.GetLocaleInfoEx(null, Kernel32.LOCALE_SSHORTDATE, buffer, bufferSize);
-    if (rv < 2) throw new IllegalStateException("GetLocaleInfoEx: " + kernel32.GetLastError());
-    var shortDate = fixWindowsFormat(new String(buffer, 0, rv - 1));
-
-    rv = kernel32.GetLocaleInfoEx(null, Kernel32.LOCALE_SSHORTTIME, buffer, bufferSize);
-    if (rv < 2) throw new IllegalStateException("GetLocaleInfoEx: " + kernel32.GetLastError());
-    var shortTime = fixWindowsFormat(new String(buffer, 0, rv - 1));
-
-    rv = kernel32.GetLocaleInfoEx(null, Kernel32.LOCALE_STIMEFORMAT, buffer, bufferSize);
-    if (rv < 2) throw new IllegalStateException("GetLocaleInfoEx: " + kernel32.GetLastError());
-    var mediumTime = fixWindowsFormat(new String(buffer, 0, rv - 1));
-
-    var locale = Locale.getDefault(Locale.Category.FORMAT);
-    return makeFormats(shortDate, shortTime, mediumTime, locale);
+  private static String getWindowsFormat(int localeType, MemorySegment callState, MemorySegment buffer) throws Throwable {
+    var capacity = (int)(buffer.byteSize() / JAVA_CHAR.byteSize());
+    var result = (int)Kernel32.GET_LOCALE_INFO_EX.invokeExact(callState, MemorySegment.NULL, localeType, buffer, capacity);
+    if (result < 2) throw new IllegalStateException("GetLocaleInfoEx: " + (int)Kernel32.LAST_ERROR.get(callState, 0L));
+    return fixWindowsFormat(new String(buffer.asSlice(0, (result - 1L) * JAVA_CHAR.byteSize()).toArray(JAVA_CHAR)));
   }
 
   // https://learn.microsoft.com/en-us/windows/win32/intl/day--month--year--and-era-format-pictures

@@ -297,4 +297,4 @@ private fun moduleDependencies() = listOf(InheritedSdkDependency, ModuleSourceDe
 
 private fun Path.toIdeUrl(): String = VfsUtilCore.pathToUrl(pathString)
 
-private fun Path.toVirtualFileUrl(urlManager: VirtualFileUrlManager) = urlManager.getOrCreateFromUrl(toIdeUrl())
+private fun Path.toVirtualFileUrl(urlManager: VirtualFileUrlManager) = urlManager.storeAndGet(toIdeUrl())

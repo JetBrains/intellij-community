@@ -10,7 +10,10 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
+import org.jetbrains.kotlin.idea.base.psi.addMemberDeclarationAfter
+import org.jetbrains.kotlin.idea.base.psi.addMemberDeclarationBefore
 import org.jetbrains.kotlin.idea.base.psi.mustHaveOnlyPropertiesInPrimaryConstructor
+import org.jetbrains.kotlin.idea.base.psi.removeModifierKeyword
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils
@@ -164,7 +167,7 @@ class ConvertPrimaryConstructorToSecondaryIntention :
 
         val lastEnumEntry = element.declarations.lastOrNull { it is KtEnumEntry } as? KtEnumEntry
         val secondaryConstructor =
-            lastEnumEntry?.let { element.addDeclarationAfter(constructor, it) } ?: element.addDeclarationBefore(constructor, null)
+            lastEnumEntry?.let { element.addMemberDeclarationAfter(constructor, it) } ?: element.addMemberDeclarationBefore(constructor, null)
         commentSaver.restore(secondaryConstructor)
 
         convertValueParametersToProperties(primaryCtor, element, psiFactory, lastEnumEntry)
@@ -181,7 +184,7 @@ class ConvertPrimaryConstructorToSecondaryIntention :
         for (valueParameter in element.valueParameters.reversed()) {
             if (!valueParameter.hasValOrVar()) continue
             val isVararg = valueParameter.hasModifier(VARARG_KEYWORD)
-            valueParameter.removeModifier(VARARG_KEYWORD)
+            valueParameter.removeModifierKeyword(VARARG_KEYWORD)
             val typeText = valueParameter.typeReference?.text
             val property = factory.createProperty(
                 valueParameter.modifierList?.text,
@@ -190,7 +193,7 @@ class ConvertPrimaryConstructorToSecondaryIntention :
                 valueParameter.isMutable,
                 null
             )
-            if (anchorBefore == null) klass.addDeclarationBefore(property, null) else klass.addDeclarationAfter(property, anchorBefore)
+            if (anchorBefore == null) klass.addMemberDeclarationBefore(property, null) else klass.addMemberDeclarationAfter(property, anchorBefore)
         }
     }
 }

@@ -1,7 +1,8 @@
 load("@community//build:bazel_targets_json.bzl", "current_bazel_targets_json")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "ALL_COMMUNITY_TARGETS")
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
+load("@jps_dynamic_deps_community//:targets.bzl", "ALL_COMMUNITY_TARGETS", "MODULE_TARGETS")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 BAZEL_TARGETS_JSON = current_bazel_targets_json()
@@ -20,6 +21,25 @@ jps_test(
     runtime_deps = [":java-debugger-streams-tests_test_lib"],
 )
 ### skip generation section `test intellij.java.debugger.streams.tests`
+
+### auto-generated section `dev intellij.debugger.streams.plugin` start
+dev_dist_plugin(
+    main_module = "intellij.debugger.streams.plugin",
+    module_targets = MODULE_TARGETS,
+    prepacked_content_modules = [
+        # do not sort,
+        "intellij.debugger.streams.backend",
+        "intellij.debugger.streams.core",
+        "intellij.debugger.streams.java.frontend",
+        "intellij.debugger.streams.java",
+        "intellij.debugger.streams.shared",
+    ],
+    prepacked_jars = {
+        "intellij.debugger.streams.java.rt.gatherers": "intellij.debugger.streams.java.rt.gatherers.jar",
+        "intellij.debugger.streams.java.rt": "intellij.debugger.streams.java.rt.jar",
+    },
+)
+### auto-generated section `dev intellij.debugger.streams.plugin` end
 
 ### auto-generated section `build intellij.debugger.streams.plugin` start
 jvm_library(
@@ -52,6 +72,22 @@ jvm_library(
         "//platform/ide-core-impl:ide-core-impl_test_lib",
     ],
 )
+
+ij_plugin(
+    name = "debugger-streams-plugin_plugin",
+    descriptor_module = ":debugger-streams-plugin",
+    content_modules = [
+        # do not sort,
+        "//plugins/stream-debugger/core",
+        "//plugins/stream-debugger/shared",
+        "//plugins/stream-debugger/backend",
+        "//plugins/stream-debugger/java",
+        "//plugins/stream-debugger/java/frontend",
+        "//plugins/stream-debugger/rt",
+        "//plugins/stream-debugger/rt/gatherers",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `build intellij.debugger.streams.plugin` end
 
 ### auto-generated section `iml intellij.debugger.streams.plugin` start
@@ -64,23 +100,6 @@ exports_files(
 )
 ### auto-generated section `iml intellij.debugger.streams.plugin` end
 
-### auto-generated section `dev intellij.debugger.streams.plugin` start
-dev_dist_plugin(
-    descriptor_module = ":debugger-streams-plugin",
-    prepacked_content_modules = [
-        "//plugins/stream-debugger/backend:backend_content_module_jar",
-        "//plugins/stream-debugger/core:core_content_module_jar",
-        "//plugins/stream-debugger/java/frontend:frontend_content_module_jar",
-        "//plugins/stream-debugger/java:java_content_module_jar",
-        "//plugins/stream-debugger/shared:shared_content_module_jar",
-    ],
-    prepacked_jars = {
-        "//plugins/stream-debugger/rt/gatherers:gatherers_content_module_jar": "intellij.debugger.streams.java.rt.gatherers.jar",
-        "//plugins/stream-debugger/rt:rt_content_module_jar": "intellij.debugger.streams.java.rt.jar",
-    },
-)
-### auto-generated section `dev intellij.debugger.streams.plugin` end
-
 ### auto-generated section `build intellij.java.debugger.streams.tests` start
 jvm_library(
     name = "java-debugger-streams-tests",
@@ -90,7 +109,11 @@ jvm_library(
     ),
     module_name = "intellij.java.debugger.streams.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = ["//java/debugger/backend"],
+    runtime_deps = [
+        # do not sort,
+        "//java/debugger/backend",
+        "//xml/plugin",
+    ],
 )
 
 jvm_library(
@@ -115,6 +138,7 @@ jvm_library(
         "//platform/platform-impl:ide-impl_test_lib",
         "//java/debugger/backend:backend_test_lib",
         "//platform/platform-util-io:ide-util-io_test_lib",
+        "//xml/plugin:plugin_test_lib",
     ],
     deps = [
         # do not sort,
@@ -168,8 +192,6 @@ jvm_library(
         "//platform/structure-view-impl/plugin:plugin_test_lib",
         "//platform/todo/plugin",
         "//platform/todo/plugin:plugin_test_lib",
-        "//libraries/misc/plugin",
-        "//libraries/misc/plugin:plugin_test_lib",
         "//java/openapi:java",
         "//java/openapi:java_test_lib",
         "//platform/core-ui",

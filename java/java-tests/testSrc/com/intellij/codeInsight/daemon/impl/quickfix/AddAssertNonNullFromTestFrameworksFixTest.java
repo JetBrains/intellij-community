@@ -28,7 +28,7 @@ public class AddAssertNonNullFromTestFrameworksFixTest extends LightQuickFixPara
       IntelliJProjectConfiguration.LibraryRoots junit5Library = IntelliJProjectConfiguration.getModuleLibrary("intellij.libraries.junit5", "JUnit5");
       PsiTestUtil.addLibrary(model, "JUnit5", "", ArrayUtil.toStringArray(junit5Library.getClassesPaths()));
 
-      IntelliJProjectConfiguration.LibraryRoots testNGLibrary = IntelliJProjectConfiguration.getProjectLibrary("TestNG");
+      IntelliJProjectConfiguration.LibraryRoots testNGLibrary = IntelliJProjectConfiguration.getModuleLibrary("intellij.libraries.testng", "TestNG");
       PsiTestUtil.addLibrary(model, "TestNG", "", ArrayUtil.toStringArray(testNGLibrary.getClassesPaths()));
 
       DefaultLightProjectDescriptor.addJetBrainsAnnotations(model);

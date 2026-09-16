@@ -1,3 +1,0 @@
-- name: dist.all/lib/intellij.platform.structureView.frontend.jar
-  modules:
-  - name: intellij.platform.structureView.frontend

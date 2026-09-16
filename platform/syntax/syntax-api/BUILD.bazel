@@ -68,7 +68,8 @@ jvm_library(
         "//platform/multiplatformSupport:multiplatformSupport_test_lib",
         "//libraries/junit5",
         "//libraries/junit5:junit5_test_lib",
-        "@lib//:kotlin-test",
+        "//libraries/kotlin/test:libraries-kotlinTest",
+        "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.syntax` end
@@ -121,7 +122,8 @@ jvm_library(
         "//platform/multiplatformSupport:multiplatformSupport_test_lib",
         "//libraries/junit5",
         "//libraries/junit5:junit5_test_lib",
-        "@lib//:kotlin-test",
+        "//libraries/kotlin/test:libraries-kotlinTest",
+        "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.syntax.tests` end

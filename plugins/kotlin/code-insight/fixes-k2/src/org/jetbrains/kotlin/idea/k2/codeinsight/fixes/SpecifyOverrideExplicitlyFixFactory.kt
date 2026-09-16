@@ -20,6 +20,8 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
+import org.jetbrains.kotlin.idea.base.psi.addMemberDeclaration
+import org.jetbrains.kotlin.idea.base.psi.addModifierKeyword
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
@@ -138,12 +140,12 @@ internal object SpecifyOverrideExplicitlyFixFactory {
             val writableParams = elementContext.delegateParameters.mapNotNull { it.element }.map(updater::getWritable)
 
             for (param in writableParams) {
-                param.addModifier(KtTokens.PRIVATE_KEYWORD)
+                param.addModifierKeyword(KtTokens.PRIVATE_KEYWORD)
                 param.addAfter(factory.createValKeyword(), param.modifierList)
             }
 
             for (member in elementContext.generatedMembers) {
-                element.addDeclaration(member).let(::shortenReferences)
+                element.addMemberDeclaration(member).let(::shortenReferences)
             }
         }
 

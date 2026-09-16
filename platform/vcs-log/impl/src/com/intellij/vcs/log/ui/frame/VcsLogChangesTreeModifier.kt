@@ -12,7 +12,7 @@ interface VcsLogChangesTreeModifier {
   companion object {
     private val EP = ExtensionPointName.create<VcsLogChangesTreeModifier>("com.intellij.vcsLogChangesTreeBuilder")
 
-    @RequiresBackgroundThread
+    @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
     fun modifyTreeModelBuilder(treeModel: TreeModelBuilder, state: VcsLogAsyncChangesTreeModel.ChangesState.Changes): TreeModelBuilder {
       EP.forEachExtensionSafe { extension ->
         if (extension.isApplicable(treeModel)) {
@@ -25,6 +25,6 @@ interface VcsLogChangesTreeModifier {
 
   fun isApplicable(model: TreeModelBuilder): Boolean
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun modifyTreeModelBuilder(treeModel: TreeModelBuilder, state: VcsLogAsyncChangesTreeModel.ChangesState.Changes): TreeModelBuilder
 }

@@ -14,6 +14,7 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.containers.toArray
 import com.intellij.util.diff.Diff
+import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -63,12 +64,21 @@ import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.flow.transformLatest
+import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.CompletionException
+import java.util.concurrent.CompletionStage
+import java.util.concurrent.ExecutionException
+import java.util.function.BiFunction
+import kotlin.coroutines.Continuation
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 import kotlin.reflect.KClass
 
 /**
@@ -296,7 +306,7 @@ private fun <T, R> Flow<T>.mapScoped2(supervisor: Boolean, mapper: suspend Corou
       launchNow {
         try {
           collect { state ->
-            lastScope?.cancelAndJoinSilently()
+            lastScope?.cancelAndJoin()
             lastScope = launchNow {
               val scopeBody: suspend CoroutineScope.() -> Unit = {
                 val result = mapper(state)
@@ -509,36 +519,61 @@ suspend fun <T> Flow<Deferred<T>>.awaitCompleted(): T =
   }.first().getOrThrow()
 
 /**
+ * A copy-paste of [await] which interrupts the future when await is canceled
+ */
+internal suspend fun <T> CompletionStage<T>.awaitInterrupting(): T {
+  val future = toCompletableFuture() // retrieve the future
+  // fast path when CompletableFuture is already done (does not suspend)
+  if (future.isDone) {
+    try {
+      @Suppress("UNCHECKED_CAST", "BlockingMethodInNonBlockingContext")
+      return future.get() as T
+    } catch (e: ExecutionException) {
+      throw e.cause ?: e // unwrap original cause from ExecutionException
+    }
+  }
+  // slow path -- suspend
+  return suspendCancellableCoroutine { cont: CancellableContinuation<T> ->
+    val consumer = ContinuationHandler(cont)
+    handle(consumer)
+    cont.invokeOnCancellation {
+      future.cancel(true)
+      consumer.cont = null // shall clear reference to continuation to aid GC
+    }
+  }
+}
+
+private class ContinuationHandler<T>(
+  @Volatile @JvmField var cont: Continuation<T>?
+) : BiFunction<T?, Throwable?, Unit> {
+  @Suppress("UNCHECKED_CAST")
+  override fun apply(result: T?, exception: Throwable?) {
+    val cont = this.cont ?: return // atomically read current value unless null
+    if (exception == null) {
+      // the future has completed normally
+      cont.resume(result as T)
+    } else {
+      // the future has completed with an exception, unwrap it to provide consistent view of .await() result and to propagate only original exception
+      cont.resumeWithException((exception as? CompletionException)?.cause ?: exception)
+    }
+  }
+}
+
+/**
  * Maps a flow or results to a flow of a mapped result
  */
 fun <T, R> Flow<Result<T>>.mapCatching(mapper: suspend (T) -> R): Flow<Result<R>> =
   map { it.mapCatching { value -> mapper(value) } }
 
-/**
- * Maps a flow or results to a flow of values from successful results. Failure results are re-thrown as exceptions.
- */
-@Deprecated("This doesn't work as we expected it to. The flow will actually stop emitting on error")
-fun <T> Flow<Result<T>>.throwFailure(): Flow<T> =
-  map { it.getOrThrow() }
+@Deprecated("Same as cancelAndJoin", ReplaceWith("cancelAndJoin()"))
+suspend fun CoroutineScope.cancelAndJoinSilently(): Unit = cancelAndJoin()
 
 /**
- * Cancel the scope, await its completion but ignore the completion exception if any to void cancelling the caller
+ * @see [Job.cancelAndJoin]
  */
-suspend fun CoroutineScope.cancelAndJoinSilently() {
+suspend fun CoroutineScope.cancelAndJoin() {
   val cs = this
-  cs.coroutineContext[Job]?.cancelAndJoinSilently() ?: error("Missing Job in $this")
-}
-
-/**
- * Cancel the job, await its completion but ignore the completion exception if any to void cancelling the caller
- */
-suspend fun Job.cancelAndJoinSilently() {
-  val job = this
-  try {
-    job.cancelAndJoin()
-  }
-  catch (ignored: Exception) {
-  }
+  cs.coroutineContext[Job]?.cancelAndJoin() ?: error("Missing Job in $this")
 }
 
 /**

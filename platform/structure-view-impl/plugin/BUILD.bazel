@@ -1,5 +1,29 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
+load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_DESCRIPTORS", "MODULE_TARGETS")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `dev intellij.platform.structureView.plugin` start
+dev_dist_plugin(
+    descriptor = "resources/META-INF/plugin.xml",
+    descriptor_index = MODULE_DESCRIPTORS,
+    descriptor_modules = [
+        "intellij.platform.structureView",
+        "intellij.platform.structureView.backend",
+        "intellij.platform.structureView.frontend",
+        "intellij.platform.structureView.impl",
+    ],
+    main_module = "intellij.platform.structureView.plugin",
+    module_targets = MODULE_TARGETS,
+    prepacked_content_modules = [
+        # do not sort,
+        "intellij.platform.structureView.backend",
+        "intellij.platform.structureView.frontend",
+        "intellij.platform.structureView.impl",
+        "intellij.platform.structureView",
+    ],
+)
+### auto-generated section `dev intellij.platform.structureView.plugin` end
 
 ### auto-generated section `build intellij.platform.structureView.plugin` start
 jvm_library(
@@ -27,6 +51,19 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = [":plugin"],
 )
+
+ij_plugin(
+    name = "plugin_plugin",
+    descriptor_module = ":plugin",
+    content_modules = [
+        # do not sort,
+        "//platform/structure-view-impl:structureView",
+        "//platform/structure-view-impl/backend",
+        "//platform/structure-view-impl/frontend",
+        "//platform/structure-view-impl/intellij.platform.structureView.impl:structureView-impl",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `build intellij.platform.structureView.plugin` end
 
 ### auto-generated section `iml intellij.platform.structureView.plugin` start
@@ -38,23 +75,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.structureView.plugin` end
-
-### auto-generated section `dev intellij.platform.structureView.plugin` start
-dev_dist_plugin(
-    descriptor = "resources/META-INF/plugin.xml",
-    descriptor_module = ":plugin",
-    descriptors = {
-        "@community//platform/structure-view-impl/backend:resources/intellij.platform.structureView.backend.xml": "intellij.platform.structureView.backend.xml",
-        "@community//platform/structure-view-impl/frontend:resources/intellij.platform.structureView.frontend.xml": "intellij.platform.structureView.frontend.xml",
-        "@community//platform/structure-view-impl/intellij.platform.structureView.impl:resources/intellij.platform.structureView.impl.xml": "intellij.platform.structureView.impl.xml",
-        "@community//platform/structure-view-impl:resources/intellij.platform.structureView.xml": "intellij.platform.structureView.xml",
-    },
-    main_module = "intellij.platform.structureView.plugin",
-    prepacked_content_modules = [
-        "//platform/structure-view-impl/backend:backend_content_module_jar",
-        "//platform/structure-view-impl/frontend:frontend_content_module_jar",
-        "//platform/structure-view-impl/intellij.platform.structureView.impl:structureView-impl_content_module_jar",
-        "//platform/structure-view-impl:structureView_content_module_jar",
-    ],
-)
-### auto-generated section `dev intellij.platform.structureView.plugin` end

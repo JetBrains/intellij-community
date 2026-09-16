@@ -8,9 +8,9 @@ import com.intellij.openapi.util.SimpleModificationTracker
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * Modification tracker that should be incremented when type engine settings change.
- * This allows caches that depend on type engine settings (like TypeEvalContextCache)
- * to be invalidated when the user switches between type engines.
+ * Modification tracker that should be incremented when the engine that a new type context picks can change.
+ * That happens when the user switches between type engines, and when the server of the selected external
+ * engine starts or stops. Caches that depend on the engine (like TypeEvalContextCache) are then invalidated.
  */
 @Service(Service.Level.PROJECT)
 @ApiStatus.Internal

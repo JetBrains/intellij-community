@@ -30,7 +30,10 @@ class OptionButtonTest {
       val button = fetch()
       assertEquals("Auto-Configure", button.text)
       assertTrue(button.isSimpleButton)
-      performClick()
+      // What is under test is that onClick reaches the button's action. A mouse gesture would not reach it:
+      // JBOptionButton keeps its mouse handling on the inner button its UI installs, so an event aimed at the
+      // composite lands on nothing.
+      button.doClick()
       assertEquals(1, clicks)
     }
 

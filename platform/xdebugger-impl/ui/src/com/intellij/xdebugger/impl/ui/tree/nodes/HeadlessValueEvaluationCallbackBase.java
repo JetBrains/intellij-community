@@ -13,9 +13,6 @@ import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.awt.Font;
 
 @ApiStatus.Internal
 public class HeadlessValueEvaluationCallbackBase implements XFullValueEvaluator.XFullValueEvaluationCallback {

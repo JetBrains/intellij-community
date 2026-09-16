@@ -244,7 +244,7 @@
     </reference>
 
     <group id="XDebugger.Code.Toolbar" class="com.intellij.xdebugger.impl.actions.DebuggerCodeToolbarGroup">
-      <add-to-group group-id="Floating.CodeToolbar" anchor="after" relative-to-action="Floating.CodeToolbar.Surround"/>
+      <add-to-group group-id="Floating.CodeToolbar.Additional" anchor="last"/>
       <separator/>
       <reference ref="EvaluateExpression"/>
       <reference ref="Debugger.AddToWatch"/>

@@ -24,8 +24,6 @@ import org.jetbrains.kotlin.psi.KtElement
  *
  * Currently, it's not supposed to be used in IntelliJ IDEA,
  * and should only be used in the Kotlin LSP Server setup.
- *
- * Note: Avoid instantiating directly, see [KotlinAddImportActionFactory] for that.
  */
 internal class AddImportModCommandAction(
     element: KtElement,

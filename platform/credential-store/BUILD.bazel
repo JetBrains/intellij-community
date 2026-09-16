@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.platform.credentialStore` start
+content_module_jar(module = ":credential-store")
+### auto-generated section `dev intellij.platform.credentialStore` end
+
 ### auto-generated section `build intellij.platform.credentialStore` start
 jvm_library(
     name = "credential-store",
@@ -29,8 +33,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":credential-store")
-
 jvm_library(
     name = "credential-store_test_lib",
     testonly = True,
@@ -57,7 +59,6 @@ exports_files(
     [
         "intellij.platform.credentialStore.iml",
         "resources/intellij.platform.credentialStore.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

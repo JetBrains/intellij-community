@@ -2,6 +2,7 @@ package com.intellij.terminal.frontend.view.impl
 
 import com.intellij.execution.impl.EditorTextDecorationApplier
 import com.intellij.execution.impl.createEditorTextDecorationApplier
+import com.intellij.ide.ActivityTracker
 import com.intellij.ide.dnd.DnDSupport
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataSink
@@ -27,8 +28,10 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.TerminalTitle
 import com.intellij.terminal.actions.TerminalActionUtil
+import com.intellij.terminal.frontend.fus.TerminalCommandCompletionStatistics
 import com.intellij.terminal.frontend.fus.TerminalFusCursorPainterListener
 import com.intellij.terminal.frontend.fus.TerminalFusFirstOutputListener
+import com.intellij.terminal.frontend.fus.installTypingLatencyTracker
 import com.intellij.terminal.frontend.view.TerminalKeyEvent
 import com.intellij.terminal.frontend.view.TerminalKeyEventsListener
 import com.intellij.terminal.frontend.view.TerminalTextSelectionModel
@@ -89,6 +92,7 @@ import org.jetbrains.plugins.terminal.block.ui.calculateTerminalSize
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinkId
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalSourceNavigationInfo
+import org.jetbrains.plugins.terminal.hyperlinks.TerminalSourceNavigationProjectResolver
 import org.jetbrains.plugins.terminal.hyperlinks.session.TerminalHyperlinksSessionId
 import org.jetbrains.plugins.terminal.session.TerminalGridSize
 import org.jetbrains.plugins.terminal.session.TerminalStartupOptions
@@ -128,7 +132,7 @@ class TerminalViewImpl(
   settings: JBTerminalSystemSettingsProviderBase,
   startupFusInfo: TerminalStartupFusInfo?,
   override val coroutineScope: CoroutineScope,
-  sourceNavigationProjectPath: String? = null,
+  sourceNavigationProjectResolver: TerminalSourceNavigationProjectResolver? = null,
 ) : TerminalView {
   override val sessionDeferred: CompletableDeferred<TerminalSession> = CompletableDeferred(coroutineScope.coroutineContext.job)
 
@@ -238,7 +242,7 @@ class TerminalViewImpl(
       settings,
       coroutineScope.childScope("TerminalAlternateBufferEditor")
     )
-    TerminalSourceNavigationInfo.setProjectPath(alternateBufferEditor, sourceNavigationProjectPath)
+    TerminalSourceNavigationInfo.setResolver(alternateBufferEditor, sourceNavigationProjectResolver)
     val alternateBufferModel = MutableTerminalOutputModelImpl(alternateBufferEditor.document, maxOutputLength = 0)
     val alternateBufferModelController = TerminalOutputModelControllerImpl(alternateBufferModel)
     val alternateBufferKeyEventsHandler = TerminalKeyEventsHandlerImpl(
@@ -277,7 +281,7 @@ class TerminalViewImpl(
     )
 
     outputEditor = TerminalEditorFactory.createOutputEditor(project, settings, coroutineScope.childScope("TerminalOutputEditor"))
-    TerminalSourceNavigationInfo.setProjectPath(outputEditor, sourceNavigationProjectPath)
+    TerminalSourceNavigationInfo.setResolver(outputEditor, sourceNavigationProjectResolver)
     outputEditor.putUserData(TerminalInput.KEY, terminalInput)
     val outputModel = MutableTerminalOutputModelImpl(outputEditor.document, maxOutputLength = TerminalUiUtils.getDefaultMaxOutputLength())
 
@@ -359,7 +363,6 @@ class TerminalViewImpl(
       coroutineScope.childScope("TerminalShellIntegrationEventsHandler"),
     )
     controller.addEventsHandler(shellIntegrationEventsHandler)
-
     controller.addTerminationCallback(coroutineScope.asDisposable()) {
       mutableSessionState.value = TerminalViewSessionState.Terminated
       // Hide the cursor on process termination
@@ -428,8 +431,18 @@ class TerminalViewImpl(
       CoroutineName("Shell integration features init")
     ) {
       val shellIntegration = shellIntegrationDeferred.await()
+      val commandCompletionStatistics = TerminalCommandCompletionStatistics.install(
+        project = project,
+        shellIntegration = shellIntegration,
+        outputModel = outputModel,
+        isCursorVisible = { sessionModel.terminalState.value.isCursorVisible },
+        registerKeyEventsListener = this@TerminalViewImpl::addKeyEventsListener,
+        coroutineScope = coroutineScope.childScope("TerminalCommandCompletionStatistics"),
+      )
 
       outputEditor.putUserData(TerminalBlocksModel.KEY, shellIntegration.blocksModel)
+      outputEditor.putUserData(TerminalCommandCompletionStatistics.KEY, commandCompletionStatistics)
+
       TerminalBlocksDecorator(
         outputEditor,
         outputModel,
@@ -445,6 +458,13 @@ class TerminalViewImpl(
         shellIntegration = shellIntegration,
         coroutineScope = coroutineScope.childScope("TerminalTypingTracker")
       )
+      installTypingLatencyTracker(
+        terminalView = this@TerminalViewImpl,
+        editor = outputEditor,
+        typingTracker = typingTracker,
+        coroutineScope = coroutineScope.childScope("TerminalTypingLatencyTracker"),
+      )
+
       if (TerminalAiInlineCompletion.isEnabled()) {
         configureInlineCompletion(outputModel, shellIntegration, typingTracker)
       }
@@ -467,6 +487,7 @@ class TerminalViewImpl(
     sessionDeferred.complete(session)
     controller.handleEvents(session)
     mutableSessionState.value = TerminalViewSessionState.Running
+    ActivityTracker.getInstance().inc()  // Make actions notice that session is initialized
   }
 
   override suspend fun hasChildProcesses(): Boolean {

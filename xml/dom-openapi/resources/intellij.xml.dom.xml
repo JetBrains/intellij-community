@@ -32,7 +32,7 @@
                     interface="com.intellij.util.xml.DomFileDescription"
                     dynamic="true"/>
 
-    <extensionPoint name="moduleContextProvider" interface="com.intellij.util.xml.ModuleContextProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.moduleContextProvider" interface="com.intellij.util.xml.ModuleContextProvider" dynamic="true"/>
   </extensionPoints>
 
   <actions resource-bundle="messages.XmlDomBundle">

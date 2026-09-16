@@ -191,6 +191,17 @@ public class Notification {
 
   @ApiStatus.Internal
   public boolean canShowFor(@Nullable Project project) {
+    configureDoNotAskOption();
+    if (DoNotAskAppManager.getInstance().isDoNotAsk(myDoNotAskId)) {
+      return false;
+    }
+    if (project != null) {
+      return !DoNotAskProjectManager.getInstance(project).isDoNotAsk(myDoNotAskId);
+    }
+    return true;
+  }
+
+  private void configureDoNotAskOption() {
     if (myDoNotAskId == null && myDisplayId != null) {
       myDoNotAskDisplayName = myTitle;
       myDoNotAskId = myDisplayId;
@@ -203,13 +214,6 @@ public class Notification {
       myDoNotAskDisplayName = title;
       myDoNotAskId = myGroupId;
     }
-    if (DoNotAskAppManager.getInstance().isDoNotAsk(myDoNotAskId)) {
-      return false;
-    }
-    if (project != null) {
-      return !DoNotAskProjectManager.getInstance(project).isDoNotAsk(myDoNotAskId);
-    }
-    return true;
   }
 
   @ApiStatus.Internal
@@ -447,6 +451,7 @@ public class Notification {
   @ApiStatus.Experimental
   @Contract("_ -> this")
   public Notification setDoNotAskFor(@Nullable Project project) {
+    configureDoNotAskOption();
     if (project == null) {
       DoNotAskAppManager.getInstance().markDoNotAsk(myDoNotAskId, myDoNotAskDisplayName);
     }

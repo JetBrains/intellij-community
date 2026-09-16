@@ -1,5 +1,12 @@
 load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_java//java:defs.bzl", "java_binary")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
+
+java_binary(
+    name = "generate_icon_classes",
+    main_class = "org.jetbrains.intellij.build.images.GenerateIconClassesKt",
+    runtime_deps = [":images-build"],
+)
 
 jps_test(
     name = "images-build-tests_test_smoke",
@@ -53,7 +60,6 @@ jvm_library(
         "@lib//:kotlin-stdlib",
         "//libraries/opentelemetry",
         "//libraries/opentelemetry-semconv",
-        "@lib//:okhttp",
         "//build/tasks",
         "//platform/util/rt-java8",
         "//libraries/gson",
@@ -186,9 +192,12 @@ jvm_library(
         "//libraries/opentelemetry-semconv:opentelemetry-semconv_test_lib",
         "//platform/util/xmlDom",
         "//platform/util/xmlDom:xmlDom_test_lib",
-        "@lib//:okhttp",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
         "//build/tasks",
         "//build/tasks:tasks_test_lib",
+        "//build/tasks:tasks-tests",
+        "//build/tasks:tasks-tests_test_lib",
         "//platform/util/rt-java8",
         "//platform/util/rt-java8:rt-java8_test_lib",
         "//libraries/gson",

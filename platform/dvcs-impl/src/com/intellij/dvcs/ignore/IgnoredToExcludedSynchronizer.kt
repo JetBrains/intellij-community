@@ -138,8 +138,6 @@ class IgnoredToExcludedSynchronizer(project: Project, private val cs: CoroutineS
     markIgnoredAsExcluded(project, files)
   }
 
-  override fun doFilterFiles(files: Collection<VirtualFile>) = files.filter(VirtualFile::isValid)
-
   override fun needDoForCurrentProject() = VcsConfiguration.getInstance(project).MARK_IGNORED_AS_EXCLUDED
 
   fun onIgnoredFilesUpdate(ignoredFilePaths: Set<FilePath>, previouslyIgnoredFilePaths: Set<FilePath>) {
@@ -158,8 +156,7 @@ class IgnoredToExcludedSynchronizer(project: Project, private val cs: CoroutineS
   }
 
   private fun processIgnored(ignoredPaths: Collection<FilePath>) {
-    val ignoredDirs =
-      determineIgnoredDirsToExclude(project, ignoredPaths)
+    val ignoredDirs = determineValidIgnoredDirsToExclude(project, ignoredPaths)
 
     if (allowShowNotification()) {
       processFiles(ignoredDirs)
@@ -172,7 +169,7 @@ class IgnoredToExcludedSynchronizer(project: Project, private val cs: CoroutineS
         }
     }
     else if (needDoForCurrentProject()) {
-      doActionOnChosenFiles(doFilterFiles(ignoredDirs))
+      doActionOnChosenFiles(ignoredDirs)
     }
   }
 
@@ -191,7 +188,7 @@ class IgnoredToExcludedSynchronizer(project: Project, private val cs: CoroutineS
         val dirsToExclude = withModalProgress(project, ActionsBundle.message("action.CheckIgnoredAndNotExcludedDirectories.progress")) {
           awaitIgnoredFilesUpdate(project)
           val ignoredFilePaths = ChangeListManager.getInstance(project).ignoredFilePaths
-          determineIgnoredDirsToExclude(project, ignoredFilePaths)
+          determineValidIgnoredDirsToExclude(project, ignoredFilePaths)
         }
 
         if (dirsToExclude.isEmpty()) {
@@ -255,7 +252,7 @@ private suspend fun awaitIgnoredFilesUpdate(project: Project) {
   }
 }
 
-private fun determineIgnoredDirsToExclude(project: Project, ignoredPaths: Collection<FilePath>): List<VirtualFile> {
+private fun determineValidIgnoredDirsToExclude(project: Project, ignoredPaths: Collection<FilePath>): List<VirtualFile> {
   val sourceRoots = getProjectSourceRoots(project)
   val fileIndex = ProjectFileIndex.getInstance(project)
   val shelfPath = ShelveChangesManager.getShelfPath(project)

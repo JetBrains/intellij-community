@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.terminal.cloud` start
+content_module_jar(module = ":cloud")
+### auto-generated section `dev intellij.terminal.cloud` end
+
 ### auto-generated section `build intellij.terminal.cloud` start
 jvm_library(
     name = "cloud",
@@ -30,8 +34,6 @@ jvm_library(
         "//platform/remote-servers/api:remoteServers",
     ],
 )
-
-content_module_jar(module = ":cloud")
 
 jvm_library(
     name = "cloud_test_lib",

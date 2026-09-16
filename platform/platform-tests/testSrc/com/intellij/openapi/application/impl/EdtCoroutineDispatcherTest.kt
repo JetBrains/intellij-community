@@ -567,7 +567,7 @@ private fun assertLockAccessReported(culprit: String, action: () -> Unit) {
   assertThat(error.message).contains("Attempt to take $culprit was reported")
 }
 
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 // we cannot use `com.intellij.openapi.application.impl.UtilKt.withModality` because `Application.invokeAndWait` takes WIL
 // and Dispatchers.UI is allergic to WIL
 private fun withModality(action: () -> Unit) {

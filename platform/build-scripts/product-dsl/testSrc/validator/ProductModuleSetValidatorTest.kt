@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.productLayout.validator
 
+import com.intellij.platform.buildScripts.concurrency.SharedTaskOwner
 import com.intellij.platform.pluginGraph.ContentModuleName
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
 import kotlinx.coroutines.Dispatchers
@@ -27,6 +28,13 @@ import org.junit.jupiter.api.extension.ExtendWith
 class ProductModuleSetValidatorTest {
   @Nested
   inner class DuplicateModulesTest {
+    private val owner = SharedTaskOwner("DuplicateModulesTest")
+
+    @org.junit.jupiter.api.AfterEach
+    fun closeSharedTasks() {
+      owner.close()
+    }
+
     @Test
     fun `reports duplicate modules across module sets`(): Unit = runBlocking(Dispatchers.Default) {
       val graph = pluginGraph {
@@ -42,7 +50,7 @@ class ProductModuleSetValidatorTest {
         }
       }
 
-      val model = testGenerationModel(graph)
+      val model = testGenerationModel(graph, owner = owner)
       val errors = runValidationRule(ProductModuleSetValidator, model)
 
       assertThat(errors).hasSize(1)
@@ -63,7 +71,7 @@ class ProductModuleSetValidatorTest {
         }
       }
 
-      val model = testGenerationModel(graphWithDup)
+      val model = testGenerationModel(graphWithDup, owner = owner)
       val errors = runValidationRule(ProductModuleSetValidator, model)
 
       assertThat(errors).hasSize(1)
@@ -75,6 +83,13 @@ class ProductModuleSetValidatorTest {
 
   @Nested
   inner class MissingDependenciesTest {
+    private val owner = SharedTaskOwner("MissingDependenciesTest")
+
+    @org.junit.jupiter.api.AfterEach
+    fun closeSharedTasks() {
+      owner.close()
+    }
+
     @Test
     fun `reports missing transitive dependency for critical module`(): Unit = runBlocking(Dispatchers.Default) {
       // module.a (EMBEDDED) -> dep.module -> missing.module
@@ -91,7 +106,7 @@ class ProductModuleSetValidatorTest {
         // missing.module vertex created but not available in product
       }
 
-      val model = testGenerationModel(graph)
+      val model = testGenerationModel(graph, owner = owner)
       val errors = runValidationRule(ProductModuleSetValidator, model)
 
       assertThat(errors).hasSize(1)
@@ -115,7 +130,7 @@ class ProductModuleSetValidatorTest {
         linkContentModuleDeps("module.a", "module.b")
       }
 
-      val model = testGenerationModel(graph)
+      val model = testGenerationModel(graph, owner = owner)
       val errors = runValidationRule(ProductModuleSetValidator, model)
 
       assertThat(errors).isEmpty()
@@ -139,7 +154,7 @@ class ProductModuleSetValidatorTest {
         linkContentModuleDeps("module.a", "plugin.module")
       }
 
-      val model = testGenerationModel(graph)
+      val model = testGenerationModel(graph, owner = owner)
       val errors = runValidationRule(ProductModuleSetValidator, model)
 
       assertThat(errors).isEmpty()
@@ -158,7 +173,7 @@ class ProductModuleSetValidatorTest {
         linkContentModuleDeps("product.module", "plugin.module")
       }
 
-      val model = testGenerationModel(graph)
+      val model = testGenerationModel(graph, owner = owner)
       val errors = runValidationRule(ProductModuleSetValidator, model)
 
       assertThat(errors).isEmpty()
@@ -184,7 +199,7 @@ class ProductModuleSetValidatorTest {
         linkContentModuleDeps("module.a", "global.module")
       }
 
-      val model = testGenerationModel(graph)
+      val model = testGenerationModel(graph, owner = owner)
       val errors = runValidationRule(ProductModuleSetValidator, model)
 
       assertThat(errors).isEmpty()
@@ -203,7 +218,7 @@ class ProductModuleSetValidatorTest {
         linkContentModuleDeps("module.a", "allowed.missing")
       }
 
-      val model = testGenerationModel(graph)
+      val model = testGenerationModel(graph, owner = owner)
       val errors = runValidationRule(ProductModuleSetValidator, model)
 
       assertThat(errors).isEmpty()
@@ -215,7 +230,7 @@ class ProductModuleSetValidatorTest {
         product("IDEA")
       }
 
-      val model = testGenerationModel(graph)
+      val model = testGenerationModel(graph, owner = owner)
       val errors = runValidationRule(ProductModuleSetValidator, model)
 
       assertThat(errors).isEmpty()
@@ -240,7 +255,7 @@ class ProductModuleSetValidatorTest {
         linkContentModuleDeps("critical.module", "missing.dep")
       }
 
-      val model = testGenerationModel(graph)
+      val model = testGenerationModel(graph, owner = owner)
       val errors = runValidationRule(ProductModuleSetValidator, model)
 
       // Error expected - missing.dep is not available in product and critical.module is critical
@@ -267,7 +282,7 @@ class ProductModuleSetValidatorTest {
         linkContentModuleDeps("module.a", "dep.module")
       }
 
-      val model = testGenerationModel(graph)
+      val model = testGenerationModel(graph, owner = owner)
       val errors = runValidationRule(ProductModuleSetValidator, model)
 
       // No error - dep.module is available in set2
@@ -290,7 +305,7 @@ class ProductModuleSetValidatorTest {
         linkContentModuleDeps("dep.a", "dep.b")
       }
 
-      val model = testGenerationModel(graph)
+      val model = testGenerationModel(graph, owner = owner)
       val errors = runValidationRule(ProductModuleSetValidator, model)
 
       // No errors - all transitive deps available in module set

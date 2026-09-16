@@ -326,7 +326,7 @@ class LocalHistoryLesson(
     }
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private fun removeLineWithAnimation(editor: Editor) {
     val document = editor.document
     val startOffset = document.getLineStartOffset(lineToDelete)
@@ -342,7 +342,7 @@ class LocalHistoryLesson(
     }
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private fun insertStringWithAnimation(editor: Editor, text: String, offset: Int) {
     val document = editor.document
     for (ind in text.indices) {

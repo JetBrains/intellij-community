@@ -20,6 +20,7 @@ internal class JsonLogHandler : StreamHandler() {
       "threadID" to record.longThreadID,
       "loggerName" to record.loggerName,
       "level" to record.level.name,
+      // `record.thrown` holds the real cause. `JulLogger` drops the `UnhandledException` wrapper. See IJPL-254578.
       "message" to if (record.thrown != null) ExceptionUtil.getThrowableText(record.thrown) else formatter.format(record)
     )))
   }

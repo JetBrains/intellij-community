@@ -2,6 +2,10 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.java.analysis.impl` start
+content_module_jar(module = ":analysis-impl")
+### auto-generated section `dev intellij.java.analysis.impl` end
+
 ### auto-generated section `build intellij.java.analysis.impl` start
 create_kotlinc_options(
     name = "custom_analysis-impl",
@@ -85,8 +89,6 @@ jvm_library(
         "//platform/util-ex",
     ],
 )
-
-content_module_jar(module = ":analysis-impl")
 
 jvm_library(
     name = "analysis-impl_test_lib",

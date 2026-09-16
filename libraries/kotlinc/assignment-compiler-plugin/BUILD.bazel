@@ -1,5 +1,4 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
-load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.libraries.kotlinc.assignment.compiler.plugin` start
 jvm_library(
@@ -21,11 +20,6 @@ jvm_library(
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//libraries/kotlinc/kotlin-compiler-fir:libraries-kotlinc-kotlin-compiler-fir",
     ],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-kotlinc-assignment-compiler-plugin-kotlinc-assignment-compiler-plugin"],
-    module = ":libraries-kotlinc-assignment-compiler-plugin",
 )
 
 jvm_library(
@@ -52,7 +46,6 @@ exports_files(
     [
         "intellij.libraries.kotlinc.assignment.compiler.plugin.iml",
         "resources/intellij.libraries.kotlinc.assignment.compiler.plugin.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

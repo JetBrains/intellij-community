@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
-import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
@@ -24,12 +23,9 @@ import org.jetbrains.annotations.TestOnly;
 import java.io.IOException;
 import java.nio.file.Path;
 
-import static com.intellij.util.SystemProperties.getBooleanProperty;
-
 @Internal
 public class MapIndexStorage<Key, Value> extends IndexStorageLockingBase implements IndexStorage<Key, Value>, MeasurableIndexStore {
   private static final Logger LOG = Logger.getInstance(MapIndexStorage.class);
-  private static final boolean ENABLE_WAL = getBooleanProperty("idea.index.enable.wal", false);
 
   private ValueContainerMap<Key, Value> myMap;
 
@@ -43,7 +39,6 @@ public class MapIndexStorage<Key, Value> extends IndexStorageLockingBase impleme
   /** {@link FileBasedIndexExtension#keyIsUniqueForIndexedFile} and {@link SingleEntryFileBasedIndexExtension} */
   private final boolean myKeyIsUniqueForIndexedFile;
   private final boolean myReadOnly;
-  private final boolean myEnableWal;
   private final @NotNull ValueContainerInputRemapping myInputRemapping;
   private final @Nullable StorageLockContext myStorageLockContext;
 
@@ -52,7 +47,7 @@ public class MapIndexStorage<Key, Value> extends IndexStorageLockingBase impleme
                          @NotNull DataExternalizer<Value> valueExternalizer,
                          int cacheSize,
                          boolean keyIsUniqueForIndexedFile) throws IOException {
-    this(storageFile, keyDescriptor, valueExternalizer, cacheSize, keyIsUniqueForIndexedFile, true, false, false, null);
+    this(storageFile, keyDescriptor, valueExternalizer, cacheSize, keyIsUniqueForIndexedFile, true, false, null);
   }
 
   public MapIndexStorage(Path storageFile,
@@ -62,9 +57,8 @@ public class MapIndexStorage<Key, Value> extends IndexStorageLockingBase impleme
                          boolean keyIsUniqueForIndexedFile,
                          boolean initialize,
                          boolean readOnly,
-                         boolean enableWal,
                          @Nullable ValueContainerInputRemapping inputRemapping) throws IOException {
-    this(storageFile, keyDescriptor, valueExternalizer, cacheSize, keyIsUniqueForIndexedFile, initialize, readOnly, enableWal,
+    this(storageFile, keyDescriptor, valueExternalizer, cacheSize, keyIsUniqueForIndexedFile, initialize, readOnly,
          inputRemapping, null);
   }
 
@@ -76,7 +70,6 @@ public class MapIndexStorage<Key, Value> extends IndexStorageLockingBase impleme
                          boolean keyIsUniqueForIndexedFile,
                          boolean initialize,
                          boolean readOnly,
-                         boolean enableWal,
                          @Nullable ValueContainerInputRemapping inputRemapping,
                          @Nullable StorageLockContext storageLockContext) throws IOException {
     myBaseStorageFile = storageFile;
@@ -85,7 +78,6 @@ public class MapIndexStorage<Key, Value> extends IndexStorageLockingBase impleme
     myDataExternalizer = valueExternalizer;
     myKeyIsUniqueForIndexedFile = keyIsUniqueForIndexedFile;
     myReadOnly = readOnly;
-    myEnableWal = enableWal;
     myStorageLockContext = storageLockContext;
     if (inputRemapping != null) {
       LOG.assertTrue(myReadOnly, "input remapping allowed only for read-only storage");
@@ -159,11 +151,6 @@ public class MapIndexStorage<Key, Value> extends IndexStorageLockingBase impleme
         .withReadonly(isReadOnly)
         .withCompactOnClose(compactOnClose)
         .withStorageLockContext(myStorageLockContext);
-      if (myEnableWal && ENABLE_WAL && !isReadOnly) {
-        builder
-          .withWal(true)
-          .withWalExecutor(SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Index Wal Pool"));
-      }
       return new PersistentMapImpl<>(builder);
     });
   }

@@ -2,6 +2,8 @@
 package org.jetbrains.intellij.build
 
 import com.intellij.platform.buildData.productInfo.ProductInfoLayoutItem
+import com.intellij.platform.buildScripts.concurrency.TaskScope
+import com.intellij.platform.buildScripts.concurrency.taskScope
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanBuilder
 import kotlinx.collections.immutable.PersistentMap
@@ -13,17 +15,19 @@ import org.jetbrains.intellij.build.impl.DistributionBuilderState
 import org.jetbrains.intellij.build.impl.plugins.PluginAutoPublishList
 import org.jetbrains.intellij.build.io.DEFAULT_TIMEOUT
 import org.jetbrains.intellij.build.productRunner.IntellijProductRunner
-import org.jetbrains.intellij.build.telemetry.blockingUse
 import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.CancellationException
-import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.time.Duration
 
 interface BuildContext : CompilationContext {
+  val lifetime: BuildLifetime
+
+  override val httpSession: BuildHttpSession
+    get() = lifetime.http
+
   val productProperties: ProductProperties
   val windowsDistributionCustomizer: WindowsDistributionCustomizer?
   val macDistributionCustomizer: MacDistributionCustomizer?
@@ -151,7 +155,7 @@ interface BuildContext : CompilationContext {
 
   fun findApplicationInfoModule(): JpsModule
 
-  suspend fun signFiles(files: List<Path>, options: PersistentMap<String, String> = persistentMapOf()) {
+  fun signFiles(files: List<Path>, options: PersistentMap<String, String> = persistentMapOf()) {
     proprietaryBuildTools.signTool.signFiles(files = files, context = this, options = options)
   }
 
@@ -162,13 +166,13 @@ interface BuildContext : CompilationContext {
    * This is necessary to generate launchers and other data for the embedded frontend process in a distribution of the full IDE.
    */
   @Internal
-  suspend fun getEmbeddedFrontendProductContext(): BuildContext?
+  fun getEmbeddedFrontendProductContext(): BuildContext?
 
   /**
    * Returns descriptors of plugins that are not bundled with the IDE, but used from the frontend process started from the IDE.
    */
   @Internal
-  suspend fun getLayoutOfAdditionalFrontendOnlyPlugins(): List<PluginBuildResult>
+  fun getLayoutOfAdditionalFrontendOnlyPlugins(): List<PluginBuildResult>
 
   fun getContentModuleFilter(): ContentModuleFilter
 
@@ -178,19 +182,19 @@ interface BuildContext : CompilationContext {
 
   fun shouldBuildDistributionForOS(os: OsFamily, arch: JvmArchitecture): Boolean
 
-  suspend fun createCopyForProduct(productProperties: ProductProperties, projectHomeForCustomizers: Path, prepareForBuild: Boolean = true): BuildContext
+  fun createCopyForProduct(productProperties: ProductProperties, projectHomeForCustomizers: Path, prepareForBuild: Boolean = true): BuildContext
 
   fun reportDistributionBuildNumber()
 
-  suspend fun cleanupJarCache()
+  fun cleanupJarCache()
 
   /**
    * Creates an instance of [IntellijProductRunner] which can be used to run the IDE being built with some command.
    * @param additionalPluginModules main modules of non-bundled plugins, which should be loaded inside the IDE process
    */
-  suspend fun createProductRunner(additionalPluginModules: List<String> = emptyList()): IntellijProductRunner
+  fun createProductRunner(additionalPluginModules: List<String> = emptyList()): IntellijProductRunner
 
-  suspend fun runProcess(
+  fun runProcess(
     args: List<String>,
     workingDir: Path? = null,
     timeout: Duration = DEFAULT_TIMEOUT,
@@ -203,7 +207,7 @@ interface BuildContext : CompilationContext {
   val isNightlyBuild: Boolean
 
   @Internal
-  suspend fun distributionState(): DistributionBuilderState
+  fun distributionState(): DistributionBuilderState
 }
 
 internal val BuildContext.isLanguageServer: Boolean
@@ -216,14 +220,16 @@ internal fun BuildContext.add64IfNeeded(s: String): String =
 /**
  * Runs a build step under a span, unless the step is skipped or fails. The step is a group of forks: a `fork` inside it
  * starts a task on a virtual thread, and the step ends when every fork has ended.
+ *
+ * A failed step is recorded and reported, and `null` is returned. A cancel of the caller, an [InterruptedException] or a
+ * [CancellationException], is not a failure of the step and is rethrown.
  */
-suspend inline fun <T> CompilationContext.executeStep(
+inline fun <T> CompilationContext.executeStep(
   spanBuilder: SpanBuilder,
   stepId: String,
-  coroutineContext: CoroutineContext = EmptyCoroutineContext,
-  crossinline step: suspend TaskScope.(Span) -> T,
+  crossinline step: TaskScope.(Span) -> T,
 ): T? {
-  return spanBuilder.use(coroutineContext) { span ->
+  return spanBuilder.use { span ->
     try {
       options.buildStepListener.onStart(stepId, messages)
       if (isStepSkipped(stepId)) {
@@ -232,45 +238,16 @@ suspend inline fun <T> CompilationContext.executeStep(
         null
       }
       else {
-        taskScope { step(span) }
+        taskScope {
+          val scopeResult = step(span)
+          join { scopeResult }
+        }
       }
     }
     catch (e: CancellationException) {
       throw e
     }
-    catch (e: Throwable) {
-      span.recordException(e)
-      options.buildStepListener.onFailure(stepId, e, messages)
-      null
-    }
-    finally {
-      options.buildStepListener.onCompletion(stepId, messages)
-    }
-  }
-}
-
-/**
- * The non-suspend twin of [executeStep] for a step that only blocks. The step runs on the calling thread, which is
- * a virtual thread in a build.
- */
-inline fun <T> CompilationContext.blockingExecuteStep(
-  spanBuilder: SpanBuilder,
-  stepId: String,
-  crossinline step: (Span) -> T,
-): T? {
-  return spanBuilder.blockingUse { span ->
-    try {
-      options.buildStepListener.onStart(stepId, messages)
-      if (isStepSkipped(stepId)) {
-        span.addEvent("skip '$stepId' step")
-        options.buildStepListener.onSkipping(stepId, messages)
-        null
-      }
-      else {
-        step(span)
-      }
-    }
-    catch (e: CancellationException) {
+    catch (e: InterruptedException) {
       throw e
     }
     catch (e: Throwable) {

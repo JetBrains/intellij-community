@@ -72,6 +72,8 @@ public interface MarkdownHtmlPanel extends ScrollableMarkdownPreview, Disposable
 
   void reloadWithOffset(int offset);
 
+  default void reloadStyles() {}
+
    /**
    * @deprecated implement {@code scrollTo(editor, line, $completion)} instead
    */

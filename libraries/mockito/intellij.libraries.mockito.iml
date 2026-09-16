@@ -5,7 +5,34 @@
     <content url="file://$MODULE_DIR$" />
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" exported="" name="mockito" level="project" />
+    <orderEntry type="module-library" exported="">
+      <library name="mockito" type="repository">
+        <properties maven-id="org.mockito:mockito-core:5.23.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/mockito/mockito-core/5.23.0/mockito-core-5.23.0.jar">
+              <sha256sum>ae295bebd5d11fab97ab297815dc7617188b86003cbce3dfd5c0d5c3a6cc4a0c</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/objenesis/objenesis/3.3/objenesis-3.3.jar">
+              <sha256sum>02dfd0b0439a5591e35b708ed2f5474eb0948f53abf74637e959b8e4ef69bfeb</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="net.bytebuddy:byte-buddy" />
+            <dependency maven-id="net.bytebuddy:byte-buddy-agent" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/mockito/mockito-core/5.23.0/mockito-core-5.23.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/objenesis/objenesis/3.3/objenesis-3.3.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/mockito/mockito-core/5.23.0/mockito-core-5.23.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/objenesis/objenesis/3.3/objenesis-3.3-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
     <orderEntry type="module" module-name="intellij.libraries.byte.buddy" />
+    <orderEntry type="module" module-name="intellij.libraries.byte.buddy.agent" />
   </component>
 </module>

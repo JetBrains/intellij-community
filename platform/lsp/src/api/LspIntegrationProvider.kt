@@ -96,8 +96,8 @@ interface LspIntegrationProvider {
    *
    * @param file a valid local file within the project roots
    */
-  @RequiresReadLock
-  @RequiresBackgroundThread
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun fileOpened(project: Project, file: VirtualFile, clientStarter: LspClientStarter)
 
   fun createWidgetItems(project: Project, currentFile: VirtualFile?): List<LanguageServiceWidgetItem> =

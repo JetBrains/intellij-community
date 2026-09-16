@@ -5,8 +5,6 @@ import com.intellij.util.text.NameUtilCore
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.withContext
 import org.apache.maven.model.Dependency
 import org.apache.maven.model.Developer
 import org.apache.maven.model.Exclusion
@@ -195,7 +193,7 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
   /**
    * @param outputDir path relative to [org.jetbrains.intellij.build.BuildPaths.artifactDir]
    */
-  suspend fun generateMavenArtifacts(
+  fun generateMavenArtifacts(
     moduleNamesToPublish: Collection<String>,
     moduleNamesToSquashAndPublish: List<String> = emptyList(),
     outputDir: String,
@@ -274,7 +272,7 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
   /**
    * @param outputDir path relative to [org.jetbrains.intellij.build.BuildPaths.artifactDir]
    */
-  internal suspend fun generateMavenArtifacts(
+  internal fun generateMavenArtifacts(
     moduleNamesToPublish: Collection<String>,
     moduleNamesToSquashAndPublish: List<String> = emptyList(),
     outputDir: String,
@@ -458,7 +456,7 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
     return generateMavenCoordinates(module.name, context.buildNumber)
   }
 
-  internal suspend fun validate(builtArtifacts: Map<MavenArtifactData, List<Path>>) {
+  internal fun validate(builtArtifacts: Map<MavenArtifactData, List<Path>>) {
     val artifacts = builtArtifacts.map { (data, files) ->
       GeneratedMavenArtifacts(data.module, data.coordinates, files)
     }
@@ -473,7 +471,7 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
 
 /** See https://central.sonatype.org/publish/requirements */
 @OptIn(ExperimentalPathApi::class)
-private suspend fun validateForMavenCentralPublication(artifacts: GeneratedMavenArtifacts, context: BuildContext) {
+private fun validateForMavenCentralPublication(artifacts: GeneratedMavenArtifacts, context: BuildContext) {
   if (artifacts.module.getSourceRoots(JavaSourceRootType.SOURCE).any()) {
     val sources = artifacts.coordinates.getFileName("sources", "jar")
     check(artifacts.files.any { it.name == sources }) {
@@ -651,13 +649,12 @@ private fun splitByCamelHumpsMergingNumbers(s: String): List<String> {
  */
 private val COMMON_GROUP_NAMES: Set<String> = setOf("platform", "vcs", "tools", "clouds")
 
-private suspend fun layoutMavenArtifacts(
+private fun layoutMavenArtifacts(
   modulesToPublish: Map<MavenArtifactData, List<JpsModule>>,
   outputDir: Path,
   context: BuildContext,
 ): Map<MavenArtifactData, List<Path>> {
   return modulesToPublish.entries.mapConcurrent { (artifactData, modules) ->
-    withContext(CoroutineName("layout maven artifact ${artifactData.coordinates}")) {
       val artifacts = mutableListOf<Path>()
       val modulesWithSources = modules.filter {
         it.getSourceRoots(JavaSourceRootType.SOURCE).any() || it.getSourceRoots(JavaResourceRootType.RESOURCE).any()
@@ -725,7 +722,6 @@ private suspend fun layoutMavenArtifacts(
         artifacts.add(javadoc)
       }
       artifactData to artifacts
-    }
   }.associate { it }
 }
 

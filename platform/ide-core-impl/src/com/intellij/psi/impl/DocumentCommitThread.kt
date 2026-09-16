@@ -207,7 +207,7 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
     commitUnderProgress(task, synchronously = true, documentManager)()
   }
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   // returns finish commit Runnable (to be invoked later in EDT) or null on failure
   private fun commitUnderProgress(task: CommitTask, synchronously: Boolean, documentManager: PsiDocumentManagerEx): () -> Unit {
     if (!synchronously) {
@@ -420,7 +420,7 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
   }
 
   // returns runnable to execute under the write action in AWT to finish the commit
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   private fun doCommit(
     task: CommitTask,
     synchronously: Boolean,

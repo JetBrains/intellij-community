@@ -7,11 +7,11 @@ import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.ExecutionTarget;
 import com.intellij.execution.ExecutionTargetManager;
 import com.intellij.execution.Executor;
+import com.intellij.execution.ExecutorRegistry;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
-import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.process.ProcessHandler;
@@ -125,7 +125,17 @@ public final class RunConfigurationCommand extends AbstractCommand {
     RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(project);
 
     ApplicationManager.getApplication().invokeLater(() -> {
-      Executor executor = options.debug ? new DefaultDebugExecutor() : new DefaultRunExecutor();
+      Executor executor;
+      if (options.debug) {
+        executor = ExecutorRegistry.getInstance().getExecutorById("Debug");
+        if (executor == null) {
+          actionCallback.reject("'Debug' executor is not found");
+          return;
+        }
+      }
+      else {
+        executor = new DefaultRunExecutor();
+      }
       RunnerAndConfigurationSettings settings = runManager.findConfigurationByName(options.configurationName);
 
       if (settings == null) {

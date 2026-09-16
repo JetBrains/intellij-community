@@ -2,19 +2,18 @@
 package com.intellij.ui;
 
 import com.intellij.ide.AppLifecycleListener;
-import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
+import com.intellij.ui.mac.foundation.Selector;
 import com.intellij.util.messages.MessageBusConnection;
-import com.sun.jna.Callback;
-import com.sun.jna.Pointer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.invoke.MethodHandle;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -24,31 +23,33 @@ import static com.intellij.ui.mac.foundation.Foundation.nsString;
 
 final class MacOsNotifications implements SystemNotificationsImpl.Notifier {
   private static final String ACTIVATION_ID_USER_INFO_KEY = "intellij-system-notification-activation-id";
-  private static final String NOTIFICATION_DELEGATE_CLASS_NAME = "IdeaSystemNotificationDelegate";
+  private static final String NOTIFICATION_DELEGATE_CLASS_NAME =
+    "IdeaSystemNotificationDelegate_" + UUID.randomUUID().toString().replace("-", "");
   private static final int MAX_STORED_ACTIVATION_CALLBACKS = 32;
 
   private static MacOsNotifications ourInstance;
 
   private final Map<String, Runnable> myCallbacksByActivationId = new ConcurrentHashMap<>();
   @SuppressWarnings("FieldCanBeLocal")
-  private final Callback myNotificationActivationCallback;
+  private final MethodHandle myNotificationActivationCallback;
   @SuppressWarnings("FieldCanBeLocal")
   private final ID myDelegate;
 
   static synchronized @NotNull MacOsNotifications getInstance() {
-    if (ourInstance == null && JnaLoader.isLoaded()) {
+    if (ourInstance == null && Foundation.isAvailable()) {
       ourInstance = new MacOsNotifications();
     }
     return ourInstance;
   }
 
   private MacOsNotifications() {
-    myNotificationActivationCallback = new Callback() {
+    var activationCallback = new Object() {
       @SuppressWarnings("unused")
-      public void callback(ID self, Pointer selector, ID center, ID notification) {
+      public void callback(ID self, Selector selector, ID center, ID notification) {
         notificationActivated(notification);
       }
     };
+    myNotificationActivationCallback = Foundation.callback(activationCallback, "callback", ID.class, Selector.class, ID.class, ID.class);
     myDelegate = createDelegate(myNotificationActivationCallback);
     ID center = notificationCenter();
     if (!ID.NIL.equals(myDelegate)) {
@@ -123,7 +124,7 @@ final class MacOsNotifications implements SystemNotificationsImpl.Notifier {
     return invoke(Foundation.getObjcClass("NSUserNotificationCenter"), "defaultUserNotificationCenter");
   }
 
-  private static @NotNull ID createDelegate(@NotNull Callback activationCallback) {
+  private static @NotNull ID createDelegate(@NotNull MethodHandle activationCallback) {
     ID delegateClass = Foundation.allocateObjcClassPair(Foundation.getObjcClass("NSObject"), NOTIFICATION_DELEGATE_CLASS_NAME);
     if (!ID.NIL.equals(delegateClass)) {
       ID delegateProtocol = Foundation.getProtocol("NSUserNotificationCenterDelegate");

@@ -20,6 +20,8 @@ public interface MavenExecutionEnvironmentProvider {
 
   boolean isApplicable(@NotNull ExecuteRunConfigurationTask task);
 
+  default boolean isTestConfiguration() { return false; }
+
   @Nullable
   ExecutionEnvironment createExecutionEnvironment(@NotNull Project project,
                                                   @NotNull ExecuteRunConfigurationTask task,

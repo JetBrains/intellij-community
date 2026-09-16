@@ -187,6 +187,7 @@ public final class InstalledPluginsState {
     PluginId id = descriptor.getPluginId();
     synchronized (myLock) {
       myOutdatedPlugins.remove(id.getIdString());
+      myUninstalledWithoutRestartPlugins.remove(id);
       if (isUpdate) {
         if (restartNeeded) {
           myUpdatedPlugins.add(id);

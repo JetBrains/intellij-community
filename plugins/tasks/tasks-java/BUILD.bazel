@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.tasks.java` start
+content_module_jar(module = ":java")
+### auto-generated section `dev intellij.tasks.java` end
+
 ### auto-generated section `build intellij.tasks.java` start
 jvm_library(
     name = "java",
@@ -31,8 +35,6 @@ jvm_library(
         "//platform/tasks-platform-impl:tasks-impl",
     ],
 )
-
-content_module_jar(module = ":java")
 
 jvm_library(
     name = "java_test_lib",

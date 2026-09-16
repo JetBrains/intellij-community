@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.markdown.fenceInjector.textMate` start
+content_module_jar(module = ":textMate")
+### auto-generated section `dev intellij.markdown.fenceInjector.textMate` end
+
 ### auto-generated section `build intellij.markdown.fenceInjector.textMate` start
 jvm_library(
     name = "textMate",
@@ -34,8 +38,6 @@ jvm_library(
         "@lib//:kotlin-stdlib",
     ],
 )
-
-content_module_jar(module = ":textMate")
 
 jvm_library(
     name = "textMate_test_lib",

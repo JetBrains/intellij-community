@@ -104,6 +104,20 @@ public interface XDebugSession extends AbstractDebuggerSession {
   void updateBreakpointPresentation(@NotNull XLineBreakpoint<?> breakpoint, @Nullable Icon icon, @Nullable String errorMessage);
 
   /**
+   * Sets a custom icon and/or error message for any breakpoint of this session, for example a function breakpoint.
+   * The Breakpoints dialog shows the icon and the error message.
+   *
+   * @param icon         icon ({@code null} if default icon should be used)
+   * @param errorMessage an error message if breakpoint isn't successfully registered
+   * @see #updateBreakpointPresentation(XLineBreakpoint, Icon, String)
+   */
+  default void updateBreakpointPresentation(@NotNull XBreakpoint<?> breakpoint, @Nullable Icon icon, @Nullable String errorMessage) {
+    if (breakpoint instanceof XLineBreakpoint<?> lineBreakpoint) {
+      updateBreakpointPresentation(lineBreakpoint, icon, errorMessage);
+    }
+  }
+
+  /**
    * Marks the given breakpoint as verified in the current session.
    */
   void setBreakpointVerified(@NotNull XLineBreakpoint<?> breakpoint);

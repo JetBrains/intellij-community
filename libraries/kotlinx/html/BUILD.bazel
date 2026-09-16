@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.kotlinx.html` start
+content_module_jar(
+    libraries = ["@lib//:libraries-kotlinx-html-kotlinx-html-jvm"],
+    module = ":html",
+)
+### auto-generated section `dev intellij.libraries.kotlinx.html` end
+
 ### auto-generated section `build intellij.libraries.kotlinx.html` start
 jvm_library(
     name = "html",
@@ -16,11 +23,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-kotlinx-html-kotlinx-html-jvm"],
     runtime_deps = ["@lib//:libraries-kotlinx-html-kotlinx-html-jvm"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-kotlinx-html-kotlinx-html-jvm"],
-    module = ":html",
 )
 
 jvm_library(
@@ -43,7 +45,6 @@ exports_files(
     [
         "intellij.libraries.kotlinx.html.iml",
         "resources/intellij.libraries.kotlinx.html.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

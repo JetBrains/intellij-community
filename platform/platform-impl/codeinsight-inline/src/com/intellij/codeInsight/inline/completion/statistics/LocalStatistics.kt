@@ -140,7 +140,7 @@ class LocalStatistics : SimplePersistentStateComponent<LocalStatistics.State>(St
   @TestOnly
   val forcePrune: AtomicBoolean = AtomicBoolean(false)
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun saveIfRegistered(pair: EventPair<*>) {
     if (pair.field.name !in Schema.registered) {
       return
@@ -182,7 +182,7 @@ class LocalStatistics : SimplePersistentStateComponent<LocalStatistics.State>(St
   /**
    * Generates JSON representation of daily statistics for all dates.
    */
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun generateRepresentation(): String {
     prune()
 

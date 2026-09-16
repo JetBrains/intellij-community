@@ -69,16 +69,16 @@ class JavaDebuggerDfaListener implements JavaDfaListener, DebuggerDfaListener {
                           @NotNull DfaValue value,
                           @NotNull ThreeState failed,
                           @NotNull DfaMemoryState state) {
-    if (problem instanceof ArrayStoreProblem) {
-      addHint(((ArrayStoreProblem)problem).getAnchor().getLExpression(), failed == ThreeState.YES ? DfaHint.ASE : DfaHint.NONE);
+    if (problem instanceof ArrayStoreProblem storeProblem) {
+      addHint(storeProblem.getAnchor().getLExpression(), failed == ThreeState.YES ? DfaHint.ASE : DfaHint.NONE);
     }
-    else if (problem instanceof ArrayIndexProblem) {
-      PsiArrayAccessExpression anchor = ((ArrayIndexProblem)problem).getAnchor();
+    else if (problem instanceof ArrayIndexProblem indexProblem) {
+      PsiArrayAccessExpression anchor = indexProblem.getAnchor();
       // Anchor to the last child to differentiate from ArrayStoreException
       addHint(anchor.getLastChild(), failed == ThreeState.YES ? DfaHint.AIOOBE : DfaHint.NONE);
     }
-    else if (problem instanceof ClassCastProblem) {
-      addHint(((ClassCastProblem)problem).getAnchor(), failed == ThreeState.YES ? DfaHint.CCE : DfaHint.NONE);
+    else if (problem instanceof ClassCastProblem castProblem) {
+      addHint(castProblem.getAnchor(), failed == ThreeState.YES ? DfaHint.CCE : DfaHint.NONE);
     }
     else if (problem instanceof NullabilityProblemKind.NullabilityProblem<?> npeProblem) {
       PsiExpression expression = npeProblem.getDereferencedExpression();
@@ -106,10 +106,10 @@ class JavaDebuggerDfaListener implements JavaDfaListener, DebuggerDfaListener {
       // Report right hand of assignment only
       return false;
     }
-    if (expr instanceof PsiPolyadicExpression) {
-      IElementType tokenType = ((PsiPolyadicExpression)expr).getOperationTokenType();
+    if (expr instanceof PsiPolyadicExpression expression) {
+      IElementType tokenType = expression.getOperationTokenType();
       if (BOOLEAN_TOKENS.contains(tokenType)) {
-        PsiExpression firstOperand = ((PsiPolyadicExpression)expr).getOperands()[0];
+        PsiExpression firstOperand = expression.getOperands()[0];
         if (firstOperand != null && PsiTypes.booleanType().equals(firstOperand.getType())) {
           // For polyadic boolean expression let's report components only, otherwise the report gets cluttered
           return false;

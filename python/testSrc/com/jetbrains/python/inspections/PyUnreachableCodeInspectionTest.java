@@ -729,6 +729,127 @@ async def nosupAssertFalse(b):
     });
   }
 
+  @TestFor(issues = "PY-72253")
+  public void testUnreachableCodeReportedAfterUnannotatedAlwaysRaisingFunction() {
+    doTestByText(
+      """
+        import sys
+
+        def raise_error():
+            raise ValueError()
+
+        def exit_program():
+            print("exiting")
+            sys.exit(1)
+
+        def loop_forever():
+            while True:
+                pass
+
+        def f1():
+            raise_error()
+            <warning descr="This code is unreachable">print("unreachable")</warning>
+
+        def f2():
+            exit_program()
+            <warning descr="This code is unreachable">print("unreachable")</warning>
+
+        def f3():
+            loop_forever()
+            <warning descr="This code is unreachable">print("unreachable")</warning>"""
+    );
+  }
+
+  @TestFor(issues = "PY-72253")
+  public void testNoUnreachableCodeAfterUnannotatedFunctionThatCanReturn() {
+    doTestByText(
+      """
+        def raise_conditionally(x):
+            if x:
+                raise ValueError()
+
+        def raise_and_catch():
+            try:
+                raise ValueError()
+            except ValueError:
+                pass
+
+        def f1(x):
+            raise_conditionally(x)
+            print("reachable")
+
+        def f2():
+            raise_and_catch()
+            print("reachable")"""
+    );
+  }
+
+  @TestFor(issues = "PY-72253")
+  public void testNoUnreachableCodeAfterCallThatDoesNotRunRaisingBody() {
+    doTestByText(
+      """
+        import abc
+
+        def generator():
+            raise ValueError()
+            <warning descr="This code is unreachable">yield 1</warning>
+
+        async def coroutine():
+            raise ValueError()
+
+        def decorator(func):
+            return func
+
+        @decorator
+        def decorated():
+            raise ValueError()
+
+        class Base(abc.ABC):
+            def not_implemented(self):
+                \"""Subclasses override it.\"""
+                raise NotImplementedError()
+
+            @abc.abstractmethod
+            def abstract(self):
+                raise ValueError()
+
+            def f(self):
+                self.not_implemented()
+                self.abstract()
+                print("reachable")
+
+        def f():
+            generator()
+            coroutine()
+            decorated()
+            print("reachable")"""
+    );
+  }
+
+  // Only the body of a direct callee is inspected, so recursion between functions does not make the analysis loop.
+  @TestFor(issues = "PY-72253")
+  public void testNoUnreachableCodeAfterIndirectlyRaisingFunction() {
+    doTestByText(
+      """
+        def raise_error():
+            raise ValueError()
+
+        def call_raise_error():
+            raise_error()
+
+        def ping():
+            pong()
+
+        def pong():
+            ping()
+
+        def f():
+            call_raise_error()
+            ping()
+            print("reachable")"""
+    );
+  }
+
   // PY-50642
   public void testTypeChecking() {
     doTestByText(

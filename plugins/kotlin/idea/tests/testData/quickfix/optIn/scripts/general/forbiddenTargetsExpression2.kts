@@ -6,5 +6,4 @@
 @Target(<caret>AnnotationTarget.EXPRESSION)
 annotation class SomeOptInAnnotation
 
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveWrongOptInAnnotationTargetFix
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveWrongOptInAnnotationTargetFix

@@ -60,11 +60,11 @@ public final class WinFocusStealer implements AWTEventListener {
 
   private void doUpdate(boolean enabled) {
     myUpdateScheduled = null;
-    int targetTimeout = 0;
+    var targetTimeout = 0;
     if (!enabled) {
       targetTimeout = readRegistryTimeoutValue();
     }
-    int currentTimeout = readCurrentTimeoutValue();
+    var currentTimeout = readCurrentTimeoutValue();
     if (currentTimeout != targetTimeout) {
       if (!writeCurrentTimeoutValue(targetTimeout)) {
         myUpdateScheduled = enabled;
@@ -73,9 +73,9 @@ public final class WinFocusStealer implements AWTEventListener {
   }
 
   private static int readRegistryTimeoutValue() {
-    int targetTimeout = DEFAULT_TIMEOUT_MS;
+    var targetTimeout = DEFAULT_TIMEOUT_MS;
     try {
-      Integer value = WindowsRegistry.getInt(WindowsRegistry.Hive.CURRENT_USER, "Control Panel\\Desktop", "ForegroundLockTimeout");
+      var value = WindowsRegistry.getInt(WindowsRegistry.Hive.CURRENT_USER, "Control Panel\\Desktop", "ForegroundLockTimeout");
       if (value != null) {
         targetTimeout = value;
       }
@@ -90,9 +90,9 @@ public final class WinFocusStealer implements AWTEventListener {
   }
 
   private static int readCurrentTimeoutValue() {
-    int currentTimeout = DEFAULT_TIMEOUT_MS;
+    var currentTimeout = DEFAULT_TIMEOUT_MS;
     try {
-      Integer result = User32Ex.systemParametersInfoUInt(User32Ex.SPI_GETFOREGROUNDLOCKTIMEOUT);
+      var result = User32Ex.systemParametersInfoUInt(User32Ex.SPI_GETFOREGROUNDLOCKTIMEOUT);
       if (result != null) {
         currentTimeout = result;
         if (LOG.isDebugEnabled()) {

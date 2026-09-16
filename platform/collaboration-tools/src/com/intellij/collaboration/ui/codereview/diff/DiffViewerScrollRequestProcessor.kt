@@ -12,7 +12,7 @@ import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy
 import com.intellij.util.concurrency.annotations.RequiresEdt
 
 internal object DiffViewerScrollRequestProcessor {
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun scroll(viewer: FrameDiffTool.DiffViewer, request: DiffViewerScrollRequest) {
     when (request) {
       is DiffViewerLineScrollRequest -> scroll(viewer, request.location)
@@ -20,7 +20,7 @@ internal object DiffViewerScrollRequestProcessor {
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun scroll(viewer: FrameDiffTool.DiffViewer, location: DiffLineLocation) {
     val (side, line) = location
     when (viewer) {

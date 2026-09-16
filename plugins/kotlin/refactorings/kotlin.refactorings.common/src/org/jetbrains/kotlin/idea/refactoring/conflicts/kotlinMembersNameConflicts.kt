@@ -269,6 +269,7 @@ fun registerAlreadyDeclaredConflict(candidateSymbol: KaDeclarationSymbol, result
 
     val what = candidate.renderDescription()
     val where = candidate.representativeContainer()?.renderDescription() ?: return
+    @Suppress("HardCodedStringLiteral")
     val message = KotlinBundle.message("text.0.already.declared.in.1", what, where).capitalize()
     result += BasicUnresolvableCollisionUsageInfo(candidate, candidate, message)
 }

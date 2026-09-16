@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.intellij.ui.dsl.builder.Panel
-import com.jetbrains.python.inspections.interpreter.InterpreterSettingsQuickFix
+import com.jetbrains.python.sdk.inspections.InterpreterSettingsQuickFix
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.statistics.modules

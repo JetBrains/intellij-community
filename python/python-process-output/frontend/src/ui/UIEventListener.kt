@@ -15,7 +15,7 @@ import com.intellij.python.processOutput.common.ExecErrorDto
 import com.intellij.python.processOutput.common.ExecErrorReasonDto
 import com.intellij.python.processOutput.frontend.LoggedProcess
 import com.intellij.python.processOutput.frontend.ProcessOutputBundle
-import com.intellij.python.processOutput.frontend.ProcessOutputController
+import com.intellij.python.processOutput.frontend.UiEvent
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBLabel
@@ -41,15 +41,15 @@ internal class UIEventListener(
 ) {
   fun launch() =
     uiContext.coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-      uiContext.controller.events.collect { event ->
+      uiContext.controller.uiEvents.collect { event ->
         when (event) {
-          is ProcessOutputController.Event.DisplayExecError -> {
+          is UiEvent.DisplayExecError -> {
             displayExecError(event.execErrorDto, event.associatedProcess)
           }
-          is ProcessOutputController.Event.DisplayToolWindow -> {
+          is UiEvent.DisplayToolWindow -> {
             displayToolWindow(event.processToSelect)
           }
-          is ProcessOutputController.Event.StatusUpdate -> {
+          is UiEvent.StatusUpdate -> {
             uiContext.processTree?.repaint()
           }
         }

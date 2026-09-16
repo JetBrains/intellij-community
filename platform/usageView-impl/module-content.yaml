@@ -1,3 +1,0 @@
-- name: dist.all/lib/intellij.platform.usageView.impl.jar
-  modules:
-  - name: intellij.platform.usageView.impl

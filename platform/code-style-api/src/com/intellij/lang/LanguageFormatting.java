@@ -37,10 +37,6 @@ public final class LanguageFormatting extends LanguageExtension<FormattingModelB
               ? formatter.createExternalFormattingModelBuilder(file, builder)
               : builder;
 
-    builder = formatter.isEligibleForVirtualFormatting(context)
-              ? formatter.wrapForVirtualFormatting(context, builder)
-              : builder;
-
     return builder;
   }
 

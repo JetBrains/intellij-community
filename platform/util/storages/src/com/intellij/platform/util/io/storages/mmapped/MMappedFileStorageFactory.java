@@ -26,11 +26,18 @@ public class MMappedFileStorageFactory implements StorageFactory<MMappedFileStor
   public static final int DEFAULT_PAGE_SIZE = IOUtil.MiB;
 
   public static MMappedFileStorageFactory withDefaults() {
-    return new MMappedFileStorageFactory(DEFAULT_PAGE_SIZE, THROW_EXCEPTION, true);
+    return new MMappedFileStorageFactory(
+      DEFAULT_PAGE_SIZE,
+      MMappedFileStorage.FSYNC_ON_FLUSH_BY_DEFAULT,
+      /*ifFileNotPageAligned: */ THROW_EXCEPTION,
+      /*createParentDirectory: */ true
+    );
   }
 
 
   private final int pageSize;
+
+  private final boolean fsyncOnFlush;
 
   /**
    * What to do if fileSize is not page-aligned (i.e. fileSize != N*pageSize), and there is no marker of unfinished
@@ -46,6 +53,7 @@ public class MMappedFileStorageFactory implements StorageFactory<MMappedFileStor
   private final boolean createParentDirectoriesIfNotExist;
 
   private MMappedFileStorageFactory(int pageSize,
+                                    boolean fsyncOnFlush,
                                     @NotNull IfNotPageAligned ifFileNotPageAligned,
                                     boolean createParentDirectoriesIfNotExist) {
     if (pageSize <= 0) {
@@ -55,12 +63,13 @@ public class MMappedFileStorageFactory implements StorageFactory<MMappedFileStor
       throw new IllegalArgumentException("pageSize(=" + pageSize + ") must be a power of 2");
     }
     this.pageSize = pageSize;
+    this.fsyncOnFlush = fsyncOnFlush;
     this.ifFileNotPageAligned = ifFileNotPageAligned;
     this.createParentDirectoriesIfNotExist = createParentDirectoriesIfNotExist;
   }
 
   public MMappedFileStorageFactory pageSize(int pageSize) {
-    return new MMappedFileStorageFactory(pageSize, ifFileNotPageAligned, createParentDirectoriesIfNotExist);
+    return new MMappedFileStorageFactory(pageSize, fsyncOnFlush, ifFileNotPageAligned, createParentDirectoriesIfNotExist);
   }
 
   /**
@@ -71,7 +80,7 @@ public class MMappedFileStorageFactory implements StorageFactory<MMappedFileStor
    * content, and open the file as-new
    */
   public MMappedFileStorageFactory ifFileIsNotPageAligned(@NotNull IfNotPageAligned ifFileNotPageAligned) {
-    return new MMappedFileStorageFactory(pageSize, ifFileNotPageAligned, createParentDirectoriesIfNotExist);
+    return new MMappedFileStorageFactory(pageSize, fsyncOnFlush, ifFileNotPageAligned, createParentDirectoriesIfNotExist);
   }
 
   /**
@@ -79,7 +88,11 @@ public class MMappedFileStorageFactory implements StorageFactory<MMappedFileStor
    * false: throw {@link NoSuchFileException} if parent directory doesn't exist
    */
   public MMappedFileStorageFactory createParentDirectories(boolean createParentDirectories) {
-    return new MMappedFileStorageFactory(pageSize, ifFileNotPageAligned, createParentDirectories);
+    return new MMappedFileStorageFactory(pageSize, fsyncOnFlush, ifFileNotPageAligned, createParentDirectories);
+  }
+
+  public MMappedFileStorageFactory fsyncOnFlush(boolean fsyncOnFlush) {
+    return new MMappedFileStorageFactory(pageSize, fsyncOnFlush, ifFileNotPageAligned, createParentDirectoriesIfNotExist);
   }
 
   @Override
@@ -100,7 +113,7 @@ public class MMappedFileStorageFactory implements StorageFactory<MMappedFileStor
       dealWithPageUnAlignedFileSize(absoluteStoragePath, fileSize, regionAllocationLock);
     }
 
-    return new MMappedFileStorage(absoluteStoragePath, pageSize, regionAllocationLock);
+    return new MMappedFileStorage(absoluteStoragePath, pageSize, regionAllocationLock, fsyncOnFlush);
   }
 
   private void dealWithPageUnAlignedFileSize(@NotNull Path storagePath,
@@ -169,6 +182,7 @@ public class MMappedFileStorageFactory implements StorageFactory<MMappedFileStor
   public String toString() {
     return "MMappedFileStorageFactory{" +
            "pageSize: " + pageSize +
+           ", fsyncOnFlush: " + fsyncOnFlush +
            ", ifNotPageAligned: " + ifFileNotPageAligned +
            ", createParentDirectoriesIfNotExist: " + createParentDirectoriesIfNotExist +
            '}';

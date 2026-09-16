@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.groovy.ant` start
+content_module_jar(module = ":ant")
+### auto-generated section `dev intellij.groovy.ant` end
+
 ### auto-generated section `build intellij.groovy.ant` start
 jvm_library(
     name = "ant",
@@ -37,8 +41,6 @@ jvm_library(
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     ],
 )
-
-content_module_jar(module = ":ant")
 
 jvm_library(
     name = "ant_test_lib",

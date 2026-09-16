@@ -14,20 +14,20 @@ interface BundledRuntime {
 
   val version: Int get() = build.takeWhile { it != '.' }.toInt()
 
-  suspend fun getHomeForCurrentOsAndArch(): Path
+  fun getHomeForCurrentOsAndArch(): Path
 
   /**
    * @return a directory, where only one subdirectory is available: 'jbr', which contains specified JBR
    */
-  suspend fun extract(os: OsFamily, arch: JvmArchitecture, libc: LibcImpl, prefix: String = this.prefix): Path
+  fun extract(os: OsFamily, arch: JvmArchitecture, libc: LibcImpl, prefix: String = this.prefix): Path
 
-  suspend fun extractTo(os: OsFamily, arch: JvmArchitecture, libc: LibcImpl, destinationDir: Path)
+  fun extractTo(os: OsFamily, arch: JvmArchitecture, libc: LibcImpl, destinationDir: Path)
 
   /**
    * The JBR archive, for reading only: under Bazel it is the preloaded runfile itself rather than a
    * copy of it in the download cache.
    */
-  suspend fun resolveArchive(os: OsFamily, arch: JvmArchitecture, libc: LibcImpl, prefix: String = this.prefix): ResolvedDownload
+  fun resolveArchive(os: OsFamily, arch: JvmArchitecture, libc: LibcImpl, prefix: String = this.prefix): ResolvedDownload
 
   fun downloadUrlFor(os: OsFamily, arch: JvmArchitecture, libc: LibcImpl, prefix: String = this.prefix): String
 

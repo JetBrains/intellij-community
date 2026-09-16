@@ -34,9 +34,16 @@ public class LoadFullValueCommand extends AbstractFrameCommand {
     super.processResponse(response);
     try {
       List<PyDebugValue> debugValues = ProtocolParser.parseValues(response.getPayload(), myDebugProcess);
-      for (int i = 0; i < debugValues.size(); ++i) {
+      int answered = Math.min(debugValues.size(), myVars.size());
+      for (int i = 0; i < answered; ++i) {
         PyDebugValue resultValue = debugValues.get(i);
         myVars.get(i).getCallback().ok(resultValue.getValue());
+      }
+      // A value the response leaves out is reported, not skipped: its node keeps the placeholder it holds
+      // until a callback replaces it, and no later response repeats a value nobody asked for again.
+      for (int i = answered; i < myVars.size(); ++i) {
+        myVars.get(i).getCallback().error(new PyDebuggerException(
+          "The debuggee answered with " + debugValues.size() + " of the " + myVars.size() + " values asked for"));
       }
     }
     catch (Exception e) {

@@ -1142,25 +1142,11 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
    * which atomically refilters the tree structure and adjusts the selection, avoiding race conditions
    * when the filter state has just been cleared synchronously.
    * <p>
-   * The configurable may come from an external {@link ConfigurableGroup} (e.g. when opening settings
-   * from an action like "Configure Gutter Icons"). In that case it is a different instance from the
-   * one stored in this tree's {@link IdentityHashMap}. We first try {@link #findNode(Configurable)};
-   * if that fails we fall back to matching by {@link ConfigurableVisitor#getId(Configurable)}.
+   * The configurable must belong to this tree, because the node is found by instance identity.
+   * A caller resolves its target in {@link SettingsNonModalDialog#getGroups()} of the open window.
    */
   void refilterAndSelect(@Nullable Configurable configurable) {
-    MyNode node = findNode(configurable);
-    if (node == null && configurable != null) {
-      // The configurable instance may differ from the one in our map (e.g. created from a new
-      // ConfigurableGroup). Fall back to matching by configurable ID.
-      String id = ConfigurableVisitor.getId(configurable);
-      for (Map.Entry<Configurable, MyNode> entry : myConfigurableToNodeMap.entrySet()) {
-        if (id.equals(ConfigurableVisitor.getId(entry.getKey()))) {
-          node = entry.getValue();
-          break;
-        }
-      }
-    }
-    myModel.updateTree(myTree, !myFilter.isEmptyFilter(), node);
+    myModel.updateTree(myTree, !myFilter.isEmptyFilter(), findNode(configurable));
   }
 
   void reloadWithSelection(@Nullable Configurable toSelect) {

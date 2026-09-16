@@ -8,6 +8,8 @@ import com.intellij.ide.actions.BaseNavigateToSourceAction;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaSeparatorUI;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.internal.inspector.CompositionObserver;
+import com.intellij.internal.inspector.ComposeUiInspector;
 import com.intellij.internal.inspector.IdeUiInspectorBundle;
 import com.intellij.internal.inspector.PropertyBean;
 import com.intellij.internal.inspector.UiInspectorAction;
@@ -129,6 +131,9 @@ public final class InspectorWindow extends JDialog implements Disposable {
   private final @NotNull List<Component> myComponents = new ArrayList<>();
   private List<? extends PropertyBean> myInfo;
   private final @NotNull Component myInitialComponent;
+  private final @NotNull Component myTreeRoot;
+  private final @NotNull CompositionObserver myCompositionObserver;
+  private final @NotNull Runnable myRebuildAStaleTree = this::rebuildAStaleTree;
   private final @NotNull List<JComponent> myHighlightComponents = new ArrayList<>();
   private boolean myIsHighlighted = true;
   private boolean myIsAccessibleEnabled = false;
@@ -141,6 +146,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
   private AWTEventListener myAltKeyListener;
   private AWTEventListener myChangeSelectionOnHoverListener;
   private boolean myIsAltHoverEnabled;
+  private boolean myShowComposeRecompositionCounts;
 
   public InspectorWindow(@Nullable Project project,
                          @NotNull Component component,
@@ -153,6 +159,10 @@ public final class InspectorWindow extends JDialog implements Disposable {
     setModal(ownerWindow instanceof JDialog && ((JDialog)ownerWindow).isModal());
     myComponents.add(component);
     myInitialComponent = component;
+    // Capture the root before recording replaces declared components. A detached component cannot find it.
+    myTreeRoot = ComponentUtil.findUltimateParent(component);
+    myCompositionObserver = new CompositionObserver();
+    ComposeUiInspector.INSTANCE.startRecording();
     getRootPane().setBorder(JBUI.Borders.empty(5));
 
     setDefaultCloseOperation(DISPOSE_ON_CLOSE);
@@ -167,7 +177,10 @@ public final class InspectorWindow extends JDialog implements Disposable {
     myWrapperPanel = new Wrapper();
     myInspectorTable = new InspectorTable(component, myProject);
     myWrapperPanel.setContent(myInspectorTable);
-    myHierarchyTree = new HierarchyTree(component) {
+    myHierarchyTree = new HierarchyTree(
+      component,
+      new ComposeHierarchyTreeElementOverlay(myCompositionObserver, () -> myShowComposeRecompositionCounts)
+    ) {
       @Override
       public void onComponentsChanged(List<? extends Component> components) {
         switchComponentsInfo(components);
@@ -214,6 +227,8 @@ public final class InspectorWindow extends JDialog implements Disposable {
     actions.add(myShowAccessibilityIssuesAction);
     actions.addSeparator();
     actions.add(new ToggleAltHoverAction());
+    actions.addSeparator();
+    actions.add(new ToggleShowComposeRecompositionCountsAction());
     actions.addSeparator();
     actions.add(new ExportTreeAction());
 
@@ -274,6 +289,9 @@ public final class InspectorWindow extends JDialog implements Disposable {
 
     TreeUtil.expandAll(myHierarchyTree);
     myHierarchyTree.selectPath(component, event);
+    // Observe before the recording-triggered pass can run on the EDT.
+    myCompositionObserver.observeAll(myTreeRoot);
+    myCompositionObserver.addCompositionListener(myRebuildAStaleTree);
 
     addWindowListener(new WindowAdapter() {
       @Override
@@ -466,8 +484,10 @@ public final class InspectorWindow extends JDialog implements Disposable {
     uninstallAltKeyListener();
     DimensionService.getInstance().setSize(getDimensionServiceKey(), getSize(), null);
     DimensionService.getInstance().setLocation(getDimensionServiceKey(), getLocation(), null);
+    myCompositionObserver.removeCompositionListener(myRebuildAStaleTree);
     Disposer.dispose(myInspector);
     Disposer.dispose(myInspectorTable);
+    Disposer.dispose(myCompositionObserver);
     super.dispose();
     // remove this object from the Disposer hierarchy manually here because this method could be called from Swing when it e.g., hides the popup and calls Window.dispose()
     Disposer.dispose(this);
@@ -741,7 +761,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
     public void uiDataSnapshot(@NotNull DataSink sink) {
       String selectedClassName = findSelectedClassName();
       if (selectedClassName == null) return;
-      sink.set(CommonDataKeys.NAVIGATABLE, new Navigatable() {
+      Navigatable navigatable = new Navigatable() {
         @Override
         public void navigate(boolean requestFocus) {
           UiInspectorImpl.openClassByFqn(myProject, selectedClassName, requestFocus);
@@ -756,7 +776,14 @@ public final class InspectorWindow extends JDialog implements Disposable {
         public boolean canNavigateToSource() {
           return true;
         }
-      });
+      };
+      if (myHierarchyTree.hasFocus() && myProject != null) {
+        var stackTrace = myInspectorTable.getComposeStackTrace();
+        if (stackTrace != null) {
+          navigatable = ComposeUiInspector.INSTANCE.createSourceNavigatable(stackTrace, myProject, InspectorWindow.this, navigatable);
+        }
+      }
+      sink.set(CommonDataKeys.NAVIGATABLE, navigatable);
     }
   }
 
@@ -931,6 +958,36 @@ public final class InspectorWindow extends JDialog implements Disposable {
     }
   }
 
+  private final class ToggleShowComposeRecompositionCountsAction extends DumbAwareAction implements Toggleable {
+    private static final String SHOW_RECOMPOSITION_COUNTS_KEY = "ui.inspector.show.compose.recomposition.counts";
+
+    private ToggleShowComposeRecompositionCountsAction() {
+      super(
+        IdeUiInspectorBundle.messagePointer("action.Anonymous.text.ShowComposeRecompositionCounts"),
+        IdeUiInspectorBundle.messagePointer("action.Anonymous.description.ShowComposeRecompositionCounts"),
+        ComposeHierarchyTreeElementOverlay.ICON
+      );
+      myShowComposeRecompositionCounts = PropertiesComponent.getInstance().getBoolean(SHOW_RECOMPOSITION_COUNTS_KEY, false);
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      myShowComposeRecompositionCounts = !myShowComposeRecompositionCounts;
+      PropertiesComponent.getInstance().setValue(SHOW_RECOMPOSITION_COUNTS_KEY, myShowComposeRecompositionCounts, false);
+      myHierarchyTree.repaint();
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      Toggleable.setSelected(e.getPresentation(), myShowComposeRecompositionCounts);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+  }
+
   private final class ShowDataContextAction extends MyTextAction {
     private ShowDataContextAction() {
       super(IdeUiInspectorBundle.messagePointer("action.Anonymous.text.DataContext"));
@@ -984,6 +1041,30 @@ public final class InspectorWindow extends JDialog implements Disposable {
       }
       return RelativePoint.getCenterOf(getRootPane());
     }
+  }
+
+  /**
+   * Rebuilds the tree after recomposition detaches a displayed component.
+   * Checks every pass because replacement can occur after the first observed pass.
+   */
+  private void rebuildAStaleTree() {
+    if (!hasDetachedNode()) return;
+    myHierarchyTree.resetModel(myTreeRoot, myIsAccessibleEnabled);
+    TreeUtil.expandAll(myHierarchyTree);
+    if (myShowAccessibilityIssuesAction.showAccessibilityIssues) {
+      myShowAccessibilityIssuesAction.updateTreeWithAccessibilityAuditStatus();
+    }
+  }
+
+  private boolean hasDetachedNode() {
+    for (int row = 0; row < myHierarchyTree.getRowCount(); row++) {
+      TreePath path = myHierarchyTree.getPathForRow(row);
+      if (path != null && path.getLastPathComponent() instanceof HierarchyTree.ComponentNode node) {
+        Component c = node.getComponent();
+        if (c != null && c != myTreeRoot && c.getParent() == null) return true;
+      }
+    }
+    return false;
   }
 
   private abstract static class MyTextAction extends IconWithTextAction implements DumbAware {

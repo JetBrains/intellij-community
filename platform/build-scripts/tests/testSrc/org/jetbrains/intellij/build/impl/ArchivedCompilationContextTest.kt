@@ -1,10 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.supervisorScope
 import org.assertj.core.api.Assertions.assertThat
+import org.jetbrains.intellij.build.BuildLifetime
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildPaths
@@ -26,7 +25,7 @@ import java.util.zip.ZipOutputStream
 
 internal class ArchivedCompilationContextTest {
   @Test
-  fun `createCopy enables archived output zip cache when scope is provided`(@TempDir tempDir: Path) {
+  fun `createCopy enables archived output zip cache when lifetime is provided`(@TempDir tempDir: Path) {
     runBlocking {
       val moduleName = "intellij.test.module"
       val module = mock(JpsModule::class.java)
@@ -57,12 +56,12 @@ internal class ArchivedCompilationContextTest {
 
       assertThat(isZipCacheEnabled(baseContext.outputProvider)).isFalse()
 
-      supervisorScope {
+      BuildLifetime().use { lifetime ->
         val copiedContext = baseContext.createCopy(
           messages = mock(BuildMessages::class.java),
           options = BuildOptions(),
           paths = buildPaths(buildOutputDir = tempDir.resolve("copy-out"), projectHome = tempDir.resolve("copy-project")),
-          scope = this,
+          lifetime = lifetime,
         )
 
         assertThat(isZipCacheEnabled(copiedContext.outputProvider)).isTrue()
@@ -114,7 +113,7 @@ internal class ArchivedCompilationContextTest {
     val archivedContextConstructor = archivedContextClass.getDeclaredConstructor(
       CompilationContext::class.java,
       storageClass,
-      CoroutineScope::class.java,
+      BuildLifetime::class.java,
     )
     archivedContextConstructor.isAccessible = true
     return archivedContextConstructor.newInstance(delegate, storage, null) as CompilationContext
@@ -177,9 +176,9 @@ internal class ArchivedCompilationContextTest {
     override val classesOutputDirectory: Path,
     override val outputProvider: ModuleOutputProvider,
   ) : CompilationContext {
-    override suspend fun getStableJdkHome(): Path = stableJavaExecutable.parent.parent
+    override fun getStableJdkHome(): Path = stableJavaExecutable.parent.parent
 
-      override suspend fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean): Collection<Path> = emptyList()
+      override fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean): Collection<Path> = emptyList()
 
     override fun findFileInModuleSources(moduleName: String, relativePath: String, forTests: Boolean): Path? = null
 
@@ -187,7 +186,7 @@ internal class ArchivedCompilationContextTest {
 
     override fun notifyArtifactBuilt(artifactPath: Path) = Unit
 
-    override fun createCopy(messages: BuildMessages, options: BuildOptions, paths: BuildPaths, scope: CoroutineScope?): CompilationContext {
+    override fun createCopy(messages: BuildMessages, options: BuildOptions, paths: BuildPaths, lifetime: BuildLifetime?): CompilationContext {
       return TestCompilationContext(
         messages = messages,
         options = options,
@@ -203,11 +202,11 @@ internal class ArchivedCompilationContextTest {
       )
     }
 
-    override suspend fun prepareForBuild() = Unit
+    override fun prepareForBuild() = Unit
 
-    override suspend fun compileModules(moduleNames: Collection<String>?, includingTestsInModules: List<String>?) = Unit
+    override fun compileModules(moduleNames: Collection<String>?, includingTestsInModules: List<String>?) = Unit
 
-    override suspend fun withCompilationLock(block: suspend () -> Unit) = block()
+    override fun withCompilationLock(block: () -> Unit) = block()
   }
 
   private class TestModuleOutputProvider(
@@ -228,8 +227,6 @@ internal class ArchivedCompilationContextTest {
     }
 
     override fun findLibraryRoots(libraryName: String, moduleLibraryModuleName: String?): List<Path> = emptyList()
-
-    override fun getProjectLibraryToModuleMap(): Map<String, String> = emptyMap()
 
     override fun getModuleOutputRoots(module: JpsModule, forTests: Boolean): List<Path> {
       return if (!forTests && module == this.module) listOf(moduleOutputRoot) else emptyList()

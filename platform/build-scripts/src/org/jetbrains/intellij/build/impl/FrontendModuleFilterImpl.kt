@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.platform.runtime.product.ProductMode
+import com.intellij.platform.runtime.product.impl.ProductModeLoadingRules
 import org.jetbrains.intellij.build.FrontendModuleFilter
 import org.jetbrains.intellij.build.impl.moduleBased.JpsProductModeMatcher
 import org.jetbrains.jps.model.JpsNamedElement
@@ -38,7 +39,7 @@ internal object EmptyFrontendModuleFilter : FrontendModuleFilter {
  * The filter a product with an embedded frontend root module gets, over the JPS project alone.
  *
  * Public because a second caller needs the same answer outside an assembly: the dev-distribution descriptor plan
- * precomputes `separate-jar` per (plugin, content module), and a packed dev distribution keeps
+ * precomputes `separate-jar` per (plugin, content module), and a dev distribution keeps
  * [org.jetbrains.intellij.build.BuildOptions.enableEmbeddedFrontend] at its default, so it gets this filter and not
  * [EmptyFrontendModuleFilter].
  */
@@ -46,3 +47,14 @@ fun createFrontendModuleFilter(project: JpsProject): FrontendModuleFilter = Fron
 
 /** The filter a product without an embedded frontend root module gets: nothing is frontend-compatible. */
 fun emptyFrontendModuleFilter(): FrontendModuleFilter = EmptyFrontendModuleFilter
+
+/**
+ * The modules a frontend-compatible module must not reach through its production runtime dependencies.
+ *
+ * The whole input of [JpsProductModeMatcher] besides the project model. The dev-distribution layout tables state it,
+ * so that the JPS-to-Bazel converter can answer [FrontendModuleFilter.isModuleCompatibleWithFrontend] from the project
+ * model alone. Sorted, so the table is stable.
+ */
+fun frontendIncompatibleRootModuleNames(): List<String> {
+  return ProductModeLoadingRules.getIncompatibleRootModules(ProductMode.FRONTEND).map { it.name }.sorted()
+}

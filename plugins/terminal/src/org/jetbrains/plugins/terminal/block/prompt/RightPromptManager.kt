@@ -41,7 +41,7 @@ internal class RightPromptManager(private val promptEditor: Editor,
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun update(commandStartOffset: Int, text: String, highlightings: List<HighlightingInfo>) {
     updateInlayEditor(text, highlightings)
     inlay?.let { Disposer.dispose(it) }

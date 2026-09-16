@@ -2,5 +2,4 @@
 // WITH_STDLIB
 // K2_ERROR: INAPPLICABLE_LATEINIT_MODIFIER
 <caret>lateinit var x: Boolean
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ConvertLateinitPropertyToNotNullDelegateFix
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ConvertLateinitPropertyToNotNullDelegateFix

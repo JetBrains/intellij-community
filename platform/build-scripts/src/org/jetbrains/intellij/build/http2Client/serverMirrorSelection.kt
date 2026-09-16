@@ -4,7 +4,7 @@ package org.jetbrains.intellij.build.http2Client
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
-import org.jetbrains.intellij.build.telemetry.use
+import org.jetbrains.intellij.build.telemetry.useSuspending
 import java.net.URI
 
 internal suspend fun <T> checkMirrorAndConnect(
@@ -13,7 +13,7 @@ internal suspend fun <T> checkMirrorAndConnect(
   authHeader: CharSequence? = null,
   block: suspend (connection: Http2ClientConnection, urlPathPrefix: String) -> T,
 ): T {
-  return spanBuilder("mirror selection").setAttribute("initialServerUri", initialServerUri.toString()).use { span ->
+  return spanBuilder("mirror selection").setAttribute("initialServerUri", initialServerUri.toString()).useSuspending { span ->
     // first let's check for initial redirect (mirror selection)
     var connection = client.connect(address = initialServerUri, authHeader = authHeader)
     try {

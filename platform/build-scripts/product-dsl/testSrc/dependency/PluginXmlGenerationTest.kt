@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.productLayout.dependency
 
+import com.intellij.platform.buildScripts.concurrency.SharedTaskOwner
 import com.intellij.platform.pluginGraph.EDGE_BUNDLES
 import com.intellij.platform.pluginGraph.PluginGraph
 import com.intellij.platform.pluginGraph.PluginId
@@ -29,6 +30,13 @@ import java.nio.file.Path
  */
 @ExtendWith(TestFailureLogger::class)
 class PluginXmlGenerationTest {
+  private val owner = SharedTaskOwner("PluginXmlGenerationTest")
+
+  @org.junit.jupiter.api.AfterEach
+  fun closeSharedTasks() {
+    owner.close()
+  }
+
   @Test
   fun `test plugin with JPS dependency on plugin module generates plugin element in plugin xml`(@TempDir tempDir: Path) {
     runBlocking(Dispatchers.Default) {
@@ -132,7 +140,7 @@ class PluginXmlGenerationTest {
     // (in reality, pluginContentCache would return info because it finds the parent plugin's plugin.xml)
     val yamlPluginInfo = setup.pluginContentInfos["intellij.yaml.plugin"]!!
     val augmentedCache = object : PluginContentProvider {
-      override suspend fun getOrExtract(pluginModule: TargetName): PluginContentInfo? {
+      override fun getOrExtract(pluginModule: TargetName): PluginContentInfo? {
         // Make intellij.yaml detectable as "plugin" (simulates shared resources dir with plugin.xml)
         if (pluginModule.value == "intellij.yaml") {
           return yamlPluginInfo  // Returns the parent plugin's info
@@ -141,7 +149,7 @@ class PluginXmlGenerationTest {
       }
     }
 
-    val descriptorCache = ModuleDescriptorCache(setup.jps.outputProvider)
+    val descriptorCache = ModuleDescriptorCache(setup.jps.outputProvider, owner = owner)
     generatePluginDependencies(
       plugins = listOf("intellij.consumer.plugin", "intellij.yaml.plugin"),
       pluginContentCache = augmentedCache,
@@ -243,7 +251,7 @@ class PluginXmlGenerationTest {
         pluginContentCache = pluginContentCache,
         testSetup = setup,
         graph = setup.pluginGraph,
-        descriptorCache = ModuleDescriptorCache(setup.jps.outputProvider),
+        descriptorCache = ModuleDescriptorCache(setup.jps.outputProvider, owner = owner),
         suppressionConfig = SuppressionConfig(),
         strategy = setup.strategy,
         testFrameworkContentModules = emptySet(),
@@ -267,13 +275,15 @@ class PluginXmlGenerationTest {
             |  <xi:include href="intellij.platform.debugger.impl.ui.actions.xml"/>
             |</idea-plugin>
           """.trimMargin()
-          resourceFile("intellij.platform.debugger.impl.ui.actions.xml", """
+          resourceFile(
+            "intellij.platform.debugger.impl.ui.actions.xml", """
             |<idea-plugin>
             |  <actions>
             |    <group id="XDebugger.Settings"/>
             |  </actions>
             |</idea-plugin>
-          """.trimMargin())
+          """.trimMargin()
+          )
         }
         contentModule("intellij.kotlin.jvm.debugger.core") {
           descriptor = """<idea-plugin package="org.jetbrains.kotlin.idea.debugger.core"/>"""
@@ -301,7 +311,7 @@ class PluginXmlGenerationTest {
         pluginContentCache = pluginContentCache,
         testSetup = setup,
         graph = setup.pluginGraph,
-        descriptorCache = ModuleDescriptorCache(setup.jps.outputProvider),
+        descriptorCache = ModuleDescriptorCache(setup.jps.outputProvider, owner = owner),
         suppressionConfig = SuppressionConfig(),
         strategy = setup.strategy,
         testFrameworkContentModules = emptySet(),

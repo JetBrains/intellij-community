@@ -3,8 +3,10 @@ package com.intellij.polySymbols.patterns.impl
 
 import com.intellij.polySymbols.query.PolySymbolCodeCompletionQueryParams
 import com.intellij.polySymbols.query.PolySymbolQueryExecutor
+import org.jetbrains.annotations.ApiStatus
 
-internal class CompletionParameters(
+@ApiStatus.Internal
+class CompletionParameters(
   name: String,
   queryExecutor: PolySymbolQueryExecutor,
   val position: Int,

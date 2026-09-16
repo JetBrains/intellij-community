@@ -8,6 +8,13 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.asJava.toLightClass
+import org.jetbrains.kotlin.idea.base.psi.addAnnotation
+import org.jetbrains.kotlin.idea.base.psi.addMemberDeclarationAfter
+import org.jetbrains.kotlin.idea.base.psi.addMemberDeclarationBefore
+import org.jetbrains.kotlin.idea.base.psi.addModifierKeyword
+import org.jetbrains.kotlin.idea.base.psi.getOrCreatePrimaryConstructor
+import org.jetbrains.kotlin.idea.base.psi.insertParameterBefore
+import org.jetbrains.kotlin.idea.base.psi.removeModifierKeyword
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.refactoring.isAbstract
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo
@@ -23,7 +30,6 @@ import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.createPrimaryConstructorIfAbsent
 
 @ApiStatus.Internal
 fun KtProperty.mustBeAbstractInInterface(): Boolean =
@@ -66,19 +72,19 @@ fun getInterfaceContainmentVerifier(getMemberInfos: () -> List<KotlinMemberInfo>
 
 fun addMemberToTarget(targetMember: KtNamedDeclaration, targetClass: KtClassOrObject): KtNamedDeclaration {
     if (targetClass is KtClass && targetClass.isInterface()) {
-        targetMember.removeModifier(KtTokens.FINAL_KEYWORD)
+        targetMember.removeModifierKeyword(KtTokens.FINAL_KEYWORD)
     }
 
     if (targetMember is KtParameter) {
-        val parameterList = (targetClass as KtClass).createPrimaryConstructorIfAbsent().valueParameterList!!
+        val parameterList = (targetClass as KtClass).getOrCreatePrimaryConstructor().valueParameterList!!
         val anchor = parameterList.parameters.firstOrNull { it.isVarArg || it.hasDefaultValue() }
-        return parameterList.addParameterBefore(targetMember, anchor)
+        return parameterList.insertParameterBefore(targetMember, anchor)
     }
 
     val anchor = targetClass.declarations.asSequence().filterIsInstance(targetMember::class.java).lastOrNull()
     return when {
-        anchor == null && targetMember is KtProperty -> targetClass.addDeclarationBefore(targetMember, null)
-        else -> targetClass.addDeclarationAfter(targetMember, anchor)
+        anchor == null && targetMember is KtProperty -> targetClass.addMemberDeclarationBefore(targetMember, null)
+        else -> targetClass.addMemberDeclarationAfter(targetMember, anchor)
     }
 }
 
@@ -98,14 +104,14 @@ fun doAddCallableMember(
 
 // TODO: Formatting rules don't apply here for some reason
 fun KtNamedDeclaration.addAnnotationWithSpace(annotationEntry: KtAnnotationEntry): KtAnnotationEntry {
-    val result = addAnnotationEntry(annotationEntry)
+    val result = addAnnotation(annotationEntry)
     addAfter(KtPsiFactory(project).createWhiteSpace(), modifierList)
     return result
 }
 
 fun KtClass.makeAbstract() {
     if (!isInterface()) {
-        addModifier(KtTokens.ABSTRACT_KEYWORD)
+        addModifierKeyword(KtTokens.ABSTRACT_KEYWORD)
     }
 }
 

@@ -14,10 +14,8 @@ internal class SnapshotLazyRangeMarker(
   markerId: Long,
   spec: MarkerSpec,
   initialRange: TextRange,
-  initialLineColumns: LineColumns?,
+  @Volatile private var initialLineColumns: LineColumns?,
 ) : SnapshotRangeMarkerImpl(fileRoot, markerId, spec, initialRange) {
-  @Volatile
-  private var initialLineColumns: LineColumns? = initialLineColumns
 
   override fun getStartOffset(): Int {
     loadDocumentForInitialLineColumns()

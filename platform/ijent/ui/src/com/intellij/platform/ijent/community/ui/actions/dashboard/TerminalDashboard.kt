@@ -9,7 +9,6 @@ import com.intellij.terminal.JBTerminalWidget
 import com.intellij.terminal.pty.PtyProcessTtyConnector
 import com.intellij.terminal.ui.TerminalWidget
 import com.jediterm.core.util.TermSize
-import com.pty4j.PtyProcess
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -21,7 +20,7 @@ class TerminalDashboard(
   private val parentDisposable: Disposable,
 ) {
 
-  suspend fun createWidget(ptyProcess: PtyProcess, initialSize: TermSize): TerminalWidget {
+  suspend fun createWidget(ptyProcess: Process, initialSize: TermSize): TerminalWidget {
     val connector = PtyProcessTtyConnector(ptyProcess, StandardCharsets.UTF_8)
     return withContext(Dispatchers.EDT) {
       val widget = JBTerminalWidget(project, JBTerminalSystemSettingsProviderBase(), parentDisposable)

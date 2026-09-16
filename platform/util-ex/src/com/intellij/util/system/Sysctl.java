@@ -8,7 +8,6 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.foreign.Arena;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.Linker;
-import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.invoke.MethodHandle;
 
@@ -31,17 +30,17 @@ public final class Sysctl {
    */
   @LowLevelLocalMachineAccess
   public static @Nullable String stringByName(@NotNull String name) {
-    try (Arena arena = Arena.ofConfined()) {
-      MemorySegment nameSegment = arena.allocateFrom(name);
-      MemorySegment size = arena.allocate(JAVA_LONG);
+    try (var arena = Arena.ofConfined()) {
+      var nameSegment = arena.allocateFrom(name);
+      var size = arena.allocate(JAVA_LONG);
       if (sysctlByName(nameSegment, MemorySegment.NULL, size) != 0) {
         return null;
       }
-      long length = size.get(JAVA_LONG, 0);
+      var length = size.get(JAVA_LONG, 0);
       if (length <= 1) {
         return null;
       }
-      MemorySegment value = arena.allocate(length);
+      var value = arena.allocate(length);
       if (sysctlByName(nameSegment, value, size) != 0) {
         return null;
       }
@@ -56,10 +55,10 @@ public final class Sysctl {
    */
   @LowLevelLocalMachineAccess
   public static @Nullable Integer intByName(@NotNull String name) {
-    try (Arena arena = Arena.ofConfined()) {
-      MemorySegment nameSegment = arena.allocateFrom(name);
-      MemorySegment value = arena.allocate(JAVA_INT);
-      MemorySegment size = arena.allocate(JAVA_LONG);
+    try (var arena = Arena.ofConfined()) {
+      var nameSegment = arena.allocateFrom(name);
+      var value = arena.allocate(JAVA_INT);
+      var size = arena.allocate(JAVA_LONG);
       size.set(JAVA_LONG, 0, JAVA_INT.byteSize());
       if (sysctlByName(nameSegment, value, size) != 0 || size.get(JAVA_LONG, 0) != JAVA_INT.byteSize()) {
         return null;
@@ -84,7 +83,7 @@ public final class Sysctl {
     static final MethodHandle SYSCTLBYNAME;
 
     static {
-      MemoryLayout sizeT = LINKER.canonicalLayouts().get("size_t");
+      var sizeT = LINKER.canonicalLayouts().get("size_t");
       if (sizeT.byteSize() != JAVA_LONG.byteSize()) {
         throw new IllegalStateException("Unexpected size_t: " + sizeT);
       }

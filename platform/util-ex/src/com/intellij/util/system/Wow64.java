@@ -31,15 +31,15 @@ public final class Wow64 {
    * @return the native machine architecture, or {@code null} when the call is unavailable, fails, or reports an unknown machine type
    */
   public static @Nullable CpuArch nativeMachine() {
-    MethodHandle isWow64Process2 = Handles.IS_WOW64_PROCESS_2;
+    var isWow64Process2 = Handles.IS_WOW64_PROCESS_2;
     if (isWow64Process2 == null) {
       return null;
     }
-    try (Arena arena = Arena.ofConfined()) {
-      MemorySegment processMachine = arena.allocate(JAVA_SHORT);
-      MemorySegment nativeMachine = arena.allocate(JAVA_SHORT);
-      MemorySegment process = (MemorySegment)Handles.GET_CURRENT_PROCESS.invokeExact();
-      int succeeded = (int)isWow64Process2.invokeExact(process, processMachine, nativeMachine);
+    try (var arena = Arena.ofConfined()) {
+      var processMachine = arena.allocate(JAVA_SHORT);
+      var nativeMachine = arena.allocate(JAVA_SHORT);
+      var process = (MemorySegment)Handles.GET_CURRENT_PROCESS.invokeExact();
+      var succeeded = (int)isWow64Process2.invokeExact(process, processMachine, nativeMachine);
       if (succeeded == 0) {
         return null;
       }

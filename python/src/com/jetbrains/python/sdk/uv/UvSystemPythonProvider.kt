@@ -3,7 +3,7 @@ package com.jetbrains.python.sdk.uv
 
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.provider.localEel
-import com.intellij.python.uv.common.UV_UI_INFO
+import com.intellij.python.community.impl.uv.common.UV_UI_INFO
 import com.intellij.python.community.services.systemPython.SystemPythonProvider
 import com.jetbrains.python.PyToolUIInfo
 import com.jetbrains.python.PythonBinary
@@ -11,7 +11,6 @@ import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.uv.impl.createUvLowLevelLocal
 import com.jetbrains.python.sdk.uv.impl.hasUvExecutableLocal
-import java.nio.file.Path
 
 internal class UvSystemPythonProvider : SystemPythonProvider {
   override suspend fun findSystemPythons(eelApi: EelApi): PyResult<Set<PythonBinary>> {
@@ -20,10 +19,10 @@ internal class UvSystemPythonProvider : SystemPythonProvider {
       return Result.success(emptySet())
     }
 
-    val uv = createUvLowLevelLocal(Path.of(".")).getOr { return it }
+    // The Python list of uv does not depend on a directory, so this runs with none.
+    val uv = createUvLowLevelLocal(cwd = null).getOr { return it }
     return uv.listUvPythons()
   }
 
   override val uiCustomization: PyToolUIInfo = UV_UI_INFO
 }
-

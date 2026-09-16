@@ -1,3 +1,0 @@
-- name: dist.all/lib/intellij.platform.rpc.topics.jar
-  modules:
-  - name: intellij.platform.rpc.topics

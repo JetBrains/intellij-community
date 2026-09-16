@@ -1,10 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.editor
 
+import com.intellij.codeWithMe.ClientId
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.fileEditor.ClientFileEditorManager
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileOpenedSyncListener
@@ -85,30 +87,38 @@ internal class EditorTabDiffPreviewAdvancedSettingsListener : AdvancedSettingsCh
   companion object {
     /**
      * Unlike [com.intellij.diff.editor.DiffEditorViewerFileEditor.reloadDiffEditorsForFiles], should not try to reopen tabs in-place.
+     *
+     * The setting changes on the host, but a diff can be open in a client (split mode). The host has no
+     * floating window for a client diff, so it can not test the current placement here. Every open diff is
+     * reopened in the client that owns it. The reopen reads the host setting as the source of truth.
      */
     private fun reopenDiffEditorsForFiles(project: Project) {
-      val isOpenInNewWindow = DiffEditorTabFilesUtil.isDiffInWindow
-
       val editorManager = FileEditorManager.getInstance(project) as? FileEditorManagerImpl ?: return
       val diffEditorManager = DiffEditorTabFilesManager.getInstance(project)
 
-      val diffFiles = editorManager.windows
-        .filter { window -> isSingletonEditorInWindow(window) != isOpenInNewWindow }
-        .flatMap { window -> window.fileList }
-        .filter { it is DiffContentVirtualFile }
-        .filter { !DiffEditorTabFilesUtil.isForceOpeningsInNewWindow(it) }
-        .distinct()
-      if (diffFiles.isEmpty()) return
+      val filesByClient = editorManager.allEditors
+        .mapNotNull { editor -> editor.file?.let { ClientFileEditorManager.getClientId(editor) to it } }
+        .filter { (_, file) -> file is DiffContentVirtualFile && !DiffEditorTabFilesUtil.isForceOpeningsInNewWindow(file) }
+        .groupBy({ it.first }, { it.second })
+        .mapValues { (_, files) -> files.distinct() }
 
-      for (file in diffFiles) {
-        editorManager.closeFile(file, false, closeAllCopies = true)
+      // Close every copy first (this path handles all clients and splitters), so the reopen can not reuse a stale one.
+      for (files in filesByClient.values) {
+        for (file in files) {
+          editorManager.closeFile(file, false, closeAllCopies = true)
+        }
       }
 
-      val (toFocus, theRest) = diffFiles.headTail()
-      for (file in theRest) {
-        diffEditorManager.showDiffFile(file, false)
+      // Reopen in the client that owned the diff. The reopen reads the host setting through showDiffFile.
+      for ((clientId, files) in filesByClient) {
+        ClientId.withExplicitClientId(clientId).use {
+          val (toFocus, theRest) = files.headTail()
+          for (file in theRest) {
+            diffEditorManager.showDiffFile(file, false)
+          }
+          diffEditorManager.showDiffFile(toFocus, true)
+        }
       }
-      diffEditorManager.showDiffFile(toFocus, true)
     }
   }
 }

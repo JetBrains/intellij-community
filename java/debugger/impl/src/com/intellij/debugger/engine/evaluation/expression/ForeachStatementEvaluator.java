@@ -32,7 +32,7 @@ public class ForeachStatementEvaluator implements Evaluator {
       throw new EvaluateException("Unable to do foreach for" + iterable);
     }
 
-    if (iterable instanceof ArrayReference) {
+    if (iterable instanceof ArrayReference reference) {
       return new ForStatementEvaluatorBase(myLabelName, myBodyEvaluator) {
         private int myCurrentIndex = 0;
         private int myArrayLength = -1;
@@ -40,12 +40,12 @@ public class ForeachStatementEvaluator implements Evaluator {
 
         @Override
         protected Object evaluateInitialization(EvaluationContextImpl context, Object value) throws EvaluateException {
-          myArrayLength = ((ArrayReference)iterable).length();
+          myArrayLength = reference.length();
           myNextEvaluator = new AssignmentEvaluator(myIterationParameterEvaluator,
                                                     new Evaluator() {
                                                       @Override
                                                       public Object evaluate(EvaluationContextImpl context) {
-                                                        return ((ArrayReference)iterable).getValue(myCurrentIndex++);
+                                                        return reference.getValue(myCurrentIndex++);
                                                       }
                                                     });
           return value;

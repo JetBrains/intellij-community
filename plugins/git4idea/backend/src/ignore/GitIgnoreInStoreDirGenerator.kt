@@ -133,7 +133,7 @@ internal class GitIgnoreInStoreDirGenerator(private val project: Project, privat
     }
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun generateGitignoreInStoreDirIfNeededSync() {
     runBlockingMaybeCancellable {
       generateGitignoreInStoreDirIfNeeded()

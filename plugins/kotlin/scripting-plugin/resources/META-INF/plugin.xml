@@ -5,7 +5,13 @@
 
   <description><![CDATA[
     Provides Kotlin JSR223 Scripting support to the IDE: kotlin scripting console and other features depending on Kotlin JSR223 Scripting.
+    The plugin also ships a self-contained Kotlin compiler toolchain based on the Kotlin Build Tools API. Any plugin can
+    use the toolchain to compile Kotlin in the IDE, and does not have to bundle a compiler of its own.
     ]]></description>
+
+  <!-- The Kotlin plugin ships the same jsr223 engine and the same public intellij.kotlin.buildToolsRuntime module.
+       The two plugins must never load together, so this plugin gives way to the Kotlin plugin. -->
+  <incompatible-with>org.jetbrains.kotlin</incompatible-with>
 
   <!-- kotlin.jsr223 is included in kotlin plugin as well. To avoid conflicts, it's private and is not included in the common namespace -->
   <content>
@@ -14,5 +20,12 @@
     <module name="intellij.libraries.kotlinc.kotlin.script.runtime" loading="embedded"/>
     <module name="intellij.libraries.kotlinc.kotlin.scripting.common" loading="embedded"/>
     <module name="intellij.libraries.kotlinc.kotlin.scripting.jvm" loading="embedded"/>
+  </content>
+
+  <content namespace="jetbrains">
+    <module name="intellij.kotlin.buildToolsRuntime" loading="embedded"/>
+    <!-- intellij.kotlin.buildToolsRuntime needs this wrapper on the BTA toolchain classpath. The Kotlin plugin
+         declares the same public module. Only one of the two plugins can load, so the two copies never collide. -->
+    <module name="intellij.libraries.kotlin.tooling.core" loading="embedded"/>
   </content>
 </idea-plugin>

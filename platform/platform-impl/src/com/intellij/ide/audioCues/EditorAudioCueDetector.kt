@@ -14,8 +14,8 @@ fun interface EditorAudioCueDetector {
     val EP_NAME: ExtensionPointName<EditorAudioCueDetector> = ExtensionPointName("com.intellij.editorAudioCueDetector")
   }
 
-  @RequiresBackgroundThread
-  @RequiresReadLock
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun detect(editor: Editor, line: Int, caretOffset: Int): Set<EditorAudioCue>
 }
 

@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.caffeine` start
+content_module_jar(
+    libraries = ["@lib//:libraries-caffeine-caffeine"],
+    module = ":caffeine",
+)
+### auto-generated section `dev intellij.libraries.caffeine` end
+
 ### auto-generated section `build intellij.libraries.caffeine` start
 jvm_library(
     name = "caffeine",
@@ -16,11 +23,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-caffeine-caffeine"],
     runtime_deps = ["@lib//:libraries-caffeine-caffeine"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-caffeine-caffeine"],
-    module = ":caffeine",
 )
 
 jvm_library(
@@ -43,7 +45,6 @@ exports_files(
     [
         "intellij.libraries.caffeine.iml",
         "resources/intellij.libraries.caffeine.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

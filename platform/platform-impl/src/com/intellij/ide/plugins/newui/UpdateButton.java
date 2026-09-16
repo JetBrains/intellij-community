@@ -16,9 +16,15 @@ public final class UpdateButton extends ColorButton {
   private static final Color BorderColor = JBColor.namedColor("Plugins.Button.updateBorderColor", BlueColor);
 
   public UpdateButton() {
-    setTextColor(ForegroundColor);
-    setBgColor(BackgroundColor);
-    setBorderColor(BorderColor);
+    this(false);
+  }
+
+  UpdateButton(boolean useSecondaryStyle) {
+    if (!useSecondaryStyle) {
+      setTextColor(ForegroundColor);
+      setBgColor(BackgroundColor);
+      setBorderColor(BorderColor);
+    }
 
     setText(IdeBundle.message("plugins.configurable.update.button"));
     setWidth72(this);

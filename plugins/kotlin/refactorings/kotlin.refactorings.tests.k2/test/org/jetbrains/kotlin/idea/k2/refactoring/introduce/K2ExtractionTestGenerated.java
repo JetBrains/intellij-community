@@ -19,7 +19,7 @@ import org.junit.runner.RunWith;
 @RunWith(JUnit3RunnerWithInners.class)
 public abstract class K2ExtractionTestGenerated extends AbstractK2ExtractionTest {
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../idea/tests/testData/refactoring/extractSuperclass")
+    @TestMetadata("testData/extractSuperclass")
     public static class ExtractSuperclass extends AbstractK2ExtractionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doExtractSuperclassTest, this, testDataFilePath);
@@ -27,112 +27,112 @@ public abstract class K2ExtractionTestGenerated extends AbstractK2ExtractionTest
 
         @TestMetadata("abstractedMemberUsingPrivate.kt")
         public void testAbstractedMemberUsingPrivate() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/extractSuperclass/abstractedMemberUsingPrivate.kt");
+            runTest("testData/extractSuperclass/abstractedMemberUsingPrivate.kt");
         }
 
         @TestMetadata("addSuperclassNoSecondaryConstructors.kt")
         public void testAddSuperclassNoSecondaryConstructors() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/extractSuperclass/addSuperclassNoSecondaryConstructors.kt");
+            runTest("testData/extractSuperclass/addSuperclassNoSecondaryConstructors.kt");
         }
 
         @TestMetadata("addSuperclassOnlySecondaryConstructors.kt")
         public void testAddSuperclassOnlySecondaryConstructors() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/extractSuperclass/addSuperclassOnlySecondaryConstructors.kt");
+            runTest("testData/extractSuperclass/addSuperclassOnlySecondaryConstructors.kt");
         }
 
         @TestMetadata("addSuperclassPrimaryConstructor.kt")
         public void testAddSuperclassPrimaryConstructor() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/extractSuperclass/addSuperclassPrimaryConstructor.kt");
+            runTest("testData/extractSuperclass/addSuperclassPrimaryConstructor.kt");
         }
 
         @TestMetadata("addTypeParameters.kt")
         public void testAddTypeParameters() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/extractSuperclass/addTypeParameters.kt");
+            runTest("testData/extractSuperclass/addTypeParameters.kt");
         }
 
         @TestMetadata("addTypeParametersWithAbstract.kt")
         public void testAddTypeParametersWithAbstract() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/extractSuperclass/addTypeParametersWithAbstract.kt");
+            runTest("testData/extractSuperclass/addTypeParametersWithAbstract.kt");
         }
 
         @TestMetadata("annotation.kt")
         public void testAnnotation() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/extractSuperclass/annotation.kt");
+            runTest("testData/extractSuperclass/annotation.kt");
         }
 
         @TestMetadata("classAlreadyExists.kt")
         public void testClassAlreadyExists() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/extractSuperclass/classAlreadyExists.kt");
+            runTest("testData/extractSuperclass/classAlreadyExists.kt");
         }
 
         @TestMetadata("dropPropertyParameterModifiers.kt")
         public void testDropPropertyParameterModifiers() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/extractSuperclass/dropPropertyParameterModifiers.kt");
+            runTest("testData/extractSuperclass/dropPropertyParameterModifiers.kt");
         }
 
         @TestMetadata("enum.kt")
         public void testEnum() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/extractSuperclass/enum.kt");
+            runTest("testData/extractSuperclass/enum.kt");
         }
 
         @TestMetadata("extractToExistingFile.kt")
         public void testExtractToExistingFile() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/extractSuperclass/extractToExistingFile.kt");
+            runTest("testData/extractSuperclass/extractToExistingFile.kt");
         }
 
         @TestMetadata("interface.kt")
         public void testInterface() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/extractSuperclass/interface.kt");
+            runTest("testData/extractSuperclass/interface.kt");
         }
 
         @TestMetadata("noWarningOnVisibilityInsideAbstractedMember.kt")
         public void testNoWarningOnVisibilityInsideAbstractedMember() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/extractSuperclass/noWarningOnVisibilityInsideAbstractedMember.kt");
+            runTest("testData/extractSuperclass/noWarningOnVisibilityInsideAbstractedMember.kt");
         }
 
         @TestMetadata("privateClass.kt")
         public void testPrivateClass() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/extractSuperclass/privateClass.kt");
+            runTest("testData/extractSuperclass/privateClass.kt");
         }
 
         @TestMetadata("privateMember.kt")
         public void testPrivateMember() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/extractSuperclass/privateMember.kt");
+            runTest("testData/extractSuperclass/privateMember.kt");
         }
 
         @TestMetadata("privateMemberWithUsages.kt")
         public void testPrivateMemberWithUsages() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/extractSuperclass/privateMemberWithUsages.kt");
+            runTest("testData/extractSuperclass/privateMemberWithUsages.kt");
         }
 
         @TestMetadata("reformatModifierList.kt")
         public void testReformatModifierList() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/extractSuperclass/reformatModifierList.kt");
+            runTest("testData/extractSuperclass/reformatModifierList.kt");
         }
 
         @TestMetadata("replaceSuperclass.kt")
         public void testReplaceSuperclass() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/extractSuperclass/replaceSuperclass.kt");
+            runTest("testData/extractSuperclass/replaceSuperclass.kt");
         }
 
         @TestMetadata("specialName.kt")
         public void testSpecialName() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/extractSuperclass/specialName.kt");
+            runTest("testData/extractSuperclass/specialName.kt");
         }
 
         @TestMetadata("typealiasAlreadyExists.kt")
         public void testTypealiasAlreadyExists() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/extractSuperclass/typealiasAlreadyExists.kt");
+            runTest("testData/extractSuperclass/typealiasAlreadyExists.kt");
         }
 
         @TestMetadata("valueClassPropertyType.kt")
         public void testValueClassPropertyType() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/extractSuperclass/valueClassPropertyType.kt");
+            runTest("testData/extractSuperclass/valueClassPropertyType.kt");
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../idea/tests/testData/refactoring/extractInterface")
+    @TestMetadata("testData/extractInterface")
     public static class ExtractInterface extends AbstractK2ExtractionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doExtractInterfaceTest, this, testDataFilePath);
@@ -140,82 +140,82 @@ public abstract class K2ExtractionTestGenerated extends AbstractK2ExtractionTest
 
         @TestMetadata("abstractedMemberUsingPrivate.kt")
         public void testAbstractedMemberUsingPrivate() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/extractInterface/abstractedMemberUsingPrivate.kt");
+            runTest("testData/extractInterface/abstractedMemberUsingPrivate.kt");
         }
 
         @TestMetadata("addImportOnParameterPullUp.kt")
         public void testAddImportOnParameterPullUp() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/extractInterface/addImportOnParameterPullUp.kt");
+            runTest("testData/extractInterface/addImportOnParameterPullUp.kt");
         }
 
         @TestMetadata("addInterface.kt")
         public void testAddInterface() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/extractInterface/addInterface.kt");
+            runTest("testData/extractInterface/addInterface.kt");
         }
 
         @TestMetadata("addInterfaceWithAbstract.kt")
         public void testAddInterfaceWithAbstract() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/extractInterface/addInterfaceWithAbstract.kt");
+            runTest("testData/extractInterface/addInterfaceWithAbstract.kt");
         }
 
         @TestMetadata("addTypeParameters.kt")
         public void testAddTypeParameters() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/extractInterface/addTypeParameters.kt");
+            runTest("testData/extractInterface/addTypeParameters.kt");
         }
 
         @TestMetadata("addTypeParametersWithAbstract.kt")
         public void testAddTypeParametersWithAbstract() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/extractInterface/addTypeParametersWithAbstract.kt");
+            runTest("testData/extractInterface/addTypeParametersWithAbstract.kt");
         }
 
         @TestMetadata("annotation.kt")
         public void testAnnotation() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/extractInterface/annotation.kt");
+            runTest("testData/extractInterface/annotation.kt");
         }
 
         @TestMetadata("dropFinal.kt")
         public void testDropFinal() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/extractInterface/dropFinal.kt");
+            runTest("testData/extractInterface/dropFinal.kt");
         }
 
         @TestMetadata("extractToExistingFile.kt")
         public void testExtractToExistingFile() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/extractInterface/extractToExistingFile.kt");
+            runTest("testData/extractInterface/extractToExistingFile.kt");
         }
 
         @TestMetadata("liftInternal.kt")
         public void testLiftInternal() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/extractInterface/liftInternal.kt");
+            runTest("testData/extractInterface/liftInternal.kt");
         }
 
         @TestMetadata("liftPrivate.kt")
         public void testLiftPrivate() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/extractInterface/liftPrivate.kt");
+            runTest("testData/extractInterface/liftPrivate.kt");
         }
 
         @TestMetadata("liftProtected.kt")
         public void testLiftProtected() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/extractInterface/liftProtected.kt");
+            runTest("testData/extractInterface/liftProtected.kt");
         }
 
         @TestMetadata("noWarningOnVisibilityInsideAbstractedMember.kt")
         public void testNoWarningOnVisibilityInsideAbstractedMember() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/extractInterface/noWarningOnVisibilityInsideAbstractedMember.kt");
+            runTest("testData/extractInterface/noWarningOnVisibilityInsideAbstractedMember.kt");
         }
 
         @TestMetadata("privateMemberWithUsages.kt")
         public void testPrivateMemberWithUsages() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/extractInterface/privateMemberWithUsages.kt");
+            runTest("testData/extractInterface/privateMemberWithUsages.kt");
         }
 
         @TestMetadata("specialName.kt")
         public void testSpecialName() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/extractInterface/specialName.kt");
+            runTest("testData/extractInterface/specialName.kt");
         }
 
         @TestMetadata("valueClassPropertyType.kt")
         public void testValueClassPropertyType() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/extractInterface/valueClassPropertyType.kt");
+            runTest("testData/extractInterface/valueClassPropertyType.kt");
         }
     }
 }

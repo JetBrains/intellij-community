@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.mermaid.markdown` start
+content_module_jar(module = ":markdown")
+### auto-generated section `dev intellij.mermaid.markdown` end
+
 ### auto-generated section `build intellij.mermaid.markdown` start
 jvm_library(
     name = "markdown",
@@ -51,8 +55,6 @@ jvm_library(
         "//platform/util/coroutines",
     ],
 )
-
-content_module_jar(module = ":markdown")
 
 jvm_library(
     name = "markdown_test_lib",

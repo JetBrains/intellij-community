@@ -8,8 +8,6 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.system.OS;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UnixDesktopEnv;
-import com.sun.jna.Memory;
-import com.sun.jna.Pointer;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,6 +17,8 @@ import javax.swing.JFrame;
 import java.awt.Toolkit;
 import java.awt.Window;
 import java.io.IOException;
+import java.lang.foreign.Arena;
+import java.lang.foreign.ValueLayout;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -34,12 +34,10 @@ import java.util.regex.Pattern;
 public final class X11UiUtil {
   private static final Logger LOG = Logger.getInstance(X11UiUtil.class);
 
-  private static final int True = 1;
   private static final int False = 0;
   private static final long XA_ATOM = 4;
   private static final long XA_WINDOW = 33;
   private static final long ANY_PROPERTY_TYPE = 0;
-  private static final int CLIENT_MESSAGE = 33;
   private static final int FORMAT_LONG = 32;
   private static final long EVENT_MASK = (3L << 19);
   private static final long NET_WM_STATE_REMOVE = 0;
@@ -161,24 +159,28 @@ public final class X11UiUtil {
 
     private long @Nullable [] getWindowProperty(long window, long name, long type) throws Exception {
       awtLock.invoke(null);
-      try (var buffer = new Memory(64)) {
-        buffer.clear();
-        long pBuf = Pointer.nativeValue(buffer);
+      try (var arena = Arena.ofConfined()) {
+        var buffer = arena.allocate(64, Long.BYTES);
+        long pBuf = buffer.address();
         int result = (Integer)XGetWindowProperty.invoke(
           null, display, window, name, 0L, 65535L, (long)False, type, pBuf, pBuf + 8, pBuf + 16, pBuf + 24, pBuf + 32
         );
         if (result == 0) {
-          var format = buffer.getInt(8);
-          var pointer = buffer.getPointer(32);
-          if (pointer != Pointer.NULL) {
-            if (format == FORMAT_LONG) {
-              var length = (int)buffer.getLong(16);
-              return pointer.getLongArray(0, length);
+          var format = buffer.get(ValueLayout.JAVA_INT, 8);
+          var pointer = buffer.get(ValueLayout.ADDRESS, 32);
+          if (pointer.address() != 0) {
+            try {
+              if (format == FORMAT_LONG) {
+                var length = Math.toIntExact(buffer.get(ValueLayout.JAVA_LONG, 16));
+                return pointer.reinterpret(Math.multiplyExact((long)length, Long.BYTES)).toArray(ValueLayout.JAVA_LONG);
+              }
+              else {
+                LOG.info("unexpected format: " + format);
+              }
             }
-            else {
-              LOG.info("unexpected format: " + format);
+            finally {
+              XFree.invoke(null, pointer.address());
             }
-            XFree.invoke(null, Pointer.nativeValue(pointer));
           }
         }
       }
@@ -190,19 +192,10 @@ public final class X11UiUtil {
     }
 
     private void sendClientMessage(long target, long window, long type, long... data) throws Exception {
-      assert data.length <= 5;
       awtLock.invoke(null);
-      try (var event = new Memory(128)) {
-        event.clear();
-        event.setInt(0, CLIENT_MESSAGE);
-        event.setInt(16, True);
-        event.setLong(32, window);
-        event.setLong(40, type);
-        event.setInt(48, FORMAT_LONG);
-        for (var i = 0; i < data.length; i++) {
-          event.setLong(56 + 8L * i, data[i]);
-        }
-        XSendEvent.invoke(null, display, target, false, EVENT_MASK, Pointer.nativeValue(event));
+      try (var arena = Arena.ofConfined()) {
+        var event = X11NativeMemory.clientMessage(arena, display, window, type, data);
+        XSendEvent.invoke(null, display, target, false, EVENT_MASK, event.address());
       }
       finally {
         awtUnlock.invoke(null);

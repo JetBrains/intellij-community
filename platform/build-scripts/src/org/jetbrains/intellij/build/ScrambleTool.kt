@@ -30,7 +30,7 @@ interface ScrambleTool {
    * (for resolving cross-plugin references during trim/obfuscate). Typically the `lib/modules`
    * subdir of every bundled plugin laid out before this run.
    */
-  suspend fun scramble(
+  fun scramble(
     platformLayout: PlatformLayout,
     platformContent: List<DistributionFileEntry>,
     coScrambleEntries: List<CoScrambleEntry>,
@@ -53,14 +53,14 @@ interface ScrambleTool {
     @JvmField val pluginDir: Path,
   )
 
-  suspend fun scramblePlugin(request: PluginScrambleRequest, context: BuildContext)
+  fun scramblePlugin(request: PluginScrambleRequest, context: BuildContext)
 
   /**
    * Returns list of module names which cannot be included in the product without scrambling.
    */
   val namesOfModulesRequiredToBeScrambled: List<String>
 
-  suspend fun validatePlatformLayout(modules: Collection<ModuleItem>, context: BuildContext)
+  fun validatePlatformLayout(modules: Collection<ModuleItem>, context: BuildContext)
 }
 
 @ApiStatus.Internal

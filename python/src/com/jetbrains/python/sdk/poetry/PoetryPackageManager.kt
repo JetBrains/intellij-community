@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.poetry
 
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
@@ -15,6 +14,8 @@ import com.intellij.python.pyproject.model.spi.ProjectName
 import com.intellij.python.pytools.resolveExecutable
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrNull
+import com.jetbrains.python.packaging.packageRequirements.packagesUnavailable
+import com.jetbrains.python.packaging.packageRequirements.cachedDependencyTree
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.common.PyDependencyGroupName
@@ -27,14 +28,12 @@ import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonRepositoryManager
 import com.jetbrains.python.packaging.management.PythonWorkspaceSupport
-import com.jetbrains.python.packaging.packageRequirements.CachedDependencyTreeProvider
 import com.jetbrains.python.packaging.packageRequirements.PackageCollectionPackageStructureNode
 import com.jetbrains.python.packaging.packageRequirements.PackageStructureNode
 import com.jetbrains.python.packaging.packageRequirements.PackageTreeNode
 import com.jetbrains.python.packaging.packageRequirements.TreeParser
 import com.jetbrains.python.packaging.packageRequirements.collectAllNames
 import com.jetbrains.python.packaging.pip.PipRepositoryManager
-import com.jetbrains.python.orLogException
 import com.jetbrains.python.poetry.POETRY_LOCK
 import com.jetbrains.python.sdk.add.v2.EelFileSystem
 import com.jetbrains.python.sdk.findModuleForSdk
@@ -57,9 +56,10 @@ internal class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageM
   override val cliSpecs: List<PythonManagerCliSpec> = listOf(
     PythonManagerCliSpec("poetry", { PoetryPyTool.getInstance().resolveExecutable(EelFileSystem(localEel))?.path })
   )
-  override val treeProvider = CachedDependencyTreeProvider(fetchOutput = {
-    runPoetryWithSdk(sdk, "show", "--tree").orLogException(thisLogger())
-  })
+  override val treeProvider = cachedDependencyTree(
+    lockFileName = POETRY_LOCK.value,
+    dependencyFiles = { resolveDependencyFilesTree() },
+  ) { runPoetryWithSdk(sdk, "show", "--tree") }
   override val dependenciesFilesRelativePaths: List<Path>
     get() = listOf(
       Path.of(PY_PROJECT_TOML),
@@ -138,7 +138,8 @@ internal class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageM
    * handled separately in [getPackageTree] as undeclared/standalone packages.
    */
   override suspend fun listDeclaredPackages(): PyResult<List<PythonPackage>> {
-    return declaredPackagesFromTrees(treeProvider.getDependencyTrees())
+    val trees = treeProvider.getDependencyTrees().getOr { return it }
+    return declaredPackagesFromTrees(trees)
   }
 
   private suspend fun declaredPackagesFromTrees(trees: List<PackageTreeNode>): PyResult<List<PythonPackage>> {
@@ -277,7 +278,7 @@ internal class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageM
   }
 
   override suspend fun getPackageTree(): PackageStructureNode {
-    val allTrees = treeProvider.getDependencyTrees()
+    val allTrees = treeProvider.getDependencyTrees().getOr { return packagesUnavailable(it.error) }
     if (allTrees.isEmpty()) return PackageCollectionPackageStructureNode(emptyList(), emptyList())
     val declaredPackageNames = declaredPackagesFromTrees(allTrees).getOrNull()
                                  ?.mapTo(mutableSetOf()) { it.name } ?: emptySet()

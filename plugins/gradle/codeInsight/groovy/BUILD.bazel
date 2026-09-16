@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.gradle.codeInsight.groovy` start
+content_module_jar(module = ":groovy")
+### auto-generated section `dev intellij.gradle.codeInsight.groovy` end
+
 ### auto-generated section `build intellij.gradle.codeInsight.groovy` start
 jvm_library(
     name = "groovy",
@@ -24,8 +28,6 @@ jvm_library(
         "//plugins/gradle/codeInsight",
     ],
 )
-
-content_module_jar(module = ":groovy")
 
 jvm_library(
     name = "groovy_test_lib",

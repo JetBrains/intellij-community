@@ -60,8 +60,9 @@ private fun filterConflictingJars(
   jars: Iterable<Path>,
   logger: Logger,
 ): Set<Path> {
-  val alreadyIncludedJarModuleNames = alreadyIncludedJars.mapTo(mutableSetOf()) { jar -> jar.moduleName }
-  val (ok, conflicting) = jars.associateWith { jar -> jar.moduleName }.entries.partition { (jar, moduleName) ->
+  // An empty jar leaves before its module name is derived: see the KDoc of `Path.moduleName`.
+  val alreadyIncludedJarModuleNames = alreadyIncludedJars.filterNot(::isEmptyJar).mapTo(mutableSetOf()) { jar -> jar.moduleName }
+  val (ok, conflicting) = jars.filterNot(::isEmptyJar).associateWith { jar -> jar.moduleName }.entries.partition { (jar, moduleName) ->
     logger.debug("Processing module '{}' from '{}'", moduleName, jar)
     val alreadyExisting = when (moduleName) {
       "annotations", "org.jetbrains.annotations" -> true // already provided by Kotlin?
@@ -84,9 +85,7 @@ private fun filterConflictingJars(
     }")
   }
 
-  val filteredJars = filteredByModuleNameJars.filterNot(::isEmptyJar)
-
-  return filteredJars.toSet()
+  return filteredByModuleNameJars.toSet()
 }
 
 internal fun isEmptyJar(jar: Path): Boolean {
@@ -121,5 +120,12 @@ internal fun copyJarToOutputDirectory(
 
 private val jarToModuleNameCache: MutableMap<Path, String> = ConcurrentHashMap<Path, String>()
 
+/**
+ * The module name the JDK derives for this jar.
+ *
+ * The caller drops an empty jar with [isEmptyJar] before it reads this property. An IntelliJ library wrapper jar
+ * holds only a descriptor, and its file name need not be a valid module name: `jvm-native-trusted-roots.jar`
+ * fails, because `native` is a keyword.
+ */
 internal val Path.moduleName: String
   get() = jarToModuleNameCache.computeIfAbsent(this) { ModuleFinder.of(this).findAll().single().descriptor().name() }

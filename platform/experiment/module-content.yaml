@@ -1,3 +1,0 @@
-- name: dist.all/lib/intellij.platform.experiment.jar
-  modules:
-  - name: intellij.platform.experiment

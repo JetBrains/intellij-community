@@ -109,8 +109,8 @@ public final class CollectionBreakpointUtils {
                                        GET_FIELD_MODIFICATIONS_METHOD_DESC,
                                        toList(clsNameRef, fieldNameRef, clsInstance));
 
-    if (result instanceof ArrayReference) {
-      return ((ArrayReference)result).getValues();
+    if (result instanceof ArrayReference reference) {
+      return reference.getValues();
     }
 
     return Collections.emptyList();
@@ -135,7 +135,7 @@ public final class CollectionBreakpointUtils {
                                        GET_FIELD_STACK_METHOD_DESC,
                                        toList(clsNameRef, fieldNameRef, collectionInstance, modificationIndex));
 
-    String message = result instanceof StringReference ? ((StringReference)result).value() : "";
+    String message = result instanceof StringReference reference ? reference.value() : "";
 
     return readStackItems(context.getDebugProcess(), message, virtualMachineProxy);
   }
@@ -173,8 +173,8 @@ public final class CollectionBreakpointUtils {
                                                         GET_COLLECTION_MODIFICATIONS_METHOD_DESC,
                                                         Collections.singletonList(collectionInstance));
 
-    if (collectionModifications instanceof ArrayReference) {
-      return ((ArrayReference)collectionModifications).getValues();
+    if (collectionModifications instanceof ArrayReference reference) {
+      return reference.getValues();
     }
 
     return Collections.emptyList();
@@ -194,7 +194,7 @@ public final class CollectionBreakpointUtils {
                                        GET_COLLECTION_STACK_METHOD_DESC,
                                        toList(collectionInstance, modificationIndex));
 
-    String message = result instanceof StringReference ? ((StringReference)result).value() : "";
+    String message = result instanceof StringReference reference ? reference.value() : "";
 
     return readStackItems(context.getDebugProcess(), message, virtualMachineProxy);
   }
@@ -221,8 +221,8 @@ public final class CollectionBreakpointUtils {
           debugProcess.invokeInstanceMethod(evaluationContext, collectionInstance, getElementMethod, Collections.emptyList(), 0);
         Value isAddition =
           debugProcess.invokeInstanceMethod(evaluationContext, collectionInstance, isAdditionMethod, Collections.emptyList(), 0);
-        if (element instanceof ObjectReference && isAddition instanceof BooleanValue) {
-          return new Pair<>((ObjectReference)element, (BooleanValue)isAddition);
+        if (element instanceof ObjectReference reference && isAddition instanceof BooleanValue value) {
+          return new Pair<>(reference, value);
         }
       }
       catch (EvaluateException e) {

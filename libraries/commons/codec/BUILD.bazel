@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.commons.codec` start
+content_module_jar(
+    libraries = ["@lib//:libraries-commons-codec-commons-codec"],
+    module = ":codec",
+)
+### auto-generated section `dev intellij.libraries.commons.codec` end
+
 ### auto-generated section `build intellij.libraries.commons.codec` start
 jvm_library(
     name = "codec",
@@ -16,11 +23,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-commons-codec-commons-codec"],
     runtime_deps = ["@lib//:libraries-commons-codec-commons-codec"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-commons-codec-commons-codec"],
-    module = ":codec",
 )
 
 jvm_library(
@@ -43,7 +45,6 @@ exports_files(
     [
         "intellij.libraries.commons.codec.iml",
         "resources/intellij.libraries.commons.codec.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

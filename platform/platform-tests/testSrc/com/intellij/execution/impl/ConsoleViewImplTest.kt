@@ -30,7 +30,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionManager
 import com.intellij.openapi.editor.actionSystem.TypedAction
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.DocumentMarkupModel
-import com.intellij.openapi.editor.impl.RangeMarkerStorageImpl
+import com.intellij.openapi.editor.impl.RangeMarkersImpl
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.project.Project
@@ -115,7 +115,7 @@ class ConsoleViewImplTest : LightPlatformTestCase() {
   fun testConsolePrintsSomethingAfterDoubleClear() {
     val alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, testRootDisposable)
     val latch = CountDownLatch(1)
-    alarm.addRequest(Runnable {
+    alarm.addRequest({
       console.clear()
       console.clear()
       console.print("Test", ConsoleViewContentType.NORMAL_OUTPUT)
@@ -133,7 +133,7 @@ class ConsoleViewImplTest : LightPlatformTestCase() {
     val alarm = Alarm(testRootDisposable)
     repeat(1000/*000*/) {
       val latch = CountDownLatch(1)
-      alarm.addRequest(Runnable {
+      alarm.addRequest({
         console.clear()
         console.print("Test", ConsoleViewContentType.NORMAL_OUTPUT)
         console.scrollTo(0)
@@ -156,11 +156,11 @@ class ConsoleViewImplTest : LightPlatformTestCase() {
       //System.out.println("Attempt #" + i);
       console.clear() // 1-st clear
       val latch = CountDownLatch(1)
-      val future = ApplicationManager.getApplication().executeOnPooledThread(Runnable {
+      val future = ApplicationManager.getApplication().executeOnPooledThread {
         console.clear() // 2-nd clear
         console.print("Test", ConsoleViewContentType.NORMAL_OUTPUT)
         latch.countDown()
-      })
+      }
       UIUtil.dispatchAllInvocationEvents() // flush 1-st clear request
       assertTrue(latch.await(30, TimeUnit.SECONDS))
       UIUtil.dispatchAllInvocationEvents() // flush 2-nd clear request
@@ -337,7 +337,7 @@ class ConsoleViewImplTest : LightPlatformTestCase() {
   }
 
   fun testCanPrintUserInputFromBackground() {
-    val future = JobScheduler.getScheduler().submit(Runnable { console.print("input", ConsoleViewContentType.USER_INPUT) })
+    val future = JobScheduler.getScheduler().submit { console.print("input", ConsoleViewContentType.USER_INPUT) }
 
     while (!future.isDone) {
       UIUtil.dispatchAllInvocationEvents()
@@ -447,7 +447,7 @@ class ConsoleViewImplTest : LightPlatformTestCase() {
     outputType: ProcessOutputType,
     bufferSize: Int
   ): Future<*> {
-    return ApplicationManager.getApplication().executeOnPooledThread(Runnable {
+    return ApplicationManager.getApplication().executeOnPooledThread {
       var bufferRestSize = bufferSize
       for (i in 1..lineCount) {
         val text = linePrefix + i + LineSeparator.LF.separatorString
@@ -463,7 +463,7 @@ class ConsoleViewImplTest : LightPlatformTestCase() {
           printedTextSize += textToPrint.length
         }
       }
-    })
+    }
   }
 
   fun testBackspaceDoesDeleteTheLastTypedChar() {
@@ -488,7 +488,7 @@ class ConsoleViewImplTest : LightPlatformTestCase() {
   private fun backspace() {
     val handler = ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_BACKSPACE)
     CommandProcessor.getInstance().executeCommand(project,
-                                                  Runnable { EditorTestUtil.executeAction(consoleEditor, true, handler) },
+                                                  { EditorTestUtil.executeAction(consoleEditor, true, handler) },
                                                   "", null, consoleEditor.document)
   }
 
@@ -891,10 +891,10 @@ class ConsoleViewImplTest : LightPlatformTestCase() {
 
     assertOneElement(consoleEditor.foldingModel.allFoldRegions)
 
-    consoleEditor.foldingModel.runBatchFoldingOperation(Runnable {
+    consoleEditor.foldingModel.runBatchFoldingOperation {
       val firstRegion = assertOneElement(consoleEditor.foldingModel.allFoldRegions)
       firstRegion.setExpanded(true)
-    })
+    }
 
     console.print("2 FOO a\n", ConsoleViewContentType.NORMAL_OUTPUT)
     console.print("3 BAR a\n", ConsoleViewContentType.NORMAL_OUTPUT)
@@ -937,10 +937,10 @@ class ConsoleViewImplTest : LightPlatformTestCase() {
 
     assertOneElement(consoleEditor.foldingModel.allFoldRegions)
 
-    consoleEditor.foldingModel.runBatchFoldingOperation(Runnable {
+    consoleEditor.foldingModel.runBatchFoldingOperation {
       val firstRegion = assertOneElement(consoleEditor.foldingModel.allFoldRegions)
       firstRegion.setExpanded(true)
-    })
+    }
 
     console.print("2 FOO a\n", ConsoleViewContentType.NORMAL_OUTPUT)
     console.print("3 BAR a\n", ConsoleViewContentType.NORMAL_OUTPUT)
@@ -1105,7 +1105,7 @@ class ConsoleViewImplTest : LightPlatformTestCase() {
 
   private val FoldRegion.linesAndPlaceholder: Pair<Pair<Int, Int>, String>
     get() =
-      lines to placeholderText!!
+      lines to placeholderText
 
   private val allRangeHighlighters: List<RangeHighlighter>
     get() {
@@ -1152,7 +1152,9 @@ class ConsoleViewImplTest : LightPlatformTestCase() {
   }
 
   fun testComputeTextToSendWithSnapshotHighlighters() {
-    RangeMarkerStorageImpl.usePMarkerImplementationIn<RuntimeException>() {
+    Disposer.dispose(console)
+    RangeMarkersImpl.usePMarkerImplementationIn<RuntimeException> {
+      console = createConsole() // otherwise the console might be created with old tree RangeMarkers and now will try to create more snapshot-based RangeMarkers and fail
       console.print("first", ConsoleViewContentType.USER_INPUT)
       console.print("output", ConsoleViewContentType.NORMAL_OUTPUT)
       console.print("second", ConsoleViewContentType.USER_INPUT)

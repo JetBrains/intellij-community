@@ -5,5 +5,3 @@ fun f(p: String?) {
 }
 
 // EXIST: { itemText:"p" }
-
-// IGNORE_K2

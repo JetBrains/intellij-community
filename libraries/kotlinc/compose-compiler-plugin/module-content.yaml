@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.kotlinc.compose.compiler.plugin.jar
+  modules:
+  - name: intellij.libraries.kotlinc.compose.compiler.plugin
+    libraries:
+      kotlinc.compose-compiler-plugin:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/compose-compiler-plugin-for-ide/2/compose-compiler-plugin-for-ide-2.jar

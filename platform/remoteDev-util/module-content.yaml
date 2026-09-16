@@ -1,6 +1,0 @@
-- name: dist.all/lib/intellij.remoteDev.util.jar
-  modules:
-  - name: intellij.remoteDev.util
-  library: rd-gen
-  files:
-  - name: $MAVEN_REPOSITORY$/com/jetbrains/rd/rd-gen/2026/rd-gen-2026.jar

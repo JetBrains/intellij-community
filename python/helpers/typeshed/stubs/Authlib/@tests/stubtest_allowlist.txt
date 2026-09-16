@@ -45,10 +45,5 @@ authlib.oidc.core.grants.implicit.OpenIDImplicitGrant.validate_consent_request
 authlib.integrations.django_client.*
 authlib.integrations.django_oauth1.*
 authlib.integrations.django_oauth2.*
-authlib.integrations.flask_client.*
-authlib.integrations.flask_oauth1.*
-authlib.integrations.flask_oauth2.*
-authlib.integrations.httpx_client.*
-authlib.integrations.requests_client.*
 authlib.integrations.sqla_oauth2.*
 authlib.integrations.starlette_client.*

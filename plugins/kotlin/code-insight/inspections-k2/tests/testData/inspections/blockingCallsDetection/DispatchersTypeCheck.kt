@@ -4,6 +4,7 @@
 package kotlinx.coroutines
 
 import java.lang.Thread
+import kotlin.coroutines.CoroutineContext
 import java.lang.Thread.sleep
 
 suspend fun withIoDispatcher() {
@@ -30,4 +31,24 @@ suspend fun withIoDispatcher() {
         //no warning since IO dispatcher type used
         Thread.sleep(42)
     }
+
+    withContext(Dispatchers.IO) {
+        run {
+            //no warning since IO dispatcher type used, even through an inlined lambda
+            Thread.sleep(43)
+        }
+    }
+
+    withContext(Dispatchers.Default) {
+        run {
+            Thread.<warning descr="Possibly blocking call in non-blocking context could lead to thread starvation">sleep</warning>(2)
+        }
+    }
+
+    // the dispatcher cannot be classified, which is not the same as having no dispatcher at all
+    withContext(getUnknownContext()) {
+        Thread.<warning descr="Possibly blocking call in non-blocking context could lead to thread starvation">sleep</warning>(3)
+    }
 }
+
+fun getUnknownContext(): CoroutineContext = TODO()

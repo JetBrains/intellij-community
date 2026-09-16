@@ -5,6 +5,5 @@ fun test(b: Byte, i: Int) {
         <caret>b -> {}
     }
 }
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.NumberConversionFix
 // IGNORE_K2
 // Task for K2: KTIJ-33283

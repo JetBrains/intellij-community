@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.properties.copyright` start
+content_module_jar(module = ":copyright")
+### auto-generated section `dev intellij.properties.copyright` end
+
 ### auto-generated section `build intellij.properties.copyright` start
 jvm_library(
     name = "copyright",
@@ -16,8 +20,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = ["//plugins/copyright"],
 )
-
-content_module_jar(module = ":copyright")
 
 jvm_library(
     name = "copyright_test_lib",

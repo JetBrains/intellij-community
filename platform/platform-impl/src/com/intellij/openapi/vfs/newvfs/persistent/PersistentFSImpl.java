@@ -1253,6 +1253,33 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     updateContentId(fileId, newContentId, newContent.length());
   }
 
+  /**
+   * Puts the {@code content} into the VFS content cache of the {@code file}, and clears the
+   * {@link Flags#MUST_RELOAD_CONTENT} flag. The next reader then gets the content from the cache, and does not
+   * read the file again.
+   *
+   * @return true if the VFS cached the content. On false the cache keeps its previous state, and the next reader
+   * reads the file again.
+   */
+  @ApiStatus.Internal
+  public boolean cacheFileContent(@NotNull VirtualFile file, byte @NotNull [] content) {
+    ThreadingAssertions.assertWriteAccess();
+
+    if (!shouldCacheFileContentInVFS(content.length) || fileSystemOf(file).isReadOnly()) {
+      return false;
+    }
+
+    int fileId = fileId(file);
+    long recordedLength = vfsPeer.readRecordFields(fileId, new LengthAndContentIdReader()).length;
+    if (recordedLength != content.length) {
+      //the file changed again after the caller read it, or the length is unknown
+      return false;
+    }
+
+    updateContentForFile(fileId, new ByteArraySequence(content));
+    return true;
+  }
+
   /** Method is obsolete, migrate to {@link #contentHashIfStored(VirtualFile)} instance method */
   @TestOnly
   @ApiStatus.Obsolete
@@ -2028,10 +2055,13 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     if (attributes == null || !attributes.isDirectory()) {
       return null;
     }
-    // assume roots have the FS default case sensitivity (TODO RC: which may not be the case!)
-    attributes = attributes.withCaseSensitivity(
-      CaseSensitivity.fromBoolean(fs.isCaseSensitive())
-    );
+    // A root can report its actual case sensitivity in the attributes (e.g. a remote root, stat'ed over Eel).
+    // Keep the reported value: the FS default describes the local OS, not the machine the root lives on.
+    if (attributes.areChildrenCaseSensitive().isUnknown()) {
+      attributes = attributes.withCaseSensitivity(
+        CaseSensitivity.fromBoolean(fs.isCaseSensitive())
+      );
+    }
 
     FSRecordsImpl vfsPeer = this.vfsPeer;//local copy
     int rootId = vfsPeer.findOrCreateRootRecord(rootUrl);

@@ -1,4 +1,0 @@
-- name: dist.all/lib/intellij.platform.core.jar
-  modules:
-  - name: intellij.platform.core
-  - name: intellij.platform.util.progress

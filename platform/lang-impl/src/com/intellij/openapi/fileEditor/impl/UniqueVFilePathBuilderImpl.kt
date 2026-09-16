@@ -241,7 +241,7 @@ private fun createAndCacheBuilders(
   }
 }
 
-@RequiresReadLock
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 private fun <T, E : Throwable?> disableIndexUpToDateCheckInEdt(computable: ThrowableComputable<T, E>): T {
   if (ApplicationManager.getApplication().isDispatchThread) {
     return IndexUpToDateCheckIn.disableUpToDateCheckIn(computable)

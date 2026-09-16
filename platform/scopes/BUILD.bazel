@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.platform.scopes` start
+content_module_jar(module = ":scopes")
+### auto-generated section `dev intellij.platform.scopes` end
+
 ### auto-generated section `build intellij.platform.scopes` start
 jvm_library(
     name = "scopes",
@@ -46,8 +50,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":scopes")
-
 jvm_library(
     name = "scopes_test_lib",
     testonly = True,
@@ -91,7 +93,6 @@ exports_files(
     [
         "intellij.platform.scopes.iml",
         "resources/intellij.platform.scopes.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

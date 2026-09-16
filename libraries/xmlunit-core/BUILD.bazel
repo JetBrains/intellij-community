@@ -1,5 +1,4 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
-load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.libraries.xmlunit.core` start
 jvm_library(
@@ -16,11 +15,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-xmlunit-core-_x_m_l_unit_core"],
     runtime_deps = ["@lib//:libraries-xmlunit-core-_x_m_l_unit_core"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-xmlunit-core-_x_m_l_unit_core"],
-    module = ":xmlunit-core",
 )
 
 jvm_library(
@@ -43,7 +37,6 @@ exports_files(
     [
         "intellij.libraries.xmlunit.core.iml",
         "resources/intellij.libraries.xmlunit.core.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

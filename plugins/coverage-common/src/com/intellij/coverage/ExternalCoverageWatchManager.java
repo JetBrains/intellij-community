@@ -35,7 +35,6 @@ public final class ExternalCoverageWatchManager implements Disposable {
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
           CoverageDataManagerImpl manager = (CoverageDataManagerImpl) CoverageDataManager.getInstance(myProject);
           for (CoverageSuitesBundle bundle : manager.activeSuites()) {
-            bundle.restoreCoverageData();
             manager.updateCoverageData(bundle);
           }
         });

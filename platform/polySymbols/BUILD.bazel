@@ -11,19 +11,18 @@ jps_test(
 
 ### skip generation section `test intellij.platform.polySymbols.tests`
 
+### auto-generated section `dev intellij.platform.polySymbols` start
+content_module_jar(module = ":polySymbols")
+### auto-generated section `dev intellij.platform.polySymbols` end
+
 ### auto-generated section `build intellij.platform.polySymbols` start
 jvm_library(
     name = "polySymbols",
     srcs = glob(
         [
-            "gen/**/*.kt",
-            "gen/**/*.java",
             "src/**/*.kt",
             "src/**/*.java",
             "src/**/*.form",
-            "src-web/**/*.kt",
-            "src-web/**/*.java",
-            "src-web/**/*.form",
         ],
         allow_empty = True,
     ),
@@ -60,8 +59,6 @@ jvm_library(
         "//platform/util:util-ui",
     ],
 )
-
-content_module_jar(module = ":polySymbols")
 
 jvm_library(
     name = "polySymbols_test_lib",
@@ -109,7 +106,6 @@ exports_files(
     [
         "intellij.platform.polySymbols.iml",
         "resources/intellij.platform.polySymbols.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )
@@ -147,6 +143,7 @@ jvm_library(
         "//platform/lang-impl",
         "//platform/editor-ui-api:editor-ui",
         "//platform/polySymbols",
+        "//platform/polySymbols-web",
         "//platform/analysis-api:analysis",
         "//platform/core-impl",
         "//platform/platform-impl:ide-impl",
@@ -192,6 +189,7 @@ jvm_library(
         "//platform/lang-impl:lang-impl_test_lib",
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/polySymbols:polySymbols_test_lib",
+        "//platform/polySymbols-web:polySymbols-web_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/core-impl:core-impl_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
@@ -264,6 +262,7 @@ jvm_library(
         "//platform/markdown-utils",
         "//platform/testFramework",
         "//platform/polySymbols",
+        "//platform/polySymbols-web",
         "//platform/polySymbols:polySymbols-testFramework",
         "//java/java-runtime:rt",
     ],
@@ -336,6 +335,8 @@ jvm_library(
         "//platform/testFramework:testFramework_test_lib",
         "//platform/polySymbols",
         "//platform/polySymbols:polySymbols_test_lib",
+        "//platform/polySymbols-web",
+        "//platform/polySymbols-web:polySymbols-web_test_lib",
         "//platform/polySymbols:polySymbols-testFramework",
         "//platform/polySymbols:polySymbols-testFramework_test_lib",
         "//java/java-runtime:rt",

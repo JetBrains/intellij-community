@@ -26,7 +26,7 @@ open class MergeDialogCustomizer {
    *
    * @param files the files that have conflicted changes and are shown in the dialog.
    */
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   open fun getMultipleFileMergeDescription(files: Collection<VirtualFile>): @NlsContexts.Label String =
     VcsBundle.message("multiple.file.merge.description", files.size)
 

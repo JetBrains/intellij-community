@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.performanceTesting.problemsView` start
+content_module_jar(module = ":problemsView")
+### auto-generated section `dev intellij.performanceTesting.problemsView` end
+
 ### auto-generated section `build intellij.performanceTesting.problemsView` start
 jvm_library(
     name = "problemsView",
@@ -36,8 +40,6 @@ jvm_library(
         "//libraries/kotlinx/coroutines/core",
     ],
 )
-
-content_module_jar(module = ":problemsView")
 
 jvm_library(
     name = "problemsView_test_lib",

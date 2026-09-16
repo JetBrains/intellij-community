@@ -17,6 +17,7 @@ import com.intellij.platform.eel.EelProcess
 import com.intellij.platform.eel.ExecuteProcessException
 import com.intellij.platform.eel.LoginShellSpawner
 import com.intellij.platform.eel.channels.EelDelicateApi
+import com.intellij.platform.eel.convertToJVMProcess
 import com.intellij.platform.eel.environmentVariables
 import com.intellij.platform.eel.isPosix
 import com.intellij.platform.eel.provider.getEelDescriptor
@@ -33,7 +34,6 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.launchOnShow
 import com.jediterm.core.util.TermSize
-import com.pty4j.PtyProcess
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.awaitCancellation
@@ -143,7 +143,7 @@ internal class IjentDashboardConfigurable(val project: Project) : SearchableConf
                   .pty(Pty(initialSize.columns, initialSize.rows, true))
                   .workingDirectory(eelApi.userInfo.home)
                   .eelIt()
-                val ptyProcess = handle.process.convertToJavaProcess() as PtyProcess
+                val ptyProcess = handle.process.convertToJVMProcess()
                 process = handle.process
                 val widget = terminalDashboard.createWidget(ptyProcess, initialSize)
                 withContext(Dispatchers.EDT) {

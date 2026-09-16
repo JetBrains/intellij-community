@@ -50,9 +50,9 @@ public class RendererConfiguration implements Cloneable, JDOMExternalizable {
 
   @Override
   public boolean equals(Object o) {
-    if (!(o instanceof RendererConfiguration)) return false;
+    if (!(o instanceof RendererConfiguration configuration)) return false;
 
-    return DebuggerUtilsEx.externalizableEqual(this, (RendererConfiguration)o);
+    return DebuggerUtilsEx.externalizableEqual(this, configuration);
   }
 
   @Override
@@ -84,7 +84,7 @@ public class RendererConfiguration implements Cloneable, JDOMExternalizable {
   }
 
   public void addRenderer(NodeRenderer renderer) {
-    myRepresentationNodes.add(0, renderer);
+    myRepresentationNodes.addFirst(renderer);
   }
 
   @TestOnly

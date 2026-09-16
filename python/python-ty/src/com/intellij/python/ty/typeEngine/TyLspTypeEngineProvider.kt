@@ -4,11 +4,12 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.lsp.api.LspClientManager
+import com.intellij.python.lsp.core.findLspClientForModule
 import com.intellij.python.lsp.core.typeEngine.PyTypeEngineUtils
 import com.intellij.python.ty.TyLspIntegrationProvider
 import com.jetbrains.python.psi.types.engine.PyTypeEngine
 import com.jetbrains.python.psi.types.engine.PyTypeEngineProvider
+import org.jetbrains.annotations.ApiStatus.Internal
 
 /**
  * External type provider that delegates to ty's LSP endpoint.
@@ -23,17 +24,16 @@ class TyLspTypeEngineProvider : PyTypeEngineProvider {
       return null
     }
 
-    // Check if LSP server exists - if not, we can't provide types
-    val lspServerExists = LspClientManager.getInstance(module.project).getClients(TyLspIntegrationProvider::class.java).isNotEmpty()
-    if (!lspServerExists) {
-      return null
-    }
-    return TyLspTypeEngine()
+    // Take the client that answers for *this* module. Another module's server answers for another
+    // module's content roots and resolves everything to `Any`.
+    val lspClient = findLspClientForModule(module, TyLspIntegrationProvider::class.java) ?: return null
+    return TyLspTypeEngine(module, lspClient)
   }
 
 }
 
-internal fun isTyTypeEngineFeatureEnabled(project: Project): Boolean =
+@Internal
+fun isTyTypeEngineFeatureEnabled(project: Project): Boolean =
   ApplicationManager.getApplication().isUnitTestMode ||
   PyTypeEngineUtils.isExternalTypeEngineSupported(project) &&
   Registry.`is`("ty.type.engine.support")

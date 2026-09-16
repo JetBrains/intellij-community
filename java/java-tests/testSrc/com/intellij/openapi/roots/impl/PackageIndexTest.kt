@@ -22,6 +22,7 @@ import com.intellij.testFramework.junit5.RunInEdt
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.ProjectModelExtension
 import com.intellij.util.ui.UIUtil
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -261,18 +262,35 @@ class PackageIndexTest {
     assertPackage(null, sourceRootDir, classesRootDir)
   }
 
+  @Test
+  fun `directories by package name after synthetic library change`() {
+    val classesRootDir = projectModel.baseProjectDir.newVirtualDirectory("lib/classes")
+    val addedClassesRootDir = projectModel.baseProjectDir.newVirtualDirectory("lib2/classes")
+    val libraries = mutableListOf<SyntheticLibrary>(JavaSyntheticLibrary("lib", emptyList(), listOf(classesRootDir), emptySet()))
+    registerSyntheticLibraries(libraries)
+
+    // Query the directories first. A getPackageNameByDirectory call updates the index and hides a stale package cache.
+    assertDirectoriesByPackageName("", true, classesRootDir)
+
+    libraries.add(JavaSyntheticLibrary("lib2", emptyList(), listOf(addedClassesRootDir), emptySet()))
+    runWriteActionAndWait { WorkspaceFileIndexEx.getInstance(projectModel.project).indexData.resetCustomContributors() }
+
+    assertDirectoriesByPackageName("", true, classesRootDir, addedClassesRootDir)
+  }
+
   private fun unregisterLibrary(disposable: Disposable) {
     Disposer.dispose(disposable)
     UIUtil.dispatchAllInvocationEvents()
   }
 
-  private fun registerSyntheticLibrary(library: SyntheticLibrary): Disposable {
+  private fun registerSyntheticLibrary(library: SyntheticLibrary): Disposable = registerSyntheticLibraries(listOf(library))
+
+  /** The provider returns [libraries] itself, so a later change to the collection is visible to the index after a reset. */
+  private fun registerSyntheticLibraries(libraries: Collection<SyntheticLibrary>): Disposable {
     val disposable = Disposer.newDisposable()
     Disposer.register(projectModel.project, disposable)
     ExtensionTestUtil.maskExtensions(AdditionalLibraryRootsProvider.EP_NAME, listOf(object : AdditionalLibraryRootsProvider() {
-      override fun getAdditionalProjectLibraries(project: Project): Collection<SyntheticLibrary> {
-        return listOf(library)
-      }
+      override fun getAdditionalProjectLibraries(project: Project): Collection<SyntheticLibrary> = libraries
     }), disposable)
     UIUtil.dispatchAllInvocationEvents()
     return disposable
@@ -287,11 +305,17 @@ class PackageIndexTest {
       directories.forEach {
         assertEquals(packageName, packageIndex.getPackageNameByDirectory(it), "Package name mismatch for ${it.presentableUrl}")
       }
-      if (packageName != null) {
-        val actual = packageIndex.getDirectoriesByPackageName(packageName, includeLibrarySources).sortedBy { it.url }
-        val expected = directories.sortedBy { it.url }
-        assertEquals(expected, actual, "Directories mismatch for '$packageName' package")
-      }
+    }
+    if (packageName != null) {
+      assertDirectoriesByPackageName(packageName, includeLibrarySources, *directories)
+    }
+  }
+
+  private fun assertDirectoriesByPackageName(packageName: String, includeLibrarySources: Boolean, vararg directories: VirtualFile) {
+    runReadAction {
+      val actual = packageIndex.getDirectoriesByPackageName(packageName, includeLibrarySources).sortedBy { it.url }
+      val expected = directories.sortedBy { it.url }
+      assertEquals(expected, actual, "Directories mismatch for '$packageName' package")
     }
   }
 }

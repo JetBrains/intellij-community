@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.jsonpath` start
+content_module_jar(
+    libraries = ["@lib//:libraries-jsonpath-jsonpath"],
+    module = ":jsonpath",
+)
+### auto-generated section `dev intellij.libraries.jsonpath` end
+
 ### auto-generated section `build intellij.libraries.jsonpath` start
 jvm_library(
     name = "jsonpath",
@@ -16,11 +23,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-jsonpath-jsonpath"],
     runtime_deps = ["@lib//:libraries-jsonpath-jsonpath"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-jsonpath-jsonpath"],
-    module = ":jsonpath",
 )
 
 jvm_library(
@@ -43,7 +45,6 @@ exports_files(
     [
         "intellij.libraries.jsonpath.iml",
         "resources/intellij.libraries.jsonpath.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -53,7 +53,6 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 abstract class ReplacementPerformer<TElement : KtElement>(
     protected val codeToInline: MutableCodeToInline,
@@ -162,8 +161,8 @@ class ExpressionReplacementPerformer(
                 val lastEntry = parent.prevSibling
                 grandParentTemplateExpression.addRangeBefore(entriesToAdd.first(), entriesToAdd.last(), parent)
                 val lastNewEntry = parent.prevSibling
-                lastEntry.safeAs<KtSimpleNameStringTemplateEntry>()?.addBracesIfNeeded(lastNewEntry)
-                lastNewEntry.safeAs<KtSimpleNameStringTemplateEntry>()?.addBracesIfNeeded(parent.nextSibling)
+                (lastEntry as? KtSimpleNameStringTemplateEntry)?.addBracesIfNeeded(lastNewEntry)
+                (lastNewEntry as? KtSimpleNameStringTemplateEntry)?.addBracesIfNeeded(parent.nextSibling)
                 grandParentTemplateExpression
             } else null
 

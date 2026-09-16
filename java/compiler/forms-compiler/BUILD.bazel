@@ -10,6 +10,10 @@ jps_test(
 )
 ### skip generation section `test intellij.java.guiForms.compiler.tests`
 
+### auto-generated section `dev intellij.java.guiForms.compiler` start
+content_module_jar(module = ":java-guiForms-compiler")
+### auto-generated section `dev intellij.java.guiForms.compiler` end
+
 ### auto-generated section `build intellij.java.guiForms.compiler` start
 jvm_library(
     name = "java-guiForms-compiler",
@@ -39,8 +43,6 @@ jvm_library(
         "//libraries/jetbrains/annotations",
     ],
 )
-
-content_module_jar(module = ":java-guiForms-compiler")
 
 jvm_library(
     name = "java-guiForms-compiler_test_lib",
@@ -79,7 +81,6 @@ exports_files(
     [
         "intellij.java.guiForms.compiler.iml",
         "resources/intellij.java.guiForms.compiler.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

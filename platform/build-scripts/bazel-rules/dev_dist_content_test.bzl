@@ -1,12 +1,21 @@
 """Analysis tests for the dev-distribution content rules: the prepacked plugin-content provider boundary, and what a
 packing action declares."""
 
-load("@bazel_skylib//lib:unittest.bzl", "analysistest", "asserts")
+load("@bazel_skylib//lib:unittest.bzl", "analysistest", "asserts", "unittest")
 load("@rules_java//java:defs.bzl", "JavaInfo", "java_common")
 load("@rules_kotlin//kotlin/internal:defs.bzl", _KtJvmInfo = "KtJvmInfo")
 load(":content_module_jar.bzl", "ContentModuleJarInfo", "DevDistPluginJarInfo", "content_module_jar", "content_module_jar_target_name")
 load(":dev_dist_content.bzl", "DevDistContentInfo", "dev_dist_content_set", "dev_dist_plugin_content")
-load(":intellij_dev_dist.bzl", "intellij_dev_build_inputs")
+load(":dev_dist_plugin.bzl", "dev_dist_plugin")
+load(":dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor_target_name")
+load(
+    ":intellij_dev_dist.bzl",
+    "IntellijDevFragmentInfo",
+    "IntellijProjectModelTreeInfo",
+    "intellij_dev_build_inputs",
+    "intellij_dev_fragment",
+    "intellij_dev_packed_jars_component",
+)
 
 # An empty zip: the 22-byte end-of-central-directory record and nothing else. Octal escapes, because Bazel's Starlark
 # rejects `\x`; every byte is below 0x80, so `ctx.actions.write` - which encodes as UTF-8 - reproduces it exactly.
@@ -276,6 +285,8 @@ _layout_jar_provider_test = analysistest.make(_layout_jar_provider_test_impl)
 _TRACE_SPANS = str(Label("//platform/build-scripts/bazel-rules:trace_spans"))
 
 _PACKING_OUTPUTS_ATTRS = {
+    "expected_mnemonic": attr.string(default = "PackContentModuleJar"),
+    "expected_module_names": attr.string_list(),
     "expected_outputs": attr.string_list(mandatory = True),
     "expected_span_files": attr.string_list(mandatory = True),
 }
@@ -290,8 +301,10 @@ def _packing_outputs_test_impl(ctx):
     """
     env = analysistest.begin(ctx)
     actions = analysistest.target_actions(env)
-    packing = [action for action in actions if action.mnemonic == "PackContentModuleJar"]
+    packing = [action for action in actions if action.mnemonic == ctx.attr.expected_mnemonic]
     asserts.equals(env, 1, len(packing), "mnemonics: %s" % [action.mnemonic for action in actions])
+    if not packing:
+        return analysistest.end(env)
     asserts.equals(
         env,
         ctx.attr.expected_outputs,
@@ -303,6 +316,13 @@ def _packing_outputs_test_impl(ctx):
     # target does not have is an error rather than an empty set.
     group = analysistest.target_under_test(env)[OutputGroupInfo].trace_spans.to_list()
     asserts.equals(env, ctx.attr.expected_span_files, [file.basename for file in group])
+    if ctx.attr.expected_module_names:
+        info = analysistest.target_under_test(env)[DevDistPluginJarInfo]
+        asserts.equals(env, ctx.attr.expected_module_names, list(info.member_modules))
+        expected_jars = list(info.member_jars) + [jar for entry in info.library_jars for jar in entry.jars]
+        inputs = packing[0].inputs.to_list()
+        asserts.equals(env, sorted([jar.path for jar in expected_jars]), sorted([file.path for file in inputs if file.extension == "jar"]))
+        asserts.equals(env, [], [file.short_path for file in inputs if file.extension in ["iml", "bzl"] or file.basename == "bazel-targets.json"])
     return analysistest.end(env)
 
 # Both tests pin the flag, neither reads it. Without `config_settings` this one would assert whatever `trace_spans`
@@ -319,6 +339,379 @@ _measuring_packing_outputs_test = analysistest.make(
     attrs = _PACKING_OUTPUTS_ATTRS,
     config_settings = {_TRACE_SPANS: True},
 )
+
+def _declaration_test_impl(ctx):
+    env = unittest.begin(ctx)
+    asserts.equals(env, json.decode(ctx.attr.expected), json.decode(ctx.attr.actual))
+    return unittest.end(env)
+
+_declaration_test = unittest.make(
+    _declaration_test_impl,
+    attrs = {"actual": attr.string(), "expected": attr.string()},
+)
+
+def _fake_descriptor_impl(ctx):
+    descriptor = ctx.actions.declare_file(ctx.label.name + ".xml")
+    ctx.actions.write(descriptor, "<idea-plugin/>")
+    return [DefaultInfo(files = depset([descriptor]))]
+
+_fake_descriptor = rule(implementation = _fake_descriptor_impl)
+
+def _rejected_declaration_impl(ctx):
+    arguments = dict(main_module = "test.rejected", module_targets = {"test.rejected": [":owner.jar"]})
+    if ctx.attr.failure == "empty_jar":
+        arguments["jars"] = {"empty.jar": {"modules": []}}
+    elif ctx.attr.failure == "multiple_outputs":
+        arguments["module_targets"] = {"test.rejected": [":first.jar", ":second.jar"]}
+        arguments["content_modules"] = ["test.rejected"]
+    elif ctx.attr.failure == "non_jar":
+        arguments["module_targets"] = {"test.rejected": [":owner"]}
+        arguments["content_modules"] = ["test.rejected"]
+    dev_dist_plugin(**arguments)
+    return []
+
+_rejected_declaration = rule(
+    implementation = _rejected_declaration_impl,
+    attrs = {"failure": attr.string()},
+)
+
+def _plugin_macro_tests(name):
+    first = ":" + name + "_raw_first"
+    second = ":" + name + "_raw_second"
+    owner = ":" + name + "_macro_owner"
+    for label, module_name in [(first, "test.first"), (second, "test.second"), (owner, "test.macro.plugin")]:
+        _fake_module(name = label[1:], module_name = module_name)
+    modules = {
+        "test.first": [first + ".jar"],
+        "test.second": [second + ".jar"],
+        "test.macro.plugin": [owner + ".jar"],
+    }
+    destination = name + "_nested.jar"
+    library_labels = [":" + name + suffix for suffix in ["_library_second", "_library_first"]]
+    for label in library_labels:
+        _fake_library(name = label[1:])
+    dev_dist_plugin(
+        main_module = "test.macro.plugin",
+        module_targets = modules,
+        content_modules = ["test.second", "test.removed", "test.first"],
+        prepacked_content_modules = ["test.removed"],
+        prepacked_jars = {"test.removed": "removed.jar"},
+        jars = {
+            destination: {"modules": ["test.second", "test.removed", "test.first"], "libraries": library_labels},
+            name + "_omitted.jar": {"modules": ["test.removed"]},
+        },
+    )
+    content = native.existing_rule(owner[1:] + "_dev_content")
+    jar_name = name + "_nested_dev_dist_plugin_jar"
+    jar = native.existing_rule(jar_name)
+    tests = [name + "_module_declaration_test"]
+    _declaration_test(
+        name = tests[0],
+        actual = json.encode([
+            content["descriptor_module"],
+            content["content_modules"],
+            content["prepacked_content_modules"],
+            content["prepacked_jars"],
+            content["prepacked_layout_jars"],
+            jar["modules"],
+            jar["plugin_main_module"],
+            jar["relative_output_file"],
+            jar["libraries"],
+            native.existing_rule(name + "_omitted_dev_dist_plugin_jar"),
+        ]),
+        expected = json.encode([owner, [second, first], [], {}, [":" + jar_name], [second, first], "test.macro.plugin", destination, library_labels, None]),
+    )
+    dev_dist_plugin(
+        main_module = "test.deleted.plugin",
+        module_targets = modules,
+        content_modules = ["test.first"],
+        descriptor = "unused.xml",
+    )
+    filtered_owner = name + "_filtered_owner"
+    dev_dist_plugin(
+        main_module = "test.filtered.plugin",
+        module_targets = {"test.filtered.plugin": [":" + filtered_owner + ".jar"]},
+        content_modules = ["test.removed"],
+    )
+    tests.append(name + "_stale_declaration_test")
+    _declaration_test(
+        name = tests[-1],
+        actual = json.encode([
+            native.existing_rule(dev_dist_plugin_descriptor_target_name("test.deleted.plugin")),
+            native.existing_rule(filtered_owner + "_dev_content"),
+        ]),
+        expected = "[null, null]",
+    )
+    source_name = name + "_descriptor_source"
+    _fake_descriptor(name = source_name)
+    descriptor_main = "test.descriptor.only"
+    descriptor_name = dev_dist_plugin_descriptor_target_name(descriptor_main)
+    dev_dist_plugin(
+        main_module = descriptor_main,
+        module_targets = {descriptor_main: [":absent_jvm_target.jar"]},
+        descriptor = source_name,
+        descriptor_modules = ["test.first", "test.missing"],
+        descriptor_index = {"test.first": ":" + source_name},
+        descriptors = {":" + source_name: "explicit.xml"},
+    )
+    leaf = native.existing_rule(descriptor_name)
+    tests.append(name + "_descriptor_declaration_test")
+    _declaration_test(
+        name = tests[-1],
+        actual = json.encode([leaf["main_module"], leaf.get("descriptor_module"), leaf["descriptors"], leaf["unresolved_descriptor_modules"]]),
+        expected = json.encode([descriptor_main, None, {":" + source_name: "explicit.xml"}, ["test.missing"]]),
+    )
+    tests.append(name + "_missing_selected_descriptor_test")
+    _expected_failure_test(
+        name = tests[-1],
+        expected_message = "Missing selected descriptors for test.descriptor.only",
+        target_under_test = descriptor_name,
+    )
+    tests.append(name + "_nested_jar_outputs_test")
+    _packing_outputs_test(
+        name = tests[-1],
+        expected_outputs = [destination],
+        expected_mnemonic = "PackPluginJar",
+        expected_module_names = ["test.second", "test.first"],
+        expected_span_files = [],
+        target_under_test = jar_name,
+    )
+    for failure, expected_message in {
+        "empty": "states neither content nor a descriptor",
+        "empty_jar": "states no modules or libraries",
+        "multiple_outputs": "must have one production target",
+        "non_jar": "is not a jar output",
+    }.items():
+        target_name = name + "_rejected_" + failure
+        _rejected_declaration(name = target_name, failure = failure, tags = ["manual"])
+        tests.append(target_name + "_test")
+        _expected_failure_test(
+            name = tests[-1],
+            expected_message = expected_message,
+            target_under_test = target_name,
+        )
+    return tests
+
+def _ijent_fragment_fixture_impl(ctx):
+    executable = ctx.actions.declare_file(ctx.label.name + ".sh")
+    ctx.actions.write(executable, "#!/bin/sh\nexit 0\n", is_executable = True)
+    ctx.actions.write(ctx.outputs.module, _EMPTY_JAR)
+    ctx.actions.write(ctx.outputs.binary, "ijent")
+    tree = ctx.actions.declare_directory(ctx.label.name + ".tree")
+    ctx.actions.run_shell(outputs = [tree], arguments = [tree.path], command = "mkdir -p \"$1\"")
+    return [
+        DefaultInfo(files = depset([executable]), executable = executable),
+        IntellijProjectModelTreeInfo(tree = tree),
+    ]
+
+_ijent_fragment_fixture = rule(
+    implementation = _ijent_fragment_fixture_impl,
+    executable = True,
+    outputs = {"module": "%{name}.jar", "binary": "%{name}.ijent"},
+)
+
+def _ijent_runtime_inputs_test_impl(ctx):
+    env = analysistest.begin(ctx)
+    asserts.equals(env, Label(ctx.attr.expected_owner), ctx.file.module_output.owner)
+    actions = [action for action in analysistest.target_actions(env) if action.mnemonic.startswith("IntellijDev")]
+    asserts.equals(env, 1, len(actions), "fragment action mnemonics: %s" % [action.mnemonic for action in actions])
+    if not actions:
+        return analysistest.end(env)
+    action = actions[0]
+    binary_inputs = [
+        file
+        for file in action.inputs.to_list()
+        if file.owner == ctx.file.ijent_binary.owner and file.basename == ctx.file.ijent_binary.basename
+    ]
+    asserts.equals(env, 1 if ctx.attr.expected_bundle else 0, len(binary_inputs), "IJent input paths: %s" % [file.path for file in binary_inputs])
+    asserts.equals(
+        env,
+        ["--ijent-binaries-dir=" + binary_inputs[0].dirname] if binary_inputs else [],
+        [argument for argument in action.argv if argument.startswith("--ijent-binaries-dir=")],
+    )
+    return analysistest.end(env)
+
+_ijent_runtime_inputs_test = analysistest.make(
+    _ijent_runtime_inputs_test_impl,
+    attrs = {
+        "module_output": attr.label(allow_single_file = True, mandatory = True),
+        "ijent_binary": attr.label(allow_single_file = True, mandatory = True),
+        "expected_owner": attr.string(mandatory = True),
+        "expected_bundle": attr.bool(mandatory = True),
+    },
+)
+
+def _ijent_runtime_input_tests(name):
+    fixture = name + "_ijent_fixture"
+    _ijent_fragment_fixture(name = fixture, tags = ["manual"])
+    owner = str(Label(":" + fixture))
+    module_output = ":" + fixture + ".jar"
+    binary = ":" + fixture + ".ijent"
+    tests = []
+    for suffix, selector, declared, requirement, offered, expected in [
+        ("unguarded", "remaining", False, "", True, True),
+        ("named", "named", True, owner, True, True),
+        ("rest", "remaining", True, owner, True, True),
+        ("rest_reference", "remaining", True, owner, True, True),
+        ("missing_module", "remaining", False, owner, True, False),
+        ("output_label", "remaining", True, owner + ".jar", True, False),
+        ("empty_bundle", "remaining", True, owner, False, False),
+    ]:
+        fragment = name + "_ijent_" + suffix
+        inputs = fragment + "_inputs"
+        intellij_dev_build_inputs(name = inputs, inputs = [module_output] if declared else [])
+        intellij_dev_fragment(
+            name = fragment,
+            assembler = ":" + fixture,
+            platform_prefix = "idea",
+            target_platform = "linux_x64",
+            fragment_name = "plugins_" + suffix,
+            plugins = selector,
+            plugin_main_modules = ["test.plugin"] if selector == "named" else [],
+            claimed_plugin_main_modules = ["test.sibling"] if selector == "remaining" else [],
+            project_model_tree = ":" + fixture,
+            bazel_targets_json = module_output,
+            build_inputs = ":" + inputs,
+            preloaded_manifests = [module_output],
+            ijent_binaries = [binary] if offered else [],
+            ijent_required_input = requirement,
+            tags = ["manual"],
+        )
+        test = fragment + "_test"
+        _ijent_runtime_inputs_test(
+            name = test,
+            target_under_test = ":" + fragment,
+            module_output = module_output,
+            ijent_binary = binary,
+            expected_owner = owner,
+            expected_bundle = expected,
+        )
+        tests.append(test)
+    return tests
+
+def _files_component_test_impl(ctx):
+    env = analysistest.begin(ctx)
+    target = analysistest.target_under_test(env)
+    component = target[IntellijDevFragmentInfo]
+    sources = component.payload.to_list()
+    asserts.equals(env, None, component.home)
+    asserts.equals(
+        env,
+        sorted([(ctx.attr.source_owner, basename) for basename in ctx.attr.expected_placements]),
+        sorted([(str(source.owner), source.basename) for source in sources]),
+    )
+    asserts.equals(
+        env,
+        sorted([source.path for source in sources] + [component.manifest.path]),
+        sorted([file.path for file in target[DefaultInfo].files.to_list()]),
+    )
+    actions = analysistest.target_actions(env)
+    collectors = [action for action in actions if action.mnemonic == "IntellijDevFiles"]
+    metadata_actions = [
+        action
+        for action in actions
+        if action.mnemonic == "FileWrite" and any([file.basename.endswith(".files.json") for file in action.outputs.to_list()])
+    ]
+    asserts.equals(env, 1, len(collectors), "mnemonics: %s" % [action.mnemonic for action in actions])
+    asserts.equals(env, 1, len(metadata_actions))
+    if not collectors or not metadata_actions:
+        return analysistest.end(env)
+    collector = collectors[0]
+    metadata = metadata_actions[0].outputs.to_list()[0]
+    asserts.equals(env, [component.manifest.path], [file.path for file in collector.outputs.to_list()])
+    asserts.equals(
+        env,
+        sorted([source.path for source in sources] + [metadata.path]),
+        sorted([file.path for file in collector.inputs.to_list() if file.owner != ctx.attr.collector.label]),
+    )
+    asserts.equals(
+        env,
+        ["--files-file=" + metadata.path],
+        [argument for argument in collector.argv if argument.startswith("--files-file=")],
+    )
+    records = json.decode(metadata_actions[0].content)
+    asserts.equals(env, len(sources), len(records))
+    asserts.equals(
+        env,
+        {
+            ctx.attr.expected_placements[source.basename]: {
+                "source": source.path,
+                "relativePath": ctx.attr.expected_placements[source.basename],
+                "executable": ctx.attr.expected_executable,
+            }
+            for source in sources
+            if source.basename in ctx.attr.expected_placements
+        },
+        {record["relativePath"]: record for record in records},
+    )
+    return analysistest.end(env)
+
+_files_component_test = analysistest.make(
+    _files_component_test_impl,
+    attrs = {
+        "collector": attr.label(executable = True, cfg = "exec", mandatory = True),
+        "source_owner": attr.string(mandatory = True),
+        "expected_placements": attr.string_dict(mandatory = True),
+        "expected_executable": attr.bool(mandatory = True),
+    },
+    config_settings = {_TRACE_SPANS: False},
+)
+
+def _files_component_tests(name):
+    collector = name + "_files_collector"
+    source = name + "_files_source"
+    _ijent_fragment_fixture(name = collector, tags = ["manual"])
+    _ijent_fragment_fixture(name = source, tags = ["manual"])
+    module = ":" + source + ".jar"
+    binary = ":" + source + ".ijent"
+    tests = []
+    for suffix, files, executable in [
+        ("plain", {module: "lib/plain.jar"}, False),
+        ("executable", {module: "bin/first", binary: "bin/second"}, True),
+    ]:
+        component = name + "_files_" + suffix
+        intellij_dev_packed_jars_component(
+            name = component,
+            collector = ":" + collector,
+            component_name = "files",
+            platform_prefix = "idea",
+            target_platform = "linux_x64",
+            files = files,
+            executable = executable,
+            tags = ["manual"],
+        )
+        test = component + "_test"
+        _files_component_test(
+            name = test,
+            target_under_test = ":" + component,
+            collector = ":" + collector,
+            source_owner = str(Label(":" + source)),
+            expected_placements = {label[1:]: relative_path for label, relative_path in files.items()},
+            expected_executable = executable,
+        )
+        tests.append(test)
+
+    native.filegroup(name = name + "_files_missing_source", srcs = [])
+    native.filegroup(name = name + "_files_multiple_sources", srcs = [module, binary])
+    for suffix, files, message in [
+        ("empty", {}, "either platform_payload or nonempty files is required"),
+        ("missing", {":" + name + "_files_missing_source": "bin/missing"}, "must provide exactly one ordinary file"),
+        ("multiple", {":" + name + "_files_multiple_sources": "bin/multiple"}, "must provide exactly one ordinary file"),
+        ("duplicate", {module: "bin/same", binary: "bin/same"}, "duplicate destination: bin/same"),
+    ]:
+        component = name + "_files_" + suffix
+        intellij_dev_packed_jars_component(
+            name = component,
+            collector = ":" + collector,
+            component_name = "files",
+            platform_prefix = "idea",
+            files = files,
+            tags = ["manual"],
+        )
+        test = component + "_test"
+        _expected_failure_test(name = test, target_under_test = ":" + component, expected_message = message)
+        tests.append(test)
+    return tests
 
 def dev_dist_content_test_suite(name):
     _fake_module(
@@ -575,7 +968,7 @@ def dev_dist_content_test_suite(name):
 
     native.test_suite(
         name = name,
-        tests = [
+        tests = _plugin_macro_tests(name) + _ijent_runtime_input_tests(name) + _files_component_tests(name) + [
             name + "_packing_outputs_test",
             name + "_measuring_packing_outputs_test",
             name + "_multi_jar_library_test",

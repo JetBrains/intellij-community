@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.codeInsight.TypeNullability;
@@ -20,7 +20,8 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-/// Intersection types arise in the process of computing the Least Upper Bound (LUB) of two or more types.
+/// The bound of for example a type variable like `<T extends Number & Runnable>` is an intersection type (note the '&').
+/// Intersection types can also arise in the process of computing the Least Upper Bound (LUB) of two or more types.
 ///
 /// See JLS 4.9 Intersection Types
 /// @see GenericsUtil#getLeastUpperBound
@@ -46,8 +47,7 @@ public final class PsiIntersectionType extends PsiType.Stub {
     if (flatten) {
       conjuncts = flattenAndRemoveDuplicates(conjuncts);
     }
-    if (conjuncts.length == 1) return conjuncts[0];
-    return new PsiIntersectionType(conjuncts);
+    return conjuncts.length == 1 ? conjuncts[0] : new PsiIntersectionType(conjuncts);
   }
 
   private static PsiType @NotNull [] flattenAndRemoveDuplicates(PsiType @NotNull [] conjuncts) {
@@ -97,7 +97,7 @@ public final class PsiIntersectionType extends PsiType.Stub {
   }
 
   @Override
-  public @NotNull String getPresentableText(final boolean annotated) {
+  public @NotNull String getPresentableText(boolean annotated) {
     return StringUtil.join(myConjuncts, psiType -> psiType.getPresentableText(annotated), " & ");
   }
 
@@ -150,7 +150,7 @@ public final class PsiIntersectionType extends PsiType.Stub {
   }
 
   @Override
-  public boolean equals(final Object obj) {
+  public boolean equals(Object obj) {
     if (this == obj) return true;
     if (!(obj instanceof PsiIntersectionType)) return false;
     final PsiType[] first = getConjuncts();

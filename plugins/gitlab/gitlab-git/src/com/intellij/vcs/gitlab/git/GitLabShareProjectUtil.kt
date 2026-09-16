@@ -45,7 +45,7 @@ object GitLabShareProjectUtil {
           shareDialogResult.repositoryName,
           shareDialogResult.isPrivate,
           shareDialogResult.description
-        ).body()
+        )
       },
       extractRepoWebUrl = { it.webUrl },
       extractRepoRemoteUrl = {

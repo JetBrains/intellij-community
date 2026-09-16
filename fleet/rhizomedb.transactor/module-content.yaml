@@ -1,3 +1,0 @@
-- name: dist.all/lib/fleet.rhizomedb.transactor.jar
-  modules:
-  - name: fleet.rhizomedb.transactor

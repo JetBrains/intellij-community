@@ -1,0 +1,29 @@
+{
+  "kind": "plugin",
+  "platformPrefix": "idea",
+  "os": "linux",
+  "arch": "x64",
+  "additionalModules": [],
+  "mainClass": null,
+  "coreClassPath": [],
+  "entries": [
+    {
+      "relativePath": "plugins/one/lib/custom.jar",
+      "type": "component-file",
+      "hash": -737883702129266468,
+      "source": "inputs/vector-3.jar"
+    },
+    {
+      "relativePath": "plugins/one/lib/modules/shared.jar",
+      "type": "component-file",
+      "hash": -2541306581069977202,
+      "source": "inputs/vector-262145.jar"
+    },
+    {
+      "relativePath": "plugins/two/lib/modules/shared.jar",
+      "type": "component-file",
+      "hash": -2541306581069977202,
+      "source": "inputs/vector-262145.jar"
+    }
+  ]
+}

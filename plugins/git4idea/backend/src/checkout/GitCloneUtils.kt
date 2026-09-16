@@ -17,7 +17,7 @@ import java.nio.file.Paths
 
 @ApiStatus.Internal
 object GitCloneUtils {
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun clone(
     project: Project,
     selectedUrl: String,

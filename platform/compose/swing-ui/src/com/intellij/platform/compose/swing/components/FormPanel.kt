@@ -13,7 +13,6 @@ import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.compose.swing.modifier.SwingModifier
-import org.jetbrains.compose.swing.modifier.applyModifier
 import org.jetbrains.compose.swing.modifier.layout.layoutConstraint
 import org.jetbrains.compose.swing.node.SwingNode
 import javax.swing.JComponent
@@ -89,7 +88,7 @@ public fun FormPanel(
   val scope = remember { FormScopeInstance(group = null, indentLevel = 0) }
   SwingNode(
     factory = { JPanel(newFormLayout()) },
-    update = { applyModifier(modifier) },
+    modifier = modifier,
     content = { scope.content() },
   )
 }
@@ -314,8 +313,8 @@ private class FormScopeInstance(
     if (comment != null) {
       Comment(
         comment,
-        maxLineLength = DEFAULT_COMMENT_WIDTH,
         modifier = SwingModifier.layoutConstraint(FormCommentMark),
+        maxLineLength = DEFAULT_COMMENT_WIDTH,
       )
     }
     FormRowBoundary(SwingModifier.layoutConstraint(FormRowEndMark))
@@ -354,7 +353,7 @@ private class FormScopeInstance(
   @Composable
   override fun FormComment(text: @NlsContexts.DetailedDescription String) {
     FormRow {
-      Comment(text, maxLineLength = MAX_LINE_LENGTH_WORD_WRAP, modifier = SwingModifier.cell(fillWidth = true))
+      Comment(text, modifier = SwingModifier.cell(fillWidth = true), maxLineLength = MAX_LINE_LENGTH_WORD_WRAP)
     }
   }
 }
@@ -388,10 +387,10 @@ private fun FormRowStart(text: @NlsContexts.Label String?, modifier: SwingModifi
         putClientProperty(DslComponentProperty.ROW_LABEL, true)
       }
     },
+    modifier = modifier,
     // A label spells a mnemonic the way every other IDE label does, with an ampersand before the letter.
     update = {
       set(text) { this.text = BundleBase.replaceMnemonicAmpersand(it) }
-      applyModifier(modifier)
     },
   )
 }
@@ -403,7 +402,7 @@ private fun FormRowStart(text: @NlsContexts.Label String?, modifier: SwingModifi
  */
 @Composable
 private fun FormRowBoundary(modifier: SwingModifier) {
-  SwingNode(factory = { FormRowBoundaryComponent() }, update = { applyModifier(modifier) })
+  SwingNode(factory = { FormRowBoundaryComponent() }, modifier = modifier)
 }
 
 internal class FormRowBoundaryComponent : JComponent()
@@ -412,7 +411,7 @@ internal class FormRowBoundaryComponent : JComponent()
 private fun FormSeparatorComponent(modifier: SwingModifier) {
   SwingNode(
     factory = { SeparatorComponent(0, 0, JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground(), null) },
-    update = { applyModifier(modifier) },
+    modifier = modifier,
   )
 }
 
@@ -421,9 +420,9 @@ private fun FormTitledSeparator(title: @NlsContexts.Separator String, modifier: 
   // A titled separator draws space of its own above and below, and a form decides that space.
   SwingNode(
     factory = { IdeaTitledSeparator().apply { border = null } },
+    modifier = modifier,
     update = {
       set(title) { this.text = it }
-      applyModifier(modifier)
     },
   )
 }

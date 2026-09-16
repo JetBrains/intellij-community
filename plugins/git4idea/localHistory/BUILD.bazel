@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.vcs.git.localHistory` start
+content_module_jar(module = ":localHistory")
+### auto-generated section `dev intellij.vcs.git.localHistory` end
+
 ### auto-generated section `build intellij.vcs.git.localHistory` start
 jvm_library(
     name = "localHistory",
@@ -20,8 +24,6 @@ jvm_library(
         "//plugins/git4idea/backend",
     ],
 )
-
-content_module_jar(module = ":localHistory")
 
 jvm_library(
     name = "localHistory_test_lib",

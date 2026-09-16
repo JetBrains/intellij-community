@@ -65,9 +65,9 @@ Create a new JPS module at `<feature-root>/plugin/`, e.g. `community/platform/<f
 
   Mark **only the shared/anchor module** (the one that loads in every product mode) as `loading="required"` — `intellij.platform.FEATURE` in the example. Plugin-XML inspection requires at least one required/embedded/required-if-available content module per wrapper, so the anchor satisfies that. Do **not** add `loading="required"` to backend / frontend / monolith modules: in frontend product mode (JetBrains Client) the platform's backend module is unavailable, so a required `FEATURE.backend` excludes itself and takes the whole wrapper plugin down — producing a confusing cascade like "Plugin 'FEATURE' depends on plugin 'IDEA CORE' which failed to load".
 
-- **No JAR-layout file.** The dev distribution derives each member's jar from the plugin's own `<content>`: the loading rule of the element, the `pack-content-into-plugin-jar` marker, and the member's own `package` attribute. So a conventional wrapper states nothing about packaging, and the navbar example holds no such file. Run `./build/jpsModelToBazel.cmd` after you register the module.
+- **No JAR-layout file.** The dev distribution derives each member's jar from the plugin's `<content>`. It uses the loading rule, and the member's `package` attribute. A conventional wrapper needs no separate packaging file. After you register the module, run `./build/jpsModelToBazel.cmd`, then `bazel run //platform/buildScripts:plugin-model-tool`.
 
-  Two generated files carry what the conventions cannot answer, and you edit neither. A `dev-dist.yaml` beside the plugin holds a layout deviation, and `community/build/dev_dist_plugin_content_population.txt` holds the plugin main modules. One run writes both: `./build/jpsModelToBazel.cmd --write-dev-dist-residue --content-report=<content-report.zip>`. The same flag with `--verify-dev-dist-residue` fails on a stale residue and names the rows that changed. The zip comes from a packaging build, so a new plugin needs that build before either file is right. No packaging test prints a patch for a plugin's content.
+  The tool derives the platform layout and compatible published plugins from sources. It writes the plugin's jars, members, and libraries into the `dev` section of the plugin's `BUILD.bazel`. Do not edit generated sections or plan files. `AllProductsPackagingTest` compares the derivation with the build layout and packed jars. Closed-product dist-file observations live in ultimate `build/dev-dist/packaging/<product>.yaml`. Packaging tests report changes as patches for review. These YAML files are test expectations, not generator or assembly inputs.
 
 - Suppress `SplitModeMixedDependencies` and `PluginXmlPluginLogo` in `plugin.xml` only if the inspection actually flags the wrapper.
 
@@ -95,8 +95,8 @@ Pluginization is a good moment to verify that each former direct module declares
 After the source edits, run the generators so the platform descriptors, Bazel files, and `.idea/modules.xml` are updated to match:
 
 ```bash
-bazel run //platform/buildScripts:plugin-model-tool
 ./build/jpsModelToBazel.cmd
+bazel run //platform/buildScripts:plugin-model-tool
 ```
 
 Expected diffs:
@@ -104,7 +104,7 @@ Expected diffs:
 - `community/platform/platform-resources/generated/META-INF/intellij.moduleSets.essential.xml`, `…ide.common.xml`, and `licenseCommon/generated/META-INF/intellij.moduleSets.ide.ultimate.xml` no longer list the pluginized modules.
 - `community/.idea/modules.xml` and `.idea/modules.xml` gain the new `intellij.platform.<feature>.plugin.iml` module in helper-generated canonical order.
 - `build/bazel-generated-file-list.txt` and `community/build/bazel-generated-file-list.txt` gain the new plugin directory.
-- Product content snapshots (`build/expected/ultimate-content-platform.yaml`, `dbe/build/datagrip-content.yaml`, etc.) gain the wrapper plugin entry.
+- The wrapper plugin's `BUILD.bazel` gains a `dev` section with its `dev_dist_plugin` call, written by `plugin-model-tool`. The platform layout derives from sources; no platform jar table needs an update.
 - `tests/ideaProjectStructure/testResources/com/intellij/ideaProjectStructure/fast/available-in-idea-free-mode.txt` gains the new module if it is free-mode available.
 - Existing wrappers under `community/module-set-plugins/generated/intellij.moduleSet.plugin.<name>/` are unrelated — do not touch them unless you are migrating one to the new pattern.
 

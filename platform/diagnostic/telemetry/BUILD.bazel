@@ -10,6 +10,10 @@ jps_test(
 )
 ### skip generation section `test intellij.platform.diagnostic.telemetry.tests`
 
+### auto-generated section `dev intellij.platform.diagnostic.telemetry` start
+content_module_jar(module = ":telemetry")
+### auto-generated section `dev intellij.platform.diagnostic.telemetry` end
+
 ### auto-generated section `build intellij.platform.diagnostic.telemetry` start
 jvm_provided_library(
     name = "libraries_kotlinx_coroutines_core_provided",
@@ -62,8 +66,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":telemetry")
-
 jvm_library(
     name = "telemetry_test_lib",
     testonly = True,
@@ -107,7 +109,6 @@ exports_files(
     [
         "intellij.platform.diagnostic.telemetry.iml",
         "resources/intellij.platform.diagnostic.telemetry.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

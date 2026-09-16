@@ -1,3 +1,0 @@
-- name: dist.all/lib/intellij.platform.remoteServers.jar
-  modules:
-  - name: intellij.platform.remoteServers

@@ -168,9 +168,11 @@ def _extracted_repo_impl(repository_ctx):
         "BUILD",
         """
 package(default_visibility = ["//visibility:public"])
+files = glob(["**"], exclude = ["BUILD"], allow_empty = False)
+exports_files(files)
 filegroup(
     name = "files",
-    srcs = glob(["**"], exclude = ["BUILD"], allow_empty = False),
+    srcs = files,
 )
 """,
     )

@@ -42,11 +42,10 @@ data class FileEntry(
   /**
    * How the build produced [name].
    *
-   * `jar` for a jar the packer wrote, `dir` for a directory it put on the classpath instead of packing, `reused` for a
-   * file it took as it already was - those three carry [sources]. `placed` for a file that reached the distribution by
-   * some other route than the packer, and `link` for a symlink; both carry no [sources], because there is no source
-   * list to give, and saying so is the point - a recipe that listed only jars would report the rest as absent rather
-   * than as unexplained.
+   * `jar` for a jar the packer wrote - the one kind that carries [sources]. `placed` for a file that reached the
+   * distribution by some other route than the packer, and `link` for a symlink; both carry no [sources], because there
+   * is no source list to give, and saying so is the point - a recipe that listed only jars would report the rest as
+   * absent rather than as unexplained.
    *
    * Set only by the executed-recipe report of a dev-distribution fragment, so it is absent from every checked-in
    * content report. A packaging report says only what landed where; a recipe has to say how.

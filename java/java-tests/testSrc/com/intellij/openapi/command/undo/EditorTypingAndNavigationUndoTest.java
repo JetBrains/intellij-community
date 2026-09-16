@@ -7,7 +7,10 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.command.CommandEvent;
+import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.CommandProcessorEx;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
@@ -19,6 +22,7 @@ import com.intellij.openapi.editor.actions.IndentSelectionAction;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.impl.DocumentImpl;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.ui.TestDialogManager;
@@ -33,6 +37,212 @@ import java.awt.Point;
 import java.io.IOException;
 
 public class EditorTypingAndNavigationUndoTest extends EditorUndoTestCase {
+  public void testCanceledEmptyCommandKeepsPreviousTyping() {
+    typeInText("user edit");
+
+    assertThrows(ProcessCanceledException.class, () -> executeCommand(() -> {
+      throw new ProcessCanceledException();
+    }, "Canceled command"));
+
+    checkEditorText("user edit");
+    undoFirstEditor();
+    checkEditorText("");
+    redoFirstEditor();
+    checkEditorText("user edit");
+  }
+
+  public void testCanceledEmptyCommandKeepsRedo() {
+    typeInText("user edit");
+    undoFirstEditor();
+
+    assertThrows(ProcessCanceledException.class, () -> executeCommand(() -> {
+      throw new ProcessCanceledException();
+    }, "Canceled command"));
+
+    checkEditorText("");
+    assertUndoInFirstEditorNotAvailable();
+    redoFirstEditor();
+    checkEditorText("user edit");
+  }
+
+  public void testCanceledCommandWithActionsBeforeModalKeepsAutomaticUndo() {
+    typeInText("user edit");
+    var processor = (CommandProcessorEx)CommandProcessor.getInstance();
+
+    assertThrows(ProcessCanceledException.class, () -> executeCommand(() -> {
+      WriteAction.run(() -> getFirstEditor().getDocument().insertString(0, "partial edit "));
+      processor.enterModal();
+      processor.leaveModal();
+      throw new ProcessCanceledException();
+    }, "Canceled command"));
+
+    checkEditorText("user edit");
+    redoFirstEditor();
+    checkEditorText("partial edit user edit");
+    undoFirstEditor();
+    undoFirstEditor();
+    checkEditorText("");
+  }
+
+  public void testCanceledEmptyCommandAfterModalKeepsPreviousTyping() {
+    typeInText("user edit");
+    var processor = (CommandProcessorEx)CommandProcessor.getInstance();
+
+    assertThrows(ProcessCanceledException.class, () -> executeCommand(() -> {
+      processor.enterModal();
+      processor.leaveModal();
+      throw new ProcessCanceledException();
+    }, "Canceled command"));
+
+    checkEditorText("user edit");
+    undoFirstEditor();
+    checkEditorText("");
+    redoFirstEditor();
+    checkEditorText("user edit");
+  }
+
+  public void testCanceledCommandChecksActionsFromBeforeModalCommandFinished() {
+    typeInText("user edit");
+    var processor = (CommandProcessorEx)CommandProcessor.getInstance();
+    getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(CommandListener.TOPIC, new CommandListener() {
+      private boolean addedAction;
+
+      @Override
+      public void beforeCommandFinished(@NotNull CommandEvent event) {
+        if (!addedAction && "Canceled command".equals(event.getCommandName())) {
+          addedAction = true;
+          WriteAction.run(() -> getFirstEditor().getDocument().insertString(0, "late edit "));
+        }
+      }
+    });
+
+    assertThrows(ProcessCanceledException.class, () -> executeCommand(() -> {
+      processor.enterModal();
+      processor.leaveModal();
+      throw new ProcessCanceledException();
+    }, "Canceled command"));
+
+    checkEditorText("user edit");
+    redoFirstEditor();
+    checkEditorText("late edit user edit");
+    undoFirstEditor();
+    undoFirstEditor();
+    checkEditorText("");
+  }
+
+  public void testCanceledCommandChecksActionsAfterModalInFinishingListener() {
+    typeInText("user edit");
+    var processor = (CommandProcessorEx)CommandProcessor.getInstance();
+    getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(CommandListener.TOPIC, new CommandListener() {
+      private boolean shownDialog;
+
+      @Override
+      public void beforeCommandFinished(@NotNull CommandEvent event) {
+        if (!shownDialog && "Canceled command".equals(event.getCommandName())) {
+          shownDialog = true;
+          processor.enterModal();
+          processor.leaveModal();
+          WriteAction.run(() -> getFirstEditor().getDocument().insertString(0, "late edit "));
+        }
+      }
+    });
+
+    assertThrows(ProcessCanceledException.class, () -> executeCommand(() -> {
+      throw new ProcessCanceledException();
+    }, "Canceled command"));
+
+    checkEditorText("user edit");
+    redoFirstEditor();
+    checkEditorText("late edit user edit");
+    undoFirstEditor();
+    undoFirstEditor();
+    checkEditorText("");
+  }
+
+  public void testCanceledEmptyCommandDoesNotUseActionsFromModalCommand() {
+    typeInText("user edit");
+    var processor = (CommandProcessorEx)CommandProcessor.getInstance();
+
+    assertThrows(ProcessCanceledException.class, () -> executeCommand(() -> {
+      processor.enterModal();
+      try {
+        executeCommand(() -> {
+          WriteAction.run(() -> getFirstEditor().getDocument().insertString(0, "modal edit "));
+          processor.enterModal();
+          processor.leaveModal();
+        }, "Modal command");
+      }
+      finally {
+        processor.leaveModal();
+      }
+      throw new ProcessCanceledException();
+    }, "Canceled command"));
+
+    checkEditorText("modal edit user edit");
+    undoFirstEditor();
+    checkEditorText("user edit");
+    undoFirstEditor();
+    checkEditorText("");
+  }
+
+  public void testCanceledCommandKeepsActionsBeforeModalInsideTransparentAction() {
+    typeInText("user edit");
+    var processor = (CommandProcessorEx)CommandProcessor.getInstance();
+
+    assertThrows(ProcessCanceledException.class, () -> executeCommand(() -> {
+      processor.runUndoTransparentAction(() -> {
+        WriteAction.run(() -> getFirstEditor().getDocument().insertString(0, "partial edit "));
+        processor.enterModal();
+        try {
+          checkEditorText("partial edit user edit");
+        }
+        finally {
+          processor.leaveModal();
+        }
+      });
+      throw new ProcessCanceledException();
+    }, "Canceled command"));
+
+    checkEditorText("user edit");
+    redoFirstEditor();
+    checkEditorText("partial edit user edit");
+    undoFirstEditor();
+    undoFirstEditor();
+    checkEditorText("");
+  }
+
+  public void testCanceledEmptyCommandDoesNotUseMergedActions() {
+    Object groupId = new Object();
+    CommandProcessor processor = CommandProcessor.getInstance();
+    processor.executeCommand(getProject(), () -> WriteAction.run(() -> getFirstEditor().getDocument().insertString(0, "user edit")),
+                             "User edit", groupId);
+
+    assertThrows(ProcessCanceledException.class, () -> processor.executeCommand(getProject(), () -> {
+      throw new ProcessCanceledException();
+    }, "Canceled command", groupId));
+
+    checkEditorText("user edit");
+    undoFirstEditor();
+    checkEditorText("");
+    redoFirstEditor();
+    checkEditorText("user edit");
+  }
+
+  public void testCanceledEmptyCommandInsideTransparentActionKeepsEarlierChange() {
+    typeInText("user edit");
+    CommandProcessor.getInstance().runUndoTransparentAction(() -> {
+      WriteAction.run(() -> getFirstEditor().getDocument().insertString(0, "transparent edit "));
+      assertThrows(ProcessCanceledException.class, () -> executeCommand(() -> {
+        throw new ProcessCanceledException();
+      }, "Canceled command"));
+      checkEditorText("transparent edit user edit");
+    });
+
+    checkEditorText("transparent edit user edit");
+    undoFirstEditor();
+    checkEditorText("");
+  }
+
   public void testUndoTypeIn() {
     typeInText("test");
     checkEditorState("test", 4, 0, 0);

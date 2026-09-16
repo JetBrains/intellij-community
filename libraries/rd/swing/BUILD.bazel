@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.rd.swing` start
+content_module_jar(
+    libraries = ["@lib//:libraries-rd-swing-rd-swing"],
+    module = ":swing",
+)
+### auto-generated section `dev intellij.libraries.rd.swing` end
+
 ### auto-generated section `build intellij.libraries.rd.swing` start
 jvm_library(
     name = "swing",
@@ -16,11 +23,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-rd-swing-rd-swing"],
     runtime_deps = ["@lib//:libraries-rd-swing-rd-swing"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-rd-swing-rd-swing"],
-    module = ":swing",
 )
 
 jvm_library(
@@ -43,7 +45,6 @@ exports_files(
     [
         "intellij.libraries.rd.swing.iml",
         "resources/intellij.libraries.rd.swing.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

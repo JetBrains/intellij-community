@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.platform.bookmarks` start
+content_module_jar(module = ":bookmarks")
+### auto-generated section `dev intellij.platform.bookmarks` end
+
 ### auto-generated section `build intellij.platform.bookmarks` start
 jvm_library(
     name = "bookmarks",
@@ -51,8 +55,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":bookmarks")
-
 jvm_library(
     name = "bookmarks_test_lib",
     testonly = True,
@@ -101,7 +103,6 @@ exports_files(
     [
         "intellij.platform.bookmarks.iml",
         "resources/intellij.platform.bookmarks.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

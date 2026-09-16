@@ -53,6 +53,57 @@ This is useful when:
 - You need to regenerate BUILD files after git operations
 - Troubleshooting build system synchronization issues
 
+## Library Version Changes
+
+Bump a library with the dashboard tool, not by hand: `bun community/build/libraries-dashboard/libraries-dashboard.mjs bump <groupId:artifactId>=<version> --kind=wrapper`. It rewrites the `maven-id`, the jar URLs and every `<sha256sum>`, and prints the follow-up commands.
+
+### The artifact list must match the POM
+
+JPS resolves a repository library from its POM and requires the `<verification>` artifact set to equal the resolved jar set. Bazel downloads the listed URLs instead, so a mismatch passes every local Bazel build and fails the first JPS step on TeamCity ("Library 'x': not found expected artifacts"). Two rules follow:
+
+- A transitive artifact in a library block stays at the version the POM of the main artifact declares. Do not align it with another wrapper by editing the version.
+- To share one version across wrappers, exclude the dependency and add a module dependency on its wrapper. `community/libraries/mockk/jvm/intellij.libraries.mockk.jvm.iml` excludes `byte-buddy-agent` and depends on `intellij.libraries.byte.buddy.agent`.
+
+The bump command checks a multi-artifact library against the direct dependencies of the new POM and fails on a mismatch. After a manual edit of a library block, run the same check:
+
+```bash
+bun community/build/libraries-dashboard/libraries-dashboard.mjs check <groupId:artifactId>
+```
+
+The check reads one POM without its parents and compares direct dependencies only. To reproduce the JPS resolution that TeamCity runs before every build, run `./build/downloadLibraries.cmd`. It needs Space credentials.
+
+### Version copies outside the JPS model
+
+After you change the version of a repository library in an `*.iml` or in `.idea/libraries/*.xml`, run the Fleet generator in the monorepo checkout:
+
+```bash
+./fleet/build/generateProjectModel.cmd dump
+```
+
+The Fleet generator copies the JPS library versions into `fleet/build/gradle/jps.versions.toml`, `fleet/build/jps-library-mappings.tsv` and both `fleet/kmp.MODULE.bazel` files. Its `check` mode fails on drift.
+
+When the dump changes a `kmp.MODULE.bazel`, update both Bazel lockfiles:
+
+```bash
+./bazel.cmd mod deps --lockfile_mode=update
+(cd community && ./bazel.cmd mod deps --lockfile_mode=update)
+```
+
+The `kmp` module extension records its artifact list in the `MODULE.bazel.lock` of each module, and CI runs Bazel with `--lockfile_mode=error`, so a stale lockfile fails the build. `bun community/build/libraries-dashboard/libraries-dashboard.mjs bump` prints these commands after a bump.
+
+Some files outside the JPS model copy a library version, and the project structure tests check each copy:
+
+- `community/platform/jps-bootstrap/pom.xml` copies every library that jps-bootstrap uses (`JpsBoostrapStructureTest`).
+- `JetBrainsAnnotationsExternalLibraryResolver.VERSION` copies `org.jetbrains:annotations` (`IdeaUltimateProjectStructureTest`).
+
+The bump command rewrites these copies and reports a copy that still differs. After a manual version change, edit them by hand. Then run the tests that gate the Smoke Tests build:
+
+```bash
+./tests.cmd --module intellij.projectStructureTests --test 'com.intellij.ideaProjectStructure.fast.*'
+```
+
+These tests also check the Kotlin, Compose and LanguageTool version alignment and the unused project libraries.
+
 ## BUILD.bazel Auto-Generated Sections
 
 BUILD.bazel files have auto-generated sections marked with comments:
@@ -104,6 +155,32 @@ jps_test(
 Product layouts can include content modules directly. If production runtime already gets a dependency from a content module in the product layout, that content-module dependency can be enough and does not automatically require adding a wrapper plugin dependency to a production `.iml` or plugin descriptor.
 
 Test plugin resolution is different because tests often do not run with the full production product layout or flat classpath. If a test module loads a plugin whose dependencies include content modules owned by a wrapper plugin, add the wrapper plugin as a test/runtime dependency in the test module `.iml` instead of broadening the production module dependency. For example, a test that needs Problems View content modules may need `intellij.platform.problemView.plugin` as a runtime dependency even when the production module only depends on Problems View content modules.
+
+## Test Access to `internal` Declarations
+
+A Kotlin `internal` declaration is visible to a test only when the test module is a friend of the
+production module.
+
+**The same module.** A test source root of a module sees the `internal` declarations of the
+production sources. Nothing to configure. The generator adds the production target to the
+`associates` attribute of the `_test_lib` target.
+
+**A separate test module.** Add the `TestModuleProperties` component to the test module `.iml`:
+
+```xml
+  <component name="TestModuleProperties" production-module="intellij.platform.configurationStore.impl" />
+```
+
+Then run `./build/jpsModelToBazel.cmd`. The generator moves the production module from `deps` to
+`associates`, and the Kotlin compiler gets it as a friend path. For a complete example, see
+`community/notebooks/visualization/intellij.notebooks.visualization.tests.iml`.
+
+The component holds one module. A test module cannot be a friend of two production modules, and the
+friendship is not transitive.
+
+**Java.** Java has no `internal` modifier. Put the test class in the same package as a
+package-private declaration. For a member that carries `@ApiStatus.Internal`, add
+`@VisibleForTesting` or `@TestOnly`, because the compiler makes no check here.
 
 ## Important Notes
 

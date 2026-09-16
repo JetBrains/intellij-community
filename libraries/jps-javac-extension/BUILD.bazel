@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.jps.javac.extension` start
+content_module_jar(
+    libraries = ["@lib//:libraries-jps-javac-extension-jps-javac-extension"],
+    module = ":jps-javac-extension",
+)
+### auto-generated section `dev intellij.libraries.jps.javac.extension` end
+
 ### auto-generated section `build intellij.libraries.jps.javac.extension` start
 jvm_library(
     name = "jps-javac-extension",
@@ -16,11 +23,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-jps-javac-extension-jps-javac-extension"],
     runtime_deps = ["@lib//:libraries-jps-javac-extension-jps-javac-extension"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-jps-javac-extension-jps-javac-extension"],
-    module = ":jps-javac-extension",
 )
 
 jvm_library(
@@ -43,7 +45,6 @@ exports_files(
     [
         "intellij.libraries.jps.javac.extension.iml",
         "resources/intellij.libraries.jps.javac.extension.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

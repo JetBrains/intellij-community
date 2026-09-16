@@ -11,13 +11,13 @@ import org.intellij.markdown.html.GeneratingProvider
 import org.intellij.markdown.html.HtmlGenerator
 import org.intellij.markdown.parser.LinkMap
 import org.intellij.plugins.markdown.extensions.CodeFenceGeneratingProvider
-import org.intellij.plugins.markdown.extensions.MarkdownCodeFenceCacheableProvider
 import org.intellij.plugins.markdown.lang.parser.CancellableText
 import org.intellij.plugins.markdown.lang.parser.MarkdownParserManager
 import org.intellij.plugins.markdown.ui.preview.html.links.IntelliJImageGeneratingProvider
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.math.BigInteger
+import java.net.URI
 
 object MarkdownUtil {
   @ApiStatus.Internal
@@ -30,19 +30,22 @@ object MarkdownUtil {
   }
 
   fun generateMarkdownHtml(file: VirtualFile, text: String, project: Project?): String {
+    // The base has to end with a slash. Resolving a relative link against a base without one replaces
+    // its last segment instead of descending into the directory, so a link next to the document would
+    // resolve into the parent directory (RFC 3986).
     val baseUri = file.parent?.let {
-      Urls.toUriWithoutParameters(Urls.newFromVirtualFile(it))
+      val directory = Urls.toUriWithoutParameters(Urls.newFromVirtualFile(it))
+      if (directory.path.endsWith("/")) directory else URI("${directory}/")
     }
 
     val parsedTree = MarkdownParserManager.createMarkdownParser(MarkdownParserManager.FLAVOUR)
       .buildMarkdownTreeFromString(CancellableText.of(text))
-    val cacheCollector = MarkdownCodeFencePluginCacheCollector(file)
 
     val linkMap = LinkMap.buildLinkMap(parsedTree, text)
     val footnoteMap = FootnoteMap.build(parsedTree, text)
     val map = MarkdownParserManager.FLAVOUR.createHtmlGeneratingProviders(linkMap, baseUri).toMutableMap()
     map[GFMElementTypes.ALERT] = MarkdownAlertGeneratingProvider(map[MarkdownElementTypes.BLOCK_QUOTE]!!)
-    map[MarkdownElementTypes.CODE_FENCE] = createCodeFenceProvider(project, file, cacheCollector)
+    map[MarkdownElementTypes.CODE_FENCE] = createCodeFenceProvider(project, file)
     if (project != null) {
       map[MarkdownElementTypes.IMAGE] = IntelliJImageGeneratingProvider(linkMap)
       map[MarkdownElementTypes.PARAGRAPH] = ParagraphGeneratingProvider()
@@ -56,23 +59,14 @@ object MarkdownUtil {
 
     val mainHtml = HtmlGenerator(text, parsedTree, map, true).generateHtml()
 
-    MarkdownCodeFenceHtmlCache.getInstance().registerCacheProvider(cacheCollector)
-
     val footnoteHtml = footnoteMap.generateFootnoteHtml(baseUri)
     return if (footnoteHtml.isEmpty()) mainHtml
            else mainHtml.dropLast("</body>".length) + "\n" + footnoteHtml + "\n</body>"
   }
 
   @ApiStatus.Internal
-  fun createCodeFenceProvider(
-    project: Project?,
-    file: VirtualFile?,
-    collector: MarkdownCodeFencePluginCacheCollector
-  ): GeneratingProvider {
+  fun createCodeFenceProvider(project: Project?, file: VirtualFile?): GeneratingProvider {
     val providers = CodeFenceGeneratingProvider.collectProviders()
-    for (provider in providers.asSequence().filterIsInstance<MarkdownCodeFenceCacheableProvider>()) {
-      provider.collector = collector
-    }
     return DefaultCodeFenceGeneratingProvider(providers.toTypedArray(), project, file)
   }
 }

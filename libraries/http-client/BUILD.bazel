@@ -1,5 +1,4 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
-load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.libraries.http.client` start
 jvm_library(
@@ -14,13 +13,8 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    exports = ["@lib//:http-client"],
-    runtime_deps = ["@lib//:http-client"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:http-client"],
-    module = ":http-client",
+    exports = ["@lib//:libraries-http-client-http-client"],
+    runtime_deps = ["@lib//:libraries-http-client-http-client"],
 )
 
 jvm_library(
@@ -33,7 +27,7 @@ jvm_library(
     kotlinc_opts = "@community//:k8",
     module_name = "intellij.libraries.http.client",
     visibility = ["//visibility:public"],
-    exports = ["@lib//:http-client"],
+    exports = ["@lib//:libraries-http-client-http-client"],
     runtime_deps = [":http-client"],
 )
 ### auto-generated section `build intellij.libraries.http.client` end
@@ -43,7 +37,6 @@ exports_files(
     [
         "intellij.libraries.http.client.iml",
         "resources/intellij.libraries.http.client.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -1,4 +1,9 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.pycharm.community.newUiOnboarding` start
+content_module_jar(module = ":newUiOnboarding")
+### auto-generated section `dev intellij.pycharm.community.newUiOnboarding` end
 
 ### auto-generated section `build intellij.pycharm.community.newUiOnboarding` start
 jvm_library(

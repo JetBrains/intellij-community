@@ -324,18 +324,18 @@ private fun collectTerminalPromotionCandidates(
   return when (provider) {
     McpServerTerminalProvider.CODEX -> McpServerTerminalPromotionCandidates(
       projectClient = project.basePath?.let { basePath ->
-        CodexClient(McpClientInfo.Scope.Project(project), Paths.get(basePath, ".codex", "config.toml"))
+        CodexClient(McpClientInfo.McpClientScope.McpClientProjectScope(project), Paths.get(basePath, ".codex", "config.toml"))
       },
       globalClient = McpClientDetector.preferredCodexConfigPath()?.let { configPath ->
-        CodexClient(McpClientInfo.Scope.Global, configPath)
+        CodexClient(McpClientInfo.McpClientScope.McpClientGlobalScope, configPath)
       },
     )
     McpServerTerminalProvider.CLAUDE -> McpServerTerminalPromotionCandidates(
       projectClient = project.basePath?.let { basePath ->
-        ClaudeCodeClient(McpClientInfo.Scope.Project(project), Paths.get(basePath, ".mcp.json"))
+        ClaudeCodeClient(McpClientInfo.McpClientScope.McpClientProjectScope(project), Paths.get(basePath, ".mcp.json"))
       },
       globalClient = ClaudeCodeClient(
-        McpClientInfo.Scope.Global,
+        McpClientInfo.McpClientScope.McpClientGlobalScope,
         Paths.get(OSAgnosticPathUtil.expandUserHome("~/.claude.json"))
       ),
     )
@@ -518,10 +518,10 @@ internal fun mcpServerTerminalPromotionFixActionText(): @NlsActions.ActionText S
   return McpServerBundle.message("mcp.server.terminal.promotion.fix.action")
 }
 
-internal fun mcpServerTerminalPromotionSetupActionText(scope: McpClientInfo.Scope): @NlsActions.ActionText String {
+internal fun mcpServerTerminalPromotionSetupActionText(scope: McpClientInfo.McpClientScope): @NlsActions.ActionText String {
   val scopeText = when (scope) {
-    is McpClientInfo.Scope.Project -> McpServerBundle.message("mcp.server.terminal.promotion.scope.project")
-    is McpClientInfo.Scope.Global -> McpServerBundle.message("mcp.server.terminal.promotion.scope.global")
+    is McpClientInfo.McpClientScope.McpClientProjectScope -> McpServerBundle.message("mcp.server.terminal.promotion.scope.project")
+    is McpClientInfo.McpClientScope.McpClientGlobalScope -> McpServerBundle.message("mcp.server.terminal.promotion.scope.global")
   }
   return McpServerBundle.message("mcp.server.terminal.promotion.setup.action", McpServerBundle.ideDisplayName(), scopeText)
 }

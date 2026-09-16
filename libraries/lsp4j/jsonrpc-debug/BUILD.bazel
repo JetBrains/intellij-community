@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.eclipse.lsp4j.jsonrpc.debug` start
+content_module_jar(
+    libraries = ["@lib//:libraries-eclipse-lsp4j-jsonrpc-debug-eclipse-lsp4j-jsonrpc-debug"],
+    module = ":libraries-eclipse-lsp4j-jsonrpc-debug",
+)
+### auto-generated section `dev intellij.libraries.eclipse.lsp4j.jsonrpc.debug` end
+
 ### auto-generated section `build intellij.libraries.eclipse.lsp4j.jsonrpc.debug` start
 jvm_library(
     name = "libraries-eclipse-lsp4j-jsonrpc-debug",
@@ -16,11 +23,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-eclipse-lsp4j-jsonrpc-debug-eclipse-lsp4j-jsonrpc-debug"],
     runtime_deps = ["@lib//:libraries-eclipse-lsp4j-jsonrpc-debug-eclipse-lsp4j-jsonrpc-debug"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-eclipse-lsp4j-jsonrpc-debug-eclipse-lsp4j-jsonrpc-debug"],
-    module = ":libraries-eclipse-lsp4j-jsonrpc-debug",
 )
 
 jvm_library(
@@ -43,7 +45,6 @@ exports_files(
     [
         "intellij.libraries.eclipse.lsp4j.jsonrpc.debug.iml",
         "resources/intellij.libraries.eclipse.lsp4j.jsonrpc.debug.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -200,7 +200,7 @@ public class XMasterBreakpointPanel extends XBreakpointPropertiesSubPanel {
       }
     }
     Collections.sort(items);
-    items.add(0, new BreakpointNoneItem());
+    items.addFirst(new BreakpointNoneItem());
     return items;
   }
 

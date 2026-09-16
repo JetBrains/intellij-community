@@ -18,7 +18,7 @@ public final class WindowsSystemLibraries {
   }
 
   private static @NotNull Path systemRoot() {
-    String systemRoot = System.getenv("SystemRoot");
+    var systemRoot = System.getenv("SystemRoot");
     return Path.of(systemRoot != null ? systemRoot : "C:\\Windows");
   }
 }

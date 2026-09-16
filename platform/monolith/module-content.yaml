@@ -1,3 +1,0 @@
-- name: dist.all/lib/intellij.platform.monolith.jar
-  modules:
-  - name: intellij.platform.monolith

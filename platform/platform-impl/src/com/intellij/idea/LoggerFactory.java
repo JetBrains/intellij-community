@@ -55,6 +55,9 @@ public final class LoggerFactory implements Logger.Factory {
       consoleLogLevel, true, getLogFilePath(), append, writeAttachments, IdeaLogger::dropFrequentExceptionsCaches
     );
 
+    // A handler here gets the real cause in `LogRecord.getThrown()`. `JulLogger` drops the `UnhandledException`
+    // wrapper, and puts its mark in `IdeaLogRecord`. So a new handler needs no knowledge of that wrapper.
+    // See IJPL-254578.
     if (!AppMode.isCommandLine() || ApplicationManagerEx.isInIntegrationTest()) {
       rootLogger.addHandler(new DialogAppender());
     }

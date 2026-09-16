@@ -218,8 +218,8 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
         if (contextClass != null) {
           contextClass = contextClass.getNavigationElement();
         }
-        if (contextClass instanceof PsiCompiledElement) {
-          contextClass = ((PsiCompiledElement)contextClass).getMirror();
+        if (contextClass instanceof PsiCompiledElement element) {
+          contextClass = element.getMirror();
         }
         contextType = getType(className, project);
       }
@@ -331,8 +331,8 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
   }
 
   public static String getConnectionDisplayName(@NotNull RemoteConnection connection) {
-    if (connection instanceof PidRemoteConnection) {
-      return "pid " + ((PidRemoteConnection)connection).getPid();
+    if (connection instanceof PidRemoteConnection remoteConnection) {
+      return "pid " + remoteConnection.getPid();
     }
     String addressDisplayName = JavaDebuggerBundle.getAddressDisplayName(connection);
     String transportName = JavaDebuggerBundle.getTransportName(connection);
@@ -393,23 +393,23 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
   }
 
   public static Stream<? extends ReferenceType> supertypes(ReferenceType type) {
-    if (type instanceof InterfaceType) {
-      return ((InterfaceType)type).superinterfaces().stream();
+    if (type instanceof InterfaceType interfaceType) {
+      return interfaceType.superinterfaces().stream();
     }
-    else if (type instanceof ClassType) {
-      return StreamEx.<ReferenceType>ofNullable(((ClassType)type).superclass()).prepend(((ClassType)type).interfaces());
+    else if (type instanceof ClassType classType) {
+      return StreamEx.<ReferenceType>ofNullable(classType.superclass()).prepend(classType.interfaces());
     }
     return StreamEx.empty();
   }
 
   public static byte @Nullable [] readBytesArray(Value bytesArray) {
-    if (bytesArray instanceof ArrayReference) {
-      List<Value> values = ((ArrayReference)bytesArray).getValues();
+    if (bytesArray instanceof ArrayReference reference) {
+      List<Value> values = reference.getValues();
       byte[] res = new byte[values.size()];
       int idx = 0;
       for (Value value : values) {
-        if (value instanceof ByteValue) {
-          res[idx++] = ((ByteValue)value).value();
+        if (value instanceof ByteValue byteValue) {
+          res[idx++] = byteValue.value();
         }
         else {
           return null;
@@ -441,18 +441,18 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
       if (value == null) {
         return "null";
       }
-      if (value instanceof StringReference) {
+      if (value instanceof StringReference stringReference) {
         ensureNotInsideObjectConstructor((ObjectReference)value, evaluationContext);
-        return ((StringReference)value).value();
+        return stringReference.value();
       }
       if (isInteger(value)) {
         return String.valueOf(((PrimitiveValue)value).longValue());
       }
-      if (value instanceof FloatValue) {
-        return String.valueOf(((FloatValue)value).floatValue());
+      if (value instanceof FloatValue floatValue) {
+        return String.valueOf(floatValue.floatValue());
       }
-      if (value instanceof DoubleValue) {
-        return String.valueOf(((DoubleValue)value).doubleValue());
+      if (value instanceof DoubleValue doubleValue) {
+        return String.valueOf(doubleValue.doubleValue());
       }
       if (value instanceof BooleanValue) {
         return String.valueOf(((PrimitiveValue)value).booleanValue());
@@ -498,7 +498,7 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
             if (result == null) {
               return "null";
             }
-            return result instanceof StringReference ? ((StringReference)result).value() : result.toString();
+            return result instanceof StringReference reference ? reference.value() : result.toString();
           },
           evaluationContext);
       }
@@ -530,8 +530,8 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
 
   @Override
   protected @Nullable GlobalSearchScope getFallbackAllScope(@NotNull GlobalSearchScope scope, @NotNull Project project) {
-    if (scope instanceof DebuggerGlobalSearchScope) {
-      return ((DebuggerGlobalSearchScope)scope).fallbackAllScope();
+    if (scope instanceof DebuggerGlobalSearchScope searchScope) {
+      return searchScope.fallbackAllScope();
     }
     GlobalSearchScope allScope = GlobalSearchScope.allScope(project);
     return !allScope.equals(scope) ? allScope : null;
@@ -625,10 +625,10 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
   }
 
   public static @Nullable XValueMarkers<?, ?> getValueMarkers(@Nullable DebugProcess process) {
-    if (process instanceof DebugProcessImpl) {
-      XDebugSession session = ((DebugProcessImpl)process).getSession().getXDebugSession();
-      if (session instanceof XDebugSessionImpl) {
-        return ((XDebugSessionImpl)session).getValueMarkers();
+    if (process instanceof DebugProcessImpl debugProcess) {
+      XDebugSession session = debugProcess.getSession().getXDebugSession();
+      if (session instanceof XDebugSessionImpl debugSession) {
+        return debugSession.getValueMarkers();
       }
     }
     return null;

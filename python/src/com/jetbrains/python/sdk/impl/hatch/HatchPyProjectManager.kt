@@ -18,7 +18,7 @@ import com.intellij.python.pyproject.model.spi.PyProjectTomlProject
 import com.intellij.python.pyproject.model.spi.TomlDependencySpecification
 import com.intellij.python.pyproject.model.spi.resolveSrcRoots
 import com.intellij.python.pyproject.safeGetArr
-import com.intellij.python.pytools.runtime.PyToolRuntime
+import com.intellij.python.pytools.backend.runtime.PyToolRuntime
 import com.jetbrains.python.PyToolUIInfo
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyError

@@ -1,3 +1,0 @@
-- name: dist.all/lib/intellij.platform.markdown.utils.jar
-  modules:
-  - name: intellij.platform.markdown.utils

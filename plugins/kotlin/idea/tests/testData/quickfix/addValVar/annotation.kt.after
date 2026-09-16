@@ -2,5 +2,4 @@
 // K2_ERROR: MISSING_VAL_ON_ANNOTATION_PARAMETER
 
 annotation class A(val x: Int)
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.intentions.AddValVarToConstructorParameterAction$QuickFix
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddValVarToConstructorParameterFixFactory$AddValVarToConstructorParameterFix

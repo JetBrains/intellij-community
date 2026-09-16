@@ -32,7 +32,7 @@ internal object ContentModuleDependencyValidator : PipelineNode {
   // with module dependency edges before this validation runs.
   override val requires: Set<DataSlot<*>> get() = setOf(Slots.CONTENT_MODULE_PLAN)
 
-  override suspend fun execute(ctx: ComputeContext) {
+  override fun execute(ctx: ComputeContext) {
     val model = ctx.model
     ctx.emitErrorsPerProduct(model.pluginGraph) { product ->
       validatePluginContentModulesForProduct(product, model.pluginGraph)

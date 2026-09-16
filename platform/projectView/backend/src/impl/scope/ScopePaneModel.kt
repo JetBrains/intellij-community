@@ -110,8 +110,8 @@ class ScopePaneModel(
     "The scope tree model of $paneId is only available while the pane is being managed"
   }
 
-  override suspend fun navigate(nodeId: Long, options: ProjectViewPaneNavigateOptions) {
-    navigateToTreeStructureNode(project, suspendingState?.getNodeById(nodeId), options)
+  override suspend fun navigate(nodeId: Long, options: ProjectViewPaneNavigateOptions): Boolean {
+    return navigateToTreeStructureNode(project, suspendingState?.getNodeById(nodeId), options)
   }
 
   override fun supportsOption(option: ProjectViewPaneOption): Boolean {

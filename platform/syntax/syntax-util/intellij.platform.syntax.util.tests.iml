@@ -11,7 +11,7 @@
     <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.multiplatformSupport" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="kotlin-test" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinTest" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.syntax" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.syntax.util" scope="TEST" />
   </component>

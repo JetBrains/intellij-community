@@ -2,15 +2,8 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
-# `PackagingSuiteDispatcherTest` needs a two-worker scheduler with a short keep-alive, so it can set the trap that
-# makes the kotlinx scheduler drop a task. The scheduler reads both properties once, when `Dispatchers.Default`
-# starts, so a test cannot set them itself.
 jps_test(
     name = "tests_test",
-    jvm_flags = [
-        "-Dkotlinx.coroutines.scheduler.core.pool.size=2",
-        "-Dkotlinx.coroutines.scheduler.keep.alive.sec=1",
-    ],
     runtime_deps = [":tests_test_lib"],
 )
 ### skip generation section `test intellij.platform.buildScripts.testFramework.tests`
@@ -52,10 +45,14 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
+        "//platform/build-scripts/api",
+        "//platform/build-scripts/api:api_test_lib",
+        "//platform/build-scripts",
+        "//platform/build-scripts:build-scripts_test_lib",
+        "//platform/testFramework/common",
+        "//platform/testFramework/common:common_test_lib",
         "//platform/distribution-content",
         "//platform/distribution-content:distribution-content_test_lib",
-        "//libraries/kotlinx/coroutines/core",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//libraries/kotlinx/serialization/core",
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//libraries/kotlinx/serialization/json",

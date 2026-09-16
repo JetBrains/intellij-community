@@ -93,8 +93,8 @@ import static org.junit.Assert.assertTrue;
  */
 public abstract class BazelIncBuildTest {
 
-  private static Path ourTestDataRoot;
-  private static Path ourTestDataWorkRoot;
+  protected static Path ourTestDataRoot;
+  protected static Path ourTestDataWorkRoot;
   private static String ourBazelRunnerPath;
   private static Path ourOutputBinRoot;
 
@@ -106,7 +106,7 @@ public abstract class BazelIncBuildTest {
     If disabled, the test project output directory will not be deleted. Useful for debugging
   */
   private static final boolean OUTPUT_FULL_CLEAN = Boolean.parseBoolean(System.getProperty("jvm-inc-builder.test.cleanup", "true"));
-  private static final Predicate<String> ACTION_EXTENSION_MATCHER = Pattern.compile("\\.(?:log|delete|new)\\d*").asMatchPredicate();
+  protected static final Predicate<String> ACTION_EXTENSION_MATCHER = Pattern.compile("\\.(?:log|delete|new)\\d*").asMatchPredicate();
 
   @BeforeClass
   public static void setupWorkDir() throws Exception {
@@ -242,11 +242,11 @@ public abstract class BazelIncBuildTest {
     return result;
   }
 
-  private static @NotNull Path getTestOutputDir(String testDataPath) {
+  protected static @NotNull Path getTestOutputDir(String testDataPath) {
     return ourOutputBinRoot.resolve(testDataPath);
   }
 
-  private static String collectDiagnostics(Path testOutputDir) {
+  protected static String collectDiagnostics(Path testOutputDir) {
     StringBuilder content = new StringBuilder();
     content.append("Test output directory: ").append(testOutputDir).append("\n");
     try {
@@ -543,7 +543,7 @@ public abstract class BazelIncBuildTest {
     return readerThread;
   }
 
-  private static void copyRecursively(Path source, Path toDir, Predicate<Path> filter) throws IOException {
+  protected static void copyRecursively(Path source, Path toDir, Predicate<Path> filter) throws IOException {
     if (!Files.isDirectory(source)) {
       copyTestDataFile(source, toDir);
     }
@@ -593,7 +593,7 @@ public abstract class BazelIncBuildTest {
     Files.setLastModifiedTime(targetFile, FileTime.from(Instant.now()));
   }
 
-  private static @NotNull String getExtension(Path path) {
+  protected static @NotNull String getExtension(Path path) {
     String fileName = getFileName(path);
     int dotIndex = fileName.lastIndexOf('.');
     return dotIndex >= 0? fileName.substring(dotIndex) : "";

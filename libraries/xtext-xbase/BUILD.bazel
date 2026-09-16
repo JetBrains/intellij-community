@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.xtext.xbase` start
+content_module_jar(
+    libraries = ["@lib//:libraries-xtext-xbase-xtext-xbase"],
+    module = ":xtext-xbase",
+)
+### auto-generated section `dev intellij.libraries.xtext.xbase` end
+
 ### auto-generated section `build intellij.libraries.xtext.xbase` start
 jvm_library(
     name = "xtext-xbase",
@@ -16,11 +23,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-xtext-xbase-xtext-xbase"],
     runtime_deps = ["@lib//:libraries-xtext-xbase-xtext-xbase"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-xtext-xbase-xtext-xbase"],
-    module = ":xtext-xbase",
 )
 
 jvm_library(
@@ -43,7 +45,6 @@ exports_files(
     [
         "intellij.libraries.xtext.xbase.iml",
         "resources/intellij.libraries.xtext.xbase.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

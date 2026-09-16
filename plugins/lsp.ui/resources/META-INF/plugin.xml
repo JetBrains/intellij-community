@@ -1,12 +1,13 @@
+<!-- BUILD_USING_BAZEL_MARKER: this plugin is also packaged by the `ij_plugin` Bazel rule, and IjPluginDistributionEquivalenceTest
+     checks that the result matches the distribution produced by the build scripts. See IJPL-251444. -->
 <idea-plugin allow-bundled-update="true">
   <name>LSP Connection Manager</name>
   <id>com.intellij.lsp.ui</id>
   <category>IDE Settings</category>
   <vendor>JetBrains</vendor>
   <description><![CDATA[
-    Provides UI for managing LSP (Language Server Protocol) servers via configuration settings.
-    <br><br>
-    Open <b>Settings | Languages & Frameworks | LSP Servers</b> to configure servers and file mappings.
+    <p>Provides UI for managing LSP (Language Server Protocol) servers via configuration settings.</p>
+    <p>Open <b>Settings | Languages & Frameworks | Language Servers</b> to configure servers and file mappings.</p>
   ]]></description>
 
   <dependencies>
@@ -19,7 +20,9 @@
     <module name="intellij.platform.frontend"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.json"/>
     <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.lsp.impl"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.statistics"/>
@@ -40,7 +43,11 @@
     <platform.lsp.integrationProvider implementation="com.intellij.lsp.ui.ConfigurableLspIntegrationProvider"/>
     <pluginAdvertiserSuppressor implementation="com.intellij.lsp.ui.LspConfiguredPluginAdvertiserSuppressor"/>
     <statistics.projectUsagesCollector implementation="com.intellij.lsp.ui.statistics.LspServerUsagesCollector"/>
-    <projectSettings service="com.intellij.lsp.ui.settings.LspServerSettings"/>
+
+    <projectService serviceInterface="com.intellij.platform.lsp.api.LspIntegrationSettings"
+      serviceImplementation="com.intellij.lsp.ui.settings.LspIntegrationSettingsImpl"/>
+    <!--suppress PluginXmlCapitalization -->
+    <notificationGroup id="Language Servers" displayType="BALLOON" bundle="messages.LspUiBundle" key="lsp.settings.display.name"/>
   </extensions>
 
   <actions resource-bundle="messages.LspUiBundle">

@@ -75,13 +75,13 @@ public abstract class JvmSmartStepIntoHandler {
         new LambdaMethodFilter(lambdaTarget.getLambda(), lambdaTarget.getOrdinal(), stepTarget.getCallingExpressionLines());
 
       if (Registry.is("debugger.async.smart.step.into") && lambdaTarget.isAsync()) {
-        PsiLambdaExpression lambda = ((LambdaSmartStepTarget)stepTarget).getLambda();
+        PsiLambdaExpression lambda = lambdaTarget.getLambda();
         PsiElement expressionList = lambda.getParent();
-        if (expressionList instanceof PsiExpressionList) {
+        if (expressionList instanceof PsiExpressionList list) {
           PsiElement method = expressionList.getParent();
-          if (method instanceof PsiMethodCallExpression) {
-            return new LambdaAsyncMethodFilter(((PsiMethodCallExpression)method).resolveMethod(),
-                                               LambdaUtil.getLambdaIdx((PsiExpressionList)expressionList, lambda),
+          if (method instanceof PsiMethodCallExpression expression) {
+            return new LambdaAsyncMethodFilter(expression.resolveMethod(),
+                                               LambdaUtil.getLambdaIdx(list, lambda),
                                                lambdaMethodFilter);
           }
         }

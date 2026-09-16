@@ -25,7 +25,7 @@ object GHCompatibilityUtil {
   fun requestNewAccountForServer(serverPath: GithubServerPath, project: Project, loginSource: GHLoginSource): GithubAccount? =
     GHAccountsUtil.requestNewAccount(serverPath, login = null, project = project, loginSource = loginSource)?.account
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   @JvmStatic
   @JvmOverloads
   fun getOrRequestToken(account: GithubAccount, project: Project, loginSource: GHLoginSource = GHLoginSource.UNKNOWN): String? {

@@ -84,7 +84,7 @@ class PyCharmCommunityProperties(private val communityHome: Path) : PyCharmPrope
     bundledPlugins(productLayout.bundledPluginModules)
   }
 
-  override suspend fun copyAdditionalFiles(targetDir: Path, context: BuildContext) {
+  override fun copyAdditionalFiles(targetDir: Path, context: BuildContext) {
     super.copyAdditionalFiles(targetDir, context)
 
     val licenseTargetDir = targetDir.resolve("license")
@@ -123,7 +123,7 @@ class PyCharmCommunityProperties(private val communityHome: Path) : PyCharmPrope
 
     override fun getRootDirectoryName(appInfo: ApplicationInfoProperties, buildNumber: String): String = "PyCharm OSS.app"
 
-    override suspend fun copyAdditionalFiles(context: BuildContext, targetDir: Path, arch: JvmArchitecture) {
+    override fun copyAdditionalFiles(context: BuildContext, targetDir: Path, arch: JvmArchitecture) {
       super.copyAdditionalFiles(context, targetDir, arch)
       PyCharmBuildUtils.copySkeletons(context, targetDir, "skeletons-mac*.zip")
     }

@@ -144,8 +144,8 @@ public class ForceEarlyReturnAction extends DebuggerAction {
                          new XDebuggerEvaluator.XEvaluationCallback() {
                            @Override
                            public void evaluated(@NotNull XValue result) {
-                             if (result instanceof JavaValue) {
-                               forceEarlyReturnWithFinally(((JavaValue)result).getDescriptor().getValue(),
+                             if (result instanceof JavaValue value) {
+                               forceEarlyReturnWithFinally(value.getDescriptor().getValue(),
                                                            stackFrame,
                                                            debugProcess,
                                                            dialog);

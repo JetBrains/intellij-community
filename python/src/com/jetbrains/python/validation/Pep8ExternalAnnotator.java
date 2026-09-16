@@ -1,7 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.validation;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -11,8 +10,6 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.CustomEditInspectionToolsSettingsAction;
 import com.intellij.codeInspection.ex.InspectionProfileModifiableModelKt;
-import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.process.ProcessOutput;
 import com.intellij.lang.annotation.AnnotationBuilder;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.ExternalAnnotator;
@@ -36,12 +33,13 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.python.community.execService.python.PyHelper;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonFileType;
-import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.codeInsight.imports.OptimizeImportsQuickFix;
 import com.jetbrains.python.documentation.docstrings.DocStringParser;
@@ -69,8 +67,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -79,9 +77,17 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.jetbrains.python.psi.PyUtil.as;
+import static com.jetbrains.python.validation.PyPep8HelperBridgeKt.execPep8Helper;
 
 
 public final class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotator.State, Pep8ExternalAnnotator.Results> {
+  @NotNull
+  private static final PyHelper PYCODESTYLE_2_8_0_PY = new PyHelper("pycodestyle-2.8.0.py", false);
+  @NotNull
+  private static final PyHelper PYCODESTYLE_2_10_0_PY = new PyHelper("pycodestyle-2.10.0.py", false);
+  @NotNull
+  private static final PyHelper PYCODESTYLE_PY = new PyHelper("pycodestyle.py", false);
+
   // Taken directly from the sources of pycodestyle.py
   private static final String DEFAULT_IGNORED_ERRORS = "E121,E123,E126,E226,E24,E704,W503,W504";
   private static final Logger LOG = Logger.getInstance(Pep8ExternalAnnotator.class);
@@ -117,48 +123,6 @@ public final class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalA
     }
   }
 
-  public static class State {
-    private final String interpreterPath;
-    private final LanguageLevel interpreterVersion;
-    private final String fileText;
-    private final HighlightDisplayLevel level;
-    private final List<String> ignoredErrors;
-    private final int margin;
-    private final boolean hangClosingBrackets;
-
-    public State(String interpreterPath,
-                 LanguageLevel interpreterVersion,
-                 String fileText,
-                 HighlightDisplayLevel level,
-                 List<String> ignoredErrors,
-                 int margin,
-                 boolean hangClosingBrackets) {
-      this.interpreterPath = interpreterPath;
-      this.interpreterVersion = interpreterVersion;
-      this.fileText = fileText;
-      this.level = level;
-      this.ignoredErrors = ignoredErrors;
-      this.margin = margin;
-      this.hangClosingBrackets = hangClosingBrackets;
-    }
-  }
-
-  public static class Results {
-    public final List<Problem> problems = new ArrayList<>();
-    private final HighlightDisplayLevel level;
-
-    public Results(HighlightDisplayLevel level) {
-      this.level = level;
-    }
-  }
-
-  private boolean myReportedMissingInterpreter;
-
-  @Override
-  public String getPairedBatchInspectionShortName() {
-    return PyPep8Inspection.INSPECTION_SHORT_NAME;
-  }
-
   @Override
   public @Nullable State collectInformation(@NotNull PsiFile psiFile) {
     VirtualFile vFile = psiFile.getVirtualFile();
@@ -186,7 +150,7 @@ public final class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalA
     if (!profile.isToolEnabled(key, psiFile)) {
       return null;
     }
-    if (psiFile instanceof PyFileImpl && !((PyFileImpl)psiFile).isAcceptedFor(PyPep8Inspection.class)) {
+    if (psiFile instanceof PyFileImpl file && !file.isAcceptedFor(PyPep8Inspection.class)) {
       return null;
     }
     final PyPep8Inspection inspection = (PyPep8Inspection)profile.getUnwrappedTool(PyPep8Inspection.INSPECTION_SHORT_NAME, psiFile);
@@ -203,8 +167,8 @@ public final class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalA
       ignoredErrors.add("E261"); // At least two spaces before inline comment
     }
 
-    return new State(homePath,
-                     // The local SDK used to launch the pycodestyle.py script is not necessarily of the same version as the project SDK, 
+    return new State(Path.of(homePath), // homePath is always valid!
+                     // The local SDK used to launch the pycodestyle.py script is not necessarily of the same version as the project SDK,
                      // so LanguageLevel.forElement(file) might lead to launching the script incompatible with the "runner" interpreter.
                      PySdkUtil.getLanguageLevelForSdk(sdk),
                      psiFile.getText(),
@@ -214,16 +178,24 @@ public final class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalA
                      customSettings.HANG_CLOSING_BRACKETS);
   }
 
-  private static void reportMissingInterpreter() {
-    LOG.info("Found no suitable interpreter to run pycodestyle.py. Available interpreters are: [");
-    List<Sdk> allSdks = ContainerUtil.sorted(PythonSdkUtil.getAllSdks(), PreferredSdkComparator.INSTANCE);
-    for (Sdk sdk : allSdks) {
-      LOG.info("  Path: " + sdk.getHomePath() + "; Flavor: " + PythonSdkFlavor.getFlavor(sdk) + "; Remote: " + PythonSdkUtil.isRemote(sdk));
+  public static class Results {
+    public final List<Problem> problems = new ArrayList<>();
+    private final HighlightDisplayLevel level;
+
+    public Results(HighlightDisplayLevel level) {
+      this.level = level;
     }
-    LOG.info("]");
+  }
+
+  private boolean myReportedMissingInterpreter;
+
+  @Override
+  public String getPairedBatchInspectionShortName() {
+    return PyPep8Inspection.INSPECTION_SHORT_NAME;
   }
 
   @Override
+  @RequiresBackgroundThread
   public @Nullable Results doAnnotate(State collectedInfo) {
     if (collectedInfo == null) return null;
     ArrayList<String> options = new ArrayList<>();
@@ -237,35 +209,39 @@ public final class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalA
     options.add("--max-line-length=" + collectedInfo.margin);
     options.add("-");
 
-    PythonHelper pycodestyleScript;
+    @NotNull
+    PyHelper pycodestyleScript;
     if (collectedInfo.interpreterVersion.isOlderThan(LanguageLevel.PYTHON36)) {
-      pycodestyleScript = PythonHelper.PYCODESTYLE_2_8_0;
+      pycodestyleScript = PYCODESTYLE_2_8_0_PY;
     }
     else if (collectedInfo.interpreterVersion.isOlderThan(LanguageLevel.PYTHON38)) {
-      pycodestyleScript = PythonHelper.PYCODESTYLE_2_10_0;
+      pycodestyleScript = PYCODESTYLE_2_10_0_PY;
     }
     else {
-      pycodestyleScript = PythonHelper.PYCODESTYLE;
+      pycodestyleScript = PYCODESTYLE_PY;
     }
-    GeneralCommandLine cmd = pycodestyleScript.newCommandLine(collectedInfo.interpreterPath, options);
+    var stdin = collectedInfo.fileText.getBytes(StandardCharsets.UTF_8);
+    var output = execPep8Helper(pycodestyleScript, collectedInfo.interpreterPath, stdin, options);
 
-    ProcessOutput output = PySdkUtil.getProcessOutput(cmd, new File(collectedInfo.interpreterPath).getParent(),
-                                                      ImmutableMap.of("PYTHONBUFFERED", "1"),
-                                                      10000,
-                                                      collectedInfo.fileText.getBytes(StandardCharsets.UTF_8), false);
 
     Results results = new Results(collectedInfo.level);
-    if (output.isTimeout()) {
+    if (output == null) {
       LOG.info("Timeout running pycodestyle.py");
       return results;
     }
-    if (!output.getStderr().isEmpty() && ApplicationInfo.getInstance().isEAP()) {
-      LOG.info("Error running pycodestyle.py: " + output.getStderr());
-    }
-    for (String line : output.getStdoutLines()) {
+    for (String line : StringUtil.split(output, "\n")) {
       ContainerUtil.addIfNotNull(results.problems, parseProblem(line));
     }
     return results;
+  }
+
+  private static void reportMissingInterpreter() {
+    LOG.info("Found no suitable interpreter to run pycodestyle.py. Available interpreters are: [");
+    List<Sdk> allSdks = ContainerUtil.sorted(PythonSdkUtil.getAllSdks(), PreferredSdkComparator.INSTANCE);
+    for (Sdk sdk : allSdks) {
+      LOG.info("  Path: " + sdk.getHomePath() + "; Flavor: " + PythonSdkFlavor.getFlavor(sdk) + "; Remote: " + PythonSdkUtil.isRemote(sdk));
+    }
+    LOG.info("]");
   }
 
   @Override
@@ -360,8 +336,36 @@ public final class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalA
         builder
           .withFix(new IgnoreErrorFix(problem.myCode))
           .withFix(new CustomEditInspectionToolsSettingsAction(HighlightDisplayKey.find(PyPep8Inspection.INSPECTION_SHORT_NAME),
-                                                               () -> PyBundle.message("QFIX.pep8.edit.inspection.profile.setting"))).create();
+                                                               () -> PyBundle.message("QFIX.pep8.edit.inspection.profile.setting")))
+          .create();
       }
+    }
+  }
+
+  static class State {
+    @NotNull
+    private final Path interpreterPath;
+    private final LanguageLevel interpreterVersion;
+    private final String fileText;
+    private final HighlightDisplayLevel level;
+    private final List<String> ignoredErrors;
+    private final int margin;
+    private final boolean hangClosingBrackets;
+
+    State(@NotNull Path interpreterPath,
+          LanguageLevel interpreterVersion,
+          String fileText,
+          HighlightDisplayLevel level,
+          List<String> ignoredErrors,
+          int margin,
+          boolean hangClosingBrackets) {
+      this.interpreterPath = interpreterPath;
+      this.interpreterVersion = interpreterVersion;
+      this.fileText = fileText;
+      this.level = level;
+      this.ignoredErrors = ignoredErrors;
+      this.margin = margin;
+      this.hangClosingBrackets = hangClosingBrackets;
     }
   }
 

@@ -7,32 +7,38 @@ import org.jdom.Element
 /**
  * Computes the patched version of `plugin.xml` descriptor where `version` tag, `since-build` and `until-build` attributes are replaced by the provided values,
  * and bodies of content module descriptors are inlined in the corresponding 'module' tags wrapped into CDATA.
- * @param contentModuleDescriptors maps from a name of a content module to the text of its descriptor
+ * @param contentModules maps from a name of a content module to the text of its descriptor
  */
 internal fun patchPluginDescriptor(
   originalContent: ByteArray,
   pluginVersion: String?,
   sinceBuild: String?,
   untilBuild: String?,
-  contentModuleDescriptors: Map<String, ByteArray>,
+  contentModules: Map<String, ContentModuleData>,
+  presentablePluginDescriptorLocation: String,
 ): ByteArray {
   val pluginDescriptorRoot = JDOMUtil.load(originalContent)
   insertVersionAndCompatibilityRange(pluginDescriptorRoot, pluginVersion = pluginVersion, sinceBuild = sinceBuild, untilBuild = untilBuild)
-  embedContentModules(pluginDescriptorRoot, contentModuleDescriptors)
+  embedContentModules(pluginDescriptorRoot, contentModules, presentablePluginDescriptorLocation)
   val patchedData = JDOMUtil.write(pluginDescriptorRoot)
   return patchedData.toByteArray()
 }
 
-private fun embedContentModules(pluginDescriptorRoot: Element, contentModuleDescriptors: Map<String, ByteArray>) {
-  inlineXIncludes(pluginDescriptorRoot)
+private fun embedContentModules(pluginDescriptorRoot: Element, contentModules: Map<String, ContentModuleData>, presentablePluginDescriptorLocation: String) {
+  inlineXIncludes(pluginDescriptorRoot, presentablePluginDescriptorLocation)
   for (contentElement in pluginDescriptorRoot.getChildren("content")) {
     for (moduleElement in contentElement.getChildren("module")) {
-      val moduleName = requireNotNull(moduleElement.getAttributeValue("name")) { "'name' is required for 'module' tag in 'content' tag" }
-      val contentDescriptor = contentModuleDescriptors[moduleName]
-      requireNotNull(contentDescriptor) { "Descriptor for content module '$moduleName' is not found" }
-      val contentDescriptorRoot = JDOMUtil.load(contentDescriptor)
-      inlineXIncludes(contentDescriptorRoot)
-      moduleElement.setContent(CDATA(JDOMUtil.write(contentDescriptorRoot)))
+      val moduleName = moduleElement.getAttributeValue("name")
+                       ?: throw IjPluginPackagingException("Required 'name' attribute for 'module' tag in 'content' tag is missing in $presentablePluginDescriptorLocation")
+      val contentModule = contentModules.get(moduleName)
+                          ?: throw IjPluginPackagingException("Descriptor for content module '$moduleName' is not found for plugin descriptor from $presentablePluginDescriptorLocation")
+
+      val rootElement = contentModule.moduleDescriptorRoot
+      if (!contentModule.shouldBeMergedToMainJar && rootElement.getAttributeValue("package") != null) {
+        rootElement.setAttribute("separate-jar", "true")
+      }
+      inlineXIncludes(rootElement, "$moduleName.xml")
+      moduleElement.setContent(CDATA(JDOMUtil.write(rootElement)))
     }
   }
 
@@ -47,11 +53,11 @@ private fun embedContentModules(pluginDescriptorRoot: Element, contentModuleDesc
   }
 }
 
-private fun inlineXIncludes(rootElement: Element) {
+private fun inlineXIncludes(rootElement: Element, presentableDescriptorLocation: String) {
   //todo support inlining at least for target files in the same module or its direct dependencies
   for (element in rootElement.children) {
     if (isXIncludeElement(element)) {
-      error("xi:include elements are not supported yet")
+      throw IjPluginPackagingException("xi:include elements are not supported yet, but they are found in $presentableDescriptorLocation")
     }
   }
 }

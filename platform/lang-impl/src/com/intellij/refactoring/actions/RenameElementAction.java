@@ -13,6 +13,7 @@ import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.DumbUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Condition;
@@ -88,9 +89,9 @@ public class RenameElementAction extends DumbAwareAction {
       if (availableRenamers.isEmpty()) {
         // check if rename is not performed due to dumb mode
         if (!allRenamers.isEmpty() && DumbService.isDumb(project)) {
-          String actionUnavailableMessage = IdeBundle.dumbModeMessage("dumb.balloon.0.is.not.available.while.indexing",
-                                                                      "dumb.balloon.0.is.not.available.in.light.mode",
-                                                                      this.getTemplateText());
+          String actionUnavailableMessage = DumbUtil.dumbModeMessage(
+            IdeBundle.message("dumb.balloon.0.is.not.available.while.indexing", this.getTemplateText()),
+            IdeBundle.message("dumb.balloon.0.is.not.available.in.light.mode", this.getTemplateText()));
           Runnable rerunAction = () -> {
             ActionManager.getInstance().tryToExecute(this, null, null, null, true);
           };

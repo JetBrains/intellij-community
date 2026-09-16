@@ -36,7 +36,7 @@ class MultipleBreakpointGutterIconRenderer extends CommonBreakpointGutterIconRen
 
   @Override
   public @NotNull Icon getIcon() {
-    var session = XDebugManagerProxy.getInstance().getCurrentSessionProxy(breakpoints.get(0).getProject());
+    var session = XDebugManagerProxy.getInstance().getCurrentSessionProxy(breakpoints.getFirst().getProject());
     if (session != null && session.areBreakpointsMuted()) {
       return AllIcons.Debugger.MultipleBreakpointsMuted;
     }

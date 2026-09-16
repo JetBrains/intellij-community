@@ -182,8 +182,6 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
     psiFile = getFileManager().findFile(virtualFile, context);
     if (psiFile == null) return null;
 
-    fireFileCreated(document, psiFile);
-
     return psiFile;
   }
 
@@ -972,13 +970,6 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
     myProject.getMessageBus().syncPublisher(PsiDocumentListener.TOPIC).documentCreated(document, file, myProject);
     for (Listener listener : myListeners) {
       listener.documentCreated(document, file);
-    }
-  }
-
-  private void fireFileCreated(@NotNull Document document, @NotNull PsiFile file) {
-    myProject.getMessageBus().syncPublisher(PsiDocumentListener.TOPIC).fileCreated(file, document);
-    for (Listener listener : myListeners) {
-      listener.fileCreated(file, document);
     }
   }
 

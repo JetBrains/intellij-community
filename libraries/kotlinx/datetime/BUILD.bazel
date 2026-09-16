@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.kotlinx.datetime` start
+content_module_jar(
+    libraries = ["@lib//:libraries-kotlinx-datetime-kotlinx-datetime-jvm"],
+    module = ":datetime",
+)
+### auto-generated section `dev intellij.libraries.kotlinx.datetime` end
+
 ### auto-generated section `build intellij.libraries.kotlinx.datetime` start
 jvm_library(
     name = "datetime",
@@ -16,11 +23,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-kotlinx-datetime-kotlinx-datetime-jvm"],
     runtime_deps = ["@lib//:libraries-kotlinx-datetime-kotlinx-datetime-jvm"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-kotlinx-datetime-kotlinx-datetime-jvm"],
-    module = ":datetime",
 )
 
 jvm_library(
@@ -43,7 +45,6 @@ exports_files(
     [
         "intellij.libraries.kotlinx.datetime.iml",
         "resources/intellij.libraries.kotlinx.datetime.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -59,7 +59,7 @@ sealed class K2MoveModel(private val observableUiSettings: ObservableUiSettings)
 
     abstract val moveCallBack: MoveCallback?
 
-    @RequiresReadLock
+    @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
     abstract fun toDescriptor(): K2MoveOperationDescriptor<*>
 
     /**

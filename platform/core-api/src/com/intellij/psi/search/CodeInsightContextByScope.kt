@@ -46,7 +46,10 @@ private fun reportMultipleContextsAreNotSupported(
 ) {
   if (ourContextErrorCounter.get() < MAX_CONTEXT_ERROR_NUMBER) {
     // todo IJPL-339 we need to process the file twice in this case. Not supported yet
-    log.warn("Multiple contexts for file $file in scope $scope. Contexts: $contexts")
+    val shown = contexts.asSequence().take(MAX_LOGGED_CONTEXTS).joinToString(", ")
+    val rest = contexts.size - MAX_LOGGED_CONTEXTS
+    val suffix = if (rest > 0) " and $rest more" else ""
+    log.warn("Multiple contexts for file $file in scope $scope. Contexts (${contexts.size}): $shown$suffix")
     ourContextErrorCounter.incrementAndGet()
   }
 }
@@ -55,3 +58,4 @@ private val log = fileLogger()
 
 private val ourContextErrorCounter = AtomicInteger(0)
 private const val MAX_CONTEXT_ERROR_NUMBER = 10
+private const val MAX_LOGGED_CONTEXTS = 5

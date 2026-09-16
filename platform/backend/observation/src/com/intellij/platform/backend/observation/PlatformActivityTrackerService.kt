@@ -41,7 +41,7 @@ internal class PlatformActivityTrackerService(private val scope: CoroutineScope)
     val counter: Int,
     // the job here is an imitation of java.util.concurrent.Phaser
     val job: CompletableJob,
-    // the throwable here are for debugging
+    // the throwable here are for debugging. The map stays empty unless `ide.activity.tracking.enable.debug` is on.
     val creationTrace: Map<Any, Throwable>,
     ) {
     override fun equals(other: Any?): Boolean {
@@ -140,14 +140,19 @@ internal class PlatformActivityTrackerService(private val scope: CoroutineScope)
     val sentinel = Any()
     while (true) {
       // compare-and-swap, basically
-      val insertionResult = concurrentConfigurationCounter.putIfAbsent(kind, AssociatedCounter(1, Job(), mapOf(sentinel to Throwable())))
-      if (insertionResult == null) {
-        // successfully inserted
-        break
+      val currentCounter = concurrentConfigurationCounter[kind]
+      if (currentCounter == null) {
+        // attempt to insert the first counter. A read comes first, because the common case is an already present counter,
+        // and `putIfAbsent` would allocate a job and a counter on every call.
+        val newCounter = AssociatedCounter(1, Job(), addCreationTrace(emptyMap(), sentinel))
+        if (concurrentConfigurationCounter.putIfAbsent(kind, newCounter) == null) {
+          break
+        }
       }
       else {
-        val incrementedCounter = AssociatedCounter(insertionResult.counter + 1, insertionResult.job, insertionResult.creationTrace + (sentinel to Throwable()))
-        if (concurrentConfigurationCounter.replace(kind, insertionResult, incrementedCounter)) {
+        val incrementedCounter = AssociatedCounter(currentCounter.counter + 1, currentCounter.job,
+                                                   addCreationTrace(currentCounter.creationTrace, sentinel))
+        if (concurrentConfigurationCounter.replace(kind, currentCounter, incrementedCounter)) {
           break
         }
       }
@@ -185,7 +190,8 @@ internal class PlatformActivityTrackerService(private val scope: CoroutineScope)
       }
       else {
         // attempt to decrease key
-        val newCounter = AssociatedCounter(currentCounter.counter - 1, currentCounter.job, currentCounter.creationTrace - key)
+        val newCounter = AssociatedCounter(currentCounter.counter - 1, currentCounter.job,
+                                           removeCreationTrace(currentCounter.creationTrace, key))
         concurrentConfigurationCounter.replace(kind, currentCounter, newCounter)
       }
       if (operationSucceeded) {
@@ -221,6 +227,34 @@ internal class PlatformActivityTrackerService(private val scope: CoroutineScope)
   }
 }
 
+private fun isActivityTrackingDebugEnabled(): Boolean = Registry.`is`("ide.activity.tracking.enable.debug", false)
+
+/**
+ * Returns [traces] with a trace for [key] added.
+ *
+ * A trace is a debug aid. The platform collects a trace only if the `ide.activity.tracking.enable.debug` registry option is on.
+ * A stack trace capture and a map copy are too expensive to do for each tracked activity.
+ * One activity key can hold thousands of activities at the same time, so the copy makes the tracker quadratic.
+ * See IDEA-388937 and IJPL-218163.
+ */
+private fun addCreationTrace(traces: Map<Any, Throwable>, key: Any): Map<Any, Throwable> {
+  if (!isActivityTrackingDebugEnabled()) {
+    return traces
+  }
+  return traces + (key to Throwable())
+}
+
+/**
+ * Returns [traces] with the trace for [key] removed.
+ * @see addCreationTrace
+ */
+private fun removeCreationTrace(traces: Map<Any, Throwable>, key: Any): Map<Any, Throwable> {
+  if (traces.isEmpty()) {
+    return traces
+  }
+  return traces - key
+}
+
 private val computationMap : MutableMap<Any, Throwable> = ConcurrentHashMap()
 
 @Internal
@@ -240,7 +274,7 @@ fun dumpObservedComputationsToString(): String {
 
 @Internal
 fun traceObservedComputation(id: Any) {
-  if (Registry.`is`("ide.activity.tracking.enable.debug", false)) {
+  if (isActivityTrackingDebugEnabled()) {
     computationMap[id] = Throwable()
   }
 }

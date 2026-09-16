@@ -3,6 +3,7 @@
 
 package org.jetbrains.intellij.build.productLayout.dependency
 
+import com.intellij.platform.buildScripts.concurrency.SharedTaskOwner
 import com.intellij.platform.pluginGraph.ContentModuleName
 import com.intellij.platform.pluginGraph.PluginId
 import com.intellij.platform.pluginGraph.PluginModuleId
@@ -38,6 +39,13 @@ import java.nio.file.Path
  */
 @ExtendWith(TestFailureLogger::class)
 class PluginDependencyGeneratorTest {
+  private val owner = SharedTaskOwner("PluginDependencyGeneratorTest")
+
+  @org.junit.jupiter.api.AfterEach
+  fun closeSharedTasks() {
+    owner.close()
+  }
+
   // --- Graph-based resolution and validation tests ---
 
   @Test
@@ -578,7 +586,7 @@ class PluginDependencyGeneratorTest {
       )
 
       // Call the REAL function (graph is the source of truth for descriptor existence)
-      val descriptorCache = ModuleDescriptorCache(jps.outputProvider)
+      val descriptorCache = ModuleDescriptorCache(jps.outputProvider, owner = owner)
       val graph = pluginGraphWithDescriptors(descriptorCache) {
         moduleWithScopedDeps("intellij.python.processOutput.impl", "intellij.platform.jewel.intUi.standalone" to "COMPILE")
         product("TestProduct") { }
@@ -638,7 +646,7 @@ class PluginDependencyGeneratorTest {
         }
       )
 
-      val descriptorCache = ModuleDescriptorCache(jps.outputProvider)
+      val descriptorCache = ModuleDescriptorCache(jps.outputProvider, owner = owner)
       val graph = pluginGraphWithDescriptors(descriptorCache) {
         moduleWithScopedDeps("intellij.consumer.module", "intellij.libraries.private" to "COMPILE")
         product("TestProduct") { }
@@ -699,7 +707,7 @@ class PluginDependencyGeneratorTest {
         }
       )
 
-      val descriptorCache = ModuleDescriptorCache(jps.outputProvider)
+      val descriptorCache = ModuleDescriptorCache(jps.outputProvider, owner = owner)
       val graph = pluginGraphWithDescriptors(descriptorCache) {
         moduleWithScopedDeps("intellij.consumer.module", "intellij.libraries.private" to "COMPILE")
         product("TestProduct") { }
@@ -763,7 +771,7 @@ class PluginDependencyGeneratorTest {
         }
       )
 
-      val descriptorCache = ModuleDescriptorCache(jps.outputProvider)
+      val descriptorCache = ModuleDescriptorCache(jps.outputProvider, owner = owner)
       val graph = pluginGraphWithDescriptors(descriptorCache) {
         moduleWithScopedDeps("intellij.consumer.module")
         moduleWithScopedDeps("intellij.libraries.private")
@@ -827,7 +835,7 @@ class PluginDependencyGeneratorTest {
         }
       )
 
-      val descriptorCache = ModuleDescriptorCache(jps.outputProvider)
+      val descriptorCache = ModuleDescriptorCache(jps.outputProvider, owner = owner)
       val graph = pluginGraphWithDescriptors(descriptorCache) {
         moduleWithScopedDeps("intellij.consumer.module")
         moduleWithScopedDeps("intellij.libraries.public")
@@ -902,7 +910,7 @@ class PluginDependencyGeneratorTest {
         }
       )
 
-      val descriptorCache = ModuleDescriptorCache(jps.outputProvider)
+      val descriptorCache = ModuleDescriptorCache(jps.outputProvider, owner = owner)
       val graph = pluginGraphWithDescriptors(descriptorCache) {
         moduleWithScopedDeps("intellij.consumer.module", "intellij.libraries.private.with.deps" to "COMPILE")
         moduleWithScopedDeps("intellij.libraries.internal.dep")
@@ -965,7 +973,7 @@ class PluginDependencyGeneratorTest {
         }
       )
 
-      val descriptorCache = ModuleDescriptorCache(jps.outputProvider)
+      val descriptorCache = ModuleDescriptorCache(jps.outputProvider, owner = owner)
       val graph = pluginGraphWithDescriptors(descriptorCache) {
         moduleWithScopedDeps("intellij.consumer.module", "intellij.platform.testFramework.junit5.wsl" to "COMPILE")
         product("TestProduct") { }
@@ -1031,7 +1039,7 @@ class PluginDependencyGeneratorTest {
         }
       )
 
-      val descriptorCache = ModuleDescriptorCache(jps.outputProvider)
+      val descriptorCache = ModuleDescriptorCache(jps.outputProvider, owner = owner)
       val graph = pluginGraphWithDescriptors(descriptorCache) {
         moduleWithScopedDeps("intellij.consumer.module", "intellij.platform.testFramework.junit5.wsl" to "COMPILE")
         product("TestProduct") { }
@@ -1097,7 +1105,7 @@ class PluginDependencyGeneratorTest {
       )
 
       coroutineScope {
-        val descriptorCache = ModuleDescriptorCache(jps.outputProvider)
+        val descriptorCache = ModuleDescriptorCache(jps.outputProvider, owner = owner)
         val graph = pluginGraphWithDescriptors(descriptorCache) {
           target("intellij.foo")
           target("intellij.bar")
@@ -1158,7 +1166,7 @@ class PluginDependencyGeneratorTest {
         }
       )
 
-      val descriptorCache = ModuleDescriptorCache(jps.outputProvider)
+      val descriptorCache = ModuleDescriptorCache(jps.outputProvider, owner = owner)
       val graph = pluginGraphWithDescriptors(descriptorCache) {
         plugin("intellij.dep.plugin") {
           content("intellij.dep.with.descriptor")
@@ -1228,7 +1236,7 @@ class PluginDependencyGeneratorTest {
         }
       )
 
-      val descriptorCache = ModuleDescriptorCache(jps.outputProvider)
+      val descriptorCache = ModuleDescriptorCache(jps.outputProvider, owner = owner)
       val graph = pluginGraphWithDescriptors(descriptorCache) {
         moduleWithScopedDeps("intellij.test.module", "intellij.dep.with.descriptor" to "COMPILE")
         moduleWithScopedDeps("intellij.dep.with.descriptor")
@@ -1288,7 +1296,7 @@ class PluginDependencyGeneratorTest {
         }
       )
 
-      val descriptorCache = ModuleDescriptorCache(jps.outputProvider)
+      val descriptorCache = ModuleDescriptorCache(jps.outputProvider, owner = owner)
       val graph = pluginGraphWithDescriptors(descriptorCache) {
         plugin("intellij.java.plugin") {
           content("intellij.java.impl")
@@ -1353,7 +1361,7 @@ class PluginDependencyGeneratorTest {
         }
       )
 
-      val descriptorCache = ModuleDescriptorCache(jps.outputProvider)
+      val descriptorCache = ModuleDescriptorCache(jps.outputProvider, owner = owner)
       val graph = pluginGraphWithDescriptors(descriptorCache) {
         plugin("intellij.java.plugin") {
           content("intellij.java.impl")
@@ -1422,7 +1430,7 @@ class PluginDependencyGeneratorTest {
         }
       )
 
-      val descriptorCache = ModuleDescriptorCache(jps.outputProvider)
+      val descriptorCache = ModuleDescriptorCache(jps.outputProvider, owner = owner)
       val graph = pluginGraphWithDescriptors(descriptorCache) {
         moduleWithScopedDeps("intellij.test.module", "intellij.libraries.junit4" to "COMPILE")
         moduleWithScopedDeps("intellij.libraries.junit4")
@@ -1483,7 +1491,7 @@ class PluginDependencyGeneratorTest {
       )
 
       val errorSink = ErrorSink()
-      val descriptorCache = ModuleDescriptorCache(jps.outputProvider)
+      val descriptorCache = ModuleDescriptorCache(jps.outputProvider, owner = owner)
       val graph = pluginGraphWithDescriptors(descriptorCache) {
         moduleWithScopedDeps("intellij.test.module", "intellij.libraries.junit4" to "COMPILE")
         product("TestProduct") { }
@@ -1544,7 +1552,7 @@ class PluginDependencyGeneratorTest {
         }
       )
 
-      val descriptorCache = ModuleDescriptorCache(jps.outputProvider)
+      val descriptorCache = ModuleDescriptorCache(jps.outputProvider, owner = owner)
       val graph = pluginGraphWithDescriptors(descriptorCache) {
         moduleWithScopedDeps("intellij.content.module", "intellij.dep.resolvable" to "COMPILE")
         product("TestProduct") { }
@@ -1603,7 +1611,7 @@ class PluginDependencyGeneratorTest {
         }
       )
 
-      val descriptorCache = ModuleDescriptorCache(jps.outputProvider)
+      val descriptorCache = ModuleDescriptorCache(jps.outputProvider, owner = owner)
       val graph = pluginGraphWithDescriptors(descriptorCache) {
         product("TestProduct") { bundlesPlugin("intellij.owner.plugin") }
         plugin("intellij.owner.plugin") { content("intellij.owner.module") }
@@ -1663,7 +1671,7 @@ class PluginDependencyGeneratorTest {
         }
       )
 
-      val descriptorCache = ModuleDescriptorCache(jps.outputProvider)
+      val descriptorCache = ModuleDescriptorCache(jps.outputProvider, owner = owner)
       val graph = pluginGraphWithDescriptors(descriptorCache) {
         product("TestProduct") { bundlesPlugin("product.java.plugin") }
         plugin("product.java.plugin") { pluginId("com.intellij.java") }
@@ -1735,7 +1743,7 @@ class PluginDependencyGeneratorTest {
         }
       )
 
-      val descriptorCache = ModuleDescriptorCache(jps.outputProvider)
+      val descriptorCache = ModuleDescriptorCache(jps.outputProvider, owner = owner)
       val graph = pluginGraphWithDescriptors(descriptorCache) {
         product("TestProduct") { }
         plugin("language-server.plugins.java") {
@@ -1804,7 +1812,7 @@ class PluginDependencyGeneratorTest {
         }
       )
 
-      val descriptorCache = ModuleDescriptorCache(jps.outputProvider)
+      val descriptorCache = ModuleDescriptorCache(jps.outputProvider, owner = owner)
       val graph = pluginGraphWithDescriptors(descriptorCache) {
         product("TestProduct") { }
         plugin("intellij.java.plugin") {
@@ -1883,7 +1891,7 @@ class PluginDependencyGeneratorTest {
         allowedMissingPluginIds = listOf(PluginId("org.jetbrains.ls.plugin.java")),
       )
 
-      val descriptorCache = ModuleDescriptorCache(jps.outputProvider)
+      val descriptorCache = ModuleDescriptorCache(jps.outputProvider, owner = owner)
       val graph = pluginGraphWithDescriptors(descriptorCache) {
         product("TestProduct") { }
         plugin("language-server.plugins.java") {
@@ -1952,7 +1960,7 @@ class PluginDependencyGeneratorTest {
         additionalBundledPluginTargetNames = listOf(TargetName("intellij.owner.plugin")),
       )
 
-      val descriptorCache = ModuleDescriptorCache(jps.outputProvider)
+      val descriptorCache = ModuleDescriptorCache(jps.outputProvider, owner = owner)
       val graph = pluginGraphWithDescriptors(descriptorCache) {
         product("TestProduct") { }
         plugin("intellij.owner.plugin") { content("intellij.owner.module") }
@@ -2012,7 +2020,7 @@ class PluginDependencyGeneratorTest {
         }
       )
 
-      val descriptorCache = ModuleDescriptorCache(jps.outputProvider)
+      val descriptorCache = ModuleDescriptorCache(jps.outputProvider, owner = owner)
       val graph = pluginGraphWithDescriptors(descriptorCache) {
         product("TestProduct") { bundlesTestPlugin("intellij.owner.plugin") }
         testPlugin("intellij.owner.plugin") { content("intellij.owner.module") }
@@ -2077,7 +2085,7 @@ class PluginDependencyGeneratorTest {
         }
       )
 
-      val descriptorCache = ModuleDescriptorCache(jps.outputProvider)
+      val descriptorCache = ModuleDescriptorCache(jps.outputProvider, owner = owner)
       val graph = pluginGraphWithDescriptors(descriptorCache) {
         product("TestProduct") { }
         testPlugin("intellij.owner.plugin") { content("intellij.owner.module") }
@@ -2152,7 +2160,7 @@ class PluginDependencyGeneratorTest {
       )
 
       // Call the REAL function (graph is the source of truth for descriptor existence)
-      val descriptorCache = ModuleDescriptorCache(jps.outputProvider)
+      val descriptorCache = ModuleDescriptorCache(jps.outputProvider, owner = owner)
       val graph = pluginGraphWithDescriptors(descriptorCache) {
         moduleWithScopedDeps(
           "intellij.content.module",
@@ -2456,7 +2464,7 @@ class PluginDependencyGeneratorTest {
       }
 
       coroutineScope {
-        val descriptorCache = ModuleDescriptorCache(setup.jps.outputProvider)
+        val descriptorCache = ModuleDescriptorCache(setup.jps.outputProvider, owner = owner)
         val info = descriptorCache.getOrAnalyze("intellij.regexp")
 
         assertThat(info).isNotNull()
@@ -2483,7 +2491,7 @@ class PluginDependencyGeneratorTest {
         }
       }
 
-      val descriptorCache = ModuleDescriptorCache(setup.jps.outputProvider)
+      val descriptorCache = ModuleDescriptorCache(setup.jps.outputProvider, owner = owner)
       val info = descriptorCache.getOrAnalyze("intellij.nonstandard")
 
       assertThat(info).isNotNull()
@@ -2513,7 +2521,7 @@ class PluginDependencyGeneratorTest {
         }
       }
 
-      val descriptorCache = ModuleDescriptorCache(setup.jps.outputProvider)
+      val descriptorCache = ModuleDescriptorCache(setup.jps.outputProvider, owner = owner)
       val info = descriptorCache.getOrAnalyze("intellij.standard")
 
       assertThat(info).isNotNull()

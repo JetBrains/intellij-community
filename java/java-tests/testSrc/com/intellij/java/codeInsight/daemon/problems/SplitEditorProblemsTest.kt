@@ -12,14 +12,11 @@ import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.fileEditor.impl.FileEditorProviderManagerImpl
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiJavaCodeReferenceElement
-import com.intellij.testFramework.EditorTestUtil
-import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.testFramework.replaceService
 import com.intellij.ui.docking.DockManager
@@ -37,8 +34,6 @@ internal class SplitEditorProblemsTest : ProjectProblemsViewTest() {
     manager = FileEditorManagerImpl(project, (project as ComponentManagerEx).getCoroutineScope().childScope()).also { it.initDockableContentFactory() }
     project.replaceService(FileEditorManager::class.java, manager!!, testRootDisposable)
     (FileEditorProviderManager.getInstance() as FileEditorProviderManagerImpl).clearSelectedProviders()
-
-    Registry.get("ide.open.in.split.with.chooser.enabled").setValue(true, testRootDisposable)
   }
 
   override fun tearDown() {
@@ -152,14 +147,5 @@ internal class SplitEditorProblemsTest : ProjectProblemsViewTest() {
   private fun rehighlight(editor: Editor) {
     val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)
     CodeInsightTestFixtureImpl.instantiateAndRun(psiFile!!, editor, ArrayUtilRt.EMPTY_INT_ARRAY, false)
-  }
-
-  fun testSplitChooserSameSideTwice() {
-    val classA = myFixture.addClass("public class A {}")
-    val editors = manager!!.openFile(classA.containingFile.virtualFile, true)
-    val editor = (UsefulTestCase.assertOneElement(editors) as TextEditor).editor
-    EditorTestUtil.executeAction(editor, "SplitChooser", true)
-    EditorTestUtil.executeAction(editor, "SplitChooser.SplitLeft", true)
-    EditorTestUtil.executeAction(editor, "SplitChooser.SplitLeft", true)
   }
 }

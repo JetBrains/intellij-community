@@ -1,366 +1,333 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
+import com.intellij.platform.buildScripts.concurrency.Awaitable
+import com.intellij.platform.buildScripts.concurrency.Joiner
+import com.intellij.platform.buildScripts.concurrency.Subtask
+import com.intellij.platform.buildScripts.concurrency.TaskFailedException
+import com.intellij.platform.buildScripts.concurrency.TaskScope
+import com.intellij.platform.buildScripts.concurrency.currentSingleFlightOwners
+import com.intellij.platform.buildScripts.concurrency.taskScope
+import com.intellij.platform.buildScripts.concurrency.withSingleFlightOwners
 import com.intellij.util.ref.GCUtil
 import io.opentelemetry.context.Context
 import io.opentelemetry.context.ContextKey
-import io.opentelemetry.extension.kotlin.asContextElement
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.awaitCancellation
-import kotlinx.coroutines.cancelAndJoin
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.future.await
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeout
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
 import java.lang.ref.WeakReference
+import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.ThreadFactory
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.Duration.Companion.seconds
 
+@Timeout(20)
 class TaskScopeTest {
   @Test
-  fun `a fork runs on a virtual thread and returns its value`() {
-    val (isVirtual, threadName) = runBlocking {
-      taskScope {
-        fork("worker") { Thread.currentThread().isVirtual to Thread.currentThread().name }.await()
+  fun `named virtual threads read dependencies before join and results after join`() {
+    val result = taskScope {
+      val first = fork("first") { 21 }
+      val second = fork("second") {
+        assertThat(Thread.currentThread().isVirtual).isTrue()
+        assertThat(Thread.currentThread().name).isEqualTo("second")
+        first.await() * 2
       }
+      assertThatThrownBy { first.get() }.isInstanceOf(IllegalStateException::class.java)
+      join { second.get() }
     }
-
-    assertThat(isVirtual).isTrue()
-    assertThat(threadName).startsWith("build-")
+    assertThat(result).isEqualTo(42)
+    assertThat(Awaitable.completed(42).await()).isEqualTo(42)
   }
 
   @Test
-  fun `the group waits for a fork that nobody awaits`() {
-    val done = CompletableFuture<Unit>()
-    runBlocking {
-      taskScope {
-        fork("late") {
-          delay(100.milliseconds)
-          done.complete(Unit)
-        }
-      }
-    }
-
-    assertThat(done).isCompleted
-  }
-
-  @Test
-  fun `fail fast cancels the other forks and rethrows the first failure`() {
-    val siblingCancelled = CompletableFuture<Unit>()
+  fun `close cancels unjoined work and reports the missing join`() {
+    val entered = CountDownLatch(1)
+    val finished = AtomicBoolean()
     assertThatThrownBy {
-      runBlocking {
-        taskScope {
-          fork("sibling") {
-            try {
-              awaitCancellation()
-            }
-            catch (e: CancellationException) {
-              siblingCancelled.complete(Unit)
-              throw e
-            }
+      taskScope {
+        fork("worker") {
+          entered.countDown()
+          try {
+            CountDownLatch(1).await()
           }
-          fork("failing") {
-            delay(50.milliseconds)
-            throw IllegalStateException("the fork failed")
+          finally {
+            finished.set(true)
           }
         }
+        entered.await()
       }
-    }
-      .isInstanceOf(IllegalStateException::class.java)
-      .hasMessage("the fork failed")
-
-    assertThat(siblingCancelled.orTimeout(5, TimeUnit.SECONDS).join()).isEqualTo(Unit)
+    }.isInstanceOf(IllegalStateException::class.java).hasMessageContaining("without a join")
+    assertThat(finished.get()).isTrue()
   }
 
   @Test
-  fun `a cancellation thrown by a fork is a failure`() {
-    val failure = CancellationException("the fork cancelled itself")
-
+  fun `body failure stays primary and close skips the missing-join report`() {
+    val failure = IllegalArgumentException("body failed")
     assertThatThrownBy {
-      runBlocking {
-        taskScope {
-          fork("failing") { throw failure }
-        }
+      taskScope {
+        fork("worker") { CountDownLatch(1).await() }
+        throw failure
       }
     }.isSameAs(failure)
-  }
-
-  /** The block awaits a fork that the group cancels because a sibling failed. The failure is thrown, not the cancellation. */
-  @Test
-  fun `a failure of a fork that the block does not await wins over the cancellation the block sees`() {
-    assertThatThrownBy {
-      runBlocking {
-        taskScope {
-          val slow = fork("slow") { awaitCancellation() }
-          fork("failing") {
-            delay(50.milliseconds)
-            throw IllegalStateException("the fork failed")
-          }
-          slow.await()
-        }
-      }
-    }
-      .isInstanceOf(IllegalStateException::class.java)
-      .hasMessage("the fork failed")
+    assertThat(failure.suppressed).isEmpty()
   }
 
   @Test
-  fun `a second failure is attached as suppressed under fail fast`() {
+  fun `fail fast cancels nested scopes and waits for cleanup`() {
+    val entered = CountDownLatch(1)
+    val cleaned = AtomicBoolean()
+    val failure = IllegalStateException("failure")
     assertThatThrownBy {
-      runBlocking {
-        val secondStarted = CompletableDeferred<Unit>()
-        taskScope {
-          fork("first") {
-            // a fork that is cancelled before it starts has no failure of its own, so the first failure waits for the second body
-            secondStarted.await()
-            throw IllegalStateException("first")
-          }
-          fork("second") {
-            secondStarted.complete(Unit)
-            // a blocking body does not see the cancel, so its own failure is kept
-            Thread.sleep(100)
-            throw IllegalArgumentException("second")
+      taskScope {
+        fork("outer") {
+          taskScope {
+            fork("inner") {
+              entered.countDown()
+              try {
+                CountDownLatch(1).await()
+              }
+              finally {
+                cleaned.set(true)
+              }
+            }
+            join()
           }
         }
+        fork("failure") { entered.await(); throw failure }
+        join()
       }
-    }
-      .isInstanceOf(IllegalStateException::class.java)
-      .hasMessage("first")
-      .satisfies({ e ->
-        assertThat(e.suppressed).hasSize(1)
-        assertThat(e.suppressed[0]).isInstanceOf(IllegalArgumentException::class.java).hasMessage("second")
-      })
+    }.isInstanceOf(TaskFailedException::class.java).hasCause(failure)
+    assertThat(cleaned.get()).isTrue()
   }
 
   @Test
-  fun `a failure of the block carries the failure of a fork as suppressed`() {
-    val forkFailed = CompletableFuture<Unit>()
+  fun `worker cancellation and interruption are task failures`() {
+    for (failure in listOf(CancellationException("cancelled"), InterruptedException("interrupted"))) {
+      assertThatThrownBy {
+        taskScope { fork("failure") { throw failure }; join() }
+      }.isInstanceOf(TaskFailedException::class.java).hasCause(failure)
+      assertThat(Thread.currentThread().isInterrupted).isFalse()
+    }
+  }
+
+  @Test
+  fun `await all exposes outcomes without cancelling siblings`() {
+    val failure = IllegalStateException("failure")
+    taskScope(joiner = Joiner.awaitAll()) {
+      val failed = fork("failed") { throw failure }
+      val success = fork("success") { 42 }
+      join {
+        assertThat(failed.state()).isEqualTo(Subtask.State.FAILED)
+        assertThat(failed.exception()).isSameAs(failure)
+        assertThat(success.get()).isEqualTo(42)
+      }
+    }
+  }
+
+  @Test
+  fun `await all then throw reports each failure`() {
+    val first = IllegalStateException("first")
+    val second = IllegalArgumentException("second")
+    val success = AtomicBoolean()
     assertThatThrownBy {
-      runBlocking {
-        taskScope(TaskScopePolicy.RUN_ALL) {
-          fork("failing") {
+      taskScope(joiner = Joiner.awaitAllOrThrow()) {
+        val task = fork("first") { throw first }
+        assertThatThrownBy { task.await() }.hasCause(first)
+        fork("second") { throw second }
+        fork("success") { success.set(true) }
+        join()
+      }
+    }.hasCause(first).satisfies({ error -> assertThat(error.suppressed).containsExactly(second) })
+    assertThat(success.get()).isTrue()
+  }
+
+  @Test
+  fun `only the owner manages the scope and joins once`() {
+    taskScope {
+      val scope = this
+      fork("non-owner") {
+        assertThatThrownBy { scope.fork("illegal") {} }.hasMessageContaining("Only the owner")
+        assertThatThrownBy { scope.join() }.hasMessageContaining("Only the owner")
+        assertThatThrownBy { scope.close() }.hasMessageContaining("Only the owner")
+      }
+      join()
+      assertThatThrownBy { fork("after join") {} }.isInstanceOf(IllegalStateException::class.java)
+      assertThatThrownBy { join() }.isInstanceOf(IllegalStateException::class.java)
+    }
+    TaskScope.open().use { outer ->
+      TaskScope.open().use { inner ->
+        assertThatThrownBy { outer.close() }.hasMessageContaining("Nested task scopes")
+        inner.join()
+      }
+      outer.join()
+    }
+  }
+
+  @Test
+  fun `a factory failure cancels workers that already started`() {
+    val entered = CountDownLatch(1)
+    val cleaned = AtomicBoolean()
+    val failure = IllegalStateException("cannot start")
+    var count = 0
+    val factory = ThreadFactory { runnable ->
+      if (count++ == 0) Thread.ofVirtual().unstarted(runnable) else throw failure
+    }
+    assertThatThrownBy {
+      TaskScope.open(threadFactory = factory).use { scope ->
+        scope.fork("first") {
+          entered.countDown()
+          try {
+            CountDownLatch(1).await()
+          }
+          finally {
+            cleaned.set(true)
+          }
+        }
+        entered.await()
+        scope.fork("cannot start") {}
+      }
+    }.isSameAs(failure)
+    assertThat(cleaned.get()).isTrue()
+  }
+
+  @Test
+  fun `deadline cancels workers`() {
+    val entered = CountDownLatch(1)
+    val cleaned = AtomicBoolean()
+    assertThatThrownBy {
+      taskScope(timeout = 200.milliseconds) {
+        fork("worker") {
+          entered.countDown()
+          try {
+            CountDownLatch(1).await()
+          }
+          finally {
+            cleaned.set(true)
+          }
+        }
+        entered.await()
+        join()
+      }
+    }.isInstanceOf(TimeoutException::class.java)
+    assertThat(cleaned.get()).isTrue()
+  }
+
+  @Test
+  fun `close waits for actual thread termination after result publication`() {
+    val published = CountDownLatch(1)
+    val release = CountDownLatch(1)
+    val finished = CompletableFuture<Unit>()
+    val factory = ThreadFactory { runnable ->
+      Thread.ofVirtual().unstarted { runnable.run(); published.countDown(); awaitUninterruptibly(release) }
+    }
+    val owner = Thread.ofVirtual().start {
+      try {
+        TaskScope.open(threadFactory = factory).use { scope ->
+          val task = scope.fork("worker") { 42 }
+          scope.join { assertThat(task.get()).isEqualTo(42) }
+          published.await()
+        }
+        finished.complete(Unit)
+      }
+      catch (error: Throwable) {
+        finished.completeExceptionally(error)
+      }
+    }
+    try {
+      assertThat(published.await(5, TimeUnit.SECONDS)).isTrue()
+      assertThat(finished.isDone).isFalse()
+    }
+    finally {
+      release.countDown(); owner.join(5000)
+    }
+    assertThat(finished.get(5, TimeUnit.SECONDS)).isEqualTo(Unit)
+  }
+
+  @Test
+  fun `repeated interruption during close preserves the flag and waits for cleanup`() {
+    val entered = CountDownLatch(1)
+    val cleaning = CountDownLatch(1)
+    val release = CountDownLatch(1)
+    val result = CompletableFuture<Boolean>()
+    val owner = Thread.ofVirtual().start {
+      try {
+        taskScope {
+          fork("worker") {
+            entered.countDown()
             try {
-              throw IllegalStateException("the fork failed")
+              CountDownLatch(1).await()
             }
             finally {
-              forkFailed.complete(Unit)
+              cleaning.countDown(); awaitUninterruptibly(release)
             }
           }
-          forkFailed.await()
-          throw IllegalArgumentException("the block failed")
+          join()
         }
+      }
+      catch (_: InterruptedException) {
+        result.complete(Thread.currentThread().isInterrupted)
+      }
+      catch (error: Throwable) {
+        result.completeExceptionally(error)
       }
     }
-      .isInstanceOf(IllegalArgumentException::class.java)
-      .hasMessage("the block failed")
-      .satisfies({ e ->
-        assertThat(e.suppressed).hasSize(1)
-        assertThat(e.suppressed[0]).hasMessage("the fork failed")
-      })
-  }
-
-  /** A fork that a cancelled fork starts must not outlive the cancel. A fork cancelled before its start never runs. */
-  @Test
-  fun `a fork started after the group was cancelled is cancelled`() {
-    val lateForkRan = AtomicBoolean()
-    assertThatThrownBy {
-      runBlocking {
-        taskScope {
-          val group = this
-          fork("starter") {
-            try {
-              awaitCancellation()
-            }
-            catch (e: CancellationException) {
-              group.fork("late") {
-                delay(500.milliseconds)
-                lateForkRan.set(true)
-              }
-              throw e
-            }
-          }
-          fork("failing") {
-            delay(50.milliseconds)
-            throw IllegalStateException("the fork failed")
-          }
-        }
-      }
-    }.isInstanceOf(IllegalStateException::class.java)
-
-    assertThat(lateForkRan.get()).isFalse()
-  }
-
-  /** A blocking body does not see the cancellation, so the group must wait for it and not for the cancelled future. */
-  @Test
-  fun `the group waits for the body of a cancelled fork to end`() {
-    val slowEnded = AtomicBoolean()
-    assertThatThrownBy {
-      runBlocking {
-        taskScope {
-          fork("slow") {
-            Thread.sleep(300)
-            slowEnded.set(true)
-          }
-          fork("failing") { throw IllegalStateException("the fork failed") }
-        }
-      }
-    }.isInstanceOf(IllegalStateException::class.java)
-
-    assertThat(slowEnded.get()).isTrue()
-  }
-
-  @Test
-  fun `run all lets every fork finish and reports every failure`() {
-    val slowFinished = CompletableFuture<Unit>()
-    assertThatThrownBy {
-      runBlocking {
-        taskScope(TaskScopePolicy.RUN_ALL) {
-          fork("failing") { throw IllegalStateException("first") }
-          fork("slow") {
-            delay(200.milliseconds)
-            slowFinished.complete(Unit)
-          }
-          fork("failing too") {
-            delay(50.milliseconds)
-            throw IllegalArgumentException("second")
-          }
-        }
-      }
+    try {
+      assertThat(entered.await(5, TimeUnit.SECONDS)).isTrue()
+      owner.interrupt()
+      assertThat(cleaning.await(5, TimeUnit.SECONDS)).isTrue()
+      repeat(10) { owner.interrupt() }
+      assertThat(result.isDone).isFalse()
     }
-      .isInstanceOf(IllegalStateException::class.java)
-      .hasMessage("first")
-      .satisfies({ e ->
-        assertThat(e.suppressed).hasSize(1)
-        assertThat(e.suppressed[0]).hasMessage("second")
-      })
-
-    assertThat(slowFinished).isCompleted
-  }
-
-  @Test
-  fun `a cancelled awaiter cancels the forks`() {
-    val forkCancelled = CompletableFuture<Unit>()
-    runBlocking {
-      val job = launch {
-        taskScope {
-          fork("endless") {
-            try {
-              awaitCancellation()
-            }
-            catch (e: CancellationException) {
-              forkCancelled.complete(Unit)
-              throw e
-            }
-          }
-        }
-      }
-      delay(100.milliseconds)
-      withTimeout(5.seconds) {
-        job.cancelAndJoin()
-      }
+    finally {
+      release.countDown(); owner.join(5000)
     }
-
-    assertThat(forkCancelled.orTimeout(5, TimeUnit.SECONDS).join()).isEqualTo(Unit)
+    assertThat(result.get(5, TimeUnit.SECONDS)).isTrue()
   }
 
-  /** Only the group cancels a fork. An awaiter that is cancelled stops waiting and changes nothing. */
   @Test
-  fun `a cancelled awaiter leaves the fork running`() {
-    val forkReleased = CompletableFuture<Unit>()
-    val forkEnded = AtomicBoolean()
-    val forkResult = runBlocking {
-      val callerScope = this
-      taskScope {
-        val fork = fork("shared") {
-          forkReleased.await()
-          forkEnded.set(true)
-          "done"
-        }
-        val awaiter = callerScope.launch {
-          fork.await()
-        }
-        delay(50.milliseconds)
-        awaiter.cancelAndJoin()
-        assertThat(forkEnded.get()).isFalse()
-        forkReleased.complete(Unit)
-        fork.await()
-      }
-    }
-
-    assertThat(forkResult).isEqualTo("done")
-  }
-
-  /** The span helpers install the telemetry context as a coroutine context element, and a fork inherits that element. */
-  @Test
-  fun `a fork sees the telemetry context of the caller`() {
+  fun `forks inherit telemetry and single flight ownership`() {
     val key = ContextKey.named<String>("TaskScopeTest")
-    val seen = runBlocking {
-      withContext(Context.current().with(key, "from the caller").asContextElement()) {
+    val token = Any()
+    val result = Context.current().with(key, "parent").makeCurrent().use {
+      withSingleFlightOwners(emptySet(), token) {
         taskScope {
-          fork("reader") { Context.current().get(key) }.await()
+          val task = fork("reader") { Context.current().get(key) to currentSingleFlightOwners() }
+          join { task.get() }
         }
       }
     }
-
-    assertThat(seen).isEqualTo("from the caller")
+    assertThat(result.first).isEqualTo("parent")
+    assertThat(result.second).containsExactly(token)
   }
 
   @Test
-  fun `the coroutines of a fork body run on more than one thread`() {
-    val threads = ConcurrentHashMap.newKeySet<String>()
-    runBlocking {
-      taskScope {
-        fork("parent") {
-          repeat(8) {
-            launch {
-              Thread.sleep(50)
-              threads.add(Thread.currentThread().name)
-            }
-          }
-        }.await()
-      }
-    }
-
-    assertThat(threads).hasSizeGreaterThan(1)
-    assertThat(threads).allSatisfy { assertThat(it).startsWith("build-") }
-  }
-
-  /** A dead virtual thread keeps its task, so the dispatcher must drop the task before it runs it. */
-  @Test
-  fun `a finished fork keeps nothing alive through its thread`() {
-    val forkThread = AtomicReference<Thread>()
-    val payload = runForkThatCapturesAPayload(forkThread)
-    val thread = forkThread.get()
-
+  fun `a terminated thread releases captured work`() {
+    val worker = AtomicReference<Thread>()
+    val payload = runWithPayload(worker)
     GCUtil.tryGcSoftlyReachableObjects()
-
-    // the thread stays reachable through this local until here
-    assertThat(thread.name).startsWith("build-")
+    assertThat(worker.get().name).isEqualTo("holder")
     assertThat(payload.get()).isNull()
   }
 
-  /** The payload is reachable only from the fork body, so only the dead thread can keep it. */
-  private fun runForkThatCapturesAPayload(forkThread: AtomicReference<Thread>): WeakReference<Any> {
+  private fun runWithPayload(worker: AtomicReference<Thread>): WeakReference<Any> {
     val payload = Any()
-    runBlocking {
-      taskScope {
-        fork("holder") {
-          forkThread.set(Thread.currentThread())
-          payload.hashCode()
-        }
+    taskScope { fork("holder") { worker.set(Thread.currentThread()); payload.hashCode() }; join() }
+    return WeakReference(payload)
+  }
+
+  private fun awaitUninterruptibly(latch: CountDownLatch) {
+    while (true) {
+      try {
+        check(latch.await(5, TimeUnit.SECONDS)); return
+      }
+      catch (_: InterruptedException) {
       }
     }
-    return WeakReference(payload)
   }
 }

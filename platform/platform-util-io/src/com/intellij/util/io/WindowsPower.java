@@ -9,7 +9,6 @@ import java.lang.foreign.Arena;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.Linker;
 import java.lang.foreign.MemoryLayout;
-import java.lang.foreign.MemorySegment;
 import java.lang.foreign.StructLayout;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.VarHandle;
@@ -28,10 +27,10 @@ public final class WindowsPower {
    * @throws IOException with the {@code GetLastError} code when the call fails
    */
   public static int acLineStatus() throws IOException {
-    try (Arena arena = Arena.ofConfined()) {
-      MemorySegment callState = arena.allocate(Handles.CALL_STATE_LAYOUT);
-      MemorySegment status = arena.allocate(Handles.SYSTEM_POWER_STATUS);
-      int succeeded = (int)Handles.GET_SYSTEM_POWER_STATUS.invokeExact(callState, status);
+    try (var arena = Arena.ofConfined()) {
+      var callState = arena.allocate(Handles.CALL_STATE_LAYOUT);
+      var status = arena.allocate(Handles.SYSTEM_POWER_STATUS);
+      var succeeded = (int)Handles.GET_SYSTEM_POWER_STATUS.invokeExact(callState, status);
       if (succeeded == 0) {
         throw new IOException("GetSystemPowerStatus(): " + (int)Handles.LAST_ERROR.get(callState, 0L));
       }

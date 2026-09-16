@@ -20,6 +20,9 @@ import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
 import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
 import org.jetbrains.kotlin.analysis.api.types.withNullability
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
+import org.jetbrains.kotlin.idea.base.psi.addModifierKeyword
+import org.jetbrains.kotlin.idea.base.psi.addSuperType
+import org.jetbrains.kotlin.idea.base.psi.removeModifierKeyword
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
@@ -145,7 +148,7 @@ internal object LetImplementInterfaceFixFactories {
 
             val superTypeEntry = KtPsiFactory(project).createSuperTypeEntry(elementContext.expectedTypeNameSourceCode)
             application.runWriteAction {
-                val entryElement = element.addSuperTypeListEntry(superTypeEntry)
+                val entryElement = element.addSuperType(superTypeEntry)
                 ShortenReferencesFacility.getInstance().shorten(entryElement)
             }
 
@@ -162,9 +165,9 @@ internal object LetImplementInterfaceFixFactories {
                     membersToAddOverride.forEach {
                         val visibility = it.visibilityModifierType()
                         if (visibility != null && visibility != KtTokens.PUBLIC_KEYWORD) {
-                            it.removeModifier(visibility)
+                            it.removeModifierKeyword(visibility)
                         }
-                        it.addModifier(KtTokens.OVERRIDE_KEYWORD)
+                        it.addModifierKeyword(KtTokens.OVERRIDE_KEYWORD)
                     }
                 }
             }

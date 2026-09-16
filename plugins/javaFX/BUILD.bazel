@@ -10,6 +10,10 @@ jps_test(
 )
 ### skip generation section `test intellij.javaFX.tests`
 
+### auto-generated section `dev intellij.javaFX` start
+content_module_jar(module = ":javaFX")
+### auto-generated section `dev intellij.javaFX` end
+
 ### auto-generated section `build intellij.javaFX` start
 jvm_library(
     name = "javaFX",
@@ -77,8 +81,6 @@ jvm_library(
         "//platform/util/concurrency",
     ],
 )
-
-content_module_jar(module = ":javaFX")
 
 jvm_library(
     name = "javaFX_test_lib",

@@ -28,7 +28,7 @@ import java.util.concurrent.atomic.AtomicReference
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 class J2KKotlinConfigurationService(val project: Project) {
-    fun checkKotlinIsConfigured(module: Module): Boolean {
+    fun kotlinIsConfigured(module: Module): Boolean {
         return module.hasKotlinPluginEnabled() || isModuleConfigured(module.toModuleGroup())
     }
 
@@ -88,7 +88,7 @@ class J2KKotlinConfigurationService(val project: Project) {
     }
 
     suspend fun ensureKotlinConfigured(module: Module): Boolean {
-        if (isUnitTestMode() || checkKotlinIsConfigured(module)) return true
+        if (isUnitTestMode() || kotlinIsConfigured(module)) return true
 
         val title = KotlinJ2kBundle.message("converter.kotlin.not.configured.title")
         val confirmed = withContext(Dispatchers.EDT) {

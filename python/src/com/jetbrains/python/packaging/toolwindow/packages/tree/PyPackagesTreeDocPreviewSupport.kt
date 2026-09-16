@@ -50,15 +50,17 @@ internal class PyPackagesTreeDocPreviewSupport(private val tree: PyPackagesTree,
     val packageName = when (val pkg = tree.packageAtRow(row)) {
       is InstalledPackage -> pkg.instance.name
       is RequirementPackage -> pkg.instance.name
+      // A member row stands for the project's own package, so it shows the same documentation as
+      // any other row for that package, and not only the plain tooltip (PY-90174).
+      is WorkspaceMember -> pkg.instance?.name
       is InstallablePackage,
-      is WorkspaceMember,
       is LoadingNode,
       is DependencyGroupNode,
       is UndeclaredPackagesGroup,
-      null -> {
-        session?.documentationSession?.mouseOutsideOfSourceArea()
-        return
-      }
+      null -> null
+    } ?: run {
+      session?.documentationSession?.mouseOutsideOfSourceArea()
+      return
     }
     if (!isHoverOverName(row, bounds, e.x)) {
       session?.documentationSession?.mouseOutsideOfSourceArea()
@@ -114,7 +116,7 @@ internal class PyPackagesTreeDocPreviewSupport(private val tree: PyPackagesTree,
     val trailingIconX = renderer.trailingIconX
     val trailingIcon = renderer.trailingIcon
     if (trailingIconX > 0 && trailingIcon != null && relativeX in trailingIconX..(trailingIconX + trailingIcon.iconWidth)) return false
-    return renderer.findFragmentAt(relativeX) == 0
+    return renderer.findFragmentAt(relativeX) == NAME_FRAGMENT
   }
 
   private data class PreviewSession(

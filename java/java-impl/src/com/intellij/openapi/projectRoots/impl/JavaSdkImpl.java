@@ -468,8 +468,8 @@ public final class JavaSdkImpl extends JavaSdk {
       // when run against IDEA plugin JDK, something like this comes up: "$IDEA_HOME$/out/classes/production/intellij.java.impl"
       Path projectRoot = JBIterable.generate(javaPluginClassesRootPath, Path::getParent).get(4);
       if (projectRoot != null) {
-        Path root1 = projectRoot.resolve("community/java/jdkAnnotations");
-        Path root2 = projectRoot.resolve("java/jdkAnnotations");
+        Path root1 = projectRoot.resolve("community/java/jdkAnnotations/resources");
+        Path root2 = projectRoot.resolve("java/jdkAnnotations/resources");
         root = Files.isDirectory(root1)
                ? (refresh ? lfs.refreshAndFindFileByNioFile(root1) : lfs.findFileByNioFile(root1))
                : Files.isDirectory(root2) ? (refresh ? lfs.refreshAndFindFileByNioFile(root2) : lfs.findFileByNioFile(root2)) : null;
@@ -485,7 +485,7 @@ public final class JavaSdkImpl extends JavaSdk {
     }
     if (root == null) {
       // community idea under idea
-      String path = FileUtil.toSystemIndependentName(PathManager.getCommunityHomePath()) + "/java/jdkAnnotations";
+      String path = FileUtil.toSystemIndependentName(PathManager.getCommunityHomePath()) + "/java/jdkAnnotations/resources";
       root = refresh ? lfs.refreshAndFindFileByPath(path) : lfs.findFileByPath(path);
       pathsChecked.add(path);
     }

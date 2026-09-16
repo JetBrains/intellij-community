@@ -1,5 +1,4 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
-load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.libraries.plexus.utils` start
 jvm_library(
@@ -16,11 +15,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-plexus-utils-plexus-utils"],
     runtime_deps = ["@lib//:libraries-plexus-utils-plexus-utils"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-plexus-utils-plexus-utils"],
-    module = ":plexus-utils",
 )
 
 jvm_library(
@@ -43,7 +37,6 @@ exports_files(
     [
         "intellij.libraries.plexus.utils.iml",
         "resources/intellij.libraries.plexus.utils.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

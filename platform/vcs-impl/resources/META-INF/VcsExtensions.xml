@@ -42,6 +42,8 @@
                  description="Add VCS repository roots as recursive VFS watch roots"/>
     <registryKey key="vcs.changelist.move.changes.on.create" defaultValue="false" restartRequired="false"
                  description="Move the currently selected changes into a changelist right after it is created"/>
+    <registryKey key="vcs.changelist.manager.lock.free.queries" defaultValue="true" restartRequired="false"
+                 description="Read the change lists and the file holders without a read action. Turn it off if a query deadlocks, or if it fails because it takes a read action under the data lock"/>
     <dependencyCollector kind="vcs" implementation="com.intellij.openapi.vcs.impl.MissingVcsPluginAdvertiser"/>
     <!--suppress LightServiceMigrationXML - see DefaultProjectStoreTest (IDE needs to know correct Storage without service being loaded) -->
     <projectService serviceImplementation="com.intellij.openapi.vcs.impl.OptionsAndConfirmationsHolder"/>
@@ -186,10 +188,6 @@
                  key="vcs.commit.dialog.esc.close"/>
     <registryKey defaultValue="true" description="Always open diff in window in either floating or windowed commit TW"
                  key="vcs.commit.dialog.force.diff.in.window"/>
-    <registryKey defaultValue="true"
-                 description="Scope diff file navigation ('Go to change' popup and file counter) to the current change's group (e.g. changelist or unversioned files). When disabled, navigation spans all changes."
-                 key="vcs.diff.preview.scope.navigation.to.group"
-                 restartRequired="false"/>
 
     <toolWindow id="Version Control" anchor="bottom" canCloseContents="true" icon="AllIcons.Toolwindows.ToolWindowChanges"
                 factoryClass="com.intellij.openapi.vcs.changes.ui.ChangeViewToolWindowFactory"/>
@@ -283,7 +281,7 @@
     <projectService serviceInterface="com.intellij.openapi.vcs.impl.LineStatusTrackerManagerI"
                     serviceImplementation="com.intellij.openapi.vcs.impl.LineStatusTrackerManager"/>
     <checkinHandlerFactory implementation="com.intellij.openapi.vcs.impl.LineStatusTrackerManager$CheckinFactory"/>
-    <projectService serviceInterface="com.intellij.openapi.vcs.impl.ActiveChangeListTracker" open="true"
+    <projectService serviceInterface="com.intellij.openapi.vcs.impl.ActiveChangeListTracker" open="false"
                     serviceImplementation="com.intellij.openapi.vcs.impl.ActiveChangeListTrackerImpl"/>
     <gutterMarkPreprocessor implementation="com.intellij.openapi.vcs.ex.ClientIdGutterIconMerge"/>
 
@@ -376,7 +374,15 @@
 
     <vcsAwareCheckoutListener implementation="com.intellij.openapi.vcs.checkout.RegisterMappingCheckoutListener"/>
 
-    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.vcs.VcsRemoteApiProvider"/>
+    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.vcs.VcsRemoteApiProvider"
+                                            apiInterfaces="com.intellij.platform.vcs.impl.shared.rpc.RemoteShelfApi,
+                                                           com.intellij.platform.vcs.impl.shared.rpc.RemoteShelfActionsApi,
+                                                           com.intellij.platform.vcs.impl.shared.rpc.ChangeListsApi,
+                                                           com.intellij.platform.vcs.impl.shared.rpc.VcsMappingsApi,
+                                                           com.intellij.platform.vcs.impl.shared.rpc.PartialChangesApi,
+                                                           com.intellij.platform.vcs.impl.shared.rpc.ChangesViewApi,
+                                                           com.intellij.platform.vcs.impl.shared.rpc.ChangesViewDiffApi,
+                                                           com.intellij.platform.vcs.impl.shared.rpc.ChangesViewInclusionModelApi"/>
     <vcs.impl.backend.treeNodeConverter implementation="com.intellij.vcs.shelf.ShelvedChangeListToEntityConverter"/>
     <vcs.impl.backend.treeNodeConverter implementation="com.intellij.vcs.shelf.TagNodeToEntityConverter"/>
     <vcs.impl.backend.treeNodeConverter implementation="com.intellij.vcs.shelf.ShelvedChangeNodeConverter"/>

@@ -127,7 +127,7 @@ internal class GitLinkToCommitResolver(private val project: Project, cs: Corouti
     updateUiQueue.queue(request.logId)
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   internal fun resolveLinks(
     logData: VcsLogData,
     visibleGraph: VisibleGraphImpl<VcsLogCommitStorageIndex>,

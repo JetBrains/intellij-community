@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.platform.vcs.dvcs` start
+content_module_jar(module = ":vcs-dvcs")
+### auto-generated section `dev intellij.platform.vcs.dvcs` end
+
 ### auto-generated section `build intellij.platform.vcs.dvcs` start
 jvm_library(
     name = "vcs-dvcs",
@@ -34,8 +38,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":vcs-dvcs")
-
 jvm_library(
     name = "vcs-dvcs_test_lib",
     testonly = True,
@@ -67,7 +69,6 @@ exports_files(
     [
         "intellij.platform.vcs.dvcs.iml",
         "resources/intellij.platform.vcs.dvcs.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

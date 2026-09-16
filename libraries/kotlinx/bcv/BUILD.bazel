@@ -1,5 +1,4 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
-load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.libraries.kotlinx.bcv` start
 jvm_library(
@@ -16,11 +15,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-kotlinx-bcv-kotlinx-bcv"],
     runtime_deps = ["@lib//:libraries-kotlinx-bcv-kotlinx-bcv"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-kotlinx-bcv-kotlinx-bcv"],
-    module = ":bcv",
 )
 
 jvm_library(
@@ -42,7 +36,6 @@ exports_files(
     [
         "intellij.libraries.kotlinx.bcv.iml",
         "resources/intellij.libraries.kotlinx.bcv.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

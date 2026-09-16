@@ -1,6 +1,0 @@
-- name: dist.all/lib/intellij.libraries.commons.cli.jar
-  modules:
-  - name: intellij.libraries.commons.cli
-    libraries:
-      commons-cli:
-      - name: $MAVEN_REPOSITORY$/commons-cli/commons-cli/1/commons-cli-1.jar

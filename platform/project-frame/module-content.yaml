@@ -1,3 +1,0 @@
-- name: dist.all/lib/intellij.platform.projectFrame.jar
-  modules:
-  - name: intellij.platform.projectFrame

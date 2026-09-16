@@ -1,3 +1,0 @@
-- name: dist.all/lib/intellij.execution.process.mediator.common.jar
-  modules:
-  - name: intellij.execution.process.mediator.common

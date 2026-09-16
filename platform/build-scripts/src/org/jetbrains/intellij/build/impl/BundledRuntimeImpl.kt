@@ -3,10 +3,10 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.NioFiles
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
+import com.intellij.platform.buildScripts.concurrency.withLockInterruptibly
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.BuildHttpSession
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildPaths
 import org.jetbrains.intellij.build.CompilationContext
@@ -20,9 +20,10 @@ import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesExtractOptions
 import org.jetbrains.intellij.build.dependencies.DependenciesProperties
 import org.jetbrains.intellij.build.ResolvedDownload
+import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.resolveFileForReading
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
-import org.jetbrains.intellij.build.telemetry.blockingUse
+import org.jetbrains.intellij.build.telemetry.use
 import java.nio.file.FileVisitResult
 import java.nio.file.Files
 import java.nio.file.Path
@@ -38,6 +39,8 @@ import java.nio.file.attribute.PosixFilePermission.OWNER_READ
 import java.nio.file.attribute.PosixFilePermission.OWNER_WRITE
 import java.util.EnumSet
 import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.locks.ReentrantLock
+import java.util.function.Predicate
 import java.util.zip.GZIPInputStream
 
 class BundledRuntimeImpl(
@@ -46,9 +49,10 @@ class BundledRuntimeImpl(
   private val dependenciesProperties: DependenciesProperties,
   private val productProperties: ProductProperties?,
   private val info: (String) -> Unit,
+  private val httpSession: BuildHttpSession? = null,
 ) : BundledRuntime {
   constructor(context: CompilationContext) : this(
-    context.options, context.paths, context.dependenciesProperties, (context as? BuildContext)?.productProperties, context.messages::info
+    context.options, context.paths, context.dependenciesProperties, (context as? BuildContext)?.productProperties, context.messages::info, context.httpSession
   )
 
   override val prefix: String
@@ -66,15 +70,15 @@ class BundledRuntimeImpl(
   override val build: String
     get() = System.getenv("JBR_DEV_SERVER_VERSION") ?: dependenciesProperties.property("runtimeBuild")
 
-  private val homeForCurrentOsAndArchMutex = Mutex()
+  private val homeForCurrentOsAndArchLock = ReentrantLock()
   private val homeForCurrentOsAndArchValue = AtomicReference<Path>(null)
 
-  override suspend fun getHomeForCurrentOsAndArch(): Path {
+  override fun getHomeForCurrentOsAndArch(): Path {
     val result = homeForCurrentOsAndArchValue.get()
     if (result != null) return result
-    homeForCurrentOsAndArchMutex.withLock {
+    return homeForCurrentOsAndArchLock.withLockInterruptibly {
       val result = homeForCurrentOsAndArchValue.get()
-      if (result != null) return result
+      if (result != null) return@withLockInterruptibly result
       val os = OsFamily.currentOs
       val arch = JvmArchitecture.currentJvmArch
       val libc = LibcImpl.current(os)
@@ -85,11 +89,11 @@ class BundledRuntimeImpl(
         "Unable to find release file $releaseFile after extracting JBR at $path"
       }
       homeForCurrentOsAndArchValue.set(home)
-      return home
+      home
     }
   }
 
-  override suspend fun extract(os: OsFamily, arch: JvmArchitecture, libc: LibcImpl, prefix: String): Path {
+  override fun extract(os: OsFamily, arch: JvmArchitecture, libc: LibcImpl, prefix: String): Path {
     val isMusl = os == OsFamily.LINUX && libc == LinuxLibcImpl.MUSL
     val effectivePrefix = if (libc == LinuxLibcImpl.MUSL) JetBrainsRuntimeDistribution.VANILLA.artifactPrefix else prefix
     val targetDir = BuildDependenciesDownloader.getDownloadCacheDirectory(paths.communityHomeDirRoot)
@@ -115,15 +119,15 @@ class BundledRuntimeImpl(
     return targetDir
   }
 
-  override suspend fun extractTo(os: OsFamily, arch: JvmArchitecture, libc: LibcImpl, destinationDir: Path) {
+  override fun extractTo(os: OsFamily, arch: JvmArchitecture, libc: LibcImpl, destinationDir: Path) {
     doExtract(resolveArchive(os, arch, libc, prefix).file, destinationDir, os)
   }
 
   override fun downloadUrlFor(os: OsFamily, arch: JvmArchitecture, libc: LibcImpl, prefix: String): String =
     "https://cache-redirector.jetbrains.com/intellij-jbr/${archiveName(os, arch, libc, prefix)}"
 
-  override suspend fun resolveArchive(os: OsFamily, arch: JvmArchitecture, libc: LibcImpl, prefix: String): ResolvedDownload =
-    resolveFileForReading(downloadUrlFor(os, arch, libc, prefix), paths.communityHomeDirRoot)
+  override fun resolveArchive(os: OsFamily, arch: JvmArchitecture, libc: LibcImpl, prefix: String): ResolvedDownload =
+    resolveFileForReading(downloadUrlFor(os, arch, libc, prefix), paths.communityHomeDirRoot, httpSession)
 
   /**
    * Update this method together with:
@@ -171,6 +175,7 @@ class BundledRuntimeImpl(
       }
     }
   }
+
   private fun getArchSuffix(arch: JvmArchitecture): String = when (arch) {
     JvmArchitecture.x64 -> "x64"
     JvmArchitecture.aarch64 -> "aarch64"
@@ -181,7 +186,7 @@ class BundledRuntimeImpl(
       .setAttribute("archive", archive.toString())
       .setAttribute("os", os.osName)
       .setAttribute("destination", destinationDir.toString())
-      .blockingUse {
+      .use {
         NioFiles.deleteRecursively(destinationDir)
         unTar(archive, destinationDir)
         fixPermissions(destinationDir, os == OsFamily.WINDOWS)
@@ -233,4 +238,20 @@ class BundledRuntimeImpl(
       }
     })
   }
+}
+
+/**
+ * Stages a copy of [runtimeDir] under [tempDir] without the entries that [ProductProperties.excludedRuntimePaths] lists.
+ * Returns [runtimeDir] unchanged when the list is empty. The shared runtime extract stays intact.
+ */
+internal fun stageRuntimeWithoutExcludedPaths(runtimeDir: Path, excludedRuntimePaths: List<String>, tempDir: Path): Path {
+  if (excludedRuntimePaths.isEmpty()) {
+    return runtimeDir
+  }
+  val runtimeHome = runtimeDir.resolve("jbr")
+  val excludedPaths = excludedRuntimePaths.mapTo(HashSet()) { runtimeHome.resolve(it) }
+  val stagedDir = tempDir.resolve(runtimeDir.fileName)
+  NioFiles.deleteRecursively(stagedDir)
+  copyDir(sourceDir = runtimeDir, targetDir = stagedDir, dirFilter = Predicate { it !in excludedPaths }, fileFilter = Predicate { it !in excludedPaths })
+  return stagedDir
 }

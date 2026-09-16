@@ -50,7 +50,7 @@ class WslTargetIntrospectable(
       output.stdout
     }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private fun executeCommand(cmd: List<@NlsSafe String>): ProcessOutput {
     val executeCommandInShell = cmd != listOf("pwd")
     val options = WSLCommandLineOptions().setExecuteCommandInShell(executeCommandInShell)

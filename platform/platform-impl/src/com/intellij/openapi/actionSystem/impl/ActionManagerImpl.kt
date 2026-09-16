@@ -27,7 +27,6 @@ import com.intellij.openapi.actionSystem.AbbreviationManager
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionPopupMenu
-import com.intellij.openapi.actionSystem.ActionStub
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -197,6 +196,10 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
       for (action in actionPostInitRegistrar.actions) {
         updateHandlers(action)
       }
+    }
+    // otherwise they will perform classloading from EDT on first hit
+    coroutineScope.launch {
+      preloadPromoters()
     }
   }
 

@@ -66,7 +66,7 @@ internal fun partitionPluginsByBuildingMethod(pluginLayouts: Collection<PluginLa
   return PluginsSplitByBuildingMethod(pluginsToBuildByScripts, pluginsToBuildByBazel)
 }
 
-internal suspend fun buildPluginsByBazel(
+internal fun buildPluginsByBazel(
   plugins: List<PluginBuiltByBazelDescriptor>,
   targetDir: Path,
   descriptorCacheContainer: DescriptorCacheContainer,
@@ -78,16 +78,18 @@ internal suspend fun buildPluginsByBazel(
   spanBuilder("build plugins by Bazel")
     .setAttribute(AttributeKey.stringArrayKey("targets"), pluginsTargets)
     .use {
-      val additionalArguments = listOfNotNull(
-        buildContext.options.buildNumber?.let {
-          "--ide_build_number=$it"
-        },
-        "--ide_stability_level=${computeIdeStabilityLevel(buildContext)}",
-        "--ij_plugin_version=${buildContext.pluginBuildNumber}",
-        "--ij_plugin_force_exact_build_compatibility".takeIf {
-          isIncludePluginsInBuiltinCustomRepository(buildContext)
-        },
-      )
+      val explicitBuildNumber = buildContext.options.buildNumber
+      val additionalArguments = buildList {
+        if (explicitBuildNumber != null) {
+          add("--ide_build_number=$explicitBuildNumber")
+          // --ij_plugin_version should be passed explicitly only if it cannot be computed automatically to avoid discarding Bazel analysis cache
+          add("--ij_plugin_version=${buildContext.pluginBuildNumber}")
+        }
+        add("--ide_stability_level=${computeIdeStabilityLevel(buildContext)}")
+        if (isIncludePluginsInBuiltinCustomRepository(buildContext)) {
+          add("--ij_plugin_force_exact_build_compatibility")
+        }
+      }
       runBazelBuild(pluginsTargets, additionalArguments, buildContext)
     }
 
@@ -225,7 +227,7 @@ internal fun computeSearchableOptionsInjections(
   return entriesByJar.map { SearchableOptionsInjection(it.key, it.value) }
 }
 
-private suspend fun getPluginId(mainModule: String, buildContext: BuildContext): String {
+private fun getPluginId(mainModule: String, buildContext: BuildContext): String {
   val module = buildContext.outputProvider.findRequiredModule(mainModule)
   return (buildContext as BuildContextImpl).jarPackagerDependencyHelper.getPluginIdByModule(module)
 }

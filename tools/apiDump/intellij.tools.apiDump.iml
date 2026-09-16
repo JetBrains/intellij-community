@@ -12,6 +12,6 @@
     <orderEntry type="module" module-name="intellij.libraries.asm.tools" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.bcv" exported="" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" />
-    <orderEntry type="library" name="kotlin-metadata" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlin.metadata" />
   </component>
 </module>

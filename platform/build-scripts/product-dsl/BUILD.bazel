@@ -17,7 +17,6 @@ create_kotlinc_options(
     opt_in = [
         "kotlin.RequiresOptIn",
         "kotlinx.serialization.ExperimentalSerializationApi",
-        "kotlinx.coroutines.ExperimentalCoroutinesApi",
     ],
 )
 
@@ -48,7 +47,6 @@ jvm_library(
         "//platform/util/jdom",
         "//platform/util/xmlDom",
         "//libraries/jackson3/jackson:libraries-jackson3",
-        "//libraries/kotlinx/coroutines/core",
         "//libraries/aalto-xml",
         "//libraries/androidx-collections",
         "//platform/build-scripts/product-dsl/plugin-graph",
@@ -86,7 +84,6 @@ jvm_library(
         "//jps/model-impl",
         "//jps/model-impl:model-impl_test_lib",
         "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//libraries/aalto-xml:aalto-xml_test_lib",
         "//libraries/androidx-collections:androidx-collections_test_lib",
         "//platform/build-scripts/product-dsl/plugin-graph:plugin-graph_test_lib",

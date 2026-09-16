@@ -11,6 +11,10 @@ jps_test(
 
 ### skip generation section `test intellij.maven.proofreading.tests`
 
+### auto-generated section `dev intellij.maven.proofreading` start
+content_module_jar(module = ":proofreading")
+### auto-generated section `dev intellij.maven.proofreading` end
+
 ### auto-generated section `build intellij.maven.proofreading` start
 jvm_library(
     name = "proofreading",
@@ -38,8 +42,6 @@ jvm_library(
         "//xml/xml-psi-api:psi",
     ],
 )
-
-content_module_jar(module = ":proofreading")
 
 jvm_library(
     name = "proofreading_test_lib",

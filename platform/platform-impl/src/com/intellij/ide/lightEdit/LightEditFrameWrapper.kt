@@ -63,7 +63,7 @@ import java.awt.Dimension
 import javax.swing.JComponent
 import javax.swing.JFrame
 
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 internal fun allocateLightEditFrame(project: Project, frameInfo: FrameInfo?): LightEditFrameWrapper {
   return runWithModalProgressBlocking(ModalTaskOwner.guess(), "") {
     withContext(Dispatchers.UiWithModelAccess) {

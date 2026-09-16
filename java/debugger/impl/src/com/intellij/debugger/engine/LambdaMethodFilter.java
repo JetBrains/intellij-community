@@ -31,8 +31,8 @@ public class LambdaMethodFilter implements BreakpointStepMethodFilter {
     SourcePosition firstStatementPosition = null;
     SourcePosition lastStatementPosition = null;
     final PsiElement body = lambda.getBody();
-    if (body instanceof PsiCodeBlock) {
-      final PsiStatement[] statements = ((PsiCodeBlock)body).getStatements();
+    if (body instanceof PsiCodeBlock block) {
+      final PsiStatement[] statements = block.getStatements();
       if (statements.length > 0) {
         firstStatementPosition = SourcePosition.createFromElement(statements[0]);
         if (firstStatementPosition != null) {

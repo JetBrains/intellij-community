@@ -71,7 +71,7 @@ class SimpleTerminalController(
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun clearTextSelection() {
     editor.selectionModel.removeSelection()
   }

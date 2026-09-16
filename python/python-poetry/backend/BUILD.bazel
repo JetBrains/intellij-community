@@ -2,6 +2,10 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.python.community.impl.poetry.backend` start
+content_module_jar(module = ":backend")
+### auto-generated section `dev intellij.python.community.impl.poetry.backend` end
+
 ### auto-generated section `build intellij.python.community.impl.poetry.backend` start
 create_kotlinc_options(
     name = "custom_backend",
@@ -42,13 +46,11 @@ jvm_library(
         "//platform/util/jdom",
         "//python/python-sdk/backend",
         "//platform/projectModel-api:projectModel",
-        "//python/python-pytools:pytools",
+        "//python/python-pytools/backend",
         "//platform/core-api:core",
         "//platform/util",
     ],
 )
-
-content_module_jar(module = ":backend")
 
 jvm_library(
     name = "backend_test_lib",
@@ -72,7 +74,7 @@ jvm_library(
         "//platform/util/jdom:jdom_test_lib",
         "//python/python-sdk/backend:backend_test_lib",
         "//platform/projectModel-api:projectModel_test_lib",
-        "//python/python-pytools:pytools_test_lib",
+        "//python/python-pytools/backend:backend_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/util:util_test_lib",
     ],

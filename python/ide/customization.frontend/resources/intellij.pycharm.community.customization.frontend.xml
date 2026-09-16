@@ -1,0 +1,17 @@
+<idea-plugin>
+  <!--Settings tree for PyCharm. Loads on the frontend, in a monolith IDE and in a split IDE-->
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.frontend"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.projectModel"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <backgroundPostStartupActivity id="PyCharmProjectConfigurableStartupActivity"
+                                   implementation="com.intellij.pycharm.community.customization.frontend.PyCharmProjectConfigurableStartupActivity"/>
+  </extensions>
+</idea-plugin>

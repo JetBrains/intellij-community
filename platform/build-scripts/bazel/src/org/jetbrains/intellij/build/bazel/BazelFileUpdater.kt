@@ -7,8 +7,8 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.createParentDirectories
 import kotlin.io.path.writeText
 
-internal class BazelFileUpdater(private val file: Path) {
-  private var originalContent: String? = runCatching { Files.readString(file) }.getOrNull()
+internal class BazelFileUpdater(private val file: Path, preloadedOriginalContent: String? = null) {
+  private var originalContent: String? = preloadedOriginalContent ?: runCatching { Files.readString(file) }.getOrNull()
   private var fileContent: String? = originalContent
 
   fun removeSections(sectionNamePrefix: String) {
@@ -18,7 +18,9 @@ internal class BazelFileUpdater(private val file: Path) {
     val pattern = sectionRemovalPatterns.computeIfAbsent(sectionNamePrefix) {
       Regex("### auto-generated section `$it[^`]*` start[\\s\\S]*?### auto-generated section `$it[^`]*` end")
     }
-    this.fileContent = fileContent.replace(pattern, "").trim().takeIf { it.isNotBlank() }
+    // A section another writer owns can stand between two removed sections. The blank lines of both removed sections
+    // would then meet around it, and the Starlark formatter rejects more than one blank line.
+    this.fileContent = fileContent.replace(pattern, "").trim().replace(BLANK_LINE_RUN, "\n\n").takeIf { it.isNotBlank() }
     handWrittenExportedFilesCache = null
   }
 
@@ -169,6 +171,8 @@ private fun identifiersOf(content: String): Set<String> {
 }
 
 private val EXPORTS_FILES_PATTERN = Regex("""exports_files\(\s*\[([^]]*)]""")
+/** Three or more newlines in a row, which is two or more blank lines. */
+private val BLANK_LINE_RUN = Regex("\n{3,}")
 private val QUOTED_PATTERN = Regex("\"([^\"]+)\"")
 // Shared across every updater in the JVM; concurrent so a future parallelization of generation cannot corrupt it.
 private val sectionRemovalPatterns = ConcurrentHashMap<String, Regex>()

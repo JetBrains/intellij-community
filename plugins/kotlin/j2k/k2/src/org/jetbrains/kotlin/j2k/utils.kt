@@ -2,7 +2,17 @@
 
 package org.jetbrains.kotlin.j2k
 
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.writeIntentReadAction
+import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.command.CommandProcessorEx
+import com.intellij.openapi.command.UndoConfirmationPolicy
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtKeywordToken
@@ -66,4 +76,37 @@ fun KtExpression.unpackedReferenceToProperty(): KtProperty? {
     return referenceExpression?.references
         ?.firstOrNull { it is KtSimpleNameReference }
         ?.resolve() as? KtProperty
+}
+
+
+@ApiStatus.Internal
+suspend inline fun <T> withCommandOnEdt(project: Project, crossinline action: suspend () -> T): T {
+    val commandProcessor = CommandProcessor.getInstance() as CommandProcessorEx
+    val token = withContext(Dispatchers.EDT) {
+        writeIntentReadAction {
+            commandProcessor.startCommand(
+                project,
+                KotlinBundle.message("action.j2k.name"),
+                null,
+                UndoConfirmationPolicy.REQUEST_CONFIRMATION
+            )
+        }
+    }
+    var throwable: Throwable? = null
+    return try {
+        withContext(Dispatchers.Default) { action() }
+    }
+    catch (e: Throwable) {
+        throwable = e
+        throw e
+    }
+    finally {
+        if (token != null) {
+            withContext(Dispatchers.EDT) {
+                writeIntentReadAction {
+                    commandProcessor.finishCommand(token, throwable)
+                }
+            }
+        }
+    }
 }

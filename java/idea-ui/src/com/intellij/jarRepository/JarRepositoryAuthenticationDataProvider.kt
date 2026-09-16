@@ -42,7 +42,7 @@ interface JarRepositoryAuthenticationDataProvider {
   }
 }
 
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 internal fun obtainAuthenticationData(description: RemoteRepositoryDescription): ArtifactRepositoryManager.ArtifactAuthenticationData? {
   // Unfortunately, right now @RequiresBackgroundThread does not trigger exceptions
   // Sync call of resolver on EDT is not allowed

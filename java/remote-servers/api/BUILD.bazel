@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.java.remoteServers` start
+content_module_jar(module = ":java-remoteServers")
+### auto-generated section `dev intellij.java.remoteServers` end
+
 ### auto-generated section `build intellij.java.remoteServers` start
 jvm_library(
     name = "java-remoteServers",
@@ -29,8 +33,6 @@ jvm_library(
         "//java/compiler/openapi:java-compiler",
     ],
 )
-
-content_module_jar(module = ":java-remoteServers")
 
 jvm_library(
     name = "java-remoteServers_test_lib",

@@ -92,7 +92,7 @@ import java.util.Objects;
 
 public final class IntroduceVariableUtil {
 
-  public static final Logger LOG = Logger.getInstance(IntroduceVariableUtil.class);
+  private static final Logger LOG = Logger.getInstance(IntroduceVariableUtil.class);
   public static final Key<Boolean> NEED_PARENTHESIS = Key.create("NEED_PARENTHESIS");
   private static final @NonNls String PREFER_STATEMENTS_OPTION = "introduce.variable.prefer.statements";
 
@@ -358,7 +358,7 @@ public final class IntroduceVariableUtil {
 
       final String fakeInitializer = "intellijidearulezzz";
       final int[] refIdx = new int[1];
-      final PsiElement toBeExpression = 
+      final PsiElement toBeExpression =
         createReplacement(fakeInitializer, project, prefix, suffix, parent, TextRange.create(startOffset, endOffset), refIdx);
       if (ErrorUtil.containsDeepError(toBeExpression)) return null;
       if (literalExpression != null && toBeExpression instanceof PsiExpression expression) {
@@ -376,7 +376,7 @@ public final class IntroduceVariableUtil {
         }
       }
 
-      final PsiReferenceExpression refExpr = 
+      final PsiReferenceExpression refExpr =
         PsiTreeUtil.getParentOfType(toBeExpression.findElementAt(refIdx[0]), PsiReferenceExpression.class);
       if (refExpr == null) return null;
       if (toBeExpression == refExpr && refIdx[0] > 0) {

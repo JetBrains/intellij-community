@@ -13,6 +13,6 @@ fun interface IconsProvider<T> {
    * @param key - icon key
    * @param iconSize - required icon size in pixels (unscaled)
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun getIcon(key: T?, iconSize: Int): Icon
 }

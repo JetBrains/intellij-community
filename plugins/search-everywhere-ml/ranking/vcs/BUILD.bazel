@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.searchEverywhereMl.ranking.vcs` start
+content_module_jar(module = ":vcs")
+### auto-generated section `dev intellij.searchEverywhereMl.ranking.vcs` end
+
 ### auto-generated section `build intellij.searchEverywhereMl.ranking.vcs` start
 jvm_library(
     name = "vcs",
@@ -32,8 +36,6 @@ jvm_library(
         "//platform/statistics",
     ],
 )
-
-content_module_jar(module = ":vcs")
 
 jvm_library(
     name = "vcs_test_lib",

@@ -24,8 +24,8 @@ interface EditorContextManager {
 
     val topic: Topic<ChangeEventListener> = Topic(ChangeEventListener::class.java)
 
-    @RequiresBackgroundThread
-    @RequiresReadLock
+    @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+    @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
     @JvmStatic
     fun getEditorContext(editor: Editor, project: Project): CodeInsightContext {
       if (!isSharedSourceSupportEnabled(project)) {
@@ -56,11 +56,11 @@ interface EditorContextManager {
    * @return the currently active code insight context for [editor].
    * Can be time-consuming because the preferred context might be needed to be inferred
    */
-  @RequiresBackgroundThread
-  @RequiresReadLock
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun getEditorContexts(editor: Editor): EditorSelectedContexts
 
-  @RequiresWriteLock
+  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
   fun setEditorContext(editor: Editor, contexts: EditorSelectedContexts)
   @ApiStatus.Internal
   fun setEditorContextNoFire(editor: Editor, contexts: EditorSelectedContexts)

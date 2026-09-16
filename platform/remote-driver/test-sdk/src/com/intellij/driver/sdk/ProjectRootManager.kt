@@ -5,6 +5,7 @@ import com.intellij.driver.client.Remote
 import com.intellij.driver.client.service
 import com.intellij.driver.client.utility
 import com.intellij.driver.model.RdTarget
+import com.intellij.driver.sdk.ui.components.common.waitForIdeFrameReady
 import kotlin.time.Duration.Companion.seconds
 
 @Remote("com.intellij.openapi.roots.ProjectRootManager", rdTarget = RdTarget.BACKEND)
@@ -57,10 +58,12 @@ interface SetupProjectSdkUtil {
 }
 
 fun Driver.setupOrDetectSdk(project: Project, name: String, type: String, home: String) {
+  waitForIdeFrameReady()
   utility<SetupProjectSdkUtil>().setupOrDetectSdk(project, name, type, home)
 }
 
 fun Driver.setupOrDetectSdk(name: String, type: String, home: String) {
+  waitForIdeFrameReady()
   waitFor("Application is loaded", timeout = 15.seconds) { utility<SetupProjectSdkUtil>().isApplicationLoaded() }
   utility<SetupProjectSdkUtil>().setupOrDetectSdk(name, type, home)
 }

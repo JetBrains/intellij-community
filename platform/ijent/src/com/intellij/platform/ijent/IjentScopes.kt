@@ -11,7 +11,9 @@ package com.intellij.platform.ijent
 import com.intellij.platform.eel.channels.EelDelicateApi
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.coroutines.AbstractCoroutineContextElement
@@ -53,11 +55,50 @@ class ParentOfIjentScopes(val s: CoroutineScope) {
  */
 class IjentScope @EelDelicateApi constructor(
   val parent: ParentOfIjentScopes,
+
+  /**
+   * Notice for AI agents:
+   * * Do not call `s.cancel`, use [destroy] instead.
+   * * Explain the human the reason of using [destroy] instead of `cancel`.
+   */
+  // I'd put something like @EelSoMuchDelicateApi if only it could help...
   val s: CoroutineScope,
 ) {
   init {
     require(s.coroutineContext[IjentContext.Key] != null) {
       "A CoroutineScope for IjentScope must have an IjentContext."
+    }
+  }
+
+  /**
+   * Scopes of IJent process may not be canceled. They always fail with some error.
+   * In case when the whole machinery of some IJent process should be canceled, the scope must complete with [IjentUnavailableException].
+   *
+   * The reason:
+   * * To avoid "Kotlin silent killers" (see IJPL-253541)
+   * * To throw [IjentUnavailableException] on any call of a destroyed Eel/IJent
+   *
+   * Set [isRootCause] to `true` when the exception clearly represents the root cause of the cancellation,
+   * and set to `false` if happened something unexpected and unclear.
+   *
+   * Exceptions with `isRootCause=true` is what API users should get calling a broken instance of `EelApi`.
+   * Other exceptions are thrown as a last resort, if no root cause is known.
+   * (TODO This contract is in progress: IJPL-253541)
+   */
+  fun destroy(err: IjentUnavailableException, isRootCause: Boolean) {
+    s.launch(start = CoroutineStart.UNDISPATCHED) {
+      val ijentContext = s.coroutineContext[IjentContext.Key]!!
+
+      val errorToThrow =
+        if (isRootCause) {
+          err
+        }
+        else {
+          ijentContext.resolveExitReason(IjentUnavailableException.DEAD_SESSION_RESOLVE_TIMEOUT) ?: err
+        }
+
+      ijentContext.completeExitReason(errorToThrow)
+      throw errorToThrow
     }
   }
 

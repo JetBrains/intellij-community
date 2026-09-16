@@ -356,6 +356,10 @@ data class IDERunContext(
     addSystemProperty("idea.log.path", lastIdeReportingData.logsDir)
   }
 
+  fun disableNonModalWelcomeScreen(): IDERunContext = addVMOptionsPatch {
+    addSystemProperty("idea.welcome.screen.non.modal.enabled", false)
+  }
+
   fun withScreenRecording() {
     if (testContext.isRemDevContext() && testContext != testContext.asRemDevContext().frontendIDEContext && !calculateVmOptions().hasHeadlessMode()) {
       logOutput("Will not record screen for a backend of remote dev")

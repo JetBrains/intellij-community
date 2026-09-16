@@ -11,7 +11,7 @@ fun Finder.jupyterTableOutput(@Language("xpath") xpath: String? = null) =
     ?: "//div[@class='JupyterTableOutputComponent']", JupyterTableUiComponent::class.java)
 
 class JupyterTableUiComponent(data: ComponentData) : UiComponent(data) {
-  val tableResults = x("//div[@class='TableResultView']", JTableUiComponent::class.java)
+  val tableResults = x("//div[@class='TableResultView' or @class='PrimaryTableResultView']", JTableUiComponent::class.java)
 
   fun getValuesFromTable(): List<String> {
     return tableResults.content().values.flatMap { it.values }

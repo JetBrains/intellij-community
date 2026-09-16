@@ -13,5 +13,4 @@ fun test(otherList: List<Int>, flag: Boolean) {
     }
 }
 
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.intentions.ReplaceWithOrdinaryAssignmentIntention
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeinsight.intentions.ReplaceWithOrdinaryAssignmentIntention

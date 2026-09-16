@@ -101,7 +101,7 @@ See [README.md](./README.md) for architecture overview and [docs/](./docs/) for 
 
 Key specs to consult when changing behavior:
 - [docs/test-plugins.md](./docs/test-plugins.md) (automatic dependency addition, DSL test plugin spec expansion)
-- [docs/dependency_generation.md](./docs/dependency_generation.md) (PluginGraph as source of truth, library module mapping)
+- [docs/dependency_generation.md](./docs/dependency_generation.md) (PluginGraph as source of truth)
 - [docs/validation-rules.md](./docs/validation-rules.md) (validation rules and terminology)
 
 ## Terminology

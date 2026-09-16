@@ -3,9 +3,9 @@
 
 package org.jetbrains.intellij.build.impl.plugins
 
+import com.intellij.platform.buildScripts.concurrency.Subtask
+import com.intellij.platform.buildScripts.concurrency.taskScope
 import io.opentelemetry.api.common.AttributeKey
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.DistFile
 import org.jetbrains.intellij.build.InMemoryDistFileContent
@@ -13,7 +13,6 @@ import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.LibcImpl
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.SearchableOptionSetDescriptor
-import org.jetbrains.intellij.build.Subtask
 import org.jetbrains.intellij.build.classPath.PluginBuildResult
 import org.jetbrains.intellij.build.classPath.generatePluginClassPath
 import org.jetbrains.intellij.build.classPath.generatePluginClassPathFromPrebuiltPluginFiles
@@ -38,7 +37,6 @@ import org.jetbrains.intellij.build.impl.satisfiesBundlingRequirements
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.block
 import org.jetbrains.intellij.build.telemetry.use
-import org.jetbrains.intellij.build.taskScope
 import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
 import java.nio.file.Path
@@ -82,11 +80,11 @@ internal fun collectOsSpecificBundledPluginBuildTasks(
   return result
 }
 
-internal suspend fun buildBundledPluginsForAllPlatforms(
+internal fun buildBundledPluginsForAllPlatforms(
   state: DistributionBuilderState,
   pluginLayouts: Set<PluginLayout>,
   isUpdateFromSources: Boolean,
-  platformEntriesProvider: suspend () -> List<DistributionFileEntry>,
+  platformEntriesProvider: () -> List<DistributionFileEntry>,
   searchableOptionSetDescriptor: SearchableOptionSetDescriptor?,
   descriptorCacheContainer: DescriptorCacheContainer,
   context: BuildContext,
@@ -147,7 +145,7 @@ internal suspend fun buildBundledPluginsForAllPlatforms(
     // Force the additional plugin copy to complete; plugin-info may be written separately by the caller after scramble.
     additionalPlugins = additionalPluginsJob?.await()
   }
-  BundledPluginsBuildResult(descriptors = descriptors, additionalPlugins = additionalPlugins)
+  join { BundledPluginsBuildResult(descriptors = descriptors, additionalPlugins = additionalPlugins) }
 }
 
 /**
@@ -155,7 +153,7 @@ internal suspend fun buildBundledPluginsForAllPlatforms(
  * the orchestrator after [scrambleAlreadyLaidOutPlugins] has updated the descriptor cache with
  * scrambled class names.
  */
-internal suspend fun writeBundledPluginInfoAfterScramble(
+internal fun writeBundledPluginInfoAfterScramble(
   state: DistributionBuilderState,
   isUpdateFromSources: Boolean,
   descriptors: List<PluginBuildResult>,
@@ -183,11 +181,11 @@ internal suspend fun writeBundledPluginInfoAfterScramble(
   )
 }
 
-private suspend fun buildOsSpecificBundledPlugins(
+private fun buildOsSpecificBundledPlugins(
   state: DistributionBuilderState,
   plugins: Set<PluginLayout>,
   isUpdateFromSources: Boolean,
-  platformEntriesProvider: suspend () -> List<DistributionFileEntry>,
+  platformEntriesProvider: () -> List<DistributionFileEntry>,
   context: BuildContext,
   searchableOptionSet: SearchableOptionSetDescriptor?,
   pluginDirs: List<Pair<SupportedDistribution, Path>>,
@@ -207,28 +205,26 @@ private suspend fun buildOsSpecificBundledPlugins(
       val results = arrayOfNulls<List<PluginBuildResult>>(tasks.size)
       tasks.indices.toList().forEachConcurrent(concurrency = minOf(OS_SPECIFIC_PLUGIN_BUILD_CONCURRENCY, tasks.size)) { index ->
         val task = tasks[index]
-        results[index] = withContext(CoroutineName("build bundled plugins ${task.dist.os.osName}-${task.dist.arch.name}")) {
-          spanBuilder("build bundled plugins")
-            .setAttribute("os", task.dist.os.osName)
-            .setAttribute("arch", task.dist.arch.name)
-            .setAttribute("count", task.plugins.size.toLong())
-            .setAttribute("outDir", task.targetDir.toString())
-            .use {
-              buildPlugins(
-                plugins = task.plugins,
-                os = task.dist.os,
-                arch = task.dist.arch,
-                targetDir = task.targetDir,
-                state = state,
-                platformEntriesProvider = platformEntriesProvider,
-                searchableOptionSet = searchableOptionSet,
-                descriptorCacheContainer = descriptorCacheContainer,
-                context = context,
-                additionalScrambleDescriptorsProvider = { commonPlugins },
-                layoutOnly = layoutOnly,
-              )
-            }
-        }
+        results[index] = spanBuilder("build bundled plugins")
+          .setAttribute("os", task.dist.os.osName)
+          .setAttribute("arch", task.dist.arch.name)
+          .setAttribute("count", task.plugins.size.toLong())
+          .setAttribute("outDir", task.targetDir.toString())
+          .use {
+            buildPlugins(
+              plugins = task.plugins,
+              os = task.dist.os,
+              arch = task.dist.arch,
+              targetDir = task.targetDir,
+              state = state,
+              platformEntriesProvider = platformEntriesProvider,
+              searchableOptionSet = searchableOptionSet,
+              descriptorCacheContainer = descriptorCacheContainer,
+              context = context,
+              additionalScrambleDescriptorsProvider = { commonPlugins },
+              layoutOnly = layoutOnly,
+            )
+          }
       }
 
       val orderedResults = LinkedHashMap<SupportedDistribution, List<PluginBuildResult>>(tasks.size)
@@ -239,11 +235,11 @@ private suspend fun buildOsSpecificBundledPlugins(
     }
 }
 
-internal suspend fun buildBundledPlugins(
+internal fun buildBundledPlugins(
   state: DistributionBuilderState,
   plugins: Collection<PluginLayout>,
   isUpdateFromSources: Boolean,
-  platformEntriesProvider: suspend () -> List<DistributionFileEntry>,
+  platformEntriesProvider: () -> List<DistributionFileEntry>,
   searchableOptionSet: SearchableOptionSetDescriptor?,
   descriptorCacheContainer: DescriptorCacheContainer,
   context: BuildContext,
@@ -303,7 +299,7 @@ private fun getPluginDirs(context: BuildContext, isUpdateFromSources: Boolean): 
   }
 }
 
-private suspend fun writePluginInfo(
+private fun writePluginInfo(
   pluginDirs: List<Pair<SupportedDistribution, Path>>,
   common: List<PluginBuildResult>,
   specific: Map<SupportedDistribution, List<PluginBuildResult>>,
@@ -339,7 +335,6 @@ private suspend fun writePluginInfo(
       val pluginCount = common.size + (additional?.size ?: 0) + (specificList?.size ?: 0)
       writePluginClassPathPrefix(
         out = out,
-        isJarOnly = true,
         platformLayout = platformLayout,
         descriptorCacheContainer = descriptorCacheContainer,
         context = context,

@@ -15,6 +15,9 @@ import com.intellij.ide.plugins.marketplace.PrepareToUninstallResult
 import com.intellij.ide.plugins.marketplace.ResetPluginsStateResult
 import com.intellij.ide.plugins.marketplace.SetEnabledStateResult
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
@@ -27,8 +30,10 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import fleet.rpc.client.RpcClientDisconnectedException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.util.UUID
 import javax.swing.JComponent
@@ -40,6 +45,10 @@ import javax.swing.JComponent
 @Service
 @ApiStatus.Internal
 class UiPluginManager {
+  suspend fun loadPluginInventory(): PluginInventoryLoadResult {
+    return getController().loadPluginInventory()
+  }
+
   suspend fun getPlugins(): List<PluginUiModel> {
     return getController().getPlugins()
   }
@@ -79,9 +88,10 @@ class UiPluginManager {
     removeSession: Boolean,
     parentComponent: JComponent? = null,
     callback: (ResetPluginsStateResult) -> Unit = {},
-  ) {
-    launchRpcTask {
-      callback(getController().resetSession(sessionId, removeSession, parentComponent))
+  ): Job {
+    return launchRpcTask {
+      val result = getController().resetSession(sessionId, removeSession, parentComponent)
+      invokeResetSessionCallback(result, callback)
     }
   }
 
@@ -188,6 +198,14 @@ class UiPluginManager {
     return getController().getCustomRepositoryPluginMap()
   }
 
+  suspend fun getCustomPluginRepositories(): List<CustomPluginRepository> {
+    return getController().getCustomPluginRepositories()
+  }
+
+  suspend fun loadCustomPluginRepository(repository: CustomPluginRepository): CustomPluginRepositoryLoadResult {
+    return getController().loadCustomPluginRepository(repository)
+  }
+
   suspend fun isDisabledInDiff(sessionId: String, pluginId: PluginId): Boolean {
     return getController().isDisabledInDiff(sessionId, pluginId)
   }
@@ -228,6 +246,10 @@ class UiPluginManager {
     return getController().getAllPluginsTags()
   }
 
+  suspend fun getMarketplaceTagCounts(): Map<String, Int> {
+    return getController().getMarketplaceTagCounts()
+  }
+
   fun getAllVendors(): Set<String> {
     return getController().getAllVendors()
   }
@@ -259,8 +281,8 @@ class UiPluginManager {
     return PluginUpdatesService.getInstance().subscribe { updatedPlugins -> callback(updatedPlugins.all.filter { session.isPluginEnabled(it.pluginId) }) }
   }
 
-  private fun launchRpcTask(block: suspend () -> Unit) {
-    service<FrontendRpcCoroutineContext>().coroutineScope.launch(Dispatchers.IO) {
+  private fun launchRpcTask(block: suspend () -> Unit): Job {
+    return service<FrontendRpcCoroutineContext>().coroutineScope.launch(Dispatchers.IO) {
       try {
         block()
       }
@@ -301,6 +323,14 @@ class UiPluginManager {
   }
 }
 
+internal suspend fun invokeResetSessionCallback(
+  result: ResetPluginsStateResult,
+  callback: (ResetPluginsStateResult) -> Unit,
+) {
+  withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+    callback(result)
+  }
+}
 
 @Service
 @ApiStatus.Internal

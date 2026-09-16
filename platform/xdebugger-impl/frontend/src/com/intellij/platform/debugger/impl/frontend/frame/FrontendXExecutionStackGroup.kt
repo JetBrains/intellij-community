@@ -3,6 +3,7 @@ package com.intellij.platform.debugger.impl.frontend.frame
 
 import com.intellij.ide.ui.icons.icon
 import com.intellij.openapi.project.Project
+import com.intellij.platform.debugger.impl.frontend.storage.getOrCreateExecutionStack
 import com.intellij.platform.debugger.impl.rpc.XExecutionStackGroupDto
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XExecutionStackGroup
@@ -21,5 +22,5 @@ internal class FrontendXExecutionStackGroup(
     get() = groupDto.groups.map { FrontendXExecutionStackGroup(it, project, cs) }
 
   override val stacks: List<XExecutionStack>
-    get() = groupDto.stacks.map { FrontendXExecutionStack(it, project, cs) }
+    get() = groupDto.stacks.map { cs.getOrCreateExecutionStack(it, project) }
 }

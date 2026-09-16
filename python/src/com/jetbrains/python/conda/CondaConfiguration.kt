@@ -2,8 +2,8 @@ package com.jetbrains.python.conda
 
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.community.impl.conda.CondaPyTool
-import com.intellij.python.pytools.getCustomExecutablePath
-import com.intellij.python.pytools.setCustomExecutablePath
+import com.intellij.python.pytools.backend.getCustomExecutablePath
+import com.intellij.python.pytools.backend.setCustomExecutablePath
 import java.nio.file.Path
 
 fun saveLocalPythonCondaPath(condaPath: Path?): Unit =

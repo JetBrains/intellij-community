@@ -314,6 +314,7 @@ public class CreateMethodFromUsageTemplateTest extends LightJavaCodeInsightFixtu
               }
 
               private void passClass(Class<?> <selection>stringClass</selection>) {
+                 \s
               }
           }
           """);
@@ -347,6 +348,7 @@ public class CreateMethodFromUsageTemplateTest extends LightJavaCodeInsightFixtu
                                 }
                             
                                 private static void useThem(List<?>[] <selection>settings<caret></selection>) {
+                                   \s
                                 }
                             }""");
   }
@@ -371,6 +373,7 @@ public class CreateMethodFromUsageTemplateTest extends LightJavaCodeInsightFixtu
                                 }
                             
                                 private static void f(int[] <selection>is<caret></selection>) {
+                                   \s
                                 }
                             }""");
   }

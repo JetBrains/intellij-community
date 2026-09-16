@@ -1,9 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.ext.spock;
 
+import com.intellij.groovy.testFramework.TypingTest;
 import org.jetbrains.plugins.groovy.codeInspection.declaration.GrMethodMayBeStaticInspection;
 import org.jetbrains.plugins.groovy.util.HighlightingTest;
-import org.jetbrains.plugins.groovy.util.TypingTest;
 import org.junit.Ignore;
 import org.junit.Test;
 

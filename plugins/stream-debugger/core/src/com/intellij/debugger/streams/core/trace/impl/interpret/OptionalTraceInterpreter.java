@@ -25,12 +25,12 @@ public class OptionalTraceInterpreter implements CallTraceInterpreter {
 
   @Override
   public @NotNull TraceInfo resolve(@NotNull StreamCall call, @NotNull Value value) {
-    if (value instanceof ArrayReference) {
-      final Value peeksResult = ((ArrayReference)value).getValue(0);
+    if (value instanceof ArrayReference reference) {
+      final Value peeksResult = reference.getValue(0);
       final TraceInfo peekInfo = myPeekResolver.resolve(call, peeksResult);
       final Map<Integer, TraceElement> before = peekInfo.getValuesOrderBefore();
 
-      final Value optionalTrace = ((ArrayReference)value).getValue(1);
+      final Value optionalTrace = reference.getValue(1);
       final Value optionalValue = getOptionalValue(optionalTrace);
       if (optionalValue == null) {
         return new ValuesOrderInfo(call, before, Collections.emptyMap());
@@ -53,8 +53,8 @@ public class OptionalTraceInterpreter implements CallTraceInterpreter {
     }
 
     final Value value = trace.getValue(1);
-    if (value instanceof ArrayReference) {
-      return ((ArrayReference)value).getValue(0);
+    if (value instanceof ArrayReference reference) {
+      return reference.getValue(0);
     }
 
     throw new UnexpectedValueTypeException("unexpected format for an optional value");
@@ -62,10 +62,10 @@ public class OptionalTraceInterpreter implements CallTraceInterpreter {
 
   private static boolean optionalIsPresent(@NotNull ArrayReference optionalTrace) {
     final Value isPresentFlag = optionalTrace.getValue(0);
-    if (isPresentFlag instanceof ArrayReference) {
-      final Value isPresentValue = ((ArrayReference)isPresentFlag).getValue(0);
-      if (isPresentValue instanceof BooleanValue) {
-        return ((BooleanValue)isPresentValue).value();
+    if (isPresentFlag instanceof ArrayReference reference) {
+      final Value isPresentValue = reference.getValue(0);
+      if (isPresentValue instanceof BooleanValue value) {
+        return value.value();
       }
     }
 

@@ -1,6 +1,6 @@
 # Golden action-group structure: child id sequences observed via getChildActionsOrStubs.
-# Regenerate: (cd community && ./tests.cmd --module intellij.idea.community.main.tests --test com.intellij.openapi.actionSystem.CommunityActionGroupStructureTest -Dpass.actions.golden.regenerate=true)
-# Risky group ids not registered in this run (0 of 320):
+# Regenerate: (cd community && ./bazel.cmd test //:main-tests_test --test_filter=com.intellij.openapi.actionSystem.CommunityActionGroupStructureTest --test_arg=--jvm_flag=-Dactions.golden.regenerate=true --cache_test_results=no)
+# Risky group ids not registered in this run (0 of 319):
 [tree MainMenu]
   FileMenu
     FileOpenGroup
@@ -888,8 +888,11 @@
         DumpGroovyControlFlowAction
       DetectProjectLeaks
       TestJbProtocolCommand
-      PythonPsiInternalGroup
-        PyTypeBenchmarkAction
+      FeatureUsage.Internal
+        OpenStatisticsEventLogAction
+        RecordStateCollectors
+        AddGroupToTestSchemeAction
+        CollectFUStatisticsAction
       Vcs.Internal
         Vcs.Log.Internal
           Vcs.Log.InvalidateCaches
@@ -899,6 +902,8 @@
           Git.Log.Internal
             Git.Log.Show.Command
         Git.Cleanup.Branches
+      PythonPsiInternalGroup
+        PyTypeBenchmarkAction
       ReloadProjectAction
       Internal.Ex
         ShowEdtUtilizationChart
@@ -930,11 +935,6 @@
         SetCurrentLessonAsPassed
         ResetOnboardingFeedbackState
         ShowDemoAltClickPromoter
-      FeatureUsage.Internal
-        OpenStatisticsEventLogAction
-        RecordStateCollectors
-        AddGroupToTestSchemeAction
-        CollectFUStatisticsAction
       PythonGenerateDictionaries
       Internal.Python
         PyUpdateProjectSdk
@@ -988,15 +988,16 @@
       Markdown.Export
       Markdown.ConfigurePandoc
     ToolsXmlGroup
+      ConvertSchemaAction
       ToolsXmlGroupEx
         ValidateXml
         GenerateDTD
         XSD2Document
         Document2XSD
         <separator>
-      ConvertSchemaAction
       AddAntBuildFile
     ExternalToolsGroup
+    ShowPluginLoadingState
     com.intellij.mcpserver.actions.ShowMcpToolsAction
     com.jetbrains.python.console.RunPythonOrDebugConsoleAction
     PyPackagingMenu
@@ -1318,18 +1319,6 @@
       MoveTabRight
       SplitHorizontally
       MoveTabDown
-      SplitChooser
-      SplitChooser.Actions
-        SplitChooser.NextWindow
-        SplitChooser.PreviousWindow
-        SplitChooser.Exit
-        SplitChooser.Split
-        SplitChooser.Duplicate
-        SplitChooser.SplitCenter
-        SplitChooser.SplitTop
-        SplitChooser.SplitLeft
-        SplitChooser.SplitDown
-        SplitChooser.SplitRight
       StretchSplitToTop
       StretchSplitToLeft
       StretchSplitToBottom
@@ -1355,7 +1344,6 @@
       MergeAllWindowsAction
       <separator>
   HelpMenu
-    OpenWelcome
     GotoAction
     <separator>
     HelpTopics
@@ -1893,14 +1881,14 @@
   CompareClipboardWithSelection
   Code.Review.Editor.Show.Diff
   Code.Review.Editor.New.Comment
-  Git.Stage.Index.File.Menu
   Gradle.ImportExternalProject
+  JsonPathEvaluateAction
+  XmlGenerateToolsGroup
+  Git.Stage.Index.File.Menu
   GitLab.Create.Snippet
   Github.Create.Gist
   Github.PullRequest.Changed.MarkViewed.Toggle
   Mermaid.ExportDiagram
-  JsonPathEvaluateAction
-  XmlGenerateToolsGroup
   Maven.AddFileAsMavenProject
   Maven.GlobalProjectMenu
   OpenInSceneBuilder
@@ -2041,8 +2029,6 @@
   MoveTabRight
   SplitHorizontally
   MoveTabDown
-  SplitChooser
-  SplitChooser.Actions
   StretchSplitToTop
   StretchSplitToLeft
   StretchSplitToBottom
@@ -2205,11 +2191,10 @@
   GotoPrevElementUnderCaretUsage
   ShowRecentFindUsagesGroup
 [group Floating.CodeToolbar]
+  Floating.CodeToolbar.Extensions
   Floating.CodeToolbar.Extract
   Floating.CodeToolbar.Surround
-  XDebugger.Code.Toolbar
-  CommentByLineComment
-  ReformatCode
+  Floating.CodeToolbar.Additional
 [group Floating.CodeToolbar.Extract]
   ExtractFunction
   PyExtractFunction
@@ -2253,10 +2238,10 @@
   DelegateMethods
   GenerateFromTestCreatorsGroup
   Markdown.InsertGroup
+  org.editorconfig.configmanagement.generate.EditorConfigGenerateLanguagePropertiesAction
   GenerateCopyright
   HtmlAddTableColumnBefore
   HtmlAddTableColumnAfter
-  org.editorconfig.configmanagement.generate.EditorConfigGenerateLanguagePropertiesAction
   JavaGenerateGroup2
   KotlinMavenGenerate
   GenerateExternalization
@@ -2319,7 +2304,6 @@
   DiagnosticGroup
   KotlinCriDiagnostics
 [group HelpMenu]
-  OpenWelcome
   GotoAction
   <separator>
   HelpTopics
@@ -2599,24 +2583,25 @@
   Groovy.NewClass
   Kotlin.NewFile
   AddNewPropertyFile
-  AddPyProject
   NewPythonFile
   NewFile
+  WelcomeNewEmptyFile
   NewScratchFile
   NewDir
   NewRemoteDevModule
   JavaFxCreateActions
   compose.newVectorAsset
   NewJavaSpecialFile
+  AddPyProject
   NewPythonPackage
   FileTemplateSeparatorGroup
   Kotlin.NewScript
   NewWebDevelopment
   NewMicroservices
   NewFromTemplate
-  CreateEditorConfigFile
   DevkitNewActions
   CreateResourceBundle
+  CreateEditorConfigFile
   Markdown.NewFile
   NewXmlDescriptor
   DevkitObsoleteNewActions
@@ -2751,14 +2736,14 @@
   ExternalToolsGroup
   <separator>
   ProjectViewPopupMenuSettingsGroup
+  XmlGenerateToolsGroup
+  UpdateCopyright
+  DissociateResourceBundleAction
+  CombinePropertiesFilesAction
+  Images.SetBackgroundImage
   GitLab.Create.Snippet
   Github.Create.Gist
   Mermaid.ExportDiagram
-  UpdateCopyright
-  Images.SetBackgroundImage
-  DissociateResourceBundleAction
-  CombinePropertiesFilesAction
-  XmlGenerateToolsGroup
   ConvertJavaToKotlin
   ConvertJavaToKotlinGroup
   Maven.AddFileAsMavenProject
@@ -2855,10 +2840,10 @@
   OpenInAssociatedApplication
   OpenInBrowserGroup
   ShowFilePath
-  Git.Hosting.Open.In.Browser.Group
   Terminal.OpenInTerminal
   PyOpenInPythonConsole
   Terminal.OpenInReworkedTerminal
+  Git.Hosting.Open.In.Browser.Group
 [group RightToolbarSideGroup]
   CompileDirty
   SettingsEntryPoint
@@ -3037,20 +3022,8 @@
   <separator>
 [group ShowRecentFindUsagesGroup]
 [group ShowUsagesPinGroup]
-[group SplitChooser.Actions]
-  SplitChooser.NextWindow
-  SplitChooser.PreviousWindow
-  SplitChooser.Exit
-  SplitChooser.Split
-  SplitChooser.Duplicate
-  SplitChooser.SplitCenter
-  SplitChooser.SplitTop
-  SplitChooser.SplitLeft
-  SplitChooser.SplitDown
-  SplitChooser.SplitRight
 [group SplitRevealGroup]
   OpenInRightSplit
-  SplitChooser
   RevealGroup
 [group StandardMacroActions]
   PlaybackLastMacro
@@ -3153,6 +3126,7 @@
   Markdown.Tools
   ToolsXmlGroup
   ExternalToolsGroup
+  ShowPluginLoadingState
   com.intellij.mcpserver.actions.ShowMcpToolsAction
   com.jetbrains.python.console.RunPythonOrDebugConsoleAction
   PyPackagingMenu

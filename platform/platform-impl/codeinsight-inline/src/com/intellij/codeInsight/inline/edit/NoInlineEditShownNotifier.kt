@@ -28,7 +28,7 @@ internal class NoInlineEditShownNotifier(private val project: Project, scope: Co
 
   private val hintRequestExecutor = InlineEditRequestExecutor.create(scope)
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun notifyNoSuggestionIfNothingIsShown(editor: Editor) {
     val initialEditorState = runReadActionBlocking { editor.getState() }
     hintRequestExecutor.switchRequest(onJobCreated = {}) {

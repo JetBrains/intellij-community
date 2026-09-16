@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.jediterm.terminal.model.TerminalTextBuffer
 import com.jediterm.terminal.util.CharUtils
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.terminal.block.ui.getLengthWithoutDwc
 import org.jetbrains.plugins.terminal.block.ui.withLock
 
 @ApiStatus.Internal
@@ -69,25 +68,19 @@ class TerminalCursorPositionTracker(
   }
 
   private fun getCursorPosition(): TerminalCursorPosition {
-    var line = cursorY
-    // Lines in the terminal buffer contain special character DWC (double width character)
-    // that indicate that the previous character is double width (for example, chinese symbol).
+    // Lines in the terminal buffer contain a special character DWC (double width character)
+    // that indicates that the previous character is double width (for example, chinese symbol).
     // This character is synthetic and present there only to create space in the TextBuffer grid.
     // But DWC is dropped when we parse the TextBuffer to string, so we also should exclude them from the offset calculation there.
-    val text = textBuffer.getLine(line).text
+    val text = textBuffer.getLine(cursorY).text
     // The cursorX value can be temporarily out of range due to async updates (or a bug in model state update).
     val end = cursorX.coerceIn(0, text.length)
     val dwcCountBeforeCursor = text.subSequence(0, end).count { it == CharUtils.DWC }
-    var column = cursorX - dwcCountBeforeCursor
+    val column = cursorX - dwcCountBeforeCursor
 
-    // Ensure that line is either not a wrapped line or the start of the wrapped line.
-    while (line - 1 >= -textBuffer.historyLinesCount && textBuffer.getLine(line - 1).isWrapped) {
-      line--
-      column += textBuffer.getLine(line).getLengthWithoutDwc()
-    }
-
-    val logicalLine = textBuffer.getLogicalLineIndex(line) + discardedHistoryTracker.getDiscardedLogicalLinesCount()
-    return TerminalCursorPosition(logicalLine, column)
+    val (logicalLine, logicalColumn) = textBuffer.toLogicalLineAndColumn(cursorY, column)
+    val absoluteLogicalLine = logicalLine + discardedHistoryTracker.getDiscardedLogicalLinesCount()
+    return TerminalCursorPosition(absoluteLogicalLine, logicalColumn)
   }
 }
 

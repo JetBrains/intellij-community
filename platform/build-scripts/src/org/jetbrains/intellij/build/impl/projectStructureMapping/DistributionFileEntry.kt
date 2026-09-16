@@ -24,12 +24,15 @@ internal data class ContentReport(
 }
 
 sealed interface DistributionFileEntry {
-  /**
-   * Path used to access this entry. It may point to an immutable cache file which is linked into the distribution.
-   */
+  /** The file this entry was read from or written to. */
   val path: Path
 
-  /** Logical path occupied by this entry in the IDE distribution. */
+  /**
+   * Logical path occupied by this entry in the IDE distribution.
+   *
+   * It differs from [path] only for a custom asset that the build extracts from a library jar: [path] is the jar and this
+   * is the extracted directory. See `pluginPlatformSpecificResourcePackager.kt`.
+   */
   val distributionPath: Path
     get() = path
 

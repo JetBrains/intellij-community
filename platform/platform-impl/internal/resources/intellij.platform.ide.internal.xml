@@ -6,7 +6,6 @@
     <module name="intellij.libraries.guava"/>
     <module name="intellij.libraries.hash4j"/>
     <module name="intellij.libraries.jbr"/>
-    <module name="intellij.libraries.jna"/>
     <module name="intellij.libraries.kotlin.reflect"/>
     <module name="intellij.libraries.kotlinx.collections.immutable"/>
     <module name="intellij.libraries.kotlinx.serialization.core"/>
@@ -66,7 +65,7 @@
                         serviceImplementation="com.intellij.internal.statistic.notification.StatisticsNotificationManagerImpl"/>
 
     <applicationService serviceInterface="com.intellij.internal.statistic.eventLog.StatisticsRegionSettingsService"
-                        serviceImplementation="com.intellij.internal.statistic.StatisticsRegionSettingsServiceImpl" preload="notLightEdit"/>
+                        serviceImplementation="com.intellij.internal.statistic.StatisticsRegionSettingsServiceImpl"/>
 
     <statistics.validation.customValidationRule
       implementation="com.intellij.internal.statistic.collectors.fus.FacetTypeUsageCollector$FacetTypeUtilValidator"/>

@@ -3,6 +3,7 @@ package com.intellij.platform.util.io.storages.mmapped;
 
 import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorage.Page;
 import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorage.RegionAllocationAtomicityLock;
+import com.intellij.util.io.ClosedStorageException;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -10,6 +11,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ValueLayout;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -26,6 +29,7 @@ import static com.intellij.platform.util.io.storages.mmapped.MMappedFileStorageF
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -58,6 +62,22 @@ public class MMappedFileStorageTest {
   public void newlyCreatedStorage_hasActualSizeZero() throws IOException {
     assertEquals(0, storage.actualFileSize(),
                  "Empty storage.actualFileSize should be 0");
+  }
+
+  @Test
+  public void pageClosedAfterLookup_AccessFailureIsConvertedToClosedStorageException() throws Exception {
+    MemorySegment pageSegment = storage.pageByOffset(0).rawPageSegment();
+    storage.close();
+
+    IllegalStateException accessFailure = assertThrows(
+      IllegalStateException.class,
+      () -> pageSegment.get(ValueLayout.JAVA_BYTE, 0),
+      "The closed page must reject access"
+    );
+    ClosedStorageException storageException = storage.asClosedStorageException(accessFailure);
+
+    assertSame(accessFailure, storageException.getCause(),
+               "The storage exception must keep the FFM failure as its cause");
   }
 
   @Test
@@ -188,6 +208,16 @@ public class MMappedFileStorageTest {
       Files.exists(storage.storagePath()),
       "Storage file [" + storage.storagePath() + "] must not exist after .closeAndClean()"
     );
+  }
+
+  @Test
+  public void close_InvalidatesPreviouslyReturnedPageBuffer() throws IOException {
+    ByteBuffer pageBuffer = storage.pageByIndex(0).rawPageBuffer();
+
+    storage.close();
+
+    assertThrows(IllegalStateException.class, () -> pageBuffer.get(0),
+                 "The page buffer must become inaccessible after the storage closes its arena");
   }
 
   @Test

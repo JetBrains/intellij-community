@@ -38,7 +38,7 @@ data class ChangesViewSelection(
 
   companion object {
     @JvmStatic
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     fun create(nodesIterator: JBIterable<ChangesBrowserNode<*>>, tree: ChangesTree): ChangesViewSelection {
       val selectedChangeListsIds = mutableSetOf<String>()
       val selectedPaths = mutableListOf<PathSelection>()

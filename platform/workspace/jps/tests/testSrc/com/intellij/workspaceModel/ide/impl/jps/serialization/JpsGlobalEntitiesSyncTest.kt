@@ -26,6 +26,8 @@ import com.intellij.testFramework.UsefulTestCase
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.GlobalLibraryTableBridgeImpl
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LegacyCustomLibraryEntitySource
+import com.intellij.workspaceModel.ide.legacyBridge.findLibraryBridge
 import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Rule
@@ -34,6 +36,7 @@ import org.junit.rules.TemporaryFolder
 import java.io.File
 import kotlin.test.assertEquals
 import kotlin.test.assertNotSame
+import kotlin.test.assertNull
 import kotlin.test.assertSame
 
 class JpsGlobalEntitiesSyncTest {
@@ -102,9 +105,9 @@ class JpsGlobalEntitiesSyncTest {
           val virtualFileManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
           WorkspaceModel.getInstance(project).updateProjectModel("Test update") { builder ->
             val projectSdkEntity = SdkEntity("oracle-1.8", "JavaSDK",
-                                             listOf(SdkRoot(virtualFileManager.getOrCreateFromUrl("/Library/Java/JavaVirtualMachines/oracle-1.8/Contents/Home!/java.base"), SdkRootTypeId("sourcePath"))),
+                                             listOf(SdkRoot(virtualFileManager.storeAndGet("/Library/Java/JavaVirtualMachines/oracle-1.8/Contents/Home!/java.base"), SdkRootTypeId("sourcePath"))),
                                              "", entitySource) {
-              homePath = virtualFileManager.getOrCreateFromUrl("/Library/Java/JavaVirtualMachines/oracle-1.8/Contents/Home")
+              homePath = virtualFileManager.storeAndGet("/Library/Java/JavaVirtualMachines/oracle-1.8/Contents/Home")
               version = "1.8"
             }
             builder.addEntity(projectSdkEntity)
@@ -142,8 +145,8 @@ class JpsGlobalEntitiesSyncTest {
         val globalVfu = sdkEntities.find { it.name == projectSdk.name }!!.roots[0].url
 
         assertEquals(globalVfu.url, projectVfu.url)
-        assertSame(projectVfu, projectVirtualFileUrlManager.getOrCreateFromUrl(projectVfu.url))
-        assertSame(globalVfu, globalVirtualFileUrlManager.getOrCreateFromUrl(globalVfu.url))
+        assertSame(projectVfu, projectVirtualFileUrlManager.storeAndGet(projectVfu.url))
+        assertSame(globalVfu, globalVirtualFileUrlManager.storeAndGet(globalVfu.url))
         assertNotSame(globalVfu, projectVfu)
       }
     }
@@ -191,7 +194,7 @@ class JpsGlobalEntitiesSyncTest {
             val gradleLibraryEntity = LibraryEntity("com.gradle",
                                                     LibraryTableId.GlobalLibraryTableId(LibraryTablesRegistrar.APPLICATION_LEVEL),
                                                     listOf(
-                                                      LibraryRoot(virtualFileManager.getOrCreateFromUrl("/a/b/one.txt"), LibraryRootTypeId.SOURCES)),
+                                                      LibraryRoot(virtualFileManager.storeAndGet("/a/b/one.txt"), LibraryRootTypeId.SOURCES)),
                                                     entitySource)
             builder.addEntity(gradleLibraryEntity)
             globalLibrariesNames.add(gradleLibraryEntity.name)
@@ -233,9 +236,40 @@ class JpsGlobalEntitiesSyncTest {
         val globalVfu = globalLibraryEntities[projectLibrary.name]!!.roots[0].url
 
         assertEquals(globalVfu.url, projectVfu.url)
-        assertSame(projectVfu, projectVirtualFileUrlManager.getOrCreateFromUrl(projectVfu.url))
-        assertSame(globalVfu, globalVirtualFileUrlManager.getOrCreateFromUrl(globalVfu.url))
+        assertSame(projectVfu, projectVirtualFileUrlManager.storeAndGet(projectVfu.url))
+        assertSame(globalVfu, globalVirtualFileUrlManager.storeAndGet(globalVfu.url))
         assertNotSame(globalVfu, projectVfu)
+      }
+    }
+  }
+
+  @Test
+  fun `test project loading with a library of an unregistered custom table`() {
+    val level = "unregistered_level"
+    val libraryName = "orphan"
+    val globalWorkspaceModel = GlobalWorkspaceModel.getInstance(LocalEelMachine)
+    ApplicationManager.getApplication().invokeAndWait {
+      runWriteAction {
+        globalWorkspaceModel.updateModel("Add a library of an unregistered custom table") { builder ->
+          builder.addEntity(LibraryEntity(libraryName, LibraryTableId.GlobalLibraryTableId(level), emptyList(),
+                                          LegacyCustomLibraryEntitySource(level)))
+        }
+      }
+    }
+    try {
+      val project = loadProject()
+      val projectSnapshot = WorkspaceModel.getInstance(project).currentSnapshot
+      val projectLibrary = projectSnapshot.entities(LibraryEntity::class.java).single { it.name == libraryName }
+      assertNull(projectLibrary.findLibraryBridge(projectSnapshot))
+    }
+    finally {
+      ApplicationManager.getApplication().invokeAndWait {
+        (ProjectManager.getInstance() as ProjectManagerEx).closeAndDisposeAllProjects(false)
+        runWriteAction {
+          globalWorkspaceModel.updateModel("Remove the library of an unregistered custom table") { builder ->
+            builder.entities(LibraryEntity::class.java).filter { it.name == libraryName }.toList().forEach { builder.removeEntity(it) }
+          }
+        }
       }
     }
   }

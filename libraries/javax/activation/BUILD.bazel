@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.javax.activation` start
+content_module_jar(
+    libraries = ["@lib//:libraries-javax-activation-javax-activation"],
+    module = ":activation",
+)
+### auto-generated section `dev intellij.libraries.javax.activation` end
+
 ### auto-generated section `build intellij.libraries.javax.activation` start
 jvm_library(
     name = "activation",
@@ -14,11 +21,9 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    exports = ["@lib//:javax-activation"],
-    runtime_deps = ["@lib//:javax-activation"],
+    exports = ["@lib//:libraries-javax-activation-javax-activation"],
+    runtime_deps = ["@lib//:libraries-javax-activation-javax-activation"],
 )
-
-content_module_jar(module = ":activation")
 
 jvm_library(
     name = "activation_test_lib",
@@ -30,7 +35,7 @@ jvm_library(
     kotlinc_opts = "@community//:k8",
     module_name = "intellij.libraries.javax.activation",
     visibility = ["//visibility:public"],
-    exports = ["@lib//:javax-activation"],
+    exports = ["@lib//:libraries-javax-activation-javax-activation"],
     runtime_deps = [":activation"],
 )
 ### auto-generated section `build intellij.libraries.javax.activation` end
@@ -40,7 +45,6 @@ exports_files(
     [
         "intellij.libraries.javax.activation.iml",
         "resources/intellij.libraries.javax.activation.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -94,7 +94,7 @@ interface KotlinProjectConfigurator {
         return emptySet()
     }
 
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     @JvmSuppressWildcards
     fun configure(project: Project, excludeModules: Collection<Module>)
 

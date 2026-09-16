@@ -59,13 +59,13 @@ kotlin {
     implementation(jps.org.jetbrains.kotlin.kotlin.stdlib1993400674.get().let { "${it.group}:${it.name}:${it.version}" }) {
       exclude(group = "org.jetbrains", module = "annotations")
     }
-    api(jps.org.jetbrains.intellij.deps.kotlinx.kotlinx.coroutines.core.jvm930800474.get().let { "${it.group}:kotlinx-coroutines-core:${it.version}" }) {
-      isTransitive = false
-    }
     implementation(jps.io.ktor.ktor.client.logging.jvm1780199912.get().let { "${it.group}:ktor-client-logging:${it.version}" }) {
       isTransitive = false
     }
     implementation(jps.io.ktor.ktor.client.mock.jvm121671911.get().let { "${it.group}:ktor-client-mock:${it.version}" }) {
+      isTransitive = false
+    }
+    api(jps.org.jetbrains.intellij.deps.kotlinx.kotlinx.coroutines.core.jvm930800474.get().let { "${it.group}:kotlinx-coroutines-core:${it.version}" }) {
       isTransitive = false
     }
     api(project(":fleet.ktor.client.core"))

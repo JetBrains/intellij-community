@@ -14,7 +14,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
@@ -282,9 +281,9 @@ public class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPo
       }
     }
 
-    Pair<Identikit.ByAnchor, PsiElement> pair = Identikit.withAnchor(element, LanguageUtil.getRootLanguage(containingFile));
-    if (pair != null) {
-      return new AnchorElementInfo(pair.second, containingFile, pair.first, manager);
+    Identikit.AnchorWithElement anchorWithElement = Identikit.withAnchor(element, LanguageUtil.getRootLanguage(containingFile));
+    if (anchorWithElement != null) {
+      return new AnchorElementInfo(anchorWithElement.getAnchorElement(), containingFile, anchorWithElement.getIdentikit(), manager);
     }
     return null;
   }

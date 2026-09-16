@@ -53,7 +53,7 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
     throw NotImplementedError("JPS compilation was broken on purpose, for details see MRI-3677")
   }
 
-  suspend fun resolveProjectDependencies() {
+  fun resolveProjectDependencies() {
     runBuild()
   }
 
@@ -69,7 +69,7 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
     throw NotImplementedError("JPS compilation was broken on purpose, for details see MRI-3677")
   }
 
-  private suspend fun runBuild() = context.withCompilationLock {
+  private fun runBuild() = context.withCompilationLock {
     val mavenLibrariesDownloading = context.options.mavenLibrariesDownloadLocation != null
 
     require(!BazelRunfiles.isRunningFromBazel || mavenLibrariesDownloading) {

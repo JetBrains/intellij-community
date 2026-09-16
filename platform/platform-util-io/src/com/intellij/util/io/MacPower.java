@@ -38,19 +38,19 @@ public final class MacPower {
    * @return {@link #AC_POWER}, {@link #BATTERY_POWER} or {@link #UPS_POWER}, or {@code null} when IOKit has no power source information
    */
   public static @Nullable String providingPowerSourceType() {
-    try (Arena arena = Arena.ofConfined()) {
-      MemorySegment blob = (MemorySegment)Handles.IOPS_COPY_POWER_SOURCES_INFO.invokeExact();
+    try (var arena = Arena.ofConfined()) {
+      var blob = (MemorySegment)Handles.IOPS_COPY_POWER_SOURCES_INFO.invokeExact();
       if (blob.address() == 0) {
         return null;
       }
       try {
         // the string is owned by the framework; do not release it
-        MemorySegment type = (MemorySegment)Handles.IOPS_GET_PROVIDING_POWER_SOURCE_TYPE.invokeExact(blob);
+        var type = (MemorySegment)Handles.IOPS_GET_PROVIDING_POWER_SOURCE_TYPE.invokeExact(blob);
         if (type.address() == 0) {
           return null;
         }
-        MemorySegment buffer = arena.allocate(BUFFER_SIZE);
-        byte copied = (byte)Handles.CF_STRING_GET_C_STRING.invokeExact(type, buffer, BUFFER_SIZE, KCF_STRING_ENCODING_UTF8);
+        var buffer = arena.allocate(BUFFER_SIZE);
+        var copied = (byte)Handles.CF_STRING_GET_C_STRING.invokeExact(type, buffer, BUFFER_SIZE, KCF_STRING_ENCODING_UTF8);
         return copied != 0 ? buffer.getString(0) : null;
       }
       finally {

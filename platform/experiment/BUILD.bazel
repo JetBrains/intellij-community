@@ -11,6 +11,10 @@ jps_test(
 
 ### skip generation section `test intellij.platform.experiment.tests`
 
+### auto-generated section `dev intellij.platform.experiment` start
+content_module_jar(module = ":experiment")
+### auto-generated section `dev intellij.platform.experiment` end
+
 ### auto-generated section `build intellij.platform.experiment` start
 jvm_library(
     name = "experiment",
@@ -39,8 +43,6 @@ jvm_library(
         "//platform/platform-impl:ide-impl",
     ],
 )
-
-content_module_jar(module = ":experiment")
 
 jvm_library(
     name = "experiment_test_lib",
@@ -71,7 +73,6 @@ exports_files(
     [
         "intellij.platform.experiment.iml",
         "resources/intellij.platform.experiment.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

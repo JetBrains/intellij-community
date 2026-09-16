@@ -1,5 +1,33 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
+load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_DESCRIPTORS", "MODULE_TARGETS")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `dev intellij.grid.core.plugin` start
+dev_dist_plugin(
+    descriptor = "resources/META-INF/plugin.xml",
+    descriptor_index = MODULE_DESCRIPTORS,
+    descriptor_modules = [
+        "intellij.grid",
+        "intellij.grid.core.impl",
+        "intellij.grid.csv.core.impl",
+        "intellij.grid.impl",
+        "intellij.grid.impl.ide",
+        "intellij.grid.types",
+    ],
+    main_module = "intellij.grid.core.plugin",
+    module_targets = MODULE_TARGETS,
+    prepacked_content_modules = [
+        # do not sort,
+        "intellij.grid",
+        "intellij.grid.core.impl",
+        "intellij.grid.csv.core.impl",
+        "intellij.grid.impl.ide",
+        "intellij.grid.impl",
+        "intellij.grid.types",
+    ],
+)
+### auto-generated section `dev intellij.grid.core.plugin` end
 
 ### auto-generated section `build intellij.grid.core.plugin` start
 jvm_library(
@@ -27,6 +55,21 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = [":plugin"],
 )
+
+ij_plugin(
+    name = "plugin_plugin",
+    descriptor_module = ":plugin",
+    content_modules = [
+        # do not sort,
+        "//grid/api:grid",
+        "//grid/core-impl",
+        "//grid/csv:csv-core-impl",
+        "//grid/impl",
+        "//grid/impl-ide",
+        "//grid/types",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `build intellij.grid.core.plugin` end
 
 ### auto-generated section `iml intellij.grid.core.plugin` start
@@ -38,27 +81,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.grid.core.plugin` end
-
-### auto-generated section `dev intellij.grid.core.plugin` start
-dev_dist_plugin(
-    descriptor = "resources/META-INF/plugin.xml",
-    descriptor_module = ":plugin",
-    descriptors = {
-        "@community//grid/api:resources/intellij.grid.xml": "intellij.grid.xml",
-        "@community//grid/core-impl:resources/intellij.grid.core.impl.xml": "intellij.grid.core.impl.xml",
-        "@community//grid/csv:resources/intellij.grid.csv.core.impl.xml": "intellij.grid.csv.core.impl.xml",
-        "@community//grid/impl-ide:resources/intellij.grid.impl.ide.xml": "intellij.grid.impl.ide.xml",
-        "@community//grid/impl:resources/intellij.grid.impl.xml": "intellij.grid.impl.xml",
-        "@community//grid/types:resources/intellij.grid.types.xml": "intellij.grid.types.xml",
-    },
-    main_module = "intellij.grid.core.plugin",
-    prepacked_content_modules = [
-        "//grid/api:grid_content_module_jar",
-        "//grid/core-impl:core-impl_content_module_jar",
-        "//grid/csv:csv-core-impl_content_module_jar",
-        "//grid/impl-ide:impl-ide_content_module_jar",
-        "//grid/impl:impl_content_module_jar",
-        "//grid/types:types_content_module_jar",
-    ],
-)
-### auto-generated section `dev intellij.grid.core.plugin` end

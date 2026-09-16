@@ -1,3 +1,0 @@
-- name: dist.all/lib/fleet.kernel.jar
-  modules:
-  - name: fleet.kernel

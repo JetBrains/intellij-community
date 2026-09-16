@@ -2,6 +2,7 @@
 package com.intellij.python.pytools
 
 import com.intellij.execution.target.FullPathOnTarget
+import com.intellij.python.pytools.backend.PyExecutable
 import com.intellij.python.community.execService.DownloadConfig
 import com.intellij.python.community.execService.ProcessOutputTransformer
 import com.intellij.python.community.execService.UploadConfig

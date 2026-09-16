@@ -192,7 +192,7 @@ open class ArtifactBridge(
 
   override fun setOutputPath(outputPath: String?) {
     val outputUrl = outputPath?.let {
-      WorkspaceModel.getInstance(project).getVirtualFileUrlManager().getOrCreateFromUrl(VfsUtilCore.pathToUrl(it))
+      WorkspaceModel.getInstance(project).getVirtualFileUrlManager().storeAndGet(VfsUtilCore.pathToUrl(it))
     }
     val entity = diff.get(artifactId)
     diff.modifyArtifactEntity(entity) {

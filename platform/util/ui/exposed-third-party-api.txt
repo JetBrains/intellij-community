@@ -1,10 +1,3 @@
-com/sun/jna/Callback
-com/sun/jna/FromNativeContext
-com/sun/jna/Library
-com/sun/jna/NativeLong
-com/sun/jna/NativeMapped
-com/sun/jna/Pointer
-com/sun/jna/PointerType
-com/sun/jna/Structure
-com/sun/jna/Structure$ByValue
+java/lang/foreign/Arena
+java/lang/foreign/MemorySegment
 kotlin/jvm/internal/DefaultConstructorMarker

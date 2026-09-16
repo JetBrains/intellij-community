@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.canBeOperator
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.idea.base.psi.addModifierKeyword
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -40,7 +41,7 @@ class AddOperatorModifierInspection : KotlinApplicableInspectionBase.Simple<KtNa
                 val originElement = PsiTreeUtil.findSameElementInCopy(element, element.containingFile.originalFile)
                 val declarations = withExpectedActuals(originElement)
                 for (declaration in declarations) {
-                    updater.getWritable(declaration).addModifier(KtTokens.OPERATOR_KEYWORD)
+                    updater.getWritable(declaration).addModifierKeyword(KtTokens.OPERATOR_KEYWORD)
                 }
             }
         }

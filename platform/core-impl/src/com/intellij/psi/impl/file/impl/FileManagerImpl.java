@@ -123,50 +123,13 @@ public final class FileManagerImpl implements FileManagerEx {
     myConnection.subscribe(DumbModeListenerBackgroundable.TOPIC, new DumbModeListenerBackgroundable() {
       @Override
       public void enteredDumbMode() {
-        analyzeInvalidations(true);
         processFileTypesChanged(false);
       }
 
       @Override
       public void exitDumbMode() {
-        analyzeInvalidations(false);
         processFileTypesChanged(false);
       }
-    });
-  }
-
-  private void analyzeInvalidations(boolean entered) {
-    boolean toBeInvalidated = PossibleInvalidationKt.pollInvalidationAfterPropertyPush();
-    if (toBeInvalidated) {
-      return;
-    }
-    myVFileToViewProviderMap.getAllEntries().forEach(entry -> {
-      FileViewProvider viewProvider = entry.getProvider();
-      if (PossibleInvalidationKt.isPossiblyInvalidated(viewProvider) || !(viewProvider instanceof AbstractFileViewProvider)) {
-        return;
-      }
-      AbstractFileViewProvider abstractProvider = (AbstractFileViewProvider)viewProvider;
-      String recreationFailureReason;
-      if (abstractProvider.getVirtualFile() instanceof LightVirtualFile) {
-        recreationFailureReason = myLightViewProviderCache.getRecreationFailureReason(abstractProvider);
-      } else {
-        recreationFailureReason = myVFileToViewProviderMap.getRecreationFailureReason(abstractProvider);
-      }
-      if (recreationFailureReason == null) {
-        return;
-      }
-
-      Throwable dumbModeStartTrace = DumbService.getInstance(myManager.getProject()).getDumbModeStartTrace();
-      Attachment[] attachment = dumbModeStartTrace == null ? Attachment.EMPTY_ARRAY : new Attachment[]{ new Attachment("dumb mode start trace", dumbModeStartTrace) };
-      String viewProviderRepresentation;
-      try {
-        viewProviderRepresentation = viewProvider.toString(); // toString calls getContent, which might behave poorly for binary files and decompilers
-      } catch (Throwable e) {
-        viewProviderRepresentation = "[class: " + viewProvider.getClass().getName() + "languages: " + viewProvider.getLanguages() + "]";
-      }
-      LOG.error(new RuntimeExceptionWithAttachments("FileViewProvider " + viewProviderRepresentation + " got invalid as part of dumb mode!\n" +
-                                                    "on: " + (entered ? "enteredDumbMode" : "exitDumbMode") + "\n" +
-                                                    recreationFailureReason, attachment));
     });
   }
 

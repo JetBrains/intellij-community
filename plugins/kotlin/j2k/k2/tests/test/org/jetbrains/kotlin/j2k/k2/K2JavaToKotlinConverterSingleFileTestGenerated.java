@@ -5063,6 +5063,11 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
             runTest("../../shared/tests/testData/newJ2k/nullability/notNullCast.java");
         }
 
+        @TestMetadata("notNullField.java")
+        public void testNotNullField() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullability/notNullField.java");
+        }
+
         @TestMetadata("NullabilityByDfa.java")
         public void testNullabilityByDfa() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/nullability/NullabilityByDfa.java");
@@ -5116,6 +5121,11 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
         @TestMetadata("NullableVariableDotAccess.java")
         public void testNullableVariableDotAccess() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/nullability/NullableVariableDotAccess.java");
+        }
+
+        @TestMetadata("optionalIsNotNull.java")
+        public void testOptionalIsNotNull() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullability/optionalIsNotNull.java");
         }
 
         @TestMetadata("OverrideWithInheritanceLoop.java")
@@ -5639,9 +5649,19 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
             runTest("../../shared/tests/testData/newJ2k/postProcessing/MapGetOrDefault.java");
         }
 
+        @TestMetadata("mutableFieldInJpaEntity.java")
+        public void testMutableFieldInJpaEntity() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/postProcessing/mutableFieldInJpaEntity.java");
+        }
+
         @TestMetadata("mutablePropertyAnnotatedWithJpaColumn.java")
         public void testMutablePropertyAnnotatedWithJpaColumn() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/postProcessing/mutablePropertyAnnotatedWithJpaColumn.java");
+        }
+
+        @TestMetadata("mutablePropertyAnnotatedWithJpaMapping.java")
+        public void testMutablePropertyAnnotatedWithJpaMapping() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/postProcessing/mutablePropertyAnnotatedWithJpaMapping.java");
         }
 
         @TestMetadata("noDestructuringForPlainVariables.java")

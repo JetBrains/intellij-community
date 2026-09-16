@@ -2,9 +2,9 @@
 package com.intellij.polySymbols.patterns.impl
 
 import com.intellij.polySymbols.PolySymbolModifier
+import com.intellij.polySymbols.patterns.PolySymbolFilter
 import com.intellij.polySymbols.patterns.ReferenceBuilder
 import com.intellij.polySymbols.query.PolySymbolNameConversionRules
-import com.intellij.polySymbols.webTypes.filters.PolySymbolFilter
 
 internal class ReferenceBuilderImpl : ReferenceBuilder {
 

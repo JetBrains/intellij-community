@@ -17,6 +17,7 @@ data class ExecutionInitiator(val id: String) {
 
     val USER: ExecutionInitiator = ExecutionInitiator("USER")
     val MCP: ExecutionInitiator = ExecutionInitiator("MCP")
+    val LS: ExecutionInitiator = ExecutionInitiator("LS")
 
     fun currentOrNull(): ExecutionInitiator? =
       currentThreadContextOrNull()?.get(ExecutionInitiatorElement)?.initiator

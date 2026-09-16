@@ -8,17 +8,18 @@ import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.diagnostic.enableCoroutineDump
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtilRt
+import com.intellij.platform.buildScripts.concurrency.taskScope
+import com.intellij.platform.buildScripts.concurrency.withLockInterruptibly
 import com.intellij.util.BazelEnvironmentUtil.isBazelTestRun
 import com.intellij.util.io.URLUtil
 import com.jetbrains.JBR
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.sync.Mutex
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.BUILD_CONCURRENCY
+import org.jetbrains.intellij.build.BuildHttpSession
+import org.jetbrains.intellij.build.BuildLifetime
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildPaths
@@ -40,7 +41,6 @@ import org.jetbrains.intellij.build.telemetry.ConsoleSpanExporter
 import org.jetbrains.intellij.build.telemetry.JaegerJsonSpanExporterManager
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
-import org.jetbrains.intellij.build.taskScope
 import org.jetbrains.jps.model.JpsDummyElement
 import org.jetbrains.jps.model.JpsElementFactory
 import org.jetbrains.jps.model.JpsGlobal
@@ -60,12 +60,14 @@ import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.Properties
+import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.locks.ReentrantLock
 import java.util.stream.Stream
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.relativeToOrNull
 
-suspend fun createCompilationContext(
+fun createCompilationContext(
   projectHome: Path,
   defaultOutputRoot: Path,
   options: BuildOptions = BuildOptions(),
@@ -94,13 +96,14 @@ internal fun computeBuildPaths(options: BuildOptions, buildOut: Path, projectHom
   return result
 }
 
-suspend fun createCompilationContext(
+fun createCompilationContext(
   projectHome: Path,
   buildOutputRootEvaluator: (JpsProject) -> Path,
   options: BuildOptions,
   setupTracer: Boolean,
   enableCoroutinesDump: Boolean = true,
   customBuildPaths: BuildPaths? = null,
+  httpSession: BuildHttpSession? = null,
 ): CompilationContextImpl {
   return doCreateCompilationContext(
     projectHome = projectHome,
@@ -111,6 +114,7 @@ suspend fun createCompilationContext(
     customBuildPaths = customBuildPaths,
     isCompilationRequired = isCompilationRequired(options),
     isBazelBacked = isRunningFromBazelOut(),
+    httpSession = httpSession,
   )
 }
 
@@ -122,11 +126,12 @@ suspend fun createCompilationContext(
  * to abort the whole launch. JPS compilation has been unimplemented since MRI-3677 anyway.
  */
 @Internal
-suspend fun createDevBuildCompilationContext(
+fun createDevBuildCompilationContext(
   projectHome: Path,
   buildOutputRootEvaluator: (JpsProject) -> Path,
   options: BuildOptions,
   customBuildPaths: BuildPaths,
+  httpSession: BuildHttpSession? = null,
 ): CompilationContextImpl {
   return doCreateCompilationContext(
     projectHome = projectHome,
@@ -138,10 +143,11 @@ suspend fun createDevBuildCompilationContext(
     customBuildPaths = customBuildPaths,
     isCompilationRequired = false,
     isBazelBacked = isDevBuildBazelBacked(),
+    httpSession = httpSession,
   )
 }
 
-private suspend fun doCreateCompilationContext(
+private fun doCreateCompilationContext(
   projectHome: Path,
   buildOutputRootEvaluator: (JpsProject) -> Path,
   options: BuildOptions,
@@ -150,6 +156,7 @@ private suspend fun doCreateCompilationContext(
   customBuildPaths: BuildPaths?,
   isCompilationRequired: Boolean,
   isBazelBacked: Boolean,
+  httpSession: BuildHttpSession?,
 ): CompilationContextImpl {
   if (isCompilationRequired) {
     // disable compression - otherwise, our zstd/zip cannot compress efficiently
@@ -189,7 +196,12 @@ private suspend fun doCreateCompilationContext(
     isBazelBacked -> getMavenRepositoryPath() + "-do-not-use-maven-repository-with-bazel"
     else -> getMavenRepositoryPath()
   }
-  val model = loadProject(projectHome = projectHome, kotlinBinaries = KotlinBinaries(COMMUNITY_ROOT), isCompilationRequired = isCompilationRequired, mavenRepositoryPath = mavenRepositoryPath)
+  val model = loadProject(
+    projectHome = projectHome,
+    kotlinBinaries = KotlinBinaries(COMMUNITY_ROOT, httpSession),
+    isCompilationRequired = isCompilationRequired,
+    mavenRepositoryPath = mavenRepositoryPath
+  )
 
   val buildPaths = customBuildPaths ?: computeBuildPaths(options, options.outRootDir ?: buildOutputRootEvaluator(model.project), projectHome)
 
@@ -205,7 +217,7 @@ private suspend fun doCreateCompilationContext(
   }
 
   val messages = BuildMessagesImpl.create()
-  val context = CompilationContextImpl(model = model, messages = messages, paths = buildPaths, options = options)
+  val context = CompilationContextImpl(model = model, messages = messages, paths = buildPaths, options = options, httpSession = httpSession)
   if (isCompilationRequired) {
     spanBuilder("define JDK").use {
       defineJavaSdk(context)
@@ -229,6 +241,7 @@ class CompilationContextImpl internal constructor(
   override val paths: BuildPaths,
   override val options: BuildOptions,
   @JvmField val outputProviderState: JpsModuleOutputProviderState = JpsModuleOutputProviderState(model.project),
+  override val httpSession: BuildHttpSession? = null,
 ) : CompilationContext {
   val global: JpsGlobal
     get() = model.global
@@ -261,8 +274,7 @@ class CompilationContextImpl internal constructor(
     var jdkHome = cachedJdkHome
     if (jdkHome == null) {
       // blocking doesn't matter, getStableJdkHome is mostly always called before
-      @Suppress("DEPRECATION")
-      jdkHome = JdkDownloader.blockingGetJdkHome(COMMUNITY_ROOT, infoLog = Span.current()::addEvent)
+      jdkHome = JdkDownloader.getJdkHome(COMMUNITY_ROOT, session = httpSession, infoLog = Span.current()::addEvent)
       cachedJdkHome = jdkHome
     }
     JdkDownloader.getJavaExecutable(jdkHome)
@@ -277,22 +289,22 @@ class CompilationContextImpl internal constructor(
     }
   }
 
-  override suspend fun getStableJdkHome(): Path {
+  override fun getStableJdkHome(): Path {
     var jdkHome = cachedJdkHome
     if (jdkHome == null) {
-      jdkHome = JdkDownloader.getJdkHome(COMMUNITY_ROOT, infoLog = Span.current()::addEvent)
+      jdkHome = JdkDownloader.getJdkHome(COMMUNITY_ROOT, session = httpSession, infoLog = Span.current()::addEvent)
       cachedJdkHome = jdkHome
     }
     return jdkHome
   }
 
-  override fun createCopy(messages: BuildMessages, options: BuildOptions, paths: BuildPaths, scope: CoroutineScope?): CompilationContext {
-    val copy = CompilationContextImpl(model = projectModel, messages = messages, paths = paths, options = options, outputProviderState = outputProviderState)
+  override fun createCopy(messages: BuildMessages, options: BuildOptions, paths: BuildPaths, lifetime: BuildLifetime?): CompilationContext {
+    val copy = CompilationContextImpl(model = projectModel, messages = messages, paths = paths, options = options, outputProviderState = outputProviderState, httpSession = lifetime?.http ?: httpSession)
     copy.compilationData = compilationData
     return copy
   }
 
-  override suspend fun prepareForBuild() {
+  override fun prepareForBuild() {
     checkCompilationOptions(this)
 
     val logDir = paths.logDir
@@ -334,15 +346,16 @@ class CompilationContextImpl internal constructor(
     }
   }
 
-  private val compileMutex = Mutex()
+  /** One compilation at a time. A `ReentrantLock` lets a compilation that holds the lock ask for it again on its thread. */
+  private val compileLock = ReentrantLock()
 
-  override suspend fun withCompilationLock(block: suspend () -> Unit) {
-    compileMutex.withReentrantLock(block)
+  override fun withCompilationLock(block: () -> Unit) {
+    compileLock.withLockInterruptibly(block)
   }
 
-  override suspend fun compileModules(moduleNames: Collection<String>?, includingTestsInModules: List<String>?) {
+  override fun compileModules(moduleNames: Collection<String>?, includingTestsInModules: List<String>?) {
     spanBuilder("resolve dependencies and compile modules").use { span ->
-      compileMutex.withReentrantLock {
+      compileLock.withLockInterruptibly {
         resolveProjectDependencies(this@CompilationContextImpl)
         reuseOrCompile(moduleNames = moduleNames, includingTestsInModules = includingTestsInModules, span = span, context = this@CompilationContextImpl)
       }
@@ -360,7 +373,7 @@ class CompilationContextImpl internal constructor(
     Span.current().addEvent("set class output directory", Attributes.of(AttributeKey.stringKey("classOutputDirectory"), classesOutputDirectory.toString()))
   }
 
-  override suspend fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean): Collection<Path> {
+  override fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean): Collection<Path> {
     return JpsJavaExtensionService.dependencies(module).recursively()
       // if a project requires different SDKs, they all shouldn't be added to the test classpath
       .also { if (forTests) it.withoutSdk() }
@@ -413,7 +426,7 @@ ${dumpCoroutines()}
   }
 }
 
-private suspend fun loadProject(projectHome: Path, kotlinBinaries: KotlinBinaries, isCompilationRequired: Boolean, mavenRepositoryPath: String): JpsModel {
+private fun loadProject(projectHome: Path, kotlinBinaries: KotlinBinaries, isCompilationRequired: Boolean, mavenRepositoryPath: String): JpsModel {
   val model = JpsElementFactory.getInstance().createModel()
   val pathVariablesConfiguration = JpsModelSerializationDataService.getOrCreatePathVariablesConfiguration(model.global)
   if (isCompilationRequired) {
@@ -433,21 +446,28 @@ private suspend fun loadProject(projectHome: Path, kotlinBinaries: KotlinBinarie
     pathVariablesConfiguration.addPathVariable("MAVEN_REPOSITORY", mavenRepositoryPath)
     val pathVariables = JpsModelSerializationDataService.computeAllPathVariables(model.global)
     // the loader submits two runnables per module, so the workers bound the parallelism and not the fork count
-    val tasks = Channel<Runnable>(Channel.UNLIMITED)
+    val tasks = LinkedBlockingQueue<Runnable>()
+    val endOfTasks = Runnable {}
     taskScope {
       repeat(BUILD_CONCURRENCY) { worker ->
         fork("loading project worker $worker") {
-          for (task in tasks) {
+          while (true) {
+            val task = tasks.take()
+            if (task === endOfTasks) {
+              break
+            }
             task.run()
           }
         }
       }
       try {
-        loadProject(model.project, pathVariables, JpsPathMapper.IDENTITY, projectHome, null, { task: Runnable -> tasks.trySend(task).getOrThrow() }, false)
+        loadProject(model.project, pathVariables, JpsPathMapper.IDENTITY, projectHome, null, { task: Runnable -> tasks.add(task) }, false)
       }
       finally {
-        tasks.close()
+        // one end marker per worker, so every worker ends
+        repeat(BUILD_CONCURRENCY) { tasks.add(endOfTasks) }
       }
+      join()
     }
     span.setAllAttributes(
       Attributes.of(
@@ -467,7 +487,7 @@ private fun suppressWarnings(project: JpsProject) {
   compilerOptions.ADDITIONAL_OPTIONS_STRING = compilerOptions.ADDITIONAL_OPTIONS_STRING.replace("-Xlint:unchecked", "")
 }
 
-private suspend fun defineJavaSdk(context: CompilationContext) {
+private fun defineJavaSdk(context: CompilationContext) {
   val homePath = context.getStableJdkHome()
   val jbrVersionName = "jbr-25"
   defineJdk(global = context.projectModel.global, jdkName = jbrVersionName, homeDir = homePath)
@@ -506,7 +526,7 @@ private fun readModulesFromReleaseFile(model: JpsModel, sdkName: String, sdkHome
   }
 }
 
-internal suspend fun cleanOutput(context: CompilationContext, keepCompilationState: Boolean) {
+internal fun cleanOutput(context: CompilationContext, keepCompilationState: Boolean) {
   val compilationState = setOf(
     context.compilationData.dataStorageRoot,
     context.classesOutputDirectory,
@@ -582,7 +602,7 @@ private fun printEnvironmentDebugInfo() {
   }
 }
 
-internal suspend fun resolveProjectDependencies(context: CompilationContext) {
+internal fun resolveProjectDependencies(context: CompilationContext) {
   if (context.compilationData.projectDependenciesResolved) {
     Span.current().addEvent("project dependencies are already resolved")
   }

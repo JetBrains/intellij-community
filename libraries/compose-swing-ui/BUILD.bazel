@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.compose.swing` start
+content_module_jar(
+    libraries = ["@lib//:libraries-compose-swing-org-jetbrains-compose-swing-swing-ui"],
+    module = ":compose-swing",
+)
+### auto-generated section `dev intellij.libraries.compose.swing` end
+
 ### auto-generated section `build intellij.libraries.compose.swing` start
 jvm_library(
     name = "compose-swing",
@@ -16,20 +23,15 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        "@lib//:libraries-compose-swing-dev-matkov-compose-swing-swing-ui",
-        "@lib//:libraries-compose-swing-dev-matkov-compose-swing-swing-ui-test",
+        "@lib//:libraries-compose-swing-org-jetbrains-compose-swing-swing-ui",
+        "@lib//:libraries-compose-swing-org-jetbrains-compose-swing-swing-ui-test",
     ],
     runtime_deps = [
         # do not sort,
-        "@lib//:libraries-compose-swing-dev-matkov-compose-swing-swing-ui",
+        "@lib//:libraries-compose-swing-org-jetbrains-compose-swing-swing-ui",
         "//libraries/kotlinx/coroutines/core",
         "//libraries/compose-runtime-desktop",
     ],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-compose-swing-dev-matkov-compose-swing-swing-ui"],
-    module = ":compose-swing",
 )
 
 jvm_library(
@@ -43,13 +45,13 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        "@lib//:libraries-compose-swing-dev-matkov-compose-swing-swing-ui",
-        "@lib//:libraries-compose-swing-dev-matkov-compose-swing-swing-ui-test",
+        "@lib//:libraries-compose-swing-org-jetbrains-compose-swing-swing-ui",
+        "@lib//:libraries-compose-swing-org-jetbrains-compose-swing-swing-ui-test",
     ],
     runtime_deps = [
         # do not sort,
         ":compose-swing",
-        "@lib//:libraries-compose-swing-dev-matkov-compose-swing-swing-ui-test",
+        "@lib//:libraries-compose-swing-org-jetbrains-compose-swing-swing-ui-test",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//libraries/compose-runtime-desktop:compose-runtime-desktop_test_lib",
     ],
@@ -61,7 +63,6 @@ exports_files(
     [
         "intellij.libraries.compose.swing.iml",
         "resources/intellij.libraries.compose.swing.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

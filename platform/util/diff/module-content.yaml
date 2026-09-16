@@ -1,3 +1,0 @@
-- name: dist.all/lib/intellij.platform.util.diff.jar
-  modules:
-  - name: intellij.platform.util.diff

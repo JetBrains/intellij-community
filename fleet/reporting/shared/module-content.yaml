@@ -1,3 +1,0 @@
-- name: dist.all/lib/fleet.reporting.shared.jar
-  modules:
-  - name: fleet.reporting.shared

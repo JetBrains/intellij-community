@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.platform.diagnostic.freezeAnalyzer` start
+content_module_jar(
+    libraries = ["@lib//:diogen-analysis"],
+    module = ":freezeAnalyzer",
+)
+### auto-generated section `dev intellij.platform.diagnostic.freezeAnalyzer` end
+
 ### auto-generated section `build intellij.platform.diagnostic.freezeAnalyzer` start
 jvm_library(
     name = "freezeAnalyzer",
@@ -27,11 +34,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(
-    libraries = ["@lib//:diogen-analysis"],
-    module = ":freezeAnalyzer",
-)
-
 jvm_library(
     name = "freezeAnalyzer_test_lib",
     testonly = True,
@@ -55,7 +57,6 @@ exports_files(
     [
         "intellij.platform.diagnostic.freezeAnalyzer.iml",
         "resources/intellij.platform.diagnostic.freezeAnalyzer.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

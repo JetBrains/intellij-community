@@ -359,6 +359,12 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
     setGeneratedName();
   }
 
+  public void beUniqueIdConfiguration(@NlsSafe String @NotNull ... uniqueIds) {
+    myData.setUniqueIds(uniqueIds);
+    myData.TEST_OBJECT = TEST_UNIQUE_ID;
+    setGeneratedName();
+  }
+
   @Override
   public void withNestedClass(PsiClass aClass) {
     String className = aClass.getName();

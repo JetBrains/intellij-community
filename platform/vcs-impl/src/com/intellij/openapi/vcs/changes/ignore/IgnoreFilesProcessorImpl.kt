@@ -9,6 +9,7 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.FilePath
@@ -25,8 +26,8 @@ import com.intellij.openapi.vcs.changes.VcsIgnoreManager
 import com.intellij.openapi.vcs.changes.ignore.IgnoreConfigurationProperty.ASKED_MANAGE_IGNORE_FILES_PROPERTY
 import com.intellij.openapi.vcs.changes.ignore.IgnoreConfigurationProperty.MANAGE_IGNORE_FILES_PROPERTY
 import com.intellij.openapi.vcs.changes.ignore.psi.util.addNewElementsToIgnoreBlock
+import com.intellij.openapi.vcs.util.paths.RecursiveFilePathSet
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.events.VFileCopyEvent
@@ -42,6 +43,7 @@ import com.intellij.vfs.AsyncVfsEventsPostProcessor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.job
+import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.write
 import kotlin.coroutines.coroutineContext
@@ -56,7 +58,8 @@ internal class IgnoreFilesProcessorImpl(project: Project, parentDisposable: Disp
 
   private val UNPROCESSED_FILES_LOCK = ReentrantReadWriteLock()
 
-  private val unprocessedFiles = mutableSetOf<VirtualFile>()
+  private var unprocessedPathsInConfigDir = RecursiveFilePathSet(SystemInfoRt.isFileSystemCaseSensitive)
+  private var unprocessedPathsOutsideConfigDir = RecursiveFilePathSet(SystemInfoRt.isFileSystemCaseSensitive)
 
   private val vcsIgnoreManager = VcsIgnoreManager.getInstance(project)
 
@@ -66,33 +69,45 @@ internal class IgnoreFilesProcessorImpl(project: Project, parentDisposable: Disp
   }
 
   override fun unchangedFileStatusChanged(upToDate: Boolean) {
-    if (!upToDate) return
     if (ApplicationManager.getApplication().isUnitTestMode) return
 
-    val files: List<VirtualFile>
-    UNPROCESSED_FILES_LOCK.write {
-      files = unprocessedFiles.toList()
-      unprocessedFiles.clear()
-    }
-    if (files.isEmpty()) return
-
-    val restFiles = silentlyIgnoreFilesInsideConfigDir(files)
-    if (needProcessIgnoredFiles() && restFiles.isNotEmpty()) {
-      processFiles(restFiles)
-    }
+    processCollectedPaths(upToDate)
   }
 
-  private fun silentlyIgnoreFilesInsideConfigDir(files: List<VirtualFile>): List<VirtualFile> {
-    val configDir = project.stateStore.directoryStorePath ?: return files
-    val configDirFile = LocalFileSystem.getInstance().findFileByNioFile(configDir) ?: return files
-    val filesInConfigDir = files.filter { VfsUtil.isAncestor(configDirFile, it, true) }
-    val unversionedFilesInConfigDir = doFilterFiles(filesInConfigDir)
+  /**
+   * Processes every path that [collectPotentiallyIgnoredPaths] collected before.
+   *
+   * [unchangedFileStatusChanged] returns at once in the unit test mode. The processor must not write an ignore file
+   * in a test that does not ask for it. A test calls this method to get the same work.
+   */
+  @VisibleForTesting
+  fun processCollectedPaths(upToDate: Boolean) {
+    if (!upToDate) return
 
-    runInEdt {
-      writeIgnores(project, unversionedFilesInConfigDir)
+    val pathsInConfigDir: RecursiveFilePathSet
+    val pathsOutsideConfigDir: RecursiveFilePathSet
+    UNPROCESSED_FILES_LOCK.write {
+      pathsInConfigDir = unprocessedPathsInConfigDir
+      pathsOutsideConfigDir = unprocessedPathsOutsideConfigDir
+      unprocessedPathsInConfigDir = RecursiveFilePathSet(SystemInfoRt.isFileSystemCaseSensitive)
+      unprocessedPathsOutsideConfigDir = RecursiveFilePathSet(SystemInfoRt.isFileSystemCaseSensitive)
     }
 
-    return files - filesInConfigDir
+    val unversionedPaths: List<FilePath> by lazy(mode = LazyThreadSafetyMode.NONE) {
+      ChangeListManager.getInstance(project).unversionedFilesPaths
+    }
+
+    if (!pathsInConfigDir.isEmpty) {
+      val unversionedPathsInConfigDir = unversionedPaths.getFilesUnder(pathsInConfigDir)
+      runInEdt {
+        writeIgnores(project, unversionedPathsInConfigDir)
+      }
+    }
+
+    if (needProcessIgnoredFiles() && !pathsOutsideConfigDir.isEmpty) {
+      val unversionedPaths = unversionedPaths.getFilesUnder(pathsOutsideConfigDir)
+      processFiles(unversionedPaths)
+    }
   }
 
   override suspend fun filesChanged(events: List<VFileEvent>) {
@@ -100,24 +115,42 @@ internal class IgnoreFilesProcessorImpl(project: Project, parentDisposable: Disp
       return
     }
 
-    val potentiallyIgnoredFiles = events.asSequence()
-        .filter {
-          val filePath = getAffectedFilePath(it)
-          filePath != null && vcsIgnoreManager.isPotentiallyIgnoredFile(filePath)
-        }
-        .mapNotNull { it.file }
-        .toList()
+    collectPotentiallyIgnoredPaths(events)
+  }
 
-    if (potentiallyIgnoredFiles.isEmpty()) {
+  /**
+   * Keeps the path of every potentially ignored file that [events] report.
+   * [processCollectedPaths] processes the kept paths later.
+   *
+   * [filesChanged] returns at once in the unit test mode. A test calls this method to get the same work.
+   */
+  @VisibleForTesting
+  suspend fun collectPotentiallyIgnoredPaths(events: List<VFileEvent>) {
+    val potentiallyIgnoredPaths = events.asSequence()
+      .mapNotNull(::getAffectedFilePath)
+      .filter(vcsIgnoreManager::isPotentiallyIgnoredFile)
+      .toList()
+
+    if (potentiallyIgnoredPaths.isEmpty()) {
       return
     }
 
-    LOG.debug { "Got potentially ignored files from VFS events $potentiallyIgnoredFiles" }
+    LOG.debug { "Got potentially ignored files from VFS events $potentiallyIgnoredPaths" }
 
     coroutineContext.job.ensureActive()
 
+    val configDirPath = project.stateStore.directoryStorePath?.let {
+      VcsUtil.getFilePath(it, true)
+    }
     UNPROCESSED_FILES_LOCK.write {
-      unprocessedFiles.addAll(potentiallyIgnoredFiles)
+      for (path in potentiallyIgnoredPaths) {
+        if (configDirPath != null && path.isUnder(configDirPath, true)) {
+          unprocessedPathsInConfigDir.add(path)
+        }
+        else {
+          unprocessedPathsOutsideConfigDir.add(path)
+        }
+      }
     }
   }
 
@@ -130,7 +163,8 @@ internal class IgnoreFilesProcessorImpl(project: Project, parentDisposable: Disp
   override fun dispose() {
     super.dispose()
     UNPROCESSED_FILES_LOCK.write {
-      unprocessedFiles.clear()
+      unprocessedPathsInConfigDir.clear()
+      unprocessedPathsOutsideConfigDir.clear()
     }
   }
 
@@ -203,14 +237,11 @@ internal class IgnoreFilesProcessorImpl(project: Project, parentDisposable: Disp
     return VfsUtilCore.isAncestor(storeDir, this, true)
   }
 
-  override fun doFilterFiles(files: Collection<VirtualFile>): List<VirtualFile> {
-    val parents = files.toHashSet()
-    return ChangeListManager.getInstance(project).unversionedFilesPaths
-      .asSequence()
+  private fun Collection<FilePath>.getFilesUnder(parents: RecursiveFilePathSet) =
+    asSequence()
+      .filter { parents.hasAncestor(it) }
       .mapNotNull { it.virtualFile }
-      .filter { isUnder(parents, it) }
       .toList()
-  }
 
   override fun rememberForAllProjects() {
     val applicationSettings = VcsApplicationSettings.getInstance()
@@ -234,9 +265,8 @@ internal class IgnoreFilesProcessorImpl(project: Project, parentDisposable: Disp
   override fun notificationTitle() = ""
   override fun notificationMessage(): String = VcsBundle.message("ignored.file.manage.with.files.message",
                                                                  ApplicationNamesInfo.getInstance().fullProductName,
-                                                                 findIgnoredFileContentProvider(vcs)?.fileName ?: VcsBundle.message("changes.ignore.file"))
-
-  private fun isUnder(parents: Set<VirtualFile>, child: VirtualFile) = generateSequence(child) { it.parent }.any { it in parents }
+                                                                 findIgnoredFileContentProvider(vcs)?.fileName
+                                                                 ?: VcsBundle.message("changes.ignore.file"))
 
   override fun needDoForCurrentProject(): Boolean {
     val appSettings = VcsApplicationSettings.getInstance()

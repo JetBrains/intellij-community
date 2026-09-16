@@ -36,6 +36,7 @@ jvm_library(
         "//platform/tasks-platform-impl/plugin",
         "//platform/vcs/plugin",
         "//platform/core-ui",
+        "//xml/plugin",
     ],
 )
 
@@ -60,6 +61,7 @@ jvm_library(
         "//spellchecker:spellchecker_test_lib",
         "//platform/tasks-platform-impl/plugin:plugin_test_lib",
         "//platform/vcs/plugin:plugin_test_lib",
+        "//xml/plugin:plugin_test_lib",
     ],
     deps = [
         # do not sort,
@@ -154,8 +156,8 @@ jvm_library(
         "//platform/util/concurrency:concurrency_test_lib",
         "//platform/lang-core",
         "//platform/lang-core:lang-core_test_lib",
-        "//plugins/git4idea:vcs-git-backend-tests",
-        "//plugins/git4idea:vcs-git-backend-tests_test_lib",
+        "//plugins/git4idea/testFramework",
+        "//plugins/git4idea/testFramework:testFramework_test_lib",
         "//plugins/hg4idea:vcs-hg-tests",
         "//plugins/hg4idea:vcs-hg-tests_test_lib",
     ],

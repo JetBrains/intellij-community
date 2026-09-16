@@ -24,7 +24,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 private val CONNECT_TIMEOUT = Duration.ofMillis(System.getProperty("idea.connection.timeout")?.toLong() ?: 30_000)
 private val READ_TIMEOUT = Duration.ofMillis(System.getProperty("idea.read.timeout")?.toLong() ?: 60_000)
 
-internal suspend fun checkLibraryUrls(licenses: List<LibraryLicense>, context: BuildContext) {
+internal fun checkLibraryUrls(licenses: List<LibraryLicense>, context: BuildContext) {
   context.executeStep(spanBuilder("checking library URLs"), BuildOptions.LIBRARY_URL_CHECK_STEP) {
     val errors = CopyOnWriteArrayList<String>()
     try {
@@ -40,7 +40,7 @@ internal suspend fun checkLibraryUrls(licenses: List<LibraryLicense>, context: B
   }
 }
 
-private suspend fun checkLicenseUrls(licenses: List<LibraryLicense>, errors: MutableList<String>) {
+private fun checkLicenseUrls(licenses: List<LibraryLicense>, errors: MutableList<String>) {
   val knownLicenses = setOf(
     "https://www.apache.org/licenses/LICENSE-2.0",
     "https://www.gnu.org/licenses/lgpl-3.0.html",
@@ -56,7 +56,7 @@ private suspend fun checkLicenseUrls(licenses: List<LibraryLicense>, errors: Mut
   checkUrls("License", map, errors)
 }
 
-private suspend fun checkWebsiteUrls(licenses: List<LibraryLicense>, errors: MutableList<String>) {
+private fun checkWebsiteUrls(licenses: List<LibraryLicense>, errors: MutableList<String>) {
   val knownProblems = setOf(
     "https://github.com/JetBrains/intellij-deps-commons-vfs",  // private repo
     "https://www.dabeaz.com/ply/",  // JRE does not recognize the certificate
@@ -73,7 +73,7 @@ private suspend fun checkWebsiteUrls(licenses: List<LibraryLicense>, errors: Mut
 
 private const val maxParallelPerHosts = 4
 
-private suspend fun checkUrls(type: String, urls: Map<String, List<LibraryLicense>>, errors: MutableList<String>) {
+private fun checkUrls(type: String, urls: Map<String, List<LibraryLicense>>, errors: MutableList<String>) {
   fun usedIn(libs: List<LibraryLicense>): String = "Used in: ${libs.joinToString { "'${it.presentableName}'" }}"
   val span = Span.current()
 

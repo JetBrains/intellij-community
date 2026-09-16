@@ -26,5 +26,7 @@
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
     <orderEntry type="module" module-name="intellij.platform.frontend" />
     <orderEntry type="module" module-name="intellij.platform.lsp.impl" />
+    <orderEntry type="module" module-name="intellij.platform.lang.impl" />
+    <orderEntry type="module" module-name="intellij.json" />
   </component>
 </module>

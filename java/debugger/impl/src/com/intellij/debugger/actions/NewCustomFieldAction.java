@@ -35,7 +35,7 @@ public class NewCustomFieldAction extends XDebuggerTreeActionBase {
     boolean enabled = false;
     List<JavaValue> values = ViewAsGroup.getSelectedValues(e);
     if (values.size() == 1) {
-      ValueDescriptorImpl descriptor = values.get(0).getDescriptor();
+      ValueDescriptorImpl descriptor = values.getFirst().getDescriptor();
       enabled = descriptor.isValueReady() && descriptor.getType() != null;
     }
     e.getPresentation().setEnabledAndVisible(enabled);

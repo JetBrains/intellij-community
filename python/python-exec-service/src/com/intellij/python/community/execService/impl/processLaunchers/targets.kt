@@ -14,11 +14,13 @@ import com.intellij.execution.target.TargetedCommandLine
 import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.execution.target.getTargetPaths
 import com.intellij.execution.target.local.LocalTargetPtyOptions
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.impl.base.ProcessFunctions
 import com.intellij.platform.eel.impl.base.bindProcessToScopeImpl
 import com.intellij.python.community.execService.BinOnTarget
@@ -27,12 +29,12 @@ import com.intellij.python.community.execService.ExecuteGetProcessError
 import com.intellij.python.community.execService.UploadConfig
 import com.intellij.python.community.execService.impl.PyExecBundle
 import com.intellij.python.community.execService.impl.TargetEnvironmentRequestHandler
-import com.intellij.remoteServer.util.ServerRuntimeException
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.Exe
 import com.jetbrains.python.errorProcessing.ExecErrorReason
 import com.jetbrains.python.errorProcessing.MessageError
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -57,8 +59,13 @@ internal suspend fun createProcessLauncherOnTarget(
     try {
       target.createEnvironmentRequest(projectMan.openProjects.firstOrNull() ?: projectMan.defaultProject)
     }
-    catch (e: ServerRuntimeException) {
-      return@withContext Result.failure(ExecuteGetProcessError.EnvironmentError(MessageError(e.localizedMessage)))
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (e: Exception) {
+      // A target implementation reports a failure with its own exception type. This module must not depend on that type.
+      if (e is ControlFlowException) throw e
+      return@withContext Result.failure(ExecuteGetProcessError.EnvironmentError(MessageError(e.localizedMessage ?: e.toString())))
     }
   }
 
@@ -107,7 +114,7 @@ internal suspend fun createProcessLauncherOnTarget(
     }
   }
 
-  val args = launchRequest.args.getArgs { localFile ->
+  val (args, env) = launchRequest.args.getArgsAndEnv { localFile ->
     targetEnv.getTargetPaths(localFile.pathString).first()
   }
   val exePath: FullPathOnTarget
@@ -131,7 +138,11 @@ internal suspend fun createProcessLauncherOnTarget(
     }
 
     commandLineBuilder.addParameters(args)
-    for ((k, v) in launchRequest.env) {
+    val osFamily = when (targetEnv.targetPlatform.platform) {
+      Platform.UNIX -> EelOsFamily.Posix
+      Platform.WINDOWS -> EelOsFamily.Windows
+    }
+    for ((k, v) in launchRequest.getEnvMergingWithPathVars(env, osFamily)) {
       commandLineBuilder.addEnvironmentVariable(k, v)
     }
   }.build()
@@ -287,7 +298,7 @@ private fun ExecutionException.asCantStart(): Result.Failure<ExecErrorReason.Can
  */
 @ApiStatus.Internal
 @Throws(IOException::class)
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 fun TargetEnvironment.UploadableVolume.uploadMeasureTime(
   relativePath: String,
   targetProgressIndicator: TargetProgressIndicator,
@@ -307,8 +318,8 @@ fun TargetEnvironment.UploadableVolume.uploadMeasureTime(
  * Measures time for [upload] and reports it along with [genMessage] if `debug` enabled using [logger]
  */
 @ApiStatus.Internal
-@RequiresBackgroundThread
-fun measureUploadTime(@RequiresBackgroundThread upload: () -> Unit, genMessage: () -> @NlsSafe String) {
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+fun measureUploadTime(@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */) upload: () -> Unit, genMessage: () -> @NlsSafe String) {
   val duration = measureTime { upload() }
   logger.debug { "upload ${genMessage()} : $duration" }
 }

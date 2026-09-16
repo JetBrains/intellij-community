@@ -12,11 +12,8 @@ import com.intellij.ide.starter.runner.DevBuildServerRunner
 import com.intellij.ide.starter.telemetry.TestTelemetryService
 import com.intellij.ide.starter.telemetry.computeWithSpan
 import com.intellij.openapi.application.PathManager
+import com.intellij.platform.buildScripts.concurrency.withLockInterruptibly
 import com.intellij.tools.ide.util.common.logOutput
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.ScrambleTool
 import org.jetbrains.intellij.build.dev.BuildRequest
@@ -26,6 +23,7 @@ import org.jetbrains.intellij.build.dev.resolveAdditionalJvmArguments
 import org.kodein.di.direct
 import org.kodein.di.instance
 import java.nio.file.Path
+import java.util.concurrent.locks.ReentrantLock
 import kotlin.io.path.copyTo
 import kotlin.io.path.div
 import kotlin.io.path.exists
@@ -40,7 +38,7 @@ import kotlin.io.path.exists
 object DevBuildServerRunnerImpl : DevBuildServerRunner {
   private val ideaRootPath = PathManager.getHomeDir()
 
-  private val mutex = Mutex()
+  private val lock = ReentrantLock()
 
   private fun copyArtifactsToDefaultDir() {
     if (!CIServer.instance.isBuildRunningOnCI) {
@@ -58,45 +56,46 @@ object DevBuildServerRunnerImpl : DevBuildServerRunner {
 
   override fun isDevBuildSupported(): Boolean = true
 
-  override suspend fun readVmOptions(installationDirectory: Path): List<String> =
+  override fun readVmOptions(installationDirectory: Path): List<String> =
     org.jetbrains.intellij.build.dev.readVmOptions(installationDirectory)
 
   override fun readCustomCommandJvmArguments(installationDirectory: Path, command: String): List<String>? =
     readCustomCommand(installationDirectory, command)?.resolveAdditionalJvmArguments(installationDirectory)
 
-  /** Returns IDE installation directory */
-  override suspend fun startDevBuild(ideInfo: IdeInfo): Path {
-    mutex.withLock {
+  /**
+   * Returns IDE installation directory.
+   *
+   * The build runs on the calling thread and owns its workers there. The lock serializes the builds, and the wait for
+   * it stops for an interrupt.
+   */
+  override fun startDevBuild(ideInfo: IdeInfo): Path {
+    return lock.withLockInterruptibly {
       logOutput("Starting dev build server for $ideInfo ...")
       copyArtifactsToDefaultDir()
 
-      val installationDirectory: Path = withContext(Dispatchers.IO) {
-        computeWithSpan("building ide $ideInfo") {
-          System.setProperty("intellij.build.console.exporter.enabled", false.toString())
-          System.setProperty("intellij.build.export.opentelemetry.spans", true.toString())
-          val targetOs = if (ConfigurationStorage.useDockerContainer()) OsFamily.LINUX else OsFamily.currentOs
-          buildProductInProcess(
-            BuildRequest(
-              projectDir = ideaRootPath,
-              os = targetOs,
-              platformPrefix = ideInfo.platformPrefix,
-              baseIdePlatformPrefixForFrontend = ideInfo.baseIdePlatformPrefixForFrontend,
-              additionalModules = ideInfo.additionalModules,
-              scrambleTool = di.direct.instance<ScrambleToolProvider>().get() as ScrambleTool?,
-              keepHttpClient = false,
-              generateRuntimeModuleRepository = ConfigurationStorage.includeRuntimeModuleRepositoryInIde(),
-              tracer = TestTelemetryService.instance.getTracer(),
-              isBootClassPathCorrect = true,
-              classesOutputDirectory = GlobalPaths.instance.compiledRootDirectory.resolve("classes"),
-              devRunDirPrefix = if (targetOs != OsFamily.currentOs) "${targetOs.name.lowercase()}-" else "",
-            )
+      val installationDirectory = computeWithSpan("building ide $ideInfo") {
+        System.setProperty("intellij.build.console.exporter.enabled", false.toString())
+        System.setProperty("intellij.build.export.opentelemetry.spans", true.toString())
+        val targetOs = if (ConfigurationStorage.useDockerContainer()) OsFamily.LINUX else OsFamily.currentOs
+        buildProductInProcess(
+          BuildRequest(
+            projectDir = ideaRootPath,
+            os = targetOs,
+            platformPrefix = ideInfo.platformPrefix,
+            baseIdePlatformPrefixForFrontend = ideInfo.baseIdePlatformPrefixForFrontend,
+            additionalModules = ideInfo.additionalModules,
+            scrambleTool = di.direct.instance<ScrambleToolProvider>().get() as ScrambleTool?,
+            generateRuntimeModuleRepository = ConfigurationStorage.includeRuntimeModuleRepositoryInIde(),
+            tracer = TestTelemetryService.instance.getTracer(),
+            isBootClassPathCorrect = true,
+            classesOutputDirectory = GlobalPaths.instance.compiledRootDirectory.resolve("classes"),
+            devRunDirPrefix = if (targetOs != OsFamily.currentOs) "${targetOs.name.lowercase()}-" else "",
           )
-        }
+        ).runDir
       }
 
       logOutput("Building IDE by dev build server finished for $ideInfo")
-
-      return installationDirectory
+      installationDirectory
     }
   }
 }

@@ -16,7 +16,7 @@
     "record to remove its own entries only."
   ],
   "areas": {
-    "air": ["acp-sync", "aia-activation-test-conventions", "air", "air-release-backport", "vm-ui-tests"],
+    "air": ["acp-sync", "air", "air-release-backport", "vm-ui-tests"],
     "build": ["bazel-test-migration", "convert-lib-to-product-module", "module-set-pluginization", "plugin-model-analyzer"],
     "clion": ["clion-devbuild-test-wiring", "clion-test-in-tc"],
     "dotnet": ["dotnet-building", "dotnet-testing"],

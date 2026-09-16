@@ -12,6 +12,7 @@
   </dependencies>
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
-    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.rpc.topics.backend.BackendRemoteTopicApiProvider"/>
+    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.rpc.topics.backend.BackendRemoteTopicApiProvider"
+                                            apiInterfaces="com.intellij.platform.rpc.topics.impl.RemoteTopicApi"/>
   </extensions>
 </idea-plugin>

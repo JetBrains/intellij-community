@@ -2,6 +2,10 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.python.community.execService.python` start
+content_module_jar(module = ":execService.python")
+### auto-generated section `dev intellij.python.community.execService.python` end
+
 ### auto-generated section `build intellij.python.community.execService.python` start
 create_kotlinc_options(
     name = "custom_execService.python",
@@ -40,8 +44,6 @@ jvm_library(
         "//platform/core-api:core",
     ],
 )
-
-content_module_jar(module = ":execService.python")
 
 jvm_library(
     name = "execService.python_test_lib",

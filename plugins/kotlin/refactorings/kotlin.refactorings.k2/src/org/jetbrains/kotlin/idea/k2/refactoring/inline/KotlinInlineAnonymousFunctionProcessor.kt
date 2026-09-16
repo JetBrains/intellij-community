@@ -13,11 +13,11 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteActio
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.base.psi.safeDeparenthesize
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.refactoring.intentions.OperatorToFunctionConverter
 import org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner.CodeInliner
 import org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner.fullyExpandCall
 import org.jetbrains.kotlin.idea.k2.refactoring.util.LambdaToAnonymousFunctionUtil
 import org.jetbrains.kotlin.idea.refactoring.inline.AbstractKotlinDeclarationInlineProcessor
+import org.jetbrains.kotlin.idea.refactoring.intentions.OperatorToFunctionConverter
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtExpression
@@ -30,7 +30,6 @@ import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.util.OperatorNameConventions
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class KotlinInlineAnonymousFunctionProcessor(
     function: KtFunction,
@@ -64,7 +63,7 @@ class KotlinInlineAnonymousFunctionProcessor(
                 else -> return
             } as KtCallExpression
 
-            invokeCallExpression.calleeExpression?.safeAs<KtReferenceExpression>()?.let {
+            (invokeCallExpression.calleeExpression as? KtReferenceExpression)?.let {
                 fullyExpandCall(it)
             }
 

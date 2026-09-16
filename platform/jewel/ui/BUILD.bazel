@@ -12,6 +12,17 @@ jps_test(
 
 ### skip generation section `test intellij.platform.jewel.ui.tests`
 
+### auto-generated section `dev intellij.platform.jewel.ui` start
+content_module_jar(
+    libraries = [
+        # do not sort,
+        "@lib//:platform-jewel-ui-org-jetbrains-compose-components-components-resources",
+        "@lib//:platform-jewel-ui-org-jetbrains-compose-components-components-resources-desktop",
+    ],
+    module = ":ui",
+)
+### auto-generated section `dev intellij.platform.jewel.ui` end
+
 ### auto-generated section `build intellij.platform.jewel.ui` start
 create_kotlinc_options(
     name = "custom_ui",
@@ -72,15 +83,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(
-    libraries = [
-        # do not sort,
-        "@lib//:platform-jewel-ui-org-jetbrains-compose-components-components-resources",
-        "@lib//:platform-jewel-ui-org-jetbrains-compose-components-components-resources-desktop",
-    ],
-    module = ":ui",
-)
-
 jvm_library(
     name = "ui_test_lib",
     testonly = True,
@@ -129,7 +131,6 @@ exports_files(
     [
         "intellij.platform.jewel.ui.iml",
         "src/main/resources/intellij.platform.jewel.ui.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

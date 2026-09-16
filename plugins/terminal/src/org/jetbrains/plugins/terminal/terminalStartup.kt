@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal
 
 import com.intellij.openapi.diagnostic.Logger
@@ -14,6 +14,7 @@ import com.intellij.platform.eel.EelExecWindowsApi
 import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.EelProcess
 import com.intellij.platform.eel.ExecuteProcessException
+import com.intellij.platform.eel.convertToJVMProcess
 import com.intellij.platform.eel.environmentVariables
 import com.intellij.platform.eel.isPosix
 import com.intellij.platform.eel.path.EelPath
@@ -30,7 +31,6 @@ import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TtyConnector
-import com.pty4j.PtyProcess
 import org.jetbrains.plugins.terminal.startup.ShellExecCommand
 import org.jetbrains.plugins.terminal.startup.ShellExecCommandImpl
 import org.jetbrains.plugins.terminal.startup.WslShellExecCommand
@@ -251,7 +251,7 @@ internal class ShellProcessHolder(
 ) {
   val isPosix: Boolean get() = eelApi.platform.isPosix
 
-  val ptyProcess: PtyProcess = eelProcess.convertToJavaProcess() as PtyProcess
+  val ptyProcess: Process = eelProcess.convertToJVMProcess()
 
   val descriptor: EelDescriptor get() = eelApi.descriptor
 }

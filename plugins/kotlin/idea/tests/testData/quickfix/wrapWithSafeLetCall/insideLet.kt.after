@@ -6,4 +6,3 @@ fun foo(x: String?, y: String) {
 }
 
 fun bar(s: String, t: String) = s.hashCode() + t.hashCode()
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.WrapWithSafeLetCallFix

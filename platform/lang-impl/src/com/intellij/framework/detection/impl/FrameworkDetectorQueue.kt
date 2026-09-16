@@ -76,7 +76,7 @@ internal class FrameworkDetectorQueue(
     }
   }
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun runDetector(detectorId: String, processNewFilesOnly: Boolean): List<DetectedFrameworkDescription> {
     val acceptedFiles = FileBasedIndex.getInstance().getContainingFiles(FrameworkDetectionIndex.NAME, detectorId,
                                                                         GlobalSearchScope.projectScope(project))

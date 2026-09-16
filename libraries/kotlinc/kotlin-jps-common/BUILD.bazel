@@ -1,5 +1,4 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
-load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.libraries.kotlinc.kotlin.jps.common` start
 jvm_library(
@@ -15,12 +14,11 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-kotlinc-kotlin-jps-common-kotlinc-kotlin-jps-common"],
-    runtime_deps = ["@lib//:libraries-kotlinc-kotlin-jps-common-kotlinc-kotlin-jps-common"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-kotlinc-kotlin-jps-common-kotlinc-kotlin-jps-common"],
-    module = ":libraries-kotlinc-kotlin-jps-common",
+    runtime_deps = [
+        # do not sort,
+        "@lib//:libraries-kotlinc-kotlin-jps-common-kotlinc-kotlin-jps-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+    ],
 )
 
 jvm_library(
@@ -34,7 +32,11 @@ jvm_library(
     module_name = "intellij.libraries.kotlinc.kotlin.jps.common",
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-kotlinc-kotlin-jps-common-kotlinc-kotlin-jps-common"],
-    runtime_deps = [":libraries-kotlinc-kotlin-jps-common"],
+    runtime_deps = [
+        # do not sort,
+        ":libraries-kotlinc-kotlin-jps-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.libraries.kotlinc.kotlin.jps.common` end
 
@@ -43,7 +45,6 @@ exports_files(
     [
         "intellij.libraries.kotlinc.kotlin.jps.common.iml",
         "resources/intellij.libraries.kotlinc.kotlin.jps.common.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

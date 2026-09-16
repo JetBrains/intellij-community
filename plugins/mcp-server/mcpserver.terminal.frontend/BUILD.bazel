@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.mcpserver.terminal.frontend` start
+content_module_jar(module = ":mcpserver.terminal.frontend")
+### auto-generated section `dev intellij.mcpserver.terminal.frontend` end
+
 ### auto-generated section `build intellij.mcpserver.terminal.frontend` start
 jvm_library(
     name = "mcpserver.terminal.frontend",
@@ -40,8 +44,6 @@ jvm_library(
         "//platform/compose/swing-ui:swing",
     ],
 )
-
-content_module_jar(module = ":mcpserver.terminal.frontend")
 
 jvm_library(
     name = "mcpserver.terminal.frontend_test_lib",

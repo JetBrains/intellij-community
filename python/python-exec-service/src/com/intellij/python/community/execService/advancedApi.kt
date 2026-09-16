@@ -85,6 +85,12 @@ fun interface ProcessInteractiveHandler<T> {
 typealias ProcessSemiInteractiveFun<T> = suspend (EelSendChannel, Deferred<EelProcessExecutionResult>) -> Result<T, CustomErrorMessage?>
 
 /**
+ * Writes something to the `stdin` of a process.
+ * The function owns [EelSendChannel]. Close the channel if the process must get `EOF`.
+ */
+typealias StdInConsumer = suspend (stdin: EelSendChannel) -> Unit
+
+/**
  * [ProcessInteractiveHandler], but you do not have to collect output by yourself. You only have access to stdout and exit code.
  * Function collects output lines and reports them to [pyProcessListener] if set
  * So, you can only *write* something to process.

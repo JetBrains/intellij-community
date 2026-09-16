@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.jing` start
+content_module_jar(
+    libraries = ["@lib//:libraries-jing-jing"],
+    module = ":jing",
+)
+### auto-generated section `dev intellij.libraries.jing` end
+
 ### auto-generated section `build intellij.libraries.jing` start
 jvm_library(
     name = "jing",
@@ -20,11 +27,6 @@ jvm_library(
         "@lib//:libraries-jing-jing",
         "//libraries/isorelax",
     ],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-jing-jing"],
-    module = ":jing",
 )
 
 jvm_library(
@@ -50,7 +52,6 @@ exports_files(
     [
         "intellij.libraries.jing.iml",
         "resources/intellij.libraries.jing.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

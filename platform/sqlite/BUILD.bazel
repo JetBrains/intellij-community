@@ -66,7 +66,6 @@ exports_files(
     [
         "intellij.platform.sqlite.iml",
         "resources/intellij.platform.sqlite.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

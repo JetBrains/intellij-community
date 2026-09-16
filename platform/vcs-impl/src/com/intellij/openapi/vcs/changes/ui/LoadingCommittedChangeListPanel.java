@@ -11,21 +11,38 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesBrowserUseCase;
 import com.intellij.openapi.vcs.changes.ui.browser.LoadingChangesPanel;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JComponent;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.function.Function;
 
 public class LoadingCommittedChangeListPanel implements Disposable {
   private final CommittedChangeListPanel myChangesPanel;
   private final LoadingChangesPanel myLoadingPanel;
 
   public LoadingCommittedChangeListPanel(@NotNull Project project) {
-    myChangesPanel = new CommittedChangeListPanel(project);
+    this(project, null);
+  }
+
+  /**
+   * @param commitDetailsComponentFactory builds the component for the bottom part of the panel. It gets this panel as the
+   *                                      parent disposable. Pass null to use the built-in commit message area.
+   * @see CommittedChangeListPanel#CommittedChangeListPanel(Project, JComponent)
+   */
+  @ApiStatus.Internal
+  public LoadingCommittedChangeListPanel(@NotNull Project project,
+                                         @Nullable Function<? super Disposable, ? extends JComponent> commitDetailsComponentFactory) {
+    JComponent commitDetailsComponent = commitDetailsComponentFactory != null ? commitDetailsComponentFactory.apply(this) : null;
+    myChangesPanel = new CommittedChangeListPanel(project, commitDetailsComponent);
 
     myLoadingPanel = new LoadingChangesPanel(myChangesPanel, this);
+
+    // A drag of a file row must reach a target outside the tree, such as an editor or an agent session.
+    ChangesTreeFileDragSourceKt.installFileDragSource(myChangesPanel.getChangesBrowser().getViewer(), this);
   }
 
   @Override
@@ -47,6 +64,14 @@ public class LoadingCommittedChangeListPanel implements Disposable {
 
   public void hideCommitMessage() {
     myChangesPanel.setShowCommitMessage(false);
+  }
+
+  /**
+   * @see CommittedChangeListPanel#setCommitDetailsProportion
+   */
+  @ApiStatus.Internal
+  public void setCommitDetailsProportion(float proportion) {
+    myChangesPanel.setCommitDetailsProportion(proportion);
   }
 
   public void hideSideBorders() {

@@ -1,45 +1,43 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java.actions
 
-import com.intellij.codeInsight.CodeInsightUtil.positionCursor
 import com.intellij.codeInsight.daemon.QuickFixBundle.message
-import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix.startTemplate
+import com.intellij.codeInsight.daemon.impl.quickfix.GuessTypeParameters
 import com.intellij.codeInsight.daemon.impl.quickfix.JavaCreateFieldFromUsageHelper
-import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
-import com.intellij.codeInsight.template.Template
-import com.intellij.codeInsight.template.TemplateEditingAdapter
+import com.intellij.codeInsight.template.impl.ConstantNode
 import com.intellij.lang.java.request.CreateFieldFromJavaUsageRequest
 import com.intellij.lang.jvm.JvmLong
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.CreateFieldActionGroup
 import com.intellij.lang.jvm.actions.CreateFieldRequest
 import com.intellij.lang.jvm.actions.JvmActionGroup
-import com.intellij.openapi.editor.Editor
+import com.intellij.modcommand.ModCommand
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementFactory
+import com.intellij.psi.PsiExpression
 import com.intellij.psi.PsiField
-import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiLambdaExpressionType
 import com.intellij.psi.PsiLambdaParameterType
 import com.intellij.psi.PsiType
 import com.intellij.psi.PsiTypes
 import com.intellij.psi.codeStyle.CodeStyleManager
+import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.presentation.java.ClassPresentationUtil.getNameForClass
 import com.intellij.psi.util.JavaElementKind
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.util.TypeConversionUtil
+import com.intellij.psi.util.createSmartPointer
 
 internal class CreateFieldAction(target: PsiClass, request: CreateFieldRequest) : CreateFieldActionBase(target, request) {
 
   override fun getActionGroup(): JvmActionGroup = CreateFieldActionGroup
 
-  override fun getText(): String = message("create.element.in.class", JavaElementKind.FIELD.`object`(),
-                                           request.fieldName, getNameForClass(target, false))
+  override fun getText(target: PsiClass): String = message("create.element.in.class", JavaElementKind.FIELD.`object`(),
+                                                            request.fieldName, getNameForClass(target, false))
 }
 
 internal val constantModifiers: Set<JvmModifier> = setOf(
@@ -47,16 +45,23 @@ internal val constantModifiers: Set<JvmModifier> = setOf(
   JvmModifier.FINAL
 )
 
+/**
+ * @param targetClass the writable copy of the target class
+ * @param originalTarget the physical target class, to find the field again after the template ends
+ */
 internal class JavaFieldRenderer(
   private val project: Project,
   private val constantField: Boolean,
   private val targetClass: PsiClass,
-  private val request: CreateFieldRequest
+  originalTarget: PsiClass,
+  private val request: CreateFieldRequest,
+  private val updater: ModPsiUpdater,
 ) {
 
   private val helper = JavaCreateFieldFromUsageHelper() // TODO get rid of it
   private val javaUsage = request as? CreateFieldFromJavaUsageRequest
   private val expectedTypes = extractExpectedTypes(project, request.fieldType, targetClass).toTypedArray()
+  private val originalTargetPointer = originalTarget.createSmartPointer(project)
 
   private val modifiersToRender: Collection<JvmModifier>
     get() {
@@ -71,10 +76,19 @@ internal class JavaFieldRenderer(
     }
 
   fun doRender() {
+    // Take every writable copy before the first write, as ModPsiUpdater.getWritable demands.
+    val anchor = updater.getWritable(javaUsage?.anchor)
+    val guesserContext = updater.getWritable(javaUsage?.reference)
+
     var field = renderField()
-    field = insertField(field, javaUsage?.anchor)
+    field = insertField(field, anchor)
+    // An annotation of the request carries the qualified name of its class. A copy of the file gets no
+    // postponed formatting, which shortens such a name in a physical file. So shorten it here, and get
+    // the import too.
+    val codeStyleManager = JavaCodeStyleManager.getInstance(project)
+    field.annotations.forEach { annotation -> codeStyleManager.shortenClassReferences(annotation) }
     if (request.fieldType.isEmpty() || request.fieldType.size > 1 || request.isStartTemplate) {
-      startTemplate(field)
+      startTemplate(field, guesserContext)
     }
   }
 
@@ -112,29 +126,52 @@ internal class JavaFieldRenderer(
     return field
   }
 
-  internal fun insertField(field: PsiField, anchor: PsiElement?): PsiField {
+  private fun insertField(field: PsiField, anchor: PsiElement?): PsiField {
     return helper.insertFieldImpl(targetClass, field, anchor)
   }
 
-  internal fun startTemplate(field: PsiField) {
-    val targetFile = targetClass.containingFile ?: return
-    val newEditor = positionCursor(field.project, targetFile, field) ?: return
+  /**
+   * A port of `JavaCreateFieldFromUsageHelper.setupTemplateImpl` onto [com.intellij.modcommand.ModTemplateBuilder].
+   */
+  private fun startTemplate(field: PsiField, guesserContext: PsiElement?) {
+    val factory = JavaPsiFacade.getElementFactory(project)
+    val typeElement = field.typeElement ?: return
     val substitutor = request.targetSubstitutor.toPsiSubstitutor(project)
-    val template = helper.setupTemplateImpl(field, expectedTypes, targetClass, newEditor, javaUsage?.reference, constantField, request.isStartTemplate, substitutor)
-    val listener = MyTemplateListener(project, newEditor, targetFile)
-    startTemplate(newEditor, template, project, listener, null)
-  }
-}
 
-private class MyTemplateListener(val project: Project, val editor: Editor, val file: PsiFile) : TemplateEditingAdapter() {
+    // Every PSI change happens first, and the template fields go in at the end. A ModTemplateBuilder
+    // writes the value of a field into the document at once, which leaves the PSI behind, so an
+    // offset read after that is stale.
+    val fields = RecordedTemplateFields(project)
+    GuessTypeParameters(project, factory, fields::field, substitutor)
+      .setupTypeElement(typeElement, expectedTypes, guesserContext, targetClass)
 
-  override fun templateFinished(template: Template, brokenOff: Boolean) {
-    PsiDocumentManager.getInstance(project).commitDocument(editor.document)
-    val offset = editor.caretModel.offset
-    val psiField = PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiField::class.java, false) ?: return
-    IntentionPreviewUtils.write<RuntimeException> {
-      CodeStyleManager.getInstance(project).reformat(psiField)
+    var initializer: PsiExpression? = null
+    if (constantField && !field.hasInitializer()) {
+      // The initializer holds a placeholder, and the empty template field clears it.
+      field.initializer = factory.createExpressionFromText("0", null)
+      initializer = field.initializer
     }
-    editor.caretModel.moveToOffset(psiField.textRange.endOffset - 1)
+
+    val builder = updater.templateBuilder()
+    if (initializer != null) {
+      field.nameIdentifier.let { builder.finishAt(it.textRange.endOffset) }
+      fields.field(initializer, ConstantNode(""))
+    }
+    fields.flushTo(builder)
+
+    builder.onTemplateFinished { _ -> reformatField() }
+  }
+
+  /**
+   * The template can leave the field badly formatted, so format it again and put the caret at its end.
+   */
+  private fun reformatField(): ModCommand {
+    val originalTarget = originalTargetPointer.element ?: return ModCommand.nop()
+    val field = originalTarget.findFieldByName(request.fieldName, false) ?: return ModCommand.nop()
+    return ModCommand.psiUpdate(field) { writableField, fieldUpdater ->
+      val formatted = CodeStyleManager.getInstance(project).reformat(writableField)
+      // Put the caret in front of the closing semicolon, so the user can type the initializer.
+      fieldUpdater.moveCaretTo(formatted.lastChild ?: formatted)
+    }
   }
 }

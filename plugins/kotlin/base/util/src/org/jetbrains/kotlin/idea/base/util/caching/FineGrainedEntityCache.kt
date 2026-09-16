@@ -67,10 +67,10 @@ abstract class FineGrainedEntityCache<Key : Any, Value : Any>(
         invalidate()
     }
 
-    @RequiresReadLock
+    @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
     abstract operator fun get(key: Key): Value
 
-    @RequiresReadLock
+    @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
     fun values(): Collection<Value> {
         ThreadingAssertions.softAssertReadAccess()
         return useCache { it.values }
@@ -135,7 +135,7 @@ abstract class FineGrainedEntityCache<Key : Any, Value : Any>(
         cache.clear()
     }
 
-    @RequiresWriteLock
+    @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
     protected fun invalidateKeysAndGetOutdatedValues(
         keys: Collection<Key>,
         validityCondition: ((Key, Value) -> Boolean)? = CHECK_ALL
@@ -157,7 +157,7 @@ abstract class FineGrainedEntityCache<Key : Any, Value : Any>(
         }
     }
 
-    @RequiresWriteLock
+    @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
     protected fun invalidateKeys(
         keys: Collection<Key>,
         validityCondition: ((Key, Value) -> Boolean)? = CHECK_ALL
@@ -176,7 +176,7 @@ abstract class FineGrainedEntityCache<Key : Any, Value : Any>(
      * @param condition is a condition to find entries those will be invalidated and removed from the cache
      * @param validityCondition is a condition to find entries those have to be checked for their validity, see [checkKeyValidity] and [checkValueValidity]
      */
-    @RequiresWriteLock
+    @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
     protected fun invalidateEntries(
         condition: (Key, Value) -> Boolean,
         validityCondition: ((Key, Value) -> Boolean)? = CHECK_ALL

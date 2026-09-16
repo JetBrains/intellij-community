@@ -21,7 +21,8 @@
 
   <extensions defaultExtensionNs="com.intellij">
 
-    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.find.backend.FindInFilesApiProvider"/>
+    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.find.backend.FindInFilesApiProvider"
+                                            apiInterfaces="com.intellij.platform.find.FindInFilesApi"/>
 
     <registryKey key="find.in.files.split.actions"
                  defaultValue="true"

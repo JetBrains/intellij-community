@@ -40,11 +40,15 @@ public interface GradleTaskManagerExtension {
 
   /**
    * Configures Gradle task execution settings.
-   *
-   * @param projectPath path to project, where tasks are executed
-   * @param id          id of operation in IDEA terms
-   * @param settings    gradle execution settings
    */
+  default void configureTasks(@NotNull GradleExecutionSettings settings, @NotNull GradleTaskExecutionContext context) {
+    configureTasks(context.getProjectPath(), context.getTaskId(), settings, context.getExecutionContext().getGradleVersion());
+  }
+
+  /**
+   * @deprecated Implement {@link #configureTasks(GradleExecutionSettings, GradleTaskExecutionContext)} instead.
+   */
+  @Deprecated
   default void configureTasks(
     @NotNull String projectPath,
     @NotNull ExternalSystemTaskId id,

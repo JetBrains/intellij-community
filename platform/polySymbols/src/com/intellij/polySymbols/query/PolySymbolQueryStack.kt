@@ -23,10 +23,12 @@ class PolySymbolQueryStack() {
     stack.addAll(initialStack)
   }
 
-  internal val lastPolySymbol: PolySymbol?
+  @get:ApiStatus.Internal
+  val lastPolySymbol: PolySymbol?
     get() = stack.lastOrNull { it is PolySymbol } as? PolySymbol
 
-  internal fun peek(): PolySymbolScope? =
+  @ApiStatus.Internal
+  fun peek(): PolySymbolScope? =
     stack.last()
 
   internal fun toList(): List<PolySymbolScope> =

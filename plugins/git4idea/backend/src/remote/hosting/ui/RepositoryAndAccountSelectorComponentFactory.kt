@@ -27,8 +27,8 @@ import com.intellij.ui.BrowserHyperlinkListener
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UI
 import com.intellij.util.ui.UIUtil
 import git4idea.remote.hosting.HostedGitRepositoryMapping
 import kotlinx.coroutines.CoroutineScope
@@ -153,7 +153,7 @@ class RepositoryAndAccountSelectorComponentFactory<M : HostedGitRepositoryMappin
 
     val actionsPanel = panel {
       row {
-        cell(JPanel(HorizontalLayout(UI.scale(16))).apply {
+        cell(JPanel(HorizontalLayout(JBUIScale.scale(16))).apply {
           isOpaque = false
           add(submitButton)
           loginButtons.forEach {

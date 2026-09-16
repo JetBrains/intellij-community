@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.java.coverage.rt.junit` start
+content_module_jar(module = ":junit")
+### auto-generated section `dev intellij.java.coverage.rt.junit` end
+
 ### auto-generated section `build intellij.java.coverage.rt.junit` start
 jvm_provided_library(
     name = "plugins_coverage-common_coverage-agent_provided",
@@ -36,8 +40,6 @@ jvm_library(
         ":java_rt_provided",
     ],
 )
-
-content_module_jar(module = ":junit")
 
 jvm_library(
     name = "junit_test_lib",

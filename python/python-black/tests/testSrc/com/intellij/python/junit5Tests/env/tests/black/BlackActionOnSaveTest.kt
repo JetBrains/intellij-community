@@ -17,7 +17,7 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.python.black.BlackPyTool
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
 import com.intellij.python.junit5Tests.framework.env.pySdkFixture
-import com.intellij.python.pytools.PyToolsState
+import com.intellij.python.pytools.backend.PyToolsState
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.fixture.editorFixture
 import com.intellij.python.junit5Tests.framework.pyModuleFixture

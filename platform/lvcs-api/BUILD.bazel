@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.platform.lvcs` start
+content_module_jar(module = ":lvcs")
+### auto-generated section `dev intellij.platform.lvcs` end
+
 ### auto-generated section `build intellij.platform.lvcs` start
 jvm_library(
     name = "lvcs",
@@ -28,8 +32,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":lvcs")
-
 jvm_library(
     name = "lvcs_test_lib",
     testonly = True,
@@ -55,7 +57,6 @@ exports_files(
     [
         "intellij.platform.lvcs.iml",
         "resources/intellij.platform.lvcs.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

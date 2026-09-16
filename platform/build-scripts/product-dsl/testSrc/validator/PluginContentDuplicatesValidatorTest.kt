@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.productLayout.validator
 
+import com.intellij.platform.buildScripts.concurrency.SharedTaskOwner
 import com.intellij.platform.pluginGraph.PluginModuleId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -15,6 +16,13 @@ import org.junit.jupiter.api.extension.ExtendWith
 
 @ExtendWith(TestFailureLogger::class)
 class PluginContentDuplicatesValidatorTest {
+  private val owner = SharedTaskOwner("PluginContentDuplicatesValidatorTest")
+
+  @org.junit.jupiter.api.AfterEach
+  fun closeSharedTasks() {
+    owner.close()
+  }
+
   @Test
   fun `reports duplicate between production and test plugin`(): Unit = runBlocking(Dispatchers.Default) {
     val graph = pluginGraph {
@@ -26,7 +34,7 @@ class PluginContentDuplicatesValidatorTest {
       testPlugin("test.plugin") { content("shared.module") }
     }
 
-    val model = testGenerationModel(graph)
+    val model = testGenerationModel(graph, owner = owner)
     val errors = runValidationRule(PluginContentDuplicatesValidator, model)
 
     assertThat(errors).hasSize(1)
@@ -49,7 +57,7 @@ class PluginContentDuplicatesValidatorTest {
       testPlugin("test.plugin") { content("shared.module", namespace = null) }
     }
 
-    val model = testGenerationModel(graph)
+    val model = testGenerationModel(graph, owner = owner)
     val errors = runValidationRule(PluginContentDuplicatesValidator, model)
 
     assertThat(errors).isEmpty()
@@ -67,7 +75,7 @@ class PluginContentDuplicatesValidatorTest {
       plugin("plugin.b") { content("shared.module", namespace = null) }
     }
 
-    val model = testGenerationModel(graph)
+    val model = testGenerationModel(graph, owner = owner)
     val errors = runValidationRule(PluginContentDuplicatesValidator, model)
 
     assertThat(errors).isEmpty()
@@ -84,7 +92,7 @@ class PluginContentDuplicatesValidatorTest {
       testPlugin("test.b") { content("shared.module") }
     }
 
-    val model = testGenerationModel(graph)
+    val model = testGenerationModel(graph, owner = owner)
     val errors = runValidationRule(PluginContentDuplicatesValidator, model)
 
     assertThat(errors).isEmpty()
@@ -101,7 +109,7 @@ class PluginContentDuplicatesValidatorTest {
       plugin("plugin.b") { content("shared.module", namespace = PluginModuleId.DEFAULT_NAMESPACE) }
     }
 
-    val model = testGenerationModel(graph)
+    val model = testGenerationModel(graph, owner = owner)
     val errors = runValidationRule(PluginContentDuplicatesValidator, model)
 
     assertThat(errors).hasSize(1)
@@ -124,7 +132,7 @@ class PluginContentDuplicatesValidatorTest {
       plugin("plugin.b") { content("shared.module", namespace = "custom") }
     }
 
-    val model = testGenerationModel(graph)
+    val model = testGenerationModel(graph, owner = owner)
     val errors = runValidationRule(PluginContentDuplicatesValidator, model)
 
     assertThat(errors).hasSize(1)
@@ -151,7 +159,7 @@ class PluginContentDuplicatesValidatorTest {
       }
     }
 
-    val model = testGenerationModel(graph)
+    val model = testGenerationModel(graph, owner = owner)
     val errors = runValidationRule(PluginContentDuplicatesValidator, model)
 
     assertThat(errors).isEmpty()
@@ -168,7 +176,7 @@ class PluginContentDuplicatesValidatorTest {
       plugin("plugin.b") { content("shared.module", namespace = "custom") }
     }
 
-    val model = testGenerationModel(graph)
+    val model = testGenerationModel(graph, owner = owner)
     val errors = runValidationRule(PluginContentDuplicatesValidator, model)
 
     assertThat(errors).isEmpty()

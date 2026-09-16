@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.java.impl.inspections` start
+content_module_jar(module = ":impl-inspections")
+### auto-generated section `dev intellij.java.impl.inspections` end
+
 ### auto-generated section `build intellij.java.impl.inspections` start
 jvm_library(
     name = "impl-inspections",
@@ -58,8 +62,6 @@ jvm_library(
         "//platform/lang-api:lang",
     ],
 )
-
-content_module_jar(module = ":impl-inspections")
 
 jvm_library(
     name = "impl-inspections_test_lib",

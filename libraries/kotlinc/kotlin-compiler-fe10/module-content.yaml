@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.kotlinc.kotlin.compiler.fe10.jar
+  modules:
+  - name: intellij.libraries.kotlinc.kotlin.compiler.fe10
+    libraries:
+      kotlinc.kotlin-compiler-fe10:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-fe10-for-ide/2/kotlin-compiler-fe10-for-ide-2.jar

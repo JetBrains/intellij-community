@@ -9,10 +9,10 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="opencsv" type="repository">
-        <properties maven-id="com.opencsv:opencsv:5.11.2">
+        <properties maven-id="com.opencsv:opencsv:5.12.0">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/com/opencsv/opencsv/5.11.2/opencsv-5.11.2.jar">
-              <sha256sum>690daad9014f23afd3ab6f1b0c45a5e0b738ac37a8d2e810e196193aab521245</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/opencsv/opencsv/5.12.0/opencsv-5.12.0.jar">
+              <sha256sum>f1c55d80a92c8ecfe3f15fb71785d5b156f3674cb5b9ad55dcfd378ffeed2960</sha256sum>
             </artifact>
             <artifact url="file://$MAVEN_REPOSITORY$/commons-beanutils/commons-beanutils/1.11.0/commons-beanutils-1.11.0.jar">
               <sha256sum>9e44ba68ec9a3f21286fa2a8bbb003b735c0f69101bb43144b79f4f8aaa74709</sha256sum>
@@ -27,12 +27,12 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/opencsv/opencsv/5.11.2/opencsv-5.11.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/opencsv/opencsv/5.12.0/opencsv-5.12.0.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/commons-beanutils/commons-beanutils/1.11.0/commons-beanutils-1.11.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/opencsv/opencsv/5.11.2/opencsv-5.11.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/opencsv/opencsv/5.12.0/opencsv-5.12.0-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/commons-beanutils/commons-beanutils/1.11.0/commons-beanutils-1.11.0-sources.jar!/" />
         </SOURCES>
       </library>

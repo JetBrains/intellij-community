@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.logging
 
+import io.opentelemetry.api.trace.Span
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.BuildScriptsLoggedError
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper.isUnderTeamCity
@@ -22,10 +23,10 @@ class BuildMessagesImpl private constructor(
 ) : BuildMessages {
   companion object {
     fun create(): BuildMessagesImpl {
-      val mainLoggerFactory = if (isUnderTeamCity) ::TeamCityBuildMessageLogger else ::ConsoleBuildMessageLogger
+      val mainLogger = if (isUnderTeamCity) TeamCityBuildMessageLogger() else ConsoleBuildMessageLogger()
       val debugLogger = DebugLogger()
       return BuildMessagesImpl(
-        logger = CompositeBuildMessageLogger(listOf(mainLoggerFactory(), debugLogger.createLogger())),
+        logger = CompositeBuildMessageLogger(listOf(mainLogger, debugLogger.createLogger(mainLogger = mainLogger as? BuildMessageLoggerBase))),
         debugLogger = debugLogger,
       )
     }
@@ -119,8 +120,8 @@ class BuildMessagesImpl private constructor(
     logger.processMessage(message)
   }
 
-  override fun reportBuildProblem(description: String, identity: String?) {
-    processMessage(BuildProblemLogMessage(description = description, identity = identity))
+  override fun reportBuildProblem(description: String, identity: String?, cause: Throwable?) {
+    processMessage(BuildProblemLogMessage(description = description, identity = identity, cause = cause))
   }
 
   override fun cancelBuild(reason: String) {
@@ -162,8 +163,8 @@ private class DebugLogger {
   fun getOutput(): String = output.toString()
 
   @Synchronized
-  fun createLogger(): BuildMessageLogger {
-    val logger = PrintWriterBuildMessageLogger(output = output, disposer = loggers::remove)
+  fun createLogger(mainLogger: BuildMessageLoggerBase?): BuildMessageLogger {
+    val logger = PrintWriterBuildMessageLogger(output = output, disposer = loggers::remove, mainLogger = mainLogger)
     loggers.add(logger)
     return logger
   }
@@ -175,12 +176,23 @@ private class DebugLogger {
 private class PrintWriterBuildMessageLogger(
   private val output: StringBuilder,
   private val disposer: Consumer<PrintWriterBuildMessageLogger>,
+  private val mainLogger: BuildMessageLoggerBase?,
 ) : BuildMessageLoggerBase() {
+  override fun processMessage(message: LogMessage) {
+    when {
+      // both main loggers drop a DEBUG message, so the debug log is its only destination
+      message.kind == LogMessage.Kind.DEBUG -> printLine(message.text)
+      // record each event once: skip a message the main logger posts to the active span
+      mainLogger?.addsSpanEvent(message.kind) == true && Span.current().spanContext.isValid -> {}
+      else -> super.processMessage(message)
+    }
+  }
+
   @Override
   @Synchronized
   override fun printLine(line: String) {
     output.append(line)
-    output.append('\n'.code)
+    output.append('\n')
   }
 
   override fun dispose() {

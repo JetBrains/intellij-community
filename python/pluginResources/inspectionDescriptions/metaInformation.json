@@ -59,6 +59,10 @@
     {
       "id": "CythonUsageBeforeDeclarationInspection",
       "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "PyTypeIgnoreWithoutCodeInspection",
+      "codeQualityCategory": "Reliability"
     }
   ]
 }

@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.visibility.createUseSiteVisibilityChecker
+import org.jetbrains.kotlin.idea.base.psi.addModifierKeyword
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
@@ -80,7 +81,7 @@ internal object AddDataModifierFixFactory {
             elementContext: ElementContext,
             updater: ModPsiUpdater,
         ) {
-            element.addModifier(KtTokens.DATA_KEYWORD)
+            element.addModifierKeyword(KtTokens.DATA_KEYWORD)
         }
 
         override fun getFamilyName(): String {

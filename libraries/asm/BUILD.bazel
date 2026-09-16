@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.asm` start
+content_module_jar(
+    libraries = ["@lib//:libraries-asm-asm"],
+    module = ":asm",
+)
+### auto-generated section `dev intellij.libraries.asm` end
+
 ### auto-generated section `build intellij.libraries.asm` start
 jvm_library(
     name = "asm",
@@ -16,11 +23,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-asm-asm"],
     runtime_deps = ["@lib//:libraries-asm-asm"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-asm-asm"],
-    module = ":asm",
 )
 
 jvm_library(
@@ -43,7 +45,6 @@ exports_files(
     [
         "intellij.libraries.asm.iml",
         "resources/intellij.libraries.asm.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

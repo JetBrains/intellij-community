@@ -17,8 +17,9 @@ import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ValueLayout;
 import java.lang.invoke.VarHandle;
-import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -29,7 +30,6 @@ import java.util.function.LongUnaryOperator;
 
 import static com.intellij.platform.util.io.storages.mmapped.MMappedFileStorageFactory.IfNotPageAligned.CLEAN;
 import static com.intellij.util.io.IOUtil.MiB;
-import static java.lang.invoke.MethodHandles.byteBufferViewVarHandle;
 import static java.nio.ByteOrder.nativeOrder;
 
 /**
@@ -199,19 +199,15 @@ public final class MappedFileStorageHelper implements Closeable, CleanableStorag
 
   public static final int DEFAULT_PAGE_SIZE = 4 * MiB;
 
-  //TODO RC: byteBufferViewVarHandle(byte[].class) is not supported by JDK
-  //private static final VarHandle BYTE_HANDLE = byteBufferViewVarHandle(byte[].class, nativeOrder())
-  //  .withInvokeExactBehavior();
-  private static final VarHandle SHORT_HANDLE = byteBufferViewVarHandle(short[].class, nativeOrder())
+  private static final VarHandle SHORT_HANDLE = ValueLayout.JAVA_SHORT.withOrder(nativeOrder()).varHandle()
     .withInvokeExactBehavior();
-  private static final VarHandle INT_HANDLE = byteBufferViewVarHandle(int[].class, nativeOrder())
+  private static final VarHandle INT_HANDLE = ValueLayout.JAVA_INT.withOrder(nativeOrder()).varHandle()
     .withInvokeExactBehavior();
-  private static final VarHandle LONG_HANDLE = byteBufferViewVarHandle(long[].class, nativeOrder())
+  private static final VarHandle LONG_HANDLE = ValueLayout.JAVA_LONG.withOrder(nativeOrder()).varHandle()
     .withInvokeExactBehavior();
 
 
   private final int bytesPerRow;
-  private final transient byte[] rowOfZeroes;
 
   private final @NotNull MMappedFileStorage storage;
 
@@ -239,8 +235,6 @@ public final class MappedFileStorageHelper implements Closeable, CleanableStorag
     this.bytesPerRow = bytesPerRow;
     maxAllocatedFileIdSupplier = maxRowsSupplier;
     this.checkFileIdsBelowMax = checkFileIdsBelowMax;
-
-    this.rowOfZeroes = new byte[bytesPerRow];
   }
 
   public int getVersion() throws IOException {
@@ -375,105 +369,91 @@ public final class MappedFileStorageHelper implements Closeable, CleanableStorag
     return "MappedFileStorageHelper[" + storage.storagePath() + "]";
   }
 
-  //TODO RC: We can fill the row just byte-by-bytes, but we can't keep reasonable atomicity/memory semantics
-  //         -- to write 4 bytes is not the same as write 1 int. I doubt: is it really worth to deal with all
-  //         possible complications arising from that, or better to keep that pandora-box closed, and not
-  //         expose clearRow() method? If users want to clear the row -- they could implement it with
-  //         .writeXXXField() methods.
-  private void clearRow(int fileId) throws IOException {
-    long offsetInFile = toOffsetInFile(fileId);
-    int offsetInPage = storage.toOffsetInPage(offsetInFile);
-
-    Page page = storage.pageByOffset(offsetInFile);
-    ByteBuffer rawPageBuffer = page.rawPageBuffer();
-
-    rawPageBuffer.put(offsetInPage, rowOfZeroes);//plain write, not volatile!
-  }
-
-  //public byte readByteField(int fileId,
-  //                          int fieldOffsetInRow) throws IOException {
-  //  long offsetInFile = toOffsetInFile(fileId) + fieldOffsetInRow;
-  //  int offsetInPage = storage.toOffsetInPage(offsetInFile);
-  //
-  //  Page page = storage.pageByOffset(offsetInFile);
-  //  ByteBuffer rawPageBuffer = page.rawPageBuffer();
-  //
-  //  return (byte)BYTE_HANDLE.getVolatile(rawPageBuffer, offsetInPage);
-  //}
-  //
-  //public void writeByteField(int fileId,
-  //                           int fieldOffsetInRow,
-  //                           byte attributeValue) throws IOException {
-  //  long offsetInFile = toOffsetInFile(fileId) + fieldOffsetInRow;
-  //  int offsetInPage = storage.toOffsetInPage(offsetInFile);
-  //
-  //  Page page = storage.pageByOffset(offsetInFile);
-  //  ByteBuffer rawPageBuffer = page.rawPageBuffer();
-  //
-  //  BYTE_HANDLE.setVolatile(rawPageBuffer, offsetInPage, attributeValue);
-  //}
-
-
   public short readShortField(int fileId,
                               int fieldOffsetInRow) throws IOException {
     long offsetInFile = toOffsetInFile(fileId) + fieldOffsetInRow;
-    int offsetInPage = storage.toOffsetInPage(offsetInFile);
+    long offsetInPage = storage.toOffsetInPage(offsetInFile);
 
     Page page = storage.pageByOffset(offsetInFile);
-    ByteBuffer rawPageBuffer = page.rawPageBuffer();
+    MemorySegment rawPageSegment = page.rawPageSegment();
 
-    return (short)SHORT_HANDLE.getVolatile(rawPageBuffer, offsetInPage);
+    try {
+      return (short)SHORT_HANDLE.getVolatile(rawPageSegment, offsetInPage);
+    }
+    catch (IllegalStateException e) {
+      throw storage.asClosedStorageException(e);
+    }
   }
 
   public void writeShortField(int fileId,
                               int fieldOffsetInRow,
                               short attributeValue) throws IOException {
     long offsetInFile = toOffsetInFile(fileId) + fieldOffsetInRow;
-    int offsetInPage = storage.toOffsetInPage(offsetInFile);
+    long offsetInPage = storage.toOffsetInPage(offsetInFile);
 
     Page page = storage.pageByOffset(offsetInFile);
-    ByteBuffer rawPageBuffer = page.rawPageBuffer();
+    MemorySegment rawPageSegment = page.rawPageSegment();
 
-    SHORT_HANDLE.setVolatile(rawPageBuffer, offsetInPage, attributeValue);
+    try {
+      SHORT_HANDLE.setVolatile(rawPageSegment, offsetInPage, attributeValue);
+    }
+    catch (IllegalStateException e) {
+      throw storage.asClosedStorageException(e);
+    }
   }
 
   public int readIntField(int fileId,
                           int fieldOffsetInRow) throws IOException {
     long offsetInFile = toOffsetInFile(fileId) + fieldOffsetInRow;
-    int offsetInPage = storage.toOffsetInPage(offsetInFile);
+    long offsetInPage = storage.toOffsetInPage(offsetInFile);
 
     Page page = storage.pageByOffset(offsetInFile);
-    ByteBuffer rawPageBuffer = page.rawPageBuffer();
+    MemorySegment rawPageSegment = page.rawPageSegment();
 
-    return (int)INT_HANDLE.getVolatile(rawPageBuffer, offsetInPage);
+    try {
+      return (int)INT_HANDLE.getVolatile(rawPageSegment, offsetInPage);
+    }
+    catch (IllegalStateException e) {
+      throw storage.asClosedStorageException(e);
+    }
   }
 
   public void writeIntField(int fileId,
                             int fieldOffsetInRow,
                             int attributeValue) throws IOException {
     long offsetInFile = toOffsetInFile(fileId) + fieldOffsetInRow;
-    int offsetInPage = storage.toOffsetInPage(offsetInFile);
+    long offsetInPage = storage.toOffsetInPage(offsetInFile);
 
     Page page = storage.pageByOffset(offsetInFile);
-    ByteBuffer rawPageBuffer = page.rawPageBuffer();
+    MemorySegment rawPageSegment = page.rawPageSegment();
 
-    INT_HANDLE.setVolatile(rawPageBuffer, offsetInPage, attributeValue);
+    try {
+      INT_HANDLE.setVolatile(rawPageSegment, offsetInPage, attributeValue);
+    }
+    catch (IllegalStateException e) {
+      throw storage.asClosedStorageException(e);
+    }
   }
 
   public int updateIntField(int fileId,
                             int fieldOffsetInRow,
                             @NotNull IntUnaryOperator updateOperator) throws IOException {
     long offsetInFile = toOffsetInFile(fileId) + fieldOffsetInRow;
-    int offsetInPage = storage.toOffsetInPage(offsetInFile);
+    long offsetInPage = storage.toOffsetInPage(offsetInFile);
 
     Page page = storage.pageByOffset(offsetInFile);
-    ByteBuffer rawPageBuffer = page.rawPageBuffer();
-    while (true) {//CAS loop:
-      int currentValue = (int)INT_HANDLE.getVolatile(rawPageBuffer, offsetInPage);
-      int newValue = updateOperator.applyAsInt(currentValue);
-      if (INT_HANDLE.compareAndSet(rawPageBuffer, offsetInPage, currentValue, newValue)) {
-        return currentValue;
+    MemorySegment rawPageSegment = page.rawPageSegment();
+    try {
+      while (true) {//CAS loop:
+        int currentValue = (int)INT_HANDLE.getVolatile(rawPageSegment, offsetInPage);
+        int newValue = updateOperator.applyAsInt(currentValue);
+        if (INT_HANDLE.compareAndSet(rawPageSegment, offsetInPage, currentValue, newValue)) {
+          return currentValue;
+        }
       }
+    }
+    catch (IllegalStateException e) {
+      throw storage.asClosedStorageException(e);
     }
   }
 
@@ -481,40 +461,55 @@ public final class MappedFileStorageHelper implements Closeable, CleanableStorag
   public long readLongField(int fileId,
                             int fieldOffsetInRow) throws IOException {
     long offsetInFile = toOffsetInFile(fileId) + fieldOffsetInRow;
-    int offsetInPage = storage.toOffsetInPage(offsetInFile);
+    long offsetInPage = storage.toOffsetInPage(offsetInFile);
 
     Page page = storage.pageByOffset(offsetInFile);
-    ByteBuffer rawPageBuffer = page.rawPageBuffer();
+    MemorySegment rawPageSegment = page.rawPageSegment();
 
-    return (long)LONG_HANDLE.getVolatile(rawPageBuffer, offsetInPage);
+    try {
+      return (long)LONG_HANDLE.getVolatile(rawPageSegment, offsetInPage);
+    }
+    catch (IllegalStateException e) {
+      throw storage.asClosedStorageException(e);
+    }
   }
 
   public void writeLongField(int fileId,
                              int fieldOffsetInRow,
                              long attributeValue) throws IOException {
     long offsetInFile = toOffsetInFile(fileId) + fieldOffsetInRow;
-    int offsetInPage = storage.toOffsetInPage(offsetInFile);
+    long offsetInPage = storage.toOffsetInPage(offsetInFile);
 
     Page page = storage.pageByOffset(offsetInFile);
-    ByteBuffer rawPageBuffer = page.rawPageBuffer();
+    MemorySegment rawPageSegment = page.rawPageSegment();
 
-    LONG_HANDLE.setVolatile(rawPageBuffer, offsetInPage, attributeValue);
+    try {
+      LONG_HANDLE.setVolatile(rawPageSegment, offsetInPage, attributeValue);
+    }
+    catch (IllegalStateException e) {
+      throw storage.asClosedStorageException(e);
+    }
   }
 
   public long updateLongField(int fileId,
                               int fieldOffsetInRow,
                               @NotNull LongUnaryOperator updateOperator) throws IOException {
     long offsetInFile = toOffsetInFile(fileId) + fieldOffsetInRow;
-    int offsetInPage = storage.toOffsetInPage(offsetInFile);
+    long offsetInPage = storage.toOffsetInPage(offsetInFile);
 
     Page page = storage.pageByOffset(offsetInFile);
-    ByteBuffer rawPageBuffer = page.rawPageBuffer();
-    while (true) {//CAS loop:
-      long currentValue = (long)LONG_HANDLE.getVolatile(rawPageBuffer, offsetInPage);
-      long newValue = updateOperator.applyAsLong(currentValue);
-      if (LONG_HANDLE.compareAndSet(rawPageBuffer, offsetInPage, currentValue, newValue)) {
-        return currentValue;
+    MemorySegment rawPageSegment = page.rawPageSegment();
+    try {
+      while (true) {//CAS loop:
+        long currentValue = (long)LONG_HANDLE.getVolatile(rawPageSegment, offsetInPage);
+        long newValue = updateOperator.applyAsLong(currentValue);
+        if (LONG_HANDLE.compareAndSet(rawPageSegment, offsetInPage, currentValue, newValue)) {
+          return currentValue;
+        }
       }
+    }
+    catch (IllegalStateException e) {
+      throw storage.asClosedStorageException(e);
     }
   }
 
@@ -523,27 +518,47 @@ public final class MappedFileStorageHelper implements Closeable, CleanableStorag
   public int readIntHeaderField(int headerRelativeOffset) throws IOException {
     checkHeaderFieldOffset(headerRelativeOffset);
     Page page = storage.pageByOffset(headerRelativeOffset);
-    return (int)INT_HANDLE.getVolatile(page.rawPageBuffer(), headerRelativeOffset);
+    try {
+      return (int)INT_HANDLE.getVolatile(page.rawPageSegment(), (long)headerRelativeOffset);
+    }
+    catch (IllegalStateException e) {
+      throw storage.asClosedStorageException(e);
+    }
   }
 
   public long readLongHeaderField(int headerRelativeOffset) throws IOException {
     checkHeaderFieldOffset(headerRelativeOffset);
     Page page = storage.pageByOffset(headerRelativeOffset);
-    return (long)LONG_HANDLE.getVolatile(page.rawPageBuffer(), headerRelativeOffset);
+    try {
+      return (long)LONG_HANDLE.getVolatile(page.rawPageSegment(), (long)headerRelativeOffset);
+    }
+    catch (IllegalStateException e) {
+      throw storage.asClosedStorageException(e);
+    }
   }
 
   public void writeIntHeaderField(int headerRelativeOffset,
                                   int headerFieldValue) throws IOException {
     checkHeaderFieldOffset(headerRelativeOffset);
     Page page = storage.pageByOffset(headerRelativeOffset);
-    INT_HANDLE.setVolatile(page.rawPageBuffer(), headerRelativeOffset, headerFieldValue);
+    try {
+      INT_HANDLE.setVolatile(page.rawPageSegment(), (long)headerRelativeOffset, headerFieldValue);
+    }
+    catch (IllegalStateException e) {
+      throw storage.asClosedStorageException(e);
+    }
   }
 
   public void writeLongHeaderField(int headerRelativeOffset,
                                    long headerFieldValue) throws IOException {
     checkHeaderFieldOffset(headerRelativeOffset);
     Page page = storage.pageByOffset(headerRelativeOffset);
-    LONG_HANDLE.setVolatile(page.rawPageBuffer(), headerRelativeOffset, headerFieldValue);
+    try {
+      LONG_HANDLE.setVolatile(page.rawPageSegment(), (long)headerRelativeOffset, headerFieldValue);
+    }
+    catch (IllegalStateException e) {
+      throw storage.asClosedStorageException(e);
+    }
   }
 
 

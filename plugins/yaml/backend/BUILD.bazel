@@ -10,6 +10,10 @@ jps_test(
 )
 ### skip generation section `test intellij.yaml.backend.tests`
 
+### auto-generated section `dev intellij.yaml.backend` start
+content_module_jar(module = ":backend")
+### auto-generated section `dev intellij.yaml.backend` end
+
 ### auto-generated section `build intellij.yaml.backend` start
 jvm_library(
     name = "backend",
@@ -63,8 +67,6 @@ jvm_library(
         "//platform/util:util-ui",
     ],
 )
-
-content_module_jar(module = ":backend")
 
 jvm_library(
     name = "backend_test_lib",
@@ -153,7 +155,11 @@ jvm_library(
     ),
     module_name = "intellij.yaml.backend.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = ["//platform/backend"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/backend",
+        "//xml/plugin",
+    ],
 )
 
 jvm_library(
@@ -183,6 +189,7 @@ jvm_library(
         "//platform/platform-impl:ide-impl_test_lib",
         "//platform/ide-core-impl:ide-core-impl_test_lib",
         "//platform/ide-core:ide-core_test_lib",
+        "//xml/plugin:plugin_test_lib",
     ],
     deps = [
         # do not sort,
@@ -271,8 +278,6 @@ jvm_library(
         "//java/plugin:plugin_test_lib",
         "//json",
         "//json:json_test_lib",
-        "//libraries/misc/plugin",
-        "//libraries/misc/plugin:plugin_test_lib",
         "//platform/structuralsearch:structuralSearch",
         "//platform/structuralsearch:structuralSearch_test_lib",
         "//platform/structuralsearch/plugin",

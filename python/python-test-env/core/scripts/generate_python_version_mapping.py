@@ -322,7 +322,7 @@ class PythonVersionMapper:
             base_url_with_tag = sample_url.rsplit('/', 1)[0]
 
             # Use cache redirector for astral-sh/python-build-standalone
-            if 'astral-sh/python-build-standalone' in base_url_with_tag:
+            if 'astral-sh/python-build-standalone' in base_url_with_tag or 'qnox/python-2.7' in base_url_with_tag:
                 base_url_with_tag = base_url_with_tag.replace('https://github.com/', 'https://cache-redirector.jetbrains.com/github.com/')
 
             result[version] = {

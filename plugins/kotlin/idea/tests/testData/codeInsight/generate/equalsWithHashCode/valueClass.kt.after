@@ -1,7 +1,11 @@
 // COMPILER_ARGUMENTS: -XXLanguage:+CustomEqualsInValueClasses
 value class Foo(val i: Int) {
     <selection><caret></selection>override fun equals(other: Any?): Boolean {
-        if (other !is Foo) return false
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as Foo
+
         if (i != other.i) return false
 
         return true

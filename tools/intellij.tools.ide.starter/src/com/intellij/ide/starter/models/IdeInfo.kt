@@ -51,7 +51,14 @@ data class IdeInfo(
 ) {
   val isFrontend: Boolean = platformPrefix == PlatformUtils.JETBRAINS_CLIENT_PREFIX
 
-  companion object;
+  companion object {
+    /**
+     * Resolves [IdeInfo] by product code.
+     * Delegates to [IdeInfoType.fromProductCode] and retrieves the registered instance from DI.
+     */
+    fun fromProductCode(productCode: String): IdeInfo =
+      di.direct.instance<IdeInfo>(IdeInfoType.fromProductCode(productCode))
+  }
 
   init {
     if (isFrontend) {

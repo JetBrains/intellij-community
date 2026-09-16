@@ -6,20 +6,22 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsConfiguration.StandardConfirmation.ADD
 import com.intellij.openapi.vcs.VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY
 import com.intellij.openapi.vcs.VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY
 import com.intellij.openapi.vcs.changes.ChangeListListener
 import com.intellij.openapi.vcs.changes.ChangeListManager
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.openapi.vcs.changes.VcsIgnoreManager
+import com.intellij.openapi.vcs.util.paths.RecursiveFilePathSet
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.project.stateStore
+import com.intellij.vcsUtil.VcsUtil
 import com.intellij.vfs.AsyncVfsEventsListener
 import com.intellij.vfs.AsyncVfsEventsPostProcessor
 import kotlinx.coroutines.CoroutineScope
@@ -39,7 +41,7 @@ internal class ExternallyAddedFilesProcessorImpl(
 ) : AsyncVfsEventsListener, ChangeListListener, Disposable {
   private val UNPROCESSED_FILES_LOCK = ReentrantReadWriteLock()
 
-  private val unprocessedFiles = mutableSetOf<VirtualFile>()
+  private var unprocessedPaths = RecursiveFilePathSet(SystemInfoRt.isFileSystemCaseSensitive)
 
   private val vcsManager = ProjectLevelVcsManager.getInstance(project)
 
@@ -58,16 +60,18 @@ internal class ExternallyAddedFilesProcessorImpl(
     if (!upToDate) return
     if (doNothingSilently()) return
 
-    val files: Set<VirtualFile>
+    val pathsToProcess: RecursiveFilePathSet
     UNPROCESSED_FILES_LOCK.write {
-      files = unprocessedFiles.toHashSet()
-      unprocessedFiles.clear()
+      pathsToProcess = unprocessedPaths
+      unprocessedPaths = RecursiveFilePathSet(SystemInfoRt.isFileSystemCaseSensitive)
     }
-    if (files.isEmpty()) return
+    if (pathsToProcess.isEmpty) return
 
     if (needDoForCurrentProject()) {
-      LOG.debug("Add external files to ${vcs.displayName} silently ", files)
-      addChosenFiles(doFilterFiles(files))
+      if (LOG.isDebugEnabled) {
+        LOG.debug("Add external files to ${vcs.displayName} silently ", pathsToProcess.filePaths())
+      }
+      addChosenFiles(collectUnversionedUnder(pathsToProcess))
     }
   }
 
@@ -83,19 +87,22 @@ internal class ExternallyAddedFilesProcessorImpl(
     }
 
     val configDir = getProjectConfigDir(project)
-    val externallyAddedFiles = events.asSequence()
-      .filter { it.isFromRefresh && it is VFileCreateEvent && !isProjectConfigDirOrUnderIt(configDir, it.parent) }
-      .mapNotNull(VFileEvent::getFile)
+    val externallyAddedEvents = events.asSequence()
+      .filter { it.isFromRefresh }
+      .filterIsInstance<VFileCreateEvent>()
+      .filterNot { isProjectConfigDirOrUnderIt(configDir, it.parent) }
       .toList()
 
-    if (externallyAddedFiles.isEmpty()) {
+    if (externallyAddedEvents.isEmpty()) {
       return
     }
 
-    LOG.debug { "Got external files from VFS events $externallyAddedFiles" }
+    LOG.debug { "Got external files from VFS events ${externallyAddedEvents.map { it.path }}" }
 
     UNPROCESSED_FILES_LOCK.write {
-      unprocessedFiles.addAll(externallyAddedFiles)
+      for (event in externallyAddedEvents) {
+        unprocessedPaths.add(VcsUtil.getFilePath(event.path, event.isDirectory))
+      }
     }
   }
 
@@ -104,7 +111,7 @@ internal class ExternallyAddedFilesProcessorImpl(
 
   override fun dispose() {
     UNPROCESSED_FILES_LOCK.write {
-      unprocessedFiles.clear()
+      unprocessedPaths.clear()
     }
   }
 
@@ -113,17 +120,14 @@ internal class ExternallyAddedFilesProcessorImpl(
             && VcsConfiguration.getInstance(project).ADD_EXTERNAL_FILES_SILENTLY)
   }
 
-  private fun doFilterFiles(files: Collection<VirtualFile>): Collection<VirtualFile> {
-    val parents = files.toHashSet()
+  private fun collectUnversionedUnder(parents: RecursiveFilePathSet): Set<VirtualFile> {
     return ChangeListManager.getInstance(project).unversionedFilesPaths
       .asSequence()
-      .mapNotNull { it.virtualFile }
+      .filter(parents::hasAncestor)
       .filterNot(vcsIgnoreManager::isPotentiallyIgnoredFile)
-      .filter { isUnder(parents, it) }
+      .mapNotNull { it.virtualFile }
       .toSet()
   }
-
-  private fun isUnder(parents: Set<VirtualFile>, child: VirtualFile) = generateSequence(child) { it.parent }.any { it in parents }
 
   private fun isProjectConfigDirOrUnderIt(configDir: VirtualFile?, file: VirtualFile): Boolean {
     return configDir != null && VfsUtilCore.isAncestor(configDir, file, false)

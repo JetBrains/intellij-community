@@ -1,3 +1,0 @@
-- name: dist.all/lib/intellij.platform.ide.remote.jar
-  modules:
-  - name: intellij.platform.ide.remote

@@ -340,11 +340,10 @@ class JavaToKotlinConverter(
 
             val psiFactory = KtPsiFactory(project)
 
-            @Suppress("DEPRECATION") // unclear how to replace this
-            val importPsi = psiFactory.createImportDirectives(
-                imports.map { ImportPath(it, isAllUnder = false) }
-            )
-            val createdImportList = importPsi.first().parent as KtImportList
+            // `KtPsiFactory` builds one directive at a time, so build the whole list from text.
+            val createdImportList = psiFactory.createFile(
+                imports.joinToString(separator = "") { "import ${ImportPath(it, isAllUnder = false).pathStr}\n" }
+            ).importList ?: return
             val importList = importList
             if (importList == null) {
                 val newImportList = addImportList(createdImportList)

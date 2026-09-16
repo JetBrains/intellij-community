@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.grid.csv.core.impl` start
+content_module_jar(module = ":csv-core-impl")
+### auto-generated section `dev intellij.grid.csv.core.impl` end
+
 ### auto-generated section `build intellij.grid.csv.core.impl` start
 jvm_library(
     name = "csv-core-impl",
@@ -34,8 +38,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":csv-core-impl")
-
 jvm_library(
     name = "csv-core-impl_test_lib",
     testonly = True,
@@ -68,7 +70,6 @@ exports_files(
     [
         "intellij.grid.csv.core.impl.iml",
         "resources/intellij.grid.csv.core.impl.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

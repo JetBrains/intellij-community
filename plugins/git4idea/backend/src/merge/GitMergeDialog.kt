@@ -220,7 +220,7 @@ class GitMergeDialog(private val project: Project,
    * |refs/remotes/origin/HEAD [refs/remotes/origin/master]
    * ```
    */
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private fun loadUnmergedBranchesForRoot(repository: GitRepository): Set<GitBranch>? {
     val root = repository.root
     try {

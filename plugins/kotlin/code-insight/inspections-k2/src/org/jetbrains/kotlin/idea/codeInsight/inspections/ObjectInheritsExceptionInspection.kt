@@ -106,8 +106,8 @@ internal class ObjectInheritsExceptionInspection : AbstractKotlinInspection(), C
                     if (qualifiedExpression != null) {
                         if (qualifiedExpression.selectorExpression != expression) {
                             val functionCallOrVariableAccess = analyze(qualifiedExpression) {
-                                val resolveToCall = qualifiedExpression.tryResolveCall()?.single?.simple ?: return@analyze false
-                                val symbol = resolveToCall.symbol
+                                val simpleCall = qualifiedExpression.tryResolveCall()?.single?.simple ?: return@analyze false
+                                val symbol = simpleCall.symbol
                                 symbol !is KaConstructorSymbol && symbol is KaFunctionSymbol || symbol is KaVariableSymbol
                             }
                             if (!functionCallOrVariableAccess) return@forEach

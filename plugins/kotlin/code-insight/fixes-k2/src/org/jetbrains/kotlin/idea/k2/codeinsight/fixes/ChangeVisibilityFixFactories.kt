@@ -26,6 +26,8 @@ import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.descriptors.EffectiveVisibility
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.descriptors.Visibility
+import org.jetbrains.kotlin.idea.base.psi.addModifierKeyword
+import org.jetbrains.kotlin.idea.base.psi.removeModifierKeyword
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
@@ -99,9 +101,9 @@ internal object ChangeVisibilityFixFactories {
             if (visibilityModifier == KtTokens.PUBLIC_KEYWORD
                 && !forceUsingExplicitModifier
             ) {
-                element.visibilityModifierType()?.let { element.removeModifier(it) }
+                element.visibilityModifierType()?.let { element.removeModifierKeyword(it) }
             } else {
-                element.addModifier(visibilityModifier)
+                element.addModifierKeyword(visibilityModifier)
             }
 
             val propertyAccessor = element as? KtPropertyAccessor

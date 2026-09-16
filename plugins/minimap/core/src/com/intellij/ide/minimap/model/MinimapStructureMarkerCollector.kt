@@ -101,14 +101,14 @@ internal class MinimapStructureMarkerCollector(
     }
   }
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   private fun resolvePointer(existing: MinimapStructureMarker?, psiElement: PsiElement?): SmartPsiElementPointer<out PsiElement>? = when {
     existing?.pointer?.range != null -> existing.pointer
     pointerManager != null && psiElement != null -> createPointer(pointerManager, psiElement)
     else -> null
   }
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   private fun createPointer(pointerManager: SmartPointerManager,
                             element: PsiElement): SmartPsiElementPointer<out PsiElement>? {
     if (!element.isValid) return null

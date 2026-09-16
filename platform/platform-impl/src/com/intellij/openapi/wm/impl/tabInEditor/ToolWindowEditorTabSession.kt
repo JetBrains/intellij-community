@@ -5,6 +5,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
+import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl.RecentFileHistoryOrderListener
 import com.intellij.openapi.project.Project
 import com.intellij.ui.content.Content
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -70,7 +71,7 @@ class ToolWindowEditorTabSession(
       .launchIn(coroutineScope)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun applyPresentation(newPresentation: ToolWindowEditorTabPresentation): Boolean {
     if (presentation == newPresentation) {
       return false
@@ -78,6 +79,9 @@ class ToolWindowEditorTabSession(
 
     presentation = newPresentation
     file.updatePresentableName(newPresentation.title)
+
+    project.messageBus.syncPublisher(RecentFileHistoryOrderListener.TOPIC).recentFileUpdated(file)
+
     return true
   }
 

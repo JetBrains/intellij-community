@@ -3,7 +3,7 @@ package com.intellij.python.uv.backend.runtime
 
 import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.community.execService.ExecOptions
-import com.intellij.python.pytools.runtime.PyToolRuntime
+import com.intellij.python.pytools.backend.runtime.PyToolRuntime
 import com.intellij.python.uv.backend.cli.uv.UvCli
 import com.intellij.python.uv.backend.cli.uvx.UvxCli
 import java.nio.file.Path

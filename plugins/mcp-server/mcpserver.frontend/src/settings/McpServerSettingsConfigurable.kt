@@ -211,15 +211,24 @@ class McpServerSettingsConfigurable : ComposeSwingSearchableConfigurable() {
       FormComment(McpServerBundle.message("settings.comment.manual.config"))
       FormIndent {
         FormRow {
-          Button(McpServerBundle.message("copy.mcp.server.sse.configuration")) {
-            copyJsonToClipboard(createSseServerJsonEntry(McpServerService.getInstance().port, mcpPath()))
-          }
-          Button(McpServerBundle.message("copy.mcp.server.stdio.configuration")) {
-            copyJsonToClipboard(createStdioMcpServerJsonConfiguration(McpServerService.getInstance().port, mcpPath()))
-          }
-          Button(McpServerBundle.message("copy.mcp.server.stream.configuration")) {
-            copyJsonToClipboard(createStreamableServerJsonEntry(McpServerService.getInstance().port, mcpPath()))
-          }
+          Button(
+            McpServerBundle.message("copy.mcp.server.sse.configuration"),
+            onClick = {
+              copyJsonToClipboard(createSseServerJsonEntry(McpServerService.getInstance().port, mcpPath()))
+            },
+          )
+          Button(
+            McpServerBundle.message("copy.mcp.server.stdio.configuration"),
+            onClick = {
+              copyJsonToClipboard(createStdioMcpServerJsonConfiguration(McpServerService.getInstance().port, mcpPath()))
+            },
+          )
+          Button(
+            McpServerBundle.message("copy.mcp.server.stream.configuration"),
+            onClick = {
+              copyJsonToClipboard(createStreamableServerJsonEntry(McpServerService.getInstance().port, mcpPath()))
+            },
+          )
         }
       }
     }
@@ -272,9 +281,9 @@ class McpServerSettingsConfigurable : ComposeSwingSearchableConfigurable() {
     FormRow {
       OptionButton(
         text = McpServerBundle.message("autoconfigure.mcp.server"),
+        onClick = state.onAutoConfigure,
         options = options,
         addSeparator = false,
-        onClick = state.onAutoConfigure,
       )
       state.statusIcon?.let {
         Label(text = "", modifier = SwingModifier.cell(smallGapAfter = true).icon(it))

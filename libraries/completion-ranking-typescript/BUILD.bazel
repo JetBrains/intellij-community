@@ -1,5 +1,4 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
-load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.libraries.completion.ranking.typescript` start
 jvm_library(
@@ -16,11 +15,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-completion-ranking-typescript-completion-ranking-typescript"],
     runtime_deps = ["@lib//:libraries-completion-ranking-typescript-completion-ranking-typescript"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-completion-ranking-typescript-completion-ranking-typescript"],
-    module = ":completion-ranking-typescript",
 )
 
 jvm_library(
@@ -42,7 +36,6 @@ exports_files(
     [
         "intellij.libraries.completion.ranking.typescript.iml",
         "resources/intellij.libraries.completion.ranking.typescript.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

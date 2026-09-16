@@ -119,14 +119,14 @@ open class CodeVisionHost(val project: Project, protected val coroutineScope: Co
 
   private val defaultSortedProvidersList = mutableListOf<String>()
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   internal fun initializeIfNeeded() {
     if (_isInitialised) return
     initialize()
     _isInitialised = true
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   protected open fun initialize() {
     lifeSettingModel.isRegistryEnabled.whenTrue(codeVisionLifetime) { enableCodeVisionLifetime ->
       runReadActionBlocking {
@@ -141,7 +141,7 @@ open class CodeVisionHost(val project: Project, protected val coroutineScope: Co
     }
   }
 
-  @get:RequiresEdt
+  @get:RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   val isInitialised: Boolean get() = _isInitialised
   private var _isInitialised = false
 
@@ -408,7 +408,7 @@ open class CodeVisionHost(val project: Project, protected val coroutineScope: Co
     editor.putUserData(editorTrackingStart, editorOpenedMark)
     var calcRunning = false
 
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     fun recalculateLenses(lensesToUpdate: UpdateLensesRequest = UpdateLensesRequest.All) {
       val editorManager = FileEditorManager.getInstance(project)
       if (!isInlaySettingsEditor(editor) && !editorManager.selectedEditors.any {
@@ -495,12 +495,12 @@ open class CodeVisionHost(val project: Project, protected val coroutineScope: Co
   private fun isAllowedFileEditor(fileEditor: FileEditor?) = fileEditor is TextEditor && fileEditor !is BaseRemoteFileEditor
 
   /** @param consumer Continuation called on EDT with the calculated lenses */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun calculateFrontendLenses(
     calcLifetime: Lifetime,
     editor: Editor,
     lensesToUpdate: UpdateLensesRequest = UpdateLensesRequest.All,
-    @RequiresEdt consumer: (newLenses: List<Pair<TextRange, CodeVisionEntry>>, providersToUpdate: List<String>) -> Unit,
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */) consumer: (newLenses: List<Pair<TextRange, CodeVisionEntry>>, providersToUpdate: List<String>) -> Unit,
   ) {
     val modCount = modificationCount(editor)
 

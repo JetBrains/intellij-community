@@ -22,6 +22,10 @@ fleet_wasmjs_module(
     ],
 )
 
+### auto-generated section `dev fleet.rpc.server` start
+content_module_jar(module = ":rpc.server")
+### auto-generated section `dev fleet.rpc.server` end
+
 ### auto-generated section `build fleet.rpc.server` start
 create_kotlinc_options(
     name = "custom_rpc.server",
@@ -54,18 +58,16 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinx-coroutines-core",
+        "//libraries/kotlinx/coroutines/core",
         "//fleet/rpc",
-        "@lib//:kotlinx-serialization-core",
-        "@lib//:kotlinx-serialization-json",
+        "//libraries/kotlinx/serialization/core",
+        "//libraries/kotlinx/serialization/json",
         "//fleet/reporting/api",
         "//fleet/reporting/shared",
         "//fleet/multiplatform.shims",
         "//fleet/util/core",
     ],
 )
-
-content_module_jar(module = ":rpc.server")
 
 jvm_library(
     name = "rpc.server_test_lib",
@@ -80,7 +82,10 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":rpc.server",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//fleet/rpc:rpc_test_lib",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//libraries/kotlinx/serialization/json:json_test_lib",
         "//fleet/reporting/api:api_test_lib",
         "//fleet/reporting/shared:shared_test_lib",
         "//fleet/multiplatform.shims:multiplatform.shims_test_lib",
@@ -94,7 +99,6 @@ exports_files(
     [
         "fleet.rpc.server.iml",
         "resources/fleet.rpc.server.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

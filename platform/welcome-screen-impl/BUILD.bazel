@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.platform.welcomeScreen.impl` start
+content_module_jar(module = ":welcomeScreen-impl")
+### auto-generated section `dev intellij.platform.welcomeScreen.impl` end
+
 ### auto-generated section `build intellij.platform.welcomeScreen.impl` start
 jvm_library(
     name = "welcomeScreen-impl",
@@ -34,8 +38,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":welcomeScreen-impl")
-
 jvm_library(
     name = "welcomeScreen-impl_test_lib",
     testonly = True,
@@ -67,7 +69,6 @@ exports_files(
     [
         "intellij.platform.welcomeScreen.impl.iml",
         "resources/intellij.platform.welcomeScreen.impl.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

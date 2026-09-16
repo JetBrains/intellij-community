@@ -792,7 +792,7 @@ object MavenUtil {
   }
 
   @JvmStatic
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun getSystemMavenHomeVariants(project: Project): MutableList<MavenHomeType> {
     val result = ArrayList<MavenHomeType>()
 
@@ -2105,7 +2105,7 @@ object MavenUtil {
   @JvmStatic
   fun isRunningFromSources(): Boolean = PluginManagerCore.isRunningFromSources()
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun isMaven410(xmlns: String?, schemaLocation: String?): Boolean {
     if (xmlns == null || schemaLocation == null) return false
     val xmlns410 = xmlns == MAVEN_4_XMLNS || xmlns == MAVEN_4_XMLNS_HTTPS

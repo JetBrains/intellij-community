@@ -14,13 +14,13 @@ interface BuildTasks {
    * Produces distributions for all operating systems from sources. This includes compiling required modules, packing their output into JAR
    * files accordingly to [ProductProperties.productLayout], and creating distributions and installers for all OS.
    */
-  suspend fun buildDistributions()
+  fun buildDistributions()
 
   /**
    * Compiles required modules and builds zip archives of the specified plugins in [BuildContext.nonBundledPlugins]
    * directory.
    */
-  suspend fun buildNonBundledPlugins(mainPluginModules: List<String>, dependencyModules: List<String> = emptyList())
+  fun buildNonBundledPlugins(mainPluginModules: List<String>, dependencyModules: List<String> = emptyList())
 
-  suspend fun buildUnpackedDistribution(targetDirectory: Path)
+  fun buildUnpackedDistribution(targetDirectory: Path)
 }

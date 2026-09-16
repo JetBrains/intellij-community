@@ -7,12 +7,17 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.bazel.jvm.WorkRequest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.condition.OS
 import org.junit.jupiter.api.io.TempDir
 import java.io.StringWriter
 import java.nio.file.Files
+import java.nio.file.LinkOption
 import java.nio.file.Path
+import kotlin.io.path.isSymbolicLink
 import kotlin.io.path.writeText
 
 internal class IjPluginPackagerTest {
@@ -25,6 +30,8 @@ internal class IjPluginPackagerTest {
         <content>
           <module name="embedded.module" loading="embedded"/>
           <module name="optional.module"/>
+          <module name="module.with.package"/>
+          <module name="module.with.package.and.library"/>
         </content>
       </idea-plugin>
     """.trimIndent()
@@ -36,6 +43,8 @@ internal class IjPluginPackagerTest {
         </actions>
       </idea-plugin>
     """.trimIndent()
+    val moduleWithPackageXml = """<idea-plugin package="my.plugin.content"/>"""
+    val moduleWithPackageAndLibraryXml = """<idea-plugin package="my.plugin.library"/>"""
     directoryContent {
       zip("descriptor.jar") {
         file("icon-robots.txt", "")
@@ -52,6 +61,36 @@ internal class IjPluginPackagerTest {
       zip("optional-module.jar") {
         file("optional.module.xml", optionalModuleXml)
       }
+      zip("module-with-package.jar") {
+        file("module.with.package.xml", moduleWithPackageXml)
+        dir("my") {
+          dir("plugin") {
+            dir("content") {
+              file("Foo.class", "module with package")
+            }
+          }
+        }
+      }
+      zip("module-with-package-and-library.jar") {
+        file("module.with.package.and.library.xml", moduleWithPackageAndLibraryXml)
+        dir("my") {
+          dir("plugin") {
+            dir("library") {
+              file("Bar.class", "module with package and library")
+            }
+          }
+        }
+      }
+      zip("library.jar") {
+        file("Library.class", "library")
+      }
+      file("LICENSE.txt", "license")
+      dir("additional-data") {
+        file("README.md", "documentation")
+        dir("bin") {
+          file("launcher", "launcher")
+        }
+      }
     }.generate(inputDirectory)
 
     // paths are relative to the base directory of the request, like they are when the packager runs as a worker
@@ -67,6 +106,14 @@ internal class IjPluginPackagerTest {
         "embedded.module:input/embedded-module.jar",
         "--content_module",
         "optional.module:input/optional-module.jar",
+        "--content_module",
+        "module.with.package:input/module-with-package.jar",
+        "--content_module",
+        "module.with.package.and.library:input/module-with-package-and-library.jar,input/library.jar",
+        "--non_classpath_data",
+        "LICENSE.txt:input/LICENSE.txt",
+        "--non_classpath_data",
+        "docs:input/additional-data",
       ),
       baseDir = tempDirectory,
     )
@@ -82,6 +129,8 @@ internal class IjPluginPackagerTest {
           <action id="foo" class="Foo" />
         </actions>
       </idea-plugin>]]></module>
+          <module name="module.with.package"><![CDATA[<idea-plugin package="my.plugin.content" />]]></module>
+          <module name="module.with.package.and.library"><![CDATA[<idea-plugin package="my.plugin.library" separate-jar="true" />]]></module>
         </content>
       </idea-plugin>
     """.trimIndent()
@@ -90,18 +139,37 @@ internal class IjPluginPackagerTest {
         - name: lib/descriptor.jar
           modules:
           - name: descriptor
+          - name: module.with.package
         - name: lib/embedded.module.jar
           contentModules:
           - name: embedded.module
+        - name: lib/modules/module.with.package.and.library.jar
+          contentModules:
+          - name: module.with.package.and.library
         - name: lib/modules/optional.module.jar
           contentModules:
           - name: optional.module
       """.trimIndent())
+      file("LICENSE.txt", "license")
+      dir("docs") {
+        file("README.md", "documentation")
+        dir("bin") {
+          file("launcher", "launcher")
+        }
+      }
       dir("lib") {
         zip("descriptor.jar") {
           file("__index__")
           dir("META-INF") {
             file("plugin.xml", expectedPluginXml)
+          }
+          file("module.with.package.xml", moduleWithPackageXml)
+          dir("my") {
+            dir("plugin") {
+              dir("content") {
+                file("Foo.class", "module with package")
+              }
+            }
           }
         }
         zip("embedded.module.jar") {
@@ -109,6 +177,18 @@ internal class IjPluginPackagerTest {
           file("embedded.module.xml", "<idea-plugin></idea-plugin>")
         }
         dir("modules") {
+          zip("module.with.package.and.library.jar") {
+            file("__index__")
+            file("module.with.package.and.library.xml", moduleWithPackageAndLibraryXml)
+            dir("my") {
+              dir("plugin") {
+                dir("library") {
+                  file("Bar.class", "module with package and library")
+                }
+              }
+            }
+            file("Library.class", "library")
+          }
           zip("optional.module.jar") {
             file("__index__")
             file("optional.module.xml", optionalModuleXml)
@@ -190,6 +270,86 @@ internal class IjPluginPackagerTest {
   }
 
   @Test
+  fun preservesSymlinkToFileUnderDataSource(@TempDir tempDirectory: Path) {
+    assumeTrue(OS.current() != OS.WINDOWS)
+    val inputDirectory = tempDirectory.resolve("input")
+    createDescriptorJar(inputDirectory)
+    val dataDirectory = Files.createDirectories(inputDirectory.resolve("data"))
+    val target = Files.writeString(dataDirectory.resolve("target.txt"), "target")
+    Files.createSymbolicLink(dataDirectory.resolve("link.txt"), target)
+
+    IjPluginPackager.packPlugin(
+      args = listOf(
+        "output",
+        "--descriptor_module",
+        "descriptor:input/descriptor.jar",
+        "--non_classpath_data",
+        "data:input/data",
+      ),
+      baseDir = tempDirectory,
+    )
+
+    val outputLink = tempDirectory.resolve("output/data/link.txt")
+    assertTrue(outputLink.isSymbolicLink())
+    assertEquals(Path.of("target.txt"), Files.readSymbolicLink(outputLink))
+    assertEquals("target", Files.readString(outputLink))
+  }
+
+  @Test
+  fun reportsErrorIfSymlinkPointsOutsideDataSource(@TempDir tempDirectory: Path) {
+    assumeTrue(OS.current() != OS.WINDOWS)
+    val inputDirectory = tempDirectory.resolve("input")
+    createDescriptorJar(inputDirectory)
+    val dataDirectory = Files.createDirectories(inputDirectory.resolve("data"))
+    val externalTarget = Files.writeString(inputDirectory.resolve("external.txt"), "external")
+    val link = Files.createSymbolicLink(dataDirectory.resolve("link.txt"), externalTarget)
+
+    val error = assertThrows(IjPluginPackagingException::class.java) {
+      IjPluginPackager.packPlugin(
+        args = listOf(
+          "output",
+          "--descriptor_module",
+          "descriptor:input/descriptor.jar",
+          "--non_classpath_data",
+          "data:input/data",
+        ),
+        baseDir = tempDirectory,
+      )
+    }
+
+    assertEquals(
+      "Cannot copy symlink $link because its target ${externalTarget.toRealPath()} is outside the source directory ${dataDirectory.toRealPath()}",
+      error.message,
+    )
+    assertFalse(Files.exists(tempDirectory.resolve("output/data/link.txt"), LinkOption.NOFOLLOW_LINKS))
+  }
+
+  @Test
+  fun reportsErrorIfNonClasspathDataOverwritesOutputFile(@TempDir tempDirectory: Path) {
+    val inputDirectory = tempDirectory.resolve("input")
+    createDescriptorJar(inputDirectory)
+    Files.writeString(inputDirectory.resolve("data1.txt"), "data")
+    Files.writeString(inputDirectory.resolve("data2.txt"), "data")
+
+    val error = assertThrows(IjPluginPackagingException::class.java) {
+      IjPluginPackager.packPlugin(
+        args = listOf(
+          "output",
+          "--descriptor_module",
+          "descriptor:input/descriptor.jar",
+          "--non_classpath_data",
+          "data.txt:input/data1.txt",
+          "--non_classpath_data",
+          "data.txt:input/data2.txt",
+        ),
+        baseDir = tempDirectory,
+      )
+    }
+
+    assertTrue(error.message?.contains("because the output file already exists") == true, error.message)
+  }
+
+  @Test
   fun readsArgumentsFromParamsFile(@TempDir tempDirectory: Path) {
     val inputDirectory = tempDirectory.resolve("input")
     directoryContent {
@@ -248,5 +408,15 @@ internal class IjPluginPackagerTest {
 
     assertEquals(3, exitCode)
     assertTrue(writer.toString().contains("--flagfile="), writer.toString())
+  }
+
+  private fun createDescriptorJar(inputDirectory: Path) {
+    directoryContent {
+      zip("descriptor.jar") {
+        dir("META-INF") {
+          file("plugin.xml", "<idea-plugin><id>my.plugin</id></idea-plugin>")
+        }
+      }
+    }.generate(inputDirectory)
   }
 }

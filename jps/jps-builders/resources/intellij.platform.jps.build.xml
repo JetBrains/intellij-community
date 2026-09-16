@@ -17,6 +17,7 @@
     <module name="intellij.libraries.javax.annotation"/>
     <module name="intellij.libraries.jetbrains.annotations"/>
     <module name="intellij.libraries.jps.javac.extension"/>
+    <module name="intellij.libraries.kotlin.metadata"/>
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.libraries.maven.resolver.provider"/>
     <module name="intellij.libraries.mvstore"/>

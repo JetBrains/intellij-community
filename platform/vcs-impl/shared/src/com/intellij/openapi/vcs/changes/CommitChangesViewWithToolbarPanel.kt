@@ -84,7 +84,7 @@ abstract class CommitChangesViewWithToolbarPanel(
   private val inputHandler = ChangesViewInputHandler(cs, changesView)
   val diffRequests: SharedFlow<ClientId> = inputHandler.diffRequests
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   open fun initPanel() {
     inputHandler.installListeners()
 
@@ -134,7 +134,7 @@ abstract class CommitChangesViewWithToolbarPanel(
     scheduleRefresh(withDelay = false, callback = callback)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun setGrouping(groupingKey: String) {
     changesView.groupingSupport.setGroupingKeysOrSkip(setOf(groupingKey))
     scheduleRefreshNow()
@@ -155,7 +155,7 @@ abstract class CommitChangesViewWithToolbarPanel(
     }
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private suspend fun refreshView() {
     if (!cs.isActive || !project.isInitialized || application.isUnitTestMode) return
     val (modelData, model) = TRACER.spanBuilder(ChangesView.ChangesViewRefreshBackground.name).use {
@@ -175,6 +175,7 @@ abstract class CommitChangesViewWithToolbarPanel(
     withContext(Dispatchers.EDT) {
       TRACER.spanBuilder(ChangesView.ChangesViewRefreshEdt.getName()).use {
         changesView.updateTreeModel(model, ChangesViewTreeStateStrategy())
+        onTreeModelUpdated()
         checkCanceled()
         synchronizeInclusion(modelData.changeLists, modelData.unversionedFiles)
       }
@@ -192,9 +193,16 @@ abstract class CommitChangesViewWithToolbarPanel(
   abstract fun synchronizeInclusion(changeLists: List<LocalChangeList>, unversionedFiles: List<FilePath>)
 
   /**
+   * Called right after the tree model was replaced.
+   */
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  protected open fun onTreeModelUpdated() {
+  }
+
+  /**
    * Immediately reset changes view and request refresh when NON_MODAL modality allows (i.e. after a plugin was unloaded or a dialog closed)
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun resetViewImmediatelyAndRefreshLater() {
     changesView.setModel(TreeModelBuilder.buildEmpty())
     changesView.setPaintBusy(true)
@@ -226,7 +234,7 @@ private class ChangesViewInputHandler(
   val diffRequests: MutableSharedFlow<ClientId> =
     MutableSharedFlow(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun installListeners() {
     changesView.doubleClickHandler = Processor { e: MouseEvent ->
       if (EditSourceOnDoubleClickHandler.isToggleEvent(changesView, e)) return@Processor false

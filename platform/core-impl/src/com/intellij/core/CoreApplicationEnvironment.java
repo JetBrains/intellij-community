@@ -21,6 +21,7 @@ import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.PsiBuilderFactory;
 import com.intellij.lang.impl.PsiBuilderFactoryImpl;
 import com.intellij.mock.MockApplication;
+import com.intellij.mock.MockDumbUtil;
 import com.intellij.mock.MockFileDocumentManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationInfo;
@@ -40,6 +41,7 @@ import com.intellij.openapi.fileTypes.FileTypeExtension;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
+import com.intellij.openapi.project.DumbUtil;
 import com.intellij.openapi.util.ClassExtension;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -132,6 +134,7 @@ public class CoreApplicationEnvironment {
     registerApplicationService(CodeFoldingSettings.class, new CodeFoldingSettings());
     registerApplicationService(CommandProcessor.class, new CoreCommandProcessor());
     registerApplicationService(GraphAlgorithms.class, new GraphAlgorithmsImpl());
+    registerApplicationService(DumbUtil.class, new MockDumbUtil());
 
     registerApplicationExtensionPoint(StubElementRegistryServiceImplKt.STUB_REGISTRY_EP, StubRegistryExtension.class);
     registerApplicationService(StubElementRegistryService.class, new StubElementRegistryServiceImpl(application.getCoroutineScope()));

@@ -565,7 +565,7 @@ abstract class RedundantIfInspectionBase : AbstractKotlinInspection(), CleanupLo
             return comments.toList().dropLastWhile { it is PsiWhiteSpace }
         }
 
-        @RequiresBackgroundThread
+        @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
         private fun negate(expression: KtExpression?): KtExpression? {
             if (expression == null) return null
             invertEmptinessCheck(expression)?.let { return it }

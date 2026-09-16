@@ -15,11 +15,13 @@ import com.intellij.coverage.analysis.PackageAnnotator.SummaryCoverageInfo
 import com.intellij.coverage.analysis.collectOutputRoots
 import com.intellij.coverage.xml.XMLReportAnnotator
 import com.intellij.idea.ExcludeFromTestDiscovery
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.CompilerModuleExtension
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.JavaPsiFacade
@@ -28,8 +30,12 @@ import com.intellij.rt.coverage.data.LineCoverage
 import com.intellij.rt.coverage.data.LineData
 import com.intellij.rt.coverage.data.ProjectData
 import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.util.concurrency.ThreadingAssertions
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -307,8 +313,8 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
     }
   }
 
-  @Test
-  fun `test sub coverage`(): Unit = runBlocking {
+  @Test(timeout = 30_000)
+  fun `test sub coverage`(): Unit = timeoutRunBlocking {
     ThreadingAssertions.assertBackgroundThread()
 
     val suite = loadIJSuite()
@@ -371,9 +377,11 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
       assertEquals(2, consumer.myDirectoryCoverage.size)
     }
 
-    waitSuiteProcessing {
+    assertTrue(manager.isSubCoverageActive)
+    runSuiteActionOnEdtAndWait(suite) {
       manager.restoreMergedCoverage(suite)
     }
+    assertFalse(manager.isSubCoverageActive)
     assertHits(suite)
     closeSuite(suite)
   }
@@ -388,6 +396,66 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
 
     suite.restoreCoverageData()
     assertNotNull(suite.coverageData)
+  }
+
+  @Test(timeout = 30_000)
+  fun `test jacoco suite replacement on EDT`(): Unit = timeoutRunBlocking {
+    val original = loadJaCoCoSuite()
+    openSuiteAndWait(original)
+    val replacement = loadJaCoCoSuite()
+
+    chooseSuiteOnEdtAndWait(replacement)
+
+    assertSame(replacement, manager.currentSuitesBundle)
+    assertHits(replacement)
+    closeSuite(replacement)
+  }
+
+  @Test(timeout = 30_000)
+  fun `test suite replacement resets coverage per test`(): Unit = timeoutRunBlocking {
+    val original = loadIJSuite()
+    openSuiteAndWait(original)
+    waitSuiteProcessing {
+      manager.selectSubCoverage(original, listOf("foo.bar.BarTest,testMethod3"))
+    }
+    assertTrue(manager.isSubCoverageActive)
+    val replacement = loadJaCoCoSuite()
+
+    chooseSuiteOnEdtAndWait(replacement)
+
+    assertFalse(manager.isSubCoverageActive)
+    assertHits(replacement)
+    closeSuite(replacement)
+  }
+
+  private suspend fun chooseSuiteOnEdtAndWait(suite: CoverageSuitesBundle) {
+    runSuiteActionOnEdtAndWait(suite) {
+      manager.chooseSuitesBundle(suite)
+    }
+  }
+
+  private suspend fun runSuiteActionOnEdtAndWait(suite: CoverageSuitesBundle, action: () -> Unit) {
+    val completion = CompletableDeferred<Unit>()
+    val disposable = Disposer.newDisposable()
+    try {
+      manager.addSuiteListener(object : CoverageSuiteListener {
+        override fun coverageDataCalculated(bundle: CoverageSuitesBundle) {
+          if (bundle === suite) completion.complete(Unit)
+        }
+
+        override fun coverageDataCalculationFailed(bundle: CoverageSuitesBundle) {
+          if (bundle === suite) completion.completeExceptionally(AssertionError("Coverage calculation failed"))
+        }
+      }, disposable)
+      withContext(Dispatchers.EDT) {
+        action()
+      }
+      completion.await()
+      awaitGutterAnnotations()
+    }
+    finally {
+      Disposer.dispose(disposable)
+    }
   }
 
   @Test

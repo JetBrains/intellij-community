@@ -3,9 +3,8 @@
 
 package org.jetbrains.intellij.build.productLayout.tooling
 
+import com.intellij.platform.buildScripts.concurrency.taskScope
 import com.intellij.platform.pluginGraph.PluginGraph
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
 import org.jetbrains.intellij.build.productLayout.traversal.collectModuleSetModuleNames
 import org.jetbrains.intellij.build.productLayout.traversal.collectProductModuleSetNames
 import org.jetbrains.intellij.build.productLayout.traversal.findModuleSetInclusionChain
@@ -37,13 +36,13 @@ internal class ProductModuleSetIndex(products: List<ProductSpec>, pluginGraph: P
 
 /**
  * Suggests module set unification opportunities based on overlap, similarity, and usage patterns.
- * 
+ *
  * Strategies:
  * - Merge: Combine overlapping module sets (especially subsets/supersets)
  * - Inline: Inline rarely used small module sets directly into products
  * - Factor: Extract common patterns from similar products
  * - Split: Split oversized module sets for better maintainability
- * 
+ *
  * @param allModuleSets All module sets with metadata
  * @param products All products
  * @param overlaps Pre-calculated module set overlaps
@@ -52,33 +51,33 @@ internal class ProductModuleSetIndex(products: List<ProductSpec>, pluginGraph: P
  * @param strategy Filter by strategy: "merge", "inline", "factor", "split", or "all"
  * @return List of suggestions sorted by priority
  */
-internal suspend fun suggestModuleSetUnification(
+internal fun suggestModuleSetUnification(
   allModuleSets: List<ModuleSetMetadata>,
   products: List<ProductSpec>,
   overlaps: List<ModuleSetOverlap>,
   similarityPairs: List<ProductSimilarityPair>,
   pluginGraph: PluginGraph,
   maxSuggestions: Int = 10,
-  strategy: String = "all"
+  strategy: String = "all",
 ): List<UnificationSuggestion> {
-  return coroutineScope {
+  return taskScope {
     // Build index for O(1) product lookups
     val productIndex = ProductModuleSetIndex(products, pluginGraph)
 
     // Run all 4 strategies in parallel
-    val mergeJob = async {
+    val mergeJob = fork("merge suggestions") {
       if (strategy == "merge" || strategy == "all") computeMergeSuggestions(overlaps) else emptyList()
     }
 
-    val inlineJob = async {
+    val inlineJob = fork("inline suggestions") {
       if (strategy == "inline" || strategy == "all") computeInlineSuggestions(allModuleSets, productIndex, pluginGraph) else emptyList()
     }
 
-    val factorJob = async {
+    val factorJob = fork("factor suggestions") {
       if (strategy == "factor" || strategy == "all") computeFactorSuggestions(similarityPairs) else emptyList()
     }
 
-    val splitJob = async {
+    val splitJob = fork("split suggestions") {
       if (strategy == "split" || strategy == "all") computeSplitSuggestions(allModuleSets, pluginGraph) else emptyList()
     }
 
@@ -100,7 +99,7 @@ internal suspend fun suggestModuleSetUnification(
     val priorityOrder = mapOf("high" to 3, "medium" to 2, "low" to 1)
     uniqueSuggestions.sortByDescending { priorityOrder.get(it.priority) ?: 0 }
 
-    uniqueSuggestions.take(maxSuggestions)
+    join { uniqueSuggestions.take(maxSuggestions) }
   }
 }
 
@@ -141,7 +140,7 @@ private fun computeMergeSuggestions(overlaps: List<ModuleSetOverlap>): List<Unif
 private fun computeInlineSuggestions(
   allModuleSets: List<ModuleSetMetadata>,
   productIndex: ProductModuleSetIndex,
-  pluginGraph: PluginGraph
+  pluginGraph: PluginGraph,
 ): List<UnificationSuggestion> {
   return allModuleSets.mapNotNull { msEntry ->
     val usedByProducts = productIndex.getProductsUsing(msEntry.moduleSet.name)
@@ -164,7 +163,8 @@ private fun computeInlineSuggestions(
           affectedProducts = usedByProducts.map { it.name }
         )
       )
-    } else null
+    }
+    else null
   }
 }
 
@@ -184,14 +184,15 @@ private fun computeFactorSuggestions(similarityPairs: List<ProductSimilarityPair
         reason = "Products ${pair.product1} and ${pair.product2} share ${pair.sharedModuleSets.size} module sets (${(pair.similarity * 100).toInt()}% similarity). Consider creating a common base.",
         impact = UnificationImpact(similarity = pair.similarity, sharedModuleSets = pair.sharedModuleSets.size)
       )
-    } else null
+    }
+    else null
   }
 }
 
 /** Strategy 4: Split large module sets */
 private fun computeSplitSuggestions(
   allModuleSets: List<ModuleSetMetadata>,
-  pluginGraph: PluginGraph
+  pluginGraph: PluginGraph,
 ): List<UnificationSuggestion> {
   return allModuleSets.mapNotNull { msEntry ->
     val totalModuleCount = collectModuleSetModuleNames(pluginGraph, msEntry.moduleSet.name).size
@@ -208,13 +209,14 @@ private fun computeSplitSuggestions(
         reason = "Module set contains $totalModuleCount modules. Consider splitting into smaller, more focused sets for better maintainability.",
         impact = UnificationImpact(moduleCount = totalModuleCount)
       )
-    } else null
+    }
+    else null
   }
 }
 
 /**
  * Helper function to find all products that use a specific module set.
- * 
+ *
  * @param products List of all products
  * @param moduleSetName Name of the module set to search for
  * @return List of products that reference the module set
@@ -222,7 +224,7 @@ private fun computeSplitSuggestions(
 fun findProductsUsingModuleSet(
   products: List<ProductSpec>,
   moduleSetName: String,
-  pluginGraph: PluginGraph
+  pluginGraph: PluginGraph,
 ): List<ProductSpec> {
   return products.filter { p ->
     if (p.contentSpec == null) return@filter false
@@ -234,7 +236,7 @@ fun findProductsUsingModuleSet(
  * Analyzes which products use a specific module set, distinguishing direct from indirect usage.
  * Direct usage = product directly references the module set in its top-level configuration
  * Indirect usage = product includes another module set that nests the target module set
- * 
+ *
  * @param moduleSetName Name of the module set to analyze
  * @param products All products
  * @return Analysis result with direct/indirect usage and inclusion chains
@@ -246,18 +248,20 @@ internal fun analyzeProductUsage(
 ): ProductUsageAnalysis {
   val directUsage = ArrayList<ProductUsageEntry>()
   val indirectUsage = ArrayList<ProductUsageEntry>()
-  
+
   for (product in products) {
     if (product.contentSpec == null) continue
     val topLevelSets = collectProductModuleSetNames(pluginGraph, product.name)
-    
+
     // Check if product directly references the target module set
     if (topLevelSets.contains(moduleSetName)) {
-      directUsage.add(ProductUsageEntry(
-        product = product.name,
-        usageType = "direct",
-        inclusionChain = null
-      ))
+      directUsage.add(
+        ProductUsageEntry(
+          product = product.name,
+          usageType = "direct",
+          inclusionChain = null
+        )
+      )
     }
     else {
       // Check if any top-level set transitively includes the target
@@ -265,17 +269,19 @@ internal fun analyzeProductUsage(
         if (isModuleSetTransitivelyNested(pluginGraph, topLevelSet, moduleSetName)) {
           // Build the inclusion chain
           val chain = findModuleSetInclusionChain(pluginGraph, topLevelSet, moduleSetName)
-          indirectUsage.add(ProductUsageEntry(
-            product = product.name,
-            usageType = "indirect",
-            inclusionChain = chain
-          ))
+          indirectUsage.add(
+            ProductUsageEntry(
+              product = product.name,
+              usageType = "indirect",
+              inclusionChain = chain
+            )
+          )
           break  // Only record once per product
         }
       }
     }
   }
-  
+
   return ProductUsageAnalysis(
     moduleSet = moduleSetName,
     directUsage = directUsage,
@@ -287,7 +293,7 @@ internal fun analyzeProductUsage(
 /**
  * Analyzes the impact of merging, moving, or inlining module sets.
  * Checks for violations, calculates size impact, and provides recommendations.
- * 
+ *
  * @param sourceSet Source module set name
  * @param targetSet Target module set name (null for inline operation)
  * @param operation Operation type (MERGE, MOVE, or INLINE)
@@ -323,16 +329,18 @@ internal fun analyzeMergeImpact(
         duplicateModules = 0,
         resultingModuleCount = 0
       ),
-      violations = listOf(MergeViolation(
-        type = "notFound",
-        severity = "error",
-        message = "Source module set '$sourceSet' not found"
-      )),
+      violations = listOf(
+        MergeViolation(
+          type = "notFound",
+          severity = "error",
+          message = "Source module set '$sourceSet' not found"
+        )
+      ),
       recommendation = "ERROR: Cannot analyze - source module set not found",
       safe = false
     )
   }
-  
+
   // Find target module set (if applicable)
   var targetEntry: ModuleSetMetadata? = null
   if (targetSet != null) {
@@ -352,17 +360,19 @@ internal fun analyzeMergeImpact(
           duplicateModules = 0,
           resultingModuleCount = 0
         ),
-        violations = listOf(MergeViolation(
-          type = "notFound",
-          severity = "error",
-          message = "Target module set '$targetSet' not found"
-        )),
+        violations = listOf(
+          MergeViolation(
+            type = "notFound",
+            severity = "error",
+            message = "Target module set '$targetSet' not found"
+          )
+        ),
         recommendation = "ERROR: Cannot analyze - target module set not found",
         safe = false
       )
     }
   }
-  
+
   // Validate that source and target are different
   if (targetSet != null && sourceSet == targetSet) {
     return MergeImpactResult(
@@ -379,26 +389,29 @@ internal fun analyzeMergeImpact(
         duplicateModules = 0,
         resultingModuleCount = 0
       ),
-      violations = listOf(MergeViolation(
-        type = "validation",
-        severity = "error",
-        message = "Source and target cannot be the same module set: '$sourceSet'"
-      )),
+      violations = listOf(
+        MergeViolation(
+          type = "validation",
+          severity = "error",
+          message = "Source and target cannot be the same module set: '$sourceSet'"
+        )
+      ),
       recommendation = "ERROR: Source and target must be different module sets",
       safe = false
     )
   }
-  
+
   // Find products using source
   val productsUsingSource = findProductsUsingModuleSet(products, sourceSet, pluginGraph)
-  
+
   // Find products using target
   val productsUsingTarget = if (targetSet != null) {
     findProductsUsingModuleSet(products, targetSet, pluginGraph)
-  } else {
+  }
+  else {
     emptyList()
   }
-  
+
   // Calculate module changes
   val sourceModules = collectModuleSetModuleNames(pluginGraph, sourceEntry.moduleSet.name)
   val targetModules = if (targetEntry != null) {
@@ -407,42 +420,46 @@ internal fun analyzeMergeImpact(
   else {
     emptySet()
   }
-  
+
   val newModules = sourceModules.minus(targetModules)
   val duplicateModules = sourceModules.intersect(targetModules)
-  
+
   // Check for community/ultimate violations
   val violations = ArrayList<MergeViolation>()
   if (operation == MergeOperation.MERGE && targetEntry != null) {
     val sourceLocation = sourceEntry.location
     val targetLocation = targetEntry.location
-    
+
     if (sourceLocation == ModuleLocation.ULTIMATE && targetLocation == ModuleLocation.COMMUNITY) {
-      violations.add(MergeViolation(
-        type = "location",
-        severity = "error",
-        message = "Cannot merge ultimate module set \"$sourceSet\" into community module set \"$targetSet\"",
-        fix = "Move \"$targetSet\" to ultimate directory, or extract community modules from \"$sourceSet\""
-      ))
+      violations.add(
+        MergeViolation(
+          type = "location",
+          severity = "error",
+          message = "Cannot merge ultimate module set \"$sourceSet\" into community module set \"$targetSet\"",
+          fix = "Move \"$targetSet\" to ultimate directory, or extract community modules from \"$sourceSet\""
+        )
+      )
     }
-    
+
     // Check if any community products would gain ultimate modules
     val communityProductsUsingTarget = productsUsingTarget.filter { p ->
       val productSets = collectProductModuleSetNames(pluginGraph, p.name)
       !productSets.contains("commercialIdeBase") && !productSets.contains("ide.ultimate")
     }
-    
+
     if (sourceLocation == ModuleLocation.ULTIMATE && communityProductsUsingTarget.isNotEmpty()) {
-      violations.add(MergeViolation(
-        type = "community-uses-ultimate",
-        severity = "error",
-        message = "Merging ultimate set \"$sourceSet\" into \"$targetSet\" would expose ultimate modules to ${communityProductsUsingTarget.size} community products",
-        affectedProducts = communityProductsUsingTarget.map { it.name },
-        fix = "Remove \"$targetSet\" from community products, or split ultimate modules from \"$sourceSet\""
-      ))
+      violations.add(
+        MergeViolation(
+          type = "community-uses-ultimate",
+          severity = "error",
+          message = "Merging ultimate set \"$sourceSet\" into \"$targetSet\" would expose ultimate modules to ${communityProductsUsingTarget.size} community products",
+          affectedProducts = communityProductsUsingTarget.map { it.name },
+          fix = "Remove \"$targetSet\" from community products, or split ultimate modules from \"$sourceSet\""
+        )
+      )
     }
   }
-  
+
   // Calculate size impact
   val sizeImpact = SizeImpact(
     sourceModuleCount = sourceModules.size,
@@ -451,19 +468,19 @@ internal fun analyzeMergeImpact(
     duplicateModules = duplicateModules.size,
     resultingModuleCount = targetModules.size + newModules.size
   )
-  
+
   // Generate recommendation
   val recommendation = when {
     violations.isNotEmpty() -> "NOT RECOMMENDED: Operation would introduce violations. See violations for details."
-    operation == MergeOperation.MERGE && duplicateModules.isNotEmpty() -> 
+    operation == MergeOperation.MERGE && duplicateModules.isNotEmpty() ->
       "CAUTION: ${duplicateModules.size} modules already exist in target. Merge would create no duplicates, but review if modules serve the same purpose."
-    operation == MergeOperation.MERGE && newModules.isNotEmpty() -> 
+    operation == MergeOperation.MERGE && newModules.isNotEmpty() ->
       "SAFE TO MERGE: Would add ${newModules.size} new modules to \"$targetSet\". ${productsUsingTarget.size} products using target would gain these modules."
-    operation == MergeOperation.INLINE -> 
+    operation == MergeOperation.INLINE ->
       "SAFE TO INLINE: ${productsUsingSource.size} products using \"$sourceSet\" would directly include ${sourceModules.size} modules instead."
     else -> "Operation appears safe based on current analysis."
   }
-  
+
   return MergeImpactResult(
     operation = operationStr,
     sourceSet = sourceSet,
@@ -472,7 +489,8 @@ internal fun analyzeMergeImpact(
     productsUsingTarget = productsUsingTarget.map { it.name },
     productsThatWouldChange = if (operation == MergeOperation.MERGE) {
       productsUsingTarget.map { it.name }
-    } else {
+    }
+    else {
       productsUsingSource.map { it.name }
     },
     sizeImpact = sizeImpact,

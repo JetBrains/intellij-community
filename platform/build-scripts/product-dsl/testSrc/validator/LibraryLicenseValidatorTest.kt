@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.productLayout.validator
 
+import com.intellij.platform.buildScripts.concurrency.SharedTaskOwner
 import com.intellij.platform.buildScripts.licenses.LibraryLicense
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -26,6 +27,13 @@ import java.nio.file.Path
  */
 @ExtendWith(TestFailureLogger::class)
 class LibraryLicenseValidatorTest {
+  private val owner = SharedTaskOwner("LibraryLicenseValidatorTest")
+
+  @org.junit.jupiter.api.AfterEach
+  fun closeSharedTasks() {
+    owner.close()
+  }
+
   private val unrelatedLicense = LibraryLicense(libraryName = "unrelated-lib", license = "Apache 2.0")
 
   @Test
@@ -42,7 +50,7 @@ class LibraryLicenseValidatorTest {
         module("intellij.libraries.example")
       }
     }
-    val model = testGenerationModel(graph, outputProvider = jps.outputProvider, libraryLicenses = listOf(unrelatedLicense))
+    val model = testGenerationModel(graph, outputProvider = jps.outputProvider, libraryLicenses = listOf(unrelatedLicense), owner = owner)
     val errors = runValidationRule(LibraryLicenseValidator, model)
 
     assertThat(errors).hasSize(1)
@@ -67,7 +75,7 @@ class LibraryLicenseValidatorTest {
     val graph = pluginGraph {
       plugin("intellij.terraform")
     }
-    val model = testGenerationModel(graph, outputProvider = jps.outputProvider, libraryLicenses = listOf(unrelatedLicense))
+    val model = testGenerationModel(graph, outputProvider = jps.outputProvider, libraryLicenses = listOf(unrelatedLicense), owner = owner)
     val errors = runValidationRule(LibraryLicenseValidator, model)
 
     assertThat(errors).hasSize(1)
@@ -94,7 +102,7 @@ class LibraryLicenseValidatorTest {
         module("intellij.platform.core")
       }
     }
-    val model = testGenerationModel(graph, outputProvider = jps.outputProvider, libraryLicenses = listOf(unrelatedLicense))
+    val model = testGenerationModel(graph, outputProvider = jps.outputProvider, libraryLicenses = listOf(unrelatedLicense), owner = owner)
     val errors = runValidationRule(LibraryLicenseValidator, model)
 
     assertThat(errors).hasSize(1)
@@ -117,7 +125,7 @@ class LibraryLicenseValidatorTest {
         module("intellij.libraries.example")
       }
     }
-    val model = testGenerationModel(graph, outputProvider = jps.outputProvider, libraryLicenses = listOf(license))
+    val model = testGenerationModel(graph, outputProvider = jps.outputProvider, libraryLicenses = listOf(license), owner = owner)
 
     assertThat(runValidationRule(LibraryLicenseValidator, model)).isEmpty()
   }
@@ -137,7 +145,7 @@ class LibraryLicenseValidatorTest {
         module("intellij.platform.core")
       }
     }
-    val model = testGenerationModel(graph, outputProvider = jps.outputProvider, libraryLicenses = listOf(unrelatedLicense))
+    val model = testGenerationModel(graph, outputProvider = jps.outputProvider, libraryLicenses = listOf(unrelatedLicense), owner = owner)
 
     assertThat(runValidationRule(LibraryLicenseValidator, model)).isEmpty()
   }
@@ -160,7 +168,7 @@ class LibraryLicenseValidatorTest {
         content("intellij.platform.testFramework")
       }
     }
-    val model = testGenerationModel(graph, outputProvider = jps.outputProvider, libraryLicenses = listOf(unrelatedLicense))
+    val model = testGenerationModel(graph, outputProvider = jps.outputProvider, libraryLicenses = listOf(unrelatedLicense), owner = owner)
 
     assertThat(runValidationRule(LibraryLicenseValidator, model)).isEmpty()
   }
@@ -179,7 +187,7 @@ class LibraryLicenseValidatorTest {
         module("intellij.libraries.ktor.io")
       }
     }
-    val model = testGenerationModel(graph, outputProvider = jps.outputProvider, libraryLicenses = listOf(unrelatedLicense))
+    val model = testGenerationModel(graph, outputProvider = jps.outputProvider, libraryLicenses = listOf(unrelatedLicense), owner = owner)
 
     assertThat(runValidationRule(LibraryLicenseValidator, model)).isEmpty()
   }
@@ -198,7 +206,7 @@ class LibraryLicenseValidatorTest {
         module("intellij.libraries.ktor.client")
       }
     }
-    val model = testGenerationModel(graph, outputProvider = jps.outputProvider, libraryLicenses = listOf(unrelatedLicense))
+    val model = testGenerationModel(graph, outputProvider = jps.outputProvider, libraryLicenses = listOf(unrelatedLicense), owner = owner)
     val errors = runValidationRule(LibraryLicenseValidator, model)
 
     assertThat(errors).hasSize(1)
@@ -219,14 +227,14 @@ class LibraryLicenseValidatorTest {
         module("intellij.libraries.example")
       }
     }
-    val model = testGenerationModel(graph, outputProvider = jps.outputProvider)
+    val model = testGenerationModel(graph, outputProvider = jps.outputProvider, owner = owner)
 
     assertThat(runValidationRule(LibraryLicenseValidator, model)).isEmpty()
   }
 
   @Test
   fun `raises when the graph holds no production module and the license list is not empty`() {
-    val model = testGenerationModel(pluginGraph {}, libraryLicenses = listOf(unrelatedLicense))
+    val model = testGenerationModel(pluginGraph {}, libraryLicenses = listOf(unrelatedLicense), owner = owner)
 
     assertThatThrownBy {
       runBlocking(Dispatchers.Default) {

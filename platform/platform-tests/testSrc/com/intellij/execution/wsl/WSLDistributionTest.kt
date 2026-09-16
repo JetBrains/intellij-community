@@ -18,6 +18,7 @@ import com.intellij.platform.eel.EelArchiveApi
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelExecApi.ExternalCliEntrypoint
+import com.intellij.platform.eel.EelHttpApi
 import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.EelPosixProcess
@@ -544,6 +545,8 @@ private class MockIjentApi(private val adapter: GeneralCommandLine, val rootUser
     }
 
   override val archive: EelArchiveApi get() = throw UnsupportedOperationException()
+
+  override val http: EelHttpApi get() = throw UnsupportedOperationException()
 
   override val isRunning: Boolean get() = true
 

@@ -1,10 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.nonModalWelcomeScreen
 
+import com.intellij.ide.trustedProjects.TrustedFiles
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
@@ -29,6 +31,8 @@ object DefaultFileDragAndDropHandler : FileDragAndDropHandler {
         readAction {
           LocalFileSystem.getInstance().findFileByNioFile(file)
         }?.let {
+          NonProjectFileWritingAccessProvider.allowWriting(listOf(it))
+          TrustedFiles.markExternallyOpened(it)
           withContext(Dispatchers.EDT) {
             fileEditorManager.openFile(it, true)
           }

@@ -35,22 +35,22 @@ public final class WindowsServices {
    * @throws IllegalStateException with the error code when the service control manager cannot be opened
    */
   public static int openService(@NotNull String serviceName) {
-    try (Arena arena = Arena.ofConfined()) {
-      MemorySegment callState = arena.allocate(Handles.CALL_STATE_LAYOUT);
-      MemorySegment manager = (MemorySegment)Handles.OPEN_SC_MANAGER.invokeExact(callState, MemorySegment.NULL, MemorySegment.NULL, SC_MANAGER_CONNECT);
+    try (var arena = Arena.ofConfined()) {
+      var callState = arena.allocate(Handles.CALL_STATE_LAYOUT);
+      var manager = (MemorySegment)Handles.OPEN_SC_MANAGER.invokeExact(callState, MemorySegment.NULL, MemorySegment.NULL, SC_MANAGER_CONNECT);
       if (manager.address() == 0) {
         throw new IllegalStateException("OpenSCManagerW failed with Win32 error " + (int)Handles.LAST_ERROR.get(callState, 0L));
       }
       try {
-        MemorySegment service = (MemorySegment)Handles.OPEN_SERVICE.invokeExact(callState, manager, arena.allocateFrom(serviceName, StandardCharsets.UTF_16LE), SC_MANAGER_CONNECT);
+        var service = (MemorySegment)Handles.OPEN_SERVICE.invokeExact(callState, manager, arena.allocateFrom(serviceName, StandardCharsets.UTF_16LE), SC_MANAGER_CONNECT);
         if (service.address() == 0) {
           return (int)Handles.LAST_ERROR.get(callState, 0L);
         }
-        int ignored = (int)Handles.CLOSE_SERVICE_HANDLE.invokeExact(service);
+        var _ = (int)Handles.CLOSE_SERVICE_HANDLE.invokeExact(service);
         return 0;
       }
       finally {
-        int ignored = (int)Handles.CLOSE_SERVICE_HANDLE.invokeExact(manager);
+        var _ = (int)Handles.CLOSE_SERVICE_HANDLE.invokeExact(manager);
       }
     }
     catch (Throwable t) {

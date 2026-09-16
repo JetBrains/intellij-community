@@ -6,7 +6,7 @@ import org.jetbrains.intellij.build.classPath.orderCoreClasspathEntries
 import org.jetbrains.intellij.build.classPath.writePluginClassPathCount
 import org.jetbrains.intellij.build.impl.PLUGIN_CLASSPATH
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
-import org.jetbrains.intellij.build.telemetry.blockingUse
+import org.jetbrains.intellij.build.telemetry.use
 import java.io.BufferedOutputStream
 import java.io.DataOutputStream
 import java.nio.file.FileVisitResult
@@ -27,7 +27,7 @@ data class DevBuildComponent(
    * The tree this component's files sit in, or `null` for a component that owns no tree.
    *
    * A component with no tree names each file's bytes where they already are, in
-   * [DevBuildComponentEntry.source] - see [writeSourcedDevBuildComponentManifest]. Its manifest is then the only
+   * [DevBuildComponentEntry.source]. Its manifest is then the only
    * statement of what the component contains, which is why the composer holds it to a stricter contract: every entry
    * must name a source and none may be a symbolic link.
    */
@@ -61,6 +61,7 @@ data class ComposedDevBuild(
  * [pluginClasspathPrefix] is the `plugin-classpath.txt` prefix one component was asked to produce; it is required as
  * soon as any component contributed plugins, since the file cannot be written without it.
  * [additionalModules] is what the distribution declares it contains - see [ComposedDevBuild.additionalModules].
+ * [sourceRunfiles] requests launch metadata without copying the component files. Its values name Bazel runfiles.
  */
 @ApiStatus.Internal
 fun composeDevBuildComponents(
@@ -69,6 +70,7 @@ fun composeDevBuildComponents(
   pluginClasspathPrefix: Path? = null,
   expectedFragments: Collection<String> = emptyList(),
   additionalModules: Collection<String> = emptyList(),
+  sourceRunfiles: Map<Path, String>? = null,
 ): ComposedDevBuild {
   require(components.isNotEmpty()) { "At least one dev-build component is required" }
   val first = components.first().manifest
@@ -128,26 +130,8 @@ fun composeDevBuildComponents(
   }
 
   Files.createDirectories(target)
-  for ((root, manifest) in components) {
-    val genuineSymlinks = HashMap<String, String>()
-    for (entry in manifest.entries) {
-      val symlinkTarget = entry.symlinkTarget ?: continue
-      check(genuineSymlinks.put(entry.relativePath, symlinkTarget) == null) {
-        "Dev-build component '${manifest.kind}' declares symbolic link '${entry.relativePath}' more than once"
-      }
-    }
-    // one span per component, so that a composition that is slow because of one fragment says which one
-    spanBuilder("merge dev build component").setAttribute("kind", manifest.kind).blockingUse { span ->
-      span.setAttribute("manifestOnly", root == null)
-      val merged = if (root == null) {
-        copyManifestOnlyComponent(manifest = manifest, target = target)
-      }
-      else {
-        mergeDevBuildComponent(source = root, target = target, genuineSymlinks = genuineSymlinks)
-      }
-      span.setAttribute("fileCount", merged.fileCount.toLong())
-      span.setAttribute("byteCount", merged.byteCount)
-    }
+  if (sourceRunfiles == null) {
+    mergeDevBuildComponents(components, target)
   }
 
   val pluginClasspathFile = composePluginClassPath(components = components, target = target, prefix = pluginClasspathPrefix)
@@ -161,12 +145,13 @@ fun composeDevBuildComponents(
     "  assembled: ${assembledModules.sorted()}"
   }
   val coreClassPath = orderCoreClasspathEntries(components.flatMap { it.manifest.coreClassPath })
+  if (sourceRunfiles != null) {
+    writeDevBuildLocalLayout(components, target, sourceRunfiles, pluginClasspathFile != null)
+  }
   return ComposedDevBuild(
     platformPrefix = first.platformPrefix,
     mainClass = mainClass,
     additionalModules = declaredModules.toList(),
-    // Ordering can only happen here: each component sorted the share of the classpath it packed, and the leading jars
-    // are not necessarily in the same component as the rest.
     coreClassPath = coreClassPath,
     fingerprint = computeIdeFingerprintFromComponents(
       components = components.map { it.manifest },
@@ -174,6 +159,30 @@ fun composeDevBuildComponents(
       additionalModules = declaredModules,
     ),
   )
+}
+
+private fun mergeDevBuildComponents(components: List<DevBuildComponent>, target: Path) {
+  for ((root, manifest) in components) {
+    val genuineSymlinks = HashMap<String, String>()
+    for (entry in manifest.entries) {
+      val symlinkTarget = entry.symlinkTarget ?: continue
+      check(genuineSymlinks.put(entry.relativePath, symlinkTarget) == null) {
+        "Dev-build component '${manifest.kind}' declares symbolic link '${entry.relativePath}' more than once"
+      }
+    }
+    // one span per component, so that a composition that is slow because of one fragment says which one
+    spanBuilder("merge dev build component").setAttribute("kind", manifest.kind).use { span ->
+      span.setAttribute("manifestOnly", root == null)
+      val merged = if (root == null) {
+        copyManifestOnlyComponent(manifest = manifest, target = target)
+      }
+      else {
+        mergeDevBuildComponent(source = root, target = target, genuineSymlinks = genuineSymlinks)
+      }
+      span.setAttribute("fileCount", merged.fileCount.toLong())
+      span.setAttribute("byteCount", merged.byteCount)
+    }
+  }
 }
 
 /**
@@ -230,8 +239,7 @@ internal class MergedDevBuildComponent(@JvmField val fileCount: Int, @JvmField v
  * for free, so they are replaced by what a manifest can be held to instead:
  *
  * - the walk's `linksNotSeen` proved every symbolic link the manifest declared was really in the tree. There is no
- *   tree to disagree with, so the manifest is not allowed to declare one at all: these components are packed jars and
- *   nothing else, and a symlink entry in one of them is a producer defect, rejected here rather than recreated.
+ *   tree to disagree with, so the manifest is not allowed to declare one at all. A symlink entry is rejected here.
  * - the walk relativized real paths, so a path could not escape the component. A manifest path is a string, so the
  *   escape is checked explicitly.
  *
@@ -239,10 +247,7 @@ internal class MergedDevBuildComponent(@JvmField val fileCount: Int, @JvmField v
  * target tree, so two components providing one path still fail here and the analysis-time check in `dev_dist_content`
  * stays the backup it was.
  *
- * The mode is this function's, not the producer's: the bytes are read out of Bazel's output tree, where a jar's mode is
- * whatever the packing action left, and the distribution wants an ordinary non-executable file. Normalizing on this
- * side is what lets the manifest state `executable = false` by construction and keeps the fingerprint where it was
- * when the producer chmodded its own copy.
+ * The manifest declares the executable flag. Source permissions do not affect the distribution permissions or fingerprint.
  */
 private fun copyManifestOnlyComponent(manifest: DevBuildComponentManifest, target: Path): MergedDevBuildComponent {
   val normalizedTarget = target.normalize()
@@ -272,7 +277,7 @@ private fun copyManifestOnlyComponent(manifest: DevBuildComponentManifest, targe
     val sourceFile = staged.toRealPath()
     Files.createDirectories(destination.parent)
     byteCount += Files.size(sourceFile)
-    copyAsDistributionFile(source = sourceFile, target = destination)
+    copyAsDistributionFile(source = sourceFile, target = destination, executable = entry.executable)
   }
   return MergedDevBuildComponent(fileCount = manifest.entries.size, byteCount = byteCount)
 }
@@ -339,12 +344,12 @@ internal fun mergeDevBuildComponent(
   return MergedDevBuildComponent(fileCount = fileCount, byteCount = byteCount)
 }
 
-/** Copies [source] as an ordinary non-executable distribution file without hard-linking back into Bazel outputs. */
-private fun copyAsDistributionFile(source: Path, target: Path) {
+/** Copies [source] with the declared executable flag without linking back into Bazel outputs. */
+private fun copyAsDistributionFile(source: Path, target: Path, executable: Boolean) {
   // COPY_ATTRIBUTES selects the host's optimized copy path, copy-on-write included, so it is never omitted here.
   Files.copy(source, target, StandardCopyOption.COPY_ATTRIBUTES)
   try {
-    Files.setPosixFilePermissions(target, DISTRIBUTION_FILE_PERMISSIONS)
+    Files.setPosixFilePermissions(target, if (executable) DISTRIBUTION_EXECUTABLE_PERMISSIONS else DISTRIBUTION_FILE_PERMISSIONS)
   }
   catch (_: UnsupportedOperationException) {
   }
@@ -356,3 +361,9 @@ private val DISTRIBUTION_FILE_PERMISSIONS: Set<PosixFilePermission> = EnumSet.of
   PosixFilePermission.GROUP_READ,
   PosixFilePermission.OTHERS_READ,
 )
+
+private val DISTRIBUTION_EXECUTABLE_PERMISSIONS: Set<PosixFilePermission> = EnumSet.copyOf(DISTRIBUTION_FILE_PERMISSIONS).apply {
+  add(PosixFilePermission.OWNER_EXECUTE)
+  add(PosixFilePermission.GROUP_EXECUTE)
+  add(PosixFilePermission.OTHERS_EXECUTE)
+}

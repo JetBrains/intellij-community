@@ -4,7 +4,6 @@ package com.intellij.openapi.editor.impl
 import com.intellij.openapi.editor.ex.DocumentSnapshot
 import com.intellij.openapi.editor.ex.RangeMarkerEx
 import com.intellij.openapi.editor.impl.marker.MarkerSpec
-import com.intellij.openapi.editor.impl.marker.PMarkerRoot
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngineImpl
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerReference
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerRootStore
@@ -15,16 +14,15 @@ import com.intellij.util.containers.ConcurrentLongObjectMap
 import com.intellij.util.containers.Java11Shim
 import java.lang.ref.ReferenceQueue
 import java.lang.ref.WeakReference
-import java.util.concurrent.atomic.AtomicReference
 
 /** Stores focus regions for one editor without adding them to the document marker root. */
 internal class SnapshotFocusRegionStorage(val document: DocumentImpl) {
-  private val regionQueue = ReferenceQueue<SnapshotFocusRegion>()
+  private val regionQueue: ReferenceQueue<SnapshotFocusRegion> = ReferenceQueue<SnapshotFocusRegion>()
   private val regionsById: ConcurrentLongObjectMap<RegionReference> = Java11Shim.createConcurrentLongObjectMap()
-  private val rootStore = SnapshotMarkerRootStore(document)
+  val rootStore: SnapshotMarkerRootStore = SnapshotMarkerRootStore(document)
 
   fun dispose() {
-    rootStore.dispose()
+    rootStore.dispose(document.snapshotMarkerStores)
     regionsById.clear()
   }
 
@@ -74,10 +72,6 @@ internal class SnapshotFocusRegionStorage(val document: DocumentImpl) {
     }
   }
 
-  fun rootReference(snapshot: DocumentSnapshot): AtomicReference<PMarkerRoot> {
-    return rootStore.rootReference(snapshot)
-  }
-
   fun currentSnapshot(): DocumentSnapshot = document.core.snapshot()
 
   fun afterDisposed(region: SnapshotFocusRegion) {
@@ -110,11 +104,7 @@ internal class SnapshotFocusRegion(
   markerId: Long,
   spec: MarkerSpec,
   initialRange: TextRange,
-) : SnapshotRangeMarkerImpl(storage.document, markerId, spec, initialRange) {
-  override fun currentRootReference(): AtomicReference<PMarkerRoot> = storage.rootReference(storage.currentSnapshot())
-
-  override fun rootReference(snapshot: DocumentSnapshot): AtomicReference<PMarkerRoot> = storage.rootReference(snapshot)
-
+) : SnapshotRangeMarkerImpl(storage.document, storage.rootStore, markerId, spec, initialRange) {
   override fun afterDispose() {
     storage.afterDisposed(this)
   }

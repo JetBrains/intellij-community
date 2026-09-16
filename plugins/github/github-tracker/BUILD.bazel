@@ -10,6 +10,10 @@ jps_test(
 )
 ### skip generation section `test intellij.vcs.github.tracker.tests`
 
+### auto-generated section `dev intellij.vcs.github.tracker` start
+content_module_jar(module = ":vcs-github-tracker")
+### auto-generated section `dev intellij.vcs.github.tracker` end
+
 ### auto-generated section `build intellij.vcs.github.tracker` start
 jvm_library(
     name = "vcs-github-tracker",
@@ -43,8 +47,6 @@ jvm_library(
         "//libraries/fastutil",
     ],
 )
-
-content_module_jar(module = ":vcs-github-tracker")
 
 jvm_library(
     name = "vcs-github-tracker_test_lib",

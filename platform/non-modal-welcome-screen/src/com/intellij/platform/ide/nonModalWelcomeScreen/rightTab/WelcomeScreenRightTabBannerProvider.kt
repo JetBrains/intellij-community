@@ -15,11 +15,7 @@ interface WelcomeScreenRightTabBannerProvider {
       ExtensionPointName<WelcomeScreenRightTabBannerProvider>("com.intellij.platform.ide.welcomeScreenRightTabBannerProvider")
 
     fun createSingleBanner(project: Project): JComponent? {
-      val provider = EP_NAME.lazySequence().firstOrNull { it.isApplicable(project) }
-      if (provider != null) {
-        return provider.createBanner(project)
-      }
-      return null
+      return EP_NAME.computeSafeIfAny { if (it.isApplicable(project)) it.createBanner(project) else null }
     }
   }
 

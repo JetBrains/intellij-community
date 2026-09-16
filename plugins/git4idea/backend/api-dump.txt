@@ -245,6 +245,7 @@ f:git4idea.remote.hosting.GitAsyncExtensionsKt
 - sf:infoFlow(git4idea.repo.GitRepository):kotlinx.coroutines.flow.Flow
 f:git4idea.remote.hosting.GitHostingUrlUtil
 - sf:getUriFromRemoteUrl(java.lang.String):java.net.URI
+- sf:isSshUrl(java.lang.String):Z
 - sf:removeProtocolPrefix(java.lang.String):java.lang.String
 f:git4idea.remote.hosting.GitRemoteBranchesUtil
 - f:fetchAndCheckoutInNewWorktree(git4idea.repo.GitRepository,git4idea.remote.hosting.HostedGitRepositoryRemote,java.lang.String,java.nio.file.Path,java.lang.String,java.lang.String,java.lang.String,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object

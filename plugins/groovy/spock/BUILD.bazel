@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.groovy.spock` start
+content_module_jar(module = ":spock")
+### auto-generated section `dev intellij.groovy.spock` end
+
 ### auto-generated section `build intellij.groovy.spock` start
 jvm_library(
     name = "spock",
@@ -39,8 +43,6 @@ jvm_library(
         "//plugins/junit_rt:junit-rt",
     ],
 )
-
-content_module_jar(module = ":spock")
 
 jvm_library(
     name = "spock_test_lib",

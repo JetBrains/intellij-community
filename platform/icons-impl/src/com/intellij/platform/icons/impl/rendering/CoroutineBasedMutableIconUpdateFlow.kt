@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.icons.impl.rendering
 
-import com.intellij.platform.icons.Icon
+import com.intellij.platform.icons.IconDescriptor
 import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
@@ -31,7 +31,7 @@ class CoroutineBasedMutableIconUpdateFlow(
       } else super.triggerUpdate()
     }
 
-    override fun collectDynamic(flow: Flow<Icon>, handler: (Icon) -> Unit) {
+    override fun collectDynamic(flow: Flow<IconDescriptor>, handler: (IconDescriptor) -> Unit) {
         coroutineScope.launch { flow.collect { handler(it) } }
     }
 }

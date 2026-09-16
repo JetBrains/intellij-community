@@ -323,8 +323,8 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
              properties.isCLASS_FILTERS_ENABLED() ||
              properties.isINSTANCE_FILTERS_ENABLED() ||
              properties.isCALLER_FILTERS_ENABLED() ||
-             (properties instanceof JavaExceptionBreakpointProperties &&
-              ((JavaExceptionBreakpointProperties)properties).isCatchFiltersEnabled());
+             (properties instanceof JavaExceptionBreakpointProperties breakpointProperties &&
+              breakpointProperties.isCatchFiltersEnabled());
     }
     return false;
   }

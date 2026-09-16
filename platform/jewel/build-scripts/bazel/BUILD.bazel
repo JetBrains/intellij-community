@@ -7,7 +7,7 @@ java_library(
     exports = [
         "@lib//:fleet-clikt",
         "@lib//:fleet-clikt-core",
-        "@lib//:kotlinx-coroutines-core",
+        "@lib//:libraries-kotlinx-coroutines-core-kotlinx-coroutines-core",
     ],
 )
 
@@ -26,7 +26,7 @@ kt_jvm_import(
 kt_jvm_library(
     name = "jewel-bazel-scripts-utils",
     srcs = ["src/main/kotlin/org/jetbrains/jewel/scripts/bazel/JewelBazelScriptsUtils.kt"],
-    deps = ["@lib//:kotlinx-coroutines-core"],
+    deps = ["@lib//:libraries-kotlinx-coroutines-core-kotlinx-coroutines-core"],
 )
 
 kt_jvm_library(
@@ -52,7 +52,7 @@ kt_jvm_library(
     srcs = ["src/main/kotlin/org/jetbrains/jewel/scripts/bazel/JewelVersionUpdater.kt"],
     deps = [
         ":jewel-bazel-scripts-utils",
-        "@lib//:kotlinx-coroutines-core",
+        "@lib//:libraries-kotlinx-coroutines-core-kotlinx-coroutines-core",
     ],
 )
 
@@ -157,7 +157,7 @@ kt_jvm_test(
     test_class = "org.jetbrains.jewel.scripts.bazel.JewelBazelScriptsUtilsTest",
     deps = [
         "@lib//:junit4",
-        "@lib//:kotlinx-coroutines-test",
+        "@lib//:libraries-kotlinx-coroutines-test-kotlinx-coroutines-test",
         "@rules_kotlin//kotlin/compiler:kotlin-test",
     ],
 )
@@ -174,7 +174,7 @@ kt_jvm_test(
         ":bazel-test-utils",
         ":jewel-bazel-scripts-utils",
         "@lib//:junit4",
-        "@lib//:kotlinx-coroutines-test",
+        "@lib//:libraries-kotlinx-coroutines-test-kotlinx-coroutines-test",
         "@rules_kotlin//kotlin/compiler:kotlin-test",
     ],
 )
@@ -191,7 +191,7 @@ kt_jvm_test(
         ":clikt-dependencies",
         ":jewel-bazel-scripts-utils",
         "@lib//:junit4",
-        "@lib//:kotlinx-coroutines-test",
+        "@lib//:libraries-kotlinx-coroutines-test-kotlinx-coroutines-test",
         "@rules_kotlin//kotlin/compiler:kotlin-test",
     ],
 )
@@ -211,7 +211,7 @@ kt_jvm_test(
         ":clikt-dependencies",
         ":jewel-bazel-scripts-utils",
         "@lib//:junit4",
-        "@lib//:kotlinx-coroutines-test",
+        "@lib//:libraries-kotlinx-coroutines-test-kotlinx-coroutines-test",
         "@rules_kotlin//kotlin/compiler:kotlin-test",
     ],
 )
@@ -229,7 +229,7 @@ kt_jvm_test(
         ":clikt-dependencies",
         ":jewel-bazel-scripts-utils",
         "@lib//:junit4",
-        "@lib//:kotlinx-coroutines-test",
+        "@lib//:libraries-kotlinx-coroutines-test-kotlinx-coroutines-test",
         "@rules_kotlin//kotlin/compiler:kotlin-test",
     ],
 )

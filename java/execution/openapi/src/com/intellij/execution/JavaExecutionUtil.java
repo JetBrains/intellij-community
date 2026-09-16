@@ -4,14 +4,17 @@ package com.intellij.execution;
 import com.intellij.execution.util.ExecutionErrorDialog;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -37,6 +40,51 @@ public final class JavaExecutionUtil {
   private static final Logger LOG = Logger.getInstance(JavaExecutionUtil.class);
 
   private JavaExecutionUtil() {
+  }
+
+  /**
+   * A module at a preview language level makes class files that the JVM loads only with
+   * {@link com.intellij.execution.configurations.JavaParameters#JAVA_ENABLE_PREVIEW_PROPERTY}. A launch that loads
+   * such a class file needs the flag.
+   * <p>
+   * The JDK is not part of the answer. A caller that adds the flag also has to know that its JDK accepts the flag.
+   *
+   * @param module the module to inspect together with every module it depends on. The dependencies count, because the
+   *               JVM refuses the class files that it loads, and not only the ones of the launched module.
+   * @return {@code true} if the module or a dependency of it sits at an
+   * {@linkplain LanguageLevelUtil#getEffectiveLanguageLevel effective} language level that
+   * {@linkplain com.intellij.pom.java.LanguageLevel#isPreview() is a preview level}.
+   */
+  public static boolean compilesPreviewFeatures(@NotNull Module module) {
+    return compilesPreviewFeatures(OrderEnumerator.orderEntries(module).recursively());
+  }
+
+  /**
+   * The same question as {@link #compilesPreviewFeatures(Module)} asks, for every module of a project.
+   *
+   * @param project the project whose modules to inspect.
+   * @return {@code true} if a module of the project sits at an
+   * {@linkplain LanguageLevelUtil#getEffectiveLanguageLevel effective} language level that
+   * {@linkplain com.intellij.pom.java.LanguageLevel#isPreview() is a preview level}.
+   */
+  public static boolean compilesPreviewFeatures(@NotNull Project project) {
+    return compilesPreviewFeatures(OrderEnumerator.orderEntries(project));
+  }
+
+  /**
+   * The answer only turns from {@code false} to {@code true}. A {@code false} from the callback of
+   * {@link OrderEnumerator#forEachModule} ends the walk of one dependency, and not of the whole graph. The answer
+   * must therefore survive a plain module that the walk visits after a preview module.
+   */
+  private static boolean compilesPreviewFeatures(@NotNull OrderEnumerator enumerator) {
+    Ref<Boolean> preview = Ref.create(false);
+    enumerator.forEachModule(module -> {
+      if (LanguageLevelUtil.getEffectiveLanguageLevel(module).isPreview()) {
+        preview.set(true);
+      }
+      return !preview.get();
+    });
+    return preview.get();
   }
 
   public static Module findModule(final Module contextModule, final Set<String> patterns, final Project project, Condition<? super PsiClass> isTestMethod) {

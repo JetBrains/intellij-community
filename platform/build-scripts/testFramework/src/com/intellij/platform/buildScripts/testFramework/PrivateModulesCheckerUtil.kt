@@ -12,7 +12,7 @@ import java.nio.file.Path
 /**
  * Utility for checking that private plugin modules are not bundled or prepared to be published in the build.
  */
-suspend fun checkPrivatePluginModulesAreNotPublic(
+fun checkPrivatePluginModulesAreNotPublic(
   context: BuildContext,
   softly: SoftAssertions,
 ) {

@@ -133,7 +133,7 @@ internal class ExecutionPositionUi private constructor(
       return markupModel.addLineHighlighter(null, line, DebuggerColors.EXECUTION_LINE_HIGHLIGHTERLAYER)
     }
 
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     fun isFullLineHighlighterAt(file: VirtualFile, line: Int, project: Project, isToCheckTopFrameOnly: Boolean = false): Boolean {
       val rangeHighlighter = findPositionHighlighterAt(file, line, project) ?: return false
       return isFullLineHighlighter(rangeHighlighter, isToCheckTopFrameOnly)

@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.productLayout.generator
 
+import com.intellij.platform.buildScripts.concurrency.SharedTaskOwner
 import com.intellij.platform.pluginGraph.ContentModuleName
 import com.intellij.platform.pluginGraph.PluginId
 import com.intellij.platform.pluginGraph.PluginModuleId
@@ -222,6 +223,13 @@ class ContentModuleDependencyGeneratorTest {
 
   @Nested
   inner class TestPluginContentModuleTest {
+    private val owner = SharedTaskOwner("TestPluginContentModuleTest")
+
+    @org.junit.jupiter.api.AfterEach
+    fun closeSharedTasks() {
+      owner.close()
+    }
+
     @Test
     fun `test plugin content modules are processed`(@TempDir tempDir: Path) {
       runBlocking(Dispatchers.Default) {
@@ -243,7 +251,7 @@ class ContentModuleDependencyGeneratorTest {
         val model = testGenerationModel(
           pluginGraph = setup.pluginGraph,
           outputProvider = setup.jps.outputProvider,
-          fileUpdater = setup.strategy,
+          fileUpdater = setup.strategy, owner = owner,
         )
 
         val ctx = ComputeContextImpl(model)
@@ -299,7 +307,7 @@ class ContentModuleDependencyGeneratorTest {
         val model = testGenerationModel(
           pluginGraph = graph,
           outputProvider = setup.jps.outputProvider,
-          fileUpdater = setup.strategy,
+          fileUpdater = setup.strategy, owner = owner,
         )
 
         val ctx = ComputeContextImpl(model)
@@ -356,7 +364,7 @@ class ContentModuleDependencyGeneratorTest {
           }
         }
 
-        val descriptorCache = ModuleDescriptorCache(setup.jps.outputProvider)
+        val descriptorCache = ModuleDescriptorCache(setup.jps.outputProvider, owner = owner)
         val generation = planContentModuleDependenciesWithBothSets(
           contentModuleName = busModule,
           descriptorCache = descriptorCache,
@@ -421,7 +429,7 @@ class ContentModuleDependencyGeneratorTest {
           moduleWithScopedDeps(testsModule.value, existingDep.value to "COMPILE", testOnlyDep.value to "TEST")
         }
 
-        val descriptorCache = ModuleDescriptorCache(setup.jps.outputProvider)
+        val descriptorCache = ModuleDescriptorCache(setup.jps.outputProvider, owner = owner)
         val generation = planContentModuleDependenciesWithBothSets(
           contentModuleName = testsModule,
           descriptorCache = descriptorCache,
@@ -543,7 +551,7 @@ class ContentModuleDependencyGeneratorTest {
 
         val generation = planContentModuleDependenciesWithBothSets(
           contentModuleName = ContentModuleName("owner.content"),
-          descriptorCache = ModuleDescriptorCache(setup.jps.outputProvider),
+          descriptorCache = ModuleDescriptorCache(setup.jps.outputProvider, owner = owner),
           outputProvider = setup.jps.outputProvider,
           pluginGraph = graph,
           isTestDescriptor = false,
@@ -620,7 +628,7 @@ class ContentModuleDependencyGeneratorTest {
 
       val generation = planContentModuleDependenciesWithBothSets(
         contentModuleName = testsModule,
-        descriptorCache = ModuleDescriptorCache(setup.jps.outputProvider),
+        descriptorCache = ModuleDescriptorCache(setup.jps.outputProvider, owner = owner),
         outputProvider = setup.jps.outputProvider,
         pluginGraph = graph,
         isTestDescriptor = false,
@@ -660,7 +668,7 @@ class ContentModuleDependencyGeneratorTest {
           moduleWithScopedDeps(testsModule.value, prodDep.value to "COMPILE", testOnlyDep.value to "TEST")
         }
 
-        val descriptorCache = ModuleDescriptorCache(setup.jps.outputProvider)
+        val descriptorCache = ModuleDescriptorCache(setup.jps.outputProvider, owner = owner)
         val generation = planContentModuleDependenciesWithBothSets(
           contentModuleName = testsModule,
           descriptorCache = descriptorCache,
@@ -710,7 +718,7 @@ class ContentModuleDependencyGeneratorTest {
           }
         }
 
-        val descriptorCache = ModuleDescriptorCache(setup.jps.outputProvider)
+        val descriptorCache = ModuleDescriptorCache(setup.jps.outputProvider, owner = owner)
         val generation = planContentModuleDependenciesWithBothSets(
           contentModuleName = ContentModuleName("intellij.test.only.consumer"),
           descriptorCache = descriptorCache,
@@ -798,7 +806,7 @@ class ContentModuleDependencyGeneratorTest {
           }
         }
 
-        val descriptorCache = ModuleDescriptorCache(setup.jps.outputProvider)
+        val descriptorCache = ModuleDescriptorCache(setup.jps.outputProvider, owner = owner)
         val generation = planContentModuleDependenciesWithBothSets(
           contentModuleName = consumer,
           descriptorCache = descriptorCache,
@@ -832,6 +840,13 @@ class ContentModuleDependencyGeneratorTest {
 
   @Nested
   inner class ExtensionPointNameRewritingTest {
+    private val owner = SharedTaskOwner("ExtensionPointNameRewritingTest")
+
+    @org.junit.jupiter.api.AfterEach
+    fun closeSharedTasks() {
+      owner.close()
+    }
+
     @Test
     fun `plugin source does not rewrite extension point names in shared descriptor`(@TempDir tempDir: Path) {
       runBlocking(Dispatchers.Default) {
@@ -861,7 +876,7 @@ class ContentModuleDependencyGeneratorTest {
         val model = testGenerationModel(
           pluginGraph = builder.build(),
           outputProvider = setup.jps.outputProvider,
-          fileUpdater = setup.strategy,
+          fileUpdater = setup.strategy, owner = owner,
         )
 
         val ctx = ComputeContextImpl(model)
@@ -1382,6 +1397,13 @@ class ContentModuleDependencyGeneratorTest {
 
   @Nested
   inner class UpdateSuppressionsDslTestPluginPolicyTest {
+    private val owner = SharedTaskOwner("UpdateSuppressionsDslTestPluginPolicyTest")
+
+    @org.junit.jupiter.api.AfterEach
+    fun closeSharedTasks() {
+      owner.close()
+    }
+
     @Test
     fun `pure dsl test owned module respects explicit suppressions config in regular generation`(@TempDir tempDir: Path) {
       runBlocking(Dispatchers.Default) {
@@ -1420,7 +1442,7 @@ class ContentModuleDependencyGeneratorTest {
           )
         )
 
-        val descriptorCache = ModuleDescriptorCache(setup.jps.outputProvider)
+        val descriptorCache = ModuleDescriptorCache(setup.jps.outputProvider, owner = owner)
         val generation = planContentModuleDependenciesWithBothSets(
           contentModuleName = ContentModuleName("owner.content"),
           descriptorCache = descriptorCache,
@@ -1485,7 +1507,7 @@ class ContentModuleDependencyGeneratorTest {
           )
         )
 
-        val descriptorCache = ModuleDescriptorCache(setup.jps.outputProvider)
+        val descriptorCache = ModuleDescriptorCache(setup.jps.outputProvider, owner = owner)
         val generation = planContentModuleDependenciesWithBothSets(
           contentModuleName = ContentModuleName("shared.content"),
           descriptorCache = descriptorCache,
@@ -1525,7 +1547,7 @@ class ContentModuleDependencyGeneratorTest {
         }
 
         val graph = buildContentModuleAliasGraph(aliasId)
-        val descriptorCache = ModuleDescriptorCache(setup.jps.outputProvider)
+        val descriptorCache = ModuleDescriptorCache(setup.jps.outputProvider, owner = owner)
         val generation = planContentModuleDependenciesWithBothSets(
           contentModuleName = ContentModuleName("owner.content"),
           descriptorCache = descriptorCache,
@@ -1577,7 +1599,7 @@ class ContentModuleDependencyGeneratorTest {
         }
 
         val graph = buildContentModuleAliasGraph(aliasId)
-        val descriptorCache = ModuleDescriptorCache(setup.jps.outputProvider)
+        val descriptorCache = ModuleDescriptorCache(setup.jps.outputProvider, owner = owner)
         val generation = planContentModuleDependenciesWithBothSets(
           contentModuleName = ContentModuleName("owner.content"),
           descriptorCache = descriptorCache,
@@ -1632,7 +1654,7 @@ class ContentModuleDependencyGeneratorTest {
           linkPluginMainTarget("dep.plugin")
         }
 
-        val descriptorCache = ModuleDescriptorCache(setup.jps.outputProvider)
+        val descriptorCache = ModuleDescriptorCache(setup.jps.outputProvider, owner = owner)
         val generation = planContentModuleDependenciesWithBothSets(
           contentModuleName = ContentModuleName("owner.content"),
           descriptorCache = descriptorCache,
@@ -1687,7 +1709,7 @@ class ContentModuleDependencyGeneratorTest {
           linkPluginMainTarget("dep.plugin")
         }
 
-        val descriptorCache = ModuleDescriptorCache(setup.jps.outputProvider)
+        val descriptorCache = ModuleDescriptorCache(setup.jps.outputProvider, owner = owner)
         val generation = planContentModuleDependenciesWithBothSets(
           contentModuleName = ContentModuleName("owner.content"),
           descriptorCache = descriptorCache,

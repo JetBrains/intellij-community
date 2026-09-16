@@ -227,16 +227,6 @@ public abstract class PsiDocumentManager {
      * @see PsiDocumentManager#getDocument(PsiFile)
      */
     void documentCreated(@NotNull Document document, @Nullable PsiFile psiFile);
-
-    /**
-     * Called when a file instance is created for a document.
-     *
-     * @param psiFile  the created file instance.
-     * @param document the document for which the file was created.
-     * @see PsiDocumentManager#getDocument(PsiFile)
-     */
-    default void fileCreated(@NotNull PsiFile psiFile, @NotNull Document document) {
-    }
   }
 
   /**

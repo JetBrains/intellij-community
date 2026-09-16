@@ -1,0 +1,254 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.jetbrains.python.codeInsight.completion
+
+import com.intellij.codeInsight.completion.CompletionContributor
+import com.intellij.codeInsight.completion.CompletionParameters
+import com.intellij.codeInsight.completion.CompletionProvider
+import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.codeInsight.completion.CompletionUtilCore
+import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.openapi.project.DumbAware
+import com.intellij.patterns.PlatformPatterns.psiElement
+import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.parentOfType
+import com.intellij.util.ProcessingContext
+import com.jetbrains.python.PyElementTypes
+import com.jetbrains.python.PyNames
+import com.jetbrains.python.PyPsiBundle
+import com.jetbrains.python.PyTokenTypes
+import com.jetbrains.python.codeInsight.fstrings.FORMAT_SPEC_OPTION_KEY
+import com.jetbrains.python.codeInsight.fstrings.PyFormatSpec
+import com.jetbrains.python.codeInsight.fstrings.PyFormatSpecCatalog
+import com.jetbrains.python.codeInsight.fstrings.PyFormatSpecCategory
+import com.jetbrains.python.codeInsight.fstrings.PyFormatSpecComponentKind
+import com.jetbrains.python.codeInsight.fstrings.PyFormatSpecOption
+import com.jetbrains.python.psi.PyExpression
+import com.jetbrains.python.psi.PyFStringFragment
+import com.jetbrains.python.psi.PyFStringFragmentFormatPart
+import com.jetbrains.python.psi.PyNamedParameter
+import com.jetbrains.python.psi.PyStringDunderUtil
+import com.jetbrains.python.psi.PyStringDunderUtil.isAllowedFormatOverride
+import com.jetbrains.python.psi.types.PyClassType
+import com.jetbrains.python.psi.types.PyLiteralType
+import com.jetbrains.python.psi.types.PyTypeUtil.asUnionSequence
+import com.jetbrains.python.psi.types.TypeEvalContext
+
+// The value types come from the shared catalog, so completion, the annotator and the inspections
+// agree on what supports the format mini-language.
+private val NUMERIC_TYPE_NAMES = PyStringDunderUtil.KNOWN_COMPLEX_TYPES
+
+private val STRING_TYPE_NAMES = setOf(PyNames.FQN.STR)
+
+private val DATETIME_TYPE_NAMES = setOf(PyNames.FQN.DATE, PyNames.FQN.DATETIME, PyNames.FQN.TIME)
+
+// Specs offered when the value type is a plain string: alignment, precision and the string type.
+private val STRING_SPECS = setOf("<", ">", "^", ".", "s")
+
+// Specs offered when the value type is unknown: a small, broadly-applicable subset.
+private val UNKNOWN_SPECS = setOf(".", "d", "f", "s", "<", ">")
+
+/**
+ * Provides code completion for f-string format specifications.
+ *
+ * Offers completions after the colon in f-string format parts, e.g., f"{x:<caret>}"
+ * Shows valid format spec options based on the expression type.
+ */
+class PyFStringFormatSpecCompletionContributor : CompletionContributor(), DumbAware {
+
+  init {
+    extend(CompletionType.BASIC, psiElement().inside(PyFStringFragmentFormatPart::class.java),
+           object : CompletionProvider<CompletionParameters>() {
+             override fun addCompletions(
+               parameters: CompletionParameters,
+               context: ProcessingContext,
+               result: CompletionResultSet
+             ) {
+               val position = parameters.position
+               val formatPart = position.parentOfType<PyFStringFragmentFormatPart>() ?: return
+               val fragment = formatPart.parentOfType<PyFStringFragment>() ?: return
+               val expression = fragment.expression ?: return
+
+               // Bail out if the caret is inside a nested replacement field (e.g. the `width` in
+               // f"{x:{width}.2f}"): that expression has its own completions and must not get format
+               // specs mixed into them.
+               val enclosingFragment = position.parentOfType<PyFStringFragment>()
+               if (enclosingFragment != null && PsiTreeUtil.isAncestor(formatPart, enclosingFragment, false)) {
+                 return
+               }
+
+               // The spec text between the colon and the caret, with a nested replacement field left out.
+               val existingText = getTextBeforeCaret(formatPart) ?: ""
+
+               // A type with a custom __format__ whose format_spec is annotated with a string Literal[...]
+               // fully determines the valid specs: offer only those literal values and suppress the generic
+               // specs that don't apply to it (PY-84261). Type conversions (!s/!r/!a) format the resulting
+               // str instead, so they bypass this.
+               if (fragment.typeConversion == null) {
+                 val literalSpecs = getLiteralFormatSpecs(expression)
+                 if (literalSpecs != null) {
+                   // The literal value is matched as a whole, so narrow by what has already been typed.
+                   val literalResult = result.withPrefixMatcher(existingText)
+                   literalSpecs.forEach { literalResult.addElement(createLiteralSpecElement(it)) }
+                   return
+                 }
+               }
+
+               addFormatSpecCompletions(result, expression, fragment, existingText)
+             }
+           })
+  }
+
+  /**
+   * Returns the literal spec text between the format start (the colon) and the caret, or `null` when the
+   * format part has no format start. A nested replacement field and the closing brace are left out, so an
+   * identifier such as the `width` in `f"{x:{width}.2f}"` is never read as spec characters.
+   */
+  private fun getTextBeforeCaret(formatPart: PyFStringFragmentFormatPart): String? {
+    var afterFormatStart = false
+    val text = StringBuilder()
+
+    for (child in formatPart.node.getChildren(null)) {
+      if (child.elementType == PyTokenTypes.FSTRING_FRAGMENT_FORMAT_START) {
+        afterFormatStart = true
+        continue
+      }
+      if (!afterFormatStart ||
+          child.elementType == PyElementTypes.FSTRING_FRAGMENT ||
+          child.elementType == PyTokenTypes.FSTRING_FRAGMENT_END) {
+        continue
+      }
+
+      // The dummy identifier that the platform inserts marks the caret, so the text stops there.
+      val childText = child.text
+      val dummyIndex = childText.indexOf(CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED)
+      if (dummyIndex >= 0) {
+        text.append(childText, 0, dummyIndex)
+        return text.toString()
+      }
+      text.append(childText)
+    }
+
+    return if (afterFormatStart) text.toString() else null
+  }
+
+  private fun addFormatSpecCompletions(
+    result: CompletionResultSet,
+    expression: PyExpression,
+    fragment: PyFStringFragment,
+    existingText: String,
+  ) {
+    val expressionType = expression.getExpressionType(fragment)
+    val applies = appliesTo(expressionType)
+
+    if (existingText.isEmpty()) {
+      // Immediately after the colon: offer every option that applies to the value type.
+      addOptions(result, PyFormatSpecCatalog.options.filter(applies))
+      return
+    }
+
+    if (expressionType == ExpressionType.DATETIME) {
+      // A datetime spec is a free-form strftime string, so a directive can follow any text. A trailing
+      // '%' already starts the next directive, so it becomes the prefix and the directive replaces it.
+      val prefix = if (existingText.endsWith("%")) "%" else ""
+      addOptions(result.withPrefixMatcher(prefix), PyFormatSpecCatalog.of(PyFormatSpecCategory.DATETIME))
+      return
+    }
+
+    val typed = PyFormatSpec.parse(existingText, datetime = false)
+
+    // A presentation type ends the spec, so nothing more can follow it.
+    if (typed.hasPresentationType) {
+      return
+    }
+
+    // Use an empty prefix matcher because the offered options extend the typed text instead of matching
+    // it (e.g., after ".2" we want to offer "f").
+    val extending = result.withPrefixMatcher("")
+
+    // After a precision (e.g. .2) or a width (e.g. r>3), only a presentation type can follow.
+    if (typed.has(PyFormatSpecComponentKind.PRECISION_MARK) || typed.has(PyFormatSpecComponentKind.WIDTH)) {
+      addOptions(extending, PyFormatSpecCatalog.of(PyFormatSpecCategory.TYPE).filter(applies))
+      return
+    }
+
+    // General case - offer the common options that apply to the value type.
+    addOptions(extending, PyFormatSpecCatalog.options.filter { it.spec in UNKNOWN_SPECS && applies(it) })
+  }
+
+  /** The options that apply to a value of [expressionType]. */
+  private fun appliesTo(expressionType: ExpressionType): (PyFormatSpecOption) -> Boolean = when (expressionType) {
+    ExpressionType.STRING -> { option -> option.spec in STRING_SPECS }
+    // A string presentation type ('s') is invalid for numbers, so it is excluded here.
+    ExpressionType.NUMERIC -> { option -> option.category != PyFormatSpecCategory.DATETIME && option.spec != "s" }
+    ExpressionType.DATETIME -> { option -> option.category == PyFormatSpecCategory.DATETIME }
+    ExpressionType.UNKNOWN -> { option -> option.spec in UNKNOWN_SPECS }
+  }
+
+  private fun addOptions(result: CompletionResultSet, options: List<PyFormatSpecOption>) {
+    options.forEach { result.addElement(createFormatSpecElement(it)) }
+  }
+
+  private fun createFormatSpecElement(option: PyFormatSpecOption): LookupElement {
+    return LookupElementBuilder.create(option.spec)
+      .withTypeText(option.shortDescription, true)
+      .also { it.putUserData(FORMAT_SPEC_OPTION_KEY, option) }
+  }
+
+  private fun createLiteralSpecElement(value: String): LookupElement {
+    return LookupElementBuilder.create(value)
+      .withTypeText(PyPsiBundle.message("fstring.format.spec.completion.literal.type.text"), true)
+  }
+
+  /**
+   * If the value's type defines a custom `__format__` whose `format_spec` parameter is annotated with a string
+   * `Literal[...]` (e.g. `def __format__(self, format_spec: Literal["foo", "bar"], /) -> str`), returns the accepted
+   * literal values. Returns `null` when no such annotation applies (including the builtin `str` `format_spec` of
+   * `object.__format__` and numeric types), so the caller falls back to the generic format specs. PY-84261.
+   *
+   * For a union value type every member must contribute string literal specs, otherwise the generic specs are used.
+   */
+  private fun getLiteralFormatSpecs(expression: PyExpression): List<String>? {
+    val context = TypeEvalContext.codeCompletion(expression.project, expression.containingFile)
+    val type = context.getType(expression) ?: return null
+
+    val values = LinkedHashSet<String>()
+    for (member in type.asUnionSequence()) {
+      val classType = member as? PyClassType ?: return null
+      val formatMethod = classType.pyClass.findMethodByName(PyNames.DUNDER_FORMAT, true, context) ?: return null
+      // Parameters are [self, format_spec]; the positional-only '/' marker is not a PyNamedParameter.
+      val specParam = formatMethod.parameterList.parameters.filterIsInstance<PyNamedParameter>().getOrNull(1) ?: return null
+      val specValues = context.getType(specParam)?.asUnionSequence()?.map { (it as? PyLiteralType)?.stringValue }?.toList()
+      if (specValues.isNullOrEmpty() || specValues.any { it == null }) return null
+      specValues.forEach { values.add(it!!) }
+    }
+    return values.toList().ifEmpty { null }
+  }
+
+  private enum class ExpressionType {
+    STRING,
+    NUMERIC,
+    DATETIME,
+    UNKNOWN
+  }
+
+  private fun PyExpression.getExpressionType(fragment: PyFStringFragment): ExpressionType {
+    // Conversion modifiers (!s, !r, !a) always produce a string before formatting.
+    if (fragment.typeConversion != null) {
+      return ExpressionType.STRING
+    }
+
+    val context = TypeEvalContext.codeCompletion(project, containingFile)
+    val type = context.getType(this) ?: return ExpressionType.UNKNOWN
+
+    // The match walks the ancestors, so a subclass such as `bool` counts as its numeric base.
+    val members = type.asUnionSequence().filterNotNull().toList()
+    return when {
+      members.any { it.isAllowedFormatOverride(NUMERIC_TYPE_NAMES, context) } -> ExpressionType.NUMERIC
+      members.any { it.isAllowedFormatOverride(STRING_TYPE_NAMES, context) } -> ExpressionType.STRING
+      members.any { it.isAllowedFormatOverride(DATETIME_TYPE_NAMES, context) } -> ExpressionType.DATETIME
+      else -> ExpressionType.UNKNOWN
+    }
+  }
+}

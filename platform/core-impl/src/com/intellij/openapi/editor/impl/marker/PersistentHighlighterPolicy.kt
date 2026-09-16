@@ -28,34 +28,32 @@ enum class PersistentHighlighterPolicy(private val wholeLineRange: Boolean) : Ma
     if (entry.shouldTranslateViaDiff(patch, beforeText, afterText)) {
       try {
         val lineDiff = patch.lineDiff(beforeText)
-        val startLine = beforeText.lineNumber(entry.startOffset)
+        val startLine = beforeText.lineNumber(entry.nodeStart)
         val changeStartLine = afterText.lineNumber(lineDiff.changeStartOffset)
         val translatedLine = lineDiff.translateLineStrict(startLine, changeStartLine, afterText.chars())
         if (translatedLine !in 0..<afterText.lineCount()) {
-          return MarkerTransformResult.Invalid(INVALIDATED_BY_EDIT)
+          return MarkerTransformResult(entry, INVALIDATED_BY_EDIT)
         }
-        return MarkerTransformResult.Valid(normalizeLine(entry, afterText, translatedLine))
+        return MarkerTransformResult(normalizeLine(entry, afterText, translatedLine))
       }
       catch (_: FilesTooBigForDiffException) {
       }
     }
 
-    return when (val transformed = DefaultMarkerPolicy.transform(entry, patch, beforeText, afterText)) {
-      is MarkerTransformResult.Invalid -> transformed
-      is MarkerTransformResult.Valid -> {
-        val transformedEntry = transformed.entry
-        val startLine = afterText.lineNumber(transformedEntry.startOffset)
-        val endLine = afterText.lineNumber(transformedEntry.endOffset)
-        if (wholeLineRange) {
-          MarkerTransformResult.Valid(normalizeLine(transformedEntry, afterText, startLine))
-        }
-        else if (endLine != startLine) {
-          MarkerTransformResult.Valid(transformedEntry.copy(endOffset = afterText.lineEndOffset(startLine)))
-        }
-        else {
-          transformed
-        }
-      }
+    val transformed = DefaultMarkerPolicy.transform(entry, patch, beforeText, afterText)
+    if (transformed.errorReason != null) return transformed
+
+    val transformedEntry = transformed.entry
+    val startLine = afterText.lineNumber(transformedEntry.nodeStart)
+    val endLine = afterText.lineNumber(transformedEntry.nodeEnd)
+    return if (wholeLineRange) {
+      MarkerTransformResult(normalizeLine(transformedEntry, afterText, startLine))
+    }
+    else if (endLine != startLine) {
+      MarkerTransformResult(transformedEntry.copy(nodeEnd = afterText.lineEndOffset(startLine)))
+    }
+    else {
+      transformed
     }
   }
 
@@ -63,7 +61,7 @@ enum class PersistentHighlighterPolicy(private val wholeLineRange: Boolean) : Ma
     val lineStart = text.lineStartOffset(line)
     val lineEnd = text.lineEndOffset(line)
     val startOffset = if (wholeLineRange) firstNonSpaceOffset(text.cachedChars(), lineStart, lineEnd) else lineStart
-    return entry.copy(startOffset = startOffset, endOffset = lineEnd)
+    return entry.copy(nodeStart = startOffset, nodeEnd = lineEnd)
   }
 
   private fun MarkerEntry.shouldTranslateViaDiff(
@@ -72,7 +70,7 @@ enum class PersistentHighlighterPolicy(private val wholeLineRange: Boolean) : Ma
     afterText: DocumentText,
   ): Boolean {
     if (beforeText.length() != 0 && patch.originStartOffset() == 0 && patch.originEndOffset() == beforeText.length()) return true
-    if (patch.startOffset() >= endOffset || patch.endOffset() <= startOffset) return false
+    if (patch.startOffset() >= nodeEnd || patch.endOffset() <= nodeStart) return false
     return PersistentMarkerPolicy.requiresFullTraversal(patch, beforeText, afterText)
   }
 
@@ -85,6 +83,6 @@ enum class PersistentHighlighterPolicy(private val wholeLineRange: Boolean) : Ma
   }
 
   private companion object {
-    private const val INVALIDATED_BY_EDIT = "Marker was invalidated by a document edit"
+    private const val INVALIDATED_BY_EDIT: String = "Marker was invalidated by a document edit"
   }
 }

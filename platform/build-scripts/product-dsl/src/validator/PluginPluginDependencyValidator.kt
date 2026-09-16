@@ -6,7 +6,6 @@ package org.jetbrains.intellij.build.productLayout.validator
 
 import com.intellij.platform.pluginGraph.PluginGraph
 import com.intellij.platform.pluginGraph.PluginId
-import kotlinx.coroutines.coroutineScope
 import org.jetbrains.intellij.build.productLayout.debug
 import org.jetbrains.intellij.build.productLayout.model.error.PluginDependencyNotBundledError
 import org.jetbrains.intellij.build.productLayout.model.error.ValidationError
@@ -31,11 +30,9 @@ internal object PluginPluginDependencyValidator : PipelineNode {
 
   override val requires: Set<DataSlot<*>> get() = emptySet()
 
-  override suspend fun execute(ctx: ComputeContext) {
-    coroutineScope {
-      val errors = validatePluginToPluginDependencies(ctx.model.pluginGraph)
-      ctx.emitErrors(errors)
-    }
+  override fun execute(ctx: ComputeContext) {
+    val errors = validatePluginToPluginDependencies(ctx.model.pluginGraph)
+    ctx.emitErrors(errors)
   }
 }
 

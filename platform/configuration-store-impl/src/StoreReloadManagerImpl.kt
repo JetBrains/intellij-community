@@ -75,7 +75,7 @@ internal open class StoreReloadManagerImpl(protected val project: Project, corou
   }
 
   private suspend fun doReload() {
-    if (isReloadBlocked()) {
+    if (isReloadBlocked() || !hasChangesToReload()) {
       return
     }
 
@@ -91,17 +91,21 @@ internal open class StoreReloadManagerImpl(protected val project: Project, corou
     }
   }
 
+  protected open suspend fun hasChangesToReload(): Boolean {
+    if (synchronized(changedSchemes) { changedSchemes.isNotEmpty() }) {
+      return true
+    }
+    return synchronized(changedStorages) { changedStorages.isNotEmpty() }
+  }
+
   /**
    * Reloads the changed schemes in [changedSchemes] and changed storages in [changedSchemes]
    *
    * @return set of projects that need to be fully re-loaded to apply the changes
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   protected open suspend fun doReloadChangedStorages(): Set<Project> {
     val projectsToReload = LinkedHashSet<Project>()
-    if (changedSchemes.isEmpty() && changedStorages.isEmpty()) {
-      return projectsToReload
-    }
 
     val changedSchemesCopy: LinkedHashMap<SchemeChangeApplicator<*, *>, MutableSet<SchemeChangeEvent<*, *>>>
     synchronized(changedSchemes) {

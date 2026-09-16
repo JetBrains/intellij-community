@@ -628,6 +628,13 @@ class PyInferredVarianceJudgmentTest : PyCodeInsightTestCase() {
     """.trimIndent())
 
   @Test
+  fun `Private initialized attributes are ignored`() = test("""
+    class A[T]:
+        __t: T|None = None
+    #        └ INFERRED_VARIANCE BIVARIANT
+    """.trimIndent())
+
+  @Test
   fun `Private methods are ignored`() = test("""
     class A[T]:
     #       └ INFERRED_VARIANCE BIVARIANT
@@ -676,12 +683,48 @@ class PyInferredVarianceJudgmentTest : PyCodeInsightTestCase() {
     """.trimIndent())
 
   @Test
+  fun `Local variable declarations in dunder init are ignored`() = test("""
+    class Box[T]:
+    #         └ INFERRED_VARIANCE BIVARIANT
+        def __init__(self, item: T) -> None:
+            tmp: T
+    """.trimIndent())
+
+  @Test
+  fun `Annotated attribute declarations in dunder init are invariant`() = test("""
+    class Box[T]:
+    #         └ INFERRED_VARIANCE INVARIANT
+        def __init__(self, item: T) -> None:
+            self.attr: T = item
+    """.trimIndent())
+
+  @Test
   fun `Implicit generic final class attributes`() = test("""
     from typing import Final
     class A[T]:
     #       └ INFERRED_VARIANCE COVARIANT
         def __init__(self, t: T):
             self.t : Final[T] = t
+    """.trimIndent())
+
+  @Test
+  fun `Implicit generic final class attributes with separate init value`() = test("""
+    from typing import Final
+    class A[T]:
+    #       └ INFERRED_VARIANCE COVARIANT
+        def __init__(self, t: T):
+            self.t : Final[T]
+    #       ^^^^^^ WARNING 'Final' name should be initialized with a value FIXME # PY-91905
+            self.t = t
+    #       ^^^^^^ WARNING 't' is 'Final' and cannot be reassigned FIXME # PY-91905
+    """.trimIndent())
+
+  @Test
+  fun `Implicit generic final class attributes with separate init value and chained assignement`() = test("""
+    class Box[T_co]:
+    #         └ INFERRED_VARIANCE BIVARIANT
+        def __init__(self, item: T_co) -> None:
+            self.value = self._cache = [item]   # chained assignment
     """.trimIndent())
 
   @Test

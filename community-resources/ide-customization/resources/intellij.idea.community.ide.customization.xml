@@ -5,6 +5,11 @@
   </dependencies>
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="search.everywhere.coroutine.based.goto"
+                 defaultValue="true"
+                 restartRequired="false"
+                 overrides="true"
+                 description="Use the coroutine based goto providers in Search Everywhere. Such a provider drives the ChooseByName model itself and computes the item presentation on a background thread. When the key is off, Search Everywhere wraps the legacy SearchEverywhereContributor instead."/>
     <registryKey key="ea.auto.report.feature.visible" defaultValue="false" overrides="true"
                  description="Makes the automatic error reporting feature hidden in UI"/>
   </extensions>

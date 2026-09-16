@@ -21,24 +21,24 @@ data class InlineCompletionSessionId(private val id: UID) {
   }
 }
 
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 @ApiStatus.Internal
 fun InlineCompletionSession.getIdOrNull(): InlineCompletionSessionId? {
   return editor.getUserData(INLINE_COMPLETION_SESSION_ID_KEY)
 }
 
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 @ApiStatus.Internal
 fun InlineCompletionSession.getId(): InlineCompletionSessionId {
   return getIdOrNull() ?: error("Inline completion session ID is not set")
 }
 
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 internal fun InlineCompletionSession.putId(): InlineCompletionSessionId {
   return putId(InlineCompletionSessionId.create())
 }
 
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 internal fun InlineCompletionSession.putId(id: InlineCompletionSessionId): InlineCompletionSessionId {
   ThreadingAssertions.assertEventDispatchThread()
   check(!context.isDisposed)

@@ -50,7 +50,7 @@ class PyExternalSystemProjectAware private constructor(
   /**
    * Project might have several "attached" modules outside its base path.
    */
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private fun getRootPaths(): Set<Path> {
     // guessPath doesn't work: it returns first module path
     val projectRootDir = project.stateStore.projectBasePath
@@ -64,7 +64,7 @@ class PyExternalSystemProjectAware private constructor(
     return computeMinimalRoots(sequenceOf(projectRootDir) + modulePaths)
   }
 
-  @get:RequiresBackgroundThread
+  @get:RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   override val settingsFiles: Set<String>
     get() =
       runBlockingMaybeCancellable {

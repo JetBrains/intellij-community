@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.platform.todo.backend` start
+content_module_jar(module = ":backend")
+### auto-generated section `dev intellij.platform.todo.backend` end
+
 ### auto-generated section `build intellij.platform.todo.backend` start
 jvm_library(
     name = "backend",
@@ -43,8 +47,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":backend")
-
 jvm_library(
     name = "backend_test_lib",
     testonly = True,
@@ -85,7 +87,6 @@ exports_files(
     [
         "intellij.platform.todo.backend.iml",
         "resources/intellij.platform.todo.backend.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -33,6 +33,13 @@
     <pluginSuggestionProvider
       implementation="com.intellij.markdown.figmaAdvertiser.FigmaConnectPluginSuggestionProvider"/>
 
+    <!--
+      The platform recomputes an editor banner when a file is opened and not while it is edited, so
+      a Figma link added to an open file is answered by this listener rather than by the next open.
+    -->
+    <editorFactoryDocumentListener
+      implementation="com.intellij.markdown.figmaAdvertiser.FigmaLinkDocumentListener"/>
+
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.markdown.figmaAdvertiser.FigmaAdvertiserUsagesCollector"/>
   </extensions>

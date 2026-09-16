@@ -56,7 +56,6 @@ import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.impl.cache.impl.id.IdIndex;
 import com.intellij.psi.impl.cache.impl.id.IdIndexEntry;
 import com.intellij.psi.search.DelegatingGlobalSearchScope;
-import com.intellij.psi.search.SearchCandidateBatcher;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PsiNonJavaFileReferenceProcessor;
@@ -66,6 +65,7 @@ import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.search.QuerySearchRequest;
 import com.intellij.psi.search.RequestResultProcessor;
 import com.intellij.psi.search.ScopeOptimizer;
+import com.intellij.psi.search.SearchCandidateBatcher;
 import com.intellij.psi.search.SearchCandidateBatcher.CandidateFilesBatchesIterator;
 import com.intellij.psi.search.SearchRequestCollector;
 import com.intellij.psi.search.SearchScope;
@@ -104,7 +104,6 @@ import java.util.Deque;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -118,8 +117,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
-
-import kotlin.sequences.Sequence;
 
 import static com.intellij.util.indexing.DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE;
 
@@ -699,7 +696,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         if (psiFile != null && !(psiFile instanceof PsiBinaryFile)) {
           Project project = myManager.getProject();
           if (project.isDisposed()) throw new ProcessCanceledException();
-          if (!DumbUtil.getInstance(project).mayUseIndices()) {
+          if (!DumbUtil.getInstance().mayUseIndices(project)) {
             throw ApplicationUtil.CannotRunReadActionException.create();
           }
 

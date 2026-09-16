@@ -11,7 +11,6 @@
     <module name="intellij.python.community.helpersLocator"/>
     <module name="intellij.python.community.impl"/>
     <module name="intellij.python.community.impl.installer"/>
-    <module name="intellij.python.community.interpreters"/>
     <module name="intellij.python.community.services.internal.impl"/>
     <module name="intellij.python.community.services.shared"/>
     <module name="intellij.python.community.services.systemPython"/>

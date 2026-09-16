@@ -48,10 +48,10 @@ public final class DebuggerTreeNodeExpression {
 
     PsiClass thisClass = PsiTreeUtil.getContextOfType(result, PsiClass.class, true);
 
-    if (thisClass instanceof PsiAnonymousClass) {
+    if (thisClass instanceof PsiAnonymousClass aClass) {
       // ChangeContextUtil.encodeContextInfo skips PsiAnonymousClass,
       // so re-create expression with named base class context for proper this-substitution
-      PsiClass baseClass = ((PsiAnonymousClass)thisClass).getBaseClassType().resolve();
+      PsiClass baseClass = aClass.getBaseClassType().resolve();
       if (baseClass != null) {
         result = JavaPsiFacade.getElementFactory(result.getProject()).createExpressionFromText(result.getText(), baseClass);
         thisClass = baseClass;
@@ -68,8 +68,8 @@ public final class DebuggerTreeNodeExpression {
         type = DebuggerUtils.getType(howToEvaluateThisDeclaredType, howToEvaluateThis.getProject());
       }
       if (type != null) {
-        if (type instanceof PsiClassType) {
-          PsiClass psiClass = ((PsiClassType)type).resolve();
+        if (type instanceof PsiClassType classType) {
+          PsiClass psiClass = classType.resolve();
           if (psiClass != null && (psiClass == thisClass || psiClass.isInheritor(thisClass, true))) {
             castNeeded = false;
           }
@@ -108,11 +108,11 @@ public final class DebuggerTreeNodeExpression {
   public static final Key<Set<String>> ADDITIONAL_IMPORTS_KEY = Key.create("ADDITIONAL_IMPORTS");
 
   public static PsiExpression castToRuntimeType(PsiExpression expression, Value value) throws EvaluateException {
-    if (!(value instanceof ObjectReference)) {
+    if (!(value instanceof ObjectReference reference)) {
       return expression;
     }
 
-    ReferenceType valueType = ((ObjectReference)value).referenceType();
+    ReferenceType valueType = reference.referenceType();
     if (valueType == null) {
       return expression;
     }

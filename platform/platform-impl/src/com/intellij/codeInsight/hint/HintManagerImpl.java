@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.codeWithMe.ClientId;
@@ -33,6 +33,7 @@ import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -123,6 +124,17 @@ public class HintManagerImpl extends HintManager {
 
   public boolean performCurrentQuestionAction() {
     return ClientHintManager.getCurrentInstance().performCurrentQuestionAction();
+  }
+
+  /**
+   * Marks the current question hint of this editor as dismissed by the user, then hides that hint.
+   *
+   * @see LightweightHint#isDismissedByEscape()
+   */
+  @ApiStatus.Internal
+  @RequiresEdt
+  public void dismissCurrentQuestionHint(@NotNull Editor editor) {
+    getClientManager(editor).dismissCurrentQuestionHint();
   }
 
   @Override

@@ -1228,6 +1228,7 @@ com.intellij.openapi.externalSystem.util.task.TaskExecutionSpec
 - a:getNavigateToError():com.intellij.util.ThreeState
 - a:getProgressExecutionMode():com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode
 - a:getProject():com.intellij.openapi.project.Project
+- a:getRunConfigConsumer():java.util.function.Consumer
 - a:getSettings():com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
 - a:getSystemId():com.intellij.openapi.externalSystem.model.ProjectSystemId
 - a:getUserData():com.intellij.openapi.util.UserDataHolderBase
@@ -1250,6 +1251,7 @@ com.intellij.openapi.externalSystem.util.task.TaskExecutionSpecBuilder
 - a:withListener(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener):com.intellij.openapi.externalSystem.util.task.TaskExecutionSpecBuilder
 - a:withProgressExecutionMode(com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode):com.intellij.openapi.externalSystem.util.task.TaskExecutionSpecBuilder
 - a:withProject(com.intellij.openapi.project.Project):com.intellij.openapi.externalSystem.util.task.TaskExecutionSpecBuilder
+- a:withRunConfigurationConsumer(java.util.function.Consumer):com.intellij.openapi.externalSystem.util.task.TaskExecutionSpecBuilder
 - a:withSettings(com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings):com.intellij.openapi.externalSystem.util.task.TaskExecutionSpecBuilder
 - a:withSystemId(com.intellij.openapi.externalSystem.model.ProjectSystemId):com.intellij.openapi.externalSystem.util.task.TaskExecutionSpecBuilder
 - a:withUserData(com.intellij.openapi.util.UserDataHolderBase):com.intellij.openapi.externalSystem.util.task.TaskExecutionSpecBuilder

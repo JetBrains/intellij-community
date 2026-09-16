@@ -272,8 +272,10 @@ internal class ProjectViewPaneStateBuilderImpl(
     updateState(ProjectViewChildRemoved(parentId, index))
   }
 
-  override suspend fun selectNode(nodePath: ProjectViewNodePath) {
-    updateState(ProjectViewSelectNodeEvent(nodePath as ProjectViewNodePathImpl))
+  override suspend fun selectNode(nodePath: ProjectViewNodePath, options: ((SelectInProjectViewRequestBuilder) -> Unit)?) {
+    val optionsBuilder = SelectInProjectViewRequestBuilderImpl(nodePath)
+    options?.invoke(optionsBuilder)
+    updateState(optionsBuilder.buildSelectNodeEvent())
   }
 
   override suspend fun updateSettingsState(build: (ProjectViewPaneSettingsStateBuilder) -> Unit) {

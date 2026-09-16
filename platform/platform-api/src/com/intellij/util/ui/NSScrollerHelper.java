@@ -2,10 +2,6 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.ui.mac.foundation.Foundation;
-import com.intellij.ui.mac.foundation.ID;
-import com.sun.jna.Callback;
-import com.sun.jna.Pointer;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,19 +15,6 @@ import java.util.List;
 
 @ApiStatus.Internal
 public final class NSScrollerHelper {
-  private static final Callback APPEARANCE_CALLBACK = new Callback() {
-    @SuppressWarnings("UnusedDeclaration")
-    public void callback(ID self, Pointer selector, ID event) {
-      UIUtil.invokeLaterIfNeeded(() -> fireStyleChanged());
-    }
-  };
-  private static final Callback BEHAVIOR_CALLBACK = new Callback() {
-    @SuppressWarnings("UnusedDeclaration")
-    public void callback(ID self, Pointer selector, ID event) {
-      UIUtil.invokeLaterIfNeeded(() -> updateBehaviorPreferences());
-    }
-  };
-
   @ApiStatus.Internal
   public enum ClickBehavior {NextPage, JumpToSpot}
 
@@ -53,45 +36,8 @@ public final class NSScrollerHelper {
   }
 
   private static void initNotificationObserver() {
-    Foundation.NSAutoreleasePool pool = new Foundation.NSAutoreleasePool();
-
-    ID delegateClass = Foundation.allocateObjcClassPair(Foundation.getObjcClass("NSObject"), "NSScrollerChangesObserver");
-    if (!ID.NIL.equals(delegateClass)) {
-      // This static initializer might be called more than once (with different class loaders). In that case NSScrollerChangesObserver
-      // already exists.
-      if (!Foundation.addMethod(delegateClass, Foundation.createSelector("handleScrollerStyleChanged:"), APPEARANCE_CALLBACK, "v@")) {
-        throw new RuntimeException("Cannot add observer method");
-      }
-      if (!Foundation.addMethod(delegateClass, Foundation.createSelector("handleBehaviorChanged:"), BEHAVIOR_CALLBACK, "v@")) {
-        throw new RuntimeException("Cannot add observer method");
-      }
-
-      Foundation.registerObjcClassPair(delegateClass);
-    }
-    ID delegate = Foundation.invoke("NSScrollerChangesObserver", "new");
-
-    try {
-      ID center;
-      center = Foundation.invoke("NSNotificationCenter", "defaultCenter");
-      Foundation.invoke(center, "addObserver:selector:name:object:",
-             delegate,
-             Foundation.createSelector("handleScrollerStyleChanged:"),
-             Foundation.nsString("NSPreferredScrollerStyleDidChangeNotification"),
-             ID.NIL
-      );
-
-      center = Foundation.invoke("NSDistributedNotificationCenter", "defaultCenter");
-      Foundation.invoke(center, "addObserver:selector:name:object:",
-                        delegate,
-                        Foundation.createSelector("handleBehaviorChanged:"),
-                        Foundation.nsString("AppleNoRedisplayAppearancePreferenceChanged"),
-                        ID.NIL,
-                        2 // NSNotificationSuspensionBehaviorCoalesce
-      );
-    }
-    finally {
-      pool.drain();
-    }
+    MacScrollbarPreferences.observeStyleChanges(NSScrollerHelper::fireStyleChanged);
+    MacScrollbarPreferences.observeBehaviorChanges(NSScrollerHelper::updateBehaviorPreferences);
   }
 
   @ApiStatus.Internal
@@ -103,32 +49,19 @@ public final class NSScrollerHelper {
   private static void updateBehaviorPreferences() {
     if (!SystemInfoRt.isMac) return;
 
-    Foundation.NSAutoreleasePool pool = new Foundation.NSAutoreleasePool();
-    try {
-      ID defaults = Foundation.invoke("NSUserDefaults", "standardUserDefaults");
-      Foundation.invoke(defaults, "synchronize");
-      ourClickBehavior = Foundation.invoke(defaults, "boolForKey:", Foundation.nsString("AppleScrollerPagingBehavior")).booleanValue()
-                         ? ClickBehavior.JumpToSpot : ClickBehavior.NextPage;
-    }
-    finally {
-      pool.drain();
-    }
+    ourClickBehavior = MacScrollbarPreferences.isJumpToSpot() ? ClickBehavior.JumpToSpot : ClickBehavior.NextPage;
   }
 
   @ApiStatus.Internal
   public static @NotNull Style getScrollerStyle() {
     if (!isOverlayScrollbarSupported()) return Style.Overlay;
 
-    Foundation.NSAutoreleasePool pool = new Foundation.NSAutoreleasePool();
     try {
-      if (Foundation.invoke(Foundation.getObjcClass("NSScroller"), "preferredScrollerStyle").intValue() == 1) {
+      if (MacScrollbarPreferences.getPreferredStyle() == 1) {
         return Style.Overlay;
       }
     }
     catch (Throwable ignore) {
-    }
-    finally {
-      pool.drain();
     }
     return Style.Legacy;
   }

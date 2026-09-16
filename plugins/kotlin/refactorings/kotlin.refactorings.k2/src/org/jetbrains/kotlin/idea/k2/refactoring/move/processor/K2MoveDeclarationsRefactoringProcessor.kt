@@ -36,6 +36,9 @@ import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.psi.deleteSingle
+import org.jetbrains.kotlin.idea.base.psi.getOrCreatePrimaryConstructorParameterList
+import org.jetbrains.kotlin.idea.base.psi.insertParameterBefore
+import org.jetbrains.kotlin.idea.base.psi.removeModifierKeyword
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.reformatted
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveDescriptor
@@ -68,7 +71,6 @@ import org.jetbrains.kotlin.psi.KtSecondaryConstructor
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
 import org.jetbrains.kotlin.psi.createExpressionByPattern
-import org.jetbrains.kotlin.psi.createPrimaryConstructorParameterListIfAbsent
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.isIdentifier
@@ -407,8 +409,8 @@ open class K2MoveDeclarationsRefactoringProcessor(
         with(originalDeclaration) {
             when (this) {
                 is KtClass -> {
-                    if (hasModifier(KtTokens.INNER_KEYWORD)) removeModifier(KtTokens.INNER_KEYWORD)
-                    if (hasModifier(KtTokens.PROTECTED_KEYWORD)) removeModifier(KtTokens.PROTECTED_KEYWORD)
+                    if (hasModifier(KtTokens.INNER_KEYWORD)) removeModifierKeyword(KtTokens.INNER_KEYWORD)
+                    if (hasModifier(KtTokens.PROTECTED_KEYWORD)) removeModifierKeyword(KtTokens.PROTECTED_KEYWORD)
 
                     if (outerInstanceParameterName != null) {
                         val containingClass = containingClassOrObject ?: return
@@ -420,8 +422,8 @@ open class K2MoveDeclarationsRefactoringProcessor(
                             ) ?: return
                             val possiblyQuotedName = quoteNameIfNeeded(outerInstanceParameterName)
                             val parameter = KtPsiFactory(project).createParameter("private val $possiblyQuotedName: $type")
-                            val constructorParameterList = createPrimaryConstructorParameterListIfAbsent()
-                            constructorParameterList.addParameterBefore(parameter, constructorParameterList.parameters.firstOrNull())
+                            val constructorParameterList = getOrCreatePrimaryConstructorParameterList()
+                            constructorParameterList.insertParameterBefore(parameter, constructorParameterList.parameters.firstOrNull())
                         }
                     }
                 }
@@ -434,7 +436,7 @@ open class K2MoveDeclarationsRefactoringProcessor(
                         }
                         if (outerInstanceType == null) return
                         val possiblyQuotedName = quoteNameIfNeeded(outerInstanceParameterName)
-                        valueParameterList?.addParameterBefore(
+                        valueParameterList?.insertParameterBefore(
                             psiFactory.createParameter(
                                 "${possiblyQuotedName}: $outerInstanceType"
                             ),
@@ -474,8 +476,8 @@ open class K2MoveDeclarationsRefactoringProcessor(
                 }
                 val moveTargetType = (moveTarget as? Declaration<*>)?.getTargetType()
                 if (moveTargetType == DeclarationTargetType.COMPANION_OBJECT || moveTargetType == DeclarationTargetType.OBJECT) {
-                    newDeclaration.removeModifier(KtTokens.OPEN_KEYWORD)
-                    newDeclaration.removeModifier(KtTokens.FINAL_KEYWORD)
+                    newDeclaration.removeModifierKeyword(KtTokens.OPEN_KEYWORD)
+                    newDeclaration.removeModifierKeyword(KtTokens.FINAL_KEYWORD)
                     newDeclaration.reformatted(true)
                 }
             }

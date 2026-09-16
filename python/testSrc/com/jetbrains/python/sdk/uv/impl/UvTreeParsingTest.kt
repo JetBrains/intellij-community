@@ -12,7 +12,6 @@ import com.jetbrains.python.packaging.packageRequirements.TreeParser
 import com.jetbrains.python.packaging.packageRequirements.TreeParser.parseTrees
 import com.jetbrains.python.packaging.packageRequirements.collectAllNames
 import com.jetbrains.python.packaging.packageRequirements.extractDeclaredDependencies
-import com.jetbrains.python.sdk.uv.buildNonWorkspacePackageStructure
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -596,6 +595,148 @@ class UvTreeParsingTest {
     }
   }
 
+  /**
+   * `uv tree` prints a package's dependencies under the first parent that needs it and marks every
+   * later line for it with `(*)`. The parser gives all those parents the same node, so the marked
+   * line carries the dependencies too (PY-90174).
+   */
+  @Nested
+  inner class DeduplicatedOutput {
+
+    @Test
+    fun `a marked line is the same node as the expanded one`() {
+      val input = """
+        myapp v1.0.0
+        ├── fastapi[standard] v0.141.1
+        │   └── uvicorn[standard] v0.52.4
+        │       ├── httptools v0.7.1
+        │       └── uvloop v0.22.1
+        └── uvicorn[standard] v0.52.4 (*)
+        (*) Package tree already displayed
+      """.trimIndent()
+
+      val root = parseTrees(input.lines()).single()
+      val expanded = root.children[0].children.single()
+      val marked = root.children[1]
+
+      assertThat(marked).isSameAs(expanded)
+      assertThat(marked.children.map { it.name.name }).containsExactly("httptools", "uvloop")
+    }
+
+    @Test
+    fun `a marked line keeps its own group`() {
+      // `sphinxcontrib-jquery` is only ever declared through the docs extra, but the tool prints it first as a plain
+      // dependency of something deeper. Sharing that line's group made it look like a dependency the environment must
+      // hold, and it was reported missing whenever the extra was not installed (PY-90174).
+      val input = """
+        devel-common v0.1.0
+        ├── sphinx v8.0.0
+        │   └── sphinxcontrib-jquery v4.1
+        └── sphinxcontrib-jquery v4.1 (extra: docs) (*)
+      """.trimIndent()
+
+      val root = parseTrees(input.lines()).single()
+      val declaring = root.children[1]
+
+      assertThat(declaring.group).isEqualTo("docs")
+      assertThat(extractDeclaredDependencies(listOf(root)).single { it.name == "sphinxcontrib-jquery" }.dependencyGroup)
+        .isEqualTo(PyDependencyGroupName("docs"))
+    }
+
+    @Test
+    fun `a marked line shares the dependencies of the line it repeats`() {
+      val input = """
+        myapp v1.0.0
+        ├── uvicorn v0.52.4
+        │   └── httptools v0.7.1
+        └── uvicorn v0.52.4 (group: dev) (*)
+      """.trimIndent()
+
+      val root = parseTrees(input.lines())
+
+      val declaring = root.single().children[1]
+      assertThat(declaring.group).isEqualTo("dev")
+      assertThat(declaring.children.map { it.name.name }).containsExactly("httptools")
+    }
+
+    @Test
+    fun `a workspace member marked at its own root keeps its dependencies`() {
+      val input = """
+        apache-airflow v3.4.0
+        └── apache-airflow-core v3.4.0
+            └── cfn-lint v1.41.0
+        apache-airflow-core v3.4.0 (*)
+      """.trimIndent()
+
+      val roots = parseTrees(input.lines()).associateBy { it.name.name }
+
+      assertThat(roots.getValue("apache-airflow-core").children.map { it.name.name }).containsExactly("cfn-lint")
+      assertThat(extractDeclaredDependencies(parseTrees(input.lines())).map { it.name })
+        .containsExactlyInAnyOrder("apache-airflow-core", "cfn-lint")
+    }
+
+    @Test
+    fun `a package and its extra stay separate nodes`() {
+      // uv resolves `pkg` and `pkg[extra]` to different dependencies, so they must not share a node.
+      val input = """
+        myapp v1.0.0
+        ├── sqlalchemy v2.0.52
+        └── sqlalchemy[asyncio] v2.0.52
+            └── greenlet v3.2.4
+      """.trimIndent()
+
+      val root = parseTrees(input.lines()).single()
+
+      assertThat(root.children[0].children).isEmpty()
+      assertThat(root.children[1].children.map { it.name.name }).containsExactly("greenlet")
+    }
+
+    @Test
+    fun `the trailing legend is not a package`() {
+      val legends = listOf("(*) Package tree already displayed", "(*) Package tree is a cycle and cannot be shown")
+
+      for (legend in legends) {
+        val input = """
+          myapp v1.0.0
+          └── flask v3.0.0 (*)
+          $legend
+        """.trimIndent()
+
+        assertThat(parseTrees(input.lines()).map { it.name.name }).describedAs(legend).containsExactly("myapp")
+      }
+    }
+
+    @Test
+    fun `the marker is not read as a version`() {
+      val input = """
+        myapp v1.0.0
+        └── local-member (*)
+      """.trimIndent()
+
+      val member = parseTrees(input.lines()).single().children.single()
+
+      assertThat(member.name).isEqualTo(PyPackageName.from("local-member"))
+      assertThat(member.version).isNull()
+    }
+
+    @Test
+    fun `a cycle does not stop the walk from ending`() {
+      // uv uses the same marker to close a cycle, so the graph the parser builds can have one.
+      val input = """
+        myapp v1.0.0
+        └── a v1.0.0
+            └── b v1.0.0
+                └── a v1.0.0 (*)
+      """.trimIndent()
+
+      val root = parseTrees(input.lines()).single()
+
+      val a = root.children.single()
+      assertThat(a.children.single().children.single()).isSameAs(a)
+      assertThat(root.collectAllNames()).containsExactlyInAnyOrder("myapp", "a", "b")
+    }
+  }
+
   @Nested
   inner class CollectAllNames {
 
@@ -746,100 +887,4 @@ class UvTreeParsingTest {
     }
   }
 
-  @Nested
-  inner class NonWorkspaceUndeclaredFilter {
-
-    /**
-     * Reproduces PTW jupyter case: `jupyterlab` is the only declared dependency; all other packages
-     * are transitive deps of `jupyterlab`. Exercises the pure non-workspace branch of
-     * `UvPackageManager.getPackageTree` via [buildNonWorkspacePackageStructure].
-     */
-    private fun undeclaredNames(projectTreeOutput: String, pipTreeOutput: String): List<String> {
-      val allTrees = parseTrees(projectTreeOutput.lines())
-      val declaredPackageNames = extractDeclaredDependencies(allTrees).mapTo(mutableSetOf()) { it.name }
-      val undeclaredRoots = parseTrees(pipTreeOutput.lines())
-      val structure = buildNonWorkspacePackageStructure(allTrees, declaredPackageNames, undeclaredRoots)
-      return structure.undeclaredPackages.map { it.name.name }
-    }
-
-    @Test
-    fun `jupyter transitives of declared package are not marked undeclared`() {
-      val projectTree = """
-        jupyterproject v0.1.0
-        └── jupyterlab v4.6.2
-            ├── async-lru v2.3.0
-            ├── httpx v0.28.1
-            │   ├── anyio v4.14.2
-            │   │   └── idna v3.18
-            │   ├── certifi v2026.7.22
-            │   ├── httpcore v1.0.9
-            │   │   ├── certifi v2026.7.22
-            │   │   └── h11 v0.16.0
-            │   └── idna v3.18
-            ├── ipykernel v7.3.0
-            │   └── traitlets v5.15.1
-            ├── jinja2 v3.1.6
-            │   └── markupsafe v3.0.3
-            ├── packaging v26.2
-            ├── tornado v6.5.7
-            └── traitlets v5.15.1
-      """.trimIndent()
-
-      // `uv pip tree` roots include the project itself + a few transitives that no other installed
-      // package depends on (typical for jupyter installs — build backends, prompt helpers, etc.).
-      val pipTree = """
-        jupyterproject v0.1.0
-        └── jupyterlab v4.6.2
-        packaging v26.2
-        idna v3.18
-        markupsafe v3.0.3
-        setuptools v75.0.0
-      """.trimIndent()
-
-      val undeclared = undeclaredNames(projectTree, pipTree)
-
-      // jupyterproject (root) and jupyterlab (declared) are filtered.
-      // packaging, idna, markupsafe are transitives of jupyterlab -> filtered too.
-      // setuptools is truly undeclared (not in project tree) -> remains.
-      assertThat(undeclared).containsExactly("setuptools")
-    }
-
-    @Test
-    fun `simple project without transitives keeps unrelated pip tree roots`() {
-      val projectTree = """
-        myapp v1.0.0
-        └── requests v2.31.0
-            └── urllib3 v2.1.0
-      """.trimIndent()
-
-      val pipTree = """
-        myapp v1.0.0
-        └── requests v2.31.0
-        urllib3 v2.1.0
-        pip v24.0
-      """.trimIndent()
-
-      val undeclared = undeclaredNames(projectTree, pipTree)
-
-      // urllib3 is transitive of declared requests -> filtered; myapp is project root -> filtered.
-      assertThat(undeclared).containsExactly("pip")
-    }
-
-    @Test
-    fun `project root name itself is filtered from undeclared`() {
-      val projectTree = """
-        jupyterproject v0.1.0
-        └── jupyterlab v4.6.2
-      """.trimIndent()
-
-      val pipTree = """
-        jupyterproject v0.1.0
-        └── jupyterlab v4.6.2
-      """.trimIndent()
-
-      val undeclared = undeclaredNames(projectTree, pipTree)
-
-      assertThat(undeclared).isEmpty()
-    }
-  }
 }

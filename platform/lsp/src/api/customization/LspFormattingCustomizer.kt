@@ -40,7 +40,7 @@ open class LspFormattingSupport : LspFormattingCustomizer() {
    * (within the [InitializeResult](https://microsoft.github.io/language-server-protocol/specification/#initializeResult))
    * doesn't count as an explicit wish to format this specific [file]
    */
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   open fun shouldFormatThisFileExclusivelyByServer(
     file: VirtualFile,
     ideCanFormatThisFileItself: Boolean,

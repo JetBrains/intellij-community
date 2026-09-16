@@ -19,7 +19,7 @@ internal class CodeFoldingZombie(
   private val regions: List<FoldLimb> = limbs.filter { it.groupId == null }
   private val groupedRegions: Map<Long, List<FoldLimb>> = limbs.filter { it.groupId != null }.groupBy { it.groupId!! }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun applyState(editor: EditorEx) {
     ThreadingAssertions.assertEventDispatchThread()
     val foldingModel = editor.foldingModel

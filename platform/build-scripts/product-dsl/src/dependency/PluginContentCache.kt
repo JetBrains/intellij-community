@@ -3,16 +3,14 @@
 
 package org.jetbrains.intellij.build.productLayout.dependency
 
+import com.intellij.platform.buildScripts.concurrency.SharedCache
 import com.intellij.platform.pluginGraph.TargetName
-import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.productLayout.discovery.PluginContentInfo
 import org.jetbrains.intellij.build.productLayout.discovery.PluginSource
 import org.jetbrains.intellij.build.productLayout.discovery.PluginXmlOverride
 import org.jetbrains.intellij.build.productLayout.discovery.extractPluginContent
 import org.jetbrains.intellij.build.productLayout.model.ErrorSink
-import org.jetbrains.intellij.build.productLayout.util.AsyncCache
-import org.jetbrains.intellij.build.runBlockingOnVirtualThreads
 
 /**
  * Interface for plugin content retrieval with on-demand discovery support.
@@ -26,7 +24,7 @@ internal interface PluginContentProvider {
    * Gets or extracts plugin content for the given plugin module name.
    * @return PluginContentInfo if module has META-INF/plugin.xml, null otherwise
    */
-  suspend fun getOrExtract(pluginModule: TargetName): PluginContentInfo?
+  fun getOrExtract(pluginModule: TargetName): PluginContentInfo?
 }
 
 /**
@@ -46,31 +44,13 @@ internal interface PluginContentProvider {
  */
 internal class PluginContentCache(
   private val outputProvider: ModuleOutputProvider,
-  private val xIncludeCache: AsyncCache<String, ByteArray?>,
+  private val xIncludeCache: SharedCache<String, ByteArray?>,
   private val skipXIncludePaths: Set<String>,
   private val xIncludePrefixFilter: (String) -> String?,
   private val pluginXmlOverrides: Map<TargetName, PluginXmlOverride> = emptyMap(),
   private val errorSink: ErrorSink,
 ) : PluginContentProvider {
-  @Suppress("UNUSED_PARAMETER")
-  constructor(
-    outputProvider: ModuleOutputProvider,
-    xIncludeCache: AsyncCache<String, ByteArray?>,
-    skipXIncludePaths: Set<String>,
-    xIncludePrefixFilter: (String) -> String?,
-    pluginXmlOverrides: Map<TargetName, PluginXmlOverride> = emptyMap(),
-    scope: CoroutineScope,
-    errorSink: ErrorSink,
-  ) : this(
-    outputProvider = outputProvider,
-    xIncludeCache = xIncludeCache,
-    skipXIncludePaths = skipXIncludePaths,
-    xIncludePrefixFilter = xIncludePrefixFilter,
-    pluginXmlOverrides = pluginXmlOverrides,
-    errorSink = errorSink,
-  )
-
-  private val cache = AsyncCache<TargetName, PluginContentInfo?>()
+  private val cache = SharedCache<TargetName, PluginContentInfo?>(xIncludeCache.owner)
 
   /**
    * Extracts plugin content with explicit source type.
@@ -86,10 +66,9 @@ internal class PluginContentCache(
     pluginXmlOverride: PluginXmlOverride? = null,
   ): PluginContentInfo? {
     val effectiveOverride = pluginXmlOverride ?: pluginXmlOverrides[plugin]
-    // the loader still suspends, so it needs an entry of its own back into coroutines
     return cache.getOrPut(plugin) {
       val source = if (isTest) PluginSource.TEST else PluginSource.BUNDLED
-      runBlockingOnVirtualThreads { extractPluginContent(
+      extractPluginContent(
         pluginName = plugin.value,
         outputProvider = outputProvider,
         xIncludeCache = xIncludeCache,
@@ -99,7 +78,7 @@ internal class PluginContentCache(
         source = source,
         pluginXmlOverride = effectiveOverride,
         errorSink = errorSink,
-      ) }
+      )
     }
   }
 
@@ -127,11 +106,10 @@ internal class PluginContentCache(
    * @param pluginModule The JPS module name (not plugin ID)
    * @return PluginContentInfo if module has META-INF/plugin.xml, null otherwise
    */
-  override suspend fun getOrExtract(pluginModule: TargetName): PluginContentInfo? {
-    // the loader still suspends, so it needs an entry of its own back into coroutines
+  override fun getOrExtract(pluginModule: TargetName): PluginContentInfo? {
     return cache.getOrPut(pluginModule) {
       // Not pre-warmed → discovered on-demand during dependency resolution
-      runBlockingOnVirtualThreads { extractPluginContent(
+      extractPluginContent(
         pluginName = pluginModule.value,
         outputProvider = outputProvider,
         xIncludeCache = xIncludeCache,
@@ -141,7 +119,7 @@ internal class PluginContentCache(
         source = PluginSource.DISCOVERED,
         pluginXmlOverride = pluginXmlOverrides[pluginModule],
         errorSink = errorSink,
-      ) }
+      )
     }
   }
 }

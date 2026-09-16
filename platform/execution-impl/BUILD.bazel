@@ -11,6 +11,13 @@ jps_test(
 
 ### skip generation section `test intellij.platform.execution.tests`
 
+### auto-generated section `dev intellij.platform.execution.impl` start
+content_module_jar(
+    module = ":execution-impl",
+    modules_after = ["//platform/wsl-impl"],
+)
+### auto-generated section `dev intellij.platform.execution.impl` end
+
 ### auto-generated section `build intellij.platform.execution.impl` start
 jvm_library(
     name = "execution-impl",
@@ -66,7 +73,6 @@ jvm_library(
         "//platform/platform-util-io-impl:ide-util-io-impl",
         "//libraries/jediterm-core",
         "//libraries/jediterm-ui",
-        "//libraries/pty4j",
         "//platform/execution",
         "//platform/wsl-impl",
         "//platform/util/jdom",
@@ -93,11 +99,6 @@ jvm_library(
         "//platform/remote-topics/shared:rpc-topics",
         "//fleet/rhizomedb",
     ],
-)
-
-content_module_jar(
-    module = ":execution-impl",
-    modules_after = ["//platform/wsl-impl"],
 )
 
 jvm_library(
@@ -147,7 +148,6 @@ jvm_library(
         "//platform/platform-util-io-impl:ide-util-io-impl_test_lib",
         "//libraries/jediterm-core:jediterm-core_test_lib",
         "//libraries/jediterm-ui:jediterm-ui_test_lib",
-        "//libraries/pty4j:pty4j_test_lib",
         "//platform/execution:execution_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
@@ -185,7 +185,6 @@ exports_files(
         "intellij.platform.execution.impl.iml",
         "resources/intellij.platform.execution.impl.actions.xml",
         "resources/intellij.platform.execution.impl.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

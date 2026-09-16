@@ -38,17 +38,6 @@ interface ModuleOutputProvider {
   fun findDeclaredLibraryRoots(libraryName: String, moduleLibraryModuleName: String? = null): List<Path> =
     findLibraryRoots(libraryName = libraryName, moduleLibraryModuleName = moduleLibraryModuleName)
 
-  /**
-   * Returns a map from project library name to library module name.
-   *
-   * This is required to translate project-level JPS library dependencies
-   * (e.g., assertJ) into intellij.libraries.* modules when
-   * building the plugin graph and DSL test plugin content.
-   *
-   * Will be removed as soon as all indirect usages are replaced.
-   */
-  fun getProjectLibraryToModuleMap(): Map<String, String>
-
   fun getModuleOutputRoots(module: JpsModule, forTests: Boolean = false): List<Path>
 
   /**

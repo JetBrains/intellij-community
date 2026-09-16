@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.markdown.fenceInjection` start
+content_module_jar(module = ":fenceInjection")
+### auto-generated section `dev intellij.markdown.fenceInjection` end
+
 ### auto-generated section `build intellij.markdown.fenceInjection` start
 jvm_library(
     name = "fenceInjection",
@@ -30,8 +34,6 @@ jvm_library(
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     ],
 )
-
-content_module_jar(module = ":fenceInjection")
 
 jvm_library(
     name = "fenceInjection_test_lib",

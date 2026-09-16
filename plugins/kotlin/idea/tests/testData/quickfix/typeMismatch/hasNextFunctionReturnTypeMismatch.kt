@@ -10,6 +10,5 @@ abstract class A {
 fun test(notRange: A) {
     for (i in notRange<caret>) {}
 }
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeCallableReturnTypeFix$ForCalled
 // IGNORE_K2
 // For K2, needs KT-75197

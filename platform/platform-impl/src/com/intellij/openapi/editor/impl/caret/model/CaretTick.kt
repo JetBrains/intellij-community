@@ -1,25 +1,49 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.caret.model
 
+import com.intellij.openapi.editor.impl.view.animation.AnimationTimeMark
 import kotlin.math.exp
-import kotlin.math.max
 import kotlin.math.pow
+import kotlin.time.Duration
 
 internal data class CaretTick(
-  val now: Long,
-  private val frameMs: Double,
+  val now: AnimationTimeMark,
+  private val frameDuration: Duration,
   val settings: CaretAnimationSettings,
-  val isCaretShown: Boolean,
-  private val quietMs: Long,
+  private val elapsedQuietTime: Duration,
 ) {
-  val isWithinQuietPeriod: Boolean get() = quietMs < settings.quietPeriodMs
+  val isWithinQuietPeriod: Boolean get() = elapsedQuietTime < settings.quietPeriod
 
-  val remainingQuietMs: Long get() = (settings.quietPeriodMs - quietMs).coerceAtLeast(TICK_MS.toLong())
+  val remainingQuietTime: Duration
+    get() {
+      val remaining = settings.quietPeriod - elapsedQuietTime
+      return remaining.coerceAtLeast(CaretFrameInterval.MOVEMENT)
+    }
 
-  fun elapsedSince(startMs: Long): Double = max(0L, now - startMs).toDouble()
+  fun elapsedSince(startTime: AnimationTimeMark): Duration {
+    val elapsed = now - startTime
+    return elapsed.coerceAtLeast(Duration.ZERO)
+  }
 
-  fun approachFactor(timeConstantMs: Double): Double =
-    (1.0 - exp(-frameMs / max(TICK_MS.toDouble(), timeConstantMs))).coerceIn(0.0, 1.0)
+  /**
+   * Fraction of the remaining distance to close during this tick, for an exponential approach with [timeConstant].
+   */
+  fun approachFactor(timeConstant: Duration): Double {
+    val effectiveTimeConstant = timeConstant.coerceAtLeast(CaretFrameInterval.MOVEMENT)
+    val elapsedTimeConstants = frameDuration / effectiveTimeConstant
+    val closedFraction = 1.0 - exp(-elapsedTimeConstants)
+    return closedFraction.coerceIn(0.0, 1.0)
+  }
 
-  fun velocityDamping(): Double = 0.75.pow(frameMs / TICK_MS)
+  fun velocityDamping(): Double {
+    val elapsedFrames = frameDuration / CaretFrameInterval.MOVEMENT
+    return VELOCITY_DAMPING_PER_FRAME.pow(elapsedFrames)
+  }
+
+  companion object {
+    /**
+     * Fraction of the inherited velocity that survives one [CaretFrameInterval.MOVEMENT].
+     */
+    private const val VELOCITY_DAMPING_PER_FRAME = 0.75
+  }
 }

@@ -28,7 +28,7 @@ internal object PluginDependencyDeclarationValidator : PipelineNode {
 
   override val requires: Set<DataSlot<*>> get() = setOf(Slots.PLUGIN_DEPENDENCY_PLAN)
 
-  override suspend fun execute(ctx: ComputeContext) {
+  override fun execute(ctx: ComputeContext) {
     val plans = ctx.get(Slots.PLUGIN_DEPENDENCY_PLAN).plans
     for (plan in plans) {
       if (plan.duplicateDeclarationPluginIds.isEmpty()) continue

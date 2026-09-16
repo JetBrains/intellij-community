@@ -9,7 +9,6 @@ import java.lang.foreign.Arena;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.Linker;
 import java.lang.foreign.MemoryLayout;
-import java.lang.foreign.MemorySegment;
 import java.lang.foreign.StructLayout;
 import java.lang.foreign.SymbolLookup;
 import java.lang.invoke.MethodHandle;
@@ -72,20 +71,20 @@ public final class MemoryUtil {
    */
   public static @Nullable Long getUnusedMemory() {
     if (!SystemInfo.isMac) return null;
-    try (Arena arena = Arena.ofConfined()) {
-      int host = (int)Mach.MACH_HOST_SELF.invokeExact();
-      MemorySegment pageSize = arena.allocate(JAVA_LONG);
+    try (var arena = Arena.ofConfined()) {
+      var host = (int)Mach.MACH_HOST_SELF.invokeExact();
+      var pageSize = arena.allocate(JAVA_LONG);
       if ((int)Mach.HOST_PAGE_SIZE.invokeExact(host, pageSize) != KERN_SUCCESS) {
         return null;
       }
-      MemorySegment statistics = arena.allocate(VM_STATISTICS64);
-      MemorySegment count = arena.allocate(JAVA_INT);
+      var statistics = arena.allocate(VM_STATISTICS64);
+      var count = arena.allocate(JAVA_INT);
       count.set(JAVA_INT, 0, (int)(VM_STATISTICS64.byteSize() / JAVA_INT.byteSize()));
       if ((int)Mach.HOST_STATISTICS64.invokeExact(host, HOST_VM_INFO64, statistics, count) != KERN_SUCCESS) {
         return null;
       }
-      long freePages = Integer.toUnsignedLong(statistics.get(JAVA_INT, FREE_COUNT_OFFSET));
-      long inactivePages = Integer.toUnsignedLong(statistics.get(JAVA_INT, INACTIVE_COUNT_OFFSET));
+      var freePages = Integer.toUnsignedLong(statistics.get(JAVA_INT, FREE_COUNT_OFFSET));
+      var inactivePages = Integer.toUnsignedLong(statistics.get(JAVA_INT, INACTIVE_COUNT_OFFSET));
       return (freePages + inactivePages) * pageSize.get(JAVA_LONG, 0);
     }
     catch (Throwable t) {

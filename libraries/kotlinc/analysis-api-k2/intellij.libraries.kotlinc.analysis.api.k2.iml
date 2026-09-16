@@ -34,15 +34,19 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="module" module-name="intellij.libraries.kotlinc.analysis.api.impl.base" />
-    <orderEntry type="module" module-name="intellij.libraries.kotlinc.analysis.api.platform.interface" />
-    <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.compiler.common" />
-    <orderEntry type="module" module-name="intellij.libraries.kotlinc.low.level.api.fir" />
-    <orderEntry type="module" module-name="intellij.libraries.kotlinc.symbol.light.classes" />
-    <orderEntry type="module" module-name="intellij.java.psi.impl" />
-    <orderEntry type="module" module-name="intellij.java.frontback.psi.impl" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.analysis.api.impl.base" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.analysis.api.platform.interface" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.analysis.api" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.compiler.common" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.compiler.fir" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.low.level.api.fir" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.symbol.light.classes" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.compiler.ir" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.psi.impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.frontback.psi.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.indexing" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.compiler.fe10" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.ide.core" scope="RUNTIME" />
   </component>
 </module>

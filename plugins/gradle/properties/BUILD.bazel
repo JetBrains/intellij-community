@@ -2,6 +2,10 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.gradle.properties` start
+content_module_jar(module = ":properties")
+### auto-generated section `dev intellij.gradle.properties` end
+
 ### auto-generated section `build intellij.gradle.properties` start
 jvm_library(
     name = "properties",
@@ -43,8 +47,6 @@ jvm_library(
         "//plugins/properties:properties-backend",
     ],
 )
-
-content_module_jar(module = ":properties")
 
 jvm_library(
     name = "properties_test_lib",

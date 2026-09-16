@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.opentelemetry.exporter.sender.jdk` start
+content_module_jar(
+    libraries = ["@lib//:libraries-opentelemetry-exporter-sender-jdk-opentelemetry-exporter-sender-jdk"],
+    module = ":opentelemetry-exporter-sender-jdk",
+)
+### auto-generated section `dev intellij.libraries.opentelemetry.exporter.sender.jdk` end
+
 ### auto-generated section `build intellij.libraries.opentelemetry.exporter.sender.jdk` start
 jvm_library(
     name = "opentelemetry-exporter-sender-jdk",
@@ -16,11 +23,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-opentelemetry-exporter-sender-jdk-opentelemetry-exporter-sender-jdk"],
     runtime_deps = ["@lib//:libraries-opentelemetry-exporter-sender-jdk-opentelemetry-exporter-sender-jdk"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-opentelemetry-exporter-sender-jdk-opentelemetry-exporter-sender-jdk"],
-    module = ":opentelemetry-exporter-sender-jdk",
 )
 
 jvm_library(
@@ -43,7 +45,6 @@ exports_files(
     [
         "intellij.libraries.opentelemetry.exporter.sender.jdk.iml",
         "resources/intellij.libraries.opentelemetry.exporter.sender.jdk.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

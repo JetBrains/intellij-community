@@ -12,6 +12,13 @@ jps_test(
 
 ### skip generation section `test intellij.platform.jewel.markdown.extensions.gfmTables.tests`
 
+### auto-generated section `dev intellij.platform.jewel.markdown.extensions.gfmTables` start
+content_module_jar(
+    libraries = ["@lib//:platform-jewel-markdown-extensions-gfm_tables-commonmark-ext-gfm-tables"],
+    module = ":gfm-tables",
+)
+### auto-generated section `dev intellij.platform.jewel.markdown.extensions.gfmTables` end
+
 ### auto-generated section `build intellij.platform.jewel.markdown.extensions.gfmTables` start
 create_kotlinc_options(
     name = "custom_gfm-tables",
@@ -56,11 +63,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(
-    libraries = ["@lib//:platform-jewel-markdown-extensions-gfm_tables-commonmark-ext-gfm-tables"],
-    module = ":gfm-tables",
-)
-
 jvm_library(
     name = "gfm-tables_test_lib",
     testonly = True,
@@ -94,7 +96,6 @@ exports_files(
     [
         "intellij.platform.jewel.markdown.extensions.gfmTables.iml",
         "src/main/resources/intellij.platform.jewel.markdown.extensions.gfmTables.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -12,6 +12,10 @@ jps_test(
 
 ### skip generation section `test intellij.notebooks.visualization.tests`
 
+### auto-generated section `dev intellij.notebooks.visualization` start
+content_module_jar(module = ":visualization")
+### auto-generated section `dev intellij.notebooks.visualization` end
+
 ### auto-generated section `build intellij.notebooks.visualization` start
 create_kotlinc_options(
     name = "custom_visualization",
@@ -68,8 +72,6 @@ jvm_library(
         "//platform/util:util-ui",
     ],
 )
-
-content_module_jar(module = ":visualization")
 
 jvm_library(
     name = "visualization_test_lib",

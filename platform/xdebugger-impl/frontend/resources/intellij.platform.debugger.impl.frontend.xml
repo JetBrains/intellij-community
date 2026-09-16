@@ -60,11 +60,16 @@
                     serviceImplementation="com.intellij.platform.debugger.impl.frontend.FrontendCustomDescriptorStateManager"/>
     <postStartupActivity implementation="com.intellij.platform.debugger.impl.frontend.FrontendXDebuggerInitializationProjectActivity"/>
     <xdebugger.managerProxy implementation="com.intellij.platform.debugger.impl.frontend.FrontendXDebugManagerProxy" order="first"/>
-    <platform.rpc.projectRemoteTopicListener implementation="com.intellij.platform.debugger.impl.frontend.ShowBreakpointsDialogRemoteTopicListener"/>
-    <platform.rpc.projectRemoteTopicListener implementation="com.intellij.platform.debugger.impl.frontend.UpdateExecutionPositionRemoteTopicListener"/>
-    <platform.rpc.projectRemoteTopicListener implementation="com.intellij.platform.debugger.impl.frontend.frame.ShowImagePopupRemoteTopicListener"/>
-    <platform.rpc.projectRemoteTopicListener implementation="com.intellij.platform.debugger.impl.frontend.frame.FrameNotificationRemoteTopicListener"/>
-    <platform.rpc.projectRemoteTopicListener implementation="com.intellij.platform.debugger.impl.frontend.frame.ShowSessionTabRemoteTopicListener"/>
+    <platform.rpc.projectRemoteTopicListener implementation="com.intellij.platform.debugger.impl.frontend.ShowBreakpointsDialogRemoteTopicListener"
+                                             topicId="xdebugger.show.breakpoint.dialog"/>
+    <platform.rpc.projectRemoteTopicListener implementation="com.intellij.platform.debugger.impl.frontend.UpdateExecutionPositionRemoteTopicListener"
+                                             topicId="xdebugger.update.execution.position"/>
+    <platform.rpc.projectRemoteTopicListener implementation="com.intellij.platform.debugger.impl.frontend.frame.ShowImagePopupRemoteTopicListener"
+                                             topicId="xdebugger.show.image.popup"/>
+    <platform.rpc.projectRemoteTopicListener implementation="com.intellij.platform.debugger.impl.frontend.frame.FrameNotificationRemoteTopicListener"
+                                             topicId="xdebugger.show.frame.notification"/>
+    <platform.rpc.projectRemoteTopicListener implementation="com.intellij.platform.debugger.impl.frontend.frame.ShowSessionTabRemoteTopicListener"
+                                             topicId="xdebugger.show.session.tab"/>
 
   </extensions>
   <projectListeners>

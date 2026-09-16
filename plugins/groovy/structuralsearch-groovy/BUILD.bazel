@@ -10,6 +10,10 @@ jps_test(
 )
 ### skip generation section `test intellij.groovy.structuralSearch.tests`
 
+### auto-generated section `dev intellij.groovy.structuralSearch` start
+content_module_jar(module = ":structuralSearch")
+### auto-generated section `dev intellij.groovy.structuralSearch` end
+
 ### auto-generated section `build intellij.groovy.structuralSearch` start
 jvm_library(
     name = "structuralSearch",
@@ -46,8 +50,6 @@ jvm_library(
         "//java/java-psi-api:psi",
     ],
 )
-
-content_module_jar(module = ":structuralSearch")
 
 jvm_library(
     name = "structuralSearch_test_lib",
@@ -111,6 +113,7 @@ jvm_library(
         "//platform/todo/plugin",
         "//platform/testRunner/plugin",
         "//plugins/groovy-scripting",
+        "//xml/plugin",
     ],
 )
 
@@ -137,6 +140,7 @@ jvm_library(
         "//platform/todo/plugin:plugin_test_lib",
         "//platform/testRunner/plugin:plugin_test_lib",
         "//plugins/groovy-scripting:groovy-scripting_test_lib",
+        "//xml/plugin:plugin_test_lib",
     ],
     deps = [
         # do not sort,
@@ -180,8 +184,6 @@ jvm_library(
         "//platform/core-ui:core-ui_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
-        "//libraries/misc/plugin",
-        "//libraries/misc/plugin:plugin_test_lib",
         "//libraries/lucene.common",
         "//libraries/lucene.common:lucene.common_test_lib",
         "//platform/code-style-api:codeStyle",

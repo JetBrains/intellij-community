@@ -1,17 +1,21 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.hint.EditorHintListener;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.fixtures.EditorHintFixture;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.ui.HintHint;
+import com.intellij.ui.LightweightHint;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
@@ -87,8 +91,6 @@ public class ImportHintDismissalTest extends LightJavaCodeInsightFixtureTestCase
     myFixture.configureByText("X.java", text);
     Editor editor = myFixture.getEditor();
     PsiJavaCodeReferenceElement reference = findReference(text.indexOf(UNRESOLVED_NAME));
-    // the tests share the project, so clear the "Escape was pressed" flag which another test can leave set
-    EditorTestUtil.executeAction(editor, IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT, true);
 
     showImportHint(editor, reference);
     HintManagerImpl.getInstanceImpl().hideAllHints();
@@ -110,6 +112,44 @@ public class ImportHintDismissalTest extends LightJavaCodeInsightFixtureTestCase
     EditorTestUtil.executeAction(editor, IdeActions.ACTION_EDITOR_ESCAPE, true);
 
     assertEquals(ImportClassFixBase.Result.POPUP_NOT_SHOWN, fix.doFix(editor, true, true, false));
+  }
+
+  public void testTheClientReportOfTheEscapeKeyKeepsTheImportHintHidden() {
+    @Language("JAVA")
+    String text = "class X { ArrayList c; }";
+    myFixture.configureByText("X.java", text);
+    Editor editor = myFixture.getEditor();
+    PsiJavaCodeReferenceElement reference = findReference(text.indexOf(UNRESOLVED_NAME));
+
+    showImportHint(editor, reference);
+    HintManagerImpl.getInstanceImpl().dismissCurrentQuestionHint(editor);
+
+    assertNull(myHintFixture.getCurrentHintText());
+    assertTrue(ImportHintDismissalTracker.isDismissed(editor, reference, UNRESOLVED_NAME));
+  }
+
+  public void testTheEscapeKeyKeepsTheHintHiddenAfterTheTooltipLeftTheScreen() {
+    @Language("JAVA")
+    String text = "class X { ArrayList c; }";
+    myFixture.configureByText("X.java", text);
+    Editor editor = myFixture.getEditor();
+    PsiJavaCodeReferenceElement reference = findReference(text.indexOf(UNRESOLVED_NAME));
+    Ref<LightweightHint> shownHint = new Ref<>();
+    ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable())
+      .subscribe(EditorHintListener.TOPIC, new EditorHintListener() {
+        @Override
+        public void hintShown(@NotNull Editor hintEditor, @NotNull LightweightHint hint, int flags, @NotNull HintHint hintInfo) {
+          shownHint.set(hint);
+        }
+      });
+
+    showImportHint(editor, reference);
+    // the tooltip can leave the screen before the key press, and the hint then stays on the hint stack.
+    // The Escape action hides such a hint from its own enablement check
+    shownHint.get().putUserData(LightweightHint.SHOWN_AT_DEBUG, Boolean.FALSE);
+    EditorTestUtil.executeAction(editor, IdeActions.ACTION_EDITOR_ESCAPE, false);
+
+    assertTrue(ImportHintDismissalTracker.isDismissed(editor, reference, UNRESOLVED_NAME));
   }
 
   private @NotNull PsiJavaCodeReferenceElement findReference(int offset) {

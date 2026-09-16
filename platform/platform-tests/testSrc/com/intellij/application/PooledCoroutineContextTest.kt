@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application
 
-import com.intellij.openapi.diagnostic.UnhandledException
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.LoggedErrorProcessor
@@ -11,22 +10,19 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import org.hamcrest.MatcherAssert.assertThat
-import org.hamcrest.core.IsInstanceOf
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import java.util.concurrent.atomic.AtomicReference
 
 @RunWith(JUnit4::class)
-class PooledCoroutineContextTest : LightPlatformTestCase() {
+internal class PooledCoroutineContextTest : LightPlatformTestCase() {
 
+  /// The test log writer must report the real cause, not the `UnhandledException` wrapper. See IJPL-254578.
   @Test
   fun `log error`() {
     val exception = RuntimeException()
-    assertThat("Unhandled exception has wrong type",
-               loggedErrorsAfterThrowingFromGlobalScope(exception),
-               IsInstanceOf(UnhandledException::class.java))
+    assertSame("Unhandled exception must be logged as itself", exception, loggedErrorsAfterThrowingFromGlobalScope(exception))
   }
 
   @Test

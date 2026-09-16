@@ -14,7 +14,7 @@ sealed interface LinkResolveResult {
      * @return a result, which makes the browser load the documentation for the [target]
      */
     @RequiresReadLock(generateAssertion = false)
-    @RequiresBackgroundThread
+    @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
     @JvmStatic
     fun resolvedTarget(target: DocumentationTarget): LinkResolveResult {
       ApplicationManager.getApplication().assertReadAccessAllowed()
@@ -28,7 +28,7 @@ sealed interface LinkResolveResult {
      * - must create its result in a read action.
      */
     @RequiresReadLock(generateAssertion = false)
-    @RequiresBackgroundThread
+    @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
     fun asyncResult(supplier: suspend () -> Async?): LinkResolveResult {
       ApplicationManager.getApplication().assertReadAccessAllowed()
       return AsyncLinkResolveResult(supplier)
@@ -52,7 +52,7 @@ sealed interface LinkResolveResult {
        * @return a result, which makes the browser load the documentation for the [target]
        */
       @RequiresReadLock(generateAssertion = false)
-      @RequiresBackgroundThread
+      @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
       @JvmStatic
       fun resolvedTarget(target: DocumentationTarget): Async {
         // async resolve result supplier is invoked outside a read action,

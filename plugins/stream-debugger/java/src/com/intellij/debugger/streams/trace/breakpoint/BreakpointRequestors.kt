@@ -39,7 +39,7 @@ internal abstract class MethodBreakpointRequestor(
   private val method: Method,
 ) : FilteredRequestorImpl(project), InstrumentedTechnicalBreakpoint, SyntheticBreakpoint {
   override fun processLocatableEvent(action: SuspendContextCommandImpl, event: LocatableEvent?): Boolean {
-    event ?: return false
+    if (event == null) return false
     val context = action.suspendContext ?: return false
 
     val currentExecutingMethod = event.location().method()

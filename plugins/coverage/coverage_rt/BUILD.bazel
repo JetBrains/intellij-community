@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.java.coverage.rt` start
+content_module_jar(module = ":java-coverage-rt")
+### auto-generated section `dev intellij.java.coverage.rt` end
+
 ### auto-generated section `build intellij.java.coverage.rt` start
 jvm_library(
     name = "java-coverage-rt",
@@ -20,8 +24,6 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
 )
-
-content_module_jar(module = ":java-coverage-rt")
 
 jvm_library(
     name = "java-coverage-rt_test_lib",

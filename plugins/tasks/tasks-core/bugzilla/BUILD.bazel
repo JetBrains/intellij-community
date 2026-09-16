@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.tasks.bugzilla` start
+content_module_jar(module = ":bugzilla")
+### auto-generated section `dev intellij.tasks.bugzilla` end
+
 ### auto-generated section `build intellij.tasks.bugzilla` start
 jvm_library(
     name = "bugzilla",
@@ -32,8 +36,6 @@ jvm_library(
         "//plugins/tasks/tasks-compatibility:compatibility",
     ],
 )
-
-content_module_jar(module = ":bugzilla")
 
 jvm_library(
     name = "bugzilla_test_lib",

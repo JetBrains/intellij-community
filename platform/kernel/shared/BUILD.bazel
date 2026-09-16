@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.platform.kernel` start
+content_module_jar(
+    module = ":kernel",
+    modules_after = ["//platform/kernel/pasta"],
+)
+### auto-generated section `dev intellij.platform.kernel` end
+
 ### auto-generated section `build intellij.platform.kernel` start
 jvm_library(
     name = "kernel",
@@ -31,11 +38,6 @@ jvm_library(
         "//platform/kernel/pasta",
         "//fleet/rhizomedb",
     ],
-)
-
-content_module_jar(
-    module = ":kernel",
-    modules_after = ["//platform/kernel/pasta"],
 )
 
 jvm_library(
@@ -72,7 +74,6 @@ exports_files(
     [
         "intellij.platform.kernel.iml",
         "resources/intellij.platform.kernel.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

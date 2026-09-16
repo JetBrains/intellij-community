@@ -16,7 +16,6 @@ jvm_library(
         "//platform/testRunner/plugin",
         "//platform/structuralsearch/plugin",
         "//aether-dependency-resolver/plugin",
-        "//libraries/misc/plugin",
     ],
 )
 
@@ -39,7 +38,6 @@ jvm_library(
         "//platform/testRunner/plugin:plugin_test_lib",
         "//platform/structuralsearch/plugin:plugin_test_lib",
         "//aether-dependency-resolver/plugin:plugin_test_lib",
-        "//libraries/misc/plugin:plugin_test_lib",
     ],
     deps = [
         # do not sort,
@@ -78,8 +76,8 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//java/testFramework",
         "//java/testFramework:testFramework_test_lib",
-        "//plugins/groovy:groovy-tests",
-        "//plugins/groovy:groovy-tests_test_lib",
+        "//plugins/groovy/testFramework",
+        "//plugins/groovy/testFramework:testFramework_test_lib",
         "//plugins/groovy",
         "//plugins/groovy:groovy_test_lib",
         "//plugins/gradle/java/groovy",

@@ -134,5 +134,7 @@
     <orderEntry type="module" module-name="intellij.platform.vcs.impl.tests" scope="TEST" />
     <orderEntry type="module" module-name="fleet.rhizomedb" />
     <orderEntry type="module" module-name="intellij.platform.eel.nioFs" />
+    <orderEntry type="module" module-name="intellij.platform.searchEverywhere" />
+    <orderEntry type="module" module-name="intellij.platform.scopes" />
   </component>
 </module>

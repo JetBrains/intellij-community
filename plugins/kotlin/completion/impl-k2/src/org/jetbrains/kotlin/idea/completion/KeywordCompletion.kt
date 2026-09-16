@@ -129,7 +129,6 @@ import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtDeclarationWithInitializer
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtEnumEntry
-import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtExpressionWithLabel
 import org.jetbrains.kotlin.psi.KtFile
@@ -761,7 +760,6 @@ class KeywordCompletion() {
                     }
 
                     if (keywordTokenType == KtTokens.INTERNAL_KEYWORD && parentTarget == INTERFACE) {
-                        @OptIn(KtExperimentalApi::class)
                         return parentParent?.parent is KtCompanionBlock
                     }
 

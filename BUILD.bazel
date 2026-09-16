@@ -1,7 +1,10 @@
 load("@aspect_rules_lint//format:defs.bzl", "format_multirun")
+load("@community//build:bazel_targets_json.bzl", "current_bazel_targets_json")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "kt_javac_options")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+BAZEL_TARGETS_JSON = current_bazel_targets_json()
 
 format_multirun(
     name = "format",
@@ -66,6 +69,10 @@ exports_files(
 jps_test(
     name = "main-tests_test",
     timeout = "moderate",
+    data = [BAZEL_TARGETS_JSON],
+    jvm_flags = [
+        "-Dintellij.build.bazel.targets.json.file=$(rlocationpath %s)" % BAZEL_TARGETS_JSON,
+    ],
     tags = ["community-aggregator"],
     runtime_deps = [":main-tests_test_lib"],
 )
@@ -556,6 +563,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":main-tests",
+        "//platform/platform-util-io-native:ide-util-io-native-tests_test_lib",
         "//platform/non-modal-welcome-screen:non-modal-welcome-screen_test_lib",
         "//platform/platform-impl/concurrency:ide-concurrency-tests_test_lib",
         "//platform/non-modal-welcome-screen:ide-nonModalWelcomeScreen-tests_test_lib",
@@ -603,8 +611,6 @@ jvm_library(
         "//platform/structuralsearch:structuralSearch-tests_test_lib",
         "//json/backend/tests",
         "//json/backend/tests:tests_test_lib",
-        "//json/backend/performanceTests:json-performance-tests",
-        "//json/backend/performanceTests:json-performance-tests_test_lib",
         "//json/networknt.wrapper/tests",
         "//json/networknt.wrapper/tests:tests_test_lib",
         "//platform/platform-tests:tests",
@@ -647,6 +653,7 @@ jvm_library(
         "//plugins/properties/property-tests:propertyBased-tests_test_lib",
         "//platform/execution-impl:execution-tests",
         "//platform/execution-impl:execution-tests_test_lib",
+        "//platform/platform-util-io-native:ide-util-io-native-tests",
         "//plugins/commander",
         "//plugins/commander:commander_test_lib",
         "//plugins/configuration-script",
@@ -1158,6 +1165,8 @@ jvm_library(
         "//platform/discoverability:discoverability-tests_test_lib",
         "//plugins/dev/intellij.dev.leakDetection:leakDetection-tests",
         "//plugins/dev/intellij.dev.leakDetection:leakDetection-tests_test_lib",
+        "//plugins/dev/intellij.dev.pluginLoading:pluginLoading-tests",
+        "//plugins/dev/intellij.dev.pluginLoading:pluginLoading-tests_test_lib",
         "//plugins/mcp-server/tests",
         "//plugins/mcp-server/tests:tests_test_lib",
         "//plugins/mcp-server/mcpserver.terminal/tests",
@@ -1170,6 +1179,8 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
+        "//platform/kernel/rpc.tests",
+        "//platform/kernel/rpc.tests:rpc.tests_test_lib",
     ],
 )
 ### auto-generated section `build intellij.idea.community.main.tests` end

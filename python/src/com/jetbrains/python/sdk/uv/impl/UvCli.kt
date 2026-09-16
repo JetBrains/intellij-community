@@ -38,7 +38,7 @@ private fun <P : PathHolder> validateUvExecutable(uvPath: P?, platformAndRoot: P
 
 private suspend fun <P : PathHolder> runUv(
   uv: P,
-  workingDir: Path,
+  workingDir: Path?,
   venvPath: P?,
   fileSystem: FileSystem<P>,
   canChangeTomlOrLock: Boolean,
@@ -65,12 +65,12 @@ private suspend fun <P : PathHolder> runUv(
 
 private class UvCliImpl<P : PathHolder>(val dispatcher: CoroutineDispatcher, val uv: P, private val fileSystem: FileSystem<P>) : UvCli<P> {
 
-  override suspend fun runUv(workingDir: Path, venvPath: P?, canChangeTomlOrLock: Boolean, args: Args): PyResult<String> =
+  override suspend fun runUv(workingDir: Path?, venvPath: P?, canChangeTomlOrLock: Boolean, args: Args): PyResult<String> =
     withContext(dispatcher) {
       runUv(uv, workingDir, venvPath, fileSystem, canChangeTomlOrLock, args)
     }
 
-  override suspend fun runUv(workingDir: Path, venvPath: P?, canChangeTomlOrLock: Boolean, vararg args: String): PyResult<String> =
+  override suspend fun runUv(workingDir: Path?, venvPath: P?, canChangeTomlOrLock: Boolean, vararg args: String): PyResult<String> =
     runUv(workingDir, venvPath, canChangeTomlOrLock, Args(*args))
 }
 

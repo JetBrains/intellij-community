@@ -33,7 +33,7 @@ import java.awt.event.MouseEvent;
 public class ProgressPanelBuilder implements GridBagPanelBuilder, PanelBuilder {
   private static final Color SEPARATOR_COLOR = JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground();
 
-  private final JProgressBar myProgressBar;
+  private final @NotNull JProgressBar myProgressBar;
   private @NlsContexts.Label String initialLabelText;
   private boolean labelAbove = true;
 
@@ -49,7 +49,7 @@ public class ProgressPanelBuilder implements GridBagPanelBuilder, PanelBuilder {
   private boolean text2Enabled;
   private boolean topSeparatorEnabled;
 
-  public ProgressPanelBuilder(JProgressBar progressBar) {
+  public ProgressPanelBuilder(@NotNull JProgressBar progressBar) {
     myProgressBar = progressBar;
   }
 

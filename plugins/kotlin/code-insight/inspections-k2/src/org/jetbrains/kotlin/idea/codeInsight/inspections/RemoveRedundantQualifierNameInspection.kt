@@ -31,7 +31,6 @@ import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
-import org.jetbrains.kotlin.psi.KtNonPublicApi
 import org.jetbrains.kotlin.psi.KtPsiMutationService
 import org.jetbrains.kotlin.psi.KtUserType
 
@@ -120,7 +119,6 @@ internal class RemoveRedundantQualifierNameInspection : AbstractKotlinInspection
     private object RemoveQualifierQuickFix : LocalQuickFix {
         override fun getFamilyName(): String = KotlinBundle.message("remove.redundant.qualifier.name.quick.fix.text")
 
-        @OptIn(KtNonPublicApi::class)
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
             val elementWithQualifier = descriptor.psiElement ?: return
 

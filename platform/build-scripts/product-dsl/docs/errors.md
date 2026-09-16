@@ -429,7 +429,7 @@ The rule reads the other direction too. An allowlist entry that no plugin layout
 ## Missing Content Module Plugin Dependency
 
 ```
-❌ Content module 'intellij.react.ultimate' has IML dependencies on plugin main modules
+❌ Content module 'intellij.react.ultimate.backend' has IML dependencies on plugin main modules
    but is missing corresponding XML plugin declarations:
 
   ✗ Missing: <plugin id="com.intellij.css"/>

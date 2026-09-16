@@ -75,7 +75,6 @@ import com.jetbrains.python.inspections.PyNewTypeInspection
 import com.jetbrains.python.inspections.PyOverloadsInspection
 import com.jetbrains.python.inspections.PyOverridesInspection
 import com.jetbrains.python.inspections.PyProtocolInspection
-import com.jetbrains.python.inspections.PyRedeclarationInspection
 import com.jetbrains.python.inspections.PyStdlibDataclassInspection
 import com.jetbrains.python.inspections.PyTypeAliasRedeclarationInspection
 import com.jetbrains.python.inspections.PyTypeCheckerInspection
@@ -213,6 +212,7 @@ abstract class PyCodeInsightTestCase {
     val enablePyAnyType: Boolean = true,
     val copyDirectoryToProject: Array<CopyDirectory> = [],
     val additionalSdkRoots: Array<SdkRoot> = [],
+    val enableRegistryKeys: Array<String> = [],
   )
 
   annotation class CopyDirectory(
@@ -297,6 +297,7 @@ abstract class PyCodeInsightTestCase {
       return cachedTestOptions == null
              || cachedTestOptions.languageLevel != testCaseOptions.languageLevel
              || cachedTestOptions.enablePyAnyType != testCaseOptions.enablePyAnyType
+             || cachedTestOptions.assertSdkRootsNotParsed != testCaseOptions.assertSdkRootsNotParsed
     }
 
     private fun createFixture(testCaseOptions: TestCaseOptions): CodeInsightTestFixture {
@@ -391,12 +392,15 @@ abstract class PyCodeInsightTestCase {
     // using the shared `myFixture.projectDisposable` would accumulate flag modifications
     // across all tests and dispose them only at @AfterAll, which can leave them non-nested and
     // trip RecursionManager's "Non-nested assertion flag modifications" check.
-    val recursionFlagDisposable = Disposer.newDisposable("PyCodeInsightTestCase recursion-prevention flag")
+    val testDisposable = Disposer.newDisposable("PyCodeInsightTestCase test case disposable")
     if (myTestCaseOptions.assertRecursionPrevention) {
-      RecursionManager.assertOnRecursionPrevention(recursionFlagDisposable)
+      RecursionManager.assertOnRecursionPrevention(testDisposable)
     }
     else {
-      RecursionManager.disableAssertOnRecursionPrevention(recursionFlagDisposable)
+      RecursionManager.disableAssertOnRecursionPrevention(testDisposable)
+    }
+    for (registryKey in myTestCaseOptions.enableRegistryKeys) {
+      Registry.get(registryKey).setValue(true, testDisposable)
     }
 
     try {
@@ -405,7 +409,7 @@ abstract class PyCodeInsightTestCase {
     }
     finally {
       setAdditionalSdkRoots(myTestCaseOptions.additionalSdkRoots, false)
-      Disposer.dispose(recursionFlagDisposable)
+      Disposer.dispose(testDisposable)
       testCallCount++
     }
   }

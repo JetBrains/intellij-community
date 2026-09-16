@@ -6,12 +6,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ReflectionUtil;
-import com.sun.jna.Pointer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
-import javax.swing.JRootPane;
 import java.awt.Component;
 import java.awt.Dialog;
 import java.awt.Frame;
@@ -22,6 +19,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
+import javax.swing.JComponent;
+import javax.swing.JRootPane;
 
 import static com.intellij.ui.mac.foundation.Foundation.createSelector;
 import static com.intellij.ui.mac.foundation.Foundation.getObjcClass;
@@ -194,11 +193,11 @@ public final class MacUtil {
 
   private static final class ActivityImpl extends AtomicReference<ID> implements Runnable {
     private static final ID processInfoCls = getObjcClass("NSProcessInfo");
-    private static final Pointer processInfoSel = createSelector("processInfo");
-    private static final Pointer beginActivityWithOptionsReasonSel = createSelector("beginActivityWithOptions:reason:");
-    private static final Pointer endActivitySel = createSelector("endActivity:");
-    private static final Pointer retainSel = createSelector("retain");
-    private static final Pointer releaseSel = createSelector("release");
+    private static final Selector processInfoSel = createSelector("processInfo");
+    private static final Selector beginActivityWithOptionsReasonSel = createSelector("beginActivityWithOptions:reason:");
+    private static final Selector endActivitySel = createSelector("endActivity:");
+    private static final Selector retainSel = createSelector("retain");
+    private static final Selector releaseSel = createSelector("release");
 
     private ActivityImpl(@NotNull Object reason) {
       super(begin(reason));

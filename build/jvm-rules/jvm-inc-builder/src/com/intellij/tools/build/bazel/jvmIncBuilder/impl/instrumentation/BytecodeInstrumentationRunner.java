@@ -22,7 +22,13 @@ public class BytecodeInstrumentationRunner implements CompilerRunner {
   private static final Logger LOG = Logger.getLogger("com.intellij.tools.build.bazel.jvmIncBuilder.impl.InstrumenterRunner");
 
   private static final List<BytecodeInstrumenter> ourInstrumenters = List.of(
-    new ThreadingModelInstrumenter(), new NotNullInstrumenter()
+    // Kotlin uses soft assertions to preserve behavior from the period when assertions were disabled.
+    // Java keeps the existing assertion methods.
+    // See IJPL-115548.
+    // todo: unify kotlin and java
+    new ThreadingModelInstrumenter(OutputOrigin.Kind.java),
+    new ThreadingModelInstrumenter(OutputOrigin.Kind.kotlin),
+    new NotNullInstrumenter()
   );
 
   private final StorageManager myStorageManager;

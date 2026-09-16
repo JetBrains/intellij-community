@@ -1,4 +1,9 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.platform.problemView.collector` start
+content_module_jar(module = ":collector")
+### auto-generated section `dev intellij.platform.problemView.collector` end
 
 ### auto-generated section `build intellij.platform.problemView.collector` start
 jvm_library(
@@ -70,7 +75,6 @@ exports_files(
     [
         "intellij.platform.problemView.collector.iml",
         "resources/intellij.platform.problemView.collector.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

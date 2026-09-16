@@ -15,7 +15,7 @@ interface PostInsertDeclarationCallback {
      * @param targetContainer the container where the declaration is inserted.
      * @param psiFactory the factory used to create Kotlin PSI elements.
      */
-    @RequiresWriteLock
+    @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
     fun declarationInserted(declaration: PsiElement, targetContainer: PsiElement, psiFactory: KtPsiFactory)
 
     companion object {

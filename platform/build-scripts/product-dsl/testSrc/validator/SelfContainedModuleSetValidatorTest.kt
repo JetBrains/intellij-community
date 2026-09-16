@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.productLayout.validator
 
+import com.intellij.platform.buildScripts.concurrency.SharedTaskOwner
 import com.intellij.platform.pluginGraph.ContentModuleName
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
 import kotlinx.coroutines.Dispatchers
@@ -27,17 +28,24 @@ class SelfContainedModuleSetValidatorTest {
 
   @Nested
   inner class SelfContainedModuleSetTest {
+    private val owner = SharedTaskOwner("SelfContainedModuleSetTest")
+
+    @org.junit.jupiter.api.AfterEach
+    fun closeSharedTasks() {
+      owner.close()
+    }
+
     @Test
     fun `no error when all deps are within the module set`(): Unit = runBlocking(Dispatchers.Default) {
       val graph = pluginGraph {
-          moduleSet("core.platform", selfContained = true) {
-              module("module.a", ModuleLoadingRuleValue.REQUIRED)
-              module("module.b")
-          }
-          linkContentModuleDeps("module.a", "module.b")
+        moduleSet("core.platform", selfContained = true) {
+          module("module.a", ModuleLoadingRuleValue.REQUIRED)
+          module("module.b")
+        }
+        linkContentModuleDeps("module.a", "module.b")
       }
 
-      val model = testGenerationModel(graph)
+      val model = testGenerationModel(graph, owner = owner)
 
       val errors = runValidationRule(SelfContainedModuleSetValidator, model)
 
@@ -47,14 +55,14 @@ class SelfContainedModuleSetValidatorTest {
     @Test
     fun `reports missing dependency outside module set`(): Unit = runBlocking(Dispatchers.Default) {
       val graph = pluginGraph {
-          moduleSet("core.platform", selfContained = true) {
-              module("module.a", ModuleLoadingRuleValue.REQUIRED)
-          }
-          // external.module is not in the module set
-          linkContentModuleDeps("module.a", "external.module")
+        moduleSet("core.platform", selfContained = true) {
+          module("module.a", ModuleLoadingRuleValue.REQUIRED)
+        }
+        // external.module is not in the module set
+        linkContentModuleDeps("module.a", "external.module")
       }
 
-      val model = testGenerationModel(graph)
+      val model = testGenerationModel(graph, owner = owner)
 
       val errors = runValidationRule(SelfContainedModuleSetValidator, model)
 
@@ -68,16 +76,16 @@ class SelfContainedModuleSetValidatorTest {
     fun `reports transitive missing dependency`(): Unit = runBlocking(Dispatchers.Default) {
       // module.a -> module.b -> missing.module
       val graph = pluginGraph {
-          moduleSet("core.platform", selfContained = true) {
-              module("module.a", ModuleLoadingRuleValue.REQUIRED)
-              module("module.b")
-          }
-          linkContentModuleDeps("module.a", "module.b")
-          linkContentModuleDeps("module.b", "missing.module")
-          // missing.module not in module set
+        moduleSet("core.platform", selfContained = true) {
+          module("module.a", ModuleLoadingRuleValue.REQUIRED)
+          module("module.b")
+        }
+        linkContentModuleDeps("module.a", "module.b")
+        linkContentModuleDeps("module.b", "missing.module")
+        // missing.module not in module set
       }
 
-      val model = testGenerationModel(graph)
+      val model = testGenerationModel(graph, owner = owner)
 
       val errors = runValidationRule(SelfContainedModuleSetValidator, model)
 
@@ -89,16 +97,16 @@ class SelfContainedModuleSetValidatorTest {
     @Test
     fun `validates nested sets correctly`(): Unit = runBlocking(Dispatchers.Default) {
       val graph = pluginGraph {
-          moduleSet("parent.set", selfContained = true) {
-              module("parent.module")
-              nestedSet("child.set") {
-                  module("child.module", ModuleLoadingRuleValue.REQUIRED)
-              }
+        moduleSet("parent.set", selfContained = true) {
+          module("parent.module")
+          nestedSet("child.set") {
+            module("child.module", ModuleLoadingRuleValue.REQUIRED)
           }
-          linkContentModuleDeps("child.module", "parent.module")
+        }
+        linkContentModuleDeps("child.module", "parent.module")
       }
 
-      val model = testGenerationModel(graph)
+      val model = testGenerationModel(graph, owner = owner)
 
       val errors = runValidationRule(SelfContainedModuleSetValidator, model)
 

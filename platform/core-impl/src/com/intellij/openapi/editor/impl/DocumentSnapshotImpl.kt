@@ -7,21 +7,13 @@ import com.intellij.openapi.editor.ex.DocumentSnapshot
 import com.intellij.openapi.editor.ex.DocumentSputnik
 import com.intellij.openapi.editor.ex.DocumentSputniks
 import com.intellij.openapi.editor.ex.DocumentText
-import com.intellij.openapi.editor.ex.DocumentTextPatch
-import com.intellij.openapi.editor.impl.marker.PMarkerRoot
-import com.intellij.openapi.editor.impl.marker.PMarkerRootImpl
-import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngineImpl
 import com.intellij.openapi.util.Key
-import java.util.concurrent.atomic.AtomicReference
 
 internal class DocumentSnapshotImpl private constructor(
   private val text: DocumentText,
   private val modState: DocumentModState,
   private val sputniks: DocumentSputniks,
-  root: PMarkerRoot = PMarkerRootImpl.empty(),
 ) : DocumentSnapshot {
-  internal val markerRoot: AtomicReference<PMarkerRoot> = AtomicReference(root)
-
   constructor(text: DocumentText) : this(
     text = text,
     modState = DocumentModStateImpl(),
@@ -48,8 +40,8 @@ internal class DocumentSnapshotImpl private constructor(
     return this
   }
 
-  internal fun copyWithMarkerRoot(root: PMarkerRoot): DocumentSnapshotImpl {
-    return DocumentSnapshotImpl(text, modState, sputniks, root)
+  internal fun copyWithNewIdentity(): DocumentSnapshotImpl {
+    return DocumentSnapshotImpl(text, modState, sputniks)
   }
 
   override fun applyOp(op: DocumentOp): DocumentSnapshot {
@@ -63,23 +55,15 @@ internal class DocumentSnapshotImpl private constructor(
       this
     }
     else {
-      DocumentSnapshotImpl(newText, newModState, sputniks, markerRoot.get())
+      DocumentSnapshotImpl(newText, newModState, sputniks)
     }
     val after = if (canAffectSputniks && (sputniks !== DocumentSputniksImpl.EMPTY || op is DocumentOp.SetSputnik)) {
       sputniks.applyOp(this, newSnapshot, op) { newSputniks ->
-        DocumentSnapshotImpl(newText, newModState, newSputniks, markerRoot.get())
+        DocumentSnapshotImpl(newText, newModState, newSputniks)
       }
     }
     else {
       newSnapshot
-    }
-    if (after !== this) {
-      if (op is DocumentTextPatch) {
-        SnapshotMarkerEngineImpl.applyPatch(this, after, op)
-      }
-      else {
-        SnapshotMarkerEngineImpl.inherit(this, after)
-      }
     }
     return after
   }

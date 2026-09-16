@@ -1,3 +1,0 @@
-- name: dist.all/lib/intellij.platform.editor.frontend.jar
-  modules:
-  - name: intellij.platform.editor.frontend

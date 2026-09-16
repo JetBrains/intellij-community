@@ -154,38 +154,46 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
 
   @Override
   protected @NotNull FutureTask<Boolean> prepareTask(@NotNull PsiFile psiFile, boolean processChangedTextOnly) {
-    if (ReadAction.computeBlocking(() -> DumbService.isDumb(psiFile.getProject()))) {
-      return emptyTask();
-    }
-
     awaitFileCodeStyleSettings(psiFile);
 
-    List<Runnable> runnables = ReadAction.computeBlocking(() -> collectOptimizers(psiFile));
-    runnables.addAll(OptimizeImportsSuspendHelper.collectSuspendOptimizers(psiFile));
-
-    if (runnables.isEmpty()) {
+    if (DumbService.isDumb(psiFile.getProject())) {
       return emptyTask();
     }
 
-    List<BooleanSupplier> hints = ApplicationManager.getApplication().isDispatchThread()
-                                  ? Collections.emptyList()
-                                  : ReadAction.computeBlocking(() -> collectAutoImports(psiFile));
+    final List<Runnable> runnablesSuspendOptimizers = OptimizeImportsSuspendHelper.collectSuspendOptimizers(psiFile);
 
-    return new FutureTask<>(() -> {
-      ThreadingAssertions.assertEventDispatchThread();
-      CoreCodeStyleUtil.setSequentialProcessingAllowed(false);
-      try {
-        for (Runnable runnable : runnables) {
-          runnable.run();
-          myOptimizerNotifications.add(getNotificationInfo(runnable));
+    return ReadAction.nonBlocking(() -> {
+      if (DumbService.isDumb(psiFile.getProject()) || !psiFile.isValid()) {
+        return emptyTask();
+      }
+
+      List<Runnable> runnables = new SmartList<>();
+      runnables.addAll(collectOptimizers(psiFile));
+      runnables.addAll(runnablesSuspendOptimizers);
+      if (runnables.isEmpty()) {
+        return emptyTask();
+      }
+
+      List<BooleanSupplier> hints = ApplicationManager.getApplication().isDispatchThread()
+                                    ? Collections.emptyList()
+                                    : collectAutoImports(psiFile);
+
+      return new FutureTask<>(() -> {
+        ThreadingAssertions.assertEventDispatchThread();
+        CoreCodeStyleUtil.setSequentialProcessingAllowed(false);
+        try {
+          for (Runnable runnable : runnables) {
+            runnable.run();
+            myOptimizerNotifications.add(getNotificationInfo(runnable));
+          }
+          putNotificationInfoIntoCollector();
+          fixAllImportsSilently(psiFile, hints);
         }
-        putNotificationInfoIntoCollector();
-        fixAllImportsSilently(psiFile, hints);
-      }
-      finally {
-        CoreCodeStyleUtil.setSequentialProcessingAllowed(true);
-      }
-    }, true);
+        finally {
+          CoreCodeStyleUtil.setSequentialProcessingAllowed(true);
+        }
+      }, true);
+    }).executeSynchronously();
   }
 
   /**

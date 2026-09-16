@@ -11,6 +11,10 @@ jps_test(
 
 ### skip generation section `test intellij.platform.vcs.dvcs.impl.tests`
 
+### auto-generated section `dev intellij.platform.vcs.dvcs.impl` start
+content_module_jar(module = ":vcs-dvcs-impl")
+### auto-generated section `dev intellij.platform.vcs.dvcs.impl` end
+
 ### auto-generated section `build intellij.platform.vcs.dvcs.impl` start
 jvm_library(
     name = "vcs-dvcs-impl",
@@ -70,8 +74,6 @@ jvm_library(
         "//fleet/rhizomedb",
     ],
 )
-
-content_module_jar(module = ":vcs-dvcs-impl")
 
 jvm_library(
     name = "vcs-dvcs-impl_test_lib",
@@ -139,7 +141,6 @@ exports_files(
         "intellij.platform.vcs.dvcs.impl.iml",
         "resources/VcsProductivityFeatures.xml",
         "resources/intellij.platform.vcs.dvcs.impl.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.platform.rpc.backend` start
+content_module_jar(module = ":rpc.backend")
+### auto-generated section `dev intellij.platform.rpc.backend` end
+
 ### auto-generated section `build intellij.platform.rpc.backend` start
 jvm_library(
     name = "rpc.backend",
@@ -35,8 +39,6 @@ jvm_library(
         "//platform/kernel/rpc.lite",
     ],
 )
-
-content_module_jar(module = ":rpc.backend")
 
 jvm_library(
     name = "rpc.backend_test_lib",
@@ -74,7 +76,6 @@ exports_files(
     [
         "intellij.platform.rpc.backend.iml",
         "resources/intellij.platform.rpc.backend.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

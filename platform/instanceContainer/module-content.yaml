@@ -1,3 +1,0 @@
-- name: dist.all/lib/intellij.platform.instanceContainer.jar
-  modules:
-  - name: intellij.platform.instanceContainer

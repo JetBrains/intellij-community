@@ -15,6 +15,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -35,9 +36,11 @@ public final class ShortenToStaticImportProcessor implements ModCommandAwareTemp
   private static final List<StaticImporter> IMPORTERS = asList(new SingleMemberStaticImporter(), new OnDemandStaticImporter());
 
   @Override
-  public void processText(@NotNull Template template, @NotNull ModNavigator navigator, @NotNull RangeMarker templateRange) {
+  public @NotNull TextRange processText(@NotNull Template template,
+                                        @NotNull ModNavigator navigator,
+                                        @NotNull RangeMarker templateRange) {
     if (!template.getValue(Template.Property.USE_STATIC_IMPORT_IF_POSSIBLE)) {
-      return;
+      return templateRange.getTextRange();
     }
     Document document = navigator.getDocument();
     Project project = navigator.getProject();
@@ -47,6 +50,7 @@ public final class ShortenToStaticImportProcessor implements ModCommandAwareTemp
 
     DumbService.getInstance(project).withAlternativeResolveEnabled(
       () -> doStaticImport(project, file, getStaticImportTargets(templateRange, file)));
+    return templateRange.getTextRange();
   }
 
   private static @NotNull List<Pair<PsiElement, StaticImporter>> getStaticImportTargets(RangeMarker templateRange,

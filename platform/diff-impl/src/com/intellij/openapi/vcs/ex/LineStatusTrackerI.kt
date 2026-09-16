@@ -65,7 +65,7 @@ interface LineStatusTrackerI<out R : Range> : LineStatusMarkerRangesSource<R> {
   fun transferLineToVcs(line: Int, approximate: Boolean): Int
 
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun rollbackChanges(range: Range)
 
   /**
@@ -74,7 +74,7 @@ interface LineStatusTrackerI<out R : Range> : LineStatusMarkerRangesSource<R> {
    * @param lines line numbers in [document]
    * @see com.intellij.diff.util.DiffUtil.getSelectedLines
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun rollbackChanges(lines: BitSet)
 
   /**
@@ -83,7 +83,7 @@ interface LineStatusTrackerI<out R : Range> : LineStatusMarkerRangesSource<R> {
    *
    * @see com.intellij.codeInsight.actions.VcsFacade.runHeavyModificationTask
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun doFrozen(task: Runnable)
 
   /**
@@ -95,11 +95,11 @@ interface LineStatusTrackerI<out R : Range> : LineStatusMarkerRangesSource<R> {
 
   @ApiStatus.Internal
   @ApiStatus.Experimental
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun addListener(listener: LineStatusTrackerListener)
 
   @ApiStatus.Internal
   @ApiStatus.Experimental
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun removeListener(listener: LineStatusTrackerListener)
 }

@@ -2,13 +2,24 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.kotlin.base.resources` start
+content_module_jar(module = ":kotlin-base-resources")
+### auto-generated section `dev intellij.kotlin.base.resources` end
+
 ### auto-generated section `build intellij.kotlin.base.resources` start
 create_kotlinc_options(
     name = "custom_kotlin-base-resources",
     opt_in = [
-        "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+        "org.jetbrains.kotlin.psi.KtExperimentalApi",
+        "org.jetbrains.kotlin.psi.KtNonPublicApi",
+        "org.jetbrains.kotlin.psi.KtIdeApi",
         "org.jetbrains.kotlin.analysis.api.KaExperimentalApi",
         "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+        "org.jetbrains.kotlin.analysis.api.KaPlatformInterface",
+        "org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaUnstableDiagnosticApi",
+        "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
+        "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+        "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
     ],
     x_context_parameters = True,
 )
@@ -48,12 +59,9 @@ jvm_library(
         "//platform/util-ex",
         "//platform/util:util-ui",
         "//platform/core-ui",
-        "//java/java-frontback-psi-api:frontback-psi",
         "//platform/lang-impl",
     ],
 )
-
-content_module_jar(module = ":kotlin-base-resources")
 
 jvm_library(
     name = "kotlin-base-resources_test_lib",
@@ -74,7 +82,6 @@ jvm_library(
         "//platform/util-ex:util-ex_test_lib",
         "//platform/util:util-ui_test_lib",
         "//platform/core-ui:core-ui_test_lib",
-        "//java/java-frontback-psi-api:frontback-psi_test_lib",
         "//platform/lang-impl:lang-impl_test_lib",
     ],
 )

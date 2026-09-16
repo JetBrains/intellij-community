@@ -321,8 +321,8 @@ object UpdateChecker {
     return getInternalPluginUpdates(backends, plugins, indicator, buildNumber)
   }
 
-  @RequiresBackgroundThread
-  @RequiresReadLockAbsence
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  @RequiresReadLockAbsence(generateAssertion = false /* IJPL-115548 */)
   @ApiStatus.Internal
   @JvmStatic
   @JvmOverloads
@@ -505,7 +505,7 @@ object UpdateChecker {
   @Throws(IOException::class)
   @JvmOverloads
   @JvmStatic
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun determineUpdateWithDownloaderDecision(
     downloader: PluginDownloader,
     state: InstalledPluginsState,
@@ -673,8 +673,8 @@ object UpdateChecker {
     // NO-OP
   }
 
-  @RequiresBackgroundThread
-  @RequiresReadLockAbsence
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  @RequiresReadLockAbsence(generateAssertion = false /* IJPL-115548 */)
   @ApiStatus.Internal
   @Deprecated("Migrate to PluginUpdateCheckService")
   @ApiStatus.ScheduledForRemoval
@@ -749,6 +749,12 @@ private suspend fun doUpdateAndShowResult(
     }
     callback?.setRejected()
     return null
+  }
+
+  // The check has completed and there is no platform update.
+  // Custom settings are a probe with another channel, and its answer is not about the real state
+  if (platformUpdates !is PlatformUpdates.Loaded && customSettings == null) {
+    UpdateSettingsEntryPointActionProvider.clearPlatformUpdateInfo()
   }
 
   // "Remind Me Later" mutes the IDE announcement
@@ -852,7 +858,7 @@ private fun showErrors(project: Project?, @NlsContexts.DialogMessage message: St
   }
 }
 
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 private suspend fun showResults(
   project: Project?,
   downloaders: List<PluginDownloader>,

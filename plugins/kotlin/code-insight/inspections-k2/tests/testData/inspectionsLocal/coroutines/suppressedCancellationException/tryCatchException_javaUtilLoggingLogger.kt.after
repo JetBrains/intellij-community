@@ -1,0 +1,25 @@
+// WITH_COROUTINES
+// PROBLEM: 'catch' clause suppresses 'CancellationException' and breaks coroutine cancellation
+// FIX: Check for cancellation with 'ensureActive()'
+package test
+
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.currentCoroutineContext
+import java.util.logging.Level
+import java.util.logging.Logger
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
+
+private val LOG = Logger.getLogger("test")
+
+// Handing the exception to a real logger does not propagate it
+suspend fun compute() {
+    try {
+        delay(100)
+    } catch (e: Exception) {
+        if (e is CancellationException) {
+            currentCoroutineContext().ensureActive()
+        }
+        LOG.log(Level.WARNING, "failed", e)
+    }
+}

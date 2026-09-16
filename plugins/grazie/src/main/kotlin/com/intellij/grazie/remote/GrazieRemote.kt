@@ -58,7 +58,7 @@ object GrazieRemote {
    * Get user agreement before downloading licensed language bundle
    * @return true if the user agrees with license, false if the user doesn't agree or agreement isn't required
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun getLanguagesBasedOnUserAgreement(languages: Collection<Lang>, project: Project): Collection<Lang> {
     if (!Registry.`is`("grazie.show.gpl.warning")) return languages
     val gplLanguages = languages

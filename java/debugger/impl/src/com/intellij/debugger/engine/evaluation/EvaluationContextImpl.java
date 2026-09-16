@@ -156,8 +156,8 @@ public final class EvaluationContextImpl extends UserDataHolderBase implements E
 
   @Override
   public void keep(Value value) {
-    if (value instanceof ObjectReference) {
-      getSuspendContext().keep((ObjectReference)value);
+    if (value instanceof ObjectReference reference) {
+      getSuspendContext().keep(reference);
     }
   }
 

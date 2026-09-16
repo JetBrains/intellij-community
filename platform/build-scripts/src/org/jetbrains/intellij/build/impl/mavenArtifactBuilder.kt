@@ -3,13 +3,13 @@
 
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.platform.buildScripts.concurrency.Subtask
+import com.intellij.platform.buildScripts.concurrency.TaskScope
 import com.intellij.util.xml.dom.XmlElement
 import com.intellij.util.xml.dom.readXmlAsModel
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.ContentModuleFilter
-import org.jetbrains.intellij.build.Subtask
-import org.jetbrains.intellij.build.TaskScope
 import org.jetbrains.intellij.build.findFileInModuleSources
 import org.jetbrains.intellij.build.impl.maven.MavenArtifactData
 import org.jetbrains.intellij.build.impl.maven.MavenArtifactsBuilder

@@ -3,122 +3,231 @@ package com.intellij.openapi.editor.impl.caret.motion
 
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.impl.caret.model.CaretAnimationSettings
-import com.intellij.openapi.editor.impl.caret.model.CaretClock
+import com.intellij.openapi.editor.impl.caret.model.CaretFrameInterval
 import com.intellij.openapi.editor.impl.caret.model.CaretPlacement
 import com.intellij.openapi.editor.impl.caret.model.CaretRectangle
 import com.intellij.openapi.editor.impl.caret.model.CaretTick
-import com.intellij.openapi.editor.impl.caret.model.TICK_MS
 import kotlin.math.max
 import kotlin.time.Duration
 
-private const val MIN_URGENCY = 0.2
-private const val URGENCY_DECAY = 0.8
+/**
+ * Drives every caret towards its target.
+ *
+ * Urgency shortens the move time constant, so that a caret retargeted mid-flight catches up faster than it started.
+ * It decays with every interrupted move and resets once the motion settles.
+ */
+internal class CaretMotionMachine private constructor(
+  private val phase: CaretMotionPhase,
+  private val urgency: Double,
+  private val retargeted: Boolean,
+  private val framesToPrefetch: List<CaretRectangle>?,
+) {
+  val isSettled: Boolean get() = phase.isSettled
 
-internal class CaretMotionMachine {
-  private var phase: CaretMotionPhase = CaretMotionPhase.DORMANT
-  private var stale: List<CaretRectangle> = emptyList()
-  private var urgency = 1.0
-  private var dirty = false
-  private var currentEasingFrames: List<CaretRectangle>? = null
+  val locations: List<CaretRectangle> get() = phase.locations
 
-  val isSettled: Boolean get() = phase.settling.isComplete
+  /// MARK: motion transitions
 
-  fun retarget(placements: List<CaretPlacement>, tick: CaretTick) {
-    val snapping = phase.settling.isComplete && (holdsSamePlaces(placements) || !tick.isCaretShown)
-
-    urgency = when {
-      snapping || holdsSameTargets(placements) -> urgency
-      else -> max(MIN_URGENCY, urgency * URGENCY_DECAY)
-    }
-    aimAt(placements, tick, snapping)
+  fun retarget(placements: List<CaretPlacement>, tick: CaretTick, isCaretShown: Boolean): CaretMotionMachine {
+    val isAtRest = phase.isSettled
+    val snapping = isAtRest && (holdsSamePlaces(placements) || !isCaretShown)
+    val nextUrgency = urgencyAfterRetarget(placements, snapping)
+    return withUrgency(nextUrgency).aimAt(placements, tick, snapping)
   }
 
-  fun snapTo(placements: List<CaretPlacement>, tick: CaretTick) {
-    urgency = 1.0
-    aimAt(placements, tick, snapping = true)
+  fun snapTo(placements: List<CaretPlacement>, tick: CaretTick): CaretMotionMachine {
+    return withUrgency(FULL_URGENCY).aimAt(placements, tick, snapping = true)
   }
 
-  fun settle(tick: CaretTick) {
-    urgency = 1.0
-    phase = restingPhase(phase.trajectories.values.map { it.target }, tick)
-    currentEasingFrames = null
-    dirty = true
-  }
-
-  fun advance(tick: CaretTick, prefetching: Boolean): CaretMotionFrame {
-    val timeConstantMs = max(TICK_MS.toDouble(), tick.settings.moveTimeConstantMs * urgency)
-    val wasMoving = !phase.settling.isComplete
-    val advancedPhase = if (wasMoving) phase.advance(tick, timeConstantMs) else phase
-    val drained = stale
-    val moving = !advancedPhase.settling.isComplete
-
-    val frame = CaretMotionFrame(
-      locations = if (dirty || wasMoving) advancedPhase.trajectories.values.map { it.rectangle() } else null,
-      stale = drained,
-      prefetch = currentEasingFrames.takeIf { prefetching },
-      nextDelay = if (moving) CaretClock.TICK else Duration.INFINITE,
+  /**
+   * Drops the motion in progress and puts every caret at its target, for example when a bulk document update starts.
+   */
+  fun settle(tick: CaretTick): CaretMotionMachine {
+    return CaretMotionMachine(
+      phase = restingPhase(phase.targets, tick),
+      urgency = FULL_URGENCY,
+      retargeted = true,
+      framesToPrefetch = null,
     )
-
-    phase = advancedPhase
-    stale = emptyList()
-    dirty = false
-    urgency = if (moving) urgency else 1.0
-    currentEasingFrames = currentEasingFrames.takeIf { moving }
-
-    return frame
   }
 
-  private fun aimAt(placements: List<CaretPlacement>, tick: CaretTick, snapping: Boolean) {
-    val previous = phase.trajectories
-    val live = placements.mapTo(HashSet()) { it.caret }
+  /// MARK: frame updates
 
-    stale = stale + previous.filterKeys { it !in live }.values.map { it.rectangle() }
-    phase = when {
-      holdsSameSpots(placements) -> phase.withTrajectories(trajectoriesFrom(previous, placements, CaretTrajectory::aimedAt))
+  fun advance(tick: CaretTick, prefetching: Boolean): Pair<CaretMotionMachine, CaretMotionStep> {
+    val wasMoving = !phase.isSettled
+    val advancedPhase = if (wasMoving) phase.advance(tick, timeConstantFor(tick)) else phase
+    val moving = !advancedPhase.isSettled
+    val step = CaretMotionStep(
+      moved = retargeted || wasMoving,
+      prefetch = framesToPrefetch.takeIf { prefetching },
+      nextDelay = if (moving) CaretFrameInterval.MOVEMENT else Duration.INFINITE,
+    )
+    val next = CaretMotionMachine(
+      phase = advancedPhase,
+      urgency = if (moving) urgency else FULL_URGENCY,
+      retargeted = false,
+      framesToPrefetch = framesToPrefetch.takeIf { moving },
+    )
+    return next to step
+  }
+
+  private fun timeConstantFor(tick: CaretTick): Duration {
+    val scaledTimeConstant = tick.settings.moveTimeConstant * urgency
+    return scaledTimeConstant.coerceAtLeast(CaretFrameInterval.MOVEMENT)
+  }
+
+  /**
+   * A move that replaces one already in flight is more urgent than the move it interrupted.
+   */
+  private fun urgencyAfterRetarget(placements: List<CaretPlacement>, snapping: Boolean): Double {
+    val keepsUrgency = snapping || holdsSameTargets(placements)
+    return if (keepsUrgency) {
+      urgency
+    } else {
+      max(MIN_URGENCY, urgency * URGENCY_DECAY)
+    }
+  }
+
+  /// MARK: trajectory updates
+
+  private fun withUrgency(urgency: Double): CaretMotionMachine {
+    return CaretMotionMachine(phase, urgency, retargeted, framesToPrefetch)
+  }
+
+  private fun aimAt(placements: List<CaretPlacement>, tick: CaretTick, snapping: Boolean): CaretMotionMachine {
+    val nextPhase = phaseAimedAt(placements, tick, snapping)
+    return CaretMotionMachine(
+      phase = nextPhase,
+      urgency = urgency,
+      retargeted = true,
+      framesToPrefetch = nextPhase.framesWorthPrefetching(tick.settings),
+    )
+  }
+
+  private fun phaseAimedAt(placements: List<CaretPlacement>, tick: CaretTick, snapping: Boolean): CaretMotionPhase {
+    val previous = phase.trajectories
+    val isAtRest = phase.isSettled
+    return when {
+      // The carets are already painted where they belong, so only the targets need rebasing.
+      holdsSameSpots(placements) -> {
+        val rebased = trajectoriesFrom(previous, placements, CaretTrajectory::aimedAt)
+        phase.withTrajectories(rebased)
+      }
       snapping || holdsSamePlaces(placements) -> restingPhase(placements, tick)
-      phase.settling.isComplete -> CaretMotionPhase.Easing(
+      // A move that starts from rest follows one shared easing curve from here.
+      isAtRest -> CaretMotionPhase.Easing(
         trajectories = trajectoriesFrom(previous, placements, CaretTrajectory::restartedAt),
         startTime = tick.now,
       )
+      // A move interrupted mid-flight keeps its velocity and bends towards the new targets.
       else -> CaretMotionPhase.Pursuit(
         trajectories = trajectoriesFrom(previous, placements, CaretTrajectory::aimedAt),
         settling = phase.settling,
       )
     }
-    currentEasingFrames = phase.easingFrames(tick.settings)
-    dirty = true
   }
 
   private fun trajectoriesFrom(
     previous: Map<Caret, CaretTrajectory>,
     placements: List<CaretPlacement>,
     rebase: (CaretTrajectory, CaretPlacement) -> CaretTrajectory,
-  ): Map<Caret, CaretTrajectory> = placements.associate { placement ->
-    val existing = previous[placement.caret]
-    placement.caret to when (existing) {
-      null -> CaretTrajectory.restingAt(placement)
-      else -> rebase(existing, placement)
+  ): Map<Caret, CaretTrajectory> {
+    return placements.associate { placement ->
+      placement.caret to rebasedTrajectory(previous[placement.caret], placement, rebase)
     }
   }
 
-  private fun restingPhase(placements: List<CaretPlacement>, tick: CaretTick): CaretMotionPhase =
-    CaretMotionPhase.Easing(
-      trajectories = placements.associate { it.caret to CaretTrajectory.restingAt(it) },
-      startTime = tick.now,
-      settling = Settling.COMPLETE,
+  private fun rebasedTrajectory(
+    existing: CaretTrajectory?,
+    placement: CaretPlacement,
+    rebase: (CaretTrajectory, CaretPlacement) -> CaretTrajectory,
+  ): CaretTrajectory {
+    return if (existing == null) {
+      CaretTrajectory.restingAt(placement)
+    } else {
+      rebase(existing, placement)
+    }
+  }
+
+  private fun restingPhase(placements: List<CaretPlacement>, tick: CaretTick): CaretMotionPhase {
+    val trajectories = placements.associate { placement ->
+      placement.caret to CaretTrajectory.restingAt(placement)
+    }
+    return CaretMotionPhase.Easing(trajectories, startTime = tick.now, settling = Settling.COMPLETE)
+  }
+
+  /// MARK: target comparisons
+
+  private fun targetFor(placement: CaretPlacement): CaretPlacement? {
+    return phase.trajectories[placement.caret]?.target
+  }
+
+  /**
+   * Whether every placement is already painted where it belongs, whatever document position it now denotes.
+   */
+  private fun holdsSameSpots(placements: List<CaretPlacement>): Boolean {
+    if (placements.isEmpty()) {
+      return false
+    }
+    return placements.all { placement ->
+      val target = targetFor(placement)
+      target != null && target.isVisuallyAt(placement)
+    }
+  }
+
+  /**
+   * Whether every placement denotes the document position it already targeted, whatever pixel that is now.
+   */
+  private fun holdsSamePlaces(placements: List<CaretPlacement>): Boolean {
+    if (phase.trajectories.isEmpty()) {
+      return false
+    }
+    return placements.all { placement ->
+      val target = targetFor(placement)
+      target != null && target.isSamePlace(placement)
+    }
+  }
+
+  /**
+   * Whether no caret was added, removed or retargeted, so the move in progress needs no adjustment at all.
+   */
+  private fun holdsSameTargets(placements: List<CaretPlacement>): Boolean {
+    if (phase.trajectories.size != placements.size) {
+      return false
+    }
+    return placements.all { placement ->
+      val target = targetFor(placement)
+      target != null && target.matches(placement)
+    }
+  }
+
+  companion object {
+    val DORMANT: CaretMotionMachine = CaretMotionMachine(
+      phase = CaretMotionPhase.DORMANT,
+      urgency = FULL_URGENCY,
+      retargeted = false,
+      framesToPrefetch = null,
     )
 
-  private fun holdsSameSpots(placements: List<CaretPlacement>): Boolean =
-    placements.isNotEmpty() && placements.all { phase.trajectories[it.caret]?.target?.isVisuallyAt(it) == true }
+    /**
+     * The most urgency an interrupted move can accumulate.
+     */
+    private const val MIN_URGENCY = 0.2
 
-  private fun holdsSamePlaces(placements: List<CaretPlacement>): Boolean =
-    phase.trajectories.isNotEmpty() && placements.all { phase.trajectories[it.caret]?.target?.isSamePlace(it) == true }
+    private const val URGENCY_DECAY = 0.8
 
-  private fun holdsSameTargets(placements: List<CaretPlacement>): Boolean =
-    phase.trajectories.size == placements.size && placements.all { phase.trajectories[it.caret]?.target?.matches(it) == true }
+    private const val FULL_URGENCY = 1.0
+  }
 }
 
-private fun CaretMotionPhase.easingFrames(settings: CaretAnimationSettings): List<CaretRectangle>? = when {
-  trajectories.isNotEmpty() && isEasing && !settling.isComplete -> framesTo(settings)
-  else -> null
+/**
+ * Every frame this easing move will paint, or `null` when there is nothing worth prefetching into the cache.
+ */
+private fun CaretMotionPhase.framesWorthPrefetching(settings: CaretAnimationSettings): List<CaretRectangle>? {
+  val hasEasingInProgress = trajectories.isNotEmpty() && isEasing && !isSettled
+  return if (hasEasingInProgress) {
+    plannedFrames(settings)
+  } else {
+    null
+  }
 }

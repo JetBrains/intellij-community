@@ -69,8 +69,8 @@ public abstract class DebuggerSessionTabBase extends RunTab implements IXDebugge
         }
       }, content);
       RunProfile profile = getRunProfile();
-      if (profile instanceof RunConfigurationBase && !ApplicationManager.getApplication().isUnitTestMode()) {
-        observable.addChangeListener(new RunContentBuilder.ConsoleToFrontListener((RunConfigurationBase)profile,
+      if (profile instanceof RunConfigurationBase base && !ApplicationManager.getApplication().isUnitTestMode()) {
+        observable.addChangeListener(new RunContentBuilder.ConsoleToFrontListener(base,
                                                                                   myProject,
                                                                                   DefaultDebugExecutor.getDebugExecutorInstance(),
                                                                                   myRunContentDescriptor,

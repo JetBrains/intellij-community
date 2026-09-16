@@ -28,10 +28,12 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 
-internal class GitRepositoryTagsHolderImpl(
+@ApiStatus.Internal
+class GitRepositoryTagsHolderImpl(
   private val repository: GitRepository,
 ) : GitRepositoryTagsHolder {
   private val cs = repository.coroutineScope.childScope("GitRepositoryTagsHolder")
@@ -80,7 +82,7 @@ internal class GitRepositoryTagsHolderImpl(
   }
 
   @TestOnly
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun updateForTests() {
     _state.value = loadTagsFromGit()
   }

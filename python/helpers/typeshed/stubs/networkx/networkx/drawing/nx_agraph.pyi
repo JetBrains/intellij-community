@@ -2,7 +2,7 @@ from _typeshed import OpenBinaryModeUpdating, OpenTextModeReading, OpenTextModeW
 from collections.abc import Callable
 from typing import IO, Any, Protocol, TypeVar, type_check_only
 
-from networkx.classes.graph import Graph, _Node
+from networkx.classes.graph import Graph, _EdgeData, _Node, _NodeData
 from networkx.utils.backends import _dispatchable
 from pygraphviz.agraph import AGraph  # type: ignore[import-not-found]  # pyright: ignore[reportMissingImports]
 
@@ -19,20 +19,21 @@ class _SupportsOpen(Protocol[_ModeT_contra, _FileT_co]):
 def from_agraph(
     A: AGraph, create_using: Graph[str] | type[Graph[str]] | None = None  # TODO: add overloads on `create_using`
 ) -> Graph[str]: ...
-def to_agraph(N: Graph[_Node]) -> AGraph: ...
+def to_agraph(N: Graph[_Node, _NodeData, _EdgeData]) -> AGraph: ...
 def write_dot(
-    G: Graph[_Node], path: str | IO[str] | IO[bytes] | _SupportsOpen[OpenTextModeWriting, IO[str] | IO[bytes]]
+    G: Graph[_Node, _NodeData, _EdgeData],
+    path: str | IO[str] | IO[bytes] | _SupportsOpen[OpenTextModeWriting, IO[str] | IO[bytes]],
 ) -> None: ...
 @_dispatchable
 def read_dot(path: str | IO[str] | IO[bytes] | _SupportsOpen[OpenTextModeReading, IO[str] | IO[bytes]]) -> Graph[str]: ...
 def graphviz_layout(
-    G: Graph[_Node], prog: str = "neato", root: str | None = None, args: str = ""
+    G: Graph[_Node, _NodeData, _EdgeData], prog: str = "neato", root: str | None = None, args: str = ""
 ) -> dict[_Node, tuple[float, float]]: ...
 def pygraphviz_layout(
-    G: Graph[_Node], prog: str = "neato", root: str | None = None, args: str = ""
+    G: Graph[_Node, _NodeData, _EdgeData], prog: str = "neato", root: str | None = None, args: str = ""
 ) -> dict[_Node, tuple[float, float]]: ...
 def view_pygraphviz(
-    G: Graph[_Node],
+    G: Graph[_Node, _NodeData, _EdgeData],
     # From implementation looks like Callable could return object since it's always immediately stringified
     # But judging by documentation this seems like an extra runtime safety thing and not intended
     # Leaving as str unless anyone reports a valid use-case

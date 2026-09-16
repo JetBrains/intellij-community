@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.completion.impl.k2.weighers
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentsOfType
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaImplicitReceiver
 import org.jetbrains.kotlin.analysis.api.components.KaScopeContext
@@ -182,7 +181,6 @@ internal class WeighingContext private constructor(
                     val typeReferenceOwner = positionContext.typeReference?.parent
                     if (typeReferenceOwner?.parent?.parent is KtCatchClause) {
                         // Prefer Throwables in catch clauses
-                        @OptIn(KaExperimentalApi::class)
                         typeCreator.classType(StandardClassIds.Throwable) as? KaClassType
                     } else {
                         val leftHandExpression = when (typeReferenceOwner) {

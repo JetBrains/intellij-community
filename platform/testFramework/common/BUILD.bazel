@@ -26,6 +26,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/platform-util-io-native:ide-util-io-native",
+        "//platform/platform-impl/os-certificates",
+    ],
     deps = [
         # do not sort,
         "//platform/analysis-api:analysis",
@@ -102,6 +107,8 @@ jvm_library(
         "//platform/lang-impl:lang-impl_test_lib",
         "//platform/platform-util-netty:ide-util-netty_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/platform-util-io-native:ide-util-io-native_test_lib",
+        "//platform/platform-impl/os-certificates:os-certificates_test_lib",
         "//platform/testFramework/core:core_test_lib",
         "//platform/diagnostic:diagnostic_test_lib",
         "//platform/diagnostic/telemetry:telemetry_test_lib",

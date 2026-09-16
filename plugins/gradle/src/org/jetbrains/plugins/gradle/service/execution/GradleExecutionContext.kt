@@ -12,6 +12,11 @@ import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.NonExtendable
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 
+/**
+ * The context of one Gradle execution, such as fetching a model or running a build.
+ *
+ * [GradleExecutionHelper] uses this context to run the operation.
+ */
 @NonExtendable
 interface GradleExecutionContext: UserDataHolderEx {
 
@@ -28,18 +33,41 @@ interface GradleExecutionContext: UserDataHolderEx {
    */
   val projectPath: String
 
+  /**
+   * The [com.intellij.openapi.externalSystem.model.task.ExternalSystemTask]'s ID that runs this operation.
+   */
   val taskId: ExternalSystemTaskId
 
+  /**
+   * The settings for this Gradle execution.
+   */
   val settings: GradleExecutionSettings
 
+  /**
+   * The listener that receives notifications about this operation.
+   */
   val listener: ExternalSystemTaskNotificationListener
 
+  /**
+   * The token that cancels this operation.
+   */
   val cancellationToken: CancellationToken
 
+  /**
+   * The build environment of the connected Gradle daemon.
+   *
+   * A caller can read this property only after this operation connects to the daemon.
+   */
   val buildEnvironment: BuildEnvironment
 
+  /**
+   * The Gradle version of the connected Gradle daemon.
+   */
   val gradleVersion: GradleVersion
 
+  /**
+   * Reports the progress of this operation.
+   */
   @get:Experimental
   val reporter: GradleExecutionReporter
 }

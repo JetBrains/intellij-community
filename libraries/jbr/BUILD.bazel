@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.jbr` start
+content_module_jar(
+    libraries = ["@lib//:libraries-jbr-jbr-api"],
+    module = ":jbr",
+)
+### auto-generated section `dev intellij.libraries.jbr` end
+
 ### auto-generated section `build intellij.libraries.jbr` start
 jvm_library(
     name = "jbr",
@@ -16,11 +23,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-jbr-jbr-api"],
     runtime_deps = ["@lib//:libraries-jbr-jbr-api"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-jbr-jbr-api"],
-    module = ":jbr",
 )
 
 jvm_library(
@@ -43,7 +45,6 @@ exports_files(
     [
         "intellij.libraries.jbr.iml",
         "resources/intellij.libraries.jbr.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

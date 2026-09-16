@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.platform.usageView` start
+content_module_jar(module = ":usageView")
+### auto-generated section `dev intellij.platform.usageView` end
+
 ### auto-generated section `build intellij.platform.usageView` start
 jvm_library(
     name = "usageView",
@@ -41,8 +45,6 @@ jvm_library(
         "//jps/model-api:model",
     ],
 )
-
-content_module_jar(module = ":usageView")
 
 jvm_library(
     name = "usageView_test_lib",
@@ -85,7 +87,6 @@ exports_files(
         "intellij.platform.usageView.iml",
         "resources/intellij.platform.usageView.actions.xml",
         "resources/intellij.platform.usageView.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

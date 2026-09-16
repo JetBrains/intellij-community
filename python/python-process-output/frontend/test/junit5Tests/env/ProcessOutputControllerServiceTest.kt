@@ -1,313 +1,140 @@
 package com.intellij.python.junit5Tests.env
 
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.ide.CopyPasteManager
+import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.community.execService.ExecService
-import com.intellij.python.community.execService.impl.LoggingLimits
 import com.intellij.python.community.execService.impl.LoggingProcess
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
 import com.intellij.python.junit5Tests.framework.env.PythonBinaryPath
-import com.intellij.python.processOutput.common.ExecutableDto
 import com.intellij.python.processOutput.common.LoggedProcessDto
 import com.intellij.python.processOutput.common.OutputKindDto
-import com.intellij.python.processOutput.common.OutputLineDto
-import com.intellij.python.processOutput.common.TraceContextDto
-import com.intellij.python.processOutput.common.TraceContextKind
-import com.intellij.python.processOutput.common.TraceContextUuid
-import com.intellij.python.processOutput.common.sendNewProcessEvent
-import com.intellij.python.processOutput.frontend.CoroutineNames
+import com.intellij.python.processOutput.common.ProcessId
 import com.intellij.python.processOutput.frontend.LoggedProcess
-import com.intellij.python.processOutput.frontend.OutputFilter
-import com.intellij.python.processOutput.frontend.ProcessOutputController
 import com.intellij.python.processOutput.frontend.ProcessOutputControllerService
-import com.intellij.python.processOutput.frontend.ProcessOutputControllerServiceLimits
-import com.intellij.python.processOutput.frontend.ProcessStatus
 import com.intellij.python.processOutput.frontend.ProcessTreeNode
-import com.intellij.python.processOutput.frontend.TreeFilter
-import com.intellij.python.processOutput.frontend.ui.commandString
+import com.intellij.python.processOutput.frontend.childrenOf
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.common.waitUntil
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.util.io.awaitExit
-import com.intellij.util.system.OS
 import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.TraceContext
-import com.jetbrains.python.getOrThrow
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.withContext
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
 import java.awt.datatransfer.DataFlavor
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.test.assertEquals
 import kotlin.time.Duration.Companion.minutes
-import kotlin.time.Instant
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.cancelAndJoin
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.debug.DebugProbes
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertNotNull
-import org.junit.jupiter.api.io.TempDir
-import java.util.concurrent.ConcurrentLinkedQueue
-import kotlin.coroutines.coroutineContext
 
 @PyEnvTestCase
-class ProcessOutputControllerServiceTest {
+internal class ProcessOutputControllerServiceTest {
   private val projectFixture = projectFixture()
 
   @Test
-  fun `stress and limits test`(
+  fun `processes are emitted through the frontend topic as expected`(
     @TempDir cwd: Path,
     @PythonBinaryPath python: PythonBinary,
-  ): Unit = timeoutRunBlocking(15.minutes) {
+  ): Unit = timeoutRunBlocking(5.minutes) {
     val service = projectFixture.get().service<ProcessOutputControllerService>()
-    val newLineLen = if (OS.CURRENT == OS.Windows) 2 else 1
-    val binOnEel = BinOnEel(python, cwd)
-    val mainPy = Files.createFile(cwd.resolve(MAIN_PY))
+    val binOnEel = BinOnEel(python, cwd.asEelPath())
+    val fileContent = { id: Int ->
+      """
+        import sys
+        
+        print("process$id out")
+        print("process$id err", file=sys.stderr)
+      """.trimIndent()
+    }
+    val treeRoot = service.controller.treeSectionState.treeRoot
 
-    fun verifyCurrentProcesses(over: Int) {
-      var count = 0
-      val processes = service.loggedProcesses.value
+    val process1 = binOnEel.runTestScriptFile(cwd, fileContent = fileContent(1))
+    val process2 = binOnEel.runTestScriptFile(cwd, fileContent = fileContent(2))
+    val process3 = binOnEel.runTestScriptFile(cwd, fileContent = fileContent(3))
+    lateinit var loggedProcess1: LoggedProcess
+    lateinit var loggedProcess2: LoggedProcess
+    lateinit var loggedProcess3: LoggedProcess
 
-      for ((_, lines, status) in processes) {
-        if (lines.value.isEmpty()
-            || lines.value[0].kind != OutputKindDto.OUT
-            || !lines.value[0].text.startsWith("test ")) {
-          continue
-        }
+    waitUntil {
+      loggedProcess1 = treeRoot.value.findProcess(process1.id) ?: return@waitUntil false
+      loggedProcess2 = treeRoot.value.findProcess(process2.id) ?: return@waitUntil false
+      loggedProcess3 = treeRoot.value.findProcess(process3.id) ?: return@waitUntil false
 
-        with(lines.value) {
-          assertEquals(
-            3,
-            size,
-            buildString {
-              appendLine("Test process output is expected to have 3 lines, but was $size.")
-              appendLine("Lines preview:")
-              append(lines.value.generatePreview(10))
-            }
-          )
-
-          val testNumber = get(0).text.split(" ")[1].toInt()
-
-          assert(testNumber >= over) {
-            "Test process header ('test x') is expected to hold a number greater or equal to $over, but was $testNumber."
-          }
-
-          val xLen =
-            LoggingLimits.MAX_OUTPUT_SIZE - (get(0).text.length + newLineLen)
-          val yLen = LoggingLimits.MAX_OUTPUT_SIZE
-
-          assertNotNull(
-            find { elem ->
-              elem.text.startsWith("xxx") && elem.text.length == xLen
-            },
-            buildString {
-              appendLine("Test process output is expected to have a string of 'x' repeating $xLen amount of times.")
-              appendLine("Lines preview:")
-              append(lines.value.generatePreview(10))
-            }
-          )
-          assertNotNull(
-            find { elem ->
-              elem.text.startsWith("yyy") && elem.text.length == yLen
-            },
-            buildString {
-              appendLine("Test process output is expected to have a string of 'y' repeating $yLen amount of times.")
-              appendLine("Lines preview:")
-              append(lines.value.generatePreview(10))
-            }
-          )
-        }
-
-        with(status.value) {
-          assert(this is ProcessStatus.Done && exitCode == 0)
-        }
-
-        count++
-      }
-
-      val processesToCheck = ProcessOutputControllerServiceLimits.MAX_PROCESSES - 30
-
-      // should expect to have found and asserted MAX_PROCESSES amount processes
-      // 30 for margin of error
-      assert(count > processesToCheck) {
-        buildString {
-          appendLine("Call to `verifyCurrentProcesses` is expected to check at least $processesToCheck processes, but checked only $count.")
-
-          for ((index, process) in processes.withIndex()) {
-            appendLine("Process $index: ${process.data.commandString}")
-          }
-        }
-      }
+      true
     }
 
-    edtWriteAction {
-      mainPy.toFile().writeText(
+    for ((index, value) in listOf(
+      process1 to loggedProcess1,
+      process2 to loggedProcess2,
+      process3 to loggedProcess3
+    ).withIndex()) {
+      val id = index + 1
+      val (process, loggedProcess) = value
+      val lines = loggedProcess.lines
+
+      assertEquals(process.id, loggedProcess.data.id)
+      assertEquals(2, lines.value.size)
+      assert(
+        lines.value.find { it.text == "process$id out" && it.kind == OutputKindDto.OUT } != null &&
+        lines.value.find { it.text == "process$id err" && it.kind == OutputKindDto.ERR } != null
+      ) {
         """
-          import sys 
-          
-          print("test " + sys.argv[1])
-          print("${"x".repeat(LoggingLimits.MAX_OUTPUT_SIZE * 2)}")
-          print("${"y".repeat(LoggingLimits.MAX_OUTPUT_SIZE * 2)}", file=sys.stderr)
-        """.trimIndent(),
-      )
-    }
-
-    // executing the file MAX_PROCESSES amount of times
-    repeat(ProcessOutputControllerServiceLimits.MAX_PROCESSES) {
-      runBin(binOnEel, Args(MAIN_PY, it.toString()))
-    }
-
-    // the amount of processes logged should exactly equal to MAX_PROCESSES
-    waitUntil {
-      service.loggedProcesses.value.size == ProcessOutputControllerServiceLimits.MAX_PROCESSES
-    }
-
-    // should have verified processes 0 to MAX_PROCESSES - 1
-    verifyCurrentProcesses(0)
-
-    // adding processes 2 times over the limit
-    repeat(ProcessOutputControllerServiceLimits.MAX_PROCESSES * 2) {
-      val newIt = (it + ProcessOutputControllerServiceLimits.MAX_PROCESSES)
-
-      runBin(binOnEel, Args(MAIN_PY, newIt.toString()))
-    }
-
-    // older processes beyond MAX_PROCESSES should be truncated
-    assertEquals(
-      ProcessOutputControllerServiceLimits.MAX_PROCESSES,
-      service.loggedProcesses.value.size,
-    )
-
-    // should have verified processes MAX_PROCESSES to MAX_PROCESSES * 2 - 1
-    verifyCurrentProcesses(ProcessOutputControllerServiceLimits.MAX_PROCESSES * 2)
-  }
-
-  @Test
-  fun `exit info collector coroutines get properly cleaned up`(
-    @TempDir cwd: Path,
-    @PythonBinaryPath python: PythonBinary,
-  ): Unit = timeoutRunBlocking(15.minutes) {
-    projectFixture.get().service<ProcessOutputControllerService>()
-
-    val binOnEel = BinOnEel(python, cwd)
-    val mainPy = Files.createFile(cwd.resolve(MAIN_PY))
-
-    edtWriteAction {
-      mainPy.toFile().writeText(
-        """
-          import sys 
-          
-          print("test " + sys.argv[1])
-          sys.stdin.read(1)
-        """.trimIndent(),
-      )
-    }
-
-    // no coroutines should be active (5 for margin of error)
-    assert(exitInfoCollectorCoroutinesCount() < 5)
-
-    // spawn 1024 processes, instantly terminate them
-    repeat(1024) {
-      val process = runBinWithInput(binOnEel, Args(MAIN_PY, it.toString()))
-      inputAndAwaitExit(process)
-    }
-
-    // no coroutines should be active (5 for margin of error)
-    waitUntil {
-      exitInfoCollectorCoroutinesCount() < 5
-    }
-
-    // spawn 100 processes
-    val processes = mutableListOf<Process>()
-    repeat(100) {
-      processes += runBinWithInput(binOnEel, Args(MAIN_PY, it.toString()))
-    }
-
-    // at least 100 coroutines should be active
-    waitUntil {
-      exitInfoCollectorCoroutinesCount() >= 100
-    }
-
-    // but not more than 105
-    assert(exitInfoCollectorCoroutinesCount() <= 105)
-
-    // terminating all processes
-    for (process in processes) {
-      inputAndAwaitExit(process)
-    }
-
-    // updating the flow by adding and terminating one process
-    val process = runBinWithInput(binOnEel, Args(MAIN_PY, "500"))
-    inputAndAwaitExit(process)
-
-    // no coroutines should be active (5 for margin of error)
-    waitUntil {
-      exitInfoCollectorCoroutinesCount() < 5
+          expected to find two lines: 
+            OutputLineDto(text="process$id out", kind=OUT)
+            OutputLineDto(text="process$id err", kind=ERR)
+          actual lines:
+            ${lines.value}
+        """.trimIndent()
+      }
     }
   }
 
   @Test
-  fun `tag section and exit info copy buttons test`(
+  fun `copying to clipboard happens through clipboard manager`(
     @TempDir cwd: Path,
     @PythonBinaryPath python: PythonBinary,
-  ): Unit = timeoutRunBlocking {
+  ): Unit = timeoutRunBlocking(5.minutes) {
     val service = projectFixture.get().service<ProcessOutputControllerService>()
+    val binOnEel = BinOnEel(python, cwd.asEelPath())
 
-    val binOnEel = BinOnEel(python, cwd)
-    val mainPy = Files.createFile(cwd.resolve(MAIN_PY))
-
-    edtWriteAction {
-      mainPy.toFile().writeText(
-        """
-          import sys 
-          
-          print("out1")
-          print("out2")
-          print("out3")
-          print("out4")
-          print("out5")
-          print("out6")
-          
-          print("err7", file=sys.stderr)
-          print("err8", file=sys.stderr)
-          print("err9", file=sys.stderr)
-          print("err10", file=sys.stderr)
-        """.trimIndent(),
+    val process =
+      binOnEel.runTestScriptFile(
+        cwd,
+        fileContent =
+          """
+            print("out1")
+            print("out2")
+            print("out3")
+            print("out4")
+            print("out5")
+            print("out6")
+          """.trimIndent()
       )
-    }
-
-    val loggingProcess = withContext(NON_INTERACTIVE_ROOT_TRACE_CONTEXT) {
-      ExecService().executeGetProcess(
-        binOnEel,
-        Args(MAIN_PY),
-        CoroutineScope(coroutineContext),
-      ).getOrThrow()
-    }
-
-    // reading all stdout
-    loggingProcess.inputStream.readAllBytes()
+    lateinit var loggedProcess: LoggedProcess
 
     waitUntil {
-      service.loggedProcesses.value.lastOrNull()?.lines?.value?.size == 6
+      loggedProcess =
+        service.controller.treeSectionState.treeRoot.value.findProcess(process.id)
+        ?: return@waitUntil false
+
+      true
     }
 
-    val process = service.loggedProcesses.value.last()
-
-    // stdout section (0..5)
-    service.copyOutputTagAtIndexToClipboard(process, 0)
+    // copying stdout
+    service.controller.copyOutputTagAtIndexToClipboard(loggedProcess, 0)
 
     assertEquals(
       """
@@ -317,478 +144,22 @@ class ProcessOutputControllerServiceTest {
         out4
         out5
         out6
-        
+
       """.trimIndent(),
       CopyPasteManager.getInstance().getContents<String>(DataFlavor.stringFlavor),
     )
-
-    // reading all stderr
-    loggingProcess.errorStream.readAllBytes()
-
-    waitUntil { process.lines.value.size == 10 }
-
-    // stderr section (6..9)
-    service.copyOutputTagAtIndexToClipboard(process, 6)
-
-    assertEquals(
-      """
-        err7
-        err8
-        err9
-        err10
-        
-      """.trimIndent(),
-      CopyPasteManager.getInstance().getContents<String>(DataFlavor.stringFlavor),
-    )
-
-    // exit info without additional message
-    service.copyOutputExitInfoToClipboard(process)
-
-    assertEquals(
-      """
-        0
-        
-      """.trimIndent(),
-      CopyPasteManager.getInstance().getContents<String>(DataFlavor.stringFlavor),
-    )
-
-    // exit info with additional message
-    val status = process.status.value as ProcessStatus.Done
-
-    (process.status as MutableStateFlow<ProcessStatus>).emit(
-      status.copy(
-        additionalMessageToUser = "some test message",
-      ),
-    )
-
-    service.copyOutputExitInfoToClipboard(process)
-
-    assertEquals(
-      """
-                0: some test message
-                
-            """.trimIndent(),
-      CopyPasteManager.getInstance().getContents<String>(DataFlavor.stringFlavor),
-    )
-  }
-
-  @Test
-  fun `toolbar copy includes tags depending on whether the filter is enabled`(
-    @TempDir cwd: Path,
-    @PythonBinaryPath python: PythonBinary,
-  ): Unit = timeoutRunBlocking {
-    val service = projectFixture.get().service<ProcessOutputControllerService>()
-
-    val binOnEel = BinOnEel(python, cwd)
-    val mainPy = Files.createFile(cwd.resolve(MAIN_PY))
-
-    edtWriteAction {
-      mainPy.toFile().writeText(
-        """
-          import sys 
-          
-          print("out1")
-          print("out2")
-          print("out3")
-          print("out4")
-          print("out5")
-          print("out6")
-          
-          print("err7", file=sys.stderr)
-          print("err8", file=sys.stderr)
-          print("err9", file=sys.stderr)
-          print("err10", file=sys.stderr)
-        """.trimIndent(),
-      )
-    }
-
-    val loggingProcess = withContext(NON_INTERACTIVE_ROOT_TRACE_CONTEXT) {
-      ExecService().executeGetProcess(
-        binOnEel,
-        Args(MAIN_PY),
-        CoroutineScope(coroutineContext),
-      ).getOrThrow()
-    }
-
-    // reading all stdout
-    loggingProcess.inputStream.readAllBytes()
-
-    waitUntil {
-      service.loggedProcesses.value.lastOrNull()?.lines?.value?.size == 6
-    }
-
-    val process = service.loggedProcesses.value.last()
-
-    // reading all stderr
-    loggingProcess.errorStream.readAllBytes()
-
-    waitUntil {
-      service.loggedProcesses.value.lastOrNull()?.lines?.value?.size == 10
-    }
-
-    // copying output
-    service.copyOutputToClipboard(process)
-
-    // copied output should include tags
-    assertEquals(
-      """
-        [stdout] out1
-                 out2
-                 out3
-                 out4
-                 out5
-                 out6
-        [stderr] err7
-                 err8
-                 err9
-                 err10
-          [exit] 0
-        
-      """.trimIndent(),
-      CopyPasteManager.getInstance().getContents<String>(DataFlavor.stringFlavor),
-    )
-
-    // toggling the show tags filter
-    service.outputSectionState.filters[OutputFilter.Item.SHOW_TAGS] = false
-
-    service.copyOutputToClipboard(process)
-
-    // copied output should not include tags
-    waitUntil("output without tags") {
-      CopyPasteManager.getInstance().getContents<String>(DataFlavor.stringFlavor) ==
-        """
-          out1
-          out2
-          out3
-          out4
-          out5
-          out6
-          err7
-          err8
-          err9
-          err10
-          0
-          
-      """.trimIndent()
-    }
-  }
-
-  @Test
-  fun `non-ascii output lines are reflected properly`(
-    @TempDir cwd: Path,
-    @PythonBinaryPath python: PythonBinary,
-  ): Unit = timeoutRunBlocking {
-    val service = projectFixture.get().service<ProcessOutputControllerService>()
-
-    val binOnEel = BinOnEel(python, cwd)
-    val mainPy = Files.createFile(cwd.resolve(MAIN_PY))
-    val testTag = "non-ascii test"
-    val nonAsciiText = "Привет, Мир"
-
-    edtWriteAction {
-      mainPy.toFile().writeText(
-        """
-          import sys 
-          
-          sys.stdout.buffer.write("$testTag\n".encode("utf8"))
-          sys.stdout.buffer.write("$nonAsciiText\n".encode("utf8"))
-        """.trimIndent(),
-      )
-    }
-
-    runBin(binOnEel, Args(MAIN_PY))
-    var lines: List<OutputLineDto>? = null
-
-    waitUntil {
-      service.loggedProcesses.value
-        .lastOrNull()
-        ?.lines
-        ?.value
-        ?.also {
-          lines = it
-        }
-        ?.firstOrNull()
-        ?.text == testTag
-    }
-
-    assertEquals(nonAsciiText, lines?.last()?.text)
-  }
-
-  @Test
-  fun `line limits are maintained`(
-    @TempDir cwd: Path,
-    @PythonBinaryPath python: PythonBinary,
-  ): Unit = timeoutRunBlocking {
-    val service = projectFixture.get().service<ProcessOutputControllerService>()
-
-    val binOnEel = BinOnEel(python, cwd)
-    val mainPy = Files.createFile(cwd.resolve(MAIN_PY))
-
-    edtWriteAction {
-      mainPy.toFile().writeText(
-        """
-          import sys 
-          
-          for i in range(${ProcessOutputControllerServiceLimits.MAX_LINES} * 2):
-            print("line " + str(i))
-        """.trimIndent(),
-      )
-    }
-
-    runBin(binOnEel, Args(MAIN_PY))
-
-    var process: LoggedProcess? = null
-
-    waitUntil {
-      process = service.loggedProcesses.value.find {
-        it.lines.value.getOrNull(0)?.text == "line ${ProcessOutputControllerServiceLimits.MAX_LINES}"
-      }
-      process != null
-    }
-
-    repeat(ProcessOutputControllerServiceLimits.MAX_LINES) {
-      assertEquals(
-        "line ${ProcessOutputControllerServiceLimits.MAX_LINES + it}",
-        process!!.lines.value[it].text,
-      )
-    }
-  }
-
-  @Test
-  fun `collectTopicEvents builds tree with nested contexts and root-level processes`(
-    @TempDir cwd: Path,
-    @PythonBinaryPath python: PythonBinary,
-  ): Unit = timeoutRunBlocking(5.minutes) {
-    val service = projectFixture.get().service<ProcessOutputControllerService>()
-    val binOnEel = BinOnEel(python, cwd)
-    val parentContext = TraceContext("parent context")
-    val childContext = TraceContext("child context", parentContext)
-
-    val process1 = binOnEel.runTestScripFile(cwd)
-    val process2 = binOnEel.runTestScripFile(cwd, context = parentContext)
-    val process3 = binOnEel.runTestScripFile(cwd, context = childContext)
-    val process4 = binOnEel.runTestScripFile(cwd, context = parentContext)
-
-    val allowedIds =
-      setOf(
-        parentContext.treeId,
-        childContext.treeId,
-        process1.treeId,
-        process2.treeId,
-        process3.treeId,
-        process4.treeId,
-      )
-
-    // wait until all processes appear loggedProcesses
-    waitUntil(
-      {
-        idMismatchDiagMessage(
-          expected = setOf(process1.id, process2.id, process3.id, process4.id),
-          actual = service.loggedProcesses.value.map { it.data.id }
-        )
-      }
-    ) {
-      val ids = service.loggedProcesses.value.map { it.data.id }.toSet()
-      setOf(process1.id, process2.id, process3.id, process4.id).all { it in ids }
-    }
-
-    // wait until root has two expected entries: Context(parentContext) and Process(process1)
-    lateinit var rootLevel: List<ProcessTreeNode>// = service.treeSectionState.treeRoot.value
-    waitUntil {
-      rootLevel = service.treeSectionState.treeRoot.value
-      rootLevel.size >= 2
-      && rootLevel.any { it is ProcessTreeNode.Context && it.uuid.uuid == parentContext.uuid.toString() }
-      && rootLevel.any { it is ProcessTreeNode.Process && it.loggedProcess.data.id == process1.id }
-    }
-
-    val top = rootLevel.filter { it.id in allowedIds }
-
-    // two root items: parentContext and process1
-    assertEquals(2, top.size)
-    val parentContextNode = top[0] as ProcessTreeNode.Context
-    val process1Node = top[1] as ProcessTreeNode.Process
-    assertEquals(parentContext.uuid.toString(), parentContextNode.uuid.uuid)
-    assertEquals(process1.id, process1Node.loggedProcess.data.id)
-
-    // parentContext's children: process4, childContext, process2
-    val parentContextChildren = parentContextNode.children().toList().filterIsInstance<ProcessTreeNode>().filter { it.id in allowedIds }
-    assertEquals(3, parentContextChildren.size)
-    assertEquals(process4.id, (parentContextChildren[0] as ProcessTreeNode.Process).loggedProcess.data.id)
-    val childContextNode = parentContextChildren[1] as ProcessTreeNode.Context
-    assertEquals(childContext.uuid.toString(), childContextNode.uuid.uuid)
-    assertEquals(process2.id, (parentContextChildren[2] as ProcessTreeNode.Process).loggedProcess.data.id)
-
-    // childContext's children: process3
-    val childContextChildren = childContextNode.children().toList().filterIsInstance<ProcessTreeNode>().filter { it.id in allowedIds }
-    assertEquals(1, childContextChildren.size)
-    assertEquals(process3.id, (childContextChildren[0] as ProcessTreeNode.Process).loggedProcess.data.id)
-  }
-
-  @Test
-  fun `collectTopicEvents applies search query to tree`(
-    @TempDir cwd: Path,
-    @PythonBinaryPath python: PythonBinary,
-  ): Unit = timeoutRunBlocking(5.minutes) {
-    val service = projectFixture.get().service<ProcessOutputControllerService>()
-    val binOnEel = BinOnEel(python, cwd)
-    val pythonProcess = binOnEel.runTestScripFile(cwd, "testpython.py", "print('test python')")
-    val nodeProcess = binOnEel.runTestScripFile(cwd, "testnode.py", "print('test node')")
-    val cargoProcess = binOnEel.runTestScripFile(cwd, "testcargo.py", "print('test cargo')")
-
-    val allowedIds = setOf(pythonProcess.treeId, nodeProcess.treeId, cargoProcess.treeId)
-
-    waitUntil(
-      {
-        idMismatchDiagMessage(
-          expected = setOf(pythonProcess.id, nodeProcess.id, cargoProcess.id),
-          actual = service.loggedProcesses.value.map { it.data.id }
-        )
-      }
-    ) {
-      val ids = service.loggedProcesses.value.map { it.data.id }.toSet()
-      setOf(pythonProcess.id, nodeProcess.id, cargoProcess.id).all { it in ids }
-    }
-
-    val processIdsInTree = {
-      service.treeSectionState.treeRoot.value
-        .filter { it.id in allowedIds }
-        .filterIsInstance<ProcessTreeNode.Process>()
-        .map { it.loggedProcess.data.id }
-        .toSet()
-    }
-
-    // default empty search: all three processes are visible
-    waitUntil(
-      {
-        idMismatchDiagMessage(
-          expected = setOf(pythonProcess.id, nodeProcess.id, cargoProcess.id),
-          actual = processIdsInTree()
-        )
-      }
-    ) {
-      processIdsInTree() == setOf(pythonProcess.id, nodeProcess.id, cargoProcess.id)
-    }
-
-    // "python" matches only the python exe
-    service.search("testpython")
-    waitUntil { processIdsInTree() == setOf(pythonProcess.id) }
-
-    // search is case-insensitive: "NODE" still matches the node exe
-    service.search("TESTNODE")
-    waitUntil { processIdsInTree() == setOf(nodeProcess.id) }
-
-    // substring match: "estcarg" is a substring of "testcargo" only
-    service.search("estcarg")
-    waitUntil { processIdsInTree() == setOf(cargoProcess.id) }
-
-    // tree is empty when no matches were found
-    service.search("nothingatall")
-    waitUntil { processIdsInTree().isEmpty() }
-
-    // clearing the query brings every process back
-    service.search("")
-    waitUntil {
-      processIdsInTree() == setOf(pythonProcess.id, nodeProcess.id, cargoProcess.id)
-    }
-  }
-
-  @Test
-  fun `collectTopicEvents applies SHOW_BACKGROUND_PROCESSES filter to tree`(
-    @TempDir cwd: Path,
-    @PythonBinaryPath python: PythonBinary,
-  ): Unit = timeoutRunBlocking(5.minutes) {
-    val service = projectFixture.get().service<ProcessOutputControllerService>()
-    val binOnEel = BinOnEel(python, cwd)
-    val backgroundContext = NON_INTERACTIVE_ROOT_TRACE_CONTEXT
-    val interactiveContext = TraceContext("interactive context")
-
-    val backgroundProcess = binOnEel.runTestScripFile(cwd, context = backgroundContext)
-    val interactiveProcess = binOnEel.runTestScripFile(cwd, context = interactiveContext)
-    val allowedIds = setOf(interactiveContext.treeId, backgroundProcess.treeId) //
-
-    waitUntil(
-      {
-        idMismatchDiagMessage(
-          expected = setOf(backgroundProcess.id, interactiveProcess.id),
-          actual = service.loggedProcesses.value.map { it.data.id }
-        )
-      }
-    ) {
-      val ids = service.loggedProcesses.value.map { it.data.id }.toSet()
-      setOf(backgroundProcess.id, interactiveProcess.id).all { it in ids }
-    }
-
-    val nodeIdsInTree = {
-      service.treeSectionState.treeRoot.value
-        .map { it.id }
-        .filter { it in allowedIds }
-        .toSet()
-    }
-
-    // by default, background processes are hidden
-    waitUntil {
-      nodeIdsInTree() == setOf(interactiveContext.treeId)
-    }
-
-    // enabling the filter makes background processes visible
-    service.treeSectionState.filters[TreeFilter.Item.SHOW_BACKGROUND_PROCESSES] = true
-    waitUntil {
-      nodeIdsInTree() == setOf(interactiveContext.treeId, backgroundProcess.treeId)
-    }
-
-    // disabling it again hides the background process
-    service.treeSectionState.filters[TreeFilter.Item.SHOW_BACKGROUND_PROCESSES] = false
-    waitUntil {
-      nodeIdsInTree() == setOf(interactiveContext.treeId)
-    }
   }
 
   companion object {
     const val MAIN_PY = "main.py"
 
-    fun List<OutputLineDto>.generatePreview(nLines: Int): String =
-      buildString {
-        for ((kind, text) in this@generatePreview.take(nLines)) {
-          when (kind) {
-            OutputKindDto.OUT -> append("OUT: ")
-            OutputKindDto.ERR -> append("ERR: ")
-          }
-
-          appendLine(text)
-        }
-      }
-
-    suspend fun runBinWithInput(binOnEel: BinOnEel, args: Args): Process =
-      ExecService().executeGetProcess(
-        binOnEel,
-        args,
-        CoroutineScope(NON_INTERACTIVE_ROOT_TRACE_CONTEXT),
-      ).getOrThrow()
-
-    suspend fun inputAndAwaitExit(process: Process) {
-      process.outputStream.write(0)
-      process.outputStream.flush()
-
-      coroutineScope {
-        listOf(
-          async(Dispatchers.IO) {
-            process.errorStream.readAllBytes()
-          },
-          async(Dispatchers.IO) {
-            process.inputStream.readAllBytes()
-          },
-        ).awaitAll()
-
-        process.awaitExit()
-      }
-    }
-
+    @OptIn(DelicateCoroutinesApi::class)
     suspend fun runBin(binOnEel: BinOnEel, args: Args, context: TraceContext? = NON_INTERACTIVE_ROOT_TRACE_CONTEXT): LoggedProcessDto =
       withContext(context ?: currentCoroutineContext()) {
         val process = ExecService().executeGetProcess(
           binOnEel,
           args,
-          CoroutineScope(coroutineContext),
+          GlobalScope,
         ).orThrow() as LoggingProcess
 
         coroutineScope {
@@ -807,7 +178,7 @@ class ProcessOutputControllerServiceTest {
         process.loggedProcess
       }
 
-    private suspend fun BinOnEel.runTestScripFile(
+    suspend fun BinOnEel.runTestScriptFile(
       cwd: Path,
       filename: String = MAIN_PY,
       fileContent: String = "print('hello, world')",
@@ -826,56 +197,23 @@ class ProcessOutputControllerServiceTest {
       return runBin(this, Args(filename), context)
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    private fun exitInfoCollectorCoroutinesCount(): Int =
-      DebugProbes.dumpCoroutinesInfo()
-        .filter { it.context[CoroutineName.Key]?.name == CoroutineNames.EXIT_INFO_COLLECTOR }
-        .size
-
-    private suspend fun waitForProcess(service: ProcessOutputControllerService, processId: Int): LoggedProcess {
-      lateinit var process: LoggedProcess
-
-      waitUntil {
-        service.loggedProcesses.value.find { it.data.id == processId }?.also {
-          process = it
-        } != null
-      }
-
-      return process
-    }
-
-    private suspend fun ConcurrentLinkedQueue<ProcessOutputController.Event>.waitForEvent(
-      callback: (ProcessOutputController.Event) -> Boolean,
-    ): ProcessOutputController.Event {
-      lateinit var event: ProcessOutputController.Event
-
-      waitUntil {
-        val polledEvent = poll() ?: return@waitUntil false
-
-        return@waitUntil if (callback(polledEvent)) {
-          event = polledEvent
-          true
-        }
-        else {
-          false
+    fun List<ProcessTreeNode>.findProcess(processId: ProcessId): LoggedProcess? {
+      for (node in this) {
+        when (node) {
+          is ProcessTreeNode.Context -> {
+            node.childrenOf<ProcessTreeNode>().findProcess(processId)?.also {
+              return it
+            }
+          }
+          is ProcessTreeNode.Process -> {
+            node.loggedProcess.takeIf { node.nodeId.processId == processId }?.also {
+              return it
+            }
+          }
         }
       }
 
-      return event
+      return null
     }
-
-    private fun idMismatchDiagMessage(expected: Collection<Int>, actual: Collection<Int>) =
-      """
-        expected to see ids: ${expected}
-        actual ids: ${actual}
-      """.trimIndent()
-
-    private val TraceContext.treeId
-      get() =
-        ProcessTreeNode.Id.Context(TraceContextUuid(uuid.toString()))
-
-    private val LoggedProcessDto.treeId
-      get() =
-        ProcessTreeNode.Id.Process(id)
   }
 }

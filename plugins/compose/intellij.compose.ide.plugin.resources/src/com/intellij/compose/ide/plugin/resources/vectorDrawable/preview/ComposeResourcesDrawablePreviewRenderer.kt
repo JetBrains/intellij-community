@@ -4,7 +4,7 @@ package com.intellij.compose.ide.plugin.resources.vectorDrawable.preview
 import com.intellij.compose.ide.plugin.resources.vectorDrawable.rendering.ComposeResourceDrawableTree
 import com.intellij.compose.ide.plugin.resources.vectorDrawable.svgConverter.ComposeResourcesSvgConverter
 import com.intellij.compose.ide.plugin.resources.vectorDrawable.svgConverter.ComposeResourcesSvgTree.Companion.formatFloatValue
-import com.intellij.openapi.diagnostic.rethrowControlFlowException
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.util.createDocumentBuilder
 import org.w3c.dom.Document
 import org.w3c.dom.Element

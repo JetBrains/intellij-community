@@ -38,7 +38,7 @@ jvm_library(
         "//fleet/codecache",
         "//fleet/build/platform",
         "//fleet/build/fs",
-        "@lib//:kotlinx-coroutines-core",
+        "//libraries/kotlinx/coroutines/core",
         "@lib//:slf4j-api",
         "@lib//:fleet-jetbrains-intellij-platform-util-zip-squashed",
         "@lib//:fleet-jetbrains-intellij-idea-community-build-zip",
@@ -63,6 +63,7 @@ jvm_library(
         "//fleet/codecache:codecache_test_lib",
         "//fleet/build/platform:platform_test_lib",
         "//fleet/build/fs:fs_test_lib",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//libraries/jetbrains/annotations:annotations_test_lib",
     ],
 )

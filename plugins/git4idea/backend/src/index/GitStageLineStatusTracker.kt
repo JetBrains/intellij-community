@@ -135,7 +135,7 @@ class GitStageLineStatusTracker(
   }
 
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun setBaseRevision(vcsContent: CharSequence, newStagedDocument: Document) {
     ThreadingAssertions.assertEventDispatchThread()
     if (isReleased) return
@@ -160,7 +160,7 @@ class GitStageLineStatusTracker(
     if (isValid()) listeners.multicaster.onBecomingValid()
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun dropBaseRevision() {
     ThreadingAssertions.assertEventDispatchThread()
     if (isReleased) return
@@ -185,7 +185,7 @@ class GitStageLineStatusTracker(
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun updateDocument(side: ThreeSide, commandName: @NlsContexts.Command String?, task: (Document) -> Unit): Boolean {
     val affectedDocument = side.selectNotNull(vcsDocument, stagedDocument, document)
     return LineStatusTrackerBase.updateDocument(project, affectedDocument, commandName, task)
@@ -276,7 +276,7 @@ class GitStageLineStatusTracker(
     runBulkRollback(toRevert)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun runBulkRollback(toRevert: List<StagedRange>) {
     if (!isValid()) return
 
@@ -291,7 +291,7 @@ class GitStageLineStatusTracker(
     runBulkStage(listOf(newRange))
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun runBulkStage(toRevert: List<StagedRange>) {
     if (!isValid()) return
 
@@ -306,7 +306,7 @@ class GitStageLineStatusTracker(
     runBulkUnstage(listOf(newRange))
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun runBulkUnstage(toRevert: List<StagedRange>) {
     if (!isValid()) return
 

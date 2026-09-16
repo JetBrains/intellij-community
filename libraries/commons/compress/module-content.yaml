@@ -1,6 +1,0 @@
-- name: dist.all/lib/intellij.libraries.commons.compress.jar
-  modules:
-  - name: intellij.libraries.commons.compress
-    libraries:
-      commons-compress:
-      - name: $MAVEN_REPOSITORY$/org/apache/commons/commons-compress/1/commons-compress-1.jar

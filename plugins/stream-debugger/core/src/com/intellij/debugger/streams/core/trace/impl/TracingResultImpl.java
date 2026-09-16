@@ -64,16 +64,16 @@ public class TracingResultImpl implements TracingResult {
     List<ValuesOrderResolver.Result> resolvedTraces =
       ContainerUtil.map(myTrace, x -> resolverFactory.getResolver(x.getCall().getName(), x.getCall().getType()).resolve(x));
 
-    final TraceInfo firstCallTrace = myTrace.get(0);
+    final TraceInfo firstCallTrace = myTrace.getFirst();
     final List<IntermediateStreamCall> intermediateCalls = mySourceChain.getIntermediateCalls();
 
     final ResolvedStreamChainImpl.Builder chainBuilder = new ResolvedStreamChainImpl.Builder();
     final List<TraceElement> valuesBeforeFirstCall = TraceUtil.sortedByTime(firstCallTrace.getValuesOrderBefore().values());
     final FirstStateImpl firstState = new FirstStateImpl(valuesBeforeFirstCall, firstCallTrace.getCall(),
-                                                         resolvedTraces.get(0).getDirectOrder());
+                                                         resolvedTraces.getFirst().getDirectOrder());
 
     if (intermediateCalls.isEmpty()) {
-      chainBuilder.setTerminator(buildResolvedTerminationCall(myTrace.get(0), firstState, resolvedTraces.get(0).getReverseOrder()));
+      chainBuilder.setTerminator(buildResolvedTerminationCall(myTrace.getFirst(), firstState, resolvedTraces.getFirst().getReverseOrder()));
     }
     else {
       final ArrayList<IntermediateStateImpl> states = new ArrayList<>();
@@ -86,19 +86,19 @@ public class TracingResultImpl implements TracingResult {
                                              resolvedTraces.get(i + 1).getDirectOrder()));
       }
 
-      states.add(new IntermediateStateImpl(TraceUtil.sortedByTime(myTrace.get(myTrace.size() - 1).getValuesOrderBefore().values()),
-                                           intermediateCalls.get(intermediateCalls.size() - 1),
+      states.add(new IntermediateStateImpl(TraceUtil.sortedByTime(myTrace.getLast().getValuesOrderBefore().values()),
+                                           intermediateCalls.getLast(),
                                            mySourceChain.getTerminationCall(),
                                            resolvedTraces.get(resolvedTraces.size() - 2).getReverseOrder(),
-                                           resolvedTraces.get(resolvedTraces.size() - 1).getDirectOrder()));
+                                           resolvedTraces.getLast().getDirectOrder()));
 
-      chainBuilder.addIntermediate(new ResolvedIntermediateCallImpl(intermediateCalls.get(0), firstState, states.get(0)));
+      chainBuilder.addIntermediate(new ResolvedIntermediateCallImpl(intermediateCalls.getFirst(), firstState, states.getFirst()));
       for (int i = 1; i < states.size(); i++) {
         chainBuilder.addIntermediate(new ResolvedIntermediateCallImpl(intermediateCalls.get(i), states.get(i - 1), states.get(i)));
       }
 
-      chainBuilder.setTerminator(buildResolvedTerminationCall(myTrace.get(myTrace.size() - 1), states.get(states.size() - 1),
-                                                              resolvedTraces.get(resolvedTraces.size() - 1).getReverseOrder()));
+      chainBuilder.setTerminator(buildResolvedTerminationCall(myTrace.getLast(), states.getLast(),
+                                                              resolvedTraces.getLast().getReverseOrder()));
     }
 
     return new MyResolvedResult(chainBuilder.build());

@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.convertToJVMProcess
 import com.intellij.platform.eel.environmentVariables
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.LocalEelDescriptor
@@ -109,7 +110,7 @@ abstract class LspClientDescriptor protected constructor(
    * @param file the file is guaranteed to be valid, in a local file system, and within project content roots. However, it might be not
    *             within the roots configured for this LSP server, which is usually fine.
    */
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   abstract fun isSupportedFile(file: VirtualFile): Boolean
 
   /**
@@ -124,7 +125,7 @@ abstract class LspClientDescriptor protected constructor(
    * The default [getFileUri] produces a URI the JetBrains language servers understand only for a jar entry.
    * A descriptor that accepts another archive file system must also override [getFileUri] and [findFileByUri].
    */
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   open fun isSupportedLibraryFile(file: VirtualFile): Boolean = false
 
   /**
@@ -134,7 +135,7 @@ abstract class LspClientDescriptor protected constructor(
    * In WSL/Docker projects the process is launched via EEL so the server runs inside the project environment.
    * In local projects the existing [GeneralCommandLine] / [OSProcessHandler] path is used unchanged.
    */
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   @Throws(ExecutionException::class)
   open fun startServerProcess(): BaseProcessHandler<*> {
     // LSP spec says: "It defaults to utf-8, which is the only encoding supported right now"
@@ -173,7 +174,7 @@ abstract class LspClientDescriptor protected constructor(
     }
 
     LOG.info("$this: starting LSP server via Eel: ${commandLine.exePath}")
-    return object : OSProcessHandler(eelProcess.convertToJavaProcess(), commandLine.commandLineString, Charsets.UTF_8) {
+    return object : OSProcessHandler(eelProcess.convertToJVMProcess(), commandLine.commandLineString, Charsets.UTF_8) {
       override fun readerOptions(): BaseOutputReader.Options = lspReaderOptions()
     }
   }
@@ -191,7 +192,7 @@ abstract class LspClientDescriptor protected constructor(
    * - the plugin implements the more generic function [startServerProcess]
    * - the plugin uses [LspCommunicationChannel.Socket] with `startProcess` set to `false`
    */
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   @Throws(ExecutionException::class)
   open fun createCommandLine(): GeneralCommandLine {
     // this text goes only to the IDE logs

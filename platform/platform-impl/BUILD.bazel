@@ -1,6 +1,5 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "kt_javac_options")
-load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 # The `--add-opens` inventory a distribution's vmoptions are generated from, read off disk by
 # `getCommandLineArgumentsForOpenPackages` - so a dev assembly with no checkout has to declare it.
@@ -87,7 +86,6 @@ jvm_library(
         "//jps/model-api:model",
         "//jps/model-serialization",
         "//platform/lang-api:lang",
-        "//libraries/jna",
         "//libraries/winp",
         "//libraries/swingx",
         "//platform/core-impl",
@@ -151,7 +149,6 @@ jvm_library(
         "//libraries/kotlinx/serialization/json",
         "//libraries/kotlinx/serialization/core",
         "//platform/util/jdom",
-        "//libraries/jvm-native-trusted-roots",
         "//libraries/opentelemetry",
         "//libraries/opentelemetry-semconv",
         "//platform/diagnostic/telemetry",
@@ -168,7 +165,6 @@ jvm_library(
         "//platform/diagnostic",
         "//platform/ijent",
         "//platform/backend/observation",
-        "//libraries/pty4j",
         "//platform/settings",
         "//platform/util/coroutines",
         "//libraries/jetbrains/annotations",
@@ -208,33 +204,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(
-    libraries = ["@lib//:diogen-analysis"],
-    module = ":ide-impl",
-    modules_after = [
-        # do not sort,
-        "//platform/platform-impl/recentProjects",
-        "//platform/platform-impl/rpc",
-        "//platform/platform-impl/ui",
-        "//platform/platform-util-io-impl:ide-util-io-impl",
-        "//platform/platform-util-netty:ide-util-netty",
-        "//platform/ijent",
-        "//platform/ijent/buildConstants",
-        "//platform/ijent/impl",
-        "//platform/jbr",
-        "//platform/object-serializer",
-        "//platform/pratt",
-        "//platform/platform-resources:resources",
-        "//platform/platform-resources-en:resources-en",
-        "//platform/syntax/syntax-tree:tree",
-    ],
-    modules_before = [
-        # do not sort,
-        "//platform/buildData",
-        "//platform/diagnostic/startUpPerformanceReporter",
-    ],
-)
-
 jvm_library(
     name = "ide-impl_test_lib",
     testonly = True,
@@ -266,7 +235,6 @@ jvm_library(
         "//jps/model-api:model_test_lib",
         "//jps/model-serialization:model-serialization_test_lib",
         "//platform/lang-api:lang_test_lib",
-        "//libraries/jna:jna_test_lib",
         "//libraries/winp:winp_test_lib",
         "//libraries/swingx:swingx_test_lib",
         "//platform/core-impl:core-impl_test_lib",
@@ -334,7 +302,6 @@ jvm_library(
         "//libraries/assertj-core",
         "//libraries/assertj-core:assertj-core_test_lib",
         "//platform/util/jdom:jdom_test_lib",
-        "//libraries/jvm-native-trusted-roots:jvm-native-trusted-roots_test_lib",
         "//libraries/opentelemetry:opentelemetry_test_lib",
         "//libraries/opentelemetry-semconv:opentelemetry-semconv_test_lib",
         "//platform/diagnostic/telemetry:telemetry_test_lib",
@@ -351,7 +318,6 @@ jvm_library(
         "//platform/diagnostic:diagnostic_test_lib",
         "//platform/ijent:ijent_test_lib",
         "//platform/backend/observation:observation_test_lib",
-        "//libraries/pty4j:pty4j_test_lib",
         "//platform/settings:settings_test_lib",
         "//platform/util/coroutines:coroutines_test_lib",
         "//libraries/jetbrains/annotations:annotations_test_lib",
@@ -409,7 +375,6 @@ exports_files(
         "resources/idea/PlatformActions.xml",
         "resources/intellij.platform.ide.impl.actions.xml",
         "resources/intellij.platform.ide.impl.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )
@@ -691,7 +656,8 @@ jvm_library(
         "//platform/util/coroutines:coroutines_test_lib",
         "//libraries/jetbrains/annotations",
         "//libraries/jetbrains/annotations:annotations_test_lib",
-        "@lib//:kotlinx-coroutines-test",
+        "//libraries/kotlinx/coroutines/test",
+        "//libraries/kotlinx/coroutines/test:test_test_lib",
         "//libraries/lz4",
         "//libraries/lz4:lz4_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",

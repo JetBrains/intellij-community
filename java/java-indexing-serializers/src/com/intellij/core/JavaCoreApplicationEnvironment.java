@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.core;
 
 import com.intellij.codeInsight.ContainerProvider;
@@ -76,7 +76,7 @@ public class JavaCoreApplicationEnvironment extends CoreApplicationEnvironment {
     registerFileType(JavaClassFileType.INSTANCE, "class");
     registerFileType(JavaFileType.INSTANCE, "java");
     registerFileType(ArchiveFileType.INSTANCE, "jar;zip");
-    Registry.get("java.highest.language.level").setValue("26");
+    Registry.get("java.highest.language.level").setValue("27");
     registerFileType(PlainTextFileType.INSTANCE, "txt;sh;bat;cmd;policy;log;cgi;MF;jad;jam;htaccess");
 
     addExplicitExtension(LanguageASTFactory.INSTANCE, PlainTextLanguage.INSTANCE, new PlainTextASTFactory());

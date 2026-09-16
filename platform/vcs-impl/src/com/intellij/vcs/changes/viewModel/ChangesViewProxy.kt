@@ -11,7 +11,6 @@ import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeListAdapter
 import com.intellij.openapi.vcs.changes.ChangeListListener
-import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
 import com.intellij.openapi.vcs.changes.ChangesViewSplitComponentBinding
 import com.intellij.openapi.vcs.changes.CommitChangesViewWithToolbarPanel
 import com.intellij.openapi.vcs.changes.InclusionModel
@@ -19,6 +18,7 @@ import com.intellij.openapi.vcs.changes.LocalChangesListView
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.vcs.impl.shared.RdLocalChanges
+import com.intellij.platform.vcs.impl.shared.changes.UpdatableMultipleChangesDiffRequestProcessor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.SharedFlow
@@ -69,7 +69,7 @@ abstract class ChangesViewProxy(val project: Project, val scope: CoroutineScope)
   abstract fun hasContentToDiff(): Boolean
   abstract fun getDiffRequestProducers(selectedOnly: Boolean): ListSelection<out DiffRequestProducer>?
 
-  abstract fun createDiffPreviewProcessor(isInEditor: Boolean): ChangeViewDiffRequestProcessor
+  abstract fun createDiffPreviewProcessor(isInEditor: Boolean): UpdatableMultipleChangesDiffRequestProcessor
 
   fun getPreferredFocusedComponent(): JComponent {
     val p = panel

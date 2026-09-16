@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.review
 
-import com.intellij.collaboration.async.cancelAndJoinSilently
+import com.intellij.collaboration.async.cancelAndJoin
 import com.intellij.collaboration.async.mapFiltered
 import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.async.mapStatefulToStateful
@@ -223,7 +223,7 @@ internal class GitLabMergeRequestDiscussionsViewModelsImpl(
     }
   }
 
-  suspend fun destroy() = cs.cancelAndJoinSilently()
+  suspend fun destroy() = cs.cancelAndJoin()
 
   override fun lookupNextComment(cursorLocation: UnifiedCodeReviewItemPosition, isVisible: (String) -> Boolean): String? =
     lookupAdjacentComment(cursorLocation, isNext = true, isVisible)

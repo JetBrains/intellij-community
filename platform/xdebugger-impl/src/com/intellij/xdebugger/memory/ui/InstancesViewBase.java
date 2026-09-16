@@ -25,8 +25,8 @@ public abstract class InstancesViewBase extends JBPanel implements Disposable {
   }
 
   protected XValueMarkers<?, ?> getValueMarkers(@NotNull XDebugSession session) {
-    return session instanceof XDebugSessionImpl
-      ? ((XDebugSessionImpl)session).getValueMarkers()
+    return session instanceof XDebugSessionImpl debugSession
+      ? debugSession.getValueMarkers()
       : null;
   }
 

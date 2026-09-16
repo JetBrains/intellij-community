@@ -13,6 +13,8 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.kotest.matchers.types.shouldNotBeInstanceOf
 import org.junit.jupiter.api.Assumptions
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import java.math.BigInteger
@@ -61,6 +63,23 @@ class MultiRoutingFileSystemProviderTest {
       val wrappedPath = provider.getPath(path.toUri())
       wrappedPath.shouldBeInstanceOf<MultiRoutingFsPath>()
       Files.probeContentType(wrappedPath).shouldBe("application/zip")
+    }
+  }
+
+  @Test
+  fun `URI paths use the same backend as string paths`() {
+    withEmptyZipFile { zip ->
+      FileSystems.newFileSystem(zip).use { backend ->
+        val provider = MultiRoutingFileSystemProvider(defaultSunNioFs.provider())
+        val fs = provider.theOnlyFileSystem
+        val localPath = defaultSunNioFs.getPath("routed path #1.txt").toAbsolutePath()
+        val routedPath = MultiRoutingFileSystem.sanitizeRoot(localPath.toString())
+        fs.setBackendProvider({ local, path -> if (path == routedPath) backend else local }, null, null)
+
+        val actual = provider.getPath(localPath.toUri())
+        assertSame(backend, actual.initialDelegate.fileSystem)
+        assertEquals(fs.getPath(localPath.toString()), actual)
+      }
     }
   }
 

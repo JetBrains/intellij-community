@@ -84,16 +84,11 @@ val CE_CLASS_VERSIONS: Map<String, String> = mapOf(
 )
 
 fun configurePropertiesForAllEditionsOfIntelliJIdea(properties: JetBrainsProductProperties) {
-  properties.productLayout.addPlatformSpec { layout, _ ->
+  properties.productLayout.addPlatformSpec { layout ->
     layout.withModule("intellij.java.ide.resources")
 
     //todo currently intellij.platform.testFramework included into idea.jar depends on this jar so it cannot be moved to java plugin
     layout.withModule("intellij.java.rt", "idea_rt.jar")
-    layout.withoutProjectLibrary("Ant")
-    // this library is placed into a subdirectory of the 'lib' directory in the Android plugin layout, so we need to exclude it from the platform layout explicitly
-    layout.withoutProjectLibrary("layoutlib")
-
-    layout.withoutProjectLibrary("hamcrest")
   }
 
   properties.productLayout.compatiblePluginsToIgnore = persistentListOf(

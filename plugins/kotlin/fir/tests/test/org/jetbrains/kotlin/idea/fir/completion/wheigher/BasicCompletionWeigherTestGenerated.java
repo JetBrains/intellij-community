@@ -459,6 +459,109 @@ public abstract class BasicCompletionWeigherTestGenerated extends AbstractBasicC
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../completion/testData/weighers/basic/smartCasts")
+    public static class SmartCasts extends AbstractBasicCompletionWeigherTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("ConflictingImplicitReceiverCasts.kt")
+        public void testConflictingImplicitReceiverCasts() throws Exception {
+            runTest("../../completion/testData/weighers/basic/smartCasts/ConflictingImplicitReceiverCasts.kt");
+        }
+
+        @TestMetadata("ContextParameter.kt")
+        public void testContextParameter() throws Exception {
+            runTest("../../completion/testData/weighers/basic/smartCasts/ContextParameter.kt");
+        }
+
+        @TestMetadata("ContextParameterAndImplicitReceiver.kt")
+        public void testContextParameterAndImplicitReceiver() throws Exception {
+            runTest("../../completion/testData/weighers/basic/smartCasts/ContextParameterAndImplicitReceiver.kt");
+        }
+
+        @TestMetadata("ContextParameterDifferentReceiver.kt")
+        public void testContextParameterDifferentReceiver() throws Exception {
+            runTest("../../completion/testData/weighers/basic/smartCasts/ContextParameterDifferentReceiver.kt");
+        }
+
+        @TestMetadata("ContextParameterNullCheck.kt")
+        public void testContextParameterNullCheck() throws Exception {
+            runTest("../../completion/testData/weighers/basic/smartCasts/ContextParameterNullCheck.kt");
+        }
+
+        @TestMetadata("ContextParameterPropertyGetter.kt")
+        public void testContextParameterPropertyGetter() throws Exception {
+            runTest("../../completion/testData/weighers/basic/smartCasts/ContextParameterPropertyGetter.kt");
+        }
+
+        @TestMetadata("ContextParameterReceiverChain.kt")
+        public void testContextParameterReceiverChain() throws Exception {
+            runTest("../../completion/testData/weighers/basic/smartCasts/ContextParameterReceiverChain.kt");
+        }
+
+        @TestMetadata("DifferentImplicitReceiver.kt")
+        public void testDifferentImplicitReceiver() throws Exception {
+            runTest("../../completion/testData/weighers/basic/smartCasts/DifferentImplicitReceiver.kt");
+        }
+
+        @TestMetadata("DifferentImplicitRootOfReceiverChain.kt")
+        public void testDifferentImplicitRootOfReceiverChain() throws Exception {
+            runTest("../../completion/testData/weighers/basic/smartCasts/DifferentImplicitRootOfReceiverChain.kt");
+        }
+
+        @TestMetadata("DifferentReceiver.kt")
+        public void testDifferentReceiver() throws Exception {
+            runTest("../../completion/testData/weighers/basic/smartCasts/DifferentReceiver.kt");
+        }
+
+        @TestMetadata("Intersection.kt")
+        public void testIntersection() throws Exception {
+            runTest("../../completion/testData/weighers/basic/smartCasts/Intersection.kt");
+        }
+
+        @TestMetadata("LocalVariable.kt")
+        public void testLocalVariable() throws Exception {
+            runTest("../../completion/testData/weighers/basic/smartCasts/LocalVariable.kt");
+        }
+
+        @TestMetadata("MultipleSmartCasts.kt")
+        public void testMultipleSmartCasts() throws Exception {
+            runTest("../../completion/testData/weighers/basic/smartCasts/MultipleSmartCasts.kt");
+        }
+
+        @TestMetadata("NullCheck.kt")
+        public void testNullCheck() throws Exception {
+            runTest("../../completion/testData/weighers/basic/smartCasts/NullCheck.kt");
+        }
+
+        @TestMetadata("QualifiedProperty.kt")
+        public void testQualifiedProperty() throws Exception {
+            runTest("../../completion/testData/weighers/basic/smartCasts/QualifiedProperty.kt");
+        }
+
+        @TestMetadata("ReassignedVariable.kt")
+        public void testReassignedVariable() throws Exception {
+            runTest("../../completion/testData/weighers/basic/smartCasts/ReassignedVariable.kt");
+        }
+
+        @TestMetadata("ReceiverChain.kt")
+        public void testReceiverChain() throws Exception {
+            runTest("../../completion/testData/weighers/basic/smartCasts/ReceiverChain.kt");
+        }
+
+        @TestMetadata("SelectedImplicitReceiver.kt")
+        public void testSelectedImplicitReceiver() throws Exception {
+            runTest("../../completion/testData/weighers/basic/smartCasts/SelectedImplicitReceiver.kt");
+        }
+
+        @TestMetadata("SelectedImplicitRootOfReceiverChain.kt")
+        public void testSelectedImplicitRootOfReceiverChain() throws Exception {
+            runTest("../../completion/testData/weighers/basic/smartCasts/SelectedImplicitRootOfReceiverChain.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../completion/testData/weighers/basic")
     public static class Uncategorized extends AbstractBasicCompletionWeigherTest {
         private void runTest(String testDataFilePath) throws Exception {

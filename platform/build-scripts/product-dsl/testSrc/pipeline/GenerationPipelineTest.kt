@@ -121,7 +121,7 @@ class GenerationPipelineTest {
     override val id = NodeId(nodeId, NodeCategory.GENERATION)
     override val requires: Set<DataSlot<*>> = requiresSlots
     override val produces: Set<DataSlot<*>> = producesSlots
-    override suspend fun execute(ctx: ComputeContext) {
+    override fun execute(ctx: ComputeContext) {
       // No-op for testing
     }
   }

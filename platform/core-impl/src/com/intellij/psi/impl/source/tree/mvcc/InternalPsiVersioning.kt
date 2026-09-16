@@ -22,6 +22,8 @@ import kotlinx.coroutines.ThreadContextElement
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
+import java.util.Collections
+import java.util.IdentityHashMap
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicBoolean
@@ -198,7 +200,27 @@ object InternalPsiVersioning {
 
   typealias PsiVersion = Long
 
-  private class PsiVersionWriteContextElement(val version: Long): IntelliJThreadContextElement<PsiVersion?>, ExternalIntelliJContextElement, ThreadContextElement<PsiVersion?> {
+  // a slight optimization: in each write action we collect the modified clenables, and we register them later in a batch
+  private class CurrentlyModifiedCleanables {
+    private val cleanables = Collections.newSetFromMap(IdentityHashMap<PsiVersionCleanable, Boolean>())
+
+    @Synchronized
+    fun add(cleanable: PsiVersionCleanable) {
+      cleanables.add(cleanable)
+    }
+
+    @Synchronized
+    fun drain(): Collection<PsiVersionCleanable> {
+      val result = cleanables.toList()
+      cleanables.clear()
+      return result
+    }
+  }
+
+  private class PsiVersionWriteContextElement(
+    val version: Long,
+    val currentlyModifiedCleanables: CurrentlyModifiedCleanables? = null,
+  ): IntelliJThreadContextElement<PsiVersion?>, ExternalIntelliJContextElement, ThreadContextElement<PsiVersion?> {
     object Key : CoroutineContext.Key<PsiVersionWriteContextElement>
     override val key: CoroutineContext.Key<*> = Key
 
@@ -267,11 +289,9 @@ object InternalPsiVersioning {
       }
     }
 
-    internal fun registerCleanable(cleanable: PsiVersionCleanable) {
-      // service can be null in tests
-      garbageCollector?.registerCleanable(cleanable)
+    internal fun registerCleanablesForVersion(version: Long, cleanables: Collection<PsiVersionCleanable>) {
+      garbageCollector?.registerCleanablesForVersion(version, cleanables)
     }
-
 
     fun incrementVersion(expected: Long) {
       // the published version is always frozen, we have no right to remove it until it ends
@@ -343,6 +363,19 @@ object InternalPsiVersioning {
     val currentReadStamp = getCurrentPsiVersion()
     return initFreezePsiVersionSection(true, currentReadStamp).use {
       action.get()
+    }
+  }
+
+  @JvmStatic
+  @Internal
+  fun recordVersionedChange(cleanable: PsiVersionCleanable) {
+    val version = getCurrentPsiVersion()
+    val batch = currentThreadContext()[PsiVersionWriteContextElement.Key]?.currentlyModifiedCleanables
+    if (batch != null) {
+      batch.add(cleanable)
+    }
+    else {
+      PsiVersionRegistry.instance.registerCleanablesForVersion(version, listOf(cleanable))
     }
   }
 
@@ -456,15 +489,17 @@ object InternalPsiVersioning {
       val psiVersionRegistry = PsiVersionRegistry.instance
       val existingVersion = psiVersionRegistry.latestPublishedVersion
       val newVersion = existingVersion + 1
+      val currentlyModifiedCleanables = CurrentlyModifiedCleanables()
       @Suppress("DEPRECATION")
-      val threadContextInstallation = installThreadContext(context + PsiVersionWriteContextElement(newVersion), true)
+      val threadContextInstallation = installThreadContext(context + PsiVersionWriteContextElement(newVersion, currentlyModifiedCleanables), true)
       threadLocalVersioningTracker.set(newVersion)
       object : AccessToken() {
         override fun finish() {
+          psiVersionRegistry.registerCleanablesForVersion(newVersion, currentlyModifiedCleanables.drain())
           threadContextInstallation.finish()
           threadLocalVersioningTracker.remove()
-          val latestVersion = PsiVersionRegistry.instance.latestPublishedVersion
-          PsiVersionRegistry.instance.incrementVersion(latestVersion)
+          val latestVersion = psiVersionRegistry.latestPublishedVersion
+          psiVersionRegistry.incrementVersion(latestVersion)
         }
       }
     } else if (context[PsiVersionWriteContextElement.Key] == null) {

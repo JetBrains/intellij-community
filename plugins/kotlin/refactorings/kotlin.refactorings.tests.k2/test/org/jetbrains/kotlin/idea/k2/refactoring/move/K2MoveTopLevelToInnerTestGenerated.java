@@ -17,7 +17,7 @@ import org.junit.runner.RunWith;
 @TestRoot("refactorings/kotlin.refactorings.tests.k2")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../../idea/tests/testData/refactoring/moveTopLevelToInner")
+@TestMetadata("testData/moveTopLevelToInner")
 public class K2MoveTopLevelToInnerTestGenerated extends AbstractK2MoveTopLevelToInnerTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -25,16 +25,16 @@ public class K2MoveTopLevelToInnerTestGenerated extends AbstractK2MoveTopLevelTo
 
     @TestMetadata("java/moveTopLevelClassToNestedClass/moveTopLevelClassToNestedClass.test")
     public void testJava_moveTopLevelClassToNestedClass_MoveTopLevelClassToNestedClass() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/moveTopLevelToInner/java/moveTopLevelClassToNestedClass/moveTopLevelClassToNestedClass.test");
+        runTest("testData/moveTopLevelToInner/java/moveTopLevelClassToNestedClass/moveTopLevelClassToNestedClass.test");
     }
 
     @TestMetadata("java/moveTopLevelClassToTopLevelClassOfAnotherPackage/moveTopLevelClassToTopLevelClassOfAnotherPackage.test")
     public void testJava_moveTopLevelClassToTopLevelClassOfAnotherPackage_MoveTopLevelClassToTopLevelClassOfAnotherPackage() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/moveTopLevelToInner/java/moveTopLevelClassToTopLevelClassOfAnotherPackage/moveTopLevelClassToTopLevelClassOfAnotherPackage.test");
+        runTest("testData/moveTopLevelToInner/java/moveTopLevelClassToTopLevelClassOfAnotherPackage/moveTopLevelClassToTopLevelClassOfAnotherPackage.test");
     }
 
     @TestMetadata("java/moveTopLevelClassToTopLevelClass/moveTopLevelClassToTopLevelClass.test")
     public void testJava_moveTopLevelClassToTopLevelClass_MoveTopLevelClassToTopLevelClass() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/moveTopLevelToInner/java/moveTopLevelClassToTopLevelClass/moveTopLevelClassToTopLevelClass.test");
+        runTest("testData/moveTopLevelToInner/java/moveTopLevelClassToTopLevelClass/moveTopLevelClassToTopLevelClass.test");
     }
 }

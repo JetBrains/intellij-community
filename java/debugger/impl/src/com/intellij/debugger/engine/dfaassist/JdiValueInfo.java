@@ -138,8 +138,8 @@ interface JdiValueInfo {
         return new EnumConstant(type, enumConstantName);
       }
       if (fillSpecial) {
-        if (value instanceof ArrayReference) {
-          PrimitiveConstant length = new PrimitiveConstant(DfTypes.intValue(((ArrayReference)value).length()));
+        if (value instanceof ArrayReference arrayReference) {
+          PrimitiveConstant length = new PrimitiveConstant(DfTypes.intValue(arrayReference.length()));
           return new ObjectWithSpecialField(type, SpecialField.ARRAY_LENGTH, length);
         }
         else if (name.startsWith("java.util.Collections$Empty")) {
@@ -150,29 +150,29 @@ interface JdiValueInfo {
         }
         else if (COLLECTIONS_WITH_SIZE_FIELD.contains(name)) {
           Value size = getField(ref, "size");
-          if (size instanceof IntegerValue) {
-            return collectionWithSize(type, ((IntegerValue)size).value());
+          if (size instanceof IntegerValue integerValue) {
+            return collectionWithSize(type, integerValue.value());
           }
         }
         else if ("java.util.ImmutableCollections$ListN".equals(name)) {
           Value elements = getField(ref, "elements");
-          if (elements instanceof ArrayReference) {
-            return collectionWithSize(type, ((ArrayReference)elements).length());
+          if (elements instanceof ArrayReference reference) {
+            return collectionWithSize(type, reference.length());
           }
         }
         else if ("java.util.Arrays$ArrayList".equals(name)) {
           Value elements = getField(ref, "a");
-          if (elements instanceof ArrayReference) {
-            return collectionWithSize(type, ((ArrayReference)elements).length());
+          if (elements instanceof ArrayReference reference) {
+            return collectionWithSize(type, reference.length());
           }
         }
         else if (CommonClassNames.JAVA_UTIL_HASH_SET.equals(name) ||
                  "java.util.TreeSet".equals(name)) {
           Value map = getField(ref, CommonClassNames.JAVA_UTIL_HASH_SET.equals(name) ? "map" : "m");
-          if (map instanceof ObjectReference) {
-            Value size = getField((ObjectReference)map, "size");
-            if (size instanceof IntegerValue) {
-              return collectionWithSize(type, ((IntegerValue)size).value());
+          if (map instanceof ObjectReference reference) {
+            Value size = getField(reference, "size");
+            if (size instanceof IntegerValue integerValue) {
+              return collectionWithSize(type, integerValue.value());
             }
           }
         }
@@ -210,8 +210,8 @@ interface JdiValueInfo {
 
   private static String getEnumConstantName(ObjectReference ref) {
     ReferenceType type = ref.referenceType();
-    if (!(type instanceof ClassType) || !((ClassType)type).isEnum()) return null;
-    ClassType superclass = ((ClassType)type).superclass();
+    if (!(type instanceof ClassType classType) || !classType.isEnum()) return null;
+    ClassType superclass = classType.superclass();
     if (superclass == null) return null;
     if (!superclass.name().equals(CommonClassNames.JAVA_LANG_ENUM)) {
       superclass = superclass.superclass();
@@ -220,28 +220,28 @@ interface JdiValueInfo {
     Field nameField = DebuggerUtils.findField(superclass, "name");
     if (nameField == null) return null;
     Value nameValue = ref.getValue(nameField);
-    return nameValue instanceof StringReference ? ((StringReference)nameValue).value() : null;
+    return nameValue instanceof StringReference reference ? reference.value() : null;
   }
 
   private static @Nullable DfConstantType<?> primitiveConstant(@Nullable Value jdiValue) {
     if (jdiValue == DfaAssistProvider.NullConst) {
       return DfTypes.NULL;
     }
-    if (jdiValue instanceof BooleanValue) {
-      return DfTypes.booleanValue(((BooleanValue)jdiValue).value());
+    if (jdiValue instanceof BooleanValue booleanValue) {
+      return DfTypes.booleanValue(booleanValue.value());
     }
-    if (jdiValue instanceof LongValue) {
-      return DfTypes.longValue(((LongValue)jdiValue).longValue());
+    if (jdiValue instanceof LongValue longValue) {
+      return DfTypes.longValue(longValue.longValue());
     }
     if (jdiValue instanceof ShortValue || jdiValue instanceof CharValue ||
         jdiValue instanceof ByteValue || jdiValue instanceof IntegerValue) {
       return DfTypes.intValue(((PrimitiveValue)jdiValue).intValue());
     }
-    if (jdiValue instanceof FloatValue) {
-      return DfTypes.floatValue(((FloatValue)jdiValue).floatValue());
+    if (jdiValue instanceof FloatValue floatValue) {
+      return DfTypes.floatValue(floatValue.floatValue());
     }
-    if (jdiValue instanceof DoubleValue) {
-      return DfTypes.doubleValue(((DoubleValue)jdiValue).doubleValue());
+    if (jdiValue instanceof DoubleValue value) {
+      return DfTypes.doubleValue(value.doubleValue());
     }
     return null;
   }

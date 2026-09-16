@@ -17,6 +17,7 @@ import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.util.findParentOfType
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ProcessingContext
+import com.intellij.util.ThreeState
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.toArray
 import com.jetbrains.python.BaseReference
@@ -36,10 +37,12 @@ import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.resolve.ImportedResolveResult
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder
 import com.jetbrains.python.psi.types.PyClassType
+import com.jetbrains.python.psi.types.PyClassTypeImpl
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypeProviderBase
 import com.jetbrains.python.psi.types.PyUnionType
 import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.testing.isTestElement
 import org.jetbrains.annotations.ApiStatus
 
 class PyTestFixtureReference(pyElement: PsiElement, fixture: PyTestFixture, private val importElement: PyElement? = null, range: TextRange? = null) : BaseReference(pyElement, range), PsiPolyVariantReference {
@@ -119,10 +122,16 @@ class PyTestFixtureReference(pyElement: PsiElement, fixture: PyTestFixture, priv
 }
 
 
+private const val FIXTURE_REQUEST_CLASS = "_pytest.fixtures.FixtureRequest"
+private const val SUB_REQUEST_CLASS = "_pytest.fixtures.SubRequest"
+
 class PyTextFixtureTypeProvider : PyTypeProviderBase() {
   override fun getParameterType(param: PyNamedParameter, func: PyFunction, context: TypeEvalContext): Ref<PyType>? {
     if (!context.maySwitchToAST(func)) {
       return null
+    }
+    if (param.name == REQUEST_FIXTURE) {
+      return getRequestFixtureType(func, context)
     }
     val fixtureFunc = param.references.filterIsInstance<PyTestFixtureReference>().firstOrNull()?.resolve() as? PyFunction ?: return null
     val returnType = context.getReturnType(fixtureFunc)
@@ -134,6 +143,21 @@ class PyTextFixtureTypeProvider : PyTypeProviderBase() {
     if (fixtureFunc.isGenerator && returnType is PyClassType && returnType.isParameterized) return Ref(returnType.iteratedItemType)
 
     return Ref(returnType)
+  }
+
+  /**
+   * Returns the type of the `request` parameter.
+   * pytest gives a `SubRequest` to a fixture and a `FixtureRequest` to a test.
+   */
+  private fun getRequestFixtureType(func: PyFunction, context: TypeEvalContext): Ref<PyType>? {
+    val requestClassQName = when {
+      func.isFixture() -> SUB_REQUEST_CLASS
+      isTestElement(func, ThreeState.NO, context) && ModuleUtilCore.findModuleForPsiElement(func)?.let(::isPyTestEnabled) == true ->
+        FIXTURE_REQUEST_CLASS
+      else -> return null
+    }
+    val requestType = PyClassTypeImpl.createTypeByQName(func, requestClassQName, false) ?: return null
+    return Ref(requestType)
   }
 
   private fun coroutineOrGeneratorElementType(coroutineOrGeneratorType: PyType?): Ref<PyType>? {

@@ -3,23 +3,28 @@ package com.intellij.openapi.editor.impl.caret.blink
 
 import com.intellij.openapi.editor.impl.caret.model.CaretTick
 
-internal class CaretBlinkMachine {
-  private var phase: CaretBlinkPhase = CaretBlinkPhase.Dormant
+internal class CaretBlinkMachine private constructor(private val phase: CaretBlinkPhase) {
+  fun start(): CaretBlinkMachine = CaretBlinkMachine(CaretBlinkPhase.Awake)
 
-  fun start() {
-    phase = CaretBlinkPhase.Awake
+  fun stop(): CaretBlinkMachine = CaretBlinkMachine(CaretBlinkPhase.Dormant)
+
+  /**
+   * Restarts the blink from a fully opaque caret, unless blinking is stopped altogether.
+   */
+  fun restart(): CaretBlinkMachine {
+    val isStopped = phase == CaretBlinkPhase.Dormant
+    val restartedPhase = if (isStopped) phase else CaretBlinkPhase.Awake
+    return CaretBlinkMachine(restartedPhase)
   }
 
-  fun stop() {
-    phase = CaretBlinkPhase.Dormant
+  fun advance(tick: CaretTick, prefetching: Boolean): Pair<CaretBlinkMachine, CaretBlinkStep> {
+    val advancedPhase = phase.advance(tick)
+    val next = CaretBlinkMachine(advancedPhase)
+    val step = advancedPhase.step(tick, prefetching)
+    return next to step
   }
 
-  fun restart() {
-    phase = if (phase == CaretBlinkPhase.Dormant) phase else CaretBlinkPhase.Awake
-  }
-
-  fun advance(tick: CaretTick, prefetching: Boolean): CaretBlinkFrame {
-    phase = phase.advance(tick)
-    return phase.frame(tick, prefetching)
+  companion object {
+    val DORMANT: CaretBlinkMachine = CaretBlinkMachine(CaretBlinkPhase.Dormant)
   }
 }

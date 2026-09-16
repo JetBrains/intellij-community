@@ -79,7 +79,7 @@ class LinuxCustomizerBuilder @PublishedApi internal constructor(private val proj
   var snaps: PersistentList<LinuxDistributionCustomizer.Snap> = persistentListOf()
 
   // Method override handlers (stored as lambdas)
-  private var copyAdditionalFilesHandler: (suspend (Path, JvmArchitecture, BuildContext) -> Unit)? = null
+  private var copyAdditionalFilesHandler: ((Path, JvmArchitecture, BuildContext) -> Unit)? = null
   private var rootDirectoryNameHandler: ((ApplicationInfoProperties, String) -> String)? = null
   private var executableFilePatternsHandler: ((Sequence<String>, Boolean, JvmArchitecture, LibcImpl, BuildContext) -> Sequence<String>)? = null
 
@@ -87,7 +87,7 @@ class LinuxCustomizerBuilder @PublishedApi internal constructor(private val proj
    * Gets the current copyAdditionalFiles handler for wrapping purposes.
    * @return the current handler, or `null` if none is set
    */
-  fun getCopyAdditionalFilesHandler(): (suspend (Path, JvmArchitecture, BuildContext) -> Unit)? = copyAdditionalFilesHandler
+  fun getCopyAdditionalFilesHandler(): ((Path, JvmArchitecture, BuildContext) -> Unit)? = copyAdditionalFilesHandler
 
   /**
    * Adds custom logic for copying additional files to the Linux distribution.
@@ -95,7 +95,7 @@ class LinuxCustomizerBuilder @PublishedApi internal constructor(private val proj
    *
    * @see [ProductProperties.copyAdditionalOsSpecificFiles]
    */
-  fun copyAdditionalFiles(handler: suspend (targetDir: Path, arch: JvmArchitecture, context: BuildContext) -> Unit) {
+  fun copyAdditionalFiles(handler: (targetDir: Path, arch: JvmArchitecture, context: BuildContext) -> Unit) {
     copyAdditionalFilesHandler = handler
   }
 
@@ -143,7 +143,7 @@ class LinuxCustomizerBuilder @PublishedApi internal constructor(private val proj
       snaps = builder.snaps
     }
 
-    override suspend fun copyAdditionalFiles(targetDir: Path, arch: JvmArchitecture, context: BuildContext) {
+    override fun copyAdditionalFiles(targetDir: Path, arch: JvmArchitecture, context: BuildContext) {
       super.copyAdditionalFiles(targetDir = targetDir, arch = arch, context = context)
       context.productProperties.copyAdditionalOsSpecificFiles(targetDir, OsFamily.LINUX, arch, context)
       builder.copyAdditionalFilesHandler?.invoke(targetDir, arch, context)
@@ -252,7 +252,7 @@ open class LinuxDistributionCustomizer {
   /**
    * Override this method to copy additional files to the Linux distribution of the product.
    */
-  open suspend fun copyAdditionalFiles(targetDir: Path, arch: JvmArchitecture, context: BuildContext) {
+  open fun copyAdditionalFiles(targetDir: Path, arch: JvmArchitecture, context: BuildContext) {
     bundleRepairUtility(os = OsFamily.LINUX, arch = arch, distributionDir = targetDir, context = context)
   }
 }

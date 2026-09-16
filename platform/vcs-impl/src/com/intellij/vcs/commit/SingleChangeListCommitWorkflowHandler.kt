@@ -9,7 +9,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ChangeListManager
-import com.intellij.openapi.vcs.changes.ChangeListManagerEx
 import com.intellij.openapi.vcs.changes.ChangesUtil.getAffectedVcses
 import com.intellij.openapi.vcs.changes.ChangesUtil.getAffectedVcsesForFilePaths
 import com.intellij.openapi.vcs.changes.ChangesViewWorkflowManager
@@ -19,7 +18,6 @@ import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.concurrency.await
 
 class SingleChangeListCommitWorkflowHandler(
   override val workflow: CommitChangeListDialogWorkflow,
@@ -147,7 +145,7 @@ class SingleChangeListCommitWorkflowHandler(
 
   private suspend fun refreshLocalChanges() {
     withModalProgressIndicator(project, VcsBundle.message("commit.progress.title")) {
-      ChangeListManagerEx.getInstanceEx(project).promiseWaitForUpdate().await()
+      ChangeListManager.getInstance(project).awaitUpdate()
       withContext(Dispatchers.EDT) {
         ui.refreshDataBeforeCommit()
       }

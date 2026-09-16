@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.maven.model` start
+content_module_jar(module = ":model")
+### auto-generated section `dev intellij.maven.model` end
+
 ### auto-generated section `build intellij.maven.model` start
 jvm_library(
     name = "model",
@@ -21,8 +25,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = ["//libraries/jetbrains/annotations"],
 )
-
-content_module_jar(module = ":model")
 
 jvm_library(
     name = "model_test_lib",

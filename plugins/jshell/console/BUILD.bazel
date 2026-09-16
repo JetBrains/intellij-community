@@ -11,6 +11,10 @@ jps_test(
 )
 ### skip generation section `test intellij.java.jshell.console.tests`
 
+### auto-generated section `dev intellij.java.jshell.console` start
+content_module_jar(module = ":console")
+### auto-generated section `dev intellij.java.jshell.console` end
+
 ### auto-generated section `build intellij.java.jshell.console` start
 jvm_library(
     name = "console",
@@ -55,8 +59,6 @@ jvm_library(
         "@lib//:kotlin-stdlib",
     ],
 )
-
-content_module_jar(module = ":console")
 
 jvm_library(
     name = "console_test_lib",

@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.productLayout.validator
 
+import com.intellij.platform.buildScripts.concurrency.SharedTaskOwner
 import com.intellij.platform.pluginGraph.ContentModuleName
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
 import kotlinx.coroutines.Dispatchers
@@ -19,6 +20,13 @@ import org.junit.jupiter.api.extension.ExtendWith
  */
 @ExtendWith(TestFailureLogger::class)
 class PluginContentStructureValidatorTest {
+  private val owner = SharedTaskOwner("PluginContentStructureValidatorTest")
+
+  @org.junit.jupiter.api.AfterEach
+  fun closeSharedTasks() {
+    owner.close()
+  }
+
   @Test
   fun `test plugin structural violations include test content modules`(): Unit = runBlocking(Dispatchers.Default) {
     val graph = pluginGraph {
@@ -36,7 +44,7 @@ class PluginContentStructureValidatorTest {
       linkContentModuleTestDeps("mod.required", "mod.optional")
     }
 
-    val model = testGenerationModel(graph)
+    val model = testGenerationModel(graph, owner = owner)
     val errors = runValidationRule(PluginContentStructureValidator, model)
 
     assertThat(errors).hasSize(1)
@@ -59,7 +67,7 @@ class PluginContentStructureValidatorTest {
       linkContentModuleDeps("mod.required", "mod.optional")
     }
 
-    val model = testGenerationModel(graph)
+    val model = testGenerationModel(graph, owner = owner)
     val errors = runValidationRule(PluginContentStructureValidator, model)
 
     assertThat(errors).hasSize(1)

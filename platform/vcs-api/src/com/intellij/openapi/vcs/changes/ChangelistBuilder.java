@@ -39,7 +39,7 @@ public interface ChangelistBuilder {
    */
   void processChangeInList(@NotNull Change change, @Nullable @NlsSafe String changeListName, VcsKey vcsKey);
 
-  void removeRegisteredChangeFor(final FilePath path);
+  void removeRegisteredChangeFor(@NotNull FilePath path);
 
   void processUnversionedFile(FilePath filePath);
 

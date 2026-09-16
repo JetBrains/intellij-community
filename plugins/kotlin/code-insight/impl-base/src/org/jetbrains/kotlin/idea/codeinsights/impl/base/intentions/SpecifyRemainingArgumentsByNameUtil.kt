@@ -30,6 +30,7 @@ import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.appendValueArgument
+import org.jetbrains.kotlin.idea.base.psi.insertValueArgumentBefore
 import org.jetbrains.kotlin.idea.base.util.reformat
 import org.jetbrains.kotlin.idea.formatter.KotlinCommonCodeStyleSettings
 import org.jetbrains.kotlin.idea.formatter.kotlinCommonSettings
@@ -107,7 +108,7 @@ object SpecifyRemainingArgumentsByNameUtil {
             val expression = psiFactory.createExpression(suggested ?: "TODO()")
             val argument = psiFactory.createArgument(expression = expression, name = argumentName)
             val addedArgument = if (anchor != null) {
-                element.addArgumentBefore(argument, anchor)
+                element.insertValueArgumentBefore(argument, anchor)
             } else {
                 element.addArgumentWithCommentsPreserve(argument, psiFactory)
             }

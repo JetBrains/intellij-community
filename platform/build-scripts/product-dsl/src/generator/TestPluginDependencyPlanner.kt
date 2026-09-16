@@ -45,7 +45,7 @@ internal object TestPluginDependencyPlanner : PipelineNode {
   override val requires: Set<DataSlot<*>> get() = setOf(Slots.CONTENT_MODULE_PLAN)
   override val produces: Set<DataSlot<*>> get() = setOf(Slots.TEST_PLUGIN_DEPENDENCY_PLAN)
 
-  override suspend fun execute(ctx: ComputeContext) {
+  override fun execute(ctx: ComputeContext) {
     val model = ctx.model
     val productClassByName = model.discovery.products
       .associate { product -> product.name to (product.properties?.javaClass?.name ?: TEST_PRODUCT_CLASS_NAME) }
@@ -186,8 +186,8 @@ private fun buildTestPluginDependencyPlan(
 
       // A library module owned by a module-set wrapper plugin must be depended on by name, not through its owner:
       // a wrapper is only a packaging container, and products are free to take its content modules directly instead
-      // of bundling it (JetBrains Client and Android Studio do that for intellij.libraries.oshi.core, while Rider
-      // bundles intellij.libraries.misc.plugin). Gating on the wrapper breaks the products that inline the module.
+      // of bundling it (Rider bundles intellij.libraries.misc.plugin, while other products inline its modules).
+      // Gating on the wrapper breaks the products that inline the module.
       if (dependency.value.startsWith(LIB_MODULE_PREFIX) &&
           resolvableProdOwners.all { isModuleSetPluginModuleName(it.name.value) }) {
         moduleDepsFromContent.add(dependency)

@@ -87,7 +87,7 @@ class ScopeChooserGroup(project: Project, parentDisposable: Disposable, initialS
     scopeModel.refreshScopes()
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun updateActions(descriptors: List<ScopeDescriptor>) {
     actions = descriptors.map { descriptor ->
       if (descriptor is ScopeSeparator)

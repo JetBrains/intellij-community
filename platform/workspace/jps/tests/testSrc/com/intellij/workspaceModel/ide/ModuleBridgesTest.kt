@@ -346,7 +346,7 @@ class ModuleBridgesTest {
         moduleManager.disposeModule(module)
       }
 
-      val moduleDirUrl = virtualFileManager.getOrCreateFromUrl(VfsUtilCore.pathToUrl(project.basePath!!))
+      val moduleDirUrl = virtualFileManager.storeAndGet(VfsUtilCore.pathToUrl(project.basePath!!))
       val projectModel = WorkspaceModel.getInstance(project)
 
       projectModel.updateProjectModel {
@@ -377,7 +377,7 @@ class ModuleBridgesTest {
       moduleManager.disposeModule(module)
     }
 
-    val moduleDirUrl = virtualFileManager.getOrCreateFromUrl(VfsUtilCore.pathToUrl(project.basePath!!))
+    val moduleDirUrl = virtualFileManager.storeAndGet(VfsUtilCore.pathToUrl(project.basePath!!))
     val projectModel = WorkspaceModel.getInstance(project)
 
     project.messageBus.connect(disposableRule.disposable).subscribe(WorkspaceModelTopics.CHANGED,
@@ -465,7 +465,7 @@ class ModuleBridgesTest {
       val moduleManager = ModuleManager.getInstance(project)
 
       val dir = File(project.basePath, "dir")
-      val moduleDirUrl = virtualFileManager.getOrCreateFromUrl(VfsUtilCore.pathToUrl(project.basePath!!))
+      val moduleDirUrl = virtualFileManager.storeAndGet(VfsUtilCore.pathToUrl(project.basePath!!))
       val projectModel = WorkspaceModel.getInstance(project)
 
       val projectLocation = getJpsProjectConfigLocation(project)!!
@@ -941,7 +941,7 @@ class ModuleBridgesTest {
     assertEquals(NonPersistentEntitySource, moduleEntity.entitySource)
 
     val moduleDirPath = temporaryDirectoryRule.newDirectoryPath(moduleName).toString()
-    val moduleDirVfu = virtualFileUrlManager.getOrCreateFromUrl(VfsUtilCore.pathToUrl(moduleDirPath))
+    val moduleDirVfu = virtualFileUrlManager.storeAndGet(VfsUtilCore.pathToUrl(moduleDirPath))
     val moduleEntitySource = LegacyBridgeJpsEntitySourceFactory.getInstance(project).createEntitySourceForModule(
       baseModuleDir = moduleDirVfu,
       externalSource = null,
@@ -971,7 +971,7 @@ class ModuleBridgesTest {
     assertFalse(newNonPersistentModule.canStoreSettings())
 
     val moduleDirPath = temporaryDirectoryRule.newDirectoryPath(renamedModuleName)
-    val moduleDirVfu = virtualFileUrlManager.getOrCreateFromUrl(VfsUtilCore.pathToUrl(moduleDirPath.toString()))
+    val moduleDirVfu = virtualFileUrlManager.storeAndGet(VfsUtilCore.pathToUrl(moduleDirPath.toString()))
     val moduleEntitySource = LegacyBridgeJpsEntitySourceFactory.getInstance(project).createEntitySourceForModule(
       baseModuleDir = moduleDirVfu,
       externalSource = null,

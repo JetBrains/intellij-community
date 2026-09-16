@@ -2,6 +2,10 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.python.community.impl.installer` start
+content_module_jar(module = ":installer")
+### auto-generated section `dev intellij.python.community.impl.installer` end
+
 ### auto-generated section `build intellij.python.community.impl.installer` start
 create_kotlinc_options(
     name = "custom_installer",
@@ -40,8 +44,6 @@ jvm_library(
         "//platform/eel-nioFs",
     ],
 )
-
-content_module_jar(module = ":installer")
 
 jvm_library(
     name = "installer_test_lib",

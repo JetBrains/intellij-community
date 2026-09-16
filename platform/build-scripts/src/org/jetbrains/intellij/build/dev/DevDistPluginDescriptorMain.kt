@@ -390,8 +390,6 @@ private object RefusingModuleOutputProvider : ModuleOutputProvider {
   override fun findLibraryRoots(libraryName: String, moduleLibraryModuleName: String?): List<Path> =
     refuse("findLibraryRoots($libraryName)")
 
-  override fun getProjectLibraryToModuleMap(): Map<String, String> = refuse("getProjectLibraryToModuleMap")
-
   override fun getModuleOutputRoots(module: JpsModule, forTests: Boolean): List<Path> = refuse("getModuleOutputRoots")
 
   override fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? =

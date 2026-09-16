@@ -162,7 +162,7 @@ class ArtifactTest : ArtifactsTestCase() {
         val artifactEntity = builder.entities(ArtifactEntity::class.java).single()
         val elementEntity = artifactEntity.rootElement!!.children.single() as FileCopyPackagingElementEntity
         builder.modifyEntity(FileCopyPackagingElementEntity.Builder::class.java, elementEntity) {
-          filePath = workspaceModel.getVirtualFileUrlManager().getOrCreateFromUrl(VfsUtilCore.pathToUrl(file2.systemIndependentPath))
+          filePath = workspaceModel.getVirtualFileUrlManager().storeAndGet(VfsUtilCore.pathToUrl(file2.systemIndependentPath))
         }
       }
     }

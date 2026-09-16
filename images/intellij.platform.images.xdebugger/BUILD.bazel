@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.platform.images.xdebugger` start
+content_module_jar(module = ":xdebugger")
+### auto-generated section `dev intellij.platform.images.xdebugger` end
+
 ### auto-generated section `build intellij.platform.images.xdebugger` start
 jvm_library(
     name = "xdebugger",
@@ -28,8 +32,6 @@ jvm_library(
         "//platform/ide-core",
     ],
 )
-
-content_module_jar(module = ":xdebugger")
 
 jvm_library(
     name = "xdebugger_test_lib",

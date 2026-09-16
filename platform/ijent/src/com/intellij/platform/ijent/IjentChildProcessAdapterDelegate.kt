@@ -7,6 +7,7 @@ import com.intellij.platform.eel.EelWindowsProcess
 import com.intellij.platform.eel.SafeDeferred
 import com.intellij.platform.eel.provider.utils.asOutputStream
 import com.intellij.platform.eel.provider.utils.consumeAsInputStream
+import com.intellij.platform.eel.terminate
 import com.intellij.platform.ijent.spi.IjentThreadPool
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi

@@ -14,7 +14,7 @@ interface KotlinCompilerPluginProjectConfigurator {
 
     fun isApplicable(module: Module): Boolean = true
 
-    @RequiresWriteLock
+    @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
     fun configureModule(module: Module, configurationResultBuilder: ConfigurationResultBuilder)
 
     fun configureModuleModCommand(module: Module): ModCommand =

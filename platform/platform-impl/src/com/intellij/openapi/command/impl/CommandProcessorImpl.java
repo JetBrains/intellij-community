@@ -17,20 +17,26 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jspecify.annotations.NonNull;
 
+import java.util.Objects;
+import java.util.function.BooleanSupplier;
 
 @ApiStatus.Internal
 public final class CommandProcessorImpl extends CoreCommandProcessor implements Disposable {
-
   @Override
   public void finishCommand(@NotNull CommandToken command, @Nullable Throwable throwable) {
     if (!isCommandTokenActive(command)) {
       return;
     }
+    CommandState state = Objects.requireNonNull(getCurrentCommandState());
     boolean isPCE = throwable instanceof ProcessCanceledException;
+    boolean shouldCheckActions = throwable != null && command.getProject() != null && !isUndoTransparentActionInProgress();
     try {
       if (throwable != null && !isPCE) {
         ExceptionUtil.rethrowUnchecked(throwable);
         LOG.error(throwable);
+      }
+      if (shouldCheckActions) {
+        state.rememberActions(captureHasActions(command));
       }
     }
     finally {
@@ -45,8 +51,44 @@ public final class CommandProcessorImpl extends CoreCommandProcessor implements 
       }
     }
     if (throwable != null) {
+      boolean hasActions = shouldCheckActions && state.hasActions();
       boolean showTooComplexDialog = !isPCE; // IJPL-1116 Cancellation causes "Too complex" message
-      undoLastOperation(command, showTooComplexDialog);
+      undoLastOperation(command, hasActions, showTooComplexDialog);
+    }
+  }
+
+  /**
+   * Modal windows reset an action collection.
+   * Saves the completed segment's action check when a modal dialog interrupts the command.
+   */
+  @Override
+  public void enterModal() {
+    CommandState state = getCurrentCommandState();
+    if (state == null || state.getToken().getProject() == null) {
+      super.enterModal();
+      return;
+    }
+    BooleanSupplier actions = captureHasActions(state.getToken());
+    try {
+      super.enterModal();
+      boolean hasActions = actions.getAsBoolean();
+      actions = () -> hasActions;
+    }
+    finally {
+      state.rememberActions(actions);
+    }
+  }
+
+  /**
+   * Closing counter-part.
+   * Saves the resumed segment's action check, including later additions.
+   */
+  @Override
+  public void leaveModal() {
+    super.leaveModal();
+    CommandState state = getCurrentCommandState();
+    if (state != null && state.getToken().getProject() != null) {
+      state.rememberActions(captureHasActions(state.getToken()));
     }
   }
 
@@ -79,9 +121,14 @@ public final class CommandProcessorImpl extends CoreCommandProcessor implements 
     }
   }
 
-  private static void undoLastOperation(@NonNull CommandToken command, boolean showTooComplexDialog) {
+  private static @NotNull BooleanSupplier captureHasActions(@NotNull CommandToken command) {
+    UndoManagerImpl undoManager = getUndoManagerImpl(command.getProject());
+    return undoManager == null ? () -> false : undoManager.captureHasActions();
+  }
+
+  private static void undoLastOperation(@NonNull CommandToken command, boolean hasActions, boolean showTooComplexDialog) {
     Project project = command.getProject();
-    if (project != null) {
+    if (project != null && hasActions) {
       var undoManagerImpl = getUndoManagerImpl(project);
       if (undoManagerImpl != null) {
         FileEditor editor = undoManagerImpl.getEditorProvider().getCurrentEditor(project);

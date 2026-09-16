@@ -48,7 +48,7 @@ internal class PythonAddLocalInterpreterDialog(
     return "create.python.interpreter"
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun doOKAction() {
     super.doOKAction()
     val addEnvironment = mainPanel.currentSdkManager

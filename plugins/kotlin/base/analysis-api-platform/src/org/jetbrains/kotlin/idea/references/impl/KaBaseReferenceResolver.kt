@@ -29,7 +29,6 @@ internal object KaBaseReferenceResolver : ResolveCache.PolyVariantResolver<KtRef
         check(ref is AbstractKtReference<*>) { "reference should be AbstractKtReference, but was ${ref::class}" }
         return allowAnalysisOnEdt {
             @Suppress("INVISIBLE_REFERENCE")
-            @OptIn(org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction::class)
             allowAnalysisFromWriteAction {
                 val resolveToPsiElements = try {
                     analyze(ref.expression) { ref.getResolvedToPsi() }

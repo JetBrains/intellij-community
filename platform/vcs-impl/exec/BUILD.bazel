@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.platform.vcs.impl.exec` start
+content_module_jar(module = ":exec")
+### auto-generated section `dev intellij.platform.vcs.impl.exec` end
+
 ### auto-generated section `build intellij.platform.vcs.impl.exec` start
 jvm_library(
     name = "exec",
@@ -28,8 +32,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":exec")
-
 jvm_library(
     name = "exec_test_lib",
     testonly = True,
@@ -55,7 +57,6 @@ exports_files(
     [
         "intellij.platform.vcs.impl.exec.iml",
         "resources/intellij.platform.vcs.impl.exec.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -3,6 +3,7 @@ package com.intellij.find.actions
 
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.editor.impl.FontInfo
+import com.intellij.openapi.project.DumbUtil
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
@@ -37,7 +38,10 @@ internal class ShowUsagesHeader(pinButton: JComponent, @NlsContexts.PopupTitle t
 
 
   private val analyzingText = TextIcon(
-    IdeBundle.dumbModeMessage("dumb.mode.results.might.be.incomplete", "dumb.mode.light.results.might.be.incomplete"),
+    DumbUtil.dumbModeMessage(
+      IdeBundle.message("dumb.mode.results.might.be.incomplete"),
+      IdeBundle.message("dumb.mode.light.results.might.be.incomplete")
+    ),
     JBUI.CurrentTheme.BigPopup.searchFieldGrayForeground(),
     Gray.TRANSPARENT,
     0
@@ -75,8 +79,10 @@ internal class ShowUsagesHeader(pinButton: JComponent, @NlsContexts.PopupTitle t
 
           val projectAnalyzingCell = icon(analyzingIcon)
           analyzingProgressLabel = projectAnalyzingCell.component.apply {
-            toolTipText = IdeBundle.dumbModeMessage("dumb.mode.results.might.be.incomplete.during.project.analysis",
-                                                    "dumb.mode.light.results.might.be.incomplete.during.project.analysis")
+            toolTipText = DumbUtil.dumbModeMessage(
+              IdeBundle.message("dumb.mode.results.might.be.incomplete.during.project.analysis"),
+              IdeBundle.message("dumb.mode.light.results.might.be.incomplete.during.project.analysis")
+            )
             isVisible = false
           }
 

@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.xml.dom` start
+content_module_jar(module = ":dom")
+### auto-generated section `dev intellij.xml.dom` end
+
 ### auto-generated section `build intellij.xml.dom` start
 jvm_library(
     name = "dom",
@@ -41,8 +45,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":dom")
-
 jvm_library(
     name = "dom_test_lib",
     testonly = True,
@@ -82,7 +84,6 @@ exports_files(
     [
         "intellij.xml.dom.iml",
         "resources/intellij.xml.dom.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

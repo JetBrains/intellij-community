@@ -11,6 +11,10 @@ jps_test(
 
 ### skip generation section `test intellij.platform.completion.common.tests`
 
+### auto-generated section `dev intellij.platform.completion.common` start
+content_module_jar(module = ":common")
+### auto-generated section `dev intellij.platform.completion.common` end
+
 ### auto-generated section `build intellij.platform.completion.common` start
 jvm_library(
     name = "common",
@@ -48,8 +52,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":common")
-
 jvm_library(
     name = "common_test_lib",
     testonly = True,
@@ -85,7 +87,6 @@ exports_files(
     [
         "intellij.platform.completion.common.iml",
         "resources/intellij.platform.completion.common.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

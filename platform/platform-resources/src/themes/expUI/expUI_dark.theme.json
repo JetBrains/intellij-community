@@ -738,7 +738,8 @@
         }
       },
       "DragAndDrop": {
-        "areaBackground": "#366ACF4D"
+        "areaBackground": "#366ACF4D",
+        "hintBackground": "#366ACF1A"
       }
     },
 

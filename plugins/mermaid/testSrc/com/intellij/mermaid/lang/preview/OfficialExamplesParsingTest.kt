@@ -54,7 +54,7 @@ class OfficialExamplesParsingTest {
     fixture.checkHighlighting(true, false, true, false)
   }
 
-  @RequiresWriteLock
+  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
   private fun copyFileToProject(file: VirtualFile): VirtualFile {
     val directory = VfsUtil.findFile(Path(fixture.tempDirPath), true)
     checkNotNull(directory)

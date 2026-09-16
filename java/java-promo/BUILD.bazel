@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.java.promo` start
+content_module_jar(module = ":promo")
+### auto-generated section `dev intellij.java.promo` end
+
 ### auto-generated section `build intellij.java.promo` start
 jvm_library(
     name = "promo",
@@ -37,8 +41,6 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui",
     ],
 )
-
-content_module_jar(module = ":promo")
 
 jvm_library(
     name = "promo_test_lib",

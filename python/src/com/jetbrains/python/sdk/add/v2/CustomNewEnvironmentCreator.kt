@@ -8,9 +8,9 @@ import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.intellij.python.pytools.PyTool
-import com.intellij.python.pytools.Version
-import com.intellij.python.pytools.performToolInstallation
+import com.intellij.python.pytools.backend.PyTool
+import com.intellij.python.pytools.backend.Version
+import com.intellij.python.pytools.backend.performToolInstallation
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -34,6 +34,8 @@ internal abstract class CustomNewEnvironmentCreator<P : PathHolder>(
   model: PythonMutableTargetAddInterpreterModel<P>,
   protected val errorSink: ErrorSink,
 ) : PythonNewEnvironmentCreator<P>(model) {
+  protected abstract val pyToolPresentableName: String
+
   internal lateinit var basePythonComboBox: PythonInterpreterComboBox<P>
   internal lateinit var executablePath: ValidatedPathField<Version, P, ValidatedPath.Executable<P>>
 
@@ -52,16 +54,16 @@ internal abstract class CustomNewEnvironmentCreator<P : PathHolder>(
       )
 
       val missingExecutableText = if (model.fileSystem.toolPathCanBePersisted) {
-        message("sdk.create.custom.venv.missing.text", pyTool.presentableName)
+        message("sdk.create.custom.venv.missing.text", pyToolPresentableName)
       }
       else {
-        message("sdk.create.custom.tool.not.detected", pyTool.presentableName)
+        message("sdk.create.custom.tool.not.detected", pyToolPresentableName)
       }
       executablePath = validatablePathField(
         fileSystem = model.fileSystem,
         pathValidator = toolValidator,
         validationRequestor = validationRequestor,
-        labelText = message("sdk.create.custom.venv.executable.path", pyTool.presentableName),
+        labelText = message("sdk.create.custom.venv.executable.path", pyToolPresentableName),
         missingExecutableText = missingExecutableText,
         installAction = createInstallFix(errorSink),
         canBeEdited = model.fileSystem.toolPathCanBePersisted,
@@ -126,9 +128,9 @@ internal abstract class CustomNewEnvironmentCreator<P : PathHolder>(
    * 6. Runs `(pythonExecutable -m) pip install <package_name> --user`.
    * 7. Reruns `detectExecutable`.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   protected fun createInstallFix(errorSink: ErrorSink): ActionLink {
-    return ActionLink(message("sdk.create.custom.venv.install.fix.title", pyTool.presentableName)) {
+    return ActionLink(message("sdk.create.custom.venv.install.fix.title", pyToolPresentableName)) {
       PythonSdkFlavor.clearExecutablesCache()
       installExecutable(errorSink)
       runWithModalProgressBlocking(ModalTaskOwner.guess(), message("sdk.create.custom.venv.progress.title.detect.executable")) {
@@ -142,9 +144,9 @@ internal abstract class CustomNewEnvironmentCreator<P : PathHolder>(
    * extension (prefers `uv tool install`, falls back to a pip install into a system Python). On
    * success the resolved launcher is persisted.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun installExecutable(errorSink: ErrorSink) {
-    runWithModalProgressBlocking(ModalTaskOwner.guess(), message("sdk.create.custom.venv.install.fix.title", pyTool.presentableName)) {
+    runWithModalProgressBlocking(ModalTaskOwner.guess(), message("sdk.create.custom.venv.install.fix.title", pyToolPresentableName)) {
       val eel = model.projectPathFlows.projectPath.first()?.getEelDescriptor()?.toEelApi() ?: localEel
       // performToolInstallation drops the detection cache on success, so the next lookup finds the new binary.
       (pyTool.performToolInstallation(eel) as? Result.Failure)?.let { errorSink.emit(it.error) }
@@ -154,7 +156,7 @@ internal abstract class CustomNewEnvironmentCreator<P : PathHolder>(
   internal abstract val interpreterType: InterpreterType
 
   /** The tool this creator installs; drives [installExecutable] via [performToolInstallation]. */
-  internal abstract val pyTool: PyTool
+  internal abstract val pyTool: PyTool<*>
 
   internal abstract val toolValidator: ToolValidator<P>
 

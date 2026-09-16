@@ -20,8 +20,8 @@
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.smRunner"/>
     <module name="intellij.python.lsp.core"/>
-    <module name="intellij.python.pytools"/>
-    <module name="intellij.python.pytools.ui"/>
+    <module name="intellij.python.pyright.common"/>
+    <module name="intellij.python.pytools.backend"/>
     <module name="intellij.xml.parser"/>
   </dependencies>
   <!-- endregion -->

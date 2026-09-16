@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.jzlib` start
+content_module_jar(
+    libraries = ["@lib//:libraries-jzlib-jzlib"],
+    module = ":jzlib",
+)
+### auto-generated section `dev intellij.libraries.jzlib` end
+
 ### auto-generated section `build intellij.libraries.jzlib` start
 jvm_library(
     name = "jzlib",
@@ -16,11 +23,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-jzlib-jzlib"],
     runtime_deps = ["@lib//:libraries-jzlib-jzlib"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-jzlib-jzlib"],
-    module = ":jzlib",
 )
 
 jvm_library(
@@ -42,7 +44,6 @@ exports_files(
     [
         "intellij.libraries.jzlib.iml",
         "resources/intellij.libraries.jzlib.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

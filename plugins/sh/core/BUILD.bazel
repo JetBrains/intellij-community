@@ -2,6 +2,10 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.sh.core` start
+content_module_jar(module = ":core")
+### auto-generated section `dev intellij.sh.core` end
+
 ### auto-generated section `build intellij.sh.core` start
 jvm_library(
     name = "core",
@@ -51,8 +55,6 @@ jvm_library(
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     ],
 )
-
-content_module_jar(module = ":core")
 
 jvm_library(
     name = "core_test_lib",
@@ -121,7 +123,6 @@ jvm_library(
         # do not sort,
         "//plugins/sh/core",
         "//platform/structure-view-impl/plugin",
-        "//libraries/misc/plugin",
         "//plugins/jcef/plugin",
         "//platform/vcs/plugin",
         "//plugins/sh/plugin:plugin-main",
@@ -155,7 +156,6 @@ jvm_library(
         # do not sort,
         ":tests",
         "//platform/structure-view-impl/plugin:plugin_test_lib",
-        "//libraries/misc/plugin:plugin_test_lib",
         "//plugins/jcef/plugin:plugin_test_lib",
         "//platform/vcs/plugin:plugin_test_lib",
         "//plugins/sh/plugin:plugin-main_test_lib",

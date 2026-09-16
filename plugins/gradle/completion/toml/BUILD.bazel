@@ -2,6 +2,10 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.gradle.completion.toml` start
+content_module_jar(module = ":toml")
+### auto-generated section `dev intellij.gradle.completion.toml` end
+
 ### auto-generated section `iml intellij.gradle.toml` end
 
 ### auto-generated section `build intellij.gradle.completion.toml` start
@@ -38,8 +42,6 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui",
     ],
 )
-
-content_module_jar(module = ":toml")
 
 jvm_library(
     name = "toml_test_lib",
@@ -151,8 +153,8 @@ jvm_library(
         "//plugins/gradle:gradle-tests_test_lib",
         "//plugins/groovy",
         "//plugins/groovy:groovy_test_lib",
-        "//plugins/groovy:groovy-tests",
-        "//plugins/groovy:groovy-tests_test_lib",
+        "//plugins/groovy/testFramework",
+        "//plugins/groovy/testFramework:testFramework_test_lib",
         "//libraries/junit5",
         "//libraries/junit5:junit5_test_lib",
         "//libraries/junit5-params",

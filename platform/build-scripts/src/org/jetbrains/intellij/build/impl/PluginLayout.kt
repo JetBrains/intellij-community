@@ -31,12 +31,15 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
 
-typealias ResourceGenerator = suspend (Path, BuildContext) -> Unit
+typealias ResourceGenerator = (Path, BuildContext) -> Unit
 
-typealias DeprecatedPostScrambleProcessor = suspend (String, ByteArray, PluginLayout, PlatformLayout, ScopedCachedDescriptorContainer, BuildContext) -> ByteArray?
+typealias DeprecatedPostScrambleProcessor = (String, ByteArray, PluginLayout, PlatformLayout, ScopedCachedDescriptorContainer, BuildContext) -> ByteArray?
 
 /**
- * Describes layout of a plugin in the product distribution
+ * Describes layout of a plugin in the product distribution.
+ *
+ * [auto] controls one thing in `JarPackager`: the direct dependencies of [mainModule] in the same module group are packed
+ * (`inferModuleSources`). No plugin module packs a project library implicitly; the platform or the plugin layout declares it.
  */
 class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean = false) : BaseLayout() {
   private val mainJarNameWithoutExtension: String = convertModuleNameToFileName(mainModule)
@@ -45,14 +48,6 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
   /** module name to file names of that module's own libraries which must not be packed */
   @JvmField
   internal val excludedModuleLibraries: MutableMap<String, MutableList<String>> = HashMap()
-
-  /** names of project libraries which must not be packed into this plugin */
-  @JvmField
-  internal val excludedProjectLibraries: MutableSet<String> = LinkedHashSet()
-
-  internal fun excludeProjectLibrary(libraryName: String) {
-    excludedProjectLibraries.add(libraryName)
-  }
 
   var directoryName: String = mainJarNameWithoutExtension
     private set
@@ -197,6 +192,15 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
    */
   @Internal
   fun getModulesWithExcludedModuleLibraries(): Set<String> = modulesWithExcludedModuleLibraries
+
+  /**
+   * The module libraries `excludeModuleLibrary` takes out of a member's jar, by member module name.
+   *
+   * A declared-input question, like [getModulesWithExcludedModuleLibraries]: the dev-distribution layout tables state
+   * it, so that the JPS-to-Bazel converter derives the library set a member's jar really merges.
+   */
+  @Internal
+  fun getExcludedModuleLibraries(): Map<String, List<String>> = excludedModuleLibraries
 
   internal var resourceGenerators: PersistentList<ResourceGenerator> = persistentListOf()
     private set
@@ -369,14 +373,6 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
     @Obsolete
     fun excludeModuleLibrary(libraryName: String, moduleName: String) {
       layout.excludedModuleLibraries.computeIfAbsent(moduleName) { ArrayList() }.add(libraryName)
-    }
-
-    /**
-     * Excludes a module-level library from the plugin. This shouldn't be used in new code; mark the dependency as 'Provided' instead.
-     */
-    @Obsolete
-    fun excludeProjectLibrary(libraryName: String) {
-      layout.excludeProjectLibrary(libraryName)
     }
 
     /**

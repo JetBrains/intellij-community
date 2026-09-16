@@ -2,6 +2,10 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.java.analysis` start
+content_module_jar(module = ":analysis")
+### auto-generated section `dev intellij.java.analysis` end
+
 ### auto-generated section `build intellij.java.analysis` start
 create_kotlinc_options(
     name = "custom_analysis",
@@ -44,8 +48,6 @@ jvm_library(
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     ],
 )
-
-content_module_jar(module = ":analysis")
 
 jvm_library(
     name = "analysis_test_lib",

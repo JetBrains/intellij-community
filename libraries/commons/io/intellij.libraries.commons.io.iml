@@ -9,19 +9,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="commons-io" type="repository">
-        <properties maven-id="commons-io:commons-io:2.21.0">
+        <properties maven-id="commons-io:commons-io:2.22.0">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/commons-io/commons-io/2.21.0/commons-io-2.21.0.jar">
-              <sha256sum>7d643a2afea8b058b762aa6fb90e5b256f6c729739f8b3784c3370ddc609e88d</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/commons-io/commons-io/2.22.0/commons-io-2.22.0.jar">
+              <sha256sum>2b9a7b1f726fb86216dbd2c8321eabe0221dbd5b1be81c18e1cb53811b104758</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/commons-io/commons-io/2.21.0/commons-io-2.21.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/commons-io/commons-io/2.22.0/commons-io-2.22.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/commons-io/commons-io/2.21.0/commons-io-2.21.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/commons-io/commons-io/2.22.0/commons-io-2.22.0-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

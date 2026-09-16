@@ -11,6 +11,10 @@ jps_test(
 )
 ### skip generation section `test intellij.platform.debugger.impl.tests`
 
+### auto-generated section `dev intellij.platform.debugger.impl` start
+content_module_jar(module = ":debugger-impl")
+### auto-generated section `dev intellij.platform.debugger.impl` end
+
 ### auto-generated section `build intellij.platform.debugger.impl` start
 create_kotlinc_options(
     name = "custom_debugger-impl",
@@ -102,8 +106,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":debugger-impl")
-
 jvm_library(
     name = "debugger-impl_test_lib",
     testonly = True,
@@ -180,7 +182,6 @@ exports_files(
         "resources/intellij.platform.debugger.impl.actions.xml",
         "resources/intellij.platform.debugger.impl.content.xml",
         "resources/intellij.platform.debugger.impl.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

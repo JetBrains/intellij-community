@@ -30,7 +30,7 @@ class CrossPlatformDistOnlyTest {
     }
 
     val productLayout = mock(ProductModulesLayout::class.java)
-    `when`(productLayout.pluginLayouts).thenReturn(persistentListOf(regularPlugin, crossPlatformOnlyPlugin))
+    `when`(productLayout.pluginLayouts).thenReturn(lazyOf(persistentListOf(regularPlugin, crossPlatformOnlyPlugin)))
 
     var result = getPluginLayoutsByJpsModuleNames(
       modules = listOf("regular.plugin", "cross.platform.only"),
@@ -61,9 +61,9 @@ class CrossPlatformDistOnlyTest {
     val regularBundledPlugin = PluginLayout.pluginAuto(listOf("regular.bundled"))
 
     val productLayout = mock(ProductModulesLayout::class.java)
-    `when`(productLayout.pluginLayouts).thenReturn(persistentListOf(
+    `when`(productLayout.pluginLayouts).thenReturn(lazyOf(persistentListOf(
       bundledCrossPlatformPlugin, nonBundledCrossPlatformPlugin, regularBundledPlugin
-    ))
+    )))
 
     val productProperties = mock(ProductProperties::class.java)
     `when`(productProperties.productLayout).thenReturn(productLayout)

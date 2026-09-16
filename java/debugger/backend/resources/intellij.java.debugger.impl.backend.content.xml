@@ -7,7 +7,9 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
     <platform.rpc.backend.remoteApiProvider
-      implementation="com.intellij.java.debugger.impl.backend.BackendJavaDebuggerRemoteApiProvider"/>
+      implementation="com.intellij.java.debugger.impl.backend.BackendJavaDebuggerRemoteApiProvider"
+      apiInterfaces="com.intellij.java.debugger.impl.shared.rpc.JavaDebuggerLuxActionsApi,
+                     com.intellij.java.debugger.impl.shared.rpc.JavaDebuggerSessionApi"/>
   </extensions>
 
   <actions>

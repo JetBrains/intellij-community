@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.isorelax` start
+content_module_jar(
+    libraries = ["@lib//:libraries-isorelax-isorelax"],
+    module = ":isorelax",
+)
+### auto-generated section `dev intellij.libraries.isorelax` end
+
 ### auto-generated section `build intellij.libraries.isorelax` start
 jvm_library(
     name = "isorelax",
@@ -16,11 +23,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-isorelax-isorelax"],
     runtime_deps = ["@lib//:libraries-isorelax-isorelax"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-isorelax-isorelax"],
-    module = ":isorelax",
 )
 
 jvm_library(
@@ -42,7 +44,6 @@ exports_files(
     [
         "intellij.libraries.isorelax.iml",
         "resources/intellij.libraries.isorelax.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -60,7 +60,7 @@ object DirectKotlinOverridingCallableSearch {
 }
 
 class DirectKotlinOverridingMethodSearcher : Searcher<SearchParameters, PsiElement> {
-    @RequiresReadLock
+    @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
     override fun collectSearchRequest(parameters: SearchParameters): Query<out PsiElement>? {
         val ktCallableDeclaration = runReadAction {
             parameters.ktCallableDeclaration.originalElement
@@ -116,7 +116,7 @@ private val EVERYTHING_BUT_KOTLIN by lazy(LazyThreadSafetyMode.PUBLICATION) {
 }
 
 internal class DirectKotlinOverridingMethodDelegatedSearcher : Searcher<SearchParameters, PsiElement> {
-    @RequiresReadLock
+    @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
     override fun collectSearchRequests(parameters: SearchParameters): Collection<Query<out PsiElement>> {
         val baseFunction = parameters.ktCallableDeclaration
         val methods = baseFunction.toLightMethods()

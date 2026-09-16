@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.jetbrains.annotations` start
+content_module_jar(
+    libraries = ["@lib//:libraries-jetbrains-annotations-jetbrains-annotations"],
+    module = ":annotations",
+)
+### auto-generated section `dev intellij.libraries.jetbrains.annotations` end
+
 ### auto-generated section `build intellij.libraries.jetbrains.annotations` start
 jvm_library(
     name = "annotations",
@@ -16,11 +23,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-jetbrains-annotations-jetbrains-annotations"],
     runtime_deps = ["@lib//:libraries-jetbrains-annotations-jetbrains-annotations"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-jetbrains-annotations-jetbrains-annotations"],
-    module = ":annotations",
 )
 
 jvm_library(
@@ -43,7 +45,6 @@ exports_files(
     [
         "intellij.libraries.jetbrains.annotations.iml",
         "resources/intellij.libraries.jetbrains.annotations.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

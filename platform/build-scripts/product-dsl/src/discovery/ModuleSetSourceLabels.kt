@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build.productLayout.discovery
 object ModuleSetSourceLabels {
   const val COMMUNITY: String = "community"
   const val CORE: String = "core"
+  const val LIBRARIES: String = "libraries"
   const val ULTIMATE: String = "ultimate"
 
   @JvmField

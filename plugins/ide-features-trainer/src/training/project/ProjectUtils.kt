@@ -298,7 +298,7 @@ object ProjectUtils {
     project.save()
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun restoreProject(languageSupport: LangSupport, project: Project) {
     val done = CompletableFuture<Boolean>()
     AppUIExecutor.onWriteThread().withDocumentsCommitted(project).submit {

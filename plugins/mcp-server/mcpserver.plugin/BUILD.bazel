@@ -1,5 +1,60 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
+load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_DESCRIPTORS", "MODULE_TARGETS")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `dev intellij.mcpserver.plugin` start
+dev_dist_plugin(
+    content_modules = [
+        # do not sort,
+        "intellij.libraries.kotlin.logging",
+        "intellij.libraries.ktor.server.content.negotiation",
+        "intellij.libraries.ktor.server.sse",
+        "intellij.libraries.mcp.kotlin.sdk",
+        "intellij.libraries.schema.kenerator",
+    ],
+    descriptor = "resources/META-INF/plugin.xml",
+    descriptor_index = MODULE_DESCRIPTORS,
+    descriptor_modules = [
+        "intellij.libraries.kotlin.logging",
+        "intellij.libraries.ktor.server.content.negotiation",
+        "intellij.libraries.ktor.server.sse",
+        "intellij.libraries.mcp.kotlin.sdk",
+        "intellij.libraries.night.config.toml",
+        "intellij.libraries.schema.kenerator",
+        "intellij.mcpserver",
+        "intellij.mcpserver.frontend",
+        "intellij.mcpserver.stdio",
+        "intellij.mcpserver.terminal",
+        "intellij.mcpserver.terminal.frontend",
+        "intellij.mcpserver.toolsets",
+        "intellij.mcpserver.vcs",
+    ],
+    libraries = [
+        "@lib//:libraries-kotlin-logging-io-github-oshai-kotlin-logging-jvm",
+        "@lib//:libraries-ktor-server-content-negotiation-ktor-server-content-negotiation",
+        "@lib//:libraries-ktor-server-sse-ktor-server-sse-jvm",
+        "@lib//:libraries-mcp-kotlin-sdk-io-modelcontextprotocol-kotlin-sdk",
+        "@lib//:libraries-schema-kenerator-io-github-smiley4-schema-kenerator-core",
+        "@lib//:libraries-schema-kenerator-io-github-smiley4-schema-kenerator-jsonschema",
+        "@lib//:libraries-schema-kenerator-io-github-smiley4-schema-kenerator-serialization",
+    ],
+    main_module = "intellij.mcpserver.plugin",
+    module_targets = MODULE_TARGETS,
+    prepacked_content_modules = [
+        # do not sort,
+        "intellij.libraries.night.config.toml",
+        "intellij.mcpserver.frontend",
+        "intellij.mcpserver.terminal.frontend",
+        "intellij.mcpserver.terminal",
+        "intellij.mcpserver.toolsets",
+        "intellij.mcpserver.vcs",
+    ],
+    prepacked_jars = {
+        "intellij.mcpserver.stdio": "intellij.mcpserver.stdio.jar",
+        "intellij.mcpserver": "intellij.mcpserver.jar",
+    },
+)
+### auto-generated section `dev intellij.mcpserver.plugin` end
 
 ### auto-generated section `build intellij.mcpserver.plugin` start
 jvm_library(
@@ -58,54 +113,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.mcpserver.plugin` end
-
-### auto-generated section `dev intellij.mcpserver.plugin` start
-dev_dist_plugin(
-    content_modules = [
-        "//libraries/kotlin/logging",
-        "//libraries/ktor/server-content-negotiation:libraries-ktor-server-content-negotiation",
-        "//libraries/ktor/server-sse:libraries-ktor-server-sse",
-        "//libraries/mcp-kotlin-sdk",
-        "//libraries/schema-kenerator",
-        "//plugins/mcp-server/mcpserver.stdio",
-        "//plugins/mcp-server:mcpserver",
-    ],
-    descriptor = "resources/META-INF/plugin.xml",
-    descriptor_module = ":mcpserver.plugin",
-    descriptors = {
-        "@community//libraries/kotlin/logging:resources/intellij.libraries.kotlin.logging.xml": "intellij.libraries.kotlin.logging.xml",
-        "@community//libraries/ktor/server-content-negotiation:resources/intellij.libraries.ktor.server.content.negotiation.xml": "intellij.libraries.ktor.server.content.negotiation.xml",
-        "@community//libraries/ktor/server-sse:resources/intellij.libraries.ktor.server.sse.xml": "intellij.libraries.ktor.server.sse.xml",
-        "@community//libraries/mcp-kotlin-sdk:resources/intellij.libraries.mcp.kotlin.sdk.xml": "intellij.libraries.mcp.kotlin.sdk.xml",
-        "@community//libraries/night-config-toml:resources/intellij.libraries.night.config.toml.xml": "intellij.libraries.night.config.toml.xml",
-        "@community//libraries/schema-kenerator:resources/intellij.libraries.schema.kenerator.xml": "intellij.libraries.schema.kenerator.xml",
-        "@community//plugins/mcp-server/mcpserver.frontend:resources/intellij.mcpserver.frontend.xml": "intellij.mcpserver.frontend.xml",
-        "@community//plugins/mcp-server/mcpserver.stdio:resources/intellij.mcpserver.stdio.xml": "intellij.mcpserver.stdio.xml",
-        "@community//plugins/mcp-server/mcpserver.terminal.frontend:resources/intellij.mcpserver.terminal.frontend.xml": "intellij.mcpserver.terminal.frontend.xml",
-        "@community//plugins/mcp-server/mcpserver.terminal:resources/intellij.mcpserver.terminal.xml": "intellij.mcpserver.terminal.xml",
-        "@community//plugins/mcp-server/mcpserver.toolsets:resources/intellij.mcpserver.toolsets.xml": "intellij.mcpserver.toolsets.xml",
-        "@community//plugins/mcp-server/mcpserver.vcs:resources/intellij.mcpserver.vcs.xml": "intellij.mcpserver.vcs.xml",
-        "@community//plugins/mcp-server:resources/intellij.mcpserver.xml": "intellij.mcpserver.xml",
-    },
-    libraries = [
-        "@lib//:libraries-kotlin-logging-io-github-oshai-kotlin-logging-jvm",
-        "@lib//:libraries-ktor-server-content-negotiation-ktor-server-content-negotiation",
-        "@lib//:libraries-ktor-server-sse-ktor-server-sse-jvm",
-        "@lib//:libraries-mcp-kotlin-sdk-io-modelcontextprotocol-kotlin-sdk",
-        "@lib//:libraries-schema-kenerator-io-github-smiley4-schema-kenerator-core",
-        "@lib//:libraries-schema-kenerator-io-github-smiley4-schema-kenerator-jsonschema",
-        "@lib//:libraries-schema-kenerator-io-github-smiley4-schema-kenerator-serialization",
-        "@lib//:slf4j-api",
-        "@lib//:slf4j-jdk14",
-    ],
-    main_module = "intellij.mcpserver.plugin",
-    prepacked_content_modules = [
-        "//libraries/night-config-toml:night-config-toml_content_module_jar",
-        "//plugins/mcp-server/mcpserver.frontend:mcpserver.frontend_content_module_jar",
-        "//plugins/mcp-server/mcpserver.terminal.frontend:mcpserver.terminal.frontend_content_module_jar",
-        "//plugins/mcp-server/mcpserver.terminal:mcpserver.terminal_content_module_jar",
-        "//plugins/mcp-server/mcpserver.toolsets:mcpserver.toolsets_content_module_jar",
-        "//plugins/mcp-server/mcpserver.vcs:mcpserver.vcs_content_module_jar",
-    ],
-)
-### auto-generated section `dev intellij.mcpserver.plugin` end

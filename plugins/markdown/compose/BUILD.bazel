@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.markdown.compose.preview` start
+content_module_jar(module = ":compose-preview")
+### auto-generated section `dev intellij.markdown.compose.preview` end
+
 ### auto-generated section `build intellij.markdown.compose.preview` start
 jvm_library(
     name = "compose-preview",
@@ -32,8 +36,6 @@ jvm_library(
         "//platform/compose/markdown",
     ],
 )
-
-content_module_jar(module = ":compose-preview")
 
 jvm_library(
     name = "compose-preview_test_lib",

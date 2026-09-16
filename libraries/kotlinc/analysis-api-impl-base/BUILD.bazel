@@ -1,5 +1,4 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
-load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.libraries.kotlinc.analysis.api.impl.base` start
 jvm_library(
@@ -22,12 +21,8 @@ jvm_library(
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
         "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface",
+        "//libraries/kotlinc/kotlin-compiler-ir:libraries-kotlinc-kotlin-compiler-ir",
     ],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-kotlinc-analysis-api-impl-base-kotlinc-analysis-api-impl-base"],
-    module = ":libraries-kotlinc-analysis-api-impl-base",
 )
 
 jvm_library(
@@ -48,6 +43,7 @@ jvm_library(
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
         "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-ir:libraries-kotlinc-kotlin-compiler-ir_test_lib",
     ],
 )
 ### auto-generated section `build intellij.libraries.kotlinc.analysis.api.impl.base` end
@@ -57,7 +53,6 @@ exports_files(
     [
         "intellij.libraries.kotlinc.analysis.api.impl.base.iml",
         "resources/intellij.libraries.kotlinc.analysis.api.impl.base.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -1,10 +1,7 @@
 package com.intellij.python.lsp.core.typeEngine
 
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.project.Project
-import com.intellij.ui.dsl.builder.Panel
-import com.intellij.ui.dsl.builder.RowsRange
 
 interface PyTypeEngineProvider {
   val pyTypeEngineType: PyTypeEngineType
@@ -12,8 +9,6 @@ interface PyTypeEngineProvider {
   fun isSupported(project: Project): Boolean
 
   fun updateLspServers(project: Project)
-
-  fun Panel.createConfigurableContent(project: Project, propertyGraph: PropertyGraph): RowsRange
 
   companion object {
     internal val EP = ExtensionPointName.create<PyTypeEngineProvider>("com.intellij.python.lsp.typeEngineConfigurable")

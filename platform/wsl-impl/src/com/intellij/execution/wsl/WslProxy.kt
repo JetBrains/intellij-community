@@ -4,6 +4,7 @@ package com.intellij.execution.wsl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.util.io.awaitExit
 import io.ktor.network.selector.ActorSelectorManager
 import io.ktor.network.sockets.Socket
 import io.ktor.network.sockets.TcpSocketBuilder
@@ -31,12 +32,14 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.coroutineContext
 
 /**
@@ -99,29 +102,6 @@ class WslProxy(distro: AbstractWslDistribution, private val applicationAddress: 
         }
       }
     }
-
-    private fun Process.destroyWslProxy() {
-      try {
-        outputStream.close() // Closing stream should stop process
-      }
-      catch (e: IOException) {
-        LOG.warn(e)
-      }
-      finally {
-        GlobalScope.launch(Dispatchers.IO) {
-          // Wait for process to die. If not -- kill it
-          delay(1000)
-          if (isAlive) {
-            LOG.warn("Process still alive, destroying")
-            destroy()
-          }
-          val exitCode = exitValue()
-          if (exitCode != 0) {
-            LOG.warn("Exit code was $exitCode")
-          }
-        }
-      }
-    }
   }
 
   val wslIngressPort: Int
@@ -142,11 +122,41 @@ class WslProxy(distro: AbstractWslDistribution, private val applicationAddress: 
 
   private suspend fun readPortFromChannel(channel: ByteReadChannel): Int = readToBuffer(channel, 2).short.toUShort().toInt()
   private val stdoutChannel: ByteReadChannel
+  private val process: Process
+  private val exitWatchdogLaunched = AtomicBoolean(false)
+
+  private fun destroyWslProxy() {
+    try {
+      process.outputStream.close() // Closing stream should stop process
+    }
+    catch (e: IOException) {
+      LOG.warn(e)
+    }
+    finally {
+      if (exitWatchdogLaunched.compareAndSet(false, true)) {
+        GlobalScope.launch(Dispatchers.IO) {
+          // Wait for process to die. If not -- kill it
+          delay(1000)
+          if (process.isAlive) {
+            LOG.warn("Process still alive, destroying")
+            process.destroy()
+          }
+          val exitCode = withTimeoutOrNull(10_000) { process.awaitExit() }
+          if (exitCode == null) {
+            LOG.warn("Process did not exit in 10 seconds")
+          }
+          else if (exitCode != 0) {
+            LOG.warn("Exit code was $exitCode")
+          }
+        }
+      }
+    }
+  }
 
   init {
     val args = if (Registry.`is`("wsl.proxy.connect.localhost")) arrayOf("--loopback") else emptyArray()
     val wslCommandLine = distro.getTool("wslproxy", *args)
-    val process =
+    process =
       if (WslIjentAvailabilityService.getInstance().runWslCommandsViaIjent())
         wslCommandLine.createProcess()
       else
@@ -177,11 +187,11 @@ class WslProxy(distro: AbstractWslDistribution, private val applicationAddress: 
           clientConnected(linuxEgressPort)
         }
       }.invokeOnCompletion {
-        process.destroyWslProxy()
+        destroyWslProxy()
       }
     }
     catch (e: Exception) {
-      process.destroyWslProxy()
+      destroyWslProxy()
       scope.cancel()
       throw e
     }
@@ -221,6 +231,7 @@ class WslProxy(distro: AbstractWslDistribution, private val applicationAddress: 
 
   override fun dispose() {
     scope.cancel()
+    destroyWslProxy()
     // Workaround KTOR-8182
     stdoutChannel.cancel()
   }

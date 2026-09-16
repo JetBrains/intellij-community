@@ -157,7 +157,7 @@ fun reinitBreadcrumbComponent(fileEditor: TextEditor, fileEditorManager: FileEdi
   }
 }
 
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 private fun isSuitable(project: Project, file: VirtualFile, forcedShown: Boolean?, editorIsValid: Boolean): Boolean {
   if (file is HttpVirtualFile || !editorIsValid) {
     return false

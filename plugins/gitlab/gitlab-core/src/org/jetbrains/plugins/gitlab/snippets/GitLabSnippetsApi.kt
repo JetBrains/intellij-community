@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.gitlab.snippets
 
 import com.intellij.collaboration.api.data.asParameters
-import com.intellij.collaboration.api.graphql.loadResponse
 import com.intellij.collaboration.api.page.ApiPageUtil
 import com.intellij.collaboration.async.collectBatches
 import com.intellij.openapi.vfs.VirtualFile
@@ -17,10 +16,8 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabGraphQLMutationResultDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabProjectsForSnippetsDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabSnippetBlobAction
 import org.jetbrains.plugins.gitlab.api.dto.GitLabSnippetDTO
-import org.jetbrains.plugins.gitlab.api.gitLabQuery
-import org.jetbrains.plugins.gitlab.api.withErrorStats
+import org.jetbrains.plugins.gitlab.api.runQuery
 import org.jetbrains.plugins.gitlab.util.GitLabProjectPath
-import java.net.http.HttpResponse
 
 private class CreateSnippetResult(snippet: GitLabSnippetDTO?, errors: List<String>)
   : GitLabGraphQLMutationResultDTO<GitLabSnippetDTO>(errors) {
@@ -35,10 +32,7 @@ private class CreateSnippetResult(snippet: GitLabSnippetDTO?, errors: List<Strin
 internal fun GitLabApi.GraphQL.getSnippetAllowedProjects(): Flow<List<GitLabProjectCoordinates>> =
   ApiPageUtil.createGQLPagesFlow { page ->
     val parameters = page.asParameters()
-    val request = gitLabQuery(GitLabGQLQuery.GET_MEMBER_PROJECTS_FOR_SNIPPETS, parameters)
-    withErrorStats(GitLabGQLQuery.GET_MEMBER_PROJECTS_FOR_SNIPPETS) {
-      loadResponse<GitLabProjectsForSnippetsDTO>(request, "projects").body()
-    }
+    runQuery<GitLabProjectsForSnippetsDTO>(GitLabGQLQuery.GET_MEMBER_PROJECTS_FOR_SNIPPETS, parameters, "projects")
   }.map {
     it.nodes
       .filter { project -> project.userPermissions.createSnippet }
@@ -60,7 +54,7 @@ internal suspend fun GitLabApi.GraphQL.createSnippet(
   description: String?,
   visibilityLevel: GitLabVisibilityLevel,
   snippetBlobActions: List<GitLabSnippetBlobAction>
-): HttpResponse<out GitLabGraphQLMutationResultDTO<GitLabSnippetDTO>?> {
+): GitLabGraphQLMutationResultDTO<GitLabSnippetDTO>? {
   val parameters = mapOf(
     "title" to title,
     "description" to description,
@@ -68,8 +62,5 @@ internal suspend fun GitLabApi.GraphQL.createSnippet(
     "projectPath" to project?.projectPath?.fullPath(),
     "blobActions" to snippetBlobActions
   )
-  val request = gitLabQuery(GitLabGQLQuery.CREATE_SNIPPET, parameters)
-  return withErrorStats(GitLabGQLQuery.CREATE_SNIPPET) {
-    loadResponse<CreateSnippetResult>(request, "createSnippet")
-  }
+  return runQuery<CreateSnippetResult>(GitLabGQLQuery.CREATE_SNIPPET, parameters, "createSnippet")
 }

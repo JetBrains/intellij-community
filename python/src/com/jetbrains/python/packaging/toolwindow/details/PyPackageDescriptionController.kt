@@ -33,7 +33,6 @@ import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.TopGap
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.jcef.JCEFHtmlPanel
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.packaging.common.PythonPackageDetails
@@ -52,6 +51,8 @@ import com.jetbrains.python.packaging.toolwindow.model.WorkspaceMember
 import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesUiComponents
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.isReadOnly
+import com.jetbrains.python.ui.PyEmbeddedBrowserProvider
+import com.jetbrains.python.ui.PyHtmlPanel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
@@ -134,7 +135,7 @@ internal class PyPackageDescriptionController(
 
   private val progressIndicatorComponent = JPanel()
 
-  private val htmlPanel: JCEFHtmlPanel = PyPackagingJcefHtmlPanel(project).also { panel ->
+  private val htmlPanel: PyHtmlPanel = PyEmbeddedBrowserProvider.createHtmlPanel(project).also { panel ->
     Disposer.register(this, panel)
 
     selectedPackageDetails.afterChange { packageDetails ->

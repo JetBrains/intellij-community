@@ -15,7 +15,7 @@ internal fun AbstractWslDistribution.createWslCommandLine(vararg commands: Strin
 /**
  * Executes [commands] on [AbstractWslDistribution], waits its completion and returns stdout as string
  */
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 @Internal
 fun AbstractWslDistribution.runCommand(vararg commands: String, options: WSLCommandLineOptions = WSLCommandLineOptions()): Result<String> {
   val process = createProcess(commands = commands, options = options)

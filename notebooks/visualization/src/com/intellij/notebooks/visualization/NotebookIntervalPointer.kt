@@ -25,16 +25,16 @@ interface NotebookIntervalPointerFactory {
   /**
    * Interval should be valid, return pointer to it.
    */
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun create(interval: NotebookCellLines.Interval): NotebookIntervalPointer
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun getForOrdinalIfExists(ordinal: Int): NotebookIntervalPointer?
 
   /**
    * Undo and redo will be added automatically.
    */
-  @RequiresWriteLock
+  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
   fun modifyPointers(changes: Iterable<Change>)
 
   /**

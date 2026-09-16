@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.grid.images.impl` start
+content_module_jar(module = ":images-impl")
+### auto-generated section `dev intellij.grid.images.impl` end
+
 ### auto-generated section `build intellij.grid.images.impl` start
 jvm_library(
     name = "images-impl",
@@ -31,8 +35,6 @@ jvm_library(
         "//images",
     ],
 )
-
-content_module_jar(module = ":images-impl")
 
 jvm_library(
     name = "images-impl_test_lib",

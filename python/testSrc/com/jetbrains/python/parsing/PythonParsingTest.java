@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.parsing;
 
+import com.intellij.idea.TestFor;
 import com.jetbrains.python.allure.Subsystems;
 import com.jetbrains.python.allure.Layers;
 import com.intellij.lang.LanguageASTFactory;
@@ -26,6 +27,7 @@ import com.jetbrains.python.psi.impl.PythonASTFactory;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
 import java.util.Collection;
 
 
@@ -1460,6 +1462,42 @@ public class PythonParsingTest extends ParsingTestCase {
   // PEP 798: unpacking (* and **) in comprehensions and generator expressions
   public void testUnpackingInComprehensions() {
     doTest(LanguageLevel.PYTHON315);
+  }
+
+  @TestFor(issues = "PY-78251")
+  public void testCommentIsTheOnlyLineOfBlock() throws IOException {
+    // The test data files lose the last line break. This input needs it.
+    doCodeTest("if a:\n    # comment\n");
+  }
+
+  @TestFor(issues = "PY-78251")
+  public void testCommentIsTheOnlyLineOfBlockAtEndOfFile() {
+    doTest();
+  }
+
+  @TestFor(issues = "PY-78251")
+  public void testOverIndentedCommentBeforeBlockBody() {
+    doTest();
+  }
+
+  @TestFor(issues = "PY-78251")
+  public void testCommentSeparatedByBlankLineFromBlock() {
+    doTest();
+  }
+
+  @TestFor(issues = "PY-78251")
+  public void testCommentOnlyBlockFollowedByDedentedStatement() {
+    doTest();
+  }
+
+  @TestFor(issues = "PY-78251")
+  public void testCommentOnlyFunctionFollowedByFunction() {
+    doTest();
+  }
+
+  @TestFor(issues = "PY-78251")
+  public void testCommentOnlyMethodFollowedByTopLevelStatement() {
+    doTest();
   }
 
   public void doTest() {

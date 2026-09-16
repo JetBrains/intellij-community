@@ -40,31 +40,12 @@
                     beanClass="com.intellij.polySymbols.PolySymbolEnabledLanguage$PolySymbolSupportInLanguageEP"
                     dynamic="true">
     </extensionPoint>
-    <!--suppress PluginXmlValidity -->
-    <extensionPoint qualifiedName="com.intellij.polySymbols.webTypes"
-                    beanClass="com.intellij.polySymbols.webTypes.impl.WebTypesDefinitionsEP"
-                    dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.polySymbols.webTypes.symbolTypeSupportFactory"
-                    beanClass="com.intellij.polySymbols.webTypes.impl.WebTypesSymbolTypeSupportFactoryEP"
-                    dynamic="true">
-      <with attribute="implementation" implements="com.intellij.polySymbols.webTypes.WebTypesSymbolTypeSupportFactory"/>
-    </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.polySymbols.queryConfigurator"
                     interface="com.intellij.polySymbols.query.PolySymbolQueryConfigurator"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.polySymbols.queryScopeContributor"
                     interface="com.intellij.polySymbols.query.PolySymbolQueryScopeContributor"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.polySymbols.webTypes.filter"
-                    beanClass="com.intellij.polySymbols.webTypes.impl.PolySymbolFilterEP"
-                    dynamic="true">
-      <with attribute="implementation" implements="com.intellij.polySymbols.webTypes.filters.PolySymbolFilter"/>
-    </extensionPoint>
-    <extensionPoint qualifiedName="com.intellij.polySymbols.webTypes.symbolFactory"
-                    beanClass="com.intellij.polySymbols.webTypes.impl.WebTypesSymbolFactoryEP"
-                    dynamic="true">
-      <with attribute="implementation" implements="com.intellij.polySymbols.webTypes.WebTypesSymbolFactory"/>
-    </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.polySymbols.documentationCustomizer"
                     interface="com.intellij.polySymbols.documentation.PolySymbolDocumentationCustomizer"
                     dynamic="true"/>
@@ -93,17 +74,5 @@
                     serviceImplementation="com.intellij.polySymbols.query.impl.PolySymbolQueryExecutorFactoryImpl"/>
 
     <metaLanguageProvider implementation="com.intellij.polySymbols.PolySymbolEnabledLanguage$Provider"/>
-
-    <polySymbols.webTypes.filter
-      name="match-prefix"
-      implementation="com.intellij.polySymbols.webTypes.filters.PolySymbolMatchPrefixFilter"/>
-    <polySymbols.documentationCustomizer
-      id="web-types"
-      implementation="com.intellij.polySymbols.webTypes.WebTypesDocumentationCustomizer"/>
-    <polySymbols.documentationCustomizer
-      id="html"
-      implementation="com.intellij.polySymbols.html.HtmlSymbolDocumentationCustomizer"/>
-    <polySymbols.matchCustomizerFactory
-      implementation="com.intellij.polySymbols.html.HtmlSymbolMatchCustomizer$Factory"/>
   </extensions>
 </idea-plugin>

@@ -1,3 +1,0 @@
-- name: dist.all/lib/intellij.platform.ide.impl.wsl.jar
-  modules:
-  - name: intellij.platform.ide.impl.wsl

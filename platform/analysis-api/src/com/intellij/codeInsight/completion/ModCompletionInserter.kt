@@ -31,7 +31,7 @@ object ModCompletionInserter {
    * @param prefixEnd The end offset of the completion prefix (typically current caret position)
    * @param modCommand The [ModCommand] to execute
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   @JvmStatic
   fun executeModCommand(
     editor: Editor,

@@ -1,11 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.performancePlugin;
 
+import com.intellij.diagnostic.PlatformMemoryUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.sun.management.OperatingSystemMXBean;
 import io.opentelemetry.api.trace.Span;
-import oshi.SystemInfo;
-import oshi.software.os.OSProcess;
 
 import javax.swing.SwingUtilities;
 import java.lang.management.ManagementFactory;
@@ -50,9 +49,6 @@ public final class Timer {
     myHWCounter.set(0);
     executor = ConcurrencyUtil.newSingleScheduledThreadExecutor("Performance plugin timer");
 
-    SystemInfo info = new SystemInfo();
-    int processId = info.getOperatingSystem().getProcessId();
-    OSProcess process = info.getOperatingSystem().getProcess(processId);
     executor.scheduleWithFixedDelay(() -> {
       long before = System.currentTimeMillis();
       try {
@@ -77,7 +73,8 @@ public final class Timer {
         if (myHighestCPULoad < cpuLoad) myHighestCPULoad = cpuLoad;
       }
 
-      long ramUsage = process.getResidentSetSize();
+      PlatformMemoryUtil.MemoryStats memoryStats = PlatformMemoryUtil.getInstance().getCurrentProcessMemoryStats();
+      long ramUsage = memoryStats == null ? 0 : memoryStats.getRam();
       myTotalRAMUsage.addAndGet(ramUsage);
       if (myHighestRAMUsage < ramUsage) myHighestRAMUsage = ramUsage;
     }, 0, 1, TimeUnit.SECONDS);

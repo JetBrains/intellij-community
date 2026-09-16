@@ -332,6 +332,9 @@ a:com.intellij.openapi.project.DumbService
 - a:processFileEx(com.intellij.openapi.vfs.VirtualFile):com.intellij.util.containers.TreeNodeProcessingResult
 a:com.intellij.openapi.roots.FileIndexFacade
 - *a:isIndexable(com.intellij.openapi.vfs.VirtualFile):Z
+com.intellij.openapi.util.registry.RegistryManager
+- *a:is(java.lang.String,Z):Z
+- *a:stringValue(java.lang.String,java.lang.String):java.lang.String
 *:com.intellij.openapi.vfs.FileVisibilityProvider
 - *sf:Companion:com.intellij.openapi.vfs.FileVisibilityProvider$Companion
 - sf:EP_NAME:com.intellij.openapi.extensions.ProjectExtensionPointName
@@ -386,6 +389,9 @@ com.intellij.pom.Navigatable
 - s:registerParse(com.intellij.lang.PsiBuilder,com.intellij.lang.Language,J):V
 *:com.intellij.psi.ParsingDiagnostics$ParserDiagnosticsHandler
 - a:registerParse(com.intellij.lang.PsiBuilder,com.intellij.lang.Language,J):V
+com.intellij.psi.PsiCompiledElement
+- com.intellij.psi.PsiElement
+- *:getCachedMirror():com.intellij.psi.PsiElement
 com.intellij.psi.PsiDirectory
 - com.intellij.psi.PsiFileSystemItem
 - *:findFile(java.lang.String,com.intellij.psi.search.GlobalSearchScope):com.intellij.psi.PsiFile

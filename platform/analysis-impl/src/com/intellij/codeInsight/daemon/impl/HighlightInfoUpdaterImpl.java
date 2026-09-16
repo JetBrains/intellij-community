@@ -443,7 +443,7 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
         }
         if (LOG.isTraceEnabled()) {
           LOG.trace("removeFromDataAtomically: " + debugPsiInfo(psiElement) +
-                    (removed ? "" : "; removed="+removed) +
+                    (removed ? "" : "; removed=false") +
                     ": old=" + oldInfos.size() + (oldInfos.size() == resultInfos.size() ? "; "+StringUtil.join(oldInfos, "\n   ")+"\n  " : "")
                     + "; new=" + resultInfos.size() + (oldInfos.size() == resultInfos.size() ? "; "+StringUtil.join(resultInfos, "\n   ")+"\n  "+"toRemove=("+toRemove.size()+") "+StringUtil.join(toRemove, "\n   ") : "")
                     + " " + session.getProgressIndicator());
@@ -557,16 +557,18 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
 
   @ApiStatus.Internal
   public enum WhatTool {
-    INSPECTION, ANNOTATOR_OR_VISITOR;
+    INSPECTION, ANNOTATOR_OR_VISITOR, CHAMELEON_SYNTAX;
     private boolean matches(@NotNull Object toolId) {
+      if (isChameleonSyntaxToolId(toolId)) {
+        return this == CHAMELEON_SYNTAX;
+      }
       if (isInspectionToolId(toolId)) {
         return this == INSPECTION;
       }
       if (isAnnotatorToolId(toolId) || isHighlightVisitorToolId(toolId)) {
         return this == ANNOTATOR_OR_VISITOR;
       }
-      if (toolId == InjectedLanguageManagerImpl.INJECTION_BACKGROUND_TOOL_ID
-          || toolId == InjectedLanguageManagerImpl.INJECTION_SYNTAX_TOOL_ID
+      if (InjectedLanguageManagerImpl.isInjectionRelated(toolId)
           || toolId instanceof Class<?> c && ExternalAnnotator.class.isAssignableFrom(c)) {
         return false;
       }
@@ -668,7 +670,7 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
    *               {@code String}: the tool is a {@link LocalInspectionTool} with its {@link LocalInspectionTool#getShortName()}==toolId
    *               {@code Class<? extends Annotator>}: the tool is an {@link Annotator} of the corresponding class
    *               {@code Class<? extends HighlightVisitor>}: the tool is a {@link HighlightVisitor} of the corresponding class
-   *               {@code Object: Injection background and syntax from InjectedGeneralHighlightingPass#INJECTION_BACKGROUND_ID }
+   *               {@code Object}: injection or chameleon syntax
    */
   @Override
   @ApiStatus.Internal
@@ -931,8 +933,8 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
     return toolId instanceof Class<?> c && HighlightVisitor.class.isAssignableFrom(c);
   }
 
-  static boolean isInjectionRelated(Object toolId) {
-    return InjectedLanguageManagerImpl.isInjectionRelated(toolId);
+  static boolean isChameleonSyntaxToolId(Object toolId) {
+    return toolId == ChameleonSyntaxHighlightingPass.CHAMELEON_SYNTAX_TOOL_ID;
   }
 
   // TODO very dirty method which throws all incrementality away, but we'd need to rewrite too many inspections to get rid of it

@@ -89,7 +89,7 @@ internal class ExecutionPositionNavigator(
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun navigateTo(openFileDescriptor: OpenFileDescriptor, navigationMode: ExecutionPositionNavigationMode) {
     when (navigationMode) {
       ExecutionPositionNavigationMode.OPEN -> {
@@ -105,8 +105,8 @@ internal class ExecutionPositionNavigator(
     }
   }
 
-  @RequiresReadLock
-  @RequiresBackgroundThread
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private fun createOpenFileDescriptor(): OpenFileDescriptor {
     return createPositionNavigatable().apply {
       isUseCurrentWindow = false //see IDEA-125645 and IDEA-63459
@@ -115,8 +115,8 @@ internal class ExecutionPositionNavigator(
     }
   }
 
-  @RequiresReadLock
-  @RequiresBackgroundThread
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private fun createPositionNavigatable(): OpenFileDescriptor {
     val navigatable = sourcePosition.createNavigatable(project)
     return if (navigatable is OpenFileDescriptor) {

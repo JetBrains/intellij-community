@@ -15,9 +15,9 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 interface InlineCompletionEditorInsertHandler {
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun insert(editor: Editor, textToInsert: String, offset: Int, file: PsiFile)
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun isApplicable(editor: Editor): Boolean
 
   companion object {

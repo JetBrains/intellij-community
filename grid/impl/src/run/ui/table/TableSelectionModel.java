@@ -17,7 +17,9 @@ import com.intellij.database.run.ui.grid.selection.GridSelectionTracker;
 import com.intellij.database.run.ui.grid.selection.GridSelectionTrackerImpl;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.DefaultListSelectionModel;
 import javax.swing.ListSelectionModel;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -48,7 +50,40 @@ class TableSelectionModel implements SelectionModel<GridRow, GridColumn>, Select
       rows = columns;
       columns = temp;
     }
-    return new GridSelectionImpl(ModelIndexSet.forRows(myGrid, rows), ModelIndexSet.forColumns(myGrid, columns));
+    ListSelectionModel rowSelection = rowSelectionModel();
+    return new GridSelectionImpl(ModelIndexSet.forRows(myGrid, rows), ModelIndexSet.forColumns(myGrid, columns),
+                                 toModelRow(rowSelection.getLeadSelectionIndex()),
+                                 toModelRow(rowSelection.getAnchorSelectionIndex()));
+  }
+
+  /** The rows of the data are laid out along the column axis in a transposed table. */
+  private @NotNull ListSelectionModel rowSelectionModel() {
+    return myTable.isTransposed() ? myTable.getColumnModel().getSelectionModel() : myTable.getSelectionModel();
+  }
+
+  /**
+   * The data row at {@code selectionIndex} of {@link #rowSelectionModel()}, or null when the table no longer shows it.
+   * A transposed table holds that index on the column axis, so it needs the column converter.
+   */
+  private @Nullable ModelIndex<GridRow> toModelRow(int selectionIndex) {
+    if (selectionIndex < 0) return null;
+    if (myTable.isTransposed()) {
+      if (selectionIndex >= myTable.getColumnCount()) return null;
+      return ModelIndex.forRow(myGrid, myTable.convertColumnIndexToModel(selectionIndex));
+    }
+    if (selectionIndex >= myTable.getRowCount()) return null;
+    return ModelIndex.forRow(myGrid, myTable.convertRowIndexToModel(selectionIndex));
+  }
+
+  /** The view index of {@code row}, or -1 when the table no longer shows it. */
+  private int toViewRow(@Nullable ModelIndex<GridRow> row) {
+    if (row == null) return -1;
+    // convertColumnIndexToView walks the column model and answers -1 for an index it does not hold, so the
+    // transposed branch needs no range check of its own. convertRowIndexToView asks the sorter and can throw.
+    if (myTable.isTransposed()) return myTable.convertColumnIndexToView(row.value);
+    if (row.value >= myTable.getModel().getRowCount()) return -1;
+    int viewIndex = myTable.convertRowIndexToView(row.value);
+    return viewIndex < myTable.getRowCount() ? viewIndex : -1;
   }
 
   @Override
@@ -305,7 +340,7 @@ class TableSelectionModel implements SelectionModel<GridRow, GridColumn>, Select
     int columnCount = myTable.isTransposed() ? myTable.getRowCount() : myTable.getColumnCount();
     ModelIndexSet<GridRow> rows = ModelIndexSet.forRows(myGrid, fit(selection.getSelectedRows().asArray(), rowCount));
     ModelIndexSet<GridColumn> columns = ModelIndexSet.forColumns(myGrid, fit(selection.getSelectedColumns().asArray(), columnCount));
-    return new GridSelectionImpl(rows, columns);
+    return GridSelectionImpl.withSelection(selection, rows, columns);
   }
 
   private static int[] fit(int @NotNull [] indices, int max) {
@@ -321,5 +356,13 @@ class TableSelectionModel implements SelectionModel<GridRow, GridColumn>, Select
     myTable.clearSelection();
     SelectionModel<GridRow, GridColumn> selectionModel = myGrid.getSelectionModel();
     selectionModel.setSelection(selection.getSelectedRows(), selection.getSelectedColumns());
+
+    // Re-adding the rows put the lead on the last row of the interval, and anything following the lead jumps there.
+    if (!(rowSelectionModel() instanceof DefaultListSelectionModel rows)) return;
+    int lead = toViewRow(selection.getCurrentRow());
+    if (lead < 0) return;
+    int anchor = toViewRow(selection.getRangeStartRow());
+    if (anchor >= 0) rows.setAnchorSelectionIndex(anchor);
+    rows.moveLeadSelectionIndex(lead); // moves the lead without changing the selection
   }
 }

@@ -1,3 +1,5 @@
+<!-- BUILD_USING_BAZEL_MARKER: this plugin is also packaged by the `ij_plugin` Bazel rule, and IjPluginDistributionEquivalenceTest
+     checks that the result matches the distribution produced by the build scripts. See MRI-4743. -->
 <idea-plugin>
   <id>com.intellij.groovy.scripting</id>
   <name>Groovy Scripting</name>
@@ -13,6 +15,8 @@
   <content namespace="jetbrains">
     <module name="intellij.libraries.groovy" loading="embedded"/>
     <module name="intellij.libraries.groovy.jsr223" loading="embedded"/>
+  </content>
+  <content>
     <module name="intellij.libraries.ivy" loading="embedded"/>
   </content>
 </idea-plugin>

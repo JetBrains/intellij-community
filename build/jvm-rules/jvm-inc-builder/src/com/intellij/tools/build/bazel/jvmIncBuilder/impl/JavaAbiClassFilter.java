@@ -4,35 +4,67 @@ package com.intellij.tools.build.bazel.jvmIncBuilder.impl;
 import com.intellij.tools.build.bazel.jvmIncBuilder.instrumentation.FailSafeClassReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.org.objectweb.asm.*;
+import org.jetbrains.org.objectweb.asm.AnnotationVisitor;
+import org.jetbrains.org.objectweb.asm.ClassReader;
+import org.jetbrains.org.objectweb.asm.ClassVisitor;
+import org.jetbrains.org.objectweb.asm.ClassWriter;
+import org.jetbrains.org.objectweb.asm.FieldVisitor;
+import org.jetbrains.org.objectweb.asm.Label;
+import org.jetbrains.org.objectweb.asm.MethodVisitor;
+import org.jetbrains.org.objectweb.asm.Opcodes;
+import org.jetbrains.org.objectweb.asm.RecordComponentVisitor;
+import org.jetbrains.org.objectweb.asm.Type;
+import org.jetbrains.org.objectweb.asm.TypePath;
+import org.jetbrains.org.objectweb.asm.signature.SignatureReader;
+import org.jetbrains.org.objectweb.asm.signature.SignatureVisitor;
+import org.jetbrains.org.objectweb.asm.tree.AnnotationNode;
 import org.jetbrains.org.objectweb.asm.tree.FieldNode;
 import org.jetbrains.org.objectweb.asm.tree.InsnNode;
 import org.jetbrains.org.objectweb.asm.tree.MethodNode;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 public class JavaAbiClassFilter extends ClassVisitor {
-  public static final String MODULE_INFO_CLASS_NAME = "module-info";
+  public enum Mode {
+    IJAR_COMPLIANT,     // kept methods carry no Code attribute, like the output of the 'ijar' tool from Bazel's rules_java; an attempt to load such bytecode may produce ClassFormatError
+    VERIFIABLE_BYTECODE // the same class filtering policy, but the bytecode stays loadable (JVMS §4.10): kept methods get minimal bodies, a class keeps its static initializer, and an enum keeps its default methods functional
+  }
+
+  private final Mode myMode;
   private boolean isEnum;
   private boolean allowPackageLocalMethods;
   private String myName;
-  private int myEffectiveAccess;
+  private boolean myAbiVisible = true;
   private final List<FieldNode> myFields = new ArrayList<>();
   private final MethodContainer myMethods;
+  private final InnerClassInfoContainer myInnerClasses = new InnerClassInfoContainer();
   private final Set<String> myReferencedClasses = new HashSet<>();
-  private final List<InnerClassInfo> myInnerClasses = new ArrayList<>();
+  private final List<String> myNestMembers = new ArrayList<>();
+  private final List<String> mySignatures = new ArrayList<>();
 
-  private JavaAbiClassFilter(ClassVisitor delegate, MethodContainer methodContainer) {
+  private JavaAbiClassFilter(ClassVisitor delegate, MethodContainer methodContainer, Mode mode) {
     super(Opcodes.API_VERSION, delegate);
     myMethods = methodContainer;
+    myMode = mode;
   }
 
   public static byte @Nullable [] filter(byte[] classBytes) {
-    ClassReader reader = new FailSafeClassReader(classBytes);
-    if (!isAbiClass(reader.getAccess(), reader.getClassName())) {
-      return null; // optimization, return faster
-    }
+    return filter(Mode.VERIFIABLE_BYTECODE, classBytes);
+  }
 
+  public static byte @Nullable [] filter(Mode mode, byte[] classBytes) {
+    ClassReader reader = new FailSafeClassReader(classBytes);
     ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_MAXS) {
       @Override
       protected String getCommonSuperClass(String type1, String type2) {
@@ -40,15 +72,19 @@ public class JavaAbiClassFilter extends ClassVisitor {
       }
     };
 
-    JavaAbiClassFilter visitor = new JavaAbiClassFilter(writer, MethodContainer.create(reader));
+    JavaAbiClassFilter visitor = new JavaAbiClassFilter(writer, MethodContainer.create(reader, mode), mode);
     // Stripping certain DEBUG-INFO from abi.jar might lead to bytecode differences between compilation results against some artifact and abi-version of this artifact.
     // This won't affect the behavior of the resulting bytecode. However, if such differences are not desired, parameter DEBUG-INFO should be kept.
     reader.accept(
       visitor, ClassReader.SKIP_CODE | ClassReader.SKIP_FRAMES /*| ClassReader.SKIP_DEBUG*/
     );
 
-    // double-check ABI condition with complete set of flags
-    if (!isAbiClass(visitor.myEffectiveAccess, visitor.myName)) {
+    // Both modes remove only the classes that no source can name: local and anonymous classes,
+    // and every class nested inside them at any depth. A NAMED class stays regardless of its
+    // declared visibility: a kept file can still reference it through a supertype constant, a
+    // PermittedSubclasses list, a member descriptor, a signature, or an annotation value, and
+    // such a reference is not visible from the referenced class's own file (e.g. DateFormatUtil$CF).
+    if (!visitor.myAbiVisible) {
       return null;
     }
 
@@ -58,7 +94,6 @@ public class JavaAbiClassFilter extends ClassVisitor {
   @Override
   public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
     myName = name;
-    myEffectiveAccess = access;
     isEnum = isEnum(access);
     allowPackageLocalMethods = name.contains("/android/");   // todo: temporary condition to enable android tests compilation
 
@@ -67,12 +102,11 @@ public class JavaAbiClassFilter extends ClassVisitor {
       myReferencedClasses.add(superName);
     }
     Collections.addAll(myReferencedClasses, interfaces);
+    if (signature != null) {
+      mySignatures.add(signature);
+    }
 
     super.visit(version, access, name, signature, superName, interfaces);
-  }
-
-  private static boolean isAbiClass(int access, String name) {
-    return MODULE_INFO_CLASS_NAME.equals(name) || isAbiVisible(access);
   }
 
   private static boolean isAbiVisible(int access) {
@@ -99,10 +133,16 @@ public class JavaAbiClassFilter extends ClassVisitor {
 
   @Override
   public FieldVisitor visitField(int access, String name, String descriptor, String signature, Object value) {
-    if (isAbiVisible(access) || isEnum && isSynthetic(access)) {
+    // in VERIFIABLE_BYTECODE mode an enum also keeps its synthetic fields ($VALUES): the kept
+    // real bodies of the default enum methods read them
+    boolean keep = myMode == Mode.IJAR_COMPLIANT? isAbiVisible(access) : isAbiVisible(access) || isEnum && isSynthetic(access);
+    if (keep) {
       FieldNode field = new FieldNode(Opcodes.API_VERSION, access, name, descriptor, signature, value);
       myFields.add(field);
       collectReferencedTypes(Type.getType(descriptor));
+      if (signature != null) {
+        mySignatures.add(signature);
+      }
       return field;
     }
     return null;
@@ -123,12 +163,70 @@ public class JavaAbiClassFilter extends ClassVisitor {
     }
   }
 
+  /**
+   * Resolves the collected generic signatures into class references. A signature encodes an
+   * inner class as a SIMPLE name that continues its enclosing class type. 
+   */
+  private void collectReferencedTypesFromSignatures() {
+    if (mySignatures.isEmpty()) {
+      return;
+    }
+    SignatureVisitor resolver = new SignatureVisitor(Opcodes.API_VERSION) {
+      private static final String UNRESOLVED = "";
+      private final Deque<String> myTypeStack = new ArrayDeque<>();
+
+      @Override
+      public void visitClassType(String name) {
+        // the signature names the outermost class type with its full internal name
+        myTypeStack.push(name);
+        myReferencedClasses.add(name);
+      }
+
+      @Override
+      public void visitInnerClassType(String name) {
+        String enclosing = myTypeStack.poll();
+        String resolved = enclosing == null || enclosing.equals(UNRESOLVED)
+          ? UNRESOLVED
+          : Objects.requireNonNullElse(myInnerClasses.find(enclosing, name), UNRESOLVED);
+        myTypeStack.push(resolved);
+        if (!resolved.equals(UNRESOLVED)) {
+          myReferencedClasses.add(resolved);
+        }
+      }
+
+      @Override
+      public void visitEnd() {
+        myTypeStack.poll();
+      }
+    };
+    for (String signature : mySignatures) {
+      new SignatureReader(signature).accept(resolver);
+    }
+  }
+
   @Override
   public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
+    if (myMode == Mode.IJAR_COMPLIANT && "<clinit>".equals(name)) {
+      // ijar always deletes the static initializer: it is never part of the compile-time API.
+      // The VERIFIABLE_BYTECODE mode keeps it: as a stub for a regular class, and with the real
+      // body for an enum (see EnumMethodContainer).
+      return null;
+    }
+    if (myMode == Mode.IJAR_COMPLIANT && isSynthetic(access) && (access & Opcodes.ACC_BRIDGE) == 0) {
+      // ijar drops synthetic non-bridge methods (the access$NNN accessors); bridges stay,
+      // which is why this repo forces ijar over turbine
+      return null;
+    }
     if (isAbiVisible(access) || (allowPackageLocalMethods && isPackageLocal(access))) {
       MethodNode visitor = myMethods.addAbiStubMethod(access, name, descriptor, signature, exceptions);
       if (visitor != null) {
         collectReferencedTypes(Type.getMethodType(descriptor));
+        if (signature != null) {
+          mySignatures.add(signature);
+        }
+        if (exceptions != null) {
+          Collections.addAll(myReferencedClasses, exceptions);
+        }
       }
       return visitor;
     }
@@ -142,23 +240,22 @@ public class JavaAbiClassFilter extends ClassVisitor {
     // For now, sorting is disabled to minimize bytecode differences
 
     // process postponed entries in the InnerClasses attribute
-    for (InnerClassInfo cls : myInnerClasses) {
-      if (cls.name.equals(myName)) {
-        // this class is an inner class and the InnerClassInfo structure describes the class being processed => the structure must be kept
-        myEffectiveAccess |= cls.access;
-        cv.visitInnerClass(cls.name, cls.outerName, cls.innerName, cls.access);
-        continue;
-      }
-
-      if (cls.outerName == null || cls.innerName == null || !isAbiVisible(cls.access)) {
-        // name is a local or anonymous class or the class cannot be included in ABI
-        continue;
-      }
-
-      if (cls.outerName.equals(myName) /*this class encloses class <name>*/ || myReferencedClasses.contains(cls.name)) {
-        cv.visitInnerClass(cls.name, cls.outerName, cls.innerName, cls.access);
-      }
+    // the reference set must be consistent and complete for BOTH modes: signature-only
+    // references keep InnerClasses entries in the VERIFIABLE_BYTECODE mode too
+    collectReferencedTypesFromSignatures();
+    // class-literal values of the kept members' annotations reference classes too; the
+    // class-level annotations are covered by AnnotationValueRefCollector during the visit
+    for (FieldNode field : myFields) {
+      collectAnnotationValueRefs(field.visibleAnnotations, field.invisibleAnnotations, field.visibleTypeAnnotations, field.invisibleTypeAnnotations);
     }
+    for (MethodNode method : myMethods) {
+      collectAnnotationValueRefs(method.visibleAnnotations, method.invisibleAnnotations, method.visibleTypeAnnotations, method.invisibleTypeAnnotations);
+      collectParameterAnnotationValueRefs(method.visibleParameterAnnotations);
+      collectParameterAnnotationValueRefs(method.invisibleParameterAnnotations);
+      collectAnnotationValue(method.annotationDefault);
+    }
+
+    emitInnerClassesAndNestMembers();
 
     //Collections.sort(myFields, Comparator.comparing(f -> f.name));
     for (FieldNode field : myFields) {
@@ -166,10 +263,64 @@ public class JavaAbiClassFilter extends ClassVisitor {
     }
 
     //Collections.sort(myMethods, Comparator.comparing(m -> m.name));
-    for (MethodNode method : myMethods.getMethods()) {
+    for (MethodNode method : myMethods) {
       method.accept(cv);
     }
     super.visitEnd();
+  }
+
+  /**
+   * Emits the kept InnerClasses entries and the kept NestMembers names. The logic is shared by both modes.
+   */
+  private void emitInnerClassesAndNestMembers() {
+    InnerClassInfo self = myInnerClasses.find(myName);
+    if (self != null) {
+      myAbiVisible = myInnerClasses.isNameable(self);
+    }
+
+    // A NestMembers name is a class constant, so a kept member must keep its InnerClasses entry
+    // (JVMS §4.7.6). The filter drops the class files of local and anonymous members and of
+    // everything nested inside them, so their NestMembers names are pruned together with the
+    // files. The member's own InnerClasses entry in this class file is the evidence; a member
+    // without an entry is kept.
+    List<String> keptNestMembers = new ArrayList<>();
+    for (String member : myNestMembers) {
+      InnerClassInfo cls = myInnerClasses.find(member);
+      if (cls == null || myInnerClasses.isNameable(cls)) {
+        keptNestMembers.add(member);
+        myReferencedClasses.add(member);
+      }
+    }
+
+    Set<String> kept = new HashSet<>();
+    for (InnerClassInfo cls : myInnerClasses) {
+      if (shouldKeep(cls)) {
+        // a kept entry keeps its whole enclosing chain, so that the attribute stays
+        // self-consistent: the intermediate entries of referenced deep classes stay too
+        for (InnerClassInfo c = cls; c != null; c = myInnerClasses.getEnclosing(c)) {
+          if (!kept.add(c.name)) {
+            break; // the rest of the chain is already kept
+          }
+        }
+      }
+    }
+
+    for (InnerClassInfo cls : myInnerClasses) {
+      if (kept.contains(cls.name)) {
+        cv.visitInnerClass(cls.name, cls.outerName, cls.innerName, cls.access);
+      }
+    }
+    for (String member : keptNestMembers) {
+      cv.visitNestMember(member);
+    }
+  }
+
+  private boolean shouldKeep(@NotNull InnerClassInfo cls) {
+    if (cls.isLocal() || cls.isAnonymous()) {
+      return false;
+    }
+    // a named direct child of this class stays even when unreferenced
+    return myReferencedClasses.contains(cls.name) || Objects.equals(cls.outerName, myName) || Objects.equals(cls.name, myName);
   }
 
   @Override
@@ -180,8 +331,9 @@ public class JavaAbiClassFilter extends ClassVisitor {
 
   @Override
   public void visitNestMember(String nestMember) {
-    myReferencedClasses.add(nestMember);
-    super.visitNestMember(nestMember);
+    // postpone: visitEnd emits the members each mode keeps. A member name must
+    // not enter myReferencedClasses here: membership alone keeps nothing, counting it would.
+    myNestMembers.add(nestMember);
   }
 
   @Override
@@ -204,14 +356,81 @@ public class JavaAbiClassFilter extends ClassVisitor {
 
   @Override
   public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
-    collectReferencedTypes(Type.getType(descriptor));
-    return super.visitAnnotation(descriptor, visible);
+    // the annotation TYPE is not a reference in either mode - see AnnotationValueRefCollector
+    return new AnnotationValueRefCollector(super.visitAnnotation(descriptor, visible));
   }
 
   @Override
   public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String descriptor, boolean visible) {
-    collectReferencedTypes(Type.getType(descriptor));
-    return super.visitTypeAnnotation(typeRef, typePath, descriptor, visible);
+    return new AnnotationValueRefCollector(super.visitTypeAnnotation(typeRef, typePath, descriptor, visible));
+  }
+
+  @SafeVarargs
+  private void collectAnnotationValueRefs(List<? extends AnnotationNode>... annotationLists) {
+    for (List<? extends AnnotationNode> annotations : annotationLists) {
+      if (annotations != null) {
+        for (AnnotationNode annotation : annotations) {
+          if (annotation.values != null) {
+            for (Object value : annotation.values) {
+              collectAnnotationValue(value);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  private void collectParameterAnnotationValueRefs(List<AnnotationNode> @Nullable [] parameterAnnotations) {
+    if (parameterAnnotations != null) {
+      for (List<AnnotationNode> annotations : parameterAnnotations) {
+        collectAnnotationValueRefs(annotations);
+      }
+    }
+  }
+
+  private void collectAnnotationValue(@Nullable Object value) {
+    if (value instanceof Type type) {
+      collectReferencedTypes(type);
+    }
+    else if (value instanceof AnnotationNode nested) {
+      collectAnnotationValueRefs(List.of(nested));
+    }
+    else if (value instanceof List<?> array) {
+      for (Object element : array) {
+        collectAnnotationValue(element);
+      }
+    }
+  }
+
+  /**
+   * Collects class-literal annotation VALUES into the reference set. In both modes an annotation
+   * TYPE is not a reference: consumers resolve it through the type's own class file, and real
+   * ijar drops its InnerClasses entry (the ApiStatus$Internal probe). A class literal in an
+   * annotation value does count: real ijar keeps its entry (the ExtraHosts$Deserializer probe,
+   * a Jackson @JsonDeserialize(using=...) value).
+   */
+  private final class AnnotationValueRefCollector extends AnnotationVisitor {
+    AnnotationValueRefCollector(@Nullable AnnotationVisitor delegate) {
+      super(Opcodes.API_VERSION, delegate);
+    }
+
+    @Override
+    public void visit(String name, Object value) {
+      if (value instanceof Type type) {
+        collectReferencedTypes(type);
+      }
+      super.visit(name, value);
+    }
+
+    @Override
+    public AnnotationVisitor visitAnnotation(String name, String descriptor) {
+      return new AnnotationValueRefCollector(super.visitAnnotation(name, descriptor));
+    }
+
+    @Override
+    public AnnotationVisitor visitArray(String name) {
+      return new AnnotationValueRefCollector(super.visitArray(name));
+    }
   }
 
   @Override
@@ -256,30 +475,49 @@ public class JavaAbiClassFilter extends ClassVisitor {
     }
   }
 
-  private interface MethodContainer {
+  /**
+   * The ijar-way method generation: no Code attribute at all, even for non-abstract methods.
+   * The class file is not valid for the VM, but javac and kotlinc accept it for resolution purposes
+   */
+  private static final class IjarMethod extends MethodNode {
+    IjarMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
+      super(Opcodes.API_VERSION, access, name, descriptor, signature, exceptions);
+    }
+
+    @Override
+    public void visitLocalVariable(String name, String descriptor, String signature, Label start, Label end, int index) {
+      // no Code attribute means no local variable table
+    }
+
+    @Override
+    public void visitLineNumber(int line, Label start) {
+      // no Code attribute means no line numbers
+    }
+  }
+
+  private interface MethodContainer extends Iterable<MethodNode> {
     @Nullable
     MethodNode addAbiStubMethod(int access, String name, String descriptor, String signature, String[] exceptions);
 
-    Collection<MethodNode> getMethods();
-
-    static MethodContainer create(ClassReader reader) {
-      if (isEnum(reader.getAccess())) {
-        // Keep enum's certain methods in ABI content. Form compiler relies on enum's valueOf() and similar methods in property value introspection.
-        // Failure to read enum constants on compilation stage may lead to incorrectly generated UI setup code.
+    static MethodContainer create(ClassReader reader, Mode mode) {
+      if (mode == Mode.VERIFIABLE_BYTECODE && isEnum(reader.getAccess())) {
+        // A loaded enum class must stay functional: keep the default enum methods and the static
+        // initializer with their real bodies, so the enum constants initialize and values() and
+        // valueOf() work when a tool loads the ABI class.
         return new EnumMethodContainer(Opcodes.API_VERSION, reader);
       }
       return new MethodContainer() {
         private final List<MethodNode> myNodes = new ArrayList<>();
         @Override
         public MethodNode addAbiStubMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
-          AbiMethod node = new AbiMethod(access, name, descriptor, signature, exceptions);
+          MethodNode node = mode == Mode.IJAR_COMPLIANT? new IjarMethod(access, name, descriptor, signature, exceptions) : new AbiMethod(access, name, descriptor, signature, exceptions);
           myNodes.add(node);
           return node;
         }
 
         @Override
-        public Collection<MethodNode> getMethods() {
-          return Collections.unmodifiableCollection(myNodes);
+        public @NotNull Iterator<MethodNode> iterator() {
+          return myNodes.iterator();
         }
       };
     }
@@ -313,12 +551,12 @@ public class JavaAbiClassFilter extends ClassVisitor {
     @Override
     @Nullable
     public MethodNode addAbiStubMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
-      return shouldKeepMethod(access, name)? null : myNodes.computeIfAbsent(getKey(name, descriptor), k -> new AbiMethod(access, name, descriptor, signature, exceptions));
+      return shouldKeepMethod(access, name)? null : myNodes.computeIfAbsent(getKey(name, descriptor), _ -> new AbiMethod(access, name, descriptor, signature, exceptions));
     }
 
     @Override
-    public Collection<MethodNode> getMethods() {
-      return Collections.unmodifiableCollection(myNodes.values());
+    public @NotNull Iterator<MethodNode> iterator() {
+      return myNodes.values().iterator();
     }
 
     private static @NotNull String getKey(String name, String descriptor) {
@@ -334,5 +572,64 @@ public class JavaAbiClassFilter extends ClassVisitor {
     }
   }
 
-  private record InnerClassInfo(String name, String outerName, String innerName, int access) {}
+  private record InnerClassInfo(String name, String outerName, String innerName, int access) {
+    boolean isAnonymous() {
+      return innerName == null; // JVMS 4.7.6: an anonymous class has no simple name
+    }
+
+    boolean isLocal() {
+      return outerName == null && innerName != null; // JVMS 4.7.6: a local class is not a member of any class
+    }
+  }
+
+  private static final class InnerClassInfoContainer implements Iterable<InnerClassInfo> {
+    private final List<InnerClassInfo> myEntries = new ArrayList<>();
+    private final Map<String, InnerClassInfo> myByName = new HashMap<>();
+    private final Map<String, Map<String, String>> myNameByEnclosingAndSimple = new HashMap<>();
+
+    void add(@NotNull InnerClassInfo cls) {
+      myEntries.add(cls);
+      myByName.put(cls.name, cls);
+      if (cls.outerName != null && cls.innerName != null) {
+        myNameByEnclosingAndSimple.computeIfAbsent(cls.outerName, _ -> new HashMap<>()).put(cls.innerName, cls.name);
+      }
+    }
+
+    @Override
+    public Iterator<InnerClassInfo> iterator() {
+      return myEntries.iterator();
+    }
+
+    @Nullable
+    InnerClassInfo find(@NotNull String name) {
+      return myByName.get(name);
+    }
+
+    @Nullable
+    String find(@NotNull String enclosingName, @NotNull String simpleName) {
+      return myNameByEnclosingAndSimple.getOrDefault(enclosingName, Map.of()).get(simpleName);
+    }
+
+    /** The entry of the class that encloses the given class, or null when there is no such entry. */
+    @Nullable
+    InnerClassInfo getEnclosing(@NotNull InnerClassInfo cls) {
+      return cls.outerName != null? myByName.get(cls.outerName) : null;
+    }
+
+    /**
+     * A class belongs to the ABI only when source code can name it: the class and every link of
+     * its enclosing chain must be a named class. A local or an anonymous class is not nameable,
+     * cannot be extended, cannot be a permitted subclass, and cannot appear in a member's type,
+     * so nothing nested under it is reachable either. The chain comes from this class file's own
+     * InnerClasses entries.
+     */
+    boolean isNameable(@NotNull InnerClassInfo cls) {
+      for (InnerClassInfo c = cls; c != null; c = getEnclosing(c)) {
+        if (c.isLocal() || c.isAnonymous()) {
+          return false;
+        }
+      }
+      return true;
+    }
+  }
 }

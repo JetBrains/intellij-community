@@ -43,7 +43,8 @@ public final class ManagedHighlighterRecycler {
     if (HighlightInfo.fromRangeHighlighter(highlighter) != info) {
       return;  // do not recycle the alien highlighter
     }
-    assert info.isFromHighlightVisitor() || info.isFromAnnotator() || info.isFromInspection() || info.isInjectionRelated(): info;
+    assert info.isFromHighlightVisitor() || info.isFromAnnotator() || info.isFromInspection() || info.isInjectionRelated() ||
+           info.isFromChameleonSyntax(): info;
     assert info.getHighlighter() != null;
     assert info.getGroup() == HighlightInfoUpdaterImpl.MANAGED_HIGHLIGHT_INFO_GROUP: info;
     if (UpdateHighlightersUtil.LOG.isDebugEnabled()) {

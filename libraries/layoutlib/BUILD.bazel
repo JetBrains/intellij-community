@@ -1,0 +1,42 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.libraries.layoutlib` start
+jvm_library(
+    name = "layoutlib",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.layoutlib",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-layoutlib-layoutlib"],
+    runtime_deps = ["@lib//:libraries-layoutlib-layoutlib"],
+)
+
+jvm_library(
+    name = "layoutlib_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.layoutlib",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-layoutlib-layoutlib"],
+    runtime_deps = [":layoutlib"],
+)
+### auto-generated section `build intellij.libraries.layoutlib` end
+
+### auto-generated section `iml intellij.libraries.layoutlib` start
+exports_files(
+    [
+        "intellij.libraries.layoutlib.iml",
+        "resources/intellij.libraries.layoutlib.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.layoutlib` end

@@ -8,7 +8,7 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextComponentAccessor
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.python.community.execService.BinaryToExec
-import com.intellij.python.pytools.ToolCommandSpec
+import com.intellij.python.pytools.backend.ToolCommandSpec
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyInternalExecApi
 import com.jetbrains.python.PyToolUIInfo
@@ -43,7 +43,7 @@ interface FileSystem<P : PathHolder> {
   suspend fun validateExecutable(path: P): PyResult<Unit>
   suspend fun fileExists(path: P): Boolean
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun <T> configureFileBrowseEditor(
     fieldAccessor: TextComponentAccessor<ComboBox<T>>,
     comboBox: ComboBox<T>,

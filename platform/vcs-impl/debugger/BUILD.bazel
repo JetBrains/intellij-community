@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.platform.vcs.impl.debugger` start
+content_module_jar(module = ":debugger")
+### auto-generated section `dev intellij.platform.vcs.impl.debugger` end
+
 ### auto-generated section `build intellij.platform.vcs.impl.debugger` start
 jvm_library(
     name = "debugger",
@@ -27,8 +31,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":debugger")
-
 jvm_library(
     name = "debugger_test_lib",
     testonly = True,
@@ -53,7 +55,6 @@ exports_files(
     [
         "intellij.platform.vcs.impl.debugger.iml",
         "resources/intellij.platform.vcs.impl.debugger.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -3,7 +3,7 @@ package com.intellij.python.hatch.cli
 
 import com.intellij.platform.eel.provider.utils.stdoutString
 import com.intellij.python.hatch.PyHatchBundle
-import com.intellij.python.pytools.runtime.PyToolRuntime
+import com.intellij.python.pytools.backend.runtime.PyToolRuntime
 import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.jetbrains.python.Result

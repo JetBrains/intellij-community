@@ -8,6 +8,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.buildScripts.concurrency" exported="" />
     <orderEntry type="module" module-name="intellij.groovy.rt.classLoader" />
     <orderEntry type="module" module-name="intellij.platform.util.classLoader" />
     <orderEntry type="module" module-name="intellij.platform.util" />
@@ -15,7 +16,8 @@
     <orderEntry type="module" module-name="intellij.platform.buildScripts.downloader" />
     <orderEntry type="module" module-name="intellij.platform.jps.model" />
     <orderEntry type="module" module-name="intellij.platform.util.zip" />
-    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
     <orderEntry type="module" module-name="intellij.idea.community.build.zip" />
+    <orderEntry type="module" module-name="intellij.libraries.opentelemetry" />
+    <orderEntry type="module" module-name="intellij.idea.community.build.tasks" />
   </component>
 </module>

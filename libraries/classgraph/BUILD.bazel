@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.classgraph` start
+content_module_jar(
+    libraries = ["@lib//:libraries-classgraph-classgraph"],
+    module = ":classgraph",
+)
+### auto-generated section `dev intellij.libraries.classgraph` end
+
 ### auto-generated section `build intellij.libraries.classgraph` start
 jvm_library(
     name = "classgraph",
@@ -16,11 +23,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-classgraph-classgraph"],
     runtime_deps = ["@lib//:libraries-classgraph-classgraph"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-classgraph-classgraph"],
-    module = ":classgraph",
 )
 
 jvm_library(
@@ -43,7 +45,6 @@ exports_files(
     [
         "intellij.libraries.classgraph.iml",
         "resources/intellij.libraries.classgraph.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

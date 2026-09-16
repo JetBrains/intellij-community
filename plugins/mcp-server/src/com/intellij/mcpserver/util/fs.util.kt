@@ -226,7 +226,7 @@ fun Path.relativizeIfPossible(virtualFile: VirtualFile): String {
 }
 
 // TODO: this must be unified with resolveInProject and made more flexible to support multiple source roots, also MCP client roots and so on
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 fun resolveReadFile(project: Project, filePath: String): VirtualFile {
   val normalizedPath = normalizeReadFilePath(filePath)
   val virtualFileManager = VirtualFileManager.getInstance()

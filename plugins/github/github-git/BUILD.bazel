@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.vcs.github.git` start
+content_module_jar(module = ":vcs-github-git")
+### auto-generated section `dev intellij.vcs.github.git` end
+
 ### auto-generated section `build intellij.vcs.github.git` start
 jvm_library(
     name = "vcs-github-git",
@@ -44,8 +48,6 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui",
     ],
 )
-
-content_module_jar(module = ":vcs-github-git")
 
 jvm_library(
     name = "vcs-github-git_test_lib",

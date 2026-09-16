@@ -4,7 +4,6 @@ package com.intellij.codeInsight.generation.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionGroupUtil;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -54,7 +53,7 @@ public final class GenerateAction extends DumbAwareAction {
     Project project = event.getProject();
     Editor editor = event.getData(CommonDataKeys.EDITOR);
     boolean enabled = project != null && editor != null &&
-                      !ActionGroupUtil.isGroupEmpty(getGroup(), event);
+                      getGroup().getChildrenCount() > 0;
     if (event.isFromContextMenu()) {
       event.getPresentation().setEnabledAndVisible(enabled);
     }

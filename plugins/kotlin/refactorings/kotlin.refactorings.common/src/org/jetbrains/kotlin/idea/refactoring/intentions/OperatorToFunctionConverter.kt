@@ -50,7 +50,6 @@ import org.jetbrains.kotlin.psi.psiUtil.findLabelAndCall
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
 import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
 import org.jetbrains.kotlin.util.OperatorNameConventions
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 /**
  * Allows to convert implicit operators' calls to explicit and vice versa.
@@ -67,10 +66,10 @@ object OperatorToFunctionConverter {
         * `invoke<>(){}` -> not applicable
         */
 
-        val callExpression = qualifiedExpression.selectorExpression.safeAs<KtCallExpression>()?.copied() ?: return null
+        val callExpression = (qualifiedExpression.selectorExpression as? KtCallExpression)?.copied() ?: return null
         val calleeExpression = callExpression.calleeExpression as KtNameReferenceExpression
         val receiverExpression = qualifiedExpression.receiverExpression
-        val selectorInReceiver = receiverExpression.safeAs<KtDotQualifiedExpression>()?.selectorExpression
+        val selectorInReceiver = (receiverExpression as? KtDotQualifiedExpression)?.selectorExpression
         return if (selectorInReceiver is KtNameReferenceExpression) {
             calleeExpression.rawReplace(selectorInReceiver.copied())
             selectorInReceiver.rawReplace(callExpression)
@@ -243,7 +242,7 @@ object OperatorToFunctionConverter {
     //TODO: don't use creation by plain text
     private fun convertCall(element: KtCallExpression): KtExpression {
         val callee = element.calleeExpression!!
-        val receiver = element.parent?.safeAs<KtQualifiedExpression>()?.receiverExpression
+        val receiver = (element.parent as? KtQualifiedExpression)?.receiverExpression
         val isAnonymousFunctionWithReceiver =
             receiver != null && (callee.safeDeparenthesize() as? KtNamedFunction)?.receiverTypeReference != null
 

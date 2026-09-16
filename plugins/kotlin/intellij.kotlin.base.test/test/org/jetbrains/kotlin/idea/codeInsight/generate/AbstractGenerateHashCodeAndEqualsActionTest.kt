@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.codeInsight.generate
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 
 abstract class AbstractGenerateHashCodeAndEqualsActionTest : AbstractCodeInsightActionTest() {
     override fun doTest(path: String) {
@@ -14,7 +15,9 @@ abstract class AbstractGenerateHashCodeAndEqualsActionTest : AbstractCodeInsight
 
         try {
             codeInsightSettings.USE_INSTANCEOF_ON_EQUALS_PARAMETER = InTextDirectivesUtils.isDirectiveDefined(fileText, "// USE_IS_CHECK")
-            super.doTest(path)
+            withCustomCompilerOptions(fileText, project, module) {
+                super.doTest(path)
+            }
         } finally {
             codeInsightSettings.USE_INSTANCEOF_ON_EQUALS_PARAMETER = useInstanceOfOnEqualsParameterOld
         }

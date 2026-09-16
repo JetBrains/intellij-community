@@ -72,7 +72,7 @@ class TreeTableSelectionModel implements SelectionModel<GridRow, GridColumn>, Se
 
   @Override
   public @NotNull GridSelection<GridRow, GridColumn> fit(@NotNull GridSelection<GridRow, GridColumn> selection) {
-    return new GridSelectionImpl(selection.getSelectedRows(), selection.getSelectedColumns());
+    return GridSelectionImpl.withSelection(selection, selection.getSelectedRows(), selection.getSelectedColumns());
   }
 
   @Override
@@ -166,7 +166,7 @@ class TreeTableSelectionModel implements SelectionModel<GridRow, GridColumn>, Se
     if (paths == null) return false;
     return ContainerUtil.find(paths, path ->
       ContainerUtil.find(path.getPath(), element ->
-        element instanceof RowNode && ((RowNode)element).getRowIdx().equals(row)) != null) != null;
+        element instanceof RowNode node && node.getRowIdx().equals(row)) != null) != null;
   }
 
   @Override

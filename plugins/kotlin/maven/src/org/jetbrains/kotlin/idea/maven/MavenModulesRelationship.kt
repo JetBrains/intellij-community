@@ -27,7 +27,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
  * so `excludeMavenChildrenModules(project, listOf(module2, module2.2, module1)` -> `listOf(module1, module2)`
  *
  */
-@RequiresReadLock
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 fun excludeMavenChildrenModules(project: Project, selectedModules: List<Module>): List<Module> {
     val mavenManager = MavenProjectsManager.getInstance(project)
 

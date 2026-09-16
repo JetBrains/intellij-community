@@ -74,6 +74,10 @@ class PathFinder(importlib.abc.MetaPathFinder):
         @deprecated("Deprecated since Python 3.4; removed in Python 3.12. Use `find_spec()` instead.")
         def find_module(cls, fullname: str, path: Sequence[str] | None = None) -> importlib.abc.Loader | None: ...
 
+    if sys.version_info >= (3, 15):
+        @classmethod
+        def discover(cls, parent: ModuleSpec | None = None) -> Iterator[ModuleSpec]: ...
+
 SOURCE_SUFFIXES: Final[list[str]]
 DEBUG_BYTECODE_SUFFIXES: Final = [".pyc"]
 OPTIMIZED_BYTECODE_SUFFIXES: Final = [".pyc"]
@@ -88,6 +92,9 @@ class FileFinder(importlib.abc.PathEntryFinder):
         cls, *loader_details: tuple[type[importlib.abc.Loader], list[str]]
     ) -> Callable[[str], importlib.abc.PathEntryFinder]: ...
 
+    if sys.version_info >= (3, 15):
+        def discover(self, parent: ModuleSpec | None = None) -> Iterator[ModuleSpec]: ...
+
 class _LoaderBasics:
     def is_package(self, fullname: str) -> bool: ...
     def create_module(self, spec: ModuleSpec) -> types.ModuleType | None: ...
@@ -101,9 +108,24 @@ class SourceLoader(_LoaderBasics):
     def set_data(self, path: str, data: bytes) -> None: ...
     def get_source(self, fullname: str) -> str | None: ...
     def path_stats(self, path: str) -> Mapping[str, Any]: ...
-    def source_to_code(
-        self, data: ReadableBuffer | str | _ast.Module | _ast.Expression | _ast.Interactive, path: bytes | StrPath
-    ) -> types.CodeType: ...
+    if sys.version_info >= (3, 15):
+        def source_to_code(
+            self,
+            data: ReadableBuffer | str | _ast.Module | _ast.Expression | _ast.Interactive,
+            path: bytes | StrPath,
+            fullname: str | None = None,
+            *,
+            _optimize: int = -1,
+        ) -> types.CodeType: ...
+    else:
+        def source_to_code(
+            self,
+            data: ReadableBuffer | str | _ast.Module | _ast.Expression | _ast.Interactive,
+            path: bytes | StrPath,
+            *,
+            _optimize: int = -1,
+        ) -> types.CodeType: ...
+
     def get_code(self, fullname: str) -> types.CodeType | None: ...
 
 class FileLoader:
@@ -120,13 +142,6 @@ class FileLoader:
 class SourceFileLoader(importlib.abc.FileLoader, FileLoader, importlib.abc.SourceLoader, SourceLoader):  # type: ignore[misc]  # incompatible method arguments in base classes
     def set_data(self, path: str, data: ReadableBuffer, *, _mode: int = 0o666) -> None: ...
     def path_stats(self, path: str) -> Mapping[str, Any]: ...
-    def source_to_code(  # type: ignore[override]  # incompatible with InspectLoader.source_to_code
-        self,
-        data: ReadableBuffer | str | _ast.Module | _ast.Expression | _ast.Interactive,
-        path: bytes | StrPath,
-        *,
-        _optimize: int = -1,
-    ) -> types.CodeType: ...
 
 class SourcelessFileLoader(importlib.abc.FileLoader, FileLoader, _LoaderBasics):
     def get_code(self, fullname: str) -> types.CodeType | None: ...
@@ -145,7 +160,7 @@ class ExtensionFileLoader(FileLoader, _LoaderBasics, importlib.abc.ExecutionLoad
 if sys.version_info >= (3, 15):
     class NamespacePath:
         def __init__(
-            self, name: str, path: MutableSequence[str], path_finder: Callable[[str, tuple[str, ...]], ModuleSpec]
+            self, name: str, path: MutableSequence[str], path_finder: Callable[[str, tuple[str, ...]], ModuleSpec | None]
         ) -> None: ...
         def __iter__(self) -> Iterator[str]: ...
         def __getitem__(self, index: int) -> str: ...
@@ -154,10 +169,12 @@ if sys.version_info >= (3, 15):
         def __contains__(self, item: str) -> bool: ...
         def append(self, item: str) -> None: ...
 
+    _NamespacePath = NamespacePath
+
 if sys.version_info >= (3, 11):
     class NamespaceLoader(importlib.abc.InspectLoader):
         def __init__(
-            self, name: str, path: MutableSequence[str], path_finder: Callable[[str, tuple[str, ...]], ModuleSpec]
+            self, name: str, path: MutableSequence[str], path_finder: Callable[[str, tuple[str, ...]], ModuleSpec | None]
         ) -> None: ...
         def is_package(self, fullname: str) -> Literal[True]: ...
         def get_source(self, fullname: str) -> Literal[""]: ...
@@ -180,7 +197,7 @@ if sys.version_info >= (3, 11):
 else:
     class _NamespaceLoader:
         def __init__(
-            self, name: str, path: MutableSequence[str], path_finder: Callable[[str, tuple[str, ...]], ModuleSpec]
+            self, name: str, path: MutableSequence[str], path_finder: Callable[[str, tuple[str, ...]], ModuleSpec | None]
         ) -> None: ...
         def is_package(self, fullname: str) -> Literal[True]: ...
         def get_source(self, fullname: str) -> Literal[""]: ...

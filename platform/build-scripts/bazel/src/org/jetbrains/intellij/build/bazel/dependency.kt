@@ -342,9 +342,6 @@ internal fun generateDeps(
   }
 
   if (exports.isNotEmpty() && !dependentModuleName.startsWith(LIB_MODULE_PREFIX)) {
-    require(!exports.any { it.label == "@lib//:kotlinx-serialization-core" }) {
-      "Do not export kotlinx-serialization-core (module=$dependentModuleName})"
-    }
     require(!exports.any { it.label == "jetbrains-jewel-markdown-laf-bridge-styling"}) {
       "Do not export jetbrains-jewel-markdown-laf-bridge-styling (module=$dependentModuleName})"
     }
@@ -634,3 +631,6 @@ internal val bazelLabelBadCharsPattern = Regex("[:.+]")
 internal fun escapeBazelLabel(name: String): String = bazelLabelBadCharsPattern.replace(name, "-")
 
 private val LOG = Logger.getLogger("dependency")
+
+/** The name prefix of a library wrapper module. Such a module may export the library it wraps. */
+private const val LIB_MODULE_PREFIX = "intellij.libraries."

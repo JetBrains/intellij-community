@@ -44,11 +44,11 @@ public final class JavaEditorTextProviderImpl implements EditorTextProvider {
     String result;
     PsiElement element = findExpression(elementAtCaret);
     if (element == null) return null;
-    if (element instanceof PsiVariable) {
-      result = qualifyEnumConstant(element, ((PsiVariable)element).getName());
+    if (element instanceof PsiVariable variable) {
+      result = qualifyEnumConstant(element, variable.getName());
     }
-    else if (element instanceof PsiMethod) {
-      result = ((PsiMethod)element).getName() + "()";
+    else if (element instanceof PsiMethod method) {
+      result = method.getName() + "()";
     }
     else if (element instanceof PsiReferenceExpression reference) {
       result = qualifyEnumConstant(reference.resolve(), element.getText());
@@ -67,21 +67,21 @@ public final class JavaEditorTextProviderImpl implements EditorTextProvider {
     else if (e instanceof PsiMethod && element.getParent() != e) {
       e = null;
     }
-    else if (e instanceof PsiReferenceExpression) {
+    else if (e instanceof PsiReferenceExpression expression) {
       if (e.getParent() instanceof PsiCallExpression) {
         e = e.getParent();
       }
       else if (e.getParent() instanceof PsiReferenceExpression) {
         // <caret>System.out case should not return plain class name
-        PsiElement resolve = ((PsiReferenceExpression)e).resolve();
+        PsiElement resolve = expression.resolve();
         if (resolve instanceof PsiClass) {
           e = e.getParent();
         }
       }
     }
-    if (e instanceof PsiNewExpression) {
+    if (e instanceof PsiNewExpression expression) {
       // skip new Runnable() { ... }
-      if (((PsiNewExpression)e).getAnonymousClass() != null) return null;
+      if (expression.getAnonymousClass() != null) return null;
     }
     return e;
   }
@@ -90,8 +90,8 @@ public final class JavaEditorTextProviderImpl implements EditorTextProvider {
   public @Nullable Pair<PsiElement, TextRange> findExpression(PsiElement element, boolean allowMethodCalls) {
     PsiElement expression = null;
     PsiElement parent = element.getParent();
-    if (parent instanceof PsiLiteralExpression) {
-      if (((PsiLiteralExpression)parent).isTextBlock() && !allowMethodCalls) {
+    if (parent instanceof PsiLiteralExpression literalExpression) {
+      if (literalExpression.isTextBlock() && !allowMethodCalls) {
         return null;
       }
       element = parent;
@@ -104,14 +104,14 @@ public final class JavaEditorTextProviderImpl implements EditorTextProvider {
     if (parent instanceof PsiVariable) {
       expression = element;
     }
-    else if (parent instanceof PsiReferenceExpression) {
+    else if (parent instanceof PsiReferenceExpression referenceExpression) {
       final PsiElement pparent = parent.getParent();
       if (parent instanceof PsiMethodReferenceExpression ||
-          (pparent instanceof PsiCallExpression && ((PsiCallExpression)pparent).getArgumentList() != null)) { // skip arrays
+          (pparent instanceof PsiCallExpression callExpression && callExpression.getArgumentList() != null)) { // skip arrays
         parent = pparent;
       }
       else if (pparent instanceof PsiReferenceExpression) {
-        if (((PsiReferenceExpression)parent).resolve() instanceof PsiClass) {
+        if (referenceExpression.resolve() instanceof PsiClass) {
           return findExpression(pparent, allowMethodCalls);
         }
       }
@@ -151,8 +151,8 @@ public final class JavaEditorTextProviderImpl implements EditorTextProvider {
       }
       else if (allowMethodCalls) {
         PsiElement e = PsiTreeUtil.getParentOfType(element, PsiVariable.class, PsiExpression.class, PsiMethod.class);
-        if (e instanceof PsiNewExpression) {
-          if (((PsiNewExpression)e).getAnonymousClass() == null) {
+        if (e instanceof PsiNewExpression newExpression) {
+          if (newExpression.getAnonymousClass() == null) {
             expression = e;
           }
         }
@@ -162,9 +162,9 @@ public final class JavaEditorTextProviderImpl implements EditorTextProvider {
     if (expression != null) {
       try {
         PsiElement context = element;
-        if (parent instanceof PsiParameter) {
+        if (parent instanceof PsiParameter parameter) {
           try {
-            context = ((PsiMethod)((PsiParameter)parent).getDeclarationScope()).getBody();
+            context = ((PsiMethod)parameter.getDeclarationScope()).getBody();
           }
           catch (Throwable ignored) {
           }

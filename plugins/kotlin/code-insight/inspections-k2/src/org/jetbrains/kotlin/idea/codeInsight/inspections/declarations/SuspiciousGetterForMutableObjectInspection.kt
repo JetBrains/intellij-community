@@ -11,9 +11,9 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.idea.base.psi.singleExpressionBody
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -30,6 +30,7 @@ import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtPropertyAccessor
 import org.jetbrains.kotlin.psi.KtVisitor
 import org.jetbrains.kotlin.psi.KtVisitorVoid
+import org.jetbrains.kotlin.resolution.KtResolvableCall
 
 private val COROUTINE_CALLABLES = listOf(
     CoroutinesIds.Job.factory,
@@ -133,8 +134,8 @@ internal class SuspiciousGetterForMutableObjectInspection :
 
     context(session: KaSession)
     override fun prepareContext(element: KtPropertyAccessor): Context? {
-        val returnedExpression = element.singleExpressionBody() ?: return null
-        val call = returnedExpression.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
+        val returnedExpression = element.singleExpressionBody() as? KtResolvableCall ?: return null
+        val call = returnedExpression.resolveSuccessfulCall()?.function ?: return null
         val callableId = call.symbol.callableId ?: return null
         val kind = CALLABLES_TO_CHECK[callableId] ?: return null
         if (!kind.isApplicable(element, call)) return null

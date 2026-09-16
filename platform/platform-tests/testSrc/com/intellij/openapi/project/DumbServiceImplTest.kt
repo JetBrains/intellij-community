@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.newvfs.impl.VirtualFileImpl
 import com.intellij.platform.ide.progress.withModalProgress
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.psi.impl.PsiManagerEx
+import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.testFramework.DumbModeTestUtils
 import com.intellij.testFramework.EdtRule
 import com.intellij.testFramework.PlatformTestUtil
@@ -62,6 +63,7 @@ import org.junit.AfterClass
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Before
@@ -240,6 +242,20 @@ class DumbServiceImplTest {
     assertTrue(Disposer.isDisposed(task1))
     assertTrue(Disposer.isDisposed(task2))
     assertNull(exception.get())
+  }
+
+  @Test
+  fun `test queueTask disposes the task and throws AlreadyDisposedException after the service is disposed`() = runBlocking {
+    val dumbService =
+      DumbServiceImpl(project, object : DumbService.DumbModeListener {}, object : DumbModeListenerBackgroundable {}, this)
+    runInEdtAndWait { Disposer.dispose(dumbService) }
+
+    val task = object : DumbModeTask() {
+      override fun performInDumbMode(indicator: ProgressIndicator) = Unit
+    }
+
+    assertThrows(AlreadyDisposedException::class.java) { dumbService.queueTask(task) }
+    assertTrue(Disposer.isDisposed(task))
   }
 
   @Test

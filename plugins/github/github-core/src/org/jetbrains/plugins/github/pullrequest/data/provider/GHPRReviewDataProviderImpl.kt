@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.data.provider
 
 import com.intellij.collaboration.api.dto.GraphQLNodesDTO
 import com.intellij.collaboration.async.BatchesLoader
+import com.intellij.collaboration.async.LoaderWithMutableCache
 import com.intellij.diff.util.Side
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diff.impl.patch.PatchHunkUtil

@@ -75,6 +75,9 @@
     <registryKey key="vcs.merge.conflict.file.suggestion" defaultValue="true" restartRequired="false"
                  description="Automatically open the next file in the merge conflict"/>
 
+    <registryKey key="vcs.diff.preview.scope.navigation.to.group" defaultValue="true" restartRequired="false"
+                 description="Scope diff file navigation ('Go to change' popup and file counter) to the current change's group (e.g. changelist or unversioned files). When disabled, navigation spans all changes."/>
+
     <projectService serviceInterface="com.intellij.platform.vcs.impl.shared.changes.ChangesViewSettings"
                     serviceImplementation="com.intellij.platform.vcs.impl.shared.changes.ChangesViewSettingsImpl"/>
 

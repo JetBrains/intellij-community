@@ -3,14 +3,24 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.kotlin.codeInsight` start
+content_module_jar(module = ":kotlin-codeInsight")
+### auto-generated section `dev intellij.kotlin.codeInsight` end
+
 ### auto-generated section `build intellij.kotlin.codeInsight` start
 create_kotlinc_options(
     name = "custom_kotlin-codeInsight",
     opt_in = [
+        "org.jetbrains.kotlin.psi.KtExperimentalApi",
+        "org.jetbrains.kotlin.psi.KtNonPublicApi",
+        "org.jetbrains.kotlin.psi.KtIdeApi",
         "org.jetbrains.kotlin.analysis.api.KaExperimentalApi",
         "org.jetbrains.kotlin.analysis.api.KaIdeApi",
-        "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+        "org.jetbrains.kotlin.analysis.api.KaPlatformInterface",
+        "org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaUnstableDiagnosticApi",
+        "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
         "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+        "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
     ],
     x_context_parameters = True,
 )
@@ -104,8 +114,6 @@ jvm_library(
         "//plugins/kotlin/highlighting/highlighting-minimal:kotlin-highlighting-minimal",
     ],
 )
-
-content_module_jar(module = ":kotlin-codeInsight")
 
 jvm_library(
     name = "kotlin-codeInsight_test_lib",
@@ -205,10 +213,16 @@ exports_files(
 create_kotlinc_options(
     name = "custom_kotlin-codeInsight-tests",
     opt_in = [
+        "org.jetbrains.kotlin.psi.KtExperimentalApi",
+        "org.jetbrains.kotlin.psi.KtNonPublicApi",
+        "org.jetbrains.kotlin.psi.KtIdeApi",
         "org.jetbrains.kotlin.analysis.api.KaExperimentalApi",
         "org.jetbrains.kotlin.analysis.api.KaIdeApi",
-        "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+        "org.jetbrains.kotlin.analysis.api.KaPlatformInterface",
+        "org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaUnstableDiagnosticApi",
+        "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
         "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+        "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
     ],
     x_context_parameters = True,
 )
@@ -400,10 +414,8 @@ jvm_library(
         "//platform/editor-ui-ex:editor-ex_test_lib",
         "//plugins/kotlin/bundled-compiler-plugins-support:compilerPlugins-support-bundled",
         "//plugins/kotlin/bundled-compiler-plugins-support:compilerPlugins-support-bundled_test_lib",
-        "//plugins/kotlin/base/scripting/scripting.k2:kotlin-base-scripting",
-        "//plugins/kotlin/base/scripting/scripting.k2:kotlin-base-scripting_test_lib",
-        "//plugins/kotlin/base/scripting/scripting.shared",
-        "//plugins/kotlin/base/scripting/scripting.shared:scripting.shared_test_lib",
+        "//plugins/kotlin/base/scripting/scripting",
+        "//plugins/kotlin/base/scripting/scripting:scripting_test_lib",
         "//plugins/kotlin/intellij.kotlin.base.test:base-test",
         "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",

@@ -1,8 +1,0 @@
-- name: dist.all/lib/intellij.relaxng.jar
-  modules:
-  - name: intellij.relaxng
-    libraries:
-      rngom-20051226-patched.jar:
-      - name: $PROJECT_DIR$/community/xml/relaxng/lib/rngom-20051226-patched.jar
-      trang-core.jar:
-      - name: $PROJECT_DIR$/community/xml/relaxng/lib/trang-core.jar

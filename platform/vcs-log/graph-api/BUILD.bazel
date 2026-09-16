@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.platform.vcs.log.graph` start
+content_module_jar(module = ":vcs-log-graph")
+### auto-generated section `dev intellij.platform.vcs.log.graph` end
+
 ### auto-generated section `build intellij.platform.vcs.log.graph` start
 jvm_library(
     name = "vcs-log-graph",
@@ -26,8 +30,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":vcs-log-graph")
-
 jvm_library(
     name = "vcs-log-graph_test_lib",
     testonly = True,
@@ -51,7 +53,6 @@ exports_files(
     [
         "intellij.platform.vcs.log.graph.iml",
         "resources/intellij.platform.vcs.log.graph.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

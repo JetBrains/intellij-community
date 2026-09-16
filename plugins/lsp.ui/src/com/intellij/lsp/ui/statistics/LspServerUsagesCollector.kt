@@ -8,7 +8,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventFields.StringListValidatedByCustomRule
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.lsp.ui.settings.LspServerConfiguration
-import com.intellij.lsp.ui.settings.LspServerSettings
+import com.intellij.lsp.ui.settings.LspIntegrationSettingsImpl
 import com.intellij.openapi.project.Project
 
 internal class LspServerUsagesCollector : ProjectUsagesCollector() {
@@ -23,7 +23,7 @@ internal class LspServerUsagesCollector : ProjectUsagesCollector() {
   override fun getMetrics(project: Project): Set<MetricEvent> {
     val metrics = mutableSetOf<MetricEvent>()
 
-    val settings = LspServerSettings.getInstance(project)
+    val settings = LspIntegrationSettingsImpl.getInstance(project)
     for (server in settings.servers) {
       metrics.add(LSP_SERVER_CONFIGURED.metric(
         server.enabled,

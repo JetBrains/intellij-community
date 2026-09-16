@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import org.jetbrains.kotlin.idea.base.psi.addModifierKeyword
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -27,7 +28,7 @@ class AddReifiedToTypeParameterOfFunctionFix(
         updater: ModPsiUpdater,
     ) {
         val function = element.getStrictParentOfType<KtNamedFunction>() ?: return
-        element.addModifier(KtTokens.REIFIED_KEYWORD)
-        function.addModifier(KtTokens.INLINE_KEYWORD)
+        element.addModifierKeyword(KtTokens.REIFIED_KEYWORD)
+        function.addModifierKeyword(KtTokens.INLINE_KEYWORD)
     }
 }

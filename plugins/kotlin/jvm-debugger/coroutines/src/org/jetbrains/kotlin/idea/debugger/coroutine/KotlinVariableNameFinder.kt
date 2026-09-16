@@ -41,7 +41,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getChildOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 internal class KotlinVariableNameFinder(val debugProcess: DebugProcessImpl) {
-    @RequiresReadLock
+    @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
     fun findVisibleVariableNames(location: Location): List<String> {
         val sourcePosition = KotlinPositionManager(debugProcess).safeGetSourcePosition(location) ?: return emptyList()
         ProgressManager.checkCanceled()

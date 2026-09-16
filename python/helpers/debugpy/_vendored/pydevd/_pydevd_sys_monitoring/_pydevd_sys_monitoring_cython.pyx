@@ -928,7 +928,12 @@ cdef _unwind_event(code, instruction, exc):
     arg = (type(exc), exc, exc.__traceback__)
 
     has_caught_exception_breakpoint_in_pydb = (
-        py_db.break_on_caught_exceptions or py_db.break_on_user_uncaught_exceptions or py_db.has_plugin_exception_breaks
+        py_db.break_on_caught_exceptions
+        or py_db.break_on_user_uncaught_exceptions
+        or py_db.has_plugin_exception_breaks
+        # JetBrains extension (PY-88218): a unit test session must trace an exception even
+        # when the user set no breakpoint.
+        or py_db.stop_on_failed_tests
     )
 
     if has_caught_exception_breakpoint_in_pydb:
@@ -1448,6 +1453,15 @@ cdef _jump_event(code, int from_offset, int to_offset):
     # We know the frame depth.
     frame = _getframe(1)
 
+    info = thread_info.additional_info
+    if info.pydev_step_cmd == -1:
+        # Not stepping — don't re-evaluate breakpoints for same-line backward jumps
+        # (e.g., comprehension loop iterations on Python < 3.13).
+        # The LINE event already handled the initial breakpoint when the line was first reached.
+        if info.pydev_state == 2:
+            _do_wait_suspend(py_db, thread_info, frame, "line", None)
+        return
+
     # Disable the next line event as we're jumping to a line. The line event will be redundant.
     _thread_local_info.f_disable_next_line_if_match = (func_code_info.co_filename, frame.f_lineno)
     # pydev_log.debug('_jump_event', code.co_name, 'from line', from_line, 'to line', frame.f_lineno)
@@ -1894,7 +1908,12 @@ def update_monitor_events(suspend_requested: Optional[bool]=None) -> None:
     required_events = 0
 
     has_caught_exception_breakpoint_in_pydb = (
-        py_db.break_on_caught_exceptions or py_db.break_on_user_uncaught_exceptions or py_db.has_plugin_exception_breaks
+        py_db.break_on_caught_exceptions
+        or py_db.break_on_user_uncaught_exceptions
+        or py_db.has_plugin_exception_breaks
+        # JetBrains extension (PY-88218): a unit test session must trace an exception even
+        # when the user set no breakpoint.
+        or py_db.stop_on_failed_tests
     )
 
     break_on_uncaught_exceptions = py_db.break_on_uncaught_exceptions

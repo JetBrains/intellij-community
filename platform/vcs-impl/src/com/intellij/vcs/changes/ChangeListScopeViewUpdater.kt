@@ -14,7 +14,7 @@ import com.intellij.packageDependencies.DependencyValidationManager
 
 internal class ChangeListScopeViewUpdater(private val project: Project) : ChangeListAdapter() {
   internal class InitialRefresh(private val project: Project) : LocalChangeListsLoadedListener {
-    override fun processLoadedLists(lists: MutableList<LocalChangeList>) {
+    override fun processLoadedLists(lists: List<LocalChangeList>) {
       updateAvailableScopesList(project)
     }
   }

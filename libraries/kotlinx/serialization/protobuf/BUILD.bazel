@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.kotlinx.serialization.protobuf` start
+content_module_jar(
+    libraries = ["@lib//:libraries-kotlinx-serialization-protobuf-kotlinx-serialization-protobuf"],
+    module = ":protobuf",
+)
+### auto-generated section `dev intellij.libraries.kotlinx.serialization.protobuf` end
+
 ### auto-generated section `build intellij.libraries.kotlinx.serialization.protobuf` start
 jvm_library(
     name = "protobuf",
@@ -16,11 +23,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-kotlinx-serialization-protobuf-kotlinx-serialization-protobuf"],
     runtime_deps = ["@lib//:libraries-kotlinx-serialization-protobuf-kotlinx-serialization-protobuf"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-kotlinx-serialization-protobuf-kotlinx-serialization-protobuf"],
-    module = ":protobuf",
 )
 
 jvm_library(
@@ -43,7 +45,6 @@ exports_files(
     [
         "intellij.libraries.kotlinx.serialization.protobuf.iml",
         "resources/intellij.libraries.kotlinx.serialization.protobuf.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

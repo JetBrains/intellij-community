@@ -45,44 +45,29 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.libraries.ui.OrderRoot;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiJavaModule;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiPackage;
-import com.intellij.psi.PsiProvidesStatement;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiReferenceList;
-import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
-import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.rt.execution.junit.IDEAJUnitListener;
 import com.intellij.rt.execution.junit.RepeatCount;
 import com.intellij.rt.execution.testFrameworks.ForkedDebuggerHelper;
 import com.intellij.rt.junit.JUnitStarter;
-import com.intellij.spi.SPIFileType;
-import com.intellij.spi.psi.SPIClassProviderReferenceElement;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
@@ -103,7 +88,6 @@ import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -114,24 +98,15 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
-import java.util.jar.Attributes;
-import java.util.jar.JarFile;
-import java.util.jar.Manifest;
 
-import static com.intellij.execution.junit.JUnitExternalLibraryDescriptor.JUNIT5;
-import static com.intellij.execution.junit.JUnitExternalLibraryDescriptor.JUNIT6;
+import static com.intellij.execution.junit.JUnitLauncherDependencies.LAUNCHER_MODULE_NAME;
+import static com.intellij.execution.junit.JUnitLauncherDependencies.isCustomJUnit;
 
 public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitConfiguration> implements PossiblyDumbAware {
-  private static final String LAUNCHER_MODULE_NAME = "org.junit.platform.launcher";
-  private static final String JUPITER_ENGINE_NAME  = "org.junit.jupiter.engine";
-  private static final String VINTAGE_ENGINE_NAME  = "org.junit.vintage.engine";
-  private static final String SUITE_ENGINE_NAME    = "org.junit.platform.suite.engine";
-
   protected static final Logger LOG = Logger.getInstance(TestObject.class);
 
   private static final @NonNls String DEBUG_RT_PATH = "idea.junit_rt.path";
@@ -145,18 +120,11 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
 
   private final Map<Module, JavaParameters> myAdditionalJarsForModuleFork = new HashMap<>();
 
-  private static final Map<String, String> RUNNER_VERSIONS = Map.of(
+  static final Map<String, String> RUNNER_VERSIONS = Map.of(
     JUnitStarter.JUNIT3_PARAMETER, "3",
     JUnitStarter.JUNIT4_PARAMETER, "4",
     JUnitStarter.JUNIT5_PARAMETER, "5",
     JUnitStarter.JUNIT6_PARAMETER, "6"
-  );
-
-  private static final Set<String> STANDARD_JUNIT_ENGINE_CLASSES = Set.of(
-    "org.junit.jupiter.engine.JupiterTestEngine",
-    "org.junit.vintage.engine.VintageTestEngine",
-    "org.junit.platform.launcher.core.SuiteTestEngine",
-    "org.junit.platform.suite.engine.SuiteTestEngine"
   );
 
   protected static final Set<String> JUPITER_RUNNERS = Set.of(JUnitStarter.JUNIT5_PARAMETER, JUnitStarter.JUNIT6_PARAMETER);
@@ -442,21 +410,12 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
                                          Project project,
                                          GlobalSearchScope globalSearchScope,
                                          boolean ensureOnModulePath) throws CantRunException {
+    boolean modulePathAllowed = ensureOnModulePath && JavaSdkUtil.isJdkAtLeast(javaParameters.getJdk(), JavaSdkVersion.JDK_1_9);
+    JUnitLauncherDependencies dependencies = JUnitLauncherDependencies.detect(project, globalSearchScope, runnerName, modulePathAllowed);
+    if (dependencies == null) return;
+
     JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-    DumbService dumbService = DumbService.getInstance(project);
-
-    String launcherVersion = getLibraryVersion("org.junit.platform.commons.JUnitException", globalSearchScope, project);
-    if (launcherVersion == null) {
-      LOG.info("Failed to detect junit " + RUNNER_VERSIONS.getOrDefault(runnerName, "5") + " launcher version, please configure explicit dependency");
-      return;
-    }
-
-    boolean isModularized = ensureOnModulePath &&
-                            JavaSdkUtil.isJdkAtLeast(javaParameters.getJdk(), JavaSdkVersion.JDK_1_9) &&
-                            ReadAction.nonBlocking(() -> !FilenameIndex.getVirtualFilesByName(PsiJavaModule.MODULE_INFO_FILE,
-                                                                                              globalSearchScope)
-                              .isEmpty()).executeSynchronously() &&
-                            VersionComparatorUtil.compare(launcherVersion, "1.5.0") >= 0;
+    boolean isModularized = dependencies.isModularized();
 
     if (isModularized) { //for modularized junit ensure the launcher is included in the module graph
       ParamsGroup group = getOrCreateJigsawOptions(javaParameters);
@@ -470,62 +429,17 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     }
 
     final List<String> additionalDependencies = new ArrayList<>();
-    if (!JUnitUtil.hasPackageWithDirectories(psiFacade, "org.junit.platform.launcher", globalSearchScope)) {
-      downloadDependenciesWhenRequired(project, additionalDependencies,
-                                       new RepositoryLibraryProperties("org.junit.platform", "junit-platform-launcher", launcherVersion));
-    }
-
-    //add standard engines only if no engine api is present
-    if (!hasJupiterEnginesAPI(globalSearchScope, psiFacade) || !isCustomJUnit(globalSearchScope,
-                                                                            JUnitStarter.JUNIT6_PARAMETER.equals(runnerName)
-                                                                            ? JUnitCommonClassNames.ORG_JUNIT_PLATFORM_ENGINE_CANCELLATION_TOKEN
-                                                                            : JUnitCommonClassNames.ORG_JUNIT_PLATFORM_ENGINE_TEST_ENGINE)) {
-      String defaultMinVersion = JUnitStarter.JUNIT6_PARAMETER.equals(runnerName)
-                                 ? JUNIT6.getMinVersion()
-                                 : JUNIT5.getMinVersion();
-      String jupiterVersion = ObjectUtils.notNull(getLibraryVersion(JUnitUtil.TEST5_ANNOTATION, globalSearchScope, project), defaultMinVersion == null ? "5.0.0" : defaultMinVersion);
-      if (JUnitUtil.hasPackageWithDirectories(psiFacade, JUnitUtil.TEST5_PACKAGE_FQN, globalSearchScope)) {
-        if (!JUnitUtil.hasPackageWithDirectories(psiFacade, JUPITER_ENGINE_NAME, globalSearchScope)) {
-          downloadDependenciesWhenRequired(project, additionalDependencies,
-                                           new RepositoryLibraryProperties("org.junit.jupiter", "junit-jupiter-engine", jupiterVersion));
-        }
-        else if (isModularized) {
-          ensureSpecifiedModuleOnModulePath(javaParameters, globalSearchScope, psiFacade, JUPITER_ENGINE_NAME);
-        }
+    dependencies.resolve(this::isAcceptableVintageVersion, new JUnitLauncherDependencies.Downloader() {
+      @Override
+      public void download(@NotNull RepositoryLibraryProperties properties) throws CantRunException {
+        downloadDependenciesWhenRequired(project, additionalDependencies, properties);
       }
 
-      if (JUnitUtil.hasPackageWithDirectories(psiFacade, "org.junit.platform.suite.api", globalSearchScope)) {
-        if (!JUnitUtil.hasPackageWithDirectories(psiFacade, SUITE_ENGINE_NAME, globalSearchScope)) {
-          String suiteVersion = getLibraryVersion(JUnitCommonClassNames.ORG_JUNIT_PLATFORM_SUITE_API_SUITE, globalSearchScope, project);
-          if (suiteVersion != null && VersionComparatorUtil.compare(suiteVersion, "1.8.0") >= 0) {
-            downloadDependenciesWhenRequired(project, additionalDependencies,
-                                             new RepositoryLibraryProperties("org.junit.platform", "junit-platform-suite-engine", suiteVersion));
-          }
-        }
-        else if (isModularized) {
-          ensureSpecifiedModuleOnModulePath(javaParameters, globalSearchScope, psiFacade, SUITE_ENGINE_NAME);
-        }
+      @Override
+      public void putModuleOnPath(@NotNull String moduleName) {
+        ensureSpecifiedModuleOnModulePath(javaParameters, globalSearchScope, psiFacade, moduleName);
       }
-
-      if (!JUnitUtil.hasPackageWithDirectories(psiFacade, VINTAGE_ENGINE_NAME, globalSearchScope)) {
-        if (JUnitUtil.hasPackageWithDirectories(psiFacade, "junit.framework", globalSearchScope)) {
-          PsiClass junit4RunnerClass = dumbService.computeWithAlternativeResolveEnabled(
-            () -> ReadAction.nonBlocking(() -> psiFacade.findClass("junit.runner.Version", globalSearchScope)).executeSynchronously());
-          if (junit4RunnerClass != null && isAcceptableVintageVersion()) {
-            String version = VersionComparatorUtil.compare(launcherVersion, "1.1.0") >= 0
-                             ? jupiterVersion
-                             : "4.12." + StringUtil.getShortName(launcherVersion);
-            downloadDependenciesWhenRequired(project, additionalDependencies,
-                                             //don't include potentially incompatible hamcrest/junit dependency
-                                             new RepositoryLibraryProperties("org.junit.vintage", "junit-vintage-engine", version, false,
-                                                                             ContainerUtil.emptyList()));
-          }
-        }
-      }
-      else if (isModularized) {
-        ensureSpecifiedModuleOnModulePath(javaParameters, globalSearchScope, psiFacade, VINTAGE_ENGINE_NAME);
-      }
-    }
+    });
 
     //add downloaded dependencies before everything else to avoid dependencies conflicts on org.junit.platform.common e.g. with spring boot test
     final PathsList targetList = isModularized ? javaParameters.getModulePath() : javaParameters.getClassPath();
@@ -564,38 +478,6 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
       LOG.debug(e);
       return false;
     }
-  }
-
-  public static boolean hasJupiterEnginesAPI(GlobalSearchScope globalSearchScope, JavaPsiFacade psiFacade) {
-    return JUnitUtil.hasPackageWithDirectories(psiFacade, "org.junit.platform.engine", globalSearchScope);
-  }
-
-  private static String getLibraryVersion(String className, GlobalSearchScope globalSearchScope, Project project) {
-    VirtualFile root = ReadAction.nonBlocking(() -> {
-      PsiClass psiClass = DumbService.getInstance(project).computeWithAlternativeResolveEnabled(() ->
-        JavaPsiFacade.getInstance(project).findClass(className, globalSearchScope)
-      );
-      VirtualFile virtualFile = PsiUtilCore.getVirtualFile(psiClass);
-      if (virtualFile == null) return null;
-
-      return ProjectFileIndex.getInstance(project).getClassRootForFile(virtualFile);
-    }).executeSynchronously();
-
-    if (root != null && root.getFileSystem() instanceof JarFileSystem) {
-      VirtualFile manifestFile = root.findFileByRelativePath(JarFile.MANIFEST_NAME);
-      if (manifestFile != null) {
-        try (final InputStream inputStream = manifestFile.getInputStream()) {
-          Attributes mainAttributes = new Manifest(inputStream).getMainAttributes();
-          if ("junit.org".equals(mainAttributes.getValue(Attributes.Name.IMPLEMENTATION_VENDOR))) {
-            return mainAttributes.getValue(Attributes.Name.IMPLEMENTATION_VERSION);
-          }
-        }
-        catch (IOException ignored) {
-        }
-      }
-    }
-
-    return null;
   }
 
   private void downloadDependenciesWhenRequired(@NotNull Project project,
@@ -857,11 +739,11 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
 
   private String getRunner(@NotNull GlobalSearchScope scope, @NotNull Project project) {
     if (JUnitUtil.isJUnit6(scope, project) ||
-        isCustomJUnit(scope, JUnitCommonClassNames.ORG_JUNIT_PLATFORM_ENGINE_CANCELLATION_TOKEN)) {
+        isCustomJUnit(project, scope, JUnitCommonClassNames.ORG_JUNIT_PLATFORM_ENGINE_CANCELLATION_TOKEN)) {
       return JUnitStarter.JUNIT6_PARAMETER;
     }
     else if (JUnitUtil.isJUnit5(scope, project) ||
-             isCustomJUnit(scope, JUnitCommonClassNames.ORG_JUNIT_PLATFORM_ENGINE_TEST_ENGINE)) {
+             isCustomJUnit(project, scope, JUnitCommonClassNames.ORG_JUNIT_PLATFORM_ENGINE_TEST_ENGINE)) {
       return JUnitStarter.JUNIT5_PARAMETER;
     }
     else {
@@ -925,57 +807,6 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     }
 
     return getRunner(globalSearchScope, project);
-  }
-
-  private boolean isCustomJUnit(GlobalSearchScope globalSearchScope, String jupiterClassName) {
-    Project project = myConfiguration.getProject();
-    JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-    DumbService dumbService = DumbService.getInstance(project);
-    return ReadAction.nonBlocking(
-      () -> dumbService.isAlternativeResolveEnabled()
-            ? hasCustomJupiterTestEngineUsingPsi(globalSearchScope, project, psiFacade, jupiterClassName)
-            : dumbService.computeWithAlternativeResolveEnabled(
-              () -> hasCustomJupiterTestEngineUsingPsi(globalSearchScope, project, psiFacade, jupiterClassName))
-    ).executeSynchronously();
-  }
-
-  private static boolean hasCustomJupiterTestEngineUsingPsi(@NotNull GlobalSearchScope globalSearchScope,
-                                                            @NotNull Project project,
-                                                            @NotNull JavaPsiFacade psiFacade,
-                                                            @NotNull String jupiterClassName) {
-    PsiClass testEngine = psiFacade.findClass(jupiterClassName, globalSearchScope);
-    if (testEngine == null) return false;
-    Collection<VirtualFile> files = FilenameIndex.getVirtualFilesByName(PsiJavaModule.MODULE_INFO_FILE, globalSearchScope);
-    if (!files.isEmpty() && ReferencesSearch.search(testEngine, GlobalSearchScope.filesScope(project, files)).anyMatch(ref -> isCustomEngineProvided(testEngine, ref))) {
-      return true;
-    }
-    PsiManager psiManager = PsiManager.getInstance(project);
-    GlobalSearchScope scope = GlobalSearchScope.getScopeRestrictedByFileTypes(globalSearchScope, SPIFileType.INSTANCE);
-    return FilenameIndex.getVirtualFilesByName(jupiterClassName, scope)
-      .stream()
-      .map(f -> psiManager.findFile(f))
-      .filter(Objects::nonNull)
-      .flatMap(f -> PsiTreeUtil.findChildrenOfType(f, SPIClassProviderReferenceElement.class).stream())
-      .map(r -> r.resolve())
-      .filter(e -> e instanceof PsiClass)
-      .map(e -> (PsiClass)e)
-      .filter(c -> isCustomJupiterTestEngineName(c.getQualifiedName()))
-      .anyMatch(c -> InheritanceUtil.isInheritorOrSelf(c, testEngine, true));
-  }
-
-  private static boolean isCustomEngineProvided(PsiClass testEngine, @NotNull PsiReference ref) {
-    PsiProvidesStatement providesStatement = PsiTreeUtil.getParentOfType(ref.getElement(), PsiProvidesStatement.class);
-    if (providesStatement != null) {
-      PsiJavaCodeReferenceElement interfaceReference = providesStatement.getInterfaceReference();
-      PsiReferenceList implementationList = providesStatement.getImplementationList();
-      return interfaceReference != null && interfaceReference.isReferenceTo(testEngine) &&
-             implementationList != null && implementationList.getReferenceElements().length > 0;
-    }
-    return false;
-  }
-
-  private static boolean isCustomJupiterTestEngineName(@Nullable String engineImplClassName) {
-    return !STANDARD_JUNIT_ENGINE_CLASSES.contains(engineImplClassName);
   }
 
   @Override

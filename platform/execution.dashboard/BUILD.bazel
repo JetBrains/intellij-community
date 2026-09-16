@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.platform.execution.dashboard` start
+content_module_jar(module = ":execution.dashboard")
+### auto-generated section `dev intellij.platform.execution.dashboard` end
+
 ### auto-generated section `build intellij.platform.execution.dashboard` start
 jvm_library(
     name = "execution.dashboard",
@@ -57,8 +61,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":execution.dashboard")
-
 jvm_library(
     name = "execution.dashboard_test_lib",
     testonly = True,
@@ -114,7 +116,6 @@ exports_files(
     [
         "intellij.platform.execution.dashboard.iml",
         "resources/intellij.platform.execution.dashboard.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

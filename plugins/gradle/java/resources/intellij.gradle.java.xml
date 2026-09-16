@@ -64,6 +64,9 @@
     <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.testTasksProvider"
                     interface="org.jetbrains.plugins.gradle.execution.test.runner.GradleTestTasksProvider"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.testLocator"
+                    interface="org.jetbrains.plugins.gradle.execution.test.runner.GradleTestLocatorExtension"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.externallyHandledExtensions"
                     interface="org.jetbrains.plugins.gradle.service.resolve.GradleVersionCatalogHandler"
                     dynamic="true"/>

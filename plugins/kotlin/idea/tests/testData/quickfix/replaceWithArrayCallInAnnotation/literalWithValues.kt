@@ -6,5 +6,4 @@ annotation class Some(vararg val ints: Int)
 @Some(ints = *<caret>[1, 2, 3])
 class My
 
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ReplaceWithArrayCallInAnnotationFix
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ReplaceWithArrayCallInAnnotationFix

@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.properties.backend` start
+content_module_jar(module = ":properties-backend")
+### auto-generated section `dev intellij.properties.backend` end
+
 ### auto-generated section `build intellij.properties.backend` start
 jvm_library(
     name = "properties-backend",
@@ -57,8 +61,6 @@ jvm_library(
         "//jps/model-api:model",
     ],
 )
-
-content_module_jar(module = ":properties-backend")
 
 jvm_library(
     name = "properties-backend_test_lib",

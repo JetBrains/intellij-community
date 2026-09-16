@@ -86,7 +86,7 @@ abstract class FileEditorManagerEx : FileEditorManager() {
    * @return true if all requested editors were closed; false otherwise
    */
   @Internal
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   open fun closeFilesWithChecks(filesWithWindows: List<Pair<EditorComposite, EditorWindow>>): Boolean {
     for (fileWithWindow in filesWithWindows) {
       if (!closeFileWithChecks(fileWithWindow.first.file, fileWithWindow.second)) {
@@ -147,7 +147,7 @@ abstract class FileEditorManagerEx : FileEditorManager() {
 
   abstract val splitters: EditorsSplitters
 
-  @get:RequiresEdt
+  @get:RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   open val activeSplittersComposites: List<EditorComposite>
     get() = splitters.getAllComposites()
 

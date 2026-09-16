@@ -59,13 +59,13 @@ kotlin {
     implementation(jps.org.jetbrains.kotlin.kotlin.stdlib1993400674.get().let { "${it.group}:${it.name}:${it.version}" }) {
       exclude(group = "org.jetbrains", module = "annotations")
     }
+    implementation(jps.com.google.devtools.ksp.symbol.processing.api1172187089.get().let { "${it.group}:${it.name}:${it.version}" }) {
+      isTransitive = false
+    }
     implementation(jps.org.jetbrains.kotlinx.kotlinx.io.core.jvm479158162.get().let { "${it.group}:kotlinx-io-core:${it.version}" }) {
       exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib")
     }
     implementation(jps.org.jetbrains.intellij.deps.kotlinx.kotlinx.coroutines.core.jvm930800474.get().let { "${it.group}:kotlinx-coroutines-core:${it.version}" }) {
-      isTransitive = false
-    }
-    implementation(jps.com.google.devtools.ksp.symbol.processing.api1172187089.get().let { "${it.group}:${it.name}:${it.version}" }) {
       isTransitive = false
     }
   }

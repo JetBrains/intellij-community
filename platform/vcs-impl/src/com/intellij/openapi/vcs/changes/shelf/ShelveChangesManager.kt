@@ -684,7 +684,7 @@ class ShelveChangesManager @Internal constructor(
     return result
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun importChangeLists(
     files: MutableCollection<out VirtualFile>,
     exceptionConsumer: Consumer<in VcsException?>,
@@ -875,7 +875,7 @@ class ShelveChangesManager @Internal constructor(
     return status
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   @VisibleForTesting
   @Internal
   fun deleteShelves(
@@ -924,7 +924,7 @@ class ShelveChangesManager @Internal constructor(
     return deletedListsWithOriginalDate
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun removeChangesFromChangeList(
     list: ShelvedChangeList,
     changes: List<ShelvedChange>,
@@ -989,7 +989,7 @@ class ShelveChangesManager @Internal constructor(
     clearShelvedLists(toDelete, true)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun shelveSilentlyUnderProgress(changes: List<Change>, rollbackChanges: Boolean) {
     val result: MutableList<ShelvedChangeList> = ArrayList()
     object : Task.Backgroundable(project, VcsBundle.message("shelve.changes.progress.title"), true) {
@@ -1165,7 +1165,7 @@ class ShelveChangesManager @Internal constructor(
     )
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun updateListAfterUnshelve(
     listToUpdate: ShelvedChangeList,
     patches: MutableList<out FilePatch>,
@@ -1181,7 +1181,7 @@ class ShelveChangesManager @Internal constructor(
    * 2. if there are some applied (deleted) changes and something remained it the original list then create separated list for applied
    * changes and delete these changes from the original list - > in this case new list with applied (deleted) changes will be a return value
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun saveRemainingPatchesIfNeeded(
     changeList: ShelvedChangeList,
     remainingPatches: MutableList<out FilePatch>,
@@ -1222,7 +1222,7 @@ class ShelveChangesManager @Internal constructor(
    *
    * @return newly created recycled/deleted list or null if no new list was created
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun saveRemainingAndRecycleOthers(
     changeList: ShelvedChangeList,
     remainingPatches: MutableList<out FilePatch>,
@@ -1505,7 +1505,7 @@ class ShelveChangesManager @Internal constructor(
     }
 
     @Internal
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     fun unshelveSilentlyWithDnd(
       project: Project,
       shelvedChangeListDragBean: ShelvedChangeListDragBean,

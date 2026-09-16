@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.zip.signer` start
+content_module_jar(
+    libraries = ["@lib//:libraries-zip-signer-zip-signer"],
+    module = ":zip-signer",
+)
+### auto-generated section `dev intellij.libraries.zip.signer` end
+
 ### auto-generated section `build intellij.libraries.zip.signer` start
 jvm_library(
     name = "zip-signer",
@@ -16,11 +23,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-zip-signer-zip-signer"],
     runtime_deps = ["@lib//:libraries-zip-signer-zip-signer"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-zip-signer-zip-signer"],
-    module = ":zip-signer",
 )
 
 jvm_library(
@@ -43,7 +45,6 @@ exports_files(
     [
         "intellij.libraries.zip.signer.iml",
         "resources/intellij.libraries.zip.signer.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

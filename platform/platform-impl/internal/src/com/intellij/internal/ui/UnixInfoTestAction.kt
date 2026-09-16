@@ -232,7 +232,7 @@ private class UnixInfoDialog(val project: Project?, dialogTitle: String) :
     }.layout(RowLayout.PARENT_GRID)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun timerUpdate() {
     ThreadingAssertions.assertEventDispatchThread()
 

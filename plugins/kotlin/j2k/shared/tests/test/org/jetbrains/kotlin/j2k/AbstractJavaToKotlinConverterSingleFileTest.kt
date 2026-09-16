@@ -2,11 +2,11 @@
 
 package org.jetbrains.kotlin.j2k
 
+import com.intellij.openapi.components.service
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
 import com.intellij.util.ThrowableRunnable
-import org.jetbrains.kotlin.j2k.actions.JavaToKotlinActionHandler
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.test.Directives
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
@@ -93,7 +93,7 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
     abstract fun dumpTextWithErrors(createKotlinFile: KtFile): String
 
     private fun addDependencies(directives: Directives) {
-        if (directives.contains(JPA_ANNOTATIONS_DIRECTIVE)) addJpaColumnAnnotations()
+        if (directives.contains(JPA_ANNOTATIONS_DIRECTIVE)) addJpaAnnotations()
         if (directives.contains(KOTLIN_API_DIRECTIVE)) addFile("KotlinApi.kt", "kotlinApi")
         if (directives.contains(JAVA_API_DIRECTIVE)) addFile("JavaApi.java", "javaApi")
         if (directives.contains(JUNIT_ANNOTATIONS_DIRECTIVE)) addJunitTestAnnotations()
@@ -162,13 +162,7 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
         val file = createJavaFile(text)
 
         runWithModalProgressBlocking(project, "") {
-            JavaToKotlinActionHandler.convertFiles(
-                listOf(file),
-                project,
-                module,
-                askExternalCodeProcessing = false,
-                settings = settings,
-            )
+            project.service<JavaToKotlinService>().convert(listOf(file), module, settings)
         }
         return (file.containingDirectory.findFile(file.name.replace(".java", ".kt")) as KtFile).text
     }

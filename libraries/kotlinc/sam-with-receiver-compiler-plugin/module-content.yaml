@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.kotlinc.sam.with.receiver.compiler.plugin.jar
+  modules:
+  - name: intellij.libraries.kotlinc.sam.with.receiver.compiler.plugin
+    libraries:
+      kotlinc.sam-with-receiver-compiler-plugin:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/sam-with-receiver-compiler-plugin-for-ide/2/sam-with-receiver-compiler-plugin-for-ide-2.jar

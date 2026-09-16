@@ -936,7 +936,12 @@ def _unwind_event(code, instruction, exc):
     arg = (type(exc), exc, exc.__traceback__)
 
     has_caught_exception_breakpoint_in_pydb = (
-        py_db.break_on_caught_exceptions or py_db.break_on_user_uncaught_exceptions or py_db.has_plugin_exception_breaks
+        py_db.break_on_caught_exceptions
+        or py_db.break_on_user_uncaught_exceptions
+        or py_db.has_plugin_exception_breaks
+        # JetBrains extension (PY-88218): a unit test session must trace an exception even
+        # when the user set no breakpoint.
+        or py_db.stop_on_failed_tests
     )
 
     if has_caught_exception_breakpoint_in_pydb:
@@ -1911,7 +1916,12 @@ def update_monitor_events(suspend_requested: Optional[bool]=None) -> None:
     required_events = 0
 
     has_caught_exception_breakpoint_in_pydb = (
-        py_db.break_on_caught_exceptions or py_db.break_on_user_uncaught_exceptions or py_db.has_plugin_exception_breaks
+        py_db.break_on_caught_exceptions
+        or py_db.break_on_user_uncaught_exceptions
+        or py_db.has_plugin_exception_breaks
+        # JetBrains extension (PY-88218): a unit test session must trace an exception even
+        # when the user set no breakpoint.
+        or py_db.stop_on_failed_tests
     )
 
     break_on_uncaught_exceptions = py_db.break_on_uncaught_exceptions

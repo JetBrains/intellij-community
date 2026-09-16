@@ -1,6 +1,19 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.grpc` start
+content_module_jar(
+    libraries = [
+        # do not sort,
+        "@lib//:libraries-grpc-grpc-core",
+        "@lib//:libraries-grpc-grpc-stub",
+        "@lib//:libraries-grpc-grpc-kotlin-stub",
+        "@lib//:libraries-grpc-grpc-protobuf",
+    ],
+    module = ":grpc",
+)
+### auto-generated section `dev intellij.libraries.grpc` end
+
 ### auto-generated section `build intellij.libraries.grpc` start
 jvm_library(
     name = "grpc",
@@ -16,29 +29,18 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        "@lib//:grpc-core",
-        "@lib//:grpc-stub",
-        "@lib//:grpc-kotlin-stub",
-        "@lib//:grpc-protobuf",
+        "@lib//:libraries-grpc-grpc-core",
+        "@lib//:libraries-grpc-grpc-stub",
+        "@lib//:libraries-grpc-grpc-kotlin-stub",
+        "@lib//:libraries-grpc-grpc-protobuf",
     ],
     runtime_deps = [
         # do not sort,
-        "@lib//:grpc-core",
-        "@lib//:grpc-stub",
-        "@lib//:grpc-kotlin-stub",
-        "@lib//:grpc-protobuf",
+        "@lib//:libraries-grpc-grpc-core",
+        "@lib//:libraries-grpc-grpc-stub",
+        "@lib//:libraries-grpc-grpc-kotlin-stub",
+        "@lib//:libraries-grpc-grpc-protobuf",
     ],
-)
-
-content_module_jar(
-    libraries = [
-        # do not sort,
-        "@lib//:grpc-core",
-        "@lib//:grpc-stub",
-        "@lib//:grpc-kotlin-stub",
-        "@lib//:grpc-protobuf",
-    ],
-    module = ":grpc",
 )
 
 jvm_library(
@@ -52,10 +54,10 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        "@lib//:grpc-core",
-        "@lib//:grpc-stub",
-        "@lib//:grpc-kotlin-stub",
-        "@lib//:grpc-protobuf",
+        "@lib//:libraries-grpc-grpc-core",
+        "@lib//:libraries-grpc-grpc-stub",
+        "@lib//:libraries-grpc-grpc-kotlin-stub",
+        "@lib//:libraries-grpc-grpc-protobuf",
     ],
     runtime_deps = [":grpc"],
 )
@@ -66,7 +68,6 @@ exports_files(
     [
         "intellij.libraries.grpc.iml",
         "resources/intellij.libraries.grpc.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

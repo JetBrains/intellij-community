@@ -9,13 +9,13 @@ import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import kotlinx.serialization.Serializable
-import org.jetbrains.intellij.build.forEachConcurrent
 import org.jetbrains.intellij.build.http2Client.Http2ClientConnection
 import org.jetbrains.intellij.build.http2Client.ZstdCompressContextPool
+import org.jetbrains.intellij.build.http2Client.forEachConcurrentSuspending
 import org.jetbrains.intellij.build.http2Client.post
 import org.jetbrains.intellij.build.http2Client.upload
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
-import org.jetbrains.intellij.build.telemetry.use
+import org.jetbrains.intellij.build.telemetry.useSuspending
 import java.nio.file.Files
 import java.util.concurrent.CancellationException
 import java.util.concurrent.TimeUnit
@@ -38,7 +38,7 @@ internal suspend fun uploadArchives(
   var fallbackToHeads = false
   val alreadyUploaded: Set<String> = try {
     if (config.checkFiles) {
-      spanBuilder("fetch info about already uploaded files").use {
+      spanBuilder("fetch info about already uploaded files").useSuspending {
         getFoundAndMissingFiles(metadataJson = metadataJson, urlPathPrefix = config.serverUrlPathPrefix, connection = httpConnection).found
       }
     }
@@ -57,15 +57,15 @@ internal suspend fun uploadArchives(
 
   val urlPathPrefix = "${config.serverUrlPathPrefix}/${config.uploadUrlPathPrefix}"
   val zstdCompressContextPool = ZstdCompressContextPool()
-  items.forEachConcurrent(concurrency = uploadParallelism) { item ->
+  items.forEachConcurrentSuspending(concurrency = uploadParallelism) { item ->
     if (alreadyUploaded.contains(item.name)) {
       reusedCount.increment()
       reusedBytes.add(Files.size(item.archive))
-      return@forEachConcurrent
+      return@forEachConcurrentSuspending
     }
 
     val urlPath = "$urlPathPrefix/${item.name}/${item.hash!!}.jar"
-    spanBuilder("upload archive").setAttribute("name", item.name).setAttribute("hash", item.hash!!).use { span ->
+    spanBuilder("upload archive").setAttribute("name", item.name).setAttribute("hash", item.hash!!).useSuspending { span ->
       if (fallbackToHeads) {
         val status = httpConnection.head(urlPath)
         if (status == HttpResponseStatus.OK) {
@@ -75,7 +75,7 @@ internal suspend fun uploadArchives(
           val size = Files.size(item.archive)
           reusedBytes.add(size)
           uncompressedBytes.add(size)
-          return@use
+          return@useSuspending
         }
         else if (status != HttpResponseStatus.NOT_FOUND) {
           span.addEvent(

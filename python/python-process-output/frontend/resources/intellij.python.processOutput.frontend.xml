@@ -24,6 +24,6 @@
                 secondary="false"
                 icon="com.intellij.python.processOutput.frontend.icons.PythonProcessOutputFrontendIcons.Process"
                 factoryClass="com.intellij.python.processOutput.frontend.ProcessOutputToolWindowFactory"/>
-    <statistics.counterUsagesCollector implementationClass="com.intellij.python.processOutput.frontend.ProcessOutputUsageCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.python.processOutput.frontend.ProcessOutputUsageCollectorImpl"/>
   </extensions>
 </idea-plugin>

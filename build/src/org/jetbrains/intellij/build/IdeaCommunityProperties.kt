@@ -29,15 +29,16 @@ val MAVEN_ARTIFACTS_ADDITIONAL_MODULES: PersistentList<String> = persistentListO
   "intellij.space.java.jps",
 ) + JewelMavenArtifacts.STANDALONE.keys
 
-internal suspend fun createCommunityBuildContext(
+internal fun createCommunityBuildContext(
   options: BuildOptions,
-  projectHome: Path = COMMUNITY_ROOT.communityRoot,
+  projectHome: Path = COMMUNITY_ROOT.communityRoot, lifetime: BuildLifetime,
 ): BuildContext {
   return createBuildContext(
     projectHome = projectHome,
     productProperties = IdeaCommunityProperties(COMMUNITY_ROOT.communityRoot),
     setupTracer = true,
     options = options,
+    lifetime = lifetime,
   )
 }
 
@@ -65,11 +66,12 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : JetBrai
 
     productLayout.prepareCustomPluginRepositoryForPublishedPlugins = false
     productLayout.buildAllCompatiblePlugins = true
-    productLayout.pluginLayouts = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS + persistentListOf(
-      JavaPluginLayout.javaPlugin(),
-      CommunityRepositoryModules.groovyPlugin(),
-      *CommunityRepositoryModules.androidPlugin(),
-    )
+    productLayout.pluginLayouts = lazy {
+      getCommunityRepositoryPlugins() + persistentListOf(
+        JavaPluginLayout.javaPlugin(),
+        groovyPlugin()
+      ) + androidPlugin()
+    }
 
     productLayout.skipUnresolvedContentModules = true
 
@@ -128,7 +130,7 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : JetBrai
     include(intellijCommunityBaseFragment(platformPrefix))
   }
 
-  override suspend fun copyAdditionalFiles(targetDir: Path, context: BuildContext) {
+  override fun copyAdditionalFiles(targetDir: Path, context: BuildContext) {
     super.copyAdditionalFiles(targetDir, context)
 
     copyFileToDir(context.paths.communityHomeDir.resolve("LICENSE.txt"), targetDir)
@@ -142,7 +144,7 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : JetBrai
     bundleExternalPlugins(context, targetDir)
   }
 
-  protected open suspend fun bundleExternalPlugins(context: BuildContext, targetDirectory: Path) {}
+  protected open fun bundleExternalPlugins(context: BuildContext, targetDirectory: Path) {}
 
   override fun createWindowsCustomizer(projectHome: Path): WindowsDistributionCustomizer = ideaCommunityWindowsCustomizer(communityHomeDir)
 
@@ -243,7 +245,7 @@ fun intellijCommunityBaseFragment(platformPrefix: String? = null): ProductModule
 
 inline fun ideaCommunityWindowsCustomizer(
   projectHome: Path,
-  configure: WindowsCustomizerBuilder.() -> Unit = {}
+  configure: WindowsCustomizerBuilder.() -> Unit = {},
 ): WindowsDistributionCustomizer = windowsCustomizer(projectHome) {
   fileAssociations = listOf("java", "gradle", "groovy", "kt", "kts", "pom")
 
@@ -259,7 +261,7 @@ inline fun ideaCommunityWindowsCustomizer(
 
 inline fun ideaCommunityMacCustomizer(
   projectHome: Path,
-  configure: MacCustomizerBuilder.() -> Unit = {}
+  configure: MacCustomizerBuilder.() -> Unit = {},
 ): MacDistributionCustomizer = macCustomizer(projectHome) {
   urlSchemes = listOf("idea")
   associateIpr = true
@@ -278,7 +280,7 @@ inline fun ideaCommunityMacCustomizer(
 
 inline fun ideaCommunityLinuxCustomizer(
   projectHome: Path,
-  configure: LinuxCustomizerBuilder.() -> Unit = {}
+  configure: LinuxCustomizerBuilder.() -> Unit = {},
 ): LinuxDistributionCustomizer = linuxCustomizer(projectHome) {
 
   rootDirectoryName { _, _ -> "idea-oss" }

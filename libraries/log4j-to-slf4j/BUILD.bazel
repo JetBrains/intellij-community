@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.log4j.to.slf4j` start
+content_module_jar(
+    libraries = ["@lib//:libraries-log4j-to-slf4j-apache-logging-log4j-to-slf4j"],
+    module = ":log4j-to-slf4j",
+)
+### auto-generated section `dev intellij.libraries.log4j.to.slf4j` end
+
 ### auto-generated section `build intellij.libraries.log4j.to.slf4j` start
 jvm_library(
     name = "log4j-to-slf4j",
@@ -16,11 +23,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-log4j-to-slf4j-apache-logging-log4j-to-slf4j"],
     runtime_deps = ["@lib//:libraries-log4j-to-slf4j-apache-logging-log4j-to-slf4j"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-log4j-to-slf4j-apache-logging-log4j-to-slf4j"],
-    module = ":log4j-to-slf4j",
 )
 
 jvm_library(
@@ -42,7 +44,6 @@ exports_files(
     [
         "intellij.libraries.log4j.to.slf4j.iml",
         "resources/intellij.libraries.log4j.to.slf4j.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

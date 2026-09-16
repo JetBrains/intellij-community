@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.java.frontback.psi` start
+content_module_jar(module = ":frontback-psi")
+### auto-generated section `dev intellij.java.frontback.psi` end
+
 ### auto-generated section `build intellij.java.frontback.psi` start
 jvm_library(
     name = "frontback-psi",
@@ -28,8 +32,6 @@ jvm_library(
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     ],
 )
-
-content_module_jar(module = ":frontback-psi")
 
 jvm_library(
     name = "frontback-psi_test_lib",

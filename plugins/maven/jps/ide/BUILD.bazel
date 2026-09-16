@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.maven.jps.ide` start
+content_module_jar(module = ":ide")
+### auto-generated section `dev intellij.maven.jps.ide` end
+
 ### auto-generated section `build intellij.maven.jps.ide` start
 jvm_library(
     name = "ide",
@@ -39,8 +43,6 @@ jvm_library(
         "//jps/model-api:model",
     ],
 )
-
-content_module_jar(module = ":ide")
 
 jvm_library(
     name = "ide_test_lib",

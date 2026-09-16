@@ -1,6 +1,0 @@
-- name: dist.all/lib/intellij.libraries.sqlite.jar
-  modules:
-  - name: intellij.libraries.sqlite
-    libraries:
-      sqlite:
-      - name: $MAVEN_REPOSITORY$/org/xerial/sqlite-jdbc/3/sqlite-jdbc-3.jar

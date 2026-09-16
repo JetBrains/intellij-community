@@ -10,7 +10,7 @@ internal interface PrevNextFileIterable {
    * @param fastCheckOnly if `true`, the check is performed as part of a fast update process (typically from an update method);
    * if `false`, a more comprehensive check is performed with a full update.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun canGoPrev(fastCheckOnly: Boolean): Boolean
 
   /**
@@ -19,7 +19,7 @@ internal interface PrevNextFileIterable {
    * @param fastCheckOnly if `true`, the check is performed as part of a fast update process (typically from an update method);
    * if `false`, a more comprehensive check is performed with a full update.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun canGoNext(fastCheckOnly: Boolean): Boolean
 
   /**
@@ -27,7 +27,7 @@ internal interface PrevNextFileIterable {
    *
    * @param showLastChange Used `true` when guaranteeing synchronous calls during external state updates.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun goPrev(showLastChange: Boolean)
 
   /**
@@ -35,6 +35,6 @@ internal interface PrevNextFileIterable {
    *
    * @param showFirstChange Used `true` when guaranteeing synchronous calls during external state updates.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun goNext(showFirstChange: Boolean)
 }

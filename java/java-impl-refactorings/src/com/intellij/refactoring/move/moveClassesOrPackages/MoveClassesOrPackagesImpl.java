@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.history.LocalHistory;
@@ -14,7 +14,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JavaProjectRootsUtil;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaDirectoryService;
@@ -44,15 +44,19 @@ import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Stream;
 
 public final class MoveClassesOrPackagesImpl {
@@ -74,37 +78,65 @@ public final class MoveClassesOrPackagesImpl {
     ).show();
   }
 
+  /**
+   * Version of {@link MoveClassesOrPackagesImpl#getTargetsForMove(PsiElement[], PsiElement)} that can show UI.
+   * @see MoveClassesOrPackagesImpl#getTargetsForMove(PsiElement[], PsiElement)
+   */
   public static PsiElement @Nullable [] adjustForMove(final Project project, final PsiElement[] elements, final PsiElement targetElement) {
+    return switch (getTargetsForMove(elements, targetElement)) {
+      case ElementsOrError.Error error -> {
+        CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("move.title"), error.message(), error.helpId(), project);
+        yield null;
+      }
+      case ElementsOrError.Elements adjusted -> {
+        if (!canMoveAllDirectoriesForPackages(project, elements)) yield null;
+        yield adjusted.elements();
+      }
+    };
+  }
+
+  /**
+   * Adjusts move candidates in a way it will be possible to move them by {@link MoveClassesOrPackagesProcessor}.
+   * @param elements move candidates to adjust.
+   * @param targetElement destination directory or package.
+   * @return array of adjusted elements or error that can be displayed to the user.
+   */
+  public static @NotNull ElementsOrError getTargetsForMove(final PsiElement @NotNull [] elements,
+                                                           final @Nullable PsiElement targetElement) {
     final PsiElement[] psiElements = new PsiElement[elements.length];
     List<String> names = new ArrayList<>();
     for (int idx = 0; idx < elements.length; idx++) {
       PsiElement element = elements[idx];
-      if (element instanceof PsiDirectory) {
-        PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory)element);
+      if (element instanceof PsiDirectory directory) {
+        PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
         LOG.assertTrue(aPackage != null);
         if (aPackage.getQualifiedName().isEmpty()) { //is default package
-          String message = JavaRefactoringBundle.message("move.package.refactoring.cannot.be.applied.to.default.package");
-          CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("move.title"), message, HelpID.getMoveHelpID(element), project);
-          return null;
+          return new ElementsOrError.Error(
+            JavaRefactoringBundle.message("move.package.refactoring.cannot.be.applied.to.default.package"),
+            HelpID.getMoveHelpID(directory));
         }
-        if (!checkNesting(project, aPackage, targetElement, true)) return null;
-        if (!isAlreadyChecked(psiElements, idx, aPackage) && !checkMovePackage(project, aPackage, (PsiDirectory)element)) return null;
+        if (!checkNesting(aPackage, targetElement)) {
+          return new ElementsOrError.Error(JavaRefactoringBundle.message("cannot.move.package.into.itself"),
+                                           HelpID.getMoveHelpID(aPackage));
+        }
         element = aPackage;
       }
       else if (element instanceof PsiPackage psiPackage) {
-        if (!checkNesting(project, psiPackage, targetElement, true)) return null;
-        if (!checkMovePackage(project, psiPackage, null)) return null;
+        if (!checkNesting(psiPackage, targetElement)) {
+          return new ElementsOrError.Error(JavaRefactoringBundle.message("cannot.move.package.into.itself"),
+                                           HelpID.getMoveHelpID(psiPackage));
+        }
       }
       else if (element instanceof PsiClass aClass) {
         if (aClass instanceof PsiAnonymousClass) {
-          String message = JavaRefactoringBundle.message("move.class.refactoring.cannot.be.applied.to.anonymous.classes");
-          CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("move.title"), message, HelpID.getMoveHelpID(element), project);
-          return null;
+          return new ElementsOrError.Error(
+            JavaRefactoringBundle.message("move.class.refactoring.cannot.be.applied.to.anonymous.classes"),
+            HelpID.getMoveHelpID(element));
         }
         if (isClassInnerOrLocal(aClass)) {
-          String message = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("moving.local.classes.is.not.supported"));
-          CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("move.title"), message, HelpID.getMoveHelpID(element), project);
-          return null;
+          return new ElementsOrError.Error(
+            RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("moving.local.classes.is.not.supported")),
+            HelpID.getMoveHelpID(element));
         }
 
         String name = null;
@@ -115,10 +147,10 @@ public final class MoveClassesOrPackagesImpl {
         if (name == null) name = aClass.getContainingFile().getName();
 
         if (names.contains(name)) {
-          String message = RefactoringBundle
-            .getCannotRefactorMessage(JavaRefactoringBundle.message("there.are.going.to.be.multiple.destination.files.with.the.same.name"));
-          CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("move.title"), message, HelpID.getMoveHelpID(element), project);
-          return null;
+          return new ElementsOrError.Error(
+            RefactoringBundle.getCannotRefactorMessage(
+              JavaRefactoringBundle.message("there.are.going.to.be.multiple.destination.files.with.the.same.name")),
+            HelpID.getMoveHelpID(element));
         }
 
         names.add(name);
@@ -126,23 +158,44 @@ public final class MoveClassesOrPackagesImpl {
       psiElements[idx] = element;
     }
 
-    return psiElements;
+    return new ElementsOrError.Elements(psiElements);
   }
 
   static boolean isClassInnerOrLocal(PsiClass aClass) {
     return aClass.getContainingClass() != null || aClass.getQualifiedName() == null;
   }
 
-  private static boolean isAlreadyChecked(PsiElement[] psiElements, int idx, PsiPackage aPackage) {
-    for (int i = 0; i < idx; i++) {
-      if (Comparing.equal(psiElements[i], aPackage)) {
-        return true;
+  /**
+   * Checks whether any package corresponds to multiple directories and possibly asks the user whether to move all directories.
+   * When is {@code shouldAsk} is false, assumes that such move is not possible.
+   */
+  private static boolean canMoveAllDirectoriesForPackages(@NotNull Project project, PsiElement @NotNull [] elements) {
+    Set<PsiPackage> checkedPackages = new HashSet<>();
+    for (PsiElement element : elements) {
+      PsiPackage aPackage = null;
+      PsiDirectory currentDirectory = null;
+      if (element instanceof PsiDirectory directory) {
+        aPackage = JavaDirectoryService.getInstance().getPackage(directory);
+        currentDirectory = directory;
       }
+      else if (element instanceof PsiPackage psiPackage) {
+        aPackage = psiPackage;
+      }
+      if (aPackage == null || !checkedPackages.add(aPackage)) continue;
+      String warning = getMoveAllDirectoriesForPackageWarning(aPackage, currentDirectory);
+      if (warning != null && !isAgreeToMoveAllDirectoriesForPackage(project, warning)) return false;
     }
-    return false;
+    return true;
   }
 
-  private static boolean checkMovePackage(Project project, PsiPackage aPackage, @Nullable PsiDirectory currentDirectory) {
+  private static boolean isAgreeToMoveAllDirectoriesForPackage(@NotNull Project project,
+                                                               @NlsContexts.DialogMessage @NotNull String warning) {
+    var message = warning + "\n" + RefactoringBundle.message("do.you.wish.to.continue");
+    var ret = Messages.showYesNoDialog(project, message, RefactoringBundle.message("warning.title"), Messages.getQuestionIcon());
+    return ret == Messages.YES;
+  }
+
+  private static @Nullable @NlsContexts.DialogMessage String getMoveAllDirectoriesForPackageWarning(PsiPackage aPackage, @Nullable PsiDirectory currentDirectory) {
     final PsiDirectory[] directories = aPackage.getDirectories();
     final VirtualFile[] virtualFiles = aPackage.occursInPackagePrefixes();
     if (directories.length > 1 || virtualFiles.length > 0) {
@@ -155,29 +208,18 @@ public final class MoveClassesOrPackagesImpl {
           .message("all.these.directories.will.be.moved.and.all.references.to.0.will.be.changed", aPackage.getQualifiedName());
         message.append(report);
       }
-      message.append("\n");
-      message.append(RefactoringBundle.message("do.you.wish.to.continue"));
-      String resultMessage = message.toString();
-      int ret = Messages.showYesNoDialog(project, resultMessage, RefactoringBundle.message("warning.title"), Messages.getQuestionIcon());
-      if (ret != Messages.YES) {
-        return false;
-      }
+      return message.toString();
     }
-    return true;
+    return null;
   }
 
-  static boolean checkNesting(final Project project, final PsiPackage srcPackage, final PsiElement targetElement, boolean showError) {
+  static boolean checkNesting(final PsiPackage srcPackage, final PsiElement targetElement) {
     final PsiPackage targetPackage = targetElement instanceof PsiPackage
                                      ? (PsiPackage)targetElement
                                      : targetElement instanceof PsiDirectory ? JavaDirectoryService.getInstance()
                                        .getPackage((PsiDirectory)targetElement) : null;
     for (PsiPackage curPackage = targetPackage; curPackage != null; curPackage = curPackage.getParentPackage()) {
       if (curPackage.equals(srcPackage)) {
-        if (showError) {
-          CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("move.title"),
-                                                 JavaRefactoringBundle.message("cannot.move.package.into.itself"),
-                                                 HelpID.getMoveHelpID(srcPackage), project);
-        }
         return false;
       }
     }
@@ -373,6 +415,28 @@ public final class MoveClassesOrPackagesImpl {
       final PackageWrapper wrapper = new PackageWrapper(parentPackage);
       final PsiDirectory moveTarget = CommonJavaRefactoringUtil.createPackageDirectoryInSourceRoot(wrapper, sourceRoot);
       MoveClassesOrPackagesUtil.moveDirectoryRecursively(directory, moveTarget);
+    }
+  }
+
+  /**
+   * Represents the result of adjusting move candidates for move.
+   */
+  public sealed interface ElementsOrError
+    permits ElementsOrError.Elements, ElementsOrError.Error {
+
+    /**
+     * Success result of adjusting move candidates.
+     * @param elements array of adjusted elements.
+     */
+    record Elements(PsiElement @NotNull [] elements) implements ElementsOrError {
+    }
+
+    /**
+     * Error that happened during adjustment of move candidates.
+     * @param message error message that can be displayed to the user
+     * @param helpId help id that can be used to show help to the user
+     */
+    record Error(@NlsContexts.DialogMessage @NotNull String message, @NonNls @Nullable String helpId) implements ElementsOrError {
     }
   }
 }

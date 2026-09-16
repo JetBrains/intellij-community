@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.idea.maven.execution.run
 
@@ -23,6 +23,7 @@ import com.intellij.execution.configurations.RemoteConnectionCreator
 import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.filters.TextConsoleBuilderFactory
 import com.intellij.execution.process.KillableColoredProcessHandler
+import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.process.ProcessListener
@@ -37,12 +38,14 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfigurationViewManager
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.ExecuteProcessException
+import com.intellij.platform.eel.convertToJVMProcess
 import com.intellij.platform.eel.isWindows
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.LocalEelDescriptor
@@ -247,7 +250,7 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
 
     try {
       val result = processOptions.eelIt()
-      return KillableColoredProcessHandler.Silent(result.convertToJavaProcess(), commandLineToShowUser, parameters.charset, emptySet())
+      return KillableColoredProcessHandler.Silent(result.convertToJVMProcess(), commandLineToShowUser, parameters.charset, emptySet())
         .also {
           it.addProcessListener(object : ProcessListener {
             override fun processTerminated(event: ProcessEvent) {
@@ -398,9 +401,10 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
     descriptor.withProcessHandler(MavenBuildHandlerFilterSpyWrapper(processHandler, isWindows()), null)
     descriptor.withExecutionEnvironment(environment)
     val startBuildEvent = StartBuildEventImpl(descriptor, "")
+    val commandLine: @NlsSafe String? = (processHandler as? OSProcessHandler)?.commandLine
     val eventProcessor =
       MavenBuildEventProcessor(myConfiguration, viewManager, descriptor, taskId,
-                               { it }, { startBuildEvent })
+                               { it }, { startBuildEvent }, commandLine)
 
     processHandler.addProcessListener(BuildToolConsoleProcessAdapter(eventProcessor))
     val res = DefaultExecutionResult(consoleView, processHandler, DefaultActionGroup())

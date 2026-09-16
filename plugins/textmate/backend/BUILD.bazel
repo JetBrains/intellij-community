@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.textmate.backend` start
+content_module_jar(module = ":backend")
+### auto-generated section `dev intellij.textmate.backend` end
+
 ### auto-generated section `build intellij.textmate.backend` start
 jvm_provided_library(
     name = "plugins_textmate_common_provided",
@@ -98,8 +102,6 @@ jvm_library(
         ":platform_core-impl_provided",
     ],
 )
-
-content_module_jar(module = ":backend")
 
 jvm_library(
     name = "backend_test_lib",

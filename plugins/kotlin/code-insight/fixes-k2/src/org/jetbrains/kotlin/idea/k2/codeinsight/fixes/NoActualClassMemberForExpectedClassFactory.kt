@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
+import org.jetbrains.kotlin.idea.base.psi.addMemberDeclaration
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
@@ -78,7 +79,7 @@ private class AddActualFix(
                     if (element.primaryConstructor == null)
                         shortenReferences(element.addAfter(actualDeclaration, element.nameIdentifier) as KtElement)
                 } else {
-                    shortenReferences(element.addDeclaration(actualDeclaration) as KtElement)
+                    shortenReferences(element.addMemberDeclaration(actualDeclaration) as KtElement)
                 }
             }
         }

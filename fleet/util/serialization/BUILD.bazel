@@ -18,6 +18,10 @@ fleet_wasmjs_module(
     ],
 )
 
+### auto-generated section `dev fleet.util.serialization` start
+content_module_jar(module = ":serialization")
+### auto-generated section `dev fleet.util.serialization` end
+
 ### auto-generated section `build fleet.util.serialization` start
 create_kotlinc_options(
     name = "custom_serialization",
@@ -48,14 +52,12 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinx-serialization-core",
-        "@lib//:kotlinx-serialization-json",
+        "//libraries/kotlinx/serialization/core",
+        "//libraries/kotlinx/serialization/json",
         "//fleet/multiplatform.shims",
-        "@lib//:kotlinx-collections-immutable",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     ],
 )
-
-content_module_jar(module = ":serialization")
 
 jvm_library(
     name = "serialization_test_lib",
@@ -70,7 +72,10 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":serialization",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//libraries/kotlinx/serialization/json:json_test_lib",
         "//fleet/multiplatform.shims:multiplatform.shims_test_lib",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
     ],
 )
 ### auto-generated section `build fleet.util.serialization` end
@@ -80,7 +85,6 @@ exports_files(
     [
         "fleet.util.serialization.iml",
         "resources/fleet.util.serialization.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

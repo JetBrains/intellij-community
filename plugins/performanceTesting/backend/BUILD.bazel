@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.performanceTesting.backend` start
+content_module_jar(module = ":backend")
+### auto-generated section `dev intellij.performanceTesting.backend` end
+
 ### auto-generated section `build intellij.performanceTesting.backend` start
 jvm_provided_library(
     name = "libraries_cli-parser_provided",
@@ -59,8 +63,6 @@ jvm_library(
         ":libraries_cli-parser_provided",
     ],
 )
-
-content_module_jar(module = ":backend")
 
 jvm_library(
     name = "backend_test_lib",

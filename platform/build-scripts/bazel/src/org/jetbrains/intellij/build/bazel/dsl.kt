@@ -91,6 +91,11 @@ internal data class LoadStatement(@JvmField val bzlFile: String, @JvmField val s
   }
 }
 
+internal interface RenderableAttributeWithComment : Renderable {
+  /** Text of a comment that should be put before the attribute (without `#` symbol) */
+  val comment: String
+}
+
 internal class Target(private val type: String) : Renderable {
   private val attributes = LinkedHashMap<String, Any>()
 
@@ -172,7 +177,8 @@ internal class Target(private val type: String) : Renderable {
 
   override fun render(): String {
     val renderedAttributes = attributes.map { (key, value) ->
-      "$INDENT$key = ${formatValue(value)},"
+      val comment = if (value is RenderableAttributeWithComment) "$INDENT# ${value.comment}\n" else ""
+      "$comment$INDENT$key = ${formatValue(value)},"
     }.joinToString("\n")
 
     return buildString {

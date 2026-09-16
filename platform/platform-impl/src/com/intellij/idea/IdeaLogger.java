@@ -18,10 +18,12 @@ import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.JulLogger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.diagnostic.UnhandledException;
+import com.intellij.openapi.diagnostic.UnhandledExceptionKind;
 import com.intellij.openapi.diagnostic.UnhandledReportSinkService;
 import com.intellij.openapi.diagnostic.UnhandledReportSinkService.PluginExceptionReportData;
 import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -78,11 +80,16 @@ public final class IdeaLogger extends JulLogger {
       return false;
     }
 
-    var hash = ThrowableInterner.computeAccurateTraceHashCode(t);
-    var counter = MyCache.getOrCreate(hash, t);
+    // `processUnhandledException` is the only place that builds an `UnhandledException`, so the trace of a
+    // wrapper is almost constant. Count the real cause instead, or this method mutes every unhandled
+    // exception after the first one. See IJPL-254578.
+    var realCause = UnhandledException.unwrapIfUnhandled(t).getRealCause();
+
+    var hash = ThrowableInterner.computeAccurateTraceHashCode(realCause);
+    var counter = MyCache.getOrCreate(hash, realCause);
     var occurrences = counter.incrementAndGet();
     if (isFascinatingNumber(occurrences)) {
-      var msg = shortenErrorMessage(t.getMessage());
+      var msg = shortenErrorMessage(realCause.getMessage());
       warn("Suppressed a frequent exception logged for the " + occurrences + (occurrences == 2 ? "nd" : "th") + " time: " + msg);
     }
     return occurrences != 1;
@@ -102,30 +109,25 @@ public final class IdeaLogger extends JulLogger {
     return StringUtil.shortenTextWithEllipsis(message, 300, 0);
   }
 
-  private static void reportToFus(Throwable rawThrowable) {
+  private static void reportToFus(@NotNull Throwable realCause, @NotNull UnhandledExceptionKind unhandledExceptionKind) {
     if (!LoadingState.COMPONENTS_LOADED.isOccurred() || FUS_RECURSION_GUARD.get() != null) {
       return;
     }
 
     FUS_RECURSION_GUARD.set(true);
 
-    var throwable = rawThrowable;
-    if (rawThrowable instanceof UnhandledException uh) {
-      throwable = uh.getCause();
-    }
-
     try {
       var app = ApplicationManager.getApplication();
       if (app != null && !app.isUnitTestMode() && !app.isDisposed()) {
         var pluginUtil = PluginUtil.getInstance();
         if (pluginUtil != null) {
-          var pluginId = pluginUtil.findPluginId(throwable);
-          var kind = DefaultIdeaErrorLogger.getOOMErrorKind(throwable);
-          LifecycleUsageTriggerCollector.onError(pluginId, throwable, kind);
+          var pluginId = pluginUtil.findPluginId(realCause);
+          var kind = DefaultIdeaErrorLogger.getOOMErrorKind(realCause);
+          LifecycleUsageTriggerCollector.onError(pluginId, realCause, unhandledExceptionKind, kind);
           if (pluginId != null) {
             var sinkService = UnhandledReportSinkService.getInstance();
             if (sinkService != null) { // might be null in CLI utils
-              sinkService.report(new PluginExceptionReportData(pluginId, throwable));
+              sinkService.report(new PluginExceptionReportData(pluginId, realCause));
             }
           }
         }
@@ -175,27 +177,38 @@ public final class IdeaLogger extends JulLogger {
 
   @Override
   public void error(String message, @Nullable Throwable t, Attachment @NotNull ... attachments) {
+    // Count the throwable that a caller gave, and count it once. `withAttachments` builds a new throwable,
+    // and the hash reads the trace of that new throwable only. It cannot tell two causes apart. See IJPL-254578.
     if (isTooFrequentException(t)) return;
 
-    Throwable errorWithAttachment;
-    if (attachments.length == 0) {
-      errorWithAttachment = t;
-    }
-    else if (t != null) {
-      errorWithAttachment = new RuntimeExceptionWithAttachments(ensureNotControlFlow(t), attachments);
-    }
-    else {
-      errorWithAttachment = new RuntimeExceptionWithAttachments(new Throwable(), attachments);
-    }
+    doError(message, t, attachments, ArrayUtilRt.EMPTY_STRING_ARRAY);
+  }
 
-    error(message, errorWithAttachment);
+  /// Wraps the cause, so that a log handler finds the attachments on it.
+  /// The kind travels apart, so this method builds no `UnhandledException`. See IJPL-254578.
+  private static @NotNull Throwable withAttachments(@Nullable Throwable realCause, Attachment @NotNull [] attachments) {
+    var cause = realCause == null ? new Throwable() : realCause;
+    return new RuntimeExceptionWithAttachments(ensureNotControlFlow(cause), attachments);
   }
 
   @Override
   public void error(String message, @Nullable Throwable t, String @NotNull ... details) {
-    if (isTooFrequentException(t)) {
-      return;
-    }
+    if (isTooFrequentException(t)) return;
+
+    doError(message, t, Attachment.EMPTY_ARRAY, details);
+  }
+
+  /// Splits an `UnhandledException`, writes the log, rethrows a control-flow exception and reports to FUS.
+  /// It counts no frequent exception, because each public overload counts once. See IJPL-254578.
+  private void doError(String message,
+                       @Nullable Throwable t,
+                       Attachment @NotNull [] attachments,
+                       String @NotNull [] details) {
+    // Split once, and let the wrapper end here. The log writer, FUS and the rethrow all need the real cause.
+    // See IJPL-254578.
+    var unwrapped = t == null ? null : UnhandledException.unwrapIfUnhandled(t);
+    var realCause = unwrapped == null ? null : unwrapped.getRealCause();
+    var kind = unwrapped == null ? UnhandledExceptionKind.HANDLED : unwrapped.getUnhandledExceptionKind();
 
     var detailString = String.join("\n", details);
     if (!detailString.isEmpty()) {
@@ -206,23 +219,22 @@ public final class IdeaLogger extends JulLogger {
       var mess = "Logger errors occurred. See IDEA logs for details. " +
                  (message == null || message.isEmpty() ? "" : "Error message is '" + message + "'");
       //noinspection AssignmentToStaticFieldFromInstanceMethod
-      ourErrorsOccurred = new Exception(mess + detailString, t);
+      ourErrorsOccurred = new Exception(mess + detailString, realCause);
     }
 
-    logSevere(message + detailString, ensureNotControlFlow(t));
-    logErrorHeader(t);
+    // The log writer gets the real cause, and the kind travels beside it in an `IdeaLogRecord`.
+    // A handler therefore needs no knowledge of the wrapper. See IJPL-254578.
+    var written = attachments.length == 0 ? ensureNotControlFlow(realCause) : withAttachments(realCause, attachments);
+    logSevere(message + detailString, written, kind);
+    logErrorHeader(realCause);
 
-    if (t != null && shouldRethrow(t)) {
-      ExceptionUtil.rethrow(t);
+    // The wrapper can hold a control-flow exception, and the caller must get that exception back.
+    if (realCause != null && shouldRethrow(realCause)) {
+      ExceptionUtil.rethrow(realCause);
     }
 
-    // Unhandled exception wraps real exception which might be control flow exception
-    if (t instanceof UnhandledException uh && shouldRethrow(uh.getCause())) {
-      ExceptionUtil.rethrow(uh.getCause());
-    }
-
-    if (t != null) {
-      reportToFus(t);
+    if (realCause != null) {
+      reportToFus(realCause, kind);
     }
   }
 

@@ -45,7 +45,7 @@ suspend fun <T> withBackgroundProgress(
   level = DeprecationLevel.ERROR,
 )
 @RequiresBlockingContext
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 fun <T> runWithModalProgressBlocking(
   project: Project,
   title: @ProgressTitle String,
@@ -114,7 +114,7 @@ suspend fun <T> withModalProgressIndicator(
   replaceWith = ReplaceWith("runWithModalProgressBlocking(project, title) { withRawProgressReporter(action) }"),
 )
 @RequiresBlockingContext
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 fun <T> runBlockingModalWithRawProgressReporter(
   project: Project,
   title: @ModalProgressTitle String,
@@ -132,7 +132,7 @@ fun <T> runBlockingModalWithRawProgressReporter(
   replaceWith = ReplaceWith("runWithModalProgressBlocking(owner, title, cancellation) { withRawProgressReporter(action) }"),
 )
 @RequiresBlockingContext
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 fun <T> runBlockingModalWithRawProgressReporter(
   owner: ModalTaskOwner,
   title: @ModalProgressTitle String,

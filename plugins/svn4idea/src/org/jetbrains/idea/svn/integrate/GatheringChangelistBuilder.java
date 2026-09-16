@@ -59,7 +59,7 @@ public class GatheringChangelistBuilder extends EmptyChangelistBuilder {
   }
 
   @Override
-  public void removeRegisteredChangeFor(FilePath path) {
+  public void removeRegisteredChangeFor(@NotNull FilePath path) {
     // not sure
     for (Iterator<Change> iterator = myChanges.iterator(); iterator.hasNext(); ) {
       final Change change = iterator.next();

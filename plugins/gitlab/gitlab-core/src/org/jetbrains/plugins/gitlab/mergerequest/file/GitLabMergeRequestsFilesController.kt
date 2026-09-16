@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.file
 
 import com.intellij.collaboration.util.CodeReviewFilesUtil
 import com.intellij.diff.editor.DiffEditorTabFilesManager
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.serviceAsync
@@ -14,10 +15,10 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.api.GitLabProjectConnection
 
 interface GitLabMergeRequestsFilesController {
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun openTimeline(mrIid: String, focus: Boolean)
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun openDiff(mrIid: String, focus: Boolean)
 
   suspend fun closeAllFiles()
@@ -43,10 +44,12 @@ class GitLabMergeRequestsFilesControllerImpl(
   }
 
   override suspend fun closeAllFiles() {
+    if (!canCloseFiles()) return
     withContext(Dispatchers.EDT) {
-      if (project.isDisposed) return@withContext
+      if (!canCloseFiles()) return@withContext
       val fileManager = project.serviceAsync<FileEditorManager>()
       edtWriteAction {
+        if (!canCloseFiles()) return@edtWriteAction
         val files = fileManager.openFiles.filter { file ->
           file is GitLabVirtualFile && connection.id == file.connectionId
         }
@@ -54,4 +57,6 @@ class GitLabMergeRequestsFilesControllerImpl(
       }
     }
   }
+
+  private fun canCloseFiles(): Boolean = !project.isDisposed && !ApplicationManager.getApplication().isExitInProgress
 }

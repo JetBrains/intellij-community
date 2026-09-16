@@ -34,7 +34,7 @@ import org.jetbrains.intellij.build.productLayout.xml.visitAllModules
 internal object CommunityLibraryLicenseValidator : PipelineNode {
   override val id get() = NodeIds.COMMUNITY_LIBRARY_LICENSE_VALIDATION
 
-  override suspend fun execute(ctx: ComputeContext) {
+  override fun execute(ctx: ComputeContext) {
     val model = ctx.model
     val licenses = model.config.communityLibraryLicenses
     // an empty license list turns the rule off
@@ -50,15 +50,15 @@ internal object CommunityLibraryLicenseValidator : PipelineNode {
       coveredNames = coveredNames,
     )
 
-    // a community or core module set always holds a module, and a silent pass would hide every misplaced entry
+    // a community, core or library module set always holds a module, and a silent pass would hide every misplaced entry
     check(checkedModuleCount != 0) {
-      "No module of a community or core module set resolves to a JPS module, and the community license list has " +
+      "No module of a community, core or library module set resolves to a JPS module, and the community license list has " +
       "${licenses.size} entries. A pass here would hide every misplaced license entry."
     }
 
     if (violations.isNotEmpty()) {
       ctx.emitError(MissingLibraryLicenseError(
-        context = "the community and core module sets",
+        context = "the community, core and library module sets",
         violations = violations,
         licenseFile = "CommunityLibraryLicenses.kt",
         ruleName = "CommunityLibraryLicenseValidation",

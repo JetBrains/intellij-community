@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.io.FileAttributes.CaseSensitivity;
@@ -28,7 +28,6 @@ public abstract class PersistentFS extends ManagingFS {
     int IS_DIRECTORY                     =           0b0010;
     int IS_READ_ONLY                     =           0b0100;
     int MUST_RELOAD_CONTENT              =           0b1000;
-
     int IS_SYMLINK                       =      0b0001_0000;
     int IS_SPECIAL                       =      0b0010_0000;
     int IS_HIDDEN                        =      0b0100_0000;
@@ -55,15 +54,13 @@ public abstract class PersistentFS extends ManagingFS {
     return new DiskQueryRelay<>(function)::accessDiskWithCheckCanceled;
   }
 
-  /**
-   * @deprecated In the current implementation the method does nothing.
-   * It's uses are likely some sort of abstraction leaks, since the details of VFS caching layers shouldn't be of a concern for clients
-   * MAYBE RC: introduce a more generic method like 'drop unused entries from VFS cache' -- which still makes some sense
-   */
+  /// @deprecated In the current implementation the method does nothing.
+  /// Its uses are likely some sort of abstraction leaks, since the details of VFS caching layers shouldn't be of a concern for clients
+  /// MAYBE RC: introduce a more generic method like 'drop unused entries from VFS cache' -- which still makes some sense
   @Deprecated(forRemoval = true)
   public abstract void clearIdCache();
 
-  /** @return children already cached in VFS (persistent) storage. It may be _not all_ the actual children! */
+  /// @return children already cached in VFS (persistent) storage. It may be \_not all\_ the actual children!
   //MAYBE RC: rename to listCachedNames()
   //MAYBE RC: remove this method, use FSRecordsImpl.list() instead
   @ApiStatus.Internal
@@ -93,7 +90,8 @@ public abstract class PersistentFS extends ManagingFS {
   public static @NotNull CaseSensitivity areChildrenCaseSensitive(@Attributes int attributes) {
     if (!isDirectory(attributes)) {
       throw new IllegalArgumentException(
-        "CHILDREN_CASE_SENSITIVE flag defined for directories only but got file: 0b" + Integer.toBinaryString(attributes));
+        "CHILDREN_CASE_SENSITIVE flag defined for directories only but got file: 0b" + Integer.toBinaryString(attributes)
+      );
     }
     if (!isSet(attributes, Flags.CHILDREN_CASE_SENSITIVITY_CACHED)) {
       return CaseSensitivity.UNKNOWN;
@@ -105,13 +103,11 @@ public abstract class PersistentFS extends ManagingFS {
 
   public abstract byte @NotNull [] contentsToByteArray(int contentId) throws IOException;
 
-  /**
-   * Same as {@linkplain #contentsToByteArray(VirtualFile)}, but allows explicitly stating that loaded content should not
-   * be put into the VFS content cache
-   *
-   * @param mayCacheContent {@code true} = caching is allowed (platform may decide itself if caching is needed or not),
-   *                        {@code false} = caching is NOT allowed (platform will not cache content).
-   */
+  /// Same as [#contentsToByteArray(VirtualFile)][#contentsToByteArray(VirtualFile)], but allows explicitly stating that loaded content
+  /// should not be put into the VFS content cache.
+  ///
+  /// @param mayCacheContent `true` = caching is allowed (the platform may decide itself if caching is needed or not),
+  ///                        `false` = caching is NOT allowed (the platform will not cache content).
   public abstract byte @NotNull [] contentsToByteArray(@NotNull VirtualFile file, boolean mayCacheContent) throws IOException;
 
   public abstract int acquireContent(@NotNull VirtualFile file);
@@ -120,10 +116,8 @@ public abstract class PersistentFS extends ManagingFS {
 
   public abstract int getCurrentContentId(@NotNull VirtualFile file);
 
-  /**
-   * @return false if fileId's children are known to VFS, and they are empty (=have no children), true otherwise
-   * (=either do have known children, or children are unknown, hence _may_ be present)
-   */
+  /// @return `false` if fileId's children are known to VFS, and they are empty (=have no children), `true` otherwise
+  /// (=either do have known children, or children are unknown, hence _may_ be present)
   //MAYBE RC: rename to maybeHaveChildren() or to !hasZeroChildren()?
   //MAYBE RC: make it @Internal?
   public abstract boolean mayHaveChildren(int fileId);

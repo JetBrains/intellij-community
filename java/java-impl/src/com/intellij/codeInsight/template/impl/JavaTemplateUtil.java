@@ -18,6 +18,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiResolveHelper;
@@ -28,6 +29,8 @@ import com.intellij.psi.PsiTypeParameterListOwner;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -68,7 +71,7 @@ public final class JavaTemplateUtil {
           if (method != null) {
             if (!method.hasModifierProperty(PsiModifier.STATIC)) {
               PsiTypeParameterListOwner owner = ((PsiTypeParameter)aClass).getOwner();
-              if (PsiTreeUtil.isAncestor(owner, method, false)) {
+              if (isInScopeOf(method, owner)) {
                 continue;
               }
             }
@@ -98,6 +101,21 @@ public final class JavaTemplateUtil {
         }
       }
     }
+  }
+
+  /**
+   * @return true if the method is inside the owner of a type parameter, so the method can use that type
+   * parameter. A {@link com.intellij.modcommand.ModCommandAction} runs the template fields on a copy of
+   * the file, and the owner then comes from the original file. So the check compares the elements
+   * instead of the identity.
+   */
+  private static boolean isInScopeOf(@NotNull PsiMethod method, @Nullable PsiTypeParameterListOwner owner) {
+    if (owner == null) return false;
+    PsiManager manager = method.getManager();
+    for (PsiElement parent = method; parent != null && !(parent instanceof PsiFile); parent = parent.getParent()) {
+      if (manager.areElementsEquivalent(parent, owner)) return true;
+    }
+    return false;
   }
 
   public static void addImportForClass(final Document document, final PsiClass aClass, final int start, final int end) {

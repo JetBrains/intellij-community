@@ -14,7 +14,7 @@ class CommunityActionGroupStructureTest : ActionGroupStructureTestCase() {
             "actionSystem" / "groupStructure" / "actionGroupStructure.txt"
 
   override val regenerateCommand: String
-    get() = "(cd community && ./tests.cmd --module intellij.idea.community.main.tests" +
-            " --test com.intellij.openapi.actionSystem.CommunityActionGroupStructureTest" +
-            " -Dpass.actions.golden.regenerate=true)"
+    get() = "(cd community && ./bazel.cmd test //:main-tests_test" +
+            " --test_filter=com.intellij.openapi.actionSystem.CommunityActionGroupStructureTest" +
+            " --test_arg=--jvm_flag=-Dactions.golden.regenerate=true --cache_test_results=no)"
 }

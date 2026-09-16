@@ -476,8 +476,7 @@ for (module in descriptor.content.modules) {
 ├─────────────────────────────────────────────────────────────┤
 │ HEADER                                                       │
 ├─────────────────────────────────────────────────────────────┤
-│ [1 byte]  Format Version (2)                                │
-│ [1 byte]  jarOnly Flag (0/1)                                │
+│ [1 byte]  Format Version (3)                                │
 │ [4 bytes] Product Descriptor Size                           │
 │ [N bytes] Product Descriptor Content (XML with CDATA)       │
 │ [2 bytes] Plugin Count                                      │

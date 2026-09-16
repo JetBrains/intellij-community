@@ -23,6 +23,7 @@
     <module name="intellij.platform.indexing"/>
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.polySymbols"/>
+    <module name="intellij.platform.polySymbols.web"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.refactoring"/>
     <module name="intellij.platform.testFramework"/>

@@ -85,7 +85,7 @@ fun <T : Id> SplitComponentBinding(
  * @param scope the scope of the model.
  * The scope passed in [SplitComponentProvider.createComponent] will be canceled when this [scope] is canceled.
  */
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 @ApiStatus.Internal
 fun <T : Id> SplitComponentBinding<T>.createComponent(project: Project, scope: CoroutineScope, modelId: T): JComponent {
   val id = SplitComponentId(placeId, modelId.uid)

@@ -23,7 +23,8 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":compiler-plugin",
-        "@lib//:kotlinc-compose-compiler-plugin-provided",
+        "//libraries/kotlinc/compose-compiler-plugin:libraries-kotlinc-compose-compiler-plugin",
+        "//libraries/kotlinc/compose-compiler-plugin:libraries-kotlinc-compose-compiler-plugin_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.compose.compilerPlugin` end

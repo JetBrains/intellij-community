@@ -23,7 +23,6 @@ import com.intellij.polySymbols.PolySymbolNameSegment
 import com.intellij.polySymbols.PolySymbolNamespace
 import com.intellij.polySymbols.PolySymbolQualifiedName
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
-import com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue
 import com.intellij.polySymbols.impl.PolySymbolNameSegmentImpl
 import com.intellij.polySymbols.impl.sortSymbolsByPriority
 import com.intellij.polySymbols.impl.withOffset
@@ -206,6 +205,9 @@ fun PolySymbolNameSegment.withSymbols(symbols: List<PolySymbol>): PolySymbolName
 fun PolySymbolMatch.withSegments(segments: List<PolySymbolNameSegment>): PolySymbolMatch =
   (this as PolySymbolMatchBase).withSegments(segments)
 
+fun PolySymbolMatch.reversedSegments(): Sequence<PolySymbolNameSegment> =
+  (this as PolySymbolMatchBase).reversedSegments()
+
 fun PolySymbol.match(
   nameToMatch: String,
   params: PolySymbolNameMatchQueryParams,
@@ -357,40 +359,6 @@ fun <T : Any> coalesceApiStatus(collection: Iterable<T>?, mapper: (T) -> PolySym
 
 fun <T : Any> coalesceApiStatus(sequence: Sequence<T>?, mapper: (T) -> PolySymbolApiStatus?): PolySymbolApiStatus =
   sequence?.map(mapper)?.reduceOrNull { a, b -> a.coalesceWith(b) } ?: PolySymbolApiStatus.Stable
-
-fun Sequence<PolySymbolHtmlAttributeValue?>.merge(): PolySymbolHtmlAttributeValue? {
-  var kind: PolySymbolHtmlAttributeValue.Kind? = null
-  var type: PolySymbolHtmlAttributeValue.Type? = null
-  var required: Boolean? = null
-  var default: String? = null
-  var langType: Any? = null
-
-  for (value in this) {
-    if (value == null) continue
-    if (kind == null || kind == PolySymbolHtmlAttributeValue.Kind.PLAIN) {
-      kind = value.kind
-    }
-    if (type == null) {
-      type = value.type
-    }
-    if (required == null) {
-      required = value.required
-    }
-    if (default == null) {
-      default = value.default
-    }
-    if (langType == null) {
-      langType = value.langType
-    }
-  }
-  return if (kind != null
-             || type != null
-             || required != null
-             || langType != null
-             || default != null)
-    PolySymbolHtmlAttributeValue.create(kind, type, required, default, langType)
-  else null
-}
 
 fun NavigationTarget.createPsiRangeNavigationItem(element: PsiElement, offsetWithinElement: Int): Navigatable {
   val vf = element.containingFile.virtualFile

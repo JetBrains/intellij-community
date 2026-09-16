@@ -26,4 +26,13 @@ public interface VMFlags {
   static boolean isBuildProcessLoggerEnabled() {
     return Boolean.parseBoolean(System.getProperty("jvm-inc-builder.log.build.process", "false"));
   }
+
+  /**
+   * Test-only flag. When set, the builder stops the whole process at the named {@link CrashPoint}.
+   * The tests use this flag to model an unexpectedly killed build process.
+   * @return the name of the active crash point, or null when no crash point is active
+   */
+  static String getTestCrashPointName() {
+    return System.getProperty("jvm-inc-builder.test.crash.point");
+  }
 }

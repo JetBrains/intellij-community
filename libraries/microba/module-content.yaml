@@ -1,3 +1,0 @@
-- name: dist.all/lib/intellij.libraries.microba.jar
-  modules:
-  - name: intellij.libraries.microba

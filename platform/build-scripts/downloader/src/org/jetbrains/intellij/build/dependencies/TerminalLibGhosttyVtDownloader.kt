@@ -1,8 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.dependencies
 
-import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.intellij.build.BuildHttpSession
 import org.jetbrains.intellij.build.resolveAndExtractToCacheLocation
 import java.nio.file.Path
 
@@ -19,11 +19,10 @@ object TerminalLibGhosttyVtDownloader {
    *
    * See `community/plugins/terminal/emulator/README.md` for the update procedure.
    */
-  fun getOrDownloadLibRoot(communityRoot: BuildDependenciesCommunityRoot): Path {
+  @JvmOverloads
+  fun getOrDownloadLibRoot(communityRoot: BuildDependenciesCommunityRoot, session: BuildHttpSession? = null): Path {
     val version = BuildDependenciesDownloader.getDependencyProperties(communityRoot).property("libGhosttyVtVersion")
-    return runBlocking {
-      resolveAndExtractToCacheLocation(downloadUrl(version), communityRoot)
-    }
+    return resolveAndExtractToCacheLocation(downloadUrl(version), communityRoot, session)
   }
 
   /** Public so tests that pre-provision the build-dependencies download cache can pin the same URL. */

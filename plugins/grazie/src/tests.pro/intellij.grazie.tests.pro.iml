@@ -250,15 +250,6 @@
             <artifact url="file://$MAVEN_REPOSITORY$/io/github/resilience4j/resilience4j-micrometer/1.7.1/resilience4j-micrometer-1.7.1.jar">
               <sha256sum>71d9be0d10026f2223f2afba5b10d5d1a7b569c6433bbc1fd189ca8817d66d60</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-api/1.42.1/opentelemetry-api-1.42.1.jar">
-              <sha256sum>6b0f9d067260ea3ed6c3960352b80800b993cb3962fa6fb1b6383cd04c3c0874</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-context/1.42.1/opentelemetry-context-1.42.1.jar">
-              <sha256sum>fc8f47bc94bec89a3dbdbcf631470fb7fd7d3e628b10d43bc376f17ebde4b405</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-semconv/1.30.1-alpha/opentelemetry-semconv-1.30.1-alpha.jar">
-              <sha256sum>aaa73f6c6a3a67cdc07870387383808826d8dae7a84e47cae182b7a88a08e513</sha256sum>
-            </artifact>
             <artifact url="file://$MAVEN_REPOSITORY$/io/grpc/grpc-netty-shaded/1.75.0/grpc-netty-shaded-1.75.0.jar">
               <sha256sum>d33d47a9720a392512c4e4ceaa17a458a0e3ed6188d17e98d6c4faf0679374d7</sha256sum>
             </artifact>
@@ -419,6 +410,11 @@
               <sha256sum>9990a2039778f6b4cc94790141c2868864eacee0620c6c459451121a901cd5b5</sha256sum>
             </artifact>
           </verification>
+          <exclude>
+            <dependency maven-id="io.opentelemetry:opentelemetry-api" />
+            <dependency maven-id="io.opentelemetry:opentelemetry-context" />
+            <dependency maven-id="io.opentelemetry:opentelemetry-semconv" />
+          </exclude>
         </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/languagetool-core/6.8.28/languagetool-core-6.8.28.jar!/" />
@@ -450,9 +446,6 @@
           <root url="jar://$MAVEN_REPOSITORY$/io/vavr/vavr-match/0.10.2/vavr-match-0.10.2.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/io/github/resilience4j/resilience4j-core/1.7.1/resilience4j-core-1.7.1.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/io/github/resilience4j/resilience4j-micrometer/1.7.1/resilience4j-micrometer-1.7.1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-api/1.42.1/opentelemetry-api-1.42.1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-context/1.42.1/opentelemetry-context-1.42.1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-semconv/1.30.1-alpha/opentelemetry-semconv-1.30.1-alpha.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-netty-shaded/1.75.0/grpc-netty-shaded-1.75.0.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-util/1.75.0/grpc-util-1.75.0.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-core/1.75.0/grpc-core-1.75.0.jar!/" />
@@ -537,9 +530,6 @@
           <root url="jar://$MAVEN_REPOSITORY$/io/vavr/vavr-match/0.10.2/vavr-match-0.10.2-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/io/github/resilience4j/resilience4j-core/1.7.1/resilience4j-core-1.7.1-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/io/github/resilience4j/resilience4j-micrometer/1.7.1/resilience4j-micrometer-1.7.1-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-api/1.42.1/opentelemetry-api-1.42.1-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-context/1.42.1/opentelemetry-context-1.42.1-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-semconv/1.30.1-alpha/opentelemetry-semconv-1.30.1-alpha-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-netty-shaded/1.75.0/grpc-netty-shaded-1.75.0-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-util/1.75.0/grpc-util-1.75.0-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-core/1.75.0/grpc-core-1.75.0-sources.jar!/" />
@@ -596,6 +586,7 @@
         </SOURCES>
       </library>
     </orderEntry>
+    <orderEntry type="module" module-name="intellij.libraries.opentelemetry" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.grazie" scope="TEST" />
     <orderEntry type="module" module-name="intellij.grazie" />
     <orderEntry type="module" module-name="intellij.grazie.core" />

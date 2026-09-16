@@ -1,6 +1,6 @@
 <!-- DO NOT EDIT: This file is auto-generated from Kotlin code -->
 <!-- To regenerate, run: `Generate Product Layouts` or `bazel run //platform/buildScripts:plugin-model-tool` -->
-<!-- Source: see moduleSet("core.ide") function in UltimateModuleSets.kt -->
+<!-- Source: see moduleSet("core.ide") function in CoreModuleSets.kt -->
 <!-- Note: Files are kept under VCS to support running products without dev mode (deprecated) -->
 <idea-plugin>
   <content namespace="jetbrains">
@@ -29,6 +29,7 @@
     <!-- endregion -->
 
     <!-- region nested: core.platform > libraries.platform > libraries.ktor -->
+    <module name="intellij.libraries.kotlinx.serialization.json.io" loading="embedded"/>
     <module name="intellij.libraries.ktor.io" loading="embedded"/>
     <module name="intellij.libraries.ktor.utils" loading="embedded"/>
     <module name="intellij.libraries.ktor.network.tls" loading="embedded"/>
@@ -41,6 +42,7 @@
     <module name="intellij.libraries.java.compatibility" loading="embedded"/>
     <module name="intellij.libraries.jetbrains.annotations" loading="embedded"/>
     <module name="intellij.libraries.kotlin.reflect" loading="embedded"/>
+    <module name="intellij.libraries.kotlin.metadata"/>
     <module name="intellij.libraries.kotlinx.io" loading="embedded"/>
     <module name="intellij.libraries.kotlinx.serialization.cbor"/>
     <module name="intellij.libraries.kotlinx.serialization.core" loading="embedded"/>
@@ -63,7 +65,7 @@
     <module name="intellij.libraries.caffeine" loading="embedded"/>
     <module name="intellij.libraries.classgraph" loading="embedded"/>
     <module name="intellij.libraries.cli.parser" loading="embedded"/>
-    <module name="intellij.libraries.commons.cli" loading="embedded"/>
+    <module name="intellij.libraries.commons.cli"/>
     <module name="intellij.libraries.commons.codec" loading="embedded"/>
     <module name="intellij.libraries.commons.compress" loading="embedded"/>
     <module name="intellij.libraries.commons.io" loading="embedded"/>
@@ -85,11 +87,11 @@
     <module name="intellij.libraries.jaxen" loading="embedded"/>
     <module name="intellij.libraries.jbr" loading="embedded"/>
     <module name="intellij.libraries.jcip" loading="embedded"/>
-    <module name="intellij.libraries.jna" loading="embedded"/>
+    <module name="intellij.libraries.jna"/>
     <module name="intellij.libraries.jsoup" loading="embedded"/>
     <module name="intellij.libraries.jsonpath"/>
     <module name="intellij.libraries.jsvg" loading="embedded"/>
-    <module name="intellij.libraries.jvm.native.trusted.roots" loading="embedded"/>
+    <module name="intellij.libraries.jvm.native.trusted.roots"/>
     <module name="intellij.libraries.jzlib"/>
     <module name="intellij.libraries.kryo5" loading="embedded"/>
     <module name="intellij.libraries.lz4" loading="embedded"/>
@@ -104,8 +106,8 @@
     <module name="intellij.libraries.protobuf" loading="embedded"/>
     <module name="intellij.libraries.protobuf.kotlin"/>
     <module name="intellij.libraries.protobuf.java.util"/>
-    <module name="intellij.libraries.proxy.vole" loading="embedded"/>
-    <module name="intellij.libraries.rhino" loading="embedded"/>
+    <module name="intellij.libraries.proxy.vole"/>
+    <module name="intellij.libraries.rhino"/>
     <module name="intellij.libraries.semver"/>
     <module name="intellij.libraries.snakeyaml" loading="embedded"/>
     <module name="intellij.libraries.snakeyaml.engine" loading="embedded"/>
@@ -165,6 +167,7 @@
 
     <!-- region direct modules -->
     <module name="intellij.platform.runtime.product" loading="embedded"/>
+    <module name="intellij.platform.buildScripts.concurrency"/>
     <module name="intellij.platform.util.ex" loading="embedded"/>
     <module name="intellij.platform.util.ui" loading="embedded"/>
     <module name="intellij.platform.util.coroutines" loading="embedded"/>
@@ -197,7 +200,7 @@
     <module name="intellij.libraries.jgoodies.forms" loading="embedded"/>
     <module name="intellij.libraries.jsch.agent.proxy"/>
     <module name="intellij.libraries.miglayout.swing" loading="embedded"/>
-    <module name="intellij.libraries.pty4j" loading="embedded"/>
+    <module name="intellij.libraries.pty4j"/>
     <module name="intellij.libraries.sshj"/>
     <module name="intellij.libraries.swingx" loading="embedded"/>
     <module name="intellij.libraries.winp" loading="embedded"/>
@@ -210,8 +213,8 @@
     <!-- region direct modules -->
     <module name="intellij.platform.ide" loading="embedded"/>
     <module name="intellij.platform.welcomeScreen" loading="embedded"/>
-    <module name="intellij.platform.remoteServers.agent.rt" loading="embedded"/>
-    <module name="intellij.platform.remoteServers" loading="embedded"/>
+    <module name="intellij.platform.remoteServers.agent.rt"/>
+    <module name="intellij.platform.remoteServers"/>
     <module name="intellij.platform.usageView" loading="embedded"/>
     <module name="intellij.platform.credentialStore" loading="embedded"/>
     <!-- endregion -->

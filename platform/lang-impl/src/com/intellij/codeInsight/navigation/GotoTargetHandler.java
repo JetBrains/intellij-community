@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbModeBlockedFunctionality;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.DumbUtil;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
@@ -250,8 +251,8 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     }
     catch (IndexNotReadyException e) {
       DumbService.getInstance(project).showDumbModeNotificationForFunctionality(
-        CodeInsightBundle.dumbModeMessage("notification.navigation.is.not.available.while.indexing",
-                                          "notification.navigation.is.not.available.in.light.mode"),
+        DumbUtil.dumbModeMessage(CodeInsightBundle.message("notification.navigation.is.not.available.while.indexing"),
+                                 CodeInsightBundle.message("notification.navigation.is.not.available.in.light.mode")),
         DumbModeBlockedFunctionality.GotoTarget);
     }
   }

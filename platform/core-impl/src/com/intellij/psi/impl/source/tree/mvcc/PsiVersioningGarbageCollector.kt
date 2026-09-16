@@ -16,9 +16,10 @@ import org.jetbrains.annotations.TestOnly
 interface PsiVersioningGarbageCollector {
 
   /**
-   * Registers [cleanable] as eligible for garbage collection.
+   * Signals that [cleanables] were modified in [version].
+   * Later, when [version] will become obsolete, [PsiVersionCleanable.liveVersionChanged] will be called on each element in [cleanables]
    */
-  fun registerCleanable(cleanable: PsiVersionCleanable)
+  fun registerCleanablesForVersion(version: Long, cleanables: Collection<PsiVersionCleanable>)
 
   /**
    * This method needs to be called by the Platform when it detects that the set of live versions is now different.
@@ -30,4 +31,10 @@ interface PsiVersioningGarbageCollector {
    */
   @TestOnly
   suspend fun awaitCleanup()
+
+  @TestOnly
+  fun cleanupNow()
+
+  @TestOnly
+  fun pendingVersionCleanableCount(): Int
 }

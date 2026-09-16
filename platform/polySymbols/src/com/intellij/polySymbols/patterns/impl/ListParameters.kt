@@ -3,8 +3,10 @@ package com.intellij.polySymbols.patterns.impl
 
 import com.intellij.polySymbols.query.PolySymbolListSymbolsQueryParams
 import com.intellij.polySymbols.query.PolySymbolQueryExecutor
+import org.jetbrains.annotations.ApiStatus
 
-internal open class ListParameters(
+@ApiStatus.Internal
+open class ListParameters(
   val queryExecutor: PolySymbolQueryExecutor,
   val expandPatterns: Boolean,
 ) {

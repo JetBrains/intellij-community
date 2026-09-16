@@ -75,6 +75,9 @@ interface EelMachine {
 
   /**
    * Converts this machine into a [EelApi] — starts or reuses a running environment.
+   * The machine selects the connection. [descriptor] defines the path namespace of the API and all paths it returns.
+   * The caller must ensure that [descriptor] addresses this environment, including when another resolver owns that descriptor.
+   * Implementations can reject path namespaces they do not support.
    * @throws EelUnavailableException if eel is unavailable (i.e. remote machine is gone, docker container removed e.t.c.). Show it to a user, ask to fix and try again.
    */
   @ApiStatus.Experimental

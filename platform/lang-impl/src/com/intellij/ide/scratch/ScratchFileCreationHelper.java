@@ -16,6 +16,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.PathUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,6 +49,9 @@ public abstract class ScratchFileCreationHelper {
 
     public Language language;
     public int caretOffset;
+
+    @ApiStatus.Internal
+    public boolean prepareText = true;
     
     public String filePrefix;
     public Factory<Integer> fileCounter;

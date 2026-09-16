@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.markdown.images` start
+content_module_jar(module = ":images")
+### auto-generated section `dev intellij.markdown.images` end
+
 ### auto-generated section `build intellij.markdown.images` start
 jvm_library(
     name = "images",
@@ -41,8 +45,6 @@ jvm_library(
         "//platform/util:util-ui",
     ],
 )
-
-content_module_jar(module = ":images")
 
 jvm_library(
     name = "images_test_lib",

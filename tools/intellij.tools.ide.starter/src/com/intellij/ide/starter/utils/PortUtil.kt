@@ -5,6 +5,7 @@ import com.intellij.ide.starter.process.ProcessInfo
 import com.intellij.ide.starter.process.ProcessKiller.killProcesses
 import com.intellij.ide.starter.process.exec.ExecOutputRedirect
 import com.intellij.ide.starter.process.exec.ProcessExecutor
+import com.intellij.tools.ide.util.common.logError
 import com.intellij.platform.testFramework.teamCity.TeamCityReporter.SyntheticTestKind
 import com.intellij.util.system.OS
 import kotlinx.coroutines.async
@@ -97,17 +98,23 @@ object PortUtil {
    * Retrieves a list of process IDs that are using a specific network port on the system.
    *
    * @param port The network port to check for processes.
+   * @param listeningOnly Reports a process which listens on [port] only. A process which holds a
+   *   client socket to [port] is then absent from the result. A cleanup call needs this, because a
+   *   client does not keep the port busy, and the IDE itself is a client while a test uses the HTTP
+   *   client.
    * @return A list of process IDs that are using the specified port, or null if an error occurs.
    */
-  suspend fun getProcessesUsingPort(port: Int): List<ProcessInfo>? {
+  suspend fun getProcessesUsingPort(port: Int, listeningOnly: Boolean = false): List<ProcessInfo>? {
     var errorMsg = ""
 
     return runCatching {
       val findCommand = if (OS.CURRENT == OS.Windows) {
-        listOf("cmd", "/c", "netstat -ano | findstr :$port")
+        val netstat = "netstat -ano | findstr :$port"
+        listOf("cmd", "/c", if (listeningOnly) "$netstat | findstr LISTENING" else netstat)
       }
       else {
-        listOf("sh", "-c", "lsof -i :$port -t")
+        val state = if (listeningOnly) " -sTCP:LISTEN" else ""
+        listOf("sh", "-c", "lsof -i :$port$state -t")
       }
 
       val prefix = "find-pid"
@@ -144,33 +151,34 @@ object PortUtil {
           .awaitAll()
       }
     }.getOrElse {
-      CIServer.instance.reportTestFailure(
-        "An error occurred while attempting to get processes using port.",
-        buildString {
-          appendLine("An error occurred while attempting to get processes using port $port. ")
-          if (errorMsg.isNotEmpty()) {
-            appendLine("Error message: $errorMsg")
-          }
-          appendLine("Exception: ${it.stackTraceToString()}")
-        }, "", kind = SyntheticTestKind.TEST_INFRA_EXCEPTION)
+      logError(buildString {
+        appendLine("An error occurred while attempting to get processes using port $port.")
+        if (errorMsg.isNotEmpty()) {
+          appendLine("Error message: $errorMsg")
+        }
+      }, it)
       return null
     }
   }
 
-  suspend fun killProcessesUsingPort(port: Int): Boolean {
-    val processes = getProcessesUsingPort(port)
+  /**
+   * Kills each process which uses [port], and each descendant of it.
+   *
+   * @param listeningOnly See [getProcessesUsingPort]. Pass `true` to keep a client of [port] alive.
+   * @return `true` when at least one process was killed.
+   */
+  suspend fun killProcessesUsingPort(port: Int, listeningOnly: Boolean = false): Boolean {
+    val processes = getProcessesUsingPort(port, listeningOnly = listeningOnly)
 
     if (processes?.isNotEmpty() == true) {
       return killProcesses(processes)
     }
     else {
       if (processes == null) {
-        CIServer.instance.reportTestFailure("Failed to retrieve processes using port", "Failed to retrieve processes using port $port", "",
-                                            kind = SyntheticTestKind.TEST_INFRA_EXCEPTION)
+        logError("Failed to retrieve processes using port $port")
       }
       else {
-        CIServer.instance.reportTestFailure("No processes using port found", "No processes using port found $port", "",
-                                            kind = SyntheticTestKind.TEST_INFRA_EXCEPTION)
+        logError("No processes using port $port found")
       }
       return false
     }

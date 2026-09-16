@@ -4,11 +4,13 @@
 
 package org.jetbrains.intellij.build.impl.compilation
 
+import com.intellij.platform.buildScripts.concurrency.taskScope
 import com.intellij.util.lang.EmptyZipFile
 import com.intellij.util.lang.ImmutableZipFile
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -21,9 +23,8 @@ import org.jetbrains.intellij.build.http2Client.withHttp2ClientConnectionFactory
 import org.jetbrains.intellij.build.io.AddDirEntriesMode
 import org.jetbrains.intellij.build.io.zip
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
-import org.jetbrains.intellij.build.telemetry.blockingUse
 import org.jetbrains.intellij.build.telemetry.use
-import org.jetbrains.intellij.build.taskScope
+import org.jetbrains.intellij.build.telemetry.useSuspending
 import java.net.InetSocketAddress
 import java.net.URI
 import java.nio.file.FileSystemException
@@ -95,7 +96,7 @@ private fun getAndNormalizeServerUrlBySystemProperty(): String {
 
 private const val COMPILATION_CACHE_METADATA_JSON = "metadata.json"
 
-suspend fun packAndUploadToServer(context: CompilationContext, zipDir: Path, config: CompilationCacheUploadConfiguration) {
+fun packAndUploadToServer(context: CompilationContext, zipDir: Path, config: CompilationCacheUploadConfiguration) {
   val items = if (config.uploadOnly && config.saveMetadata) {  // no metadata.json
     context.project.modules.flatMap { module ->
       listOf(
@@ -108,7 +109,7 @@ suspend fun packAndUploadToServer(context: CompilationContext, zipDir: Path, con
       PackAndUploadItem(output = Path.of(""), name = name, archive = output!!)
     }.apply {
       forEachConcurrent { item ->
-        spanBuilder("compute hash").setAttribute("name", item.name).blockingUse {
+        spanBuilder("compute hash").setAttribute("name", item.name).use {
           item.hash = computeHash(item.archive)
         }
       }
@@ -132,7 +133,7 @@ suspend fun packAndUploadToServer(context: CompilationContext, zipDir: Path, con
   }
 }
 
-private suspend fun packCompilationResult(zipDir: Path, context: CompilationContext, addDirEntriesMode: AddDirEntriesMode = AddDirEntriesMode.ALL): List<PackAndUploadItem> {
+private fun packCompilationResult(zipDir: Path, context: CompilationContext, addDirEntriesMode: AddDirEntriesMode = AddDirEntriesMode.ALL): List<PackAndUploadItem> {
   val incremental = context.options.incrementalCompilation
   if (!incremental) {
     try {
@@ -194,12 +195,12 @@ internal fun packAndComputeHash(
   source: Path,
 ): String {
   if (source.isRegularFile()) {
-    spanBuilder("copy").setAttribute("name", name).blockingUse {
+    spanBuilder("copy").setAttribute("name", name).use {
       source.copyTo(archive, overwrite = true)
     }
   }
   else {
-    spanBuilder("pack").setAttribute("name", name).blockingUse {
+    spanBuilder("pack").setAttribute("name", name).use {
       // we compress the whole file using ZSTD - no need to compress
       zip(
         targetFile = archive,
@@ -210,7 +211,7 @@ internal fun packAndComputeHash(
       )
     }
   }
-  return spanBuilder("compute hash").setAttribute("name", name).blockingUse {
+  return spanBuilder("compute hash").setAttribute("name", name).use {
     computeHash(archive)
   }
 }
@@ -226,7 +227,7 @@ private fun isModuleOutputDirEmpty(moduleOutDir: Path): Boolean {
   return true
 }
 
-private suspend fun upload(
+private fun upload(
   config: CompilationCacheUploadConfiguration,
   zipDir: Path,
   messages: BuildMessages,
@@ -259,16 +260,19 @@ private suspend fun upload(
   }
 
   val serverAddress = config.serverAddress
-  withHttp2ClientConnectionFactory(trustAll = serverAddress.hostString == "127.0.0.1") { client ->
-    client.connect(serverAddress).use { connection ->
-      spanBuilder("upload archives").setAttribute(AttributeKey.stringArrayKey("items"), items.map(PackAndUploadItem::name)).use {
-        uploadArchives(
-          reportStatisticValue = messages::reportStatisticValue,
-          config = config,
-          metadataJson = metadataJson,
-          httpConnection = connection,
-          items = items,
-        )
+  // the netty client is a coroutine API, so the upload enters coroutines here and nowhere else
+  runBlocking {
+    withHttp2ClientConnectionFactory(trustAll = serverAddress.hostString == "127.0.0.1") { client ->
+      client.connect(serverAddress).use { connection ->
+        spanBuilder("upload archives").setAttribute(AttributeKey.stringArrayKey("items"), items.map(PackAndUploadItem::name)).useSuspending {
+          uploadArchives(
+            reportStatisticValue = messages::reportStatisticValue,
+            config = config,
+            metadataJson = metadataJson,
+            httpConnection = connection,
+            items = items,
+          )
+        }
       }
     }
   }
@@ -279,7 +283,7 @@ internal fun getArchiveStorage(fallbackPersistentCacheRoot: Path): Path {
 }
 
 @VisibleForTesting
-suspend fun fetchAndUnpackCompiledClasses(
+fun fetchAndUnpackCompiledClasses(
   reportStatisticValue: (key: String, value: String) -> Unit,
   classOutput: Path,
   metadataFile: Path,
@@ -354,15 +358,18 @@ suspend fun fetchAndUnpackCompiledClasses(
     val start = System.nanoTime()
 
     val downloadedBytes = AtomicLong()
-    withHttp2ClientConnectionFactory(trustAll = metadata.serverUrl.contains("127.0.0.1")) { client ->
-      downloadCompilationCache(
-        client = client,
-        serverUrl = if (metadata.prefix.trim('/').isEmpty()) URI(metadata.serverUrl) else URI(metadata.serverUrl.trimEnd('/') + '/' + metadata.prefix),
-        toDownload = toDownload,
-        downloadedBytes = downloadedBytes,
-        skipUnpack = skipUnpack,
-        saveHash = saveHash,
-      )
+    // the netty client is a coroutine API, so the download enters coroutines here and nowhere else
+    runBlocking {
+      withHttp2ClientConnectionFactory(trustAll = metadata.serverUrl.contains("127.0.0.1")) { client ->
+        downloadCompilationCache(
+          client = client,
+          serverUrl = if (metadata.prefix.trim('/').isEmpty()) URI(metadata.serverUrl) else URI(metadata.serverUrl.trimEnd('/') + '/' + metadata.prefix),
+          toDownload = toDownload,
+          downloadedBytes = downloadedBytes,
+          skipUnpack = skipUnpack,
+          saveHash = saveHash,
+        )
+      }
     }
 
     reportStatisticValue("compile-parts:download:time", TimeUnit.NANOSECONDS.toMillis((System.nanoTime() - start)).toString())
@@ -374,7 +381,7 @@ suspend fun fetchAndUnpackCompiledClasses(
   val start = System.nanoTime()
   spanBuilder("unpack compiled classes archives").use {
     toUnpack.forEachConcurrent(Runtime.getRuntime().availableProcessors().coerceAtLeast(4)) { item ->
-      spanBuilder("unpack").setAttribute("name", item.name).blockingUse {
+      spanBuilder("unpack").setAttribute("name", item.name).use {
         unpackCompilationPartArchive(item, saveHash)
       }
     }
@@ -423,7 +430,7 @@ private fun cleanupOutdatedCompiledClassArchives(
   reportStatisticValue("compile-parts:removed:count", count.toString())
 }
 
-private suspend fun checkPreviouslyUnpackedDirectories(
+private fun checkPreviouslyUnpackedDirectories(
   items: List<FetchAndUnpackItem>,
   span: Span,
   upToDate: MutableSet<String>,
@@ -438,11 +445,11 @@ private suspend fun checkPreviouslyUnpackedDirectories(
   val name = "remove stalled directories not present in metadata"
   taskScope {
     fork(name) {
-      val stalledDirs = spanBuilder(name).setAttribute(AttributeKey.stringArrayKey("keys"), java.util.List.copyOf(metadata.files.keys)).blockingUse {
+      val stalledDirs = spanBuilder(name).setAttribute(AttributeKey.stringArrayKey("keys"), java.util.List.copyOf(metadata.files.keys)).use {
         collectStalledDirs(metadata, classOutput)
       }
       stalledDirs.forEachConcurrent { dir ->
-        spanBuilder("delete stalled dir").setAttribute("dir", dir.toString()).blockingUse {
+        spanBuilder("delete stalled dir").setAttribute("dir", dir.toString()).use {
           dir.deleteRecursively()
         }
       }
@@ -488,6 +495,7 @@ private suspend fun checkPreviouslyUnpackedDirectories(
         out.deleteRecursively()
       }
     }
+    join()
   }
   return System.nanoTime() - start
 }

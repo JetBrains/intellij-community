@@ -51,7 +51,7 @@ public class XEvaluateInConsoleFromEditorActionHandler extends XAddToWatchesFrom
   protected void perform(@NotNull XDebugSessionProxy session, @NotNull AnActionEvent event) {
     DataContext dataContext = event.getDataContext();
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
-    if (!(editor instanceof EditorEx)) {
+    if (!(editor instanceof EditorEx ex)) {
       return;
     }
 
@@ -86,7 +86,7 @@ public class XEvaluateInConsoleFromEditorActionHandler extends XAddToWatchesFrom
         return;
       ConsoleExecuteAction action = getConsoleExecuteAction(session);
       if (action != null) {
-        action.execute(range, text, (EditorEx) editor);
+        action.execute(range, text, ex);
       }
     }));
   }

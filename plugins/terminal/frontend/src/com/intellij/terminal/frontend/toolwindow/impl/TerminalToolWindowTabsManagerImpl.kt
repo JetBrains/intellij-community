@@ -17,6 +17,7 @@ import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.terminal.frontend.action.TerminalEmulatorBadgeAction
 import com.intellij.terminal.frontend.action.TerminalRenameTabAction
 import com.intellij.terminal.frontend.fus.TerminalFocusFusService
 import com.intellij.terminal.frontend.toolwindow.TerminalRequestedProcessOptions
@@ -56,6 +57,7 @@ import org.jetbrains.plugins.terminal.TerminalToolWindowPanel
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
 import org.jetbrains.plugins.terminal.fus.TerminalTabOpeningWay
+import org.jetbrains.plugins.terminal.hyperlinks.TerminalSourceNavigationProjectResolver
 import org.jetbrains.plugins.terminal.settings.impl.TerminalSessionPersistedTab
 import org.jetbrains.plugins.terminal.settings.impl.TerminalTabsStorage
 import org.jetbrains.plugins.terminal.startup.TerminalProcessType
@@ -248,7 +250,7 @@ class TerminalToolWindowTabsManagerImpl(
     val viewOptions = TerminalViewBuilderOptions(
       processOptions = builder.getRequestedProcessOptions(),
       deferSessionStartUntilUiShown = builder.deferSessionStartUntilUiShown,
-      sourceNavigationProjectPath = builder.sourceNavigationProjectPath,
+      sourceNavigationProjectResolver = builder.sourceNavigationProjectResolver,
       startupFusInfo = builder.startupFusInfo,
     )
     val terminal = createTerminalView(
@@ -275,7 +277,7 @@ class TerminalToolWindowTabsManagerImpl(
     return toolWindow
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun installTabsPersistence() {
     val toolWindow = getToolWindow()
     installTerminalTabsPersistence(
@@ -296,6 +298,7 @@ class TerminalToolWindowTabsManagerImpl(
 
       val toolWindowActions = ActionManager.getInstance().getAction("Terminal.ToolWindowActions") as? ActionGroup
       toolWindow.setAdditionalGearActions(toolWindowActions)
+      toolWindow.setTitleActions(listOf(TerminalEmulatorBadgeAction()))
       toolWindow.setTabsSplittingAllowed(true)
       ToolWindowContentUi.setToolWindowInEditorSupport(toolWindow, TerminalInEditorSupport())
 
@@ -352,7 +355,7 @@ class TerminalToolWindowTabsManagerImpl(
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   internal fun createDetachedTab(
     row: TerminalSessionPersistedTab,
   ): TerminalToolWindowTab {
@@ -403,7 +406,7 @@ class TerminalToolWindowTabsManagerImpl(
       private set
     var shouldAddToToolWindow: Boolean = true
       private set
-    var sourceNavigationProjectPath: String? = null
+    var sourceNavigationProjectResolver: TerminalSourceNavigationProjectResolver? = null
       private set
     var startupFusInfo: TerminalStartupFusInfo? = null
       private set
@@ -473,8 +476,8 @@ class TerminalToolWindowTabsManagerImpl(
       return this
     }
 
-    override fun sourceNavigationProjectPath(projectPath: String?): TerminalToolWindowTabBuilder {
-      sourceNavigationProjectPath = projectPath
+    override fun sourceNavigationProjectResolver(resolver: TerminalSourceNavigationProjectResolver?): TerminalToolWindowTabBuilder {
+      sourceNavigationProjectResolver = resolver
       return this
     }
 

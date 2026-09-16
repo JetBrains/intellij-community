@@ -5,5 +5,4 @@ fun test() {
     var map = mapOf(1 to 2)
     map +=<caret> 3 to 4
 }
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.inspections.SuspiciousCollectionReassignmentInspection$ChangeTypeToMutableFix
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.inspections.SuspiciousCollectionReassignmentInspection$ChangeTypeToMutableFix

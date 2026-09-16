@@ -95,7 +95,7 @@ class TerminalPromptModelImpl(
     })
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun resetChangesHistory() {
     WriteIntentReadAction.run {
       val undoManager = UndoManager.getInstance(editor.project!!) as UndoManagerImpl
@@ -117,7 +117,7 @@ class TerminalPromptModelImpl(
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun doUpdatePrompt(renderingInfo: TerminalPromptRenderingInfo) {
     DocumentUtil.writeInRunUndoTransparentAction {
       document.clearGuardedBlocks()

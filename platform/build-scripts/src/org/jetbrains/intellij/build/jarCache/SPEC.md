@@ -82,10 +82,8 @@ Rationale: another process may have completed publication for the same key.
 
 ## Concurrency Model
 
-- In-process: per-key-slot serialization (`StripedMutex`) is required.
+- In-process: per-key-slot serialization (`StripedLock`) is required.
 - Cross-process: no file lock is used; duplicate producer runs are allowed.
-
-For `useCacheAsTargetFile=true`, returned cache path can disappear due to concurrent cleanup in another process.
 
 ## Metadata Touch And Retention
 

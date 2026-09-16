@@ -1,6 +1,0 @@
-- name: dist.all/lib/intellij.libraries.jackson.module.kotlin.jar
-  modules:
-  - name: intellij.libraries.jackson.module.kotlin
-    libraries:
-      jackson-module-kotlin:
-      - name: $MAVEN_REPOSITORY$/com/fasterxml/jackson/module/jackson-module-kotlin/2/jackson-module-kotlin-2.jar

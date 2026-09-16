@@ -1,6 +1,0 @@
-- name: dist.all/lib/intellij.libraries.jackson.dataformat.toml.jar
-  modules:
-  - name: intellij.libraries.jackson.dataformat.toml
-    libraries:
-      jackson-dataformat-toml:
-      - name: $MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-toml/2/jackson-dataformat-toml-2.jar

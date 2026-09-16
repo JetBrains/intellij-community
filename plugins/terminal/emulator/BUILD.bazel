@@ -10,6 +10,10 @@ jps_test(
 )
 ### skip generation section `test intellij.terminal.emulator.tests` end
 
+### auto-generated section `dev intellij.terminal.emulator` start
+content_module_jar(module = ":emulator")
+### auto-generated section `dev intellij.terminal.emulator` end
+
 ### auto-generated section `build intellij.terminal.emulator` start
 jvm_library(
     name = "emulator",
@@ -37,8 +41,6 @@ jvm_library(
         "//platform/build-scripts/downloader",
     ],
 )
-
-content_module_jar(module = ":emulator")
 
 jvm_library(
     name = "emulator_test_lib",

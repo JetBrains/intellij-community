@@ -1,4 +1,0 @@
-- name: dist.all/lib/intellij.platform.core.ui.jar
-  modules:
-  - name: intellij.platform.core.ui
-  - name: intellij.platform.icons.api

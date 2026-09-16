@@ -1,6 +1,0 @@
-- name: dist.all/lib/intellij.libraries.jackson.databind.jar
-  modules:
-  - name: intellij.libraries.jackson.databind
-    libraries:
-      jackson-databind:
-      - name: $MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-databind/2/jackson-databind-2.jar

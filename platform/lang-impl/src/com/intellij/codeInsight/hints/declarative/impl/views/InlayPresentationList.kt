@@ -57,7 +57,7 @@ class InlayPresentationList(
            max(getPadding(context), entriesMetrics.rightMargin)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun updateModel(newModel: InlayData) {
     updateStateTree(newModel.tree, this.model.tree, 0, 0)
     this.model = newModel

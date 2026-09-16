@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -27,6 +26,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +36,6 @@ import javax.swing.JComponent;
 import javax.swing.JEditorPane;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 import java.awt.BorderLayout;
 import java.util.Collection;
 import java.util.Collections;
@@ -48,8 +47,12 @@ public class CommittedChangeListPanel extends JPanel implements UiDataProvider {
 
   private final JLabel myDescriptionLabel;
   private final CommittedChangesBrowser myChangesBrowser;
-  private final JEditorPane myCommitMessageArea;
-  private final JScrollPane myCommitMessageScrollPane;
+  private final OnePixelSplitter mySplitter;
+
+  /** The bottom part of this panel. It is the built-in commit message area, or the component that the caller supplied. */
+  private final @NotNull JComponent myCommitDetailsComponent;
+  /** Null when the caller supplied its own commit details component. */
+  private final @Nullable JEditorPane myCommitMessageArea;
 
   private @NotNull CommittedChangeList myChangeList;
   private @NotNull Collection<Change> myChanges;
@@ -58,6 +61,15 @@ public class CommittedChangeListPanel extends JPanel implements UiDataProvider {
   private boolean myShowCommitMessage = true;
 
   public CommittedChangeListPanel(@NotNull Project project) {
+    this(project, null);
+  }
+
+  /**
+   * @param commitDetailsComponent the component for the bottom part of this panel. The caller owns it and fills it with
+   *                               the commit data. Pass null to use the built-in commit message area.
+   */
+  @ApiStatus.Internal
+  public CommittedChangeListPanel(@NotNull Project project, @Nullable JComponent commitDetailsComponent) {
     super(new BorderLayout());
     myProject = project;
 
@@ -69,24 +81,30 @@ public class CommittedChangeListPanel extends JPanel implements UiDataProvider {
 
     myChangesBrowser = new MyChangesBrowser(myProject);
 
-    myCommitMessageArea = new JEditorPane(UIUtil.HTML_MIME, "") {
-      @Override
-      public void updateUI() {
-        super.updateUI();
-        setText(getChangelistCommentHtml());
-      }
-    };
-    myCommitMessageArea.setBorder(JBUI.Borders.empty(3));
-    myCommitMessageArea.setEditable(false);
-    myCommitMessageArea.setBackground(UIUtil.getTreeBackground());
-    myCommitMessageArea.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
-    myCommitMessageScrollPane = ScrollPaneFactory.createScrollPane(myCommitMessageArea);
+    if (commitDetailsComponent != null) {
+      myCommitMessageArea = null;
+      myCommitDetailsComponent = commitDetailsComponent;
+    }
+    else {
+      myCommitMessageArea = new JEditorPane(UIUtil.HTML_MIME, "") {
+        @Override
+        public void updateUI() {
+          super.updateUI();
+          setText(getChangelistCommentHtml());
+        }
+      };
+      myCommitMessageArea.setBorder(JBUI.Borders.empty(3));
+      myCommitMessageArea.setEditable(false);
+      myCommitMessageArea.setBackground(UIUtil.getTreeBackground());
+      myCommitMessageArea.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
+      myCommitDetailsComponent = ScrollPaneFactory.createScrollPane(myCommitMessageArea);
+    }
 
-    Splitter splitter = new OnePixelSplitter(true, 0.8f);
-    splitter.setFirstComponent(myChangesBrowser);
-    splitter.setSecondComponent(myCommitMessageScrollPane);
+    mySplitter = new OnePixelSplitter(true, 0.8f);
+    mySplitter.setFirstComponent(myChangesBrowser);
+    mySplitter.setSecondComponent(myCommitDetailsComponent);
 
-    add(splitter, BorderLayout.CENTER);
+    add(mySplitter, BorderLayout.CENTER);
     add(myDescriptionLabel, BorderLayout.NORTH);
     updatePresentation();
 
@@ -94,12 +112,12 @@ public class CommittedChangeListPanel extends JPanel implements UiDataProvider {
   }
 
   private void updatePresentation() {
-    myCommitMessageScrollPane.setVisible(myShowCommitMessage);
+    myCommitDetailsComponent.setVisible(myShowCommitMessage);
 
     if (myShowSideBorders) {
       if (myShowCommitMessage) {
         myChangesBrowser.setViewerBorder(IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.LEFT | SideBorder.RIGHT));
-        myCommitMessageScrollPane.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT | SideBorder.RIGHT | SideBorder.BOTTOM));
+        myCommitDetailsComponent.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT | SideBorder.RIGHT | SideBorder.BOTTOM));
       }
       else {
         myChangesBrowser.setViewerBorder(IdeBorderFactory.createBorder(SideBorder.ALL));
@@ -107,7 +125,7 @@ public class CommittedChangeListPanel extends JPanel implements UiDataProvider {
     }
     else {
       myChangesBrowser.setViewerBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
-      myCommitMessageScrollPane.setBorder(JBUI.Borders.empty());
+      myCommitDetailsComponent.setBorder(JBUI.Borders.empty());
     }
   }
 
@@ -117,14 +135,28 @@ public class CommittedChangeListPanel extends JPanel implements UiDataProvider {
 
     myChangesBrowser.setChangesToDisplay(myChanges);
 
-    myCommitMessageArea.setText(getChangelistCommentHtml());
-    myCommitMessageArea.setCaretPosition(0);
+    if (myCommitMessageArea != null) {
+      myCommitMessageArea.setText(getChangelistCommentHtml());
+      myCommitMessageArea.setCaretPosition(0);
+    }
   }
 
   private @NotNull @Nls String getChangelistCommentHtml() {
     return IssueLinkHtmlRenderer.formatTextIntoHtml(myProject, myChangeList.getComment().trim());
   }
 
+  /**
+   * Sets the part of the height that the changes browser gets. The bottom component gets the rest.
+   */
+  @ApiStatus.Internal
+  public void setCommitDetailsProportion(float proportion) {
+    mySplitter.setProportion(proportion);
+  }
+
+  /**
+   * Shows or hides the bottom part of this panel. This is the built-in commit message area,
+   * or the component that the caller supplied to the constructor.
+   */
   public void setShowCommitMessage(boolean value) {
     myShowCommitMessage = value;
     updatePresentation();

@@ -1,6 +1,0 @@
-- name: dist.all/lib/intellij.libraries.jsvg.jar
-  modules:
-  - name: intellij.libraries.jsvg
-    libraries:
-      jsvg:
-        - name: $MAVEN_REPOSITORY$/com/github/weisj/jsvg/2/jsvg-2.jar

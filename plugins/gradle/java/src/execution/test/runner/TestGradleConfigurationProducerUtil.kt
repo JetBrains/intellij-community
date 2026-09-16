@@ -108,6 +108,10 @@ fun <T> ExternalSystemTaskExecutionSettings.applyTestConfiguration(
     }
   }
 
+  if (testRunConfigurations.isEmpty()) {
+    return false
+  }
+
   externalProjectPath = projectPath
   taskNames = testRunConfigurations.entries.flatMap { it.key + it.value }
   if (testRunConfigurations.size > 1) {
@@ -135,7 +139,7 @@ fun ExternalSystemTaskExecutionSettings.addScriptParameterIfAbsent(option: Strin
  */
 internal const val CONTINUE_OPTION: String = "--continue"
 
-fun String.escapeIfNeeded() = when {
+fun String.escapeIfNeeded(): String = when {
   contains(' ') -> "'$this'"
   else -> this
 }

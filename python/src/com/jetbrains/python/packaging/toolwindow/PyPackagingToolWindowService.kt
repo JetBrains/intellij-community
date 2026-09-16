@@ -2,29 +2,20 @@
 package com.jetbrains.python.packaging.toolwindow
 
 import com.intellij.notification.NotificationGroupManager
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
-import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.FileEditorManagerEvent
-import com.intellij.openapi.fileEditor.FileEditorManagerListener
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.options.ex.SingleConfigurableEditor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.modules
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.ModuleRootEvent
-import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.util.messages.MessageBusConnection
 import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.Result
@@ -56,13 +47,19 @@ import com.jetbrains.python.packaging.management.ui.notify
 import com.jetbrains.python.packaging.packageRequirements.FlatPackageStructureNode
 import com.jetbrains.python.packaging.packageRequirements.PackageCollectionPackageStructureNode
 import com.jetbrains.python.packaging.packageRequirements.PackageTreeNode
+import com.jetbrains.python.packaging.packageRequirements.newNodeSet
 import com.jetbrains.python.packaging.packageRequirements.PackageStructureNode
+import com.jetbrains.python.packaging.packageRequirements.PackagesUnavailableNode
 import com.jetbrains.python.packaging.packageRequirements.WorkspaceMemberPackageStructureNode
 import com.jetbrains.python.packaging.packageRequirements.collectAllNames
 import com.jetbrains.python.packaging.pip.PipRepositoryManager
+import com.jetbrains.python.packaging.toolwindow.packages.PackagesUnavailableAction
+import com.jetbrains.python.showProcessExecutionErrorDialog
 import com.intellij.python.requirements.pyRequirement
 import com.jetbrains.python.packaging.repository.PyPiPackageRepository
 import com.jetbrains.python.packaging.repository.PyPackageRepositories
+import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
+import com.intellij.python.sdk.backend.getSdkAPI
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.packaging.repository.PyRepositoriesList
 import com.jetbrains.python.packaging.repository.checkValid
@@ -77,9 +74,6 @@ import com.jetbrains.python.packaging.toolwindow.model.PyPackagesViewData
 import com.jetbrains.python.packaging.toolwindow.model.RequirementPackage
 import com.jetbrains.python.packaging.toolwindow.model.UndeclaredPackagesGroup
 import com.jetbrains.python.packaging.toolwindow.model.WorkspaceMember
-import com.jetbrains.python.sdk.PySdkListener
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
-import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.statistics.PythonPackagesIdsHolder.Companion.PYTHON_PACKAGE_DELETED
 import com.jetbrains.python.statistics.PythonPackagesIdsHolder.Companion.PYTHON_PACKAGE_INSTALLED
 import kotlinx.coroutines.CoroutineScope
@@ -178,7 +172,8 @@ internal class PyPackagingToolWindowService(val project: Project, val serviceSco
   fun initialize(toolWindowPanel: PyPackagingToolWindowPanel) {
     this.toolWindowPanel = toolWindowPanel
     serviceScope.launch(Dispatchers.IO) {
-      val sdkToOpenOn = resolvePackagesToolWindowSdk(project)
+      @Suppress("DEPRECATION")
+      val sdkToOpenOn = project.service<EvoPyProjectModel>().interpreter.value?.getSdkAPI()
       val boundSdk = sdkContext?.sdk
       if (shouldReplayBoundSdk(boundSdk, sdkToOpenOn)) {
         checkNotNull(boundSdk)
@@ -239,20 +234,34 @@ internal class PyPackagingToolWindowService(val project: Project, val serviceSco
   @ApiStatus.Internal
   fun findAllMatchingPackages(query: String): List<DisplayablePackage> = pruneTreeByQuery(installedPackages, query)
 
-  private fun pruneTreeByQuery(packages: List<DisplayablePackage>, query: String): List<DisplayablePackage> {
+  /**
+   * [path] holds the packages between this one and the top of the result, so a package that repeats
+   * on its own path keeps its row but not its dependencies. Nothing else is cut, or a match below a
+   * package that appears twice would be dropped.
+   */
+  private fun pruneTreeByQuery(
+    packages: List<DisplayablePackage>,
+    query: String,
+    path: MutableSet<DisplayablePackage> = mutableSetOf(),
+  ): List<DisplayablePackage> {
     val result = mutableListOf<DisplayablePackage>()
     for (pkg in packages) {
-      val prunedChildren = pruneTreeByQuery(pkg.getRequirements(), query)
+      val prunedChildren = if (path.add(pkg)) {
+        pruneTreeByQuery(pkg.getRequirements(), query, path).also { path.remove(pkg) }
+      }
+      else emptyList()
       val selfMatches = nameMatches(pkg, query)
       val keep: DisplayablePackage? = when (pkg) {
-        is WorkspaceMember -> if (prunedChildren.isNotEmpty()) WorkspaceMember(pkg.name, prunedChildren) else null
+        is WorkspaceMember -> if (prunedChildren.isNotEmpty()) WorkspaceMember(pkg.name, prunedChildren, pkg.instance) else null
         is DependencyGroupNode -> if (prunedChildren.isNotEmpty()) DependencyGroupNode(pkg.name, prunedChildren) else null
         is UndeclaredPackagesGroup -> if (prunedChildren.isNotEmpty()) UndeclaredPackagesGroup(prunedChildren.filterIsInstance<InstalledPackage>()) else null
         is InstalledPackage -> if (selfMatches || prunedChildren.isNotEmpty()) InstalledPackage(
-          pkg.instance, pkg.repository, pkg.nextVersion, prunedChildren.filterIsInstance<RequirementPackage>(), pkg.isDeclared, pkg.workspaceMember, pkg.dependencyGroup
+          pkg.instance, pkg.repository, pkg.nextVersion, prunedChildren.filterIsInstance<RequirementPackage>(), pkg.isDeclared,
+          pkg.workspaceMember, pkg.dependencyGroup, pkg.isProjectPackage, pkg.extras
         ) else null
         is RequirementPackage -> if (selfMatches || prunedChildren.isNotEmpty()) RequirementPackage(
-          pkg.instance, pkg.repository, prunedChildren.filterIsInstance<RequirementPackage>(), pkg.group, pkg.isDeclared, pkg.workspaceMember
+          pkg.instance, pkg.repository, prunedChildren.filterIsInstance<RequirementPackage>(), pkg.group, pkg.isDeclared,
+          pkg.workspaceMember, pkg.isProjectPackage, pkg.extras
         ) else null
         is InstallablePackage -> if (selfMatches) pkg else null
         is LoadingNode -> null
@@ -505,6 +514,37 @@ internal class PyPackagingToolWindowService(val project: Project, val serviceSco
     }
   }
 
+  /**
+   * Shows why the packages could not be listed, with the manager's own fix as a link when it has one.
+   *
+   * An empty list in this state read as "this project has no packages", which is not what a `uv tree` the tool
+   * refused to run means (PY-90174).
+   */
+  private suspend fun showPackagesUnavailable(state: PackagesUnavailableNode, manager: PythonPackageManager) {
+    val updateLocked = manager.updateLockedAction()
+    val actions = buildList {
+      state.failedProcess?.let { failed ->
+        // The process already wrote its command and its output to the Process Output tool window, so link to it
+        // there instead of repeating either in a column too narrow to hold them (PY-90174).
+        add(PackagesUnavailableAction(message("python.packaging.unavailable.show.output")) {
+          showProcessExecutionErrorDialog(failed)
+        })
+      }
+      if (state.fixCommand != null && updateLocked != null) {
+        add(PackagesUnavailableAction(state.fixCommand) {
+          serviceScope.launch {
+            updateLocked().onFailure { thisLogger().warn("Failed to update the lock file: $it") }
+            refreshInstalledPackages()
+          }
+        })
+      }
+    }
+    withContext(Dispatchers.EDT) {
+      installedPackages = emptyList()
+      toolWindowPanel?.packageListController?.showPackagesUnavailableMessage(state.description, actions)
+    }
+  }
+
   private fun showNoInterpreterMessage() {
     serviceScope.launch(Dispatchers.EDT) {
       installedPackages = emptyList()
@@ -513,26 +553,27 @@ internal class PyPackagingToolWindowService(val project: Project, val serviceSco
   }
 
   private fun subscribeToChanges() {
-    subscribeToSdkChanges()
+    followSharedInterpreter()
     subscribeToPackageManagementChanges()
-    subscribeToProjectChanges()
   }
 
-  private fun subscribeToSdkChanges() {
-    ApplicationManager.getApplication().messageBus.connect(serviceScope)
-      .subscribe(PySdkListener.TOPIC, object : PySdkListener {
-        override fun moduleSdkUpdated(module: Module, prevSdk: Sdk?, newSdk: Sdk?) {
-          // `PySdkListener` fires on the application bus, so every open project's service is
-          // notified. Ignore modules that don't belong to *this* project — otherwise creating a
-          // venv in project B repoints project A's PPTW to that venv (PY-91324).
-          if (module.project != project) return
-          if (newSdk != null && newSdk == currentSdk) return
-          serviceScope.launch(Dispatchers.IO) {
-            initForSdk(newSdk)
-          }
-        }
-      })
+  /**
+   * Follows the interpreter every Python surface shows, so this view and the interpreter widget never name different
+   * ones.
+   *
+   * The resolving used to live here as well — the file's own module, the project's roots, the SDK topic — and it
+   * answered differently from the widget's: a file whose module carried no interpreter cleared this view while the
+   * widget kept showing the workspace's (PY-90174). [EvoPyProjectModel.interpreter] is the one answer now, and it
+   * already re-emits on everything those listeners watched, since a module's interpreter is part of the module entity
+   * the structure is computed from.
+   */
+  private fun followSharedInterpreter() {
+    serviceScope.launch {
+      @Suppress("DEPRECATION")
+      project.service<EvoPyProjectModel>().interpreter.collect { initForSdk(it?.getSdkAPI()) }
+    }
   }
+
 
   private fun subscribeToPackageManagementChanges() {
     ApplicationManager.getApplication().messageBus.connect(serviceScope)
@@ -557,44 +598,8 @@ internal class PyPackagingToolWindowService(val project: Project, val serviceSco
       })
   }
 
-  private fun subscribeToProjectChanges() {
-    val connection = project.messageBus.connect(this)
-    subscribeToRootChanges(connection)
-    subscribeToFileEditorChanges(connection)
-  }
 
-  // Needed alongside PySdkListener: covers structural changes (module added/removed) that affect SDK availability
-  private fun subscribeToRootChanges(connection: MessageBusConnection) {
-    connection.subscribe(ModuleRootListener.TOPIC, object : ModuleRootListener {
-      override fun rootsChanged(event: ModuleRootEvent) {
-        serviceScope.launch(Dispatchers.IO) {
-          val current = currentSdk
-          val allSdks = readAction { project.modules.mapNotNull { it.pythonSdk } }
-          if (current != null && current in allSdks) return@launch
-          val sdk = allSdks.firstOrNull()
-          if (sdk != current) {
-            initForSdk(sdk)
-          }
-        }
-      }
-    })
-  }
 
-  private fun subscribeToFileEditorChanges(connection: MessageBusConnection) {
-    connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
-      override fun selectionChanged(event: FileEditorManagerEvent) {
-        event.newFile?.let { newFile ->
-          serviceScope.launch {
-            val sdk = readAction {
-              val module = ModuleUtilCore.findModuleForFile(newFile, project)
-              PythonSdkUtil.findPythonSdk(module)
-            }
-            initForSdk(sdk)
-          }
-        }
-      }
-    })
-  }
 
   suspend fun refreshInstalledPackages(showIndicator: Boolean = true) {
     if (project.isDisposed) return
@@ -630,10 +635,16 @@ internal class PyPackagingToolWindowService(val project: Project, val serviceSco
     val packageIndex = PackageIndex(context.manager)
     val packageTree = context.manager.getPackageTree()
 
+    if (packageTree is PackagesUnavailableNode) {
+      showPackagesUnavailable(packageTree, context.manager)
+      return
+    }
+
     val declaredPackageNames = collectDeclaredNames(packageTree, packageIndex)
+    val projectPackageNames = collectProjectPackageNames(packageTree)
 
     withContext(Dispatchers.Default) {
-      val allPackages = buildPackages(context, packageTree, packageIndex, declaredPackageNames)
+      val allPackages = buildPackages(context, packageTree, packageIndex, declaredPackageNames, projectPackageNames, newNodeSet())
       installedPackages = allPackages.sortedWith(compareBy({ getSortPriority(it) }, { it.name.lowercase() }))
     }
 
@@ -656,16 +667,26 @@ internal class PyPackagingToolWindowService(val project: Project, val serviceSco
     }
   }
 
+  /** The workspace members and project packages, which the tree marks apart from a PyPI package. */
+  private fun collectProjectPackageNames(node: PackageStructureNode): Set<String> = when (node) {
+    is WorkspaceMemberPackageStructureNode ->
+      (listOf(node.name) + node.subMembers.map { it.name }).mapTo(mutableSetOf()) { PyPackageName.from(it).name }
+    is PackageCollectionPackageStructureNode -> node.projectPackageNames
+    FlatPackageStructureNode, is PackagesUnavailableNode -> emptySet()
+  }
+
   private suspend fun buildPackages(
     context: SdkContext,
     node: PackageStructureNode,
     packageIndex: PackageIndex,
     declaredPackageNames: Set<String>,
+    projectPackageNames: Set<String>,
+    path: MutableSet<PackageTreeNode>,
   ): List<DisplayablePackage> {
     return when (node) {
       is WorkspaceMemberPackageStructureNode -> {
-        val workspaceMembers = buildWorkspaceMembers(context, node, packageIndex, declaredPackageNames)
-        val undeclared = buildInstalledPackages(context, node.undeclaredPackages, packageIndex, declaredPackageNames)
+        val workspaceMembers = buildWorkspaceMembers(context, node, packageIndex, declaredPackageNames, projectPackageNames)
+        val undeclared = buildInstalledPackages(context, node.undeclaredPackages, packageIndex, declaredPackageNames, projectPackageNames, path)
         val result = mutableListOf<DisplayablePackage>()
         if (undeclared.isNotEmpty()) {
           result.add(UndeclaredPackagesGroup(undeclared))
@@ -674,8 +695,8 @@ internal class PyPackagingToolWindowService(val project: Project, val serviceSco
         result
       }
       is PackageCollectionPackageStructureNode -> {
-        val declared = buildInstalledPackages(context, node.declaredPackages, packageIndex, declaredPackageNames)
-        val undeclared = buildInstalledPackages(context, node.undeclaredPackages, packageIndex, declaredPackageNames)
+        val declared = buildInstalledPackages(context, node.declaredPackages, packageIndex, declaredPackageNames, projectPackageNames, path)
+        val undeclared = buildInstalledPackages(context, node.undeclaredPackages, packageIndex, declaredPackageNames, projectPackageNames, path)
         val result = mutableListOf<DisplayablePackage>()
         if (undeclared.isNotEmpty()) {
           result.add(UndeclaredPackagesGroup(undeclared))
@@ -684,18 +705,21 @@ internal class PyPackagingToolWindowService(val project: Project, val serviceSco
         result
       }
       is FlatPackageStructureNode -> {
-        buildPackagesFromManager(packageIndex, declaredPackageNames)
+        buildPackagesFromManager(packageIndex, declaredPackageNames, projectPackageNames)
       }
+      is PackagesUnavailableNode -> emptyList()
     }
   }
 
   private fun buildPackagesFromManager(
     packageIndex: PackageIndex,
     declaredPackageNames: Set<String>,
+    projectPackageNames: Set<String>,
   ): List<InstalledPackage> {
     return packageIndex.installedByName.values.map { pkg ->
       val nextVersion = packageIndex.outdated[pkg.name]?.latestVersion?.let { PyPackageVersionNormalizer.normalize(it) }
-      InstalledPackage(pkg, defaultRepositoryFor(pkg), nextVersion, emptyList(), isDeclared = pkg.name in declaredPackageNames)
+      InstalledPackage(pkg, defaultRepositoryFor(pkg), nextVersion, emptyList(), isDeclared = pkg.name in declaredPackageNames,
+                       isProjectPackage = pkg.name in projectPackageNames)
     }
   }
 
@@ -712,6 +736,8 @@ internal class PyPackagingToolWindowService(val project: Project, val serviceSco
         }
       }
       is FlatPackageStructureNode -> return packageIndex.installedByName.keys
+      // Handled before either of these is reached; it names no package at all.
+      is PackagesUnavailableNode -> return emptySet()
     }
     return names
   }
@@ -727,11 +753,13 @@ internal class PyPackagingToolWindowService(val project: Project, val serviceSco
     }
   }
 
+  /** Each member starts its own path, since a member row shows its own packages in full. */
   private suspend fun buildWorkspaceMembers(
     context: SdkContext,
     root: WorkspaceMemberPackageStructureNode,
     packageIndex: PackageIndex,
     declaredPackageNames: Set<String>,
+    projectPackageNames: Set<String>,
   ): List<WorkspaceMember> {
     val members = mutableListOf<WorkspaceMemberPackageStructureNode>()
     root.packageTree?.let { members.add(root) }
@@ -742,7 +770,8 @@ internal class PyPackagingToolWindowService(val project: Project, val serviceSco
 
     return members.mapNotNull { member ->
       member.packageTree?.let { packageTree ->
-        buildWorkspaceMember(context, member.name, packageTree, packageIndex, declaredPackageNames)
+        buildWorkspaceMember(context, member.name, packageTree, packageIndex, declaredPackageNames, projectPackageNames,
+                             newNodeSet().apply { add(packageTree) })
       }
     }
   }
@@ -753,16 +782,27 @@ internal class PyPackagingToolWindowService(val project: Project, val serviceSco
     tree: PackageTreeNode,
     packageIndex: PackageIndex,
     declaredPackageNames: Set<String>,
+    projectPackageNames: Set<String>,
+    path: MutableSet<PackageTreeNode>,
   ): WorkspaceMember {
     val member = PyWorkspaceMember(memberName)
     val packages = tree.children.distinctBy { it.name.name }.mapNotNull { node ->
       val pkg = packageIndex.installedByName[node.name.name] ?: return@mapNotNull null
       val repository = resolveRepository(context, pkg)
       val nextVersion = packageIndex.outdated[pkg.name]?.latestVersion?.let { PyPackageVersionNormalizer.normalize(it) }
-      val requirements = buildRequirements(node.children, packageIndex, repository, true, member, declaredPackageNames)
-      InstalledPackage(pkg, repository, nextVersion, requirements, isDeclared = true, workspaceMember = member, dependencyGroup = node.group?.let { PyDependencyGroup(it) })
+      // Every member lists its own packages in full, which is where the view departs from the tool:
+      // `uv tree` prints a member another member needed first as a single `(*)` line.
+      val requirements = if (pkg.name !in projectPackageNames && path.add(node)) {
+        buildRequirements(node.children, packageIndex, repository, true, member, declaredPackageNames, projectPackageNames, path)
+          .also { path.remove(node) }
+      }
+      else emptyList()
+      InstalledPackage(pkg, repository, nextVersion, requirements, isDeclared = true, workspaceMember = member,
+                       dependencyGroup = node.group?.let { PyDependencyGroup(it) },
+                       isProjectPackage = pkg.name in projectPackageNames, extras = node.extras)
     }
-    return WorkspaceMember(memberName, packages)
+    return WorkspaceMember(memberName, packages.sortedForDisplay(),
+                           instance = packageIndex.installedByName[PyPackageName.from(memberName).name])
   }
 
   private suspend fun buildInstalledPackages(
@@ -770,6 +810,8 @@ internal class PyPackagingToolWindowService(val project: Project, val serviceSco
     nodes: List<PackageTreeNode>,
     packageIndex: PackageIndex,
     declaredPackageNames: Set<String>,
+    projectPackageNames: Set<String>,
+    path: MutableSet<PackageTreeNode>,
     workspaceMember: PyWorkspaceMember? = null,
   ): List<InstalledPackage> {
     return nodes.mapNotNull { node ->
@@ -777,9 +819,15 @@ internal class PyPackagingToolWindowService(val project: Project, val serviceSco
       val repository = resolveRepository(context, pkg)
       val nextVersion = packageIndex.outdated[pkg.name]?.latestVersion?.let { PyPackageVersionNormalizer.normalize(it) }
       val isDeclared = pkg.name in declaredPackageNames
-      val requirements = buildRequirements(node.children, packageIndex, repository, isDeclared, workspaceMember, declaredPackageNames)
-      InstalledPackage(pkg, repository, nextVersion, requirements, isDeclared, workspaceMember, dependencyGroup = node.group?.let { PyDependencyGroup(it) })
-    }
+      val requirements = if (path.add(node)) {
+        buildRequirements(node.children, packageIndex, repository, isDeclared, workspaceMember, declaredPackageNames, projectPackageNames, path)
+          .also { path.remove(node) }
+      }
+      else emptyList()
+      InstalledPackage(pkg, repository, nextVersion, requirements, isDeclared, workspaceMember,
+                       dependencyGroup = node.group?.let { PyDependencyGroup(it) },
+                       isProjectPackage = pkg.name in projectPackageNames, extras = node.extras)
+    }.sortedForDisplay()
   }
 
   private suspend fun resolveRepository(context: SdkContext, pkg: PythonPackage): PyPackageRepository {
@@ -790,6 +838,17 @@ internal class PyPackagingToolWindowService(val project: Project, val serviceSco
   private fun defaultRepositoryFor(pkg: PythonPackage): PyPackageRepository =
     if (pkg is CondaPackage && !pkg.installedWithPip) CondaPackageRepository else PyPiPackageRepository
 
+  /**
+   * Gives every package row the dependencies the tool listed for it.
+   *
+   * [path] holds the nodes between the row being built and the top of the view, and a node already
+   * on it stays a single row. That is a cycle, which the graph can have, and nothing else is cut: a
+   * rule that expanded each package once for the whole view left most rows without the dependencies
+   * the tool had printed for them (PY-90174).
+   *
+   * A workspace member is the exception. It has its own row at the top level, so a reference to it
+   * from another member stays a single row instead of repeating that member's dependencies.
+   */
   private fun buildRequirements(
     nodes: List<PackageTreeNode>,
     packageIndex: PackageIndex,
@@ -797,13 +856,38 @@ internal class PyPackagingToolWindowService(val project: Project, val serviceSco
     isDeclared: Boolean,
     workspaceMember: PyWorkspaceMember?,
     declaredPackageNames: Set<String>,
+    projectPackageNames: Set<String>,
+    path: MutableSet<PackageTreeNode>,
   ): List<RequirementPackage> {
     return nodes.mapNotNull { node ->
       val pkg = packageIndex.installedByName[node.name.name] ?: return@mapNotNull null
       val effectiveIsDeclared = pkg.name in declaredPackageNames || isDeclared
-      val childRequirements = buildRequirements(node.children, packageIndex, repository, effectiveIsDeclared, workspaceMember, declaredPackageNames)
-      RequirementPackage(pkg, repository, childRequirements, node.group, effectiveIsDeclared, workspaceMember)
-    }
+      val isProjectPackage = pkg.name in projectPackageNames
+      val children = if (!isProjectPackage && path.add(node)) {
+        buildRequirements(node.children, packageIndex, repository, effectiveIsDeclared,
+                          workspaceMember, declaredPackageNames, projectPackageNames, path)
+          .also { path.remove(node) }
+      }
+      else {
+        emptyList()
+      }
+      RequirementPackage(pkg, repository, children, node.group, effectiveIsDeclared, workspaceMember,
+                         isProjectPackage = isProjectPackage, extras = node.extras)
+    }.sortedForDisplay()
+  }
+
+  /**
+   * The tool prints the declared dependencies first and the group ones after, which mixes the
+   * project's own packages with the packages from an index. Group them instead: the project's own
+   * first, then by name.
+   */
+  private fun <T : DisplayablePackage> List<T>.sortedForDisplay(): List<T> =
+    sortedWith(compareBy({ if (it.isProjectPackage()) 0 else 1 }, { it.name.lowercase() }))
+
+  private fun DisplayablePackage.isProjectPackage(): Boolean = when (this) {
+    is InstalledPackage -> isProjectPackage
+    is RequirementPackage -> isProjectPackage
+    else -> false
   }
 
   private suspend fun handleActionCompleted(text: @Nls String, displayId: String) {
@@ -947,24 +1031,6 @@ internal class PyPackagingToolWindowService(val project: Project, val serviceSco
   }
 }
 
-/**
- * The interpreter the Python Packages tool window should open on: the one belonging to the module
- * that owns the file the user is looking at, falling back to any module's interpreter when the
- * editor gives no answer.
- *
- * Scanning `modules.firstNotNullOfOrNull { it.pythonSdk }` outright is only correct in a
- * single-module project. Across independent subprojects it picks whichever module happens to come
- * first, so the tool window opens on a foreign subproject's environment while the user is editing
- * another one, and only starts agreeing with the editor once the next selection change reaches
- * `PyPackagingToolWindowService`'s `FileEditorManagerListener` — the "switch between subprojects to
- * make it refresh" half of PY-91300.
- */
-internal suspend fun resolvePackagesToolWindowSdk(project: Project): Sdk? = readAction {
-  val selectedFile = FileEditorManager.getInstance(project).selectedFiles.firstOrNull()
-  val selectedModule = selectedFile?.let { ModuleUtilCore.findModuleForFile(it, project) }
-  selectedModule?.let { PythonSdkUtil.findPythonSdk(it) }
-  ?: project.modules.firstNotNullOfOrNull { it.pythonSdk }
-}
 
 /**
  * Whether a tool window attaching to an already-bound [PyPackagingToolWindowService] should have the
@@ -972,7 +1038,7 @@ internal suspend fun resolvePackagesToolWindowSdk(project: Project): Sdk? = read
  *
  * The service is a project service and outlives the tool window, so it can already be bound by the
  * time a panel is built — the install dialog and the pyproject.toml "+ Add package" inlay call
- * `initForSdk` directly, and the editor / roots / `PySdkListener` subscriptions keep that binding
+ * `initForSdk` directly, and [EvoPyProjectModel.interpreter] keeps that binding
  * fresh. Handing the same SDK back to `initForSdk` would hit its "same SDK" short-circuit and the
  * new panel would learn nothing at all: no path in the header, no module selection, empty package
  * tree. Binding and rendering are separate concerns, so the rendering half is replayed explicitly.

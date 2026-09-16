@@ -8,7 +8,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
-import com.intellij.python.pytools.statistics.PyToolUsagesCollector.Helper.logDisableRule
+import com.intellij.python.pytools.backend.statistics.PyToolUsagesCollector.Helper.logDisableRule
 import com.intellij.python.ruff.RuffBundle
 import com.intellij.util.IncorrectOperationException
 

@@ -70,6 +70,17 @@ class MinimapActivationTest : BasePlatformTestCase() {
     assertTrue(MinimapService.getInstance().isMinimapInstalled(editor))
   }
 
+  fun testBuildsInitialSnapshot() {
+    val editor = openAndUpdate("a.txt", (0 until 100).joinToString("\n") { "line $it" })
+    val minimap = (editor.component as JPanel).components.filterIsInstance<MinimapPanel>().single()
+
+    PlatformTestUtil.waitWithEventsDispatching(
+      "The minimap snapshot was not built.",
+      { minimap.currentSnapshot()?.tokenEntries?.isNotEmpty() == true },
+      5,
+    )
+  }
+
   fun testNotInstalledWhenDisabled() {
     setSettings(enabled = false)
     val editor = openAndUpdate("a.txt", "alpha\nbeta\n")

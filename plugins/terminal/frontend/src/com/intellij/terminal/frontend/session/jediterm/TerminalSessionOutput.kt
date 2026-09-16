@@ -94,6 +94,8 @@ internal fun createTerminalOutputFlow(
           startLineLogicalIndex = actualContentUpdate.startLineLogicalIndex,
           cursorLogicalLineIndex = cursorPosition.logicalLineIndex,
           cursorColumnIndex = cursorPosition.column,
+          screenTopLogicalLineIndex = actualContentUpdate.screenTopLogicalLineIndex,
+          screenTopColumnIndex = actualContentUpdate.screenTopColumnIndex,
           osc8Hyperlinks = actualContentUpdate.osc8Hyperlinks,
           readTime = outputLatencyTracker.getCurUpdateTtyReadTimeAndReset(),
         )

@@ -34,6 +34,7 @@
     <module name="intellij.platform.indexing"/>
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.monolith"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.refactoring"/>
     <module name="intellij.platform.statistics"/>
@@ -62,6 +63,10 @@
       dynamic="true"
       qualifiedName="com.intellij.compose.ide.plugin.resources.dataProvider"
       interface="com.intellij.compose.ide.plugin.resources.ComposeResourcesDataProvider"/>
+    <extensionPoint
+      dynamic="true"
+      qualifiedName="com.intellij.compose.ide.plugin.resources.settingsContributor"
+      interface="com.intellij.compose.ide.plugin.resources.settings.ComposeResourcesSettingsContributor"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij.compose.ide.plugin.resources">
@@ -69,10 +74,24 @@
       implementation="com.intellij.compose.ide.plugin.resources.vectorDrawable.preview.ComposeResourcesDrawablePreviewRenderer"
       order="last"/>
     <dataProvider implementation="com.intellij.compose.ide.plugin.resources.gradle.GradleComposeResourcesDataProvider"/>
+    <settingsContributor
+      implementation="com.intellij.compose.ide.plugin.resources.emmetLikeTemplates.settings.ComposeResourcesEmmetLikeSettingsContributor"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
     <annotator language="XML" implementationClass="com.intellij.compose.ide.plugin.resources.highlighting.ComposeResourcesXmlAnnotator"/>
+
+    <applicationConfigurable
+      id="compose.resources.settings"
+      parentId="kmp.settings.group"
+      bundle="messages.ComposeIdeBundle"
+      key="compose.resources.title"
+      instance="com.intellij.compose.ide.plugin.resources.settings.ComposeResourcesConfigurable"/>
+
+    <applicationService
+      serviceImplementation="com.intellij.compose.ide.plugin.resources.emmetLikeTemplates.settings.ComposeResourcesEmmetLikeSettings"/>
+    <applicationSettings
+      service="com.intellij.compose.ide.plugin.resources.emmetLikeTemplates.settings.ComposeResourcesEmmetLikeSettings"/>
 
 
     <codeInsight.unresolvedReferenceQuickFixProvider
@@ -127,6 +146,20 @@
             icon="com.intellij.compose.ide.plugin.shared.icons.ComposeIdePluginSharedIcons.ComposeMultiplatform">
       <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewDir"/>
     </action>
+    <group id="compose.resource.preview.Toolbar">
+      <group id="compose.resource.preview.background"
+             popup="true"
+             icon="com.intellij.compose.ide.plugin.shared.icons.ComposeIdePluginSharedIcons.ViewMode">
+        <action id="compose.resource.preview.background.none"
+                class="com.intellij.compose.ide.plugin.resources.vectorDrawable.preview.ComposeResourcePreviewBackgroundAction$None"/>
+        <action id="compose.resource.preview.background.white"
+                class="com.intellij.compose.ide.plugin.resources.vectorDrawable.preview.ComposeResourcePreviewBackgroundAction$White"/>
+        <action id="compose.resource.preview.background.black"
+                class="com.intellij.compose.ide.plugin.resources.vectorDrawable.preview.ComposeResourcePreviewBackgroundAction$Black"/>
+        <action id="compose.resource.preview.background.checkered"
+                class="com.intellij.compose.ide.plugin.resources.vectorDrawable.preview.ComposeResourcePreviewBackgroundAction$Checkered"/>
+      </group>
+    </group>
   </actions>
   <projectListeners>
     <listener class="com.intellij.compose.ide.plugin.resources.gradle.GradleComposeResourcesManager$ComposeResourcesProjectDataImportListener"

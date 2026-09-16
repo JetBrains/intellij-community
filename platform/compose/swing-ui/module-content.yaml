@@ -1,3 +1,0 @@
-- name: dist.all/lib/intellij.platform.compose.swing.jar
-  modules:
-  - name: intellij.platform.compose.swing

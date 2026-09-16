@@ -11,6 +11,10 @@ jps_test(
 
 ### skip generation section `test intellij.platform.debugger.impl.frontend.tests`
 
+### auto-generated section `dev intellij.platform.debugger.impl.frontend` start
+content_module_jar(module = ":frontend")
+### auto-generated section `dev intellij.platform.debugger.impl.frontend` end
+
 ### auto-generated section `build intellij.platform.debugger.impl.frontend` start
 jvm_library(
     name = "frontend",
@@ -66,8 +70,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":frontend")
-
 jvm_library(
     name = "frontend_test_lib",
     testonly = True,
@@ -121,7 +123,6 @@ exports_files(
     [
         "intellij.platform.debugger.impl.frontend.iml",
         "resources/intellij.platform.debugger.impl.frontend.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -8,7 +8,7 @@ import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 
 internal class InlineCompletionEditorInsertHandlerImpl : InlineCompletionEditorInsertHandler {
-  @RequiresWriteLock
+  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
   override fun insert(editor: Editor, textToInsert: String, offset: Int, file: PsiFile) {
     ThreadingAssertions.assertEventDispatchThread()
     ThreadingAssertions.assertWriteAccess()

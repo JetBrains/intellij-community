@@ -6,7 +6,6 @@ import com.intellij.execution.Location;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.testframework.JavaAwareTestConsoleProperties;
 import com.intellij.execution.testframework.JavaSMTRunnerTestTreeView;
-import com.intellij.execution.testframework.JavaTestLocator;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.SMTestLocator;
@@ -36,7 +35,7 @@ import static com.intellij.execution.testframework.JavaAwareTestConsolePropertie
  */
 public class GradleConsoleProperties extends SMTRunnerConsoleProperties implements SMTRunnerTestTreeViewProvider {
   public static final BooleanProperty SHOW_INTERNAL_TEST_NODES = new BooleanProperty("showInternalTestNodes", false);
-  public static final SMTestLocator GRADLE_TEST_LOCATOR = JavaTestLocator.INSTANCE;
+  public static final SMTestLocator GRADLE_TEST_LOCATOR = GradleTestLocator.INSTANCE;
 
   private @Nullable File gradleTestReport;
 
@@ -98,6 +97,11 @@ public class GradleConsoleProperties extends SMTRunnerConsoleProperties implemen
 
   @Override
   public @NotNull SMTRunnerTestTreeView createSMTRunnerTestTreeView() {
-    return Registry.is("java.test.enable.tree.live.time") ? new JavaSMTRunnerTestTreeView(this) : new SMTRunnerTestTreeView();
+    return Registry.is("java.test.enable.tree.live.time") ? new JavaSMTRunnerTestTreeView() : new SMTRunnerTestTreeView();
+  }
+
+  @Override
+  public SMTRunnerTestTreeViewProvider.@Nullable CustomizedDurationProvider getCustomizedDurationProvider() {
+    return Registry.is("java.test.enable.tree.live.time") ? JavaAwareTestConsoleProperties.createCustomizedDurationProvider(this) : null;
   }
 }

@@ -483,9 +483,8 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       d_obj : D[object] = D[object]()
 
       d_int = d_obj # ok
-      #       ^^^^^ WARNING Expected type 'D[int]', got 'D[object]' instead FIXME # PY-89564
       d_obj = d_int # E
-      #       ^^^^^ WARNING FIXME Expected type 'D[object]', got 'D[int]' instead # PY-89564
+      #       ^^^^^ WARNING Expected type 'D[object]', got 'D[int]' instead # PY-89564
       """.trimIndent())
 
     @Test
@@ -499,7 +498,6 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       d_obj : E = E()
 
       d_int = d_obj # ok
-      #       ^^^^^ WARNING Expected type 'D[int]', got 'E' instead FIXME # PY-89564
       d_obj = d_int # E
       #       ^^^^^ WARNING Expected type 'E', got 'D[int]' instead
       """.trimIndent())
@@ -556,7 +554,6 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       b : B[object] = B[object]()
 
       a = b # Ok
-      #   └ WARNING Expected type 'A[int]', got 'B[object]' instead FIXME # PY-89564
       b = a # E
       #   └ WARNING Expected type 'B[object]', got 'A[int]' instead
       """.trimIndent())
@@ -576,7 +573,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       b : B[int] = B[int]()
 
       a = b # E
-      #   └ WARNING FIXME Expected type 'A[object]', got 'B[int]' instead # PY-89564
+      #   └ WARNING Expected type 'A[object]', got 'B[int]' instead # PY-89564
       b = a # E
       #   └ WARNING Expected type 'B[int]', got 'A[object]' instead
       """.trimIndent())
@@ -588,7 +585,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
 
       def f() -> list[object]:
          return data # expect error
-      #         ^^^^ WARNING FIXME Expected type 'list[object]', got 'list[int]' instead # PY-89564
+      #         ^^^^ WARNING Expected type 'list[object]', got 'list[int]' instead # PY-89564
       """.trimIndent())
 
     @Test
@@ -628,7 +625,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       # PY-25989
       assert_type(max(1, 2.6), float | int)
       assert_type(max(2.6, 1), float | int)
-      max(1, object()) # WARNING Expected type 'int' (matched generic type 'SupportsRichComparisonT ≤: SupportsDunderLT[Any] | SupportsDunderGT[Any]'), got 'object' instead
+      max(1, object()) # WARNING Expected type 'Literal[1]' (matched generic type 'SupportsRichComparisonT ≤: SupportsDunderLT[Any] | SupportsDunderGT[Any]'), got 'object' instead
 
 
       def bar[T: int, str](v1: T, v2: T) -> T:
@@ -637,7 +634,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
           return v2
 
 
-      _ = bar(1, "a") # WARNING Expected type 'int' (matched generic type 'T ≤: int'), got 'Literal["a"]' instead
+      _ = bar(1, "a") # WARNING Expected type 'Literal[1]' (matched generic type 'T ≤: int'), got 'Literal["a"]' instead
       """.trimIndent())
 
     @Test
@@ -1226,12 +1223,12 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
 
       def expects_builtin_frozenset(xs: frozenset[int]):
           expects_typing_FrozenSet(xs)
-          expects_typing_FrozenSet(frozenset(['a'])) # WARNING Expected type 'frozenset[int]', got 'frozenset[str]' instead
+          expects_typing_FrozenSet(frozenset(['a'])) # WARNING Expected type 'frozenset[int]', got 'frozenset[Literal["a"]]' instead
 
 
       def expects_typing_FrozenSet(xs: FrozenSet[int]):
           expects_builtin_frozenset(xs)
-          expects_builtin_frozenset(frozenset(['a'])) # WARNING Expected type 'frozenset[int]', got 'frozenset[str]' instead
+          expects_builtin_frozenset(frozenset(['a'])) # WARNING Expected type 'frozenset[int]', got 'frozenset[Literal["a"]]' instead
 
 
       def expects_builtin_dict(xs: dict[str, int]):
@@ -1488,7 +1485,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
           return [x] # WARNING Expected type 'list[str]', got 'list[list[int]]' instead
 
       def b(x: int) -> List[str]:
-          return [1,2] # WARNING Expected type 'list[str]', got 'list[Literal[1, 2]]' instead
+          return [1,2] # WARNING Expected type 'list[str]', got 'list[int]' instead
 
       def c() -> int:
           return 'abc' # WARNING Expected type 'int', got 'Literal["abc"]' instead

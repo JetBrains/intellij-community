@@ -3,14 +3,13 @@
 
 package org.jetbrains.intellij.build.productLayout.validator
 
+import com.intellij.platform.buildScripts.concurrency.taskScope
 import com.intellij.platform.pluginGraph.ContentModuleName
 import com.intellij.platform.pluginGraph.PluginGraph
 import com.intellij.platform.pluginGraph.PluginId
 import com.intellij.platform.pluginGraph.TargetName
 import com.intellij.platform.pluginGraph.contentName
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleVisibilityValue
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
 import org.jetbrains.intellij.build.productLayout.config.SuppressionConfig
 import org.jetbrains.intellij.build.productLayout.dependency.ModuleDescriptorCache
 import org.jetbrains.intellij.build.productLayout.model.error.ContentModuleDependencyDeclarationError
@@ -81,7 +80,7 @@ internal object ContentModuleDependencyDeclarationValidator : PipelineNode {
   // Requires CONTENT_MODULE_PLAN, so the descriptor cache is warm and the graph holds every module dependency edge.
   override val requires: Set<DataSlot<*>> get() = setOf(Slots.CONTENT_MODULE_PLAN)
 
-  override suspend fun execute(ctx: ComputeContext) {
+  override fun execute(ctx: ComputeContext) {
     val model = ctx.model
     val facts = collectGraphFacts(model.pluginGraph)
     if (facts.owners.isEmpty()) {
@@ -89,12 +88,14 @@ internal object ContentModuleDependencyDeclarationValidator : PipelineNode {
     }
 
     val descriptorData = readDescriptors(model = model, facts = facts)
-    ctx.emitErrors(validateDescriptorDependencies(
-      facts = facts,
-      descriptorData = descriptorData,
-      suppressionConfig = model.suppressionConfig,
-      projectRoot = model.projectRoot,
-    ))
+    ctx.emitErrors(
+      validateDescriptorDependencies(
+        facts = facts,
+        descriptorData = descriptorData,
+        suppressionConfig = model.suppressionConfig,
+        projectRoot = model.projectRoot,
+      )
+    )
   }
 }
 
@@ -171,11 +172,11 @@ private class DescriptorData(
  * A plugin id resolves through an alias, and an alias comes from either kind of descriptor. So the pass must read
  * both kinds before the first check runs.
  */
-private suspend fun readDescriptors(model: GenerationModel, facts: GraphFacts): DescriptorData {
+private fun readDescriptors(model: GenerationModel, facts: GraphFacts): DescriptorData {
   val moduleNames = facts.owners.keys.toList()
-  return coroutineScope {
-    val descriptorTasks = moduleNames.map { name -> async { model.descriptorCache.getOrAnalyze(name.value) } }
-    val pluginTasks = facts.pluginTargets.map { target -> async { model.pluginContentCache.getOrExtract(target) } }
+  return taskScope {
+    val descriptorTasks = moduleNames.map { name -> fork("read descriptor ${name.value}") { model.descriptorCache.getOrAnalyze(name.value) } }
+    val pluginTasks = facts.pluginTargets.map { target -> fork("read plugin ${target.value}") { model.pluginContentCache.getOrExtract(target) } }
 
     val aliasIds = HashSet<PluginId>()
     val descriptors = HashMap<ContentModuleName, ModuleDescriptorCache.DescriptorInfo>(moduleNames.size)
@@ -190,7 +191,7 @@ private suspend fun readDescriptors(model: GenerationModel, facts: GraphFacts): 
       aliasIds.addAll(task.await()?.pluginAliases ?: emptyList())
     }
 
-    DescriptorData(descriptors = descriptors, aliasIds = aliasIds)
+    join { DescriptorData(descriptors = descriptors, aliasIds = aliasIds) }
   }
 }
 
@@ -224,12 +225,14 @@ private fun validateDescriptorDependencies(
       continue
     }
 
-    errors.add(ContentModuleDependencyDeclarationError(
-      context = moduleName.value,
-      contentModuleName = moduleName,
-      descriptorPath = relativizePath(projectRoot, descriptor.descriptorPath),
-      problems = problems,
-    ))
+    errors.add(
+      ContentModuleDependencyDeclarationError(
+        context = moduleName.value,
+        contentModuleName = moduleName,
+        descriptorPath = relativizePath(projectRoot, descriptor.descriptorPath),
+        problems = problems,
+      )
+    )
   }
 
   errors.sortBy { it.context }
@@ -255,11 +258,13 @@ private fun checkPluginDependencies(
 
   for (rawId in descriptor.existingPluginDependencies) {
     if (rawId == JAVA_MODULE_ID) {
-      problems.add(ContentModuleDependencyProblem(
-        kind = ContentModuleDependencyProblemKind.JAVA_MODULE_ALIAS,
-        message = "the plugin dependency '$JAVA_MODULE_ID' uses the old alias of the Java plugin",
-        fix = "<plugin id=\"com.intellij.java\"/>",
-      ))
+      problems.add(
+        ContentModuleDependencyProblem(
+          kind = ContentModuleDependencyProblemKind.JAVA_MODULE_ALIAS,
+          message = "the plugin dependency '$JAVA_MODULE_ID' uses the old alias of the Java plugin",
+          fix = "<plugin id=\"com.intellij.java\"/>",
+        )
+      )
       continue
     }
     if (rawId == K1_MODULE_ID) {
@@ -268,11 +273,13 @@ private fun checkPluginDependencies(
     if (rawId == PLATFORM_MODULE_ID) {
       // todo: remove this check when MP-7413 is fixed in the plugin verifier version that the Marketplace uses
       if (moduleDependencyCount > 1) {
-        problems.add(ContentModuleDependencyProblem(
-          kind = ContentModuleDependencyProblemKind.REDUNDANT_PLATFORM_DEPENDENCY,
-          message = "the plugin dependency '$PLATFORM_MODULE_ID' is redundant next to another module dependency",
-          fix = "remove the '$PLATFORM_MODULE_ID' element",
-        ))
+        problems.add(
+          ContentModuleDependencyProblem(
+            kind = ContentModuleDependencyProblemKind.REDUNDANT_PLATFORM_DEPENDENCY,
+            message = "the plugin dependency '$PLATFORM_MODULE_ID' is redundant next to another module dependency",
+            fix = "remove the '$PLATFORM_MODULE_ID' element",
+          )
+        )
       }
       continue
     }
@@ -285,20 +292,24 @@ private fun checkPluginDependencies(
     }
 
     if (!isPluginIdResolved(pluginId = pluginId, facts = facts, descriptorData = descriptorData, allowedMissing = allowedMissing)) {
-      problems.add(ContentModuleDependencyProblem(
-        kind = ContentModuleDependencyProblemKind.UNRESOLVED_PLUGIN,
-        message = "no plugin defines the plugin id '$rawId'",
-        fix = "fix the id, or add it to validationExceptions of '${moduleName.value}' in suppressions.json",
-      ))
+      problems.add(
+        ContentModuleDependencyProblem(
+          kind = ContentModuleDependencyProblemKind.UNRESOLVED_PLUGIN,
+          message = "no plugin defines the plugin id '$rawId'",
+          fix = "fix the id, or add it to validationExceptions of '${moduleName.value}' in suppressions.json",
+        )
+      )
       continue
     }
 
     if (!declared.add(pluginId)) {
-      problems.add(ContentModuleDependencyProblem(
-        kind = ContentModuleDependencyProblemKind.DUPLICATE_PLUGIN,
-        message = "the descriptor declares the plugin dependency '$rawId' two times",
-        fix = "remove the second '$rawId' element",
-      ))
+      problems.add(
+        ContentModuleDependencyProblem(
+          kind = ContentModuleDependencyProblemKind.DUPLICATE_PLUGIN,
+          message = "the descriptor declares the plugin dependency '$rawId' two times",
+          fix = "remove the second '$rawId' element",
+        )
+      )
     }
   }
 }
@@ -331,11 +342,13 @@ private fun checkModuleDependencies(
       // Only the plugin main module gets a report here, because the fix is a change of the element.
       if (facts.mainModuleToPluginId.containsKey(dependencyName)) {
         val pluginId = facts.mainModuleToPluginId.get(dependencyName)
-        problems.add(ContentModuleDependencyProblem(
-          kind = ContentModuleDependencyProblemKind.PLUGIN_AS_MODULE,
-          message = "the module dependency '$rawName' names the main module of a plugin",
-          fix = if (pluginId == null) "use a plugin element instead of a module element" else "<plugin id=\"${pluginId.value}\"/>",
-        ))
+        problems.add(
+          ContentModuleDependencyProblem(
+            kind = ContentModuleDependencyProblemKind.PLUGIN_AS_MODULE,
+            message = "the module dependency '$rawName' names the main module of a plugin",
+            fix = if (pluginId == null) "use a plugin element instead of a module element" else "<plugin id=\"${pluginId.value}\"/>",
+          )
+        )
       }
       continue
     }
@@ -353,12 +366,14 @@ private fun checkModuleDependencies(
     // referencing module gets one report.
     for (owner in owners.distinctBy { it.namespace }) {
       val conflicting = dependencyOwners.firstOrNull { it.namespace != owner.namespace } ?: continue
-      problems.add(ContentModuleDependencyProblem(
-        kind = ContentModuleDependencyProblemKind.INTERNAL_FROM_OTHER_NAMESPACE,
-        message = "the module dependency '$rawName' is internal ${describeNamespace(conflicting.namespace)}" +
-                  " in the plugin '${describePlugin(conflicting.pluginId)}', and this module is ${describeNamespace(owner.namespace)}",
-        fix = "use the 'public' visibility in '$rawName.xml', or use one namespace in both plugins",
-      ))
+      problems.add(
+        ContentModuleDependencyProblem(
+          kind = ContentModuleDependencyProblemKind.INTERNAL_FROM_OTHER_NAMESPACE,
+          message = "the module dependency '$rawName' is internal ${describeNamespace(conflicting.namespace)}" +
+                    " in the plugin '${describePlugin(conflicting.pluginId)}', and this module is ${describeNamespace(owner.namespace)}",
+          fix = "use the 'public' visibility in '$rawName.xml', or use one namespace in both plugins",
+        )
+      )
     }
   }
 }

@@ -12,24 +12,13 @@ import tempfile
 from pathlib import Path
 from shutil import rmtree
 from textwrap import dedent
-from time import time
 from typing_extensions import Never
 
+from ts_utils.formatter import StatusLineFormatter
 from ts_utils.metadata import NoSuchStubError, get_recursive_requirements, read_metadata
 from ts_utils.mypy import mypy_configuration_from_distribution, temporary_mypy_config_file
 from ts_utils.paths import STUBS_PATH, allowlists_path, tests_path
-from ts_utils.utils import (
-    PYTHON_VERSION,
-    allowlist_stubtest_arguments,
-    colored,
-    get_mypy_req,
-    print_divider,
-    print_error,
-    print_info,
-    print_success_msg,
-    print_time,
-    print_warning,
-)
+from ts_utils.utils import PYTHON_VERSION, allowlist_stubtest_arguments, get_mypy_req
 
 
 def run_stubtest(dist: Path, *, verbose: bool = False, ci_platforms_only: bool = False, keep_tmp_dir: bool = False) -> bool:
@@ -37,192 +26,190 @@ def run_stubtest(dist: Path, *, verbose: bool = False, ci_platforms_only: bool =
 
     dist_name = dist.name
     metadata = read_metadata(dist_name)
-    print(f"{dist_name}... ", end="", flush=True)
 
-    t = time()
+    with StatusLineFormatter(dist_name, timed=True) as formatter:
+        stubtest_settings = metadata.stubtest_settings
+        if stubtest_settings.skip:
+            formatter.warning("skipping (skip = true)")
+            return True
 
-    stubtest_settings = metadata.stubtest_settings
-    if stubtest_settings.skip:
-        print(colored("skipping (skip = true)", "yellow"))
-        return True
+        if stubtest_settings.supported_platforms is not None and sys.platform not in stubtest_settings.supported_platforms:
+            formatter.warning("skipping (platform not supported)")
+            return True
 
-    if stubtest_settings.supported_platforms is not None and sys.platform not in stubtest_settings.supported_platforms:
-        print(colored("skipping (platform not supported)", "yellow"))
-        return True
+        if ci_platforms_only and sys.platform not in stubtest_settings.ci_platforms:
+            formatter.warning("skipping (platform skipped in CI)")
+            return True
 
-    if ci_platforms_only and sys.platform not in stubtest_settings.ci_platforms:
-        print(colored("skipping (platform skipped in CI)", "yellow"))
-        return True
+        if not metadata.requires_python.contains(PYTHON_VERSION):
+            formatter.warning(f"skipping (requires Python {metadata.requires_python})")
+            return True
 
-    if not metadata.requires_python.contains(PYTHON_VERSION):
-        print(colored(f"skipping (requires Python {metadata.requires_python})", "yellow"))
-        return True
-
-    tmp = tempfile.mkdtemp(prefix="stubtest-")  # TODO: Python 3.12: Use TemporaryDirectory
-    venv_dir = Path(tmp)
-    try:
+        tmp = tempfile.mkdtemp(prefix="stubtest-")  # TODO: Python 3.12: Use TemporaryDirectory
+        venv_dir = Path(tmp)
         try:
-            subprocess.run(["uv", "venv", venv_dir, "--seed"], capture_output=True, check=True)
-        except subprocess.CalledProcessError as e:
-            print_command_failure("Failed to create a virtualenv (likely a bug in uv?)", e)
-            return False
-        if sys.platform == "win32":
-            pip_exe = str(venv_dir / "Scripts" / "pip.exe")
-            python_exe = str(venv_dir / "Scripts" / "python.exe")
-        else:
-            pip_exe = str(venv_dir / "bin" / "pip")
-            python_exe = str(venv_dir / "bin" / "python")
-        dist_extras = ", ".join(stubtest_settings.extras)
-        dist_req = f"{dist_name}[{dist_extras}]{metadata.version_spec}"
-
-        requirements = get_recursive_requirements(dist_name)
-
-        # We need stubtest to be able to import the package, so install mypy into the venv
-        # Hopefully mypy continues to not need too many dependencies
-        # TODO: Maybe find a way to cache these in CI
-        dists_to_install = [dist_req, get_mypy_req()]
-        # Internal requirements are added to MYPYPATH
-        dists_to_install.extend(str(r) for r in requirements.external_pkgs)
-        dists_to_install.extend(stubtest_settings.stubtest_dependencies)
-
-        # Since the "gdb" Python package is available only inside GDB, it is not
-        # possible to install it through pip, so stub tests cannot install it.
-        if dist_name == "gdb":
-            dists_to_install[:] = dists_to_install[1:]
-
-        pip_cmd = [pip_exe, "install", *dists_to_install]
-        # Some packages read environment variables at build time, e.g. to
-        # opt out of CPU-specific compiler flags. See `install-environment`
-        # in CONTRIBUTING.md.
-        pip_env = os.environ | stubtest_settings.install_environment
-        try:
-            subprocess.run(pip_cmd, env=pip_env, check=True, capture_output=True)
-        except subprocess.CalledProcessError as e:
-            print_command_failure("Failed to install", e)
-            return False
-
-        mypy_configuration = mypy_configuration_from_distribution(dist_name)
-        with temporary_mypy_config_file(mypy_configuration, stubtest_settings) as temp:
-            ignore_missing_stub = ["--ignore-missing-stub"] if stubtest_settings.ignore_missing_stub else []
-            packages_to_check = [d.name for d in dist.iterdir() if d.is_dir() and d.name.isidentifier()]
-            modules_to_check = [d.stem for d in dist.iterdir() if d.is_file() and d.suffix == ".pyi"]
-            stubtest_cmd = [
-                python_exe,
-                "-m",
-                "mypy.stubtest",
-                "--mypy-config-file",
-                temp.name,
-                "--show-traceback",
-                "--strict-type-check-only",
-                # Use --custom-typeshed-dir in case we make linked changes to stdlib or _typeshed
-                "--custom-typeshed-dir",
-                str(dist.parent.parent),
-                *ignore_missing_stub,
-                *packages_to_check,
-                *modules_to_check,
-                *allowlist_stubtest_arguments(dist_name),
-            ]
-
-            stubs_dir = dist.parent
-            mypypath_items = [str(dist)] + [str(stubs_dir / pkg.name) for pkg in requirements.typeshed_pkgs]
-            mypypath = os.pathsep.join(mypypath_items)
-            # For packages that need a display, we need to pass at least $DISPLAY
-            # to stubtest. $DISPLAY is set by xvfb-run in CI.
-            #
-            # It seems that some other environment variables are needed too,
-            # because the CI fails if we pass only os.environ["DISPLAY"]. I didn't
-            # "bisect" to see which variables are actually needed.
-            stubtest_env = os.environ | {
-                "MYPYPATH": mypypath,
-                "MYPY_FORCE_COLOR": "1",
-                # Prevent stubtest crash due to special unicode character
-                # https://github.com/python/mypy/issues/19071
-                "PYTHONUTF8": "1",
-            }
-
-            # Perform some black magic in order to run stubtest inside uWSGI
-            if dist_name == "uWSGI":
-                if not setup_uwsgi_stubtest_command(dist, venv_dir, stubtest_cmd):
-                    return False
-
-            if dist_name == "gdb":
-                if not setup_gdb_stubtest_command(venv_dir, stubtest_cmd):
-                    return False
-
             try:
-                subprocess.run(stubtest_cmd, env=stubtest_env, check=True, capture_output=True)
+                subprocess.run(["uv", "venv", venv_dir, "--seed"], capture_output=True, check=True)
             except subprocess.CalledProcessError as e:
-                print_time(time() - t)
-                print_error(f"failed with exit code {e.returncode}")
-
-                print_divider()
-                print("Commands run:")
-                print_commands(pip_cmd, stubtest_cmd, mypypath)
-
-                print_divider()
-                print("Command output:\n")
-                print_command_output(e)
-
-                print_divider()
-                print("Python version: ", end="", flush=True)
-                ret = subprocess.run([sys.executable, "-VV"], capture_output=True, check=False)
-                print_command_output(ret)
-
-                print("\nRan with the following environment:")
-                ret = subprocess.run([pip_exe, "freeze", "--all"], capture_output=True, check=False)
-                print_command_output(ret)
-                if keep_tmp_dir:
-                    print("Path to virtual environment:", venv_dir, flush=True)
-
-                print_divider()
-                main_allowlist_path = allowlists_path(dist_name) / "stubtest_allowlist.txt"
-                if main_allowlist_path.exists():
-                    print(f'To fix "unused allowlist" errors, remove the corresponding entries from {main_allowlist_path}')
-                    print()
-                else:
-                    print(f"Re-running stubtest with --generate-allowlist.\nAdd the following to {main_allowlist_path}:")
-                    ret = subprocess.run(
-                        [*stubtest_cmd, "--generate-allowlist"], env=stubtest_env, capture_output=True, check=False
-                    )
-                    print_command_output(ret)
-
-                print_divider()
-                print(f"Upstream repository: {metadata.upstream_repository}")
-                print(f"Typeshed source code: https://github.com/python/typeshed/tree/main/stubs/{dist.name}")
-
-                print_divider()
-
+                formatter.command_error("fail (could not create a virtualenv)", e)
                 return False
+            if sys.platform == "win32":
+                pip_exe = str(venv_dir / "Scripts" / "pip.exe")
+                python_exe = str(venv_dir / "Scripts" / "python.exe")
             else:
-                print_time(time() - t)
-                print_success_msg()
+                pip_exe = str(venv_dir / "bin" / "pip")
+                python_exe = str(venv_dir / "bin" / "python")
+            dist_extras = ", ".join(stubtest_settings.extras)
+            dist_req = f"{dist_name}[{dist_extras}]{metadata.version_spec}"
 
-                if sys.platform not in stubtest_settings.ci_platforms:
-                    print_warning(f"Note: {dist_name} is not currently tested on {sys.platform} in typeshed's CI")
+            requirements = get_recursive_requirements(dist_name)
 
-                if keep_tmp_dir:
-                    print_info(f"Virtual environment kept at: {venv_dir}")
+            # We need stubtest to be able to import the package, so install mypy into the venv
+            # Hopefully mypy continues to not need too many dependencies
+            # TODO: Maybe find a way to cache these in CI
+            dists_to_install = [dist_req, get_mypy_req()]
+            # Internal requirements are added to MYPYPATH
+            dists_to_install.extend(str(r) for r in requirements.external_pkgs)
+            dists_to_install.extend(stubtest_settings.stubtest_dependencies)
 
-    finally:
-        if not keep_tmp_dir:
-            rmtree(venv_dir)
+            # Since the "gdb" Python package is available only inside GDB, it is not
+            # possible to install it through pip, so stub tests cannot install it.
+            if dist_name == "gdb":
+                dists_to_install[:] = dists_to_install[1:]
 
-    if verbose:
-        print_commands(pip_cmd, stubtest_cmd, mypypath)
+            pip_cmd = [pip_exe, "install", *dists_to_install]
+            # Some packages read environment variables at build time, e.g. to
+            # opt out of CPU-specific compiler flags. See `install-environment`
+            # in CONTRIBUTING.md.
+            pip_env = os.environ | stubtest_settings.install_environment
+            try:
+                subprocess.run(pip_cmd, env=pip_env, check=True, capture_output=True)
+            except subprocess.CalledProcessError as e:
+                formatter.command_error("fail (pip install)", e)
+                return False
+
+            mypy_configuration = mypy_configuration_from_distribution(dist_name)
+            with temporary_mypy_config_file(mypy_configuration, stubtest_settings) as temp:
+                ignore_missing_stub = ["--ignore-missing-stub"] if stubtest_settings.ignore_missing_stub else []
+                packages_to_check = [d.name for d in dist.iterdir() if d.is_dir() and d.name.isidentifier()]
+                modules_to_check = [d.stem for d in dist.iterdir() if d.is_file() and d.suffix == ".pyi"]
+                stubtest_cmd = [
+                    python_exe,
+                    "-m",
+                    "mypy.stubtest",
+                    "--mypy-config-file",
+                    temp.name,
+                    "--show-traceback",
+                    "--strict-type-check-only",
+                    # Use --custom-typeshed-dir in case we make linked changes to stdlib or _typeshed
+                    "--custom-typeshed-dir",
+                    str(dist.parent.parent),
+                    *ignore_missing_stub,
+                    *packages_to_check,
+                    *modules_to_check,
+                    *allowlist_stubtest_arguments(dist_name),
+                ]
+
+                stubs_dir = dist.parent
+                mypypath_items = [str(dist)] + [str(stubs_dir / pkg.name) for pkg in requirements.typeshed_pkgs]
+                mypypath = os.pathsep.join(mypypath_items)
+                # For packages that need a display, we need to pass at least $DISPLAY
+                # to stubtest. $DISPLAY is set by xvfb-run in CI.
+                #
+                # It seems that some other environment variables are needed too,
+                # because the CI fails if we pass only os.environ["DISPLAY"]. I didn't
+                # "bisect" to see which variables are actually needed.
+                stubtest_env = os.environ | {
+                    "MYPYPATH": mypypath,
+                    "MYPY_FORCE_COLOR": "1",
+                    # Prevent stubtest crash due to special unicode character
+                    # https://github.com/python/mypy/issues/19071
+                    "PYTHONUTF8": "1",
+                }
+
+                # Perform some black magic in order to run stubtest inside uWSGI
+                if dist_name == "uWSGI":
+                    if not setup_uwsgi_stubtest_command(dist, venv_dir, stubtest_cmd, formatter):
+                        return False
+
+                if dist_name == "gdb":
+                    if not setup_gdb_stubtest_command(venv_dir, stubtest_cmd, formatter):
+                        return False
+
+                try:
+                    subprocess.run(stubtest_cmd, env=stubtest_env, check=True, capture_output=True)
+                except subprocess.CalledProcessError as e:
+                    formatter.error(f"failed with exit code {e.returncode}")
+
+                    formatter.append_divider()
+                    formatter.append_output("Commands run:")
+                    print_commands(formatter, pip_cmd, stubtest_cmd, mypypath)
+
+                    formatter.append_divider()
+                    formatter.append_output("Command output:")
+                    formatter.command_output(e)
+
+                    formatter.append_divider()
+                    ret = subprocess.run([sys.executable, "-VV"], capture_output=True, check=False)
+                    formatter.command_output(ret)
+
+                    formatter.append_output("Ran with the following environment:")
+                    ret = subprocess.run([pip_exe, "freeze", "--all"], capture_output=True, check=False)
+                    formatter.command_output(ret)
+                    if keep_tmp_dir:
+                        formatter.append_output(f"Path to virtual environment: {venv_dir}")
+
+                    formatter.append_divider()
+                    main_allowlist_path = allowlists_path(dist_name) / "stubtest_allowlist.txt"
+                    if main_allowlist_path.exists():
+                        formatter.append_hint(
+                            f'To fix "unused allowlist" errors, remove the corresponding entries from {main_allowlist_path}'
+                        )
+                    else:
+                        formatter.append_hint(
+                            f"Re-running stubtest with --generate-allowlist.\nAdd the following to {main_allowlist_path}:"
+                        )
+                        ret = subprocess.run(
+                            [*stubtest_cmd, "--generate-allowlist"], env=stubtest_env, capture_output=True, check=False
+                        )
+                        formatter.command_output(ret)
+
+                    formatter.append_divider()
+                    formatter.append_output(f"Upstream repository: {metadata.upstream_repository}")
+                    formatter.append_output(
+                        f"Typeshed source code: https://github.com/python/typeshed/tree/main/stubs/{dist.name}"
+                    )
+
+                    return False
+                else:
+                    formatter.success("success")
+
+                    if sys.platform not in stubtest_settings.ci_platforms:
+                        formatter.append_warning(f"Note: {dist_name} is not currently tested on {sys.platform} in typeshed's CI")
+
+                    if keep_tmp_dir:
+                        formatter.append_output(f"Virtual environment kept at: {venv_dir}")
+
+        finally:
+            if not keep_tmp_dir:
+                rmtree(venv_dir)
+
+        if verbose:
+            print_commands(formatter, pip_cmd, stubtest_cmd, mypypath)
 
     return True
 
 
-def setup_gdb_stubtest_command(venv_dir: Path, stubtest_cmd: list[str]) -> bool:
+def setup_gdb_stubtest_command(venv_dir: Path, stubtest_cmd: list[str], formatter: StatusLineFormatter) -> bool:
     """
     Use wrapper scripts to run stubtest inside gdb.
     The wrapper script is used to pass the arguments to the gdb script.
     """
     if sys.platform == "win32":
-        print_error("gdb is not supported on Windows")
+        formatter.error("gdb is not supported on Windows")
         return False
 
-    if not gdb_version_check():
+    if not gdb_version_check(formatter):
         return False
 
     gdb_script = venv_dir / "gdb_stubtest.py"
@@ -288,25 +275,26 @@ def setup_gdb_stubtest_command(venv_dir: Path, stubtest_cmd: list[str]) -> bool:
     return True
 
 
-def gdb_version_check() -> bool:
+def gdb_version_check(formatter: StatusLineFormatter) -> bool:
     try:
         gdb_version_output = subprocess.check_output(["gdb", "--version"], text=True, stderr=subprocess.STDOUT)
     except FileNotFoundError:
-        print_error("gdb is not installed")
+        formatter.error("fail (gdb is not installed)")
         return False
     if "Python scripting is not supported in this copy of GDB" in gdb_version_output:
-        print_error("Python scripting is not supported in this copy of GDB")
+        formatter.error("fail (GDB version does not support Python scripting)")
         return False
     m = re.search(r"GNU gdb\s+.*?(\d+\.\d+(\.[\da-z-]+)+)", gdb_version_output)
     if m is None:
-        print_error("Failed to determine gdb version:\n" + gdb_version_output)
+        formatter.error("failed to determine gdb version")
+        formatter.append_output(gdb_version_output)
         return False
     gdb_version = m.group(1)
-    print(f"({gdb_version}) ", end="", flush=True)
+    formatter.append_output(f"GDB version: {gdb_version}")
     return True
 
 
-def setup_uwsgi_stubtest_command(dist: Path, venv_dir: Path, stubtest_cmd: list[str]) -> bool:
+def setup_uwsgi_stubtest_command(dist: Path, venv_dir: Path, stubtest_cmd: list[str], formatter: StatusLineFormatter) -> bool:
     """Perform some black magic in order to run stubtest inside uWSGI.
 
     We have to write the exit code from stubtest to a surrogate file
@@ -323,7 +311,7 @@ def setup_uwsgi_stubtest_command(dist: Path, venv_dir: Path, stubtest_cmd: list[
     uwsgi_ini = tests_path(dist.name) / "uwsgi.ini"
 
     if sys.platform == "win32":
-        print_error("uWSGI is not supported on Windows")
+        formatter.error("uWSGI is not supported on Windows")
         return False
 
     uwsgi_script = venv_dir / "uwsgi_stubtest.py"
@@ -378,22 +366,9 @@ def setup_uwsgi_stubtest_command(dist: Path, venv_dir: Path, stubtest_cmd: list[
     return True
 
 
-def print_commands(pip_cmd: list[str], stubtest_cmd: list[str], mypypath: str) -> None:
-    print()
-    print(" ".join(pip_cmd))
-    print(f"MYPYPATH={mypypath}", " ".join(stubtest_cmd))
-
-
-def print_command_failure(message: str, e: subprocess.CalledProcessError) -> None:
-    print_error("fail")
-    print()
-    print(message)
-    print_command_output(e)
-
-
-def print_command_output(e: subprocess.CalledProcessError | subprocess.CompletedProcess[bytes]) -> None:
-    print(e.stdout.decode(), end="")
-    print(e.stderr.decode(), end="")
+def print_commands(formatter: StatusLineFormatter, pip_cmd: list[str], stubtest_cmd: list[str], mypypath: str) -> None:
+    formatter.append_output(" ".join(pip_cmd))
+    formatter.append_output(f"MYPYPATH={mypypath}" + " " + " ".join(stubtest_cmd))
 
 
 def main() -> Never:

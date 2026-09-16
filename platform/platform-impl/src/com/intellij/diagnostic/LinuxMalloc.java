@@ -23,7 +23,7 @@ final class LinuxMalloc {
    * @throws UnsatisfiedLinkError on every call when the libc has no {@code malloc_trim}
    */
   static boolean trim() {
-    MethodHandle mallocTrim = Handles.MALLOC_TRIM;
+    var mallocTrim = Handles.MALLOC_TRIM;
     if (mallocTrim == null) {
       throw new UnsatisfiedLinkError("malloc_trim is not exported by this libc");
     }
@@ -40,7 +40,7 @@ final class LinuxMalloc {
     static final @Nullable MethodHandle MALLOC_TRIM = find();
 
     private static @Nullable MethodHandle find() {
-      Linker linker = Linker.nativeLinker();
+      var linker = Linker.nativeLinker();
       return linker.defaultLookup().find("malloc_trim")
         .map(symbol -> linker.downcallHandle(symbol, FunctionDescriptor.of(JAVA_INT, JAVA_LONG)))
         .orElse(null);

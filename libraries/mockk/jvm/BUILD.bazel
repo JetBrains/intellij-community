@@ -1,5 +1,4 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
-load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.libraries.mockk.jvm` start
 jvm_library(
@@ -23,11 +22,6 @@ jvm_library(
         "//libraries/byte-buddy/agent",
         "//libraries/objenesis",
     ],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-mockk-jvm-io-mockk-jvm"],
-    module = ":jvm",
 )
 
 jvm_library(
@@ -57,7 +51,6 @@ exports_files(
     [
         "intellij.libraries.mockk.jvm.iml",
         "resources/intellij.libraries.mockk.jvm.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -6,7 +6,6 @@ import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.RoamingType
-import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
@@ -14,30 +13,86 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.fileTypes.FileNameMatcher
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.lsp.api.LspPluginServerConfiguration
+import com.intellij.platform.lsp.api.LspIntegrationSettings
+import com.intellij.platform.lsp.api.LspIntegrationSettingsProvider
+import com.intellij.platform.lsp.api.LspServerEnvironmentData
+import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.xmlb.XmlSerializerUtil
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XCollection
 import com.intellij.util.xmlb.annotations.XMap
+import org.jetbrains.annotations.ApiStatus
 
 @State(
   name = "LspServerSettings",
   storages = [Storage(StoragePathMacros.WORKSPACE_FILE, roamingType = RoamingType.LOCAL)],
 )
-@Service(Service.Level.PROJECT)
-internal class LspServerSettings : PersistentStateComponent<LspServerSettings> {
+@ApiStatus.Experimental
+class LspIntegrationSettingsImpl : PersistentStateComponent<LspIntegrationSettingsImpl>, LspIntegrationSettings {
   @XCollection(style = XCollection.Style.v2)
-  var servers: MutableList<LspServerConfiguration> = mutableListOf()
+  internal var servers: MutableList<LspServerConfiguration> = mutableListOf()
 
-  override fun getState(): LspServerSettings = this
+  @get:XMap(entryTagName = "pluginServer", keyAttributeName = "id")
+  internal var pluginServers: MutableMap<String, PluginServerState> = LinkedHashMap()
 
-  override fun loadState(state: LspServerSettings) {
+  override fun getState(): LspIntegrationSettingsImpl = this
+
+  override fun loadState(state: LspIntegrationSettingsImpl) {
     XmlSerializerUtil.copyBean(state, this)
   }
 
-  companion object {
-    @JvmStatic
-    fun getInstance(project: Project): LspServerSettings = project.service()
+  override fun getPluginConfiguration(serverId: String): LspPluginServerConfiguration {
+    val provider = LspIntegrationSettingsProvider.EP_NAME.extensionList.firstOrNull { it.serverId == serverId }
+                   ?: error("No LSP server settings provider is registered for '$serverId'")
+    return getPluginConfiguration(provider)
+  }
+
+  internal fun getPluginConfiguration(provider: LspIntegrationSettingsProvider): LspPluginServerConfiguration {
+    val serverId = provider.serverId
+    val state = pluginServers[serverId]
+    return provider.defaultConfiguration.copy(
+      arguments = state?.arguments?.toList() ?: provider.defaultConfiguration.arguments,
+      filePatterns = state?.filePatterns?.toList() ?: provider.defaultConfiguration.filePatterns,
+      initializationOptions = state?.initializationOptions ?: provider.defaultConfiguration.initializationOptions,
+      environmentVariables = state?.environmentVariables?.let {
+        LspServerEnvironmentData(
+          variables = it.envs,
+          passParentEnvironment = it.isPassParentEnvs,
+        )
+      }
+                             ?: provider.defaultConfiguration.environmentVariables,
+    )
+  }
+
+  internal fun updatePluginConfiguration(serverId: String, configuration: LspPluginServerConfiguration) {
+    val state = pluginServers[serverId] ?: PluginServerState().also { pluginServers[serverId] = it }
+    state.arguments = configuration.arguments.toMutableList()
+    state.filePatterns = configuration.filePatterns.toMutableList()
+    state.initializationOptions = configuration.initializationOptions
+    state.environmentVariables.setEnvironment(
+      configuration.environmentVariables.variables,
+      configuration.environmentVariables.passParentEnvironment,
+    )
+  }
+
+  internal class PluginServerState {
+    @get:XCollection(style = XCollection.Style.v2, elementName = "argument")
+    var arguments: MutableList<String> = mutableListOf()
+
+    @get:XCollection(style = XCollection.Style.v2, elementName = "pattern")
+    var filePatterns: MutableList<String> = mutableListOf()
+
+    @Tag("initializationOptions")
+    var initializationOptions: String = ""
+
+    var environmentVariables: EnvironmentVariablesDataOptions = EnvironmentVariablesDataOptions()
+  }
+
+  internal companion object {
+    fun getInstance(project: Project): LspIntegrationSettingsImpl =
+      project.service<LspIntegrationSettings>() as LspIntegrationSettingsImpl
   }
 }
 
@@ -81,7 +136,7 @@ internal data class LspServerConfiguration(
       .map { it.substringAfterLast(".") }
       .distinct()
   }
-  
+
   fun getFileMatchers(): List<FileNameMatcher> {
     return filePatterns.split(";")
       .map { it.trim() }
@@ -90,9 +145,7 @@ internal data class LspServerConfiguration(
   }
 
   fun getArgumentsList(): List<String> {
-    return arguments.split(" ")
-      .map { it.trim() }
-      .filter { it.isNotEmpty() }
+    return ParametersListUtil.parse(arguments)
   }
 }
 
@@ -113,4 +166,11 @@ internal class EnvironmentVariablesDataOptions : BaseState() {
   }
 
   fun get(): EnvironmentVariablesData = EnvironmentVariablesData.create(envs, isPassParentEnvs)
+
+  internal fun setEnvironment(variables: Map<String, String>, passParentEnvironment: Boolean) {
+    envs.clear()
+    envs.putAll(variables)
+    isPassParentEnvs = passParentEnvironment
+    incrementModificationCount()
+  }
 }

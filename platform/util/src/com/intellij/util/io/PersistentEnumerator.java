@@ -50,7 +50,7 @@ public class PersistentEnumerator<Data> implements DurableDataEnumerator<Data>,
                                                                                 @Nullable StorageLockContext lockContext,
                                                                                 int version,
                                                                                 boolean registerForStats) throws IOException {
-    return new PersistentBTreeEnumerator<>(file, dataDescriptor, initialSize, lockContext, version, false, registerForStats);
+    return new PersistentBTreeEnumerator<>(file, dataDescriptor, initialSize, lockContext, version, registerForStats);
   }
 
   public static int getVersion() {

@@ -7,8 +7,8 @@ import com.intellij.psi.PsiFile
 import com.intellij.testFramework.common.runAll
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.k2FileName
-import org.jetbrains.kotlin.idea.core.script.k2.configurations.KotlinScriptService
-import org.jetbrains.kotlin.idea.core.script.v1.alwaysVirtualFile
+import org.jetbrains.kotlin.idea.core.script.configurations.KotlinScriptService
+import org.jetbrains.kotlin.idea.core.script.alwaysVirtualFile
 import org.jetbrains.kotlin.idea.fir.K2DirectiveBasedActionUtils
 import org.jetbrains.kotlin.idea.inspections.AbstractLocalInspectionTest
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor

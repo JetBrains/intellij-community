@@ -3,7 +3,7 @@ package org.jetbrains.intellij.build
 
 import com.intellij.platform.buildData.productInfo.CustomCommandLaunchData
 import com.intellij.platform.buildData.productInfo.CustomProperty
-import com.intellij.platform.buildScripts.licenses.CommunityLibraryLicenses
+import com.intellij.platform.buildScripts.licenses.COMMUNITY_LICENSES_LIST
 import com.intellij.platform.buildScripts.licenses.LibraryLicense
 import com.intellij.platform.buildScripts.licenses.SoftwareBillOfMaterials
 import com.intellij.platform.runtime.product.ProductMode
@@ -188,7 +188,7 @@ abstract class ProductProperties {
   /**
    * List of licenses information about all libraries that can be used in the product modules.
    */
-  var allLibraryLicenses: List<LibraryLicense> = CommunityLibraryLicenses.LICENSES_LIST
+  var allLibraryLicenses: List<LibraryLicense> = COMMUNITY_LICENSES_LIST
 
   /**
    * If `true`, the product's main JAR file will be scrambled using [ProprietaryBuildTools.scrambleTool].
@@ -280,8 +280,9 @@ abstract class ProductProperties {
   /**
    * Specifies name of cross-platform ZIP archive if `[buildCrossPlatformDistribution]` is set to `true`.
    */
-  open fun getCrossPlatformZipFileName(applicationInfo: ApplicationInfoProperties, buildNumber: String): String =
-    getBaseArtifactName(applicationInfo, buildNumber) + ".portable.zip"
+  open fun getCrossPlatformZipFileName(applicationInfo: ApplicationInfoProperties, buildNumber: String): String {
+    return getBaseArtifactName(applicationInfo, buildNumber) + ".portable.zip"
+  }
 
   /**
    * A config map for [org.jetbrains.intellij.build.impl.ClassFileChecker], when .class file version verification is necessary.
@@ -382,6 +383,13 @@ abstract class ProductProperties {
   var runtimeDistribution: JetBrainsRuntimeDistribution = JetBrainsRuntimeDistribution.VANILLA
 
   /**
+   * Paths in the bundled runtime, relative to the runtime home, to exclude from the distributions of all operating systems.
+   * An entry that is absent in one OS runtime has no effect there.
+   * The exclusion applies at pack time. The shared runtime extract stays intact.
+   */
+  var excludedRuntimePaths: List<String> = emptyList()
+
+  /**
    * A prefix for names of environment variables used by product distributions
    * to allow users to customize location of the product runtime (`<PRODUCT>_JDK` variable),
    * *.vmoptions file (`<PRODUCT>_VM_OPTIONS`), `idea.properties` file (`<PRODUCT>_PROPERTIES`).
@@ -391,12 +399,23 @@ abstract class ProductProperties {
   /**
    * Override this method to copy additional files to distributions of all operating systems.
    */
-  open suspend fun copyAdditionalFiles(targetDir: Path, context: BuildContext) { }
+  open fun copyAdditionalFiles(targetDir: Path, context: BuildContext) { }
+
+  /** Registers IJent files for legacy assembly. A null value excludes IJent from the distribution. */
+  var ijentDistributionRegistrar: ((BuildContext) -> Unit)? = null
+
+  /**
+   * Registers runtime files for complete dev builds and production packaging.
+   * Source-only derivation and split fragments do not call this hook.
+   */
+  open fun registerDistFiles(context: BuildContext) {
+    ijentDistributionRegistrar?.invoke(context)
+  }
 
   /**
    * Override this method to copy additional OS- and arch-specific files.
    */
-  open suspend fun copyAdditionalOsSpecificFiles(runDir: Path, os: OsFamily, arch: JvmArchitecture, context: BuildContext) { }
+  open fun copyAdditionalOsSpecificFiles(runDir: Path, os: OsFamily, arch: JvmArchitecture, context: BuildContext) { }
 
   /**
    * Override this method if the product has several editions to ensure that their artifacts won't be mixed up.
@@ -409,7 +428,7 @@ abstract class ProductProperties {
    * Paths to externally built plugins to be included in the IDE.
    * They will be copied into the build, as well as included in the IDE classpath when launching it to build search index, .jar order, etc.
    */
-  open suspend fun getAdditionalPluginPaths(context: BuildContext): List<Path> = emptyList()
+  open fun getAdditionalPluginPaths(context: BuildContext): List<Path> = emptyList()
 
   /**
    * Override this function to provide additional JVM command line arguments which will be added to launchers along with
@@ -471,7 +490,7 @@ abstract class ProductProperties {
    * Copies additional localization resources to the plugin-generated localization resources directory.
    */
   @ApiStatus.Internal
-  open suspend fun copyAdditionalLocalizationResourcesToPlugin(lang: String, targetDir: Path, context: BuildContext) {}
+  open fun copyAdditionalLocalizationResourcesToPlugin(lang: String, targetDir: Path, context: BuildContext) {}
 
   /**
    * Build steps which are always skipped for this product.

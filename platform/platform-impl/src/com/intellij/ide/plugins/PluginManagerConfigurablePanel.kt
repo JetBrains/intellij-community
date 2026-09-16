@@ -28,7 +28,6 @@ import com.intellij.ide.plugins.newui.TabbedPaneHeaderComponent
 import com.intellij.ide.plugins.newui.UiPluginManager
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.idea.AppMode
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -103,10 +102,10 @@ import javax.swing.ScrollPaneConstants
 import javax.swing.SwingUtilities
 
 @ApiStatus.Internal
-class PluginManagerConfigurablePanel @RequiresEdt constructor(
+class PluginManagerConfigurablePanel @RequiresEdt(generateAssertion = false /* IJPL-115548 */) constructor(
   searchQuery: String?,
   openSource: PluginManagerOpenSourceEnum = PluginManagerOpenSourceEnum.OTHER,
-) : Disposable {
+) : PluginsPageSession {
   private val coroutineScope: CoroutineScope
 
   private val pluginModelFacade: PluginModelFacade
@@ -177,7 +176,7 @@ class PluginManagerConfigurablePanel @RequiresEdt constructor(
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun createCardPanel(selectionTab: Int): MultiPanel {
     val cardPanel = object : MultiPanel() {
       override fun create(key: Int?): JComponent {
@@ -224,7 +223,7 @@ class PluginManagerConfigurablePanel @RequiresEdt constructor(
     return tabHeaderComponent
   }
 
-  fun getCenterComponent(controller: Configurable.TopComponentController): JComponent {
+  override fun getCenterComponent(controller: Configurable.TopComponentController): JComponent {
     pluginModelFacade.getModel().setTopController(controller)
     return tabHeaderComponent
   }
@@ -233,15 +232,15 @@ class PluginManagerConfigurablePanel @RequiresEdt constructor(
     return getCenterComponent(Configurable.TopComponentController.EMPTY)
   }
 
-  fun getComponent(): JComponent {
+  override fun getComponent(): JComponent {
     return cardPanel
   }
 
-  fun isMarketplaceTabShowing(): Boolean {
+  override fun isMarketplaceTabShowing(): Boolean {
     return tabHeaderComponent.getSelectionTab() == MARKETPLACE_TAB
   }
 
-  fun isInstalledTabShowing(): Boolean {
+  override fun isInstalledTabShowing(): Boolean {
     return tabHeaderComponent.getSelectionTab() == INSTALLED_TAB
   }
 
@@ -356,7 +355,7 @@ class PluginManagerConfigurablePanel @RequiresEdt constructor(
   }
 
   @Suppress("SameParameterValue")
-  fun setInstallSource(source: FUSEventSource?) {
+  override fun setInstallSource(source: FUSEventSource?) {
     pluginModelFacade.getModel().setInstallSource(source)
   }
 
@@ -389,11 +388,11 @@ class PluginManagerConfigurablePanel @RequiresEdt constructor(
     coroutineScope.cancel(null)
   }
 
-  fun cancel() {
+  override fun cancel() {
     pluginModelFacade.getModel().cancel(cardPanel, true)
   }
 
-  fun isModified(): Boolean {
+  override fun isModified(): Boolean {
     if (pluginsAutoUpdateEnabled != null &&
         UpdateSettings.getInstance().getState().isPluginsAutoUpdateEnabled != pluginsAutoUpdateEnabled) {
       return true
@@ -401,7 +400,7 @@ class PluginManagerConfigurablePanel @RequiresEdt constructor(
     return pluginModelFacade.getModel().isModified()
   }
 
-  fun scheduleApply() {
+  override fun scheduleApply() {
     synchronized(callbackLock) {
       if (applyScheduled) {
         return
@@ -432,7 +431,7 @@ class PluginManagerConfigurablePanel @RequiresEdt constructor(
   }
 
   @Throws(ConfigurationException::class)
-  fun apply() {
+  override fun apply() {
     if (pluginsAutoUpdateEnabled != null) {
       val state: UpdateOptions = UpdateSettings.getInstance().getState()
       if (state.isPluginsAutoUpdateEnabled != pluginsAutoUpdateEnabled) {
@@ -481,19 +480,19 @@ class PluginManagerConfigurablePanel @RequiresEdt constructor(
     }
   }
 
-  fun reset() {
+  override fun reset() {
     if (pluginsAutoUpdateEnabled != null) {
       pluginsAutoUpdateEnabled = UpdateSettings.getInstance().getState().isPluginsAutoUpdateEnabled
     }
     pluginModelFacade.getModel().clear(cardPanel)
   }
 
-  fun selectAndEnable(descriptors: Set<IdeaPluginDescriptor>) {
+  override fun selectAndEnable(descriptors: Set<IdeaPluginDescriptor>) {
     pluginModelFacade.getModel().enable(descriptors)
     select(descriptors.map { it.pluginId })
   }
 
-  fun select(pluginIds: Collection<PluginId>) {
+  override fun select(pluginIds: Collection<PluginId>) {
     updateSelectionTab(INSTALLED_TAB)
 
     val components = ArrayList<ListPluginComponent>()
@@ -514,11 +513,11 @@ class PluginManagerConfigurablePanel @RequiresEdt constructor(
     }
   }
 
-  fun enableSearch(option: String?): Runnable? {
+  override fun enableSearch(option: String?): Runnable? {
     return enableSearch(option, false)
   }
 
-  fun enableSearch(option: String?, ignoreTagMarketplaceTab: Boolean): Runnable? {
+  override fun enableSearch(option: String?, ignoreTagMarketplaceTab: Boolean): Runnable? {
     if (StringUtil.isEmpty(option) &&
         (tabHeaderComponent.getSelectionTab() == MARKETPLACE_TAB || installedTab.getInstalledSearchPanel().isQueryEmpty)) {
       return null
@@ -541,7 +540,7 @@ class PluginManagerConfigurablePanel @RequiresEdt constructor(
     }
   }
 
-  fun openMarketplaceTab(option: String) {
+  override fun openMarketplaceTab(option: String) {
     laterSearchQuery = option
     showMarketplaceTab = true
     updateSelectionTab(MARKETPLACE_TAB)
@@ -549,14 +548,14 @@ class PluginManagerConfigurablePanel @RequiresEdt constructor(
     marketplaceTab.showSearchPanel(option)
   }
 
-  fun openInstalledTab(option: String) {
+  override fun openInstalledTab(option: String) {
     laterSearchQuery = option
     showMarketplaceTab = false
     forceShowInstalledTabForTag = true
     updateSelectionTab(INSTALLED_TAB)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun onPluginInstalledFromDisk(callbackData: PluginInstallCallbackData) {
     PluginModelAsyncOperationsExecutor.updateErrors(
       coroutineScope,
@@ -677,7 +676,7 @@ class PluginManagerConfigurablePanel @RequiresEdt constructor(
       super.actionPerformed(e)
     }
 
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     override fun onPluginInstalledFromDisk(callbackData: PluginInstallCallbackData, project: Project?) {
       if (pluginManagerCustomizer != null) {
         pluginManagerCustomizer.updateAfterModification {

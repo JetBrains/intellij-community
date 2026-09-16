@@ -1,3 +1,2 @@
 com/intellij/configurationStore/StreamProvider
 com/intellij/execution/RunProfileStarter
-com/intellij/internal/statistic/StructuredIdeActivity

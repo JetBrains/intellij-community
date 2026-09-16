@@ -6,8 +6,8 @@ import com.intellij.execution.JUnitBundle;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.application.ClassEditorField;
 import com.intellij.execution.junit.JUnitConfiguration;
+import com.intellij.execution.junit.JUnitLauncherDependencies;
 import com.intellij.execution.junit.JUnitUtil;
-import com.intellij.execution.junit.TestObject;
 import com.intellij.execution.testDiscovery.TestDiscoveryExtension;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ModalityState;
@@ -322,7 +322,7 @@ public class JUnitConfigurationModel {
 
       if (myProject.isDefault() ||
           JUnitUtil.isJUnit5(searchScope, myProject) ||
-          TestObject.hasJupiterEnginesAPI(searchScope, JavaPsiFacade.getInstance(myProject))) {
+          JUnitLauncherDependencies.hasJupiterEnginesAPI(searchScope, JavaPsiFacade.getInstance(myProject))) {
         aModel.addElement(UNIQUE_ID);
         aModel.addElement(TAGS);
       }

@@ -24,16 +24,16 @@ interface NavigationRequests {
     fun getInstance(): NavigationRequests = ApplicationManager.getApplication().getService(NavigationRequests::class.java)
   }
 
-  @RequiresReadLock
-  @RequiresBackgroundThread
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun sourceNavigationRequest(project: Project, file: VirtualFile, offset: Int, elementRange: TextRange?): NavigationRequest?
 
-  @RequiresReadLock
-  @RequiresBackgroundThread
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun sharedSourceNavigationRequest(project: Project, file: VirtualFile, context: CodeInsightContext, offset: Int, elementRange: TextRange?): NavigationRequest?
 
-  @RequiresReadLock
-  @RequiresBackgroundThread
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun directoryNavigationRequest(directory: PsiDirectory): NavigationRequest?
 
   /**
@@ -41,8 +41,8 @@ interface NavigationRequests {
    */
   @Internal
   @Deprecated("Do not call this function by hand")
-  @RequiresReadLock
-  @RequiresBackgroundThread
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun psiNavigationRequest(element: PsiElement): NavigationRequest?
 
   /**
@@ -51,7 +51,7 @@ interface NavigationRequests {
    */
   @Internal
   @Deprecated("Don't call this function directly")
-  @RequiresReadLock
-  @RequiresBackgroundThread
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun rawNavigationRequest(navigatable: Navigatable): NavigationRequest?
 }

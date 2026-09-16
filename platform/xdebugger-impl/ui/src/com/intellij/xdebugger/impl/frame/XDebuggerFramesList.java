@@ -117,8 +117,8 @@ public class XDebuggerFramesList extends DebuggerFramesList implements UiCompati
         }
 
         if (value != null) {
-          if (value instanceof XStackFrame) {
-            ((XStackFrame)value).customizeTextPresentation(coloredTextContainer);
+          if (value instanceof XStackFrame frame) {
+            frame.customizeTextPresentation(coloredTextContainer);
             coloredTextContainer.appendTo(plainBuf);
           }
           else {
@@ -237,7 +237,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements UiCompati
     else if (toSelect instanceof HiddenStackFramesItem placeholder) {
       // If a user has a selected hidden frames placeholder and toggles "view library frames",
       // we should select first of hidden frames under the selected placeholder.
-      var firstHiddenFrame = placeholder.hiddenFrames.get(0);
+      var firstHiddenFrame = placeholder.hiddenFrames.getFirst();
       if (getModel().contains(firstHiddenFrame)) {
         setSelectedValue(firstHiddenFrame, true);
         return true;
@@ -270,15 +270,15 @@ public class XDebuggerFramesList extends DebuggerFramesList implements UiCompati
 
   public @Nullable XStackFrame getSelectedFrame() {
     Object value = getSelectedValue();
-    return value instanceof XStackFrame ? (XStackFrame)value : null;
+    return value instanceof XStackFrame frame ? frame : null;
   }
 
   @Override
   protected @Nullable Navigatable getSelectedFrameNavigatable() {
     XStackFrame frame = getSelectedFrame();
     Navigatable navigatable = frame != null ? getFrameNavigatable(frame, false) : null;
-    if (navigatable instanceof OpenFileDescriptor) {
-      ((OpenFileDescriptor)navigatable).setUsePreviewTab(true);
+    if (navigatable instanceof OpenFileDescriptor descriptor) {
+      descriptor.setUsePreviewTab(true);
     }
     return navigatable != null ? XDebuggerUtilImplShared.wrapKeepEditorAreaFocusNavigatable(myProject, navigatable) : null;
   }
@@ -299,8 +299,8 @@ public class XDebuggerFramesList extends DebuggerFramesList implements UiCompati
   }
 
   Color getFrameBgColor(XStackFrame stackFrame) {
-    if (stackFrame instanceof XStackFrameWithCustomBackgroundColor) {
-      return ((XStackFrameWithCustomBackgroundColor)stackFrame).getBackgroundColor();
+    if (stackFrame instanceof XStackFrameWithCustomBackgroundColor color) {
+      return color.getBackgroundColor();
     }
     return myFileColorsCache.get(stackFrame, myProject);
   }
@@ -317,12 +317,12 @@ public class XDebuggerFramesList extends DebuggerFramesList implements UiCompati
 
         @Override
         public @Nullable String getCaptionAboveOf(Object value) {
-          return value instanceof XStackFrameWithSeparatorAbove ? ((XStackFrameWithSeparatorAbove)value).getCaptionAboveOf() : null;
+          return value instanceof XStackFrameWithSeparatorAbove above ? above.getCaptionAboveOf() : null;
         }
 
         @Override
         public boolean hasSeparatorAboveOf(Object value) {
-          return value instanceof XStackFrameWithSeparatorAbove && ((XStackFrameWithSeparatorAbove)value).hasSeparatorAbove();
+          return value instanceof XStackFrameWithSeparatorAbove above && above.hasSeparatorAbove();
         }
       });
       mySeparatorComponent.setCaptionCentered(false);
@@ -397,8 +397,8 @@ public class XDebuggerFramesList extends DebuggerFramesList implements UiCompati
         append(XDebuggerBundle.message("stack.frame.loading.text"), SimpleTextAttributes.GRAY_ATTRIBUTES);
         return;
       }
-      if (value instanceof String) {
-        append((String)value, SimpleTextAttributes.ERROR_ATTRIBUTES);
+      if (value instanceof String s) {
+        append(s, SimpleTextAttributes.ERROR_ATTRIBUTES);
         return;
       }
 
@@ -446,7 +446,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements UiCompati
     }
 
     private static boolean canDropSelectedFrame(JList list) {
-      if (!(list instanceof XDebuggerFramesList)) {
+      if (!(list instanceof XDebuggerFramesList framesList)) {
         return false;
       }
       var selectedValue = list.getSelectedValue();
@@ -454,7 +454,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements UiCompati
         return false;
       }
       try {
-        var dropFrameHandler = findDropFrameHandler((XDebuggerFramesList)list);
+        var dropFrameHandler = findDropFrameHandler(framesList);
         if (dropFrameHandler == null) {
           return false;
         }
@@ -768,8 +768,8 @@ public class XDebuggerFramesList extends DebuggerFramesList implements UiCompati
     public void paintIcon(Component c, Graphics g, int x, int y) {
       Color background = getBackground();
       if (background != null) {
-        if (g instanceof Graphics2D) {
-          ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        if (g instanceof Graphics2D d) {
+          d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         }
         g.setColor(background);
         int arc = (int)Math.ceil(scaleVal(5));

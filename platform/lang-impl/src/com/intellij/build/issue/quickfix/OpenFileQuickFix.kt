@@ -57,7 +57,7 @@ class OpenFileQuickFix(private val path: Path, private val search: String?) : Bu
       }
     }
 
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     private fun doShowFile(project: Project, file: VirtualFile, search: String?) {
       val editor = FileEditorManager.getInstance(project).openTextEditor(OpenFileDescriptor(project, file), false)
       if (search == null || editor == null) return

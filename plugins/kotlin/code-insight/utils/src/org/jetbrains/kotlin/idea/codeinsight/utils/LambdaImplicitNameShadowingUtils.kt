@@ -4,11 +4,12 @@ package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.builtins.StandardNames
+import org.jetbrains.kotlin.idea.base.psi.getOrCreateFunctionLiteralParameterList
+import org.jetbrains.kotlin.idea.base.psi.insertParameterBefore
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.psiUtil.getOrCreateParameterList
 
 @ApiStatus.Internal
 val scopeFunctionsList: Array<FqName> = arrayOf(
@@ -20,8 +21,8 @@ val scopeFunctionsList: Array<FqName> = arrayOf(
 
 fun KtLambdaExpression.addExplicitItParameter(): KtParameter {
     return functionLiteral
-        .getOrCreateParameterList()
-        .addParameterBefore(
+        .getOrCreateFunctionLiteralParameterList()
+        .insertParameterBefore(
             KtPsiFactory(project).createLambdaParameterList(StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier).parameters.first(),
             null,
         )

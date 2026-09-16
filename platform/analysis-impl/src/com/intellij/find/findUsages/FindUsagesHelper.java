@@ -82,7 +82,7 @@ public final class FindUsagesHelper {
                                                @NotNull GlobalSearchScope searchScope,
                                                @NotNull UsageInfoFactory factory,
                                                @NotNull Processor<? super UsageInfo> processor) {
-    Project project = psiElement.getProject();
+    Project project = ReadAction.computeBlocking(() -> psiElement.getProject());
     var psiSearchHelper = PsiSearchHelper.getInstance(project);
     try {
       return psiSearchHelper.processUsagesInNonJavaFiles(psiElement, stringToSearch, (psiFile, startOffset, endOffset) -> {

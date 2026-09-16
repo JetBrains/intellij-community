@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
+import org.jetbrains.kotlin.idea.base.psi.appendValueArgument
 import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.reformatted
@@ -204,7 +205,7 @@ internal class DeprecatedCallableAddReplaceWithInspection :
             val psiFactory = KtPsiFactory(project)
 
             var argument = psiFactory.createArgument(psiFactory.createExpression(annotationEntry.buildReplaceWithArgumentText(replaceWithData)))
-            argument = valueArgumentList.addArgument(argument)
+            argument = valueArgumentList.appendValueArgument(argument)
             shortenReferences(argument)?.let {
                 updater.moveCaretTo(it)
             }

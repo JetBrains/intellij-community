@@ -1,0 +1,25 @@
+// WITH_COROUTINES
+// PROBLEM: 'runCatching' suppresses 'CancellationException' and breaks coroutine cancellation
+// FIX: Check for cancellation in 'onFailure { ... }'
+package test
+
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
+
+fun logWarning(message: String, t: Throwable) {
+    println("$message: $t")
+}
+
+// Logging the failure does not propagate it
+suspend fun compute(): Int? {
+    return runCatching {
+        delay(100)
+        42
+    }.onFailure {
+        if (it is CancellationException) {
+            currentCoroutineContext().ensureActive()
+        }
+    }.onFailure { logWarning("failed", it) }.getOrNull()
+}

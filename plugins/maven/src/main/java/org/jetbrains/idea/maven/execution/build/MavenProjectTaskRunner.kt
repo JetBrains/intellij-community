@@ -13,6 +13,7 @@ import com.intellij.execution.scratch.JavaScratchConfiguration
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.ModuleManager.Companion.getInstance
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.packaging.artifacts.Artifact
 import com.intellij.packaging.artifacts.ArtifactProperties
@@ -56,9 +57,8 @@ class MavenProjectTaskRunner : ProjectTaskRunner() {
       return false
     }
 
-    if (!MavenRunner.getInstance(project).settings.isDelegateBuildToMaven) {
-      return false
-    }
+    val settings = MavenRunner.getInstance(project).settings
+    if (!settings.isDelegateBuildToMaven) return false
 
     if (projectTask is ModuleBuildTask) {
       return isMavenModule(projectTask.getModule())
@@ -177,7 +177,7 @@ private fun buildModules(
   val clean = moduleBuildTasks.any { it !is ModuleFilesBuildTask && !it.isIncrementalBuild() }
   val compileOnly = moduleBuildTasks.all { it is ModuleFilesBuildTask }
   val includeDependentModules = moduleBuildTasks.any { it.isIncludeDependentModules() }
-  val goal: String = getGoal(buildOnlyResources, compileOnly)
+  val goal: String = getPhase(buildOnlyResources, compileOnly)
   val commands: MutableList<MavenRunnerParameters> = ArrayList()
   for ((key, mavenProjects) in rootProjectsToModules) {
     val parameters = ParametersList()
@@ -186,19 +186,14 @@ private fun buildModules(
     }
     parameters.add(goal)
 
-    if (!includeDependentModules) {
-      if (mavenProjects.size > 1) {
-        parameters.add("--projects")
-        parameters.add(
-          mavenProjects.joinToString(",") {
-            val id = it.mavenId
-            "${id.groupId}:${id.artifactId}"
-          }
-        )
-      }
-      else {
-        parameters.add("--non-recursive")
-      }
+    if (!includeDependentModules && mavenProjects.size > 1) {
+      parameters.add("--projects")
+      parameters.add(
+        mavenProjects.joinToString(",") {
+          val id = it.mavenId
+          "${id.groupId}:${id.artifactId}"
+        }
+      )
     }
 
     val pomFile = (if (mavenProjects.size > 1) key else mavenProjects[0]).file
@@ -217,11 +212,11 @@ private fun buildModules(
   runBatch(project, commands, callback)
 }
 
-private fun getGoal(buildOnlyResources: Boolean, compileOnly: Boolean): String {
+private fun getPhase(buildOnlyResources: Boolean, compileOnly: Boolean): String {
   if (buildOnlyResources) {
     return "resources:resources"
   }
-  return if (compileOnly) "compile" else "install"
+  return if (compileOnly) "compile" else AdvancedSettings.getEnum("maven.delegate.build.phase", MavenDelegateBuildPhase::class.java).phaseName
 }
 
 object MavenProjectTaskRunnerUtil {

@@ -55,10 +55,10 @@ public final class User32Ex {
    * @return {@code WINDOWPLACEMENT.rcNormalPosition} as left, top, right and bottom, or {@code null} when the call fails
    */
   public static int @Nullable [] getWindowNormalPosition(long window) {
-    try (Arena arena = Arena.ofConfined()) {
-      MemorySegment placement = arena.allocate(WINDOWPLACEMENT_SIZE);
+    try (var arena = Arena.ofConfined()) {
+      var placement = arena.allocate(WINDOWPLACEMENT_SIZE);
       placement.set(JAVA_INT, 0, WINDOWPLACEMENT_SIZE);
-      int succeeded = (int)Handles.GET_WINDOW_PLACEMENT.invokeExact(MemorySegment.ofAddress(window), placement);
+      var succeeded = (int)Handles.GET_WINDOW_PLACEMENT.invokeExact(MemorySegment.ofAddress(window), placement);
       if (succeeded == 0) {
         return null;
       }
@@ -86,7 +86,7 @@ public final class User32Ex {
   /** @return an {@code HICON} the caller owns, or 0 on failure. Release it with {@link #destroyIcon}. */
   public static long createIconFromResourceEx(@NotNull MemorySegment resourceBits, int resourceSize, boolean icon, int version, int width, int height, int flags) {
     try {
-      MemorySegment handle = (MemorySegment)Handles.CREATE_ICON_FROM_RESOURCE_EX.invokeExact(resourceBits, resourceSize, icon ? 1 : 0, version, width, height, flags);
+      var handle = (MemorySegment)Handles.CREATE_ICON_FROM_RESOURCE_EX.invokeExact(resourceBits, resourceSize, icon ? 1 : 0, version, width, height, flags);
       return handle.address();
     }
     catch (Throwable t) {
@@ -100,7 +100,7 @@ public final class User32Ex {
 
   public static void flashWindow(long window, boolean invert) {
     try {
-      int ignored = (int)Handles.FLASH_WINDOW.invokeExact(MemorySegment.ofAddress(window), invert ? 1 : 0);
+      var _ = (int)Handles.FLASH_WINDOW.invokeExact(MemorySegment.ofAddress(window), invert ? 1 : 0);
     }
     catch (Throwable t) {
       throw new IllegalStateException(t);
@@ -109,15 +109,15 @@ public final class User32Ex {
 
   /** @return a {@code BOOL} system parameter, or {@code null} when the call fails */
   public static @Nullable Boolean systemParametersInfoBool(int action) {
-    Integer value = systemParametersInfoUInt(action);
+    var value = systemParametersInfoUInt(action);
     return value != null ? value != 0 : null;
   }
 
   /** @return a {@code UINT} system parameter, or {@code null} when the call fails */
   public static @Nullable Integer systemParametersInfoUInt(int action) {
-    try (Arena arena = Arena.ofConfined()) {
-      MemorySegment value = arena.allocate(JAVA_INT);
-      int succeeded = (int)Handles.SYSTEM_PARAMETERS_INFO.invokeExact(action, 0, value, 0);
+    try (var arena = Arena.ofConfined()) {
+      var value = arena.allocate(JAVA_INT);
+      var succeeded = (int)Handles.SYSTEM_PARAMETERS_INFO.invokeExact(action, 0, value, 0);
       return succeeded != 0 ? value.get(JAVA_INT, 0) : null;
     }
     catch (Throwable t) {
@@ -138,7 +138,7 @@ public final class User32Ex {
   /** Lets the process call {@code SetForegroundWindow}; a {@code DWORD} process id, so the upper half of a {@code long} pid is dropped. */
   public static void allowSetForegroundWindow(long processId) {
     try {
-      int ignored = (int)Handles.ALLOW_SET_FOREGROUND_WINDOW.invokeExact((int)processId);
+      var _ = (int)Handles.ALLOW_SET_FOREGROUND_WINDOW.invokeExact((int)processId);
     }
     catch (Throwable t) {
       throw new IllegalStateException(t);
@@ -156,7 +156,7 @@ public final class User32Ex {
   /** @return the related window, for example the owner for {@link #GW_OWNER}, or 0 */
   public static long getWindow(long window, int command) {
     try {
-      MemorySegment result = (MemorySegment)Handles.GET_WINDOW.invokeExact(MemorySegment.ofAddress(window), command);
+      var result = (MemorySegment)Handles.GET_WINDOW.invokeExact(MemorySegment.ofAddress(window), command);
       return result.address();
     }
     catch (Throwable t) {
@@ -166,9 +166,9 @@ public final class User32Ex {
 
   /** @return the id of the process that created the window, or 0 when the call fails */
   public static int getWindowProcessId(long window) {
-    try (Arena arena = Arena.ofConfined()) {
-      MemorySegment processId = arena.allocate(JAVA_INT);
-      int threadId = (int)Handles.GET_WINDOW_THREAD_PROCESS_ID.invokeExact(MemorySegment.ofAddress(window), processId);
+    try (var arena = Arena.ofConfined()) {
+      var processId = arena.allocate(JAVA_INT);
+      var threadId = (int)Handles.GET_WINDOW_THREAD_PROCESS_ID.invokeExact(MemorySegment.ofAddress(window), processId);
       return threadId != 0 ? processId.get(JAVA_INT, 0) : 0;
     }
     catch (Throwable t) {
@@ -178,15 +178,15 @@ public final class User32Ex {
 
   /** @return the title bar text, or an empty string when the window has none */
   public static @NotNull String getWindowText(long window) {
-    try (Arena arena = Arena.ofConfined()) {
-      MemorySegment handle = MemorySegment.ofAddress(window);
-      int length = (int)Handles.GET_WINDOW_TEXT_LENGTH.invokeExact(handle);
+    try (var arena = Arena.ofConfined()) {
+      var handle = MemorySegment.ofAddress(window);
+      var length = (int)Handles.GET_WINDOW_TEXT_LENGTH.invokeExact(handle);
       if (length <= 0) {
         return "";
       }
-      int capacity = length + 1;
-      MemorySegment buffer = arena.allocate(2L * capacity);
-      int copied = (int)Handles.GET_WINDOW_TEXT.invokeExact(handle, buffer, capacity);
+      var capacity = length + 1;
+      var buffer = arena.allocate(2L * capacity);
+      var copied = (int)Handles.GET_WINDOW_TEXT.invokeExact(handle, buffer, capacity);
       return copied > 0 ? new String(buffer.asSlice(0, 2L * copied).toArray(JAVA_BYTE), StandardCharsets.UTF_16LE) : "";
     }
     catch (Throwable t) {
@@ -199,10 +199,10 @@ public final class User32Ex {
    * An exception from the visitor stops the enumeration and is rethrown after the downcall returns.
    */
   public static void enumWindows(@NotNull LongPredicate visitor) {
-    EnumWindowsVisitor state = new EnumWindowsVisitor(visitor);
-    try (Arena arena = Arena.ofConfined()) {
-      MemorySegment callback = Handles.LINKER.upcallStub(Handles.ENUM_WINDOWS_CALLBACK.bindTo(state), Handles.WNDENUMPROC, arena);
-      int ignored = (int)Handles.ENUM_WINDOWS.invokeExact(callback, 0L);
+    var state = new EnumWindowsVisitor(visitor);
+    try (var arena = Arena.ofConfined()) {
+      var callback = Handles.LINKER.upcallStub(Handles.ENUM_WINDOWS_CALLBACK.bindTo(state), Handles.WNDENUMPROC, arena);
+      var _ = (int)Handles.ENUM_WINDOWS.invokeExact(callback, 0L);
     }
     catch (Throwable t) {
       throw new IllegalStateException(t);

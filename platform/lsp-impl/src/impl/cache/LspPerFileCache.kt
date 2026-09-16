@@ -55,7 +55,7 @@ internal open class LspPerFileCache<K : Any, V : Any>(
 
   private var slot: Slot<K, V>? = null // guarded by `this`
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   open fun getOrCompute(file: VirtualFile, key: K, compute: () -> V?): V? {
     while (true) {
       ProgressManager.checkCanceled()
@@ -160,6 +160,6 @@ internal open class LspPerFileCache<K : Any, V : Any>(
 /**
  * Convenience overload for the file-level shape — no secondary key to pass.
  */
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 internal fun <V : Any> LspPerFileCache<Unit, V>.getOrCompute(file: VirtualFile, compute: () -> V?): V? =
   getOrCompute(file, Unit, compute)

@@ -33,7 +33,6 @@ class PyTestFixtureResolvingTest : PyTestCase() {
     const val TESTS_SUBDIR = "/testPytestFixtureResolving"
     const val STR_TYPE_NAME = "str"
     const val STR_TYPE_DICT = "dict[$STR_TYPE_NAME, $STR_TYPE_NAME]"
-    const val INT_STR_UNION = "int | str"
 
     const val SIMPLE_TEST_DIR = "/testSimple"
     const val SIMPLE_TEST_CONFTEST_FIXTURE = "/test_conftest_fixture.py"
@@ -367,7 +366,7 @@ class PyTestFixtureResolvingTest : PyTestCase() {
   }
 
   fun testNamedParameterTypes() {
-    assertCorrectType(PARAMETRIZED_DIR, TEST_PARAMETER_TYPES, INT_STR_UNION)
+    assertCorrectType(PARAMETRIZED_DIR, TEST_PARAMETER_TYPES, "Literal[9, \"foo\"]")
   }
 
   @TestFor(issues = ["PY-56268"])

@@ -1,5 +1,4 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
-load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.libraries.completion.ranking.java` start
 jvm_library(
@@ -16,11 +15,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-completion-ranking-java-completion-ranking-java"],
     runtime_deps = ["@lib//:libraries-completion-ranking-java-completion-ranking-java"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-completion-ranking-java-completion-ranking-java"],
-    module = ":completion-ranking-java",
 )
 
 jvm_library(
@@ -42,7 +36,6 @@ exports_files(
     [
         "intellij.libraries.completion.ranking.java.iml",
         "resources/intellij.libraries.completion.ranking.java.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

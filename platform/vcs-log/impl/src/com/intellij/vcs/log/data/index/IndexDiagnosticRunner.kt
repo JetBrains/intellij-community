@@ -87,7 +87,7 @@ internal class IndexDiagnosticRunner(
     }
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private fun doRunDiagnostic(rootsToCheck: Collection<VirtualFile>) {
     val dataGetter = index.dataGetter ?: return
 

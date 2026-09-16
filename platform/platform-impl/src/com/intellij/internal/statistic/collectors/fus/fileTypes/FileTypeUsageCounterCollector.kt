@@ -18,8 +18,6 @@ import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.internal.statistic.utils.getPluginInfoByDescriptor
-import com.intellij.openapi.editor.elf.ElfFeatureFlag
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileEditor
@@ -80,20 +78,13 @@ object FileTypeUsageCounterCollector : CounterUsagesCollector() {
   private val CREATE_WITH_FILE_TEMPLATE: VarargEventId = registerFileTypeEvent("create_with_template",
                                                                                FILE_TEMPLATE_FIELD, EventFields.PluginInfo)
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   @JvmStatic
   fun triggerEdit(project: Project, file: VirtualFile) {
-    if (ElfFeatureFlag.isEnabled()) {
-      // TODO: `triggerEdit` acquires RA on EDT while typing,
-      //  it should be reworked for lock-free typing (IJPL-54)
-      return
-    }
-    val projectState = ReadAction.computeBlocking<List<EventPair<*>>, Throwable> {
-      listOf(
-        EventFields.Dumb.with(isDumb(project)),
-        INCOMPLETE_DEPENDENCIES_MODE.with(project.service<IncompleteDependenciesService>().getState())
-      )
-    }
+    val projectState = listOf(
+      EventFields.Dumb.with(isDumb(project)),
+      INCOMPLETE_DEPENDENCIES_MODE.with(project.service<IncompleteDependenciesService>().getStateUnsafe())
+    )
 
     EDIT.log(project, Consumer { pairs: MutableList<EventPair<*>> ->
       pairs.addAll(buildCommonEventPairs(project, file, false))
@@ -102,7 +93,7 @@ object FileTypeUsageCounterCollector : CounterUsagesCollector() {
     })
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun triggerSelect(project: Project, file: VirtualFile?) {
     if (file != null) {
       log(SELECT, project, file, false)

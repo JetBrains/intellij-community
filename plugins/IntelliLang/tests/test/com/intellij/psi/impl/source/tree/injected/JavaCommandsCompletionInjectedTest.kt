@@ -167,6 +167,43 @@ class JavaCommandsCompletionInjectedTest : LightFixtureCompletionTestCase() {
     """.trimIndent(), (preview as IntentionPreviewInfo.CustomDiff).modifiedText())
   }
 
+  fun testCastPostfixPreviewTemporaryEnabled() {
+    // language="JAVA"
+    val psiFile = myFixture.configureByText(JavaFileType.INSTANCE, """
+      class Hello {
+        String aaa = ""${'"'}
+        import java.util.List;
+        class A {
+            void a(Object o, List<String> a, String[] b) {
+                o.cast<caret>
+            }
+        }""${'"'};
+      }
+      """.trimIndent())
+    LiveTemplateCompletionContributor.setShowTemplatesInTests(true, getTestRootDisposable())
+    TemplateManagerImpl.setTemplateTesting(getTestRootDisposable())
+    val textBlock = PsiTreeUtil.getParentOfType(psiFile.findElementAt(editor.caretModel.offset), PsiLanguageInjectionHost::class.java)
+    val temporaryPlacesRegistry = TemporaryPlacesRegistry.getInstance(project)
+    temporaryPlacesRegistry.addHost(textBlock, InjectedLanguage.create(JavaLanguage.INSTANCE.id))
+    val elements = myFixture.completeBasic()
+    val item = elements.first { element -> element.lookupString.contains("cast", ignoreCase = true) }
+      .`as`(LookupElementCustomPreviewHolder::class.java)
+    assertNotNull(item)
+    val preview = item!!.preview(ActionContext.from(myFixture.editor, myFixture.file))
+    assertTrue(preview is IntentionPreviewInfo.CustomDiff)
+    assertEquals("""
+      class Hello {
+        String aaa = ""${'"'}
+        import java.util.List;
+        class A {
+            void a(Object o, List<String> a, String[] b) {
+                (() o)
+            }
+        }""${'"'};
+      }
+    """.trimIndent(), (preview as IntentionPreviewInfo.CustomDiff).modifiedText())
+  }
+
   fun testForiPostfixPreview() {
     TemplateManagerImpl.setTemplateTesting(getTestRootDisposable())
     LiveTemplateCompletionContributor.setShowTemplatesInTests(true, getTestRootDisposable())

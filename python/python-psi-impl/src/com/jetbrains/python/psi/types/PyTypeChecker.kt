@@ -614,7 +614,8 @@ object PyTypeChecker {
     if (!safeActual.isUnknown) {
       val type = if (constraints.isEmpty())
         // temporary special casing to avoid Literal problems PY-90366
-        if (context.literalInference) safeActual else PyLiteralType.upcastLiteralToClass(safeActual)
+        if (isWidenBoundsCase(expected, context.context)) PyLiteralType.upcastLiteralToClass(safeActual)
+        else safeActual
       else constraints[matchedConstraintIndex]
       context.mySubstitutions.putTypeVar(expected, Ref(type), KeyImpl)
     }
@@ -635,9 +636,23 @@ object PyTypeChecker {
       val substitution = if (expected.isDefinition) selfType.toClass() else selfType.toInstance()
       return match(substitution, actual, context).orElse(false)!!
     }
-    if (actual !is PySelfType) return false
+    if (actual !is PySelfType) {
+      // A final class has no subclass, so `Self` in it denotes the class itself. A class with own type parameters
+      // is excluded: `Self` then denotes the class with those parameters, which the bare scope type cannot express.
+      return PyTypingTypeProvider.isFinalClass(expected.pyClass, context.context) &&
+             !hasOwnTypeParameters(expected.pyClass, context.context) &&
+             match(expected.scopeClassType, actual, context).orElse(false)!!
+    }
     return expected.isDefinition == actual.isDefinition &&
            match(expected.scopeClassType, actual.scopeClassType, context).orElse(false)!!
+  }
+
+  /**
+   * Returns true if and only if [cls] declares its own type parameters. A class that only specializes
+   * a generic ancestor, for example `class C(list[int])`, declares none.
+   */
+  private fun hasOwnTypeParameters(cls: PyClass, context: TypeEvalContext): Boolean {
+    return PyTypeProvider.EP_NAME.extensionList.any { it.getGenericType(cls, context) != null }
   }
 
   private fun convertToClass(type: PyType?): PyType? {
@@ -1009,7 +1024,7 @@ object PyTypeChecker {
     // It should be equivalent to replacing Self in the protocol with the Foo class we're matching it with.
     val protocolSubstitutions = GenericSubstitutions()
     protocolSubstitutions.selfType = actual.toInstance()
-    val protocolContext = MatchContext(matchContext.context, protocolSubstitutions, matchContext.reversedSubstitutions, matchContext.literalInference)
+    val protocolContext = MatchContext(matchContext.context, protocolSubstitutions, matchContext.reversedSubstitutions)
     protocolContext.diagnostics = matchContext.diagnostics
     protocolContext.anchor = matchContext.anchor
 
@@ -1149,21 +1164,43 @@ object PyTypeChecker {
 
   /**
    * Binds TypeVars from the self parameter annotation of protocol member to [classType].
+   * For an instance, it also replaces `Self` in the member with [classType].
    */
   private fun substituteSelfInProtocolMember(classType: PyClassType, elementType: PyType?, context: TypeEvalContext): PyType? {
     if (elementType !is PyCallableType) return elementType
     val parameters = elementType.getParameters(context)
     if (parameters.isNullOrEmpty() || !parameters.first().isSelf) return elementType
     val selfParamType = parameters.first().getType(context) ?: return elementType
+    if (selfParamType is PySelfType) {
+      // A class object keeps its `Self`. Resolving it breaks the match of a class object against a `__call__` protocol.
+      if (classType.isDefinition) return elementType
+      // Without another `Self`, the member needs no substitution and keeps its function type
+      if (!hasSelfOutsideSelfParameter(elementType, parameters, context)) return elementType
+    }
     val selfSubstitutions = GenericSubstitutions()
+    if (!classType.isDefinition) {
+      selfSubstitutions.selfType = classType
+    }
 
-    /**
-     * Note: intentionally does not propagate [literalInference] into the self-binding sub-context;
-     * binding `self` is a separate concern from the conversion of [convertToType], so this match keeps the widening default.
-     */
-    val selfMatchContext = MatchContext(context, selfSubstitutions, false)
-    if (!match(selfParamType, classType, selfMatchContext).orElse(true)) return elementType
+    // An unannotated `self` has the `Self` type. It binds no type variable, so the self match is skipped.
+    if (selfParamType !is PySelfType) {
+      /**
+       * Note: intentionally does not propagate [literalInference] into the self-binding sub-context;
+       * binding `self` is a separate concern from the conversion of [convertToType], so this match keeps the widening default.
+       */
+      val selfMatchContext = MatchContext(context, selfSubstitutions, false)
+      if (!match(selfParamType, classType, selfMatchContext).orElse(true)) return elementType
+    }
     return substitute(elementType, selfSubstitutions, context) as? PyCallableType ?: elementType
+  }
+
+  private fun hasSelfOutsideSelfParameter(
+    callable: PyCallableType,
+    parameters: List<PyCallableParameter>,
+    context: TypeEvalContext,
+  ): Boolean {
+    return callable.getReturnType(context).collectGenerics(context).self != null ||
+           parameters.asSequence().drop(1).any { it.getType(context).collectGenerics(context).self != null }
   }
 
   // https://typing.python.org/en/latest/spec/tuples.html#type-compatibility-rules
@@ -1518,12 +1555,20 @@ object PyTypeChecker {
           }
           else -> {
             var elementTypes = classType.typeArguments
-            if (classType is PyTupleType && !classType.isHomogeneous) {
-              val unionTypes = classType.typeArguments.flatMap { et -> if (et is PyUnpackedTupleType) et.elementTypes else listOf(et) }
-              elementTypes = listOf(PyUnionType.union(unionTypes))
+            var typeParameters = definitionTypeParameters
+
+            if (shouldExpandElementwiseCollectionType(classType)) {
+              /** treat tuples as `class tuple[_T_co#1, _T_co#2, ..., _T_co#n](Sequence[_T_co]): ...`. @see [expandTupleTypeParameters]. */
+              val actualArguments = classType.typeArguments - definitionTypeParameters
+              val expandedTypeParameters = expandTupleTypeParameters(definitionTypeParameters, actualArguments.size)
+              if (expandedTypeParameters != null) {
+                val unionTypes = actualArguments.flatMap { et -> if (et is PyUnpackedTupleType) et.elementTypes else listOf(et) }
+                elementTypes = listOf(PyUnionType.union(unionTypes)) + actualArguments
+                typeParameters = definitionTypeParameters + expandedTypeParameters
+              }
             }
             mapTypeParametersToSubstitutions(
-              result, definitionTypeParameters, elementTypes,
+              result, typeParameters, elementTypes,
               PyTypeParameterMapping.Option.MAP_UNMATCHED_EXPECTED_TYPES_TO_ANY
             )
           }
@@ -1532,6 +1577,48 @@ object PyTypeChecker {
       if (result.typeVars.isNotEmpty() || result.typeVarTuples.isNotEmpty() || result.paramSpecs.isNotEmpty()) {
         return result
       }
+    }
+    return result
+  }
+
+  /** @see [expandTupleTypeParameters] */
+  private fun shouldExpandElementwiseCollectionType(classType: PyClassType): Boolean {
+    if (classType is PyTupleType) {
+      return !classType.isHomogeneous
+    }
+    return false
+  }
+
+  /**
+   * Creates [size] synthetic copies of the single type variable in [definitionTypeParameters].
+   * Each copy gets the name `"<name>#<index>"` to keep the copies distinct. Returns null when the expansion is not possible.
+   *
+   * Note that Python tuple types are defined as `class tuple(Sequence[_T_co]): ...`. This models the upwards type hierarchy.
+   * However, tuples can be used as `tuple[int, str]` which is not represented by that definition. The expansion will create additional
+   * type variables for tuples that can be roughly understood as `class tuple[_T_co#1, _T_co#2](Sequence[_T_co]): ...`
+   * with `_T_co = _T_co#1 | _T_co#2 | ... | _T_co#n`.
+   *
+   * Also note the explanations at the use-site of expanded type parameters: [ConstraintReducer.subtract]
+   */
+  internal fun expandTupleTypeParameters(definitionTypeParameters: List<PyType?>, size: Int): List<PyType?>? {
+    if (definitionTypeParameters.size != 1 || size <= 1) {
+      return null
+    }
+    val typeVar = definitionTypeParameters.single() as? PyTypeVarType ?: return null
+    val result = ArrayList<PyType?>(size)
+    for (index in 1..size) {
+      result.add(
+        @Suppress("UNCHECKED_CAST") // cast is necessary to select the correct constructor
+        PyTypeVarTypeImpl(
+          "${typeVar.name}#$index",
+          typeVar.constraints,
+          typeVar.bound,
+          typeVar.defaultType as Ref<PyType>?,
+          typeVar.variance
+        )
+          .withScopeOwner(typeVar.scopeOwner)
+          .withDeclarationElement(typeVar.declarationElement)
+      )
     }
     return result
   }
@@ -1986,29 +2073,6 @@ object PyTypeChecker {
     substitutions: GenericSubstitutions,
     context: TypeEvalContext,
   ): PyType? {
-    return substituteWithOptions(type, substitutions, true, context)
-  }
-
-  /**
-   * All type parameters in the given type are substituted according to the given substitutions mapping.
-   * No other type modifications are performed.
-   */
-  @JvmStatic
-  fun substitutePlainly(
-    type: PyType?,
-    substitutions: GenericSubstitutions,
-    context: TypeEvalContext,
-  ): PyType? {
-    return substituteWithOptions(type, substitutions, false, context)
-  }
-
-  @JvmStatic
-  fun substituteWithOptions(
-    type: PyType?,
-    substitutions: GenericSubstitutions,
-    widenTupleLiterals: Boolean,
-    context: TypeEvalContext,
-  ): PyType? {
     return PyCloningTypeVisitor.clone(type, object : PyCloningTypeVisitor(context) {
       // Type variables currently being expanded along the active substitution path. A substitution map can be
       // mutually recursive (e.g. {T: S, S: T}) or self-referential (e.g. {T: list[T]}), and the transformations
@@ -2157,8 +2221,7 @@ object PyTypeChecker {
           classType.pyClass, classType.isDefinition,
           classType.typeArguments.flatMap { typeArg ->
             val clonedTypeArg = clone<PyType>(typeArg)
-            val clonedAndWidenedTypeArg = if (widenTupleLiterals) clonedTypeArg.widenTupleLiterals() else clonedTypeArg
-            flattenUnpackedTuple(clonedAndWidenedTypeArg)
+            flattenUnpackedTuple(clonedTypeArg)
           }
         )
         return if (classType is PyClassTypeImpl) classType.withUserDataCopy(clonedClassType) else clonedClassType
@@ -2633,7 +2696,7 @@ object PyTypeChecker {
   @JvmStatic
   @ApiStatus.Internal
   fun convertToType(type: PyType?, superType: PyClassType, context: TypeEvalContext): PyType? {
-    val matchContext = MatchContext(context, GenericSubstitutions(), false, literalInference=true)
+    val matchContext = MatchContext(context, GenericSubstitutions(), false)
     val matched = match(superType, type, matchContext)
     if (matched.orElse(false)) {
       // There is a tricky problem with handling type parameter binds to Any. Namely, during matching list[Any] to Iterable[T@Iterable],
@@ -2844,15 +2907,6 @@ object PyTypeChecker {
     val context: TypeEvalContext,
     val mySubstitutions: GenericSubstitutions,
     val reversedSubstitutions: Boolean,
-    /**
-     * When `true`, a type variable inferred from an actual value keeps that value's literal type (e.g. `Literal[1]`);
-     * when `false` (the default), the literal is widened to its class (e.g. `int`) at the bind site.
-     *
-     * It is enabled only by [convertToType] (upcasting/conversion: iteration, `Sequence`/`Mapping` patterns,
-     * with-items), where preserving literals is desirable. Regular generic-call inference uses the default `false`
-     * and relies on widening here.
-     */
-    val literalInference: Boolean = false,
   ) {
     /**
      * `null` during normal (cheap) matching, so it adds no overhead. Non-null only while
@@ -2873,12 +2927,12 @@ object PyTypeChecker {
     var anchor: PsiElement? = null
 
     fun reverseSubstitutions(): MatchContext {
-      return MatchContext(context, mySubstitutions, !reversedSubstitutions, literalInference)
+      return MatchContext(context, mySubstitutions, !reversedSubstitutions)
         .also { it.diagnostics = diagnostics; it.anchor = anchor }
     }
 
     fun resetSubstitutions(): MatchContext {
-      return MatchContext(context, mySubstitutions, false, literalInference)
+      return MatchContext(context, mySubstitutions, false)
         .also { it.diagnostics = diagnostics; it.anchor = anchor }
     }
   }

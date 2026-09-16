@@ -17,11 +17,16 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiDeclarationStatement;
+import com.intellij.psi.PsiDiamondType;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiEnumConstantInitializer;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNewExpression;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
@@ -126,6 +131,33 @@ public final class ClassUtil {
       public void visitElement(@NotNull PsiElement element) {
         if (result[0] == null) {
           super.visitElement(element);
+        }
+      }
+
+      @Override
+      public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) {
+        if (jvmCompatible && name == null && aClass != containingClass && !(aClass instanceof PsiEnumConstantInitializer)) {
+          PsiExpressionList arguments = aClass.getArgumentList();
+          if (arguments != null) {
+            for (PsiExpression argument : arguments.getExpressions()) {
+              if (argument instanceof PsiNewExpression) {
+                PsiNewExpression expression = (PsiNewExpression)argument;
+                PsiAnonymousClass argumentClass = expression.getAnonymousClass();
+                if (argumentClass != null && !PsiDiamondType.hasDiamond(expression)) {
+                  argumentClass.accept(this);
+                }
+              }
+            }
+          }
+        }
+        super.visitAnonymousClass(aClass);
+      }
+
+      @Override
+      public void visitExpressionList(@NotNull PsiExpressionList list) {
+        if (!jvmCompatible || !(containingClass instanceof PsiAnonymousClass) ||
+            list != ((PsiAnonymousClass)containingClass).getArgumentList()) {
+          super.visitExpressionList(list);
         }
       }
 
@@ -302,7 +334,7 @@ public final class ClassUtil {
    */
   public static @Nullable @NlsSafe String getBinaryClassName(@NotNull PsiClass aClass) {
     if (PsiUtil.isLocalOrAnonymousClass(aClass)) {
-      PsiClass parentClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class);
+      PsiClass parentClass = PsiUtil.getContainingClass(aClass);
       if (parentClass == null) {
         return null;
       }

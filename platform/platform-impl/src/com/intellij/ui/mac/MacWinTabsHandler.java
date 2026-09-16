@@ -19,26 +19,29 @@ import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.ui.mac.foundation.MacUtil;
+import com.intellij.ui.mac.foundation.Selector;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import com.sun.jna.Callback;
-import com.sun.jna.Pointer;
-import kotlin.Unit;
 import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.JRootPane;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Rectangle;
 import java.awt.Window;
+import java.lang.foreign.MemorySegment;
+import java.lang.invoke.MethodHandle;
 import java.lang.reflect.Method;
+import java.util.UUID;
+import javax.swing.JComponent;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.JRootPane;
+
+import kotlin.Unit;
 
 /**
  * @author Alexander Lobas
@@ -52,7 +55,7 @@ public class MacWinTabsHandler {
   private final boolean myFrameAllowed;
 
   @SuppressWarnings("FieldCanBeLocal")
-  private static Callback myObserverCallback; // don't convert to local var
+  private static MethodHandle myObserverCallback;
   private static ID myObserverDelegate;
 
   public static @NotNull JComponent createAndInstallHandlerComponent(@NotNull JRootPane rootPane) {
@@ -321,19 +324,21 @@ public class MacWinTabsHandler {
     }
 
     if (myObserverDelegate == null) {
-      myObserverCallback = new Callback() {
+      var observerCallback = new Object() {
         @SuppressWarnings("unused")
-        public void callback(ID self, Pointer selector, ID keyPath, ID ofObject, ID change, Pointer context) {
+        public void callback(ID self, Selector selector, ID keyPath, ID ofObject, ID change, MemorySegment context) {
           ApplicationManager.getApplication().invokeLater(() -> updateTabBars(null));
         }
       };
-
-      ID delegateClass = Foundation.allocateObjcClassPair(Foundation.getObjcClass("NSObject"), "MyWindowTabGroupObserver");
+      myObserverCallback =
+        Foundation.callback(observerCallback, "callback", ID.class, Selector.class, ID.class, ID.class, ID.class, MemorySegment.class);
+      var className = "MyWindowTabGroupObserver_" + UUID.randomUUID().toString().replace("-", "");
+      ID delegateClass = Foundation.allocateObjcClassPair(Foundation.getObjcClass("NSObject"), className);
       Foundation.addMethod(delegateClass, Foundation.createSelector("observeValueForKeyPath:ofObject:change:context:"),
-                           myObserverCallback, "v*");
+                           myObserverCallback, "v@:@@@^v");
       Foundation.registerObjcClassPair(delegateClass);
 
-      myObserverDelegate = Foundation.invoke("MyWindowTabGroupObserver", "new");
+      myObserverDelegate = Foundation.invoke(delegateClass, "new");
     }
 
     Foundation.invoke(tabGroup, "addObserver:forKeyPath:options:context:", myObserverDelegate, Foundation.nsString("windows"), 0, ID.NIL);

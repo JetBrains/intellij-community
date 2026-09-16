@@ -10,11 +10,11 @@ import com.intellij.execution.filters.InputFilter;
 import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.execution.process.BaseProcessHandler;
 import com.intellij.execution.process.ColoredProcessHandler;
+import com.intellij.execution.process.LocalProcessService;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.process.ProcessOutputType;
-import com.intellij.execution.process.PtyBasedProcess;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ObservableConsoleView;
@@ -50,8 +50,6 @@ import com.jediterm.terminal.model.StyleState;
 import com.jediterm.terminal.model.TerminalTextBuffer;
 import com.jediterm.terminal.ui.settings.SettingsProvider;
 import com.jediterm.terminal.util.CharUtils;
-import com.pty4j.PtyProcess;
-import com.pty4j.windows.conpty.WinConPtyProcess;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,6 +65,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.terminal.TerminalExecutionConsoleBuilderKt.DEFAULT_CONVERT_LF_TO_CRLF_FOR_PROCESS_WITHOUT_PTY;
 import static com.intellij.terminal.TerminalExecutionConsoleBuilderKt.DEFAULT_INITIAL_TERM_SIZE;
+import static com.intellij.terminal.TerminalExecutionConsoleBuilderKt.DEFAULT_KEEP_LAST_LINE_ON_CLEAR;
 import static com.intellij.terminal.TerminalExecutionConsoleBuilderKt.createDefaultConsoleSettingsProvider;
 
 public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleView {
@@ -82,6 +81,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
 
   private boolean myEnterKeyDefaultCodeEnabled = true;
   private boolean myConvertLfToCrlfForNonPtyProcess = DEFAULT_CONVERT_LF_TO_CRLF_FOR_PROCESS_WITHOUT_PTY;
+  private final boolean myKeepLastLineOnClear;
   private final AtomicBoolean myFirstOutput = new AtomicBoolean(false);
 
   /**
@@ -128,7 +128,8 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
     @NotNull JBTerminalSystemSettingsProviderBase settingsProvider,
     @Nullable ProcessHandler processHandler
   ) {
-    this(project, initialTermSize, settingsProvider, DEFAULT_CONVERT_LF_TO_CRLF_FOR_PROCESS_WITHOUT_PTY, processHandler);
+    this(project, initialTermSize, settingsProvider, DEFAULT_CONVERT_LF_TO_CRLF_FOR_PROCESS_WITHOUT_PTY,
+         DEFAULT_KEEP_LAST_LINE_ON_CLEAR, processHandler);
   }
 
   TerminalExecutionConsole(
@@ -136,9 +137,11 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
     @NotNull TermSize initialTermSize,
     @NotNull JBTerminalSystemSettingsProviderBase settingsProvider,
     boolean convertLfToCrlfForNonPtyProcess,
+    boolean keepLastLineOnClear,
     @Nullable ProcessHandler processHandler
   ) {
     myProject = project;
+    myKeepLastLineOnClear = keepLastLineOnClear;
     myDataStream = new AppendableTerminalDataStream();
     myTerminalWidget = new ConsoleTerminalWidget(project, initialTermSize.getColumns(), initialTermSize.getRows(), settingsProvider);
     myInputMessageFilter = ConsoleViewUtil.computeInputFilter(this, project, GlobalSearchScope.allScope(project));
@@ -170,10 +173,15 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
 
     if (myFirstOutput.compareAndSet(false, true) &&
         contentType == ConsoleViewContentType.SYSTEM_OUTPUT &&
-        getProcess() instanceof WinConPtyProcess winConPtyProcess &&
-        !winConPtyProcess.isConPtyInheritCursor()) {
+        shouldResetConPtyCursor()) {
       moveScreenToScrollbackBufferAndShowAllOutput();
     }
+  }
+
+  private boolean shouldResetConPtyCursor() {
+    var process = getProcess();
+    var control = process == null ? null : LocalProcessService.getInstance().getPtyControl(process);
+    return control != null && control.isConPty() && !control.isConPtyInheritCursor();
   }
 
   /**
@@ -430,9 +438,8 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
 
   private static boolean isProcessWithPty(@NotNull ProcessHandler processHandler) {
     if (processHandler instanceof BaseProcessHandler<?> baseProcessHandler) {
-      Process process = baseProcessHandler.getProcess();
-      return process instanceof PtyProcess ||
-             (process instanceof PtyBasedProcess ptyBasedProcess && ptyBasedProcess.hasPty());
+      var process = baseProcessHandler.getProcess();
+      return LocalProcessService.getInstance().getPtyControl(process) != null;
     }
     return false;
   }
@@ -528,7 +535,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
       JBTerminalPanel panel = new JBTerminalPanel((JBTerminalSystemSettingsProviderBase)settingsProvider, textBuffer, styleState) {
         @Override
         public void clearBuffer() {
-          super.clearBuffer(false);
+          super.clearBuffer(myKeepLastLineOnClear);
         }
       };
 
@@ -542,8 +549,10 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
         @Override
         public byte[] getCode(int key, int modifiers) {
           if (key == KeyEvent.VK_ENTER && modifiers == 0 && myEnterKeyDefaultCodeEnabled) {
-            PtyProcess process = ObjectUtils.tryCast(getProcess(), PtyProcess.class);
-            return process != null ? new byte[]{process.getEnterKeyCode()} : LineSeparator.CR.getSeparatorBytes();
+            var process = getProcess();
+            var control = process == null ? null : LocalProcessService.getInstance().getPtyControl(process);
+            var enterKeyCode = control == null ? null : control.getEnterKeyCode();
+            return enterKeyCode != null ? new byte[]{enterKeyCode} : LineSeparator.CR.getSeparatorBytes();
           }
           return super.getCode(key, modifiers);
         }

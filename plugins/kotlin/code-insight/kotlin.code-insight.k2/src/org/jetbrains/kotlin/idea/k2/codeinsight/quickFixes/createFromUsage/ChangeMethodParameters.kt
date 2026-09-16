@@ -29,6 +29,9 @@ import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.session.useSiteSession
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
+import org.jetbrains.kotlin.idea.base.psi.appendParameter
+import org.jetbrains.kotlin.idea.base.psi.deleteParameter
+import org.jetbrains.kotlin.idea.base.psi.insertParameterBefore
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreatePropertyFromUsageBuilder.addAnnotationEntry
@@ -190,9 +193,9 @@ internal class ChangeMethodParameters(
                     }
                     val anchor = action.beforeAnchor
                     if (anchor != null) {
-                        valueParameterList.addParameterBefore(parameter, anchor)
+                        valueParameterList.insertParameterBefore(parameter, anchor)
                     } else {
-                        valueParameterList.addParameter(parameter)
+                        valueParameterList.appendParameter(parameter)
                     }
                 }
 
@@ -201,7 +204,7 @@ internal class ChangeMethodParameters(
                 }
 
                 is ParameterModification.Remove -> {
-                    valueParameterList.removeParameter(action.ktParameter)
+                    valueParameterList.deleteParameter(action.ktParameter)
                 }
             }
         }

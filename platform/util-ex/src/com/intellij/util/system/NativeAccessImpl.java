@@ -32,7 +32,7 @@ public final class NativeAccessImpl extends NativeAccess {
     }
     try {
       // this key is undocumented but mentioned heavily all over the Internet
-      String value = WindowsRegistry.getString(WindowsRegistry.Hive.LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", "CurrentBuildNumber");
+      var value = WindowsRegistry.getString(WindowsRegistry.Hive.LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", "CurrentBuildNumber");
       return value != null ? Long.valueOf(value) : null;
     }
     catch (Throwable t) {
@@ -50,7 +50,7 @@ public final class NativeAccessImpl extends NativeAccess {
     try {
       // https://developer.apple.com/documentation/apple-silicon/about-the-rosetta-translation-environment
       // the key is absent on an Intel Mac
-      Integer translated = Sysctl.intByName("sysctl.proc_translated");
+      var translated = Sysctl.intByName("sysctl.proc_translated");
       return translated != null && translated == 1;
     }
     catch (Throwable t) {
@@ -80,7 +80,7 @@ public final class NativeAccessImpl extends NativeAccess {
     if (!caseSensitivityAvailable) {
       return FileAttributes.CaseSensitivity.UNKNOWN;
     }
-    String path = directory.toAbsolutePath().toString();
+    var path = directory.toAbsolutePath().toString();
     try {
       if (OS.CURRENT == OS.Windows) {
         // FILE_CASE_SENSITIVE_INFORMATION needs Windows 10, and the query opens the directory by a DOS path
@@ -122,8 +122,8 @@ public final class NativeAccessImpl extends NativeAccess {
    * initialize, or a later call found it in that state. Every other failure belongs to one path.
    */
   private static boolean isBindFailure(@NotNull Throwable t) {
-    Throwable cause = t;
-    for (int depth = 0; cause != null && depth < 10; depth++) {
+    var cause = t;
+    for (var depth = 0; cause != null && depth < 10; depth++) {
       if (cause instanceof LinkageError) {
         return true;
       }

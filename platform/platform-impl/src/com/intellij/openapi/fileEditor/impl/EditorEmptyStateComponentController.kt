@@ -572,7 +572,9 @@ internal class EditorEmptyStateComponentController(
         if (!isCreationValidOnUiThread(generation, kind)) {
           break
         }
+        var fullContent = false
         val component = try {
+          fullContent = provider.isFullContent(splitters)
           val uiBuildTime = EditorEmptyStateUiBuildTime()
           val startedAt = TimeSource.Monotonic.markNow()
           val result = withContext(uiBuildTime) { provider.createComponent(splitters) }
@@ -593,7 +595,7 @@ internal class EditorEmptyStateComponentController(
           null
         }
         if (component != null) {
-          entries.add(EditorEmptyStateComponentEntry(provider, component, kind, pluginDescriptor))
+          entries.add(EditorEmptyStateComponentEntry(provider, component, fullContent, kind, pluginDescriptor))
         }
       }
       return entries
@@ -616,7 +618,8 @@ internal class EditorEmptyStateComponentController(
     // an editor there — AIR's composer hosts an `AirPromptEditorTextField`, whose `addNotify` runs `EditorTextField.initEditor`. The
     // lock is taken here, where the need is, so that it is stated rather than inherited from whichever caller arrives.
     WriteIntentReadAction.run {
-      val host = EditorEmptyStateComponentHost(fillContent = entries.all { it.kind == EditorEmptyStateComponentProvider.Kind.FALLBACK })
+      val host = EditorEmptyStateComponentHost(fillContent = entries.all { it.kind == EditorEmptyStateComponentProvider.Kind.FALLBACK },
+                                               fillWidth = entries.any { it.fullContent })
       componentHost = host
       componentEntries = entries
       host.setComponents(entries.map { it.component })
@@ -711,6 +714,7 @@ private data class EditorEmptyStateProviderEntry(
 private data class EditorEmptyStateComponentEntry(
   val provider: EditorEmptyStateComponentProvider,
   val component: JComponent,
+  val fullContent: Boolean,
   val kind: EditorEmptyStateComponentProvider.Kind,
   val pluginDescriptor: PluginDescriptor,
 )
@@ -781,7 +785,9 @@ internal class EditorsSplittersLayout : LayoutManager2 {
 }
 
 @ApiStatus.Internal
-class EditorEmptyStateComponentHost(private val fillContent: Boolean) : JPanel() {
+class EditorEmptyStateComponentHost(fillContent: Boolean, val fillWidth: Boolean) : JPanel() {
+  private val fillContent = fillContent || fillWidth
+
   private val contentPanel = JPanel().apply {
     isOpaque = false
     layout = BoxLayout(this, BoxLayout.Y_AXIS)
@@ -789,7 +795,7 @@ class EditorEmptyStateComponentHost(private val fillContent: Boolean) : JPanel()
 
   init {
     isOpaque = false
-    if (fillContent) {
+    if (this.fillContent) {
       layout = BorderLayout()
     }
     else {

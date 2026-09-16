@@ -41,7 +41,7 @@ internal class PushLogChangesBrowser(project: Project,
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun setCommitsToDisplay(newCommitNodes: List<CommitNode>) {
     changesTreeModel.commitNodes = newCommitNodes
     viewer.rebuildTree()

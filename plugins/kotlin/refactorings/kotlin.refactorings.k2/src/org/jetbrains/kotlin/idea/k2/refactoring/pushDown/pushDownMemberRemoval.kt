@@ -8,6 +8,9 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaSubstitutor
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
+import org.jetbrains.kotlin.idea.base.psi.addModifierKeyword
+import org.jetbrains.kotlin.idea.base.psi.removeSuperType
+import org.jetbrains.kotlin.idea.base.psi.setCallableTypeReference
 import org.jetbrains.kotlin.idea.k2.refactoring.pullUp.computeAndRenderReturnType
 import org.jetbrains.kotlin.idea.k2.refactoring.pullUp.makeAbstract
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo
@@ -45,10 +48,10 @@ private fun createRemoveCallableMemberAction(
 
         return RemovalAction {
             if (member.hasModifier(KtTokens.PRIVATE_KEYWORD)) {
-                member.addModifier(KtTokens.PROTECTED_KEYWORD)
+                member.addModifierKeyword(KtTokens.PROTECTED_KEYWORD)
             }
             if (renderedType != null) {
-                member.typeReference = KtPsiFactory(member.project).createType(renderedType)
+                member.setCallableTypeReference(KtPsiFactory(member.project).createType(renderedType))
             }
             makeAbstract(member, sourceClass)
             member.typeReference?.let { typeReference ->
@@ -72,7 +75,7 @@ private fun createRemoveClassLikeMemberAction(
             member.symbol as KaClassSymbol,
         ) ?: return null
 
-        RemovalAction { sourceClass.removeSuperTypeListEntry(superTypeListEntry) }
+        RemovalAction { sourceClass.removeSuperType(superTypeListEntry) }
     } else {
         RemovalAction { member.delete() }
     }

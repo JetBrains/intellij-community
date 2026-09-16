@@ -36,6 +36,8 @@ import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.platform.diagnostic.telemetry.Scope
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.util.ConcurrencyUtil
+import com.intellij.util.IntelliJCoroutinesFacade
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.AppScheduledExecutorService
@@ -86,6 +88,7 @@ import kotlin.io.path.getLastModifiedTime
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.name
 import kotlin.io.path.useDirectoryEntries
+import kotlin.math.min
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
@@ -97,6 +100,7 @@ private const val TOLERABLE_LATENCY = 100L
 private const val THREAD_DUMPS_PREFIX = "threadDumps-"
 private const val DURATION_FILE_NAME = ".duration"
 private const val PID_FILE_NAME = ".pid"
+private const val MAXIMUM_REQUESTED_CHECKS = 3600
 private val ideStartTime = ZonedDateTime.now()
 
 private val EP_NAME = ExtensionPointName<FreezeListener>("com.intellij.diagnostic.freezeListener")
@@ -125,6 +129,9 @@ internal class PerformanceWatcherImpl(providedScope: CoroutineScope) : Performan
   }
   private val pooledUnresponsiveIntervalLazy: RegistryValue by lazy {
     RegistryManager.getInstance().get("performance.watcher.pooled.unresponsive.interval.ms")
+  }
+  private val pooledCompensationIntervalLazy: RegistryValue by lazy {
+    RegistryManager.getInstance().get("performance.watcher.pooled.compensation.interval.ms")
   }
   private val maxDumpDurationLazy: RegistryValue by lazy {
     RegistryManager.getInstance().get("performance.watcher.maxDumpDuration.ms")
@@ -160,7 +167,7 @@ internal class PerformanceWatcherImpl(providedScope: CoroutineScope) : Performan
     }
 
     (Toolkit.getDefaultToolkit() as? SunToolkit)?.addModalityListener(object : ModalityListener {
-      override fun modalityPushed(ev: ModalityEvent) { }
+      override fun modalityPushed(ev: ModalityEvent) {}
 
       override fun modalityPopped(ev: ModalityEvent) {
         stopCurrentTaskAndReEmit(FreezeCheckerTask(System.nanoTime()))
@@ -176,8 +183,14 @@ internal class PerformanceWatcherImpl(providedScope: CoroutineScope) : Performan
     startEdtSampling()
 
     if (Registry.`is`("performance.watcher.pooled.enabled", true)) {
-      CoroutineDispatcherWatcher(Dispatchers.Default, coroutineScope, ::pooledUnresponsiveInterval).watchDispatcher()
-      CoroutineDispatcherWatcher(Dispatchers.IO, coroutineScope, ::pooledUnresponsiveInterval).watchDispatcher()
+      CoroutineDispatcherWatcher(Dispatchers.Default,
+                                 coroutineScope,
+                                 ::calculatePooledUnresponsiveInterval,
+                                 pooledCompensationInterval).watchDispatcher()
+      CoroutineDispatcherWatcher(Dispatchers.IO,
+                                 coroutineScope,
+                                 ::calculatePooledUnresponsiveInterval,
+                                 pooledCompensationInterval).watchDispatcher()
     }
   }
 
@@ -323,6 +336,30 @@ internal class PerformanceWatcherImpl(providedScope: CoroutineScope) : Performan
       val value = pooledUnresponsiveIntervalLazy.asInteger()
       return if (value <= 0) 0 else value.coerceIn(500, 180000)
     }
+
+  private val pooledCompensationInterval: Int
+    get() {
+      val value = pooledCompensationIntervalLazy.asInteger()
+      return value.coerceIn(500, 25000)
+    }
+
+  private fun calculatePooledUnresponsiveInterval(dumpCount: Int): Int {
+    if (dumpCount <= 0) {
+      // Don't forget to do thread dump before compensation started
+      return if (Registry.`is`("performance.watcher.pooled.compensation.enabled", false)) {
+        min(pooledUnresponsiveInterval, pooledCompensationInterval)
+      } else {
+        pooledUnresponsiveInterval
+      }
+    }
+
+    val useProgressiveInterval = Registry.`is`("performance.watcher.pooled.progressive.interval", true)
+    return when {
+      !useProgressiveInterval -> pooledUnresponsiveInterval
+      dumpCount < 3 -> pooledUnresponsiveInterval
+      else -> pooledUnresponsiveInterval * dumpCount.coerceAtMost(40)
+    }
+  }
 
   override fun smokeAndMirrors(name: @NonNls String): AccessToken {
     if (!Registry.`is`("performance.watcher.enable.smoke.and.mirrors.compensation", true)) {
@@ -609,20 +646,42 @@ private suspend fun <T : Any> ExtensionPointName<T>.forEachExtensionSafeAsync(ap
 private class CoroutineDispatcherWatcher(
   private val dispatcher: CoroutineDispatcher,
   private val coroutineScope: CoroutineScope,
-  private val getUnresponsiveIntervalMs: () -> Int,
+  getUnresponsiveIntervalMs: (dumpCount: Int) -> Int,
+  compensationIntervalMs: Int,
 ) {
   @Volatile
   private var lastSampleNs = System.nanoTime()
-  private var reportedDumpsCount = 0
+
+  private val threadDumper = PooledThreadDumper(dispatcher, getUnresponsiveIntervalMs)
+
+  private val parallelismCompensator = ParallelismCompensator(
+    pool = DefaultCompensatablePool(
+      dispatcher = dispatcher,
+      getLastSampleNs = { lastSampleNs },
+      unresponsiveIntervalMs = compensationIntervalMs.toLong(),
+    ),
+    maxGrantsAllowed = Registry.intValue("performance.watcher.pooled.compensation.max.grants", 100).coerceAtLeast(1),
+    baseChecksForRevoke = Registry.intValue("performance.watcher.pooled.compensation.checks.for.revoke", 5).coerceAtLeast(1),
+    minConsecutiveChecksToConfirmRevoke = Registry.intValue("performance.watcher.pooled.compensation.checks.to.confirm.revoke", 3)
+      .coerceAtLeast(1),
+  )
 
   fun watchDispatcher() {
-    startPooledThreadSampling()
-    startPooledThreadWatcher()
+    val samplingJob = startPooledThreadSampling()
+    val threadWatcherJob = if (Registry.`is`("performance.watcher.pooled.dump.threads.enabled")) {
+      startPooledThreadWatcher()
+    } else {
+      null
+    }
+    if (Registry.`is`("performance.watcher.pooled.compensation.enabled")) {
+      parallelismCompensator.start()
+    }
+    samplingJob.invokeOnCompletion { parallelismCompensator.shutdown(); threadWatcherJob?.cancel() }
   }
 
-  private fun startPooledThreadSampling() {
+  private fun startPooledThreadSampling(): Job {
     LOG.debug("$dispatcher thread sampling started")
-    coroutineScope.launchWithSafeContext(CoroutineName("$dispatcher sampling") + dispatcher) {
+    return coroutineScope.launchWithSafeContext(CoroutineName("$dispatcher sampling") + dispatcher) {
       try {
         while (true) {
           delay(pooledSamplingInterval.milliseconds)
@@ -635,40 +694,14 @@ private class CoroutineDispatcherWatcher(
     }
   }
 
-  private fun startPooledThreadWatcher() {
+  private fun startPooledThreadWatcher(): Job {
     LOG.debug("$dispatcher thread watcher started")
     @Suppress("OPT_IN_USAGE")
-    coroutineScope.launchWithSafeContext(CoroutineName("$dispatcher watcher") + blockingDispatcher) {
+    return coroutineScope.launchWithSafeContext(CoroutineName("$dispatcher watcher") + blockingDispatcher) {
       try {
-        var lastReportedNs = System.nanoTime()
-
         while (true) {
           delay(pooledSamplingInterval.milliseconds)
-
-          val useProgressiveInterval = Registry.`is`("performance.watcher.pooled.progressive.interval", true)
-          val baseUnresponsiveIntervalMs = getUnresponsiveIntervalMs()
-          val unresponsiveIntervalMs = when {
-            !useProgressiveInterval -> baseUnresponsiveIntervalMs
-            reportedDumpsCount < 3 -> baseUnresponsiveIntervalMs
-            else -> baseUnresponsiveIntervalMs * reportedDumpsCount.coerceAtMost(40)
-          }
-
-          if (TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - lastSampleNs) <= unresponsiveIntervalMs ||
-              TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - lastReportedNs) <= unresponsiveIntervalMs) {
-            continue
-          }
-
-          val maxDumps = Registry.intValue("performance.watcher.pooled.maximum.dumps", 10)
-          if (reportedDumpsCount < maxDumps || maxDumps == -1) {
-            val file = PerformanceWatcher.getInstance().dumpThreads("$dispatcher", true, true)
-            LOG.info("Thread pool exhaustion: ${dispatcher} is not responding for $unresponsiveIntervalMs ms." + if (file == null) "" else "; thread dump is saved to '$file'")
-          }
-          else {
-            LOG.info("Thread pool exhaustion: ${dispatcher} is not responding for $unresponsiveIntervalMs ms.")
-          }
-
-          lastReportedNs = System.nanoTime()
-          reportedDumpsCount++
+          threadDumper.dumpThreadsIfNeeded(lastSampleNs)
         }
       }
       finally {
@@ -677,14 +710,43 @@ private class CoroutineDispatcherWatcher(
     }
   }
 
-  private fun CoroutineScope.launchWithSafeContext(context: CoroutineContext, block: suspend () -> Unit) {
+  private fun CoroutineScope.launchWithSafeContext(context: CoroutineContext, block: suspend () -> Unit): Job {
     // See IJPL-234553
     // We keep the Job from application scope to get cancellation, but strip everything else that might influence the coroutine execution
     val effectiveContext = context + coroutineContext[Job]!!
     @Suppress("OPT_IN_USAGE")
-    GlobalScope.launch(effectiveContext) {
+    return GlobalScope.launch(effectiveContext) {
       block()
     }
+  }
+}
+
+private class PooledThreadDumper(
+  private val dispatcher: CoroutineDispatcher,
+  private val getUnresponsiveIntervalMs: (dumpCount: Int) -> Int,
+) {
+  private var reportedDumpsCount = 0
+  private var lastReportedNs = System.nanoTime()
+
+  fun dumpThreadsIfNeeded(lastSampleNs: Long) {
+    val unresponsiveIntervalMs = getUnresponsiveIntervalMs(reportedDumpsCount)
+
+    if (TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - lastSampleNs) <= unresponsiveIntervalMs ||
+        TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - lastReportedNs) <= unresponsiveIntervalMs) {
+      return
+    }
+
+    val maxDumps = Registry.intValue("performance.watcher.pooled.maximum.dumps", 10)
+    if (reportedDumpsCount < maxDumps || maxDumps == -1) {
+      val file = PerformanceWatcher.getInstance().dumpThreads("$dispatcher", true, true)
+      LOG.warn("Thread pool exhaustion: $dispatcher is not responding for $unresponsiveIntervalMs ms." + if (file == null) "" else "; thread dump is saved to '$file'")
+    }
+    else {
+      LOG.warn("Thread pool exhaustion: $dispatcher is not responding for $unresponsiveIntervalMs ms.")
+    }
+
+    lastReportedNs = System.nanoTime()
+    reportedDumpsCount++
   }
 }
 
@@ -742,6 +804,173 @@ private fun getFreezePlaceSuffix(task: PerformanceWatcherSamplingTask): String {
 
   val element = stacktraceCommonPart.first()
   return "-${sanitizeFileName(StringUtilRt.getShortName(element.className))}.${sanitizeFileName(element.methodName)}"
+}
+
+/**
+ * Abstracts the pool being watched by [ParallelismCompensator] so the compensation algorithm can be tested
+ * without a real dispatcher or real time passing.
+ *
+ * Implementations should override [toString] to identify the pool, since [ParallelismCompensator] uses it to
+ * name its watcher thread and log messages.
+ */
+internal interface CompensatablePool {
+  /** Waits at least [timeMs] and reports whether the pool was responsive during that interval. */
+  fun waitForStatus(timeMs: Long): Boolean
+
+  /**
+   * Grants one extra unit of parallelism to the pool for the duration of [block], if possible.
+   * [block] runs only when the grant actually succeeded; the extra unit is released once [block] returns.
+   */
+  fun withGrantedParallelism(block: () -> Unit)
+}
+
+/**
+ * Default [CompensatablePool] implementation that detects starvation in a dispatcher pool and temporarily increases
+ * its parallelism when needed.
+ *
+ *
+ * @param dispatcher the dispatcher whose pool is monitored
+ * @param getLastSampleNs returns the timestamp, in nanoseconds, of the latest successful dispatcher health check.
+ * This reuses the existing health-check coroutine managed by [CoroutineDispatcherWatcher] instead of submitting
+ * a separate probe coroutine.
+ * @param unresponsiveIntervalMs the interval, in milliseconds, after which the pool is considered unresponsive
+ */
+internal class DefaultCompensatablePool(
+  private val dispatcher: CoroutineDispatcher,
+  private val getLastSampleNs: () -> Long,
+  private val unresponsiveIntervalMs: Long,
+) : CompensatablePool {
+  override fun waitForStatus(timeMs: Long): Boolean {
+    // This function checks the pool's health using `getLastSampleNs`. The health-check coroutine is managed by
+    // [CoroutineDispatcherWatcher].
+    //
+    // Using an empty coroutine as a probe would cause cancelled probe coroutines to accumulate in a starved pool's queue.
+    // Cancelling a coroutine before it starts does not remove it from the queue; it is removed only when a worker dequeues it.
+    // When the pool is starved, no worker is available to drain these cancelled probes.
+
+    Thread.sleep(timeMs)
+    val now = System.nanoTime()
+    return TimeUnit.NANOSECONDS.toMillis(now - getLastSampleNs()) < unresponsiveIntervalMs
+  }
+
+  override fun withGrantedParallelism(block: () -> Unit) {
+    with(IntelliJCoroutinesFacade) {
+      dispatcher.withGrantedParallelism {
+        // Ignore unsuccessful grants to increase next timeout
+        block()
+      }
+    }
+  }
+
+  override fun toString(): String = dispatcher.toString()
+}
+
+/**
+ * Decides when [pool] needs additional parallelism and when it can release it.
+ *
+ * Run [parallelismCompensationLoop] on a dedicated [Thread].
+ * Each recursive call represents one currently granted unit: [parallelismCompensationLoop] recurses one level
+ * deeper every time it grants a unit, and returns to release it. The thread's stack depth therefore shows the
+ * current compensation level in a thread dump.
+ */
+internal class ParallelismCompensator(
+  private val pool: CompensatablePool,
+  private val maxGrantsAllowed: Int,
+  private val baseChecksForRevoke: Int,
+  private val minConsecutiveChecksToConfirmRevoke: Int,
+  private val samplingIntervalMs: Long = pooledSamplingInterval,
+) {
+  private val watcherExecutor = ConcurrencyUtil.newSingleThreadExecutor("$pool thread starvation compensation watcher")
+
+  fun start() {
+    // It is possible to implement parallelism compensation using coroutines, but it is favorable that
+    // information about added parallelism is directly visible in the thread dump: there is a dedicated thread, and the stack trace shows
+    // how many threads were added: every withGrantedParallelism in the stack trace means an additional thread.
+    // This is also one of the reasons why `parallelismCompensationLoop` is implemented with recursion
+    LOG.debug("$pool parallelism-compensation thread started")
+    watcherExecutor.execute {
+      try {
+        parallelismCompensationLoop()
+      }
+      catch (_: InterruptedException) {
+        // expected: watcherExecutor.shutdownNow() interrupts this thread on scope cancellation
+      }
+      finally {
+        LOG.debug("$pool parallelism-compensation thread stopped")
+      }
+    }
+  }
+
+  fun shutdown() = watcherExecutor.shutdownNow()
+
+  internal enum class ProbeResult { ALIVE, STALLED }
+
+  /**
+   * Repeatedly checks the pool's status until either [requestedSuccess] consecutive checks report it alive,
+   * or [requestedFails] consecutive checks report it stalled.
+   */
+  internal fun probe(requestedSuccess: Int = baseChecksForRevoke, requestedFails: Int = 1): ProbeResult {
+    var success = 0
+    var fails = 0
+    while (true) {
+      val alive = pool.waitForStatus(samplingIntervalMs)
+      if (alive) {
+        success++
+        fails = 0
+        if (success >= requestedSuccess) return ProbeResult.ALIVE
+      }
+      else {
+        success = 0
+        fails++
+        if (fails >= requestedFails) return ProbeResult.STALLED
+      }
+    }
+  }
+
+  /**
+   * To avoid over-flooding the pool with threads, each additional grant requires a proportionally longer stall:
+   * [requestedFails] doubles on every recursive descent. If no starvation is detected, the pool gradually
+   * returns to the initial parallelism -- one grant is released (the call returns) per successful [probe].
+   *
+   * To avoid a flapping problem (revoking a unit directly leads to starvation again), revoking is done through
+   * a revoke attempt: if starvation is detected right after a revoke, the unit is immediately re-granted, no
+   * matter how many units were already granted, and the next revoke attempt requires a doubled streak of
+   * successful checks.
+   */
+  internal fun parallelismCompensationLoop(requestedSuccess: Int = baseChecksForRevoke, requestedFails: Int = 1, depth: Int = 0) {
+    while (true) {
+      val status = probe(requestedSuccess, requestedFails)
+      when (status) {
+        ProbeResult.ALIVE -> {
+          // Nothing to release at the base level -- keep monitoring. A granted level (depth > 0) is released by
+          // returning, which unwinds the `withGrantedParallelism` block that called into this recursive frame.
+          if (depth > 0) {
+            LOG.warn("$pool: responsive for long enough -- revoking parallelism (granted: $depth -> ${depth - 1})")
+            return
+          }
+        }
+        ProbeResult.STALLED -> {
+          if (depth >= maxGrantsAllowed) continue
+          var recovered = false
+          var requestedSuccessForRecover = requestedSuccess
+          // There is flapping sitation possible:
+          // 1 granted thread fixes starvation -> so it has to be taken out -> and starvation again
+          // To cope with it revoking is done through a fast health check: if at least one failure happened grant parallelism back
+          // Also increase the amount of successful check needed to longer stay in responsive state
+          while (!recovered) {
+            LOG.warn("$pool: unresponsive for too long -- requesting additional parallelism (granted: $depth -> ${depth + 1})")
+            pool.withGrantedParallelism {
+              parallelismCompensationLoop(requestedSuccessForRecover,
+                                          (requestedFails * 2).coerceAtMost(MAXIMUM_REQUESTED_CHECKS),
+                                          depth + 1)
+            }
+            requestedSuccessForRecover = (requestedSuccessForRecover * 2).coerceAtMost(MAXIMUM_REQUESTED_CHECKS)
+            recovered = probe(minConsecutiveChecksToConfirmRevoke, 1) == ProbeResult.ALIVE
+          }
+        }
+      }
+    }
+  }
 }
 
 @Suppress("BlockingMethodInNonBlockingContext")

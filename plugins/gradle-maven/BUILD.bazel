@@ -10,6 +10,10 @@ jps_test(
 )
 ### skip generation section `test intellij.gradle.java.maven.tests`
 
+### auto-generated section `dev intellij.gradle.java.maven` start
+content_module_jar(module = ":gradle-java-maven")
+### auto-generated section `dev intellij.gradle.java.maven` end
+
 ### auto-generated section `build intellij.gradle.java.maven` start
 jvm_library(
     name = "gradle-java-maven",
@@ -49,8 +53,6 @@ jvm_library(
         "//platform/util:util-ui",
     ],
 )
-
-content_module_jar(module = ":gradle-java-maven")
 
 jvm_library(
     name = "gradle-java-maven_test_lib",
@@ -172,8 +174,6 @@ jvm_library(
         "//java/unscramble:unscramble_test_lib",
         "//aether-dependency-resolver/plugin",
         "//aether-dependency-resolver/plugin:plugin_test_lib",
-        "//libraries/misc/plugin",
-        "//libraries/misc/plugin:plugin_test_lib",
         "//platform/core-impl",
         "//platform/core-impl:core-impl_test_lib",
         "//platform/analysis-api:analysis",

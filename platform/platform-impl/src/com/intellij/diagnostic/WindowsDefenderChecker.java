@@ -5,7 +5,6 @@ import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -18,18 +17,10 @@ import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
-import com.sun.jna.Memory;
-import com.sun.jna.Structure;
-import com.sun.jna.platform.win32.COM.COMException;
-import com.sun.jna.platform.win32.COM.Wbemcli;
-import com.sun.jna.platform.win32.COM.WbemcliUtil;
-import com.sun.jna.platform.win32.Kernel32;
-import com.sun.jna.platform.win32.Kernel32Util;
-import com.sun.jna.platform.win32.KnownFolders;
-import com.sun.jna.platform.win32.Ole32;
-import com.sun.jna.platform.win32.Shell32Util;
-import com.sun.jna.platform.win32.WinBase;
-import com.sun.jna.platform.win32.WinNT;
+import com.intellij.util.system.WindowsComException;
+import com.intellij.util.system.WindowsFileSystem;
+import com.intellij.util.system.WindowsShell;
+import com.intellij.util.system.WindowsWmi;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,6 +66,7 @@ public class WindowsDefenderChecker {
   enum ProjectStatus {SKIPPED, SUCCEED, FAILED}
 
   private final Map<Path, @Nullable ProjectStatus> myProjectPaths = Collections.synchronizedMap(new HashMap<>());
+  private volatile boolean myWmiAvailable = true;
 
   public final boolean isStatusCheckIgnored(@Nullable Project project) {
     return (
@@ -127,45 +119,42 @@ public class WindowsDefenderChecker {
   /// [Boolean#FALSE] means something from the above list is not true.
   /// `null` means the IDE cannot detect the status.
   public final @Nullable Boolean isRealTimeProtectionEnabled() {
-    if (!JnaLoader.isLoaded()) {
-      LOG.debug("isRealTimeProtectionEnabled: JNA is not loaded");
+    if (!SystemInfo.isWindows || !myWmiAvailable) {
       return null;
     }
 
     try {
-      var comInit = Ole32.INSTANCE.CoInitializeEx(null, Ole32.COINIT_APARTMENTTHREADED);
-      if (LOG.isDebugEnabled()) LOG.debug("CoInitializeEx: " + comInit);
-
-      var avQuery = new WbemcliUtil.WmiQuery<>("Root\\SecurityCenter2", "AntivirusProduct", AntivirusProduct.class);
-      var avResult = avQuery.execute(WMIC_COMMAND_TIMEOUT_MS);
-      if (LOG.isDebugEnabled()) LOG.debug(avQuery.getWmiClassName() + ": " + avResult.getResultCount());
-      for (var i = 0; i < avResult.getResultCount(); i++) {
-        var name = avResult.getValue(AntivirusProduct.DisplayName, i);
-        if (LOG.isDebugEnabled()) LOG.debug("DisplayName[" + i + "]: " + name + " (" + name.getClass().getName() + ')');
+      var avResult = WindowsWmi.query("Root\\SecurityCenter2", "AntivirusProduct", List.of("DisplayName", "ProductState"), WMIC_COMMAND_TIMEOUT_MS);
+      if (LOG.isDebugEnabled()) LOG.debug("AntivirusProduct: " + avResult.size());
+      for (var row : avResult) {
+        var name = row.get("DisplayName");
+        if (LOG.isDebugEnabled()) LOG.debug("DisplayName: " + name);
         if (name instanceof String s && (s.contains("Windows Defender") || s.contains("Microsoft Defender"))) {
-          var state = avResult.getValue(AntivirusProduct.ProductState, i);
-          if (LOG.isDebugEnabled()) LOG.debug("ProductState: " + state + " (" + state.getClass().getName() + ')');
+          var state = row.get("ProductState");
+          if (LOG.isDebugEnabled()) LOG.debug("ProductState: " + state);
           var enabled = state instanceof Integer intState && (intState.intValue() & 0x1000) != 0;
           if (!enabled) return false;
           break;
         }
       }
 
-      var statusQuery = new WbemcliUtil.WmiQuery<>("Root\\Microsoft\\Windows\\Defender", "MSFT_MpComputerStatus", MpComputerStatus.class);
-      var statusResult = statusQuery.execute(WMIC_COMMAND_TIMEOUT_MS);
-      if (LOG.isDebugEnabled()) LOG.debug(statusQuery.getWmiClassName() + ": " + statusResult.getResultCount());
-      if (statusResult.getResultCount() != 1) return false;
-      var rtProtection = statusResult.getValue(MpComputerStatus.RealTimeProtectionEnabled, 0);
-      if (LOG.isDebugEnabled()) LOG.debug("RealTimeProtectionEnabled: " + rtProtection + " (" + rtProtection.getClass().getName() + ')');
+      var statusResult = WindowsWmi.query("Root\\Microsoft\\Windows\\Defender", "MSFT_MpComputerStatus",
+                                         List.of("RealTimeProtectionEnabled"), WMIC_COMMAND_TIMEOUT_MS);
+      if (LOG.isDebugEnabled()) LOG.debug("MSFT_MpComputerStatus: " + statusResult.size());
+      if (statusResult.size() != 1) return false;
+      var rtProtection = statusResult.getFirst().get("RealTimeProtectionEnabled");
+      if (LOG.isDebugEnabled()) LOG.debug("RealTimeProtectionEnabled: " + rtProtection);
       return Boolean.TRUE.equals(rtProtection);
     }
-    catch (COMException e) {
+    catch (WindowsComException e) {
       // reference: https://learn.microsoft.com/en-us/windows/win32/wmisdk/wmi-error-constants
-      if (e.matchesErrorCode(Wbemcli.WBEM_E_INVALID_NAMESPACE)) return false;  // Microsoft Defender not installed
-      var message = "WMI Microsoft Defender check failed";
-      var hresult = e.getHresult();
-      if (hresult != null) message += " [0x" + Integer.toHexString(hresult.intValue()) + ']';
-      LOG.warn(message, e);
+      if (e.hresult == 0x8004100E) return false;
+      LOG.warn("WMI Microsoft Defender check failed [0x" + Integer.toHexString(e.hresult) + ']', e);
+      return null;
+    }
+    catch (LinkageError failure) {
+      myWmiAvailable = false;
+      LOG.warn("WMI bindings are unavailable", failure);
       return null;
     }
     catch (Exception e) {
@@ -173,9 +162,6 @@ public class WindowsDefenderChecker {
       return null;
     }
   }
-
-  private enum AntivirusProduct {DisplayName, ProductState}
-  private enum MpComputerStatus {RealTimeProtectionEnabled}
 
   /// Returns `true` if the given path should not be put on the Defender's exclusion list
   /// (either because it may host suspicious files or is too broad).
@@ -198,13 +184,12 @@ public class WindowsDefenderChecker {
     }
 
     var downloadDir = (Path)null;
-    if (JnaLoader.isLoaded()) {
-      try {
-        downloadDir = Path.of(Shell32Util.getKnownFolderPath(KnownFolders.FOLDERID_Downloads));
-      }
-      catch (Exception e) {
-        LOG.warn("download dir detection failed", e);
-      }
+    try {
+      var knownFolder = WindowsShell.knownFolderPath(WindowsShell.FOLDERID_DOWNLOADS);
+      if (knownFolder != null) downloadDir = Path.of(knownFolder);
+    }
+    catch (Exception e) {
+      LOG.warn("download dir detection failed", e);
     }
     if (downloadDir == null) {
       downloadDir = homeDir.resolve("Downloads");
@@ -243,78 +228,20 @@ public class WindowsDefenderChecker {
   public final @NotNull List<Path> filterDevDrivePaths(@NotNull List<Path> paths) {
     if (paths.isEmpty()) return paths;
 
-    if (!JnaLoader.isLoaded()) {
-      LOG.debug("filterDevDrivePaths: JNA is not loaded");
-      return paths;
-    }
-
     var buildNumber = SystemInfo.getWinBuildNumber();
     if (buildNumber == null || buildNumber < 22621) {
       if (LOG.isDebugEnabled()) LOG.debug("DevDrive feature is not supported on " + buildNumber);
       return paths;
     }
 
-    try (var volInfo = new FILE_FS_PERSISTENT_VOLUME_INFORMATION()) {
-      return paths.stream().filter(path -> !isOnDevDrive(path, volInfo)).toList();
+    try {
+      return paths.stream().filter(path -> !WindowsFileSystem.isOnDevDrive(path)).toList();
     }
     catch (Exception e) {
       LOG.warn("DevDrive detection failed", e);
       return paths;
     }
   }
-
-  private static final int FSCTL_QUERY_PERSISTENT_VOLUME_STATE = 0x9023C;
-  private static final int PERSISTENT_VOLUME_STATE_DEV_VOLUME = 0x00002000;
-  private static final int PERSISTENT_VOLUME_STATE_TRUSTED_VOLUME = 0x00004000;
-
-  @ApiStatus.Internal
-  @SuppressWarnings({"unused", "FieldMayBeFinal"})
-  @Structure.FieldOrder({"VolumeFlags", "FlagMask", "Version", "Reserved"})
-  public static final class FILE_FS_PERSISTENT_VOLUME_INFORMATION extends Structure implements AutoCloseable {
-    public int VolumeFlags;
-    public int FlagMask;
-    public int Version;
-    public int Reserved;
-
-    @Override
-    public void close() {
-      if (getPointer() instanceof Memory m) m.close();
-    }
-  }
-
-  // https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/ntifs/ns-ntifs-_file_fs_persistent_volume_information
-  private static boolean isOnDevDrive(Path path, FILE_FS_PERSISTENT_VOLUME_INFORMATION volInfo) {
-    var handle = Kernel32.INSTANCE.CreateFile(
-      path.toString(), WinNT.FILE_READ_ATTRIBUTES, WinNT.FILE_SHARE_READ | WinNT.FILE_SHARE_WRITE, null, WinNT.OPEN_EXISTING,
-      WinNT.FILE_FLAG_BACKUP_SEMANTICS, null);
-    if (handle == WinBase.INVALID_HANDLE_VALUE) {
-      var err = Kernel32.INSTANCE.GetLastError();
-      LOG.warn("CreateFile(" + path + "): " + err + ": " + Kernel32Util.formatMessageFromLastErrorCode(err));
-      return false;
-    }
-    try {
-      volInfo.FlagMask = PERSISTENT_VOLUME_STATE_DEV_VOLUME | PERSISTENT_VOLUME_STATE_TRUSTED_VOLUME;
-      volInfo.Version = 1;
-      volInfo.write();
-      if (Kernel32.INSTANCE.DeviceIoControl(handle, FSCTL_QUERY_PERSISTENT_VOLUME_STATE,
-                                            volInfo.getPointer(), volInfo.size(), volInfo.getPointer(), volInfo.size(), null, null)) {
-        volInfo.read();
-        if (LOG.isDebugEnabled()) LOG.debug(path + ": 0x" + Integer.toHexString(volInfo.VolumeFlags));
-        return volInfo.VolumeFlags == (PERSISTENT_VOLUME_STATE_DEV_VOLUME | PERSISTENT_VOLUME_STATE_TRUSTED_VOLUME);
-      }
-      else {
-        if (LOG.isDebugEnabled()) {
-          var err = Kernel32.INSTANCE.GetLastError();
-          LOG.debug("DeviceIoControl(" + path + "): " + err + ": " + Kernel32Util.formatMessageFromLastErrorCode(err));
-        }
-        return false;
-      }
-    }
-    finally {
-      Kernel32.INSTANCE.CloseHandle(handle);
-    }
-  }
-
 
   public final boolean excludeProjectPaths(@NotNull Project project, @NotNull List<Path> paths) {
     return doExcludeProjectPaths(project, null, paths);

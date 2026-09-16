@@ -61,7 +61,7 @@ class DistributedTestModel private constructor(
         
         private val __RdTestSessionNullableSerializer = RdTestSession.nullable()
         
-        const val serializationHash = 1019449310822351010L
+        const val serializationHash = 2452151636138289357L
         
     }
     override val serializersOwner: ISerializersOwner get() = DistributedTestModel
@@ -529,7 +529,7 @@ data class RdProductInfo (
  */
 enum class RdProductType {
     REMOTE_DEVELOPMENT, 
-    CODE_WITH_ME;
+    MONOLITH;
     
     companion object : IMarshaller<RdProductType> {
         val marshaller = FrameworkMarshallers.enum<RdProductType>()

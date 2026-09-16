@@ -1,3 +1,0 @@
-- name: dist.all/lib/fleet.util.logging.api.jar
-  modules:
-  - name: fleet.util.logging.api

@@ -1,0 +1,24 @@
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <plugin id="JUnit"/>
+    <module name="intellij.java.debugger.impl"/>
+    <module name="intellij.java.debugger.impl.shared"/>
+    <module name="intellij.maven"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.smRunner"/>
+    <module name="intellij.platform.testRunner"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="org.jetbrains.idea.maven">
+    <executionEnvironmentProvider
+      implementation="com.intellij.maven.delegation.junit.MavenJUnitConfigurationExecutionEnvironmentProvider"/>
+  </extensions>
+</idea-plugin>

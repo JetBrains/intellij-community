@@ -13,6 +13,10 @@ jps_test(
 )
 ### skip generation section `test intellij.platform.vcs.impl.tests`
 
+### auto-generated section `dev intellij.platform.vcs.impl` start
+content_module_jar(module = ":vcs-impl")
+### auto-generated section `dev intellij.platform.vcs.impl` end
+
 ### auto-generated section `build intellij.platform.vcs.impl` start
 jvm_library(
     name = "vcs-impl",
@@ -113,8 +117,6 @@ jvm_library(
         "//platform/remote-topics/shared:rpc-topics",
     ],
 )
-
-content_module_jar(module = ":vcs-impl")
 
 jvm_library(
     name = "vcs-impl_test_lib",
@@ -217,7 +219,6 @@ exports_files(
         "resources/META-INF/VcsExtensionPoints.xml",
         "resources/META-INF/VcsExtensions.xml",
         "resources/intellij.platform.vcs.impl.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

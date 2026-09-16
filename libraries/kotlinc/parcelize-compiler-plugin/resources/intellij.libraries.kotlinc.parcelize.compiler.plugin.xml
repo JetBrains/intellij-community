@@ -1,0 +1,9 @@
+<idea-plugin visibility="internal">
+  <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.fir"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.ir"/>
+    <!-- endregion -->
+  </dependencies>
+</idea-plugin>

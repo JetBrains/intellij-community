@@ -31,6 +31,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
+        "//platform/build-scripts/concurrency",
         "//libraries/kotlinx/serialization/core",
         "//libraries/kotlinx/serialization/json",
         "//platform/util/zip",
@@ -69,6 +70,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":tasks",
+        "//platform/build-scripts/concurrency:concurrency_test_lib",
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//libraries/kotlinx/serialization/json:json_test_lib",
         "//platform/util/zip:zip_test_lib",

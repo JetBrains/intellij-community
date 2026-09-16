@@ -26,8 +26,6 @@ class JpsModuleOutputProviderState(
 
   fun findRequiredModule(name: String): JpsModule = index.findRequiredModule(name)
 
-  fun getProjectLibraryToModuleMap(): Map<String, String> = index.getProjectLibraryToModuleMap()
-
   fun getModuleImlFile(module: JpsModule): Path = index.getModuleImlFile(module)
 
   fun createProvider(useTestCompilationOutput: Boolean): ModuleOutputProvider {
@@ -101,8 +99,6 @@ internal class JpsModuleOutputProvider(
       processedModules = processedModules,
     )
   }
-
-  override fun getProjectLibraryToModuleMap(): Map<String, String> = state.getProjectLibraryToModuleMap()
 
   override fun getModuleImlFile(module: JpsModule): Path = state.getModuleImlFile(module)
 }

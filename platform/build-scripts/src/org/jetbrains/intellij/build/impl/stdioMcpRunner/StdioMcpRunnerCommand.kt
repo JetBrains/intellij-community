@@ -12,6 +12,7 @@ internal fun generateStdioMcpRunnerLaunchData(ideContext: BuildContext, os: OsFa
     "../plugins/mcpserver-plugin/lib/intellij.mcpserver.stdio.jar",
     "../plugins/mcpserver-plugin/lib/intellij.libraries.kotlin.logging.jar",
     "../plugins/mcpserver-plugin/lib/intellij.libraries.ktor.server.sse.jar",
+    "../plugins/mcpserver-plugin/lib/intellij.libraries.mcp.kotlin.sdk.jar",
   ),
   mainClass = "com.intellij.mcpserver.stdio.McpStdioRunnerKt",
 )

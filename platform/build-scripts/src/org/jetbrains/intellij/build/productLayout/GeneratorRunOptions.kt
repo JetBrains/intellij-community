@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.productLayout
 
+import java.nio.file.Path
+
 /**
  * Options controlling generator execution.
  * Encapsulates CLI arguments and generation behavior flags.
@@ -10,6 +12,7 @@ package org.jetbrains.intellij.build.productLayout
  * @param updateSuppressions If true, updates suppressions.json (no XML changes)
  * @param validationFilter If non-null, only runs validation rules with matching names
  * @param logFilter If non-null, enables debug output. Empty set = all debug, non-empty = only matching tags.
+ * @param devSectionsDumpDir If non-null, the run writes the rendered dev-distribution build sections into this directory and generates nothing else
  */
 data class GeneratorRunOptions(
   @JvmField val jsonFilter: String? = null,
@@ -17,7 +20,19 @@ data class GeneratorRunOptions(
   @JvmField val updateSuppressions: Boolean = false,
   @JvmField val validationFilter: Set<String>? = null,
   @JvmField val logFilter: Set<String>? = null,
+  @JvmField val devSectionsDumpDir: Path? = null,
 )
+
+/**
+ * Parses `--dump-dev-sections=<dir>`.
+ * Returns null when the argument is absent.
+ */
+private fun parseDevSectionsDumpDir(args: Array<String>): Path? {
+  val arg = args.firstOrNull { it.startsWith("--dump-dev-sections=") } ?: return null
+  val value = arg.substringAfter("=")
+  require(value.isNotEmpty()) { "--dump-dev-sections needs a directory" }
+  return Path.of(value)
+}
 
 /**
  * Parses `--validation=<ids>` argument.
@@ -62,12 +77,15 @@ internal fun parseGeneratorOptions(args: Array<String>): GeneratorRunOptions {
   val check = args.any { it == "--check" }
   val validationFilter = parseValidationFilter(args)
   val logFilter = parseLogFilter(args)
+  // A dump run renders the sections into a directory of its own and writes nothing into the repository.
+  val devSectionsDumpDir = parseDevSectionsDumpDir(args)
 
   return GeneratorRunOptions(
     jsonFilter = jsonArg,
-    commitChanges = jsonArg == null && !updateSuppressions && !check,
+    commitChanges = jsonArg == null && !updateSuppressions && !check && devSectionsDumpDir == null,
     updateSuppressions = updateSuppressions,
     validationFilter = validationFilter,
     logFilter = logFilter,
+    devSectionsDumpDir = devSectionsDumpDir,
   )
 }

@@ -1,0 +1,42 @@
+load("@rules_go//go:def.bzl", "go_binary", "go_test")
+
+go_binary(
+    name = "dev-dist-collector",
+    srcs = [
+        "collect.go",
+        "local_home.go",
+        "main.go",
+        "manifest.go",
+    ],
+    gc_linkopts = [
+        "-s",
+        "-w",
+    ],
+    importpath = "jetbrains.com/content-module-packer/dev-dist-collector",
+    pure = "on",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//build/content-module-packer/internal/span",
+        "@com_github_zeebo_xxh3//:xxh3",
+    ],
+)
+
+go_test(
+    name = "dev-dist-collector_test",
+    srcs = [
+        "collect.go",
+        "collect_test.go",
+        "local_home.go",
+        "local_home_test.go",
+        "main.go",
+        "main_test.go",
+        "manifest.go",
+        "manifest_test.go",
+    ],
+    data = glob(["testdata/*"]),
+    pure = "on",
+    deps = [
+        "//build/content-module-packer/internal/span",
+        "@com_github_zeebo_xxh3//:xxh3",
+    ],
+)

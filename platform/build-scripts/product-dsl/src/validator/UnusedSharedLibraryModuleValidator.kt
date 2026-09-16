@@ -19,7 +19,7 @@ internal object UnusedSharedLibraryModuleValidator : PipelineNode {
   override val id get() = NodeIds.UNUSED_SHARED_LIBRARY_MODULE_VALIDATION
   override val requires: Set<DataSlot<*>> get() = setOf(Slots.CONTENT_MODULE_PLAN)
 
-  override suspend fun execute(ctx: ComputeContext) {
+  override fun execute(ctx: ComputeContext) {
     val result = analyzeUnusedSharedLibraryModules(ctx.model.pluginGraph)
     if (result.violations.isNotEmpty()) {
       ctx.emitError(UnusedSharedLibraryModuleError(

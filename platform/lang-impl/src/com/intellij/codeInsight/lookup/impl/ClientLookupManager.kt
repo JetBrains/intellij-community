@@ -30,7 +30,7 @@ interface ClientLookupManager {
 
   fun getActiveLookup(): LookupEx?
   fun hideActiveLookup()
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun createLookup(editor: Editor, items: Array<LookupElement>, prefix: String, arranger: LookupArranger): LookupImpl
   fun clear()
 
@@ -61,7 +61,7 @@ abstract class ClientLookupManagerBase(val session: ClientProjectSession) : Clie
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun createLookup(
     editor: Editor,
     items: Array<LookupElement>,

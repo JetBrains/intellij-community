@@ -11,7 +11,6 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
     }
 
   override fun getConfigForModule(moduleName: String): IntellijIconClassGeneratorModuleConfig? {
-    @Suppress("SpellCheckingInspection")
     return when (moduleName) {
       "intellij.devkit" -> IntellijIconClassGeneratorModuleConfig(
         className = "DevKitIcons",
@@ -136,10 +135,6 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
         packageName = "com.intellij.jinja"
       )
 
-      "intellij.bigdatatools.visualisation" -> IntellijIconClassGeneratorModuleConfig(
-        className = "BigdatatoolsVisualisationIcons",
-        packageName = "com.intellij.bigdatatools.visualization"
-      )
       "intellij.bigdatatools.core" -> IntellijIconClassGeneratorModuleConfig(
         className = "BigdatatoolsCoreIcons",
         packageName = "com.jetbrains.bigdatatools.common"
@@ -216,7 +211,7 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
         packageName = "icons",
       )
 
-      "intellij.platform.icons" -> super.getConfigForModule(moduleName)?.copy(generateJewelIcons = true) ?: IntellijIconClassGeneratorModuleConfig(generateJewelIcons = true)
+      "intellij.platform.icons" -> super.getConfigForModule(moduleName)?.copy(generateJewelIcons = true, generateNewApiKotlinIcons = true) ?: IntellijIconClassGeneratorModuleConfig(generateJewelIcons = true, generateNewApiKotlinIcons = true)
 
       "intellij.java.ultimate.icons" -> IntellijIconClassGeneratorModuleConfig(
         className = "JavaUltimateIcons",

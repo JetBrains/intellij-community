@@ -1,0 +1,8 @@
+// COMPILER_ARGUMENTS: -Xcompanion-blocks
+
+class Foo {
+    companion {
+        fun f1(n: String) {}
+        fun f1(n: Int) {}
+    }
+}

@@ -10,10 +10,19 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VfsUtilCore
+import kotlinx.serialization.Serializable
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.settings.MarkdownSettings
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
+
+@ApiStatus.Internal
+@Serializable
+data class MarkdownCommandWorkingDirectoryPaths(
+  val projectDirectory: String,
+  val fileDirectory: String,
+  val fileDirectoryRelativePath: String,
+)
 
 /**
  * The directory a Markdown command runs in, as a path.
@@ -36,17 +45,36 @@ fun withMarkdownCommandWorkingDirectory(
   component: Component, x: Int, y: Int,
   action: (String) -> Unit,
 ) {
+  val paths = getMarkdownCommandWorkingDirectoryPaths(project, virtualFile) ?: return
+  withMarkdownCommandWorkingDirectory(project, paths, component, x, y, action)
+}
+
+@ApiStatus.Internal
+fun getMarkdownCommandWorkingDirectoryPaths(project: Project, virtualFile: VirtualFile?): MarkdownCommandWorkingDirectoryPaths? {
   if (virtualFile == null) {
     LOG.warn("A Markdown command is not run: the preview has no file.")
-    return
+    return null
   }
   val fileDirectory = markdownCommandFileDirectory(virtualFile)
   if (fileDirectory == null) {
     LOG.warn("A Markdown command is not run: no directory for '${virtualFile.url}'.")
-    return
+    return null
   }
   val projectBaseDirectory = BaseProjectDirectories.getInstance(project).getBaseDirectoryFor(virtualFile)
   val projectDirectory = projectBaseDirectory?.canonicalPath ?: fileDirectory
+  val fileDirectoryRelativePath =
+    virtualFile.parent?.let { parent -> projectBaseDirectory?.let { VfsUtilCore.getRelativePath(parent, it, '/') } }?.let { "/$it" }
+    ?: fileDirectory.substringAfterLast('/')
+  return MarkdownCommandWorkingDirectoryPaths(projectDirectory, fileDirectory, fileDirectoryRelativePath)
+}
+
+@ApiStatus.Internal
+fun withMarkdownCommandWorkingDirectory(
+  project: Project, paths: MarkdownCommandWorkingDirectoryPaths,
+  component: Component, x: Int, y: Int,
+  action: (String) -> Unit,
+) {
+  val (projectDirectory, fileDirectory, fileDirectoryRelativePath) = paths
   if (fileDirectory == projectDirectory) {
     action(fileDirectory)
     return
@@ -64,9 +92,6 @@ fun withMarkdownCommandWorkingDirectory(
     action(if (useFileDirectory) fileDirectory else projectDirectory)
   }
 
-  val fileDirectoryRelativePath =
-    virtualFile.parent?.let { parent -> projectBaseDirectory?.let { VfsUtilCore.getRelativePath(parent, it, '/') } }?.let { "/$it" }
-    ?: fileDirectory.substringAfterLast('/')
   val choices = DefaultActionGroup(
     DumbAwareAction.create(MarkdownBundle.message("markdown.runner.directory.popup.project")) { choose(false) },
     DumbAwareAction.create(MarkdownBundle.message("markdown.runner.directory.popup.file", fileDirectoryRelativePath)) { choose(true) },

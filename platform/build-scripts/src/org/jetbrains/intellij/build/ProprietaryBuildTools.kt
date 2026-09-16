@@ -48,22 +48,22 @@ data class ProprietaryBuildTools(
       override val signNativeFileMode: SignNativeFileMode
         get() = SignNativeFileMode.DISABLED
 
-      override suspend fun signFiles(files: List<Path>, context: BuildContext?, options: PersistentMap<String, String>) {
+      override fun signFiles(files: List<Path>, context: BuildContext?, options: PersistentMap<String, String>) {
         Span.current().addEvent("files won't be signed", Attributes.of(
           AttributeKey.stringArrayKey("files"), files.map(Path::toString),
           AttributeKey.stringKey("reason"), "sign tool isn't defined",
         ))
       }
 
-      override suspend fun signFilesWithGpg(files: List<Path>, context: BuildContext) {
+      override fun signFilesWithGpg(files: List<Path>, context: BuildContext) {
         signFiles(files = files, context = context, options = persistentMapOf())
       }
 
-      override suspend fun getPresignedLibraryFile(path: String, libName: String, libVersion: String, context: BuildContext): Path {
+      override fun getPresignedLibraryFile(path: String, libName: String, libVersion: String, context: BuildContext): Path {
         error("Must be not called if signNativeFileMode equals to $signNativeFileMode")
       }
 
-      override suspend fun commandLineClient(context: BuildContext, os: OsFamily, arch: JvmArchitecture): Path? = null
+      override fun commandLineClient(context: BuildContext, os: OsFamily, arch: JvmArchitecture): Path? = null
     }
 
     val DUMMY: ProprietaryBuildTools = ProprietaryBuildTools(

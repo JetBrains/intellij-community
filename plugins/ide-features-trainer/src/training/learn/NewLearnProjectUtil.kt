@@ -18,7 +18,7 @@ import training.project.ProjectUtils
 object NewLearnProjectUtil {
   private val LOG = logger<NewLearnProjectUtil>()
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun createLearnProject(projectToClose: Project?,
                          langSupport: LangSupport,
                          selectedSdk: Sdk?,

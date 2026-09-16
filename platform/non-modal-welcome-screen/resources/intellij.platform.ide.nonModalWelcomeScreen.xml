@@ -1,12 +1,9 @@
 <idea-plugin visibility="internal" package="com.intellij.platform.ide.nonModalWelcomeScreen">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="intellij.platform.jewel.markdown.ideLafBridgeStyling"/>
     <module name="fleet.rhizomedb"/>
-    <module name="intellij.libraries.compose.runtime.desktop"/>
     <module name="intellij.libraries.kotlinx.serialization.core"/>
     <module name="intellij.platform.analysis"/>
-    <module name="intellij.platform.compose"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.editor.ui"/>
@@ -41,10 +38,6 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <projectService serviceInterface="com.intellij.openapi.wm.ex.WelcomeScreenTabService"
-                    serviceImplementation="com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenTabServiceImpl"
-                    overrides="true"
-                    open="true"/>
     <projectFrameCapabilitiesProvider
       implementation="com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenProjectFrameCapabilitiesProvider"/>
     <postStartupActivity implementation="com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenProjectActivity"/>
@@ -56,8 +49,6 @@
     <actionConfigurationCustomizer implementation="com.intellij.platform.ide.nonModalWelcomeScreen.actions.WelcomeScreenAwareActionsCustomizer" />
 
     <!-- The welcome tab is a persisted editor tab: the platform restores it by URL through this file system. -->
-    <virtualFileSystem key="welcome-screen" implementationClass="com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenRightTabFileSystem"/>
-    <fileEditorProvider id="settingsWindow" implementation="com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenRightTabVirtualFileEditorProvider"/>
     <projectViewPane implementation="com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.WelcomeScreenLeftPanel"/>
     <projectViewPaneExtractor implementation="com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.WelcomeScreenLeftPanelModelExtractor"/>
 
@@ -68,22 +59,27 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.platform.ide.nonModalWelcomeScreen.newProjectNotification.WelcomeScreenSingleFileOpeningCollector"/>
 
     <internalFileTemplate name="Generic Empty File"/>
-    <editorSkeletonPolicy implementation="com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenEditorSkeletonPolicy"/>
+
+    <platform.ide.welcomeScreenAccessPoint implementation="com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeAccessPoint"/>
+
+    <editorEmptyStateComponentProvider implementation="com.intellij.platform.ide.nonModalWelcomeScreen.emptyState.WelcomeScreenEmptyStateProvider" order="first"/>
   </extensions>
 
   <actions resource-bundle="messages.NonModalWelcomeScreenBundle">
     <group id="NonModalWelcomeScreen.LeftTabActions.New" icon="AllIcons.General.Add" popup="true">
-      <reference ref="WelcomeNewEmptyFile"/>
       <reference ref="NewProjectOrModuleGroup"/>
       <separator/>
+      <reference ref="WelcomeNewEmptyFile"/>
+      <reference ref="WelcomeMarkdownNewFile"/>
     </group>
-    <action id="OpenWelcome" class="com.intellij.platform.ide.nonModalWelcomeScreen.actions.OpenWelcomeScreenAction">
-      <add-to-group group-id="HelpMenu" anchor="first"/>
-    </action>
     <action id="NonModalWelcomeScreen.LeftTabActions.New.Action" icon="AllIcons.General.Add"
             class="com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.WelcomeScreenLeftTabActionNew"/>
     <action id="welcome.screen.left.tab.new.empty.file"
             class="com.intellij.platform.ide.nonModalWelcomeScreen.actions.CreateEmptyFileAction"
             icon="AllIcons.FileTypes.Text"/>
+
+    <action id="WelcomeMarkdownNewFile" class="com.intellij.platform.ide.nonModalWelcomeScreen.actions.MarkdownNewFileAction" icon="AllIcons.FileTypes.Markdown"/>
+    <action id="NewJavaFile" class="com.intellij.platform.ide.nonModalWelcomeScreen.actions.NewJavaFileAction" icon="AllIcons.FileTypes.Java"/>
+    <action id="NewKotlinFile" class="com.intellij.platform.ide.nonModalWelcomeScreen.actions.NewKotlinFileAction" icon="AllIcons.Language.Kotlin"/>
   </actions>
 </idea-plugin>

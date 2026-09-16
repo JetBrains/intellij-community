@@ -1,0 +1,34 @@
+PyFile:CommentOnlyMethodFollowedByTopLevelStatement.py
+  PyClass: A
+    PsiElement(Py:CLASS_KEYWORD)('class')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:IDENTIFIER)('A')
+    PyArgumentList
+      <empty list>
+    PsiElement(Py:COLON)(':')
+    PsiWhiteSpace('\n    ')
+    PyStatementList
+      PyFunction('f')
+        PsiElement(Py:DEF_KEYWORD)('def')
+        PsiWhiteSpace(' ')
+        PsiElement(Py:IDENTIFIER)('f')
+        PyParameterList
+          PsiElement(Py:LPAR)('(')
+          PyNamedParameter('self')
+            PsiElement(Py:IDENTIFIER)('self')
+          PsiElement(Py:RPAR)(')')
+        PsiElement(Py:COLON)(':')
+        PsiWhiteSpace('\n        ')
+        PyStatementList
+          PsiComment(Py:END_OF_LINE_COMMENT)('# TODO')
+          PsiErrorElement:Indent expected
+            <empty list>
+  PsiWhiteSpace('\n')
+  PyAssignmentStatement
+    PyTargetExpression: x
+      PsiElement(Py:IDENTIFIER)('x')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:EQ)('=')
+    PsiWhiteSpace(' ')
+    PyNumericLiteralExpression
+      PsiElement(Py:INTEGER_LITERAL)('1')

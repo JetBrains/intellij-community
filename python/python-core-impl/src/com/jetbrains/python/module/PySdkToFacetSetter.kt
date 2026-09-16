@@ -11,7 +11,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.OverrideOnly
 @PyInternalExecApi
 fun interface PySdkToFacetSetter {
-  @RequiresWriteLock
+  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
   @PyInternalExecApi
     /**
      * Set [sdk] to [module] for non-python module (any non-opython module might have python SDK as a facet)

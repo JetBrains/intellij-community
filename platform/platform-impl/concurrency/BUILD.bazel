@@ -11,6 +11,10 @@ jps_test(
 
 ### skip generation section `test intellij.platform.ide.concurrency.tests`
 
+### auto-generated section `dev intellij.platform.ide.concurrency` start
+content_module_jar(module = ":concurrency")
+### auto-generated section `dev intellij.platform.ide.concurrency` end
+
 ### auto-generated section `build intellij.platform.ide.concurrency` start
 jvm_library(
     name = "concurrency",
@@ -45,8 +49,6 @@ jvm_library(
         "//platform/core-impl",
     ],
 )
-
-content_module_jar(module = ":concurrency")
 
 jvm_library(
     name = "concurrency_test_lib",
@@ -85,7 +87,6 @@ exports_files(
     [
         "intellij.platform.ide.concurrency.iml",
         "resources/intellij.platform.ide.concurrency.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

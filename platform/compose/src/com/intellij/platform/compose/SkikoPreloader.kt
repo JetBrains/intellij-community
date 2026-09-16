@@ -9,17 +9,16 @@ import com.intellij.platform.diagnostic.telemetry.Scope
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.util.application
 import kotlinx.coroutines.withContext
-import org.jetbrains.jewel.foundation.InternalJewelApi
 import org.jetbrains.skiko.Library
 
 // org.jetbrains.skiko.Library.load seems expensive, better have it loaded before the first rendering happens
 internal class SkikoPreloader : ApplicationActivity {
   private val SKIKO: Scope = Scope("skiko")
 
-  @OptIn(InternalJewelApi::class)
   override suspend fun execute() {
     if (application.isHeadlessEnvironment) return
     if (AppMode.isRemoteDevHost()) return
+    if (System.getProperty("skiko.preload.native.lib", "false") != "true") return
 
     val tracer = TelemetryManager.getInstance().getSimpleTracer(SKIKO)
     withContext(tracer.span("org.jetbrains.skiko.Library.load")) {

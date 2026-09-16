@@ -173,6 +173,13 @@ public class CoverageSuitesBundle {
     myData = new SoftReference<>(projectData);
   }
 
+  void invalidateCoverageData() {
+    setCoverageData(null);
+    for (CoverageSuite suite : mySuites) {
+      suite.setCoverageData(null);
+    }
+  }
+
   void restoreCoverageData() {
     myData = new SoftReference<>(null);
     for (CoverageSuite suite : mySuites) {

@@ -5,7 +5,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.impl.DocumentImpl
-import com.intellij.openapi.editor.impl.DocumentSnapshotImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
@@ -20,19 +19,24 @@ import java.util.concurrent.atomic.AtomicReference
 internal class FileMarkerRoot private constructor(
   internal val file: VirtualFile,
   initialRootReference: AtomicReference<PMarkerRoot>,
-) : DocumentListener {
+) : MarkerRootUpdater(), DocumentListener {
   @Volatile
   private var rootReference: AtomicReference<PMarkerRoot> = initialRootReference
 
   @Volatile
   private var documentReference: WeakReference<DocumentImpl>? = null
 
-  internal fun rootReference(): AtomicReference<PMarkerRoot> {
-    val document = documentReference?.get() ?: return rootReference
+  override fun selectCurrentRootReference(): AtomicReference<PMarkerRoot> {
+    val observedDocumentReference = documentReference ?: return rootReference
+    val document = observedDocumentReference.get() ?: return rootReference
     val currentRootReference = markerRoot(document)
-    rootReference = currentRootReference
+    if (documentReference === observedDocumentReference) {
+      rootReference = currentRootReference
+    }
     return currentRootReference
   }
+
+  override fun <T> withRootUpdateLock(action: () -> T): T = synchronized(this, action)
 
   private fun attach(document: DocumentImpl) {
     synchronized(this) {
@@ -52,8 +56,9 @@ internal class FileMarkerRoot private constructor(
       sourceRoot.processRangeMarkersOverlappingWith(0, Int.MAX_VALUE, 0) { entry ->
         val marker = entry.markerReference?.get() as? SnapshotLazyRangeMarker ?: return@processRangeMarkersOverlappingWith true
         val range = marker.initialRange(document, tabSize) ?: return@processRangeMarkersOverlappingWith true
+        val resolution = sourceRoot.resolve(entry.markerId, marker.initialRange)
         resolvedMarkers.add(marker)
-        if (range.startOffset != entry.startOffset || range.endOffset != entry.endOffset) {
+        if (range.startOffset != resolution.startOffset || range.endOffset != resolution.endOffset) {
           restoredRoot = restoredRoot.remove(entry.markerId).insert(
             entry.markerId,
             range.startOffset,
@@ -75,7 +80,9 @@ internal class FileMarkerRoot private constructor(
 
   override fun documentChanged(event: DocumentEvent) {
     val document = event.document as? DocumentImpl ?: return
-    rootReference = markerRoot(document)
+    synchronized(this) {
+      rootReference = markerRoot(document)
+    }
   }
 
   companion object {
@@ -134,6 +141,6 @@ internal class FileMarkerRoot private constructor(
     }
 
     private fun markerRoot(document: DocumentImpl): AtomicReference<PMarkerRoot> =
-      (document.core.snapshot() as DocumentSnapshotImpl).markerRoot
+      document.rangeMarkers.rootStore().rootReference(document.core.snapshot())
   }
 }

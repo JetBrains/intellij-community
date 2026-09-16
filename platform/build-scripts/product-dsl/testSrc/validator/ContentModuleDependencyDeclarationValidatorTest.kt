@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.productLayout.validator
 
+import com.intellij.platform.buildScripts.concurrency.SharedTaskOwner
 import com.intellij.platform.pluginGraph.ContentModuleName
 import com.intellij.platform.pluginGraph.PluginId
 import kotlinx.coroutines.Dispatchers
@@ -166,9 +167,11 @@ class ContentModuleDependencyDeclarationValidatorTest {
     val errors = validate(
       tempDir = tempDir,
       descriptors = mapOf("com.example.foo.impl" to descriptor(pluginDependencies = listOf("com.example.external"))),
-      suppressionConfig = SuppressionConfig(contentModules = mapOf(
-        ContentModuleName("com.example.foo.impl") to ContentModuleSuppression(suppressPlugins = setOf(PluginId("com.example.external"))),
-      )),
+      suppressionConfig = SuppressionConfig(
+        contentModules = mapOf(
+          ContentModuleName("com.example.foo.impl") to ContentModuleSuppression(suppressPlugins = setOf(PluginId("com.example.external"))),
+        )
+      ),
     ) {
       plugin("com.example.foo.plugin") {
         pluginId("com.example.foo")
@@ -333,7 +336,7 @@ private fun descriptor(
 /**
  * Writes each descriptor into the resource root of its own JPS module, then runs the rule on the built graph.
  */
-private suspend fun validate(
+private fun validate(
   tempDir: Path,
   descriptors: Map<String, String>,
   suppressionConfig: SuppressionConfig = SuppressionConfig(),
@@ -352,10 +355,12 @@ private suspend fun validate(
     Files.writeString(resourceDir.resolve("$name.xml"), content)
   }
 
-  val graph = pluginGraphWithDescriptors(ModuleDescriptorCache(jps.outputProvider), graphBlock)
-  val model = testGenerationModel(graph, outputProvider = jps.outputProvider, suppressionConfig = suppressionConfig)
-  val errors = runValidationRule(ContentModuleDependencyDeclarationValidator, model)
-  return errors.map { it as ContentModuleDependencyDeclarationError }
+  return SharedTaskOwner("validation").use { owner ->
+    val graph = pluginGraphWithDescriptors(ModuleDescriptorCache(jps.outputProvider, owner), graphBlock)
+    val model = testGenerationModel(graph, outputProvider = jps.outputProvider, suppressionConfig = suppressionConfig, owner = owner)
+    val errors = runValidationRule(ContentModuleDependencyDeclarationValidator, model)
+    errors.map { it as ContentModuleDependencyDeclarationError }
+  }
 }
 
 private fun kinds(errors: List<ContentModuleDependencyDeclarationError>): List<ContentModuleDependencyProblemKind> {

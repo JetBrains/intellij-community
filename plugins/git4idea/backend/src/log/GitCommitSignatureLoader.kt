@@ -25,7 +25,7 @@ internal object GitCommitSignatureLoader {
 
   private val COMMIT_SIGNATURES_FORMAT = listOf(HASH, SIGNATURE_STATUS, SIGNER, FINGERPRINT).joinToString(NEW_LINE)
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   @Throws(VcsException::class)
   @JvmStatic
   fun loadSignatures(

@@ -10,6 +10,13 @@ jps_test(
 )
 ### skip generation section `test intellij.platform.credentialStore.impl.tests`
 
+### auto-generated section `dev intellij.platform.credentialStore.impl` start
+content_module_jar(
+    libraries = ["@lib//:platform-credential_store-impl-dbus-java"],
+    module = ":credentialStore-impl",
+)
+### auto-generated section `dev intellij.platform.credentialStore.impl` end
+
 ### auto-generated section `build intellij.platform.credentialStore.impl` start
 jvm_library(
     name = "credentialStore-impl",
@@ -56,11 +63,6 @@ jvm_library(
         "//platform/analysis-api:analysis",
         "//platform/platform-api:ide",
     ],
-)
-
-content_module_jar(
-    libraries = ["@lib//:platform-credential_store-impl-dbus-java"],
-    module = ":credentialStore-impl",
 )
 
 jvm_library(
@@ -122,7 +124,6 @@ exports_files(
     [
         "intellij.platform.credentialStore.impl.iml",
         "resources/intellij.platform.credentialStore.impl.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.platform.buildScripts.concurrency.taskScope
 import com.jetbrains.signatureverifier.ILogger
 import com.jetbrains.signatureverifier.InvalidDataException
 import com.jetbrains.signatureverifier.crypt.SignatureVerificationParams
@@ -16,6 +17,7 @@ import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.io.AddDirEntriesMode
@@ -23,12 +25,10 @@ import org.jetbrains.intellij.build.io.PackageIndexBuilder
 import org.jetbrains.intellij.build.io.WRITE_OPEN_OPTION
 import org.jetbrains.intellij.build.io.ZipEntryProcessorResult
 import org.jetbrains.intellij.build.io.readZipFile
-import org.jetbrains.intellij.build.io.suspendAwareReadZipFile
 import org.jetbrains.intellij.build.io.writeToFileChannelFully
 import org.jetbrains.intellij.build.io.writeZipUsingTempFile
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
-import org.jetbrains.intellij.build.taskScope
 import java.nio.channels.FileChannel
 import java.nio.channels.SeekableByteChannel
 import java.nio.file.FileVisitResult
@@ -49,7 +49,7 @@ internal fun isMacLibrary(name: String): Boolean =
   name.endsWith(".jnilib") || name.endsWith(".dylib") || name.endsWith(".so") || name.endsWith(".tbd")
 
 /** Signs the binaries under [root] and repacks the archives under it whose binaries are not signed. */
-internal suspend fun recursivelySignMacBinaries(
+internal fun recursivelySignMacBinaries(
   root: Path,
   context: BuildContext,
   executableFileMatchers: Collection<PathMatcher> = emptyList(),
@@ -86,14 +86,15 @@ internal suspend fun recursivelySignMacBinaries(
         signAndRepackZipIfMacSignaturesAreMissing(file, context)
       }
     }
+    join()
   }
 }
 
-private suspend fun signAndRepackZipIfMacSignaturesAreMissing(zip: Path, context: BuildContext) {
+private fun signAndRepackZipIfMacSignaturesAreMissing(zip: Path, context: BuildContext) {
   val filesToBeSigned = LinkedHashMap<String, Path>()
-  suspendAwareReadZipFile(zip) { name, dataSupplier ->
+  readZipFile(zip) { name, dataSupplier ->
     if (!isMacLibrary(name)) {
-      return@suspendAwareReadZipFile
+      return@readZipFile ZipEntryProcessorResult.CONTINUE
     }
 
     val data = dataSupplier()
@@ -110,6 +111,7 @@ private suspend fun signAndRepackZipIfMacSignaturesAreMissing(zip: Path, context
         filesToBeSigned[name] = fileToBeSigned
       }
     }
+    ZipEntryProcessorResult.CONTINUE
   }
 
   if (filesToBeSigned.isEmpty()) {
@@ -125,7 +127,7 @@ private suspend fun signAndRepackZipIfMacSignaturesAreMissing(zip: Path, context
   }
 }
 
-private suspend fun copyZipReplacing(origin: Path, entries: Map<String, Path>, context: BuildContext) {
+private fun copyZipReplacing(origin: Path, entries: Map<String, Path>, context: BuildContext) {
   spanBuilder("replacing unsigned entries in zip")
     .setAttribute("zip", origin.toString())
     .setAttribute(AttributeKey.stringArrayKey("unsigned"), entries.keys.toList())
@@ -161,7 +163,7 @@ internal fun macSigningOptions(contentType: String, context: BuildContext): Pers
   )
 }
 
-internal suspend fun signMacBinaries(
+internal fun signMacBinaries(
   files: List<Path>,
   context: BuildContext,
   additionalOptions: Map<String, String> = emptyMap(),
@@ -205,7 +207,7 @@ internal suspend fun signMacBinaries(
 
 private fun isMacBinary(path: Path): Boolean = isMacBinary(Files.newByteChannel(path))
 
-internal suspend fun isSigned(path: Path): Boolean {
+internal fun isSigned(path: Path): Boolean {
   return Files.newByteChannel(path).use {
     isSigned(byteChannel = it, binaryId = path.toString())
   }
@@ -221,7 +223,7 @@ private fun detectFileType(byteChannel: SeekableByteChannel): Pair<FileType, Enu
 /**
  * Assumes [isMacBinary].
  */
-internal suspend fun isSigned(byteChannel: SeekableByteChannel, binaryId: String): Boolean {
+internal fun isSigned(byteChannel: SeekableByteChannel, binaryId: String): Boolean {
   val verificationParams = SignatureVerificationParams(signRootCertStore = null, timestampRootCertStore = null, buildChain = false, withRevocationCheck = false)
   val binaries = MachoArch(byteChannel).Extract()
   return binaries.all { binary ->
@@ -246,7 +248,10 @@ internal suspend fun isSigned(byteChannel: SeekableByteChannel, binaryId: String
 
     val result = try {
       val signedMessageVerifier = SignedMessageVerifier(SignatureVerificationLog(binaryId))
-      signedMessageVerifier.VerifySignatureAsync(signedMessage, verificationParams)
+      // the signature verifier is a coroutine API, so the check enters coroutines here and nowhere else
+      runBlocking {
+        signedMessageVerifier.VerifySignatureAsync(signedMessage, verificationParams)
+      }
     }
     catch (e: Exception) {
       throw Exception("Failed to verify $binaryId", e)

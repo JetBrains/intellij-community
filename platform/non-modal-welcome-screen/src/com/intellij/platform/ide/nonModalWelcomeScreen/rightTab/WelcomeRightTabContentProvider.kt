@@ -29,10 +29,6 @@ interface WelcomeRightTabContentProvider {
 
   val productIcon: Icon? get() = null
 
-  val isDisableOptionVisible: Boolean
-  val isStartupSwitchPanelOptionVisible: Boolean
-    get() = false
-
   val buttonsPerRow: Int
     get() = 3
 
@@ -85,6 +81,7 @@ interface WelcomeRightTabContentProvider {
     @NlsSafe val text: String,
     val icon: Icon,
     val onClick: (Project, CoroutineScope) -> Unit,
+    val background: java.awt.Color? = null,
   )
 
   /**
@@ -95,13 +92,14 @@ interface WelcomeRightTabContentProvider {
     val isAlwaysAvailable: Boolean = false,
     text: String,
     icon: Icon,
-    val beforeOnClick: suspend (Project) -> Unit = {}
+    val beforeOnClick: suspend (Project) -> Unit = {},
+    background: java.awt.Color? = null,
   ) : FeatureButtonModel(text, icon, { project, coroutineScope ->
     coroutineScope.launch {
       beforeOnClick(project)
       WelcomeScreenFeatureApi.getInstance().onClick(project.projectId(), featureKey)
     }
-  })
+  }, background)
 
   companion object {
     private val EP_NAME: ExtensionPointName<WelcomeRightTabContentProvider> = ExtensionPointName("com.intellij.platform.ide.welcomeScreenContentProvider")

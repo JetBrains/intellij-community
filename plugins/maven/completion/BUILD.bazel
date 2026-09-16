@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.maven.completion` start
+content_module_jar(module = ":completion")
+### auto-generated section `dev intellij.maven.completion` end
+
 ### auto-generated section `build intellij.maven.completion` start
 jvm_library(
     name = "completion",
@@ -41,8 +45,6 @@ jvm_library(
         "//platform/platform-impl:ide-impl",
     ],
 )
-
-content_module_jar(module = ":completion")
 
 jvm_library(
     name = "completion_test_lib",

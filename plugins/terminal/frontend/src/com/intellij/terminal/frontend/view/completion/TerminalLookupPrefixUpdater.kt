@@ -163,7 +163,7 @@ class TerminalLookupPrefixUpdater private constructor(
   companion object {
     private val KEY: Key<TerminalLookupPrefixUpdater> = Key.create("TerminalLookupPrefixUpdater")
 
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     fun install(outputModel: TerminalOutputModel, lookup: LookupImpl, coroutineScope: CoroutineScope) {
       val updater = TerminalLookupPrefixUpdater(outputModel, lookup, coroutineScope)
       lookup.putUserData(KEY, updater)

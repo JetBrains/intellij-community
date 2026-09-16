@@ -33,11 +33,11 @@ public final class JavaSimpleGetterProvider implements SimplePropertyGetterProvi
     }
 
     final PsiStatement statement = statements[0];
-    if (!(statement instanceof PsiReturnStatement)) {
+    if (!(statement instanceof PsiReturnStatement returnStatement)) {
       return false;
     }
 
-    final PsiExpression value = ((PsiReturnStatement)statement).getReturnValue();
+    final PsiExpression value = returnStatement.getReturnValue();
     if (!(value instanceof PsiReferenceExpression reference)) {
       return false;
     }
@@ -52,10 +52,10 @@ public final class JavaSimpleGetterProvider implements SimplePropertyGetterProvi
       return false;
     }
 
-    if (!(referent instanceof PsiField)) {
+    if (!(referent instanceof PsiField field)) {
       return false;
     }
 
-    return Comparing.equal(((PsiField)referent).getContainingClass(), method.getContainingClass());
+    return Comparing.equal(field.getContainingClass(), method.getContainingClass());
   }
 }

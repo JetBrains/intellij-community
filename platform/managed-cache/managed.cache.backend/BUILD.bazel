@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.platform.managed.cache.backend` start
+content_module_jar(module = ":managed.cache.backend")
+### auto-generated section `dev intellij.platform.managed.cache.backend` end
+
 ### auto-generated section `build intellij.platform.managed.cache.backend` start
 jvm_library(
     name = "managed.cache.backend",
@@ -37,8 +41,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":managed.cache.backend")
-
 jvm_library(
     name = "managed.cache.backend_test_lib",
     testonly = True,
@@ -73,7 +75,6 @@ exports_files(
     [
         "intellij.platform.managed.cache.backend.iml",
         "resources/intellij.platform.managed.cache.backend.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

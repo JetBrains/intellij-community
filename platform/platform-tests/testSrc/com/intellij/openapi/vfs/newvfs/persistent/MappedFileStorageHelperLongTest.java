@@ -79,6 +79,18 @@ public class MappedFileStorageHelperLongTest {
   }
 
   @Test
+  public void updateLongField_AtomicallyReplacesValue() throws Exception {
+    int fileId = vfs.createRecord();
+    storageHelper.writeLongField(fileId, FIELD_LONG_OFFSET_IN_ROW, 41L);
+
+    long previousValue = storageHelper.updateLongField(fileId, FIELD_LONG_OFFSET_IN_ROW, value -> value + 1);
+
+    assertEquals(41L, previousValue, "The update must return the previous value");
+    assertEquals(42L, storageHelper.readLongField(fileId, FIELD_LONG_OFFSET_IN_ROW),
+                 "The update must store the new value");
+  }
+
+  @Test
   public void notYetWrittenValue_ReadsBackAsZero() throws Exception {
     int fileId = vfs.createRecord();
     long valueReadBack = storageHelper.readLongField(fileId, FIELD_LONG_OFFSET_IN_ROW);

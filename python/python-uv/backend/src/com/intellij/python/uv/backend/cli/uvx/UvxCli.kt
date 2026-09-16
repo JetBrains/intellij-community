@@ -2,8 +2,8 @@
 package com.intellij.python.uv.backend.cli.uvx
 
 import com.intellij.python.community.execService.ZeroCodeStdoutTransformer
-import com.intellij.python.pytools.runtime.PyToolRuntime
-import com.intellij.python.pytools.runtime.executeAndHandleErrors
+import com.intellij.python.pytools.backend.runtime.PyToolRuntime
+import com.intellij.python.pytools.backend.runtime.executeAndHandleErrors
 import com.jetbrains.python.errorProcessing.PyResult
 
 /**

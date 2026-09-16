@@ -4,8 +4,10 @@ package com.intellij.polySymbols.patterns.impl
 import com.intellij.polySymbols.patterns.PolySymbolPattern
 import com.intellij.polySymbols.query.PolySymbolQueryExecutor
 import com.intellij.polySymbols.query.PolySymbolQueryStack
+import org.jetbrains.annotations.ApiStatus
 
-internal interface ComplexPatternConfigProvider {
+@ApiStatus.Internal
+interface ComplexPatternConfigProvider {
 
   fun getPatterns(): List<PolySymbolPattern>
 

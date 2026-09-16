@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.python.pyrefly` start
+content_module_jar(module = ":pyrefly")
+### auto-generated section `dev intellij.python.pyrefly` end
+
 ### auto-generated section `build intellij.python.pyrefly` start
 jvm_library(
     name = "pyrefly",
@@ -9,8 +13,6 @@ jvm_library(
             "src/**/*.kt",
             "src/**/*.java",
             "src/**/*.form",
-            "gen/**/*.kt",
-            "gen/**/*.java",
         ],
         allow_empty = True,
     ),
@@ -44,17 +46,15 @@ jvm_library(
         "//libraries/lsp4j/jsonrpc",
         "//platform/projectModel-api:projectModel",
         "//python/python-lsp-core:lsp-core",
+        "//python/python-pyrefly/common",
         "//platform/core-impl",
         "//platform/lsp-impl",
         "//platform/statistics",
         "//platform/observable",
         "//platform/util:util-ui",
-        "//python/python-pytools:pytools",
-        "//python/python-pytools-ui:pytools-ui",
+        "//python/python-pytools/backend",
     ],
 )
-
-content_module_jar(module = ":pyrefly")
 
 jvm_library(
     name = "pyrefly_test_lib",
@@ -94,13 +94,13 @@ jvm_library(
         "//libraries/lsp4j/jsonrpc:jsonrpc_test_lib",
         "//platform/projectModel-api:projectModel_test_lib",
         "//python/python-lsp-core:lsp-core_test_lib",
+        "//python/python-pyrefly/common:common_test_lib",
         "//platform/core-impl:core-impl_test_lib",
         "//platform/lsp-impl:lsp-impl_test_lib",
         "//platform/statistics:statistics_test_lib",
         "//platform/observable:observable_test_lib",
         "//platform/util:util-ui_test_lib",
-        "//python/python-pytools:pytools_test_lib",
-        "//python/python-pytools-ui:pytools-ui_test_lib",
+        "//python/python-pytools/backend:backend_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.pyrefly` end

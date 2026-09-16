@@ -1,6 +1,0 @@
-- name: dist.all/lib/intellij.libraries.jackson.jar
-  modules:
-  - name: intellij.libraries.jackson
-    libraries:
-      jackson:
-      - name: $MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-core/2/jackson-core-2.jar

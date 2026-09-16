@@ -46,6 +46,7 @@ import com.intellij.platform.eel.provider.utils.awaitProcessResult
 import com.intellij.platform.eel.provider.utils.stderrString
 import com.intellij.platform.eel.provider.utils.stdoutString
 import com.intellij.platform.eel.spawnProcess
+import com.intellij.platform.eel.terminate
 import com.intellij.util.Urls
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.delete

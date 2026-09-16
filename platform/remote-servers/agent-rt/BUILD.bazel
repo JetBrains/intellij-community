@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.platform.remoteServers.agent.rt` start
+content_module_jar(module = ":remoteServers-agent-rt")
+### auto-generated section `dev intellij.platform.remoteServers.agent.rt` end
+
 ### auto-generated section `build intellij.platform.remoteServers.agent.rt` start
 jvm_library(
     name = "remoteServers-agent-rt",
@@ -21,8 +25,6 @@ jvm_library(
     visibility = ["//visibility:public"],
 )
 
-content_module_jar(module = ":remoteServers-agent-rt")
-
 jvm_library(
     name = "remoteServers-agent-rt_test_lib",
     testonly = True,
@@ -42,7 +44,6 @@ exports_files(
     [
         "intellij.platform.remoteServers.agent.rt.iml",
         "resources/intellij.platform.remoteServers.agent.rt.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

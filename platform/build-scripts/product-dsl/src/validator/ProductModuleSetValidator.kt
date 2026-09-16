@@ -31,7 +31,7 @@ internal object ProductModuleSetValidator : PipelineNode {
   override val id get() = NodeIds.PRODUCT_MODULE_SET_VALIDATION
   override val requires: Set<DataSlot<*>> get() = setOf(Slots.CONTENT_MODULE_PLAN)
 
-  override suspend fun execute(ctx: ComputeContext) {
+  override fun execute(ctx: ComputeContext) {
     val model = ctx.model
     model.pluginGraph.forEachProductParallel { product ->
       model.pluginGraph.query {

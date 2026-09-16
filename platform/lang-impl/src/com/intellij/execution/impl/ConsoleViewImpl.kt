@@ -256,7 +256,7 @@ open class ConsoleViewImpl protected constructor(
       }
     }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun getHyperlinks(): EditorHyperlinkSupport? = editor?.let { EditorHyperlinkSupport.get(it) }
 
   open fun scrollToEnd() {
@@ -517,7 +517,7 @@ open class ConsoleViewImpl protected constructor(
   }
 
   @TestOnly
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun waitAllRequests() {
     assert(ApplicationManager.getApplication().isUnitTestMode)
     val future = ApplicationManager.getApplication().executeOnPooledThread {
@@ -1711,7 +1711,7 @@ private fun isVScrollAtTheBottom(editor: EditorEx, useImmediatePosition: Boolean
   return scrollBarPosition == scrollBar.maximum - scrollBar.visibleAmount
 }
 
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 private fun registerActionHandler(editor: Editor, @Suppress("SameParameterValue") actionId: String) {
   val action = ActionManager.getInstance().getAction(actionId)
   action.registerCustomShortcutSet(action.shortcutSet, editor.contentComponent)

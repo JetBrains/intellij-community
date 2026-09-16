@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -45,6 +45,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.Collections;
 import java.util.List;
@@ -55,6 +56,7 @@ import java.util.Objects;
 public abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiElement>
   implements HintAction, IntentionActionWithModCommandFallback {
   private final List<T> candidates;
+  private final List<T> hintCandidates;
   final SmartPsiElementPointer<R> myReferencePointer;
   private final long myPsiModificationCount;
 
@@ -73,12 +75,16 @@ public abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiEl
         || !BaseIntentionAction.canModify(psiFile)
         || resolveRef() != null) {
       candidates = Collections.emptyList();
+      hintCandidates = Collections.emptyList();
     }
     else {
       // search for suitable candidates here, in the background thread
       StaticMembersProcessor.MembersToImport<T> membersToImport = getMembersToImport(100);
-      List<T> candidatesToImport = membersToImport.applicable().isEmpty() ? membersToImport.all() : membersToImport.applicable();
+      boolean noApplicableMember = membersToImport.applicable().isEmpty();
+      List<T> candidatesToImport = noApplicableMember ? membersToImport.all() : membersToImport.applicable();
       candidates = ContainerUtil.filter(candidatesToImport, candidate -> isValidCandidate(psiFile, candidate));
+      // an applicable member always has a compatible signature, so only the fallback list needs the check
+      hintCandidates = noApplicableMember ? ContainerUtil.filter(candidates, this::hasCompatibleSignature) : candidates;
     }
     myPsiModificationCount = PsiModificationTracker.getInstance(project).getModificationCount();
   }
@@ -93,6 +99,25 @@ public abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiEl
     VirtualFile virtualFile = PsiUtilCore.getVirtualFile(candidate);
     if (virtualFile == null) return false;
     return ProjectFileIndex.getInstance(psiFile.getProject()).isInContent(virtualFile);
+  }
+
+  /**
+   * The fallback candidate list holds one member for each class with the correct name, also when the applicability check
+   * rejected the member. The editor hint shows a member only when it passes this check, because the user did not ask
+   * for the hint. The quick fix keeps every candidate.
+   *
+   * @return true when the signature of the member can match the reference
+   */
+  boolean hasCompatibleSignature(@NotNull T member) {
+    return true;
+  }
+
+  /**
+   * @return the members the editor hint offers
+   */
+  @TestOnly
+  public @NotNull List<T> getHintCandidates() {
+    return hintCandidates;
   }
 
   protected abstract @NotNull @IntentionName String getBaseText();
@@ -202,7 +227,7 @@ public abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiEl
     if (!CodeInsightSettings.getInstance().ADD_MEMBER_IMPORTS_ON_THE_FLY) {
       return false;
     }
-    if (candidates.isEmpty()) {
+    if (hintCandidates.isEmpty()) {
       return false;
     }
     String referenceName = getReferenceName();
@@ -210,21 +235,21 @@ public abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiEl
       return false;
     }
 
-    T firstCandidate = candidates.getFirst();
+    T firstCandidate = hintCandidates.getFirst();
     PsiFile containingFile = callExpression.getContainingFile();
     if (containingFile == null || isPsiModificationStampChanged(containingFile.getProject())) {
       return false;
     }
 
     if ((!toAddStaticImports() ||
-         candidates.size() != 1 ||
+         hintCandidates.size() != 1 ||
          !PsiTreeUtil.isAncestor(containingFile, firstCandidate, true))
         && !ApplicationManager.getApplication().isHeadlessEnvironment()
         && !HintManager.getInstance().hasShownHintsThatWillHideByOtherHint(true)) {
       TextRange textRange = callExpression.getTextRange();
-      QuestionAction action = createQuestionAction(candidates, containingFile.getProject(), editor);
+      QuestionAction action = createQuestionAction(hintCandidates, containingFile.getProject(), editor);
       String hintText =
-        ShowAutoImportPass.getMessage(candidates.size() > 1, getMemberKindPresentableText(), getMemberPresentableText(firstCandidate));
+        ShowAutoImportPass.getMessage(hintCandidates.size() > 1, getMemberKindPresentableText(), getMemberPresentableText(firstCandidate));
       ImportHintDismissalTracker.showHint(editor, hintText,
                                           textRange.getStartOffset(),
                                           textRange.getEndOffset(), action, callExpression, referenceName);

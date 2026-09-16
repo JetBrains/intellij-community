@@ -2,13 +2,14 @@
 package com.intellij.openapi.editor.impl
 
 import com.intellij.openapi.editor.ex.DocumentTextPatch
-import com.intellij.openapi.editor.impl.marker.PMarker
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot
+import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngineImpl
 import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl
 import com.intellij.openapi.editor.impl.marker.UsePMarkerImplementation
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.util.DocumentUtil
 import com.intellij.util.ref.GCUtil
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test
@@ -44,32 +45,38 @@ class SnapshotRangeHighlighterImplTest {
         null, 6, 7, 1, HighlighterTargetArea.EXACT_RANGE, true, null
       )
       val lineHighlighter = model.addPersistentLineHighlighter(null, 1, 1)!!
+      val markerStores = document.snapshotMarkerStores
 
       Assertions.assertThat(exactHighlighter).isInstanceOf(SnapshotRangeMarkerImpl::class.java)
       Assertions.assertThat(lineHighlighter).isInstanceOf(SnapshotRangeMarkerImpl::class.java)
       Assertions.assertThat(exactHighlighter.isPersistent).isTrue()
       Assertions.assertThat(lineHighlighter.isPersistent).isTrue()
-      Assertions.assertThat((exactHighlighter as PMarker).resolve(initialSnapshot))
+      val exactMarker = exactHighlighter as SnapshotRangeMarkerImpl
+      val lineMarker = lineHighlighter as SnapshotRangeMarkerImpl
+      val rootStore = model.rootStore()
+      Assertions.assertThat(SnapshotMarkerEngineImpl.resolveRangeMarker(exactMarker, rootStore.rootReference(initialSnapshot).get()))
         .extracting("startOffset", "endOffset").containsExactly(4, 12)
-      Assertions.assertThat((lineHighlighter as PMarker).resolve(initialSnapshot))
+      Assertions.assertThat(SnapshotMarkerEngineImpl.resolveRangeMarker(lineMarker, rootStore.rootReference(initialSnapshot).get()))
         .extracting("startOffset", "endOffset").containsExactly(6, 12)
 
-      val insertedBefore = initialSnapshot.applyOp(textPatch(0, 0, "x\n"))
-      Assertions.assertThat(exactHighlighter.resolve(insertedBefore))
+      val insertedBefore = markerStores.applyOp(initialSnapshot, textPatch(0, 0, "x\n"))
+      Assertions.assertThat(SnapshotMarkerEngineImpl.resolveRangeMarker(exactMarker, rootStore.rootReference(insertedBefore).get()))
         .extracting("startOffset", "endOffset").containsExactly(6, 14)
-      Assertions.assertThat(lineHighlighter.resolve(insertedBefore))
+      Assertions.assertThat(SnapshotMarkerEngineImpl.resolveRangeMarker(lineMarker, rootStore.rootReference(insertedBefore).get()))
         .extracting("startOffset", "endOffset").containsExactly(8, 14)
 
       val replacedText = "prefix\none\n  target\nlast"
-      val replaced = initialSnapshot.applyOp(textPatch(0, initialSnapshot.text().length(), replacedText))
-      Assertions.assertThat(exactHighlighter.resolve(replaced))
+      val replaced = markerStores.applyOp(initialSnapshot, textPatch(0, initialSnapshot.text().length(), replacedText))
+      Assertions.assertThat(SnapshotMarkerEngineImpl.resolveRangeMarker(exactMarker, rootStore.rootReference(replaced).get()))
         .extracting("startOffset", "endOffset").containsExactly(11, 19)
-      Assertions.assertThat(lineHighlighter.resolve(replaced))
+      Assertions.assertThat(SnapshotMarkerEngineImpl.resolveRangeMarker(lineMarker, rootStore.rootReference(replaced).get()))
         .extracting("startOffset", "endOffset").containsExactly(13, 19)
 
-      val deleted = initialSnapshot.applyOp(textPatch(4, 13, ""))
-      Assertions.assertThat(exactHighlighter.resolve(deleted).isValid).isFalse()
-      Assertions.assertThat(lineHighlighter.resolve(deleted).isValid).isFalse()
+      val deleted = markerStores.applyOp(initialSnapshot, textPatch(4, 13, ""))
+      Assertions.assertThat(SnapshotMarkerEngineImpl.resolveRangeMarker(exactMarker, rootStore.rootReference(deleted).get()).isValid)
+        .isFalse()
+      Assertions.assertThat(SnapshotMarkerEngineImpl.resolveRangeMarker(lineMarker, rootStore.rootReference(deleted).get()).isValid)
+        .isFalse()
     }
     finally {
       model.dispose()
@@ -112,14 +119,19 @@ class SnapshotRangeHighlighterImplTest {
     val model = MarkupModelImpl(document)
     try {
       val initialSnapshot = document.core.snapshot()
-      val highlighter = model.addRangeHighlighter(2, 4, 1, null, HighlighterTargetArea.EXACT_RANGE) as PMarker
+      val highlighter = model.addRangeHighlighter(2, 4, 1, null, HighlighterTargetArea.EXACT_RANGE) as SnapshotRangeMarkerImpl
+      val markerStores = document.snapshotMarkerStores
+      val rootStore =  model.rootStore()
 
-      val firstBranch = initialSnapshot.applyOp(textPatch(0, 0, "X"))
-      val secondBranch = initialSnapshot.applyOp(textPatch(0, 0, "YYYY"))
+      val firstBranch = markerStores.applyOp(initialSnapshot, textPatch(0, 0, "X"))
+      val secondBranch = markerStores.applyOp(initialSnapshot, textPatch(0, 0, "YYYY"))
 
-      Assertions.assertThat(highlighter.resolve(initialSnapshot)).extracting("startOffset", "endOffset").containsExactly(2, 4)
-      Assertions.assertThat(highlighter.resolve(firstBranch)).extracting("startOffset", "endOffset").containsExactly(3, 5)
-      Assertions.assertThat(highlighter.resolve(secondBranch)).extracting("startOffset", "endOffset").containsExactly(6, 8)
+      Assertions.assertThat(SnapshotMarkerEngineImpl.resolveRangeMarker(highlighter, rootStore.rootReference(initialSnapshot).get()))
+        .extracting("startOffset", "endOffset").containsExactly(2, 4)
+      Assertions.assertThat(SnapshotMarkerEngineImpl.resolveRangeMarker(highlighter, rootStore.rootReference(firstBranch).get()))
+        .extracting("startOffset", "endOffset").containsExactly(3, 5)
+      Assertions.assertThat(SnapshotMarkerEngineImpl.resolveRangeMarker(highlighter, rootStore.rootReference(secondBranch).get()))
+        .extracting("startOffset", "endOffset").containsExactly(6, 8)
     }
     finally {
       model.dispose()
@@ -135,11 +147,15 @@ class SnapshotRangeHighlighterImplTest {
       val snapshot = document.core.snapshot()
       val firstHighlighter = firstModel.addRangeHighlighter(1, 2, 1, null, HighlighterTargetArea.EXACT_RANGE)
       val secondHighlighter = secondModel.addRangeHighlighter(4, 5, 1, null, HighlighterTargetArea.EXACT_RANGE)
-      val first = firstHighlighter as PMarker
-      val second = secondHighlighter as PMarker
+      val first = firstHighlighter as SnapshotRangeMarkerImpl
+      val second = secondHighlighter as SnapshotRangeMarkerImpl
+      val firstRootStore = firstModel.rootStore()
+      val secondRootStore = secondModel.rootStore()
 
-      Assertions.assertThat(first.resolve(snapshot)).extracting("startOffset", "endOffset").containsExactly(1, 2)
-      Assertions.assertThat(second.resolve(snapshot)).extracting("startOffset", "endOffset").containsExactly(4, 5)
+      Assertions.assertThat(SnapshotMarkerEngineImpl.resolveRangeMarker(first, firstRootStore.rootReference(snapshot).get()))
+        .extracting("startOffset", "endOffset").containsExactly(1, 2)
+      Assertions.assertThat(SnapshotMarkerEngineImpl.resolveRangeMarker(second, secondRootStore.rootReference(snapshot).get()))
+        .extracting("startOffset", "endOffset").containsExactly(4, 5)
       Assertions.assertThat(firstModel.allHighlighters).containsExactly(firstHighlighter)
       Assertions.assertThat(secondModel.allHighlighters).containsExactly(secondHighlighter)
     }
@@ -188,6 +204,37 @@ class SnapshotRangeHighlighterImplTest {
     finally {
       model.dispose()
     }
+  }
+
+  @Test
+  fun `highlighters shift after bulk multi replace at descending offsets`() {
+    val document = DocumentImpl("xxxx mmmm yyyy nnnn zzzz tail", true)
+    val model = MarkupModelImpl(document)
+    try {
+      val highlighterA = model.addRangeHighlighter(5, 9, 1, null, HighlighterTargetArea.EXACT_RANGE)
+      val highlighterB = model.addRangeHighlighter(15, 19, 1, null, HighlighterTargetArea.EXACT_RANGE)
+      val highlighterC = model.addRangeHighlighter(25, 29, 1, null, HighlighterTargetArea.EXACT_RANGE)
+
+      DocumentUtil.executeInBulk(document) {
+        document.replaceString(20, 24, "zzzzTT")
+        document.replaceString(10, 14, "yyyyTT")
+        document.replaceString(0, 4, "xxxxTT")
+      }
+
+      Assertions.assertThat(document.text).isEqualTo("xxxxTT mmmm yyyyTT nnnn zzzzTT tail")
+      assertValidHighlighter(highlighterA, 7, 11)
+      assertValidHighlighter(highlighterB, 19, 23)
+      assertValidHighlighter(highlighterC, 31, 35)
+    }
+    finally {
+      model.dispose()
+    }
+  }
+
+  private fun assertValidHighlighter(highlighter: RangeHighlighter, start: Int, end: Int) {
+    Assertions.assertThat(highlighter.isValid).isTrue()
+    Assertions.assertThat(highlighter.startOffset).isEqualTo(start)
+    Assertions.assertThat(highlighter.endOffset).isEqualTo(end)
   }
 
   @Test

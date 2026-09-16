@@ -37,6 +37,14 @@ class PyDBDaemonThread(threading.Thread):
                 self._stop_trace()
                 self._warn_pydevd_thread_is_traced()
                 self._on_run()
+            except SystemExit:
+                # The debugger raises it in this thread through PyThreadState_SetAsyncExc to stop resolving
+                # values the user is no longer waiting for, so it lands wherever the thread happens to be and
+                # says nothing a user needs. Printing it puts a traceback of pydevd's own code on stderr of
+                # every step that follows a variable request.
+                if not self._kill_received:
+                    if sys is not None and traceback is not None:
+                        traceback.print_exc()
             except:
                 if sys is not None and traceback is not None:
                     traceback.print_exc()

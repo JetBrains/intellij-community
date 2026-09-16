@@ -33,7 +33,9 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyFunctionTypeAnnotation
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyFunctionTypeAnnotationFile
+import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider
 import com.jetbrains.python.codeInsight.stdlib.getNamedTupleTypeForClass
+import com.jetbrains.python.codeInsight.stdlib.parameterizeNamedTupleType
 import com.jetbrains.python.codeInsight.typeHints.PyTypeHintFile
 import com.jetbrains.python.codeInsight.typeRepresentation.PyModuleTypeName
 import com.jetbrains.python.codeInsight.typeRepresentation.psi.PyFunctionTypeRepresentation
@@ -55,6 +57,7 @@ import com.jetbrains.python.psi.PyDecoratable
 import com.jetbrains.python.psi.PyDoubleStarExpression
 import com.jetbrains.python.psi.PyEllipsisLiteralExpression
 import com.jetbrains.python.psi.PyExpression
+import com.jetbrains.python.psi.PyExpressionCodeFragment
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyForPart
 import com.jetbrains.python.psi.PyFunction
@@ -1113,7 +1116,13 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
       val results: MutableList<PyClassType> = ArrayList()
       for (superClassExpression in getSuperClassExpressions(pyClass)) {
         val type = getType(superClassExpression, context).derefOrUnknown()
-        if (type is PyClassType) {
+        if (type is PyNamedTupleType && superClassExpression is PySubscriptionExpression) {
+          // A named tuple type reports its field types as its type arguments.
+          // The type arguments of the class must come from the superclass expression, as in `class Sub(Base[str])`.
+          val typeArguments = staticWithCustomContext(context) { getIndexTypes(superClassExpression, it) }
+          results.add(PyCollectionTypeImpl(type.pyClass, false, typeArguments))
+        }
+        else if (type is PyClassType) {
           results.add(type)
         }
       }
@@ -1588,7 +1597,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
         val isTypeIs = TYPE_IS in names || TYPE_IS_EXT in names
         val isTypeGuard = TYPE_GUARD in names || TYPE_GUARD_EXT in names
         if (isTypeIs || isTypeGuard) {
-          val indexTypes: MutableList<PyType?> = getIndexTypes(resolved, context)
+          val indexTypes = getIndexTypes(resolved, context)
           if (indexTypes.size == 1) {
             val narrowedType = create(resolved, isTypeIs, indexTypes[0])
             if (narrowedType != null) {
@@ -1919,6 +1928,17 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
       return PyKnownDecoratorUtil
         .getKnownDecorators(decoratable, context)
         .any { it === PyKnownDecorator.TYPING_FINAL || it === PyKnownDecorator.TYPING_FINAL_EXT }
+    }
+
+    /**
+     * Returns true if and only if [cls] accepts no subclass. A class with the `@final` decorator
+     * accepts none. An enum class with one member or more also accepts none.
+     */
+    @JvmStatic
+    fun isFinalClass(cls: PyClass, context: TypeEvalContext): Boolean {
+      return PyUtil.getParameterizedCachedValue(cls, context) {
+        isFinal(cls, context) || PyStdlibTypeProvider.isFinalEnum(cls, context)
+      }
     }
 
     @JvmStatic
@@ -2567,18 +2587,10 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
       return Ref(getType(starredExpression, context).derefOrUnknown())
     }
 
-    private fun getIndexTypes(expression: PySubscriptionExpression, context: Context): MutableList<PyType?> {
-      val types: MutableList<PyType?> = ArrayList()
+    private fun getIndexTypes(expression: PySubscriptionExpression, context: Context): List<PyType?> {
       val indexExpr = PyPsiUtils.flattenParens(expression.indexExpression)
-      if (indexExpr is PyTupleExpression) {
-        for (expr in indexExpr.elements) {
-          types.add(getType(expr, context).derefOrUnknown())
-        }
-      }
-      else if (indexExpr != null) {
-        types.add(getType(indexExpr, context).derefOrUnknown())
-      }
-      return types
+      val elements = if (indexExpr is PyTupleExpression) indexExpr.elements.asList() else listOfNotNull(indexExpr)
+      return elements.map { getType(it, context).derefOrUnknown() }
     }
 
     private fun parameterizeClassDefaultAware(
@@ -2640,7 +2652,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
             return assignedTypeRef
           }
           if (typeHint is PySubscriptionExpression) {
-            val indexTypes: MutableList<PyType?> = getIndexTypes(typeHint, context)
+            val indexTypes = getIndexTypes(typeHint, context)
             return Ref(PyTypeChecker.parameterizeType(assignedType, indexTypes, context.typeContext))
           }
           if (typeHint is PyReferenceExpression) {
@@ -2705,8 +2717,13 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
         val indexExpr = element.indexExpression
         if (indexExpr != null) {
           val operandType = Ref.deref<PyType?>(getType(operand, context))
-          val indexTypes: MutableList<PyType?> = getIndexTypes(element, context)
+          val indexTypes = getIndexTypes(element, context)
           if (operandType != null) {
+            if (operandType is PyNamedTupleType) {
+              parameterizeNamedTupleType(operandType, indexTypes, context.typeContext)?.let {
+                return it
+              }
+            }
             if (operandType is PyClassType) {
               if (operandType !is PyTupleType && PyNames.FQN.TUPLE == operandType.pyClass.qualifiedName) {
                 if (indexExpr is PyTupleExpression) {
@@ -2858,19 +2875,14 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
       val qualifiedName = expression.asQualifiedName()
       val pyFile = FileContextUtil.getContextFile(expression) as? PyFile
 
-      val anchor = expression.containingFile.context
-      val scopeOwner: ScopeOwner?
-
-      when (anchor) {
-        null -> {
-          scopeOwner = pyFile
-        }
-        is ScopeOwner -> {
-          scopeOwner = anchor
-        }
-        else -> {
-          scopeOwner = ScopeUtil.getScopeOwner(anchor)
-        }
+      val containingFile = expression.containingFile
+      val anchor = containingFile.context
+      val scopeOwner: ScopeOwner? = when {
+        anchor == null -> pyFile
+        // The scope owner of a fragment knows that a parameter or return annotation is resolved outside of the function
+        containingFile is PyExpressionCodeFragment -> ScopeUtil.getScopeOwner(containingFile)
+        anchor is ScopeOwner -> anchor
+        else -> ScopeUtil.getScopeOwner(anchor)
       }
 
       if (scopeOwner != null && qualifiedName != null) {

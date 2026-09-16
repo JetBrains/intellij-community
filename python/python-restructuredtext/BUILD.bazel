@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.restructuredtext.python` start
+content_module_jar(module = ":restructuredtext-python")
+### auto-generated section `dev intellij.restructuredtext.python` end
+
 ### auto-generated section `build intellij.restructuredtext.python` start
 jvm_provided_library(
     name = "platform_lang-impl_provided",
@@ -75,8 +79,6 @@ jvm_library(
         ":spellchecker_provided",
     ],
 )
-
-content_module_jar(module = ":restructuredtext-python")
 
 jvm_library(
     name = "restructuredtext-python_test_lib",

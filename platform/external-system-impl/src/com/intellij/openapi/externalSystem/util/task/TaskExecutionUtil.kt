@@ -53,6 +53,7 @@ object TaskExecutionUtil {
       settings = spec.settings,
       progressExecutionMode = spec.progressExecutionMode,
       callback = spec.callback,
+      runConfigConsumer = spec.runConfigConsumer,
       userData = spec.userData,
       activateToolWindowBeforeRun = spec.activateToolWindowBeforeRun,
       activateToolWindowOnFailure = spec.activateToolWindowOnFailure,

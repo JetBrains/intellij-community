@@ -1,5 +1,4 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
-load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.libraries.qodana.sarif` start
 jvm_library(
@@ -16,11 +15,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-qodana-sarif-qodana-sarif"],
     runtime_deps = ["@lib//:libraries-qodana-sarif-qodana-sarif"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-qodana-sarif-qodana-sarif"],
-    module = ":sarif",
 )
 
 jvm_library(
@@ -42,7 +36,6 @@ exports_files(
     [
         "intellij.libraries.qodana.sarif.iml",
         "resources/intellij.libraries.qodana.sarif.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

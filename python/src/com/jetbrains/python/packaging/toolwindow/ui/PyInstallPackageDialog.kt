@@ -20,8 +20,8 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.WindowStateService
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.WindowManager
-import com.intellij.python.processOutput.common.sendOpenToolWindowByTraceUuidEvent
-import com.intellij.python.pytools.PyTool
+import com.intellij.python.processOutput.common.ProcessOutputTopic
+import com.intellij.python.pytools.backend.PyTool
 import com.intellij.python.requirements.PyPackageVersionNormalizer
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.OnePixelSplitter
@@ -132,6 +132,7 @@ internal class PyInstallPackageDialog(private val project: Project) : BigPopupUI
   private lateinit var bottomContainer: JPanel
   private lateinit var listScrollPane: JScrollPane
   private lateinit var listOrDescContainer: JPanel
+
   // Assigned by the popup-creation method that always runs before any code path that reads
   // `popup` (the field is only read from user-driven actions — key handlers, resize callbacks,
   // install-completion callbacks — all of which the popup itself installs after this assignment).
@@ -689,7 +690,7 @@ internal class PyInstallPackageDialog(private val project: Project) : BigPopupUI
       else {
         // Failure keeps today's behavior: close the dialog and surface the logs.
         withContext(Dispatchers.EDT) { popup.cancel() }
-        sendOpenToolWindowByTraceUuidEvent(trace.uuid)
+        ProcessOutputTopic.sendOpenToolWindowByTraceUuidEvent(trace.uuid)
       }
     }.invokeOnCompletion {
       ApplicationManager.getApplication().invokeLater(

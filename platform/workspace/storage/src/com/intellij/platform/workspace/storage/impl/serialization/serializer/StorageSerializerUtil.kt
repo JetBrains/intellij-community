@@ -186,12 +186,12 @@ internal class StorageSerializerUtil(
 
       if (urlRelativizer == null) {
         val url = kryo.readObject(input, ArrayList::class.java) as List<String>
-        return virtualFileManager.getOrCreateFromUrl(url.joinToString("/"))
+        return virtualFileManager.storeAndGet(url.joinToString("/"))
       }
       else {
         val serializedUrl = kryo.readObject(input, String::class.java) as String
         val convertedUrl = urlRelativizer.toAbsoluteUrl(serializedUrl)
-        return virtualFileManager.getOrCreateFromUrl(convertedUrl)
+        return virtualFileManager.storeAndGet(convertedUrl)
       }
     }
   }

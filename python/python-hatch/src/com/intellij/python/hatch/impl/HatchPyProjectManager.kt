@@ -2,11 +2,11 @@
 package com.intellij.python.hatch.impl
 
 import com.intellij.python.community.common.tools.ToolId
-import com.intellij.python.hatch.icons.PythonHatchIcons
+import com.intellij.python.hatch.common.icons.PythonHatchCommonIcons
 import com.jetbrains.python.PyToolUIInfo
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 val HATCH_TOOL_ID: ToolId = ToolId("hatch")
-val HATCH_UI_INFO: PyToolUIInfo = PyToolUIInfo("Hatch", PythonHatchIcons.Logo)
+val HATCH_UI_INFO: PyToolUIInfo = PyToolUIInfo("Hatch", PythonHatchCommonIcons.Logo)
 

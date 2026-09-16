@@ -19,6 +19,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.EnvironmentUtil;
+import com.jetbrains.python.PyEnvConstKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,9 +30,15 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
+
+/**
+ * Leave this class alone, use {@link com.intellij.python.community.execService.ExecService} or {@link com.intellij.platform.eel.EelExecApi}
+ * or {@link com.intellij.python.pytools.backend.PyTool}
+ */
+@ApiStatus.Obsolete
 @ApiStatus.Internal
 public final class PythonEnvUtil {
-  @SuppressWarnings("SpellCheckingInspection") public static final String PYTHONPATH = "PYTHONPATH";
+  @SuppressWarnings("SpellCheckingInspection") public static final String PYTHONPATH = PyEnvConstKt.PYTHONPATH;
   @SuppressWarnings("SpellCheckingInspection") public static final String PYTHONUNBUFFERED = "PYTHONUNBUFFERED";
   @SuppressWarnings("SpellCheckingInspection") public static final String PYTHONIOENCODING = "PYTHONIOENCODING";
   @SuppressWarnings("SpellCheckingInspection") public static final String IPYTHONENABLE = "IPYTHONENABLE";
@@ -51,8 +58,9 @@ public final class PythonEnvUtil {
   }
 
   /**
-   * Resets the environment variables that affect the way the Python interpreter searches for its settings and libraries.
+   * @deprecated it doesn't support eel, do ot use it.
    */
+  @Deprecated(forRemoval = true)
   public static Map<String, String> resetHomePathChanges(@NotNull String homePath, @NotNull Map<String, String> env) {
     if (System.getenv(PYVENV_LAUNCHER) != null || EnvironmentUtil.getEnvironmentMap().containsKey(PYVENV_LAUNCHER)) {
       env.put(PYVENV_LAUNCHER, homePath);
@@ -60,15 +68,11 @@ public final class PythonEnvUtil {
     return env;
   }
 
-  /**
-   * Adds a value to the end os a path-like environment variable, using system-dependent path separator.
-   *
-   * @param source path-like string to append to
-   * @param value  what to append
-   * @param asPrefix if true, adds a value as a prefix, otherwise as a suffix
-   * @return modified path-like string
-   */
 
+  /**
+   * @deprecated it doesn't support eel, do ot use it.
+   */
+  @Deprecated(forRemoval = true)
   public static @NotNull String addToPathEnvVar(@Nullable String source, @NotNull String value, boolean asPrefix) {
     if (StringUtil.isEmpty(source)) return value;
     Set<String> paths = Sets.newHashSet(source.split(File.pathSeparator));
@@ -85,13 +89,21 @@ public final class PythonEnvUtil {
     }
   }
 
+  /**
+   * @deprecated it doesn't support eel, do ot use it.
+   */
+  @Deprecated(forRemoval = true)
   public static void addPathsToEnv(@NotNull Map<String, String> env, String key, @NotNull Collection<String> values) {
     for (String val : values) {
       addPathToEnv(env, key, val);
     }
   }
 
-  public static void addPathToEnv(@NotNull Map<String, String> env, String key, String value) {
+  /**
+   * @deprecated it doesn't support eel, do ot use it.
+   */
+  @Deprecated(forRemoval = true)
+  static void addPathToEnv(@NotNull Map<String, String> env, String key, String value) {
     if (!StringUtil.isEmpty(value)) {
       if (env.containsKey(key)) {
         env.put(key, addToPathEnvVar(env.get(key), value, false));
@@ -102,24 +114,39 @@ public final class PythonEnvUtil {
     }
   }
 
+  /**
+   * @deprecated it doesn't support eel, do ot use it.
+   */
+  @Deprecated(forRemoval = true)
   public static void addToPythonPath(@NotNull Map<String, String> env, @NotNull Collection<String> values) {
     addPathsToEnv(env, PYTHONPATH, values);
   }
 
+  /**
+   * @deprecated it doesn't support eel, do ot use it.
+   */
+  @Deprecated(forRemoval = true)
   public static void addToPythonPath(@NotNull Map<String, String> env, String value) {
     addPathToEnv(env, PYTHONPATH, value);
   }
 
-  public static @NotNull Map<String, String> setPythonDontWriteBytecode(@NotNull Map<String, String> env) {
+  public static void setPythonDontWriteBytecode(@NotNull Map<String, String> env) {
     env.put(PYTHONDONTWRITEBYTECODE, "1");
-    return env;
   }
 
-  public static Collection<String> appendSystemPythonPath(@NotNull Collection<String> pythonPath) {
+  /**
+   * @deprecated it doesn't support eel, do ot use it.
+   */
+  @Deprecated(forRemoval = true)
+  private static Collection<String> appendSystemPythonPath(@NotNull Collection<String> pythonPath) {
     return appendSystemEnvPaths(pythonPath, PYTHONPATH);
   }
 
-  public static Collection<String> appendSystemEnvPaths(@NotNull Collection<String> pythonPath, String envname) {
+  /**
+   * @deprecated it doesn't support eel, do ot use it.
+   */
+  @Deprecated(forRemoval = true)
+  private static Collection<String> appendSystemEnvPaths(@NotNull Collection<String> pythonPath, String envname) {
     String syspath = System.getenv(envname);
     if (syspath != null) {
       pythonPath.addAll(Lists.newArrayList(syspath.split(File.pathSeparator)));
@@ -127,6 +154,10 @@ public final class PythonEnvUtil {
     return pythonPath;
   }
 
+  /**
+   * @deprecated it doesn't support eel, do ot use it.
+   */
+  @Deprecated(forRemoval = true)
   public static void initPythonPath(@NotNull Map<String, String> envs, boolean passParentEnvs, @NotNull Collection<String> pythonPathList) {
     if (passParentEnvs && !envs.containsKey(PYTHONPATH)) {
       pythonPathList = appendSystemPythonPath(pythonPathList);

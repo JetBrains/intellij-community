@@ -104,15 +104,15 @@ class sfan(NamedTuple):
 
 if sys.platform == "win32":
     class pheap(NamedTuple):
-        heap_used: Incomplete
-        mmap_used: Incomplete
-        heap_count: Incomplete
+        heap_used: int
+        mmap_used: int
+        heap_count: int
 
 else:
     # if LINUX or MACOS or BSD:
     class pheap(NamedTuple):
-        heap_used: Incomplete
-        mmap_used: Incomplete
+        heap_used: int
+        mmap_used: int
 
 # redefine for linux:
 if sys.platform != "linux":
@@ -237,32 +237,32 @@ if sys.platform == "linux":
         swap: int
 
     class pmmap_grouped(NamedTuple):
-        path: Incomplete
-        rss: Incomplete
-        size: Incomplete
-        pss: Incomplete
-        shared_clean: Incomplete
-        shared_dirty: Incomplete
-        private_clean: Incomplete
-        private_dirty: Incomplete
-        referenced: Incomplete
-        anonymous: Incomplete
-        swap: Incomplete
+        path: str
+        rss: int
+        size: int
+        pss: int
+        shared_clean: int
+        shared_dirty: int
+        private_clean: int
+        private_dirty: int
+        referenced: int
+        anonymous: int
+        swap: int
 
     class pmmap_ext(NamedTuple):
-        addr: Incomplete
-        perms: Incomplete
-        path: Incomplete
-        rss: Incomplete
-        size: Incomplete
-        pss: Incomplete
-        shared_clean: Incomplete
-        shared_dirty: Incomplete
-        private_clean: Incomplete
-        private_dirty: Incomplete
-        referenced: Incomplete
-        anonymous: Incomplete
-        swap: Incomplete
+        addr: str
+        perms: str
+        path: str
+        rss: int
+        size: int
+        pss: int
+        shared_clean: int
+        shared_dirty: int
+        private_clean: int
+        private_dirty: int
+        referenced: int
+        anonymous: int
+        swap: int
 
     class pio(NamedTuple):
         read_count: int
@@ -324,14 +324,14 @@ elif sys.platform == "win32":
         uss: int
 
     class pmmap_grouped(NamedTuple):
-        path: Incomplete
-        rss: Incomplete
+        path: str
+        rss: int
 
     class pmmap_ext(NamedTuple):
-        addr: Incomplete
-        perms: Incomplete
-        path: Incomplete
-        rss: Incomplete
+        addr: str
+        perms: str
+        path: str
+        rss: int
 
     class pio(NamedTuple):
         read_count: int

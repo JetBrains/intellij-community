@@ -6,30 +6,60 @@ package com.intellij.platform.buildScripts.testFramework.distributionContent
 import com.intellij.platform.distributionContent.FileEntry
 import com.intellij.platform.distributionContent.ModuleEntry
 import com.intellij.platform.distributionContent.PluginContentReport
-import com.intellij.platform.distributionContent.deserializeContentData
-import com.intellij.platform.distributionContent.deserializePluginData
-import com.intellij.platform.distributionContent.serializeContentEntries
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
-import com.intellij.util.lang.HashMapZipFile
-import kotlinx.serialization.SerializationException
 import org.assertj.core.util.diff.DiffUtils
 import org.jetbrains.annotations.ApiStatus.Internal
-import org.jetbrains.jps.model.JpsProject
-import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.Files
-import java.nio.file.NoSuchFileException
 import java.nio.file.Path
-
-private const val ADDITIONAL_INSTRUCTIONS = """
-Snapshots for other products may require update, please run 'All Packaging Tests' run configuration to run all packaging tests.
-
-When the patches is applied, please also run PatronusConfigYamlConsistencyTest to ensure the Patronus configuration is up to date.
-"""
 
 @Internal
 fun buildUnifiedDiffText(fileName: String, originalLines: List<String>, revisedLines: List<String>): String {
   val patch = DiffUtils.diff(originalLines, revisedLines)
   return DiffUtils.generateUnifiedDiff(fileName, fileName, originalLines, patch, 3).joinToString(separator = "\n")
+}
+
+/**
+ * A failure that carries a patch over one checked-in file.
+ *
+ * [currentText] is what the file holds, and [desiredText] is what it must hold. The message states the patch, so a
+ * reader of a log can apply it. The error states the desired text as the expected side and names the real file as the
+ * actual one, so the Diff Viewer of the IDE writes the desired text into that file.
+ *
+ * A file the patch creates is created empty here, because `FileComparisonFailedError` takes a path that exists.
+ */
+@Internal
+fun createFilePatchFailure(
+  name: String,
+  file: Path,
+  projectHome: Path,
+  currentText: String,
+  desiredText: String,
+  context: String,
+): PackagingCheckFailure {
+  val patchText = buildUnifiedDiffText(
+    fileName = projectHome.relativize(file).toString(),
+    originalLines = currentText.lines(),
+    revisedLines = desiredText.lines(),
+  )
+  if (!Files.exists(file)) {
+    file.parent?.let(Files::createDirectories)
+    Files.createFile(file)
+  }
+  return PackagingCheckFailure(
+    name = name,
+    error = FileComparisonFailedError(
+      message = buildString {
+        appendLine(context)
+        appendLine()
+        // The patch names the file on both sides without a prefix, so `git apply` needs `-p0`.
+        appendLine("Patch, to apply with `git apply -p0` or to accept in the Diff Viewer:")
+        appendLine(patchText)
+      },
+      expected = desiredText,
+      actual = currentText,
+      actualFilePath = file.toString(),
+    ),
+  )
 }
 
 @Internal
@@ -41,120 +71,35 @@ data class ParsedContentReport(
 )
 
 @Internal
-fun readContentReportZip(reportFile: Path): ParsedContentReport {
-  HashMapZipFile.load(reportFile).use { zip ->
-    fun readEntry(name: String): String {
-      return Charsets.UTF_8.decode(requireNotNull(zip.getByteBuffer(name)) { "Cannot find $name in $reportFile" }).toString()
-    }
-
-    fun readPlatformEntries(name: String): List<FileEntry> {
-      val data = readEntry(name)
-      try {
-        return deserializeContentData(data)
-      }
-      catch (e: SerializationException) {
-        throw RuntimeException("Cannot parse $name in $reportFile\ndata:$data", e)
-      }
-    }
-
-    fun readPluginEntries(name: String): List<PluginContentReport> {
-      val data = readEntry(name)
-      try {
-        return deserializePluginData(data)
-      }
-      catch (e: SerializationException) {
-        throw RuntimeException("Cannot parse $name in $reportFile\ndata:$data", e)
-      }
-    }
-
-    return ParsedContentReport(
-      platform = readPlatformEntries("platform.yaml"),
-      productModules = readPluginEntries("product-modules.yaml"),
-      bundled = readPluginEntries("bundled-plugins.yaml"),
-      nonBundled = readPluginEntries("non-bundled-plugins.yaml"),
-    )
-  }
-}
-
-@Internal
 data class PackagingCheckFailure(
   @JvmField val name: String,
   @JvmField val error: Throwable,
 )
 
 /**
- * The checks over the plugins and the product modules a build reported.
- *
- * A product module is compared against the `module-content.yaml` checked in beside it.
+ * The check over the plugins a build reported.
  *
  * A plugin has no checked-in snapshot, so a plugin gets one check. The content the build reports for a bundled plugin
- * must equal the content it reports for the non-bundled build of the same plugin. This still finds a layout that
- * differs between the two builds. It no longer finds a change of one plugin's own content, and it asks no reviewer to
- * approve such a change.
+ * must equal the content it reports for the non-bundled build of the same plugin. This finds a layout that differs
+ * between the two builds. It does not find a change of one plugin's own content, and it asks no reviewer to approve
+ * such a change.
  *
  * A plugin the build reports only as non-bundled therefore gets no check, and no test name is stated for one.
  */
 @Internal
 fun collectPluginContentFailures(
   content: ParsedContentReport,
-  project: JpsProject,
-  projectHome: Path,
   checkPlugins: Boolean = true,
-  suggestedReviewer: String? = null,
   testName: (category: String, key: String) -> String,
 ): List<PackagingCheckFailure> {
-  return buildList {
-    addAll(
-      collectProductModuleContentFailures(
-        reports = toPluginContentMap(content.productModules).values,
-        project = project,
-        projectHome = projectHome,
-        suggestedReviewer = suggestedReviewer,
-        testName = { key -> testName("product-module", key) },
-      )
-    )
-
-    if (!checkPlugins) {
-      return@buildList
-    }
-
-    addAll(
-      collectBundledPluginContentFailures(
-        bundled = toPluginContentMap(content.bundled).values,
-        nonBundled = toPluginContentMap(content.nonBundled),
-        testName = { key -> testName("bundled-plugin", key) },
-      )
-    )
+  if (!checkPlugins) {
+    return emptyList()
   }
-}
-
-/** Compares each product module against the `module-content.yaml` beside its own module. */
-private fun collectProductModuleContentFailures(
-  reports: Collection<PluginContentReport>,
-  project: JpsProject,
-  projectHome: Path,
-  suggestedReviewer: String?,
-  testName: (key: String) -> String,
-): List<PackagingCheckFailure> {
-  val failures = ArrayList<PackagingCheckFailure>()
-  for ((mainModule, items) in reports.groupBy { it.mainModule }) {
-    val module = project.findModuleByName(mainModule) ?: continue
-    val key = getPluginContentKey(items.first())
-    try {
-      val contentRoot = Path.of(JpsPathUtil.urlToPath(module.contentRootsList.urls.first()))
-      checkThatContentIsNotChanged(
-        actualFileEntries = mergePerOsPluginContent(items),
-        expectedFile = contentRoot.resolve("module-content.yaml"),
-        projectHome = projectHome,
-        isBundled = false,
-        suggestedReviewer = suggestedReviewer,
-      )
-    }
-    catch (t: Throwable) {
-      failures.add(PackagingCheckFailure(name = testName(key), error = t))
-    }
-  }
-  return failures
+  return collectBundledPluginContentFailures(
+    bundled = toPluginContentMap(content.bundled).values,
+    nonBundled = toPluginContentMap(content.nonBundled),
+    testName = { key -> testName("bundled-plugin", key) },
+  )
 }
 
 /**
@@ -229,98 +174,6 @@ private fun getPluginContentKey(item: PluginContentReport): String {
   return item.mainModule +
          (if (item.os == null) "" else " (os=${item.os})") +
          (if (item.arch == null) "" else " (arch=${item.arch})")
-}
-
-private fun buildDistributionChangedMessage(
-  fileName: String,
-  expectedLines: List<String>,
-  actualLines: List<String>,
-  suggestedReviewer: String?,
-  requiresApproval: Boolean,
-): String {
-  val patchText = buildUnifiedDiffText(fileName, expectedLines, actualLines)
-
-  return if (requiresApproval && suggestedReviewer != null) {
-    """Distribution content has changed.
-If you are sure that the difference is as expected, ask $suggestedReviewer to approve changes.
-
-Please do not push changes without approval.
-For more details, please visit https://youtrack.jetbrains.com/articles/IDEA-A-80/Distribution-Content-Approving.
-
-$ADDITIONAL_INSTRUCTIONS
-Patch:
-$patchText"""
-  }
-  else {
-    """Distribution content has changed.
-If you are sure that the difference is as expected, please apply and commit a new snapshot.
-Approval is not required. For more details, please visit https://youtrack.jetbrains.com/articles/IDEA-A-80/Distribution-Content-Approving.
-
-Please copy the patch below and apply it, or open the Diff Viewer to accept the proposed changes.
-
-$ADDITIONAL_INSTRUCTIONS
-Patch:
-$patchText"""
-  }
-}
-
-/**
- * Compares the content a build produced against a checked-in snapshot, and fails with a patch when the two differ.
- *
- * Two production callers remain. One is the per-product platform snapshot, and it passes `isBundled = true`, so the
- * review path that [suggestedReviewer] drives still runs for it. The other is the `module-content.yaml` of a product
- * module, and it passes `isBundled = false`. No caller compares one plugin against a snapshot any more, so a change of
- * one plugin's own content needs no approval.
- */
-@Internal
-fun checkThatContentIsNotChanged(
-  actualFileEntries: List<FileEntry>,
-  expectedFile: Path,
-  projectHome: Path,
-  writeFull: Boolean = false,
-  isBundled: Boolean,
-  suggestedReviewer: String? = null,
-) {
-  val expected = try {
-    deserializeContentData(Files.readString(expectedFile))
-  }
-  catch (_: SerializationException) {
-    emptyList()
-  }
-  catch (_: NoSuchFileException) {
-    Files.createFile(expectedFile)
-    emptyList()
-  }
-
-  if (writeFull && System.getenv("TEAMCITY_VERSION") == null) {
-    val actualFull = normalizeContentReport(fileEntries = actualFileEntries, short = false)
-    Files.writeString(expectedFile.parent.resolve(expectedFile.fileName.toString().replace(".yaml", "-full.yaml")),
-                      serializeContentEntries(actualFull))
-  }
-
-  val actual = normalizeContentReport(fileEntries = actualFileEntries, short = true)
-  if (actual == expected) {
-    return
-  }
-
-  val isReviewRequired = suggestedReviewer != null && isBundled && (actual.size != expected.size || !actual.asSequence().zip(expected.asSequence()).all {
-    it.first.compareImportantFields(it.second)
-  })
-
-  val expectedString = serializeContentEntries(expected)
-  val actualString = serializeContentEntries(actual)
-
-  val fileName = projectHome.relativize(expectedFile).toString()
-
-  val resultMessage = buildDistributionChangedMessage(
-    fileName = fileName,
-    expectedLines = expectedString.lines(),
-    actualLines = actualString.lines(),
-    suggestedReviewer = suggestedReviewer,
-    requiresApproval = isReviewRequired,
-  )
-
-  throw FileComparisonFailedError(message = resultMessage, expected = expectedString, actual = actualString, expectedFilePath = expectedFile.toString())
 }
 
 internal fun normalizeContentReport(fileEntries: List<FileEntry>, short: Boolean): List<FileEntry> {

@@ -1,15 +1,14 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.filters
 
-import com.intellij.collaboration.async.ReloadablePotentiallyInfiniteListLoader
-import io.mockk.confirmVerified
+import com.intellij.collaboration.util.ComputableSequence
+import com.intellij.collaboration.util.ListPart
+import com.intellij.collaboration.util.SequenceComputer
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -17,7 +16,7 @@ import kotlinx.coroutines.test.runTest
 import org.jetbrains.plugins.gitlab.api.dto.GitLabAccessLevel
 import org.jetbrains.plugins.gitlab.api.dto.GitLabMemberDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
-import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestShortRestDTO
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDetails
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue.MergeRequestStateFilterValue
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue.MergeRequestsMemberFilterValue.MergeRequestsAssigneeFilterValue
@@ -57,13 +56,12 @@ internal class GitLabMergeRequestsFiltersViewModelImplTest {
                                                   avatarIconsProvider = mockk(),
                                                   loaderSupplier = loaderSupplierMock)
     vm.awaitLoader()
-    verify(exactly = 1) { loaderSupplierMock.invoke(any(), eq(defaultFilter)) }
+    verify { loaderSupplierMock.invoke(eq(defaultFilter)) }
 
     // Default filter
     filterVm.searchState.value = defaultFilter
     vm.awaitLoader()
-    verify(exactly = 1) { loaderSupplierMock.invoke(any(), eq(defaultFilter)) }
-    confirmVerified(loaderSupplierMock)
+    verify { loaderSupplierMock.invoke(eq(defaultFilter)) }
 
     // Default filter
     filterVm.searchState.value = GitLabMergeRequestsFiltersValue(
@@ -75,11 +73,11 @@ internal class GitLabMergeRequestsFiltersViewModelImplTest {
     // Change filter from Default
     filterVm.searchState.value = GitLabMergeRequestsFiltersValue.EMPTY
     vm.awaitLoader()
-    verify(exactly = 1) { loaderSupplierMock.invoke(any(), eq(GitLabMergeRequestsFiltersValue.EMPTY)) }
+    verify { loaderSupplierMock.invoke(eq(GitLabMergeRequestsFiltersValue.EMPTY)) }
 
     filterVm.searchState.value = defaultFilter
     vm.awaitLoader()
-    verify(exactly = 1) { loaderSupplierMock.invoke(any(), eq(defaultFilter)) }
+    verify { loaderSupplierMock.invoke(eq(defaultFilter)) }
   }
 
   @Test
@@ -102,16 +100,16 @@ internal class GitLabMergeRequestsFiltersViewModelImplTest {
     val filterValueStateMerged = GitLabMergeRequestsFiltersValue(state = MergeRequestStateFilterValue.MERGED)
     filterVm.searchState.value = filterValueStateMerged
     vm.awaitLoader()
-    verify(exactly = 1) { loaderSupplierMock.invoke(any(), eq(filterValueStateMerged)) }
+    verify { loaderSupplierMock.invoke(eq(filterValueStateMerged)) }
 
     filterVm.searchState.value = GitLabMergeRequestsFiltersValue.EMPTY
     vm.awaitLoader()
-    verify(exactly = 1) { loaderSupplierMock.invoke(any(), eq(GitLabMergeRequestsFiltersValue.EMPTY))  }
+    verify { loaderSupplierMock.invoke(eq(GitLabMergeRequestsFiltersValue.EMPTY)) }
 
     val filterValueStateClosed = GitLabMergeRequestsFiltersValue(state = MergeRequestStateFilterValue.CLOSED)
     filterVm.searchState.value = filterValueStateClosed
     vm.awaitLoader()
-    verify(exactly = 1) { loaderSupplierMock.invoke(any(), eq(filterValueStateClosed)) }
+    verify { loaderSupplierMock.invoke(eq(filterValueStateClosed)) }
   }
 
   @Test
@@ -221,22 +219,23 @@ internal class GitLabMergeRequestsFiltersViewModelImplTest {
   private suspend fun verifyFilterParticipantSelect(
     vm: GitLabMergeRequestsListViewModel,
     filterVm: GitLabMergeRequestsFiltersViewModelImpl,
-    loaderSupplier: (CoroutineScope, GitLabMergeRequestsFiltersValue) -> ReloadablePotentiallyInfiniteListLoader<GitLabMergeRequestShortRestDTO>,
-    filter: GitLabMergeRequestsFiltersValue
+    loaderSupplier: (GitLabMergeRequestsFiltersValue) -> ComputableSequence<ListPart<GitLabMergeRequestDetails>>,
+    filter: GitLabMergeRequestsFiltersValue,
   ) {
     filterVm.searchState.value = filter
     vm.awaitLoader()
-    verify(exactly = 1) { loaderSupplier.invoke(any(), eq(filter)) }
+    verify { loaderSupplier.invoke(eq(filter)) }
   }
 
-  private fun mockLoaderSupplier(): (CoroutineScope, GitLabMergeRequestsFiltersValue) -> ReloadablePotentiallyInfiniteListLoader<GitLabMergeRequestShortRestDTO> {
-    val mockLoader = mockk<ReloadablePotentiallyInfiniteListLoader<GitLabMergeRequestShortRestDTO>> {
-      every { isBusyFlow } returns MutableStateFlow(false)
+  private fun mockLoaderSupplier(): (GitLabMergeRequestsFiltersValue) -> ComputableSequence<ListPart<GitLabMergeRequestDetails>> =
+    mockk {
+      every { this@mockk.invoke(any()) } returns ComputableSequence {
+        object : SequenceComputer<ListPart<GitLabMergeRequestDetails>> {
+          override suspend fun computeNext(): SequenceComputer.ComputationOutcome<ListPart<GitLabMergeRequestDetails>> =
+            SequenceComputer.ComputationOutcome.Done
+        }
+      }
     }
-    return mockk<(CoroutineScope, GitLabMergeRequestsFiltersValue) -> ReloadablePotentiallyInfiniteListLoader<GitLabMergeRequestShortRestDTO>> {
-      every { this@mockk.invoke(any(), any()) } returns mockLoader
-    }
-  }
 
   private suspend fun GitLabMergeRequestsListViewModel.awaitLoader() {
     loading.first()

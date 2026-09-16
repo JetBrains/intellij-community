@@ -1,8 +1,7 @@
 import abc
-from abc import ABC
 
 
-class A(ABC):
+class A(abc.ABC):
     @abc.abstractmethod
     def meth(self):
         ...

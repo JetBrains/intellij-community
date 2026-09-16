@@ -2,6 +2,7 @@
 package com.intellij.openapi.roots.impl
 
 import com.intellij.concurrency.SensitiveProgressWrapper
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.platform.util.coroutines.childScope
@@ -16,7 +17,9 @@ import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -68,7 +71,7 @@ class ScanningCancellationMonitorTest {
 
     val report = awaitReport()
 
-    val stalled = report.stalled.single()
+    val stalled = report.entries.single()
     assertEquals(ScanningStallKind.NOT_CANCELED, stalled.kind)
     assertTrue(wrapper.isCanceled, "the monitor must cancel the indicator it reported")
     // exercises the formatting, including dumping the stack of a thread that was never started
@@ -88,7 +91,7 @@ class ScanningCancellationMonitorTest {
 
     val report = awaitReport()
 
-    assertEquals(ScanningStallKind.CANCELLATION_UNOBSERVED, report.stalled.single().kind)
+    assertEquals(ScanningStallKind.CANCELLATION_UNOBSERVED, report.entries.single().kind)
   }
 
   @Test
@@ -189,6 +192,59 @@ class ScanningCancellationMonitorTest {
     val recent = reports.get(TIMEOUT_SECONDS, TimeUnit.SECONDS).recentWriteActions
     assertTrue(recent.size in 1..64, "history must stay bounded, was ${recent.size}")
     assertTrue(recent.last().contains("pending"), recent.last())
+  }
+
+  @Test
+  fun `a canceled and marked thread that still holds the read action is reported`() {
+    val wrapper = sensitiveWrapper()
+    val reports = CompletableFuture<ScanningStallReport>()
+    val monitor = monitor(reports) { 0 }
+    // Runs under the indicator so that the platform marks this thread. That is the state the monitor used
+    // to excuse as "not yet noticed", although the grace period had already passed.
+    ProgressManager.getInstance().runProcess({
+      val thread = Thread.currentThread()
+      val outer = tracker.register(thread, wrapper)
+      try {
+        wrapper.cancel()
+        assertTrue(CoreProgressManager.hasThreadUnderCanceledIndicator(thread))
+        monitor.beforeWriteActionStart(javaClass)
+        val report = reports.get(TIMEOUT_SECONDS, TimeUnit.SECONDS)
+        assertEquals(ScanningStallKind.CANCELED_AND_MARKED, report.entries.single().kind)
+      }
+      finally {
+        tracker.unregister(thread, outer)
+      }
+    }, wrapper)
+  }
+
+  @Test
+  fun `the thread dump section names an unobservable cancellation`() {
+    val root = ProgressIndicatorBase(false, false)
+    val wrapper = SensitiveProgressWrapper(root)
+    root.cancel()
+    registerStuckReadAction(wrapper)
+
+    val dump = dumpScanningWork(tracker) ?: fail("the section must appear while a scan read action is active")
+
+    assertTrue(dump.contains("1 scanning read actions active:"), dump)
+    assertTrue(dump.contains("indicator.isCanceled: true"), dump)
+    assertTrue(dump.contains("checkCanceled can throw here: false"), dump)
+    assertTrue(dump.contains("diagnosis: " + ScanningStallKind.CANCELLATION_UNOBSERVED), dump)
+    // no line may start with a quote, or ThreadDumpParser reads it as a thread header
+    assertTrue(dump.lineSequence().none { it.startsWith("\"") }, dump)
+  }
+
+  @Test
+  fun `the thread dump section disappears when no scan read action is active`() {
+    assertNull(dumpScanningWork(tracker))
+  }
+
+  @Test
+  @RegistryKey(SCANNING_MONITOR_ENABLED_KEY, "false")
+  fun `the thread dump section disappears when the monitor is off`() {
+    registerStuckReadAction(sensitiveWrapper())
+
+    assertNull(dumpScanningWork(tracker))
   }
 
   private fun monitor(reports: CompletableFuture<ScanningStallReport>, graceMs: () -> Long): ScanningCancellationMonitor =

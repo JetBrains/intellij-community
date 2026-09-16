@@ -5,7 +5,7 @@ group = "com.jetbrains.intellij.tools"
 
 buildscript {
   ext.kotlin_version = '2.2.0-RC'
-  ext.otel_version = '1.37.0'
+  ext.otel_version = '1.66.0'
 
   repositories {
     maven { url = "https://cache-redirector.jetbrains.com/maven-central" }

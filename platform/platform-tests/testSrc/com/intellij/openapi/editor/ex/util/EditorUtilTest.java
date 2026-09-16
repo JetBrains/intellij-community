@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.ex.util;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
 import com.intellij.openapi.editor.impl.BreakpointArea;
@@ -238,6 +239,7 @@ public class EditorUtilTest extends AbstractEditorTest {
     assertEquals(lineEndOffset, EditorUtil.getNotFoldedLineEndOffset(getEditor(), offset));
   }
 
+  @SuppressWarnings("SameParameterValue")
   private @NotNull InterLineBreakpointConfiguration registerInterLineConfigurationProvider(@NotNull InterLineBreakpointHitArea hitArea,
                                                                                            int @NotNull ... lines) {
     TestInterLineBreakpointConfigurationProvider provider = new TestInterLineBreakpointConfigurationProvider(hitArea, lines);
@@ -269,6 +271,7 @@ public class EditorUtilTest extends AbstractEditorTest {
       myLines = lines;
       myConfiguration = new InterLineBreakpointConfiguration(
         AllIcons.Actions.Cancel,
+        AllIcons.Actions.Cancel,
         "test",
         new InterLineBreakpointProperties(false),
         null,
@@ -283,7 +286,7 @@ public class EditorUtilTest extends AbstractEditorTest {
     }
 
     @Override
-    public @NotNull Flow<InterLineBreakpointConfiguration> getConfiguration(@NotNull com.intellij.openapi.editor.Editor editor) {
+    public @NotNull Flow<InterLineBreakpointConfiguration> getConfiguration(@NotNull Editor editor) {
       return FlowKt.flowOf(myConfiguration);
     }
 

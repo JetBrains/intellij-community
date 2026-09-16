@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.platform.navbar.frontend` start
+content_module_jar(module = ":frontend")
+### auto-generated section `dev intellij.platform.navbar.frontend` end
+
 ### auto-generated section `build intellij.platform.navbar.frontend` start
 jvm_library(
     name = "frontend",
@@ -43,8 +47,6 @@ jvm_library(
         "//platform/util/concurrency",
     ],
 )
-
-content_module_jar(module = ":frontend")
 
 jvm_library(
     name = "frontend_test_lib",
@@ -91,7 +93,6 @@ exports_files(
     [
         "intellij.platform.navbar.frontend.iml",
         "resources/intellij.platform.navbar.frontend.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

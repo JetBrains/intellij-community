@@ -1,5 +1,25 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
+load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_TARGETS")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `dev intellij.sh.plugin` start
+dev_dist_plugin(
+    main_module = "intellij.sh.plugin",
+    module_targets = MODULE_TARGETS,
+    prepacked_content_modules = [
+        # do not sort,
+        "intellij.sh.backend",
+        "intellij.sh.copyright",
+        "intellij.sh.markdown",
+        "intellij.sh.python",
+        "intellij.sh.terminal.frontend",
+        "intellij.sh.terminal",
+    ],
+    prepacked_jars = {
+        "intellij.sh.core": "intellij.sh.core.jar",
+    },
+)
+### auto-generated section `dev intellij.sh.plugin` end
 
 ### auto-generated section `build intellij.sh.plugin` start
 jvm_library(
@@ -38,22 +58,6 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.sh.plugin` end
-
-### auto-generated section `dev intellij.sh.plugin` start
-dev_dist_plugin(
-    descriptor_module = ":plugin",
-    prepacked_content_modules = [
-        "//plugins/sh/backend:backend_content_module_jar",
-        "//plugins/sh/copyright:copyright_content_module_jar",
-        "//plugins/sh/markdown:markdown_content_module_jar",
-        "//plugins/sh/python:python_content_module_jar",
-        "//plugins/sh/terminal:terminal_content_module_jar",
-    ],
-    prepacked_jars = {
-        "//plugins/sh/core:core_content_module_jar": "intellij.sh.core.jar",
-    },
-)
-### auto-generated section `dev intellij.sh.plugin` end
 
 ### auto-generated section `build intellij.sh.plugin.main` start
 jvm_library(

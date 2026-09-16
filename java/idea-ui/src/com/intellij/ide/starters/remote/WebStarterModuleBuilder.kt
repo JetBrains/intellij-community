@@ -28,6 +28,7 @@ import com.intellij.ide.starters.shared.StarterLanguageLevel
 import com.intellij.ide.starters.shared.StarterProjectType
 import com.intellij.ide.starters.shared.StarterTestRunner
 import com.intellij.ide.starters.shared.StarterWizardSettings
+import com.intellij.ide.starters.shared.initGitRepository
 import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.SettingsStep
@@ -35,7 +36,6 @@ import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.GitRepositoryInitializer
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
@@ -49,7 +49,6 @@ import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.JavaSdkType
@@ -67,6 +66,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Url
 import com.intellij.util.concurrency.EdtExecutorService
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -184,10 +184,10 @@ abstract class WebStarterModuleBuilder : ModuleBuilder() {
 
   protected open fun getCustomizedMessages(): CustomizedMessages? = null
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun getServerOptions(serverUrl: String): WebStarterServerOptions = loadServerOptions(serverUrl)
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   protected abstract fun loadServerOptions(serverUrl: String): WebStarterServerOptions
 
   internal fun getDependencyStateInternal(frameworkVersion: WebStarterFrameworkVersion, dependency: WebStarterDependency): DependencyState {
@@ -259,6 +259,11 @@ abstract class WebStarterModuleBuilder : ModuleBuilder() {
     }
   }
 
+  override fun postCommit(project: Project, projectDir: VirtualFile) {
+    // the new project is replaced with the workspace project, so the startup callback of setupModule never runs
+    starterContext.initGitRepository(project, projectDir)
+  }
+
   override fun setupRootModel(modifiableRootModel: ModifiableRootModel) {
     val sdk = setupNewModuleJdk(modifiableRootModel, moduleJdk, starterContext.isCreatingNewProject)
     val moduleExt = modifiableRootModel.getModuleExtension(LanguageLevelModuleExtension::class.java)
@@ -299,9 +304,7 @@ abstract class WebStarterModuleBuilder : ModuleBuilder() {
       val moduleContentRoot = LocalFileSystem.getInstance().refreshAndFindFileByPath(contentEntryPath!!.replace("\\", "/"))
                               ?: throw IllegalStateException("Module root not found")
 
-      runBackgroundableTask(IdeBundle.message("progress.title.creating.git.repository"), module.project) {
-        GitRepositoryInitializer.getInstance()?.initRepository(module.project, moduleContentRoot, true)
-      }
+      starterContext.initGitRepository(module.project, moduleContentRoot)
     }
 
     importModule(module)
@@ -365,7 +368,7 @@ abstract class WebStarterModuleBuilder : ModuleBuilder() {
     }
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   protected fun loadJsonData(url: String, accept: String? = null): JsonNode {
     return HttpRequests.request(url)
       .userAgent(getUserAgent())
@@ -391,7 +394,7 @@ abstract class WebStarterModuleBuilder : ModuleBuilder() {
       })
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   internal fun downloadResultInternal(progressIndicator: ProgressIndicator): DownloadResult {
     val tempFile = FileUtil.createTempFile(builderId, ".tmp", true)
     return downloadResult(progressIndicator, tempFile)
@@ -407,7 +410,7 @@ abstract class WebStarterModuleBuilder : ModuleBuilder() {
   @ApiStatus.Internal
   fun validateAndDownloadProject(
     project: Project?,
-    @RequiresBackgroundThread validateWithServer: (ProgressIndicator) -> Boolean = { true }
+    @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */) validateWithServer: (ProgressIndicator) -> Boolean = { true }
   ) {
     ProgressManager.getInstance().runProcessWithProgressSynchronously(
       {
@@ -439,7 +442,7 @@ abstract class WebStarterModuleBuilder : ModuleBuilder() {
       }, JavaStartersBundle.message("message.state.preparing.template"), true, project)
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   protected open fun downloadResult(progressIndicator: ProgressIndicator, tempFile: File): DownloadResult {
     val url = getGeneratorUrlInternal(starterContext.serverUrl, starterContext).toExternalForm()
     thisLogger().info("Loading project from ${url}")

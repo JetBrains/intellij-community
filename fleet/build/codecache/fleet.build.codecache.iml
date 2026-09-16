@@ -29,7 +29,7 @@
     <orderEntry type="module" module-name="fleet.codecache" />
     <orderEntry type="module" module-name="fleet.build.platform" />
     <orderEntry type="module" module-name="fleet.build.fs" />
-    <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
     <orderEntry type="library" name="slf4j-api" level="project" />
     <orderEntry type="library" name="fleet:jetbrains.intellij.platform.util.zip.squashed" level="project" />
     <orderEntry type="library" name="fleet:jetbrains.intellij.idea.community.build.zip" level="project" />

@@ -22,7 +22,7 @@ class StandardInstaller(
   val customInstallersDownloadDirectory: Path? = null,
 ) : IdeInstaller {
 
-  override suspend fun install(ideInfo: IdeInfo): Pair<String, InstalledIde> {
+  override fun install(ideInfo: IdeInfo): Pair<String, InstalledIde> {
     val installersDirectory = (GlobalPaths.instance.installersDirectory / ideInfo.productCode).createDirectories()
     val installersDownloadDirectory = customInstallersDownloadDirectory ?: installersDirectory
 

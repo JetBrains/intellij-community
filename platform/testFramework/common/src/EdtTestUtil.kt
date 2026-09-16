@@ -61,7 +61,7 @@ fun runInEdtAndWait(writeIntent: Boolean, runnable: () -> Unit) {
  *
  *  Do not use in a new code.
  */
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 fun dispatchAllEventsInIdeEventQueue() {
   doDispatchAllEventsInIdeEventQueue(null)
 }
@@ -71,7 +71,7 @@ fun dispatchAllEventsInIdeEventQueue() {
  * Use this overload when the caller must retain control of its own timeout while events keep replenishing the queue.
  * @return false if deadlineNs is breached while not all available events were dispatched
  */
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 fun dispatchAllEventsInIdeEventQueue(deadlineNs: Long): Boolean {
   return doDispatchAllEventsInIdeEventQueue(deadlineNs)
 }

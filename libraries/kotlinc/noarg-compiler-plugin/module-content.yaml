@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.kotlinc.noarg.compiler.plugin.jar
+  modules:
+  - name: intellij.libraries.kotlinc.noarg.compiler.plugin
+    libraries:
+      kotlinc.noarg-compiler-plugin:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/noarg-compiler-plugin-for-ide/2/noarg-compiler-plugin-for-ide-2.jar

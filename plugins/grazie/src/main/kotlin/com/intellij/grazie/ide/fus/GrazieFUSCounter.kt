@@ -23,9 +23,8 @@ private val actionInfo = listOf("rule.settings:canceled",
                                 "rule.settings:changes:domains",
                                 "rule.settings:changes:unclassified")
 
-private val GROUP = EventLogGroup("grazie.count", 12)
+private val GROUP = EventLogGroup("grazie.count", 13)
 
-private val LANGUAGE_FIELD = EventFields.Enum<Language>("language") { it.iso.name.lowercase() }
 private val RULE_FIELD = EventFields.StringValidatedByDictionary("id", "grazie_rule_long_ids.ndjson")
 private val FIXES_FIELD = EventFields.Int("fixes")
 private val ACTION_INFO_FIELD = EventFields.String("info", actionInfo)
@@ -69,68 +68,6 @@ private val suggestionShownEvent = GROUP.registerVarargEvent("suggestion.shown",
                                                              TEXT_LANGUAGE_FIELD,
                                                              EventFields.PluginInfo)
 
-private object RephraseEventFields {
-  val sentenceLength = EventFields.Int("sentence_length")
-  val rangeLength = EventFields.Int("range_length")
-  val rangeWordCount = EventFields.Int("range_word_count")
-  val rephraseLength = EventFields.Int("rephrase_length")
-  val rephraseWordCount = EventFields.Int("rephrase_word_count")
-  val suggestionCount = EventFields.Int("suggestion_count")
-  val appliedRank = EventFields.Int("applied_rank")
-}
-
-private val rephraseRequested = GROUP.registerVarargEvent(
-  "rephrase.requested",
-  LANGUAGE_FIELD,
-  RephraseEventFields.sentenceLength,
-  RephraseEventFields.rangeLength,
-  RephraseEventFields.rangeWordCount
-)
-
-private val rephraseShownEmpty = GROUP.registerVarargEvent(
-  "rephrase.shown.empty",
-  LANGUAGE_FIELD,
-  RephraseEventFields.sentenceLength,
-  RephraseEventFields.rangeLength,
-  RephraseEventFields.rangeWordCount
-)
-
-private val rephraseRejected = GROUP.registerEvent(
-  "rephrase.rejected",
-  LANGUAGE_FIELD,
-  RephraseEventFields.suggestionCount
-)
-
-private val rephraseApplied = GROUP.registerVarargEvent(
-  "rephrase.applied",
-  LANGUAGE_FIELD,
-  RephraseEventFields.suggestionCount,
-  RephraseEventFields.rephraseLength,
-  RephraseEventFields.rephraseWordCount,
-  RephraseEventFields.appliedRank
-)
-
-private object TranslateEventFields {
-  val fromLanguage = EventFields.Enum<Language>("from") { it.iso.name.lowercase() }
-  val toLanguage = EventFields.Enum<Language>("to") { it.iso.name.lowercase() }
-  val srcWordCount = EventFields.Int("src_word_count")
-  val translationWordCount= EventFields.Int("translation_word_count")
-}
-
-private val translateRequested = GROUP.registerVarargEvent(
-  "translate.requested",
-  TranslateEventFields.fromLanguage,
-  TranslateEventFields.toLanguage,
-  TranslateEventFields.srcWordCount
-)
-
-private val translateReplaced = GROUP.registerVarargEvent(
-  "translate.replaced",
-  TranslateEventFields.fromLanguage,
-  TranslateEventFields.toLanguage,
-  TranslateEventFields.srcWordCount,
-  TranslateEventFields.translationWordCount
-)
 
 private object RuleIdFields {
   val RULE_FIELD = EventFields.StringValidatedByDictionary("id", "grazie_rule_long_ids.ndjson")
@@ -210,62 +147,6 @@ object GrazieFUSCounter : CounterUsagesCollector() {
       TEXT_LANGUAGE_FIELD.with(tracker.textLanguage),
       EventFields.PluginInfo.with(getPluginInfo(tracker.rule.javaClass)),
     ))
-  }
-
-  fun reportRephraseRequested(language: Language, sentenceLength: Int, rangeLength: Int, rangeWordCount: Int) {
-    rephraseRequested.log(
-      LANGUAGE_FIELD.with(language),
-      RephraseEventFields.sentenceLength.with(sentenceLength),
-      RephraseEventFields.rangeLength.with(rangeLength),
-      RephraseEventFields.rangeWordCount.with(rangeWordCount))
-  }
-
-  fun reportRephraseEmpty(language: Language, sentenceLength: Int?, rangeLength: Int?, rangeWordCount: Int?) {
-    rephraseShownEmpty.log(
-      LANGUAGE_FIELD.with(language),
-      RephraseEventFields.sentenceLength.with(sentenceLength ?: 0),
-      RephraseEventFields.rangeLength.with(rangeLength ?: 0),
-      RephraseEventFields.rangeWordCount.with(rangeWordCount ?: 0)
-    )
-  }
-
-  fun reportRephraseRejected(language: Language, suggestionCount: Int) {
-    rephraseRejected.log(language, suggestionCount)
-  }
-
-  fun reportRephraseApplied(language: Language, suggestionCount: Int, rephraseLength: Int, rephraseWordCount: Int, appliedRank: Int) {
-    rephraseApplied.log(
-      LANGUAGE_FIELD.with(language),
-      RephraseEventFields.suggestionCount.with(suggestionCount),
-      RephraseEventFields.rephraseLength.with(rephraseLength),
-      RephraseEventFields.rephraseWordCount.with(rephraseWordCount),
-      RephraseEventFields.appliedRank.with(appliedRank)
-    )
-  }
-
-  fun reportTranslateRequested(fromLanguage: Language, toLanguage: Language, srcWordCount: Int) {
-    translateRequested.log(
-      TranslateEventFields.fromLanguage.with(fromLanguage),
-      TranslateEventFields.toLanguage.with(toLanguage),
-      TranslateEventFields.srcWordCount.with(srcWordCount)
-    )
-  }
-
-  fun reportTranslateError(fromLanguage: Language, toLanguage: Language, srcWordCount: Int) {
-    translateRequested.log(
-      TranslateEventFields.fromLanguage.with(fromLanguage),
-      TranslateEventFields.toLanguage.with(toLanguage),
-      TranslateEventFields.srcWordCount.with(srcWordCount),
-    )
-  }
-
-  fun reportTranslateReplaced(fromLanguage: Language, toLanguage: Language, srcWordCount: Int, translationWordCount: Int) {
-    translateReplaced.log(
-      TranslateEventFields.fromLanguage.with(fromLanguage),
-      TranslateEventFields.toLanguage.with(toLanguage),
-      TranslateEventFields.srcWordCount.with(srcWordCount),
-      TranslateEventFields.translationWordCount.with(translationWordCount)
-    )
   }
 
   fun reportAutoFixApplied(tracker: AcceptanceRateTracker) {

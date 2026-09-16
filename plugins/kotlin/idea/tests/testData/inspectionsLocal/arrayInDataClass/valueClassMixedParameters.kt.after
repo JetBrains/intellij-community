@@ -1,5 +1,5 @@
 // WITH_STDLIB
-// COMPILER_ARGUMENTS: -XXLanguage:+CustomEqualsInValueClasses
+// COMPILER_ARGUMENTS: -XXLanguage:+FullValueClasses
 // DISABLE_K2_ERRORS
 
 value class A(

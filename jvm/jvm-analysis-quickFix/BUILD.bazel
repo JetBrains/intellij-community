@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.jvm.analysis.quickFix` start
+content_module_jar(module = ":analysis-quickFix")
+### auto-generated section `dev intellij.jvm.analysis.quickFix` end
+
 ### auto-generated section `build intellij.jvm.analysis.quickFix` start
 jvm_library(
     name = "analysis-quickFix",
@@ -31,8 +35,6 @@ jvm_library(
         "//java/java-analysis-api:analysis",
     ],
 )
-
-content_module_jar(module = ":analysis-quickFix")
 
 jvm_library(
     name = "analysis-quickFix_test_lib",

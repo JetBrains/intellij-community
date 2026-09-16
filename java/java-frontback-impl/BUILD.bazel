@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.java.frontback.impl` start
+content_module_jar(module = ":frontback-impl")
+### auto-generated section `dev intellij.java.frontback.impl` end
+
 ### auto-generated section `build intellij.java.frontback.impl` start
 jvm_library(
     name = "frontback-impl",
@@ -55,8 +59,6 @@ jvm_library(
         "//platform/util/concurrency",
     ],
 )
-
-content_module_jar(module = ":frontback-impl")
 
 jvm_library(
     name = "frontback-impl_test_lib",

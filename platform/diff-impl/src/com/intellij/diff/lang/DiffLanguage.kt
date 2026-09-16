@@ -31,7 +31,7 @@ internal object DiffLanguage {
     getLanguageByDataKey(content) ?: getLanguageByFileType(content)
 
   @JvmStatic
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun getLanguageOrCompute(project: Project, content: DiffContent): Language? {
     val language = getLanguageByDataKey(content)
     if (language != null) return language
@@ -40,7 +40,7 @@ internal object DiffLanguage {
   }
 
   @JvmStatic
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun computeAndCacheLanguage(content: DiffContent, project: Project?) {
     val language = computeLanguage(content, project)
     if (language != null) {

@@ -1,3 +1,0 @@
-- name: dist.all/lib/intellij.xml.syntax.jar
-  modules:
-  - name: intellij.xml.syntax

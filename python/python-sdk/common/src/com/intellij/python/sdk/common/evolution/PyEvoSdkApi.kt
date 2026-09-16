@@ -167,6 +167,11 @@ interface PyEvoSdkApi : RemoteApi<Unit> {
    * disables its popup while `true`, instead of the current interpreter and its actions.
    */
   suspend fun sdkConfigurationInProgress(projectId: ProjectId): Flow<Boolean>
+
+  /**
+   * Resolves a list of action ids registered in the `PythonPackageManagerActions` action group.
+   */
+  suspend fun listPackageManagerActionIds(): List<String>
 }
 
 @ApiStatus.Internal
@@ -274,6 +279,10 @@ suspend fun requestEvoShowToolProcessOutput(projectId: ProjectId, nodeId: String
 suspend fun requestEvoSdkConfigurationInProgress(projectId: ProjectId): Flow<Boolean> =
   PyEvoSdkApi().sdkConfigurationInProgress(projectId)
 
+@ApiStatus.Internal
+suspend fun requestPackageManagerActionIds(): List<String> =
+  PyEvoSdkApi().listPackageManagerActionIds()
+
 /**
  * Frontend-safe, serializable projection of a `PyInterpreterItem` (an interpreter's display
  * label/icon), plus the [ref] needed to select it. All fields are pre-computed on the backend so the
@@ -339,11 +348,20 @@ data class EvoPyProjectDto(
    */
   val isMain: Boolean,
   /**
-   * [key] of the root of the tool workspace (uv/poetry) this takes part in, as its root or as a member; `null` when
-   * standalone. Every member of a workspace shares the one environment declared at its root, so the backend resolves
-   * every directory it works with against that root — this is what lets the popup name the workspace in its title.
+   * [key] of the root of the tool workspace (uv/poetry) this takes part in, as its root or as a member. A standalone
+   * project is its own root and states its own key. Every member of a workspace shares the one environment declared at
+   * its root, so the backend resolves every directory it works with against that root — this is what lets the popup
+   * name the workspace in its title, which it does only where the root is another project.
    */
   val workspaceRootKey: @NonNls String? = null,
+  /**
+   * The interpreter this `PyProject` uses, or `null` when it has none.
+   *
+   * Stated here so the frontend can tell two projects on one interpreter apart from two on different ones without
+   * asking about either: the widget states an interpreter, so that is what its data belongs to, and a project it has
+   * never asked about renders from what another project on the same interpreter already fetched (PY-90174).
+   */
+  val interpreterRef: PyInterpreterRef? = null,
 )
 
 /**

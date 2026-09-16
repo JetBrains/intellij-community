@@ -1,6 +1,17 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.batik` start
+content_module_jar(
+    libraries = [
+        # do not sort,
+        "@lib//:libraries-batik-batik-transcoder",
+        "@lib//:libraries-batik-xml-apis-ext",
+    ],
+    module = ":batik",
+)
+### auto-generated section `dev intellij.libraries.batik` end
+
 ### auto-generated section `build intellij.libraries.batik` start
 jvm_library(
     name = "batik",
@@ -25,15 +36,6 @@ jvm_library(
         "@lib//:libraries-batik-xml-apis-ext",
         "//libraries/commons/io",
     ],
-)
-
-content_module_jar(
-    libraries = [
-        # do not sort,
-        "@lib//:libraries-batik-batik-transcoder",
-        "@lib//:libraries-batik-xml-apis-ext",
-    ],
-    module = ":batik",
 )
 
 jvm_library(
@@ -63,7 +65,6 @@ exports_files(
     [
         "intellij.libraries.batik.iml",
         "resources/intellij.libraries.batik.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

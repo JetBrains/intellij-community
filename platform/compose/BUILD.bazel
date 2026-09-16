@@ -11,6 +11,13 @@ jps_test(
 
 ### skip generation section `test intellij.platform.compose.tests`
 
+### auto-generated section `dev intellij.platform.compose` start
+content_module_jar(
+    libraries = ["@lib//:jetbrains-compose-components-ui-tooling-preview-desktop"],
+    module = ":compose",
+)
+### auto-generated section `dev intellij.platform.compose` end
+
 ### auto-generated section `build intellij.platform.compose` start
 jvm_library(
     name = "compose",
@@ -55,11 +62,6 @@ jvm_library(
         "//platform/diagnostic/telemetry",
         "//platform/core-impl",
     ],
-)
-
-content_module_jar(
-    libraries = ["@lib//:jetbrains-compose-components-ui-tooling-preview-desktop"],
-    module = ":compose",
 )
 
 jvm_library(
@@ -112,7 +114,6 @@ exports_files(
     [
         "intellij.platform.compose.iml",
         "resources/intellij.platform.compose.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -8,8 +8,9 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.openapi.util.Key
+import com.intellij.psi.PsiManager
 import com.intellij.psi.util.CachedValue
-import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValueProvider.Result
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.xml.XmlFile
 import org.jetbrains.idea.devkit.inspections.remotedev.SplitModeInspectionUtil.findDependingContentModuleEntriesInFile
@@ -43,24 +44,56 @@ internal object SplitModeModuleKindResolver {
            && apiRestriction.restrictionKind == SplitModeApiRestrictionsService.ApiRestrictionKind.GENERIC_PLATFORM_API
   }
 
-  fun getOrComputeModuleAnalysis(module: Module, descriptorFile: XmlFile? = null): ModuleAnalysis {
-    val xmlDescriptor = descriptorFile ?: PluginModuleType.getContentModuleDescriptorXml(module) ?: PluginModuleType.getPluginXml(module)
-    if (xmlDescriptor == null) {
+  /**
+   * Returns the analysis of the own descriptor of [module].
+   *
+   * The platform holds the result in the user data of [module].
+   * Therefore, the provider must capture no PSI element.
+   */
+  fun getOrComputeModuleAnalysis(module: Module): ModuleAnalysis {
+    if (findOwnDescriptor(module) == null) {
       return ModuleAnalysis(ResolvedModuleKind(SplitModeApiRestrictionsService.ModuleKind.SHARED, ""))
     }
 
-    val cacheKey = if (descriptorFile == null) MODULE_ID_ANALYSIS_KEY else MODULE_DESCRIPTOR_ANALYSIS_KEY
-    return CachedValuesManager.getManager(module.project).getCachedValue(xmlDescriptor, cacheKey, {
-      CachedValueProvider.Result.create(
-        computeModuleAnalysis(module, descriptorFile),
-        ProjectRootModificationTracker.getInstance(module.project),
-        xmlDescriptor.manager.modificationTracker.forLanguage(XMLLanguage.INSTANCE),
+    return CachedValuesManager.getManager(module.project).getCachedValue(module, MODULE_ID_ANALYSIS_KEY, {
+      val project = module.project
+      Result.create(
+        computeModuleAnalysis(module, null),
+        ProjectRootModificationTracker.getInstance(project),
+        PsiManager.getInstance(project).modificationTracker.forLanguage(XMLLanguage.INSTANCE),
       )
     }, false)
   }
 
-  private fun computeModuleAnalysis(module: Module, descriptorFile: XmlFile? = null): ModuleAnalysis {
-    val xmlDescriptor = descriptorFile ?: PluginModuleType.getContentModuleDescriptorXml(module) ?: PluginModuleType.getPluginXml(module)
+  /**
+   * Returns the analysis of [descriptorFile].
+   *
+   * The platform holds the result in the user data of [descriptorFile].
+   * Therefore, the provider must capture no module, and it resolves the module itself.
+   * A module is not a stable function of a descriptor file.
+   */
+  fun getOrComputeDescriptorAnalysis(descriptorFile: XmlFile): ModuleAnalysis {
+    return CachedValuesManager.getManager(descriptorFile.project).getCachedValue(descriptorFile, MODULE_DESCRIPTOR_ANALYSIS_KEY, {
+      val project = descriptorFile.project
+      Result.create(
+        computeDescriptorAnalysis(descriptorFile),
+        ProjectRootModificationTracker.getInstance(project),
+        PsiManager.getInstance(project).modificationTracker.forLanguage(XMLLanguage.INSTANCE),
+      )
+    }, false)
+  }
+
+  private fun computeDescriptorAnalysis(descriptorFile: XmlFile): ModuleAnalysis {
+    val module = ModuleUtilCore.findModuleForPsiElement(descriptorFile) ?: return ModuleAnalysis(ResolvedModuleKind(SplitModeApiRestrictionsService.ModuleKind.SHARED, ""))
+    return computeModuleAnalysis(module, descriptorFile)
+  }
+
+  private fun findOwnDescriptor(module: Module): XmlFile? {
+    return PluginModuleType.getContentModuleDescriptorXml(module) ?: PluginModuleType.getPluginXml(module)
+  }
+
+  private fun computeModuleAnalysis(module: Module, descriptorFile: XmlFile?): ModuleAnalysis {
+    val xmlDescriptor = descriptorFile ?: findOwnDescriptor(module)
     if (xmlDescriptor == null) {
       return ModuleAnalysis(ResolvedModuleKind(SplitModeApiRestrictionsService.ModuleKind.SHARED, ""))
     }

@@ -153,10 +153,13 @@ interface PyDataclassResolver {
     val parameter = fieldInfo.parameter
     val fieldName = fieldInfo.name
 
-    if ((acc.seenKeywordOnlyClass && kwOnly != false || index < indexOfKeywordOnlyAttribute || kwOnly == true)
-        && aliasOrFieldName !in acc.positionalAliasOrFieldNameParams) {
-      acc.keywordOnlyAliasOrFieldNameParams += aliasOrFieldName
-      acc.keywordOnlyFieldNameParams += fieldName
+    if (acc.seenKeywordOnlyClass && kwOnly != false || index < indexOfKeywordOnlyAttribute || kwOnly == true) {
+      if (aliasOrFieldName !in acc.positionalAliasOrFieldNameParams) {
+        acc.keywordOnlyAliasOrFieldNameParams += aliasOrFieldName
+      }
+      if (fieldName !in acc.positionalFieldNameParams) {
+        acc.keywordOnlyFieldNameParams += fieldName
+      }
     }
 
     if (parameter == null) {

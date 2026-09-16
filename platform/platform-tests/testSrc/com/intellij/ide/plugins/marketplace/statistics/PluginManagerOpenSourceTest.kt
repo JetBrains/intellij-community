@@ -43,6 +43,7 @@ internal class PluginManagerOpenSourceTest {
         }
         val sessionStartedEvent = events.single { it.event.id == "session.started" }
         assertEquals(source.toString(), sessionStartedEvent.event.data["source"])
+        assertEquals(false, sessionStartedEvent.event.data["isUnifiedPage"])
         assertNotNull(sessionStartedEvent.event.data["sessionId"])
         assertNotNull(sessionStartedEvent.event.data["searchSessionId"])
       }

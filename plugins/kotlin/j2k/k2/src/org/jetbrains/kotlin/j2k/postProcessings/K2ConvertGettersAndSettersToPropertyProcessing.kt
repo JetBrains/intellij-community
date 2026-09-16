@@ -49,7 +49,12 @@ import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.PROPERTY_GETTER
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.PROPERTY_SETTER
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.findSamSymbolOrNull
+import org.jetbrains.kotlin.idea.base.psi.addAnnotation
+import org.jetbrains.kotlin.idea.base.psi.addMemberDeclarationBefore
+import org.jetbrains.kotlin.idea.base.psi.addModifierKeyword
+import org.jetbrains.kotlin.idea.base.psi.removeModifierKeyword
 import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.base.psi.setPropertyInitializer
 import org.jetbrains.kotlin.idea.base.util.or
 import org.jetbrains.kotlin.idea.base.util.projectScope
 import org.jetbrains.kotlin.idea.codeinsight.utils.isRedundantGetter
@@ -733,7 +738,7 @@ private class ClassConverter(
             is FakeProperty -> {
                 val newProperty = psiFactory.createProperty(property.name, property.type, property.isVar)
                 val anchor = realGetter?.function ?: realSetter?.function
-                klass.addDeclarationBefore(newProperty, anchor)
+                klass.addMemberDeclarationBefore(newProperty, anchor)
             }
 
             is MergedProperty -> property.mergeTo
@@ -751,8 +756,8 @@ private class ClassConverter(
 
         fun removeRealAccessors() {
             if (realGetter != null && realGetter.function.isAbstract() && !klass.isInterfaceClass()) {
-                ktProperty.addModifier(ABSTRACT_KEYWORD)
-                ktGetter.removeModifier(ABSTRACT_KEYWORD)
+                ktProperty.addModifierKeyword(ABSTRACT_KEYWORD)
+                ktGetter.removeModifierKeyword(ABSTRACT_KEYWORD)
             }
 
             // Restore the setter's comments first so the getter's end up closer to the property: each
@@ -784,7 +789,7 @@ private class ClassConverter(
         // If getter & setter do not have backing fields we should remove initializer
         // As we already know that property is not directly used in the code
         if (getter.target == null && setter?.target == null) {
-            ktProperty.initializer = null
+            ktProperty.setPropertyInitializer(null)
             retargetAnnotationsToGetter(propertyWithAccessors.fieldAnnotationsToRetargetToGetter)
         }
 
@@ -792,14 +797,14 @@ private class ClassConverter(
             ktProperty.renameTo(property.name)
         }
         if (isOpen) {
-            ktProperty.addModifier(OPEN_KEYWORD)
+            ktProperty.addModifierKeyword(OPEN_KEYWORD)
         }
 
         moveAccessorAnnotationsToProperty(ktProperty)
         removeRedundantPropertyAccessors(ktProperty)
         convertGetterToSingleExpressionBody(ktProperty.getter)
         if (ktProperty.getter != null || ktProperty.setter != null) {
-            ktProperty.removeModifier(CONST_KEYWORD)
+            ktProperty.removeModifierKeyword(CONST_KEYWORD)
         }
     }
 
@@ -817,7 +822,7 @@ private class ClassConverter(
 
         val ktGetter = psiFactory.createGetter(getter.body, getter.modifiersText)
         for (modifier in redundantGetterModifiers) {
-            ktGetter.removeModifier(modifier)
+            ktGetter.removeModifierKeyword(modifier)
         }
 
         if (getter is RealGetter) {
@@ -899,12 +904,12 @@ private class ClassConverter(
 
         val ktSetter = psiFactory.createSetter(setter.body, setter.parameterName, modifiers)
         for (modifier in redundantSetterModifiers) {
-            ktSetter.removeModifier(modifier)
+            ktSetter.removeModifierKeyword(modifier)
         }
 
         val classVisibility = ktProperty.parentOfType<KtClassOrObject>()?.visibilityModifierTypeOrDefault()
         if (classVisibility == INTERNAL_KEYWORD || classVisibility == PUBLIC_KEYWORD) {
-            ktSetter.removeModifier(PUBLIC_KEYWORD)
+            ktSetter.removeModifierKeyword(PUBLIC_KEYWORD)
         }
 
         if (setter is RealSetter) {
@@ -1016,7 +1021,7 @@ private class ClassConverter(
 
         for (accessor in property.accessors.sortedBy { it.isGetter }) {
             for (accessorEntry in accessor.annotationEntries) {
-                val propertyEntry = property.addAnnotationEntry(accessorEntry)
+                val propertyEntry = property.addAnnotation(accessorEntry)
                 val target = if (accessor.isGetter) PROPERTY_GETTER else PROPERTY_SETTER
                 propertyEntry.addUseSiteTarget(target)
             }

@@ -45,7 +45,7 @@ internal object PluginContentStructureValidator : PipelineNode {
   // Requires CONTENT_MODULE_PLAN to ensure graph has module dependency edges populated.
   override val requires: Set<DataSlot<*>> get() = setOf(Slots.CONTENT_MODULE_PLAN)
 
-  override suspend fun execute(ctx: ComputeContext) {
+  override fun execute(ctx: ComputeContext) {
     val model = ctx.model
 
     val autoAddedModulesByPluginId = model.dslTestPluginDependencyChains.mapValues { it.value.keys }

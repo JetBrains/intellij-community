@@ -47,13 +47,16 @@ class KotlinGenerateEqualsAndHashCodeWizard(
                 val selectedTemplate = this.selectedTemplate
                 val ext = KotlinEqualsHashCodeGeneratorExtension.getSingleApplicableFor(myClass)
 
-                if (ext == null || !ext.isExtensionTemplate(selectedTemplate)) {
+                if (ext?.isExtensionTemplateFieldsEditable(selectedTemplate) != false) {
                     enableTables()
-                    updateMemberInfos(myClass, DefaultMemberFilters)
                 } else {
                     disableTables()
-                    updateMemberInfos(myClass, ext.memberFilters)
                 }
+
+                updateMemberInfos(
+                    myClass,
+                    ext?.takeIf { it.isExtensionTemplate(selectedTemplate) }?.memberFilters ?: DefaultMemberFilters
+                )
                 super._commit(finishChosen)
             }
 

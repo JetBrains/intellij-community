@@ -32,6 +32,7 @@ import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.inline.InlineObjectProcessorUtil.InlineObjectContext;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
@@ -42,7 +43,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Objects;
 import java.util.function.Supplier;
 
 public final class InlineMethodHandler extends JavaInlineActionHandler {
@@ -77,8 +77,8 @@ public final class InlineMethodHandler extends JavaInlineActionHandler {
       case ContextOrError.InlineAbstractMethod context -> {
         inlineAbstractMethod(project, editor, context);
       }
-      case ContextOrError.InlineObjectMethod context -> {
-        inlineObjectMethod(context);
+      case ContextOrError.InlineObject context -> {
+        inlineObject(context);
       }
       case ContextOrError.InlineRegularMethod context -> {
         inlineRegularMethod(project, editor, context);
@@ -96,9 +96,7 @@ public final class InlineMethodHandler extends JavaInlineActionHandler {
     PsiMethod realMethod = context.method();
     PsiReference reference = context.reference();
     String message = JavaRefactoringBundle.message("dialog.message.confirmation.to.process.only.implementation",
-                                                   PsiFormatUtil.formatMethod(realMethod, PsiSubstitutor.EMPTY,
-                                                                              PsiFormatUtilBase.SHOW_NAME |
-                                                                              PsiFormatUtilBase.SHOW_CONTAINING_CLASS, 0));
+                                                   formatMethod(realMethod));
     int answer = Messages.showYesNoDialog(project, message, getRefactoringName(), Messages.getQuestionIcon());
     if (answer == Messages.NO) return;
     InlineMethodProcessor processor = new InlineMethodProcessor(project, realMethod, reference, editor, true, false, false, true);
@@ -107,8 +105,18 @@ public final class InlineMethodHandler extends JavaInlineActionHandler {
     processor.run();
   }
 
-  private static void inlineObjectMethod(ContextOrError.InlineObjectMethod context) {
-    InlineObjectProcessor processor = context.processor();
+  /**
+   * Formats method in a way it will be displayed in the dialogs related to inline method refactoring.
+   * @param method candidate method to be formatted.
+   */
+  public static @NotNull String formatMethod(@NotNull PsiMethod method) {
+    return PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY,
+                                      PsiFormatUtilBase.SHOW_NAME |
+                                      PsiFormatUtilBase.SHOW_CONTAINING_CLASS, 0);
+  }
+
+  private static void inlineObject(ContextOrError.InlineObject inlineObject) {
+    InlineObjectProcessor processor = InlineObjectProcessor.create(InlineObjectContext.create(inlineObject.method(), inlineObject.reference()));
     if (Messages.showOkCancelDialog(JavaRefactoringBundle.message("inline.method.object.suggestion.message"),
                                     JavaRefactoringBundle.message("inline.method.object.action.name"),
                                     JavaRefactoringBundle.message("inline.action.name"), CommonBundle.getCancelButtonText(),
@@ -210,9 +218,8 @@ public final class InlineMethodHandler extends JavaInlineActionHandler {
     }
     if (method.isConstructor()) {
       if (!InlineUtil.isChainingConstructor(method)) {
-        InlineObjectProcessor processor = InlineObjectProcessor.create(reference, method);
-        if (processor != null) {
-          return new ContextOrError.InlineObjectMethod(processor, method, reference);
+        if (InlineObjectProcessorUtil.canInlineConstructorAndChainCall(reference, method)) {
+          return new ContextOrError.InlineObject(method, reference);
         }
         if (!isThisReference(reference)) {
           return new ContextOrError.Error(
@@ -273,7 +280,7 @@ public final class InlineMethodHandler extends JavaInlineActionHandler {
    * Represents the result of preliminary analysis of the context of the method to be inlined.
    */
   public sealed interface ContextOrError
-    permits ContextOrError.Error, ContextOrError.InlineAbstractMethod, ContextOrError.InlineObjectMethod,
+    permits ContextOrError.Error, ContextOrError.InlineAbstractMethod, ContextOrError.InlineObject,
             ContextOrError.InlineRegularMethod {
 
     /**
@@ -285,12 +292,12 @@ public final class InlineMethodHandler extends JavaInlineActionHandler {
     }
 
     /**
-     * Result in which the object method could be inlined, for example, {@code new Point(12, 34).getX()}.
-     * @param processor - Processor that will be used to perform inline
-     * @param method - Method to be inlined.
-     * @param reference - Reference to the method call on which inline refactoring was invoked. It is null when refactoring is invoked on method declaration.
+     * Result in which the refactoring can inline the object creation together with the chained call.
+     * For example, {@code new Point(12, 34).getX()}.
+     * @param method - Constructor of the object to be inlined.
+     * @param reference - Reference to the constructor call on which inline refactoring was invoked.
      */
-    record InlineObjectMethod(@NotNull InlineObjectProcessor processor, @NotNull PsiMethod method, @Nullable PsiReference reference) implements ContextOrError {
+    record InlineObject(@NotNull PsiMethod method, @NotNull PsiReference reference) implements ContextOrError {
     }
 
     /**

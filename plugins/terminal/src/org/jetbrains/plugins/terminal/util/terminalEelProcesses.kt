@@ -35,7 +35,6 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import com.intellij.util.ui.EDT
 import com.jediterm.terminal.TtyConnector
-import com.pty4j.PtyProcess
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
@@ -44,8 +43,8 @@ import org.jetbrains.plugins.terminal.original
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
-@RequiresReadLockAbsence
-@RequiresBackgroundThread
+@RequiresReadLockAbsence(generateAssertion = false /* IJPL-115548 */)
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 internal fun hasRunningCommandsBlocking(shellEelProcess: ShellEelProcess): Boolean {
   if (EDT.isCurrentThreadEdt()) {
     val project = guessContextProject()
@@ -196,7 +195,7 @@ private suspend fun EelPath.isFile(eelApi: EelApi): Boolean {
 }
 
 @ApiStatus.Internal
-class ShellEelProcess(val eelProcess: EelProcess, val eelApi: EelApi, val ptyProcess: PtyProcess) {
+class ShellEelProcess(val eelProcess: EelProcess, val eelApi: EelApi, val ptyProcess: Process) {
   override fun toString(): String {
     val root = eelApi.descriptor.asSafely<EelPathBoundDescriptor>()?.rootPath?.let { "(root=$it)" }.orEmpty()
     return "descriptor=${eelApi.descriptor}$root, platform=${eelApi.platform}, process=${ptyProcess::class.java.name})"

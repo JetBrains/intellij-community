@@ -181,7 +181,7 @@ public final class AsyncStacksUtils {
     String value = DebuggerUtils.getInstance().processCollectibleValue(
       () -> process.invokeMethod(evaluationContext, finalMethodPair.first, finalMethodPair.second,
                                  args, ObjectReference.INVOKE_SINGLE_THREADED, true),
-      result -> result instanceof StringReference ? ((StringReference)result).value() : null,
+      result -> result instanceof StringReference reference ? reference.value() : null,
       evaluationContext);
     if (value != null) {
       return parseAgentAsyncStackTrace(value, virtualMachineProxy);

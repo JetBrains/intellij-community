@@ -8,4 +8,3 @@ fun foo() {
     a<caret>["1"]++
 }
 
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateCallableFromUsageFix

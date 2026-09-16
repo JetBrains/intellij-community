@@ -59,7 +59,7 @@ class MavenIndicesTestFixture(
    * write-intent lock, a pending write action blocks the read action, and that write action needs the lock.
    * See IDEA-393211.
    */
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   suspend fun setUpAfterImport() {
     MavenSystemIndicesManager.getInstance().setTestIndicesDir(myDir.resolve("MavenIndices"))
     val listUpdated = CompletableDeferred<Unit>()

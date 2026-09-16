@@ -19,14 +19,10 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.launchOnShow
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import org.jetbrains.annotations.Nls
 import java.awt.Color
 import java.awt.Graphics
 import javax.swing.JComponent
-import kotlin.time.Duration.Companion.milliseconds
-
-private const val ID = "EditorAnimationCacheStatistics"
-
-private const val WINDOW_SECONDS = STATISTICS_BUCKET_MS * STATISTICS_BUCKET_COUNT / 1000
 
 internal class EditorAnimationCacheStatisticsWidgetFactory : StatusBarWidgetFactory {
   override fun getId(): String = ID
@@ -40,7 +36,7 @@ internal class EditorAnimationCacheStatisticsWidgetFactory : StatusBarWidgetFact
 private class EditorAnimationCacheStatisticsWidget : CustomStatusBarWidget {
   private val lazyUi = lazy(::EditorAnimationCacheStatisticsUi)
 
-  @get:RequiresEdt
+  @get:RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private val ui: EditorAnimationCacheStatisticsUi
     get() = lazyUi.value
 
@@ -62,7 +58,7 @@ private class EditorAnimationCacheStatisticsUi {
   private val updates: Job = bar.launchOnShow(ID) {
     while (true) {
       bar.updateState()
-      delay(STATISTICS_BUCKET_MS.milliseconds)
+      delay(STATISTICS_BUCKET_DURATION)
     }
   }
 
@@ -92,31 +88,23 @@ private class HitRateBar : TextPanel() {
     get() = " " + UIBundle.message("status.bar.editor.animation.cache.widget.text", 100)
 
   fun updateState() {
-    if (!isShowing) return
-
-    val hitRate = EditorAnimationCacheStatistics.hitRate()
-    if (hitRate == rate && text != null) return
-
-    rate = hitRate
-    text = when (hitRate) {
-      null -> UIBundle.message("status.bar.editor.animation.cache.widget.idle")
-      else -> UIBundle.message("status.bar.editor.animation.cache.widget.text", hitRate.hitPercent)
+    if (!isShowing) {
+      return
     }
-    setToolTipText(HtmlChunk.text(when (hitRate) {
-      null -> UIBundle.message("status.bar.editor.animation.cache.widget.tooltip.idle", WINDOW_SECONDS)
-      else -> UIBundle.message(
-        "status.bar.editor.animation.cache.widget.tooltip",
-        hitRate.hits,
-        hitRate.misses,
-        WINDOW_SECONDS,
-      )
-    }))
+    val hitRate = EditorAnimationCacheStatistics.hitRate()
+    if (hitRate == rate && text != null) {
+      return
+    }
+    rate = hitRate
+    text = labelFor(hitRate)
+    setToolTipText(HtmlChunk.text(tooltipFor(hitRate)))
     repaint()
   }
 
   override fun paintComponent(g: Graphics) {
     val size = size
-    val servedWidth = size.width * (rate?.hitPercent ?: 0) / 100
+    val hitPercent = rate?.hitPercent ?: 0
+    val servedWidth = size.width * hitPercent / 100
 
     val isIslandTheme = IslandsState.isEnabled()
     val arc = if (isIslandTheme) JBUI.scale(6) else 0
@@ -136,4 +124,34 @@ private class HitRateBar : TextPanel() {
 
     super.paintComponent(g)
   }
+
+  private fun labelFor(hitRate: CacheHitRate?): @Nls String {
+    return if (hitRate == null) {
+      UIBundle.message("status.bar.editor.animation.cache.widget.idle")
+    } else {
+      UIBundle.message("status.bar.editor.animation.cache.widget.text", hitRate.hitPercent)
+    }
+  }
+
+  private fun tooltipFor(hitRate: CacheHitRate?): @Nls String {
+    return if (hitRate == null) {
+      UIBundle.message("status.bar.editor.animation.cache.widget.tooltip.idle", WINDOW_SECONDS.inWholeSeconds)
+    } else {
+      UIBundle.message(
+        "status.bar.editor.animation.cache.widget.tooltip",
+        hitRate.hits,
+        hitRate.misses,
+        WINDOW_SECONDS.inWholeSeconds,
+      )
+    }
+  }
 }
+
+/// MARK: constants
+
+private const val ID = "EditorAnimationCacheStatistics"
+
+/**
+ * The window the reported hit rate covers, which is however much history the statistics keep.
+ */
+private val WINDOW_SECONDS = STATISTICS_BUCKET_DURATION * STATISTICS_BUCKET_COUNT

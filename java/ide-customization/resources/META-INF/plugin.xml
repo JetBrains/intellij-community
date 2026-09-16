@@ -47,7 +47,18 @@
 
     <platform.ide.welcomeScreenAccessProvider implementation="com.intellij.ide.customization.java.welcomeScreen.IdeaWelcomeScreenAccessProvider"/>
 
-    <registryKey key="idea.welcome.screen.non.modal.enabled" defaultValue="false" restartRequired="true"
+    <registryKey key="idea.welcome.screen.non.modal.enabled" defaultValue="true" restartRequired="true"
                  description="Show the Welcome screen in non-modal mode for IDEA"/>
   </extensions>
+
+  <actions resource-bundle="messages.NonModalWelcomeScreenBundle">
+    <group id="NonModalWelcomeScreen.LeftTabActions.New" overrides="true" icon="AllIcons.General.Add" popup="true">
+      <reference ref="NonModalWelcomeNewProjectGroup"/>
+      <separator/>
+      <reference ref="WelcomeNewEmptyFile"/>
+      <reference ref="WelcomeMarkdownNewFile"/>
+      <reference ref="NewJavaFile"/>
+      <reference ref="NewKotlinFile"/>
+    </group>
+  </actions>
 </idea-plugin>

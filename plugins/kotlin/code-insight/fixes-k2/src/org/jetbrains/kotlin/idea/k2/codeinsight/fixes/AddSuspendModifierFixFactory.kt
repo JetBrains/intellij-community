@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
+import org.jetbrains.kotlin.idea.base.psi.addModifierKeyword
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
@@ -46,7 +47,7 @@ internal object AddSuspendModifierFixFactory {
             elementContext: ElementContext,
             updater: ModPsiUpdater,
         ) {
-            element.addModifier(KtTokens.SUSPEND_KEYWORD)
+            element.addModifierKeyword(KtTokens.SUSPEND_KEYWORD)
         }
 
         override fun getFamilyName(): String = KotlinBundle.message("fix.add.suspend.modifier.function", context.functionName)

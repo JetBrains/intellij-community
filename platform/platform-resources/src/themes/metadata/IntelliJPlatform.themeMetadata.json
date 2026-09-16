@@ -2616,53 +2616,13 @@
       "key": "ToggleButton.offBackground"
     },
     {
-      "key": "ToggleButton.offDisabledBackground",
-      "description": "Toggle track fill when unselected and disabled (Islands pill)",
-      "since": "2026.2"
-    },
-    {
-      "key": "ToggleButton.offDisabledBorderColor",
-      "description": "Toggle track border when unselected and disabled (Islands pill)",
-      "since": "2026.2"
-    },
-    {
-      "key": "ToggleButton.offDisabledNotchColor",
-      "description": "Notch fill when unselected and disabled (Islands pill)",
-      "since": "2026.2"
-    },
-    {
       "key": "ToggleButton.offForeground"
-    },
-    {
-      "key": "ToggleButton.offNotchColor",
-      "description": "Notch fill when unselected and enabled (Islands pill)",
-      "since": "2026.2"
     },
     {
       "key": "ToggleButton.onBackground"
     },
     {
-      "key": "ToggleButton.onDisabledBackground",
-      "description": "Toggle track fill when selected and disabled (Islands pill)",
-      "since": "2026.2"
-    },
-    {
-      "key": "ToggleButton.onDisabledBorderColor",
-      "description": "Toggle track border when selected and disabled (Islands pill)",
-      "since": "2026.2"
-    },
-    {
-      "key": "ToggleButton.onDisabledNotchColor",
-      "description": "Notch fill when selected and disabled (Islands pill)",
-      "since": "2026.2"
-    },
-    {
       "key": "ToggleButton.onForeground"
-    },
-    {
-      "key": "ToggleButton.onNotchColor",
-      "description": "Notch fill when selected and enabled (Islands pill)",
-      "since": "2026.2"
     },
     {
       "key": "SegmentedButton.selectedStartBorderColor",
@@ -2761,6 +2721,10 @@
     {
       "key": "ToolWindow.DragAndDrop.areaBackground",
       "description": "Background of the drop target area in a tool window"
+    },
+    {
+      "key": "ToolWindow.DragAndDrop.hintBackground",
+      "description": "Background of the drop hint area in a tool window"
     },
     {
       "key": "ToolWindow.Header.background",

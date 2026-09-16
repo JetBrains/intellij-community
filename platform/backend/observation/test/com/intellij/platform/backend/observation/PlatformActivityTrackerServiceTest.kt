@@ -3,6 +3,7 @@ package com.intellij.platform.backend.observation
 
 import kotlinx.coroutines.CompletableJob
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -106,6 +107,30 @@ class PlatformActivityTrackerServiceTest {
         launchedJob.cancel()
       }
       assert(!flow.value)
+    }
+  }
+
+  // this test hammers one activity key with blocking activities from several threads.
+  // It covers the compare-and-swap loops of `enterConfiguration` and `leaveConfiguration` under contention.
+  @RepeatedTest(20)
+  fun blockingActivitiesOnSingleKeyTest(): Unit = runBlocking {
+    withTimeout(60_000) {
+      val service = PlatformActivityTrackerService(this)
+      coroutineScope {
+        repeat(8) {
+          launch(Dispatchers.Default) {
+            repeat(200) {
+              service.trackConfigurationActivityBlocking(Key1) {}
+            }
+          }
+        }
+      }
+      // a blocking activity leaves the configuration asynchronously, so wait for the counter to drain
+      while (service.getAllKeys().isNotEmpty()) {
+        delay(10)
+      }
+      assert(!service.isInProgress(Key1))
+      assert(!service.configurationFlow.value)
     }
   }
 }

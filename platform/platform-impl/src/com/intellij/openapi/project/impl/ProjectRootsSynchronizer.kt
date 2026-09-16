@@ -25,7 +25,7 @@ class ProjectRootsSynchronizer : ProjectActivity {
       val roots = projectRootsComponent.projectRootUrls
       val virtualFileUrlManager = project.serviceAsync<WorkspaceModel>().getVirtualFileUrlManager()
       for (root in roots) {
-        registerProjectRoot(project, virtualFileUrlManager.getOrCreateFromUrl(root))
+        registerProjectRoot(project, virtualFileUrlManager.storeAndGet(root))
       }
     }
   }

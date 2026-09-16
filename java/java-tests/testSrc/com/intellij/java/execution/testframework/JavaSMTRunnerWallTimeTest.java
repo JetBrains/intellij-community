@@ -127,7 +127,12 @@ public class JavaSMTRunnerWallTimeTest extends LightPlatformTestCase {
 
     @Override
     public @NotNull SMTRunnerTestTreeView createSMTRunnerTestTreeView() {
-      return new JavaSMTRunnerTestTreeView(this);
+      return new JavaSMTRunnerTestTreeView();
+    }
+
+    @Override
+    public SMTRunnerTestTreeViewProvider.CustomizedDurationProvider getCustomizedDurationProvider() {
+      return JavaAwareTestConsoleProperties.createCustomizedDurationProvider(this);
     }
   }
 }

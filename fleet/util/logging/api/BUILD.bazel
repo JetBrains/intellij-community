@@ -17,6 +17,10 @@ fleet_wasmjs_module(
     deps = ["@kmp_deps//:org_jetbrains_kotlin_wrappers_kotlin_browser"],
 )
 
+### auto-generated section `dev fleet.util.logging.api` start
+content_module_jar(module = ":api")
+### auto-generated section `dev fleet.util.logging.api` end
+
 ### auto-generated section `build fleet.util.logging.api` start
 create_kotlinc_options(
     name = "custom_api",
@@ -54,17 +58,15 @@ jvm_library(
     exports = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinx-coroutines-core",
+        "//libraries/kotlinx/coroutines/core",
     ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinx-coroutines-core",
+        "//libraries/kotlinx/coroutines/core",
         ":fleet_util_multiplatform_provided",
     ],
 )
-
-content_module_jar(module = ":api")
 
 jvm_library(
     name = "api_test_lib",
@@ -79,11 +81,13 @@ jvm_library(
     exports = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinx-coroutines-core",
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
     ],
     runtime_deps = [
         # do not sort,
         ":api",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//fleet/util/multiplatform",
         "//fleet/util/multiplatform:multiplatform_test_lib",
     ],
@@ -95,7 +99,6 @@ exports_files(
     [
         "fleet.util.logging.api.iml",
         "resources/fleet.util.logging.api.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

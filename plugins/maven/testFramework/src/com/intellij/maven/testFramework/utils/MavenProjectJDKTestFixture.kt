@@ -18,7 +18,7 @@ import java.nio.file.Path
 class MavenProjectJDKTestFixture(val project: Project, val jdkName: String) : IdeaTestFixture {
   private lateinit var jdk: Sdk
 
-  @RequiresWriteLock
+  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
   override fun setUp() {
     val myJdkHome = IdeaTestUtil.requireRealJdkHome()
     val oldJdk = ProjectJdkTable.getInstance(project).findJdk(jdkName)
@@ -39,7 +39,7 @@ class MavenProjectJDKTestFixture(val project: Project, val jdkName: String) : Id
     }
   }
 
-  @RequiresWriteLock
+  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
   override fun tearDown() {
     if (!this::jdk.isInitialized) {
       // either super.setUp() wasn't called or jdk creation failed

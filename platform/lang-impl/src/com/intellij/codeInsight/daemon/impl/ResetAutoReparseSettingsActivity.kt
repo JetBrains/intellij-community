@@ -13,8 +13,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.backgroundWriteAction
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
-import com.intellij.openapi.options.ShowSettingsUtil
-import com.intellij.openapi.options.ex.ConfigurableVisitor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 
@@ -46,10 +44,7 @@ internal class ResetAutoReparseSettingsActivity : ProjectActivity {
         notification.setDisplayId("reset.auto.reparse.settings.to.default")
         notification.setSuppressShowingPopup(true)
         notification.addAction(NotificationAction.create(LangBundle.message("action.open.settings.text")) {
-          val groups = ShowSettingsUtilImpl.getConfigurableGroups(project, withIdeSettings = true)
-          val configurable = ConfigurableVisitor.findById("preferences.editor.code.editing", groups.toList())
-
-          ShowSettingsUtil.getInstance().showSettingsDialog(project, configurable)
+          ShowSettingsUtilImpl.showSettingsDialog(project, "preferences.editor.code.editing", null)
         })
         notification.notify(project)
       }

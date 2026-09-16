@@ -11,6 +11,10 @@ jps_test(
 
 ### skip generation section `test intellij.platform.statistics.devkit.tests`
 
+### auto-generated section `dev intellij.platform.statistics.devkit` start
+content_module_jar(module = ":devkit")
+### auto-generated section `dev intellij.platform.statistics.devkit` end
+
 ### auto-generated section `build intellij.platform.statistics.devkit` start
 jvm_library(
     name = "devkit",
@@ -46,7 +50,7 @@ jvm_library(
         "//libraries/guava",
         "//platform/statistics",
         "//platform/util/progress",
-        "//json/backend",
+        "//json",
         "//platform/core-ui",
         "//platform/statistics/uploader",
         "//platform/statistics/config",
@@ -64,8 +68,6 @@ jvm_library(
         "//platform/util/concurrency",
     ],
 )
-
-content_module_jar(module = ":devkit")
 
 jvm_library(
     name = "devkit_test_lib",
@@ -96,7 +98,7 @@ jvm_library(
         "//libraries/guava:guava_test_lib",
         "//platform/statistics:statistics_test_lib",
         "//platform/util/progress:progress_test_lib",
-        "//json/backend:backend_test_lib",
+        "//json:json_test_lib",
         "//platform/core-ui:core-ui_test_lib",
         "//platform/statistics/uploader:uploader_test_lib",
         "//platform/statistics/config:config_test_lib",
@@ -186,18 +188,12 @@ jvm_library(
         "//platform/testFramework:testFramework_test_lib",
         "//libraries/guava",
         "//libraries/guava:guava_test_lib",
-        "//libraries/misc/plugin",
-        "//libraries/misc/plugin:plugin_test_lib",
         "//platform/statistics",
         "//platform/statistics:statistics_test_lib",
         "//platform/util/progress",
         "//platform/util/progress:progress_test_lib",
         "//json",
         "//json:json_test_lib",
-        "//json/backend",
-        "//json/backend:backend_test_lib",
-        "//json/networknt.wrapper",
-        "//json/networknt.wrapper:networknt.wrapper_test_lib",
         "//platform/core-ui",
         "//platform/core-ui:core-ui_test_lib",
         "//platform/statistics/uploader",

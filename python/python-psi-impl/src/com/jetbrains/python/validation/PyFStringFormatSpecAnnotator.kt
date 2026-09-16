@@ -2,10 +2,13 @@
 package com.jetbrains.python.validation
 
 import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyTokenTypes
+import com.jetbrains.python.codeInsight.fstrings.PyFormatSpec
+import com.jetbrains.python.codeInsight.fstrings.PyFormatSpecComponentKind
 import com.jetbrains.python.highlighting.PyHighlighter
 import com.jetbrains.python.psi.PyElementVisitor
 import com.jetbrains.python.psi.PyExpression
@@ -106,148 +109,44 @@ private class PyFStringFormatSpecVisitor(private val holder: PyAnnotationHolder)
     }
   }
 
+  /**
+   * Highlights the components that [PyFormatSpec] recognizes in [text]. The parser is shared with the
+   * completion contributor and the documentation providers, so all three read a character the same way.
+   * The policy stays here: highlighting follows the syntax, and an invalid combination is reported by an
+   * inspection instead.
+   */
   private fun highlightFormatSpecComponents(element: PsiElement, text: String, expressionType: ExpressionType) {
     val baseOffset = element.textRange.startOffset
+    val spec = PyFormatSpec.parse(text, datetime = expressionType == ExpressionType.DATETIME)
 
-    when (expressionType) {
-      ExpressionType.STRING_OR_NUMERIC -> {
-        // Parse the format spec structure to properly identify fill character
-        // Format: [[fill]align][sign][z][#][0][width][grouping][.precision][grouping][type]
-
-        // Check for fill+align (fill is any char, align is <, >, ^, =)
-        // If second char is alignment, then first char is fill (don't highlight)
-        val fillIdx = if (text.length > 1 && text[1] in STRING_ALIGNMENT_CHARS) 0 else -1
-
-        // Track whether we've seen any digits yet (to distinguish 0 flag from width)
-        var seenNonZeroDigit = false
-        var seenZeroFlag = false
-
-        // Now highlight character by character, skipping the fill character
-        for (i in text.indices) {
-          if (i == fillIdx) continue // Don't highlight fill character
-
-          val char = text[i]
-          val range = TextRange(baseOffset + i, baseOffset + i + 1)
-
-          when {
-            char in STRING_ALIGNMENT_CHARS -> {
-              holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
-                .range(range)
-                .textAttributes(PyHighlighter.PY_FSTRING_FORMAT_SPEC_SPECIAL_CHAR)
-                .create()
-            }
-            char in SIGN_CHARS -> {
-              // Sign is valid if:
-              // 1. We have fill at position 0 and we're at position 2+ (after fill+align)
-              // 2. We have no fill and we're at position 1+ (after alignment, if any)
-              // 3. We have no fill and we're at position 0 and it's NOT an alignment char
-              val isValidSign = when {
-                fillIdx == 0 -> i >= 2  // fill+align, sign starts at 2
-                i == 0 -> true  // No fill, position 0, this IS the sign
-                else -> true  // No fill, position 1+, after optional alignment
-              }
-              if (isValidSign) {
-                holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
-                  .range(range)
-                  .textAttributes(PyHighlighter.PY_FSTRING_FORMAT_SPEC_SPECIAL_CHAR)
-                  .create()
-              }
-            }
-            char in NUMERIC_FLAGS_WITHOUT_ZERO -> {
-              // Flags: z, # (but not 0, which can be confused with width)
-              holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
-                .range(range)
-                .textAttributes(PyHighlighter.PY_FSTRING_FORMAT_SPEC_SPECIAL_CHAR)
-                .create()
-            }
-            char == '0' -> {
-              val nextChar = text.getOrNull(i + 1)
-              if (!seenZeroFlag && !seenNonZeroDigit && nextChar != null && nextChar.isDigit()) {
-                // This is the 0-padding flag
-                seenZeroFlag = true
-                holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
-                  .range(range)
-                  .textAttributes(PyHighlighter.PY_FSTRING_FORMAT_SPEC_SPECIAL_CHAR)
-                  .create()
-              }
-              else {
-                // This is part of the width
-                seenNonZeroDigit = true
-                holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
-                  .range(range)
-                  .textAttributes(PyHighlighter.PY_FSTRING_FORMAT_SPEC_NUMBER)
-                  .create()
-              }
-            }
-            char == '.' -> {
-              holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
-                .range(range)
-                .textAttributes(PyHighlighter.PY_FSTRING_FORMAT_SPEC_SPECIAL_CHAR)
-                .create()
-            }
-            char in GROUPING_CHARS -> {
-              holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
-                .range(range)
-                .textAttributes(PyHighlighter.PY_FSTRING_FORMAT_SPEC_SPECIAL_CHAR)
-                .create()
-            }
-            char.isDigit() -> {
-              // Track that we've seen a non-zero digit (for 0 flag detection)
-              seenNonZeroDigit = true
-              holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
-                .range(range)
-                .textAttributes(PyHighlighter.PY_FSTRING_FORMAT_SPEC_NUMBER)
-                .create()
-            }
-            char in NUMERIC_FORMAT_TYPES -> {
-              // Only highlight format type if it appears at a reasonable position
-              val nextChar = text.getOrNull(i + 1)
-              if (i == text.lastIndex || nextChar == null || nextChar in " \t}") {
-                holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
-                  .range(range)
-                  .textAttributes(PyHighlighter.PY_FSTRING_FORMAT_SPEC_SPECIAL_CHAR)
-                  .create()
-              }
-            }
+    for (component in spec.components) {
+      when (component.kind) {
+        // A fill character carries no meaning of its own, so it stays unhighlighted.
+        PyFormatSpecComponentKind.FILL -> continue
+        // A width or a precision is a run of digits, highlighted one digit at a time.
+        PyFormatSpecComponentKind.WIDTH, PyFormatSpecComponentKind.PRECISION -> {
+          for (offset in component.startOffset until component.endOffset) {
+            highlight(TextRange(baseOffset + offset, baseOffset + offset + 1), PyHighlighter.PY_FSTRING_FORMAT_SPEC_NUMBER)
           }
         }
-      }
-
-      ExpressionType.DATETIME -> {
-        // Highlight: strftime format codes (%Y, %m, %d, %H, %M, %S, etc.)
-        for (i in text.indices) {
-          val char = text[i]
-          if (char == '%' && i < text.lastIndex) {
-            // Highlight the % and the following directive character
-            holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
-              .range(TextRange(baseOffset + i, baseOffset + i + 2))
-              .textAttributes(PyHighlighter.PY_FSTRING_FORMAT_SPEC_SPECIAL_CHAR)
-              .create()
-          }
+        else -> {
+          highlight(TextRange(baseOffset + component.startOffset, baseOffset + component.endOffset),
+                    PyHighlighter.PY_FSTRING_FORMAT_SPEC_SPECIAL_CHAR)
         }
-      }
-
-      ExpressionType.UNKNOWN -> {
-        // Don't highlight anything
       }
     }
+  }
+
+  private fun highlight(range: TextRange, attributes: TextAttributesKey) {
+    holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
+      .range(range)
+      .textAttributes(attributes)
+      .create()
   }
 
   companion object {
     private val DATETIME_TYPE_NAMES = setOf(
       PyNames.FQN.DATETIME, PyNames.FQN.DATE, PyNames.FQN.TIME
     )
-
-    private val NUMERIC_FORMAT_TYPES = setOf(
-      'b', 'c', 'd', 'e', 'E', 'f', 'F', 'g', 'G', 'n', 'o', 's', 'x', 'X', '%'
-    )
-
-    private val STRING_ALIGNMENT_CHARS = setOf('<', '>', '^', '=')
-
-    private val SIGN_CHARS = setOf('+', '-', ' ')
-
-    private val NUMERIC_FLAGS_WITHOUT_ZERO = setOf('z', '#')
-
-    private val GROUPING_CHARS = setOf(',', '_')
   }
 }

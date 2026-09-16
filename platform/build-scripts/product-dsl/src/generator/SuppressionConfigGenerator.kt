@@ -62,7 +62,7 @@ internal object SuppressionConfigGenerator : PipelineNode {
     Slots.TEST_LIBRARY_SCOPE_SUPPRESSIONS,
   )
 
-  override suspend fun execute(ctx: ComputeContext) {
+  override fun execute(ctx: ComputeContext) {
     val model = ctx.model
     val existingConfig = model.suppressionConfig
 

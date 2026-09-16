@@ -11,6 +11,10 @@ jps_test(
 
 ### skip generation section `test intellij.platform.testRunner.tests`
 
+### auto-generated section `dev intellij.platform.testRunner` start
+content_module_jar(module = ":testRunner")
+### auto-generated section `dev intellij.platform.testRunner` end
+
 ### auto-generated section `build intellij.platform.testRunner` start
 jvm_library(
     name = "testRunner",
@@ -57,8 +61,6 @@ jvm_library(
         "//platform/util/concurrency",
     ],
 )
-
-content_module_jar(module = ":testRunner")
 
 jvm_library(
     name = "testRunner_test_lib",
@@ -110,7 +112,6 @@ exports_files(
     [
         "intellij.platform.testRunner.iml",
         "resources/intellij.platform.testRunner.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

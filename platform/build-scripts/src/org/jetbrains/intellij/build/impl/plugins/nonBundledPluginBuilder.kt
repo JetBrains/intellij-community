@@ -4,6 +4,7 @@
 package org.jetbrains.intellij.build.impl.plugins
 
 import com.intellij.openapi.util.io.NioFiles
+import com.intellij.platform.buildScripts.concurrency.TaskScope
 import com.jetbrains.plugin.blockmap.core.BlockMap
 import com.jetbrains.plugin.blockmap.core.FileHash
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
@@ -12,8 +13,6 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.withContext
 import org.apache.commons.compress.archivers.zip.Zip64Mode
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
@@ -22,7 +21,6 @@ import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
 import org.jetbrains.intellij.build.SearchableOptionSetDescriptor
-import org.jetbrains.intellij.build.TaskScope
 import org.jetbrains.intellij.build.classPath.PluginBuildResult
 import org.jetbrains.intellij.build.executeStep
 import org.jetbrains.intellij.build.getUnprocessedPluginXmlContent
@@ -51,9 +49,7 @@ import org.jetbrains.intellij.build.io.writeNewZipWithoutIndex
 import org.jetbrains.intellij.build.io.zipWithCompression
 import org.jetbrains.intellij.build.mapConcurrent
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
-import org.jetbrains.intellij.build.telemetry.blockingUse
 import org.jetbrains.intellij.build.telemetry.use
-import org.jetbrains.intellij.build.taskScope
 import tools.jackson.jr.ob.JSON
 import java.nio.ByteBuffer
 import java.nio.file.Files
@@ -61,10 +57,10 @@ import java.nio.file.Path
 import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.io.path.invariantSeparatorsPathString
 
-internal suspend fun buildNonBundledPlugins(
+internal fun buildNonBundledPlugins(
   pluginsToPublish: Set<PluginLayout>,
   compressPluginArchive: Boolean,
-  platformEntriesProvider: (suspend () -> List<DistributionFileEntry>)?,
+  platformEntriesProvider: (() -> List<DistributionFileEntry>)?,
   state: DistributionBuilderState,
   searchableOptionSet: SearchableOptionSetDescriptor?,
   isUpdateFromSources: Boolean,
@@ -72,27 +68,25 @@ internal suspend fun buildNonBundledPlugins(
   context: BuildContext,
 ): List<PluginBuildResult> {
   return context.executeStep(spanBuilder("build non-bundled plugins").setAttribute("count", state.pluginsToPublish.size.toLong()), BuildOptions.NON_BUNDLED_PLUGINS_STEP) {
-    taskScope {
-      buildNonBundledPlugins(
-        tasks = this,
-        pluginsToPublish = pluginsToPublish,
-        compressPluginArchive = compressPluginArchive,
-        platformEntriesProvider = platformEntriesProvider,
-        state = state,
-        searchableOptionSet = searchableOptionSet,
-        isUpdateFromSources = isUpdateFromSources,
-        descriptorCacheContainer = descriptorCacheContainer,
-        context = context,
-      )
-    }
+    buildNonBundledPlugins(
+      tasks = this,
+      pluginsToPublish = pluginsToPublish,
+      compressPluginArchive = compressPluginArchive,
+      platformEntriesProvider = platformEntriesProvider,
+      state = state,
+      searchableOptionSet = searchableOptionSet,
+      isUpdateFromSources = isUpdateFromSources,
+      descriptorCacheContainer = descriptorCacheContainer,
+      context = context,
+    )
   } ?: emptyList()
 }
 
-private suspend fun buildNonBundledPlugins(
+private fun buildNonBundledPlugins(
   tasks: TaskScope,
   pluginsToPublish: Set<PluginLayout>,
   compressPluginArchive: Boolean,
-  platformEntriesProvider: (suspend () -> List<DistributionFileEntry>)?,
+  platformEntriesProvider: (() -> List<DistributionFileEntry>)?,
   state: DistributionBuilderState,
   searchableOptionSet: SearchableOptionSetDescriptor?,
   isUpdateFromSources: Boolean,
@@ -308,11 +302,11 @@ private fun archivePlugin(
     .setAttribute("input", source.toString())
     .setAttribute("outputFile", target.toString())
     .setAttribute("optimizedZip", optimizedZip)
-    .blockingUse {
+    .use {
       archivePlugin(optimized = optimizedZip, target = target, compress = compress, source = source, context = context)
     }
   if (withBlockMap) {
-    spanBuilder("build plugin blockmap").setAttribute("file", target.toString()).blockingUse {
+    spanBuilder("build plugin blockmap").setAttribute("file", target.toString()).use {
       buildBlockMap(target, json.value)
     }
   }
@@ -346,7 +340,7 @@ private fun archivePlugin(optimized: Boolean, target: Path, compress: Boolean, s
   }
 }
 
-private suspend fun buildKeymapPlugins(targetDir: Path, context: BuildContext): List<Pair<Path, ByteArray>> {
+private fun buildKeymapPlugins(targetDir: Path, context: BuildContext): List<Pair<Path, ByteArray>> {
   val keymapDir = context.paths.communityHomeDir.resolve("platform/platform-resources/src/keymaps")
   Files.createDirectories(targetDir)
   return spanBuilder("build keymap plugins").use {
@@ -358,9 +352,7 @@ private suspend fun buildKeymapPlugins(targetDir: Path, context: BuildContext): 
       arrayOf("Emacs"),
       arrayOf("Sublime Text", "Sublime Text (Mac OS X)"),
     ).mapConcurrent { keymaps ->
-      withContext(CoroutineName("build keymap plugin for ${keymaps[0]}")) {
-        buildKeymapPlugin(keymaps = keymaps, buildNumber = context.buildNumber, targetDir = targetDir, keymapDir = keymapDir)
-      }
+      buildKeymapPlugin(keymaps = keymaps, buildNumber = context.buildNumber, targetDir = targetDir, keymapDir = keymapDir)
     }
   }
 }
@@ -412,7 +404,7 @@ private fun validatePlugin(file: Path, span: Span, context: BuildContext) {
   }
 }
 
-private suspend fun buildHelpPlugin(
+private fun buildHelpPlugin(
   helpPluginLayout: PluginLayout,
   pluginXml: String,
   pluginsToPublishDir: Path,

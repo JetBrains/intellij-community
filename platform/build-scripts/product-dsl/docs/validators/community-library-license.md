@@ -4,9 +4,9 @@ Entry point: `CommunityLibraryLicenseValidator` (`NodeIds.COMMUNITY_LIBRARY_LICE
 
 ## Overview
 
-A community product reads `CommunityLibraryLicenses.LICENSES_LIST` alone. `ProductProperties.allLibraryLicenses`
+A community product reads `CommunityLibraryLicenses.COMMUNITY_LICENSES_LIST` alone. `ProductProperties.allLibraryLicenses`
 defaults to it, and `IdeaCommunityProperties` and `PyCharmCommunityProperties` never override that default. An
-ultimate product overrides it with `UltimateLibraryLicenses.LICENSES_LIST`, which **holds the community list**
+ultimate product overrides it with `UltimateLibraryLicenses.ULTIMATE_LICENSE_LIST`, which **holds the community list**
 through its own concatenation.
 
 [library-license.md](library-license.md) reads `libraryLicenses`, and the ultimate generator fills that field with
@@ -53,7 +53,7 @@ A COMMUNITY label does not imply a community source tree. `CommunityModuleSets.r
 ## Output
 
 - `MissingLibraryLicenseError` with the category `MISSING_LIBRARY_LICENSE`, the context
-  `the community and core module sets`, and the rule name `CommunityLibraryLicenseValidation`.
+  `the community, core and library module sets`, and the rule name `CommunityLibraryLicenseValidation`.
 - The error carries `licenseFile`, so the fix line names `CommunityLibraryLicenses.kt` alone. The two rules share
   the error class, and the `Scope` line separates the reports.
 
@@ -69,8 +69,8 @@ With the three entries below in `UltimateLibraryLicenses.kt`, the rule names all
 
 | Library | Module | Module set |
 |---|---|---|
-| `google.protobuf.java.util` | `intellij.libraries.protobuf.java.util` | `CoreModuleSets.librariesPlatform()` |
-| `SSHJ` | `intellij.libraries.sshj` | `CoreModuleSets.librariesIde()` |
+| `google.protobuf.java.util` | `intellij.libraries.protobuf.java.util` | `LibraryModuleSets.librariesPlatform()` |
+| `SSHJ` | `intellij.libraries.sshj` | `LibraryModuleSets.librariesIde()` |
 | `jetbrains.patronus.codeowners.lib.ownership` | `intellij.platform.testFramework.junit5.eel.tests` | `CommunityModuleSets.platformTestFrameworksCore()` |
 
 Only the protobuf entry broke a build. The other two carry a JetBrains own group id, and

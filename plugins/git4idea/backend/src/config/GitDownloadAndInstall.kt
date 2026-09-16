@@ -28,7 +28,7 @@ fun downloadAndInstallGit(project: Project, onSuccess: () -> Unit = {}) {
   }
 }
 
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 internal fun getLatestAvailableVersion(): GitVersion {
   try {
     return downloadListOfGitInstallers()

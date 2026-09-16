@@ -119,6 +119,8 @@ abstract class WelcomeScreenProjectProvider {
     }
   }
 
+  open suspend fun createSimpleProject(projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? = null
+
   /**
    * Return true if the welcome screen project can open [filePath] from the file manager (Explorer, Finder) or command line.
    */
@@ -158,6 +160,8 @@ abstract class WelcomeScreenProjectProvider {
     val name = project.name
     return name == getWelcomeScreenProjectName() || name == getWelcomeScreenProjectDirName()
   }
+
+  open fun showHomeActionInProjectWidget(): Boolean = true
 
   /**
    * Return true if your project is not only a welcome screen, but also a real project where the user can create, store and edit files.
@@ -218,9 +222,6 @@ abstract class WelcomeScreenProjectProvider {
   protected open fun getToolWindowIdsToExclusiveShowing(): Set<String> = emptySet()
 
   open fun addWelcomeProjectNewAction(): Boolean = true
-
-  @Internal
-  fun isHiddenInRecentProjectsForInternalUsage(): Boolean = doIsHiddenInRecentProjects()
 }
 
 @Suppress("DuplicatedCode")

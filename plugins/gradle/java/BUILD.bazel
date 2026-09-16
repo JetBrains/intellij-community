@@ -2,6 +2,10 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.gradle.java` start
+content_module_jar(module = ":java")
+### auto-generated section `dev intellij.gradle.java` end
+
 ### auto-generated section `build intellij.gradle.java` start
 jvm_library(
     name = "java",
@@ -89,8 +93,6 @@ jvm_library(
         "//plugins/gradle/properties",
     ],
 )
-
-content_module_jar(module = ":java")
 
 jvm_library(
     name = "java_test_lib",
@@ -352,8 +354,8 @@ jvm_library(
         "//plugins/gradle/java/groovy/toml:toml_test_lib",
         "//plugins/gradle/java/properties",
         "//plugins/gradle/java/properties:properties_test_lib",
-        "//plugins/groovy:groovy-tests",
-        "//plugins/groovy:groovy-tests_test_lib",
+        "//plugins/groovy/testFramework",
+        "//plugins/groovy/testFramework:testFramework_test_lib",
         "//platform/smRunner:smRunner-tests",
         "//platform/smRunner:smRunner-tests_test_lib",
         "//platform/util:util-ui",

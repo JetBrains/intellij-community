@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.jettison` start
+content_module_jar(
+    libraries = ["@lib//:libraries-jettison-jettison"],
+    module = ":jettison",
+)
+### auto-generated section `dev intellij.libraries.jettison` end
+
 ### auto-generated section `build intellij.libraries.jettison` start
 jvm_library(
     name = "jettison",
@@ -16,11 +23,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-jettison-jettison"],
     runtime_deps = ["@lib//:libraries-jettison-jettison"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-jettison-jettison"],
-    module = ":jettison",
 )
 
 jvm_library(
@@ -43,7 +45,6 @@ exports_files(
     [
         "intellij.libraries.jettison.iml",
         "resources/intellij.libraries.jettison.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

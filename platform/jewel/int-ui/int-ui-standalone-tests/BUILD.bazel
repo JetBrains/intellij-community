@@ -37,7 +37,7 @@ spectre_test(
         "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone",
         "//platform/jewel/ui",
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlin-test",
+        "@lib//:libraries-kotlin_test-kotlin-test",
     ],
 )
 
@@ -91,7 +91,8 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlin-test",
+        "//libraries/kotlin/test:libraries-kotlinTest",
+        "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
         "//libraries/junit5",
         "//libraries/junit5:junit5_test_lib",
         "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone",

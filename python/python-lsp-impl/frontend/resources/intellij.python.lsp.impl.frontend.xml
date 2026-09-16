@@ -1,0 +1,23 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.frontend"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lsp"/>
+    <module name="intellij.platform.project"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.rpc"/>
+    <module name="intellij.python.lsp.core.common"/>
+    <module name="intellij.python.lsp.core.frontend"/>
+    <module name="intellij.python.pytools.common"/>
+    <module name="intellij.python.pytools.frontend"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <postStartupActivity implementation="com.intellij.python.lsp.impl.frontend.PyLspToolAdvertiserStartupActivity"/>
+  </extensions>
+</idea-plugin>

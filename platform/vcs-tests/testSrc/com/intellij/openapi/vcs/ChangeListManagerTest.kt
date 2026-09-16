@@ -122,6 +122,36 @@ class ChangeListManagerTest : BaseChangeListsTest() {
     FILE_2.toFilePath.assertAffectedChangeLists(DEFAULT)
   }
 
+  fun `test loadState publishes changes before refresh`() {
+    val file = addLocalFile(name = FILE_1, content = "text", baseContent = "oldText")
+    refreshCLM()
+    assertEquals(FileStatus.MODIFIED, clm.getStatus(file))
+    val state = clm.state
+
+    removeBaseVersion(FILE_1)
+    changeProvider.files.remove(file)
+    refreshCLM()
+    assertEquals(FileStatus.NOT_CHANGED, clm.getStatus(file))
+    assertNull(file.change)
+
+    clm.forceStopInTestMode()
+    try {
+      clm.loadState(state)
+
+      assertEquals(FileStatus.MODIFIED, clm.getStatus(file))
+      assertNotNull(file.change)
+      assertEquals(1, clm.allChanges.size)
+      assertEquals(ThreeState.YES, clm.haveChangesUnder(file.parent))
+    }
+    finally {
+      clm.forceGoInTestMode()
+    }
+
+    refreshCLM()
+    assertEquals(FileStatus.NOT_CHANGED, clm.getStatus(file))
+    assertNull(file.change)
+  }
+
   fun `test haveChangesUnder flag`() {
     val file1 = addLocalFile(name = FILE_1, content = "a_b_c_d_e", baseContent = "a_b1_c_d1_e")
     val file2 = createLocalFile(FILE_2, "a_b_c_d_e")

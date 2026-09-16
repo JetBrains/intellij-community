@@ -19,10 +19,9 @@ import java.awt.event.KeyEvent
  * hand-maintained table for the JediTerm session, this class gets from the emulator.
  *
  * What stays at this layer is policy the wire protocol does not know about:
- * - the macOS "natural text editing" chords (Cmd/Option + arrows), which both
- *   jediterm's key table and the Ghostty app's default keybinds resolve above VT
- *   encoding — a VT encoder reports SUPER as the xterm meta modifier, which shells
- *   ignore;
+ * - the macOS "natural text editing" chords (Cmd/Option + arrows, Cmd+Backspace),
+ *   which the Ghostty app's default keybinds resolve above VT encoding — a VT encoder
+ *   reports SUPER as the xterm meta modifier, which shells ignore;
  * - Alt as an ESC prefix for characters (the `altSendsEscape` setting); the native
  *   encoder cannot apply it on macOS, where its `macos_option_as_alt` option defaults
  *   to off;
@@ -67,6 +66,16 @@ internal class TerminalEmulatorKeyEventEncoder(
       // wanted. Uppercase under shift — zsh distinguishes ESC f from ESC F.
       val base = e.keyCode.toChar().let { if (e.isShiftDown) it.uppercaseChar() else it.lowercaseChar() }
       return KeyEventProcessingResultDto.StringResult(Char(27) + base.toString(), false)
+    }
+
+    if ((e.isAltGraphDown || (SystemInfoRt.isWindows && e.isControlDown && e.isAltDown)) &&
+        Character.isDefined(e.keyChar) && !Character.isISOControl(e.keyChar)) {
+      // Windows synthesizes AltGr as Ctrl+Alt(+AltGraph) down (never plain Alt alone), so this
+      // isn't a real Ctrl chord; its keyChar already holds the AltGr symbol, not a control code
+      // like a genuine Ctrl chord would carry. Leave it for KEY_TYPED to type normally. Elsewhere,
+      // real AltGr reports as isAltGraphDown alone (X11's level-3 shift carries no Ctrl+Alt
+      // synthesis), so a genuine Ctrl+Alt chord there is never mistaken for AltGr text.
+      return KeyEventProcessingResultDto.Unhandled
     }
 
     // Ctrl chords arrive as KEY_PRESSED (AWT reduces their keyChar to a control
@@ -128,9 +137,9 @@ internal class TerminalEmulatorKeyEventEncoder(
   }
 
   /**
-   * The macOS "natural text editing" chords, resolved above VT encoding like jediterm's
-   * macOS key table and the Ghostty app's default keybinds: Cmd+arrows edit the line
-   * via Ctrl+A / Ctrl+E, Option+arrows jump words via ESC b / ESC f.
+   * The macOS "natural text editing" chords, resolved above VT encoding like the
+   * Ghostty app's default keybinds: Cmd+arrows edit the line via Ctrl+A / Ctrl+E,
+   * Option+arrows jump words via ESC b / ESC f, and Cmd+Backspace kills the line via Ctrl+U.
    */
   private fun macNaturalTextEditingChord(e: KeyEvent): ByteArray? {
     if (!SystemInfoRt.isMac) return null
@@ -140,6 +149,7 @@ internal class TerminalEmulatorKeyEventEncoder(
     return when {
       cmd && e.keyCode == KeyEvent.VK_LEFT -> byteArrayOf(1) // Ctrl+A: line start
       cmd && e.keyCode == KeyEvent.VK_RIGHT -> byteArrayOf(5) // Ctrl+E: line end
+      cmd && e.keyCode == KeyEvent.VK_BACK_SPACE -> byteArrayOf(NAK) // Ctrl+U: kill line
       option && e.keyCode == KeyEvent.VK_LEFT -> byteArrayOf(ESC, 'b'.code.toByte()) // backward-word
       option && e.keyCode == KeyEvent.VK_RIGHT -> byteArrayOf(ESC, 'f'.code.toByte()) // forward-word
       else -> null
@@ -226,5 +236,6 @@ internal class TerminalEmulatorKeyEventEncoder(
   companion object {
     private const val ESC: Byte = 0x1B
     private const val CR: Byte = 0x0D
+    private const val NAK: Byte = 0x15  // Ctrl+U: kill line
   }
 }

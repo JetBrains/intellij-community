@@ -63,8 +63,8 @@ internal abstract class Lsp4jServerConnector protected constructor(private val l
    */
   protected open fun releaseServerToIdeStream() {}
 
-  @RequiresBackgroundThread
-  @RequiresReadLockAbsence
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  @RequiresReadLockAbsence(generateAssertion = false /* IJPL-115548 */)
   internal fun connect(onSuccess: (InitializeResult) -> Unit) {
     prepareConnect()
 
@@ -118,8 +118,8 @@ internal abstract class Lsp4jServerConnector protected constructor(private val l
     initializeServer(onSuccess)
   }
 
-  @RequiresBackgroundThread
-  @RequiresReadLockAbsence
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  @RequiresReadLockAbsence(generateAssertion = false /* IJPL-115548 */)
   private fun initializeServer(onSuccess: (InitializeResult) -> Unit) {
     logger.debug("$descriptor: initializing LSP server")
 
@@ -146,8 +146,8 @@ internal abstract class Lsp4jServerConnector protected constructor(private val l
     error?.let { throw LspInitializationException("LSP server failed to initialize", it) }
   }
 
-  @RequiresBackgroundThread
-  @RequiresReadLockAbsence
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  @RequiresReadLockAbsence(generateAssertion = false /* IJPL-115548 */)
   internal fun shutdownExitDisconnect(graceful: Boolean) {
     try {
       // On an unexpected stop the listener thread is no longer reading serverToIdeStream, so the shutdown response

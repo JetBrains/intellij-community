@@ -23,9 +23,9 @@ public class ArgValueData extends DescriptorData<ArgumentValueDescriptorImpl> {
 
   @Override
   public boolean equals(Object object) {
-    if (!(object instanceof ArgValueData)) return false;
+    if (!(object instanceof ArgValueData data)) return false;
 
-    return myVariable.slot() == ((ArgValueData)object).myVariable.slot();
+    return myVariable.slot() == data.myVariable.slot();
   }
 
   @Override

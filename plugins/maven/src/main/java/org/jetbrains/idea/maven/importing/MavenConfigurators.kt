@@ -41,7 +41,7 @@ interface MavenWorkspaceConfigurator {
    * * Side-effects are not allowed.
    * * WriteActions are not allowed.
    */
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun getAdditionalFolders(context: MavenWorkspaceConfigurator.FoldersContext): Stream<AdditionalFolder> {
     return Stream.empty()
   }
@@ -57,7 +57,7 @@ interface MavenWorkspaceConfigurator {
    * * Side-effects are not allowed.
    * * WriteActions are not allowed.
    */
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun getFoldersToExclude(context: FoldersContext): Stream<String> {
     return Stream.empty()
   }
@@ -76,7 +76,7 @@ interface MavenWorkspaceConfigurator {
    * * WriteActions are not allowed.
    * * Side-effects other than changing [ModuleEntity]-related entities are not allowed.
    */
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun configureMavenProject(context: MutableMavenProjectContext) {
   }
 
@@ -89,7 +89,7 @@ interface MavenWorkspaceConfigurator {
    * * WriteActions are not allowed.
    * * Side-effects other than changing [MutableEntityStorage] are not allowed
    */
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun beforeModelApplied(context: MutableModelContext) {
   }
 
@@ -104,7 +104,7 @@ interface MavenWorkspaceConfigurator {
    * * Should be as fast as possible.
    * * Necessary preparations must be done in [beforeModelApplied] or [configureMavenProject]. Data can be passed context as [UserDataHolder].
    */
-  @RequiresWriteLock
+  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
   fun afterModelApplied(context: AppliedModelContext) {
   }
 

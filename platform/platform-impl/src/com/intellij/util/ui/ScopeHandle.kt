@@ -17,7 +17,7 @@ internal class ScopeHandle {
   var isDisposed: Boolean = true
     private set
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun install(): CoroutineScope {
     assert(coroutineScope == null)
     coroutineScope = CoroutineScope(SupervisorJob() +

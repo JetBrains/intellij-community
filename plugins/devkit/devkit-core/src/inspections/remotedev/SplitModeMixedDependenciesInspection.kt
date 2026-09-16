@@ -29,7 +29,8 @@ internal class SplitModeMixedDependenciesInspection : DevKitPluginXmlInspectionB
     val currentXmlFile = holder.fileElement.file
     if (element.xmlElement == null) return
 
-    val moduleAnalysis = SplitModeModuleKindResolver.getOrComputeModuleAnalysis(module, currentXmlFile)
+    val moduleAnalysis = SplitModeModuleKindResolver.getOrComputeDescriptorAnalysis(currentXmlFile)
+
     if (moduleAnalysis.resolvedModuleKind.kind == SplitModeApiRestrictionsService.ModuleKind.MIXED) {
       val regularFixes = SplitModeDependencyQuickFixes.createMixedModuleFixes(module, element)
       val suppressionFixes = SplitModeInspectionExclusionsService.getInstance(currentXmlFile.project).createCommonSuppressionQuickFixes()

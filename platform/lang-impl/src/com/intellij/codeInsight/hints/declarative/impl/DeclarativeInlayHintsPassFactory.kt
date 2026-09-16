@@ -28,7 +28,7 @@ class DeclarativeInlayHintsPassFactory : TextEditorHighlightingPassFactory, Text
   @Suppress("CompanionObjectInExtension") // used in third party
   companion object {
     @Internal
-    @RequiresReadLock
+    @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
     fun createPassForPreview(
       file: PsiFile,
       editor: Editor,

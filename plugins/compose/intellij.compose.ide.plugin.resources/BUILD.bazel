@@ -67,6 +67,7 @@ jvm_library(
         "//plugins/kotlin/base/code-insight",
         "//platform/code-style-api:codeStyle",
         "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
+        "//platform/monolith",
     ],
 )
 
@@ -156,6 +157,7 @@ jvm_library(
         "//plugins/kotlin/base/code-insight:code-insight_test_lib",
         "//platform/code-style-api:codeStyle_test_lib",
         "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils_test_lib",
+        "//platform/monolith:monolith_test_lib",
     ],
 )
 ### auto-generated section `build intellij.compose.ide.plugin.resources` end
@@ -215,6 +217,8 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
+        "@lib//:studio-platform",
+        "@lib//:studio-test-platform",
         "//plugins/kotlin/references",
         "//plugins/kotlin/references:references_test_lib",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
@@ -312,7 +316,6 @@ jvm_library(
         "//plugins/kotlin/tests-common:common-tests_test_lib",
         "//plugins/compose/intellij.compose.ide.plugin.resources.android:ide-plugin-resources-android",
         "//plugins/compose/intellij.compose.ide.plugin.resources.android:ide-plugin-resources-android_test_lib",
-        "@lib//:studio-test-platform",
         "//platform/ide-core",
         "//plugins/kotlin/base/plugin",
         "//plugins/kotlin/base/plugin:plugin_test_lib",
@@ -320,11 +323,16 @@ jvm_library(
         "//android/android:core_test_lib",
         "//android/gradle-dsl-kotlin",
         "//android/gradle-dsl-kotlin:gradle-dsl-kotlin_test_lib",
-        "@lib//:studio-platform",
         "//platform/util:util-ui",
         "//platform/util:util-ui_test_lib",
         "//plugins/kotlin/code-insight/api",
         "//plugins/kotlin/code-insight/api:api_test_lib",
+        "//platform/testFramework/junit5",
+        "//platform/testFramework/junit5:junit5_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "//libraries/junit5-params",
+        "//libraries/junit5-params:junit5-params_test_lib",
     ],
 )
 ### auto-generated section `build intellij.compose.ide.plugin.resources.tests` end

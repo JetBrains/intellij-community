@@ -27,7 +27,7 @@ class CompilationErrorsLogMessage(@JvmField val compilerName: String, @JvmField 
   : LogMessage(Kind.COMPILATION_ERRORS, "$compilerName compilation errors")
 
 @ApiStatus.Internal
-class BuildProblemLogMessage(description: String, val identity: String?) : LogMessage(Kind.BUILD_PROBLEM, description)
+class BuildProblemLogMessage(description: String, val identity: String?, val cause: Throwable? = null) : LogMessage(Kind.BUILD_PROBLEM, description)
 
 @ApiStatus.Internal
 class ConsoleBuildMessageLogger : BuildMessageLoggerBase() {
@@ -35,27 +35,23 @@ class ConsoleBuildMessageLogger : BuildMessageLoggerBase() {
     when (message.kind) {
       // reported by trace exporter
       LogMessage.Kind.BLOCK_STARTED, LogMessage.Kind.BLOCK_FINISHED -> {}
-      // failing-fast upon a build problem
-      LogMessage.Kind.BUILD_PROBLEM -> throw BuildScriptsLoggedError(message.text)
+      // failing-fast upon a build problem; the cause keeps the failure chain readable
+      LogMessage.Kind.BUILD_PROBLEM -> throw BuildScriptsLoggedError(message.text, (message as? BuildProblemLogMessage)?.cause)
       LogMessage.Kind.COMPILATION_ERRORS -> {
         check(message is CompilationErrorsLogMessage) {
           "Unexpected compilation errors message type: ${message::class.java.canonicalName}"
         }
         throw BuildScriptsLoggedError(message.errorMessages.joinToString(prefix = "${message.text}:\n", separator = "\n"))
       }
-      LogMessage.Kind.INFO,
-      LogMessage.Kind.DEBUG,
-      LogMessage.Kind.PROGRESS,
-      LogMessage.Kind.STATISTICS -> {
-        if (verbose) {
-          super.processMessage(message)
-        }
-      }
       else -> super.processMessage(message)
     }
   }
 
-  override fun shouldBePrinted(kind: LogMessage.Kind): Boolean = kind != LogMessage.Kind.DEBUG
+  override fun shouldBePrinted(kind: LogMessage.Kind): Boolean = when (kind) {
+    LogMessage.Kind.DEBUG -> false
+    LogMessage.Kind.INFO, LogMessage.Kind.PROGRESS, LogMessage.Kind.STATISTICS -> verbose
+    else -> true
+  }
 
   override fun printLine(line: String) {
     println(line)

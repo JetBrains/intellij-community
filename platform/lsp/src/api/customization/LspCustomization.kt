@@ -321,6 +321,26 @@ open class LspCustomization {
 
 
   /**
+   * Customizes the override/implement gutter icons (line markers). The feature is disabled by default.
+   * Implementations may override this property to:
+   * - return [LspInheritanceMarkersSupport] or a subclass of it to enable the LSP feature
+   *
+   * When enabled, the IDE finds the marker anchors with the
+   * [textDocument/documentSymbol](https://microsoft.github.io/language-server-protocol/specification/#textDocument_documentSymbol)
+   * request, and then computes one marker per symbol with the
+   * [textDocument/implementation](https://microsoft.github.io/language-server-protocol/specification/#textDocument_implementation)
+   * request for a method-like symbol, or the
+   * [textDocument/prepareTypeHierarchy](https://microsoft.github.io/language-server-protocol/specification/#textDocument_prepareTypeHierarchy)
+   * and `typeHierarchy/subtypes` requests for a class-like symbol.
+   * The per-symbol requests also respect [goToImplementationCustomizer] and [typeHierarchyCustomizer].
+   * Traffic gates keep the request count low: the IDE queries an interface member always,
+   * and a class method only when the class has subtypes.
+   *
+   * The feature is opt-in because one pull costs one request per queried symbol, and server speed varies.
+   */
+  open val inheritanceMarkersCustomizer: LspInheritanceMarkersCustomizer = LspInheritanceMarkersDisabled
+
+  /**
    * Customizes the LSP Rename functionality.
    *
    * Allows overriding or extending the default behavior for renaming symbols.

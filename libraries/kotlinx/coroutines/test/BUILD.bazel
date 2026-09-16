@@ -1,5 +1,4 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
-load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.libraries.kotlinx.coroutines.test` start
 jvm_library(
@@ -14,17 +13,12 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    exports = ["@lib//:kotlinx-coroutines-test"],
+    exports = ["@lib//:libraries-kotlinx-coroutines-test-kotlinx-coroutines-test"],
     runtime_deps = [
         # do not sort,
         "//libraries/kotlinx/coroutines/core",
-        "@lib//:kotlinx-coroutines-test",
+        "@lib//:libraries-kotlinx-coroutines-test-kotlinx-coroutines-test",
     ],
-)
-
-content_module_jar(
-    libraries = ["@lib//:kotlinx-coroutines-test"],
-    module = ":test",
 )
 
 jvm_library(
@@ -37,7 +31,7 @@ jvm_library(
     kotlinc_opts = "@community//:k8",
     module_name = "intellij.libraries.kotlinx.coroutines.test",
     visibility = ["//visibility:public"],
-    exports = ["@lib//:kotlinx-coroutines-test"],
+    exports = ["@lib//:libraries-kotlinx-coroutines-test-kotlinx-coroutines-test"],
     runtime_deps = [
         # do not sort,
         ":test",
@@ -51,7 +45,6 @@ exports_files(
     [
         "intellij.libraries.kotlinx.coroutines.test.iml",
         "resources/intellij.libraries.kotlinx.coroutines.test.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

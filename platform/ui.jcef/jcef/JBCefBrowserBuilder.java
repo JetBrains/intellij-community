@@ -23,6 +23,7 @@ public class JBCefBrowserBuilder {
   boolean myCreateImmediately;
   boolean myEnableOpenDevToolsMenuItem;
   boolean myMouseWheelEventEnable = true;
+  boolean myUseCertManager = RegistryManager.getInstance().is("ide.browser.jcef.cert.manager.enabled");
   int myWindowlessFrameRate = RegistryManager.getInstance().intValue("ide.browser.jcef.osr.framerate", 120);
 
   /**
@@ -158,6 +159,16 @@ public class JBCefBrowserBuilder {
    */
   public @NotNull JBCefBrowserBuilder setWindowlessFramerate(int framerate) {
     myWindowlessFrameRate = framerate;
+    return this;
+  }
+
+  /**
+   * Sets whether to use the IDE CertificateManager for SSL certificate validation and revocation listeners.
+   * <p>
+   * Default value is controlled by {@code ide.browser.jcef.certManager.enabled} registry key (defaults to {@code false}).
+   */
+  public @NotNull JBCefBrowserBuilder setUseCertificateManager(boolean useCertManager) {
+    myUseCertManager = useCertManager;
     return this;
   }
 }

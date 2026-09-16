@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.tree.TokenSet
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.idea.base.psi.isRedundant
+import org.jetbrains.kotlin.idea.base.psi.removeModifierKeyword
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinPsiDiagnosticBasedInspectionBase
@@ -51,7 +52,7 @@ abstract class RedundantModifierInspectionBase<DIAGNOSTIC : KaDiagnosticWithPsi<
             element: ListOwner,
             updater: ModPsiUpdater,
         ) {
-            element.removeModifier(context.modifier)
+            element.removeModifierKeyword(context.modifier)
             if (element is KtPrimaryConstructor && element.isRedundant()) {
                 element.delete()
             }

@@ -36,12 +36,6 @@ import java.util.regex.Pattern
 
 private val LOG = logger<SearchEverywhereNavigationHandler>()
 
-// NavigationService is designed to process one navigation request at a time.
-// However, the current implementation of AbstractGotoSEContributor can potentially generate multiple concurrent navigation requests.
-// The semaphore ensures these requests are processed sequentially, maintaining the NavigationService's single-request-at-a-time contract.
-// See IJPL-188436
-private val semaphore: OverflowSemaphore = OverflowSemaphore(permits = 1, overflow = BufferOverflow.SUSPEND)
-
 @ApiStatus.Internal
 open class SearchEverywhereNavigationHandler(val project: Project) {
 
@@ -63,10 +57,12 @@ open class SearchEverywhereNavigationHandler(val project: Project) {
     val navigationOptions = NavigationOptions.defaultOptions()
       .openInRightSplit((modifiers and InputEvent.SHIFT_DOWN_MASK) != 0)
       .preserveCaret(true).forceFocus(true)
+
+    val scopeHolder = project.service<SearchEverywhereContributorCoroutineScopeHolder>()
     // the client id must reach the navigation
-    project.service<SearchEverywhereContributorCoroutineScopeHolder>().coroutineScope.launch(ClientId.coroutineContext()) {
+    scopeHolder.coroutineScope.launch(ClientId.coroutineContext()) {
       val navigationService = project.serviceAsync<NavigationService>()
-      semaphore.withPermit {
+      scopeHolder.navigationSemaphore.withPermit {
         navigationService.navigateRequests(navigationOptions) {
           makeNavigationRequests(selected, searchText, offset)
         }
@@ -139,7 +135,7 @@ open class SearchEverywhereNavigationHandler(val project: Project) {
    * Only file system items can be re-resolved this way; for anything else navigation may still go through
    * the cache-avoiding file, hence the warning.
    */
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   private fun reResolveOnCacheableFile(element: PsiElement, file: VirtualFile): PsiElement {
     val reResolved = if (element is PsiFileSystemItem) PsiUtilCore.findFileSystemItem(project, file) else null
     if (reResolved == null) {
@@ -200,6 +196,10 @@ open class SearchEverywhereNavigationHandler(val project: Project) {
 private class SearchEverywhereContributorCoroutineScopeHolder(coroutineScope: CoroutineScope) {
   @JvmField
   val coroutineScope: CoroutineScope = coroutineScope.childScope("SearchEverywhereContributorCoroutineScopeHolder")
+
+  // AbstractGotoSEContributor can generate concurrent requests.
+  // Process them sequentially within one project, see IJPL-254912
+  val navigationSemaphore: OverflowSemaphore = OverflowSemaphore(permits = 1, overflow = BufferOverflow.SUSPEND)
 }
 
 private val ourPatternToDetectLinesAndColumns: Pattern = Pattern.compile(

@@ -8,7 +8,7 @@ interface OAuthCredentialsAcquirer<T : Credentials> {
   /**
    * Exchange code for credentials
    */
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun acquireCredentials(code: String): AcquireCredentialsResult<T>
 
   sealed class AcquireCredentialsResult<T : Credentials> {

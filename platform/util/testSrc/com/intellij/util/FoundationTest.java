@@ -4,6 +4,7 @@ package com.intellij.util;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.ui.mac.foundation.NSWorkspace;
+import com.intellij.ui.mac.foundation.Selector;
 import com.intellij.util.system.CpuArch;
 import com.sun.jna.Library;
 import com.sun.jna.Memory;
@@ -17,13 +18,13 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static com.intellij.ui.mac.foundation.Foundation.autorelease;
+import static com.intellij.ui.mac.foundation.Foundation.createArray;
 import static com.intellij.ui.mac.foundation.Foundation.createDict;
 import static com.intellij.ui.mac.foundation.Foundation.createSelector;
 import static com.intellij.ui.mac.foundation.Foundation.getEncodingCode;
 import static com.intellij.ui.mac.foundation.Foundation.getEncodingName;
 import static com.intellij.ui.mac.foundation.Foundation.getObjcClass;
 import static com.intellij.ui.mac.foundation.Foundation.invoke;
-import static com.intellij.ui.mac.foundation.Foundation.invokeVarArg;
 import static com.intellij.ui.mac.foundation.Foundation.invoke_fpret;
 import static com.intellij.ui.mac.foundation.Foundation.nsString;
 import static com.intellij.ui.mac.foundation.Foundation.stringFromClass;
@@ -139,12 +140,12 @@ public class FoundationTest {
 
   @Test
   public void testObjcMsgSend_vararg() {
-    ID number = autorelease(invokeVarArg("NSArray", "arrayWithObjects:",
-                                         autorelease(invoke("NSNumber", "numberWithInt:", 1)),
-                                         autorelease(invoke("NSNumber", "numberWithInt:", 2)),
-                                         autorelease(invoke("NSNumber", "numberWithInt:", 3)),
-                                         autorelease(invoke("NSNumber", "numberWithInt:", 4)),
-                                         autorelease(invoke("NSNumber", "numberWithInt:", 5))));
+    ID number = autorelease(createArray(
+      autorelease(invoke("NSNumber", "numberWithInt:", 1)),
+      autorelease(invoke("NSNumber", "numberWithInt:", 2)),
+      autorelease(invoke("NSNumber", "numberWithInt:", 3)),
+      autorelease(invoke("NSNumber", "numberWithInt:", 4)),
+      autorelease(invoke("NSNumber", "numberWithInt:", 5))));
     assertEquals("(\n    1,\n    2,\n    3,\n    4,\n    5\n)", toStringViaUTF8(invoke(number, "description")));
   }
 
@@ -156,21 +157,21 @@ public class FoundationTest {
 
   @Test
   public void testObjcMsgSend_vararg_singleString() {
-    ID number = autorelease(invokeVarArg("NSArray", "arrayWithObjects:", nsString("Hello")));
+    ID number = autorelease(createArray(nsString("Hello")));
     assertEquals("(\n    Hello\n)", toStringViaUTF8(invoke(number, "description")));
   }
 
   @Test
   public void testObjcMsgSend_vararg_manyStrings() {
     Object[] strings = IntStream.rangeClosed(1, 100).mapToObj(i -> nsString(Integer.toString(i))).toArray();
-    ID number = autorelease(invokeVarArg("NSArray", "arrayWithObjects:", strings));
+    ID number = autorelease(createArray(strings));
     assertEquals("(" + IntStream.rangeClosed(1, 100).mapToObj(i -> "\n    " + i).collect(Collectors.joining(",")) + "\n)",
                  toStringViaUTF8(invoke(number, "description")));
   }
 
   @Test
   public void testSelector() {
-    Pointer sel = createSelector("respondsToSelector:");
+    Selector sel = createSelector("respondsToSelector:");
     assertEquals("respondsToSelector:", stringFromSelector(sel));
   }
 

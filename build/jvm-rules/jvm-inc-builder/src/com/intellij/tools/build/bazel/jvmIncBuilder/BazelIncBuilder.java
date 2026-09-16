@@ -217,6 +217,10 @@ public class BazelIncBuilder {
           }
           else {
             if (isInitialRound) {
+              CrashPoint.BEFORE_BUILD_START.reached();
+              // Ensure build state data consistency: delete config store file:
+              // => if build process crashes or gets killed, the missing build state will effectively cause full target rebuild next time the build is triggered
+              storageManager.deleteOrTrashRecursively(DataPaths.getConfigStateStoreFile(context));
               storageManager.cleanTrashDir();
             }
           }
@@ -303,6 +307,9 @@ public class BazelIncBuilder {
 
           if (!diagnostic.hasErrors()) {
             srcSnapshotDelta = nextSnapshotDelta;
+            if (srcSnapshotDelta.hasChanges()) {
+              CrashPoint.AFTER_ROUND_INTEGRATE.reached();
+            }
           }
           else {
             if (srcSnapshotDelta.isRecompileAll()) {
@@ -358,9 +365,10 @@ public class BazelIncBuilder {
       return ExitCode.ERROR;
     }
     finally {
+      CrashPoint.BEFORE_SAVE_STATE.reached();
       NodeSourceSnapshot sourcesState = srcSnapshotDelta != null? srcSnapshotDelta.asSnapshot() : null;
       saveBuildState(
-        context, sourcesState, context.getResources(), modifiedLibraries, deletedLibraries
+        context, pastState, sourcesState, context.getResources(), modifiedLibraries, deletedLibraries
       );
     }
 
@@ -442,11 +450,13 @@ public class BazelIncBuilder {
     return destPath;
   }
 
-
   public void saveBuildState(
     BuildContext context,
-    NodeSourceSnapshot sourcesState, Iterable<ResourceGroup> resourcesState,
-    Iterable<NodeSource> modifiedLibraries, Iterable<NodeSource> deletedLibraries
+    @Nullable ConfigurationState pastState,
+    NodeSourceSnapshot sourcesState,
+    Iterable<ResourceGroup> resourcesState,
+    Iterable<NodeSource> modifiedLibraries,
+    Iterable<NodeSource> deletedLibraries
   ) {
 
     if (sourcesState == null) {
@@ -468,12 +478,12 @@ public class BazelIncBuilder {
       });
 
       StorageManager.backupDependencies(context, deletedPaths, presentPaths);
+      CrashPoint.AFTER_DEPS_BACKUP.reached();
 
       if (context.hasErrors()) {
         // in case of errors, rollback to previous resources state to ensure that
         // all resources deleted or changed for this compile session will be handled in the next session
-        ConfigurationState pastState = ConfigurationState.loadSavedState(context);
-        resourcesState = pastState.getResources();
+        resourcesState = pastState != null? pastState.getResources() : List.of();
 
         // do not publish incomplete artifacts
         Utils.deleteIfExists(outputZip);

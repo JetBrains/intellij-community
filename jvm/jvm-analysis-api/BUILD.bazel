@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.jvm.analysis` start
+content_module_jar(module = ":analysis")
+### auto-generated section `dev intellij.jvm.analysis` end
+
 ### auto-generated section `build intellij.jvm.analysis` start
 jvm_library(
     name = "analysis",
@@ -36,8 +40,6 @@ jvm_library(
         "//uast/uast-common-ide:ide",
     ],
 )
-
-content_module_jar(module = ":analysis")
 
 jvm_library(
     name = "analysis_test_lib",

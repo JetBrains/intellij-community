@@ -35,7 +35,6 @@ import com.intellij.xdebugger.DapMode
 import com.sun.jdi.VMDisconnectedException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CompletableJob
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -64,7 +63,8 @@ import kotlin.system.measureNanoTime
 class DebuggerManagerThreadImpl @ApiStatus.Internal constructor(
   parent: Disposable,
   private val parentScope: CoroutineScope,
-) : InvokeAndWaitThread<DebuggerCommandImpl?>(), DebuggerManagerThread, Disposable {
+  workJob: Job,
+) : InvokeAndWaitThread<DebuggerCommandImpl?>(workJob), DebuggerManagerThread, Disposable {
 
   @Volatile
   private var myDisposed = false
@@ -90,36 +90,23 @@ class DebuggerManagerThreadImpl @ApiStatus.Internal constructor(
   var coroutineScope: CoroutineScope = createScope()
     private set
 
-  /**
-   * Owns the work the workers spawn. [closeAndCancel] completes it instead of canceling it, so the stop drain can
-   * still post its EDT updates; it finishes when every worker has exited and all spawned work has ended.
-   * The job stands outside the parent scope, so a project close does not cancel the spawned work.
-   * A teardown that must wait for the work joins the job that [closeAndCancel] returns.
-   */
-  private var myWorkJob: CompletableJob = createWorkJob()
-
   init {
     Disposer.register(parent, this)
     startNewWorkerThread()
   }
-
-  public override fun getWorkJob(): Job = myWorkJob
 
   override fun dispose() {
     myDisposed = true
     closeAndCancel()
   }
 
-  /** Returns the work job. It completes when every worker has exited and all spawned work has ended. */
+  /** Stops the current workers and commands. The owner can restart this manager before final disposal. */
   @ApiStatus.Internal
-  fun closeAndCancel(): Job {
-    val workJob = myWorkJob
+  fun closeAndCancel() {
     if (myClosed.compareAndSet(false, true)) {
       close()
-      cancelScope()
-      workJob.complete()
+      coroutineScope.cancel()
     }
-    return workJob
   }
 
   @ApiStatus.Internal
@@ -147,10 +134,6 @@ class DebuggerManagerThreadImpl @ApiStatus.Internal constructor(
   }
 
   private fun createScope() = parentScope.childScope("DebuggerManagerThreadImpl")
-
-  // an unparented supervisor: a failed spawned task must not cancel the parent scope,
-  // and a parent scope cancellation must not cancel the spawned work; the teardown joins it
-  private fun createWorkJob() = SupervisorJob()
 
   override fun invokeAndWait(managerCommand: DebuggerCommandImpl) {
     LOG.assertTrue(!isManagerThread(), "Should be invoked outside manager thread, use DebuggerManagerThreadImpl.schedule(...)")
@@ -384,14 +367,8 @@ class DebuggerManagerThreadImpl @ApiStatus.Internal constructor(
       myEvents.reopen()
       LOG.assertTrue(!coroutineScope.isActive, "Coroutine scope should be cancelled")
       coroutineScope = createScope()
-      myWorkJob = createWorkJob()
       startNewWorkerThread()
     }
-  }
-
-  @ApiStatus.Internal
-  fun cancelScope() {
-    coroutineScope.cancel()
   }
 
   @ApiStatus.Internal
@@ -401,6 +378,12 @@ class DebuggerManagerThreadImpl @ApiStatus.Internal constructor(
   }
 
   companion object {
+    private fun createWorkJob(parent: Disposable): Job {
+      val job = SupervisorJob()
+      Disposer.register(parent, Disposable { job.complete() })
+      return job
+    }
+
     private val LOG = Logger.getInstance(DebuggerManagerThreadImpl::class.java)
     private val myCurrentCommands = ThreadLocal.withInitial { ArrayDeque<DebuggerCommandImpl>() }
 
@@ -419,7 +402,7 @@ class DebuggerManagerThreadImpl @ApiStatus.Internal constructor(
         thread?.currentRequest?.join()
       }
       Disposer.register(parent, disposable)
-      return DebuggerManagerThreadImpl(disposable, (project as ComponentManagerEx).getCoroutineScope())
+      return DebuggerManagerThreadImpl(disposable, (project as ComponentManagerEx).getCoroutineScope(), createWorkJob(disposable))
         .also { thread = it }
     }
 

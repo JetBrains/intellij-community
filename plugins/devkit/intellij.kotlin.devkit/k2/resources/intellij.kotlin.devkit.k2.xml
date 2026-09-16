@@ -3,6 +3,7 @@
   <dependencies>
     <plugin id="com.intellij.modules.kotlin"/>
     <module name="intellij.java.psi"/>
+    <module name="intellij.kotlin.base.psi"/>
     <module name="intellij.kotlin.codeInsight.intentions"/>
     <module name="intellij.kotlin.devkit"/>
     <module name="intellij.kotlin.refactorings"/>

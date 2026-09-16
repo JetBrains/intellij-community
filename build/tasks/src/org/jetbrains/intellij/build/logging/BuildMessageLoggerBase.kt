@@ -33,7 +33,15 @@ abstract class BuildMessageLoggerBase : BuildMessageLogger() {
     }
   }
 
-  private fun addEvent(text: String) {
+  /** True when [processMessage] posts a message of this [kind] to the active span. A secondary logger uses it to skip the duplicate event. */
+  fun addsSpanEvent(kind: LogMessage.Kind): Boolean = when (kind) {
+    LogMessage.Kind.ARTIFACT_BUILT -> true
+    LogMessage.Kind.BLOCK_STARTED, LogMessage.Kind.BLOCK_FINISHED,
+    LogMessage.Kind.COMPILATION_ERRORS, LogMessage.Kind.BUILD_CANCEL -> false
+    else -> shouldBePrinted(kind)
+  }
+
+  protected open fun addEvent(text: String) {
     val currentSpan = Span.current()
     if (currentSpan.spanContext.isValid) {
       currentSpan.addEvent(text)

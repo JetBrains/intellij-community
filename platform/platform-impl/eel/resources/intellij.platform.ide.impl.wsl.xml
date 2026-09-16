@@ -5,7 +5,6 @@
   <dependencies>
     <module name="intellij.libraries.caffeine"/>
     <module name="intellij.libraries.jetbrains.annotations"/>
-    <module name="intellij.libraries.pty4j"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.diagnostic.telemetry.impl"/>
     <module name="intellij.platform.eel.nioFs.impl"/>

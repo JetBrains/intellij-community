@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.j2k.types
 
+import com.intellij.psi.CommonClassNames.JAVA_UTIL_OPTIONAL
 import com.intellij.psi.PsiAnonymousClass
 import com.intellij.psi.PsiArrayType
 import com.intellij.psi.PsiCapturedWildcardType
@@ -17,23 +18,23 @@ import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.PsiWildcardType
 import com.intellij.psi.impl.source.PsiClassReferenceType
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
+import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
 import org.jetbrains.kotlin.builtins.StandardNames
+import org.jetbrains.kotlin.j2k.JKSymbolProvider
 import org.jetbrains.kotlin.j2k.Nullability
 import org.jetbrains.kotlin.j2k.Nullability.Default
 import org.jetbrains.kotlin.j2k.Nullability.NotNull
 import org.jetbrains.kotlin.j2k.Nullability.Nullable
-import org.jetbrains.kotlin.name.FqNameUnsafe
-import org.jetbrains.kotlin.j2k.JKSymbolProvider
 import org.jetbrains.kotlin.j2k.NullabilityInfo
 import org.jetbrains.kotlin.j2k.OriginalJavaSemanticResolver
 import org.jetbrains.kotlin.j2k.symbols.JKClassSymbol
 import org.jetbrains.kotlin.j2k.symbols.JKTypeParameterSymbol
 import org.jetbrains.kotlin.j2k.symbols.JKUnresolvedClassSymbol
+import org.jetbrains.kotlin.name.FqNameUnsafe
 import org.jetbrains.kotlin.resolve.jvm.JvmPrimitiveType
 
 class JKTypeFactory internal constructor(
@@ -167,10 +168,14 @@ class JKTypeFactory internal constructor(
         val nullability = when {
             info.nullableTypes.contains(type) || info.nullableElements.contains(referenceElement) -> Nullable
             info.notNullTypes.contains(type) || info.notNullElements.contains(referenceElement) -> NotNull
+            isOptional(type) -> NotNull
             else -> Default
         }
         return nullability
     }
+
+    private fun isOptional(type: PsiType): Boolean =
+        type is PsiClassType && type.resolve()?.qualifiedName == JAVA_UTIL_OPTIONAL
 
     context(_: KaSession)
     private fun createFromKaType(type: KaType): JKType {

@@ -12,7 +12,7 @@ import com.intellij.ui.scroll.LatchingScroll;
 import com.intellij.ui.scroll.MouseWheelSmoothScroll;
 import com.intellij.ui.scroll.TouchScroll;
 import com.intellij.ui.scroll.TouchScrollUtil;
-import com.intellij.ui.tabs.impl.IslandsPainterProvider;
+import com.intellij.ui.tabs.impl.UIThemeCustomization;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
@@ -1088,7 +1088,7 @@ public class JBScrollPane extends JScrollPane {
 
   @ApiStatus.Internal
   public static RegionPainter<Float> getThumbPainter(@NotNull Supplier<? extends Component> supplier, @NotNull CoroutineScope coroutineScope) {
-    IslandsPainterProvider provider = IslandsPainterProvider.getInstance();
-    return new ScrollBarPainter.Thumb(supplier, SystemInfoRt.isMac || (provider != null && provider.useMacScrollBar()), coroutineScope);
+    UIThemeCustomization provider = UIThemeCustomization.getInstance();
+    return new ScrollBarPainter.Thumb(supplier, SystemInfoRt.isMac || (provider != null && provider.isMacScrollBar()), coroutineScope);
   }
 }

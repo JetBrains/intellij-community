@@ -2,6 +2,13 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.platform.jps.build` start
+content_module_jar(
+    libraries = ["@lib//:platform-jps-build-qdox-java-parser"],
+    module = ":build",
+)
+### auto-generated section `dev intellij.platform.jps.build` end
+
 ### auto-generated section `build intellij.platform.jps.build` start
 jvm_library(
     name = "build",
@@ -64,20 +71,11 @@ jvm_library(
         "//libraries/netty/codec-protobuf:libraries-netty-codec-protobuf",
         "//libraries/netty/codec-http:libraries-netty-codec-http",
         "//libraries/netty/buffer",
-        "@lib//:kotlin-metadata",
+        "//libraries/kotlin/metadata",
         "//libraries/kotlinx/coroutines/core",
         "//platform/eel",
         "//platform/eel-nioFs",
     ],
-)
-
-content_module_jar(
-    libraries = [
-        # do not sort,
-        "@lib//:platform-jps-build-qdox-java-parser",
-        "@lib//:kotlin-metadata",
-    ],
-    module = ":build",
 )
 
 jvm_library(
@@ -129,6 +127,7 @@ jvm_library(
         "//libraries/netty/codec-protobuf:libraries-netty-codec-protobuf_test_lib",
         "//libraries/netty/codec-http:libraries-netty-codec-http_test_lib",
         "//libraries/netty/buffer:buffer_test_lib",
+        "//libraries/kotlin/metadata:metadata_test_lib",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//platform/eel:eel_test_lib",
         "//platform/eel-nioFs:eel-nioFs_test_lib",
@@ -141,7 +140,6 @@ exports_files(
     [
         "intellij.platform.jps.build.iml",
         "resources/intellij.platform.jps.build.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

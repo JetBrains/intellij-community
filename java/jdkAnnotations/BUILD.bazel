@@ -1,0 +1,105 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+# The IDE plugin layout copies this checkout directory into a distribution verbatim (`withResourceArchive`).
+# It is resolved against the module content root, so a dev assembly that materializes its own project tree
+# has to declare it. Consumed through `ULTIMATE_EXTRA_PROJECT_FILES` and through `//java:mockJDK` for tests.
+filegroup(
+    name = "dev_dist_resources",
+    srcs = glob(["resources/**"]),
+    visibility = ["//visibility:public"],
+)
+
+### auto-generated section `dev intellij.java.jdkAnnotations` start
+content_module_jar(module = ":jdkAnnotations")
+### auto-generated section `dev intellij.java.jdkAnnotations` end
+
+### auto-generated section `build intellij.java.jdkAnnotations` start
+jvm_library(
+    name = "jdkAnnotations",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.java.jdkAnnotations",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+)
+
+jvm_library(
+    name = "jdkAnnotations_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.java.jdkAnnotations",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":jdkAnnotations"],
+)
+### auto-generated section `build intellij.java.jdkAnnotations` end
+
+### auto-generated section `iml intellij.java.jdkAnnotations` start
+exports_files(
+    [
+        "intellij.java.jdkAnnotations.iml",
+        "resources/com/sun/jdi/annotations.xml",
+        "resources/com/sun/jdi/event/annotations.xml",
+        "resources/com/sun/jdi/request/annotations.xml",
+        "resources/intellij.java.jdkAnnotations.xml",
+        "resources/java/awt/annotations.xml",
+        "resources/java/awt/datatransfer/annotations.xml",
+        "resources/java/awt/dnd/annotations.xml",
+        "resources/java/awt/event/annotations.xml",
+        "resources/java/awt/geom/annotations.xml",
+        "resources/java/awt/im/annotations.xml",
+        "resources/java/beans/annotations.xml",
+        "resources/java/io/annotations.xml",
+        "resources/java/lang/annotations.xml",
+        "resources/java/lang/invoke/annotations.xml",
+        "resources/java/lang/ref/annotations.xml",
+        "resources/java/lang/reflect/annotations.xml",
+        "resources/java/math/annotations.xml",
+        "resources/java/net/annotations.xml",
+        "resources/java/nio/annotations.xml",
+        "resources/java/nio/channels/annotations.xml",
+        "resources/java/nio/charset/annotations.xml",
+        "resources/java/nio/file/annotations.xml",
+        "resources/java/nio/file/spi/annotations.xml",
+        "resources/java/security/annotations.xml",
+        "resources/java/sql/annotations.xml",
+        "resources/java/text/annotations.xml",
+        "resources/java/time/annotations.xml",
+        "resources/java/time/format/annotations.xml",
+        "resources/java/util/annotations.xml",
+        "resources/java/util/concurrent/annotations.xml",
+        "resources/java/util/concurrent/atomic/annotations.xml",
+        "resources/java/util/concurrent/locks/annotations.xml",
+        "resources/java/util/function/annotations.xml",
+        "resources/java/util/jar/annotations.xml",
+        "resources/java/util/regex/annotations.xml",
+        "resources/java/util/stream/annotations.xml",
+        "resources/java/util/zip/annotations.xml",
+        "resources/javax/accessibility/annotations.xml",
+        "resources/javax/annotation/processing/annotations.xml",
+        "resources/javax/lang/model/annotations.xml",
+        "resources/javax/lang/model/element/annotations.xml",
+        "resources/javax/naming/event/annotations.xml",
+        "resources/javax/swing/annotations.xml",
+        "resources/javax/swing/border/annotations.xml",
+        "resources/javax/swing/event/annotations.xml",
+        "resources/javax/swing/plaf/annotations.xml",
+        "resources/javax/swing/plaf/basic/annotations.xml",
+        "resources/javax/swing/table/annotations.xml",
+        "resources/javax/swing/text/html/annotations.xml",
+        "resources/javax/swing/tree/annotations.xml",
+        "resources/javax/tools/annotations.xml",
+        "resources/javax/xml/bind/annotation/annotations.xml",
+        "resources/org/w3c/dom/annotations.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.java.jdkAnnotations` end

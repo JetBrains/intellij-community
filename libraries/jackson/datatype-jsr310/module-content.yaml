@@ -1,6 +1,0 @@
-- name: dist.all/lib/intellij.libraries.jackson.datatype.jsr310.jar
-  modules:
-  - name: intellij.libraries.jackson.datatype.jsr310
-    libraries:
-      jackson-datatype-jsr310:
-      - name: $MAVEN_REPOSITORY$/com/fasterxml/jackson/datatype/jackson-datatype-jsr310/2/jackson-datatype-jsr310-2.jar

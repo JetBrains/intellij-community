@@ -2,16 +2,16 @@
 
 package org.jetbrains.kotlin.idea.compilerPlugin.parcelize.quickfixes
 
+import org.jetbrains.kotlin.idea.base.psi.getOrCreatePrimaryConstructor
 import org.jetbrains.kotlin.idea.compilerPlugin.parcelize.KotlinParcelizeBundle
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.createPrimaryConstructorIfAbsent
 
 class ParcelizeAddPrimaryConstructorQuickFix(clazz: KtClass) : AbstractParcelizePsiOnlyQuickFix<KtClass>(clazz) {
     override fun getText() = KotlinParcelizeBundle.message("parcelize.fix.add.empty.primary.constructor")
 
     override fun invoke(ktPsiFactory: KtPsiFactory, element: KtClass) {
-        element.createPrimaryConstructorIfAbsent()
+        element.getOrCreatePrimaryConstructor()
 
         for (secondaryConstructor in element.secondaryConstructors) {
             if (secondaryConstructor.getDelegationCall().isImplicit) {

@@ -2,11 +2,22 @@ package com.intellij.driver.sdk
 
 import com.intellij.driver.client.Driver
 import com.intellij.driver.client.service
+import com.intellij.driver.sdk.remoteDev.isLightSession
 import com.intellij.openapi.diagnostic.logger
 import java.time.Instant
 import kotlin.collections.emptyList
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
+
+@RequiresOptIn(
+  level = RequiresOptIn.Level.WARNING,
+  message = "Prefer the pauseOnIndexing parameter of runIdeWithDriver. " +
+            "Use waitForIndicators only when pauseOnIndexing does not work for the test. " +
+            "Add @OptIn(ManualWaitForIndicators::class) after you check this requirement."
+)
+@Retention(AnnotationRetention.BINARY)
+@Target(AnnotationTarget.FUNCTION)
+annotation class ManualWaitForIndicators
 
 fun Driver.getProgressIndicators(project: Project): List<Pair<TaskInfo?, ProgressModel?>> {
   return withContext {
@@ -25,10 +36,17 @@ private fun Driver.logProgressIndicators(project: Project) {
   }
 }
 
-fun Driver.areIndicatorsVisible(project: Project): Boolean {
-  if (service<DumbService>(project).isDumb()) return true
-
+fun Driver.indicatorsRunning(project: Project): Boolean {
   return getProgressIndicators(project).isNotEmpty()
+}
+
+fun Driver.indicatorsRunningOrDumbMode(project: Project): Boolean {
+  return indicatorsRunning(project) || service<DumbService>(project).isDumb()
+}
+
+@Deprecated("Use indicatorsRunningOrDumbMode instead.", ReplaceWith("indicatorsRunningOrDumbMode(project)"))
+fun Driver.areIndicatorsVisible(project: Project): Boolean {
+  return indicatorsRunningOrDumbMode(project)
 }
 
 /**
@@ -48,6 +66,7 @@ fun Driver.waitForProjectOpen(timeout: Duration = 1.minutes) {
 /**
  * Method waits till a project is opened and there are no indicators for 10 seconds.
  */
+@ManualWaitForIndicators
 fun Driver.waitForIndicators(project: Project, timeout: Duration, waitSmartLongEnough: Boolean = true) {
   waitForIndicators({ project }, timeout, waitSmartLongEnough = waitSmartLongEnough)
 }
@@ -55,6 +74,7 @@ fun Driver.waitForIndicators(project: Project, timeout: Duration, waitSmartLongE
 /**
  * Method waits till a project is opened and there are no indicators for 10 seconds.
  */
+@ManualWaitForIndicators
 fun Driver.waitForIndicators(timeout: Duration, waitSmartLongEnough: Boolean = true) {
   waitForProjectOpen(timeout)
   waitForIndicators(::singleProject, timeout, waitSmartLongEnough = waitSmartLongEnough)
@@ -69,7 +89,12 @@ internal fun Driver.waitForIndicators(projectGet: () -> Project?, timeout: Durat
   waitFor("Indicators with waitSmartLongEnough=$waitSmartLongEnough", timeout) {
     val project = runCatching { projectGet.invoke() }.getOrNull()
     val projectReady = (project != null && isProjectOpened(project))
-    val indicatorsVisible = projectReady && areIndicatorsVisible(project)
+    val indicatorsVisible = projectReady && if (isLightSession()) {
+      indicatorsRunning(project)
+    }
+    else {
+      indicatorsRunningOrDumbMode(project)
+    }
     if (!projectReady) {
       logger<Driver>().info("The project is not opened.")
     }

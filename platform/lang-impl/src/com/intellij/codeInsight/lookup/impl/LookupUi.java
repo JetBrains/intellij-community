@@ -35,12 +35,12 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.elf.Elf;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.psi.util.PsiVersioningService;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.ScreenUtil;
@@ -229,7 +229,10 @@ final class LookupUi {
       public void valueChanged(ListSelectionEvent e) {
         if (!lookup.isLookupDisposed()) {
           hintAlarm.cancelAllRequests();
-          updateHint();
+          PsiVersioningService.freezePsiVersion(() -> {
+            updateHint();
+            return null;
+          });
         }
       }
     });
@@ -247,7 +250,7 @@ final class LookupUi {
     }
 
     LookupElement item = lookup.getCurrentItem();
-    if (item != null && Elf.getElf().runReadAction(() -> item.isValid())) {
+    if (item != null && item.isValid()) {
       ReadAction.nonBlocking(() -> lookup.getActionsFor(item))
         .expireWhen(() -> !item.isValid() || hintAlarm.isDisposed())
         .finishOnUiThread(modalityState, actions -> {

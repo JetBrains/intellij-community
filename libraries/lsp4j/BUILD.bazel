@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.eclipse.lsp4j` start
+content_module_jar(
+    libraries = ["@lib//:libraries-eclipse-lsp4j-eclipse-lsp4j"],
+    module = ":lsp4j",
+)
+### auto-generated section `dev intellij.libraries.eclipse.lsp4j` end
+
 ### auto-generated section `build intellij.libraries.eclipse.lsp4j` start
 jvm_library(
     name = "lsp4j",
@@ -16,11 +23,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-eclipse-lsp4j-eclipse-lsp4j"],
     runtime_deps = ["@lib//:libraries-eclipse-lsp4j-eclipse-lsp4j"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-eclipse-lsp4j-eclipse-lsp4j"],
-    module = ":lsp4j",
 )
 
 jvm_library(
@@ -43,7 +45,6 @@ exports_files(
     [
         "intellij.libraries.eclipse.lsp4j.iml",
         "resources/intellij.libraries.eclipse.lsp4j.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

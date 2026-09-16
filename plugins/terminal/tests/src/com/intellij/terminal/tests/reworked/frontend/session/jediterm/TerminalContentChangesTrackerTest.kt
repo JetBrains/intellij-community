@@ -178,6 +178,94 @@ internal class TerminalContentChangesTrackerTest : BasePlatformTestCase() {
   }
 
   @Test
+  fun `screen top is at line 0 while nothing has scrolled`() {
+    val textBuffer = createTextBuffer(width = 10, height = 2, maxHistoryLinesCount = 2)
+    val contentChangesTracker = createChangesTracker(textBuffer)
+
+    textBuffer.write("first", 1, 0)
+
+    val update = contentChangesTracker.getContentUpdate() ?: error("Update is null")
+    TestCase.assertEquals(0L, update.screenTopLogicalLineIndex)
+    TestCase.assertEquals(0, update.screenTopColumnIndex)
+  }
+
+  @Test
+  fun `screen top counts the lines that scrolled into the history`() {
+    val textBuffer = createTextBuffer(width = 10, height = 2, maxHistoryLinesCount = 2)
+    val contentChangesTracker = createChangesTracker(textBuffer)
+
+    textBuffer.write("first", 1, 0)
+    textBuffer.write("second", 2, 0)
+    textBuffer.scrollDown(1)
+    textBuffer.write("third", 2, 0)
+    textBuffer.scrollDown(1)
+
+    // "first" and "second" are in the history, so the screen starts at the third logical line.
+    val update = contentChangesTracker.getContentUpdate() ?: error("Update is null")
+    TestCase.assertEquals(2L, update.screenTopLogicalLineIndex)
+    TestCase.assertEquals(0, update.screenTopColumnIndex)
+  }
+
+  @Test
+  fun `screen top counts the lines already discarded from the history`() {
+    val textBuffer = createTextBuffer(width = 10, height = 2, maxHistoryLinesCount = 2)
+    val contentChangesTracker = createChangesTracker(textBuffer)
+
+    // Six lines through a 2-line history: "first" and "second" are discarded, "third" and "fourth" retained.
+    textBuffer.write("first", 1, 0)
+    textBuffer.write("second", 2, 0)
+    textBuffer.scrollDown(1)
+    textBuffer.write("third", 2, 0)
+    textBuffer.scrollDown(1)
+    textBuffer.write("fourth", 2, 0)
+    textBuffer.scrollDown(1)
+    textBuffer.write("fifth", 2, 0)
+    textBuffer.scrollDown(1)
+    textBuffer.write("sixth", 2, 0)
+
+    // The screen holds "fifth" and "sixth", so it starts at the fifth logical line, index 4.
+    val update = contentChangesTracker.getContentUpdate() ?: error("Update is null")
+    TestCase.assertEquals(4L, update.screenTopLogicalLineIndex)
+    TestCase.assertEquals(0, update.screenTopColumnIndex)
+  }
+
+  @Test
+  fun `screen top reports a column when a wrapped line straddles it`() {
+    val textBuffer = createTextBuffer(width = 5, height = 2, maxHistoryLinesCount = 2)
+    val contentChangesTracker = createChangesTracker(textBuffer)
+
+    // One logical line "aaaaabb" wrapped over two rows, then its first row scrolls into the history. The
+    // screen now begins in the middle of that line, five characters in.
+    textBuffer.write("aaaaa", 1, 0)
+    textBuffer.getLine(0).isWrapped = true
+    textBuffer.write("bb", 2, 0)
+    textBuffer.scrollDown(1)
+
+    val update = contentChangesTracker.getContentUpdate() ?: error("Update is null")
+    TestCase.assertEquals(0L, update.screenTopLogicalLineIndex)
+    TestCase.assertEquals(5, update.screenTopColumnIndex)
+  }
+
+  @Test
+  fun `clearing the history resets the screen top to 0`() {
+    val textBuffer = createTextBuffer(width = 10, height = 2, maxHistoryLinesCount = 2)
+    val contentChangesTracker = createChangesTracker(textBuffer)
+
+    textBuffer.write("first", 1, 0)
+    textBuffer.write("second", 2, 0)
+    textBuffer.scrollDown(1)
+    textBuffer.write("third", 2, 0)
+    textBuffer.scrollDown(1)
+    contentChangesTracker.getContentUpdate()
+
+    textBuffer.clearHistory()
+
+    val update = contentChangesTracker.getContentUpdate() ?: error("Update is null")
+    TestCase.assertEquals(0L, update.screenTopLogicalLineIndex)
+    TestCase.assertEquals(0, update.screenTopColumnIndex)
+  }
+
+  @Test
   fun `check all text is reported after width increase`() {
     val textBuffer = createTextBuffer(width = 10, height = 2, maxHistoryLinesCount = 2)
     val contentChangesTracker = createChangesTracker(textBuffer)

@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.takeOrElse
 import androidx.compose.ui.window.PopupPositionProvider
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
@@ -615,6 +616,7 @@ internal fun <T : Any> ListComboBoxImpl(
             alignment = horizontalPopupAlignment,
             density = LocalDensity.current,
         ),
+    speedSearchState: SpeedSearchState? = null,
     itemContent: @Composable (index: Int, item: T, isSelected: Boolean, isActive: Boolean) -> Unit,
 ) {
     val density = LocalDensity.current
@@ -702,6 +704,14 @@ internal fun <T : Any> ListComboBoxImpl(
                 listState.selectedKeys = emptySet()
             }
         }
+    }
+
+    // The ultimate question this side effect answers is: is the live preview still trustworthy, or is it
+    // just where the pointer happened to be before the user started typing?
+    LaunchedEffect(listState, speedSearchState) {
+        snapshotFlow { listState.selectedKeys to speedSearchState?.searchText }
+            .drop(1) // ignoring current value from snapshotFlow
+            .collect { resetPreviewSelectedIndex() }
     }
 
     fun commitSelectionFromHoverOrMapped() {

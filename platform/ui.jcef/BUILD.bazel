@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "kt_javac_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.platform.ui.jcef` start
+content_module_jar(module = ":ui.jcef")
+### auto-generated section `dev intellij.platform.ui.jcef` end
+
 ### auto-generated section `build intellij.platform.ui.jcef` start
 kt_javac_options(
     name = "custom-javac-options",
@@ -55,8 +59,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":ui.jcef")
-
 jvm_library(
     name = "ui.jcef_test_lib",
     testonly = True,
@@ -98,7 +100,6 @@ exports_files(
     [
         "intellij.platform.ui.jcef.iml",
         "resources/intellij.platform.ui.jcef.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

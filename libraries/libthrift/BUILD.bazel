@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.libthrift` start
+content_module_jar(
+    libraries = ["@lib//:libraries-libthrift-libthrift"],
+    module = ":libthrift",
+)
+### auto-generated section `dev intellij.libraries.libthrift` end
+
 ### auto-generated section `build intellij.libraries.libthrift` start
 jvm_library(
     name = "libthrift",
@@ -16,11 +23,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-libthrift-libthrift"],
     runtime_deps = ["@lib//:libraries-libthrift-libthrift"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-libthrift-libthrift"],
-    module = ":libthrift",
 )
 
 jvm_library(
@@ -42,7 +44,6 @@ exports_files(
     [
         "intellij.libraries.libthrift.iml",
         "resources/intellij.libraries.libthrift.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

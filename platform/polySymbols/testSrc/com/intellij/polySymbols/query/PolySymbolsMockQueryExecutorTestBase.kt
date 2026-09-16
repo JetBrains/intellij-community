@@ -18,6 +18,7 @@ import com.intellij.polySymbols.query.impl.PolySymbolMockQueryExecutorFactory
 import com.intellij.polySymbols.query.impl.WebTypesMockScopeImpl
 import com.intellij.polySymbols.webTypes.WebTypesSymbolBase
 import com.intellij.polySymbols.webTypes.impl.PolySymbolFilterEP
+import com.intellij.polySymbols.webTypes.impl.PolySymbolMatchPrefixFilter
 import com.intellij.testFramework.UsefulTestCase
 import java.io.File
 
@@ -75,7 +76,7 @@ abstract class PolySymbolsMockQueryExecutorTestBase : UsefulTestCase() {
       .registerExtension(
         PolySymbolFilterEP().also {
           it.name = "match-prefix"
-          it.implementation = "com.intellij.polySymbols.webTypes.filters.PolySymbolMatchPrefixFilter"
+          it.implementation = "com.intellij.polySymbols.webTypes.impl.PolySymbolMatchPrefixFilter"
           it.pluginDescriptor = mockPluginDescriptor
         },
         mockPluginDescriptor, testRootDisposable)

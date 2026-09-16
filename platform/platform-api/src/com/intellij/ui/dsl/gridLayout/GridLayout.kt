@@ -4,7 +4,6 @@ package com.intellij.ui.dsl.gridLayout
 import com.intellij.ui.dsl.builder.impl.checkConstraints
 import com.intellij.ui.dsl.builder.impl.checkJComponent
 import com.intellij.ui.dsl.builder.impl.checkNull
-import com.intellij.ui.dsl.builder.impl.failInInternalOrLogError
 import com.intellij.ui.dsl.gridLayout.impl.GridImpl
 import com.intellij.ui.dsl.gridLayout.impl.SizeConstrainsData
 import org.jetbrains.annotations.ApiStatus
@@ -142,29 +141,4 @@ open class GridLayout : LayoutManager2 {
   protected fun resetRootGrid() {
     _rootGrid = GridImpl()
   }
-}
-
-@ApiStatus.Internal
-fun JComponent.setVisualPadding(visualPaddings: UnscaledGaps) {
-  val parent = parent
-  if (parent == null) {
-    failInInternalOrLogError("Parent is null: $this")
-    return
-  }
-
-  val layout = parent.layout as? GridLayout
-  if (layout == null) {
-    failInInternalOrLogError("GridLayout was expected, found: ${parent.layout}")
-    return
-  }
-
-  val constraints = layout.getConstraints(this)
-  if (constraints == null) {
-    failInInternalOrLogError("Component is not found in the layout: $this")
-    return
-  }
-
-  constraints.visualPaddings = visualPaddings
-  parent.revalidate()
-  parent.repaint()
 }

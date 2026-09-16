@@ -50,7 +50,7 @@ public abstract class XDebuggerEditorsProvider {
 
   public @NotNull @Unmodifiable Collection<Language> getSupportedLanguages(@NotNull Project project, @Nullable XSourcePosition sourcePosition) {
     FileType type = getFileType();
-    return type instanceof LanguageFileType ? Collections.singleton(((LanguageFileType)type).getLanguage()) : Collections.emptyList();
+    return type instanceof LanguageFileType fileType ? Collections.singleton(fileType.getLanguage()) : Collections.emptyList();
   }
 
   @ApiStatus.Internal

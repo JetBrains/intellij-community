@@ -36,7 +36,14 @@ import tomlkit
 from packaging.specifiers import Specifier
 from termcolor import colored
 
-from ts_utils.metadata import ObsoleteMetadata, StubMetadata, read_metadata, update_metadata
+from ts_utils.metadata import (
+    ObsoleteMetadata,
+    StubMetadata,
+    StubtestSettings,
+    read_metadata,
+    read_stubtest_settings,
+    update_metadata,
+)
 from ts_utils.paths import PYRIGHT_CONFIG, STUBS_PATH, distribution_path
 from ts_utils.stubs import third_party_stubs
 
@@ -172,10 +179,14 @@ class Remove:
 @dataclass
 class NoUpdate:
     distribution: str
-    reason: Literal["obsolete", "no longer updated", "up to date"]
+    reason: Literal["obsolete", "no longer updated", "up to date", "pr open"]
+    pr_number: int = 0
 
     def __str__(self) -> str:
-        return f"{colored('skipping', 'green')} ({self.reason})"
+        if self.reason == "pr open":
+            return f"{colored('skipping', 'green')} ({self.reason} {self.pr_number})"
+        else:
+            return f"{colored('skipping', 'green')} ({self.reason})"
 
 
 @dataclass
@@ -742,10 +753,9 @@ async def create_or_update_pull_request(*, title: str, body: str, branch_name: s
     await update_pull_request_label(pr_number=pr_number, session=session)
 
 
-async def update_existing_pull_request(*, title: str, body: str, branch_name: str, session: aiohttp.ClientSession) -> int:
+async def find_existing_pr(*, branch_name: str, session: aiohttp.ClientSession) -> int:
     fork_owner = get_origin_owner()
 
-    # Find the existing PR
     async with session.get(
         f"{TYPESHED_API_URL}/pulls",
         params={"state": "open", "head": f"{fork_owner}:{branch_name}", "base": "main"},
@@ -756,6 +766,13 @@ async def update_existing_pull_request(*, title: str, body: str, branch_name: st
         assert len(resp_json) >= 1
         pr_number = resp_json[0]["number"]
         assert isinstance(pr_number, int)
+
+    return pr_number
+
+
+async def update_existing_pull_request(*, title: str, body: str, branch_name: str, session: aiohttp.ClientSession) -> int:
+    # Find the existing PR
+    pr_number = await find_existing_pr(branch_name=branch_name, session=session)
     # Update the PR's title and body
     async with session.patch(
         f"{TYPESHED_API_URL}/pulls/{pr_number}", json={"title": title, "body": body}, headers=get_github_api_headers()
@@ -772,35 +789,40 @@ async def update_pull_request_label(*, pr_number: int, session: aiohttp.ClientSe
         response.raise_for_status()
 
 
+def remote_branch_exists(branch: str) -> bool:
+    return (
+        subprocess.run(["git", "show-ref", "--verify", "--quiet", f"refs/remotes/origin/{branch}"], check=False).returncode == 0
+    )
+
+
 def has_non_stubsabot_commits(branch: str) -> bool:
     assert not branch.startswith("origin/")
-    try:
-        # commits on origin/branch that are not on branch or are
-        # patch equivalent to a commit on branch
-        output = subprocess.check_output(
-            ["git", "log", "--right-only", "--pretty=%an", "--cherry-pick", f"{branch}...origin/{branch}"],
-            stderr=subprocess.DEVNULL,
-        )
-        return bool(set(output.splitlines()) - {b"stubsabot"})
-    except subprocess.CalledProcessError:
-        # origin/branch does not exist
+
+    if not remote_branch_exists(branch):
         return False
+
+    # commits on origin/branch that are not on branch or are
+    # patch equivalent to a commit on branch
+    output = subprocess.check_output(
+        ["git", "log", "--right-only", "--pretty=%an", "--cherry-pick", f"{branch}...origin/{branch}"], stderr=subprocess.DEVNULL
+    )
+    return bool(set(output.splitlines()) - {b"stubsabot"})
 
 
 def latest_commit_is_different_to_last_commit_on_origin(branch: str) -> bool:
     assert not branch.startswith("origin/")
-    try:
-        # https://www.git-scm.com/docs/git-range-diff
-        # If the number of lines is >1,
-        # it indicates that something about our commit is different to the last commit
-        # (Could be the commit "content", or the commit message).
-        commit_comparison = subprocess.run(
-            ["git", "range-diff", f"origin/{branch}~1..origin/{branch}", "HEAD~1..HEAD"], check=True, capture_output=True
-        )
-        return len(commit_comparison.stdout.splitlines()) > 1
-    except subprocess.CalledProcessError:
-        # origin/branch does not exist
+
+    if not remote_branch_exists(branch):
         return True
+
+    # https://www.git-scm.com/docs/git-range-diff
+    # If the number of lines is >1,
+    # it indicates that something about our commit is different to the last commit
+    # (Could be the commit "content", or the commit message).
+    commit_comparison = subprocess.run(
+        ["git", "range-diff", f"origin/{branch}~1..origin/{branch}", "HEAD~1..HEAD"], check=True, capture_output=True
+    )
+    return len(commit_comparison.stdout.splitlines()) > 1
 
 
 class RemoteConflictError(Exception):
@@ -810,7 +832,12 @@ class RemoteConflictError(Exception):
 def somewhat_safe_force_push(branch: str) -> None:
     if has_non_stubsabot_commits(branch):
         raise RemoteConflictError(f"origin/{branch} has non-stubsabot changes that are not on {branch}!")
-    subprocess.check_call(["git", "push", "origin", branch, "--force"])
+    result = subprocess.run(["git", "push", "--quiet", "origin", branch, "--force"], text=True, capture_output=True, check=False)
+    if result.returncode:
+        # Capture both streams to suppress stderr on success without losing it on failure
+        sys.stdout.write(result.stdout)
+        sys.stderr.write(result.stderr)
+        result.check_returncode()
 
 
 def normalize(name: str) -> str:
@@ -824,15 +851,13 @@ _repo_lock = asyncio.Lock()
 BRANCH_PREFIX = "stubsabot"
 
 
-def get_update_pr_body(update: Update, metadata: Mapping[str, Any]) -> str:
+def get_update_pr_body(update: Update, settings: StubtestSettings) -> str:
     body = "\n".join(f"{k}: {v}" for k, v in update.links.items())
 
     if update.diff_analysis is not None:
         body += f"\n\n{update.diff_analysis}"
 
-    stubtest_settings: dict[str, Any] = metadata.get("tool", {}).get("stubtest", {})
-    stubtest_will_run = not stubtest_settings.get("skip", False)
-    if stubtest_will_run:
+    if not settings.skip:
         body += textwrap.dedent("""
 
             If stubtest fails for this PR:
@@ -866,72 +891,63 @@ def remove_stubs(distribution: str) -> None:
         f.writelines(lines)
 
 
-async def suggest_typeshed_update(update: Update, session: aiohttp.ClientSession, action_level: ActionLevel) -> None:
+def get_commit_message(action: Update | Obsolete | Remove) -> tuple[str, str]:
+    """Return git commit message title and body."""
+    match action:
+        case Update():
+            stubtest_settings = read_stubtest_settings(action.distribution)
+            return (
+                f"[stubsabot] Bump {action.distribution} to {action.new_version}",
+                get_update_pr_body(action, stubtest_settings),
+            )
+        case Obsolete():
+            return (
+                f"[stubsabot] Mark {action.distribution} as obsolete since {action.obsolete_since_version}",
+                "\n".join(f"{k}: {v}" for k, v in action.links.items()),
+            )
+        case Remove():
+            return (
+                f"[stubsabot] Remove {action.distribution} as {action.reason}",
+                "\n".join(f"{k}: {v}" for k, v in action.links.items()),
+            )
+
+
+def run_action(action: Update | Obsolete | Remove) -> None:
+    match action:
+        case Update():
+            update_metadata(action.distribution, version=action.new_version)
+        case Obsolete():
+            obsolete_t = cast(dict[str, object], tomlkit.inline_table())
+            obsolete_t.update({"version": action.obsolete_since_version, "date": action.obsolete_since_date.date().isoformat()})
+            update_metadata(action.distribution, obsolete_since=obsolete_t)
+        case Remove():
+            remove_stubs(action.distribution)
+
+
+_A = TypeVar("_A", bound=Update | Obsolete | Remove)
+
+
+async def process_typeshed_change(action: _A, session: aiohttp.ClientSession, action_level: ActionLevel) -> _A | NoUpdate:
     if action_level <= ActionLevel.nothing:
-        return
-    title = f"[stubsabot] Bump {update.distribution} to {update.new_version}"
+        return action
+
     async with _repo_lock:
-        branch_name = f"{BRANCH_PREFIX}/{normalize(update.distribution)}"
-        subprocess.check_call(["git", "checkout", "-B", branch_name, "origin/main"])
-        meta = update_metadata(update.distribution, version=update.new_version)
-        body = get_update_pr_body(update, meta)
-        subprocess.check_call(["git", "commit", "--all", "-m", f"{title}\n\n{body}"])
+        branch_name = f"{BRANCH_PREFIX}/{normalize(action.distribution)}"
+        subprocess.check_call(["git", "checkout", "--quiet", "-B", branch_name, "origin/main"])
+        run_action(action)
+        title, body = get_commit_message(action)
+        subprocess.check_call(["git", "commit", "--quiet", "--all", "-m", f"{title}\n\n{body}"])
         if action_level <= ActionLevel.local:
-            return
+            return action
         if not latest_commit_is_different_to_last_commit_on_origin(branch_name):
-            print(f"No pushing to origin required: origin/{branch_name} exists and requires no changes!")
-            return
+            pr_number = await find_existing_pr(branch_name=branch_name, session=session)
+            return NoUpdate(action.distribution, "pr open", pr_number)
         somewhat_safe_force_push(branch_name)
         if action_level <= ActionLevel.fork:
-            return
+            return action
 
     await create_or_update_pull_request(title=title, body=body, branch_name=branch_name, session=session)
-
-
-async def suggest_typeshed_obsolete(obsolete: Obsolete, session: aiohttp.ClientSession, action_level: ActionLevel) -> None:
-    if action_level <= ActionLevel.nothing:
-        return
-    title = f"[stubsabot] Mark {obsolete.distribution} as obsolete since {obsolete.obsolete_since_version}"
-    async with _repo_lock:
-        branch_name = f"{BRANCH_PREFIX}/{normalize(obsolete.distribution)}"
-        subprocess.check_call(["git", "checkout", "-B", branch_name, "origin/main"])
-        obsolete_t = cast(dict[str, object], tomlkit.inline_table())
-        obsolete_t.update({"version": obsolete.obsolete_since_version, "date": obsolete.obsolete_since_date.date().isoformat()})
-        update_metadata(obsolete.distribution, obsolete_since=obsolete_t)
-        body = "\n".join(f"{k}: {v}" for k, v in obsolete.links.items())
-        subprocess.check_call(["git", "commit", "--all", "-m", f"{title}\n\n{body}"])
-        if action_level <= ActionLevel.local:
-            return
-        if not latest_commit_is_different_to_last_commit_on_origin(branch_name):
-            print(f"No PR required: origin/{branch_name} exists and requires no changes!")
-            return
-        somewhat_safe_force_push(branch_name)
-        if action_level <= ActionLevel.fork:
-            return
-
-    await create_or_update_pull_request(title=title, body=body, branch_name=branch_name, session=session)
-
-
-async def suggest_typeshed_remove(remove: Remove, session: aiohttp.ClientSession, action_level: ActionLevel) -> None:
-    if action_level <= ActionLevel.nothing:
-        return
-    title = f"[stubsabot] Remove {remove.distribution} as {remove.reason}"
-    async with _repo_lock:
-        branch_name = f"{BRANCH_PREFIX}/{normalize(remove.distribution)}"
-        subprocess.check_call(["git", "checkout", "-B", branch_name, "origin/main"])
-        remove_stubs(remove.distribution)
-        body = "\n".join(f"{k}: {v}" for k, v in remove.links.items())
-        subprocess.check_call(["git", "commit", "--all", "-m", f"{title}\n\n{body}"])
-        if action_level <= ActionLevel.local:
-            return
-        if not latest_commit_is_different_to_last_commit_on_origin(branch_name):
-            print(f"No pushing to origin required: origin/{branch_name} exists and requires no changes!")
-            return
-        somewhat_safe_force_push(branch_name)
-        if action_level <= ActionLevel.fork:
-            return
-
-    await create_or_update_pull_request(title=title, body=body, branch_name=branch_name, session=session)
+    return action
 
 
 async def main() -> int:
@@ -995,32 +1011,27 @@ async def main() -> int:
 
             action_count = 0
             for task in asyncio.as_completed(tasks):
-                update = await task
-                print(f"{update.distribution}... ", end="")
-                print(update)
+                action = await task
+                print(f"{action.distribution}... ", end="")
 
-                if isinstance(update, NoUpdate):
+                if isinstance(action, NoUpdate):
+                    print(action)
                     continue
-                if isinstance(update, Error):
+                if isinstance(action, Error):
+                    print(action)
                     error = True
                     continue
 
                 if args.action_count_limit is not None and action_count >= args.action_count_limit:
+                    print(action)
                     print(colored("... but we've reached action count limit", "red"))
                     continue
                 action_count += 1
 
                 try:
-                    if isinstance(update, Update):
-                        await suggest_typeshed_update(update, session, action_level=args.action_level)
-                        continue
-                    if isinstance(update, Obsolete):
-                        await suggest_typeshed_obsolete(update, session, action_level=args.action_level)
-                        continue
-                    # Redundant, but keeping for extra runtime validation
-                    if isinstance(update, Remove):  # pyright: ignore[reportUnnecessaryIsInstance]
-                        await suggest_typeshed_remove(update, session, action_level=args.action_level)
-                        continue
+                    action_result = await process_typeshed_change(action, session, action_level=args.action_level)
+                    print(action_result)
+                    continue
                 except RemoteConflictError as e:
                     print(colored(f"... but ran into {type(e).__qualname__}: {e}", "red"))
                     continue
@@ -1029,7 +1040,7 @@ async def main() -> int:
         # if you need to cleanup, try:
         # git branch -D $(git branch --list 'stubsabot/*')
         if args.action_level >= ActionLevel.local and original_branch:
-            subprocess.check_call(["git", "checkout", original_branch])
+            subprocess.check_call(["git", "checkout", "--quiet", original_branch])
 
     return 1 if error else 0
 

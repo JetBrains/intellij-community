@@ -41,52 +41,42 @@
     <orderEntry type="module" module-name="intellij.gradle.toolingExtension.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlin.gradle.plugin.idea" exported="" />
     <orderEntry type="module" module-name="intellij.gradle.toolingExtension.tests" scope="TEST" />
-    <orderEntry type="library" name="kotlin-test" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinTest" />
     <orderEntry type="module" module-name="intellij.kotlin.base.projectModel" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.highlighting" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.test" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.fastutil" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-tests" level="project" />
     <orderEntry type="module" module-name="intellij.kotlin.base.facet" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-jps-plugin-classpath" level="project" />
     <orderEntry type="module" module-name="intellij.kotlin.base.projectStructure" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.gradle" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.completion.tests.shared" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.indices" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.util" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.psi" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.jps.common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.compilerConfiguration" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.projectConfiguration" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.codeInsight.common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.codeInsight.toml" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.analysis" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.kotlin.migration" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle.java" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.platforms" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.codeInsight.groovy" scope="TEST" />
     <orderEntry type="module" module-name="intellij.groovy.psi" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.gradle.java.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.kotlin.runConfigurations.jvm" scope="TEST" />
     <orderEntry type="module" module-name="intellij.groovy" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.codeInsight" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.kotlin.projectWizard.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.externalSystem" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.kotlin.jvm.debugger.coroutines" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.syntax" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.psi" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.java.rt" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.execution" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testRunner" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.junit" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.groovy.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.groovy.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.highlighting.minimal" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />

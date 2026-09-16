@@ -20,6 +20,7 @@ import com.jetbrains.python.allure.Subsystems;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.idea.TestFor;
 import com.intellij.testFramework.TestDataFile;
 import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -154,6 +155,33 @@ public class Py3QuickFixTest extends PyTestCase {
   // PY-12132
   public void testAddABCToSuperclassesCaretAtAbstractMethod() {
     doInspectionTest("PyAbstractClassInspection/quickFix/AddABCToSuperclassesCaretAtAbstractMethod/main.py",
+                     PyAbstractClassInspection.class,
+                     "Add '" + PyNames.ABC + "' as base class",
+                     true,
+                     true);
+  }
+
+  @TestFor(issues = "PY-84718")
+  public void testAddModuleImportedABCToSuperclasses() {
+    doInspectionTest("PyAbstractClassInspection/quickFix/AddModuleImportedABCToSuperclasses/main.py",
+                     PyAbstractClassInspection.class,
+                     "Add '" + PyNames.ABC + "' as base class",
+                     true,
+                     true);
+  }
+
+  @TestFor(issues = "PY-84718")
+  public void testAddAliasedModuleImportedABCToSuperclasses() {
+    doInspectionTest("PyAbstractClassInspection/quickFix/AddAliasedModuleImportedABCToSuperclasses/main.py",
+                     PyAbstractClassInspection.class,
+                     "Add '" + PyNames.ABC + "' as base class",
+                     true,
+                     true);
+  }
+
+  @TestFor(issues = "PY-84718")
+  public void testAddAliasedImportedABCToSuperclasses() {
+    doInspectionTest("PyAbstractClassInspection/quickFix/AddAliasedImportedABCToSuperclasses/main.py",
                      PyAbstractClassInspection.class,
                      "Add '" + PyNames.ABC + "' as base class",
                      true,

@@ -12,7 +12,7 @@ abstract class LessonContext : LearningDslBase {
   /**
    * Start a new task in a lesson context
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   open fun task(taskContent: TaskContext.() -> Unit) = Unit
 
   /**

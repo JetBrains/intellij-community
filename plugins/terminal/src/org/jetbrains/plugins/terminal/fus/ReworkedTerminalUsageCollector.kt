@@ -26,7 +26,7 @@ private const val GROUP_ID = "terminal"
 object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup(GROUP_ID, 20)
+  private val GROUP = EventLogGroup(GROUP_ID, 22)
 
   private val OS_VERSION_FIELD = EventFields.StringValidatedByRegexpReference("os-version", "version")
   private val SHELL_STR_FIELD = EventFields.String("shell", KNOWN_SHELLS.toList())
@@ -40,6 +40,30 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   private val PROCESS_EXECUTABLE = EventFields.String("process_executable", getKnownCommandValuesListWithoutPaths())
   private val INSERTED_CONTENT_TYPE = EventFields.Enum<TerminalInsertedContentType>("content_type")
   private val INSERTED_CONTENT_SOURCE = EventFields.Enum<TerminalInsertedContentSource>("content_source")
+  private val RATIO_OF_POPUP_COMPLETION_FIELD = EventFields.Double(
+    "ratio_of_popup_completion",
+    "Ratio of text inserted by popup completion to total inserted command text length",
+  )
+  private val RATIO_OF_INLINE_COMPLETION_FIELD = EventFields.Double(
+    "ratio_of_inline_completion",
+    "Ratio of text inserted by inline completion to total inserted command text length",
+  )
+  private val TYPING_RATIO_FIELD = EventFields.Double(
+    "typing_ratio",
+    "Ratio of typing events to total inserted command text length",
+  )
+  private val BACKSPACES_RATIO_FIELD = EventFields.Double(
+    "backspaces_ratio",
+    "Ratio of Backspace key presses to total inserted command text length",
+  )
+  private val ROUNDED_TOTAL_COMMAND_INSERTED_LENGTH_FIELD = EventFields.RoundedInt(
+    "rounded_total_command_inserted_length",
+    "Total command text length growth, including typing, shell completion, command history, and paste rounded to the next power of 2",
+  )
+  private val ROUNDED_TYPING_TIME_FIELD = EventFields.RoundedLong(
+    "rounded_typing_time",
+    "Time in milliseconds from the first insertion event to command execution rounded to the next power of 2",
+  )
 
   // Latency measurement related fields
   private val DURATION_FIELD = EventFields.createDurationField(DurationUnit.MILLISECONDS, "duration_ms")
@@ -61,9 +85,16 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
 
   private val localShellStartedEvent = GROUP.registerEvent("local.exec", OS_VERSION_FIELD, SHELL_STR_FIELD)
 
-  private val commandStartedEvent = GROUP.registerEvent(
+  private val commandStartedEvent = GROUP.registerVarargEvent(
     "terminal.command.executed",
-    TerminalCommandUsageStatistics.commandExecutableField, TerminalCommandUsageStatistics.subCommandField
+    TerminalCommandUsageStatistics.commandExecutableField,
+    TerminalCommandUsageStatistics.subCommandField,
+    RATIO_OF_POPUP_COMPLETION_FIELD,
+    RATIO_OF_INLINE_COMPLETION_FIELD,
+    TYPING_RATIO_FIELD,
+    BACKSPACES_RATIO_FIELD,
+    ROUNDED_TOTAL_COMMAND_INSERTED_LENGTH_FIELD,
+    ROUNDED_TYPING_TIME_FIELD,
   )
 
   private val commandFinishedEvent = GROUP.registerVarargEvent(
@@ -178,10 +209,31 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   }
 
   @JvmStatic
-  fun logCommandStarted(project: Project, userCommandLine: String) {
+  fun logCommandStarted(
+    project: Project,
+    userCommandLine: String,
+    totalCommandInsertedLength: Int,
+    popupCompletionLength: Int,
+    inlineCompletionLength: Int,
+    typingsCount: Int,
+    backspacesCount: Int,
+    commandTypingTimeMillis: Long,
+  ) {
     val commandData = TerminalCommandUsageStatistics.getLoggableCommandData(userCommandLine)
-    commandStartedEvent.log(project, commandData.command, commandData.subCommand)
+    commandStartedEvent.log(
+      project,
+      TerminalCommandUsageStatistics.commandExecutableField with commandData.command,
+      TerminalCommandUsageStatistics.subCommandField with commandData.subCommand,
+      RATIO_OF_POPUP_COMPLETION_FIELD with popupCompletionLength.ratioOf(totalCommandInsertedLength),
+      RATIO_OF_INLINE_COMPLETION_FIELD with inlineCompletionLength.ratioOf(totalCommandInsertedLength),
+      TYPING_RATIO_FIELD with typingsCount.ratioOf(totalCommandInsertedLength),
+      BACKSPACES_RATIO_FIELD with backspacesCount.ratioOf(totalCommandInsertedLength),
+      ROUNDED_TOTAL_COMMAND_INSERTED_LENGTH_FIELD with totalCommandInsertedLength,
+      ROUNDED_TYPING_TIME_FIELD with commandTypingTimeMillis,
+    )
   }
+
+  private fun Int.ratioOf(total: Int): Double = if (total == 0) 0.0 else toDouble() / total
 
   fun logCommandFinished(project: Project, userCommandLine: String, exitCode: Int, executionTime: Duration) {
     val commandData = TerminalCommandUsageStatistics.getLoggableCommandData(userCommandLine)

@@ -25,7 +25,7 @@ internal object PluginXmlWriter : PipelineNode {
   override val requires: Set<DataSlot<*>> get() = setOf(Slots.PLUGIN_DEPENDENCY_PLAN)
   override val produces: Set<DataSlot<*>> get() = setOf(Slots.PLUGIN_XML)
 
-  override suspend fun execute(ctx: ComputeContext) {
+  override fun execute(ctx: ComputeContext) {
     val model = ctx.model
     val plans = ctx.get(Slots.PLUGIN_DEPENDENCY_PLAN).plans
     if (plans.isEmpty()) {

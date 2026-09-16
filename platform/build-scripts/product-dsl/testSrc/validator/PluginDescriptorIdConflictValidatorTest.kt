@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.productLayout.validator
 
+import com.intellij.platform.buildScripts.concurrency.SharedTaskOwner
 import com.intellij.platform.pluginGraph.EDGE_BUNDLES
 import com.intellij.platform.pluginGraph.PluginId
 import com.intellij.platform.pluginGraph.PluginModuleId
@@ -22,6 +23,13 @@ import org.junit.jupiter.api.extension.ExtendWith
 
 @ExtendWith(TestFailureLogger::class)
 class PluginDescriptorIdConflictValidatorTest {
+  private val owner = SharedTaskOwner("PluginDescriptorIdConflictValidatorTest")
+
+  @org.junit.jupiter.api.AfterEach
+  fun closeSharedTasks() {
+    owner.close()
+  }
+
   @Test
   fun `reports conflicts between production and test descriptor ids`(): Unit = runBlocking(Dispatchers.Default) {
     val graph = pluginGraph {
@@ -39,7 +47,7 @@ class PluginDescriptorIdConflictValidatorTest {
       }
     }
 
-    val model = testGenerationModel(graph)
+    val model = testGenerationModel(graph, owner = owner)
     val errors = runValidationRule(PluginDescriptorIdConflictValidator, model)
 
     val conflictErrors = errors.filterIsInstance<PluginDescriptorIdConflictError>()
@@ -69,7 +77,7 @@ class PluginDescriptorIdConflictValidatorTest {
       }
     }
 
-    val model = testGenerationModel(graph)
+    val model = testGenerationModel(graph, owner = owner)
     val errors = runValidationRule(PluginDescriptorIdConflictValidator, model)
 
     assertThat(errors).isEmpty()
@@ -93,7 +101,7 @@ class PluginDescriptorIdConflictValidatorTest {
       }
     }
 
-    val model = testGenerationModel(graph, dslTestPluginsByProduct = testPluginSpecsWithExtraBundle())
+    val model = testGenerationModel(graph, dslTestPluginsByProduct = testPluginSpecsWithExtraBundle(), owner = owner)
     val errors = runValidationRule(PluginDescriptorIdConflictValidator, model)
 
     val conflictErrors = errors.filterIsInstance<PluginDescriptorIdConflictError>()
@@ -122,7 +130,7 @@ class PluginDescriptorIdConflictValidatorTest {
       }
     }
 
-    val model = testGenerationModel(graph, dslTestPluginsByProduct = testPluginSpecsWithExtraBundle())
+    val model = testGenerationModel(graph, dslTestPluginsByProduct = testPluginSpecsWithExtraBundle(), owner = owner)
     val errors = runValidationRule(PluginDescriptorIdConflictValidator, model)
 
     assertThat(errors).isEmpty()
@@ -158,7 +166,7 @@ class PluginDescriptorIdConflictValidatorTest {
     val aliasNodeId = builder.addAliasPlugin(aliasId)
     builder.addEdge(builder.addProduct("IDEA"), aliasNodeId, EDGE_BUNDLES)
 
-    val model = testGenerationModel(builder.build())
+    val model = testGenerationModel(builder.build(), owner = owner)
     val errors = runValidationRule(PluginDescriptorIdConflictValidator, model)
 
     assertThat(errors).isEmpty()

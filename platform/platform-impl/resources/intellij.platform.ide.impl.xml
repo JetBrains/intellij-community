@@ -27,9 +27,7 @@
     <module name="intellij.libraries.jetbrains.annotations"/>
     <module name="intellij.libraries.jgoodies.common"/>
     <module name="intellij.libraries.jgoodies.forms"/>
-    <module name="intellij.libraries.jna"/>
     <module name="intellij.libraries.jsoup"/>
-    <module name="intellij.libraries.jvm.native.trusted.roots"/>
     <module name="intellij.libraries.kotlin.reflect"/>
     <module name="intellij.libraries.kotlinx.collections.immutable"/>
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
@@ -44,7 +42,6 @@
     <module name="intellij.libraries.opentelemetry.semconv"/>
     <module name="intellij.libraries.oro.matcher"/>
     <module name="intellij.libraries.protobuf"/>
-    <module name="intellij.libraries.pty4j"/>
     <module name="intellij.libraries.rd.core"/>
     <module name="intellij.libraries.stream"/>
     <module name="intellij.libraries.swingx"/>
@@ -98,6 +95,9 @@
   </dependencies>
   <!-- endregion -->
   <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.rdProtocolDetector"
+                    interface="com.intellij.platform.rd.RdProtocolDetector"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.marketplaceCustomization"
                     interface="com.intellij.ide.plugins.marketplace.utils.MarketplaceCustomizationService"
                     dynamic="true"/>
@@ -408,6 +408,8 @@
     <extensionPoint qualifiedName="com.intellij.lookup.charFilter" interface="com.intellij.codeInsight.lookup.CharFilter" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.registerToolWindowTaskProvider" interface="com.intellij.toolWindow.RegisterToolWindowTaskProvider"/>
     <extensionPoint qualifiedName="com.intellij.diagnostic.freezeNotifier" interface="com.intellij.diagnostic.FreezeNotifier" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.platform.ide.welcomeScreenAccessPoint"
+                    interface="com.intellij.ide.welcomeScreen.WelcomeAccessPoint" dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <iw.actionProvider implementation="com.intellij.openapi.editor.impl.multiverse.CodeInsightContextSwitcherProvider"/>
@@ -434,6 +436,11 @@
       key="ide.update.toolbar.widget"
       defaultValue="false"
       description="Show an available IDE update as a main toolbar button instead of an item in the Settings menu"
+    />
+    <registryKey
+      key="ide.settings.header.centered"
+      defaultValue="true"
+      description="Center the Settings title and header actions vertically"
     />
     <registryKey
       key="ide.hide.default.project.directory.for.isolated.workspace"
@@ -484,6 +491,11 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.platform.ide.menu.MainMenuCollector"/>
     <editorEmptyStateComponentProvider implementation="com.intellij.openapi.fileEditor.impl.EditorEmptyTextComponentProvider" order="last"/>
     <editorEmptyTextProvider implementation="com.intellij.openapi.fileEditor.impl.DefaultEditorEmptyTextProvider" order="last"/>
+    <registryKey key="plugin.manager.unified.page" defaultValue="true"
+                 description="Enable the unified Plugins settings page"/>
+    <registryKey key="plugin.manager.unified.page.density.options"
+                 defaultValue="[Baseline*|32 px icons|2 preview rows]"
+                 description="Select a temporary density variant for the unified Plugins settings page"/>
     <pluginUpdatesProvider implementation="com.intellij.ide.plugins.newui.DefaultPluginUpdatesProvider"/>
     <projectSettings service="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeaturesCollector"/>
     <projectSettings service="com.intellij.ui.RecentsManager"/>
@@ -498,7 +510,6 @@
     <projectSettings service="com.intellij.openapi.fileEditor.impl.EditorHistoryManager"/>
     <applicationSettings service="com.intellij.toolWindow.ButtonsStateService"/>
     <applicationSettings service="com.intellij.toolWindow.ToolWindowDefaultLayoutManager"/>
-    <applicationSettings service="com.intellij.toolWindow.xNext.toolbar.data.XNextPinnedService"/>
     <applicationSettings service="com.intellij.notification.impl.RemindLaterManager"/>
     <applicationSettings service="com.intellij.ide.plugins.org.PluginManagerConfigurableForOrgConfig"/>
     <applicationService serviceInterface="com.intellij.execution.wsl.GatewayNativeWslProjectOpener"
@@ -560,8 +571,6 @@
                        descriptionKey="configurable.group.other.settings.description"/>
     <applicationService serviceInterface="com.intellij.ide.actions.ReportFeedbackService" open="true"
                         serviceImplementation="com.intellij.ide.actions.DefaultReportFeedbackService"/>
-    <applicationService serviceInterface="com.intellij.util.net.ssl.OsCertificatesService"
-                        serviceImplementation="com.intellij.util.net.ssl.OsCertificatesServiceImpl"/>
     <applicationService serviceInterface="com.intellij.ide.plugins.PluginConflictReporter"
                         serviceImplementation="com.intellij.diagnostic.GuiPluginConflictReporter"/>
     <applicationService serviceInterface="com.intellij.openapi.vfs.newvfs.ManagingFS"
@@ -813,10 +822,6 @@
                         serviceInterface="com.intellij.openapi.application.WriteDelayDiagnostics$WriteDelayDiagnosticsHandler"/>
     <applicationService serviceInterface="com.intellij.execution.process.ProcessHandlerFactory"
                         serviceImplementation="com.intellij.execution.process.ProcessHandlerFactoryImpl"/>
-    <applicationService serviceInterface="com.intellij.execution.process.LocalProcessService"
-                        serviceImplementation="com.intellij.execution.process.LocalProcessServiceImpl"/>
-    <applicationService serviceInterface="com.intellij.util.io.IoService"
-                        serviceImplementation="com.intellij.util.io.IoServiceImpl"/>
     <applicationService serviceInterface="com.intellij.diagnostic.EventWatcher"
                         serviceImplementation="com.intellij.diagnostic.EventWatcherService" headlessImplementation=""
                         open="true"/>
@@ -839,8 +844,8 @@
     <projectService serviceInterface="com.intellij.openapi.project.IncompleteDependenciesService"
                     serviceImplementation="com.intellij.openapi.project.IncompleteDependenciesServiceImpl"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.project.DumbModeBlockedFunctionalityCollector"/>
-    <projectService serviceInterface="com.intellij.openapi.project.DumbUtil"
-                    serviceImplementation="com.intellij.openapi.project.DumbUtilImpl"/>
+    <applicationService serviceInterface="com.intellij.openapi.project.DumbUtil"
+                        serviceImplementation="com.intellij.openapi.project.DumbUtilImpl"/>
     <projectService serviceInterface="com.intellij.openapi.project.ProjectReloadState"
                     serviceImplementation="com.intellij.openapi.project.impl.ProjectReloadStateImpl"/>
     <backgroundPostStartupActivity implementation="com.intellij.openapi.project.impl.ProjectRootsSynchronizer"/>
@@ -1199,12 +1204,7 @@
     <fileEditorProvider implementation="com.intellij.openapi.fileEditor.impl.text.LargeFileEditorProvider" id="LargeFileEditor"
                         allowedInUntrustedFiles="true"/>
     <fileEditorProvider id="jcomponent-editor" implementation="com.intellij.openapi.fileEditor.impl.JComponentEditorProvider"/>
-    <fileEditorProvider id="settingsWindow" implementation="com.intellij.openapi.options.newEditor.settings.SettingsFileEditorProvider"/>
-    <editorTabTitleProvider implementation="com.intellij.openapi.options.newEditor.settings.SettingsFileEditorProvider"/>
     <editorTabTitleProvider implementation="com.intellij.openapi.wm.impl.tabInEditor.ToolWindowEditorTabTitleProvider"/>
-    <editorNotificationProvider implementation="com.intellij.openapi.options.newEditor.settings.SettingModifiedExternallyNotificationProvider"/>
-    <virtualFileSystem implementationClass="com.intellij.openapi.options.newEditor.settings.SettingsFileSystem" key="settings" physical="false"/>
-    <navbar implementation="com.intellij.openapi.options.newEditor.settings.SettingsNavBarModelExtension"/>
     <editorAutoClosingHandler implementation="com.intellij.openapi.wm.impl.tabInEditor.ToolWindowEditorTabAutoClosingHandler"/>
     <virtualFilePreCloseCheck implementation="com.intellij.openapi.wm.impl.tabInEditor.ToolWindowEditorTabPreCloseCheck"/>
     <editorNotificationProvider implementation="com.intellij.openapi.fileEditor.impl.text.LargeFileNotificationProvider"/>
@@ -1856,15 +1856,8 @@
                         serviceImplementation="com.intellij.openapi.editor.impl.inspector.InspectionsSettingContentServiceImpl"/>
     <applicationService serviceInterface="com.intellij.codeInsight.actions.ReaderModeDefaultsOverride" open="true"
                         serviceImplementation="com.intellij.codeInsight.actions.ReaderModeDefaultsOverrideImpl" />
-    <projectService serviceInterface="com.intellij.toolWindow.xNext.toolbar.data.XNextToolbarManager"
-                        serviceImplementation="com.intellij.toolWindow.xNext.toolbar.data.XNextToolbarManagerImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.wm.ex.WelcomeScreenProjectSupport"
                         serviceImplementation="com.intellij.openapi.wm.ex.WelcomeScreenProjectSupportImpl"/>
-    <!--XNext-->
-    <applicationService serviceInterface="com.intellij.openapi.application.impl.InternalUICustomization"
-                        serviceImplementation="com.intellij.openapi.application.impl.islands.IslandsUICustomization"/>
-    <applicationService serviceInterface="com.intellij.ui.tabs.impl.IslandsPainterProvider"
-                        serviceImplementation="com.intellij.openapi.application.impl.islands.IslandsInternalPainterProvider"/>
     <applicationSettings service="com.intellij.ide.ui.laf.LafManagerImpl"/>
     <projectSettings service="com.intellij.openapi.wm.impl.ToolWindowManagerStateImpl"/>
     <applicationSettings service="com.intellij.openapi.wm.impl.WindowManagerImpl"/>

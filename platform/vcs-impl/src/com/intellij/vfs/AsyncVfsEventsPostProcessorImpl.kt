@@ -66,7 +66,7 @@ class AsyncVfsEventsPostProcessorImpl(coroutineScope: CoroutineScope) : AsyncVfs
     }
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private suspend fun processEvents(events: List<VFileEvent>) {
     for ((listener, listenerScope) in listeners) {
       coroutineContext.ensureActive()

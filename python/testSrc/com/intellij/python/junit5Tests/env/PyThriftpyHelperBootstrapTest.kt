@@ -4,6 +4,7 @@ package com.intellij.python.junit5Tests.env
 import com.intellij.python.community.helpersLocator.PythonHelpersLocator
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
 import com.intellij.python.junit5Tests.framework.env.PythonBinaryPath
+import com.jetbrains.python.PYTHONPATH
 import com.jetbrains.python.PythonBinary
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -68,7 +69,7 @@ class PyThriftpyHelperBootstrapTest {
       ProcessBuilder(python.toString(), "-c", code)
         .directory(foreignCwd.toFile())
         .apply {
-          environment().remove("PYTHONPATH")
+          environment().remove(PYTHONPATH)
           environment()["PY_HELPER_DIR"] = scriptDir.toString()
         }
         .start()

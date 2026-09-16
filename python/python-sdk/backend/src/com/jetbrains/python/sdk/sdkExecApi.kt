@@ -16,15 +16,15 @@ import com.intellij.python.community.execService.ProcessOutputTransformer
 import com.intellij.python.community.execService.PyProcessListener
 import com.intellij.python.community.execService.execGetStdout
 import com.intellij.python.community.execService.execute
-import com.intellij.python.community.execService.python.HelperName
-import com.intellij.python.community.execService.python.addHelper
+import com.intellij.python.community.execService.python.PyHelper
+import com.intellij.python.community.execService.python.StdInProvider
+import com.intellij.python.community.execService.python.executeHelper
 import com.intellij.python.sdk.backend.PySdkBundle.message
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import kotlinx.coroutines.CoroutineScope
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.CheckReturnValue
 import java.nio.file.InvalidPathException
@@ -56,22 +56,27 @@ suspend fun <T> ExecService.execute(
   processOutputTransformer: ProcessOutputTransformer<T>,
 ): PyResult<T> {
   val binToExecute = sdk.asBinToExecute().getOr { return it }
-  return execute(binToExecute, args, options, procListener, processOutputTransformer)
+  return execute(binToExecute, args, options, procListener, processOutputTransformer = processOutputTransformer)
 }
 
 
 /**
  * Executes [helper] on [sdk] (copies it to the remote machine if needed)
+ * To write something into the `stdin` of [helper], use [stdInProvider].
  */
 @Internal
 @CheckReturnValue
 suspend fun ExecService.executeHelper(
   sdk: Sdk,
-  helper: HelperName,
+  helper: PyHelper,
   helperArgs: Args = Args(),
   options: ExecOptions = ExecOptions(),
   procListener: PyProcessListener? = null,
-): PyResult<String> = execGetStdout(sdk, Args().addHelper(helper).add(helperArgs), options, procListener)
+  stdInProvider: StdInProvider? = null,
+): PyResult<String> {
+  val binToExecute = sdk.asBinToExecute().getOr { return it }
+  return executeHelper(binToExecute, helper, helperArgs, options, procListener, stdInProvider)
+}
 
 
 // See function it calls for more info

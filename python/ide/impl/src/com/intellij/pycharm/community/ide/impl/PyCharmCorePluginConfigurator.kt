@@ -32,7 +32,7 @@ import kotlin.time.Duration.Companion.milliseconds
  * It does not work in plugin.
  *
  * In patchConfigurables() we are rearranging applicationConfigurable, assigning Pycharm specific groups and weights.
- * We should remember that the same work for projectConfigurables done in [PyCharmProjectConfigurableStartupActivity].
+ * The frontend project activity does the same work for project configurables.
  */
 internal class PyCharmCorePluginConfigurator : ApplicationInitializedListener {
   init {

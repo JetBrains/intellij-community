@@ -113,12 +113,14 @@ sealed interface XDebuggerSessionEvent {
     override val state: XDebugSessionState,
   ) : EventWithState
 
+  /** [executionStack] is the stack that holds [stackFrame]; the backend can select a thread other than the stopped one. */
   @Serializable
   class StackFrameChanged(
     override val state: XDebugSessionState,
     val sourcePositionDto: XSourcePositionDto?,
     val topSourcePositionDto: XSourcePositionDto?,
     val isTopFrame: Boolean,
+    val executionStack: XExecutionStackDto?,
     val stackFrame: XStackFrameDto?,
   ) : EventWithState
 

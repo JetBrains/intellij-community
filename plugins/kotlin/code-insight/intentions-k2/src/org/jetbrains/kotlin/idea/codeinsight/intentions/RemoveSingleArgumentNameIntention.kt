@@ -12,6 +12,8 @@ import com.intellij.psi.util.startOffset
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.psi.deleteValueArgument
+import org.jetbrains.kotlin.idea.base.psi.insertValueArgumentAfter
 import org.jetbrains.kotlin.idea.base.psi.relativeTo
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
@@ -97,9 +99,9 @@ internal class RemoveSingleArgumentNameIntention :
         val argumentList = element.parent as? KtValueArgumentList ?: return
 
         val newArguments = createArgumentWithoutName(element, elementContext.isVararg, elementContext.isArrayOfCall)
-        argumentList.removeArgument(element)
+        argumentList.deleteValueArgument(element)
         newArguments.asReversed().forEach {
-            argumentList.addArgumentAfter(it, elementContext.anchorArgumentPointer?.element)
+            argumentList.insertValueArgumentAfter(it, elementContext.anchorArgumentPointer?.element)
         }
     }
 }

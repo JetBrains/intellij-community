@@ -50,6 +50,7 @@ private fun composeDevDistribution(options: CommandLineOptions) {
     pluginClasspathPrefix = spec.pluginClasspathPrefix?.let { Path.of(it).toAbsolutePath().normalize() },
     expectedFragments = spec.expectedFragments,
     additionalModules = spec.additionalModules,
+    sourceRunfiles = spec.sourceRunfiles?.mapKeys { Path.of(it.key).toAbsolutePath().normalize() },
   )
   Files.writeString(outputDir.resolve("core-classpath.txt"), result.coreClassPath.joinToString(separator = "\n"))
   Files.writeString(outputDir.resolve("fingerprint.txt"), result.fingerprint)

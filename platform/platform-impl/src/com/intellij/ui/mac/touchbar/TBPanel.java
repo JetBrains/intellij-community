@@ -11,10 +11,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
-import javax.swing.Icon;
 import java.awt.Window;
 import java.awt.event.KeyEvent;
+import java.lang.foreign.MemorySegment;
 import java.util.Arrays;
+import javax.swing.Icon;
 
 @ApiStatus.Internal
 public class TBPanel implements NSTLibrary.ItemCreator {
@@ -90,13 +91,13 @@ public class TBPanel implements NSTLibrary.ItemCreator {
   }
 
   @Override
-  public ID createItem(@NotNull String uid) { // called from AppKit (when NSTouchBarDelegate create items)
+  public MemorySegment createItem(@NotNull String uid) {
     final long startNs = myStats != null ? System.nanoTime() : 0;
     final ID result = createItemImpl(uid);
     if (myStats != null) {
       myStats.incrementCounter(StatsCounters.itemsCreationDurationNs, System.nanoTime() - startNs);
     }
-    return result;
+    return result.asMemorySegment();
   }
 
   private ID createItemImpl(@NotNull String uid) {

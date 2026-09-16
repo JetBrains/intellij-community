@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.platform.buildView` start
+content_module_jar(module = ":buildView")
+### auto-generated section `dev intellij.platform.buildView` end
+
 ### auto-generated section `build intellij.platform.buildView` start
 jvm_library(
     name = "buildView",
@@ -38,8 +42,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":buildView")
-
 jvm_library(
     name = "buildView_test_lib",
     testonly = True,
@@ -75,7 +77,6 @@ exports_files(
     [
         "intellij.platform.buildView.iml",
         "resources/intellij.platform.buildView.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.ide.IdeTooltip;
@@ -451,6 +451,15 @@ public final class LocalHintManager implements ClientHintManager {
     myQuestionHint = hint;
   }
 
+  @Override
+  public void dismissCurrentQuestionHint() {
+    ThreadingAssertions.assertEventDispatchThread();
+    if (myQuestionHint != null) {
+      myQuestionHint.setDismissedByEscape();
+    }
+    hideQuestionHint();
+  }
+
   private void hideQuestionHint() {
     ThreadingAssertions.assertEventDispatchThread();
     if (myQuestionHint != null) {
@@ -509,6 +518,8 @@ public final class LocalHintManager implements ClientHintManager {
       if (!info.hint().isVisible()) {
         if (isEDT) {
           myHintsStack.remove(info);
+          // only EscapeHandler asks this, so the Escape key causes this hide
+          info.hint().setDismissedByEscape();
           info.hint().hide();
         }
         continue;
@@ -536,6 +547,9 @@ public final class LocalHintManager implements ClientHintManager {
 
       if ((info.flags() & mask) != 0 || editorChanged && !info.reviveOnEditorChange()) {
         myHintsStack.remove(info);
+        if (BitUtil.isSet(mask, HintManager.HIDE_BY_ESCAPE)) {
+          info.hint().setDismissedByEscape();
+        }
         info.hint().hide();
         if ((mask & HintManager.HIDE_BY_ESCAPE) == 0 || (info.flags() & HintManager.DONT_CONSUME_ESCAPE) == 0) {
           result = true;

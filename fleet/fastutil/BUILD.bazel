@@ -11,6 +11,10 @@ fleet_wasmjs_module(
     deps = ["@kmp_deps//:org_jetbrains_kotlin_kotlin_stdlib"],
 )
 
+### auto-generated section `dev fleet.fastutil` start
+content_module_jar(module = ":fastutil")
+### auto-generated section `dev fleet.fastutil` end
+
 ### auto-generated section `build fleet.fastutil` start
 create_kotlinc_options(
     name = "custom_fastutil",
@@ -44,8 +48,6 @@ jvm_library(
     deps = ["@lib//:kotlin-stdlib"],
 )
 
-content_module_jar(module = ":fastutil")
-
 jvm_library(
     name = "fastutil_test_lib",
     testonly = True,
@@ -65,7 +67,6 @@ exports_files(
     [
         "fleet.fastutil.iml",
         "resources/fleet.fastutil.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

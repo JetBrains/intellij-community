@@ -1,9 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.picker;
 
-import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -50,7 +50,7 @@ public abstract class ColorPipetteBase implements ColorPipette {
   }
 
   public static boolean canUseMacPipette() {
-    return SystemInfo.isMac && Registry.is("ide.mac.native.pipette") && JnaLoader.isLoaded();
+    return SystemInfo.isMac && Registry.is("ide.mac.native.pipette") && Foundation.isAvailable();
   }
 
   @Override

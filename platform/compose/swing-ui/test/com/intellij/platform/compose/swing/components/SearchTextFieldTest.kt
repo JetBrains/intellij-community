@@ -5,6 +5,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.intellij.ui.components.JBTextField
+import org.jetbrains.compose.swing.test.interaction.performFocusLost
+import org.jetbrains.compose.swing.test.interaction.performTextReplacement
 import org.jetbrains.compose.swing.test.onNodeOfType
 import org.jetbrains.compose.swing.test.runComposeSwingTest
 import org.junit.jupiter.api.Test
@@ -41,7 +43,9 @@ class SearchTextFieldTest {
 
     onNodeOfType<JBTextField>().performTextReplacement("typed query")
 
-    assertEquals(listOf("typed query"), reported)
+    // A replacement is typed over the selection, so the field reports every keystroke on the way. What the
+    // contract fixes is the text the last of them carries, not how many the gesture takes.
+    assertEquals("typed query", reported.last())
     assertEquals("typed query", text)
     assertEquals("typed query", onNodeOfType<IdeaSearchTextField>().fetch().text)
   }

@@ -8,7 +8,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 open class ProjectUtilService(protected val project: Project) {
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   open fun focusProjectWindow(stealFocusIfAppInactive: Boolean = false) {
     ProjectUtil.focusProjectWindow(project, stealFocusIfAppInactive)
   }

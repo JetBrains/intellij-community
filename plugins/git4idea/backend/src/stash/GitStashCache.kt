@@ -72,7 +72,7 @@ class GitStashCache(private val project: Project) : Disposable {
     return if (future.isCancelled) cache.synchronous().refresh(id) else future
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   internal fun preloadStashes() {
     val currentStashes = stashTracker.allStashes().map { it.stashId() }.toSet()
     val previousStashes = cache.synchronous().asMap().keys

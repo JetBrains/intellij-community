@@ -8,11 +8,9 @@ import com.intellij.featureStatistics.fusCollectors.FileEditorCollector
 import com.intellij.featureStatistics.fusCollectors.FileEditorCollector.EmptyStateCause
 import com.intellij.icons.AllIcons
 import com.intellij.ide.GeneralSettings
-import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.DistractionFreeModeController
 import com.intellij.ide.ui.UISettings
 import com.intellij.notebook.editor.BackedVirtualFile
-import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
@@ -26,39 +24,29 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.fileEditor.CompositeTabIconHolderCreator
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
-import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ReadmeShownUsageCollector.README_OPENED_ON_START_TS
 import com.intellij.openapi.project.ReadmeShownUsageCollector.logReadmeClosedIn
-import com.intellij.openapi.ui.AbstractPainter
 import com.intellij.openapi.ui.Splitter
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.KeyWithDefaultValue
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.wm.IdeFocusManager
-import com.intellij.openapi.wm.IdeGlassPaneUtil
 import com.intellij.platform.util.coroutines.attachAsChildTo
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.tabs.TabInfo
 import com.intellij.ui.tabs.TabsListener
-import com.intellij.ui.tabs.TabsUtil
 import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.EmptyIcon
-import com.intellij.util.ui.GraphicsUtil
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.NamedColorUtil
-import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -76,26 +64,14 @@ import java.awt.Color
 import java.awt.Component
 import java.awt.Container
 import java.awt.Dimension
-import java.awt.Graphics2D
-import java.awt.Point
-import java.awt.Shape
-import java.awt.event.ComponentAdapter
-import java.awt.event.ComponentEvent
-import java.awt.event.FocusAdapter
-import java.awt.event.FocusEvent
 import java.awt.event.MouseEvent
-import java.awt.geom.Rectangle2D
-import java.awt.geom.RoundRectangle2D
 import java.time.Instant
-import java.util.function.Function
-import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.JSplitPane
 import javax.swing.SwingConstants
 import javax.swing.SwingUtilities
-import kotlin.math.roundToInt
 
 private val LOG = logger<EditorWindow>()
 
@@ -131,7 +107,8 @@ class EditorWindow internal constructor(
       }
   }
 
-  internal val component: JComponent
+  @get:Internal
+  val component: JComponent
     get() = tabbedPane.component
 
   val tabbedPane: EditorTabbedContainer = EditorTabbedContainer(window = this, coroutineScope = coroutineScope)
@@ -218,7 +195,7 @@ class EditorWindow internal constructor(
   val fileList: List<VirtualFile>
     get() = files().toList()
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   internal fun files(): Sequence<VirtualFile> = composites().map { it.file }
 
   private val _currentCompositeFlow: MutableStateFlow<EditorComposite?> = MutableStateFlow(null)
@@ -243,7 +220,8 @@ class EditorWindow internal constructor(
     })
   }
 
-  internal enum class RelativePosition(@JvmField val swingConstant: Int) {
+  @Internal
+  enum class RelativePosition(@JvmField val swingConstant: Int) {
     CENTER(SwingConstants.CENTER),
     UP(SwingConstants.TOP),
     LEFT(SwingConstants.LEFT),
@@ -251,7 +229,8 @@ class EditorWindow internal constructor(
     RIGHT(SwingConstants.RIGHT)
   }
 
-  internal fun getAdjacentEditors(): Map<RelativePosition, EditorWindow> {
+  @Internal
+  fun getAdjacentEditors(): Map<RelativePosition, EditorWindow> {
     checkConsistency()
     // can't have more than 4
     val adjacentEditors = HashMap<RelativePosition, EditorWindow>(4)
@@ -348,7 +327,7 @@ class EditorWindow internal constructor(
     )
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   internal fun addComposite(
     composite: EditorComposite,
     file: VirtualFile,
@@ -464,7 +443,7 @@ class EditorWindow internal constructor(
   }
 
   // we must select tab in the same EDT event (same command) - IdeDocumentHistoryImpl rely on that
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   internal fun setCurrentCompositeAndSelectTab(composite: EditorComposite) {
     tabbedPane.tabs.tabs.find { it.composite == composite }?.let {
       tabbedPane.editorTabs.select(info = it, requestFocus = false)
@@ -473,13 +452,13 @@ class EditorWindow internal constructor(
   }
 
   // we must select tab in the same EDT event (same command) - IdeDocumentHistoryImpl rely on that
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   internal fun setCurrentCompositeAndSelectTab(tab: TabInfo) {
     tabbedPane.editorTabs.select(info = tab, requestFocus = false)
     _currentCompositeFlow.value = tab.composite
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   internal fun selectTabOnStartup(tab: TabInfo, requestFocus: Boolean, windowAdded: suspend () -> Unit) {
     val composite = tab.composite
     tabbedPane.editorTabs.selectTabSilently(tab)
@@ -505,7 +484,7 @@ class EditorWindow internal constructor(
   }
 
   @JvmOverloads
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun split(
     orientation: Int,
     forceSplit: Boolean,
@@ -641,7 +620,7 @@ class EditorWindow internal constructor(
   @JvmName("getSiblings")
   internal fun getSiblings(): List<EditorWindow> = siblings().toList()
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   internal fun siblings(): Sequence<EditorWindow> {
     checkConsistency()
     val splitter = (component.parent as? Splitter) ?: return emptySequence()
@@ -679,7 +658,7 @@ class EditorWindow internal constructor(
 
   internal fun hasClosedTabs(): Boolean = !removedTabs.isEmpty()
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   internal fun restoreClosedTab() {
     val info = removedTabs.removeLastOrNull() ?: return
     val file = info.restoreFile() ?: return
@@ -701,7 +680,7 @@ class EditorWindow internal constructor(
     closeFile(file = file, composite = composite, disposeIfNeeded = disposeIfNeeded)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   @Internal
   fun closeFile(file: VirtualFile, composite: EditorComposite, disposeIfNeeded: Boolean = true) {
     runBulkTabChange(owner) {
@@ -732,11 +711,7 @@ class EditorWindow internal constructor(
           fileEditorManager.disposeComposite(composite)
         }
 
-        if (disposeIfNeeded && tabCount == 0) {
-          removeFromSplitter()
-          logEmptyStateIfMainSplitter(cause = EmptyStateCause.ALL_TABS_CLOSED)
-        }
-        else {
+        if (!(disposeIfNeeded && removeIfEmpty(cause = EmptyStateCause.ALL_TABS_CLOSED))) {
           component.revalidate()
         }
 
@@ -781,7 +756,24 @@ class EditorWindow internal constructor(
     return if (indexToSelect >= 0 && indexToSelect < editorTabs.tabCount) editorTabs.getTabAt(indexToSelect) else null
   }
 
-  internal fun logEmptyStateIfMainSplitter(cause: EmptyStateCause) {
+  /**
+   * Removes this window from its splitter when it holds no tab, and reports the empty state.
+   *
+   * The check and the removal run in one EDT call, so no other event can add a tab in between.
+   *
+   * @return whether the window was empty
+   */
+  @RequiresEdt
+  internal fun removeIfEmpty(cause: EmptyStateCause): Boolean {
+    if (tabCount != 0) {
+      return false
+    }
+    removeFromSplitter()
+    logEmptyStateIfMainSplitter(cause)
+    return true
+  }
+
+  private fun logEmptyStateIfMainSplitter(cause: EmptyStateCause) {
     require(tabCount == 0) { "Tab count expected to be zero" }
     if (EditorEmptyTextPainter.isEnabled() && component.parent === manager.mainSplitters) {
       FileEditorCollector.logEditorEmptyState(manager.project, cause)
@@ -852,79 +844,6 @@ class EditorWindow internal constructor(
 
     // by default, select the previous neighbor
     return if (fileIndex > 0) fileIndex - 1 else -1
-  }
-
-  internal interface SplitChooser {
-    val position: RelativePosition
-
-    fun positionChanged(position: RelativePosition)
-
-    fun dispose()
-  }
-
-  internal fun showSplitChooser(project: Project, showInfoPanel: Boolean): SplitChooser {
-    val disposable = Disposer.newDisposable("GlassPaneListeners")
-    val painter = MySplitPainter(project, showInfoPanel, tabbedPane, owner)
-    if (!ApplicationManager.getApplication().isUnitTestMode) {
-      IdeGlassPaneUtil.find(component).addPainter(component, painter, disposable)
-    }
-
-    // editor size can change when we increase tool window size using mouse or due to some other reasons
-    // we need to adapt the painter size accordingly
-    val updatePainterSizeOnTabbedPaneResizeListener = object : ComponentAdapter() {
-      override fun componentResized(e: ComponentEvent) {
-        painter.updateRectangleAndRepaint()
-      }
-    }
-    component.addComponentListener(updatePainterSizeOnTabbedPaneResizeListener)
-
-    //Reminder about UI components hierarchy:
-    //    EditorsSplitters
-    //    |-- EditorTabs                    // `tabbedPane.component` OR `component`
-    //        |-- EditorWindowTopComponent  //
-    //            |-- EditorCompositePanel  // `tabbedPane.getSelectedComposite()`
-    //                |-- JPanel            // `componentToFocus`
-    //                    |-- PsiAwareTextEditorComponent
-    //
-    //assuming that it's safe to `!!`, if `showSplitChooser` is called, we expect that selected editor exists and it's not null
-    val componentToFocus = tabbedPane.tabs.selectedInfo!!.component.getComponent(0) as JComponent
-
-    componentToFocus.repaint()
-    componentToFocus.isFocusable = true
-    componentToFocus.grabFocus()
-    componentToFocus.focusTraversalKeysEnabled = false
-
-    val focusAdapter = object : FocusAdapter() {
-      override fun focusLost(e: FocusEvent) {
-        component.removeComponentListener(updatePainterSizeOnTabbedPaneResizeListener)
-
-        componentToFocus.removeFocusListener(this)
-        val splitterService = SplitterService.getInstance(project)
-        if (splitterService.activeWindow == this@EditorWindow) {
-          splitterService.stopSplitChooser(true)
-        }
-      }
-    }
-    componentToFocus.addFocusListener(focusAdapter)
-
-    return object : SplitChooser {
-      override val position: RelativePosition
-        get() = painter.position
-
-      override fun positionChanged(position: RelativePosition) {
-        painter.positionChanged(position)
-      }
-
-      override fun dispose() {
-        component.removeComponentListener(updatePainterSizeOnTabbedPaneResizeListener)
-
-        painter.rectangle = null
-        componentToFocus.removeFocusListener(focusAdapter)
-        componentToFocus.isFocusable = false
-        componentToFocus.repaint()
-        Disposer.dispose(disposable)
-      }
-    }
   }
 
   fun changeOrientation() {
@@ -1235,109 +1154,6 @@ private fun swapComponents(parent: JPanel, toAdd: JComponent, toRemove: JCompone
     check(parent is EditorsSplitters)
     parent.remove(toRemove)
     parent.addEditorComponent(toAdd)
-  }
-}
-
-private class MySplitPainter(
-  private val project: Project,
-  private var showInfoPanel: Boolean,
-  private val tabbedPane: EditorTabbedContainer,
-  private val owner: EditorsSplitters,
-) : AbstractPainter() {
-  var rectangle: Shape? = tabbedPane.tabs.dropArea
-  var position: EditorWindow.RelativePosition = EditorWindow.RelativePosition.CENTER
-
-  override fun needsRepaint(): Boolean = rectangle != null
-
-  override fun executePaint(component: Component, g: Graphics2D) {
-    if (rectangle == null) {
-      return
-    }
-
-    GraphicsUtil.setupAAPainting(g)
-    g.color = JBUI.CurrentTheme.DragAndDrop.Area.BACKGROUND
-    g.fill(rectangle)
-    if (position == EditorWindow.RelativePosition.CENTER && showInfoPanel) {
-      drawInfoPanel(component, g)
-    }
-  }
-
-  private fun drawInfoPanel(component: Component, g: Graphics2D) {
-    val rectangle = rectangle!!
-    val centerX = rectangle.bounds.x + rectangle.bounds.width / 2
-    val centerY = rectangle.bounds.y + rectangle.bounds.height / 2
-    val height = Registry.intValue("ide.splitter.chooser.info.panel.height")
-    var width = Registry.intValue("ide.splitter.chooser.info.panel.width")
-    val arc = Registry.intValue("ide.splitter.chooser.info.panel.arc")
-    val openShortcuts = IdeBundle.message(
-      "split.with.chooser.move.tab",
-      getShortcut("SplitChooser.Split"),
-      if (SplitterService.getInstance(project).initialEditorWindow != null) {
-        IdeBundle.message("split.with.chooser.duplicate.tab", getShortcut("SplitChooser.Duplicate"))
-      }
-      else {
-        ""
-      })
-    val switchShortcuts = IdeBundle.message("split.with.chooser.switch.tab", getShortcut("SplitChooser.NextWindow"))
-
-    // Adjust the default width to an info text
-    val font = StartupUiUtil.labelFont
-    val fontMetrics = g.getFontMetrics(font)
-    val openShortcutsWidth = fontMetrics.stringWidth(openShortcuts)
-    val switchShortcutsWidth = fontMetrics.stringWidth(switchShortcuts)
-    width = width.coerceAtLeast((openShortcutsWidth.coerceAtLeast(switchShortcutsWidth) * 1.2f).roundToInt())
-
-    // Check if an info panel will actually fit into an editor with some free space around the edges
-    if (rectangle.bounds.height < height * 1.2f || rectangle.bounds.width < width * 1.2f) {
-      return
-    }
-
-    val shape = RoundRectangle2D.Double(centerX - width / 2.0, centerY - height / 2.0, width.toDouble(), height.toDouble(),
-                                        arc.toDouble(), arc.toDouble())
-    g.color = UIUtil.getLabelBackground()
-    g.fill(shape)
-    val arrowCenterVShift = Registry.intValue("ide.splitter.chooser.info.panel.arrows.shift.center")
-    val arrowsVShift = Registry.intValue("ide.splitter.chooser.info.panel.arrows.shift.vertical")
-    val arrowsHShift = Registry.intValue("ide.splitter.chooser.info.panel.arrows.shift.horizontal")
-    val function = Function { icon: Icon -> Point(centerX - icon.iconWidth / 2, centerY - icon.iconHeight / 2 + arrowCenterVShift) }
-    val forUpDownIcons = function.apply(AllIcons.Chooser.Top)
-    AllIcons.Chooser.Top.paintIcon(component, g, forUpDownIcons.x, forUpDownIcons.y - arrowsVShift)
-    AllIcons.Chooser.Bottom.paintIcon(component, g, forUpDownIcons.x, forUpDownIcons.y + arrowsVShift)
-    val forLeftRightIcons = function.apply(AllIcons.Chooser.Right)
-    AllIcons.Chooser.Right.paintIcon(component, g, forLeftRightIcons.x + arrowsHShift, forLeftRightIcons.y)
-    AllIcons.Chooser.Left.paintIcon(component, g, forLeftRightIcons.x - arrowsHShift, forLeftRightIcons.y)
-    val textVShift = Registry.intValue("ide.splitter.chooser.info.panel.text.shift")
-    val textY = forUpDownIcons.y + AllIcons.Chooser.Bottom.iconHeight + textVShift
-    g.color = NamedColorUtil.getInactiveTextColor()
-    g.font = font
-    g.drawString(openShortcuts, centerX - openShortcutsWidth / 2, textY)
-    if (owner.windows().count() > 1) {
-      g.drawString(switchShortcuts, centerX - switchShortcutsWidth / 2, textY + fontMetrics.height)
-    }
-  }
-
-  private fun getShortcut(actionId: String): @NlsSafe String {
-    val shortcut = ActionManager.getInstance().getKeyboardShortcut(actionId)
-    return KeymapUtil.getKeystrokeText(shortcut?.firstKeyStroke)
-  }
-
-  fun positionChanged(position: EditorWindow.RelativePosition) {
-    if (this.position == position) {
-      return
-    }
-
-    showInfoPanel = false
-    this.position = position
-
-    updateRectangleAndRepaint()
-  }
-
-  fun updateRectangleAndRepaint() {
-    rectangle = null
-    setNeedsRepaint(true)
-    val r = tabbedPane.tabs.dropArea
-    TabsUtil.updateBoundsWithDropSide(r, position.swingConstant)
-    rectangle = Rectangle2D.Double(r.x.toDouble(), r.y.toDouble(), r.width.toDouble(), r.height.toDouble())
   }
 }
 

@@ -68,10 +68,10 @@ public class ShowCollectionHistoryAction extends XFetchValueActionBase {
   private static XValueNodeImpl getNode(@NotNull AnActionEvent e) {
     List<XValueNodeImpl> selectedNodes = XDebuggerTreeActionBase.getSelectedNodes(e.getDataContext());
     if (selectedNodes.size() == 1) {
-      XValueNodeImpl node = selectedNodes.get(0);
+      XValueNodeImpl node = selectedNodes.getFirst();
       XValue container = node.getValueContainer();
-      if (container instanceof JavaValue && ((JavaValue)container).getDescriptor() instanceof FieldDescriptor) {
-        Type type = ((JavaValue)container).getDescriptor().getType();
+      if (container instanceof JavaValue value && value.getDescriptor() instanceof FieldDescriptor) {
+        Type type = value.getDescriptor().getType();
         Project project = e.getProject();
         if (type == null || project == null) {
           return null;

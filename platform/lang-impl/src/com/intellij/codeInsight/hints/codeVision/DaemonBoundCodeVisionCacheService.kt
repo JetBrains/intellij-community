@@ -26,13 +26,13 @@ internal class DaemonBoundCodeVisionCacheService {
    * @param providerId id of [DaemonBoundCodeVisionProvider], for which it is required to get lens data
    * @return computed (maybe not fresh) lens data for a given [editor] and for a [DaemonBoundCodeVisionProvider] with a given [providerId]
    */
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun getVisionDataForEditor(editor: Editor, providerId: String): CodeVisionWithStamp? {
     val cache = getFileCache(editor)
     return cache.get(providerId)
   }
 
-  @RequiresWriteLock
+  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
   fun storeVisionDataForEditor(editor: Editor, providerId: String, data: CodeVisionWithStamp) {
     val fileCache = getFileCache(editor)
     fileCache.update(providerId, data)

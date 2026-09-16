@@ -5,6 +5,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.DumbUtil;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.ColoredTreeCellRenderer;
@@ -98,7 +99,8 @@ final class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
 
         if (!node.isRoot() && ((DefaultMutableTreeNode)node.getParent()).isRoot() && DumbService.isDumb(myView.getProject())) {
           append(FontUtil.spaceAndThinSpace() +
-                 IdeBundle.dumbModeMessage("dumb.mode.analyzing.project", "dumb.mode.light.analyzing.project"),
+                 DumbUtil.dumbModeMessage(IdeBundle.message("dumb.mode.analyzing.project"),
+                                          IdeBundle.message("dumb.mode.light.analyzing.project")),
                  SimpleTextAttributes.GRAYED_ATTRIBUTES);
         }
       }

@@ -6,6 +6,9 @@ import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
+import org.jetbrains.kotlin.idea.base.psi.addAnnotation
+import org.jetbrains.kotlin.idea.base.psi.appendValueArgument
+import org.jetbrains.kotlin.idea.base.psi.deleteValueArgument
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
@@ -28,7 +31,7 @@ class AddSourceRetentionFix(
         element: KtClass,
         updater: ModPsiUpdater,
     ) {
-        val added = element.addAnnotationEntry(KtPsiFactory(context.project).createAnnotationEntry(sourceRetentionAnnotation))
+        val added = element.addAnnotation(KtPsiFactory(context.project).createAnnotationEntry(sourceRetentionAnnotation))
         ShortenReferencesFacility.getInstance().shorten(added)
     }
 }
@@ -49,9 +52,9 @@ class ChangeRetentionToSourceFix(
             element.add(psiFactory.createCallArguments("($sourceRetention)")) as KtValueArgumentList
         } else {
             if (element.valueArguments.isNotEmpty()) {
-                element.valueArgumentList?.removeArgument(0)
+                element.valueArgumentList?.deleteValueArgument(0)
             }
-            element.valueArgumentList?.addArgument(psiFactory.createArgument(sourceRetention))
+            element.valueArgumentList?.appendValueArgument(psiFactory.createArgument(sourceRetention))
         }
         if (added != null) {
             ShortenReferencesFacility.getInstance().shorten(added)
@@ -75,7 +78,7 @@ class RemoveExpressionTargetFix(
             val annotation = argumentList.parent as? KtAnnotationEntry ?: return
             annotation.delete()
         } else {
-            argumentList.removeArgument(element)
+            argumentList.deleteValueArgument(element)
         }
     }
 }

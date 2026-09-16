@@ -2,6 +2,10 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.python.community.helpersLocator` start
+content_module_jar(module = ":community-helpersLocator")
+### auto-generated section `dev intellij.python.community.helpersLocator` end
+
 ### auto-generated section `build intellij.python.community.helpersLocator` start
 create_kotlinc_options(
     name = "custom_community-helpersLocator",
@@ -36,8 +40,6 @@ jvm_library(
         "//platform/diagnostic",
     ],
 )
-
-content_module_jar(module = ":community-helpersLocator")
 
 jvm_library(
     name = "community-helpersLocator_test_lib",

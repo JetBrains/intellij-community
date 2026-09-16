@@ -1,5 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.pycharm.community.ide.impl.promotion` start
+content_module_jar(module = ":pycharm-community-ide-impl-promotion")
+### auto-generated section `dev intellij.pycharm.community.ide.impl.promotion` end
 
 ### auto-generated section `build intellij.pycharm.community.ide.impl.promotion` start
 create_kotlinc_options(

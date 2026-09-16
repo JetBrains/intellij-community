@@ -559,10 +559,8 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
                                         @NotNull DefaultActionGroup topToolbar,
                                         @NotNull DefaultActionGroup settings) {
     super.registerAdditionalActions(leftToolbar, topToolbar, settings);
-    settings.add(new WatchReturnValuesAction(this, myDebugger::setShowReturnValues));
-    settings.add(new PyVariableViewSettings.SimplifiedView(this));
-    settings.add(new PyVariableViewSettings.VariablesPolicyGroup());
-    settings.add(new PyVariableViewSettings.QuotingPolicyGroup());
+    PyVariableViewSettings.registerSettingsActions(settings, this, new WatchReturnValuesAction(this, myDebugger::setShowReturnValues),
+                                                    true);
   }
 
   public void setUnitTestDebuggingMode() {

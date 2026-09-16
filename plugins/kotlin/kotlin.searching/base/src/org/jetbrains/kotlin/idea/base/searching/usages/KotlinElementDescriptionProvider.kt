@@ -42,7 +42,6 @@ import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPropertyAccessor
 import org.jetbrains.kotlin.psi.KtScript
 import org.jetbrains.kotlin.psi.KtSecondaryConstructor
-import org.jetbrains.kotlin.psi.KtSelfType
 import org.jetbrains.kotlin.psi.KtTypeAlias
 import org.jetbrains.kotlin.psi.KtTypeParameter
 import org.jetbrains.kotlin.psi.KtTypeReference
@@ -111,8 +110,6 @@ open class KotlinElementDescriptionProviderBase : ElementDescriptionProvider {
                     val innerTypeText = nullableType.innerType?.accept(this, data) ?: return "???"
                     return "$innerTypeText?"
                 }
-
-                override fun visitSelfType(type: KtSelfType, data: Unit) = type.text
 
                 override fun visitUserType(type: KtUserType, data: Unit): String {
                     return buildString {

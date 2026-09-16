@@ -224,8 +224,8 @@ public class XDebuggerTestUtil {
   public static @NotNull XValue findVar(Collection<? extends XValue> vars, String name) {
     StringBuilder names = new StringBuilder();
     for (XValue each : vars) {
-      if (each instanceof XNamedValue) {
-        String eachName = ((XNamedValue)each).getName();
+      if (each instanceof XNamedValue value) {
+        String eachName = value.getName();
         if (eachName.equals(name)) return each;
 
         if (!names.isEmpty()) names.append(", ");
@@ -241,8 +241,8 @@ public class XDebuggerTestUtil {
 
   public static XTestValueNode computePresentation(XValue value, long timeout) {
     XTestValueNode node = new XTestValueNode();
-    if (value instanceof XNamedValue) {
-      node.myName = ((XNamedValue)value).getName();
+    if (value instanceof XNamedValue namedValue) {
+      node.myName = namedValue.getName();
     }
     value.computePresentation(node, XValuePlace.TREE);
     node.waitFor(timeout);

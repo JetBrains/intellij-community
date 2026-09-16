@@ -29,8 +29,9 @@
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
-    <orderEntry type="module" module-name="intellij.python.pytools.ui" />
-    <orderEntry type="module" module-name="intellij.python.pytools" />
+    <orderEntry type="module" module-name="intellij.python.pytools.backend" />
+    <orderEntry type="module" module-name="intellij.python.pytools.common" />
+    <orderEntry type="module" module-name="intellij.python.lsp.core.common" />
     <orderEntry type="module" module-name="intellij.python.community.execService" />
     <orderEntry type="module" module-name="intellij.platform.lsp.impl" />
   </component>

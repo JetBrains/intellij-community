@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.getJvmName
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
+import org.jetbrains.kotlin.idea.base.psi.removeModifierKeyword
 import org.jetbrains.kotlin.idea.refactoring.rename.KotlinRenameRefactoringSupport
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.searching.inheritors.findAllOverridings
@@ -97,7 +98,7 @@ internal class K2RenameRefactoringSupport : KotlinRenameRefactoringSupport {
     override fun dropOverrideKeywordIfNecessary(element: KtNamedDeclaration) {
         val declaration = element as? KtCallableDeclaration ?: return
         if (overridesNothing(declaration)) {
-            declaration.removeModifier(KtTokens.OVERRIDE_KEYWORD)
+            declaration.removeModifierKeyword(KtTokens.OVERRIDE_KEYWORD)
         }
     }
 

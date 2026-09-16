@@ -1218,4 +1218,10 @@ class PyExpectedTypeJudgmentTest : PyCodeInsightTestCase() {
     a, b = [1]
     #      ^^^ EXPECTED_TYPE Iterable[Unknown]
     """.trimIndent())
+
+  @Test
+  fun `Default parameter`() = test("""
+      def f(a: list[object] = [1, 2]) -> None: pass
+      #                       ^^^^^^ EXPECTED_TYPE list[object]
+      """.trimIndent())
 }

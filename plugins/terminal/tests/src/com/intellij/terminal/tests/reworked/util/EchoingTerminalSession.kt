@@ -170,7 +170,15 @@ internal class EchoingTerminalSession(
 
         screenState.addListener(listenerDisposable) {
           val screen = screenState.getSnapshot()
-          val contentChangeEvent = TerminalContentUpdatedEvent(screen.text, emptyList(), 0, screen.cursorLine.toLong(), screen.cursorColumn)
+          val contentChangeEvent = TerminalContentUpdatedEvent(
+            text = screen.text,
+            styles = emptyList(),
+            startLineLogicalIndex = 0,
+            cursorLogicalLineIndex = screen.cursorLine.toLong(),
+            cursorColumnIndex = screen.cursorColumn,
+            screenTopLogicalLineIndex = 0,
+            screenTopColumnIndex = 0,
+          )
           trySend(listOf(contentChangeEvent))
         }
       }
@@ -193,6 +201,7 @@ internal class EchoingTerminalSession(
       trimmedCharsCount = 0,
       firstLineTrimmedCharsCount = 0,
       cursorOffset = screen.cursorOffset,
+      screenTopOffset = 0,
       highlightings = emptyList(),
       osc8Hyperlinks = emptyList(),
     )
@@ -214,7 +223,7 @@ internal class EchoingTerminalSession(
       startupOptions = startupOptions.toDto(),
       sessionState = sessionState.toDto(),
       outputModelState = outputModelState,
-      alternateBufferState = TerminalOutputModelStateDto("", 0, 0, 0, 0, emptyList(), emptyList()),
+      alternateBufferState = TerminalOutputModelStateDto("", 0, 0, 0, 0, 0, emptyList(), emptyList()),
       blocksModelState = TerminalBlocksModelStateDto(listOf(commandBlock), 1),
     )
   }

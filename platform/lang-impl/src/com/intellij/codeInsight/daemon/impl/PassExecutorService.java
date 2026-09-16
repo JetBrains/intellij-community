@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.daemon.impl;
 
@@ -545,6 +545,10 @@ public final class PassExecutorService implements Disposable {
     ThreadingAssertions.assertBackgroundThread();
     try {
       ApplicationManager.getApplication().invokeLater(() -> {
+        if (pass.getExpiredCondition().test(null)) {
+          log(updateProgress, pass, " is canceled because it is expired");
+          return;
+        }
         if (isDisposed() || !fileEditor.isValid()) {
           updateProgress.cancel("isDisposed()="+isDisposed()+"; fileEditor.isValid()="+fileEditor.isValid());
         }
@@ -591,7 +595,7 @@ public final class PassExecutorService implements Disposable {
           log(updateProgress, pass, "Finished but there are passes in the queue: " + threadsToStartCountdown.get());
         }
         callbackOnApplied.run();
-      }, updateProgress.getModalityState(), pass.getExpiredCondition());
+      }, updateProgress.getModalityState());
     }
     catch (ProcessCanceledException ignored) {
       // pass.getExpiredCondition() computation could throw PCE

@@ -3,18 +3,13 @@ package com.intellij.python.sdk.frontend.evolution
 import com.intellij.ide.actions.ShowSettingsUtilImpl
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.icons.icon
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.ActionUiKind
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataKey
-import com.intellij.openapi.actionSystem.Presentation
-import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.actionSystem.ex.ActionUtil
-import com.intellij.openapi.actionSystem.ex.ActionUtil.getAction
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -70,10 +65,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import javax.swing.Icon
 import com.intellij.python.sdk.common.evolution.requestEvoShowToolProcessOutput
-import com.intellij.openapi.application.EDT
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import com.intellij.openapi.util.text.StringUtil
 
 private val managePackagesAction = object : AnAction(
@@ -117,9 +109,6 @@ private fun EvoLeafDto.toStubAction(): AnAction = object : AnAction({ title }, {
 /** Synthetic node id for the "Shortcuts" autoconfigure rows (the backend ignores it for a [PyInterpreterRef.Autoconfigure] ref). */
 private const val SHORTCUTS_NODE_ID: String = EvoNodeIds.SHORTCUTS
 
-/** The platform group holding every tool's package-manager actions (uv lock/sync, conda export/update, …). */
-private const val PACKAGE_MANAGER_ACTIONS_GROUP: String = "PythonPackageManagerActions"
-
 /**
  * Puts [value] under [key], or masks [key] with an explicit null when [value] is absent.
  *
@@ -159,6 +148,7 @@ class EvoPySdkSwitchPopupFactory(
    * One direction only. There is no row to fold the list back, so nothing asks for the opposite.
    */
   val expandTools: () -> Unit,
+  val packageManagerActionIds: List<String>,
 ) {
   /** The tool's own name for [nodeId], as the popup writes it, falling back to the id when no node claims it. */
   private fun nodeLabel(nodeId: String): @NlsSafe String = nodes.firstOrNull { it.id == nodeId }?.label ?: nodeId
@@ -465,10 +455,12 @@ class EvoPySdkSwitchPopupFactory(
    * the popup step runs against the dependency-file context and which it drops when the action reports itself
    * invisible. The group's separators are dropped here, since which rows survive is only known after that.
    */
-  private fun packageManagerActions(context: DataContext): List<EvoTreeElement> {
-    val group = getAction(PACKAGE_MANAGER_ACTIONS_GROUP) as? ActionGroup ?: return emptyList()
-    val event = AnActionEvent.createEvent(context, Presentation(), ActionPlaces.POPUP, ActionUiKind.POPUP, null)
-    return group.getChildren(event).filterNot { it is Separator }.map { EvoTreeActionLeafElement(it) }
+  private fun packageManagerActions(): List<EvoTreeElement> {
+    val actionManager = ActionManager.getInstance()
+    return packageManagerActionIds.mapNotNull { actionId -> 
+      actionManager.getAction(actionId)
+        ?.let { action -> EvoTreeActionLeafElement(action) } 
+    }
   }
 
   /**
@@ -481,7 +473,7 @@ class EvoPySdkSwitchPopupFactory(
    * Without one it holds the "Shortcuts" rows instead — the IDE's autoconfigure suggestion(s), selecting one runs it —
    * and is omitted entirely when there is nothing to suggest, rather than leaving an empty "Shortcuts" header.
    */
-  private fun currentEnvSection(traceId: String, context: DataContext): EvoTreeSection? = when (currentInterpreter) {
+  private fun currentEnvSection(traceId: String): EvoTreeSection? = when (currentInterpreter) {
     null -> shortcuts.takeIf { it.isNotEmpty() }?.let { leaves ->
       EvoTreeSection(
         label = ListSeparator(PySdkFrontendBundle.message("evo.sdk.status.bar.popup.shortcuts")),
@@ -497,7 +489,7 @@ class EvoPySdkSwitchPopupFactory(
       // mis-click nothing.
       elements = buildList {
         add(recreateCurrentEnvNode(traceId))
-        addAll(packageManagerActions(context))
+        addAll(packageManagerActions())
         add(EvoTreeLeafElement(managePackagesAction))
       },
       // Which environment, on hover — the identity the caption no longer spells out.
@@ -606,11 +598,8 @@ class EvoPySdkSwitchPopupFactory(
    * Builds the popup tree. A fresh trace root (`traceId`) is minted here, so all of this tree's backend commands
    * (tool listing, version probes) group under one "Python Interpreter Widget" root — the widget builds a tree once
    * per data change and reuses it across re-opens, so a re-open makes no new calls and mints no new root.
-   *
-   * [context] only enumerates the package-manager action group; what each of those actions *does* with a context is
-   * decided per popup open, against the enriched one [createPopup] builds.
    */
-  fun buildTree(context: DataContext): EvoTreeStaticNodeElement {
+  fun buildTree(): EvoTreeStaticNodeElement {
     val projectId = project.projectId()
     val traceId = UUID.randomUUID().toString()
 
@@ -664,7 +653,7 @@ class EvoPySdkSwitchPopupFactory(
       if (currentInterpreter == null) "evo.sdk.status.bar.popup.select.environment"
       else "evo.sdk.status.bar.popup.change.environment"))
 
-    val currentEnvSection = currentEnvSection(traceId, context)
+    val currentEnvSection = currentEnvSection(traceId)
 
     /** [toolSections] plus the group that acts on whatever interpreter is current, which is always last. */
     fun sectionsWith(toolSections: List<EvoTreeSection>): List<EvoTreeSection> =

@@ -5,13 +5,14 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
+import org.jetbrains.kotlin.idea.base.psi.appendValueArgument
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.psiUtil.replaceFileAnnotationList
+import org.jetbrains.kotlin.idea.base.psi.replaceFileAnnotationList
 import org.jetbrains.kotlin.renderer.render
 
 /**
@@ -57,7 +58,7 @@ open class AddFileAnnotationFix(
         if (annotationList == null) {
             // If there are no existing file-level annotations, create an annotation list with the new annotation
             val newAnnotationList = psiFactory.createFileAnnotationListWithAnnotation(annotationText)
-            val createdAnnotationList = replaceFileAnnotationList(element, newAnnotationList)
+            val createdAnnotationList = element.replaceFileAnnotationList(newAnnotationList)
             element.addAfter(psiFactory.createWhiteSpace("\n"), createdAnnotationList)
             ShortenReferencesFacility.getInstance().shorten(createdAnnotationList)
         } else {
@@ -91,7 +92,7 @@ open class AddFileAnnotationFix(
             existingArgumentList.arguments.isEmpty() -> // replace '()' with the new argument list
                 existingArgumentList.replace(newArgumentList)
             else -> // add the new argument to the existing list
-                existingArgumentList.addArgument(newArgumentList.arguments[0])
+                existingArgumentList.appendValueArgument(newArgumentList.arguments[0])
         }
         ShortenReferencesFacility.getInstance().shorten(annotationEntry)
     }

@@ -6,6 +6,7 @@ package com.intellij.openapi.keymap.impl
 
 import com.intellij.configurationStore.SchemeDataHolder
 import com.intellij.configurationStore.SerializableScheme
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl
@@ -510,7 +511,7 @@ open class KeymapImpl @JvmOverloads constructor(@field:Volatile private var data
                         convertShortcut = KeymapImpl::convertMouseShortcut)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun <T> getActionIds(shortcut: T,
                                shortcutToActionIds: (keymap: KeymapImpl) -> Map<T, MutableList<String>>,
                                convertShortcut: (keymap: KeymapImpl, shortcut: T) -> T): List<String> {
@@ -684,7 +685,13 @@ open class KeymapImpl @JvmOverloads constructor(@field:Volatile private var data
       actionIdToShortcuts.put(id, java.util.List.copyOf(shortcuts))
     }
 
-    ActionsCollectorImpl.onActionsLoadedFromKeymapXml(this, actionIds)
+    try {
+      ActionsCollectorImpl.onActionsLoadedFromKeymapXml(this, actionIds)
+    }
+    catch (e: Throwable) {
+      rethrowControlFlowException(e)
+      logger<KeymapImpl>().error("Failed to process onActionsLoadedFromKeymapXml $name", e)
+    }
     cleanShortcutsCache()
   }
 

@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.rd.framework` start
+content_module_jar(
+    libraries = ["@lib//:libraries-rd-framework-rd-framework"],
+    module = ":framework",
+)
+### auto-generated section `dev intellij.libraries.rd.framework` end
+
 ### auto-generated section `build intellij.libraries.rd.framework` start
 jvm_library(
     name = "framework",
@@ -16,11 +23,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-rd-framework-rd-framework"],
     runtime_deps = ["@lib//:libraries-rd-framework-rd-framework"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-rd-framework-rd-framework"],
-    module = ":framework",
 )
 
 jvm_library(
@@ -43,7 +45,6 @@ exports_files(
     [
         "intellij.libraries.rd.framework.iml",
         "resources/intellij.libraries.rd.framework.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

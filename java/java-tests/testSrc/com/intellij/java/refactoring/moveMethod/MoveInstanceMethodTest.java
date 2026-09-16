@@ -93,6 +93,10 @@ public class MoveInstanceMethodTest extends LightJavaCodeInsightTestCase {
     doTest(true, 0);
   }
 
+  public void testUsageInInnerClass() {
+    doTest(false, 0);
+  }
+
   public void testInterfaceMethodIntoClass() {
     doTest(true, 0);
   }

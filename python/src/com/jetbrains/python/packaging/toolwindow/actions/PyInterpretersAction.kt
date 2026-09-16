@@ -5,7 +5,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.inspections.interpreter.InterpreterSettingsQuickFix
+import com.jetbrains.python.sdk.inspections.InterpreterSettingsQuickFix
 
 internal class PyInterpretersAction : DumbAwareAction(PyBundle.messagePointer("python.toolwindow.packages.interpreters.action")) {
   override fun actionPerformed(e: AnActionEvent) {

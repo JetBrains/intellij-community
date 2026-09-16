@@ -45,7 +45,7 @@ public class JavaClassVirtualFileCustomDataProvider : VirtualFileCustomDataProvi
     }
   }
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   private fun createClassFileInformation(
     project: Project,
     virtualFile: VirtualFile,

@@ -9,19 +9,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="jackson3-jr-objects" type="repository">
-        <properties include-transitive-deps="false" maven-id="tools.jackson.jr:jackson-jr-objects:3.2.1">
+        <properties include-transitive-deps="false" maven-id="tools.jackson.jr:jackson-jr-objects:3.2.2">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/tools/jackson/jr/jackson-jr-objects/3.2.1/jackson-jr-objects-3.2.1.jar">
-              <sha256sum>51d4f7d2438dfd32413fa55b28050096b7c114389146fb31883f47f8cd12f8ad</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/tools/jackson/jr/jackson-jr-objects/3.2.2/jackson-jr-objects-3.2.2.jar">
+              <sha256sum>ede8d56254447d3352b7728cb42ac87113ce6dcdfaa6fac5330e9802add4ffbd</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/tools/jackson/jr/jackson-jr-objects/3.2.1/jackson-jr-objects-3.2.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/tools/jackson/jr/jackson-jr-objects/3.2.2/jackson-jr-objects-3.2.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/tools/jackson/jr/jackson-jr-objects/3.2.1/jackson-jr-objects-3.2.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/tools/jackson/jr/jackson-jr-objects/3.2.2/jackson-jr-objects-3.2.2-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

@@ -10,7 +10,7 @@ import java.io.File
 
 abstract class AbstractMultiModuleRenameTest : KotlinMultiFileTestCase() {
 
-    override fun getTestRoot(): String = "/refactoring/renameMultiModule/"
+    override fun getTestRoot(): String = "/renameMultiModule/"
     override fun getTestDataDirectory() = IDEA_TEST_DATA_DIR
 
     fun doTest(path: String) {

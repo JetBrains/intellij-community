@@ -239,6 +239,7 @@ abstract class NioBasedEelFileSystemApi(@VisibleForTesting val fs: FileSystem) :
       val path = options.path
       val nioPath = path.toNioPath()
       val nioOptions = writeOptionsToNioOptions(options)
+      if (options.createParents) nioPath.parent?.let { Files.createDirectories(it) }
       val byteChannel: SeekableByteChannel = nioPath.fileSystem.provider().newByteChannel(nioPath, nioOptions)
       LocalEelOpenedFileWriter(this, byteChannel, path, AtomicReference(null))
     }
@@ -251,6 +252,7 @@ abstract class NioBasedEelFileSystemApi(@VisibleForTesting val fs: FileSystem) :
       val nioPath = path.toNioPath()
       val nioOptions = writeOptionsToNioOptions(options)
       nioOptions += StandardOpenOption.READ
+      if (options.createParents) nioPath.parent?.let { Files.createDirectories(it) }
       val byteChannel: SeekableByteChannel = nioPath.fileSystem.provider().newByteChannel(nioPath, nioOptions)
       val isClosed = AtomicReference<Boolean?>(null)
       object : EelOpenedFile.ReaderWriter, EelOpenedFile.Writer by LocalEelOpenedFileWriter(this, byteChannel, path, isClosed) {
@@ -731,6 +733,7 @@ private suspend fun doStreamingWrite(chunks: Flow<ByteBuffer>, targetFileOpenOpt
 
   try {
     withContext(Dispatchers.IO) {
+      if (targetFileOpenOptions.createParents) path.asNioPath().parent?.let { Files.createDirectories(it) }
       Files.newByteChannel(
         path.asNioPath(),
         nioOptions

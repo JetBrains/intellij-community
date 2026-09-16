@@ -20,6 +20,9 @@ import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.util.lang.JavaVersion;
 import org.intellij.lang.annotations.MagicConstant;
 
+import java.util.Collections;
+import java.util.List;
+
 public class JavaParametersTest extends ModuleRootManagerTestCase {
   public void testLibrary() throws Exception {
     ModuleRootModificationUtil.addDependency(myModule, createFastUtilLibrary());
@@ -127,5 +130,34 @@ public class JavaParametersTest extends ModuleRootManagerTestCase {
     javaParameters = new JavaParameters();
     javaParameters.configureByModule(myModule, JavaParameters.CLASSES_AND_TESTS);
     assertFalse(javaParameters.getVMParametersList().hasParameter(JavaParameters.JAVA_ENABLE_PREVIEW_PROPERTY));
+  }
+
+  /**
+   * A dependency at a preview language level needs the flag, and one flag is enough. The enumeration visits the whole
+   * graph, so a plain dependency after a preview one must neither hide the flag nor add it again.
+   */
+  public void testPreviewLanguageFeaturesInDependencies() throws CantRunException {
+    Sdk mockJdk = IdeaTestUtil.getMockJdk(JavaVersion.compose(14));
+    WriteAction.runAndWait(() -> ProjectJdkTable.getInstance().addJdk(mockJdk, myProject));
+    ModuleRootModificationUtil.updateModel(myModule, (model) -> model.setSdk(mockJdk));
+
+    Module preview = createModule("preview");
+    ModuleRootModificationUtil.updateModel(preview, (model) -> model.getModuleExtension(LanguageLevelModuleExtension.class)
+                                                                    .setLanguageLevel(LanguageLevel.JDK_21_PREVIEW));
+    Module alsoPreview = createModule("alsoPreview");
+    ModuleRootModificationUtil.updateModel(alsoPreview, (model) -> model.getModuleExtension(LanguageLevelModuleExtension.class)
+                                                                        .setLanguageLevel(LanguageLevel.JDK_21_PREVIEW));
+    Module plain = createModule("plain");
+    ModuleRootModificationUtil.updateModel(plain, (model) -> model.getModuleExtension(LanguageLevelModuleExtension.class)
+                                                                  .setLanguageLevel(LanguageLevel.JDK_15));
+
+    ModuleRootModificationUtil.addDependency(myModule, preview, DependencyScope.COMPILE, false);
+    ModuleRootModificationUtil.addDependency(myModule, plain, DependencyScope.COMPILE, false);
+    ModuleRootModificationUtil.addDependency(myModule, alsoPreview, DependencyScope.COMPILE, false);
+
+    JavaParameters javaParameters = new JavaParameters();
+    javaParameters.configureByModule(myModule, JavaParameters.CLASSES_AND_TESTS);
+    List<String> vmParameters = javaParameters.getVMParametersList().getList();
+    assertEquals(vmParameters.toString(), 1, Collections.frequency(vmParameters, JavaParameters.JAVA_ENABLE_PREVIEW_PROPERTY));
   }
 }

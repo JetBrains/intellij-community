@@ -20,7 +20,7 @@ fun GitRepository.asSubmodule() : GitSubmodule? {
 private fun GitRepository.isParentRepositoryFor(submodule: GitRepository): Boolean {
   return VfsUtil.isAncestor(root, submodule.root, true) &&
          submodules.isNotEmpty() &&
-         runReadAction { submodules.any { module -> root.findFileByRelativePath(module.path) == submodule.root } }
+         runReadAction { root.isValid && submodules.any { module -> root.findFileByRelativePath(module.path) == submodule.root } }
 }
 
 fun GitRepository.isSubmodule(): Boolean = asSubmodule() != null

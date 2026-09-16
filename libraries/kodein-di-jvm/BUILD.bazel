@@ -1,5 +1,4 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
-load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.libraries.kodein.di.jvm` start
 jvm_library(
@@ -16,11 +15,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-kodein-di-jvm-kodein-di-jvm"],
     runtime_deps = ["@lib//:libraries-kodein-di-jvm-kodein-di-jvm"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-kodein-di-jvm-kodein-di-jvm"],
-    module = ":kodein-di-jvm",
 )
 
 jvm_library(
@@ -43,7 +37,6 @@ exports_files(
     [
         "intellij.libraries.kodein.di.jvm.iml",
         "resources/intellij.libraries.kodein.di.jvm.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

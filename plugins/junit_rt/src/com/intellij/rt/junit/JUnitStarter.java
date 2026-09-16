@@ -30,6 +30,8 @@ import java.util.Objects;
 public final class JUnitStarter {
   public static final int VERSION = 5;
   public static final String IDE_VERSION = "-ideVersion";
+  /** Reports the whole test tree, but runs no test body. See {@code DryRunInterceptor} for what still runs. */
+  public static final String DRY_RUN_PROPERTY = "idea.junit.dry.run";
 
   public static final String JUNIT3_PARAMETER = "-junit3";
   public static final String JUNIT4_PARAMETER = "-junit4";

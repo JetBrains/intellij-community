@@ -48,12 +48,12 @@ sealed class GithubApiRequestExecutor {
 
   open fun addListener(disposable: Disposable, listener: () -> Unit) = Unit
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   @Throws(IOException::class, ProcessCanceledException::class)
   abstract fun <T> execute(indicator: ProgressIndicator, request: GithubApiRequest<T>): T
 
   @TestOnly
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   @Throws(IOException::class, ProcessCanceledException::class)
   fun <T> execute(request: GithubApiRequest<T>): T = execute(EmptyProgressIndicator(), request)
 

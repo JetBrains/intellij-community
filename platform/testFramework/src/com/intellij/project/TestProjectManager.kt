@@ -20,6 +20,7 @@ import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ex.PreparedProjectCloseBatch
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.project.impl.ProjectManagerImpl
@@ -52,7 +53,7 @@ var totalCreatedProjectsCount: Int = 0
 @TestOnly
 open class TestProjectManager : ProjectManagerImpl() {
   companion object {
-    @RequiresBackgroundThread
+    @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
     suspend fun loadAndOpenProject(path: Path, parent: Disposable): Project {
       val project = getInstanceEx().openProjectAsync(path, OpenProjectTask {})!!
       Disposer.register(parent) {
@@ -160,6 +161,28 @@ open class TestProjectManager : ProjectManagerImpl() {
   }
 
   override fun closeProject(project: Project, saveProject: Boolean, dispose: Boolean, checkCanClose: Boolean): Boolean {
+    untrackProject(project)
+    val result = super.closeProject(project = project, saveProject = saveProject, dispose = dispose, checkCanClose = checkCanClose)
+    clearUndoHistory()
+    return result
+  }
+
+  override fun prepareProjectsForExit(checkCanClose: Boolean): PreparedProjectCloseBatch? {
+    val batch = super.prepareProjectsForExit(checkCanClose) ?: return null
+    return object : PreparedProjectCloseBatch by batch {
+      override fun close() {
+        batch.projects.forEach(::untrackProject)
+        try {
+          batch.close()
+        }
+        finally {
+          clearUndoHistory()
+        }
+      }
+    }
+  }
+
+  private fun untrackProject(project: Project) {
     if (isTracking) {
       synchronized(this) {
         if (isTracking) {
@@ -167,14 +190,14 @@ open class TestProjectManager : ProjectManagerImpl() {
         }
       }
     }
+  }
 
-    val result = super.closeProject(project = project, saveProject = saveProject, dispose = dispose, checkCanClose = checkCanClose)
+  private fun clearUndoHistory() {
     val undoManager = serviceIfCreated<UndoManager>() as? UndoManagerImpl
     // test may use WrapInCommand (it is ok - in this case HeavyPlatformTestCase will call dropHistoryInTests)
     if (undoManager != null && !undoManager.isInsideCommand) {
       undoManager.dropHistoryInTests()
     }
-    return result
   }
 
   /**

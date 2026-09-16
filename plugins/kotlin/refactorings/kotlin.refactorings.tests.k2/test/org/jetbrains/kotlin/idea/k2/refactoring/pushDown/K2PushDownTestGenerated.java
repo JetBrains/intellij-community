@@ -19,7 +19,7 @@ import org.junit.runner.RunWith;
 @RunWith(JUnit3RunnerWithInners.class)
 public abstract class K2PushDownTestGenerated extends AbstractK2PushDownTest {
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../idea/tests/testData/refactoring/pushDown/k2k")
+    @TestMetadata("testData/pushDown/k2k")
     public static class K2K extends AbstractK2PushDownTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doKotlinTest, this, testDataFilePath);
@@ -27,137 +27,137 @@ public abstract class K2PushDownTestGenerated extends AbstractK2PushDownTest {
 
         @TestMetadata("accidentalOverrides.kt")
         public void testAccidentalOverrides() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/pushDown/k2k/accidentalOverrides.kt");
+            runTest("testData/pushDown/k2k/accidentalOverrides.kt");
         }
 
         @TestMetadata("caretOnDeepestFinalClassInInterface.kt")
         public void testCaretOnDeepestFinalClassInInterface() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/pushDown/k2k/caretOnDeepestFinalClassInInterface.kt");
+            runTest("testData/pushDown/k2k/caretOnDeepestFinalClassInInterface.kt");
         }
 
         @TestMetadata("caretOnFinalClassInOpenClass.kt")
         public void testCaretOnFinalClassInOpenClass() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/pushDown/k2k/caretOnFinalClassInOpenClass.kt");
+            runTest("testData/pushDown/k2k/caretOnFinalClassInOpenClass.kt");
         }
 
         @TestMetadata("caretOnObjectInFinalClass.kt")
         public void testCaretOnObjectInFinalClass() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/pushDown/k2k/caretOnObjectInFinalClass.kt");
+            runTest("testData/pushDown/k2k/caretOnObjectInFinalClass.kt");
         }
 
         @TestMetadata("clashingMembers.kt")
         public void testClashingMembers() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/pushDown/k2k/clashingMembers.kt");
+            runTest("testData/pushDown/k2k/clashingMembers.kt");
         }
 
         @TestMetadata("classToInterface.kt")
         public void testClassToInterface() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/pushDown/k2k/classToInterface.kt");
+            runTest("testData/pushDown/k2k/classToInterface.kt");
         }
 
         @TestMetadata("conflictingSuperCall.kt")
         public void testConflictingSuperCall() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/pushDown/k2k/conflictingSuperCall.kt");
+            runTest("testData/pushDown/k2k/conflictingSuperCall.kt");
         }
 
         @TestMetadata("dropVisibilityOnGeneratedOverride.kt")
         public void testDropVisibilityOnGeneratedOverride() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/pushDown/k2k/dropVisibilityOnGeneratedOverride.kt");
+            runTest("testData/pushDown/k2k/dropVisibilityOnGeneratedOverride.kt");
         }
 
         @TestMetadata("finalClass.kt")
         public void testFinalClass() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/pushDown/k2k/finalClass.kt");
+            runTest("testData/pushDown/k2k/finalClass.kt");
         }
 
         @TestMetadata("implicitCompanionUsages.kt")
         public void testImplicitCompanionUsages() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/pushDown/k2k/implicitCompanionUsages.kt");
+            runTest("testData/pushDown/k2k/implicitCompanionUsages.kt");
         }
 
         @TestMetadata("liftPrivate.kt")
         public void testLiftPrivate() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/pushDown/k2k/liftPrivate.kt");
+            runTest("testData/pushDown/k2k/liftPrivate.kt");
         }
 
         @TestMetadata("noCaret.kt")
         public void testNoCaret() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/pushDown/k2k/noCaret.kt");
+            runTest("testData/pushDown/k2k/noCaret.kt");
         }
 
         @TestMetadata("noInheritors.kt")
         public void testNoInheritors() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/pushDown/k2k/noInheritors.kt");
+            runTest("testData/pushDown/k2k/noInheritors.kt");
         }
 
         @TestMetadata("noInheritorsNestedClass.kt")
         public void testNoInheritorsNestedClass() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/pushDown/k2k/noInheritorsNestedClass.kt");
+            runTest("testData/pushDown/k2k/noInheritorsNestedClass.kt");
         }
 
         @TestMetadata("noInheritorsNestedInterface.kt")
         public void testNoInheritorsNestedInterface() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/pushDown/k2k/noInheritorsNestedInterface.kt");
+            runTest("testData/pushDown/k2k/noInheritorsNestedInterface.kt");
         }
 
         @TestMetadata("objectDeclaration.kt")
         public void testObjectDeclaration() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/pushDown/k2k/objectDeclaration.kt");
+            runTest("testData/pushDown/k2k/objectDeclaration.kt");
         }
 
         @TestMetadata("outsideOfClass.kt")
         public void testOutsideOfClass() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/pushDown/k2k/outsideOfClass.kt");
+            runTest("testData/pushDown/k2k/outsideOfClass.kt");
         }
 
         @TestMetadata("pushClassMembers.kt")
         public void testPushClassMembers() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/pushDown/k2k/pushClassMembers.kt");
+            runTest("testData/pushDown/k2k/pushClassMembers.kt");
         }
 
         @TestMetadata("pushClassMembersAndMakeAbstract.kt")
         public void testPushClassMembersAndMakeAbstract() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/pushDown/k2k/pushClassMembersAndMakeAbstract.kt");
+            runTest("testData/pushDown/k2k/pushClassMembersAndMakeAbstract.kt");
         }
 
         @TestMetadata("pushClassMembersWithGenerics.kt")
         public void testPushClassMembersWithGenerics() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/pushDown/k2k/pushClassMembersWithGenerics.kt");
+            runTest("testData/pushDown/k2k/pushClassMembersWithGenerics.kt");
         }
 
         @TestMetadata("pushInterfaceMembers.kt")
         public void testPushInterfaceMembers() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/pushDown/k2k/pushInterfaceMembers.kt");
+            runTest("testData/pushDown/k2k/pushInterfaceMembers.kt");
         }
 
         @TestMetadata("pushInterfaceMembersAndMakeAbstract.kt")
         public void testPushInterfaceMembersAndMakeAbstract() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/pushDown/k2k/pushInterfaceMembersAndMakeAbstract.kt");
+            runTest("testData/pushDown/k2k/pushInterfaceMembersAndMakeAbstract.kt");
         }
 
         @TestMetadata("pushMembersUsingPrivates.kt")
         public void testPushMembersUsingPrivates() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/pushDown/k2k/pushMembersUsingPrivates.kt");
+            runTest("testData/pushDown/k2k/pushMembersUsingPrivates.kt");
         }
 
         @TestMetadata("pushMembersWithExternalUsages.kt")
         public void testPushMembersWithExternalUsages() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/pushDown/k2k/pushMembersWithExternalUsages.kt");
+            runTest("testData/pushDown/k2k/pushMembersWithExternalUsages.kt");
         }
 
         @TestMetadata("pushSuperInterfaces.kt")
         public void testPushSuperInterfaces() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/pushDown/k2k/pushSuperInterfaces.kt");
+            runTest("testData/pushDown/k2k/pushSuperInterfaces.kt");
         }
 
         @TestMetadata("pushSuperInterfacesWithGenerics.kt")
         public void testPushSuperInterfacesWithGenerics() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/pushDown/k2k/pushSuperInterfacesWithGenerics.kt");
+            runTest("testData/pushDown/k2k/pushSuperInterfacesWithGenerics.kt");
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../idea/tests/testData/refactoring/pushDown/k2j")
+    @TestMetadata("testData/pushDown/k2j")
     public static class K2J extends AbstractK2PushDownTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doKotlinTest, this, testDataFilePath);
@@ -165,7 +165,7 @@ public abstract class K2PushDownTestGenerated extends AbstractK2PushDownTest {
 
         @TestMetadata("kotlinToJava.kt")
         public void testKotlinToJava() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/pushDown/k2j/kotlinToJava.kt");
+            runTest("testData/pushDown/k2j/kotlinToJava.kt");
         }
     }
 }

@@ -16650,6 +16650,109 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/convertToValueClass")
+        public static class ConvertToValueClass extends AbstractK2LocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("computedBodyProperty.kt")
+            public void testComputedBodyProperty() throws Exception {
+                runTest("testData/inspectionsLocal/convertToValueClass/computedBodyProperty.kt");
+            }
+
+            @TestMetadata("copyAndComponents.kt")
+            public void testCopyAndComponents() throws Exception {
+                runTest("testData/inspectionsLocal/convertToValueClass/copyAndComponents.kt");
+            }
+
+            @TestMetadata("copyOnly.kt")
+            public void testCopyOnly() throws Exception {
+                runTest("testData/inspectionsLocal/convertToValueClass/copyOnly.kt");
+            }
+
+            @TestMetadata("existingBody.kt")
+            public void testExistingBody() throws Exception {
+                runTest("testData/inspectionsLocal/convertToValueClass/existingBody.kt");
+            }
+
+            @TestMetadata("generic.kt")
+            public void testGeneric() throws Exception {
+                runTest("testData/inspectionsLocal/convertToValueClass/generic.kt");
+            }
+
+            @TestMetadata("implementsInterface.kt")
+            public void testImplementsInterface() throws Exception {
+                runTest("testData/inspectionsLocal/convertToValueClass/implementsInterface.kt");
+            }
+
+            @TestMetadata("implementsInterfaceWithComponentN.kt")
+            public void testImplementsInterfaceWithComponentN() throws Exception {
+                runTest("testData/inspectionsLocal/convertToValueClass/implementsInterfaceWithComponentN.kt");
+            }
+
+            @TestMetadata("implementsInterfaceWithComponentN2.kt")
+            public void testImplementsInterfaceWithComponentN2() throws Exception {
+                runTest("testData/inspectionsLocal/convertToValueClass/implementsInterfaceWithComponentN2.kt");
+            }
+
+            @TestMetadata("implementsInterfaceWithComponentN3.kt")
+            public void testImplementsInterfaceWithComponentN3() throws Exception {
+                runTest("testData/inspectionsLocal/convertToValueClass/implementsInterfaceWithComponentN3.kt");
+            }
+
+            @TestMetadata("implementsInterfaceWithComponentN4.kt")
+            public void testImplementsInterfaceWithComponentN4() throws Exception {
+                runTest("testData/inspectionsLocal/convertToValueClass/implementsInterfaceWithComponentN4.kt");
+            }
+
+            @TestMetadata("implementsInterfaceWithComponentNProperty.kt")
+            public void testImplementsInterfaceWithComponentNProperty() throws Exception {
+                runTest("testData/inspectionsLocal/convertToValueClass/implementsInterfaceWithComponentNProperty.kt");
+            }
+
+            @TestMetadata("noFunctions.kt")
+            public void testNoFunctions() throws Exception {
+                runTest("testData/inspectionsLocal/convertToValueClass/noFunctions.kt");
+            }
+
+            @TestMetadata("notApplicable_bodyPropertyWithBackingField.kt")
+            public void testNotApplicable_bodyPropertyWithBackingField() throws Exception {
+                runTest("testData/inspectionsLocal/convertToValueClass/notApplicable_bodyPropertyWithBackingField.kt");
+            }
+
+            @TestMetadata("notApplicable_explicitBackingField.kt")
+            public void testNotApplicable_explicitBackingField() throws Exception {
+                runTest("testData/inspectionsLocal/convertToValueClass/notApplicable_explicitBackingField.kt");
+            }
+
+            @TestMetadata("notApplicable_extendsClass.kt")
+            public void testNotApplicable_extendsClass() throws Exception {
+                runTest("testData/inspectionsLocal/convertToValueClass/notApplicable_extendsClass.kt");
+            }
+
+            @TestMetadata("notApplicable_inner.kt")
+            public void testNotApplicable_inner() throws Exception {
+                runTest("testData/inspectionsLocal/convertToValueClass/notApplicable_inner.kt");
+            }
+
+            @TestMetadata("notApplicable_notDataClass.kt")
+            public void testNotApplicable_notDataClass() throws Exception {
+                runTest("testData/inspectionsLocal/convertToValueClass/notApplicable_notDataClass.kt");
+            }
+
+            @TestMetadata("notApplicable_varProperty.kt")
+            public void testNotApplicable_varProperty() throws Exception {
+                runTest("testData/inspectionsLocal/convertToValueClass/notApplicable_varProperty.kt");
+            }
+
+            @TestMetadata("singleProperty.kt")
+            public void testSingleProperty() throws Exception {
+                runTest("testData/inspectionsLocal/convertToValueClass/singleProperty.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/convertTwoComparisonsToRangeCheck")
         public static class ConvertTwoComparisonsToRangeCheck extends AbstractK2LocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
@@ -17370,6 +17473,604 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 @TestMetadata("qualifiedUsage_getOperator.kt")
                 public void testQualifiedUsage_getOperator() throws Exception {
                     runTest("testData/inspectionsLocal/coroutines/preferCurrentCoroutineContextToCoroutineContext/qualifiedUsage_getOperator.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/inspectionsLocal/coroutines/suppressedCancellationException")
+            public static class SuppressedCancellationException extends AbstractK2LocalInspectionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("iteratorBuilder_tryCatchSwallows.kt")
+                public void testIteratorBuilder_tryCatchSwallows() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/iteratorBuilder_tryCatchSwallows.kt");
+                }
+
+                @TestMetadata("runCatching_alsoStoredInVariable.kt")
+                public void testRunCatching_alsoStoredInVariable() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_alsoStoredInVariable.kt");
+                }
+
+                @TestMetadata("runCatching_ensureActiveAfterEnclosingIf.kt")
+                public void testRunCatching_ensureActiveAfterEnclosingIf() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_ensureActiveAfterEnclosingIf.kt");
+                }
+
+                @TestMetadata("runCatching_ensureActiveAfterEnclosingTry.kt")
+                public void testRunCatching_ensureActiveAfterEnclosingTry() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_ensureActiveAfterEnclosingTry.kt");
+                }
+
+                @TestMetadata("runCatching_ensureActiveBeforeRunCatching.kt")
+                public void testRunCatching_ensureActiveBeforeRunCatching() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_ensureActiveBeforeRunCatching.kt");
+                }
+
+                @TestMetadata("runCatching_ensureActiveInSiblingBranch.kt")
+                public void testRunCatching_ensureActiveInSiblingBranch() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_ensureActiveInSiblingBranch.kt");
+                }
+
+                @TestMetadata("runCatching_ensureActiveInUnrelatedFunction.kt")
+                public void testRunCatching_ensureActiveInUnrelatedFunction() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_ensureActiveInUnrelatedFunction.kt");
+                }
+
+                @TestMetadata("runCatching_ensureActiveInsideLambda.kt")
+                public void testRunCatching_ensureActiveInsideLambda() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_ensureActiveInsideLambda.kt");
+                }
+
+                @TestMetadata("runCatching_ensureActiveOnlyConditionally.kt")
+                public void testRunCatching_ensureActiveOnlyConditionally() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_ensureActiveOnlyConditionally.kt");
+                }
+
+                @TestMetadata("runCatching_exceptionOrNullDirect.kt")
+                public void testRunCatching_exceptionOrNullDirect() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_exceptionOrNullDirect.kt");
+                }
+
+                @TestMetadata("runCatching_exceptionOrNullRethrown.kt")
+                public void testRunCatching_exceptionOrNullRethrown() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_exceptionOrNullRethrown.kt");
+                }
+
+                @TestMetadata("runCatching_expressionBodyFunction.kt")
+                public void testRunCatching_expressionBodyFunction() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_expressionBodyFunction.kt");
+                }
+
+                @TestMetadata("runCatching_foldRethrowsOnFailure.kt")
+                public void testRunCatching_foldRethrowsOnFailure() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_foldRethrowsOnFailure.kt");
+                }
+
+                @TestMetadata("runCatching_getOrDefault.kt")
+                public void testRunCatching_getOrDefault() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_getOrDefault.kt");
+                }
+
+                @TestMetadata("runCatching_getOrElse.kt")
+                public void testRunCatching_getOrElse() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_getOrElse.kt");
+                }
+
+                @TestMetadata("runCatching_getOrElseCallsError.kt")
+                public void testRunCatching_getOrElseCallsError() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_getOrElseCallsError.kt");
+                }
+
+                @TestMetadata("runCatching_getOrElseRethrows.kt")
+                public void testRunCatching_getOrElseRethrows() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_getOrElseRethrows.kt");
+                }
+
+                @TestMetadata("runCatching_getOrElseStoredInVariable.kt")
+                public void testRunCatching_getOrElseStoredInVariable() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_getOrElseStoredInVariable.kt");
+                }
+
+                @TestMetadata("runCatching_getOrElseThenJobEnsureActive.kt")
+                public void testRunCatching_getOrElseThenJobEnsureActive() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_getOrElseThenJobEnsureActive.kt");
+                }
+
+                @TestMetadata("runCatching_getOrNull.kt")
+                public void testRunCatching_getOrNull() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_getOrNull.kt");
+                }
+
+                @TestMetadata("runCatching_getOrNullThenEnsureActive.kt")
+                public void testRunCatching_getOrNullThenEnsureActive() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_getOrNullThenEnsureActive.kt");
+                }
+
+                @TestMetadata("runCatching_getOrThrow.kt")
+                public void testRunCatching_getOrThrow() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_getOrThrow.kt");
+                }
+
+                @TestMetadata("runCatching_importAlias.kt")
+                public void testRunCatching_importAlias() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_importAlias.kt");
+                }
+
+                @TestMetadata("runCatching_insideLaunch.kt")
+                public void testRunCatching_insideLaunch() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_insideLaunch.kt");
+                }
+
+                @TestMetadata("runCatching_isSuccess.kt")
+                public void testRunCatching_isSuccess() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_isSuccess.kt");
+                }
+
+                @TestMetadata("runCatching_isSuccessThenCoroutineContextEnsureActive.kt")
+                public void testRunCatching_isSuccessThenCoroutineContextEnsureActive() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_isSuccessThenCoroutineContextEnsureActive.kt");
+                }
+
+                @TestMetadata("runCatching_letCallsGetOrThrow.kt")
+                public void testRunCatching_letCallsGetOrThrow() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_letCallsGetOrThrow.kt");
+                }
+
+                @TestMetadata("runCatching_mapChainedTwiceThenGetOrNull.kt")
+                public void testRunCatching_mapChainedTwiceThenGetOrNull() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_mapChainedTwiceThenGetOrNull.kt");
+                }
+
+                @TestMetadata("runCatching_mapStoredInVariable.kt")
+                public void testRunCatching_mapStoredInVariable() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_mapStoredInVariable.kt");
+                }
+
+                @TestMetadata("runCatching_mapThenGetOrNull.kt")
+                public void testRunCatching_mapThenGetOrNull() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_mapThenGetOrNull.kt");
+                }
+
+                @TestMetadata("runCatching_mapThenGetOrThrow.kt")
+                public void testRunCatching_mapThenGetOrThrow() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_mapThenGetOrThrow.kt");
+                }
+
+                @TestMetadata("runCatching_nestedCoroutineScope.kt")
+                public void testRunCatching_nestedCoroutineScope() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_nestedCoroutineScope.kt");
+                }
+
+                @TestMetadata("runCatching_nestedRunBlocking.kt")
+                public void testRunCatching_nestedRunBlocking() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_nestedRunBlocking.kt");
+                }
+
+                @TestMetadata("runCatching_noSuspendCallInBody.kt")
+                public void testRunCatching_noSuspendCallInBody() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_noSuspendCallInBody.kt");
+                }
+
+                @TestMetadata("runCatching_nonSuspendFunction.kt")
+                public void testRunCatching_nonSuspendFunction() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_nonSuspendFunction.kt");
+                }
+
+                @TestMetadata("runCatching_nonSuspendFunctionReference.kt")
+                public void testRunCatching_nonSuspendFunctionReference() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_nonSuspendFunctionReference.kt");
+                }
+
+                @TestMetadata("runCatching_onFailureEnsureActive.kt")
+                public void testRunCatching_onFailureEnsureActive() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_onFailureEnsureActive.kt");
+                }
+
+                @TestMetadata("runCatching_onFailureLogsOnly.kt")
+                public void testRunCatching_onFailureLogsOnly() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_onFailureLogsOnly.kt");
+                }
+
+                @TestMetadata("runCatching_onFailureLogsWithLogger.kt")
+                public void testRunCatching_onFailureLogsWithLogger() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_onFailureLogsWithLogger.kt");
+                }
+
+                @TestMetadata("runCatching_onFailurePassesToHandler.kt")
+                public void testRunCatching_onFailurePassesToHandler() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_onFailurePassesToHandler.kt");
+                }
+
+                @TestMetadata("runCatching_onFailureRethrows.kt")
+                public void testRunCatching_onFailureRethrows() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_onFailureRethrows.kt");
+                }
+
+                @TestMetadata("runCatching_onFailureStoredInVariable.kt")
+                public void testRunCatching_onFailureStoredInVariable() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_onFailureStoredInVariable.kt");
+                }
+
+                @TestMetadata("runCatching_onSuccessThenGetOrNull.kt")
+                public void testRunCatching_onSuccessThenGetOrNull() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_onSuccessThenGetOrNull.kt");
+                }
+
+                @TestMetadata("runCatching_onSuccessThrowsAsStatement.kt")
+                public void testRunCatching_onSuccessThrowsAsStatement() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_onSuccessThrowsAsStatement.kt");
+                }
+
+                @TestMetadata("runCatching_parenthesizedReceiverWithThrowInChain.kt")
+                public void testRunCatching_parenthesizedReceiverWithThrowInChain() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_parenthesizedReceiverWithThrowInChain.kt");
+                }
+
+                @TestMetadata("runCatching_receiverMethodReference.kt")
+                public void testRunCatching_receiverMethodReference() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_receiverMethodReference.kt");
+                }
+
+                @TestMetadata("runCatching_recoverRethrows.kt")
+                public void testRunCatching_recoverRethrows() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_recoverRethrows.kt");
+                }
+
+                @TestMetadata("runCatching_recoverThenGetOrNull.kt")
+                public void testRunCatching_recoverThenGetOrNull() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_recoverThenGetOrNull.kt");
+                }
+
+                @TestMetadata("runCatching_recoverWithDefault.kt")
+                public void testRunCatching_recoverWithDefault() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_recoverWithDefault.kt");
+                }
+
+                @TestMetadata("runCatching_resultIgnored.kt")
+                public void testRunCatching_resultIgnored() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_resultIgnored.kt");
+                }
+
+                @TestMetadata("runCatching_resultIgnoredThenEnsureActive.kt")
+                public void testRunCatching_resultIgnoredThenEnsureActive() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_resultIgnoredThenEnsureActive.kt");
+                }
+
+                @TestMetadata("runCatching_suspendFunctionCalledInLambda.kt")
+                public void testRunCatching_suspendFunctionCalledInLambda() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_suspendFunctionCalledInLambda.kt");
+                }
+
+                @TestMetadata("runCatching_throwAfterCall.kt")
+                public void testRunCatching_throwAfterCall() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_throwAfterCall.kt");
+                }
+
+                @TestMetadata("runCatching_throwInLaterChainLink.kt")
+                public void testRunCatching_throwInLaterChainLink() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_throwInLaterChainLink.kt");
+                }
+
+                @TestMetadata("runCatching_unrelatedImportAlias.kt")
+                public void testRunCatching_unrelatedImportAlias() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_unrelatedImportAlias.kt");
+                }
+
+                @TestMetadata("runCatching_unrelatedThrowableConsumedAfterCall.kt")
+                public void testRunCatching_unrelatedThrowableConsumedAfterCall() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_unrelatedThrowableConsumedAfterCall.kt");
+                }
+
+                @TestMetadata("runCatching_userDefinedFunction.kt")
+                public void testRunCatching_userDefinedFunction() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_userDefinedFunction.kt");
+                }
+
+                @TestMetadata("runCatching_withReceiver.kt")
+                public void testRunCatching_withReceiver() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_withReceiver.kt");
+                }
+
+                @TestMetadata("sequenceBuilder_nestedRunBlocking.kt")
+                public void testSequenceBuilder_nestedRunBlocking() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/sequenceBuilder_nestedRunBlocking.kt");
+                }
+
+                @TestMetadata("sequenceBuilder_tryCatchInsideInlineLambda.kt")
+                public void testSequenceBuilder_tryCatchInsideInlineLambda() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/sequenceBuilder_tryCatchInsideInlineLambda.kt");
+                }
+
+                @TestMetadata("sequenceBuilder_tryCatchSwallows.kt")
+                public void testSequenceBuilder_tryCatchSwallows() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/sequenceBuilder_tryCatchSwallows.kt");
+                }
+
+                @TestMetadata("sequenceScopeExtensionFunction_tryCatchSwallows.kt")
+                public void testSequenceScopeExtensionFunction_tryCatchSwallows() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/sequenceScopeExtensionFunction_tryCatchSwallows.kt");
+                }
+
+                @TestMetadata("tryCatchCancellationException_rethrownBeforeException.kt")
+                public void testTryCatchCancellationException_rethrownBeforeException() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/tryCatchCancellationException_rethrownBeforeException.kt");
+                }
+
+                @TestMetadata("tryCatchCancellationException_swallowedExplicitly.kt")
+                public void testTryCatchCancellationException_swallowedExplicitly() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/tryCatchCancellationException_swallowedExplicitly.kt");
+                }
+
+                @TestMetadata("tryCatchCustomCancellationSubclass_thenBroadClause.kt")
+                public void testTryCatchCustomCancellationSubclass_thenBroadClause() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/tryCatchCustomCancellationSubclass_thenBroadClause.kt");
+                }
+
+                @TestMetadata("tryCatchException_assignsToVariable.kt")
+                public void testTryCatchException_assignsToVariable() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/tryCatchException_assignsToVariable.kt");
+                }
+
+                @TestMetadata("tryCatchException_callsErrorFunction.kt")
+                public void testTryCatchException_callsErrorFunction() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/tryCatchException_callsErrorFunction.kt");
+                }
+
+                @TestMetadata("tryCatchException_callsFunctionWithoutException.kt")
+                public void testTryCatchException_callsFunctionWithoutException() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/tryCatchException_callsFunctionWithoutException.kt");
+                }
+
+                @TestMetadata("tryCatchException_coroutineContextEnsureActive.kt")
+                public void testTryCatchException_coroutineContextEnsureActive() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/tryCatchException_coroutineContextEnsureActive.kt");
+                }
+
+                @TestMetadata("tryCatchException_earlyReturn.kt")
+                public void testTryCatchException_earlyReturn() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/tryCatchException_earlyReturn.kt");
+                }
+
+                @TestMetadata("tryCatchException_emptyBody.kt")
+                public void testTryCatchException_emptyBody() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/tryCatchException_emptyBody.kt");
+                }
+
+                @TestMetadata("tryCatchException_ensureActive.kt")
+                public void testTryCatchException_ensureActive() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/tryCatchException_ensureActive.kt");
+                }
+
+                @TestMetadata("tryCatchException_ensureActiveAfterTry.kt")
+                public void testTryCatchException_ensureActiveAfterTry() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/tryCatchException_ensureActiveAfterTry.kt");
+                }
+
+                @TestMetadata("tryCatchException_ignoredParameterName.kt")
+                public void testTryCatchException_ignoredParameterName() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/tryCatchException_ignoredParameterName.kt");
+                }
+
+                @TestMetadata("tryCatchException_inNestedLocalNonSuspendFunction.kt")
+                public void testTryCatchException_inNestedLocalNonSuspendFunction() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/tryCatchException_inNestedLocalNonSuspendFunction.kt");
+                }
+
+                @TestMetadata("tryCatchException_inNonSuspendLambdaInsideSuspendFunction.kt")
+                public void testTryCatchException_inNonSuspendLambdaInsideSuspendFunction() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/tryCatchException_inNonSuspendLambdaInsideSuspendFunction.kt");
+                }
+
+                @TestMetadata("tryCatchException_inNonSuspendLambdaWithSuspendCall.kt")
+                public void testTryCatchException_inNonSuspendLambdaWithSuspendCall() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/tryCatchException_inNonSuspendLambdaWithSuspendCall.kt");
+                }
+
+                @TestMetadata("tryCatchException_inScopeLaunchInsideClass.kt")
+                public void testTryCatchException_inScopeLaunchInsideClass() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/tryCatchException_inScopeLaunchInsideClass.kt");
+                }
+
+                @TestMetadata("tryCatchException_inSuspendMemberFunction.kt")
+                public void testTryCatchException_inSuspendMemberFunction() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/tryCatchException_inSuspendMemberFunction.kt");
+                }
+
+                @TestMetadata("tryCatchException_insideCoroutineScope.kt")
+                public void testTryCatchException_insideCoroutineScope() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/tryCatchException_insideCoroutineScope.kt");
+                }
+
+                @TestMetadata("tryCatchException_insideInlineLambdaInSuspendFunction.kt")
+                public void testTryCatchException_insideInlineLambdaInSuspendFunction() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/tryCatchException_insideInlineLambdaInSuspendFunction.kt");
+                }
+
+                @TestMetadata("tryCatchException_insideLaunchLambda.kt")
+                public void testTryCatchException_insideLaunchLambda() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/tryCatchException_insideLaunchLambda.kt");
+                }
+
+                @TestMetadata("tryCatchException_insideSuspendLambdaParameter.kt")
+                public void testTryCatchException_insideSuspendLambdaParameter() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/tryCatchException_insideSuspendLambdaParameter.kt");
+                }
+
+                @TestMetadata("tryCatchException_javaThrowableParameter.kt")
+                public void testTryCatchException_javaThrowableParameter() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/tryCatchException_javaThrowableParameter.kt");
+                }
+
+                @TestMetadata("tryCatchException_javaUtilLoggingLogger.kt")
+                public void testTryCatchException_javaUtilLoggingLogger() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/tryCatchException_javaUtilLoggingLogger.kt");
+                }
+
+                @TestMetadata("tryCatchException_logAndThrowFunction.kt")
+                public void testTryCatchException_logAndThrowFunction() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/tryCatchException_logAndThrowFunction.kt");
+                }
+
+                @TestMetadata("tryCatchException_loggerTypedReceiver.kt")
+                public void testTryCatchException_loggerTypedReceiver() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/tryCatchException_loggerTypedReceiver.kt");
+                }
+
+                @TestMetadata("tryCatchException_logsWithException.kt")
+                public void testTryCatchException_logsWithException() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/tryCatchException_logsWithException.kt");
+                }
+
+                @TestMetadata("tryCatchException_logsWithoutException.kt")
+                public void testTryCatchException_logsWithoutException() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/tryCatchException_logsWithoutException.kt");
+                }
+
+                @TestMetadata("tryCatchException_multipleClausesFirstSwallows.kt")
+                public void testTryCatchException_multipleClausesFirstSwallows() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/tryCatchException_multipleClausesFirstSwallows.kt");
+                }
+
+                @TestMetadata("tryCatchException_nestedInnerSwallows.kt")
+                public void testTryCatchException_nestedInnerSwallows() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/tryCatchException_nestedInnerSwallows.kt");
+                }
+
+                @TestMetadata("tryCatchException_nestedRunBlocking.kt")
+                public void testTryCatchException_nestedRunBlocking() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/tryCatchException_nestedRunBlocking.kt");
+                }
+
+                @TestMetadata("tryCatchException_nonSuspendFunction.kt")
+                public void testTryCatchException_nonSuspendFunction() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/tryCatchException_nonSuspendFunction.kt");
+                }
+
+                @TestMetadata("tryCatchException_passesExceptionToFunction.kt")
+                public void testTryCatchException_passesExceptionToFunction() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/tryCatchException_passesExceptionToFunction.kt");
+                }
+
+                @TestMetadata("tryCatchException_rethrows.kt")
+                public void testTryCatchException_rethrows() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/tryCatchException_rethrows.kt");
+                }
+
+                @TestMetadata("tryCatchException_rethrowsConditionally.kt")
+                public void testTryCatchException_rethrowsConditionally() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/tryCatchException_rethrowsConditionally.kt");
+                }
+
+                @TestMetadata("tryCatchException_rethrowsFromNestedBlock.kt")
+                public void testTryCatchException_rethrowsFromNestedBlock() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/tryCatchException_rethrowsFromNestedBlock.kt");
+                }
+
+                @TestMetadata("tryCatchException_rethrowsInUnreachedClause.kt")
+                public void testTryCatchException_rethrowsInUnreachedClause() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/tryCatchException_rethrowsInUnreachedClause.kt");
+                }
+
+                @TestMetadata("tryCatchException_returnsDefaultValue.kt")
+                public void testTryCatchException_returnsDefaultValue() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/tryCatchException_returnsDefaultValue.kt");
+                }
+
+                @TestMetadata("tryCatchException_throwablePassedToCatalogClass.kt")
+                public void testTryCatchException_throwablePassedToCatalogClass() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/tryCatchException_throwablePassedToCatalogClass.kt");
+                }
+
+                @TestMetadata("tryCatchException_throwsWrappedException.kt")
+                public void testTryCatchException_throwsWrappedException() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/tryCatchException_throwsWrappedException.kt");
+                }
+
+                @TestMetadata("tryCatchException_underscoreParameter.kt")
+                public void testTryCatchException_underscoreParameter() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/tryCatchException_underscoreParameter.kt");
+                }
+
+                @TestMetadata("tryCatchException_usesOnlyExceptionMessage.kt")
+                public void testTryCatchException_usesOnlyExceptionMessage() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/tryCatchException_usesOnlyExceptionMessage.kt");
+                }
+
+                @TestMetadata("tryCatchException_withFinally.kt")
+                public void testTryCatchException_withFinally() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/tryCatchException_withFinally.kt");
+                }
+
+                @TestMetadata("tryCatchIOException.kt")
+                public void testTryCatchIOException() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/tryCatchIOException.kt");
+                }
+
+                @TestMetadata("tryCatchIllegalStateException_emptyBody.kt")
+                public void testTryCatchIllegalStateException_emptyBody() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/tryCatchIllegalStateException_emptyBody.kt");
+                }
+
+                @TestMetadata("tryCatchJavaConcurrentCancellationException_rethrown.kt")
+                public void testTryCatchJavaConcurrentCancellationException_rethrown() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/tryCatchJavaConcurrentCancellationException_rethrown.kt");
+                }
+
+                @TestMetadata("tryCatchJavaConcurrentCancellationException_swallowed.kt")
+                public void testTryCatchJavaConcurrentCancellationException_swallowed() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/tryCatchJavaConcurrentCancellationException_swallowed.kt");
+                }
+
+                @TestMetadata("tryCatchNumberFormatException.kt")
+                public void testTryCatchNumberFormatException() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/tryCatchNumberFormatException.kt");
+                }
+
+                @TestMetadata("tryCatchRuntimeException_emptyBody.kt")
+                public void testTryCatchRuntimeException_emptyBody() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/tryCatchRuntimeException_emptyBody.kt");
+                }
+
+                @TestMetadata("tryCatchThrowable_emptyBody.kt")
+                public void testTryCatchThrowable_emptyBody() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/tryCatchThrowable_emptyBody.kt");
+                }
+
+                @TestMetadata("tryCatchTimeoutCancellationException.kt")
+                public void testTryCatchTimeoutCancellationException() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/tryCatchTimeoutCancellationException.kt");
+                }
+
+                @TestMetadata("tryCatchTimeoutCancellation_handled_thenBroadClause.kt")
+                public void testTryCatchTimeoutCancellation_handled_thenBroadClause() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/tryCatchTimeoutCancellation_handled_thenBroadClause.kt");
+                }
+
+                @TestMetadata("tryCatchTimeoutCancellation_rethrown_thenBroadClause.kt")
+                public void testTryCatchTimeoutCancellation_rethrown_thenBroadClause() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/tryCatchTimeoutCancellation_rethrown_thenBroadClause.kt");
+                }
+
+                @TestMetadata("tryFinallyWithoutCatch.kt")
+                public void testTryFinallyWithoutCatch() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/tryFinallyWithoutCatch.kt");
+                }
+
+                @TestMetadata("tryFinally_ensureActiveBeforeCallInFinally.kt")
+                public void testTryFinally_ensureActiveBeforeCallInFinally() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/tryFinally_ensureActiveBeforeCallInFinally.kt");
+                }
+
+                @TestMetadata("tryFinally_ensureActiveInFinally.kt")
+                public void testTryFinally_ensureActiveInFinally() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/tryFinally_ensureActiveInFinally.kt");
+                }
+
+                @TestMetadata("unrelatedCallExpression.kt")
+                public void testUnrelatedCallExpression() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/unrelatedCallExpression.kt");
                 }
             }
 
@@ -28019,6 +28720,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/convertImplicitContextArgumentToExplicit/multipleContextParameters.kt");
         }
 
+        @TestMetadata("notApplicable_namedContextParameterShadowed.kt")
+        public void testNotApplicable_namedContextParameterShadowed() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/convertImplicitContextArgumentToExplicit/notApplicable_namedContextParameterShadowed.kt");
+        }
+
         @TestMetadata("notApplicable_noContextParameters.kt")
         public void testNotApplicable_noContextParameters() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/convertImplicitContextArgumentToExplicit/notApplicable_noContextParameters.kt");
@@ -28037,6 +28743,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         @TestMetadata("preservesTrailingComment.kt")
         public void testPreservesTrailingComment() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/convertImplicitContextArgumentToExplicit/preservesTrailingComment.kt");
+        }
+
+        @TestMetadata("reservedWordContextParameter.kt")
+        public void testReservedWordContextParameter() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/convertImplicitContextArgumentToExplicit/reservedWordContextParameter.kt");
         }
 
         @TestMetadata("sharedContextBlock.kt")

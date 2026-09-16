@@ -24,7 +24,7 @@ import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
 internal class UseVirtualFileToVirtualFileUrlConversionInspection : VirtualFileUrlConversionInspection(
   targetClassName = VIRTUAL_FILE_URL_MANAGER_FQN,
-  targetMethodName = "getOrCreateFromUrl",
+  targetMethodName = "storeAndGet",
   urlSourceClassName = VIRTUAL_FILE_FQN,
   messageKey = "inspection.use.virtual.file.to.virtual.file.url.conversion.message",
   javaMessageKey = "inspection.use.virtual.file.to.virtual.file.url.conversion.java.message",

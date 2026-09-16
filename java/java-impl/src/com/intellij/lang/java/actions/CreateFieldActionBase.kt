@@ -1,33 +1,31 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java.actions
 
 import com.intellij.codeInsight.daemon.QuickFixBundle.message
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
-import com.intellij.lang.java.request.CreateFieldFromJavaUsageRequest
+import com.intellij.lang.jvm.JvmClass
 import com.intellij.lang.jvm.actions.CreateFieldRequest
 import com.intellij.lang.jvm.actions.JvmActionGroup
-import com.intellij.lang.jvm.actions.JvmGroupIntentionAction
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
+import com.intellij.lang.jvm.actions.JvmGroupModCommandAction
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiErrorElement
-import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiImplicitClass
 import com.intellij.psi.PsiMethod
-import com.intellij.psi.util.PsiTreeUtil
 
 internal abstract class CreateFieldActionBase(
   target: PsiClass,
-  override val request: CreateFieldRequest
-) : CreateMemberAction(target, request), JvmGroupIntentionAction {
+  override val request: CreateFieldRequest,
+) : CreateMemberModCommandAction(target, request), JvmGroupModCommandAction {
 
   override fun getRenderData(): JvmActionGroup.RenderData = JvmActionGroup.RenderData { request.fieldName }
 
-  private fun fieldRenderer(project: Project) = JavaFieldRenderer(project, isConstant(), target, request)
+  override fun getTarget(): JvmClass? = targetClass
 
-  override fun isAvailable(project: Project, file: PsiFile, target: PsiClass): Boolean {
-    if (!super.isAvailable(project, file, target)) return false
-    if (target.findFieldByName(request.fieldName, false) != null) return false;
+  override fun getFamilyName(): String = message("create.field.from.usage.family")
+
+  override fun isAvailable(target: PsiClass): Boolean {
+    if (target.findFieldByName(request.fieldName, false) != null) return false
     return isClassBodyValid(target)
   }
 
@@ -41,20 +39,10 @@ internal abstract class CreateFieldActionBase(
       .none { it.lastChild is PsiErrorElement }
   }
 
-  override fun invoke(project: Project, file: PsiFile, target: PsiClass) {
-    fieldRenderer(project).doRender()
-  }
-
-  override fun generatePreview(project: Project, editor: Editor, psiFile: PsiFile): IntentionPreviewInfo {
-    val copyClass = PsiTreeUtil.findSameElementInCopy(target, psiFile)
-    val javaFieldRenderer = JavaFieldRenderer(project, isConstant(), copyClass, request)
-    var field = javaFieldRenderer.renderField()
-    field = javaFieldRenderer.insertField(field, PsiTreeUtil.findSameElementInCopy((request as? CreateFieldFromJavaUsageRequest)?.anchor, psiFile))
-    javaFieldRenderer.startTemplate(field)
-    return IntentionPreviewInfo.DIFF
-  }
-
   internal open fun isConstant(): Boolean = false
 
-  override fun getFamilyName(): String = message("create.field.from.usage.family")
+  override fun invoke(context: ActionContext, element: PsiClass, updater: ModPsiUpdater) {
+    val originalTarget = targetClass ?: return
+    JavaFieldRenderer(context.project, isConstant(), element, originalTarget, request, updater).doRender()
+  }
 }

@@ -42,8 +42,8 @@ interface UpdateCheckerFacade {
    * When [buildNumber] is null, returns new versions of plugins compatible with the current IDE version,
    * otherwise, returns versions compatible with the specified build.
    */
-  @RequiresBackgroundThread
-  @RequiresReadLockAbsence
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  @RequiresReadLockAbsence(generateAssertion = false /* IJPL-115548 */)
   @ApiStatus.Internal
   fun getPluginUpdates(
     plugins: Collection<PluginId>,
@@ -55,8 +55,8 @@ interface UpdateCheckerFacade {
    * When [buildNumber] is null, returns new versions of plugins compatible with the current IDE version,
    * otherwise, returns versions compatible with the specified build.
    */
-  @RequiresBackgroundThread
-  @RequiresReadLockAbsence
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  @RequiresReadLockAbsence(generateAssertion = false /* IJPL-115548 */)
   @ApiStatus.Internal
   fun checkInstalledPluginUpdates(
     indicator: ProgressIndicator? = null,

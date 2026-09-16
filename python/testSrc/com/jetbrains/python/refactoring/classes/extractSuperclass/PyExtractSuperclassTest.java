@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.refactoring.classes.extractSuperclass;
 
+import com.intellij.idea.TestFor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -240,6 +241,17 @@ public final class PyExtractSuperclassTest extends PyClassRefactoringTest {
       WriteCommandAction.writeCommandAction(myFixture.getProject()).run(() -> {
         //TODO: Test via presenter
         PyExtractSuperclassHelper.extractSuperclass(clazz, members, superclassName, projectRoot.getPath() + "/a/b/foo.py");
+      });
+    });
+  }
+
+  @TestFor(issues = "PY-84718")
+  public void testMoveExtendsExistingDottedModuleImport() {
+    doComparingDirectories(projectRoot -> {
+      final PyClass clazz = findClass("Foo");
+      final PyMemberInfo<PyElement> member = findMemberInfo("Foo", "Base");
+      WriteCommandAction.writeCommandAction(myFixture.getProject()).run(() -> {
+        PyExtractSuperclassHelper.extractSuperclass(clazz, Collections.singleton(member), "Suppa", projectRoot.getPath() + "/pkg/dest.py");
       });
     });
   }

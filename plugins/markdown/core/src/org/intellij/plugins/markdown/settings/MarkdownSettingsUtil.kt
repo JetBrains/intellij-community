@@ -62,7 +62,7 @@ object MarkdownSettingsUtil {
     return false
   }
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   internal fun belongsToTheProject(project: Project, path: Path): Boolean {
     val file = VfsUtil.findFile(path, true) ?: return false
     return ProjectFileIndex.getInstance(project).isInProjectOrExcluded(file)

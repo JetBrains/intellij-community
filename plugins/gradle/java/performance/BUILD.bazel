@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.gradle.java.performance` start
+content_module_jar(module = ":performance")
+### auto-generated section `dev intellij.gradle.java.performance` end
+
 ### auto-generated section `build intellij.gradle.java.performance` start
 jvm_library(
     name = "performance",
@@ -48,8 +52,6 @@ jvm_library(
         "//plugins/maven/performanceTesting",
     ],
 )
-
-content_module_jar(module = ":performance")
 
 jvm_library(
     name = "performance_test_lib",

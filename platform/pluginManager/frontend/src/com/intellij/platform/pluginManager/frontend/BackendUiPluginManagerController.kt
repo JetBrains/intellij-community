@@ -14,7 +14,12 @@ import com.intellij.ide.plugins.marketplace.PluginSearchResult
 import com.intellij.ide.plugins.marketplace.PrepareToUninstallResult
 import com.intellij.ide.plugins.marketplace.ResetPluginsStateResult
 import com.intellij.ide.plugins.marketplace.SetEnabledStateResult
+import com.intellij.ide.plugins.newui.PluginInstallationProgressSink
 import com.intellij.ide.plugins.newui.PluginInstallationState
+import com.intellij.ide.plugins.newui.CustomPluginRepository
+import com.intellij.ide.plugins.newui.CustomPluginRepositoryLoadResult
+import com.intellij.ide.plugins.newui.PluginInventoryEntry
+import com.intellij.ide.plugins.newui.PluginInventorySnapshot
 import com.intellij.ide.plugins.newui.PluginSource
 import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.ide.plugins.newui.UiPluginManagerController
@@ -28,6 +33,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceId
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
 import com.intellij.platform.pluginManager.shared.rpc.PluginInstallerApi
+import com.intellij.platform.pluginManager.shared.rpc.PluginInstallRpcEvent
 import com.intellij.platform.pluginManager.shared.rpc.PluginManagerApi
 import com.intellij.platform.project.projectId
 import fleet.rpc.client.RpcClientDisconnectedException
@@ -35,6 +41,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.completeWith
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
@@ -47,6 +54,14 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
   }
 
   override fun getTarget(): PluginSource = PluginSource.REMOTE
+
+  override suspend fun getPluginInventory(): PluginInventorySnapshot {
+    val snapshot = PluginManagerApi.getInstance().getPluginInventory()
+    return PluginInventorySnapshot(
+      runtimePlugins = snapshot.runtimePlugins.map(PluginDto::toInventoryEntry),
+      stagedPlugins = snapshot.stagedPlugins.map(PluginDto::toInventoryEntry),
+    )
+  }
 
   override suspend fun getPlugins(): List<PluginUiModel> {
     return PluginManagerApi.getInstance().getPlugins().withSource()
@@ -84,12 +99,62 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     return PluginInstallerApi.getInstance().performUninstall(sessionId, pluginId)
   }
 
-  override suspend fun installOrUpdatePlugin(sessionId: String, parentComponent: JComponent?, descriptor: PluginUiModel, updateDescriptor: PluginUiModel?, installSource: FUSEventSource?, modalityState: ModalityState?, pluginEnabler: PluginEnabler?, customRepoPlugins: List<PluginUiModel>?): InstallPluginResult {
-    return PluginInstallerApi.getInstance().installOrUpdatePlugin(sessionId, PluginDto.fromModel(descriptor), updateDescriptor?.let { PluginDto.fromModel(it) }, installSource, customRepoPlugins?.map { PluginDto.fromModel(it) })
+  override suspend fun installOrUpdatePlugin(
+    sessionId: String,
+    parentComponent: () -> JComponent?,
+    descriptor: PluginUiModel,
+    updateDescriptor: PluginUiModel?,
+    installSource: FUSEventSource?,
+    modalityState: ModalityState?,
+    pluginEnabler: PluginEnabler?,
+    customRepoPlugins: List<PluginUiModel>?,
+    progressSink: PluginInstallationProgressSink,
+  ): InstallPluginResult {
+    return collectInstallResult(
+      PluginInstallerApi.getInstance().installOrUpdatePlugin(
+        sessionId, PluginDto.fromModel(descriptor), updateDescriptor?.let { PluginDto.fromModel(it) }, installSource,
+        customRepoPlugins?.map { PluginDto.fromModel(it) },
+      ),
+      progressSink,
+    )
   }
 
-  override suspend fun continueInstallation(sessionId: String, pluginId: PluginId, enableRequiredPlugins: Boolean, allowInstallWithoutRestart: Boolean, pluginEnabler: PluginEnabler?, modalityState: ModalityState?, parentComponent: JComponent?, customRepoPlugins: List<PluginUiModel>?): InstallPluginResult {
-    return PluginInstallerApi.getInstance().continueInstallation(sessionId, pluginId, enableRequiredPlugins, allowInstallWithoutRestart, customRepoPlugins?.map { PluginDto.fromModel(it) })
+  override suspend fun continueInstallation(
+    sessionId: String,
+    pluginId: PluginId,
+    enableRequiredPlugins: Boolean,
+    allowInstallWithoutRestart: Boolean,
+    pluginEnabler: PluginEnabler?,
+    modalityState: ModalityState?,
+    parentComponent: () -> JComponent?,
+    customRepoPlugins: List<PluginUiModel>?,
+    progressSink: PluginInstallationProgressSink,
+  ): InstallPluginResult {
+    return collectInstallResult(
+      PluginInstallerApi.getInstance().continueInstallation(
+        sessionId, pluginId, enableRequiredPlugins, allowInstallWithoutRestart,
+        customRepoPlugins?.map { PluginDto.fromModel(it) },
+      ),
+      progressSink,
+    )
+  }
+
+  private suspend fun collectInstallResult(
+    events: Flow<PluginInstallRpcEvent>,
+    progressSink: PluginInstallationProgressSink,
+  ): InstallPluginResult {
+    var completedResult: InstallPluginResult? = null
+    events.collect { event ->
+      when (event) {
+        is PluginInstallRpcEvent.DependenciesScheduled -> {
+          event.dependencies.forEach { it.source = PluginSource.REMOTE }
+          progressSink.dependenciesScheduled(event.dependencies)
+        }
+        is PluginInstallRpcEvent.DownloadProgressChanged -> progressSink.downloadProgressChanged(event.fraction)
+        is PluginInstallRpcEvent.Completed -> completedResult = event.result
+      }
+    }
+    return checkNotNull(completedResult) { "Plugin installation stream completed without a result" }
   }
 
   override suspend fun getCustomRepoTags(): Set<String> {
@@ -195,6 +260,17 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     return PluginManagerApi.getInstance().getCustomRepositoryPluginMap()
   }
 
+  override suspend fun getCustomPluginRepositories(): List<CustomPluginRepository> {
+    return PluginManagerApi.getInstance().getCustomPluginRepositoryIds().map { repositoryId ->
+      CustomPluginRepository(repositoryId, PluginSource.REMOTE)
+    }
+  }
+
+  override suspend fun loadCustomPluginRepository(repository: CustomPluginRepository): CustomPluginRepositoryLoadResult {
+    val result = PluginManagerApi.getInstance().loadCustomPluginRepository(repository.id)
+    return CustomPluginRepositoryLoadResult(result.plugins.withSource(), result.error)
+  }
+
   override fun hasPluginRequiresUltimateButItsDisabled(pluginIds: List<PluginId>): Boolean {
     return awaitForResult { PluginManagerApi.getInstance().hasPluginRequiresUltimateButItsDisabled(pluginIds) }
   }
@@ -241,6 +317,10 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
 
   override fun getAllPluginsTags(): Set<String> {
     return awaitForResult { PluginManagerApi.getInstance().getAllPluginsTags() }
+  }
+
+  override suspend fun getMarketplaceTagCounts(): Map<String, Int> {
+    return PluginManagerApi.getInstance().getMarketplaceTagCounts()
   }
 
   override fun getAllVendors(): Set<String> {
@@ -306,6 +386,14 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
       }
     }
   }
+}
+
+private fun PluginDto.toInventoryEntry(): PluginInventoryEntry {
+  source = PluginSource.REMOTE
+  return PluginInventoryEntry(
+    model = this,
+    side = PluginSource.REMOTE,
+  )
 }
 
 

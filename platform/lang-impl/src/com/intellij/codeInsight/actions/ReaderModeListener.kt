@@ -35,7 +35,7 @@ class ReaderModeSettingsListener : ReaderModeListener {
     @JvmField
     val TOPIC: Topic<ReaderModeListener> = Topic(ReaderModeListener::class.java, Topic.BroadcastDirection.NONE)
 
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     fun applyToAllEditors(project: Project) {
       for (editor in FileEditorManager.getInstance(project).allEditors) {
         if (editor is TextEditor) {

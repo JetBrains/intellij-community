@@ -86,10 +86,10 @@ open class LspIntentionAction(protected val lspClient: LspClient, private val in
    * The side effect of this function is that it resolves the [initialCodeAction] if needed,
    * and also fills the auxiliary [uriToDocumentMap] that is used later in the [invoke] function.
    */
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun isAvailable(): Boolean = isAvailable { true }
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun isAvailable(codeActionValidator: (CodeAction) -> Boolean): Boolean {
     codeAction.disabled?.let { return false }
 
@@ -106,7 +106,7 @@ open class LspIntentionAction(protected val lspClient: LspClient, private val in
            codeActionValidator(codeAction)
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private fun resolveCodeAction() {
     if (resolvedCodeAction != null) return
 
@@ -120,7 +120,7 @@ open class LspIntentionAction(protected val lspClient: LspClient, private val in
    * Make sure to call [isAvailable] before calling [invoke],
    * otherwise the auxiliary [uriToDocumentMap] will be not ready and the `CodeAction` will not be applied.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun invoke(contextFile: VirtualFile?) {
     val uriToDocumentMap = this.uriToDocumentMap ?: return
     val files = uriToDocumentMap.map { FileDocumentManager.getInstance().getFile(it.value) }
@@ -143,7 +143,7 @@ open class LspIntentionAction(protected val lspClient: LspClient, private val in
   /**
    * @param uriToDocumentMap it's guaranteed that it contains `Document` objects for URIs from this [workspaceEdit]
    */
-  @RequiresWriteLock
+  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
   protected open fun applyWorkspaceEdit(workspaceEdit: WorkspaceEdit, uriToDocumentMap: Map<String, Document>) {
     workspaceEdit.changes?.let { changes ->
       changes.entries.forEach { entry ->

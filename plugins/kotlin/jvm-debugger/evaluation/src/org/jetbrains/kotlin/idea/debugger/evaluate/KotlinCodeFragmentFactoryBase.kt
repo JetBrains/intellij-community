@@ -5,6 +5,7 @@ import com.intellij.debugger.engine.JavaDebuggerCodeFragmentFactory
 import com.intellij.debugger.engine.evaluation.TextWithImports
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.psi.JavaCodeFragment
@@ -32,7 +33,7 @@ abstract class KotlinCodeFragmentFactoryBase : JavaDebuggerCodeFragmentFactory()
         if (!PsiTreeUtil.hasErrorElements(kotlinCodeFragment) || kotlinCodeFragment !is KtCodeFragment) return kotlinCodeFragment
         val javaExpression = try {
             PsiElementFactory.getInstance(project).createExpressionFromText(item.text, context)
-        } catch (e: IncorrectOperationException) {
+        } catch (_: IncorrectOperationException) {
             null
         }
         val importList = try {
@@ -46,8 +47,13 @@ abstract class KotlinCodeFragmentFactoryBase : JavaDebuggerCodeFragmentFactory()
         }
         val convertedFragment = try {
             val converter = JavaToKotlinConverter(project, javaExpression?.module, ConverterSettings.defaultSettings)
-            val convertedExpression = ActionUtil.underModalProgress(project, KotlinDebuggerEvaluationBundle.message("progress.title.converting.java.expression.to.kotlin")) {
+            val application = ApplicationManager.getApplication()
+            val convertedExpression = if (!application.isDispatchThread() && application.holdsReadLock()) {
                 converter.elementsToKotlin(listOfNotNull(javaExpression))
+            } else {
+                ActionUtil.underModalProgress(project, KotlinDebuggerEvaluationBundle.message("progress.title.converting.java.expression.to.kotlin")) {
+                    converter.elementsToKotlin(listOfNotNull(javaExpression))
+                }
             }
             val newText = convertedExpression.results.singleOrNull()?.text
             val newImports = importList?.text

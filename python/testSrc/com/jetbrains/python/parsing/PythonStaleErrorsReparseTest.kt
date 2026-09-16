@@ -148,6 +148,21 @@ class PythonStaleErrorsReparseTest : PyTestCase() {
     action = IdeActions.ACTION_MOVE_LINE_DOWN_ACTION
   )
 
+  /** Comment out the only statement of a method, so that its body holds only comments. */
+  @TestFor(issues = ["PY-78251"])
+  fun testCommentOutOnlyStatementOfMethod() = doInsertAndRemoveCharTest(
+    source = """
+      class C:
+          def m(self):
+              # TODO
+              pass
+          def other(self):
+              return 2
+    """,
+    anchor = "# TODO\n        ",
+    charToInsert = "# "
+  )
+
   private fun doMoveLineTest(source: String, action: String) = withIncrementalReparse {
     myFixture.configureByText("test.py", source)
     commitAndGetDocument()

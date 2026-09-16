@@ -18,7 +18,6 @@ DONT_TRACE_DIRS = {
     'pydevd_attach_to_process': PYDEV_FILE,
     'pydevd_concurrency_analyser': PYDEV_FILE,
     'pydevd_plugins': PYDEV_FILE,
-    'test_pydevd_reload': PYDEV_FILE,
 }
 
 LIB_FILES_IN_DONT_TRACE_DIRS = {
@@ -97,6 +96,7 @@ DONT_TRACE = {
     'pydevd_additional_thread_info.py': PYDEV_FILE,
     'pydevd_additional_thread_info_regular.py': PYDEV_FILE,
     'pydevd_api.py': PYDEV_FILE,
+    'pydevd_asyncio_provider.py': PYDEV_FILE,
     'pydevd_base_schema.py': PYDEV_FILE,
     'pydevd_breakpoints.py': PYDEV_FILE,
     'pydevd_bytecode_utils.py': PYDEV_FILE,
@@ -112,7 +112,6 @@ DONT_TRACE = {
     'pydevd_custom_frames.py': PYDEV_FILE,
     'pydevd_cython_wrapper.py': PYDEV_FILE,
     'pydevd_daemon_thread.py': PYDEV_FILE,
-    'pydevd_dataset.py': PYDEV_FILE,
     'pydevd_defaults.py': PYDEV_FILE,
     'pydevd_dont_trace.py': PYDEV_FILE,
     'pydevd_dont_trace_files.py': PYDEV_FILE,
@@ -128,28 +127,19 @@ DONT_TRACE = {
     'pydevd_frame_utils.py': PYDEV_FILE,
     'pydevd_gevent_integration.py': PYDEV_FILE,
     'pydevd_helpers.py': PYDEV_FILE,
-    'pydevd_image_loader.py': PYDEV_FILE,
     'pydevd_import_class.py': PYDEV_FILE,
     'pydevd_io.py': PYDEV_FILE,
     'pydevd_json_debug_options.py': PYDEV_FILE,
     'pydevd_line_validation.py': PYDEV_FILE,
-    'pydevd_matplotlib_image.py': PYDEV_FILE,
     'pydevd_modify_bytecode.py': PYDEV_FILE,
     'pydevd_net_command.py': PYDEV_FILE,
     'pydevd_net_command_factory_json.py': PYDEV_FILE,
     'pydevd_net_command_factory_xml.py': PYDEV_FILE,
-    'pydevd_numpy.py': PYDEV_FILE,
-    'pydevd_numpy_based.py': PYDEV_FILE,
-    'pydevd_numpy_based_image.py': PYDEV_FILE,
-    'pydevd_numpy_image.py': PYDEV_FILE,
-    'pydevd_pandas.py': PYDEV_FILE,
-    'pydevd_pillow_image.py': PYDEV_FILE,
     'pydevd_plugin_numpy_types.py': PYDEV_FILE,
     'pydevd_plugin_pandas_types.py': PYDEV_FILE,
     'pydevd_plugin_repr_lib.py': PYDEV_FILE,
     'pydevd_plugin_utils.py': PYDEV_FILE,
     'pydevd_plugins_django_form_str.py': PYDEV_FILE,
-    'pydevd_polars.py': PYDEV_FILE,
     'pydevd_process_net_command.py': PYDEV_FILE,
     'pydevd_process_net_command_json.py': PYDEV_FILE,
     'pydevd_referrers.py': PYDEV_FILE,
@@ -196,5 +186,26 @@ DONT_TRACE['_jb_nosetest_runner.py'] = PYDEV_FILE
 DONT_TRACE['_jb_tox_runner.py'] = PYDEV_FILE
 DONT_TRACE['_jb_trialtest_runner.py'] = PYDEV_FILE
 DONT_TRACE['_jb_runner_tools.py'] = PYDEV_FILE
+
+# Don't trace the helper that reports an unequal value as `EqualsAssertionError` (PY-88218).
+# The debugger must not treat it as the user's own code, so that it can suspend in the
+# failed test itself.
+DONT_TRACE['diff_tools.py'] = PYDEV_FILE
+
+# Don't trace the table and the image helpers of PyCharm. They live in
+# `helpers/pycharm_tables`, so the scan of this directory cannot see them. The launcher of
+# debugpy copies them to the debuggee, and `DONT_TRACE` matches a basename in any directory.
+# `pydevd_tables.py` needs no entry here, because a copy of it lives in `_pydevd_bundle/custom`.
+DONT_TRACE['pydevd_dataset.py'] = PYDEV_FILE
+DONT_TRACE['pydevd_image_loader.py'] = PYDEV_FILE
+DONT_TRACE['pydevd_matplotlib_image.py'] = PYDEV_FILE
+DONT_TRACE['pydevd_numpy.py'] = PYDEV_FILE
+DONT_TRACE['pydevd_numpy_based.py'] = PYDEV_FILE
+DONT_TRACE['pydevd_numpy_based_image.py'] = PYDEV_FILE
+DONT_TRACE['pydevd_numpy_image.py'] = PYDEV_FILE
+DONT_TRACE['pydevd_pandas.py'] = PYDEV_FILE
+DONT_TRACE['pydevd_pillow_image.py'] = PYDEV_FILE
+DONT_TRACE['pydevd_polars.py'] = PYDEV_FILE
+DONT_TRACE['pydevd_tabular_to_xml.py'] = PYDEV_FILE
 
 # fmt: on

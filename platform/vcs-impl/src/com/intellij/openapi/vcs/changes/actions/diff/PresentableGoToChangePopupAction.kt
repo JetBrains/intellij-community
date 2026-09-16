@@ -2,13 +2,11 @@
 package com.intellij.openapi.vcs.changes.actions.diff
 
 import com.intellij.diff.actions.impl.LinkAction
-import com.intellij.diff.tools.util.DiffDataKeys
 import com.intellij.openapi.ListSelection
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.ActionUtil
-import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.ProjectManager
 import org.jetbrains.annotations.ApiStatus
@@ -26,12 +24,12 @@ class PresentableGoToChangePopupAction<T : Any> private constructor(
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun update(e: AnActionEvent) {
-    val changes = getChanges()
+    val counterState = DiffFilesCounterState(getChanges())
     e.presentation.apply {
-      isVisible = e.getData(DiffDataKeys.DIFF_CONTEXT) != null
-      isEnabled = changes.list.size > 1
+      isVisible = true
+      isEnabled = counterState.hasMultipleFiles
       icon = null
-      text = DiffBundle.message("diff.files.count.progress", changes.list.size, changes.selectedIndex + 1)
+      text = counterState.text
     }
   }
 

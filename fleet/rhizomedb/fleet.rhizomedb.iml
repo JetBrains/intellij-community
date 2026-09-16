@@ -28,10 +28,10 @@
     <orderEntry type="module" module-name="fleet.multiplatform.shims" />
     <orderEntry type="module" module-name="fleet.radixTrie" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
-    <orderEntry type="library" name="kotlinx-collections-immutable" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" />
     <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" />
-    <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
-    <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.json" />
     <orderEntry type="module" module-name="fleet.fastutil" />
     <orderEntry type="module" module-name="fleet.openmap" />
   </component>

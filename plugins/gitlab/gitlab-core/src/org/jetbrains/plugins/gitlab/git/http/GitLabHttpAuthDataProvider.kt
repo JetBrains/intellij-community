@@ -27,7 +27,7 @@ import org.jetbrains.plugins.gitlab.authentication.save
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 
 class GitLabHttpAuthDataProvider : GitHttpAuthDataProvider {
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   override fun getAuthData(project: Project, url: String, login: String): AuthData? =
     runBlockingMaybeCancellable {
       when (val loginResult = performLogin(project, url, login)) {
@@ -37,7 +37,7 @@ class GitLabHttpAuthDataProvider : GitHttpAuthDataProvider {
       }
     }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   override fun getAuthData(project: Project, url: String): AuthData? =
     runBlockingMaybeCancellable {
       when (val loginResult = performLogin(project, url)) {

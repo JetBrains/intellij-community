@@ -5,7 +5,7 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.python.black.BlackPyTool
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
 import com.intellij.python.junit5Tests.framework.env.pySdkFixture
-import com.intellij.python.pytools.PyToolsState
+import com.intellij.python.pytools.backend.PyToolsState
 import com.intellij.python.junit5Tests.framework.pyModuleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture

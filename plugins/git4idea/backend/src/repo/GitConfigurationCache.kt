@@ -42,7 +42,7 @@ class GitProjectConfigurationCache(val project: Project) : GitConfigurationCache
     })
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun readRepositoryConfig(root: VirtualFile, key: String): String? {
     return computeCachedValue(RepositoryConfigKey(root, key)) {
       try {
@@ -76,7 +76,7 @@ class GitProjectConfigurationCache(val project: Project) : GitConfigurationCache
 abstract class GitConfigurationCacheBase() : Disposable {
   protected val cache: MutableMap<GitConfigKey<*>, Optional<*>> = ConcurrentHashMap()
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   @Suppress("UNCHECKED_CAST")
   fun <T> computeCachedValue(configKey: GitConfigKey<T>, computeValue: () -> T): T {
     cache[configKey]?.let { return it.getOrNull() as T }

@@ -1,34 +1,13 @@
 package com.intellij.polySymbols.impl
 
-import com.fasterxml.jackson.core.JsonParser
-import com.fasterxml.jackson.databind.DeserializationContext
-import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.deser.std.StringDeserializer
-import com.fasterxml.jackson.databind.module.SimpleModule
-import com.fasterxml.jackson.databind.type.TypeFactory
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolApiStatus
 import com.intellij.polySymbols.PolySymbolNameSegment
 import com.intellij.polySymbols.query.PolySymbolQueryParams
-import com.intellij.polySymbols.webTypes.json.WebTypes
 import com.intellij.util.IconUtil
-import com.intellij.util.containers.Interner
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
-
-
-internal val objectMapper = ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-  .setTypeFactory(TypeFactory.defaultInstance().withClassLoader(WebTypes::class.java.classLoader))
-  .registerModule(SimpleModule().also { module ->
-    val interner = Interner.createStringInterner()
-    module.addDeserializer(String::class.java, object : StringDeserializer() {
-      override fun deserialize(p: JsonParser, ctxt: DeserializationContext): String? {
-        return super.deserialize(p, ctxt)?.let { synchronized(interner) { interner.intern(it) } }
-      }
-    })
-  })
 
 internal fun Icon.scaleToHeight(height: Int): Icon {
   val scale = JBUI.scale(height).toFloat() / this.iconHeight.toFloat()

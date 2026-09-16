@@ -34,9 +34,9 @@ internal class BackendActionInFrontendGroupInspection : DevKitPluginXmlInspectio
 
     if (!isAllowed(holder)) return
 
-    val module = element.module ?: return
+    if (element.module == null) return
     val file = holder.fileElement.file
-    val moduleAnalysis = SplitModeModuleKindResolver.getOrComputeModuleAnalysis(module, file)
+    val moduleAnalysis = SplitModeModuleKindResolver.getOrComputeDescriptorAnalysis(file)
 
     when (element) {
       is AddToGroup -> checkBackendActionAddedToFrontendGroup(element, moduleAnalysis, holder)
@@ -141,8 +141,8 @@ internal class BackendActionInFrontendGroupInspection : DevKitPluginXmlInspectio
   }
 
   private fun ActionOrGroup.isRegisteredInModuleKind(expectedKind: ModuleKind): Boolean {
-    val module = module ?: return false
+    if (module == null) return false
     val descriptor = DomUtil.getFile(this)
-    return SplitModeModuleKindResolver.getOrComputeModuleAnalysis(module, descriptor).resolvedModuleKind.kind == expectedKind
+    return SplitModeModuleKindResolver.getOrComputeDescriptorAnalysis(descriptor).resolvedModuleKind.kind == expectedKind
   }
 }

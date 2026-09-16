@@ -282,6 +282,12 @@ public final class SeverityRegistrar implements Comparator<HighlightSeverity>, M
     }
   }
 
+  /**
+   * Returns every known severity, sorted by the severity index.
+   * The position of a severity in the list is equal to {@link #getSeverityIdx(HighlightSeverity)},
+   * because the index set has no gap. Use the position when you need both the list and the index.
+   * A second call can return a different list, because another thread can change the registrar.
+   */
   public @NotNull List<HighlightSeverity> getAllSeverities() {
     return getSortedSeverities(getOrderMap());
   }

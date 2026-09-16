@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.python.typeEngine` start
+content_module_jar(module = ":typeEngine")
+### auto-generated section `dev intellij.python.typeEngine` end
+
 ### auto-generated section `build intellij.python.typeEngine` start
 jvm_library(
     name = "typeEngine",
@@ -54,12 +58,15 @@ jvm_library(
         "//platform/util:util-ui",
         "//platform/lang-api:lang",
         "//platform/statistics",
-        "//python/python-pytools:pytools",
-        "//python/python-pytools-ui:pytools-ui",
+        "//python/python-pytools/backend",
+        "//python/python-type-engine/common",
+        "//platform/project/shared:project",
+        "//platform/kernel/rpc.backend",
+        "//platform/kernel/backend",
+        "//platform/platform-impl/rpc",
+        "//platform/backend",
     ],
 )
-
-content_module_jar(module = ":typeEngine")
 
 jvm_library(
     name = "typeEngine_test_lib",
@@ -111,8 +118,13 @@ jvm_library(
         "//platform/util:util-ui_test_lib",
         "//platform/lang-api:lang_test_lib",
         "//platform/statistics:statistics_test_lib",
-        "//python/python-pytools:pytools_test_lib",
-        "//python/python-pytools-ui:pytools-ui_test_lib",
+        "//python/python-pytools/backend:backend_test_lib",
+        "//python/python-type-engine/common:common_test_lib",
+        "//platform/project/shared:project_test_lib",
+        "//platform/kernel/rpc.backend:rpc.backend_test_lib",
+        "//platform/kernel/backend:backend_test_lib",
+        "//platform/platform-impl/rpc:rpc_test_lib",
+        "//platform/backend:backend_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.typeEngine` end

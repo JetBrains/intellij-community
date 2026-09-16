@@ -9,6 +9,7 @@ import com.intellij.driver.model.RdTarget
 import com.intellij.driver.sdk.Project
 import com.intellij.driver.sdk.invokeAction
 import com.intellij.driver.sdk.ui.components.UiComponent
+import com.intellij.driver.sdk.ui.components.common.waitForIdeFrameReady
 import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.driver.sdk.ui.remote.REMOTE_ROBOT_MODULE_ID
 import com.intellij.driver.sdk.waitFor
@@ -63,6 +64,15 @@ val UiComponent.boundsOnScreen
     Rectangle(locationOnScreen.x, locationOnScreen.y, c.width, c.height)
   }
 
+/**
+ * Converts a point in screen coordinates into coordinates relative to [component],
+ * so that it can be passed to [UiComponent.click] and friends.
+ */
+fun Point.relativeTo(component: UiComponent): Point {
+  val location = component.component.getLocationOnScreen()
+  return Point(x - location.x, y - location.y)
+}
+
 val UiComponent.accessibleName: String? get() = component.getAccessibleContext()?.getAccessibleName()
 
 val Component.rdTarget get() = (this as RefWrapper).getRef().rdTarget()
@@ -112,6 +122,7 @@ fun Driver.getSystemClipboard(): ClipboardRef = utility(ToolkitRef::class)
 
 
 fun Driver.syncVfs(rdTarget: RdTarget = RdTarget.BACKEND) {
+  waitForIdeFrameReady()
   withWriteAction {
     service<VirtualFileManagerRemote>(rdTarget).syncRefresh()
   }

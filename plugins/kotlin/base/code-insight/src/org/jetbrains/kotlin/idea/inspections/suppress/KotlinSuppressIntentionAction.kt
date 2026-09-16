@@ -11,6 +11,7 @@ import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinBaseCodeInsightBundle
+import org.jetbrains.kotlin.idea.base.psi.appendValueArgument
 import org.jetbrains.kotlin.idea.util.addAnnotation
 import org.jetbrains.kotlin.idea.util.findAnnotation
 import org.jetbrains.kotlin.name.StandardClassIds
@@ -27,7 +28,7 @@ import org.jetbrains.kotlin.psi.KtModifierListOwner
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.psiUtil.replaceFileAnnotationList
+import org.jetbrains.kotlin.idea.base.psi.replaceFileAnnotationList
 
 class KotlinSuppressIntentionAction(
     suppressAt: KtElement,
@@ -108,7 +109,7 @@ class KotlinSuppressIntentionAction(
                     // packageDirective could be empty but suppression still should be added before it to generate consistent PSI
                     ktFile.addBefore(newAnnotationList, packageDirective) as KtFileAnnotationList
                 } else {
-                    replaceFileAnnotationList(ktFile, newAnnotationList)
+                    ktFile.replaceFileAnnotationList(newAnnotationList)
                 }
             ktFile.addAfter(psiFactory.createWhiteSpace(kind), createAnnotationList)
 
@@ -173,7 +174,7 @@ class KotlinSuppressIntentionAction(
             args.arguments.isEmpty() -> // replace '()' with a new argument list
                 args.replace(newArgList)
 
-            else -> args.addArgument(newArgList.arguments[0])
+            else -> args.appendValueArgument(newArgList.arguments[0])
         }
     }
 

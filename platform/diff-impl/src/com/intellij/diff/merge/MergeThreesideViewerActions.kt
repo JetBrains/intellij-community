@@ -54,7 +54,7 @@ internal abstract class ApplySelectedChangesActionBase protected constructor(
     viewer.executeMergeCommand(title, selectedChanges.size > 1, selectedChanges, Runnable { apply(side, selectedChanges) })
   }
 
-  @RequiresWriteLock
+  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
   protected abstract fun apply(side: ThreeSide, changes: List<TextMergeChange>)
 
   fun isSomeChangeSelected(side: ThreeSide): Boolean {
@@ -66,7 +66,7 @@ internal abstract class ApplySelectedChangesActionBase protected constructor(
     })
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   protected open fun getSelectedChanges(side: ThreeSide): List<TextMergeChange> {
     val editor = viewer.getEditor(side)
     val lines = DiffUtil.getSelectedLines(editor)

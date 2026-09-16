@@ -17,5 +17,4 @@ class Bar<T : A?, U : A?> {
 }
 
 // IGNORE_K2
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.HighPriorityMakeUpperBoundNonNullableFix
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.MakeUpperBoundNotNullFix

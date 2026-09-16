@@ -1,0 +1,43 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.frontend"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.progress"/>
+    <module name="intellij.platform.kernel"/>
+    <module name="intellij.platform.project"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.rpc"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.util.ui"/>
+    <module name="intellij.python.parser"/>
+    <module name="intellij.python.pytools.frontend"/>
+    <module name="intellij.python.typeEngine.common"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.python.typeEngine.frontend"
+                    interface="com.intellij.python.typeEngine.frontend.PyTypeEngineFrontend"
+                    dynamic="true"/>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <python.typeEngine.frontend implementation="com.intellij.python.typeEngine.frontend.BuiltInPyTypeEngineFrontend"/>
+    <postStartupActivity implementation="com.intellij.python.typeEngine.frontend.PyTypeEngineFrontendStateStartupActivity"/>
+    <projectConfigurable groupId="python.group.settings"
+                         id="com.intellij.python.lsp.core.PyTypeEngineConfigurable"
+                         bundle="messages.TypeEngineFrontendBundle"
+                         key="display.name"
+                         provider="com.intellij.python.typeEngine.frontend.PyChooserTypeEngineConfigurableProvider"
+                         groupWeight="190"
+                         nonDefaultProject="true"/>
+    <statusBarWidgetFactory id="pythonTypeEngineWidget"
+                            implementation="com.intellij.python.typeEngine.frontend.PyTypeEngineStatusBarWidgetFactory"
+                            order="after CodeStyleStatusBarWidget, before pythonInterpreterWidget"/>
+  </extensions>
+</idea-plugin>

@@ -91,9 +91,6 @@
                         overrides="true"/>
 
     <!--Settings -->
-    <backgroundPostStartupActivity id="PyCharmProjectConfigurableStartupActivity"
-                                   implementation="com.intellij.pycharm.community.ide.impl.PyCharmProjectConfigurableStartupActivity"/>
-
     <projectConfigurable groupId="project"
                          id="com.intellij.pycharm.community.ide.impl.configuration.PythonContentEntriesConfigurable"
                          bundle="messages.PyBundle"
@@ -115,13 +112,6 @@
                        bundle="messages.PyBundle"
                        displayNameKey="settings.python.group.title"
                        descriptionKey="settings.python.group.description"/>
-
-    <groupConfigurable id="python.tools.group.settings"
-                       parentId="python.group.settings"
-                       weight="72"
-                       bundle="messages.PyBundle"
-                       displayNameKey="settings.python.tools.group.title"
-                       descriptionKey="settings.python.tools.group.description"/>
 
     <projectConfigurable groupId="python.group.settings"
                          id="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
@@ -215,7 +205,7 @@
     <!--Non Modal Welcome Screen customization-->
     <action id="welcome.screen.left.tab.new.py.script"
             class="com.intellij.pycharm.community.ide.impl.miscProject.impl.PyNewMiscScriptAction">
-      <add-to-group group-id="NonModalWelcomeScreen.LeftTabActions.New"/>
+      <add-to-group group-id="NonModalWelcomeScreen.LeftTabActions.New" anchor="before" relative-to-action="WelcomeNewEmptyFile"/>
     </action>
   </actions>
 

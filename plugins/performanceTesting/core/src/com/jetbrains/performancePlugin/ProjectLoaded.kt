@@ -175,7 +175,7 @@ private fun subscribeToStopProfile() {
     }
   }
   catch (connectException: ConnectException) {
-    // Some integration tests don't start event bus server. e.g com.jetbrains.rdct.cwm.distributed.connectionTypes.LocalRelayTest
+    // Some integration tests do not start the event bus server.
     LOG.info("Subscription to stop profiling failed", connectException)
   }
 }

@@ -15,7 +15,7 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 
 private const val PM_MP_GROUP_ID = "mp.$PM_FUS_GROUP_ID"
-private const val PM_MP_GROUP_VERSION = 2
+private const val PM_MP_GROUP_VERSION = 3
 private val EVENT_GROUP = EventLogGroup(
   PM_MP_GROUP_ID,
   // this is necessary to be able to change `PM_MP_GROUP_ID` child group without a requirement to update `PM_FUS_GROUP_ID` parent group version.

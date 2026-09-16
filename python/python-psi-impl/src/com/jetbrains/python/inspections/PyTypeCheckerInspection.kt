@@ -329,8 +329,13 @@ open class PyTypeCheckerInspection : PyInspection() {
             }
           }
 
-          val actual = if (returnExpr != null) tryPromotingType(returnExpr, expected) else getInstance(node).noneType
+          val actual = if (returnExpr == null) getInstance(node).noneType else returnExpr.getType(myTypeEvalContext)
           if (!matchesExpectedType(expected, actual, returnExpr, null)) {
+            if (returnExpr != null) {
+              val actualViaPromotion = tryPromotingType(returnExpr, expected)
+              if (matchesExpectedType(expected, actualViaPromotion, returnExpr, null)) return
+            }
+
             PyTypeCheckerProblemReporter.report(holder, PyTypeCheckerSuppressionCode.BAD_RETURN, returnExpr ?: node,
                                                 typeMismatchMessage(expected, actual, returnExpr ?: node),
                                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
@@ -619,7 +624,7 @@ open class PyTypeCheckerInspection : PyInspection() {
         return
       }
 
-      val actual = tryPromotingType(assignedValue, expected)
+      val actual = myTypeEvalContext.getType(assignedValue)
 
       if (expected is PySentinelType) {
         if (actual.isObject) return
@@ -631,8 +636,9 @@ open class PyTypeCheckerInspection : PyInspection() {
         // for instance for an un-annotated `x = [1, [1]]`. If the value's natural (un-promoted) type already
         // matches the expected type, the fresh literal is assignable and there is no real mismatch.
         // temporary special casing to avoid Literal problems PY-90366
-        val naturalType = myTypeEvalContext.getType(assignedValue)
-        if (naturalType != actual && matchesExpectedType(expected, naturalType, assignedValue, null)) {
+        val promotedType = tryPromotingType(assignedValue, expected)
+        if (promotedType != actual && matchesExpectedType(expected, promotedType, assignedValue, null)) {
+          // fallback/promotion approach succeeded
           return
         }
         val message = if (isDescriptor) {
@@ -915,11 +921,15 @@ open class PyTypeCheckerInspection : PyInspection() {
         findInheritedParameterAnnotationType(node) ?: return
       }
       val expected = expectedRef.get()
-      val actual = tryPromotingType(defaultValue, expected)
+      val actual = myTypeEvalContext.getType(defaultValue)
 
       if (actual is PySentinelType) return
 
       if (!matchesExpectedType(expected, actual, defaultValue, null)) {
+        val promotedType = tryPromotingType(defaultValue, expected)
+        if (promotedType != actual && matchesExpectedType(expected, promotedType, defaultValue, null)) {
+          return // fallback/promotion approach succeeded
+        }
         PyTypeCheckerProblemReporter.report(
           holder,
           PyTypeCheckerSuppressionCode.BAD_ASSIGNMENT,
@@ -1685,7 +1695,7 @@ open class PyTypeCheckerInspection : PyInspection() {
       val unexpectedArgumentForParamSpecs = ArrayList<UnexpectedArgumentForParamSpec>()
       val unfilledParameterFromParamSpecs = ArrayList<UnfilledParameterFromParamSpec>()
 
-      val substitutions = unifyReceiver(mapping, myTypeEvalContext)
+      var substitutions = unifyReceiver(mapping, myTypeEvalContext)
 
       val mappedParameters = mapping.mappedParameters
       val regularMappedParameters =
@@ -1695,8 +1705,7 @@ open class PyTypeCheckerInspection : PyInspection() {
         val argument: PyExpression = entry.key!!
         val parameter: PyCallableParameter = entry.value
         val expected = parameter.getArgumentType(myTypeEvalContext)
-        val promotedToLiteral = promoteToLiteral(argument, expected, myTypeEvalContext, substitutions)
-        val actual = promotedToLiteral.takeUnless { isUnknown(it, myTypeEvalContext) } ?: myTypeEvalContext.getType(argument)
+        val actual = myTypeEvalContext.getType(argument)
 
         if (expected is PyParamSpecType) {
           val allArguments = callSite.getArguments(callableType.callable)
@@ -1744,8 +1753,24 @@ open class PyTypeCheckerInspection : PyInspection() {
           break
         }
         else {
-          val matched = matchParameterAndArgument(expected, actual, argument, substitutions)
-          result.add(AnalyzeArgumentResult(argument, parameter, expected, substituteGenerics(expected, substitutions), actual, matched))
+          val substitutionsCopy = substitutions.addToCopy() // avoid pollution during match call
+          val matched = matchParameterAndArgument(expected, actual, argument, substitutionsCopy)
+          val actualPromoted = if (matched) actual else {
+            // fallback/promotion approach: only worth trying if the plain match failed
+            val promoted = promoteToLiteral(argument, expected, myTypeEvalContext, substitutions)
+            if (isUnknown(promoted, myTypeEvalContext)) actual else promoted
+          }
+          val isMatched = if (actualPromoted == actual) {
+            substitutions = substitutionsCopy
+            matched
+          }
+          else {
+            // promoted type differs: re-match against the original substitutions
+            matchParameterAndArgument(expected, actualPromoted, argument, substitutions)
+          }
+
+          val expectedSubstituted = substituteGenerics(expected, substitutions)
+          result.add(AnalyzeArgumentResult(argument, parameter, expected, expectedSubstituted, actualPromoted, isMatched))
         }
       }
 

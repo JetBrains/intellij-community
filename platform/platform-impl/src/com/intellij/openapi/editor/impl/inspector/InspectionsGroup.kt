@@ -67,12 +67,12 @@ class InspectionsGroup(
   companion object {
     @JvmField
     val INSPECTION_TYPED_ERROR: DataKey<StatusItem> = DataKey.create<StatusItem>("INSPECTION_TYPED_ERROR")
-    private val idCounter = AtomicInteger(0)
+    private val idCounter: AtomicInteger = AtomicInteger(0)
   }
 
-  private val actionList = mutableListOf<InspectionAction>()
+  private val actionList: MutableList<InspectionAction> = mutableListOf<InspectionAction>()
   private var base: InspectionsBaseAction? = null
-  private val fusTabId = idCounter.incrementAndGet()
+  private val fusTabId: Int = idCounter.incrementAndGet()
   private var myInspectionsSettingAction: InspectionsSettingAction = InspectionsSettingAction(analyzerGetter, fusTabId)
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
@@ -242,11 +242,11 @@ class InspectionsGroup(
 
   internal class InspectionAction(item: StatusItem, editor: EditorImpl, actionLink: Link? = null, fusTabId: Int) : InspectionsBaseAction(item, editor, actionLink = actionLink, fusTabId = fusTabId) {
     companion object {
-      private val leftRight = DaemonBundle.message("iw.inspection.next.previous", convertSC("Left Click"), convertSC("Right Click"))
+      private val leftRight: @Nls String = DaemonBundle.message("iw.inspection.next.previous", convertSC("Left Click"), convertSC("Right Click"))
       private val url: String = "https://surveys.jetbrains.com/s3/inspection-widget-feedback-form"
 
-      private const val PREVIOUS_ACTION_ID = "GotoPreviousError"
-      private const val NEXT_ACTION_ID = "GotoNextError"
+      private const val PREVIOUS_ACTION_ID: String = "GotoPreviousError"
+      private const val NEXT_ACTION_ID: String = "GotoNextError"
 
       private fun convertSC(str: String): String {
         return "<span style=\"color: ${ColorUtil.toHex(UIUtil.getToolTipForeground())};\"><b>$str</b></span>"

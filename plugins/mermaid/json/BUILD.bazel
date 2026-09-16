@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.mermaid.json` start
+content_module_jar(module = ":json")
+### auto-generated section `dev intellij.mermaid.json` end
+
 ### auto-generated section `build intellij.mermaid.json` start
 jvm_library(
     name = "json",
@@ -29,8 +33,6 @@ jvm_library(
         "//json/backend",
     ],
 )
-
-content_module_jar(module = ":json")
 
 jvm_library(
     name = "json_test_lib",

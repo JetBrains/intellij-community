@@ -6,6 +6,8 @@ import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
+import org.jetbrains.kotlin.idea.base.psi.setPropertyInitializer
+import org.jetbrains.kotlin.idea.base.psi.setPropertyTypeReference
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -43,11 +45,11 @@ object UnfoldPropertyUtils {
         val assignment = parent.addAfter(expression, property) as KtBinaryExpression
         parent.addAfter(psiFactory.createNewLine(), property)
 
-        property.initializer = null
+        property.setPropertyInitializer(null)
 
         if (propertyTypeAsString != null) {
             val typeReference = psiFactory.createType(propertyTypeAsString)
-            property.setTypeReference(typeReference)?.let { ShortenReferencesFacility.getInstance().shorten(it) }
+            property.setPropertyTypeReference(typeReference)?.let { ShortenReferencesFacility.getInstance().shorten(it) }
         }
         return assignment
     }

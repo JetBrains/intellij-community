@@ -935,6 +935,7 @@ package org.jetbrains.jewel.foundation.theme {
     method @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public java.util.UUID getInstanceUuid();
     method @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public String getName();
     method @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public boolean isDark();
+    method @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public boolean isIslands();
     method @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public boolean isSwingCompatMode();
     property @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public androidx.compose.ui.text.TextStyle consoleTextStyle;
     property public androidx.compose.ui.graphics.Color contentColor;
@@ -944,6 +945,7 @@ package org.jetbrains.jewel.foundation.theme {
     property @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public org.jetbrains.jewel.foundation.GlobalMetrics globalMetrics;
     property @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public java.util.UUID instanceUuid;
     property @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public boolean isDark;
+    property @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public boolean isIslands;
     property @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public boolean isSwingCompatMode;
     property @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public String name;
   }
@@ -1018,7 +1020,7 @@ package org.jetbrains.jewel.foundation.theme {
   }
 
   @androidx.compose.runtime.Immutable @org.jetbrains.jewel.foundation.GenerateDataFunctions public final class ThemeDefinition {
-    ctor @KotlinOnly public ThemeDefinition(String name, boolean isDark, org.jetbrains.jewel.foundation.GlobalColors globalColors, org.jetbrains.jewel.foundation.GlobalMetrics globalMetrics, androidx.compose.ui.text.TextStyle defaultTextStyle, androidx.compose.ui.text.TextStyle editorTextStyle, androidx.compose.ui.text.TextStyle consoleTextStyle, androidx.compose.ui.graphics.Color contentColor, org.jetbrains.jewel.foundation.theme.ThemeColorPalette colorPalette, org.jetbrains.jewel.foundation.theme.ThemeIconData iconData, org.jetbrains.jewel.foundation.DisabledAppearanceValues disabledAppearanceValues);
+    ctor @KotlinOnly public ThemeDefinition(String name, boolean isDark, org.jetbrains.jewel.foundation.GlobalColors globalColors, org.jetbrains.jewel.foundation.GlobalMetrics globalMetrics, androidx.compose.ui.text.TextStyle defaultTextStyle, androidx.compose.ui.text.TextStyle editorTextStyle, androidx.compose.ui.text.TextStyle consoleTextStyle, androidx.compose.ui.graphics.Color contentColor, org.jetbrains.jewel.foundation.theme.ThemeColorPalette colorPalette, org.jetbrains.jewel.foundation.theme.ThemeIconData iconData, org.jetbrains.jewel.foundation.DisabledAppearanceValues disabledAppearanceValues, boolean isIslands);
     method public org.jetbrains.jewel.foundation.theme.ThemeColorPalette getColorPalette();
     method public androidx.compose.ui.text.TextStyle getConsoleTextStyle();
     method public androidx.compose.ui.text.TextStyle getDefaultTextStyle();
@@ -1029,6 +1031,7 @@ package org.jetbrains.jewel.foundation.theme {
     method public org.jetbrains.jewel.foundation.theme.ThemeIconData getIconData();
     method public String getName();
     method public boolean isDark();
+    method public boolean isIslands();
     property public org.jetbrains.jewel.foundation.theme.ThemeColorPalette colorPalette;
     property public androidx.compose.ui.text.TextStyle consoleTextStyle;
     property public androidx.compose.ui.graphics.Color contentColor;
@@ -1039,6 +1042,7 @@ package org.jetbrains.jewel.foundation.theme {
     property public org.jetbrains.jewel.foundation.GlobalMetrics globalMetrics;
     property public org.jetbrains.jewel.foundation.theme.ThemeIconData iconData;
     property public boolean isDark;
+    property public boolean isIslands;
     property public String name;
   }
 

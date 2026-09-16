@@ -33,6 +33,10 @@
     <orderEntry type="module" module-name="intellij.json" />
     <orderEntry type="module" module-name="intellij.yaml" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.python.community.impl.pipenv.common" />
+    <orderEntry type="module" module-name="intellij.python.community.impl.conda.common" />
+    <orderEntry type="module" module-name="intellij.python.venv.common" />
+    <orderEntry type="module" module-name="intellij.python.hatch.common" />
     <orderEntry type="module" module-name="intellij.platform.analysis" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle" />
     <orderEntry type="module" module-name="intellij.platform.concurrency" />
@@ -122,7 +126,6 @@
     <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" />
     <orderEntry type="module" module-name="intellij.libraries.fastutil" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
-    <orderEntry type="module" module-name="intellij.libraries.jcef" />
     <orderEntry type="module" module-name="intellij.libraries.jna" />
     <orderEntry type="module" module-name="intellij.toml" />
     <orderEntry type="module" module-name="intellij.toml.core" />
@@ -165,7 +168,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
     <orderEntry type="module" module-name="intellij.commandInterface" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.syntax" />
-    <orderEntry type="module" module-name="intellij.platform.ui.jcef" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.io" />
     <orderEntry type="module" module-name="intellij.platform.util.progress" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
@@ -191,7 +193,6 @@
     <orderEntry type="module" module-name="intellij.libraries.commons.lang3" />
     <orderEntry type="module" module-name="intellij.python.community.helpersLocator" />
     <orderEntry type="module" module-name="intellij.python.community.execService.python" />
-    <orderEntry type="module" module-name="intellij.python.community.interpreters" />
     <orderEntry type="module" module-name="intellij.python.community.impl.poetry.common" />
     <orderEntry type="module" module-name="intellij.python.uv.common" />
     <orderEntry type="module" module-name="intellij.python.community.common" />
@@ -205,7 +206,8 @@
     <orderEntry type="module" module-name="intellij.python.community.impl.conda" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" />
     <orderEntry type="module" module-name="intellij.python.requirements.backend" exported="" />
-    <orderEntry type="module" module-name="intellij.python.pytools" />
+    <orderEntry type="module" module-name="intellij.python.pytools.common" />
+    <orderEntry type="module" module-name="intellij.python.pytools.backend" />
     <orderEntry type="module" module-name="intellij.python.uv.backend" />
     <orderEntry type="module" module-name="intellij.platform.testIntegration" />
     <orderEntry type="module" module-name="intellij.platform.testIntegration.ui" />

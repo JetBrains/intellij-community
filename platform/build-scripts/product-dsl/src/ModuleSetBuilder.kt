@@ -41,12 +41,10 @@ import com.intellij.platform.pluginGraph.PluginId
 import com.intellij.platform.pluginGraph.PluginModuleId
 import com.intellij.platform.pluginGraph.contentName
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import org.jetbrains.intellij.build.ModuleOutputProvider
+import org.jetbrains.intellij.build.productLayout.discovery.ModuleSetSourceLabels
 import org.jetbrains.intellij.build.productLayout.discovery.discoverModuleSets
 import org.jetbrains.intellij.build.productLayout.stats.FileChangeStatus
 import org.jetbrains.intellij.build.productLayout.stats.ModuleSetFileResult
@@ -55,6 +53,7 @@ import org.jetbrains.intellij.build.productLayout.util.FileUpdateStrategy
 import org.jetbrains.intellij.build.productLayout.xml.buildModuleAliasesXml
 import org.jetbrains.intellij.build.productLayout.xml.collectAllAliases
 import org.jetbrains.intellij.build.productLayout.xml.withEditorFold
+import org.jetbrains.intellij.build.mapConcurrent
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import java.nio.file.Files
 import java.nio.file.Path
@@ -186,8 +185,8 @@ class ModuleSetBuilder(private val defaultIncludeDependencies: Boolean = false) 
  * }
  *
  * // With module alias:
- * fun xml() = moduleSet("xml", alias = "com.intellij.modules.xml") {
- *   embeddedModule("intellij.xml.dom")
+ * fun xmlWithoutStructureView() = moduleSet("xml.without.structureView", alias = "com.intellij.modules.xml") {
+ *   module("intellij.xml.dom")
  *   // ...
  * }
  *
@@ -295,13 +294,18 @@ private fun appendModuleSetContent(
  * Builds the XML content for a module set.
  *
  * @param moduleSet The module set to build XML for
- * @param label Description label ("community" or "ultimate") for header generation
+ * @param label Discovery label ("community", "core", "libraries" or "ultimate") that names the source file in the header
  * @return ModuleSetBuildResult containing XML and direct module count
  */
 internal fun buildModuleSetXml(moduleSet: ModuleSet, label: String): ModuleSetBuildResult {
   val xml = buildString {
     // Add generated file header
-    val mainClass = if (label == "community") "CommunityModuleSets" else "UltimateModuleSets"
+    val mainClass = when (label) {
+      ModuleSetSourceLabels.COMMUNITY -> "CommunityModuleSets"
+      ModuleSetSourceLabels.CORE -> "CoreModuleSets"
+      ModuleSetSourceLabels.LIBRARIES -> "LibraryModuleSets"
+      else -> "UltimateModuleSets"
+    }
     append("<!-- DO NOT EDIT: This file is auto-generated from Kotlin code -->\n")
     append("<!-- To regenerate, run: `Generate Product Layouts` or `bazel run //platform/buildScripts:plugin-model-tool` -->\n")
     append("<!-- Source: see moduleSet(\"${moduleSet.name}\") function in ${mainClass}.kt -->\n")
@@ -414,25 +418,23 @@ private fun resolveOutputDir(moduleSet: ModuleSet, defaultOutputDir: Path, outpu
  * Automatically cleans up outdated module set XML files that no longer have corresponding
  * Kotlin module set functions.
  */
-internal suspend fun doGenerateAllModuleSetsInternal(
+internal fun doGenerateAllModuleSetsInternal(
   obj: Any,
   outputDir: Path,
   label: String,
   outputProvider: ModuleOutputProvider? = null,
   strategy: FileUpdateStrategy,
 ): ModuleSetGenerationResult {
-  return coroutineScope {
+  return run {
     Files.createDirectories(outputDir)
 
     val moduleSetsToGenerate = discoverModuleSets(obj)
 
     // Generate all module set XML files first (in parallel)
-    val fileResults = moduleSetsToGenerate.map { moduleSet ->
-      async {
-        val targetOutputDir = resolveOutputDir(moduleSet, outputDir, outputProvider)
-        generateModuleSetXml(moduleSet = moduleSet, outputDir = targetOutputDir, label = label, strategy = strategy)
-      }
-    }.awaitAll()
+    val fileResults = moduleSetsToGenerate.mapConcurrent { moduleSet ->
+      val targetOutputDir = resolveOutputDir(moduleSet, outputDir, outputProvider)
+      generateModuleSetXml(moduleSet = moduleSet, outputDir = targetOutputDir, label = label, strategy = strategy)
+    }
 
     // Build map of output directory -> generated file names (for cleanup aggregation)
     val outputDirToGeneratedFiles = HashMap<Path, MutableSet<String>>()

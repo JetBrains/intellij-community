@@ -36,7 +36,6 @@ import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.isIdentifier
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class KotlinFirExtractFunctionHandler(
     private val acceptAllScopes: Boolean = false,
@@ -112,7 +111,7 @@ class KotlinFirExtractFunctionHandler(
         targetSibling: PsiElement
     ) {
 
-        val adjustedElements = elements.singleOrNull().safeAs<KtBlockExpression>()?.statements ?: elements
+        val adjustedElements = (elements.singleOrNull() as? KtBlockExpression)?.statements ?: elements
         if (adjustedElements.isEmpty()) return
         val data = ActionUtil.underModalProgress(file.project, KotlinBundle.message("fix.change.signature.prepare")) {
             ExtractionData(file, adjustedElements.toRange(false), targetSibling)

@@ -4,7 +4,6 @@ package com.intellij.accessibility
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.isSupportScreenReadersOverridden
 import com.intellij.ide.ui.laf.setEarlyUiLaF
-import com.intellij.jna.JnaLoader
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.components.serviceAsync
@@ -65,8 +64,8 @@ object AccessibilityUtils {
 
   private fun isScreenReaderDetected(): Boolean = when (OS.CURRENT) {
     OS.Windows -> isWindowsScreenReaderEnabled()
-    OS.macOS -> JnaLoader.isLoaded() && isMacVoiceOverEnabled()
-    OS.Linux -> JnaLoader.isLoaded() && LinuxAccessibilitySupport.isLinuxScreenReaderEnabled()
+    OS.macOS -> Foundation.isAvailable() && isMacVoiceOverEnabled()
+    OS.Linux -> LinuxAccessibilitySupport.isLinuxScreenReaderEnabled()
     else -> false
   }
 

@@ -3,6 +3,8 @@
 
 package com.intellij.platform.buildScripts.testFramework
 
+import org.jetbrains.intellij.build.BuildLifetime
+
 import com.intellij.openapi.application.PathManager
 import org.assertj.core.api.SoftAssertions
 import org.assertj.core.api.junit.jupiter.SoftAssertionsExtension
@@ -11,7 +13,6 @@ import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.ProprietaryBuildTools
 import org.jetbrains.intellij.build.impl.ModuleStructureValidator
 import org.jetbrains.intellij.build.impl.createDistributionBuilderState
-import org.jetbrains.intellij.build.runBlockingOnVirtualThreads
 import org.jetbrains.jps.model.java.JpsJavaDependencyScope
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -29,35 +30,39 @@ abstract class IdeStructureTestBase {
 
   data class MissingModuleException(val fromModule: String, val toModule: String, val scope: JpsJavaDependencyScope)
 
-  private fun createBuildContext(): BuildContext {
+  private fun createBuildContext(lifetime: BuildLifetime): BuildContext {
     val productProperties = createProductProperties(projectHome)
-    return runBlockingOnVirtualThreads {
-      createBuildContext(homeDir = projectHome, productProperties = productProperties, buildTools = createBuildTools())
+    return run {
+      createBuildContext(lifetime = lifetime, homeDir = projectHome, productProperties = productProperties, buildTools = createBuildTools())
     }
   }
 
   @Test
   fun moduleStructureValidation(softly: SoftAssertions) {
-    val context = createBuildContext()
-    val state = runBlockingOnVirtualThreads {
-      createDistributionBuilderState(context = context)
-    }
+    BuildLifetime().use { lifetime ->
 
-    println("Packed modules:")
-    for (item in state.platformLayout.includedModules) {
-      println("  ${item.moduleName} ${item.relativeOutputFile}")
-    }
-
-    val validator = ModuleStructureValidator(context, state.platformLayout.includedModules)
-    val errors = runBlockingOnVirtualThreads { validator.validate() }
-    val expectedMissingModuleMessages = missingModulesException.mapTo(HashSet()) {
-      "Missing dependency found: ${it.fromModule} -> ${it.toModule} [${it.scope.name}]"
-    }
-    for (error in errors) {
-      if (error.message in expectedMissingModuleMessages) {
-        continue
+      val context = createBuildContext(lifetime = lifetime)
+      val state = run {
+        createDistributionBuilderState(context = context)
       }
-      softly.collectAssertionError(error)
+
+      println("Packed modules:")
+      for (item in state.platformLayout.includedModules) {
+        println("  ${item.moduleName} ${item.relativeOutputFile}")
+      }
+
+      val validator = ModuleStructureValidator(context, state.platformLayout.includedModules)
+      val errors = run { validator.validate() }
+      val expectedMissingModuleMessages = missingModulesException.mapTo(HashSet()) {
+        "Missing dependency found: ${it.fromModule} -> ${it.toModule} [${it.scope.name}]"
+      }
+      for (error in errors) {
+        if (error.message in expectedMissingModuleMessages) {
+          continue
+        }
+        softly.collectAssertionError(error)
+      }
+
     }
   }
 }

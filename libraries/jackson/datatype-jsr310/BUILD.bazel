@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.jackson.datatype.jsr310` start
+content_module_jar(
+    libraries = ["@lib//:libraries-jackson-datatype-jsr310-jackson-datatype-jsr310"],
+    module = ":libraries-jackson-datatype-jsr310",
+)
+### auto-generated section `dev intellij.libraries.jackson.datatype.jsr310` end
+
 ### auto-generated section `build intellij.libraries.jackson.datatype.jsr310` start
 jvm_library(
     name = "libraries-jackson-datatype-jsr310",
@@ -20,11 +27,6 @@ jvm_library(
         "@lib//:libraries-jackson-datatype-jsr310-jackson-datatype-jsr310",
         "//libraries/jackson/jackson",
     ],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-jackson-datatype-jsr310-jackson-datatype-jsr310"],
-    module = ":libraries-jackson-datatype-jsr310",
 )
 
 jvm_library(
@@ -51,7 +53,6 @@ exports_files(
     [
         "intellij.libraries.jackson.datatype.jsr310.iml",
         "resources/intellij.libraries.jackson.datatype.jsr310.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

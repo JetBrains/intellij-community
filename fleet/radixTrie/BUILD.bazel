@@ -17,6 +17,10 @@ fleet_wasmjs_module(
     ],
 )
 
+### auto-generated section `dev fleet.radixTrie` start
+content_module_jar(module = ":radixTrie")
+### auto-generated section `dev fleet.radixTrie` end
+
 ### auto-generated section `build fleet.radixTrie` start
 create_kotlinc_options(
     name = "custom_radixTrie",
@@ -47,12 +51,10 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinx-serialization-core",
+        "//libraries/kotlinx/serialization/core",
         "//fleet/util/serialization",
     ],
 )
-
-content_module_jar(module = ":radixTrie")
 
 jvm_library(
     name = "radixTrie_test_lib",
@@ -67,6 +69,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":radixTrie",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
         "//fleet/util/serialization:serialization_test_lib",
         "//fleet/test-runtime",
         "//fleet/test-runtime:test-runtime_test_lib",
@@ -79,7 +82,6 @@ exports_files(
     [
         "fleet.radixTrie.iml",
         "resources/fleet.radixTrie.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

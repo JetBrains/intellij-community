@@ -18,7 +18,6 @@ import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 
 @Suppress("JUnitTestCaseWithNoTests")
@@ -85,20 +84,6 @@ open class BaseTestCase {
 
   fun resetGrazieConfiguration() {
     GrazieConfig.update { GrazieConfig.State() }
-  }
-
-  protected fun checkIntention(fileName: String, nameHint: String, before: String, after: String) {
-    myFixture.configureByText(fileName, before)
-    myFixture.launchAction(findSingleIntention(nameHint))
-    myFixture.checkResult(after)
-  }
-
-  protected fun checkIntentionIsAbsent(fileName: String, nameHint: String?, text: String) {
-    myFixture.configureByText(fileName, text)
-    Assertions.assertFalse(
-      availableIntentions.any { it.text == nameHint },
-      "$nameHint should not be available"
-    )
   }
 
   protected fun findSingleIntention(nameHint: String): IntentionAction {

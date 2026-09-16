@@ -476,7 +476,7 @@ internal class GitWorkingTreeDialog(
     }
 
     @VisibleForTesting
-    @RequiresBackgroundThread
+    @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
     internal fun validateWorktreePath(parentPath: String, dirName: String): @NlsContexts.DialogMessage String? {
       validateWorktreeParentPath(parentPath)?.let { return it }
       val parent = Paths.get(parentPath)

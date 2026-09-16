@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.buildScripts.testFramework
 
+import org.jetbrains.intellij.build.BuildLifetime
+
 import com.intellij.util.xml.dom.readXmlAsModel
 import org.assertj.core.api.SoftAssertions
 import org.jetbrains.intellij.build.BuildContext
@@ -8,39 +10,41 @@ import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.ProprietaryBuildTools
 import org.jetbrains.intellij.build.impl.collectPluginDescriptors
 import org.jetbrains.intellij.build.impl.createBuildContext
-import org.jetbrains.intellij.build.runBlockingOnVirtualThreads
 import java.nio.file.Path
 
 fun runEssentialPluginsTest(
   homePath: Path,
   productProperties: ProductProperties,
   buildTools: ProprietaryBuildTools,
-): Unit = runBlockingOnVirtualThreads {
-  val buildContext = createBuildContext(
-    projectHome = homePath,
-    productProperties = productProperties,
-    setupTracer = false,
-    proprietaryBuildTools = buildTools,
-    options = createBuildOptionsForTest(productProperties, homePath),
-  )
-  val essentialPlugins = readXmlAsModel(buildContext.appInfoXml.toByteArray()).children.filter { it.name == "essential-plugin" }.mapNotNull { it.content }
-  val softly = SoftAssertions()
-  println("Essential plugins: ${essentialPlugins.joinToString(", ")}")
-  val pluginById = getPluginByIdMap(buildContext)
-  for (essentialPlugin in essentialPlugins) {
-    val essentialPluginDescription = pluginById[essentialPlugin]
-    if (essentialPluginDescription == null) {
-      continue
-    }
+): Unit = BuildLifetime().use { lifetime ->
+  run {
+    val buildContext = createBuildContext(
+      lifetime = lifetime,
+      projectHome = homePath,
+      productProperties = productProperties,
+      setupTracer = false,
+      proprietaryBuildTools = buildTools,
+      options = createBuildOptionsForTest(productProperties, homePath),
+    )
+    val essentialPlugins = readXmlAsModel(buildContext.appInfoXml.toByteArray()).children.filter { it.name == "essential-plugin" }.mapNotNull { it.content }
+    val softly = SoftAssertions()
+    println("Essential plugins: ${essentialPlugins.joinToString(", ")}")
+    val pluginById = getPluginByIdMap(buildContext)
+    for (essentialPlugin in essentialPlugins) {
+      val essentialPluginDescription = pluginById[essentialPlugin]
+      if (essentialPluginDescription == null) {
+        continue
+      }
 
-    essentialPluginDescription.requiredDependencies.filter { it in pluginById }.forEach { requiredPlugin ->
-      println("$essentialPlugin depends on $requiredPlugin")
-      if (requiredPlugin !in essentialPlugins) {
-        softly.fail("$essentialPlugin depends on non-essential plugin $requiredPlugin")
+      essentialPluginDescription.requiredDependencies.filter { it in pluginById }.forEach { requiredPlugin ->
+        println("$essentialPlugin depends on $requiredPlugin")
+        if (requiredPlugin !in essentialPlugins) {
+          softly.fail("$essentialPlugin depends on non-essential plugin $requiredPlugin")
+        }
       }
     }
+    softly.assertAll()
   }
-  softly.assertAll()
 }
 
 private data class PluginDescription(
@@ -48,7 +52,7 @@ private data class PluginDescription(
   val requiredDependencies: Set<String> = emptySet(),
 )
 
-private suspend fun getPluginByIdMap(context: BuildContext): Map<String, PluginDescription> {
+private fun getPluginByIdMap(context: BuildContext): Map<String, PluginDescription> {
   val pluginMap = collectPluginDescriptors(
     skipImplementationDetails = true,  // it's not possible to disable implementation detail plugins
     skipBundled = false,

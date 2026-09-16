@@ -16,7 +16,7 @@ import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsRepositoryLibraryType
 import org.jetbrains.jps.model.module.JpsModule
 
-internal suspend fun createLibraryLicensesListGenerator(
+internal fun createLibraryLicensesListGenerator(
   context: BuildContext,
   licenseList: List<LibraryLicense>,
   usedModulesNames: Set<String>,

@@ -20,11 +20,6 @@ jvm_library(
     kotlinc_opts = ":custom_testFramework",
     module_name = "intellij.platform.buildScripts.testFramework",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//libraries/byte-buddy",
-        "//libraries/byte-buddy/agent",
-    ],
     deps = [
         # do not sort,
         "//platform/build-scripts",
@@ -44,7 +39,6 @@ jvm_library(
         "//libraries/junit5",
         "//libraries/assertj-core",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
-        "//libraries/kotlinx/coroutines/core",
         "//libraries/kotlinx/serialization/core",
         "//libraries/kotlinx/serialization/json",
         "//libraries/kaml",
@@ -96,7 +90,6 @@ jvm_library(
         "//libraries/junit5:junit5_test_lib",
         "//libraries/assertj-core:assertj-core_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//libraries/kotlinx/serialization/json:json_test_lib",
         "//libraries/kaml:kaml_test_lib",
@@ -116,8 +109,6 @@ jvm_library(
         "//platform/util/zip:zip_test_lib",
         "//platform/distribution-content:distribution-content_test_lib",
         "//platform/build-scripts/licenses:licenses_test_lib",
-        "//libraries/byte-buddy:byte-buddy_test_lib",
-        "//libraries/byte-buddy/agent:agent_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.buildScripts.testFramework` end

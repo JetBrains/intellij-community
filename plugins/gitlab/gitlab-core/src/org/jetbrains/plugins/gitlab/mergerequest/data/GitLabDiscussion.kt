@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.gitlab.mergerequest.data
 
 import com.intellij.collaboration.async.AddedLast
-import com.intellij.collaboration.async.Change
+import com.intellij.collaboration.async.ListChange
 import com.intellij.collaboration.async.Deleted
 import com.intellij.collaboration.async.childScope
 import com.intellij.collaboration.async.mapDataToModel
@@ -78,11 +78,11 @@ class LoadedGitLabDiscussion(
   glMetadata: GitLabServerMetadata?,
   private val projectId: String,
   private val currentUser: GitLabUserDTO,
-  private val eventSink: suspend (Change<GitLabDiscussionRestDTO>) -> Unit,
-  private val draftNotesEventSink: suspend (Change<GitLabMergeRequestDraftNoteRestDTO>) -> Unit,
+  private val eventSink: suspend (ListChange<GitLabDiscussionRestDTO>) -> Unit,
+  private val draftNotesEventSink: suspend (ListChange<GitLabMergeRequestDraftNoteRestDTO>) -> Unit,
   private val mr: GitLabMergeRequest,
   discussionData: GitLabDiscussionRestDTO,
-  draftNotes: Flow<List<GitLabMergeRequestDraftNote>>,
+  draftNotes: Flow<Result<List<GitLabMergeRequestDraftNote>>>,
 ) : GitLabMergeRequestDiscussion {
   init {
     require(discussionData.notes.isNotEmpty()) { "Discussion with empty notes" }
@@ -134,11 +134,11 @@ class LoadedGitLabDiscussion(
         },
         MutableGitLabMergeRequestNote::update
       ).combine(draftNotes) { notes, draftNotes ->
-        notes + draftNotes
+        notes + draftNotes.getOrNull().orEmpty()
       }.stateInNow(cs, emptyList())
 
   override val canAddNotes: StateFlow<Boolean> = draftNotes
-    .map { it.isEmpty() && mr.details.value.userPermissions.createNote }
+    .map { (it.getOrNull()?.isEmpty() ?: false) && mr.details.value.userPermissions.createNote }
     .stateIn(cs, SharingStarted.Lazily, false)
   override val canAddDraftNotes: Boolean =
     mr.details.value.userPermissions.createNote &&
@@ -159,7 +159,7 @@ class LoadedGitLabDiscussion(
       operationsGuard.withLock {
         val resolved = resolved.first()
         val result = withContext(Dispatchers.IO) {
-          api.rest.changeMergeRequestDiscussionResolve(projectId, mr.iid, id.restId, !resolved).body()
+          api.rest.changeMergeRequestDiscussionResolve(projectId, mr.iid, id.restId, !resolved)
         }
         noteEvents.emit(GitLabNoteEvent.Changed(result.notes))
         if (mr.details.value.onlyAllowMergeIfAllDiscussionsAreResolved) {
@@ -172,7 +172,7 @@ class LoadedGitLabDiscussion(
   override suspend fun addNote(body: String) {
     withContext(cs.coroutineContext) {
       val note = withContext(Dispatchers.IO) {
-        api.rest.createReplyNote(projectId, mr.iid, id.restId, body).body()
+        api.rest.createReplyNote(projectId, mr.iid, id.restId, body)
       }
 
       withContext(NonCancellable) {
@@ -184,7 +184,7 @@ class LoadedGitLabDiscussion(
   override suspend fun addDraftNote(body: String) {
     withContext(cs.coroutineContext) {
       withContext(Dispatchers.IO) {
-        api.rest.addDraftReplyNote(projectId, mr.iid, id.restId, body).body()
+        api.rest.addDraftReplyNote(projectId, mr.iid, id.restId, body)
       }?.also {
         withContext(NonCancellable) {
           draftNotesEventSink(AddedLast(it))

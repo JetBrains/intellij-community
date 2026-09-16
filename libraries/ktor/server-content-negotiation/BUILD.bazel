@@ -1,5 +1,4 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
-load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.libraries.ktor.server.content.negotiation` start
 jvm_library(
@@ -20,11 +19,6 @@ jvm_library(
         "@lib//:libraries-ktor-server-content-negotiation-ktor-server-content-negotiation",
         "//libraries/ktor/server-cio:libraries-ktor-server-cio",
     ],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-ktor-server-content-negotiation-ktor-server-content-negotiation"],
-    module = ":libraries-ktor-server-content-negotiation",
 )
 
 jvm_library(
@@ -51,7 +45,6 @@ exports_files(
     [
         "intellij.libraries.ktor.server.content.negotiation.iml",
         "resources/intellij.libraries.ktor.server.content.negotiation.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

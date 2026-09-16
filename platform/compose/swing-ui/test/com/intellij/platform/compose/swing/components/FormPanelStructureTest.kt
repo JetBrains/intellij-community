@@ -7,7 +7,6 @@ import androidx.compose.runtime.mutableStateOf
 import org.jetbrains.compose.swing.modifier.SwingModifier
 import org.jetbrains.compose.swing.modifier.appearance.name
 import org.jetbrains.compose.swing.modifier.appearance.testTag
-import org.jetbrains.compose.swing.modifier.applyModifier
 import org.jetbrains.compose.swing.modifier.layout.visible
 import org.jetbrains.compose.swing.node.SwingNode
 import org.jetbrains.compose.swing.test.ComposeSwingTest
@@ -261,7 +260,7 @@ class FormPanelStructureTest {
   private fun TextFieldControl(tag: String, modifier: SwingModifier = SwingModifier) {
     SwingNode(
       factory = { JTextField(20) },
-      update = { applyModifier(modifier.testTag(tag).name(tag)) },
+      modifier = modifier.testTag(tag).name(tag),
     )
   }
 }

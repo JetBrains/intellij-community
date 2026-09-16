@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.grid` start
+content_module_jar(module = ":grid")
+### auto-generated section `dev intellij.grid` end
+
 ### auto-generated section `build intellij.grid` start
 jvm_library(
     name = "grid",
@@ -26,8 +30,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":grid")
-
 jvm_library(
     name = "grid_test_lib",
     testonly = True,
@@ -52,7 +54,6 @@ exports_files(
     [
         "intellij.grid.iml",
         "resources/intellij.grid.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

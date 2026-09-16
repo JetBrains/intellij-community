@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.xml.emmet.backend` start
+content_module_jar(module = ":backend")
+### auto-generated section `dev intellij.xml.emmet.backend` end
+
 ### auto-generated section `build intellij.xml.emmet.backend` start
 jvm_provided_library(
     name = "xml_emmet_provided",
@@ -104,8 +108,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":backend")
-
 jvm_library(
     name = "backend_test_lib",
     testonly = True,
@@ -156,7 +158,6 @@ exports_files(
     [
         "intellij.xml.emmet.backend.iml",
         "resources/intellij.xml.emmet.backend.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

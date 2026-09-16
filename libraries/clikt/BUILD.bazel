@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.clikt` start
+content_module_jar(
+    libraries = ["@lib//:libraries-clikt-clikt"],
+    module = ":clikt",
+)
+### auto-generated section `dev intellij.libraries.clikt` end
+
 ### auto-generated section `build intellij.libraries.clikt` start
 jvm_library(
     name = "clikt",
@@ -16,11 +23,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-clikt-clikt"],
     runtime_deps = ["@lib//:libraries-clikt-clikt"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-clikt-clikt"],
-    module = ":clikt",
 )
 
 jvm_library(
@@ -43,7 +45,6 @@ exports_files(
     [
         "intellij.libraries.clikt.iml",
         "resources/intellij.libraries.clikt.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

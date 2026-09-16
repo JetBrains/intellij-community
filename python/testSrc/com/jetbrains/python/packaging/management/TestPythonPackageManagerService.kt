@@ -21,14 +21,22 @@ internal class TestPythonPackageManagerService(val installedPackages: List<Pytho
   private val cache: MutableMap<Sdk, PythonPackageManager> = ConcurrentHashMap()
 
   override fun forSdk(project: Project, sdk: Sdk): PythonPackageManager {
-    return cache.computeIfAbsent(sdk) {
-      val manager = createManager(project, sdk)
-      // Production drives manager init via package UI / sync / FUS / install paths; tests
-      // bypass those paths, so trigger init here so the inspection-side snapshot is ready
-      // before the test starts reading it.
-      runBlocking { manager.waitForInit() }
-      manager
-    }
+    val manager = cache.computeIfAbsent(sdk) { createManager(project, sdk) }
+    // Production drives manager init via package UI / sync / FUS / install paths; tests
+    // bypass those paths, so trigger init here so the inspection-side snapshot is ready
+    // before the test starts reading it.
+    //
+    // The wait runs outside `computeIfAbsent`, which holds the bin lock of the map for the whole
+    // mapping function, so a second thread no longer waits on the map while this one blocks.
+    //
+    // The init takes a read action of its own, see `TestPythonPackageManager.listDeclaredPackages`.
+    // A caller that already holds the read lock therefore deadlocks here as soon as a write action
+    // queues: the write action waits for that read action to end, and the init waits for the write
+    // action to let a new read action start. The python LSP tools read a tool version through a
+    // snapshot for exactly that reason, see `pyLspServeKeys`. `waitForInit` is idempotent, so the
+    // wait costs a caller nothing after the first one.
+    runBlocking { manager.waitForInit() }
+    return manager
   }
 
   private fun createManager(project: Project, sdk: Sdk): TestPythonPackageManager {

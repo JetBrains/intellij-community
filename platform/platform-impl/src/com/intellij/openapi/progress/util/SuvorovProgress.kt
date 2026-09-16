@@ -14,6 +14,7 @@ import com.intellij.openapi.application.ReadWriteActionSupport
 import com.intellij.openapi.application.impl.InternalThreading
 import com.intellij.openapi.application.rw.PlatformReadWriteActionSupport
 import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.util.ui.NiceOverlayUi
 import com.intellij.openapi.util.Disposer
@@ -24,7 +25,6 @@ import com.intellij.util.application
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.GraphicsUtil
 import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.InternalCoroutinesApi
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.AWTEvent
@@ -407,7 +407,9 @@ private class EternalEventStealer(disposable: Disposable) {
 
 private fun logErrorReliably(e: Throwable) {
   try {
-    logger<SuvorovProgress>().error(e)
+    if (!Logger.shouldRethrow(e)) {
+      logger<SuvorovProgress>().error(e)
+    }
   } catch (_ : Throwable) {
     // protection against rethrowing by logger
   }

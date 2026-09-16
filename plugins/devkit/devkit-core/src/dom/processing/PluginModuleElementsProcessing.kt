@@ -52,7 +52,7 @@ private fun isRegistrationInExtension(element: GenericDomValue<*>, extension: Ex
  * The result doesn't include classes that are *referenced* in the descriptor: interfaces of registered services, extension point
  * interfaces of registered extensions.
  */
-@RequiresReadLock
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 internal fun collectRegisteredClasses(root: IdeaPlugin): Set<PsiClass> {
   val result = mutableSetOf<PsiClass>()
   root.extensionPoints.flatMapTo(result) { points ->

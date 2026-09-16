@@ -20,11 +20,11 @@ public class IfStatementEvaluator implements Evaluator {
   @Override
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
     Object value = myConditionEvaluator.evaluate(context);
-    if (!(value instanceof BooleanValue)) {
+    if (!(value instanceof BooleanValue booleanValue)) {
       throw EvaluateExceptionUtil.BOOLEAN_EXPECTED;
     }
     else {
-      if (((BooleanValue)value).booleanValue()) {
+      if (booleanValue.booleanValue()) {
         value = myThenEvaluator.evaluate(context);
       }
       else {

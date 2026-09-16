@@ -13,6 +13,10 @@ jps_test(
 
 ### skip generation section `test intellij.platform.jewel.foundation.tests`
 
+### auto-generated section `dev intellij.platform.jewel.foundation` start
+content_module_jar(module = ":foundation")
+### auto-generated section `dev intellij.platform.jewel.foundation` end
+
 ### auto-generated section `build intellij.platform.jewel.foundation` start
 create_kotlinc_options(
     name = "custom_foundation",
@@ -60,8 +64,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":foundation")
-
 jvm_library(
     name = "foundation_test_lib",
     testonly = True,
@@ -97,7 +99,6 @@ exports_files(
     [
         "intellij.platform.jewel.foundation.iml",
         "src/main/resources/intellij.platform.jewel.foundation.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

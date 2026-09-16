@@ -20,7 +20,7 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
-import com.intellij.terminal.TerminalCmdKShortcutConflictNotification
+import com.intellij.terminal.TerminalCmdKShortcutDialog
 import com.intellij.terminal.frontend.action.SendShortcutToTerminalAction
 import com.intellij.terminal.frontend.view.TerminalAllowedActionsProvider
 import com.intellij.util.concurrency.ThreadingAssertions
@@ -97,7 +97,11 @@ private class TerminalEventDispatcher(
       TerminalEscapeBehaviorChangeNotification.showNotificationIfNeeded(editor.project!!)
     }
 
-    TerminalCmdKShortcutConflictNotification.showIfNeeded(editor.project, keyEvent)
+    if (TerminalCmdKShortcutDialog.handleIfNeeded(editor.project, editor.contentComponent, keyEvent)) {
+      keyEvent.consume()
+      ignoreNextKeyTypedEvent = true
+      return
+    }
 
     if (isAllowedActionShortcut(e.original)) {
       // KeyEvent will be handled by action system, so we need to remember that the next KeyTyped event is not needed

@@ -1,6 +1,6 @@
 import ssl
 import sys
-from _typeshed import ReadableBuffer, StrOrBytesPath, SupportsRead
+from _typeshed import ReadableBuffer, StrOrBytesPath, SupportsItems, SupportsRead
 from collections.abc import Callable, Iterable, Mapping, MutableMapping, Sequence
 from email.message import Message
 from http.client import HTTPConnection, HTTPMessage, HTTPResponse
@@ -139,7 +139,7 @@ class Request:
         self,
         url: str,
         data: _DataType = None,
-        headers: MutableMapping[str, str] = {},
+        headers: SupportsItems[str, str] = {},
         origin_req_host: str | None = None,
         unverifiable: bool = False,
         method: str | None = None,

@@ -1,0 +1,7 @@
+// FILE: build.gradle.kts
+// "EXPECTED-NAVIGATION-SUBSTRING": "println("from buildSrc")"
+repositories {
+    mavenCentral()
+}
+
+myHelper<caret>Method()

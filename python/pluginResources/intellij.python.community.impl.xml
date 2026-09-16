@@ -14,7 +14,6 @@
     <module name="intellij.libraries.jackson.dataformat.yaml"/>
     <module name="intellij.libraries.jackson.module.kotlin"/>
     <module name="intellij.libraries.javax.annotation"/>
-    <module name="intellij.libraries.jcef"/>
     <module name="intellij.libraries.jetbrains.annotations"/>
     <module name="intellij.libraries.jna"/>
     <module name="intellij.libraries.jsoup"/>
@@ -72,7 +71,6 @@
     <module name="intellij.platform.testIntegration"/>
     <module name="intellij.platform.testIntegration.ui"/>
     <module name="intellij.platform.testRunner"/>
-    <module name="intellij.platform.ui.jcef"/>
     <module name="intellij.platform.usageView"/>
     <module name="intellij.platform.usageView.impl"/>
     <module name="intellij.platform.util.coroutines"/>
@@ -88,18 +86,21 @@
     <module name="intellij.python.community.execService.python"/>
     <module name="intellij.python.community.helpersLocator"/>
     <module name="intellij.python.community.impl.conda"/>
+    <module name="intellij.python.community.impl.conda.common"/>
     <module name="intellij.python.community.impl.installer"/>
     <module name="intellij.python.community.impl.pipenv"/>
+    <module name="intellij.python.community.impl.pipenv.common"/>
     <module name="intellij.python.community.impl.poetry.backend"/>
     <module name="intellij.python.community.impl.poetry.common"/>
-    <module name="intellij.python.community.interpreters"/>
     <module name="intellij.python.community.services.systemPython"/>
     <module name="intellij.python.externalIndex"/>
     <module name="intellij.python.hatch"/>
+    <module name="intellij.python.hatch.common"/>
     <module name="intellij.python.processOutput.common"/>
     <module name="intellij.python.pydev"/>
     <module name="intellij.python.pyproject"/>
-    <module name="intellij.python.pytools"/>
+    <module name="intellij.python.pytools.backend"/>
+    <module name="intellij.python.pytools.common"/>
     <module name="intellij.python.requirements.backend"/>
     <module name="intellij.python.sdk.backend"/>
     <module name="intellij.python.sdk.common"/>
@@ -107,6 +108,7 @@
     <module name="intellij.python.uv.backend"/>
     <module name="intellij.python.uv.common"/>
     <module name="intellij.python.venv"/>
+    <module name="intellij.python.venv.common"/>
     <module name="intellij.regexp"/>
     <module name="intellij.spellchecker"/>
     <module name="intellij.toml.core"/>
@@ -118,6 +120,8 @@
   <resource-bundle>messages.PyBundle</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.python.pytools.backend.PyToolSdkBackendService"
+                        serviceImplementation="com.jetbrains.python.packaging.management.PyToolSdkBackendServiceImpl"/>
     <applicationService serviceInterface="com.jetbrains.python.errorProcessing.ErrorSink"
                         serviceImplementation="com.jetbrains.python.impl.ShowingMessageErrorSink"/>
     <python.pytools.genericPyToolManagerProvider implementation="com.jetbrains.python.sdk.configuration.SystemPythonToolManagerProvider"/>
@@ -144,6 +148,10 @@
     <multiHostInjector implementation="com.jetbrains.python.requirements.injection.CondaRequirementsLanguageInjector"/>
     <platform.backend.documentation.psiTargetProvider
       implementation="com.jetbrains.python.requirements.RequirementsDocumentationProvider"/>
+    <platform.backend.documentation.lookupElementTargetProvider
+      implementation="com.jetbrains.python.codeInsight.fstrings.PyFStringFormatSpecDocumentationProvider"/>
+    <platform.backend.documentation.targetProvider
+      implementation="com.jetbrains.python.codeInsight.fstrings.PyFStringFormatSpecHoverDocumentationProvider"/>
     <platform.backend.documentation.linkHandler
       implementation="com.jetbrains.python.requirements.RequirementDocumentationLinkHandler"/>
     <psi.referenceContributor language="Requirements"
@@ -272,7 +280,7 @@
               topic="com.jetbrains.python.packaging.common.PythonPackageManagementListener"/>
     <listener class="com.jetbrains.python.statistics.PyPackageDaemonListener"
               topic="com.intellij.codeInsight.daemon.DaemonCodeAnalyzer$DaemonListener"/>
-    <listener class="com.jetbrains.python.inspections.interpreter.PyInterpreterNotificationFileOpenedListener"
+    <listener class="com.jetbrains.python.sdk.inspections.PyInterpreterNotificationFileOpenedListener"
               topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
     <listener class="com.jetbrains.python.sdk.AvailableSdkNotifier"
               topic="com.intellij.openapi.roots.ModuleRootListener"/>
@@ -460,7 +468,7 @@
                      groupPathKey="INSP.GROUP.python" groupKey="INSP.GROUP.python.code.style.issues"
                      enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.jetbrains.python.inspections.PyPep8Inspection" unfair="true"/>
-    <editorNotificationProvider implementation="com.jetbrains.python.inspections.interpreter.PyInterpreterNotificationProvider"/>
+    <editorNotificationProvider implementation="com.jetbrains.python.sdk.inspections.PyInterpreterNotificationProvider"/>
     <editorNotificationProvider implementation="com.jetbrains.python.packaging.management.PyPackageManagerEditorBanner"/>
     <localInspection language="Python" shortName="PyStubPackagesCompatibilityInspection" suppressId="PyStubPackagesCompatibility"
                      bundle="messages.PyPsiBundle" key="INSP.stub.packages.compatibility"
@@ -472,6 +480,11 @@
                      groupPathKey="INSP.GROUP.python" groupKey="INSP.GROUP.python.type.hinting"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="com.jetbrains.python.codeInsight.stubs.PyStubPackagesAdvertiser"/>
+    <localInspection language="Python" shortName="PyTypeIgnoreWithoutCodeInspection" suppressId="PyTypeIgnoreWithoutCode"
+                     bundle="messages.PyPsiBundle" key="INSP.NAME.type.ignore.without.code"
+                     groupPathKey="INSP.GROUP.python" groupKey="INSP.GROUP.python.type.hinting"
+                     enabledByDefault="false" level="WARNING"
+                     implementationClass="com.jetbrains.python.inspections.typeignore.PyTypeIgnoreWithoutCodeInspection"/>
     <localInspection language="Python" shortName="PyRelativeImportInspection" suppressId="PyPackages"
                      bundle="messages.PyPsiBundle" key="INSP.NAME.relative.import"
                      groupPathKey="INSP.GROUP.python" groupKey="INSP.GROUP.python.general"
@@ -608,12 +621,6 @@
                              id="debugger.dataViews.python.type.renderers"
                              instance="com.jetbrains.python.debugger.variablesview.usertyperenderers.PyUserTypeRenderersConfigurable"
                              key="configurable.PyUserTypeRenderersConfigurable.display.name"/> <!--id is used in PyCharmCorePluginConfigurator-->
-
-    <applicationConfigurable groupId="editor"
-                             id="com.jetbrains.python.codeInsight.PythonTypeCheckingConfigurable"
-                             instance="com.jetbrains.python.codeInsight.PythonTypeCheckingConfigurable"
-                             bundle="messages.PyBundle"
-                             key="configurable.PythonTypeCheckingConfigurable.display.name"/>
 
     <projectConfigurable groupId="tools"
                          id="com.jetbrains.python.configuration.PyIntegratedToolsModulesConfigurable"
@@ -926,6 +933,9 @@
     <extensionPoint qualifiedName="Pythonid.packageInstalledIconProvider"
                     interface="com.jetbrains.python.packaging.toolwindow.packages.tree.renderers.PyPackageInstalledIconProvider"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="Pythonid.embeddedBrowserProvider"
+                    interface="com.jetbrains.python.ui.PyEmbeddedBrowserProvider"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="com.jetbrains.python.console.runnerFactory"
                     interface="com.jetbrains.python.console.PythonConsoleRunnerFactory"
                     dynamic="true"/>
@@ -1042,7 +1052,8 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij.platform">
-    <rpc.backend.remoteApiProvider implementation="com.jetbrains.python.sdk.evolution.PyEvoSdkApiProvider"/>
+    <rpc.backend.remoteApiProvider implementation="com.jetbrains.python.sdk.evolution.PyEvoSdkApiProvider"
+                                   apiInterfaces="com.intellij.python.sdk.common.evolution.PyEvoSdkApi"/>
   </extensions>
 
   <extensions defaultExtensionNs="Pythonid">

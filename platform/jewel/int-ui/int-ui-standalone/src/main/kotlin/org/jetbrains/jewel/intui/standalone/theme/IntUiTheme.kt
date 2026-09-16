@@ -25,7 +25,6 @@ import org.jetbrains.jewel.intui.standalone.IntUiTypography
 import org.jetbrains.jewel.intui.standalone.ScrollbarHelper
 import org.jetbrains.jewel.intui.standalone.StandalonePainterHintsProvider
 import org.jetbrains.jewel.intui.standalone.StandalonePlatformCursorController
-import org.jetbrains.jewel.intui.standalone.icon.StandaloneIconManager
 import org.jetbrains.jewel.intui.standalone.icon.StandaloneNewUiChecker
 import org.jetbrains.jewel.intui.standalone.menuShortcut.StandaloneMenuItemShortcutHintProvider
 import org.jetbrains.jewel.intui.standalone.menuShortcut.StandaloneShortcutProvider
@@ -122,6 +121,7 @@ public fun JewelTheme.Companion.lightThemeDefinition(
         palette,
         iconData,
         disabledAppearanceValues,
+        isIslands = false,
     )
 
 /**
@@ -159,6 +159,7 @@ public fun JewelTheme.Companion.lightThemeDefinition(
         palette,
         iconData,
         DisabledAppearanceValues.light(),
+        isIslands = false,
     )
 
 /**
@@ -196,6 +197,7 @@ public fun JewelTheme.Companion.darkThemeDefinition(
         palette,
         iconData,
         DisabledAppearanceValues.dark(),
+        isIslands = false,
     )
 
 /**
@@ -234,6 +236,7 @@ public fun JewelTheme.Companion.darkThemeDefinition(
         palette,
         iconData,
         disabledAppearanceValues,
+        isIslands = false,
     )
 
 /**
@@ -1481,7 +1484,7 @@ public fun IntUiTheme(
     content: @Composable () -> Unit,
 ) {
     val managerScope = rememberCoroutineScope()
-    IconManager.activate(StandaloneIconManager(managerScope))
+    IconManager.getInstance().setDeferredIconScope(managerScope)
     val standaloneCursorController = remember { StandalonePlatformCursorController() }
 
     BaseJewelTheme(theme, ComponentStyling.default().with(styling), swingCompatMode) {

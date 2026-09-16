@@ -17,7 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiEditorUtil
-import com.intellij.python.pytools.isEnabledOn
+import com.intellij.python.pytools.backend.isEnabledOn
 import com.intellij.ui.LightweightHint
 import com.intellij.util.application
 import com.jetbrains.python.PythonFileType

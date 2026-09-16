@@ -112,7 +112,7 @@ object ImportQuickFixProvider : KotlinQuickFixFactory.IntentionBased<KaDiagnosti
             data.importsInfo,
             suggestions = data.uniqueFqNameSortedImportCandidates.map { (candidate, _) -> candidate.getFqName() }
         )
-        return KotlinAddImportActionFactory.getInstance().createAddImportFix(position, text, data.importVariants)
+        return ImportQuickFix(position, text, data.importVariants)
     }
 
     context(_: KaSession)

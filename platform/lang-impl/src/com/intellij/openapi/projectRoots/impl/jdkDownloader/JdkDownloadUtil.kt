@@ -65,7 +65,7 @@ object JdkDownloadUtil {
   }
 
   @ApiStatus.Internal
-  @RequiresWriteLock
+  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
   fun createDownloadSdkInternal(sdkType: SdkType, sdkDownloadTask: SdkDownloadTask): Sdk {
     val sdkTable = ProjectJdkTable.getInstance()
     val sdks = sdkTable.allJdks.asList()

@@ -27,6 +27,30 @@
       </exec>
     </sequential>
   </macrodef>
+  
+  <macrodef name="native-tar">
+    <attribute name="destfile"/>
+    <attribute name="basedir" default="${basedir}"/>
+    <attribute name="executable" default="tar"/>
+
+    <!-- Accepts nested <arg> elements -->
+    <element name="entries" implicit="true"/>
+
+    <sequential>
+      <exec executable="@{executable}" failonerror="true">
+        <!-- -czf creates a gzip-compressed tar; use -cf for plain TAR -->
+        <arg value="-czf"/>
+        <arg file="@{destfile}"/>
+
+        <!-- Relative entries are resolved from this directory -->
+        <arg value="-C"/>
+        <arg file="@{basedir}"/>
+
+        <entries/>
+      </exec>
+    </sequential>
+  </macrodef>
+
 
   <!-- Build the IJ platform for MPS without custom patches (re-runnable) -->
   <target name="build" depends="ij-platform,repackage,package-mps-platform-provided"/>
@@ -81,8 +105,8 @@
 
   <!-- Build contains exe files with proper MPS icons -->
   <target name="extract-win-exe" description="Extract customized Windows executables">
-    <copy file="${target.win.x64}/bin/mps64.exe" tofile="${target.dist}/build/resources/mps-win-64.exe"/>
-    <copy file="${target.win.aarch64}/bin/mps64.exe" tofile="${target.dist}/build/resources/mps-win-aarch64.exe"/>
+    <copy file="${target.win.x64}/bin/mps64.exe" tofile="${target.dist}/build/resources/mps-win-64.exe" overwrite="true"/>
+    <copy file="${target.win.aarch64}/bin/mps64.exe" tofile="${target.dist}/build/resources/mps-win-aarch64.exe" overwrite="true"/>
   </target>
 
   <!-- plugin.xml built by JPS contains all needed embedded module descriptors. Extract them for MPS build to later include them in MPSPlugin.xml -->
@@ -104,30 +128,91 @@
   </target>
 
   <target name="package-mps-platform-provided">
+
+    <exec executable="tar"
+          failonerror="false"
+          failifexecutionfails="false"
+          outputproperty="tar.version"
+          errorproperty="tar.version.error"
+          resultproperty="tar.version.exit">
+      <arg value="--version"/>
+    </exec>
+
+    <condition property="tar.is.gnu">
+      <and>
+        <equals arg1="${tar.version.exit}" arg2="0"/>
+        <or>
+          <contains string="${tar.version}" substring="GNU tar"/>
+          <contains string="${tar.version.error}" substring="GNU tar"/>
+        </or>
+      </and>
+    </condition>
+
+    <fail unless="tar.is.gnu">
+      GNU tar is required; found: ${tar.version}
+    </fail>
+
       <!-- Copied from `IdeaPlatform.buildTypes.PlatformCI#artifactRules` and adapted to ant -->
-    <tar destfile="${target.root}/artifacts/mps-platform-provided.tar.gz" compression="gzip" longfile="gnu">
-      <tarfileset file="${target.root}/artifacts/platform-sources.zip" prefix="lib/src"/>
-      <tarfileset dir="${target.root}/dist.all/lib" prefix="lib"/>
-      <tarfileset dir="${target.root}/dist.all/license" prefix="license"/>
-      <tarfileset dir="${target.root}/dist.all/plugins" prefix="plugins"/>
+    <native-tar destfile="${target.root}/artifacts/mps-platform-provided.tar.gz" basedir="${target.root}">
+      <arg value="--transform=s,^artifacts/,lib/src/,"/>
+      <arg value="--transform=s,^dist.all/build.txt,lib/build.txt,"/>
+      <arg value="--transform=s,^dist.all/,,"/>
+      <arg value="--transform=s,^temp/,lib/,"/>
+      <arg value="--transform=s,^dist\.\([^/]*\)/,__overlay__/\1/,"/>
+      <arg value="--exclude=plugin-classpath.txt"/>
+      
+      <!--Begin files and directories-->
+      <arg value="--"/>
+
+      <arg value="artifacts/platform-sources.zip"/>
+
+      <arg value="dist.all/lib"/>
+      <arg value="dist.all/license"/>
+      <arg value="dist.all/plugins"/>
+      <!--<arg value="dist.all/build.txt"/>-->
+      <arg value="dist.all/bin"/>
+      <arg value="dist.all/build/resources"/>
+      <arg value="dist.all/build/dependencies"/>
+      <arg value="dist.all/build/tools"/>
+
+      <arg value="temp/jna"/>
+      <arg value="temp/skiko-awt-runtime-all"/>
+      <arg value="temp/native"/>
+      <arg value="temp/pty4j"/>
+
+      <arg value="dist.mac.aarch64/plugins"/>
+      <arg value="dist.mac.x64/plugins"/>
+      <arg value="dist.win.aarch64/plugins"/>
+      <arg value="dist.win.x64/plugins"/>
+      <arg value="dist.unix.aarch64/plugins"/>
+      <arg value="dist.unix.x64/plugins"/>
+
+      <!--<tarfileset file="${target.root}/artifacts/platform-sources.zip" prefix="lib/src"/>-->
+
+      <!--<tarfileset dir="${target.root}/dist.all/lib" prefix="lib"/>-->
+      <!--<tarfileset dir="${target.root}/dist.all/license" prefix="license"/>-->
+      <!--<tarfileset dir="${target.root}/dist.all/plugins" prefix="plugins"/>-->
+
       <!--<tarfileset dir="${target.root}/dist.mac.x64/plugins/laf-macos" prefix="plugins/laf-macos"/>-->
       <!--<tarfileset dir="${target.root}/dist.win.x64/plugins/laf-win10" prefix="plugins/laf-win10"/>-->
-      <tarfileset file="${target.root}/dist.all/build.txt" fullpath="lib/build.txt"/>
-      <tarfileset dir="${target.root}/dist.all/bin" prefix="bin"/>
-      <tarfileset dir="${target.root}/dist.all/build/resources" prefix="build/resources"/>
-      <tarfileset dir="${target.root}/dist.all/build/dependencies" prefix="build/dependencies"/>
-      <tarfileset dir="${target.root}/dist.all/build/tools" prefix="build/tools"/>
-      <tarfileset dir="${target.root}/temp/jna" prefix="lib/jna"/>
-      <tarfileset dir="${target.root}/temp/skiko-awt-runtime-all" prefix="lib/skiko-awt-runtime-all"/>
-      <tarfileset dir="${target.root}/temp/native" prefix="lib/native"/>
-      <tarfileset dir="${target.root}/temp/pty4j" prefix="lib/pty4j"/>
-      <tarfileset dir="${target.root}/dist.mac.aarch64/plugins" prefix="__overlay__/mac.aarch64/plugins"/>
-      <tarfileset dir="${target.root}/dist.mac.x64/plugins" prefix="__overlay__/mac.x64/plugins"/>
-      <tarfileset dir="${target.root}/dist.win.aarch64/plugins" prefix="__overlay__/win.aarch64/plugins"/>
-      <tarfileset dir="${target.root}/dist.win.x64/plugins" prefix="__overlay__/win.x64/plugins"/>
-      <tarfileset dir="${target.root}/dist.unix.aarch64/plugins" prefix="__overlay__/unix.aarch64/plugins"/>
-      <tarfileset dir="${target.root}/dist.unix.x64/plugins" prefix="__overlay__/unix.x64/plugins"/>
-    </tar>
+
+      <!--<tarfileset file="${target.root}/dist.all/build.txt" fullpath="lib/build.txt"/>-->
+      <!--<tarfileset dir="${target.root}/dist.all/bin" prefix="bin"/>-->
+      <!--<tarfileset dir="${target.root}/dist.all/build/resources" prefix="build/resources"/>-->
+      <!--<tarfileset dir="${target.root}/dist.all/build/dependencies" prefix="build/dependencies"/>-->
+      <!--<tarfileset dir="${target.root}/dist.all/build/tools" prefix="build/tools"/>-->
+
+      <!--<tarfileset dir="${target.root}/temp/jna" prefix="lib/jna"/>-->
+      <!--<tarfileset dir="${target.root}/temp/skiko-awt-runtime-all" prefix="lib/skiko-awt-runtime-all"/>-->
+      <!--<tarfileset dir="${target.root}/temp/native" prefix="lib/native"/>-->
+      <!--<tarfileset dir="${target.root}/temp/pty4j" prefix="lib/pty4j"/>-->
+
+      <!--<tarfileset dir="${target.root}/dist.mac.aarch64/plugins" prefix="__overlay__/mac.aarch64/plugins"/>-->
+      <!--<tarfileset dir="${target.root}/dist.mac.x64/plugins" prefix="__overlay__/mac.x64/plugins"/>-->
+      <!--<tarfileset dir="${target.root}/dist.win.aarch64/plugins" prefix="__overlay__/win.aarch64/plugins"/>-->
+      <!--<tarfileset dir="${target.root}/dist.win.x64/plugins" prefix="__overlay__/win.x64/plugins"/>-->
+      <!--<tarfileset dir="${target.root}/dist.unix.aarch64/plugins" prefix="__overlay__/unix.aarch64/plugins"/>-->
+      <!--<tarfileset dir="${target.root}/dist.unix.x64/plugins" prefix="__overlay__/unix.x64/plugins"/>-->
+    </native-tar>
   </target>
-  
 </project>

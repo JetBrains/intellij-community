@@ -1,3 +1,0 @@
-- name: dist.all/lib/intellij.platform.externalSystem.impl.jar
-  modules:
-  - name: intellij.platform.externalSystem.impl

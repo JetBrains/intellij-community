@@ -14,10 +14,13 @@
   <!--suppress AllContentModulesOptionalLoadingRule -->
   <content namespace="jetbrains">
     <module name="intellij.platform.statistics.devkit"/>
+    <module name="intellij.platform.statistics.devkit.backend"/>
+    <module name="intellij.platform.statistics.devkit.frontend"/>
     <module name="intellij.platform.ide.ui.inspector"/>
     <module name="intellij.dev.psiViewer"/>
     <module name="intellij.dev.codeInsight"/>
     <module name="intellij.dev.leakDetection"/>
+    <module name="intellij.dev.pluginLoading"/>
     <module name="intellij.java.dev"/>
     <module name="intellij.groovy.dev"/>
     <module name="intellij.kotlin.dev"/>

@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.test.env.junit5
 
-import com.intellij.python.pytools.PyTool
+import com.intellij.python.pytools.backend.PyTool
 import java.util.Properties
 
 /**
@@ -26,7 +26,7 @@ object LspToolVersions {
    * The pinned PEP 508 requirement (e.g. `ruff==0.15.18`) for [tool], keyed by its PyPI
    * package ([PyTool.packageName]).
    */
-  fun requirement(tool: PyTool): String = requirement(tool.packageName.name)
+  fun requirement(tool: PyTool<*>): String = requirement(tool.packageName.name)
 
   /** The pinned PEP 508 requirement (e.g. `pandas==3.0.2`) for the PyPI package [pypiPackage]. */
   fun requirement(pypiPackage: String): String {

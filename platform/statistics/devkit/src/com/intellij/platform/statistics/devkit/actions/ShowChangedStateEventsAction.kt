@@ -7,10 +7,9 @@ import com.google.common.collect.Maps
 import com.intellij.icons.AllIcons
 import com.intellij.idea.ActionsBundle
 import com.intellij.internal.statistic.StatisticsBundle
+import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger
 import com.intellij.platform.statistics.devkit.StatisticsDevKitUtil
 import com.intellij.platform.statistics.devkit.toolwindow.ChangedStateEventsPanel
-import com.intellij.platform.statistics.devkit.toolwindow.eventLogToolWindowsId
-import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -22,7 +21,7 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.content.ContentFactory
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
 
-internal class ShowChangedStateEventsAction(private val recorderId: String) : DumbAwareAction(
+internal class ShowChangedStateEventsAction(private val recorderId: String, private val toolWindowId: String) : DumbAwareAction(
   ActionsBundle.message("action.ShowChangedStateStatisticsAction.text"),
   ActionsBundle.message("action.ShowChangedStateStatisticsAction.description"),
   AllIcons.Actions.Diff) {
@@ -51,9 +50,9 @@ internal class ShowChangedStateEventsAction(private val recorderId: String) : Du
       StatisticsDevKitUtil.showNotification(project, NotificationType.INFORMATION, StatisticsBundle.message("stats.no.changed.events"))
       return
     }
-    val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(eventLogToolWindowsId) ?: return
+    val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(toolWindowId) ?: return
     val displayName = "Changed events: $recorderId"
-    val changedEventsComponent = ChangedStateEventsPanel(project, toolWindow.disposable, difference, recorderId).component
+    val changedEventsComponent = ChangedStateEventsPanel(project, toolWindow.disposable, difference, recorderId, toolWindowId).component
     val content = ContentFactory.getInstance().createContent(changedEventsComponent, displayName, true)
     content.preferredFocusableComponent = changedEventsComponent
     val contentManager = toolWindow.contentManager

@@ -40,7 +40,7 @@ class TerminalKeyEncodingManager(
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun getCode(key: Int, modifiers: Int): ByteArray? {
     return encoder.getCode(key, modifiers)
   }

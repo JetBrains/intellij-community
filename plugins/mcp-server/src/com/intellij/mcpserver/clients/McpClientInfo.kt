@@ -8,10 +8,10 @@ import org.jetbrains.annotations.TestOnly
  */
 data class McpClientInfo(
   val name: Name,
-  val scope: Scope,
+  val scope: McpClientScope,
 ) {
 
-  val displayName: String = "${name.baseName}${if (scope is Scope.Project) " (Project)" else ""}"
+  val displayName: String = "${name.baseName}${if (scope is McpClientScope.McpClientProjectScope) " (Project)" else ""}"
 
   enum class Name(val baseName: String) {
     VS_CODE("Visual Studio Code"),
@@ -26,9 +26,9 @@ data class McpClientInfo(
     GITHUB_COPILOT_CLI("GitHub Copilot CLI"),
   }
 
-  sealed class Scope {
-    data object Global: Scope()
-    class Project : Scope {
+  sealed class McpClientScope {
+    data object McpClientGlobalScope: McpClientScope()
+    class McpClientProjectScope : McpClientScope {
       val projectPath: String?
 
       constructor(project: com.intellij.openapi.project.Project) {

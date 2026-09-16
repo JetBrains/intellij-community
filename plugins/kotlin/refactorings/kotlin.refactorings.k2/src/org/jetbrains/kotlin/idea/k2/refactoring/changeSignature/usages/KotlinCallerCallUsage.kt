@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages
 
 import com.intellij.usageView.UsageInfo
+import org.jetbrains.kotlin.idea.base.psi.appendValueArgument
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeInfoBase
 import org.jetbrains.kotlin.idea.refactoring.isInsideOfCallerBody
 import org.jetbrains.kotlin.name.Name
@@ -33,7 +34,7 @@ class KotlinCallerCallUsage(element: KtCallElement) : UsageInfo(element), Kotlin
                     name = if (isNamedCall) Name.identifier(parameterName) else null
                 )
 
-                argumentList.addArgument(argument)
+                argumentList.appendValueArgument(argument)
             }
 
         return argumentList

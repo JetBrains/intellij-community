@@ -1,0 +1,11 @@
+// PROBLEM: Data class can be converted to value class
+// FIX: Convert to value class
+// CHOSEN_OPTION: Generate 'copy' function
+// COMPILER_ARGUMENTS: -XXLanguage:+FullValueClasses
+
+interface I { operator fun component1(): String }
+
+value class User(val firstName: String, val lastName: String): I {
+    fun copy(firstName: String = this.firstName, lastName: String = this.lastName): User = User(firstName, lastName)
+    override operator fun component1(): String = firstName
+}

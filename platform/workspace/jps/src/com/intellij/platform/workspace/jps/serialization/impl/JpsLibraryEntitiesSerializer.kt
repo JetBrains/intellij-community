@@ -63,7 +63,7 @@ internal class JpsLibrariesDirectorySerializerFactory(override val directoryUrl:
   override fun createSerializer(fileUrl: String,
                                 entitySource: JpsProjectFileEntitySource.FileInDirectory,
                                 virtualFileManager: VirtualFileUrlManager): JpsFileEntitiesSerializer<LibraryEntity> {
-    return JpsLibraryEntitiesSerializer(virtualFileManager.getOrCreateFromUrl(fileUrl), entitySource, LibraryTableId.ProjectLibraryTableId)
+    return JpsLibraryEntitiesSerializer(virtualFileManager.storeAndGet(fileUrl), entitySource, LibraryTableId.ProjectLibraryTableId)
   }
 
   override fun changeEntitySourcesToDirectoryBasedFormat(builder: MutableEntityStorage, configLocation: JpsProjectConfigLocation) {
@@ -303,7 +303,7 @@ open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFileUrl,
           "excluded" -> excludedRoots.addAll(
             childElement.getChildren(JpsJavaModelSerializerExtension.ROOT_TAG)
               .map { it.getAttributeValueStrict(JpsModuleRootModelSerializer.URL_ATTRIBUTE) }
-              .map { virtualFileManager.getOrCreateFromUrl(it) }
+              .map { virtualFileManager.storeAndGet(it) }
           )
           PROPERTIES_TAG -> {
             properties = JDOMUtil.write(childElement)
@@ -315,7 +315,7 @@ open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFileUrl,
             for (rootTag in childElement.getChildren(JpsJavaModelSerializerExtension.ROOT_TAG)) {
               val url = rootTag.getAttributeValueStrict(JpsModuleRootModelSerializer.URL_ATTRIBUTE)
               val inclusionOptions = jarDirectories[Pair(rootType, url)] ?: LibraryRoot.InclusionOptions.ROOT_ITSELF
-              roots.add(LibraryRoot(virtualFileManager.getOrCreateFromUrl(url), libraryRootTypes[rootType]!!, inclusionOptions))
+              roots.add(LibraryRoot(virtualFileManager.storeAndGet(url), libraryRootTypes[rootType]!!, inclusionOptions))
             }
           }
         }

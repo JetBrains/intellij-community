@@ -120,7 +120,7 @@ class ProjectIndexingDependenciesService @NonInjectable @VisibleForTesting const
     }
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun getLatestIndexingRequestToken(): IndexingRequestToken {
     val appCurrent = appIndexingDependenciesService.getCurrent()
     return IndexingRequestTokenImpl(appCurrent)
@@ -130,7 +130,7 @@ class ProjectIndexingDependenciesService @NonInjectable @VisibleForTesting const
 
   fun getAppIndexingRequestIdOfLastScanning(): Int = storage.readAppIndexingRequestIdOfLastScanning()
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun newScanningToken(): ScanningRequestToken {
     val appCurrent = appIndexingDependenciesService.getCurrent()
     val token = WriteOnlyScanningRequestTokenImpl(appCurrent, false)
@@ -139,7 +139,7 @@ class ProjectIndexingDependenciesService @NonInjectable @VisibleForTesting const
   }
 
   @ApiStatus.Internal
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun newScanningTokenOnProjectOpen(forceCheckingForOutdatedIndexesUsingFileModCount: Boolean): ScanningRequestToken {
     val appCurrent = appIndexingDependenciesService.getCurrent()
     val token = if (heavyScanningOnProjectOpen || issuedScanningTokens.contains(RequestFullHeavyScanningToken)) {
@@ -225,7 +225,7 @@ class ProjectIndexingDependenciesService @NonInjectable @VisibleForTesting const
   /**
    * This token can be thrown away without [completeToken] invocation
    */
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   @TestOnly
   fun getReadOnlyTokenForTest(): ScanningRequestToken {
     val appCurrent = appIndexingDependenciesService.getCurrent()

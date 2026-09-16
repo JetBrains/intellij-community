@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.grazie.markdown` start
+content_module_jar(
+    libraries = ["@lib//:grazie-markdown-ai-grazie-tasks-library-model-jvm"],
+    module = ":markdown",
+)
+### auto-generated section `dev intellij.grazie.markdown` end
+
 ### auto-generated section `build intellij.grazie.markdown` start
 jvm_library(
     name = "markdown",
@@ -44,11 +51,6 @@ jvm_library(
         "//platform/util:util-ui",
         "//platform/lang-api:lang",
     ],
-)
-
-content_module_jar(
-    libraries = ["@lib//:grazie-markdown-ai-grazie-tasks-library-model-jvm"],
-    module = ":markdown",
 )
 
 jvm_library(

@@ -9,19 +9,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="jackson-dataformat-xml" type="repository">
-        <properties include-transitive-deps="false" maven-id="com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.19.0">
+        <properties include-transitive-deps="false" maven-id="com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.22.2">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-xml/2.19.0/jackson-dataformat-xml-2.19.0.jar">
-              <sha256sum>a9c2d02fa10a87a9e5fdd7684ec8ddc9e6c47e01d668cdf120452908fc58b9e9</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-xml/2.22.2/jackson-dataformat-xml-2.22.2.jar">
+              <sha256sum>3e1e0e4b68cf579a67c5e2915aacd1f05f33d0ba290f38ca76e1b0605e54aabd</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-xml/2.19.0/jackson-dataformat-xml-2.19.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-xml/2.22.2/jackson-dataformat-xml-2.22.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-xml/2.19.0/jackson-dataformat-xml-2.19.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-xml/2.22.2/jackson-dataformat-xml-2.22.2-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

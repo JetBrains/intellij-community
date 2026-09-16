@@ -53,7 +53,7 @@ import java.util.SortedMap
  *
  * @see resolveTopLevelMember
  */
-@RequiresReadLock
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 @RequiresBackgroundThread(generateAssertion = false)
 fun resolveQualifiedName(name: QualifiedName, context: PyQualifiedNameResolveContext): List<PsiElement> {
   checkAccess()

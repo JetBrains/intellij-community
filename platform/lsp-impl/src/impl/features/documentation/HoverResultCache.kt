@@ -12,7 +12,7 @@ internal class HoverResultCache(project: Project) : LspPerFileCache<Int, TextRan
   matches = { _, storedValue, queriedOffset -> storedValue.textRange.contains(queriedOffset) },
 ) {
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   override fun getOrCompute(file: VirtualFile, key: Int, compute: () -> TextRangeAndMarkupContent?): TextRangeAndMarkupContent? {
     if (file is VirtualFileWindow) {
       thisLogger().error("VirtualFileWindow not expected here")

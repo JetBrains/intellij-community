@@ -1,6 +1,17 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.kryo2` start
+content_module_jar(
+    libraries = [
+        # do not sort,
+        "@lib//:libraries-kryo2-_kryo",
+        "@lib//:libraries-kryo2-_objenesis",
+    ],
+    module = ":kryo2",
+)
+### auto-generated section `dev intellij.libraries.kryo2` end
+
 ### auto-generated section `build intellij.libraries.kryo2` start
 jvm_library(
     name = "kryo2",
@@ -24,15 +35,6 @@ jvm_library(
         "@lib//:libraries-kryo2-_kryo",
         "@lib//:libraries-kryo2-_objenesis",
     ],
-)
-
-content_module_jar(
-    libraries = [
-        # do not sort,
-        "@lib//:libraries-kryo2-_kryo",
-        "@lib//:libraries-kryo2-_objenesis",
-    ],
-    module = ":kryo2",
 )
 
 jvm_library(
@@ -59,7 +61,6 @@ exports_files(
     [
         "intellij.libraries.kryo2.iml",
         "resources/intellij.libraries.kryo2.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

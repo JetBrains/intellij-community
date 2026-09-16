@@ -22,6 +22,10 @@ fleet_wasmjs_module(
     ],
 )
 
+### auto-generated section `dev fleet.kernel` start
+content_module_jar(module = ":kernel")
+### auto-generated section `dev fleet.kernel` end
+
 ### auto-generated section `build fleet.kernel` start
 create_kotlinc_options(
     name = "custom_kernel",
@@ -87,8 +91,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":kernel")
-
 jvm_library(
     name = "kernel_test_lib",
     testonly = True,
@@ -121,7 +123,6 @@ exports_files(
     [
         "fleet.kernel.iml",
         "resources/fleet.kernel.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -11,7 +11,7 @@ import org.jetbrains.plugins.github.util.GithubUtil
 internal class GHRepositoryHostingService : GitRepositoryHostingService() {
   override fun getServiceDisplayName(): String = GithubUtil.SERVICE_DISPLAY_NAME
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   override fun getInteractiveAuthDataProvider(project: Project, url: String)
     : InteractiveGitHttpAuthDataProvider? = runBlocking {
     GHSilentHttpAuthDataProvider.getAccountsWithTokens(project, url).takeIf { it.isNotEmpty() }?.let {
@@ -19,7 +19,7 @@ internal class GHRepositoryHostingService : GitRepositoryHostingService() {
     }
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   override fun getInteractiveAuthDataProvider(project: Project, url: String, login: String)
     : InteractiveGitHttpAuthDataProvider? = runBlocking {
     GHSilentHttpAuthDataProvider.getAccountsWithTokens(project, url).mapNotNull { (acc, token) ->

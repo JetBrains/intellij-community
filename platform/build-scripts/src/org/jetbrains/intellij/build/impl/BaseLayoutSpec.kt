@@ -88,7 +88,7 @@ sealed class BaseLayoutSpec(private val layout: BaseLayout) {
     layout.withProjectLibrary(libraryName, jarName)
   }
 
-  fun withPatch(patcher: suspend (ModuleOutputPatcher, BuildContext) -> Unit) {
+  fun withPatch(patcher: (ModuleOutputPatcher, BuildContext) -> Unit) {
     layout.withPatch { moduleOutputPatcher, _, buildContext -> patcher(moduleOutputPatcher, buildContext) }
   }
 }

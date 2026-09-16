@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.platform.images.copyright` start
+content_module_jar(module = ":copyright")
+### auto-generated section `dev intellij.platform.images.copyright` end
+
 ### auto-generated section `build intellij.platform.images.copyright` start
 jvm_library(
     name = "copyright",
@@ -28,8 +32,6 @@ jvm_library(
         "//xml/xml-psi-impl:psi-impl",
     ],
 )
-
-content_module_jar(module = ":copyright")
 
 jvm_library(
     name = "copyright_test_lib",

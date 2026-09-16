@@ -10,6 +10,7 @@ data class TerminalOutputModelState(
   val trimmedCharsCount: Long,
   val firstLineTrimmedCharsCount: Int,
   val cursorOffset: Int,
+  val screenTopOffset: Int,
   val highlightings: List<StyleRange>,
   /** [Osc8Hyperlink] with absolute offsets. */
   val osc8Hyperlinks: List<Osc8Hyperlink>,

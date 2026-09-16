@@ -30,7 +30,7 @@ internal class ExternalResourcesRootsProvider : IndexableSetContributor() {
         }
       }
     }
-    CachedValueProvider.Result.create(set, VirtualFileManager.VFS_STRUCTURE_MODIFICATIONS)
+    CachedValueProvider.Result.create(set, VirtualFileManager.VFS_STRUCTURE_MODIFICATIONS, manager)
   })
 
   override fun getAdditionalRootsToIndex(): Set<VirtualFile> {

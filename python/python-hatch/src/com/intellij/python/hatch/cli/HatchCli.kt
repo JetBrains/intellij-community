@@ -7,9 +7,9 @@ import com.intellij.platform.eel.provider.utils.stderrString
 import com.intellij.platform.eel.provider.utils.stdoutString
 import com.intellij.python.community.execService.ProcessOutputTransformer
 import com.intellij.python.hatch.runtime.HatchConstants
-import com.intellij.python.pytools.runtime.PyToolRuntime
-import com.intellij.python.pytools.runtime.executeAndHandleErrors
-import com.intellij.python.pytools.runtime.executeAndMatch
+import com.intellij.python.pytools.backend.runtime.PyToolRuntime
+import com.intellij.python.pytools.backend.runtime.executeAndHandleErrors
+import com.intellij.python.pytools.backend.runtime.executeAndMatch
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.add.v2.PathHolder

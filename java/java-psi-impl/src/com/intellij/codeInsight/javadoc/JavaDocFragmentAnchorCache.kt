@@ -42,7 +42,7 @@ private class JavaDocFragmentCacheService {
 
   private fun findIdsFromComment(docComment: PsiDocComment?): List<JavaDocFragmentData> {
     val text = docComment?.text ?: return listOf()
-    return listOf(findIdsFromText(text, docComment.textOffset), findIdsFromSystemProperties(docComment)).flatten()
+    return findIdsFromText(text, docComment.textOffset) + findIdsFromSystemProperties(docComment)
   }
 
   /** Collect usages of `{@systemProperty ...}` tags as ids since the `javadoc` tool creates ids from them */

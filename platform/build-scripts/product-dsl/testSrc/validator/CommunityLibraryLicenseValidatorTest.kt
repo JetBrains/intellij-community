@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.productLayout.validator
 
+import com.intellij.platform.buildScripts.concurrency.SharedTaskOwner
 import com.intellij.platform.buildScripts.licenses.LibraryLicense
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -31,6 +32,13 @@ import java.nio.file.Path
  */
 @ExtendWith(TestFailureLogger::class)
 class CommunityLibraryLicenseValidatorTest {
+  private val owner = SharedTaskOwner("CommunityLibraryLicenseValidatorTest")
+
+  @org.junit.jupiter.api.AfterEach
+  fun closeSharedTasks() {
+    owner.close()
+  }
+
   private val unrelatedLicense = LibraryLicense(libraryName = "unrelated-lib", license = "Apache 2.0")
   private val exampleLicense = LibraryLicense(libraryName = "example-lib", license = "Apache 2.0")
 
@@ -40,7 +48,7 @@ class CommunityLibraryLicenseValidatorTest {
 
     assertThat(errors).hasSize(1)
     val error = errors.single() as MissingLibraryLicenseError
-    assertThat(error.context).isEqualTo("the community and core module sets")
+    assertThat(error.context).isEqualTo("the community, core and library module sets")
     assertThat(error.licenseFile).isEqualTo("CommunityLibraryLicenses.kt")
     val violation = error.violations.single()
     assertThat(violation.libraryName).isEqualTo("example-lib")
@@ -93,6 +101,7 @@ class CommunityLibraryLicenseValidatorTest {
         ModuleSetSourceLabels.CORE to listOf(coreSet),
         ModuleSetSourceLabels.ULTIMATE to listOf(ultimateSet),
       ),
+      owner = owner,
     )
     val errors = runValidationRule(CommunityLibraryLicenseValidator, model)
 
@@ -105,7 +114,7 @@ class CommunityLibraryLicenseValidatorTest {
     assertThatThrownBy {
       runBlocking(Dispatchers.Default) { run(tempDir, label = ModuleSetSourceLabels.ULTIMATE, licenses = listOf(unrelatedLicense)) }
     }.isInstanceOf(IllegalStateException::class.java)
-      .hasMessageContaining("No module of a community or core module set")
+      .hasMessageContaining("No module of a community, core or library module set")
   }
 
   @Test
@@ -172,7 +181,7 @@ class CommunityLibraryLicenseValidatorTest {
     assertThat(errors).isEmpty()
   }
 
-  private suspend fun run(tempDir: Path, label: String, licenses: List<LibraryLicense>): List<ValidationError> {
+  private fun run(tempDir: Path, label: String, licenses: List<LibraryLicense>): List<ValidationError> {
     val jps = jpsProject(tempDir) {
       mavenLibrary("example-lib", groupId = "com.example", artifactId = "example-lib", version = "1.0")
       module("intellij.libraries.example") {
@@ -185,7 +194,7 @@ class CommunityLibraryLicenseValidatorTest {
     return runRule(jps.outputProvider, label, set, licenses)
   }
 
-  private suspend fun runRule(
+  private fun runRule(
     outputProvider: ModuleOutputProvider,
     label: String,
     set: ModuleSet,
@@ -201,7 +210,7 @@ class CommunityLibraryLicenseValidatorTest {
       graph,
       outputProvider = outputProvider,
       communityLibraryLicenses = licenses,
-      moduleSetsByLabel = mapOf(label to listOf(set)),
+      moduleSetsByLabel = mapOf(label to listOf(set)), owner = owner,
     )
     return runValidationRule(CommunityLibraryLicenseValidator, model)
   }

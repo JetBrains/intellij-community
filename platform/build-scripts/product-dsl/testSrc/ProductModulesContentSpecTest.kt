@@ -479,10 +479,6 @@ private class MockModuleOutputProvider : ModuleOutputProvider {
     throw UnsupportedOperationException("Not available in mock")
   }
 
-  override fun getProjectLibraryToModuleMap(): Map<String, String> {
-    throw UnsupportedOperationException("Not available in mock")
-  }
-
   override fun getModuleOutputRoots(module: JpsModule, forTests: Boolean): List<Path> {
     throw UnsupportedOperationException("Not available in mock")
   }

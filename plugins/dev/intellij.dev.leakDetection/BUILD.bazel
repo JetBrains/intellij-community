@@ -10,6 +10,10 @@ jps_test(
 )
 ### skip generation section `test intellij.dev.leakDetection.tests`
 
+### auto-generated section `dev intellij.dev.leakDetection` start
+content_module_jar(module = ":leakDetection")
+### auto-generated section `dev intellij.dev.leakDetection` end
+
 ### auto-generated section `build intellij.dev.leakDetection` start
 jvm_library(
     name = "leakDetection",
@@ -44,8 +48,6 @@ jvm_library(
         "//libraries/jbr",
     ],
 )
-
-content_module_jar(module = ":leakDetection")
 
 jvm_library(
     name = "leakDetection_test_lib",

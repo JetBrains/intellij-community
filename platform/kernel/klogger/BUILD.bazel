@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.platform.klogger` start
+content_module_jar(module = ":klogger")
+### auto-generated section `dev intellij.platform.klogger` end
+
 ### auto-generated section `build intellij.platform.klogger` start
 jvm_library(
     name = "klogger",
@@ -26,8 +30,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":klogger")
-
 jvm_library(
     name = "klogger_test_lib",
     testonly = True,
@@ -51,7 +53,6 @@ exports_files(
     [
         "intellij.platform.klogger.iml",
         "resources/intellij.platform.klogger.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

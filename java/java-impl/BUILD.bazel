@@ -3,6 +3,10 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.java.impl` start
+content_module_jar(module = ":impl")
+### auto-generated section `dev intellij.java.impl` end
+
 ### auto-generated section `build intellij.java.impl` start
 create_kotlinc_options(
     name = "custom_impl",
@@ -137,8 +141,6 @@ jvm_library(
         "//platform/lang-api:lang",
     ],
 )
-
-content_module_jar(module = ":impl")
 
 jvm_library(
     name = "impl_test_lib",

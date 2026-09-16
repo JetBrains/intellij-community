@@ -11,6 +11,10 @@ jps_test(
 )
 ### skip generation section `test intellij.platform.compose.swing.tests`
 
+### auto-generated section `dev intellij.platform.compose.swing` start
+content_module_jar(module = ":swing")
+### auto-generated section `dev intellij.platform.compose.swing` end
+
 ### auto-generated section `build intellij.platform.compose.swing` start
 create_kotlinc_options(
     name = "custom_swing",
@@ -52,8 +56,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":swing")
-
 jvm_library(
     name = "swing_test_lib",
     testonly = True,
@@ -87,7 +89,6 @@ exports_files(
     [
         "intellij.platform.compose.swing.iml",
         "resources/intellij.platform.compose.swing.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

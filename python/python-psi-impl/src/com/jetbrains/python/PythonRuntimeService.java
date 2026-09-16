@@ -6,6 +6,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.parsing.console.PythonConsoleData;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -46,6 +47,7 @@ public class PythonRuntimeService {
     return null;
   }
 
+  @RequiresBackgroundThread
   public String formatDocstring(@NotNull Module module,
                                 @NotNull DocStringFormat format,
                                 @NotNull String input,

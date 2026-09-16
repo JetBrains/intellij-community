@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.platform.ide.core.impl` start
+content_module_jar(
+    module = ":ide-core-impl",
+    modules_before = ["//platform/backend/observation"],
+)
+### auto-generated section `dev intellij.platform.ide.core.impl` end
+
 ### auto-generated section `build intellij.platform.ide.core.impl` start
 jvm_library(
     name = "ide-core-impl",
@@ -47,11 +54,6 @@ jvm_library(
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//jps/model-api:model",
     ],
-)
-
-content_module_jar(
-    module = ":ide-core-impl",
-    modules_before = ["//platform/backend/observation"],
 )
 
 jvm_library(
@@ -101,7 +103,6 @@ exports_files(
     [
         "intellij.platform.ide.core.impl.iml",
         "resources/intellij.platform.ide.core.impl.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

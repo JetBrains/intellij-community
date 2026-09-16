@@ -29,7 +29,8 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlin-test",
+        "//libraries/kotlin/test:libraries-kotlinTest",
+        "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
         "//jps/model-api:model",

@@ -1,4 +1,0 @@
-- name: dist.all/lib/intellij.platform.ide.core.jar
-  modules:
-  - name: intellij.platform.ide.core
-  - name: intellij.platform.settings

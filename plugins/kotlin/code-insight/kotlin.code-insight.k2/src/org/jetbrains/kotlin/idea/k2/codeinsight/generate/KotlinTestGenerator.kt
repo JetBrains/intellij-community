@@ -31,6 +31,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAct
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
+import org.jetbrains.kotlin.idea.base.psi.addSuperType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.core.insertMembersAfter
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
@@ -139,7 +140,7 @@ class KotlinTestGenerator: TestGenerator {
             val superTypeEntry = psiFactory.createSuperTypeEntry(superClassName)
             if (referenceElements.isEmpty()) {
                 val superTypeListEntry =
-                    targetClass.addSuperTypeListEntry(superTypeEntry)
+                    targetClass.addSuperType(superTypeEntry)
                 shortenReferences(superTypeListEntry)
             } else {
                 referenceElements[0]!!.element.replace(superTypeEntry)

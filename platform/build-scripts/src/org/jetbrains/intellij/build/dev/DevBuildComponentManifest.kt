@@ -10,7 +10,7 @@ import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.classPath.orderCoreClasspathEntries
 import org.jetbrains.intellij.build.impl.PLUGIN_CLASSPATH
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
-import org.jetbrains.intellij.build.telemetry.blockingUse
+import org.jetbrains.intellij.build.telemetry.use
 import java.nio.charset.StandardCharsets
 import java.nio.file.FileVisitResult
 import java.nio.file.Files
@@ -40,7 +40,7 @@ data class DevBuildComponentEntry(
   /** Relative target of a genuine distribution symlink; `null` for an ordinary owned file. */
   @JvmField val symlinkTarget: String? = null,
   /**
-   * Where this file's bytes are, for a component that owns no tree - see [writeSourcedDevBuildComponentManifest].
+   * Where this file's bytes are, for a component that owns no tree.
    *
    * A path as the producer received it, which is a Bazel execution-root-relative one, so the composer resolves it
    * against its own working directory and finds the file its action staged at the same path. `null` for an entry of a
@@ -110,57 +110,6 @@ fun writeDevBuildComponentManifest(
     },
     pluginCount = pluginCount,
     entries = inventoryDevBuildComponent(componentRoot),
-  )
-  file.parent?.let { Files.createDirectories(it) }
-  Files.writeString(file, componentManifestJson.encodeToString(DevBuildComponentManifest.serializer(), manifest))
-}
-
-/**
- * One file of a component that owns no tree: bytes that already exist, and the distribution path they belong at.
- *
- * @param relativePath the file's path in the distribution, `/`-separated.
- * @param source the path the producer was given for the bytes - see [DevBuildComponentEntry.source].
- */
-@ApiStatus.Internal
-data class DevBuildComponentSourcedFile(
-  @JvmField val relativePath: String,
-  @JvmField val source: String,
-)
-
-/**
- * Writes the manifest of a component that owns no tree, naming where each of its files' bytes already are.
- *
- * The counterpart of [writeDevBuildComponentManifest] for a producer whose whole job is to say where already-packed
- * jars belong: copying them into a tree only for the composer to copy them again writes the distribution twice, so it
- * declares no tree at all and the composer copies each jar straight into the distribution.
- *
- * The mode is recorded by construction rather than measured. Such a file lands in the distribution as an ordinary
- * non-executable file - the composer chmods it, exactly as the collector used to before writing this manifest - so
- * `executable` is false here for the same reason it was false then, and not because of whatever mode Bazel left on the
- * packed jar in its output tree. Reading the mode off the source would make the fingerprint depend on that instead.
- *
- * Such a component declares no main class, no core classpath, no additional modules and no plugins, because deciding
- * any of those needs a product layout - see [DevBuildComponentManifest.mainClass].
- */
-@ApiStatus.Internal
-fun writeSourcedDevBuildComponentManifest(
-  file: Path,
-  kind: String,
-  platformPrefix: String,
-  os: OsFamily,
-  arch: JvmArchitecture,
-  files: Collection<DevBuildComponentSourcedFile>,
-) {
-  val manifest = DevBuildComponentManifest(
-    kind = kind,
-    platformPrefix = platformPrefix,
-    os = os.osId,
-    arch = arch.name,
-    additionalModules = emptyList(),
-    mainClass = null,
-    coreClassPath = emptyList(),
-    pluginCount = 0,
-    entries = inventorySourcedDevBuildComponent(files),
   )
   file.parent?.let { Files.createDirectories(it) }
   Files.writeString(file, componentManifestJson.encodeToString(DevBuildComponentManifest.serializer(), manifest))
@@ -237,7 +186,7 @@ fun computeIdeFingerprintFromComponents(
  * actions. `fileCount` and `byteCount` are what the duration has to be read against.
  */
 private fun inventoryDevBuildComponent(componentRoot: Path): List<DevBuildComponentEntry> {
-  return spanBuilder("inventory dev build component").blockingUse { span ->
+  return spanBuilder("inventory dev build component").use { span ->
     val normalizedComponentRoot = componentRoot.toAbsolutePath().normalize()
     val hasher = DevBuildContentHasher()
     val result = ArrayList<DevBuildComponentEntry>()
@@ -288,37 +237,6 @@ private fun inventoryDevBuildComponent(componentRoot: Path): List<DevBuildCompon
       }
     })
 
-    result.sortWith(DEV_BUILD_COMPONENT_ENTRY_ORDER)
-    span.setAttribute("fileCount", result.size.toLong())
-    span.setAttribute("hashedFileCount", hasher.fileCount)
-    span.setAttribute("byteCount", hasher.byteCount)
-    result
-  }
-}
-
-/**
- * Hashes the bytes of a component that owns no tree, at the paths its producer was given.
- *
- * Under the same span name as [inventoryDevBuildComponent], because it is the same cost on the same bytes - reading
- * back the component's whole content, single-threaded - and the two are only readable against each other under one
- * name. `hashedFileCount` below `fileCount` is what this shape adds: one jar placed in several plugins is hashed once,
- * where inventorying a tree hashed each copy of it.
- */
-private fun inventorySourcedDevBuildComponent(files: Collection<DevBuildComponentSourcedFile>): List<DevBuildComponentEntry> {
-  return spanBuilder("inventory dev build component").blockingUse { span ->
-    val hasher = DevBuildContentHasher()
-    val result = files.mapTo(ArrayList(files.size)) { file ->
-      val source = Path.of(file.source)
-      require(Files.isRegularFile(source)) { "Source of '${file.relativePath}' is not a regular file: ${file.source}" }
-      DevBuildComponentEntry(
-        relativePath = file.relativePath,
-        type = COMPONENT_FILE_ENTRY_TYPE,
-        hash = hasher.hash(source.toAbsolutePath().normalize(), Files.size(source)),
-        // by construction, not measured - see `writeSourcedDevBuildComponentManifest`
-        executable = false,
-        source = file.source,
-      )
-    }
     result.sortWith(DEV_BUILD_COMPONENT_ENTRY_ORDER)
     span.setAttribute("fileCount", result.size.toLong())
     span.setAttribute("hashedFileCount", hasher.fileCount)

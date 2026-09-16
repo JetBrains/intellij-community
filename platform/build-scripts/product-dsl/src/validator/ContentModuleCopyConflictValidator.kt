@@ -46,7 +46,7 @@ internal object ContentModuleCopyConflictValidator : PipelineNode {
   // ContentModuleDependencyPlanner has published the module dependency edges of the graph.
   override val requires: Set<DataSlot<*>> get() = setOf(Slots.CONTENT_MODULE_PLAN)
 
-  override suspend fun execute(ctx: ComputeContext) {
+  override fun execute(ctx: ComputeContext) {
     val plan = ctx.get(Slots.CONTENT_MODULE_PLAN)
     val modulePluginDependencies = plan.plansByModule.mapValues { it.value.writtenPluginDependencies }
     val pluginGraph = ctx.model.pluginGraph

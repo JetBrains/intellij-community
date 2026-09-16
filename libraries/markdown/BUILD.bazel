@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.markdown` start
+content_module_jar(
+    libraries = ["@lib//:libraries-markdown-jetbrains-markdown"],
+    module = ":markdown",
+)
+### auto-generated section `dev intellij.libraries.markdown` end
+
 ### auto-generated section `build intellij.libraries.markdown` start
 jvm_library(
     name = "markdown",
@@ -14,13 +21,8 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    exports = ["@lib//:jetbrains-markdown"],
-    runtime_deps = ["@lib//:jetbrains-markdown"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:jetbrains-markdown"],
-    module = ":markdown",
+    exports = ["@lib//:libraries-markdown-jetbrains-markdown"],
+    runtime_deps = ["@lib//:libraries-markdown-jetbrains-markdown"],
 )
 
 jvm_library(
@@ -33,7 +35,7 @@ jvm_library(
     kotlinc_opts = "@community//:k8",
     module_name = "intellij.libraries.markdown",
     visibility = ["//visibility:public"],
-    exports = ["@lib//:jetbrains-markdown"],
+    exports = ["@lib//:libraries-markdown-jetbrains-markdown"],
     runtime_deps = [":markdown"],
 )
 ### auto-generated section `build intellij.libraries.markdown` end
@@ -43,7 +45,6 @@ exports_files(
     [
         "intellij.libraries.markdown.iml",
         "resources/intellij.libraries.markdown.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

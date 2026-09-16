@@ -5,4 +5,3 @@
 @Experimental<caret>(level=Experimental.Level.WARNING)
 annotation class Marker
 
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.migration.MigrateExperimentalToRequiresOptInFix

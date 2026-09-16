@@ -183,11 +183,10 @@ f:com.intellij.dvcs.commit.CommitAndPushExecutorKt
 - sf:getCommitAndPushActionName(com.intellij.vcs.commit.CommitWorkflowHandlerState):java.lang.String
 f:com.intellij.dvcs.commit.EditedCommitDetailsExtKt
 f:com.intellij.dvcs.ignore.IgnoredToExcludedSynchronizer
-- com.intellij.openapi.vcs.FilesProcessor
+- com.intellij.openapi.Disposable
 - <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope):V
 - f:clearFiles(java.util.Collection):Z
 - doActionOnChosenFiles(java.util.Collection):V
-- doFilterFiles(java.util.Collection):java.util.List
 - f:getValidFiles():java.util.List
 - f:isNotEmpty():Z
 - f:muteForCurrentProject():V

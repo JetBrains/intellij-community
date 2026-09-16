@@ -2,8 +2,10 @@
 package com.intellij.polySymbols.patterns.impl
 
 import com.intellij.polySymbols.PolySymbolNameSegment
+import org.jetbrains.annotations.ApiStatus
 
-internal open class MatchResult internal constructor(
+@ApiStatus.Internal
+open class MatchResult internal constructor(
   val segments: List<PolySymbolNameSegment>,
 ) {
 

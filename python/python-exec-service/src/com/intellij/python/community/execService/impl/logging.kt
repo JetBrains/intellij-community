@@ -10,13 +10,12 @@ import com.intellij.python.processOutput.common.ExecutableDto
 import com.intellij.python.processOutput.common.LoggedProcessDto
 import com.intellij.python.processOutput.common.OutputKindDto
 import com.intellij.python.processOutput.common.OutputLineDto
+import com.intellij.python.processOutput.common.ProcessId
+import com.intellij.python.processOutput.common.ProcessOutputTopicSender
 import com.intellij.python.processOutput.common.ProcessWeightDto
 import com.intellij.python.processOutput.common.TraceContextDto
 import com.intellij.python.processOutput.common.TraceContextKind
 import com.intellij.python.processOutput.common.TraceContextUuid
-import com.intellij.python.processOutput.common.sendNewOutputLineEvent
-import com.intellij.python.processOutput.common.sendNewProcessEvent
-import com.intellij.python.processOutput.common.sendProcessExitEvent
 import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
 import com.jetbrains.python.TraceContext
 import com.jetbrains.python.errorProcessing.Exe
@@ -38,7 +37,7 @@ object LoggingLimits {
   /**
    * The maximum buffer size of a LoggingProcess
    */
-  const val MAX_OUTPUT_SIZE = 100_000
+  const val MAX_OUTPUT_SIZE: Int = 100_000
 }
 
 @ApiStatus.Internal
@@ -52,6 +51,8 @@ class LoggingProcess(
   args: List<String>,
   env: Map<String, String>,
   target: String,
+  topicSender: ProcessOutputTopicSender,
+  coroutineScope: CoroutineScope = ApplicationManager.getApplication().service<LoggingService>().scope,
 ) : Process() {
   val loggedProcess: LoggedProcessDto =
     LoggedProcessDto(
@@ -83,14 +84,26 @@ class LoggingProcess(
       args = args,
       env = env,
       target = target,
-      id = nextId.getAndAdd(1),
+      id = ProcessId(nextId.getAndAdd(1)),
     )
 
-  private val stdoutStream = LoggingInputStream(loggedProcess.id, backingProcess.inputStream, OutputKindDto.OUT)
-  private val stderrStream = LoggingInputStream(loggedProcess.id, backingProcess.errorStream, OutputKindDto.ERR)
+  private val stdoutStream =
+    LoggingInputStream(
+      loggedProcess.id,
+      backingProcess.inputStream,
+      OutputKindDto.OUT,
+      topicSender,
+    )
+  private val stderrStream =
+    LoggingInputStream(
+      loggedProcess.id,
+      backingProcess.errorStream,
+      OutputKindDto.ERR,
+      topicSender,
+    )
 
   init {
-    ApplicationManager.getApplication().service<LoggingService>().scope.launch {
+    coroutineScope.launch {
       val traceHierarchy = mutableListOf<TraceContextDto>()
       var currentTraceContext = traceContext
 
@@ -99,14 +112,14 @@ class LoggingProcess(
         currentTraceContext = currentTraceContext.parentTraceContext
       }
 
-      sendNewProcessEvent(loggedProcess, traceHierarchy)
+      topicSender.sendNewProcessEvent(loggedProcess, traceHierarchy)
 
       // PY-89717: avoid awaitExit() on this app-scoped coroutine to stop
       // ThreadLeakTracker false-positives. See processAwaiter.kt for the full rationale.
       // (LoggingProcess.onExit() below already delegates to the JDK process reaper.)
       onExit().await()
 
-      sendProcessExitEvent(
+      topicSender.sendProcessExitEvent(
         processId = loggedProcess.id,
         exitedAt = Clock.System.now(),
         exitValue = exitValue(),
@@ -158,10 +171,11 @@ class LoggingProcess(
   }
 }
 
-private class LoggingInputStream(
-  private val processId: Int,
-  private val backingInputStream: InputStream,
+internal class LoggingInputStream(
+  private val processId: ProcessId,
+  internal val backingInputStream: InputStream,
   private val kind: OutputKindDto,
+  private val topicSender: ProcessOutputTopicSender,
 ) : InputStream() {
   private var closed = AtomicBoolean(false)
   private var outputSize = 0
@@ -249,7 +263,7 @@ private class LoggingInputStream(
   private fun finalizeLine(bytes: ByteArray) {
     val line = String(bytes)
 
-    sendNewOutputLineEvent(
+    topicSender.sendNewOutputLineEvent(
       processId = processId,
       OutputLineDto(
         kind = kind,
@@ -263,7 +277,7 @@ private class LoggingInputStream(
   private fun finalizeLastLine() {
     val bytes = currentLineBytes.toByteArray()
 
-    if (bytes.size > 0) {
+    if (bytes.isNotEmpty()) {
       finalizeLine(bytes)
     }
   }

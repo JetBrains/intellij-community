@@ -17,7 +17,7 @@ import org.junit.runner.RunWith;
 @TestRoot("refactorings/kotlin.refactorings.tests.k2")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../../idea/tests/testData/refactoring/copyMultiModule")
+@TestMetadata("testData/copyMultiModule")
 public class K2MultiModuleCopyTestGenerated extends AbstractK2MultiModuleCopyTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -25,16 +25,16 @@ public class K2MultiModuleCopyTestGenerated extends AbstractK2MultiModuleCopyTes
 
     @TestMetadata("fileNotUnderSourceRoot/fileNotUnderSourceRoot.test")
     public void testFileNotUnderSourceRoot_FileNotUnderSourceRoot() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/copyMultiModule/fileNotUnderSourceRoot/fileNotUnderSourceRoot.test");
+        runTest("testData/copyMultiModule/fileNotUnderSourceRoot/fileNotUnderSourceRoot.test");
     }
 
     @TestMetadata("internalReferencesToAnotherModule2/internalReferencesToAnotherModule.test")
     public void testInternalReferencesToAnotherModule2_InternalReferencesToAnotherModule() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/copyMultiModule/internalReferencesToAnotherModule2/internalReferencesToAnotherModule.test");
+        runTest("testData/copyMultiModule/internalReferencesToAnotherModule2/internalReferencesToAnotherModule.test");
     }
 
     @TestMetadata("referencesToUnrelatedModule/referencesToUnrelatedModule.test")
     public void testReferencesToUnrelatedModule_ReferencesToUnrelatedModule() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/copyMultiModule/referencesToUnrelatedModule/referencesToUnrelatedModule.test");
+        runTest("testData/copyMultiModule/referencesToUnrelatedModule/referencesToUnrelatedModule.test");
     }
 }

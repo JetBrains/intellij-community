@@ -2,7 +2,6 @@
 package com.intellij.ide.starters.local
 
 import com.intellij.codeInsight.actions.ReformatCodeProcessor
-import com.intellij.ide.IdeBundle
 import com.intellij.ide.projectWizard.ProjectSettingsStep
 import com.intellij.ide.starters.JavaStartersBundle
 import com.intellij.ide.starters.StarterModuleImporter
@@ -16,12 +15,12 @@ import com.intellij.ide.starters.shared.StarterLanguage
 import com.intellij.ide.starters.shared.StarterProjectType
 import com.intellij.ide.starters.shared.StarterTestRunner
 import com.intellij.ide.starters.shared.StarterWizardSettings
+import com.intellij.ide.starters.shared.initGitRepository
 import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.SettingsStep
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.GitRepositoryInitializer
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.WriteAction
@@ -37,7 +36,6 @@ import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.options.ConfigurationException
-import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.projectRoots.JavaSdk
@@ -56,6 +54,7 @@ import com.intellij.openapi.util.Version
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.util.ModalityUiUtil
@@ -286,6 +285,11 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
 
   internal fun getMinJavaVersionInternal(): JavaVersion? = getMinJavaVersion()
 
+  override fun postCommit(project: Project, projectDir: VirtualFile) {
+    // the new project is replaced with the workspace project, so the startup callback of setupModule never runs
+    starterContext.initGitRepository(project, projectDir)
+  }
+
   override fun setupRootModel(modifiableRootModel: ModifiableRootModel) {
     setupNewModuleJdk(modifiableRootModel, moduleJdk, starterContext.isCreatingNewProject)
     doAddContentEntry(modifiableRootModel)
@@ -398,11 +402,7 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
             // import of module may dispose it and create another. open samples first.
             openSampleFiles(module, getFilePathsToOpen())
 
-            if (starterContext.gitIntegration && starterContext.isCreatingNewProject) {
-              runBackgroundableTask(IdeBundle.message("progress.title.creating.git.repository"), module.project) {
-                GitRepositoryInitializer.getInstance()?.initRepository(module.project, moduleContentRoot, true)
-              }
-            }
+            starterContext.initGitRepository(module.project, moduleContentRoot)
 
             importModule(module)
           }

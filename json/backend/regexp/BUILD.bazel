@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.json.backend.regexp` start
+content_module_jar(module = ":regexp")
+### auto-generated section `dev intellij.json.backend.regexp` end
+
 ### auto-generated section `build intellij.json.backend.regexp` start
 jvm_library(
     name = "regexp",
@@ -29,8 +33,6 @@ jvm_library(
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     ],
 )
-
-content_module_jar(module = ":regexp")
 
 jvm_library(
     name = "regexp_test_lib",

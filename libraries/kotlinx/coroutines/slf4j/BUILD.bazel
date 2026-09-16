@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.kotlinx.coroutines.slf4j` start
+content_module_jar(
+    libraries = ["@lib//:libraries-kotlinx-coroutines-slf4j-kotlinx-coroutines-slf4j"],
+    module = ":slf4j",
+)
+### auto-generated section `dev intellij.libraries.kotlinx.coroutines.slf4j` end
+
 ### auto-generated section `build intellij.libraries.kotlinx.coroutines.slf4j` start
 jvm_library(
     name = "slf4j",
@@ -14,13 +21,8 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    exports = ["@lib//:kotlinx-coroutines-slf4j"],
-    runtime_deps = ["@lib//:kotlinx-coroutines-slf4j"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:kotlinx-coroutines-slf4j"],
-    module = ":slf4j",
+    exports = ["@lib//:libraries-kotlinx-coroutines-slf4j-kotlinx-coroutines-slf4j"],
+    runtime_deps = ["@lib//:libraries-kotlinx-coroutines-slf4j-kotlinx-coroutines-slf4j"],
 )
 
 jvm_library(
@@ -33,7 +35,7 @@ jvm_library(
     kotlinc_opts = "@community//:k8",
     module_name = "intellij.libraries.kotlinx.coroutines.slf4j",
     visibility = ["//visibility:public"],
-    exports = ["@lib//:kotlinx-coroutines-slf4j"],
+    exports = ["@lib//:libraries-kotlinx-coroutines-slf4j-kotlinx-coroutines-slf4j"],
     runtime_deps = [":slf4j"],
 )
 ### auto-generated section `build intellij.libraries.kotlinx.coroutines.slf4j` end
@@ -43,7 +45,6 @@ exports_files(
     [
         "intellij.libraries.kotlinx.coroutines.slf4j.iml",
         "resources/intellij.libraries.kotlinx.coroutines.slf4j.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.python.lsp.core` start
+content_module_jar(module = ":lsp-core")
+### auto-generated section `dev intellij.python.lsp.core` end
+
 ### auto-generated section `build intellij.python.lsp.core` start
 jvm_library(
     name = "lsp-core",
@@ -46,14 +50,13 @@ jvm_library(
         "//platform/statistics",
         "//platform/core-impl",
         "//platform/util:util-ui",
-        "//python/python-pytools-ui:pytools-ui",
-        "//python/python-pytools:pytools",
+        "//python/python-pytools/backend",
+        "//python/python-pytools/common",
+        "//python/python-lsp-core/common",
         "//python/python-exec-service:community-execService",
         "//platform/lsp-impl",
     ],
 )
-
-content_module_jar(module = ":lsp-core")
 
 jvm_library(
     name = "lsp-core_test_lib",
@@ -94,8 +97,9 @@ jvm_library(
         "//platform/statistics:statistics_test_lib",
         "//platform/core-impl:core-impl_test_lib",
         "//platform/util:util-ui_test_lib",
-        "//python/python-pytools-ui:pytools-ui_test_lib",
-        "//python/python-pytools:pytools_test_lib",
+        "//python/python-pytools/backend:backend_test_lib",
+        "//python/python-pytools/common:common_test_lib",
+        "//python/python-lsp-core/common:common_test_lib",
         "//python/python-exec-service:community-execService_test_lib",
         "//platform/lsp-impl:lsp-impl_test_lib",
     ],

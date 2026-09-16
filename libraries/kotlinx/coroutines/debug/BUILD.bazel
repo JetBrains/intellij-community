@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.kotlinx.coroutines.debug` start
+content_module_jar(
+    libraries = ["@lib//:libraries-kotlinx-coroutines-debug-kotlinx-coroutines-debug"],
+    module = ":debug",
+)
+### auto-generated section `dev intellij.libraries.kotlinx.coroutines.debug` end
+
 ### auto-generated section `build intellij.libraries.kotlinx.coroutines.debug` start
 jvm_library(
     name = "debug",
@@ -14,17 +21,12 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    exports = ["@lib//:kotlinx-coroutines-debug"],
+    exports = ["@lib//:libraries-kotlinx-coroutines-debug-kotlinx-coroutines-debug"],
     runtime_deps = [
         # do not sort,
         "//libraries/kotlinx/coroutines/core",
-        "@lib//:kotlinx-coroutines-debug",
+        "@lib//:libraries-kotlinx-coroutines-debug-kotlinx-coroutines-debug",
     ],
-)
-
-content_module_jar(
-    libraries = ["@lib//:kotlinx-coroutines-debug"],
-    module = ":debug",
 )
 
 jvm_library(
@@ -37,7 +39,7 @@ jvm_library(
     kotlinc_opts = "@community//:k8",
     module_name = "intellij.libraries.kotlinx.coroutines.debug",
     visibility = ["//visibility:public"],
-    exports = ["@lib//:kotlinx-coroutines-debug"],
+    exports = ["@lib//:libraries-kotlinx-coroutines-debug-kotlinx-coroutines-debug"],
     runtime_deps = [
         # do not sort,
         ":debug",
@@ -51,7 +53,6 @@ exports_files(
     [
         "intellij.libraries.kotlinx.coroutines.debug.iml",
         "resources/intellij.libraries.kotlinx.coroutines.debug.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

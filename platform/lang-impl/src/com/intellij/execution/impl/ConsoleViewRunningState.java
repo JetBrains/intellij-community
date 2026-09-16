@@ -3,6 +3,7 @@ package com.intellij.execution.impl;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.process.BaseProcessHandler;
+import com.intellij.execution.process.LocalProcessService;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
@@ -11,8 +12,6 @@ import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
-import com.intellij.util.ObjectUtils;
-import com.pty4j.PtyProcess;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -119,10 +118,11 @@ public final class ConsoleViewRunningState extends ConsoleState {
   }
 
   private char getEnterKeyCode() {
-    if (myProcessHandler instanceof BaseProcessHandler<?>) {
-      PtyProcess process = ObjectUtils.tryCast(((BaseProcessHandler<?>)myProcessHandler).getProcess(), PtyProcess.class);
-      if (process != null) {
-        return (char)process.getEnterKeyCode();
+    if (myProcessHandler instanceof BaseProcessHandler<?> baseProcessHandler) {
+      var control = LocalProcessService.getInstance().getPtyControl(baseProcessHandler.getProcess());
+      var enterKeyCode = control == null ? null : control.getEnterKeyCode();
+      if (enterKeyCode != null) {
+        return (char)enterKeyCode.byteValue();
       }
     }
     return LF;

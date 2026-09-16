@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.gradle.analysis` start
+content_module_jar(module = ":analysis")
+### auto-generated section `dev intellij.gradle.analysis` end
+
 ### auto-generated section `build intellij.gradle.analysis` start
 jvm_library(
     name = "analysis",
@@ -31,8 +35,6 @@ jvm_library(
         "//platform/projectModel-api:projectModel",
     ],
 )
-
-content_module_jar(module = ":analysis")
 
 jvm_library(
     name = "analysis_test_lib",

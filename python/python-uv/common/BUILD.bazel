@@ -2,6 +2,10 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.python.uv.common` start
+content_module_jar(module = ":common")
+### auto-generated section `dev intellij.python.uv.common` end
+
 ### auto-generated section `build intellij.python.uv.common` start
 create_kotlinc_options(
     name = "custom_common",
@@ -33,13 +37,10 @@ jvm_library(
         "@lib//:kotlin-stdlib",
         "//libraries/jetbrains/annotations",
         "//platform/util",
-        "//python/openapi:community",
         "//python/common",
         "//python/python-process-output/common",
     ],
 )
-
-content_module_jar(module = ":common")
 
 jvm_library(
     name = "common_test_lib",
@@ -56,7 +57,6 @@ jvm_library(
         ":common",
         "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/util:util_test_lib",
-        "//python/openapi:community_test_lib",
         "//python/common:common_test_lib",
         "//python/python-process-output/common:common_test_lib",
     ],

@@ -17,7 +17,7 @@ import org.junit.runner.RunWith;
 @TestRoot("refactorings/kotlin.refactorings.tests.k2")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../../idea/tests/testData/refactoring/changePackage")
+@TestMetadata("testData/changePackage")
 public class K2ChangePackageTestGenerated extends AbstractK2ChangePackageTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -25,36 +25,36 @@ public class K2ChangePackageTestGenerated extends AbstractK2ChangePackageTest {
 
     @TestMetadata("java/movePackageToAnotherPackage/movePackageToAnotherPackage.test")
     public void testJava_movePackageToAnotherPackage_MovePackageToAnotherPackage() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/changePackage/java/movePackageToAnotherPackage/movePackageToAnotherPackage.test");
+        runTest("testData/changePackage/java/movePackageToAnotherPackage/movePackageToAnotherPackage.test");
     }
 
     @TestMetadata("kotlin/addExtensionImport/addExtensionImport.test")
     public void testKotlin_addExtensionImport_AddExtensionImport() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/changePackage/kotlin/addExtensionImport/addExtensionImport.test");
+        runTest("testData/changePackage/kotlin/addExtensionImport/addExtensionImport.test");
     }
 
     @TestMetadata("kotlin/changeToDefaultPackage/changeToDefaultPackage.test")
     public void testKotlin_changeToDefaultPackage_ChangeToDefaultPackage() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/changePackage/kotlin/changeToDefaultPackage/changeToDefaultPackage.test");
+        runTest("testData/changePackage/kotlin/changeToDefaultPackage/changeToDefaultPackage.test");
     }
 
     @TestMetadata("kotlin/changeToNonDefaultPackage/changeToNonDefaultPackage.test")
     public void testKotlin_changeToNonDefaultPackage_ChangeToNonDefaultPackage() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/changePackage/kotlin/changeToNonDefaultPackage/changeToNonDefaultPackage.test");
+        runTest("testData/changePackage/kotlin/changeToNonDefaultPackage/changeToNonDefaultPackage.test");
     }
 
     @TestMetadata("kotlin/longName/longName.test")
     public void testKotlin_longName_LongName() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/changePackage/kotlin/longName/longName.test");
+        runTest("testData/changePackage/kotlin/longName/longName.test");
     }
 
     @TestMetadata("kotlin/updateAllUsagesByDefault/updateAllUsagesByDefault.test")
     public void testKotlin_updateAllUsagesByDefault_UpdateAllUsagesByDefault() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/changePackage/kotlin/updateAllUsagesByDefault/updateAllUsagesByDefault.test");
+        runTest("testData/changePackage/kotlin/updateAllUsagesByDefault/updateAllUsagesByDefault.test");
     }
 
     @TestMetadata("kotlin/updateOnlyRealReferences/updateOnlyRealReferences.test")
     public void testKotlin_updateOnlyRealReferences_UpdateOnlyRealReferences() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/changePackage/kotlin/updateOnlyRealReferences/updateOnlyRealReferences.test");
+        runTest("testData/changePackage/kotlin/updateOnlyRealReferences/updateOnlyRealReferences.test");
     }
 }

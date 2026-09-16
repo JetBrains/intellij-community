@@ -30,9 +30,9 @@ public class JavaReferenceInfo implements ReferenceInfo {
 
   @Override
   public boolean equals(Object obj) {
-    if (!(obj instanceof JavaReferenceInfo)) {
+    if (!(obj instanceof JavaReferenceInfo info)) {
       return false;
     }
-    return ((JavaReferenceInfo)obj).objectReference.equals(objectReference);
+    return info.objectReference.equals(objectReference);
   }
 }

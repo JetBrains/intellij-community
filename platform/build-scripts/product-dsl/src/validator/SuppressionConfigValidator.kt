@@ -24,7 +24,7 @@ import org.jetbrains.intellij.build.productLayout.pipeline.PipelineNode
 internal object SuppressionConfigValidator : PipelineNode {
   override val id get() = NodeIds.SUPPRESSION_CONFIG_VALIDATION
 
-  override suspend fun execute(ctx: ComputeContext) {
+  override fun execute(ctx: ComputeContext) {
     val model = ctx.model
     // Skip validation when updating suppressions - invalid keys are auto-removed
     if (model.updateSuppressions) {

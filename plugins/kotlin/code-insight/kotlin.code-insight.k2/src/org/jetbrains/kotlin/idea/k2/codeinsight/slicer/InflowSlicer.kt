@@ -1,7 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-@file:OptIn(KaNonPublicApi::class)
-
 package org.jetbrains.kotlin.idea.k2.codeinsight.slicer
 
 import com.intellij.psi.PsiCall
@@ -11,7 +9,6 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.slicer.SliceUsage
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.Processor
-import org.jetbrains.kotlin.analysis.api.KaNonPublicApi
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.dataflow.computeExitPointSnapshot
 import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
@@ -431,7 +428,6 @@ class InflowSlicer(
                 }
     }
 
-    @OptIn(KaNonPublicApi::class)
     private fun KtDeclarationWithBody.processBody() {
         val bodyExpression = bodyExpression ?: return
         if (bodyExpression is KtBlockExpression) {

@@ -8,8 +8,8 @@ import com.intellij.python.community.execService.ExecOptions
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.execGetStdout
 import com.intellij.python.community.helpersLocator.PythonHelpersLocator
-import com.intellij.python.pytools.ToolCommandSpec
-import com.intellij.python.pytools.ToolSearchPath
+import com.intellij.python.pytools.backend.ToolCommandSpec
+import com.intellij.python.pytools.backend.ToolSearchPath
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.ToolProbeResult

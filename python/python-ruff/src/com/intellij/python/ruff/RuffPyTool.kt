@@ -4,11 +4,10 @@ package com.intellij.python.ruff
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.lsp.api.LspClientManager
-import com.intellij.python.pytools.PyTool
-import com.intellij.python.pytools.statistics.PyToolFusSnapshot
-import com.intellij.python.pytools.lsp.PyLspTool
-import com.intellij.python.pytools.ExternalPyTool
-import com.intellij.python.pytools.ui.PyToolsUiBundle
+import com.intellij.python.lsp.core.PyLspTool
+import com.intellij.python.lsp.core.common.PyLspToolConfigurationDto
+import com.intellij.python.pytools.backend.PyTool
+import com.intellij.python.pytools.backend.statistics.PyToolFusSnapshot
 import com.intellij.python.ruff.server.RuffLspIntegrationProvider
 import com.jetbrains.python.packaging.PyPackageName
 import org.jetbrains.annotations.ApiStatus
@@ -20,28 +19,12 @@ import javax.swing.Icon
  * replace Flake8, isort, pyupgrade, and Black.
  */
 @ApiStatus.Internal
-class RuffPyTool : PyLspTool<RuffConfiguration>(), ExternalPyTool {
-  override val presentableName: String = "Ruff"
-  override val description: String get() = RuffBundle.message("ruff.tool.description")
+class RuffPyTool : PyLspTool<RuffConfiguration>() {
+  override val lspServerName: String = "Ruff"
+  override val icon: Icon = RuffUtil.getDefaultRuffIcon()
   override val packageName: PyPackageName = PyPackageName.from("ruff")
 
-  override fun configuration(project: Project): RuffConfiguration = project.service<RuffConfiguration>()
-
-  override val icon: Icon = RuffUtil.getDefaultRuffIcon()
-
-  override fun createConfigurable(project: Project): RuffConfigurable = RuffConfigurable(project)
-
-  override fun summaryFor(project: Project): String {
-    val cfg = configuration(project)
-    return buildList {
-      if (cfg.inspections) add(PyToolsUiBundle.message("checkbox.inspections"))
-      if (cfg.formatting) add(RuffBundle.message("checkbox.formatting"))
-      if (cfg.sortImports) add(RuffBundle.message("checkbox.import.optimizer"))
-      if (cfg.completions == true) add(PyToolsUiBundle.message("checkbox.completions"))
-      if (cfg.inlayHints == true) add(PyToolsUiBundle.message("checkbox.inlay.hints"))
-      if (cfg.documentation == true) add(PyToolsUiBundle.message("checkbox.documentation"))
-    }.joinToString(", ")
-  }
+  override fun configuration(project: Project): RuffConfiguration = project.service()
 
   override fun onEnabledChanged(project: Project, enabled: Boolean) {
     val manager = LspClientManager.getInstance(project)
@@ -49,15 +32,29 @@ class RuffPyTool : PyLspTool<RuffConfiguration>(), ExternalPyTool {
     else manager.stopClients(RuffLspIntegrationProvider::class.java)
   }
 
-  override fun configurationFusSnapshot(project: Project): PyToolFusSnapshot {
-    val cfg = configuration(project)
-    return super.configurationFusSnapshot(project).copy(
-      formatting = cfg.formatting,
-      sortImports = cfg.sortImports,
+  override fun configurationState(project: Project): PyLspToolConfigurationDto {
+    val configuration = configuration(project)
+    return super.configurationState(project).copy(
+      formatting = configuration.formatting,
+      sortImports = configuration.sortImports,
     )
   }
 
-  @Suppress("CompanionObjectInExtension")
+  override fun applyConfigurationState(project: Project, state: PyLspToolConfigurationDto) {
+    super.applyConfigurationState(project, state)
+    val configuration = configuration(project)
+    state.formatting?.let { configuration.formatting = it }
+    state.sortImports?.let { configuration.sortImports = it }
+  }
+
+  override fun configurationFusSnapshot(project: Project): PyToolFusSnapshot {
+    val configuration = configuration(project)
+    return super.configurationFusSnapshot(project).copy(
+      formatting = configuration.formatting,
+      sortImports = configuration.sortImports,
+    )
+  }
+
   companion object {
     fun getInstance(): RuffPyTool = PyTool.EP_NAME.findExtensionOrFail(RuffPyTool::class.java)
   }

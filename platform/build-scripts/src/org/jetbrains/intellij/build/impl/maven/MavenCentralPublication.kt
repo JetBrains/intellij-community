@@ -3,17 +3,8 @@ package org.jetbrains.intellij.build.impl.maven
 
 import com.intellij.util.io.Compressor
 import io.opentelemetry.api.trace.Span
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.MultipartBody
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.RequestBody.Companion.asRequestBody
-import okhttp3.RequestBody.Companion.toRequestBody
-import okhttp3.Response
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
@@ -21,10 +12,19 @@ import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import org.jetbrains.intellij.build.forEachConcurrent
 import org.jetbrains.intellij.build.impl.Checksums
+import org.jetbrains.intellij.build.io.sendHttpRequest
+import org.jetbrains.intellij.build.io.withHttpClient
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
+import java.net.URI
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse
+import java.nio.file.Files
 import java.nio.file.Path
 import java.util.Base64
+import java.util.UUID
+import java.util.concurrent.TimeoutException
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.PathWalkOption
 import kotlin.io.path.deleteIfExists
@@ -39,6 +39,7 @@ import kotlin.io.path.walk
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.TimeSource
 
 /**
  * @param workDir is expected to contain:
@@ -50,7 +51,6 @@ import kotlin.time.Duration.Companion.seconds
  * See https://youtrack.jetbrains.com/articles/IJPL-A-611 internal article for more details
  */
 @ApiStatus.Internal
-@Suppress("IO_FILE_USAGE")
 @OptIn(ExperimentalPathApi::class)
 class MavenCentralPublication(
   private val context: BuildContext,
@@ -174,13 +174,16 @@ class MavenCentralPublication(
     }
   }
 
-  suspend fun execute() {
+  fun execute() {
     sign()
-    val deploymentId = publish(bundle())
-    if (deploymentId != null) wait(deploymentId)
+    val bundle = bundle()
+    withHttpClient(connectTimeout = SONATYPE_TIMEOUT) { client ->
+      val deploymentId = publish(client, bundle)
+      if (deploymentId != null) wait(client, deploymentId)
+    }
   }
 
-  private suspend fun sign() {
+  private fun sign() {
     context.proprietaryBuildTools.signTool.signFilesWithGpg(
       artifacts.flatMap {
         it.distributionFiles - it.checksums.toSet()
@@ -195,7 +198,7 @@ class MavenCentralPublication(
     }
   }
 
-  private suspend fun generateOrVerifyChecksums() {
+  private fun generateOrVerifyChecksums() {
     val checksumAlgorithms = listOf(
       Checksums.Algorithm.SHA1,
       Checksums.Algorithm.SHA256,
@@ -224,7 +227,7 @@ class MavenCentralPublication(
   /**
    * https://central.sonatype.org/publish/publish-portal-upload/
    */
-  suspend fun bundle(): Path {
+  fun bundle(): Path {
     generateOrVerifyChecksums()
     return spanBuilder("creating a bundle").use {
       val bundle = workDir.resolve("bundle.zip")
@@ -249,40 +252,16 @@ class MavenCentralPublication(
     }
   }
 
-  private suspend fun <T> callSonatype(
+  private fun <T> callSonatype(
+    client: HttpClient,
     uri: String,
-    builder: suspend (Request.Builder) -> Request.Builder,
-    action: suspend (Response) -> T,
+    builder: (HttpRequest.Builder) -> HttpRequest.Builder,
+    action: (HttpResponse<String>) -> T,
   ): T {
-    requireNotNull(userName) {
-      "Please specify intellij.build.mavenCentral.userName system property"
-    }
-    requireNotNull(token) {
-      "Please specify intellij.build.mavenCentral.token system property"
-    }
-    val base64Auth = Base64.getEncoder()
-      .encode("$userName:$token".toByteArray())
-      .toString(Charsets.UTF_8)
-    val span = Span.current()
-    span.addEvent("Sending request to $uri...")
-    val client = OkHttpClient.Builder()
-      .connectTimeout(SONATYPE_TIMEOUT)
-      .readTimeout(SONATYPE_TIMEOUT)
-      .writeTimeout(SONATYPE_TIMEOUT)
-      .build()
-    val request = Request.Builder().url(uri)
-      .header("Authorization", "Bearer $base64Auth")
-      .let { builder(it) }
-      .build()
-    return client.newCall(request)
-      .execute()
-      .use {
-        span.addEvent("Response status code: ${it.code}")
-        action(it)
-      }
+    return action(sendSonatypeRequest(client, URI(uri), userName, token, SONATYPE_TIMEOUT, builder))
   }
 
-  private suspend fun publish(bundle: Path): String? {
+  private fun publish(client: HttpClient, bundle: Path): String? {
     return spanBuilder("publishing").setAttribute("bundle", "$bundle").use { span ->
       if (dryRun && userName == null && token == null) {
         span.addEvent("skipped in the dryRun mode")
@@ -294,17 +273,12 @@ class MavenCentralPublication(
       val deploymentName = "teamcity.buildType.id=${System.getProperty("teamcity.buildType.id")}," +
                            "teamcity.build.id=${TeamCityHelper.allProperties.getValue("teamcity.build.id")}"
       val uri = "$UPLOADING_URI_BASE?name=$deploymentName&publishingType=$type"
-      callSonatype(uri, builder = {
-        it.post(
-          MultipartBody.Builder()
-            .setType(MultipartBody.FORM)
-            .addFormDataPart("bundle", bundle.name, bundle.toFile().asRequestBody())
-            .build()
-        )
+      callSonatype(client, uri, builder = {
+        it.mavenCentralBundle(bundle)
       }, action = {
-        val deploymentId = it.body.string()
-        check(it.code == 201) {
-          "Unable to upload to Central repository, status code: ${it.code}, upload response: $deploymentId"
+        val deploymentId = it.body()
+        check(it.statusCode() == 201) {
+          "Unable to upload to Central repository, status code: ${it.statusCode()}, upload response: $deploymentId"
         }
         span.addEvent("Deployment ID: $deploymentId")
         deploymentId
@@ -315,28 +289,32 @@ class MavenCentralPublication(
   /**
    * @param deploymentId see https://central.sonatype.org/publish/publish-portal-api/#uploading-a-deployment-bundle
    */
-  private suspend fun wait(deploymentId: String) {
+  private fun wait(client: HttpClient, deploymentId: String) {
     spanBuilder("waiting").setAttribute("deploymentId", deploymentId).use { span ->
-      withTimeout(DEPLOYMENT_TIMEOUT) {
-        while (true) {
-          val deploymentState = callSonatype("$STATUS_URI_BASE?id=$deploymentId", builder = {
-            it.post("{}".toRequestBody("application/json".toMediaType()))
-          }, action = {
-            val response = it.body.string()
-            context.messages.info(response)
-            span.addEvent(response)
-            parseDeploymentState(response)
-          })
-          when (deploymentState) {
-            DeploymentState.FAILED -> context.messages.logErrorAndThrow("$deploymentId status is $deploymentState")
-            DeploymentState.VALIDATED if type == PublishingType.USER_MANAGED -> break
-            DeploymentState.PUBLISHED if type == PublishingType.AUTOMATIC -> {
-              artifacts.forEach {
-                context.messages.info("Expected to be available in https://repo1.maven.org/maven2/${it.coordinates.directoryPath} shortly")
-              }
-              break
+      val deadline = TimeSource.Monotonic.markNow() + DEPLOYMENT_TIMEOUT
+      while (true) {
+        val deploymentState = callSonatype(client, "$STATUS_URI_BASE?id=$deploymentId", builder = {
+          it.header("Content-Type", "application/json; charset=utf-8").POST(HttpRequest.BodyPublishers.ofString("{}"))
+        }, action = {
+          val response = it.body()
+          context.messages.info(response)
+          span.addEvent(response)
+          parseDeploymentState(response)
+        })
+        when (deploymentState) {
+          DeploymentState.FAILED -> context.messages.logErrorAndThrow("$deploymentId status is $deploymentState")
+          DeploymentState.VALIDATED if type == PublishingType.USER_MANAGED -> break
+          DeploymentState.PUBLISHED if type == PublishingType.AUTOMATIC -> {
+            artifacts.forEach {
+              context.messages.info("Expected to be available in https://repo1.maven.org/maven2/${it.coordinates.directoryPath} shortly")
             }
-            else -> delay(DEPLOYMENT_STATUS_POLL_DELAY)
+            break
+          }
+          else -> {
+            if (deadline.hasPassedNow()) {
+              throw TimeoutException("$deploymentId is still $deploymentState after $DEPLOYMENT_TIMEOUT")
+            }
+            Thread.sleep(DEPLOYMENT_STATUS_POLL_DELAY.inWholeMilliseconds)
           }
         }
       }
@@ -361,4 +339,46 @@ class MavenCentralPublication(
   fun parseDeploymentState(response: String): DeploymentState {
     return JSON.decodeFromString<StatusResponse>(response).deploymentState
   }
+}
+
+@VisibleForTesting
+internal fun sendSonatypeRequest(
+  client: HttpClient,
+  uri: URI,
+  userName: String?,
+  token: String?,
+  timeout: Duration,
+  builder: (HttpRequest.Builder) -> HttpRequest.Builder,
+): HttpResponse<String> {
+  requireNotNull(userName) {
+    "Please specify intellij.build.mavenCentral.userName system property"
+  }
+  requireNotNull(token) {
+    "Please specify intellij.build.mavenCentral.token system property"
+  }
+  val base64Auth = Base64.getEncoder().encodeToString("$userName:$token".toByteArray(Charsets.UTF_8))
+  val span = Span.current()
+  span.addEvent("Sending request to $uri...")
+  val request = HttpRequest.newBuilder(uri)
+    .header("Authorization", "Bearer $base64Auth")
+    .let(builder)
+    .build()
+  val response = sendHttpRequest(client, request, timeout)
+  span.addEvent("Response status code: ${response.statusCode()}")
+  return response
+}
+
+@VisibleForTesting
+internal fun HttpRequest.Builder.mavenCentralBundle(bundle: Path): HttpRequest.Builder {
+  val boundary = UUID.randomUUID().toString()
+  val fileName = bundle.name.replace("\n", "%0A").replace("\r", "%0D").replace("\"", "%22")
+  val header = "--$boundary\r\n" +
+               "Content-Disposition: form-data; name=\"bundle\"; filename=\"$fileName\"\r\n" +
+               "Content-Length: ${Files.size(bundle)}\r\n\r\n"
+  return header("Content-Type", "multipart/form-data; boundary=$boundary")
+    .POST(HttpRequest.BodyPublishers.concat(
+      HttpRequest.BodyPublishers.ofString(header),
+      HttpRequest.BodyPublishers.ofFile(bundle),
+      HttpRequest.BodyPublishers.ofString("\r\n--$boundary--\r\n"),
+    ))
 }

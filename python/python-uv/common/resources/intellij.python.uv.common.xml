@@ -2,7 +2,6 @@
   <dependencies>
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.libraries.jetbrains.annotations"/>
-    <module name="intellij.python.community"/>
     <module name="intellij.python.community.common"/>
     <module name="intellij.python.processOutput.common"/>
     <!-- endregion -->

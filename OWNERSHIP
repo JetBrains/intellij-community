@@ -1,0 +1,4 @@
+/.bazel*
+/MODULE.bazel*
+/*.bazelrc
+owner 'Bazel Migration Team'

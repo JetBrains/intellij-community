@@ -60,6 +60,7 @@ import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XExecutionStackGroup
 import com.intellij.xdebugger.frame.XStackFrame
+import com.intellij.xdebugger.frame.XStackFrameVisibilityInfoProvider
 import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.XSourceKind
@@ -468,7 +469,8 @@ internal suspend fun XStackFrame.toRpc(coroutineScope: CoroutineScope, session: 
     computeTextPresentation(),
     captionInfo(),
     backgroundInfo(session.project),
-    canDrop(session)
+    canDrop(session),
+    shouldHide(),
   )
 }
 
@@ -519,6 +521,10 @@ private suspend fun XStackFrame.backgroundInfo(project: Project): XStackFrameBac
 private fun XStackFrame.canDrop(session: XDebugSessionImpl): ThreeState {
   val handler = session.debugProcess.dropFrameHandler ?: return ThreeState.NO
   return handler.canDropFrame(this)
+}
+
+private fun XStackFrame.shouldHide(): Boolean {
+  return (this as? XStackFrameVisibilityInfoProvider)?.shouldHide() == true
 }
 
 internal fun XStackFrame.computeTextPresentation(): XStackFramePresentation {

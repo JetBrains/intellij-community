@@ -13,7 +13,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPoint
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.impl.unregisterEverything
-import com.intellij.openapi.extensions.impl.unregisterEverythingExcept
 import com.intellij.openapi.extensions.impl.unregisterExtensions
 import com.intellij.openapi.extensions.impl.unregisterExtensionsById
 import com.intellij.openapi.extensions.impl.unregisterExtensionsMatching
@@ -57,14 +56,7 @@ fun unregisterExtensionsForLightProduct() {
       GutterIntentionMenuContributor::class
     )
 
-  FileBasedIndexExtension.EXTENSION_POINT_NAME.appPoint
-    .unregisterEverythingExcept(
-      // Unregistering of this extension leads to "Index is not created for `filetypes`" errors
-      FileTypeIndexImpl::class
-    )
-
-  IndexableSetContributor.EP_NAME.appPoint.unregisterEverything()
-  StubIndexExtension.EP_NAME.appPoint.unregisterEverything()
+  unregisterIndexExtensions()
 
   UsageCollectors.PROJECT_EP_NAME.appPoint
     .unregisterExtensionsMatching { _, adapter ->
@@ -98,6 +90,33 @@ fun unregisterExtensionsForLightProduct() {
     )
 
   GeneralSettings.getInstance().isShowTipsOnStartup = false
+}
+
+/**
+ * The application-level index extension points that [unregisterExtensionsForLightProduct] clears.
+ *
+ * A light product can restore these points at run time, see the `IjLight.EnableIndexes` action.
+ * The removal and the restoration must use this one list.
+ */
+@ApiStatus.Internal
+val LIGHT_PRODUCT_INDEX_EXTENSION_POINTS: List<String> = listOf(
+  FileBasedIndexExtension.EXTENSION_POINT_NAME.name,
+  StubIndexExtension.EP_NAME.name,
+  IndexableSetContributor.EP_NAME.name,
+)
+
+/**
+ * The index extensions that survive the cleanup.
+ *
+ * Removal of [FileTypeIndexImpl] gives "Index is not created for `filetypes`" errors.
+ */
+private val KEPT_INDEX_EXTENSIONS = setOf(FileTypeIndexImpl::class.java.name)
+
+private fun unregisterIndexExtensions() {
+  for (pointName in LIGHT_PRODUCT_INDEX_EXTENSION_POINTS) {
+    application.extensionArea.getExtensionPoint<Any>(pointName)
+      .unregisterExtensionsMatching { className, _ -> className !in KEPT_INDEX_EXTENSIONS }
+  }
 }
 
 private val <T : Any> ExtensionPointName<T>.appPoint: ExtensionPoint<T> get() = application.extensionArea.getExtensionPoint(this)

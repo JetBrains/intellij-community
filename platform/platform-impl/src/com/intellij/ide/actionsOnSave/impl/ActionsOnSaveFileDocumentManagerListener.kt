@@ -63,7 +63,7 @@ class ActionsOnSaveFileDocumentManagerListener private constructor(private val p
      *
      * @param project it's initialized, open, not disposed, and not the default one; no need to double-check in implementations
      */
-    @RequiresReadLock
+    @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
     open fun isEnabledForProject(project: Project): Boolean = false
 
     /**
@@ -76,7 +76,7 @@ class ActionsOnSaveFileDocumentManagerListener private constructor(private val p
      * Implementations don't need to save modified documents.
      * Note that the passed documents may be unsaved if already modified by some other save action.
      */
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     open fun processDocuments(project: Project, documents: Array<Document>) {
     }
   }
@@ -128,7 +128,7 @@ class ActionsOnSaveFileDocumentManagerListener private constructor(private val p
      * }
      * ```
      */
-    @RequiresBackgroundThread
+    @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
     abstract suspend fun updateDocument(project: Project, document: Document)
   }
 
@@ -196,7 +196,7 @@ class ActionsOnSaveManager private constructor(private val project: Project, pri
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private suspend fun processSavedDocuments() {
     val documentsAndModStamps = filesToProcess.associate { file ->
       val document = FileDocumentManager.getInstance().getDocument(file)
@@ -243,7 +243,7 @@ class ActionsOnSaveManager private constructor(private val project: Project, pri
    * It's invoked in a background thread with a cancelable background progress bar.
    * This API is preferred for actions that update the saved file contents, for example, format files on save.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private suspend fun runActionsOnSave(projectDocuments: List<Document>) {
     val projectActionsOnSave = EP_NAME.extensionList.filter { it.isEnabledForProject(project) }
 
@@ -279,7 +279,7 @@ class ActionsOnSaveManager private constructor(private val project: Project, pri
    * if it has been already manually edited after save but before Actions on Save have been started.
    * This can be checked by comparing the current modification stamp with the one from this map.
    */
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private suspend fun runDocumentUpdatingActionsOnSave(
     actionsOnSave: List<DocumentUpdatingActionOnSave>,
     documentsToModStamps: Map<Document, Long>,
@@ -322,7 +322,7 @@ class ActionsOnSaveManager private constructor(private val project: Project, pri
    * @param documentScope the [CoroutineScope] in which the [actionsOnSave] run for the given [document].
    * Used to cancel Actions on Save for this document if it has been manually edited before the Actions on Save have finished.
    */
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private suspend fun runDocumentUpdatingActionsOnSaveAndSaveDocument(
     actionsOnSave: List<DocumentUpdatingActionOnSave>,
     document: Document,

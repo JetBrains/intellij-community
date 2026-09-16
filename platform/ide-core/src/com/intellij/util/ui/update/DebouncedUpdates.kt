@@ -506,7 +506,7 @@ sealed interface UpdateQueue<T> {
    * @throws TimeoutException if the timeout is exceeded
    */
   @TestOnly
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   @Throws(TimeoutException::class)
   fun waitForAllExecuted(timeout: Duration)
 
@@ -519,7 +519,7 @@ sealed interface UpdateQueue<T> {
    * @throws TimeoutException if the timeout is exceeded
    */
   @TestOnly
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   @Throws(TimeoutException::class)
   fun waitForAllExecuted(timeoutMillis: Long)
 
@@ -635,7 +635,7 @@ private abstract class BaseUpdateQueue<T>(
    * @throws TimeoutException if the timeout is exceeded
    */
   @TestOnly
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   @Throws(TimeoutException::class)
   override fun waitForAllExecuted(timeout: Duration) {
     val deadline = System.currentTimeMillis() + timeout.inWholeMilliseconds
@@ -668,7 +668,7 @@ private abstract class BaseUpdateQueue<T>(
    * @throws TimeoutException if the timeout is exceeded
    */
   @TestOnly
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   @Throws(TimeoutException::class)
   override fun waitForAllExecuted(timeoutMillis: Long) {
     waitForAllExecuted(timeoutMillis.milliseconds)

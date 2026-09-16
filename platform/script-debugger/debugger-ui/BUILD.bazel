@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.platform.scriptDebugger.ui` start
+content_module_jar(module = ":scriptDebugger-ui")
+### auto-generated section `dev intellij.platform.scriptDebugger.ui` end
+
 ### auto-generated section `build intellij.platform.scriptDebugger.ui` start
 jvm_library(
     name = "scriptDebugger-ui",
@@ -44,8 +48,6 @@ jvm_library(
         "//platform/execution",
     ],
 )
-
-content_module_jar(module = ":scriptDebugger-ui")
 
 jvm_library(
     name = "scriptDebugger-ui_test_lib",
@@ -91,7 +93,6 @@ exports_files(
     [
         "intellij.platform.scriptDebugger.ui.iml",
         "resources/intellij.platform.scriptDebugger.ui.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

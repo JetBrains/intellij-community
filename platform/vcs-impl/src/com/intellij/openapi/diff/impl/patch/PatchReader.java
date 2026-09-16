@@ -567,7 +567,11 @@ public final class PatchReader {
           }
         }
       }
-      fileName = VcsFileUtil.unescapeGitPath(fileName);
+      // Git escapes a path only inside double quotes.
+      // Keep an unquoted path unchanged, so a Windows path such as C:\Users\... does not fail.
+      if (fileName.length() > 1 && fileName.charAt(0) == '"' && fileName.charAt(fileName.length() - 1) == '"') {
+        fileName = VcsFileUtil.unescapeGitPath(fileName);
+      }
       String newFileName = stripPatchNameIfNeeded(fileName, before);
       if (newFileName == null) return;
       if (before) {

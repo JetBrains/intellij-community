@@ -231,7 +231,7 @@ open class IdeStatusBarImpl @Internal constructor(
   }
 
   //=== CREATE CHILD: New child gets all existing widgets ===
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   @Internal
   override fun createChild(coroutineScope: CoroutineScope, frame: IdeFrame, currentFileEditorFlow: StateFlow<FileEditor?>): StatusBar {
     return childManager.createChild(coroutineScope, currentFileEditorFlow)
@@ -390,7 +390,7 @@ open class IdeStatusBarImpl @Internal constructor(
   }
 
   @ApiStatus.Experimental
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun setCentralWidget(id: String, component: JComponent?) {
     if (component == null) {
       widgetRegistry.remove(id)
@@ -419,7 +419,7 @@ open class IdeStatusBarImpl @Internal constructor(
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   @Internal
   fun addWidget(widget: StatusBarWidget, anchor: LoadingOrder) {
     addWidget(widget, Position.RIGHT, anchor)
@@ -513,7 +513,7 @@ open class IdeStatusBarImpl @Internal constructor(
   }
 
   //=== CORE: Add widget to THIS status bar only (no propagation) ===
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   internal fun addWidgetToSelf(bean: WidgetBean, parentDisposable: Disposable? = null) {
     LOG.debug { "addWidgetToSelf: ${bean.widget.ID()}" }
 
@@ -595,7 +595,7 @@ open class IdeStatusBarImpl @Internal constructor(
   }
 
   //=== PUBLIC API: Add widget + propagate to all children ===
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun addWidget(widget: StatusBarWidget, position: Position, anchor: LoadingOrder) {
     val component = wrap(widget)
     if (component is StatusBarWidgetWrapper) {
@@ -982,7 +982,7 @@ open class IdeStatusBarImpl @Internal constructor(
   }
 }
 
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 internal fun createComponentByWidgetPresentation(presentation: WidgetPresentation, project: Project, scope: CoroutineScope): JComponent {
   val toolTipTextSupplier = { runWithModalProgressBlocking(project, title = "") { presentation.getTooltipText() } }
   return when (presentation) {
@@ -1026,7 +1026,7 @@ internal fun createComponentByWidgetPresentation(presentation: WidgetPresentatio
   }
 }
 
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 private fun createComponentByWidgetPresentation(widget: StatusBarWidget): JComponent {
   val presentation = widget.getPresentation() ?: throw IllegalStateException("Widget $widget getPresentation() method must not return null")
   return when (presentation) {

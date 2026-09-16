@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.markdown.backend` start
+content_module_jar(module = ":backend")
+### auto-generated section `dev intellij.markdown.backend` end
+
 ### auto-generated section `build intellij.markdown.backend` start
 jvm_library(
     name = "backend",
@@ -35,6 +39,7 @@ jvm_library(
         "//libraries/markdown",
         "//platform/kernel/backend",
         "//platform/kernel/rpc.backend",
+        "//platform/built-in-server:builtInServer-impl",
         "//platform/platform-impl:ide-impl",
         "//platform/analysis-api:analysis",
         "//platform/ide-core",
@@ -54,8 +59,6 @@ jvm_library(
         "//platform/statistics",
     ],
 )
-
-content_module_jar(module = ":backend")
 
 jvm_library(
     name = "backend_test_lib",
@@ -87,6 +90,7 @@ jvm_library(
         "//platform/backend:backend_test_lib",
         "//platform/kernel/backend:backend_test_lib",
         "//platform/kernel/rpc.backend:rpc.backend_test_lib",
+        "//platform/built-in-server:builtInServer-impl_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/ide-core:ide-core_test_lib",

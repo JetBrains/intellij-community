@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.kotlinc.kotlin.dataframe.compiler.plugin.jar
+  modules:
+  - name: intellij.libraries.kotlinc.kotlin.dataframe.compiler.plugin
+    libraries:
+      kotlinc.kotlin-dataframe-compiler-plugin:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-dataframe-compiler-plugin-for-ide/2/kotlin-dataframe-compiler-plugin-for-ide-2.jar

@@ -11,6 +11,10 @@ jps_test(
 
 ### skip generation section `test intellij.platform.markdown.utils.tests`
 
+### auto-generated section `dev intellij.platform.markdown.utils` start
+content_module_jar(module = ":markdown-utils")
+### auto-generated section `dev intellij.platform.markdown.utils` end
+
 ### auto-generated section `build intellij.platform.markdown.utils` start
 jvm_library(
     name = "markdown-utils",
@@ -38,8 +42,6 @@ jvm_library(
         "//platform/lang-impl",
     ],
 )
-
-content_module_jar(module = ":markdown-utils")
 
 jvm_library(
     name = "markdown-utils_test_lib",
@@ -71,7 +73,6 @@ exports_files(
     [
         "intellij.platform.markdown.utils.iml",
         "resources/intellij.platform.markdown.utils.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )
@@ -118,7 +119,8 @@ jvm_library(
         "//libraries/markdown:markdown_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
-        "@lib//:kotlin-test",
+        "//libraries/kotlin/test:libraries-kotlinTest",
+        "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
         "//platform/lang-impl",
         "//platform/lang-impl:lang-impl_test_lib",
     ],

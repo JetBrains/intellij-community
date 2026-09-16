@@ -1,5 +1,4 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
-load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.libraries.jsp` start
 jvm_library(
@@ -16,11 +15,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-jsp-_j_s_p"],
     runtime_deps = ["@lib//:libraries-jsp-_j_s_p"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-jsp-_j_s_p"],
-    module = ":jsp",
 )
 
 jvm_library(
@@ -43,7 +37,6 @@ exports_files(
     [
         "intellij.libraries.jsp.iml",
         "resources/intellij.libraries.jsp.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

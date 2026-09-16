@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.xmlbeans` start
+content_module_jar(
+    libraries = ["@lib//:libraries-xmlbeans-_xml_beans"],
+    module = ":xmlbeans",
+)
+### auto-generated section `dev intellij.libraries.xmlbeans` end
+
 ### auto-generated section `build intellij.libraries.xmlbeans` start
 jvm_library(
     name = "xmlbeans",
@@ -20,11 +27,6 @@ jvm_library(
         "@lib//:libraries-xmlbeans-_xml_beans",
         "//libraries/log4j-to-slf4j",
     ],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-xmlbeans-_xml_beans"],
-    module = ":xmlbeans",
 )
 
 jvm_library(
@@ -50,7 +52,6 @@ exports_files(
     [
         "intellij.libraries.xmlbeans.iml",
         "resources/intellij.libraries.xmlbeans.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

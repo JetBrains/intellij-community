@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy;
 
+import com.intellij.groovy.testFramework.BaseTest;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.plugins.groovy.editor.GroovyLiteralCopyPasteProcessor;
 import org.jetbrains.plugins.groovy.lang.psi.util.StringKind;
-import org.jetbrains.plugins.groovy.util.BaseTest;
 import org.jetbrains.plugins.groovy.util.GroovyLatestTest;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 import org.junit.Assert;

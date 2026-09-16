@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.snakeyaml` start
+content_module_jar(
+    libraries = ["@lib//:libraries-snakeyaml-snakeyaml"],
+    module = ":snakeyaml",
+)
+### auto-generated section `dev intellij.libraries.snakeyaml` end
+
 ### auto-generated section `build intellij.libraries.snakeyaml` start
 jvm_library(
     name = "snakeyaml",
@@ -16,11 +23,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-snakeyaml-snakeyaml"],
     runtime_deps = ["@lib//:libraries-snakeyaml-snakeyaml"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-snakeyaml-snakeyaml"],
-    module = ":snakeyaml",
 )
 
 jvm_library(
@@ -43,7 +45,6 @@ exports_files(
     [
         "intellij.libraries.snakeyaml.iml",
         "resources/intellij.libraries.snakeyaml.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

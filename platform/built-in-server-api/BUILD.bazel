@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.platform.builtInServer` start
+content_module_jar(module = ":builtInServer")
+### auto-generated section `dev intellij.platform.builtInServer` end
+
 ### auto-generated section `build intellij.platform.builtInServer` start
 jvm_library(
     name = "builtInServer",
@@ -31,8 +35,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":builtInServer")
-
 jvm_library(
     name = "builtInServer_test_lib",
     testonly = True,
@@ -61,7 +63,6 @@ exports_files(
     [
         "intellij.platform.builtInServer.iml",
         "resources/intellij.platform.builtInServer.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

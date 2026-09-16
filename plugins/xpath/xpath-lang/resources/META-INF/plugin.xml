@@ -45,7 +45,9 @@
     <module name="intellij.xml.psi"/>
   </dependencies>
   <!-- endregion -->
-  <content namespace="jetbrains"/>
+  <content namespace="jetbrains">
+    <module name="intellij.xml.langInjection.xpath"/>
+  </content>
   <depends>com.intellij.modules.xml</depends>
   <resource-bundle>messages.XPathBundle</resource-bundle>
 

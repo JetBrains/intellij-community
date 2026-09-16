@@ -1,3 +1,0 @@
-- name: dist.all/lib/intellij.platform.threadDumpParser.jar
-  modules:
-  - name: intellij.platform.threadDumpParser

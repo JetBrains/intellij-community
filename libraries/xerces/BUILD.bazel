@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.xerces` start
+content_module_jar(
+    libraries = ["@lib//:libraries-xerces-_xerces"],
+    module = ":xerces",
+)
+### auto-generated section `dev intellij.libraries.xerces` end
+
 ### auto-generated section `build intellij.libraries.xerces` start
 jvm_library(
     name = "xerces",
@@ -16,11 +23,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-xerces-_xerces"],
     runtime_deps = ["@lib//:libraries-xerces-_xerces"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-xerces-_xerces"],
-    module = ":xerces",
 )
 
 jvm_library(
@@ -42,7 +44,6 @@ exports_files(
     [
         "intellij.libraries.xerces.iml",
         "resources/intellij.libraries.xerces.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -9,6 +9,8 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.asJava.unwrapped
+import org.jetbrains.kotlin.idea.base.psi.addModifierKeyword
+import org.jetbrains.kotlin.idea.base.psi.removeModifierKeyword
 import org.jetbrains.kotlin.idea.search.declarationsSearch.hasOverridingElement
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
@@ -24,8 +26,8 @@ class KotlinOverrideMethodsProcessor : OverrideMethodsProcessor {
         if (!kotlinElement.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return false
 
         kotlinElement.addOpenModifierIfNeeded()
-        kotlinElement.removeModifier(KtTokens.OVERRIDE_KEYWORD)
-        kotlinElement.removeModifier(KtTokens.FINAL_KEYWORD)
+        kotlinElement.removeModifierKeyword(KtTokens.OVERRIDE_KEYWORD)
+        kotlinElement.removeModifierKeyword(KtTokens.FINAL_KEYWORD)
 
         return true
     }
@@ -41,5 +43,5 @@ private fun KtNamedDeclaration.addOpenModifierIfNeeded() {
         }
     }
 
-    addModifier(KtTokens.OPEN_KEYWORD)
+    addModifierKeyword(KtTokens.OPEN_KEYWORD)
 }

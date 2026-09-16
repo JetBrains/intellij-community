@@ -7,7 +7,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.resolution.KaCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallResolutionAttempt
 import org.jetbrains.kotlin.analysis.api.resolution.KaCompoundArrayAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaCompoundVariableAccessCall
@@ -49,7 +48,7 @@ import org.jetbrains.kotlin.resolution.KtResolvableCall
 
 sealed interface CallTarget {
     val caller: KtElement
-    val call: KaCall?
+    val call: KaSimpleOrMultiCall?
     val symbol: KaCallableSymbol
 
     val anchor: PsiElement

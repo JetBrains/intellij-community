@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
-import org.jetbrains.intellij.build.runBlockingOnVirtualThreads
 import org.jetbrains.intellij.build.TestingOptions
 import org.jetbrains.intellij.build.TestingTasks
 import org.jetbrains.intellij.build.impl.createCompilationContext
@@ -18,17 +17,15 @@ import org.jetbrains.intellij.build.impl.createCompilationContext
 object CommunityRunTestsBuildTarget {
   @JvmStatic
   fun main(args: Array<String>) {
-    runBlockingOnVirtualThreads {
-      val context = createCompilationContext(
-        projectHome = COMMUNITY_ROOT.communityRoot,
-        defaultOutputRoot = COMMUNITY_ROOT.communityRoot.resolve("out/tests"),
-        options = BuildOptions().also {
-          it.useTestCompilationOutput = true
-        },
-      )
-      val options = TestingOptions()
-      options.mainModule = options.mainModule ?: "intellij.idea.community.main.tests"
-      TestingTasks.create(context, options).runTests()
-    }
+    val context = createCompilationContext(
+      projectHome = COMMUNITY_ROOT.communityRoot,
+      defaultOutputRoot = COMMUNITY_ROOT.communityRoot.resolve("out/tests"),
+      options = BuildOptions().also {
+        it.useTestCompilationOutput = true
+      },
+    )
+    val options = TestingOptions()
+    options.mainModule = options.mainModule ?: "intellij.idea.community.main.tests"
+    TestingTasks.create(context, options).runTests()
   }
 }

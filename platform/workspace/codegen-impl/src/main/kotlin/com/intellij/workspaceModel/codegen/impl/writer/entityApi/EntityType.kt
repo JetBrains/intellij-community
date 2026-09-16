@@ -53,7 +53,7 @@ fun CodeContext.generateEntityTypeObject(objClass: ObjClass<*>) {
       }
     }
     if (objClass.requiresCompatibility) {
-      compatibilityInvoke(mandatoryProperties, objClass.javaFullName, builderGeneric)
+      compatibilityInvoke(mandatoryProperties, objClass, builderGeneric)
     }
   }
 }

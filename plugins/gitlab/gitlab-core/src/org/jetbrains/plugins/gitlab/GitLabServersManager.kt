@@ -98,13 +98,13 @@ private suspend fun getServerMetadata(api: GitLabApi): GitLabServerMetadata {
   val dto =
     try {
       // More recent. If it fails, use getServerVersion
-      api.graphQL.getServerMetadata().body()
+      api.graphQL.getServerMetadata()
     }
     catch (e: CancellationException) {
       throw e
     }
     catch (_: Throwable) {
-      val serverVersion = api.rest.getServerVersion().body()
+      val serverVersion = api.rest.getServerVersion()
       GitLabServerMetadataDTO(serverVersion.version, serverVersion.revision, null)
     } ?: throw IllegalStateException("Cannot fetch any metadata for server: ${api.server}")
 

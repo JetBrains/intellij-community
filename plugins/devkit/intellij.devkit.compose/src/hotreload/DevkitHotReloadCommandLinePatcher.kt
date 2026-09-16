@@ -49,7 +49,7 @@ import kotlin.io.path.exists
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.pathString
 
-private const val COMPOSE_HOT_RELOAD_AGENT_DEFAULT_VERSION = "1.1.0-alpha03"
+private const val COMPOSE_HOT_RELOAD_AGENT_DEFAULT_VERSION = "1.2.0"
 private const val COMPOSE_HOT_RELOAD_AGENT_FILE_PREFIX = "agent"
 private const val COMPOSE_HOT_RELOAD_GRADLE_ARG = "--compose-hot-reload"
 

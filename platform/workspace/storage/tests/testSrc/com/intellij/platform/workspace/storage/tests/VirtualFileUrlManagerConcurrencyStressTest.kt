@@ -35,8 +35,8 @@ class VirtualFileUrlManagerConcurrencyStressTest {
             val random = Random(threadIndex.toLong())
             repeat(iterationsPerThread) {
               val path = paths[random.nextInt(paths.size)]
-              val first = manager.getOrCreateFromUrl(path)
-              val second = manager.getOrCreateFromUrl(path)
+              val first = manager.storeAndGet(path)
+              val second = manager.storeAndGet(path)
 
               assertEquals(first, second)
               assertEquals(path, first.url)

@@ -192,6 +192,7 @@ class SeTabVmImpl(
           val params = SeParams(searchPattern, filterData)
           val searchId = UUID.randomUUID().toString()
           val disabledProviderIds = SeEverywhereFilterImpl.from(filterData).disabledProviderIds
+          val shouldApplyMlWeight = searchPattern.isNotEmpty()
 
           SeMlService.getInstanceIfEnabled()?.onStateStarted(this@SeTabVmImpl.tabId, params)
 
@@ -199,7 +200,7 @@ class SeTabVmImpl(
             val resultsFlowWithAdaptedPresentations = resultsFlow.mapNotNull {
               checkAndAddMissingPresentationIfPossible(it)
                 ?.let { withPresentation ->
-                  calculateMlWeight(withPresentation)
+                  processWithMl(withPresentation, shouldApplyMlWeight)
                 }
             }
 
@@ -306,12 +307,17 @@ class SeTabVmImpl(
     }
   }
 
-  private fun calculateMlWeight(resultEvent: SeResultEvent): SeResultEvent {
+  private fun processWithMl(resultEvent: SeResultEvent, shouldApplyWeight: Boolean): SeResultEvent {
     if (resultEvent !is SeResultAddedEvent && resultEvent !is SeResultReplacedEvent) return resultEvent
     val mlService = SeMlService.getInstanceIfEnabled() ?: return resultEvent
 
     val itemData = resultEvent.itemDataOrNull() ?: return resultEvent
-    val newItemData = mlService.applyMlWeight(itemData)
+    val newItemData =
+      if (shouldApplyWeight) mlService.applyMlWeight(itemData)
+      else {
+        mlService.process(itemData)
+        itemData
+      }
 
     return when (resultEvent) {
       is SeResultAddedEvent -> SeResultAddedEvent(newItemData)

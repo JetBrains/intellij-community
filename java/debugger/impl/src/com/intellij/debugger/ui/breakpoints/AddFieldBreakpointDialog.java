@@ -184,7 +184,7 @@ public abstract class AddFieldBreakpointDialog extends DialogWrapper {
           chooser.show();
           List<PsiFieldMember> selectedElements = chooser.getSelectedElements();
           if (selectedElements != null && selectedElements.size() == 1) {
-            PsiField field = selectedElements.get(0).getElement();
+            PsiField field = selectedElements.getFirst().getElement();
             myFieldChooser.setText(field.getName());
           }
         }

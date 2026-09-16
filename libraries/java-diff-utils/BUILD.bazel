@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.java.diff.utils` start
+content_module_jar(
+    libraries = ["@lib//:libraries-java-diff-utils-java-diff-utils"],
+    module = ":java-diff-utils",
+)
+### auto-generated section `dev intellij.libraries.java.diff.utils` end
+
 ### auto-generated section `build intellij.libraries.java.diff.utils` start
 jvm_library(
     name = "java-diff-utils",
@@ -16,11 +23,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-java-diff-utils-java-diff-utils"],
     runtime_deps = ["@lib//:libraries-java-diff-utils-java-diff-utils"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-java-diff-utils-java-diff-utils"],
-    module = ":java-diff-utils",
 )
 
 jvm_library(
@@ -43,7 +45,6 @@ exports_files(
     [
         "intellij.libraries.java.diff.utils.iml",
         "resources/intellij.libraries.java.diff.utils.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -10,6 +10,13 @@ jps_test(
 )
 ### skip generation section `test intellij.execution.process.mediator.client.tests`
 
+### auto-generated section `dev intellij.execution.process.mediator.client` start
+content_module_jar(
+    libraries = ["@lib//:execution-process-mediator-client-grpc-inprocess"],
+    module = ":client",
+)
+### auto-generated section `dev intellij.execution.process.mediator.client` end
+
 ### auto-generated section `build intellij.execution.process.mediator.client` start
 jvm_library(
     name = "client",
@@ -44,11 +51,6 @@ jvm_library(
         "//libraries/grpc",
         "//libraries/grpc-netty-shaded",
     ],
-)
-
-content_module_jar(
-    libraries = ["@lib//:execution-process-mediator-client-grpc-inprocess"],
-    module = ":client",
 )
 
 jvm_library(
@@ -90,7 +92,6 @@ exports_files(
     [
         "intellij.execution.process.mediator.client.iml",
         "resources/intellij.execution.process.mediator.client.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.gradle.java.coverage` start
+content_module_jar(module = ":coverage")
+### auto-generated section `dev intellij.gradle.java.coverage` end
+
 ### auto-generated section `build intellij.gradle.java.coverage` start
 jvm_library(
     name = "coverage",
@@ -32,8 +36,6 @@ jvm_library(
         "//plugins/coverage",
     ],
 )
-
-content_module_jar(module = ":coverage")
 
 jvm_library(
     name = "coverage_test_lib",

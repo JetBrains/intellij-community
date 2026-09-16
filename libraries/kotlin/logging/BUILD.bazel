@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.kotlin.logging` start
+content_module_jar(
+    libraries = ["@lib//:libraries-kotlin-logging-io-github-oshai-kotlin-logging-jvm"],
+    module = ":logging",
+)
+### auto-generated section `dev intellij.libraries.kotlin.logging` end
+
 ### auto-generated section `build intellij.libraries.kotlin.logging` start
 jvm_library(
     name = "logging",
@@ -16,11 +23,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-kotlin-logging-io-github-oshai-kotlin-logging-jvm"],
     runtime_deps = ["@lib//:libraries-kotlin-logging-io-github-oshai-kotlin-logging-jvm"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-kotlin-logging-io-github-oshai-kotlin-logging-jvm"],
-    module = ":logging",
 )
 
 jvm_library(
@@ -42,7 +44,6 @@ exports_files(
     [
         "intellij.libraries.kotlin.logging.iml",
         "resources/intellij.libraries.kotlin.logging.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

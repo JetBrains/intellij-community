@@ -2,14 +2,20 @@
 package com.intellij.java.psi.util;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.ide.util.JavaAnonymousClassesHelper;
 import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiNewExpression;
 import com.intellij.psi.util.ClassUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 
 public class ClassUtilTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
@@ -46,6 +52,84 @@ public class ClassUtilTest extends LightJavaCodeInsightFixtureTestCase {
     PsiClass fooLocal2 = ClassUtil.findPsiClassByJVMName(getPsiManager(), "ManyClasses$2FooLocal");
     assertNotNull(fooLocal2);
     assertEquals("Runnable", fooLocal2.getImplementsListTypes()[0].getClassName());
+    assertEquals("ManyClasses$2FooLocal", ClassUtil.getBinaryClassName(fooLocal2));
+  }
+
+  public void testConstructorArgumentClassNames() {
+    assertClassNames("ConstructorArgumentClassNames$2", "ConstructorArgumentClassNames$1");
+  }
+
+  public void testMultipleAnonymousArguments() {
+    assertClassNames("MultipleAnonymousArguments$3", "MultipleAnonymousArguments$1", "MultipleAnonymousArguments$2");
+  }
+
+  public void testNestedAnonymousArguments() {
+    assertClassNames("NestedAnonymousArguments$1", "NestedAnonymousArguments$4", "NestedAnonymousArguments$3",
+                     "NestedAnonymousArguments$2", "NestedAnonymousArguments$6", "NestedAnonymousArguments$5",
+                     "NestedAnonymousArguments$6$1");
+    assertNull(ClassUtil.findPsiClassByJVMName(getPsiManager(), "NestedAnonymousArguments$7"));
+    assertNull(ClassUtil.findPsiClassByJVMName(getPsiManager(), "NestedAnonymousArguments$6$2"));
+  }
+
+  public void testNamedConstructorArgument() {
+    assertClassNames("NamedConstructorArgument$1", "NamedConstructorArgument$2");
+  }
+
+  public void testEnumConstantClassNames() {
+    assertClassNames("EnumConstantClassNames$1", "EnumConstantClassNames$1$1");
+  }
+
+  public void testEnumConstantArgumentClassNames() {
+    assertClassNames("EnumConstantArgumentClassNames$1", "EnumConstantArgumentClassNames$2",
+                     "EnumConstantArgumentClassNames$2$1", "EnumConstantArgumentClassNames$3");
+    assertNull(ClassUtil.findPsiClassByJVMName(getPsiManager(), "EnumConstantArgumentClassNames$4"));
+    assertNull(ClassUtil.findPsiClassByJVMName(getPsiManager(), "EnumConstantArgumentClassNames$2$2"));
+  }
+
+  public void testAnonymousLambdaArgumentLookup() {
+    myFixture.configureByFile("AnonymousLambdaArgumentLookup.java");
+    var outerAnonymousClass = PsiTreeUtil.findChildOfType(myFixture.getFile(), PsiAnonymousClass.class);
+    assertNotNull(outerAnonymousClass);
+    assertEquals("Outer", outerAnonymousClass.getBaseClassReference().getReferenceName());
+    assertSame(outerAnonymousClass, ClassUtil.findPsiClassByJVMName(getPsiManager(), "AnonymousLambdaArgumentLookup$1"));
+  }
+
+  public void testAnonymousDiamondArgumentLookup() {
+    myFixture.configureByFile("AnonymousDiamondArgumentLookup.java");
+    var outerAnonymousClass = PsiTreeUtil.findChildOfType(myFixture.getFile(), PsiAnonymousClass.class);
+    assertNotNull(outerAnonymousClass);
+    assertEquals("Outer", outerAnonymousClass.getBaseClassReference().getReferenceName());
+    assertSame(outerAnonymousClass, ClassUtil.findPsiClassByJVMName(getPsiManager(), "AnonymousDiamondArgumentLookup$1"));
+  }
+
+  public void testConstructorArgumentLegacyLookup() {
+    myFixture.configureByFile("ConstructorArgumentClassNames.java");
+    var classes = List.copyOf(PsiTreeUtil.findChildrenOfType(myFixture.getFile(), PsiAnonymousClass.class));
+    assertSize(2, classes);
+    assertSame(classes.get(1), ClassUtil.findNonQualifiedClassByIndex("1", classes.getFirst(), false));
+    assertNull(ClassUtil.findNonQualifiedClassByIndex("1", classes.getFirst(), true));
+    assertSame(classes.get(1), ClassUtil.findPsiClass(getPsiManager(), "ConstructorArgumentClassNames$2$1"));
+  }
+
+  public void testAnonymousClassWithoutContainingClass() {
+    var expression = (PsiNewExpression)JavaPsiFacade.getElementFactory(getProject())
+      .createExpressionFromText("new Object() { Object nested = new Object() { }; }", null);
+    var anonymousClass = expression.getAnonymousClass();
+    assertNotNull(anonymousClass);
+    assertNull(ClassUtil.getBinaryClassName(anonymousClass));
+    assertNull(JavaAnonymousClassesHelper.getName(anonymousClass));
+    var nestedClass = PsiTreeUtil.findChildOfType(anonymousClass, PsiAnonymousClass.class);
+    assertNotNull(nestedClass);
+    assertNull(ClassUtil.getBinaryClassName(nestedClass));
+  }
+
+  private void assertClassNames(String... expectedNames) {
+    myFixture.configureByFile(getTestName(false) + ".java");
+    var classes = List.copyOf(PsiTreeUtil.findChildrenOfType(myFixture.getFile(), PsiAnonymousClass.class));
+    assertEquals(List.of(expectedNames), ContainerUtil.map(classes, ClassUtil::getBinaryClassName));
+    for (int i = 0; i < expectedNames.length; i++) {
+      assertSame(expectedNames[i], classes.get(i), ClassUtil.findPsiClassByJVMName(getPsiManager(), expectedNames[i]));
+    }
   }
 
   @NotNull

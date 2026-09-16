@@ -110,7 +110,7 @@ class FrontendRecentFilesModel(private val project: Project) {
             oldList.entries - fileModels.toSet()
           }
           FileChangeKind.UPDATED_AND_PUT_ON_TOP -> {
-            fileModels + oldList.entries - fileModels.toSet()
+            fileModels + (oldList.entries - fileModels.toSet())
           }
           else -> {
             oldList.entries

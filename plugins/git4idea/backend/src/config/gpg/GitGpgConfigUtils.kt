@@ -82,7 +82,7 @@ private fun checkKeyCapabilities(capabilities: String): Boolean {
   return capabilities.contains("s") || capabilities.contains("S")  // can Sign
 }
 
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 fun isGpgSignEnabledCached(repository: GitRepository): Boolean {
   return GitConfigUtil
     .getBooleanValue(GitProjectConfigurationCache.getInstance(repository.project)
@@ -99,7 +99,7 @@ fun isGpgSignEnabled(project: Project, root: VirtualFile): Boolean {
   }
 }
 
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 fun getGpgSignKeyCached(repository: GitRepository): String? {
   return GitProjectConfigurationCache.getInstance(repository.project).readRepositoryConfig(repository.root, GitConfigUtil.GPG_COMMIT_SIGN_KEY)
 }

@@ -26,8 +26,8 @@ internal class LspWordSelectionHandler : ExtendWordSelectionHandler {
     return true
   }
 
-  @RequiresReadLock
-  @RequiresBackgroundThread
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   override fun select(e: PsiElement, editorText: CharSequence, cursorOffset: Int, editor: Editor): List<TextRange>? {
     val psiFile: PsiFile = e.containingFile ?: return null
     val file = psiFile.virtualFile ?: return null

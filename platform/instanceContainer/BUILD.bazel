@@ -11,6 +11,10 @@ jps_test(
 
 ### skip generation section `test intellij.platform.instanceContainer.tests`
 
+### auto-generated section `dev intellij.platform.instanceContainer` start
+content_module_jar(module = ":instanceContainer")
+### auto-generated section `dev intellij.platform.instanceContainer` end
+
 ### auto-generated section `build intellij.platform.instanceContainer` start
 jvm_library(
     name = "instanceContainer",
@@ -39,8 +43,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":instanceContainer")
-
 jvm_library(
     name = "instanceContainer_test_lib",
     testonly = True,
@@ -67,7 +69,6 @@ exports_files(
     [
         "intellij.platform.instanceContainer.iml",
         "resources/intellij.platform.instanceContainer.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )
@@ -103,7 +104,8 @@ jvm_library(
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
-        "@lib//:kotlin-test",
+        "//libraries/kotlin/test:libraries-kotlinTest",
+        "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
         "//libraries/junit5",
         "//libraries/junit5:junit5_test_lib",
         "//platform/instanceContainer",

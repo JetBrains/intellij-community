@@ -43,7 +43,7 @@ public class LambdaToAnonymousTransformTest extends LightJavaCodeInsightTestCase
       StandardLibrarySupport librarySupport = new StandardLibrarySupport();
       final JavaTraceExpressionBuilder expressionBuilder = new JavaTraceExpressionBuilder(getProject(), librarySupport
         .createHandlerFactory(javaDsl), javaDsl);
-      expressionBuilder.createTraceExpression(chains.get(0));
+      expressionBuilder.createTraceExpression(chains.getFirst());
     });
   }
 }

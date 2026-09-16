@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.devkit.smartupdate` start
+content_module_jar(module = ":smartupdate")
+### auto-generated section `dev intellij.devkit.smartupdate` end
+
 ### auto-generated section `build intellij.devkit.smartupdate` start
 jvm_library(
     name = "smartupdate",
@@ -31,8 +35,6 @@ jvm_library(
         "//platform/util:util-ui",
     ],
 )
-
-content_module_jar(module = ":smartupdate")
 
 jvm_library(
     name = "smartupdate_test_lib",

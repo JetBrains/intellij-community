@@ -298,7 +298,7 @@ class SuggestedRefactoringChangeListener(
       }
     }
 
-    @RequiresBackgroundThread
+    @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
     private fun computeSignatureUpdate(editingState: SignatureEditingState): SignatureUpdate {
       val watchedRange = editingState.signatureRangeMarker.asTextRange ?: return SignatureUpdate.Reset
 
@@ -321,7 +321,7 @@ class SuggestedRefactoringChangeListener(
       return SignatureUpdate.NextSignature(anchor, refactoringSupport)
     }
 
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     private fun applySignatureUpdate(editingState: SignatureEditingState, update: SignatureUpdate) {
       if (this@SuggestedRefactoringChangeListener.editingState !== editingState) return
 

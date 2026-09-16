@@ -1,17 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.smartPointers
 
-import com.intellij.lang.Language
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.impl.FrozenDocument
 import com.intellij.openapi.editor.impl.ManualRangeMarker
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl
-import com.intellij.openapi.util.ProperTextRange
 import com.intellij.openapi.util.Segment
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.UnfairTextRange
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 
 /**
  * A utility class responsible for caching and updating text ranges in response to document changes.
@@ -172,20 +168,6 @@ internal class MarkerCache(
     }
   }
 
-  private class MockIdentikit : Identikit() {
-    override fun findPsiElement(file: PsiFile, startOffset: Int, endOffset: Int): PsiElement? {
-      return null
-    }
-
-    override fun getFileLanguage(): Language {
-      throw IllegalStateException()
-    }
-
-    override fun isForPsiFile(): Boolean {
-      return false
-    }
-  }
-
   companion object {
     val INFO_COMPARATOR: Comparator<SelfElementInfo> = SelfElementInfoComparator()
 
@@ -216,14 +198,13 @@ internal class MarkerCache(
      * infers the up-to-date range for the given segment in the given containingFile, and the frozen document after applying the given events.
      */
     fun getUpdatedRange(
-      containingFile: PsiFile,
       segment: Segment,
       isSegmentGreedy: Boolean,
       frozen: FrozenDocument,
       events: List<DocumentEvent>,
     ): Segment? {
       @Suppress("UNCHECKED_CAST")
-      val ranges = createInitialRangesForSegment(segment, isSegmentGreedy, frozen, events as List<DocumentEventImpl>, containingFile)
+      events as List<DocumentEventImpl>
 
       // NB: convert events from completion to whole doc change event to more precise translation
       val newEvents = events.map { event ->
@@ -234,28 +215,23 @@ internal class MarkerCache(
           event
         }
       }
-      val updated = ranges.applyEvents(newEvents)
-      return updated.myMarkers[0]
-    }
 
-    private fun createInitialRangesForSegment(
-      segment: Segment,
-      isSegmentGreedy: Boolean,
-      frozen: FrozenDocument,
-      events: List<DocumentEventImpl>,
-      containingFile: PsiFile,
-    ): MarkerRanges {
-      // using a mock SelfElementInfo to infer updated range for the segment
-      val info = SelfElementInfo(ProperTextRange.create(segment), MockIdentikit(), containingFile, isSegmentGreedy, null)
-      val infos = listOf(info)
+      var marker: ManualRangeMarker? = ManualRangeMarker(
+        segment.startOffset,
+        segment.endOffset,
+        isSegmentGreedy,
+        isSegmentGreedy,
+        events.any { isWholeDocumentReplace(frozen, it) },
+        null,
+      )
 
-      val greedy = info.isGreedy
-      val start = info.psiStartOffset
-      val end = info.psiEndOffset
-      val surviveOnExternalChange = events.any { event -> isWholeDocumentReplace(frozen, event) }
-      val marker = ManualRangeMarker(start, end, greedy, greedy, surviveOnExternalChange, null)
-
-      return MarkerRanges(0, frozen, infos, arrayOf(marker))
+      var document = frozen
+      for (event in newEvents) {
+        val before = document
+        document = document.applyEvent(event, 0)
+        marker = marker?.getUpdatedRange(withFrozenDocument(event, document), before)
+      }
+      return marker
     }
 
     private fun isWholeDocumentReplace(frozen: FrozenDocument, event: DocumentEventImpl): Boolean {

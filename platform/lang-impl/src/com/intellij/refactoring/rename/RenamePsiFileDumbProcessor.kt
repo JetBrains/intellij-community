@@ -5,10 +5,10 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.DumbUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.refactoring.RefactoringBundle
@@ -75,9 +75,9 @@ private class PsiFileDumbRenameDialog(project: Project, element: PsiElement, nam
 
     val warningLabel = JBLabel().apply {
       icon = AllIcons.General.Warning
-      text =
-        if (IdeProductMode.isLight) RefactoringBundle.message("rename.dumb.mode.light.warning")
-        else RefactoringBundle.message("rename.dumb.mode.warning")
+      text = DumbUtil.dumbModeMessage(
+        RefactoringBundle.message("rename.dumb.mode.warning"),
+        RefactoringBundle.message("rename.dumb.mode.light.warning"))
       horizontalAlignment = JBLabel.LEFT
       foreground = JBUI.CurrentTheme.BigPopup.searchFieldGrayForeground()
     }

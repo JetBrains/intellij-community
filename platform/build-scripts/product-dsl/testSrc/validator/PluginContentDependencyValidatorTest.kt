@@ -3,6 +3,7 @@
 
 package org.jetbrains.intellij.build.productLayout.validator
 
+import com.intellij.platform.buildScripts.concurrency.SharedTaskOwner
 import com.intellij.platform.pluginGraph.ContentModuleName
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
 import kotlinx.coroutines.Dispatchers
@@ -38,6 +39,13 @@ class PluginContentDependencyValidatorTest {
 
   @Nested
   inner class GraphDependencyQueryTest {
+    private val owner = SharedTaskOwner("GraphDependencyQueryTest")
+
+    @org.junit.jupiter.api.AfterEach
+    fun closeSharedTasks() {
+      owner.close()
+    }
+
     @Test
     fun `validation uses graph deps - available dep causes no error`(): Unit = runBlocking(Dispatchers.Default) {
       // This tests the fix: validation queries EDGE_CONTENT_MODULE_DEPENDS_ON from graph,
@@ -57,7 +65,7 @@ class PluginContentDependencyValidatorTest {
         linkContentModuleDeps("content.module", "available.dep")
       }
 
-      val model = testGenerationModel(graph)
+      val model = testGenerationModel(graph, owner = owner)
       val errors = runValidationRule(PluginContentDependencyValidator, model)
 
       assertThat(errors).isEmpty()
@@ -79,7 +87,7 @@ class PluginContentDependencyValidatorTest {
         // Even if JPS had deps, validation should not see them
       }
 
-      val model = testGenerationModel(graph)
+      val model = testGenerationModel(graph, owner = owner)
       val errors = runValidationRule(PluginContentDependencyValidator, model)
 
       // No errors because graph has no deps to validate
@@ -89,6 +97,13 @@ class PluginContentDependencyValidatorTest {
 
   @Nested
   inner class MissingDependencyTest {
+    private val owner = SharedTaskOwner("MissingDependencyTest")
+
+    @org.junit.jupiter.api.AfterEach
+    fun closeSharedTasks() {
+      owner.close()
+    }
+
     @Test
     fun `reports missing dependency not in any module set or plugin`(): Unit = runBlocking(Dispatchers.Default) {
       val graph = pluginGraph {
@@ -102,7 +117,7 @@ class PluginContentDependencyValidatorTest {
         linkContentModuleDeps("content.module", "missing.dep")
       }
 
-      val model = testGenerationModel(graph)
+      val model = testGenerationModel(graph, owner = owner)
       val errors = runValidationRule(PluginContentDependencyValidator, model)
 
       assertThat(errors).hasSize(1)
@@ -127,7 +142,7 @@ class PluginContentDependencyValidatorTest {
         linkContentModuleDeps("content.module", "dep.module")
       }
 
-      val model = testGenerationModel(graph)
+      val model = testGenerationModel(graph, owner = owner)
       val errors = runValidationRule(PluginContentDependencyValidator, model)
 
       assertThat(errors).isEmpty()
@@ -152,7 +167,7 @@ class PluginContentDependencyValidatorTest {
         linkContentModuleDeps("content.module", "dep.module")
       }
 
-      val model = testGenerationModel(graph)
+      val model = testGenerationModel(graph, owner = owner)
       val errors = runValidationRule(PluginContentDependencyValidator, model)
 
       assertThat(errors).hasSize(1)
@@ -174,7 +189,7 @@ class PluginContentDependencyValidatorTest {
         linkContentModuleDeps("content.module.a", "content.module.b")
       }
 
-      val model = testGenerationModel(graph)
+      val model = testGenerationModel(graph, owner = owner)
       val errors = runValidationRule(PluginContentDependencyValidator, model)
 
       assertThat(errors).isEmpty()
@@ -183,6 +198,13 @@ class PluginContentDependencyValidatorTest {
 
   @Nested
   inner class FilteredDependencyAllowlistTest {
+    private val owner = SharedTaskOwner("FilteredDependencyAllowlistTest")
+
+    @org.junit.jupiter.api.AfterEach
+    fun closeSharedTasks() {
+      owner.close()
+    }
+
     @Test
     fun `allowed test library module is ignored in filtered deps`(): Unit = runBlocking(Dispatchers.Default) {
       val graph = pluginGraph {
@@ -203,6 +225,7 @@ class PluginContentDependencyValidatorTest {
         testLibraryAllowedInModule = mapOf(
           ContentModuleName("content.module") to setOf("intellij.libraries.assertj.core"),
         ),
+        owner = owner,
       )
       val errors = runValidationRule(PluginContentDependencyValidator, model)
 
@@ -212,6 +235,13 @@ class PluginContentDependencyValidatorTest {
 
   @Nested
   inner class TestPluginEdgeTypeTest {
+    private val owner = SharedTaskOwner("TestPluginEdgeTypeTest")
+
+    @org.junit.jupiter.api.AfterEach
+    fun closeSharedTasks() {
+      owner.close()
+    }
+
     @Test
     fun `test plugin uses TEST edge type - sees test deps`(): Unit = runBlocking(Dispatchers.Default) {
       // Test plugins should include EDGE_CONTENT_MODULE_DEPENDS_ON_TEST
@@ -230,7 +260,7 @@ class PluginContentDependencyValidatorTest {
         linkContentModuleTestDeps("test.content", "test.dep")
       }
 
-      val model = testGenerationModel(graph)
+      val model = testGenerationModel(graph, owner = owner)
       val errors = runValidationRule(PluginContentDependencyValidator, model)
 
       // No error - test.dep is available and test plugin sees TEST edges
@@ -250,7 +280,7 @@ class PluginContentDependencyValidatorTest {
         linkContentModuleDeps("test.content", "missing.prod.dep")
       }
 
-      val model = testGenerationModel(graph)
+      val model = testGenerationModel(graph, owner = owner)
       val errors = runValidationRule(PluginContentDependencyValidator, model)
 
       assertThat(errors).hasSize(1)
@@ -273,7 +303,7 @@ class PluginContentDependencyValidatorTest {
         // Note: no linkContentModuleDeps for prod.content
       }
 
-      val model = testGenerationModel(graph)
+      val model = testGenerationModel(graph, owner = owner)
       val errors = runValidationRule(PluginContentDependencyValidator, model)
 
       // No error - production validation uses EDGE_CONTENT_MODULE_DEPENDS_ON,
@@ -294,7 +324,7 @@ class PluginContentDependencyValidatorTest {
         linkContentModuleTestDeps("test.content", "missing.test.dep")
       }
 
-      val model = testGenerationModel(graph)
+      val model = testGenerationModel(graph, owner = owner)
       val errors = runValidationRule(PluginContentDependencyValidator, model)
 
       assertThat(errors).hasSize(1)
@@ -307,13 +337,20 @@ class PluginContentDependencyValidatorTest {
 
   @Nested
   inner class EmptyAndEdgeCasesTest {
+    private val owner = SharedTaskOwner("EmptyAndEdgeCasesTest")
+
+    @org.junit.jupiter.api.AfterEach
+    fun closeSharedTasks() {
+      owner.close()
+    }
+
     @Test
     fun `no error when no bundled plugins`(): Unit = runBlocking(Dispatchers.Default) {
       val graph = pluginGraph {
         product("IDEA")
       }
 
-      val model = testGenerationModel(graph)
+      val model = testGenerationModel(graph, owner = owner)
       val errors = runValidationRule(PluginContentDependencyValidator, model)
 
       assertThat(errors).isEmpty()
@@ -330,7 +367,7 @@ class PluginContentDependencyValidatorTest {
         }
       }
 
-      val model = testGenerationModel(graph)
+      val model = testGenerationModel(graph, owner = owner)
       val errors = runValidationRule(PluginContentDependencyValidator, model)
 
       assertThat(errors).isEmpty()
@@ -345,6 +382,13 @@ class PluginContentDependencyValidatorTest {
    */
   @Nested
   inner class ContentModuleVisibilityTest {
+    private val owner = SharedTaskOwner("ContentModuleVisibilityTest")
+
+    @org.junit.jupiter.api.AfterEach
+    fun closeSharedTasks() {
+      owner.close()
+    }
+
     @Test
     fun `private module of another plugin does not satisfy a dependency`(@TempDir tempDir: Path): Unit = runBlocking(Dispatchers.Default) {
       val jps = privateWrapperProject(tempDir)
@@ -362,7 +406,7 @@ class PluginContentDependencyValidatorTest {
         linkContentModuleDeps("consumer.module", WRAPPER_MODULE)
       }
 
-      val model = testGenerationModel(graph, outputProvider = jps.outputProvider)
+      val model = testGenerationModel(graph, outputProvider = jps.outputProvider, owner = owner)
       val errors = runValidationRule(PluginContentDependencyValidator, model)
 
       assertThat(errors).hasSize(1)
@@ -388,7 +432,7 @@ class PluginContentDependencyValidatorTest {
         linkContentModuleDeps("consumer.module", WRAPPER_MODULE)
       }
 
-      val model = testGenerationModel(graph, outputProvider = jps.outputProvider)
+      val model = testGenerationModel(graph, outputProvider = jps.outputProvider, owner = owner)
       val errors = runValidationRule(PluginContentDependencyValidator, model)
 
       assertThat(errors).isEmpty()
@@ -411,7 +455,7 @@ class PluginContentDependencyValidatorTest {
         linkContentModuleDeps("consumer.module", WRAPPER_MODULE)
       }
 
-      val model = testGenerationModel(graph, outputProvider = jps.outputProvider)
+      val model = testGenerationModel(graph, outputProvider = jps.outputProvider, owner = owner)
       val errors = runValidationRule(PluginContentDependencyValidator, model)
 
       assertThat(errors).isEmpty()

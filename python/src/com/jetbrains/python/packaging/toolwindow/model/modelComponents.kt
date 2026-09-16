@@ -27,6 +27,7 @@ sealed class DisplayablePackage(val name: @NlsSafe String, open val repository: 
  * @param isDeclared True if explicitly declared in project files (requirements.txt, pyproject.toml), false if transitive dependency
  * @param workspaceMember The workspace member this package belongs to (for uv/Poetry workspaces)
  * @param dependencyGroup The dependency group this package belongs to (e.g. "dev"), null for the default group
+ * @param isProjectPackage True for a workspace member or the project itself, which the tree marks apart from a PyPI package
  */
 class InstalledPackage(
   val instance: PythonPackage,
@@ -36,6 +37,9 @@ class InstalledPackage(
   val isDeclared: Boolean = true,
   val workspaceMember: PyWorkspaceMember? = null,
   val dependencyGroup: PyDependencyGroup? = null,
+  val isProjectPackage: Boolean = false,
+  /** The extras the parent asked for, shown in the label so `pkg` and `pkg[extra]` are distinct rows. */
+  val extras: String? = null,
 ) : DisplayablePackage(instance.name, repository) {
   val currentVersion: PyPackageVersion? = PyPackageVersionNormalizer.normalize(instance.version)
 
@@ -54,6 +58,8 @@ class InstalledPackage(
 class WorkspaceMember(
   name: String,
   private val packages: List<DisplayablePackage>,
+  /** The member's own installed package, which carries where it lives. `null` when it is not installed. */
+  val instance: PythonPackage? = null,
 ) : DisplayablePackage(name, null) {
   override fun getRequirements(): List<DisplayablePackage> = packages
 }
@@ -79,7 +85,11 @@ class RequirementPackage(
   private val requirements: List<RequirementPackage> = emptyList(),
   val group: String? = null,
   val isDeclared: Boolean = true,
-  val workspaceMember: PyWorkspaceMember? = null
+  val workspaceMember: PyWorkspaceMember? = null,
+  /** True for a workspace member or the project itself, which the tree marks apart from a PyPI package. */
+  val isProjectPackage: Boolean = false,
+  /** The extras the parent asked for, shown in the label so `pkg` and `pkg[extra]` are distinct rows. */
+  val extras: String? = null,
 ) : DisplayablePackage(instance.name, repository) {
   override fun getRequirements(): List<DisplayablePackage> = requirements
 }

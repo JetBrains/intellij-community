@@ -1,5 +1,34 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
+load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_TARGETS")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `dev intellij.java.aetherDependencyResolver.plugin` start
+dev_dist_plugin(
+    content_modules = [
+        # do not sort,
+        "intellij.libraries.maven.resolver.provider",
+        "intellij.libraries.maven.resolver.transport",
+        "intellij.libraries.plexus.utils",
+    ],
+    libraries = [
+        "@lib//:libraries-maven-resolver-provider-maven-resolver-provider",
+        "@lib//:libraries-maven-resolver-transport-org-apache-maven-resolver-maven-resolver-connector-basic",
+        "@lib//:libraries-maven-resolver-transport-org-apache-maven-resolver-maven-resolver-transport-file",
+        "@lib//:libraries-maven-resolver-transport-org-apache-maven-resolver-maven-resolver-transport-http",
+        "@lib//:libraries-plexus-utils-plexus-utils",
+    ],
+    main_module = "intellij.java.aetherDependencyResolver.plugin",
+    module_targets = MODULE_TARGETS,
+    prepacked_content_modules = [
+        # do not sort,
+        "intellij.java.aetherDependencyResolver",
+        "intellij.libraries.kotlinx.document.store.mvstore",
+        "intellij.libraries.package.search.api.client",
+        "intellij.repository.search.common",
+        "intellij.repository.search.completion",
+    ],
+)
+### auto-generated section `dev intellij.java.aetherDependencyResolver.plugin` end
 
 ### auto-generated section `build intellij.java.aetherDependencyResolver.plugin` start
 jvm_library(
@@ -38,29 +67,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.java.aetherDependencyResolver.plugin` end
-
-### auto-generated section `dev intellij.java.aetherDependencyResolver.plugin` start
-dev_dist_plugin(
-    content_modules = [
-        "//libraries/maven-resolver-provider",
-        "//libraries/maven-resolver-transport",
-        "//libraries/plexus-utils",
-        "//plugins/repository-search/common",
-    ],
-    descriptor_module = ":plugin",
-    libraries = [
-        "@lib//:ktor-client-mock",
-        "@lib//:libraries-maven-resolver-transport-org-apache-maven-resolver-maven-resolver-connector-basic",
-        "@lib//:libraries-maven-resolver-transport-org-apache-maven-resolver-maven-resolver-transport-file",
-        "@lib//:libraries-maven-resolver-transport-org-apache-maven-resolver-maven-resolver-transport-http",
-        "@lib//:libraries-plexus-utils-plexus-utils",
-        "@lib//:maven-resolver-provider",
-    ],
-    prepacked_content_modules = [
-        "//aether-dependency-resolver:aether-dependency-resolver_content_module_jar",
-        "//libraries/kotlinx/document-store-mvstore:libraries-kotlinx-document-store-mvstore_content_module_jar",
-        "//libraries/package-search-api-client:package-search-api-client_content_module_jar",
-        "//plugins/repository-search/completion:completion_content_module_jar",
-    ],
-)
-### auto-generated section `dev intellij.java.aetherDependencyResolver.plugin` end

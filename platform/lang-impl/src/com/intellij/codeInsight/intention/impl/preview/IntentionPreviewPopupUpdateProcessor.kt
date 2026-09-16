@@ -17,6 +17,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.elf.Elf
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.SoftWrapChangeListener
 import com.intellij.openapi.editor.impl.EditorImpl
@@ -253,7 +254,7 @@ class IntentionPreviewPopupUpdateProcessor internal constructor(
     if (editorsToRelease.isNotEmpty()) {
       val editorFactory = EditorFactory.getInstance()
       for (editor in editorsToRelease) {
-        editorFactory.releaseEditor(editor)
+        Elf.getElf().runReadAction { editorFactory.releaseEditor(editor) }
       }
       editorsToRelease.clear()
     }

@@ -33,7 +33,7 @@ final class SubCoverageManager {
 
   public void restoreMergedCoverage(@NotNull CoverageSuitesBundle suite) {
     mySubCoverageIsActive = false;
-    suite.restoreCoverageData();
+    suite.invalidateCoverageData();
   }
 
   public void selectSubCoverage(@NotNull CoverageSuitesBundle suite, List<String> testNames) {

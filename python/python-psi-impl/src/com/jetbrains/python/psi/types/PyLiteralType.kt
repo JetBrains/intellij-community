@@ -285,8 +285,17 @@ class PyLiteralType private constructor(
               return candidate
             }
           }
+          else if (candidate is PyClassType && !candidate.isDefinition && acceptsDictLiteral(candidate, dictLiteral)) {
+            return candidate
+          }
         }
         return promoteDictLiteralOrDictComprehension(expectedType, dictLiteral, dictLiteral.elements.asList())
+      }
+
+      private fun acceptsDictLiteral(expectedType: PyClassType, dictLiteral: PyDictLiteralExpression): Boolean {
+        return PyDictLiteralPromotionExtension.EP_NAME.extensionList.any {
+          it.acceptsDictLiteral(expectedType, dictLiteral, ::promoteToType, context)
+        }
       }
 
       private fun promoteDictLiteralOrDictComprehension(

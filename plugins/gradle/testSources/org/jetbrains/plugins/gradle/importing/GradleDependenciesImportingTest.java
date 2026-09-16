@@ -36,14 +36,11 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.util.JpsPathUtil;
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilderUtil;
 import org.jetbrains.plugins.gradle.service.resolve.VersionCatalogsLocator;
-import org.jetbrains.plugins.gradle.service.syncAction.GradleEntitySource;
-import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase;
 import org.jetbrains.plugins.gradle.settings.GradleSystemSettings;
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetJavaVersion;
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
@@ -556,7 +553,6 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     libDep = moduleLibDeps.getFirst();
     assertFalse("Dependency must be project level: " + libDep.toString(), libDep.isModuleLevel());
     assertEquals("URLs must be in the correct format", expectedPath, libDep.getLibrary().getUrls(OrderRootType.CLASSES)[0]);
-    ((LibraryBridgeImpl)libDep.getLibrary()).getLibrarySnapshot$intellij_platform_projectModel_impl().getLibraryEntity().getEntitySource();
 
     // Try another import attempt and make sure it doesn't throw anything
     importProject();
@@ -1144,7 +1140,50 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
 
   @Test
-  @TargetVersions("7.6+")
+  @TargetVersions("8.14+")
+  @TargetJavaVersion(value = "17+", reason = "Spring Boot 4 Compatibility")
+  @TestFor(issues = "IDEA-339492")
+  public void testProjectDependencyOnBootJar4Artifact() throws Exception {
+    createSettingsFile(including("moduleA", "moduleB"));
+    createProjectSubFile("moduleB/build.gradle",
+                         script(it -> {
+                           it.withJavaPlugin();
+                           it.addImplementationDependency(it.project(":moduleA"));
+                         }));
+
+    String springBootVersion = "4.0.8";
+    importProject(script(it -> {
+                           it.withMavenCentral();
+                           it.withPlugin("org.springframework.boot", springBootVersion);
+                           it.allprojects(all -> {
+                             all.withMavenCentral();
+                             all.applyPlugin("java");
+                             all.applyPlugin("org.springframework.boot");
+                             all.addPostfix("""
+                                                bootJar {
+                                                  enabled = true
+                                                  mainClass = 'MyApplication'
+                                                }
+                                                jar {
+                                                  enabled = true
+                                                  archiveClassifier.set('')
+                                                }
+                                              """);
+                           });
+                         }
+    ));
+
+    assertModules("project", "project.main", "project.test",
+                  "project.moduleA", "project.moduleA.main", "project.moduleA.test",
+                  "project.moduleB", "project.moduleB.main", "project.moduleB.test");
+
+    assertModuleModuleDeps("project.moduleB.main", "project.moduleA.main");
+    assertModuleLibDeps("project.moduleB.main");
+    assertModuleModuleDeps("project.moduleB.test", "project.moduleB.main", "project.moduleA.main");
+  }
+
+  @Test
+  @TargetVersions("7.6 <=> 8.13")
   @TargetJavaVersion(value = "17+", reason = "Spring Boot 3 Compatibility")
   @TestFor(issues = "IDEA-339492")
   public void testProjectDependencyOnBootJar3Artifact() throws Exception {

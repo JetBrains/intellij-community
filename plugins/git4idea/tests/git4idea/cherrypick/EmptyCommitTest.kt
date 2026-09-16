@@ -2,29 +2,40 @@
 package git4idea.cherrypick
 
 import git4idea.GitUtil
+import com.intellij.testFramework.junit5.TestApplication
 import git4idea.i18n.GitBundle.message
-import git4idea.repo.GitRepository
-import git4idea.test.GitSingleRepoTest
+import git4idea.test.GitSingleRepoContext
 import git4idea.test.addCommit
+import git4idea.test.file
+import git4idea.test.git
+import git4idea.test.gitSingleRepoContextFixture
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
 
-class EmptyCommitTest : GitSingleRepoTest() {
+@TestApplication
+class EmptyCommitTest {
+  private val fixture = gitSingleRepoContextFixture()
+  private val context: GitSingleRepoContext get() = fixture.get()
 
   private val fallbackMessage = message("cherry.pick.empty.cherry.pick.commit")
-  fun `test create empty commit succeeds when no staged changes`() {
-    val file = file("file.txt").create("initial content").add()
+
+  @Test
+  fun `test create empty commit succeeds when no staged changes`(): Unit = with(context) {
+    file("file.txt").create("initial content").add()
     addCommit("Initial commit")
 
     // Verify no staged changes
-    assertFalse("Should have no staged changes", repo.hasLocalChanges(staged = true))
+    assertThat(hasLocalChanges(staged = true)).isFalse()
 
     // Create empty commit
-    val result = repo.createEmptyCommit()
+    val result = createEmptyCommit()
 
-    assertTrue("Empty commit should succeed", result.success())
+    assertThat(result.success()).isTrue()
     assertCommitMessage(fallbackMessage)
   }
 
-  fun `test create empty commit fails when staged changes exist`() {
+  @Test
+  fun `test create empty commit fails when staged changes exist`(): Unit = with(context) {
     val file = file("file.txt").create("initial content").add()
     addCommit("Initial commit")
 
@@ -33,31 +44,33 @@ class EmptyCommitTest : GitSingleRepoTest() {
     git("add file.txt")
 
     // Verify staged changes exist
-    assertTrue("Should have staged changes", repo.hasLocalChanges(staged = true))
+    assertThat(hasLocalChanges(staged = true)).isTrue()
 
     // Attempt to create empty commit
-    val result = repo.createEmptyCommit()
+    val result = createEmptyCommit()
 
-    assertFalse("Empty commit should fail when staged changes exist", result.success())
-    assertErrorContains(result, "staged changes exist")
+    assertThat(result.success()).isFalse()
+    assertThat(result.errorOutputAsJoinedString).contains("staged changes exist")
   }
 
-  fun `test create empty commit uses MERGE_MSG file when present`() {
-    val file = file("file.txt").create("initial content").add()
+  @Test
+  fun `test create empty commit uses MERGE_MSG file when present`(): Unit = with(context) {
+    file("file.txt").create("initial content").add()
     addCommit("Initial commit")
 
     // Create MERGE_MSG file
     val mergeMsg = "Cherry-picked commit message\n\n(cherry picked from commit abc123)"
     repo.repositoryFiles.mergeMessageFile.writeText(mergeMsg)
 
-    val result = repo.createEmptyCommit()
+    val result = createEmptyCommit()
 
-    assertTrue("Empty commit should succeed", result.success())
+    assertThat(result.success()).isTrue()
     assertCommitMessage(mergeMsg.trim())
   }
 
-  fun `test create empty commit uses fallback message when MERGE_MSG missing`() {
-    val file = file("file.txt").create("initial content").add()
+  @Test
+  fun `test create empty commit uses fallback message when MERGE_MSG missing`(): Unit = with(context) {
+    file("file.txt").create("initial content").add()
     addCommit("Initial commit")
 
     // Ensure MERGE_MSG doesn't exist
@@ -66,44 +79,38 @@ class EmptyCommitTest : GitSingleRepoTest() {
       mergeMsgFile.delete()
     }
 
-    val result = repo.createEmptyCommit()
+    val result = createEmptyCommit()
 
-    assertTrue("Empty commit should succeed", result.success())
+    assertThat(result.success()).isTrue()
     assertCommitMessage(fallbackMessage)
   }
 
-  fun `test hasLocalChanges ignores unstaged changes`() {
+  @Test
+  fun `test hasLocalChanges ignores unstaged changes`(): Unit = with(context) {
     val file = file("file.txt").create("initial content").add()
     addCommit("Initial commit")
 
     file.append("new content")
     // Don't stage the changes
 
-    assertFalse("Should not detect unstaged changes when checking staged",
-                repo.hasLocalChanges(staged = true))
-    assertTrue("Should detect changes in working tree",
-               repo.hasLocalChanges(staged = false))
+    assertThat(hasLocalChanges(staged = true)).isFalse()
+    assertThat(hasLocalChanges(staged = false)).isTrue()
   }
 
-  private fun assertCommitMessage(expectedMessage: String) {
+  private fun GitSingleRepoContext.assertCommitMessage(expectedMessage: String) {
     val lastCommitMessage = git("log -1 --pretty=%B").trim()
-    assertEquals("Commit message should match", expectedMessage, lastCommitMessage)
+    assertThat(lastCommitMessage).isEqualTo(expectedMessage)
   }
 
-  private fun assertErrorContains(result: git4idea.commands.GitCommandResult, substring: String) {
-    val error = result.errorOutputAsJoinedString
-    assertTrue("Error should contain '$substring', but was: $error",
-               error.contains(substring))
-  }
-
-  private fun GitRepository.hasLocalChanges(staged: Boolean): Boolean {
+  private fun GitSingleRepoContext.hasLocalChanges(staged: Boolean): Boolean {
     return try {
-      GitUtil.hasLocalChanges(staged, project, root)
-    } catch (e: Exception) {
+      GitUtil.hasLocalChanges(staged, project, repo.root)
+    }
+    catch (_: Exception) {
       false
     }
   }
 
-  private fun GitRepository.createEmptyCommit() = EmptyCherryPickResolutionStrategy.CREATE_EMPTY.apply(this)
+  private fun GitSingleRepoContext.createEmptyCommit() = EmptyCherryPickResolutionStrategy.CREATE_EMPTY.apply(repo)
 
 }

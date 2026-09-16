@@ -1,3 +1,0 @@
-- name: dist.all/lib/intellij.platform.jps.build.javac.rt.jar
-  modules:
-  - name: intellij.platform.jps.build.javac.rt

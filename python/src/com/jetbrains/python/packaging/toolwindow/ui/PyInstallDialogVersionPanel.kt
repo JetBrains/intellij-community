@@ -29,7 +29,8 @@ import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.packaging.toolwindow.PyPackageIcons
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
 import com.jetbrains.python.packaging.toolwindow.details.PyPackageDetailsHtmlRender
-import com.jetbrains.python.packaging.toolwindow.details.PyPackagingJcefHtmlPanel
+import com.jetbrains.python.ui.PyEmbeddedBrowserProvider
+import com.jetbrains.python.ui.PyHtmlPanel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -75,7 +76,7 @@ internal class PyInstallDialogVersionPanel(
   private val presenter = PyInstallDialogVersionPresenter()
   private var loadedDetailsKey: String? = null
   private val detailsLoadMutex = kotlinx.coroutines.sync.Mutex()
-  private val htmlPanel: PyPackagingJcefHtmlPanel = PyPackagingJcefHtmlPanel(project)
+  private val htmlPanel: PyHtmlPanel = PyEmbeddedBrowserProvider.createHtmlPanel(project)
 
   val packageInfoLabel: JBLabel = JBLabel().apply { icon = PyPackageIcons.PackageGray; isVisible = false }
   val versionButton: JPanel = buildVersionSelectorPanel().apply { isVisible = false }

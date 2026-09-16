@@ -1,3 +1,0 @@
-- name: dist.all/lib/intellij.platform.completion.backend.jar
-  modules:
-  - name: intellij.platform.completion.backend

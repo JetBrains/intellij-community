@@ -21,6 +21,6 @@ interface InstallablePythonSdk {
   /**
    * Install python
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun install(module: Module?, systemWideSdksDetector: () -> List<Sdk>): Result<Sdk>
 }

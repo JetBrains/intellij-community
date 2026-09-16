@@ -174,7 +174,7 @@ class PythonPackageManagerUI private constructor(
    *
    * @return list of all installed packages after installation, or null if the operation failed
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   @RequiresBlockingContext
   @ApiStatus.Experimental
   fun installPackagesWithModalProgressBlocking(vararg packages: String): List<PythonPackage>? {

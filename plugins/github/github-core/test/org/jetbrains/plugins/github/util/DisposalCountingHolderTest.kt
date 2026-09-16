@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.util
 
-import com.intellij.collaboration.async.cancelAndJoinSilently
+import com.intellij.collaboration.async.cancelAndJoin
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.isActive
@@ -25,7 +25,7 @@ class DisposalCountingHolderTest {
 
       assertThat(holder.value).isNull()
 
-      cancelAndJoinSilently()
+      cancelAndJoin()
     }
   }
 
@@ -44,7 +44,7 @@ class DisposalCountingHolderTest {
       assertSame(v1, v2)
       assertThat(v1.cs.isActive).isTrue()
 
-      cancelAndJoinSilently()
+      cancelAndJoin()
     }
   }
 
@@ -60,11 +60,11 @@ class DisposalCountingHolderTest {
       holder.acquireValue(host1)
       val v2 = holder.acquireValue(host2)
 
-      host1.cancelAndJoinSilently()
+      host1.cancelAndJoin()
       assertThat(v2.cs.isActive).isTrue()
       assertThat(holder.value).isNotNull()
 
-      cancelAndJoinSilently()
+      cancelAndJoin()
     }
   }
 
@@ -77,12 +77,12 @@ class DisposalCountingHolderTest {
       val host1 = childScope("host1")
 
       val v1 = holder.acquireValue(host1)
-      host1.cancelAndJoinSilently()
+      host1.cancelAndJoin()
 
       assertThat(v1.cs.isActive).isFalse()
       assertThat(holder.value).isNull()
 
-      cancelAndJoinSilently()
+      cancelAndJoin()
     }
   }
 
@@ -96,14 +96,14 @@ class DisposalCountingHolderTest {
       val host2 = childScope("host2")
 
       val v1 = holder.acquireValue(host1)
-      host1.cancelAndJoinSilently()
+      host1.cancelAndJoin()
       val v2 = holder.acquireValue(host2)
 
       assertThat(v1).isNotSameAs(v2)
       assertThat(v1.cs.isActive).isFalse()
       assertThat(v2.cs.isActive).isTrue()
 
-      cancelAndJoinSilently()
+      cancelAndJoin()
     }
   }
 
@@ -116,12 +116,12 @@ class DisposalCountingHolderTest {
       val host1 = childScope("host1")
 
       val v1 = holder.acquireValue(host1)
-      holderScope.cancelAndJoinSilently()
+      holderScope.cancelAndJoin()
 
       assertThat(v1.cs.isActive).isFalse()
       assertThat(holder.value).isNull()
 
-      cancelAndJoinSilently()
+      cancelAndJoin()
     }
   }
 
@@ -131,11 +131,11 @@ class DisposalCountingHolderTest {
       val holderScope = this.childScope("holder")
       val holder = AcquirableScopedValueOwner(holderScope) { CancellableData(this) }
 
-      holderScope.cancelAndJoinSilently()
+      holderScope.cancelAndJoin()
 
       assertThrows<Throwable> { holder.acquireValue(this) }
 
-      cancelAndJoinSilently()
+      cancelAndJoin()
     }
   }
 }

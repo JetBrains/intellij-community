@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.platform.navbar.monolith` start
+content_module_jar(module = ":monolith")
+### auto-generated section `dev intellij.platform.navbar.monolith` end
+
 ### auto-generated section `build intellij.platform.navbar.monolith` start
 jvm_library(
     name = "monolith",
@@ -30,8 +34,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":monolith")
-
 jvm_library(
     name = "monolith_test_lib",
     testonly = True,
@@ -59,7 +61,6 @@ exports_files(
     [
         "intellij.platform.navbar.monolith.iml",
         "resources/intellij.platform.navbar.monolith.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

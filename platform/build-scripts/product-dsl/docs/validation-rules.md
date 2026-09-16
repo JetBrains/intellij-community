@@ -20,17 +20,16 @@ plugin that owns the API, then a shared module set. Read
 | 7 | Test plugin plugin dependencies | Test plugin | [test-plugin-plugin-dependency.md](validators/test-plugin-plugin-dependency.md) |
 | 8 | Duplicate plugin content modules | Product | [plugin-content-duplicates.md](validators/plugin-content-duplicates.md) |
 | 9 | Test plugin descriptor ID conflicts | Product | [plugin-descriptor-id-conflicts.md](validators/plugin-descriptor-id-conflicts.md) |
-| 10 | Library module replacement | Module | [library-module.md](validators/library-module.md) |
-| 11 | Test library scope | Module | [test-library-scope.md](validators/test-library-scope.md) |
-| 12 | Suppression config keys | Config | [suppression-config.md](validators/suppression-config.md) |
-| 13 | Plugin content structural validation | Plugin | [plugin-content-structure.md](validators/plugin-content-structure.md) |
-| 14 | Embedded content module dependencies | Product | [embedded-content-module-dependency.md](validators/embedded-content-module-dependency.md) |
-| 15 | Unused embedded library modules | Module set | [unused-embedded-library-module.md](validators/unused-embedded-library-module.md) |
-| 16 | Unused shared library modules | Module set | [unused-shared-library-module.md](validators/unused-shared-library-module.md) |
-| 17 | Content module copy conflicts | Product | [content-module-copy-conflict.md](validators/content-module-copy-conflict.md) |
-| 18 | Library license coverage | Content module | [library-license.md](validators/library-license.md) |
-| 19 | Module in multiple plugins | Plugin layouts | [module-in-multiple-plugins.md](validators/module-in-multiple-plugins.md) |
-| 20 | Content module dependency declarations | Content module | [content-module-dependency-declaration.md](validators/content-module-dependency-declaration.md) |
+| 10 | Test library scope | Module | [test-library-scope.md](validators/test-library-scope.md) |
+| 11 | Suppression config keys | Config | [suppression-config.md](validators/suppression-config.md) |
+| 12 | Plugin content structural validation | Plugin | [plugin-content-structure.md](validators/plugin-content-structure.md) |
+| 13 | Embedded content module dependencies | Product | [embedded-content-module-dependency.md](validators/embedded-content-module-dependency.md) |
+| 14 | Unused embedded library modules | Module set | [unused-embedded-library-module.md](validators/unused-embedded-library-module.md) |
+| 15 | Unused shared library modules | Module set | [unused-shared-library-module.md](validators/unused-shared-library-module.md) |
+| 16 | Content module copy conflicts | Product | [content-module-copy-conflict.md](validators/content-module-copy-conflict.md) |
+| 17 | Library license coverage | Content module | [library-license.md](validators/library-license.md) |
+| 18 | Module in multiple plugins | Plugin layouts | [module-in-multiple-plugins.md](validators/module-in-multiple-plugins.md) |
+| 19 | Content module dependency declarations | Content module | [content-module-dependency-declaration.md](validators/content-module-dependency-declaration.md) |
 
 ## When Validation Runs
 

@@ -1,13 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
-
 package org.jetbrains.intellij.build.jarCache
 
 import com.dynatrace.hash4j.hashing.Hashing
 import io.opentelemetry.api.trace.Span
-import kotlinx.coroutines.sync.withLock
 import org.jetbrains.intellij.build.Source
-import org.jetbrains.intellij.build.StripedMutex
+import org.jetbrains.intellij.build.StripedLock
 import org.jetbrains.intellij.build.ZipSource
 import org.jetbrains.intellij.build.createSourceAndCacheStrategyList
 import java.nio.file.Files
@@ -15,7 +12,7 @@ import java.nio.file.Path
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 
-private val keyLocks = StripedMutex(256)
+private val keyLocks = StripedLock(256)
 // Bump this version when build scripts semantics affecting cache contents change.
 private const val CACHE_VERSION = 1
 
@@ -59,7 +56,7 @@ class LocalDiskJarCacheManager(
     )
   }
 
-  override suspend fun cleanup() {
+  override fun cleanup() {
     cleanupLocalDiskJarCache(
       entriesDir = entriesDir,
       lastCleanupMarkerFile = lastCleanupMarkerFile,
@@ -71,13 +68,13 @@ class LocalDiskJarCacheManager(
     )
   }
 
-  override suspend fun computeIfAbsent(
+  override fun computeIfAbsent(
     sources: Collection<Source>,
     targetFile: Path,
     nativeFiles: MutableMap<ZipSource, List<String>>?,
     span: Span,
     producer: SourceBuilder,
-  ): Path {
+  ) {
     val digestStartNano = System.nanoTime()
     val items = createSourceAndCacheStrategyList(sources = sources, classesOutputDirectory = classesOutputDirectory)
     val targetFileName = targetFile.fileName?.toString() ?: targetFile.toString()
@@ -98,55 +95,56 @@ class LocalDiskJarCacheManager(
     val key = "${longToString(leastSignificantBits)}-${longToString(hashValue128.mostSignificantBits)}"
     val paths = getCacheEntryPaths(entriesDir = entriesDir, key = key, targetFileName = targetFileName)
 
-    val optimisticCacheResult = tryUseCacheEntry(
+    val optimisticHit = tryUseCacheEntry(
       key = key,
       paths = paths,
       targetFile = targetFile,
-      sources = sources,
       items = items,
       nativeFiles = nativeFiles,
       span = span,
       producer = producer,
       metadataTouchTracker = metadataTouchTracker,
       cleanupCandidateIndex = cleanupCandidateIndex,
-      deleteInvalidEntry = false,
-      failOnCacheIoErrors = false,
+      underLock = false,
     )
-    if (optimisticCacheResult != null) {
+    if (optimisticHit) {
       span.setAttribute(JAR_CACHE_OUTCOME, "hit")
-      return optimisticCacheResult
+      return
     }
 
-    return withCacheEntryLock(lockHash = leastSignificantBits) {
-      tryUseCacheEntry(
+    withCacheEntryLock(lockHash = leastSignificantBits) {
+      val hitUnderLock = tryUseCacheEntry(
         key = key,
         paths = paths,
         targetFile = targetFile,
-        sources = sources,
         items = items,
         nativeFiles = nativeFiles,
         span = span,
         producer = producer,
         metadataTouchTracker = metadataTouchTracker,
         cleanupCandidateIndex = cleanupCandidateIndex,
-        deleteInvalidEntry = true,
-        failOnCacheIoErrors = true,
+        underLock = true,
       )
-        ?.also { span.setAttribute(JAR_CACHE_OUTCOME, "hitUnderLock") }
-      ?: produceAndCache(
-        paths = paths,
-        producer = producer,
-        targetFile = targetFile,
-        items = items,
-        nativeFiles = nativeFiles,
-        tempFilePrefix = tempFilePrefix,
-        metadataTouchTracker = metadataTouchTracker,
-        cleanupCandidateIndex = cleanupCandidateIndex,
-      ).also { span.setAttribute(JAR_CACHE_OUTCOME, "produced") }
+      if (hitUnderLock) {
+        span.setAttribute(JAR_CACHE_OUTCOME, "hitUnderLock")
+      }
+      else {
+        produceAndCache(
+          paths = paths,
+          producer = producer,
+          targetFile = targetFile,
+          items = items,
+          nativeFiles = nativeFiles,
+          tempFilePrefix = tempFilePrefix,
+          metadataTouchTracker = metadataTouchTracker,
+          cleanupCandidateIndex = cleanupCandidateIndex,
+        )
+        span.setAttribute(JAR_CACHE_OUTCOME, "produced")
+      }
     }
   }
 
-  private suspend fun <T> withCacheEntryLock(lockHash: Long, task: suspend () -> T): T {
-    return keyLocks.getLockByHash(lockHash).withLock { task() }
+  private fun <T> withCacheEntryLock(lockHash: Long, task: () -> T): T {
+    return keyLocks.withLockByHash(lockHash, task)
   }
 }

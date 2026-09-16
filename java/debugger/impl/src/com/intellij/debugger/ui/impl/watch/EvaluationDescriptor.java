@@ -135,8 +135,8 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl {
   @Override
   public PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException {
     PsiElement evaluationCode = getEvaluationCode(context);
-    if (evaluationCode instanceof PsiExpressionCodeFragment) {
-      return ((PsiExpressionCodeFragment)evaluationCode).getExpression();
+    if (evaluationCode instanceof PsiExpressionCodeFragment fragment) {
+      return fragment.getExpression();
     }
     else {
       throw new EvaluateException(JavaDebuggerBundle.message("error.cannot.create.expression.from.code.fragment"), null);

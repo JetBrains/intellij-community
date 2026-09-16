@@ -5,6 +5,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
+import com.intellij.terminal.frontend.fus.TerminalCommandCompletionStatistics
 import com.intellij.terminal.frontend.view.impl.TerminalInput
 import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionUtil.CURSOR_MARKER
 import org.jetbrains.plugins.terminal.session.ShellName
@@ -52,6 +53,7 @@ internal fun insertTerminalCompletionItem(
   // Third step - insert the completion item
   val realInsertValue = optimizedInfo.insertValue.replace(CURSOR_MARKER, "")
   terminalInput.sendString(realInsertValue)
+  lookup.editor.getUserData(TerminalCommandCompletionStatistics.KEY)?.recordPopupInserted(realInsertValue.length - charsToRemove - optimizedInfo.afterPrefixReplacementLength)
 
   // Fourth step - move the cursor to the custom position if it is specified
   val cursorOffset = optimizedInfo.insertValue.indexOf(CURSOR_MARKER)

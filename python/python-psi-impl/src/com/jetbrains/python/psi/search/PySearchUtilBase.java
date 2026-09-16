@@ -2,9 +2,9 @@ package com.jetbrains.python.psi.search;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.jetbrains.python.psi.resolve.MainPythonSdkKt;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.python.sdk.backend.PythonInterpreterKt;
@@ -53,7 +53,7 @@ public class PySearchUtilBase {
 
   public static @NotNull GlobalSearchScope excludeSdkTestScope(@NotNull GlobalSearchScope scope) {
     Project project = Objects.requireNonNull(scope.getProject());
-    Sdk sdk = ProjectRootManager.getInstance(project).getProjectSdk();
+    Sdk sdk = MainPythonSdkKt.mainPythonSdk(project);
     // TODO cache the scope in project userdata (update when SDK paths change or different project SDK is selected)
     if (sdk != null && PythonSdkUtil.isPythonSdk(sdk)) {
       return scope.intersectWith(PySearchScopeBuilder.forPythonSdk(project, sdk)

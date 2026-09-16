@@ -2,6 +2,10 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.python.copyright` start
+content_module_jar(module = ":copyright")
+### auto-generated section `dev intellij.python.copyright` end
+
 ### auto-generated section `build intellij.python.copyright` start
 create_kotlinc_options(
     name = "custom_copyright",
@@ -36,8 +40,6 @@ jvm_library(
         "//python:python-community-impl",
     ],
 )
-
-content_module_jar(module = ":copyright")
 
 jvm_library(
     name = "copyright_test_lib",

@@ -72,8 +72,7 @@ def _iml_roots(iml_content, iml_rel_path, iml_dir_rel):
     no production output at all, only `resources/META-INF/plugin.xml` marked `java-test-resource`.
 
     The first content root is where a plugin's dev-distribution residue lives, and only the first: that is the rule the
-    converter reads it back with (`devDistResidueFile` in `ModuleDescriptor.kt`), and the rule a `module-content.yaml`
-    follows too.
+    converter reads it back with (`devDistResidueFile` in `ModuleDescriptor.kt`).
     """
     doc = xml.parse(iml_content, strict = True)
     root = xml.get_document_element(doc)
@@ -92,6 +91,7 @@ def _iml_roots(iml_content, iml_rel_path, iml_dir_rel):
         break
 
     production = []
+    production_resources = []
     test = []
     for source_folder in xml.find_elements_by_tag_name(root, "sourceFolder"):
         root_type = xml.get_attribute(source_folder, "type")
@@ -106,13 +106,19 @@ def _iml_roots(iml_content, iml_rel_path, iml_dir_rel):
         if not url:
             fail("A %s root is missing the 'url' attribute in %s" % (root_type, iml_rel_path))
 
-        target.append(_module_dir_relative_project_path(
+        path = _module_dir_relative_project_path(
             url = url,
             iml_rel_path = iml_rel_path,
             iml_dir_rel = iml_dir_rel,
             root_type = root_type,
-        ))
-    return struct(production = production, test = test, first_content_root = first_content_root)
+        )
+        target.append(path)
+        if root_type == "java-resource":
+            production_resources.append(struct(
+                path = path,
+                relative_output_path = xml.get_attribute(source_folder, "relativeOutputPath") or "",
+            ))
+    return struct(production = production, production_resources = production_resources, test = test, first_content_root = first_content_root)
 
 def _find_plugin_xml_rel_path(ctx, project_root, resource_roots):
     for resource_root in resource_roots:
@@ -214,36 +220,6 @@ def _find_descriptor_rel_paths(project_root, module_name, resource_roots, extra_
             result.append(rel_path)
     return result
 
-_CONTENT_MODULE_RECIPE_FILE_NAME = "module-content.yaml"
-
-def _find_content_module_recipe_rel_path(ctx, project_root, first_content_root):
-    """The `module-content.yaml` of the `lib/` jar this module owns, or `None`.
-
-    The recipe is what says whether a platform content module owns a jar of its own, and only the converter reads it.
-    A recipe nobody names is a recipe the hermetic `bazel-targets.json` run cannot see, because that run loads its
-    project model from a tree materialized out of declared labels, and its `contentModuleJarTarget` then silently
-    differs from the full-checkout run's. That is not a symmetric loss: a missing label makes a dev-distribution fragment repack a jar whose packing
-    target goes unbuilt, and the recipe's absence also stops the veto in `isPrepackedPluginContentModule` from firing,
-    so the fallback claims jars for modules that own none and the plan hands a jar to a target that is not in the tree.
-
-    Beside the module's *first content root*, which is where the content-report writer puts it and is not always the
-    directory holding the `.iml` - the same rule `ModuleDescriptor.contentModuleRecipeFile` follows.
-
-    Existence only, deliberately: this side cannot parse YAML and does not have to. `JpsModuleToBazelTargetsOnly`
-    asserts that the two sides pick out the same set of files, and the one converter then decides the rest.
-    """
-    if first_content_root == None:
-        return None
-    rel_path = _join_project_relative_path(first_content_root, _CONTENT_MODULE_RECIPE_FILE_NAME)
-    path = project_root.get_child(rel_path)
-
-    # Watched, and not only probed. `path.exists` reads the filesystem and records nothing, so a recipe that is deleted
-    # leaves its label in the generated list and Bazel then fails the analysis of every target that reads the group.
-    # The watch is what makes a creation or a deletion re-evaluate this extension. `ctx.watch` accepts a path that does
-    # not exist, which is the case that matters: a recipe added later has to invalidate too.
-    ctx.watch(path)
-    return rel_path if path.exists else None
-
 def watch_project_model_files(ctx, project_root):
     idea_dir = project_root.get_child(".idea")
     modules_xml = idea_dir.get_child("modules.xml")
@@ -277,7 +253,7 @@ def read_project_model(ctx, project_root, extra_descriptor_rel_paths_by_module =
 
     Returns struct with:
       - modules: list of structs (module_name, iml_dir_rel, iml_content, iml_rel_path, plugin_xml_rel_path,
-        descriptor_rel_paths, content_module_recipe_rel_path, test_plugin_modules)
+        descriptor_rel_paths, test_plugin_modules)
       - library_xmls: list of structs (xml_content, xml_rel_path) from .idea/libraries/
     """
     idea_dir = project_root.get_child(".idea")
@@ -323,17 +299,13 @@ def read_project_model(ctx, project_root, extra_descriptor_rel_paths_by_module =
             iml_dir_rel = iml_dir_rel,
             iml_content = iml_content,
             iml_rel_path = rel_path,
+            resource_roots = iml_roots.production_resources,
             plugin_xml_rel_path = _find_plugin_xml_rel_path(ctx = ctx, project_root = project_root, resource_roots = resource_roots),
             descriptor_rel_paths = _find_descriptor_rel_paths(
                 project_root = project_root,
                 module_name = module_name,
                 resource_roots = resource_roots,
                 extra_rel_paths = extra_descriptor_rel_paths_by_module.get(module_name, []),
-            ),
-            content_module_recipe_rel_path = _find_content_module_recipe_rel_path(
-                ctx = ctx,
-                project_root = project_root,
-                first_content_root = iml_roots.first_content_root,
             ),
             test_plugin_modules = test_plugin_modules,
         ))

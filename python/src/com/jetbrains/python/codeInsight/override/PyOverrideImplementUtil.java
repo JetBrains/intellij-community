@@ -181,7 +181,11 @@ public final class PyOverrideImplementUtil {
     final PyStatementList statementList = cls.getStatementList();
     final TypeEvalContext context = TypeEvalContext.userInitiated(cls.getProject(), cls.getContainingFile());
 
-    final PyFunction function = buildOverriddenFunction(cls, baseFunction, implement).addFunctionAfter(statementList, anchor);
+    final PyFunctionBuilder builder = buildOverriddenFunction(cls, baseFunction, implement);
+    // A plain PSI insertion into a class body without statements gives an incorrect indent to an async method.
+    final PyFunction function = statementList.getStatements().length == 0
+                                ? (PyFunction)PyPsiRefactoringUtil.addElementToStatementList(builder.buildFunction(), statementList, true)
+                                : builder.addFunctionAfter(statementList, anchor);
     PyClassRefactoringUtil.transplantImportsFromSignature(baseFunction, function);
 
     PyiUtil

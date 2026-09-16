@@ -319,7 +319,7 @@ data class GenerationTiming(
  * The `finally` matters: a stage that throws still reports how long it ran before it did, and a failed generation is
  * exactly when a reader wants the timing.
  */
-suspend fun <T> recordGenerationTiming(name: String, into: MutableList<GenerationTiming>, block: suspend () -> T): T {
+inline fun <T> recordGenerationTiming(name: String, into: MutableList<GenerationTiming>, block: () -> T): T {
   val startEpochMs = System.currentTimeMillis()
   val startNano = System.nanoTime()
   try {

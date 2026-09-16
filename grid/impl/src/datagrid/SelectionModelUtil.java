@@ -40,7 +40,7 @@ public final class SelectionModelUtil {
 
     @Override
     public @NotNull GridSelection<GridRow, GridColumn> fit(@NotNull GridSelection<GridRow, GridColumn> selection) {
-      return new GridSelectionImpl(selection.getSelectedRows(), selection.getSelectedColumns());
+      return GridSelectionImpl.withSelection(selection, selection.getSelectedRows(), selection.getSelectedColumns());
     }
 
     @Override

@@ -24,6 +24,7 @@ import com.intellij.codeInspection.options.OptionController;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -70,19 +71,17 @@ public abstract class BaseInspection extends LocalInspectionTool {
   }
 
   @Override
+  public boolean isAvailableForFile(@NotNull PsiFile file) {
+    return GrInspectionUIUtil.checkInspectionEnabledByFileType(this, file, explicitlyEnabledFileTypes);
+  }
+
+  @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                                  boolean isOnTheFly,
                                                  @NotNull LocalInspectionToolSession session) {
     BaseInspectionVisitor visitor = buildVisitor();
     visitor.initialize(this, holder, isOnTheFly);
-    return new GroovyPsiElementVisitor(visitor) {
-      @Override
-      public void visitElement(@NotNull PsiElement element) {
-        if (GrInspectionUIUtil.checkInspectionEnabledByFileType(BaseInspection.this, element, explicitlyEnabledFileTypes)) {
-          super.visitElement(element);
-        }
-      }
-    };
+    return new GroovyPsiElementVisitor(visitor);
   }
 
   protected abstract @NotNull BaseInspectionVisitor buildVisitor();

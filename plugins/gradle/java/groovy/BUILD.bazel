@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.gradle.java.groovy` start
+content_module_jar(module = ":groovy")
+### auto-generated section `dev intellij.gradle.java.groovy` end
+
 ### auto-generated section `build intellij.gradle.java.groovy` start
 jvm_library(
     name = "groovy",
@@ -66,8 +70,6 @@ jvm_library(
         "//plugins/gradle/properties",
     ],
 )
-
-content_module_jar(module = ":groovy")
 
 jvm_library(
     name = "groovy_test_lib",

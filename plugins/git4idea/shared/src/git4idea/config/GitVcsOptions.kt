@@ -4,11 +4,14 @@ package git4idea.config
 import com.intellij.dvcs.branch.DvcsBranchSettings
 import com.intellij.dvcs.branch.DvcsSyncSettings
 import com.intellij.openapi.components.BaseState
+import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.Property
+import com.intellij.util.xmlb.annotations.Tag
 import git4idea.fetch.GitFetchTagsMode
 import git4idea.push.GitPushTagMode
 import git4idea.reset.GitResetMode
+import org.jetbrains.annotations.ApiStatus
 
 class GitVcsOptions : BaseState() {
   @get:OptionTag("PATH_TO_GIT")
@@ -52,6 +55,11 @@ class GitVcsOptions : BaseState() {
   var showRecentBranches: Boolean by property(true)
   @get:OptionTag("SHOW_TAGS")
   var showTags: Boolean by property(true)
+
+  // Recently used push targets per repository root, most recent first, up to [GitVcsSettings.RECENT_PUSH_TARGETS_LIMIT] per repository.
+  @get:ApiStatus.Internal
+  @get:OptionTag("RECENT_PUSH_TARGETS")
+  val recentPushTargets: MutableMap<String, MutableList<GitPushTargetHistoryEntry>> by map()
 
   @get:OptionTag("FILTER_BY_ACTION_IN_POPUP")
   var filterByActionInPopup: Boolean by property(true)
@@ -104,4 +112,18 @@ class GitVcsOptions : BaseState() {
   @get:OptionTag("BRANCH_SETTINGS")
   @get:Property(surroundWithTag = false, flat = true)
   var branchSettings: DvcsBranchSettings by property(DvcsBranchSettings())
+}
+
+/**
+ * One remembered push target. The repository root path is the key in [GitVcsOptions.recentPushTargets].
+ */
+@ApiStatus.Internal
+@Tag("push-target")
+data class GitPushTargetHistoryEntry(
+  @get:Attribute("source-branch") var sourceBranch: String?,
+  @get:Attribute("target-remote") var targetRemote: String?,
+  @get:Attribute("target-branch") var targetBranch: String?,
+) {
+  @Suppress("unused")
+  constructor() : this(null, null, null)
 }

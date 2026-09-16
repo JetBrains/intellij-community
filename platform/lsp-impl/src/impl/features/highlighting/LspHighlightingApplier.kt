@@ -34,10 +34,14 @@ import com.intellij.problems.WolfTheProblemSolver
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Applies LSP highlighting reactively without restarting the daemon.
@@ -71,15 +75,47 @@ internal class LspHighlightingApplier(private val project: Project) {
   fun scheduleHighlightingRefresh(file: VirtualFile) {
     val generationCounter = fileToCurrentGeneration.computeIfAbsent(file) { AtomicLong() }
     val gen = generationCounter.incrementAndGet()
+    launchRefresh(file, generationCounter, gen)
+  }
+
+  /**
+   * Like [scheduleHighlightingRefresh], but waits [EDIT_DEBOUNCE] first, so a typing burst coalesces into
+   * one refresh. The generation is claimed synchronously: this call supersedes every earlier refresh, and
+   * any refresh scheduled later supersedes this one. The window is invisible on screen: the applied
+   * highlighters are range markers and follow the edits meanwhile.
+   */
+  fun scheduleHighlightingRefreshDebounced(file: VirtualFile) {
+    val generationCounter = fileToCurrentGeneration.computeIfAbsent(file) { AtomicLong() }
+    val gen = generationCounter.incrementAndGet()
+    LspCoroutineScopeService.getInstance(project).cs.launch {
+      // The override is null in production; only tests set it.
+      @Suppress("TestOnlyProblems")
+      delay(editDebounceOverride ?: EDIT_DEBOUNCE)
+      if (generationCounter.get() > gen) return@launch
+      launchRefresh(file, generationCounter, gen)
+    }
+  }
+
+  private fun launchRefresh(file: VirtualFile, generationCounter: AtomicLong, gen: Long) {
     LspCoroutineScopeService.getInstance(project).cs.launch(serializedDispatcher) {
       if (generationCounter.get() > gen) return@launch
       val highlights = readAction { collectHighlightsForApply(file) } ?: return@launch
-      withContext(Dispatchers.EDT) {
+      afterCollectHook?.invoke(file)
+      val applied = withContext(Dispatchers.EDT) {
+        // An edit after the collect makes the ranges stale, and the edit itself scheduled a replacement refresh.
+        if (highlights.document.modificationStamp != highlights.collectedModStamp) return@withContext false
         applyHighlightsToEditor(highlights)
+        true
       }
+      if (!applied) return@launch
       reportErrorsToWolf(file, highlights.highlights, gen)
     }
   }
+
+  /** Invoked after the collect read action and before the EDT apply. Lets a test interleave an edit deterministically. */
+  @set:TestOnly
+  @Volatile
+  internal var afterCollectHook: (suspend (VirtualFile) -> Unit)? = null
 
   private fun collectHighlightsForApply(file: VirtualFile): HighlightsToApply? {
     if (file is VirtualFileWindow) return null
@@ -90,7 +126,7 @@ internal class LspHighlightingApplier(private val project: Project) {
     val groupId = GROUP_ID
     if (groupId == UNREGISTERED_PASS_ID) return null
     val highlights = collectHighlightInfos(psiFile, file, document)
-    return HighlightsToApply(document, highlights, groupId)
+    return HighlightsToApply(document, highlights, groupId, document.modificationStamp)
   }
 
   /**
@@ -109,6 +145,7 @@ internal class LspHighlightingApplier(private val project: Project) {
     val document: Document,
     val highlights: List<HighlightInfo>,
     val groupId: Int,
+    val collectedModStamp: Long,
   )
 
   fun collectHighlightInfos(psiFile: PsiFile, file: VirtualFile, document: Document): List<HighlightInfo> {
@@ -234,6 +271,17 @@ internal class LspHighlightingApplier(private val project: Project) {
   companion object {
     private const val LSP_EXTERNAL_SOURCE: String = "LSP"
     const val UNREGISTERED_PASS_ID: Int = -1
+
+    /** How long [scheduleHighlightingRefreshDebounced] waits, so one refresh serves a whole typing burst. */
+    val EDIT_DEBOUNCE: Duration = 40.milliseconds
+
+    /**
+     * Widens or disables the debounce window in tests, where the production value is too
+     * timing-sensitive to assert against.
+     */
+    @set:TestOnly
+    @Volatile
+    var editDebounceOverride: Duration? = null
 
     /**
      * Assigned by the platform via [com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar.registerTextEditorHighlightingPass].

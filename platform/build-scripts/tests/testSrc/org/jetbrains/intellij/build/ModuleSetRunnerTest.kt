@@ -3,11 +3,27 @@ package org.jetbrains.intellij.build
 
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
+import org.jetbrains.intellij.build.productLayout.discoverCommunityModuleSetSources
+import org.jetbrains.intellij.build.productLayout.discovery.ModuleSetSourceLabels
 import org.jetbrains.intellij.build.productLayout.parseJsonArgument
 import org.junit.jupiter.api.Test
 import java.nio.file.Path
 
 class ModuleSetRunnerTest {
+  @Test
+  fun `community discovery includes the library module sets`() {
+    val sources = discoverCommunityModuleSetSources()
+    assertThat(sources.keys).containsExactlyInAnyOrder(ModuleSetSourceLabels.COMMUNITY, ModuleSetSourceLabels.CORE, ModuleSetSourceLabels.LIBRARIES)
+
+    val librarySource = sources.getValue(ModuleSetSourceLabels.LIBRARIES)
+    assertThat(librarySource.sourceFile).endsWith("/LibraryModuleSets.kt")
+    val libraries = librarySource.moduleSets.single { it.name == "libraries.platform" }
+    assertThat(libraries.modules.map { it.moduleId.name }).contains("intellij.libraries.jna")
+
+    val moduleSetNames = sources.values.flatMap { source -> source.moduleSets.map { it.name } }
+    assertThat(moduleSetNames).doesNotHaveDuplicates()
+  }
+
   @Test
   fun `plain json argument requests full export`() {
     assertThat(parseJsonArgument("--json")).isNull()

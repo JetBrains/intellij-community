@@ -3,6 +3,7 @@
 
 package com.intellij.platform.eel
 
+import com.intellij.platform.eel.fs.EelOpenOption
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
@@ -10,7 +11,9 @@ import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.nio.charset.Charset
 import java.nio.file.Files
+import java.nio.file.OpenOption
 import java.nio.file.Path
+import java.nio.file.StandardOpenOption
 import java.util.ServiceLoader
 
 @ApiStatus.Internal
@@ -34,8 +37,23 @@ object EelSharedSecrets {
     @Throws(IOException::class)
     fun readString(path: Path, cs: Charset): String
 
+    @Throws(IOException::class)
+    fun write(path: Path, bytes: ByteArray, vararg options: OpenOption): Path
+
     object Default : EelFilesAccessor {
       override fun readAllBytes(path: Path): ByteArray = Files.readAllBytes(path)
+
+      override fun write(path: Path, bytes: ByteArray, vararg options: OpenOption): Path {
+        if (EelOpenOption.CREATE_PARENTS !in options) return Files.write(path, bytes, *options)
+
+        val nioOptions = options.filter { it != EelOpenOption.CREATE_PARENTS }.toTypedArray()
+        require(StandardOpenOption.READ !in nioOptions) { "READ not allowed" }
+        require(!(StandardOpenOption.APPEND in nioOptions && StandardOpenOption.TRUNCATE_EXISTING in nioOptions)) {
+          "APPEND + TRUNCATE_EXISTING not allowed"
+        }
+        path.parent?.let { Files.createDirectories(it) }
+        return Files.write(path, bytes, *nioOptions)
+      }
 
       private val readString =
         try {

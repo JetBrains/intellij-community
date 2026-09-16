@@ -16,7 +16,6 @@ import com.intellij.platform.ijent.IjentChildPtyProcessAdapter
 import com.intellij.terminal.pty.PtyProcessTtyConnector
 import com.intellij.util.io.awaitExit
 import com.jediterm.core.util.TermSize
-import com.pty4j.PtyProcess
 import com.pty4j.unix.UnixPtyProcess
 import com.pty4j.windows.conpty.WinConPtyProcess
 import kotlinx.coroutines.Dispatchers
@@ -40,7 +39,7 @@ class LocalTerminalTtyConnector internal constructor(
   private val shellProcessHolder: ShellProcessHolder,
   charset: Charset,
 ) : PtyProcessTtyConnector(shellProcessHolder.ptyProcess, charset) {
-  private val ptyProcess: PtyProcess = shellProcessHolder.ptyProcess
+  private val ptyProcess: Process = shellProcessHolder.ptyProcess
 
   val eelDescriptor: EelDescriptor
     get() = shellProcessHolder.descriptor

@@ -10,6 +10,10 @@ jps_test(
 )
 ### skip generation section `test intellij.platform.builtInServer.tests`
 
+### auto-generated section `dev intellij.platform.builtInServer.impl` start
+content_module_jar(module = ":builtInServer-impl")
+### auto-generated section `dev intellij.platform.builtInServer.impl` end
+
 ### auto-generated section `build intellij.platform.builtInServer.impl` start
 jvm_library(
     name = "builtInServer-impl",
@@ -70,8 +74,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":builtInServer-impl")
-
 jvm_library(
     name = "builtInServer-impl_test_lib",
     testonly = True,
@@ -130,7 +132,6 @@ exports_files(
     [
         "intellij.platform.builtInServer.impl.iml",
         "resources/intellij.platform.builtInServer.impl.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )
@@ -164,6 +165,7 @@ jvm_library(
         "//libraries/netty/buffer",
         "//platform/core-ui",
         "//platform/platform-util-io:ide-util-io",
+        "//xml/plugin",
     ],
 )
 
@@ -192,6 +194,7 @@ jvm_library(
         "//platform/platform-impl:ide-impl_test_lib",
         "//platform/platform-util-io:ide-util-io_test_lib",
         "//platform/platform-util-netty:ide-util-netty_test_lib",
+        "//xml/plugin:plugin_test_lib",
     ],
     deps = [
         # do not sort,

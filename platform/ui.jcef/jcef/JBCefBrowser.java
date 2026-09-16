@@ -265,26 +265,7 @@ public class JBCefBrowser extends JBCefBrowserBase {
                    @Override
                    public void onHealthHealthStatusChanged(JBCefHealthMonitor.@NotNull Status status) {
                      SwingUtilities.invokeLater(() -> {
-                       Component stubComponent = null;
-                       if (status == JBCefHealthMonitor.Status.OK) {
-                         if (myPrevStatus == JBCefHealthMonitor.Status.GPU_PROCESS_FAILED ||
-                             myPrevStatus == JBCefHealthMonitor.Status.STARTUP_TEST_FAILED ||
-                             myPrevStatus == JBCefHealthMonitor.Status.CEF_SERVER_DISCONNECTED)
-                         {
-                           JPanel panel = new JPanel();
-                           panel.setLayout(new GridBagLayout());
-                           GridBagConstraints c = new GridBagConstraints();
-                           c.anchor = GridBagConstraints.CENTER;
-                           c.fill = GridBagConstraints.NONE;
-                           final String text = CefLog.GetLogLevel() == CefSettings.LogSeverity.LOGSEVERITY_VERBOSE ? JcefBundle.message(
-                             "notification.jcef.restarted_with_verbose_logging") : JcefBundle.message("notification.jcef.restarted");
-                           panel.add(new JLabel(text), c);
-                           stubComponent = panel;
-                         }
-                       } else {
-                         stubComponent = JBCefNotifications.createStubPanel(status);
-                       }
-
+                       Component stubComponent = createStubPanel(myPrevStatus, status);
                        if (stubComponent != null) {
                          resultPanel.setStubPanel(stubComponent);
                        }
@@ -300,6 +281,28 @@ public class JBCefBrowser extends JBCefBrowserBase {
     }
 
     return resultPanel;
+  }
+
+  private static Component createStubPanel(JBCefHealthMonitor.@Nullable Status prevStatus, JBCefHealthMonitor.@NotNull Status newStatus) {
+    if (newStatus == JBCefHealthMonitor.Status.OK) {
+      if (prevStatus == JBCefHealthMonitor.Status.GPU_PROCESS_FAILED ||
+          prevStatus == JBCefHealthMonitor.Status.STARTUP_TEST_FAILED ||
+          prevStatus == JBCefHealthMonitor.Status.CEF_SERVER_DISCONNECTED)
+      {
+        JPanel panel = new JPanel();
+        panel.setLayout(new GridBagLayout());
+        GridBagConstraints c = new GridBagConstraints();
+        c.anchor = GridBagConstraints.CENTER;
+        c.fill = GridBagConstraints.NONE;
+        final String text = CefLog.GetLogLevel() == CefSettings.LogSeverity.LOGSEVERITY_VERBOSE ? JcefBundle.message(
+          "notification.jcef.restarted_with_verbose_logging") : JcefBundle.message("notification.jcef.restarted");
+        panel.add(new JLabel(text), c);
+        return panel;
+      }
+      return null;
+    }
+
+    return JBCefNotifications.createStubPanel(newStatus);
   }
 
   /**

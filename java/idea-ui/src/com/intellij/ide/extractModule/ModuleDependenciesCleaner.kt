@@ -75,7 +75,7 @@ class ModuleDependenciesCleaner(
     return dependenciesToRemove
   }
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   private fun processRedundantDependencies(usedModules: Set<Module>, classLinks: Map<String, Set<String>>): Set<Module>? {
     val dependenciesToRemove = dependenciesToCheck - usedModules
     if (dependenciesToRemove.isEmpty()) {

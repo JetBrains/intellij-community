@@ -59,16 +59,29 @@ interface TerminalEmulator : AutoCloseable {
   // screen state (always current)
   val cursor: Cursor
 
-  /** Current cursor drawing shape, as selected by the program via DECSCUSR (`CSI Ps SP q`). */
+  /**
+   *  Current cursor drawing shape, as selected by the program via DECSCUSR (`CSI Ps SP q`)
+   *  or the default value provided by [setDefaultCursorShape].
+   */
   val cursorShape: CursorShape
+
+  /**
+   * Sets the shape the cursor gets until the program selects one itself via DECSCUSR (`CSI Ps SP q`),
+   * or after DECSCUSR `0` or a full reset (RIS) restores the default. Never overrides a shape requested by a program.
+   */
+  fun setDefaultCursorShape(shape: CursorShape)
 
   /**
    * Whether the cursor should currently blink. Orthogonal to [cursorShape]: it reflects the effective
    * blink state the program requested, folding in both the DECSCUSR (`CSI Ps SP q`) odd/even parity
    * (`1`/`3`/`5` blink, `2`/`4`/`6` steady) and DEC private mode 12 (`CSI ?12 h` blink / `CSI ?12 l`
    * steady). The embedder decides how (and whether) to actually animate the caret.
+   * The value from [setDefaultCursorBlinking] is used as the default.
    */
   val cursorBlinking: Boolean
+
+  /** Same non-clobbering semantics as [setDefaultCursorShape], for the default blink state. */
+  fun setDefaultCursorBlinking(blinking: Boolean)
 
   val title: String
 

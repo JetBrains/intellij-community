@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.aalto.xml` start
+content_module_jar(
+    libraries = ["@lib//:libraries-aalto-xml-aalto-xml"],
+    module = ":aalto-xml",
+)
+### auto-generated section `dev intellij.libraries.aalto.xml` end
+
 ### auto-generated section `build intellij.libraries.aalto.xml` start
 jvm_library(
     name = "aalto-xml",
@@ -16,11 +23,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-aalto-xml-aalto-xml"],
     runtime_deps = ["@lib//:libraries-aalto-xml-aalto-xml"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-aalto-xml-aalto-xml"],
-    module = ":aalto-xml",
 )
 
 jvm_library(
@@ -43,7 +45,6 @@ exports_files(
     [
         "intellij.libraries.aalto.xml.iml",
         "resources/intellij.libraries.aalto.xml.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

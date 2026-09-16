@@ -27,6 +27,8 @@
     <module name="intellij.maven.errorProne.compiler"/>
     <module name="intellij.maven.groovy"/>
     <module name="intellij.maven.completion"/>
+    <module name="intellij.maven.delegation.junit"/>
+    <module name="intellij.maven.delegation.testng"/>
     <module name="intellij.maven.completion.ex"/>
     <module name="intellij.maven.jps"/>
     <module name="intellij.maven.jps.ide"/>

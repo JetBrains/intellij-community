@@ -9,19 +9,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="XmlBeans" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.apache.xmlbeans:xmlbeans:5.1.1">
+        <properties include-transitive-deps="false" maven-id="org.apache.xmlbeans:xmlbeans:5.4.0">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/xmlbeans/xmlbeans/5.1.1/xmlbeans-5.1.1.jar">
-              <sha256sum>5f484a78bed71cbffe3709678b6bdd3463781a7c61c6d9872330aecbf150762a</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/xmlbeans/xmlbeans/5.4.0/xmlbeans-5.4.0.jar">
+              <sha256sum>2ba04bb62d81719ac980b6062d211e9c45b9cab109418cfb6bb90e9f3fc4fa03</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/xmlbeans/xmlbeans/5.1.1/xmlbeans-5.1.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/xmlbeans/xmlbeans/5.4.0/xmlbeans-5.4.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/xmlbeans/xmlbeans/5.1.1/xmlbeans-5.1.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/xmlbeans/xmlbeans/5.4.0/xmlbeans-5.4.0-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

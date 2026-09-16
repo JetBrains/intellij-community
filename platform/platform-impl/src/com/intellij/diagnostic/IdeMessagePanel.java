@@ -34,11 +34,16 @@ import com.intellij.ui.ClickListener;
 import com.intellij.util.LazyInitializer;
 import com.intellij.util.LazyInitializer.LazyValue;
 import com.intellij.util.concurrency.EdtExecutorService;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.update.DebouncedUpdates;
+import com.intellij.util.ui.update.UpdateQueue;
 import kotlin.Unit;
 import kotlin.coroutines.Continuation;
+import kotlinx.coroutines.CoroutineScope;
+import kotlinx.coroutines.Dispatchers;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -72,6 +77,11 @@ public final class IdeMessagePanel implements MessagePoolAdvisor, IconLikeCustom
 
   private static final String GROUP_ID = "IDE-errors";
 
+  /** The debounce window for {@link #updateIconAndNotify()}. */
+  private static final int UPDATE_DELAY_MS = 200;
+  private static final Object UPDATE_REQUEST = new Object();
+  private final UpdateQueue<Object> updateRequests;
+
   private final LazyValue<JPanel> component;
   private final @Nullable IdeFrame frame;
   private final @Nullable Project project;
@@ -96,7 +106,7 @@ public final class IdeMessagePanel implements MessagePoolAdvisor, IconLikeCustom
     }
   };
 
-  public IdeMessagePanel(@Nullable IdeFrame frame, @NotNull MessagePool messagePool) {
+  public IdeMessagePanel(@Nullable IdeFrame frame, @NotNull MessagePool messagePool, @NotNull CoroutineScope coroutineScope) {
     component = LazyInitializer.create(() -> {
       var result = new IdeMessagePanelComponent();
       onClick.installOn(result);
@@ -107,6 +117,12 @@ public final class IdeMessagePanel implements MessagePoolAdvisor, IconLikeCustom
     this.project = frame == null ? null : frame.getProject();
     this.messagePool = messagePool;
 
+    // The queue coalesces the requests, runs the checks on a background thread, and only then touches the UI.
+    updateRequests = DebouncedUpdates.forScope(coroutineScope, "IdeMessagePanel.updateIconAndNotify", UPDATE_DELAY_MS)
+      .withContext(Dispatchers.getDefault())
+      .runBatched(ignored -> updateIconAndNotify())
+      .cancelOnDispose(this);
+
     if (project != null) {
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
         ijProject.set(IntelliJProjectUtil.isIntelliJPlatformProject(project) || IntelliJProjectUtil.isIntelliJPluginProject(project));
@@ -116,14 +132,14 @@ public final class IdeMessagePanel implements MessagePoolAdvisor, IconLikeCustom
     messagePool.addAdvisor(this);
 
     var application = ApplicationManager.getApplication();
-    if (application != null && !application.isEAP() && !application.isInternal()) {
+    if (!application.isEAP() && !application.isInternal()) {
       if (!ExceptionAutoReportUtil.INSTANCE.isAutoReportVisibleBlocking()) {
         LOG.debug("Suppressing bundled exceptions in release build, automatic reporting is not available");
         messagePool.addAdvisor(releaseExceptionsFilter);
       }
     }
 
-    updateIconAndNotify();
+    scheduleUpdateIconAndNotify();
   }
 
   @Override
@@ -183,7 +199,7 @@ public final class IdeMessagePanel implements MessagePoolAdvisor, IconLikeCustom
       protected void dispose() {
         super.dispose();
         dialog = null;
-        updateIconAndNotify();
+        scheduleUpdateIconAndNotify();
       }
 
       @Override
@@ -225,9 +241,7 @@ public final class IdeMessagePanel implements MessagePoolAdvisor, IconLikeCustom
         || NOTIFICATIONS_ENABLED
         || showPluginError(message.getThrowable(), message.getMessage(), findPlugin(message.getThrowable()))) {
       LOG.debug("Update error indicator");
-      UIUtil.invokeLaterIfNeeded(() -> {
-        updateIconAndNotify();
-      });
+      scheduleUpdateIconAndNotify();
     }
 
     return MessagePoolAdvisor.super.afterEntryAdded(e, $completion);
@@ -255,12 +269,12 @@ public final class IdeMessagePanel implements MessagePoolAdvisor, IconLikeCustom
 
   @Override
   public void poolCleared(@NotNull PoolClearedEvent e) {
-    updateIconAndNotify();
+    scheduleUpdateIconAndNotify();
   }
 
   @Override
   public void entryWasRead(@NotNull EntryReadEvent e) {
-    updateIconAndNotify();
+    scheduleUpdateIconAndNotify();
   }
 
   private boolean isOtherModalWindowActive() {
@@ -268,16 +282,32 @@ public final class IdeMessagePanel implements MessagePoolAdvisor, IconLikeCustom
     return activeWindow instanceof JDialog d && d.isModal() && (dialog == null || dialog.getWindow() != activeWindow);
   }
 
+  /**
+   * Asks for an icon and notification update. The request is debounced, and the update runs on a background thread.
+   * This method is safe to call from any thread.
+   */
+  private void scheduleUpdateIconAndNotify() {
+    updateRequests.queue(UPDATE_REQUEST);
+  }
+
+  /** Reads the pool state and updates the UI. The caller must go through {@link #scheduleUpdateIconAndNotify()}. */
+  @RequiresBackgroundThread
   private void updateIconAndNotify() {
     var state = messagePool.getState();
     updateIcon(state);
 
-    if (state == MessagePool.State.NoErrors && balloon != null) {
-      Disposer.dispose(balloon);
-    }
-    else if (state == MessagePool.State.UnreadErrors && balloon == null && isActive(frame) && project != null) {
-      ApplicationManager.getApplication().invokeLater(() -> showErrorNotification(project, frame), project.getDisposed());
-    }
+    var displayType = NotificationsConfiguration.getNotificationsConfiguration().getDisplayType(GROUP_ID);
+
+    // The balloon and the window state belong to the UI, so the rest runs on the EDT.
+    UIUtil.invokeLaterIfNeeded(() -> {
+      if (state == MessagePool.State.NoErrors && balloon != null) {
+        Disposer.dispose(balloon);
+      }
+      else if (state == MessagePool.State.UnreadErrors && balloon == null && displayType != NotificationDisplayType.NONE
+               && isActive(frame) && project != null && !project.isDisposed()) {
+        showErrorNotification(project, frame, displayType);
+      }
+    });
   }
 
   @Contract("null -> false")
@@ -286,13 +316,8 @@ public final class IdeMessagePanel implements MessagePoolAdvisor, IconLikeCustom
   }
 
   @RequiresEdt
-  private void showErrorNotification(@NotNull Project project, @NotNull IdeFrame frame) {
+  private void showErrorNotification(@NotNull Project project, @NotNull IdeFrame frame, @NotNull NotificationDisplayType displayType) {
     if (balloon != null) {
-      return;
-    }
-
-    var displayType = NotificationsConfiguration.getNotificationsConfiguration().getDisplayType(GROUP_ID);
-    if (displayType == NotificationDisplayType.NONE) {
       return;
     }
 

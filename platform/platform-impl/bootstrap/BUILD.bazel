@@ -1,6 +1,23 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.platform.ide.bootstrap` start
+content_module_jar(
+    libraries = ["@lib//:googlecode-plist-dd"],
+    module = ":bootstrap",
+    modules_after = [
+        # do not sort,
+        "//platform/platform-impl/bootstrap/eel",
+        "//platform/platform-impl/bootstrap/kernel",
+    ],
+    modules_before = [
+        # do not sort,
+        "//platform/icons-api/rendering",
+        "//platform/icons-impl",
+    ],
+)
+### auto-generated section `dev intellij.platform.ide.bootstrap` end
+
 ### auto-generated section `build intellij.platform.ide.bootstrap` start
 jvm_library(
     name = "bootstrap",
@@ -52,7 +69,6 @@ jvm_library(
         "//fleet/kernel",
         "//platform/platform-impl/bootstrap/kernel",
         "//platform/util/jdom",
-        "//libraries/jna",
         "//libraries/hash4j",
         "//libraries/jbr",
         "@lib//:googlecode-plist-dd",
@@ -66,21 +82,6 @@ jvm_library(
         "//platform/eel-nioFs-impl",
         "//platform/icons-impl",
         "//platform/icons-impl/intellij",
-    ],
-)
-
-content_module_jar(
-    libraries = ["@lib//:googlecode-plist-dd"],
-    module = ":bootstrap",
-    modules_after = [
-        # do not sort,
-        "//platform/platform-impl/bootstrap/eel",
-        "//platform/platform-impl/bootstrap/kernel",
-    ],
-    modules_before = [
-        # do not sort,
-        "//platform/icons-api/rendering",
-        "//platform/icons-impl",
     ],
 )
 
@@ -127,7 +128,6 @@ jvm_library(
         "//fleet/kernel:kernel_test_lib",
         "//platform/platform-impl/bootstrap/kernel:kernel_test_lib",
         "//platform/util/jdom:jdom_test_lib",
-        "//libraries/jna:jna_test_lib",
         "//libraries/hash4j:hash4j_test_lib",
         "//libraries/jbr:jbr_test_lib",
         "//libraries/netty/codec-http:libraries-netty-codec-http_test_lib",
@@ -149,7 +149,6 @@ exports_files(
     [
         "intellij.platform.ide.bootstrap.iml",
         "resources/intellij.platform.ide.bootstrap.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

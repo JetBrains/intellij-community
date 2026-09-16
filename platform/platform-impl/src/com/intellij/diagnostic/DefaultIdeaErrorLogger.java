@@ -6,6 +6,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
 import com.intellij.openapi.diagnostic.ProblematicPluginInfo;
+import com.intellij.openapi.diagnostic.UnhandledException;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,6 +18,7 @@ import static com.intellij.diagnostic.ErrorMessageClusteringKt.toProblematicPlug
 @ApiStatus.Internal
 public final class DefaultIdeaErrorLogger {
   public static @Nullable MemoryKind getOOMErrorKind(@NotNull Throwable t) {
+    t = UnhandledException.unwrapIfUnhandled(t).getRealCause(); // See IJPL-254578.
     var message = t.getMessage();
 
     if (t instanceof OutOfMemoryError) {

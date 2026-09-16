@@ -17,6 +17,19 @@ public interface SMTRunnerTestTreeViewProvider {
   @NotNull
   SMTRunnerTestTreeView createSMTRunnerTestTreeView();
 
+  /**
+   * Returns the logic that computes a customized duration, or null if this provider gives none.
+   * <p>
+   * The test tree sort calls this method off the EDT and under a read action.
+   * The method must not create a Swing component. A Swing component takes the AWT tree lock.
+   * The read lock plus the AWT tree lock can make a deadlock. See IJPL-254402.
+   *
+   * @return the customized-duration logic, or null to use the default duration
+   */
+  default @Nullable CustomizedDurationProvider getCustomizedDurationProvider() {
+    return null;
+  }
+
   interface CustomizedDurationProvider {
 
     /**

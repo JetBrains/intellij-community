@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.devkit.gradle.tooling` start
+content_module_jar(module = ":gradle-tooling")
+### auto-generated section `dev intellij.devkit.gradle.tooling` end
+
 ### auto-generated section `build intellij.devkit.gradle.tooling` start
 jvm_provided_library(
     name = "libraries_gradle_provided",
@@ -32,8 +36,6 @@ jvm_library(
         ":libraries_gradle_provided",
     ],
 )
-
-content_module_jar(module = ":gradle-tooling")
 
 jvm_library(
     name = "gradle-tooling_test_lib",

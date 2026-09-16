@@ -8,4 +8,3 @@ fun test() {
     anyFoo(a = intArr<caret>ayOf(1))
 }
 // IGNORE_K2
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.SurroundWithArrayOfWithSpreadOperatorInFunctionFix

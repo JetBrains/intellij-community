@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.platform.searchEverywhere` start
+content_module_jar(module = ":searchEverywhere")
+### auto-generated section `dev intellij.platform.searchEverywhere` end
+
 ### auto-generated section `build intellij.platform.searchEverywhere` start
 jvm_library(
     name = "searchEverywhere",
@@ -26,6 +30,7 @@ jvm_library(
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
         "//platform/core-api:core",
+        "//platform/core-impl",
         "//platform/project/shared:project",
         "//platform/kernel/shared:kernel",
         "//libraries/kotlinx/serialization/core",
@@ -39,6 +44,8 @@ jvm_library(
         "//platform/util:util-ui",
         "//platform/util/text-matching",
         "//platform/usageView",
+        "//platform/usageView-impl",
+        "//platform/progress/shared:ide-progress",
         "//platform/execution-impl",
         "//platform/statistics",
         "//platform/scopes",
@@ -51,8 +58,6 @@ jvm_library(
         "//platform/welcome-screen",
     ],
 )
-
-content_module_jar(module = ":searchEverywhere")
 
 jvm_library(
     name = "searchEverywhere_test_lib",
@@ -75,6 +80,7 @@ jvm_library(
         "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//platform/core-api:core_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
         "//platform/project/shared:project_test_lib",
         "//platform/kernel/shared:kernel_test_lib",
         "//libraries/kotlinx/serialization/core:core_test_lib",
@@ -88,6 +94,8 @@ jvm_library(
         "//platform/util:util-ui_test_lib",
         "//platform/util/text-matching:text-matching_test_lib",
         "//platform/usageView:usageView_test_lib",
+        "//platform/usageView-impl:usageView-impl_test_lib",
+        "//platform/progress/shared:ide-progress_test_lib",
         "//platform/execution-impl:execution-impl_test_lib",
         "//platform/statistics:statistics_test_lib",
         "//platform/scopes:scopes_test_lib",
@@ -107,7 +115,6 @@ exports_files(
     [
         "intellij.platform.searchEverywhere.iml",
         "resources/intellij.platform.searchEverywhere.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

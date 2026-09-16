@@ -176,7 +176,7 @@ internal class WorkspaceModuleImporter(
                                   null,
                                   {
                                     dependency.rootPaths.map { (url, type) ->
-                                      LibraryRoot(virtualFileUrlManager.getOrCreateFromUrl(pathToUrl(url)), type)
+                                      LibraryRoot(virtualFileUrlManager.storeAndGet(pathToUrl(url)), type)
                                     }
                                   },
                                   { reuseOrCreateProjectLibrarySource(dependency.artifact) })
@@ -223,7 +223,7 @@ internal class WorkspaceModuleImporter(
                      artifact,
                      {
                        val classes = MavenImportUtil.getArtifactUrlForClassifierAndExtension(artifact, null, null)
-                       listOf(LibraryRoot(virtualFileUrlManager.getOrCreateFromUrl(classes), LibraryRootTypeId.COMPILED))
+                       listOf(LibraryRoot(virtualFileUrlManager.storeAndGet(classes), LibraryRootTypeId.COMPILED))
                      },
                      sourceProvider)
     return EntitiesLibraryDependency(libraryId, false, artifact.dependencyScope)
@@ -243,9 +243,9 @@ internal class WorkspaceModuleImporter(
       // The `.iml` files keep the order of roots sorted.
       // This rule can be relaxed when the maven projects will not generate any `.iml` files.
       listOf(
-        LibraryRoot(virtualFileUrlManager.getOrCreateFromUrl(classes), LibraryRootTypeId.COMPILED),
-        LibraryRoot(virtualFileUrlManager.getOrCreateFromUrl(javadoc), JAVADOC_TYPE),
-        LibraryRoot(virtualFileUrlManager.getOrCreateFromUrl(sources), LibraryRootTypeId.SOURCES),
+        LibraryRoot(virtualFileUrlManager.storeAndGet(classes), LibraryRootTypeId.COMPILED),
+        LibraryRoot(virtualFileUrlManager.storeAndGet(javadoc), JAVADOC_TYPE),
+        LibraryRoot(virtualFileUrlManager.storeAndGet(sources), LibraryRootTypeId.SOURCES),
       )
     }
     return createLibraryDependency(artifact.libraryName,
@@ -334,10 +334,10 @@ internal class WorkspaceModuleImporter(
 
     if (!inheritCompilerOutput) {
       if (moduleType.containsMain) {
-        compilerOutputUrl = virtualFileUrlManager.getOrCreateFromUrl(VfsUtilCore.pathToUrl(outputFolders.outputPath))
+        compilerOutputUrl = virtualFileUrlManager.storeAndGet(VfsUtilCore.pathToUrl(outputFolders.outputPath))
       }
       if (moduleType.containsTest) {
-        compilerOutputUrlForTests = virtualFileUrlManager.getOrCreateFromUrl(VfsUtilCore.pathToUrl(outputFolders.testOutputPath))
+        compilerOutputUrlForTests = virtualFileUrlManager.storeAndGet(VfsUtilCore.pathToUrl(outputFolders.testOutputPath))
       }
     }
 

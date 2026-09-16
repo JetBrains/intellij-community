@@ -22,7 +22,6 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.util.OperatorNameConventions
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 internal class ReplaceWithOrdinaryAssignmentIntention : KotlinApplicableModCommandAction<KtBinaryExpression, Unit>(
     KtBinaryExpression::class,
@@ -42,7 +41,7 @@ internal class ReplaceWithOrdinaryAssignmentIntention : KotlinApplicableModComma
         val operationReference = element.operationReference
         if (element.operationToken !in KtTokens.AUGMENTED_ASSIGNMENTS) return false
         val left = element.left ?: return false
-        if (left.safeAs<KtQualifiedExpression>()?.receiverExpression is KtQualifiedExpression) return false
+        if ((left as? KtQualifiedExpression)?.receiverExpression is KtQualifiedExpression) return false
         if (element.right == null) return false
 
         analyze(element) {

@@ -9,19 +9,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="xerial.snappy.java" type="repository">
-        <properties maven-id="org.xerial.snappy:snappy-java:1.1.10.7">
+        <properties maven-id="org.xerial.snappy:snappy-java:1.1.10.8">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/xerial/snappy/snappy-java/1.1.10.7/snappy-java-1.1.10.7.jar">
-              <sha256sum>4c766cb3f855415ee734b2392949a0b6f12a60879334a74518deaf6270d32e36</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/xerial/snappy/snappy-java/1.1.10.8/snappy-java-1.1.10.8.jar">
+              <sha256sum>50485d06037fea3d6e40c968386feeca6338cc9872e25549593ff3eb352cefcc</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/xerial/snappy/snappy-java/1.1.10.7/snappy-java-1.1.10.7.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/xerial/snappy/snappy-java/1.1.10.8/snappy-java-1.1.10.8.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/xerial/snappy/snappy-java/1.1.10.7/snappy-java-1.1.10.7-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/xerial/snappy/snappy-java/1.1.10.8/snappy-java-1.1.10.8-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

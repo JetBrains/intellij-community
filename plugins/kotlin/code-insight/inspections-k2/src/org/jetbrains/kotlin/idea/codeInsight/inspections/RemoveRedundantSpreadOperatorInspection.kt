@@ -11,6 +11,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.idea.base.psi.deleteValueArgument
+import org.jetbrains.kotlin.idea.base.psi.insertValueArgumentAfter
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -119,7 +121,7 @@ private fun removeRedundantSpreadOperator(
 
     val factory = KtPsiFactory(project)
     innerArgumentExpressions.reversed().forEach { (expression, isSpread) ->
-        outerArgumentList.addArgumentAfter(factory.createArgument(expression, isSpread = isSpread), element)
+        outerArgumentList.insertValueArgumentAfter(factory.createArgument(expression, isSpread = isSpread), element)
     }
-    outerArgumentList.removeArgument(element)
+    outerArgumentList.deleteValueArgument(element)
 }

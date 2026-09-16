@@ -39,8 +39,8 @@ class VirtualFileUrlManagerTest {
   }
 
   private fun assertIsEqualOrParentOf(expectedResult: Boolean, parentString: String, childString: String) {
-    val parent = virtualFileManager.getOrCreateFromUrl(parentString)
-    val child = virtualFileManager.getOrCreateFromUrl(childString)
+    val parent = virtualFileManager.storeAndGet(parentString)
+    val child = virtualFileManager.storeAndGet(childString)
     Assert.assertTrue("'$parent'.isEqualOrParentOf('$parent')", parent.isEqualOrParentOf(parent))
     Assert.assertTrue("'$child'.isEqualOrParentOf('$child')", child.isEqualOrParentOf(child))
     Assert.assertEquals(

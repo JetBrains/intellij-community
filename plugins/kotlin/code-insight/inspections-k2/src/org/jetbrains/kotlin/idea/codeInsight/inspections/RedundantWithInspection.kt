@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.resolution.simple
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.base.psi.setCallableTypeReference
 import org.jetbrains.kotlin.idea.base.psi.safeDeparenthesize
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -145,7 +146,7 @@ private class RemoveRedundantWithFix(
             if (singleStatement != null) {
                 element.replaced((singleStatement as? KtReturnExpression)?.returnedExpression ?: singleStatement)
             } else {
-                function.setTypeReference(context.typeReference)?.let { shortenReferences(it) }
+                function.setCallableTypeReference(context.typeReference)?.let { shortenReferences(it) }
                 val lambdaStatements = lambdaBody.statements
                 val lastStatement = lambdaStatements.lastOrNull()
                 if (lastStatement != null && lastStatement !is KtReturnExpression) {

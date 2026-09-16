@@ -6,11 +6,11 @@ import com.intellij.compiler.instrumentation.InstrumentationClassFinder
 import com.intellij.compiler.instrumentation.InstrumenterClassWriter
 import com.intellij.openapi.application.PluginPathManager
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.project.IntelliJProjectConfiguration
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.util.ExceptionUtil
+import com.intellij.util.PathUtil
 import org.assertj.core.api.Assertions.assertThat
 import org.intellij.lang.annotations.Pattern
 import org.junit.Assert.assertEquals
@@ -148,7 +148,7 @@ class PatternInstrumenterTest {
     val testName = testName.methodName.capitalize()
     val testFile = IdeaTestUtil.findSourceFile(testDir + testName)
     val classesDir = tempDir.newDirectory("out")
-    val rootPaths = IntelliJProjectConfiguration.getModuleLibrary("intellij.libraries.jetbrains.annotations", "jetbrains-annotations").classesPaths
+    val rootPaths = listOf(PathUtil.getJarPathForClass(Pattern::class.java))
     IdeaTestUtil.compileFile(testFile, classesDir, "-cp", rootPaths.joinToString(File.pathSeparator))
 
     val finder = InstrumentationClassFinder((listOf(classesDir.toURI().toURL()) +

@@ -1,8 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
-import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.intellij.build.BuildLifetime
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildPaths
@@ -21,20 +21,20 @@ import kotlin.io.path.writeLines
 class ArchivedCompilationContext internal constructor(
   private val delegate: CompilationContext,
   private val storage: ArchivedCompilationOutputStorage = createArchivedStorage(delegate),
-  private val outputProviderScope: CoroutineScope?,
+  private val outputProviderLifetime: BuildLifetime?,
 ) : CompilationContext by delegate {
   val archivesLocation: Path
     get() = storage.archivedOutputDirectory
 
-  override val outputProvider: ModuleOutputProvider = ArchivedModuleOutputProvider(delegateOutputProvider = delegate.outputProvider, storage = storage, scope = outputProviderScope)
+  override val outputProvider: ModuleOutputProvider = ArchivedModuleOutputProvider(delegateOutputProvider = delegate.outputProvider, storage = storage, lifetime = outputProviderLifetime)
 
-  override suspend fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean): List<Path> {
+  override fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean): List<Path> {
     return delegate.getModuleRuntimeClasspath(module, forTests).mapConcurrent { storage.getArchived(it) }.filterNotNull()
   }
 
-  override fun createCopy(messages: BuildMessages, options: BuildOptions, paths: BuildPaths, scope: CoroutineScope?): CompilationContext {
-    val effectiveScope = scope ?: outputProviderScope
-    return ArchivedCompilationContext(delegate = delegate.createCopy(messages, options, paths, effectiveScope), storage = storage, outputProviderScope = effectiveScope)
+  override fun createCopy(messages: BuildMessages, options: BuildOptions, paths: BuildPaths, lifetime: BuildLifetime?): CompilationContext {
+    val effectiveLifetime = lifetime ?: outputProviderLifetime
+    return ArchivedCompilationContext(delegate = delegate.createCopy(messages, options, paths, effectiveLifetime), storage = storage, outputProviderLifetime = effectiveLifetime)
   }
 
   fun saveMapping(file: Path) {
@@ -47,9 +47,9 @@ class ArchivedCompilationContext internal constructor(
 private class ArchivedModuleOutputProvider(
   private val delegateOutputProvider: ModuleOutputProvider,
   private val storage: ArchivedCompilationOutputStorage,
-  scope: CoroutineScope?,
+  lifetime: BuildLifetime?,
 ) : ModuleOutputProvider by delegateOutputProvider {
-  private val zipFilePool = ModuleOutputZipFilePool(scope)
+  private val zipFilePool = ModuleOutputZipFilePool(lifetime)
 
   override fun getModuleOutputRoots(module: JpsModule, forTests: Boolean): List<Path> {
     val outputRoots = delegateOutputProvider.getModuleOutputRoots(module, forTests).mapNotNull { storage.getArchived(it) }
@@ -87,10 +87,6 @@ private class ArchivedModuleOutputProvider(
     return null
   }
 
-  override fun getProjectLibraryToModuleMap(): Map<String, String> {
-    return delegateOutputProvider.getProjectLibraryToModuleMap()
-  }
-
   override fun toString(): String {
     return "ArchivedModuleOutputProvider(" +
            "archivesLocation=${storage.archivedOutputDirectory}, " +
@@ -101,29 +97,29 @@ private class ArchivedModuleOutputProvider(
 }
 
 val CompilationContext.asArchivedIfNeeded: CompilationContext
-  get() = this.toArchivedIfNeeded(scope = null)
+  get() = this.toArchivedIfNeeded(lifetime = null)
 
 /**
- * Pass the [scope] that owns the read. It enables the zip cache of the module output pool, so a repeated
+ * Pass the [lifetime] that owns the read. It enables the zip cache of the module output pool, so a repeated
  * read of the same archive costs a map lookup instead of a new open.
  */
 @Internal
-fun CompilationContext.toArchivedIfNeeded(scope: CoroutineScope?): CompilationContext {
+fun CompilationContext.toArchivedIfNeeded(lifetime: BuildLifetime?): CompilationContext {
   return when {
     this is ArchivedCompilationContext -> this
-    TestingOptions().useArchivedCompiledClasses || !System.getProperty("intellij.test.jars.mapping.file", "").isNullOrBlank() -> this.toArchivedContext(scope)
+    TestingOptions().useArchivedCompiledClasses || !System.getProperty("intellij.test.jars.mapping.file", "").isNullOrBlank() -> this.toArchivedContext(lifetime)
     else -> this
   }
 }
 
 val CompilationContext.asArchived: CompilationContext
-  get() = toArchivedContext(scope = null)
+  get() = toArchivedContext(lifetime = null)
 
-internal fun CompilationContext.toArchivedContext(scope: CoroutineScope?): CompilationContext {
+internal fun CompilationContext.toArchivedContext(lifetime: BuildLifetime?): CompilationContext {
   return when (this) {
     is ArchivedCompilationContext -> this
     is BazelCompilationContext -> error("BazelCompilationContext must not be used as archived")
     is BuildContextImpl -> compilationContext.asArchived
-    else -> ArchivedCompilationContext(delegate = this, outputProviderScope = scope)
+    else -> ArchivedCompilationContext(delegate = this, outputProviderLifetime = lifetime)
   }
 }

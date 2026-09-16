@@ -7,12 +7,12 @@ import com.intellij.polySymbols.PolySymbolModifier
 import com.intellij.polySymbols.PolySymbolQualifiedName
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.impl.canUnwrapSymbols
+import com.intellij.polySymbols.patterns.PolySymbolFilter
 import com.intellij.polySymbols.patterns.PolySymbolPatternSymbolsResolver
 import com.intellij.polySymbols.query.PolySymbolMatch
 import com.intellij.polySymbols.query.PolySymbolNameConversionRules
 import com.intellij.polySymbols.query.PolySymbolQueryExecutor
 import com.intellij.polySymbols.query.PolySymbolQueryStack
-import com.intellij.polySymbols.webTypes.filters.PolySymbolFilter
 
 internal class PolySymbolPatternReferenceResolver(private vararg val items: Reference) : PolySymbolPatternSymbolsResolver {
   override fun getSymbolKinds(context: PolySymbol?): Set<PolySymbolKind> =

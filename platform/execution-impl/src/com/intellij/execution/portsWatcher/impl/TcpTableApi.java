@@ -72,11 +72,11 @@ public final class TcpTableApi {
    * @return every listening IPv4 TCP socket with its owner, in table order
    */
   public static @NotNull List<ListeningRow> listeningRows() throws Win32Exception {
-    try (Arena arena = Arena.ofConfined()) {
-      MemorySegment size = arena.allocate(JAVA_INT);
+    try (var arena = Arena.ofConfined()) {
+      var size = arena.allocate(JAVA_INT);
       // The first call sizes the buffer. The table can grow between two calls, so retry while the buffer stays too small.
-      MemorySegment table = MemorySegment.NULL;
-      int status = getExtendedTcpTable(table, size);
+      var table = MemorySegment.NULL;
+      var status = getExtendedTcpTable(table, size);
       while (status == ERROR_INSUFFICIENT_BUFFER) {
         table = arena.allocate(Integer.toUnsignedLong(size.get(JAVA_INT, 0)));
         status = getExtendedTcpTable(table, size);
@@ -84,10 +84,10 @@ public final class TcpTableApi {
       if (status != NO_ERROR) {
         throw new Win32Exception(status);
       }
-      int count = table.get(JAVA_INT, 0);
-      List<ListeningRow> rows = new ArrayList<>(count);
+      var count = table.get(JAVA_INT, 0);
+      var rows = new ArrayList<ListeningRow>(count);
       for (int i = 0; i < count; i++) {
-        long row = TABLE_OFFSET + i * MIB_TCPROW_OWNER_PID.byteSize();
+        var row = TABLE_OFFSET + i * MIB_TCPROW_OWNER_PID.byteSize();
         rows.add(new ListeningRow(table.get(JAVA_INT, row + LOCAL_PORT_OFFSET), Integer.toUnsignedLong(table.get(JAVA_INT, row + OWNING_PID_OFFSET))));
       }
       return rows;
@@ -114,7 +114,7 @@ public final class TcpTableApi {
       FunctionDescriptor.of(JAVA_INT, ADDRESS, ADDRESS, JAVA_INT, JAVA_INT, JAVA_INT, JAVA_INT));
 
     private static @NotNull Path systemRoot() {
-      String systemRoot = System.getenv("SystemRoot");
+      var systemRoot = System.getenv("SystemRoot");
       return Path.of(systemRoot != null ? systemRoot : "C:\\Windows");
     }
   }

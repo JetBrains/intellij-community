@@ -1,0 +1,60 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.compose.ide.plugin.resources.gradle
+
+import com.intellij.compose.ide.plugin.resources.ANDROID_MAIN
+import com.intellij.compose.ide.plugin.resources.COMMON_MAIN
+import com.intellij.compose.ide.plugin.resources.COMPOSE_RESOURCES_TEST_DATA_RELATIVE_PATH
+import com.intellij.compose.ide.plugin.resources.IOS_MAIN
+import com.intellij.compose.ide.plugin.resources.TARGET_GRADLE_VERSION
+import com.intellij.openapi.application.ex.PathManagerEx
+import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.util.Computable
+import com.intellij.testFramework.common.runAll
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture
+import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
+import org.jetbrains.kotlin.idea.base.test.TestRoot
+import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradleImportingTestCase
+import org.jetbrains.kotlin.test.TestMetadata
+import org.junit.runners.Parameterized
+import org.junit.runners.Parameterized.Parameters
+import kotlin.test.assertNotNull as kAssertNotNull
+
+
+internal val SOURCE_SETS = setOf(COMMON_MAIN, ANDROID_MAIN, IOS_MAIN)
+
+@TestRoot("../../../community/$COMPOSE_RESOURCES_TEST_DATA_RELATIVE_PATH")
+@TestMetadata("")
+abstract class ComposeResourcesGradleImportingTestCase : KotlinGradleImportingTestCase() {
+  @Parameterized.Parameter(1)
+  lateinit var sourceSetName: String
+
+  companion object {
+    @JvmStatic
+    @Suppress("ACCIDENTAL_OVERRIDE")
+    @Parameters(name = "{index}: source set {1} with Gradle-{0}")
+    fun data(): Collection<Any> = SOURCE_SETS.map { arrayOf(TARGET_GRADLE_VERSION, it) }
+  }
+
+  protected fun <R> runWriteAction(update: () -> R): R =
+    WriteCommandAction.runWriteCommandAction(myProject, Computable { update() })
+
+  protected var _codeInsightTestFixture: CodeInsightTestFixture? = null
+
+  protected val codeInsightTestFixture: CodeInsightTestFixture
+    get() = kAssertNotNull(_codeInsightTestFixture, "_codeInsightTestFixture was not initialized")
+
+  override fun setUpFixtures() {
+    myTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getName()).fixture
+    _codeInsightTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(myTestFixture)
+    codeInsightTestFixture.setUp()
+    codeInsightTestFixture.testDataPath = PathManagerEx.getCommunityHomePath() + "/$COMPOSE_RESOURCES_TEST_DATA_RELATIVE_PATH/"
+  }
+
+  override fun tearDownFixtures() {
+    runAll(
+      { _codeInsightTestFixture?.tearDown() },
+      { _codeInsightTestFixture = null },
+      { resetTestFixture() },
+    )
+  }
+}

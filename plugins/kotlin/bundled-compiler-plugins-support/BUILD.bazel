@@ -2,10 +2,26 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.kotlin.compilerPlugins.support.bundled` start
+content_module_jar(module = ":compilerPlugins-support-bundled")
+### auto-generated section `dev intellij.kotlin.compilerPlugins.support.bundled` end
+
 ### auto-generated section `build intellij.kotlin.compilerPlugins.support.bundled` start
 create_kotlinc_options(
     name = "custom_compilerPlugins-support-bundled",
-    opt_in = ["org.jetbrains.kotlin.K1Deprecation"],
+    opt_in = [
+        "org.jetbrains.kotlin.psi.KtExperimentalApi",
+        "org.jetbrains.kotlin.psi.KtNonPublicApi",
+        "org.jetbrains.kotlin.psi.KtIdeApi",
+        "org.jetbrains.kotlin.analysis.api.KaExperimentalApi",
+        "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+        "org.jetbrains.kotlin.analysis.api.KaPlatformInterface",
+        "org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaUnstableDiagnosticApi",
+        "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
+        "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+        "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+    ],
+    x_context_parameters = True,
 )
 
 jvm_library(
@@ -31,22 +47,20 @@ jvm_library(
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//platform/core-api:core",
         "//platform/lang-api:lang",
-        "@lib//:kotlinc-allopen-compiler-plugin",
-        "@lib//:kotlinc-compose-compiler-plugin",
-        "@lib//:kotlinc-sam-with-receiver-compiler-plugin",
-        "@lib//:kotlinc-noarg-compiler-plugin",
-        "@lib//:kotlinc-lombok-compiler-plugin",
+        "//libraries/kotlinc/allopen-compiler-plugin:libraries-kotlinc-allopen-compiler-plugin",
+        "//libraries/kotlinc/compose-compiler-plugin:libraries-kotlinc-compose-compiler-plugin",
+        "//libraries/kotlinc/sam-with-receiver-compiler-plugin:libraries-kotlinc-sam-with-receiver-compiler-plugin",
+        "//libraries/kotlinc/noarg-compiler-plugin:libraries-kotlinc-noarg-compiler-plugin",
+        "//libraries/kotlinc/lombok-compiler-plugin:libraries-kotlinc-lombok-compiler-plugin",
         "//libraries/kotlinc/assignment-compiler-plugin:libraries-kotlinc-assignment-compiler-plugin",
-        "@lib//:kotlinc-parcelize-compiler-plugin",
+        "//libraries/kotlinc/parcelize-compiler-plugin:libraries-kotlinc-parcelize-compiler-plugin",
         "//libraries/kotlinc/scripting-compiler-plugin:libraries-kotlinc-scripting-compiler-plugin",
-        "@lib//:kotlinc-js-plain-objects-compiler-plugin",
+        "//libraries/kotlinc/js-plain-objects-compiler-plugin:libraries-kotlinc-js-plain-objects-compiler-plugin",
         "//plugins/kotlin/base/plugin",
         "//libraries/kotlinc/kotlinx-serialization-compiler-plugin:libraries-kotlinc-kotlinx-serialization-compiler-plugin",
-        "@lib//:kotlinc-kotlin-dataframe-compiler-plugin",
+        "//libraries/kotlinc/kotlin-dataframe-compiler-plugin:libraries-kotlinc-kotlin-dataframe-compiler-plugin",
     ],
 )
-
-content_module_jar(module = ":compilerPlugins-support-bundled")
 
 jvm_library(
     name = "compilerPlugins-support-bundled_test_lib",
@@ -64,10 +78,18 @@ jvm_library(
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/lang-api:lang_test_lib",
+        "//libraries/kotlinc/allopen-compiler-plugin:libraries-kotlinc-allopen-compiler-plugin_test_lib",
+        "//libraries/kotlinc/compose-compiler-plugin:libraries-kotlinc-compose-compiler-plugin_test_lib",
+        "//libraries/kotlinc/sam-with-receiver-compiler-plugin:libraries-kotlinc-sam-with-receiver-compiler-plugin_test_lib",
+        "//libraries/kotlinc/noarg-compiler-plugin:libraries-kotlinc-noarg-compiler-plugin_test_lib",
+        "//libraries/kotlinc/lombok-compiler-plugin:libraries-kotlinc-lombok-compiler-plugin_test_lib",
         "//libraries/kotlinc/assignment-compiler-plugin:libraries-kotlinc-assignment-compiler-plugin_test_lib",
+        "//libraries/kotlinc/parcelize-compiler-plugin:libraries-kotlinc-parcelize-compiler-plugin_test_lib",
         "//libraries/kotlinc/scripting-compiler-plugin:libraries-kotlinc-scripting-compiler-plugin_test_lib",
+        "//libraries/kotlinc/js-plain-objects-compiler-plugin:libraries-kotlinc-js-plain-objects-compiler-plugin_test_lib",
         "//plugins/kotlin/base/plugin:plugin_test_lib",
         "//libraries/kotlinc/kotlinx-serialization-compiler-plugin:libraries-kotlinc-kotlinx-serialization-compiler-plugin_test_lib",
+        "//libraries/kotlinc/kotlin-dataframe-compiler-plugin:libraries-kotlinc-kotlin-dataframe-compiler-plugin_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.compilerPlugins.support.bundled` end

@@ -156,6 +156,26 @@ public class RenameLocalTest extends LightJavaCodeInsightTestCase {
     doTestInplaceRename("myFoo");
   }
 
+  public void testAnonymousClassFieldConflict() {
+    try {
+      doTestInplaceRename("field");
+      fail();
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      assertEquals("Field 'field' Already Exists", e.getMessage());
+    }
+  }
+
+  public void testImplicitClassFieldConflict() {
+    try {
+      doTestInplaceRename("field");
+      fail();
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      assertEquals("Field 'field' Already Exists", e.getMessage());
+    }
+  }
+
   public void testRenameInPlaceInStaticContextWithConflictingField() {
     doTestInplaceRename("s");
   }

@@ -11,8 +11,8 @@ allowed-tools:
 
 # Jewel PR Preparer
 
-Prepare a Jewel pull request that passes all CI checks and follows the project's contribution guidelines. Work through each section below in
-order, reporting results as you go. Stop and ask the user to fix issues before moving on.
+Prepare a Jewel pull request that passes all CI checks and follows the project's contribution guidelines. Work through
+each section below in order, reporting results as you go. Stop and ask the user to fix issues before moving on.
 
 Check the [`platform/jewel/docs`](../../../platform/jewel/docs) folder for further guidelines and process info for PRs.
 
@@ -20,45 +20,50 @@ Check the [`platform/jewel/docs`](../../../platform/jewel/docs) folder for furth
 
 ## 1. Verify environment
 
-- Confirm the working directory is inside the `intellij-community` checkout and that the `platform/jewel` directory exists.
+- Confirm the working directory is inside the `intellij-community` checkout and that the `platform/jewel` directory
+  exists.
 - Confirm the current branch is NOT `master`. If it is, stop and offer the user to create a feature branch first.
 - Confirm `gh` (GitHub CLI) is on `PATH`. If not, offer to install it via `brew install gh` (macOS) or direct the user
-  to https://cli.github.com/. The `gh` tool is needed for the final PR creation step, but all earlier steps can proceed without it.
+  to <https://cli.github.com/>. The `gh` tool is needed for the final PR creation step, but all earlier steps can
+  proceed without it.
 
 ## 2. Validate single-commit requirement
 
 Jewel PRs MUST contain exactly one commit on top of `master`.
 
-```
+```text
 git rev-list --count master..HEAD
 ```
 
 - If count is 0: stop — nothing to submit.
 - If count > 1: squash all commits into one using soft reset and amend:
+
   ```bash
   git reset --soft master
   git commit --amend --no-edit
   ```
-  This preserves the first commit's message; consider whether relevant info from subsequent commits needs to be folded into this commit
-  message, and if so offer to the user to do it. If the commit message needs to change, use `git commit --amend -m "<new message>"` instead.
-  Verify the count is 1 after squashing before proceeding.
+
+This preserves the first commit's message; consider whether relevant info from subsequent commits needs to be folded
+into this commit message, and if so offer to the user to do it. If the commit message needs to change, use `git commit
+--amend -m "<new message>"` instead. Verify the count is 1 after squashing before proceeding.
+
 - If count is 1: proceed.
 
 ## 3. Validate commit message format
 
 The **single commit message subject** must match:
 
-```
+```text
 [JEWEL-<number>] <summary>
 ```
 
 Rules (from `platform/jewel/scripts/validate-commit-message.sh`):
 
-- Must start with `[JEWEL-xxx] ` where xxx is a YouTrack issue number.
+- Must start with `[JEWEL-xxx]` where xxx is a YouTrack issue number.
 - Multiple issues are allowed: `[JEWEL-xxx, JEWEL-yyy] `.
 - The regex the CI uses: `^\[(JEWEL-[0-9]+)(,\s*JEWEL-[0-9]+)*\][ ]`
-- Ideally, follow conventional Git commit message style: a short subject (ideally <= 72 chars), a blank line, and a wrapped body (ideally <=
-  72 chars per line)
+- Ideally, follow conventional Git commit message style: a short subject (ideally <= 72 chars), a blank line, and a
+  wrapped body (ideally <= 72 chars per line)
 
 Validate locally:
 
@@ -69,14 +74,15 @@ if ! echo "$SUBJECT" | grep -qE '^\[(JEWEL-[0-9]+)(,\s*JEWEL-[0-9]+)*\][ ]'; the
 fi
 ```
 
-If invalid, show the user the current message, explain the required format, and offer to amend (ask before running `git commit --amend`).
+If invalid, show the user the current message, explain the required format, and offer to amend (ask before running `git
+commit --amend`).
 
 Do NOT add `Co-Authored-By` trailers or any AI attribution to the commit message and PR description.
 
 ## 4. Run CI checks locally
 
-Run these checks from the `platform/jewel` directory. Report pass/fail for each. If any fail, stop and help the user fix the issues before
-continuing.
+Run these checks from the `platform/jewel` directory. Report pass/fail for each. If any fail, stop and help the user fix
+the issues before continuing.
 
 ### 4a. Gradle check task
 
@@ -96,7 +102,8 @@ cd platform/jewel && ./gradlew detekt detektMain detektTest --continue --no-daem
 cd platform/jewel && ./scripts/check-api-dumps.main.kts
 ```
 
-Review the output. If API dumps are out of date, tell the user to run the appropriate update task and amend their commit.
+Review the output. If API dumps are out of date, tell the user to run the appropriate update task and amend their
+commit.
 
 ### 4d. Metalava signature validation
 
@@ -104,16 +111,17 @@ Review the output. If API dumps are out of date, tell the user to run the approp
 cd platform/jewel && ./scripts/metalava-signatures.main.kts validate
 ```
 
-If Metalava reports an intentional API change, tell the user to update the API dumps and re-validate.
-If the finding should be suppressed instead, tell the user to update the baseline files with the `--update-baseline`
-parameter, then amend and re-validate.
+If Metalava reports an intentional API change, tell the user to update the API dumps and re-validate. If the finding
+should be suppressed instead, tell the user to update the baseline files with the `--update-baseline` parameter, then
+amend and re-validate.
 
 ### 4e. Bazel build/tests
 
-The IntelliJ Community repo is migrating to Bazel. It's important to make sure the Bazel build is not broken and tests pass.
+The IntelliJ Community repo is migrating to Bazel. It's important to make sure the Bazel build is not broken and tests
+pass.
 
-Unlike the previous steps, **the commands in this step run from the repository root**, where `tests.cmd` and `bazel.cmd` live.
-`tests.cmd` needs both the JPS module that holds the test class and the test pattern:
+Unlike the previous steps, **the commands in this step run from the repository root**, where `tests.cmd` and `bazel.cmd`
+live. `tests.cmd` needs both the JPS module that holds the test class and the test pattern:
 
 ```shell
 ./tests.cmd --module <jps-module> --test <test-class-fqn-or-pattern>
@@ -125,7 +133,8 @@ For example, to run the IJP API dump check the way step 4c does under the hood:
 ./tests.cmd --module intellij.platform.testFramework.monorepo.tests --test com.intellij.platform.testFramework.monorepo.api.ApiCheckTest
 ```
 
-If there are no useful tests, at a minimum verify Bazel compilation for the affected Jewel module targets. Common examples:
+If there are no useful tests, at a minimum verify Bazel compilation for the affected Jewel module targets. Common
+examples:
 
 ```shell
 ./bazel.cmd build //platform/jewel/foundation:foundation
@@ -142,7 +151,8 @@ If sample modules are touched, also consider:
 ./bazel.cmd build //platform/jewel/samples/standalone:standalone
 ```
 
-If you specifically need to verify that test sources compile, build the corresponding `*_test_lib` target for the affected module, e.g.:
+If you specifically need to verify that test sources compile, build the corresponding `*_test_lib` target for the
+affected module, e.g.:
 
 ```shell
 ./bazel.cmd build //platform/jewel/foundation:foundation_test_lib
@@ -153,6 +163,43 @@ If you specifically need to verify that test sources compile, build the correspo
 
 If a runnable Bazel test target exists, it is usually named `*_test`, e.g. `//platform/jewel/ui:ui_test` or
 `//platform/jewel/int-ui/int-ui-standalone-tests:jewel-intUi-standalone-tests_test`.
+
+### 4e-b. Spectre headful tests (when relevant)
+
+[Spectre](https://spectre.sebastiano.dev) drives a real Compose Desktop window with actual mouse and keyboard input. Use
+it when Compose UI unit tests cannot cover the behavior — for example real pointer/keyboard interactions, focus chains,
+popup dismissal, scroll physics, or visual checks that need a rendered window.
+
+Today Spectre targets standalone Jewel (`src/spectreTest/kotlin` under a Jewel module). IJP bridge coverage (`JBPopup` /
+`ComposePanel` inside the IDE) is planned and may already be available — **check the current state** before assuming
+either limitation still holds. Read the
+[`platform/jewel/docs/bazel-build-tips.md`](../../../platform/jewel/docs/bazel-build-tips.md#running-the-spectre-headful-ui-tests)
+Spectre section, the `spectre` skill, and any `src/spectreTest` sources under the affected module on this branch.
+
+When the diff touches UI behavior that Spectre can exercise, add or extend a Spectre test and run the matching target
+locally before opening the PR. Any Jewel module may host Spectre tests — look for `src/spectreTest/kotlin` and a
+`spectre_test(...)` entry in that module's `BUILD.bazel`, not only under `int-ui-standalone-tests`.
+
+Discover targets under the affected module(s):
+
+```shell
+./tools/rg.cmd -n 'spectre_test\(' platform/jewel/<affected-module>/BUILD.bazel
+```
+
+Run the target(s) you found:
+
+```shell
+./bazel.cmd test //platform/jewel/<affected-module>:<spectre-target-name>
+```
+
+When several modules changed, or you want a broader sanity check, run all Spectre-tagged tests under Jewel:
+
+```shell
+./bazel.cmd test //platform/jewel/... --build_tests_only --test_tag_filters=requires-display
+```
+
+If the harness does not expose a `spectre` skill, suggest the user install it from <https://spectre.sebastiano.dev>
+before writing or extending Spectre tests. Read that skill for API details, recording helpers, and capture conventions.
 
 ### 4f. Bazel build check (if module structure changed)
 
@@ -173,60 +220,82 @@ if [ -n "$CHANGED_BAZEL_FILES" ]; then
 fi
 ```
 
-If changed Bazel files are found, they need to be committed. This mirrors the relevant scope of the GitHub CI Bazel sync check.
-Make sure to always check if the Bazel changes are sensible given the context, or if they are spurious changes caused by bugs in the
-Community repo Bazel scripts (which happen semi-frequently). For example, you should not see any changes in the `android` sub-repo when
-making Jewel-only changes.
+If changed Bazel files are found, they need to be committed. This mirrors the relevant scope of the GitHub CI Bazel sync
+check. Make sure to always check if the Bazel changes are sensible given the context, or if they are spurious changes
+caused by bugs in the Community repo Bazel scripts (which happen semi-frequently). For example, you should not see any
+changes in the `android` sub-repo when making Jewel-only changes.
 
 You may also want to run:
 
-* `./bazel.cmd build <affected-target>` for the affected Jewel module targets, using concrete targets like the examples above
-* Optionally, `./bazel-build-all-community.cmd` if the change is broad
+- `./bazel.cmd build <affected-target>` for the affected Jewel module targets, using concrete targets like the examples
+  above
+- Optionally, `./bazel-build-all-community.cmd` if the change is broad
 
 ## 5. Check for breaking API changes
 
-Check both IntelliJ Platform API dumps and Jewel's own Metalava API dumps. Both act as API surface checks now and can fail the build when
-the checked-in dump no longer matches the current API surface.
+Check both IntelliJ Platform API dumps and Jewel's own Metalava API dumps. Both act as API surface checks now and can
+fail the build when the checked-in dump no longer matches the current API surface.
 
-For IntelliJ Platform API dump files such as `api-dump.txt` and `api-dump-experimental.txt`, follow the module's existing API
-compatibility rules and review any intentional dump updates carefully.
+For IntelliJ Platform API dump files such as `api-dump.txt` and `api-dump-experimental.txt`, follow the module's
+existing API compatibility rules and review any intentional dump updates carefully.
 
-For Jewel API dump files under module `metalava/` directories, stable Jewel API changes must preserve both binary and source
-compatibility. Experimental Jewel API changes **must** preserve binary compatibility, but may evolve in source-incompatible ways.
-Intentional changes still need updated API dumps and should be called out clearly when they affect users. Look at the diff for Jewel API
-dump files under module `metalava/` directories:
+For Jewel API dump files under module `metalava/` directories, stable Jewel API changes must preserve both binary and
+source compatibility. Experimental Jewel API changes **must** preserve binary compatibility, but may evolve in
+source-incompatible ways. Intentional changes still need updated API dumps and should be called out clearly when they
+affect users. Look at the diff for Jewel API dump files under module `metalava/` directories:
 
 ```bash
 git diff master -- 'platform/jewel/**/metalava/*.txt'
 ```
 
-- Removed or changed lines in `*-api-stable-*.txt` = potential breaking changes in stable API. Only acceptable if compatibility is
-  preserved, for example by keeping the old declaration as a deprecated `DeprecationLevel.HIDDEN` shim that remains in the ABI and
-  preserves the previous source entry point.
-- Removed or changed lines in `*-api-*.txt` = experimental API changes. These can be allowed when intentional, but they should preserve
-  binary compatibility, come with updated dumps, and be documented in the release notes when relevant.
+- Removed or changed lines in `*-api-stable-*.txt` = potential breaking changes in stable API. Only acceptable if
+  compatibility is preserved, for example by keeping the old declaration as a deprecated `DeprecationLevel.HIDDEN` shim
+  that remains in the ABI and preserves the previous source entry point.
+- Removed or changed lines in `*-api-*.txt` = experimental API changes. These can be allowed when intentional, but they
+  should preserve binary compatibility, come with updated dumps, and be documented in the release notes when relevant.
 
-## 6. Check for visual changes and screenshots
+## 6. Visual proof, Spectre, and PR assets
 
-Scan the diff for changes to Composable functions, UI components, styling, colors, or layout code:
+Scan the diff for changes to Composable functions, UI components, styling, colors, themes, or layout code:
 
 ```bash
 git diff master --stat -- 'platform/jewel/'
 ```
 
-If the changes look like they affect visuals (components, themes, painters, styles, icons), the PR description **must** include:
+If the changes look like they affect visuals or interactive behavior, the PR description **must** include visual proof.
+Cover every impacted flow and variant:
 
-- At minimum, an "after" screenshot or screen recording.
-- Ideally "before" screenshots too for comparison.
+- **Before and after** for behavior or layout changes.
+- **All user-visible states** the PR touches (empty/filled, open/closed, enabled/disabled, error/success, etc.).
+- **Theme-sensitive changes:** show every impacted theme. Switching theme mid-recording and repeating the proof there is
+  fine when it keeps video count low.
+- Prefer **screenshots** for static layout or pixel diffs; prefer **screen recordings** for motion, interaction, or
+  multi-step flows. Use both when each adds information.
 
-Ask the user if they have screenshots ready. Guide the user through capturing those if not. Note that you cannot programmatically upload
-screenshots and videos to GitHub, so you'll have to leave placeholders and ask the user to fill those in once the PR is open. Collect a list
-of files and which placeholders they go in, so you can later present a recap table to the user.
+### Capture with Spectre
+
+When Spectre can drive the scenario on the current branch, use it to produce the proof automatically rather than manual
+capture. Spectre tests can assert behavior **and** emit screenshots or recordings suitable for the PR.
+
+If the harness does not expose a `spectre` skill, suggest installing it from <https://spectre.sebastiano.dev> first.
+
+Pair Spectre with §4e-b: add or extend headful tests when unit tests cannot cover the interaction, then reuse the same
+scenario for visual proof.
+
+### Upload with pr-asset-upload
+
+Do not commit screenshots or demo clips to the repository. Upload them with the `pr-asset-upload` skill
+([github.com/rock3r/pr-asset-upload](https://github.com/rock3r/pr-asset-upload)) and embed the returned
+`static.sebastiano.dev` URLs in the PR description. Install that skill when it is not already available and
+`PR_ASSET_UPLOAD_TOKEN` is set in the environment.
+
+Collect a table of asset name → placeholder → uploaded URL while preparing the PR so you can verify nothing is missing
+before requesting review.
 
 ## 7. Draft release notes
 
-If the PR has user-visible changes (new features, bug fixes, API changes, behavioral changes), draft a release notes section using the
-template found in [`platform/jewel/docs`](../../../platform/jewel/docs/pr-guide.md):
+If the PR has user-visible changes (new features, bug fixes, API changes, behavioral changes), draft a release notes
+section using the template found in [`platform/jewel/docs`](../../../platform/jewel/docs/pr-guide.md):
 
 ```markdown
 ## Release notes
@@ -248,22 +317,30 @@ template found in [`platform/jewel/docs`](../../../platform/jewel/docs/pr-guide.
 *
 ```
 
-Remove sections that don't apply. Match the style of existing release notes in `platform/jewel/RELEASE NOTES.md`.
-Do NOT prepend the `JEWEL-xxx` issue IDs and PR link to the notes, as those are added by the release notes script when preparing a release.
+Remove sections that don't apply. Match the style of existing release notes in `platform/jewel/RELEASE NOTES.md`, but
+read that file **only** as a tone sample.
+
+**Hard rule:** never stage, commit, or edit `platform/jewel/RELEASE NOTES.md`. Release notes belong **only** in the PR
+description; the release helper copies them into the file when preparing a release.
+
+Do NOT prepend the `JEWEL-xxx` issue IDs and PR link to the notes, as those are added by the release notes script when
+preparing a release.
 
 Guidance:
 
-- Release notes are user-targeted. Our users are the devs who use Jewel to build something, NOT their end users. Only write notes that are
-  valuable to those devs.
+- Release notes are user-targeted. Our users are the devs who use Jewel to build something, NOT their end users. Only
+  write notes that are valuable to those devs.
 - Omit internal implementation details (refactoring, test-only, CI changes) that do not matter to our users.
 - Use `⚠️ Important Changes` for behavior or API changes users must actively react to.
 - Use `Deprecated API` when public API is deprecated, replaced, or scheduled for removal.
+- Migration guides, caveats, and similar material belong under `## Changes` or in an earlier section — never after `##
+  Release notes`.
 
 ## 8. PR title and description
 
 ### Title format
 
-```
+```text
 [JEWEL-xxx] Short imperative summary
 ```
 
@@ -271,16 +348,18 @@ Use the commit message subject verbatim as the title.
 
 ### Description structure
 
-The description should follow a structure compatible with common high-quality Jewel PRs such
-as [#3449](https://github.com/JetBrains/intellij-community/pull/3449), [#3407](https://github.com/JetBrains/intellij-community/pull/3407),
-and [#3418](https://github.com/JetBrains/intellij-community/pull/3418).
+The description should follow a structure compatible with common high-quality Jewel PRs such as
+[#3449](https://github.com/JetBrains/intellij-community/pull/3449),
+[#3407](https://github.com/JetBrains/intellij-community/pull/3407), and
+[#3418](https://github.com/JetBrains/intellij-community/pull/3418).
 
 A good Jewel PR description usually contains:
 
 1. An initial short summary of the issue/feature
 2. Optionally, a Context section
 3. `## Changes` section with a bullet list of changes
-4. `## Screenshots`, `## Screen recordings` when relevant (i.e., there are visual or behavioral UI changes)
+4. `## Screenshots`, `## Screen recordings`, or `## Screenshots/screen recordings` when relevant — see §6 for coverage
+   rules and upload workflow
 5. `## Release notes` for user-visible or API changes (if any)
 
 Use this starter template and adapt the headings to the PR:
@@ -305,69 +384,96 @@ Guidelines:
 
 - The context/summary intro paragraph does not need a header. Keep the opening section concise but complete.
 - The `Changes` section should mention notable implementation details.
-- Include a visual evidence section for UI changes. At minimum, include an "after" screenshot or screen recording; ideally include a
-  "before" too.
+- Include a visual evidence section for UI changes. At minimum, include an "after" screenshot or screen recording; ideally
+  include a "before" too.
 - Include `Release notes` only for user-visible or public API changes.
+- When present, `## Release notes` must be the **last** level-2 heading in the body. Put migration guides, caveats, and
+  any other sections above it.
 - Remove any empty `Release notes` subsections that do not apply.
-- **Do NOT hard-wrap prose lines.** Write each paragraph or bullet as a single long line and let GitHub soft-wrap it. Hard line breaks
-  inside a sentence render as visible breaks in the GitHub PR UI.
+- **Do NOT hard-wrap prose lines.** Write each paragraph or bullet as a single long line and let GitHub soft-wrap it.
+  Hard line breaks inside a sentence render as visible breaks in the GitHub PR UI.
 - Do NOT add AI attribution, co-author tags, or "generated by" notices anywhere in the PR title or description.
+
+Before presenting the draft, validate the body layout:
+
+```bash
+python3 .claude/skills/jewel-pr-preparer/scripts/validate_pr_body.py /tmp/pr-body.md
+```
+
+Fix any reported layout errors before asking the user to approve the description.
 
 ### Present to user
 
-Show the full PR title and description for approval from the user. DO NOT create the PR until you have explicit approval. Tweak the draft
-based on user feedback, if any, until the user signals it's good to go.
+Show the full PR title and description for approval from the user. DO NOT create the PR until you have explicit
+approval. Tweak the draft based on user feedback, if any, until the user signals it's good to go.
 
 ## 9. Create the PR (after user approval)
 
-Once the user has approved the draft, it's time to automate opening the PR. Make sure the `gh` CLI is installed and authenticated.
+Once the user has approved the draft, it's time to automate opening the PR. Make sure the `gh` CLI is installed and
+authenticated.
 
-Push the branch, then create the PR:
-
-```bash
-gh pr create --repo JetBrains/intellij-community --base master ...
-```
-
-It's strongly recommended to write the PR body to a temp Markdown file and use that to fill in the body, since Markdown backticks will break
-shell escapes and cause all sorts of formatting issues. Delete the temp file once done with this step.
-Once the PR is open, if there are pending screenshots/videos that the user needs to manually attach to the PR, print the PR URL as a link.
-Then, ask the user to edit the description to fill in the placeholders. Remind to the user which placeholders need filling in with what.
-
-Once the user confirms they have filled in the placeholders, verify all placeholders are correctly filled in the PR description.
-
-### PR metadata adjustment
-
-If the user has triage or write access to `JetBrains/intellij-community` (i.e., they are a JetBrains employee or an official Jewel
-contributor), all the following can be done directly via `gh` — ask if they want to run them:
+Write the PR body to a temp Markdown file and use that to fill in the body, since Markdown backticks will break shell
+escapes and cause all sorts of formatting issues. Re-run the layout validator on that file before creating or editing
+the PR:
 
 ```bash
-gh pr edit <number> --repo JetBrains/intellij-community \
-  --add-label "jewel" \
-  --add-assignee "<their-github-handle>" \
-  --add-reviewer "<reviewer1>" \
-  --add-reviewer "<reviewer2>" \
-  --add-reviewer "<reviewer3>"
+python3 .claude/skills/jewel-pr-preparer/scripts/validate_pr_body.py /tmp/pr-body.md
 ```
 
-Always add 3 reviewers, mixing teams.
+Also confirm the commit does **not** touch `platform/jewel/RELEASE NOTES.md`:
+
+```bash
+git diff master --name-only | grep -F 'platform/jewel/RELEASE NOTES.md' && echo "FAIL: do not commit RELEASE NOTES.md"
+```
+
+If that command prints a path, stop and remove the file from the commit before continuing.
+
+Push the branch, then create the PR. Opening the PR is **not** approval to request reviewers — those are separate gates.
+
+### 9a. Open the PR (labels and assignee only)
+
+If the user has triage or write access to `JetBrains/intellij-community`, create the PR with the `jewel` label and
+assign the author. Do **not** pass `--reviewer` to `gh pr create` or `gh pr edit` in this step.
+
+```bash
+gh pr create --repo JetBrains/intellij-community --base master \
+  --title "<title>" \
+  --body-file /tmp/pr-body.md \
+  --label jewel \
+  --assignee "<their-github-handle>"
+```
+
+Delete the temp body file once done with this step.
+
+Once the PR is open, if there are pending screenshots/videos that the user needs to manually attach to the PR, print the
+PR URL as a link. Then, ask the user to edit the description to fill in the placeholders. Remind to the user which
+placeholders need filling in with what.
+
+Once the user confirms they have filled in the placeholders, verify all placeholders are correctly filled in the PR
+description. If the description changed, re-run `validate_pr_body.py` on the updated body before moving on.
+
+### 9b. Request reviewers (separate confirmation)
+
+Do **not** request reviewers until the user explicitly confirms the suggested set.
 
 The reviewer pool is **not** hardcoded here. It comes from the published Jewel maintainers list at
-<https://jewel-ui.dev/data/maintainers.json>, where every maintainer carries a `team` of either `jetbrains` or `google`. Maintainers from
-Touchlab work on Google's behalf and are recorded as `google`; the only distinction that matters for reviews is whether someone is a
-JetBrains employee. Never hardcode reviewer handles in this skill, in the helper script, or in a PR — if the roster is wrong, fix the
-published list instead.
+<https://jewel-ui.dev/data/maintainers.json>, where every maintainer carries a `team` of either `jetbrains` or `google`.
+Maintainers from Touchlab work on Google's behalf and are recorded as `google`; the only distinction that matters for
+reviews is whether someone is a JetBrains employee. Never hardcode reviewer handles in this skill, in the helper script,
+or in a PR — if the roster is wrong, fix the published list instead.
 
 Do NOT ask for a review from the author of the PR, of course.
 
-For best-effort round-robin assignment, prefer reviewers with the fewest outstanding review requests across currently open Jewel PRs.
-Try to keep at least one reviewer from each team in the set whenever possible. This is only a heuristic — it does not know about
-vacations, availability, or special topic ownership. Ask the user before applying the suggested reviewers.
+For best-effort round-robin assignment, prefer reviewers with the fewest outstanding review requests across currently
+open Jewel PRs. Try to keep at least one reviewer from each team in the set whenever possible. This is only a heuristic
+— it does not know about vacations, availability, or special topic ownership.
 
-Requesting 3 reviewers is unrelated to how many approvals the PR needs to merge. Per the
-[approval rules](../../../platform/jewel/docs/jewel-contribution-guide.md#approval-rules), one Jewel team approval is enough for a small or
-simple change, or for one confined to `platform/jewel`; anything else needs two approvals, at least one of them from a JetBrains
-maintainer. Note that "confined to `platform/jewel`" is deliberately narrower than the Jewel-related paths in the contribution guide, so a
-PR touching `libraries/skiko` — or this skill's own files — still needs a JetBrains approval.
+Requesting 3 reviewers is unrelated to how many approvals the PR needs to merge. Per the [approval
+rules](../../../platform/jewel/docs/jewel-contribution-guide.md#approval-rules), one Jewel team approval is enough for a
+small or simple change, or for one confined to `platform/jewel`; anything else needs two approvals, at least one of them
+from a JetBrains maintainer. Note that "confined to `platform/jewel`" is deliberately narrower than the Jewel-related
+paths in the contribution guide, so a PR touching `libraries/skiko` — or this skill's own files — still needs a
+JetBrains approval.
 
 Run the helper script from the repository root (or adjust the path accordingly):
 
@@ -378,18 +484,32 @@ python3 .claude/skills/jewel-pr-preparer/scripts/suggest_reviewers.py \
   --exclude <optional-comma-separated-extra-logins>
 ```
 
-The script prints the maintainer list it used, the suggested reviewers with their team, and an example `gh pr edit ... --add-reviewer ...`
-command. If the script returns fewer than 3 reviewers, ask the user how they want to fill the remaining slots. If the user wants a different
-balance (e.g., 2 JetBrains + 1 Google), adjust the selection accordingly.
+The script prints the maintainer list it used, the suggested reviewers with their team, and an example `gh pr edit ...
+--add-reviewer ...` command. Print the three suggested names clearly and **wait for explicit user confirmation** before
+running any reviewer command.
 
-The script fetches the maintainers list at run time. If that fetch fails it warns on stderr and falls back to `maintainers.fallback.json`,
-a snapshot bundled next to the script. When you see that warning, tell the user the suggestions came from a possibly stale copy so they can
-sanity-check the handles. If neither source is usable the script exits with an error and the user should pick reviewers manually.
+If the script returns fewer than 3 reviewers, ask the user how they want to fill the remaining slots. If the user wants
+a different balance (e.g., 2 JetBrains + 1 Google), adjust the selection accordingly.
+
+The script fetches the maintainers list at run time. If that fetch fails it warns on stderr and falls back to
+`maintainers.fallback.json`, a snapshot bundled next to the script. When you see that warning, tell the user the
+suggestions came from a possibly stale copy so they can sanity-check the handles. If neither source is usable the script
+exits with an error and the user should pick reviewers manually.
+
+Only after the user confirms, run the suggested command:
+
+```bash
+gh pr edit <number> --repo JetBrains/intellij-community \
+  --add-reviewer "<reviewer1>" \
+  --add-reviewer "<reviewer2>" \
+  --add-reviewer "<reviewer3>"
+```
 
 ### Update YouTrack ticket state
 
-After the PR is created, set the YouTrack ticket state to "In Review" for each `JEWEL-xxx` issue referenced in the commit message/PR title.
-Use the `youtrack-community` skill to do this. The user may have to do some manual setup if they have never run it.
+After the PR is created, set the YouTrack ticket state to "In Review" for each `JEWEL-xxx` issue referenced in the
+commit message/PR title. Use the `youtrack-community` skill to do this. The user may have to do some manual setup if
+they have never run it.
 
 ## 10. Subsequent PR updates
 
@@ -397,14 +517,24 @@ When the user needs to update an existing PR (e.g., after review feedback), the 
 
 1. Make the necessary code changes.
 2. Stage the changes and amend the single commit:
+
    ```bash
    git add <files>
    git commit --amend --no-edit
    ```
-3. Force push to update the PR:
+
+   Never stage `platform/jewel/RELEASE NOTES.md`.
+3. **Keep the PR description in sync.** If review feedback changes behavior, scope, API surface, or visuals, update the
+   PR body to match before force-pushing. At minimum revisit `## Changes`, release notes, and any visual-proof sections.
+   Add or refresh Spectre tests and re-capture proof when interactions or appearance changed.
+4. Force push to update the PR:
+
    ```bash
    git push --force-with-lease <remote> <branch>
    ```
+
+5. If the PR description changes, re-run `validate_pr_body.py` before `gh pr edit --body`. Upload replacement assets
+   with `pr-asset-upload` when screenshots or recordings are stale.
 
 This keeps the PR as a single commit. Never create additional commits on the branch — always amend and force push.
 
@@ -414,7 +544,7 @@ This keeps the PR as a single commit. Never create additional commits on the bra
 
 Good commit messages that follow the convention:
 
-```
+```text
 [JEWEL-1250] Prepare Jewel 0.34 release
 [JEWEL-741] Use TextMate as Fallback for Languages Without Parsers
 [JEWEL-1222] Fix Jewel Demos Toolwindow Crash
@@ -430,19 +560,20 @@ Style notes:
 - Imperative mood ("Fix", "Add", "Implement", "Prepare", not "Fixed", "Added")
 - Concise but descriptive
 - No trailing period
-- The summary after `[JEWEL-xxx] ` starts with a capital letter
+- The summary after `[JEWEL-xxx]` starts with a capital letter
 
 ## Reference: good PR description examples
 
 These Jewel PRs are good models to imitate:
 
-- [#3449](https://github.com/JetBrains/intellij-community/pull/3449) — strong `Context`, `Changes`, visual demo tables, and `Release notes`
-  with a `Deprecated API` section.
-- [#3407](https://github.com/JetBrains/intellij-community/pull/3407) — concise user-facing write-up with clear screenshots and a solid
-  `⚠️ Important Changes` example.
-- [#3418](https://github.com/JetBrains/intellij-community/pull/3418) — compact bug-fix PR with a clean `Context` / `Changes` / evidence
-  structure.
+- [#3449](https://github.com/JetBrains/intellij-community/pull/3449) — strong `Context`, `Changes`, visual demo tables,
+  and `Release notes` with a `Deprecated API` section.
+- [#3407](https://github.com/JetBrains/intellij-community/pull/3407) — concise user-facing write-up with clear
+  screenshots and a solid `⚠️ Important Changes` example.
+- [#3418](https://github.com/JetBrains/intellij-community/pull/3418) — compact bug-fix PR with a clean `Context` /
+  `Changes` / evidence structure.
 
-Use these as structural inspiration. Do not force every PR to look identical, but keep the same overall shape: explain the problem,
-summarize the implementation, show evidence when relevant, and include release notes when applicable. Format modifications are acceptable
-when they make sense (e.g., there may be no point in having a super long PR description for a one-liner PR).
+Use these as structural inspiration. Do not force every PR to look identical, but keep the same overall shape: explain
+the problem, summarize the implementation, show evidence when relevant, and include release notes when applicable.
+Format modifications are acceptable when they make sense (e.g., there may be no point in having a super long PR
+description for a one-liner PR).

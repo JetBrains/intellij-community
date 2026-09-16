@@ -1,0 +1,107 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.python.typeEngine.frontend` start
+content_module_jar(module = ":frontend")
+### auto-generated section `dev intellij.python.typeEngine.frontend` end
+
+### auto-generated section `build intellij.python.typeEngine.frontend` start
+create_kotlinc_options(
+    name = "custom_frontend",
+    warn = "error",
+)
+
+jvm_library(
+    name = "frontend",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_frontend",
+    module_name = "intellij.python.typeEngine.frontend",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/kotlinx/coroutines/core",
+        "//platform/util",
+        "//platform/util:util-ui",
+        "//platform/core-api:core",
+        "//platform/core-ui",
+        "//platform/icons",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/project/shared:project",
+        "//platform/projectModel-api:projectModel",
+        "//platform/platform-api:ide",
+        "//platform/ide-core",
+        "//platform/platform-impl:ide-impl",
+        "//platform/progress/shared:ide-progress",
+        "//platform/observable",
+        "//platform/statistics",
+        "//python/python-parser:parser",
+        "//python/python-pytools/frontend",
+        "//python/python-type-engine/common",
+        "//platform/kernel/rpc",
+        "//platform/platform-impl/rpc",
+        "//platform/kernel/shared:kernel",
+        "//platform/platform-frontend:frontend",
+    ],
+)
+
+jvm_library(
+    name = "frontend_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_frontend",
+    module_name = "intellij.python.typeEngine.frontend",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":frontend",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/util:util-ui_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/icons:icons_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/project/shared:project_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/platform-api:ide_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/progress/shared:ide-progress_test_lib",
+        "//platform/observable:observable_test_lib",
+        "//platform/statistics:statistics_test_lib",
+        "//python/python-parser:parser_test_lib",
+        "//python/python-pytools/frontend:frontend_test_lib",
+        "//python/python-type-engine/common:common_test_lib",
+        "//platform/kernel/rpc:rpc_test_lib",
+        "//platform/platform-impl/rpc:rpc_test_lib",
+        "//platform/kernel/shared:kernel_test_lib",
+        "//platform/platform-frontend:frontend_test_lib",
+    ],
+)
+### auto-generated section `build intellij.python.typeEngine.frontend` end
+
+### auto-generated section `iml intellij.python.typeEngine.frontend` start
+exports_files(
+    [
+        "intellij.python.typeEngine.frontend.iml",
+        "resources/intellij.python.typeEngine.frontend.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.python.typeEngine.frontend` end

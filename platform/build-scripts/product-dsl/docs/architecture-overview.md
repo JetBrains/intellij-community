@@ -44,8 +44,9 @@ The product-dsl module provides a **Kotlin DSL for defining product module compo
 ### 1. Input: Kotlin Definitions
 
 ```
-CommunityModuleSets.kt   ──┐
-CoreModuleSets.kt        ──┼──▶  Module Set Definitions
+LibraryModuleSets.kt     ──┐
+CoreModuleSets.kt        ──┤
+CommunityModuleSets.kt   ──┼──▶  Module Set Definitions
 UltimateModuleSets.kt    ──┘
 
 *Properties.kt files     ──────▶  Product Content Specs
@@ -120,8 +121,10 @@ The generation uses a **5-stage pipeline architecture** with pluggable generator
 ┌─────────────────────────────────────────────────┐
 │              Module Sets                         │
 ├─────────────────────────────────────────────────┤
+│  LibraryModuleSets                               │
+│  └─ libraries*() - Library wrapper modules      │
+│                                                  │
 │  CoreModuleSets                                  │
-│  ├─ libraries() - Library wrapper modules       │
 │  ├─ corePlatform() - Core platform modules      │
 │  ├─ coreLang() - Language support               │
 │  └─ rpc*() - RPC infrastructure                 │

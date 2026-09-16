@@ -17,12 +17,21 @@ class WriteOptionsBuilder(
 ) {
   private var append: Boolean = false
 
+  private var createParents: Boolean = false
+
   private var creationMode: EelFileSystemApi.FileWriterCreationMode = EelFileSystemApi.FileWriterCreationMode.ALLOW_CREATE
 
   private var truncateExisting: Boolean = true
 
   fun append(arg: Boolean): WriteOptionsBuilder = apply {
     this.append = arg
+  }
+
+  /**
+   * Creates missing parent directories before opening the file.
+   */
+  fun createParents(arg: Boolean): WriteOptionsBuilder = apply {
+    this.createParents = arg
   }
 
   fun creationMode(arg: EelFileSystemApi.FileWriterCreationMode): WriteOptionsBuilder = apply {
@@ -49,6 +58,7 @@ class WriteOptionsBuilder(
   fun build(): WriteOptions =
     WriteOptionsImpl(
       append = append,
+      createParents = createParents,
       creationMode = creationMode,
       path = path,
       truncateExisting = truncateExisting,
@@ -58,6 +68,7 @@ class WriteOptionsBuilder(
 @GeneratedBuilder.Result
 internal class WriteOptionsImpl(
   override val append: Boolean,
+  override val createParents: Boolean,
   override val creationMode: EelFileSystemApi.FileWriterCreationMode,
   override val path: EelPath,
   override val truncateExisting: Boolean,

@@ -1,17 +1,15 @@
 // MODULE: jvm-lib
 // FILE: a.kt
 
-const val prefix = "prefix_"
-
-@JvmName("${prefix}f1")
+@JvmName("prefix_f1")
 fun f1() = 42
 
 var prop: Int = 0
-    @JvmName("${prefix}getter")
+    @JvmName("prefix_getter")
     get() {
         return field + 1
     }
-    @JvmName("${prefix}setter")
+    @JvmName("prefix_setter")
     set(value) {
         field = value + 1
     }

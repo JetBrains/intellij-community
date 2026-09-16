@@ -24,7 +24,7 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.groovy" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.groovy.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.groovy.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.properties" scope="TEST" />
     <orderEntry type="module" module-name="intellij.properties.backend" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle.java.toml" scope="RUNTIME" />

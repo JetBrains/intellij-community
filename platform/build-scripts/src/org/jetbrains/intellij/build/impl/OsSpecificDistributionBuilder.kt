@@ -21,7 +21,6 @@ import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.copyFileToDir
 import org.jetbrains.intellij.build.io.runProcess
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
-import org.jetbrains.intellij.build.telemetry.blockingUse
 import org.jetbrains.intellij.build.telemetry.use
 import java.io.BufferedInputStream
 import java.nio.file.FileSystems
@@ -54,7 +53,7 @@ internal fun copyNativeBinDir(
  * [OsSpecificDistributionBuilder.copyNativeBinFiles] implementations - the one part of that step which is the
  * same for every OS.
  */
-internal suspend fun copyRestarterToDir(binDir: Path, os: OsFamily, arch: JvmArchitecture, context: BuildContext): Path {
+internal fun copyRestarterToDir(binDir: Path, os: OsFamily, arch: JvmArchitecture, context: BuildContext): Path {
   return copyNativeBinFileToDir(NativeBinaryDownloader.getRestarter(context, os, arch), binDir)
 }
 
@@ -67,7 +66,7 @@ interface OsSpecificDistributionBuilder {
   val targetOs: OsFamily
   val targetLibcImpl: LibcImpl
 
-  suspend fun copyFilesForOsDistribution(targetPath: Path, arch: JvmArchitecture)
+  fun copyFilesForOsDistribution(targetPath: Path, arch: JvmArchitecture)
 
   /**
    * Copies into [binDir] the native files a distribution's `bin` directory needs for this OS and [arch] -
@@ -84,11 +83,11 @@ interface OsSpecificDistributionBuilder {
    * The operation must be repeatable: [binDir] may contain files returned by an earlier invocation, and those files
    * must be replaced with the current sources. It must not delete unrelated entries; the caller owns stale-file cleanup.
    */
-  suspend fun copyNativeBinFiles(binDir: Path, arch: JvmArchitecture): List<Path>
+  fun copyNativeBinFiles(binDir: Path, arch: JvmArchitecture): List<Path>
 
-  suspend fun buildArtifacts(osAndArchSpecificDistPath: Path, arch: JvmArchitecture)
+  fun buildArtifacts(osAndArchSpecificDistPath: Path, arch: JvmArchitecture)
 
-  suspend fun writeProductInfoFile(targetDir: Path, arch: JvmArchitecture): Path
+  fun writeProductInfoFile(targetDir: Path, arch: JvmArchitecture): Path
 
   fun generateExecutableFilesPatterns(includeRuntime: Boolean, arch: JvmArchitecture, libc: LibcImpl): Sequence<String> = emptySequence()
 
@@ -103,7 +102,7 @@ interface OsSpecificDistributionBuilder {
   }
 
   /** Checks the executable permissions in [distribution]: a directory, a `.tar.gz`, a `.zip`, or a `.snap`. */
-  suspend fun checkExecutablePermissions(distribution: Path, root: String, includeRuntime: Boolean = true, arch: JvmArchitecture, libc: LibcImpl, context: BuildContext) {
+  fun checkExecutablePermissions(distribution: Path, root: String, includeRuntime: Boolean = true, arch: JvmArchitecture, libc: LibcImpl, context: BuildContext) {
     if (!distribution.isDirectory() && "$distribution".endsWith(".snap")) {
       spanBuilder("Permissions check for ${distribution.name}").use {
         val patterns = generateExecutableFilesMatchers(includeRuntime, arch, libc)
@@ -118,11 +117,11 @@ interface OsSpecificDistributionBuilder {
 
   /** The plain twin of [checkExecutablePermissions] for a directory, a `.tar.gz`, or a `.zip`. A `.snap` file goes to the suspend member. */
   fun checkFileExecutablePermissions(distribution: Path, root: String, includeRuntime: Boolean = true, arch: JvmArchitecture, libc: LibcImpl, context: BuildContext) {
-    spanBuilder("Permissions check for ${distribution.name}").blockingUse {
+    spanBuilder("Permissions check for ${distribution.name}").use {
       val patterns = generateExecutableFilesMatchers(includeRuntime, arch, libc)
       val matchedFiles = when {
-        patterns.isEmpty() -> return@blockingUse
-        SystemInfoRt.isWindows && distribution.isDirectory() -> return@blockingUse
+        patterns.isEmpty() -> return@use
+        SystemInfoRt.isWindows && distribution.isDirectory() -> return@use
         distribution.isDirectory() -> checkDirectory(distribution.resolve(root), patterns.keys)
         "$distribution".endsWith(".tar.gz") -> checkTar(distribution, root, patterns.keys)
         else -> checkZip(distribution, root, patterns.keys)
@@ -140,7 +139,7 @@ interface OsSpecificDistributionBuilder {
 
   fun isRuntimeBundled(file: Path): Boolean
 
-  suspend fun createChecksumAndGpgSignFiles(context: BuildContext, buildArtifact: suspend () -> Path): Path {
+  fun createChecksumAndGpgSignFiles(context: BuildContext, buildArtifact: () -> Path): Path {
     val artifactFile = buildArtifact.invoke()
 
     val checksums = Checksums.compute(artifactFile, Checksums.Algorithm.SHA256, Checksums.Algorithm.SHA512)
@@ -153,7 +152,7 @@ interface OsSpecificDistributionBuilder {
     return artifactFile
   }
 
-  private suspend fun sign(context: BuildContext, hashFile: Path) {
+  private fun sign(context: BuildContext, hashFile: Path) {
     context.executeStep(spanBuilder("sign checksums").setAttribute("file", "$hashFile"), BuildOptions.CHECKSUM_SIGN_STEP) {
       context.proprietaryBuildTools.signTool.signFilesWithGpg(
         listOf(hashFile), context,
@@ -239,7 +238,7 @@ private class MatchedFile(val relativePath: String, val isValid: Boolean, val pa
   override fun toString() = relativePath
 }
 
-private suspend fun checkSnap(distribution: Path, root: String, patterns: Collection<PathMatcher>, context: BuildContext): List<MatchedFile> {
+private fun checkSnap(distribution: Path, root: String, patterns: Collection<PathMatcher>, context: BuildContext): List<MatchedFile> {
   val stdout = ArrayList<String>()
   val extractionRoot = "ROOT"
   runProcess(

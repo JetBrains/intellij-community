@@ -58,7 +58,7 @@ private constructor(
   private var columnHovered: Boolean = false
   private var selectedRangeForMultilineComment: LineRange? = null
 
-  @set:RequiresEdt
+  @set:RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private var state: CodeReviewEditorGutterControlsModel.ControlsState by observable(initialState) { _, oldState, newState ->
     if (newState != oldState) {
       repaintColumn(editor)

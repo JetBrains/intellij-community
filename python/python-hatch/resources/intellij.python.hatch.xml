@@ -14,9 +14,10 @@
     <module name="intellij.python.community.execService"/>
     <module name="intellij.python.community.execService.python"/>
     <module name="intellij.python.community.services.systemPython"/>
+    <module name="intellij.python.hatch.common"/>
     <module name="intellij.python.processOutput.common"/>
     <module name="intellij.python.pyproject"/>
-    <module name="intellij.python.pytools"/>
+    <module name="intellij.python.pytools.backend"/>
     <module name="intellij.python.sdk.backend"/>
     <module name="intellij.python.sdk.common"/>
   </dependencies>

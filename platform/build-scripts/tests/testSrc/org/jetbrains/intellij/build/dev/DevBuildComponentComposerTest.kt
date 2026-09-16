@@ -202,26 +202,6 @@ internal class DevBuildComponentComposerTest {
   }
 
   @Test
-  fun `platform resources solely own IJent DistFiles`() {
-    val platformLib = DevBuildFragment(
-      name = "platform_lib",
-      platform = PlatformJarSelector(jars = setOf("intellij.charts.jar"), mode = PlatformJarSelector.Mode.EXCLUDE),
-      platformResources = false,
-      plugins = null,
-    )
-    val platformResources = DevBuildFragment(
-      name = "platform_resources",
-      platform = null,
-      platformResources = true,
-      plugins = null,
-    )
-
-    assertThat(shouldCopyDevBuildDistFile(platformLib, "lib/ijent/ijent-x86_64-unknown-linux-musl-release")).isFalse()
-    assertThat(shouldCopyDevBuildDistFile(platformResources, "lib/ijent/ijent-x86_64-unknown-linux-musl-release")).isTrue()
-    assertThat(shouldCopyDevBuildDistFile(platformLib, "bin/another-dist-file")).isTrue()
-  }
-
-  @Test
   fun `component merge follows an undeclared sandbox staging symlink`(@TempDir tempDir: Path) {
     if (!supportsSymbolicLinks(tempDir)) return
     val stagedBytes = tempDir.resolve("bazel-out/fragment/file.jar")
@@ -359,7 +339,7 @@ internal class DevBuildComponentComposerTest {
   @Test
   fun `composer builds plugin-classpath from the prefix and every component's records`(@TempDir tempDir: Path) {
     val prefix = tempDir.resolve("prefix.bin")
-    Files.write(prefix, byteArrayOf(2, 1, 0, 0, 0, 0))
+    Files.write(prefix, byteArrayOf(3, 0, 0, 0, 0))
     val air = DevBuildComponent(
       root = component(tempDir, "air", "plugins/air-plugin/lib/air.jar"),
       manifest = manifest(kind = "plugins_air", pluginCount = 1),
@@ -376,7 +356,7 @@ internal class DevBuildComponentComposerTest {
 
     // prefix, then the summed plugin count as a big-endian short, then the records in component order
     assertThat(Files.readAllBytes(target.resolve("plugins/plugin-classpath.txt")))
-      .containsExactly(2, 1, 0, 0, 0, 0, 0, 3, 10, 20, 21)
+      .containsExactly(3, 0, 0, 0, 0, 0, 3, 10, 20, 21)
   }
 
   @Test
@@ -618,40 +598,57 @@ internal class DevBuildComponentComposerTest {
   }
 
   @Test
-  fun `sourced component manifest names where each file's bytes are and hashes a shared source once`(@TempDir tempDir: Path) {
-    val shared = tempDir.resolve("shared.jar")
-    Files.writeString(shared, "packed bytes")
-    val manifestFile = tempDir.resolve("component.json")
-
-    writeSourcedDevBuildComponentManifest(
-      file = manifestFile,
-      kind = "plugins_packed_content_modules",
-      platformPrefix = "idea",
-      os = OsFamily.LINUX,
-      arch = JvmArchitecture.x64,
-      files = listOf(
-        DevBuildComponentSourcedFile("plugins/two/lib/modules/shared.jar", shared.toString()),
-        DevBuildComponentSourcedFile("plugins/one/lib/modules/shared.jar", shared.toString()),
-      ),
+  fun `Go manifests preserve version 9 hashes and tree fingerprints`(@TempDir tempDir: Path) {
+    val vectors = listOf(
+      0 to 3244421341483603138L,
+      1 to -2399747073602280719L,
+      3 to -737883702129266468L,
+      240 to 2788469911834355041L,
+      241 to -4155630063455057979L,
+      262143 to 9078738661776034622L,
+      262144 to -1692254647099917537L,
+      262145 to -2541306581069977202L,
+      524288 to 3157545227256347297L,
+      524301 to 8144707773225287728L,
     )
-
-    val manifest = readDevBuildComponentManifest(manifestFile)
-    // Such a component knows its product and target platform and nothing that needs a product layout.
-    assertThat(manifest.mainClass).isNull()
-    assertThat(manifest.coreClassPath).isEmpty()
-    assertThat(manifest.entries.map { it.relativePath }).containsExactly(
-      "plugins/one/lib/modules/shared.jar",
-      "plugins/two/lib/modules/shared.jar",
-    )
-    assertThat(manifest.entries).allSatisfy { entry ->
-      assertThat(entry.type).isEqualTo("component-file")
-      assertThat(entry.source).isEqualTo(shared.toString())
-      assertThat(entry.symlinkTarget).isNull()
-      // Not read off the source: the composer chmods what it writes, so this is false by construction.
-      assertThat(entry.executable).isFalse()
+    val componentRoot = tempDir.resolve("component")
+    val contentFile = componentRoot.resolve("lib/content.jar")
+    Files.createDirectories(contentFile.parent)
+    val launch = manifest(kind = "launch")
+    for ((size, hash) in vectors) {
+      Files.write(contentFile, ByteArray(size) { index -> (index * 31 + 7).toByte() })
+      val treeFile = tempDir.resolve("tree.json")
+      writeDevBuildComponentManifest(
+        file = treeFile,
+        kind = "files",
+        platformPrefix = "idea",
+        os = OsFamily.LINUX,
+        arch = JvmArchitecture.x64,
+        additionalModules = emptyList(),
+        mainClass = null,
+        coreClassPath = emptyList(),
+        pluginCount = 0,
+        componentRoot = componentRoot,
+      )
+      val sourcedFile = tempDir.resolve("sourced.json")
+      Files.writeString(sourcedFile, """
+        {
+          "kind": "files", "platformPrefix": "idea", "os": "linux", "arch": "x64",
+          "additionalModules": [], "mainClass": null, "coreClassPath": [],
+          "entries": [{"relativePath": "lib/content.jar", "type": "component-file", "hash": $hash, "source": "inputs/content.jar"}]
+        }
+      """.trimIndent())
+      val sourced = readDevBuildComponentManifest(sourcedFile)
+      val tree = readDevBuildComponentManifest(treeFile)
+      assertThat(sourced.version).isEqualTo(9)
+      assertThat(tree.entries.single().hash).describedAs("hash for %s bytes", size).isEqualTo(hash)
+      assertThat(sourced.entries.single().executable).isFalse()
+      assertThat(computeIdeFingerprintFromComponents(listOf(launch, sourced)))
+        .isEqualTo(computeIdeFingerprintFromComponents(listOf(launch, tree)))
+      val relocated = sourced.copy(entries = sourced.entries.map { entry -> entry.copy(source = "other/content.jar") })
+      assertThat(computeIdeFingerprintFromComponents(listOf(launch, relocated)))
+        .isEqualTo(computeIdeFingerprintFromComponents(listOf(launch, sourced)))
     }
-    // One jar under two destinations is one set of bytes, so both entries carry the same hash.
-    assertThat(manifest.entries.map { it.hash }.distinct()).hasSize(1)
   }
 
   /**
@@ -698,6 +695,43 @@ internal class DevBuildComponentComposerTest {
         ))
       }
     }
+  }
+
+  @Test
+  fun `composer honors the declared executable flag without changing the source`(@TempDir tempDir: Path) {
+    val source = tempDir.resolve("ijent")
+    Files.writeString(source, "binary bytes")
+    val supportsPosix = Files.getFileStore(source).supportsFileAttributeView(PosixFileAttributeView::class.java)
+    val sourcePermissions = setOf(PosixFilePermission.OWNER_READ)
+    if (supportsPosix) {
+      Files.setPosixFilePermissions(source, sourcePermissions)
+    }
+    val entry = sourcedEntry("bin/ijent", source).copy(executable = true)
+    val componentManifest = manifest(kind = "ijent", entries = listOf(entry))
+    val target = tempDir.resolve("target")
+
+    val composed = composeDevBuildComponents(listOf(DevBuildComponent(root = null, manifest = componentManifest)), target)
+
+    val copied = target.resolve("bin/ijent")
+    assertThat(Files.readString(copied)).isEqualTo("binary bytes")
+    assertThat(Files.isSymbolicLink(copied)).isFalse()
+    if (supportsPosix) {
+      assertThat(Files.getPosixFilePermissions(copied)).isEqualTo(setOf(
+        PosixFilePermission.OWNER_READ,
+        PosixFilePermission.OWNER_WRITE,
+        PosixFilePermission.GROUP_READ,
+        PosixFilePermission.OTHERS_READ,
+        PosixFilePermission.OWNER_EXECUTE,
+        PosixFilePermission.GROUP_EXECUTE,
+        PosixFilePermission.OTHERS_EXECUTE,
+      ))
+      assertThat(Files.getPosixFilePermissions(source)).isEqualTo(sourcePermissions)
+    }
+    val nonExecutable = componentManifest.copy(entries = listOf(entry.copy(executable = false)))
+    assertThat(composed.fingerprint).isEqualTo(computeIdeFingerprintFromComponents(listOf(componentManifest)))
+    assertThat(composed.fingerprint).isNotEqualTo(computeIdeFingerprintFromComponents(listOf(nonExecutable)))
+    Files.writeString(copied, "changed bytes")
+    assertThat(Files.readString(source)).isEqualTo("binary bytes")
   }
 
   @Test

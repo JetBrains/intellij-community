@@ -4,4 +4,3 @@
 fun test() {
     val a = <caret>-false
 }
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateExtensionCallableFromUsageFix

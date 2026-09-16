@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.StateFlow
 import java.util.concurrent.TimeUnit
 
 internal class StructureUiModelImpl(private val dtoId: StructureViewDtoId) {
-  @all:RequiresEdt
+  @all:RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   var dto: StructureViewModelDto? = null
     private set
 
@@ -23,7 +23,7 @@ internal class StructureUiModelImpl(private val dtoId: StructureViewDtoId) {
 
   private val myModelListeners = ContainerUtil.createLockFreeCopyOnWriteList<StructureUiModelListener>()
 
-  @get:RequiresEdt
+  @get:RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   val rootElement: StructureViewNode = StructureViewNode()
 
   private val nodeById = HashMap<Int, StructureViewNode>().also {
@@ -36,21 +36,21 @@ internal class StructureUiModelImpl(private val dtoId: StructureViewDtoId) {
 
   internal val editorSelection = MutableStateFlow<StructureUiTreeElement?>(null)
 
-  @all:RequiresEdt
+  @all:RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   internal var rebuildTreeOnDeferredNodes = false
 
   val updatePendingFlow: StateFlow<Boolean>
     get() = mutableUpdatePendingFlow
 
-  @get:RequiresEdt
+  @get:RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   val smartExpand: Boolean
     get() = dto?.smartExpand ?: false
 
-  @get:RequiresEdt
+  @get:RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   val minimumAutoExpandDepth: Int
     get() = dto?.minimumAutoExpandDepth ?: 2
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun initActions(modelDto: StructureViewModelDto) {
     dto = modelDto
 
@@ -63,10 +63,10 @@ internal class StructureUiModelImpl(private val dtoId: StructureViewDtoId) {
     logger.trace { "StructureUiModelImpl[$dtoId]: initialized actions; enabledActions=${myEnabledActionNames}" }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun getActions(): Collection<StructureTreeAction> = myActions
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun isActionEnabled(action: StructureTreeAction): Boolean {
     return action.name in myEnabledActionNames
   }
@@ -76,7 +76,7 @@ internal class StructureUiModelImpl(private val dtoId: StructureViewDtoId) {
    *
    * Returns `false` if the action already had that state, in which case the caller must not notify the backend.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun setActionEnabled(action: StructureTreeAction, isEnabled: Boolean): Boolean {
     val affectiveIsEnabled = isEnabled != action.isReverted
 
@@ -103,7 +103,7 @@ internal class StructureUiModelImpl(private val dtoId: StructureViewDtoId) {
     return true
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun applyNodesModel(
     rootDto: StructureViewTreeElementDto,
     nodeProviders: List<NodeProviderNodesDto>,
@@ -171,12 +171,12 @@ internal class StructureUiModelImpl(private val dtoId: StructureViewDtoId) {
     myModelListeners.clear()
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun fireTreeChanged() {
     myModelListeners.forEach { it.onTreeChanged() }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun fireActionsChanged() {
     myModelListeners.forEach { it.onActionsChanged() }
   }

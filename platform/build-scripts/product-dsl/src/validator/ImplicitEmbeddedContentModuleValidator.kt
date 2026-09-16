@@ -47,7 +47,7 @@ import org.jetbrains.intellij.build.productLayout.traversal.analyzeImplicitEmbed
 internal object ImplicitEmbeddedContentModuleValidator : PipelineNode {
   override val id get() = NodeIds.IMPLICIT_EMBEDDED_CONTENT_MODULE_VALIDATION
 
-  override suspend fun execute(ctx: ComputeContext) {
+  override fun execute(ctx: ComputeContext) {
     val model = ctx.model
     val pluginGraph = model.pluginGraph
     val productsByName = model.discovery.products.associateBy { it.name }

@@ -66,8 +66,8 @@ public class JavaValuePresentation extends XValueExtendedPresentation implements
 
       String value = truncateToMaxLength(valueText);
       Renderer lastRenderer = myValueDescriptor.getLastLabelRenderer();
-      if (lastRenderer instanceof ToStringRenderer) {
-        if (!((ToStringRenderer)lastRenderer).isShowValue(myValueDescriptor, myValueDescriptor.getStoredEvaluationContext())) {
+      if (lastRenderer instanceof ToStringRenderer stringRenderer) {
+        if (!stringRenderer.isShowValue(myValueDescriptor, myValueDescriptor.getStoredEvaluationContext())) {
           return; // to avoid empty line for not calculated toStrings
         }
         value = StringUtil.wrapWithDoubleQuote(value);

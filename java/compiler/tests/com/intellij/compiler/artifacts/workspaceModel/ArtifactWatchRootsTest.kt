@@ -30,8 +30,8 @@ class ArtifactWatchRootsTest : ArtifactsTestCase() {
 
     val workspaceModel = WorkspaceModel.getInstance(project)
     val virtualFileUrlManager = workspaceModel.getVirtualFileUrlManager()
-    val outputVirtualUrl = virtualFileUrlManager.getOrCreateFromUrl(VfsUtilCore.pathToUrl(outputDir.path))
-    val fileVirtualUrl = virtualFileUrlManager.getOrCreateFromUrl(VfsUtilCore.pathToUrl(file.path))
+    val outputVirtualUrl = virtualFileUrlManager.storeAndGet(VfsUtilCore.pathToUrl(outputDir.path))
+    val fileVirtualUrl = virtualFileUrlManager.storeAndGet(VfsUtilCore.pathToUrl(file.path))
     runWriteAction {
       workspaceModel.updateProjectModel {
         it addEntity ArtifactEntity("MyArtifact", PlainArtifactType.ID, false, MySource) {

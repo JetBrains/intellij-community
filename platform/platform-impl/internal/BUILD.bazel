@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.platform.ide.internal` start
+content_module_jar(module = ":internal")
+### auto-generated section `dev intellij.platform.ide.internal` end
+
 ### auto-generated section `build intellij.platform.ide.internal` start
 jvm_library(
     name = "internal",
@@ -34,6 +38,7 @@ jvm_library(
         "//platform/projectModel-api:projectModel",
         "//platform/platform-impl/bootstrap",
         "//platform/platform-impl:ide-impl",
+        "//platform/platform-impl/rpc",
         "//platform/platform-impl/ui",
         "//platform/core-ui",
         "//platform/util:util-ui",
@@ -61,7 +66,6 @@ jvm_library(
         "//libraries/gson",
         "//libraries/kotlinx/serialization/core",
         "//libraries/kotlin/reflect",
-        "//libraries/jna",
         "//platform/workspace/storage",
         "//platform/platform-impl/concurrency",
         "//platform/platform-impl/update-checker",
@@ -74,8 +78,6 @@ jvm_library(
         "//platform/lang-impl",
     ],
 )
-
-content_module_jar(module = ":internal")
 
 jvm_library(
     name = "internal_test_lib",
@@ -103,6 +105,7 @@ jvm_library(
         "//platform/projectModel-api:projectModel_test_lib",
         "//platform/platform-impl/bootstrap:bootstrap_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/platform-impl/rpc:rpc_test_lib",
         "//platform/platform-impl/ui:ui_test_lib",
         "//platform/core-ui:core-ui_test_lib",
         "//platform/util:util-ui_test_lib",
@@ -130,7 +133,6 @@ jvm_library(
         "//libraries/gson:gson_test_lib",
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//libraries/kotlin/reflect:reflect_test_lib",
-        "//libraries/jna:jna_test_lib",
         "//platform/workspace/storage:storage_test_lib",
         "//platform/platform-impl/concurrency:concurrency_test_lib",
         "//platform/platform-impl/update-checker:update-checker_test_lib",
@@ -150,7 +152,6 @@ exports_files(
     [
         "intellij.platform.ide.internal.iml",
         "resources/intellij.platform.ide.internal.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

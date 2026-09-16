@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.microba` start
+content_module_jar(module = ":microba")
+### auto-generated section `dev intellij.libraries.microba` end
+
 ### auto-generated section `build intellij.libraries.microba` start
 jvm_library(
     name = "microba",
@@ -20,8 +24,6 @@ jvm_library(
     visibility = ["//visibility:public"],
 )
 
-content_module_jar(module = ":microba")
-
 jvm_library(
     name = "microba_test_lib",
     testonly = True,
@@ -40,7 +42,6 @@ exports_files(
     [
         "intellij.libraries.microba.iml",
         "resources/intellij.libraries.microba.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

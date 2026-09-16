@@ -156,8 +156,10 @@ public class FilesToUpdateCollector {
 
     VersionedRequest currentRequest = myFilesToUpdate.get(fileId);
     if (currentRequest == null || currentRequest.request() != expectedRequest) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("stale removeIfCurrent(#" + fileId + ", expected: " + expectedRequest + ", current=" + currentRequest);
+      if (LOG.isDebugEnabled() && currentRequest != null) {
+        //[currentRequest == null] is less interesting but quite frequent: it is actually a regular case when requests come
+        // not from VFS, but from 'outside', e.g., from persistent dirty queue on startup -> better not overflow the logs with it:
+        LOG.debug("stale removeIfCurrent(#" + fileId + ", expected: " + expectedRequest + ", current=" + currentRequest + ")");
       }
       return false;
     }
@@ -168,7 +170,11 @@ public class FilesToUpdateCollector {
         return true;
       }
     }
-    return false; //should also log 'stale removeIfCurrent...'?
+
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("[tight race] stale removeIfCurrent(#" + fileId + ", expected: " + expectedRequest + ", current=" + myFilesToUpdate.get(fileId) + ")");
+    }
+    return false;
   }
 
   /** @return whether the instance is still the actual one */

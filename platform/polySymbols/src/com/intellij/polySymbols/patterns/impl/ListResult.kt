@@ -5,13 +5,15 @@ import com.intellij.polySymbols.PolySymbolNameSegment
 import com.intellij.polySymbols.impl.canUnwrapSymbols
 import com.intellij.polySymbols.impl.withOffset
 import com.intellij.polySymbols.query.PolySymbolMatch
+import org.jetbrains.annotations.ApiStatus
 
-internal class ListResult(
+@ApiStatus.Internal
+class ListResult internal constructor(
   val name: String,
   segments: List<PolySymbolNameSegment>,
 ) : MatchResult(segments) {
 
-  constructor(name: String, segment: PolySymbolNameSegment) :
+  internal constructor(name: String, segment: PolySymbolNameSegment) :
     this(name, listOf(segment.unpackIfPossible(name)))
 
   fun prefixedWith(prevResult: ListResult): ListResult =

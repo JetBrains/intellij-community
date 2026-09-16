@@ -161,6 +161,8 @@ internal enum class GhosttyRowData(val code: Int) {
 internal enum class GhosttyTerminalOption(val code: Int) {
   WRITE_PTY(1),
   BELL(2),
+  DEFAULT_CURSOR_STYLE(22),
+  DEFAULT_CURSOR_BLINK(23),
   SCROLLBACK_MAX_BYTES(27),
   PROGRESS_REPORT(30),
 }
@@ -208,7 +210,13 @@ internal enum class GhosttyRenderStateRowOption(val code: Int) {
   DIRTY(0),
 }
 
-/** `GhosttyRenderStateCursorVisualStyle` (render.h) — the shape the renderer would draw the cursor. */
+/**
+ * `GhosttyRenderStateCursorVisualStyle` (render.h) — the shape the renderer would draw the cursor.
+ *
+ * Also doubles as the input value for [GhosttyTerminalOption.DEFAULT_CURSOR_STYLE]
+ * (`GhosttyTerminalCursorStyle`, terminal.h): the two C enums share this exact numeric layout, so
+ * one Kotlin enum serves both the render-state read and the default-cursor-style write.
+ */
 internal enum class GhosttyCursorVisualStyle(val code: Int) {
   BAR(0),
   BLOCK(1),

@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.compose.ide.plugin.shared.android` start
+content_module_jar(module = ":ide-plugin-shared-android")
+### auto-generated section `dev intellij.compose.ide.plugin.shared.android` end
+
 ### auto-generated section `build intellij.compose.ide.plugin.shared.android` start
 jvm_library(
     name = "ide-plugin-shared-android",
@@ -28,8 +32,6 @@ jvm_library(
         "//platform/util",
     ],
 )
-
-content_module_jar(module = ":ide-plugin-shared-android")
 
 jvm_library(
     name = "ide-plugin-shared-android_test_lib",

@@ -626,10 +626,10 @@ def _dev_dist_content_set_impl(ctx):
     if bool(ctx.attr.prepacked_plugin_main_module) != bool(ctx.attr.prepacked_content_modules):
         fail("%s: `prepacked_plugin_main_module` and `prepacked_content_modules` must be set together" % ctx.label)
     if ctx.attr.prepacked_content_modules:
-        # No `prepacked_jars` here. A completion carries a member of the *other* repository, and the converter records
-        # such a member only when its plugin places the jar at the conventional path - `resolvePluginContent` in
-        # `pluginContent.kt` keeps the rest raw, with a warning. No plugin of this repository needs the other case
-        # today, so the attribute would be one nothing writes.
+        # No `prepacked_jars` here. A completion carries a member of the *other* repository. `plugin-model-tool`
+        # records such a member only when its plugin places the jar at the conventional path. The renderer in
+        # `devDistPluginSectionRender.kt` keeps the rest raw, with a warning. No plugin of this repository needs the
+        # other case today, so the attribute would be one nothing writes.
         _collect_prepacked(
             label = ctx.label,
             plugin_main_module = ctx.attr.prepacked_plugin_main_module,

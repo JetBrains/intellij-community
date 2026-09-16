@@ -9,5 +9,3 @@ class Foo(val s: String?) {
 fun foo(s: String){}
 
 // EXIST: { itemText:"s" }
-
-// IGNORE_K2

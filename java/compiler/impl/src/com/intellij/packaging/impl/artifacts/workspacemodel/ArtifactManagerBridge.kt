@@ -66,7 +66,7 @@ class ArtifactManagerBridge(private val project: Project, coroutineScope: Corout
     DynamicArtifactExtensionsLoaderBridge(this).installListeners(coroutineScope)
   }
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   override fun getArtifacts(): Array<ArtifactBridge> = getArtifactsMs.addMeasuredTime {
     initBridges()
 
@@ -79,7 +79,7 @@ class ArtifactManagerBridge(private val project: Project, coroutineScope: Corout
       .toList().toTypedArray()
   }
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   override fun findArtifact(name: String): Artifact? = findArtifactMs.addMeasuredTime {
     initBridges()
 
@@ -93,7 +93,7 @@ class ArtifactManagerBridge(private val project: Project, coroutineScope: Corout
 
   override fun getOriginalArtifact(artifact: Artifact): Artifact = artifact
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   override fun getArtifactsByType(type: ArtifactType): List<ArtifactBridge> = getArtifactsByTypeMs.addMeasuredTime {
     // XXX @RequiresReadLock annotation doesn't work for kt now
     ApplicationManager.getApplication().assertReadAccessAllowed()
@@ -109,7 +109,7 @@ class ArtifactManagerBridge(private val project: Project, coroutineScope: Corout
       .toList()
   }
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   override fun getAllArtifactsIncludingInvalid(): List<Artifact> {
     // XXX @RequiresReadLock annotation doesn't work for kt now
     ThreadingAssertions.assertReadAccess()
@@ -125,7 +125,7 @@ class ArtifactManagerBridge(private val project: Project, coroutineScope: Corout
       .toMutableList()
   }
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   override fun getSortedArtifacts(): Array<ArtifactBridge> {
     val artifacts = this.artifacts
 
@@ -173,7 +173,7 @@ class ArtifactManagerBridge(private val project: Project, coroutineScope: Corout
   }
 
   @OptIn(EntityStorageInstrumentationApi::class)
-  @RequiresWriteLock
+  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
   fun commit(artifactModel: ArtifactModifiableModelBridge) = commitMs.addMeasuredTime {
     // XXX @RequiresReadLock annotation doesn't work for kt now
     ApplicationManager.getApplication().assertWriteAccessAllowed()
@@ -292,7 +292,7 @@ class ArtifactManagerBridge(private val project: Project, coroutineScope: Corout
 
   // Initialize all artifact bridges
   @OptIn(EntityStorageInstrumentationApi::class)
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   private fun initBridges() = initBridgesMs.addMeasuredTime {
     // XXX @RequiresReadLock annotation doesn't work for kt now
     ApplicationManager.getApplication().assertReadAccessAllowed()
@@ -387,7 +387,7 @@ class ArtifactManagerBridge(private val project: Project, coroutineScope: Corout
     }
   }
 
-  @RequiresWriteLock
+  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
   fun dropMappings(selector: (ArtifactEntity) -> Boolean) = dropMappingsMs.addMeasuredTime {
     // XXX @RequiresWriteLock annotation doesn't work for kt now
     ApplicationManager.getApplication().assertWriteAccessAllowed()

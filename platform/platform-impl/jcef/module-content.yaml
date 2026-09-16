@@ -1,3 +1,0 @@
-- name: dist.all/lib/intellij.platform.ide.impl.jcef.jar
-  modules:
-  - name: intellij.platform.ide.impl.jcef

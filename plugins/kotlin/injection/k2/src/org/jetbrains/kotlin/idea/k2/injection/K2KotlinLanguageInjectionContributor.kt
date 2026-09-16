@@ -6,7 +6,6 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiReference
 import com.intellij.psi.util.PsiTreeUtil
 import org.intellij.plugins.intelliLang.inject.InjectorUtils
-import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotation
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
@@ -51,7 +50,6 @@ internal class K2KotlinLanguageInjectionContributor : KotlinLanguageInjectionCon
 
     override fun resolveReference(reference: PsiReference): PsiElement? = reference.resolve()
 
-    @OptIn(KaPlatformInterface::class)
     override fun getTargetProperty(ktProperty: KtProperty, containingFile: PsiFile): KtProperty {
         val copyOrigin = containingFile.copyOrigin as? KtFile
             ?: return super.getTargetProperty(ktProperty, containingFile)

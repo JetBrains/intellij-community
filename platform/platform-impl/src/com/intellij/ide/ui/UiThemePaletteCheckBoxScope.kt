@@ -38,7 +38,8 @@ class PaletteKeys(id: String) {
 }
 
 /**
- * CheckBox scope for new themes, see [NewThemeCheckboxPatcher] for details
+ * Control scope for new themes — checkboxes and radio buttons,
+ * see [NewThemeCheckboxPatcher] for details
  */
 internal class UiThemePaletteCheckBoxScope(theme: UIThemeBean) : UiThemePaletteScope {
 
@@ -139,5 +140,5 @@ private val paletteNames: Set<String> = setOf(
   "Checkbox.Focus.Wide",
   "Checkbox.Foreground.Disabled",
   "Checkbox.Background.Disabled",
-  "Checkbox.Border.Disabled"
+  "Checkbox.Border.Disabled",
 )

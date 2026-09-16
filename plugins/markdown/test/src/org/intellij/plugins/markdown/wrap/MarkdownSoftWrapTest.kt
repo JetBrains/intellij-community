@@ -11,6 +11,23 @@ import org.intellij.plugins.markdown.editor.tables.ui.MarkdownInlayUpdateOnSoftW
 import org.junit.jupiter.api.assertDoesNotThrow
 
 class MarkdownSoftWrapTest : BasePlatformTestCase() {
+  /**
+   * The long token hides the previous space from the ten-character fast path.
+   * This forces the Markdown strategy to reject dots inside the address.
+   */
+  fun `test soft wrap does not break an IPv4 address`() {
+    val address = "192.168.0.1"
+    val text = "word ".repeat(10) + "unbreakable".repeat(2) + "$address more words after the address"
+    myFixture.configureByText("softWrapIpv4.md", text)
+    assertTrue(EditorTestUtil.configureSoftWraps(myFixture.editor, 80))
+
+    val addressStart = text.indexOf(address)
+    val wrapOffsets = myFixture.editor.softWrapModel.getSoftWrapsForRange(0, text.length).map { it.start }
+    assertNotEmpty(wrapOffsets)
+    assertEmpty("soft wrap must not appear inside the IPv4 address: $wrapOffsets",
+                wrapOffsets.filter { it in (addressStart + 1) until (addressStart + address.length) })
+  }
+
   fun `test listener does not throw or report slow operations on EDT`() {
     myFixture.configureByText("test.md", "")
     val listener = MarkdownInlayUpdateOnSoftWrapListener()

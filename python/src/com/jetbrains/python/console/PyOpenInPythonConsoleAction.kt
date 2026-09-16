@@ -44,7 +44,12 @@ internal class PyOpenInPythonConsoleAction : AnAction(), DumbAware {
     val target = runBlockingCancellable { resolveConsoleTarget(project, file) } ?: return
     presentation.isVisible = true
     // The one case the issue asks to grey out rather than hide: a Python subproject with no interpreter set up yet.
-    presentation.isEnabled = target.interpreter != null
+    setConsoleInterpreterState(
+      presentation = presentation,
+      hasInterpreter = target.interpreter != null,
+      reason = PyBundle.message("python.console.no.interpreter.subproject"),
+      defaultDescription = templatePresentation.description,
+    )
   }
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -58,9 +63,10 @@ internal class PyOpenInPythonConsoleAction : AnAction(), DumbAware {
 
     if (focusExistingConsole(project, consoleTabTitle(project, target.module, PyConsoleType.PYTHON.title))) return
 
-    val runner = PythonConsoleRunnerFactory.getInstance().createConsoleRunner(project, target.module)
-    runner.addConsoleListener { PythonConsoleToolWindow.getInstance(project)?.toolWindow?.show(null) }
-    runner.run(true)
+    launchPythonConsoleRunner(project, target.module) { runner ->
+      runner.addConsoleListener { PythonConsoleToolWindow.getInstance(project)?.toolWindow?.show(null) }
+      runner.run(true)
+    }
   }
 
   /**

@@ -28,14 +28,14 @@ class TerminalToolWindowEditorTabPersistenceProvider : ToolWindowEditorTabPersis
   // not put back the command re-run that TerminalTabsPersistence leaves out of the tool window state.
   override fun canSerialize(content: Content): Boolean = content.getTerminalTab()?.restoreOnProjectReopen == true
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun serialize(content: Content): Element {
     val tab = requireNotNull(content.getTerminalTab()) { "Not a reworked terminal content: $content" }
 
     return XmlSerializer.serialize(computePersistedTab(tab))
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun deserialize(project: Project, element: Element): Content? {
     if (!TrustedProjects.isProjectTrusted(project)) return null
 

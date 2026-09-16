@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.productLayout.generator
 
+import com.intellij.platform.buildScripts.concurrency.SharedTaskOwner
 import com.intellij.platform.pluginGraph.ContentModuleName
 import com.intellij.platform.pluginGraph.PluginId
 import kotlinx.coroutines.runBlocking
@@ -39,6 +40,13 @@ import java.nio.file.Path
  */
 @ExtendWith(TestFailureLogger::class)
 class SuppressionConfigGeneratorTest {
+  private val owner = SharedTaskOwner("SuppressionConfigGeneratorTest")
+
+  @org.junit.jupiter.api.AfterEach
+  fun closeSharedTasks() {
+    owner.close()
+  }
+
 
   @Test
   fun `update suppressions defers file writes until pipeline output stage`(@TempDir tempDir: Path): Unit = runBlocking {
@@ -62,7 +70,7 @@ class SuppressionConfigGeneratorTest {
       fileUpdater = DeferredFileUpdater(tempDir),
       suppressionConfig = existingConfig,
       updateSuppressions = true,
-      suppressionConfigPath = suppressionsPath,
+      suppressionConfigPath = suppressionsPath, owner = owner,
     )
 
     val ctx = ComputeContextImpl(model)
@@ -349,45 +357,48 @@ class SuppressionConfigGeneratorTest {
   }
 }
 
-private suspend fun runSuppressionConfigGenerator(
+private fun runSuppressionConfigGenerator(
   tempDir: Path,
   graph: com.intellij.platform.pluginGraph.PluginGraph,
   existingConfig: SuppressionConfig,
   contentPlans: List<ContentModuleDependencyPlan> = emptyList(),
   pluginPlans: List<PluginDependencyPlan> = emptyList(),
 ): Pair<org.jetbrains.intellij.build.productLayout.pipeline.SuppressionConfigOutput, List<org.jetbrains.intellij.build.productLayout.model.error.FileDiff>> {
-  val suppressionsPath = tempDir.resolve("suppressions.json")
-  Files.writeString(suppressionsPath, SuppressionConfig.serializeToString(existingConfig))
-  val fileUpdater = DeferredFileUpdater(tempDir)
-  val model = testGenerationModel(
-    pluginGraph = graph,
-    fileUpdater = fileUpdater,
-    suppressionConfig = existingConfig,
-    updateSuppressions = true,
-    suppressionConfigPath = suppressionsPath,
-  )
+  return SharedTaskOwner("validation").use { owner ->
+    val suppressionsPath = tempDir.resolve("suppressions.json")
+    Files.writeString(suppressionsPath, SuppressionConfig.serializeToString(existingConfig))
+    val fileUpdater = DeferredFileUpdater(tempDir)
+    val model = testGenerationModel(
+      owner = owner,
+      pluginGraph = graph,
+      fileUpdater = fileUpdater,
+      suppressionConfig = existingConfig,
+      updateSuppressions = true,
+      suppressionConfigPath = suppressionsPath,
+    )
 
-  val ctx = ComputeContextImpl(model)
-  ctx.initSlot(Slots.PRODUCT_MODULE_DEPS)
-  ctx.publish(Slots.PRODUCT_MODULE_DEPS, ProductModuleDepsOutput(files = emptyList()))
-  ctx.initSlot(Slots.CONTENT_MODULE_PLAN)
-  ctx.publish(Slots.CONTENT_MODULE_PLAN, ContentModuleDependencyPlanOutput(plans = contentPlans))
-  ctx.initSlot(Slots.PLUGIN_DEPENDENCY_PLAN)
-  ctx.publish(Slots.PLUGIN_DEPENDENCY_PLAN, PluginDependencyPlanOutput(plans = pluginPlans))
-  ctx.initSlot(Slots.TEST_LIBRARY_SCOPE_SUPPRESSIONS)
-  ctx.publish(Slots.TEST_LIBRARY_SCOPE_SUPPRESSIONS, emptyList())
+    val ctx = ComputeContextImpl(model)
+    ctx.initSlot(Slots.PRODUCT_MODULE_DEPS)
+    ctx.publish(Slots.PRODUCT_MODULE_DEPS, ProductModuleDepsOutput(files = emptyList()))
+    ctx.initSlot(Slots.CONTENT_MODULE_PLAN)
+    ctx.publish(Slots.CONTENT_MODULE_PLAN, ContentModuleDependencyPlanOutput(plans = contentPlans))
+    ctx.initSlot(Slots.PLUGIN_DEPENDENCY_PLAN)
+    ctx.publish(Slots.PLUGIN_DEPENDENCY_PLAN, PluginDependencyPlanOutput(plans = pluginPlans))
+    ctx.initSlot(Slots.TEST_LIBRARY_SCOPE_SUPPRESSIONS)
+    ctx.publish(Slots.TEST_LIBRARY_SCOPE_SUPPRESSIONS, emptyList())
 
-  val contentModuleDepsErrorSlot = ErrorSlot(NodeIds.CONTENT_MODULE_DEPS)
-  ctx.initSlot(contentModuleDepsErrorSlot)
-  ctx.publish(contentModuleDepsErrorSlot, emptyList())
-  val pluginXmlDepsErrorSlot = ErrorSlot(NodeIds.PLUGIN_XML_DEPS)
-  ctx.initSlot(pluginXmlDepsErrorSlot)
-  ctx.publish(pluginXmlDepsErrorSlot, emptyList())
+    val contentModuleDepsErrorSlot = ErrorSlot(NodeIds.CONTENT_MODULE_DEPS)
+    ctx.initSlot(contentModuleDepsErrorSlot)
+    ctx.publish(contentModuleDepsErrorSlot, emptyList())
+    val pluginXmlDepsErrorSlot = ErrorSlot(NodeIds.PLUGIN_XML_DEPS)
+    ctx.initSlot(pluginXmlDepsErrorSlot)
+    ctx.publish(pluginXmlDepsErrorSlot, emptyList())
 
-  ctx.initSlot(Slots.SUPPRESSION_CONFIG)
-  val nodeCtx = ctx.forNode(SuppressionConfigGenerator.id)
-  SuppressionConfigGenerator.execute(nodeCtx)
-  ctx.finalizeNodeErrors(SuppressionConfigGenerator.id)
+    ctx.initSlot(Slots.SUPPRESSION_CONFIG)
+    val nodeCtx = ctx.forNode(SuppressionConfigGenerator.id)
+    SuppressionConfigGenerator.execute(nodeCtx)
+    ctx.finalizeNodeErrors(SuppressionConfigGenerator.id)
 
-  return ctx.get(Slots.SUPPRESSION_CONFIG) to model.fileUpdater.getDiffs()
+    ctx.get(Slots.SUPPRESSION_CONFIG) to model.fileUpdater.getDiffs()
+  }
 }

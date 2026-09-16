@@ -1,18 +1,16 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.awaitCancellation
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
+import com.intellij.platform.buildScripts.concurrency.TaskFailedException
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.time.Duration.Companion.milliseconds
 
 class ConcurrencyTest {
   @Test
@@ -22,15 +20,13 @@ class ConcurrencyTest {
     val seen = ConcurrentHashMap.newKeySet<Int>()
     val virtual = ConcurrentHashMap.newKeySet<Boolean>()
 
-    runBlocking {
-      (1..20).toList().forEachConcurrent(concurrency = 3) { item ->
-        val now = running.incrementAndGet()
-        maxRunning.accumulateAndGet(now, ::maxOf)
-        virtual.add(Thread.currentThread().isVirtual)
-        Thread.sleep(20)
-        seen.add(item)
-        running.decrementAndGet()
-      }
+    (1..20).toList().forEachConcurrent(concurrency = 3) { item ->
+      val now = running.incrementAndGet()
+      maxRunning.accumulateAndGet(now, ::maxOf)
+      virtual.add(Thread.currentThread().isVirtual)
+      Thread.sleep(20)
+      seen.add(item)
+      running.decrementAndGet()
     }
 
     assertThat(seen).containsExactlyInAnyOrderElementsOf(1..20)
@@ -40,11 +36,9 @@ class ConcurrencyTest {
 
   @Test
   fun mapConcurrentPreservesInputOrder() {
-    val result = runBlocking {
-      listOf(1, 2, 3).mapConcurrent(concurrency = 3) { value ->
-        delay(((4 - value) * 10).milliseconds)
-        value
-      }
+    val result = listOf(1, 2, 3).mapConcurrent(concurrency = 3) { value ->
+      Thread.sleep(((4 - value) * 10).toLong())
+      value
     }
 
     assertThat(result).containsExactly(1, 2, 3)
@@ -52,63 +46,58 @@ class ConcurrencyTest {
 
   @Test
   fun mapConcurrentHandlesAnEmptyCollectionAndASingleItem() {
-    runBlocking {
-      assertThat(emptyList<Int>().mapConcurrent { it }).isEmpty()
-      assertThat(setOf(7).mapConcurrent(concurrency = 1) { it * 2 }).containsExactly(14)
-    }
+    assertThat(emptyList<Int>().mapConcurrent { it }).isEmpty()
+    assertThat(setOf(7).mapConcurrent(concurrency = 1) { it * 2 }).containsExactly(14)
   }
 
   @Test
   fun mapConcurrentValidatesConcurrency() {
     assertThatThrownBy {
-      runBlocking {
-        listOf(1).mapConcurrent(concurrency = 0) { it }
-      }
+      listOf(1).mapConcurrent(concurrency = 0) { it }
     }
       .isInstanceOf(IllegalArgumentException::class.java)
       .hasMessageContaining("Concurrency must be positive")
   }
 
   @Test
-  fun mapConcurrentPropagatesTheFirstFailureAndCancelsTheOtherWorkers() {
-    val siblingCancelled = CompletableFuture<Unit>()
+  fun mapConcurrentPropagatesTheFirstFailureAndInterruptsTheOtherWorkers() {
+    val siblingInterrupted = CompletableFuture<Unit>()
+    val siblingStarted = CountDownLatch(1)
     assertThatThrownBy {
-      runBlocking {
-        listOf(1, 2).mapConcurrent(concurrency = 2) { item ->
-          if (item == 1) {
-            try {
-              awaitCancellation()
-            }
-            catch (e: CancellationException) {
-              siblingCancelled.complete(Unit)
-              throw e
-            }
+      listOf(1, 2).mapConcurrent(concurrency = 2) { item ->
+        if (item == 1) {
+          siblingStarted.countDown()
+          try {
+            Thread.sleep(10_000)
           }
-          check(item != 2) { "boom" }
-          item
+          catch (e: InterruptedException) {
+            siblingInterrupted.complete(Unit)
+            throw e
+          }
         }
+        siblingStarted.await()
+        check(item != 2) { "boom" }
+        item
       }
     }
-      .isInstanceOf(IllegalStateException::class.java)
+      .isInstanceOf(TaskFailedException::class.java)
       .hasMessageContaining("boom")
 
-    assertThat(siblingCancelled.orTimeout(5, TimeUnit.SECONDS).join()).isEqualTo(Unit)
+    assertThat(siblingInterrupted.orTimeout(5, TimeUnit.SECONDS).join()).isEqualTo(Unit)
   }
 
   @Test
-  fun mapConcurrentPropagatesCancellation() {
+  fun mapConcurrentPropagatesACancellationThrownByAnAction() {
     assertThatThrownBy {
-      runBlocking {
-        listOf(1, 2, 3).mapConcurrent(concurrency = 2) { item ->
-          if (item == 2) {
-            throw CancellationException("cancel")
-          }
-          delay(50.milliseconds)
-          item
+      listOf(1, 2, 3).mapConcurrent(concurrency = 2) { item ->
+        if (item == 2) {
+          throw CancellationException("cancel")
         }
+        Thread.sleep(50)
+        item
       }
     }
-      .isInstanceOf(CancellationException::class.java)
-      .satisfies({ e -> assertThat(generateSequence(e) { it.cause }.map { it.message }.toList()).contains("cancel") })
+      .isInstanceOf(TaskFailedException::class.java)
+      .hasCauseInstanceOf(CancellationException::class.java)
   }
 }

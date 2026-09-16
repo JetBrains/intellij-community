@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.java.copyright` start
+content_module_jar(module = ":copyright")
+### auto-generated section `dev intellij.java.copyright` end
+
 ### auto-generated section `build intellij.java.copyright` start
 jvm_library(
     name = "copyright",
@@ -29,8 +33,6 @@ jvm_library(
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     ],
 )
-
-content_module_jar(module = ":copyright")
 
 jvm_library(
     name = "copyright_test_lib",

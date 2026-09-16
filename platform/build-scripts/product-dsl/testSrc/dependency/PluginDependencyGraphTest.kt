@@ -310,7 +310,7 @@ class PluginDependencyGraphTest {
       val builder = PluginGraphBuilder()
       builder.addTarget(targetModule)
       builder.registerReferencedPlugins(object : PluginContentProvider {
-        override suspend fun getOrExtract(pluginModule: TargetName): PluginContentInfo? {
+        override fun getOrExtract(pluginModule: TargetName): PluginContentInfo? {
           return if (pluginModule == targetModule) info else null
         }
       })
@@ -361,7 +361,7 @@ class PluginDependencyGraphTest {
       val builder = PluginGraphBuilder()
       builder.addTarget(targetModule)
       builder.registerReferencedPlugins(object : PluginContentProvider {
-        override suspend fun getOrExtract(pluginModule: TargetName): PluginContentInfo? {
+        override fun getOrExtract(pluginModule: TargetName): PluginContentInfo? {
           return if (pluginModule == targetModule) info else null
         }
       })
@@ -448,7 +448,7 @@ class PluginDependencyGraphTest {
       val builder = PluginGraphBuilder()
       builder.addTarget(discoveredModule)
       val discoveredInfos = builder.registerReferencedPlugins(object : PluginContentProvider {
-        override suspend fun getOrExtract(pluginModule: TargetName): PluginContentInfo? {
+        override fun getOrExtract(pluginModule: TargetName): PluginContentInfo? {
           return if (pluginModule == discoveredModule) discoveredInfo else null
         }
       })

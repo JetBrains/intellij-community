@@ -11,6 +11,10 @@ jps_test(
 )
 ### skip generation section `test intellij.driver.client.tests`
 
+### auto-generated section `dev intellij.driver.client` start
+content_module_jar(module = ":client")
+### auto-generated section `dev intellij.driver.client` end
+
 ### auto-generated section `build intellij.driver.client` start
 jvm_library(
     name = "client",
@@ -35,8 +39,6 @@ jvm_library(
         "//libraries/jetbrains/annotations",
     ],
 )
-
-content_module_jar(module = ":client")
 
 jvm_library(
     name = "client_test_lib",

@@ -64,7 +64,7 @@ abstract class CompletionCommand : UserDataHolderBase() {
    * It can be a null or imaginary editor.
    * Used only for compatibility with old actions
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   abstract fun execute(offset: Int, psiFile: PsiFile, editor: Editor?)
 
   override fun toString(): String {

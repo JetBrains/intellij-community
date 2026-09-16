@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.properties.psi` start
+content_module_jar(module = ":psi")
+### auto-generated section `dev intellij.properties.psi` end
+
 ### auto-generated section `build intellij.properties.psi` start
 jvm_library(
     name = "psi",
@@ -38,8 +42,6 @@ jvm_library(
         "//jps/model-api:model",
     ],
 )
-
-content_module_jar(module = ":psi")
 
 jvm_library(
     name = "psi_test_lib",

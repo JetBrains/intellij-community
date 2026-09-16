@@ -23,12 +23,20 @@ import com.intellij.platform.testFramework.projectModel.library.MockCustomLibrar
 import com.intellij.platform.testFramework.projectModel.library.NewMockCustomLibraryTableDescription
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryTableId
+import com.intellij.platform.workspace.storage.InternalEnvironmentName
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageImpl
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.XmlSerializerUtil
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
+import com.intellij.workspaceModel.ide.impl.createIdeVirtualFileUrlManager
+import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsGlobalModelSynchronizerImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LegacyCustomLibraryEntitySource
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import org.jdom.Element
 import org.junit.Rule
 import org.junit.Test
@@ -152,6 +160,36 @@ class CustomLibraryBridgeTest {
     assertEquals("/a/b/c/d/", library.getUrls(OrderRootType.CLASSES)[0])
     assertEquals("/a/c/d", library.getUrls(OrderRootType.SOURCES)[0])
     assertEquals(MockLibraryProperties("data"), library.properties)
+  }
+
+  @Test
+  @Suppress("RAW_SCOPE_CREATION")
+  fun `test cached libraries of unregistered custom tables are removed at loading`() {
+    val mockCustomLibraryTableDescription = MockCustomLibraryTableDescription()
+    ExtensionPointName.create<CustomLibraryTableDescription>("com.intellij.customLibraryTable").point
+      .registerExtension(mockCustomLibraryTableDescription, disposableRule.disposable)
+    val registeredLevel = mockCustomLibraryTableDescription.tableLevel
+    val unregisteredLevel = "unregistered_level"
+
+    val mutableStorage = MutableEntityStorage.create()
+    mutableStorage.addEntity(LibraryEntity("kept", LibraryTableId.GlobalLibraryTableId(registeredLevel), emptyList(),
+                                           LegacyCustomLibraryEntitySource(registeredLevel)))
+    mutableStorage.addEntity(LibraryEntity("orphan", LibraryTableId.GlobalLibraryTableId(unregisteredLevel), emptyList(),
+                                           LegacyCustomLibraryEntitySource(unregisteredLevel)))
+
+    val coroutineScope = CoroutineScope(SupervisorJob())
+    try {
+      val synchronizer = JpsGlobalModelSynchronizerImpl(coroutineScope)
+      synchronizer.setVirtualFileUrlManager(createIdeVirtualFileUrlManager())
+      // The callback is not invoked on purpose: it only starts the delayed loading
+      synchronizer.loadInitialState(LocalEelMachine, InternalEnvironmentName.of("test"), mutableStorage,
+                                    VersionedEntityStorageImpl(mutableStorage.toSnapshot()), loadedFromCache = true)
+    }
+    finally {
+      coroutineScope.cancel()
+    }
+
+    assertEquals(listOf("kept"), mutableStorage.entities(LibraryEntity::class.java).map { it.name }.toList())
   }
 
   @Test

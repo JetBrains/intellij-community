@@ -5,11 +5,11 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
-import com.intellij.python.pytools.PyTool
-import com.intellij.python.pytools.ToolCommandSpec
-import com.intellij.python.pytools.Version
-import com.intellij.python.pytools.getToolVersion
-import com.intellij.python.pytools.parseVersion
+import com.intellij.python.pytools.backend.PyTool
+import com.intellij.python.pytools.backend.ToolCommandSpec
+import com.intellij.python.pytools.backend.Version
+import com.intellij.python.pytools.backend.getToolVersion
+import com.intellij.python.pytools.backend.parseVersion
 import com.intellij.python.pytools.resolveExecutable
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.TraceContext
@@ -27,7 +27,7 @@ import kotlinx.coroutines.withContext
 
 class ToolValidator<P : PathHolder>(
   val fileSystem: FileSystem<P>,
-  val tool: PyTool,
+  val tool: PyTool<*>,
   override val backProperty: ObservableMutableProperty<ValidatedPath.Executable<P>?>,
   propertyGraph: PropertyGraph,
   val toolValidator: suspend (P) -> PyResult<Version> = { fileSystem.getBinaryToExec(it).getToolVersion(tool.fusId) },

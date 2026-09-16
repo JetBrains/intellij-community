@@ -13,6 +13,7 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiWhiteSpace
+import org.jetbrains.kotlin.idea.base.psi.removeRedundantConstructorKeyword
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.psi.KtClass
@@ -51,6 +52,6 @@ private class RemoveRedundantConstructorFix : PsiUpdateModCommandQuickFix() {
 
     override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
         val constructor = element as? KtPrimaryConstructor ?: return
-        constructor.removeRedundantConstructorKeywordAndSpace()
+        constructor.removeRedundantConstructorKeyword()
     }
 }

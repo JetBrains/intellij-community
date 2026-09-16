@@ -20,20 +20,20 @@ interface SettingsLog {
    * @return true if the repository was created from scratch;
    * false if the data was already there, and we've just created internal structures.
    */
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun initialize()
 
   /**
    * Records all shareable settings from the config directories in their current state.
    * Happens on the very first settings sync initialization, and between IDE sessions.
    */
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun logExistingSettings()
 
   /**
    * Records the current local state of the settings.
    */
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun applyIdeState(snapshot: SettingsSnapshot, message: String)
 
   /**
@@ -41,14 +41,14 @@ interface SettingsLog {
    *
    * returns true if merge has happened, false in case of fast-forward
    */
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun applyCloudState(snapshot: SettingsSnapshot, message: String)
 
   /**
    * Returns the current state of the settings as it is now from the SettingsLog point of view,
    * i.e. the state after all completed apply and merge operations.
    */
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun collectCurrentSnapshot(): SettingsSnapshot
 
   fun getIdePosition(): Position

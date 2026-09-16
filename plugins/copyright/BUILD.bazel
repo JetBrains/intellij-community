@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
+load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_DESCRIPTORS", "MODULE_TARGETS")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jps_test(
@@ -10,6 +11,17 @@ jps_test(
     runtime_deps = [":copyright-tests_test_lib"],
 )
 ### skip generation section `test intellij.copyright.tests`
+
+### auto-generated section `dev intellij.copyright` start
+dev_dist_plugin(
+    content_modules = ["intellij.copyright.vcs"],
+    descriptor = "resources/META-INF/plugin.xml",
+    descriptor_index = MODULE_DESCRIPTORS,
+    descriptor_modules = ["intellij.copyright.vcs"],
+    main_module = "intellij.copyright",
+    module_targets = MODULE_TARGETS,
+)
+### auto-generated section `dev intellij.copyright` end
 
 ### auto-generated section `build intellij.copyright` start
 jvm_library(
@@ -121,18 +133,6 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.copyright` end
-
-### auto-generated section `dev intellij.copyright` start
-dev_dist_plugin(
-    content_modules = ["//plugins/copyright/vcs"],
-    descriptor = "resources/META-INF/plugin.xml",
-    descriptor_module = ":copyright",
-    descriptors = {
-        "@community//plugins/copyright/vcs:resources/intellij.copyright.vcs.xml": "intellij.copyright.vcs.xml",
-    },
-    main_module = "intellij.copyright",
-)
-### auto-generated section `dev intellij.copyright` end
 
 ### auto-generated section `build intellij.copyright.tests` start
 jvm_library(

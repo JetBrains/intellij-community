@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.yaml.syntax` start
+content_module_jar(module = ":syntax")
+### auto-generated section `dev intellij.yaml.syntax` end
+
 ### auto-generated section `build intellij.yaml.syntax` start
 jvm_library(
     name = "syntax",
@@ -30,8 +34,6 @@ jvm_library(
         "//platform/syntax/syntax-i18n:i18n",
     ],
 )
-
-content_module_jar(module = ":syntax")
 
 jvm_library(
     name = "syntax_test_lib",

@@ -73,6 +73,10 @@ class LocalDriverRunner : DriverRunner {
           collectNativeThreads = collectNativeThreads,
         ) {
           provideDriverProperties(driverOptions)
+          // in split mode RemDevDriverRunner already enabled it for the frontend and the backend together
+          if (!context.isRemDevContext()) {
+            addVMOptionsPatch { enableFocusRequestsLog() }
+          }
           configure()
         }
       }

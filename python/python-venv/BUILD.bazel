@@ -3,6 +3,18 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+jps_test(
+    name = "venv-tests_test",
+    timeout = "short",
+    tags = ["community-aggregator"],
+    runtime_deps = [":venv-tests_test_lib"],
+)
+### skip generation section `test intellij.python.venv.tests`
+
+### auto-generated section `dev intellij.python.venv` start
+content_module_jar(module = ":venv")
+### auto-generated section `dev intellij.python.venv` end
+
 ### auto-generated section `build intellij.python.venv` start
 create_kotlinc_options(
     name = "custom_venv",
@@ -18,8 +30,6 @@ jvm_library(
             "src/**/*.kt",
             "src/**/*.java",
             "src/**/*.form",
-            "gen/**/*.kt",
-            "gen/**/*.java",
         ],
         allow_empty = True,
     ),
@@ -32,13 +42,14 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
+        "//python/python-venv/common",
         "@lib//:kotlin-stdlib",
         "//libraries/jetbrains/annotations",
         "//python/openapi:community",
         "//python/python-exec-service:community-execService",
         "//libraries/kotlinx/coroutines/core",
         "//python/python-sdk/backend",
-        "//python/python-pytools:pytools",
+        "//python/python-pytools/backend",
         "//python/python-sdk/common",
         "//platform/projectModel-api:projectModel",
         "//platform/util",
@@ -49,8 +60,6 @@ jvm_library(
         "//platform/analysis-api:analysis",
     ],
 )
-
-content_module_jar(module = ":venv")
 
 jvm_library(
     name = "venv_test_lib",
@@ -65,12 +74,13 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":venv",
+        "//python/python-venv/common:common_test_lib",
         "//libraries/jetbrains/annotations:annotations_test_lib",
         "//python/openapi:community_test_lib",
         "//python/python-exec-service:community-execService_test_lib",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//python/python-sdk/backend:backend_test_lib",
-        "//python/python-pytools:pytools_test_lib",
+        "//python/python-pytools/backend:backend_test_lib",
         "//python/python-sdk/common:common_test_lib",
         "//platform/projectModel-api:projectModel_test_lib",
         "//platform/util:util_test_lib",
@@ -108,6 +118,7 @@ jvm_library(
     ),
     module_name = "intellij.python.venv.tests",
     visibility = ["//visibility:public"],
+    runtime_deps = ["//xml/plugin"],
 )
 
 jvm_library(
@@ -135,6 +146,7 @@ jvm_library(
         # do not sort,
         ":venv-tests",
         "//platform/ide-core-impl:ide-core-impl_test_lib",
+        "//xml/plugin:plugin_test_lib",
     ],
     deps = [
         # do not sort,
@@ -190,10 +202,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.python.venv.tests` end
-
-### auto-generated section `test intellij.python.venv.tests` start
-jps_test(
-    name = "venv-tests_test",
-    runtime_deps = [":venv-tests_test_lib"],
-)
-### auto-generated section `test intellij.python.venv.tests` end

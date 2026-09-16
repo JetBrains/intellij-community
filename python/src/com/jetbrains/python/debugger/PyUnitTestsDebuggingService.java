@@ -32,6 +32,7 @@ import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionListener;
 import com.intellij.xdebugger.XSourcePosition;
 import com.jetbrains.python.PyBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,13 +47,15 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
 
 @Service(Service.Level.PROJECT)
-final class PyUnitTestsDebuggingService {
+@ApiStatus.Internal
+public final class PyUnitTestsDebuggingService {
   private static final @NotNull Map<XDebugSession, List<Inlay<FailedTestInlayRenderer>>> ourActiveInlays = new WeakHashMap<>();
   private static final @NotNull Map<Inlay<?>, ComponentListener> ourEditorListeners = Maps.newHashMap();
 
@@ -73,24 +76,27 @@ final class PyUnitTestsDebuggingService {
    */
   public void showFailedTestInlay(@NotNull XDebugSession debugSession, @NotNull PyStackFrame frame,
                                   @NotNull String exceptionType, @NotNull String errorMessage, boolean isTestSetUpFail) {
-    AppUIUtil.invokeLaterIfProjectAlive(debugSession.getProject(), () -> {
-      XSourcePosition position = frame.getPosition();
-      if (position == null) return;
+    showFailedTestInlay(debugSession, frame.getPosition(), exceptionType, errorMessage, isTestSetUpFail);
+  }
 
-      Consumer<Editor> addInlayToEditor = makeAddInlayToEditorFunction(debugSession, frame, exceptionType, errorMessage, isTestSetUpFail);
+  public void showFailedTestInlay(@NotNull XDebugSession debugSession, @Nullable XSourcePosition position,
+                                  @NotNull String exceptionType, @NotNull String errorMessage, boolean isTestSetUpFail) {
+    if (position == null) return;
+    AppUIUtil.invokeLaterIfProjectAlive(debugSession.getProject(), () -> {
+      Consumer<Editor> addInlayToEditor = makeAddInlayToEditorFunction(debugSession, position, exceptionType, errorMessage, isTestSetUpFail);
       Arrays.stream(getAllEditorsForFile(debugSession.getProject(), position.getFile())).forEach(
         editor -> addInlayToEditor.consume(editor));
     });
   }
 
-  private Consumer<Editor> makeAddInlayToEditorFunction(@NotNull XDebugSession debugSession, @NotNull PyStackFrame frame,
+  private Consumer<Editor> makeAddInlayToEditorFunction(@NotNull XDebugSession debugSession, @NotNull XSourcePosition position,
                                                         @NotNull String exceptionType, @NotNull String errorMessage,
                                                         boolean isTestSetUpFail) {
     return editor -> {
       InlayModel inlayModel = editor.getInlayModel();
 
       Inlay<FailedTestInlayRenderer> inlay = inlayModel.addBlockElement(
-        frame.getPosition().getOffset(), true, false, 0,
+        position.getOffset(), true, false, 0,
         new FailedTestInlayRenderer(exceptionType, errorMessage, isTestSetUpFail));
 
       if (inlay == null) return;
@@ -116,7 +122,7 @@ final class PyUnitTestsDebuggingService {
         debugSession.addSessionListener(new XDebugSessionListener() {
           @Override
           public void sessionResumed() {
-            Disposer.dispose(inlay);
+            disposeInlay(inlay);
             debugSession.removeSessionListener(this);
           }
         });
@@ -127,12 +133,22 @@ final class PyUnitTestsDebuggingService {
   public static void removeInlaysAssociatedWithSession(XDebugSession session) {
     List<Inlay<FailedTestInlayRenderer>> inlays = ourActiveInlays.getOrDefault(session, null);
     if (inlays != null) {
-      inlays.forEach((inlay) -> {
-        inlay.getEditor().getComponent().removeComponentListener(ourEditorListeners.get(inlay));
-        ApplicationManager.getApplication().invokeLater(() -> Disposer.dispose(inlay));
-      });
+      inlays.forEach((inlay) -> ApplicationManager.getApplication().invokeLater(() -> disposeInlay(inlay)));
       ourActiveInlays.remove(session);
     }
+  }
+
+  /**
+   * Dispose the inlay and forget its listener.
+   * {@code ourEditorListeners} is static, so an entry that stays keeps the editor and the
+   * project alive after the session ends.
+   */
+  private static void disposeInlay(@NotNull Inlay<?> inlay) {
+    ComponentListener listener = ourEditorListeners.remove(inlay);
+    if (listener != null) {
+      inlay.getEditor().getComponent().removeComponentListener(listener);
+    }
+    Disposer.dispose(inlay);
   }
 
   /**
@@ -141,8 +157,18 @@ final class PyUnitTestsDebuggingService {
    * @param frames of the thread where an exception has occured
    */
   public static boolean isErrorInTestSetUpOrTearDown(@NotNull List<PyStackFrameInfo> frames) {
-    for (PyStackFrameInfo frameInfo : frames) {
-      if (ContainerUtil.exists(SET_UP_AND_TEAR_DOWN_FUNCTIONS_BY_FRAMEWORK.values(), names -> names.contains(frameInfo.getName())))
+    return isErrorInTestSetUpOrTearDown(ContainerUtil.map(frames, PyStackFrameInfo::getName));
+  }
+
+  /**
+   * Check if the error has happened while set up or tear down.
+   *
+   * @param frameNames the function names of the thread where an exception has occurred
+   */
+  @ApiStatus.Internal
+  public static boolean isErrorInTestSetUpOrTearDown(@NotNull Collection<String> frameNames) {
+    for (String frameName : frameNames) {
+      if (ContainerUtil.exists(SET_UP_AND_TEAR_DOWN_FUNCTIONS_BY_FRAMEWORK.values(), names -> names.contains(frameName)))
         return true;
     }
     return false;
@@ -202,13 +228,13 @@ final class PyUnitTestsDebuggingService {
 
       g.setColor(UIUtil.getToolTipForeground());
 
+      // An exception can carry no message. Then the type alone must appear, without a colon.
       String[] lines = StringUtil.splitByLines(myErrorMessage);
-      drawStringToInlayBox(myExceptionType + ": " + lines[0], inlay, g, targetRegion);
+      String firstLine = myErrorMessage.isEmpty() ? myExceptionType : myExceptionType + ": " + lines[0];
+      drawStringToInlayBox(firstLine, inlay, g, targetRegion);
 
-      if (lines.length > 1) {
-        for (int k = 1; k < lines.length; k++) {
-          drawStringToInlayBox(lines[k], inlay, g, targetRegion);
-        }
+      for (int k = 1; k < lines.length; k++) {
+        drawStringToInlayBox(lines[k], inlay, g, targetRegion);
       }
     }
 

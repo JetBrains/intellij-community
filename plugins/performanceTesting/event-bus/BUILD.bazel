@@ -10,6 +10,10 @@ jps_test(
 )
 ### skip generation section `test intellij.tools.ide.starter.bus.tests`
 
+### auto-generated section `dev intellij.tools.ide.starter.bus` start
+content_module_jar(module = ":tools-ide-starter-bus")
+### auto-generated section `dev intellij.tools.ide.starter.bus` end
+
 ### auto-generated section `build intellij.tools.ide.starter.bus` start
 jvm_library(
     name = "tools-ide-starter-bus",
@@ -41,8 +45,6 @@ jvm_library(
         "//libraries/netty/codec-compression:libraries-netty-codec-compression",
     ],
 )
-
-content_module_jar(module = ":tools-ide-starter-bus")
 
 jvm_library(
     name = "tools-ide-starter-bus_test_lib",

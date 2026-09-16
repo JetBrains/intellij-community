@@ -13,8 +13,8 @@ import org.jetbrains.kotlin.analysis.api.components.compositeScope
 import org.jetbrains.kotlin.analysis.api.components.scopeContext
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.resolution.KaCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleOrMultiCall
 import org.jetbrains.kotlin.analysis.api.resolution.function
 import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -358,7 +358,7 @@ internal object WrapWithSafeLetCallFixFactories {
      * function or the function doesn't have a parameter at the given index. Then caller can do whatever needed to cover such cases.
      */
     context(session: KaSession)
-    private fun doesFunctionAcceptNull(call: KaCall, index: Int): Boolean? {
+    private fun doesFunctionAcceptNull(call: KaSimpleOrMultiCall, index: Int): Boolean? {
         val symbol = (call as? KaFunctionCall<*>)?.symbol ?: return null
         if (index == -1) {
             // Null extension receiver means the function does not accept extension receiver and hence cannot be invoked on a nullable

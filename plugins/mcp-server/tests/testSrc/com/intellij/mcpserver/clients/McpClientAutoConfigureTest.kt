@@ -79,7 +79,7 @@ class McpClientAutoConfigureTest {
 
     McpClient.overrideProductSpecificServerKeyForTests("test")
 
-    val client = CursorClient(McpClientInfo.Scope.Global, configPath)
+    val client = CursorClient(McpClientInfo.McpClientScope.McpClientGlobalScope, configPath)
     runBlocking(Dispatchers.Default) {
       client.autoConfigure()
     }
@@ -98,7 +98,7 @@ class McpClientAutoConfigureTest {
 
     McpClient.overrideProductSpecificServerKeyForTests("test")
 
-    val client = VSCodeClient(McpClientInfo.Scope.Global, configPath)
+    val client = VSCodeClient(McpClientInfo.McpClientScope.McpClientGlobalScope, configPath)
     runBlocking(Dispatchers.Default) {
       client.autoConfigure()
     }
@@ -117,7 +117,7 @@ class McpClientAutoConfigureTest {
 
     McpClient.overrideProductSpecificServerKeyForTests("test")
 
-    val client = WindsurfClient(McpClientInfo.Scope.Global, configPath)
+    val client = WindsurfClient(McpClientInfo.McpClientScope.McpClientGlobalScope, configPath)
     runBlocking(Dispatchers.Default) {
       client.autoConfigure()
     }
@@ -136,7 +136,7 @@ class McpClientAutoConfigureTest {
 
     McpClient.overrideProductSpecificServerKeyForTests("codextest")
 
-    val client = CodexClient(McpClientInfo.Scope.Global, configPath)
+    val client = CodexClient(McpClientInfo.McpClientScope.McpClientGlobalScope, configPath)
     // CodexClient overrides streamableHttpUrl, so it doesn't need service substitution
     runBlocking(Dispatchers.Default) {
       client.autoConfigure()
@@ -155,7 +155,7 @@ class McpClientAutoConfigureTest {
 
     McpClient.overrideProductSpecificServerKeyForTests("test")
 
-    val client = JunieClient(McpClientInfo.Scope.Global, configPath)
+    val client = JunieClient(McpClientInfo.McpClientScope.McpClientGlobalScope, configPath)
     runBlocking(Dispatchers.Default) {
       client.autoConfigure()
     }
@@ -174,7 +174,7 @@ class McpClientAutoConfigureTest {
 
     McpClient.overrideProductSpecificServerKeyForTests("test")
 
-    val client = ClaudeCodeClient(McpClientInfo.Scope.Global, configPath)
+    val client = ClaudeCodeClient(McpClientInfo.McpClientScope.McpClientGlobalScope, configPath)
     runBlocking(Dispatchers.Default) {
       client.autoConfigure()
     }
@@ -194,7 +194,7 @@ class McpClientAutoConfigureTest {
 
     McpClient.overrideProductSpecificServerKeyForTests("test")
 
-    val client = AirClient(McpClientInfo.Scope.Global, configPath)
+    val client = AirClient(McpClientInfo.McpClientScope.McpClientGlobalScope, configPath)
     runBlocking(Dispatchers.Default) {
       client.autoConfigure()
     }
@@ -225,7 +225,7 @@ class McpClientAutoConfigureTest {
 
     McpClient.overrideProductSpecificServerKeyForTests("test")
 
-    val client = CursorClient(McpClientInfo.Scope.Global, configPath)
+    val client = CursorClient(McpClientInfo.McpClientScope.McpClientGlobalScope, configPath)
     runBlocking(Dispatchers.EDT) {
       client.autoConfigure()
     }
@@ -258,7 +258,7 @@ class McpClientAutoConfigureTest {
 
     McpClient.overrideProductSpecificServerKeyForTests("test")
 
-    val client = CursorClient(McpClientInfo.Scope.Global, configPath)
+    val client = CursorClient(McpClientInfo.McpClientScope.McpClientGlobalScope, configPath)
     runBlocking(Dispatchers.Default) {
       client.autoConfigure()
     }
@@ -287,7 +287,7 @@ class McpClientAutoConfigureTest {
     McpClient.overrideProductSpecificServerKeyForTests("test")
     McpClient.overrideWriteLegacyForTests(false)
 
-    val client = VSCodeClient(McpClientInfo.Scope.Global, configPath)
+    val client = VSCodeClient(McpClientInfo.McpClientScope.McpClientGlobalScope, configPath)
     runBlocking(Dispatchers.Default) {
       client.autoConfigure()
     }
@@ -309,7 +309,7 @@ class McpClientAutoConfigureTest {
 
     McpClient.overrideProductSpecificServerKeyForTests("codextest")
 
-    val client = CodexClient(McpClientInfo.Scope.Global, configPath)
+    val client = CodexClient(McpClientInfo.McpClientScope.McpClientGlobalScope, configPath)
     runBlocking(Dispatchers.Default) {
       client.autoConfigure()
     }
@@ -328,7 +328,7 @@ class McpClientAutoConfigureTest {
 
     McpClient.overrideProductSpecificServerKeyForTests("test")
 
-    val client = ClaudeCodeClient(McpClientInfo.Scope.Project("/my/project"), configPath)
+    val client = ClaudeCodeClient(McpClientInfo.McpClientScope.McpClientProjectScope("/my/project"), configPath)
     runBlocking(Dispatchers.Default) {
       client.autoConfigure()
     }
@@ -349,7 +349,7 @@ class McpClientAutoConfigureTest {
 
     McpClient.overrideProductSpecificServerKeyForTests("test")
 
-    val client = ClaudeCodeClient(McpClientInfo.Scope.Global, configPath)
+    val client = ClaudeCodeClient(McpClientInfo.McpClientScope.McpClientGlobalScope, configPath)
     runBlocking(Dispatchers.Default) {
       client.autoConfigure()
     }

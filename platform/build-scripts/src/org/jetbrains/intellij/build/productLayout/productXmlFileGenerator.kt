@@ -21,7 +21,7 @@ import java.nio.file.Path
  * @param outputProvider Module output provider for creating ProductProperties
  * @return List of discovered products with ProductProperties instances
  */
-suspend fun discoverAllProducts(projectRoot: Path, outputProvider: ModuleOutputProvider): List<DiscoveredProduct> {
+fun discoverAllProducts(projectRoot: Path, outputProvider: ModuleOutputProvider): List<DiscoveredProduct> {
   val jsonContent = Files.readString(projectRoot.resolve(PRODUCT_REGISTRY_PATH))
   val productToConfiguration = Json.decodeFromString<ProductConfigurationRegistry>(jsonContent).products
 

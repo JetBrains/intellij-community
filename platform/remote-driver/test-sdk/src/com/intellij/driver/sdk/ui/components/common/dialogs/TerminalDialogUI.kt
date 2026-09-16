@@ -2,10 +2,12 @@ package com.intellij.driver.sdk.ui.components.common.dialogs
 
 import com.intellij.driver.client.Driver
 import com.intellij.driver.client.Remote
+import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.components.common.currentIdeFrame
+import com.intellij.driver.sdk.ui.components.common.editor
 import com.intellij.driver.sdk.ui.ui
 import com.intellij.driver.sdk.waitFor
 import org.intellij.lang.annotations.Language
@@ -35,6 +37,36 @@ fun Driver.terminalPanel(action: TerminalPanelUi.() -> Unit) {
 
 class TerminalPanelUi(data: ComponentData) : UiComponent(data) {
   val terminalView: TerminalViewImpl by lazy { driver.cast(component, TerminalViewImpl::class) }
+
+  /** The offset of the block cursor in the text of the terminal. */
+  fun cursorOffset(): Int {
+    return driver.withContext(OnDispatcher.EDT) {
+      val outputModel = terminalView.getActiveOutputModel()
+      outputModel.cursorOffset.toAbsolute() - outputModel.startOffset.toAbsolute()
+    }.toInt()
+  }
+
+  fun distanceBetweenCursorAndLastCharacter(): Int {
+    val cursorOffset = driver.withContext(OnDispatcher.EDT) {
+      val outputModel = terminalView.getActiveOutputModel()
+      outputModel.cursorOffset.toAbsolute() - outputModel.startOffset.toAbsolute()
+    }
+    return (cursorOffset - editor().text.trimEnd().length).toInt()
+  }
+
+  /**
+   * The distance in lines from the last line that holds text to the block cursor.
+   *
+   * The value is negative when the cursor stands on an earlier line.
+   */
+  fun linesBetweenCursorAndLastCharacter(): Int {
+    val lastLineWithText = editor().text.lines().indexOfLast { it.isNotBlank() }
+    val cursorLine = driver.withContext(OnDispatcher.EDT) {
+      val outputModel = terminalView.getActiveOutputModel()
+      outputModel.getLineByOffset(outputModel.cursorOffset).toAbsolute() - outputModel.firstLineIndex.toAbsolute()
+    }
+    return (cursorLine - lastLineWithText).toInt()
+  }
 }
 
 class TerminalDialogUI(data: ComponentData) : UiComponent(data) {
@@ -75,17 +107,27 @@ class RdPortForwardingPanelWidget(data: ComponentData) : UiComponent(data) {
 }
 
 @Suppress("InjectedReferences")
-@Remote("com.intellij.terminal.frontend.view.impl.TerminalViewImpl\$TerminalPanel", plugin = "org.jetbrains.plugins.terminal/intellij.terminal.frontend")
+@Remote("com.intellij.terminal.frontend.view.impl.TerminalViewImpl\$TerminalPanel",
+        plugin = "org.jetbrains.plugins.terminal/intellij.terminal.frontend")
 interface TerminalViewImpl {
-  fun getActiveOutputModel() : TerminalOutputModel
+  fun getActiveOutputModel(): TerminalOutputModel
 }
 
 @Remote("org.jetbrains.plugins.terminal.view.TerminalOutputModel")
 interface TerminalOutputModel {
   val cursorOffset: TerminalOffset
+  val startOffset: TerminalOffset
+  val firstLineIndex: TerminalLineIndex
+
+  fun getLineByOffset(offset: TerminalOffset): TerminalLineIndex
 }
 
-@Remote("org.jetbrains.plugins.terminal.view.TerminalOffset",  plugin = "org.jetbrains.plugins.terminal")
+@Remote("org.jetbrains.plugins.terminal.view.TerminalOffset", plugin = "org.jetbrains.plugins.terminal")
 interface TerminalOffset {
+  fun toAbsolute(): Long
+}
+
+@Remote("org.jetbrains.plugins.terminal.view.TerminalLineIndex", plugin = "org.jetbrains.plugins.terminal")
+interface TerminalLineIndex {
   fun toAbsolute(): Long
 }

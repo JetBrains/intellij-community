@@ -6,7 +6,7 @@ import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.ex.DocumentSnapshot
 import com.intellij.openapi.editor.ex.DocumentTextPatch
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl
-import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngineImpl
+import com.intellij.openapi.editor.impl.marker.SnapshotMarkerStores
 import com.intellij.util.DocumentEventUtil
 import com.intellij.util.concurrency.ThreadingAssertions
 import java.util.concurrent.LinkedBlockingQueue
@@ -178,7 +178,7 @@ internal abstract class ElfRealSync(
   }
 
   private fun computeSnapshotAfter(change: ElfTextChange): DocumentSnapshot {
-    return change.snapshotBefore.applyOp(change.patch)
+    return mutatorReal.snapshotMarkerStores.applyOp(change.snapshotBefore, change.patch)
   }
 
   private fun matchesOldFragment(wholeText: CharSequence, startOffset: Int, oldFragment: CharSequence): Boolean {
@@ -263,7 +263,7 @@ internal abstract class ElfRealSync(
     while (true) {
       val expect = getSnapshotSnapshot()
       checkTextConsistency(expect)
-      val cleanSnapshot = SnapshotMarkerEngineImpl.mergeMarkerRoots(expect.elf, expect.real)
+      val cleanSnapshot = mutatorReal.snapshotMarkerStores.mergeMarkerRoots(expect.elf, expect.real)
       val update = SnapshotSnapshot.newClean(cleanSnapshot)
       if (compareAndSet(expect, update)) {
         return

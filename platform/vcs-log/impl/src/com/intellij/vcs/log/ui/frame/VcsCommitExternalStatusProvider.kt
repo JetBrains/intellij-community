@@ -32,10 +32,10 @@ interface VcsCommitExternalStatusProvider<T : VcsCommitExternalStatus> {
   @get:NonNls
   val id: String
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun createLoader(project: Project): VcsCommitsDataLoader<T>
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun getPresentation(project: Project, status: T): VcsCommitExternalStatusPresentation?
 
   /**
@@ -62,7 +62,7 @@ interface VcsCommitExternalStatusProvider<T : VcsCommitExternalStatus> {
      * Service that provides the column infrastructure
      * One should extend [com.intellij.vcs.log.ui.table.column.util.VcsLogExternalStatusColumnService], make it a service and return here
      */
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     protected abstract fun getExternalStatusColumnService(): VcsLogExternalStatusColumnService<T>
 
     final override fun createLoader(project: Project): VcsCommitsDataLoader<T> = getExternalStatusColumnService().getDataLoader(project)
@@ -70,7 +70,7 @@ interface VcsCommitExternalStatusProvider<T : VcsCommitExternalStatus> {
     /**
      * Value that will be passed to a renderer when the table cell is empty or when an exception happens when calculating the status
      */
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     protected abstract fun getStubStatus(): T
 
     private inner class ExternalStatusLogColumn : VcsLogCustomColumn<T> {
@@ -137,7 +137,7 @@ interface VcsCommitExternalStatusProvider<T : VcsCommitExternalStatus> {
     @JvmStatic
     fun getExtensionsWithColumns(): List<WithColumn<*>> = EP.extensionList.filterIsInstance(WithColumn::class.java)
 
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     fun addProviderListChangeListener(disposable: Disposable, listener: () -> Unit) {
       EP.addChangeListener(listener, disposable)
     }

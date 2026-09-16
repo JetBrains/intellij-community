@@ -100,6 +100,33 @@ internal class TerminalTextBufferEventsTest(emulatorType: TerminalEmulatorType) 
   }
 
   // ---------------------------------------------------------------------------
+  // (1c) Double-width characters
+  // ---------------------------------------------------------------------------
+
+  @Test
+  fun `the cursor after double-width characters sits right after them, with no gap`() = doTest { fixture ->
+    val model = fixture.view.activeOutputModel()
+
+    // Five double-width CJK characters occupy ten grid columns but only five document characters.
+    fixture.connector.feed("生活習慣病")
+    fixture.assertOutputModelState(model) { it.text == "生活習慣病" }
+
+    assertThat(model.text).describedAs("no padding must be inserted after a double-width run").isEqualTo("生活習慣病")
+    assertThat(model.cursorColumn()).isEqualTo(5L)
+  }
+
+  @Test
+  fun `double-width characters mixed with narrow ones do not inflate the cursor column`() = doTest { fixture ->
+    val model = fixture.view.activeOutputModel()
+
+    fixture.connector.feed("a生b活c") // 7 grid columns, 5 document characters
+    fixture.assertOutputModelState(model) { it.text == "a生b活c" }
+
+    assertThat(model.text).isEqualTo("a生b活c")
+    assertThat(model.cursorColumn()).isEqualTo(5L)
+  }
+
+  // ---------------------------------------------------------------------------
   // (2) Adding text to the scrollback
   // ---------------------------------------------------------------------------
 
@@ -131,6 +158,28 @@ internal class TerminalTextBufferEventsTest(emulatorType: TerminalEmulatorType) 
 
     fixture.assertOutputModelState(model) { it.text.isBlank() }
     assertThat(model.text).describedAs("no line from before clear may survive").doesNotContain("L")
+  }
+
+  @Test
+  fun `Ctrl+L leaves the redrawn prompt as the screen top`() = doTest { fixture ->
+    val model = fixture.view.activeOutputModel()
+
+    // 40 lines on a 24-row screen leave 16 in scrollback.
+    fixture.connector.feed((0 until 40).joinToString("\r\n") { "L%02d".format(it) })
+    fixture.assertOutputModelState(model) { it.text.contains("L39") }
+
+    // Home plus ED2, which is what a shell sends for Ctrl+L, then the redrawn prompt. Unlike `clear`, this
+    // erases the screen alone and keeps the whole scrollback.
+    fixture.connector.feed("${ESC}[H${ESC}[2J" + "prompt> ")
+    fixture.assertOutputModelState(model) { it.text.contains("prompt>") }
+
+    // The prompt occupies the screen's first row, so the screen starts on the prompt's own line.
+    assertThat(model.getLineByOffset(model.screenTopOffset))
+      .describedAs("the screen top must be the prompt's line, not the start of the output")
+      .isEqualTo(model.getLineByOffset(model.cursorOffset))
+    // And it is well past the start of the output, because the scrollback survived.
+    assertThat(model.screenTopOffset).isGreaterThan(model.startOffset)
+    assertThat(model.text).describedAs("the scrollback must survive Ctrl+L").contains("L00")
   }
 
   @Test

@@ -128,10 +128,10 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
   private void updateCaches(@NotNull DebugProcessImpl debugProcess) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     updateIcon(debugProcess);
-    if (isVisible() && isValid() && myXBreakpoint instanceof XLineBreakpoint) {
+    if (isVisible() && isValid() && myXBreakpoint instanceof XLineBreakpoint breakpoint) {
       JavaDebugProcess process = debugProcess.getXdebugProcess();
       if (process != null) {
-        process.getSession().updateBreakpointPresentation(((XLineBreakpoint)myXBreakpoint), myIcon, myInvalidMessage);
+        process.getSession().updateBreakpointPresentation(breakpoint, myIcon, myInvalidMessage);
       }
     }
     if (!debugProcess.isAttached()) return;

@@ -2,115 +2,148 @@
 package git4idea.ignore
 
 import com.intellij.dvcs.ignore.IgnoredToExcludeNotificationProvider
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
-import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsConfiguration
-import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.IndexingTestUtil
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.RegistryKey
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.ui.EditorNotificationPanel
+import com.intellij.util.io.createDirectories
 import git4idea.repo.GitRepositoryFiles.GITIGNORE
-import git4idea.test.GitSingleRepoTest
-import kotlinx.coroutines.runBlocking
+import git4idea.test.GitSingleRepoContext
+import git4idea.test.gitSingleRepoContextFixture
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import kotlin.io.path.writeText
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 const val GEN = "gen"
 
-class GitIgnoredToExcludedSynchronizerTest : GitSingleRepoTest() {
+private val TEST_TIMEOUT: Duration = 5.seconds
 
+@TestApplication
+@RegistryKey(key = "vcs.enable.add.ignored.directories.to.exclude", value = "true")
+@RegistryKey(key = "vcs.propose.add.ignored.directories.to.exclude", value = "true")
+internal class GitIgnoredToExcludedSynchronizerTest {
+  private val fixture = gitSingleRepoContextFixture()
+  private val context: GitSingleRepoContext get() = fixture.get()
+
+  @TestDisposable
+  lateinit var testDisposable: Disposable
+
+  private lateinit var module: Module
   private lateinit var out: VirtualFile
   private lateinit var excluded: VirtualFile
   private lateinit var gen: VirtualFile
 
-  override fun setUp() {
-    super.setUp()
-    Registry.get("vcs.enable.add.ignored.directories.to.exclude").setValue(true, testRootDisposable)
-    Registry.get("vcs.propose.add.ignored.directories.to.exclude").setValue(true, testRootDisposable)
-  }
-
-  override fun setUpModule() {
-    runWriteAction {
-      myModule = createMainModule()
-      val moduleDir = getOrCreateModuleDir(module)
-      myModule.addContentRoot(moduleDir)
-
-      //create file in dirs, otherwise the directory will be not treated as ignored by Git
-      out = moduleDir.findOrCreateDir(OUT).apply { createFile("a.class") }
-      excluded = moduleDir.findOrCreateDir(EXCLUDED).apply { createFile("b.class") }
-      gen = moduleDir.findOrCreateDir(GEN).apply { createFile("a.java") }
-      myModule.addSourceFolder(gen)
+  @BeforeEach
+  fun setUp(): Unit = with(context) {
+    timeoutRunBlocking {
+      val moduleDir = writeAction {
+        module = ModuleManager.getInstance(project).newModule("$projectPath/main.iml", "EMPTY_MODULE")
+        IndexingTestUtil.waitUntilIndexesAreReady(project)
+        projectNioRoot.createDirectories()
+        projectRoot
+      }
+      module.addContentRoot(moduleDir)
+      writeAction {
+        out = moduleDir.findOrCreateDir(OUT).apply { findOrCreateChildData(this, "a.class") }
+        excluded = moduleDir.findOrCreateDir(EXCLUDED).apply { findOrCreateChildData(this, "b.class") }
+        gen = moduleDir.findOrCreateDir(GEN).apply { findOrCreateChildData(this, "a.java") }
+      }
+      module.addSourceFolder(gen)
     }
   }
 
-  fun `test mark ignored directories as excluded notification`() = runBlocking {
-    assertEmpty(module.excludes())
+  @Test
+  fun `test mark ignored directories as excluded notification`(): Unit = with(context) {
+    timeoutRunBlocking(TEST_TIMEOUT) {
+      assertThat(module.excludes()).isEmpty()
 
-    createGitignoreAndWait("""
+      createGitignoreAndWait("""
                             /$EXCLUDED/
                             /$OUT/
                            """.trimIndent())
 
-    assertNotificationByContent(VcsBundle.message("ignore.to.exclude.notification.message"))
+      assertNotificationByContent(VcsBundle.message("ignore.to.exclude.notification.message"))
+    }
   }
 
-  fun `test mark ignored directories as excluded`() = runBlocking {
-    VcsConfiguration.getInstance(project).MARK_IGNORED_AS_EXCLUDED = true
+  @Test
+  fun `test mark ignored directories as excluded`(): Unit = with(context) {
+    timeoutRunBlocking(TEST_TIMEOUT) {
+      VcsConfiguration.getInstance(project).MARK_IGNORED_AS_EXCLUDED = true
 
-    assertEmpty(module.excludes())
+      assertThat(module.excludes()).isEmpty()
 
-    createGitignoreAndWait("""
+      createGitignoreAndWait("""
                             /$EXCLUDED/
                             /$OUT/
                            """.trimIndent())
 
-    assertExcludedDirs(out, excluded)
+      assertExcludedDirs(out, excluded)
+    }
   }
 
-  fun `test do not mark ignored source root directory as excluded`() = runBlocking {
-    VcsConfiguration.getInstance(project).MARK_IGNORED_AS_EXCLUDED = true
+  @Test
+  fun `test do not mark ignored source root directory as excluded`(): Unit = with(context) {
+    timeoutRunBlocking(TEST_TIMEOUT) {
+      VcsConfiguration.getInstance(project).MARK_IGNORED_AS_EXCLUDED = true
 
-    assertSourceDirs(gen)
+      assertSourceDirs(gen)
 
-    createGitignoreAndWait("""
+      createGitignoreAndWait("""
                             /$EXCLUDED/
                             /$OUT/
                             /$GEN/
                            """.trimIndent())
 
-    assertExcludedDirs(out, excluded)
-    assertSourceDirs(gen)
+      assertExcludedDirs(out, excluded)
+      assertSourceDirs(gen)
+    }
   }
 
-  private suspend fun createGitignoreAndWait(gitignoreContent: String) {
-    val gitIgnore = file(GITIGNORE).create(gitignoreContent)
-    VfsUtil.findFileByIoFile(gitIgnore.file, true) //trigger VFS create event explicitly
+  private suspend fun GitSingleRepoContext.createGitignoreAndWait(gitignoreContent: String) {
+    val gitIgnorePath = repo.root.toNioPath().resolve(GITIGNORE)
+    gitIgnorePath.writeText(gitignoreContent)
+    checkNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(gitIgnorePath)) //trigger VFS create event explicitly
 
     repo.untrackedFilesHolder.awaitNotBusy()
   }
 
-  private fun assertNotificationByContent(notificationContent: String) {
-    val gitignore = file(GITIGNORE)
-    val gitIgnoreVF = getVirtualFile(gitignore.file)
-    val editor =
+  private fun GitSingleRepoContext.assertNotificationByContent(notificationContent: String) {
+    val gitIgnorePath = repo.root.toNioPath().resolve(GITIGNORE)
+    val gitIgnoreVF = checkNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(gitIgnorePath))
+    val editor = checkNotNull(
       invokeAndWaitIfNeeded { FileEditorManager.getInstance(project).openFile(gitIgnoreVF, false) }.firstOrNull()
+    ) { "Editor for $gitIgnoreVF not found" }
 
-    assertNotNull("Editor for $gitignore not found", editor)
-
-    val notificationPanel = IgnoredToExcludeNotificationProvider().collectNotificationData(project, gitIgnoreVF)?.apply(editor!!) as? EditorNotificationPanel
-    assertTrue("Notification $notificationContent not found", notificationPanel?.text == notificationContent)
+    val notificationPanel =
+      IgnoredToExcludeNotificationProvider().collectNotificationData(project, gitIgnoreVF)?.apply(editor) as? EditorNotificationPanel
+    assertThat(notificationPanel?.text).describedAs("Notification %s not found", notificationContent).isEqualTo(notificationContent)
   }
 
   private fun assertExcludedDirs(vararg expectedExcludes: VirtualFile) {
     val excludes = module.excludes()
-    assertContainsElements(excludes, *expectedExcludes)
+    assertThat(excludes).contains(*expectedExcludes)
   }
 
   private fun assertSourceDirs(vararg expectedSources: VirtualFile) {
     val sourceRoots = module.sourceRoots()
-    assertContainsElements(sourceRoots, *expectedSources)
+    assertThat(sourceRoots).contains(*expectedSources)
   }
 
   private fun Module.sourceRoots() = invokeAndWaitIfNeeded { ModuleRootManager.getInstance(this).sourceRoots.toList() }

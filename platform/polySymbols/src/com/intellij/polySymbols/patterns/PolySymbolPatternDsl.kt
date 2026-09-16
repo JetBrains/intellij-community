@@ -12,7 +12,6 @@ import com.intellij.polySymbols.PolySymbolQualifiedName
 import com.intellij.polySymbols.patterns.impl.PolySymbolPatternBuilderImpl
 import com.intellij.polySymbols.query.PolySymbolNameConversionRules
 import com.intellij.polySymbols.query.PolySymbolScope
-import com.intellij.polySymbols.webTypes.filters.PolySymbolFilter
 import org.jetbrains.annotations.ApiStatus
 
 /**

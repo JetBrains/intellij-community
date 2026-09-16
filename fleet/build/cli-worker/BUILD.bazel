@@ -18,7 +18,7 @@ jvm_library(
     deps = [
         "//fleet/build/cli",
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinx-coroutines-core",
+        "@lib//:libraries-kotlinx-coroutines-core-kotlinx-coroutines-core",
         "@rules_jvm//:opentelemetry-api_import",
         "@rules_jvm//worker-framework",
     ],

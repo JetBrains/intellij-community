@@ -152,10 +152,10 @@ public abstract class InlineDebugRendererBase implements EditorCustomElementRend
     Font font = getFont(inlay.getEditor());
     String text;
     if (isErrorMessage()) {
-      text = getPresentation().getTexts().get(0);
+      text = getPresentation().getTexts().getFirst();
     }
     else {
-      text = getPresentation().toString() + NAME_VALUE_SEPARATION;
+      text = getPresentation() + NAME_VALUE_SEPARATION;
     }
     return getFontMetrics(font, inlay.getEditor()).stringWidth(text + INDENT);
   }

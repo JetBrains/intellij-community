@@ -251,7 +251,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
         if (method == null) {
           return null;
         }
-        else if (((method instanceof PsiMethod && myExpectedMethodName.equals(((PsiMethod)method).getName())) ||
+        else if (((method instanceof PsiMethod psiMethod && myExpectedMethodName.equals(psiMethod.getName())) ||
                   (method instanceof PsiLambdaExpression && DebuggerUtilsEx.isLambdaName(myExpectedMethodName))) &&
                  insideBody(element, DebuggerUtilsEx.getBody(method))) {
           return element;
@@ -262,8 +262,8 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
 
     private static boolean insideBody(@NotNull PsiElement element, @Nullable PsiElement body) {
       if (!PsiTreeUtil.isAncestor(body, element, false)) return false;
-      if (body instanceof PsiCodeBlock) {
-        return !element.equals(((PsiCodeBlock)body).getRBrace()) && !element.equals(((PsiCodeBlock)body).getLBrace());
+      if (body instanceof PsiCodeBlock block) {
+        return !element.equals(block.getRBrace()) && !element.equals(block.getLBrace());
       }
       return true;
     }
@@ -390,8 +390,8 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     if (alternativeJre != null) {
       GlobalSearchScope scope = AlternativeJreClassFinder.getSearchScope(alternativeJre);
       psiClass = findClass(myDebugProcess.getProject(), originalQName, scope, false);
-      if (psiClass instanceof ClsClassImpl && altClsProcessor != null) { //try to find sources
-        altClsProcessor.accept((ClsClassImpl)psiClass);
+      if (psiClass instanceof ClsClassImpl aClass && altClsProcessor != null) { //try to find sources
+        altClsProcessor.accept(aClass);
       }
     }
 

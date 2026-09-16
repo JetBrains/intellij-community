@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.python
 
-import io.opentelemetry.api.trace.Span
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.OsFamily
@@ -17,7 +16,7 @@ import org.jetbrains.intellij.build.resolveFileForReading
 import java.nio.file.Files
 import java.nio.file.Path
 
-private const val PYREFLY_BUNDLE_ENABLED_PROPERTY: String = "pyrefly.bundle"
+internal const val PYREFLY_BUNDLE_ENABLED_PROPERTY: String = "pyrefly.bundle"
 
 private const val PYREFLY_VERSION_PROPERTY: String = "pyreflyBuild"
 
@@ -31,26 +30,21 @@ private const val PYREFLY_DIR_NAME: String = "pyrefly"
 
 private const val PYREFLY_BINARY_NAME: String = "pyrefly"
 
-internal fun PluginLayout.PluginLayoutSpec.withBundledPyrefly() {
-  if (!isPyreflyBundlingEnabled()) {
-    Span.current().addEvent("skip the Pyrefly bundling, because '$PYREFLY_BUNDLE_ENABLED_PROPERTY' is false")
-    return
-  }
-
+fun PluginLayout.PluginLayoutSpec.withBundledPyrefly() {
   withGeneratedResources { targetDir, context -> copyPyreflyLicenseReport(targetDir, context) }
 
   for ((os, arch, libc) in SUPPORTED_DISTRIBUTIONS) {
     withGeneratedPlatformResources(os, arch, libc) { targetDir, context -> copyPyreflyBinary(targetDir, context, os, arch) }
 
     if (os != OsFamily.WINDOWS) {
-      withPlatformExecutable(os, arch, libc, "$PYREFLY_DIR_NAME/${os.binaryName(PYREFLY_BINARY_NAME)}")
+      withPlatformExecutable(os, arch, libc, "$PYREFLY_DIR_NAME/${pyreflyPlatformDirName(os, arch)}/${os.binaryName(PYREFLY_BINARY_NAME)}")
     }
   }
 }
 
-private fun isPyreflyBundlingEnabled(): Boolean = System.getProperty(PYREFLY_BUNDLE_ENABLED_PROPERTY).toBoolean()
+internal fun isPyreflyBundlingEnabled(): Boolean = System.getProperty(PYREFLY_BUNDLE_ENABLED_PROPERTY).toBoolean()
 
-private suspend fun copyPyreflyLicenseReport(targetDir: Path, context: BuildContext) {
+private fun copyPyreflyLicenseReport(targetDir: Path, context: BuildContext) {
   val licenseDir = downloadPyrefly(context, PYREFLY_LICENSE_ARTIFACT_ID).resolve("license")
   check(Files.isDirectory(licenseDir)) {
     "Pyrefly license report is missing from the archive: $licenseDir"
@@ -59,7 +53,7 @@ private suspend fun copyPyreflyLicenseReport(targetDir: Path, context: BuildCont
   copyDir(sourceDir = licenseDir, targetDir = targetDir.resolve(PYREFLY_DIR_NAME).resolve("license"))
 }
 
-private suspend fun copyPyreflyBinary(targetDir: Path, context: BuildContext, os: OsFamily, arch: JvmArchitecture) {
+private fun copyPyreflyBinary(targetDir: Path, context: BuildContext, os: OsFamily, arch: JvmArchitecture) {
   val platformDirName = pyreflyPlatformDirName(os, arch)
   val platformDir = downloadPyrefly(context, pyreflyArtifactId(platformDirName)).resolve(platformDirName)
   val binary = platformDir.resolve(os.binaryName(PYREFLY_BINARY_NAME))
@@ -67,14 +61,14 @@ private suspend fun copyPyreflyBinary(targetDir: Path, context: BuildContext, os
     "Pyrefly binary for ${os.osName} ${arch.archName} is missing from the archive: $binary"
   }
   context.messages.info("Bundling pyrefly binary at $binary into ${os.osName} ${arch.archName}")
-  copyFileToDir(binary, targetDir.resolve(PYREFLY_DIR_NAME))
+  copyFileToDir(binary, targetDir.resolve(PYREFLY_DIR_NAME).resolve(platformDirName))
 }
 
-private suspend fun downloadPyrefly(context: BuildContext, artifactId: String): Path {
+private fun downloadPyrefly(context: BuildContext, artifactId: String): Path {
   val communityRoot = context.paths.communityHomeDirRoot
   val version = context.dependenciesProperties.property(PYREFLY_VERSION_PROPERTY)
   val uri = BuildDependenciesDownloader.getUriForMavenArtifact(INTELLIJ_DEPENDENCIES_URL, PYREFLY_GROUP_ID, artifactId, version, PYREFLY_PACKAGING)
-  val resolved = resolveFileForReading(uri.toString(), communityRoot)
+  val resolved = resolveFileForReading(uri.toString(), communityRoot, context.httpSession)
   return extractToCacheLocation(
     archiveFile = resolved.file,
     communityRoot = communityRoot,

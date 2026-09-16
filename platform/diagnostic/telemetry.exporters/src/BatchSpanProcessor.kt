@@ -14,6 +14,7 @@ import io.opentelemetry.sdk.trace.data.SpanData
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.NonCancellable
@@ -40,8 +41,8 @@ class BatchSpanProcessor(
   private val scheduleDelay: Duration = 1.minutes,
   private val maxExportBatchSize: Int = 512,
 ) : SpanProcessor {
-  private val queue = Channel<ReadableSpan>(capacity = Channel.UNLIMITED)
-  private val flushRequested = Channel<FlushRequest>(capacity = Channel.UNLIMITED)
+  private val queue = Channel(capacity = Channel.UNLIMITED, onUndeliveredElement = ::onEnd)
+  private val flushRequested = Channel<FlushRequest>(capacity = Channel.UNLIMITED, onUndeliveredElement = { it.job.complete(Unit) })
 
   private data class FlushRequest(@JvmField val exportOnly: Boolean) {
     @JvmField
@@ -49,7 +50,7 @@ class BatchSpanProcessor(
   }
 
   init {
-    coroutineScope.launch(Dispatchers.IO) {
+    coroutineScope.launch(Dispatchers.IO, start = CoroutineStart.UNDISPATCHED) {
       val batch = ArrayList<SpanData>(maxExportBatchSize)
       try {
         while (true) {

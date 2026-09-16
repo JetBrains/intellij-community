@@ -28,8 +28,8 @@ object MarkdownFileGraphUtils {
    * The computed dependency list is cached for every file in the set. A later call with any of those files as [root] returns
    * the same cached list until the project PSI changes.
    */
-  @RequiresReadLock
-  @RequiresBackgroundThread
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun getDependencySet(root: PsiFile, filter: Predicate<PsiFile>): Set<VirtualFile> {
     val scope = GlobalSearchScope.getScopeRestrictedByFileTypes(
       GlobalSearchScope.projectScope(root.project),

@@ -1,3 +1,0 @@
-- name: dist.all/lib/intellij.platform.editor.ui.jar
-  modules:
-  - name: intellij.platform.editor.ui

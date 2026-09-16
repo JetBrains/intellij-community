@@ -14,7 +14,7 @@ import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager
 import org.jetbrains.idea.maven.aether.ProgressConsumer
 import org.jetbrains.intellij.build.io.zipWithCompression
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
-import org.jetbrains.intellij.build.telemetry.blockingUse
+import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.jps.model.JpsGlobal
 import org.jetbrains.jps.model.JpsSimpleElement
 import org.jetbrains.jps.model.jarRepository.JpsRemoteRepositoryService
@@ -40,7 +40,7 @@ import kotlin.io.path.walk
  * archive also includes sources of project-level libraries on which platform API modules from `modules` list depend on.
  */
 fun zipSourcesOfModules(modules: List<String>, targetFile: Path, includeLibraries: Boolean, context: BuildContext) {
-  context.blockingExecuteStep(
+  context.executeStep(
     spanBuilder("build module sources archives")
       .setAttribute("path", context.paths.buildOutputDir.toString())
       .setAttribute(AttributeKey.stringArrayKey("modules"), modules),
@@ -122,7 +122,7 @@ fun zipSourcesOfModules(modules: List<String>, targetFile: Path, includeLibrarie
 
     spanBuilder("pack")
       .setAttribute("targetFile", context.paths.buildOutputDir.relativize(targetFile).toString())
-      .blockingUse {
+      .use {
         zipWithCompression(targetFile = targetFile, dirs = zipFileMap)
       }
 
@@ -160,7 +160,7 @@ private fun downloadMissingLibrarySources(
 ) {
   spanBuilder("download missing sources")
     .setAttribute(AttributeKey.stringArrayKey("librariesWithMissingSources"), librariesWithMissingSources.map { it.name })
-    .blockingUse { span ->
+    .use { span ->
       val configuration = JpsRemoteRepositoryService.getInstance().getRemoteRepositoriesConfiguration(context.project)
       val repositories = configuration?.repositories?.map { ArtifactRepositoryManager.createRemoteRepository(it.id, it.url) } ?: emptyList()
       val repositoryManager = ArtifactRepositoryManager(

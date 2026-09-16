@@ -2,6 +2,7 @@
 package org.intellij.plugins.markdown.editor.livepreview
 
 import com.intellij.codeInsight.documentation.render.DocRenderer
+import com.intellij.markdown.backend.editor.livepreview.computeLivePreviewSpecs
 import com.intellij.markdown.frontend.editor.livepreview.MarkdownLivePreviewReconciler
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.actionSystem.IdeActions
@@ -11,6 +12,8 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.ex.DocumentEx
+import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.ex.FoldingListener
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.FoldingKeys
 import com.intellij.openapi.editor.markup.RangeHighlighter
@@ -25,14 +28,14 @@ import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.fixtures.EditorMouseFixture
 import com.intellij.util.DocumentUtil
-import org.intellij.plugins.markdown.settings.MarkdownSettings
+import org.intellij.plugins.markdown.settings.MarkdownApplicationSettings
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
 import javax.imageio.ImageIO
 
 class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
 
-  private val settings get() = MarkdownSettings.getInstance(project)
+  private val settings get() = MarkdownApplicationSettings.getInstance()
 
   override fun setUp() {
     super.setUp()
@@ -219,7 +222,7 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     val content = "`---`\n---\ntail"
     configure("$content<caret>")
 
-    assertEquals(listOf("`---`", "---"), computeLivePreviewSpecs(myFixture.file).map {
+    assertEquals(listOf("`---`", "---"), computeLivePreviewSpecs(myFixture.file, myFixture.editor).elements.map {
       content.substring(it.range.startOffset, it.range.endOffset)
     })
     assertEquals(1, thematicBreakHighlighters().size)
@@ -278,7 +281,7 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     val content = "# Markdown WYSIWYG Demo\n\n![logo](image.png)\n\n![logo](image.png)\n\n# Markdown WYSIWYG Demo"
     configureProjectFile(content)
 
-    assertEquals(2, computeLivePreviewSpecs(myFixture.file).filterIsInstance<MarkdownLivePreviewSpec.Image>().size)
+    assertEquals(2, computeLivePreviewSpecs(myFixture.file, myFixture.editor).elements.filterIsInstance<MarkdownLivePreviewSpec.Image>().size)
     waitForImageRegions(2)
   }
 
@@ -347,7 +350,7 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     Disposer.register(testRootDisposable) { VfsTestUtil.deleteFile(image.parent) }
     configureProjectFile("![alt](../../src-other/image.png)\n\ntail")
 
-    assertEquals(1, computeLivePreviewSpecs(myFixture.file).filterIsInstance<MarkdownLivePreviewSpec.Image>().size)
+    assertEquals(1, computeLivePreviewSpecs(myFixture.file, myFixture.editor).elements.filterIsInstance<MarkdownLivePreviewSpec.Image>().size)
     waitForNoImageRegion()
   }
 
@@ -388,6 +391,58 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
       10,
     )
     assertSame(region, imageRegions().single())
+  }
+
+  fun testTypingAfterImageKeepsTheImageFold() {
+    addPng(120, 60)
+    configureProjectFile("![alt](image.png)\n\ntail")
+    val region = waitForImageRenderer()
+    var disposedImageFolds = 0
+    (myFixture.editor as EditorEx).foldingModel.addListener(object : FoldingListener {
+      override fun beforeFoldRegionDisposed(region: FoldRegion) {
+        if (region is CustomFoldRegion) disposedImageFolds++
+      }
+    }, testRootDisposable)
+
+    myFixture.type("x")
+    myFixture.doHighlighting()
+    waitForCurrentSpecs()
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+
+    assertEquals("A keystroke outside the image must not dispose its fold", 0, disposedImageFolds)
+    assertSame(region, imageRegions().single())
+  }
+
+  fun testUnrelatedEditKeepsImageUrl() {
+    addPng(120, 60)
+    configureProjectFile("![alt](image.png)\n\ntail")
+    val region = waitForImageRenderer()
+    val initialImageUrl = imageUrl(region)
+
+    myFixture.type("x")
+    myFixture.doHighlighting()
+    waitForCurrentSpecs()
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+
+    assertSame(region, imageRegions().single())
+    assertEquals("An edit outside the image must not change its URL", initialImageUrl, imageUrl(region))
+  }
+
+  fun testAddingAnImageKeepsExistingImageUrl() {
+    addPng(120, 60)
+    addBinaryFile("docs/image2.png", pngBytes(80, 40))
+    configureProjectFile("![alt](image.png)\n\ntail")
+    val region = waitForImageRenderer()
+    val initialImageUrl = imageUrl(region)
+
+    myFixture.type("\n\n![alt2](image2.png)\n")
+    myFixture.doHighlighting()
+    waitForCurrentSpecs()
+    waitForImageRegions(2)
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+
+    assertSame(region, imageRegions().minByOrNull { it.startOffset })
+    assertEquals("Adding an image must not change the URL of an existing image", initialImageUrl, imageUrl(region))
   }
 
   fun testImageOverByteLimitIsRejectedAfterVfsRefresh() {
@@ -585,9 +640,7 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     val diffEditor = EditorFactory.getInstance().createEditor(document, project, myFixture.file.virtualFile, false, EditorKind.DIFF)
     try {
       val reconciler = MarkdownLivePreviewReconciler.getOrCreate(diffEditor)!!
-      reconciler.publishSpecs(
-        MarkdownLivePreviewSpecSet(MarkdownLivePreviewDocumentVersion.capture(document, project), computeLivePreviewSpecs(myFixture.file))
-      )
+      reconciler.publishSpecs(computeLivePreviewSpecs(myFixture.file, myFixture.editor))
       assertEmpty("A diff editor must show the raw source", concealed(diffEditor))
     }
     finally {
@@ -611,7 +664,7 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     val editor = myFixture.editor
     PsiDocumentManager.getInstance(project).commitAllDocuments()
     val reconciler = MarkdownLivePreviewReconciler.getOrCreate(editor)!!
-    val elements = computeLivePreviewSpecs(myFixture.file)
+    val elements = computeLivePreviewSpecs(myFixture.file, editor).elements
     val oldVersion = MarkdownLivePreviewDocumentVersion.capture(editor.document, project)
     (editor.document as DocumentEx).setModificationStamp(editor.document.modificationStamp + 1)
 
@@ -631,10 +684,7 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     PsiDocumentManager.getInstance(project).commitAllDocuments()
     val editor = myFixture.editor
     val reconciler = MarkdownLivePreviewReconciler.getOrCreate(editor)!!
-    val specSet = MarkdownLivePreviewSpecSet(
-      MarkdownLivePreviewDocumentVersion.capture(editor.document, project),
-      computeLivePreviewSpecs(myFixture.file),
-    )
+    val specSet = computeLivePreviewSpecs(myFixture.file, editor)
 
     DocumentUtil.executeInBulk(editor.document, true) {
       reconciler.publishSpecs(specSet)

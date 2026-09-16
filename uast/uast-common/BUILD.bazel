@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.platform.uast` start
+content_module_jar(module = ":uast")
+### auto-generated section `dev intellij.platform.uast` end
+
 ### auto-generated section `build intellij.platform.uast` start
 jvm_library(
     name = "uast",
@@ -32,8 +36,6 @@ jvm_library(
         "//platform/util/base",
     ],
 )
-
-content_module_jar(module = ":uast")
 
 jvm_library(
     name = "uast_test_lib",

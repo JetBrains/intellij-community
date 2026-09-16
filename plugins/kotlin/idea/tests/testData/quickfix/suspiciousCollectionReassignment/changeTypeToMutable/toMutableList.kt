@@ -7,5 +7,4 @@ fun test() {
 }
 
 fun foo() = listOf(1)
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.inspections.SuspiciousCollectionReassignmentInspection$ChangeTypeToMutableFix
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.inspections.SuspiciousCollectionReassignmentInspection$ChangeTypeToMutableFix

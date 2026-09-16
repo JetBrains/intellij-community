@@ -305,8 +305,6 @@ private class TestOutputProvider(
   override fun findLibraryRoots(libraryName: String, moduleLibraryModuleName: String?): List<Path> =
     libraryRoots.get(libraryName) ?: emptyList()
 
-  override fun getProjectLibraryToModuleMap(): Map<String, String> = emptyMap()
-
   override fun getModuleImlFile(module: JpsModule): Path = error("Not needed for this test")
 
   override fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? {

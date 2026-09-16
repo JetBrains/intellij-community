@@ -25,7 +25,7 @@ This document describes how IntelliJ's build system generates module dependencie
 All dependency generation and validation must use **PluginGraph** as the single source of truth. Avoid re-parsing plugin.xml or reading module/product descriptors from disk to determine dependencies or "pseudo-core" plugins; product DSL and module sets already populate the graph.
 
 - Use graph edges created from JPS dependencies and DSL content.
-- For JPS **library** dependencies, resolve library name -> library module via `ModuleSetGenerationConfig.projectLibraryToModuleMap` (built from JPS library modules), not by scanning `.idea` libraries or module libraries.
+- A JPS **library** dependency adds no edge. A library reaches a module only through its wrapper module (`intellij.libraries.*`), and that is a module dependency.
 - The graph already encodes product/module-set aliases and pseudo-core plugins; do not build parallel maps.
 - Keep generator and validator in sync: if validation expects a dependency to be present, generator must be able to emit it (or mark it implicit/suppressed) so a second run is clean.
 - Suppression config is a contract: if a JPS-derived dep is suppressed, it is intentionally omitted from XML and must not produce validation errors. Existing XML-only deps are removed unless explicitly suppressed or graph semantics require preserving them (for example, manual alias-backed plugin deps). Validation should only consider deps represented in the graph after filtering/suppression.
@@ -162,7 +162,7 @@ testPlugin(
 ```json
 {
   "contentModules": {
-    "intellij.react.ultimate": {
+    "intellij.react.ultimate.backend": {
       "suppressPlugins": ["com.intellij.css"]
     }
   }
@@ -233,8 +233,6 @@ data class ModuleSetGenerationConfig(
   val testingLibraries: Set<String> = emptySet(),
   val testLibraryAllowedInModule: Map<ContentModuleName, Set<String>> = emptyMap(),
   val pluginAllowedMissingDependencies: Map<ContentModuleName, Set<ContentModuleName>> = emptyMap(),
-  val libraryModuleFilter: (libraryModuleName: String) -> Boolean = { true },
-  val projectLibraryToModuleMap: Map<String, String> = emptyMap(),
   val suppressionConfigPath: Path? = null,
   val validationFilter: Set<String>? = null,
   val dslTestPluginAutoAddLoadingMode: ModuleLoadingRuleValue = ModuleLoadingRuleValue.OPTIONAL,
@@ -405,9 +403,8 @@ Check: Has module descriptor?
 ```
 
 Auto-add uses the **graph** to check resolvable modules, but traverses **JPS dependencies** of the
-explicit content modules. Project library dependencies resolve via `ModuleSetGenerationConfig.projectLibraryToModuleMap`
-(built from JPS library modules, not graph targets), and `libraryModuleFilter` is ignored for DSL test plugins
-because the test plugin must be a complete container in dev mode. Auto-added modules are written into the
+explicit content modules. A JPS library dependency adds nothing to the closure: a library reaches a module only
+through its wrapper module, which is a module dependency. Auto-added modules are written into the
 generated test plugin content (the `<!-- region additional -->` block), so repeat runs are clean.
 
 This fallback is scoped to **DSL test plugin auto-add** and does not change global content-module dependency generation/classification.

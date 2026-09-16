@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.devkit.mcp` start
+content_module_jar(module = ":mcp")
+### auto-generated section `dev intellij.devkit.mcp` end
+
 ### auto-generated section `build intellij.devkit.mcp` start
 jvm_library(
     name = "mcp",
@@ -36,8 +40,6 @@ jvm_library(
         "//platform/progress/shared:ide-progress",
     ],
 )
-
-content_module_jar(module = ":mcp")
 
 jvm_library(
     name = "mcp_test_lib",

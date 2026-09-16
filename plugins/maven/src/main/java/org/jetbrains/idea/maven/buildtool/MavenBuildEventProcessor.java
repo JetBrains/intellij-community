@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.buildtool;
 
 import com.intellij.build.BuildDescriptor;
 import com.intellij.build.BuildProgressListener;
+import com.intellij.build.events.OutputBuildEvent;
 import com.intellij.build.events.StartBuildEvent;
 import com.intellij.build.events.impl.StartBuildEventImpl;
 import com.intellij.build.output.BuildOutputInstantReaderImpl;
@@ -10,6 +11,7 @@ import com.intellij.execution.process.AnsiEscapeDecoder;
 import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,6 +31,7 @@ public class MavenBuildEventProcessor implements AnsiEscapeDecoder.ColoredTextAc
   private boolean closed = false;
   private final BuildDescriptor myDescriptor;
   private final @NotNull Function<MavenParsingContext, StartBuildEvent> myStartBuildEventSupplier;
+  private final @Nullable @NlsSafe String myCommandLine;
 
   public MavenBuildEventProcessor(@NotNull MavenRunConfiguration runConfiguration,
                                   @NotNull BuildProgressListener buildProgressListener,
@@ -36,9 +39,20 @@ public class MavenBuildEventProcessor implements AnsiEscapeDecoder.ColoredTextAc
                                   @NotNull ExternalSystemTaskId taskId,
                                   @NotNull Function<String, String> targetFileMapper,
                                   @Nullable Function<MavenParsingContext, StartBuildEvent> startBuildEventSupplier) {
+    this(runConfiguration, buildProgressListener, descriptor, taskId, targetFileMapper, startBuildEventSupplier, null);
+  }
+
+  public MavenBuildEventProcessor(@NotNull MavenRunConfiguration runConfiguration,
+                                  @NotNull BuildProgressListener buildProgressListener,
+                                  @NotNull BuildDescriptor descriptor,
+                                  @NotNull ExternalSystemTaskId taskId,
+                                  @NotNull Function<String, String> targetFileMapper,
+                                  @Nullable Function<MavenParsingContext, StartBuildEvent> startBuildEventSupplier,
+                                  @Nullable @NlsSafe String commandLine) {
 
     myBuildProgressListener = buildProgressListener;
     myDescriptor = descriptor;
+    myCommandLine = commandLine;
     myStartBuildEventSupplier = startBuildEventSupplier != null
                                 ? startBuildEventSupplier : ctx -> new StartBuildEventImpl(myDescriptor, "");
 
@@ -60,6 +74,15 @@ public class MavenBuildEventProcessor implements AnsiEscapeDecoder.ColoredTextAc
     StartBuildEvent startEvent = myStartBuildEventSupplier.apply(getParsingContext());
 
     myBuildProgressListener.onEvent(myDescriptor.getId(), startEvent);
+
+    if (myCommandLine != null && !myCommandLine.isBlank()) {
+      myBuildProgressListener.onEvent(
+        myDescriptor.getId(),
+        OutputBuildEvent.builder(myCommandLine + "\n")
+          .withParentId(myDescriptor.getId())
+          .withOutputType(ProcessOutputType.SYSTEM)
+          .build());
+    }
   }
 
   public synchronized void onTextAvailable(String text, boolean stdError) {

@@ -1,6 +1,0 @@
-- name: dist.all/lib/intellij.libraries.download.pgp.verifier.jar
-  modules:
-  - name: intellij.libraries.download.pgp.verifier
-    libraries:
-      download-pgp-verifier:
-      - name: $MAVEN_REPOSITORY$/com/jetbrains/infra/download-pgp-verifier/1/download-pgp-verifier-1.jar

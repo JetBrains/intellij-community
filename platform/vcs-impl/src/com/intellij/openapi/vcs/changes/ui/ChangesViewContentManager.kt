@@ -332,7 +332,7 @@ fun MessageBusConnection.subscribeOnVcsToolWindowLayoutChanges(updateLayout: Run
 /**
  * Hides windowed/floating Commit TW when the commit started. Only for default non-modal commit mode
  */
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 internal fun hideWindowedFloatingTwOnCommit(project: Project) {
   if (!CloseWindowedFloatingTwOnCommit.isSelected()) return
 

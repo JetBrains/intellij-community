@@ -218,11 +218,11 @@ public final class XFramesView extends XDebugView {
 
         if (e.getStateChange() == ItemEvent.SELECTED) {
           Object item = e.getItem();
-          if (item != mySelectedStack && item instanceof XExecutionStack) {
+          if (item != mySelectedStack && item instanceof XExecutionStack stack) {
             XDebugSessionProxy session = getSession();
             if (session != null) {
               myRefresh = false;
-              updateFrames((XExecutionStack)item, null, false);
+              updateFrames(stack, null, false);
               XDebuggerActionsCollector.threadSelected.log(XDebuggerActionsCollector.PLACE_FRAMES_VIEW);
             }
           }

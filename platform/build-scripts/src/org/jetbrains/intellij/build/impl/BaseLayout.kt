@@ -16,7 +16,7 @@ import org.jetbrains.intellij.build.BuildContext
 import java.lang.StackWalker.Option
 import kotlin.streams.asSequence
 
-typealias LayoutPatcher = suspend (ModuleOutputPatcher, PlatformLayout, BuildContext) -> Unit
+typealias LayoutPatcher = (ModuleOutputPatcher, PlatformLayout, BuildContext) -> Unit
 
 /**
  * Describes layout of a plugin or the platform JARs in the product distribution
@@ -52,7 +52,7 @@ sealed class BaseLayout {
     patchers += patcher
   }
 
-  fun withPatch(patcher: suspend (ModuleOutputPatcher, BuildContext) -> Unit) {
+  fun withPatch(patcher: (ModuleOutputPatcher, BuildContext) -> Unit) {
     patchers += { moduleOutputPatcher, _, buildContext -> patcher(moduleOutputPatcher, buildContext) }
   }
 
@@ -74,6 +74,19 @@ sealed class BaseLayout {
    */
   @ApiStatus.Internal
   fun getIncludedModuleLibraryNames(): List<Pair<String, String>> = includedModuleLibraries.map { it.libraryName to it.moduleName }
+
+  /**
+   * The project libraries this layout declares, with the out path a `withProjectLibrary(name, jarName)` call states.
+   *
+   * The dev-distribution layout tables need the path and not only the name: a library packed into a jar of its own
+   * leaves every member jar that declares it, and the derivation has to know which jar the layout named.
+   */
+  @ApiStatus.Internal
+  fun getIncludedProjectLibraries(): List<ProjectLibraryData> = includedProjectLibraries.toList()
+
+  /** The module libraries this layout declares, with the relative output path each `withModuleLibrary` call states. */
+  @ApiStatus.Internal
+  fun getIncludedModuleLibraries(): List<ModuleLibraryData> = includedModuleLibraries.toList()
 
   fun filteredIncludedModuleNames(excludedRelativeJarPath: String, includeFromSubdirectories: Boolean = true): Sequence<String> {
     return _includedModules.asSequence().filter {

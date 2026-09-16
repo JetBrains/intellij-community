@@ -2,10 +2,10 @@
 
 package org.jetbrains.kotlin.j2k
 
+import com.intellij.openapi.components.service
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiManager
-import org.jetbrains.kotlin.j2k.actions.JavaToKotlinActionHandler
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
@@ -51,7 +51,7 @@ abstract class AbstractJavaToKotlinConverterMultiFileTest : AbstractJavaToKotlin
         }
 
         runWithModalProgressBlocking(project, "") {
-            JavaToKotlinActionHandler.convertFiles(psiFilesToConvert, project, module, askExternalCodeProcessing = false)
+            project.service<JavaToKotlinService>().convert(psiFilesToConvert, module)
         }
 
         val resultFiles = psiFilesToConvert.map { f ->

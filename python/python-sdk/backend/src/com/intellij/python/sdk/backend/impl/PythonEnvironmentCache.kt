@@ -28,7 +28,7 @@ private val PYTHON_ENVIRONMENT_RESULT_KEY = Key.create<PyResult<PythonEnvironmen
  *
  * @param forceRefresh re-detect even if a cached result already exists.
  */
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 internal fun Sdk.enrichLocalPythonSdkWithHomeInfo(forceRefresh: Boolean = false): PyResult<PythonEnvironment>? {
   if (!isPythonSdk(this) || isRemote(this)) return null
   if (!forceRefresh) {

@@ -170,7 +170,7 @@ internal class GitLabShareProjectDialogViewModel(
       if (account == null || api == null || namespace == null) return@combine false
 
       LOG.info("Checking for existing repositories at coordinates: ${account.server}/${namespace.fullPath}/$name")
-      api.graphQL.findProject(GitLabProjectPath(namespace.fullPath, name)).body() != null
+      api.graphQL.findProject(GitLabProjectPath(namespace.fullPath, name)) != null
     }.stateIn(cs, SharingStarted.Eagerly, false)
 
   private val accountValidationError: StateFlow<@NlsContexts.DialogMessage String?> =

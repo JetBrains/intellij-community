@@ -13,20 +13,22 @@ import org.junit.Test
 
 class FrontendModuleFilterTest {
   @Test
-  fun cachesValueForConcurrentAwaiters(): Unit = runBlocking(Dispatchers.Default) {
-    val productProperties = IdeaCommunityProperties(COMMUNITY_ROOT.communityRoot).apply {
-      embeddedFrontendRootModule = "intellij.idea.frontend.split"
-    }
-    val context = createBuildContext(projectHome = ULTIMATE_HOME, productProperties = productProperties, setupTracer = false)
-    val filters = List(4) {
-      async {
-        context.getFrontendModuleFilter()
+  fun cachesValueForConcurrentAwaiters(): Unit = BuildLifetime().use { lifetime ->
+    runBlocking(Dispatchers.Default) {
+      val productProperties = IdeaCommunityProperties(COMMUNITY_ROOT.communityRoot).apply {
+        embeddedFrontendRootModule = "intellij.idea.frontend.split"
       }
-    }.awaitAll()
+      val context = createBuildContext(projectHome = ULTIMATE_HOME, productProperties = productProperties, setupTracer = false, lifetime = lifetime)
+      val filters = List(4) {
+        async {
+          context.getFrontendModuleFilter()
+        }
+      }.awaitAll()
 
-    val first = filters.first()
-    for (filter in filters) {
-      assertThat(filter).isSameAs(first)
+      val first = filters.first()
+      for (filter in filters) {
+        assertThat(filter).isSameAs(first)
+      }
     }
   }
 }

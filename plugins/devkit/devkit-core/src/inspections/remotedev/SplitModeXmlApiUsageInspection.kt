@@ -33,7 +33,7 @@ internal class SplitModeXmlApiUsageInspection : DevKitPluginXmlInspectionBase() 
     val restrictionsService = SplitModeApiRestrictionsService.getInstance(currentXmlFile.project)
     val apiRestriction = restrictionsService.getExtensionPointRestriction(extensionPointName) ?: return
     val expectedModuleKind = apiRestriction.targetModuleKind
-    val moduleAnalysis = SplitModeModuleKindResolver.getOrComputeModuleAnalysis(module, currentXmlFile)
+    val moduleAnalysis = SplitModeModuleKindResolver.getOrComputeDescriptorAnalysis(currentXmlFile)
     if (SplitModeInspectionUtil.shouldReportSinglePluginLevelErrorInsteadOfManyNestedErrors(currentXmlFile, moduleAnalysis)) return
     val actualModuleKind = moduleAnalysis.resolvedModuleKind
 

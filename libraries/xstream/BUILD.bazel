@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.xstream` start
+content_module_jar(
+    libraries = ["@lib//:libraries-xstream-xstream"],
+    module = ":xstream",
+)
+### auto-generated section `dev intellij.libraries.xstream` end
+
 ### auto-generated section `build intellij.libraries.xstream` start
 jvm_library(
     name = "xstream",
@@ -20,11 +27,6 @@ jvm_library(
         "@lib//:libraries-xstream-xstream",
         "//libraries/jettison",
     ],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-xstream-xstream"],
-    module = ":xstream",
 )
 
 jvm_library(
@@ -51,7 +53,6 @@ exports_files(
     [
         "intellij.libraries.xstream.iml",
         "resources/intellij.libraries.xstream.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -473,8 +473,8 @@ public abstract class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
   }
 
   private void setBrowseButtonsVisible(boolean visible) {
-    myInterpreterPathField.getButton().setVisible(visible);
-    myHelpersPathField.getButton().setVisible(visible);
+    myInterpreterPathField.setButtonVisible(visible);
+    myHelpersPathField.setButtonVisible(visible);
   }
 
   // TODO: (next) may propose to start DockerMachine - somewhere

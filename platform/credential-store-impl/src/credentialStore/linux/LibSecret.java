@@ -73,11 +73,11 @@ public final class LibSecret {
     if (attributeNames.length != 1 && attributeNames.length != 2) {
       throw new IllegalArgumentException("one or two attributes are supported, got " + attributeNames.length);
     }
-    try (Arena arena = Arena.ofConfined()) {
-      List<Object> arguments = new ArrayList<>();
+    try (var arena = Arena.ofConfined()) {
+      var arguments = new ArrayList<>();
       arguments.add(arena.allocateFrom(name));
       arguments.add(flags);
-      for (String attributeName : attributeNames) {
+      for (var attributeName : attributeNames) {
         arguments.add(arena.allocateFrom(attributeName));
         arguments.add(SECRET_SCHEMA_ATTRIBUTE_STRING);
       }
@@ -105,14 +105,14 @@ public final class LibSecret {
    * @return the stored password, or {@code null} when there is none or the call failed
    */
   public static @Nullable String passwordLookupSync(@NotNull MemorySegment schema, @NotNull ErrorOut error, @NotNull String @NotNull ... attributes) {
-    try (Arena arena = Arena.ofConfined()) {
-      MemorySegment errorSlot = arena.allocate(ADDRESS);
-      List<Object> arguments = new ArrayList<>();
+    try (var arena = Arena.ofConfined()) {
+      var errorSlot = arena.allocate(ADDRESS);
+      var arguments = new ArrayList<>();
       arguments.add(schema);
       arguments.add(MemorySegment.NULL);
       arguments.add(errorSlot);
       addAttributes(arena, arguments, attributes);
-      MemorySegment password = (MemorySegment)Handles.passwordLookupSync(attributes.length / 2).invokeWithArguments(arguments);
+      var password = (MemorySegment)Handles.passwordLookupSync(attributes.length / 2).invokeWithArguments(arguments);
       error.error = readError(errorSlot);
       if (password.address() == 0) {
         return null;
@@ -135,12 +135,12 @@ public final class LibSecret {
    * @param password UTF-8 bytes without a terminator; the native copy is zeroed after the call
    */
   public static void passwordStoreSync(@NotNull MemorySegment schema, @NotNull String label, byte @NotNull [] password, @NotNull ErrorOut error, @NotNull String @NotNull ... attributes) {
-    try (Arena arena = Arena.ofConfined()) {
-      MemorySegment passwordSegment = arena.allocate(password.length + 1L);
+    try (var arena = Arena.ofConfined()) {
+      var passwordSegment = arena.allocate(password.length + 1L);
       MemorySegment.copy(password, 0, passwordSegment, JAVA_BYTE, 0, password.length);
       try {
-        MemorySegment errorSlot = arena.allocate(ADDRESS);
-        List<Object> arguments = new ArrayList<>();
+        var errorSlot = arena.allocate(ADDRESS);
+        var arguments = new ArrayList<>();
         arguments.add(schema);
         arguments.add(MemorySegment.NULL);
         arguments.add(arena.allocateFrom(label));
@@ -148,7 +148,7 @@ public final class LibSecret {
         arguments.add(MemorySegment.NULL);
         arguments.add(errorSlot);
         addAttributes(arena, arguments, attributes);
-        int ignored = (int)Handles.passwordStoreSync(attributes.length / 2).invokeWithArguments(arguments);
+        var _ = (int)Handles.passwordStoreSync(attributes.length / 2).invokeWithArguments(arguments);
         error.error = readError(errorSlot);
       }
       finally {
@@ -162,14 +162,14 @@ public final class LibSecret {
 
   /** {@code secret_password_clear_sync(schema, NULL, &error, name, value, ..., NULL)} */
   public static void passwordClearSync(@NotNull MemorySegment schema, @NotNull ErrorOut error, @NotNull String @NotNull ... attributes) {
-    try (Arena arena = Arena.ofConfined()) {
-      MemorySegment errorSlot = arena.allocate(ADDRESS);
-      List<Object> arguments = new ArrayList<>();
+    try (var arena = Arena.ofConfined()) {
+      var errorSlot = arena.allocate(ADDRESS);
+      var arguments = new ArrayList<>();
       arguments.add(schema);
       arguments.add(MemorySegment.NULL);
       arguments.add(errorSlot);
       addAttributes(arena, arguments, attributes);
-      int ignored = (int)Handles.passwordClearSync(attributes.length / 2).invokeWithArguments(arguments);
+      var _ = (int)Handles.passwordClearSync(attributes.length / 2).invokeWithArguments(arguments);
       error.error = readError(errorSlot);
     }
     catch (Throwable t) {
@@ -189,20 +189,20 @@ public final class LibSecret {
     if (attributes.length != 2 && attributes.length != 4) {
       throw new IllegalArgumentException("one or two attribute pairs are supported, got " + attributes.length + " strings");
     }
-    for (String attribute : attributes) {
+    for (var attribute : attributes) {
       arguments.add(arena.allocateFrom(attribute));
     }
     arguments.add(MemorySegment.NULL);
   }
 
   private static @Nullable GError readError(MemorySegment errorSlot) throws Throwable {
-    MemorySegment error = errorSlot.get(ADDRESS, 0);
+    var error = errorSlot.get(ADDRESS, 0);
     if (error.address() == 0) {
       return null;
     }
     error = error.reinterpret(Handles.G_ERROR.byteSize());
-    MemorySegment message = error.get(ADDRESS, Handles.G_ERROR.byteOffset(MemoryLayout.PathElement.groupElement("message")));
-    GError result = new GError(
+    var message = error.get(ADDRESS, Handles.G_ERROR.byteOffset(MemoryLayout.PathElement.groupElement("message")));
+      var result = new GError(
       error.get(JAVA_INT, 0),
       error.get(JAVA_INT, Handles.G_ERROR.byteOffset(MemoryLayout.PathElement.groupElement("code"))),
       message.address() != 0 ? message.reinterpret(Long.MAX_VALUE).getString(0) : null);
@@ -282,7 +282,7 @@ public final class LibSecret {
 
     /** A variadic downcall: the fixed arguments come from {@code base}, and {@code variadic} lists the trailing layouts including the {@code NULL}. */
     private static MethodHandle variadic(String name, FunctionDescriptor base, MemoryLayout... variadic) {
-      int firstVariadicArgument = base.argumentLayouts().size();
+      var firstVariadicArgument = base.argumentLayouts().size();
       return LINKER.downcallHandle(SECRET.findOrThrow(name), base.appendArgumentLayouts(variadic), Linker.Option.firstVariadicArg(firstVariadicArgument));
     }
   }

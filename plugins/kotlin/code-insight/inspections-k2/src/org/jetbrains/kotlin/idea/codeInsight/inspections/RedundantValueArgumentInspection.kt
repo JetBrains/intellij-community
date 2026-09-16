@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.allOverriddenSymbols
 import org.jetbrains.kotlin.analysis.api.symbols.sourcePsiSafe
+import org.jetbrains.kotlin.idea.base.psi.deleteValueArgument
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.NamedArgumentUtils
@@ -109,7 +110,7 @@ internal class RedundantValueArgumentInspection : AbstractKotlinInspection(), Cl
                 NamedArgumentUtils.addArgumentName(followingArgument, name)
             }
 
-            argumentList.removeArgument(argument)
+            argumentList.deleteValueArgument(argument)
         }
     }
 }

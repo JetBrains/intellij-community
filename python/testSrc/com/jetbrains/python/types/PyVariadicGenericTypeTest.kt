@@ -350,7 +350,7 @@ class PyVariadicGenericTypeTest : PyCodeInsightTestCase() {
       
       
       expr = args_to_tuple(1, 'a', 'a', [1], True, 3.3)
-      #└ TYPE tuple[str, list[int], bool, int]
+      #└ TYPE tuple[Literal["a"], list[int], bool, Literal[1]]
       """.trimIndent())
   }
 
@@ -1109,7 +1109,7 @@ class PyVariadicGenericTypeTest : PyCodeInsightTestCase() {
       shape = (42, True)
       arr: Array[int, bool] = Array(shape)
       expr = arr.add_axis_prefix('')
-      #└ TYPE Array[str, int, bool]
+      #└ TYPE Array[Literal[""], int, bool]
       """.trimIndent())
 
     @Test
@@ -1120,7 +1120,7 @@ class PyVariadicGenericTypeTest : PyCodeInsightTestCase() {
       def args_to_tuple[T1, T2, *Ts](t1: T1, t2: T2, *args: *Tuple[T2, *Ts, float]) -> Tuple[T2, *Ts, T1]: ...
       
       expr = args_to_tuple(1, 'a', 'a', [1], True, 3.3)
-      #└ TYPE tuple[str, list[int], bool, int]
+      #└ TYPE tuple[Literal["a"], list[int], bool, Literal[1]]
       """.trimIndent())
   }
 
@@ -1174,7 +1174,7 @@ class PyVariadicGenericTypeTest : PyCodeInsightTestCase() {
       foo(1, baz, args=(0, 'foo', 1.0, False))
       
       foo(1, bar, args=('foo', 0)) # WARNING Expected type 'tuple[int, str]' (matched generic type 'tuple[*Ts]'), got 'tuple[Literal['foo'], Literal[0]]' instead
-      foo(1, baz, args=('foo', 0, 1.0, False)) # WARNING Expected type 'tuple[int, str, float | int, bool]' (matched generic type 'tuple[*Ts]'), got 'tuple[Literal['foo'], Literal[0], float, Literal[False]]' instead
+      foo(1, baz, args=('foo', 0, 1.0, False)) # WARNING Expected type 'tuple[int, str, float | int, bool]' (matched generic type 'tuple[*Ts]'), got 'tuple[Literal['foo'], Literal[0], float | int, Literal[False]]' instead
       """.trimIndent())
 
     @Test

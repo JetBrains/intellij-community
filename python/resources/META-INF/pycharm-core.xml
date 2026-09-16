@@ -31,10 +31,9 @@
       <add-to-group group-id="FileOpenGroup" anchor="after" relative-to-action="OpenFile"/>
     </action>
 
-    <!-- ProjectFromVersionControl is intentionally not defined in this shared core descriptor.
-         Its implementation lives in the backend-only VCS module and is registered from
-         intellij.pycharm.community.customization.backend, so JetBrains Client can load PyCharm core
-         customization without pulling backend VCS into the shared plugin. -->
+    <!-- The clone action placement is intentionally not in this shared core descriptor.
+         intellij.pycharm.community.customization.backend places the platform Vcs.VcsClone action,
+         so JetBrains Client can load PyCharm core customization without backend VCS. -->
     <group id="PyCharm.MarkRootGroup">
       <action id="MarkSourceRoot" class="com.intellij.ide.projectView.actions.MarkJavaSourceRootAction"/>
       <action id="MarkExcludeRoot" class="com.intellij.ide.projectView.actions.MarkExcludeRootAction"/>

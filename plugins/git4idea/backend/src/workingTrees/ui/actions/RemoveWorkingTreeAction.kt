@@ -29,8 +29,13 @@ internal class RemoveWorkingTreeAction : DumbAwareAction() {
   }
 
   private fun isEnabledFor(trees: List<GitWorkingTree>?, project: Project?, repository: GitRepository?): Boolean {
-    return project != null && repository != null && !trees.isNullOrEmpty() && trees.all {
-      !it.isCurrent && !it.isMain && !GitCreateWorkingTreeService.getInstance().isWorkingTreeCreationInProgress(it)
+    if (project == null || repository == null || trees.isNullOrEmpty()) return false
+    val creationService = GitCreateWorkingTreeService.getInstance()
+    val worktreesService = GitWorkingTreesService.getInstance(project)
+    return trees.all {
+      !it.isCurrent && !it.isMain &&
+      !creationService.isWorkingTreeCreationInProgress(it) &&
+      !worktreesService.isWorkingTreeDeletionInProgress(it)
     }
   }
 
@@ -38,19 +43,38 @@ internal class RemoveWorkingTreeAction : DumbAwareAction() {
     GitWorkingTreesNewBadgeUtil.workingTreesFeatureWasUsed()
     val project = e.project ?: return
     val data = e.getData(SELECTED_WORKING_TREES)
-    val repository = e.getData(GitWorkingTreeTabActionsDataKeys.CURRENT_REPOSITORY)
+    val repository = e.getData(GitWorkingTreeTabActionsDataKeys.CURRENT_REPOSITORY) ?: return
     if (!isEnabledFor(data, project, repository)) return
 
-    val tree = data?.singleOrNull() ?: return
-    val result = Messages.showYesNoDialog(
-      GitBundle.message("Git.WorkingTrees.dialog.delete.worktree.message", tree.path.presentableUrl),
-      GitBundle.message("Git.WorkingTrees.dialog.delete.worktree.title"),
-      GitBundle.message("Git.WorkingTrees.dialog.delete.worktree.yes.option"),
+    val trees = data ?: return
+    val result = showDeleteWorktreeDialog(trees)
+    if (result == Messages.YES) {
+      GitWorkingTreesService.getInstance(project).deleteWorkingTrees(project, trees, repository)
+    }
+  }
+
+  private fun showDeleteWorktreeDialog(trees: List<GitWorkingTree>): Int {
+    val singleTree = trees.singleOrNull()
+    val (message, title, yesText) = if (singleTree != null) {
+      Triple(
+        GitBundle.message("Git.WorkingTrees.dialog.delete.worktree.message", singleTree.path.presentableUrl),
+        GitBundle.message("Git.WorkingTrees.dialog.delete.worktree.title"),
+        GitBundle.message("Git.WorkingTrees.dialog.delete.worktree.yes.option")
+      )
+    }
+    else {
+      Triple(
+        GitBundle.message("Git.WorkingTrees.dialog.delete.worktrees.message", trees.size),
+        GitBundle.message("Git.WorkingTrees.dialog.delete.worktrees.title"),
+        GitBundle.message("Git.WorkingTrees.dialog.delete.worktrees.yes.option")
+      )
+    }
+
+    return Messages.showYesNoDialog(
+      message,
+      title,
+      yesText,
       CommonBundle.getCancelButtonText(),
       AllIcons.General.QuestionDialog)
-
-    if (result == Messages.YES) {
-      GitWorkingTreesService.getInstance(project).deleteWorkingTree(project, tree, repository!!)
-    }
   }
 }

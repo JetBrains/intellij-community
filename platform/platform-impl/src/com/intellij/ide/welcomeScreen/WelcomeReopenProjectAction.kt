@@ -31,6 +31,7 @@ internal class WelcomeReopenProjectAction :
     val project = e.project
     e.presentation.text = ActionsBundle.message("action.WelcomeReopenProjectAction.text")
     e.presentation.icon = AllIcons.Nodes.HomeFolder
-    e.presentation.isEnabledAndVisible = projectDisplayName.isNotBlank() && project != null && !WelcomeUtils.isWelcomeProject(project)
+    e.presentation.isEnabledAndVisible =
+      projectDisplayName.isNotBlank() && project != null && !WelcomeUtils.isWelcomeProject(project) && WelcomeAccessPoint.isAvailable()
   }
 }

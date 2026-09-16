@@ -57,4 +57,7 @@ class MarkdownParserTest: MarkdownParsingTestCase("parser") {
    * so bracketed text separated by whitespace stays a pair of shortcut reference links.
    */
   fun testReferenceLinkLabelSeparatedFromLinkText() = doTest(true)
+
+  @TestFor(issues = ["IJPL-172056"])
+  fun testLinkDestinationWithUnderscore() = doTest(true)
 }

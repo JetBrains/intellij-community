@@ -8,7 +8,21 @@
   "colors": {
     "core-border": "#c4c4c4",
     "core-border-transparent": "#00000000",
-    "tab-selected-bg-active": "#2121a6"
+    "tab-selected-bg-active": "#2121a6",
+
+    "toggle-on-bg": "#1AEBFF",
+    "toggle-off-bg": "#000000",
+    "toggle-off-border": "#1AEBFF",
+    "toggle-on-border": "#1AEBFF",
+    "toggle-on-disabled-bg": "#AA6E28",
+    "toggle-off-disabled-bg": "#000000",
+    "toggle-on-disabled-border": "#AA6E28",
+    "toggle-off-disabled-border": "#AA6E28",
+    "toggle-focus-border": "#1AEBFF",
+    "toggle-on-notch": "#000000",
+    "toggle-off-notch": "#1AEBFF",
+    "toggle-on-disabled-notch": "#000000",
+    "toggle-off-disabled-notch": "#AA6E28"
   },
 
   "ui": {
@@ -487,7 +501,8 @@
       "offForeground": "#FFFFFF",
       "offBackground": "#000000",
       "buttonColor":  "#FFFFFF",
-      "borderColor": "#FFFFFF"
+      "borderColor": "#FFFFFF",
+      "focusBorderColor": "#1AEBFF"
     },
 
     "ToolTip": {
@@ -789,7 +804,6 @@
       "Checkbox.Foreground.Disabled": "#AA6E28",
 
       "#CED0D6": "#FFFFFF"
-
     }
   }
 }

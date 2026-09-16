@@ -9,7 +9,6 @@ import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtDeclarationWithBody
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 abstract class AbstractCodeToInlineBuilder(
     project: Project,
@@ -18,7 +17,7 @@ abstract class AbstractCodeToInlineBuilder(
 ) {
     protected val psiFactory = KtPsiFactory(project)
     protected open fun saveComments(codeToInline: MutableCodeToInline, contextDeclaration: KtDeclaration) {
-        val bodyBlockExpression = contextDeclaration.safeAs<KtDeclarationWithBody>()?.bodyBlockExpression
+        val bodyBlockExpression = (contextDeclaration as? KtDeclarationWithBody)?.bodyBlockExpression
         if (bodyBlockExpression != null) addCommentHoldersForStatements(codeToInline, bodyBlockExpression)
     }
 

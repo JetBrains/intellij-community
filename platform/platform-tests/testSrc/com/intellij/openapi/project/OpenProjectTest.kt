@@ -13,6 +13,7 @@ import com.intellij.openapi.project.TestOpenMode.ModeFolderAsFolder
 import com.intellij.openapi.project.TestOpenMode.ModeFolderAsProject
 import com.intellij.openapi.project.TestProjectSource.SourceCLI
 import com.intellij.openapi.project.TestProjectSource.SourceOpenFileAction
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ModuleAttachProcessor
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
@@ -47,18 +48,21 @@ import kotlin.io.path.writeText
 // terms:
 // valid: .idea (.ipr) exists
 // clean: .idea (.ipr) doesn't exist
-// project directory: directory that contains .idea, .ipr, root maven or root gradle file
+// project directory: directory that contains .idea, .ipr, or a root build file
 // existing: project directory exists
 // nested: .idea (.ipr) exists and ../.idea (../.ipr) exists too
-// multibuild: .idea (.ipr) does not exist, and there are 2 marker build files (pom.xml and build.gradle)
+// multibuild: .idea (.ipr) does not exist, and there are 2 marker build files
 // regular file: regular file that is not a folder
 
 // with ability to attach - there is some defined ProjectAttachProcessor extension (e.g. WS, PS).
 // with inability to attach - there is no any defined ProjectAttachProcessor extension (e.g. IU, IC).
 
 
-enum class TestProjectSource { SourceOpenFileAction, SourceCLI }
-enum class TestOpenMode { ModeFileOrFolderDefault, ModeFolderAsProject, ModeFolderAsFolder }
+private const val BUILD_SYSTEM_ONE_MARKER = "build.system.one"
+private const val BUILD_SYSTEM_TWO_MARKER = "build.system.two"
+
+internal enum class TestProjectSource { SourceOpenFileAction, SourceCLI }
+internal enum class TestOpenMode { ModeFileOrFolderDefault, ModeFolderAsProject, ModeFolderAsFolder }
 
 internal class ExpectedProjectState(
   private val resolveRoot: Path,
@@ -366,6 +370,7 @@ internal class OpenProjectTest {
     projectDir.createDirectories()
 
     checkDefaultProjectAsTemplate { checkDefaultProjectAsTemplateTask ->
+      @Suppress("DEPRECATION") // this test explicitly tests empty OpenProjectTask
       val project = ProjectUtil.openOrImportAsync(projectDir, OpenProjectTask())
       assertThat(project).isNotNull()
       project!!.useProject { openedProject ->
@@ -402,8 +407,7 @@ internal class OpenProjectTest {
       " has different behavior when opening folder from CLI and from open action, and we don't want to cement this behavior in tests.",
     )
 
-    val processorNames = ProjectOpenProcessor.EXTENSION_POINT_NAME.extensionList.map(ProjectOpenProcessor::name)
-    assertThat(processorNames).`as` { "Use intellij.idea.community.main.tests as a classpath" }.containsAll(listOf("Maven", "Gradle"))
+    registerBuildSystemProcessors()
     attachProcessors.configureAttachProcessors(disposable)
     val projectDir = setupMultibuildProject()
     var suggestedProcessors: List<String>? = null
@@ -474,26 +478,21 @@ internal class OpenProjectTest {
   private fun setupMultibuildProject(): Path {
     val projectDir = tempDir.newPath("project")
     projectDir.createDirectories()
-    projectDir.resolve("pom.xml").writeText("""
-      <?xml version="1.0" encoding="UTF-8"?>
-      <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-          <modelVersion>4.0.0</modelVersion>
-          <groupId>link.sharpe</groupId>
-          <artifactId>mavenproject1</artifactId>
-          <version>1.0-SNAPSHOT</version>
-      </project>
-    """.trimIndent())
-
-    projectDir.resolve("settings.gradle").writeText("""
-      rootProject.name = 'spring-petclinic'
-    """.trimIndent())
-
-    projectDir.resolve("build.gradle").writeText("""
-      group = 'com.example'
-      version = '1.0.0-SNAPSHOT'
-    """.trimIndent())
+    projectDir.resolve(BUILD_SYSTEM_ONE_MARKER).writeText("")
+    projectDir.resolve(BUILD_SYSTEM_TWO_MARKER).writeText("")
 
     return projectDir
+  }
+
+  private fun registerBuildSystemProcessors() {
+    ProjectOpenProcessor.EXTENSION_POINT_NAME.point.registerExtension(
+      TestBuildSystemProjectOpenProcessor("Build System One", BUILD_SYSTEM_ONE_MARKER),
+      disposable,
+    )
+    ProjectOpenProcessor.EXTENSION_POINT_NAME.point.registerExtension(
+      TestBuildSystemProjectOpenProcessor("Build System Two", BUILD_SYSTEM_TWO_MARKER),
+      disposable,
+    )
   }
 
   private suspend fun openWithOpenerAndAssertProjectState(
@@ -524,6 +523,19 @@ internal class OpenProjectTest {
         assertThatProjectContainsRootEntities(project, expectedProjectState.getExpectedRoots())
         checkDefaultProjectAsTemplateTask(project, defaultProjectTemplateShouldBeApplied)
       }
+    }
+  }
+}
+
+private class TestBuildSystemProjectOpenProcessor(
+  override val name: String,
+  private val markerFileName: String,
+) : ProjectOpenProcessor() {
+  override fun canOpenProject(file: VirtualFile): Boolean {
+    return if (file.isDirectory) {
+      file.findChild(markerFileName) != null
+    } else {
+      file.name == markerFileName
     }
   }
 }

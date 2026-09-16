@@ -64,7 +64,7 @@ private class LspDocumentationTarget(
       .builder(presentableText ?: CodeInsightBundle.message("documentation.tool.window.title"))
       .presentation()
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   override fun computeDocumentation(): DocumentationResult =
     createLspDocumentationData(markupContent)
       .toQuickDocHtml(project)

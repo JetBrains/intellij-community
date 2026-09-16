@@ -1,5 +1,4 @@
 // WITH_STDLIB
-// COMPILER_ARGUMENTS: -XXLanguage:+CustomEqualsInValueClasses
+// COMPILER_ARGUMENTS: -XXLanguage:+FullValueClasses
 
-@JvmInline
 value class A(<caret>val a: IntArray)

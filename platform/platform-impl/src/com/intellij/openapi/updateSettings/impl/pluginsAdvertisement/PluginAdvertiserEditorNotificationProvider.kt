@@ -32,6 +32,7 @@ import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdver
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService.Companion.getSuggestedCommercialIdeCode
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService.Companion.isCommunityIde
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
@@ -118,7 +119,7 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider, D
     val thirdParty: MutableSet<PluginData> = mutableSetOf()
     private val jbProduced: MutableSet<PluginData> = mutableSetOf()
 
-    private val hasSuggestedIde: Boolean
+    val hasSuggestedIde: Boolean
 
     private var pluginsToInstall: Set<PluginData>? = null
 
@@ -135,7 +136,8 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider, D
         }
       }
 
-      hasSuggestedIde = suggestedIdes.isNotEmpty()
+      hasSuggestedIde = Registry.`is`("ide.plugin.advertiser.suggest.ide.for.textmate.files")
+                        && suggestedIdes.isNotEmpty()
                         && jbProduced.isEmpty()
                         && isMappedToTextMate(extensionOrFileName)
     }

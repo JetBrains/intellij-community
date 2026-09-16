@@ -1,7 +1,29 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.kotlin.ide` start
+content_module_jar(module = ":kotlin.ide")
+### auto-generated section `dev intellij.kotlin.ide` end
+
 ### auto-generated section `build intellij.kotlin.ide` start
+create_kotlinc_options(
+    name = "custom_kotlin.ide",
+    opt_in = [
+        "org.jetbrains.kotlin.psi.KtExperimentalApi",
+        "org.jetbrains.kotlin.psi.KtNonPublicApi",
+        "org.jetbrains.kotlin.psi.KtIdeApi",
+        "org.jetbrains.kotlin.analysis.api.KaExperimentalApi",
+        "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+        "org.jetbrains.kotlin.analysis.api.KaPlatformInterface",
+        "org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaUnstableDiagnosticApi",
+        "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
+        "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+        "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+    ],
+    x_context_parameters = True,
+)
+
 jvm_library(
     name = "kotlin.ide",
     srcs = glob(
@@ -12,6 +34,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    kotlinc_opts = ":custom_kotlin.ide",
     module_name = "intellij.kotlin.ide",
     resource_strip_prefix = "resources",
     resources = glob(
@@ -54,16 +77,12 @@ jvm_library(
         "//platform/util:util-ui",
         "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
         "//platform/diff-impl",
-        "//libraries/kotlinc/kotlin-scripting-common:libraries-kotlinc-kotlin-scripting-common",
-        "//libraries/kotlinc/kotlin-scripting-compiler-impl:libraries-kotlinc-kotlin-scripting-compiler-impl",
-        "//plugins/kotlin/base/scripting/scripting.shared",
         "//libraries/gson",
         "//platform/structure-view-impl:structureView",
         "//platform/statistics",
+        "//plugins/kotlin/base/psi",
     ],
 )
-
-content_module_jar(module = ":kotlin.ide")
 
 jvm_library(
     name = "kotlin.ide_test_lib",
@@ -72,6 +91,7 @@ jvm_library(
         [],
         allow_empty = True,
     ),
+    kotlinc_opts = ":custom_kotlin.ide",
     module_name = "intellij.kotlin.ide",
     visibility = ["//visibility:public"],
     runtime_deps = [
@@ -111,12 +131,10 @@ jvm_library(
         "//platform/util:util-ui_test_lib",
         "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared_test_lib",
         "//platform/diff-impl:diff-impl_test_lib",
-        "//libraries/kotlinc/kotlin-scripting-common:libraries-kotlinc-kotlin-scripting-common_test_lib",
-        "//libraries/kotlinc/kotlin-scripting-compiler-impl:libraries-kotlinc-kotlin-scripting-compiler-impl_test_lib",
-        "//plugins/kotlin/base/scripting/scripting.shared:scripting.shared_test_lib",
         "//libraries/gson:gson_test_lib",
         "//platform/structure-view-impl:structureView_test_lib",
         "//platform/statistics:statistics_test_lib",
+        "//plugins/kotlin/base/psi:psi_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.ide` end

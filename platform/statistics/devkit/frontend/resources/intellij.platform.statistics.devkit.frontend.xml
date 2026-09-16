@@ -1,0 +1,15 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.platform.frontend"/>
+    <module name="intellij.platform.statistics.devkit"/>
+  </dependencies>
+
+  <resource-bundle>messages.ActionsBundle</resource-bundle>
+  <extensions defaultExtensionNs="com.intellij">
+    <!-- The factory implementation is shared with the projected host window (IJPL-149684). -->
+    <!--suppress PluginXmlRegistrationCheck -->
+    <toolWindow id="Statistics Event Log"
+                factoryClass="com.intellij.platform.statistics.devkit.toolwindow.FrontendStatisticsEventLogToolWindowFactory"
+                anchor="bottom" canCloseContents="true" order="last"/>
+  </extensions>
+</idea-plugin>

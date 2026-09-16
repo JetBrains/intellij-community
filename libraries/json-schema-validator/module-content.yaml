@@ -1,6 +1,0 @@
-- name: dist.all/lib/intellij.libraries.jsonSchemaValidator.jar
-  modules:
-  - name: intellij.libraries.jsonSchemaValidator
-    libraries:
-      json-schema-validator-jetbrains:
-      - name: $MAVEN_REPOSITORY$/com/networknt/json-schema-validator/3/json-schema-validator-3.jar

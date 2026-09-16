@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage
 
+import com.intellij.compiler.JavacUtil
 import com.intellij.coverage.analysis.JavaCoverageAnnotator
 import com.intellij.coverage.view.CoverageViewManager
 import com.intellij.coverage.view.CoverageViewTreeStructure
@@ -15,14 +16,20 @@ import com.intellij.execution.impl.RunManagerImpl
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.PluginPathManager
+import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl
+import com.intellij.openapi.roots.CompilerModuleExtension
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.rt.coverage.data.LineCoverage
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.utils.io.deleteRecursively
 import com.intellij.ui.classFilter.ClassFilter
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -34,6 +41,7 @@ import org.junit.Assert
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import java.io.ByteArrayOutputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.time.Duration.Companion.milliseconds
@@ -76,8 +84,12 @@ class CoverageRunConfigTest : CoverageIntegrationBaseTest() {
   }
 
   @Test
-  fun `test run with jacoco creates report and aggregated coverage tree stats`() =
+  fun `test run with jacoco matches native HTML coverage counters`() =
     doTestRunWithCoverage(requireNotNull(CoverageRunner.getInstance(JaCoCoCoverageRunner::class.java)))
+
+  @Test
+  fun `test run with jacoco matches native HTML for partial branches`() =
+    doTestRunWithCoverage(requireNotNull(CoverageRunner.getInstance(JaCoCoCoverageRunner::class.java)), includeApplication = true)
 
   @Test
   fun `test run with intellij coverage creates report and aggregated coverage tree stats`() =
@@ -266,7 +278,7 @@ class CoverageRunConfigTest : CoverageIntegrationBaseTest() {
     }
   }
 
-  private fun doTestRunWithCoverage(coverageRunner: CoverageRunner): Unit = runBlocking {
+  private fun doTestRunWithCoverage(coverageRunner: CoverageRunner, includeApplication: Boolean = false): Unit = runBlocking {
     val projectDir = requireNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(getProjectDirOrFile(true)))
     VfsUtil.markDirtyAndRefresh(false, true, true, projectDir)
     IndexingTestUtil.waitUntilIndexesAreReady(project)
@@ -278,9 +290,13 @@ class CoverageRunConfigTest : CoverageIntegrationBaseTest() {
     val previousFlattenPackages = coverageViewState.isFlattenPackages
     val previousHideFullyCovered = coverageViewState.isHideFullyCovered
     val previousShowOnlyModified = coverageViewState.isShowOnlyModified
+    val originalOutputUrl = requireNotNull(CompilerModuleExtension.getInstance(runModule)?.compilerOutputUrl)
+    val outputDir = Files.createTempDirectory("coverage-compiled-fixture")
     var reportPath: Path? = null
     var suite: JavaCoverageSuite? = null
     try {
+      compileFixture(outputDir)
+      PsiTestUtil.setCompilerOutputPath(runModule, VfsUtilCore.pathToUrl(outputDir.toString()), false)
       coverageViewState.isFlattenPackages = false
       coverageViewState.isHideFullyCovered = false
       coverageViewState.isShowOnlyModified = false
@@ -295,7 +311,12 @@ class CoverageRunConfigTest : CoverageIntegrationBaseTest() {
       coverageConfig.coverageRunner = coverageRunner
       Assert.assertSame(coverageRunner, coverageOptions.coverageRunner)
       Assert.assertSame(coverageRunner, coverageConfig.coverageRunner)
-      coverageConfig.setCoveragePatterns(arrayOf(ClassFilter("foo.FooClass"), ClassFilter("foo.bar.UncoveredClass")))
+      val classNames = buildList {
+        add("foo.FooClass")
+        add("foo.bar.UncoveredClass")
+        if (includeApplication) add("foo.CoverageApp")
+      }
+      coverageConfig.coveragePatterns = classNames.map { ClassFilter(it) }.toTypedArray()
       val coverageReport = Path.of(requireNotNull(coverageConfig.coverageFilePath))
       reportPath = coverageReport
       Files.deleteIfExists(coverageReport)
@@ -316,6 +337,15 @@ class CoverageRunConfigTest : CoverageIntegrationBaseTest() {
       Assert.assertEquals(LineCoverage.FULL.toInt(), classData.getLineData(5).status)
 
       val bundle = requireNotNull(manager.currentSuitesBundle)
+      if (coverageRunner is JaCoCoCoverageRunner) {
+        assertJaCoCoHtmlCoverage(project, runModule, bundle, classNames)
+      }
+      if (includeApplication) {
+        val info = requireNotNull(JavaCoverageAnnotator.getInstance(project).classesCoverage["foo.CoverageApp"])
+        Assert.assertEquals(2, info.totalBranchCount)
+        Assert.assertEquals(1, info.coveredBranchCount)
+        return@runBlocking
+      }
       val treeStructure = CoverageViewTreeStructure(project, bundle)
       val rootNode = treeStructure.rootElement as AbstractTreeNode<*>
       val packageNode = treeStructure.getChildElements(rootNode).single() as JavaCoverageNode
@@ -351,7 +381,47 @@ class CoverageRunConfigTest : CoverageIntegrationBaseTest() {
       coverageViewState.isFlattenPackages = previousFlattenPackages
       coverageViewState.isHideFullyCovered = previousHideFullyCovered
       coverageViewState.isShowOnlyModified = previousShowOnlyModified
+      PsiTestUtil.setCompilerOutputPath(runModule, originalOutputUrl, false)
+      outputDir.deleteRecursively()
     }
+  }
+
+  @Test
+  fun `test another applicable engine replaces the cached configuration`() {
+    val runner = TestCoverageRunner()
+    CoverageRunner.EP_NAME.point.registerExtension(runner, testRootDisposable)
+    val runConfig = ApplicationConfiguration("coverage engine switch", project)
+
+    // JavaCoverageEngine applies to every ApplicationConfiguration, so it wins while the test engine stays off.
+    Assert.assertTrue(CoverageEnabledConfiguration.getOrCreate(runConfig) is JavaCoverageEnabledConfiguration)
+
+    val engine = SwitchableCoverageEngine(runner)
+    CoverageEngine.EP_NAME.point.registerExtension(engine, LoadingOrder.FIRST, testRootDisposable)
+    engine.isApplicable = true
+    val switched = CoverageEnabledConfiguration.getOrCreate(runConfig)
+
+    Assert.assertTrue(switched is SwitchableCoverageEnabledConfiguration)
+    Assert.assertSame(switched, CoverageEnabledConfiguration.getOrNull(runConfig))
+    Assert.assertSame(runConfig, switched.configuration)
+
+    engine.isApplicable = false
+    val switchedBack = CoverageEnabledConfiguration.getOrCreate(runConfig)
+
+    Assert.assertTrue(switchedBack is JavaCoverageEnabledConfiguration)
+    Assert.assertSame(switchedBack, CoverageEnabledConfiguration.getOrNull(runConfig))
+  }
+
+  private fun compileFixture(outputDir: Path) {
+    val compiler = JavacUtil.getJavac()
+    val sourceRoot = getProjectDirOrFile(true).resolve("src")
+    val compilerOutput = ByteArrayOutputStream()
+    val exitCode = compiler.run(
+      null, compilerOutput, compilerOutput, "-g", "--release", "17", "-d", outputDir.toString(),
+      sourceRoot.resolve("foo/CoverageApp.java").toString(),
+      sourceRoot.resolve("foo/FooClass.java").toString(),
+      sourceRoot.resolve("foo/bar/UncoveredClass.java").toString(),
+    )
+    Assert.assertEquals(compilerOutput.toString(Charsets.UTF_8), 0, exitCode)
   }
 
   private class TestCoverageRunner : CoverageRunner() {
@@ -363,4 +433,22 @@ class CoverageRunConfigTest : CoverageIntegrationBaseTest() {
 
     override fun acceptsCoverageEngine(engine: CoverageEngine) = true
   }
+
+  private class SwitchableCoverageEngine(private val runner: CoverageRunner) : CoverageEngine() {
+    var isApplicable: Boolean = false
+
+    override fun getPresentableText() = "Switchable"
+
+    override fun isApplicableTo(conf: RunConfigurationBase<*>) = isApplicable
+
+    override fun createCoverageEnabledConfiguration(conf: RunConfigurationBase<*>): CoverageEnabledConfiguration =
+      SwitchableCoverageEnabledConfiguration(conf, runner)
+
+    override fun createEmptyCoverageSuite(coverageRunner: CoverageRunner): CoverageSuite? = null
+
+    override fun getCoverageAnnotator(project: Project): CoverageAnnotator = throw UnsupportedOperationException()
+  }
+
+  private class SwitchableCoverageEnabledConfiguration(conf: RunConfigurationBase<*>, runner: CoverageRunner) :
+    CoverageEnabledConfiguration(conf, runner)
 }

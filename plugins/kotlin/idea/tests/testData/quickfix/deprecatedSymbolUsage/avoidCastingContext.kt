@@ -8,5 +8,4 @@ fun m(s: String?) {
 @Deprecated("", ReplaceWith("lowercase(Locale.getDefault())", "java.util.Locale"))
 fun String.toLowerCase(): String = (this as java.lang.String).toLowerCase()
 
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.replaceWith.DeprecatedSymbolUsageFix

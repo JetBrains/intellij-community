@@ -7,7 +7,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
 import com.intellij.openapi.vcs.changes.ChangesViewI
 import com.intellij.openapi.vcs.changes.ChangesViewId
 import com.intellij.openapi.vcs.changes.ChangesViewManager
@@ -137,7 +136,7 @@ internal class RpcChangesViewProxy(project: Project, scope: CoroutineScope) : Ch
 
   override fun hasContentToDiff(): Boolean = diffableSelection.value != null
 
-  override fun createDiffPreviewProcessor(isInEditor: Boolean): ChangeViewDiffRequestProcessor =
+  override fun createDiffPreviewProcessor(isInEditor: Boolean): RemoteChangesViewDiffPreviewProcessor =
     RemoteChangesViewDiffPreviewProcessor(this, isInEditor)
 
   fun inclusionChanged() {

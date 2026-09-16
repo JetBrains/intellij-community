@@ -15,12 +15,12 @@ import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.formatter.settings.MarkdownCustomCodeStyleSettings
 import org.intellij.plugins.markdown.lang.formatter.settings.TableStyle
-import org.intellij.plugins.markdown.lang.isMarkdownType
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableCell
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRow
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
 import org.intellij.plugins.markdown.lang.psi.util.hasType
+import org.intellij.plugins.markdown.lang.supportsMarkdown
 import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings
 import org.jetbrains.annotations.ApiStatus
 
@@ -178,7 +178,7 @@ object TableUtils {
 
   @ApiStatus.Internal
   fun isFormattingOnTypeEnabledForTables(file: PsiFile): Boolean {
-    if (!file.fileType.isMarkdownType()) {
+    if (!file.supportsMarkdown()) {
       return false
     }
     val settings = CodeStyle.getSettings(file)

@@ -9,12 +9,14 @@ import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.UIThemeProvider
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -41,8 +43,13 @@ internal class LafDynamicPluginManager(private val coroutineScope: CoroutineScop
   // access only from EDT
   private var scheduledLaF: UIThemeLookAndFeelInfo? = null
 
+  @RequiresEdt
   fun reloadColorSchemesAndApplyScheduledLaF() {
-    serviceIfCreated<EditorColorsManager>()?.reloadKeepingActiveScheme()
+    serviceIfCreated<EditorColorsManager>()?.let { manager ->
+      runWriteAction {
+        manager.reloadKeepingActiveScheme()
+      }
+    }
     applyScheduledLaF()
   }
 

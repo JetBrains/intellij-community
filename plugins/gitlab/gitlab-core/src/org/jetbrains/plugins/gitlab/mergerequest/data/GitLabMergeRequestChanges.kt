@@ -31,10 +31,6 @@ import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabServerMetadata
 import org.jetbrains.plugins.gitlab.api.GitLabVersion
 import org.jetbrains.plugins.gitlab.api.dto.GitLabDiffDTO
-import org.jetbrains.plugins.gitlab.mergerequest.api.request.getCommitDiffsURI
-import org.jetbrains.plugins.gitlab.mergerequest.api.request.getMergeRequestChangesURI
-import org.jetbrains.plugins.gitlab.mergerequest.api.request.getMergeRequestCommitsURI
-import org.jetbrains.plugins.gitlab.mergerequest.api.request.getMergeRequestDiffsURI
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.loadCommit
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.loadCommitDiffs
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.loadMergeRequestChanges
@@ -89,10 +85,8 @@ class GitLabMergeRequestChangesImpl(
 
   private val commits: Deferred<List<GitLabCommit>> = cs.async {
     if (glMetadata != null && glMetadata.version < GitLabVersion(14, 7)) {
-      val initialURI = api.rest.getMergeRequestCommitsURI(projectId, mergeRequestDetails.iid)
-      return@async ApiPageUtil.createPagesFlowByLinkHeader(initialURI) { uri -> api.rest.loadMergeRequestCommits(uri) }
-        .map { it.body() ?: emptyList() }
-        .foldToList(GitLabCommit.Companion::fromRestDTO)
+      return@async api.rest.loadMergeRequestCommits(projectId, mergeRequestDetails.iid)
+        .map(GitLabCommit::fromRestDTO)
         .asReversed()
     }
 
@@ -100,7 +94,7 @@ class GitLabMergeRequestChangesImpl(
       api.graphQL.loadMergeRequestCommits(projectPath, mergeRequestDetails.iid, pagination)
     }
       .map { page -> page.nodes }
-      .foldToList(GitLabCommit.Companion::fromGraphQLDTO)
+      .foldToList(GitLabCommit::fromGraphQLDTO)
       .asReversed()
   }
 
@@ -121,40 +115,29 @@ class GitLabMergeRequestChangesImpl(
       coroutineScope {
         commits.map { commit ->
           async {
-            val commitWithParents = api.rest.loadCommit(projectId, commit.sha).body()!!
-            val patches = ApiPageUtil.createPagesFlowByLinkHeader(api.rest.getCommitDiffsURI(projectId, commit.sha)) {
-              api.rest.loadCommitDiffs(it)
-            }.map { it.body() }.foldToList(GitLabDiffDTO::toPatch)
+            val commitWithParents = api.rest.loadCommit(projectId, commit.sha)
+            val patches = api.rest.loadCommitDiffs(projectId, commit.sha).map(GitLabDiffDTO::toPatch)
             GitCommitShaWithPatches(commit.sha, commitWithParents.parentIds, patches)
           }
         }.awaitAll()
       }
-    }.apply {
-      forEach { commit ->
-        commit.patches.forEach {
-          if (it is TextFilePatch && it.hunks.isEmpty()) {
-            LOG.warn("""Empty patch for file change [${it.beforeName} -> ${it.afterName}] in commit ${commit.sha} in MR ${mergeRequestDetails.iid} with refs ${mergeRequestDetails.diffRefs}.""")
-          }
+    }.onEach { commit ->
+      commit.patches.forEach {
+        if (it is TextFilePatch && it.hunks.isEmpty()) {
+          LOG.warn("""Empty patch for file change [${it.beforeName} -> ${it.afterName}] in commit ${commit.sha} in MR ${mergeRequestDetails.iid} with refs ${mergeRequestDetails.diffRefs}.""")
         }
       }
     }
     val headPatches = withContext(Dispatchers.IO) {
       if (api.getMetadata().version < GitLabVersion(15, 7)) {
-        ApiPageUtil.createPagesFlowByLinkHeader(api.rest.getMergeRequestChangesURI(projectId, mergeRequestDetails.iid)) {
-          api.rest.loadMergeRequestChanges(it)
-        }.map { it.body().changes }.foldToList(GitLabDiffDTO::toPatch)
+        api.rest.loadMergeRequestChanges(projectId, mergeRequestDetails.iid)
       }
       else {
-        // doesn't send back Link headers...
-        ApiPageUtil.createPagesFlowByPagination { page ->
-          api.rest.loadMergeRequestDiffs(api.rest.getMergeRequestDiffsURI(projectId, mergeRequestDetails.iid, page))
-        }.map { it.body() }.foldToList(GitLabDiffDTO::toPatch)
-      }
-    }.apply {
-      forEach {
-        if (it.hunks.isEmpty()) {
-          LOG.warn("""Empty patch for file change [${it.beforeName} -> ${it.afterName}] in MR ${mergeRequestDetails.iid} with refs ${mergeRequestDetails.diffRefs}.""")
-        }
+        api.rest.loadMergeRequestDiffs(projectId, mergeRequestDetails.iid)
+      }.map(GitLabDiffDTO::toPatch)
+    }.onEach {
+      if (it.hunks.isEmpty()) {
+        LOG.warn("""Empty patch for file change [${it.beforeName} -> ${it.afterName}] in MR ${mergeRequestDetails.iid} with refs ${mergeRequestDetails.diffRefs}.""")
       }
     }
     return GitBranchComparisonResult.create(project, gitRemoteUrlCoordinates.repository.root, baseSha, mergeBaseSha, commitsWithPatches, headPatches)

@@ -2,7 +2,6 @@
 package com.intellij.platform.eel.impl.local
 
 import com.intellij.execution.process.UnixProcessManager
-import com.intellij.execution.process.UnixSignal
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.fileLogger
@@ -11,33 +10,30 @@ import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.EelPosixProcess
 import com.intellij.platform.eel.EelProcess
 import com.intellij.platform.eel.SafeDeferred
+import com.intellij.platform.eel.UnixSignal
 import com.intellij.platform.eel.channels.EelReceiveChannel
 import com.intellij.platform.eel.channels.EelSendChannel
+import com.intellij.platform.eel.impl.ToJvmConvertableProcess
 import com.intellij.platform.eel.provider.utils.asEelChannel
 import com.intellij.platform.eel.provider.utils.consumeAsEelChannel
 import com.intellij.util.io.awaitExit
-import com.pty4j.WinSize
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 
 internal class LocalEelPosixProcess private constructor(
   private val process: Process,
-  private val resizeWindow: ((WinSize) -> Unit)?,
+  private val resizeWindow: ((Int, Int) -> Unit)?,
   scope: CoroutineScope,
   private val platform: EelPlatform.Posix,
-) : EelPosixProcess {
+) : EelPosixProcess, ToJvmConvertableProcess {
   companion object {
     /**
      * Send signal to the process group. If failed, send it to the process itself.
      * @return false if failed to send signal
      */
     private fun sendSignalToProcessGroup(process: Process, signal: UnixSignal, platform: EelPlatform.Posix): Boolean {
-      val code = when (platform) {
-        is EelPlatform.Darwin, is EelPlatform.FreeBSD -> signal.darwinCode
-        is EelPlatform.Linux -> signal.linuxCode
-        is EelPlatform.HarmonyOS -> signal.linuxCode //todo[kb] double-check HOS
-      }
+      val code = signal.getSignalNumber(UnixSignal.PlatformHint.FromEelPlatform(platform))
       val pid = process.pid().toInt()
       var result = UnixProcessManager.sendSignalToGroup(pid, code)
       if (result != 0) {
@@ -54,7 +50,7 @@ internal class LocalEelPosixProcess private constructor(
     private val logger = fileLogger()
 
     @JvmStatic
-    suspend fun create(process: Process, resizeWindow: ((WinSize) -> Unit)?, platform: EelPlatform.Posix): LocalEelPosixProcess =
+    suspend fun create(process: Process, resizeWindow: ((Int, Int) -> Unit)?, platform: EelPlatform.Posix): LocalEelPosixProcess =
       LocalEelPosixProcess(process, resizeWindow, ApplicationManager.getApplication().serviceAsync<EelLocalApiService>().scope, platform)
   }
 
@@ -71,14 +67,14 @@ internal class LocalEelPosixProcess private constructor(
     process.destroyForcibly() // When signal failed, we still need to kill it
   }
 
-  override fun convertToJavaProcess(): Process = process
+  override fun convertToJVMProcess(): Process = process
 
   override suspend fun resizePty(columns: Int, rows: Int) {
     if (!process.isAlive) {
       throw EelProcess.ResizePtyError.ProcessExited()
     }
     val resizeWindow = this.resizeWindow ?: throw EelProcess.ResizePtyError.NoPty()
-    resizeWindow(WinSize(columns, rows))
+    resizeWindow(columns, rows)
   }
 
   override suspend fun interrupt() {
@@ -87,12 +83,11 @@ internal class LocalEelPosixProcess private constructor(
 
   /**
    * The behavior of this method has one significant difference from [Process.destroy].
-   * Although both methods send `SIGTERM` to the process, [Process.destroy] also closes all stdio channels,
+   * Although both methods send signal to the process, [Process.destroy] also closes all stdio channels,
    * making it impossible to read data after sending the signal.
-   * In contrast, the API user may send and receive data through stdio after invoking [terminate].
+   * In contrast, the API user may send and receive data through stdio after invoking [EelProcess.terminate].
    */
-  override suspend fun terminate() {
-    sendSignalToProcessGroup(process, UnixSignal.SIGTERM, platform)
+  override suspend fun sendSignal(sig: UnixSignal) {
+    sendSignalToProcessGroup(process, sig, platform)
   }
 }
-

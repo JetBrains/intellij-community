@@ -21,7 +21,7 @@ import org.jetbrains.plugins.gradle.testFramework.configuration.TestFilesConfigu
 import java.nio.file.Path
 import kotlin.io.path.writeText
 
-@RequiresWriteLock
+@RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
 fun VirtualFile.createSettingsFile(
   gradleVersion: GradleVersion,
   gradleDsl: GradleDsl = GradleDsl.GROOVY,
@@ -32,7 +32,7 @@ fun VirtualFile.createSettingsFile(
   }
 }
 
-@RequiresWriteLock
+@RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
 fun VirtualFile.createBuildFile(
   gradleVersion: GradleVersion,
   gradleDsl: GradleDsl = GradleDsl.GROOVY,
@@ -43,7 +43,7 @@ fun VirtualFile.createBuildFile(
   }
 }
 
-@RequiresWriteLock
+@RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
 fun VirtualFile.createGradleWrapper(gradleVersion: GradleVersion) {
   generateGradleWrapper(this, gradleVersion)
 }

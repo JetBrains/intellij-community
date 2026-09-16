@@ -11,7 +11,7 @@ import kotlinx.coroutines.Deferred
 import java.nio.file.Path
 
 
-class CursorClient(scope: McpClientInfo.Scope, configPath: Path) : McpClient(
+class CursorClient(scope: McpClientInfo.McpClientScope, configPath: Path) : McpClient(
   mcpClientInfo = McpClientInfo(McpClientInfo.Name.CURSOR, scope),
   configPath = configPath
 ) {

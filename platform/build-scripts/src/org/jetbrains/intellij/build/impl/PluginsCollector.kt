@@ -9,9 +9,13 @@ import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
 import org.jetbrains.intellij.build.PluginDistribution
+import org.jetbrains.intellij.build.ProductProperties
+import org.jetbrains.intellij.build.classPath.DescriptorResolveContext
 import org.jetbrains.intellij.build.classPath.DescriptorSearchScope
 import org.jetbrains.intellij.build.classPath.XIncludeElementResolverImpl
 import org.jetbrains.intellij.build.classPath.descriptorResolveContext
@@ -21,20 +25,62 @@ import org.jetbrains.intellij.build.mapConcurrent
 import org.jetbrains.intellij.build.productLayout.ProductModulesLayout
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
+import org.jetbrains.jps.model.module.JpsModule
 
 private const val CORE_PLUGIN_ID = "com.intellij"
 
-suspend fun collectCompatiblePluginsToPublish(pluginsToPublish: MutableSet<PluginLayout>, platformLayout: PlatformLayout, context: BuildContext) {
-  val availableModulesAndPlugins = HashSet(collectBundledLayoutNames(platformLayout = platformLayout, context = context))
+/** Reads bundled plugins from the product declaration, including modular loader includes. */
+@ApiStatus.Internal
+fun getBundledPluginModules(productProperties: ProductProperties, outputProvider: ModuleOutputProvider): List<String> {
+  val rootModule = productProperties.rootModuleForModularLoader ?: return productProperties.productLayout.bundledPluginModules
+  return loadRawProductModules(rootModule, outputProvider).bundledPluginMainModules.map { it.name }
+}
+
+fun collectCompatiblePluginsToPublish(pluginsToPublish: MutableSet<PluginLayout>, platformLayout: PlatformLayout, context: BuildContext) {
+  collectCompatiblePluginsToPublish(
+    pluginsToPublish = pluginsToPublish,
+    platformLayout = platformLayout,
+    productProperties = context.productProperties,
+    outputProvider = context.outputProvider,
+    bundledPluginModules = context.getBundledPluginModules(),
+    modules = context.project.modules,
+    sourceOnly = false,
+  )
+}
+
+internal fun collectCompatiblePluginsToPublish(
+  pluginsToPublish: MutableSet<PluginLayout>,
+  platformLayout: PlatformLayout,
+  productProperties: ProductProperties,
+  outputProvider: ModuleOutputProvider,
+  bundledPluginModules: List<String> = getBundledPluginModules(productProperties, outputProvider),
+  modules: List<JpsModule> = outputProvider.getAllModules(),
+  sourceOnly: Boolean = true,
+) {
+  val resolveContext = descriptorResolveContext(outputProvider, productProperties.javaClass.simpleName, sourceOnly)
+  val availableModulesAndPlugins = HashSet(collectBundledLayoutNames(
+    platformLayout = platformLayout,
+    productProperties = productProperties,
+    bundledPluginModules = bundledPluginModules,
+    resolveContext = resolveContext,
+  ))
 
   val minimal = System.getProperty("intellij.build.minimal").toBoolean()
   // One walk over the project serves both maps. The walk reads every plugin descriptor once, and the two maps
   // differ only in the bundled plugins and in the implementation-detail plugins, which a filter states.
-  val allDescriptors = collectPluginDescriptors(skipImplementationDetails = false, skipBundled = false, honorCompatiblePluginsToIgnore = true, context = context)
-  val bundledPluginModules = java.util.Set.copyOf(context.getBundledPluginModules())
-  val descriptorMap = allDescriptors.filterValuesTo { it.mainModule !in bundledPluginModules && (minimal || !it.isImplementationDetail) }
+  val allDescriptors = collectPluginDescriptors(
+    skipImplementationDetails = false,
+    skipBundled = false,
+    honorCompatiblePluginsToIgnore = true,
+    productProperties = productProperties,
+    bundledPluginModules = bundledPluginModules,
+    resolveContext = resolveContext,
+    modules = modules,
+  )
+  val allBundledPluginModules = java.util.Set.copyOf(bundledPluginModules)
+  val descriptorMap = allDescriptors.filterValuesTo { it.mainModule !in allBundledPluginModules && (minimal || !it.isImplementationDetail) }
   val descriptorMapWithBundled = allDescriptors.filterValuesTo { !it.isImplementationDetail }
-  val productModuleAliases = context.productProperties.getProductContentDescriptor()?.productModuleAliases?.map { it.value } ?: emptyList()
+  val productModuleAliases = productProperties.getProductContentDescriptor()?.productModuleAliases?.map { it.value } ?: emptyList()
   val bundledPluginIds = descriptorMapWithBundled.values
     .asSequence().map { it.id }
     .plus(productModuleAliases)
@@ -70,7 +116,12 @@ suspend fun collectCompatiblePluginsToPublish(pluginsToPublish: MutableSet<Plugi
  * The build reads every name from a declaration. It does not start the headless IDE for this answer any more.
  * The answer is now independent of the host OS. The IDE dropped each plugin that needs another OS.
  */
-suspend fun collectBundledLayoutNames(platformLayout: PlatformLayout, context: BuildContext): Set<String> {
+private fun collectBundledLayoutNames(
+  platformLayout: PlatformLayout,
+  productProperties: ProductProperties,
+  bundledPluginModules: List<String>,
+  resolveContext: DescriptorResolveContext,
+): Set<String> {
   return spanBuilder("collect bundled layout names").use { span ->
     val result = LinkedHashSet<String>()
     result.add(CORE_PLUGIN_ID)
@@ -87,22 +138,21 @@ suspend fun collectBundledLayoutNames(platformLayout: PlatformLayout, context: B
           continue
         }
 
-        addContentModuleAliases(contentModuleName = contentModuleName, result = result, context = context)
+        addContentModuleAliases(contentModuleName = contentModuleName, result = result, outputProvider = resolveContext.outputProvider)
         result.add(contentModuleName)
       }
     }
 
     // the DSL declares an alias that the generated product descriptor can omit
-    val productModuleAliases = context.productProperties.getProductContentDescriptor()?.productModuleAliases
+    val productModuleAliases = productProperties.getProductContentDescriptor()?.productModuleAliases
     if (productModuleAliases != null) {
       for (alias in productModuleAliases) {
         result.add(alias.value)
       }
     }
 
-    val bundledPluginModules = context.getBundledPluginModules()
     val allBundledPlugins = java.util.Set.copyOf(bundledPluginModules)
-    val nonTrivialPlugins = groupPluginLayoutsByMainModule(context.productProperties.productLayout)
+    val nonTrivialPlugins = groupPluginLayoutsByMainModule(productProperties.productLayout)
     for (moduleName in bundledPluginModules) {
       // the runtime enables an implementation-detail plugin too, so this walk does not skip one
       val descriptor = readPluginDescriptor(
@@ -111,7 +161,8 @@ suspend fun collectBundledLayoutNames(platformLayout: PlatformLayout, context: B
         applyPublishFilters = false,
         allBundledPlugins = allBundledPlugins,
         nonTrivialPlugins = nonTrivialPlugins,
-        context = context,
+        productProperties = productProperties,
+        resolveContext = resolveContext,
       ) ?: continue
 
       result.add(descriptor.id)
@@ -163,22 +214,42 @@ internal fun isPluginCompatible(
   return true
 }
 
-suspend fun collectPluginDescriptors(
+fun collectPluginDescriptors(
   skipImplementationDetails: Boolean,
   skipBundled: Boolean,
   honorCompatiblePluginsToIgnore: Boolean,
   context: BuildContext,
+): MutableMap<String, PluginDescriptor> {
+  return collectPluginDescriptors(
+    skipImplementationDetails = skipImplementationDetails,
+    skipBundled = skipBundled,
+    honorCompatiblePluginsToIgnore = honorCompatiblePluginsToIgnore,
+    productProperties = context.productProperties,
+    bundledPluginModules = context.getBundledPluginModules(),
+    resolveContext = descriptorResolveContext(context),
+    modules = context.project.modules,
+  )
+}
+
+private fun collectPluginDescriptors(
+  skipImplementationDetails: Boolean,
+  skipBundled: Boolean,
+  honorCompatiblePluginsToIgnore: Boolean,
+  productProperties: ProductProperties,
+  bundledPluginModules: List<String>,
+  resolveContext: DescriptorResolveContext,
+  modules: List<JpsModule>,
 ): MutableMap<String, PluginDescriptor> {
   return spanBuilder("collect plugin descriptors")
     .setAttribute("skip.implementation.details", skipImplementationDetails)
     .setAttribute("skip.bundled", skipBundled)
     .setAttribute("honor.compatible.plugins.to.ignore", honorCompatiblePluginsToIgnore)
     .use {
-      val productLayout = context.productProperties.productLayout
+      val productLayout = productProperties.productLayout
       val nonTrivialPlugins = groupPluginLayoutsByMainModule(productLayout)
-      val allBundledPlugins = java.util.Set.copyOf(context.getBundledPluginModules())
+      val allBundledPlugins = java.util.Set.copyOf(bundledPluginModules)
 
-      val candidates = context.project.modules.filter { jpsModule ->
+      val candidates = modules.filter { jpsModule ->
         val moduleName = jpsModule.name
         !(skipBundled && allBundledPlugins.contains(moduleName)) &&
         !(honorCompatiblePluginsToIgnore && productLayout.compatiblePluginsToIgnore.contains(moduleName))
@@ -192,7 +263,8 @@ suspend fun collectPluginDescriptors(
           applyPublishFilters = true,
           allBundledPlugins = allBundledPlugins,
           nonTrivialPlugins = nonTrivialPlugins,
-          context = context,
+          productProperties = productProperties,
+          resolveContext = resolveContext,
         )
       }
 
@@ -222,8 +294,8 @@ private fun Map<String, PluginDescriptor>.filterValuesTo(predicate: (PluginDescr
 }
 
 private fun groupPluginLayoutsByMainModule(productLayout: ProductModulesLayout): Map<String, List<PluginLayout>> {
-  val result = HashMap<String, MutableList<PluginLayout>>(productLayout.pluginLayouts.size)
-  for (pluginLayout in productLayout.pluginLayouts) {
+  val result = HashMap<String, MutableList<PluginLayout>>(productLayout.pluginLayouts.value.size)
+  for (pluginLayout in productLayout.pluginLayouts.value) {
     result.getOrPut(pluginLayout.mainModule) { mutableListOf() }.add(pluginLayout)
   }
   return result
@@ -238,13 +310,14 @@ private fun groupPluginLayoutsByMainModule(productLayout: ProductModulesLayout):
  * [applyPublishFilters] turns on the filters that find a module which the build must not publish as a plugin.
  * A walk over the bundled plugins sets it to false, because the list of the bundled plugins is the authority.
  */
-private suspend fun readPluginDescriptor(
+private fun readPluginDescriptor(
   moduleName: String,
   skipImplementationDetails: Boolean,
   applyPublishFilters: Boolean,
   allBundledPlugins: Set<String>,
   nonTrivialPlugins: Map<String, List<PluginLayout>>,
-  context: BuildContext,
+  productProperties: ProductProperties,
+  resolveContext: DescriptorResolveContext,
 ): PluginDescriptor? {
   // when we migrate to Bazel, we will use a test marker to avoid checking the module name for "test" pattern
   if (moduleName.contains(".tests.") && !allBundledPlugins.contains(moduleName)) {
@@ -252,11 +325,11 @@ private suspend fun readPluginDescriptor(
   }
 
   // not a plugin
-  if (context.productProperties.platformPrefix != "FleetBackend" && moduleName.startsWith("fleet.plugins.")) {
+  if (productProperties.platformPrefix != "FleetBackend" && moduleName.startsWith("fleet.plugins.")) {
     return null
   }
 
-  val outputProvider = context.outputProvider
+  val outputProvider = resolveContext.outputProvider
   val pluginXml = findFileInModuleSources(module = outputProvider.findRequiredModule(moduleName), relativePath = "META-INF/plugin.xml", onlyProductionSources = true) ?: return null
 
   val xml = JDOMUtil.load(pluginXml)
@@ -321,7 +394,7 @@ private suspend fun readPluginDescriptor(
           searchInDependencies = DescriptorSearchScope.SearchMode.PLUGIN_COLLECTOR,
         ),
       ),
-      context = descriptorResolveContext(context),
+      context = resolveContext,
     )
   )
 
@@ -358,7 +431,7 @@ private suspend fun readPluginDescriptor(
     for (module in content.getChildren("module")) {
       val contentModuleName = module.getAttributeValue("name")
       if (contentModuleName != null && !contentModuleName.isEmpty()) {
-        addContentModuleAliases(contentModuleName = contentModuleName, result = declaredModules, context = context)
+        addContentModuleAliases(contentModuleName = contentModuleName, result = declaredModules, outputProvider = outputProvider)
         declaredModules.add(contentModuleName)
       }
     }
@@ -421,9 +494,9 @@ private fun addPluginAliases(element: Element, result: MutableSet<String>) {
  * Adds the plugin aliases that the descriptor of one content module declares.
  * The descriptor file is in the production sources of the JPS module that owns the content module.
  */
-private fun addContentModuleAliases(contentModuleName: String, result: MutableSet<String>, context: BuildContext) {
+private fun addContentModuleAliases(contentModuleName: String, result: MutableSet<String>, outputProvider: ModuleOutputProvider) {
   val jpsModuleName = contentModuleName.substringBeforeLast('/')
-  val jpsContentModule = context.outputProvider.findModule(jpsModuleName) ?: return
+  val jpsContentModule = outputProvider.findModule(jpsModuleName) ?: return
   val moduleFile = findFileInModuleSources(
     module = jpsContentModule,
     relativePath = contentModuleNameToDescriptorFileName(contentModuleName),

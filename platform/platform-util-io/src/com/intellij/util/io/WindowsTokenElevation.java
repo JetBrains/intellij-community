@@ -35,25 +35,25 @@ public final class WindowsTokenElevation {
    * @throws IOException with the {@code GetLastError} code when a call fails
    */
   public static boolean isElevated() throws IOException {
-    try (Arena arena = Arena.ofConfined()) {
-      MemorySegment callState = arena.allocate(Handles.CALL_STATE_LAYOUT);
-      MemorySegment process = (MemorySegment)Handles.GET_CURRENT_PROCESS.invokeExact();
-      MemorySegment tokenHandle = arena.allocate(ADDRESS);
+    try (var arena = Arena.ofConfined()) {
+      var callState = arena.allocate(Handles.CALL_STATE_LAYOUT);
+      var process = (MemorySegment)Handles.GET_CURRENT_PROCESS.invokeExact();
+      var tokenHandle = arena.allocate(ADDRESS);
       if ((int)Handles.OPEN_PROCESS_TOKEN.invokeExact(callState, process, TOKEN_QUERY, tokenHandle) == 0) {
         throw new IOException("OpenProcessToken: " + (int)Handles.LAST_ERROR.get(callState, 0L));
       }
-      MemorySegment token = tokenHandle.get(ADDRESS, 0);
+      var token = tokenHandle.get(ADDRESS, 0);
       try {
         // TOKEN_ELEVATION { DWORD TokenIsElevated; }
-        MemorySegment elevation = arena.allocate(JAVA_INT);
-        MemorySegment returnLength = arena.allocate(JAVA_INT);
+        var elevation = arena.allocate(JAVA_INT);
+        var returnLength = arena.allocate(JAVA_INT);
         if ((int)Handles.GET_TOKEN_INFORMATION.invokeExact(callState, token, TOKEN_ELEVATION_CLASS, elevation, (int)elevation.byteSize(), returnLength) == 0) {
           throw new IOException("GetTokenInformation: " + (int)Handles.LAST_ERROR.get(callState, 0L));
         }
         return elevation.get(JAVA_INT, 0) != 0;
       }
       finally {
-        int ignored = (int)Handles.CLOSE_HANDLE.invokeExact(token);
+        var _ = (int)Handles.CLOSE_HANDLE.invokeExact(token);
       }
     }
     catch (IOException e) {

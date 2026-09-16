@@ -49,12 +49,12 @@ public class UnBoxingEvaluator implements Evaluator {
     if (value == null) {
       throw new EvaluateException("java.lang.NullPointerException: cannot unbox null value");
     }
-    if (value instanceof ObjectReference) {
-      final String valueTypeName = ((ObjectReference)value).type().name();
+    if (value instanceof ObjectReference reference) {
+      final String valueTypeName = reference.type().name();
       JvmPrimitiveTypeKind primitiveType = getUnboxableType(valueTypeName);
       if (primitiveType != null) {
         return convertToPrimitive(context,
-                                  (ObjectReference)value,
+                                  reference,
                                   primitiveType.getName() + "Value",
                                   "()" + primitiveType.getBinaryName());
       }
@@ -93,7 +93,7 @@ public class UnBoxingEvaluator implements Evaluator {
           if (valueField != null) {
             return getValue(value, valueField, now)
               .thenApply(primitiveValue -> {
-                if (primitiveValue instanceof PrimitiveValue) {
+                if (primitiveValue instanceof PrimitiveValue value1) {
                   JvmPrimitiveTypeKind primitiveType = JvmPrimitiveTypeKind.getKindByName(primitiveValue.type().name());
                   String expected = primitiveType != null ? primitiveType.getBoxedFqn() : null;
                   String actual = type.name();
@@ -102,7 +102,7 @@ public class UnBoxingEvaluator implements Evaluator {
                                  "\nType: " + actual +
                                  "\nPrimitive value type: " + primitiveValue.type() +
                                  "\nBoxed type: " + expected);
-                  return (PrimitiveValue)primitiveValue;
+                  return value1;
                 }
                 return null;
               });

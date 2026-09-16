@@ -12,6 +12,10 @@ jps_test(
 
 ### skip generation section `test intellij.platform.jewel.markdown.extensions.gfmAlerts.tests`
 
+### auto-generated section `dev intellij.platform.jewel.markdown.extensions.gfmAlerts` start
+content_module_jar(module = ":gfm-alerts")
+### auto-generated section `dev intellij.platform.jewel.markdown.extensions.gfmAlerts` end
+
 ### auto-generated section `build intellij.platform.jewel.markdown.extensions.gfmAlerts` start
 create_kotlinc_options(
     name = "custom_gfm-alerts",
@@ -55,8 +59,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":gfm-alerts")
-
 jvm_library(
     name = "gfm-alerts_test_lib",
     testonly = True,
@@ -90,7 +92,6 @@ exports_files(
     [
         "intellij.platform.jewel.markdown.extensions.gfmAlerts.iml",
         "src/main/resources/intellij.platform.jewel.markdown.extensions.gfmAlerts.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

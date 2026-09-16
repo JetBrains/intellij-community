@@ -22,7 +22,7 @@ import kotlin.io.path.visitFileTree
  * Return paths to files which matches the given [pathPattern] in Ant format.
  * @param includeAll if `true`, all matching files will be returned, otherwise only the last modified one.
  */
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 @OptIn(ExperimentalPathApi::class)
 @VisibleForTesting
 @ApiStatus.Internal

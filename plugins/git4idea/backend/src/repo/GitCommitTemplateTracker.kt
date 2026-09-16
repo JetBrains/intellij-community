@@ -100,7 +100,7 @@ internal class GitCommitTemplateTracker(
   }
 
   @VisibleForTesting
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun start() {
     try {
       BackgroundTaskUtil.syncPublisher(project, GitCommitTemplateListener.TOPIC).loadingStarted()
@@ -227,7 +227,7 @@ internal class GitCommitTemplateTracker(
     return null
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private fun trackCommitTemplate(repository: GitRepository) {
     val newTemplatePath = resolveCommitTemplatePath(repository)
     val templateChanged = synchronized(this) {

@@ -1,3 +1,0 @@
-- name: dist.all/lib/intellij.platform.duplicates.analysis.jar
-  modules:
-  - name: intellij.platform.duplicates.analysis

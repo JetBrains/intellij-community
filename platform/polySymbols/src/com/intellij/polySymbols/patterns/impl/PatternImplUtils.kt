@@ -9,6 +9,7 @@ import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.completion.impl.PolySymbolCodeCompletionItemImpl
 import com.intellij.polySymbols.impl.copy
 import com.intellij.polySymbols.query.PolySymbolQueryStack
+import org.jetbrains.annotations.ApiStatus
 
 internal fun PolySymbolCodeCompletionItem.withStopSequencePatternEvaluation(stop: Boolean): PolySymbolCodeCompletionItem =
   if ((this as PolySymbolCodeCompletionItemImpl).stopSequencePatternEvaluation != stop)
@@ -63,7 +64,8 @@ internal fun <T : MatchResult> T.copy(segments: List<PolySymbolNameSegment>): T 
     else -> MatchResult(segments)
   } as T
 
-internal fun List<PolySymbolCodeCompletionItem>.applyIcons(symbol: PolySymbol) =
+@ApiStatus.Internal
+fun List<PolySymbolCodeCompletionItem>.applyIcons(symbol: PolySymbol): List<PolySymbolCodeCompletionItem> =
   if (symbol.icon != null) {
     map { item -> if (item.icon == null) item.withIcon(symbol.icon) else item }
   }
@@ -74,7 +76,8 @@ internal fun List<PolySymbolCodeCompletionItem>.applyIcons(symbol: PolySymbol) =
 private val SPECIAL_CHARS = setOf('[', '.', '\\', '^', '$', '(', '+')
 private val SPECIAL_CHARS_ONE_BACK = setOf('?', '*', '{')
 
-internal const val SPECIAL_MATCHED_CONTRIB = "\$special$"
+@ApiStatus.Internal
+const val SPECIAL_MATCHED_CONTRIB: String = "\$special$"
 
 internal fun getPatternCompletablePrefix(pattern: String?): String {
   if (pattern == null || pattern.contains('|')) return ""

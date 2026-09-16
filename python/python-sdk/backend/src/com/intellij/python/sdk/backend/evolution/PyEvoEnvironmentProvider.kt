@@ -14,6 +14,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.python.community.common.tools.ToolId
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.common.evolution.EvoAddNewDto
 import com.intellij.python.sdk.common.evolution.EvoAddNewOptionDto
 import com.intellij.python.sdk.common.evolution.EvoBasePythonDto
@@ -61,41 +62,86 @@ import kotlin.io.path.pathString
 private val LOG: Logger = fileLogger()
 
 /**
- * A tool workspace (uv/poetry) a module takes part in: the [root] project everything is resolved against, the [tool]
- * declaring it, and every [modules] belonging to it — the root and its members alike, since they all share one
- * environment.
+ * The modules that share one environment, and where that environment lives.
+ *
+ * A tool workspace (uv, poetry) declares one environment at its [root], and no member owns one. So every directory a
+ * tool works in is the root's ([baseDir]), every tool is driven from the root's [module], and an interpreter picked
+ * for any one member is written to all of [members].
+ *
+ * A standalone project is a workspace of one and is its own root. That is why a project always has one, and why
+ * nothing downstream has to ask whether a workspace exists before it can act.
+ *
+ * One instance is shared by every member, so "the same workspace" is answerable by identity.
  */
 @ApiStatus.Internal
-class EvoWorkspace(val root: PyProject, val tool: ToolId, val modules: List<Module>)
+class EvoWorkspace(
+  /** The project every directory and every tool is resolved against. */
+  val root: PyProject,
+  /** Every project of the workspace, the [root] included. A selected interpreter is written to all of them. */
+  val members: List<PyProject>,
+) {
+  /** The module every tool is driven from. */
+  val module: Module get() = root.residesOnModule
+
+  /** The directory every tool runs in. */
+  val baseDir: Directory get() = root.baseDir
+
+  /** The wire identity of the [root]. See [keyOf]. */
+  val rootKey: String = keyOf(root)
+}
 
 /**
  * The [PyProject] the widget acts on, resolved against the workspace it belongs to.
  *
- * A tool workspace (a uv/poetry workspace) has a single environment, declared at its root: no member owns one, and the
- * tools are always driven from the root. So everything the widget does with a directory (scanning for envs, reading
- * `requires-python`, creating an env, running the tool) uses [baseDir] — the *workspace root's* base dir — and an
- * interpreter picked for any one module is applied to [sdkModules], the whole workspace. Only [module] itself, whose
- * interpreter the status bar reflects, stays the one the user is looking at.
+ * Two views of one project, and every member belongs to exactly one of them. [module], [baseDir] and [sdk] describe
+ * the project the user is looking at, which is what the status bar reflects. [workspace] describes what a tool acts on,
+ * which for a workspace member is the workspace root and not the member.
  */
 @ApiStatus.Internal
 class EvoPyProject(
   private val self: PyProject,
-  /** The workspace [self] takes part in (as its root or as a member); `null` when it is standalone. */
-  val workspace: EvoWorkspace? = null,
+  /** What a tool acts on. See [EvoWorkspace]. */
+  val workspace: EvoWorkspace,
+  /**
+   * The interpreter this project uses, as it stood when the snapshot was computed.
+   *
+   * Every module of a workspace holds its own reference to the interpreter, so the module of this project alone
+   * answers it.
+   *
+   * A value rather than a question the caller asks: reading it used to wait for the project model on every call, and
+   * that wait is what a snapshot exists to pay one time. A generation that holds one interpreter never states another,
+   * and a caller that cannot suspend reads it like any other field. Without the wait a configured interpreter reads as
+   * `null` while the SDK table is still loading, and a surface then states that a project with an interpreter has none
+   * (PY-91871); the snapshot waits instead, once.
+   *
+   * A [PythonInterpreter] and not an [Sdk], so a caller asks the interpreter what it is. A caller that still needs the
+   * `Sdk` API calls [com.intellij.python.sdk.backend.getSdkAPI], whose deprecation marks the work left to do.
+   */
+  val interpreter: PythonInterpreter?,
 ) {
   val module: Module get() = self.residesOnModule
 
   val project: Project get() = self.project
 
-  /** The directory the widget works in: the workspace root's base dir when in a workspace, else the module's own. */
-  val baseDir: Directory get() = (workspace?.root ?: self).baseDir
+  /** This project's own base dir. See [EvoWorkspace.baseDir] for the directory a tool runs in. */
+  val baseDir: Directory get() = self.baseDir
 
-  /** The module's *own* base dir, whether or not it takes part in a workspace. */
-  val moduleBaseDir: Directory get() = self.baseDir
-
-  /** Every module a selected interpreter must be applied to: the whole workspace, or just this module when standalone. */
-  val sdkModules: List<Module> get() = workspace?.let { (it.modules + module).distinct() } ?: listOf(module)
+  /**
+   * This project's wire identity. See [keyOf].
+   *
+   * A field, so the key travels with the project it addresses. A caller that holds one never has to derive the other.
+   */
+  val key: String = keyOf(self)
 }
+
+/**
+ * A `PyProject`'s wire identity: its base dir, system-independent.
+ *
+ * System-independent because the frontend matches it against a content root's
+ * [com.intellij.openapi.vfs.VirtualFile.getPath], which is already in that form. So the comparison is plain string
+ * equality on both sides, with no path parsing and no VFS lookup.
+ */
+private fun keyOf(pyProject: PyProject): String = FileUtil.toSystemIndependentName(pyProject.baseDir.toString())
 
 /** [EvoToolContext.cached] key under which the core-supplied system-Python list is memoized. */
 private const val SYSTEM_PYTHONS_KEY: String = "core.systemPythons"
@@ -514,8 +560,8 @@ fun EvoToolContext.resolveNewVenvDir(ref: PyInterpreterRef.CreateEnv): Path {
   val name = ref.name
   return when {
     !folder.isNullOrBlank() && !name.isNullOrBlank() -> Path.of(folder).resolve(name)
-    !folder.isNullOrBlank() -> pyProject.baseDir.resolve(folder)
-    else -> firstFreeVenvDir(pyProject.baseDir)
+    !folder.isNullOrBlank() -> pyProject.workspace.baseDir.resolve(folder)
+    else -> firstFreeVenvDir(pyProject.workspace.baseDir)
   }
 }
 

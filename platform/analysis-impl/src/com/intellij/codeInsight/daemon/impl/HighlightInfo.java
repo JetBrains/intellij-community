@@ -64,6 +64,7 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.util.BitUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
@@ -1363,7 +1364,11 @@ public class HighlightInfo implements Segment {
   }
   @ApiStatus.Internal
   final boolean isInjectionRelated() {
-    return HighlightInfoUpdaterImpl.isInjectionRelated(toolId);
+    return InjectedLanguageManagerImpl.isInjectionRelated(toolId);
+  }
+
+  final boolean isFromChameleonSyntax() {
+    return HighlightInfoUpdaterImpl.isChameleonSyntaxToolId(toolId);
   }
 
   @ApiStatus.Internal

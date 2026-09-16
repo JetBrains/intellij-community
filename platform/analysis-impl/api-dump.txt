@@ -375,7 +375,7 @@ f:com.intellij.codeInsight.template.impl.MacroParser
 - s:parse(java.lang.String):com.intellij.codeInsight.template.Expression
 com.intellij.codeInsight.template.impl.ModCommandAwareTemplateOptionalProcessor
 - com.intellij.codeInsight.template.impl.TemplateOptionalProcessor
-- a:processText(com.intellij.codeInsight.template.Template,com.intellij.openapi.editor.ModNavigator,com.intellij.openapi.editor.RangeMarker):V
+- a:processText(com.intellij.codeInsight.template.Template,com.intellij.openapi.editor.ModNavigator,com.intellij.openapi.editor.RangeMarker):com.intellij.openapi.util.TextRange
 - processText(com.intellij.openapi.project.Project,com.intellij.codeInsight.template.Template,com.intellij.openapi.editor.Document,com.intellij.openapi.editor.RangeMarker,com.intellij.openapi.editor.Editor):V
 f:com.intellij.codeInsight.template.impl.TemplateContext
 - isEnabled(com.intellij.codeInsight.template.TemplateContextType):Z

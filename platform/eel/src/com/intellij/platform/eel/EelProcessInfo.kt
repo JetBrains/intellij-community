@@ -20,6 +20,7 @@ interface EelProcessInfo {
   /** The identifier of the parent process in the environment, or `null` when it is unknown or the process has no parent. */
   val parentPid: EelApi.Pid?
 
+  // TODO: Should be EelPath
   /** The executable path or name of the process, or `null` when it cannot be determined. */
   val executable: String?
 

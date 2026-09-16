@@ -68,7 +68,8 @@ abstract class StaticPolySymbolScopeBase<Root : Any, Contribution : Any, Origin>
       it.getCodeCompletions(qualifiedName, params, stack.copy())
     }.toList()
 
-  internal fun getMatchingSymbols(
+  @Internal
+  fun getMatchingSymbols(
     contribution: Contribution,
     origin: Origin,
     qualifiedName: PolySymbolQualifiedName,
@@ -79,7 +80,8 @@ abstract class StaticPolySymbolScopeBase<Root : Any, Contribution : Any, Origin>
       .getMatchingSymbols(qualifiedName, params, stack)
       .toList()
 
-  internal fun getSymbols(
+  @Internal
+  fun getSymbols(
     contribution: Contribution,
     origin: Origin,
     kind: PolySymbolKind,
@@ -89,7 +91,8 @@ abstract class StaticPolySymbolScopeBase<Root : Any, Contribution : Any, Origin>
       .getSymbols(kind, params)
       .toList()
 
-  internal fun getCodeCompletions(
+  @Internal
+  fun getCodeCompletions(
     contribution: Contribution,
     origin: Origin,
     qualifiedName: PolySymbolQualifiedName,
@@ -173,18 +176,21 @@ abstract class StaticPolySymbolScopeBase<Root : Any, Contribution : Any, Origin>
       .also { it.checkForModifications() }
   }
 
-  internal fun addRoot(root: Root?, origin: Origin) {
+  @Internal
+  fun addRoot(root: Root?, origin: Origin) {
     (modificationTracker as SimpleModificationTracker).incModificationCount()
     if (root == null) return
     roots[root] = origin
   }
 
-  internal fun removeRoot(root: Root?) {
+  @Internal
+  fun removeRoot(root: Root?) {
     (modificationTracker as SimpleModificationTracker).incModificationCount()
     roots.remove(root)
   }
 
-  internal fun getRootOrigin(root: Root): Origin? =
+  @Internal
+  fun getRootOrigin(root: Root): Origin? =
     roots[root]
 
   interface StaticSymbolContributionAdapter {

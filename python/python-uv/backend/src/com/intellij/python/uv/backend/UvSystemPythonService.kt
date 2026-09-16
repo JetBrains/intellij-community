@@ -7,7 +7,7 @@ import com.intellij.platform.eel.EelDescriptor
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.python.community.execService.ExecOptions
 import com.intellij.python.sdk.backend.resolveExecutable
-import com.intellij.python.pytools.runtime.PyToolRuntime
+import com.intellij.python.pytools.backend.runtime.PyToolRuntime
 import com.intellij.python.uv.backend.cli.uv.UvPythonEntry
 import com.intellij.python.uv.backend.runtime.uvCli
 import com.jetbrains.python.errorProcessing.PyResult

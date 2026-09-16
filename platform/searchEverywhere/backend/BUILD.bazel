@@ -11,6 +11,10 @@ jps_test(
 
 ### skip generation section `test intellij.platform.searchEverywhere.backend.tests`
 
+### auto-generated section `dev intellij.platform.searchEverywhere.backend` start
+content_module_jar(module = ":backend")
+### auto-generated section `dev intellij.platform.searchEverywhere.backend` end
+
 ### auto-generated section `build intellij.platform.searchEverywhere.backend` start
 jvm_library(
     name = "backend",
@@ -56,11 +60,13 @@ jvm_library(
         "//platform/ide-core",
         "//platform/progress/shared:ide-progress",
         "//platform/lang-api:lang",
+        "//platform/platform-impl:ide-impl",
+        "//platform/analysis-api:analysis",
+        "//platform/projectModel-api:projectModel",
+        "//platform/welcome-screen",
         "//fleet/rhizomedb",
     ],
 )
-
-content_module_jar(module = ":backend")
 
 jvm_library(
     name = "backend_test_lib",
@@ -99,6 +105,10 @@ jvm_library(
         "//platform/ide-core:ide-core_test_lib",
         "//platform/progress/shared:ide-progress_test_lib",
         "//platform/lang-api:lang_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/welcome-screen:welcome-screen_test_lib",
         "//fleet/rhizomedb:rhizomedb_test_lib",
     ],
 )
@@ -109,7 +119,6 @@ exports_files(
     [
         "intellij.platform.searchEverywhere.backend.iml",
         "resources/intellij.platform.searchEverywhere.backend.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -5,7 +5,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
-import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
@@ -15,6 +14,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.NSDefaults;
 import com.intellij.util.messages.SimpleMessageBusConnection;
 import org.jetbrains.annotations.NotNull;
@@ -57,8 +57,8 @@ public final class TouchbarSupport {
         else if (!Registry.is(IS_ENABLED_KEY, true)) {
           LOG.info("touchbar disabled: registry");
         }
-        else if (!JnaLoader.isLoaded()) {
-          LOG.info("touchbar disabled: JNA library is unavailable");
+        else if (!Foundation.isAvailable()) {
+          LOG.info("Touch Bar is disabled: Foundation is unavailable");
         }
         else if (!Helpers.isTouchBarServerRunning()) {
           LOG.info("touchbar disabled: touchbar-server isn't running");

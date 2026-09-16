@@ -4,6 +4,7 @@ import com.intellij.codeInsight.inline.completion.InlineCompletionEditorInsertHa
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiFile
 import com.intellij.terminal.frontend.view.impl.TerminalInput
+import com.intellij.terminal.frontend.fus.TerminalCommandCompletionStatistics
 import com.intellij.terminal.frontend.view.typeahead.TerminalTypeAhead
 
 internal class TerminalInlineCompletionEditorInsertHandler : InlineCompletionEditorInsertHandler {
@@ -13,6 +14,7 @@ internal class TerminalInlineCompletionEditorInsertHandler : InlineCompletionEdi
 
     terminalTypeAhead.type(textToInsert)
     terminalInput.sendString(textToInsert)
+    editor.getUserData(TerminalCommandCompletionStatistics.KEY)?.recordInlineInserted(textToInsert.length)
   }
 
   override fun isApplicable(editor: Editor): Boolean =

@@ -2,59 +2,61 @@
 package com.intellij.terminal.tests.reworked.backend
 
 import com.intellij.execution.filters.FileHyperlinkInfo
+import com.intellij.execution.filters.HyperlinkInfo
 import com.intellij.execution.filters.OpenFileHyperlinkInfo
-import com.intellij.ide.impl.OpenProjectTask
+import com.intellij.mock.MockProjectEx
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.yield
 import org.assertj.core.api.Assertions.assertThat
-import org.jetbrains.plugins.terminal.hyperlinks.SourceNavigationProjectRouter
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalCrossProjectFileHyperlinkNavigator
+import org.jetbrains.plugins.terminal.hyperlinks.TerminalSourceNavigationProjectResolver
 import org.junit.jupiter.api.Test
-import java.nio.file.Path
-import java.util.concurrent.atomic.AtomicReference
 
 @TestApplication
 class TerminalCrossProjectFileHyperlinkNavigatorTest {
   @Test
-  fun fileHyperlinkUsesSourceNavigationProjectPathAtClickTime() {
-    runBlocking(Dispatchers.Default) {
-      val currentProject = ProjectManager.getInstance().defaultProject
+  fun fileHyperlinkAsksTheResolverAtClickTimeAndNavigatesInItsProject() {
+    withTerminalProject { terminalProject ->
       val targetProject = ProjectManager.getInstance().defaultProject
       val file = LightVirtualFile("Main.kt", "fun main() {}")
-      val hyperlinkInfo = TestFileHyperlinkInfo(OpenFileDescriptor(currentProject, file, 4, 2))
-      var sourceProjectPath = "/tmp/source-project-a"
-
-      var openedPath: String? = null
+      val hyperlinkInfo = TestFileHyperlinkInfo(OpenFileDescriptor(targetProject, file, 4, 2))
+      var resolverCalls = 0
+      var askedTerminalProject: Project? = null
       var focusCalls = 0
+      var navigatedProject: Project? = null
       var capturedDescriptor: OpenFileDescriptor? = null
       val navigator = TerminalCrossProjectFileHyperlinkNavigator(
-        sourceNavigationProjectPath = { sourceProjectPath },
-        openProject = { path ->
-          openedPath = path
-          targetProject
+        sourceNavigationProjectResolver = {
+          TerminalSourceNavigationProjectResolver { askedProject ->
+            resolverCalls++
+            askedTerminalProject = askedProject
+            targetProject
+          }
         },
         focusProjectWindow = {
           focusCalls++
         },
-        navigate = { _, descriptor, _ ->
+        navigate = { project, descriptor, _ ->
+          navigatedProject = project
           capturedDescriptor = descriptor
           true
         },
       )
 
-      sourceProjectPath = "/tmp/source-project-b"
-      val handled = navigator.navigate(currentProject, hyperlinkInfo, null)
+      val handled = navigator.navigate(terminalProject, hyperlinkInfo, null)
 
       assertThat(handled).isTrue()
-      assertThat(openedPath).isEqualTo("/tmp/source-project-b")
+      assertThat(resolverCalls).isEqualTo(1)
+      assertThat(askedTerminalProject).isSameAs(terminalProject)
+      assertThat(navigatedProject).isSameAs(targetProject)
       assertThat(focusCalls).isEqualTo(1)
-      assertThat(capturedDescriptor).isNotNull()
       assertThat(capturedDescriptor?.file).isSameAs(file)
       assertThat(capturedDescriptor?.line).isEqualTo(4)
       assertThat(capturedDescriptor?.column).isEqualTo(2)
@@ -63,37 +65,105 @@ class TerminalCrossProjectFileHyperlinkNavigatorTest {
   }
 
   @Test
-  fun blankSourceNavigationProjectPathReturnsFalse() {
+  fun resolverThatAnswersTheTerminalProjectReturnsFalse() {
     runBlocking(Dispatchers.Default) {
-      val project = ProjectManager.getInstance().defaultProject
-      val hyperlinkInfo = TestFileHyperlinkInfo(OpenFileDescriptor(project, LightVirtualFile("Main.kt", "fun main() {}"), 1, 0))
-      var openCalls = 0
+      val terminalProject = ProjectManager.getInstance().defaultProject
+      val file = LightVirtualFile("Main.kt", "fun main() {}")
+      val hyperlinkInfo = TestFileHyperlinkInfo(OpenFileDescriptor(terminalProject, file, 4, 2))
+      var focusCalls = 0
+      var navigateCalls = 0
       val navigator = TerminalCrossProjectFileHyperlinkNavigator(
-        sourceNavigationProjectPath = { "" },
-        openProject = {
-          openCalls++
-          project
+        sourceNavigationProjectResolver = { TerminalSourceNavigationProjectResolver { terminalProject } },
+        focusProjectWindow = {
+          focusCalls++
+        },
+        navigate = { _, _, _ ->
+          navigateCalls++
+          true
         },
       )
 
-      val handled = navigator.navigate(project, hyperlinkInfo, null)
+      val handled = navigator.navigate(terminalProject, hyperlinkInfo, null)
 
       assertThat(handled).isFalse()
-      assertThat(openCalls).isZero()
+      assertThat(focusCalls).isZero()
+      assertThat(navigateCalls).isZero()
       assertThat(hyperlinkInfo.navigateCalls).isZero()
     }
   }
 
   @Test
-  fun missingDescriptorReturnsFalse() {
+  fun absentResolverReturnsFalse() {
     runBlocking(Dispatchers.Default) {
       val project = ProjectManager.getInstance().defaultProject
-      val hyperlinkInfo = TestFileHyperlinkInfo(null)
+      val hyperlinkInfo = TestFileHyperlinkInfo(OpenFileDescriptor(project, LightVirtualFile("Main.kt", "fun main() {}"), 1, 0))
       val navigator = TerminalCrossProjectFileHyperlinkNavigator(
-        sourceNavigationProjectPath = { "/tmp/source-project" },
+        sourceNavigationProjectResolver = { null },
       )
 
       val handled = navigator.navigate(project, hyperlinkInfo, null)
+
+      assertThat(handled).isFalse()
+      assertThat(hyperlinkInfo.navigateCalls).isZero()
+    }
+  }
+
+  @Test
+  fun resolverThatAnswersNoProjectReturnsFalse() {
+    withTerminalProject { terminalProject ->
+      val descriptorProject = ProjectManager.getInstance().defaultProject
+      val hyperlinkInfo = TestFileHyperlinkInfo(
+        OpenFileDescriptor(descriptorProject, LightVirtualFile("Main.kt", "fun main() {}"), 1, 0)
+      )
+      var navigateCalls = 0
+      val navigator = TerminalCrossProjectFileHyperlinkNavigator(
+        sourceNavigationProjectResolver = { TerminalSourceNavigationProjectResolver { null } },
+        focusProjectWindow = {},
+        navigate = { _, _, _ ->
+          navigateCalls++
+          true
+        },
+      )
+
+      val handled = navigator.navigate(terminalProject, hyperlinkInfo, null)
+
+      assertThat(handled).isFalse()
+      assertThat(navigateCalls).isZero()
+      assertThat(hyperlinkInfo.navigateCalls).isZero()
+    }
+  }
+
+  @Test
+  fun nonFileHyperlinkReturnsFalse() {
+    withTerminalProject { terminalProject ->
+      val targetProject = ProjectManager.getInstance().defaultProject
+      var navigateCalls = 0
+      val navigator = TerminalCrossProjectFileHyperlinkNavigator(
+        sourceNavigationProjectResolver = { TerminalSourceNavigationProjectResolver { targetProject } },
+        focusProjectWindow = {},
+        navigate = { _, _, _ ->
+          navigateCalls++
+          true
+        },
+      )
+
+      val handled = navigator.navigate(terminalProject, TestPlainHyperlinkInfo(), null)
+
+      assertThat(handled).isFalse()
+      assertThat(navigateCalls).isZero()
+    }
+  }
+
+  @Test
+  fun missingDescriptorReturnsFalse() {
+    withTerminalProject { terminalProject ->
+      val targetProject = ProjectManager.getInstance().defaultProject
+      val hyperlinkInfo = TestFileHyperlinkInfo(null)
+      val navigator = TerminalCrossProjectFileHyperlinkNavigator(
+        sourceNavigationProjectResolver = { TerminalSourceNavigationProjectResolver { targetProject } },
+      )
+
+      val handled = navigator.navigate(terminalProject, hyperlinkInfo, null)
 
       assertThat(handled).isFalse()
       assertThat(hyperlinkInfo.navigateCalls).isZero()
@@ -102,15 +172,13 @@ class TerminalCrossProjectFileHyperlinkNavigatorTest {
 
   @Test
   fun offsetDescriptorIsPreservedWhenRerouted() {
-    runBlocking(Dispatchers.Default) {
-      val currentProject = ProjectManager.getInstance().defaultProject
+    withTerminalProject { terminalProject ->
       val targetProject = ProjectManager.getInstance().defaultProject
       val file = LightVirtualFile("Main.kt", "fun main() {\n  println()\n}")
-      val hyperlinkInfo = TestFileHyperlinkInfo(OpenFileDescriptor(currentProject, file, 12))
+      val hyperlinkInfo = TestFileHyperlinkInfo(OpenFileDescriptor(targetProject, file, 12))
       var capturedDescriptor: OpenFileDescriptor? = null
       val navigator = TerminalCrossProjectFileHyperlinkNavigator(
-        sourceNavigationProjectPath = { "/tmp/source-project" },
-        openProject = { targetProject },
+        sourceNavigationProjectResolver = { TerminalSourceNavigationProjectResolver { targetProject } },
         focusProjectWindow = {},
         navigate = { _, descriptor, _ ->
           capturedDescriptor = descriptor
@@ -118,7 +186,7 @@ class TerminalCrossProjectFileHyperlinkNavigatorTest {
         },
       )
 
-      val handled = navigator.navigate(currentProject, hyperlinkInfo, null)
+      val handled = navigator.navigate(terminalProject, hyperlinkInfo, null)
 
       assertThat(handled).isTrue()
       assertThat(capturedDescriptor?.offset).isEqualTo(12)
@@ -129,15 +197,13 @@ class TerminalCrossProjectFileHyperlinkNavigatorTest {
 
   @Test
   fun lineAndColumnDescriptorIsPreservedWhenOffsetIsAbsent() {
-    runBlocking(Dispatchers.Default) {
-      val currentProject = ProjectManager.getInstance().defaultProject
+    withTerminalProject { terminalProject ->
       val targetProject = ProjectManager.getInstance().defaultProject
       val file = LightVirtualFile("Main.kt", "fun main() {\n  println()\n}")
-      val hyperlinkInfo = TestFileHyperlinkInfo(OpenFileDescriptor(currentProject, file, 1, 2))
+      val hyperlinkInfo = TestFileHyperlinkInfo(OpenFileDescriptor(targetProject, file, 1, 2))
       var capturedDescriptor: OpenFileDescriptor? = null
       val navigator = TerminalCrossProjectFileHyperlinkNavigator(
-        sourceNavigationProjectPath = { "/tmp/source-project" },
-        openProject = { targetProject },
+        sourceNavigationProjectResolver = { TerminalSourceNavigationProjectResolver { targetProject } },
         focusProjectWindow = {},
         navigate = { _, descriptor, _ ->
           capturedDescriptor = descriptor
@@ -145,7 +211,7 @@ class TerminalCrossProjectFileHyperlinkNavigatorTest {
         },
       )
 
-      val handled = navigator.navigate(currentProject, hyperlinkInfo, null)
+      val handled = navigator.navigate(terminalProject, hyperlinkInfo, null)
 
       assertThat(handled).isTrue()
       assertThat(capturedDescriptor?.line).isEqualTo(1)
@@ -156,16 +222,18 @@ class TerminalCrossProjectFileHyperlinkNavigatorTest {
 
   @Test
   fun navigationRequestFocusesTargetWindowBeforeOpeningDescriptor() {
-    runBlocking(Dispatchers.Default) {
-      val currentProject = ProjectManager.getInstance().defaultProject
+    withTerminalProject { terminalProject ->
       val targetProject = ProjectManager.getInstance().defaultProject
-      val hyperlinkInfo = TestFileHyperlinkInfo(OpenFileDescriptor(currentProject, LightVirtualFile("Main.kt", "fun main() {}"), 1, 0))
+      val hyperlinkInfo = TestFileHyperlinkInfo(
+        OpenFileDescriptor(targetProject, LightVirtualFile("Main.kt", "fun main() {}"), 1, 0)
+      )
       val steps = mutableListOf<String>()
       val navigator = TerminalCrossProjectFileHyperlinkNavigator(
-        sourceNavigationProjectPath = { "/tmp/source-project" },
-        openProject = {
-          steps += "open"
-          targetProject
+        sourceNavigationProjectResolver = {
+          TerminalSourceNavigationProjectResolver {
+            steps += "resolve"
+            targetProject
+          }
         },
         focusProjectWindow = {
           steps += "focus"
@@ -176,26 +244,27 @@ class TerminalCrossProjectFileHyperlinkNavigatorTest {
         },
       )
 
-      val handled = navigator.navigate(currentProject, hyperlinkInfo, null)
+      val handled = navigator.navigate(terminalProject, hyperlinkInfo, null)
 
       assertThat(handled).isTrue()
-      assertThat(steps).containsExactly("open", "focus", "navigate")
+      assertThat(steps).containsExactly("resolve", "focus", "navigate")
     }
   }
 
   @Test
   fun navigationReturnsFalseWhenFileBecomesInvalidBeforeTargetDescriptorIsBuilt() {
-    runBlocking(Dispatchers.Default) {
-      val currentProject = ProjectManager.getInstance().defaultProject
+    withTerminalProject { terminalProject ->
+      val targetProject = ProjectManager.getInstance().defaultProject
       val file = TestInvalidatableVirtualFile("Main.kt", "fun main() {}")
-      val hyperlinkInfo = TestFileHyperlinkInfo(OpenFileDescriptor(currentProject, file, 4))
+      val hyperlinkInfo = TestFileHyperlinkInfo(OpenFileDescriptor(targetProject, file, 4))
       var navigateCalls = 0
       val navigator = TerminalCrossProjectFileHyperlinkNavigator(
-        sourceNavigationProjectPath = { "/tmp/source-project" },
-        openProject = {
-          yield()
-          file.isStillValid = false
-          currentProject
+        sourceNavigationProjectResolver = {
+          TerminalSourceNavigationProjectResolver {
+            yield()
+            file.isStillValid = false
+            targetProject
+          }
         },
         focusProjectWindow = {},
         navigate = { _, _, _ ->
@@ -204,7 +273,7 @@ class TerminalCrossProjectFileHyperlinkNavigatorTest {
         },
       )
 
-      val handled = navigator.navigate(currentProject, hyperlinkInfo, null)
+      val handled = navigator.navigate(terminalProject, hyperlinkInfo, null)
 
       assertThat(handled).isFalse()
       assertThat(navigateCalls).isZero()
@@ -213,15 +282,13 @@ class TerminalCrossProjectFileHyperlinkNavigatorTest {
 
   @Test
   fun browserFallbackPreferenceIsPassedToTargetNavigation() {
-    runBlocking(Dispatchers.Default) {
-      val currentProject = ProjectManager.getInstance().defaultProject
+    withTerminalProject { terminalProject ->
       val targetProject = ProjectManager.getInstance().defaultProject
       val file = LightVirtualFile("Main.kt", "fun main() {}")
-      val hyperlinkInfo = OpenFileHyperlinkInfo(currentProject, file, 1, 0, false)
+      val hyperlinkInfo = OpenFileHyperlinkInfo(targetProject, file, 1, 0, false)
       var capturedUseBrowser: Boolean? = null
       val navigator = TerminalCrossProjectFileHyperlinkNavigator(
-        sourceNavigationProjectPath = { "/tmp/source-project" },
-        openProject = { targetProject },
+        sourceNavigationProjectResolver = { TerminalSourceNavigationProjectResolver { targetProject } },
         focusProjectWindow = {},
         navigate = { _, _, useBrowser ->
           capturedUseBrowser = useBrowser
@@ -229,90 +296,31 @@ class TerminalCrossProjectFileHyperlinkNavigatorTest {
         },
       )
 
-      val handled = navigator.navigate(currentProject, hyperlinkInfo, null)
+      val handled = navigator.navigate(terminalProject, hyperlinkInfo, null)
 
       assertThat(handled).isTrue()
       assertThat(capturedUseBrowser).isFalse()
     }
   }
-
-  @Test
-  fun canonicalManagedPathIsUsedForDirectOpenProjectReuse() {
-    runBlocking(Dispatchers.Default) {
-      val router = testRouter(
-        managedProjectPath = { path ->
-          if (path == Path.of("/repo")) "/repo/sample.ipr" else path.toString()
-        },
-        openProjects = listOf("open-project"),
-        projectIdentityPath = { "/repo/sample.ipr" },
-        isPathEquivalent = { _, _ -> false },
-        openProjectByPath = { _, _ -> error("should reuse the already open project") },
-      )
-
-      val project = router.openOrReuseProject("/repo")
-
-      assertThat(project).isEqualTo("open-project")
-    }
-  }
-
-  @Test
-  fun pathEquivalenceFallbackReusesOpenProjectWhenManagedPathDiffers() {
-    runBlocking(Dispatchers.Default) {
-      val router = testRouter(
-        managedProjectPath = { _ -> "/repo/from-manager.ipr" },
-        openProjects = listOf("open-project"),
-        projectIdentityPath = { "/repo/other.ipr" },
-        isPathEquivalent = { _, path -> path == Path.of("/repo") },
-        openProjectByPath = { _, _ -> error("should reuse the already open project") },
-      )
-
-      val project = router.openOrReuseProject("/repo")
-
-      assertThat(project).isEqualTo("open-project")
-    }
-  }
-
-  @Test
-  fun canonicalManagedPathIsUsedWhenOpeningClosedProject() {
-    runBlocking(Dispatchers.Default) {
-      val openedPath = AtomicReference<Path?>(null)
-      val router = testRouter(
-        managedProjectPath = { path ->
-          if (path == Path.of("/repo")) "/repo/sample.ipr" else path.toString()
-        },
-        openProjects = emptyList(),
-        projectIdentityPath = { error("no open projects expected") },
-        isPathEquivalent = { _, _ -> false },
-        openProjectByPath = { path, _ ->
-          openedPath.set(path)
-          "opened-project"
-        },
-      )
-
-      val project = router.openOrReuseProject("/repo")
-
-      assertThat(project).isEqualTo("opened-project")
-      assertThat(openedPath.get()).isEqualTo(Path.of("/repo/sample.ipr"))
-    }
-  }
 }
 
-private fun testRouter(
-  managedProjectPath: (Path) -> String?,
-  openProjects: List<String>,
-  projectIdentityPath: (String) -> String?,
-  isPathEquivalent: (String, Path) -> Boolean,
-  openProjectByPath: suspend (Path, OpenProjectTask) -> String?,
-): SourceNavigationProjectRouter<String> {
-  return SourceNavigationProjectRouter(
-    parsePath = { normalizedPath -> Path.of(normalizedPath) },
-    normalizePath = { it },
-    resolveManagedPath = managedProjectPath,
-    openProjectsProvider = { openProjects },
-    projectIdentityPath = projectIdentityPath,
-    isPathEquivalent = isPathEquivalent,
-    openProjectByPath = openProjectByPath,
-  )
+/**
+ * Runs [action] with a stand-in for the terminal's own project.
+ *
+ * The navigator reads only the disposal state and the identity of that project, and the reroute needs a target
+ * project that differs from it. The target of each test is the default project, which builds a real descriptor.
+ */
+private fun withTerminalProject(action: suspend (Project) -> Unit) {
+  val disposable = Disposer.newDisposable("TerminalCrossProjectFileHyperlinkNavigatorTest")
+  try {
+    val terminalProject = MockProjectEx(disposable)
+    runBlocking(Dispatchers.Default) {
+      action(terminalProject)
+    }
+  }
+  finally {
+    Disposer.dispose(disposable)
+  }
 }
 
 private open class TestFileHyperlinkInfo(private val openFileDescriptor: OpenFileDescriptor?) : FileHyperlinkInfo {
@@ -324,6 +332,10 @@ private open class TestFileHyperlinkInfo(private val openFileDescriptor: OpenFil
   override fun navigate(project: Project) {
     navigateCalls++
   }
+}
+
+private class TestPlainHyperlinkInfo : HyperlinkInfo {
+  override fun navigate(project: Project) = Unit
 }
 
 private class TestInvalidatableVirtualFile(name: String, content: String) : LightVirtualFile(name, content) {

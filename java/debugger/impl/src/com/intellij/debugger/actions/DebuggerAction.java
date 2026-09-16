@@ -33,8 +33,8 @@ public abstract class DebuggerAction extends AnAction {
   public static void refreshViews(@Nullable XDebugSession session) {
     if (session != null) {
       XDebugProcess process = session.getDebugProcess();
-      if (process instanceof JavaDebugProcess) {
-        ((JavaDebugProcess)process).saveNodeHistory();
+      if (process instanceof JavaDebugProcess debugProcess) {
+        debugProcess.saveNodeHistory();
       }
       session.rebuildViews();
     }
@@ -55,8 +55,8 @@ public abstract class DebuggerAction extends AnAction {
       XDebugSession session = DebuggerUIUtil.getSession(e);
       if (session != null) {
         XStackFrame frame = session.getCurrentStackFrame();
-        if (frame instanceof JavaStackFrame) {
-          return ((JavaStackFrame)frame);
+        if (frame instanceof JavaStackFrame stackFrame) {
+          return stackFrame;
         }
       }
     }

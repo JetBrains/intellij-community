@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.platform.ide.newUiOnboarding.jcef` start
+content_module_jar(module = ":jcef")
+### auto-generated section `dev intellij.platform.ide.newUiOnboarding.jcef` end
+
 ### auto-generated section `build intellij.platform.ide.newUiOnboarding.jcef` start
 jvm_library(
     name = "jcef",
@@ -31,8 +35,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":jcef")
-
 jvm_library(
     name = "jcef_test_lib",
     testonly = True,
@@ -62,7 +64,6 @@ exports_files(
     [
         "intellij.platform.ide.newUiOnboarding.jcef.iml",
         "resources/intellij.platform.ide.newUiOnboarding.jcef.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

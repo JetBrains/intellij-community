@@ -4,7 +4,9 @@
 
 package com.intellij.openapi.roots.impl
 
+import com.intellij.concurrency.SensitiveProgressWrapper
 import com.intellij.diagnostic.PerformanceWatcher
+import com.intellij.diagnostic.ScanningWorkDumper
 import com.intellij.diagnostic.ThreadDumper
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -43,6 +45,9 @@ const val SCANNING_MONITOR_ENABLED_KEY: String = "ide.scanning.cancellation.moni
 const val SCANNING_MONITOR_GRACE_MS_KEY: String = "ide.scanning.cancellation.monitor.grace.ms"
 const val SCANNING_MONITOR_MAX_REPORTS_KEY: String = "ide.scanning.cancellation.monitor.max.reports"
 
+/** The shortest wait before the monitor judges whether a repair worked. */
+private const val REPAIR_VERIFICATION_MIN_MS = 1_000L
+
 /** Why a [FilesScanExecutor] worker was still holding a read action after a write action asked it to stop. */
 @Internal
 enum class ScanningStallKind {
@@ -55,8 +60,22 @@ enum class ScanningStallKind {
    */
   CANCELLATION_UNOBSERVED,
 
-  /** Canceled and correctly marked; the thread simply has not reached its next cancellation check yet. */
-  CANCELED_NOT_YET_NOTICED,
+  /**
+   * The indicator reports canceled, the thread is correctly marked, and the thread still holds the read
+   * action. The check runs only after the grace period, so the thread already had that long to stop.
+   */
+  CANCELED_AND_MARKED,
+}
+
+/**
+ * Why a scanning worker still holds a read action.
+ *
+ * The stall report and the thread dump both call this, so the two never disagree.
+ */
+private fun stallKind(indicator: SensitiveProgressWrapper, underCanceledIndicator: Boolean): ScanningStallKind = when {
+  !indicator.isCanceled -> ScanningStallKind.NOT_CANCELED
+  !underCanceledIndicator -> ScanningStallKind.CANCELLATION_UNOBSERVED
+  else -> ScanningStallKind.CANCELED_AND_MARKED
 }
 
 @Internal
@@ -66,9 +85,7 @@ class ScanningStallEntry(
   @JvmField val ageMs: Long,
   @JvmField val kind: ScanningStallKind,
   @JvmField val underCanceledIndicator: Boolean,
-) {
-  val isStalled: Boolean get() = kind != ScanningStallKind.CANCELED_NOT_YET_NOTICED
-}
+)
 
 @Internal
 class ScanningStallReport(
@@ -78,13 +95,13 @@ class ScanningStallReport(
   @JvmField val entries: List<ScanningStallEntry>,
   @JvmField val recentWriteActions: List<String>,
 ) {
-  val stalled: List<ScanningStallEntry> get() = entries.filter { it.isStalled }
-
   fun summary(): String {
-    val notCanceled = stalled.count { it.kind == ScanningStallKind.NOT_CANCELED }
-    val unobserved = stalled.count { it.kind == ScanningStallKind.CANCELLATION_UNOBSERVED }
+    val notCanceled = entries.count { it.kind == ScanningStallKind.NOT_CANCELED }
+    val unobserved = entries.count { it.kind == ScanningStallKind.CANCELLATION_UNOBSERVED }
+    val markedAndRunning = entries.count { it.kind == ScanningStallKind.CANCELED_AND_MARKED }
     return "Scanning thread(s) did not stop for a pending write action: " +
-           "$notCanceled not canceled, $unobserved with unobservable cancellation"
+           "$notCanceled not canceled, $unobserved with unobservable cancellation, " +
+           "$markedAndRunning canceled and marked"
   }
 
   fun details(): String = buildString {
@@ -141,7 +158,7 @@ class ScanningCancellationMonitor(
   private val coroutineScope: CoroutineScope,
   private val tracker: ScanningWorkTracker = ScanningWorkTracker.getInstance(),
   private val reporter: (ScanningStallReport) -> Unit = ::reportStallToLog,
-  private val graceMs: () -> Long = { Registry.intValue(SCANNING_MONITOR_GRACE_MS_KEY, 1000).toLong() },
+  private val graceMs: () -> Long = { Registry.intValue(SCANNING_MONITOR_GRACE_MS_KEY, 10_000).toLong() },
 ) : WriteActionListener {
 
   private val pendingCheck = AtomicReference<Job?>()
@@ -221,8 +238,8 @@ class ScanningCancellationMonitor(
       val entries = tracker.activeReadActions()
         .filter { it.startedAtNanos < writeActionStartedAtNanos }
         .map { classify(it) }
-      if (entries.none { it.isStalled }) {
-        // either everything stopped, or the remaining workers are correctly canceled and simply have not noticed yet
+      if (entries.isEmpty()) {
+        // every worker released its read action, so nothing held the write action up
         return
       }
 
@@ -265,11 +282,7 @@ class ScanningCancellationMonitor(
   private fun classify(readAction: ScanningReadAction): ScanningStallEntry {
     val indicator = readAction.indicator
     val underCanceledIndicator = CoreProgressManager.hasThreadUnderCanceledIndicator(readAction.thread)
-    val kind = when {
-      !indicator.isCanceled -> ScanningStallKind.NOT_CANCELED
-      !underCanceledIndicator -> ScanningStallKind.CANCELLATION_UNOBSERVED
-      else -> ScanningStallKind.CANCELED_NOT_YET_NOTICED
-    }
+    val kind = stallKind(indicator, underCanceledIndicator)
     return ScanningStallEntry(
       thread = readAction.thread,
       indicatorPresentation = indicator.toString(),
@@ -280,18 +293,21 @@ class ScanningCancellationMonitor(
   }
 
   private fun repair(entries: List<ScanningStallEntry>) {
-    val threads = entries.filter { it.isStalled }.mapTo(HashSet()) { it.thread }
+    val threads = entries.mapTo(HashSet()) { it.thread }
     if (threads.isEmpty()) return
     val repaired = tracker.activeReadActions().filter { it.thread in threads }
     for (readAction in repaired) {
       readAction.indicator.cancel()
     }
     // Report whether re-canceling was enough, so we learn if the repair actually works in the field.
+    // The wait never drops below REPAIR_VERIFICATION_MIN_MS. A repaired worker needs to reach its next
+    // `ProgressManager.checkCanceled()` and unwind, so a verdict taken right away means nothing.
+    val verificationMs = maxOf(graceMs(), REPAIR_VERIFICATION_MIN_MS)
     coroutineScope.launch(Dispatchers.IO) {
-      delay(graceMs().milliseconds)
+      delay(verificationMs.milliseconds)
       val stillHolding = tracker.activeReadActions().count { it.thread in threads }
       if (stillHolding > 0) {
-        THROTTLED_LOG.warn("$stillHolding scanning thread(s) still hold a read action after being re-canceled")
+        THROTTLED_LOG.error("$stillHolding scanning thread(s) still hold a read action after being re-canceled")
       }
     }
   }
@@ -316,6 +332,56 @@ private class WriteActionLog {
 
   private companion object {
     private const val CAPACITY = 32
+  }
+}
+
+/** The maximum number of read actions that the thread dump section shows. */
+private const val MAX_DUMPED_READ_ACTIONS = 64
+
+/**
+ * Renders the active scanning read actions for a thread dump.
+ *
+ * [FilesScanExecutor] registers a read action per item, so `held for` stays small even during a long
+ * freeze. Compare two consecutive dumps to tell a blind worker from a busy one. The same thread in
+ * both, with a small but different age, means the worker keeps taking items while a write action is
+ * pending.
+ *
+ * Returns null when the monitor is off or when no worker holds a read action. Then the whole section
+ * disappears from the dump.
+ */
+fun dumpScanningWork(tracker: ScanningWorkTracker): String? {
+  try {
+    if (!Registry.`is`(SCANNING_MONITOR_ENABLED_KEY, true)) {
+      return null
+    }
+    val readActions = tracker.activeReadActions()
+    if (readActions.isEmpty()) {
+      return null
+    }
+    return buildString {
+      append("ProgressManager.checkCanceled behavior: ").append(CoreProgressManager.getCheckCanceledBehaviorName()).append('\n')
+      append(readActions.size).append(" scanning read actions active:\n")
+      for (readAction in readActions.take(MAX_DUMPED_READ_ACTIONS)) {
+        val indicator = readAction.indicator
+        val underCanceledIndicator = CoreProgressManager.hasThreadUnderCanceledIndicator(readAction.thread)
+        val ageMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - readAction.startedAtNanos)
+        append(readAction.thread).append(' ').append(readAction.thread.state).append('\n')
+        append("    held for ").append(ageMs).append(" ms\n")
+        append("    indicator chain: ").append(CoreProgressManager.indicatorChain(indicator)).append('\n')
+        append("    indicator.isCanceled: ").append(indicator.isCanceled).append('\n')
+        append("    checkCanceled can throw here: ").append(underCanceledIndicator).append('\n')
+        append("    diagnosis: ").append(stallKind(indicator, underCanceledIndicator)).append('\n')
+      }
+      val hidden = readActions.size - MAX_DUMPED_READ_ACTIONS
+      if (hidden > 0) {
+        append("    ... and ").append(hidden).append(" more\n")
+      }
+    }
+  }
+  catch (e: Throwable) {
+    // A thread dump must never throw. It runs while the IDE is already in trouble.
+    rethrowControlFlowException(e)
+    return "the scanning read actions dump failed: $e\n"
   }
 }
 
@@ -356,10 +422,18 @@ private fun reportStallToLog(report: ScanningStallReport) {
  * Being a service also means the installation happens exactly once however many projects are opened.
  */
 @Service(Service.Level.APP)
-internal class ScanningCancellationMonitorService(coroutineScope: CoroutineScope) : Disposable.Default {
+internal class ScanningCancellationMonitorService(coroutineScope: CoroutineScope) : Disposable {
   init {
+    val tracker = ScanningWorkTracker.getInstance()
     val application = ApplicationManagerEx.getApplicationEx()
-    application.addWriteActionListener(ScanningCancellationMonitor(coroutineScope), this)
+    application.addWriteActionListener(ScanningCancellationMonitor(coroutineScope, tracker), this)
+    // The supplier holds the tracker, so a thread dump makes no service lookup. A lookup can throw once
+    // the application is disposed, and a thread dump must never throw.
+    ScanningWorkDumper.setScanningWorkDumper { dumpScanningWork(tracker) }
+  }
+
+  override fun dispose() {
+    ScanningWorkDumper.removeScanningWorkDumper()
   }
 }
 

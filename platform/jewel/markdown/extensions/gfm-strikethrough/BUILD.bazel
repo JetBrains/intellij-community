@@ -2,6 +2,13 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.platform.jewel.markdown.extensions.gfmStrikethrough` start
+content_module_jar(
+    libraries = ["@lib//:platform-jewel-markdown-extensions-gfm_strikethrough-commonmark-ext-gfm-strikethrough"],
+    module = ":gfm-strikethrough",
+)
+### auto-generated section `dev intellij.platform.jewel.markdown.extensions.gfmStrikethrough` end
+
 ### auto-generated section `build intellij.platform.jewel.markdown.extensions.gfmStrikethrough` start
 create_kotlinc_options(
     name = "custom_gfm-strikethrough",
@@ -45,11 +52,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(
-    libraries = ["@lib//:platform-jewel-markdown-extensions-gfm_strikethrough-commonmark-ext-gfm-strikethrough"],
-    module = ":gfm-strikethrough",
-)
-
 jvm_library(
     name = "gfm-strikethrough_test_lib",
     testonly = True,
@@ -80,7 +82,6 @@ exports_files(
     [
         "intellij.platform.jewel.markdown.extensions.gfmStrikethrough.iml",
         "src/main/resources/intellij.platform.jewel.markdown.extensions.gfmStrikethrough.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

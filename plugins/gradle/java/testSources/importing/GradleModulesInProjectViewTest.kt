@@ -62,6 +62,38 @@ class GradleModulesInProjectViewTest : GradleImportingTestCase() {
       """.trimMargin(), myStructure)
   }
 
+  @Test
+  fun `test gradle modules in sibling directories`() {
+    createProjectSubDir("../coreProject")
+    createProjectSubDir("../engineProject")
+    createSettingsFile("""
+      |include 'coreProject'
+      |include 'engineProject'
+      |project(':coreProject').projectDir = file('../coreProject')
+      |project(':engineProject').projectDir = file('../engineProject')
+      """.trimMargin())
+    importProject("")
+
+    assertModules("project", "project.coreProject", "project.engineProject")
+
+    assertProjectViewPresentation("""
+      |project
+      | *project*
+      |  build.gradle
+      |  gradle
+      |   wrapper
+      |    gradle-wrapper.jar
+      |    gradle-wrapper.properties
+      |  gradlew
+      |  gradlew.bat
+      |  settings.gradle
+      | project
+      |  coreProject *[project.coreProject]*
+      |  engineProject *[project.engineProject]*
+      |
+      """.trimMargin(), myStructure)
+  }
+
   private fun assertProjectViewPresentation(expected: String?, structure: AbstractTreeStructure) {
     ReadAction.run<Nothing> {
       val nodePresenter = java.util.function.Function { o: Any ->

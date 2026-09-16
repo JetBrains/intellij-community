@@ -1,3 +1,0 @@
-- name: dist.all/lib/intellij.execution.process.mediator.daemon.jar
-  modules:
-  - name: intellij.execution.process.mediator.daemon

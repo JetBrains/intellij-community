@@ -1,16 +1,16 @@
 <idea-plugin>
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="intellij.libraries.kotlinx.collections.immutable"/>
     <module name="intellij.markdown"/>
-    <module name="intellij.platform.backend"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.execution"/>
-    <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.frontend"/>
+    <module name="intellij.platform.ide"/>
     <module name="intellij.platform.ide.core"/>
-    <module name="intellij.platform.lang"/>
-    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.rpc"/>
     <module name="intellij.sh.core"/>
+    <module name="intellij.sh.terminal.frontend"/>
   </dependencies>
   <!-- endregion -->
   <extensions defaultExtensionNs="org.intellij.markdown">

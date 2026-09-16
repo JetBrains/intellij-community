@@ -51,12 +51,12 @@
 - a:extractSingleModule(com.intellij.platform.projectView.pane.BackendProjectViewNodeModel):com.intellij.openapi.module.Module
 - a:extractUnloadedModules(java.util.List):java.util.List
 *a:com.intellij.platform.projectView.impl.ProjectViewSelectNodeVisitor
-- <init>(com.intellij.psi.PsiElement,com.intellij.openapi.vfs.VirtualFile):V
-- pf:getElement():com.intellij.psi.PsiElement
+- <init>(com.intellij.psi.SmartPsiElementPointer,com.intellij.openapi.vfs.VirtualFile):V
+- pf:getElementPointer():com.intellij.psi.SmartPsiElementPointer
 - pf:getFile():com.intellij.openapi.vfs.VirtualFile
 - a:visitNodeForSelect(com.intellij.platform.projectView.pane.BackendProjectViewNodeModel,kotlin.coroutines.Continuation):java.lang.Object
 *:com.intellij.platform.projectView.impl.ProjectViewSelectNodeVisitorProvider
-- a:createSelectNodeVisitor(com.intellij.psi.PsiElement,com.intellij.openapi.vfs.VirtualFile):com.intellij.platform.projectView.impl.ProjectViewSelectNodeVisitor
+- a:createSelectNodeVisitor(com.intellij.psi.SmartPsiElementPointer,com.intellij.openapi.vfs.VirtualFile):com.intellij.platform.projectView.impl.ProjectViewSelectNodeVisitor
 *:com.intellij.platform.projectView.impl.ProjectViewTreeNodeProvider
 - a:getChildren(java.lang.Object,kotlin.coroutines.Continuation):java.lang.Object
 - a:getNodeModelFlow(J,java.lang.Object,kotlin.coroutines.Continuation):java.lang.Object
@@ -205,7 +205,8 @@
 - a:moveNodeChild(J,com.intellij.platform.projectView.pane.ProjectViewNodeModel,I,kotlin.coroutines.Continuation):java.lang.Object
 - a:removeNodeChild(J,I,kotlin.coroutines.Continuation):java.lang.Object
 - a:removeNodeChildren(J,kotlin.coroutines.Continuation):java.lang.Object
-- a:selectNode(com.intellij.platform.projectView.pane.ProjectViewNodePath,kotlin.coroutines.Continuation):java.lang.Object
+- a:selectNode(com.intellij.platform.projectView.pane.ProjectViewNodePath,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
+- bs:selectNode$default(com.intellij.platform.projectView.pane.ProjectViewPaneStateBuilder,com.intellij.platform.projectView.pane.ProjectViewNodePath,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 - a:setNodeChildren(J,java.util.List,kotlin.coroutines.Continuation):java.lang.Object
 - a:updateNode(com.intellij.platform.projectView.pane.ProjectViewNodeModel,kotlin.coroutines.Continuation):java.lang.Object
 - a:updateSettingsState(kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
@@ -217,6 +218,9 @@
 - com.intellij.platform.projectView.pane.SelectInRequest
 - a:getConsiderOnlyLastFocusedEditor():Z
 - a:isInvokedManually():Z
+*:com.intellij.platform.projectView.pane.SelectInProjectViewRequestBuilder
+- a:getRequestFocus():Z
+- a:setRequestFocus(Z):V
 *:com.intellij.platform.projectView.pane.SelectInRequest
 *:com.intellij.platform.projectView.pane.SuspendingBackendProjectViewPaneStateAccessor
 - a:getChildren(com.intellij.platform.projectView.pane.BackendProjectViewNodeModel,kotlin.coroutines.Continuation):java.lang.Object

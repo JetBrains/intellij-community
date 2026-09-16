@@ -2,6 +2,10 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.devkit.threading` start
+content_module_jar(module = ":threading")
+### auto-generated section `dev intellij.devkit.threading` end
+
 ### auto-generated section `build intellij.devkit.threading` start
 create_kotlinc_options(
     name = "custom_threading",
@@ -47,8 +51,6 @@ jvm_library(
         "//platform/analysis-api:analysis",
     ],
 )
-
-content_module_jar(module = ":threading")
 
 jvm_library(
     name = "threading_test_lib",

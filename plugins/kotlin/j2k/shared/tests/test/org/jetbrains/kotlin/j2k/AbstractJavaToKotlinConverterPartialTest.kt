@@ -7,7 +7,6 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiField
 import com.intellij.psi.PsiMethod
-import org.jetbrains.kotlin.j2k.actions.withCommandOnEdt
 
 abstract class AbstractJavaToKotlinConverterPartialTest : AbstractJavaToKotlinConverterSingleFileTest() {
     override fun fileToKotlin(

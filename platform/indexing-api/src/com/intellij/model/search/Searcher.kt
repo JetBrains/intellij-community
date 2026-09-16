@@ -22,7 +22,7 @@ interface Searcher<P : SearchParameters<R>, R : Any> {
    * @return read-only collection of results, which can be obtained from [parameters],
    * meaning they don't require indexes or otherwise long-running computations
    */
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun collectImmediateResults(parameters: P): Collection<@JvmWildcard R> {
     return emptyList()
   }
@@ -31,7 +31,7 @@ interface Searcher<P : SearchParameters<R>, R : Any> {
    * @return read-only collection of queries to be executed when the search is run with [parameters]
    * @see collectSearchRequest
    */
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun collectSearchRequests(parameters: P): Collection<@JvmWildcard Query<out R>> {
     return listOfNotNull(collectSearchRequest(parameters))
   }
@@ -41,7 +41,7 @@ interface Searcher<P : SearchParameters<R>, R : Any> {
    *
    * @return query to be executed when the search is run with [parameters]
    */
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun collectSearchRequest(parameters: P): Query<out R>? {
     return null
   }

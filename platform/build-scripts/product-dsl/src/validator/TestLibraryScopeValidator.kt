@@ -34,7 +34,7 @@ internal object TestLibraryScopeValidator : PipelineNode {
   override val id get() = NodeIds.TEST_LIBRARY_SCOPE_VALIDATION
   override val produces: Set<DataSlot<*>> get() = setOf(Slots.TEST_LIBRARY_SCOPE_SUPPRESSIONS)
 
-  override suspend fun execute(ctx: ComputeContext) {
+  override fun execute(ctx: ComputeContext) {
     val model = ctx.model
     val graph = model.pluginGraph
     val outputProvider = model.outputProvider
@@ -51,7 +51,7 @@ internal object TestLibraryScopeValidator : PipelineNode {
 
     val violationsByModule = HashMap<ContentModuleName, MutableList<TestLibraryViolation>>()
 
-    // Single-pass: iterate content modules directly (like LibraryModuleValidator)
+    // Single-pass: iterate content modules directly
     graph.query {
       contentModules { contentModule ->
         val moduleName = contentModule.name()
@@ -124,7 +124,6 @@ internal object TestLibraryScopeValidator : PipelineNode {
       if (active.isNotEmpty()) {
         val module = outputProvider.findModule(contentModuleName.value) ?: continue
         val imlFile = outputProvider.getModuleImlFile(module)
-        @Suppress("BlockingMethodInNonBlockingContext") // the build runs on virtual threads
         val current = Files.readString(imlFile)
         val fixed = applyTestLibraryScopeFixes(current, active)
         model.fileUpdater.writeIfChanged(imlFile, current, fixed)

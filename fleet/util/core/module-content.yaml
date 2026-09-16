@@ -1,3 +1,0 @@
-- name: dist.all/lib/fleet.util.core.jar
-  modules:
-  - name: fleet.util.core

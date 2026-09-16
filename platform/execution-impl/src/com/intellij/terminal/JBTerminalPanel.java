@@ -2,6 +2,7 @@
 package com.intellij.terminal;
 
 import com.intellij.application.options.EditorFontsConstants;
+import com.intellij.execution.process.LocalProcessService;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
@@ -27,14 +28,12 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.terminal.actions.TerminalActionWrapper;
 import com.intellij.util.JBHiDPIScaledImage;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.system.OS;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import com.jediterm.terminal.ProcessTtyConnector;
 import com.jediterm.terminal.TerminalCopyPasteHandler;
 import com.jediterm.terminal.TextStyle;
 import com.jediterm.terminal.model.StyleState;
@@ -43,7 +42,6 @@ import com.jediterm.terminal.ui.TerminalAction;
 import com.jediterm.terminal.ui.TerminalActionMenuBuilder;
 import com.jediterm.terminal.ui.TerminalActionProvider;
 import com.jediterm.terminal.ui.TerminalPanel;
-import com.pty4j.windows.conpty.WinConPtyProcess;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -170,6 +168,10 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
   }
 
   private static boolean skipAction(@NotNull KeyEvent e, @Nullable List<? extends AnAction> actionsToSkip) {
+    // The Classic Terminal handles Clear Buffer as a local action. Route Cmd+K to the terminal instead of the Commit action.
+    if (TerminalCmdKShortcutDialog.hasClearTerminalShortcut(e))
+      return false;
+
     if (actionsToSkip != null) {
       final KeyboardShortcut eventShortcut = new KeyboardShortcut(KeyStroke.getKeyStrokeForEvent(e), null);
       for (AnAction action : actionsToSkip) {
@@ -214,16 +216,24 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
         if (getTerminalTextBuffer().isUsingAlternateBuffer()) {
           return false;
         }
-        JBTerminalWidget terminalWidget = DataManager.getInstance().getDataContext(this).getData(JBTerminalWidget.TERMINAL_DATA_KEY);
+        var terminalWidget = DataManager.getInstance().getDataContext(this).getData(JBTerminalWidget.TERMINAL_DATA_KEY);
         if (terminalWidget == null || terminalWidget.getTerminalPanel() != this) {
           return false;
         }
-        ProcessTtyConnector connector = terminalWidget.getProcessTtyConnector();
-        WinConPtyProcess winConPtyProcess = connector != null ? ObjectUtils.tryCast(connector.getProcess(), WinConPtyProcess.class) : null;
-        return winConPtyProcess == null;
+        var connector = terminalWidget.getProcessTtyConnector();
+        var control = connector != null ? LocalProcessService.getInstance().getPtyControl(connector.getProcess()) : null;
+        return control == null || !control.isConPty();
       });
     }
     return actions;
+  }
+
+  private void invokeClearBufferAction(@NotNull KeyEvent event) {
+    String actionName = mySettingsProvider.getClearBufferActionPresentation().getName();
+    TerminalAction action = ContainerUtil.find(getActions(), candidate -> candidate.getName().equals(actionName));
+    if (action != null && action.isEnabled(event)) {
+      action.actionPerformed(event);
+    }
   }
 
   @Override
@@ -408,7 +418,11 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
     }
 
     private void dispatchKeyEvent(@NotNull KeyEvent e) {
-      TerminalCmdKShortcutConflictNotification.showIfNeeded(getContextProject(), e);
+      if (TerminalCmdKShortcutDialog.handleIfNeeded(getContextProject(), JBTerminalPanel.this, e,
+                                                    JBTerminalPanel.this::invokeClearBufferAction)) {
+        e.consume();
+        return;
+      }
 
       if (e.getID() == KeyEvent.KEY_PRESSED && !skipKeyEvent(e)) {
         if (!JBTerminalPanel.this.isFocusOwner()) {

@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.sshj` start
+content_module_jar(
+    libraries = ["@lib//:libraries-sshj-_s_s_h_j"],
+    module = ":sshj",
+)
+### auto-generated section `dev intellij.libraries.sshj` end
+
 ### auto-generated section `build intellij.libraries.sshj` start
 jvm_library(
     name = "sshj",
@@ -16,11 +23,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-sshj-_s_s_h_j"],
     runtime_deps = ["@lib//:libraries-sshj-_s_s_h_j"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-sshj-_s_s_h_j"],
-    module = ":sshj",
 )
 
 jvm_library(
@@ -42,7 +44,6 @@ exports_files(
     [
         "intellij.libraries.sshj.iml",
         "resources/intellij.libraries.sshj.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

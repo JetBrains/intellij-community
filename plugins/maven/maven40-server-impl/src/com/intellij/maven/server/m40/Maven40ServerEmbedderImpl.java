@@ -25,9 +25,11 @@ import org.apache.maven.MavenExecutionException;
 import org.apache.maven.RepositoryUtils;
 import org.apache.maven.api.ArtifactCoordinates;
 import org.apache.maven.api.DependencyCoordinates;
+import org.apache.maven.api.DependencyScope;
 import org.apache.maven.api.DownloadedArtifact;
 import org.apache.maven.api.Node;
 import org.apache.maven.api.PathScope;
+import org.apache.maven.api.RemoteRepository;
 import org.apache.maven.api.Session;
 import org.apache.maven.api.SourceRoot;
 import org.apache.maven.api.annotations.Nonnull;
@@ -35,10 +37,19 @@ import org.apache.maven.api.cli.InvokerException;
 import org.apache.maven.api.cli.InvokerRequest;
 import org.apache.maven.api.cli.Logger;
 import org.apache.maven.api.cli.ParserRequest;
+import org.apache.maven.api.model.Plugin;
+import org.apache.maven.api.model.RepositoryPolicy;
 import org.apache.maven.api.model.Source;
 import org.apache.maven.api.services.ArtifactResolver;
+import org.apache.maven.api.services.ArtifactResolverRequest;
 import org.apache.maven.api.services.ArtifactResolverResult;
+import org.apache.maven.api.services.DependencyCoordinatesFactory;
+import org.apache.maven.api.services.DependencyCoordinatesFactoryRequest;
+import org.apache.maven.api.services.DependencyResolver;
+import org.apache.maven.api.services.DependencyResolverRequest;
+import org.apache.maven.api.services.DependencyResolverResult;
 import org.apache.maven.api.services.Lookup;
+import org.apache.maven.api.services.RequestTrace;
 import org.apache.maven.api.services.model.ModelResolverException;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.InvalidRepositoryException;
@@ -55,16 +66,13 @@ import org.apache.maven.execution.ProfileActivation;
 import org.apache.maven.internal.impl.DefaultSessionFactory;
 import org.apache.maven.internal.impl.InternalMavenSession;
 import org.apache.maven.jline.JLineMessageBuilderFactory;
-import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Model;
-import org.apache.maven.model.Plugin;
 import org.apache.maven.model.Repository;
 import org.apache.maven.model.building.FileModelSource;
 import org.apache.maven.model.building.ModelProblem;
 import org.apache.maven.model.building.ModelProcessor;
 import org.apache.maven.model.io.ModelReader;
 import org.apache.maven.plugin.LegacySupport;
-import org.apache.maven.plugin.internal.PluginDependenciesResolver;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.ProjectBuildingException;
 import org.apache.maven.resolver.MavenChainedWorkspaceReader;
@@ -73,15 +81,11 @@ import org.apache.maven.session.scope.internal.SessionScope;
 import org.codehaus.plexus.classworlds.ClassWorld;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
-import org.eclipse.aether.graph.DependencyFilter;
-import org.eclipse.aether.graph.DependencyNode;
-import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.repository.WorkspaceReader;
 import org.eclipse.aether.resolution.ArtifactRequest;
 import org.eclipse.aether.resolution.ArtifactResolutionException;
 import org.eclipse.aether.resolution.ArtifactResult;
 import org.eclipse.aether.transfer.ArtifactTransferException;
-import org.eclipse.aether.util.graph.visitor.PreorderNodeListGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenArchetype;
@@ -678,110 +682,152 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
 
 
       List<PluginResolutionResponse> results = new ArrayList<>();
-      executeWithMavenSession(request, MavenWorkspaceMap.empty(), task.getIndicator(), session -> {
+      executeWithMavenSession(request, MavenWorkspaceMap.empty(), task.getIndicator(), mavenSession -> {
+        Session session = mavenSession.getSession();
         List<PluginResolutionData> resolutions = collectPluginResolutionData(session, pluginResolutionRequests);
+        // Resolve one plugin at a time.
+        // IDEA-341451: Parallel plugin resolution hangs in Maven 4.0.0-alpha-9. It worked up to 4.0.0-alpha-8.
+        // The request trace also lives on the session, so two threads cannot share one session safely.
         results.addAll(ParallelRunnerForServer.execute(false, resolutions, resolution ->
-          resolvePlugin(task, resolution.mavenPluginId, resolution.resolveDependencies, resolution.dependencies, resolution.remoteRepos,
-                        session.getRepositorySession())));
+          resolvePlugin(task, resolution.mavenPluginId, resolution.resolveDependencies, resolution.dependencies,
+                        resolution.remoteRepos, session)));
       });
 
       telemetry.shutdown();
-      // IDEA-341451: Parallel plugin resolution hangs in Maven 4.0.0-alpha-9
-      // It worked fine up until Maven 4.0.0-alpha-8
       return new MavenServerResponse<>(new ArrayList<>(results), getLongRunningTaskStatus(longRunningTaskId, token));
     }
   }
 
-  private @NotNull List<PluginResolutionData> collectPluginResolutionData(MavenSession session,
+  private @NotNull List<PluginResolutionData> collectPluginResolutionData(@NotNull Session session,
                                                                           @NotNull ArrayList<PluginResolutionRequest> pluginResolutionRequests) {
+    DependencyCoordinatesFactory coordinatesFactory = session.getService(DependencyCoordinatesFactory.class);
     List<PluginResolutionData> resolutions = new ArrayList<>();
 
     for (PluginResolutionRequest pluginResolutionRequest : pluginResolutionRequests) {
       MavenId mavenPluginId = pluginResolutionRequest.getMavenPluginId();
-      List<RemoteRepository> remoteRepos =
-        RepositoryUtils.toRepos(map2ArtifactRepositories(session, pluginResolutionRequest.getRepositories(), false));
+      List<RemoteRepository> remoteRepos = map2ApiRepositories(session, pluginResolutionRequest.getRepositories());
 
-      List<Dependency> dependencies = new ArrayList<>();
+      List<DependencyCoordinates> dependencies = new ArrayList<>();
       for (MavenId dependencyId : pluginResolutionRequest.getPluginDependencies()) {
-        Dependency dependency = new Dependency();
-        dependency.setGroupId(dependencyId.getGroupId());
-        dependency.setArtifactId(dependencyId.getArtifactId());
-        dependency.setVersion(dependencyId.getVersion());
-        dependencies.add(dependency);
+        // The type must be explicit. Without it the resolver leaves the extension empty instead of "jar".
+        // The Maven model defaults the dependency type to "jar", so keep that default here.
+        // Maven also puts every plugin dependency into the runtime scope. See DefaultPluginDependenciesResolver.
+        dependencies.add(coordinatesFactory.create(DependencyCoordinatesFactoryRequest.builder()
+                                                     .session(session)
+                                                     .groupId(dependencyId.getGroupId())
+                                                     .artifactId(dependencyId.getArtifactId())
+                                                     .version(dependencyId.getVersion())
+                                                     .type("jar")
+                                                     .scope(DependencyScope.RUNTIME.id())
+                                                     .build()));
       }
 
-      PluginResolutionData resolution = new PluginResolutionData(
+      resolutions.add(new PluginResolutionData(
         mavenPluginId,
         pluginResolutionRequest.resolvePluginDependencies(),
         dependencies,
-        remoteRepos);
-      resolutions.add(resolution);
+        remoteRepos));
     }
     return resolutions;
   }
 
+  /**
+   * Converts the IDE repositories to public-API repositories.
+   *
+   * <p>The session supplies the mirror, the proxy and the authentication. Maven applies them when it hands the
+   * repositories to the resolver, so this method must not inject them.
+   */
+  private static @NotNull List<RemoteRepository> map2ApiRepositories(@NotNull Session session,
+                                                                     @NotNull List<MavenRemoteRepository> repositories) {
+    Set<RemoteRepository> result = new LinkedHashSet<>();
+    for (MavenRemoteRepository each : repositories) {
+      try {
+        result.add(session.createRemoteRepository(toApiRepository(each)));
+      }
+      catch (Exception e) {
+        MavenServerGlobals.getLogger().warn(e);
+      }
+    }
+    return new ArrayList<>(result);
+  }
+
+  private static @NotNull org.apache.maven.api.model.Repository toApiRepository(@NotNull MavenRemoteRepository repository) {
+    // The layout is always "default", because MavenRepositorySystem.buildArtifactRepository also forces it.
+    return org.apache.maven.api.model.Repository.newBuilder()
+      .id(repository.getId())
+      .name(repository.getName())
+      .url(repository.getUrl())
+      .layout("default")
+      .releases(toApiPolicy(repository.getReleasesPolicy()))
+      .snapshots(toApiPolicy(repository.getSnapshotsPolicy()))
+      .build();
+  }
+
+  /**
+   * Converts one repository policy, and fills each empty field.
+   *
+   * <p>The defaults match the legacy repository builder, which warns about a bad checksum. The public-API factory
+   * fails the build instead, so every field needs a value here.
+   */
+  private static @NotNull RepositoryPolicy toApiPolicy(@Nullable MavenRemoteRepository.Policy policy) {
+    String updatePolicy = null == policy ? null : policy.getUpdatePolicy();
+    String checksumPolicy = null == policy ? null : policy.getChecksumPolicy();
+    return RepositoryPolicy.newBuilder()
+      .enabled(Boolean.toString(null == policy || policy.isEnabled()))
+      .updatePolicy(null == updatePolicy ? "daily" : updatePolicy)
+      .checksumPolicy(null == checksumPolicy ? "warn" : checksumPolicy)
+      .build();
+  }
+
   private static class PluginResolutionData {
-    MavenId mavenPluginId;
-    boolean resolveDependencies;
-    List<Dependency> dependencies;
-    List<RemoteRepository> remoteRepos;
+    final MavenId mavenPluginId;
+    final boolean resolveDependencies;
+    final List<DependencyCoordinates> dependencies;
+    final List<RemoteRepository> remoteRepos;
 
     private PluginResolutionData(MavenId mavenPluginId,
                                  boolean resolveDependencies,
-                                 List<Dependency> dependencies,
+                                 List<DependencyCoordinates> dependencies,
                                  List<RemoteRepository> remoteRepos) {
       this.mavenPluginId = mavenPluginId;
       this.resolveDependencies = resolveDependencies;
-      this.remoteRepos = remoteRepos;
       this.dependencies = dependencies;
+      this.remoteRepos = remoteRepos;
     }
   }
 
   private @NotNull PluginResolutionResponse resolvePlugin(LongRunningTask task,
                                                           MavenId mavenPluginId,
                                                           boolean resolveDependencies,
-                                                          List<Dependency> dependencies,
+                                                          List<DependencyCoordinates> dependencies,
                                                           List<RemoteRepository> remoteRepos,
-                                                          RepositorySystemSession session) {
+                                                          Session session) {
     long startTime = System.currentTimeMillis();
     MavenArtifact mavenPluginArtifact = null;
     List<MavenArtifact> artifacts = new ArrayList<>();
     if (task.isCanceled()) return new PluginResolutionResponse(mavenPluginId, mavenPluginArtifact, artifacts);
 
     try {
-      Plugin plugin = new Plugin();
-      plugin.setGroupId(mavenPluginId.getGroupId());
-      plugin.setArtifactId(mavenPluginId.getArtifactId());
-      plugin.setVersion(mavenPluginId.getVersion());
-      plugin.setDependencies(dependencies);
+      Plugin plugin = Plugin.newBuilder()
+        .groupId(mavenPluginId.getGroupId())
+        .artifactId(mavenPluginId.getArtifactId())
+        .version(mavenPluginId.getVersion())
+        .build();
 
-      PluginDependenciesResolver pluginDependenciesResolver = getComponent(PluginDependenciesResolver.class);
+      // The trace makes Maven use the "plugin" repository context, like DefaultPluginDependenciesResolver did.
+      RequestTrace trace = new RequestTrace(RequestTrace.CONTEXT_PLUGIN, null, plugin);
+      DependencyCoordinates pluginCoordinates =
+        session.getService(DependencyCoordinatesFactory.class).create(session, plugin);
 
-      org.eclipse.aether.artifact.Artifact pluginArtifact =
-        pluginDependenciesResolver.resolve(plugin, remoteRepos, session);
+      mavenPluginArtifact = resolvePluginArtifact(session, trace, pluginCoordinates, remoteRepos);
 
-      DependencyFilter dependencyFilter = resolveDependencies ? null : new DependencyFilter() {
-        @Override
-        public boolean accept(DependencyNode node, List<DependencyNode> parents) {
-          return false;
-        }
-      };
-
-      DependencyNode node = pluginDependenciesResolver.resolve(plugin, pluginArtifact, dependencyFilter, remoteRepos, session);
-
-      PreorderNodeListGenerator nlg = new PreorderNodeListGenerator();
-      node.accept(nlg);
-
-
-      for (org.eclipse.aether.artifact.Artifact artifact : nlg.getArtifacts(true)) {
-        MavenArtifact mavenArtifact = Maven40ModelConverter.convertArtifact(RepositoryUtils.toArtifact(artifact), getLocalRepositoryFile());
-        if (!Objects.equals(artifact.getArtifactId(), plugin.getArtifactId()) ||
-            !Objects.equals(artifact.getGroupId(), plugin.getGroupId())) {
-          artifacts.add(mavenArtifact);
-        }
-        else {
-          mavenPluginArtifact = mavenArtifact;
-        }
+      try {
+        artifacts.addAll(
+          resolvePluginDependencies(session, trace, pluginCoordinates, dependencies, remoteRepos, resolveDependencies));
+      }
+      catch (Exception e) {
+        // Keep the plugin artifact. The plugin itself resolved, so the IDE must not report it as unresolved.
+        MavenServerGlobals.getLogger().warn(e);
       }
 
       task.incrementFinishedRequests();
@@ -795,6 +841,70 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       long totalTime = System.currentTimeMillis() - startTime;
       MavenServerGlobals.getLogger().debug("Resolved plugin " + mavenPluginId + " in " + totalTime + " ms");
     }
+  }
+
+  private @Nullable MavenArtifact resolvePluginArtifact(@NotNull Session session,
+                                                        @NotNull RequestTrace trace,
+                                                        @NotNull DependencyCoordinates pluginCoordinates,
+                                                        @NotNull List<RemoteRepository> remoteRepos) {
+    ArtifactResolverResult result = session.getService(ArtifactResolver.class).resolve(
+      ArtifactResolverRequest.builder()
+        .session(session)
+        .trace(trace)
+        .coordinates(Collections.singletonList(pluginCoordinates))
+        .repositories(remoteRepos)
+        .build());
+
+    for (DownloadedArtifact artifact : result.getArtifacts()) {
+      return Maven40ApiModelConverter.convertArtifactAndPath(
+        artifact, artifact.getPath(), getLocalRepositoryFile(), "maven-plugin", "", false);
+    }
+    return null;
+  }
+
+  private @NotNull List<MavenArtifact> resolvePluginDependencies(@NotNull Session session,
+                                                                 @NotNull RequestTrace trace,
+                                                                 @NotNull DependencyCoordinates pluginCoordinates,
+                                                                 @NotNull List<DependencyCoordinates> dependencies,
+                                                                 @NotNull List<RemoteRepository> remoteRepos,
+                                                                 boolean resolveDependencies) {
+    DependencyResolverRequest.RequestType requestType = resolveDependencies
+                                                        ? DependencyResolverRequest.RequestType.RESOLVE
+                                                        : DependencyResolverRequest.RequestType.COLLECT;
+
+    DependencyResolverResult result = session.getService(DependencyResolver.class).resolve(
+      DependencyResolverRequest.builder()
+        .session(session)
+        .trace(trace)
+        .requestType(requestType)
+        .root(pluginCoordinates)
+        .dependencies(dependencies)
+        .repositories(remoteRepos)
+        .pathScope(PathScope.MAIN_RUNTIME)
+        .build());
+
+    for (Exception exception : result.getExceptions()) {
+      MavenServerGlobals.getLogger().warn(exception);
+    }
+
+    File localRepository = getLocalRepositoryFile();
+    List<MavenArtifact> artifacts = new ArrayList<>();
+    if (DependencyResolverRequest.RequestType.COLLECT == requestType) {
+      // COLLECT fills neither getNodes() nor getDependencies(), so walk the graph. Node.stream() returns the root too.
+      Node root = result.getRoot();
+      root.stream()
+        .filter(node -> node != root)
+        .map(Node::getDependency)
+        .filter(Objects::nonNull)
+        .forEach(dependency -> artifacts.add(Maven40ApiModelConverter.convertDependencyAndPath(
+          dependency, session.getArtifactPath(dependency).orElse(null), localRepository)));
+    }
+    else {
+      // RESOLVE drops the root, so the plugin artifact is absent here.
+      result.getDependencies().forEach((dependency, path) -> artifacts.add(
+        Maven40ApiModelConverter.convertDependencyAndPath(dependency, path, localRepository)));
+    }
+    return artifacts;
   }
 
   @Override

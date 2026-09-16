@@ -710,19 +710,6 @@
           <reference ref="MoveTabRight"/>
           <reference ref="SplitHorizontally"/>
           <reference ref="MoveTabDown"/>
-          <reference ref="SplitChooser"/>
-          <group id="SplitChooser.Actions" searchable="false" compact="true" popup="true">
-            <reference ref="SplitChooser.NextWindow"/>
-            <reference ref="SplitChooser.PreviousWindow"/>
-            <reference ref="SplitChooser.Exit"/>
-            <reference ref="SplitChooser.Split"/>
-            <reference ref="SplitChooser.Duplicate"/>
-            <reference ref="SplitChooser.SplitCenter"/>
-            <reference ref="SplitChooser.SplitTop"/>
-            <reference ref="SplitChooser.SplitLeft"/>
-            <reference ref="SplitChooser.SplitDown"/>
-            <reference ref="SplitChooser.SplitRight"/>
-          </group>
           <reference ref="StretchSplitToTop"/>
           <reference ref="StretchSplitToLeft"/>
           <reference ref="StretchSplitToBottom"/>
@@ -799,7 +786,6 @@
 
     <group id="SplitRevealGroup" popup="false">
       <reference ref="OpenInRightSplit"/>
-      <reference ref="SplitChooser"/>
       <reference ref="RevealGroup"/>
     </group>
 

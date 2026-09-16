@@ -3,24 +3,31 @@ package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.mapDataToModel
-import com.intellij.collaboration.async.nestedDisposable
+import com.intellij.collaboration.async.mapScoped
+import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.ui.html.AsyncHtmlImageLoader
+import com.intellij.collaboration.util.AsyncIncrementalListComputer
 import com.intellij.collaboration.util.ChangesSelection
+import com.intellij.collaboration.util.IncrementallyComputedValue
 import com.intellij.collaboration.util.getOrNull
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.api.data.GHIssueComment
@@ -31,7 +38,6 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestCommitShor
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReview
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineEvent
 import org.jetbrains.plugins.github.authentication.GHLoginSource
-import org.jetbrains.plugins.github.pullrequest.data.GHListLoader
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRPersistentInteractionState.PRState
@@ -77,6 +83,7 @@ interface GHPRTimelineViewModel {
   }
 }
 
+@OptIn(ExperimentalCoroutinesApi::class)
 internal class GHPRTimelineViewModelImpl(
   private val project: Project,
   parentCs: CoroutineScope,
@@ -84,12 +91,13 @@ internal class GHPRTimelineViewModelImpl(
   private val dataProvider: GHPRDataProvider,
   private val viewModelWithTextCompletion: GHViewModelWithTextCompletion,
 ) : GHPRTimelineViewModel {
-  private val cs = parentCs.childScope("GitHub Pull Request Timeline View Model", Dispatchers.Main)
+  private val cs = parentCs.childScope("GitHub Pull Request Timeline View Model", Dispatchers.Default)
 
   private val vm by lazy { project.service<GHPRProjectViewModel>() }
   private val securityService = dataContext.securityService
 
   private val detailsData = dataProvider.detailsData
+  private val timelineData = dataProvider.timelineData
   private val reviewData = dataProvider.reviewData
   private val commentsData = dataProvider.commentsData
 
@@ -99,10 +107,45 @@ internal class GHPRTimelineViewModelImpl(
   override val currentUser: GHUser = securityService.currentUser
 
   override val detailsVm = GHPRDetailsTimelineViewModel(project, cs, dataContext, dataProvider)
-  private val timelineLoader = dataProvider.acquireTimelineLoader(cs)
+
+  private val requestMoreSignal = MutableSharedFlow<Boolean>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
+  private var loadedCompletely = false
+  private val timelineLoader: StateFlow<AsyncIncrementalListComputer<GHPRTimelineItemDTO>?> =
+    timelineData.timelineChangeSignal.withInitial(Unit).mapScoped {
+      createComputer()
+    }.stateIn(cs, SharingStarted.Eagerly, null)
+
+  private fun CoroutineScope.createComputer(): AsyncIncrementalListComputer<GHPRTimelineItemDTO> =
+    AsyncIncrementalListComputer.createIn(this, timelineData.getTimelineItems(), loadAfterDone = true).apply {
+      launch(start = CoroutineStart.UNDISPATCHED) {
+        requestMoreSignal.collect {
+          if (it || !state.value.isComplete) {
+            requestMore()
+          }
+        }
+      }
+
+      launch(start = CoroutineStart.UNDISPATCHED) {
+        timelineData.timelineUpdateSignal.collect {
+          requestMore()
+        }
+      }
+
+      // load fully if it was loaded fully at least once
+      if (loadedCompletely) {
+        launch(start = CoroutineStart.UNDISPATCHED) {
+          state.collect {
+            if (!it.isLoading && !it.isComplete) {
+              requestMore()
+            }
+          }
+        }
+      }
+    }
 
   override val loadingErrorHandler: GHLoadingErrorHandler =
-    GHApiLoadingErrorHandler(project, securityService.account, GHLoginSource.PR_TIMELINE, timelineLoader::reset)
+    GHApiLoadingErrorHandler(project, securityService.account, GHLoginSource.PR_TIMELINE, timelineData::signalTimelineNeedsReload)
 
   override val commentVm: GHPRNewCommentViewModel? =
     if (securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.READ)) {
@@ -116,76 +159,51 @@ internal class GHPRTimelineViewModelImpl(
   override val htmlImageLoader = dataContext.htmlImageLoader
   override val avatarIconsProvider = dataContext.avatarIconsProvider
 
-  override val timelineItems: StateFlow<List<GHPRTimelineItem>>
-
-  override val isLoading: StateFlow<Boolean> = callbackFlow {
-    val disposable = Disposer.newDisposable()
-    timelineLoader.addLoadingStateChangeListener(disposable) {
-      trySend(timelineLoader.loading)
-
-      // Update the last seen date to the last time a fully loaded timeline was loaded
-      if (!timelineLoader.canLoadMore() && !timelineLoader.loading) {
-        updateLastSeen(System.currentTimeMillis())
+  private val timelineLoaderState: Flow<IncrementallyComputedValue<List<GHPRTimelineItemDTO>>> = timelineLoader.flatMapLatest {
+    it?.state ?: flowOf(IncrementallyComputedValue.initial())
+  }
+  override val timelineItems: StateFlow<List<GHPRTimelineItem>> =
+    timelineLoaderState
+      .filter {
+        it.isValueAvailable && !it.isLoading // don't rebuild on full reload until the first batch
+        && (!loadedCompletely || it.isComplete) // don't rebuild in batches if loaded completely at least once
       }
-    }
-    send(timelineLoader.loading)
-    awaitClose { Disposer.dispose(disposable) }
-  }.stateIn(cs, SharingStarted.Eagerly, timelineLoader.loading)
+      .onEach {
+        loadedCompletely = it.isComplete
+      }
+      .map {
+        it.valueOrNull.orEmpty()
+      }
+      .map {
+        GHPRTimelineMergingModel().apply {
+          add(it)
+        }.getItemsList()
+      }.mapDataToModel(
+        ::getItemID,
+        { createItemFromDTO(it) },
+        { update(it) }
+      ).stateIn(cs, SharingStarted.Eagerly, emptyList())
 
-  override val loadingError: StateFlow<Throwable?> = callbackFlow {
-    val disposable = Disposer.newDisposable()
-    timelineLoader.addErrorChangeListener(disposable) {
-      trySend(timelineLoader.error)
-    }
-    send(timelineLoader.error)
-    awaitClose { Disposer.dispose(disposable) }
-  }.stateIn(cs, SharingStarted.Eagerly, timelineLoader.error)
+  override val isLoading: StateFlow<Boolean> =
+    timelineLoaderState.map { it.isLoading }
+      .stateIn(cs, SharingStarted.Eagerly, false)
+
+  override val loadingError: StateFlow<Throwable?> =
+    timelineLoaderState.map { it.exceptionOrNull }
+      .stateIn(cs, SharingStarted.Eagerly, null)
 
   val showCommitRequests = MutableSharedFlow<String>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   val showDiffRequests = MutableSharedFlow<ChangesSelection>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   init {
-    val timelineModel = GHPRTimelineMergingModel()
-    timelineModel.add(timelineLoader.loadedData)
-    val itemsFromModel = MutableStateFlow(timelineModel.getItemsList())
-    timelineItems = itemsFromModel.mapDataToModel(
-      ::getItemID,
-      { createItemFromDTO(it) },
-      { update(it) }
-    ).stateIn(cs, SharingStarted.Eagerly, emptyList())
-
-    timelineLoader.addDataListener(cs.nestedDisposable(), object : GHListLoader.ListDataListener {
-      override fun onDataAdded(startIdx: Int) {
-        val loadedData = timelineLoader.loadedData
-        val addedData = loadedData.subList(startIdx, loadedData.size)
-        timelineModel.add(addedData)
-        itemsFromModel.value = timelineModel.getItemsList()
-
-        val latestLoadedItemTime = loadedData.mapNotNull { it.createdAt }.maxOrNull()?.time
-        updateLastSeen(latestLoadedItemTime ?: System.currentTimeMillis())
-      }
-
-      override fun onDataUpdated(idx: Int) {
-        val newItem = timelineLoader.loadedData[idx]
-        timelineModel.update(idx, newItem)
-        itemsFromModel.value = timelineModel.getItemsList()
-
+    cs.launch {
+      timelineLoaderState.filter {
+        !it.isLoading && it.isComplete
+      }.collect {
+        // Update the last seen date to the last time a full timeline was loaded
         updateLastSeen(System.currentTimeMillis())
       }
-
-      override fun onDataRemoved(idx: Int) {
-        timelineModel.remove(idx)
-        itemsFromModel.value = timelineModel.getItemsList()
-
-        updateLastSeen(System.currentTimeMillis())
-      }
-
-      override fun onAllDataRemoved() {
-        timelineModel.removeAll()
-        itemsFromModel.value = timelineModel.getItemsList()
-        timelineLoader.loadMore()
-      }
-    })
+    }
   }
 
   private fun updateLastSeen(lastSeenMillis: Long) {
@@ -231,19 +249,18 @@ internal class GHPRTimelineViewModelImpl(
   }
 
   override fun requestMore() {
-    timelineLoader.loadMore()
+    requestMoreSignal.tryEmit(false)
   }
 
   override fun update() {
-    if (timelineLoader.loadedData.isNotEmpty())
-      timelineLoader.loadMore(true)
+    requestMoreSignal.tryEmit(true)
   }
 
   override fun updateAll() {
     cs.launch {
       detailsData.signalDetailsNeedReload()
       detailsData.signalMergeabilityNeedsReload()
-      timelineLoader.loadMore(true)
+      timelineData.signalTimelineNeedsReload()
       reviewData.signalThreadsNeedReload()
     }
   }

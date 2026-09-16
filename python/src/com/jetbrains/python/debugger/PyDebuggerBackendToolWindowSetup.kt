@@ -44,7 +44,7 @@ internal class PyDebuggerBackendToolWindowSetup : ProjectActivity {
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun setupTitleAction(toolWindow: ToolWindow) {
     val action = ActionManager.getInstance().getAction(SWITCHER_ACTION_ID) ?: return
     val existing = ((toolWindow as? ToolWindowEx)?.decorator as? InternalDecoratorImpl)?.headerToolbarActions

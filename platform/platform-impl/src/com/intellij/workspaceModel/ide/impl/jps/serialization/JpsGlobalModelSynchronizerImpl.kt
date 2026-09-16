@@ -7,11 +7,13 @@ import com.intellij.openapi.application.backgroundWriteAction
 import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
 import com.intellij.platform.eel.EelMachine
 import com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.jps.entities.LibraryTableId
 import com.intellij.platform.workspace.jps.entities.SdkEntity
 import com.intellij.platform.workspace.jps.serialization.impl.ApplicationStoreJpsContentReader
 import com.intellij.platform.workspace.jps.serialization.impl.ELEMENT_ADDITIONAL
@@ -90,6 +92,7 @@ open class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineS
     loadedFromCache: Boolean,
   ): () -> Job = jpsLoadInitialStateMs.addMeasuredTime {
     if (loadedFromCache) {
+      removeLibrariesOfUnregisteredCustomTables(mutableStorage)
       val callback = bridgesInitializationCallback(
         eelMachine,
         mutableStorage = mutableStorage,
@@ -113,6 +116,20 @@ open class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineS
         initializeBridges = true,
       )
       return@addMeasuredTime { callback(); CompletableDeferred(Unit) }
+    }
+  }
+
+  private fun removeLibrariesOfUnregisteredCustomTables(mutableStorage: MutableEntityStorage) {
+    val registeredLevels = LibraryTablesRegistrar.getInstance().customLibraryTables.mapTo(HashSet()) { it.tableLevel }
+    val orphans = mutableStorage.entities(LibraryEntity::class.java).filter { entity ->
+      val tableId = entity.tableId
+      tableId is LibraryTableId.GlobalLibraryTableId
+      && tableId.level != LibraryTablesRegistrar.APPLICATION_LEVEL
+      && tableId.level !in registeredLevels
+    }.toList()
+    for (entity in orphans) {
+      LOG.info("Remove the cached library '${entity.name}': the custom library table '${entity.tableId.level}' is not registered")
+      mutableStorage.removeEntity(entity)
     }
   }
 

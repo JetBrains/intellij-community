@@ -23,6 +23,7 @@ import org.jetbrains.annotations.ApiStatus
 @Rpc
 @ApiStatus.Internal
 interface PluginManagerApi : RemoteApi<Unit> {
+  suspend fun getPluginInventory(): PluginInventoryDto
   suspend fun getPlugins(): List<PluginDto>
   suspend fun getPluginById(pluginId: PluginId): PluginDto?
   suspend fun getVisiblePlugins(showImplementationDetails: Boolean): List<PluginDto>
@@ -36,6 +37,7 @@ interface PluginManagerApi : RemoteApi<Unit> {
   suspend fun loadPluginReviews(pluginId: PluginId, page: Int): List<PluginReviewComment>?
   suspend fun loadPluginMetadata(externalPluginId: String): IntellijPluginMetadata?
   suspend fun getAllPluginsTags(): Set<String>
+  suspend fun getMarketplaceTagCounts(): Map<String, Int>
   suspend fun getAllVendors(): Set<String>
   suspend fun updateDescriptorsForInstalledPlugins()
   suspend fun closeSession(sessionId: String)
@@ -48,6 +50,8 @@ interface PluginManagerApi : RemoteApi<Unit> {
   suspend fun hasPluginRequiresUltimateButItsDisabled(ids: List<PluginId>): Boolean
   suspend fun enableRequiredPlugins(sessionId: String, pluginId: PluginId): Set<PluginId>
   suspend fun getCustomRepositoryPluginMap(): Map<String, List<PluginDto>>
+  suspend fun getCustomPluginRepositoryIds(): List<String>
+  suspend fun loadCustomPluginRepository(repositoryId: String): CustomPluginRepositoryLoadResultDto
   suspend fun isDisabledInDiff(sessionId: String, pluginId: PluginId): Boolean
   suspend fun isPluginInstalled(pluginId: PluginId): Boolean
   suspend fun getPluginsRequiresUltimateMap(pluginIds: List<PluginId>): Map<PluginId, Boolean>

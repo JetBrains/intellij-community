@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.upload
 
+import com.intellij.collaboration.api.httpclient.HttpClientUtil
 import com.intellij.collaboration.api.json.loadJsonValue
 import com.intellij.collaboration.util.resolveRelative
 import org.jetbrains.plugins.gitlab.api.GitLabApi
@@ -9,7 +10,6 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabUploadRestDTO
 import org.jetbrains.plugins.gitlab.api.projectApiUrl
 import java.io.InputStream
 import java.net.http.HttpRequest.BodyPublishers
-import java.net.http.HttpResponse
 import java.util.UUID
 
 
@@ -19,7 +19,7 @@ internal suspend fun GitLabApi.Rest.markdownUploadFile(
     filename: String,
     mimeType: String,
     fileInputStream: InputStream,
-): HttpResponse<out GitLabUploadRestDTO> {
+): GitLabUploadRestDTO {
   val boundary = "FormBoundary" + UUID.randomUUID()
   val boundaryStart = "--$boundary\r\n" +
                       "Content-Disposition: form-data; name=\"file\"; filename=\"$filename\"\r\n" +
@@ -33,10 +33,10 @@ internal suspend fun GitLabApi.Rest.markdownUploadFile(
   )
 
   val uri = projectApiUrl(projectId).resolveRelative("uploads")
-  val httpRequest = request(uri)
+  return request(uri)
     .POST(bodyPublisher)
-    .header("Content-Type", "multipart/form-data; boundary=$boundary")
+    .header(HttpClientUtil.CONTENT_TYPE_HEADER, "multipart/form-data; boundary=$boundary")
     .build()
-
-  return loadJsonValue(httpRequest)
+    .loadJsonValue<GitLabUploadRestDTO>()
+    .body()
 }

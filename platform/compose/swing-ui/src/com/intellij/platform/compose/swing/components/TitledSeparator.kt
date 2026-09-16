@@ -5,7 +5,6 @@ import androidx.compose.runtime.Composable
 import com.intellij.openapi.util.NlsContexts
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.compose.swing.modifier.SwingModifier
-import org.jetbrains.compose.swing.modifier.applyModifier
 import org.jetbrains.compose.swing.node.SwingNode
 import com.intellij.ui.TitledSeparator as IdeaTitledSeparator
 
@@ -27,9 +26,9 @@ public fun TitledSeparator(
 ) {
   SwingNode(
     factory = { IdeaTitledSeparator() },
+    modifier = modifier,
     update = {
       set(text) { this.text = it }
-      applyModifier(modifier)
     },
   )
 }

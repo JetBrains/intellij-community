@@ -2,20 +2,16 @@
 package com.intellij.platform.compose.swing.components
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.compose.swing.modifier.SwingModifier
-import org.jetbrains.compose.swing.modifier.applyModifier
-import org.jetbrains.compose.swing.modifier.listener.listener
+import org.jetbrains.compose.swing.modifier.listener.itemListener
 import org.jetbrains.compose.swing.node.SwingNode
 import org.jetbrains.compose.swing.node.declare
-import org.jetbrains.compose.swing.node.rememberAppliedValue
+import org.jetbrains.compose.swing.node.rememberMirrorState
 import java.awt.event.ItemEvent
-import java.awt.event.ItemListener
-import javax.swing.AbstractButton
 import com.intellij.ui.components.DropDownLink as IdeaDropDownLink
 
 /**
@@ -41,24 +37,12 @@ import com.intellij.ui.components.DropDownLink as IdeaDropDownLink
 public fun <T> DropDownLink(
   items: List<T>,
   selectedItem: T,
+  onSelectedItemChange: (T) -> Unit,
   modifier: SwingModifier = SwingModifier,
   updateText: Boolean = true,
-  onSelectedItemChange: (T) -> Unit = {},
 ) {
   val currentItems = rememberUpdatedState(items)
-  val callback = rememberUpdatedState(onSelectedItemChange)
-  val applied = rememberAppliedValue(selectedItem)
-  // The link publishes every selection it settles on, the wrapper's own write-back included; the binding
-  // tells the user's picks from that by value.
-  val selectionListener = remember(applied) {
-    ItemListener { event ->
-      if (event.stateChange != ItemEvent.SELECTED) return@ItemListener
-      // A link only ever holds an item it was handed - one of the popup's, or one the composition wrote.
-      @Suppress("UNCHECKED_CAST")
-      val item = event.item as T
-      if (applied.observed(item)) callback.value(item)
-    }
-  }
+  val mirror = rememberMirrorState(selectedItem)
   val linkText: @Nls String? = if (updateText) itemText(selectedItem) else null
   SwingNode(
     factory = {
@@ -72,12 +56,21 @@ public fun <T> DropDownLink(
           .createPopup()
       }
     },
+    // The link publishes every selection it settles on, the wrapper's own write-back included; report
+    // tells the user's picks from that by value.
+    modifier =
+      modifier.itemListener { event ->
+        if (event.stateChange != ItemEvent.SELECTED) return@itemListener
+        // A link only ever holds an item it was handed - one of the popup's, or one the composition wrote.
+        @Suppress("UNCHECKED_CAST")
+        val item = event.item as T
+        mirror.report(item, onSelectedItemChange)
+      },
     update = {
-      declare(selectedItem, applied, read = { this.selectedItem }, write = { this.selectedItem = it })
+      declare(selectedItem, mirror, read = { this.selectedItem }, write = { this.selectedItem = it })
       // The constructor already put the initial item's text on the link, so only later ones are written;
       // a null text is one the selection does not own and leaves whatever the link shows alone.
       update(linkText) { if (it != null) text = it }
-      applyModifier(modifier.itemListener(selectionListener))
     },
   )
 }
@@ -85,14 +78,3 @@ public fun <T> DropDownLink(
 /** The text an item stands for, on the link and in its popup alike. */
 @Nls
 private fun itemText(item: Any?): String = item.toString()
-
-/**
- * Attaches [instance] to the link's item-selection channel, where every selection it settles on is
- * published. The channel lives on [AbstractButton], which a `DropDownLink` is one of.
- */
-private fun SwingModifier.itemListener(instance: ItemListener): SwingModifier =
-  listener<AbstractButton, ItemListener>(
-    instance,
-    { link, l -> link.addItemListener(l) },
-    { link, l -> link.removeItemListener(l) },
-  )

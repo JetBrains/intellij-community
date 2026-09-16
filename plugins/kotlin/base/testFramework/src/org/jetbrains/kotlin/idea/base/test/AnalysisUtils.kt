@@ -3,8 +3,8 @@
 package org.jetbrains.kotlin.idea.base.test
 
 import com.intellij.openapi.application.runReadAction
-import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
-import org.jetbrains.kotlin.analysis.api.components.collectDiagnostics
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.diagnostics.diagnostics
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.session.analyze
@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.psi.KtFile
  * Performs all-phase analysis of the given [files].
  * Does nothing if all declarations in files are already resolved.
  */
-@OptIn(KaAllowAnalysisOnEdt::class)
+@OptIn(KaAllowAnalysisOnEdt::class, KaExperimentalApi::class)
 fun ensureFilesResolved(vararg files: KtFile) {
     // Unless the session is created for the module, its invalidation won't trigger invalidation of dependents.
     // See 'didSessionExist' in 'LLFirSessionInvalidationService.invalidate()'.
@@ -23,7 +23,8 @@ fun ensureFilesResolved(vararg files: KtFile) {
         runReadAction {
             for (file in files) {
                 analyze(file) {
-                    file.collectDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+                    // The query is lazy, so it has to be iterated to force the analysis.
+                    file.diagnostics().count()
                 }
             }
         }

@@ -194,7 +194,6 @@ class KeyHashLogTest {
       16,
       false,
       true,
-      false,
       storageLockContext,
     ).use { storage ->
       val keyHashLog = storage.getFieldValue<KeyHashLog<String>>("myKeyHashToVirtualFileMapping")

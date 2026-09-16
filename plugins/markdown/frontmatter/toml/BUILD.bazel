@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.markdown.frontmatter.toml` start
+content_module_jar(module = ":toml")
+### auto-generated section `dev intellij.markdown.frontmatter.toml` end
+
 ### auto-generated section `build intellij.markdown.frontmatter.toml` start
 jvm_provided_library(
     name = "plugins_toml_core_provided",
@@ -35,8 +39,6 @@ jvm_library(
         ":plugins_toml_core_provided",
     ],
 )
-
-content_module_jar(module = ":toml")
 
 jvm_library(
     name = "toml_test_lib",

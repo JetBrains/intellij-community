@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.ClassInheritorsSearch
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.Processor
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -59,7 +60,7 @@ internal class KotlinK2FindUsagesSupport : KotlinFindUsagesSupport {
         val klass = companionObject.getStrictParentOfType<KtClass>() ?: return true
         if (klass.containingKtFile.isCompiled) return true
         return !klass.anyDescendantOfType(fun(element: KtElement): Boolean {
-            if (element == companionObject) return false
+            if (PsiTreeUtil.isAncestor(companionObject, element, false)) return false
             return withResolvedCall(element) { call ->
                 if (callReceiverRefersToCompanionObject(call, companionObject)) {
                     element.references.any {

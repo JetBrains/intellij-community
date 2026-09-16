@@ -46,7 +46,7 @@ interface JvmSpecialLineBreakpointCaseProvider {
    * 
    * Return `null` if the line does not fall to a "special case" in the file's language.
    */
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun getSpecialCase(project: Project, file: PsiFile, line: Int): SpecialLineBreakpointCase?
 
   companion object {

@@ -1,6 +1,47 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
+load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_TARGETS")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
-load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "dev_dist_plugin_jar")
+
+### auto-generated section `dev intellij.devkit` start
+dev_dist_plugin(
+    jars = {
+        "devkit-jps.jar": {
+            "modules": ["intellij.devkit.jps"],
+        },
+    },
+    main_module = "intellij.devkit",
+    module_targets = MODULE_TARGETS,
+    prepacked_content_modules = [
+        # do not sort,
+        "intellij.libraries.workspace.model.codegen",
+        "intellij.platform.jewel.samples.showcase",
+        "intellij.devkit.apiDump.lang",
+        "intellij.devkit.apiDump",
+        "intellij.devkit.core",
+        "intellij.devkit.compose",
+        "intellij.devkit.debugger",
+        "intellij.devkit.experiments",
+        "intellij.devkit.gradle.tooling",
+        "intellij.devkit.gradle",
+        "intellij.devkit.i18n",
+        "intellij.devkit.intelliLang",
+        "intellij.devkit.mcp.inspections",
+        "intellij.devkit.mcp",
+        "intellij.devkit.modules",
+        "intellij.devkit.scaffolding",
+        "intellij.devkit.smartupdate",
+        "intellij.devkit.stacktrace",
+        "intellij.devkit.themes",
+        "intellij.devkit.threading",
+        "intellij.devkit.uiDesigner",
+        "intellij.devkit.uiDsl",
+        "intellij.devkit.workspaceModel.k2",
+        "intellij.devkit.workspaceModel",
+        "intellij.kotlin.devkit.k2",
+        "intellij.kotlin.devkit",
+    ],
+)
+### auto-generated section `dev intellij.devkit` end
 
 ### auto-generated section `build intellij.devkit` start
 jvm_library(
@@ -44,47 +85,6 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.devkit` end
-
-### auto-generated section `dev intellij.devkit` start
-dev_dist_plugin(
-    descriptor_module = ":devkit",
-    prepacked_content_modules = [
-        "//libraries/workspace-model-codegen:workspace-model-codegen_content_module_jar",
-        "//platform/jewel/samples/showcase:showcase_content_module_jar",
-        "//plugins/devkit/api-dump-lang:apiDump-lang_content_module_jar",
-        "//plugins/devkit/api-dump:api-dump_content_module_jar",
-        "//plugins/devkit/devkit-core:core_content_module_jar",
-        "//plugins/devkit/intellij.devkit.compose:compose_content_module_jar",
-        "//plugins/devkit/intellij.devkit.debugger:debugger_content_module_jar",
-        "//plugins/devkit/intellij.devkit.experiments:experiments_content_module_jar",
-        "//plugins/devkit/intellij.devkit.gradle.tooling:gradle-tooling_content_module_jar",
-        "//plugins/devkit/intellij.devkit.gradle:gradle_content_module_jar",
-        "//plugins/devkit/intellij.devkit.i18n:i18n_content_module_jar",
-        "//plugins/devkit/intellij.devkit.intelliLang:intelliLang_content_module_jar",
-        "//plugins/devkit/intellij.devkit.mcp.inspections:mcp-inspections_content_module_jar",
-        "//plugins/devkit/intellij.devkit.mcp:mcp_content_module_jar",
-        "//plugins/devkit/intellij.devkit.modules:modules_content_module_jar",
-        "//plugins/devkit/intellij.devkit.scaffolding:scaffolding_content_module_jar",
-        "//plugins/devkit/intellij.devkit.smartupdate:smartupdate_content_module_jar",
-        "//plugins/devkit/intellij.devkit.stacktrace:stacktrace_content_module_jar",
-        "//plugins/devkit/intellij.devkit.themes:themes_content_module_jar",
-        "//plugins/devkit/intellij.devkit.threading:threading_content_module_jar",
-        "//plugins/devkit/intellij.devkit.uiDesigner:uiDesigner_content_module_jar",
-        "//plugins/devkit/intellij.devkit.uiDsl:uiDsl_content_module_jar",
-        "//plugins/devkit/intellij.devkit.workspaceModel/k2:k2_content_module_jar",
-        "//plugins/devkit/intellij.devkit.workspaceModel:workspaceModel_content_module_jar",
-        "//plugins/devkit/intellij.kotlin.devkit/k2:k2_content_module_jar",
-        "//plugins/devkit/intellij.kotlin.devkit:kotlin-devkit_content_module_jar",
-    ],
-    prepacked_layout_jars = [":devkit-jps_dev_dist_plugin_jar"],
-)
-
-dev_dist_plugin_jar(
-    modules = ["//plugins/devkit/jps-plugin:jps"],
-    plugin_main_module = "intellij.devkit",
-    relative_output_file = "devkit-jps.jar",
-)
-### auto-generated section `dev intellij.devkit` end
 
 ### auto-generated section `build intellij.devkit.plugin.main` start
 jvm_library(

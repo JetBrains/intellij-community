@@ -8,7 +8,7 @@ import javax.swing.Icon
 interface DeferredIcon : UpdatableIcon {
   val baseIcon: Icon
 
-  @get:RequiresEdt
+  @get:RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   val isDone: Boolean
 
   fun evaluate(): Icon

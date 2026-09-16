@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.commons.io` start
+content_module_jar(
+    libraries = ["@lib//:libraries-commons-io-commons-io"],
+    module = ":io",
+)
+### auto-generated section `dev intellij.libraries.commons.io` end
+
 ### auto-generated section `build intellij.libraries.commons.io` start
 jvm_library(
     name = "io",
@@ -16,11 +23,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-commons-io-commons-io"],
     runtime_deps = ["@lib//:libraries-commons-io-commons-io"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-commons-io-commons-io"],
-    module = ":io",
 )
 
 jvm_library(
@@ -43,7 +45,6 @@ exports_files(
     [
         "intellij.libraries.commons.io.iml",
         "resources/intellij.libraries.commons.io.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

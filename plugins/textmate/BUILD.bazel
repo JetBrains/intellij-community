@@ -16,6 +16,10 @@ filegroup(
     visibility = ["//visibility:public"],
 )
 
+### auto-generated section `dev intellij.textmate` start
+content_module_jar(module = ":textmate")
+### auto-generated section `dev intellij.textmate` end
+
 ### auto-generated section `build intellij.textmate` start
 jvm_library(
     name = "textmate",
@@ -70,8 +74,6 @@ jvm_library(
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     ],
 )
-
-content_module_jar(module = ":textmate")
 
 jvm_library(
     name = "textmate_test_lib",

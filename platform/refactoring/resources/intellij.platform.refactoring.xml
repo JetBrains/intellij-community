@@ -53,6 +53,7 @@
     <extensionPoint name="refactoring.elementListenerProvider" interface="com.intellij.refactoring.listeners.RefactoringElementListenerProvider" area="IDEA_PROJECT" dynamic="true"/>
 
     <extensionPoint name="findInProjectSearchEngine" interface="com.intellij.find.FindInProjectSearchEngine" dynamic="true"/>
+    <extensionPoint name="directorySearchEngine" interface="com.intellij.find.DirectorySearchEngine" dynamic="true"/>
 
     <extensionPoint name="qualifiedNameProvider" interface="com.intellij.ide.actions.QualifiedNameProvider" dynamic="true"/>
     <extensionPoint name="virtualFileQualifiedNameProvider" interface="com.intellij.ide.actions.VirtualFileQualifiedNameProvider" dynamic="true"/>

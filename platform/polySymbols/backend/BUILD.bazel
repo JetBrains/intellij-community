@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.platform.polySymbols.backend` start
+content_module_jar(module = ":backend")
+### auto-generated section `dev intellij.platform.polySymbols.backend` end
+
 ### auto-generated section `build intellij.platform.polySymbols.backend` start
 jvm_library(
     name = "backend",
@@ -36,8 +40,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":backend")
-
 jvm_library(
     name = "backend_test_lib",
     testonly = True,
@@ -71,7 +73,6 @@ exports_files(
     [
         "intellij.platform.polySymbols.backend.iml",
         "resources/intellij.platform.polySymbols.backend.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

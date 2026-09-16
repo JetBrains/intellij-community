@@ -182,7 +182,7 @@ open class StarterInitialStep(contextProvider: StarterContextProvider) : CommonS
     }
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private fun checkDependencyUpdates(starters: List<Starter>) {
     for (starter in starters) {
       val localUpdates = loadStarterDependencyUpdatesFromFile(starter.id)
@@ -206,7 +206,7 @@ open class StarterInitialStep(contextProvider: StarterContextProvider) : CommonS
     }
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private fun loadStarterDependencyUpdatesFromFile(starterId: String): DependencyConfig? {
     val configUpdateDir = File(PathManager.getTempPath(), getDependencyConfigUpdatesDirLocation(starterId))
     val configUpdateFile = File(configUpdateDir, getPatchFileName(starterId))
@@ -226,7 +226,7 @@ open class StarterInitialStep(contextProvider: StarterContextProvider) : CommonS
     }
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private fun loadStarterDependencyUpdatesFromNetwork(starterId: String): Pair<Element, String>? {
     val url = buildStarterPatchUrl(starterId) ?: return null
     return try {
@@ -250,7 +250,7 @@ open class StarterInitialStep(contextProvider: StarterContextProvider) : CommonS
     }
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private fun saveStarterDependencyUpdatesToFile(starterId: String, dependencyConfigUpdate: Element) {
     val configUpdateDir = Path.of(PathManager.getTempPath(), getDependencyConfigUpdatesDirLocation(starterId))
     if (!configUpdateDir.exists()) {

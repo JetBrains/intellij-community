@@ -845,7 +845,7 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
       
       special_painter(Colors.GREEN) # WARNING Expected type 'Literal[Colors.RED]', got 'Literal[Colors.GREEN]' instead
       
-      costs: dict[SpecialColors, int] = {Colors.GREEN: 7} # WARNING Expected type 'dict[Literal[Colors.RED], int]', got 'dict[Literal[Colors.GREEN], Literal[7]]' instead
+      costs: dict[SpecialColors, int] = {Colors.GREEN: 7} # WARNING Expected type 'dict[Literal[Colors.RED], int]', got 'dict[Colors, int]' instead
       """.trimIndent())
 
     @Test
@@ -1021,4 +1021,36 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
         e.value
     #       └ TYPE object
     """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-90693"])
+  fun `IntEnum StrEnum literal type`() = test("""
+    from enum import IntEnum, StrEnum
+    
+    class I(IntEnum):
+        a = 1
+        b = 2
+    
+    I.a.value
+    #    └ TYPE Literal[1]
+    
+    def fi(i: I):
+        i.name
+    #     └ TYPE Literal["a", "b"]
+        i.value
+    #     └ TYPE Literal[1, 2]
+    
+    class S(StrEnum):
+        a = "x"
+        b = "y"
+    
+    S.a.value
+    #    └ TYPE Literal["x"]
+    
+    def fs(s: S):
+        s.name
+    #     └ TYPE Literal["a", "b"]
+        s.value
+    #     └ TYPE Literal["x", "y"]
+    """)
 }

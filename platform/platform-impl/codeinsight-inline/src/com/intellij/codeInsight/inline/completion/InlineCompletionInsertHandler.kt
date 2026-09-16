@@ -21,8 +21,8 @@ class InlineCompletionInsertEnvironment @ApiStatus.Internal constructor(
 ) : UserDataHolderBase()
 
 interface InlineCompletionInsertHandler {
-  @RequiresEdt
-  @RequiresWriteLock
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
   fun afterInsertion(environment: InlineCompletionInsertEnvironment, elements: List<InlineCompletionElement>)
 
   object Dummy : InlineCompletionInsertHandler {

@@ -133,7 +133,7 @@ private class Osc8HyperlinksRenderer(
    * a document replace can invalidate a decoration's range highlighter without changing the link itself
    * (same offsets, same target), so a diff keyed by the link would never restore its decoration.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun reconcile() {
     val links = outputModel.getOsc8Hyperlinks()
     val toAdd = ArrayList<EditorTextDecoration>()
@@ -157,7 +157,7 @@ private class Osc8HyperlinksRenderer(
    * Relies on the hover tracking of [applier]; a hovered filter-based hyperlink is not in
    * [appliedUriById], so it yields `null`.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun hoveredLinkUri(): @NlsSafe String? {
     val hovered = applier.getHoveredHyperlink() ?: return null
     return appliedUriById[hovered.id]

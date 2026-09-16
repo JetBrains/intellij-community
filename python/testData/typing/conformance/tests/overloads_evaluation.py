@@ -239,6 +239,12 @@ def check_variadic(v: list[int]) -> None:
 # > :term:`materializations <materialize>` of the argument's type are assignable to
 # > the corresponding parameter type for each of the remaining overloads. If so,
 # > eliminate all of the subsequent remaining overloads.
+# >
+# > If the return types are not equivalent, overload matching is ambiguous. In
+# > this case, infer a return type that is :term:`assignable` to each of the
+# > remaining return types and permits operations supported by any of them without
+# > errors, then stop. A type checker may infer ``Any`` or a more precise gradual
+# > type that satisfies these requirements.
 
 
 @overload
@@ -262,7 +268,8 @@ def check_example4(v1: list[Any], v2: Any) -> None:
     assert_type(ret1, list[int])
 
     ret2 = example4(v2, 1)
-    assert_type(ret2, Any)
+    int_list: list[int] = ret2
+    str_list: list[str] = ret2
 
 
 @overload
@@ -278,7 +285,9 @@ def example5(obj: Any) -> list[Any]:
 
 
 def check_example5(b: list[Any]) -> None:
-    assert_type(example5(b), Any)
+    ret = example5(b)
+    int_list: list[int] = ret
+    str_list: list[str] = ret
 
 
 @overload
@@ -344,4 +353,17 @@ def check_example7(v1: list[Any], v2: Any) -> None:
     assert_type(ret2, list[str])
 
     ret3 = example7(v1, v2)
-    assert_type(ret3, Any)
+    int_list: list[int] = ret3
+    str_list: list[str] = ret3
+
+
+# The earlier ambiguity cases check assignability of list return types. This
+# checks distinct scalar return types and operations specific to each type.
+
+
+def check_ambiguous_scalar_return(v: Any) -> None:
+    ret = example2(1, v, 1)
+    int_result: int = ret
+    str_result: str = ret
+    _ = ret + 1
+    ret.upper()

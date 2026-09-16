@@ -104,7 +104,7 @@ public final class JavaPsiAnnotationUtil {
         for (ContentEntry entry : ModuleRootManager.getInstance(module).getContentEntries()) {
           for (SourceFolder folder : entry.getSourceFolders()) {
             VirtualFile folderFile = folder.getFile();
-            if (folderFile == null) continue;
+            if (folderFile == null || !folderFile.isValid()) continue;
             String prefix = folder.getPackagePrefix();
             if (folderFile.equals(root)) {
               mainPackagePrefix = prefix;

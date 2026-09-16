@@ -25,6 +25,7 @@
     <module name="intellij.platform.lang.core"/>
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.polySymbols.backend"/>
+    <module name="intellij.platform.polySymbols.web"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.refactoring"/>
     <module name="intellij.platform.usageView"/>
@@ -43,24 +44,24 @@
   <!-- endregion -->
 
   <extensionPoints>
-    <extensionPoint name="completion.htmlInTextCompletionEnabler"
+    <extensionPoint qualifiedName="com.intellij.completion.htmlInTextCompletionEnabler"
                     interface="com.intellij.codeInsight.completion.HtmlInTextCompletionEnabler"
                     dynamic="true"/>
 
-    <extensionPoint name="completion.htmlInTextCompletionPopupExtension"
+    <extensionPoint qualifiedName="com.intellij.completion.htmlInTextCompletionPopupExtension"
                     interface="com.intellij.codeInsight.completion.HtmlInTextCompletionPopupExtension"
                     dynamic="true"/>
 
-    <extensionPoint name="html.htmlScriptInjectionBlocker" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+    <extensionPoint qualifiedName="com.intellij.html.htmlScriptInjectionBlocker" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.psi.impl.source.html.HtmlScriptInjectionBlocker"/>
     </extensionPoint>
 
-    <extensionPoint name="xml.namespaceHelper" interface="com.intellij.xml.XmlNamespaceHelper" dynamic="true"/>
-    <extensionPoint name="xml.tagNameProvider" interface="com.intellij.xml.XmlTagNameProvider" dynamic="true"/>
-    <extensionPoint name="xml.relatedToHtmlFilesContributor" interface="com.intellij.navigation.RelatedToHtmlFilesContributor" dynamic="true"/>
-    <extensionPoint name="html.scriptDocumentationProvider" interface="com.intellij.lang.documentation.DocumentationProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.xml.namespaceHelper" interface="com.intellij.xml.XmlNamespaceHelper" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.xml.tagNameProvider" interface="com.intellij.xml.XmlTagNameProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.xml.relatedToHtmlFilesContributor" interface="com.intellij.navigation.RelatedToHtmlFilesContributor" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.html.scriptDocumentationProvider" interface="com.intellij.lang.documentation.DocumentationProvider" dynamic="true"/>
 
-    <extensionPoint name="webSmartKeysConfigurable" beanClass="com.intellij.application.options.editor.WebSmartKeysConfigurableEP" dynamic="true">
+    <extensionPoint qualifiedName="com.intellij.webSmartKeysConfigurable" beanClass="com.intellij.application.options.editor.WebSmartKeysConfigurableEP" dynamic="true">
       <with attribute="instance" implements="com.intellij.openapi.options.UnnamedConfigurable"/>
     </extensionPoint>
   </extensionPoints>
@@ -70,7 +71,7 @@
     <listener class="com.intellij.codeInsight.editorActions.XmlTagNameSynchronizer$MyDynamicPluginListener" topic="com.intellij.ide.plugins.DynamicPluginListener"/>
   </applicationListeners>
 
-  <actions>
+  <actions resource-bundle="messages.ActionsBundle">
     <group id="ToolsXmlGroup" popup="true" class="com.intellij.xml.actions.XmlActionsGroup">
       <add-to-group group-id="ToolsMenu" anchor="before" relative-to-action="ExternalToolsGroup"/>
     </group>

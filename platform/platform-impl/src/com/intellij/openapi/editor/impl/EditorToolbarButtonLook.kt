@@ -19,11 +19,11 @@ import javax.swing.JComponent
 @ApiStatus.Internal
 class EditorToolbarButtonLook(private val editor: Editor) : ActionButtonLook() {
   companion object {
-    private val HOVER_BACKGROUND = ColorKey.createColorKey("ActionButton.hoverBackground",
-                                                           JBUI.CurrentTheme.ActionButton.hoverBackground())
+    private val HOVER_BACKGROUND: ColorKey = ColorKey.createColorKey("ActionButton.hoverBackground",
+                                                                     JBUI.CurrentTheme.ActionButton.hoverBackground())
 
-    private val PRESSED_BACKGROUND = ColorKey.createColorKey("ActionButton.pressedBackground",
-                                                             JBUI.CurrentTheme.ActionButton.pressedBackground())
+    private val PRESSED_BACKGROUND: ColorKey = ColorKey.createColorKey("ActionButton.pressedBackground",
+                                                                       JBUI.CurrentTheme.ActionButton.pressedBackground())
   }
 
   override fun paintBorder(g: Graphics?, component: JComponent?, state: Int) {}

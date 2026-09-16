@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.vcs.impl.frontend.changes
 
+import com.intellij.openapi.vcs.changes.LocalChangeListImpl
 import com.intellij.openapi.vcs.changes.LocalChangesListView
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.platform.vcs.impl.changes.ChangesViewTestBase
@@ -50,6 +51,78 @@ internal class FrontendCommitChangesViewWithToolbarTest : ChangesViewTestBase() 
       panel.selectPath(ChangesTreePath(FilePathDto.toDto(unversioned), changeId = null))
       assertSelection(unversioned)
     }
+  }
+
+  fun `test selecting a removed change is ignored`() {
+    val removed = change(path("removed.txt"))
+    val remaining = change(path("remaining.txt"))
+    val list = LocalChangeListImpl.Builder(project, "Default").setDefault(true)
+      .setChanges(listOf(remaining))
+      .build()
+
+    val model = buildModel(view, listOf(list), emptyList())
+    updateModel(view, model)
+
+    testPanel { panel ->
+      panel.selectPath(checkNotNull(ChangesTreePath.create(remaining)))
+      panel.selectPath(checkNotNull(ChangesTreePath.create(removed)))
+
+      assertSelection(remaining)
+    }
+  }
+
+  fun `test navigating inside a multiple selection keeps it`() {
+    val c1 = change(path("c1.txt"))
+    val c2 = change(path("c2.txt"))
+    val c3 = change(path("c3.txt"))
+
+    val list = LocalChangeListImpl.Builder(project, "Default").setDefault(true)
+      .setChanges(listOf(c1, c2, c3))
+      .build()
+
+    val model = buildModel(view, listOf(list), emptyList())
+    updateModel(view, model)
+
+    testPanel { panel ->
+      selectNodes(c1, c2)
+
+      // "Compare Next File" inside the selection
+      panel.selectPath(checkNotNull(ChangesTreePath.create(c2)))
+
+      // Only the previewed file moved, the selection is untouched
+      assertEquals(2, view.selectionCount)
+    }
+  }
+
+  fun `test navigating outside a multiple selection moves the tree selection`() {
+    val c1 = change(path("c1.txt"))
+    val c2 = change(path("c2.txt"))
+    val c3 = change(path("c3.txt"))
+
+    val list = LocalChangeListImpl.Builder(project, "Default").setDefault(true)
+      .setChanges(listOf(c1, c2, c3))
+      .build()
+
+    val model = buildModel(view, listOf(list), emptyList())
+    updateModel(view, model)
+
+    testPanel { panel ->
+      selectNodes(c1, c2)
+
+      panel.selectPath(checkNotNull(ChangesTreePath.create(c3)))
+
+      assertSelection(c3)
+    }
+  }
+
+  private fun selectNodes(vararg nodes: Any) {
+    val treePaths = nodes.map { node ->
+      val treeNode = requireNotNull(view.root.traverse().find { it.userObject === node }) { "Node $node not found" }
+      TreeUtil.getPathFromRoot(treeNode)
+    }
+    view.clearSelection()
+    treePaths.forEach { view.addSelectionPath(it) }
+    assertEquals(nodes.size, view.selectionCount)
   }
 
   private fun assertSelection(expected: Any) {

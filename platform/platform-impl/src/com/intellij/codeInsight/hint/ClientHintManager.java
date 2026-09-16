@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,6 +39,14 @@ public interface ClientHintManager {
   void setRequestFocusForNextHint(boolean requestFocus);
 
   boolean performCurrentQuestionAction();
+
+  /**
+   * Marks the current question hint with {@link LightweightHint#setDismissedByEscape()}, then hides that hint.
+   * The remote implementation gets this call from the client, which owns the Escape key.
+   */
+  @ApiStatus.Internal
+  @RequiresEdt
+  void dismissCurrentQuestionHint();
 
   boolean hasShownHintsThatWillHideByOtherHint(boolean willShowTooltip);
 

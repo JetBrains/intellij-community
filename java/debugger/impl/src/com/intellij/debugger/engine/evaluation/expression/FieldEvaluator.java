@@ -128,8 +128,8 @@ public class FieldEvaluator implements ModifiableEvaluator {
       }
 
       // expressions like 'array.length' must be treated separately
-      if (objRef instanceof ArrayReference && "length".equals(myFieldName)) {
-        return new ModifiableValue(context.getVirtualMachineProxy().mirrorOf(((ArrayReference)objRef).length()), null);
+      if (objRef instanceof ArrayReference reference && "length".equals(myFieldName)) {
+        return new ModifiableValue(context.getVirtualMachineProxy().mirrorOf(reference.length()), null);
       }
 
       Field field = findField(refType);
@@ -246,8 +246,8 @@ public class FieldEvaluator implements ModifiableEvaluator {
 
     @Override
     public NodeDescriptorImpl getInspectItem(Project project) {
-      if (myEvaluatedQualifier instanceof ObjectReference) {
-        return new FieldDescriptorImpl(project, (ObjectReference)myEvaluatedQualifier, myEvaluatedField);
+      if (myEvaluatedQualifier instanceof ObjectReference reference) {
+        return new FieldDescriptorImpl(project, reference, myEvaluatedField);
       }
       else {
         return null;

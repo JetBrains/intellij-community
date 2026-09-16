@@ -1,9 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
-@file:OptIn(kotlinx.coroutines.DelicateCoroutinesApi::class)
 
 package org.jetbrains.intellij.build.productLayout.dependency
 
+import com.intellij.platform.buildScripts.concurrency.SharedCache
+import com.intellij.platform.buildScripts.concurrency.SharedTaskOwner
 import com.intellij.platform.buildScripts.licenses.LibraryLicense
 import com.intellij.platform.pluginGraph.ContentModuleName
 import com.intellij.platform.pluginGraph.PluginGraph
@@ -11,9 +12,7 @@ import com.intellij.platform.pluginGraph.PluginId
 import com.intellij.platform.pluginGraph.PluginModuleId
 import com.intellij.platform.pluginGraph.TargetName
 import com.intellij.platform.pluginGraph.contentName
-import kotlinx.coroutines.GlobalScope
 import org.jetbrains.intellij.build.ModuleOutputProvider
-import org.jetbrains.intellij.build.productLayout.LIB_MODULE_PREFIX
 import org.jetbrains.intellij.build.productLayout.config.SuppressionConfig
 import org.jetbrains.intellij.build.productLayout.deps.ContentModuleDependencyPlanOutput
 import org.jetbrains.intellij.build.productLayout.deps.PluginDependencyPlanOutput
@@ -39,7 +38,6 @@ import org.jetbrains.intellij.build.productLayout.pipeline.Slots
 import org.jetbrains.intellij.build.productLayout.pipeline.SuppressionConfigOutput
 import org.jetbrains.intellij.build.productLayout.pipeline.TestPluginDependencyPlanOutput
 import org.jetbrains.intellij.build.productLayout.pipeline.TestPluginsOutput
-import org.jetbrains.intellij.build.productLayout.util.AsyncCache
 import org.jetbrains.intellij.build.productLayout.util.DeferredFileUpdater
 import org.jetbrains.intellij.build.productLayout.util.GeneratedArtifactWritePolicy
 import org.jetbrains.jps.model.JpsElementFactory
@@ -51,9 +49,7 @@ import org.jetbrains.jps.model.java.JpsJavaLibraryType
 import org.jetbrains.jps.model.java.JpsJavaModuleType
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
 import org.jetbrains.jps.model.library.JpsRepositoryLibraryType
-import org.jetbrains.jps.model.module.JpsLibraryDependency
 import org.jetbrains.jps.model.module.JpsModule
-import org.jetbrains.jps.model.module.JpsModuleReference
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.model.serialization.impl.JpsModuleSerializationDataExtensionImpl
 import org.jetbrains.jps.util.JpsPathUtil
@@ -405,14 +401,16 @@ class PluginTestSetupBuilder(private val tempDir: Path) {
           loadingMode = spec.contentLoadings.get(moduleName),
         )
       }
-      pluginContentInfos.put(spec.name, PluginContentInfo(
-        pluginXmlPath = pluginXmlPath,
-        pluginXmlContent = pluginXmlContent,
-        pluginId = spec.pluginId?.let { PluginId(it) },
-        contentModules = contentModuleInfos,
-        moduleDependencies = spec.moduleDependencies.mapTo(HashSet()) { ContentModuleName(it) },
-        source = if (spec.isTestPlugin) PluginSource.TEST else PluginSource.BUNDLED,
-      ))
+      pluginContentInfos.put(
+        spec.name, PluginContentInfo(
+          pluginXmlPath = pluginXmlPath,
+          pluginXmlContent = pluginXmlContent,
+          pluginId = spec.pluginId?.let { PluginId(it) },
+          contentModules = contentModuleInfos,
+          moduleDependencies = spec.moduleDependencies.mapTo(HashSet()) { ContentModuleName(it) },
+          source = if (spec.isTestPlugin) PluginSource.TEST else PluginSource.BUNDLED,
+        )
+      )
 
     }
 
@@ -525,7 +523,10 @@ class TestProductBuilder(private val name: String) {
     bundledPlugins.add(pluginName)
   }
 
-  fun content(moduleName: String, loading: com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue = com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue.REQUIRED) {
+  fun content(
+    moduleName: String,
+    loading: com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue = com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue.REQUIRED,
+  ) {
     contentModules.put(moduleName, loading)
   }
 
@@ -559,6 +560,7 @@ internal data class TestContentModuleSpec(
   @JvmField val descriptorInTestResources: Boolean = false,
   @JvmField val resourceFiles: Map<String, String> = emptyMap(),
 )
+
 internal data class TestProductSpec(
   @JvmField val name: String,
   @JvmField val moduleSets: List<TestModuleSetSpec>,
@@ -593,7 +595,7 @@ internal class PluginTestSetupContext(
 internal class StubPluginContentCache(
   private val knownPlugins: Map<String, PluginContentInfo>,
 ) : PluginContentProvider {
-  override suspend fun getOrExtract(pluginModule: TargetName): PluginContentInfo? {
+  override fun getOrExtract(pluginModule: TargetName): PluginContentInfo? {
     return knownPlugins.get(pluginModule.value)
   }
 
@@ -745,8 +747,6 @@ private fun isTestPluginByName(pluginName: String): Boolean {
 
 internal fun createTestModuleOutputProvider(project: JpsProject): ModuleOutputProvider {
   return object : ModuleOutputProvider {
-    private val projectLibraryToModuleMapCache by lazy { buildTestProjectLibraryToModuleMap(project) }
-
     override fun findModule(name: String): JpsModule? = project.modules.find { it.name == name }
 
     override fun findRequiredModule(name: String): JpsModule {
@@ -764,8 +764,6 @@ internal fun createTestModuleOutputProvider(project: JpsProject): ModuleOutputPr
       throw UnsupportedOperationException("Not needed for this test")
     }
 
-    override fun getProjectLibraryToModuleMap(): Map<String, String> = projectLibraryToModuleMapCache
-
     override fun getAllModules(): List<JpsModule> = project.modules
 
     override fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray {
@@ -779,38 +777,6 @@ internal fun createTestModuleOutputProvider(project: JpsProject): ModuleOutputPr
       return baseDir.resolve("${module.name}.iml")
     }
   }
-}
-
-private fun buildTestProjectLibraryToModuleMap(project: JpsProject): Map<String, String> {
-  val javaExtensionService = JpsJavaExtensionService.getInstance()
-  val result = HashMap<String, String>()
-
-  for (module in project.modules) {
-    val moduleName = module.name
-    if (!moduleName.startsWith(LIB_MODULE_PREFIX)) {
-      continue
-    }
-
-    for (dep in module.dependenciesList.dependencies) {
-      if (dep !is JpsLibraryDependency) {
-        continue
-      }
-
-      val libRef = dep.libraryReference
-      if (libRef.parentReference is JpsModuleReference) {
-        continue
-      }
-
-      if (javaExtensionService.getDependencyExtension(dep)?.isExported != true) {
-        continue
-      }
-
-      val libName = dep.library?.name ?: libRef.libraryName
-      result.put(libName, moduleName)
-    }
-  }
-
-  return result
 }
 
 // ========== Validation Rule Test Utilities ==========
@@ -838,10 +804,11 @@ internal fun testGenerationModel(
   libraryLicenses: List<LibraryLicense> = emptyList(),
   communityLibraryLicenses: List<LibraryLicense> = emptyList(),
   moduleSetsByLabel: Map<String, List<org.jetbrains.intellij.build.productLayout.ModuleSet>> = emptyMap(),
+  owner: SharedTaskOwner,
 ): GenerationModel {
   val effectiveOutputProvider = outputProvider ?: stubModuleOutputProvider()
   val effectiveFileUpdater = fileUpdater ?: DeferredFileUpdater(Path.of("."))
-  val effectivePluginContentCache = pluginContentCache ?: stubPluginContentCache()
+  val effectivePluginContentCache = pluginContentCache ?: stubPluginContentCache(owner)
   val generationMode = if (updateSuppressions) GenerationMode.UPDATE_SUPPRESSIONS else GenerationMode.NORMAL
   return GenerationModel(
     discovery = DiscoveryResult(
@@ -855,7 +822,6 @@ internal fun testGenerationModel(
       discoveredProducts = emptyList(),
       projectRoot = Path.of("."),
       outputProvider = effectiveOutputProvider,
-      projectLibraryToModuleMap = effectiveOutputProvider.getProjectLibraryToModuleMap(),
       libraryLicenses = libraryLicenses,
       communityLibraryLicenses = communityLibraryLicenses,
       pluginAllowedMissingDependencies = pluginAllowedMissingDependencies,
@@ -864,11 +830,10 @@ internal fun testGenerationModel(
     ),
     projectRoot = Path.of("."),
     outputProvider = effectiveOutputProvider,
-    descriptorCache = ModuleDescriptorCache(effectiveOutputProvider),
+    descriptorCache = ModuleDescriptorCache(effectiveOutputProvider, owner),
     pluginContentCache = effectivePluginContentCache,
     fileUpdater = effectiveFileUpdater,
     generatedArtifactWritePolicy = GeneratedArtifactWritePolicy(generationMode, effectiveFileUpdater),
-    scope = GlobalScope,
     pluginGraph = pluginGraph,
     dslTestPluginsByProduct = dslTestPluginsByProduct,
     dslTestPluginDependencyChains = emptyMap(),
@@ -892,7 +857,7 @@ internal fun testGenerationModel(
  * Automatically initializes required slots with empty data for validation-only nodes.
  * Use slotOverrides to publish specific slot outputs instead of empty defaults.
  */
-internal suspend fun runValidationRule(
+internal fun runValidationRule(
   rule: PipelineNode,
   model: GenerationModel,
   slotOverrides: Map<DataSlot<*>, Any> = emptyMap(),
@@ -1014,8 +979,6 @@ private fun stubModuleOutputProvider(): ModuleOutputProvider {
       throw UnsupportedOperationException("Stub")
     }
 
-    override fun getProjectLibraryToModuleMap(): Map<String, String> = emptyMap()
-
     override fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray {
       throw UnsupportedOperationException("Stub")
     }
@@ -1026,10 +989,10 @@ private fun stubModuleOutputProvider(): ModuleOutputProvider {
   }
 }
 
-private fun stubPluginContentCache(): PluginContentCache {
+private fun stubPluginContentCache(owner: SharedTaskOwner): PluginContentCache {
   return PluginContentCache(
     outputProvider = stubModuleOutputProvider(),
-    xIncludeCache = AsyncCache(),
+    xIncludeCache = SharedCache(owner),
     skipXIncludePaths = emptySet(),
     xIncludePrefixFilter = { null },
     errorSink = ErrorSink(),

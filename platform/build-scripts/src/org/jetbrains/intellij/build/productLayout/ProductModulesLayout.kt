@@ -12,8 +12,8 @@ import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.plus
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.CommunityRepositoryModules
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
+import org.jetbrains.intellij.build.getCommunityRepositoryPlugins
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.PluginLayout
 
@@ -24,7 +24,6 @@ val DEFAULT_BUNDLED_PLUGINS: PersistentList<String> = persistentListOf(
   "intellij.dev",
   "intellij.java.aetherDependencyResolver.plugin",
   "intellij.jcef.plugin",
-  "intellij.libraries.misc.plugin",
   "intellij.platform.bookmarks.plugin",
   "intellij.grid.core.plugin",
   "intellij.platform.navbar.plugin",
@@ -37,6 +36,7 @@ val DEFAULT_BUNDLED_PLUGINS: PersistentList<String> = persistentListOf(
   "intellij.platform.execution.serviceView.plugin",
   "intellij.platform.todo.plugin",
   "intellij.platform.vcs.plugin",
+  "intellij.xml.plugin",
   "intellij.platform.images",
 )
 
@@ -69,25 +69,46 @@ class ProductModulesLayout {
   var pluginModulesToPublish: PersistentSet<String> = persistentSetOf()
 
   /**
-   * Describes the layout of non-trivial plugins which may be included in the product.
-   * The actual list of the plugins needs to be bundled with the product is specified by [bundledPluginModules],
-   * the actual list of plugins which need to be prepared for publishing is specified by [pluginModulesToPublish].
+   * The plugin ids that each variant of the plugin set leaves out.
+   *
+   * It is used only if [buildAllCompatiblePlugins] is set to `true`.
+   *
+   * Some plugins do not load next to each other. One IDE cannot hold them all, so a consumer that loads the plugin set
+   * runs once per variant. The searchable options step starts one `traverseUI` run per variant, and the plugin
+   * dependency validation checks one plugin set per variant.
+   *
+   * A variant must name each dependent of a plugin that it leaves out, because a plugin does not load without a
+   * required dependency. A variant that keeps such a dependent makes the consumer fail.
+   *
+   * An empty list means one variant that excludes nothing.
+   * A plugin that every variant excludes gets no searchable options and no validation.
+   * State the conflict next to each entry, because only a full product build reveals it.
    */
-  var pluginLayouts: PersistentList<PluginLayout> = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS
+  var pluginExclusionVariants: List<Set<String>> = emptyList()
+
+  /**
+   * Describes the layout of non-trivial plugins which may be included in the product.
+   * [bundledPluginModules] specifies the plugins to bundle, and [pluginModulesToPublish] specifies the plugins to publish.
+   * The producer runs on the first read of its [Lazy.value]. Assigned producers check for duplicate layouts before they cache their lists.
+   */
+  var pluginLayouts: Lazy<PersistentList<PluginLayout>> = lazy { getCommunityRepositoryPlugins() }
     set(value) {
-      val nameGuard = createPluginLayoutSet(value.size)
-      for (layout in value) {
-        check(nameGuard.add(layout)) {
-          val bundlingRestrictionsAsString = if (layout.bundlingRestrictions == PluginBundlingRestrictions.NONE) {
-            ""
+      field = lazy {
+        val layouts = value.value
+        val nameGuard = createPluginLayoutSet(layouts.size)
+        for (layout in layouts) {
+          check(nameGuard.add(layout)) {
+            val bundlingRestrictionsAsString = if (layout.bundlingRestrictions == PluginBundlingRestrictions.NONE) {
+              ""
+            }
+            else {
+              ", bundlingRestrictions=${layout.bundlingRestrictions}"
+            }
+            "PluginLayout(mainModule=${layout.mainModule}$bundlingRestrictionsAsString) is duplicated"
           }
-          else {
-            ", bundlingRestrictions=${layout.bundlingRestrictions}"
-          }
-          "PluginLayout(mainModule=${layout.mainModule}$bundlingRestrictionsAsString) is duplicated"
         }
+        layouts
       }
-      field = value
     }
 
   /**
@@ -104,10 +125,10 @@ class ProductModulesLayout {
   /**
    * Additional customizations of platform JARs. **This is a temporary property added to keep layout of some products.**
    */
-  internal var platformLayoutSpec = persistentListOf<suspend (PlatformLayout, BuildContext) -> Unit>()
+  internal var platformLayoutSpec = persistentListOf<(PlatformLayout) -> Unit>()
     private set
 
-  fun addPlatformSpec(customizer: suspend (PlatformLayout, BuildContext) -> Unit) {
+  fun addPlatformSpec(customizer: (PlatformLayout) -> Unit) {
     platformLayoutSpec += customizer
   }
 
@@ -137,7 +158,10 @@ class ProductModulesLayout {
   var buildAllCompatiblePlugins: Boolean = true
 
   /**
-   * List of plugin names which should not be built even if they are compatible and [buildAllCompatiblePlugins] is true
+   * The main modules of the plugins that the build must not build, even when the plugin is compatible
+   * and [buildAllCompatiblePlugins] is `true`.
+   *
+   * Add to this list, and do not replace it, because the default value holds [DEV_ONLY_PLUGINS].
    */
   var compatiblePluginsToIgnore: PersistentList<String> = persistentListOf()
 

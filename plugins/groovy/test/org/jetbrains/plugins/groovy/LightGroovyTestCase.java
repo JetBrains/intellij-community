@@ -5,18 +5,14 @@ import com.intellij.codeInspection.ex.EntryPointsManagerBase;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiIntersectionType;
-import com.intellij.psi.PsiType;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public abstract class LightGroovyTestCase extends LightJavaCodeInsightFixtureTestCase {
   @NotNull
@@ -234,25 +230,6 @@ public abstract class LightGroovyTestCase extends LightJavaCodeInsightFixtureTes
                            public void setName(java.lang.String name) { /* compiled code */ }
                          }
                          """);
-  }
-
-  public static void assertType(@Nullable String expected, @Nullable PsiType actual) {
-    if (expected == null){
-      assertNull(actual);
-      return;
-    }
-
-    assertNotNull(actual);
-    if (actual instanceof PsiIntersectionType){
-      assertEquals(expected, genIntersectionTypeText((PsiIntersectionType)actual));
-    }
-    else {
-      assertEquals(expected, actual.getCanonicalText());
-    }
-  }
-
-  private static String genIntersectionTypeText(PsiIntersectionType t) {
-    return Stream.of(t.getConjuncts()).map(c -> c.getCanonicalText()).collect(Collectors.joining(",", "[", "]"));
   }
 
   public String getTestName() {

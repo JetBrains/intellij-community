@@ -72,6 +72,14 @@ public class LanguageListCompletionTest extends BasePlatformTestCase {
     doTest("jso\n");
   }
 
+  /**
+   * Same collapsed-fence shape as {@link #testInSixQuotes()}, but the fence is nested in a list item: the
+   * inserted body and closing lines must carry the item's content indent instead of falling back to column 0.
+   */
+  public void testInSixQuotesIndentedInListItem() {
+    doTest("jso\n");
+  }
+
   public void testInSixQuotesNotMiddle() {
     checkEmptyCompletion();
   }

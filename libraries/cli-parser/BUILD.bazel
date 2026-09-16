@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.cli.parser` start
+content_module_jar(
+    libraries = ["@lib//:libraries-cli-parser-cli-parser"],
+    module = ":cli-parser",
+)
+### auto-generated section `dev intellij.libraries.cli.parser` end
+
 ### auto-generated section `build intellij.libraries.cli.parser` start
 jvm_library(
     name = "cli-parser",
@@ -16,11 +23,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-cli-parser-cli-parser"],
     runtime_deps = ["@lib//:libraries-cli-parser-cli-parser"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-cli-parser-cli-parser"],
-    module = ":cli-parser",
 )
 
 jvm_library(
@@ -43,7 +45,6 @@ exports_files(
     [
         "intellij.libraries.cli.parser.iml",
         "resources/intellij.libraries.cli.parser.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

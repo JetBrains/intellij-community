@@ -31,24 +31,24 @@
   <!-- endregion -->
 
   <extensionPoints>
-    <extensionPoint name="dom.fileMetaData"
+    <extensionPoint qualifiedName="com.intellij.dom.fileMetaData"
                     beanClass="com.intellij.util.xml.impl.DomFileMetaData"
                     dynamic="true">
       <with attribute="implementation" implements="com.intellij.util.xml.DomFileDescription"/>
     </extensionPoint>
 
-    <extensionPoint name="dom.implementation"
+    <extensionPoint qualifiedName="com.intellij.dom.implementation"
                     beanClass="com.intellij.util.xml.impl.DomImplementationClassEP"
                     dynamic="true">
       <with attribute="interfaceClass" implements="com.intellij.util.xml.DomElement"/>
       <with attribute="implementationClass" implements="com.intellij.util.xml.DomElement"/>
     </extensionPoint>
 
-    <extensionPoint name="dom.converter"
+    <extensionPoint qualifiedName="com.intellij.dom.converter"
                     beanClass="com.intellij.util.xml.impl.DomImplementationClassEP"
                     dynamic="true"/>
 
-    <extensionPoint name="dom.extender"
+    <extensionPoint qualifiedName="com.intellij.dom.extender"
                     beanClass="com.intellij.util.xml.reflect.DomExtenderEP"
                     dynamic="true">
       <with attribute="domClass" implements="com.intellij.util.xml.DomElement"/>

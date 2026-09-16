@@ -124,7 +124,7 @@ open class DiffManagerImpl : DiffManagerEx() {
     return MergeRequestHandler.BuiltInHandler
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun showMerge(project: Project?, request: MergeRequest) {
     when (val handler = getHandler(project, request)) {
       MergeRequestHandler.BuiltInHandler -> showMergeBuiltin(project, request)
@@ -135,12 +135,12 @@ open class DiffManagerImpl : DiffManagerEx() {
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun showMergeBuiltin(project: Project?, request: MergeRequest) {
     ForRequest(project, request, DiffDialogHints.MODAL).show()
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun showMergeBuiltin(project: Project?, requestProducer: MergeRequestProducer, hints: DiffDialogHints) {
     ForProducer(project, requestProducer, hints).show()
   }

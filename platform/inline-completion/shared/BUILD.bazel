@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.platform.inline.completion` start
+content_module_jar(module = ":inline-completion")
+### auto-generated section `dev intellij.platform.inline.completion` end
+
 ### auto-generated section `build intellij.platform.inline.completion` start
 jvm_library(
     name = "inline-completion",
@@ -39,8 +43,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":inline-completion")
-
 jvm_library(
     name = "inline-completion_test_lib",
     testonly = True,
@@ -77,7 +79,6 @@ exports_files(
     [
         "intellij.platform.inline.completion.iml",
         "resources/intellij.platform.inline.completion.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -70,6 +70,24 @@ internal class PersistentLongMapTest {
 
   @ParameterizedTest
   @EnumSource(PersistentLongMapImplementation::class)
+  fun `toString lists entries in key order`(implementation: PersistentLongMapImplementation) {
+    val empty = PersistentLongMap.empty<String>(implementation)
+    val map = empty
+      .put(Long.MAX_VALUE, "max")
+      .put(64, "sixty-four")
+      .put(0, "zero")
+      .put(4096, "four thousand ninety-six")
+      .put(63, "sixty-three")
+
+    assertEquals("{}", empty.toString())
+    assertEquals(
+      "{0=zero, 63=sixty-three, 64=sixty-four, 4096=four thousand ninety-six, 9223372036854775807=max}",
+      map.toString(),
+    )
+  }
+
+  @ParameterizedTest
+  @EnumSource(PersistentLongMapImplementation::class)
   fun `operations reject negative keys`(implementation: PersistentLongMapImplementation) {
     val map = PersistentLongMap.empty<String>(implementation)
 

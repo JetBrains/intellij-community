@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.libraries.jcip` start
+content_module_jar(
+    libraries = ["@lib//:libraries-jcip-jcip"],
+    module = ":jcip",
+)
+### auto-generated section `dev intellij.libraries.jcip` end
+
 ### auto-generated section `build intellij.libraries.jcip` start
 jvm_library(
     name = "jcip",
@@ -16,11 +23,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-jcip-jcip"],
     runtime_deps = ["@lib//:libraries-jcip-jcip"],
-)
-
-content_module_jar(
-    libraries = ["@lib//:libraries-jcip-jcip"],
-    module = ":jcip",
 )
 
 jvm_library(
@@ -43,7 +45,6 @@ exports_files(
     [
         "intellij.libraries.jcip.iml",
         "resources/intellij.libraries.jcip.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

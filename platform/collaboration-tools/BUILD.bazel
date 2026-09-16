@@ -11,6 +11,10 @@ jps_test(
 
 ### skip generation section `test intellij.platform.collaborationTools.tests`
 
+### auto-generated section `dev intellij.platform.collaborationTools` start
+content_module_jar(module = ":collaboration-tools")
+### auto-generated section `dev intellij.platform.collaborationTools` end
+
 ### auto-generated section `build intellij.platform.collaborationTools` start
 jvm_library(
     name = "collaboration-tools",
@@ -75,8 +79,6 @@ jvm_library(
         "//platform/util:util-ui",
     ],
 )
-
-content_module_jar(module = ":collaboration-tools")
 
 jvm_library(
     name = "collaboration-tools_test_lib",
@@ -158,7 +160,6 @@ exports_files(
         "resources/colorSchemes/CollaborationToolsDark.xml",
         "resources/colorSchemes/CollaborationToolsDefault.xml",
         "resources/intellij.platform.collaborationTools.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )
@@ -291,6 +292,14 @@ jvm_library(
         "//platform/vcs-impl/shared:shared_test_lib",
         "//libraries/junit5",
         "//libraries/junit5:junit5_test_lib",
+        "//platform/testFramework/junit5",
+        "//platform/testFramework/junit5:junit5_test_lib",
+        "//libraries/jackson/jackson",
+        "//libraries/jackson/jackson:jackson_test_lib",
+        "//libraries/jackson/databind",
+        "//libraries/jackson/databind:databind_test_lib",
+        "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
+        "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.collaborationTools.tests` end

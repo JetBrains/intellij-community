@@ -2,6 +2,10 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.platform.eel.tcp` start
+content_module_jar(module = ":eel-tcp")
+### auto-generated section `dev intellij.platform.eel.tcp` end
+
 ### auto-generated section `build intellij.platform.eel.tcp` start
 create_kotlinc_options(
     name = "custom_eel-tcp",
@@ -52,8 +56,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":eel-tcp")
-
 jvm_library(
     name = "eel-tcp_test_lib",
     testonly = True,
@@ -96,7 +98,6 @@ exports_files(
     [
         "intellij.platform.eel.tcp.iml",
         "resources/intellij.platform.eel.tcp.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

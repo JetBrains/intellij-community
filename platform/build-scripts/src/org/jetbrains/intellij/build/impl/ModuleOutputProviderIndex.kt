@@ -11,7 +11,6 @@ internal class ModuleOutputProviderIndex(
   @JvmField val modules: List<JpsModule>,
 ) {
   private val nameToModule = modules.associateByTo(HashMap(modules.size)) { it.name }
-  private val projectLibraryToModuleMapCache by lazy { buildProjectLibraryToModuleMap(modules) }
 
   fun findModule(name: String): JpsModule? = nameToModule.get(name.removeSuffix("._test"))
 
@@ -20,8 +19,6 @@ internal class ModuleOutputProviderIndex(
       "Cannot find required module '$name' in the project"
     }
   }
-
-  fun getProjectLibraryToModuleMap(): Map<String, String> = projectLibraryToModuleMapCache
 
   fun getModuleImlFile(module: JpsModule): Path {
     val baseDir = requireNotNull(JpsModelSerializationDataService.getBaseDirectoryPath(module)) {

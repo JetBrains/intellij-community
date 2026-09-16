@@ -1,33 +1,57 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lsp.ui.settings
 
+import com.intellij.codeInsight.template.impl.TemplateEditorUtil
 import com.intellij.execution.configuration.EnvironmentVariablesTextFieldWithBrowseButton
+import com.intellij.json.JsonLanguage
 import com.intellij.lsp.ui.LspUiBundle
 import com.intellij.lsp.ui.settings.LspServerConfiguration.CommunicationMode
+import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.runReadActionBlocking
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.options.BoundConfigurable
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiFileFactory
 import com.intellij.ui.components.JBRadioButton
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.AlignX
-import com.intellij.ui.dsl.builder.COLUMNS_LARGE
+import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.DslComponentProperty
 import com.intellij.ui.dsl.builder.MutableProperty
 import com.intellij.ui.dsl.builder.TopGap
+import com.intellij.ui.dsl.builder.VerticalComponentGap
 import com.intellij.ui.dsl.builder.bind
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.bindText
-import com.intellij.ui.dsl.builder.columns
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.builder.rows
 import com.intellij.util.net.NetUtils
+import com.intellij.util.ui.JBDimension
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 
 internal class LspServerConfigurable(
+  private val project: Project,
   private val configuration: LspServerConfiguration,
 ) : BoundConfigurable(configuration.name.ifEmpty { LspUiBundle.message("lsp.settings.default.name") }) {
+  private lateinit var initializationOptionsEditor: Editor
 
   override fun createPanel(): DialogPanel {
+    val jsonFile = PsiFileFactory.getInstance(project).createFileFromText(
+      "dummy.json",
+      JsonLanguage.INSTANCE,
+      configuration.initializationOptions,
+      true,
+      false,
+    )
+    val jsonDocument = runReadActionBlocking { PsiDocumentManager.getInstance(project).getDocument(jsonFile) }
+    initializationOptionsEditor = TemplateEditorUtil.createEditor(false, jsonDocument, project)
+    initializationOptionsEditor.settings.additionalLinesCount = 0
+    initializationOptionsEditor.component.preferredSize = JBDimension(200, 100)
+
     return panel {
       row {
         checkBox(LspUiBundle.message("lsp.settings.server.enable"))
@@ -79,6 +103,18 @@ internal class LspServerConfigurable(
           panel {}
         }
 
+        row(LspUiBundle.message("lsp.settings.server.environment.variables")) {
+          cell(EnvironmentVariablesTextFieldWithBrowseButton(project))
+            .bind(
+              componentGet = { component -> component.data },
+              componentSet = { component, data -> component.data = data },
+              MutableProperty(getter = { configuration.envVars.get() }, setter = { configuration.envVars.set(it) })
+            )
+            .align(AlignX.FILL)
+            .resizableColumn()
+          panel {}
+        }
+
         // action listeners (unlike item listeners) fire only on user interaction,
         // so programmatic selection during reset() doesn't rewrite stored arguments
         stdioRadioButton.component.addActionListener {
@@ -101,50 +137,52 @@ internal class LspServerConfigurable(
         configuration.socketPort = parseSocketPortArgument(configuration.arguments) ?: 0
       }
 
-      group(LspUiBundle.message("lsp.settings.server.files.association.group")) {
-        row {
-          val patternsPanel = LspPatternsPanel().also { it.setPatterns(configuration.filePatterns) }
-          cell(patternsPanel)
-            .align(AlignX.FILL)
-            .resizableColumn()
-            .bind(
-              componentGet = { it.getPatterns() },
-              componentSet = { component, value -> component.setPatterns(value) },
-              MutableProperty(getter = { configuration.filePatterns }, setter = { configuration.filePatterns = it })
-            )
-          panel {}
-        }.topGap(TopGap.MEDIUM)
-      }
+      row {
+        label(LspUiBundle.message("lsp.settings.server.file.patterns"))
+      }.topGap(TopGap.MEDIUM)
 
-      val advancedSection = collapsibleGroup(LspUiBundle.message("lsp.settings.server.advanced.group")) {
-        row {
-          label(LspUiBundle.message("lsp.settings.server.init"))
-        }
-        row {
-          textArea()
-            .bindText(configuration::initializationOptions)
-            .rows(5)
-            .comment(LspUiBundle.message("lsp.settings.server.init.comment"))
-            .columns(COLUMNS_LARGE)
-        }
+      row {
+        val patternsPanel = LspPatternsPanel().also { it.setPatterns(configuration.filePatterns) }
+        cell(patternsPanel)
+          .align(AlignX.FILL)
+          .resizableColumn()
+          .bind(
+            componentGet = { it.getPatterns() },
+            componentSet = { component, value -> component.setPatterns(value) },
+            MutableProperty(getter = { configuration.filePatterns }, setter = { configuration.filePatterns = it })
+          )
+        panel {}
+      }.bottomGap(BottomGap.SMALL)
 
-        row(LspUiBundle.message("lsp.settings.server.environment.variables")) {
-          cell(EnvironmentVariablesTextFieldWithBrowseButton())
-            .bind(
-              componentGet = { component -> component.data },
-              componentSet = { component, data -> component.data = data },
-              MutableProperty(getter = { configuration.envVars.get() }, setter = { configuration.envVars.set(it) })
-            )
-            .align(AlignX.FILL)
-            .resizableColumn()
-          panel {}
-        }
+      row {
+        label(LspUiBundle.message("lsp.settings.server.init"))
       }
-      advancedSection.expanded = false
+      row {
+        cell(initializationOptionsEditor.component)
+          .applyToComponent {
+            putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap.NONE)
+          }
+          .align(AlignX.FILL)
+          .resizableColumn()
+          .comment(LspUiBundle.message("lsp.settings.server.init.comment"))
+          .onApply { configuration.initializationOptions = initializationOptionsEditor.document.text }
+          .onIsModified { configuration.initializationOptions != initializationOptionsEditor.document.text }
+          .onReset {
+            WriteAction.run<Throwable> { initializationOptionsEditor.document.setText(configuration.initializationOptions) }
+          }
+        panel {}
+      }.resizableRow()
     }
   }
 
   override fun getDisplayName(): String = configuration.name.ifEmpty { LspUiBundle.message("lsp.settings.default.name") }
+
+  override fun disposeUIResources() {
+    if (::initializationOptionsEditor.isInitialized) {
+      EditorFactory.getInstance().releaseEditor(initializationOptionsEditor)
+    }
+    super.disposeUIResources()
+  }
 }
 
 private const val STDIO_ARGUMENT = "--stdio"

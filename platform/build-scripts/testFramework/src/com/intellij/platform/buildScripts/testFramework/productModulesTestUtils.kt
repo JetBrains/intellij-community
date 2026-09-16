@@ -7,7 +7,6 @@ import com.intellij.platform.runtime.product.serialization.ResourceFileResolver
 import com.intellij.platform.runtime.repository.MalformedRepositoryException
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import org.jetbrains.intellij.build.ModuleOutputProvider
-import org.jetbrains.intellij.build.runBlockingOnVirtualThreads
 import java.io.IOException
 import java.io.InputStream
 
@@ -39,8 +38,7 @@ internal fun createModuleOutputResourceFileResolver(outputProvider: ModuleOutput
 }
 
 private fun readFileContentFromModuleOutput(outputProvider: ModuleOutputProvider, moduleName: String, relativePath: String): ByteArray? {
-  @Suppress("RAW_RUN_BLOCKING")
-  return runBlockingOnVirtualThreads {
+  return run {
     outputProvider.readFileContentFromModuleOutput(outputProvider.findRequiredModule(moduleName), relativePath)
   }
 }

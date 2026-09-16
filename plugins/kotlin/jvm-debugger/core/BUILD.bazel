@@ -2,13 +2,24 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+### auto-generated section `dev intellij.kotlin.jvm.debugger.core` start
+content_module_jar(module = ":core")
+### auto-generated section `dev intellij.kotlin.jvm.debugger.core` end
+
 ### auto-generated section `build intellij.kotlin.jvm.debugger.core` start
 create_kotlinc_options(
     name = "custom_core",
     opt_in = [
-        "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+        "org.jetbrains.kotlin.psi.KtExperimentalApi",
+        "org.jetbrains.kotlin.psi.KtNonPublicApi",
+        "org.jetbrains.kotlin.psi.KtIdeApi",
         "org.jetbrains.kotlin.analysis.api.KaExperimentalApi",
         "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+        "org.jetbrains.kotlin.analysis.api.KaPlatformInterface",
+        "org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaUnstableDiagnosticApi",
+        "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
+        "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+        "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
     ],
     x_context_parameters = True,
 )
@@ -88,15 +99,13 @@ jvm_library(
         "//libraries/gson",
         "//java/debugger/shared",
         "//platform/util/jdom",
-        "@lib//:kotlin-metadata",
+        "//libraries/kotlin/metadata",
         "//platform/execution",
         "//platform/forms_rt:java-guiForms-rt",
         "//java/java-frontback-psi-api:frontback-psi",
         ":java_rt_provided",
     ],
 )
-
-content_module_jar(module = ":core")
 
 jvm_library(
     name = "core_test_lib",
@@ -163,6 +172,7 @@ jvm_library(
         "//platform/util/jdom:jdom_test_lib",
         "//java/java-runtime:rt",
         "//java/java-runtime:rt_test_lib",
+        "//libraries/kotlin/metadata:metadata_test_lib",
         "//platform/execution:execution_test_lib",
         "//platform/forms_rt:java-guiForms-rt_test_lib",
         "//java/java-frontback-psi-api:frontback-psi_test_lib",

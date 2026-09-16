@@ -55,9 +55,14 @@ import javax.swing.BorderFactory
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-internal const val eventLogToolWindowsId = "Statistics Event Log"
+internal const val eventLogToolWindowId = "Statistics Event Log"
+internal const val hostEventLogToolWindowId = "Statistics Event Log (On Host)"
 
-internal class StatisticsEventLogToolWindow(private val project: Project, private val recorderId: String) : SimpleToolWindowPanel(false, true), Disposable {
+internal class StatisticsEventLogToolWindow(
+  private val project: Project,
+  private val recorderId: String,
+  private val toolWindowId: String,
+) : SimpleToolWindowPanel(false, true), Disposable {
   private val consoleLog: StatisticsEventLogConsole
   private val messageBuilder = StatisticsEventLogMessageBuilder()
   private val eventLogListener: StatisticsEventLogListener
@@ -65,7 +70,7 @@ internal class StatisticsEventLogToolWindow(private val project: Project, privat
   init {
     val model = StatisticsLogFilterModel()
     val logFormatter = StatisticsEventLogFormatter(model)
-    consoleLog = StatisticsEventLogConsole(project, model, recorderId, logFormatter)
+    consoleLog = StatisticsEventLogConsole(project, model, recorderId, toolWindowId, logFormatter)
     eventLogListener = object : StatisticsEventLogListener {
       override fun onLogEvent(validatedEvent: LogEvent, rawEventId: String?, rawData: Map<String, Any>?) {
         ApplicationManager.getApplication().invokeLater {
@@ -110,7 +115,7 @@ internal class StatisticsEventLogToolWindow(private val project: Project, privat
   private fun createActionToolbar(): JComponent {
     val topToolbarActions = DefaultActionGroup()
     topToolbarActions.add(RecordStateStatisticsEventLogAction(recorderId, false))
-    topToolbarActions.add(ShowChangedStateEventsAction(recorderId))
+    topToolbarActions.add(ShowChangedStateEventsAction(recorderId, toolWindowId))
     topToolbarActions.add(OpenEventLogFileAction(recorderId))
     topToolbarActions.addSeparator(StatisticsBundle.message("stats.events.scheme"))
     topToolbarActions.add(ConfigureEventsSchemeFileAction(recorderId))

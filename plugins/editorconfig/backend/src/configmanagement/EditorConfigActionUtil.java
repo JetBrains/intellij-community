@@ -56,7 +56,9 @@ public final class EditorConfigActionUtil {
         seManager.setSelectedTabID(searchProviderID);
       }
     }
-    seManager.show(searchProviderID, Utils.EDITOR_CONFIG_FILE_NAME, event);
+    else {
+      seManager.show(searchProviderID, Utils.EDITOR_CONFIG_FILE_NAME, event);
+    }
   }
 
 

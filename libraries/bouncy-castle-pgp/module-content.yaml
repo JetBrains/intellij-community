@@ -1,6 +1,0 @@
-- name: dist.all/lib/intellij.libraries.bouncy.castle.pgp.jar
-  modules:
-  - name: intellij.libraries.bouncy.castle.pgp
-    libraries:
-      bouncy-castle-pgp:
-      - name: $MAVEN_REPOSITORY$/org/bouncycastle/bcpg-jdk18on/1/bcpg-jdk18on-1.jar

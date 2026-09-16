@@ -56,7 +56,7 @@ public final class PyTypeConversionTest extends PyTestCase {
   }
 
   public void testContextManagerGeneratorToContextlibAbstractContextManager() {
-    doTest("contextlib.AbstractContextManager", "AbstractContextManager[str, bool | None]", """
+    doTest("contextlib.AbstractContextManager", "AbstractContextManager[Literal[\"foo\"], bool | None]", """
       import contextlib
       
       @contextlib.contextmanager

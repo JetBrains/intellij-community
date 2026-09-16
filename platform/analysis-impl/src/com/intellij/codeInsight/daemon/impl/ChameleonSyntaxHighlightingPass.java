@@ -15,8 +15,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.editor.ex.MarkupModelEx;
-import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -31,16 +29,19 @@ import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.ILazyParseableElementType;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.TreeTraversal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 final class ChameleonSyntaxHighlightingPass extends ProgressableTextEditorHighlightingPass {
+  static final Object CHAMELEON_SYNTAX_TOOL_ID = ObjectUtils.sentinel("CHAMELEON_SYNTAX_TOOL_ID");
+
   private final @NotNull ProperTextRange myPriorityRange;
+  private final @NotNull HighlightInfoUpdater myHighlightInfoUpdater;
   private volatile List<HighlightInfo> myHighlights = List.of();
 
   static final class Factory implements MainHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar {
@@ -55,7 +56,8 @@ final class ChameleonSyntaxHighlightingPass extends ProgressableTextEditorHighli
       TextRange restrict = FileStatusMap.getDirtyTextRange(editor.getDocument(), psiFile, Pass.UPDATE_ALL);
       if (restrict == null) return new ProgressableTextEditorHighlightingPass.EmptyPass(project, editor.getDocument());
       ProperTextRange priority = DaemonCodeAnalyzerEx.getInstanceEx(project).getHighlightSessionFromCurrentIndicator(psiFile).getVisibleRange();
-      return new ChameleonSyntaxHighlightingPass(psiFile, editor.getDocument(), ProperTextRange.create(restrict), priority, editor);
+      return new ChameleonSyntaxHighlightingPass(psiFile, editor.getDocument(), ProperTextRange.create(restrict), priority, editor,
+                                                  HighlightInfoUpdater.getInstance(project));
     }
 
     @Override
@@ -63,7 +65,7 @@ final class ChameleonSyntaxHighlightingPass extends ProgressableTextEditorHighli
                                                                           @NotNull Document document,
                                                                           @NotNull HighlightInfoProcessor highlightInfoProcessor) {
       ProperTextRange range = ProperTextRange.from(0, document.getTextLength());
-      return new ChameleonSyntaxHighlightingPass(psiFile, document, range, range, null);
+      return new ChameleonSyntaxHighlightingPass(psiFile, document, range, range, null, HighlightInfoUpdater.EMPTY);
     }
   }
 
@@ -71,9 +73,11 @@ final class ChameleonSyntaxHighlightingPass extends ProgressableTextEditorHighli
                                           @NotNull Document document,
                                           @NotNull ProperTextRange restrictRange,
                                           @NotNull ProperTextRange priorityRange,
-                                          @Nullable Editor editor) {
+                                          @Nullable Editor editor,
+                                          @NotNull HighlightInfoUpdater highlightInfoUpdater) {
     super(psiFile.getProject(), document, AnalysisBundle.message("pass.chameleon"), psiFile, editor, restrictRange, false, HighlightInfoProcessor.getEmpty());
     myPriorityRange = priorityRange;
+    myHighlightInfoUpdater = highlightInfoUpdater;
   }
 
   @Override
@@ -95,51 +99,57 @@ final class ChameleonSyntaxHighlightingPass extends ProgressableTextEditorHighli
     for (PsiElement e : s) {
       (e.getTextRange().intersects(myPriorityRange) ? lazyInside : lazyOutside).add(e);
     }
-    HighlightInfoHolder holderInside = new HighlightInfoHolder(myFile);
-    HighlightInfoHolder holderOutside = new HighlightInfoHolder(myFile);
-    for (PsiElement e : lazyInside) {
-      collectHighlights(e, holderInside, holderOutside, myPriorityRange);
+    List<HighlightInfo> highlights = new ArrayList<>();
+    Consumer<ManagedHighlighterRecycler> recyclerConsumer = invalidPsiRecycler -> {
+      visitElements(lazyInside, highlights, invalidPsiRecycler);
+      visitElements(lazyOutside, highlights, invalidPsiRecycler);
+    };
+    if (myHighlightInfoUpdater instanceof HighlightInfoUpdaterImpl impl) {
+      impl.runWithInvalidPsiRecycler(getHighlightingSession(), HighlightInfoUpdaterImpl.WhatTool.CHAMELEON_SYNTAX, recyclerConsumer);
     }
-    List<HighlightInfo> inside = new ArrayList<>(100);
-    List<HighlightInfo> outside = new ArrayList<>(100);
-    for (int i=0; i<holderInside.size();i++) {
-      inside.add(holderInside.get(i));
+    else {
+      ManagedHighlighterRecycler.runWithRecycler(getHighlightingSession(), "ChameleonSyntaxHighlightingPass", recyclerConsumer);
     }
-    MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(getDocument(), myProject, true);
-    BackgroundUpdateHighlightersUtil.setHighlightersInRange(myPriorityRange, inside, markupModel, getId(), getHighlightingSession());
-    for (PsiElement e : lazyOutside) {
-      collectHighlights(e, holderInside, holderOutside, myPriorityRange);
-    }
-    for (int i=0; i<holderOutside.size();i++) {
-      outside.add(holderOutside.get(i));
-    }
-    BackgroundUpdateHighlightersUtil.setHighlightersOutsideRange(outside, myRestrictRange, myPriorityRange, getId(), getHighlightingSession());
-    myHighlights = ContainerUtil.concat(inside, outside);
+    myHighlights = List.copyOf(highlights);
     setProgressLimit(1);
     advanceProgress(1);
   }
 
-  private void collectHighlights(@NotNull PsiElement element,
-                                 @NotNull HighlightInfoHolder inside,
-                                 @NotNull HighlightInfoHolder outside,
-                                 @NotNull ProperTextRange priorityRange) {
+  private void visitElements(@NotNull List<? extends PsiElement> elements,
+                             @NotNull List<? super HighlightInfo> allHighlights,
+                             @NotNull ManagedHighlighterRecycler invalidPsiRecycler) {
+    for (PsiElement element : elements) {
+      List<HighlightInfo> highlights = collectHighlights(element);
+      myHighlightInfoUpdater.psiElementVisited(CHAMELEON_SYNTAX_TOOL_ID, element, highlights, getDocument(), myFile, myProject,
+                                                getHighlightingSession(), invalidPsiRecycler);
+      allHighlights.addAll(highlights);
+    }
+  }
+
+  private @NotNull List<HighlightInfo> collectHighlights(@NotNull PsiElement element) {
     EditorColorsScheme scheme = ObjectUtils.notNull(getColorsScheme(), EditorColorsManager.getInstance().getGlobalScheme());
 
     Language language = ILazyParseableElementType.LANGUAGE_KEY.get(element.getNode());
-    if (language == null) return;
+    if (language == null) return List.of();
 
+    HighlightInfoHolder holder = new HighlightInfoHolder(myFile);
     SyntaxHighlighter syntaxHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(language, myProject, myFile.getVirtualFile());
     for (PsiElement token : SyntaxTraverser.psiTraverser(element).traverse(TreeTraversal.LEAVES_DFS)) {
       TextRange tokenRange = token.getTextRange();
       if (tokenRange.isEmpty()) continue;
       IElementType type = PsiUtilCore.getElementType(token);
-      @NotNull HighlightInfoHolder holder = priorityRange.contains(tokenRange) ? inside : outside;
       TextAttributesKey[] keys = type==null ? TextAttributesKey.EMPTY_ARRAY : syntaxHighlighter.getTokenHighlights(type);
-      List<HighlightInfo> infos = InjectedLanguageFragmentSyntaxUtil.addSyntaxInjectedFragmentInfo(scheme, tokenRange, keys, null);
+      List<HighlightInfo> infos =
+        InjectedLanguageFragmentSyntaxUtil.addSyntaxInjectedFragmentInfo(scheme, tokenRange, keys, CHAMELEON_SYNTAX_TOOL_ID);
       for (HighlightInfo info : infos) {
         holder.add(info);
       }
     }
+    List<HighlightInfo> highlights = new ArrayList<>(holder.size());
+    for (int i = 0; i < holder.size(); i++) {
+      highlights.add(holder.get(i));
+    }
+    return highlights;
   }
 
   @Override

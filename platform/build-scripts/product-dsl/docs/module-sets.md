@@ -19,6 +19,16 @@ Read [ADR 0005](../../../../../build/decisions/0005-a-library-copy-belongs-to-th
 for the decision, and [content-module-copy-conflict.md](validators/content-module-copy-conflict.md) for the rule
 that enforces the middle route.
 
+## A module set is the leaf, a fragment is the feature
+
+A module set groups platform content and the library wrappers that ship with it. A fragment
+(`productModules { }` plus `include()`) groups a feature: bundled plugins plus sets plus modules, which only
+the product builder can name. A library plugin is reserved for a fat, plugin-only library that a non-bundling
+product must be able to install. Do not add a module set for a group that one product uses.
+
+Read [ADR 0010](../../../../../build/decisions/0010-a-module-set-is-the-leaf-a-fragment-is-the-feature.md)
+for the decision and the rejected alternatives.
+
 ## How Module Sets Work
 
 Module sets are **defined in Kotlin code** and **auto-generate XML files**:
@@ -34,7 +44,8 @@ Module sets are **defined in Kotlin code** and **auto-generate XML files**:
 | Location | File Path | Description |
 |----------|-----------|-------------|
 | Community | `community/platform/build-scripts/src/org/jetbrains/intellij/build/productLayout/CommunityModuleSets.kt` | IDE feature sets (essential, vcs, xml, debugger) |
-| Community (Core) | `community/platform/build-scripts/src/org/jetbrains/intellij/build/productLayout/CoreModuleSets.kt` | Platform infrastructure (libraries, corePlatform, rpc) |
+| Community (Core) | `community/platform/build-scripts/src/org/jetbrains/intellij/build/productLayout/CoreModuleSets.kt` | Platform infrastructure (corePlatform, coreLang, rpc, telemetry) |
+| Community (Libraries) | `community/platform/build-scripts/src/org/jetbrains/intellij/build/productLayout/LibraryModuleSets.kt` | Library wrapper sets (libraries.platform, libraries.ide, libraries.grpc) |
 | Ultimate | `platform/buildScripts/src/productLayout/UltimateModuleSets.kt` | Ultimate-only module sets |
 
 Each module set is defined as a Kotlin function (e.g., `fun essential(): ModuleSet`) that returns a `ModuleSet` object. The XML files (pattern: `intellij.moduleSets.<name>.xml`) are **auto-generated** from this Kotlin code.

@@ -4,7 +4,7 @@ package com.jetbrains.python.sdk.add.v2.pipenv
 import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.community.impl.pipenv.PipEnvPyTool
-import com.intellij.python.pytools.PyTool
+import com.intellij.python.pytools.backend.PyTool
 import com.intellij.platform.util.progress.withProgressText
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.errorProcessing.ErrorSink
@@ -22,7 +22,8 @@ import java.nio.file.Path
 
 internal class EnvironmentCreatorPip<P : PathHolder>(model: PythonMutableTargetAddInterpreterModel<P>, errorSink: ErrorSink) : CustomNewEnvironmentCreator<P>(model, errorSink) {
   override val interpreterType: InterpreterType = InterpreterType.PIPENV
-  override val pyTool: PyTool = PipEnvPyTool.getInstance()
+  override val pyTool: PyTool<*> = PipEnvPyTool.getInstance()
+  override val pyToolPresentableName: String = "Pipenv"
   override val toolValidator: ToolValidator<P> = model.pipenvViewModel.toolValidator
   override val toolExecutable: ObservableProperty<ValidatedPath.Executable<P>?> = model.pipenvViewModel.pipenvExecutable
   override val toolExecutablePersister: suspend (P) -> Unit = { pathHolder ->

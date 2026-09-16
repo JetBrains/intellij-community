@@ -72,6 +72,18 @@ _fleet_wasmjs_service_accessors = rule(
     toolchains = [_KOTLIN_TOOLCHAIN],
 )
 
+def _distinct(labels):
+    """The labels in their first-seen order, each once.
+
+    A transparent library wrapper expands to its libraries in `deps`, and the module can name one of those libraries
+    itself in `test_deps` or `exports`, so the joined list can hold a label twice. A rule rejects a duplicated label.
+    """
+    result = []
+    for label in labels:
+        if label not in result:
+            result.append(label)
+    return result
+
 # TODO: make it a symbolic macro if we manage to work around the usage of globs
 def fleet_wasmjs_module(
         name,
@@ -119,7 +131,7 @@ def fleet_wasmjs_module(
             name = service_accessors_target_name,
             module_name = module_name,
             srcs = analyzed_sources,
-            deps = deps + exports,
+            deps = _distinct(deps + exports),
         )
         wasmjs_main_sources = wasmjs_main_sources + [service_accessors_target_name]
 
@@ -193,7 +205,7 @@ def fleet_wasmjs_module(
                 "commonTest": common_test_sourceset_target_name,
                 "wasmJsTest": wasmjs_test_sourceset_target_name,
             },
-            deps = deps + test_deps + [wasmjs_library_target_name],
+            deps = _distinct(deps + test_deps + [wasmjs_library_target_name]),
             exports = test_exported_deps,
             plugins = plugins,
             kotlinc_opts = kotlinc_opts,

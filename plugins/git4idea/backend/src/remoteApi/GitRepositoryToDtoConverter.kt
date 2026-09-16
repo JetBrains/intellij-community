@@ -21,9 +21,11 @@ import git4idea.repo.GitRepository
 import git4idea.repo.isSubmodule
 import git4idea.repo.tags
 import git4idea.ui.branch.GitBranchManager
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 
-internal object GitRepositoryToDtoConverter {
+@ApiStatus.Internal
+object GitRepositoryToDtoConverter {
   fun convertToDto(repository: GitRepository): GitRepositoryDto {
     return GitRepositoryDto(
       repositoryId = repository.repositoryId(),

@@ -2,17 +2,14 @@
 package com.intellij.terminal;
 
 import com.intellij.execution.process.BaseProcessHandler;
+import com.intellij.execution.process.LocalProcessService;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.process.PtyBasedProcess;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.terminal.pty.PtyProcessTtyConnectorKt;
-import com.intellij.util.ObjectUtils;
 import com.jediterm.core.util.TermSize;
 import com.jediterm.terminal.TtyConnector;
 import com.jediterm.terminal.TtyConnectorResizeStrategy;
 import com.jediterm.terminal.TtyConnectorResizeStrategyProvider;
-import com.pty4j.PtyProcess;
-import com.pty4j.WinSize;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,14 +32,14 @@ public class ProcessHandlerTtyConnector implements TtyConnector, TtyConnectorRes
   }
 
   private static @Nullable Process getPtyProcess(@NotNull ProcessHandler processHandler) {
-    if (!(processHandler instanceof BaseProcessHandler)) {
+    if (!(processHandler instanceof BaseProcessHandler<?> baseProcessHandler)) {
       if (LOG.isDebugEnabled()) {
         LOG.debug("ProcessHandler doesn't support terminal window resizing: " + processHandler.getClass());
       }
       return null;
     }
-    Process process = ((BaseProcessHandler<?>)processHandler).getProcess();
-    if (!(process instanceof PtyProcess) && !(process instanceof PtyBasedProcess)) {
+    var process = baseProcessHandler.getProcess();
+    if (LocalProcessService.getInstance().getPtyControl(process) == null) {
       if (LOG.isDebugEnabled()) {
         LOG.debug("Process doesn't support terminal window resizing: " + process.getClass());
       }
@@ -69,14 +66,13 @@ public class ProcessHandlerTtyConnector implements TtyConnector, TtyConnectorRes
 
   @Override
   public void resize(@NotNull TermSize termSize) {
-    if (myPtyProcess instanceof PtyProcess ptyProcess) {
-      setWindowSizeSafely(myPtyProcess, () -> {
-        ptyProcess.setWinSize(new WinSize(termSize.getColumns(), termSize.getRows()));
-      });
+    if (myPtyProcess == null) {
+      return;
     }
-    else if (myPtyProcess instanceof PtyBasedProcess ptyBasedProcess) {
+    var control = LocalProcessService.getInstance().getPtyControl(myPtyProcess);
+    if (control != null) {
       setWindowSizeSafely(myPtyProcess, () -> {
-        ptyBasedProcess.setWindowSize(termSize.getColumns(), termSize.getRows());
+        control.setWindowSize(termSize.getColumns(), termSize.getRows());
       });
     }
   }
@@ -148,11 +144,4 @@ public class ProcessHandlerTtyConnector implements TtyConnector, TtyConnectorRes
     return myPtyProcess;
   }
 
-  /**
-   * @deprecated use {@link #getProcess()} instead
-   */
-  @Deprecated
-  public @Nullable PtyProcess getPtyProcess() {
-    return ObjectUtils.tryCast(myPtyProcess, PtyProcess.class);
-  }
 }

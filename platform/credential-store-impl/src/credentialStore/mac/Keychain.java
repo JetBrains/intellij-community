@@ -64,23 +64,23 @@ public final class Keychain {
    * {@code SecKeychainFindGenericPassword}. With {@code readPassword} false, only the item reference is returned.
    */
   public static @NotNull Found findGenericPassword(byte @NotNull [] service, byte @Nullable [] account, boolean readPassword) {
-    try (Arena arena = Arena.ofConfined()) {
-      MemorySegment passwordLength = readPassword ? arena.allocate(JAVA_INT) : MemorySegment.NULL;
-      MemorySegment passwordData = readPassword ? arena.allocate(ADDRESS) : MemorySegment.NULL;
-      MemorySegment itemRef = arena.allocate(ADDRESS);
+    try (var arena = Arena.ofConfined()) {
+      var passwordLength = readPassword ? arena.allocate(JAVA_INT) : MemorySegment.NULL;
+      var passwordData = readPassword ? arena.allocate(ADDRESS) : MemorySegment.NULL;
+      var itemRef = arena.allocate(ADDRESS);
       // a conditional expression passed to a signature-polymorphic call is typed as Object, so it needs a local
-      MemorySegment accountSegment = account != null ? arena.allocateFrom(JAVA_BYTE, account) : MemorySegment.NULL;
-      int status = (int)Handles.FIND_GENERIC_PASSWORD.invokeExact(
+      var accountSegment = account != null ? arena.allocateFrom(JAVA_BYTE, account) : MemorySegment.NULL;
+      var status = (int)Handles.FIND_GENERIC_PASSWORD.invokeExact(
         MemorySegment.NULL, service.length, arena.allocateFrom(JAVA_BYTE, service),
         account != null ? account.length : 0, accountSegment,
         passwordLength, passwordData, itemRef);
       byte[] password = null;
       if (readPassword) {
-        MemorySegment data = passwordData.get(ADDRESS, 0);
+        var data = passwordData.get(ADDRESS, 0);
         if (data.address() != 0) {
-          int length = passwordLength.get(JAVA_INT, 0);
+          var length = passwordLength.get(JAVA_INT, 0);
           password = data.reinterpret(length).toArray(JAVA_BYTE);
-          int ignored = (int)Handles.ITEM_FREE_CONTENT.invokeExact(MemorySegment.NULL, data);
+          var _ = (int)Handles.ITEM_FREE_CONTENT.invokeExact(MemorySegment.NULL, data);
         }
       }
       return new Found(status, password, itemRef.get(ADDRESS, 0).address());
@@ -92,9 +92,9 @@ public final class Keychain {
 
   /** {@code SecKeychainAddGenericPassword} into the default keychain. The native password copy is zeroed after the call. */
   public static int addGenericPassword(byte @NotNull [] service, byte @Nullable [] account, byte @Nullable [] password) {
-    try (Arena arena = Arena.ofConfined()) {
-      MemorySegment passwordSegment = password != null ? arena.allocateFrom(JAVA_BYTE, password) : MemorySegment.NULL;
-      MemorySegment accountSegment = account != null ? arena.allocateFrom(JAVA_BYTE, account) : MemorySegment.NULL;
+    try (var arena = Arena.ofConfined()) {
+      var passwordSegment = password != null ? arena.allocateFrom(JAVA_BYTE, password) : MemorySegment.NULL;
+      var accountSegment = account != null ? arena.allocateFrom(JAVA_BYTE, account) : MemorySegment.NULL;
       try {
         return (int)Handles.ADD_GENERIC_PASSWORD.invokeExact(
           MemorySegment.NULL, service.length, arena.allocateFrom(JAVA_BYTE, service),
@@ -115,15 +115,15 @@ public final class Keychain {
    * A {@code null} password stores empty data, as the JNA code did.
    */
   public static int modifyContent(long itemRef, byte @Nullable [] account, byte @Nullable [] password) {
-    try (Arena arena = Arena.ofConfined()) {
-      MemorySegment attribute = arena.allocate(Handles.SEC_KEYCHAIN_ATTRIBUTE);
+    try (var arena = Arena.ofConfined()) {
+      var attribute = arena.allocate(Handles.SEC_KEYCHAIN_ATTRIBUTE);
       attribute.set(JAVA_INT, 0, kSecAccountItemAttr);
       attribute.set(JAVA_INT, 4, account != null ? account.length : 0);
       attribute.set(ADDRESS, 8, account != null && account.length > 0 ? arena.allocateFrom(JAVA_BYTE, account) : MemorySegment.NULL);
-      MemorySegment attributeList = arena.allocate(Handles.SEC_KEYCHAIN_ATTRIBUTE_LIST);
+      var attributeList = arena.allocate(Handles.SEC_KEYCHAIN_ATTRIBUTE_LIST);
       attributeList.set(JAVA_INT, 0, 1);
       attributeList.set(ADDRESS, 8, attribute);
-      MemorySegment passwordSegment = password != null ? arena.allocateFrom(JAVA_BYTE, password) : arena.allocate(1);
+      var passwordSegment = password != null ? arena.allocateFrom(JAVA_BYTE, password) : arena.allocate(1);
       try {
         return (int)Handles.ITEM_MODIFY_CONTENT.invokeExact(
           MemorySegment.ofAddress(itemRef), attributeList, password != null ? password.length : 0, passwordSegment);
@@ -139,36 +139,36 @@ public final class Keychain {
 
   /** {@code SecKeychainItemCopyAttributesAndData} for the account attribute alone. */
   public static @NotNull Account copyAccountAttribute(long itemRef) {
-    try (Arena arena = Arena.ofConfined()) {
-      MemorySegment tags = arena.allocateFrom(JAVA_INT, kSecAccountItemAttr);
-      MemorySegment formats = arena.allocateFrom(JAVA_INT, kSecFormatUnknown);
-      MemorySegment info = arena.allocate(Handles.SEC_KEYCHAIN_ATTRIBUTE_INFO);
+    try (var arena = Arena.ofConfined()) {
+      var tags = arena.allocateFrom(JAVA_INT, kSecAccountItemAttr);
+      var formats = arena.allocateFrom(JAVA_INT, kSecFormatUnknown);
+      var info = arena.allocate(Handles.SEC_KEYCHAIN_ATTRIBUTE_INFO);
       info.set(JAVA_INT, 0, 1);
       info.set(ADDRESS, 8, tags);
       info.set(ADDRESS, 16, formats);
-      MemorySegment attributeListRef = arena.allocate(ADDRESS);
-      int status = (int)Handles.ITEM_COPY_ATTRIBUTES_AND_DATA.invokeExact(
+      var attributeListRef = arena.allocate(ADDRESS);
+      var status = (int)Handles.ITEM_COPY_ATTRIBUTES_AND_DATA.invokeExact(
         MemorySegment.ofAddress(itemRef), info, MemorySegment.NULL, attributeListRef, MemorySegment.NULL, MemorySegment.NULL);
-      MemorySegment attributeList = attributeListRef.get(ADDRESS, 0);
+      var attributeList = attributeListRef.get(ADDRESS, 0);
       if (status != errSecSuccess || attributeList.address() == 0) {
         return new Account(status, null);
       }
       try {
         attributeList = attributeList.reinterpret(Handles.SEC_KEYCHAIN_ATTRIBUTE_LIST.byteSize());
-        int count = attributeList.get(JAVA_INT, 0);
-        MemorySegment attributes = attributeList.get(ADDRESS, 8).reinterpret(count * Handles.SEC_KEYCHAIN_ATTRIBUTE.byteSize());
+        var count = attributeList.get(JAVA_INT, 0);
+        var attributes = attributeList.get(ADDRESS, 8).reinterpret(count * Handles.SEC_KEYCHAIN_ATTRIBUTE.byteSize());
         for (int i = 0; i < count; i++) {
-          long offset = i * Handles.SEC_KEYCHAIN_ATTRIBUTE.byteSize();
+          var offset = i * Handles.SEC_KEYCHAIN_ATTRIBUTE.byteSize();
           if (attributes.get(JAVA_INT, offset) != kSecAccountItemAttr) continue;
-          int length = attributes.get(JAVA_INT, offset + 4);
-          MemorySegment data = attributes.get(ADDRESS, offset + 8);
+          var length = attributes.get(JAVA_INT, offset + 4);
+          var data = attributes.get(ADDRESS, offset + 8);
           if (data.address() == 0) continue;
           return new Account(status, new String(data.reinterpret(length).toArray(JAVA_BYTE), StandardCharsets.UTF_8));
         }
         return new Account(status, null);
       }
       finally {
-        int ignored = (int)Handles.ITEM_FREE_ATTRIBUTES_AND_DATA.invokeExact(attributeList, MemorySegment.NULL);
+        var _ = (int)Handles.ITEM_FREE_ATTRIBUTES_AND_DATA.invokeExact(attributeList, MemorySegment.NULL);
       }
     }
     catch (Throwable t) {
@@ -198,14 +198,14 @@ public final class Keychain {
 
   /** @return the text of {@code SecCopyErrorMessageString} for the status, or {@code null} */
   public static @Nullable String errorMessage(int status) {
-    try (Arena arena = Arena.ofConfined()) {
-      MemorySegment message = (MemorySegment)Handles.COPY_ERROR_MESSAGE_STRING.invokeExact(status, MemorySegment.NULL);
+    try (var arena = Arena.ofConfined()) {
+      var message = (MemorySegment)Handles.COPY_ERROR_MESSAGE_STRING.invokeExact(status, MemorySegment.NULL);
       if (message.address() == 0) {
         return null;
       }
       try {
-        MemorySegment buffer = arena.allocate(MESSAGE_BUFFER_SIZE);
-        byte copied = (byte)Handles.CF_STRING_GET_C_STRING.invokeExact(message, buffer, MESSAGE_BUFFER_SIZE, KCF_STRING_ENCODING_UTF8);
+        var buffer = arena.allocate(MESSAGE_BUFFER_SIZE);
+        var copied = (byte)Handles.CF_STRING_GET_C_STRING.invokeExact(message, buffer, MESSAGE_BUFFER_SIZE, KCF_STRING_ENCODING_UTF8);
         return copied != 0 ? buffer.getString(0) : null;
       }
       finally {

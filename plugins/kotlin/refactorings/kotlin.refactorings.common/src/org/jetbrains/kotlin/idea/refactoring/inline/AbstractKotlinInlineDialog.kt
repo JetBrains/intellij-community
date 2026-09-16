@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.refactoring.inline
 
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.ElementDescriptionUtil
 import com.intellij.psi.PsiReference
@@ -60,6 +61,7 @@ abstract class AbstractKotlinInlineDialog<TDeclaration : KtNamedDeclaration>(
 
     private val kind: String get() = ElementDescriptionUtil.getElementDescription(declaration, UsageViewTypeLocation.INSTANCE)
 
+    @get:NlsContexts.DialogTitle
     private val refactoringName get() = KotlinBundle.message("text.inline.0", StringUtil.capitalizeWords(kind, true))
 
     init {
@@ -83,6 +85,7 @@ abstract class AbstractKotlinInlineDialog<TDeclaration : KtNamedDeclaration>(
     override fun getNameLabelText(): String {
         @Suppress("HardCodedStringLiteral")
         val occurrencesString = occurrencesString?.let { " - $it" } ?: ""
+        @Suppress("HardCodedStringLiteral")
         return "${kind.capitalize()} ${declaration.nameAsSafeName} $occurrencesString"
     }
 

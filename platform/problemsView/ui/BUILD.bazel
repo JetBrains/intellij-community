@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 jps_test(
     name = "problemView-ui-tests_test",
@@ -9,6 +10,10 @@ jps_test(
 )
 
 ### skip generation section `test intellij.platform.problemView.ui.tests`
+
+### auto-generated section `dev intellij.platform.problemView.ui` start
+content_module_jar(module = ":ui")
+### auto-generated section `dev intellij.platform.problemView.ui` end
 
 ### auto-generated section `build intellij.platform.problemView.ui` start
 jvm_library(
@@ -136,7 +141,6 @@ exports_files(
     [
         "intellij.platform.problemView.ui.iml",
         "resources/intellij.platform.problemView.ui.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )
@@ -180,7 +184,8 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:mockito",
+        "//libraries/mockito",
+        "//libraries/mockito:mockito_test_lib",
         "//platform/analysis-api:analysis",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/analysis-impl",

@@ -4,8 +4,8 @@ package com.intellij.python.pyrefly
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
-import com.intellij.python.pytools.lsp.LSP_TOOLS_STORAGE_FILE
-import com.intellij.python.pytools.lsp.PyLspToolConfiguration
+import com.intellij.python.lsp.core.LSP_TOOLS_STORAGE_FILE
+import com.intellij.python.lsp.core.PyLspToolConfiguration
 import com.intellij.util.xmlb.XmlSerializerUtil
 
 

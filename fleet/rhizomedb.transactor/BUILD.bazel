@@ -31,6 +31,10 @@ fleet_wasmjs_module(
     ],
 )
 
+### auto-generated section `dev fleet.rhizomedb.transactor` start
+content_module_jar(module = ":rhizomedb.transactor")
+### auto-generated section `dev fleet.rhizomedb.transactor` end
+
 ### auto-generated section `build fleet.rhizomedb.transactor` start
 create_kotlinc_options(
     name = "custom_rhizomedb.transactor",
@@ -66,10 +70,10 @@ fleet_plugin_services_resources(
         "//fleet/rhizomedb",
         "//fleet/rpc",
         "//fleet/util/core",
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/kotlinx/serialization/core",
+        "//libraries/kotlinx/serialization/json",
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinx-coroutines-core",
-        "@lib//:kotlinx-serialization-core",
-        "@lib//:kotlinx-serialization-json",
     ],
 )
 
@@ -100,11 +104,11 @@ jvm_library(
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//fleet/rhizomedb",
-        "@lib//:kotlinx-serialization-core",
-        "@lib//:kotlinx-serialization-json",
+        "//libraries/kotlinx/serialization/core",
+        "//libraries/kotlinx/serialization/json",
         "//fleet/util/core",
         "//fleet/rpc",
-        "@lib//:kotlinx-coroutines-core",
+        "//libraries/kotlinx/coroutines/core",
         "//fleet/reporting/api",
         "//fleet/reporting/shared",
         "//fleet/multiplatform.shims",
@@ -113,8 +117,6 @@ jvm_library(
         "//fleet/openmap",
     ],
 )
-
-content_module_jar(module = ":rhizomedb.transactor")
 
 jvm_library(
     name = "rhizomedb.transactor_test_lib",
@@ -137,8 +139,11 @@ jvm_library(
         # do not sort,
         ":rhizomedb.transactor",
         "//fleet/rhizomedb:rhizomedb_test_lib",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//libraries/kotlinx/serialization/json:json_test_lib",
         "//fleet/util/core:core_test_lib",
         "//fleet/rpc:rpc_test_lib",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//fleet/reporting/api:api_test_lib",
         "//fleet/reporting/shared:shared_test_lib",
         "//fleet/multiplatform.shims:multiplatform.shims_test_lib",
@@ -154,7 +159,6 @@ exports_files(
     [
         "fleet.rhizomedb.transactor.iml",
         "resources/fleet.rhizomedb.transactor.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

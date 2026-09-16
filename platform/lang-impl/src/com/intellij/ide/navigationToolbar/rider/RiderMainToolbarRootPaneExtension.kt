@@ -113,7 +113,7 @@ open class RiderMainToolbarRootPaneManager(private val project: Project) : Simpl
   open fun isRightSideAction(action: AnAction): Boolean =
     action.templateText.equals(ActionsBundle.message("group.RightToolbarSideGroup.text"))
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private fun correctedToolbarActions(panel: JPanel): Map<String, ActionGroup?> {
     val toolbarGroup = getToolbarGroup() ?: return emptyMap()
     val excludedActionIds = service<ProjectFrameTypeService>().getExcludedActionIds(panel.projectFrameTypeId(), ActionPlaces.MAIN_TOOLBAR)
@@ -174,7 +174,7 @@ open class RiderMainToolbarRootPaneManager(private val project: Project) : Simpl
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun applyTo(actions: Map<String, ActionGroup?>, component: JComponent, layout: BorderLayout) {
     actions.mapValues { (_, actionGroup) ->
       if (actionGroup != null) {

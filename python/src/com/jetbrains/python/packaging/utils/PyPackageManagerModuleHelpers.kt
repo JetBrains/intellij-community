@@ -4,15 +4,9 @@ package com.jetbrains.python.packaging.utils
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.psi.PsiDirectory
-import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.psi.PyExpression
 
 object PyPackageManagerModuleHelpers {
-  fun isRunningPackagingTasks(module: Module): Boolean {
-    val value = module.getUserData(PythonPackageManager.RUNNING_PACKAGING_TASKS)
-    return value != null && value
-  }
-
   fun isLocalModule(packageReferenceExpression: PyExpression, module: Module): Boolean {
     val reference = packageReferenceExpression.reference ?: return false
     val element = reference.resolve() ?: return false

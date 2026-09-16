@@ -11,6 +11,7 @@ class DebugOptions(object):
         "django_debug",
         "flask_debug",
         "stop_on_entry",
+        "stop_on_failed_tests",
         "max_exception_stack_frames",
         "gui_event_loop",
         "client_os",
@@ -24,6 +25,7 @@ class DebugOptions(object):
         self.django_debug = False
         self.flask_debug = False
         self.stop_on_entry = False
+        self.stop_on_failed_tests = False
         self.max_exception_stack_frames = 0
         self.gui_event_loop = "matplotlib"
         self.client_os = None
@@ -89,6 +91,9 @@ class DebugOptions(object):
 
         if "stopOnEntry" in args:
             self.stop_on_entry = bool_parser(args["stopOnEntry"])
+
+        if "stopOnFailedTests" in args:
+            self.stop_on_failed_tests = bool_parser(args["stopOnFailedTests"])
 
         self.max_exception_stack_frames = int_parser(args.get("maxExceptionStackFrames", 0))
 

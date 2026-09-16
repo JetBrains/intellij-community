@@ -102,7 +102,7 @@ class MiniDetailsGetter internal constructor(
 
   override fun saveInCache(commit: VcsLogCommitStorageIndex, details: VcsCommitMetadata) = cache.put(commit, details)
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun cacheCommit(commitId: VcsLogCommitStorageIndex, taskNumber: Long) {
     // fill the cache with temporary "Loading" values to avoid producing queries for each commit that has not been cached yet,
     // even if it will be loaded within a previous query
@@ -111,19 +111,19 @@ class MiniDetailsGetter internal constructor(
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun cacheCommits(commits: IntOpenHashSet) {
     val taskNumber = currentTaskIndex++
     commits.forEach(IntConsumer { commit -> cacheCommit(commit, taskNumber) })
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   @Throws(VcsException::class)
   override fun doLoadCommitsData(commits: IntSet, consumer: Consumer<in VcsCommitMetadata>) {
     doLoadCommitsData(commits) { _, metadata -> consumer.consume(metadata) }
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   @Throws(VcsException::class)
   fun doLoadCommitsData(commits: IntSet, consumer: (Int, VcsCommitMetadata) -> Unit) {
     val dataGetter = index.dataGetter
@@ -141,7 +141,7 @@ class MiniDetailsGetter internal constructor(
     }
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   @Throws(VcsException::class)
   override fun doLoadCommitsDataFromProvider(
     logProvider: VcsLogProvider,

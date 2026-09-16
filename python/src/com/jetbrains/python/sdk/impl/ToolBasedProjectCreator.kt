@@ -3,7 +3,7 @@ package com.jetbrains.python.sdk.impl
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.python.pyproject.model.spi.PyProjectCreator
-import com.intellij.python.pytools.runtime.PyToolRuntime
+import com.intellij.python.pytools.backend.runtime.PyToolRuntime
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyError
 import com.jetbrains.python.errorProcessing.PyResult

@@ -9,19 +9,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="jackson3-dataformat-toml" type="repository">
-        <properties include-transitive-deps="false" maven-id="tools.jackson.dataformat:jackson-dataformat-toml:3.2.1">
+        <properties include-transitive-deps="false" maven-id="tools.jackson.dataformat:jackson-dataformat-toml:3.2.2">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/tools/jackson/dataformat/jackson-dataformat-toml/3.2.1/jackson-dataformat-toml-3.2.1.jar">
-              <sha256sum>18829c4cac6e9aae8ebff68f3f483508f72cf666fd6928aa10253bae59ba8215</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/tools/jackson/dataformat/jackson-dataformat-toml/3.2.2/jackson-dataformat-toml-3.2.2.jar">
+              <sha256sum>b77f852d139a9978212e9d52dadfb5a547f2602f580322be1f73f2f8a2efcead</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/tools/jackson/dataformat/jackson-dataformat-toml/3.2.1/jackson-dataformat-toml-3.2.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/tools/jackson/dataformat/jackson-dataformat-toml/3.2.2/jackson-dataformat-toml-3.2.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/tools/jackson/dataformat/jackson-dataformat-toml/3.2.1/jackson-dataformat-toml-3.2.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/tools/jackson/dataformat/jackson-dataformat-toml/3.2.2/jackson-dataformat-toml-3.2.2-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
