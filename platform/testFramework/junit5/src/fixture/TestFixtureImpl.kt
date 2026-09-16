@@ -36,6 +36,26 @@ class TestFixtureImpl<T>(
     return (_state as? Deferred<*>)?.isCompleted == true
   }
 
+  @Synchronized
+  override fun interceptLifecycle(interceptor: TestFixtureLifecycleInterceptor): TestFixture<T> {
+    check(_state is TestFixtureInitializer<*>) {
+      "Cannot intercept a fixture after initialization"
+    }
+    @Suppress("UNCHECKED_CAST")
+    val initializer = _state as TestFixtureInitializer<T>
+    _state = TestFixtureInitializer { context ->
+      val data = interceptor.initialize {
+        with(initializer) {
+          initFixture(context) as InitializedTestFixtureData<T>
+        }
+      }
+      initialized(data.fixture) {
+        interceptor.tearDown(data.tearDown)
+      }
+    }
+    return this
+  }
+
   override fun get(): T {
     try {
       @Suppress("UNCHECKED_CAST", "TestOnlyProblems")
