@@ -32,7 +32,9 @@ import com.intellij.ide.ui.ToolbarSettings
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.Anchor
+import com.intellij.openapi.actionSystem.CompositeShortcutSet
 import com.intellij.openapi.actionSystem.Constraints
+import com.intellij.openapi.actionSystem.CustomShortcutSet
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.SplitButtonAction
@@ -369,6 +371,7 @@ private fun initExecutorActions(
     registerAction(actionRegistrar = actionRegistrar, actionId = delegateId, anAction = actionGroup, idToAction = idToAction)
 
     val toolbarActionGroup = SplitButtonAction(actionGroup)
+    toolbarActionGroup.shortcutSet = CustomShortcutSet.EMPTY // the shortcut was copied from actionGroup, which is an error if we register 'toolbarActionGroup' as a Global action
     val presentation = toolbarActionGroup.getTemplatePresentation()
     presentation.setIconSupplier { executor.getIcon() }
     presentation.setText(executor.getStartActionText())
