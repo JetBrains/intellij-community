@@ -131,14 +131,6 @@ private object WindowsProcessMetrics {
   /** The offset of `WorkingSetSize`: after `cb`, `PageFaultCount` and `PeakWorkingSetSize`. */
   private const val WORKING_SET_SIZE = 16L
 
-  /** `BOOL GetProcessMemoryInfo(HANDLE Process, PPROCESS_MEMORY_COUNTERS ppsmemCounters, DWORD cb)` */
-  private val GET_PROCESS_MEMORY_INFO: MethodHandle by lazy {
-    Linker.nativeLinker().downcallHandle(
-      WindowsSystemLibraries.psapi().findOrThrow("GetProcessMemoryInfo"),
-      FunctionDescriptor.of(JAVA_INT, ADDRESS, ADDRESS, JAVA_INT),
-    )
-  }
-
   fun residentSetSize(pid: Long): Long? {
     Arena.ofConfined().use { arena ->
       val callState = arena.allocate(WindowsKernel32.CALL_STATE)
@@ -156,8 +148,7 @@ private object WindowsProcessMetrics {
         }
         val counters = arena.allocate(COUNTERS_SIZE.toLong())
         counters.set(JAVA_INT, 0, COUNTERS_SIZE)
-        val succeeded = GET_PROCESS_MEMORY_INFO.invokeExact(process, counters, COUNTERS_SIZE) as Int
-        if (succeeded == 0) {
+        if (!WindowsPsapi.processMemoryInfo(process, counters)) {
           return null
         }
         return counters.get(JAVA_LONG, WORKING_SET_SIZE)

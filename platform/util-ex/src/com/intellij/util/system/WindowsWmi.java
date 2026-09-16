@@ -29,7 +29,6 @@ import static java.nio.charset.StandardCharsets.UTF_16LE;
 
 @ApiStatus.Internal
 public final class WindowsWmi {
-  private static final int CLSCTX_INPROC_SERVER = 1;
   private static final int RPC_C_AUTHN_WINNT = 10;
   private static final int RPC_C_AUTHN_LEVEL_CALL = 3;
   private static final int RPC_C_IMP_LEVEL_IMPERSONATE = 3;
@@ -64,13 +63,12 @@ public final class WindowsWmi {
       return WindowsCom.withApartment(() -> {
         try (var arena = Arena.ofConfined()) {
           var locator = arena.allocate(ADDRESS);
-          WindowsCom.checkResult("CoCreateInstance", (int)Handles.CREATE_INSTANCE.invokeExact(
-            WindowsCom.guid(arena, LOCATOR_CLASS), MemorySegment.NULL, CLSCTX_INPROC_SERVER,
-            WindowsCom.guid(arena, LOCATOR_INTERFACE), locator));
+          WindowsCom.checkResult("CoCreateInstance", WindowsCom.createInstance(
+            WindowsCom.guid(arena, LOCATOR_CLASS), WindowsCom.CLSCTX_INPROC_SERVER, WindowsCom.guid(arena, LOCATOR_INTERFACE), locator));
           return withObject(locator, locatorObject -> withBstr(arena, namespace, namespaceBstr -> {
             var services = arena.allocate(ADDRESS);
             WindowsCom.checkResult("IWbemLocator.ConnectServer", (int)Handles.CONNECT.invokeExact(
-              method(locatorObject, 3), locatorObject, namespaceBstr, MemorySegment.NULL, MemorySegment.NULL, MemorySegment.NULL,
+              WindowsCom.method(locatorObject, 3), locatorObject, namespaceBstr, MemorySegment.NULL, MemorySegment.NULL, MemorySegment.NULL,
               0, MemorySegment.NULL, MemorySegment.NULL, services));
             return withObject(services, servicesObject -> {
               WindowsCom.checkResult("CoSetProxyBlanket", (int)Handles.SET_PROXY_BLANKET.invokeExact(
@@ -99,7 +97,7 @@ public final class WindowsWmi {
       withBstr(arena, "SELECT " + String.join(",", properties) + " FROM " + className, query -> {
         var enumerator = arena.allocate(ADDRESS);
         WindowsCom.checkResult("IWbemServices.ExecQuery", (int)Handles.EXEC_QUERY.invokeExact(
-          method(services, 20), services, language, query, WBEM_FLAG_RETURN_IMMEDIATELY | WBEM_FLAG_FORWARD_ONLY,
+          WindowsCom.method(services, 20), services, language, query, WBEM_FLAG_RETURN_IMMEDIATELY | WBEM_FLAG_FORWARD_ONLY,
           MemorySegment.NULL, enumerator));
         return withObject(enumerator, enumeratorObject -> {
           var rows = new ArrayList<Map<String, @Nullable Object>>();
@@ -113,7 +111,7 @@ public final class WindowsWmi {
           while (true) {
             returned.set(JAVA_INT, 0, 0);
             row.set(ADDRESS, 0, MemorySegment.NULL);
-            var result = (int)Handles.NEXT.invokeExact(method(enumeratorObject, 4), enumeratorObject, timeoutMillis, 1, row, returned);
+            var result = (int)Handles.NEXT.invokeExact(WindowsCom.method(enumeratorObject, 4), enumeratorObject, timeoutMillis, 1, row, returned);
             var count = returned.get(JAVA_INT, 0);
             if (count == 0) {
               WindowsCom.checkResult("IEnumWbemClassObject.Next", result);
@@ -127,7 +125,7 @@ public final class WindowsWmi {
                 variant.fill((byte)0);
                 try {
                   WindowsCom.checkResult("IWbemClassObject.Get(" + property.getKey() + ")", (int)Handles.GET_PROPERTY.invokeExact(
-                    method(rowObject, 4), rowObject, property.getValue(), 0, variant, MemorySegment.NULL, MemorySegment.NULL));
+                    WindowsCom.method(rowObject, 4), rowObject, property.getValue(), 0, variant, MemorySegment.NULL, MemorySegment.NULL));
                   values.put(property.getKey(), variantValue(variant));
                 }
                 finally {
@@ -176,13 +174,8 @@ public final class WindowsWmi {
       return action.run(instance);
     }
     finally {
-      var _ = (int)Handles.RELEASE.invokeExact(method(instance, 2), instance);
+      var _ = (int)Handles.RELEASE.invokeExact(WindowsCom.method(instance, 2), instance);
     }
-  }
-
-  private static @NotNull MemorySegment method(@NotNull MemorySegment instance, int index) {
-    var table = instance.reinterpret(ADDRESS.byteSize()).get(ADDRESS, 0);
-    return table.reinterpret((index + 1) * ADDRESS.byteSize()).getAtIndex(ADDRESS, index);
   }
 
   @FunctionalInterface
@@ -194,8 +187,6 @@ public final class WindowsWmi {
     private static final Linker LINKER = Linker.nativeLinker();
     private static final SymbolLookup OLE32 = WindowsSystemLibraries.ole32();
     private static final SymbolLookup OLEAUT32 = WindowsSystemLibraries.lookup("oleaut32.dll");
-    static final MethodHandle CREATE_INSTANCE = LINKER.downcallHandle(
-      OLE32.findOrThrow("CoCreateInstance"), FunctionDescriptor.of(JAVA_INT, ADDRESS, ADDRESS, JAVA_INT, ADDRESS, ADDRESS));
     static final MethodHandle SET_PROXY_BLANKET = LINKER.downcallHandle(
       OLE32.findOrThrow("CoSetProxyBlanket"),
       FunctionDescriptor.of(JAVA_INT, ADDRESS, JAVA_INT, JAVA_INT, ADDRESS, JAVA_INT, JAVA_INT, ADDRESS, JAVA_INT));

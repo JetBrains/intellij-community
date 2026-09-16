@@ -4,8 +4,8 @@ package com.intellij.ui;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.util.system.WindowsCom;
 import com.intellij.util.ui.EDT;
-import com.intellij.util.system.WindowsSystemLibraries;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.awt.AWTAccessor;
@@ -18,7 +18,7 @@ import java.lang.foreign.Linker;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
-import java.nio.charset.StandardCharsets;
+import java.util.UUID;
 
 import static java.lang.foreign.ValueLayout.ADDRESS;
 import static java.lang.foreign.ValueLayout.JAVA_INT;
@@ -56,25 +56,15 @@ final class Win7TaskBar {
     }
     EDT.assertIsEdt();
 
-    var linker = Linker.nativeLinker();
-    var ole32 = WindowsSystemLibraries.ole32();
-    var initialize = linker.downcallHandle(ole32.findOrThrow("CoInitializeEx"), FunctionDescriptor.of(JAVA_INT, ADDRESS, JAVA_INT));
-    var uninitialize = linker.downcallHandle(ole32.findOrThrow("CoUninitialize"), FunctionDescriptor.ofVoid());
-    var parseGuid = linker.downcallHandle(ole32.findOrThrow("CLSIDFromString"), FunctionDescriptor.of(JAVA_INT, ADDRESS, ADDRESS));
-    var createInstance = linker.downcallHandle(ole32.findOrThrow("CoCreateInstance"),
-                                              FunctionDescriptor.of(JAVA_INT, ADDRESS, ADDRESS, JAVA_INT, ADDRESS, ADDRESS));
-    var initialized = (int)initialize.invokeExact(MemorySegment.NULL, 2);
-    if (initialized != 0x80010106) checkResult("CoInitializeEx", initialized);
+    // The apartment stays for the life of the process, because the taskbar object does. Only a failure ends it.
+    var initialized = WindowsCom.initializeApartment();
+    if (initialized != WindowsCom.RPC_E_CHANGED_MODE) checkResult("CoInitializeEx", initialized);
     var success = false;
     try (var arena = Arena.ofConfined()) {
-      var classId = arena.allocate(16, 4);
-      var interfaceId = arena.allocate(16, 4);
-      checkResult("CLSIDFromString", (int)parseGuid.invokeExact(
-        arena.allocateFrom("{56FDF344-FD6D-11d0-958A-006097C9A090}", StandardCharsets.UTF_16LE), classId));
-      checkResult("CLSIDFromString", (int)parseGuid.invokeExact(
-        arena.allocateFrom("{EA1AFB91-9E28-4B86-90E9-9E9F8A5EEFAF}", StandardCharsets.UTF_16LE), interfaceId));
+      var classId = WindowsCom.guid(arena, UUID.fromString("56FDF344-FD6D-11d0-958A-006097C9A090"));
+      var interfaceId = WindowsCom.guid(arena, UUID.fromString("EA1AFB91-9E28-4B86-90E9-9E9F8A5EEFAF"));
       var result = arena.allocate(ADDRESS);
-      checkResult("CoCreateInstance", (int)createInstance.invokeExact(classId, MemorySegment.NULL, 3, interfaceId, result));
+      checkResult("CoCreateInstance", WindowsCom.createInstance(classId, WindowsCom.CLSCTX_INPROC, interfaceId, result));
       var pointer = result.get(ADDRESS, 0);
       if (pointer.address() == 0) return false;
       try {
@@ -92,7 +82,7 @@ final class Win7TaskBar {
       }
     }
     finally {
-      if (!success && initialized >= 0) uninitialize.invokeExact();
+      if (!success && initialized >= 0) WindowsCom.uninitializeApartment();
     }
   }
 
@@ -203,8 +193,7 @@ final class Win7TaskBar {
     }
 
     private static MethodHandle method(MemorySegment pointer, int slot, FunctionDescriptor descriptor) {
-      var table = pointer.reinterpret(ADDRESS.byteSize()).get(ADDRESS, 0).reinterpret(21 * ADDRESS.byteSize());
-      return Linker.nativeLinker().downcallHandle(table.getAtIndex(ADDRESS, slot), descriptor);
+      return Linker.nativeLinker().downcallHandle(WindowsCom.method(pointer, slot), descriptor);
     }
 
     void init() throws Throwable {

@@ -2,18 +2,14 @@
 package com.intellij.diagnostic;
 
 import com.intellij.util.system.WindowsKernel32;
-import com.intellij.util.system.WindowsSystemLibraries;
+import com.intellij.util.system.WindowsPsapi;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.foreign.Arena;
-import java.lang.foreign.FunctionDescriptor;
-import java.lang.foreign.Linker;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.StructLayout;
-import java.lang.invoke.MethodHandle;
 
-import static java.lang.foreign.ValueLayout.ADDRESS;
 import static java.lang.foreign.ValueLayout.JAVA_INT;
 import static java.lang.foreign.ValueLayout.JAVA_LONG;
 
@@ -33,18 +29,13 @@ final class WindowsProcessMemory {
     try (var arena = Arena.ofConfined()) {
       var counters = arena.allocate(Handles.PROCESS_MEMORY_COUNTERS_EX2);
       counters.set(JAVA_INT, 0, (int)Handles.PROCESS_MEMORY_COUNTERS_EX2.byteSize());
-      var process = WindowsKernel32.currentProcess();
-      var succeeded = (int)Handles.GET_PROCESS_MEMORY_INFO.invokeExact(process, counters, (int)Handles.PROCESS_MEMORY_COUNTERS_EX2.byteSize());
-      if (succeeded == 0) {
+      if (!WindowsPsapi.processMemoryInfo(WindowsKernel32.currentProcess(), counters)) {
         return null;
       }
       return new Counters(
         counters.get(JAVA_LONG, offset("WorkingSetSize")),
         counters.get(JAVA_LONG, offset("PrivateUsage")),
         counters.get(JAVA_LONG, offset("PrivateWorkingSetSize")));
-    }
-    catch (Throwable t) {
-      throw new IllegalStateException(t);
     }
   }
 
@@ -53,8 +44,6 @@ final class WindowsProcessMemory {
   }
 
   private static final class Handles {
-    private static final Linker LINKER = Linker.nativeLinker();
-
     /**
      * {@code PROCESS_MEMORY_COUNTERS_EX2}, 96 bytes on x64 and ARM64: two {@code DWORD}s, then ten {@code SIZE_T}s and one {@code ULONG64}.
      * {@code PrivateWorkingSetSize} needs Windows 10 22H2 or Windows 11 22H2 with the September 2023 update; older systems leave it 0.
@@ -66,9 +55,5 @@ final class WindowsProcessMemory {
       JAVA_LONG.withName("QuotaPeakNonPagedPoolUsage"), JAVA_LONG.withName("QuotaNonPagedPoolUsage"),
       JAVA_LONG.withName("PagefileUsage"), JAVA_LONG.withName("PeakPagefileUsage"),
       JAVA_LONG.withName("PrivateUsage"), JAVA_LONG.withName("PrivateWorkingSetSize"), JAVA_LONG.withName("SharedCommitUsage"));
-
-    /** {@code BOOL GetProcessMemoryInfo(HANDLE, PPROCESS_MEMORY_COUNTERS, DWORD cb)} */
-    static final MethodHandle GET_PROCESS_MEMORY_INFO = LINKER.downcallHandle(
-      WindowsSystemLibraries.psapi().findOrThrow("GetProcessMemoryInfo"), FunctionDescriptor.of(JAVA_INT, ADDRESS, ADDRESS, JAVA_INT));
   }
 }
