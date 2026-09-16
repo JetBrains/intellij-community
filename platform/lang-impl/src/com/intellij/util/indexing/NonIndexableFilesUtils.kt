@@ -53,7 +53,7 @@ internal fun iterateNonIndexableFilesImpl(project: Project, inputFilter: Virtual
   val workspaceFileIndex = WorkspaceFileIndexEx.getInstance(project)
   val roots: Set<VirtualFile> =
     ReadAction.nonBlocking<Set<VirtualFile>> { workspaceFileIndex.nonIndexableRootsAsCacheAvoiding() }.executeSynchronously()
-  return workspaceFileIndex.iterateNonIndexableFilesImpl(roots, inputFilter ?: VirtualFileFilter.ALL, processor)
+  return workspaceFileIndex.iterateNonIndexableFilesImpl(roots, inputFilter, processor)
 }
 
 @ApiStatus.Internal
@@ -86,7 +86,7 @@ fun WorkspaceFileIndexEx.isExcludedOrInvalid(file: VirtualFile): Boolean {
 @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 private fun WorkspaceFileIndexEx.iterateNonIndexableFilesImpl(
   roots: Set<VirtualFile>,
-  filter: VirtualFileFilter,
+  filter: VirtualFileFilter?,
   processor: ContentIterator,
 ): Boolean {
   for (root in roots) {
@@ -98,7 +98,7 @@ private fun WorkspaceFileIndexEx.iterateNonIndexableFilesImpl(
         return when {
           currentIndexableFileSets.recursive.isNotEmpty() -> SKIP_CHILDREN
           currentIndexableFileSets.nonRecursive.isNotEmpty() -> CONTINUE // skip only the current file, children can be non-indexable
-          !runReadActionBlocking { filter.accept(file) } -> CONTINUE // skip only the current file, children can pass the filter
+          filter != null && !runReadActionBlocking { filter.accept(file) } -> CONTINUE // skip only the current file, children can pass the filter
           !processor.processFile(file) -> skipTo(root) // terminate processing
           else -> CONTINUE
         }
@@ -139,7 +139,7 @@ interface ConcurrentFilesDeque {
     fun nonIndexableDequeue(
       project: Project,
       searchInLibraries: Boolean = true,
-      filter: VirtualFileFilter = VirtualFileFilter.ALL,
+      filter: VirtualFileFilter? = null,
     ): ConcurrentFilesDeque {
       val workspaceFileIndex = WorkspaceFileIndexEx.getInstance(project)
       val roots = when {
@@ -171,7 +171,7 @@ interface FilesDeque {
     fun nonIndexableDequeue(
       project: Project,
       searchInLibraries: Boolean = true,
-      filter: VirtualFileFilter = VirtualFileFilter.ALL,
+      filter: VirtualFileFilter? = null,
     ): FilesDeque {
       val concurrentDeque = ConcurrentFilesDeque.nonIndexableDequeue(project, searchInLibraries, filter)
       return FilesDequeImpl(concurrentDeque)
@@ -202,7 +202,7 @@ class FilesDequeImpl internal constructor(
 class ConcurrentNonIndexableFilesDequeImpl internal constructor(
   private val project: Project,
   private val roots: Set<VirtualFile>,
-  private val filter: VirtualFileFilter,
+  private val filter: VirtualFileFilter?,
 ) : ConcurrentFilesDeque {
 
   private data class SubtreeProcessingMode(val shouldProcessRoot: Boolean, val shouldProcessChildren: Boolean){
@@ -238,7 +238,7 @@ class ConcurrentNonIndexableFilesDequeImpl internal constructor(
     }
 
     if (subtreeProcessingMode.shouldProcessRoot) {
-      return runReadActionBlocking { filter.accept(file) }
+      return filter == null || runReadActionBlocking { filter.accept(file) }
     }
     else {
       return false
