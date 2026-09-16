@@ -25,7 +25,7 @@ class KotlinBuildToolsFusEvenListTest {
         }
     }
 
-    private val GROUP_EXPECTED_VERSION_AND_HASH = Pair(19, "81aec677123a3862ff19b1840ae3bafb")
+    private val GROUP_EXPECTED_VERSION_AND_HASH = Pair(20, "3a75a33d652b9399825073ed1d0c8583")
 
     @Test
     fun checkGroupVersionVersion() {
