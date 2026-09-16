@@ -132,7 +132,17 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
   }
 
   /**
-   * @param highlightRange the range the frontend range marker tracks after a document edit, or null
+   * Drops the cached source position after a document edit.
+   * The frontend sends the range its marker tracks with the position request.
+   * The type sees the range in {@link XLineBreakpointType#highlightRangeMoved} before the change event fires.
+   * <p>
+   * The frontend debounces the position requests, while the other setters send their requests at once.
+   * So a later request can complete first, and {@code requestId} is then stale.
+   * A stale id suppresses the change event.
+   * The event still fires when the type reports a changed property.
+   *
+   * @param requestId      the frontend request id, or {@code -1} for a local call
+   * @param highlightRange the range the frontend marker tracks, or {@code null} when no marker exists
    */
   public void resetSourcePosition(long requestId, @Nullable TextRange highlightRange) {
     boolean rangeMoved = highlightRange != null && myType.highlightRangeMoved(this, highlightRange);
@@ -175,7 +185,18 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
   }
 
   /**
-   * @param highlightRange the range the frontend range marker tracks after a document edit, or null
+   * Moves the breakpoint to {@code line} after a document edit.
+   * The frontend sends the range its marker tracks with the set-line request.
+   * The type sees the range in {@link XLineBreakpointType#highlightRangeMoved} before the change event fires.
+   * <p>
+   * The frontend debounces the set-line requests, while the other setters send their requests at once.
+   * So a later request can complete first, and {@code requestId} is then stale.
+   * A stale id suppresses the change event.
+   * The event still fires when the type reports a changed property.
+   *
+   * @param requestId      the frontend request id, or {@code -1} for a local call
+   * @param line           the new zero-based line
+   * @param highlightRange the range the frontend marker tracks, or {@code null} when no marker exists
    */
   public void setLine(long requestId, int line, @Nullable TextRange highlightRange) {
     boolean rangeMoved = highlightRange != null && myType.highlightRangeMoved(this, highlightRange);
