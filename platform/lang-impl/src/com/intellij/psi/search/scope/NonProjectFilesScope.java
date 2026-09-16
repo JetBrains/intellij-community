@@ -27,7 +27,7 @@ public final class NonProjectFilesScope extends NamedScope {
       public boolean contains(@NotNull VirtualFile file, @NotNull Project project) {
         return containsImpl(file, project);
       }
-    });
+    }, true);
   }
 
   private static boolean containsImpl(@NotNull VirtualFile file,

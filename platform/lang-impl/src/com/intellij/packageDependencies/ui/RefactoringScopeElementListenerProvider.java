@@ -96,7 +96,7 @@ public final class RefactoringScopeElementListenerProvider implements Refactorin
             PackageSet newSet = oldSet.map(set -> updateNameInPattern(set, oldQualifiedName, newName));
             if (newSet != oldSet) {
               String presentableName = oldScope.getPresentableName();
-              descriptor.replaceScope(new NamedScope(oldScope.getScopeId(), () -> presentableName, oldScope.getIcon(), newSet));
+              descriptor.replaceScope(new NamedScope(oldScope.getScopeId(), () -> presentableName, oldScope.getIcon(), newSet, oldScope.isPredefined()));
             }
           }
         }

@@ -3,6 +3,7 @@ package com.intellij.psi.search.scope.packageSet;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.NlsSafe;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,20 +17,27 @@ public class NamedScope {
   private final @NotNull Supplier<@NlsSafe String> myPresentableNameSupplier;
   private final Icon myIcon;
   private final PackageSet myValue;
+  private final boolean myIsPredefined;
 
   public NamedScope(@NotNull @NonNls String scopeId, @Nullable PackageSet value) {
     this(scopeId, AllIcons.Ide.LocalScope, value);
   }
 
   public NamedScope(@NotNull @NonNls String scopeId, @NotNull Icon icon, @Nullable PackageSet value) {
-    this(scopeId, () -> scopeId, icon, value);
+    this(scopeId, () -> scopeId, icon, value, false);
   }
 
   public NamedScope(@NotNull @NonNls String scopeId, @NotNull Supplier <@NlsSafe String> presentableNameSupplier, @NotNull Icon icon, @Nullable PackageSet value) {
+    this(scopeId, presentableNameSupplier, icon, value, false);
+  }
+
+  @ApiStatus.Internal
+  public NamedScope(@NotNull @NonNls String scopeId, @NotNull Supplier <@NlsSafe String> presentableNameSupplier, @NotNull Icon icon, @Nullable PackageSet value, boolean isPredefined) {
     myPresentableNameSupplier = presentableNameSupplier;
     myIcon = icon;
     myScopeId = scopeId;
     myValue = value;
+    myIsPredefined = isPredefined;
   }
 
   /**
@@ -57,7 +65,7 @@ public class NamedScope {
   }
 
   public @NotNull NamedScope createCopy() {
-    return new NamedScope(myScopeId, myPresentableNameSupplier, myIcon, myValue == null ? null : myValue.createCopy());
+    return new NamedScope(myScopeId, myPresentableNameSupplier, myIcon, myValue == null ? null : myValue.createCopy(), myIsPredefined);
   }
 
   public @Nullable String getDefaultColorName() {
@@ -66,8 +74,13 @@ public class NamedScope {
 
   public static final class UnnamedScope extends NamedScope {
     public UnnamedScope(@NotNull PackageSet value) {
-      super(value.getText(), () -> value.getText(), AllIcons.Ide.LocalScope, value);
+      super(value.getText(), () -> value.getText(), AllIcons.Ide.LocalScope, value, false);
     }
+  }
+
+  @ApiStatus.Internal
+  public boolean isPredefined() {
+    return myIsPredefined;
   }
 
   @Override

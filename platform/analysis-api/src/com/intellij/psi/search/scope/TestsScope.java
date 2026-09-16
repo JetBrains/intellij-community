@@ -24,7 +24,7 @@ public final class TestsScope extends NamedScope {
       public boolean contains(@NotNull VirtualFile file, @NotNull Project project) {
         return TestSourcesFilter.isTestSources(file, project);
       }
-    });
+    }, true);
   }
 
   @Override

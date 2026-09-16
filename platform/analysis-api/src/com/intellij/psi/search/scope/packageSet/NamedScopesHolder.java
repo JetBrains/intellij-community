@@ -185,6 +185,6 @@ public abstract class NamedScopesHolder implements PersistentStateComponent<Elem
   }
 
   public final @NotNull NamedScope createScope(@NotNull String name, @Nullable PackageSet value) {
-    return new NamedScope(name, () -> name, getIcon(), value);
+    return new NamedScope(name, () -> name, getIcon(), value,  false);
   }
 }

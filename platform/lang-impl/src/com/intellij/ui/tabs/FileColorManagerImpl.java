@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService;
 import com.intellij.openapi.wm.ex.ProjectFrameCapability;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.FileColorManager;
 import com.intellij.ui.JBColor;
@@ -27,6 +28,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.function.Predicate;
 
 @ApiStatus.Internal
 public final class FileColorManagerImpl extends FileColorManager {
@@ -149,6 +151,21 @@ public final class FileColorManagerImpl extends FileColorManager {
   }
 
   @Override
+  public @Nullable Color getNonPredefinedRendererBackground(VirtualFile file) {
+    if (file == null) return null;
+
+    if (isEnabled()) {
+      final Color fileColor = doGetFileColor(file, scope -> {
+        return !scope.isPredefined();
+      });
+      if (fileColor != null) return fileColor;
+    }
+
+    //return FileEditorManager.getInstance(myProject).isFileOpen(vFile) && !UIUtil.isUnderDarcula() ? LightColors.SLIGHTLY_GREEN : null;
+    return null;
+  }
+
+  @Override
   public @Nullable Color getRendererBackground(PsiFile file) {
     if (file == null) return null;
 
@@ -165,8 +182,12 @@ public final class FileColorManagerImpl extends FileColorManager {
 
   @Override
   public @Nullable Color getFileColor(@NotNull VirtualFile file) {
+    return doGetFileColor(file, (_) -> true);
+  }
+
+  private @Nullable Color doGetFileColor(@NotNull VirtualFile file, @NotNull Predicate<NamedScope> acceptScope) {
     if (!isEnabled()) return null;
-    String colorName = myInitializedModel.getValue().getColor(file, getProject());
+    String colorName = myInitializedModel.getValue().getColorWithScopeFilter(file, getProject(), acceptScope);
     return colorName == null ? null : getColor(colorName);
   }
 

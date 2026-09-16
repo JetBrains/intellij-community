@@ -27,7 +27,7 @@ public final class ProjectFilesScope extends NamedScope {
         ProjectFileIndex fileIndex = getFileIndex(project);
         return fileIndex != null && fileIndex.isInContent(file);
       }
-    });
+    }, true);
   }
 
   static @Nullable ProjectFileIndex getFileIndex(@NotNull Project project) {

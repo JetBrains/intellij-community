@@ -51,7 +51,7 @@ final class PackageSetFactoryImpl extends PackageSetFactory {
               if (value != null && value.getClass().getClassLoader() == pluginClassLoader) {
                 String presentableName = scope.getPresentableName();
                 scopes[i] = new NamedScope(scope.getScopeId(), () -> presentableName, AllIcons.Ide.LocalScope,
-                                           new InvalidPackageSet(value.getText()));
+                                           new InvalidPackageSet(value.getText()), scope.isPredefined());
                 changed = true;
               }
             }

@@ -772,8 +772,8 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     result.add(ProjectProductionScope.INSTANCE);
     result.add(TestsScope.INSTANCE);
     result.add(CustomScopesProviderEx.getAllScope());
-    result.add(new NamedScope(SCOPE_CLASS, () -> LangBundle.message("this.class.scope.name"), AllIcons.Ide.LocalScope, null));
-    result.add(new NamedScope(SCOPE_MODULE, () -> LangBundle.message("this.module.scope.name"), AllIcons.Ide.LocalScope, null));
+    result.add(new NamedScope(SCOPE_CLASS, () -> LangBundle.message("this.class.scope.name"), AllIcons.Ide.LocalScope, null, true));
+    result.add(new NamedScope(SCOPE_MODULE, () -> LangBundle.message("this.module.scope.name"), AllIcons.Ide.LocalScope, null, true));
 
     NamedScopesHolder[] holders = NamedScopesHolder.getAllNamedScopeHolders(myProject);
     for (NamedScopesHolder holder : holders) {

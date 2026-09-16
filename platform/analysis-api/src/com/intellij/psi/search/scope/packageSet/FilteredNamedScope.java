@@ -22,6 +22,6 @@ public class FilteredNamedScope extends NamedScope {
       public boolean contains(@NotNull VirtualFile file, @NotNull Project project) {
         return filter.accept(file);
       }
-    });
+    }, false);
   }
 }
