@@ -949,7 +949,7 @@ internal class UnifiedPluginsPageSessionTest {
   }
 
   private fun assertAdaptiveSearchWidth(header: JComponent, searchComponent: JComponent) {
-    val updateAllButton = updateAllButton(header)
+    val updateAllButton = updateAllButton(header).apply { isVisible = true }
     val settingsToolbar = header.components.single { it !== searchComponent && it !is JButton }
     val layout = header.layout as GridBagLayout
     val searchConstraints = layout.getConstraints(searchComponent)

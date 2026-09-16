@@ -791,6 +791,11 @@ internal class UnifiedPluginsPageView @RequiresEdt(generateAssertion = false /* 
         toggleButton.border = border
       }
 
+      override fun doLayout() {
+        super.doLayout()
+        toggleButton.doLayout()
+      }
+
       fun addContent(component: Component, constraints: String) {
         toggleButton.add(component, constraints)
       }

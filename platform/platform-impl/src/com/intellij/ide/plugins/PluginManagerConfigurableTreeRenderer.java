@@ -58,7 +58,7 @@ public final class PluginManagerConfigurableTreeRenderer extends AncestorListene
     myCountLabel.getAccessibleContext().setAccessibleName(count);
 
     return Pair.create(
-      myCountLabel, (renderer, bounds, text, right, textBaseline) -> {
+      myCountLabel, (renderer, bounds, _, right, _) -> {
         Dimension size = renderer.getPreferredSize();
         int preferredWidth = size.width;
         int preferredHeight = size.height;

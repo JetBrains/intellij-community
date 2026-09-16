@@ -262,8 +262,8 @@ internal class PluginManagerConfigurableRoutingTest {
       val settings = header.components[2]
 
       assertThat(header.border).isNull()
-      assertThat(layout.getConstraints(search).insets.right).isEqualTo(JBUI.scale(8))
-      assertThat(layout.getConstraints(updateAll).insets.right).isEqualTo(JBUI.scale(8))
+      assertThat(layout.getConstraints(search).insets.right).isEqualTo(JBUI.scale(4))
+      assertThat(layout.getConstraints(updateAll).insets.right).isEqualTo(JBUI.scale(4))
       assertThat(layout.getConstraints(settings).weightx).isEqualTo(1.0)
       assertThat(layout.getConstraints(settings).anchor).isEqualTo(GridBagConstraints.WEST)
     }

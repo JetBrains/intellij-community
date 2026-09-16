@@ -58,7 +58,6 @@ import org.junit.jupiter.api.Timeout
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Container
-import java.awt.Dimension
 import java.util.concurrent.CompletableFuture
 import javax.swing.JButton
 import javax.swing.JComponent

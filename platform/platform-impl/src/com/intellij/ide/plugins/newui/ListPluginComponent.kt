@@ -1693,10 +1693,10 @@ class ListPluginComponent private constructor(
       val iconSize = myIconComponent!!.preferredSize
       result.width += iconSize.width + myHGap.get()
       result.height = if (myUseUnifiedRowLayout) {
-        Math.max(myUnifiedRowCoreHeight.get(), Math.max(iconSize.height, Math.max(unifiedContentHeight(), unifiedControlHeight())))
+        maxOf(myUnifiedRowCoreHeight.get(), iconSize.height, unifiedContentHeight(), unifiedControlHeight())
       }
       else {
-        Math.max(result.height, iconSize.height)
+        maxOf(result.height, iconSize.height)
       }
 
       JBInsets.addTo(result, insets)
@@ -1711,7 +1711,7 @@ class ListPluginComponent private constructor(
       if (myProgressComponent == null && myCheckBoxComponent != null && myCheckBoxComponent!!.isVisible) {
         val size = myCheckBoxComponent!!.preferredSize
         val checkBoxY = if (myUseUnifiedRowLayout) {
-          insets.top + (Math.max(myUnifiedControlSlotHeight.get(), size.height) - size.height) / 2
+          insets.top + (maxOf(myUnifiedControlSlotHeight.get(), size.height) - size.height) / 2
         }
         else {
           (parent.height - size.height) / 2
@@ -1783,7 +1783,7 @@ class ListPluginComponent private constructor(
       }
 
       val lineWidth = if (myUseUnifiedRowLayout) {
-        Math.max(0, unifiedContentRight() - x)
+        maxOf(0, unifiedContentRight() - x)
       }
       else {
         width - x - insets.right
@@ -1808,7 +1808,7 @@ class ListPluginComponent private constructor(
     private fun unifiedFirstLineHeight(): Int {
       val nameHeight = myNameComponent!!.preferredSize.height
       val tagHeight = myTagComponent?.takeIf(Component::isVisible)?.preferredSize?.height ?: 0
-      return Math.max(nameHeight, tagHeight)
+      return maxOf(nameHeight, tagHeight)
     }
 
     private fun unifiedContentHeight(): Int {
@@ -1826,14 +1826,14 @@ class ListPluginComponent private constructor(
       var result = 0
       fun include(component: JComponent?) {
         if (component != null && component.isVisible) {
-          result = Math.max(result, component.preferredSize.height)
+          result = maxOf(result, component.preferredSize.height)
         }
       }
 
       include(myCheckBoxComponent)
       include(myProgressComponent)
       myButtonComponents.forEach(::include)
-      return if (result == 0) 0 else Math.max(result, myUnifiedControlSlotHeight.get())
+      return if (result == 0) 0 else maxOf(result, myUnifiedControlSlotHeight.get())
     }
 
     private fun calculateNameWidth(): Int {
@@ -1920,7 +1920,7 @@ class ListPluginComponent private constructor(
 
     private fun setActionBounds(x: Int, baseline: Int, component: JComponent, size: Dimension) {
       if (myUseUnifiedRowLayout) {
-        val slotHeight = Math.max(myUnifiedControlSlotHeight.get(), size.height)
+        val slotHeight = maxOf(myUnifiedControlSlotHeight.get(), size.height)
         component.setBounds(x, insets.top + (slotHeight - size.height) / 2, size.width, size.height)
       }
       else {

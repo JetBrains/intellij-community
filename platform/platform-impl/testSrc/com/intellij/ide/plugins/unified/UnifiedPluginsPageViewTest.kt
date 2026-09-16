@@ -291,7 +291,7 @@ internal class UnifiedPluginsPageViewTest {
     headerButton.isSelected = true
     val selectedImage = paintedImage(header)
     val selectionColor = ColorUtil.alphaBlending(ListPluginComponent.SELECTION_COLOR, PluginManagerConfigurable.MAIN_BG_COLOR)
-    assertThat((header as SelectablePanel).selectionColor).isNull()
+    assertThat(header.selectionColor).isNull()
     assertThat(Color(selectedImage.getRGB(hoverX, hoverY), true).rgb).isNotEqualTo(selectionColor.rgb)
 
     titleLabel.dispatchEvent(MouseEvent(

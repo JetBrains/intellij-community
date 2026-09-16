@@ -2381,7 +2381,7 @@ private interface PluginDetailsTabs {
 
   var selectedIndex: Int
 
-  fun addTab(title: String, component: JComponent)
+  fun addTab(title: @Nls String, component: JComponent)
 
   fun setEnabledAt(index: Int, enabled: Boolean)
 }
@@ -2396,7 +2396,7 @@ private class SwingPluginDetailsTabs(private val pane: JBTabbedPane) : PluginDet
       pane.selectedIndex = value
     }
 
-  override fun addTab(title: String, component: JComponent) {
+  override fun addTab(title: @Nls String, component: JComponent) {
     val insets = pane.tabComponentInsets
     pane.tabComponentInsets = JBInsets.emptyInsets()
     try {
@@ -2423,7 +2423,7 @@ private class IntelliJPluginDetailsTabs(
       tabs.select(tabs.getTabAt(value), false)
     }
 
-  override fun addTab(title: String, component: JComponent) {
+  override fun addTab(title: @Nls String, component: JComponent) {
     tabs.addTab(TabInfo(component).setText(title))
   }
 
