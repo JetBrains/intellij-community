@@ -123,7 +123,7 @@ object PluginUpdateSourceInitializer {
       return
     }
 
-    val singleCustomRepoUpdateSource = customPluginUpdateSources.singleOrNull()
+    val singleCustomRepoUpdateSource = customPluginUpdateSources.singleEquivalentOrNull()
     val newUpdateSourceId = when {
       singleCustomRepoUpdateSource != null -> {
         singleCustomRepoUpdateSource
@@ -144,5 +144,10 @@ object PluginUpdateSourceInitializer {
       thisLogger().info("Set ${newUpdateSourceId.getPresentableName()} update source to $pluginId")
       service.setPluginUpdateSourceId(pluginId, newUpdateSourceId)
     }
+  }
+
+  private fun List<PluginUpdateSourceId>.singleEquivalentOrNull(): PluginUpdateSourceId? {
+    val firstSource = firstOrNull() ?: return null
+    return firstSource.takeIf { all { source -> firstSource.isEquivalent(source) } }
   }
 }

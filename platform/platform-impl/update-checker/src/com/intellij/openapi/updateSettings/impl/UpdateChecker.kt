@@ -385,7 +385,8 @@ object UpdateChecker {
         val relevantUpdates = if (PluginUpdateSourceService.isPluginUpdateFilteredAgainstPluginUpdateSource()) {
           val backendUpdateSource = getMatchingPluginUpdateSource(backend)
           val relevantPluginIds = updates.getAllPluginIds().filter { pluginId ->
-            hasMatchingPluginUpdateSource(pluginId, backendUpdateSource)
+            val updateSourceFromSettings = PluginUpdateSourceService.getInstance().getPluginUpdateSourceId(pluginId)
+            updateSourceFromSettings?.isEquivalent(backendUpdateSource) == true
           }
           updates.filterByPluginIds(relevantPluginIds)
         }
@@ -414,18 +415,6 @@ object UpdateChecker {
                                 categorizedDownloaders.getDownloadersForAllDisabledPlugins(),
                                 incompatible)
     return InternalPluginResults(updates, pluginModels.values, errors)
-  }
-
-  private fun hasMatchingPluginUpdateSource(
-    pluginId: PluginId,
-    candidatePluginUpdateSource: PluginUpdateSourceId,
-  ): Boolean {
-    val updateSourceFromSettings = PluginUpdateSourceService.getInstance().getPluginUpdateSourceId(pluginId)
-    return when {
-      updateSourceFromSettings == null -> false
-      updateSourceFromSettings.isMarketplace -> candidatePluginUpdateSource.isMarketplace
-      else -> !candidatePluginUpdateSource.isMarketplace && updateSourceFromSettings.host == candidatePluginUpdateSource.host
-    }
   }
 
   private fun collectUpdateablePlugins(): Map<PluginId, IdeaPluginDescriptor?> {

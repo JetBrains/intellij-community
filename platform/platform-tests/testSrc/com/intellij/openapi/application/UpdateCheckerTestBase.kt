@@ -36,6 +36,10 @@ import java.util.jar.JarOutputStream
 import java.util.zip.ZipEntry
 
 internal abstract class UpdateCheckerTestBase {
+  companion object {
+    const val CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY = "intellij.plugins.custom.built.in.repository.url"
+  }
+
   protected val testDisposable = disposableFixture()
   protected val objectMapper = ObjectMapper()
 
