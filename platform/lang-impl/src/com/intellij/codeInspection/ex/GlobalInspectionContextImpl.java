@@ -431,9 +431,10 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
           ((JobLauncherImpl)JobLauncher.getInstance()).processQueue(filesToInspect, filesFailedToInspect, wrapper, TOMBSTONE, processor);
           break;
         }
-        catch (ProcessCanceledException e) {
+        catch (CancellationException e) {
           progressIndicator.checkCanceled();
-          // PCE may be thrown from inside wrapper when write action started.
+          // The wrapper cancels when a write action starts. The cancellation arrives from inside it as a
+          // ProcessCanceledException, or as a plain CancellationException through a coroutine bridge.
           // Go on with the write action and then resume processing the rest of the queue.
           if (!isOfflineInspections) {
             ApplicationManager.getApplication().assertIsNonDispatchThread();
