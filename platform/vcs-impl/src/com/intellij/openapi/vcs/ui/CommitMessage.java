@@ -136,7 +136,7 @@ public class CommitMessage extends JPanel implements Disposable, UiCompatibleDat
     myMessagePlaceholder = messagePlaceholder;
     myEditorField = createCommitMessageEditor(project, runInspections);
     myEditorField.getDocument().putUserData(DATA_KEY, this);
-    restartHighlightingOnEdit(project, myEditorField.getDocument());
+    myEditorField.getDocument().putUserData(DaemonCodeAnalyzer.INTERACTIVE_NON_PHYSICAL_DOCUMENT, project);
     myEditorField.setPlaceholder(myMessagePlaceholder);
     myEditorField.setShowPlaceholderWhenFocused(true);
     myEditorField.getAccessibleContext().setAccessibleName(VcsBundle.message("commit.message.editor.accessible.name"));
@@ -199,20 +199,6 @@ public class CommitMessage extends JPanel implements Disposable, UiCompatibleDat
       Editor editor = myEditorField.getEditor();
       if (editor instanceof EditorEx) RightMarginCustomization.customize(project, (EditorEx)editor);
     });
-  }
-
-  // Plain-text commit editor: the daemon's typing optimization skips re-highlighting on in-line edits, so annotator
-  // checks (which can't opt into runForWholeFile like inspections) go stale. Force a full pass per edit. See IJPL-245329.
-  private void restartHighlightingOnEdit(@NotNull Project project, @NotNull Document document) {
-    document.addDocumentListener(new DocumentListener() {
-      @Override
-      public void documentChanged(@NotNull DocumentEvent event) {
-        PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
-        if (psiFile != null) {
-          DaemonCodeAnalyzer.getInstance(project).restart(psiFile, this);
-        }
-      }
-    }, this);
   }
 
   @Override
