@@ -9,7 +9,7 @@ import com.intellij.testFramework.LightPlatformCodeInsightTestCase
 import com.intellij.testFramework.MockFontLayoutService
 import com.intellij.markdown.frontend.editor.tables.ui.alignment.MarkdownTableAlignmentController
 import org.intellij.plugins.markdown.editor.tables.ui.MarkdownTableInlayProvider
-import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings
+import org.intellij.plugins.markdown.settings.MarkdownApplicationSettings
 
 @Suppress("MarkdownIncorrectTableFormatting", "MarkdownNoTableBorders")
 class MarkdownTableAlignmentModelTest : LightPlatformCodeInsightTestCase() {
@@ -137,16 +137,16 @@ class MarkdownTableAlignmentModelTest : LightPlatformCodeInsightTestCase() {
       it.start()
     }
 
-    val state = MarkdownCodeInsightSettings.getInstance().state
-    val previous = state.alignTableCellsVisually
+    val settings = MarkdownApplicationSettings.getInstance()
+    val previous = settings.alignTableCellsVisually
     try {
-      state.alignTableCellsVisually = false
+      settings.alignTableCellsVisually = false
       MarkdownTableAlignmentSettingsListener.fireChanged()
 
       assertNotEmpty(editor.softWrapModel.getSoftWrapsForRange(0, editor.document.textLength))
     }
     finally {
-      state.alignTableCellsVisually = previous
+      settings.alignTableCellsVisually = previous
       MarkdownTableAlignmentSettingsListener.fireChanged()
     }
   }
@@ -240,14 +240,14 @@ class MarkdownTableAlignmentModelTest : LightPlatformCodeInsightTestCase() {
   }
 
   private fun withSettingDisabled(action: () -> Unit) {
-    val state = MarkdownCodeInsightSettings.getInstance().state
-    val previous = state.alignTableCellsVisually
-    state.alignTableCellsVisually = false
+    val settings = MarkdownApplicationSettings.getInstance()
+    val previous = settings.alignTableCellsVisually
+    settings.alignTableCellsVisually = false
     try {
       action()
     }
     finally {
-      state.alignTableCellsVisually = previous
+      settings.alignTableCellsVisually = previous
     }
   }
 

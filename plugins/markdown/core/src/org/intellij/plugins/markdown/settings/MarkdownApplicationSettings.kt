@@ -19,8 +19,13 @@ import org.jetbrains.annotations.ApiStatus
        storages = [(Storage("markdown.xml"))])
 class MarkdownApplicationSettings: SimplePersistentStateComponent<MarkdownApplicationSettings.State>(State()) {
   class State: BaseState() {
+    var alignTableCellsVisually: Boolean by property(true)
     var enableLivePreview: Boolean by property(true)
   }
+
+  var alignTableCellsVisually: Boolean
+    get() = state.alignTableCellsVisually
+    set(value) { state.alignTableCellsVisually = value }
 
   var enableLivePreview: Boolean
     get() = state.enableLivePreview
