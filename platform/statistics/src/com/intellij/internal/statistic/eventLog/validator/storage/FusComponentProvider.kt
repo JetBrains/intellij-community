@@ -134,6 +134,9 @@ object FusComponentProvider {
   // Mirrors the historical retention used by EventLogFileWriter; PersistentQueue deletes log files older than this.
   private val MAX_LOG_FILE_AGE = 7.days
 
+  // The SDK retrier rejects a shorter delay, see com.jetbrains.fus.reporting.defaults.retry.Retrier.
+  private const val MIN_SEND_FREQUENCY_MS = 1000L
+
   @Throws(IOException::class)
   private fun getMetadataDir(recorderId: String): Path = getMetadataConfigRoot()
     .resolve(StringUtil.toLowerCase(recorderId)) // TODO: can we remove lower case?
@@ -179,9 +182,10 @@ object FusComponentProvider {
   data class FusComponents(
     val metadataStorage: MetadataStorage<EventLogBuild>,
     /**
-     * Null only on the blind/test path ([createBlindFusComponents]) — production [createFusComponents] always builds a real
-     * client. Callers in the IDE's event pipeline can `!!` it; unit tests typically route through
-     * `TestStatisticsEventLoggerProvider` and never touch this field.
+     * [createFusComponents] always builds a client, on the production path and on the blind path.
+     * The field stays null only for a validator that does not come from [createFusComponents]: one built through the
+     * deprecated `IntellijSensitiveDataValidator(IntellijValidationRulesStorage, String)` constructor, or one built in a
+     * validator test from the one-argument [FusComponents].
      */
     val fusClient: FusClient<LogEvent, ValidatedFusReport>? = null,
   )
@@ -204,16 +208,6 @@ object FusComponentProvider {
     override fun getFieldsToAnonymize(groupId: String, eventId: String): Set<String> = emptySet()
   }
 
-  @JvmStatic
-  fun createBlindFusComponents(recorderId: String): FusComponents {
-    return FusComponents(
-      metadataStorage = CompositeValidationRulesStorage(
-        metadataStorage = BlindMetadataStorage(),
-        testRulesStorage = ValidationTestRulesPersistedStorage(recorderId)
-      )
-    )
-  }
-
   private fun EventLogBuildType.toIntelliJBuildType() = try {
     com.intellij.internal.statistic.config.eventLog.EventLogBuildType.valueOf(this.name)
   } catch (_: Exception) {
@@ -226,9 +220,15 @@ object FusComponentProvider {
     LogsFileDeleteCause.SEND_SUCCESS -> FileDeletionCause.SEND_SUCCESS
   }
 
+  /**
+   * @param blind When true, the metadata storage validates nothing. Use it for the unit test mode, where no remote
+   * metadata is available. It also keeps the client away from the network, because [BlindMetadataStorage] never loads.
+   */
   @JvmStatic
+  @JvmOverloads
   fun createFusComponents(
-    recorderId: String
+    recorderId: String,
+    blind: Boolean = false,
   ): FusComponents {
     val applicationInfo = EventLogInternalApplicationInfo(
       StatisticsUploadAssistant.isUseTestStatisticsConfig(),
@@ -236,6 +236,10 @@ object FusComponentProvider {
     )
     val eventLogProvider = getEventLogProvider(recorderId)
     val isUnitTest = ApplicationManager.getApplication().isUnitTestMode()
+
+    // The SDK retrier requires a send frequency of one second or more. A provider can report less, for example
+    // EmptyStatisticsEventLoggerProvider reports -1, so clamp the value here.
+    val sendFrequency = maxOf(eventLogProvider.sendFrequencyMs, MIN_SEND_FREQUENCY_MS).milliseconds
 
     val isInternal = { applicationInfo.isInternal }
     val systemLogGroupId = "${recorderId.lowercase(Locale.ENGLISH)}.event.log"
@@ -296,24 +300,33 @@ object FusComponentProvider {
           DefaultRemoteConfig(config, messageBus, loggerFactory, jsonSerializer, httpClient)
         }
         metadataStorage { config, messageBus, loggerFactory, remoteConfig, httpClient, fileStorage, jsonSerializer, bundledFileStorage ->
-          val storage = DefaultMetadataStorage(
-            config,
-            messageBus,
-            loggerFactory,
-            remoteConfig,
-            httpClient,
-            jsonSerializer,
-            fileStorage,
-            bundledFileStorage,
-            MetadataUpdateDelay.LONG,
-            { version -> EventLogBuild.fromString(version) },
-            excludedFields = FeatureUsageData.platformDataKeys,
-            utilRulesProducer = CustomRuleProducer(recorderId)
-          )
-          val effective: MetadataStorage<EventLogBuild> = if (isInternal()) {
-            CompositeValidationRulesStorage(storage, ValidationTestRulesPersistedStorage(recorderId))
-          } else {
-            storage
+          val effective: MetadataStorage<EventLogBuild> = if (blind) {
+            CompositeValidationRulesStorage(
+              metadataStorage = BlindMetadataStorage(),
+              testRulesStorage = ValidationTestRulesPersistedStorage(recorderId)
+            )
+          }
+          else {
+            val storage = DefaultMetadataStorage(
+              config,
+              messageBus,
+              loggerFactory,
+              remoteConfig,
+              httpClient,
+              jsonSerializer,
+              fileStorage,
+              bundledFileStorage,
+              MetadataUpdateDelay.LONG,
+              { version -> EventLogBuild.fromString(version) },
+              excludedFields = FeatureUsageData.platformDataKeys,
+              utilRulesProducer = CustomRuleProducer(recorderId)
+            )
+            if (isInternal()) {
+              CompositeValidationRulesStorage(storage, ValidationTestRulesPersistedStorage(recorderId))
+            }
+            else {
+              storage
+            }
           }
           metadataStorageRef = effective
           effective
@@ -327,7 +340,7 @@ object FusComponentProvider {
             fileStorage = eventLogFileStorage,
             jsonSerializer = jsonSerializer,
             loggerFactory = loggerFactory,
-            defaultDelay = eventLogProvider.sendFrequencyMs.milliseconds,
+            defaultDelay = sendFrequency,
             eventClass = LogEvent::class,
             buildType = buildType,
             maxFileBytes = eventLogProvider.maxFileSizeInBytes.toLong(),
@@ -345,7 +358,7 @@ object FusComponentProvider {
             device,
             isInternal,
             systemLogGroupId,
-            eventLogProvider.sendFrequencyMs.milliseconds,
+            sendFrequency,
             // eventBufferSize is a safeguard against missing bundled metadata. If bundled metadata is missing due to a regression,
             // we have a buffer that should be enough to bridge the gap until the first metadata update.
             5000,

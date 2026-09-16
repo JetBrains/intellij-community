@@ -106,7 +106,7 @@ open class IntellijSensitiveDataValidator protected constructor(
         // Validator creation initializes metadata storage and may do IO; keep it outside ConcurrentHashMap locks.
         lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
           if (ApplicationManager.getApplication().isUnitTestMode) {
-            BlindSensitiveDataValidator(FusComponentProvider.createBlindFusComponents(id), id)
+            BlindSensitiveDataValidator(FusComponentProvider.createFusComponents(id, blind = true), id)
           }
           else {
             IntellijSensitiveDataValidator(FusComponentProvider.createFusComponents(id), id)
