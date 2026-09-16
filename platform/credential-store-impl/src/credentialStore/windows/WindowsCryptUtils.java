@@ -90,7 +90,7 @@ public final class WindowsCryptUtils {
   private static final class Handles {
     private static final Linker LINKER = Linker.nativeLinker();
     private static final SymbolLookup CRYPT32 = WindowsSystemLibraries.lookup("crypt32.dll");
-    private static final SymbolLookup KERNEL32 = WindowsKernel32.kernel32();
+    private static final SymbolLookup KERNEL32 = WindowsSystemLibraries.kernel32();
     private static final Linker.Option CAPTURE_LAST_ERROR = WindowsKernel32.captureLastError();
 
     /** {@code DATA_BLOB { DWORD cbData; BYTE *pbData; }}, 16 bytes with padding */

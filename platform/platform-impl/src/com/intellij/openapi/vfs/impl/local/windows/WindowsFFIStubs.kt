@@ -6,6 +6,7 @@ package com.intellij.openapi.vfs.impl.local.windows
 
 import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.WindowsKernel32
+import com.intellij.util.system.WindowsSystemLibraries
 import com.intellij.util.system.WindowsNtDll
 import org.jetbrains.annotations.ApiStatus
 import java.io.Closeable
@@ -47,8 +48,8 @@ private object WindowsDllLookup {
    * The facade loads the library on the first call, so this object holds no library until a call needs one.
    */
   private fun lookupFor(library: WindowsLibrary): SymbolLookup = when (library) {
-    WindowsLibrary.Kernel32 -> WindowsKernel32.kernel32()
-    WindowsLibrary.Ntdll -> WindowsNtDll.ntdll()
+    WindowsLibrary.Kernel32 -> WindowsSystemLibraries.kernel32()
+    WindowsLibrary.Ntdll -> WindowsSystemLibraries.ntdll()
   }
 
   fun handleFor(library: WindowsLibrary, label: WindowsSymbol): MethodHandle {

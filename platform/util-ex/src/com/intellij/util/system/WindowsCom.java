@@ -56,7 +56,7 @@ final class WindowsCom {
 
   private static final class Handles {
     private static final Linker LINKER = Linker.nativeLinker();
-    private static final SymbolLookup OLE32 = WindowsSystemLibraries.lookup("ole32.dll");
+    private static final SymbolLookup OLE32 = WindowsSystemLibraries.ole32();
     static final MethodHandle INITIALIZE =
       LINKER.downcallHandle(OLE32.findOrThrow("CoInitializeEx"), FunctionDescriptor.of(JAVA_INT, ADDRESS, JAVA_INT));
     static final MethodHandle UNINITIALIZE = LINKER.downcallHandle(OLE32.findOrThrow("CoUninitialize"), FunctionDescriptor.ofVoid());

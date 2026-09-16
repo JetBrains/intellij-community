@@ -8,6 +8,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.UtilBundle;
 import com.intellij.util.system.OS;
 import com.intellij.util.system.WindowsKernel32;
+import com.intellij.util.system.WindowsSystemLibraries;
 import com.intellij.util.text.DateTimeFormatManager.Formats;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -391,7 +392,7 @@ public final class DateFormatUtil {
     static final int LOCALE_STIMEFORMAT = 0x00001003;
 
     static final MethodHandle GET_LOCALE_INFO_EX = Linker.nativeLinker().downcallHandle(
-      WindowsKernel32.kernel32().findOrThrow("GetLocaleInfoEx"),
+      WindowsSystemLibraries.kernel32().findOrThrow("GetLocaleInfoEx"),
       FunctionDescriptor.of(JAVA_INT, ADDRESS, JAVA_INT, ADDRESS, JAVA_INT), WindowsKernel32.captureLastError());
   }
 

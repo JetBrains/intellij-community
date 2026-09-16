@@ -125,15 +125,6 @@ public final class WindowsNtDll {
   public static final long PROCESS_ID_LIST = FILE_PROCESS_IDS.byteOffset(groupElement("ProcessIdList"));
 
   /**
-   * The {@code ntdll.dll} lookup, for a symbol that only one class needs. A symbol that more than one class
-   * needs belongs in this class.
-   */
-  @ApiStatus.Internal
-  public static @NotNull SymbolLookup ntdll() {
-    return Handles.NTDLL;
-  }
-
-  /**
    * {@code NTSTATUS NtQueryInformationFile(HANDLE file, PIO_STATUS_BLOCK, PVOID information, ULONG length,
    * FILE_INFORMATION_CLASS)}
    *
@@ -164,7 +155,7 @@ public final class WindowsNtDll {
   /** The library and the handles load on the first call, so the layouts above stay readable on another operating system. */
   private static final class Handles {
     private static final Linker LINKER = Linker.nativeLinker();
-    static final SymbolLookup NTDLL = WindowsSystemLibraries.lookup("ntdll.dll");
+    static final SymbolLookup NTDLL = WindowsSystemLibraries.ntdll();
 
     static final MethodHandle QUERY_INFORMATION_FILE = LINKER.downcallHandle(
       NTDLL.findOrThrow("NtQueryInformationFile"),

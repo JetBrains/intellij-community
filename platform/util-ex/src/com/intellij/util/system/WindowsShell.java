@@ -54,9 +54,9 @@ public final class WindowsShell {
 
     /** {@code HRESULT SHGetKnownFolderPath(REFKNOWNFOLDERID, DWORD flags, HANDLE token, PWSTR *path)} */
     static final MethodHandle SH_GET_KNOWN_FOLDER_PATH = LINKER.downcallHandle(
-      WindowsSystemLibraries.lookup("shell32.dll").findOrThrow("SHGetKnownFolderPath"), FunctionDescriptor.of(JAVA_INT, ADDRESS, JAVA_INT, ADDRESS, ADDRESS));
+      WindowsSystemLibraries.shell32().findOrThrow("SHGetKnownFolderPath"), FunctionDescriptor.of(JAVA_INT, ADDRESS, JAVA_INT, ADDRESS, ADDRESS));
     /** {@code void CoTaskMemFree(LPVOID)} */
     static final MethodHandle CO_TASK_MEM_FREE = LINKER.downcallHandle(
-      WindowsSystemLibraries.lookup("ole32.dll").findOrThrow("CoTaskMemFree"), FunctionDescriptor.ofVoid(ADDRESS));
+      WindowsSystemLibraries.ole32().findOrThrow("CoTaskMemFree"), FunctionDescriptor.ofVoid(ADDRESS));
   }
 }

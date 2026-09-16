@@ -2,6 +2,7 @@
 package com.intellij.util.io;
 
 import com.intellij.util.system.WindowsKernel32;
+import com.intellij.util.system.WindowsSystemLibraries;
 import org.jetbrains.annotations.ApiStatus;
 
 import java.io.IOException;
@@ -53,7 +54,7 @@ public final class WindowsPower {
 
     /** {@code BOOL GetSystemPowerStatus(LPSYSTEM_POWER_STATUS)}, with {@code GetLastError} captured into the leading call-state argument */
     static final MethodHandle GET_SYSTEM_POWER_STATUS = LINKER.downcallHandle(
-      WindowsKernel32.kernel32().findOrThrow("GetSystemPowerStatus"),
+      WindowsSystemLibraries.kernel32().findOrThrow("GetSystemPowerStatus"),
       FunctionDescriptor.of(JAVA_INT, ADDRESS),
       WindowsKernel32.captureLastError());
   }

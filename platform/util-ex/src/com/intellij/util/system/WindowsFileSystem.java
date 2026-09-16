@@ -143,7 +143,7 @@ public final class WindowsFileSystem {
    */
   private static final class Handles {
     private static final Linker LINKER = Linker.nativeLinker();
-    private static final SymbolLookup KERNEL32 = WindowsKernel32.kernel32();
+    private static final SymbolLookup KERNEL32 = WindowsSystemLibraries.kernel32();
 
     /** {@code DWORD GetFileAttributesW(LPCWSTR fileName)} */
     static final MethodHandle GET_FILE_ATTRIBUTES = LINKER.downcallHandle(

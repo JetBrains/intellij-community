@@ -124,7 +124,7 @@ private object WindowsSystemTimes {
   /** `BOOL GetSystemTimes(LPFILETIME lpIdleTime, LPFILETIME lpKernelTime, LPFILETIME lpUserTime)` */
   private val GET_SYSTEM_TIMES: MethodHandle by lazy {
     Linker.nativeLinker().downcallHandle(
-      WindowsKernel32.kernel32().findOrThrow("GetSystemTimes"),
+      WindowsSystemLibraries.kernel32().findOrThrow("GetSystemTimes"),
       FunctionDescriptor.of(JAVA_INT, ADDRESS, ADDRESS, ADDRESS),
     )
   }

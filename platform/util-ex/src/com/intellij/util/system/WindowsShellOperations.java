@@ -64,7 +64,7 @@ public final class WindowsShellOperations {
 
   private static final class Handles {
     private static final Linker LINKER = Linker.nativeLinker();
-    private static final SymbolLookup SHELL32 = WindowsSystemLibraries.lookup("shell32.dll");
+    private static final SymbolLookup SHELL32 = WindowsSystemLibraries.shell32();
     static final MethodHandle EXECUTE = LINKER.downcallHandle(
       SHELL32.findOrThrow("ShellExecuteW"), FunctionDescriptor.of(ADDRESS, ADDRESS, ADDRESS, ADDRESS, ADDRESS, ADDRESS, JAVA_INT));
     static final MethodHandle CREATE_ITEM =

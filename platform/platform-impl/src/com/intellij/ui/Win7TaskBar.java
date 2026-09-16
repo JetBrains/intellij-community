@@ -57,7 +57,7 @@ final class Win7TaskBar {
     EDT.assertIsEdt();
 
     var linker = Linker.nativeLinker();
-    var ole32 = WindowsSystemLibraries.lookup("ole32.dll");
+    var ole32 = WindowsSystemLibraries.ole32();
     var initialize = linker.downcallHandle(ole32.findOrThrow("CoInitializeEx"), FunctionDescriptor.of(JAVA_INT, ADDRESS, JAVA_INT));
     var uninitialize = linker.downcallHandle(ole32.findOrThrow("CoUninitialize"), FunctionDescriptor.ofVoid());
     var parseGuid = linker.downcallHandle(ole32.findOrThrow("CLSIDFromString"), FunctionDescriptor.of(JAVA_INT, ADDRESS, ADDRESS));

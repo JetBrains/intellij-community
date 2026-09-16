@@ -91,7 +91,7 @@ internal class WindowsWindowEffectsNativeTest {
         val handle = peer.javaClass.getMethod("getHWnd").invoke(peer) as Long
         assertThat(handle).isNotZero()
         action(MemorySegment.ofAddress(handle),
-               WindowsSystemLibraries.lookup("user32.dll").or(WindowsSystemLibraries.lookup("gdi32.dll")))
+               WindowsSystemLibraries.user32().or(WindowsSystemLibraries.gdi32()))
       }
       finally {
         window.dispose()

@@ -249,7 +249,7 @@ public final class User32Ex {
   /** {@code HWND}, {@code HICON} and {@code PBYTE} are addresses; {@code BOOL}, {@code DWORD}, {@code UINT} and {@code int} are {@code int}; {@code LPARAM} is {@code long}. */
   private static final class Handles {
     static final Linker LINKER = Linker.nativeLinker();
-    private static final SymbolLookup USER32 = WindowsSystemLibraries.lookup("user32.dll");
+    private static final SymbolLookup USER32 = WindowsSystemLibraries.user32();
 
     /** {@code int LookupIconIdFromDirectoryEx(PBYTE, BOOL icon, int cx, int cy, UINT flags)} */
     static final MethodHandle LOOKUP_ICON_ID_FROM_DIRECTORY_EX = downcall("LookupIconIdFromDirectoryEx", FunctionDescriptor.of(JAVA_INT, ADDRESS, JAVA_INT, JAVA_INT, JAVA_INT, JAVA_INT));

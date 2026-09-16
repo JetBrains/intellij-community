@@ -58,7 +58,7 @@ public final class WindowsServices {
 
   private static final class Handles {
     private static final Linker LINKER = Linker.nativeLinker();
-    private static final SymbolLookup ADVAPI32 = WindowsSystemLibraries.lookup("advapi32.dll");
+    private static final SymbolLookup ADVAPI32 = WindowsSystemLibraries.advapi32();
     private static final Linker.Option CAPTURE_LAST_ERROR = WindowsKernel32.captureLastError();
 
     /** {@code SC_HANDLE OpenSCManagerW(LPCWSTR machine, LPCWSTR database, DWORD access)} */

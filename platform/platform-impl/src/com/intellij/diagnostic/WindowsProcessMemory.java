@@ -69,6 +69,6 @@ final class WindowsProcessMemory {
 
     /** {@code BOOL GetProcessMemoryInfo(HANDLE, PPROCESS_MEMORY_COUNTERS, DWORD cb)} */
     static final MethodHandle GET_PROCESS_MEMORY_INFO = LINKER.downcallHandle(
-      WindowsSystemLibraries.lookup("psapi.dll").findOrThrow("GetProcessMemoryInfo"), FunctionDescriptor.of(JAVA_INT, ADDRESS, ADDRESS, JAVA_INT));
+      WindowsSystemLibraries.psapi().findOrThrow("GetProcessMemoryInfo"), FunctionDescriptor.of(JAVA_INT, ADDRESS, ADDRESS, JAVA_INT));
   }
 }

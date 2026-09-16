@@ -61,15 +61,6 @@ public final class WindowsKernel32 {
   public static final StructLayout CALL_STATE = Linker.Option.captureStateLayout();
 
   /**
-   * The {@code kernel32.dll} lookup, for a symbol that only one class needs. A symbol that more than one class
-   * needs belongs in this class.
-   */
-  @ApiStatus.Internal
-  public static @NotNull SymbolLookup kernel32() {
-    return Handles.KERNEL32;
-  }
-
-  /**
    * The option that makes a downcall write its {@code GetLastError} code into a leading call-state argument.
    * Allocate the argument from {@link #CALL_STATE} and read it with {@link #lastError}.
    * <p>
@@ -173,7 +164,7 @@ public final class WindowsKernel32 {
   /** The library and the handles load on the first call, so a class of this package stays readable on another operating system. */
   private static final class Handles {
     private static final Linker LINKER = Linker.nativeLinker();
-    static final SymbolLookup KERNEL32 = WindowsSystemLibraries.lookup("kernel32.dll");
+    static final SymbolLookup KERNEL32 = WindowsSystemLibraries.kernel32();
     static final Linker.Option CAPTURE_LAST_ERROR = Linker.Option.captureCallState("GetLastError");
 
     static final VarHandle LAST_ERROR = CALL_STATE.varHandle(MemoryLayout.PathElement.groupElement("GetLastError"));

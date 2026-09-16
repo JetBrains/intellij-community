@@ -246,7 +246,7 @@ public final class WindowsRegistry {
    */
   private static final class Handles {
     private static final Linker LINKER = Linker.nativeLinker();
-    private static final SymbolLookup ADVAPI32 = WindowsSystemLibraries.lookup("advapi32.dll");
+    private static final SymbolLookup ADVAPI32 = WindowsSystemLibraries.advapi32();
 
     /** {@code LSTATUS RegGetValueW(HKEY, LPCWSTR subKey, LPCWSTR value, DWORD flags, LPDWORD type, PVOID data, LPDWORD size)} */
     static final MethodHandle REG_GET_VALUE = LINKER.downcallHandle(

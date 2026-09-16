@@ -170,6 +170,6 @@ private fun String.toArgv(): List<String> {
 private object Shell32 {
   /** `LPWSTR* CommandLineToArgvW(LPCWSTR commandLine, int* count)` */
   val COMMAND_LINE_TO_ARGV: MethodHandle = Linker.nativeLinker().downcallHandle(
-    WindowsSystemLibraries.lookup("shell32.dll").findOrThrow("CommandLineToArgvW"),
+    WindowsSystemLibraries.shell32().findOrThrow("CommandLineToArgvW"),
     FunctionDescriptor.of(ADDRESS, ADDRESS, ADDRESS))
 }

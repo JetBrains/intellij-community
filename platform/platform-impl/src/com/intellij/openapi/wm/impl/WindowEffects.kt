@@ -19,7 +19,7 @@ import javax.swing.RootPaneContainer
 
 internal object WindowEffects {
   private val windows by lazy {
-    WindowsWindowEffects(WindowsSystemLibraries.lookup("user32.dll").or(WindowsSystemLibraries.lookup("gdi32.dll")))
+    WindowsWindowEffects(WindowsSystemLibraries.user32().or(WindowsSystemLibraries.gdi32()))
   }
   private val xlib by lazy { SymbolLookup.libraryLookup("libX11.so.6", Arena.global()) }
   private val xshape by lazy { SymbolLookup.libraryLookup("libXext.so.6", Arena.global()) }

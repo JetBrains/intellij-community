@@ -57,7 +57,7 @@ public final class Wow64 {
   /** Downcalls into {@code kernel32.dll}. {@code HANDLE} is an address, {@code BOOL} is {@code int}, {@code USHORT*} points at a {@code short}. */
   private static final class Handles {
     private static final Linker LINKER = Linker.nativeLinker();
-    private static final SymbolLookup KERNEL32 = WindowsKernel32.kernel32();
+    private static final SymbolLookup KERNEL32 = WindowsSystemLibraries.kernel32();
 
     /** {@code BOOL IsWow64Process2(HANDLE process, USHORT *processMachine, USHORT *nativeMachine)}, absent before Windows 10 1709 */
     static final @Nullable MethodHandle IS_WOW64_PROCESS_2 = KERNEL32.find("IsWow64Process2")

@@ -192,7 +192,7 @@ public final class WindowsWmi {
 
   private static final class Handles {
     private static final Linker LINKER = Linker.nativeLinker();
-    private static final SymbolLookup OLE32 = WindowsSystemLibraries.lookup("ole32.dll");
+    private static final SymbolLookup OLE32 = WindowsSystemLibraries.ole32();
     private static final SymbolLookup OLEAUT32 = WindowsSystemLibraries.lookup("oleaut32.dll");
     static final MethodHandle CREATE_INSTANCE = LINKER.downcallHandle(
       OLE32.findOrThrow("CoCreateInstance"), FunctionDescriptor.of(JAVA_INT, ADDRESS, ADDRESS, JAVA_INT, ADDRESS, ADDRESS));

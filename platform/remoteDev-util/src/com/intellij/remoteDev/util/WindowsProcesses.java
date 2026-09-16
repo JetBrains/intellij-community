@@ -2,6 +2,7 @@
 package com.intellij.remoteDev.util;
 
 import com.intellij.util.system.WindowsKernel32;
+import com.intellij.util.system.WindowsSystemLibraries;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -145,7 +146,7 @@ public final class WindowsProcesses {
   /** {@code HANDLE} and every pointer are addresses; {@code BOOL} and {@code DWORD} are {@code int}. */
   private static final class Handles {
     private static final Linker LINKER = Linker.nativeLinker();
-    private static final SymbolLookup KERNEL32 = WindowsKernel32.kernel32();
+    private static final SymbolLookup KERNEL32 = WindowsSystemLibraries.kernel32();
     private static final Linker.Option CAPTURE_LAST_ERROR = WindowsKernel32.captureLastError();
 
     /** {@code STARTUPINFOW}, 104 bytes on x64 and ARM64 */

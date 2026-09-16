@@ -134,7 +134,7 @@ private object WindowsProcessMetrics {
   /** `BOOL GetProcessMemoryInfo(HANDLE Process, PPROCESS_MEMORY_COUNTERS ppsmemCounters, DWORD cb)` */
   private val GET_PROCESS_MEMORY_INFO: MethodHandle by lazy {
     Linker.nativeLinker().downcallHandle(
-      WindowsSystemLibraries.lookup("psapi.dll").findOrThrow("GetProcessMemoryInfo"),
+      WindowsSystemLibraries.psapi().findOrThrow("GetProcessMemoryInfo"),
       FunctionDescriptor.of(JAVA_INT, ADDRESS, ADDRESS, JAVA_INT),
     )
   }

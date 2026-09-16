@@ -124,7 +124,7 @@ object WinHttp {
   private object Handles {
     private val LINKER: Linker = Linker.nativeLinker()
     private val WINHTTP: SymbolLookup = WindowsSystemLibraries.lookup("winhttp.dll")
-    private val KERNEL32: SymbolLookup = WindowsKernel32.kernel32()
+    private val KERNEL32: SymbolLookup = WindowsSystemLibraries.kernel32()
     private val CAPTURE_LAST_ERROR: Linker.Option = WindowsKernel32.captureLastError()
 
     val CALL_STATE: StructLayout = Linker.Option.captureStateLayout()
