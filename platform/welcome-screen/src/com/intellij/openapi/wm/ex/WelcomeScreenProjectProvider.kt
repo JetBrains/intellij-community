@@ -119,6 +119,8 @@ abstract class WelcomeScreenProjectProvider {
     }
   }
 
+  open suspend fun createSimpleProject(projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? = null
+
   /**
    * Return true if the welcome screen project can open [filePath] from the file manager (Explorer, Finder) or command line.
    */

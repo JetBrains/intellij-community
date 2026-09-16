@@ -24,6 +24,11 @@ internal class WelcomeScreenProjectSupportImpl : WelcomeScreenProjectSupport {
     projectToClose: Project?,
     forceOpenInNewFrame: Boolean,
   ): Project {
+    val simpleProject = extension.createSimpleProject(projectToClose, forceOpenInNewFrame)
+    if (simpleProject != null) {
+      return simpleProject
+    }
+
     val projectPath = extension.getWelcomeScreenProjectPathForInternalUsage()
 
     if (!projectPath.exists(LinkOption.NOFOLLOW_LINKS)) {
