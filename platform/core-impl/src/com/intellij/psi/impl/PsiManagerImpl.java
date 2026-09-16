@@ -458,7 +458,7 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
           LOG.error(PluginException.createByClass(e, preprocessor.getClass()));
         }
       }
-      if (isBeforeEvent || !myTreeChangePreprocessors.isEmpty()) {
+      if (isBeforeEvent || !myTreeChangePreprocessors.isEmpty() || !PsiTreeChangePreprocessor.EP.getExtensions(myProject).isEmpty()) {
         runWriteActionOnEdtRegardlessOfCurrentThread(() -> {
           if (isBeforeEvent) {
             myProject.getMessageBus().syncPublisher(ANY_PSI_CHANGE_TOPIC).beforePsiChanged(true);
@@ -470,15 +470,16 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
               LOG.error(PluginException.createByClass(e, preprocessor.getClass()));
             }
           }
+          // Re-read the extensions. The list can change while the event waits for the EDT.
+          for (PsiTreeChangePreprocessor preprocessor : PsiTreeChangePreprocessor.EP.getExtensions(myProject)) {
+            try {
+              preprocessor.treeChanged(event);
+            }
+            catch (Throwable e) {
+              LOG.error(e);
+            }
+          }
         });
-      }
-      for (PsiTreeChangePreprocessor preprocessor : PsiTreeChangePreprocessor.EP.getExtensions(myProject)) {
-        try {
-          preprocessor.treeChanged(event);
-        }
-        catch (Throwable e) {
-          LOG.error(e);
-        }
       }
       for (PsiTreeChangeListener listener : myTreeChangeListenersBackgroundable) {
         notifyPsiTreeChangeListener(event, listener);

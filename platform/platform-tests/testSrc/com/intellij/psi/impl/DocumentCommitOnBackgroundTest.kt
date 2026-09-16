@@ -9,6 +9,7 @@ import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener
 import com.intellij.openapi.fileEditor.FileDocumentManagerListenerBackgroundable
@@ -19,6 +20,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiTreeChangeAdapter
 import com.intellij.psi.PsiTreeChangeEvent
+import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.common.waitForAllDocumentsCommitted
 import com.intellij.testFramework.junit5.TestApplication
@@ -47,6 +49,10 @@ class DocumentCommitOnBackgroundTest {
     val project = projectFixture(openAfterCreation = true)
     val module = project.moduleFixture()
     val sourceRoot = module.sourceRootFixture()
+
+    /** The same point as [PsiTreeChangePreprocessor.EP], but in the form that [ExtensionTestUtil] accepts. */
+    val PREPROCESSOR_EP_NAME: ExtensionPointName<PsiTreeChangePreprocessor> =
+      ExtensionPointName("com.intellij.psi.treeChangePreprocessor")
   }
 
   val file = sourceRoot.psiFileFixture("A.java", "class A {}")
@@ -316,6 +322,40 @@ class DocumentCommitOnBackgroundTest {
       listOf(false, false, false),
     )
     assertEquals(expected, actual, "Each entry is [isLegacy, isBefore, isPhysical]")
+  }
+
+  @Test
+  fun `an extension point preprocessor runs on EDT and an imperative backgroundable one runs in place`(
+    @TestDisposable testDisposable: Disposable,
+  ) {
+    Registry.get("document.async.commit.with.coroutines").setValue(true, testDisposable)
+    val psiDocumentManager = PsiDocumentManager.getInstance(project.get())
+    val psiManager = PsiManagerEx.getInstanceEx(project.get())
+
+    val epPreprocessor = RecordingTreeChangePreprocessor()
+    ExtensionTestUtil.maskExtensions(PREPROCESSOR_EP_NAME, listOf<PsiTreeChangePreprocessor>(epPreprocessor), testDisposable, true,
+                                     project.get())
+
+    val backgroundablePreprocessor = RecordingTreeChangePreprocessor()
+    psiManager.addTreeChangePreprocessorBackgroundable(backgroundablePreprocessor, testDisposable)
+
+    invokeAndWaitIfNeeded {
+      val file = file.get()
+      val document = psiDocumentManager.getDocument(file)!!
+      WriteCommandAction.runWriteCommandAction(project.get()) { document.insertString(0, "ghi") }
+      waitForAllDocumentsCommitted(10, TimeUnit.SECONDS)
+    }
+
+    DumbService.getInstance(project.get()).waitForSmartMode()
+
+    assertTrue(epPreprocessor.recorder.invoked.get() > 0, "The extension point preprocessor got no event")
+    assertEquals(epPreprocessor.recorder.invoked.get(), epPreprocessor.recorder.onEdt.get(),
+                 "The extension point preprocessor must always run on EDT")
+
+    assertTrue(backgroundablePreprocessor.recorder.invoked.get() > 0, "The backgroundable preprocessor got no event")
+    // Some events fire when dumb mode ends. They come from EDT, so a strict zero is not possible here.
+    assertTrue(backgroundablePreprocessor.recorder.onEdt.get() < backgroundablePreprocessor.recorder.invoked.get(),
+               "The backgroundable preprocessor must run in place, off EDT")
   }
 
   @Test
