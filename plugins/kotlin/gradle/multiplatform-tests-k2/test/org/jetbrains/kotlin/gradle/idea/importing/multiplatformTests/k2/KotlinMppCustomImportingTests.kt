@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfigurationDslScope
 import org.jetbrains.kotlin.gradle.multiplatformTests.isAgp9OrHigher
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.buildGradleModel
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.buildKotlinMPPGradleModel
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.buildRootKotlinMPPGradleModel
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.highlighting.HighlightingChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.hooks.KotlinMppTestHooks
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradlePluginVersions
@@ -65,6 +66,16 @@ class KotlinMppCustomImportingTests : AbstractKotlinMppGradleImportingTest() {
                 assertNotSame(kotlinGradlePluginVersion, kotlinGradlePluginVersion.reparse()!!)
                 assertEquals(kotlinGradlePluginVersion.reparse(), kotlinGradlePluginVersion.reparse()!!)
             }
+        }
+    }
+
+    @Test
+    @TestMetadata("taskRealization")
+    fun testDoesNotRealizeUnrelatedTaskWhileBuildingKotlinMppModel() = doTest(runImport = false) {
+        runBeforeImport {
+            val model = buildRootKotlinMPPGradleModel()
+
+            assertTrue("Expected the Android unit-test task to be exported", model.targets.single().testRunTasks.isNotEmpty())
         }
     }
 

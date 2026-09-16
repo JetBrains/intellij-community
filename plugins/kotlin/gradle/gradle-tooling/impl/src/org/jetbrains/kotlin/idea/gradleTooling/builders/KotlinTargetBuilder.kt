@@ -173,11 +173,12 @@ object KotlinTargetBuilder : KotlinMultiplatformComponentBuilder<KotlinTargetRef
             val androidUnitTestClass = gradleTarget.testTaskClass("com.android.build.gradle.tasks.factory.AndroidUnitTest")
                 ?: return emptyList()
 
-            return project.tasks.filter { androidUnitTestClass.isInstance(it) }.map { task -> task.name }
+            return project.tasks.withType(androidUnitTestClass).map { task -> task.name }
                 .map { KotlinTestRunTaskImpl(it, KotlinCompilation.TEST_COMPILATION_NAME) }
         }
 
-        return project.tasks.filter { kotlinTestTaskClass.isInstance(it) || jvmTestTaskClass.isInstance(it) }.mapNotNull { task ->
+        val testTasks = project.tasks.withType(kotlinTestTaskClass) + project.tasks.withType(jvmTestTaskClass)
+        return testTasks.distinct().mapNotNull { task ->
             val testTaskDisambiguationClassifier =
                 (if (kotlinTestTaskClass.isInstance(task)) getTargetName(task) else getJvmTargetName(task)) as String?
             task.name.takeIf {

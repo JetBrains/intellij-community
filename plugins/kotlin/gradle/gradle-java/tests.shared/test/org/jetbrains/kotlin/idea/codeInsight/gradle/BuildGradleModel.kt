@@ -16,6 +16,7 @@ import org.gradle.tooling.model.idea.IdeaProject
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.idea.gradleTooling.IdeaMppProjectProvider
 import org.jetbrains.kotlin.utils.addIfNotNull
+import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider
 import org.jetbrains.plugins.gradle.service.execution.createMainInitScript
 import org.jetbrains.plugins.gradle.service.execution.createTargetPathMapperInitScript
 import org.jetbrains.plugins.gradle.service.modelAction.GradleIdeaModelHolder
@@ -50,11 +51,51 @@ data class BuildGradleModelDebuggerOptions(
     val port: Int = 5005
 )
 
+/**
+ * Requests the model for each project and an [IdeaProject] model to map the results to modules.
+ * The [IdeaProject] request can realize unrelated tasks. Use [buildRootGradleModel] to skip the [IdeaProject] request.
+ */
 fun <T : Any> buildGradleModel(
     projectPath: File, gradleVersion: GradleVersion, javaHomePath: String, clazz: KClass<T>,
     builderClass: Class<*>? = null,
     debuggerOptions: BuildGradleModelDebuggerOptions? = null
 ): BuiltGradleModel<T> {
+    val models = fetchGradleModels(
+        projectPath, gradleVersion, javaHomePath, builderClass, debuggerOptions,
+        GradleClassProjectModelProvider.createAll(clazz.java) + GradleClassBuildModelProvider.createAll(IdeaProject::class.java)
+    )
+    val ideaProject = models.getRootModel(IdeaProject::class.java) ?: fail("Missing '${IdeaProject::class.simpleName}' model")
+    return BuiltGradleModel(ideaProject.modules.associateWith { module -> models.getProjectModel(module, clazz.java) })
+}
+
+/**
+ * Requests the model for each project in the root build and in the nested builds.
+ * Unlike [buildGradleModel], it does not request the [IdeaProject] model, so it avoids the task realization that this request causes.
+ * Returns only the model of the root project.
+ */
+fun <T : Any> buildRootGradleModel(
+    projectPath: File,
+    gradleVersion: GradleVersion,
+    javaHomePath: String,
+    clazz: KClass<T>,
+    builderClass: Class<*>? = null,
+    debuggerOptions: BuildGradleModelDebuggerOptions? = null,
+): T {
+    val models = fetchGradleModels(
+        projectPath, gradleVersion, javaHomePath, builderClass, debuggerOptions,
+        GradleClassProjectModelProvider.createAll(clazz.java)
+    )
+    return models.getProjectModel(models.getRootBuild().rootProject, clazz.java) ?: fail("Gradle did not build ${clazz.java.name}")
+}
+
+private fun fetchGradleModels(
+    projectPath: File,
+    gradleVersion: GradleVersion,
+    javaHomePath: String,
+    builderClass: Class<*>?,
+    debuggerOptions: BuildGradleModelDebuggerOptions?,
+    modelProviders: Collection<ProjectImportModelProvider>,
+): GradleIdeaModelHolder {
     val connector = GradleConnector.newConnector()
     connector.useDistribution(GradleUtil.getWrapperDistributionUri(gradleVersion))
     connector.forProjectDirectory(projectPath)
@@ -65,8 +106,7 @@ fun <T : Any> buildGradleModel(
 
     connector.connect().use { gradleConnection ->
         val buildAction = GradleModelFetchAction(gradleVersion)
-            .addProjectImportModelProviders(GradleClassProjectModelProvider.createAll(clazz.java))
-            .addProjectImportModelProviders(GradleClassBuildModelProvider.createAll(IdeaProject::class.java))
+            .addProjectImportModelProviders(modelProviders)
 
         val executionSettings = GradleExecutionSettings()
         val targetPathMapperInitScript = createTargetPathMapperInitScript()
@@ -103,9 +143,7 @@ fun <T : Any> buildGradleModel(
         }
         val models = GradleIdeaModelHolder()
         models.addState(state)
-
-        val ideaProject = models.getRootModel(IdeaProject::class.java) ?: fail("Missing '${IdeaProject::class.simpleName}' model")
-        return BuiltGradleModel(ideaProject.modules.associateWith { module -> models.getProjectModel(module, clazz.java) })
+        return models
     }
 }
 

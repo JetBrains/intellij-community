@@ -26,4 +26,20 @@ fun <T : Any> KotlinSyncTestsContext.buildGradleModel(
 fun KotlinSyncTestsContext.buildKotlinMPPGradleModel(
     debuggerOptions: BuildGradleModelDebuggerOptions? = null
 ): BuiltGradleModel<KotlinMPPGradleModel> = buildGradleModel(KotlinMPPGradleModelBinary::class, null, debuggerOptions)
-    .map { model -> ObjectInputStream(ByteArrayInputStream(model.data)).readObject() as KotlinMPPGradleModel }
+    .map { model -> model.deserialize() }
+
+/**
+ * Builds the [KotlinMPPGradleModel] for each project and returns the model of the root project.
+ */
+fun KotlinSyncTestsContext.buildRootKotlinMPPGradleModel(
+    debuggerOptions: BuildGradleModelDebuggerOptions? = null
+): KotlinMPPGradleModel {
+    require(this is KotlinMppTestsContext) { "buildRootKotlinMPPGradleModel works only with KotlinMppTestsContext" }
+    return org.jetbrains.kotlin.idea.codeInsight.gradle.buildRootGradleModel(
+        testProjectRoot, testProperties.gradleVersion.version, gradleJdkPath.absolutePath, KotlinMPPGradleModelBinary::class,
+        debuggerOptions = debuggerOptions
+    ).deserialize()
+}
+
+private fun KotlinMPPGradleModelBinary.deserialize(): KotlinMPPGradleModel =
+    ObjectInputStream(ByteArrayInputStream(data)).readObject() as KotlinMPPGradleModel
