@@ -3,7 +3,9 @@
 package com.intellij.util.indexing.contentQueue.dev
 
 
+import com.intellij.diagnostic.ThreadDumper
 import com.intellij.find.ngrams.TrigramIndex
+import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
@@ -827,11 +829,14 @@ class MultiThreadedWithSuspendIndexWriter(workersCount: Int = TOTAL_WRITERS_NUMB
                         "queue sizes during last 100ms: $queueSizesForDebug; " +
                         "writers size: ${writers.size}; " +
                         "unfinished sentinel tasks: $sentinelTasks"
+
           if (queueSize == 0) {
             LOG.warn(message)
           }
           else {
-            LOG.error(message)
+            val threadDump = Attachment("threadDump.txt", ThreadDumper.dumpThreadsToString())
+            threadDump.isIncluded = true //opt-in
+            LOG.error(message, Throwable(message), threadDump)
           }
           return
         }
