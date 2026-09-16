@@ -67,6 +67,7 @@ import java.awt.event.KeyEvent
 import java.util.concurrent.CompletableFuture
 import javax.swing.JButton
 import javax.swing.JComponent
+import javax.swing.JEditorPane
 import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.JTabbedPane
@@ -929,6 +930,53 @@ internal class LegacyPluginRowFactoryTest {
 
           assertThat(metricsPanel.x + metricsPanel.width).isLessThanOrEqualTo(installButton.x - JBUI.scale(8))
           assertThat(vendorLabel.toolTipText).isEqualTo(vendor)
+        }
+      }
+      finally {
+        host.dispose(closeSession = false)
+      }
+    }
+
+  @Test
+  fun `unified error spans the action column`(): Unit =
+    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+      val host = LegacyPluginUiHost(parentScope = this, operationScope = this)
+      try {
+        val pluginId = PluginId.getId("plugin.with.loading.error")
+        val plugin = PluginNodeModelBuilderFactory.createBuilder(pluginId).setName("Plugin With Loading Error").build()
+        val update = PluginNodeModelBuilderFactory.createBuilder(pluginId).setName("Plugin Update").build()
+        val item = PluginItemState(
+          pluginId,
+          plugin.name,
+          modelHandle = PluginItemModelHandle(plugin),
+          rowInput = PluginRowInput(
+            installedPlugin = plugin,
+            installationState = PluginInstallationState(true),
+            errors = listOf(HtmlChunk.text("Plugin loading failed")),
+            updateDescriptor = update,
+            enabled = true,
+            restrictedByProduct = false,
+          ),
+        )
+        val section = PluginSectionState(PluginSectionId.Installed, items = listOf(item))
+        val factory = LegacyPluginRowFactory(host, ListPluginModel(), LinkListener { _, _ -> }, onSelectionChanged = {})
+        factory.createReconciler { _, _ -> }.use { reconciler ->
+          val binding = reconciler.reconcile(listOf(factory.specification(section, item))).single()
+          val row = (binding.row as LegacyPluginRow).component
+          JPanel().add(row)
+          factory.rowsRendered(listOf(binding))
+          row.setBounds(0, 0, JBUI.scale(480), row.preferredSize.height)
+          row.doLayout()
+
+          val title = componentsOfType(row, JBLabel::class.java).single { it.text == plugin.name }
+          val errorPanel = componentsOfType(row, JEditorPane::class.java).single().parent
+          val updateButton = checkNotNull(row.myUpdateButton)
+          val toggle = componentsOfType(row, OnOffButton::class.java).single()
+
+          assertThat(errorPanel.x).isEqualTo(title.x)
+          assertThat(errorPanel.y).isGreaterThan(title.y + title.height)
+          assertThat(errorPanel.x + errorPanel.width).isEqualTo(toggle.x + toggle.width)
+          assertThat(errorPanel.x + errorPanel.width).isGreaterThan(updateButton.x + updateButton.width)
         }
       }
       finally {

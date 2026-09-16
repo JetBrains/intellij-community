@@ -1789,7 +1789,7 @@ class ListPluginComponent private constructor(
         setActionBounds(unifiedControlRight() - size.width, baseline, myProgressComponent!!, size)
       }
 
-      val lineWidth = if (myUseUnifiedRowLayout) {
+      val contentLineWidth = if (myUseUnifiedRowLayout) {
         maxOf(0, unifiedContentRight() - x)
       }
       else {
@@ -1805,6 +1805,12 @@ class ListPluginComponent private constructor(
           if (myUseUnifiedRowLayout) {
             if (lineHeight <= 0) continue
             y += myUnifiedLineGap.get()
+          }
+          val lineWidth = if (myUseUnifiedRowLayout && component === myErrorPanel) {
+            maxOf(0, unifiedControlRight() - x)
+          }
+          else {
+            contentLineWidth
           }
           component.setBounds(x, y, lineWidth, lineHeight)
           y += lineHeight
