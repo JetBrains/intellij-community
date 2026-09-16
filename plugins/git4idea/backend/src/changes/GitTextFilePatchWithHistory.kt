@@ -35,8 +35,8 @@ import kotlin.math.floor
  *
  * @param patch a patch with changes in a file between two commits
  * @param fileHistory the whole history of changes for the file (file history)
- * @param isCumulative [true] if [patch] is between start and end of [fileHistory] which spans from merge base to last commit,
- *                     [false] if it is a patch between a pair of adjacent commits in [fileHistory]
+ * @param isCumulative `true` if [patch] is between start and end of [fileHistory] which spans from merge base to last commit,
+ *                     `false` if it is a patch between a pair of adjacent commits in [fileHistory]
  */
 @ApiStatus.Experimental
 class GitTextFilePatchWithHistory(val patch: TextFilePatch, val isCumulative: Boolean, val fileHistory: GitFileHistory) {
