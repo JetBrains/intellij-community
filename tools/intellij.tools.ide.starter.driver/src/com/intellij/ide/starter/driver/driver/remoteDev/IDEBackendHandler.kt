@@ -42,7 +42,7 @@ internal class IDEBackendHandler(
     expectedKill: Boolean,
     expectedExitCode: Int,
     collectNativeThreads: Boolean,
-    pauseOnIndexing: Duration? = null,
+    pauseOnIndicators: Duration? = null,
     configure: IDERunContext.() -> Unit = {},
   ): BackgroundRun {
     if (ConfigurationStorage.useInstaller()) {
@@ -59,7 +59,7 @@ internal class IDEBackendHandler(
                                                 expectedKill = expectedKill,
                                                 expectedExitCode = expectedExitCode,
                                                 collectNativeThreads = collectNativeThreads,
-                                                pauseOnIndexing = pauseOnIndexing) {
+                                                pauseOnIndicators = pauseOnIndicators) {
       configure(this)
     }
   }

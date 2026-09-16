@@ -23,9 +23,9 @@ fun IDETestContext.runIdeWithDriver(commandLine: (IDERunContext) -> IDECommandLi
                                     expectedExitCode: Int = 0,
                                     collectNativeThreads: Boolean = false,
                                     disableNonModalWelcomeScreen: Boolean = false,
-                                    pauseOnIndexing: Duration? = null,
+                                    pauseOnIndicators: Duration? = null,
                                     configure: IDERunContext.() -> Unit = {}): BackgroundRun {
-  return selectedDriverRunner().runIdeWithDriver(this, commandLine, commands, runTimeout, useStartupScript, launchName, expectedKill, expectedExitCode, collectNativeThreads, pauseOnIndexing) {
+  return selectedDriverRunner().runIdeWithDriver(this, commandLine, commands, runTimeout, useStartupScript, launchName, expectedKill, expectedExitCode, collectNativeThreads, pauseOnIndicators) {
     if (System.getenv("SCREEN_RECORDING_ENABLED").toBoolean()) {
       withScreenRecording()
     }
