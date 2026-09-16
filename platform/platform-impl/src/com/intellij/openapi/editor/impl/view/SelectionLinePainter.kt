@@ -7,7 +7,6 @@ import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.ui.scale.JBUIScale.scale
 import java.awt.Graphics2D
 import java.awt.RenderingHints
 import java.awt.geom.Path2D
@@ -153,7 +152,7 @@ internal class SelectionLinePainter(
   private val editor: EditorImpl,
   private val lineExtensionWidth: Double,
 ) {
-  private val radius = scale(lineHeight / 6.0f).toDouble()
+  private val radius = lineHeight / 6.0
   private val selectionBg = editor.selectionModel.textAttributes.backgroundColor
   private val leftExtensionWidth = if (editor.isRightAligned) lineExtensionWidth else 0.0
   private val rightExtensionWidth = if (editor.isRightAligned) 0.0 else lineExtensionWidth
