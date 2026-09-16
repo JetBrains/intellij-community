@@ -19,7 +19,9 @@ import io.opentelemetry.context.Context
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildLifetime
+import java.util.Locale
 import java.util.concurrent.CancellationException
+import java.util.concurrent.ConcurrentLinkedQueue
 import org.jetbrains.intellij.build.BuildPaths
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.JvmArchitecture
@@ -64,6 +66,46 @@ private data class PackagingSuiteTelemetry(
   @JvmField val rootSpan: Span,
   @JvmField val parentContext: Context,
 )
+
+/** One phase of a suite run: a validation, a packaging target, a plugin content check or a target validation. */
+private class SuitePhase(@JvmField val name: String, @JvmField val startNanos: Long, @JvmField val endNanos: Long)
+
+/**
+ * The phases of one suite run, and the summary [PackagingSuiteFixture.close] prints.
+ *
+ * The recorder does not read the tracer, so the summary is in the log of every run, and a run with the trace off still
+ * names its long pole.
+ */
+private class SuitePhaseRecorder {
+  private val suiteStartNanos = System.nanoTime()
+  private val phases = ConcurrentLinkedQueue<SuitePhase>()
+
+  fun <T> record(name: String, block: () -> T): T {
+    val startNanos = System.nanoTime()
+    try {
+      return block()
+    }
+    finally {
+      phases.add(SuitePhase(name = name, startNanos = startNanos, endNanos = System.nanoTime()))
+    }
+  }
+
+  /** The suite duration, then the [limit] phases that ended last. The phase that ended last bounds the suite. */
+  fun summary(suiteName: String, limit: Int = 10): String {
+    val endNanos = System.nanoTime()
+    fun seconds(fromNanos: Long, toNanos: Long): String = String.format(Locale.ROOT, "%.2f", (toNanos - fromNanos) / 1e9)
+    return buildString {
+      append("Packaging suite '").append(suiteName).append("' took ").append(seconds(suiteStartNanos, endNanos)).append(" s.")
+      appendLine(" The $limit phases that ended last, as start -> end (duration) in seconds:")
+      for (phase in phases.sortedByDescending { it.endNanos }.take(limit)) {
+        append("  ").append(seconds(suiteStartNanos, phase.startNanos).padStart(7))
+        append(" -> ").append(seconds(suiteStartNanos, phase.endNanos).padStart(7))
+        append(" (").append(seconds(phase.startNanos, phase.endNanos).padStart(6)).append(")  ")
+        appendLine(phase.name)
+      }
+    }
+  }
+}
 
 private data class TaskResult<T>(
   @JvmField val value: T? = null,
@@ -245,6 +287,7 @@ class PackagingSuiteFixture private constructor(
   private val diagnostics: PackagingSuiteHangDiagnostics,
   private val tempDir: Path,
   private val telemetry: PackagingSuiteTelemetry?,
+  private val phases: SuitePhaseRecorder,
   private val tracerOverride: AutoCloseable?,
   private val suiteContextDeferred: PackagingTaskHandle<PackagingSuiteContext>,
   private val validationTasks: List<ValidationTask>,
@@ -299,6 +342,7 @@ class PackagingSuiteFixture private constructor(
       val traceSettings = resolvePackagingSuiteTraceSettings(spec)
       val telemetry = createSuiteTelemetry(spec = spec, traceSettings = traceSettings)
       val tracerOverride = traceSettings.takeUnless { it.enabled }?.let { TraceManager.pushTracer(packagingSuiteNoopTracer) }
+      val phases = SuitePhaseRecorder()
 
       val diagnostics = PackagingSuiteHangDiagnostics()
       val scope = PackagingTasks(tasks, diagnostics)
@@ -308,7 +352,7 @@ class PackagingSuiteFixture private constructor(
       try {
         val tempDir = Files.createTempDirectory("${spec.name}-packaging-suite-").also { tempDirForCleanup = it }
         val suiteContextDeferred = scope.task(name = "create compilation context") {
-          withTelemetrySpan(telemetry = telemetry, name = "create shared compilation context") {
+          withTelemetrySpan(telemetry = telemetry, phases = phases, name = "create shared compilation context") {
             run {
               PackagingSuiteContext(
                 projectHome = spec.homePath,
@@ -325,6 +369,7 @@ class PackagingSuiteFixture private constructor(
         val moduleOutputDeferred = scope.task(name = "prepare module output") {
           withTelemetrySpan(
             telemetry = telemetry,
+            phases = phases,
             name = "prepare shared module output",
             configure = { span ->
               span.setAttribute("packaging.target.count", spec.targets.size.toLong())
@@ -342,6 +387,7 @@ class PackagingSuiteFixture private constructor(
           suiteContextDeferred = suiteContextDeferred,
           moduleOutputDeferred = moduleOutputDeferred,
           telemetry = telemetry,
+          phases = phases,
         )
         val packagingTasks = createPackagingTasks(
           scope = scope,
@@ -350,15 +396,17 @@ class PackagingSuiteFixture private constructor(
           moduleOutputDeferred = moduleOutputDeferred,
           validationTasks = validationTasks,
           telemetry = telemetry,
+          phases = phases,
           waitForScheduledStart = optimizedFullSuiteScheduling,
         )
-        val pluginCheckTasks = createPluginCheckTasks(scope = scope, packagingTasks = packagingTasks, telemetry = telemetry)
+        val pluginCheckTasks = createPluginCheckTasks(scope = scope, packagingTasks = packagingTasks, telemetry = telemetry, phases = phases)
         val targetValidationTasks = createTargetValidationTasks(
           scope = scope,
           spec = spec,
           suiteContextDeferred = suiteContextDeferred,
           packagingTasks = packagingTasks,
           telemetry = telemetry,
+          phases = phases,
         )
         if (optimizedFullSuiteScheduling) {
           scheduleFullSuiteWork(
@@ -377,6 +425,7 @@ class PackagingSuiteFixture private constructor(
           diagnostics = diagnostics,
           tempDir = tempDir,
           telemetry = telemetry,
+          phases = phases,
           tracerOverride = tracerOverride,
           suiteContextDeferred = suiteContextDeferred,
           validationTasks = validationTasks,
@@ -544,6 +593,9 @@ class PackagingSuiteFixture private constructor(
         clean { TraceManager.flush() }
         println("Packaging suite trace is written to ${it.traceFile}")
       }
+      // The summary names the phase that ended last, which is the one that bounds the suite. It is the first thing
+      // to read after a slow run, and it needs no trace file.
+      clean { print(phases.summary(spec.name)) }
       clean { tracerOverride?.close() }
       clean { NioFiles.deleteRecursively(tempDir) }
       failure?.let { throw it }
@@ -619,6 +671,7 @@ private fun createValidationTasks(
   suiteContextDeferred: PackagingTaskHandle<PackagingSuiteContext>,
   moduleOutputDeferred: PackagingTaskHandle<Unit>,
   telemetry: PackagingSuiteTelemetry?,
+  phases: SuitePhaseRecorder,
 ): List<ValidationTask> {
   return spec.validations.map { validation ->
     ValidationTask(
@@ -627,6 +680,7 @@ private fun createValidationTasks(
         captureTaskResult {
           withTelemetrySpan(
             telemetry = telemetry,
+            phases = phases,
             name = "suite validation: ${validation.name}",
             configure = { span ->
               span.setAttribute("packaging.validation.name", validation.name)
@@ -649,6 +703,7 @@ private fun createPackagingTasks(
   moduleOutputDeferred: PackagingTaskHandle<Unit>,
   validationTasks: List<ValidationTask>,
   telemetry: PackagingSuiteTelemetry?,
+  phases: SuitePhaseRecorder,
   waitForScheduledStart: Boolean,
 ): List<PackagingTask> {
   val blockingTasks = validationTasks.filter { it.spec.isBlocking }
@@ -667,6 +722,7 @@ private fun createPackagingTasks(
             val taskResult = captureTaskResult {
               withTelemetrySpan(
                 telemetry = telemetry,
+                phases = phases,
                 name = "package target: ${target.id}",
                 configure = { span ->
                   span.setAttribute("packaging.target.id", target.id)
@@ -710,6 +766,7 @@ private fun createPluginCheckTasks(
   scope: PackagingTasks,
   packagingTasks: List<PackagingTask>,
   telemetry: PackagingSuiteTelemetry?,
+  phases: SuitePhaseRecorder,
 ): List<PluginCheckTask> {
   return packagingTasks.map { task ->
     PluginCheckTask(
@@ -722,6 +779,7 @@ private fun createPluginCheckTasks(
         captureTaskResult {
           withTelemetrySpan(
             telemetry = telemetry,
+            phases = phases,
             name = "plugin content check: ${task.spec.id}",
             configure = { span ->
               span.setAttribute("packaging.target.id", task.spec.id)
@@ -745,6 +803,7 @@ private fun createTargetValidationTasks(
   suiteContextDeferred: PackagingTaskHandle<PackagingSuiteContext>,
   packagingTasks: List<PackagingTask>,
   telemetry: PackagingSuiteTelemetry?,
+  phases: SuitePhaseRecorder,
 ): List<TargetValidationTask> {
   val packagingTasksByTargetId = packagingTasks.associateBy { it.spec.id }
   val result = ArrayList<TargetValidationTask>(spec.targetValidations.size)
@@ -760,6 +819,7 @@ private fun createTargetValidationTasks(
           captureTaskResult {
             withTelemetrySpan(
               telemetry = telemetry,
+              phases = phases,
               name = "target validation: ${validation.targetId} ${validation.name}",
               configure = { span ->
                 span.setAttribute("packaging.target.id", validation.targetId)
@@ -1072,18 +1132,23 @@ private fun createSuiteTelemetry(spec: PackagingSuiteSpec, traceSettings: Packag
   )
 }
 
+/** Runs [block] as one phase of the suite: recorded for the summary, and traced under the root span when the trace is on. */
 private fun <T> withTelemetrySpan(
   telemetry: PackagingSuiteTelemetry?,
+  phases: SuitePhaseRecorder,
   name: String,
   configure: (Span) -> Unit = {},
   block: () -> T,
 ): T {
-  if (telemetry == null) {
-    return block()
-  }
-
-  return spanBuilder(name).setParent(telemetry.parentContext).use { span ->
-    configure(span)
-    block()
+  return phases.record(name) {
+    if (telemetry == null) {
+      block()
+    }
+    else {
+      spanBuilder(name).setParent(telemetry.parentContext).use { span ->
+        configure(span)
+        block()
+      }
+    }
   }
 }
