@@ -37,7 +37,6 @@ single_version_override(
     module_name = "rules_jvm_external",
     patches = [
         "//:build/jvm-rules/rules-jvm-external-6.10-make-coursier-repo-targets-shell-free-and-hermetic.patch",
-        "//:build/jvm-rules/rules-jvm-external-6.10-default-to-maven-resolver.patch",
         "//:build/jvm-rules/rules-jvm-external-6.10-optional-source-jars.patch",
         "//:build/jvm-rules/rules-jvm-external-6.10-coursier-optional-file-field.patch",
         "//:build/jvm-rules/rules-jvm-external-6.10-fix-multi-repo-hash.patch",

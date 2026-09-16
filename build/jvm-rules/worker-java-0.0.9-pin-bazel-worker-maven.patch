@@ -1,16 +1,17 @@
 diff --git MODULE.bazel MODULE.bazel
 --- MODULE.bazel
 +++ MODULE.bazel
-@@ -19,6 +19,8 @@ maven.install(
+@@ -19,6 +19,9 @@ maven.install(
          "com.google.protobuf:protobuf-java:4.33.1",
          "com.google.protobuf:protobuf-java-util:4.33.1",
      ],
++    fail_if_repin_required = True,
 +    lock_file = "//:rules_jvm_external++maven+bazel_worker_maven_install.json",
-+    resolver = "maven",
++    use_credentials_from_home_netrc_file = True,
  )
  maven.artifact(
      name = "test_deps",
-@@ -44,7 +46,7 @@ maven.artifact(
+@@ -44,7 +47,7 @@ maven.artifact(
      testonly = True,
      version = "1.4.0",
  )

@@ -18,7 +18,6 @@ single_version_override(
     module_name = "rules_jvm_external",
     patches = [
         "rules-jvm-external-6.10-make-coursier-repo-targets-shell-free-and-hermetic.patch",
-        "rules-jvm-external-6.10-default-to-maven-resolver.patch",
         "rules-jvm-external-6.10-optional-source-jars.patch",
         "rules-jvm-external-6.10-coursier-optional-file-field.patch",
         "rules-jvm-external-6.10-fix-multi-repo-hash.patch",
@@ -62,6 +61,11 @@ intellij_version = "253.29346.138"
 maven = use_extension("@rules_jvm_external//:extensions.bzl", "maven")
 maven.install(
     name = "j2b_maven",
+    # --experimental_repository_downloader_retries from community/common.bazelrc is not applicable here
+    additional_coursier_options = [
+        "--retry-count",
+        "5",
+    ],
     artifacts = [
         "com.jetbrains.intellij.platform:jps-model-impl:" + intellij_version,
         "com.jetbrains.intellij.platform:build-scripts-downloader:" + intellij_version,
@@ -81,6 +85,7 @@ maven.install(
         "https://cache-redirector.jetbrains.com/download.jetbrains.com/teamcity-repository",
         "https://cache-redirector.jetbrains.com/www.jetbrains.com/intellij-repository/releases",
     ],
+    use_credentials_from_home_netrc_file = True,
 )
 use_repo(maven, "j2b_maven")
 
