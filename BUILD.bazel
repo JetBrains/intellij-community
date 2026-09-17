@@ -714,6 +714,8 @@ jvm_library(
         "//plugins/devkit/intellij.devkit.workspaceModel/tests:tests_test_lib",
         "//plugins/performanceTesting/scripts-ui:ui",
         "//plugins/performanceTesting/scripts-ui:ui_test_lib",
+        "//plugins/performanceTesting/backend",
+        "//plugins/performanceTesting/backend:backend_test_lib",
         "//uast/uast-tests:tests",
         "//uast/uast-tests:tests_test_lib",
         "//platform/runtime/repository/tests",
