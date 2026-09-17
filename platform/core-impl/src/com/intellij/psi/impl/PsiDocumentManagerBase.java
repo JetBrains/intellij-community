@@ -23,6 +23,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.diagnostic.ControlFlowExceptionKt;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.editor.Document;
@@ -935,19 +936,18 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
   private static void runActions(@NotNull @Unmodifiable List<? extends Runnable> actions) {
     List<Pair<Runnable, Throwable>> exceptions = new ArrayList<>();
     for (Runnable action : actions) {
-      //noinspection IncorrectCancellationExceptionHandling
       try {
         ThreadContext.resetThreadContext(() -> {
           action.run();
           return null;
         });
       }
-      catch (ProcessCanceledException e) {
-        // some actions are crazy enough to use PCE for their own control flow.
-        // swallow and ignore to not disrupt completely unrelated control flow.
-      }
       catch (Throwable e) {
-        exceptions.add(Pair.create(action, e));
+        if (!ControlFlowExceptionKt.isControlFlowException(e)) {
+          // some actions are crazy enough to use PCE for their own control flow.
+          // swallow and ignore to not disrupt completely unrelated control flow.
+          exceptions.add(Pair.create(action, e));
+        }
       }
     }
     for (Pair<Runnable, Throwable> pair : exceptions) {
@@ -960,19 +960,18 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
   private static void runActions(@NotNull Document document, @NotNull @Unmodifiable List<? extends Consumer<? super Document>> actions) {
     List<Pair<Consumer<? super Document>, Throwable>> exceptions = new ArrayList<>();
     for (Consumer<? super Document> action : actions) {
-      //noinspection IncorrectCancellationExceptionHandling
       try {
         ThreadContext.resetThreadContext(() -> {
           action.accept(document);
           return null;
         });
       }
-      catch (ProcessCanceledException e) {
-        // some actions are crazy enough to use PCE for their own control flow.
-        // swallow and ignore to not disrupt completely unrelated control flow.
-      }
       catch (Throwable e) {
-        exceptions.add(Pair.create(action, e));
+        if (!ControlFlowExceptionKt.isControlFlowException(e)) {
+          // some actions are crazy enough to use PCE for their own control flow.
+          // swallow and ignore to not disrupt completely unrelated control flow.
+          exceptions.add(Pair.create(action, e));
+        }
       }
     }
     for (Pair<Consumer<? super Document>, Throwable> pair : exceptions) {
