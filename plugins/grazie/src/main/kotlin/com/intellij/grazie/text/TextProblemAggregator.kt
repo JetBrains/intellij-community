@@ -9,7 +9,6 @@ import ai.grazie.gec.model.problem.ProblemFix
 import ai.grazie.gec.util.ProblemAggregator
 import ai.grazie.gec.util.concedeToOtherGrammarCheckers
 import ai.grazie.text.TextRange
-import com.intellij.grazie.mlec.MlecChecker
 import com.intellij.grazie.utils.aiRange
 
 
@@ -19,11 +18,7 @@ object TextProblemAggregator : ProblemAggregator<TextProblem>() {
     return concedeToOtherGrammarCheckers(problem.source)
   }
 
-  override fun service(problem: TextProblem): CorrectionServiceType {
-    if (problem !is GrazieProblem) return OTHER
-    return if (problem.rule.globalId.startsWith(MlecChecker.Constants.MLEC_RULE_PREFIX)) MLEC else RULE
-  }
-
+  override fun service(problem: TextProblem): CorrectionServiceType = if (problem !is GrazieProblem) OTHER else RULE
   override fun kindInfo(problem: TextProblem): Problem.KindInfo = mapGrazieProblem(problem) { it.source.info }
   override fun message(problem: TextProblem): String = mapGrazieProblem(problem) { it.source.message }
   override fun isSpellingProblem(problem: TextProblem): Boolean = problem.isSpellingProblem

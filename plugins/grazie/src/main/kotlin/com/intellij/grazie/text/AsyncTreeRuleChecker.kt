@@ -1,8 +1,6 @@
 package com.intellij.grazie.text
 
 import ai.grazie.nlp.langs.Language
-import ai.grazie.rules.tree.Tree
-import ai.grazie.text.exclusions.SentenceWithExclusions
 import com.intellij.grazie.rule.ParsedSentence
 import com.intellij.grazie.utils.hasLanguage
 import java.util.Locale
@@ -27,9 +25,4 @@ class AsyncTreeRuleChecker : ExternalTextChecker() {
     val texts = contexts.mapNotNull { if (it.hasLanguage()) it.text else null }
     return TreeRuleChecker.checkText(ParsedSentence.getAllCheckedSentences(texts))
   }
-
-  internal fun checkWithTrees(
-    contexts: List<ProofreadingContext>, trees: Map<Language, Map<SentenceWithExclusions, Tree?>>,
-  ): Collection<TextProblem> =
-    TreeRuleChecker.checkText(ParsedSentence.getAllCheckedSentences(contexts, trees))
 }

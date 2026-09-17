@@ -2,35 +2,22 @@ package com.intellij.grazie.utils
 
 import ai.grazie.detector.ChainLanguageDetector
 import ai.grazie.detector.DefaultLanguageDetectors
-import ai.grazie.gec.model.CorrectionServiceType
-import ai.grazie.gec.model.doc.Paragraph
-import ai.grazie.gec.model.problem.Problem
 import ai.grazie.gec.model.problem.ProblemHighlighting
-import ai.grazie.gec.model.problem.SentenceWithProblems
 import ai.grazie.nlp.langs.Language
 import ai.grazie.nlp.langs.Language.UNKNOWN
 import ai.grazie.rules.Rule
 import ai.grazie.rules.settings.RuleSetting
 import ai.grazie.rules.settings.Setting
 import ai.grazie.rules.toolkit.LanguageToolkit
-import ai.grazie.text.exclusions.Exclusion
 import ai.grazie.utils.mpp.FromResourcesDataLoader
-import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.grazie.GrazieConfig
-import com.intellij.grazie.cloud.APIQueries
-import com.intellij.grazie.cloud.GrazieCloudConnector
 import com.intellij.grazie.detection.BatchLangDetector
 import com.intellij.grazie.detection.LangDetector
 import com.intellij.grazie.ide.inspection.grammar.GrazieInspection.Companion.MAX_TEXT_LENGTH_IN_FILE
 import com.intellij.grazie.ide.ui.configurable.StyleConfigurable.Companion.ruleEngineLanguages
 import com.intellij.grazie.jlanguage.LangTool
-import com.intellij.grazie.mlec.LanguageHolder
-import com.intellij.grazie.mlec.MlecChecker
 import com.intellij.grazie.rule.RuleIdeClient
-import com.intellij.grazie.rule.SentenceBatcher
-import com.intellij.grazie.rule.SentenceBatcher.Companion.runWithSentenceBatcher
 import com.intellij.grazie.rule.SentenceTokenizer.toTokens
-import com.intellij.grazie.rule.SentenceTokenizer.tokenize
 import com.intellij.grazie.spellcheck.SpellingTextChecker
 import com.intellij.grazie.text.CheckerRunner
 import com.intellij.grazie.text.ProblemFilter
@@ -43,9 +30,7 @@ import com.intellij.grazie.text.TextProblem
 import com.intellij.grazie.text.TextProblemAggregator
 import com.intellij.grazie.utils.HighlightingUtil.findInstalledLang
 import com.intellij.openapi.components.service
-import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.progress.runBlockingCancellable
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.TextRange
@@ -55,7 +40,6 @@ import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.spellchecker.engine.DictionaryModificationTracker
 import com.intellij.util.containers.CollectionFactory.createConcurrentSoftValueMap
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.TimeUnit
 import ai.grazie.text.TextRange as GrazieTextRange
 
 @JvmField
@@ -66,12 +50,6 @@ private val associatedGrazieRules = ConcurrentHashMap<Language, Map<String, Rule
 
 fun getAssociatedGrazieRule(rule: com.intellij.grazie.text.Rule): Rule? {
   if (rule.language !in ruleEngineLanguages) return null
-  if (rule.globalId == MlecChecker.Constants.enMissingArticle.globalId) {
-    return featuredSettings(Language.ENGLISH).asSequence()
-      .filterIsInstance<RuleSetting>()
-      .map { it.rule }
-      .find { it.id == "Grammar.MISSING_ARTICLE" }!!
-  }
   return associatedGrazieRules
     .computeIfAbsent(rule.language) { buildAssociatedGrazieMapping(rule.language) }
     .get(rule.globalId)
@@ -164,27 +142,6 @@ internal fun ProofreadingContext.hasLanguage(): Boolean = this.language != UNKNO
 internal fun TextChecker.isSpelling(): Boolean = this is SpellingTextChecker
 internal fun TextChecker.isGrammar(): Boolean = this !is SpellingTextChecker
 
-suspend fun <T : LanguageHolder<SentenceBatcher<SentenceWithProblems>>> getProblems(context: ProofreadingContext, parserClass: Class<T>): List<Problem>? {
-  val stripPrefixLength = context.stripPrefix.length
-  val subText = context.text.subText(TextRange(stripPrefixLength, context.text.length)) ?: return emptyList()
-  val sentences = tokenize(subText)
-  val parsed = runWithSentenceBatcher(sentences, context.language, context.text.containingFile.viewProvider, parserClass)
-  if (parsed == null) return null
-  if (parsed.isEmpty()) return emptyList()
-
-  val result = ArrayList<Problem>()
-  for (sentence in sentences) {
-    val corrections = parsed[sentence.swe()]?.problems ?: continue
-    val start = sentence.start + stripPrefixLength
-    if (!context.text.hasUnknownFragmentsIn(TextRange.from(start, sentence.text.trimEnd().length))) {
-      corrections.forEach {
-        result.add(it.withOffset(start))
-      }
-    }
-  }
-  return result
-}
-
 val ProblemHighlighting.underline: TextRange?
   get() = GrazieTextRange.coveringIde(this.always)
 
@@ -209,85 +166,6 @@ fun Rule.isEnabledInState(state: GrazieConfig.State, domain: TextStyleDomain): B
   else {
     state.isRuleEnabled(this.globalId(), domain)
   }
-}
-
-private val textProblemsCache = Caffeine.newBuilder()
-  .expireAfterWrite(5, TimeUnit.MINUTES)
-  .build<String, List<Problem>>()
-
-suspend fun getProblemsForText(contexts: List<ProofreadingContext>, project: Project): Map<ProofreadingContext, List<Problem>> {
-  if (contexts.isEmpty()) return emptyMap()
-  if (!GrazieCloudConnector.seemsCloudConnected() || GrazieCloudConnector.isAfterRecentGecError()) {
-    return emptyMap()
-  }
-  return getAndCacheTextProblems(contexts.filter { it.hasLanguage() && NaturalTextDetector.seemsNatural(it.text) }, project)
-}
-
-private suspend fun getAndCacheTextProblems(contexts: List<ProofreadingContext>, project: Project): Map<ProofreadingContext, List<Problem>> {
-  if (contexts.isEmpty()) return emptyMap()
-  val key = contexts.joinToString(";")
-
-  val problems =
-    textProblemsCache.getIfPresent(key)
-    ?: getTextProblems(contexts, project)?.also { textProblemsCache.put(key, it) }
-    ?: emptyList()
-  return problems.associateByContexts(contexts)
-}
-
-private suspend fun getTextProblems(contexts: List<ProofreadingContext>, project: Project): List<Problem>? =
-  APIQueries.correctText(
-    contexts.map { it.toParagraph() }, project,
-    setOf(CorrectionServiceType.SPELL, CorrectionServiceType.MLEC)
-  )
-
-private suspend fun List<Problem>.associateByContexts(contexts: List<ProofreadingContext>): Map<ProofreadingContext, List<Problem>> {
-  if (this.isEmpty()) return emptyMap()
-  val texts = contexts.filter { it.hasLanguage() && NaturalTextDetector.seemsNatural(it.text) }
-  if (texts.isEmpty()) return emptyMap()
-
-  val offsets = texts
-    .map { it.text.length }
-    .runningFold(0) { acc, offset -> acc + offset }
-
-  val contextsWithProblems = texts.associateWithTo(HashMap(contexts.size)) { mutableListOf<Problem>() }
-  this.forEach { problem ->
-    findProblemIndex(offsets, problem)?.let { index ->
-      contextsWithProblems[texts[index]]!!.add(problem.withOffset(-offsets[index]))
-    }
-    checkCanceled()
-  }
-  return contextsWithProblems
-}
-
-private fun findProblemIndex(offsets: List<Int>, problem: Problem): Int? {
-  if (offsets.size < 2) return null
-
-  val startOffset = problem.highlighting.underline?.startOffset ?: return null
-  if (startOffset < offsets.first() || startOffset > offsets.last()) return null
-
-  val offsetIndex = offsets.indexOfLast { it <= startOffset }
-  return if (offsetIndex < 0) null else offsetIndex.coerceAtMost(offsets.lastIndex - 1)
-}
-
-private fun ProofreadingContext.toParagraph(): Paragraph {
-  val exclusions = mutableListOf<Exclusion>()
-  this.text.markupOffsets().forEach { exclusions.add(Exclusion(it, Exclusion.Kind.Markup)) }
-  this.text.unknownOffsets().forEach { exclusions.add(Exclusion(it, Exclusion.Kind.Unknown)) }
-  return Paragraph(
-    text = this.text.toString(),
-    exclusions = exclusions.sortedBy { it.offset },
-    forcedLanguage = this.language
-  )
-}
-
-internal fun Map<ProofreadingContext, List<Problem>>.toSpellingProblems(): Map<ProofreadingContext, List<Problem>> =
-  toServiceTypeProblems(CorrectionServiceType.SPELL)
-
-internal fun Map<ProofreadingContext, List<Problem>>.toMlecProblems(): Map<ProofreadingContext, List<Problem>> =
-  toServiceTypeProblems(CorrectionServiceType.MLEC)
-
-private fun Map<ProofreadingContext, List<Problem>>.toServiceTypeProblems(type: CorrectionServiceType): Map<ProofreadingContext, List<Problem>> {
-  return this.mapValues { (_, problems) -> problems.filter { it.info.service == type } }
 }
 
 internal fun getGrazieTracker(file: PsiFile): ModificationTracker {

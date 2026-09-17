@@ -3918,1336 +3918,6 @@ jvm_import(
 )
 
 copy_file(
-    name = "ai.grazie.model/model-text-jvm-0.8.256.jar_copy",
-    src = "@ai_grazie_model-model-text-jvm-0_8_256_http//file",
-    out = "ai.grazie.model/model-text-jvm-0.8.256.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "ai.grazie.nlp/nlp-langs-jvm-0.8.256.jar_copy",
-    src = "@ai_grazie_nlp-nlp-langs-jvm-0_8_256_http//file",
-    out = "ai.grazie.nlp/nlp-langs-jvm-0.8.256.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "ai.grazie.client/client-cbor-jvm-0.8.256.jar_copy",
-    src = "@ai_grazie_client-client-cbor-jvm-0_8_256_http//file",
-    out = "ai.grazie.client/client-cbor-jvm-0.8.256.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "ai.grazie.utils/utils-cbor-jvm-0.8.256.jar_copy",
-    src = "@ai_grazie_utils-utils-cbor-jvm-0_8_256_http//file",
-    out = "ai.grazie.utils/utils-cbor-jvm-0.8.256.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "org.jetbrains.kotlinx/kotlinx-serialization-cbor-jvm-1.7.3.jar_copy",
-    src = "@org_jetbrains_kotlinx-kotlinx-serialization-cbor-jvm-1_7_3_http//file",
-    out = "org.jetbrains.kotlinx/kotlinx-serialization-cbor-jvm-1.7.3.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-java_library(
-    name = "grazie-tests-pro-ai-grazie-api-gateway-client-jvm",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        ":ai_grazie_api-api-gateway-client-jvm-0_8_256_http_import",
-        ":ai_grazie_indexing-indexing-provider-api-jvm-0_8_256_http_import",
-        ":ai_grazie_api-api-gateway-api-jvm-0_8_256_http_import",
-        ":ai_grazie_model-model-gateway-jvm-0_8_256_http_import",
-        ":ai_grazie_model-model-text-jvm-0_8_256_http_import",
-        ":ai_grazie_nlp-nlp-langs-jvm-0_8_256_http_import",
-        ":ai_grazie_client-client-cbor-jvm-0_8_256_http_import",
-        ":ai_grazie_utils-utils-cbor-jvm-0_8_256_http_import",
-        ":org_jetbrains_kotlinx-kotlinx-serialization-cbor-jvm-1_7_3_http_import",
-    ],
-)
-
-jvm_import(
-    name = "ai_grazie_model-model-text-jvm-0_8_256_http_import",
-    jar = "@ai_grazie_model-model-text-jvm-0_8_256_http//file",
-    source_jar = "@ai_grazie_model-model-text-jvm-0_8_256-sources_http//file",
-)
-
-jvm_import(
-    name = "ai_grazie_nlp-nlp-langs-jvm-0_8_256_http_import",
-    jar = "@ai_grazie_nlp-nlp-langs-jvm-0_8_256_http//file",
-    source_jar = "@ai_grazie_nlp-nlp-langs-jvm-0_8_256-sources_http//file",
-)
-
-jvm_import(
-    name = "ai_grazie_client-client-cbor-jvm-0_8_256_http_import",
-    jar = "@ai_grazie_client-client-cbor-jvm-0_8_256_http//file",
-    source_jar = "@ai_grazie_client-client-cbor-jvm-0_8_256-sources_http//file",
-)
-
-jvm_import(
-    name = "ai_grazie_utils-utils-cbor-jvm-0_8_256_http_import",
-    jar = "@ai_grazie_utils-utils-cbor-jvm-0_8_256_http//file",
-    source_jar = "@ai_grazie_utils-utils-cbor-jvm-0_8_256-sources_http//file",
-)
-
-jvm_import(
-    name = "org_jetbrains_kotlinx-kotlinx-serialization-cbor-jvm-1_7_3_http_import",
-    jar = "@org_jetbrains_kotlinx-kotlinx-serialization-cbor-jvm-1_7_3_http//file",
-    source_jar = "@org_jetbrains_kotlinx-kotlinx-serialization-cbor-jvm-1_7_3-sources_http//file",
-)
-
-jvm_import(
-    name = "grazie-tests-pro-ai-grazie-gec-util",
-    jar = "@ai_grazie_gec-gec-util-0_9_5_http//file",
-    source_jar = "@ai_grazie_gec-gec-util-0_9_5-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "grazie-tests-pro-ai-grazie-model-ner-jvm",
-    jar = "@ai_grazie_model-model-ner-jvm-0_8_256_http//file",
-    source_jar = "@ai_grazie_model-model-ner-jvm-0_8_256-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "grazie-tests-pro-ai-grazie-tasks-library-model-jvm",
-    jar = "@ai_grazie_tasks-library-tasks-library-model-jvm-0_8_256_http//file",
-    source_jar = "@ai_grazie_tasks-library-tasks-library-model-jvm-0_8_256-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "com.carrotsearch/hppc-0.8.2.jar_copy",
-    src = "@com_carrotsearch-hppc-0_8_2_http//file",
-    out = "com.carrotsearch/hppc-0.8.2.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "com.fasterxml.jackson.core/jackson-databind-2.18.0.jar_copy",
-    src = "@com_fasterxml_jackson_core-jackson-databind-2_18_0_http//file",
-    out = "com.fasterxml.jackson.core/jackson-databind-2.18.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "com.fasterxml.jackson.core/jackson-annotations-2.18.0.jar_copy",
-    src = "@com_fasterxml_jackson_core-jackson-annotations-2_18_0_http//file",
-    out = "com.fasterxml.jackson.core/jackson-annotations-2.18.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "com.fasterxml.jackson.core/jackson-core-2.18.0.jar_copy",
-    src = "@com_fasterxml_jackson_core-jackson-core-2_18_0_http//file",
-    out = "com.fasterxml.jackson.core/jackson-core-2.18.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "com.gitlab.dumonts/hunspell-2.1.2.jar_copy",
-    src = "@com_gitlab_dumonts-hunspell-2_1_2_http//file",
-    out = "com.gitlab.dumonts/hunspell-2.1.2.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "net.java.dev.jna/jna-platform-5.12.1.jar_copy",
-    src = "@net_java_dev_jna-jna-platform-5_12_1_http//file",
-    out = "net.java.dev.jna/jna-platform-5.12.1.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "net.java.dev.jna/jna-5.12.1.jar_copy",
-    src = "@net_java_dev_jna-jna-5_12_1_http//file",
-    out = "net.java.dev.jna/jna-5.12.1.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "com.google.guava/guava-33.5.0-jre.jar_copy",
-    src = "@com_google_guava-guava-33_5_0-jre_http//file",
-    out = "com.google.guava/guava-33.5.0-jre.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "com.google.guava/failureaccess-1.0.3.jar_copy",
-    src = "@com_google_guava-failureaccess-1_0_3_http//file",
-    out = "com.google.guava/failureaccess-1.0.3.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "com.google.guava/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar_copy",
-    src = "@com_google_guava-listenablefuture-9999_0-empty-to-avoid-conflict-with-guava_http//file",
-    out = "com.google.guava/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "com.google.code.findbugs/jsr305-3.0.2.jar_copy",
-    src = "@com_google_code_findbugs-jsr305-3_0_2_http//file",
-    out = "com.google.code.findbugs/jsr305-3.0.2.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "org.jspecify/jspecify-1.0.0.jar_copy",
-    src = "@org_jspecify-jspecify-1_0_0_http//file",
-    out = "org.jspecify/jspecify-1.0.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "org.codehaus.mojo/animal-sniffer-annotations-1.24.jar_copy",
-    src = "@org_codehaus_mojo-animal-sniffer-annotations-1_24_http//file",
-    out = "org.codehaus.mojo/animal-sniffer-annotations-1.24.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "com.google.errorprone/error_prone_annotations-2.41.0.jar_copy",
-    src = "@com_google_errorprone-error_prone_annotations-2_41_0_http//file",
-    out = "com.google.errorprone/error_prone_annotations-2.41.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "com.google.j2objc/j2objc-annotations-3.1.jar_copy",
-    src = "@com_google_j2objc-j2objc-annotations-3_1_http//file",
-    out = "com.google.j2objc/j2objc-annotations-3.1.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "com.google.protobuf/protobuf-java-3.25.8.jar_copy",
-    src = "@com_google_protobuf-protobuf-java-3_25_8_http//file",
-    out = "com.google.protobuf/protobuf-java-3.25.8.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "com.hankcs/aho-corasick-double-array-trie-1.2.2.jar_copy",
-    src = "@com_hankcs-aho-corasick-double-array-trie-1_2_2_http//file",
-    out = "com.hankcs/aho-corasick-double-array-trie-1.2.2.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "com.optimaize.languagedetector/language-detector-0.6.jar_copy",
-    src = "@com_optimaize_languagedetector-language-detector-0_6_http//file",
-    out = "com.optimaize.languagedetector/language-detector-0.6.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "net.arnx/jsonic-1.2.11.jar_copy",
-    src = "@net_arnx-jsonic-1_2_11_http//file",
-    out = "net.arnx/jsonic-1.2.11.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "com.intellij/annotations-12.0.jar_copy",
-    src = "@com_intellij-annotations-12_0_http//file",
-    out = "com.intellij/annotations-12.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "commons-logging/commons-logging-1.3.4.jar_copy",
-    src = "@commons-logging-commons-logging-1_3_4_http//file",
-    out = "commons-logging/commons-logging-1.3.4.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "commons-validator/commons-validator-1.9.0.jar_copy",
-    src = "@commons-validator-commons-validator-1_9_0_http//file",
-    out = "commons-validator/commons-validator-1.9.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "commons-digester/commons-digester-2.1.jar_copy",
-    src = "@commons-digester-commons-digester-2_1_http//file",
-    out = "commons-digester/commons-digester-2.1.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "io.github.resilience4j/resilience4j-circuitbreaker-1.7.1.jar_copy",
-    src = "@io_github_resilience4j-resilience4j-circuitbreaker-1_7_1_http//file",
-    out = "io.github.resilience4j/resilience4j-circuitbreaker-1.7.1.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "io.vavr/vavr-0.10.2.jar_copy",
-    src = "@io_vavr-vavr-0_10_2_http//file",
-    out = "io.vavr/vavr-0.10.2.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "io.vavr/vavr-match-0.10.2.jar_copy",
-    src = "@io_vavr-vavr-match-0_10_2_http//file",
-    out = "io.vavr/vavr-match-0.10.2.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "io.github.resilience4j/resilience4j-core-1.7.1.jar_copy",
-    src = "@io_github_resilience4j-resilience4j-core-1_7_1_http//file",
-    out = "io.github.resilience4j/resilience4j-core-1.7.1.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "io.github.resilience4j/resilience4j-micrometer-1.7.1.jar_copy",
-    src = "@io_github_resilience4j-resilience4j-micrometer-1_7_1_http//file",
-    out = "io.github.resilience4j/resilience4j-micrometer-1.7.1.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "io.grpc/grpc-netty-shaded-1.75.0.jar_copy",
-    src = "@io_grpc-grpc-netty-shaded-1_75_0_http//file",
-    out = "io.grpc/grpc-netty-shaded-1.75.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "io.grpc/grpc-util-1.75.0.jar_copy",
-    src = "@io_grpc-grpc-util-1_75_0_http//file",
-    out = "io.grpc/grpc-util-1.75.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "io.grpc/grpc-core-1.75.0.jar_copy",
-    src = "@io_grpc-grpc-core-1_75_0_http//file",
-    out = "io.grpc/grpc-core-1.75.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "com.google.code.gson/gson-2.11.0.jar_copy",
-    src = "@com_google_code_gson-gson-2_11_0_http//file",
-    out = "com.google.code.gson/gson-2.11.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "com.google.android/annotations-4.1.1.4.jar_copy",
-    src = "@com_google_android-annotations-4_1_1_4_http//file",
-    out = "com.google.android/annotations-4.1.1.4.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "io.grpc/grpc-context-1.75.0.jar_copy",
-    src = "@io_grpc-grpc-context-1_75_0_http//file",
-    out = "io.grpc/grpc-context-1.75.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "io.perfmark/perfmark-api-0.27.0.jar_copy",
-    src = "@io_perfmark-perfmark-api-0_27_0_http//file",
-    out = "io.perfmark/perfmark-api-0.27.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "io.grpc/grpc-api-1.75.0.jar_copy",
-    src = "@io_grpc-grpc-api-1_75_0_http//file",
-    out = "io.grpc/grpc-api-1.75.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "io.grpc/grpc-protobuf-1.75.0.jar_copy",
-    src = "@io_grpc-grpc-protobuf-1_75_0_http//file",
-    out = "io.grpc/grpc-protobuf-1.75.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "com.google.api.grpc/proto-google-common-protos-2.59.2.jar_copy",
-    src = "@com_google_api_grpc-proto-google-common-protos-2_59_2_http//file",
-    out = "com.google.api.grpc/proto-google-common-protos-2.59.2.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "io.grpc/grpc-protobuf-lite-1.75.0.jar_copy",
-    src = "@io_grpc-grpc-protobuf-lite-1_75_0_http//file",
-    out = "io.grpc/grpc-protobuf-lite-1.75.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "io.grpc/grpc-stub-1.75.0.jar_copy",
-    src = "@io_grpc-grpc-stub-1_75_0_http//file",
-    out = "io.grpc/grpc-stub-1.75.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "io.micrometer/micrometer-registry-prometheus-1.7.12.jar_copy",
-    src = "@io_micrometer-micrometer-registry-prometheus-1_7_12_http//file",
-    out = "io.micrometer/micrometer-registry-prometheus-1.7.12.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "io.micrometer/micrometer-core-1.7.12.jar_copy",
-    src = "@io_micrometer-micrometer-core-1_7_12_http//file",
-    out = "io.micrometer/micrometer-core-1.7.12.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "org.hdrhistogram/HdrHistogram-2.1.12.jar_copy",
-    src = "@org_hdrhistogram-HdrHistogram-2_1_12_http//file",
-    out = "org.hdrhistogram/HdrHistogram-2.1.12.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "org.latencyutils/LatencyUtils-2.0.3.jar_copy",
-    src = "@org_latencyutils-LatencyUtils-2_0_3_http//file",
-    out = "org.latencyutils/LatencyUtils-2.0.3.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "io.prometheus/simpleclient_common-0.10.0.jar_copy",
-    src = "@io_prometheus-simpleclient_common-0_10_0_http//file",
-    out = "io.prometheus/simpleclient_common-0.10.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "io.prometheus/simpleclient-0.16.0.jar_copy",
-    src = "@io_prometheus-simpleclient-0_16_0_http//file",
-    out = "io.prometheus/simpleclient-0.16.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "io.prometheus/simpleclient_tracer_otel-0.16.0.jar_copy",
-    src = "@io_prometheus-simpleclient_tracer_otel-0_16_0_http//file",
-    out = "io.prometheus/simpleclient_tracer_otel-0.16.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "io.prometheus/simpleclient_tracer_common-0.16.0.jar_copy",
-    src = "@io_prometheus-simpleclient_tracer_common-0_16_0_http//file",
-    out = "io.prometheus/simpleclient_tracer_common-0.16.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "io.prometheus/simpleclient_tracer_otel_agent-0.16.0.jar_copy",
-    src = "@io_prometheus-simpleclient_tracer_otel_agent-0_16_0_http//file",
-    out = "io.prometheus/simpleclient_tracer_otel_agent-0.16.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "io.prometheus/simpleclient_guava-0.16.0.jar_copy",
-    src = "@io_prometheus-simpleclient_guava-0_16_0_http//file",
-    out = "io.prometheus/simpleclient_guava-0.16.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "javax.activation/javax.activation-api-1.2.0.jar_copy",
-    src = "@javax_activation-javax_activation-api-1_2_0_http//file",
-    out = "javax.activation/javax.activation-api-1.2.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "javax.annotation/javax.annotation-api-1.3.2.jar_copy",
-    src = "@javax_annotation-javax_annotation-api-1_3_2_http//file",
-    out = "javax.annotation/javax.annotation-api-1.3.2.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "javax.xml.bind/jaxb-api-2.3.1.jar_copy",
-    src = "@javax_xml_bind-jaxb-api-2_3_1_http//file",
-    out = "javax.xml.bind/jaxb-api-2.3.1.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "org.apache.commons/commons-lang3-3.18.0.jar_copy",
-    src = "@org_apache_commons-commons-lang3-3_18_0_http//file",
-    out = "org.apache.commons/commons-lang3-3.18.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "org.apache.commons/commons-pool2-2.12.0.jar_copy",
-    src = "@org_apache_commons-commons-pool2-2_12_0_http//file",
-    out = "org.apache.commons/commons-pool2-2.12.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "org.apache.commons/commons-text-1.12.0.jar_copy",
-    src = "@org_apache_commons-commons-text-1_12_0_http//file",
-    out = "org.apache.commons/commons-text-1.12.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "org.apache.lucene/lucene-backward-codecs-5.5.5.jar_copy",
-    src = "@org_apache_lucene-lucene-backward-codecs-5_5_5_http//file",
-    out = "org.apache.lucene/lucene-backward-codecs-5.5.5.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "org.apache.lucene/lucene-core-5.5.5.jar_copy",
-    src = "@org_apache_lucene-lucene-core-5_5_5_http//file",
-    out = "org.apache.lucene/lucene-core-5.5.5.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "org.glassfish.jaxb/jaxb-runtime-4.0.5.jar_copy",
-    src = "@org_glassfish_jaxb-jaxb-runtime-4_0_5_http//file",
-    out = "org.glassfish.jaxb/jaxb-runtime-4.0.5.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "org.glassfish.jaxb/jaxb-core-4.0.5.jar_copy",
-    src = "@org_glassfish_jaxb-jaxb-core-4_0_5_http//file",
-    out = "org.glassfish.jaxb/jaxb-core-4.0.5.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "org.glassfish.jaxb/txw2-4.0.5.jar_copy",
-    src = "@org_glassfish_jaxb-txw2-4_0_5_http//file",
-    out = "org.glassfish.jaxb/txw2-4.0.5.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "com.sun.istack/istack-commons-runtime-4.1.2.jar_copy",
-    src = "@com_sun_istack-istack-commons-runtime-4_1_2_http//file",
-    out = "com.sun.istack/istack-commons-runtime-4.1.2.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "org.eclipse.angus/angus-activation-2.0.2.jar_copy",
-    src = "@org_eclipse_angus-angus-activation-2_0_2_http//file",
-    out = "org.eclipse.angus/angus-activation-2.0.2.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "it.unimi.dsi/fastutil-core-8.5.14.jar_copy",
-    src = "@it_unimi_dsi-fastutil-core-8_5_14_http//file",
-    out = "it.unimi.dsi/fastutil-core-8.5.14.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "com.sun.activation/jakarta.activation-1.2.2.jar_copy",
-    src = "@com_sun_activation-jakarta_activation-1_2_2_http//file",
-    out = "com.sun.activation/jakarta.activation-1.2.2.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "jakarta.activation/jakarta.activation-api-2.1.3.jar_copy",
-    src = "@jakarta_activation-jakarta_activation-api-2_1_3_http//file",
-    out = "jakarta.activation/jakarta.activation-api-2.1.3.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "jakarta.xml.bind/jakarta.xml.bind-api-2.3.3.jar_copy",
-    src = "@jakarta_xml_bind-jakarta_xml_bind-api-2_3_3_http//file",
-    out = "jakarta.xml.bind/jakarta.xml.bind-api-2.3.3.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "com.sun.xml.bind/jaxb-core-2.3.0.1.jar_copy",
-    src = "@com_sun_xml_bind-jaxb-core-2_3_0_1_http//file",
-    out = "com.sun.xml.bind/jaxb-core-2.3.0.1.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "com.sun.xml.bind/jaxb-impl-2.3.3.jar_copy",
-    src = "@com_sun_xml_bind-jaxb-impl-2_3_3_http//file",
-    out = "com.sun.xml.bind/jaxb-impl-2.3.3.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "org.json/json-20240303.jar_copy",
-    src = "@org_json-json-20240303_http//file",
-    out = "org.json/json-20240303.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "org.slf4j/slf4j-api-2.0.16.jar_copy",
-    src = "@org_slf4j-slf4j-api-2_0_16_http//file",
-    out = "org.slf4j/slf4j-api-2.0.16.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "io.github.java-diff-utils/java-diff-utils-4.12.jar_copy",
-    src = "@io_github_java-diff-utils-java-diff-utils-4_12_http//file",
-    out = "io.github.java-diff-utils/java-diff-utils-4.12.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-java_library(
-    name = "grazie-tests-pro-jetbrains-intellij-deps-languagetool-core",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        ":org_jetbrains_intellij_deps_languagetool-languagetool-core-6_8_28_http_import",
-        ":com_carrotsearch-hppc-0_8_2_http_import",
-        ":com_fasterxml_jackson_core-jackson-databind-2_18_0_http_import",
-        ":com_fasterxml_jackson_core-jackson-annotations-2_18_0_http_import",
-        ":com_fasterxml_jackson_core-jackson-core-2_18_0_http_import",
-        ":com_gitlab_dumonts-hunspell-2_1_2_http_import",
-        ":net_java_dev_jna-jna-platform-5_12_1_http_import",
-        ":net_java_dev_jna-jna-5_12_1_http_import",
-        ":com_google_guava-guava-33_5_0-jre_http_import",
-        ":com_google_guava-failureaccess-1_0_3_http_import",
-        ":com_google_guava-listenablefuture-9999_0-empty-to-avoid-conflict-with-guava_http_import",
-        ":com_google_code_findbugs-jsr305-3_0_2_http_import",
-        ":org_jspecify-jspecify-1_0_0_http_import",
-        ":org_codehaus_mojo-animal-sniffer-annotations-1_24_http_import",
-        ":com_google_errorprone-error_prone_annotations-2_41_0_http_import",
-        ":com_google_j2objc-j2objc-annotations-3_1_http_import",
-        ":com_google_protobuf-protobuf-java-3_25_8_http_import",
-        ":com_hankcs-aho-corasick-double-array-trie-1_2_2_http_import",
-        ":com_optimaize_languagedetector-language-detector-0_6_http_import",
-        ":net_arnx-jsonic-1_2_11_http_import",
-        ":com_intellij-annotations-12_0_http_import",
-        ":commons-logging-commons-logging-1_3_4_http_import",
-        ":commons-validator-commons-validator-1_9_0_http_import",
-        ":commons-digester-commons-digester-2_1_http_import",
-        ":io_github_resilience4j-resilience4j-circuitbreaker-1_7_1_http_import",
-        ":io_vavr-vavr-0_10_2_http_import",
-        ":io_vavr-vavr-match-0_10_2_http_import",
-        ":io_github_resilience4j-resilience4j-core-1_7_1_http_import",
-        ":io_github_resilience4j-resilience4j-micrometer-1_7_1_http_import",
-        ":io_grpc-grpc-netty-shaded-1_75_0_http_import",
-        ":io_grpc-grpc-util-1_75_0_http_import",
-        ":io_grpc-grpc-core-1_75_0_http_import",
-        ":com_google_code_gson-gson-2_11_0_http_import",
-        ":com_google_android-annotations-4_1_1_4_http_import",
-        ":io_grpc-grpc-context-1_75_0_http_import",
-        ":io_perfmark-perfmark-api-0_27_0_http_import",
-        ":io_grpc-grpc-api-1_75_0_http_import",
-        ":io_grpc-grpc-protobuf-1_75_0_http_import",
-        ":com_google_api_grpc-proto-google-common-protos-2_59_2_http_import",
-        ":io_grpc-grpc-protobuf-lite-1_75_0_http_import",
-        ":io_grpc-grpc-stub-1_75_0_http_import",
-        ":io_micrometer-micrometer-registry-prometheus-1_7_12_http_import",
-        ":io_micrometer-micrometer-core-1_7_12_http_import",
-        ":org_hdrhistogram-HdrHistogram-2_1_12_http_import",
-        ":org_latencyutils-LatencyUtils-2_0_3_http_import",
-        ":io_prometheus-simpleclient_common-0_10_0_http_import",
-        ":io_prometheus-simpleclient-0_16_0_http_import",
-        ":io_prometheus-simpleclient_tracer_otel-0_16_0_http_import",
-        ":io_prometheus-simpleclient_tracer_common-0_16_0_http_import",
-        ":io_prometheus-simpleclient_tracer_otel_agent-0_16_0_http_import",
-        ":io_prometheus-simpleclient_guava-0_16_0_http_import",
-        ":javax_activation-javax_activation-api-1_2_0_http_import",
-        ":javax_annotation-javax_annotation-api-1_3_2_http_import",
-        ":javax_measure-unit-api-1_0_http_import",
-        ":javax_xml_bind-jaxb-api-2_3_1_http_import",
-        ":net_loomchild-segment-2_0_3_http_import",
-        ":org_apache_commons-commons-lang3-3_18_0_http_import",
-        ":org_apache_commons-commons-pool2-2_12_0_http_import",
-        ":org_apache_commons-commons-text-1_12_0_http_import",
-        ":org_apache_lucene-lucene-backward-codecs-5_5_5_http_import",
-        ":org_apache_lucene-lucene-core-5_5_5_http_import",
-        ":org_carrot2-morfologik-fsa-2_1_9_http_import",
-        ":org_carrot2-morfologik-fsa-builders-2_1_9_http_import",
-        ":org_carrot2-morfologik-speller-2_1_9_http_import",
-        ":org_carrot2-morfologik-stemming-2_1_9_http_import",
-        ":org_glassfish_jaxb-jaxb-runtime-4_0_5_http_import",
-        ":org_glassfish_jaxb-jaxb-core-4_0_5_http_import",
-        ":org_glassfish_jaxb-txw2-4_0_5_http_import",
-        ":com_sun_istack-istack-commons-runtime-4_1_2_http_import",
-        ":org_eclipse_angus-angus-activation-2_0_2_http_import",
-        ":it_unimi_dsi-fastutil-core-8_5_14_http_import",
-        ":com_sun_activation-jakarta_activation-1_2_2_http_import",
-        ":jakarta_activation-jakarta_activation-api-2_1_3_http_import",
-        ":jakarta_xml_bind-jakarta_xml_bind-api-2_3_3_http_import",
-        ":com_sun_xml_bind-jaxb-core-2_3_0_1_http_import",
-        ":com_sun_xml_bind-jaxb-impl-2_3_3_http_import",
-        ":org_json-json-20240303_http_import",
-        ":org_slf4j-slf4j-api-2_0_16_http_import",
-        ":tech_units-indriya-1_3_http_import",
-        ":tech_uom_lib-uom-lib-common-1_1_http_import",
-        ":edu_washington_cs_knowitall-openregex-1_1_1_http_import",
-        ":io_github_java-diff-utils-java-diff-utils-4_12_http_import",
-    ],
-)
-
-jvm_import(
-    name = "com_carrotsearch-hppc-0_8_2_http_import",
-    jar = "@com_carrotsearch-hppc-0_8_2_http//file",
-    source_jar = "@com_carrotsearch-hppc-0_8_2-sources_http//file",
-)
-
-jvm_import(
-    name = "com_fasterxml_jackson_core-jackson-databind-2_18_0_http_import",
-    jar = "@com_fasterxml_jackson_core-jackson-databind-2_18_0_http//file",
-    source_jar = "@com_fasterxml_jackson_core-jackson-databind-2_18_0-sources_http//file",
-)
-
-jvm_import(
-    name = "com_fasterxml_jackson_core-jackson-annotations-2_18_0_http_import",
-    jar = "@com_fasterxml_jackson_core-jackson-annotations-2_18_0_http//file",
-    source_jar = "@com_fasterxml_jackson_core-jackson-annotations-2_18_0-sources_http//file",
-)
-
-jvm_import(
-    name = "com_fasterxml_jackson_core-jackson-core-2_18_0_http_import",
-    jar = "@com_fasterxml_jackson_core-jackson-core-2_18_0_http//file",
-    source_jar = "@com_fasterxml_jackson_core-jackson-core-2_18_0-sources_http//file",
-)
-
-jvm_import(
-    name = "com_gitlab_dumonts-hunspell-2_1_2_http_import",
-    jar = "@com_gitlab_dumonts-hunspell-2_1_2_http//file",
-    source_jar = "@com_gitlab_dumonts-hunspell-2_1_2-sources_http//file",
-)
-
-jvm_import(
-    name = "net_java_dev_jna-jna-platform-5_12_1_http_import",
-    jar = "@net_java_dev_jna-jna-platform-5_12_1_http//file",
-    source_jar = "@net_java_dev_jna-jna-platform-5_12_1-sources_http//file",
-)
-
-jvm_import(
-    name = "net_java_dev_jna-jna-5_12_1_http_import",
-    jar = "@net_java_dev_jna-jna-5_12_1_http//file",
-    source_jar = "@net_java_dev_jna-jna-5_12_1-sources_http//file",
-)
-
-jvm_import(
-    name = "com_google_guava-guava-33_5_0-jre_http_import",
-    jar = "@com_google_guava-guava-33_5_0-jre_http//file",
-    source_jar = "@com_google_guava-guava-33_5_0-jre-sources_http//file",
-)
-
-jvm_import(
-    name = "com_google_guava-failureaccess-1_0_3_http_import",
-    jar = "@com_google_guava-failureaccess-1_0_3_http//file",
-    source_jar = "@com_google_guava-failureaccess-1_0_3-sources_http//file",
-)
-
-jvm_import(
-    name = "com_google_guava-listenablefuture-9999_0-empty-to-avoid-conflict-with-guava_http_import",
-    jar = "@com_google_guava-listenablefuture-9999_0-empty-to-avoid-conflict-with-guava_http//file",
-)
-
-jvm_import(
-    name = "com_google_code_findbugs-jsr305-3_0_2_http_import",
-    jar = "@com_google_code_findbugs-jsr305-3_0_2_http//file",
-    source_jar = "@com_google_code_findbugs-jsr305-3_0_2-sources_http//file",
-)
-
-jvm_import(
-    name = "org_jspecify-jspecify-1_0_0_http_import",
-    jar = "@org_jspecify-jspecify-1_0_0_http//file",
-    source_jar = "@org_jspecify-jspecify-1_0_0-sources_http//file",
-)
-
-jvm_import(
-    name = "org_codehaus_mojo-animal-sniffer-annotations-1_24_http_import",
-    jar = "@org_codehaus_mojo-animal-sniffer-annotations-1_24_http//file",
-    source_jar = "@org_codehaus_mojo-animal-sniffer-annotations-1_24-sources_http//file",
-)
-
-jvm_import(
-    name = "com_google_errorprone-error_prone_annotations-2_41_0_http_import",
-    jar = "@com_google_errorprone-error_prone_annotations-2_41_0_http//file",
-    source_jar = "@com_google_errorprone-error_prone_annotations-2_41_0-sources_http//file",
-)
-
-jvm_import(
-    name = "com_google_j2objc-j2objc-annotations-3_1_http_import",
-    jar = "@com_google_j2objc-j2objc-annotations-3_1_http//file",
-    source_jar = "@com_google_j2objc-j2objc-annotations-3_1-sources_http//file",
-)
-
-jvm_import(
-    name = "com_google_protobuf-protobuf-java-3_25_8_http_import",
-    jar = "@com_google_protobuf-protobuf-java-3_25_8_http//file",
-    source_jar = "@com_google_protobuf-protobuf-java-3_25_8-sources_http//file",
-)
-
-jvm_import(
-    name = "com_hankcs-aho-corasick-double-array-trie-1_2_2_http_import",
-    jar = "@com_hankcs-aho-corasick-double-array-trie-1_2_2_http//file",
-    source_jar = "@com_hankcs-aho-corasick-double-array-trie-1_2_2-sources_http//file",
-)
-
-jvm_import(
-    name = "com_optimaize_languagedetector-language-detector-0_6_http_import",
-    jar = "@com_optimaize_languagedetector-language-detector-0_6_http//file",
-    source_jar = "@com_optimaize_languagedetector-language-detector-0_6-sources_http//file",
-)
-
-jvm_import(
-    name = "net_arnx-jsonic-1_2_11_http_import",
-    jar = "@net_arnx-jsonic-1_2_11_http//file",
-    source_jar = "@net_arnx-jsonic-1_2_11-sources_http//file",
-)
-
-jvm_import(
-    name = "com_intellij-annotations-12_0_http_import",
-    jar = "@com_intellij-annotations-12_0_http//file",
-    source_jar = "@com_intellij-annotations-12_0-sources_http//file",
-)
-
-jvm_import(
-    name = "commons-logging-commons-logging-1_3_4_http_import",
-    jar = "@commons-logging-commons-logging-1_3_4_http//file",
-    source_jar = "@commons-logging-commons-logging-1_3_4-sources_http//file",
-)
-
-jvm_import(
-    name = "commons-validator-commons-validator-1_9_0_http_import",
-    jar = "@commons-validator-commons-validator-1_9_0_http//file",
-    source_jar = "@commons-validator-commons-validator-1_9_0-sources_http//file",
-)
-
-jvm_import(
-    name = "commons-digester-commons-digester-2_1_http_import",
-    jar = "@commons-digester-commons-digester-2_1_http//file",
-    source_jar = "@commons-digester-commons-digester-2_1-sources_http//file",
-)
-
-jvm_import(
-    name = "io_github_resilience4j-resilience4j-circuitbreaker-1_7_1_http_import",
-    jar = "@io_github_resilience4j-resilience4j-circuitbreaker-1_7_1_http//file",
-    source_jar = "@io_github_resilience4j-resilience4j-circuitbreaker-1_7_1-sources_http//file",
-)
-
-jvm_import(
-    name = "io_vavr-vavr-0_10_2_http_import",
-    jar = "@io_vavr-vavr-0_10_2_http//file",
-    source_jar = "@io_vavr-vavr-0_10_2-sources_http//file",
-)
-
-jvm_import(
-    name = "io_vavr-vavr-match-0_10_2_http_import",
-    jar = "@io_vavr-vavr-match-0_10_2_http//file",
-    source_jar = "@io_vavr-vavr-match-0_10_2-sources_http//file",
-)
-
-jvm_import(
-    name = "io_github_resilience4j-resilience4j-core-1_7_1_http_import",
-    jar = "@io_github_resilience4j-resilience4j-core-1_7_1_http//file",
-    source_jar = "@io_github_resilience4j-resilience4j-core-1_7_1-sources_http//file",
-)
-
-jvm_import(
-    name = "io_github_resilience4j-resilience4j-micrometer-1_7_1_http_import",
-    jar = "@io_github_resilience4j-resilience4j-micrometer-1_7_1_http//file",
-    source_jar = "@io_github_resilience4j-resilience4j-micrometer-1_7_1-sources_http//file",
-)
-
-jvm_import(
-    name = "io_grpc-grpc-netty-shaded-1_75_0_http_import",
-    jar = "@io_grpc-grpc-netty-shaded-1_75_0_http//file",
-    source_jar = "@io_grpc-grpc-netty-shaded-1_75_0-sources_http//file",
-)
-
-jvm_import(
-    name = "io_grpc-grpc-util-1_75_0_http_import",
-    jar = "@io_grpc-grpc-util-1_75_0_http//file",
-    source_jar = "@io_grpc-grpc-util-1_75_0-sources_http//file",
-)
-
-jvm_import(
-    name = "io_grpc-grpc-core-1_75_0_http_import",
-    jar = "@io_grpc-grpc-core-1_75_0_http//file",
-    source_jar = "@io_grpc-grpc-core-1_75_0-sources_http//file",
-)
-
-jvm_import(
-    name = "com_google_code_gson-gson-2_11_0_http_import",
-    jar = "@com_google_code_gson-gson-2_11_0_http//file",
-    source_jar = "@com_google_code_gson-gson-2_11_0-sources_http//file",
-)
-
-jvm_import(
-    name = "com_google_android-annotations-4_1_1_4_http_import",
-    jar = "@com_google_android-annotations-4_1_1_4_http//file",
-    source_jar = "@com_google_android-annotations-4_1_1_4-sources_http//file",
-)
-
-jvm_import(
-    name = "io_grpc-grpc-context-1_75_0_http_import",
-    jar = "@io_grpc-grpc-context-1_75_0_http//file",
-    source_jar = "@io_grpc-grpc-context-1_75_0-sources_http//file",
-)
-
-jvm_import(
-    name = "io_perfmark-perfmark-api-0_27_0_http_import",
-    jar = "@io_perfmark-perfmark-api-0_27_0_http//file",
-    source_jar = "@io_perfmark-perfmark-api-0_27_0-sources_http//file",
-)
-
-jvm_import(
-    name = "io_grpc-grpc-api-1_75_0_http_import",
-    jar = "@io_grpc-grpc-api-1_75_0_http//file",
-    source_jar = "@io_grpc-grpc-api-1_75_0-sources_http//file",
-)
-
-jvm_import(
-    name = "io_grpc-grpc-protobuf-1_75_0_http_import",
-    jar = "@io_grpc-grpc-protobuf-1_75_0_http//file",
-    source_jar = "@io_grpc-grpc-protobuf-1_75_0-sources_http//file",
-)
-
-jvm_import(
-    name = "com_google_api_grpc-proto-google-common-protos-2_59_2_http_import",
-    jar = "@com_google_api_grpc-proto-google-common-protos-2_59_2_http//file",
-    source_jar = "@com_google_api_grpc-proto-google-common-protos-2_59_2-sources_http//file",
-)
-
-jvm_import(
-    name = "io_grpc-grpc-protobuf-lite-1_75_0_http_import",
-    jar = "@io_grpc-grpc-protobuf-lite-1_75_0_http//file",
-    source_jar = "@io_grpc-grpc-protobuf-lite-1_75_0-sources_http//file",
-)
-
-jvm_import(
-    name = "io_grpc-grpc-stub-1_75_0_http_import",
-    jar = "@io_grpc-grpc-stub-1_75_0_http//file",
-    source_jar = "@io_grpc-grpc-stub-1_75_0-sources_http//file",
-)
-
-jvm_import(
-    name = "io_micrometer-micrometer-registry-prometheus-1_7_12_http_import",
-    jar = "@io_micrometer-micrometer-registry-prometheus-1_7_12_http//file",
-    source_jar = "@io_micrometer-micrometer-registry-prometheus-1_7_12-sources_http//file",
-)
-
-jvm_import(
-    name = "io_micrometer-micrometer-core-1_7_12_http_import",
-    jar = "@io_micrometer-micrometer-core-1_7_12_http//file",
-    source_jar = "@io_micrometer-micrometer-core-1_7_12-sources_http//file",
-)
-
-jvm_import(
-    name = "org_hdrhistogram-HdrHistogram-2_1_12_http_import",
-    jar = "@org_hdrhistogram-HdrHistogram-2_1_12_http//file",
-    source_jar = "@org_hdrhistogram-HdrHistogram-2_1_12-sources_http//file",
-)
-
-jvm_import(
-    name = "org_latencyutils-LatencyUtils-2_0_3_http_import",
-    jar = "@org_latencyutils-LatencyUtils-2_0_3_http//file",
-    source_jar = "@org_latencyutils-LatencyUtils-2_0_3-sources_http//file",
-)
-
-jvm_import(
-    name = "io_prometheus-simpleclient_common-0_10_0_http_import",
-    jar = "@io_prometheus-simpleclient_common-0_10_0_http//file",
-    source_jar = "@io_prometheus-simpleclient_common-0_10_0-sources_http//file",
-)
-
-jvm_import(
-    name = "io_prometheus-simpleclient-0_16_0_http_import",
-    jar = "@io_prometheus-simpleclient-0_16_0_http//file",
-    source_jar = "@io_prometheus-simpleclient-0_16_0-sources_http//file",
-)
-
-jvm_import(
-    name = "io_prometheus-simpleclient_tracer_otel-0_16_0_http_import",
-    jar = "@io_prometheus-simpleclient_tracer_otel-0_16_0_http//file",
-    source_jar = "@io_prometheus-simpleclient_tracer_otel-0_16_0-sources_http//file",
-)
-
-jvm_import(
-    name = "io_prometheus-simpleclient_tracer_common-0_16_0_http_import",
-    jar = "@io_prometheus-simpleclient_tracer_common-0_16_0_http//file",
-    source_jar = "@io_prometheus-simpleclient_tracer_common-0_16_0-sources_http//file",
-)
-
-jvm_import(
-    name = "io_prometheus-simpleclient_tracer_otel_agent-0_16_0_http_import",
-    jar = "@io_prometheus-simpleclient_tracer_otel_agent-0_16_0_http//file",
-    source_jar = "@io_prometheus-simpleclient_tracer_otel_agent-0_16_0-sources_http//file",
-)
-
-jvm_import(
-    name = "io_prometheus-simpleclient_guava-0_16_0_http_import",
-    jar = "@io_prometheus-simpleclient_guava-0_16_0_http//file",
-    source_jar = "@io_prometheus-simpleclient_guava-0_16_0-sources_http//file",
-)
-
-jvm_import(
-    name = "javax_activation-javax_activation-api-1_2_0_http_import",
-    jar = "@javax_activation-javax_activation-api-1_2_0_http//file",
-    source_jar = "@javax_activation-javax_activation-api-1_2_0-sources_http//file",
-)
-
-jvm_import(
-    name = "javax_annotation-javax_annotation-api-1_3_2_http_import",
-    jar = "@javax_annotation-javax_annotation-api-1_3_2_http//file",
-    source_jar = "@javax_annotation-javax_annotation-api-1_3_2-sources_http//file",
-)
-
-jvm_import(
-    name = "javax_measure-unit-api-1_0_http_import",
-    jar = "@javax_measure-unit-api-1_0_http//file",
-    source_jar = "@javax_measure-unit-api-1_0-sources_http//file",
-)
-
-jvm_import(
-    name = "javax_xml_bind-jaxb-api-2_3_1_http_import",
-    jar = "@javax_xml_bind-jaxb-api-2_3_1_http//file",
-    source_jar = "@javax_xml_bind-jaxb-api-2_3_1-sources_http//file",
-)
-
-jvm_import(
-    name = "net_loomchild-segment-2_0_3_http_import",
-    jar = "@net_loomchild-segment-2_0_3_http//file",
-    source_jar = "@net_loomchild-segment-2_0_3-sources_http//file",
-)
-
-jvm_import(
-    name = "org_apache_commons-commons-lang3-3_18_0_http_import",
-    jar = "@org_apache_commons-commons-lang3-3_18_0_http//file",
-    source_jar = "@org_apache_commons-commons-lang3-3_18_0-sources_http//file",
-)
-
-jvm_import(
-    name = "org_apache_commons-commons-pool2-2_12_0_http_import",
-    jar = "@org_apache_commons-commons-pool2-2_12_0_http//file",
-    source_jar = "@org_apache_commons-commons-pool2-2_12_0-sources_http//file",
-)
-
-jvm_import(
-    name = "org_apache_commons-commons-text-1_12_0_http_import",
-    jar = "@org_apache_commons-commons-text-1_12_0_http//file",
-    source_jar = "@org_apache_commons-commons-text-1_12_0-sources_http//file",
-)
-
-jvm_import(
-    name = "org_apache_lucene-lucene-backward-codecs-5_5_5_http_import",
-    jar = "@org_apache_lucene-lucene-backward-codecs-5_5_5_http//file",
-    source_jar = "@org_apache_lucene-lucene-backward-codecs-5_5_5-sources_http//file",
-)
-
-jvm_import(
-    name = "org_apache_lucene-lucene-core-5_5_5_http_import",
-    jar = "@org_apache_lucene-lucene-core-5_5_5_http//file",
-    source_jar = "@org_apache_lucene-lucene-core-5_5_5-sources_http//file",
-)
-
-jvm_import(
-    name = "org_carrot2-morfologik-fsa-2_1_9_http_import",
-    jar = "@org_carrot2-morfologik-fsa-2_1_9_http//file",
-    source_jar = "@org_carrot2-morfologik-fsa-2_1_9-sources_http//file",
-)
-
-jvm_import(
-    name = "org_carrot2-morfologik-fsa-builders-2_1_9_http_import",
-    jar = "@org_carrot2-morfologik-fsa-builders-2_1_9_http//file",
-    source_jar = "@org_carrot2-morfologik-fsa-builders-2_1_9-sources_http//file",
-)
-
-jvm_import(
-    name = "org_carrot2-morfologik-speller-2_1_9_http_import",
-    jar = "@org_carrot2-morfologik-speller-2_1_9_http//file",
-    source_jar = "@org_carrot2-morfologik-speller-2_1_9-sources_http//file",
-)
-
-jvm_import(
-    name = "org_carrot2-morfologik-stemming-2_1_9_http_import",
-    jar = "@org_carrot2-morfologik-stemming-2_1_9_http//file",
-    source_jar = "@org_carrot2-morfologik-stemming-2_1_9-sources_http//file",
-)
-
-jvm_import(
-    name = "org_glassfish_jaxb-jaxb-runtime-4_0_5_http_import",
-    jar = "@org_glassfish_jaxb-jaxb-runtime-4_0_5_http//file",
-    source_jar = "@org_glassfish_jaxb-jaxb-runtime-4_0_5-sources_http//file",
-)
-
-jvm_import(
-    name = "org_glassfish_jaxb-jaxb-core-4_0_5_http_import",
-    jar = "@org_glassfish_jaxb-jaxb-core-4_0_5_http//file",
-    source_jar = "@org_glassfish_jaxb-jaxb-core-4_0_5-sources_http//file",
-)
-
-jvm_import(
-    name = "org_glassfish_jaxb-txw2-4_0_5_http_import",
-    jar = "@org_glassfish_jaxb-txw2-4_0_5_http//file",
-    source_jar = "@org_glassfish_jaxb-txw2-4_0_5-sources_http//file",
-)
-
-jvm_import(
-    name = "com_sun_istack-istack-commons-runtime-4_1_2_http_import",
-    jar = "@com_sun_istack-istack-commons-runtime-4_1_2_http//file",
-    source_jar = "@com_sun_istack-istack-commons-runtime-4_1_2-sources_http//file",
-)
-
-jvm_import(
-    name = "org_eclipse_angus-angus-activation-2_0_2_http_import",
-    jar = "@org_eclipse_angus-angus-activation-2_0_2_http//file",
-    source_jar = "@org_eclipse_angus-angus-activation-2_0_2-sources_http//file",
-)
-
-jvm_import(
-    name = "it_unimi_dsi-fastutil-core-8_5_14_http_import",
-    jar = "@it_unimi_dsi-fastutil-core-8_5_14_http//file",
-    source_jar = "@it_unimi_dsi-fastutil-core-8_5_14-sources_http//file",
-)
-
-jvm_import(
-    name = "com_sun_activation-jakarta_activation-1_2_2_http_import",
-    jar = "@com_sun_activation-jakarta_activation-1_2_2_http//file",
-    source_jar = "@com_sun_activation-jakarta_activation-1_2_2-sources_http//file",
-)
-
-jvm_import(
-    name = "jakarta_activation-jakarta_activation-api-2_1_3_http_import",
-    jar = "@jakarta_activation-jakarta_activation-api-2_1_3_http//file",
-    source_jar = "@jakarta_activation-jakarta_activation-api-2_1_3-sources_http//file",
-)
-
-jvm_import(
-    name = "jakarta_xml_bind-jakarta_xml_bind-api-2_3_3_http_import",
-    jar = "@jakarta_xml_bind-jakarta_xml_bind-api-2_3_3_http//file",
-    source_jar = "@jakarta_xml_bind-jakarta_xml_bind-api-2_3_3-sources_http//file",
-)
-
-jvm_import(
-    name = "com_sun_xml_bind-jaxb-core-2_3_0_1_http_import",
-    jar = "@com_sun_xml_bind-jaxb-core-2_3_0_1_http//file",
-    source_jar = "@com_sun_xml_bind-jaxb-core-2_3_0_1-sources_http//file",
-)
-
-jvm_import(
-    name = "com_sun_xml_bind-jaxb-impl-2_3_3_http_import",
-    jar = "@com_sun_xml_bind-jaxb-impl-2_3_3_http//file",
-    source_jar = "@com_sun_xml_bind-jaxb-impl-2_3_3-sources_http//file",
-)
-
-jvm_import(
-    name = "org_json-json-20240303_http_import",
-    jar = "@org_json-json-20240303_http//file",
-    source_jar = "@org_json-json-20240303-sources_http//file",
-)
-
-jvm_import(
-    name = "org_slf4j-slf4j-api-2_0_16_http_import",
-    jar = "@org_slf4j-slf4j-api-2_0_16_http//file",
-    source_jar = "@org_slf4j-slf4j-api-2_0_16-sources_http//file",
-)
-
-jvm_import(
-    name = "tech_units-indriya-1_3_http_import",
-    jar = "@tech_units-indriya-1_3_http//file",
-    source_jar = "@tech_units-indriya-1_3-sources_http//file",
-)
-
-jvm_import(
-    name = "tech_uom_lib-uom-lib-common-1_1_http_import",
-    jar = "@tech_uom_lib-uom-lib-common-1_1_http//file",
-    source_jar = "@tech_uom_lib-uom-lib-common-1_1-sources_http//file",
-)
-
-jvm_import(
-    name = "io_github_java-diff-utils-java-diff-utils-4_12_http_import",
-    jar = "@io_github_java-diff-utils-java-diff-utils-4_12_http//file",
-    source_jar = "@io_github_java-diff-utils-java-diff-utils-4_12-sources_http//file",
-)
-
-java_library(
-    name = "grazie-tests-pro-jetbrains-intellij-deps-languagetool-language-de",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        ":org_jetbrains_intellij_deps_languagetool-language-de-6_8_28_http_import",
-        ":de_danielnaber-german-pos-dict-1_2_4_http_import",
-        ":de_danielnaber-jwordsplitter-4_7_http_import",
-        ":edu_washington_cs_knowitall-openregex-1_1_1_http_import",
-        ":org_apache_commons-commons-lang3-3_18_0_http_import",
-    ],
-)
-
-copy_file(
-    name = "org.jetbrains.intellij.deps.languagetool/language-el-6.8.28.jar_copy",
-    src = "@org_jetbrains_intellij_deps_languagetool-language-el-6_8_28_http//file",
-    out = "org.jetbrains.intellij.deps.languagetool/language-el-6.8.28.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "org.ioperm/morphology-el-1.0.0.jar_copy",
-    src = "@org_ioperm-morphology-el-1_0_0_http//file",
-    out = "org.ioperm/morphology-el-1.0.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-java_library(
-    name = "grazie-tests-pro-jetbrains-intellij-deps-languagetool-language-el",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        ":org_jetbrains_intellij_deps_languagetool-language-el-6_8_28_http_import",
-        ":org_ioperm-morphology-el-1_0_0_http_import",
-    ],
-)
-
-jvm_import(
-    name = "org_jetbrains_intellij_deps_languagetool-language-el-6_8_28_http_import",
-    jar = "@org_jetbrains_intellij_deps_languagetool-language-el-6_8_28_http//file",
-    source_jar = "@org_jetbrains_intellij_deps_languagetool-language-el-6_8_28-sources_http//file",
-)
-
-jvm_import(
-    name = "org_ioperm-morphology-el-1_0_0_http_import",
-    jar = "@org_ioperm-morphology-el-1_0_0_http//file",
-    source_jar = "@org_ioperm-morphology-el-1_0_0-sources_http//file",
-)
-
-java_library(
-    name = "grazie-tests-pro-jetbrains-intellij-deps-languagetool-language-ru",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        ":org_jetbrains_intellij_deps_languagetool-language-ru-6_8_28_http_import",
-        ":edu_washington_cs_knowitall-openregex-1_1_1_http_import",
-    ],
-)
-
-jvm_import(
-    name = "org_jetbrains_intellij_deps_languagetool-language-ru-6_8_28_http_import",
-    jar = "@org_jetbrains_intellij_deps_languagetool-language-ru-6_8_28_http//file",
-    source_jar = "@org_jetbrains_intellij_deps_languagetool-language-ru-6_8_28-sources_http//file",
-)
-
-java_library(
-    name = "grazie-tests-pro-jetbrains-intellij-deps-languagetool-language-uk",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        ":org_jetbrains_intellij_deps_languagetool-language-uk-6_8_28_http_import",
-        ":ua_net_nlp-morfologik-ukrainian-lt-6_8_0_http_import",
-    ],
-)
-
-copy_file(
     name = "org.spockframework/spock-core-2.1-groovy-3.0.jar_copy",
     src = "@org_spockframework-spock-core-2_1-groovy-3_0_http//file",
     out = "org.spockframework/spock-core-2.1-groovy-3.0.jar",
@@ -5356,6 +4026,14 @@ copy_file(
 )
 
 copy_file(
+    name = "jakarta.activation/jakarta.activation-api-2.1.3.jar_copy",
+    src = "@jakarta_activation-jakarta_activation-api-2_1_3_http//file",
+    out = "jakarta.activation/jakarta.activation-api-2.1.3.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
     name = "org.glassfish.jaxb/jaxb-runtime-4.0.2.jar_copy",
     src = "@org_glassfish_jaxb-jaxb-runtime-4_0_2_http//file",
     out = "org.glassfish.jaxb/jaxb-runtime-4.0.2.jar",
@@ -5422,6 +4100,12 @@ jvm_import(
     name = "jakarta_xml_bind-jakarta_xml_bind-api-4_0_2_http_import",
     jar = "@jakarta_xml_bind-jakarta_xml_bind-api-4_0_2_http//file",
     source_jar = "@jakarta_xml_bind-jakarta_xml_bind-api-4_0_2-sources_http//file",
+)
+
+jvm_import(
+    name = "jakarta_activation-jakarta_activation-api-2_1_3_http_import",
+    jar = "@jakarta_activation-jakarta_activation-api-2_1_3_http//file",
+    source_jar = "@jakarta_activation-jakarta_activation-api-2_1_3-sources_http//file",
 )
 
 jvm_import(
@@ -5773,6 +4457,14 @@ java_library(
     exports = [":javax-inject"],
 )
 
+copy_file(
+    name = "javax.xml.bind/jaxb-api-2.3.1.jar_copy",
+    src = "@javax_xml_bind-jaxb-api-2_3_1_http//file",
+    out = "javax.xml.bind/jaxb-api-2.3.1.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
 jvm_import(
     name = "jaxb-api",
     jar = "@javax_xml_bind-jaxb-api-2_3_1_http//file",
@@ -5800,6 +4492,14 @@ copy_file(
     name = "com.sun.istack/istack-commons-runtime-3.0.12.jar_copy",
     src = "@com_sun_istack-istack-commons-runtime-3_0_12_http//file",
     out = "com.sun.istack/istack-commons-runtime-3.0.12.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.sun.activation/jakarta.activation-1.2.2.jar_copy",
+    src = "@com_sun_activation-jakarta_activation-1_2_2_http//file",
+    out = "com.sun.activation/jakarta.activation-1.2.2.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
@@ -5832,6 +4532,12 @@ jvm_import(
     name = "com_sun_istack-istack-commons-runtime-3_0_12_http_import",
     jar = "@com_sun_istack-istack-commons-runtime-3_0_12_http//file",
     source_jar = "@com_sun_istack-istack-commons-runtime-3_0_12-sources_http//file",
+)
+
+jvm_import(
+    name = "com_sun_activation-jakarta_activation-1_2_2_http_import",
+    jar = "@com_sun_activation-jakarta_activation-1_2_2_http//file",
+    source_jar = "@com_sun_activation-jakarta_activation-1_2_2-sources_http//file",
 )
 
 copy_file(
@@ -7044,6 +5750,14 @@ jvm_import(
     visibility = ["//visibility:public"],
 )
 
+copy_file(
+    name = "ai.grazie.model/model-text-jvm-0.8.256.jar_copy",
+    src = "@ai_grazie_model-model-text-jvm-0_8_256_http//file",
+    out = "ai.grazie.model/model-text-jvm-0.8.256.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
 jvm_import(
     name = "libraries-ai-grazie-spell-gec-engine-local-ai-grazie-model-text-jvm",
     jar = "@ai_grazie_model-model-text-jvm-0_8_256_http//file",
@@ -7063,6 +5777,14 @@ jvm_import(
     name = "libraries-ai-grazie-spell-gec-engine-local-ai-grazie-nlp-detect",
     jar = "@ai_grazie_nlp-nlp-detect-jvm-0_9_5_http//file",
     source_jar = "@ai_grazie_nlp-nlp-detect-jvm-0_9_5-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "ai.grazie.nlp/nlp-langs-jvm-0.8.256.jar_copy",
+    src = "@ai_grazie_nlp-nlp-langs-jvm-0_8_256_http//file",
+    out = "ai.grazie.nlp/nlp-langs-jvm-0.8.256.jar",
+    allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
@@ -7782,6 +6504,14 @@ copy_file(
 )
 
 copy_file(
+    name = "org.jspecify/jspecify-1.0.0.jar_copy",
+    src = "@org_jspecify-jspecify-1_0_0_http//file",
+    out = "org.jspecify/jspecify-1.0.0.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
     name = "com.google.errorprone/error_prone_annotations-2.49.0.jar_copy",
     src = "@com_google_errorprone-error_prone_annotations-2_49_0_http//file",
     out = "com.google.errorprone/error_prone_annotations-2.49.0.jar",
@@ -7804,6 +6534,12 @@ jvm_import(
     name = "com_github_ben-manes_caffeine-caffeine-3_2_4_http_import",
     jar = "@com_github_ben-manes_caffeine-caffeine-3_2_4_http//file",
     source_jar = "@com_github_ben-manes_caffeine-caffeine-3_2_4-sources_http//file",
+)
+
+jvm_import(
+    name = "org_jspecify-jspecify-1_0_0_http_import",
+    jar = "@org_jspecify-jspecify-1_0_0_http//file",
+    source_jar = "@org_jspecify-jspecify-1_0_0-sources_http//file",
 )
 
 jvm_import(
@@ -10346,6 +9082,30 @@ copy_file(
 )
 
 copy_file(
+    name = "com.google.android/annotations-4.1.1.4.jar_copy",
+    src = "@com_google_android-annotations-4_1_1_4_http//file",
+    out = "com.google.android/annotations-4.1.1.4.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "org.codehaus.mojo/animal-sniffer-annotations-1.24.jar_copy",
+    src = "@org_codehaus_mojo-animal-sniffer-annotations-1_24_http//file",
+    out = "org.codehaus.mojo/animal-sniffer-annotations-1.24.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "io.perfmark/perfmark-api-0.27.0.jar_copy",
+    src = "@io_perfmark-perfmark-api-0_27_0_http//file",
+    out = "io.perfmark/perfmark-api-0.27.0.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
     name = "io.grpc/grpc-context-1.73.0.jar_copy",
     src = "@io_grpc-grpc-context-1_73_0_http//file",
     out = "io.grpc/grpc-context-1.73.0.jar",
@@ -10377,6 +9137,24 @@ jvm_import(
     name = "io_grpc-grpc-api-1_73_0_http_import",
     jar = "@io_grpc-grpc-api-1_73_0_http//file",
     source_jar = "@io_grpc-grpc-api-1_73_0-sources_http//file",
+)
+
+jvm_import(
+    name = "com_google_android-annotations-4_1_1_4_http_import",
+    jar = "@com_google_android-annotations-4_1_1_4_http//file",
+    source_jar = "@com_google_android-annotations-4_1_1_4-sources_http//file",
+)
+
+jvm_import(
+    name = "org_codehaus_mojo-animal-sniffer-annotations-1_24_http_import",
+    jar = "@org_codehaus_mojo-animal-sniffer-annotations-1_24_http//file",
+    source_jar = "@org_codehaus_mojo-animal-sniffer-annotations-1_24-sources_http//file",
+)
+
+jvm_import(
+    name = "io_perfmark-perfmark-api-0_27_0_http_import",
+    jar = "@io_perfmark-perfmark-api-0_27_0_http//file",
+    source_jar = "@io_perfmark-perfmark-api-0_27_0-sources_http//file",
 )
 
 jvm_import(
@@ -10529,6 +9307,14 @@ copy_file(
     visibility = ["//visibility:public"],
 )
 
+copy_file(
+    name = "com.google.guava/failureaccess-1.0.3.jar_copy",
+    src = "@com_google_guava-failureaccess-1_0_3_http//file",
+    out = "com.google.guava/failureaccess-1.0.3.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
 java_library(
     name = "libraries-guava-_guava",
     visibility = ["//visibility:public"],
@@ -10543,6 +9329,12 @@ jvm_import(
     name = "com_google_guava-guava-33_7_1-jre_http_import",
     jar = "@com_google_guava-guava-33_7_1-jre_http//file",
     source_jar = "@com_google_guava-guava-33_7_1-jre-sources_http//file",
+)
+
+jvm_import(
+    name = "com_google_guava-failureaccess-1_0_3_http_import",
+    jar = "@com_google_guava-failureaccess-1_0_3_http//file",
+    source_jar = "@com_google_guava-failureaccess-1_0_3-sources_http//file",
 )
 
 copy_file(
@@ -11105,6 +9897,14 @@ jvm_import(
     name = "libraries-javax-activation-javax-activation",
     jar = "@com_sun_activation-javax_activation-1_2_0_http//file",
     source_jar = "@com_sun_activation-javax_activation-1_2_0-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "javax.annotation/javax.annotation-api-1.3.2.jar_copy",
+    src = "@javax_annotation-javax_annotation-api-1_3_2_http//file",
+    out = "javax.annotation/javax.annotation-api-1.3.2.jar",
+    allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
@@ -11675,6 +10475,14 @@ jvm_import(
     name = "libraries-jspecify-jspecify",
     jar = "@org_jspecify-jspecify-1_0_1_http//file",
     source_jar = "@org_jspecify-jspecify-1_0_1-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.google.code.findbugs/jsr305-3.0.2.jar_copy",
+    src = "@com_google_code_findbugs-jsr305-3_0_2_http//file",
+    out = "com.google.code.findbugs/jsr305-3.0.2.jar",
+    allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
@@ -15893,6 +14701,14 @@ copy_file(
 )
 
 copy_file(
+    name = "jakarta.xml.bind/jakarta.xml.bind-api-2.3.3.jar_copy",
+    src = "@jakarta_xml_bind-jakarta_xml_bind-api-2_3_3_http//file",
+    out = "jakarta.xml.bind/jakarta.xml.bind-api-2.3.3.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
     name = "jakarta.activation/jakarta.activation-api-1.2.2.jar_copy",
     src = "@jakarta_activation-jakarta_activation-api-1_2_2_http//file",
     out = "jakarta.activation/jakarta.activation-api-1.2.2.jar",
@@ -15915,6 +14731,12 @@ jvm_import(
     name = "org_xmlunit-xmlunit-core-2_13_0_http_import",
     jar = "@org_xmlunit-xmlunit-core-2_13_0_http//file",
     source_jar = "@org_xmlunit-xmlunit-core-2_13_0-sources_http//file",
+)
+
+jvm_import(
+    name = "jakarta_xml_bind-jakarta_xml_bind-api-2_3_3_http_import",
+    jar = "@jakarta_xml_bind-jakarta_xml_bind-api-2_3_3_http//file",
+    source_jar = "@jakarta_xml_bind-jakarta_xml_bind-api-2_3_3-sources_http//file",
 )
 
 jvm_import(
@@ -17483,6 +16305,12 @@ jvm_import(
     name = "com_google_guava-guava-25_1-android_http_import",
     jar = "@com_google_guava-guava-25_1-android_http//file",
     source_jar = "@com_google_guava-guava-25_1-android-sources_http//file",
+)
+
+jvm_import(
+    name = "com_google_code_findbugs-jsr305-3_0_2_http_import",
+    jar = "@com_google_code_findbugs-jsr305-3_0_2_http//file",
+    source_jar = "@com_google_code_findbugs-jsr305-3_0_2-sources_http//file",
 )
 
 jvm_import(
@@ -21054,6 +19882,12 @@ java_library(
         ":ai_grazie_utils-utils-common-jvm-0_8_256_http_import",
         ":ai_grazie_utils-utils-multiplatform-jvm-0_8_256_http_import",
     ],
+)
+
+jvm_import(
+    name = "ai_grazie_model-model-text-jvm-0_8_256_http_import",
+    jar = "@ai_grazie_model-model-text-jvm-0_8_256_http//file",
+    source_jar = "@ai_grazie_model-model-text-jvm-0_8_256-sources_http//file",
 )
 
 jvm_import(

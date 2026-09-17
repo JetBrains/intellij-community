@@ -2,12 +2,9 @@
 package com.intellij.grazie.ide.fus
 
 import ai.grazie.nlp.langs.LanguageISO
-import ai.grazie.rules.settings.TextStyle
 import com.intellij.grazie.GrazieConfig
-import com.intellij.grazie.GrazieConfig.State.Processing
 import com.intellij.grazie.config.CheckingContext
 import com.intellij.grazie.ide.ui.grammar.tabs.rules.component.allRules
-import com.intellij.grazie.rule.RuleIdeClient
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.collectors.fus.LangCustomRuleValidator
 import com.intellij.internal.statistic.eventLog.EventLogGroup
@@ -17,7 +14,7 @@ import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesC
 import com.intellij.internal.statistic.utils.getPluginInfo
 
 internal class GrazieFUSState : ApplicationUsagesCollector() {
-  private val GROUP = EventLogGroup("grazie.state", 12)
+  private val GROUP = EventLogGroup("grazie.state", 13)
   private val ENABLE_LANGUAGE = GROUP.registerEvent(
     "enabled.language",
     EventFields.Enum("value", LanguageISO::class.java) { it.name.lowercase() }
@@ -57,16 +54,6 @@ internal class GrazieFUSState : ApplicationUsagesCollector() {
 
   private val SPECIFICATION_ANALYSIS = GROUP.registerEvent("settings.specification.analysis", EventFields.Enabled)
 
-  private val PROCESSING = GROUP.registerEvent(
-    "settings.processing",
-    EventFields.Enum<Processing>("type") { it.name.uppercase() }
-  )
-
-  private val WRITING_STYLE = GROUP.registerEvent(
-    "settings.writing.style",
-    EventFields.String("style", TextStyle.styles(RuleIdeClient.INSTANCE).map { it.id.uppercase() })
-  )
-
   private val DEFAULT_STATE = GrazieConfig.get()
 
   override fun getGroup(): EventLogGroup = GROUP
@@ -97,11 +84,6 @@ internal class GrazieFUSState : ApplicationUsagesCollector() {
       metrics.add(CHECKING_CONTEXT.metric(LANGUAGE_FIELD.with(id), USER_CHANGE_FIELD.with("enabled")))
     }
 
-    // state.processing doesn't have a constant default value, so we always report it
-    metrics.add(PROCESSING.metric(GrazieConfig.get().processing))
-    if (state.styleProfile != DEFAULT_STATE.styleProfile) {
-      metrics.add(WRITING_STYLE.metric(state.getTextStyle().id.uppercase()))
-    }
     if (state.autoFix != DEFAULT_STATE.autoFix) {
       metrics.add(AUTO_FIX.metric(state.autoFix))
     }

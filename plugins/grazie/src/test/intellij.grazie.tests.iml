@@ -421,5 +421,7 @@
     <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit5.params" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.ai.grazie.semantic.engine" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.gson" scope="TEST" />
   </component>
 </module>

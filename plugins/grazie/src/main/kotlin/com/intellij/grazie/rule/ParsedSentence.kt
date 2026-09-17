@@ -1,6 +1,5 @@
 package com.intellij.grazie.rule
 
-import ai.grazie.nlp.langs.Language
 import ai.grazie.rules.tree.StubbedSentence
 import ai.grazie.rules.tree.Tree
 import ai.grazie.text.exclusions.SentenceWithExclusions
@@ -72,7 +71,7 @@ class ParsedSentence private constructor(
     fun findSentenceInFile(file: PsiFile?, fileOffset: Int): ParsedSentence? {
       if (file == null) return null
       val text = TextExtractor.findTextAt(file, fileOffset, TextContent.TextDomain.ALL) ?: return null
-      val sentences = runBlockingCancellable { getSentences(text, TextRange.from(fileOffset, 0), minimal = false) }
+      val sentences = runBlockingCancellable { getSentences(text, TextRange.from(fileOffset, 0)) }
       return sentences.lastOrNull { it.tree != null && it.fileOffsetToText(fileOffset) != null }
     }
 
@@ -82,13 +81,8 @@ class ParsedSentence private constructor(
      */
     @JvmStatic
     fun findSentenceASAP(text: TextContent, fileOffset: Int): ParsedSentence? {
-      val sentences = runBlockingCancellable { getSentences(text, TextRange.from(fileOffset, 0), minimal = true) }
+      val sentences = runBlockingCancellable { getSentences(text, TextRange.from(fileOffset, 0)) }
       return sentences.lastOrNull { it.tree != null && it.fileOffsetToText(fileOffset) != null }
-    }
-
-    @JvmStatic
-    fun getSentences(content: TextContent): List<ParsedSentence> {
-      return runBlockingCancellable { getSentencesAsync(content) }
     }
 
     @JvmStatic
@@ -103,7 +97,7 @@ class ParsedSentence private constructor(
 
     @JvmStatic
     suspend fun getAllCheckedSentences(texts: List<TextContent>): SequencedMap<TextContent, List<ParsedSentence>> {
-      return getAllCheckedSentences(texts) { DependencyParser.getParser(it, false) }
+      return getAllCheckedSentences(texts) { DependencyParser.getParser(it) }
     }
 
     internal suspend fun getAllCheckedSentences(texts: List<TextContent>, parser: (TextContent) -> AsyncBatchParser<Tree>?): SequencedMap<TextContent, List<ParsedSentence>> {
@@ -116,39 +110,21 @@ class ParsedSentence private constructor(
       } as SequencedMap<TextContent, List<ParsedSentence>>
     }
 
-    internal fun getAllCheckedSentences(
-      contexts: List<ProofreadingContext>, treesByLanguage: Map<Language, Map<SentenceWithExclusions, Tree?>>,
-    ): SequencedMap<TextContent, List<ParsedSentence>> {
-      val checkedDomains = checkedDomains()
-      return contexts.asSequence()
-        .filter { it.text.domain in checkedDomains }
-        .filterNot { HighlightingUtil.isTooLargeText(it.text) }
-        .filter { seemsNatural(it.text) }
-        .mapNotNull {
-          val trees = treesByLanguage[it.language]
-          if (trees == null) return@mapNotNull null
-          it.text to trees
-        }.associate { (content, trees) ->
-          content to getSentences(content, content.commonParent.textRange, trees)
-        } as SequencedMap<TextContent, List<ParsedSentence>>
-    }
-
     suspend fun getSentencesAsync(content: TextContent): List<ParsedSentence> {
-      return getSentences(content, content.commonParent.textRange, minimal = false)
+      return getSentences(content, content.commonParent.textRange)
     }
 
-    @Suppress("unused")
     suspend fun getSentencesAsync(context: ProofreadingContext): List<ParsedSentence> {
       if (HighlightingUtil.isTooLargeText(listOf(context.text))) return emptyList()
-      val parser = DependencyParser.getParser(context, false) ?: return emptyList()
+      val parser = DependencyParser.getParser(context) ?: return emptyList()
       return getSentences(context.text, context.text.commonParent.textRange, parser)
     }
 
-    private suspend fun getSentences(content: TextContent, rangeInFile: TextRange, minimal: Boolean): List<ParsedSentence> {
+    private suspend fun getSentences(content: TextContent, rangeInFile: TextRange): List<ParsedSentence> {
       if (HighlightingUtil.isTooLargeText(listOf(content)) || !seemsNatural(content)) {
         return emptyList()
       }
-      val parser = DependencyParser.getParser(content, minimal) ?: return emptyList()
+      val parser = DependencyParser.getParser(content) ?: return emptyList()
       return getSentences(content, rangeInFile, parser)
     }
 
@@ -164,15 +140,6 @@ class ParsedSentence private constructor(
         return getSentences(content, intersectingSentences, trees)
       }
       return emptyList()
-    }
-
-    private fun getSentences(content: TextContent, rangeInFile: TextRange, trees: Map<SentenceWithExclusions, Tree?>): List<ParsedSentence> {
-      val intersectingSentences = SentenceTokenizer.tokenize(content).filter { token ->
-        val start = content.textOffsetToFile(token.start)
-        val end = content.textOffsetToFile(token.end())
-        rangeInFile.intersects(start, end)
-      }
-      return getSentences(content, intersectingSentences, trees)
     }
 
     private fun getSentences(content: TextContent, intersectingSentences: List<SentenceTokenizer.Sentence>, trees: Map<SentenceWithExclusions, Tree?>): List<ParsedSentence> {

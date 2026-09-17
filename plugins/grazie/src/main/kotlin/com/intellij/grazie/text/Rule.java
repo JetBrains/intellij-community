@@ -94,8 +94,6 @@ public abstract class Rule {
 
   /**
    * @return whether this rule is enabled by default
-   *
-   * @deprecated Use {@link #isEnabledByDefault(TextStyleDomain)} instead.
    */
   @Deprecated(forRemoval = true)
   public boolean isEnabledByDefault() {

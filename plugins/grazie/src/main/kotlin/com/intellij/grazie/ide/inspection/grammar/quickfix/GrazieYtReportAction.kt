@@ -9,7 +9,6 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.grazie.GrazieBundle
 import com.intellij.grazie.cloud.GrazieCloudConnector.Companion.seemsCloudConnected
-import com.intellij.grazie.mlec.MlecChecker.MlecProblem
 import com.intellij.grazie.spellcheck.TypoProblem
 import com.intellij.grazie.text.GrazieProblem
 import com.intellij.grazie.text.TextProblem
@@ -40,7 +39,7 @@ import kotlin.math.abs
 private const val NEW_ISSUE_URL = "https://youtrack.jetbrains.com/newissue"
 private val SUPPORTED_LANGUAGES = setOf(Language.ENGLISH, Language.GERMAN)
 private val TRIM_REGEX = Regex("^(?:\\s*\\n)+|(?:\\s*\\n)+$")
-private val SUPPORTED_CLASSES = setOf(TypoProblem::class.java, GrazieProblem::class.java, MlecProblem::class.java, TreeProblem::class.java)
+private val SUPPORTED_CLASSES = setOf(TypoProblem::class.java, GrazieProblem::class.java, TreeProblem::class.java)
 private const val AGREEMENT_KEY = "grazie.report.bug.yt.agreement.accepted"
 
 internal class GrazieYtReportAction(problem: TextProblem) : IntentionAndQuickFixAction(), Iconable, DumbAware {
@@ -69,7 +68,6 @@ internal class GrazieYtReportAction(problem: TextProblem) : IntentionAndQuickFix
     words = problem.highlightRanges.map { it.substring(text) }
     problemKind = when {
       isSpellingProblem -> GrazieBundle.message("grazie.report.bug.spelling.name")
-      problem is MlecProblem -> problem.errorText
       else -> problem.rule.globalId
     }
     suggestions = when (problem) {
