@@ -189,7 +189,7 @@ class NotificationGroup private constructor(val displayId: String,
     Notification(displayId, title, content, type)
 
   //<editor-fold desc="Deprecated stuff.">
-  @Deprecated("Use `createNotification(String, String, NotificationType)` along with `Notification#setListener`")
+  @Deprecated("Use `createNotification(String, String, NotificationType)` along with `Notification#addAction(AnAction)`")
   @ApiStatus.ScheduledForRemoval
   @Suppress("DeprecatedCallableAddReplaceWith", "DEPRECATION")
   fun createNotification(@NotificationTitle title: String,
@@ -200,7 +200,7 @@ class NotificationGroup private constructor(val displayId: String,
       .also { if (listener != null) it.setListener(listener) }
 
   @Deprecated("Use `createNotification(String, NotificationType)` or `createNotification(String, String, NotificationType)`" +
-              " along with `Notification#setSubtitle` and `Notification#setListener`")
+              " along with `Notification#setSubtitle` and `Notification#addAction(AnAction)`")
   @ApiStatus.ScheduledForRemoval
   @Suppress("DeprecatedCallableAddReplaceWith", "DEPRECATION")
   @JvmOverloads

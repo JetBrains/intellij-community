@@ -39,6 +39,13 @@ interface PluginInitializationContext {
    */
   val disablePluginLoadingCompletely: Boolean
 
+  /**
+   * **TODO: Remove after IJPL-255400**
+   *
+   * If true, treats `required-if-available` modules as optional unless their loading rule is `REQUIRED` or `EMBEDDED`.
+   */
+  val disableRequiredIfAvailable: Boolean
+
   val pluginsPerProjectConfig: PluginsPerProjectConfig?
 
   /**

@@ -40,7 +40,7 @@ open class RemDevDriverRunner : DriverRunner {
     expectedKill: Boolean,
     expectedExitCode: Int,
     collectNativeThreads: Boolean,
-    pauseOnIndexing: Duration?,
+    pauseOnIndicators: Duration?,
     configure: IDERunContext.() -> Unit,
   ): BackgroundRun {
     require(context.isRemDevContext()) { "for split-mode context should be instance of ${IDERemDevTestContext::class.java.simpleName}" }
@@ -62,7 +62,7 @@ open class RemDevDriverRunner : DriverRunner {
              expectedKill,
              expectedExitCode,
              collectNativeThreads,
-             pauseOnIndexing = pauseOnIndexing,
+             pauseOnIndicators = pauseOnIndicators,
              configure = configure)
     val joinLink = customizeJoinLink(backendRun.driver.remoteDevDirectLink())
 

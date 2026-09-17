@@ -7,7 +7,6 @@ import com.intellij.platform.buildScripts.concurrency.Subtask
 import com.intellij.platform.buildScripts.concurrency.TaskScope
 import com.intellij.platform.buildScripts.concurrency.taskScope
 import com.intellij.platform.ijent.community.buildConstants.isMultiRoutingFileSystemEnabledForProduct
-import com.intellij.util.io.Compressor
 import io.opentelemetry.api.trace.Span
 import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.annotations.VisibleForTesting
@@ -30,9 +29,6 @@ import org.jetbrains.intellij.build.buildSearchableOptions
 import org.jetbrains.intellij.build.classPath.PluginBuildResult
 import org.jetbrains.intellij.build.classPath.generateClassPathByLayoutReport
 import org.jetbrains.intellij.build.classPath.generateCoreClasspathFromPlugins
-import org.jetbrains.intellij.build.dev.AssembledPrepackedPluginContentJar
-import org.jetbrains.intellij.build.dev.PrepackedPluginContentJar
-import org.jetbrains.intellij.build.dev.PrepackedPluginContentKey
 import org.jetbrains.intellij.build.dev.collectLayoutsOfPluginsToScramble
 import org.jetbrains.intellij.build.executeStep
 import org.jetbrains.intellij.build.fus.createStatisticsRecorderBundledMetadataProviderTask
@@ -48,7 +44,6 @@ import org.jetbrains.intellij.build.impl.projectStructureMapping.getIncludedModu
 import org.jetbrains.intellij.build.injectAppInfo
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.copyFileToDir
-import org.jetbrains.intellij.build.io.zip
 import org.jetbrains.intellij.build.productLayout.ProductModulesLayout
 import org.jetbrains.intellij.build.productLayout.createPluginLayoutSet
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
@@ -746,7 +741,41 @@ private fun TaskScope.createBuildThirdPartyLibraryListJob(entries: Sequence<Dist
 }
 
 internal fun satisfiesBundlingRequirements(plugin: PluginLayout, osFamily: OsFamily?, arch: JvmArchitecture?, context: BuildContext): Boolean {
-  if (context.options.bundledPluginDirectoriesToSkip.contains(plugin.directoryName)) {
+  return satisfiesBundlingRequirements(plugin, osFamily, arch, context.options.bundledPluginDirectoriesToSkip) { distribution ->
+    if (context.options.useReleaseCycleRelatedBundlingRestrictions) {
+      val isNightly = context.isNightlyBuild
+      val isEap = context.applicationInfo.isEAP
+      when (distribution) {
+        PluginDistribution.ALL -> true
+        PluginDistribution.NOT_FOR_RELEASE -> isNightly || isEap
+        PluginDistribution.NOT_FOR_PUBLIC_BUILDS -> isNightly
+        PluginDistribution.CROSS_PLATFORM_DIST_ONLY -> false
+      }
+    }
+    else {
+      true
+    }
+  }
+}
+
+/** Applies the dev path's bundling rules without release-cycle restrictions or build context access. */
+internal fun satisfiesDevBundlingRequirements(
+  plugin: PluginLayout,
+  osFamily: OsFamily?,
+  arch: JvmArchitecture?,
+  bundledPluginDirectoriesToSkip: Collection<String>,
+): Boolean {
+  return satisfiesBundlingRequirements(plugin, osFamily, arch, bundledPluginDirectoriesToSkip) { true }
+}
+
+private fun satisfiesBundlingRequirements(
+  plugin: PluginLayout,
+  osFamily: OsFamily?,
+  arch: JvmArchitecture?,
+  bundledPluginDirectoriesToSkip: Collection<String>,
+  releaseCycleAllows: (PluginDistribution) -> Boolean,
+): Boolean {
+  if (bundledPluginDirectoriesToSkip.contains(plugin.directoryName)) {
     return false
   }
 
@@ -759,19 +788,8 @@ internal fun satisfiesBundlingRequirements(plugin: PluginLayout, osFamily: OsFam
     return false
   }
 
-  if (context.options.useReleaseCycleRelatedBundlingRestrictions) {
-    val isNightly = context.isNightlyBuild
-    val isEap = context.applicationInfo.isEAP
-
-    val distributionCondition = when (bundlingRestrictions.includeInDistribution) {
-      PluginDistribution.ALL -> true
-      PluginDistribution.NOT_FOR_RELEASE -> isNightly || isEap
-      PluginDistribution.NOT_FOR_PUBLIC_BUILDS -> isNightly
-      PluginDistribution.CROSS_PLATFORM_DIST_ONLY -> false
-    }
-    if (!distributionCondition) {
-      return false
-    }
+  if (!releaseCycleAllows(bundlingRestrictions.includeInDistribution)) {
+    return false
   }
 
   return when {
@@ -792,8 +810,6 @@ internal fun layoutDistribution(
   searchableOptionSet: SearchableOptionSetDescriptor?,
   cachedDescriptorWriterProvider: ScopedCachedDescriptorContainer?,
   assetFilter: DistributionAssetFilter? = null,
-  prepackedPluginContent: Map<PrepackedPluginContentKey, PrepackedPluginContentJar> = emptyMap(),
-  prepackedPluginContentJars: MutableCollection<AssembledPrepackedPluginContentJar>? = null,
   context: BuildContext,
 ): Pair<List<DistributionFileEntry>, Path> {
   if (copyFiles) {
@@ -838,8 +854,6 @@ internal fun layoutDistribution(
           dryRun = !copyFiles,
           descriptorCache = cachedDescriptorWriterProvider,
           assetFilter = assetFilter,
-          prepackedPluginContent = prepackedPluginContent,
-          prepackedPluginContentJars = prepackedPluginContentJars,
           context = context,
         )
       }
@@ -872,16 +886,9 @@ private fun layoutResourcePaths(layout: BaseLayout, targetDirectory: Path, outpu
       missing.add("'${resourceData.resourcePath}' of module '${resourceData.moduleName}' (expected at $source)")
       continue
     }
-    var target = targetDirectory.resolve(resourceData.relativeOutputPath).normalize()
+    val target = targetDirectory.resolve(resourceData.relativeOutputPath).normalize()
     if (resourceData.packToZip) {
-      if (Files.isDirectory(source)) {
-        // do not compress - doesn't make sense as it is a part of distribution
-        zip(targetFile = target, dirs = mapOf(source to ""))
-      }
-      else {
-        target = target.resolve(source.fileName)
-        Compressor.Zip(target).use { it.addFile(target.fileName.toString(), source) }
-      }
+      writeResourceArchive(source, target)
     }
     else {
       if (Files.isRegularFile(source)) {
@@ -897,6 +904,8 @@ private fun layoutResourcePaths(layout: BaseLayout, targetDirectory: Path, outpu
     "Resource paths of layout '$layout' do not exist:\n  " + missing.joinToString(separator = "\n  ")
   }
 }
+
+internal fun writeResourceArchive(source: Path, target: Path): Path = writeResourceArchiveImpl(source, target)
 
 private fun layoutAdditionalResources(layout: BaseLayout, targetDirectory: Path, context: BuildContext) {
   layoutResourcePaths(layout = layout, targetDirectory = targetDirectory, outputProvider = context.outputProvider)

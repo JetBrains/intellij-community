@@ -45,7 +45,7 @@ fun NewProjectWizardStep.addMultiPlatformLink(builder: Panel) {
 
                 event.closeContextDialog()
                 ShowSettingsUtil.getInstance().showSettingsDialog(null, PluginManagerConfigurable::class.java) {
-                    it.openMarketplaceTab(KotlinMultiplatformPluginName)
+                    it.navigateToMarketplace(KotlinMultiplatformPluginName)
                 }
             }
         }

@@ -8,9 +8,10 @@ import (
 	"jetbrains.com/plugin-descriptor-patcher/internal/stamps"
 )
 
-// The two scalars this binary computes rather than receives. The assembly computes them from the same two functions,
-// so a disagreement here moves the `<version>` and the `<idea-version>` of every plugin - which is what the byte gate
-// of `./build/dev-dist.cmd descriptors` would report as 0 identical.
+// The two scalars this binary computes rather than receives. The assembly computes them with
+// `computePluginBuildNumber` and `getCompatiblePlatformVersionRange`, and this package is their port. A disagreement
+// here moves the `<version>` and the `<idea-version>` of every plugin, which `checkProducedPluginDescriptor` refuses
+// in the fragment that reads the produced file.
 
 func TestThePluginBuildNumber(t *testing.T) {
 	for name, it := range map[string]struct {

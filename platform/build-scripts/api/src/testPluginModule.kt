@@ -12,14 +12,24 @@ import org.jetbrains.jps.model.module.JpsModule
  * which under an explicit Bazel input manifest *declares* that stub jar as a fragment input before a byte is read.
  *
  * Always false unless [ModuleOutputProvider.isTestCompilationOutputEnabled] allows this module's test output, so a
- * production build is unaffected by the naming rules below.
+ * production build is unaffected by the name rule of [isTestOnlyPluginModuleName].
  */
 fun isTestOnlyPluginModule(moduleName: String, module: JpsModule?, outputProvider: ModuleOutputProvider): Boolean {
   val resolvedModule = module ?: outputProvider.findModule(moduleName)
   if (resolvedModule == null || !outputProvider.isTestCompilationOutputEnabled(resolvedModule)) {
     return false
   }
+  return isTestOnlyPluginModuleName(moduleName = moduleName, module = resolvedModule)
+}
 
+/**
+ * The name rule of [isTestOnlyPluginModule], without its enablement check.
+ *
+ * True for the modules named below. True for a `.tests` suffix. True for a `.test.` segment when [module] has a test
+ * source root. True for the Product DSL `._test` suffix. [moduleName] can carry that suffix while [module] is the JPS
+ * module it marks. A generator that plans a test plugin applies this rule to match the packager's output-root choice.
+ */
+fun isTestOnlyPluginModuleName(moduleName: String, module: JpsModule): Boolean {
   // todo use some marker
   if (moduleName == "intellij.rdct.testFramework" ||
       moduleName == "intellij.platform.split.testFramework" ||
@@ -34,12 +44,7 @@ fun isTestOnlyPluginModule(moduleName: String, module: JpsModule?, outputProvide
   }
 
   if (moduleName.contains(".test.")) {
-    @Suppress("RedundantIf", "RedundantSuppression")
-    if (resolvedModule.sourceRoots.none { it.rootType.isForTests }) {
-      return false
-    }
-
-    return true
+    return module.sourceRoots.any { it.rootType.isForTests }
   }
   return moduleName.endsWith("._test")
 }

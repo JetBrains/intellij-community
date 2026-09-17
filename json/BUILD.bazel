@@ -1,5 +1,4 @@
-load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_TARGETS")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -9,25 +8,15 @@ content_module_jar(module = ":json")
 dev_dist_plugin(
     content_modules = [
         # do not sort,
-        "intellij.libraries.joni",
-        "intellij.libraries.jsonSchemaValidator",
-    ],
-    libraries = [
-        "@lib//:libraries-joni-joni",
-        "@lib//:libraries-json_schema_validator-json-schema-validator-jetbrains",
-    ],
-    main_module = "intellij.json",
-    module_targets = MODULE_TARGETS,
-    prepacked_content_modules = [
-        # do not sort,
-        "intellij.json.backend.regexp",
         "intellij.json.backend",
         "intellij.json.networknt.wrapper",
+        "intellij.json.backend.regexp",
         "intellij.json.structureView",
+        "intellij.json.syntax",
+        "intellij.libraries.jsonSchemaValidator",
+        "intellij.libraries.joni",
     ],
-    prepacked_jars = {
-        "intellij.json.syntax": "intellij.json.syntax.jar",
-    },
+    main_module = "intellij.json",
 )
 ### auto-generated section `dev intellij.json` end
 

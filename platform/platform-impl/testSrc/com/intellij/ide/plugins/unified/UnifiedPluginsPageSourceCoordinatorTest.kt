@@ -947,7 +947,7 @@ internal class UnifiedPluginsPageSourceCoordinatorTest {
     )
     return UnifiedPluginsPageSourceCoordinator(
       backgroundScope,
-      initialQuery,
+      query,
       localSource,
       internalSource,
       marketplaceSource,

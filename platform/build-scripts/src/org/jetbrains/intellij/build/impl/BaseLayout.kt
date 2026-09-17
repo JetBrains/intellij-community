@@ -23,10 +23,8 @@ typealias LayoutPatcher = (ModuleOutputPatcher, PlatformLayout, BuildContext) ->
  */
 sealed class BaseLayout {
   // one module can be packed into several JARs; that's why we have map "jar to modules" and not "module to jar"
-  private val _includedModules = LinkedHashSet<ModuleItem>()
-
   val includedModules: Collection<ModuleItem>
-    get() = _includedModules
+    field = LinkedHashSet<ModuleItem>()
 
   /** list of additional resources which should be included in the distribution */
   @JvmField
@@ -89,7 +87,7 @@ sealed class BaseLayout {
   fun getIncludedModuleLibraries(): List<ModuleLibraryData> = includedModuleLibraries.toList()
 
   fun filteredIncludedModuleNames(excludedRelativeJarPath: String, includeFromSubdirectories: Boolean = true): Sequence<String> {
-    return _includedModules.asSequence().filter {
+    return includedModules.asSequence().filter {
       it.relativeOutputFile != excludedRelativeJarPath && (includeFromSubdirectories || !it.relativeOutputFile.contains('/')) 
     }.map { it.moduleName }
   }
@@ -97,12 +95,12 @@ sealed class BaseLayout {
   fun withModules(items: Sequence<ModuleItem>) {
     for (item in items) {
       checkNotExists(item)
-      _includedModules.add(item)
+      includedModules.add(item)
     }
   }
 
   private fun checkNotExists(item: ModuleItem) {
-    val existing = _includedModules.firstOrNull { it.moduleName == item.moduleName } ?: return
+    val existing = includedModules.firstOrNull { it.moduleName == item.moduleName } ?: return
     // allow putting module to several JARs if JAR located in another dir
     // (e.g. intellij.spring.customNs packed into main JAR and customNs/customNs.jar)
     if (existing.relativeOutputFile != item.relativeOutputFile &&
@@ -146,7 +144,7 @@ sealed class BaseLayout {
 
     val item = ModuleItem(moduleName = moduleName, relativeOutputFile = relativeJarPath, reason = "withModule at \n    $reason")
     checkNotExists(item)
-    _includedModules.add(item)
+    includedModules.add(item)
   }
 
   private fun getStacktrace(): String? {
@@ -218,6 +216,10 @@ sealed class BaseLayout {
   /**
    * @param resourcePath path to resource file or directory relative to `moduleName` module content root
    * @param relativeOutputPath target path relative to the plugin root directory
+   *
+   * The path stays inside the Bazel package of the module, the directory that holds its `BUILD.bazel`. It uses no `..`
+   * and crosses no nested package. The dev-distribution generator derives `//<package>:dev_dist_resources` from the
+   * declaration and refuses a layout that breaks the rule. Declare a resource against the module whose package holds it.
    */
   fun withResourceFromModule(moduleName: String, resourcePath: String, relativeOutputPath: String) {
     resourcePaths += ModuleResourceData(
@@ -243,7 +245,6 @@ class ModuleItem(
   @JvmField val relativeOutputFile: String,
   @JvmField val reason: String?,
   @JvmField val moduleSet: List<String>? = null,
-  @JvmField val includeDependencies: Boolean = false,
 ) {
   init {
     require(!moduleName.isEmpty()) {
@@ -259,5 +260,5 @@ class ModuleItem(
 
   override fun hashCode(): Int = 31 * moduleName.hashCode() + relativeOutputFile.hashCode()
 
-  override fun toString(): String = "ModuleItem(moduleName=$moduleName, relativeOutputFile=$relativeOutputFile, reason=$reason, moduleSet=$moduleSet, includeDependencies=$includeDependencies)"
+  override fun toString(): String = "ModuleItem(moduleName=$moduleName, relativeOutputFile=$relativeOutputFile, reason=$reason, moduleSet=$moduleSet)"
 }

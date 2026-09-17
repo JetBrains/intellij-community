@@ -11,8 +11,8 @@ import kotlin.time.Duration.Companion.minutes
 
 @RequiresOptIn(
   level = RequiresOptIn.Level.WARNING,
-  message = "Prefer the pauseOnIndexing parameter of runIdeWithDriver. " +
-            "Use waitForIndicators only when pauseOnIndexing does not work for the test. " +
+  message = "Prefer the pauseOnIndicators parameter of runIdeWithDriver. " +
+            "Use waitForIndicators only when pauseOnIndicators does not work for the test. " +
             "Add @OptIn(ManualWaitForIndicators::class) after you check this requirement."
 )
 @Retention(AnnotationRetention.BINARY)

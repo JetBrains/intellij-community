@@ -1,5 +1,19 @@
 load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_java//java:defs.bzl", "java_binary")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+java_binary(
+    name = "plugin-callback-recipe-fixture",
+    testonly = True,
+    jvm_flags = [
+        "--add-opens=java.base/jdk.internal.ref=ALL-UNNAMED",
+        "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED",
+        "--add-opens=java.base/sun.nio.fs=ALL-UNNAMED",
+    ],
+    main_class = "org.jetbrains.intellij.build.dev.DevPluginCallbackRecipeFixture",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":tests_test_lib"],
+)
 
 ### auto-generated section `build intellij.platform.buildScripts.tests` start
 jvm_library(
@@ -35,6 +49,8 @@ jvm_library(
     runtime_deps = [":tests"],
     deps = [
         # do not sort,
+        "//platform/build-scripts/plugin-preparation",
+        "//platform/build-scripts/plugin-preparation:plugin-preparation_test_lib",
         "//platform/build-scripts/bazel-rules/searchable-options-injector",
         "//platform/build-scripts/bazel-rules/searchable-options-injector:searchable-options-injector_test_lib",
         "//platform/devIdeConfig",
@@ -72,6 +88,10 @@ jvm_library(
         "//build/deps:dependencies_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+        "//libraries/kotlinx/serialization/core",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//libraries/kotlinx/serialization/json",
+        "//libraries/kotlinx/serialization/json:json_test_lib",
         "//libraries/commons/compress",
         "//libraries/commons/compress:compress_test_lib",
         "//build",

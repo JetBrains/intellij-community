@@ -52,7 +52,6 @@ data class ProductModuleSelection(
   @JvmField val namespace: String? = "jetbrains",
   @JvmField val loading: String = "optional",
   @JvmField val requiredIfAvailable: ProductModuleIdentity? = null,
-  @JvmField val includeDependencies: Boolean = false,
 )
 
 @Internal

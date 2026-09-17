@@ -34,6 +34,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
+        "//platform/build-scripts/plugin-preparation",
         "//platform/build-scripts/api",
         "//platform/build-scripts/product-dsl",
     ],
@@ -58,6 +59,7 @@ jvm_library(
     ],
     deps = [
         # do not sort,
+        "//platform/build-scripts/plugin-preparation",
         "//platform/build-scripts/downloader",
         "//libraries/commons/compress",
         "//platform/util",
@@ -151,6 +153,8 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
+        "//platform/build-scripts/plugin-preparation",
+        "//platform/build-scripts/plugin-preparation:plugin-preparation_test_lib",
         "//platform/build-scripts/api",
         "//platform/build-scripts/api:api_test_lib",
         "//platform/build-scripts/product-dsl",
@@ -159,6 +163,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":build-scripts",
+        "//platform/build-scripts/plugin-preparation:plugin-preparation_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
         "//libraries/commons/cli:cli_test_lib",

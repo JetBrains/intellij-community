@@ -102,7 +102,6 @@ fun moduleSet(
   alias: String? = null,             // Optional: module alias (e.g., "com.intellij.modules.xml")
   outputModule: String? = null,      // Optional: module whose resources dir receives generated XML
   selfContained: Boolean = false,    // Optional: validate in isolation
-  includeDependencies: Boolean = false, // Optional: default for embedded modules
   block: ModuleSetBuilder.() -> Unit
 ): ModuleSet
 ```
@@ -201,17 +200,11 @@ fun corePlatform() = moduleSet("core.platform", selfContained = true) {
 
 Use for module sets designed to be standalone building blocks.
 
-### `includeDependencies` - Auto-Include Dependencies
+### A module reaches a product only as a content module
 
-When `true`, embedded modules in this set automatically include their implementation-only transitive dependencies:
-
-```kotlin
-fun essential() = moduleSet("essential", includeDependencies = true) {
-  embeddedModule("intellij.platform.core")  // Inherits includeDependencies=true
-}
-```
-
-See [programmatic-content.md](programmatic-content.md) for details on content vs implementation modules.
+The layout packs the modules the descriptor names and nothing else. A JPS module that a member needs at
+runtime is a content module of its own: give it a `<module>.xml` descriptor and list it in the set of its
+consumer. The generator then writes the `<dependencies>` edge, and the validators see the module.
 
 ## Real-World Examples
 
@@ -283,10 +276,9 @@ fun librariesTestFrameworks(): ModuleSet = moduleSet("libraries.testFrameworks")
 /**
  * Essential platform modules required by most IDE products.
  */
-fun essential(): ModuleSet = moduleSet("essential", includeDependencies = true) {
+fun essential(): ModuleSet = moduleSet("essential") {
   // Include minimal essential modules
   moduleSet(essentialMinimal())
-  moduleSet(debugger())
 
   // Embedded modules (core classloader)
   embeddedModule("intellij.platform.scopes")
@@ -365,7 +357,6 @@ Module sets can:
 - **Nest other module sets**: `moduleSet(corePlatform())`
 - **Use embedded loading**: `embeddedModule("intellij.platform.core")` for core classloader
 - **Use required loading**: `requiredModule("intellij.libraries.junit5")` for test frameworks
-- **Include dependencies**: `includeDependencies = true` to automatically pull in module dependencies
 
 **Tip**: Prefer nesting existing module sets over duplicating modules. This creates a clean hierarchy and ensures consistency.
 

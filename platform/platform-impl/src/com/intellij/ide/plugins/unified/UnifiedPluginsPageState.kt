@@ -6,6 +6,7 @@ import com.intellij.ide.plugins.MarketplaceTabSearchSortByOptions
 import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.ide.plugins.newui.PluginRowInput
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceId
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.annotations.Nls
 
@@ -39,6 +40,7 @@ internal data class PluginItemState(
   val searchCategory: @Nls String? = null,
   val searchVendor: String? = null,
   val searchTags: Set<String> = emptySet(),
+  val updateSourceId: PluginUpdateSourceId? = null,
 ) {
   init {
     require(contentRevision >= 0) { "Plugin content revision must not be negative" }

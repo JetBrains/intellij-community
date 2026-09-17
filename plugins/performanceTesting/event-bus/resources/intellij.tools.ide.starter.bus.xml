@@ -9,6 +9,7 @@
     <module name="intellij.libraries.netty.buffer"/>
     <module name="intellij.libraries.netty.codec.compression"/>
     <module name="intellij.libraries.netty.codec.http"/>
+    <module name="intellij.platform.ide.util.netty"/>
   </dependencies>
   <!-- endregion -->
 

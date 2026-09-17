@@ -20,7 +20,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public class JavaFileElementType extends IFileElementType {
-  public static final int STUB_VERSION = 70;
+  public static final int STUB_VERSION = 71;
 
   public JavaFileElementType() {
     super("java.FILE", JavaLanguage.INSTANCE);

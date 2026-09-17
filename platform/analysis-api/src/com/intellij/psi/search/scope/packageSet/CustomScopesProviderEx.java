@@ -51,7 +51,7 @@ public abstract class CustomScopesProviderEx implements CustomScopesProvider {
       public boolean contains(@NotNull VirtualFile file, @NotNull Project project, @Nullable NamedScopesHolder holder) {
         return true;
       }
-    });
+    }, true);
   }
 
   public static @NotNull NamedScope getAllScope() {

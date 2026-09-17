@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.dev
 
-import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.impl.BazelBuildInputs
 import org.jetbrains.intellij.build.impl.checkProducedPluginDescriptor
 import org.assertj.core.api.Assertions.assertThat
@@ -10,167 +9,81 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
 
 /**
- * The plan-driven half of the per-plugin descriptor action, and the three negative controls of the M2 design.
+ * The embedded product descriptor resolver of `DevDistPluginDescriptorMain`, and the guard on a produced descriptor.
  *
- * Each control damages the **plan** against an undamaged descriptor, and each is checked both ways: damaged, which must
- * change the text or be refused, and undamaged, which must produce the reference text. A comparison that cannot fail is
- * not evidence, which is ADR 0006 rule 2.
- *
- * The byte comparison against a real assembly is `./build/dev-dist.cmd descriptors`. This test needs no distribution
- * build, so it catches a regression in the plan-driven stage long before that gate runs.
+ * The resolver reads declared files only. A descriptor the request does not declare fails the run instead of loading a
+ * project model. The two refusals of the guard and the no-manifest case are its negative control, and the accepted arm
+ * is the reference. A check that cannot fail is not evidence, which is ADR 0006 rule 2.
  */
 class DevDistPluginDescriptorTest {
   @Test
-  fun `the patch runs with no project model`(@TempDir dir: Path) {
-    val text = patch(fixture(dir))
-    assertThat(text).isEqualTo(REFERENCE)
+  fun `an embedded product descriptor resolves only declared files`(@TempDir dir: Path) {
+    val text = resolveEmbeddedProductDescriptorFromPlan(embeddedProductFixture(dir)).decodeToString()
+
+    assertThat(text)
+      .doesNotContain("xi:include")
+      .contains(
+        "<module name=\"$BACKEND\"><![CDATA[",
+        "serviceImplementation=\"com.example.BackendService\"",
+        "separate-jar=\"true\"",
+        "<module name=\"$FRONTEND\"><![CDATA[",
+      )
   }
 
-  /**
-   * Control (a): the plan refuses one content module.
-   *
-   * The action removes the `<module/>` of every refused name, because that is how the assembly's `ContentModuleFilter`
-   * refuses an optional module. So a refusal takes the `<module/>` and its embedded body out.
-   */
   @Test
-  fun `a refused content module changes the text`(@TempDir dir: Path) {
-    val damaged = patch(fixture(dir, refusedContentModules = listOf(FRONTEND)))
-
-    assertThat(damaged).isNotEqualTo(REFERENCE)
-    assertThat(damaged).doesNotContain(FRONTEND)
-    assertThat(patch(fixture(dir))).isEqualTo(REFERENCE)
-  }
-
-  /**
-   * Control (b): the plan refuses a name the descriptor does not state.
-   *
-   * This one is **refused** rather than applied, and it is the invariant the refusal list carries. A refusal that
-   * reaches no `<module/>` is a plan the descriptor has moved away from, and the action must not emit a text that
-   * silently ignored it.
-   */
-  @Test
-  fun `a refusal the descriptor does not state is refused`(@TempDir dir: Path) {
-    assertThatThrownBy { patch(fixture(dir, refusedContentModules = listOf("intellij.example.absent"))) }
-      .isInstanceOf(RuntimeException::class.java)
-      .hasMessageContaining("Could not patch descriptor (module=$MAIN_MODULE)")
-
-    assertThat(patch(fixture(dir))).isEqualTo(REFERENCE)
-  }
-
-  /**
-   * Control (c): the plan flips one `separate-jar` verdict.
-   *
-   * One attribute of one embedded descriptor, and nothing else. The assembly decides it from
-   * `JarPackagerDependencyHelper.isPluginModulePackedIntoSeparateJar`, which reads the JPS project model, so it has to
-   * be a plan field here.
-   */
-  @Test
-  fun `a flipped separate-jar verdict changes one attribute`(@TempDir dir: Path) {
-    val damaged = patch(fixture(dir, separateJarModules = setOf(BACKEND)))
-
-    assertThat(damaged).isNotEqualTo(REFERENCE)
-    assertThat(damaged).contains("separate-jar=\"true\"")
-    assertThat(REFERENCE).doesNotContain("separate-jar")
-    assertThat(patch(fixture(dir))).isEqualTo(REFERENCE)
-  }
-
-  /**
-   * A content module name that holds a `/` never takes `separate-jar`, even when the plan names it.
-   *
-   * The third gate of `embedContentModule`: the verdict is asked of the module before the `/`, and only when that name
-   * and the content module name are the same string. Such a name points at a descriptor another module owns, and the
-   * assembly refuses the attribute for it. 19 of this product's 1 540 embedded pairs hold a `/`.
-   *
-   * The plan lists no such name today, because the generator applies the same gate. This asserts that the action
-   * refuses one anyway, so the two producers agree by construction and not by the plan's current content.
-   */
-  @Test
-  fun `a content module name with a slash takes no separate-jar`(@TempDir dir: Path) {
-    val text = patch(slashFixture(dir, separateJarModules = setOf(SPLIT)))
-
-    assertThat(text).doesNotContain("separate-jar")
-    // The plan's own name, without the `/`, still takes it - so the refusal is about the `/` and not about the plan.
-    assertThat(patch(slashFixture(dir, separateJarModules = setOf(BACKEND)))).contains("separate-jar=\"true\"")
-  }
-
-  /** A descriptor the plan does not declare must fail loudly, and never load a project model to find it. */
-  @Test
-  fun `an undeclared content module descriptor fails loudly`(@TempDir dir: Path) {
-    assertThatThrownBy { patch(fixture(dir, declareContentModuleDescriptors = false)) }
-      .isInstanceOf(RuntimeException::class.java)
-      .hasStackTraceContaining("needs a JPS project model")
-  }
-
-  /** The version and the compatibility range are derived from the declared build number and the pinned build date. */
-  @Test
-  fun `the stamps are derived from the build number file`(@TempDir dir: Path) {
-    assertThat(patch(fixture(dir))).contains(
-      "<version>263.99999999.0</version>",
-      """<idea-version since-build="263.SNAPSHOT" until-build="263.SNAPSHOT" />""",
+  fun `an undeclared embedded product descriptor fails without a project model`(@TempDir dir: Path) {
+    val request = embeddedProductFixture(dir)
+    val incomplete = DevDistEmbeddedProductDescriptorRequest(
+      output = request.output,
+      source = request.source,
+      descriptors = request.descriptors - "$BACKEND.xml",
+      descriptorsInJar = request.descriptorsInJar,
+      modules = request.modules,
+      separateJarModules = request.separateJarModules,
     )
+
+    assertThatThrownBy { resolveEmbeddedProductDescriptorFromPlan(incomplete) }
+      .isInstanceOf(UnsupportedOperationException::class.java)
+      .hasMessageContaining("needs a JPS project model")
   }
 
-  /** The argument grammar the rule writes into a parameter file, read back into the request the body runs. */
   @Test
-  fun `the argument grammar round trips`(@TempDir dir: Path) {
-    val request = parseDevDistPluginDescriptorRequest(listOf(
+  fun `the embedded product argument grammar round trips`(@TempDir dir: Path) {
+    val request = parseDevDistEmbeddedProductDescriptorRequest(listOf(
+      "--embedded-product",
       "--out=${dir.resolve("out.xml")}",
-      "--main-module=intellij.cwm",
-      "--source=${dir.resolve("plugin.xml")}",
-      "--build-number-file=${dir.resolve("build.txt")}",
-      "--release-date=20260101",
-      "--release-version=2026300",
-      "--eap=true",
-      "--exact-version=true",
-      "--retain-product-descriptor=true",
-      "--embed-content-modules=false",
-      "--refused-content-module=intellij.a",
-      "--refused-content-module=intellij.b",
-      "--separate-jar=intellij.b",
-      "--plugin-descriptor=intellij.a.xml=${dir.resolve("a.xml")}",
-      "--platform-descriptor=x/y.xml=${dir.resolve("y.xml")}",
-      "--plugin-module=intellij.cwm",
-      "--platform-module=intellij.platform.ide.impl",
+      "--source=${dir.resolve("JetBrainsClientPlugin.xml")}",
+      "--descriptor=intellij.example.backend.xml=${dir.resolve("backend.xml")}",
+      "--descriptor-in-jar=META-INF/extensions.xml=${dir.resolve("first.jar")}",
+      "--descriptor-in-jar=META-INF/extensions.xml=${dir.resolve("second.jar")}",
+      "--module=intellij.frontend.split.customization",
+      "--module=intellij.example.backend",
+      "--separate-jar=intellij.example.backend",
     ))
 
-    assertThat(request.mainModule).isEqualTo("intellij.cwm")
-    // Derived, and the plan states a deviation only. `intellij.cwm` takes `cwm-plugin` in the real plan; here nothing
-    // states one, so the derived name is what the request carries.
-    assertThat(request.directoryName).isEqualTo("cwm")
-    assertThat(request.mainJarName).isEqualTo("cwm.jar")
-    assertThat(request.isEap).isTrue()
-    assertThat(request.exactVersion).isTrue()
-    assertThat(request.retainProductDescriptor).isTrue()
-    assertThat(request.embedsContentModules).isFalse()
-    assertThat(request.refusedContentModules).containsExactly("intellij.a", "intellij.b")
-    assertThat(request.separateJarModules).containsExactly("intellij.b")
-    assertThat(request.pluginDescriptors).containsOnlyKeys("intellij.a.xml")
-    assertThat(request.platformDescriptors).containsOnlyKeys("x/y.xml")
-    assertThat(request.pluginModules).containsExactly("intellij.cwm")
-    assertThat(request.platformModules).containsExactly("intellij.platform.ide.impl")
-  }
-
-  @Test
-  fun `an unknown option is refused`() {
-    assertThatThrownBy { parseDevDistPluginDescriptorRequest(listOf("--tomorrow=1")) }
-      .isInstanceOf(IllegalArgumentException::class.java)
-      .hasMessageContaining("--tomorrow")
+    assertThat(request.descriptors).containsOnlyKeys("intellij.example.backend.xml")
+    assertThat(request.descriptorsInJar.getValue("META-INF/extensions.xml"))
+      .containsExactly(dir.resolve("first.jar"), dir.resolve("second.jar"))
+    assertThat(request.modules).containsExactly("intellij.frontend.split.customization", "intellij.example.backend")
+    assertThat(request.separateJarModules).containsExactly("intellij.example.backend")
   }
 
   /**
    * The seam a fragment reads the produced descriptor through, and the guard on what it read.
    *
-   * The guard is what replaces the byte comparison the descriptor gate loses for these plugins: once a fragment reads
-   * the produced file, the gate holds that plugin out rather than compare the file against a record of itself. So the
-   * three cases below are the negative control of the guard, and the accepted arm is the reference.
+   * A fragment that reads a produced descriptor cannot compare it against its own patch. The guard checks the stamps
+   * instead: the version and the compatibility range must be this assembly's. The two refusals below are its negative
+   * control, and this accepted arm is the reference.
    */
   @Test
   fun `a produced descriptor whose stamps agree is accepted`() {
     checkProducedPluginDescriptor(
       mainModule = MAIN_MODULE,
-      content = REFERENCE,
+      content = PRODUCED_DESCRIPTOR,
       pluginVersion = "263.99999999.0",
       compatibleSinceUntil = "263.SNAPSHOT" to "263.SNAPSHOT",
     )
@@ -181,7 +94,7 @@ class DevDistPluginDescriptorTest {
     assertThatThrownBy {
       checkProducedPluginDescriptor(
         mainModule = MAIN_MODULE,
-        content = REFERENCE,
+        content = PRODUCED_DESCRIPTOR,
         pluginVersion = "263.99999998.0",
         compatibleSinceUntil = "263.SNAPSHOT" to "263.SNAPSHOT",
       )
@@ -196,7 +109,7 @@ class DevDistPluginDescriptorTest {
     assertThatThrownBy {
       checkProducedPluginDescriptor(
         mainModule = MAIN_MODULE,
-        content = REFERENCE,
+        content = PRODUCED_DESCRIPTOR,
         pluginVersion = "263.99999999.0",
         compatibleSinceUntil = "263.1" to "263.*",
       )
@@ -216,80 +129,40 @@ class DevDistPluginDescriptorTest {
     assertThat(BazelBuildInputs.producedPluginDescriptorIfDeclared(MAIN_MODULE)).isNull()
   }
 
-  private fun patch(request: DevDistPluginDescriptorRequest): String = runBlocking {
-    patchPluginDescriptorFromPlan(request)
-  }
-
-  private fun fixture(
-    dir: Path,
-    refusedContentModules: List<String> = emptyList(),
-    separateJarModules: Set<String> = emptySet(),
-    declareContentModuleDescriptors: Boolean = true,
-  ): DevDistPluginDescriptorRequest {
-    Files.writeString(dir.resolve("build.txt"), "263.SNAPSHOT\n")
-    Files.writeString(dir.resolve("plugin.xml"), SOURCE)
-    Files.writeString(dir.resolve("$BACKEND.xml"), """<idea-plugin package="$BACKEND" />""")
-    Files.writeString(dir.resolve("$FRONTEND.xml"), """<idea-plugin package="$FRONTEND" />""")
-    return DevDistPluginDescriptorRequest(
-      output = dir.resolve("out/plugin.xml"),
-      mainModule = MAIN_MODULE,
-      directoryName = "example",
-      mainJarName = "example.jar",
-      source = dir.resolve("plugin.xml"),
-      buildNumberFile = dir.resolve("build.txt"),
-      releaseDate = "20260101",
-      releaseVersion = "2026300",
-      isEap = true,
-      exactVersion = false,
-      retainProductDescriptor = false,
-      embedsContentModules = true,
-      refusedContentModules = refusedContentModules,
-      separateJarModules = separateJarModules,
-      pluginDescriptors = if (declareContentModuleDescriptors) {
-        mapOf(
-          "$BACKEND.xml" to dir.resolve("$BACKEND.xml"),
-          "$FRONTEND.xml" to dir.resolve("$FRONTEND.xml"),
-        )
-      }
-      else {
-        emptyMap()
-      },
-      platformDescriptors = emptyMap(),
-      pluginModules = listOf(MAIN_MODULE),
-      platformModules = emptyList(),
+  private fun embeddedProductFixture(dir: Path): DevDistEmbeddedProductDescriptorRequest {
+    val source = dir.resolve("JetBrainsClientPlugin.xml")
+    val productModules = dir.resolve("product-modules.xml")
+    val backendDescriptor = dir.resolve("$BACKEND.xml")
+    val frontendDescriptor = dir.resolve("$FRONTEND.xml")
+    val emptyJar = dir.resolve("empty.jar")
+    val descriptorJar = dir.resolve("descriptors.jar")
+    Files.writeString(source, EMBEDDED_PRODUCT_SOURCE)
+    Files.writeString(productModules, EMBEDDED_PRODUCT_MODULES)
+    Files.writeString(backendDescriptor, EMBEDDED_BACKEND_DESCRIPTOR)
+    Files.writeString(frontendDescriptor, """<idea-plugin package="$FRONTEND" />""")
+    writeJar(emptyJar, emptyMap())
+    writeJar(descriptorJar, mapOf("META-INF/backend-extensions.xml" to EMBEDDED_BACKEND_EXTENSIONS))
+    return DevDistEmbeddedProductDescriptorRequest(
+      output = dir.resolve("out/JetBrainsClientPlugin.xml"),
+      source = source,
+      descriptors = mapOf(
+        "META-INF/product-modules.xml" to productModules,
+        "$BACKEND.xml" to backendDescriptor,
+        "$FRONTEND.xml" to frontendDescriptor,
+      ),
+      descriptorsInJar = mapOf("META-INF/backend-extensions.xml" to listOf(emptyJar, descriptorJar)),
+      modules = listOf("intellij.frontend.split.customization", BACKEND, FRONTEND),
+      separateJarModules = setOf(BACKEND),
     )
   }
 
-  /** A descriptor whose `<content>` names one plain module and one whose name holds a `/`. */
-  private fun slashFixture(dir: Path, separateJarModules: Set<String>): DevDistPluginDescriptorRequest {
-    Files.writeString(dir.resolve("build.txt"), "263.SNAPSHOT\n")
-    Files.writeString(dir.resolve("slash-plugin.xml"), SLASH_SOURCE)
-    Files.writeString(dir.resolve("$BACKEND.xml"), """<idea-plugin package="$BACKEND" />""")
-    Files.writeString(dir.resolve(SPLIT_DESCRIPTOR), """<idea-plugin package="$BACKEND.split" />""")
-    return fixture(dir).let { base ->
-      DevDistPluginDescriptorRequest(
-        output = base.output,
-        mainModule = base.mainModule,
-        directoryName = base.directoryName,
-        mainJarName = base.mainJarName,
-        source = dir.resolve("slash-plugin.xml"),
-        buildNumberFile = base.buildNumberFile,
-        releaseDate = base.releaseDate,
-        releaseVersion = base.releaseVersion,
-        isEap = base.isEap,
-        exactVersion = base.exactVersion,
-        retainProductDescriptor = base.retainProductDescriptor,
-        embedsContentModules = true,
-        refusedContentModules = emptyList(),
-        separateJarModules = separateJarModules,
-        pluginDescriptors = mapOf(
-          "$BACKEND.xml" to dir.resolve("$BACKEND.xml"),
-          SPLIT_DESCRIPTOR to dir.resolve(SPLIT_DESCRIPTOR),
-        ),
-        platformDescriptors = emptyMap(),
-        pluginModules = base.pluginModules,
-        platformModules = emptyList(),
-      )
+  private fun writeJar(file: Path, entries: Map<String, String>) {
+    ZipOutputStream(Files.newOutputStream(file)).use { output ->
+      for ((name, content) in entries) {
+        output.putNextEntry(ZipEntry(name))
+        output.write(content.encodeToByteArray())
+        output.closeEntry()
+      }
     }
   }
 }
@@ -298,31 +171,8 @@ private const val MAIN_MODULE = "intellij.example"
 private const val BACKEND = "intellij.example.backend"
 private const val FRONTEND = "intellij.example.frontend"
 
-/** A content module whose name holds a `/`: its descriptor belongs to [BACKEND], not to a module of its own. */
-private const val SPLIT = "$BACKEND/split"
-private const val SPLIT_DESCRIPTOR = "$BACKEND.split.xml"
-
-private val SLASH_SOURCE = """
-  <idea-plugin>
-    <id>com.example</id>
-    <content>
-      <module name="$BACKEND"/>
-      <module name="$SPLIT"/>
-    </content>
-  </idea-plugin>
-""".trimIndent()
-
-private val SOURCE = """
-  <idea-plugin>
-    <id>com.example</id>
-    <content>
-      <module name="$BACKEND"/>
-      <module name="$FRONTEND"/>
-    </content>
-  </idea-plugin>
-""".trimIndent()
-
-private val REFERENCE = """
+/** A produced descriptor whose stamps are the fixture assembly's: the version and the compatibility range. */
+private val PRODUCED_DESCRIPTOR = """
   <idea-plugin>
     <id>com.example</id>
     <version>263.99999999.0</version>
@@ -331,5 +181,35 @@ private val REFERENCE = """
       <module name="$BACKEND"><![CDATA[<idea-plugin package="$BACKEND" />]]></module>
       <module name="$FRONTEND"><![CDATA[<idea-plugin package="$FRONTEND" />]]></module>
     </content>
+  </idea-plugin>
+""".trimIndent()
+
+private val EMBEDDED_PRODUCT_SOURCE = """
+  <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+    <id>com.intellij</id>
+    <xi:include href="/META-INF/product-modules.xml"/>
+  </idea-plugin>
+""".trimIndent()
+
+private val EMBEDDED_PRODUCT_MODULES = """
+  <idea-plugin>
+    <content>
+      <module name="$BACKEND"/>
+      <module name="$FRONTEND"/>
+    </content>
+  </idea-plugin>
+""".trimIndent()
+
+private val EMBEDDED_BACKEND_DESCRIPTOR = """
+  <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" package="$BACKEND">
+    <xi:include href="/META-INF/backend-extensions.xml"/>
+  </idea-plugin>
+""".trimIndent()
+
+private val EMBEDDED_BACKEND_EXTENSIONS = """
+  <idea-plugin>
+    <extensions defaultExtensionNs="com.intellij">
+      <applicationService serviceImplementation="com.example.BackendService"/>
+    </extensions>
   </idea-plugin>
 """.trimIndent()

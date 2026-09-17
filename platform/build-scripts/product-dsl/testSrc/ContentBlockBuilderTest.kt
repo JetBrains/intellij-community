@@ -266,26 +266,6 @@ class ContentBlockBuilderTest {
   }
 
   @Nested
-  inner class IncludeDependenciesTest {
-    @Test
-    fun `includeDependencies flag is tracked`() {
-      val moduleSet = ModuleSet(
-        name = "test",
-        modules = listOf(
-          ContentModule(PluginModuleId("module.with.deps", namespace = "jetbrains"), includeDependencies = true),
-          ContentModule(PluginModuleId("module.no.deps", namespace = "jetbrains"), includeDependencies = false)
-        )
-      )
-      val spec = productModules { moduleSet(moduleSet) }
-      
-      val result = buildContentBlocksAndChainMapping(spec)
-      
-      assertThat(result.moduleToIncludeDependencies).containsEntry(ContentModuleName("module.with.deps"), true)
-      assertThat(result.moduleToIncludeDependencies).doesNotContainKey(ContentModuleName("module.no.deps"))
-    }
-  }
-
-  @Nested
   inner class DuplicateDetectionTest {
     @Test
     fun `duplicate modules in same set throws error`() {

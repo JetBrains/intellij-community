@@ -32,6 +32,7 @@ import org.jetbrains.intellij.build.FrontendModuleFilter
 import org.jetbrains.intellij.build.JarPackagerDependencyHelper
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
+import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetSpec
 import org.jetbrains.intellij.build.findFileInModuleDependenciesRecursive
 import org.jetbrains.intellij.build.findFileInModuleLibraryDependencies
 import org.jetbrains.intellij.build.findUnprocessedDescriptorContent
@@ -165,7 +166,7 @@ fun deprecatedResolveDescriptorForEmbeddedProduct(
     moduleOutputPatcher.patchModuleOutput(moduleName = clientModuleName, path = relativePath, content = patchedXmlContent)
   }
 
-  spec.withDeprecatedPostProcessor(layoutPatcherIfNoScrambling) { zipFileName, data, pluginLayout, platformLayout, pluginDescriptorContainer, context ->
+  spec.withDeprecatedPostProcessor(DevPluginLayoutAssetSpec.OMITTED, layoutPatcherIfNoScrambling) { zipFileName, data, pluginLayout, platformLayout, pluginDescriptorContainer, context ->
     if (zipFileName != relativePath) {
       return@withDeprecatedPostProcessor null
     }
@@ -333,17 +334,18 @@ internal fun resolveAndEmbedContentModuleDescriptor(
   outputProvider: ModuleOutputProvider,
   descriptorModifier: ((Element) -> Unit)? = null,
 ) {
-  if (!moduleElement.content.isEmpty()) {
-    return
-  }
-
   val moduleName = moduleElement.getAttributeValue("name") ?: return
+  // The resolve also caches the descriptor, and the runtime module repository reads that cache for every module of
+  // the published `<content>` list. So a module that already holds a body still resolves, and only keeps its body.
   val descriptor = resolveContentModuleDescriptor(
     moduleName = moduleName,
     descriptorCache = descriptorCache,
     xIncludeResolver = xIncludeResolver.copyWithExtraSearchPath(moduleName, descriptorCache),
     outputProvider = outputProvider,
   )
+  if (!moduleElement.content.isEmpty()) {
+    return
+  }
 
   descriptorModifier?.invoke(descriptor)
   moduleElement.setContent(CDATA(JDOMUtil.write(descriptor)))

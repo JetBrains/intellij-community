@@ -17,12 +17,14 @@
     <module name="intellij.java.syntax"/>
     <module name="intellij.libraries.test.discovery"/>
     <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.concurrency"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.diff"/>
     <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.execution"/>
     <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.icons"/>
     <module name="intellij.platform.ide.concurrency"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.impl"/>

@@ -1,4 +1,9 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.platform.ijent.community.buildConstants` start
+content_module_jar(module = ":buildConstants")
+### auto-generated section `dev intellij.platform.ijent.community.buildConstants` end
 
 ### auto-generated section `build intellij.platform.ijent.community.buildConstants` start
 jvm_library(
@@ -12,6 +17,10 @@ jvm_library(
         allow_empty = True,
     ),
     module_name = "intellij.platform.ijent.community.buildConstants",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
@@ -41,6 +50,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.ijent.community.buildConstants.iml",
+        "resources/intellij.platform.ijent.community.buildConstants.xml",
     ],
     visibility = ["//visibility:public"],
 )

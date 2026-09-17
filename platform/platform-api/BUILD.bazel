@@ -2,11 +2,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "kt_javac_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `dev intellij.platform.ide` start
-content_module_jar(
-    module = ":ide",
-    modules_after = ["//platform/observable"],
-    modules_before = ["//platform/icons"],
-)
+content_module_jar(module = ":ide")
 ### auto-generated section `dev intellij.platform.ide` end
 
 ### auto-generated section `build intellij.platform.ide` start

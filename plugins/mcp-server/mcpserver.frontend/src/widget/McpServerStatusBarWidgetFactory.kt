@@ -24,7 +24,7 @@ internal class McpServerStatusBarWidgetFactory : StatusBarWidgetFactory {
 
   override fun isEnabledByDefault(): Boolean =
     McpServerStatusBarWidgetProvider.EP_NAME.computeSafeIfAny(McpServerStatusBarWidgetProvider::isEnabledByDefault)
-    ?: McpServerSettings.getInstance().enableMcpServer
+    ?: true
 
   override fun isAvailable(project: Project): Boolean = IdeProductMode.isMonolith
 

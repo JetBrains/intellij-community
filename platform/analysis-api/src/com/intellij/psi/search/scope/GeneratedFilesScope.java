@@ -23,7 +23,7 @@ public final class GeneratedFilesScope extends NamedScope {
             public boolean contains(@NotNull VirtualFile file, @NotNull Project project) {
               return GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(file, project);
             }
-          }
+          }, true
     );
   }
 

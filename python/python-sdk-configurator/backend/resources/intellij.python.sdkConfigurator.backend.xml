@@ -5,6 +5,7 @@
     <module name="intellij.libraries.kotlinx.collections.immutable"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.eel.provider"/>
     <module name="intellij.platform.ide"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.progress"/>
@@ -14,7 +15,9 @@
     <module name="intellij.platform.rpc"/>
     <module name="intellij.platform.rpc.backend"/>
     <module name="intellij.platform.rpc.topics"/>
+    <module name="intellij.platform.util.progress"/>
     <module name="intellij.platform.workspace.jps"/>
+    <module name="intellij.platform.workspace.storage"/>
     <module name="intellij.python.community"/>
     <module name="intellij.python.community.common"/>
     <module name="intellij.python.pyproject"/>

@@ -27,7 +27,7 @@ public final class OpenFilesScope extends NamedScope {
         FileEditorManager manager = project.isDisposed() ? null : FileEditorManager.getInstance(project);
         return manager != null && manager.isFileOpen(file);
       }
-    });
+    }, true);
   }
 
   public static final class Provider implements CustomScopesProvider {

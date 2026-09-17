@@ -1,4 +1,9 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.platform.ide.ui` start
+content_module_jar(module = ":ui")
+### auto-generated section `dev intellij.platform.ide.ui` end
 
 ### auto-generated section `build intellij.platform.ide.ui` start
 jvm_library(
@@ -12,6 +17,10 @@ jvm_library(
         allow_empty = True,
     ),
     module_name = "intellij.platform.ide.ui",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
@@ -57,6 +66,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.ide.ui.iml",
+        "resources/intellij.platform.ide.ui.xml",
     ],
     visibility = ["//visibility:public"],
 )

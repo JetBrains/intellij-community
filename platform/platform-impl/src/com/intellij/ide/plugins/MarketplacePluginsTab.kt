@@ -403,7 +403,7 @@ internal class MarketplacePluginsTab @RequiresEdt(generateAssertion = false /* I
           ).map { sort -> sort.query }
           SearchWords.VENDOR -> getOrCalculateVendors()
           SearchWords.REPOSITORY -> RepositoryHelper.getCustomPluginRepositoryHosts()
-          SearchWords.INTERNAL, SearchWords.SUGGESTED, SearchWords.STAFF_PICKS, null -> null
+          SearchWords.INTERNAL, SearchWords.SUGGESTED, SearchWords.STAFF_PICKS, SearchWords.PLUGIN_UPDATE_SOURCE, null -> null
         }
       }
 
@@ -463,6 +463,7 @@ internal class MarketplacePluginsTab @RequiresEdt(generateAssertion = false /* I
       selectionListener,
       marketplaceSortByGroup,
       Supplier { marketplacePanel },
+      pluginModelFacade,
     )
     return searchPanel
   }

@@ -1,6 +1,4 @@
 load("@community//build:tests-options.bzl", "jps_test")
-load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_TARGETS")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jps_test(
@@ -10,14 +8,6 @@ jps_test(
     runtime_deps = [":statsCollector-tests_test_lib"],
 )
 ### skip generation section `test intellij.statsCollector.tests`
-
-### auto-generated section `dev intellij.statsCollector` start
-dev_dist_plugin(
-    libraries = ["@lib//:stats_collector-completion-log-events"],
-    main_module = "intellij.statsCollector",
-    module_targets = MODULE_TARGETS,
-)
-### auto-generated section `dev intellij.statsCollector` end
 
 ### auto-generated section `build intellij.statsCollector` start
 jvm_library(

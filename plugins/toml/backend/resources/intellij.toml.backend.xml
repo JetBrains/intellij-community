@@ -1,17 +1,18 @@
 <idea-plugin>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <dependencies>
-      <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
       <module name="intellij.platform.analysis"/>
       <module name="intellij.platform.backend"/>
       <module name="intellij.platform.core"/>
       <module name="intellij.platform.core.impl"/>
       <module name="intellij.platform.editor.ui"/>
       <module name="intellij.platform.indexing"/>
+      <module name="intellij.platform.indexing.impl"/>
       <module name="intellij.platform.lang"/>
       <module name="intellij.platform.lang.impl"/>
       <module name="intellij.toml.core"/>
-      <!-- endregion -->
     </dependencies>
+    <!-- endregion -->
 
     <resource-bundle>messages.TomlBundle</resource-bundle>
 

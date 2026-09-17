@@ -118,6 +118,13 @@ public final class PsiIntersectionType extends PsiType.Stub {
   }
 
   @Override
+  public @NotNull PsiType withNullability(@NotNull TypeNullability nullability) {
+    if (nullability.equals(getNullability())) return this;
+    PsiType[] conjuncts = ContainerUtil.map2Array(myConjuncts, PsiType.class, conjunct -> conjunct.withNullability(nullability));
+    return createIntersection(false, conjuncts);
+  }
+
+  @Override
   public boolean isValid() {
     for (PsiType conjunct : myConjuncts) {
       if (!conjunct.isValid()) return false;

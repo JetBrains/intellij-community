@@ -1,24 +1,24 @@
 load("@community//build:tests-options.bzl", "jps_test")
-load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_DESCRIPTORS", "MODULE_TARGETS")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `dev intellij.java.ide.customization` start
 dev_dist_plugin(
+    content_modules = [
+        # do not sort,
+        "intellij.java.ide.customization.training",
+        "intellij.java.ide.customization.backend",
+    ],
     descriptor = "resources/META-INF/plugin.xml",
-    descriptor_index = MODULE_DESCRIPTORS,
     descriptor_modules = [
         "intellij.java.ide.customization.backend",
         "intellij.java.ide.customization.training",
     ],
+    jars = {
+        "lib/java-ide-customization.jar": ["intellij.java.ide.customization"],
+    },
     main_module = "intellij.java.ide.customization",
-    module_targets = MODULE_TARGETS,
-    prepacked_content_modules = [
-        # do not sort,
-        "intellij.java.ide.customization.backend",
-        "intellij.java.ide.customization.training",
-    ],
 )
 ### auto-generated section `dev intellij.java.ide.customization` end
 

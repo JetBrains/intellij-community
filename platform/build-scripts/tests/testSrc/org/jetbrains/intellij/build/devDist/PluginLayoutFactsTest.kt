@@ -17,7 +17,6 @@ class PluginLayoutFactsTest {
     assertThat(facts.directoryName).isEqualTo("demo-plugin")
     assertThat(facts.mainJarName).isEqualTo("demo-plugin.jar")
     assertThat(facts.memberJars).isEmpty()
-    assertThat(facts.noEmbedding).isFalse()
     // The build gives a plugin with no layout an `auto` one.
     assertThat(facts.auto).isTrue()
   }
@@ -29,6 +28,17 @@ class PluginLayoutFactsTest {
 
     assertThat(pluginLayoutFacts(mainModule = MAIN, layouts = listOf(plain)).auto).isFalse()
     assertThat(pluginLayoutFacts(mainModule = MAIN, layouts = listOf(plain, auto)).auto).isTrue()
+  }
+
+  @Test
+  fun `a custom jar keeps the source layout order`() {
+    val layout = PluginLayout.plugin(MAIN) { spec ->
+      spec.withModule("intellij.demo.b", "shared.jar")
+      spec.withModule("intellij.demo.a", "shared.jar")
+    }
+
+    assertThat(pluginLayoutFacts(mainModule = MAIN, layouts = listOf(layout)).layoutJarMembers.getValue("shared.jar"))
+      .containsExactly("intellij.demo.b", "intellij.demo.a")
   }
 
   @Test
@@ -50,7 +60,7 @@ class PluginLayoutFactsTest {
       spec.withModule("intellij.demo.rt", "rt/demo-rt.jar")
       spec.withModuleLibrary("owned", "intellij.demo.owner", "")
       spec.excludeModuleLibrary("excluded", "intellij.demo.core")
-      spec.withGeneratedResources(listOf("generated")) { _, _ -> }
+      spec.withLibraryResources("generated", "generated")
     }
 
     val facts = pluginLayoutFacts(mainModule = MAIN, layouts = listOf(second, first))
@@ -69,14 +79,6 @@ class PluginLayoutFactsTest {
     assertThat(facts.moduleLibraries.single().libraryName).isEqualTo("owned")
     assertThat(facts.moduleLibraries.single().relativeOutputPath).isNull()
     assertThat(facts.generatorLibraries).containsExactly("generated")
-    assertThat(facts.noEmbedding).isFalse()
-  }
-
-  @Test
-  fun `a scrambled layout states no embedding`() {
-    val layout = PluginLayout.plugin(MAIN) { spec -> spec.scramble("demo.jar") }
-
-    assertThat(pluginLayoutFacts(mainModule = MAIN, layouts = listOf(layout)).noEmbedding).isTrue()
   }
 
   @Test

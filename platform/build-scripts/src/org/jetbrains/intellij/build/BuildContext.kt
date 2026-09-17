@@ -130,7 +130,7 @@ interface BuildContext : CompilationContext {
   val nonBundledPluginsToBePublished: Path
 
   /**
-   * Add the file to be copied into an application.
+   * Add the file to be copied into an application. [DistFile.relativePath] starts at the distribution root.
    */
   fun addDistFile(file: DistFile)
 

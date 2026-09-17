@@ -236,9 +236,8 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
 
   @RequiresEdt
   public @NotNull CaretRepaintMetrics getCaretRepaintMetrics() {
-    int caretHeight = getCaretHeight();
-    int topOverhang = myEditor.getSettings().isFullLineHeightCursor() ? 0 : getTopOverhang();
-    return new CaretRepaintMetrics(caretHeight, topOverhang);
+    EditorViewSnapshot snapshot = getSnapshotWithMetrics();
+    return new CaretRepaintMetrics(snapshot.caretHeight(), snapshot.caretTopOverhang());
   }
 
   @RequiresEdt
@@ -257,10 +256,8 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   @RequiresEdt
   public @NotNull Dimension getPreferredSize() {
     assert !myEditor.isPurePaintingMode();
-    return EditorThreading.compute(() -> {
-      getSoftWrapModel().prepareToMapping();
-      return mySizeManager.getPreferredSize();
-    });
+    getSoftWrapModel().prepareToMapping();
+    return mySizeManager.getPreferredSize();
   }
 
   /**
@@ -275,19 +272,15 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   @RequiresEdt
   public int getPreferredWidth(int beginLine, int endLine) {
     assert !myEditor.isPurePaintingMode();
-    return EditorThreading.compute(() -> {
-      getSoftWrapModel().prepareToMapping();
-      return mySizeManager.getPreferredWidth(beginLine, endLine);
-    });
+    getSoftWrapModel().prepareToMapping();
+    return mySizeManager.getPreferredWidth(beginLine, endLine);
   }
 
   @RequiresEdt
   public int getPreferredHeight() {
     assert !myEditor.isPurePaintingMode();
-    return EditorThreading.compute(() -> {
-      getSoftWrapModel().prepareToMapping();
-      return mySizeManager.getPreferredHeight();
-    });
+    getSoftWrapModel().prepareToMapping();
+    return mySizeManager.getPreferredHeight();
   }
 
   @RequiresEdt
@@ -405,13 +398,10 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   @RequiresEdt
   public void setPrefix(@Nullable String prefixText, @Nullable TextAttributes attributes) {
     checkPrefixAttributes(prefixText, attributes);
-    SNAPSHOT_UPDATER.updateAndGet(
-      this,
-      snapshot -> snapshot
-        .withPrefixText(prefixText)
-        .withPrefixAttributes(attributes)
-        .withPrefixLayout(NOT_INITIALIZED_PREFIX)
-    );
+    var prefix = (prefixText == null || prefixText.isEmpty()) && attributes == null
+                 ? null
+                 : new EditorPrefix(prefixText, attributes, NOT_INITIALIZED_PREFIX);
+    SNAPSHOT_UPDATER.updateAndGet(this, snapshot -> snapshot.withPrefix(prefix));
     mySizeManager.invalidateRange(0, 0);
   }
 
@@ -419,27 +409,19 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
    * @see EditorImpl#setPaintCallback(Runnable)
    */
   public void setPaintCallback(@Nullable Runnable paintCallback) {
-    SNAPSHOT_UPDATER.updateAndGet(
-      this,
-      snapshot -> snapshot.withPaintCallback(paintCallback)
-    );
+    SNAPSHOT_UPDATER.updateAndGet(this, snapshot -> snapshot.withPaintCallback(paintCallback));
   }
 
   @RequiresEdt
   public void reinitSettings() {
     clearContentAnimationCache();
     SNAPSHOT_UPDATER.updateAndGet(this, snapshot -> {
-      FontRenderContext context = computeFontRenderContext(snapshot.fontRenderContext, null);
-      FontRenderContext newFontRenderContext = context != null ? context : snapshot.fontRenderContext;
-      int newBidiFlags = switch (EditorSettingsExternalizable.getInstance().getBidiTextDirection()) {
-        case LTR -> Bidi.DIRECTION_LEFT_TO_RIGHT;
-        case RTL -> Bidi.DIRECTION_RIGHT_TO_LEFT;
-        default -> Bidi.DIRECTION_DEFAULT_LEFT_TO_RIGHT;
-      };
+      FontRenderContext newFontRenderContext = readFontRenderContext(snapshot);
+      int newBidiFlags = readBidiFlags();
       int newTabSize = readTabSize();
       return snapshot
         .withFontRenderContext(newFontRenderContext)
-        .withMetrics(null)
+        .withMetrics(EditorViewMetrics.UNINITIALIZED)
         .withTabSize(newTabSize)
         .withBidiFlags(newBidiFlags)
         .withPrefixLayout(NOT_INITIALIZED_PREFIX);
@@ -503,14 +485,14 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   @Override
   public @NotNull String dumpState() {
     EditorViewSnapshot snapshot = mySnapshot;
-    String prefixText = snapshot.prefixText;
-    TextAttributes prefixAttributes = snapshot.prefixAttributes;
-    EditorViewMetrics metrics = snapshot.metrics;
-    float plainSpaceWidth = metrics == null ? -1 : metrics.plainSpaceWidth;
-    int lineHeight = metrics == null ? -1 : metrics.lineHeight;
-    int descent = metrics == null ? -1 : metrics.descent;
-    int charHeight = metrics == null ? -1 : metrics.charHeight;
-    float charWidth = metrics == null ? -1 : metrics.maxCharWidth;
+    String prefixText = snapshot.prefixText();
+    TextAttributes prefixAttributes = snapshot.prefixAttributes();
+    EditorViewMetrics metrics = snapshot.metrics();
+    float plainSpaceWidth = metrics.plainSpaceWidth();
+    int lineHeight = metrics.lineHeight();
+    int descent = metrics.descent();
+    int charHeight = metrics.charHeight();
+    float charWidth = metrics.maxCharWidth();
     return "[prefix text: " + prefixText +
            ", prefix attributes: " + prefixAttributes +
            ", space width: " + plainSpaceWidth +
@@ -518,7 +500,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
            ", descent: " + descent +
            ", char height: " + charHeight +
            ", max char width: " + charWidth +
-           ", tab size: " + snapshot.tabSize +
+           ", tab size: " + snapshot.tabSize() +
            " ,size manager: " + mySizeManager.dumpState() +
            " ,logical position cache: " + myLogicalPositionCache.dumpState() +
            "]";
@@ -678,9 +660,9 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     if (myEditor.isCurrentlyBuildingCache()) {
       return;
     }
-    EditorViewSnapshot snapshot = mySnapshot;
-    if (snapshot.paintCallback != null) {
-      snapshot.paintCallback.run();
+    Runnable callback = mySnapshot.paintCallback();
+    if (callback != null) {
+      callback.run();
     }
   }
 
@@ -700,45 +682,45 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   }
 
   @NotNull FontRenderContext getFontRenderContext() {
-    return mySnapshot.fontRenderContext;
+    return mySnapshot.fontRenderContext();
   }
 
   public float getPlainSpaceWidth() {
-    return getMetrics().plainSpaceWidth;
+    return getSnapshotWithMetrics().plainSpaceWidth();
   }
 
   public int getCaretHeight() {
-    return getMetrics().caretHeight;
+    return getSnapshotWithMetrics().caretHeight();
   }
 
   public int getLineHeight() {
-    return getMetrics().lineHeight;
+    return getSnapshotWithMetrics().lineHeight();
   }
 
   public int getDescent() {
-    return getMetrics().descent;
+    return getSnapshotWithMetrics().descent();
   }
 
   public int getCharHeight() {
-    return getMetrics().charHeight;
+    return getSnapshotWithMetrics().charHeight();
   }
 
   public int getAscent() {
-    return getMetrics().ascent;
+    return getSnapshotWithMetrics().ascent();
   }
 
   public int getTopOverhang() {
-    return getMetrics().topOverhang;
+    return getSnapshotWithMetrics().topOverhang();
   }
 
   public int getBottomOverhang() {
-    return getMetrics().bottomOverhang;
+    return getSnapshotWithMetrics().bottomOverhang();
   }
 
   public int getTabSize() {
     while (true) {
       EditorViewSnapshot snapshot = mySnapshot;
-      int tabSize = snapshot.tabSize;
+      int tabSize = snapshot.tabSize();
       if (tabSize != -1) {
         return tabSize;
       }
@@ -748,6 +730,53 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
         return newTabSize;
       }
     }
+  }
+
+  float getMaxCharWidth() {
+    return getSnapshotWithMetrics().maxCharWidth();
+  }
+
+  int getCapHeight() {
+    return getSnapshotWithMetrics().capHeight();
+  }
+
+  int getBidiFlags() {
+    return mySnapshot.bidiFlags();
+  }
+
+  TextAttributes getPrefixAttributes() {
+    return mySnapshot.prefixAttributes();
+  }
+
+  public @NotNull EditorViewSnapshot getSnapshot() {
+    while (true) {
+      EditorViewSnapshot snapshot = mySnapshot;
+      if (snapshot.metrics() != EditorViewMetrics.UNINITIALIZED &&
+          snapshot.tabSize() != -1 &&
+          snapshot.prefixLayout() != NOT_INITIALIZED_PREFIX) {
+        return snapshot;
+      }
+      initAllLazyFields();
+    }
+  }
+
+  private void initAllLazyFields() {
+    getOrComputePrefixLayout();
+  }
+
+  private @NotNull FontRenderContext readFontRenderContext(@NotNull EditorViewSnapshot snapshot) {
+    FontRenderContext oldContext = snapshot.fontRenderContext();
+    FontRenderContext context = computeFontRenderContext(oldContext, null);
+    FontRenderContext newFontRenderContext = context != null ? context : oldContext;
+    return newFontRenderContext;
+  }
+
+  private static int readBidiFlags() {
+    return switch (EditorSettingsExternalizable.getInstance().getBidiTextDirection()) {
+      case LTR -> Bidi.DIRECTION_LEFT_TO_RIGHT;
+      case RTL -> Bidi.DIRECTION_RIGHT_TO_LEFT;
+      default -> Bidi.DIRECTION_DEFAULT_LEFT_TO_RIGHT;
+    };
   }
 
   /**
@@ -760,52 +789,20 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     return Math.max(1, EditorUtil.getTabSize(myEditor));
   }
 
-  float getMaxCharWidth() {
-    return getMetrics().maxCharWidth;
-  }
-
-  int getCapHeight() {
-    return getMetrics().capHeight;
-  }
-
-  int getBidiFlags() {
-    return mySnapshot.bidiFlags;
-  }
-
-  TextAttributes getPrefixAttributes() {
-    return mySnapshot.prefixAttributes;
-  }
-
-  public @NotNull EditorViewSnapshot getSnapshot() {
-    while (true) {
-      EditorViewSnapshot snapshot = mySnapshot;
-      if (snapshot.metrics != null &&
-          snapshot.tabSize != -1 &&
-          snapshot.prefixLayout != NOT_INITIALIZED_PREFIX) {
-        return snapshot;
-      }
-      initAllLazyFields();
-    }
-  }
-
-  private void initAllLazyFields() {
-    getOrComputePrefixLayout();
-  }
-
   /**
    * Returns the prefix layout, and computes it when the snapshot holds {@link #NOT_INITIALIZED_PREFIX}.
    */
   private @Nullable LineLayout getOrComputePrefixLayout() {
     getTabSize(); // force tabSize and metrics calculations to avoid nested CAS loop in createForStandaloneText
-    getMetrics();
+    getSnapshotWithMetrics();
     while (true) {
       EditorViewSnapshot snapshot = mySnapshot;
-      LineLayout layout = snapshot.prefixLayout;
+      LineLayout layout = snapshot.prefixLayout();
       if (layout != NOT_INITIALIZED_PREFIX) {
         return layout;
       }
-      String prefixText = snapshot.prefixText;
-      TextAttributes attributes = snapshot.prefixAttributes;
+      String prefixText = snapshot.prefixText();
+      TextAttributes attributes = snapshot.prefixAttributes();
       // setPrefix rejects a text without attributes, so the last test only makes the null safety local.
       LineLayout newPrefixLayout = prefixText == null || prefixText.isEmpty() || attributes == null
                                    ? null
@@ -817,23 +814,23 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     }
   }
 
-  private @NotNull EditorViewMetrics getMetrics() {
+  private @NotNull EditorViewSnapshot getSnapshotWithMetrics() {
     while (true) {
       EditorViewSnapshot snapshot = mySnapshot;
-      EditorViewMetrics metrics = snapshot.metrics;
-      if (metrics != null) {
-        return metrics;
+      EditorViewMetrics metrics = snapshot.metrics();
+      if (metrics != EditorViewMetrics.UNINITIALIZED) {
+        return snapshot;
       }
       EditorViewMetrics newMetrics = createNewMetrics(snapshot);
       EditorViewSnapshot newSnapshot = snapshot.withMetrics(newMetrics);
       if (SNAPSHOT_UPDATER.compareAndSet(this, snapshot, newSnapshot)) {
-        return newMetrics;
+        return newSnapshot;
       }
     }
   }
 
   private @NotNull EditorViewMetrics createNewMetrics(@NotNull EditorViewSnapshot snapshot) {
-    FontRenderContext fontRenderContext = snapshot.fontRenderContext;
+    FontRenderContext fontRenderContext = snapshot.fontRenderContext();
 
     Editor editor = myEditor;
     EditorColorsScheme colorsScheme = editor.getColorsScheme();
@@ -859,6 +856,8 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     int newTopOverhang = fontMetricsHeight - newLineHeight + newDescent - descent;
     int newBottomOverhang = descent - newDescent;
     int newCaretHeight = fullLineHeightCursor ? newLineHeight : newLineHeight + newTopOverhang + newBottomOverhang;
+    // A full line height caret starts at the line top, so it overhangs nothing.
+    int newCaretTopOverhang = fullLineHeightCursor ? 0 : newTopOverhang;
 
     // assuming that bold italic 'W' gives a good approximation of font's widest character
     FontMetrics fmBI = FontInfo.getFontMetrics(colorsScheme.getFont(EditorFontType.BOLD_ITALIC), fontRenderContext);
@@ -866,15 +865,17 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     int newCapHeight = (int)font.createGlyphVector(fontRenderContext, "H").getVisualBounds().getHeight();
 
     return new EditorViewMetrics(
-      newPlainSpaceWidth,
-      newLineHeight,
-      newDescent,
-      newCharHeight,
-      newMaxCharWidth,
-      newCapHeight,
-      newTopOverhang,
-      newBottomOverhang,
-      newCaretHeight
+      /* plainSpaceWidth= */ newPlainSpaceWidth,
+      /* lineHeight= */ newLineHeight,
+      /* descent= */ newDescent,
+      /* ascent= */ newLineHeight - newDescent,
+      /* charHeight= */ newCharHeight,
+      /* maxCharWidth= */ newMaxCharWidth,
+      /* capHeight= */ newCapHeight,
+      /* topOverhang= */ newTopOverhang,
+      /* bottomOverhang= */ newBottomOverhang,
+      /* caretHeight= */ newCaretHeight,
+      /* caretTopOverhang= */ newCaretTopOverhang
     );
   }
 
@@ -963,13 +964,13 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   private boolean updateFontRenderContext(@Nullable FontRenderContext context) {
     while (true) {
       EditorViewSnapshot snapshot = mySnapshot;
-      FontRenderContext newContext = computeFontRenderContext(snapshot.fontRenderContext, context);
+      FontRenderContext newContext = computeFontRenderContext(snapshot.fontRenderContext(), context);
       if (newContext == null) {
         return false;
       }
       EditorViewSnapshot newSnapshot = snapshot
         .withFontRenderContext(newContext)
-        .withMetrics(null)
+        .withMetrics(EditorViewMetrics.UNINITIALIZED)
         .withPrefixLayout(NOT_INITIALIZED_PREFIX);
       if (SNAPSHOT_UPDATER.compareAndSet(this, snapshot, newSnapshot)) {
         return true;

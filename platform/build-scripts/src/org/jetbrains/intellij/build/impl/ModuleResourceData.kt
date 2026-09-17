@@ -10,7 +10,7 @@ internal data class ModuleResourceData(
   @JvmField
   val moduleName: String,
 
-  /** Path to resource file or directory relative to the module content root */
+  /** Path to resource file or directory relative to the module content root, inside the Bazel package of the module */
   @JvmField
   val resourcePath: String,
 

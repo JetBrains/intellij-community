@@ -904,7 +904,7 @@ class LafComboBoxModelWrapper(private val lafComboBoxModelProvider: () -> Collec
       if (settings == null) {
         ShowSettingsUtil.getInstance().showSettingsDialog(ProjectManager.getInstance().defaultProject,
                                                           PluginManagerConfigurable::class.java) { c: PluginManagerConfigurable ->
-          c.enableSearch(themeTag)
+          c.navigateToMarketplace(themeTag)
         }
       }
       else {

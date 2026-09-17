@@ -46,17 +46,14 @@ private const val CLASS = SHOW_NAME or SHOW_FQ_CLASS_NAMES or SHOW_EXTENDS_IMPLE
 
 internal class LibrarySourceNotificationProvider : EditorNotificationProvider {
 
-  // Support releases (e.g. "android-30") as well as previews (e.g. "android-tiramisu")
-  private inline val ANDROID_SDK_PATTERN get() = ".*/platforms/android-\\w+/android.jar!/.*".toRegex()
-
   override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
     if (file.fileType is LanguageFileType && ProjectRootManager.getInstance(project).fileIndex.isInLibrarySource(file)) {
       val psiFile = PsiManager.getInstance(project).findFile(file)
       if (psiFile is PsiJavaFile) {
-        val offender = psiFile.classes.find { differs(it) }
+        val offender = psiFile.classes.find { differs(it) && !LibrarySourcesMismatchSuppressor.shouldSuppress(it) }
         if (offender != null) {
           val clsFile = offender.originalElement.containingFile?.virtualFile
-          if (clsFile != null && !clsFile.path.matches(ANDROID_SDK_PATTERN)) {
+          if (clsFile != null) {
             return Function {
               val panel = EditorNotificationPanel(LightColors.RED, EditorNotificationPanel.Status.Error)
               panel.text = JavaUiBundle.message("library.source.mismatch", offender.name)

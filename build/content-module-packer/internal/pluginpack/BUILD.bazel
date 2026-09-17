@@ -1,0 +1,59 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "pluginpack",
+    srcs = [
+        "contract.go",
+        "execute.go",
+        "layout.go",
+        "layout_archive.go",
+        "layout_writer.go",
+        "plan.go",
+        "symlink_other.go",
+        "symlink_windows.go",
+    ],
+    importpath = "jetbrains.com/content-module-packer/internal/pluginpack",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//build/content-module-packer/internal/filemetadata",
+        "//build/content-module-packer/internal/jarpack",
+        "//build/content-module-packer/internal/javaglob",
+        "@com_github_klauspost_compress//zstd",
+    ],
+)
+
+go_test(
+    name = "pluginpack_test",
+    srcs = [
+        "callback_recipe_test.go",
+        "contract_test.go",
+        "execute_test.go",
+        "export_test.go",
+        "kotlin_derivation_test.go",
+        "kotlin_preparation_test.go",
+        "layout_test.go",
+        "plan_test.go",
+    ],
+    args = [
+        "-kotlin-callback-fixture=$(rlocationpath //platform/build-scripts/tests:plugin-callback-recipe-fixture)",
+        "-kotlin-callback-preparer=$(rlocationpath //platform/build-scripts/plugin-preparation/callback-runner:plugin-callback-preparer)",
+        "-kotlin-preparer=$(rlocationpath //platform/build-scripts/plugin-preparation:plugin-preparer)",
+        "-plugin-remainder-packer=$(rlocationpath //build/content-module-packer/plugin-remainder-packer)",
+    ],
+    data = [
+        "//build/content-module-packer/plugin-remainder-packer",
+        "//platform/build-scripts/plugin-preparation:plugin-preparer",
+        "//platform/build-scripts/plugin-preparation/callback-runner:plugin-callback-preparer",
+        "//platform/build-scripts/tests:plugin-callback-recipe-fixture",
+    ] + glob(["testdata/*"]),
+    embed = [":pluginpack"],
+    pure = "on",
+    deps = [
+        "//build/content-module-packer/internal/filemetadata",
+        "//build/content-module-packer/internal/jarpack",
+        "//build/content-module-packer/internal/javaglob",
+        "//build/content-module-packer/internal/planfile",
+        "//build/content-module-packer/internal/xxh3",
+        "@com_github_klauspost_compress//zstd",
+    ],
+)

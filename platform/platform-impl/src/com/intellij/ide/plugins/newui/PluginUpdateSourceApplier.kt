@@ -20,7 +20,7 @@ internal class PluginUpdateSourceApplier private constructor(
     suspend fun createApplier(pluginModel: PluginUiModel, modelFacade: PluginModelFacade): PluginUpdateSourceApplier {
       // Case when pluginUpdateSource was edited in settings, then plugin was updated but failed is ignored for now,
       // because in future pluginUpdateSource won't be updated on update. For uninstalled plugin one can't edit pluginUpdateSource
-      val initialUpdateSource = modelFacade.getPluginUpdateSource(pluginModel.pluginId)
+      val initialUpdateSource = modelFacade.getPendingPluginUpdateSource(pluginModel.pluginId)
       val wasInitialUpdateSourceExplicit =
         (PluginUpdateSourceService.getInstance() as PluginUpdateSourceServiceImpl).hasExplicitlySetPluginUpdateSource(pluginModel.pluginId)
       return PluginUpdateSourceApplier(pluginModel, modelFacade, initialUpdateSource, wasInitialUpdateSourceExplicit)

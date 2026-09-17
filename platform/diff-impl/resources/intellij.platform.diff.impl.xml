@@ -10,6 +10,7 @@
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.analysis.impl"/>
     <module name="intellij.platform.codeStyle"/>
+    <module name="intellij.platform.concurrency"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.core.ui"/>
@@ -21,6 +22,7 @@
     <module name="intellij.platform.ide.core.impl"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.ide.progress"/>
+    <module name="intellij.platform.ide.util.io.impl"/>
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.statistics"/>

@@ -3,10 +3,7 @@ load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `dev intellij.platform.workspace.jps` start
-content_module_jar(
-    module = ":jps",
-    modules_after = ["//platform/workspace/storage"],
-)
+content_module_jar(module = ":jps")
 ### auto-generated section `dev intellij.platform.workspace.jps` end
 
 ### auto-generated section `build intellij.platform.workspace.jps` start

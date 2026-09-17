@@ -1,5 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.platform.backend.workspace` start
+content_module_jar(module = ":workspace")
+### auto-generated section `dev intellij.platform.backend.workspace` end
 
 ### auto-generated section `build intellij.platform.backend.workspace` start
 create_kotlinc_options(
@@ -20,6 +25,10 @@ jvm_library(
     ),
     kotlinc_opts = ":custom_workspace",
     module_name = "intellij.platform.backend.workspace",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
@@ -56,6 +65,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.backend.workspace.iml",
+        "resources/intellij.platform.backend.workspace.xml",
     ],
     visibility = ["//visibility:public"],
 )

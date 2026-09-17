@@ -1,0 +1,5 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Malformed" type="Application" factoryName="Application">
+    <option name="MAIN_CLASS_NAME" value="org.jetbrains.intellij.build.devServer.DevMainKt" />
+    <option name="VM_PARAMETERS" value="-Didea.platform.prefix=idea -Dadditional.modules=intellij.malformed" />
+  </configuration>

@@ -3,6 +3,7 @@
 
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <module name="intellij.vcs.gitlab.backend"/>
     <plugin id="Git4Idea"/>
     <module name="intellij.libraries.caffeine"/>
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
@@ -14,13 +15,14 @@
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.core.impl"/>
     <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.observable"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.progress"/>
     <module name="intellij.platform.util.ui"/>
     <module name="intellij.platform.vcs.impl"/>
     <module name="intellij.vcs.git.backend"/>
     <module name="intellij.vcs.git.shared"/>
-    <module name="intellij.vcs.gitlab.backend"/>
   </dependencies>
   <!-- endregion -->
 

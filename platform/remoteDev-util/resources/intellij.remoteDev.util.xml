@@ -16,10 +16,12 @@
     <module name="intellij.libraries.rd.framework"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.bootstrap"/>
+    <module name="intellij.platform.concurrency"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.diagnostic.telemetry"/>
+    <module name="intellij.platform.diagnostic.telemetry.exporters"/>
     <module name="intellij.platform.diagnostic.telemetry.impl"/>
     <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.execution"/>
@@ -28,6 +30,7 @@
     <module name="intellij.platform.ide.core.impl"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.ide.progress"/>
+    <module name="intellij.platform.ide.ui"/>
     <module name="intellij.platform.lang.core"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.rd.community"/>
@@ -35,6 +38,7 @@
     <module name="intellij.platform.statistics"/>
     <module name="intellij.platform.util.coroutines"/>
     <module name="intellij.platform.util.ex"/>
+    <module name="intellij.platform.util.progress"/>
     <module name="intellij.platform.util.ui"/>
     <module name="intellij.platform.welcomeScreen.impl"/>
   </dependencies>

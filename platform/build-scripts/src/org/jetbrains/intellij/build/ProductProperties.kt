@@ -401,16 +401,14 @@ abstract class ProductProperties {
    */
   open fun copyAdditionalFiles(targetDir: Path, context: BuildContext) { }
 
-  /** Registers IJent files for legacy assembly. A null value excludes IJent from the distribution. */
-  var ijentDistributionRegistrar: ((BuildContext) -> Unit)? = null
-
   /**
-   * Registers runtime files for complete dev builds and production packaging.
+   * Registers product-specific runtime files for complete dev builds and production packaging.
+   *
+   * The files a downloaded dependency contributes are not registered here. They are declared on the platform layout with
+   * [PlatformLayout.withDistFiles], so that the dev distribution packs them from the same declaration.
    * Source-only derivation and split fragments do not call this hook.
    */
-  open fun registerDistFiles(context: BuildContext) {
-    ijentDistributionRegistrar?.invoke(context)
-  }
+  open fun registerDistFiles(context: BuildContext) { }
 
   /**
    * Override this method to copy additional OS- and arch-specific files.

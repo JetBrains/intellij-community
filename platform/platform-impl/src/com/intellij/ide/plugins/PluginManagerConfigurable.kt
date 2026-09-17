@@ -83,14 +83,17 @@ class PluginManagerConfigurable() : SearchableConfigurable, Configurable.NoScrol
   }
 
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
-  private fun createPanelIfNeeded(): PluginsPageSession {
-    return createPanelIfNeeded(null)
-  }
-
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
-  private fun createPanelIfNeeded(searchQuery: String?): PluginsPageSession {
+  private fun createPanelIfNeeded(
+    searchQuery: String? = null,
+    initialNavigation: PluginsPageInitialNavigation? = null,
+  ): PluginsPageSession {
     if (myPanel == null) {
-      myPanel = createPluginsPageSession(searchQuery, openSource ?: PluginManagerOpenSourceEnum.OTHER, isStandaloneConfigurable)
+      myPanel = createPluginsPageSession(
+        searchQuery,
+        openSource ?: PluginManagerOpenSourceEnum.OTHER,
+        isStandaloneConfigurable,
+        initialNavigation,
+      )
     }
     return myPanel!!
   }
@@ -144,11 +147,13 @@ class PluginManagerConfigurable() : SearchableConfigurable, Configurable.NoScrol
   }
 
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @Deprecated("Use Settings.select with an option or a plugin navigation method.")
   override fun enableSearch(option: String?): Runnable? {
     return createPanelIfNeeded(option).enableSearch(option)
   }
 
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @Deprecated("Use Settings.select with an option or a plugin navigation method.")
   fun enableSearch(option: String?, ignoreTagMarketplaceTab: Boolean): Runnable? {
     return createPanelIfNeeded(option).enableSearch(option, ignoreTagMarketplaceTab)
   }
@@ -162,17 +167,43 @@ class PluginManagerConfigurable() : SearchableConfigurable, Configurable.NoScrol
   }
 
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
-  fun openMarketplaceTab(option: String) {
-    createPanelIfNeeded(option).openMarketplaceTab(option)
+  fun navigateToMarketplace(query: String) {
+    createPanelIfNeeded(
+      initialNavigation = PluginsPageInitialNavigation(query, PluginsPageInitialNavigationTarget.Marketplace),
+    ).openMarketplaceTab(query)
   }
 
-  /**
-   * If the plugin settings must be opened with the Installed tab selected and search applied, consider
-   * [PluginManagerConfigurableUtils.showInstalledTabWithSearch], see IJPL-254032 for details.
-   */
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  fun navigateToInstalled(query: String) {
+    val search = openInstalledTabWithSearch(query)
+    if (search != null) {
+      ApplicationManager.getApplication().invokeLater(search)
+    }
+  }
+
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @Deprecated("Use navigateToMarketplace(option).", ReplaceWith("navigateToMarketplace(option)"))
+  fun openMarketplaceTab(option: String) {
+    createPanelIfNeeded(
+      searchQuery = option,
+      initialNavigation = PluginsPageInitialNavigation(option, PluginsPageInitialNavigationTarget.Marketplace),
+    ).openMarketplaceTab(option)
+  }
+
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @Deprecated("Use navigateToInstalled(option).", ReplaceWith("navigateToInstalled(option)"))
   fun openInstalledTab(option: String) {
-    createPanelIfNeeded(option).openInstalledTab(option)
+    createPanelIfNeeded(
+      searchQuery = option,
+      initialNavigation = PluginsPageInitialNavigation(option, PluginsPageInitialNavigationTarget.Installed),
+    ).openInstalledTab(option)
+  }
+
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  internal fun openInstalledTabWithSearch(option: String): Runnable? {
+    return createPanelIfNeeded(
+      initialNavigation = PluginsPageInitialNavigation(option, PluginsPageInitialNavigationTarget.Installed),
+    ).openInstalledTabWithSearch(option)
   }
 
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
@@ -355,7 +386,7 @@ class PluginManagerConfigurable() : SearchableConfigurable, Configurable.NoScrol
     fun showSuggestedPlugins(project: Project?, source: FUSEventSource?) {
       showPluginManagerDialog(project, PluginManagerOpenSourceEnum.NOTIFICATION, {
         it.setInstallSource(source)
-        it.openMarketplaceTab("/suggested")
+        it.navigateToMarketplace("/suggested")
       })
     }
 

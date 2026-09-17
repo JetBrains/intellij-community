@@ -1071,7 +1071,7 @@ internal class PluginDependenciesTest {
       plugin("cwm.provider") {
         pluginAlias("com.jetbrains.codeWithMe")
         content(namespace = "jetbrains") {
-          module("intellij.cwm") { packagePrefix = "com.intellij.cwm"; moduleVisibility = ModuleVisibilityValue.PUBLIC }
+          module("intellij.remoteDevelopment.plugin") { packagePrefix = "com.intellij.cwm"; moduleVisibility = ModuleVisibilityValue.PUBLIC }
         }
       }.installAt(pluginDirPath)
 
@@ -1109,7 +1109,7 @@ internal class PluginDependenciesTest {
         pluginSet.getEnabledPlugin("json.provider"),
         pluginSet.getEnabledModule("intellij.java.backend"),
         pluginSet.getEnabledModule("intellij.rider"),
-        pluginSet.getEnabledModule("intellij.cwm"),
+        pluginSet.getEnabledModule("intellij.remoteDevelopment.plugin"),
         pluginSet.getEnabledModule("intellij.rider.plugins.cwm"),
         pluginSet.getEnabledModule("intellij.json.backend"),
       )
@@ -1305,7 +1305,7 @@ internal class PluginDependenciesTest {
 
       plugin("cwm.module.provider") {
         content(namespace = "jetbrains") {
-          module("intellij.cwm") { packagePrefix = "com.intellij.cwm"; moduleVisibility = ModuleVisibilityValue.PUBLIC }
+          module("intellij.remoteDevelopment.plugin") { packagePrefix = "com.intellij.cwm"; moduleVisibility = ModuleVisibilityValue.PUBLIC }
         }
       }.installAt(pluginDirPath)
 
@@ -1317,7 +1317,7 @@ internal class PluginDependenciesTest {
       val consumer = pluginSet.getEnabledPlugin("consumer")
       assertThat(consumer).hasExactDirectParentClassloaders(
         pluginSet.getEnabledPlugin("cwm.alias.provider"),
-        pluginSet.getEnabledModule("intellij.cwm"),
+        pluginSet.getEnabledModule("intellij.remoteDevelopment.plugin"),
       )
     }
 

@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"jetbrains.com/content-module-packer/internal/filemetadata"
 	"jetbrains.com/content-module-packer/internal/span"
 )
 
@@ -21,63 +22,46 @@ func referenceBytes(size int) []byte {
 	return data
 }
 
-func TestKotlinManifestParity(t *testing.T) {
-	for _, mode := range []string{"platform", "plugin"} {
-		t.Run(mode, func(t *testing.T) {
-			golden, err := os.ReadFile("testdata/" + mode + ".json")
-			if err != nil {
-				t.Fatal(err)
-			}
-			t.Chdir(t.TempDir())
-			var jars []string
-			for _, size := range referenceSizes {
-				name := fmt.Sprintf("inputs/vector-%d.jar", size)
-				jars = append(jars, writeTestFile(t, name, referenceBytes(size)))
-			}
-			writeText(t, "jars.list", strings.Join(jars, "\n"))
-			writeText(t, "plugins.tsv", "plugin.two\tmodules/shared.jar\tinputs/vector-262145.jar\n"+
-				"plugin.one\tcustom.jar\tinputs/vector-3.jar\nplugin.one\tmodules/shared.jar\tinputs/vector-262145.jar\n")
-			writeText(t, "placements.tsv", "plugin.one\tmodules/shared.jar\tplugins/one/lib/modules/shared.jar\n"+
-				"plugin.two\tmodules/shared.jar\tplugins/two/lib/modules/shared.jar\nplugin.one\tcustom.jar\tplugins/one/lib/custom.jar\n")
-			args := baseArgs("--jars-file=jars.list")
-			args[1] = "--kind=" + mode
-			if mode == "plugin" {
-				args[5] = "--plugin-jars-file=plugins.tsv"
-				args = append(args, "--plugin-placement=placements.tsv")
-			}
-			var output, errors bytes.Buffer
-			if code := run(append(args, "--trace-file=trace.json"), &output, &errors); code != 0 {
-				t.Fatalf("exit = %d: %s", code, &errors)
-			}
-			actual, err := os.ReadFile("component.json")
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(actual, bytes.TrimSuffix(golden, []byte{'\n'})) {
-				t.Fatalf("manifest differs from Kotlin v9:\ngot: %s\nwant: %s", actual, golden)
-			}
-			trace := readTrace(t, "trace.json")
-			activities := trace.Data[0].Spans
-			if len(activities) != 3 || activities[0].OperationName != "collect packed jars" || activities[0].tag("kind") != mode {
-				t.Fatalf("trace = %#v", trace)
-			}
-			for _, activity := range activities[1:] {
-				if len(activity.References) != 1 || activity.References[0].SpanID != activities[0].SpanID {
-					t.Fatalf("span is not under the action root: %#v", activity)
-				}
-			}
-			count, collectedBytes, hashedCount, hashedBytes := "10", "1835506", "10", "1835506"
-			collectionName := "collect platform jars"
-			if mode == "plugin" {
-				count, collectedBytes, hashedCount, hashedBytes = "3", "524293", "2", "262148"
-				collectionName = "collect prepacked plugin content jars"
-			}
-			if activities[1].OperationName != collectionName || activities[1].tag("jarCount") != count || activities[1].tag("byteCount") != collectedBytes ||
-				activities[2].OperationName != "inventory dev build component" || activities[2].tag("fileCount") != count ||
-				activities[2].tag("hashedFileCount") != hashedCount || activities[2].tag("byteCount") != hashedBytes {
-				t.Fatalf("span counters differ from Kotlin: %#v", activities)
-			}
-		})
+func TestPlatformManifestKotlinParity(t *testing.T) {
+	golden, err := os.ReadFile("testdata/platform.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Chdir(t.TempDir())
+	var jars []string
+	for _, size := range referenceSizes {
+		name := fmt.Sprintf("inputs/vector-%d.jar", size)
+		jars = append(jars, writeTestFile(t, name, referenceBytes(size)))
+	}
+	writeJarRecords(t, "jars.json", jars...)
+	args := baseArgs("--jars-file=jars.json")
+	args[1] = "--kind=platform"
+	var output, errors bytes.Buffer
+	catalogue := writeMetadataCatalogue(t, jars)
+	if code := run(append(args, "--trace-file=trace.json", "--metadata-catalogue="+catalogue), &output, &errors); code != 0 {
+		t.Fatalf("exit = %d: %s", code, &errors)
+	}
+	actual, err := os.ReadFile("component.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(actual, bytes.TrimSuffix(golden, []byte{'\n'})) {
+		t.Fatalf("manifest differs from Kotlin v9:\ngot: %s\nwant: %s", actual, golden)
+	}
+	trace := readTrace(t, "trace.json")
+	activities := trace.Data[0].Spans
+	if len(activities) != 3 || activities[0].OperationName != "collect packed jars" || activities[0].tag("kind") != "platform" {
+		t.Fatalf("trace = %#v", trace)
+	}
+	for _, activity := range activities[1:] {
+		if len(activity.References) != 1 || activity.References[0].SpanID != activities[0].SpanID {
+			t.Fatalf("span is not under the action root: %#v", activity)
+		}
+	}
+	if activities[1].OperationName != "collect platform jars" || activities[1].tag("jarCount") != "10" || activities[1].tag("byteCount") != "0" ||
+		activities[2].OperationName != "inventory dev build component" || activities[2].tag("fileCount") != "10" ||
+		activities[2].tag("hashedFileCount") != "0" || activities[2].tag("byteCount") != "0" {
+		t.Fatalf("span counters differ from Kotlin: %#v", activities)
 	}
 }
 
@@ -106,6 +90,47 @@ func TestInventorySourceIdentityAndMode(t *testing.T) {
 	activity := readTrace(t, "trace.json").Data[0].Spans[0]
 	if activity.tag("fileCount") != "2" || activity.tag("hashedFileCount") != "1" || activity.tag("byteCount") != "3" {
 		t.Fatalf("inventory counters = %#v", activity)
+	}
+}
+
+func TestInventoryEmitsLogicalComponentModes(t *testing.T) {
+	metadata := []filemetadata.Entry{
+		{RelativePath: "source-data", Type: "file", Hash: 1, Size: 1, Mode: 0o444},
+		{RelativePath: "source-tool", Type: "file", Hash: 2, Size: 1, Mode: 0o555, Executable: true},
+		{RelativePath: "source-special", Type: "file", Hash: 3, Size: 1, Mode: 0o550, Executable: true},
+		{RelativePath: "source-directory", Type: "directory", Mode: 0o555},
+	}
+	files := make([]sourcedFile, 0, len(metadata))
+	for index := range metadata {
+		entry := &metadata[index]
+		files = append(files, sourcedFile{
+			Source:       entry.RelativePath,
+			RelativePath: "plugins/demo/" + entry.RelativePath,
+			metadata:     entry,
+			mode:         &entry.Mode,
+		})
+	}
+	entries, err := inventory(files, nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	byPath := make(map[string]componentEntry, len(entries))
+	for _, entry := range entries {
+		byPath[entry.RelativePath] = entry
+	}
+	for _, name := range []string{"source-data", "source-tool"} {
+		entry := byPath["plugins/demo/"+name]
+		if entry.Mode != nil {
+			t.Fatalf("%s mode = %04o, want the conventional mode omitted", name, *entry.Mode)
+		}
+	}
+	special := byPath["plugins/demo/source-special"]
+	if special.Mode == nil || *special.Mode != 0o550 {
+		t.Fatalf("special mode = %v, want 0550", special.Mode)
+	}
+	directory := byPath["plugins/demo/source-directory"]
+	if directory.Mode == nil || *directory.Mode != 0o755 {
+		t.Fatalf("directory mode = %v, want 0755", directory.Mode)
 	}
 }
 

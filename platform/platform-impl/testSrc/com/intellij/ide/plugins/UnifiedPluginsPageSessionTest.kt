@@ -34,6 +34,7 @@ import com.intellij.ide.plugins.newui.PluginUpdatesEvent
 import com.intellij.ide.ui.LafManager
 import com.intellij.internal.statistic.FUCollectorTestCase
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.DataMap
 import com.intellij.openapi.actionSystem.DataProvider
@@ -46,6 +47,8 @@ import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
@@ -127,6 +130,149 @@ internal class UnifiedPluginsPageSessionTest {
       finally {
         Disposer.dispose(session)
       }
+    }
+
+  @Test
+  fun `stale Settings clear does not replace Marketplace navigation`(): Unit =
+    uiTest {
+      val session = createSession(null)
+      try {
+        session.enableSearch("Settings query")!!.run()
+        val staleClear = session.enableSearch("")!!
+
+        session.openMarketplaceTab("Marketplace query")
+        staleClear.run()
+
+        assertThat(searchField(session).text).isEqualTo("Marketplace query")
+      }
+      finally {
+        Disposer.dispose(session)
+      }
+    }
+
+  @Test
+  fun `explicit empty Settings request clears Marketplace navigation`(): Unit =
+    uiTest {
+      val session = createSession(null)
+      try {
+        session.openMarketplaceTab("Marketplace query")
+
+        session.enableSearch("")!!.run()
+
+        assertThat(searchField(session).text).isEmpty()
+      }
+      finally {
+        Disposer.dispose(session)
+      }
+    }
+
+  @Test
+  fun `page input invalidates a pending Settings action`(): Unit =
+    uiTest {
+      val session = createSession(null)
+      try {
+        session.enableSearch("Settings query")!!.run()
+        val staleClear = session.enableSearch("")!!
+
+        val searchField = searchField(session)
+        searchField.text = "Page query"
+        staleClear.run()
+
+        assertThat(searchField.text).isEqualTo("Page query")
+      }
+      finally {
+        Disposer.dispose(session)
+      }
+    }
+
+  @Test
+  fun `search filter invalidates a pending Settings action`(): Unit =
+    uiTest {
+      val session = createSession(null)
+      try {
+        session.enableSearch("Settings query")!!.run()
+        val staleClear = session.enableSearch("")!!
+        val searchComponent = componentsOfType(
+          session.getCenterComponent(Configurable.TopComponentController.EMPTY),
+          SearchFieldWithExtension::class.java,
+        ).single()
+        val filterButton = componentsOfType(searchComponent, ActionButton::class.java).last()
+        val filterGroup = filterButton.action as ActionGroup
+        val disabledAction = filterGroup.getChildren(TestActionEvent.createTestEvent()).takeLast(5)[2]
+
+        disabledAction.actionPerformed(TestActionEvent.createTestEvent(disabledAction))
+        staleClear.run()
+
+        waitForSearchQuery(searchField(session), "Settings query /disabled")
+      }
+      finally {
+        Disposer.dispose(session)
+      }
+    }
+
+  @Test
+  fun `Settings can clear its current query`(): Unit =
+    uiTest {
+      val session = createSession(null)
+      try {
+        session.enableSearch("Settings query")!!.run()
+
+        session.enableSearch("")!!.run()
+
+        assertThat(searchField(session).text).isEmpty()
+      }
+      finally {
+        Disposer.dispose(session)
+      }
+    }
+
+  @Test
+  fun `only the latest pending Settings action applies`(): Unit =
+    uiTest {
+      val session = createSession(null)
+      try {
+        val first = session.enableSearch("First query")!!
+        val second = session.enableSearch("Second query")!!
+
+        first.run()
+        assertThat(searchField(session).text).isEmpty()
+
+        second.run()
+        assertThat(searchField(session).text).isEqualTo("Second query")
+      }
+      finally {
+        Disposer.dispose(session)
+      }
+    }
+
+  @Test
+  fun `empty Settings request invalidates a pending action`(): Unit =
+    uiTest {
+      val session = createSession(null)
+      try {
+        val pending = session.enableSearch("Pending query")!!
+
+        assertThat(session.enableSearch("")).isNull()
+        pending.run()
+
+        assertThat(searchField(session).text).isEmpty()
+      }
+      finally {
+        Disposer.dispose(session)
+      }
+    }
+
+  @Test
+  fun `disposed session ignores a pending Settings action`(): Unit =
+    uiTest {
+      val session = createSession(null)
+      val searchField = searchField(session)
+      val pending = session.enableSearch("Pending query")!!
+
+      Disposer.dispose(session)
+      pending.run()
+
+      assertThat(searchField.text).isEmpty()
     }
 
   @Test
@@ -389,6 +535,76 @@ internal class UnifiedPluginsPageSessionTest {
     }
 
   @Test
+  fun `Installed navigation does not search Marketplace`(): Unit =
+    uiTest {
+      val provider = FixedLocalDataProvider(
+        UnifiedPluginInventory(listOf(inventoryItem("local.plugin", "Local Plugin")), emptyList())
+      )
+      val marketplaceProvider = FixedMarketplaceDataProvider()
+      val session = createSession(null, provider, marketplaceProvider)
+      try {
+        session.openInstalledTabWithSearch("Local Plugin")
+
+        waitForPluginIds(session.getComponent(), setOf("local.plugin"))
+        assertThat(marketplaceProvider.searchQueries).isEmpty()
+      }
+      finally {
+        Disposer.dispose(session)
+      }
+    }
+
+  @Test
+  fun `Installed Settings search does not search Marketplace`(): Unit =
+    uiTest {
+      val provider = FixedLocalDataProvider(
+        UnifiedPluginInventory(listOf(inventoryItem("local.plugin", "Local Plugin")), emptyList())
+      )
+      val marketplaceProvider = FixedMarketplaceDataProvider()
+      val session = createSession(null, provider, marketplaceProvider)
+      try {
+        session.enableSearch("Local Plugin", ignoreTagMarketplaceTab = true)!!.run()
+
+        waitForPluginIds(session.getComponent(), setOf("local.plugin"))
+        assertThat(marketplaceProvider.searchQueries).isEmpty()
+      }
+      finally {
+        Disposer.dispose(session)
+      }
+    }
+
+  @Test
+  fun `Installed invalid search includes a plugin after local enrichment`(): Unit =
+    uiTest {
+      val enrichmentRequested = CompletableDeferred<Unit>()
+      val enrichmentReady = CompletableDeferred<Unit>()
+      val invalidPlugin = inventoryItem("invalid.plugin", "Invalid Plugin")
+      val provider = FixedLocalDataProvider(
+        inventory = UnifiedPluginInventory(listOf(invalidPlugin), emptyList()),
+        enrichmentReadiness = enrichmentReady::await,
+        onEnrichmentRequested = { enrichmentRequested.complete(Unit) },
+        errors = mapOf(invalidPlugin.model.pluginId to listOf(HtmlChunk.text("Invalid plugin"))),
+      )
+      val session = createSession(
+        searchQuery = null,
+        provider = provider,
+        initialNavigation = PluginsPageInitialNavigation("/invalid", PluginsPageInitialNavigationTarget.Installed),
+      )
+      try {
+        enrichmentRequested.await()
+
+        assertThat(searchField(session).text).isEqualTo("/invalid")
+        assertThat(componentsOfType(session.getComponent(), ListPluginComponent::class.java)).isEmpty()
+
+        enrichmentReady.complete(Unit)
+
+        waitForPluginIds(session.getComponent(), setOf("invalid.plugin"))
+      }
+      finally {
+        Disposer.dispose(session)
+      }
+    }
+
+  @Test
   fun `plugin source enrichment waits for readiness without blocking the page`(): Unit =
     uiTest {
       val pluginStatesReady = CompletableDeferred<Unit>()
@@ -521,6 +737,33 @@ internal class UnifiedPluginsPageSessionTest {
     }
 
   @Test
+  fun `initial Marketplace navigation skips Suggested loading`(): Unit =
+    uiTest {
+      val searchStarted = CompletableDeferred<Unit>()
+      val marketplaceProvider = FixedMarketplaceDataProvider(
+        onSearch = { searchStarted.complete(Unit) },
+      )
+      val session = createSession(
+        searchQuery = null,
+        marketplaceProvider = marketplaceProvider,
+        initialNavigation = PluginsPageInitialNavigation(
+          "Marketplace query",
+          PluginsPageInitialNavigationTarget.Marketplace,
+        ),
+      )
+      try {
+        searchStarted.await()
+
+        assertThat(searchField(session).text).isEqualTo("Marketplace query")
+        assertThat(marketplaceProvider.searchQueries).containsExactly("Marketplace query")
+        assertThat(marketplaceProvider.suggestedLoadCount).isZero()
+      }
+      finally {
+        Disposer.dispose(session)
+      }
+    }
+
+  @Test
   fun `session renders and filters ordered repository rows`(): Unit =
     uiTest {
       val first = CustomPluginRepository("first", PluginSource.LOCAL)
@@ -626,9 +869,10 @@ internal class UnifiedPluginsPageSessionTest {
     updateAllExecutor: UnifiedPluginUpdateAllExecutor = UnifiedPluginUpdateAllExecutor { _, _ -> },
     unifiedSearchLogger: (UnifiedPluginSearchStatistics, Int) -> Unit = { _, _ -> },
     showPage: Boolean = true,
+    initialNavigation: PluginsPageInitialNavigation? = null,
   ): UnifiedPluginsPageSession {
     val session = UnifiedPluginsPageSession(
-      searchQuery,
+      initialNavigation,
       PluginManagerOpenSourceEnum.OTHER,
       localDataProviderFactory = { provider },
       repositoryDataProviderFactory = { repositoryProvider },
@@ -643,6 +887,7 @@ internal class UnifiedPluginsPageSessionTest {
       unifiedSearchLogger = unifiedSearchLogger,
     )
     if (showPage) showComponent(session.getComponent())
+    if (searchQuery != null) session.enableSearch(searchQuery)?.run()
     return session
   }
 
@@ -677,6 +922,21 @@ internal class UnifiedPluginsPageSessionTest {
         yield()
       }
     }
+  }
+
+  private suspend fun waitForSearchQuery(searchField: SearchTextField, query: String) {
+    withTimeout(5.seconds) {
+      while (searchField.text != query) {
+        yield()
+      }
+    }
+  }
+
+  private fun searchField(session: UnifiedPluginsPageSession): SearchTextField {
+    return componentsOfType(
+      session.getCenterComponent(Configurable.TopComponentController.EMPTY),
+      SearchTextField::class.java,
+    ).single()
   }
 
   private fun visibleSearchControlCount(searchComponent: JComponent): Int {
@@ -751,6 +1011,8 @@ internal class UnifiedPluginsPageSessionTest {
     private val onInventoryLoaded: () -> Unit = {},
     private val onEnrich: () -> Unit = {},
     private val enrichmentReadiness: suspend () -> Unit = {},
+    private val onEnrichmentRequested: () -> Unit = {},
+    private val errors: Map<PluginId, List<HtmlChunk>> = emptyMap(),
   ) : UnifiedPluginLocalDataProvider {
     override suspend fun loadInventory(): UnifiedPluginInventory {
       onInventoryLoaded()
@@ -762,6 +1024,7 @@ internal class UnifiedPluginsPageSessionTest {
       updates: PluginUpdatesEvent?,
       contentRevision: Long,
     ): UnifiedPluginLocalSnapshot {
+      onEnrichmentRequested()
       enrichmentReadiness()
       onEnrich()
       val plugins = inventory.installedPlugins + inventory.bundledPlugins
@@ -770,7 +1033,7 @@ internal class UnifiedPluginsPageSessionTest {
         updates = updates,
         contentRevision = contentRevision,
         enabledStates = plugins.associate { it.model.pluginId to true },
-        errors = emptyMap(),
+        errors = errors,
         installationStates = emptyMap(),
         restrictions = emptyMap(),
       )

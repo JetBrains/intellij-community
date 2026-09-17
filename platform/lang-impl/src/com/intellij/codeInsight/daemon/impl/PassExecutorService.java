@@ -12,6 +12,7 @@ import com.intellij.codeWithMe.ClientId;
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobLauncher;
+import com.intellij.concurrency.JobLauncherImpl;
 import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.Disposable;
@@ -364,7 +365,7 @@ public final class PassExecutorService implements Disposable {
 
   private void submit(@NotNull ScheduledPass pass) {
     if (!pass.myUpdateProgress.isCanceled()) {
-      Job job = JobLauncher.getInstance().submitToJobThread(pass, future -> {
+      Job job = ((JobLauncherImpl)JobLauncher.getInstance()).submitToJobThread(pass, future -> {
         try {
           if (!future.isCancelled()) { // for canceled task .get() generates CancellationException which is expensive
             future.get();

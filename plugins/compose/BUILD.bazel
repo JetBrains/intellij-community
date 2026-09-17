@@ -1,17 +1,18 @@
-load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_DESCRIPTORS", "MODULE_TARGETS")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `dev intellij.compose.ide.plugin` start
 dev_dist_plugin(
     content_modules = [
         # do not sort,
+        "intellij.compose.ide.plugin.shared",
+        "intellij.compose.ide.plugin.shared.android",
         "intellij.compose.ide.plugin.k2",
-        "intellij.compose.ide.plugin.resources.android",
+        "intellij.compose.ide.plugin.gradleTooling.rt",
         "intellij.compose.ide.plugin.resources",
+        "intellij.compose.ide.plugin.resources.android",
     ],
     descriptor = "resources/META-INF/plugin.xml",
-    descriptor_index = MODULE_DESCRIPTORS,
     descriptor_modules = [
         "intellij.compose.ide.plugin.gradleTooling.rt",
         "intellij.compose.ide.plugin.k2",
@@ -20,18 +21,15 @@ dev_dist_plugin(
         "intellij.compose.ide.plugin.shared",
         "intellij.compose.ide.plugin.shared.android",
     ],
-    libraries = [
-        "@lib//:kotlinc-kotlin-compiler-tests",
-        "@lib//:studio-platform",
-    ],
+    jars = {
+        "lib/compose-ide-plugin.jar": [
+            "intellij.compose.ide.plugin",
+            "intellij.compose.ide.plugin.k2",
+            "intellij.compose.ide.plugin.resources",
+            "intellij.compose.ide.plugin.resources.android",
+        ],
+    },
     main_module = "intellij.compose.ide.plugin",
-    module_targets = MODULE_TARGETS,
-    prepacked_content_modules = [
-        # do not sort,
-        "intellij.compose.ide.plugin.gradleTooling.rt",
-        "intellij.compose.ide.plugin.shared.android",
-        "intellij.compose.ide.plugin.shared",
-    ],
 )
 ### auto-generated section `dev intellij.compose.ide.plugin` end
 

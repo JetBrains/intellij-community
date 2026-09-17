@@ -34,7 +34,6 @@ import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.Timings;
-import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.TestTimeOut;
@@ -252,7 +251,7 @@ public class JobUtilTest extends LightPlatformTestCase {
     COUNT.set(0);
     assertTrue(ex.getMessage().contains("myMsg"));
     List<Object> objects = Collections.nCopies(100_000, null);
-    UsefulTestCase.assertThrows(ex.getClass(), "myMsg", () ->
+    assertThrows(ex.getClass(), "myMsg", () ->
       JobLauncher.getInstance().invokeConcurrentlyUnderProgress(objects, new EmptyProgressIndicator(), _ -> {
         if (COUNT.incrementAndGet() == 10_000) {
           LOG.debug("PCE");
@@ -269,7 +268,7 @@ public class JobUtilTest extends LightPlatformTestCase {
 
   public void testIndicatorCancelMustEnsuePCE() {
     ProgressIndicator progress = new DaemonProgressIndicator();
-    UsefulTestCase.assertThrows(ProcessCanceledException.class, () ->
+    assertThrows(ProcessCanceledException.class, () ->
       JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Collections.nCopies(100_000, null), progress, _ -> {
         if (COUNT.incrementAndGet() == 10_000) {
           progress.cancel();
@@ -305,7 +304,7 @@ public class JobUtilTest extends LightPlatformTestCase {
       LOG.debug("--- " + i+"; fingerPrint="+fingerPrint+"; COUNT="+COUNT);
       boolean[] success = new boolean[1];
       logElapsed(()->
-        UsefulTestCase.assertThrows(MyException.class, "myMsg", () ->
+        assertThrows(MyException.class, "myMsg", () ->
           success[0] = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(list, new EmptyProgressIndicator(), ind -> {
             boolean nestedSuccess = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(list, new EmptyProgressIndicator(), nestedInd -> {
               if (busySleepAndIncrement(1) % 1024 == 0) {
@@ -326,7 +325,7 @@ public class JobUtilTest extends LightPlatformTestCase {
     CountDownLatch latch = new CountDownLatch(1);
     List<Job> jobs = new ArrayList<>();
     for (int i = 0; i<100 && checkTestTimeout(i); i++) {
-      jobs.add(JobLauncher.getInstance().submitToJobThread(() -> {
+      jobs.add(((JobLauncherImpl)JobLauncher.getInstance()).submitToJobThread(() -> {
         try {
           latch.await();
         }
@@ -335,7 +334,7 @@ public class JobUtilTest extends LightPlatformTestCase {
         }
       }, null));
     }
-    jobs.add(JobLauncher.getInstance().submitToJobThread(latch::countDown, null));
+    jobs.add(((JobLauncherImpl)JobLauncher.getInstance()).submitToJobThread(latch::countDown, null));
 
     try {
       boolean scheduled = latch.await(3, TimeUnit.SECONDS);
@@ -502,7 +501,7 @@ public class JobUtilTest extends LightPlatformTestCase {
     for (int i = 0; i<100 && checkTestTimeout(i); i++) {
       AtomicBoolean finished = new AtomicBoolean();
       AtomicBoolean started = new AtomicBoolean();
-      Job job = JobLauncher.getInstance().submitToJobThread(() -> {
+      Job job = ((JobLauncherImpl)JobLauncher.getInstance()).submitToJobThread(() -> {
         started.set(true);
         TimeoutUtil.sleep(100);
         finished.set(true);
@@ -542,7 +541,7 @@ public class JobUtilTest extends LightPlatformTestCase {
     for (int i = 0; i<100 && checkTestTimeout(i); i++) {
       AtomicBoolean finished = new AtomicBoolean();
       AtomicBoolean started = new AtomicBoolean();
-      Job job = JobLauncher.getInstance().submitToJobThread(() -> {
+      Job job = ((JobLauncherImpl)JobLauncher.getInstance()).submitToJobThread(() -> {
         started.set(true);
         TimeoutUtil.sleep(100);
         finished.set(true);
@@ -567,7 +566,7 @@ public class JobUtilTest extends LightPlatformTestCase {
     int N_JOBS = 10_000 * JobSchedulerImpl.getJobPoolParallelism();
     ProgressIndicator indicator = new DaemonProgressIndicator();
 
-    Job job = JobLauncher.getInstance().submitToJobThread(
+    Job job = ((JobLauncherImpl)JobLauncher.getInstance()).submitToJobThread(
       () -> JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Collections.nCopies(N_JOBS, null), indicator, _ -> {
         jobsStarted.incrementAndGet();
         TimeoutUtil.sleep(10);
@@ -607,7 +606,7 @@ public class JobUtilTest extends LightPlatformTestCase {
     // and cancel the indicator in the meantime
     // check that invokeConcurrentlyUnderProgress() gets canceled immediately
     CountDownLatch cancelCalled = new CountDownLatch(1);
-    Job job = JobLauncher.getInstance().submitToJobThread(() -> ProgressManager.getInstance().runProcess(()->
+    Job job = ((JobLauncherImpl)JobLauncher.getInstance()).submitToJobThread(() -> ProgressManager.getInstance().runProcess(()->
         assertFalse(JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Collections.nCopies(N, null), indicator, _->{
           TimeoutUtil.sleep(1);
           counter.incrementAndGet();
@@ -622,7 +621,7 @@ public class JobUtilTest extends LightPlatformTestCase {
     TimeoutUtil.sleep(10); // all tasks distributed among all cpus
     indicator.cancel();
     cancelCalled.countDown();
-    UsefulTestCase.assertThrows(ProcessCanceledException.class, ()-> {
+    assertThrows(ProcessCanceledException.class, ()-> {
       long start = System.currentTimeMillis();
       boolean result = job.waitForCompletion(10_000);
       LOG.debug("wtf? counter: "+counter+"; indicator:"+indicator+"; result:"+result+"; job:"+job+
@@ -647,7 +646,7 @@ public class JobUtilTest extends LightPlatformTestCase {
           // in which call invokeConcurrentlyUnderProgress() which normally takes 100s
           // and cancel the indicator in the meantime
           // check that invokeConcurrentlyUnderProgress() gets canceled immediately
-          Job job = JobLauncher.getInstance().submitToJobThread(() -> {
+          Job job = ((JobLauncherImpl)JobLauncher.getInstance()).submitToJobThread(() -> {
             // to ensure lengthy task executes in thread other that the one which called invokeConcurrentlyUnderProgress()
             // otherwise (when the thread doing sleep(COARSENESS) is the same which did invokeConcurrentlyUnderProgress) it means that FJP stole the task, started executing it in the waiting thread, and we can't do anything
             mainThread.set(Thread.currentThread());
@@ -715,7 +714,7 @@ public class JobUtilTest extends LightPlatformTestCase {
 
       AtomicInteger executed = new AtomicInteger();
       DaemonProgressIndicator progress = new DaemonProgressIndicator();
-      UsefulTestCase.assertThrows(MyException.class, "myMsg", () -> {
+      assertThrows(MyException.class, "myMsg", () -> {
         TestTimeOut deadline = TestTimeOut.setTimeout(2, TimeUnit.SECONDS);
         JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Arrays.asList(times.clone()), progress, time -> {
           while ((time -= 100) >= 0) {
@@ -976,7 +975,7 @@ public class JobUtilTest extends LightPlatformTestCase {
     Set<Thread> threads = ContainerUtil.newConcurrentSet();
     ProgressIndicator wrapper = new DaemonProgressIndicator();
     wrapper.start();
-    ((JobLauncherImpl)JobLauncher.getInstance()).processQueue(things, failed, wrapper, TOMB_STONE, e -> {
+    ((JobLauncherImpl)JobLauncher.getInstance()).processQueue(things, failed, wrapper, TOMB_STONE, _ -> {
       threads.add(Thread.currentThread());
       TimeoutUtil.sleep(20);                                 // keep several elements in flight
       return true;

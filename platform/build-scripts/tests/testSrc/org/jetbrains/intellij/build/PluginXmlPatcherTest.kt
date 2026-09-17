@@ -8,8 +8,6 @@ import org.intellij.lang.annotations.Language
 import org.jdom.Element
 import org.jetbrains.intellij.build.classPath.DescriptorResolveContext
 import org.jetbrains.intellij.build.classPath.XIncludeElementResolverImpl
-import org.jetbrains.intellij.build.dev.DevDistDescriptorStage
-import org.jetbrains.intellij.build.dev.DevDistDescriptorStages
 import org.jetbrains.intellij.build.impl.PluginDescriptorPatchRequest
 import org.jetbrains.intellij.build.impl.applyPluginDescriptorPatch
 import org.jetbrains.intellij.build.impl.doPatchPluginXml
@@ -247,7 +245,6 @@ class PluginXmlPatcherTest {
           """.trimIndent()
         ),
         xIncludeResolver = XIncludeElementResolverImpl(searchPath = emptyList(), context = NoProjectModelContext),
-        stages = null,
         embedContentModules = { rootElement -> embedded.addAll(contentModuleNames(rootElement)) },
         patchText = { "$it\n<!-- text patcher -->" },
       )
@@ -269,39 +266,8 @@ class PluginXmlPatcherTest {
     )
   }
 
-  /**
-   * The stage record is the vocabulary of the descriptor report, and it states that the steps are in the order they
-   * run. This case holds that order for the body both producers share.
-   */
-  @Test
-  fun sharedBodyRecordsEveryStageInOrder() {
-    val stages = DevDistDescriptorStages()
-    val source = "<idea-plugin>\n  <id>com.intellij.css</id>\n</idea-plugin>"
-    val patched = runBlocking {
-      applyPluginDescriptorPatch(
-        request = request(source),
-        xIncludeResolver = XIncludeElementResolverImpl(searchPath = emptyList(), context = NoProjectModelContext),
-        stages = stages,
-        embedContentModules = { },
-        patchText = { it },
-      )
-    }
-
-    val record = stages.toRecord(
-      mainModule = "x-plugin-module-name",
-      directoryName = "x-plugin-directory",
-      mainJar = "x-plugin.jar",
-      embedsContentModules = true,
-    )
-    assertThat(record.steps.map { it.stage }).containsExactly(*DevDistDescriptorStage.entries.toTypedArray())
-    assertThat(record.source).isEqualTo(source)
-    assertThat(record.patched).isEqualTo(patched)
-  }
-
   private fun request(source: String): PluginDescriptorPatchRequest = PluginDescriptorPatchRequest(
     mainModule = "x-plugin-module-name",
-    directoryName = "x-plugin-directory",
-    mainJarName = "x-plugin.jar",
     sourceContent = source,
     rawPatchedContent = source,
     pluginVersion = "x-plugin-version",
@@ -311,7 +277,6 @@ class PluginXmlPatcherTest {
     toPublish = false,
     retainProductDescriptorForBundledPlugin = false,
     isEap = false,
-    embedsContentModules = true,
   )
 
   private fun contentModuleNames(rootElement: Element): List<String> {

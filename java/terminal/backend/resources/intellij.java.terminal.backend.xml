@@ -6,6 +6,7 @@
     <module name="intellij.java.impl"/>
     <module name="intellij.java.terminal.shared"/>
     <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.platform.backend.workspace"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.execution"/>
@@ -18,6 +19,7 @@
     <module name="intellij.platform.rpc.topics"/>
     <module name="intellij.platform.util.ui"/>
     <module name="intellij.platform.workspace.jps"/>
+    <module name="intellij.platform.workspace.storage"/>
   </dependencies>
   <!-- endregion -->
 

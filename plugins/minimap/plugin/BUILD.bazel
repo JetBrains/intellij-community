@@ -1,13 +1,11 @@
-load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_TARGETS")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `dev intellij.minimap.plugin` start
 dev_dist_plugin(
+    content_modules = ["intellij.minimap.core"],
     main_module = "intellij.minimap.plugin",
-    module_targets = MODULE_TARGETS,
-    prepacked_content_modules = ["intellij.minimap.core"],
 )
 ### auto-generated section `dev intellij.minimap.plugin` end
 

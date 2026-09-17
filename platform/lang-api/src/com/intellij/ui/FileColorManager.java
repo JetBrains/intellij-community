@@ -4,6 +4,7 @@ package com.intellij.ui;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -43,6 +44,9 @@ public abstract class FileColorManager {
   public abstract boolean isShared(final @NotNull String scopeName);
 
   public abstract @Nullable Color getRendererBackground(VirtualFile file);
+
+  @ApiStatus.Internal
+  public abstract @Nullable Color getNonPredefinedRendererBackground(VirtualFile file);
 
   public abstract @Nullable Color getRendererBackground(PsiFile file);
 

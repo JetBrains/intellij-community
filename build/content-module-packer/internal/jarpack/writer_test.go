@@ -6,6 +6,8 @@ import (
 	"archive/zip"
 	"bytes"
 	"encoding/binary"
+	"slices"
+	"strings"
 	"testing"
 )
 
@@ -93,4 +95,84 @@ func indexPointerOf(t *testing.T, data []byte) int32 {
 		t.Fatal("no end-of-central-directory record 27 bytes from the end")
 	}
 	return int32(binary.LittleEndian.Uint32(tail[23:]))
+}
+
+func TestWriterDirectoryModesMatchKotlinIndexRecords(t *testing.T) {
+	for _, mode := range []DirectoryMode{DirectoriesNone, DirectoriesResources, DirectoriesAll} {
+		t.Run(string(mode), func(t *testing.T) {
+			var output bytes.Buffer
+			writer, err := NewWriterWithDirectoryMode(&output, mode)
+			if err != nil {
+				t.Fatal(err)
+			}
+			for _, name := range []string{"classes/Value.class", "resources/nested/value.txt"} {
+				if err := writer.Add(name, []byte(name), crc32Of([]byte(name)), true); err != nil {
+					t.Fatal(err)
+				}
+			}
+			if err := writer.Close(); err != nil {
+				t.Fatal(err)
+			}
+			var directories []string
+			for _, name := range entryNames(t, output.Bytes()) {
+				if strings.HasSuffix(name, "/") {
+					directories = append(directories, name)
+				}
+			}
+			var want []string
+			if mode != DirectoriesNone {
+				want = []string{"resources/", "resources/nested/"}
+				if mode == DirectoriesAll {
+					want = append([]string{"classes/"}, want...)
+				}
+			}
+			if !slices.Equal(directories, want) {
+				t.Fatalf("directories %v, want %v", directories, want)
+			}
+			for position, name := range writer.index.names {
+				if !slices.Contains([]string{"classes", "resources", "resources/nested"}, string(name)) {
+					continue
+				}
+				entry := writer.index.entries[position]
+				if mode == DirectoriesNone {
+					if entry.offset != 0 || entry.size != -1 {
+						t.Fatalf("virtual directory record: %+v", entry)
+					}
+				} else if entry.offset != -1 || entry.size != 0 {
+					t.Fatalf("real directory record: %+v", entry)
+				}
+			}
+			pointer := indexPointerOf(t, output.Bytes())
+			if count := binary.LittleEndian.Uint32(output.Bytes()[pointer-5:]); int(count) != len(writer.index.entries) {
+				t.Fatalf("index pointer count %d", count)
+			}
+			reader, err := zip.NewReader(bytes.NewReader(output.Bytes()), int64(output.Len()))
+			if err != nil {
+				t.Fatal(err)
+			}
+			for _, file := range reader.File {
+				if !strings.HasSuffix(file.Name, "/") {
+					continue
+				}
+				dataOffset, err := file.DataOffset()
+				if err != nil {
+					t.Fatal(err)
+				}
+				header := output.Bytes()[int(dataOffset)-localHeaderSize-len(file.Name):]
+				if !bytes.Equal(header[4:26], make([]byte, 22)) || file.ExternalAttrs != 0 || file.Flags != 0 || file.CRC32 != 0 {
+					t.Fatalf("nonzero directory header: %+v", file.FileHeader)
+				}
+			}
+		})
+	}
+}
+
+func TestWriterRejectsUnknownDirectoryModesAndLongNames(t *testing.T) {
+	if _, err := NewWriterWithDirectoryMode(&bytes.Buffer{}, "guess"); err == nil {
+		t.Fatal("accepted an unknown directory mode")
+	}
+	writer := NewWriter(&bytes.Buffer{})
+	if err := writer.Add(strings.Repeat("a", 65536), nil, 0, true); err == nil {
+		t.Fatal("accepted an overflowing entry name")
+	}
 }

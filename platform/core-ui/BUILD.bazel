@@ -2,10 +2,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `dev intellij.platform.core.ui` start
-content_module_jar(
-    module = ":core-ui",
-    modules_after = ["//platform/icons-api"],
-)
+content_module_jar(module = ":core-ui")
 ### auto-generated section `dev intellij.platform.core.ui` end
 
 ### auto-generated section `build intellij.platform.core.ui` start

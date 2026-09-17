@@ -1,0 +1,3 @@
+load("//platform/build-scripts/bazel-rules:dev_plugin_test.bzl", "dev_plugin_test_suite")
+
+dev_plugin_test_suite(name = "dev_plugin_tests")

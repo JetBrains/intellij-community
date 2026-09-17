@@ -11,11 +11,8 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.concurrent.Future;
-import java.util.function.Consumer;
 
 /**
  * Invitation-only service for running short-lived computing-intensive IO-free tasks on all available CPU cores.
@@ -66,18 +63,6 @@ public abstract class JobLauncher {
   }
 
   /**
-   * Schedules concurrent execution of #thingProcessor over each element of #things and waits for completion
-   * With checkCanceled in each thread delegated to our current progress
-   *
-   * @param things                      data to process concurrently
-   * @param progress                    progress indicator
-   * @param failFastOnAcquireReadAction if true, returns false when failed to acquire read action
-   * @param thingProcessor              to be invoked concurrently on each element from the collection
-   * @return false if tasks have been canceled,
-   *         or at least one processor returned false,
-   *         or threw an exception,
-   *         or we were unable to start read action in at least one thread
-   * @throws ProcessCanceledException if at least one task has thrown ProcessCanceledException
    * @deprecated use {@link #invokeConcurrentlyUnderProgress(List, ProgressIndicator, Processor)} instead
    */
   @Deprecated
@@ -97,14 +82,6 @@ public abstract class JobLauncher {
                                                               boolean runInReadAction,
                                                               boolean failFastOnAcquireReadAction,
                                                               @NotNull Processor<? super T> thingProcessor) throws ProcessCanceledException;
-
-  /**
-   * NEVER EVER submit runnable which can lock itself for indeterminate amount of time.
-   * This will cause deadlock since this thread pool is an easily exhaustible resource.
-   * Use {@link com.intellij.openapi.application.Application#executeOnPooledThread(Runnable)} instead
-   */
-  @ApiStatus.Internal
-  public abstract @NotNull Job submitToJobThread(final @NotNull Runnable action, @Nullable Consumer<? super Future<?>> onDoneCallback);
 
   /**
    * Process each element in {@code items} with {@code thingProcessor} under {@code progress} in a background in an async manner,

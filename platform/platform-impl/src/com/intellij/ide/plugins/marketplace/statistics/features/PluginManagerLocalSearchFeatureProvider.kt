@@ -5,6 +5,7 @@ import com.intellij.ide.plugins.newui.SearchQueryParser
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
+import com.intellij.openapi.updateSettings.impl.getPresentableName
 
 internal object PluginManagerLocalSearchFeatureProvider {
   private val IS_ENABLED_DATA_KEY = EventFields.Boolean("isEnabled")
@@ -16,11 +17,14 @@ internal object PluginManagerLocalSearchFeatureProvider {
   private val WITH_ATTRIBUTES_DATA_KEY = EventFields.Boolean("withAttributes")
   private val TAG_FILTERS_COUNT_DATA_KEY = EventFields.Int("tagFiltersCount")
   private val VENDOR_FILTERS_COUNT_DATA_KEY = EventFields.Int("vendorFiltersCount")
+  private val WITH_PLUGIN_UPDATE_SOURCES_DATA_KEY = EventFields.Int("pluginUpdateSources")
+  private val WITH_UNKNOWN_PLUGIN_UPDATE_SOURCE_DATA_KEY = EventFields.Boolean("unknownPluginUpdateSource")
 
   fun getFeaturesDefinition(): Array<EventField<*>> {
     return arrayOf(
       IS_ENABLED_DATA_KEY, IS_DISABLED_DATA_KEY, IS_BUNDLED_DATA_KEY, IS_DOWNLOADED_DATA_KEY, IS_INVALID_DATA_KEY,
-      IS_UPDATE_NEEDED_DATA_KEY, WITH_ATTRIBUTES_DATA_KEY, TAG_FILTERS_COUNT_DATA_KEY, VENDOR_FILTERS_COUNT_DATA_KEY
+      IS_UPDATE_NEEDED_DATA_KEY, WITH_ATTRIBUTES_DATA_KEY, TAG_FILTERS_COUNT_DATA_KEY, VENDOR_FILTERS_COUNT_DATA_KEY,
+      WITH_PLUGIN_UPDATE_SOURCES_DATA_KEY, WITH_UNKNOWN_PLUGIN_UPDATE_SOURCE_DATA_KEY
     )
   }
 
@@ -33,7 +37,9 @@ internal object PluginManagerLocalSearchFeatureProvider {
     IS_INVALID_DATA_KEY.with(query.invalid),
     IS_UPDATE_NEEDED_DATA_KEY.with(query.needUpdate),
     WITH_ATTRIBUTES_DATA_KEY.with(query.attributes),
-    TAG_FILTERS_COUNT_DATA_KEY.with(query.tags?.size ?: 0),
-    VENDOR_FILTERS_COUNT_DATA_KEY.with(query.vendors?.size ?: 0)
+    TAG_FILTERS_COUNT_DATA_KEY.with(query.tags.size),
+    VENDOR_FILTERS_COUNT_DATA_KEY.with(query.vendors.size),
+    WITH_PLUGIN_UPDATE_SOURCES_DATA_KEY.with(query.updateSources.size),
+    WITH_UNKNOWN_PLUGIN_UPDATE_SOURCE_DATA_KEY.with(query.updateSources.contains(null.getPresentableName()))
   )
 }

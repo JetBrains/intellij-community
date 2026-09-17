@@ -8,6 +8,7 @@ import com.intellij.ide.plugins.newui.PluginUpdatesEvent
 import com.intellij.ide.plugins.newui.latestCustomRepositoryPlugins
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceId
 import com.intellij.openapi.util.text.HtmlChunk
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -421,6 +422,7 @@ internal class UnifiedPluginRepositorySourceCoordinator(
     val installedModels = LinkedHashMap<PluginId, PluginUiModel>()
     val errors = LinkedHashMap<PluginId, List<HtmlChunk>>()
     val installationStates = LinkedHashMap<PluginId, PluginInstallationState>()
+    val updateSources = LinkedHashMap<PluginId, PluginUpdateSourceId>()
     val settledRepositoryPlugins = LinkedHashMap<String, List<PluginUiModel>>()
     val allRepositoryPlugins = ArrayList<PluginUiModel>()
     for ((repositoryId, entry) in entries) {
@@ -428,6 +430,7 @@ internal class UnifiedPluginRepositorySourceCoordinator(
         data.installedModels.forEach(installedModels::putIfAbsent)
         data.errors.forEach(errors::putIfAbsent)
         data.installationStates.forEach(installationStates::putIfAbsent)
+        data.updateSources.forEach(updateSources::putIfAbsent)
       }
       entry.fetchedModels?.let { models ->
         settledRepositoryPlugins[repositoryId] = models
@@ -435,7 +438,7 @@ internal class UnifiedPluginRepositorySourceCoordinator(
       }
     }
     cachedAggregates = RepositoryAggregates(
-      listModelData = PluginListModelData(installedModels, errors, installationStates),
+      listModelData = PluginListModelData(installedModels, errors, installationStates, updateSources),
       settledRepositoryPlugins = settledRepositoryPlugins,
       repositoryPlugins = latestCustomRepositoryPlugins(allRepositoryPlugins),
     )

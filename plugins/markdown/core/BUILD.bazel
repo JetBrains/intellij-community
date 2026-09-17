@@ -1,5 +1,4 @@
-load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_TARGETS")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -7,28 +6,27 @@ load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_mod
 content_module_jar(module = ":markdown")
 
 dev_dist_plugin(
-    main_module = "intellij.markdown",
-    module_targets = MODULE_TARGETS,
-    prepacked_content_modules = [
+    content_modules = [
         # do not sort,
-        "intellij.markdown.compose.preview",
-        "intellij.markdown.backend",
-        "intellij.markdown.frontend",
-        "intellij.markdown.fenceInjection",
-        "intellij.markdown.figmaAdvertiser",
-        "intellij.markdown.frontmatter.toml",
-        "intellij.markdown.frontmatter.yaml",
-        "intellij.markdown.frontmatter",
-        "intellij.markdown.images",
-        "intellij.markdown.java",
         "intellij.markdown.jcef",
-        "intellij.markdown.model",
-        "intellij.markdown.projectView",
-        "intellij.markdown.spellchecker",
-        "intellij.markdown.fenceInjector.textMate",
-        "intellij.markdown.vcs",
+        "intellij.markdown.fenceInjection",
+        "intellij.markdown.frontmatter",
+        "intellij.markdown.frontmatter.yaml",
+        "intellij.markdown.frontmatter.toml",
+        "intellij.markdown.images",
         "intellij.markdown.xml",
+        "intellij.markdown.model",
+        "intellij.markdown.spellchecker",
+        "intellij.markdown.compose.preview",
+        "intellij.markdown.frontend",
+        "intellij.markdown.backend",
+        "intellij.markdown.java",
+        "intellij.markdown.fenceInjector.textMate",
+        "intellij.markdown.projectView",
+        "intellij.markdown.figmaAdvertiser",
+        "intellij.markdown.vcs",
     ],
+    main_module = "intellij.markdown",
 )
 ### auto-generated section `dev intellij.markdown` end
 

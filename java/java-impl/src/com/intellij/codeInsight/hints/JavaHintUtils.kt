@@ -3,6 +3,7 @@ package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.completion.CompletionMemory
 import com.intellij.codeInsight.completion.JavaMethodCallElement
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.CommonClassNames
 import com.intellij.psi.JavaResolveResult
@@ -52,6 +53,7 @@ internal object JavaInlayHintsProvider {
       val infos = ArrayList<InlayInfo>()
       var lastIndex = 0
       (if (arguments.isEmpty()) listOf(trailingOffset) else arguments.map { inlayOffset(it) }).forEachIndexed { i, offset ->
+        ProgressManager.checkCanceled()
         if (i < params.size) {
           params[i].name.let {
             infos.add(InlayInfo(it, offset, false, params.size == 1, false))
@@ -61,7 +63,8 @@ internal object JavaInlayHintsProvider {
       }
       if (Registry.`is`("editor.completion.hints.virtual.comma")) {
         for (i in lastIndex + 1 until minOf(params.size, limit)) {
-          params[i].name.let {
+          ProgressManager.checkCanceled()
+           params[i].name.let {
             infos.add(createHintWithComma(it, trailingOffset))
           }
           lastIndex = i
@@ -97,8 +100,10 @@ internal object JavaInlayHintsProvider {
                      HintWidthAdjustment(", ", parameterName, 1))
   }
 
-  private fun mergedHints(callExpression: PsiCallExpression,
-                          results: Array<out ResolveResult>): Set<InlayInfo> {
+  private fun mergedHints(
+    callExpression: PsiCallExpression,
+    results: Array<out ResolveResult>,
+  ): Set<InlayInfo> {
     val resultSet = results
       .filter { it.element != null }
       .map { methodHints(callExpression, it) }

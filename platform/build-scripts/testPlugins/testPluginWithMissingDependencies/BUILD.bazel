@@ -1,12 +1,10 @@
-load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_TARGETS")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `dev intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies` start
 dev_dist_plugin(
+    content_modules = ["intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies.module"],
     main_module = "intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies",
-    module_targets = MODULE_TARGETS,
-    prepacked_content_modules = ["intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies.module"],
 )
 ### auto-generated section `dev intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies` end
 

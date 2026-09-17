@@ -1,0 +1,19 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "filemetadata",
+    srcs = ["metadata.go"],
+    importpath = "jetbrains.com/content-module-packer/internal/filemetadata",
+    visibility = ["//build/content-module-packer:__subpackages__"],
+    deps = [
+        "@com_github_zeebo_xxh3//:xxh3",
+        "@org_golang_x_text//cases",
+        "@org_golang_x_text//unicode/norm",
+    ],
+)
+
+go_test(
+    name = "filemetadata_test",
+    srcs = ["metadata_test.go"],
+    embed = [":filemetadata"],
+)

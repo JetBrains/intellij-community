@@ -3,6 +3,7 @@
   <dependencies>
     <module name="intellij.markdown"/>
     <module name="intellij.platform.core"/>
+    <module name="intellij.platform.eel.provider"/>
     <module name="intellij.platform.execution"/>
     <module name="intellij.platform.frontend"/>
     <module name="intellij.platform.ide"/>

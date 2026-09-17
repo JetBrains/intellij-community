@@ -1,0 +1,10 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Repository" type="Application" factoryName="Application">
+    <option name="MAIN_CLASS_NAME" value="org.jetbrains.intellij.build.devServer.DevMainKt" />
+    <module name="intellij.platform.bootstrap.dev" />
+    <option name="VM_PARAMETERS" value="-Didea.platform.prefix=idea -Dintellij.build.generate.runtime.module.repository=true -Dadditional.modules=intellij.repository" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

@@ -7,11 +7,14 @@
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.codeStyle"/>
+    <module name="intellij.platform.concurrency"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.credentialStore"/>
     <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.icons"/>
     <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.observable"/>
     <module name="intellij.platform.ide.progress"/>
     <module name="intellij.platform.projectFrame"/>
     <module name="intellij.platform.projectModel"/>
@@ -20,6 +23,8 @@
     <module name="intellij.platform.util.coroutines"/>
     <module name="intellij.platform.util.diff"/>
     <module name="intellij.platform.util.ex"/>
+    <module name="intellij.platform.util.progress"/>
+    <module name="intellij.platform.util.text.matching"/>
     <module name="intellij.platform.util.ui"/>
     <module name="intellij.platform.welcomeScreen"/>
   </dependencies>

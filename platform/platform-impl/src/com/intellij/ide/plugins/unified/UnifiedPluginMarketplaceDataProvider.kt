@@ -397,6 +397,7 @@ internal fun buildMarketplaceSnapshot(
       installedModels = installedModels.filterKeys(resultIds::contains),
       errors = errors.filterKeys(resultIds::contains),
       installationStates = effectiveStates,
+      updateSources = emptyMap(),
     ),
   )
 }

@@ -4,7 +4,9 @@
     <module name="intellij.libraries.fastutil"/>
     <module name="intellij.platform.backend"/>
     <module name="intellij.platform.core"/>
+    <module name="intellij.platform.ide.rpc"/>
     <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.indexing.impl"/>
     <module name="intellij.platform.kernel.backend"/>
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.projectModel"/>

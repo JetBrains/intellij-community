@@ -52,7 +52,6 @@ class ProductReviewDerivationTest {
       moduleId = PluginModuleId("direct", null),
       loading = ModuleLoadingRuleValue.REQUIRED,
       requiredIfAvailable = PluginModuleId("backend", "private"),
-      includeDependencies = true,
     )
     val properties = product(ModuleSet("shared", emptyList()), listOf(direct))
     val selected = derive(properties).platform.modules.single()
@@ -62,7 +61,6 @@ class ProductReviewDerivationTest {
         namespace = null,
         loading = "required",
         requiredIfAvailable = ProductModuleIdentity("backend", "private"),
-        includeDependencies = true,
       )
     )
     val baseline = writeProductReviewReport(derive(properties))
@@ -72,7 +70,6 @@ class ProductReviewDerivationTest {
       direct.copy(loading = ModuleLoadingRuleValue.EMBEDDED),
       direct.copy(loading = ModuleLoadingRuleValue.ON_DEMAND),
       direct.copy(requiredIfAvailable = null),
-      direct.copy(includeDependencies = false),
     )) {
       assertThat(writeProductReviewReport(derive(product(ModuleSet("shared", emptyList()), listOf(changed)))))
         .isNotEqualTo(baseline)

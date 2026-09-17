@@ -77,56 +77,10 @@ internal class RuntimeDependencyTraversalTest {
 
     assertThat(result.map { it.first }).containsExactly("dependency")
   }
-
-  @Test
-  fun `embedded dependency ownership stays with the first processed module`() {
-    val result = computeEmbeddedModuleDependenciesInOrder(
-      embeddedModulesInProcessingOrder = listOf(
-        moduleItem(moduleName = "embedded.first", relativeOutputFile = "first.jar"),
-        moduleItem(moduleName = "embedded.second", relativeOutputFile = "second.jar"),
-      ),
-      excludedModuleNames = emptySet(),
-      alreadyIncluded = hashSetOf("embedded.first", "embedded.second"),
-      dependencyResolver = dependencyResolver(
-        mapOf(
-          "embedded.first" to listOf("shared"),
-          "embedded.second" to listOf("shared"),
-        )
-      ),
-    )
-
-    val sharedDependency = result.single()
-    assertThat(sharedDependency.moduleName).isEqualTo("shared")
-    assertThat(sharedDependency.relativeOutputFile).isEqualTo("first.jar")
-  }
-
-  @Test
-  fun `excluded embedded dependencies are skipped`() {
-    val result = computeEmbeddedModuleDependenciesInOrder(
-      embeddedModulesInProcessingOrder = listOf(moduleItem(moduleName = "embedded", relativeOutputFile = "embedded.jar")),
-      excludedModuleNames = setOf("excluded"),
-      alreadyIncluded = hashSetOf("embedded"),
-      dependencyResolver = dependencyResolver(
-        mapOf(
-          "embedded" to listOf("excluded", "dependency"),
-        )
-      ),
-    )
-
-    assertThat(result.map { it.moduleName }).containsExactly("dependency")
-  }
 }
 
 private fun dependencyResolver(graph: Map<String, List<String>>): RuntimeDependencyResolver {
   return RuntimeDependencyResolver { moduleName ->
     graph.getOrDefault(moduleName, emptyList())
   }
-}
-
-private fun moduleItem(moduleName: String, relativeOutputFile: String): ModuleItem {
-  return ModuleItem(
-    moduleName = moduleName,
-    relativeOutputFile = relativeOutputFile,
-    reason = "test",
-  )
 }

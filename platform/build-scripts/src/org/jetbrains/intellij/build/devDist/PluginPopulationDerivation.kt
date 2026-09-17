@@ -5,10 +5,6 @@ package org.jetbrains.intellij.build.devDist
 
 import com.intellij.platform.distributionContent.DevDistPlatformJars
 import com.intellij.platform.distributionContent.NonBundledPluginRow
-import com.intellij.platform.distributionContent.PlatformContentModuleRow
-import com.intellij.platform.distributionContent.PlatformJarRow
-import com.intellij.platform.distributionContent.PlatformLibraryRow
-import com.intellij.platform.distributionContent.PlatformMergedLibraryRow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.ProductProperties
@@ -18,7 +14,10 @@ import org.jetbrains.intellij.build.impl.createPlatformLayout
 import org.jetbrains.intellij.build.impl.frontendIncompatibleRootModuleNames
 import org.jetbrains.intellij.build.impl.getBundledPluginModules
 import org.jetbrains.intellij.build.impl.getPluginLayoutsByJpsModuleNames
+import org.jetbrains.intellij.build.mapConcurrent
 import org.jetbrains.intellij.build.productLayout.discovery.DiscoveredProduct
+import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.telemetry.use
 import java.util.TreeMap
 import java.util.TreeSet
 
@@ -42,50 +41,67 @@ fun deriveDevDistPlatformJars(
   )
 }
 
-/** Derives the platform jars and published plugins from product declarations and source descriptors. */
+/**
+ * The products a derivation walks at once. Each walk reads every plugin descriptor of the project on its own
+ * workers, so a small bound here keeps the fan-out near the core count.
+ */
+private const val PRODUCT_DERIVATION_CONCURRENCY = 6
+
+/**
+ * Derives the platform jars and published plugins from product declarations and source descriptors.
+ *
+ * The products are derived beside each other, and the rows keep the order of [products].
+ */
 @ApiStatus.Internal
 fun deriveDevDistPlatformJars(
   products: Map<String, ProductProperties>,
   outputProvider: ModuleOutputProvider,
 ): DevDistPlatformJars {
-  val platformJars = ArrayList<PlatformJarRow>()
-  val platformLibraries = ArrayList<PlatformLibraryRow>()
-  val platformMergedLibraries = ArrayList<PlatformMergedLibraryRow>()
-  val platformContentModules = ArrayList<PlatformContentModuleRow>()
-  val nonBundledPlugins = ArrayList<NonBundledPluginRow>()
-  for ((product, properties) in products) {
-    val layout = createPlatformLayout(productProperties = properties, outputProvider = outputProvider)
-    val rows = derivePlatformJars(product = product, layout = layout, findModule = outputProvider::findRequiredModule)
-    platformJars.addAll(rows.jars)
-    platformLibraries.addAll(rows.libraries)
-    platformMergedLibraries.addAll(rows.mergedLibraries)
-    platformContentModules.addAll(rows.contentModules)
-
-    val productLayout = properties.productLayout
-    val pluginsToPublish = getPluginLayoutsByJpsModuleNames(
-      modules = productLayout.pluginModulesToPublish,
-      productLayout = productLayout,
-      toPublish = true,
-    )
-    if (productLayout.buildAllCompatiblePlugins) {
-      collectCompatiblePluginsToPublish(
-        pluginsToPublish = pluginsToPublish,
-        platformLayout = layout,
-        productProperties = properties,
-        outputProvider = outputProvider,
-      )
-    }
-    pluginsToPublish.map { it.mainModule }.distinct().sorted().mapTo(nonBundledPlugins) {
-      NonBundledPluginRow(product = product, mainModule = it)
+  val rowsByProduct = products.entries.toList().mapConcurrent(concurrency = PRODUCT_DERIVATION_CONCURRENCY) { (product, properties) ->
+    spanBuilder("derive platform jars: $product").use {
+      deriveProductPlatformJars(product = product, properties = properties, outputProvider = outputProvider)
     }
   }
   return DevDistPlatformJars(
-    platformJars = platformJars,
-    platformLibraries = platformLibraries,
-    platformMergedLibraries = platformMergedLibraries,
-    platformContentModules = platformContentModules,
-    nonBundledPlugins = nonBundledPlugins,
+    platformJars = rowsByProduct.flatMap { it.rows.jars },
+    platformLibraries = rowsByProduct.flatMap { it.rows.libraries },
+    platformMergedLibraries = rowsByProduct.flatMap { it.rows.mergedLibraries },
+    platformContentModules = rowsByProduct.flatMap { it.rows.contentModules },
+    nonBundledPlugins = rowsByProduct.flatMap { it.nonBundledPlugins },
   )
+}
+
+/** The platform rows and the published plugins of one product. */
+private class ProductPlatformJars(
+  @JvmField val rows: PlatformJarRows,
+  @JvmField val nonBundledPlugins: List<NonBundledPluginRow>,
+)
+
+private fun deriveProductPlatformJars(product: String, properties: ProductProperties, outputProvider: ModuleOutputProvider): ProductPlatformJars {
+  // the bundled plugin list is read once, and the layout and the compatible-plugin walk both take it
+  val bundledPluginModules = getBundledPluginModules(properties, outputProvider)
+  val layout = createPlatformLayout(productProperties = properties, outputProvider = outputProvider, bundledPluginModules = bundledPluginModules)
+  val rows = derivePlatformJars(product = product, layout = layout, findModule = outputProvider::findRequiredModule)
+
+  val productLayout = properties.productLayout
+  val pluginsToPublish = getPluginLayoutsByJpsModuleNames(
+    modules = productLayout.pluginModulesToPublish,
+    productLayout = productLayout,
+    toPublish = true,
+  )
+  if (productLayout.buildAllCompatiblePlugins) {
+    collectCompatiblePluginsToPublish(
+      pluginsToPublish = pluginsToPublish,
+      platformLayout = layout,
+      productProperties = properties,
+      outputProvider = outputProvider,
+      bundledPluginModules = bundledPluginModules,
+    )
+  }
+  val nonBundledPlugins = pluginsToPublish.map { it.mainModule }.distinct().sorted().map {
+    NonBundledPluginRow(product = product, mainModule = it)
+  }
+  return ProductPlatformJars(rows = rows, nonBundledPlugins = nonBundledPlugins)
 }
 
 /** One plugin of the population, with the layout facts its derivation read and the derivation itself. */
@@ -200,19 +216,21 @@ fun derivePluginJars(
     }
   }
 
-  val plugins = ArrayList<DerivedPlugin>()
-  for (mainModule in population) {
-    val facts = pluginLayoutFacts(mainModule = mainModule, layouts = layoutsByMainModule.get(mainModule).orEmpty())
-    val packing = derivePluginPacking(
-      mainModule = mainModule,
-      facts = facts,
-      project = outputProvider.findRequiredModule(mainModule).project,
-      outputProvider = outputProvider,
-      frontendRoots = frontendRoots,
-      isPrepackedContentModule = { true },
-      isPackedElsewhere = { name -> name in platformMembers || layoutMemberOwners.get(name)?.any { it != mainModule } == true },
-    ) ?: continue
-    plugins.add(DerivedPlugin(mainModule = mainModule, facts = facts, packing = packing))
+  // Each plugin is derived on its own, and the list keeps the population order. Every input the workers read is
+  // complete before the first one starts.
+  val plugins = spanBuilder("derive plugin jars").setAttribute("populationSize", population.size.toLong()).use {
+    population.toList().mapConcurrent { mainModule ->
+      val facts = pluginLayoutFacts(mainModule = mainModule, layouts = layoutsByMainModule.get(mainModule).orEmpty())
+      val packing = derivePluginPacking(
+        mainModule = mainModule,
+        facts = facts,
+        project = outputProvider.findRequiredModule(mainModule).project,
+        outputProvider = outputProvider,
+        frontendRoots = frontendRoots,
+        isPackedElsewhere = { name -> name in platformMembers || layoutMemberOwners.get(name)?.any { it != mainModule } == true },
+      )
+      packing?.let { DerivedPlugin(mainModule = mainModule, facts = facts, packing = it) }
+    }.filterNotNull()
   }
   val productPlugins = products.map { properties ->
     DerivedProductPlugins(

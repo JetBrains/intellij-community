@@ -36,6 +36,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.MessageDialogBuilder.Companion.okCancel
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceId
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.StringUtil
@@ -1068,11 +1069,7 @@ open class MyPluginModel @JvmOverloads constructor(
 
   private fun applyChangedUpdateSourcesToUI(updateSourceStates: Map<PluginId, PluginUpdateSourceState>) {
     for ((pluginId, updateSourceState) in updateSourceStates) {
-      forEachDetailPanel { pageComponent ->
-        if (!pageComponent.isShowingPlugin(pluginId)) return@forEachDetailPanel
-
-        pageComponent.updatePluginUpdateSource(updateSourceState.value)
-      }
+      updateUiAfterUpdateSourceChange(pluginId, updateSourceState.value)
     }
   }
 
@@ -1256,6 +1253,25 @@ open class MyPluginModel @JvmOverloads constructor(
       }
     }
     return icon
+  }
+
+  fun updateUiAfterUpdateSourceChange(
+    pluginId: PluginId,
+    pluginUpdateSource: PluginUpdateSourceId?,
+    providedInstalledPluginForMarketplace: PluginUiModel? = null,
+  ) {
+    forEachDetailPanel { pageComponent ->
+      if (pageComponent.isShowingPlugin(pluginId)) {
+        pageComponent.updatePluginUpdateSourceUI(pluginUpdateSource, providedInstalledPluginForMarketplace)
+      }
+    }
+    val isUnknown = pluginUpdateSource == null
+    myInstalledPluginComponentMap[pluginId]?.forEach { listComponent ->
+      listComponent.updateUnknownUpdateSourceWarning(isUnknown, providedInstalledPluginForMarketplace)
+    }
+    myMarketplacePluginComponentMap[pluginId]?.forEach { listComponent ->
+      listComponent.updateUnknownUpdateSourceWarning(isUnknown, providedInstalledPluginForMarketplace)
+    }
   }
 
   companion object {

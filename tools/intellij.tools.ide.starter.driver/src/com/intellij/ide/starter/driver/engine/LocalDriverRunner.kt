@@ -35,13 +35,13 @@ class LocalDriverRunner : DriverRunner {
     expectedKill: Boolean,
     expectedExitCode: Int,
     collectNativeThreads: Boolean,
-    pauseOnIndexing: Duration?,
+    pauseOnIndicators: Duration?,
     configure: IDERunContext.() -> Unit,
   ): BackgroundRun {
     val driverOptions = DriverOptions()
     val driver = DriverWithDetailedLogging(
       driver = DriverImpl(JmxHost(address = driverOptions.address), isRemDevMode = false) {
-        pauseOnIndexing?.let { timeout ->
+        pauseOnIndicators?.let { timeout ->
           // note failures when dialog is opened and the 'Synchronizing output directories...' indicator is active till the dialog is closed,
           // so have to ensure that there is no dialog opened before checking the indicator
           if (isConnected && !ui.isDialogOpened()) {

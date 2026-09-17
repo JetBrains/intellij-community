@@ -1,5 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.platform.ijent.community.impl` start
+content_module_jar(module = ":impl")
+### auto-generated section `dev intellij.platform.ijent.community.impl` end
 
 ### auto-generated section `build intellij.platform.ijent.community.impl` start
 create_kotlinc_options(
@@ -97,6 +102,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.ijent.community.impl.iml",
+        "resources/intellij.platform.ijent.community.impl.xml",
     ],
     visibility = ["//visibility:public"],
 )

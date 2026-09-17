@@ -23,7 +23,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
 import kotlin.io.path.absolutePathString
 
-object LocalhostTcpEelDescriptor : TcpEelDescriptor(LocalEelDescriptor.osFamily) {
+object LocalhostTcpEelDescriptor : TcpEelDescriptor(LocalEelDescriptor.osFamily, LOCALHOST_TCP_EEL_INTERNAL_NAME) {
   override val rootPathString: String =
     "${TcpEelConstants.TCP_PATH_PREFIX}$LOCALHOST_TCP_EEL_INTERNAL_NAME-${osFamily.name.lowercase()}"
   override val name: @NonNls String = "Localhost EEL"

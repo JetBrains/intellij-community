@@ -23,7 +23,7 @@ public final class ScratchesNamedScope extends NamedScope {
       public boolean contains(@NotNull VirtualFile file, @NotNull Project project, @Nullable NamedScopesHolder holder) {
         return ScratchesNamedScope.contains(project, file);
       }
-    });
+    }, true);
   }
 
   public static boolean contains(@NotNull Project project, @NotNull VirtualFile file) {

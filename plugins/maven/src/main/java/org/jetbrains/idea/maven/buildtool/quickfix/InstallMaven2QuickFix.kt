@@ -48,7 +48,7 @@ class InstallMaven2QuickFix : BuildIssueQuickFix {
   override fun runQuickFix(project: Project, dataContext: DataContext): CompletableFuture<*> {
     ApplicationManager.getApplication().invokeLater {
       ShowSettingsUtil.getInstance().showSettingsDialog(project, PluginManagerConfigurable::class.java) {
-        it.openMarketplaceTab(MAVEN2_SEARCH_STRING)
+        it.navigateToMarketplace(MAVEN2_SEARCH_STRING)
       }
     }
     return CompletableFuture.completedFuture(null)

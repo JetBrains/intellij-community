@@ -317,7 +317,6 @@ fun moduleSet(
   alias: String? = null,
   outputModule: String? = null,
   selfContained: Boolean = false,
-  includeDependencies: Boolean = false,
   block: ModuleSetBuilder.() -> Unit
 ): ModuleSet
 ```
@@ -328,7 +327,6 @@ fun moduleSet(
 | `alias` | Optional module alias for `<module value="..."/>` |
 | `outputModule` | Module whose resources dir receives generated XML |
 | `selfContained` | If true, validates in isolation (all deps must be within set) |
-| `includeDependencies` | Default for embedded modules to include transitive deps |
 
 **Examples:**
 ```kotlin
@@ -348,11 +346,6 @@ fun xml() = moduleSet("xml", alias = "com.intellij.modules.xml") {
 // With custom output location
 fun corePlatform() = moduleSet("core.platform", outputModule = "intellij.platform.ide.core") {
   // ...
-}
-
-// With dependency auto-inclusion
-fun essential() = moduleSet("essential", includeDependencies = true) {
-  embeddedModule("intellij.platform.core")  // Inherits includeDependencies=true
 }
 ```
 
@@ -488,7 +481,7 @@ Represents a module with optional loading attribute.
 data class ContentModule(
   val moduleId: PluginModuleId,
   val loading: ModuleLoadingRuleValue = ModuleLoadingRuleValue.OPTIONAL,
-  val includeDependencies: Boolean = false
+  val requiredIfAvailable: PluginModuleId? = null,
 )
 ```
 

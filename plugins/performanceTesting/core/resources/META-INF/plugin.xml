@@ -36,15 +36,19 @@
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.analysis.impl"/>
     <module name="intellij.platform.codeStyle"/>
+    <module name="intellij.platform.concurrency"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.diagnostic.startUpPerformanceReporter"/>
     <module name="intellij.platform.diagnostic.telemetry"/>
     <module name="intellij.platform.editor.ex"/>
     <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.eel.impl"/>
+    <module name="intellij.platform.eel.provider"/>
     <module name="intellij.platform.execution"/>
     <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.ide.codeinsight.inline"/>
     <module name="intellij.platform.ide.concurrency"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.core.impl"/>
@@ -52,6 +56,7 @@
     <module name="intellij.platform.ide.internal"/>
     <module name="intellij.platform.ide.progress"/>
     <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.indexing.impl"/>
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.lang.core"/>
     <module name="intellij.platform.lang.impl"/>

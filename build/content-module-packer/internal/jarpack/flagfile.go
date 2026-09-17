@@ -36,7 +36,7 @@ func ParseFlagFile(path string, baseDir string) ([]MergeSpec, error) {
 	}
 	resolve := func(p string) string {
 		if filepath.IsAbs(p) {
-			return p
+			return filepath.Clean(p)
 		}
 		return filepath.Join(baseDir, p)
 	}
@@ -61,17 +61,40 @@ func ParseFlagFile(path string, baseDir string) ([]MergeSpec, error) {
 			if current.KeepManifest, err = parseStrictBool(value); err != nil {
 				return nil, err
 			}
-		case "rewrite-boot-class-path":
-			if current.RewriteBootClassPath, err = parseStrictBool(value); err != nil {
+		case "merge-entities":
+			if current.MergeEntities, err = parseStrictBool(value); err != nil {
 				return nil, err
 			}
 		case "trace-file":
 			current.TraceFile = resolve(value)
+		case "metadata-file":
+			if value == "" || current.MetadataFile != "" {
+				return nil, fmt.Errorf("expected one nonempty `metadata-file=` per output")
+			}
+			current.MetadataFile = resolve(value)
+		case "reject-native-entries":
+			if current.RejectNativeEntries, err = parseStrictBool(value); err != nil {
+				return nil, err
+			}
 		case "module":
 			current.Sources = append(current.Sources, Source{Path: resolve(value), Filter: ModuleOutputNameFilter})
 		case "library":
 			current.Sources = append(current.Sources, Source{Path: resolve(value), Filter: LibraryNameFilter})
-		case "file":
+		case "source-manifest":
+			if len(current.Sources) == 0 {
+				return nil, fmt.Errorf("`source-manifest=` requires a preceding archive source")
+			}
+			source := &current.Sources[len(current.Sources)-1]
+			if source.Name != "" || source.Manifest != "" {
+				return nil, fmt.Errorf("`source-manifest=` requires an archive source without a manifest policy")
+			}
+			switch ManifestMode(value) {
+			case ManifestKeep, ManifestDrop, ManifestCoverageAgent, ManifestRewriteBootClassPath:
+				source.Manifest = ManifestMode(value)
+			default:
+				return nil, fmt.Errorf("unknown source manifest policy %q", value)
+			}
+		case "file", "patch":
 			// `file=<entry name>=<path>`, cut at the first `=`, so the entry name states no `=` and a path may. A jar
 			// entry name is a jar path and carries none; a `bazel-out` path is free to.
 			name, filePath, ok := strings.Cut(value, "=")
@@ -81,7 +104,7 @@ func ParseFlagFile(path string, baseDir string) ([]MergeSpec, error) {
 			if name == "" || filePath == "" {
 				return nil, fmt.Errorf("`file=` states an empty entry name or path in %q", line)
 			}
-			current.Sources = append(current.Sources, Source{Path: resolve(filePath), Name: name})
+			current.Sources = append(current.Sources, Source{Path: resolve(filePath), Name: name, Patch: option == "patch"})
 		default:
 			return nil, fmt.Errorf("unknown option %q in %q", option, line)
 		}
@@ -110,6 +133,24 @@ func ParseFlagFile(path string, baseDir string) ([]MergeSpec, error) {
 				"`--trace-file=` for the whole run or drop the lines", trace, spec.TraceFile)
 		}
 		trace = spec.TraceFile
+	}
+	metadataPaths := make(map[string]bool)
+	for _, spec := range specs {
+		if spec.MetadataFile == "" {
+			continue
+		}
+		_, outputConflict := seen[spec.MetadataFile]
+		if outputConflict || metadataPaths[spec.MetadataFile] || spec.MetadataFile == trace {
+			return nil, fmt.Errorf("conflicting metadata destination: %s", spec.MetadataFile)
+		}
+		metadataPaths[spec.MetadataFile] = true
+	}
+	for _, spec := range specs {
+		for _, source := range spec.Sources {
+			if metadataPaths[source.Path] {
+				return nil, fmt.Errorf("metadata destination is an input: %s", source.Path)
+			}
+		}
 	}
 	return specs, nil
 }

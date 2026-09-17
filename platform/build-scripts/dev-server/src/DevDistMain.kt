@@ -11,12 +11,8 @@ import org.jetbrains.intellij.build.dependencies.BuildDependenciesConstants
 import org.jetbrains.intellij.build.dev.BuildRequest
 import org.jetbrains.intellij.build.dev.DevBuildFragment
 import org.jetbrains.intellij.build.dev.DevBuildOutput
-import org.jetbrains.intellij.build.dev.DevDistPatchedDescriptors
 import org.jetbrains.intellij.build.dev.DevDistRecipe
 import org.jetbrains.intellij.build.dev.PlatformJarSelector
-import org.jetbrains.intellij.build.dev.PluginFragmentSelector
-import org.jetbrains.intellij.build.dev.PrepackedPluginContentJar
-import org.jetbrains.intellij.build.dev.PrepackedPluginContentKey
 import org.jetbrains.intellij.build.dev.buildProductInProcess
 import org.jetbrains.intellij.build.dev.materializeProjectModelTree
 import org.jetbrains.intellij.build.impl.BazelBuildInputs
@@ -48,7 +44,6 @@ import kotlin.system.exitProcess
  *
  * [TRACE_FILE_OPTION] writes this process's spans out as a side output; without it nothing is written.
  * `--plan` does the same for the packaging recipe this assembly executed. See [DevDistRecipe].
- * `--patched-descriptors` does it for the plugin descriptors this assembly patched. See [DevDistPatchedDescriptors].
  */
 fun main(args: Array<String>) {
   val options = parseCommandLineOptions(args)
@@ -89,12 +84,8 @@ private fun assembleDevDistribution(options: CommandLineOptions) {
   System.setProperty("intellij.build.ultimate.home.path", projectDir.invariantSeparatorsPathString)
 
   val ideConfigFile = options.optionalPath("--ide-config")
-  val platformPrefix = options.optional("--platform-prefix") ?: "idea"
+  val platformPrefix = options.optional("--platform-prefix") ?: error("--platform-prefix is required")
   val additionalModules = options.list("--additional-module")
-  val testOutputModules = options.list("--test-output-module")
-  if (testOutputModules.isNotEmpty()) {
-    System.setProperty("idea.build.pack.test.source.modules", testOutputModules.joinToString(","))
-  }
   val os = options.optional("--os")?.let(::parseOs) ?: OsFamily.currentOs
   val arch = options.optional("--arch")?.let(::parseArch) ?: JvmArchitecture.currentJvmArch
   val buildDateInSeconds = options.optional("--build-date-seconds")?.let {
@@ -114,12 +105,9 @@ private fun assembleDevDistribution(options: CommandLineOptions) {
   // one, so it has to say which fragment it was
   Span.current().setAttribute("fragment", fragment.name)
   val componentManifest = options.optionalPath("--component-manifest")
-  val pluginClasspathPart = options.optionalPath("--plugin-classpath-part")
   val pluginClasspathPrefix = options.optionalPath("--plugin-classpath-prefix")
-  val prepackedPluginContent = options.optionalPath("--prepacked-plugin-jars")?.let(::readPrepackedPluginContentPlan).orEmpty()
-  val prepackedPluginContentPlacement = options.optionalPath("--prepacked-plugin-jars-placement")
   val output = if (fragment.isComplete) {
-    require(componentManifest == null && pluginClasspathPart == null && pluginClasspathPrefix == null && prepackedPluginContentPlacement == null) {
+    require(componentManifest == null && pluginClasspathPrefix == null) {
       "Component output options require --fragment"
     }
     DevBuildOutput.Complete
@@ -128,9 +116,7 @@ private fun assembleDevDistribution(options: CommandLineOptions) {
     DevBuildOutput.Component(
       fragment = fragment,
       manifestFile = checkNotNull(componentManifest) { "--component-manifest is required for fragment '$fragment'" },
-      pluginClasspathPartFile = pluginClasspathPart,
       pluginClasspathPrefixFile = pluginClasspathPrefix,
-      prepackedPluginContentPlacementFile = prepackedPluginContentPlacement,
     )
   }
   options.optionalPath("--bazel-targets-json")?.let { path ->
@@ -144,20 +130,11 @@ private fun assembleDevDistribution(options: CommandLineOptions) {
   options.optionalPath("--download-cache-dir")?.let { path ->
     System.setProperty(BuildDependenciesConstants.DOWNLOAD_CACHE_DIR_PROPERTY, path.invariantSeparatorsPathString)
   }
-  // The IJent binaries the distribution bundles, already unpacked by the caller. Without this the build extracts the
-  // archive into the cache above just to read four files out of it, on every assembly of every fragment.
-  options.optionalPath("--ijent-binaries-dir")?.let { path ->
-    System.setProperty("ijent.provided.at", path.invariantSeparatorsPathString)
-  }
   val unusedInputs = options.optionalPath("--unused-inputs")
   // The packaging recipe this assembly is about to execute, written after it has executed it. A pure side output: with
   // the option absent nothing is recorded and nothing is written, so an assembly that is not asked for its recipe is
   // byte-for-byte the assembly it was.
   val planFile = options.optionalPath("--plan")
-  // The plugin descriptors this assembly patched, on the same terms as `--plan`. Nothing is recorded and nothing is
-  // written when the option is absent. Separate from `--plan` because the two are wanted at different times. See the
-  // `dev_dist_patched_descriptors` flag.
-  val descriptorFile = options.optionalPath("--patched-descriptors")
   configurePreloadedDownloads(options)
   options.checkNoUnknownOptions()
 
@@ -167,9 +144,6 @@ private fun assembleDevDistribution(options: CommandLineOptions) {
 
   if (planFile != null) {
     DevDistRecipe.start(distRoot = outputDir, projectHome = projectDir, scratchDir = scratchDir)
-  }
-  if (descriptorFile != null) {
-    DevDistPatchedDescriptors.start()
   }
 
   val build = buildProductInProcess(
@@ -187,7 +161,6 @@ private fun assembleDevDistribution(options: CommandLineOptions) {
       buildDateInSeconds = buildDateInSeconds,
       jarCacheDir = jarCacheDir,
       output = output,
-      prepackedPluginContent = prepackedPluginContent,
     )
   )
   val runDir = build.runDir
@@ -204,9 +177,6 @@ private fun assembleDevDistribution(options: CommandLineOptions) {
   planFile?.let {
     DevDistRecipe.write(file = it, fragment = fragment.name)
   }
-  descriptorFile?.let {
-    DevDistPatchedDescriptors.write(file = it, fragment = fragment.name)
-  }
 
   println("Dev distribution fragment '$fragment' assembled into $runDir (main class: $mainClassName${ideConfigFile?.let { ", config: $it" }.orEmpty()})")
   if (cleanScratchOnSuccess) {
@@ -214,34 +184,6 @@ private fun assembleDevDistribution(options: CommandLineOptions) {
     Files.createDirectories(scratchDir)
   }
   unusedInputs?.let(BazelBuildInputs::writeUnusedInputs)
-}
-
-/**
- * Reads the relation-only plan `intellij_dev_build_inputs` wrote: one line per relation, as
- * `<plugin main module>\t<`lib/`-relative destination>\t<space-separated members>`.
- *
- * The first two columns are the relation's key, and the members follow in merge order. A space separates them, which no
- * JPS module name holds; the writer refuses one that does. The plan holds no jar path by design - a jar reaches the
- * assembly through the input manifest, and this file states only what belongs where.
- */
-private fun readPrepackedPluginContentPlan(file: Path): Map<PrepackedPluginContentKey, PrepackedPluginContentJar> {
-  val result = LinkedHashMap<PrepackedPluginContentKey, PrepackedPluginContentJar>()
-  for ((index, line) in Files.readAllLines(file).withIndex()) {
-    if (line.isBlank()) {
-      continue
-    }
-    val fields = line.split('\t')
-    require(fields.size == 3) { "$file:${index + 1}: expected plugin, relative output path and the members" }
-    require(fields[2].isNotEmpty()) { "$file:${index + 1}: a relation with no member hands over nothing" }
-    val jar = PrepackedPluginContentJar(
-      pluginMainModule = fields[0],
-      contentModules = fields[2].split(' '),
-      relativeOutputFile = fields[1],
-    )
-    val previous = result.put(jar.key, jar)
-    require(previous == null) { "$file:${index + 1}: duplicate prepacked plugin relation ${jar.key}" }
-  }
-  return result
 }
 
 /**
@@ -263,25 +205,19 @@ private fun parseFragment(options: CommandLineOptions): DevBuildFragment {
     }
   }
   val platformResources = options.optionalBoolean("--platform-resources") ?: false
-  val plugins = options.optional("--plugins")?.let { value ->
-    when (value) {
-      "named" -> PluginFragmentSelector.Named(options.list("--plugin").toSet())
-      "remaining" -> PluginFragmentSelector.Remaining(options.list("--claimed-plugin").toSet())
-      else -> error("Unknown --plugins value '$value', expected named or remaining")
-    }
-  }
 
   if (name == null) {
-    require(platform == null && !platformResources && plugins == null) {
+    require(platform == null && !platformResources) {
       "--fragment is required to select a part of a distribution; without it the whole distribution is assembled"
     }
     return DevBuildFragment.COMPLETE
   }
 
-  require(platform != null || platformResources || plugins != null) {
-    "The '$name' fragment selects nothing: pass at least one of --platform, --platform-resources, --plugins"
+  require(platform != null || platformResources) {
+    "The '$name' fragment selects nothing: pass at least one of --platform, --platform-resources"
   }
-  return DevBuildFragment(name = name, platform = platform, platformResources = platformResources, plugins = plugins)
+  // The plugin directories come from the packed plugin components, so a fragment never owns one.
+  return DevBuildFragment(name = name, platform = platform, platformResources = platformResources, plugins = null)
 }
 
 /**

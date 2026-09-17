@@ -5,6 +5,7 @@
     <module name="intellij.libraries.junit5"/>
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.platform.core"/>
+    <module name="intellij.platform.eel.provider"/>
     <module name="intellij.platform.testFramework.common"/>
     <module name="intellij.platform.testFramework.junit5"/>
     <module name="intellij.python.community"/>

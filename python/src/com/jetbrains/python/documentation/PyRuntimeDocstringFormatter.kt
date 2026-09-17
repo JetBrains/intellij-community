@@ -12,6 +12,7 @@ import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.python.PyHelper
 import com.intellij.python.community.execService.python.StdInProvider
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.getPythonInfo
 import com.intellij.python.sdk.backend.pythonInterpreter
 import com.intellij.ui.ColorUtil
@@ -43,7 +44,8 @@ internal object PyRuntimeDocstringFormatter {
         PythonSdkType.findLocalCPython(moduleOrSdk.module) ?: return logSdkNotFound(format)
       }
     }
-    val languageLevel = sdk.pythonInterpreter().getPythonInfo().getOr {
+    val interpreter = sdk.pythonInterpreter()
+    val languageLevel = interpreter.getPythonInfo().getOr {
       LOG.debug { "Sdk $sdk is broken ${it.error}" }
       return null
     }.languageLevel
@@ -52,13 +54,13 @@ internal object PyRuntimeDocstringFormatter {
     }
     else {
       formatCached(sdk.homePath!!, languageLevel, format, formatterFlags, input) {
-        runProcess(sdk, format, formatterFlags, input)
+        runProcess(interpreter, format, formatterFlags, input)
       }
     }
   }
 
   @RequiresBackgroundThread
-  private fun runProcess(sdk: Sdk, format: DocStringFormat, formatterFlags: List<String>, input: String): String? {
+  private fun runProcess(interpreter: PythonInterpreter, format: DocStringFormat, formatterFlags: List<String>, input: String): String? {
     val encodedInput = DEFAULT_CHARSET.encode(input)
     val data = ByteArray(encodedInput.limit()).also { encodedInput.get(it) }
     val arguments = formatterFlags.toMutableList().apply {
@@ -72,7 +74,7 @@ internal object PyRuntimeDocstringFormatter {
     }
     val result = runBlockingMaybeCancellable {
       ExecService().executeHelper(
-        sdk = sdk,
+        interpreter = interpreter,
         helper = helper,
         helperArgs = Args(*arguments.toTypedArray()),
         stdInProvider = stdInProvider

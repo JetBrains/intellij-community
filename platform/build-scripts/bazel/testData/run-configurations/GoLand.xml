@@ -1,0 +1,10 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="GoLand" type="Application" factoryName="Application">
+    <option name="MAIN_CLASS_NAME" value="org.jetbrains.intellij.build.devServer.DevMainKt" />
+    <module name="intellij.platform.bootstrap.dev" />
+    <option name="VM_PARAMETERS" value="-Didea.platform.prefix=GoLand -Dadditional.modules=intellij.go.extra" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

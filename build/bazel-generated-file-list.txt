@@ -102,7 +102,6 @@ android/design-plugin
 android/design-plugin/descriptor
 android/designer
 android/designer-perf-tests
-android/designer/customview
 android/designer/gradle
 android/device-explorer
 android/device-explorer-common
@@ -110,9 +109,9 @@ android/device-explorer-files
 android/device-explorer-monitor
 android/device-manager-v2
 android/device-manager-v2/integration
+android/emulator-snapshots
 android/execution/common
 android/glance-designer
-android/glasses-pairing
 android/gmaven
 android/gradle-declarative-lang
 android/gradle-declarative-lang-flags
@@ -714,6 +713,7 @@ platform/build-scripts/dev-server
 platform/build-scripts/downloader
 platform/build-scripts/icons
 platform/build-scripts/licenses
+platform/build-scripts/plugin-preparation
 platform/build-scripts/product-dsl
 platform/build-scripts/product-dsl/plugin-graph
 platform/build-scripts/testFramework
@@ -790,6 +790,7 @@ platform/execution-process-mediator/common
 platform/execution-process-mediator/daemon
 platform/execution.dashboard
 platform/execution.dashboard/backend
+platform/execution.dashboard/debugger
 platform/execution.dashboard/frontend
 platform/execution.serviceView
 platform/execution.serviceView/backend

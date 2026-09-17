@@ -959,11 +959,23 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     return getErrors(session, pluginId)
   }
 
-  override suspend fun getPluginUpdateSourceId(sessionId: String, pluginId: PluginId): PluginUpdateSourceId? {
+  override suspend fun getPendingPluginUpdateSource(sessionId: String, pluginId: PluginId): PluginUpdateSourceId? {
     val session = findSession(sessionId) ?: return null
+    return getPendingUpdateSource(session, pluginId)
+  }
+
+  private fun getPendingUpdateSource(session: PluginManagerSession, pluginId: PluginId): PluginUpdateSourceId? {
     val changedValue = session.pluginUpdateSourceStatesDiff[pluginId]
     if (changedValue != null) return changedValue.newValue.value
     return session.pluginUpdateSourceStates[pluginId]?.value
+  }
+
+  override suspend fun getPendingPluginUpdateSources(sessionId: String, pluginIds: List<PluginId>): Map<PluginId, PluginUpdateSourceId> {
+    val session = findSession(sessionId) ?: return emptyMap()
+    return pluginIds.mapNotNull { pluginId ->
+      val pendingUpdateSource = getPendingUpdateSource(session, pluginId)
+      if (pendingUpdateSource != null) pluginId to pendingUpdateSource else null
+    }.toMap()
   }
 
   override suspend fun setPendingPluginUpdateSourceInSession(sessionId: String, pluginId: PluginId, pluginUpdateSource: PluginUpdateSourceId?) {
@@ -992,8 +1004,16 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     session.pluginUpdateSourceStates[pluginId] = PluginUpdateSourceState(pluginUpdateSource)
   }
 
-  override suspend fun isPluginUpdateSourceVisibleInUI(): Boolean {
+  override fun isPluginUpdateSourceVisibleInUI(): Boolean {
     return PluginUpdateSourceService.isPluginUpdateSourceShownInUI()
+  }
+
+  override fun isMissingUpdateSourceWarningEnabled(): Boolean {
+    return PluginUpdateSourceService.isMissingUpdateSourceWarningEnabled()
+  }
+
+  override suspend fun getAllPluginUpdateSources(): List<PluginUpdateSourceId> {
+    return PluginUpdateSourceService.getInstance().getAllSources()
   }
 
   private fun getContextElement(modalityState: ModalityState?): CoroutineContext {

@@ -10,6 +10,7 @@ import com.intellij.ide.plugins.newui.PluginUpdatesEvent
 import com.intellij.ide.plugins.newui.UiPluginManager
 import com.intellij.ide.plugins.newui.calculateTags
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceId
 import com.intellij.openapi.util.text.HtmlChunk
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -52,9 +53,10 @@ internal data class PluginListModelData(
   val installedModels: Map<PluginId, PluginUiModel>,
   val errors: Map<PluginId, List<HtmlChunk>>,
   val installationStates: Map<PluginId, PluginInstallationState>,
+  val updateSources: Map<PluginId, PluginUpdateSourceId> = emptyMap(),
 ) {
   companion object {
-    val EMPTY: PluginListModelData = PluginListModelData(emptyMap(), emptyMap(), emptyMap())
+    val EMPTY: PluginListModelData = PluginListModelData(emptyMap(), emptyMap(), emptyMap(), emptyMap())
   }
 }
 
@@ -81,6 +83,7 @@ internal class DefaultUnifiedPluginLocalDataProvider(
       val enabledStates = async { host.getPluginEnabledStates(models) }
       val errors = async { MyPluginModel.getErrors(pluginManager.loadErrors(host.sessionId)) }
       val installationStates = async { pluginManager.getInstallationStates() }
+      val updateSources = async { pluginManager.getPendingPluginUpdateSourcesSync(host.sessionId, pluginIds) }
       val restrictions = async {
         if (pluginIds.isEmpty()) emptyMap() else pluginManager.getPluginsRequiresUltimateMap(pluginIds)
       }
@@ -92,6 +95,7 @@ internal class DefaultUnifiedPluginLocalDataProvider(
         enabledStates = enabledStates.await(),
         errors = errors.await(),
         installationStates = installationStates.await(),
+        updateSources = updateSources.await(),
         restrictions = resolvedRestrictions,
         tags = models.associate { model ->
           model.pluginId to model.calculateTags(resolvedRestrictions[model.pluginId] == true)
@@ -114,6 +118,7 @@ internal fun buildDegradedLocalSnapshot(
     enabledStates = models.associate { it.pluginId to it.isEnabled },
     errors = emptyMap(),
     installationStates = emptyMap(),
+    updateSources = emptyMap(),
     restrictions = emptyMap(),
     tags = models.associate { it.pluginId to it.calculateTags() },
   )
@@ -126,6 +131,7 @@ internal fun buildLocalSnapshot(
   enabledStates: Map<PluginId, Boolean>,
   errors: Map<PluginId, List<HtmlChunk>>,
   installationStates: Map<PluginId, PluginInstallationState>,
+  updateSources: Map<PluginId, PluginUpdateSourceId> = emptyMap(),
   restrictions: Map<PluginId, Boolean>,
   tags: Map<PluginId, List<String>> = emptyMap(),
 ): UnifiedPluginLocalSnapshot {
@@ -152,6 +158,7 @@ internal fun buildLocalSnapshot(
       pluginId = pluginId,
       name = model.name,
       contentRevision = contentRevision,
+      updateSourceId = updateSources[pluginId],
       modelHandle = PluginItemModelHandle(model),
       rowInput = input,
       searchCategory = if (plugin.bundledOn == null) model.displayCategory else bundledPluginCategory(model.displayCategory),
@@ -172,6 +179,7 @@ internal fun buildLocalSnapshot(
       installedModels = installedModels,
       errors = errors.filterKeys(installedModels::containsKey),
       installationStates = effectiveStates,
+      updateSources = updateSources.filterKeys(installedModels::containsKey),
     ),
   )
 }

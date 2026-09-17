@@ -1,6 +1,5 @@
 load("@community//build:tests-options.bzl", "jps_test")
-load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_DESCRIPTORS", "MODULE_TARGETS")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jps_test(
@@ -16,10 +15,14 @@ jps_test(
 dev_dist_plugin(
     content_modules = ["intellij.copyright.vcs"],
     descriptor = "resources/META-INF/plugin.xml",
-    descriptor_index = MODULE_DESCRIPTORS,
     descriptor_modules = ["intellij.copyright.vcs"],
+    jars = {
+        "lib/copyright.jar": [
+            "intellij.copyright",
+            "intellij.copyright.vcs",
+        ],
+    },
     main_module = "intellij.copyright",
-    module_targets = MODULE_TARGETS,
 )
 ### auto-generated section `dev intellij.copyright` end
 

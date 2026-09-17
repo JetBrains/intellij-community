@@ -227,6 +227,7 @@ open class TextSearchContributor(val event: AnActionEvent) : WeightedSearchEvery
 
     model.customScopeName = selectedScopeDescriptor.scope?.displayName
     model.customScope = selectedScopeDescriptor.scope
+    model.directoryName = null // set directory to null to not get intersection of directory and scope
     model.isCustomScope = true
   }
 

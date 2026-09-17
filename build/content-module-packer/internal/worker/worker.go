@@ -6,16 +6,16 @@
 // `writeDelimitedTo` and `parseDelimitedFrom` on Bazel's side. It is decoded here by hand, tag by tag, with no protobuf
 // dependency and no generated schema, because at this size the schema is four fields of a message that has not changed
 // shape in years and the codec is eighty lines. That is also what the repository's other worker does:
-// ../../../community/build/jvm-rules/worker-framework/protocol.kt dispatches on `tag.shr(3)` over the same field
+// community/build/jvm-rules/worker-framework/protocol.kt dispatches on `tag.shr(3)` over the same field
 // numbers and reaches for protobuf-java only as a byte-level codec, never for a generated message.
 //
 // Nothing in the action selects the dialect: proto is Bazel's default, so `requires-worker-protocol` is absent from the
-// execution requirements in `@rules_jvm//rules/impl/content-module-packer-tool.bzl` rather than set - see the comment
-// there. Every other worker in this repository is on the same default.
+// execution requirements in `@community//platform/build-scripts/bazel-rules:content_module_jar.bzl` rather than set.
+// The comment there states why. Every other worker in this repository is on the same default.
 //
 // Why a worker at all, for a binary that starts in milliseconds: the cost being amortised is not this process's startup
 // but Bazel's per-spawn work, and at several thousand actions each doing about a millisecond of real work that is the
-// whole build. See ../../content-module-packer/README.md for the measurements.
+// whole build. See community/build/content-module-packer/README.md for the measurements.
 package worker
 
 import (

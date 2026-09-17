@@ -103,7 +103,7 @@ internal fun IDERemDevTestContext.runIdeWithLambda(
                                                     expectedKill,
                                                     expectedExitCode,
                                                     collectNativeThreads = collectNativeThreads,
-                                                    pauseOnIndexing = null,
+                                                    pauseOnIndicators = null,
                                                     configure = configure)
   // Killed rather than leaked, for the reason the monolith launch above states.
   try {

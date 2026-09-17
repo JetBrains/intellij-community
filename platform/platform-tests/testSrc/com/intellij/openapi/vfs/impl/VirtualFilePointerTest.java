@@ -5,6 +5,7 @@ import com.intellij.CacheSwitcher;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobLauncher;
+import com.intellij.concurrency.JobLauncherImpl;
 import com.intellij.mock.MockVirtualFile;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -709,7 +710,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
   private static void stressRead(VirtualFilePointer pointer, Collection<? super Job> reads) {
     for (var i = 0; i < 10; i++) {
       var reference = new AtomicReference<Job>();
-      reference.set(JobLauncher.getInstance().submitToJobThread(() -> ApplicationManager.getApplication().runReadAction(() -> {
+      reference.set(((JobLauncherImpl)JobLauncher.getInstance()).submitToJobThread(() -> ApplicationManager.getApplication().runReadAction(() -> {
         var file = pointer.getFile();
         if (file != null && !file.isValid()) {
           throw new IncorrectOperationException("I've caught it. I am that good");
@@ -847,7 +848,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
         run.set(true);
         List<Job> jobs = new ArrayList<>(nThreads);
         for (var it = 0; it < nThreads; it++) {
-          jobs.add(JobLauncher.getInstance().submitToJobThread(read, null));
+          jobs.add(((JobLauncherImpl)JobLauncher.getInstance()).submitToJobThread(read, null));
         }
         var isReady = ready.await(10, TimeUnit.SECONDS);
         assumeTrue("It took too long to start all jobs", isReady);

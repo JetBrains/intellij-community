@@ -25,5 +25,8 @@
     <internalFileTemplate name="Kotlin Object"/>
     <internalFileTemplate name="Kotlin Script"/>
     <internalFileTemplate name="Kotlin Script MainKts"/>
+
+    <additionalTextAttributes scheme="Default" file="colorScheme/Default_Kotlin.xml"/>
+    <additionalTextAttributes scheme="Darcula" file="colorScheme/Darcula_Kotlin.xml"/>
   </extensions>
 </idea-plugin>

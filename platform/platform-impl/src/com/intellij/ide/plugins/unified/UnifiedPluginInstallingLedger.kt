@@ -172,6 +172,7 @@ internal class UnifiedPluginInstallingLedger(
         pluginId = pluginId,
         name = presentationModel.name,
         contentRevision = contentRevision,
+        updateSourceId = listModelData.updateSources[pluginId],
         modelHandle = PluginItemModelHandle(presentationModel),
         rowInput = PluginRowInput(
           installedPlugin = installedModel,

@@ -16,6 +16,7 @@
     <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.observable"/>
     <module name="intellij.platform.ide.progress"/>
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.lsp"/>
@@ -23,6 +24,7 @@
     <module name="intellij.platform.projectModel.impl"/>
     <module name="intellij.platform.smRunner"/>
     <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.util.progress"/>
     <module name="intellij.python.lsp.core"/>
     <module name="intellij.python.pytools.backend"/>
     <module name="intellij.python.ty.common"/>

@@ -3,6 +3,7 @@ package com.intellij.java.psi;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
+import com.intellij.idea.TestFor;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -547,6 +548,32 @@ public class JavaStubsTest extends LightJavaCodeInsightFixtureTestCase {
 
     assertNotNull(clazz.getNode());// load AST
     assertEquals(1, parameter.getType().getAnnotations().length);
+  }
+
+  @TestFor(issues = "IDEA-393876")
+  public void test_varargs_of_record_compact_constructor() {
+    PsiClass cls = myFixture.addClass("""
+                                        public record VarArgsRecord(String first, int... rest) {
+                                          public VarArgsRecord { rest = rest.clone(); }
+                                        }""");
+
+    assertNotNull(((PsiFileImpl)cls.getContainingFile()).getStub());
+    PsiMethod constructor = assertOneElement(cls.getConstructors());
+    assertTrue(constructor.isVarArgs());
+    assertTrue(constructor.getParameterList().getParameters()[1].isVarArgs());
+  }
+
+  @TestFor(issues = "IDEA-393876")
+  public void test_no_varargs_of_record_compact_constructor() {
+    PsiClass cls = myFixture.addClass("""
+                                        public record ArrayRecord(String first, int[] rest) {
+                                          public ArrayRecord { rest = rest.clone(); }
+                                        }""");
+
+    assertNotNull(((PsiFileImpl)cls.getContainingFile()).getStub());
+    PsiMethod constructor = assertOneElement(cls.getConstructors());
+    assertFalse(constructor.isVarArgs());
+    assertFalse(constructor.getParameterList().getParameters()[1].isVarArgs());
   }
 
   private static void assertAnnotationValueText(PsiAnnotation[] annotations, String text) {

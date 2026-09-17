@@ -22,8 +22,8 @@ import com.intellij.openapi.ui.NamedConfigurable
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.lsp.api.LspClientManager
 import com.intellij.platform.lsp.api.LspIntegrationProvider
-import com.intellij.platform.lsp.api.LspPluginServerConfiguration
 import com.intellij.platform.lsp.api.LspIntegrationSettingsProvider
+import com.intellij.platform.lsp.api.LspPluginServerConfiguration
 import com.intellij.ui.EditorNotifications
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBScrollPane
@@ -66,7 +66,7 @@ internal class LspServersConfigurable(private val project: Project) : MasterDeta
     val allSettings = Settings.KEY.getData(DataManager.getInstance().getDataContext(myTree))
     if (allSettings == null) {
       ShowSettingsUtil.getInstance().showSettingsDialog(project, PluginManagerConfigurable::class.java) {
-        it.enableSearch(LSP_PLUGIN_SEARCH_TAG)
+        it.navigateToMarketplace(LSP_PLUGIN_SEARCH_TAG)
       }
     }
     else {

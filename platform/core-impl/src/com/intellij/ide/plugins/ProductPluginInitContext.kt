@@ -92,6 +92,9 @@ class ProductPluginInitContext(
   override val disablePluginLoadingCompletely: Boolean
     get() = !System.getProperty("idea.load.plugins", "true").toBoolean()
 
+  override val disableRequiredIfAvailable: Boolean =
+    System.getProperty("idea.plugins.required.if.available.disabled").toBoolean()
+
   override val pluginsPerProjectConfig: PluginsPerProjectConfig? by lazy {
     if (java.lang.Boolean.getBoolean("ide.per.project.instance")) {
       PluginsPerProjectConfig(
@@ -468,7 +471,7 @@ private val CWM_RIDER_PLUGIN_ID = PluginId.getId("intellij.rider.plugins.cwm")
 private val REMOTE_DEVELOPMENT_PLUGIN_ID: PluginId = PluginId.getId("com.jetbrains.remoteDevelopment")
 private val REMOTE_DEVELOPMENT_RIDER_PLUGIN_ID: PluginId = PluginId.getId("intellij.rider.plugins.remoteDevelopment")
 private val JSON_BACKEND_MODULE_ID = PluginModuleId("intellij.json.backend", PluginModuleId.JETBRAINS_NAMESPACE)
-private val REMOTE_DEVELOPMENT_MODULE_ID = PluginModuleId("intellij.cwm", PluginModuleId.JETBRAINS_NAMESPACE)
+private val REMOTE_DEVELOPMENT_MODULE_ID = PluginModuleId("intellij.remoteDevelopment.plugin", PluginModuleId.JETBRAINS_NAMESPACE)
 private val REMOTE_DEVELOPMENT_RIDER_MODULE_ID = PluginModuleId("intellij.rider.plugins.cwm", PluginModuleId.JETBRAINS_NAMESPACE)
 private val PLATFORM_PLUGIN_ALIAS_ID = PluginId.getId("com.intellij.modules.platform")
 private val LANG_PLUGIN_ALIAS_ID = PluginId.getId("com.intellij.modules.lang")

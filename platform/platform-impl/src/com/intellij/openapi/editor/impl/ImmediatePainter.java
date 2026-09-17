@@ -166,7 +166,7 @@ public final class ImmediatePainter {
     int ascent = editor.getAscent();
     CaretRepaintMetrics metrics = editor.myView.getCaretRepaintMetrics();
     int caretHeight = metrics.caretHeight;
-    int topOverhang = metrics.topOverhang;
+    int topOverhang = metrics.caretTopOverhang;
 
     char c1 = offset == 0 ? ' ' : document.getImmutableCharSequence().charAt(offset - 1);
 

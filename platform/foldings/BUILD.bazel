@@ -1,4 +1,9 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.platform.foldings` start
+content_module_jar(module = ":foldings")
+### auto-generated section `dev intellij.platform.foldings` end
 
 ### auto-generated section `build intellij.platform.foldings` start
 jvm_library(
@@ -12,6 +17,10 @@ jvm_library(
         allow_empty = True,
     ),
     module_name = "intellij.platform.foldings",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
@@ -61,6 +70,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.foldings.iml",
+        "resources/intellij.platform.foldings.xml",
     ],
     visibility = ["//visibility:public"],
 )

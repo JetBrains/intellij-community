@@ -17,6 +17,8 @@ import java.nio.file.Files
 import java.nio.file.LinkOption
 import java.nio.file.Path
 import java.nio.file.SimpleFileVisitor
+import java.nio.file.StandardCopyOption.COPY_ATTRIBUTES
+import java.nio.file.StandardCopyOption.REPLACE_EXISTING
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.PosixFilePermission
 import java.util.LinkedHashSet
@@ -34,7 +36,7 @@ private const val LAUNCH_METADATA_ENTRY_TYPE = "launch-metadata"
 data class DevBuildComponentEntry(
   @JvmField val relativePath: String,
   @JvmField val type: String,
-  @JvmField val hash: Long,
+  @JvmField val hash: Long? = null,
   /** Whether an ordinary owned file has any POSIX executable bit set. */
   @JvmField val executable: Boolean = false,
   /** Relative target of a genuine distribution symlink; `null` for an ordinary owned file. */
@@ -49,6 +51,10 @@ data class DevBuildComponentEntry(
    * Deliberately outside the fingerprint: it names where bytes came from, and [hash] already says what they are.
    */
   @JvmField val source: String? = null,
+  /** Exact POSIX permission bits when the producer declares more than the conventional executable flag. */
+  @JvmField val mode: Int? = null,
+  /** A genuine link inside a declared directory artifact. This records provenance, not a file-byte source. */
+  @JvmField val symlinkSource: String? = null,
 )
 
 @Serializable
@@ -79,6 +85,15 @@ data class DevBuildComponentManifest(
   @JvmField val pluginCount: Int = 0,
   @JvmField val entries: List<DevBuildComponentEntry>,
 )
+
+/**
+ * Whether this component fits every target platform.
+ *
+ * A producer that packs plain jars from Starlark attributes knows no target platform, so it writes an empty [DevBuildComponentManifest.os]
+ * and [DevBuildComponentManifest.arch]. The composer takes the distribution's platform from a component that names one.
+ */
+internal val DevBuildComponentManifest.isPlatformNeutral: Boolean
+  get() = os.isEmpty() && arch.isEmpty()
 
 private val componentManifestJson = Json {
   prettyPrint = true
@@ -121,7 +136,22 @@ fun readDevBuildComponentManifest(file: Path): DevBuildComponentManifest {
   check(manifest.version == DEV_BUILD_COMPONENT_MANIFEST_VERSION) {
     "Unsupported dev-build component manifest version ${manifest.version} in $file"
   }
+  manifest.entries.forEach(::validateDevBuildEntryMode)
   return manifest
+}
+
+internal fun validateDevBuildEntryMode(entry: DevBuildComponentEntry) {
+  if (entry.type == "directory") {
+    check(entry.hash == null && entry.source == null && entry.symlinkTarget == null && entry.symlinkSource == null &&
+          !entry.executable && entry.mode in 0..511) { "Invalid directory entry '${entry.relativePath}'" }
+    return
+  }
+  check(entry.hash != null) { "Dev-build component entry '${entry.relativePath}' requires a hash" }
+  val mode = entry.mode ?: return
+  check(mode in 0..511 && entry.symlinkTarget == null && entry.type == COMPONENT_FILE_ENTRY_TYPE &&
+        entry.executable == (mode and 73 != 0)) {
+    "Dev-build component entry '${entry.relativePath}' has an invalid or conflicting file mode: $mode"
+  }
 }
 
 /**
@@ -140,11 +170,22 @@ fun computeIdeFingerprintFromComponents(
   val launchMetadata = requireNotNull(components.firstOrNull { it.mainClass != null }) {
     "No dev-build component declares an IDE main class"
   }
+  // the platform of the distribution, not the empty one of a neutral component that happens to come first
+  val platform = components.firstOrNull { !it.isPlatformNeutral } ?: first
   val declaredModules = additionalModules
                         ?: components.flatMapTo(LinkedHashSet(), DevBuildComponentManifest::additionalModules)
   val coreClasspath = orderCoreClasspathEntries(components.flatMap(DevBuildComponentManifest::coreClassPath))
   val entries = components.flatMapTo(ArrayList()) { component ->
-    component.entries.map { entry -> IdeFingerprintEntry(entry.relativePath, entry.type, entry.hash, entry.executable) }
+    component.entries.map { entry -> IdeFingerprintEntry(entry.relativePath, entry.type, entry.hash ?: 0, entry.executable) }
+  }
+  for (component in components) {
+    for (entry in component.entries) {
+      validateDevBuildEntryMode(entry)
+      val mode = entry.mode ?: continue
+      if (entry.type == "directory" || mode != if (entry.executable) 493 else 420) {
+        entries.add(IdeFingerprintEntry(entry.relativePath, if (entry.type == "directory") "directory-mode" else "file-mode", mode.toLong()))
+      }
+    }
   }
   entries.add(
     IdeFingerprintEntry(
@@ -152,8 +193,8 @@ fun computeIdeFingerprintFromComponents(
       type = LAUNCH_METADATA_ENTRY_TYPE,
       hash = computeDevBuildLaunchMetadataHash(
         platformPrefix = first.platformPrefix,
-        os = first.os,
-        arch = first.arch,
+        os = platform.os,
+        arch = platform.arch,
         mainClass = launchMetadata.mainClass!!,
         additionalModules = declaredModules,
       ),
@@ -180,6 +221,7 @@ fun computeIdeFingerprintFromComponents(
 
 /**
  * Hashes every file a producer wrote and records what it found.
+ * External transport links become private component files before hashing. Genuine distribution links remain links.
  *
  * Spanned because it is the one part of a producing action whose cost is a property of the action's output rather than
  * of its work: it reads back, single-threaded, the full content of everything just written, in all ten producing
@@ -190,6 +232,7 @@ private fun inventoryDevBuildComponent(componentRoot: Path): List<DevBuildCompon
     val normalizedComponentRoot = componentRoot.toAbsolutePath().normalize()
     val hasher = DevBuildContentHasher()
     val result = ArrayList<DevBuildComponentEntry>()
+    var copiedByteCount = 0L
     Files.walkFileTree(normalizedComponentRoot, object : SimpleFileVisitor<Path>() {
       override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
         val relativePath = normalizedComponentRoot.relativize(file.toAbsolutePath().normalize()).invariantSeparatorsPathString
@@ -207,18 +250,19 @@ private fun inventoryDevBuildComponent(componentRoot: Path): List<DevBuildCompon
             )
           }
           else {
-            // Bazel inputs and cache-backed assets may be linked into the fragment with an absolute or escaping target.
-            // Such a link is transport, not distribution semantics: inventory its bytes and let the composer copy them.
             val realFile = file.toRealPath()
             check(Files.isRegularFile(realFile, LinkOption.NOFOLLOW_LINKS)) {
               "Dev-build component external symbolic link '$relativePath' must resolve to a regular file: $target"
             }
+            Files.copy(realFile, file, REPLACE_EXISTING, COPY_ATTRIBUTES)
+            val size = Files.size(file)
+            copiedByteCount += size
             result.add(
               DevBuildComponentEntry(
                 relativePath = relativePath,
                 type = COMPONENT_FILE_ENTRY_TYPE,
-                hash = hasher.hash(realFile, Files.size(realFile)),
-                executable = computeDevBuildExecutableBit(realFile),
+                hash = hasher.hash(file, size),
+                executable = computeDevBuildExecutableBit(file),
               )
             )
           }
@@ -241,6 +285,7 @@ private fun inventoryDevBuildComponent(componentRoot: Path): List<DevBuildCompon
     span.setAttribute("fileCount", result.size.toLong())
     span.setAttribute("hashedFileCount", hasher.fileCount)
     span.setAttribute("byteCount", hasher.byteCount)
+    span.setAttribute("copiedByteCount", copiedByteCount)
     result
   }
 }
@@ -329,4 +374,9 @@ internal fun computeDevBuildExecutableBit(file: Path): Boolean {
   return PosixFilePermission.OWNER_EXECUTE in permissions ||
          PosixFilePermission.GROUP_EXECUTE in permissions ||
          PosixFilePermission.OTHERS_EXECUTE in permissions
+}
+
+/** Resolves the symbolic links of the composed components through the shared link validation. */
+internal fun validateDevBuildLinkGraph(entries: List<DevBuildComponentEntry>): Map<String, String> {
+  return validateDevBuildLinks(entries.mapNotNull { entry -> entry.symlinkTarget?.let { entry.relativePath to it } })
 }

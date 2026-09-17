@@ -5,7 +5,9 @@
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.syntax"/>
     <module name="intellij.platform.syntax.psi"/>
+    <module name="intellij.platform.syntax.util"/>
     <module name="intellij.xml.syntax"/>
   </dependencies>
   <!-- endregion -->

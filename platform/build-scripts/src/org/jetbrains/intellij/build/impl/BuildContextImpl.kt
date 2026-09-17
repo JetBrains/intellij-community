@@ -316,14 +316,7 @@ class BuildContextImpl internal constructor(
   }
 
   override fun getDistFiles(os: OsFamily?, arch: JvmArchitecture?, libcImpl: LibcImpl?): Collection<DistFile> {
-    val result = distFiles.filterTo(mutableListOf()) {
-      (os == null && arch == null && libcImpl == null) ||
-      (os == null || it.os == null || it.os == os) &&
-      (arch == null || it.arch == null || it.arch == arch) &&
-      (libcImpl == null || it.libcImpl == null || it.libcImpl == libcImpl)
-    }
-    result.sortWith(compareBy({ it.relativePath }, { it.os }, { it.arch }))
-    return result
+    return selectDistFiles(distFiles, os, arch, libcImpl)
   }
 
   override fun findApplicationInfoModule(): JpsModule = outputProvider.findRequiredModule(productProperties.applicationInfoModule)

@@ -1,11 +1,8 @@
 """Writes one plugin's patched `META-INF/plugin.xml` in an action of its own.
 
-A dev-distribution fragment computes that text today, inside the assembly that evaluates the whole product layout. This
-rule is the other producer: one action per plugin, whose declared inputs are the descriptors the patch reads and whose
-output is the text the plugin's main jar receives. Every fragment of the product now reads that output instead of
-computing it, so the byte comparison of the two producers is `./build/dev-dist.cmd descriptors --two-producer`, which
-declares both producers inside this rule. A second producer is worth having only while something compares the two
-(ADR 0006 rule 2).
+The rule runs one action per plugin. Its declared inputs are the descriptors the patch reads. Its output is the text
+the plugin's main jar receives. Every fragment of the product reads that output instead of computing it inside the
+assembly that evaluates the whole product layout. The Go patcher is the one producer of the text.
 
 Modelled on two neighbours, each for what it already settled. `ij_plugin` for the per-plugin grain and for the build
 number arriving as a declared file. `content_module_jar` for the provider, for the `manual` tag and for a packer named
@@ -16,19 +13,23 @@ directly rather than pushed in through a flag.
 that both caches keep is the property ADR 0006 asks for.
 """
 
-load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
 load("@rules_java//java:defs.bzl", "JavaInfo")
 load("//build:dev_launch_dependencies.bzl", "HOST_PLATFORMS", "platform_parts")
+load(":content_module_jar.bzl", "library_entries")
 
 DevDistPluginDescriptorInfo = provider(
     doc = """One plugin's patched descriptor, and the plugin it belongs to.
 
-    A provider rather than a bare `DefaultInfo`, for the reason `prepacked_content_modules` gives: a consumer that names
-    a target which produces no descriptor must be refused by Bazel at analysis, not by a reader a whole build later.""",
+    The provider lets Bazel reject a target that produces no descriptor during analysis.""",
     fields = {
         "plugin_main_module": "The JPS module whose resources carry the descriptor.",
         "descriptor": "The patched `META-INF/plugin.xml` as a `File`.",
+        "classpath_descriptor": """The patched descriptor with embedded content modules for classpath generation.
+
+        Always in its final byte form: a classpath writer copies the bytes and applies no XML rewrite.""",
         "platforms": "The `HOST_PLATFORMS` entries this layout variant serves.",
+        "_declaration": "Private versioned metadata with the declared File objects and action parameters.",
+        "_declaration_file": "The private metadata file. It is not a default output or an action input.",
     },
 )
 
@@ -46,12 +47,15 @@ DevDistProductInfo = provider(
     A configuration and not four attributes on the leaf rule. One plugin's patched descriptor differs between two
     products only in these values, so a leaf that stated them would be a leaf per (plugin, product). Read through
     a `label_flag`, a product's set target names its own values, and one leaf per plugin then answers every product
-    that bundles the plugin.""",
+    that bundles the plugin. The exception is a plugin two products state differently. The later product gets a leaf
+    of its own under `build/dev-dist-descriptors/<module>/<product>`, and that leaf still reads its stamps here.""",
     fields = {
         "eap": "The `eap` attribute of the product's `ApplicationInfo.xml`.",
         "release_date": "`ApplicationInfoProperties.majorReleaseDate`.",
         "release_version": "`ApplicationInfoProperties.releaseVersionForLicensing`.",
         "marketplace_names": "`OsFamily.osId` and `JvmArchitecture.marketplaceName`, keyed by the token `HOST_PLATFORMS` spells.",
+        "platform_prefix": "The product's platform prefix, `idea` for example. Empty in the flag's default.",
+        "_producer": "The actual provider declaration, not the forwarding label flag or a consumer label.",
     },
 )
 
@@ -61,6 +65,8 @@ def _dev_dist_product_info_impl(ctx):
         release_date = ctx.attr.release_date,
         release_version = ctx.attr.release_version,
         marketplace_names = ctx.attr.marketplace_names,
+        platform_prefix = ctx.attr.platform_prefix,
+        _producer = _descriptor_producer_identity(ctx),
     )]
 
 dev_dist_product_info = rule(
@@ -69,6 +75,7 @@ dev_dist_product_info = rule(
     Public because two packages declare one: `@community//build` declares the empty default of the flag, and the
     descriptor macro declares the product's own.""",
     implementation = _dev_dist_product_info_impl,
+    fragments = ["platform"],
     attrs = {
         "eap": attr.bool(doc = "The `eap` attribute of the product's `ApplicationInfo.xml`."),
         "release_date": attr.string(doc = "`ApplicationInfoProperties.majorReleaseDate`. Empty in the flag's default."),
@@ -79,6 +86,9 @@ dev_dist_product_info = rule(
 Generated, because no rule can read an enum. Here and not on the leaf, so a leaf beside a plugin derives the stamps of
 a one-platform layout variant without stating the table - see `dev_dist_plugin_descriptor_os_arch_stamps`.""",
         ),
+        "platform_prefix": attr.string(
+            doc = "The product's platform prefix. A packed plugin component states it to the collector. Empty in the flag's default.",
+        ),
     },
 )
 
@@ -86,13 +96,34 @@ a one-platform layout variant without stating the table - see `dev_dist_plugin_d
 # apparent repository name nor a relative label.
 _PRODUCT_INFO_FLAG = str(Label("//build:dev_dist_product_info"))
 
-def _dev_dist_product_info_transition_impl(_settings, attr):
-    return {_PRODUCT_INFO_FLAG: str(attr.product_info)}
+# The flag's default. A rule that must not depend on a product resets the flag to it, see
+# `dev_dist_neutral_product_transition`. A `Label` and not its string: Bazel trims a flag that equals its default from
+# the configuration only when the two values compare equal, and the default is a `Label`.
+_NO_PRODUCT_INFO = Label("//build:no_dev_dist_product_info")
+
+def _dev_dist_product_info_transition_impl(settings, attr):
+    product_info = getattr(attr, "product_info", None)
+    if product_info == None:
+        # The consumer names no product, so the leaf keeps the configuration it is reached in.
+        return {_PRODUCT_INFO_FLAG: settings[_PRODUCT_INFO_FLAG]}
+    return {_PRODUCT_INFO_FLAG: str(product_info)}
 
 # What names the product on the way down to a leaf. The leaf declares no product, so the target that collects leaves
 # per product is the one that states it.
-_dev_dist_product_info_transition = transition(
+dev_dist_product_info_transition = transition(
     implementation = _dev_dist_product_info_transition_impl,
+    inputs = [_PRODUCT_INFO_FLAG],
+    outputs = [_PRODUCT_INFO_FLAG],
+)
+
+def _dev_dist_neutral_product_transition_impl(_settings, _attr):
+    return {_PRODUCT_INFO_FLAG: _NO_PRODUCT_INFO}
+
+# The reset. A compiled module jar is the same file for every product, so a rule that collects module jars under a
+# product configuration resets the flag to its default. The default value is trimmed from the configuration, so the
+# jars come from the default configuration and no product recompiles them.
+dev_dist_neutral_product_transition = transition(
+    implementation = _dev_dist_neutral_product_transition_impl,
     inputs = [],
     outputs = [_PRODUCT_INFO_FLAG],
 )
@@ -113,8 +144,9 @@ The transition on `descriptors` reads this label, so a leaf stamps the product t
 DevDistPluginDescriptorSetInfo = provider(
     doc = """The produced descriptors of one fragment of one product.
 
-    A set target and not a `label_list` on the fragment, because `//build` cannot compute which fragment lays out which
-    plugin. The generated plan holds that partition, and it lives in this package.
+    A set target and not a `label_list` on the fragment: the set selects, per plugin, the variant its platform takes.
+    No macro of this package declares a set today. The rule `_dev_dist_plugin_descriptor_set` stays for a fragment that
+    reads produced descriptors.
 
     The set is also where the product is named. It transitions every descriptor below it onto its own
     `dev_dist_product_info`, so one leaf per plugin serves any number of products.""",
@@ -127,6 +159,7 @@ def _dev_dist_plugin_descriptor_set_impl(ctx):
     if ctx.attr.platform not in HOST_PLATFORMS:
         fail("'%s' is not one of %s" % (ctx.attr.platform, HOST_PLATFORMS), attr = "platform")
     records = []
+    metadata = []
     seen = {}
     for target in ctx.attr.descriptors:
         info = target[DevDistPluginDescriptorInfo]
@@ -151,7 +184,11 @@ def _dev_dist_plugin_descriptor_set_impl(ctx):
             plugin_main_module = main_module,
             descriptor = info.descriptor,
         ))
-    return [DevDistPluginDescriptorSetInfo(descriptors = depset(records))]
+        metadata.append(info._declaration_file)
+    return [
+        DevDistPluginDescriptorSetInfo(descriptors = depset(records)),
+        OutputGroupInfo(_dev_dist_descriptor_metadata = depset(metadata)),
+    ]
 
 _dev_dist_plugin_descriptor_set = rule(
     doc = "One fragment's produced plugin descriptors, as the one label a fragment declares.",
@@ -163,9 +200,8 @@ _dev_dist_plugin_descriptor_set = rule(
 Every layout variant of each of them, because which variant one platform takes follows from the variant itself. So one
 list serves all six platforms, and `platform` selects inside it.
 
-The provider gate is the whole check, for `prepacked_content_modules`' reason: a target that produces no descriptor has
-no plugin to name, and Bazel must refuse it at analysis rather than a reader a whole build later.""",
-            cfg = _dev_dist_product_info_transition,
+The provider gate is the whole check. A target that produces no descriptor has no plugin to name.""",
+            cfg = dev_dist_product_info_transition,
             providers = [DevDistPluginDescriptorInfo],
         ),
         "platform": attr.string(
@@ -180,16 +216,23 @@ carries.""",
 )
 
 def _dev_dist_plugin_descriptor_group_impl(ctx):
-    return [DefaultInfo(files = depset(transitive = [
-        target[DefaultInfo].files
-        for target in ctx.attr.descriptors
-    ]))]
+    return [
+        DefaultInfo(files = depset(transitive = [
+            target[DefaultInfo].files
+            for target in ctx.attr.descriptors
+        ])),
+        OutputGroupInfo(_dev_dist_descriptor_metadata = depset([
+            target[DevDistPluginDescriptorInfo]._declaration_file
+            for target in ctx.attr.descriptors
+        ])),
+    ]
 
 dev_dist_plugin_descriptor_group = rule(
     doc = """Produced descriptors of one product, as one target that names the product.
 
     A rule and not a `filegroup`, because the product scalars arrive through a transition and a `filegroup` states none.
-    `./build/dev-dist.cmd descriptors` reads this target's files, and both producers write into `DefaultInfo`.
+    `//build:idea_dev_descriptor_leaf_build_test` builds one such group, and the produced descriptors are its
+    `DefaultInfo` files.
 
     Public, because a leaf no longer builds on its own: the flag's default states no product and the leaf fails at
     analysis. So anything that wants to build a leaf names it through a group, and `//build:*_descriptor_build_test` is
@@ -198,28 +241,11 @@ dev_dist_plugin_descriptor_group = rule(
     attrs = {
         "descriptors": attr.label_list(
             doc = "Every `dev_dist_plugin_descriptor` target of this product, every layout variant included.",
-            cfg = _dev_dist_product_info_transition,
+            cfg = dev_dist_product_info_transition,
             providers = [DevDistPluginDescriptorInfo],
         ),
     } | _PRODUCT_INFO_ATTR,
 )
-
-def dev_dist_plugin_descriptor_set_target_name(platform_prefix, fragment_name, platform):
-    """This set's target name - `("idea", "plugins_rest", "darwin_aarch64")`.
-
-    Per platform, because a plugin whose descriptor differs by operating system or architecture has one target per
-    variant and a fragment must be handed the one its own platform takes. A fragment built for the host selects among
-    these sets; one built for a named target platform names one directly.
-
-    Public because two packages write it: this one declares the target, and `//build` names it on the fragment. It is
-    spelled the way `dev_dist_content_sets.bzl` spells a content set, so the two sets of one fragment read alike.
-
-    Args:
-        platform_prefix: the product's platform prefix.
-        fragment_name: the fragment name, `plugins_` included.
-        platform: a `HOST_PLATFORMS` entry of `dev_launch_dependencies.bzl`.
-    """
-    return "%s_%s_%s_descriptors" % (platform_prefix, fragment_name, platform)
 
 def _os_arch_stamps(ctx, product):
     """The marker rows and the version suffix this leaf stamps: the stated ones, or the ones its variant gives.
@@ -240,7 +266,7 @@ def _os_arch_stamps(ctx, product):
         return struct(markers = ctx.attr.markers, version_suffix = ctx.attr.version_suffix)
 
     # The convention has one spelling. A stated pair here would be a checked-in copy of what the variant gives, and
-    # both producers of a leaf write none, so this is a hand edit rather than a deviation.
+    # the leaf writes none, so this is a hand edit rather than a deviation.
     if ctx.attr.markers or ctx.attr.version_suffix:
         fail("variant '%s' gives the marker row and the version suffix, so %s restates them" % (
             ctx.attr.variant,
@@ -248,55 +274,70 @@ def _os_arch_stamps(ctx, product):
         ), attr = "markers")
     return stamps
 
-def _descriptor_request(ctx, module_name, output):
-    """One (plugin, layout variant) request as a parameter file, and the files it reads.
-
-    Built once per producer, because the only field that differs between the two is `--out`. Both binaries take this
-    exact spelling, which is what makes the reference run a comparison of two implementations over one request.
+def _descriptor_request(ctx, module_name, embed_content_modules = None, reserialize_before_content_embedding = False):
+    """Collects the ordered parameters and File bindings for both descriptor producers.
 
     Args:
         ctx: the rule context.
         module_name: the plugin's main JPS module.
-        output: the `File` this producer writes.
+        embed_content_modules: an optional override for classpath generation.
+        reserialize_before_content_embedding: whether to finish XML normalization before content descriptors are embedded.
 
     Returns:
-        A `(Args, [File])` pair: the request, and every file it names.
+        The parameters, declared inputs, source bindings, and resolved stamps.
     """
     product = ctx.attr._product_info[DevDistProductInfo]
-    args = ctx.actions.args()
-    args.set_param_file_format("multiline")
+    jars = ctx.attr.jar_inputs[_DevDistDescriptorJarsInfo] if ctx.attr.jar_inputs != None else _NO_DESCRIPTOR_JARS
+    source = ctx.file.descriptor
+    source_jar = jars.descriptor_jar
+    if (source == None) == (source_jar == None):
+        fail("exactly one of descriptor and descriptor_jar must be set")
+    if source_jar != None and not ctx.attr.descriptor_entry:
+        fail("descriptor_entry is required with descriptor_jar", attr = "descriptor_entry")
 
-    # A parameter file, so the request is the action's arguments and not a generated file per plugin. Both tools accept
-    # `--flagfile=<path>` and nothing else on their command line.
-    args.use_param_file("--flagfile=%s", use_always = True)
-    args.add(output, format = "--out=%s")
-    args.add(module_name, format = "--main-module=%s")
-    args.add(ctx.file.descriptor, format = "--source=%s")
-    args.add(ctx.file._build_number_file, format = "--build-number-file=%s")
-    args.add(product.release_date, format = "--release-date=%s")
-    args.add(product.release_version, format = "--release-version=%s")
-    args.add("--eap=" + str(product.eap).lower())
-    args.add("--exact-version=" + str(ctx.attr.exact_version).lower())
-    args.add("--retain-product-descriptor=" + str(ctx.attr.retain_product_descriptor).lower())
-    args.add("--embed-content-modules=" + str(ctx.attr.embed_content_modules).lower())
+    if embed_content_modules == None:
+        embed_content_modules = ctx.attr.embed_content_modules
+
+    parameters = [
+        ("--main-module", module_name, "formatted"),
+        ("--build-number-file", ctx.file._build_number_file, "formatted"),
+        ("--release-date", product.release_date, "formatted"),
+        ("--release-version", product.release_version, "formatted"),
+        ("--eap", str(product.eap).lower(), "literal"),
+        ("--exact-version", str(ctx.attr.exact_version).lower(), "literal"),
+        ("--retain-product-descriptor", str(ctx.attr.retain_product_descriptor).lower(), "literal"),
+        ("--embed-content-modules", str(embed_content_modules).lower(), "literal"),
+        ("--reserialize-before-content-embedding", str(reserialize_before_content_embedding).lower(), "literal"),
+    ]
+    if source != None:
+        parameters.insert(1, ("--source", source, "formatted"))
+    else:
+        parameters.insert(1, ("--source-in-jar", ctx.attr.descriptor_entry + "=" + source_jar.path, "literal"))
     if ctx.attr.directory_name:
-        args.add(ctx.attr.directory_name, format = "--directory-name=%s")
+        parameters.append(("--directory-name", ctx.attr.directory_name, "formatted"))
     if ctx.attr.main_jar_name:
-        args.add(ctx.attr.main_jar_name, format = "--main-jar-name=%s")
+        parameters.append(("--main-jar-name", ctx.attr.main_jar_name, "formatted"))
     stamps = _os_arch_stamps(ctx, product)
     if stamps.version_suffix:
-        args.add(stamps.version_suffix, format = "--version-suffix=%s")
-    args.add_all(stamps.markers, format_each = "--marker=%s")
-    args.add_all(ctx.attr.refused_content_modules, format_each = "--refused-content-module=%s")
-    args.add_all(ctx.attr.separate_jar, format_each = "--separate-jar=%s")
-    args.add_all(ctx.attr.plugin_modules, format_each = "--plugin-module=%s")
-    args.add_all(ctx.attr.platform_modules, format_each = "--platform-module=%s")
+        parameters.append(("--version-suffix", stamps.version_suffix, "formatted"))
+    parameters.extend([
+        ("--marker", stamps.markers, "repeated"),
+        ("--refused-content-module", ctx.attr.refused_content_modules, "repeated"),
+        ("--separate-jar", ctx.attr.separate_jar, "repeated"),
+        ("--plugin-module", ctx.attr.plugin_modules, "repeated"),
+        ("--platform-module", ctx.attr.platform_modules, "repeated"),
+    ])
 
-    inputs = [ctx.file.descriptor, ctx.file._build_number_file]
+    source_file = source if source != None else source_jar
+    source_label = ctx.attr.descriptor.label if source != None else jars.descriptor_jar_label
+    inputs = [source_file, ctx.file._build_number_file]
+    sources = [
+        _descriptor_source_binding("descriptor" if source != None else "descriptor_jar", source_label, ctx.attr.descriptor_entry if source_jar != None else None, [source_file]),
+        _descriptor_source_binding("build_number", ctx.attr._build_number_file.label, None, [ctx.file._build_number_file]),
+    ]
 
-    # Who answers one load path, so that the two producers cannot answer it differently. The Go executor seeds the
-    # files first and puts a jar entry in only when the path is absent, and the JVM one lets the right operand of a map
-    # sum win. So a load path two declarations answer is refused here, where every declaration is visible.
+    # One answer per load path. The Go executor seeds the files first and puts a jar entry in only when the path is
+    # absent. So a load path two declarations answer is refused here, where every declaration is visible.
     answered_by = {}
     for label, load_path in ctx.attr.descriptors.items():
         files = label.files.to_list()
@@ -305,32 +346,212 @@ def _descriptor_request(ctx, module_name, output):
         if load_path in answered_by:
             fail("%s and %s both answer the load path '%s'" % (answered_by[load_path], label.label, load_path), attr = "descriptors")
         answered_by[load_path] = label.label
-        args.add("--plugin-descriptor=" + load_path + "=" + files[0].path)
+        parameters.append(("--plugin-descriptor", load_path + "=" + files[0].path, "literal"))
+        sources.append(_descriptor_source_binding("descriptors", label.label, load_path, files))
         inputs.append(files[0])
+    for jar in jars.descriptor_jars:
+        if jar.load_path in answered_by:
+            fail("%s and %s both answer the load path '%s'" % (answered_by[jar.load_path], jar.label, jar.load_path), attr = "descriptor_jars")
+        answered_by[jar.load_path] = jar.label
+        parameters.append(("--plugin-descriptor-in-jar", jar.load_path + "=" + jar.files[0].path, "literal"))
+        sources.append(_descriptor_source_binding("descriptor_jars", jar.label, jar.load_path, jar.files))
+        inputs.append(jar.files[0])
     for label, load_path in ctx.attr.platform_descriptors.items():
         files = label.files.to_list()
         if len(files) != 1:
             fail("%s declares %d files, and a descriptor must name exactly one" % (label.label, len(files)), attr = "platform_descriptors")
-        args.add("--platform-descriptor=" + load_path + "=" + files[0].path)
+        parameters.append(("--platform-descriptor", load_path + "=" + files[0].path, "literal"))
+        sources.append(_descriptor_source_binding("platform_descriptors", label.label, load_path, files))
         inputs.append(files[0])
-    for container, load_paths in ctx.attr.library_descriptors.items():
-        # `transitive_runtime_jars` for the reason `_collect_libraries` of `dev_dist_content.bzl` gives: it is the only
-        # `JavaInfo` set correct for all three shapes the library generator emits, and its order is stable.
-        jars = container[JavaInfo].transitive_runtime_jars.to_list()
-        if not jars:
-            fail("%s holds no runtime jar, so it answers no load path" % container.label, attr = "library_descriptors")
-        for load_path in load_paths.split(" "):
+    for library in jars.library_descriptors:
+        for load_path in library.load_paths:
             if load_path in answered_by:
-                fail("%s and %s both answer the load path '%s'" % (answered_by[load_path], container.label, load_path), attr = "library_descriptors")
-            answered_by[load_path] = container.label
+                fail("%s and %s both answer the load path '%s'" % (answered_by[load_path], library.label, load_path), attr = "library_descriptors")
+            answered_by[load_path] = library.label
+            sources.append(_descriptor_source_binding("library_descriptors", library.label, load_path, library.jars))
 
             # Every jar of the container, in the container's own order. Which one holds the entry is a fact inside a zip,
             # so no rule can know it. The executor takes the first jar that answers, the way the assembly's
             # `findFileInModuleLibraryDependencies` asks each declared library jar in turn.
-            for jar in jars:
-                args.add("--plugin-descriptor-in-jar=" + load_path + "=" + jar.path)
-        inputs.extend(jars)
-    return args, inputs
+            for jar in library.jars:
+                parameters.append(("--plugin-descriptor-in-jar", load_path + "=" + jar.path, "literal"))
+        inputs.extend(library.jars)
+    return struct(parameters = tuple(parameters), inputs = tuple(inputs), sources = tuple(sources), stamps = stamps)
+
+def _descriptor_source_binding(attribute, label, load_path, files):
+    return struct(attribute = attribute, label = label, load_path = load_path, files = tuple(files))
+
+_DevDistDescriptorJarsInfo = provider(
+    doc = "The jar inputs of one descriptor leaf, resolved in the neutral product configuration.",
+    fields = {
+        "descriptor_jar": "The `File` that holds the plugin descriptor, or None when `descriptor` is a source file.",
+        "descriptor_jar_label": "Its `Label`, or None.",
+        "descriptor_jars": "tuple of struct(label, load_path, files): one content descriptor jar per load path.",
+        "library_descriptors": "tuple of struct(label, load_paths, jars): one library container and the load paths it answers.",
+    },
+)
+
+_NO_DESCRIPTOR_JARS = _DevDistDescriptorJarsInfo(descriptor_jar = None, descriptor_jar_label = None, descriptor_jars = (), library_descriptors = ())
+
+def _dev_dist_plugin_descriptor_jars_impl(ctx):
+    descriptor_jars = []
+    for label, load_path in ctx.attr.descriptor_jars.items():
+        files = label.files.to_list()
+        if len(files) != 1:
+            fail("%s declares %d files, and a descriptor jar must name exactly one" % (label.label, len(files)), attr = "descriptor_jars")
+        descriptor_jars.append(struct(label = label.label, load_path = load_path, files = tuple(files)))
+    library_descriptors = []
+    for container, load_paths in ctx.attr.library_descriptors.items():
+        jars = library_entries(ctx, [container], attr_name = "library_descriptors")[0].jars
+        library_descriptors.append(struct(label = container.label, load_paths = tuple(load_paths.split(" ")), jars = jars))
+    return [
+        DefaultInfo(files = depset()),
+        _DevDistDescriptorJarsInfo(
+            descriptor_jar = ctx.file.descriptor_jar,
+            descriptor_jar_label = ctx.attr.descriptor_jar.label if ctx.attr.descriptor_jar != None else None,
+            descriptor_jars = tuple(descriptor_jars),
+            library_descriptors = tuple(library_descriptors),
+        ),
+    ]
+
+_dev_dist_plugin_descriptor_jars = rule(
+    doc = """The jar inputs of one descriptor leaf, in the neutral product configuration.
+
+The leaf is configured for a product, so the stamps it writes are that product's. A jar it reads is a module output or a
+library, and both are the same files for every product. Without this reset, the product configuration reached the module
+behind every jar and compiled it a second time. `_dev_plugin_inputs` of `dev_plugin.bzl` is the same reset for a packed
+plugin's jars.""",
+    implementation = _dev_dist_plugin_descriptor_jars_impl,
+    cfg = dev_dist_neutral_product_transition,
+    attrs = {
+        "descriptor_jar": attr.label(
+            doc = "The test output jar that contains the plugin descriptor.",
+            allow_single_file = [".jar"],
+        ),
+        "descriptor_jars": attr.label_keyed_string_dict(
+            doc = "Test output jars that contain content descriptors, valued by descriptor load path.",
+            allow_files = [".jar"],
+        ),
+        "library_descriptors": attr.label_keyed_string_dict(
+            doc = """A descriptor no production source root holds, keyed by the library container and valued by its load paths.
+
+A value states one load path, or several separated by a space. The load path is also the zip entry, because `toLoadPath`
+strips the leading `/`. `findFileInModuleLibraryDependencies` is the assembly's route to such a file, and it belongs to
+`DescriptorSearchPass.MODULE_OUTPUT` alone. One plugin of this product needs it: the Kotlin compiler ships
+`META-INF/analysis-api/analysis-api-fir.xml` inside a library jar.
+
+The **container** target, and not a jar of it: a per-jar label carries the artifact version, so a Maven bump rewrote
+every checked-in file that named the jar. A container label carries no version, so a bump now rewrites only the
+library's own package. The action expands the container back into its jars - see `_descriptor_request`.""",
+            providers = [[JavaInfo]],
+        ),
+        "_allowlist_function_transition": attr.label(default = Label("@bazel_tools//tools/allowlists/function_transition_allowlist")),
+    },
+)
+
+def _descriptor_producer_identity(ctx):
+    return {
+        "label": str(ctx.label),
+        "bin_dir": ctx.bin_dir.path,
+        "target_platform": str(ctx.fragments.platform.platform),
+        "configuration_checksum": None,
+    }
+
+def _descriptor_file_identity(file):
+    return {
+        "path": file.path,
+        "short_path": file.short_path,
+        "basename": file.basename,
+        "owner": str(file.owner) if file.owner != None else None,
+        "root": file.root.path,
+        "root_kind": "source" if file.is_source else "generated",
+        "is_directory": file.is_directory,
+    }
+
+def _descriptor_action(ctx, request, output, tool, mnemonic, progress_message, reserialized_output = None):
+    """Runs one descriptor producer.
+
+    `reserialized_output`, when given, is a second output: the same descriptor with every content module embedded, in
+    the byte form a classpath writer copies. The Go executor writes it from the same request, so the classpath
+    descriptor of an ordinary plugin costs no second action.
+    """
+    operations = (("--out", output, "formatted"),) + request.parameters
+    if reserialized_output != None:
+        operations += (("--reserialized-output", reserialized_output, "formatted"),)
+    action = struct(
+        parameters = tuple([
+            (flag, item)
+            for flag, value, mode in operations
+            for item in (value if mode == "repeated" else [value])
+        ]),
+        inputs = request.inputs,
+        outputs = (output,) + ((reserialized_output,) if reserialized_output != None else ()),
+        executable = tool[DefaultInfo].files_to_run.executable,
+        _tool_target = tool,
+        tool_label = tool.label,
+        tool_runfiles = tool[DefaultInfo].default_runfiles.files,
+        mnemonic = mnemonic,
+        param_file_format = "multiline",
+        param_file_arg = "--flagfile=%s",
+        use_param_file_always = True,
+        execution_requirements = {},
+    )
+    args = ctx.actions.args()
+    args.set_param_file_format(action.param_file_format)
+    args.use_param_file(action.param_file_arg, use_always = action.use_param_file_always)
+    for flag, value, mode in operations:
+        if mode == "repeated":
+            args.add_all(value, format_each = flag + "=%s")
+        elif mode == "literal":
+            args.add(flag + "=" + value)
+        else:
+            args.add(value, format = flag + "=%s")
+    ctx.actions.run(
+        mnemonic = action.mnemonic,
+        inputs = depset(action.inputs),
+        outputs = list(action.outputs),
+        executable = action.executable,
+        arguments = [args],
+        progress_message = progress_message,
+        execution_requirements = action.execution_requirements,
+    )
+    return action
+
+def _descriptor_declaration_json(declaration):
+    return json.encode({
+        "version": declaration.version,
+        "producer": declaration.producer,
+        "product": {
+            "producer": declaration.product._producer,
+            "dependency_label": str(declaration.product_dependency_label),
+            "eap": declaration.product.eap,
+            "release_date": declaration.product.release_date,
+            "release_version": declaration.product.release_version,
+            "marketplace_names": declaration.product.marketplace_names,
+        },
+        "scope": declaration.scope,
+        "sources": [{
+            "attribute": source.attribute,
+            "label": str(source.label),
+            "load_path": source.load_path,
+            "files": [_descriptor_file_identity(file) for file in source.files],
+        } for source in declaration.sources],
+        "actions": [{
+            "mnemonic": action.mnemonic,
+            "executable": _descriptor_file_identity(action.executable),
+            "tool_label": str(action.tool_label),
+            "tool_runfiles": [_descriptor_file_identity(file) for file in action.tool_runfiles.to_list()],
+            "parameters": [{"flag": flag, "value": value.path if type(value) == "File" else value} for flag, value in action.parameters],
+            "param_file_format": action.param_file_format,
+            "param_file_arg": action.param_file_arg,
+            "use_param_file_always": action.use_param_file_always,
+            "declared_inputs": [_descriptor_file_identity(file) for file in action.inputs],
+            "outputs": [_descriptor_file_identity(file) for file in action.outputs],
+            "execution_requirements": action.execution_requirements,
+        } for action in declaration.actions],
+        "primary_output": _descriptor_file_identity(declaration.primary_output),
+        "default_outputs": [_descriptor_file_identity(file) for file in declaration.default_outputs],
+    }) + "\n"
 
 def _dev_dist_plugin_descriptor_impl(ctx):
     if ctx.attr.unresolved_descriptor_modules:
@@ -353,52 +574,77 @@ def _dev_dist_plugin_descriptor_impl(ctx):
         ))
 
     # The variant's own directory, so two variants of one plugin never collide and the file's own name stays the main
-    # module. `./build/dev-dist.cmd descriptors` joins the artifact by that name, and `--two-producer` pairs the two
-    # producers by the whole path - which is why the reference file below lands in the same directory.
+    # module.
     directory = ctx.attr.variant + "/" if ctx.attr.variant else ""
     descriptor = ctx.actions.declare_file(directory + module_name + ".plugin.xml")
-    args, inputs = _descriptor_request(ctx, module_name, descriptor)
-    ctx.actions.run(
+
+    # The classpath descriptor is always a file of its own, in its final byte form. An ordinary plugin gets it from the
+    # primary action as a second output. A plugin that embeds no content module gets it from a second action, which
+    # embeds them and normalizes the XML first.
+    classpath_descriptor = ctx.actions.declare_file(directory + module_name + ".plugin.classpath.xml")
+    request = _descriptor_request(ctx, module_name)
+    actions = [_descriptor_action(
+        ctx,
+        request,
+        descriptor,
+        ctx.attr._patcher,
         # One mnemonic for every plugin descriptor, so a strategy or an execution-info override reaches all of them.
         mnemonic = "DevDistPluginDescriptor",
-        inputs = depset(inputs),
-        outputs = [descriptor],
-        executable = ctx.executable._patcher,
-        arguments = [args],
         progress_message = "Patching the plugin descriptor of %{label}",
-    )
+        reserialized_output = classpath_descriptor if ctx.attr.embed_content_modules else None,
+    )]
 
-    # The reference producer, and nothing at all when the flag is off. Two producers of one text is what ADR 0006 rule 2
-    # asks for, and the Go executor above is the one a distribution reads.
-    #
-    # **A second action, not a side output of the first.** A side output is written by the same tool, and the whole
-    # point here is a different implementation over the same request. The first action's key, arguments and declared
-    # outputs are therefore untouched either way.
-    files = [descriptor]
-    if ctx.attr._dev_dist_descriptor_reference[BuildSettingInfo].value:
-        reference = ctx.actions.declare_file(directory + module_name + ".plugin.reference.xml")
-        reference_args, reference_inputs = _descriptor_request(ctx, module_name, reference)
-        ctx.actions.run(
-            mnemonic = "DevDistPluginDescriptorReference",
-            inputs = depset(reference_inputs),
-            outputs = [reference],
-            executable = ctx.executable._reference_patcher,
-            arguments = [reference_args],
-            progress_message = "Patching the plugin descriptor of %{label} with the JVM reference tool",
+    if not ctx.attr.embed_content_modules:
+        classpath_request = _descriptor_request(
+            ctx,
+            module_name,
+            embed_content_modules = True,
+            reserialize_before_content_embedding = True,
         )
+        actions.append(_descriptor_action(
+            ctx,
+            classpath_request,
+            classpath_descriptor,
+            ctx.attr._patcher,
+            mnemonic = "DevDistPluginClasspathDescriptor",
+            progress_message = "Embedding the classpath descriptor of %{label}",
+        ))
 
-        # In `DefaultInfo`, because `./build/dev-dist.cmd descriptors --two-producer` reads the files of the group
-        # target this package declares, and that group unions `DefaultInfo` and no other output group. A fragment
-        # reads `DevDistPluginDescriptorInfo.descriptor` instead, so no distribution can pick this file up, and with
-        # the flag off there is no file to pick up at all.
-        files.append(reference)
+    files = [descriptor]
 
+    platforms = _resolved_platforms(ctx)
+    declaration = struct(
+        version = 1,
+        producer = _descriptor_producer_identity(ctx),
+        product = product,
+        product_dependency_label = ctx.attr._product_info.label,
+        scope = {
+            "main_module": module_name,
+            "variant": ctx.attr.variant,
+            "declared_platforms": ctx.attr.platforms,
+            "platforms": platforms,
+            "declared_markers": ctx.attr.markers,
+            "declared_version_suffix": ctx.attr.version_suffix,
+            "markers": request.stamps.markers,
+            "version_suffix": request.stamps.version_suffix,
+        },
+        sources = request.sources,
+        actions = tuple(actions),
+        primary_output = descriptor,
+        default_outputs = tuple(files),
+    )
+    metadata = ctx.actions.declare_file(ctx.label.name + ".declaration.json")
+    ctx.actions.write(metadata, _descriptor_declaration_json(declaration))
     return [
         DefaultInfo(files = depset(files)),
+        OutputGroupInfo(_dev_dist_descriptor_metadata = depset([metadata])),
         DevDistPluginDescriptorInfo(
             plugin_main_module = module_name,
             descriptor = descriptor,
-            platforms = _resolved_platforms(ctx),
+            classpath_descriptor = classpath_descriptor,
+            platforms = platforms,
+            _declaration = declaration,
+            _declaration_file = metadata,
         ),
     ]
 
@@ -424,19 +670,30 @@ def _resolved_platforms(ctx):
 _dev_dist_plugin_descriptor = rule(
     doc = "Patches one plugin's `META-INF/plugin.xml` the way a dev-distribution assembly does.",
     implementation = _dev_dist_plugin_descriptor_impl,
+    fragments = ["platform"],
     attrs = {
         "main_module": attr.string(
             doc = "The main JPS module that identifies this descriptor.",
             mandatory = True,
         ),
-        "unresolved_descriptor_modules": attr.string_list(),
+        "unresolved_descriptor_modules": attr.string_list(
+            doc = """The descriptor modules the dev section names but no descriptor target answers.
+
+The macro writes the list. A non-empty list fails analysis and asks for a regeneration of the dev sections.""",
+        ),
         "descriptor": attr.label(
             doc = """The plugin's own `META-INF/plugin.xml`, as the exported source file.
 
 Declared rather than derived: the file sits under a production resource root, and which directory that is cannot be
 computed from a label. Everything else about the plugin is derived - see the macro.""",
-            mandatory = True,
             allow_single_file = [".xml"],
+        ),
+        "jar_inputs": attr.label(
+            doc = "The leaf's `_dev_dist_plugin_descriptor_jars` target, or None when the leaf reads no jar. The macro declares it.",
+            providers = [_DevDistDescriptorJarsInfo],
+        ),
+        "descriptor_entry": attr.string(
+            doc = "The plugin descriptor path inside the descriptor jar.",
         ),
         "descriptors": attr.label_keyed_string_dict(
             doc = """Every other descriptor this plugin's patch can reach, keyed by target and valued by load path.
@@ -448,20 +705,6 @@ action run with no JPS project model: `resolveElement` reads the cache before it
         "platform_descriptors": attr.label_keyed_string_dict(
             doc = """The same, for the platform's search scope. No generator writes it; see `plugin_modules`.""",
             allow_files = [".xml"],
-        ),
-        "library_descriptors": attr.label_keyed_string_dict(
-            doc = """A descriptor no production source root holds, keyed by the library container and valued by its load paths.
-
-A value states one load path, or several separated by a space. The load path is also the zip entry, because `toLoadPath`
-strips the leading `/`. `findFileInModuleLibraryDependencies` is the assembly's route to such a file, and it belongs to
-`DescriptorSearchPass.MODULE_OUTPUT` alone. One plugin of this product needs it: the Kotlin compiler ships
-`META-INF/analysis-api/analysis-api-fir.xml` inside a library jar.
-
-The **container** target, and not a jar of it, for the reason `dev_dist_plugin_content.libraries` names containers: a
-per-jar label carries the artifact version, so a Maven bump rewrote every checked-in file that named the jar. A
-container label carries no version, so a bump now rewrites only the library's own package. The action expands the
-container back into its jars - see `_descriptor_request`.""",
-            providers = [[JavaInfo]],
         ),
         "variant": attr.string(
             doc = """The layout variant, empty for a plugin whose one layout serves every platform.
@@ -482,7 +725,7 @@ generator writes it, and it is kept on purpose: the variant token cannot spell e
             doc = """The layout's raw text patch as marker-table rows, in the order it applies them.
 
 Two shapes. `os-arch:<osId>:<marketplaceName>` is the OS and architecture dependency placeholder, whose replacement text
-`osArchDescriptorMarker` owns; `marker:<literal>:<replacement>` is a plain replacement. Both producers replace the first
+`osArchDescriptorMarker` owns; `marker:<literal>:<replacement>` is a plain replacement. The executor replaces the first
 occurrence of a plain string, and an unknown shape fails the action rather than emitting an unpatched text.""",
         ),
         "version_suffix": attr.string(
@@ -528,23 +771,10 @@ port is field for field and a scope is what the platform's own resolver takes.""
             doc = """The Go executor.
 
 ADR 0006 puts the executors in Go, and a descriptor feeds every plugin main jar, so a JVM action for it sits on the
-build's critical path. `_reference_patcher` is the JVM tool it replaced, and it stays as the second producer.""",
+build's critical path.""",
             default = Label("//build/plugin-descriptor-patcher:plugin-descriptor-patcher"),
             executable = True,
             cfg = "exec",
-        ),
-        "_reference_patcher": attr.label(
-            doc = """The JVM reference producer, run only under `dev_dist_descriptor_reference`.
-
-It calls `applyPluginDescriptorPatch`, the same body a dev assembly runs. So a byte comparison of its output against
-`_patcher`'s is a comparison of two implementations of one request, over one set of declared inputs.""",
-            default = Label("//platform/build-scripts/bazel-rules/dev-dist-plugin-descriptor:dev-dist-plugin-descriptor"),
-            executable = True,
-            cfg = "exec",
-        ),
-        "_dev_dist_descriptor_reference": attr.label(
-            default = Label("//platform/build-scripts/bazel-rules:dev_dist_descriptor_reference"),
-            providers = [BuildSettingInfo],
         ),
         "_product_info": attr.label(
             doc = """The product the stamps come from, as a flag rather than three attributes.
@@ -640,8 +870,7 @@ def dev_dist_plugin_descriptor_target_name(main_module, variant = ""):
 
     Keyed by the main module and not by the module target's own name, because a target name repeats: several plugins
     keep their main module in a package whose production target is called `plugin`, and two of those would declare one
-    target twice. The main module is unique across the product, and it is already the stem of the output file and the
-    join key of `./build/dev-dist.cmd descriptors`.
+    target twice. The main module is unique across the product, and it is already the stem of the output file.
 
     The variant joins the name where the plugin has one, because a plugin whose descriptor differs by operating system
     or architecture declares one target per variant.
@@ -669,9 +898,8 @@ def dev_dist_plugin_descriptor_entry_of(label):
     exist.
 
     A main module whose own name ends in `_x64` or another variant token therefore parses as a shorter plugin with a
-    variant. A JPS module name states dots and no underscore of that shape, and
-    `//build:*_descriptor_declaration_test` compares the answer against the `module_name` the leaf reads out of its own
-    module target, so such a name turns that suite red.
+    variant. A JPS module name states dots and no underscore of that shape, and the leaf reads its `module_name` out of
+    its own module target, so such a name would not match its leaf.
 
     Args:
         label: a descriptor target's label or its bare name.
@@ -699,7 +927,7 @@ def dev_dist_plugin_descriptor_entry_of(label):
         ))
     return struct(main_module = stem, variant = entry_variant)
 
-def dev_dist_plugin_descriptor_key(main_module, variant = ""):
+def _descriptor_key(main_module, variant = ""):
     """The key every deviation table of the plan is keyed by - `("intellij.jcef.plugin", "darwin_aarch64")`.
 
     A deviation is a fact about one (plugin, variant) and not about the plugin: two variants state different markers, and
@@ -713,14 +941,22 @@ def dev_dist_plugin_descriptor_key(main_module, variant = ""):
         return main_module + "/" + variant
     return main_module
 
-def dev_dist_plugin_descriptor(main_module, descriptor_module, descriptor, variant = "", tags = [], visibility = ["//visibility:public"], **kwargs):
+def dev_dist_plugin_descriptor(
+        main_module,
+        descriptor = "",
+        descriptor_module = "",
+        descriptor_jar = None,
+        descriptor_entry = "",
+        variant = "",
+        tags = [],
+        visibility = ["//visibility:public"],
+        **kwargs):
     """`_dev_dist_plugin_descriptor` with what every plugin says the same way filled in.
 
     Three things the macro derives rather than have them restated once per plugin. `name` comes from `main_module`, the
-    way `dev_dist_plugin_content` and `content_module_jar` derive their own. The descriptor's label comes from the
-    module target's own package, which is where `exportDescriptorFiles` put the `exports_files` entry. And `manual` is
-    added, for `content_module_jar`'s reason: these are per-plugin targets of a measurement, and `bazel build //...`
-    must not run all of them.
+    way `content_module_jar` derives its own. The descriptor's label comes from the module target's own package, which
+    is where `exportDescriptorFiles` put the `exports_files` entry. And `manual` is added, for `content_module_jar`'s
+    reason: these are per-plugin targets of a measurement, and `bazel build //...` must not run all of them.
 
     Args:
         main_module: the plugin's main JPS module, which names the target.
@@ -731,58 +967,42 @@ def dev_dist_plugin_descriptor(main_module, descriptor_module, descriptor, varia
         visibility: public by default.
         **kwargs: see `_dev_dist_plugin_descriptor`.
     """
+    if bool(descriptor) == bool(descriptor_jar):
+        fail("dev_dist_plugin_descriptor requires exactly one descriptor source")
+    source = descriptor_module.rpartition(":")[0] + ":" + descriptor if descriptor else None
+    name = dev_dist_plugin_descriptor_target_name(main_module, variant)
+    descriptor_jars = kwargs.pop("descriptor_jars", {})
+    library_descriptors = kwargs.pop("library_descriptors", {})
+    jar_inputs = None
+    if descriptor_jar or descriptor_jars or library_descriptors:
+        jar_inputs = name + "_jars"
+        _dev_dist_plugin_descriptor_jars(
+            name = jar_inputs,
+            descriptor_jar = descriptor_jar,
+            descriptor_jars = descriptor_jars,
+            library_descriptors = library_descriptors,
+            tags = ["manual"],
+            visibility = ["//visibility:private"],
+            **{key: kwargs[key] for key in ["testonly"] if key in kwargs}
+        )
     _dev_dist_plugin_descriptor(
-        name = dev_dist_plugin_descriptor_target_name(main_module, variant),
+        name = name,
         main_module = main_module,
-        descriptor = descriptor_module.rpartition(":")[0] + ":" + descriptor,
+        descriptor = source,
+        jar_inputs = ":" + jar_inputs if jar_inputs else None,
+        descriptor_entry = descriptor_entry,
         variant = variant,
         tags = tags + ["manual"],
         visibility = visibility,
         **kwargs
     )
 
-# The plugin fragment of every plugin no named fragment claims. `intellij_dev_plugin_fragments_ultimate` spells this
-# name and the named ones the same way, and `//build:*_descriptor_declaration_test` is what compares the two spellings.
-DEV_DIST_PLUGIN_DESCRIPTOR_REST_FRAGMENT = "plugins_rest"
-
-def dev_dist_plugin_descriptor_fragment_partition(plugin_fragments):
-    """Every plugin fragment of one product, and the fragment that lays out each plugin a named one claims.
-
-    `plugin_fragments` of `dev_dist_plan.bzl` is the product's fragment partition, and it is the one statement of it.
-    The descriptor plan states no fragment of its own, because a second statement of one partition can drift from the
-    first.
-
-    Args:
-        plugin_fragments: `DEV_DIST_PLANS[<product>].plugin_fragments`, keyed by the fragment suffix.
-
-    Returns:
-        `struct(names, owner)`. `names` is every fragment name, the complement last. `owner` is the fragment of each
-        plugin a named fragment claims, and a plugin absent from it takes the complement.
-    """
-    names = []
-    owner = {}
-    for suffix in sorted(plugin_fragments.keys()):
-        fragment = "plugins_" + suffix
-        if fragment == DEV_DIST_PLUGIN_DESCRIPTOR_REST_FRAGMENT:
-            fail("dev_dist_plugin_descriptor: '%s' is the complement, so no named fragment can be called that" % fragment)
-        names.append(fragment)
-        for main_module in plugin_fragments[suffix]:
-            earlier = owner.get(main_module)
-            if earlier != None:
-                fail("dev_dist_plugin_descriptor: '%s' is claimed by both '%s' and '%s'" % (
-                    main_module,
-                    earlier,
-                    fragment,
-                ))
-            owner[main_module] = fragment
-    return struct(names = names + [DEV_DIST_PLUGIN_DESCRIPTOR_REST_FRAGMENT], owner = owner)
-
 # What `fragment_reads` states. `all` means every fragment reads the produced descriptor of every plugin the plan
 # expresses, which is the state of every product today. `none` puts every fragment back on the computed path, and it is
 # the second arm of the two-arm measurement.
 _FRAGMENT_READS_MODES = ["all", "none"]
 
-def dev_dist_plugin_descriptor_fragment_reads_mode(product):
+def _descriptor_fragment_reads_mode(product):
     """The plan's `fragment_reads` mode, refused when it states neither `all` nor `none`.
 
     The one owner of that refusal, because a mode the plan misspells would otherwise read as `none` and take every
@@ -798,38 +1018,18 @@ def dev_dist_plugin_descriptor_fragment_reads_mode(product):
         ))
     return product.fragment_reads
 
-def dev_dist_plugin_descriptor_reads_produced(product, main_module):
-    """Whether a fragment reads this plugin's produced descriptor, or computes the text itself.
+def dev_dist_plugin_descriptors(name, product, platform_prefix, visibility = ["//visibility:public"]):
+    """One group over every descriptor target of a product, and one `dev_dist_product_info`.
 
-    The macro that hands a set to a fragment and `//build:*_descriptor_declaration_test` both read this, so one arm of
-    the measurement cannot be flipped halfway.
-
-    Args:
-        product: one product's entry of `DEV_DIST_PLUGIN_DESCRIPTORS`.
-        main_module: the plugin's main JPS module. `fragment_reads` is keyed by plugin and not by entry, because a
-            fragment reads one descriptor per plugin and which variant that is follows from the platform.
-    """
-    if dev_dist_plugin_descriptor_fragment_reads_mode(product) == "none":
-        return False
-    return main_module not in product.fragment_reads_opt_out
-
-def dev_dist_plugin_descriptors(name, product, platform_prefix, plugin_fragments, visibility = ["//visibility:public"]):
-    """One group over every descriptor target of a product, one `dev_dist_product_info`, and one set target per
-    (plugin fragment, platform).
-
-    A set exists for every fragment the partition names and every `HOST_PLATFORMS` entry, and an empty one where the
-    plan names no plugin. That is what makes the population a single-file toggle: with `descriptor_targets = []` every
-    label `//build` names still resolves, and every fragment then declares nothing.
+    The group is one product's whole population. The population is a single-file toggle: with `descriptor_targets = []`
+    the group still resolves and names no descriptor.
 
     Args:
-        name: the group target's name. `./build/dev-dist.cmd descriptors` names it.
+        name: the group target's name.
         product: one product's entry of `DEV_DIST_PLUGIN_DESCRIPTORS`.
-        platform_prefix: the product's platform prefix, which names the set targets and the product info target.
-        plugin_fragments: `DEV_DIST_PLANS[<product>].plugin_fragments` - see
-            `dev_dist_plugin_descriptor_fragment_partition`.
-        visibility: the group's, the product info's and the sets' visibility.
+        platform_prefix: the product's platform prefix, which names the product info target.
+        visibility: the group's and the product info's visibility.
     """
-    partition = dev_dist_plugin_descriptor_fragment_partition(plugin_fragments)
 
     # The product's own scalars, as the one target every descriptor of this product is configured with.
     product_info = platform_prefix + "_product_info"
@@ -839,6 +1039,7 @@ def dev_dist_plugin_descriptors(name, product, platform_prefix, plugin_fragments
         marketplace_names = product.marketplace_names,
         release_date = product.release_date,
         release_version = product.release_version,
+        platform_prefix = platform_prefix,
         # `manual`, for the reason every other target of this package is: `bazel build //...` must run no descriptor
         # action. This one runs none and declares no output, and the tag keeps the package's rule one sentence.
         tags = ["manual"],
@@ -853,7 +1054,7 @@ def dev_dist_plugin_descriptors(name, product, platform_prefix, plugin_fragments
     plugin_names = {}
     for label in product.descriptor_targets:
         entry = dev_dist_plugin_descriptor_entry_of(label)
-        key = dev_dist_plugin_descriptor_key(entry.main_module, entry.variant)
+        key = _descriptor_key(entry.main_module, entry.variant)
         earlier = entry_by_key.get(key)
         if earlier != None:
             fail("dev_dist_plugin_descriptors: both %s and %s name the descriptor of '%s'" % (earlier, label, key))
@@ -861,9 +1062,9 @@ def dev_dist_plugin_descriptors(name, product, platform_prefix, plugin_fragments
         entries.append((label, entry))
         plugin_names[entry.main_module] = None
 
-    # The switch, checked over the whole plan. The loop below reads it per plugin, so an empty population would let a
-    # misspelled mode and a stale opt-out name pass as the default.
-    if dev_dist_plugin_descriptor_fragment_reads_mode(product) == "none" and product.fragment_reads_opt_out:
+    # The switch, checked over the whole plan. No rule reads it today, so this check is what keeps a misspelled mode
+    # and a stale opt-out name from passing as the default.
+    if _descriptor_fragment_reads_mode(product) == "none" and product.fragment_reads_opt_out:
         fail("dev_dist_plugin_descriptors: fragment_reads is 'none', so an opt-out list restates it")
     for main_module in product.fragment_reads_opt_out:
         if main_module not in plugin_names:
@@ -876,33 +1077,3 @@ def dev_dist_plugin_descriptors(name, product, platform_prefix, plugin_fragments
         tags = ["manual"],
         visibility = visibility,
     )
-
-    # A plugin whose fragment the product does not name would be declared to no fragment, and the analysis test of
-    # `//build:idea_dev_plugins_descriptor_declaration_test` would then compare a plan entry against nothing. Refused
-    # here, where the plan is read, rather than there.
-    #
-    # The switch and not the whole list, although the switch answers yes for every plugin today. `fragment_reads =
-    # "none"` puts every fragment back on the computed path, with no edit to a rule, a test or a fragment, and this loop
-    # is what reads it - see the plan file's header.
-    #
-    # One list per fragment, and not one per (fragment, platform). Which platform takes which variant of a plugin
-    # follows from the variant, so the six sets of one fragment take the same list and each one filters it.
-    by_fragment = {fragment: [] for fragment in partition.names}
-    for (label, entry) in entries:
-        if not dev_dist_plugin_descriptor_reads_produced(product, entry.main_module):
-            continue
-        fragment = partition.owner.get(entry.main_module, DEV_DIST_PLUGIN_DESCRIPTOR_REST_FRAGMENT)
-        by_fragment[fragment].append(label)
-
-    for fragment in partition.names:
-        for platform in HOST_PLATFORMS:
-            _dev_dist_plugin_descriptor_set(
-                name = dev_dist_plugin_descriptor_set_target_name(platform_prefix, fragment, platform),
-                descriptors = by_fragment[fragment],
-                platform = platform,
-                product_info = ":" + product_info,
-                # `manual` for the leaves' reason: a wildcard build must run none of these actions on its own. An
-                # explicit dependency still builds them, which is how a fragment that declares a set gets its files.
-                tags = ["manual"],
-                visibility = visibility,
-            )

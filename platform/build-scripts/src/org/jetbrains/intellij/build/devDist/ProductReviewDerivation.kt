@@ -46,7 +46,6 @@ fun deriveProductReviewReport(
           namespace = module.moduleId.namespace,
           loading = module.loading.xmlValue,
           requiredIfAvailable = module.requiredIfAvailable?.let { ProductModuleIdentity(it.name, it.namespace) },
-          includeDependencies = module.includeDependencies,
         )
       },
       xmlIncludes = spec.deprecatedXmlIncludes.map { reference ->

@@ -7,10 +7,12 @@
     <module name="intellij.platform.frontend"/>
     <module name="intellij.platform.ide"/>
     <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.observable"/>
     <module name="intellij.platform.ide.progress"/>
     <module name="intellij.platform.project"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.rpc"/>
+    <module name="intellij.platform.util.progress"/>
     <module name="intellij.python.lsp.core.common"/>
     <module name="intellij.python.lsp.core.frontend"/>
     <module name="intellij.python.pytools.common"/>

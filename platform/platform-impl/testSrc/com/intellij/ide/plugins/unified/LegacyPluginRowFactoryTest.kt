@@ -8,8 +8,8 @@ import com.intellij.ide.plugins.PluginInfoProvider
 import com.intellij.ide.plugins.PluginsGroupType
 import com.intellij.ide.plugins.TagPanel
 import com.intellij.ide.plugins.newui.BaselinePanel
-import com.intellij.ide.plugins.newui.InstallButton
 import com.intellij.ide.plugins.newui.EventHandler
+import com.intellij.ide.plugins.newui.InstallButton
 import com.intellij.ide.plugins.newui.LegacyPluginUiHost
 import com.intellij.ide.plugins.newui.LinkComponent
 import com.intellij.ide.plugins.newui.ListPluginComponent
@@ -35,6 +35,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.common.waitUntilAssertSucceeds
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.replaceService
@@ -612,103 +613,108 @@ internal class LegacyPluginRowFactoryTest {
     }
 
   @Test
-  fun `active update renders row and details progress without action overlap`(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
-    ApplicationManager.getApplication().replaceService(PluginInfoProvider::class.java, object : PluginInfoProvider {
-      override fun loadCachedPlugins(): Set<PluginId> = emptySet()
+  fun `active update renders row and details progress without action overlap`(): Unit =
+    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+      ApplicationManager.getApplication().replaceService(PluginInfoProvider::class.java, object : PluginInfoProvider {
+        override fun loadCachedPlugins(): Set<PluginId> = emptySet()
 
-      override fun loadPlugins(indicator: ProgressIndicator?) = CompletableFuture.completedFuture(emptySet<PluginId>())
-    }, disposable)
-    val host = LegacyPluginUiHost(parentScope = this, operationScope = this, unifiedDetailsPageLayout = true)
-    try {
-      val pluginId = PluginId.getId("update.progress.plugin")
-      val installed = PluginNodeModelBuilderFactory.createBuilder(pluginId)
-        .setName("Update Progress Plugin")
-        .setIsConverted(true)
-        .build()
-      val update = PluginNodeModelBuilderFactory.createBuilder(pluginId)
-        .setName("Update Progress Plugin")
-        .setIsConverted(true)
-        .build()
-      val listModel = ListPluginModel().apply {
-        setPluginInstallationState(pluginId, PluginInstallationState(true))
-      }
-      val input = PluginRowInput(
-        installedPlugin = installed,
-        installationState = PluginInstallationState(true),
-        errors = emptyList(),
-        updateDescriptor = update,
-        enabled = true,
-        restrictedByProduct = false,
-        operationInProgress = true,
-        detailsProgress = PluginProgressState.Determinate(0.375),
-      )
-      val item = PluginItemState(
-        pluginId, update.name, modelHandle = PluginItemModelHandle(update), rowInput = input,
-      )
-      val listener = LinkListener<Any> { _, _ -> }
-      val factory = LegacyPluginRowFactory(host, listModel, listener, onSelectionChanged = {})
-      val presenter = LegacyPluginDetailsPresenter(host, listener)
-      val details = componentsOfType(presenter.component, PluginDetailsPageComponent::class.java).single { it.isVisible }
-      val initialHeader = detailsHeader(details.getValue(0, true))
-      val initialActions = componentsOfType(initialHeader, BaselinePanel::class.java).single()
-      val staleDisableAction = initialActions.buttonComponents.filterIsInstance<OptionButton>().single { it !is InstallOptionButton }
-      initialActions.setProgressDisabledButton(staleDisableAction)
-      UnifiedPluginsPageView({}, {}, { _, _ -> }, rowFactory = factory, detailsPresenter = presenter).use { view ->
-        val controller = UnifiedPluginsPageController(
-          listOf(PluginSectionState(PluginSectionId.Installing, items = listOf(item)))
+        override fun loadPlugins(indicator: ProgressIndicator?) = CompletableFuture.completedFuture(emptySet<PluginId>())
+      }, disposable)
+      val host = LegacyPluginUiHost(parentScope = this, operationScope = this, unifiedDetailsPageLayout = true)
+      try {
+        val pluginId = PluginId.getId("update.progress.plugin")
+        val installed = PluginNodeModelBuilderFactory.createBuilder(pluginId)
+          .setName("Update Progress Plugin")
+          .setIsConverted(true)
+          .build()
+        val update = PluginNodeModelBuilderFactory.createBuilder(pluginId)
+          .setName("Update Progress Plugin")
+          .setIsConverted(true)
+          .build()
+        val listModel = ListPluginModel().apply {
+          setPluginInstallationState(pluginId, PluginInstallationState(true))
+        }
+        val input = PluginRowInput(
+          installedPlugin = installed,
+          installationState = PluginInstallationState(true),
+          errors = emptyList(),
+          updateDescriptor = update,
+          enabled = true,
+          restrictedByProduct = false,
+          operationInProgress = true,
+          detailsProgress = PluginProgressState.Determinate(0.375),
         )
-        view.render(controller.state.value)
-        yield()
+        val item = PluginItemState(
+          pluginId, update.name, modelHandle = PluginItemModelHandle(update), rowInput = input,
+        )
+        val listener = LinkListener<Any> { _, _ -> }
+        val factory = LegacyPluginRowFactory(host, listModel, listener, onSelectionChanged = {})
+        val presenter = LegacyPluginDetailsPresenter(host, listener)
+        val details = componentsOfType(presenter.component, PluginDetailsPageComponent::class.java).single { it.isVisible }
+        val initialHeader = detailsHeader(details.getValue(0, true))
+        val initialActions = componentsOfType(initialHeader, BaselinePanel::class.java).single()
+        val staleDisableAction = initialActions.buttonComponents.filterIsInstance<OptionButton>().single { it !is InstallOptionButton }
+        initialActions.setProgressDisabledButton(staleDisableAction)
+        UnifiedPluginsPageView({}, {}, { _, _ -> }, rowFactory = factory, detailsPresenter = presenter).use { view ->
+          val controller = UnifiedPluginsPageController(
+            listOf(PluginSectionState(PluginSectionId.Installing, items = listOf(item)))
+          )
+          view.render(controller.state.value)
+          yield()
 
-        val row = componentsOfType(view.component, ListPluginComponent::class.java).single()
-        assertThat(row.underProgress()).isTrue()
-        val progress = componentsOfType(view.component, JProgressBar::class.java).single()
-        assertThat(progress.isIndeterminate).isFalse()
-        assertThat(progress.percentComplete).isCloseTo(0.375, within(0.01))
-        val header = detailsHeader(details.getValue(0, true))
-        val actions = componentsOfType(header, BaselinePanel::class.java).single()
-        val updateAction = actions.buttonComponents.filterIsInstance<UpdateButton>().single()
-        header.setBounds(0, 0, JBUI.scale(800), header.preferredSize.height)
-        header.doLayout()
-        actions.doLayout()
+          val row = componentsOfType(view.component, ListPluginComponent::class.java).single()
+          assertThat(row.underProgress()).isTrue()
+          waitUntilAssertSucceeds {
+            val progressBars = componentsOfType(view.component, JProgressBar::class.java)
+            assertThat(progressBars).hasSize(1)
+            val progress = progressBars.single()
+            assertThat(progress.isIndeterminate).isFalse()
+            assertThat(progress.percentComplete).isCloseTo(0.375, within(0.01))
+            val header = detailsHeader(details.getValue(0, true))
+            val actions = componentsOfType(header, BaselinePanel::class.java).single()
+            val updateAction = actions.buttonComponents.filterIsInstance<UpdateButton>().single()
+            header.setBounds(0, 0, JBUI.scale(800), header.preferredSize.height)
+            header.doLayout()
+            actions.doLayout()
 
-        assertThat(actions.buttonComponents.filter(Component::isVisible)).containsExactly(updateAction)
-        assertThat(updateAction.isEnabled).isFalse()
-        assertThat(updateAction.x).isEqualTo(-JBUI.scale(3))
-        val progressContainer = generateSequence<Component>(progress) { it.parent }.first { it.parent === actions }
-        assertThat(updateAction.bounds.intersects(progressContainer.bounds)).isFalse()
+            assertThat(actions.buttonComponents.filter(Component::isVisible)).containsExactly(updateAction)
+            assertThat(updateAction.isEnabled).isFalse()
+            assertThat(updateAction.x).isEqualTo(-JBUI.scale(3))
+            val progressContainer = generateSequence<Component>(progress) { it.parent }.first { it.parent === actions }
+            assertThat(updateAction.bounds.intersects(progressContainer.bounds)).isFalse()
+          }
 
-        row.showProgress()
-        details.showInstallProgress(this)
+          row.showProgress()
+          details.showInstallProgress(this)
 
-        assertThat(componentsOfType(view.component, JProgressBar::class.java)).hasSize(1)
+          assertThat(componentsOfType(view.component, JProgressBar::class.java)).hasSize(1)
 
-        controller.updateSection(PluginSectionState(
-          PluginSectionId.Installing,
-          items = listOf(item.copy(contentRevision = 1, rowInput = input.copy(detailsProgress = PluginProgressState.Indeterminate))),
-        ))
-        view.render(controller.state.value)
-        yield()
+          controller.updateSection(PluginSectionState(
+            PluginSectionId.Installing,
+            items = listOf(item.copy(contentRevision = 1, rowInput = input.copy(detailsProgress = PluginProgressState.Indeterminate))),
+          ))
+          view.render(controller.state.value)
+          yield()
 
-        assertThat(componentsOfType(view.component, JProgressBar::class.java).single().isIndeterminate).isTrue()
+          assertThat(componentsOfType(view.component, JProgressBar::class.java).single().isIndeterminate).isTrue()
 
-        details.hideProgress()
+          details.hideProgress()
 
-        controller.updateSection(PluginSectionState(
-          PluginSectionId.Installing,
-          items = listOf(item.copy(contentRevision = 2, rowInput = input.copy(operationInProgress = false, detailsProgress = null))),
-        ))
-        view.render(controller.state.value)
-        yield()
+          controller.updateSection(PluginSectionState(
+            PluginSectionId.Installing,
+            items = listOf(item.copy(contentRevision = 2, rowInput = input.copy(operationInProgress = false, detailsProgress = null))),
+          ))
+          view.render(controller.state.value)
+          yield()
 
-        assertThat(componentsOfType(view.component, ListPluginComponent::class.java).single().underProgress()).isFalse()
-        assertThat(componentsOfType(view.component, JProgressBar::class.java)).isEmpty()
+          assertThat(componentsOfType(view.component, ListPluginComponent::class.java).single().underProgress()).isFalse()
+          assertThat(componentsOfType(view.component, JProgressBar::class.java)).isEmpty()
+        }
+      }
+      finally {
+        host.dispose(closeSession = false)
       }
     }
-    finally {
-      host.dispose(closeSession = false)
-    }
-  }
 
   @Test
   fun `prepared dynamic update shows Installed and Reset restores Update`(): Unit =
@@ -990,17 +996,19 @@ internal class LegacyPluginRowFactoryTest {
     assertThat(button.getClientProperty("JButton.focusedBorderColor")).isNull()
   }
 
-  private fun assertPreparedDetailsAction(
+  private suspend fun assertPreparedDetailsAction(
     presenter: LegacyPluginDetailsPresenter,
     expectedText: String,
     enabled: Boolean,
   ) {
-    val details = componentsOfType(presenter.component, PluginDetailsPageComponent::class.java).single { it.isVisible }
-    val actions = componentsOfType(detailsHeader(details.getValue(0, true)), BaselinePanel::class.java).single()
-    val action = actions.buttonComponents.filterIsInstance<JButton>().single { button ->
-      button.isVisible && button.text == expectedText
+    waitUntilAssertSucceeds {
+      val details = componentsOfType(presenter.component, PluginDetailsPageComponent::class.java).single { it.isVisible }
+      val actions = componentsOfType(detailsHeader(details.getValue(0, true)), BaselinePanel::class.java).single()
+      val buttons = actions.buttonComponents.filterIsInstance<JButton>()
+      assertThat(buttons.filter(Component::isVisible).map(JButton::getText)).contains(expectedText)
+      val action = buttons.single { button -> button.isVisible && button.text == expectedText }
+      assertThat(action.isEnabled).isEqualTo(enabled)
     }
-    assertThat(action.isEnabled).isEqualTo(enabled)
   }
 
   private fun verticalCenterTwice(component: Component): Int = component.y * 2 + component.height

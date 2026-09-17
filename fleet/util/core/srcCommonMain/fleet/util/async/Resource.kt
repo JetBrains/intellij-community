@@ -264,6 +264,7 @@ sealed class SharingMode(
 ) {
   /**
    * The resource starts immediately and remains active until the scope is canceled.
+   * A failure is terminal here: since the resource runs without a consumer, restarting it on failure would be an unbounded retry loop, so there is no `restartOnFailure` to opt into.
    */
   data object Eager : SharingMode(
     runImmediately = true,
@@ -271,9 +272,14 @@ sealed class SharingMode(
   )
 
   /**
-   * The resource starts when a consumer appears and remains active until the scope is canceled.
+   * The resource starts when a consumer appears and remains active until the scope is canceled, or, with [Lazy.restartOnFailure], until it fails and is dropped once nobody holds it any more.
    */
-  data object Lazy : SharingMode(
+  data class Lazy(
+    /**
+     * drops a failed resource once nobody holds it any more, instead of keeping it for the lifetime of the scope, so the consumer after that gets a new one rather than the cached failure. Off by default: a failure is replayed to every consumer that comes later.
+     */
+    val restartOnFailure: Boolean = false,
+  ) : SharingMode(
     runImmediately = false,
     stopWithoutConsumersMode = StopMode.DoNotStop,
   )
@@ -288,6 +294,10 @@ sealed class SharingMode(
      * configures a delay between the disappearance of the last subscriber and the stopping of the sharing coroutine. It defaults to zero (stop immediately).
      */
     val stopTimeout: kotlin.time.Duration = kotlin.time.Duration.ZERO,
+    /**
+     * evicts a failed resource once nobody holds it any more, instead of keeping it for [stopTimeout], so the consumer after that gets a new one rather than the cached failure. Off by default: a failure is replayed to consumers arriving within the [stopTimeout] window. Only matters together with a non-zero [stopTimeout]: without one a failed resource is evicted anyway.
+     */
+    val restartOnFailure: Boolean = false,
   ) : SharingMode(
     runImmediately = false,
     stopWithoutConsumersMode = StopMode.Stop(stopTimeout, graceful),
@@ -366,6 +376,11 @@ private fun <T> sharedResource(
     is StopMode.Stop -> mode.graceful
     StopMode.DoNotStop -> true
   }
+  val restartOnFailure = when (sharing) {
+    is SharingMode.Eager -> false
+    is SharingMode.Lazy -> sharing.restartOnFailure
+    is SharingMode.WhileUsed -> sharing.restartOnFailure
+  }
   val resource = resource<T> { cc ->
     while (true) {
       val r: Pair<SharedResourceState.Running<T>?, Job?> = store.update { state ->
@@ -374,7 +389,9 @@ private fun <T> sharedResource(
             SharedResourceState.Running(1, runSharedResource(state.source, coroutineScope)).also { state.value = it } to null
           }
           is SharedResourceState.Running<T> -> {
-            s.copy(refCount = s.refCount + 1).also { state.value = it } to null
+            // a resource nobody holds may have died in the meantime — restart it instead of replaying its failure
+            val running = if (restartOnFailure && s.refCount == 0 && s.runnning.isDead) runSharedResource(state.source, coroutineScope) else s.runnning
+            s.copy(refCount = s.refCount + 1, runnning = running).also { state.value = it } to null
           }
           is SharedResourceState.Stopping<T> -> {
             when {
@@ -389,7 +406,9 @@ private fun <T> sharedResource(
           }
           is SharedResourceState.StoppingAfterDelay<T> -> {
             s.timeoutCoroutine.cancel()
-            SharedResourceState.Running(1, s.running).also { state.value = it } to null
+            // the parked resource may have died while idle — restart it instead of replaying its failure
+            val running = if (restartOnFailure && s.running.isDead) runSharedResource(state.source, coroutineScope) else s.running
+            SharedResourceState.Running(1, running).also { state.value = it } to null
           }
           is SharedResourceState.Stopped<T> -> {
             throw ResourceStoppedException()
@@ -419,7 +438,8 @@ private fun <T> sharedResource(
                   val next = if (s.refCount == 1) {
                     when (val mode = sharing.stopWithoutConsumersMode) {
                       is StopMode.Stop -> {
-                        if (mode.stopTimeout == Duration.ZERO) {
+                        // a dead resource has nothing to keep warm: evict it right away so the next consumer restarts it instead of replaying the cached failure
+                        if (mode.stopTimeout == Duration.ZERO || (restartOnFailure && s.runnning.isDead)) {
                           s.runnning.shutDown(mode.graceful)
                           SharedResourceState.Stopping<T>(
                             job = s.runnning.job,
@@ -450,7 +470,8 @@ private fun <T> sharedResource(
                         }
                       }
                       StopMode.DoNotStop -> {
-                        s.copy(refCount = 0)
+                        // a dead resource is not worth keeping for the rest of the scope's life: drop it so the next consumer starts a new one
+                        if (restartOnFailure && s.runnning.isDead) SharedResourceState.NotRunning() else s.copy(refCount = 0)
                       }
                     }
                   }
@@ -567,6 +588,8 @@ private class HotResource<T>(
   val failure: CompletableDeferred<Nothing>,
   val value: CompletableDeferred<T>,
 ) {
+  val isDead: Boolean get() = failure.isCompleted || job.isCompleted
+
   @OptIn(ExperimentalCoroutinesApi::class)
   suspend fun use(cc: Consumer<T>): Consumed {
     return coroutineScope {
@@ -647,6 +670,7 @@ class ResourceCache<K, R> internal constructor(
   private val scope: CoroutineScope,
   private val graceful: Boolean,
   private val stopTimeout: Duration,
+  private val restartOnFailure: Boolean,
   private val factory: (K) -> Resource<R>,
 ) {
   private val lock = SynchronizedObject()
@@ -675,6 +699,7 @@ class ResourceCache<K, R> internal constructor(
     val sharing = SharingMode.WhileUsed(
       graceful = graceful,
       stopTimeout = stopTimeout,
+      restartOnFailure = restartOnFailure,
     )
     // every client gets their own instance, but they share the same per-key state
     return sharedResource(scope, sharing, keyStore(key))
@@ -703,9 +728,13 @@ class ResourceCache<K, R> internal constructor(
     }
 }
 
+/**
+ * A cache of [SharingMode.WhileUsed] resources, one per key. See [SharingMode.WhileUsed.restartOnFailure] for [restartOnFailure], which, like there, only matters together with a non-zero [stopTimeout].
+ */
 fun <K, R> resourceCache(
   graceful: Boolean = true,
   stopTimeout: Duration = Duration.ZERO,
+  restartOnFailure: Boolean = false,
   f: (K) -> Resource<R>,
 ): Resource<ResourceCache<K, R>> =
   resource { cc ->
@@ -715,6 +744,7 @@ fun <K, R> resourceCache(
         scope = scope,
         graceful = graceful,
         stopTimeout = stopTimeout,
+        restartOnFailure = restartOnFailure,
         factory = f,
       )
       var cause: Throwable? = null

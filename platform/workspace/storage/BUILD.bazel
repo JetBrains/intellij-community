@@ -1,5 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.platform.workspace.storage` start
+content_module_jar(module = ":storage")
+### auto-generated section `dev intellij.platform.workspace.storage` end
 
 ### auto-generated section `build intellij.platform.workspace.storage` start
 create_kotlinc_options(
@@ -86,6 +91,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.workspace.storage.iml",
+        "resources/intellij.platform.workspace.storage.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -8,7 +8,7 @@ Parity with the JPS-to-Bazel converter is asserted in JpsModuleToBazelTargetsOnl
 
 load(":jps_library_derivation.bzl", "derive_library_targets")
 load(":jps_model.bzl", "read_project_model")
-load(":jps_target_derivation.bzl", "SKIPPED_MODULES", "compute_build_dir", "compute_iml_target", "compute_module_descriptor_target", "compute_module_targets", "compute_plugin_distribution_target", "compute_project_file_target", "format_module_descriptor_index", "module_name_to_target", "parse_iml")
+load(":jps_target_derivation.bzl", "SKIPPED_MODULES", "compute_build_dir", "compute_iml_target", "compute_module_descriptor_target", "compute_module_targets", "compute_plugin_distribution_target", "compute_project_file_target", "format_dev_dist_plugin_load", "format_dev_dist_plugin_wrapper", "format_module_descriptor_index", "module_name_to_target", "parse_iml")
 
 def _format_target_list(name, targets):
     """Format a list of targets as a Starlark list assignment."""
@@ -24,6 +24,7 @@ def _format_target_list(name, targets):
 def _generate_targets_bzl(production_targets, test_targets, library_targets, iml_targets, plugin_distribution_targets, descriptor_targets, production_by_module, descriptors_by_module):
     """Generate the content for targets.bzl file."""
     content = []
+    content.append(format_dev_dist_plugin_load())
     content.append(_format_target_list("ALL_PRODUCTION_COMMUNITY_TARGETS", production_targets))
     content.append(_format_target_list("ALL_TEST_COMMUNITY_TARGETS", test_targets))
     content.append(_format_target_list("ALL_LIBRARY_COMMUNITY_TARGETS", library_targets))
@@ -35,6 +36,7 @@ def _generate_targets_bzl(production_targets, test_targets, library_targets, iml
         content.append('    "%s": %s,' % (module_name, repr(production_by_module[module_name])))
     content.append("}\n")
     content.append(format_module_descriptor_index(descriptors_by_module))
+    content.append(format_dev_dist_plugin_wrapper())
     content.append("BAZEL_TARGETS_JSON_COMMUNITY = \"@community//build:community_bazel_targets_json\"")
     content.append("ALL_COMMUNITY_TARGETS = ALL_PRODUCTION_COMMUNITY_TARGETS + ALL_TEST_COMMUNITY_TARGETS + ALL_LIBRARY_COMMUNITY_TARGETS")
     return "\n".join(content)

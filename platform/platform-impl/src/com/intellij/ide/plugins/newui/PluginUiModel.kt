@@ -152,6 +152,9 @@ interface PluginUiModel {
 
   fun addDependency(id: PluginId, optional: Boolean)
 
+  val isUpdateable: Boolean
+    get() = !isBundled || allowBundledUpdate
+
   /**
    * Java compatibility method. Going to be removed after refactoring is done.
    */

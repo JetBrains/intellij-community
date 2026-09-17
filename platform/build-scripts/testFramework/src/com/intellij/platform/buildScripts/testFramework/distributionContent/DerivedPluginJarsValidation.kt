@@ -1,19 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.buildScripts.testFramework.distributionContent
 
-import com.intellij.platform.buildScripts.concurrency.withLockInterruptibly
 import com.intellij.platform.distributionContent.FileEntry
 import com.intellij.platform.distributionContent.PluginContentReport
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.ModuleOutputProvider
-import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.devDist.DEV_DIST_ON_DEMAND_PLUGIN_MODULES
 import org.jetbrains.intellij.build.devDist.DerivedPluginJars
-import org.jetbrains.intellij.build.devDist.deriveDevDistPlatformJars
-import org.jetbrains.intellij.build.devDist.derivePluginJars
-import org.jetbrains.intellij.build.productLayout.discoverAllProducts
+import org.jetbrains.intellij.build.devDist.productDerivation
 import java.nio.file.Path
-import java.util.concurrent.locks.ReentrantLock
 import kotlin.io.path.exists
 import kotlin.io.path.readText
 
@@ -25,8 +20,8 @@ import kotlin.io.path.readText
  * disagreement: the derivation is wrong for that plugin. A comparison of the derivation against itself could not
  * fail, and this one can.
  *
- * The suite derives once. The products come from `build/dev-build.json` through `discoverAllProducts`, and every
- * target of the suite reads the one result.
+ * The suite derives once. The products come from `build/dev-build.json` through `productDerivation`, and every
+ * target of the suite, and every other validation of the run, reads the one result.
  *
  * A jar the derivation states and this product did not pack is held out when every member of it is packed in another
  * jar of the same plugin here. Two products can pack one member into two different jars, and the derivation states
@@ -38,9 +33,6 @@ import kotlin.io.path.readText
  * set. The report splits a member into `modules` or `contentModules` by the inclusion reason the packer recorded,
  * and the derivation states the members in merge order. The jar holds the same module output either way. A bare
  * library jar names no module, and the derivation states none.
- *
- * The libraries of a jar are compared where the derivation states a set: the jars a packing target packs. A jar the
- * derivation states no set for skips the field.
  *
  * A packed plugin the derivation has no jar for is outside the population. The failure names the plugin and the one
  * source-derived population that must include each bundled or compatible published plugin.
@@ -70,7 +62,7 @@ private fun validateDerivedPluginJars(
   content: ParsedContentReport,
   outputProvider: ModuleOutputProvider,
 ): List<PackagingCheckFailure> {
-  val records = derivedJarsOf(derivedPluginJars(projectHome = projectHome, outputProvider = outputProvider))
+  val records = derivedJarsOf(productDerivation(projectRoot = projectHome, outputProvider = outputProvider).pluginJars(DEV_DIST_ON_DEMAND_PLUGIN_MODULES))
   val reports = content.bundled + content.nonBundled
   val failures = ArrayList<PackagingCheckFailure>()
 
@@ -100,30 +92,6 @@ private fun validateDerivedPluginJars(
     ))
   }
   return failures
-}
-
-/** The one derivation of a suite, by project home. A suite runs its targets beside each other, and each reads this. */
-private val derivations = HashMap<Path, DerivedPluginJars>()
-private val derivationsLock = ReentrantLock()
-
-/**
- * The derivation over every product of `build/dev-build.json` under [projectHome], derived once per project home.
- *
- * The product discovery loads every `ProductProperties` class from compiled build modules, which [outputProvider]
- * names. The derivation reads the product declarations and source descriptors.
- */
-private fun derivedPluginJars(projectHome: Path, outputProvider: ModuleOutputProvider): DerivedPluginJars {
-  return derivationsLock.withLockInterruptibly {
-    derivations.getOrPut(projectHome) {
-      val products = discoverAllProducts(projectRoot = projectHome, outputProvider = outputProvider)
-      derivePluginJars(
-        products = products.mapNotNull { it.properties as? ProductProperties },
-        extraPopulation = DEV_DIST_ON_DEMAND_PLUGIN_MODULES,
-        platformJars = deriveDevDistPlatformJars(products, outputProvider),
-        outputProvider = outputProvider,
-      )
-    }
-  }
 }
 
 /** The path a plugin's report gives every jar of the plugin, before the path the derivation states. */
@@ -235,14 +203,12 @@ fun writeDivergenceTable(comments: Map<String, List<String>>, divergences: Map<S
 /**
  * One jar the derivation states for a plugin, as the comparison reads it.
  *
- * [relativeOutputFile] and [members] come from a `DerivedPluginJar`. [libraries] is the set a packing target merges
- * into the jar, and `null` where the derivation states no set.
+ * [relativeOutputFile] and [members] come from a `DerivedPluginJar`.
  */
 @Internal
 class DerivedJar(
   @JvmField val relativeOutputFile: String,
   @JvmField val members: List<String>,
-  @JvmField val libraries: List<String>? = null,
 )
 
 /** The jars of every plugin of [derived] as [DerivedJar] lists, by plugin main module. */
@@ -250,7 +216,7 @@ class DerivedJar(
 fun derivedJarsOf(derived: DerivedPluginJars): Map<String, List<DerivedJar>> {
   val result = LinkedHashMap<String, List<DerivedJar>>()
   for (plugin in derived.plugins) {
-    result[plugin.mainModule] = plugin.packing.jars.map { DerivedJar(relativeOutputFile = it.relativeOutputFile, members = it.members, libraries = it.libraries) }
+    result[plugin.mainModule] = plugin.packing.jars.map { DerivedJar(relativeOutputFile = it.relativeOutputFile, members = it.members) }
   }
   return result
 }
@@ -258,7 +224,6 @@ fun derivedJarsOf(derived: DerivedPluginJars): Map<String, List<DerivedJar>> {
 /** One packed jar of one plugin, narrowed to what the derivation states. */
 private class PackedJar(
   @JvmField val members: Set<String>,
-  @JvmField val libraries: Set<String>,
 )
 
 /**
@@ -348,13 +313,11 @@ private fun packedJars(entries: List<FileEntry>): PackedPlugin {
       continue
     }
     val members = LinkedHashSet<String>()
-    val libraries = LinkedHashSet<String>()
     for (module in entry.modules + entry.contentModules) {
       members.add(module.name)
-      libraries.addAll(module.libraries.keys)
     }
     packedMembers.addAll(members)
-    jars[entry.name.removePrefix(LIB_PREFIX)] = PackedJar(members = members, libraries = libraries)
+    jars[entry.name.removePrefix(LIB_PREFIX)] = PackedJar(members = members)
   }
   bareLibraryModules.removeAll(packedMembers)
   return PackedPlugin(jars = jars, members = packedMembers + bareLibraryModules, bareLibraryModules = bareLibraryModules)
@@ -382,18 +345,14 @@ private fun compareOnePlugin(packed: PackedPlugin, derived: List<DerivedJar>): L
       differences.add(Difference(path, "derived, not packed: $path ${describe(members)}"))
       continue
     }
-    addDifference(differences = differences, path = path, field = "members", derived = members, packed = jar.members)
-    val libraries = record.libraries
-    if (libraries != null) {
-      addDifference(differences = differences, path = path, field = "libraries", derived = libraries, packed = jar.libraries)
-    }
+    addDifference(differences = differences, path = path, derived = members, packed = jar.members)
   }
   return differences
 }
 
 private fun describe(members: Collection<String>): String = "[${members.sorted().joinToString()}]"
 
-private fun addDifference(differences: MutableList<Difference>, path: String, field: String, derived: Collection<String>, packed: Collection<String>) {
+private fun addDifference(differences: MutableList<Difference>, path: String, derived: Collection<String>, packed: Collection<String>) {
   val derivedSet = derived.toSet()
   val packedSet = packed.toSet()
   if (derivedSet == packedSet) {
@@ -401,7 +360,7 @@ private fun addDifference(differences: MutableList<Difference>, path: String, fi
   }
   differences.add(Difference(
     path,
-    "$path: $field only derived: ${(derivedSet - packedSet).sorted().joinToString()};" +
+    "$path: members only derived: ${(derivedSet - packedSet).sorted().joinToString()};" +
     " only packed: ${(packedSet - derivedSet).sorted().joinToString()}",
   ))
 }

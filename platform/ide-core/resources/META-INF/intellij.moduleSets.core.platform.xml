@@ -170,10 +170,25 @@
     <module name="intellij.platform.util.ex" loading="embedded"/>
     <module name="intellij.platform.util.ui" loading="embedded"/>
     <module name="intellij.platform.util.coroutines" loading="embedded"/>
+    <module name="intellij.platform.util.annotations" loading="embedded"/>
+    <module name="intellij.platform.util.progress" loading="embedded"/>
+    <module name="intellij.platform.util.text.matching" loading="embedded"/>
+    <module name="intellij.platform.util.io.storages" loading="embedded"/>
+    <module name="intellij.platform.concurrency" loading="embedded"/>
+    <module name="intellij.platform.objectSerializer" loading="embedded"/>
+    <module name="intellij.platform.settings" loading="embedded"/>
+    <module name="intellij.platform.pluginSystem.parser.impl" loading="embedded"/>
+    <module name="intellij.platform.jbr" loading="embedded"/>
+    <module name="intellij.platform.buildData" loading="embedded"/>
+    <module name="intellij.platform.eel.provider" loading="embedded"/>
     <module name="intellij.platform.locking.impl" loading="embedded"/>
     <module name="intellij.platform.core" loading="embedded"/>
     <module name="intellij.platform.core.ui" loading="embedded"/>
     <module name="intellij.platform.core.impl" loading="embedded"/>
+    <module name="intellij.platform.icons.api" loading="embedded"/>
+    <module name="intellij.platform.icons.api.rendering" loading="embedded"/>
+    <module name="intellij.platform.icons" loading="embedded"/>
+    <module name="intellij.platform.icons.impl" loading="embedded"/>
     <module name="intellij.platform.indexing" loading="embedded"/>
     <module name="intellij.platform.projectFrame" loading="embedded"/>
     <module name="intellij.platform.codeStyle" loading="embedded"/>
@@ -184,8 +199,17 @@
     <module name="intellij.platform.instanceContainer" loading="embedded"/>
     <module name="intellij.platform.serviceContainer" loading="embedded"/>
     <module name="intellij.platform.workspace.jps" loading="embedded"/>
+    <module name="intellij.platform.workspace.storage" loading="embedded"/>
+    <module name="intellij.platform.backend.workspace" loading="embedded"/>
+    <module name="intellij.platform.backend.observation" loading="embedded"/>
     <module name="intellij.platform.analysis" loading="embedded"/>
     <module name="intellij.platform.analysis.impl" loading="embedded"/>
+    <module name="intellij.platform.syntax" loading="embedded"/>
+    <module name="intellij.platform.syntax.extensions" loading="embedded"/>
+    <module name="intellij.platform.syntax.i18n" loading="embedded"/>
+    <module name="intellij.platform.syntax.tree" loading="embedded"/>
+    <module name="intellij.platform.syntax.util" loading="embedded"/>
+    <module name="intellij.platform.pratt" loading="embedded"/>
     <module name="intellij.platform.ide.core" loading="embedded"/>
     <module name="intellij.platform.ide.core.impl" loading="embedded"/>
     <module name="intellij.platform.ide.core.plugins" loading="embedded"/>

@@ -17,10 +17,24 @@
 package xxh3
 
 import (
+	"encoding/binary"
+	"math/big"
 	"unicode/utf16"
 
 	"github.com/zeebo/xxh3"
 )
+
+// Signature128 is `devDistSignature` of the Kotlin plugin-preparation module: hash4j's `Hashing.xxh3_128()` over
+// the stream bytes, rendered as one base-36 number of the 128-bit value, most significant half first. The caller
+// frames the stream the way hash4j does: `putString` is the UTF-16 code units, two little-endian bytes each,
+// followed by the length as a little-endian int; `putInt` is four little-endian bytes; `putBoolean` is one byte.
+func Signature128(stream []byte) string {
+	value := xxh3.Hash128(stream)
+	bytes := make([]byte, 16)
+	binary.BigEndian.PutUint64(bytes, value.Hi)
+	binary.BigEndian.PutUint64(bytes[8:], value.Lo)
+	return new(big.Int).SetBytes(bytes).Text(36)
+}
 
 // HashBytes is hash4j's `Hashing.xxh3_64().hashBytesToLong`, which adds no framing of its own - the digest is over
 // exactly the bytes given. This is the form the IKV keys and the directory-name entries use.

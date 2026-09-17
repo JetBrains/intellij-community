@@ -1,19 +1,17 @@
-load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_TARGETS")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `dev intellij.vcs.gitlab` start
 dev_dist_plugin(
-    main_module = "intellij.vcs.gitlab",
-    module_targets = MODULE_TARGETS,
-    prepacked_content_modules = [
+    content_modules = [
         # do not sort,
-        "intellij.vcs.gitlab.frontend",
+        "intellij.vcs.gitlab.shared",
         "intellij.vcs.gitlab.backend",
+        "intellij.vcs.gitlab.frontend",
         "intellij.vcs.gitlab.git",
         "intellij.vcs.gitlab.yaml",
-        "intellij.vcs.gitlab.shared",
     ],
+    main_module = "intellij.vcs.gitlab",
 )
 ### auto-generated section `dev intellij.vcs.gitlab` end
 

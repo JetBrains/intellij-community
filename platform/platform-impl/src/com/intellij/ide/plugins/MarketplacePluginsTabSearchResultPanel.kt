@@ -11,6 +11,7 @@ import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollect
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector.updateAndGetSearchIndex
 import com.intellij.ide.plugins.newui.LinkComponent
 import com.intellij.ide.plugins.newui.PluginModelAsyncOperationsExecutor
+import com.intellij.ide.plugins.newui.PluginModelFacade
 import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.ide.plugins.newui.PluginsGroup
 import com.intellij.ide.plugins.newui.PluginsGroupComponent
@@ -60,6 +61,7 @@ internal class MarketplacePluginsTabSearchResultPanel(
   private val mySelectionListener: Consumer<in PluginsGroupComponent?>,
   private val myMarketplaceSortByGroup: DefaultActionGroup,
   private val myMarketplacePanelSupplier: Supplier<PluginsGroupComponentWithProgress?>,
+  private val myPluginModelFacade: PluginModelFacade,
 ) : SearchResultPanel(coroutineScope, marketplaceController, panel, true) {
   private val myMarketplaceSortByAction: LinkComponent
 
@@ -278,6 +280,7 @@ internal class MarketplacePluginsTabSearchResultPanel(
     val ids = result.getModels().mapTo(LinkedHashSet()) { it.pluginId }
     result.getPreloadedModel().setInstalledPlugins(getInstance().findInstalledPluginsSync(ids))
     result.getPreloadedModel().setPluginInstallationStates(getInstance().getInstallationStatesSync())
+    result.getPreloadedModel().setPluginUpdateSources(myPluginModelFacade.getPendingPluginUpdateSourcesSync(ids.toList()))
     PluginManagerUsageCollector.performMarketplaceSearch(
       getActiveProject(), parser, result.getModels(),
       searchIndex, pluginToScore

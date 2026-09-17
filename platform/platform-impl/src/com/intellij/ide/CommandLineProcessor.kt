@@ -2,7 +2,6 @@
 package com.intellij.ide
 
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
-import com.intellij.ide.CommandLineProcessorResult.Companion.createError
 import com.intellij.ide.actions.ShowLogAction
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
@@ -105,7 +104,7 @@ object CommandLineProcessor {
         }
       }
       catch (@Suppress("IncorrectCancellationExceptionHandling") _: ProcessCanceledException) {
-        return createError(IdeBundle.message("dialog.message.open.cancelled"))
+        return CommandLineProcessorResult(IdeBundle.message("dialog.message.open.cancelled"))
       }
     }
 
@@ -131,14 +130,14 @@ object CommandLineProcessor {
           return CommandLineProcessorResult(lightEditProject, future)
         }
       }
-      return createError(IdeBundle.message("dialog.message.can.not.open.file", ioFile.toString()))
+      return CommandLineProcessorResult(IdeBundle.message("dialog.message.can.not.open.file", ioFile.toString()))
     }
 
     if (projects.isEmpty()) {
       val project = CommandLineProjectOpenProcessor.openProjectAndFile(ioFile, tempProject, OpenProjectTask {
         this.line = line
         this.column = column
-      }) ?: return createError(IdeBundle.message("dialog.message.no.project.found.to.open.file.in"))
+      }) ?: return CommandLineProcessorResult(IdeBundle.message("dialog.message.no.project.found.to.open.file.in"))
       val future = if (shouldWait) CommandLineWaitingManager.getInstance().addHookForFile(file).asDeferred() else OK_FUTURE
       return CommandLineProcessorResult(project, future)
     }
@@ -181,7 +180,7 @@ object CommandLineProcessor {
   }
 
   @ApiStatus.Internal
-  suspend fun processProtocolCommand(rawUri: @NlsSafe String): CliResult {
+  suspend fun processProtocolCommand(rawUri: @NlsSafe String): CommandLineProcessorResult {
     LOG.info("external URI request:\n$rawUri")
     check(!ApplicationManager.getApplication().isHeadlessEnvironment) { "cannot process URI requests in a headless state" }
     val internal = rawUri.startsWith(SCHEME_INTERNAL)
@@ -191,7 +190,7 @@ object CommandLineProcessor {
     val scheme = uri.take(separatorStart)
     val query = uri.substring(separatorStart + URLUtil.SCHEME_SEPARATOR.length)
 
-    val cliResult = try {
+    val result = try {
       if (internal) processInternalProtocol(query) else processProtocol(scheme, query)
     }
     catch (e: CancellationException) {
@@ -199,28 +198,27 @@ object CommandLineProcessor {
     }
     catch (e: Throwable) {
       LOG.error(e)
-      CliResult(0, IdeBundle.message("ide.protocol.exception", e.javaClass.simpleName, e.message))
+      CommandLineProcessorResult(project = null, CliResult(0, IdeBundle.message("ide.protocol.exception", e.javaClass.simpleName, e.message)))
     }
 
-    cliResult.message?.let { message ->
+    result.getErrorMessage()?.let { message ->
       val title = IdeBundle.message("ide.protocol.cannot.title")
       Notification("System Messages", title, Strings.escapeXmlEntities(message), NotificationType.WARNING)
         .addAction(ShowLogAction.notificationAction())
         .notify(null)
     }
-    return cliResult
+    return result
   }
 
   private val PROTOCOL_EP_NAME = ExtensionPointName<ProtocolHandler>("com.intellij.protocolHandler")
 
-  @Suppress("IfThenToElvis")
-  private suspend fun processProtocol(scheme: String, query: String): CliResult {
+  private suspend fun processProtocol(scheme: String, query: String): CommandLineProcessorResult {
     val handler = PROTOCOL_EP_NAME.lazySequence().find { scheme == it.scheme }
-    return if (handler != null) handler.process(query)
-           else CliResult(0, IdeBundle.message("ide.protocol.unsupported", scheme))
+    val cliResult = handler?.process(query) ?: CliResult(0, IdeBundle.message("ide.protocol.unsupported", scheme))
+    return CommandLineProcessorResult(project = null, cliResult)
   }
 
-  private suspend fun processInternalProtocol(query: String): CliResult {
+  private suspend fun processInternalProtocol(query: String): CommandLineProcessorResult {
     val decoder = QueryStringDecoder(query)
     if ("open" == decoder.path().trimEnd('/')) {
       val parameters = decoder.parameters()
@@ -232,11 +230,11 @@ object CommandLineProcessor {
           val column = parameters["column"]?.lastOrNull()?.toIntOrNull() ?: -1
           val (project, _) = openFileOrProject(file, line, column, tempProject = false, shouldWait = false, lightEditMode = false)
           LifecycleUsageTriggerCollector.onProtocolOpenCommandHandled(project)
-          return CliResult.OK
+          return CommandLineProcessorResult(project, CliResult.OK)
         }
       }
     }
-    return CliResult(0, IdeBundle.message("ide.protocol.internal.bad.query", query))
+    return CommandLineProcessorResult(project = null, CliResult(0, IdeBundle.message("ide.protocol.internal.bad.query", query)))
   }
 
   suspend fun processExternalCommandLine(args: List<String>, currentDirectory: String?, focusApp: Boolean = false): CommandLineProcessorResult {
@@ -344,7 +342,7 @@ object CommandLineProcessor {
     if (parsedArgsResult.isFailure) {
       FUSProjectHotStartUpMeasurer.noProjectFound()
       when (val e = parsedArgsResult.exceptionOrNull()) {
-        is ParseException -> return createError(IdeBundle.message("dialog.message.invalid.path", e.message))
+        is ParseException -> return CommandLineProcessorResult(IdeBundle.message("dialog.message.invalid.path", e.message))
         else -> error("Unexpected exception during parsing arguments: $e")
       }
     }

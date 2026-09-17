@@ -1,4 +1,9 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.platform.pratt` start
+content_module_jar(module = ":pratt")
+### auto-generated section `dev intellij.platform.pratt` end
 
 ### auto-generated section `build intellij.platform.pratt` start
 jvm_library(
@@ -57,6 +62,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.pratt.iml",
+        "resources/intellij.platform.pratt.xml",
     ],
     visibility = ["//visibility:public"],
 )

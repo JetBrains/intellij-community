@@ -1,18 +1,11 @@
 load("@community//build:tests-options.bzl", "jps_test")
-load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_TARGETS")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `dev intellij.vcs.svn` start
 dev_dist_plugin(
     content_modules = ["intellij.libraries.sqlite"],
-    libraries = [
-        "@lib//:jaxb-api",
-        "@lib//:jaxb-runtime",
-        "@lib//:libraries-sqlite-sqlite",
-    ],
     main_module = "intellij.vcs.svn",
-    module_targets = MODULE_TARGETS,
 )
 ### auto-generated section `dev intellij.vcs.svn` end
 

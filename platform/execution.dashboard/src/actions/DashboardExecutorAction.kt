@@ -11,9 +11,15 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.util.SmartList
+import org.jetbrains.annotations.ApiStatus
 
+/**
+ * The base of the run dashboard executor actions.
+ * `intellij.platform.execution.dashboard.debugger` extends it, so it is not `internal`.
+ */
+@ApiStatus.Internal
 @Suppress("removal", "DEPRECATION")
-internal sealed class DashboardExecutorAction : ExecutorAction() {
+abstract class DashboardExecutorAction : ExecutorAction() {
   final override fun update(e: AnActionEvent) {
     val project = e.project
     if (project == null) {

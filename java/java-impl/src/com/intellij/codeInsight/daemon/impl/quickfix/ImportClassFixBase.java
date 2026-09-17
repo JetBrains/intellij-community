@@ -107,8 +107,8 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
   @RequiresReadLock
   protected ImportClassFixBase(@NotNull T referenceElement, @NotNull R reference) {
     super(referenceElement.getProject());
-    ApplicationManager.getApplication().assertIsNonDispatchThread();
-    ApplicationManager.getApplication().assertReadAccessAllowed();
+    ThreadingAssertions.assertBackgroundThread();
+    ThreadingAssertions.assertReadAccess();
     myReferenceElement = referenceElement;
     myReference = reference;
     myContainingPsiFile = referenceElement.getContainingFile();
@@ -142,7 +142,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     // ok, something did change. but can we still import? (in case of auto-import there maybe multiple fixes wanting to be executed)
     List<? extends PsiClass> classesToImport = getClassesToImport(true);
     return myContainingPsiFile.isValid() && !classesToImport.isEmpty() && 
-           !isClassDefinitelyPositivelyImportedAlready(myContainingPsiFile, classesToImport.get(0));
+           !isClassDefinitelyPositivelyImportedAlready(myContainingPsiFile, classesToImport.getFirst());
   }
 
   /**
@@ -277,7 +277,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     return false;
   }
 
-  private void filterByPackageName(@NotNull Collection<PsiClass> classList, @NotNull PsiFile psiFile) {
+  private void filterByPackageName(@NotNull Collection<? extends PsiClass> classList, @NotNull PsiFile psiFile) {
     String qualifiedName = getQualifiedName(myReferenceElement);
     String packageName = StringUtil.getPackageName(qualifiedName);
     if (!packageName.isEmpty() &&
@@ -326,7 +326,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     return false;
   }
 
-  private static void filterAlreadyImportedButUnresolved(@NotNull Collection<PsiClass> list, @NotNull PsiFile containingFile) {
+  private static void filterAlreadyImportedButUnresolved(@NotNull Collection<? extends PsiClass> list, @NotNull PsiFile containingFile) {
     if (!(containingFile instanceof PsiJavaFile javaFile)) return;
     PsiImportList importList = javaFile.getImportList();
     PsiImportStatementBase[] importStatements = importList == null ? PsiImportStatementBase.EMPTY_ARRAY : importList.getAllImportStatements();
@@ -498,7 +498,8 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     PsiFile psiFile = myReferenceElement.isValid() && myContainingPsiFile != null && myContainingPsiFile.isValid() ? myContainingPsiFile : null;
     if (psiFile == null) return false;
 
-    Result result = doFix(editor, true, false, ShowAutoImportPass.mayAutoImportNow(psiFile, myInContent, extensionsAllowToChangeFileSilently));
+    boolean mayAddUnambiguousImportsSilently = ShowAutoImportPass.mayAutoImportNow(psiFile, myInContent, extensionsAllowToChangeFileSilently);
+    Result result = doFix(editor, true, false, mayAddUnambiguousImportsSilently);
     return result == Result.POPUP_SHOWN || result == Result.CLASS_AUTO_IMPORTED;
   }
 
@@ -519,7 +520,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
 
   protected abstract boolean hasUnresolvedImportWhichCanImport(@NotNull PsiFile psiFile, @NotNull String name);
 
-  private static void reduceSuggestedClassesBasedOnDependencyRuleViolation(@NotNull List<PsiClass> classes, @NotNull PsiFile psiFile) {
+  private static void reduceSuggestedClassesBasedOnDependencyRuleViolation(@NotNull List<? extends PsiClass> classes, @NotNull PsiFile psiFile) {
     Project project = psiFile.getProject();
     DependencyValidationManager validationManager = DependencyValidationManager.getInstance(project);
     for (int i = classes.size() - 1; i >= 0; i--) {
@@ -567,7 +568,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     return null;
   }
 
-  protected @NotNull AddImportAction createAddImportAction(PsiClass @NotNull [] classes, @NotNull Project project, @NotNull Editor editor) {
+  private @NotNull AddImportAction createAddImportAction(PsiClass @NotNull [] classes, @NotNull Project project, @NotNull Editor editor) {
     return new AddImportAction(project, myReference, editor, classes) {
       @Override
       protected void bindReference(@NotNull PsiReference ref, @NotNull PsiClass targetClass) {

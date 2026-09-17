@@ -55,6 +55,7 @@ jvm_library(
         "//libraries/teamcity/service-messages:libraries-teamcity-service-messages",
         "//libraries/opentelemetry-extension-kotlin",
         "@community//build:zip",
+        "//platform/build-scripts/plugin-preparation",
     ],
 )
 
@@ -105,6 +106,7 @@ jvm_library(
         "//libraries/teamcity/service-messages:libraries-teamcity-service-messages_test_lib",
         "//libraries/opentelemetry-extension-kotlin:opentelemetry-extension-kotlin_test_lib",
         "@community//build:zip_test_lib",
+        "//platform/build-scripts/plugin-preparation:plugin-preparation_test_lib",
     ],
 )
 ### auto-generated section `build intellij.idea.community.build.tasks` end

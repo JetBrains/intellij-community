@@ -1,6 +1,5 @@
 load("@community//build:tests-options.bzl", "jps_test")
-load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_DESCRIPTORS", "MODULE_TARGETS")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jps_test(
@@ -13,18 +12,18 @@ jps_test(
 
 ### auto-generated section `dev intellij.xpath` start
 dev_dist_plugin(
-    content_modules = ["intellij.xpath.rt"],
+    content_modules = [
+        # do not sort,
+        "intellij.xml.langInjection.xpath",
+        "intellij.xpath.rt",
+    ],
     descriptor = "xpath-lang/resources/META-INF/plugin.xml",
-    descriptor_index = MODULE_DESCRIPTORS,
     descriptor_modules = ["intellij.xml.langInjection.xpath"],
     jars = {
-        "rt/xslt-rt.jar": {
-            "modules": ["intellij.xpath.rt"],
-        },
+        "lib/xpath.jar": ["intellij.xpath"],
+        "lib/rt/xslt-rt.jar": ["intellij.xpath.rt"],
     },
     main_module = "intellij.xpath",
-    module_targets = MODULE_TARGETS,
-    prepacked_content_modules = ["intellij.xml.langInjection.xpath"],
 )
 ### auto-generated section `dev intellij.xpath` end
 

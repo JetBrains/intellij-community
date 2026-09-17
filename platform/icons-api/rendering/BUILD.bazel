@@ -1,4 +1,9 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.platform.icons.api.rendering` start
+content_module_jar(module = ":rendering")
+### auto-generated section `dev intellij.platform.icons.api.rendering` end
 
 ### auto-generated section `build intellij.platform.icons.api.rendering` start
 jvm_library(
@@ -13,6 +18,10 @@ jvm_library(
     ),
     kotlinc_opts = "@community//:k8",
     module_name = "intellij.platform.icons.api.rendering",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
     visibility = ["//visibility:public"],
     exports = ["//platform/icons-api"],
     deps = [
@@ -53,6 +62,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.icons.api.rendering.iml",
+        "resources/intellij.platform.icons.api.rendering.xml",
     ],
     visibility = ["//visibility:public"],
 )

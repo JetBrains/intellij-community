@@ -1,0 +1,14 @@
+load("@rules_java//java:defs.bzl", "java_binary")
+
+java_binary(
+    name = "plugin-callback-preparer",
+    jvm_flags = [
+        "-Dintellij.build.snap.docker.image=unused-plugin-preparation",
+        "--add-opens=java.base/jdk.internal.ref=ALL-UNNAMED",
+        "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED",
+        "--add-opens=java.base/sun.nio.fs=ALL-UNNAMED",
+    ],
+    main_class = "org.jetbrains.intellij.build.devServer.DevPluginPrepareMain",
+    visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/build-scripts"],
+)

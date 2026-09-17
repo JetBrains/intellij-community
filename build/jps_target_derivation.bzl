@@ -439,6 +439,26 @@ def format_module_descriptor_index(descriptors_by_module):
     lines.append("}\n")
     return "\n".join(lines)
 
+# The macro every `dev <module>` section calls. The bridge binds it to its own maps, see `format_dev_dist_plugin_wrapper`.
+DEV_DIST_PLUGIN_BZL = "@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl"
+
+def format_dev_dist_plugin_load():
+    """Render the load line of the `dev_dist_plugin` wrapper. It is the first statement of `targets.bzl`."""
+    return 'load("%s", _dev_dist_plugin = "dev_dist_plugin")\n' % DEV_DIST_PLUGIN_BZL
+
+def format_dev_dist_plugin_wrapper():
+    """Render `dev_dist_plugin` bound to the bridge's `MODULE_TARGETS` and `MODULE_DESCRIPTORS`.
+
+    A `dev <module>` section loads only this symbol. The bridge is the one file that knows its half, so the binding
+    lives here and not in the macro, which the community module owns. A caller can still state both maps.
+    """
+    return "\n".join([
+        "def dev_dist_plugin(module_targets = MODULE_TARGETS, descriptor_index = MODULE_DESCRIPTORS, **kwargs):",
+        '    """`dev_dist_plugin` bound to this bridge\'s module map and descriptor index."""',
+        "    _dev_dist_plugin(module_targets = module_targets, descriptor_index = descriptor_index, **kwargs)",
+        "",
+    ])
+
 def compute_plugin_distribution_target(module_name, build_dir_parts, target_name, is_community, community_root_parts):
     """Compute the Bazel label for a module's ij_plugin distribution target."""
     package_prefix = _compute_package_info(module_name, build_dir_parts, is_community, community_root_parts).package_prefix

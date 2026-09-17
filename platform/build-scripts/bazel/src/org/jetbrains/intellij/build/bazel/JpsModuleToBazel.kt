@@ -132,19 +132,21 @@ internal class JpsModuleToBazel {
 
       deleteOldFiles(
         projectDir = communityRoot,
-        generatedFiles = communityResult.moduleBuildFiles.keys
+        generatedFiles = communityResult.generatedBuildFileDirs
           .filter { it != communityRoot }
           .sortedBy { communityRoot.relativize(it).invariantSeparatorsPathString }
           .toSet(),
+        currentBuildFileDirs = communityResult.moduleBuildFiles.keys,
       )
 
       if (ultimateRoot != null) {
         deleteOldFiles(
           projectDir = ultimateRoot,
-          generatedFiles = ultimateResult.moduleBuildFiles.keys
+          generatedFiles = ultimateResult.generatedBuildFileDirs
             .filter { it != ultimateRoot }
             .sortedBy { ultimateRoot.relativize(it).invariantSeparatorsPathString }
             .toSet(),
+          currentBuildFileDirs = ultimateResult.moduleBuildFiles.keys,
         )
       }
 
@@ -468,7 +470,7 @@ internal class JpsModuleToBazel {
   }
 }
 
-private fun deleteOldFiles(projectDir: Path, generatedFiles: Set<Path>) {
+private fun deleteOldFiles(projectDir: Path, generatedFiles: Set<Path>, currentBuildFileDirs: Set<Path>) {
   val fileListFile = projectDir.resolve(BAZEL_GENERATED_FILE_LIST_RELATIVE_PATH)
   // `plugin-model-tool` owns the cross-half descriptor packages and deletes an absent one itself, so an old entry of that
   // directory is neither deleted nor carried into the new list.
@@ -484,6 +486,7 @@ private fun deleteOldFiles(projectDir: Path, generatedFiles: Set<Path>) {
 
   val filesToDelete = HashSet(oldFiles)
   filesToDelete.removeAll(generatedFiles)
+  filesToDelete.removeAll(currentBuildFileDirs)
   if (filesToDelete.isNotEmpty()) {
     println("Delete ${filesToDelete.size} old files")
     for (file in filesToDelete) {

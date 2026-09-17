@@ -3,11 +3,7 @@ load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `dev intellij.platform.diagnostic.telemetry.impl` start
-content_module_jar(
-    module = ":telemetry-impl",
-    modules_after = ["//platform/util/http"],
-    modules_before = ["//platform/diagnostic/telemetry.exporters"],
-)
+content_module_jar(module = ":telemetry-impl")
 ### auto-generated section `dev intellij.platform.diagnostic.telemetry.impl` end
 
 ### auto-generated section `build intellij.platform.diagnostic.telemetry.impl` start

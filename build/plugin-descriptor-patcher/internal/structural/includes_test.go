@@ -12,10 +12,9 @@ import (
 
 // The curated cases of the includes stage, one branch of `resolveXIncludeElement` each.
 //
-// The whole-population arm is elsewhere and it is two gates, both over real plugins. `./build/dev-dist.cmd descriptors`
-// compares this binary's output against the text a dev assembly recorded, and its `--two-producer` mode compares this
-// binary against the JVM tool over the same declared inputs. A curated case states one rule; those two state the
-// population.
+// A curated case states one rule, so a failure names the rule. The population is guarded elsewhere:
+// `//build:idea_dev_descriptor_leaf_build_test` builds a sample group of leaves, and
+// `./build/dev-dist.cmd snapshot diff` compares every plugin main jar of a composed distribution against a baseline.
 
 // xi is the namespace declaration every include case needs.
 const xi = ` xmlns:xi="http://www.w3.org/2001/XInclude"`

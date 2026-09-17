@@ -29,7 +29,7 @@ public final class ProjectProductionScope extends NamedScope {
                      && !index.isInLibrary(file)
                      && !TestSourcesFilter.isTestSources(file, project);
             }
-          });
+          }, true);
   }
 
   public static String getNameText() {

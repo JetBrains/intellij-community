@@ -36,6 +36,14 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
       "intellij.cidr.debugger.dap" -> IntellijIconClassGeneratorModuleConfig(
         packageName = "com.jetbrains.cidr.execution.debugger.backend.dap",
       )
+      // The module has no Classic-UI icon anywhere, so a plain "merge" rule can't find a
+      // common icon root (see ImageCollector.downToRoot). Point the collector straight at
+      // the expui tree instead.
+      "intellij.rider.cpp.core" -> IntellijIconClassGeneratorModuleConfig(
+        className = "RiderCppCoreIcons",
+        packageName = "com.jetbrains.rider.cpp.icons",
+        iconDirectory = "icons/expui",
+      )
       "intellij.clouds.docker.gateway" -> IntellijIconClassGeneratorModuleConfig(
         className = "DockerGatewayIcons",
         packageName = "com.intellij.clouds.docker.gateway"

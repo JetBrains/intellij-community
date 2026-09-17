@@ -12,7 +12,8 @@ enum class SearchWords(@NonNls val value: String) {
   REPOSITORY("/repository:"),
   STAFF_PICKS("/staffPicks"),
   SUGGESTED("/suggested"),
-  INTERNAL("/internal");
+  INTERNAL("/internal"),
+  PLUGIN_UPDATE_SOURCE("/updatesFrom:");
 
   companion object {
     @JvmStatic

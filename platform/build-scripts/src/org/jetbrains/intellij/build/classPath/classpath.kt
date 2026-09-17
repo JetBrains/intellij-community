@@ -19,7 +19,6 @@ import org.jetbrains.intellij.build.PLATFORM_LOADER_JAR
 import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
 import org.jetbrains.intellij.build.UTIL_8_JAR
 import org.jetbrains.intellij.build.UTIL_JAR
-import org.jetbrains.intellij.build.dev.AssembledPrepackedPluginContentJar
 import org.jetbrains.intellij.build.getUnprocessedPluginXmlContent
 import org.jetbrains.intellij.build.readDescriptor
 import org.jetbrains.intellij.build.impl.DescriptorCacheContainer
@@ -43,8 +42,6 @@ import org.jetbrains.intellij.build.isWindows
 import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
 import java.nio.file.Path
-import kotlin.io.path.invariantSeparatorsPathString
-import kotlin.io.path.relativeToOrSelf
 
 /**
  * [includeProductModules] keeps the jars that hold a product content module. The module system loads them, so a
@@ -118,6 +115,9 @@ fun generateClassPathByLayoutReport(libDir: Path, entries: List<DistributionFile
  * system, not from the classpath. So a jar is on the classpath when some module in it is there for another reason -
  * `intellij.libraries.asm` is an ordinary platform dependency as well as a content module, `intellij.charts` is not.
  *
+ * A destination is the whole `lib/`-relative path, and a jar under a subdirectory of `lib/` stays off the classpath,
+ * for the reason [generateClassPathByLayoutReport] states: only a direct child of `lib/` is on it.
+ *
  * A change to this has to be made in [generateClassPathByLayoutReport] too, and the composed distribution's
  * `core-classpath.txt` is what proves the two agree.
  */
@@ -136,6 +136,12 @@ fun contentModuleJarCoreClasspathEntries(
   for (item in includedModules) {
     val jarName = item.relativeOutputFile
     if (!externallyPackedJars.contains(jarName) || item.reason == ModuleIncludeReasons.PRODUCT_MODULES) {
+      continue
+    }
+    // The nested-destination rule of `generateClassPathByLayoutReport`: the platform classloader takes only the direct
+    // children of `lib/`, so a jar under a subdirectory of it is not on the core classpath. This is what keeps
+    // `ext/platform-main.jar` and the two `frontend-split` jars off it now that another producer packs them.
+    if (jarName.contains('/') && item.reason != ModuleIncludeReasons.PRODUCT_EMBEDDED_MODULES) {
       continue
     }
     // The two module-name exclusions of `generateClassPathByLayoutReport`. Neither module owns a content-module jar
@@ -194,14 +200,6 @@ internal fun generateCoreClasspathFromPlugins(
     for (distributionEntry in buildResult.distribution) {
       if (distributionEntry is ModuleOwnedFileEntry && distributionEntry.owner?.moduleName in classPathModules) {
         classPathResult.add(distributionEntry.path)
-      }
-    }
-    for (assembled in buildResult.prepackedContentJars) {
-      val jar = assembled.jar
-      // Any member, because the jar is the unit the core classpath takes. A jar of several members holds an embedded one
-      // and the classpath needs the whole jar, exactly as it needs the whole jar of a single embedded member.
-      if (jar.contentModules.any { it in classPathModules }) {
-        classPathResult.add(buildResult.dir.resolve("lib").resolve(jar.relativeOutputFile))
       }
     }
   }
@@ -264,7 +262,6 @@ data class PluginBuildResult(
   @JvmField val os: OsFamily?,
   @JvmField val arch: JvmArchitecture?,
   @JvmField val distribution: Collection<DistributionFileEntry>,
-  @JvmField val prepackedContentJars: List<AssembledPrepackedPluginContentJar> = emptyList(),
 )
 
 /**
@@ -344,69 +341,6 @@ fun createCachedProductDescriptor(
   return mainPluginDescriptor
 }
 
-/**
- * One plugin's classpath jars, with each handed-off jar back at the position the assembly would have given it.
- *
- * The position is the whole point, and [AssembledPrepackedPluginContentJar.assetOrdinal] states why: the sort that
- * follows is stable and its last tiebreak is the file-name length, so appending the handed-off jars would let a jar's
- * *producer* decide the classpath order.
- *
- * [distribution] enumerates the assembly's assets in creation order. It holds one or more entries per asset, so the
- * count of distinct target files seen so far is the index of the next asset, and a jar recorded at ordinal `n` belongs
- * immediately before the asset at index `n`. Two jars recorded at one ordinal keep the order the assembly recorded them
- * in.
- *
- * One shape would make the count lag: an asset that produces no entry at all. Nothing here detects it. It would move
- * a handed-off jar later and never earlier, and the whole-distribution comparison in `dev-dist.cmd snapshot diff` is
- * what says it does not happen.
- *
- * A jar in a subdirectory of `lib/` is never on the classpath. That is the same rule the `relativeOutputFile` test below
- * applies to an assembled entry.
- */
-@VisibleForTesting
-internal fun mergePrepackedIntoAssetOrder(
-  distribution: Collection<DistributionFileEntry>,
-  prepacked: List<AssembledPrepackedPluginContentJar>,
-  libDir: Path,
-): MutableList<Path> {
-  val files = ArrayList<Path>(distribution.size)
-  val uniqueGuard = HashSet<Path>()
-  val seenAssets = HashSet<Path>()
-
-  val ordered = prepacked.filter { !it.jar.relativeOutputFile.contains('/') }
-    .sortedBy(AssembledPrepackedPluginContentJar::assetOrdinal)
-  var next = 0
-  fun drainUpTo(assetIndex: Int) {
-    while (next < ordered.size && ordered[next].assetOrdinal <= assetIndex) {
-      val file = libDir.resolve(ordered[next].jar.relativeOutputFile)
-      if (uniqueGuard.add(file)) {
-        files.add(file)
-      }
-      next++
-    }
-  }
-
-  var assetIndex = 0
-  for (entry in distribution) {
-    val file = entry.path
-    if (seenAssets.add(file)) {
-      drainUpTo(assetIndex)
-      assetIndex++
-    }
-
-    val relativeOutputFile = entry.relativeOutputFile
-    if (relativeOutputFile != null && relativeOutputFile.contains('/')) {
-      continue
-    }
-    if (!uniqueGuard.add(file) || (entry is CustomAssetEntry && !file.toString().endsWith(".jar"))) {
-      continue
-    }
-    files.add(file)
-  }
-  drainUpTo(Int.MAX_VALUE)
-  return files
-}
-
 @Suppress("BlockingMethodInNonBlockingContext")
 internal fun generatePluginClassPath(
   pluginEntries: List<PluginBuildResult>,
@@ -421,22 +355,20 @@ internal fun generatePluginClassPath(
   for (plugin in pluginEntries) {
     val pluginDir = plugin.dir
 
-    val files = mergePrepackedIntoAssetOrder(
-      distribution = plugin.distribution,
-      prepacked = plugin.prepackedContentJars,
-      libDir = pluginDir.resolve(LIB_DIRECTORY),
-    )
-    for (file in files) {
-      check(!file.startsWith(pluginDir) || pluginDir.relativize(file).nameCount == 2) {
-        "plugin entry is not specified correctly: $file"
+    val files = ArrayList<Path>(plugin.distribution.size)
+    val uniqueGuard = HashSet<Path>()
+    for (entry in plugin.distribution) {
+      val relativeOutputFile = entry.relativeOutputFile
+      if (relativeOutputFile != null && relativeOutputFile.contains('/')) {
+        continue
       }
-    }
 
-    if (files.size > 1) {
-      // always sort
-      putMoreLikelyPluginJarsFirst(pluginDirName = pluginDir.fileName.toString(), filesInLibUnderPluginDir = files)
+      val file = entry.path
+      if (!uniqueGuard.add(file) || (entry is CustomAssetEntry && !file.toString().endsWith(".jar"))) {
+        continue
+      }
+      files.add(file)
     }
-
     val pluginDescriptorContainer = descriptorFileProvider.forPlugin(pluginDir)
     var pluginDescriptorContent = requireNotNull(pluginDescriptorContainer.getCachedFileData(PLUGIN_XML_RELATIVE_PATH)) {
       "Cannot find plugin descriptor file $PLUGIN_XML_RELATIVE_PATH in $pluginDir (descriptorFileProvider=$descriptorFileProvider"
@@ -470,24 +402,24 @@ internal fun generatePluginClassPath(
       it
     }.toByteArray()
 
-    writeEntry(out = out, files = files, pluginDir = pluginDir, pluginDescriptorContent = pluginDescriptorContent)
+    writePluginClassPathEntry(out = out, orderedFiles = files, pluginDir = pluginDir, pluginDescriptorContent = pluginDescriptorContent)
   }
 
   out.close()
   return byteOut.toByteArray()
 }
 
+private fun writePluginClassPathEntry(
+  out: DataOutputStream,
+  orderedFiles: List<Path>,
+  pluginDir: Path,
+  pluginDescriptorContent: ByteArray,
+) {
+  writeOrderedPluginClassPathEntry(out, orderedFiles, pluginDir, pluginDescriptorContent)
+}
+
 private fun writeEntry(out: DataOutputStream, files: Collection<Path>, pluginDir: Path, pluginDescriptorContent: ByteArray) {
-  // the plugin dir as the last item in the list
-  out.writeShort(files.size)
-  out.writeUTF(pluginDir.fileName.invariantSeparatorsPathString)
-
-  out.writeInt(pluginDescriptorContent.size)
-  out.write(pluginDescriptorContent)
-
-  for (file in files) {
-    out.writeUTF(file.relativeToOrSelf(pluginDir).invariantSeparatorsPathString)
-  }
+  writePluginClassPathEntryData(out, files, pluginDir, pluginDescriptorContent)
 }
 
 internal fun generatePluginClassPathFromPrebuiltPluginFiles(pluginEntries: List<Pair<Path, List<Path>>>): ByteArray {

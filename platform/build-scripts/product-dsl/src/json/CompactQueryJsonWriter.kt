@@ -547,12 +547,7 @@ internal fun writeValidationQuery(
     }
     "unused_embedded_library_modules" -> {
       gen.writeName("result")
-      writeUnusedEmbeddedLibraryModulesResult(gen, analyzeUnusedEmbeddedLibraryModules(
-        graph = pluginGraph,
-        productSpecsByName = products.mapNotNull { product ->
-          product.contentSpec?.let { product.name to it }
-        }.toMap(),
-      ))
+      writeUnusedEmbeddedLibraryModulesResult(gen, analyzeUnusedEmbeddedLibraryModules(pluginGraph))
     }
     "unused_shared_library_modules" -> {
       gen.writeName("result")

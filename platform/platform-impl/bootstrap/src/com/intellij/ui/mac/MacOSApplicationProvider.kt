@@ -31,6 +31,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.IdeFrame
+import com.intellij.openapi.wm.WindowManager
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.ui.AppIcon
 import com.intellij.ui.mac.foundation.Foundation
@@ -83,14 +84,14 @@ fun initMacApplication(mainScope: CoroutineScope) {
       }
 
       if (project == null || project.isDefault) {
-        LOG.debug("MacMenu: no opened project frame, use default project instead")
+        LOG.debug("MacMenu: no opened project frame, using the default project instead")
         val defaultProject = project ?: serviceAsync<ProjectManager>().defaultProject
         showSettingsUtil.showSettingsDialog(defaultProject)
       }
       else {
         // Execute in the project coroutine scope to ensure that,
         // if project opening is canceled or the project is closed, we cancel settings opening.
-        // Still, we `.join` to ensure that mac menu actions is disabled for the entire duration of the task (contract of `submit`).
+        // Still, we `.join` to ensure that macOS menu actions are disabled for the entire duration of the task (contract of `submit`).
         project.serviceAsync<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
           (project.serviceAsync<StartupManager>() as StartupManagerEx).waitForInitProjectActivities(IdeBundle.message("settings.modal.opening.message"))
           showSettingsUtil.showSettingsDialog(project)
@@ -235,11 +236,7 @@ private fun installProtocolHandler(desktop: Desktop, mainScope: CoroutineScope) 
   if (urlTypes == ID.NIL) {
     val build = ApplicationInfoImpl.getShadowInstance().build
     if (!build.isSnapshot) {
-      LOG.warn("""
-        No URL bundle (CFBundleURLTypes) is defined in the main bundle.
-        To be able to open external links, specify protocols in the app layout section of the build file.
-        Example: args.urlSchemes = ["your-protocol"] will handle following links: your-protocol://open?file=file&line=line
-        """.trimIndent())
+      LOG.info("No URL bundle (CFBundleURLTypes) is defined in the main bundle")
     }
     return
   }
@@ -253,10 +250,17 @@ private fun installProtocolHandler(desktop: Desktop, mainScope: CoroutineScope) 
     }
     if (LoadingState.APP_STARTED.isOccurred) {
       mainScope.launch {
-        CommandLineProcessor.processProtocolCommand(uriString)
+       val result = CommandLineProcessor.processProtocolCommand(uriString)
         withContext(Dispatchers.EDT) {
-          CommandLineProcessor.findVisibleFrame()?.let { frame ->
-            AppIcon.getInstance().requestFocus(frame)
+          if (result.project != null) {
+            WindowManager.getInstance().getIdeFrame(result.project)?.let { frame ->
+              AppIcon.getInstance().requestFocus(frame)
+            }
+          }
+          else {
+            CommandLineProcessor.findVisibleFrame()?.let { frame ->
+              AppIcon.getInstance().requestFocus(frame)
+            }
           }
         }
       }

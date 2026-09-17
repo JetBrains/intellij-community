@@ -355,6 +355,7 @@ internal fun updateAllInstallingItem(
     pluginId = model.pluginId,
     name = model.name,
     contentRevision = contentRevision,
+    updateSourceId = listModelData.updateSources[model.pluginId],
     modelHandle = PluginItemModelHandle(model),
     rowInput = PluginRowInput(
       installedPlugin = installedModel,

@@ -1,3 +1,0 @@
-- name: dist.all/lib/fleet.lsp.protocol.jar
-  modules:
-  - name: fleet.lsp.protocol

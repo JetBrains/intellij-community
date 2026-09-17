@@ -46,7 +46,7 @@ final class UpdatingScopeOnProjectStructureChangeListener implements ModuleListe
     });
     if (newSet != oldSet) {
       String presentableName = scope.getPresentableName();
-      return new NamedScope(scope.getScopeId(), () -> presentableName, scope.getIcon(), newSet);
+      return new NamedScope(scope.getScopeId(), () -> presentableName, scope.getIcon(), newSet, scope.isPredefined());
     }
     return scope;
   }

@@ -282,7 +282,6 @@ fun buildProductContentXml(
   val contentBlocks = buildData.contentBlocks
   val moduleToSetChainMapping = buildData.moduleToSetChainMapping
   val moduleSetAliases = buildData.aliasToSource
-  val moduleToIncludeDependenciesMapping = buildData.moduleToIncludeDependencies
 
   val sb = StringBuilder()
   with(sb) {
@@ -372,6 +371,5 @@ fun buildProductContentXml(
     xml = sb.toString(),
     contentBlocks = contentBlocks,
     moduleToSetChainMapping = moduleToSetChainMapping,
-    moduleToIncludeDependenciesMapping = moduleToIncludeDependenciesMapping,
   )
 }

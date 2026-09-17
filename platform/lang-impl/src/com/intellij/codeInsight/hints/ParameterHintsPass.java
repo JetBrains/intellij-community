@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.TextRange;
@@ -112,6 +113,7 @@ public final class ParameterHintsPass extends EditorBoundHighlightingPass {
   }
 
   private void process(@NotNull PsiElement element, @NotNull InlayParameterHintsProvider provider) {
+    ProgressManager.checkCanceled();
     List<InlayInfo> hints = provider.getParameterHints(element, myFile);
     if (hints.isEmpty()) return;
     HintInfo info = provider.getHintInfo(element, myFile);
@@ -124,6 +126,7 @@ public final class ParameterHintsPass extends EditorBoundHighlightingPass {
     }
 
     inlays.forEach(hint -> {
+      ProgressManager.checkCanceled();
       int offset = hint.getOffset();
       if (!canShowHintsAtOffset(offset)) return;
       if (ParameterNameHintsSuppressor.All.isSuppressedFor(myFile, hint)) return;

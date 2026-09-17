@@ -10,6 +10,7 @@
     <module name="intellij.libraries.search.everywhere.find.all.model"/>
     <module name="intellij.libraries.search.everywhere.find.ec.model"/>
     <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.concurrency"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.core.ui"/>

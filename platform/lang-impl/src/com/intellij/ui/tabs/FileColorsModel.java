@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
 /**
  * @author Konstantin Bulenkov
@@ -205,12 +206,17 @@ public final class FileColorsModel implements Cloneable {
   }
 
   public @Nullable String getColor(@NotNull VirtualFile file, Project project) {
+    return getColorWithScopeFilter(file, project, (_) -> true);
+  }
+
+  @ApiStatus.Internal
+  public @Nullable String getColorWithScopeFilter(@NotNull VirtualFile file, @NotNull Project project, @NotNull Predicate<NamedScope> acceptScope) {
     if (!file.isValid()) {
       return null;
     }
 
     return ReadAction.computeBlocking(() -> {
-      final FileColorConfiguration configuration = findConfiguration(file);
+      final FileColorConfiguration configuration = findConfigurationWithScopeFilter(file, acceptScope);
       if (configuration != null && configuration.isValid(project)) {
         return configuration.getColorID();
       }
@@ -235,11 +241,15 @@ public final class FileColorsModel implements Cloneable {
   }
 
   private @Nullable FileColorConfiguration findConfiguration(final @NotNull VirtualFile colored) {
+    return findConfigurationWithScopeFilter(colored, (_) -> true);
+  }
+
+  private @Nullable FileColorConfiguration findConfigurationWithScopeFilter(final @NotNull VirtualFile colored, final @NotNull Predicate<NamedScope> acceptScope) {
     Iterator<FileColorConfiguration> iterator = getConfigurations();
     while(iterator.hasNext()) {
       var configuration = iterator.next();
       NamedScope scope = NamedScopesHolder.getScope(myProject, configuration.getScopeName());
-      if (scope != null) {
+      if (scope != null && acceptScope.test(scope)) {
         NamedScopesHolder namedScopesHolder = NamedScopesHolder.getHolder(myProject, configuration.getScopeName(), null);
         PackageSet packageSet = scope.getValue();
         if (packageSet instanceof PackageSetBase && namedScopesHolder != null && ((PackageSetBase)packageSet).contains(colored, myProject, namedScopesHolder)) {

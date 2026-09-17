@@ -14,10 +14,9 @@ go_library(
     deps = ["//build/plugin-descriptor-patcher/internal/descriptorxml"],
 )
 
-# The curated cases, one branch of the two structural stages each, with a negative control per branch. The
-# whole-population arms live outside this package and both compare against a real product:
-# `./build/dev-dist.cmd descriptors` against the text a dev assembly recorded, and its `--two-producer` mode against
-# the JVM reference tool over the same declared inputs.
+# The curated cases, one branch of the two structural stages each, with a negative control per branch. The population
+# is guarded outside this package: `//build:idea_dev_descriptor_leaf_build_test` builds a sample group of leaves, and
+# `./build/dev-dist.cmd snapshot diff` compares every plugin main jar of a composed distribution against a baseline.
 go_test(
     name = "structural_test",
     srcs = [

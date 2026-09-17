@@ -55,6 +55,9 @@ class PluginContentDescriptor(@JvmField val modules: List<ModuleItem>) {
       if (loadingRule == ModuleLoadingRule.EMBEDDED || loadingRule == ModuleLoadingRule.REQUIRED) {
         return loadingRule
       }
+      if (initContext.disableRequiredIfAvailable) {
+        return loadingRule
+      }
       val targetModule = initContext.environmentConfiguredModules[requiredIfAvailable]
       if (targetModule == null) {
         // TODO should lift this log out of here

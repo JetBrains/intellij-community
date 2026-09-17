@@ -32,12 +32,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressWrapper;
@@ -87,6 +87,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
@@ -1028,12 +1029,23 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
     try {
       calculateItems(initContext, consumer, parameters);
     }
-    catch (@SuppressWarnings("IncorrectCancellationExceptionHandling") ProcessCanceledException ignore) {
-      cancel(); // some contributor may just throw PCE; if indicator is not canceled everything will hang
-    }
     catch (Throwable t) {
       cancel();
-      LOG.error(t);
+
+      //noinspection InstanceofCatchParameter
+      if (t instanceof CancellationException) {
+        // some contributor may just throw CE;
+        // don't log them, it's kinda fine
+        return;
+      }
+      if (t instanceof ControlFlowException) {
+        // ControlFlowExceptions (except for CancellationException) are not allowed here.
+        // Thus logging it. Wrapping to IllegalStateException as logger does not allow reporting raw CFE.
+        LOG.error(new IllegalStateException("Illegal ControlFlowException during completion contributor run", t));
+      }
+      else {
+        LOG.error(t);
+      }
     }
   }
 

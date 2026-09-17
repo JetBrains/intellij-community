@@ -597,13 +597,12 @@ private fun setActivationListeners() {
 
 private suspend fun handleExternalCommand(args: List<String>, currentDirectory: String?): CommandLineProcessorResult {
   if (args.isNotEmpty() && args[0].contains(URLUtil.SCHEME_SEPARATOR)) {
-    val cliResult = CommandLineProcessor.processProtocolCommand(args[0])
-    val result = CommandLineProcessorResult(project = null, cliResult)
+    val result = CommandLineProcessor.processProtocolCommand(args[0])
     withContext(Dispatchers.EDT) {
       if (result.hasError) {
         result.showError()
       }
-      else if (cliResult.exitCode != ProtocolHandler.PLEASE_DO_NOT_FOCUS) {
+      else if (result.getExitCode() != ProtocolHandler.PLEASE_DO_NOT_FOCUS) {
         CommandLineProcessor.findVisibleFrame()?.let { frame ->
           AppIcon.getInstance().requestFocus(frame)
         }

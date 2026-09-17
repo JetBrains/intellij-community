@@ -232,12 +232,13 @@ open class IdeStarter : ModernApplicationStarter() {
 
   private suspend fun processUriParameter(uri: String, lifecyclePublisher: AppLifecycleListener) {
     val result = CommandLineProcessor.processProtocolCommand(uri)
-    if (result.exitCode == ProtocolHandler.PLEASE_QUIT) {
+    val exitCode = result.getExitCode()
+    if (exitCode == ProtocolHandler.PLEASE_QUIT) {
       withContext(Dispatchers.EDT) {
         ApplicationManagerEx.getApplicationEx().exit(false, true)
       }
     }
-    else if (result.exitCode != ProtocolHandler.PLEASE_NO_UI) {
+    else if (exitCode != ProtocolHandler.PLEASE_NO_UI) {
       WelcomeFrame.showIfNoProjectOpened(lifecyclePublisher)
     }
   }

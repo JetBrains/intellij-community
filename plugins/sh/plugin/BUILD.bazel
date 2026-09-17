@@ -1,23 +1,19 @@
-load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_TARGETS")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `dev intellij.sh.plugin` start
 dev_dist_plugin(
-    main_module = "intellij.sh.plugin",
-    module_targets = MODULE_TARGETS,
-    prepacked_content_modules = [
+    content_modules = [
         # do not sort,
+        "intellij.sh.core",
         "intellij.sh.backend",
+        "intellij.sh.terminal",
+        "intellij.sh.terminal.frontend",
         "intellij.sh.copyright",
         "intellij.sh.markdown",
         "intellij.sh.python",
-        "intellij.sh.terminal.frontend",
-        "intellij.sh.terminal",
     ],
-    prepacked_jars = {
-        "intellij.sh.core": "intellij.sh.core.jar",
-    },
+    main_module = "intellij.sh.plugin",
 )
 ### auto-generated section `dev intellij.sh.plugin` end
 

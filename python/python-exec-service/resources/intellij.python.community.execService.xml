@@ -9,11 +9,14 @@
     <module name="intellij.libraries.kotlinx.serialization.json"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.eel.impl"/>
+    <module name="intellij.platform.eel.impl.base"/>
+    <module name="intellij.platform.eel.provider"/>
     <module name="intellij.platform.execution"/>
     <module name="intellij.platform.execution.impl"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.projectModel.impl"/>
+    <module name="intellij.platform.util.progress"/>
     <module name="intellij.python.community"/>
     <module name="intellij.python.processOutput.common"/>
   </dependencies>

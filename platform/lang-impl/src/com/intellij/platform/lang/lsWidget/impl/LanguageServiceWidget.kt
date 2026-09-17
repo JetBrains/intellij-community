@@ -159,7 +159,7 @@ internal class LanguageServiceWidget(project: Project, scope: CoroutineScope) : 
   private inner class MoreLanguagesAction : AnAction(LangBundle.message("language.services.widget.more.languages")), DumbAware {
     override fun actionPerformed(e: AnActionEvent) {
       ShowSettingsUtil.getInstance().showSettingsDialog(project, PluginManagerConfigurable::class.java) {
-        it.enableSearch(LANGUAGE_SERVER_PLUGIN_SEARCH_TAG)
+        it.navigateToMarketplace(LANGUAGE_SERVER_PLUGIN_SEARCH_TAG)
       }
     }
   }

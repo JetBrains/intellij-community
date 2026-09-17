@@ -3,10 +3,7 @@ load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `dev intellij.platform.eel.impl` start
-content_module_jar(
-    module = ":eel-impl",
-    modules_after = ["//platform/eel-impl-base"],
-)
+content_module_jar(module = ":eel-impl")
 ### auto-generated section `dev intellij.platform.eel.impl` end
 
 ### auto-generated section `build intellij.platform.eel.impl` start

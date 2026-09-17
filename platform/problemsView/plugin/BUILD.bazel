@@ -1,12 +1,19 @@
-load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_DESCRIPTORS", "MODULE_TARGETS")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `dev intellij.platform.problemView.plugin` start
 dev_dist_plugin(
+    content_modules = [
+        # do not sort,
+        "intellij.platform.problemView.core",
+        "intellij.platform.problemView.collector",
+        "intellij.platform.problemView.shared",
+        "intellij.platform.problemView.ui",
+        "intellij.platform.problemView.backend",
+        "intellij.platform.problemView.frontend",
+    ],
     descriptor = "resources/META-INF/plugin.xml",
-    descriptor_index = MODULE_DESCRIPTORS,
     descriptor_modules = [
         "intellij.platform.problemView.backend",
         "intellij.platform.problemView.collector",
@@ -15,17 +22,10 @@ dev_dist_plugin(
         "intellij.platform.problemView.shared",
         "intellij.platform.problemView.ui",
     ],
+    jars = {
+        "lib/platform-problemView-plugin.jar": ["intellij.platform.problemView.plugin"],
+    },
     main_module = "intellij.platform.problemView.plugin",
-    module_targets = MODULE_TARGETS,
-    prepacked_content_modules = [
-        # do not sort,
-        "intellij.platform.problemView.backend",
-        "intellij.platform.problemView.collector",
-        "intellij.platform.problemView.core",
-        "intellij.platform.problemView.frontend",
-        "intellij.platform.problemView.shared",
-        "intellij.platform.problemView.ui",
-    ],
 )
 ### auto-generated section `dev intellij.platform.problemView.plugin` end
 

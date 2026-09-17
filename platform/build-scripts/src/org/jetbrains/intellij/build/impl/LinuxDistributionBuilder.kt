@@ -64,10 +64,7 @@ class LinuxDistributionBuilder(
 
   override fun copyNativeBinFiles(binDir: Path, arch: JvmArchitecture): List<Path> {
     val sourceBinDir = context.paths.communityHomeDir.resolve("bin/linux")
-    return listOf(
-      copyRestarterToDir(binDir, OsFamily.LINUX, arch, context),
-      copyNativeBinFileToDir(sourceBinDir.resolve("${arch.dirName}/fsnotifier"), binDir),
-    )
+    return listOf(copyNativeBinFileToDir(sourceBinDir.resolve("${arch.dirName}/fsnotifier"), binDir))
   }
 
   override fun copyFilesForOsDistribution(targetPath: Path, arch: JvmArchitecture) {
@@ -80,6 +77,7 @@ class LinuxDistributionBuilder(
 
       context.executeStep(spanBuilder("copy product bin files"), BuildOptions.PRODUCT_BIN_DIR_STEP) {
         copyNativeBinFiles(distBinDir, arch)
+        copyDeclaredOsSpecificFiles(targetPath, arch, context.distributionState().platformLayout, context)
 
         context.getEmbeddedFrontendProductContext()?.let { clientContext ->
           writeLinuxVmOptions(distBinDir, clientContext)

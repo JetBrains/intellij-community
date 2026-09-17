@@ -5,7 +5,6 @@ load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_mod
 content_module_jar(
     libraries = ["@lib//:platform-coverage-agent-intellij-coverage"],
     module = ":coverage-agent",
-    rewrite_boot_class_path = True,
 )
 ### auto-generated section `dev intellij.platform.coverage.agent` end
 

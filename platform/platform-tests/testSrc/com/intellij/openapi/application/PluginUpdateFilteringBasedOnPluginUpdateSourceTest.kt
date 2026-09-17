@@ -5,6 +5,8 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceId
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceService
 import com.intellij.openapi.updateSettings.impl.UpdateCheckerFacade
+import com.intellij.openapi.updateSettings.impl.createNightlyPluginUpdateSourceId
+import com.intellij.testFramework.PlatformTestUtil.withSystemProperty
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.http.url
@@ -144,6 +146,94 @@ internal class PluginUpdateFilteringBasedOnPluginUpdateSourceTest : UpdateChecke
     assertEquals(setOf(UPDATEABLE_BUNDLED_JETBRAINS, UPDATEABLE_BUNDLED_NOT_JETBRAINS), marketplaceRequestedIds)
   }
 
+  @Test
+  fun `plugins installed from nightly servers are updated from current nightly servers only`() {
+    val oldNightlyServer = createTestServer(testDisposable.get())
+    val firstNightlyServer = createTestServer(testDisposable.get())
+    val secondNightlyServer = createTestServer(testDisposable.get())
+    val oldNightlyRepositoryUrl = oldNightlyServer.url + "/custom-repository"
+    val firstNightlyRepositoryUrl = firstNightlyServer.url + "/custom-repository"
+    val secondNightlyRepositoryUrl = secondNightlyServer.url + "/custom-repository"
+
+    setInstalledPluginMocks(installedPlugin(NIGHTLY_SOURCE_PLUGIN))
+    installedPluginsFacade.setHosts(listOf(oldNightlyRepositoryUrl, firstNightlyRepositoryUrl, secondNightlyRepositoryUrl))
+
+    setCustomRepositoryPlugins(oldNightlyServer, listOf(CustomRepositoryPlugin(NIGHTLY_SOURCE_PLUGIN, "9.0")))
+    setCustomRepositoryPlugins(firstNightlyServer, listOf(CustomRepositoryPlugin(NIGHTLY_SOURCE_PLUGIN, "2.0")))
+    setCustomRepositoryPlugins(secondNightlyServer, listOf(CustomRepositoryPlugin(NIGHTLY_SOURCE_PLUGIN, "3.0")))
+
+    withSystemProperty<RuntimeException>(CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY, oldNightlyRepositoryUrl) {
+      setPluginUpdateSources(PluginUpdateSourceService.getInstance().createCustomRepositoryPluginUpdateSourceId(oldNightlyRepositoryUrl),
+                             NIGHTLY_SOURCE_PLUGIN)
+    }
+
+    withSystemProperty<RuntimeException>(CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY,
+                                         "$firstNightlyRepositoryUrl,$secondNightlyRepositoryUrl") {
+      val internalResult = UpdateCheckerFacade.getInstance().checkInstalledPluginUpdates()
+      assertEquals(emptyMap<String?, Exception>(), internalResult.errors)
+      val result = internalResult.pluginUpdates
+
+      val updatesById = result.allEnabled.associateBy { it.id.idString }
+      assertEquals(setOf(NIGHTLY_SOURCE_PLUGIN), updatesById.keys)
+      assertEquals("3.0", updatesById.getValue(NIGHTLY_SOURCE_PLUGIN).pluginVersion)
+      assertTrue(result.allDisabled.isEmpty())
+    }
+  }
+
+  @Test
+  fun `plugin update sources match by source type`() {
+    val service = PluginUpdateSourceService.getInstance()
+    val firstMarketplace = service.createMarketplacePluginUpdateSourceId()
+    val secondMarketplace = service.createMarketplacePluginUpdateSourceId()
+    val firstNightlyRepositoryUrl = "https://nightly.example.com"
+    val secondNightlyRepositoryUrl = "https://nightly2.example.com"
+
+    withSystemProperty<RuntimeException>(CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY,
+                                         "$firstNightlyRepositoryUrl,$secondNightlyRepositoryUrl") {
+      val firstNightlyRepository = service.createCustomRepositoryPluginUpdateSourceId(firstNightlyRepositoryUrl)
+      val secondNightlyRepository = service.createCustomRepositoryPluginUpdateSourceId(secondNightlyRepositoryUrl)
+      val firstCustomRepository = service.createCustomRepositoryPluginUpdateSourceId("https://custom.example.com")
+      val sameFirstCustomRepository = service.createCustomRepositoryPluginUpdateSourceId("https://custom.example.com")
+      val secondCustomRepository = service.createCustomRepositoryPluginUpdateSourceId("https://custom2.example.com")
+      val nightlyRepo = createNightlyPluginUpdateSourceId()
+
+      assertInterchangeableOnlyWithinLists(
+        listOf(firstMarketplace, secondMarketplace),
+        listOf(firstNightlyRepository, secondNightlyRepository, nightlyRepo),
+        listOf(firstCustomRepository, sameFirstCustomRepository),
+        listOf(secondCustomRepository),
+      )
+    }
+  }
+
+  private fun assertInterchangeableOnlyWithinLists(vararg lists: List<PluginUpdateSourceId>) {
+    fun assertIsInterchangeable(first: PluginUpdateSourceId, second: PluginUpdateSourceId, interchangeable: Boolean) {
+      val message = "Should ${if (interchangeable) "" else "not "}be interchangeable: $first and $second"
+      assertEquals(interchangeable, first.isEquivalent(second), message)
+    }
+    for (list in lists) {
+      for (firstIndex in list.indices) {
+        for (secondIndex in firstIndex + 1 until list.size) {
+          val first = list[firstIndex]
+          val second = list[secondIndex]
+          assertIsInterchangeable(first, second, true)
+          assertIsInterchangeable(second, first, true)
+        }
+      }
+    }
+
+    for (firstListIndex in lists.indices) {
+      for (secondListIndex in firstListIndex + 1 until lists.size) {
+        for (first in lists[firstListIndex]) {
+          for (second in lists[secondListIndex]) {
+            assertIsInterchangeable(first, second, false)
+            assertIsInterchangeable(second, first, false)
+          }
+        }
+      }
+    }
+  }
+
   private fun setMarketplacePlugins(plugins: List<RepositoryPluginMock>, knownPluginIds: Collection<String>) {
     server.createContext("/plugins/files/pluginsXMLIds.json") { handler ->
       handler.sendResponseHeaders(200, 0)
@@ -179,7 +269,7 @@ internal class PluginUpdateFilteringBasedOnPluginUpdateSourceTest : UpdateChecke
     isJetBrainsPlugin: Boolean = false,
   ): InstalledPluginMock {
     val company = if (isJetBrainsPlugin) "JetBrains" else "Acme"
-    val vendor =  if (isJetBrainsPlugin) "JetBrains" else "Some Company"
+    val vendor = if (isJetBrainsPlugin) "JetBrains" else "Some Company"
     return InstalledPluginMock(pluginId, pluginId, company, "1.0", "1.0", "999.99999", true, vendor, isBundled,
                                allowBundledUpdate)
   }
@@ -205,5 +295,6 @@ internal class PluginUpdateFilteringBasedOnPluginUpdateSourceTest : UpdateChecke
     const val UPDATEABLE_BUNDLED_NOT_JETBRAINS = "test.updateable.bundled.not.jetbrains"
     const val NON_UPDATEABLE_BUNDLED_JETBRAINS = "test.non.updateable.bundled.jetbrains"
     const val NON_UPDATEABLE_BUNDLED_NOT_JETBRAINS = "test.non.updateable.bundled.not.jetbrains"
+    const val NIGHTLY_SOURCE_PLUGIN = "test.nightly.source"
   }
 }

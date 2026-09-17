@@ -76,7 +76,6 @@ object OsFamilyDetector {
   }
 }
 
-@VisibleForTesting
 class NativeFilesMatcher(paths: List<String>, private val targetOs: Iterable<OsFamily>?, private val targetArch: JvmArchitecture?) {
   private val iterator = paths.iterator()
   var commonPathPrefix: CharSequence? = null
@@ -230,7 +229,7 @@ private fun unpackNativeLibraries(
       context.addDistFile(
         DistFile(
           content = LocalDistFileContent(file = file, isExecutable = isExecutable),
-          relativePath = toRelativePath(libName, getRelativePath(libName = libName, arch = arch, fileName = fileName, path = path)),
+          relativePath = toRelativePath(libName, nativeLibraryRelativePath(libName = libName, arch = arch, fileName = fileName, path = path)),
           os = os.takeUnless { allPlatformsRequired },
           arch = arch.takeUnless { allPlatformsRequired },
         )
@@ -319,7 +318,7 @@ private fun determineArch(os: OsFamily, path: CharSequence): NativeFileArchitect
 }
 
 // each library has own implementation of handling path property
-private fun getRelativePath(libName: String, arch: JvmArchitecture?, fileName: String, path: String): String {
+internal fun nativeLibraryRelativePath(libName: String, arch: JvmArchitecture?, fileName: String, path: String): String {
   when (libName) {
     "async-profiler" -> {
       return if (arch == null) fileName else "${arch.dirName}/$fileName"

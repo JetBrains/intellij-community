@@ -1,17 +1,18 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.common
 
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.python.PyHelper
+import com.intellij.python.sdk.backend.pythonInterpreterAsync
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.sdk.executeHelper
 import kotlinx.serialization.SerialName
-import kotlinx.serialization.SerializationException
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import org.jetbrains.annotations.ApiStatus
 
@@ -98,7 +99,7 @@ internal object PythonPackageMetadataParser {
 @ApiStatus.Internal
 suspend fun Sdk.loadInstalledPackagesMetadata(): PyResult<Map<PyPackageName, PythonPackageMetadata>> {
   val output = ExecService()
-    .executeHelper(this, PyHelper(PythonPackageMetadataParser.HELPER_SCRIPT), Args())
+    .executeHelper(this.pythonInterpreterAsync(), PyHelper(PythonPackageMetadataParser.HELPER_SCRIPT), Args())
     .getOr { return it }
   return PythonPackageMetadataParser.parse(output)
 }

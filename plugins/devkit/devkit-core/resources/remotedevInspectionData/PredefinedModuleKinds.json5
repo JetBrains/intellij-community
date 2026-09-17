@@ -28,7 +28,7 @@
   {kind: "moduleId", id: "intellij.platform.backend.split", moduleKind: "backend"},
   {kind: "moduleId", id: "intellij.platform.kernel.backend", moduleKind: "backend"},
   {kind: "moduleId", id: "com.jetbrains.remoteDevelopment", moduleKind: "backend"},
-  {kind: "moduleId", id: "intellij.cwm", moduleKind: "backend"},
+  {kind: "moduleId", id: "intellij.remoteDevelopment.plugin", moduleKind: "backend"},
   {kind: "moduleId", id: "intellij.cwm.plugin", moduleKind: "backend"},
   {kind: "moduleId", id: "intellij.cwm.plugin.provisioner", moduleKind: "backend"},
   {kind: "moduleId", id: "intellij.cwm.connection.backend", moduleKind: "backend"},

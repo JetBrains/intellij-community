@@ -28,6 +28,7 @@ public class JavaMethodStubFactory implements LightStubElementFactory<PsiMethodS
     String name = null;
     boolean isConstructor = true;
     boolean isVarArgs = false;
+    boolean hasParameterList = false;
     boolean isDeprecatedByComment = false;
     boolean hasDeprecatedAnnotation = false;
     boolean hasDocComment = false;
@@ -50,13 +51,8 @@ public class JavaMethodStubFactory implements LightStubElementFactory<PsiMethodS
         name = RecordUtil.intern(tree.getCharTable(), child);
       }
       else if (type == JavaElementType.PARAMETER_LIST) {
-        final List<LighterASTNode> params = LightTreeUtil.getChildrenOfType(tree, child, JavaElementType.PARAMETER);
-        if (!params.isEmpty()) {
-          final LighterASTNode pType = LightTreeUtil.firstChildOfType(tree, params.get(params.size() - 1), JavaElementType.TYPE);
-          if (pType != null) {
-            isVarArgs = LightTreeUtil.firstChildOfType(tree, pType, JavaTokenType.ELLIPSIS) != null;
-          }
-        }
+        hasParameterList = true;
+        isVarArgs = endsWithEllipsis(tree, child, JavaElementType.PARAMETER);
       }
       else if (type == JavaTokenType.DEFAULT_KEYWORD) {
         expectingDef = true;
@@ -68,11 +64,31 @@ public class JavaMethodStubFactory implements LightStubElementFactory<PsiMethodS
       }
     }
 
+    if (!hasParameterList) {
+      // A compact constructor has no parameter list. It takes the record components,
+      // the same way as PsiMethodImpl.getParameterList reports them.
+      isVarArgs = hasVarArgsRecordComponent(tree, node);
+    }
+
     TypeInfo typeInfo = isConstructor ? TypeInfo.createConstructorType() : TypeInfo.create(tree, node, parentStub);
     boolean isAnno = node.getTokenType() == JavaElementType.ANNOTATION_METHOD;
     byte flags = PsiMethodStubImpl.packFlags(isConstructor, isAnno, isVarArgs, isDeprecatedByComment, hasDeprecatedAnnotation, hasDocComment);
 
     return new PsiMethodStubImpl(parentStub, name, typeInfo, flags, defValueText);
+  }
+
+  private static boolean hasVarArgsRecordComponent(@NotNull LighterAST tree, @NotNull LighterASTNode method) {
+    final LighterASTNode containingClass = tree.getParent(method);
+    if (containingClass == null || containingClass.getTokenType() != JavaElementType.CLASS) return false;
+    final LighterASTNode header = LightTreeUtil.firstChildOfType(tree, containingClass, JavaElementType.RECORD_HEADER);
+    return header != null && endsWithEllipsis(tree, header, JavaElementType.RECORD_COMPONENT);
+  }
+
+  private static boolean endsWithEllipsis(@NotNull LighterAST tree, @NotNull LighterASTNode list, @NotNull IElementType itemType) {
+    final List<LighterASTNode> items = LightTreeUtil.getChildrenOfType(tree, list, itemType);
+    if (items.isEmpty()) return false;
+    final LighterASTNode type = LightTreeUtil.firstChildOfType(tree, items.get(items.size() - 1), JavaElementType.TYPE);
+    return type != null && LightTreeUtil.firstChildOfType(tree, type, JavaTokenType.ELLIPSIS) != null;
   }
 
   @Override

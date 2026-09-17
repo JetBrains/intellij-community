@@ -18,6 +18,13 @@ import org.jetbrains.annotations.Nls
 sealed interface PluginUpdateSourceId {
   val host: @NlsSafe String
   val isMarketplace: Boolean
+
+  /**
+   * Is symmetric: `first.isEquivalent(second) == second.isEquivalent(first)`
+   *
+   * @return if a plugin with this update source may have updates from [other] update source
+   */
+  fun isEquivalent(other: PluginUpdateSourceId): Boolean
 }
 
 @ApiStatus.Internal

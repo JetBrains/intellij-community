@@ -11,8 +11,8 @@ import (
 )
 
 // indexBuilder accumulates the `__index__` entry the platform's class loader reads instead of walking the central
-// directory. Ported from PackageIndexBuilder and IkvIndexBuilder in zip/src, in the one configuration the packer uses:
-// AddDirEntriesMode.NONE, so directories are recorded *in the index* but never written as zip entries.
+// directory. It follows PackageIndexBuilder and IkvIndexBuilder in zip/src.
+// The default records directories in the index without writing zip entries.
 //
 // Two things here decide bytes and are easy to get subtly wrong, so both are spelled out at their use site: which of
 // the two hash encodings each field uses, and the sort order of the arrays.
@@ -30,6 +30,7 @@ type indexBuilder struct {
 	resourcePackages map[int64]struct{}
 	dirsToRegister   map[string]struct{}
 	dirOrder         []string
+	directoryMode    DirectoryMode
 }
 
 type ikvEntry struct {
@@ -66,6 +67,9 @@ func (b *indexBuilder) addFile(name string) {
 	}
 	if hasSuffix(name, ".class") {
 		b.classPackages[packageHash] = struct{}{}
+		if b.directoryMode == DirectoriesAll {
+			b.registerDirs(name)
+		}
 		// AddDirEntriesMode.NONE never registers a class directory, so nothing else to do.
 		return
 	}
@@ -102,19 +106,20 @@ func (b *indexBuilder) registerDirs(name string) {
 
 // finish adds the directory entries, which must happen after every file entry has been written so that the file
 // entries occupy the head of the index in write order. Mirrors `writePackageIndex` for AddDirEntriesMode.NONE.
-func (b *indexBuilder) finish() error {
+func (b *indexBuilder) sortedDirectories() []string {
 	if len(b.resourcePackages) != 0 {
 		// An empty package, so a request for the top-level directory resolves.
 		b.resourcePackages[0] = struct{}{}
-	}
-	if len(b.dirsToRegister) == 0 {
-		return nil
 	}
 	dirs := slices.Clone(b.dirOrder)
 	// Java's Arrays.sort over String, i.e. UTF-16 code-unit order - not Go's byte order, which disagrees once a
 	// non-BMP name is involved.
 	slices.SortFunc(dirs, compareJavaString)
-	for _, dir := range dirs {
+	return dirs
+}
+
+func (b *indexBuilder) finish() error {
+	for _, dir := range b.sortedDirectories() {
 		nameBytes := []byte(dir)
 		// size -1 packs to 0xffffffff, which is how the reader tells a directory from a real entry.
 		if err := b.add(ikvEntry{key: xxh3.HashBytes(nameBytes), offset: 0, size: -1}, nameBytes); err != nil {

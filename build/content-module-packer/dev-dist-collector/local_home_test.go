@@ -10,6 +10,47 @@ import (
 	"testing"
 )
 
+func TestLocalHomeCreatesDirectoriesWithoutRunfiles(test *testing.T) {
+	parentMode, childMode := uint32(0o500), uint32(0o710)
+	layout := localLayout{Version: 1, Files: []localLayoutFile{
+		{Path: "resources/empty", Kind: "directory", Mode: &childMode},
+		{Path: "resources", Kind: "directory", Mode: &parentMode},
+		{Path: "current", SymlinkTarget: "resources/empty"},
+	}}
+	output := filepath.Join(test.TempDir(), "home")
+	test.Cleanup(func() { os.Chmod(filepath.Join(output, "resources"), 0o755) })
+	lookup := func(name string) (string, error) {
+		test.Fatalf("unexpected directory runfile: %s", name)
+		return "", nil
+	}
+	if err := materializeLocalHome(writeLocalLayoutTestFile(test, layout), output, lookup); err != nil {
+		test.Fatal(err)
+	}
+	for name, mode := range map[string]uint32{"resources": parentMode, "resources/empty": childMode} {
+		info, err := os.Lstat(filepath.Join(output, name))
+		if err != nil || !info.IsDir() || uint32(info.Mode().Perm()) != mode {
+			test.Fatalf("directory %s: %v: %v", name, info, err)
+		}
+	}
+	if err := materializeLocalHome(writeLocalLayoutTestFile(test, layout), output, lookup); err == nil {
+		test.Fatal("accepted stale local directories")
+	}
+	for _, invalid := range []localLayoutFile{
+		{Path: "resources", Runfile: "_main/file"},
+		{Path: "resources", SymlinkTarget: "elsewhere"},
+		{Path: "Resources/other", Kind: "directory", Mode: &childMode},
+		{Path: "resources/../outside", Kind: "directory", Mode: &childMode},
+		{Path: "current/child", Kind: "directory", Mode: &childMode},
+		{Path: "extra", Kind: "directory", Runfile: "_main/directory", Mode: &childMode},
+	} {
+		changed := layout
+		changed.Files = append(append([]localLayoutFile{}, layout.Files...), invalid)
+		if err := materializeLocalHome(writeLocalLayoutTestFile(test, changed), filepath.Join(test.TempDir(), "home"), lookup); err == nil {
+			test.Fatalf("accepted invalid local directory: %+v", invalid)
+		}
+	}
+}
+
 func writeLocalLayoutTestFile(test *testing.T, layout localLayout) string {
 	test.Helper()
 	content, err := json.Marshal(layout)
@@ -110,18 +151,155 @@ func TestLocalHomeLinksDataWithBazelExecutableBits(test *testing.T) {
 		test.Skip("Windows launches use the self-contained distribution")
 	}
 	source := filepath.Join(test.TempDir(), "packed.jar")
-	if err := os.WriteFile(source, []byte("jar bytes"), 0755); err != nil {
+	if err := os.WriteFile(source, []byte("jar bytes"), 0644); err != nil {
 		test.Fatal(err)
+	}
+	if err := os.Chmod(source, 0555); err != nil {
+		test.Fatal(err)
+	}
+	for _, file := range []localLayoutFile{
+		{Path: "lib/packed.jar", Runfile: "_main/packed.jar"},
+		{Path: "lib/packed.jar", Runfile: "_main/packed.jar", Executable: true},
+		{Path: "lib/packed.jar", Runfile: "_main/packed.jar", Mode: new(uint32(0644))},
+		{Path: "lib/packed.jar", Runfile: "_main/packed.jar", Executable: true, Mode: new(uint32(0755))},
+	} {
+		layout := writeLocalLayoutTestFile(test, localLayout{Version: 1, Files: []localLayoutFile{file}})
+		home := test.TempDir()
+		if err := materializeLocalHome(layout, home, func(string) (string, error) { return source, nil }); err != nil {
+			test.Fatal(err)
+		}
+		if linked, err := os.Readlink(filepath.Join(home, "lib/packed.jar")); err != nil || linked != source {
+			test.Fatalf("data was copied instead of linked: %q, %v", linked, err)
+		}
+		info, err := os.Stat(source)
+		if err != nil || info.Mode().Perm() != 0555 {
+			test.Fatalf("the normalized source mode changed: %v", err)
+		}
+	}
+}
+
+func TestLocalHomePreservesExactSourceModes(test *testing.T) {
+	if runtime.GOOS == "windows" {
+		test.Skip("Windows launches use the self-contained distribution")
+	}
+	for _, mode := range []uint32{0, 0600, 0640, 0750, 0755} {
+		source := filepath.Join(test.TempDir(), "shared")
+		if err := os.WriteFile(source, []byte("shared bytes"), 0600); err != nil {
+			test.Fatal(err)
+		}
+		if err := os.Chmod(source, os.FileMode(mode)); err != nil {
+			test.Fatal(err)
+		}
+		layout := writeLocalLayoutTestFile(test, localLayout{Version: 1, Files: []localLayoutFile{
+			{Path: "bin/shared", Runfile: "_main/shared", Executable: mode&0111 != 0, Mode: &mode},
+		}})
+		home := test.TempDir()
+		if err := materializeLocalHome(layout, home, func(string) (string, error) { return source, nil }); err != nil {
+			test.Fatal(err)
+		}
+		if target, err := os.Readlink(filepath.Join(home, "bin/shared")); err != nil || target != source {
+			test.Fatalf("payload was not linked: %q, %v", target, err)
+		}
+		info, err := os.Stat(source)
+		if err != nil || uint32(info.Mode().Perm()) != mode {
+			test.Fatalf("shared source mode changed: %v", err)
+		}
+	}
+}
+
+func TestLocalHomeCopiesNoncanonicalModesWithoutChangingSource(test *testing.T) {
+	if runtime.GOOS == "windows" {
+		test.Skip("Windows launches use the self-contained distribution")
+	}
+	source := filepath.Join(test.TempDir(), "shared")
+	if err := os.WriteFile(source, []byte("shared bytes"), 0600); err != nil {
+		test.Fatal(err)
+	}
+	if err := os.Chmod(source, 0555); err != nil {
+		test.Fatal(err)
+	}
+	for _, mode := range []uint32{0, 0600, 0640, 0700, 0750, 0777} {
+		layout := writeLocalLayoutTestFile(test, localLayout{Version: 1, Files: []localLayoutFile{
+			{Path: "bin/shared", Runfile: "_main/shared", Executable: mode&0111 != 0, Mode: &mode},
+		}})
+		home := test.TempDir()
+		if err := materializeLocalHome(layout, home, func(string) (string, error) { return source, nil }); err != nil {
+			test.Fatal(err)
+		}
+		destination := filepath.Join(home, "bin/shared")
+		copied, err := os.Lstat(destination)
+		if err != nil || !copied.Mode().IsRegular() || uint32(copied.Mode().Perm()) != mode || copied.Size() != int64(len("shared bytes")) {
+			test.Fatalf("the private copy does not have mode %04o: %v, %v", mode, copied, err)
+		}
+		if mode&0400 != 0 {
+			if content, err := os.ReadFile(destination); err != nil || string(content) != "shared bytes" {
+				test.Fatalf("the private copy changed the payload: %q, %v", content, err)
+			}
+		}
+		info, err := os.Stat(source)
+		if err != nil || info.Mode().Perm() != 0555 || os.SameFile(copied, info) {
+			test.Fatalf("shared source mode changed: %v", err)
+		}
+	}
+}
+
+func TestLocalHomeCopiesOnlyNoncanonicalNativeMode(test *testing.T) {
+	if runtime.GOOS == "windows" {
+		test.Skip("POSIX file modes are required")
+	}
+	sources := make(map[string]string)
+	for _, name := range []string{"packed.jar", "native"} {
+		source := filepath.Join(test.TempDir(), name)
+		if err := os.WriteFile(source, []byte(name), 0644); err != nil {
+			test.Fatal(err)
+		}
+		if err := os.Chmod(source, 0555); err != nil {
+			test.Fatal(err)
+		}
+		sources["_main/"+name] = source
 	}
 	layout := writeLocalLayoutTestFile(test, localLayout{Version: 1, Files: []localLayoutFile{
-		{Path: "lib/packed.jar", Runfile: "_main/packed.jar"},
+		{Path: "lib/packed.jar", Runfile: "_main/packed.jar", Mode: new(uint32(0644))},
+		{Path: "bin/native", Runfile: "_main/native", Executable: true, Mode: new(uint32(0750))},
 	}})
 	home := test.TempDir()
-	if err := materializeLocalHome(layout, home, func(string) (string, error) { return source, nil }); err != nil {
+	if err := materializeLocalHome(layout, home, func(runfile string) (string, error) { return sources[runfile], nil }); err != nil {
 		test.Fatal(err)
 	}
-	if linked, err := os.Readlink(filepath.Join(home, "lib/packed.jar")); err != nil || linked != source {
-		test.Fatalf("data was copied instead of linked: %q, %v", linked, err)
+	if target, err := os.Readlink(filepath.Join(home, "lib/packed.jar")); err != nil || target != sources["_main/packed.jar"] {
+		test.Fatalf("the jar was copied instead of linked: %q, %v", target, err)
+	}
+	native := filepath.Join(home, "bin/native")
+	info, err := os.Lstat(native)
+	if err != nil || !info.Mode().IsRegular() || info.Mode().Perm() != 0750 {
+		test.Fatalf("the native file was not copied with mode 0750: %v, %v", info, err)
+	}
+	if content, err := os.ReadFile(native); err != nil || string(content) != "native" {
+		test.Fatalf("the native payload changed: %q, %v", content, err)
+	}
+	for runfile, source := range sources {
+		info, err := os.Stat(source)
+		if err != nil || info.Mode().Perm() != 0555 {
+			test.Fatalf("shared source %s changed: %v", runfile, err)
+		}
+	}
+}
+
+func TestLocalHomeRejectsInvalidModeMetadata(test *testing.T) {
+	for _, file := range []localLayoutFile{
+		{Path: "file", Runfile: "_main/file", Mode: new(uint32(01000))},
+		{Path: "file", Runfile: "_main/file", Mode: new(uint32(0750))},
+		{Path: "file", Runfile: "_main/file", Executable: true, Mode: new(uint32(0644))},
+		{Path: "link", SymlinkTarget: "file", Mode: new(uint32(0))},
+	} {
+		layout := writeLocalLayoutTestFile(test, localLayout{Version: 1, Files: []localLayoutFile{file}})
+		err := materializeLocalHome(layout, test.TempDir(), func(string) (string, error) {
+			test.Fatal("invalid mode metadata resolved a payload")
+			return "", nil
+		})
+		if err == nil || !strings.Contains(err.Error(), "invalid mode metadata") {
+			test.Fatalf("accepted invalid mode metadata: %#v, %v", file, err)
+		}
 	}
 }
 

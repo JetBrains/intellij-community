@@ -1,23 +1,21 @@
-load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_TARGETS")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `dev intellij.pycharm.community.customization.shared` start
 dev_dist_plugin(
-    content_modules = ["intellij.platform.ide.nonModalWelcomeScreen"],
-    main_module = "intellij.pycharm.community.customization.shared",
-    module_targets = MODULE_TARGETS,
-    prepacked_content_modules = [
+    content_modules = [
         # do not sort,
+        "intellij.pycharm.community.ide.impl",
+        "intellij.pycharm.community.customization.frontend",
+        "intellij.pycharm.community.ide.implTraining",
+        "intellij.platform.whatsNew",
+        "intellij.platform.ide.nonModalWelcomeScreen",
         "intellij.platform.ide.nonModalWelcomeScreen.backend",
         "intellij.platform.ide.nonModalWelcomeScreen.frontend",
-        "intellij.platform.whatsNew",
-        "intellij.pycharm.community.customization.backend",
-        "intellij.pycharm.community.customization.frontend",
-        "intellij.pycharm.community.ide.impl",
-        "intellij.pycharm.community.ide.implTraining",
         "intellij.pycharm.community.newUiOnboarding",
+        "intellij.pycharm.community.customization.backend",
     ],
+    main_module = "intellij.pycharm.community.customization.shared",
 )
 ### auto-generated section `dev intellij.pycharm.community.customization.shared` end
 

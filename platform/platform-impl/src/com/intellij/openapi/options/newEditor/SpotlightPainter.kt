@@ -108,6 +108,8 @@ open class SpotlightPainter(
       try {
         lightOptions(configurable = searchable, component = component, option = text)
         // execute for empty string too
+        /** NOTE: calling `enableSearch` without user's intent kinda breaks the API contract,
+         * [com.intellij.ide.plugins.UnifiedPluginsPageSession] has custom handling of [SpotlightPainter] */
         val search = searchable.enableSearch(text)
         if (search != null && (filter == null || !filter.contains(configurable)) && text != configurableOption.get(searchable.id)) {
           search.run()

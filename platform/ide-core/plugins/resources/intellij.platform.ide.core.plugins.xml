@@ -4,6 +4,7 @@
     <module name="intellij.libraries.kotlinx.serialization.core"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.settings"/>
   </dependencies>
   <!-- endregion -->
 </idea-plugin>

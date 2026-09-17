@@ -1,0 +1,3 @@
+GoLand: intellij.go.extra
+idea: intellij.a,intellij.b,intellij.c,intellij.q,intellij.s,intellij.second
+ideaJetBrainsClient: intellij.frontend

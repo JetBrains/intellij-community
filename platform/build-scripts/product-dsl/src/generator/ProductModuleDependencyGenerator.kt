@@ -148,8 +148,7 @@ private fun collectModulesToProcess(moduleSets: List<ModuleSet>): Set<String> {
   for (set in moduleSets) {
     visitAllModules(set) { module ->
       val moduleName = module.moduleId.name
-      if (module.includeDependencies ||
-          moduleName.startsWith(LIB_MODULE_PREFIX) ||
+      if (moduleName.startsWith(LIB_MODULE_PREFIX) ||
           moduleName.startsWith("intellij.platform.settings.")) {
         result.add(moduleName)
       }

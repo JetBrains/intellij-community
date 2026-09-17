@@ -146,6 +146,7 @@ def _repo_impl(repository_ctx):
 
     # Reproducible even where the checksum was not known up front: every URL here carries its own
     # version, so the same URL is the same artifact, and the repo contents cache may share it.
+    # The one exception is `dev_launch_jetbrains_public_keys`, whose URL carries no version.
     return repository_ctx.repo_metadata(reproducible = all_downloads_pinned(files))
 
 dev_launch_deps_repo = repository_rule(
@@ -346,15 +347,23 @@ def _dev_launch_deps_community_impl(module_ctx):
 
     # NativeBinaryDownloader.getRestarter - one archive carrying `<os>-<arch>/restarter` for every platform,
     # so it is fetched once for all six. Every distribution's `bin` copies it, a dev one included.
+    restarter_url = maven_url(
+        INTELLIJ_DEPENDENCIES_URL,
+        "org.jetbrains.intellij.deps",
+        "restarter",
+        pinned(community, _COMMUNITY_DEPENDENCIES, "restarterBuild"),
+        "tar.gz",
+    )
     dev_launch_deps_repo(
         name = "dev_launch_restarter",
-        urls = [maven_url(
-            INTELLIJ_DEPENDENCIES_URL,
-            "org.jetbrains.intellij.deps",
-            "restarter",
-            pinned(community, _COMMUNITY_DEPENDENCIES, "restarterBuild"),
-            "tar.gz",
-        )],
+        urls = [restarter_url],
+    )
+
+    # The same archive, unpacked. The platform layout declares `bin/restarter` out of it (`PlatformLayout.withRestarter`),
+    # and the `platform_assets` component of a split distribution places the file from this repository.
+    dev_launch_extracted_repo(
+        name = "dev_launch_restarter_extracted",
+        url = restarter_url,
     )
     dev_launch_deps_repo(
         name = "dev_launch_maven",

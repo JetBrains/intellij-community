@@ -38,6 +38,7 @@
     <module name="intellij.platform.diagnostic.telemetry.impl"/>
     <module name="intellij.platform.diff.impl"/>
     <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.codeinsight.inline"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.ide.internal"/>

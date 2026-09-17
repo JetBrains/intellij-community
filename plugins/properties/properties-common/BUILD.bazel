@@ -1,5 +1,4 @@
-load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_DESCRIPTORS", "MODULE_TARGETS")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -7,8 +6,14 @@ load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_mod
 content_module_jar(module = ":properties")
 
 dev_dist_plugin(
+    content_modules = [
+        # do not sort,
+        "intellij.properties.copyright",
+        "intellij.properties.backend.psi",
+        "intellij.properties.backend",
+        "intellij.properties.psi",
+    ],
     descriptor = "resources/META-INF/plugin.xml",
-    descriptor_index = MODULE_DESCRIPTORS,
     descriptor_modules = [
         "intellij.properties",
         "intellij.properties.backend",
@@ -16,16 +21,12 @@ dev_dist_plugin(
         "intellij.properties.copyright",
         "intellij.properties.psi",
     ],
+    jars = {
+        "lib/intellij.properties.jar": ["intellij.properties"],
+    },
     main_module = "intellij.properties",
-    module_targets = MODULE_TARGETS,
-    prepacked_content_modules = [
-        # do not sort,
-        "intellij.properties.copyright",
-        "intellij.properties.backend.psi",
-        "intellij.properties.backend",
-    ],
-    prepacked_jars = {
-        "intellij.properties.psi": "intellij.properties.psi.jar",
+    module_jar_paths = {
+        "intellij.properties.psi": "lib/intellij.properties.psi.jar",
     },
 )
 ### auto-generated section `dev intellij.properties` end

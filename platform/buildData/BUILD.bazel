@@ -1,5 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.platform.buildData` start
+content_module_jar(module = ":buildData")
+### auto-generated section `dev intellij.platform.buildData` end
 
 ### auto-generated section `build intellij.platform.buildData` start
 create_kotlinc_options(
@@ -59,6 +64,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.buildData.iml",
+        "resources/intellij.platform.buildData.xml",
     ],
     visibility = ["//visibility:public"],
 )

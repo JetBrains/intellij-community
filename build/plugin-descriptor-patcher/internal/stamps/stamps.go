@@ -3,10 +3,9 @@
 // The stamps stage of the plugin descriptor patch.
 //
 // This is `doPatchPluginXml`
-// (`community/platform/build-scripts/src/org/jetbrains/intellij/build/impl/PluginXmlPatcher.kt:250-294`), the second of
-// the seven stages `DevDistDescriptorStage` names. It runs over the element tree the round trip parsed, and it is the
-// one stage that every plugin's descriptor reaches: a dev assembly's own report shows it changing all 162 texts of one
-// product.
+// (`community/platform/build-scripts/src/org/jetbrains/intellij/build/impl/PluginXmlPatcher.kt`), the stage after
+// `reserialized` in the stage list of the package doc of `main.go`. It runs over the element tree the round trip
+// parsed, and every plugin's descriptor reaches it.
 //
 // It does four things, and each one moves bytes:
 //

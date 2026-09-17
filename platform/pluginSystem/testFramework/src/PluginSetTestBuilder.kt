@@ -36,6 +36,7 @@ class PluginSetTestBuilder private constructor(
   private var customCoreLoader: UrlClassLoader? = null
   private var productMode: ProductMode = ProductMode.MONOLITH
   private var explicitPluginSubsetToLoad: Set<PluginId>? = null
+  private var disableRequiredIfAvailable: Boolean = false
   private var customEnvironmentConfiguredModules: Map<PluginModuleId, EnvironmentConfiguredModuleData>? = null
   private var compatibilityDependenciesForRemainingCandidatesProvider:
     ((IdeaPluginDescriptorImpl, RemainingCandidatesView) -> Sequence<DependencyRef>)? = null
@@ -82,6 +83,10 @@ class PluginSetTestBuilder private constructor(
     this.explicitPluginSubsetToLoad = pluginsToLoad
   }
 
+  fun withRequiredIfAvailableDisabled(disabled: Boolean): PluginSetTestBuilder = apply {
+    disableRequiredIfAvailable = disabled
+  }
+
   fun withEnvironmentConfiguredModules(
     environmentConfiguredModules: Map<PluginModuleId, EnvironmentConfiguredModuleData>,
   ): PluginSetTestBuilder = apply {
@@ -110,6 +115,7 @@ class PluginSetTestBuilder private constructor(
         return false
       }
       override val explicitPluginSubsetToLoad: Set<PluginId>? = this@PluginSetTestBuilder.explicitPluginSubsetToLoad
+      override val disableRequiredIfAvailable: Boolean = this@PluginSetTestBuilder.disableRequiredIfAvailable
       override val currentProductModeId: String = productMode.id
       override val environmentConfiguredModules: Map<PluginModuleId, EnvironmentConfiguredModuleData>
         get() = customEnvironmentConfiguredModules ?: super.environmentConfiguredModules

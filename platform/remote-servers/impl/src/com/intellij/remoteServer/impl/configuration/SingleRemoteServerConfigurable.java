@@ -3,6 +3,7 @@ package com.intellij.remoteServer.impl.configuration;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
@@ -49,7 +50,10 @@ public class SingleRemoteServerConfigurable extends NamedConfigurable<RemoteServ
 
   private boolean myConnected;
 
-  public <C extends ServerConfiguration> SingleRemoteServerConfigurable(RemoteServer<C> server, Runnable treeUpdater, boolean isNew) {
+  public <C extends ServerConfiguration> SingleRemoteServerConfigurable(@Nullable Project project,
+                                                                        RemoteServer<C> server,
+                                                                        Runnable treeUpdater,
+                                                                        boolean isNew) {
     super(true, treeUpdater);
     myServer = server;
     myNew = isNew;
@@ -82,7 +86,7 @@ public class SingleRemoteServerConfigurable extends NamedConfigurable<RemoteServ
     myInnerApplied = false;
     myAppliedButNeedsCheck = isNew || server.getType().canAutoDetectConfiguration();
 
-    myConfigurable = createConfigurable(server, innerConfiguration);
+    myConfigurable = createConfigurable(project, server, innerConfiguration);
 
     myConnected = false;
     myRunner = new DelayedRunner(myMainPanel) {
@@ -123,11 +127,19 @@ public class SingleRemoteServerConfigurable extends NamedConfigurable<RemoteServ
     myRunner.queueChangesCheck();
   }
 
+  public <C extends ServerConfiguration> SingleRemoteServerConfigurable(RemoteServer<C> server, Runnable treeUpdater, boolean isNew) {
+    this(null, server, treeUpdater, isNew);
+  }
+
   /** @noinspection ALL */
   public JComponent $$$getRootComponent$$$() { return myMainPanel; }
 
-  private static <C extends ServerConfiguration> RemoteServerConfigurable createConfigurable(RemoteServer<C> server, C configuration) {
-    return server.getType().createServerConfigurable(configuration);
+  private static <C extends ServerConfiguration> RemoteServerConfigurable createConfigurable(@Nullable Project project,
+                                                                                             RemoteServer<C> server,
+                                                                                             C configuration) {
+    return project == null
+           ? server.getType().createServerConfigurable(configuration)
+           : server.getType().createServerConfigurable(project, configuration);
   }
 
   private void setConnectionStatus(boolean error, boolean connected, @NlsContexts.Label String text) {

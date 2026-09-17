@@ -34,6 +34,7 @@
     <module name="intellij.libraries.kotlinc.symbol.light.classes"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.codeStyle"/>
+    <module name="intellij.platform.concurrency"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.core.ui"/>
@@ -41,6 +42,7 @@
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.core.impl"/>
     <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.observable"/>
     <module name="intellij.platform.ide.progress"/>
     <module name="intellij.platform.indexing"/>
     <module name="intellij.platform.lang"/>
@@ -50,6 +52,7 @@
     <module name="intellij.platform.refactoring"/>
     <module name="intellij.platform.statistics"/>
     <module name="intellij.platform.usageView"/>
+    <module name="intellij.platform.util.text.matching"/>
     <module name="intellij.platform.util.ui"/>
     <module name="kotlin.fir"/>
     <module name="kotlin.fir.frontend-independent"/>

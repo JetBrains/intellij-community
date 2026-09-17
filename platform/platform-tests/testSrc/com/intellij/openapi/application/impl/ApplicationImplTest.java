@@ -3,6 +3,7 @@ package com.intellij.openapi.application.impl;
 
 import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobLauncher;
+import com.intellij.concurrency.JobLauncherImpl;
 import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.idea.IJIgnore;
@@ -97,7 +98,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
         final int numOfThreads = JobSchedulerImpl.getJobPoolParallelism();
         List<Job> threads = new ArrayList<>(numOfThreads);
         for (int i = 0; i < numOfThreads; i++) {
-          Job thread = JobLauncher.getInstance().submitToJobThread(() -> {
+          Job thread = ((JobLauncherImpl)JobLauncher.getInstance()).submitToJobThread(() -> {
             assertFalse(application.isReadAccessAllowed());
             for (int i1 = 0; i1 < readIterations; i1++) {
               application.runReadAction(EmptyRunnable.getInstance());

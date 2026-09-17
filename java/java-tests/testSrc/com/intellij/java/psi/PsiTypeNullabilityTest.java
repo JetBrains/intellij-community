@@ -10,6 +10,7 @@ import com.intellij.psi.GenericsUtil;
 import com.intellij.psi.JavaResolveResult;
 import com.intellij.psi.PsiCapturedWildcardType;
 import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiConditionalExpression;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiFile;
@@ -736,6 +737,41 @@ public final class PsiTypeNullabilityTest extends LightJavaCodeInsightFixtureTes
     // The @Nullable bound alone does not make the return type nullable: T is instantiated with the non-null Base
     assertEquals("NOT_NULL (@NullMarked on class Sample)", argumentNullabilityOf(calls.get(1)));
     assertEquals("NOT_NULL (@NullMarked on class Sample)", parameterNullabilityOf(calls.get(1)));
+  }
+
+  /**
+   * The least upper bound of two equal intersection types joins the nullability of the arguments,
+   * so the order of the conditional branches does not change the result.
+   */
+  public void testIntersectionTypeLeastUpperBound() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    PsiFile file = myFixture.configureByText("Test.java", """
+      import org.jspecify.annotations.NullMarked;
+      import org.jspecify.annotations.Nullable;
+
+      @NullMarked
+      class Sample {
+        interface A {}
+        interface B {}
+
+        static <T extends A & B> T notNull() { return null; }
+        static <T extends @Nullable A & @Nullable B> @Nullable T nullable() { return null; }
+
+        void test(boolean flag) {
+          var notNullFirst = flag ? notNull() : nullable();
+          var nullableFirst = flag ? nullable() : notNull();
+        }
+      }
+      """);
+    List<PsiConditionalExpression> conditionals =
+      new ArrayList<>(PsiTreeUtil.findChildrenOfType(file, PsiConditionalExpression.class));
+    assertEquals(2, conditionals.size());
+    for (PsiConditionalExpression conditional : conditionals) {
+      PsiType type = conditional.getType();
+      assertNotNull(type);
+      assertEquals(conditional.getText(), "NULLABLE (@Nullable)", type.getNullability().toString());
+    }
   }
 
   private static @NotNull String argumentNullabilityOf(@NotNull PsiMethodCallExpression call) {

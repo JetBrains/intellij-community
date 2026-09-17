@@ -263,7 +263,7 @@ public final class EditorPainter implements TextDrawingCallback {
   ) {
     return ContainerUtil.map(
       locations,
-      location -> caretRectangleForLocationAndGrow(location, metrics.topOverhang, metrics.caretHeight, grow)
+      location -> caretRectangleForLocationAndGrow(location, metrics.caretTopOverhang, metrics.caretHeight, grow)
     ).toArray(Rectangle[]::new);
   }
 
@@ -1588,7 +1588,7 @@ public final class EditorPainter implements TextDrawingCallback {
       if (caretColor == null) caretColor = new JBColor(CARET_DARK, CARET_LIGHT);
       int minX = myInsets.left;
       int caretHeight = snapshot.repaintMetrics.caretHeight;
-      int topOverhang = snapshot.repaintMetrics.topOverhang;
+      int topOverhang = snapshot.repaintMetrics.caretTopOverhang;
       float opacity = snapshot.blinkOpacity;
       for (CaretRectangle location : snapshot.locations) {
         float x = (float)location.getX();

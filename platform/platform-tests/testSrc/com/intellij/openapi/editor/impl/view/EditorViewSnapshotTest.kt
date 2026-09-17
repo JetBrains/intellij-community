@@ -80,6 +80,23 @@ class EditorViewSnapshotTest : AbstractEditorTest() {
     )
   }
 
+  fun `test the caret repaint metrics drop the top overhang for a full line height caret`() {
+    initText("text")
+    val view = EditorViewAccessor.getView(editor)
+    editor.settings.isFullLineHeightCursor = true
+    assertEquals(
+      "A full line height caret starts at the line top, so it overhangs nothing",
+      0,
+      EditorViewAccessor.getCaretTopOverhang(editor),
+    )
+    editor.settings.isFullLineHeightCursor = false
+    assertEquals(
+      "A default caret starts at the top overhang of the font",
+      view.topOverhang,
+      EditorViewAccessor.getCaretTopOverhang(editor),
+    )
+  }
+
   fun `test a prefix with a text and no attributes is rejected`() {
     initText("text")
     val failure = assertThrows<IllegalArgumentException> {

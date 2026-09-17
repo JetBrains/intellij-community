@@ -5,12 +5,14 @@
     <module name="intellij.java.compiler"/>
     <module name="intellij.maven.jps"/>
     <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.backend.workspace"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.execution"/>
     <module name="intellij.platform.jps.build"/>
     <module name="intellij.platform.lang.core"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.projectModel.impl"/>
+    <module name="intellij.platform.workspace.storage"/>
   </dependencies>
   <!-- endregion -->
 

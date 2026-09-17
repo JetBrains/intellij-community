@@ -385,7 +385,8 @@ object UpdateChecker {
         val relevantUpdates = if (PluginUpdateSourceService.isPluginUpdateFilteredAgainstPluginUpdateSource()) {
           val backendUpdateSource = getMatchingPluginUpdateSource(backend)
           val relevantPluginIds = updates.getAllPluginIds().filter { pluginId ->
-            hasMatchingPluginUpdateSource(pluginId, backendUpdateSource)
+            val updateSourceFromSettings = PluginUpdateSourceService.getInstance().getPluginUpdateSourceId(pluginId)
+            updateSourceFromSettings?.isEquivalent(backendUpdateSource) == true
           }
           updates.filterByPluginIds(relevantPluginIds)
         }
@@ -414,18 +415,6 @@ object UpdateChecker {
                                 categorizedDownloaders.getDownloadersForAllDisabledPlugins(),
                                 incompatible)
     return InternalPluginResults(updates, pluginModels.values, errors)
-  }
-
-  private fun hasMatchingPluginUpdateSource(
-    pluginId: PluginId,
-    candidatePluginUpdateSource: PluginUpdateSourceId,
-  ): Boolean {
-    val updateSourceFromSettings = PluginUpdateSourceService.getInstance().getPluginUpdateSourceId(pluginId)
-    return when {
-      updateSourceFromSettings == null -> false
-      updateSourceFromSettings.isMarketplace -> candidatePluginUpdateSource.isMarketplace
-      else -> !candidatePluginUpdateSource.isMarketplace && updateSourceFromSettings.host == candidatePluginUpdateSource.host
-    }
   }
 
   private fun collectUpdateablePlugins(): Map<PluginId, IdeaPluginDescriptor?> {
@@ -890,6 +879,7 @@ private suspend fun showResults(
 
     if (forceDialog) {
       showUpdateDialog()
+      PluginsMissingUpdateSourceNotifier.notify(project)
     }
     else {
       UpdateSettingsEntryPointActionProvider.newPluginUpdates(pluginUpdates, customRepoPlugins)
@@ -897,6 +887,7 @@ private suspend fun showResults(
       if (userInitiated) {
         // offer to update only enabled plugins
         showUpdatePluginsNotification(pluginUpdates, project, showUpdateDialog)
+        PluginsMissingUpdateSourceNotifier.notify(project)
       }
     }
   }
@@ -925,6 +916,7 @@ private suspend fun showResults(
   else if (pluginUpdates.isEmpty()) {
     if (forceDialog) {
       NoUpdatesDialog(showSettingsLink).show()
+      PluginsMissingUpdateSourceNotifier.notify(project)
     }
     else if (userInitiated) {
       showNotification(project = project,
@@ -932,6 +924,7 @@ private suspend fun showResults(
                        displayId = "no.updates.available",
                        title = "",
                        message = NoUpdatesDialog.getNoUpdatesText())
+      PluginsMissingUpdateSourceNotifier.notify(project)
     }
   }
 }

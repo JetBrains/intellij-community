@@ -3,10 +3,12 @@
   <dependencies>
     <module name="intellij.libraries.mlapi.catboost"/>
     <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.concurrency"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.codeinsight.inline"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.indexing"/>

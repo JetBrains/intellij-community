@@ -1,5 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.platform.diagnostic.startUpPerformanceReporter` start
+content_module_jar(module = ":startUpPerformanceReporter")
+### auto-generated section `dev intellij.platform.diagnostic.startUpPerformanceReporter` end
 
 ### auto-generated section `build intellij.platform.diagnostic.startUpPerformanceReporter` start
 create_kotlinc_options(
@@ -19,6 +24,10 @@ jvm_library(
     ),
     kotlinc_opts = ":custom_startUpPerformanceReporter",
     module_name = "intellij.platform.diagnostic.startUpPerformanceReporter",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
@@ -83,6 +92,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.diagnostic.startUpPerformanceReporter.iml",
+        "resources/intellij.platform.diagnostic.startUpPerformanceReporter.xml",
     ],
     visibility = ["//visibility:public"],
 )

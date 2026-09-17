@@ -12,6 +12,7 @@ import com.intellij.remoteServer.runtime.Deployment;
 import com.intellij.remoteServer.runtime.ServerConnector;
 import com.intellij.remoteServer.runtime.ServerTaskExecutor;
 import com.intellij.remoteServer.runtime.deployment.debug.DebugConnector;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -74,6 +75,11 @@ public abstract class ServerType<C extends ServerConfiguration> {
   public abstract @NotNull C createDefaultConfiguration();
 
   public @NotNull RemoteServerConfigurable createServerConfigurable(@NotNull C configuration) {
+    throw new UnsupportedOperationException();
+  }
+
+  @ApiStatus.Internal
+  public @NotNull RemoteServerConfigurable createServerConfigurable(@NotNull Project project, @NotNull C configuration) {
     throw new UnsupportedOperationException();
   }
 

@@ -292,8 +292,12 @@ class UiPluginManager {
     }
   }
 
-  suspend fun getPluginUpdateSource(sessionId: String, pluginId: PluginId): PluginUpdateSourceId? {
-    return getController().getPluginUpdateSourceId(sessionId, pluginId)
+  suspend fun getPendingPluginUpdateSource(sessionId: String, pluginId: PluginId): PluginUpdateSourceId? {
+    return getController().getPendingPluginUpdateSource(sessionId, pluginId)
+  }
+
+  fun getPendingPluginUpdateSourcesSync(sessionId: String, pluginIds: List<PluginId>): Map<PluginId, PluginUpdateSourceId> {
+    return runBlockingMaybeCancellable { getController().getPendingPluginUpdateSources(sessionId, pluginIds)}
   }
 
   suspend fun setPendingPluginUpdateSourceInSession(sessionId: String, pluginId: PluginId, pluginUpdateSource: PluginUpdateSourceId?) {
@@ -304,8 +308,16 @@ class UiPluginManager {
     getController().persistPluginUpdateSource(sessionId, pluginId, pluginUpdateSource)
   }
 
-  suspend fun isPluginUpdateSourceVisibleInUI(): Boolean {
+  fun isPluginUpdateSourceVisibleInUI(): Boolean {
     return getController().isPluginUpdateSourceVisibleInUI()
+  }
+
+  fun isMissingUpdateSourceWarningEnabled(): Boolean {
+    return getController().isMissingUpdateSourceWarningEnabled()
+  }
+
+  suspend fun getAllPluginUpdateSources(): List<PluginUpdateSourceId> {
+    return getController().getAllPluginUpdateSources()
   }
 
   companion object {

@@ -13,6 +13,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
 import com.intellij.psi.tree.IElementType
 import org.intellij.plugins.markdown.editor.runForEachCaret
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
@@ -33,7 +34,7 @@ abstract class BaseToggleStateAction: ToggleAction(), DumbAware {
   protected abstract val targetNodeType: IElementType
 
   override fun update(event: AnActionEvent) {
-    val editor = MarkdownActionUtil.findMarkdownEditor(event)
+    val editor = findHostEditor(event)
     event.presentation.isEnabled = editor != null
     super.update(event)
   }
@@ -43,11 +44,9 @@ abstract class BaseToggleStateAction: ToggleAction(), DumbAware {
   }
 
   override fun isSelected(event: AnActionEvent): Boolean {
-    if (MarkdownActionUtil.findMarkdownEditor(event) == null) {
-      return false
-    }
+    val editor = findHostEditor(event) ?: return false
     val file = event.getData(CommonDataKeys.PSI_FILE) ?: return false
-    val caretSnapshots = SelectionUtil.obtainCaretSnapshots(this, event)?.asSequence() ?: return false
+    val caretSnapshots = SelectionUtil.obtainCaretSnapshots(this, event, editor).asSequence()
     val selectionElements = caretSnapshots.map { getElementsUnderCaretOrSelection(file, it.selectionStart, it.selectionEnd) }
     if (shouldIgnoreSelectedElements(selectionElements)) {
       event.presentation.isEnabled = false
@@ -66,7 +65,7 @@ abstract class BaseToggleStateAction: ToggleAction(), DumbAware {
   }
 
   override fun setSelected(event: AnActionEvent, state: Boolean) {
-    val editor = MarkdownActionUtil.findMarkdownEditor(event) ?: return
+    val editor = findHostEditor(event) ?: return
     val file = event.getData(CommonDataKeys.PSI_FILE) ?: return
     WriteCommandAction.writeCommandAction(file.project, file)
       .withName(templatePresentation.text)
@@ -155,13 +154,22 @@ abstract class BaseToggleStateAction: ToggleAction(), DumbAware {
     }
   }
 
-  private fun shouldIgnoreSelectedElements(selectionElements: Sequence<Pair<PsiElement, PsiElement>>) =
-    targetNodeType !in elementsToProhibit
-    && elementsToProhibit.any { elementType -> selectionElements.any { getCommonParentOfType(it.first, it.second, elementType) != null } }
+  private fun shouldIgnoreSelectedElements(selectionElements: Sequence<Pair<PsiElement, PsiElement>>): Boolean {
+    return elementsToProhibit.any { elementType ->
+      elementType != targetNodeType
+      && selectionElements.any { getCommonParentOfType(it.first, it.second, elementType) != null }
+    }
+  }
+
+  private fun findHostEditor(event: AnActionEvent): Editor? {
+    val editor = MarkdownActionUtil.findMarkdownEditor(event) ?: return null
+    return InjectedLanguageEditorUtil.getTopLevelEditor(editor)
+  }
 
   companion object {
     // If element is prohibited then action's presentation will be disabled
     private val elementsToProhibit = setOf(
+      MarkdownElementTypes.CODE_FENCE,
       MarkdownElementTypes.CODE_SPAN,
       MarkdownElementTypes.LINK_TEXT,
       MarkdownElementTypes.LINK_DESTINATION,

@@ -1,6 +1,5 @@
 load("@community//build:tests-options.bzl", "jps_test")
-load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_TARGETS")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jps_test(
@@ -13,17 +12,18 @@ jps_test(
 
 ### auto-generated section `dev intellij.eclipse` start
 dev_dist_plugin(
+    content_modules = [
+        # do not sort,
+        "intellij.eclipse.common",
+        "intellij.eclipse.jps",
+    ],
     descriptor = "resources/META-INF/plugin.xml",
     jars = {
-        "eclipse-common.jar": {
-            "modules": ["intellij.eclipse.common"],
-        },
-        "eclipse-jps.jar": {
-            "modules": ["intellij.eclipse.jps"],
-        },
+        "lib/eclipse.jar": ["intellij.eclipse"],
+        "lib/eclipse-jps.jar": ["intellij.eclipse.jps"],
+        "lib/eclipse-common.jar": ["intellij.eclipse.common"],
     },
     main_module = "intellij.eclipse",
-    module_targets = MODULE_TARGETS,
 )
 ### auto-generated section `dev intellij.eclipse` end
 

@@ -42,7 +42,7 @@ To migrate a product to programmatic content:
 **`getProductContentDescriptor()` (modern):**
 - Declares content modules via module sets and `module()`/`embeddedModule()`
 - Content modules = have XML descriptors with extensions/services
-- Implementation dependencies come via `includeDependencies = true`
+- A runtime dependency of a content module is a content module too; the layout packs nothing else
 
 ### Migration Steps
 
@@ -92,22 +92,24 @@ productLayout.productImplementationModules = listOf(
 )
 ```
 
-**4. Use includeDependencies for transitive implementation deps**
+**4. Give a transitive implementation dependency its own descriptor**
 
-Instead of listing all implementation dependencies explicitly:
+The layout packs only the modules the descriptor names. When a content module depends on an
+implementation module, add a `<module>.xml` descriptor to that module and list it in the module set
+of its consumer:
 
 ```kotlin
-// ❌ OLD - manually list all transitive implementation modules
+// ❌ OLD - list the implementation module beside the content module
 productLayout.productImplementationModules = listOf(
   "fleet.andel",  // Content module (has descriptor)
   "fleet.util.multiplatform",  // Implementation dep of fleet.andel
   "fleet.backend"
 )
 
-// ✅ NEW - let includeDependencies handle transitive implementation modules
+// ✅ NEW - fleet.util.multiplatform gets a descriptor and joins the set that holds fleet.andel
 override fun getProductContentDescriptor() = productModules {
-  embeddedModule("fleet.andel", includeDependencies = true)
-  // This automatically includes fleet.util.multiplatform and other implementation deps
+  embeddedModule("fleet.andel")
+  embeddedModule("fleet.util.multiplatform")
 }
 
 productLayout.productImplementationModules = listOf(
@@ -136,32 +138,16 @@ override fun getProductContentDescriptor() = productModules {
 **Pitfall 2: Not checking transitive dependencies**
 
 ```kotlin
-// ❌ BAD - assuming no duplicates without checking
+// ❌ BAD - the module is already a content module of a module set
 productLayout.productImplementationModules = listOf(
-  "fleet.util.multiplatform"  // Might come via includeDependencies!
+  "fleet.util.multiplatform"  // A content module of the `fleet` set
 )
-
-override fun getProductContentDescriptor() = productModules {
-  embeddedModule("fleet.andel", includeDependencies = true)
-  // fleet.andel → fleet.util.core → fleet.util.multiplatform
-}
 ```
 
 **Fix:** Use the Plugin Model Analyzer skill to check transitive deps through the Bazel JSON analyzer:
 
 ```bash
 bazel run --ui_event_filters=-info --noshow_progress //platform/buildScripts:plugin-model-tool -- --json='{"filter":"moduleDependencies","module":"fleet.andel","includeTransitive":true}'
-```
-
-**Pitfall 3: Forgetting includeDependencies only gets implementation modules**
-
-```kotlin
-// ❓ QUESTION - will this include fleet.util.core?
-embeddedModule("fleet.andel", includeDependencies = true)
-
-// ✅ ANSWER - NO! 
-// fleet.util.core has a descriptor, so it's filtered out
-// Only implementation modules (no descriptors) are included
 ```
 
 ### Verification Checklist
@@ -188,7 +174,7 @@ Before committing changes:
 
 4. **Use MCP to analyze transitive dependencies**
    ```kotlin
-   // Check what includeDependencies will include
+   // Check which content modules the module needs
    get_module_dependencies(
      moduleName = "your.module",
      includeTransitive = true

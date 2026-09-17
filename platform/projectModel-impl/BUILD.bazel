@@ -1,4 +1,9 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.platform.projectModel.impl` start
+content_module_jar(module = ":projectModel-impl")
+### auto-generated section `dev intellij.platform.projectModel.impl` end
 
 ### auto-generated section `build intellij.platform.projectModel.impl` start
 jvm_library(

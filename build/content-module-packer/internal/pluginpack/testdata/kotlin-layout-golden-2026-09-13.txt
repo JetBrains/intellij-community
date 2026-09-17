@@ -1,0 +1,66 @@
+# kotlin-layout: the Kotlin preparer's materialization, golden-2026-09-13, recorded by pluginpack_test -record-kotlin-goldens.
+# fixture	path	kind (directory, file, symlink, or a jar entry when the jar order follows the host)	mode	sha256 or link target
+archive-tree from a tar.gz keeps modes, a link, and an empty directory	payload	directory	0755	-
+archive-tree from a tar.gz keeps modes, a link, and an empty directory	payload/bin	directory	0755	-
+archive-tree from a tar.gz keeps modes, a link, and an empty directory	payload/bin/current	symlink	-	tool
+archive-tree from a tar.gz keeps modes, a link, and an empty directory	payload/bin/latest	symlink	-	tool
+archive-tree from a tar.gz keeps modes, a link, and an empty directory	payload/bin/tool	file	0751	7c9bbe5ec9b3fb774e8fa0f54247e93c34ddf8e5d16fe3073420de0ae81a262d
+archive-tree from a tar.gz keeps modes, a link, and an empty directory	payload/data.txt	file	0644	3a6eb0790f39ac87c94f3856b2dd2c5d110e6811602261a9a923d3bb23adc8b7
+archive-tree from a tar.gz keeps modes, a link, and an empty directory	payload/docs	directory	0750	-
+archive-tree from a tar.gz keeps modes, a link, and an empty directory	payload/docs/readme.md	file	0644	711a6108ba2ce6ca93dd47d6817f2361db10d8ab6eec89460b2dfc2c325efabe
+archive-tree from a tar.gz keeps modes, a link, and an empty directory	payload/empty	directory	0755	-
+archive-tree from a tar.gz keeps modes, a link, and an empty directory	payload/private.txt	file	0600	2bb80d537b1da3e38bd30361aa855686bde0eacd7162fef6a25fe97bf527a25b
+inline text and plain file copies inside a tree	jbr	directory	0755	-
+inline text and plain file copies inside a tree	jbr/bin	directory	0755	-
+inline text and plain file copies inside a tree	jbr/bin/launcher	file	0755	ec9a6e9fe278eb1a471fbab6f40367d8548078b651d9c71581c57c2a6ca379e0
+inline text and plain file copies inside a tree	jbr/jre-build.txt	file	0644	39a069e3150946ba678d8e2b3ec2c338b8204584bdede5158fc823962d9a5b5a
+inline text and plain file copies inside a tree	jbr/lib	directory	0755	-
+inline text and plain file copies inside a tree	jbr/lib/tool.jar	file	0644	7c9bbe5ec9b3fb774e8fa0f54247e93c34ddf8e5d16fe3073420de0ae81a262d
+plain overlay of two trees keeps the first claim and a relative link	overlay	directory	0755	-
+plain overlay of two trees keeps the first claim and a relative link	overlay/a.txt	file	0644	ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb
+plain overlay of two trees keeps the first claim and a relative link	overlay/b.txt	file	0644	3e23e8160039594a33894f6564e1b1348bbd7a0088d42c4acb73eeaed59c009d
+plain overlay of two trees keeps the first claim and a relative link	overlay/bin	directory	0755	-
+plain overlay of two trees keeps the first claim and a relative link	overlay/bin/tool	file	0755	7c9bbe5ec9b3fb774e8fa0f54247e93c34ddf8e5d16fe3073420de0ae81a262d
+plain overlay of two trees keeps the first claim and a relative link	overlay/link.txt	symlink	-	a.txt
+plain overlay of two trees keeps the first claim and a relative link	overlay/shared.txt	file	0644	a7937b64b8caa58f03721bb6bacf5c78cb235febe0e70b1b84cd99541461a08e
+plain overlay of two trees keeps the first claim and a relative link	overlay/sub	directory	0750	-
+plain overlay of two trees keeps the first claim and a relative link	overlay/sub/inner.txt	file	0600	33bf6fbd7cd8379785a21e233d8e09f824e7bab459168a96312c1c882c1d7e1f
+strip and mapping selection with normalized tree modes	jcef	directory	0755	-
+strip and mapping selection with normalized tree modes	jcef/README	file	0644	711a6108ba2ce6ca93dd47d6817f2361db10d8ab6eec89460b2dfc2c325efabe
+strip and mapping selection with normalized tree modes	jcef/fallback	directory	0755	-
+strip and mapping selection with normalized tree modes	jcef/fallback/docs	directory	0755	-
+strip and mapping selection with normalized tree modes	jcef/fallback/docs/guide	file	0644	83ca68be6227af2feb15f227485ed18aff8ecae99416a4bd6df3be1b5e8059b4
+strip and mapping selection with normalized tree modes	jcef/lib	directory	0755	-
+strip and mapping selection with normalized tree modes	jcef/lib/libcef.so	file	0755	7708169e4fc7c45b16dc161fc7ff561b67f45f3671fa83053adfb11976711e07
+tree-map entries keep the readdir order, the first source, and a transport link	messages/alpha.properties	entry	-	f852c8de26e977d85c915f981fb56a8d30f59be3886d8894ec4cc8816f9b654e
+tree-map entries keep the readdir order, the first source, and a transport link	messages/mid.properties	entry	-	4d38aa96aee6a40aab9f031b5ba4106ae8eb96566c65acc0ed93267cf1bdd36c
+tree-map entries keep the readdir order, the first source, and a transport link	messages/zeta.properties	entry	-	ac9229c90c4ef4299d7c01c494c6a4755921649e90dc430147474ab082acf452
+tree-map entries keep the readdir order, the first source, and a transport link	nested/deep.properties	entry	-	63d2d1b2aab358e15ca45f56c14f6b63e8088c5e4568cad86b0cf54c7cdbb49a
+tree-map entries keep the readdir order, the first source, and a transport link	nested/resource.txt	entry	-	f8649836a3febf3173d4592c206f6903de40de660c1a71b399c9396ec9ea12e9
+tree-map entries keep the readdir order, the first source, and a transport link	notes.txt	entry	-	ac53ef75a75f63b3bd2e0ac94075210cc5710d3ca8b8d1a469af139ddbc90654
+tree-map tree keeps source modes, the first source, and a transport link	resources	directory	0755	-
+tree-map tree keeps source modes, the first source, and a transport link	resources/messages	directory	0755	-
+tree-map tree keeps source modes, the first source, and a transport link	resources/messages/alpha.properties	file	0644	f852c8de26e977d85c915f981fb56a8d30f59be3886d8894ec4cc8816f9b654e
+tree-map tree keeps source modes, the first source, and a transport link	resources/messages/mid.properties	file	0640	4d38aa96aee6a40aab9f031b5ba4106ae8eb96566c65acc0ed93267cf1bdd36c
+tree-map tree keeps source modes, the first source, and a transport link	resources/messages/zeta.properties	file	0644	ac9229c90c4ef4299d7c01c494c6a4755921649e90dc430147474ab082acf452
+tree-map tree keeps source modes, the first source, and a transport link	resources/nested	directory	0755	-
+tree-map tree keeps source modes, the first source, and a transport link	resources/nested/deep.properties	file	0644	63d2d1b2aab358e15ca45f56c14f6b63e8088c5e4568cad86b0cf54c7cdbb49a
+tree-map tree keeps source modes, the first source, and a transport link	resources/nested/resource.txt	file	0644	f8649836a3febf3173d4592c206f6903de40de660c1a71b399c9396ec9ea12e9
+tree-map tree keeps source modes, the first source, and a transport link	resources/notes.txt	file	0644	ac53ef75a75f63b3bd2e0ac94075210cc5710d3ca8b8d1a469af139ddbc90654
+zip creators: Unix and MacOSX carry modes and a link, Windows is flattened	archives	directory	0755	-
+zip creators: Unix and MacOSX carry modes and a link, Windows is flattened	archives/macos	directory	0755	-
+zip creators: Unix and MacOSX carry modes and a link, Windows is flattened	archives/macos/bin	directory	0755	-
+zip creators: Unix and MacOSX carry modes and a link, Windows is flattened	archives/macos/bin/current	symlink	-	tool
+zip creators: Unix and MacOSX carry modes and a link, Windows is flattened	archives/macos/bin/tool	file	0755	7c9bbe5ec9b3fb774e8fa0f54247e93c34ddf8e5d16fe3073420de0ae81a262d
+zip creators: Unix and MacOSX carry modes and a link, Windows is flattened	archives/unix	directory	0755	-
+zip creators: Unix and MacOSX carry modes and a link, Windows is flattened	archives/unix/bin	directory	0755	-
+zip creators: Unix and MacOSX carry modes and a link, Windows is flattened	archives/unix/bin/current	symlink	-	tool
+zip creators: Unix and MacOSX carry modes and a link, Windows is flattened	archives/unix/bin/tool	file	0755	7c9bbe5ec9b3fb774e8fa0f54247e93c34ddf8e5d16fe3073420de0ae81a262d
+zip creators: Unix and MacOSX carry modes and a link, Windows is flattened	archives/unix/data.txt	file	0644	3a6eb0790f39ac87c94f3856b2dd2c5d110e6811602261a9a923d3bb23adc8b7
+zip creators: Unix and MacOSX carry modes and a link, Windows is flattened	archives/windows	directory	0755	-
+zip creators: Unix and MacOSX carry modes and a link, Windows is flattened	archives/windows/bin	directory	0755	-
+zip creators: Unix and MacOSX carry modes and a link, Windows is flattened	archives/windows/bin/current	file	0644	7c9bbe5ec9b3fb774e8fa0f54247e93c34ddf8e5d16fe3073420de0ae81a262d
+zip creators: Unix and MacOSX carry modes and a link, Windows is flattened	archives/windows/bin/tool	file	0644	7c9bbe5ec9b3fb774e8fa0f54247e93c34ddf8e5d16fe3073420de0ae81a262d
+zip.zst modes and a link-typed entry become 0644 files	terminal	directory	0755	-
+zip.zst modes and a link-typed entry become 0644 files	terminal/libghostty.so	file	0644	bef32d2c315a289576f2a6828d27edb16bb316a4d85c271f2d794045f3ea668d
+zip.zst modes and a link-typed entry become 0644 files	terminal/libghostty.so.1	file	0644	1a68475529c60191d0f0969ce9ca5c9a62261fb733e51e6c9247ffea4ee957f5

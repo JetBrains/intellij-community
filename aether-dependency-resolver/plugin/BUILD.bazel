@@ -1,32 +1,20 @@
-load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_TARGETS")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `dev intellij.java.aetherDependencyResolver.plugin` start
 dev_dist_plugin(
     content_modules = [
         # do not sort,
+        "intellij.java.aetherDependencyResolver",
         "intellij.libraries.maven.resolver.provider",
         "intellij.libraries.maven.resolver.transport",
         "intellij.libraries.plexus.utils",
-    ],
-    libraries = [
-        "@lib//:libraries-maven-resolver-provider-maven-resolver-provider",
-        "@lib//:libraries-maven-resolver-transport-org-apache-maven-resolver-maven-resolver-connector-basic",
-        "@lib//:libraries-maven-resolver-transport-org-apache-maven-resolver-maven-resolver-transport-file",
-        "@lib//:libraries-maven-resolver-transport-org-apache-maven-resolver-maven-resolver-transport-http",
-        "@lib//:libraries-plexus-utils-plexus-utils",
-    ],
-    main_module = "intellij.java.aetherDependencyResolver.plugin",
-    module_targets = MODULE_TARGETS,
-    prepacked_content_modules = [
-        # do not sort,
-        "intellij.java.aetherDependencyResolver",
-        "intellij.libraries.kotlinx.document.store.mvstore",
-        "intellij.libraries.package.search.api.client",
         "intellij.repository.search.common",
         "intellij.repository.search.completion",
+        "intellij.libraries.kotlinx.document.store.mvstore",
+        "intellij.libraries.package.search.api.client",
     ],
+    main_module = "intellij.java.aetherDependencyResolver.plugin",
 )
 ### auto-generated section `dev intellij.java.aetherDependencyResolver.plugin` end
 

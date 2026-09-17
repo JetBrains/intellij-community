@@ -19,9 +19,6 @@ import org.jetbrains.intellij.build.SearchableOptionSetDescriptor
 import org.jetbrains.intellij.build.antToRegex
 import org.jetbrains.intellij.build.classPath.PluginBuildDescriptor
 import org.jetbrains.intellij.build.classPath.PluginBuildResult
-import org.jetbrains.intellij.build.dev.AssembledPrepackedPluginContentJar
-import org.jetbrains.intellij.build.dev.PrepackedPluginContentJar
-import org.jetbrains.intellij.build.dev.PrepackedPluginContentKey
 import org.jetbrains.intellij.build.hasModuleOutputPath
 import org.jetbrains.intellij.build.impl.BUILT_IN_HELP_MODULE_NAME
 import org.jetbrains.intellij.build.impl.DescriptorCacheContainer
@@ -51,7 +48,6 @@ internal fun buildPlugins(
   context: BuildContext,
   copyFiles: Boolean = true,
   layoutOnly: Boolean = false,
-  prepackedPluginContent: Map<PrepackedPluginContentKey, PrepackedPluginContentJar> = emptyMap(),
   additionalScrambleDescriptorsProvider: (() -> Collection<PluginBuildResult>)? = null,
   pluginBuilt: ((PluginLayout, pluginDirOrFile: Path) -> List<DistributionFileEntry>)? = null,
 ): List<PluginBuildResult> {
@@ -74,7 +70,6 @@ internal fun buildPlugins(
       context = context,
       copyFiles = copyFiles,
       pluginBuilt = pluginBuilt,
-      prepackedPluginContent = prepackedPluginContent,
     )
   }
 
@@ -165,7 +160,6 @@ private fun buildPlugin(
   context: BuildContext,
   copyFiles: Boolean,
   pluginBuilt: ((PluginLayout, Path) -> List<DistributionFileEntry>)?,
-  prepackedPluginContent: Map<PrepackedPluginContentKey, PrepackedPluginContentJar>,
 ): Pair<PluginBuildResult, ScrambleTask?> = taskScope {
   val directoryName = pluginLayout.directoryName
   val pluginDir = targetDir.resolve(directoryName)
@@ -196,7 +190,6 @@ private fun buildPlugin(
     )
   }
 
-  val prepackedContentJars = ArrayList<AssembledPrepackedPluginContentJar>()
   val task = spanBuilder("plugin").setAttribute("path", context.paths.buildOutputDir.relativize(pluginDir).toString()).use {
     val (entries, file) = layoutDistribution(
       layout = pluginLayout,
@@ -207,8 +200,6 @@ private fun buildPlugin(
       includedModules = pluginLayout.includedModules,
       searchableOptionSet = searchableOptionSet,
       cachedDescriptorWriterProvider = descriptorCacheContainer.forPlugin(pluginDir),
-      prepackedPluginContent = prepackedPluginContent,
-      prepackedPluginContentJars = prepackedContentJars,
       context = context,
     )
 
@@ -226,7 +217,6 @@ private fun buildPlugin(
     os = os,
     arch = arch,
     distribution = task,
-    prepackedContentJars = prepackedContentJars,
   )
   var scrambleTask: ScrambleTask? = null
   if (!pluginLayout.pathsToScramble.isEmpty()) {

@@ -1,7 +1,6 @@
 <idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="intellij.platform.debugger.impl.ui"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="fleet.rhizomedb"/>
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.libraries.kotlinx.serialization.core"/>
@@ -10,12 +9,14 @@
     <module name="intellij.platform.debugger.impl"/>
     <module name="intellij.platform.debugger.impl.rpc"/>
     <module name="intellij.platform.debugger.impl.shared"/>
+    <module name="intellij.platform.debugger.impl.ui"/>
     <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.rpc"/>
     <module name="intellij.platform.kernel"/>
     <module name="intellij.platform.rpc"/>
     <module name="intellij.platform.statistics"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <statistics.counterUsagesCollector implementationClass="com.intellij.debugger.streams.shared.statistics.StreamDebuggerStatisticsCollector"/>
   </extensions>

@@ -54,7 +54,7 @@ private val DEFAULT_SHELL_INITIALIZATION_TIMEOUT: Duration =
 
 private val PROCESS_CLEANUP_TIMEOUT: Duration = 3_000.milliseconds
 
-/** See `community/platform/ijent/docs/shell-deploy-lifetime.md` for the process ownership and the error strategy. */
+/** See `platform/ijent/docs/internal/shell-deploy-lifetime.md` for the process ownership and the error strategy. */
 abstract class IjentDeployingOverShellProcessStrategy(
   scope: ParentOfIjentScopes,
   currentDispatcher: CoroutineDispatcher,

@@ -1,185 +1,128 @@
-"""Analysis tests for the dev-distribution content rules: the prepacked plugin-content provider boundary, and what a
-packing action declares."""
+"""Analysis tests for direct dev distribution packaging."""
 
 load("@bazel_skylib//lib:unittest.bzl", "analysistest", "asserts", "unittest")
 load("@rules_java//java:defs.bzl", "JavaInfo", "java_common")
 load("@rules_kotlin//kotlin/internal:defs.bzl", _KtJvmInfo = "KtJvmInfo")
-load(":content_module_jar.bzl", "ContentModuleJarInfo", "DevDistPluginJarInfo", "content_module_jar", "content_module_jar_target_name")
-load(":dev_dist_content.bzl", "DevDistContentInfo", "dev_dist_content_set", "dev_dist_plugin_content")
+load(":content_module_jar.bzl", "ContentModuleJarInfo", "DevDistPlatformJarInfo")
+load(":content_module_jar_test.bzl", "content_module_jar_test_suite")
+load(":dev_dist_content.bzl", "DevDistContentInfo", "DevDistPlatformPayloadInfo", "dev_dist_platform_payload")
 load(":dev_dist_plugin.bzl", "dev_dist_plugin")
-load(":dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor_target_name")
+load(":dev_dist_plugin_descriptor.bzl", "DevDistPluginDescriptorSetInfo", "dev_dist_plugin_descriptor_target_name")
 load(
     ":intellij_dev_dist.bzl",
+    "IntellijDevBuildInputsInfo",
     "IntellijDevFragmentInfo",
     "IntellijProjectModelTreeInfo",
     "intellij_dev_build_inputs",
     "intellij_dev_fragment",
+    "intellij_dev_fragments_dist",
     "intellij_dev_packed_jars_component",
 )
 
-# An empty zip: the 22-byte end-of-central-directory record and nothing else. Octal escapes, because Bazel's Starlark
-# rejects `\x`; every byte is below 0x80, so `ctx.actions.write` - which encodes as UTF-8 - reproduces it exactly.
-#
-# A fake module's jar has to be a *real* jar, because one of these fakes is the owner of a real `content_module_jar`
-# target and `./build/dev-dist.cmd jars` builds every one of those in the repository. A few bytes of text there failed
-# that gate with `11 bytes is too small to be a zip`, and the alternative - teaching the gate to skip this target -
-# would have put an opt-out into the only check that holds the two producers of these bytes to each other.
 _EMPTY_JAR = "PK\005\006" + ("\000" * 18)
+_TRACE_SPANS = str(Label("//platform/build-scripts/bazel-rules:trace_spans"))
 
 def _fake_module_impl(ctx):
-    """A module: one own output jar, and the `KtJvmInfo.module_name` that tells a module from a library container.
-
-    Nothing about packing lives here. A module's `lib/` jar is a `content_module_jar` target of its own now - see
-    `_fake_packed` - so a module fake is only what the `modules`/`content_modules`/`descriptor_module` attributes ask
-    for. The jar's *content* is the one exception: see [_EMPTY_JAR].
-    """
-    module_jar = ctx.actions.declare_file(ctx.label.name + ".jar")
-    ctx.actions.write(module_jar, _EMPTY_JAR)
+    jar = ctx.actions.declare_file(ctx.label.name + ".jar")
+    ctx.actions.write(jar, _EMPTY_JAR)
     return [
-        DefaultInfo(files = depset([module_jar])),
-        _KtJvmInfo(
-            all_output_jars = [module_jar],
-            module_name = ctx.attr.module_name,
-        ),
+        DefaultInfo(files = depset([jar])),
+        _KtJvmInfo(all_output_jars = [jar], module_name = ctx.attr.module_name),
     ]
 
 _fake_module = rule(
     implementation = _fake_module_impl,
-    attrs = {
-        "module_name": attr.string(mandatory = True),
-    },
+    attrs = {"module_name": attr.string(mandatory = True)},
+)
+
+def _fake_library_impl(ctx):
+    jars = []
+    infos = []
+    for index in range(ctx.attr.jar_count):
+        jar = ctx.actions.declare_file("%s-%d.jar" % (ctx.label.name, index))
+        ctx.actions.write(jar, ctx.label.name)
+        jars.append(jar)
+        infos.append(JavaInfo(output_jar = jar, compile_jar = jar))
+    return [
+        DefaultInfo(files = depset(jars)),
+        java_common.merge(infos),
+    ]
+
+_fake_library = rule(
+    implementation = _fake_library_impl,
+    attrs = {"jar_count": attr.int(default = 1)},
 )
 
 def _fake_packed_impl(ctx):
-    """A `content_module_jar` target: the packed jar, the module it is named after, and the recipe inside it.
-
-    The jar is named after the *target*, where the real rule names it after the module. That is the one deviation, and
-    it is what makes the two-producers-one-relation case constructible: two real packing targets for one module name
-    cannot share a package, since they would declare the same file, so the conflict this suite defends against is
-    reachable only across packages. The record's placement is derived from `module_name` regardless of the file's own
-    name, which is exactly the derivation `_completion_provider_test` pins.
-
-    The recipe fields are filled because the real provider fills them - `dev_dist_platform_payload` reads all of them -
-    and the member is the owner module's *own* jar, never the packed jar it was merged into.
-    """
-    packed_jar = ctx.actions.declare_file(ctx.label.name + ".jar")
-    ctx.actions.write(packed_jar, ctx.attr.module_name)
-    member_jar = ctx.actions.declare_file(ctx.label.name + "-member.jar")
-    ctx.actions.write(member_jar, ctx.attr.module_name)
+    jar = ctx.actions.declare_file(ctx.label.name + ".jar")
+    metadata = ctx.actions.declare_file(ctx.label.name + ".metadata.json")
+    ctx.actions.write(jar, _EMPTY_JAR)
+    ctx.actions.write(metadata, "{}")
+    member = ctx.attr.member[_KtJvmInfo]
+    libraries = []
+    if ctx.attr.library:
+        libraries.append(struct(
+            label = str(ctx.attr.library.label),
+            jars = tuple(ctx.attr.library[JavaInfo].transitive_runtime_jars.to_list()),
+        ))
     return [
-        DefaultInfo(files = depset([packed_jar])),
-        # Tuples, not lists: these travel in a depset, whose elements must be immutable.
+        DefaultInfo(files = depset([jar])),
         ContentModuleJarInfo(
-            jar = packed_jar,
-            module_name = ctx.attr.module_name,
-            member_jars = (member_jar,),
-            member_modules = (ctx.attr.module_name,),
-            library_jars = (),
+            jar = jar,
+            metadata = metadata,
+            module_name = member.module_name,
+            relative_path = jar.basename,
+            member_jars = tuple(member.all_output_jars),
+            member_modules = (member.module_name,),
+            library_jars = tuple(libraries),
         ),
     ]
 
 _fake_packed = rule(
     implementation = _fake_packed_impl,
     attrs = {
-        "module_name": attr.string(mandatory = True),
+        "library": attr.label(providers = [JavaInfo]),
+        "member": attr.label(mandatory = True, providers = [_KtJvmInfo]),
     },
 )
 
-def _fake_layout_jar_impl(ctx):
-    """A `dev_dist_plugin_jar` target: the packed jar, the plugin, the destination, and what was merged into it.
-
-    A fake rather than the real rule, for the reason [_fake_packed] is one: the real rule runs the packer, and this
-    suite asserts what the provider carries rather than what the packer writes. Two members, because that is the shape a
-    member relation cannot express and this attribute exists for.
-    """
-    packed_jar = ctx.actions.declare_file(ctx.label.name + ".jar")
-    ctx.actions.write(packed_jar, ctx.attr.relative_output_file)
-    member_jars = []
-    for member in ctx.attr.member_modules:
-        member_jar = ctx.actions.declare_file("%s-%s.jar" % (ctx.label.name, member))
-        ctx.actions.write(member_jar, member)
-        member_jars.append(member_jar)
-    library_jar = ctx.actions.declare_file(ctx.label.name + "-library.jar")
-    ctx.actions.write(library_jar, ctx.label.name)
+# A platform jar that names a subdirectory of `lib/`, which is the one thing a content module jar never does.
+def _fake_platform_jar_impl(ctx):
+    jar = ctx.actions.declare_file(ctx.label.name + ".jar")
+    metadata = ctx.actions.declare_file(ctx.label.name + ".metadata.json")
+    ctx.actions.write(jar, _EMPTY_JAR)
+    ctx.actions.write(metadata, "{}")
     return [
-        DefaultInfo(files = depset([packed_jar])),
-        DevDistPluginJarInfo(
-            jar = packed_jar,
-            plugin_main_module = ctx.attr.plugin_main_module,
-            relative_output_file = ctx.attr.relative_output_file,
-            member_jars = tuple(member_jars),
-            member_modules = tuple(ctx.attr.member_modules),
-            library_jars = (struct(label = str(ctx.label) + "-library", jars = (library_jar,)),),
+        DefaultInfo(files = depset([jar])),
+        DevDistPlatformJarInfo(
+            jar = jar,
+            metadata = metadata,
+            relative_path = ctx.attr.destination,
+            member_jars = (),
+            member_modules = (),
+            library_jars = (),
         ),
     ]
 
-_fake_layout_jar = rule(
-    implementation = _fake_layout_jar_impl,
-    attrs = {
-        "plugin_main_module": attr.string(mandatory = True),
-        "relative_output_file": attr.string(mandatory = True),
-        "member_modules": attr.string_list(mandatory = True),
-    },
+_fake_platform_jar = rule(
+    implementation = _fake_platform_jar_impl,
+    attrs = {"destination": attr.string(mandatory = True)},
 )
 
-def _fake_library_impl(ctx):
-    """A library container: `JavaInfo` with [runtime_jar_count] runtime jars, and no `KtJvmInfo` module name.
+def _fake_descriptor_set_impl(ctx):
+    descriptor = ctx.actions.declare_file(ctx.label.name + ".xml")
+    ctx.actions.write(descriptor, "<idea-plugin/>")
+    return [DevDistPluginDescriptorSetInfo(descriptors = depset([struct(
+        plugin_main_module = ctx.attr.main_module,
+        descriptor = descriptor,
+    )]))]
 
-    `neverlink` reproduces the `-provided` wrapper, whose `transitive_runtime_jars` is empty - the shape
-    `_collect_libraries` must refuse rather than paper over, because for a local library behind such a wrapper the
-    compile-time sets hold an *interface* jar.
-    """
-    jars = []
-    for index in range(ctx.attr.runtime_jar_count):
-        jar = ctx.actions.declare_file("%s-%d.jar" % (ctx.label.name, index))
-        ctx.actions.write(jar, "%s:%d" % (ctx.label.name, index))
-        jars.append(jar)
-
-    # `compile_jar` is required per output, so each jar is announced as its own `JavaInfo` and they are merged - which is
-    # also what the real multi-jar container is: a srcs-less `java_library` re-exporting one `jvm_import` per jar.
-    infos = [JavaInfo(output_jar = jar, compile_jar = jar, neverlink = ctx.attr.neverlink) for jar in jars]
-    return [
-        DefaultInfo(files = depset(jars)),
-        java_common.merge(infos) if infos else JavaInfo(output_jar = None, compile_jar = None),
-    ]
-
-_fake_library = rule(
-    implementation = _fake_library_impl,
-    attrs = {
-        "neverlink": attr.bool(default = False),
-        "runtime_jar_count": attr.int(default = 1),
-    },
-)
-
-def _library_jars_test_impl(ctx):
-    env = analysistest.begin(ctx)
-    all_entries = analysistest.target_under_test(env)[DevDistContentInfo].library_jars.to_list()
-
-    # The key is the container's own label, not a jar's owner. Selected by that key rather than by position: the rule
-    # declares `@lib//:kotlin-stdlib` for every plugin, so the declared container is not the only entry.
-    entries = [entry for entry in all_entries if entry.label.endswith(ctx.attr.expected_label_suffix)]
-    asserts.equals(env, 1, len(entries), "keys: %s" % [entry.label for entry in all_entries])
-
-    # Order is the container's, not sorted: the packer resolves a duplicated entry to its first source.
-    asserts.equals(env, ctx.attr.expected_jars, [jar.basename for jar in entries[0].jars])
-    return analysistest.end(env)
-
-_library_jars_test = analysistest.make(
-    _library_jars_test_impl,
-    attrs = {
-        "expected_jars": attr.string_list(mandatory = True),
-        "expected_label_suffix": attr.string(mandatory = True),
-    },
+_fake_descriptor_set = rule(
+    implementation = _fake_descriptor_set_impl,
+    attrs = {"main_module": attr.string(mandatory = True)},
 )
 
 def _expected_failure_test_impl(ctx):
-    """Asserts the target under test fails analysis, with [expected_message] in the failure.
-
-    Every target tested through here must be tagged `manual`. `expect_failure` tolerates the failure only under this
-    rule's own `analysis_test_transition`, which is where `--allow_analysis_failures` is set; the same target reached
-    as a top-level target of a wildcard build is in the default configuration, and there its `fail()` aborts the
-    whole build.
-    """
     env = analysistest.begin(ctx)
     asserts.expect_failure(env, ctx.attr.expected_message)
     return analysistest.end(env)
@@ -187,157 +130,180 @@ def _expected_failure_test_impl(ctx):
 _expected_failure_test = analysistest.make(
     _expected_failure_test_impl,
     expect_failure = True,
+    attrs = {"expected_message": attr.string(mandatory = True)},
+)
+
+def _platform_payload_test_impl(ctx):
+    env = analysistest.begin(ctx)
+    target = analysistest.target_under_test(env)
+    payload = target[DevDistPlatformPayloadInfo]
+    reference = target[DevDistContentInfo]
+    packed = ctx.attr.packed[ContentModuleJarInfo]
+    nested = ctx.attr.nested[DevDistPlatformJarInfo]
+
+    # The destination, not the file name: this is the set the owning fragment must not pack, and a nested jar whose
+    # base name reached it would leave both producers writing the same jar to two places.
+    asserts.equals(env, sorted([packed.relative_path, nested.relative_path]), payload.packed_jar_names)
+    asserts.equals(env, [packed.jar, nested.jar], payload.packed_jars.to_list())
+    asserts.equals(env, sorted(ctx.attr.expected_declared_modules), sorted(payload.declared_modules.to_list()))
+    asserts.equals(env, list(packed.member_jars), reference.module_jars.to_list())
+    asserts.equals(env, list(packed.library_jars), reference.library_jars.to_list())
+    return analysistest.end(env)
+
+_platform_payload_test = analysistest.make(
+    _platform_payload_test_impl,
     attrs = {
-        "expected_message": attr.string(mandatory = True),
+        "expected_declared_modules": attr.string_list(mandatory = True),
+        "packed": attr.label(mandatory = True, providers = [ContentModuleJarInfo]),
+        "nested": attr.label(mandatory = True, providers = [DevDistPlatformJarInfo]),
     },
 )
 
-def _composed_provider_test_impl(ctx):
+def _build_inputs_test_impl(ctx):
     env = analysistest.begin(ctx)
     target = analysistest.target_under_test(env)
-    records = target[DevDistContentInfo].prepacked_plugin_jars.to_list()
-    asserts.equals(env, 1, len(records))
-    record = records[0]
-    asserts.equals(env, "test.plugin", record.plugin_main_module)
-    asserts.equals(env, ("test.content",), record.content_modules)
-    asserts.equals(env, "modules/test.content.jar", record.relative_output_file)
+    info = target[IntellijDevBuildInputsInfo]
+    expected = []
+    for module in ctx.attr.modules:
+        expected.extend(module[_KtJvmInfo].all_output_jars)
+    expected.extend(ctx.attr.library[JavaInfo].transitive_runtime_jars.to_list())
+    for file in expected:
+        asserts.true(env, file in info.files.to_list(), file.path)
+    descriptors = ctx.attr.descriptors[DevDistPluginDescriptorSetInfo].descriptors.to_list()
+    asserts.equals(env, 1, len(info.patched_descriptors.to_list()))
+    asserts.true(env, descriptors[0].descriptor in info.files.to_list())
+    asserts.equals(env, sorted([info.manifest, info.inputs_origin]), sorted(target[DefaultInfo].files.to_list()))
+    asserts.equals(env, 2, len(analysistest.target_actions(env)))
     return analysistest.end(env)
 
-_composed_provider_test = analysistest.make(_composed_provider_test_impl)
+_build_inputs_test = analysistest.make(
+    _build_inputs_test_impl,
+    attrs = {
+        "descriptors": attr.label(mandatory = True, providers = [DevDistPluginDescriptorSetInfo]),
+        "library": attr.label(mandatory = True, providers = [JavaInfo]),
+        "modules": attr.label_list(mandatory = True, providers = [_KtJvmInfo]),
+    },
+)
 
-def _placed_provider_test_impl(ctx):
-    """A relation that declares its own destination produces it verbatim, beside a conventional one.
+def _tool_fixture_impl(ctx):
+    executable = ctx.actions.declare_file(ctx.label.name + ".sh")
+    tree = ctx.actions.declare_directory(ctx.label.name + ".tree")
+    ctx.actions.write(executable, "#!/bin/sh\nexit 0\n", is_executable = True)
+    ctx.actions.write(ctx.outputs.data, "fixture")
+    ctx.actions.run_shell(outputs = [tree], arguments = [tree.path], command = "mkdir -p \"$1\"")
+    return [
+        DefaultInfo(files = depset([executable, ctx.outputs.data]), executable = executable),
+        IntellijProjectModelTreeInfo(tree = tree),
+    ]
 
-    Both attributes at once, because that is the shape the generator writes for a plugin whose members are placed
-    differently, and because it is what proves the two are one mechanism: the records are indistinguishable apart from
-    `relative_output_file`.
-    """
+_tool_fixture = rule(
+    implementation = _tool_fixture_impl,
+    executable = True,
+    outputs = {"data": "%{name}.data"},
+)
+
+def _fragment_test_impl(ctx):
     env = analysistest.begin(ctx)
-    records = analysistest.target_under_test(env)[DevDistContentInfo].prepacked_plugin_jars.to_list()
+    target = analysistest.target_under_test(env)
+    fragment = target[IntellijDevFragmentInfo]
+    inputs = ctx.attr.build_inputs[IntellijDevBuildInputsInfo]
+    actions = [action for action in analysistest.target_actions(env) if action.mnemonic.startswith("IntellijDev")]
+    asserts.equals(env, 1, len(actions))
+    if actions:
+        action = actions[0]
+        for file in inputs.files.to_list():
+            asserts.true(env, file in action.inputs.to_list(), file.path)
 
-    # The members beside the destination, not the destinations alone: a record that carried the wrong member list
-    # would pass a test that compares only paths, and the key of the whole relation is that pair.
-    asserts.equals(
-        env,
-        [(("test.content",), "modules/test.content.jar"), (("test.other",), "test.other.jar")],
-        sorted([(record.content_modules, record.relative_output_file) for record in records]),
-    )
-    for record in records:
-        asserts.equals(env, "test.plugin", record.plugin_main_module)
-
-    # The jar as well, because the dict branch reads the destination from the attribute and the jar from the provider.
-    asserts.equals(
-        env,
-        [
-            (("test.content",), "dev_dist_content_tests_content.jar"),
-            (("test.other",), "dev_dist_content_tests_other_content.jar"),
-        ],
-        sorted([(record.content_modules, record.jar.basename) for record in records]),
-    )
+    # A fragment builds no plugin, so it declares no plugin output: the packed plugin components own that group.
+    asserts.false(env, hasattr(target[OutputGroupInfo], "dev_dist_plugin_outputs"))
+    asserts.equals(env, None, fragment.plugin_classpath_part)
+    asserts.equals(env, [fragment.home, fragment.manifest], target[DefaultInfo].files.to_list())
     return analysistest.end(env)
 
-_placed_provider_test = analysistest.make(_placed_provider_test_impl)
-
-def _completion_provider_test_impl(ctx):
-    """A set that completes a cross-repository plugin produces the same record a plugin-content target would.
-
-    The whole point of the completion is that `descriptor_module` is unnameable from the package that has to declare
-    these members, so the plugin is named as a string instead - and nothing downstream may be able to tell.
-    """
-    env = analysistest.begin(ctx)
-    records = analysistest.target_under_test(env)[DevDistContentInfo].prepacked_plugin_jars.to_list()
-    asserts.equals(env, 1, len(records))
-    asserts.equals(env, "test.plugin", records[0].plugin_main_module)
-    asserts.equals(env, ("test.content",), records[0].content_modules)
-    asserts.equals(env, "modules/test.content.jar", records[0].relative_output_file)
-    return analysistest.end(env)
-
-_completion_provider_test = analysistest.make(_completion_provider_test_impl)
-
-def _layout_jar_provider_test_impl(ctx):
-    """A jar the plugin's own layout names travels as one relation with its whole member list.
-
-    Its own depset, and both halves of it: the relation the fragment takes, and the two lists a reference arm declares
-    instead. One provider answers both, which is what keeps the two arms describing one jar.
-    """
-    env = analysistest.begin(ctx)
-    info = analysistest.target_under_test(env)[DevDistContentInfo]
-    asserts.equals(env, [], info.prepacked_plugin_jars.to_list())
-    records = info.prepacked_layout_jars.to_list()
-    asserts.equals(env, 1, len(records))
-    asserts.equals(env, "test.plugin", records[0].plugin_main_module)
-    asserts.equals(env, ("test.content", "test.other"), records[0].content_modules)
-    asserts.equals(env, "specifics/test-specifics.jar", records[0].relative_output_file)
-
-    asserts.equals(
-        env,
-        2,
-        len(info.layout_jar_module_jars.to_list()),
-    )
-    asserts.equals(env, 1, len(info.layout_jar_library_jars.to_list()))
-    return analysistest.end(env)
-
-_layout_jar_provider_test = analysistest.make(_layout_jar_provider_test_impl)
-
-# The setting the two packing-output tests differ by, in the canonical form a transition needs. Written once: the same
-# label is the rule's own `_trace_spans` default, and a test that named a different one would pass while asserting
-# nothing.
-_TRACE_SPANS = str(Label("//platform/build-scripts/bazel-rules:trace_spans"))
-
-_PACKING_OUTPUTS_ATTRS = {
-    "expected_mnemonic": attr.string(default = "PackContentModuleJar"),
-    "expected_module_names": attr.string_list(),
-    "expected_outputs": attr.string_list(mandatory = True),
-    "expected_span_files": attr.string_list(mandatory = True),
-}
-
-def _packing_outputs_test_impl(ctx):
-    """What a packing action declares: the jar alone, or the jar and the span file beside it.
-
-    This is the invariant the whole `trace_spans` gating rests on. Off has to mean *absent* - not an empty file, not an
-    output nobody asks for - because these actions are the dev build itself, and a second declared output re-keys every
-    one of the ~2 500 of them, so a measuring build would be measuring a different build. That was proved once by hand,
-    with an `aquery` diff over 1 512 actions; this is what holds it.
-    """
-    env = analysistest.begin(ctx)
-    actions = analysistest.target_actions(env)
-    packing = [action for action in actions if action.mnemonic == ctx.attr.expected_mnemonic]
-    asserts.equals(env, 1, len(packing), "mnemonics: %s" % [action.mnemonic for action in actions])
-    if not packing:
-        return analysistest.end(env)
-    asserts.equals(
-        env,
-        ctx.attr.expected_outputs,
-        sorted([file.basename for file in packing[0].outputs.to_list()]),
-    )
-
-    # The output group is how a single jar's spans are asked for explicitly, and it has to exist in both states:
-    # `--output_groups=+trace_spans` is part of the documented measuring command line, and requesting a group that a
-    # target does not have is an error rather than an empty set.
-    group = analysistest.target_under_test(env)[OutputGroupInfo].trace_spans.to_list()
-    asserts.equals(env, ctx.attr.expected_span_files, [file.basename for file in group])
-    if ctx.attr.expected_module_names:
-        info = analysistest.target_under_test(env)[DevDistPluginJarInfo]
-        asserts.equals(env, ctx.attr.expected_module_names, list(info.member_modules))
-        expected_jars = list(info.member_jars) + [jar for entry in info.library_jars for jar in entry.jars]
-        inputs = packing[0].inputs.to_list()
-        asserts.equals(env, sorted([jar.path for jar in expected_jars]), sorted([file.path for file in inputs if file.extension == "jar"]))
-        asserts.equals(env, [], [file.short_path for file in inputs if file.extension in ["iml", "bzl"] or file.basename == "bazel-targets.json"])
-    return analysistest.end(env)
-
-# Both tests pin the flag, neither reads it. Without `config_settings` this one would assert whatever `trace_spans`
-# happened to be on the command line, so `bazel test ... --@community//platform/build-scripts/bazel-rules:trace_spans`
-# would fail it - a test of the ambient configuration rather than of the rule.
-_packing_outputs_test = analysistest.make(
-    _packing_outputs_test_impl,
-    attrs = _PACKING_OUTPUTS_ATTRS,
+_fragment_test = analysistest.make(
+    _fragment_test_impl,
+    attrs = {
+        "build_inputs": attr.label(mandatory = True, providers = [IntellijDevBuildInputsInfo]),
+    },
     config_settings = {_TRACE_SPANS: False},
 )
 
-_measuring_packing_outputs_test = analysistest.make(
-    _packing_outputs_test_impl,
-    attrs = _PACKING_OUTPUTS_ATTRS,
-    config_settings = {_TRACE_SPANS: True},
+def _fake_component_impl(ctx):
+    manifest = ctx.actions.declare_file(ctx.label.name + ".component.json")
+    payload = ctx.actions.declare_file(ctx.label.name + ".payload")
+    plugin_output = ctx.actions.declare_file(ctx.label.name + ".plugin-output")
+    ctx.actions.write(manifest, "{}")
+    ctx.actions.write(payload, ctx.label.name)
+    ctx.actions.write(plugin_output, ctx.label.name)
+    return [
+        DefaultInfo(files = depset([manifest, plugin_output]), runfiles = ctx.runfiles(files = [payload])),
+        OutputGroupInfo(dev_dist_plugin_outputs = depset([plugin_output])),
+        IntellijDevFragmentInfo(
+            name = ctx.attr.component_name,
+            home = None,
+            payload = depset([payload]),
+            manifest = manifest,
+            plugin_classpath_part = None,
+            plugin_classpath_prefix = None,
+            inputs_manifest = None,
+            unused_inputs = None,
+        ),
+    ]
+
+_fake_component = rule(
+    implementation = _fake_component_impl,
+    attrs = {"component_name": attr.string(mandatory = True)},
+)
+
+def _distribution_groups_test_impl(ctx):
+    env = analysistest.begin(ctx)
+    target = analysistest.target_under_test(env)
+    groups = target[OutputGroupInfo]
+    expected_production = [component[OutputGroupInfo].dev_dist_plugin_outputs.to_list()[0] for component in ctx.attr.production]
+    asserts.equals(env, sorted(expected_production), sorted(groups.dev_dist_plugin_outputs.to_list()))
+    actions = [action for action in analysistest.target_actions(env) if action.mnemonic == "IntellijDevDistCompose"]
+    asserts.equals(env, 1, len(actions))
+    return analysistest.end(env)
+
+_distribution_groups_test = analysistest.make(
+    _distribution_groups_test_impl,
+    attrs = {
+        "production": attr.label_list(mandatory = True, providers = [IntellijDevFragmentInfo]),
+    },
+    config_settings = {_TRACE_SPANS: False},
+)
+
+def _packed_component_test_impl(ctx):
+    env = analysistest.begin(ctx)
+    target = analysistest.target_under_test(env)
+    component = target[IntellijDevFragmentInfo]
+    payload = component.payload.to_list()
+    actions = [action for action in analysistest.target_actions(env) if action.mnemonic == "IntellijDevPackedJars"]
+    asserts.equals(env, 1, len(actions))
+    if actions:
+        for jar in payload:
+            asserts.false(env, jar in actions[0].inputs.to_list())
+    asserts.equals(env, None, component.home)
+    asserts.equals(env, sorted([component.manifest] + payload), sorted(target[DefaultInfo].files.to_list()))
+    return analysistest.end(env)
+
+_packed_component_test = analysistest.make(
+    _packed_component_test_impl,
+    config_settings = {_TRACE_SPANS: False},
+)
+
+def _manifest_test_impl(ctx):
+    env = analysistest.begin(ctx)
+    target = analysistest.target_under_test(env)
+    info = target[IntellijDevBuildInputsInfo]
+    asserts.true(env, info.manifest.basename.endswith(ctx.attr.expected_suffix))
+    asserts.equals(env, [info.manifest, info.inputs_origin], target[DefaultInfo].files.to_list())
+    asserts.equals(env, 2, len(analysistest.target_actions(env)))
+    return analysistest.end(env)
+
+_manifest_test = analysistest.make(
+    _manifest_test_impl,
+    attrs = {"expected_suffix": attr.string(mandatory = True)},
 )
 
 def _declaration_test_impl(ctx):
@@ -347,7 +313,10 @@ def _declaration_test_impl(ctx):
 
 _declaration_test = unittest.make(
     _declaration_test_impl,
-    attrs = {"actual": attr.string(), "expected": attr.string()},
+    attrs = {
+        "actual": attr.string(mandatory = True),
+        "expected": attr.string(mandatory = True),
+    },
 )
 
 def _fake_descriptor_impl(ctx):
@@ -357,631 +326,205 @@ def _fake_descriptor_impl(ctx):
 
 _fake_descriptor = rule(implementation = _fake_descriptor_impl)
 
-def _rejected_declaration_impl(ctx):
-    arguments = dict(main_module = "test.rejected", module_targets = {"test.rejected": [":owner.jar"]})
-    if ctx.attr.failure == "empty_jar":
-        arguments["jars"] = {"empty.jar": {"modules": []}}
-    elif ctx.attr.failure == "multiple_outputs":
-        arguments["module_targets"] = {"test.rejected": [":first.jar", ":second.jar"]}
-        arguments["content_modules"] = ["test.rejected"]
-    elif ctx.attr.failure == "non_jar":
-        arguments["module_targets"] = {"test.rejected": [":owner"]}
-        arguments["content_modules"] = ["test.rejected"]
-    dev_dist_plugin(**arguments)
-    return []
-
-_rejected_declaration = rule(
-    implementation = _rejected_declaration_impl,
-    attrs = {"failure": attr.string()},
-)
-
 def _plugin_macro_tests(name):
-    first = ":" + name + "_raw_first"
-    second = ":" + name + "_raw_second"
-    owner = ":" + name + "_macro_owner"
-    for label, module_name in [(first, "test.first"), (second, "test.second"), (owner, "test.macro.plugin")]:
-        _fake_module(name = label[1:], module_name = module_name)
-    modules = {
-        "test.first": [first + ".jar"],
-        "test.second": [second + ".jar"],
-        "test.macro.plugin": [owner + ".jar"],
-    }
-    destination = name + "_nested.jar"
-    library_labels = [":" + name + suffix for suffix in ["_library_second", "_library_first"]]
-    for label in library_labels:
-        _fake_library(name = label[1:])
+    owner = name + "_macro_owner"
+    member = name + "_macro_member"
+    source = name + "_macro_descriptor"
+    _fake_module(name = owner, module_name = "test.plugin")
+    _fake_module(name = member, module_name = "test.member")
+    _fake_descriptor(name = source)
     dev_dist_plugin(
-        main_module = "test.macro.plugin",
-        module_targets = modules,
-        content_modules = ["test.second", "test.removed", "test.first"],
-        prepacked_content_modules = ["test.removed"],
-        prepacked_jars = {"test.removed": "removed.jar"},
+        main_module = "test.plugin",
+        module_targets = {
+            "test.member": [":" + member + ".jar"],
+            "test.plugin": [":" + owner + ".jar"],
+        },
+        content_modules = ["test.member"],
+        descriptor = source,
+    )
+    descriptor = native.existing_rule(dev_dist_plugin_descriptor_target_name("test.plugin"))
+    test = name + "_plugin_macro_test"
+    _declaration_test(
+        name = test,
+        actual = json.encode([
+            descriptor["main_module"],
+            descriptor["descriptor"],
+        ]),
+        expected = json.encode([
+            "test.plugin",
+            ":" + source,
+        ]),
+    )
+
+    # A plugin that states `jars` also declares a packed component: the main module and the merged modules go in as
+    # `modules`, a content module no jar merges is reused from its own packing target, and the library token passes
+    # through unchanged.
+    packed_owner = name + "_macro_packed_owner"
+    packed_split = name + "_macro_packed_split"
+    packed_member = name + "_macro_packed_member"
+    packed_source = name + "_macro_packed_descriptor"
+    _fake_module(name = packed_owner, module_name = "intellij.test.packed")
+    _fake_module(name = packed_split, module_name = "intellij.test.packed.split")
+    _fake_module(name = packed_member, module_name = "intellij.test.packed.member")
+    _fake_descriptor(name = packed_source)
+    dev_dist_plugin(
+        main_module = "intellij.test.packed",
+        module_targets = {
+            "intellij.test.packed": [":" + packed_owner + ".jar"],
+            "intellij.test.packed.member": [":" + packed_member + ".jar"],
+            "intellij.test.packed.split": [":" + packed_split + ".jar"],
+        },
+        content_modules = ["intellij.test.packed.split", "intellij.test.packed.member"],
+        descriptor = packed_source,
         jars = {
-            destination: {"modules": ["test.second", "test.removed", "test.first"], "libraries": library_labels},
-            name + "_omitted.jar": {"modules": ["test.removed"]},
+            "lib/test-packed.jar": ["@lib//:fake", "intellij.test.packed", "intellij.test.packed.split"],
         },
+        classpath_jars = ["lib/modules/intellij.test.packed.member.jar", "lib/test-packed.jar"],
     )
-    content = native.existing_rule(owner[1:] + "_dev_content")
-    jar_name = name + "_nested_dev_dist_plugin_jar"
-    jar = native.existing_rule(jar_name)
-    tests = [name + "_module_declaration_test"]
+    component = native.existing_rule("intellij.test.packed_dev_plugin")
+    inputs = native.existing_rule("intellij.test.packed_dev_plugin_inputs")
+    packed_test = name + "_plugin_macro_packed_test"
     _declaration_test(
-        name = tests[0],
+        name = packed_test,
         actual = json.encode([
-            content["descriptor_module"],
-            content["content_modules"],
-            content["prepacked_content_modules"],
-            content["prepacked_jars"],
-            content["prepacked_layout_jars"],
-            jar["modules"],
-            jar["plugin_main_module"],
-            jar["relative_output_file"],
-            jar["libraries"],
-            native.existing_rule(name + "_omitted_dev_dist_plugin_jar"),
+            component["main_module"],
+            component["plugin_directory"],
+            component["descriptor"],
+            component["inputs"],
+            component["jars"],
+            component["classpath_jars"],
+            sorted(component["tags"]),
+            sorted(inputs["modules"].items()),
+            # The values only: `existing_rule` returns a label key in its canonical form.
+            sorted(inputs["libraries"].values()),
+            inputs["content_module_jars"],
         ]),
-        expected = json.encode([owner, [second, first], [], {}, [":" + jar_name], [second, first], "test.macro.plugin", destination, library_labels, None]),
-    )
-    dev_dist_plugin(
-        main_module = "test.deleted.plugin",
-        module_targets = modules,
-        content_modules = ["test.first"],
-        descriptor = "unused.xml",
-    )
-    filtered_owner = name + "_filtered_owner"
-    dev_dist_plugin(
-        main_module = "test.filtered.plugin",
-        module_targets = {"test.filtered.plugin": [":" + filtered_owner + ".jar"]},
-        content_modules = ["test.removed"],
-    )
-    tests.append(name + "_stale_declaration_test")
-    _declaration_test(
-        name = tests[-1],
-        actual = json.encode([
-            native.existing_rule(dev_dist_plugin_descriptor_target_name("test.deleted.plugin")),
-            native.existing_rule(filtered_owner + "_dev_content"),
+        expected = json.encode([
+            "intellij.test.packed",
+            "plugins/test-packed",
+            ":" + dev_dist_plugin_descriptor_target_name("intellij.test.packed"),
+            ":intellij.test.packed_dev_plugin_inputs",
+            {"lib/test-packed.jar": ["@lib//:fake", "intellij.test.packed", "intellij.test.packed.split"]},
+            ["lib/modules/intellij.test.packed.member.jar", "lib/test-packed.jar"],
+            ["manual"],
+            sorted([[":" + packed_owner, "intellij.test.packed"], [":" + packed_split, "intellij.test.packed.split"]]),
+            ["@lib//:fake"],
+            [":" + packed_member + "_content_module_jar"],
         ]),
-        expected = "[null, null]",
     )
-    source_name = name + "_descriptor_source"
-    _fake_descriptor(name = source_name)
-    descriptor_main = "test.descriptor.only"
-    descriptor_name = dev_dist_plugin_descriptor_target_name(descriptor_main)
-    dev_dist_plugin(
-        main_module = descriptor_main,
-        module_targets = {descriptor_main: [":absent_jvm_target.jar"]},
-        descriptor = source_name,
-        descriptor_modules = ["test.first", "test.missing"],
-        descriptor_index = {"test.first": ":" + source_name},
-        descriptors = {":" + source_name: "explicit.xml"},
-    )
-    leaf = native.existing_rule(descriptor_name)
-    tests.append(name + "_descriptor_declaration_test")
-    _declaration_test(
-        name = tests[-1],
-        actual = json.encode([leaf["main_module"], leaf.get("descriptor_module"), leaf["descriptors"], leaf["unresolved_descriptor_modules"]]),
-        expected = json.encode([descriptor_main, None, {":" + source_name: "explicit.xml"}, ["test.missing"]]),
-    )
-    tests.append(name + "_missing_selected_descriptor_test")
-    _expected_failure_test(
-        name = tests[-1],
-        expected_message = "Missing selected descriptors for test.descriptor.only",
-        target_under_test = descriptor_name,
-    )
-    tests.append(name + "_nested_jar_outputs_test")
-    _packing_outputs_test(
-        name = tests[-1],
-        expected_outputs = [destination],
-        expected_mnemonic = "PackPluginJar",
-        expected_module_names = ["test.second", "test.first"],
-        expected_span_files = [],
-        target_under_test = jar_name,
-    )
-    for failure, expected_message in {
-        "empty": "states neither content nor a descriptor",
-        "empty_jar": "states no modules or libraries",
-        "multiple_outputs": "must have one production target",
-        "non_jar": "is not a jar output",
-    }.items():
-        target_name = name + "_rejected_" + failure
-        _rejected_declaration(name = target_name, failure = failure, tags = ["manual"])
-        tests.append(target_name + "_test")
-        _expected_failure_test(
-            name = tests[-1],
-            expected_message = expected_message,
-            target_under_test = target_name,
-        )
-    return tests
 
-def _ijent_fragment_fixture_impl(ctx):
-    executable = ctx.actions.declare_file(ctx.label.name + ".sh")
-    ctx.actions.write(executable, "#!/bin/sh\nexit 0\n", is_executable = True)
-    ctx.actions.write(ctx.outputs.module, _EMPTY_JAR)
-    ctx.actions.write(ctx.outputs.binary, "ijent")
-    tree = ctx.actions.declare_directory(ctx.label.name + ".tree")
-    ctx.actions.run_shell(outputs = [tree], arguments = [tree.path], command = "mkdir -p \"$1\"")
-    return [
-        DefaultInfo(files = depset([executable]), executable = executable),
-        IntellijProjectModelTreeInfo(tree = tree),
-    ]
-
-_ijent_fragment_fixture = rule(
-    implementation = _ijent_fragment_fixture_impl,
-    executable = True,
-    outputs = {"module": "%{name}.jar", "binary": "%{name}.ijent"},
-)
-
-def _ijent_runtime_inputs_test_impl(ctx):
-    env = analysistest.begin(ctx)
-    asserts.equals(env, Label(ctx.attr.expected_owner), ctx.file.module_output.owner)
-    actions = [action for action in analysistest.target_actions(env) if action.mnemonic.startswith("IntellijDev")]
-    asserts.equals(env, 1, len(actions), "fragment action mnemonics: %s" % [action.mnemonic for action in actions])
-    if not actions:
-        return analysistest.end(env)
-    action = actions[0]
-    binary_inputs = [
-        file
-        for file in action.inputs.to_list()
-        if file.owner == ctx.file.ijent_binary.owner and file.basename == ctx.file.ijent_binary.basename
-    ]
-    asserts.equals(env, 1 if ctx.attr.expected_bundle else 0, len(binary_inputs), "IJent input paths: %s" % [file.path for file in binary_inputs])
-    asserts.equals(
-        env,
-        ["--ijent-binaries-dir=" + binary_inputs[0].dirname] if binary_inputs else [],
-        [argument for argument in action.argv if argument.startswith("--ijent-binaries-dir=")],
-    )
-    return analysistest.end(env)
-
-_ijent_runtime_inputs_test = analysistest.make(
-    _ijent_runtime_inputs_test_impl,
-    attrs = {
-        "module_output": attr.label(allow_single_file = True, mandatory = True),
-        "ijent_binary": attr.label(allow_single_file = True, mandatory = True),
-        "expected_owner": attr.string(mandatory = True),
-        "expected_bundle": attr.bool(mandatory = True),
-    },
-)
-
-def _ijent_runtime_input_tests(name):
-    fixture = name + "_ijent_fixture"
-    _ijent_fragment_fixture(name = fixture, tags = ["manual"])
-    owner = str(Label(":" + fixture))
-    module_output = ":" + fixture + ".jar"
-    binary = ":" + fixture + ".ijent"
-    tests = []
-    for suffix, selector, declared, requirement, offered, expected in [
-        ("unguarded", "remaining", False, "", True, True),
-        ("named", "named", True, owner, True, True),
-        ("rest", "remaining", True, owner, True, True),
-        ("rest_reference", "remaining", True, owner, True, True),
-        ("missing_module", "remaining", False, owner, True, False),
-        ("output_label", "remaining", True, owner + ".jar", True, False),
-        ("empty_bundle", "remaining", True, owner, False, False),
-    ]:
-        fragment = name + "_ijent_" + suffix
-        inputs = fragment + "_inputs"
-        intellij_dev_build_inputs(name = inputs, inputs = [module_output] if declared else [])
-        intellij_dev_fragment(
-            name = fragment,
-            assembler = ":" + fixture,
-            platform_prefix = "idea",
-            target_platform = "linux_x64",
-            fragment_name = "plugins_" + suffix,
-            plugins = selector,
-            plugin_main_modules = ["test.plugin"] if selector == "named" else [],
-            claimed_plugin_main_modules = ["test.sibling"] if selector == "remaining" else [],
-            project_model_tree = ":" + fixture,
-            bazel_targets_json = module_output,
-            build_inputs = ":" + inputs,
-            preloaded_manifests = [module_output],
-            ijent_binaries = [binary] if offered else [],
-            ijent_required_input = requirement,
-            tags = ["manual"],
-        )
-        test = fragment + "_test"
-        _ijent_runtime_inputs_test(
-            name = test,
-            target_under_test = ":" + fragment,
-            module_output = module_output,
-            ijent_binary = binary,
-            expected_owner = owner,
-            expected_bundle = expected,
-        )
-        tests.append(test)
-    return tests
-
-def _files_component_test_impl(ctx):
-    env = analysistest.begin(ctx)
-    target = analysistest.target_under_test(env)
-    component = target[IntellijDevFragmentInfo]
-    sources = component.payload.to_list()
-    asserts.equals(env, None, component.home)
-    asserts.equals(
-        env,
-        sorted([(ctx.attr.source_owner, basename) for basename in ctx.attr.expected_placements]),
-        sorted([(str(source.owner), source.basename) for source in sources]),
-    )
-    asserts.equals(
-        env,
-        sorted([source.path for source in sources] + [component.manifest.path]),
-        sorted([file.path for file in target[DefaultInfo].files.to_list()]),
-    )
-    actions = analysistest.target_actions(env)
-    collectors = [action for action in actions if action.mnemonic == "IntellijDevFiles"]
-    metadata_actions = [
-        action
-        for action in actions
-        if action.mnemonic == "FileWrite" and any([file.basename.endswith(".files.json") for file in action.outputs.to_list()])
-    ]
-    asserts.equals(env, 1, len(collectors), "mnemonics: %s" % [action.mnemonic for action in actions])
-    asserts.equals(env, 1, len(metadata_actions))
-    if not collectors or not metadata_actions:
-        return analysistest.end(env)
-    collector = collectors[0]
-    metadata = metadata_actions[0].outputs.to_list()[0]
-    asserts.equals(env, [component.manifest.path], [file.path for file in collector.outputs.to_list()])
-    asserts.equals(
-        env,
-        sorted([source.path for source in sources] + [metadata.path]),
-        sorted([file.path for file in collector.inputs.to_list() if file.owner != ctx.attr.collector.label]),
-    )
-    asserts.equals(
-        env,
-        ["--files-file=" + metadata.path],
-        [argument for argument in collector.argv if argument.startswith("--files-file=")],
-    )
-    records = json.decode(metadata_actions[0].content)
-    asserts.equals(env, len(sources), len(records))
-    asserts.equals(
-        env,
-        {
-            ctx.attr.expected_placements[source.basename]: {
-                "source": source.path,
-                "relativePath": ctx.attr.expected_placements[source.basename],
-                "executable": ctx.attr.expected_executable,
-            }
-            for source in sources
-            if source.basename in ctx.attr.expected_placements
-        },
-        {record["relativePath"]: record for record in records},
-    )
-    return analysistest.end(env)
-
-_files_component_test = analysistest.make(
-    _files_component_test_impl,
-    attrs = {
-        "collector": attr.label(executable = True, cfg = "exec", mandatory = True),
-        "source_owner": attr.string(mandatory = True),
-        "expected_placements": attr.string_dict(mandatory = True),
-        "expected_executable": attr.bool(mandatory = True),
-    },
-    config_settings = {_TRACE_SPANS: False},
-)
-
-def _files_component_tests(name):
-    collector = name + "_files_collector"
-    source = name + "_files_source"
-    _ijent_fragment_fixture(name = collector, tags = ["manual"])
-    _ijent_fragment_fixture(name = source, tags = ["manual"])
-    module = ":" + source + ".jar"
-    binary = ":" + source + ".ijent"
-    tests = []
-    for suffix, files, executable in [
-        ("plain", {module: "lib/plain.jar"}, False),
-        ("executable", {module: "bin/first", binary: "bin/second"}, True),
-    ]:
-        component = name + "_files_" + suffix
-        intellij_dev_packed_jars_component(
-            name = component,
-            collector = ":" + collector,
-            component_name = "files",
-            platform_prefix = "idea",
-            target_platform = "linux_x64",
-            files = files,
-            executable = executable,
-            tags = ["manual"],
-        )
-        test = component + "_test"
-        _files_component_test(
-            name = test,
-            target_under_test = ":" + component,
-            collector = ":" + collector,
-            source_owner = str(Label(":" + source)),
-            expected_placements = {label[1:]: relative_path for label, relative_path in files.items()},
-            expected_executable = executable,
-        )
-        tests.append(test)
-
-    native.filegroup(name = name + "_files_missing_source", srcs = [])
-    native.filegroup(name = name + "_files_multiple_sources", srcs = [module, binary])
-    for suffix, files, message in [
-        ("empty", {}, "either platform_payload or nonempty files is required"),
-        ("missing", {":" + name + "_files_missing_source": "bin/missing"}, "must provide exactly one ordinary file"),
-        ("multiple", {":" + name + "_files_multiple_sources": "bin/multiple"}, "must provide exactly one ordinary file"),
-        ("duplicate", {module: "bin/same", binary: "bin/same"}, "duplicate destination: bin/same"),
-    ]:
-        component = name + "_files_" + suffix
-        intellij_dev_packed_jars_component(
-            name = component,
-            collector = ":" + collector,
-            component_name = "files",
-            platform_prefix = "idea",
-            files = files,
-            tags = ["manual"],
-        )
-        test = component + "_test"
-        _expected_failure_test(name = test, target_under_test = ":" + component, expected_message = message)
-        tests.append(test)
-    return tests
+    # The stale-module case of the macro lives in `dev_plugin_test.bzl`: its warning must not print in a dist analysis,
+    # and every dist loads this package for `:trace_spans`.
+    return [test, packed_test]
 
 def dev_dist_content_test_suite(name):
-    _fake_module(
-        name = name + "_descriptor",
-        module_name = "test.plugin",
+    library = name + "_library"
+    _fake_library(name = library, jar_count = 2)
+    tests = []
+
+    packed_owner = name + "_packed_owner"
+    raw_owner = name + "_raw_owner"
+    dependency = name + "_dependency"
+    packed = name + "_packed"
+    _fake_module(name = packed_owner, module_name = "test.packed")
+    _fake_module(name = raw_owner, module_name = "test.raw")
+    _fake_module(name = dependency, module_name = "test.dependency")
+    _fake_packed(name = packed, member = ":" + packed_owner, library = ":" + library)
+    nested = name + "_nested"
+    _fake_platform_jar(name = nested, destination = "ext/nested.jar")
+    payload = name + "_payload"
+    dev_dist_platform_payload(
+        name = payload,
+        modules = [":" + packed_owner, ":" + raw_owner, ":" + dependency],
+        packed = [":" + packed, ":" + nested],
+        modules_by_name = ["test.packed", "test.raw", "test.dependency"],
+    )
+    tests.append(name + "_platform_payload_test")
+    _platform_payload_test(
+        name = tests[-1],
+        target_under_test = ":" + payload,
+        packed = ":" + packed,
+        nested = ":" + nested,
+        expected_declared_modules = ["test.raw", "test.dependency"],
     )
 
-    # Two packing targets for one module name, which is what a relation claimed by two producers is made of. A module
-    # that packs nothing has no such target at all, so `prepacked_content_modules` cannot name one: the attribute's
-    # `providers = [ContentModuleJarInfo]` gate refuses it before any rule code runs, and that is now the whole check -
-    # there is no fake for it, because there is nothing left for a fake to reach.
-    _fake_packed(
-        name = name + "_content",
-        module_name = "test.content",
-    )
-    _fake_packed(
-        name = name + "_content_same_name",
-        module_name = "test.content",
-    )
-
-    _fake_library(
-        name = name + "_multi_jar_library",
-        runtime_jar_count = 3,
-    )
-    _fake_library(
-        name = name + "_provided_library",
-        neverlink = True,
-        runtime_jar_count = 1,
-    )
-
-    # A container expands to every runtime jar it holds, under one key, in the container's own order.
-    dev_dist_plugin_content(
-        name = name + "_multi_jar_library_content",
-        descriptor_module = name + "_descriptor",
-        libraries = [name + "_multi_jar_library"],
-    )
-    _library_jars_test(
-        name = name + "_multi_jar_library_test",
-        expected_jars = [
-            # do not sort
-            name + "_multi_jar_library-0.jar",
-            name + "_multi_jar_library-1.jar",
-            name + "_multi_jar_library-2.jar",
-        ],
-        expected_label_suffix = ":" + name + "_multi_jar_library",
-        target_under_test = name + "_multi_jar_library_content",
-    )
-
-    # A `neverlink` container holds no runtime jar, so declaring it would declare nothing. Refused rather than resolved
-    # through a compile-time set, which for a local library would be an interface jar.
-    dev_dist_plugin_content(
-        name = name + "_provided_library_content",
-        descriptor_module = name + "_descriptor",
-        libraries = [name + "_provided_library"],
-        tags = ["manual"],
-    )
-    _expected_failure_test(
-        name = name + "_provided_library_test",
-        expected_message = "contributes no runtime jars",
-        target_under_test = name + "_provided_library_content",
-    )
-
-    # A jar the plugin's own layout names: two members and a name neither of them has, which is what no member relation
-    # can express.
-    _fake_layout_jar(
-        name = name + "_layout_jar",
-        member_modules = ["test.content", "test.other"],
-        plugin_main_module = "test.plugin",
-        relative_output_file = "specifics/test-specifics.jar",
-    )
-    dev_dist_plugin_content(
-        name = name + "_layout_jar_content",
-        descriptor_module = name + "_descriptor",
-        prepacked_layout_jars = [name + "_layout_jar"],
-    )
-    _layout_jar_provider_test(
-        name = name + "_layout_jar_provider_test",
-        target_under_test = name + "_layout_jar_content",
-    )
-
-    # A packing target of another plugin keys its relation to that other plugin, so the content that names it would hand
-    # off a jar of a layout it does not describe.
-    _fake_layout_jar(
-        name = name + "_other_plugin_layout_jar",
-        member_modules = ["test.content"],
-        plugin_main_module = "test.other.plugin",
-        relative_output_file = "specifics/other.jar",
-    )
-    dev_dist_plugin_content(
-        name = name + "_foreign_layout_jar_content",
-        descriptor_module = name + "_descriptor",
-        prepacked_layout_jars = [name + "_other_plugin_layout_jar"],
-        tags = ["manual"],
-    )
-    _expected_failure_test(
-        name = name + "_foreign_layout_jar_test",
-        expected_message = "packs a jar of 'test.other.plugin'",
-        target_under_test = name + "_foreign_layout_jar_content",
-    )
-
-    dev_dist_plugin_content(
-        name = name + "_plugin_content",
-        descriptor_module = name + "_descriptor",
-        prepacked_content_modules = [name + "_content"],
-    )
-    dev_dist_plugin_content(
-        name = name + "_same_plugin_content",
-        descriptor_module = name + "_descriptor",
-        prepacked_content_modules = [name + "_content"],
-    )
-    dev_dist_content_set(
-        name = name + "_composed_content",
-        deps = [
-            name + "_plugin_content",
-            name + "_same_plugin_content",
-        ],
-    )
-    _composed_provider_test(
-        name = name + "_composed_provider_test",
-        target_under_test = name + "_composed_content",
-    )
-
-    dev_dist_plugin_content(
-        name = name + "_conflicting_plugin_content",
-        descriptor_module = name + "_descriptor",
-        prepacked_content_modules = [name + "_content_same_name"],
-    )
-    dev_dist_content_set(
-        name = name + "_conflicting_content",
-        deps = [
-            name + "_plugin_content",
-            name + "_conflicting_plugin_content",
-        ],
-    )
+    descriptors = name + "_descriptors"
+    _fake_descriptor_set(name = descriptors, main_module = "test.plugin")
+    inputs = name + "_inputs"
     intellij_dev_build_inputs(
-        name = name + "_conflicting_inputs",
-        content = name + "_conflicting_content",
+        name = inputs,
+        content = ":" + payload,
+        patched_descriptors = ":" + descriptors,
+    )
+    tests.append(inputs + "_test")
+    _build_inputs_test(
+        name = tests[-1],
+        target_under_test = ":" + inputs,
+        descriptors = ":" + descriptors,
+        library = ":" + library,
+        modules = [":" + packed_owner],
+    )
+
+    fixture = name + "_tool"
+    _tool_fixture(name = fixture, tags = ["manual"])
+    fragment = name + "_fragment"
+    intellij_dev_fragment(
+        name = fragment,
+        assembler = ":" + fixture,
+        platform_prefix = "idea",
+        target_platform = "linux_x64",
+        fragment_name = "platform_resources",
+        platform_resources = True,
+        project_model_tree = ":" + fixture,
+        bazel_targets_json = ":" + fixture + ".data",
+        build_inputs = ":" + inputs,
+        preloaded_manifests = [":" + fixture + ".data"],
         tags = ["manual"],
     )
-    _expected_failure_test(
-        name = name + "_conflicting_relation_test",
-        expected_message = "is provided by conflicting records",
-        target_under_test = name + "_conflicting_inputs",
+    tests.append(fragment + "_test")
+    _fragment_test(
+        name = tests[-1],
+        target_under_test = ":" + fragment,
+        build_inputs = ":" + inputs,
     )
 
-    _fake_packed(
-        name = name + "_other_content",
-        module_name = "test.other",
-    )
-
-    # The conventional relation and a declared one side by side, which is what a plugin placing its members differently
-    # generates.
-    dev_dist_plugin_content(
-        name = name + "_placed_plugin_content",
-        descriptor_module = name + "_descriptor",
-        prepacked_content_modules = [name + "_content"],
-        prepacked_jars = {name + "_other_content": "test.other.jar"},
-    )
-    _placed_provider_test(
-        name = name + "_placed_provider_test",
-        target_under_test = name + "_placed_plugin_content",
-    )
-
-    # The convention has one spelling. A relation that restates it would be a checked-in copy of a derived rule.
-    dev_dist_plugin_content(
-        name = name + "_restated_plugin_content",
-        descriptor_module = name + "_descriptor",
-        prepacked_jars = {name + "_content": "modules/test.content.jar"},
+    production = [name + "_component_first", name + "_component_second"]
+    for component in production:
+        _fake_component(name = component, component_name = component)
+    distribution = name + "_distribution"
+    intellij_dev_fragments_dist(
+        name = distribution,
+        composer = ":" + fixture,
+        fragments = [":" + component for component in production],
+        expect_fragments = production,
         tags = ["manual"],
     )
-    _expected_failure_test(
-        name = name + "_restated_path_test",
-        expected_message = "name the target in `prepacked_content_modules` instead",
-        target_under_test = name + "_restated_plugin_content",
+    tests.append(distribution + "_test")
+    _distribution_groups_test(
+        name = tests[-1],
+        target_under_test = ":" + distribution,
+        production = [":" + component for component in production],
     )
 
-    # `<module>.jar` is the only destination the report shape accepts besides the derived one, so it is the only one a
-    # relation may declare. Both a foreign module's name and a path that leaves the plugin are refused where the relation
-    # is written, rather than where the bytes are copied: the composer's own check has no target to name.
-    dev_dist_plugin_content(
-        name = name + "_foreign_name_plugin_content",
-        descriptor_module = name + "_descriptor",
-        prepacked_jars = {name + "_content": "test.other.jar"},
+    packed_component = name + "_packed_component"
+    intellij_dev_packed_jars_component(
+        name = packed_component,
+        collector = ":" + fixture,
+        component_name = "platform",
+        platform_prefix = "idea",
+        target_platform = "linux_x64",
+        platform_payload = ":" + payload,
         tags = ["manual"],
     )
-    _expected_failure_test(
-        name = name + "_foreign_name_test",
-        expected_message = "'test.other.jar' is not the own jar name of test.content",
-        target_under_test = name + "_foreign_name_plugin_content",
-    )
+    tests.append(packed_component + "_test")
+    _packed_component_test(name = tests[-1], target_under_test = ":" + packed_component)
 
-    dev_dist_plugin_content(
-        name = name + "_escaping_plugin_content",
-        descriptor_module = name + "_descriptor",
-        prepacked_jars = {name + "_content": "../elsewhere/test.content.jar"},
-        tags = ["manual"],
-    )
-    _expected_failure_test(
-        name = name + "_escaping_path_test",
-        expected_message = "is not the own jar name of test.content",
-        target_under_test = name + "_escaping_plugin_content",
-    )
+    empty_inputs = name + "_empty_inputs"
+    intellij_dev_build_inputs(name = empty_inputs)
+    tests.append(empty_inputs + "_test")
+    _manifest_test(name = tests[-1], target_under_test = ":" + empty_inputs, expected_suffix = ".bazel-inputs")
 
-    dev_dist_content_set(
-        name = name + "_completion_content",
-        prepacked_content_modules = [name + "_content"],
-        prepacked_plugin_main_module = "test.plugin",
-    )
-    _completion_provider_test(
-        name = name + "_completion_provider_test",
-        target_under_test = name + "_completion_content",
-    )
-
-    # A relation with no plugin has no key, so the two attributes are required together rather than defaulted.
-    dev_dist_content_set(
-        name = name + "_unnamed_completion_content",
-        prepacked_content_modules = [name + "_content"],
-        tags = ["manual"],
-    )
-    _expected_failure_test(
-        name = name + "_unnamed_completion_test",
-        expected_message = "must be set together",
-        target_under_test = name + "_unnamed_completion_content",
-    )
-
-    # A packing target of its own, so the action under test is the real one rather than a fake of it. It needs nothing
-    # but an owner module: a jar with no library and no other member is still a `PackContentModuleJar` action, and what
-    # is asserted is the shape of its output set, not its recipe. Both tests run against this one target - the only
-    # difference between them is the value of `trace_spans` their transition sets.
-    _fake_module(
-        name = name + "_packed_owner",
-        module_name = "test.packed",
-    )
-
-    # A real packing target, and `./build/dev-dist.cmd jars` builds it along with the other ~2 500. It packs, because
-    # `_fake_module`'s jar is a real (empty) jar - see [_EMPTY_JAR] - and lands in that gate's "packed, not in this
-    # distribution" bucket, where a target no distribution composes belongs.
-    content_module_jar(module = ":" + name + "_packed_owner")
-    _packing_outputs_test(
-        name = name + "_packing_outputs_test",
-        expected_outputs = ["test.packed.jar"],
-        expected_span_files = [],
-        target_under_test = content_module_jar_target_name(name + "_packed_owner"),
-    )
-    _measuring_packing_outputs_test(
-        name = name + "_measuring_packing_outputs_test",
-        expected_outputs = [
-            "test.packed.jar",
-            "test.packed.spans.json",
-        ],
-        expected_span_files = ["test.packed.spans.json"],
-        target_under_test = content_module_jar_target_name(name + "_packed_owner"),
-    )
-
-    native.test_suite(
-        name = name,
-        tests = _plugin_macro_tests(name) + _ijent_runtime_input_tests(name) + _files_component_tests(name) + [
-            name + "_packing_outputs_test",
-            name + "_measuring_packing_outputs_test",
-            name + "_multi_jar_library_test",
-            name + "_provided_library_test",
-            name + "_layout_jar_provider_test",
-            name + "_foreign_layout_jar_test",
-            name + "_composed_provider_test",
-            name + "_placed_provider_test",
-            name + "_restated_path_test",
-            name + "_foreign_name_test",
-            name + "_escaping_path_test",
-            name + "_conflicting_relation_test",
-            name + "_completion_provider_test",
-            name + "_unnamed_completion_test",
-        ],
-    )
+    tests.extend(_plugin_macro_tests(name))
+    content_module_jar_test_suite(name = name + "_production")
+    tests.append(name + "_production")
+    native.test_suite(name = name, tests = tests)
