@@ -5,6 +5,7 @@ import com.intellij.ide.rpc.DocumentPatchVersion
 import com.intellij.markdown.backend.editor.livepreview.computeLivePreviewSpecs
 import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import org.intellij.plugins.markdown.MarkdownBundle
 
 class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
 
@@ -48,6 +49,19 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
 
     assertEquals(content, content.substring(image.range.startOffset, image.range.endOffset))
     assertEquals("images/img.png", image.destination)
+    assertEquals("alt text", image.placeholderText)
+  }
+
+  fun testImagePlaceholderIsTheAltTextOnOneLine() {
+    assertEquals("alt text", images("![alt text](image.png)").single().placeholderText)
+    assertEquals("first second", images("![  first\n  second  ](image.png)").single().placeholderText)
+  }
+
+  fun testImageWithoutAltTextUsesTheGenericPlaceholder() {
+    val placeholder = MarkdownBundle.message("markdown.live.preview.image.placeholder")
+
+    assertEquals(placeholder, images("![](image.png)").single().placeholderText)
+    assertEquals(placeholder, images("![   ](image.png)").single().placeholderText)
   }
 
   fun testImagesBetweenHeadersAreBothSpecs() {
@@ -60,11 +74,24 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
     assertEquals(2, images("![logo](test.png)\n![logo](test.png)").size)
   }
 
-  fun testInlineAndNestedImagesAreNotConcealed() {
-    assertEmpty(images("Text ![alt](image.png) here"))
-    assertEmpty(images("before\n![alt](image.png)\nafter"))
-    assertEmpty(images("- ![alt](image.png)"))
-    assertEmpty(images("> ![alt](image.png)"))
+  fun testInlineAndNestedImagesConcealTheirElement() {
+    assertEquals(listOf("![alt](image.png)"), imageRanges("Text ![alt](image.png) here"))
+    assertEquals(listOf("![alt](image.png)"), imageRanges("- ![alt](image.png)"))
+    assertEquals(listOf("![alt](image.png)"), imageRanges("> ![alt](image.png)"))
+    assertEquals(listOf("![alt](image.png)"), imageRanges("# ![alt](image.png)"))
+  }
+
+  fun testImageLineInsideParagraphConcealsItsCompleteLine() {
+    assertEquals(listOf("  ![alt](image.png) "), imageRanges("before\n  ![alt](image.png) \nafter"))
+  }
+
+  fun testTwoImagesOnOneLineConcealTheirElements() {
+    val content = "![one](one.png) ![two](two.png)"
+    val images = images(content)
+
+    assertEquals(listOf("one.png", "two.png"), images.map { it.destination })
+    assertEquals(listOf("one", "two"), images.map { it.placeholderText })
+    assertEquals(listOf("![one](one.png)", "![two](two.png)"), imageRanges(content))
   }
 
   fun testUnsupportedImageDestinationsAreNotConcealed() {
@@ -230,6 +257,9 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
 
   private fun images(content: String): List<MarkdownLivePreviewSpec.Image> =
     elements(content).filterIsInstance<MarkdownLivePreviewSpec.Image>()
+
+  private fun imageRanges(content: String): List<String> =
+    images(content).map { content.substring(it.range.startOffset, it.range.endOffset) }
 
   private fun MarkdownLivePreviewRange.contains(other: MarkdownLivePreviewRange): Boolean {
     return startOffset <= other.startOffset && endOffset >= other.endOffset

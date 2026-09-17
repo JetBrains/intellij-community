@@ -1,19 +1,17 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.editor.livepreview
 
-import com.intellij.codeInsight.documentation.render.DocRenderer
 import com.intellij.markdown.backend.editor.livepreview.computeLivePreviewSpecs
+import com.intellij.markdown.frontend.editor.livepreview.MarkdownLivePreviewImageInlayRenderer
 import com.intellij.markdown.frontend.editor.livepreview.MarkdownLivePreviewReconciler
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.openapi.editor.CustomFoldRegion
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.FoldRegion
+import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.ex.DocumentEx
-import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.editor.ex.FoldingListener
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.FoldingKeys
 import com.intellij.openapi.editor.markup.RangeHighlighter
@@ -28,6 +26,8 @@ import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.fixtures.EditorMouseFixture
 import com.intellij.util.DocumentUtil
+import com.intellij.util.ui.JBUI
+import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.settings.MarkdownApplicationSettings
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
@@ -211,7 +211,7 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     assertEmpty(concealed())
     assertEmpty(thematicBreakHighlighters())
     myFixture.checkResult(content)
-    assertEmpty(imageRegions())
+    assertEmpty(imageInlays())
 
     moveCaretTo(content.length)
     assertEquals(listOf("---"), concealed())
@@ -260,20 +260,85 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
 
   fun testStandaloneLocalImageRendersAndRevealsItsSource() {
     addPng(120, 60)
-    val content = "![alt](image.png)\n\ntail"
+    val imageSource = "![alt](image.png)"
+    val content = "$imageSource\n\ntail"
     configureProjectFile(content)
 
-    val region = waitForImageRenderer()
-    assertEquals("![alt](image.png)", content.substring(region.startOffset, region.endOffset))
-    assertTrue(region.renderer is DocRenderer)
+    val inlay = waitForImageInlay()
+    assertEquals("The image sits below its line", imageSource.length, inlay.offset)
+    assertEquals(listOf(imageSource to "alt"), concealedWithPlaceholders())
+    assertEquals("The concealed line shows the alt text", "alt\n\ntail", visibleText())
+    assertTrue(concealedLivePreviewRegions(myFixture.editor).all { FoldingKeys.HIDE_PLACEHOLDER_BACKGROUND.isIn(it) })
     myFixture.checkResult(content)
 
     moveCaretTo(0)
-    assertEmpty(imageRegions())
+    assertEmpty("The caret on the line reveals the source", concealed())
+    assertSame("The image stays while the source is revealed", inlay, imageInlays().single())
     myFixture.checkResult(content)
 
     moveCaretTo(content.length)
-    waitForImageRenderer()
+    assertEquals(listOf(imageSource), concealed())
+    assertSame(inlay, imageInlays().single())
+  }
+
+  fun testInlineImageConcealsOnlyItsElement() {
+    addPng(120, 60)
+    val imageSource = "![alt](image.png)"
+    val content = "Text $imageSource here\n\ntail"
+    configureProjectFile(content)
+
+    val inlay = waitForImageInlay()
+    assertEquals(content.indexOf('\n'), inlay.offset)
+    assertEquals(listOf(imageSource), concealed())
+    assertEquals("Text alt here\n\ntail", visibleText())
+
+    moveCaretTo(2)
+    assertEquals("The caret on the text next to the image keeps it concealed", listOf(imageSource), concealed())
+
+    moveCaretTo(content.indexOf("alt"))
+    assertEmpty("The caret on the element reveals it", concealed())
+    assertSame(inlay, imageInlays().single())
+  }
+
+  fun testImagesInListItemBlockQuoteAndHeaderRender() {
+    addPng(120, 60)
+    val content = "- ![a](image.png)\n\n> ![b](image.png)\n\n# ![c](image.png)\n\ntail"
+    configureProjectFile(content)
+
+    waitForImageInlays(3)
+    assertEquals(listOf("![a](image.png)", "![b](image.png)", "![c](image.png)"), concealed().filter { it.startsWith("![") })
+    assertEquals("• a\n\n> b\n\n# c\n\ntail", visibleText())
+    assertEquals(
+      listOf(0, 2, 4),
+      imageInlays().map { myFixture.editor.document.getLineNumber(it.offset) }.sorted(),
+    )
+  }
+
+  fun testImageWithoutAltTextShowsTheGenericPlaceholder() {
+    addPng(120, 60)
+    configureProjectFile("![](image.png)\n\ntail")
+
+    waitForImageInlay()
+    assertEquals("${MarkdownBundle.message("markdown.live.preview.image.placeholder")}\n\ntail", visibleText())
+  }
+
+  fun testTwoImagesOnOneLineConcealEachElementAndProduceTwoInlays() {
+    addPng(120, 60)
+    addBinaryFile("docs/image2.png", pngBytes(80, 40))
+    val first = "![one](image.png)"
+    val second = "![two](image2.png)"
+    val line = "$first $second"
+    configureProjectFile("$line\n\ntail")
+
+    waitForImageInlays(2)
+    assertEquals(listOf(first, second), concealed())
+    assertEquals("one two\n\ntail", visibleText())
+    assertEquals(setOf(line.length), imageInlays().mapTo(HashSet()) { it.offset })
+    assertEquals(setOf("image.png", "image2.png"), imageInlays().mapTo(HashSet()) { it.renderer.destination })
+
+    moveCaretTo(3)
+    assertEquals("The caret in the first image reveals that image alone", listOf(second), concealed())
+    assertEquals(2, imageInlays().size)
   }
 
   fun testImagesBetweenHeadersBothRender() {
@@ -282,29 +347,32 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     configureProjectFile(content)
 
     assertEquals(2, computeLivePreviewSpecs(myFixture.file, myFixture.editor).elements.filterIsInstance<MarkdownLivePreviewSpec.Image>().size)
-    waitForImageRegions(2)
+    waitForImageInlays(2)
   }
 
   fun testAdjacentImagesBothRender() {
     addPng(120, 60)
     configureProjectFile("![logo](image.png)\n![logo](image.png)\n\ntail")
 
-    waitForImageRegions(2)
+    waitForImageInlays(2)
   }
 
-  fun testMovingCaretBetweenImagesDoesNotUseDisposedFoldRegion() {
+  fun testMovingCaretBetweenImagesKeepsBothInlays() {
     addPng(120, 60)
     val first = "![first](image.png)"
     val second = "![second](image.png)"
     val content = "$first\n\n$second\n\ntail"
     configureProjectFile(content)
-    waitForImageRegions(2)
+    waitForImageInlays(2)
+    val inlays = imageInlays()
 
     moveCaretTo(first.length)
-    assertEquals(1, imageRegions().size)
+    assertEquals(listOf(second), concealed())
+    assertEquals(inlays, imageInlays())
 
     moveCaretTo(content.indexOf(second) + second.length)
-    assertEquals(1, imageRegions().size)
+    assertEquals(listOf(first), concealed())
+    assertEquals(inlays, imageInlays())
   }
 
   fun testSelectionOverImageYieldsMarkdownSource() {
@@ -312,12 +380,13 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     val imageSource = "![alt](image.png)"
     val content = "$imageSource\n\ntail"
     configureProjectFile(content)
-    waitForImageRenderer()
+    val inlay = waitForImageInlay()
 
     select(0, imageSource.length)
 
-    assertEmpty(imageRegions())
+    assertEmpty(concealed())
     assertEquals(imageSource, myFixture.editor.selectionModel.selectedText)
+    assertSame(inlay, imageInlays().single())
   }
 
   fun testSvgImageUsesItsIntrinsicSize() {
@@ -326,21 +395,24 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
       "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"90\" height=\"45\"><rect width=\"90\" height=\"45\"/></svg>".toByteArray(),
     )
     configureProjectFile("![alt](image.svg)\n\ntail")
-    assertTrue(waitForImageRenderer().renderer is DocRenderer)
+
+    val source = waitForImageInlay().renderer.source
+    assertEquals(90, source.width)
+    assertEquals(45, source.height)
   }
 
   fun testCachedAttachmentImageRendersFromProjectRoot() {
     addBinaryFile(".attachments/image.png", pngBytes(70, 35))
     configureProjectFile("![alt](/.attachments/image.png)\n\ntail")
 
-    assertTrue(waitForImageRenderer().renderer is DocRenderer)
+    waitForImageInlay()
   }
 
   fun testEncodedLocalImagePathUsesSharedResolver() {
     addBinaryFile("docs/image with space.png", pngBytes(70, 35))
     configureProjectFile("![alt](image%20with%20space.png)\n\ntail")
 
-    assertTrue(waitForImageRenderer().renderer is DocRenderer)
+    waitForImageInlay()
   }
 
   fun testSiblingPrefixPathOutsideProjectRestoresItsSource() {
@@ -351,7 +423,7 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     configureProjectFile("![alt](../../src-other/image.png)\n\ntail")
 
     assertEquals(1, computeLivePreviewSpecs(myFixture.file, myFixture.editor).elements.filterIsInstance<MarkdownLivePreviewSpec.Image>().size)
-    waitForNoImageRegion()
+    waitForNoImageInlay()
   }
 
   fun testFileUriOutsideProjectRestoresItsSource() {
@@ -362,134 +434,121 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     myFixture.configureFromExistingVirtualFile(source)
     myFixture.editor.caretModel.moveToOffset(source.contentsToByteArray().size)
     myFixture.doHighlighting()
-    PlatformTestUtil.waitWithEventsDispatching("Outside image fold was not removed", { imageRegions().isEmpty() }, 10)
+    waitForNoImageInlay()
   }
 
   fun testBrokenImageAndMissingImageStayRaw() {
     addBinaryFile("docs/broken.png", "not an image".toByteArray())
     configureProjectFile("![broken](broken.png)\n\n![missing](missing.png)\n\ntail")
 
-    waitForNoImageRegion()
+    waitForNoImageInlay()
 
+    assertEmpty(concealed())
     myFixture.checkResult("![broken](broken.png)\n\n![missing](missing.png)\n\ntail")
   }
 
   fun testImageRefreshesAfterVfsChange() {
     val image = addPng(100, 40)
     configureProjectFile("![alt](image.png)\n\ntail")
-    val region = waitForImageRenderer()
-    assertTrue(region.renderer is DocRenderer)
-    val initialImageUrl = imageUrl(region)
+    val inlay = waitForImageInlay()
+    val initialHeight = inlay.heightInPixels
     val initialStamp = image.modificationStamp
 
     ApplicationManager.getApplication().runWriteAction { image.setBinaryContent(pngBytes(100, 90)) }
     assertTrue("The image modification stamp must change", initialStamp != image.modificationStamp)
 
     PlatformTestUtil.waitWithEventsDispatching(
-      "Image renderer was not refreshed",
-      { imageUrl(imageRegions().single()) != initialImageUrl },
+      "Image inlay was not refreshed",
+      { imageInlays().single().heightInPixels > initialHeight },
       10,
     )
-    assertSame(region, imageRegions().single())
+    val refreshed = imageInlays().single()
+    assertNotSame("A refresh replaces the inlay, because its renderer is immutable", inlay, refreshed)
+    assertFalse(inlay.isValid)
+    assertEquals(image.modificationStamp, refreshed.renderer.source.stamp)
+    assertEquals(90, refreshed.renderer.source.height)
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+    assertEquals("The source stays concealed across the refresh", listOf("![alt](image.png)"), concealed())
   }
 
-  fun testTypingAfterImageKeepsTheImageFold() {
+  fun testTypingAfterImageKeepsTheImageInlay() {
     addPng(120, 60)
     configureProjectFile("![alt](image.png)\n\ntail")
-    val region = waitForImageRenderer()
-    var disposedImageFolds = 0
-    (myFixture.editor as EditorEx).foldingModel.addListener(object : FoldingListener {
-      override fun beforeFoldRegionDisposed(region: FoldRegion) {
-        if (region is CustomFoldRegion) disposedImageFolds++
-      }
-    }, testRootDisposable)
+    val inlay = waitForImageInlay()
+    val renderer = inlay.renderer
 
     myFixture.type("x")
     myFixture.doHighlighting()
     waitForCurrentSpecs()
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
 
-    assertEquals("A keystroke outside the image must not dispose its fold", 0, disposedImageFolds)
-    assertSame(region, imageRegions().single())
+    assertSame("A keystroke outside the image must not recreate its inlay", inlay, imageInlays().single())
+    assertSame("A keystroke outside the image must not replace its renderer", renderer, inlay.renderer)
   }
 
-  fun testUnrelatedEditKeepsImageUrl() {
-    addPng(120, 60)
-    configureProjectFile("![alt](image.png)\n\ntail")
-    val region = waitForImageRenderer()
-    val initialImageUrl = imageUrl(region)
-
-    myFixture.type("x")
-    myFixture.doHighlighting()
-    waitForCurrentSpecs()
-    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
-
-    assertSame(region, imageRegions().single())
-    assertEquals("An edit outside the image must not change its URL", initialImageUrl, imageUrl(region))
-  }
-
-  fun testAddingAnImageKeepsExistingImageUrl() {
+  fun testAddingAnImageKeepsTheExistingInlay() {
     addPng(120, 60)
     addBinaryFile("docs/image2.png", pngBytes(80, 40))
     configureProjectFile("![alt](image.png)\n\ntail")
-    val region = waitForImageRenderer()
-    val initialImageUrl = imageUrl(region)
+    val inlay = waitForImageInlay()
+    val renderer = inlay.renderer
 
     myFixture.type("\n\n![alt2](image2.png)\n")
     myFixture.doHighlighting()
     waitForCurrentSpecs()
-    waitForImageRegions(2)
-    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+    waitForImageInlays(2)
 
-    assertSame(region, imageRegions().minByOrNull { it.startOffset })
-    assertEquals("Adding an image must not change the URL of an existing image", initialImageUrl, imageUrl(region))
+    assertSame(inlay, imageInlays().minByOrNull { it.offset })
+    assertSame("Adding an image must not replace the renderer of an existing image", renderer, inlay.renderer)
   }
 
   fun testImageOverByteLimitIsRejectedAfterVfsRefresh() {
     val image = addPng(2, 2)
     configureProjectFile("![alt](image.png)\n\ntail")
-    waitForImageRenderer()
+    waitForImageInlay()
     Registry.get("markdown.live.preview.image.max.bytes").setValue(1, testRootDisposable)
 
     ApplicationManager.getApplication().runWriteAction { image.setBinaryContent(pngBytes(3, 3)) }
 
-    waitForNoImageRegion()
+    waitForNoImageInlay()
+    assertEmpty(concealed())
   }
 
   fun testImageOverPixelLimitIsRejectedAfterVfsRefresh() {
     val image = addPng(2, 2)
     configureProjectFile("![alt](image.png)\n\ntail")
-    waitForImageRenderer()
+    waitForImageInlay()
     Registry.get("markdown.live.preview.image.max.pixels").setValue(1, testRootDisposable)
 
     ApplicationManager.getApplication().runWriteAction { image.setBinaryContent(pngBytes(3, 3)) }
 
-    waitForNoImageRegion()
+    waitForNoImageInlay()
+    assertEmpty(concealed())
   }
 
-  fun testResizingEditorDoesNotRecreateImageFold() {
+  fun testResizingEditorDoesNotRecreateImageInlay() {
     addPng(100, 40)
     configureProjectFile("![alt](image.png)\n\ntail")
-    val region = waitForImageRenderer()
-    val renderer = region.renderer
+    val inlay = waitForImageInlay()
+    val renderer = inlay.renderer
 
     EditorTestUtil.setEditorVisibleSize(myFixture.editor, 40, 20)
     EditorTestUtil.setEditorVisibleSize(myFixture.editor, 80, 20)
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
 
-    assertSame(region, imageRegions().single())
-    assertSame(renderer, imageRegions().single().renderer)
+    assertSame(inlay, imageInlays().single())
+    assertSame(renderer, inlay.renderer)
   }
 
   fun testClickingImagePreservesViewportPosition() {
     addPng(240, 120)
     val content = (1..4).joinToString("\n\n") { "![logo](image.png)" } + "\n\n- tail"
     configureProjectFile(content)
-    waitForImageRegions(4)
+    waitForImageInlays(4)
     val editor = myFixture.editor
     EditorTestUtil.setEditorVisibleSize(editor, 80, 12)
-    val target = imageRegions().sortedBy { it.startOffset }[1]
-    val targetLine = editor.offsetToVisualPosition(target.startOffset).line
+    val target = imageInlays().sortedBy { it.offset }[1]
+    val targetLine = editor.offsetToVisualPosition(target.offset).line
     editor.scrollingModel.scrollVertically((editor.visualLineToY(targetLine) - editor.lineHeight).coerceAtLeast(0))
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
     val verticalOffset = editor.scrollingModel.verticalScrollOffset
@@ -498,6 +557,7 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
 
     assertEquals(verticalOffset, editor.scrollingModel.verticalScrollOffset)
+    assertEquals(4, imageInlays().size)
   }
 
   fun testMovingCaretAcrossSmallImageDoesNotJumpViewport() {
@@ -507,7 +567,7 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
                   (1..8).joinToString("\n") { "after$it" }
     configureProjectFile(content)
     val editor = myFixture.editor
-    waitForImageRenderer()
+    waitForImageInlay()
     EditorTestUtil.setEditorVisibleSize(editor, 400, editor.lineHeight * 8)
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
 
@@ -529,13 +589,17 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
                   (1..12).joinToString("\n") { "after$it" }
     configureProjectFile(content)
     val editor = myFixture.editor
-    waitForImageRenderer()
-    EditorTestUtil.setEditorVisibleSizeInPixels(editor, 300, editor.lineHeight * 5)
+    val inlay = waitForImageInlay()
+    assertEquals("A tall image is capped at 20 lines", 20 * editor.lineHeight + 2 * JBUI.scale(2), inlay.heightInPixels)
+    // The platform scrolls by the minimum only when the caret line and one line of context on each side fit into
+    // the viewport. The context line above the caret carries the image, so the viewport holds 24 lines.
+    EditorTestUtil.setEditorVisibleSizeInPixels(editor, 300, editor.lineHeight * 24)
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
 
     val imageLine = editor.document.getLineNumber(content.indexOf(image))
     moveCaretTo(editor.document.getLineStartOffset(imageLine))
-    assertEmpty(imageRegions())
+    assertEmpty(concealed())
+    assertEquals(1, imageInlays().size)
     editor.scrollingModel.scrollVertically((editor.visualLineToY(imageLine) - editor.lineHeight * 2).coerceAtLeast(0))
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
     val visibleArea = editor.scrollingModel.visibleArea
@@ -544,7 +608,8 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
 
     val expected = expectedRelativeScroll(editor, visibleArea.y, visibleArea.height)
     assertEquals(expected, editor.scrollingModel.verticalScrollOffset)
-    assertTrue(imageRegions().isNotEmpty())
+    assertEquals(listOf(image), concealed())
+    assertEquals(1, imageInlays().size)
   }
 
   fun testSelectingEverythingRevealsEverything() {
@@ -605,13 +670,17 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     val image = "![logo](image.png)"
     val content = "`KotlinClass`\n\n$image\n"
     configureProjectFile("$content<caret>")
-    waitForImageRenderer()
+    val inlay = waitForImageInlay()
 
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_BACKSPACE)
 
     myFixture.checkResult(content.dropLast(1))
     assertEquals(content.length - 1, myFixture.editor.caretModel.offset)
-    assertEmpty(imageRegions())
+    myFixture.doHighlighting()
+    waitForCurrentSpecs()
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+    assertEquals("The caret at the end of the image line reveals the source", listOf("`", "`"), concealed())
+    assertSame(inlay, imageInlays().single())
   }
 
   fun testDeleteAfterAnElementDeletesOneCharacter() {
@@ -744,25 +813,28 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     return output.toByteArray()
   }
 
-  private fun waitForImageRenderer(): CustomFoldRegion {
-    waitForImageRegions(1)
-    return imageRegions().single()
+  private fun waitForImageInlay(): Inlay<out MarkdownLivePreviewImageInlayRenderer> {
+    waitForImageInlays(1)
+    return imageInlays().single()
   }
 
-  private fun waitForImageRegions(count: Int) {
+  /** Waits until [count] image inlays exist. Every inlay has a loaded source by construction. */
+  private fun waitForImageInlays(count: Int) {
     PlatformTestUtil.waitWithEventsDispatching(
-      "Image renderer was not created",
-      { imageRegions().size == count && imageRegions().all { it.renderer is DocRenderer } },
+      "Image inlays were not added",
+      { imageInlays().size == count },
       10,
     )
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
   }
 
-  private fun waitForNoImageRegion() {
+  private fun waitForNoImageInlay() {
     PlatformTestUtil.waitWithEventsDispatching(
-      "Image fold was not removed",
-      { imageRegions().isEmpty() },
+      "Image inlay was not removed",
+      { imageInlays().isEmpty() },
       10,
     )
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
   }
 
   private fun moveCaretTo(offset: Int) {
@@ -823,7 +895,7 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
 
   private fun concealedLivePreviewRegions(editor: Editor): List<FoldRegion> =
     editor.foldingModel.allFoldRegions
-      .filter { it.isValid && (it is CustomFoldRegion || it.shouldNeverExpand()) }
+      .filter { it.isValid && it.shouldNeverExpand() }
       .sortedWith(compareBy({ it.startOffset }, { it.endOffset }))
 
   private fun thematicBreakHighlighters(): List<RangeHighlighter> =
@@ -831,12 +903,10 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
       .filter { it.isValid && it.customRenderer != null }
       .sortedWith(compareBy({ it.startOffset }, { it.endOffset }))
 
-  private fun imageRegions(): List<CustomFoldRegion> =
-    myFixture.editor.foldingModel.allFoldRegions
-      .filterIsInstance<CustomFoldRegion>()
+  private fun imageInlays(): List<Inlay<out MarkdownLivePreviewImageInlayRenderer>> {
+    val editor = myFixture.editor
+    return editor.inlayModel
+      .getBlockElementsInRange(0, editor.document.textLength, MarkdownLivePreviewImageInlayRenderer::class.java)
       .filter { it.isValid }
-
-  private fun imageUrl(region: CustomFoldRegion): String? {
-    return (region.renderer as? DocRenderer)?.item?.textToRender
   }
 }

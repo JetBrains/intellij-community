@@ -4,7 +4,6 @@ package com.intellij.markdown.frontend.editor.livepreview
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.CustomFoldRegion
 import com.intellij.openapi.editor.Document
@@ -20,6 +19,7 @@ import com.intellij.openapi.editor.event.SelectionEvent
 import com.intellij.openapi.editor.event.SelectionListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.FoldingListener
+import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.FoldingKeys
 import com.intellij.openapi.editor.markup.CustomHighlighterRenderer
@@ -48,7 +48,9 @@ private val AllowedEditorKinds = setOf(EditorKind.MAIN_EDITOR, EditorKind.UNTYPE
  * Keeps one editor's concealing fold regions in step with the caret.
  *
  * Concealment is a never-expanding fold region. Revealing markup means removing the region, and this class
- * owns the regions outright.
+ * owns the regions outright. An image is different: its source is concealed like other markup, and the
+ * image itself is a block inlay below the line that stays while the caret reveals the source. Both appear
+ * as soon as the backend has loaded the image file. The picture follows when the platform has fetched it.
  */
 @ApiStatus.Internal
 class MarkdownLivePreviewReconciler private constructor(
@@ -124,32 +126,13 @@ class MarkdownLivePreviewReconciler private constructor(
       return
     }
     val specSet = currentSpecSet() ?: return
+    // Inlays and folds follow the same specs: a loaded image gets its inlay and its fold in one reconcile.
+    imageRenderer.reconcileInlays(getImageInlays(specSet))
     val revealed = revealedElementIndices(specSet)
     val desired = desiredRegions(specSet, revealed)
     reconcileFoldRegions(desired)
     reconcileHorizontalRules(desired)
     revealedElements = revealed
-  }
-
-  /**
-   * Deletes the line break between an image and the caret instead of a character of the hidden image source.
-   * Returns false when the caret is not next to an image, so the default handler runs.
-   */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
-  fun handleBackspace(): Boolean {
-    if (editor.isDisposed || editor.selectionModel.hasSelection()) return false
-    val document = editor.document
-    val text = document.charsSequence
-    val caretOffset = editor.caretModel.offset
-    val lineBreak = when {
-      caretOffset > 0 && text[caretOffset - 1] == '\n' -> caretOffset - 1
-      caretOffset < text.length && text[caretOffset] == '\n' -> caretOffset
-      else -> return false
-    }
-    val region = ownedRegions.values.firstOrNull { it is CustomFoldRegion && it.isValid && it.endOffset == lineBreak } ?: return false
-    removeOwned(listOf(region.currentRange()))
-    runWriteAction { document.deleteString(lineBreak, lineBreak + 1) }
-    return true
   }
 
   // Not @RequiresEdt: Disposer may call this from any thread, and it only drops state.
@@ -164,6 +147,7 @@ class MarkdownLivePreviewReconciler private constructor(
   private fun desiredRegions(specSet: MarkdownLivePreviewSpecSet, revealed: Set<Int>): Map<TextRange, OwnedRegion> {
     val regions = LinkedHashMap<TextRange, OwnedRegion>()
     specSet.elements.forEachIndexed { index, spec ->
+      if (spec is MarkdownLivePreviewSpec.Image && spec.source == null) imageRenderer.requestImage(spec.destination)
       if (index in revealed) return@forEachIndexed
       when (spec) {
         is MarkdownLivePreviewSpec.Conceal -> spec.conceals.forEach { regions[it.toTextRange()] = OwnedRegion.Text("") }
@@ -171,11 +155,27 @@ class MarkdownLivePreviewReconciler private constructor(
         is MarkdownLivePreviewSpec.Bullet -> regions[spec.concealRange.toTextRange()] = OwnedRegion.Text(spec.placeholderText)
         is MarkdownLivePreviewSpec.Image -> {
           if (spec.source == null) imageRenderer.requestImage(spec.destination)
-          else regions[spec.range.toTextRange()] = OwnedRegion.Image(spec.destination, spec.stamp)
+          else regions[spec.range.toTextRange()] = OwnedRegion.Text(spec.placeholderText)
         }
       }
     }
     return regions
+  }
+
+  private fun getImageInlays(specSet: MarkdownLivePreviewSpecSet): List<ImageInlay> {
+    val document = editor.document
+    val inlays = ArrayList<ImageInlay>()
+    var previousOffset = -1
+    var ordinal = 0
+    for (spec in specSet.elements) {
+      val source = (spec as? MarkdownLivePreviewSpec.Image)?.source ?: continue
+      val endOffset = spec.range.endOffset.coerceIn(0, document.textLength)
+      val offset = document.getLineEndOffset(document.getLineNumber(endOffset))
+      ordinal = if (offset == previousOffset) ordinal + 1 else 0
+      previousOffset = offset
+      inlays += ImageInlay(offset, spec.destination, source, ordinal)
+    }
+    return inlays
   }
 
   private fun reconcileFoldRegions(desired: Map<TextRange, OwnedRegion>) {
@@ -191,7 +191,6 @@ class MarkdownLivePreviewReconciler private constructor(
         continue
       }
       kept[range] = region
-      if (wanted is OwnedRegion.Image) imageRenderer.updateRegion(region, wanted.stamp)
     }
     val obsolete = existing.filterKeys { it !in kept }.values
     ownedRegions.clear()
@@ -246,6 +245,7 @@ class MarkdownLivePreviewReconciler private constructor(
 
   private fun removeAllOwned() {
     removeOwned(ownedRegions.keys.toList() + ownedHorizontalRules.keys)
+    imageRenderer.reconcileInlays(emptyList())
     revealedElements = emptySet()
   }
 
@@ -283,7 +283,6 @@ class MarkdownLivePreviewReconciler private constructor(
     return when (wanted) {
       is OwnedRegion.Text -> createTextRegion(range, wanted.placeholderText)
       OwnedRegion.HorizontalRule -> createTextRegion(range, "")
-      is OwnedRegion.Image -> imageRenderer.createRegion(range, wanted.destination, wanted.stamp)
     }
   }
 
@@ -321,7 +320,7 @@ class MarkdownLivePreviewReconciler private constructor(
     val snapshot = editor.caretModel.allCarets.map { CaretSnapshot(it) }
     updating = true
     try {
-      MarkdownLivePreviewPositionKeeper.perform(editor) {
+      EditorScrollingPositionKeeper.perform(editor, false) {
         editor.foldingModel.runBatchFoldingOperation(body, false, false)
         snapshot.forEach { it.restore() }
       }
@@ -394,13 +393,11 @@ private fun MarkdownLivePreviewSpec.concealedRanges(): List<TextRange> {
 private sealed interface OwnedRegion {
   data class Text(val placeholderText: String) : OwnedRegion
   data object HorizontalRule : OwnedRegion
-  data class Image(val destination: String, val stamp: Long?) : OwnedRegion
 
   fun matches(region: FoldRegion): Boolean {
     return when (this) {
       is Text -> region !is CustomFoldRegion && region.placeholderText == placeholderText
       HorizontalRule -> region !is CustomFoldRegion && region.placeholderText.isEmpty()
-      is Image -> (region as? CustomFoldRegion)?.markdownImageRenderItem()?.destination == destination
     }
   }
 }

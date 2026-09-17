@@ -3,12 +3,14 @@ package com.intellij.markdown.backend.editor.livepreview
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SyntaxTraverser
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilCore
+import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewDocumentVersion
 import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewSpec
 import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewSpecSet
@@ -88,34 +90,14 @@ private fun PsiElement.toDecorationSpecs(editor: Editor): MarkdownLivePreviewSpe
 
 private fun PsiElement.toImageSpec(editor: Editor): MarkdownLivePreviewSpec.Image? {
   val image = this as? MarkdownImage ?: return null
-  val paragraph = image.parent ?: return null
-  if (PsiUtilCore.getElementType(paragraph) != MarkdownElementTypes.PARAGRAPH) return null
   val linkDestination = image.linkDestination ?: return null
   val destination = linkDestination.text.markdownDestination()
   if (!destination.isLocalDestination()) return null
-  val paragraphText = paragraph.text
-  val imageChildren = paragraph.childList().filterIsInstance<MarkdownImage>()
-  val imageIndex = imageChildren.indexOf(image)
-  val paragraphStart = paragraph.textRange.startOffset
-  if (imageIndex < 0 || !paragraphText.isBlank(0, imageChildren.first().textRange.startOffset - paragraphStart)) {
-    return null
-  }
-  if (imageChildren.hasNonBlankTextBetween(paragraphText, paragraphStart)) {
-    return null
-  }
-  if (!paragraphText.isBlank(imageChildren.last().textRange.endOffset - paragraphStart, paragraphText.length)) {
-    return null
-  }
-  val lineRange = image.wholeLineRange() ?: return null
-  val specImage = MarkdownLivePreviewSpec.Image(lineRange.toMarkdownLivePreviewRange(), destination)
-  val (source, stamp) = editor.getOrCreateMarkdownLivePreviewImageManager().findImageData(destination) ?: return specImage
-  return specImage.copy(source = source, stamp = stamp)
-}
-
-private fun List<MarkdownImage>.hasNonBlankTextBetween(paragraphText: String, paragraphStart: Int): Boolean {
-  return zipWithNext().any { (first, second) ->
-    !paragraphText.isBlank(first.textRange.endOffset - paragraphStart, second.textRange.startOffset - paragraphStart)
-  }
+  val range = image.wholeLineRange() ?: image.textRange
+  val altText = image.collectLinkDescriptionText()?.let(StringUtil::collapseWhiteSpace).orEmpty()
+  val placeholderText = altText.ifEmpty { MarkdownBundle.message("markdown.live.preview.image.placeholder") }
+  val source = editor.getOrCreateMarkdownLivePreviewImageManager().findImageData(destination)
+  return MarkdownLivePreviewSpec.Image(range.toMarkdownLivePreviewRange(), destination, placeholderText, source)
 }
 
 private fun PsiElement.toSetextCodeSpanUnderlineSpec(): MarkdownLivePreviewSpec? {

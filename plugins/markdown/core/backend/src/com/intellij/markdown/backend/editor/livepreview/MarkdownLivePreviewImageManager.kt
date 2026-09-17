@@ -1,8 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.markdown.backend.editor.livepreview
 
-import com.intellij.ide.vfs.VirtualFileId
-import com.intellij.ide.vfs.rpcId
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.util.EditorUtil
@@ -24,6 +22,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.intellij.plugins.markdown.MarkdownBundle
+import org.intellij.plugins.markdown.editor.livepreview.LoadedImage
 import org.intellij.plugins.markdown.editor.livepreview.MarkdownImageLoader
 import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewSpec
 import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewSpecSet
@@ -37,8 +36,8 @@ internal class MarkdownLivePreviewImageManager(
 ) : Disposable {
   private val file = FileDocumentManager.getInstance().getFile(editor.document)
     ?: error("Markdown live preview editor has no document file")
-  private val loadedSources = ConcurrentHashMap<String, VirtualFile>()
-  private val loadingSources = ConcurrentHashMap<String, Deferred<VirtualFile?>>()
+  private val loadedSources = ConcurrentHashMap<String, LoadedImage>()
+  private val loadingSources = ConcurrentHashMap<String, Deferred<LoadedImage?>>()
   private val coroutineScope = MarkdownApplicationScope.createChildScope()
 
   init {
@@ -53,23 +52,22 @@ internal class MarkdownLivePreviewImageManager(
   }
 
   suspend fun load(destination: String) {
-    val source = loadedSources[destination]?.takeIf { it.isValid } ?: startLoading(destination).await()
+    val source = loadedSources[destination]?.takeIf { it.file.isValid } ?: startLoading(destination).await()
     publishSource(destination, source)
   }
 
-  /** The already loaded source of [destination] and its modification stamp, or null when none is loaded. */
-  fun findImageData(destination: String): Pair<VirtualFileId, Long>? {
-    val source = loadedSources[destination]?.takeIf { it.isValid } ?: return null
-    return source.rpcId() to source.modificationStamp
+  /** The [MarkdownLivePreviewSpec.ImageSource] already loaded source of [destination], or null when none is loaded. */
+  fun findImageData(destination: String): MarkdownLivePreviewSpec.ImageSource? {
+    return loadedSources[destination]?.takeIf { it.file.isValid }?.toImageSource()
   }
 
-  private fun startLoading(destination: String): Deferred<VirtualFile?> {
+  private fun startLoading(destination: String): Deferred<LoadedImage?> {
     return loadingSources.computeIfAbsent(destination) {
       coroutineScope.async(Dispatchers.IO, start = CoroutineStart.LAZY) { loadImage(destination) }
     }.also { it.start() }
   }
 
-  private suspend fun loadImage(destination: String): VirtualFile? {
+  private suspend fun loadImage(destination: String): LoadedImage? {
     try {
       val source = withBackgroundProgress(project, MarkdownBundle.message("markdown.image.loading"), cancellable = true) {
         MarkdownImageLoader.load(project, file, destination)
@@ -88,18 +86,18 @@ internal class MarkdownLivePreviewImageManager(
     val destinations = editor.livePreviewSpecSetFlow().value?.imageDestinations() ?: return
     for (destination in destinations) {
       val source = loadedSources[destination]
-      if (source != null && source !in changedFiles) continue
+      if (source != null && source.file !in changedFiles) continue
       val deferred = startLoading(destination)
       coroutineScope.launch { publishSource(destination, deferred.await()) }
     }
   }
 
-  private fun publishSource(destination: String, source: VirtualFile?) {
+  private fun publishSource(destination: String, source: LoadedImage?) {
     editor.livePreviewSpecSetFlow().update { specSet ->
       if (specSet == null) return@update null
       val elements = specSet.elements.map { spec ->
         if (spec is MarkdownLivePreviewSpec.Image && spec.destination == destination) {
-          spec.copy(source = source?.rpcId(), stamp = source?.modificationStamp)
+          spec.copy(source = source?.toImageSource())
         } else spec
       }
       MarkdownLivePreviewSpecSet(specSet.documentVersion, elements)
@@ -113,6 +111,10 @@ internal class MarkdownLivePreviewImageManager(
 
 private fun MarkdownLivePreviewSpecSet.imageDestinations(): Set<String> {
   return elements.filterIsInstance<MarkdownLivePreviewSpec.Image>().mapTo(HashSet()) { it.destination }
+}
+
+private fun LoadedImage.toImageSource(): MarkdownLivePreviewSpec.ImageSource {
+  return MarkdownLivePreviewSpec.ImageSource(file.modificationStamp, width, height)
 }
 
 private val IMAGE_MANAGER_KEY = Key.create<MarkdownLivePreviewImageManager>("markdown.live.preview.image.manager")

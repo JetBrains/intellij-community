@@ -1,42 +1,39 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.markdown.frontend.editor.livepreview
 
-import com.intellij.codeInsight.documentation.render.DocRenderItem
-import com.intellij.codeInsight.documentation.render.DocRenderItemUpdater
-import com.intellij.codeInsight.documentation.render.DocRenderer
 import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.editor.CustomFoldRegion
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.FoldRegion
+import com.intellij.openapi.editor.Inlay
+import com.intellij.openapi.editor.InlayProperties
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.editor.ex.FoldingListener
+import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper
 import com.intellij.openapi.editor.impl.EditorScopeProvider
 import com.intellij.openapi.editor.impl.editorIdOrNull
-import com.intellij.openapi.editor.markup.HighlighterTargetArea
-import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.text.HtmlChunk
-import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import fleet.rpc.client.durable
 import kotlinx.coroutines.launch
 import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewRemoteApi
+import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewSpec
 import org.intellij.plugins.markdown.ui.preview.MarkdownImageResourceProvider
 import org.intellij.plugins.markdown.ui.preview.PreviewStaticServer
 
-/** Renders the resolved images of one editor as custom fold regions and asks the backend for the unresolved ones. */
-internal class MarkdownLivePreviewImageRenderer(
-  project: Project,
-  private val editor: EditorEx,
-) : Disposable {
-  private val items = HashSet<MarkdownImageRenderItem>()
+internal data class ImageInlay(
+  val offset: Int,
+  val destination: String,
+  val source: MarkdownLivePreviewSpec.ImageSource,
+  val ordinal: Int, // orders images from one line
+)
+
+private data class InlayKey(val line: Int, val destination: String, val ordinal: Int)
+
+internal class MarkdownLivePreviewImageRenderer(project: Project, private val editor: EditorEx) : Disposable {
+  private val inlays = LinkedHashSet<Inlay<MarkdownLivePreviewImageInlayRenderer>>()
   private val requestedDestinations = HashSet<String>()
-  private var geometry = currentGeometry()
+  private var visibleWidth = editor.scrollingModel.visibleArea.width
 
   private val coroutineScope = EditorScopeProvider.getInstance(project).getEditorScope(editor)
   private val editorId = editor.editorIdOrNull()
@@ -44,12 +41,6 @@ internal class MarkdownLivePreviewImageRenderer(
 
   init {
     Disposer.register(this, PreviewStaticServer.instance.registerResourceProvider(resourceProvider))
-    editor.foldingModel.addListener(object : FoldingListener {
-      override fun beforeFoldRegionDisposed(region: FoldRegion) {
-        val item = (region as? CustomFoldRegion)?.markdownImageRenderItem() ?: return
-        if (items.remove(item)) item.dispose()
-      }
-    }, this)
     editor.scrollingModel.addVisibleAreaListener({ updateGeometry() }, this)
   }
 
@@ -76,101 +67,70 @@ internal class MarkdownLivePreviewImageRenderer(
     requestedDestinations.clear()
   }
 
-  /** Creates the fold region that paints [destination] over the lines of [range], or null if the folding model refuses it. */
+  /**
+   * Brings the owned inlays in line with [desired]. An inlay survives while its line, image, order, and stamp
+   * stay the same. A new stamp replaces the inlay with one that holds a new renderer and a new image URL.
+   */
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
-  fun createRegion(range: TextRange, destination: String, stamp: Long?): CustomFoldRegion? {
-    if (range.isEmpty) return null
-    val foldingModel = editor.foldingModel
-    // A normal region that shares one boundary with the image lines and extends beyond them blocks a custom region.
-    foldingModel.getRegionsOverlappingWith(range.startOffset, range.endOffset)
-      .filter { it !is CustomFoldRegion }
-      .filter { (it.startOffset == range.startOffset && it.endOffset > range.endOffset) ||
-                (it.startOffset < range.startOffset && it.endOffset == range.endOffset) }
-      .forEach(foldingModel::removeFoldRegion)
-    val item = MarkdownImageRenderItem(editor, range, destination, imageUrl(destination, stamp))
+  fun reconcileInlays(desired: List<ImageInlay>) {
     val document = editor.document
-    val region = foldingModel.addCustomLinesFolding(
-      document.getLineNumber(range.startOffset),
-      document.getLineNumber(range.endOffset - 1),
-      item.renderer,
-    )
-    if (region == null) {
-      item.dispose()
-      return null
+    val obsolete = ArrayList<Inlay<MarkdownLivePreviewImageInlayRenderer>>()
+    val owned = HashMap<InlayKey, Inlay<MarkdownLivePreviewImageInlayRenderer>>()
+    for (inlay in inlays) {
+      if (!inlay.isValid) continue
+      val key = InlayKey(document.getLineNumber(inlay.offset), inlay.renderer.destination, -inlay.properties.priority)
+      if (owned.putIfAbsent(key, inlay) != null) obsolete += inlay
     }
-    items.add(item)
-    item.foldRegion = region
-    DocRenderItemUpdater.updateRenderers(listOf(item), false)
-    return region
-  }
 
-  /** Re-renders the image of [region] when [stamp] changed, which is how a refreshed source bypasses the image cache. */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
-  fun updateRegion(region: FoldRegion, stamp: Long?) {
-    val item = (region as? CustomFoldRegion)?.markdownImageRenderItem() ?: return
-    if (item.updateImageUrl(imageUrl(item.destination, stamp))) {
-      DocRenderItemUpdater.updateRenderers(listOf(item), true)
+    val retained = ArrayList<Inlay<MarkdownLivePreviewImageInlayRenderer>>()
+    val missing = ArrayList<ImageInlay>()
+    for (wanted in desired) {
+      val inlay = owned.remove(InlayKey(document.getLineNumber(wanted.offset), wanted.destination, wanted.ordinal))
+      if (inlay != null && inlay.renderer.source.stamp == wanted.source.stamp) {
+        retained += inlay
+        continue
+      }
+      if (inlay != null) obsolete += inlay
+      missing += wanted
+    }
+    obsolete += owned.values
+
+    inlays.clear()
+    inlays += retained
+    if (obsolete.isEmpty() && missing.isEmpty()) return
+
+    EditorScrollingPositionKeeper.perform(editor, false) {
+      obsolete.forEach(Disposer::dispose)
+      for ((offset, destination, source, ordinal) in missing) {
+        // A higher priority sits closer to the line, so the first image of a line gets the highest one.
+        val properties = InlayProperties().showAbove(false).relatesToPrecedingText(true).priority(-ordinal)
+        val renderer = MarkdownLivePreviewImageInlayRenderer(editor, destination, source, imageUrl(destination, source.stamp))
+        editor.inlayModel.addBlockElement(offset, properties, renderer)?.let { inlays += it }
+      }
     }
   }
 
-  private fun updateGeometry() {
-    if (editor.scrollingModel.visibleArea.isEmpty) return
-    val current = currentGeometry()
-    if (current == geometry) return
-    geometry = current
-    DocRenderItemUpdater.updateRenderers(items, false)
-  }
-
-  /** The visible width and the pixel scale, which are what decide the rendered size of an image. */
-  private fun currentGeometry(): Pair<Int, Float> {
-    return editor.scrollingModel.visibleArea.width to JBUIScale.pixScale(editor.contentComponent.graphicsConfiguration)
-  }
-
-  private fun imageUrl(destination: String, stamp: Long?): String {
+  private fun imageUrl(destination: String, stamp: Long): String {
     val resourceName = MarkdownImageResourceProvider.resourceName(destination)
     return "${PreviewStaticServer.getStaticUrl(resourceProvider, resourceName)}?refresh=$stamp"
   }
 
+  private fun updateGeometry() {
+    val visibleArea = editor.scrollingModel.visibleArea
+    if (visibleArea.isEmpty || visibleArea.width == visibleWidth) return
+    visibleWidth = visibleArea.width
+
+    val validInlays = inlays.filter { it.isValid }
+    if (validInlays.isEmpty()) return
+    EditorScrollingPositionKeeper.perform(editor, false) {
+      validInlays.forEach(Inlay<*>::update)
+    }
+  }
+
   override fun dispose() {
-    items.forEach(MarkdownImageRenderItem::dispose)
+    inlays.filter { it.isValid }.forEach(Disposer::dispose)
+    inlays.clear()
   }
 }
-
-internal class MarkdownImageRenderItem(
-  override val editor: Editor,
-  range: TextRange,
-  val destination: String,
-  imageUrl: String,
-) : DocRenderItem {
-  val renderer = DocRenderer(this, true) { MarkdownLivePreviewPositionKeeper(editor) }
-
-  override var textToRender: String = imageText(imageUrl)
-    private set
-  override val highlighter: RangeHighlighter = editor.markupModel.addRangeHighlighter(
-    null, range.startOffset, range.endOffset, 0, HighlighterTargetArea.EXACT_RANGE,
-  )
-  override var foldRegion: CustomFoldRegion? = null
-
-  override fun calcFoldingGutterIconRenderer() = null
-  override fun setIconVisible(visible: Boolean) = Unit
-  override fun toggle() = Unit
-  override fun getInlineDocumentation() = null
-  override fun getInlineDocumentationTarget() = null
-
-  /** Returns whether the rendered content changed. */
-  fun updateImageUrl(imageUrl: String): Boolean {
-    val text = imageText(imageUrl)
-    if (textToRender == text) return false
-    textToRender = text
-    return true
-  }
-
-  fun dispose() {
-    renderer.dispose()
-    highlighter.dispose()
-  }
-}
-
-private fun imageText(url: String): String = HtmlChunk.tag("img").attr("src", url).toString()
 
 private val LOG = logger<MarkdownLivePreviewImageRenderer>()

@@ -72,7 +72,7 @@ public final class DocRenderItemUpdater implements Runnable {
 
   private void processChunk(@Nullable Runnable onAfterDone) {
     long deadline = System.currentTimeMillis() + MAX_UPDATE_DURATION_MS;
-    Map<Editor, DocRenderer.PositionKeeper> keepers = new HashMap<>();
+    Map<Editor, EditorScrollingPositionKeeper> keepers = new HashMap<>();
     // This is a heuristic to lessen visual 'jumping' on editor opening. We'd like regions visible at target opening location to be updated
     // first, and all the rest - later. We're not specifically optimizing for the case when multiple editors are opened simultaneously now,
     // opening several editors in succession should work fine with this logic though (by the time a new editor is opened, 'high-priority'
@@ -80,21 +80,13 @@ public final class DocRenderItemUpdater implements Runnable {
     List<CustomFoldRegion> toProcess = new ArrayList<>(myQueue.keySet());
     Object2IntMap<Editor> memoMap = new Object2IntOpenHashMap<>();
     toProcess.sort(Comparator.comparingInt(i -> -Math.abs(i.getStartOffset() - getVisibleOffset(i.getEditor(), memoMap))));
-    Map<Editor, DocRenderer> customRenderers = new HashMap<>();
-    for (CustomFoldRegion region : toProcess) {
-      if (!region.isValid()) continue;
-      DocRenderer renderer = (DocRenderer)region.getRenderer();
-      if (renderer.hasPositionKeeperFactory()) {
-        customRenderers.putIfAbsent(region.getEditor(), renderer);
-      }
-    }
     Map<Editor, List<Runnable>> editorTasks = new HashMap<>();
     do {
       CustomFoldRegion region = toProcess.remove(toProcess.size() - 1);
       boolean updateContent = myQueue.remove(region);
       if (region.isValid()) {
         Editor editor = region.getEditor();
-        keepPosition(keepers, customRenderers, editor);
+        keepPosition(keepers, editor);
         var tasks = editorTasks.computeIfAbsent(editor, e -> new ArrayList<>());
         ((DocRenderer)region.getRenderer()).update(true, updateContent, tasks);
         if (tasks.size() > 20) {
@@ -109,24 +101,18 @@ public final class DocRenderItemUpdater implements Runnable {
     if (myQueue.isEmpty() && onAfterDone != null) onAfterDone.run();
   }
 
-  private static void keepPosition(@NotNull Map<Editor, DocRenderer.PositionKeeper> keepers,
-                                   @NotNull Map<Editor, DocRenderer> customRenderers,
-                                   @NotNull Editor editor) {
+  private static void keepPosition(@NotNull Map<Editor, EditorScrollingPositionKeeper> keepers, @NotNull Editor editor) {
     keepers.computeIfAbsent(editor, e -> {
-      DocRenderer renderer = customRenderers.get(e);
-      DocRenderer.PositionKeeper keeper = renderer == null ? null : renderer.createPositionKeeper();
-      if (keeper == null) {
-        keeper = new DefaultPositionKeeper(e);
-      }
-      keeper.save();
+      EditorScrollingPositionKeeper keeper = new EditorScrollingPositionKeeper(editor);
+      keeper.savePosition();
       return keeper;
     });
   }
 
-  private static void restorePosition(@NotNull Map<Editor, DocRenderer.PositionKeeper> keepers) {
+  private static void restorePosition(@NotNull Map<Editor, EditorScrollingPositionKeeper> keepers) {
     keepers.values().forEach(k -> {
       try {
-        k.restore();
+        k.restorePosition(false);
       }
       finally {
         Disposer.dispose(k);
@@ -137,29 +123,6 @@ public final class DocRenderItemUpdater implements Runnable {
   private static void runFoldingTasks(@NotNull Editor editor, @NotNull List<Runnable> tasks) {
     editor.getFoldingModel().runBatchFoldingOperation(() -> tasks.forEach(Runnable::run), true, false);
     tasks.clear();
-  }
-
-  private static final class DefaultPositionKeeper implements DocRenderer.PositionKeeper {
-    private final EditorScrollingPositionKeeper delegate;
-
-    private DefaultPositionKeeper(@NotNull Editor editor) {
-      delegate = new EditorScrollingPositionKeeper(editor);
-    }
-
-    @Override
-    public void save() {
-      delegate.savePosition();
-    }
-
-    @Override
-    public void restore() {
-      delegate.restorePosition(false);
-    }
-
-    @Override
-    public void dispose() {
-      Disposer.dispose(delegate);
-    }
   }
 
   private static int getVisibleOffset(Editor editor, Object2IntMap<Editor> memoMap) {

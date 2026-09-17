@@ -66,7 +66,8 @@ import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.math.max
 
 @Service(Service.Level.APP)
-internal class CachingAdaptiveImageManagerService(private val coroutineScope: CoroutineScope) : AdaptiveImagesManager {
+@ApiStatus.Internal
+class CachingAdaptiveImageManagerService(private val coroutineScope: CoroutineScope) : AdaptiveImagesManager {
   companion object {
     @JvmStatic
     fun isEnabled(): Boolean = Registry.`is`("doc.render.adaptive.image", defaultValue = true)

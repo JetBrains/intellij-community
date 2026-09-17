@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.editor.livepreview
 
-import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.ide.rpc.DocumentPatchVersion
 import com.intellij.ide.rpc.DocumentPatchVersionAccessor
 import com.intellij.openapi.editor.Document
@@ -81,13 +80,26 @@ sealed interface MarkdownLivePreviewSpec {
   @Serializable
   data class HorizontalRule(override val range: MarkdownLivePreviewRange) : MarkdownLivePreviewSpec
 
-  /** Conceals complete logical lines and paints a local image. */
+  /**
+   * The loaded file behind an [Image]: its modification [stamp] and its intrinsic size in logical pixels.
+   * A new [stamp] means new pixels behind the same destination.
+   */
+  @Serializable
+  data class ImageSource(
+    val stamp: Long,
+    val width: Int,
+    val height: Int,
+  )
+
+  /**
+   * Replaces the source of a local image with [placeholderText] and paints the image below its line.
+   */
   @Serializable
   data class Image(
     override val range: MarkdownLivePreviewRange,
     val destination: String,
-    val source: VirtualFileId? = null,
-    val stamp: Long? = null,
+    val placeholderText: String,
+    val source: ImageSource? = null,
   ) : MarkdownLivePreviewSpec
 
   /** Replaces a list marker with a depth-aware bullet placeholder. */
