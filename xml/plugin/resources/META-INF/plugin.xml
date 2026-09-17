@@ -1,9 +1,13 @@
 <!--suppress PluginXmlPluginLogo -->
-<idea-plugin>
+<idea-plugin allow-bundled-update="true">
   <id>intellij.xml.plugin</id>
-  <name>XML</name>
-  <description>Provides XML, HTML, DTD, RELAX NG and Emmet editing support: parser, PSI, DOM model, structure view, code analysis, and language injection.</description>
+  <name>XML and HTML</name>
   <vendor>JetBrains</vendor>
+  <category>Languages</category>
+  <description><![CDATA[
+    Provides XML, HTML, DTD and XSD editing support: highlighting,
+    code completion, Emmet, structure view, and language injection.
+  ]]></description>
   <module value="com.intellij.modules.xml"/>
 
   <!-- intellij.libraries.cglib stays embedded in the core classloader,
