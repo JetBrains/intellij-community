@@ -15,7 +15,6 @@ import org.jetbrains.kotlin.test.util.invalidateCaches
 import java.io.File
 
 abstract class AbstractK2IntentionTest : AbstractIntentionTestBase() {
-    override fun intentionFileName(): String = ".k2Intention"
 
     override fun afterFileNameSuffix(ktFilePath: File): String =
         if (ktFilePath.resolveSibling(ktFilePath.name + AFTER_K2_EXTENSION).exists()) {
