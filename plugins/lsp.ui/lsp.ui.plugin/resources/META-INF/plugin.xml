@@ -1,0 +1,19 @@
+<!-- BUILD_USING_BAZEL_MARKER: this plugin is also packaged by the `ij_plugin` Bazel rule, and IjPluginDistributionEquivalenceTest
+     checks that the result matches the distribution produced by the build scripts. See IJPL-251444. -->
+<idea-plugin allow-bundled-update="true">
+  <name>LSP Connection Manager</name>
+  <id>com.intellij.lsp.ui</id>
+  <category>IDE Settings</category>
+  <vendor>JetBrains</vendor>
+  <description><![CDATA[
+    <p>Provides UI for managing LSP (Language Server Protocol) servers via configuration settings.</p>
+    <p>Open <b>Settings | Languages & Frameworks | Language Servers</b> to configure servers and file mappings.</p>
+  ]]></description>
+
+  <!--suppress PluginXmlValidity -->
+  <content namespace="jetbrains">
+    <module name="intellij.lsp.ui.frontend" required-if-available="intellij.platform.frontend"/>
+  </content>
+
+
+</idea-plugin>

@@ -1597,8 +1597,9 @@ plugins/lombok
 plugins/lombok/generated
 plugins/lombok/plugin
 plugins/lsp.client.playground
-plugins/lsp.ui
 plugins/lsp.ui/idea.product.modules
+plugins/lsp.ui/lsp.ui.frontend
+plugins/lsp.ui/lsp.ui.plugin
 plugins/markdown/compose
 plugins/markdown/core
 plugins/markdown/core/backend

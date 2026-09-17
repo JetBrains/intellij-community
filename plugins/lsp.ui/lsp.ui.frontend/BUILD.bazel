@@ -1,20 +1,13 @@
-load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
-### auto-generated section `dev intellij.lsp.ui` start
-dev_dist_plugin(
-    descriptor = "resources/META-INF/plugin.xml",
-    jars = {
-        "lib/lsp-ui.jar": ["intellij.lsp.ui"],
-    },
-    main_module = "intellij.lsp.ui",
-)
-### auto-generated section `dev intellij.lsp.ui` end
+### auto-generated section `dev intellij.lsp.ui.frontend` start
+content_module_jar(module = ":lsp.ui.frontend")
+### auto-generated section `dev intellij.lsp.ui.frontend` end
 
-### auto-generated section `build intellij.lsp.ui` start
+### auto-generated section `build intellij.lsp.ui.frontend` start
 jvm_library(
-    name = "lsp.ui",
+    name = "lsp.ui.frontend",
     srcs = glob(
         [
             "src/**/*.kt",
@@ -23,7 +16,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    module_name = "intellij.lsp.ui",
+    module_name = "intellij.lsp.ui.frontend",
     resource_strip_prefix = "resources",
     resources = glob(
         ["resources/**/*"],
@@ -55,17 +48,17 @@ jvm_library(
 )
 
 jvm_library(
-    name = "lsp.ui_test_lib",
+    name = "lsp.ui.frontend_test_lib",
     testonly = True,
     srcs = glob(
         [],
         allow_empty = True,
     ),
-    module_name = "intellij.lsp.ui",
+    module_name = "intellij.lsp.ui.frontend",
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
-        ":lsp.ui",
+        ":lsp.ui.frontend",
         "//platform/core-api:core_test_lib",
         "//platform/statistics:statistics_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
@@ -87,20 +80,14 @@ jvm_library(
         "//json:json_test_lib",
     ],
 )
+### auto-generated section `build intellij.lsp.ui.frontend` end
 
-ij_plugin(
-    name = "lsp.ui_plugin",
-    descriptor_module = ":lsp.ui",
-    visibility = ["//visibility:public"],
-)
-### auto-generated section `build intellij.lsp.ui` end
-
-### auto-generated section `iml intellij.lsp.ui` start
+### auto-generated section `iml intellij.lsp.ui.frontend` start
 exports_files(
     [
-        "intellij.lsp.ui.iml",
-        "resources/META-INF/plugin.xml",
+        "intellij.lsp.ui.frontend.iml",
+        "resources/intellij.lsp.ui.frontend.xml",
     ],
     visibility = ["//visibility:public"],
 )
-### auto-generated section `iml intellij.lsp.ui` end
+### auto-generated section `iml intellij.lsp.ui.frontend` end

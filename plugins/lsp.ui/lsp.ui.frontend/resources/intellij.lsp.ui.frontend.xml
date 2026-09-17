@@ -1,17 +1,7 @@
-<!-- BUILD_USING_BAZEL_MARKER: this plugin is also packaged by the `ij_plugin` Bazel rule, and IjPluginDistributionEquivalenceTest
-     checks that the result matches the distribution produced by the build scripts. See IJPL-251444. -->
-<idea-plugin allow-bundled-update="true">
-  <name>LSP Connection Manager</name>
-  <id>com.intellij.lsp.ui</id>
-  <category>IDE Settings</category>
-  <vendor>JetBrains</vendor>
-  <description><![CDATA[
-    <p>Provides UI for managing LSP (Language Server Protocol) servers via configuration settings.</p>
-    <p>Open <b>Settings | Languages & Frameworks | Language Servers</b> to configure servers and file mappings.</p>
-  ]]></description>
-
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.json"/>
     <module name="intellij.libraries.gson"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.ui"/>
@@ -20,17 +10,15 @@
     <module name="intellij.platform.frontend"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.impl"/>
-    <module name="intellij.json"/>
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.lsp"/>
     <module name="intellij.platform.lsp.impl"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.statistics"/>
     <module name="intellij.platform.util.ui"/>
-    <!-- endregion -->
   </dependencies>
-  <!--suppress PluginXmlValidity -->
-  <content namespace="jetbrains"/>
+  <!-- endregion -->
 
   <resource-bundle>messages.LspUiBundle</resource-bundle>
 
@@ -45,7 +33,7 @@
     <statistics.projectUsagesCollector implementation="com.intellij.lsp.ui.statistics.LspServerUsagesCollector"/>
 
     <projectService serviceInterface="com.intellij.platform.lsp.api.LspIntegrationSettings"
-      serviceImplementation="com.intellij.lsp.ui.settings.LspIntegrationSettingsImpl"/>
+                    serviceImplementation="com.intellij.lsp.ui.settings.LspIntegrationSettingsImpl"/>
     <!--suppress PluginXmlCapitalization -->
     <notificationGroup id="Language Servers" displayType="BALLOON" bundle="messages.LspUiBundle" key="lsp.settings.display.name"/>
   </extensions>
@@ -55,4 +43,6 @@
             icon="AllIcons.Nodes.EnterpriseProject"
             internal="true"/>
   </actions>
+
 </idea-plugin>
+
