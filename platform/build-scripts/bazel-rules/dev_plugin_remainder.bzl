@@ -165,6 +165,56 @@ def _declare_source_trees(ctx):
         result[identifier] = directory
     return result
 
+def _dev_debugger_egg_impl(ctx):
+    if sorted(ctx.attr.source_tree_targets.keys()) != ["metadata", "pydev"]:
+        fail("debugger egg source tree IDs must be exactly metadata and pydev")
+    file_name = ctx.attr.file_name
+    if file_name in ["", ".", ".."] or any([char in file_name for char in ["/", "\\", ":", "\000"]]):
+        fail("debugger egg file_name must be a single safe file name: %r" % file_name)
+    source_trees = _declare_source_trees(ctx)
+    egg = ctx.actions.declare_file(ctx.label.name + "/" + file_name)
+    temporary = ctx.actions.declare_directory(ctx.label.name + ".temporary")
+    ctx.actions.run(
+        executable = ctx.executable.preparer,
+        tools = [ctx.attr.preparer[DefaultInfo].files_to_run],
+        arguments = [
+            source_trees["pydev"].path,
+            source_trees["metadata"].path,
+            ctx.attr.build_number,
+            egg.path,
+            temporary.path,
+        ],
+        inputs = source_trees.values(),
+        outputs = [egg, temporary],
+        mnemonic = "DebuggerEggPreparation",
+        progress_message = "Preparing debugger egg %{label}",
+    )
+    return [DefaultInfo(files = depset([egg]))]
+
+dev_debugger_egg = rule(
+    implementation = _dev_debugger_egg_impl,
+    attrs = {
+        "source_tree_targets": attr.string_keyed_label_dict(
+            mandatory = True,
+            allow_files = True,
+            doc = "Declared source targets keyed by pydev and metadata.",
+        ),
+        "source_tree_prefixes": attr.string_dict(
+            mandatory = True,
+            doc = "Repository-relative source prefixes keyed by pydev and metadata.",
+        ),
+        "build_number": attr.string(mandatory = True),
+        "file_name": attr.string(default = "pydevd-pycharm.egg"),
+        "preparer": attr.label(mandatory = True, executable = True, cfg = "exec"),
+        "_zipper": attr.label(
+            default = "@bazel_tools//tools/zip:zipper",
+            executable = True,
+            cfg = "exec",
+        ),
+    },
+    doc = "Prepares a debugger egg from two declared source trees and a build number.",
+)
+
 # A plan file names the chain's platform as a whole quoted JSON string leaf. `"{platform}"` is the chain's
 # `HOST_PLATFORMS` id. `"{platform:<name>}"` is a slot, and the call states its value in `platform_values`. The same
 # `{platform}` token stands in a generated label or ID, where the macro substitutes it.

@@ -18,6 +18,16 @@ import java.util.zip.GZIPOutputStream
 sealed interface DevPluginLayoutAssetSource {
   data class ModuleDirectory(@JvmField val moduleName: String, @JvmField val path: String) : DevPluginLayoutAssetSource
 
+  /** A debugger egg prepared in Kotlin from two raw checkout directories. Paths are relative to the project root. */
+  data class DebuggerEgg(
+    @JvmField val pydevModule: String,
+    @JvmField val pydevPath: String,
+    @JvmField val metadataModule: String,
+    @JvmField val metadataPath: String,
+    @JvmField val buildNumber: String,
+    @JvmField val fileName: String,
+  ) : DevPluginLayoutAssetSource
+
   data class BazelTarget(
     @JvmField val label: String,
     @JvmField val kind: String,
