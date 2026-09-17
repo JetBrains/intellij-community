@@ -17,6 +17,7 @@ import org.jetbrains.idea.maven.execution.MavenRunnerSettings
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.project.MavenProjectsTree
 import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Test
 import java.nio.file.Files
@@ -177,6 +178,37 @@ internal class ToolchainsResolverTest {
   }
 
 
+  @Test
+  fun testShouldKeepFullVersionOfRegisteredSdk() = runBlocking {
+    val mavenSession = MavenSyncSession(maven.project, MavenSyncSpec.incremental("test"), MavenProjectsTree(maven.project))
+    val toolchainsFile = createTempDirectory("testToolchains").resolve("toolchains.xml")
+    val sdk = createTestSdk("test-jdk47", "47.0.1", createTempDirectory("testSdk").toString())
+    mavenSession.syncContext.putUserData(MavenSyncSession.TOOLCHAINS_FILE, toolchainsFile)
+    edtWriteAction {
+      ProjectJdkTable.getInstance(maven.project).addJdk(sdk)
+    }
+
+    try {
+      val session = ToolchainResolverSession.forSession(mavenSession)
+      val rangeRequirement = ToolchainRequirement.Builder(ToolchainRequirement.JDK_TYPE)
+        .set("version", "[47.0.1,48)")
+        .discoverJdks(true)
+        .build()
+      assertSame(sdk, session.findOrInstallJdk(rangeRequirement))
+
+      val bareRequirement = ToolchainRequirement.Builder(ToolchainRequirement.JDK_TYPE)
+        .set("version", "47")
+        .discoverJdks(true)
+        .build()
+      assertNull(session.findOrInstallJdk(bareRequirement), "A bare version must match only an exact equal version")
+    }
+    finally {
+      edtWriteAction {
+        ProjectJdkTable.getInstance(maven.project).removeJdk(sdk)
+      }
+    }
+  }
+
   private fun write(file: Path, data: String) {
     Files.write(file, data.toByteArray())
   }
@@ -184,7 +216,8 @@ internal class ToolchainsResolverTest {
   private suspend fun createTestSdk(name: String, version: String, homePath: String): Sdk {
     val sdk = ProjectJdkTable.getInstance(maven.project).createSdk(name, JavaSdk.getInstance())
     val sdkModificator = sdk.sdkModificator
-    sdkModificator.homePath = homePath
+    // The VFS stores canonical paths. A short 8.3 temp path breaks the home path comparison.
+    sdkModificator.homePath = Path.of(homePath).toRealPath().toString()
     sdkModificator.versionString = version
     edtWriteAction { sdkModificator.commitChanges() }
     return sdk

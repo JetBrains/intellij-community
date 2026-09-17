@@ -38,7 +38,7 @@ class ToolchainModel(
   companion object {
     fun fromSdk(sdk: Sdk): ToolchainModel? {
       if (sdk.sdkType !is JavaSdkType) return null
-      val version = sdk.versionString?.let { JavaVersion.parse(it) }?.toFeatureString() ?: return null
+      val version = JavaVersion.tryParse(sdk.versionString)?.toString() ?: return null
       val path = sdk.homePath?.asTargetPath() ?: return null
       return ToolchainModel(
         type = "jdk",

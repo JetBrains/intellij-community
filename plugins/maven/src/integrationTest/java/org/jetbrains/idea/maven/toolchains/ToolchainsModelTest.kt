@@ -55,6 +55,40 @@ class ToolchainsModelTest {
   }
 
   @Test
+  fun testBareVersionRequiresExactMatch() {
+    val requirement = toolchainRequirement("47")
+    val model = ToolchainModel("jdk", mapOf("version" to "47.0.1"), emptyMap())
+    assertFalse(model.matches(requirement))
+  }
+
+  @Test
+  fun testFullVersionMatchesRange() {
+    val requirement = toolchainRequirement("[47.0.1,48)")
+    val model = ToolchainModel("jdk", mapOf("version" to "47.0.1"), emptyMap())
+    assertTrue(model.matches(requirement))
+  }
+
+  @Test
+  fun testMatchingVendor() {
+    val requirement = ToolchainRequirement.Builder(ToolchainRequirement.JDK_TYPE)
+      .set("vendor", "Eclipse Temurin")
+      .build()
+    val model = ToolchainModel("jdk", mapOf("vendor" to "Eclipse Temurin"), emptyMap())
+    assertTrue(model.matches(requirement))
+  }
+
+  @Test
+  fun testMatchingVendorNegative() {
+    val requirement = ToolchainRequirement.Builder(ToolchainRequirement.JDK_TYPE)
+      .set("vendor", "Eclipse Temurin")
+      .build()
+    val wrongVendor = ToolchainModel("jdk", mapOf("vendor" to "Oracle OpenJDK"), emptyMap())
+    val noVendor = ToolchainModel("jdk", emptyMap(), emptyMap())
+    assertFalse(wrongVendor.matches(requirement))
+    assertFalse(noVendor.matches(requirement))
+  }
+
+  @Test
   fun testMatchingEnvList() {
     val requirement = ToolchainRequirement.Builder(ToolchainRequirement.JDK_TYPE)
       .set("env", "JAVA_HOME,TEST_HOME")

@@ -22,6 +22,7 @@ import org.jetbrains.idea.maven.buildtool.MavenSyncSession
 import org.jetbrains.idea.maven.buildtool.getToolchainsFile
 import org.jetbrains.idea.maven.utils.MavenUtil.getJdkForImporter
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil
+import org.jetbrains.jps.model.java.JdkVersionDetector
 import java.nio.file.Path
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.isRegularFile
@@ -128,9 +129,14 @@ class ToolchainResolverSession private constructor(
     return JavaHomeFinder.findJdks(myProject.getEelDescriptor(), false)
       .mapNotNull {
         val versionInfo = it.versionInfo() ?: return@mapNotNull null
+        val provides = HashMap<String, String>()
+        provides["version"] = versionInfo.version.toString()
+        if (versionInfo.variant != JdkVersionDetector.Variant.Unknown) {
+          provides["vendor"] = versionInfo.variant.displayName
+        }
         ToolchainModel(
           type = "jdk",
-          providesMap = mapOf("version" to versionInfo.version.toFeatureString()),
+          providesMap = provides,
           configurationMap = mapOf("jdkHome" to it.path()),
         )
       }

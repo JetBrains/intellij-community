@@ -11,7 +11,6 @@ interface ToolchainMatcher {
 fun findMatcher(key: String): ToolchainMatcher {
   return when (key) {
     "version" -> ToolchainVersionMatcher
-    "vendor" -> AlwaysMatcher
     "env" -> ToolchainEnvMatcher
     else -> ExactMatcher
   }
@@ -116,10 +115,6 @@ object ToolchainVersionMatcher : ToolchainMatcher {
       return true
     }
   }
-}
-
-object AlwaysMatcher : ToolchainMatcher {
-  override fun matches(key: String, value: String, model: ToolchainModel): Boolean = true
 }
 
 object ToolchainEnvMatcher : ToolchainMatcher {
