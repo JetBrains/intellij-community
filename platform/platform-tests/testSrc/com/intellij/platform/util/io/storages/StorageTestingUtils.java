@@ -11,6 +11,7 @@ import com.intellij.util.io.Unmappable;
 import com.intellij.util.io.pagecache.PagedStorage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.lang.reflect.Field;
@@ -27,8 +28,15 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 
 import static com.intellij.openapi.util.text.StringUtil.repeat;
+import static com.intellij.util.SystemProperties.getBooleanProperty;
 
+@TestOnly
 public final class StorageTestingUtils {
+  /// `false` uses the regular `close()` method on memory-mapped storage
+  /// `true` uses the legacy helper to find [Unmappable] instances in the object tree
+  /// This flag permits a quick rollback if the regular close operation causes a failure
+  private static final boolean USE_LEGACY_UNMAP = getBooleanProperty("StorageTestingUtils.USE_LEGACY_UNMAP", false);
+
   /**
    * Emulates scenario there underlying storage(s) was closed without invoking storage.close() method -- as-if
    * app was kill-9-ed. This is just an emulation -- it doesn't replicate all the details of actual kill-9 --
@@ -128,6 +136,8 @@ public final class StorageTestingUtils {
     }
   }
 
+  /// Finds [CleanableStorage] instances in the object tree and asks each instance to clean itself
+  /// It closes [AutoCloseable], [Disposable], and [Unmappable] instances without cleaning them
   public static void bestEffortToCloseAndClean(@NotNull Object storage) throws Exception {
     bestEffortToCloseAndClean("", storage, new HashSet<>(), 0);
   }
@@ -207,9 +217,15 @@ public final class StorageTestingUtils {
     }
   }
 
-
+  /// @deprecated FFM scopes now close and unmap memory-mapped storage reliably. Use the regular `close()` method instead
+  @Deprecated
   public static void bestEffortToCloseAndUnmap(@NotNull Object storage) throws Exception {
-    bestEffortToCloseAndUnmap("", storage, new HashSet<>(), 0);
+    if (storage instanceof AutoCloseable ac && !USE_LEGACY_UNMAP) {
+      ac.close();
+    }
+    else {
+      bestEffortToCloseAndUnmap("", storage, new HashSet<>(), 0);
+    }
   }
 
   private static void bestEffortToCloseAndUnmap(@NotNull String fieldName,

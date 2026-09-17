@@ -19,7 +19,12 @@ import java.io.IOException;
  * actual unmapping.
  * 2. MMapped storages implement this interface, and whoever needs explicit unmapping -- cast storage to
  * {@link Unmappable}. This way it is explicit that the operation is unsafe
+ *
+ * @deprecated with transition to FFM Arena/scope API the complication above not needed anymore: regular .close() now (should)
+ *             always unmaps the mmapped buffers, if any -- because with FFM it is safe, and not carry a risk of JVM segfault anymore.
+ *             This interface should be considered a legacy and its usages should be gradually removed from the codebase.
  */
+@Deprecated
 public interface Unmappable {
   /**
    * Close the storage, and unmap all the memory-mapped buffers used.
