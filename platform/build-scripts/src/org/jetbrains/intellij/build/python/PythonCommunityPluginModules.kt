@@ -2,8 +2,6 @@
 package org.jetbrains.intellij.build.python
 
 import org.jetbrains.intellij.build.impl.PluginLayout
-import org.jetbrains.intellij.build.io.copyDir
-import java.nio.file.Files
 
 object PythonCommunityPluginModules {
 
@@ -19,21 +17,13 @@ object PythonCommunityPluginModules {
     return PluginLayout.pluginAutoWithCustomDirName(mainModuleName, name) { spec ->
       spec.withModules(modules)
       if (mainModuleName == "intellij.python.community.plugin") {
-        spec.withGeneratedResources { targetDir, context ->
-          val output = targetDir.resolve("helpers")
-          Files.createDirectories(output)
-          copyDir(
-            sourceDir = context.paths.communityHomeDir.resolve("python/helpers"), targetDir = output,
-            dirFilter = { path ->
-              when {
-                path.endsWith("tests") || path.endsWith(".idea") -> false
-                path.parent?.fileName?.toString() == "pydev" -> !path.fileName.toString().startsWith("pydev_test")
-                else -> true
-              }
-            },
-            fileFilter = { path -> !path.endsWith("setup.py") && !path.endsWith("conftest.py") }
-          )
-        }
+        spec.withResourceTree(
+          moduleName = "intellij.python.helpers",
+          resourcePath = "",
+          relativeOutputPath = "helpers",
+          excludes = listOf("{setup.py,conftest.py}", "**/{setup.py,conftest.py}"),
+          directoryExcludes = listOf("{tests,.idea}", "**/{tests,.idea}", "pydev/pydev_test*", "**/pydev/pydev_test*"),
+        )
       }
 
       // required for "Python Console" in PythonCore plugin

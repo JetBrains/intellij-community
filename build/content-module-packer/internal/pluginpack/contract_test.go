@@ -55,6 +55,50 @@ func TestOwnedTreeMetadataEncodingAndStrictVersion(test *testing.T) {
 	}
 }
 
+func TestLayoutTransformExcludesEncoding(t *testing.T) {
+	for _, test := range []struct {
+		excludes          []string
+		directoryExcludes []string
+		want              string
+	}{
+		{want: `{"kind":"tree-map"}`},
+		{excludes: []string{}, directoryExcludes: []string{}, want: `{"kind":"tree-map"}`},
+		{excludes: []string{"*.pyc"}, want: `{"kind":"tree-map","excludes":["*.pyc"]}`},
+		{directoryExcludes: []string{"tests"}, want: `{"kind":"tree-map","directoryExcludes":["tests"]}`},
+		{excludes: []string{"*.pyc"}, directoryExcludes: []string{"tests", "**/tests"},
+			want: `{"kind":"tree-map","excludes":["*.pyc"],"directoryExcludes":["tests","**/tests"]}`},
+	} {
+		transform := &LayoutTransform{Kind: "tree-map", Excludes: test.excludes, DirectoryExcludes: test.directoryExcludes}
+		data, err := json.Marshal(transform)
+		if err != nil || string(data) != test.want {
+			t.Fatalf("transform encoding = %s: %v, want %s", data, err, test.want)
+		}
+		file := filepath.Join(t.TempDir(), "transform.json")
+		writeTestFile(t, file, data)
+		var decoded LayoutTransform
+		if err := ReadJSON(file, &decoded); err != nil {
+			t.Fatal(err)
+		}
+		if got := kotlinJSON(t, decoded); got != test.want {
+			t.Fatalf("decoded transform = %s, want %s", got, test.want)
+		}
+		operation := kotlinLayoutAssetsOperation(t, "layout", "output", "tree", "payload", LayoutAssets{Assets: []LayoutAsset{{Transform: transform}}})
+		var encoded struct {
+			LayoutAssets struct {
+				Assets []struct {
+					Transform json.RawMessage `json:"transform"`
+				} `json:"assets"`
+			} `json:"layoutAssets"`
+		}
+		if err := json.Unmarshal([]byte(operation), &encoded); err != nil {
+			t.Fatal(err)
+		}
+		if len(encoded.LayoutAssets.Assets) != 1 || string(encoded.LayoutAssets.Assets[0].Transform) != test.want {
+			t.Fatalf("Kotlin operation encoding = %s, want transform %s", operation, test.want)
+		}
+	}
+}
+
 func TestKotlinDefaultFieldEncoding(t *testing.T) {
 	root := t.TempDir()
 	recipeFile := filepath.Join(root, "recipe.json")

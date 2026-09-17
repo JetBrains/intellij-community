@@ -555,6 +555,167 @@ func TestLayoutTreeWriterAndEntriesWriterRules(t *testing.T) {
 	})
 }
 
+func TestLayoutTreeMapExcludes(t *testing.T) {
+	files := []string{
+		"root.pyc", "root.pyo", "keep.py", "nested/cache.pyc", "nested/deep/cache.pyo", "nested/keep.py",
+		"tests/keep.py", "nested/tests/keep.py", "nested/deep/tests/keep.py", "ordinary/tests",
+		"pydev/pydev_tests/keep.py", "nested/pydev/pydev_test2/keep.py", "nested/deep/pydev/pydev_test3/keep.py",
+		"ordinary/pydev/pydev_tests", "other/pydev_test/keep.py",
+	}
+	tests := []struct {
+		name              string
+		excludes          []string
+		directoryExcludes []string
+		absent            []string
+		directories       []string
+	}{
+		{name: "root file glob", excludes: []string{"*.pyc"}, absent: []string{"root.pyc"}},
+		{name: "nested file glob", excludes: []string{"**/*.pyc"}, absent: []string{"nested/cache.pyc"}},
+		{name: "brace globs", excludes: []string{"*.{pyc,pyo}", "**/*.{pyc,pyo}"},
+			absent: []string{"root.pyc", "root.pyo", "nested/cache.pyc", "nested/deep/cache.pyo"}},
+		{name: "file filters keep directories", excludes: []string{"tests", "**/tests"},
+			absent: []string{"ordinary/tests"}, directories: []string{"tests", "nested/tests", "nested/deep/tests", "empty/tests"}},
+		{name: "file subtree globs keep empty directories", excludes: []string{"tests/**", "**/tests/**"},
+			absent:      []string{"tests/keep.py", "nested/tests/keep.py", "nested/deep/tests/keep.py"},
+			directories: []string{"tests", "nested/tests", "nested/deep/tests", "empty/tests"}},
+		{name: "directory filters keep ordinary files", directoryExcludes: []string{"tests", "**/tests", "pydev/pydev_test*", "**/pydev/pydev_test*"},
+			absent: []string{"tests", "nested/tests", "nested/deep/tests", "empty/tests", "pydev/pydev_tests",
+				"nested/pydev/pydev_test2", "nested/deep/pydev/pydev_test3"}},
+		{name: "nested directory glob keeps the root directory", directoryExcludes: []string{"**/tests"},
+			absent: []string{"nested/tests", "nested/deep/tests", "empty/tests"}, directories: []string{"tests"}},
+		{name: "both filters", excludes: []string{"*.pyc", "**/*.pyc"}, directoryExcludes: []string{"tests", "**/tests"},
+			absent: []string{"root.pyc", "nested/cache.pyc", "tests", "nested/tests", "nested/deep/tests", "empty/tests"}},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			source := t.TempDir()
+			for _, name := range files {
+				writeTestFile(t, filepath.Join(source, filepath.FromSlash(name)), []byte(name))
+			}
+			if err := os.MkdirAll(filepath.Join(source, "empty/tests"), 0o755); err != nil {
+				t.Fatal(err)
+			}
+			transform := treeMap(LayoutMapping{Destination: "mapped"})
+			transform.Excludes, transform.DirectoryExcludes = test.excludes, test.directoryExcludes
+			layout := LayoutAssets{Inputs: []Reference{{Artifact: "tree"}}, Assets: []LayoutAsset{{Sources: []int{0}, Transform: transform}}}
+			catalogue := Catalogue{Version: Version, Artifacts: []Artifact{directoryArtifact("tree", source)}}
+			output, _ := writeExecution(t, layoutTreeRecipe("payload", 0, layout), catalogue)
+			jarOutput, _ := writeExecution(t, layoutJarRecipe(layout), catalogue)
+			_, entries := readArchive(t, filepath.Join(jarOutput, "lib/layout.jar"))
+			for _, name := range test.absent {
+				assertAbsent(t, filepath.Join(output, "payload/mapped", filepath.FromSlash(name)))
+			}
+			for _, name := range files {
+				absent := slices.ContainsFunc(test.absent, func(excluded string) bool {
+					return name == excluded || strings.HasPrefix(name, excluded+"/")
+				})
+				content, present := entries["mapped/"+name]
+				if absent {
+					if present {
+						t.Errorf("excluded jar entry %s", name)
+					}
+				} else {
+					assertContent(t, filepath.Join(output, "payload/mapped", filepath.FromSlash(name)), name)
+					if !present || content != name {
+						t.Errorf("jar entry %s = %q, present = %v", name, content, present)
+					}
+				}
+			}
+			for _, name := range test.directories {
+				info, err := os.Stat(filepath.Join(output, "payload/mapped", filepath.FromSlash(name)))
+				if err != nil || !info.IsDir() {
+					t.Fatalf("missing directory %s: %v", name, err)
+				}
+			}
+		})
+	}
+}
+
+func TestLayoutTreeMapExcludesBeforeFirstClaim(t *testing.T) {
+	root := t.TempDir()
+	first, second := filepath.Join(root, "first"), filepath.Join(root, "second")
+	writeTestFile(t, filepath.Join(first, "tests/keep.py"), []byte("excluded directory"))
+	writeTestFile(t, filepath.Join(first, "drop/shared.txt"), []byte("excluded file"))
+	writeTestFile(t, filepath.Join(second, "tests"), []byte("ordinary file"))
+	writeTestFile(t, filepath.Join(second, "keep/shared.txt"), []byte("first retained file"))
+	transform := treeMap(LayoutMapping{Pattern: "*/*.txt", StripComponents: 1}, LayoutMapping{})
+	transform.Excludes = []string{"drop/**"}
+	transform.DirectoryExcludes = []string{"tests"}
+	layout := LayoutAssets{Inputs: []Reference{{Artifact: "first"}, {Artifact: "second"}}, Assets: []LayoutAsset{
+		{Sources: []int{0, 1}, Transform: transform},
+		{Destination: "shared.txt", Transform: &LayoutTransform{Kind: "inline-text", Text: "later asset"}},
+	}}
+	catalogue := Catalogue{Version: Version, Artifacts: []Artifact{directoryArtifact("first", first), directoryArtifact("second", second)}}
+	output, _ := writeExecution(t, layoutTreeRecipe("payload", 0, layout), catalogue)
+	assertContent(t, filepath.Join(output, "payload/tests"), "ordinary file")
+	assertContent(t, filepath.Join(output, "payload/shared.txt"), "first retained file")
+	jarOutput, _ := writeExecution(t, layoutJarRecipe(layout), catalogue)
+	_, entries := readArchive(t, filepath.Join(jarOutput, "lib/layout.jar"))
+	if entries["tests"] != "ordinary file" || entries["shared.txt"] != "first retained file" {
+		t.Fatalf("jar entries differ: %v", entries)
+	}
+}
+
+func TestLayoutTreeMapExcludesPreserveModesAndLinks(t *testing.T) {
+	source := t.TempDir()
+	writeTestFile(t, filepath.Join(source, "keep/tool"), []byte("tool"))
+	if err := os.Chmod(filepath.Join(source, "keep/tool"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink("keep", filepath.Join(source, "tests")); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink("absent", filepath.Join(source, "drop.pyc")); err != nil {
+		t.Fatal(err)
+	}
+	transform := treeMap(LayoutMapping{})
+	transform.Excludes = []string{"*.pyc"}
+	transform.DirectoryExcludes = []string{"tests"}
+	layout := LayoutAssets{Inputs: []Reference{{Artifact: "tree"}}, Assets: []LayoutAsset{{Sources: []int{0}, Transform: transform}}}
+	output, _ := writeExecution(t, layoutTreeRecipe("payload", 0, layout), Catalogue{Version: Version, Artifacts: []Artifact{directoryArtifact("tree", source)}})
+	assertLink(t, filepath.Join(output, "payload/tests"), "keep")
+	assertMode(t, filepath.Join(output, "payload/keep/tool"), 0o755)
+	assertAbsent(t, filepath.Join(output, "payload/drop.pyc"))
+}
+
+func TestLayoutTreeMapExcludesValidation(t *testing.T) {
+	for _, directory := range []bool{false, true} {
+		for _, pattern := range []string{"[", "{a", "\\", "[z-a]"} {
+			transform := treeMap(LayoutMapping{})
+			if directory {
+				transform.DirectoryExcludes = []string{pattern}
+			} else {
+				transform.Excludes = []string{pattern}
+			}
+			layout := LayoutAssets{Inputs: []Reference{{Artifact: "tree"}}, Assets: []LayoutAsset{{Sources: []int{0}, Transform: transform}}}
+			for _, recipe := range []Recipe{layoutTreeRecipe("payload", 0, layout), layoutJarRecipe(layout)} {
+				_, err := Plan(recipe, Catalogue{Version: Version, Artifacts: []Artifact{directoryArtifact("tree", t.TempDir())}})
+				if err == nil || !strings.Contains(err.Error(), "invalid exclude") {
+					t.Fatalf("accepted invalid exclude %q (directory = %v) on an empty tree: %v", pattern, directory, err)
+				}
+			}
+		}
+		for _, kind := range []string{"archive-tree", "inline-text"} {
+			transform := &LayoutTransform{Kind: kind}
+			asset := LayoutAsset{Destination: "out", Transform: transform}
+			if kind == "archive-tree" {
+				asset.Sources = []int{0}
+			}
+			if err := validateLayoutAsset(asset, layoutTreeFormat, []string{"file"}); err != nil {
+				t.Fatal(err)
+			}
+			if directory {
+				transform.DirectoryExcludes = []string{"tests"}
+			} else {
+				transform.Excludes = []string{"*.pyc"}
+			}
+			if err := validateLayoutAsset(asset, layoutTreeFormat, []string{"file"}); err == nil || !strings.Contains(err.Error(), "excludes require tree-map") {
+				t.Fatalf("accepted excludes on %s (directory = %v): %v", kind, directory, err)
+			}
+		}
+	}
+}
+
 func TestLayoutPlanRejectsInvalidPayloads(t *testing.T) {
 	excluded := false
 	directory := directoryArtifact("tree", "tree")

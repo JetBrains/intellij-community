@@ -173,12 +173,16 @@ type LayoutAsset struct {
 // LayoutTransform kinds are archive-tree, inline-text, and tree-map.
 // An archive-tree extracts one .zip, .jar, .zip.zst, .tar.gz, or .tgz archive after StripComponents.
 // An inline-text writes Text as UTF-8. A tree-map copies the entries of its directories that a mapping selects.
+// Only tree-map accepts Excludes and DirectoryExcludes. Both use java.nio globs over the whole relative path before mapping.
+// Excludes omits files and symlinks. DirectoryExcludes prunes matching directories and their descendants.
 // Plan refuses the kind gzip-xml-archive, which stays a Kotlin preparation.
 type LayoutTransform struct {
-	Kind            string          `json:"kind"`
-	StripComponents int             `json:"stripComponents,omitempty"`
-	Text            string          `json:"text,omitempty"`
-	Mappings        []LayoutMapping `json:"mappings,omitempty"`
+	Kind              string          `json:"kind"`
+	StripComponents   int             `json:"stripComponents,omitempty"`
+	Text              string          `json:"text,omitempty"`
+	Mappings          []LayoutMapping `json:"mappings,omitempty"`
+	Excludes          []string        `json:"excludes,omitempty"`
+	DirectoryExcludes []string        `json:"directoryExcludes,omitempty"`
 }
 
 // LayoutMapping selects entries by a java.nio glob over the whole relative path. An empty Pattern is "**".

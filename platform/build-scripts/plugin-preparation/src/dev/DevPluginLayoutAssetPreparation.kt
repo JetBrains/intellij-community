@@ -16,6 +16,8 @@ import java.util.zip.GZIPOutputStream
 /** A semantic source that the dev-plugin generator resolves to declared Bazel inputs. */
 @ApiStatus.Internal
 sealed interface DevPluginLayoutAssetSource {
+  data class ModuleDirectory(@JvmField val moduleName: String, @JvmField val path: String) : DevPluginLayoutAssetSource
+
   data class BazelTarget(
     @JvmField val label: String,
     @JvmField val kind: String,
@@ -104,6 +106,8 @@ data class DevPluginLayoutAssetTransform(
   @EncodeDefault(EncodeDefault.Mode.NEVER) @JvmField val stripComponents: Int = 0,
   @EncodeDefault(EncodeDefault.Mode.NEVER) @JvmField val text: String = "",
   @EncodeDefault(EncodeDefault.Mode.NEVER) @JvmField val mappings: List<DevPluginLayoutAssetMapping> = emptyList(),
+  @EncodeDefault(EncodeDefault.Mode.NEVER) @JvmField val excludes: List<String> = emptyList(),
+  @EncodeDefault(EncodeDefault.Mode.NEVER) @JvmField val directoryExcludes: List<String> = emptyList(),
 ) {
   companion object {
     fun archiveTree(
@@ -121,8 +125,12 @@ data class DevPluginLayoutAssetTransform(
       return DevPluginLayoutAssetTransform(kind = "inline-text", text = text)
     }
 
-    fun treeMap(mappings: List<DevPluginLayoutAssetMapping>): DevPluginLayoutAssetTransform {
-      return DevPluginLayoutAssetTransform(kind = "tree-map", mappings = mappings)
+    fun treeMap(
+      mappings: List<DevPluginLayoutAssetMapping>,
+      excludes: List<String> = emptyList(),
+      directoryExcludes: List<String> = emptyList(),
+    ): DevPluginLayoutAssetTransform {
+      return DevPluginLayoutAssetTransform(kind = "tree-map", mappings = mappings, excludes = excludes, directoryExcludes = directoryExcludes)
     }
   }
 }
@@ -174,6 +182,13 @@ internal fun validateDevPluginLayoutAssetPreparation(
     }
     require(preparation.format != "file" || transform.kind == "inline-text") { "A file layout asset allows a plain copy or inline text only" }
     require(transform.stripComponents >= 0) { "A layout asset strip count must not be negative" }
+    require(transform.kind == "tree-map" || transform.excludes.isEmpty() && transform.directoryExcludes.isEmpty()) {
+      "Only a tree-map transform accepts exclusions"
+    }
+    for (pattern in transform.excludes + transform.directoryExcludes) {
+      require(pattern.isNotEmpty()) { "A layout asset exclusion requires a pattern" }
+      FileSystems.getDefault().getPathMatcher("glob:$pattern")
+    }
     for (mapping in transform.mappings) {
       require(mapping.pattern.isNotEmpty() && mapping.stripComponents >= 0) { "A layout asset mapping requires a pattern and a valid strip count" }
       if (mapping.destination.isNotEmpty()) validatePreparationPath(mapping.destination)

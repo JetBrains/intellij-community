@@ -389,6 +389,17 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
       layout.resourceGenerators += DeclaredPluginLayoutResourceGenerator(layoutAssetSpec, generator)
     }
 
+    /** Copies a module resource tree through the same declaration in production and development. */
+    fun withResourceTree(
+      moduleName: String,
+      resourcePath: String,
+      relativeOutputPath: String,
+      excludes: List<String> = emptyList(),
+      directoryExcludes: List<String> = emptyList(),
+    ) {
+      layout.resourceGenerators += ModuleResourceTree(moduleName, resourcePath, relativeOutputPath, excludes, directoryExcludes)
+    }
+
     /**
      * Unpacks the single jar of the project library [libraryName] into [relativeOutputPath] under the plugin directory.
      * The dev-distribution generator plans this declaration from the library name.

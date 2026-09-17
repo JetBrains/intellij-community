@@ -343,6 +343,7 @@ type layoutTreeEntry struct {
 
 // walkLayoutTree visits a directory in pre-order and raw directory order, the order of Kotlin's Files.walk.
 // It reads every directory through (*os.File).ReadDir, which does not sort. It does not follow links.
+// A visitor can return fs.SkipDir for a directory to skip its descendants.
 func walkLayoutTree(root string, visit func(layoutTreeEntry) error) error {
 	var walk func(directory, prefix string) error
 	walk = func(directory, prefix string) error {
@@ -362,6 +363,9 @@ func walkLayoutTree(root string, visit func(layoutTreeEntry) error) error {
 			}
 			item := layoutTreeEntry{relative: prefix + entry.Name(), full: filepath.Join(directory, entry.Name()), info: info}
 			if err := visit(item); err != nil {
+				if err == fs.SkipDir && info.IsDir() {
+					continue
+				}
 				return err
 			}
 			if info.IsDir() {
@@ -375,8 +379,28 @@ func walkLayoutTree(root string, visit func(layoutTreeEntry) error) error {
 	return walk(root, "")
 }
 
+func compileLayoutExcludes(patterns []string) ([]javaglob.Matcher, error) {
+	matchers := make([]javaglob.Matcher, 0, len(patterns))
+	for _, pattern := range patterns {
+		matcher, err := javaglob.Compile(pattern)
+		if err != nil {
+			return nil, fmt.Errorf("invalid exclude: %w", err)
+		}
+		matchers = append(matchers, matcher)
+	}
+	return matchers, nil
+}
+
 // mapTrees copies the entries of every source directory that a mapping selects. The first mapping per entry wins.
 func (executor *layoutExecutor) mapTrees(inputs []layoutInput, asset LayoutAsset, writer layoutWriter) error {
+	excludes, err := compileLayoutExcludes(asset.Transform.Excludes)
+	if err != nil {
+		return err
+	}
+	directoryExcludes, err := compileLayoutExcludes(asset.Transform.DirectoryExcludes)
+	if err != nil {
+		return err
+	}
 	mappings := asset.Transform.Mappings
 	matchers := make([]javaglob.Matcher, 0, len(mappings))
 	for _, mapping := range mappings {
@@ -392,6 +416,13 @@ func (executor *layoutExecutor) mapTrees(inputs []layoutInput, asset LayoutAsset
 		}
 		transportRoot := ""
 		err := walkLayoutTree(input.path, func(entry layoutTreeEntry) error {
+			if entry.info.IsDir() {
+				if slices.ContainsFunc(directoryExcludes, func(matcher javaglob.Matcher) bool { return matcher.Match(entry.relative) }) {
+					return fs.SkipDir
+				}
+			} else if slices.ContainsFunc(excludes, func(matcher javaglob.Matcher) bool { return matcher.Match(entry.relative) }) {
+				return nil
+			}
 			index := slices.IndexFunc(matchers, func(matcher javaglob.Matcher) bool { return matcher.Match(entry.relative) })
 			if index < 0 {
 				return nil

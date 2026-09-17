@@ -730,6 +730,14 @@ func validateLayoutAsset(asset LayoutAsset, format layoutFormat, kinds []string)
 	if transform.StripComponents < 0 {
 		return fmt.Errorf("negative strip count")
 	}
+	if kind != "tree-map" && (len(transform.Excludes) != 0 || len(transform.DirectoryExcludes) != 0) {
+		return fmt.Errorf("layout excludes require tree-map")
+	}
+	for _, patterns := range [][]string{transform.Excludes, transform.DirectoryExcludes} {
+		if _, err := compileLayoutExcludes(patterns); err != nil {
+			return err
+		}
+	}
 	for _, mapping := range transform.Mappings {
 		if mapping.StripComponents < 0 {
 			return fmt.Errorf("negative mapping strip count")

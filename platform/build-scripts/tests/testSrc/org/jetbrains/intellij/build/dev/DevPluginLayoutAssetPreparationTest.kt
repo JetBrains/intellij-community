@@ -154,7 +154,11 @@ internal class DevPluginLayoutAssetPreparationTest {
     val entryAssets = listOf(DevPluginLayoutAsset(
       destination = "",
       sources = listOf(0),
-      transform = DevPluginLayoutAssetTransform.treeMap(listOf(DevPluginLayoutAssetMapping(pattern = "*.properties", destination = "messages"))),
+      transform = DevPluginLayoutAssetTransform.treeMap(
+        mappings = listOf(DevPluginLayoutAssetMapping(pattern = "*.properties", destination = "messages")),
+        excludes = listOf("private.properties"),
+        directoryExcludes = listOf("tests", "**/tests"),
+      ),
     ))
     val operations = listOf(
       DevPluginPreparationOperation(
@@ -274,6 +278,44 @@ internal class DevPluginLayoutAssetPreparationTest {
     assertThat(devPluginPreparationKind(listOf(moduleFilter, gzip))).isEqualTo("plain")
     assertThat(devPluginPreparationKind(listOf(inlineFile))).isEqualTo("plain")
     assertThat(devPluginPreparationKind(listOf(moduleFilter, presigned))).isEqualTo("callback")
+  }
+
+  @Test
+  fun `tree exclusions change the preparation signature`() {
+    val transform = DevPluginLayoutAssetTransform.treeMap(listOf(DevPluginLayoutAssetMapping()))
+    fun signature(value: DevPluginLayoutAssetTransform): String {
+      return devPluginPreparationOperationSignature(DevPluginPreparationOperation(
+        id = "layout-assets:tree", kind = "layout-assets", inputs = listOf(DevPluginReference("tree")), output = "tree:output", manifest = "keep",
+        layoutAssets = DevPluginLayoutAssetPreparation(
+          format = "tree", root = "helpers",
+          assets = listOf(DevPluginLayoutAsset(destination = "", sources = listOf(0), transform = value)),
+        ),
+      ), version = 2)
+    }
+
+    assertThat(signature(transform.copy(excludes = listOf("setup.py")))).isNotEqualTo(signature(transform))
+    assertThat(signature(transform.copy(directoryExcludes = listOf("tests")))).isNotEqualTo(signature(transform))
+  }
+
+  @Test
+  fun `only tree mappings accept valid exclusion patterns`() {
+    val tree = DevPluginLayoutAssetTransform.treeMap(listOf(DevPluginLayoutAssetMapping()))
+    val transforms = listOf(
+      tree.copy(excludes = listOf("")),
+      tree.copy(excludes = listOf("[")),
+      tree.copy(directoryExcludes = listOf("")),
+      tree.copy(directoryExcludes = listOf("[")),
+      DevPluginLayoutAssetTransform.archiveTree().copy(excludes = listOf("setup.py")),
+      DevPluginLayoutAssetTransform.archiveTree().copy(directoryExcludes = listOf("tests")),
+    )
+    for (transform in transforms) {
+      assertThatThrownBy {
+        validateLayoutAssets(DevPluginLayoutAssetPreparation(
+          format = "tree", root = "helpers",
+          assets = listOf(DevPluginLayoutAsset(destination = "", sources = listOf(0), transform = transform)),
+        ), listOf(DevPluginReference("tree")))
+      }.isInstanceOf(IllegalArgumentException::class.java)
+    }
   }
 
   private fun gzipXmlArchivePreparation(sources: List<Int>): DevPluginLayoutAssetPreparation {

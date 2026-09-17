@@ -458,6 +458,12 @@ func kotlinLayoutAssetsOperation(t *testing.T, id, output, format, root string, 
 				}
 				text += `,"mappings":[` + strings.Join(mappings, ",") + `]`
 			}
+			if len(transform.Excludes) != 0 {
+				text += `,"excludes":` + kotlinJSON(t, transform.Excludes)
+			}
+			if len(transform.DirectoryExcludes) != 0 {
+				text += `,"directoryExcludes":` + kotlinJSON(t, transform.DirectoryExcludes)
+			}
 			text += "}"
 		}
 		if asset.Mode != 0 {

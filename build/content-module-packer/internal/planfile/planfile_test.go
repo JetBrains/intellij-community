@@ -260,7 +260,8 @@ func TestDeriveCompilesEveryOperationKind(t *testing.T) {
 	tree := `{"id": "tree", "kind": "layout-assets", "inputs": [{"artifact": "archive"}], "output": "tree:output", "manifest": "keep",
 		"layoutAssets": {"format": "tree", "root": "payload", "assets": [{"destination": "", "sources": [0], "transform": {"kind": "archive-tree", "stripComponents": 1}}]}}`
 	entries := `{"id": "entries", "kind": "layout-assets", "inputs": [{"artifact": "properties"}], "output": "entries:output", "manifest": "keep",
-		"layoutAssets": {"format": "entries", "assets": [{"destination": "", "sources": [0], "transform": {"kind": "tree-map", "mappings": [{"pattern": "*.properties", "destination": "messages"}, {}]}}]}}`
+		"layoutAssets": {"format": "entries", "assets": [{"destination": "", "sources": [0], "transform": {"kind": "tree-map", "mappings": [{"pattern": "*.properties", "destination": "messages"}, {}],
+			"excludes": ["*.pyc", "**/*.pyc"], "directoryExcludes": ["tests", "**/tests"]}}]}}`
 	derivation := mustDerive(t, plan(2,
 		`{"destination": "lib/main.jar", "recipe": {"sources": [{"input": "filtered", "kind": "prepared", "filter": "prepared"},
 			{"input": "descriptor", "kind": "file", "filter": "none", "entry": "META-INF/plugin.xml", "options": ["patch"]}], "writer": {"manifest": "drop", "directoryEntries": true}}},
@@ -280,7 +281,8 @@ func TestDeriveCompilesEveryOperationKind(t *testing.T) {
 			{Kind: "entries", Manifest: "drop", Entries: []pluginpack.PreparedEntry{{Kind: "patch", Name: "META-INF/plugin.xml", Input: &pluginpack.Reference{Artifact: "descriptor"}}}}}},
 		{Kind: "jar", Destination: "lib/l10n.jar", Mode: DefaultMode, Options: &pluginpack.JarOptions{Directories: "none"}, Sources: []pluginpack.Source{
 			{Kind: "layout", Manifest: "keep", Layout: &pluginpack.LayoutAssets{Inputs: []pluginpack.Reference{{Artifact: "properties"}}, Assets: []pluginpack.LayoutAsset{{Sources: []int{0},
-				Transform: &pluginpack.LayoutTransform{Kind: "tree-map", Mappings: []pluginpack.LayoutMapping{{Pattern: "*.properties", Destination: "messages"}, {}}}}}}}}},
+				Transform: &pluginpack.LayoutTransform{Kind: "tree-map", Mappings: []pluginpack.LayoutMapping{{Pattern: "*.properties", Destination: "messages"}, {}},
+					Excludes: []string{"*.pyc", "**/*.pyc"}, DirectoryExcludes: []string{"tests", "**/tests"}}}}}}}},
 		{Kind: "layout-tree", Destination: "payload", Mode: DefaultMode, Layout: &pluginpack.LayoutAssets{Inputs: []pluginpack.Reference{{Artifact: "archive"}},
 			Assets: []pluginpack.LayoutAsset{{Sources: []int{0}, Transform: &pluginpack.LayoutTransform{Kind: "archive-tree", StripComponents: 1}}}}},
 		{Kind: "copy-tree", Destination: "lib/standardDsls", Input: &pluginpack.Reference{Artifact: "dsls"}},
