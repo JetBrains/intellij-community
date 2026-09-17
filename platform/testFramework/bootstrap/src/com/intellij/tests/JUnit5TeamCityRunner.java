@@ -40,6 +40,7 @@ import org.junit.vintage.engine.VintageTestEngine;
 import org.opentest4j.AssertionFailedError;
 import org.opentest4j.MultipleFailuresError;
 
+import java.io.Console;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.PrintWriter;
@@ -338,7 +339,8 @@ public final class JUnit5TeamCityRunner {
     }
 
     private static String colored(String text, String ansiColor) {
-      return ansiColor != null ? ansiColor + text + ANSI_RESET : text;
+      Console console = System.console();
+      return ansiColor != null && console != null && console.isTerminal() ? ansiColor + text + ANSI_RESET : text;
     }
 
     private static String displayName(TestIdentifier id) {
@@ -378,7 +380,7 @@ public final class JUnit5TeamCityRunner {
     public void executionStarted(TestIdentifier testIdentifier) {
       if (!testIdentifier.isTest()) return;
       mySomethingExecuted = true;
-      System.out.println(displayName(testIdentifier) + " :: " + colored("STARTED", null));
+      System.out.println(displayName(testIdentifier) + " :: " + colored("[STARTED]", null));
     }
 
     @Override
@@ -386,7 +388,7 @@ public final class JUnit5TeamCityRunner {
       mySomethingExecuted = true;
       myTotal++;
       mySkipped++;
-      System.out.println(displayName(testIdentifier) + " :: " + colored("SKIPPED", ANSI_YELLOW));
+      System.out.println(displayName(testIdentifier) + " :: " + colored("[SKIPPED]", ANSI_YELLOW));
       if (reason != null && !reason.isEmpty()) {
         System.out.println("\tReason: " + escapeNewlines(reason));
       }
@@ -406,19 +408,19 @@ public final class JUnit5TeamCityRunner {
       if (testIdentifier.isTest()) {
         switch (status) {
           case SUCCESSFUL -> {
-            printFinished(testIdentifier, colored("SUCCESSFUL", ANSI_GREEN), null);
+            printFinished(testIdentifier, colored("[SUCCESSFUL]", ANSI_GREEN), null);
             myTotal++;
             myPassed++;
           }
           case FAILED -> {
             String path = displayName(testIdentifier);
-            printFinished(testIdentifier, colored("FAILED", ANSI_RED), throwable);
+            printFinished(testIdentifier, colored("[FAILED]", ANSI_RED), throwable);
             myTotal++;
             myFailed++;
             myFailedPaths.add(path);
           }
           case ABORTED -> {
-            printFinished(testIdentifier, colored("ABORTED", ANSI_YELLOW), throwable);
+            printFinished(testIdentifier, colored("[ABORTED]", ANSI_YELLOW), throwable);
             myTotal++;
             mySkipped++;
           }
@@ -428,7 +430,7 @@ public final class JUnit5TeamCityRunner {
       if (throwable == null) return;
       if (status == TestExecutionResult.Status.FAILED) {
         String syntheticPath = displayName(testIdentifier) + " > <classInitializationError>";
-        System.out.println(syntheticPath + " :: " + colored("FAILED", ANSI_RED));
+        System.out.println(syntheticPath + " :: " + colored("[FAILED]", ANSI_RED));
         printStacktrace(throwable);
         mySomethingExecuted = true;
         myTotal++;
@@ -438,7 +440,7 @@ public final class JUnit5TeamCityRunner {
       else if (status == TestExecutionResult.Status.ABORTED) {
         String syntheticPath = displayName(testIdentifier) + " > <classInitializationSkipped>";
         String message = throwable.getMessage();
-        System.out.println(syntheticPath + " :: " + colored("SKIPPED", ANSI_YELLOW));
+        System.out.println(syntheticPath + " :: " + colored("[SKIPPED]", ANSI_YELLOW));
         if (message != null && !message.isEmpty()) {
           System.out.println("\tReason: " + escapeNewlines(message));
         }
