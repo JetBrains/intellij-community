@@ -15,8 +15,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiArrayType
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiTypes
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.uast.UastVisitorAdapter
 import org.jetbrains.annotations.ApiStatus
@@ -34,7 +36,7 @@ import org.jetbrains.uast.getQualifiedName
 import org.jetbrains.uast.getUastParentOfType
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
-private val OPTIMIZED_METHOD_NAMES = setOf("deleteRecursively", "readAllBytes", "readString")
+private val OPTIMIZED_METHOD_NAMES = setOf("deleteRecursively", "readAllBytes", "readString", "write")
 
 @ApiStatus.Internal
 @VisibleForTesting
@@ -111,6 +113,12 @@ class UseOptimizedEelFunctions : LocalInspectionTool() {
         ReplaceWithEelFunction(holder.project, "com.intellij.platform.eel.fs.EelFiles", "readString"),
       )
     }
+    if (fqn == "java.nio.file.Files.write" && isByteArrayWrite(node)) {
+      holder.registerProblem(
+        methodPsi, DevKitBundle.message("inspection.message.works.ineffectively.with.remote.eel"), highlightType,
+        ReplaceWithEelFunction(holder.project, "com.intellij.platform.eel.fs.EelFiles", "write"),
+      )
+    }
     if (
       (
         fqn == "com.intellij.openapi.util.io.NioFiles.deleteRecursively" ||
@@ -123,6 +131,11 @@ class UseOptimizedEelFunctions : LocalInspectionTool() {
         ReplaceWithEelFunction(holder.project, "com.intellij.platform.eel.fs.EelFileUtils", "deleteRecursively"),
       )
     }
+  }
+
+  private fun isByteArrayWrite(node: UCallExpression): Boolean {
+    val secondParameterType = node.resolve()?.parameterList?.parameters?.getOrNull(1)?.type as? PsiArrayType ?: return false
+    return secondParameterType.componentType == PsiTypes.byteType()
   }
 
   private class ReplaceWithEelFunction(

@@ -4,6 +4,7 @@ package org.jetbrains.idea.devkit.k2.inspections.eel
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.OrderRootType
@@ -566,6 +567,110 @@ class UseOptimizedEelFunctionsTest {
     }
 
     @Test
+    fun `Files write byte array Java`() {
+      @Language("Java")
+      val source = """
+        import java.io.IOException;
+        import java.nio.file.Files;
+        import java.nio.file.Path;
+        import java.nio.file.StandardOpenOption;
+
+        class Example {
+          void example(byte[] content) throws IOException {
+            Files.<warning descr="Can require multiple round trips for one file operation">write</warning>(Path.of("hello.txt"), content);
+            Files.<warning descr="Can require multiple round trips for one file operation">write</warning>(Path.of("hello.txt"), content, StandardOpenOption.APPEND);
+          }
+        }
+      """.trimIndent()
+
+      @Language("Java")
+      val expectedResult = """
+        import com.intellij.platform.eel.fs.EelFiles;
+
+        import java.io.IOException;
+        import java.nio.file.Files;
+        import java.nio.file.Path;
+        import java.nio.file.StandardOpenOption;
+
+        class Example {
+          void example(byte[] content) throws IOException {
+            EelFiles.write(Path.of("hello.txt"), content);
+            EelFiles.write(Path.of("hello.txt"), content, StandardOpenOption.APPEND);
+          }
+        }
+      """.trimIndent()
+
+      doTest("Example.java", source, expectedResult)
+    }
+
+    @Test
+    fun `Files write byte array Kotlin`() {
+      @Language("Kt")
+      val source = """
+        import java.nio.file.Files
+        import java.nio.file.Path
+        import java.nio.file.StandardOpenOption
+
+        fun example(content: ByteArray) {
+          Files.<warning descr="Can require multiple round trips for one file operation">write</warning>(Path.of("hello.txt"), content, StandardOpenOption.CREATE)
+        }
+      """.trimIndent()
+
+      @Language("Kt")
+      val expectedResult = """
+        import com.intellij.platform.eel.fs.EelFiles
+        import java.nio.file.Files
+        import java.nio.file.Path
+        import java.nio.file.StandardOpenOption
+
+        fun example(content: ByteArray) {
+            EelFiles.write(Path.of("hello.txt"), content, StandardOpenOption.CREATE)
+        }
+      """.trimIndent()
+
+      doTest("Example.kt", source, expectedResult)
+    }
+
+    @Test
+    fun `Files write unsupported overloads`() {
+      @Language("Java")
+      val source = """
+        import java.io.IOException;
+        import java.nio.charset.StandardCharsets;
+        import java.nio.file.Files;
+        import java.nio.file.Path;
+        import java.util.List;
+
+        class Example {
+          void example() throws IOException {
+            Files.write(Path.of("hello.txt"), List.of("hello"));
+            Files.write(Path.of("hello.txt"), List.of("hello"), StandardCharsets.UTF_8);
+            Files.writeString(Path.of("hello.txt"), "hello");
+          }
+        }
+      """.trimIndent()
+
+      doHighlightingTest("Example.java", source)
+    }
+
+    @Test
+    fun `Files write in external plugin project`() {
+      IntelliJProjectUtil.markAsIntelliJPlatformProject(myFixture.project, false)
+
+      @Language("Kt")
+      val source = """
+        import java.nio.file.Files
+        import java.nio.file.Path
+
+        fun example(content: ByteArray) {
+          Files.<info descr="Can require multiple round trips for one file operation">write</info>(Path.of("hello.txt"), content)
+        }
+      """.trimIndent()
+
+      doHighlightingTest("Example.kt", source)
+    }
+
+    @Test
     fun deleteRecursively() {
       @Suppress("unused")
       fun someFnThatIsNeverCalled() {
@@ -628,7 +733,17 @@ class UseOptimizedEelFunctionsTest {
       .getFixture()
     myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, LightTempDirTestFixtureImpl(true))
     myFixture.setUp()
+    IntelliJProjectUtil.markAsIntelliJPlatformProject(myFixture.project, true)
     myFixture.enableInspections(UseOptimizedEelFunctions::class.java)
+  }
+
+  private fun doHighlightingTest(fileName: String, source: String) = timeoutRunBlocking {
+    val exampleFile = myFixture.configureByText(fileName, source)
+    withContext(Dispatchers.EDT) {
+      myFixture.openFileInEditor(exampleFile.virtualFile)
+    }
+
+    myFixture.testHighlighting()
   }
 
   private fun doTest(fileName: String, source: String, expectedResult: String) = timeoutRunBlocking {
