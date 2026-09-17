@@ -1,8 +1,6 @@
 package com.intellij.python.processOutput
 
 import com.intellij.python.junit5Tests.framework.applicationScope
-import com.intellij.python.processOutput.common.ExecErrorDto
-import com.intellij.python.processOutput.common.ExecErrorReasonDto
 import com.intellij.python.processOutput.common.ExecutableDto
 import com.intellij.python.processOutput.common.FrontendTopicListener
 import com.intellij.python.processOutput.common.LoggedProcessDto
@@ -132,89 +130,6 @@ private class ProcessOutputControllerImplTest {
       process.lastLine?.let { it.text == "out${Limits.MAX_LINES * 3 - 1}" && it.kind == OutputKindDto.OUT } == true
     }
     assertEquals(Limits.MAX_LINES, process.lines.value.size)
-  }
-
-  @Test
-  fun `tag section and exit info copy buttons work correctly`() = runOutputControllerImplTest {
-    val process = addProcessAndAwait(0)
-
-    repeat(6) {
-      process.addOutLine("out$it")
-    }
-
-    repeat(4) {
-      process.addErrLine("err${it + 6}")
-    }
-
-    process.exit(0)
-
-    waitUntil {
-      when (val status = process.status.value) {
-        is ProcessStatus.Done -> status.exitCode == 0
-        ProcessStatus.Running -> false
-      }
-    }
-
-    // copy stdout section 0..5
-    controller.copyOutputTagAtIndexToClipboard(process, 0)
-
-    assertEquals(
-      """
-        out0
-        out1
-        out2
-        out3
-        out4
-        out5
-        
-      """.trimIndent(),
-      clipboardStrings[0]
-    )
-
-    // copy stderr section 6..9
-    controller.copyOutputTagAtIndexToClipboard(process, 6)
-
-    Assertions.assertEquals(
-      """
-        err6
-        err7
-        err8
-        err9
-        
-      """.trimIndent(),
-      clipboardStrings[1],
-    )
-
-    // exit info without additional message
-    controller.copyOutputExitInfoToClipboard(process)
-
-    Assertions.assertEquals(
-      """
-        0
-        
-      """.trimIndent(),
-      clipboardStrings[2],
-    )
-
-    // exit info with additional message
-    process.setAdditionalInfo("some test message")
-
-    waitUntil {
-      when (val status = process.status.value) {
-        is ProcessStatus.Done -> status.additionalMessageToUser != null
-        ProcessStatus.Running -> false
-      }
-    }
-
-    controller.copyOutputExitInfoToClipboard(process)
-
-    Assertions.assertEquals(
-      """
-        0: some test message
-        
-      """.trimIndent(),
-      clipboardStrings[3],
-    )
   }
 
   @Test
@@ -487,20 +402,6 @@ private class ProcessOutputControllerImplTest {
                 kind = OutputKindDto.OUT,
                 text = text
               )
-          )
-        )
-      }
-
-      suspend fun LoggedProcess.setAdditionalInfo(text: String) {
-        emitFeEvent(
-          ProcessOutputEventDto.ExecError(
-            ExecErrorDto(
-              message = "",
-              command = "",
-              reason = ExecErrorReasonDto.Timeout,
-              loggedProcessId = data.id,
-              additionalMessageToUser = text
-            )
           )
         )
       }

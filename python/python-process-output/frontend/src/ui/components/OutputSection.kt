@@ -25,6 +25,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Dimension
@@ -36,12 +37,16 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 
 internal class OutputSection(private val uiContext: ProcessOutputUiContext) {
-  private val statusLabel: JBLabel = JBLabel()
+  private val statusPrefixLabel: JBLabel = JBLabel()
+  private val statusValueLabel: JBLabel = JBLabel()
   private val spinner: AsyncProcessIcon = AsyncProcessIcon(uiContext.coroutineScope)
-  private val timeLabel: JBLabel = JBLabel()
-  private val pidLabel: JBLabel = JBLabel()
+  private val timePrefixLabel: JBLabel = JBLabel()
+  private val timeValueLabel: JBLabel = JBLabel()
+  private val pidPrefixLabel: JBLabel = JBLabel()
+  private val pidValueLabel: JBLabel = JBLabel()
 
   private val spinnerHolder: JComponent = Box.createHorizontalBox()
+  private val statusSegment: JComponent = Box.createHorizontalBox()
   private val timeSegment: JComponent = Box.createHorizontalBox()
   private val pidSegment: JComponent = Box.createHorizontalBox()
 
@@ -49,19 +54,33 @@ internal class OutputSection(private val uiContext: ProcessOutputUiContext) {
     field = JPanel(BorderLayout())
 
   init {
-    statusLabel.minimumSize = Dimension(0, statusLabel.minimumSize.height)
+    statusPrefixLabel.minimumSize = Dimension(0, statusPrefixLabel.minimumSize.height)
     spinner.suspend()
+
+    statusPrefixLabel.foreground = Styling.MUTED_LABEL_COLOR
+
+    statusSegment.add(statusPrefixLabel)
+    statusSegment.add(Box.createHorizontalStrut(Styling.PREFIX_VALUE_GAP))
+    statusSegment.add(statusValueLabel)
 
     spinnerHolder.add(Box.createHorizontalStrut(Styling.STATUS_SPINNER_GAP))
     spinnerHolder.add(spinner)
     spinnerHolder.isVisible = false
 
+    timePrefixLabel.foreground = Styling.MUTED_LABEL_COLOR
+
     timeSegment.add(Box.createHorizontalStrut(Styling.TITLE_SEGMENT_GAP))
-    timeSegment.add(timeLabel)
+    timeSegment.add(timePrefixLabel)
+    timeSegment.add(Box.createHorizontalStrut(Styling.PREFIX_VALUE_GAP))
+    timeSegment.add(timeValueLabel)
     timeSegment.isVisible = false
 
+    pidPrefixLabel.foreground = Styling.MUTED_LABEL_COLOR
+
     pidSegment.add(Box.createHorizontalStrut(Styling.TITLE_SEGMENT_GAP))
-    pidSegment.add(pidLabel)
+    pidSegment.add(pidPrefixLabel)
+    pidSegment.add(Box.createHorizontalStrut(Styling.PREFIX_VALUE_GAP))
+    pidSegment.add(pidValueLabel)
     pidSegment.isVisible = false
 
     uiContext.coroutineScope.launch(Dispatchers.EDT) {
@@ -89,10 +108,10 @@ internal class OutputSection(private val uiContext: ProcessOutputUiContext) {
     component.add(Console(uiContext).component, BorderLayout.CENTER)
   }
 
-  @Suppress("DialogTitleCapitalization")
   private fun renderTitle(process: LoggedProcess?, status: ProcessStatus?) {
     if (process == null || status == null) {
-      statusLabel.text = ""
+      statusPrefixLabel.text = ""
+      statusValueLabel.text = ""
       spinner.suspend()
       spinnerHolder.isVisible = false
       timeSegment.isVisible = false
@@ -103,7 +122,11 @@ internal class OutputSection(private val uiContext: ProcessOutputUiContext) {
 
     when (status) {
       ProcessStatus.Running -> {
-        statusLabel.text = message("process.output.output.header.status.running")
+        setPrefixAndValue(
+          statusPrefixLabel,
+          statusValueLabel,
+          message("process.output.output.header.status.running"),
+        )
         spinnerHolder.isVisible = true
         spinner.resume()
         timeSegment.isVisible = false
@@ -120,12 +143,21 @@ internal class OutputSection(private val uiContext: ProcessOutputUiContext) {
         val colored = "<font color='#${ColorUtil.toHex(color)}'>$text</font>"
         val elapsed = (status.exitedAt - process.data.startedAt).formatCompact()
 
-        statusLabel.text = "<html>${message("process.output.output.header.status.done", colored)}</html>"
+        setPrefixAndValue(
+          statusPrefixLabel,
+          statusValueLabel,
+          message("process.output.output.header.status.done", colored),
+          valueContainsHtml = true,
+        )
 
         spinner.suspend()
         spinnerHolder.isVisible = false
 
-        timeLabel.text = message("process.output.output.header.time", elapsed)
+        setPrefixAndValue(
+          timePrefixLabel,
+          timeValueLabel,
+          message("process.output.output.header.time", elapsed),
+        )
         timeSegment.isVisible = true
       }
     }
@@ -133,12 +165,38 @@ internal class OutputSection(private val uiContext: ProcessOutputUiContext) {
     val pid = process.data.pid
 
     if (pid != null) {
-      pidLabel.text = message("process.output.output.header.pid", pid.toString())
+      setPrefixAndValue(
+        pidPrefixLabel,
+        pidValueLabel,
+        message("process.output.output.header.pid", pid.toString()),
+      )
       pidSegment.isVisible = true
     }
     else {
       pidSegment.isVisible = false
     }
+  }
+
+  @Suppress("HardCodedStringLiteral")
+  private fun setPrefixAndValue(
+    prefixLabel: JBLabel,
+    valueLabel: JBLabel,
+    @Nls message: String,
+    valueContainsHtml: Boolean = false,
+  ) {
+    val colonIndex = message.indexOf(':')
+
+    if (colonIndex < 0) {
+      prefixLabel.text = message
+      valueLabel.text = ""
+      return
+    }
+
+    val prefix = message.substring(0, colonIndex + 1)
+    val value = message.substring(colonIndex + 1).trimStart()
+
+    prefixLabel.text = prefix
+    valueLabel.text = if (valueContainsHtml) "<html>$value</html>" else value
   }
 
   private fun toolbar(): JPanel {
@@ -149,7 +207,7 @@ internal class OutputSection(private val uiContext: ProcessOutputUiContext) {
     val row = JPanel(FlowLayout(FlowLayout.LEFT, 0, 0))
 
     row.isOpaque = false
-    row.add(statusLabel)
+    row.add(statusSegment)
     row.add(spinnerHolder)
     row.add(timeSegment)
     row.add(pidSegment)
@@ -231,7 +289,9 @@ internal class OutputSection(private val uiContext: ProcessOutputUiContext) {
     const val TITLE_HORIZONTAL_PADDING = 8
     const val TITLE_SEGMENT_GAP = 16
     const val STATUS_SPINNER_GAP = 4
+    const val PREFIX_VALUE_GAP = 4
     val ERROR_FOREGROUND: Color = UIUtil.getErrorForeground()
     val SUCCESS_FOREGROUND: Color = UIUtil.getLabelSuccessForeground()
+    val MUTED_LABEL_COLOR: Color = ColorUtil.withAlpha(JBUI.CurrentTheme.Label.foreground(), 0.75)
   }
 }

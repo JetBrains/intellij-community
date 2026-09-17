@@ -59,7 +59,6 @@ internal class Console(private val uiContext: ProcessOutputUiContext) {
     name = Naming.OUTPUT_SECTION_NAME,
     formatter = OutputTag.formatter,
     onChevronClicked = { uiContext.controller.toggleProcessOutput() },
-    onCopy = this::onCopy,
     onRebuild = this::onOutputPanelRebuild,
   )
 
@@ -138,6 +137,7 @@ internal class Console(private val uiContext: ProcessOutputUiContext) {
           val wrap = OutputFilter.Item.WRAP_CONTENT in active
 
           outputSection.setShowTags(showTags)
+          commandSection.setWrapContent(wrap)
           infoSection.setWrapContent(wrap)
           outputSection.setWrapContent(wrap)
 
@@ -152,17 +152,6 @@ internal class Console(private val uiContext: ProcessOutputUiContext) {
 
           contentPanel.revalidate()
         }
-    }
-  }
-
-  private fun onCopy(line: ConsoleTextLine<OutputTag>, index: Int) {
-    val loggedProcess = uiContext.controller.selectedProcess.value ?: return
-
-    when (line.tag) {
-      OutputTag.EXIT ->
-        uiContext.controller.copyOutputExitInfoToClipboard(loggedProcess)
-      OutputTag.OUTPUT, OutputTag.ERROR ->
-        uiContext.controller.copyOutputTagAtIndexToClipboard(loggedProcess, index)
     }
   }
 

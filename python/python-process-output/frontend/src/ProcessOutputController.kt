@@ -35,8 +35,6 @@ internal interface ProcessOutputController {
   fun toggleProcessOutput()
 
   fun copyOutputToClipboard(loggedProcess: LoggedProcess)
-  fun copyOutputTagAtIndexToClipboard(loggedProcess: LoggedProcess, fromIndex: Int)
-  fun copyOutputExitInfoToClipboard(loggedProcess: LoggedProcess)
 }
 
 internal sealed interface UiEvent {
