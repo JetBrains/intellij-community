@@ -317,6 +317,7 @@ internal class ProjectViewToolWindowServiceImpl(
 
   override fun getState(): Element = Element("projectView").also { element ->
     persistentState.writeStateTo(element)
+    LOG.debug { "Serialized the state to save" }
   }
 
   override fun noStateLoaded() {
@@ -326,6 +327,21 @@ internal class ProjectViewToolWindowServiceImpl(
   override fun loadState(state: Element) {
     persistentState.readStateFrom(state)
     stateInitJob.complete(Unit)
+    LOG.debug { "Restored the saved state" }
+  }
+  
+  private fun loadPaneState(pane: FrontendProjectViewPane) {
+    val paneState = persistentState.getPaneState(pane.id)
+    pane.restoreStateFrom(paneState)
+    LOG.debug { "Applied the loaded state for ${pane.id}" }
+  }
+  
+  private fun savePaneState(pane: FrontendProjectViewPane) {
+    val paneElement = Element("pane")
+    paneElement.setAttribute("pane", pane.id.idString)
+    pane.saveStateTo(paneElement)
+    persistentState.putPaneState(pane.id, paneElement)
+    LOG.debug { "Saved the last state for ${pane.id}" }
   }
 
   private inner class PaneManager(
@@ -350,17 +366,11 @@ internal class ProjectViewToolWindowServiceImpl(
         launch(Dispatchers.UI + CoroutineName("Manage TW content for PV pane ${pane.id}")) {
           pane.component.launchOnShow("Pane ${pane.id} service state saving/restoring") {
             try {
-              val paneState = persistentState.getPaneState(pane.id)
-              pane.restoreStateFrom(paneState)
-              LOG.debug { "Applied the loaded state for ${pane.id}" }
+              loadPaneState(pane)
               awaitCancellation()
             }
             finally {
-              val paneElement = Element("pane")
-              paneElement.setAttribute("pane", pane.id.idString)
-              pane.saveStateTo(paneElement)
-              persistentState.putPaneState(pane.id, paneElement)
-              LOG.debug { "Saved the last state for ${pane.id}" }
+              savePaneState(pane)
             }
           }
           val selectedPaneId = persistentState.getSelectedPaneState() ?: defaultSelection
