@@ -13,6 +13,7 @@ import com.intellij.execution.target.TargetEnvironmentConfigurations;
 import com.intellij.execution.target.TargetEnvironmentType;
 import com.intellij.internal.statistic.IdeActivityDefinition;
 import com.intellij.internal.statistic.StructuredIdeActivity;
+import com.intellij.internal.statistic.collectors.fus.ProjectlessData;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.BooleanEventField;
 import com.intellij.internal.statistic.eventLog.events.EnumEventField;
@@ -34,6 +35,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.NonUrgentExecutor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,7 +49,7 @@ import static com.intellij.execution.impl.statistics.RunConfigurationTypeUsagesC
 @ApiStatus.Internal
 public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCollector {
   private static final String GROUP_NAME = RunConfigurationTypeDefs.TRIGGER_USAGES_GROUP_ID;
-  private static final EventLogGroup GROUP = new EventLogGroup(GROUP_NAME, 81);
+  private static final EventLogGroup GROUP = new EventLogGroup(GROUP_NAME, 82);
 
   public static final IntEventField ALTERNATIVE_JRE_VERSION = EventFields.Int("alternative_jre_version");
   private static final ObjectEventField ADDITIONAL_FIELD = EventFields.createAdditionalDataField(GROUP_NAME, "started");
@@ -83,7 +85,8 @@ public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCo
       EventFields.PluginInfo,
       ENV_FILES_COUNT,
       EventFields.Dumb,
-      IS_SERVICE_VIEW
+      IS_SERVICE_VIEW,
+      EventFields.Projectless
     },
     new EventField<?>[]{FINISH_TYPE},
     null,
@@ -144,6 +147,7 @@ public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCo
     eventPairs.add(IS_RUNNING_CURRENT_FILE.with(isRunningCurrentFile));
     eventPairs.add(EventFields.Dumb.with(isDumb));
     eventPairs.add(IS_SERVICE_VIEW.with(isServiceView));
+    ContainerUtil.addIfNotNull(eventPairs, ProjectlessData.forProject(project));
 
     if (runConfiguration instanceof FusAwareRunConfiguration) {
       List<EventPair<?>> additionalData = ((FusAwareRunConfiguration)runConfiguration).getAdditionalUsageData();
