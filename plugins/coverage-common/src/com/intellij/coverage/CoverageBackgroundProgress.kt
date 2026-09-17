@@ -8,7 +8,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -22,19 +21,17 @@ internal fun launchCoverageDataRenewal(
   onCancel: Runnable,
 ) {
   project.service<ProgressScopeProvider>().cs.launch(Dispatchers.Default) {
-    try {
-      withBackgroundProgress(project, CoverageBundle.message("coverage.view.loading.data")) {
-        action.run()
-      }
-      withContext(Dispatchers.EDT) {
-        if (!project.isDisposed) onSuccess.run()
-      }
+    withBackgroundProgress(project, CoverageBundle.message("coverage.view.loading.data")) {
+      action.run()
     }
-    catch (e: Throwable) {
-      withContext(NonCancellable + Dispatchers.EDT) {
+    withContext(Dispatchers.EDT) {
+      if (!project.isDisposed) onSuccess.run()
+    }
+  }.invokeOnCompletion { cause ->
+    if (cause != null) {
+      project.service<ProgressScopeProvider>().cs.launch(Dispatchers.EDT) {
         if (!project.isDisposed) onCancel.run()
       }
-      throw e
     }
   }
 }
