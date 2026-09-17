@@ -600,6 +600,7 @@ internal class WorkspaceFileIndexDataImpl(
 
   private fun fillPackageFilesAndDirectories(packageName: String, result: MutableList<in VirtualFile>) {
     val addedRoots = HashSet<VirtualFile>()
+    val processedRoots = HashSet<VirtualFile>()
     val map = fileSetsByPackagePrefix[packageName] ?: return
     for (list in map.values) {
       for (fileSet in list) {
@@ -608,6 +609,9 @@ internal class WorkspaceFileIndexDataImpl(
           continue
         }
 
+        if (!processedRoots.add(root)) {
+          continue
+        }
         // single file source roots could be added here as well
         if (addedRoots.add(root)) result.add(root)
         if (root.fileSystem.protocol == StandardFileSystems.JAR_PROTOCOL) {
