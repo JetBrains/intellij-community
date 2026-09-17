@@ -11,8 +11,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.PasteProvider;
-import com.intellij.ide.PowerSaveMode;
-import com.intellij.ide.RemoteDesktopService;
 import com.intellij.ide.actions.DistractionFreeModeController;
 import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.dnd.DnDManagerImpl;
@@ -178,6 +176,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsListener;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.DirtyUI;
+import com.intellij.ui.DrawUtil;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.IslandsState;
@@ -2618,6 +2617,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return;
     }
 
+    if (!shouldPaint()) {
+      fillPlaceholder(g);
+      return;
+    }
+
+    if (myProject != null && myProject.isDisposed()) {
+      return;
+    }
+
     BufferedImage buffer = myDumbBuffer;
     if (buffer != null) {
       Rectangle rect = getContentComponent().getVisibleRect();
@@ -2625,21 +2633,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return;
     }
 
-    if (!shouldPaint()) {
-      fillPlaceholder(g);
-      return;
-    }
-
     if (myUpdateCursor && !myPurePaintingMode) {
-      setCursorPosition();
+      if (shouldSetCursorPositionImmediately()) {
+        caretMutator.caretMovedImmediately();
+      } else {
+        caretMutator.caretMoved();
+      }
       myUpdateCursor = false;
     }
 
-    if (myProject != null && myProject.isDisposed()) {
-      return;
-    }
-
-    myView.paint(g, canPaintFromContentAnimationCache() ? myContentAnimationCache : null);
+    EditorAnimationCache cache = canPaintFromContentAnimationCache() ? myContentAnimationCache : null;
+    myView.paint(g, cache);
 
     boolean isBackgroundImageSet = IdeBackgroundUtil.isEditorBackgroundImageSet(myProject);
     if (myBackgroundImageSet != isBackgroundImageSet) {
@@ -3591,24 +3595,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @ApiStatus.Internal
   public boolean shouldDisableAnimations() {
-    return Registry.is("ui.simplified", false) ||
-           PowerSaveMode.isEnabled() ||
-           RemoteDesktopService.isRemoteSession();
+    return DrawUtil.isSimplifiedUI();
   }
 
   private boolean shouldSetCursorPositionImmediately() {
-    return !getSettings().isSmoothCaretMovement() ||
-           gainedFocus.getAndSet(false) ||
+    return gainedFocus.getAndSet(false) ||
            myMouseIsInDrag ||
+           !getSettings().isSmoothCaretMovement() ||
            shouldDisableAnimations();
-  }
-
-  private void setCursorPosition() {
-    if (shouldSetCursorPositionImmediately()) {
-      caretMutator.caretMovedImmediately();
-    } else {
-      caretMutator.caretMoved();
-    }
   }
 
   @Override

@@ -220,7 +220,6 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     return layout == null ? 0 : layout.getWidth();
   }
 
-  @RequiresEdt
   public void paint(@NotNull Graphics2D g, @Nullable EditorAnimationCache cache) {
     getSoftWrapModel().prepareToMapping();
     checkFontRenderContext(g.getFontRenderContext());
