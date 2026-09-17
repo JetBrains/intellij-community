@@ -217,6 +217,12 @@ public class VirtualFileManagerImpl extends VirtualFileManager implements Dispos
     HelperKt.removeOnCompletion(asyncFileListeners, listener, coroutineScope);
   }
 
+  @Override
+  public void addAsyncFileListenerBackgroundable(@NotNull CoroutineScope coroutineScope, @NotNull AsyncFileListener listener) {
+    asyncFileListenersBackgroundable.add(listener);
+    HelperKt.removeOnCompletion(asyncFileListenersBackgroundable, listener, coroutineScope);
+  }
+
   @ApiStatus.Internal
   public @NotNull @Unmodifiable List<AsyncFileListener> withAsyncFileListeners(@NotNull @Unmodifiable List<? extends AsyncFileListener> listeners) {
     // copy to avoid modification during iteration later

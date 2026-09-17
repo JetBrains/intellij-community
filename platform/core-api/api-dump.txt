@@ -1787,6 +1787,7 @@ a:com.intellij.openapi.vfs.VirtualFileManager
 - sf:VFS_CHANGES_BG:com.intellij.util.messages.Topic
 - a:addAsyncFileListener(kotlinx.coroutines.CoroutineScope,com.intellij.openapi.vfs.AsyncFileListener):V
 - a:addAsyncFileListenerBackgroundable(com.intellij.openapi.vfs.AsyncFileListener,com.intellij.openapi.Disposable):V
+- a:addAsyncFileListenerBackgroundable(kotlinx.coroutines.CoroutineScope,com.intellij.openapi.vfs.AsyncFileListener):V
 - a:addVirtualFileListener(com.intellij.openapi.vfs.VirtualFileListener):V
 - f:asyncRefresh():J
 - a:asyncRefresh(java.lang.Runnable):J

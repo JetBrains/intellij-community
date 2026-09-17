@@ -216,6 +216,8 @@ public abstract class VirtualFileManager implements ModificationTracker {
 
   public abstract void addAsyncFileListener(@NotNull CoroutineScope coroutineScope, @NotNull AsyncFileListener listener);
 
+  public abstract void addAsyncFileListenerBackgroundable(@NotNull CoroutineScope coroutineScope, @NotNull AsyncFileListener listener);
+
   /**
    * Constructs a {@link VirtualFile#getUrl() URL} by specified protocol and path.
    *
