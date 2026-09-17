@@ -24,7 +24,7 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
-import kotlinx.coroutines.channels.consumeEach
+import kotlinx.coroutines.channels.consume
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
@@ -130,200 +130,216 @@ internal suspend fun withLspImpl(
             val lspHandlerContext = LspHandlerContext(lspClient, supervisor)
             val incomingRequestsJobs = MultiplatformConcurrentHashMap<StringOrInt, Job>()
             withContext(CoroutineName("incoming requests accepter")) {
-                incoming.consumeEach { jsonMessage ->
-                    when {
-                        jsonMessage !is JsonObject || jsonMessage["jsonrpc"] != JsonPrimitive("2.0") -> {
-                            throw ProtocolViolation("not json rpc message: $jsonMessage")
-                        }
-
-                        isRequest(jsonMessage) -> {
-                            val request = LSP.json.decodeFromJsonElement(RequestMessage.serializer(), jsonMessage)
-                            supervisor.launch(context = CoroutineName("handler for ${request.method}"), start = CoroutineStart.ATOMIC) {
-                                val maybeHandler = handlers.requestHandler(request.method)
-                                runCatching {
-                                    val handler = requireNotNull(maybeHandler) {
-                                        "no handler for request: ${request.method}"
-                                    }
-                                    val deserializedParams = request.params?.let { params ->
-                                        LSP.json.decodeFromJsonElement(handler.requestType.paramsSerializer, params)
-                                    }
-
-                                    @Suppress("UNCHECKED_CAST")
-                                    handler as LspRequestHandler<Any?, Any?, Any?>
-
-                                    val result = handler.handler(
-                                        lspHandlerContext,
-                                        this,
-                                        deserializedParams
-                                    )
-
-                                    LSP.json.encodeToJsonElement(
-                                        serializer = handler.requestType.resultSerializer,
-                                        value = result
-                                    )
-                                }.fold(
-                                    onSuccess = { result ->
-                                        ResponseMessage(
-                                            jsonrpc = "2.0",
-                                            id = request.id,
-                                            result = result,
-                                            error = null
-                                        )
-                                    },
-                                    onFailure = { x ->
-                                        val responseError = when (x) {
-                                            is CancellationException -> {
-                                                ResponseError(
-                                                    code = ErrorCodes.RequestCancelled,
-                                                    message = "cancelled",
-                                                )
-                                            }
-
-                                            is LspException -> {
-                                                ResponseError(
-                                                    code = x.errorCode,
-                                                    message = x.message ?: x::class.simpleName ?: "unknown error",
-                                                    data = runCatching {
-                                                        @Suppress("UNCHECKED_CAST")
-                                                        val errorSerializer = requireNotNull(maybeHandler) {
-                                                            "we could not have caught LspException if we didn't find the handler"
-                                                        }.requestType.errorSerializer as KSerializer<Any?>
-
-                                                        LSP.json.encodeToJsonElement(
-                                                            serializer = errorSerializer,
-                                                            value = x.payload
-                                                        )
-                                                    }.getOrNull()
-                                                )
-                                            }
-
-                                            else -> {
-                                                LOG.error(x)
-
-                                                ResponseError(
-                                                    code = ErrorCodes.RequestFailed,
-                                                    message = x.message ?: x::class.simpleName ?: "unknown error",
-                                                )
-                                            }
-                                        }
-                                        ResponseMessage(
-                                            jsonrpc = "2.0",
-                                            id = request.id,
-                                            result = null,
-                                            error = responseError
-                                        )
-                                    }
-                                ).let { responseMessage ->
-                                    val encodedResponse = LSP.json.encodeToJsonElement(ResponseMessage.serializer(), responseMessage)
-                                    runCatching {
-                                        outgoing.send(encodedResponse)
-                                    }.onFailure {
-                                        currentCoroutineContext().job.ensureActive()
-                                        LOG.info("Response for ${request.method} is not delivered ($it)")
-                                    }
-                                }
-                            }.also { requestJob ->
-                                incomingRequestsJobs[request.id] = requestJob
-                                requestJob.invokeOnCompletion {
-                                    incomingRequestsJobs.remove(request.id)
-                                }
+                // The scope for handler-launched work; `consume` below shadows `this` with the channel.
+                val messageScope = this
+                // Drive the loop with a plain `for`, and leave it (on `exit`) so `consume` cancels
+                // `incoming` on the way out, instead of cancelling the channel from inside its own handler.
+                incoming.consume {
+                    for (jsonMessage in incoming) {
+                        when {
+                            jsonMessage !is JsonObject || jsonMessage["jsonrpc"] != JsonPrimitive("2.0") -> {
+                                throw ProtocolViolation("not json rpc message: $jsonMessage")
                             }
-                        }
 
-                        isResponse(jsonMessage) -> {
-                            val response = LSP.json.decodeFromJsonElement(ResponseMessage.serializer(), jsonMessage)
-                            when (val client = outgoingRequests.remove(response.id)) {
-                                null -> {
-                                    // request was cancelled
-                                }
+                            isRequest(jsonMessage) -> {
+                                val request = LSP.json.decodeFromJsonElement(RequestMessage.serializer(), jsonMessage)
+                                supervisor.launch(
+                                    context = CoroutineName("handler for ${request.method}"),
+                                    start = CoroutineStart.ATOMIC
+                                ) {
+                                    val maybeHandler = handlers.requestHandler(request.method)
+                                    runCatching {
+                                        val handler = requireNotNull(maybeHandler) {
+                                            "no handler for request: ${request.method}"
+                                        }
+                                        val deserializedParams = request.params?.let { params ->
+                                            LSP.json.decodeFromJsonElement(handler.requestType.paramsSerializer, params)
+                                        }
 
-                                else -> {
-                                    client.deferred.let { deferred ->
-                                        when (val error = response.error) {
-                                            null -> {
-                                                val result = response.result?.let { result ->
-                                                    runCatching {
-                                                        @Suppress("UNCHECKED_CAST")
-                                                        LSP.json.decodeFromJsonElement(
-                                                            client.requestType.resultSerializer as KSerializer<Any?>,
-                                                            result
-                                                        )
-                                                    }.onFailure { error ->
-                                                        currentCoroutineContext().job.ensureActive()
-                                                        LOG.error(error)
-                                                    }.getOrNull()
-                                                }
-                                                deferred.complete(result)
-                                            }
+                                        @Suppress("UNCHECKED_CAST")
+                                        handler as LspRequestHandler<Any?, Any?, Any?>
 
-                                            else -> {
-                                                deferred.completeExceptionally(
-                                                    LspException(
-                                                        message = error.message,
-                                                        errorCode = error.code,
-                                                        cause = null,
-                                                        payload = error.data?.let { data ->
-                                                            runCatching {
-                                                                @Suppress("UNCHECKED_CAST")
-                                                                LSP.json.decodeFromJsonElement(
-                                                                    client.requestType.errorSerializer as KSerializer<Any?>,
-                                                                    data
-                                                                )
-                                                            }.onFailure { decodingError ->
-                                                                currentCoroutineContext().job.ensureActive()
-                                                                LOG.error(decodingError)
-                                                            }.getOrNull()
-                                                        }
+                                        val result = handler.handler(
+                                            lspHandlerContext,
+                                            this,
+                                            deserializedParams
+                                        )
+
+                                        LSP.json.encodeToJsonElement(
+                                            serializer = handler.requestType.resultSerializer,
+                                            value = result
+                                        )
+                                    }.fold(
+                                        onSuccess = { result ->
+                                            ResponseMessage(
+                                                jsonrpc = "2.0",
+                                                id = request.id,
+                                                result = result,
+                                                error = null
+                                            )
+                                        },
+                                        onFailure = { x ->
+                                            val responseError = when (x) {
+                                                is CancellationException -> {
+                                                    ResponseError(
+                                                        code = ErrorCodes.RequestCancelled,
+                                                        message = "cancelled",
                                                     )
-                                                )
+                                                }
+
+                                                is LspException -> {
+                                                    ResponseError(
+                                                        code = x.errorCode,
+                                                        message = x.message ?: x::class.simpleName ?: "unknown error",
+                                                        data = runCatching {
+                                                            @Suppress("UNCHECKED_CAST")
+                                                            val errorSerializer = requireNotNull(maybeHandler) {
+                                                                "we could not have caught LspException if we didn't find the handler"
+                                                            }.requestType.errorSerializer as KSerializer<Any?>
+
+                                                            LSP.json.encodeToJsonElement(
+                                                                serializer = errorSerializer,
+                                                                value = x.payload
+                                                            )
+                                                        }.getOrNull()
+                                                    )
+                                                }
+
+                                                else -> {
+                                                    LOG.error(x)
+
+                                                    ResponseError(
+                                                        code = ErrorCodes.RequestFailed,
+                                                        message = x.message ?: x::class.simpleName ?: "unknown error",
+                                                    )
+                                                }
+                                            }
+                                            ResponseMessage(
+                                                jsonrpc = "2.0",
+                                                id = request.id,
+                                                result = null,
+                                                error = responseError
+                                            )
+                                        }
+                                    ).let { responseMessage ->
+                                        val encodedResponse =
+                                            LSP.json.encodeToJsonElement(ResponseMessage.serializer(), responseMessage)
+                                        runCatching {
+                                            outgoing.send(encodedResponse)
+                                        }.onFailure {
+                                            currentCoroutineContext().job.ensureActive()
+                                            LOG.info("Response for ${request.method} is not delivered ($it)")
+                                        }
+                                    }
+                                }.also { requestJob ->
+                                    incomingRequestsJobs[request.id] = requestJob
+                                    requestJob.invokeOnCompletion {
+                                        incomingRequestsJobs.remove(request.id)
+                                    }
+                                }
+                            }
+
+                            isResponse(jsonMessage) -> {
+                                val response = LSP.json.decodeFromJsonElement(ResponseMessage.serializer(), jsonMessage)
+                                when (val client = outgoingRequests.remove(response.id)) {
+                                    null -> {
+                                        // request was cancelled
+                                    }
+
+                                    else -> {
+                                        client.deferred.let { deferred ->
+                                            when (val error = response.error) {
+                                                null -> {
+                                                    val result = response.result?.let { result ->
+                                                        runCatching {
+                                                            @Suppress("UNCHECKED_CAST")
+                                                            LSP.json.decodeFromJsonElement(
+                                                                client.requestType.resultSerializer as KSerializer<Any?>,
+                                                                result
+                                                            )
+                                                        }.onFailure { error ->
+                                                            currentCoroutineContext().job.ensureActive()
+                                                            LOG.error(error)
+                                                        }.getOrNull()
+                                                    }
+                                                    deferred.complete(result)
+                                                }
+
+                                                else -> {
+                                                    deferred.completeExceptionally(
+                                                        LspException(
+                                                            message = error.message,
+                                                            errorCode = error.code,
+                                                            cause = null,
+                                                            payload = error.data?.let { data ->
+                                                                runCatching {
+                                                                    @Suppress("UNCHECKED_CAST")
+                                                                    LSP.json.decodeFromJsonElement(
+                                                                        client.requestType.errorSerializer as KSerializer<Any?>,
+                                                                        data
+                                                                    )
+                                                                }.onFailure { decodingError ->
+                                                                    currentCoroutineContext().job.ensureActive()
+                                                                    LOG.error(decodingError)
+                                                                }.getOrNull()
+                                                            }
+                                                        )
+                                                    )
+                                                }
                                             }
                                         }
                                     }
                                 }
                             }
-                        }
 
-                        isNotification(jsonMessage) -> {
-                            //todo: separate queue for notifications
-                            val notification = LSP.json.decodeFromJsonElement(NotificationMessage.serializer(), jsonMessage)
-                            when {
-                                notification.method == LSP.CancelNotificationType.method -> {
-                                    val params = LSP.json.decodeFromJsonElement(CancelParams.serializer(), notification.params!!)
-                                    incomingRequestsJobs.remove(params.id)?.cancel()
-                                }
-
-                                else ->
-                                    runCatching {
-                                        when (val handler = handlers.notificationHandler(notification.method)) {
-                                            null ->
-                                                LOG.info("Notification handler for ${notification.method} is not found")
-
-                                            else -> {
-                                                val deserializedParams = notification.params?.let { params ->
-                                                    LSP.json.decodeFromJsonElement(handler.notificationType.paramsSerializer, params)
-                                                }
-                                                // After receiving the exit notification, no further communication may happen.
-                                                if (notification.method == ExitNotificationType.method) {
-                                                    incoming.cancel()
-                                                    outgoing.close()
-                                                }
-                                                @Suppress("UNCHECKED_CAST")
-                                                (handler as LspNotificationHandler<Any?>).handler(
-                                                    lspHandlerContext,
-                                                    this,
-                                                    deserializedParams
-                                                )
-                                            }
-                                        }
-                                    }.onFailure { error ->
-                                        currentCoroutineContext().job.ensureActive()
-                                        LOG.error(error)
+                            isNotification(jsonMessage) -> {
+                                //todo: separate queue for notifications
+                                val notification =
+                                    LSP.json.decodeFromJsonElement(NotificationMessage.serializer(), jsonMessage)
+                                when {
+                                    notification.method == LSP.CancelNotificationType.method -> {
+                                        val params = LSP.json.decodeFromJsonElement(
+                                            CancelParams.serializer(),
+                                            notification.params!!
+                                        )
+                                        incomingRequestsJobs.remove(params.id)?.cancel()
                                     }
-                            }
-                        }
 
-                        else -> {
-                            throw ProtocolViolation("not json rpc message: $jsonMessage")
+                                    else ->
+                                        runCatching {
+                                            when (val handler = handlers.notificationHandler(notification.method)) {
+                                                null ->
+                                                    LOG.info("Notification handler for ${notification.method} is not found")
+
+                                                else -> {
+                                                    val deserializedParams = notification.params?.let { params ->
+                                                        LSP.json.decodeFromJsonElement(
+                                                            handler.notificationType.paramsSerializer,
+                                                            params
+                                                        )
+                                                    }
+                                                    @Suppress("UNCHECKED_CAST")
+                                                    (handler as LspNotificationHandler<Any?>).handler(
+                                                        lspHandlerContext,
+                                                        messageScope,
+                                                        deserializedParams
+                                                    )
+                                                }
+                                            }
+                                        }.onFailure { error ->
+                                            currentCoroutineContext().job.ensureActive()
+                                            LOG.error(error)
+                                        }
+                                }
+                                // The exit notification ends the session: leave the loop so `consume` cancels `incoming`.
+                                if (notification.method == ExitNotificationType.method) {
+                                    break
+                                }
+                            }
+
+                            else -> {
+                                throw ProtocolViolation("not json rpc message: $jsonMessage")
+                            }
                         }
                     }
                 }
