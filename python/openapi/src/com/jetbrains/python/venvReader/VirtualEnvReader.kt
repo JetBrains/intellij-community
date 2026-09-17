@@ -138,26 +138,18 @@ class VirtualEnvReader private constructor(
 
 
   /**
-   * True when a child of [childNames] can lead [findPythonInPythonRoot] to an interpreter in [directory].
+   * Returns true when [childNames] contains a possible interpreter or interpreter directory from either OS layout.
    *
-   * [findPythonUsingDirectoryListing] uses this check before it searches the filesystem.
+   * Checks only names. [findPythonInPythonRoot] selects the actual layout and checks the filesystem.
    *
-   * The answer is a superset. A name that passes costs one call of the method, and a name that fails hides
-   * no interpreter. The layout comes from [directory], so it is the layout that the method itself reads.
-   *
-   * A child named as [PythonOsLayout.dirWithPython] may hold the binary. That comparison ignores the case,
-   * because the method resolves the name with `Path.resolve`, and a filesystem that ignores the case
-   * answers `resolve("bin")` with a directory named `Bin`. The default volume of macOS does that, so the
-   * rule follows the filesystem and not the family of the system. A filesystem that keeps the case pays one
-   * call of the method for such a name, and nothing more.
-   *
-   * A child that matches [PythonOsLayout.pyBinaryPattern] may be the binary itself. That pattern reads the
-   * case on posix, and [findInterpreter] matches a name the same way.
+   * Directory comparisons ignore case. Binary comparisons follow each layout's pattern.
    */
-  private fun mayContainPython(directory: Directory, childNames: Sequence<String>): Boolean {
-    val layout = getLayout(forcedOs ?: directory.osFamily)
+  private fun mayContainPython(childNames: Sequence<String>): Boolean {
     return childNames.any { name ->
-      name.equals(layout.dirWithPython, ignoreCase = true) || layout.pyBinaryPattern.matches(name)
+      name.equals(POSIX_LAYOUT.dirWithPython, ignoreCase = true) ||
+      name.equals(WIN_LAYOUT.dirWithPython, ignoreCase = true) ||
+      POSIX_LAYOUT.pyBinaryPattern.matches(name) ||
+      WIN_LAYOUT.pyBinaryPattern.matches(name)
     }
   }
 
@@ -172,7 +164,7 @@ class VirtualEnvReader private constructor(
    */
   @RequiresBackgroundThread
   fun findPythonUsingDirectoryListing(directory: Directory, childNames: Sequence<String>): PythonBinary? =
-    if (mayContainPython(directory, childNames)) findPythonInPythonRoot(directory) else null
+    if (mayContainPython(childNames)) findPythonInPythonRoot(directory) else null
 
   /**
    * [pathOrDir] is either a direct path to a Python binary or a root directory of python installation or virtualenv
