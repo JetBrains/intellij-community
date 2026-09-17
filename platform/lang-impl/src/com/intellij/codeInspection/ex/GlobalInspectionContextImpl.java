@@ -532,16 +532,15 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
       EnabledInspectionsProvider.ToolWrappers cachedWrappersValue = wrappersForThisFile.get();
       EnabledInspectionsProvider.ToolWrappers wrappers =
         (cachedWrappersValue != null) ? cachedWrappersValue : getWrappersFromTools(enabledInspectionsProvider, psiFile, includeDoNotShow);
-
-      wrappers.getExternalAnnotatorWrappers()
-        .forEach(wrapper -> {
+      InspectionProfileWrapper.runWithCustomInspectionWrapper(psiFile, _ -> new InspectionProfileWrapper(getCurrentProfile()), () ->
+        wrappers.getExternalAnnotatorWrappers().forEach(wrapper -> {
           ExternalAnnotatorBatchInspection tool = ((ExternalAnnotatorBatchInspection)wrapper.getTool());
           ProblemDescriptor[] descriptors = tool.checkFile(psiFile, this, inspectionManager);
           InspectionToolResultExporter toolPresentation = getPresentation(wrapper);
           ReadAction.runBlocking(
             () -> BatchModeDescriptorsUtil.addProblemDescriptors(Arrays.asList(descriptors), false, this, null, toolPresentation, CONVERT)
           );
-        });
+        }));
 
       return true;
     };
