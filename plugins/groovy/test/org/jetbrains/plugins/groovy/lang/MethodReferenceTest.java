@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.lang;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.groovy.testFramework.ResolveTest;
 import com.intellij.groovy.testFramework.TypingTest;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
@@ -123,7 +124,7 @@ public class MethodReferenceTest extends LightGroovyTestCase implements TypingTe
 
     PsiClass clazz = myFixture.findClass("A");
     PsiMethod constructor = clazz.getConstructors()[0];
-    assertEquals(3, MethodReferencesSearch.search(constructor).findAll().size());
+    assertEquals(3, ReadAction.computeBlocking(()->MethodReferencesSearch.search(constructor).findAll()).size());
 
     myFixture.renameElementAtCaret("B");
     myFixture.checkResult("""

@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi.resolve;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ResourceFileUtil;
 import com.intellij.openapi.roots.ContentEntry;
@@ -89,7 +90,7 @@ public final class SingleFileRootResolveTest extends LightJavaCodeInsightFixture
     assertNotNull(cClass);
     SearchScope scope = cClass.getUseScope();
     assertTrue(scope.contains(aClass.getContainingFile().getVirtualFile()));
-    Collection<PsiReference> uses = ReferencesSearch.search(cClass).findAll();
+    Collection<PsiReference> uses = ReadAction.computeBlocking(() -> ReferencesSearch.search(cClass).findAll());
     assertEquals(1, uses.size());
     PsiElement element = uses.iterator().next().getElement();
     PsiJavaCodeReferenceElement ref = assertInstanceOf(element, PsiJavaCodeReferenceElement.class);

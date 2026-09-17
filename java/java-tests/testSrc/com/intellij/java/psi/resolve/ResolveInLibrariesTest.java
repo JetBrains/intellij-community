@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi.resolve;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -67,16 +68,18 @@ public class ResolveInLibrariesTest extends JavaCodeInsightFixtureTestCase {
     PsiClass[] interfaces = JavaPsiFacade.getInstance(getProject()).findClasses("com.google.protobuf.MessageLite", scope);
     assertEquals(2, interfaces.length);
 
-    for (int i = 0; i < 2; i++) {
-      assertTrue(ClassInheritorsSearch.search(interfaces[i]).findAll().containsAll(List.of(middles[i], bottoms[i])));
-      for (PsiMethod method : interfaces[i].getMethods()) {
-        assertFalse(OverridingMethodsSearch.search(method).findAll().isEmpty());
-      }
+    ReadAction.runBlocking(()-> {
+      for (int i = 0; i < 2; i++) {
+        assertTrue(ClassInheritorsSearch.search(interfaces[i]).findAll().containsAll(List.of(middles[i], bottoms[i])));
+        for (PsiMethod method : interfaces[i].getMethods()) {
+          assertFalse(OverridingMethodsSearch.search(method).findAll().isEmpty());
+        }
 
-      assertTrue(middles[i].isInheritor(interfaces[i], true));
-      assertTrue(bottoms[i].isInheritor(interfaces[i], true));
-      assertTrue(bottoms[i].isInheritor(middles[i], true));
-    }
+        assertTrue(middles[i].isInheritor(interfaces[i], true));
+        assertTrue(bottoms[i].isInheritor(interfaces[i], true));
+        assertTrue(bottoms[i].isInheritor(middles[i], true));
+      }
+    });
   }
 
   public void testMissedLibraryDependency() {
@@ -142,8 +145,10 @@ public class ResolveInLibrariesTest extends JavaCodeInsightFixtureTestCase {
     assertTrue(other0.isInheritor(i0, true));
     assertFalse(other0.isInheritor(i0, false));
 
-    assertEquals(ContainerUtil.newHashSet(m0, b1, other0), new HashSet<>(ClassInheritorsSearch.search(i0).findAll()));
-    assertEquals(ContainerUtil.newHashSet(b1, other0), new HashSet<>(ClassInheritorsSearch.search(m0).findAll()));
+    assertEquals(ContainerUtil.newHashSet(m0, b1, other0),
+                 new HashSet<>(ReadAction.computeBlocking(() -> ClassInheritorsSearch.search(i0).findAll())));
+    assertEquals(ContainerUtil.newHashSet(b1, other0),
+                 new HashSet<>(ReadAction.computeBlocking(() -> ClassInheritorsSearch.search(m0).findAll())));
 
     assertEquals(ContainerUtil.newHashSet(fooMethod(m0), fooMethod(other0)), fooInheritors(i0));
     assertEquals(ContainerUtil.newHashSet(fooMethod(other0), fooMethod(b1)), fooInheritors(m0));
@@ -155,7 +160,7 @@ public class ResolveInLibrariesTest extends JavaCodeInsightFixtureTestCase {
   }
 
   private static Set<PsiMethod> fooInheritors(PsiClass c) {
-    return new HashSet<>(OverridingMethodsSearch.search(fooMethod(c)).findAll());
+    return new HashSet<>(ReadAction.computeBlocking(() -> OverridingMethodsSearch.search(fooMethod(c)).findAll()));
   }
 
   public void testDoNotParseNotStubbedSourcesInClassJars() {

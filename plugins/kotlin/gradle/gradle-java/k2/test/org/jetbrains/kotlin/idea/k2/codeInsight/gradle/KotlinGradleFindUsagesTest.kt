@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.codeInsight.gradle
 
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.psi.search.searches.ReferencesSearch
@@ -190,7 +191,7 @@ fun AbstractGradleCodeInsightTest.verifyFindUsages(gradleVersion: GradleVersion,
         }
         runInEdtAndWait {
             val elementAtCaret = codeInsightFixture.elementAtCaret
-            val usagesPsi = ReferencesSearch.search(elementAtCaret).findAll()
+            val usagesPsi = runReadActionBlocking { ReferencesSearch.search(elementAtCaret).findAll() }
             val projectDir = project.guessProjectDir() ?: error("project dir is not found")
             val usages = usagesPsi.map {
                 val virtualFile = it.element.containingFile.virtualFile

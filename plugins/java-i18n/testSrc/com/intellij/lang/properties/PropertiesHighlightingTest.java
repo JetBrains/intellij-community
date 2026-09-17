@@ -5,6 +5,7 @@ import com.intellij.lang.FileASTNode;
 import com.intellij.lang.properties.codeInspection.unused.UnusedPropertyInspection;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -86,7 +87,7 @@ public class PropertiesHighlightingTest extends JavaCodeInsightFixtureTestCase {
 
     IProperty property = ((PropertiesFile)myFixture.getFile()).getProperties().get(1);
     assertEquals("used.prop", property.getName());
-    Collection<PsiReference> references = ReferencesSearch.search(property.getPsiElement()).findAll();
+    Collection<PsiReference> references = ReadAction.computeBlocking(() -> ReferencesSearch.search(property.getPsiElement()).findAll());
     assertEquals(usage, assertOneElement(references).getElement().getContainingFile().getVirtualFile());
   }
 

@@ -7,6 +7,7 @@ import com.intellij.find.findUsages.FindUsagesHandler;
 import com.intellij.find.findUsages.FindUsagesManager;
 import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.find.impl.FindManagerImpl;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
@@ -49,7 +50,7 @@ public class GroovyFindUsagesTest extends LightGroovyTestCase {
     TestCase.assertTrue(method.isConstructor());
     final Query<PsiReference> query = ReferencesSearch.search(method);
 
-    TestCase.assertEquals(expectedCount, query.findAll().size());
+    TestCase.assertEquals(expectedCount, ReadAction.computeBlocking(()->query.findAll()).size());
   }
 
   public void testDerivedClass() {
@@ -61,7 +62,7 @@ public class GroovyFindUsagesTest extends LightGroovyTestCase {
     final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myFixture.getProject());
     final Query<PsiClass> query = DirectClassInheritorsSearch.search(clazz, projectScope);
 
-    TestCase.assertEquals(1, query.findAll().size());
+    TestCase.assertEquals(1, ReadAction.computeBlocking(()->query.findAll()).size());
   }
 
   public void testConstructor1() {
@@ -74,8 +75,8 @@ public class GroovyFindUsagesTest extends LightGroovyTestCase {
       TargetElementUtil.findTargetElement(myFixture.getEditor(), TargetElementUtil.getInstance().getReferenceSearchFlags());
     TestCase.assertNotNull("Could not resolve reference", resolved);
     final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myFixture.getProject());
-    TestCase.assertEquals(2, MethodReferencesSearch.search((PsiMethod)resolved, projectScope, true).findAll().size());
-    TestCase.assertEquals(4, MethodReferencesSearch.search((PsiMethod)resolved, projectScope, false).findAll().size());
+    TestCase.assertEquals(2, ReadAction.computeBlocking(()->MethodReferencesSearch.search((PsiMethod)resolved, projectScope, true).findAll()).size());
+    TestCase.assertEquals(4, ReadAction.computeBlocking(()->MethodReferencesSearch.search((PsiMethod)resolved, projectScope, false).findAll()).size());
   }
 
   public void testGotoConstructor() {
@@ -167,7 +168,7 @@ public class GroovyFindUsagesTest extends LightGroovyTestCase {
     }
 
 
-    TestCase.assertEquals(1, query.findAll().size());
+    TestCase.assertEquals(1, ReadAction.computeBlocking(()->query.findAll()).size());
   }
 
   private void doTestImpl(String filePath, int expectedUsagesCount) {
@@ -215,7 +216,7 @@ public class GroovyFindUsagesTest extends LightGroovyTestCase {
   public void testLabels() {
     myFixture.configureByFile(getTestName(false) + ".groovy");
     final GroovyFile file = (GroovyFile)myFixture.getFile();
-    TestCase.assertEquals(2, ReferencesSearch.search(file.getTopStatements()[0]).findAll().size());
+    TestCase.assertEquals(2, ReadAction.computeBlocking(()->ReferencesSearch.search(file.getTopStatements()[0]).findAll()).size());
   }
 
   public void testConstructorUsageInAnonymousClass() {
@@ -442,7 +443,8 @@ public class GroovyFindUsagesTest extends LightGroovyTestCase {
     final GroovyFile file = (GroovyFile)myFixture.getFile();
     final GrTypeDefinition psiClass = (GrTypeDefinition)file.getClasses()[0];
     final GrMethod method = (GrMethod)psiClass.getMethods()[0];
-    final Collection<MethodSignatureBackedByPsiMethod> superMethods = SuperMethodsSearch.search(method, null, true, true).findAll();
+    final Collection<MethodSignatureBackedByPsiMethod> superMethods =
+      ReadAction.computeBlocking(() -> SuperMethodsSearch.search(method, null, true, true).findAll());
     TestCase.assertEquals(firstParameterTypes.length, superMethods.size());
 
     final Iterator<MethodSignatureBackedByPsiMethod> iterator = superMethods.iterator();
@@ -471,6 +473,6 @@ public class GroovyFindUsagesTest extends LightGroovyTestCase {
     PsiFile file = myFixture.addFileToProject("aaa/bbb/Foo.groovy", "package aaa.bbb \n class Foo {}");
     myFixture.addFileToProject("Bar.groovy", "import aaa.bbb.Foo");
     PsiElement packageStatement = file.getChildren()[0].getChildren()[1].getReference().resolve();// package 'aaa.bbb'
-    TestCase.assertEquals(2, ReferencesSearch.search(packageStatement).findAll().size());
+    TestCase.assertEquals(2, ReadAction.computeBlocking(()->ReferencesSearch.search(packageStatement).findAll()).size());
   }
 }

@@ -15,6 +15,7 @@
  */
 package com.intellij.java.psi.search;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.search.LocalSearchScope;
@@ -38,7 +39,8 @@ public class JavaOverrideMethodsSearchTest extends LightJavaCodeInsightFixtureTe
     assertNull(anotherFile.derefStub());
     assertFalse(anotherFile.isContentsLoaded());
 
-    assertOneElement(OverridingMethodsSearch.search(superMethod, new LocalSearchScope(getFile()), true).findAll());
+    assertOneElement(
+      ReadAction.computeBlocking(() -> OverridingMethodsSearch.search(superMethod, new LocalSearchScope(getFile()), true).findAll()));
 
     // check we didn't go to another file during search
     assertNull(anotherFile.derefStub());

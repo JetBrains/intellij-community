@@ -17,6 +17,7 @@
 package com.intellij.java.codeInsight;
 
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -274,8 +275,9 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
     PsiClass abstractList8 = myFixture.getJavaFacade().findClass(AbstractList.class.getName(), usage8.getResolveScope());
     assertNotSame(abstractList7, abstractList8);
 
-    checkScopes(ClassInheritorsSearch.search(abstractList7).findAll(), IdeaTestUtil.getMockJdk17Path(), usage7);
-    checkScopes(ClassInheritorsSearch.search(abstractList8).findAll(), IdeaTestUtil.getMockJdk18Path(), usage8);
+    checkScopes(
+      ReadAction.computeBlocking(()->ClassInheritorsSearch.search(abstractList7).findAll()), IdeaTestUtil.getMockJdk17Path(), usage7);
+    checkScopes(ReadAction.computeBlocking(()->ClassInheritorsSearch.search(abstractList8).findAll()), IdeaTestUtil.getMockJdk18Path(), usage8);
   }
 
   private static void checkScopes(Collection<PsiClass> classes, File jdkHome, PsiClass usageInProject) {
@@ -297,7 +299,7 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
 
     PsiReference ref = libSrc.findReferenceAt(libSrc.getText().indexOf("Horizontal"));
     PsiMethod method = assertInstanceOf(ref.resolve(), PsiMethod.class);
-    assertContainsElements(MethodReferencesSearch.search(method).findAll(), ref);
+    assertContainsElements(ReadAction.computeBlocking(()->MethodReferencesSearch.search(method).findAll()), ref);
   }
 
   public void testConditionalAssignedToJava3Object() {

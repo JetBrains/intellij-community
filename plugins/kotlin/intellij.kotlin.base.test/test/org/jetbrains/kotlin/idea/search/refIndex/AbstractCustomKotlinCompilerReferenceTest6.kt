@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.search.refIndex
 
 import com.intellij.compiler.CompilerReferenceService
 import com.intellij.compiler.backwardRefs.CompilerReferenceServiceBase
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.CommonClassNames
 import com.intellij.psi.PsiElement
@@ -327,10 +328,10 @@ abstract class AbstractCustomKotlinCompilerReferenceTest6 : KotlinCompilerRefere
         }
     }
 
-    private fun findClassSubtypes(className: String, deep: Boolean) = ClassInheritorsSearch.search(myFixture.findClass(className), deep)
+    private fun findClassSubtypes(className: String, deep: Boolean) = runReadActionBlocking { ClassInheritorsSearch.search(myFixture.findClass(className), deep)
         .findAll()
         .map { it.kotlinFqName.toString() }
-        .sorted()
+        .sorted() }
 
     fun testNonPresentedClass(): Unit = doTestNonPresentedClass(7)
 

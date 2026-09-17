@@ -10,6 +10,7 @@ import com.intellij.find.findUsages.CustomUsageSearcher;
 import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -509,7 +510,7 @@ public abstract class PyTestCase extends UsefulTestCase {
         result.add(((PsiElementUsage)usage).getElement());
       }
     }
-    for (final PsiReference reference : ReferencesSearch.search(element).findAll()) {
+    for (final PsiReference reference : ReadAction.computeBlocking(()->ReferencesSearch.search(element).findAll())) {
       result.add(reference.getElement());
     }
 

@@ -2,6 +2,7 @@
 package com.intellij.compiler.backwardRefs
 
 import com.intellij.compiler.CompilerReferenceService
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.Module
@@ -48,12 +49,12 @@ class CompilerReferencesMultiModuleTest : CompilerReferencesFixtureTestCase() {
     addClass("B/Unrelated.java", "public class Unrelated {}")
     rebuildProject()
     val foo = (file1 as PsiClassOwner).classes[0]
-    assertOneElement(ClassInheritorsSearch.search(foo, foo.useScope, false).findAll())
+    assertOneElement(runReadActionBlocking { ClassInheritorsSearch.search(foo, foo.useScope, false).findAll()})
 
     val registryValue = Registry.get("compiler.ref.index")
     try {
       registryValue.setValue(false)
-      assertOneElement(ClassInheritorsSearch.search(foo, foo.useScope, false).findAll())
+      assertOneElement(runReadActionBlocking { ClassInheritorsSearch.search(foo, foo.useScope, false).findAll()})
     }
     finally {
       registryValue.setValue(true)

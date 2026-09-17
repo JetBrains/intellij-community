@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.overriding;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
@@ -28,7 +29,7 @@ public class GrAliasedImportInheritorsTest extends LightGroovyTestCase {
       new Roo() {}
       """);
 
-    Collection<PsiClass> inheritors = DirectClassInheritorsSearch.search(iface).findAll();
+    Collection<PsiClass> inheritors = ReadAction.computeBlocking(() -> DirectClassInheritorsSearch.search(iface).findAll());
     assertEquals(4, inheritors.size());
   }
 
@@ -49,7 +50,7 @@ public class GrAliasedImportInheritorsTest extends LightGroovyTestCase {
       new Roo<Double>() {}
       """);
 
-    Collection<PsiClass> inheritors = DirectClassInheritorsSearch.search(iface).findAll();
+    Collection<PsiClass> inheritors = ReadAction.computeBlocking(() -> DirectClassInheritorsSearch.search(iface).findAll());
     assertEquals(4, inheritors.size());
     for (PsiClass inheritor : inheritors) {
       PsiClassType type = ContainerUtil.find(((GrTypeDefinition)inheritor).getSuperTypes(false), t -> t.resolve() == iface);
@@ -79,7 +80,7 @@ public class GrAliasedImportInheritorsTest extends LightGroovyTestCase {
       new bar.Bar(){}
       """);
 
-    Collection<PsiClass> inheritors = DirectClassInheritorsSearch.search(iface).findAll();
+    Collection<PsiClass> inheritors = ReadAction.computeBlocking(() -> DirectClassInheritorsSearch.search(iface).findAll());
     assertEquals(1, inheritors.size());
 
     Iterator<PsiClass> iterator = inheritors.iterator();
@@ -108,7 +109,7 @@ public class GrAliasedImportInheritorsTest extends LightGroovyTestCase {
       new Bar() {} // inherits foo.Foo
       """);
 
-    Collection<PsiClass> inheritors = DirectClassInheritorsSearch.search(iface).findAll();
+    Collection<PsiClass> inheritors = ReadAction.computeBlocking(() -> DirectClassInheritorsSearch.search(iface).findAll());
     assertEquals(1, inheritors.size());
     Iterator<PsiClass> iterator = inheritors.iterator();
     assertTrue(iterator.hasNext());
@@ -131,7 +132,7 @@ public class GrAliasedImportInheritorsTest extends LightGroovyTestCase {
       new Bar() {} // inherits foo.Foo
       """);
 
-    Collection<PsiClass> inheritors = DirectClassInheritorsSearch.search(iface).findAll();
+    Collection<PsiClass> inheritors = ReadAction.computeBlocking(() -> DirectClassInheritorsSearch.search(iface).findAll());
     assertEquals(1, inheritors.size());
     Iterator<PsiClass> iterator = inheritors.iterator();
     assertTrue(iterator.hasNext());

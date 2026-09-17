@@ -2,6 +2,7 @@
 package com.intellij.java.psi.search;
 
 import com.intellij.concurrency.JobScheduler;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -36,11 +37,13 @@ public class ClassInheritorsTest extends JavaCodeInsightFixtureTestCase {
     assertTrue(String.valueOf(numberClass), numberClass instanceof ClsClassImpl);
     PsiClass n2 = (PsiClass)numberClass.getNavigationElement();
     assertTrue(String.valueOf(n2), n2 instanceof PsiClassImpl);
-    Collection<PsiClass> subClasses = DirectClassInheritorsSearch.search(n2, GlobalSearchScope.allScope(getProject())).findAll();
+    Collection<PsiClass> subClasses =
+      ReadAction.computeBlocking(() -> DirectClassInheritorsSearch.search(n2, GlobalSearchScope.allScope(getProject())).findAll());
     List<String> fqn = subClasses.stream().map(PsiClass::getQualifiedName).sorted().toList();
     assertEquals(fqn.toString(), fqn.size(), new HashSet<>(fqn).size()); // no dups mean no Cls/Psi mixed
 
-    Collection<PsiClass> allSubClasses = ClassInheritorsSearch.search(n2, GlobalSearchScope.allScope(getProject()), true).findAll();
+    Collection<PsiClass> allSubClasses =
+      ReadAction.computeBlocking(() -> ClassInheritorsSearch.search(n2, GlobalSearchScope.allScope(getProject()), true).findAll());
     List<String> allFqn = allSubClasses.stream().map(PsiClass::getQualifiedName).sorted().toList();
     assertEquals(allFqn.toString(), allFqn.size(), new HashSet<>(allFqn).size());
   }
@@ -94,8 +97,8 @@ public class ClassInheritorsTest extends JavaCodeInsightFixtureTestCase {
                            private static class D1 extends Test.C1 { }
                            private static class D2 extends Test.C2 { }
                          }""");
-    assertSize(5, ClassInheritorsSearch.search(myFixture.findClass("Test.A")).findAll());
-    assertSize(4, ClassInheritorsSearch.search(myFixture.findClass("Test.B")).findAll());
+    assertSize(5, ReadAction.computeBlocking(() -> ClassInheritorsSearch.search(myFixture.findClass("Test.A")).findAll()));
+    assertSize(4, ReadAction.computeBlocking(() -> ClassInheritorsSearch.search(myFixture.findClass("Test.B")).findAll()));
   }
 
   public void testPackageLocalClassCanHaveInheritorsInAnotherPackage() {
@@ -111,8 +114,8 @@ public class ClassInheritorsTest extends JavaCodeInsightFixtureTestCase {
                            private static class D1 extends one.Test.C1 { }
                            private static class D2 extends one.Test.C2 { }
                          }""");
-    assertSize(5, ClassInheritorsSearch.search(myFixture.findClass("one.Test.A")).findAll());
-    assertSize(4, ClassInheritorsSearch.search(myFixture.findClass("one.Test.B")).findAll());
+    assertSize(5, ReadAction.computeBlocking(() -> ClassInheritorsSearch.search(myFixture.findClass("one.Test.A")).findAll()));
+    assertSize(4, ReadAction.computeBlocking(() -> ClassInheritorsSearch.search(myFixture.findClass("one.Test.B")).findAll()));
   }
   
   public void testClassExposedViaContainingClassSubclass() {
@@ -131,7 +134,7 @@ public class ClassInheritorsTest extends JavaCodeInsightFixtureTestCase {
       package two;
       interface InnerChild extends one.Child.Inner {}
       """);
-    assertSize(1, ClassInheritorsSearch.search(myFixture.findClass("one.OuterSuper.Inner")).findAll());
+    assertSize(1, ReadAction.computeBlocking(() -> ClassInheritorsSearch.search(myFixture.findClass("one.OuterSuper.Inner")).findAll()));
   }
 
   public void testInheritorsInAnotherModuleWithNoDirectDependency() throws IOException {
@@ -145,7 +148,7 @@ public class ClassInheritorsTest extends JavaCodeInsightFixtureTestCase {
     ModuleRootModificationUtil.addDependency(mod1, getModule(), DependencyScope.COMPILE, true);
     ModuleRootModificationUtil.addDependency(mod2, mod1, DependencyScope.COMPILE, false);
 
-    assertSize(2, ClassInheritorsSearch.search(myFixture.findClass("A")).findAll());
+    assertSize(2, ReadAction.computeBlocking(() -> ClassInheritorsSearch.search(myFixture.findClass("A")).findAll()));
   }
 
   public void testInheritorsInAnotherModuleWithProductionOnTestDependency() throws IOException {
@@ -158,19 +161,19 @@ public class ClassInheritorsTest extends JavaCodeInsightFixtureTestCase {
     ModuleRootModificationUtil.updateModel(mod2, model ->
       model.addModuleOrderEntry(getModule()).setProductionOnTestDependency(true));
 
-    assertSize(1, ClassInheritorsSearch.search(myFixture.findClass("B")).findAll());
+    assertSize(1, ReadAction.computeBlocking(() -> ClassInheritorsSearch.search(myFixture.findClass("B")).findAll()));
   }
 
   public void testSpaceBeforeSuperTypeGenerics() {
     myFixture.addFileToProject("A.java", "interface A<T> {}");
     myFixture.addFileToProject("B.java", "class B implements A <T> {}");
-    assertSize(1, ClassInheritorsSearch.search(myFixture.findClass("A")).findAll());
+    assertSize(1, ReadAction.computeBlocking(() -> ClassInheritorsSearch.search(myFixture.findClass("A")).findAll()));
   }
 
   public void testQueryingNonAnonymousInheritors() {
     PsiClass foo = myFixture.addClass("class Foo { { new Foo(){}; }; class Bar extends Foo {} }");
     GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
-    assertSize(1, ClassInheritorsSearch.search(foo, scope, true, true, false).findAll());
-    assertSize(2, ClassInheritorsSearch.search(foo, scope, true, true, true).findAll());
+    assertSize(1, ReadAction.computeBlocking(() -> ClassInheritorsSearch.search(foo, scope, true, true, false).findAll()));
+    assertSize(2, ReadAction.computeBlocking(() -> ClassInheritorsSearch.search(foo, scope, true, true, true).findAll()));
   }
 }

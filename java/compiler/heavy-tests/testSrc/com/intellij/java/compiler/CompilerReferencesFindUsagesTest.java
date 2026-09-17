@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.find.findUsages.JavaFindUsagesHandlerFactory;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription;
 import com.intellij.openapi.compiler.options.ExcludesConfiguration;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -183,9 +184,11 @@ public class CompilerReferencesFindUsagesTest extends DaemonAnalyzerTestCase {
     try {
       configureByFiles(getName(), Arrays.stream(testFiles).map(f -> getName() + "/" + f).toArray(String[]::new));
       excludesConfigurationPatcher.consume(excludesConfiguration);
-      assertSize(expectedUsagesCount, FunctionalExpressionSearch.search(myJavaFacade.findClass(CommonClassNames.JAVA_LANG_RUNNABLE)).findAll());
+      assertSize(expectedUsagesCount, ReadAction.computeBlocking(
+        () -> FunctionalExpressionSearch.search(myJavaFacade.findClass(CommonClassNames.JAVA_LANG_RUNNABLE)).findAll()));
       myCompilerTester.rebuild();
-      assertSize(expectedUsagesCount, FunctionalExpressionSearch.search(myJavaFacade.findClass(CommonClassNames.JAVA_LANG_RUNNABLE)).findAll());
+      assertSize(expectedUsagesCount, ReadAction.computeBlocking(
+        () -> FunctionalExpressionSearch.search(myJavaFacade.findClass(CommonClassNames.JAVA_LANG_RUNNABLE)).findAll()));
     } finally {
       excludesConfiguration.removeAllExcludeEntryDescriptions();
     }
@@ -203,8 +206,9 @@ public class CompilerReferencesFindUsagesTest extends DaemonAnalyzerTestCase {
 
   private Collection<PsiReference> searchReferences(@NotNull PsiElement element) {
     if (element instanceof PsiMethod) {
-      return MethodReferencesSearch.search((PsiMethod)element, GlobalSearchScope.projectScope(getProject()), false).findAll();
+      return ReadAction.computeBlocking(
+        () -> MethodReferencesSearch.search((PsiMethod)element, GlobalSearchScope.projectScope(getProject()), false).findAll());
     }
-    return ReferencesSearch.search(element, GlobalSearchScope.projectScope(getProject())).findAll();
+    return ReadAction.computeBlocking(() -> ReferencesSearch.search(element, GlobalSearchScope.projectScope(getProject())).findAll());
   }
 }

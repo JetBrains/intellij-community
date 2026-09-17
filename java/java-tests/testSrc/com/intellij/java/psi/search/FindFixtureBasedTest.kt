@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi.search
 
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.psi.PsiReferenceExpression
 import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
@@ -13,7 +14,7 @@ class FindFixtureBasedTest : LightJavaCodeInsightFixtureTestCase() {
 
     val constructors = aClass.constructors
     assertSize(1, constructors)
-    val references = MethodReferencesSearch.search(constructors[0]).findAll()
+    val references = runReadActionBlocking { MethodReferencesSearch.search(constructors[0]).findAll() }
     assertSize(1, references)
   }
 

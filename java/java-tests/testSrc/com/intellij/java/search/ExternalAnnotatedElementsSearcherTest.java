@@ -2,6 +2,7 @@
 package com.intellij.java.search;
 
 import com.intellij.codeInsight.ExternalAnnotationsManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.roots.JavaModuleExternalPaths;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -52,7 +53,7 @@ public class ExternalAnnotatedElementsSearcherTest extends JavaCodeInsightFixtur
       """);
 
     GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
-    Collection<PsiClass> result = AnnotatedElementsSearch.searchPsiClasses(annClass, scope).findAll();
+    Collection<PsiClass> result = ReadAction.computeBlocking(() -> AnnotatedElementsSearch.searchPsiClasses(annClass, scope).findAll());
     assertSize(1, result);
     assertEquals("Foo", result.iterator().next().getName());
   }
@@ -80,7 +81,7 @@ public class ExternalAnnotatedElementsSearcherTest extends JavaCodeInsightFixtur
       """);
 
     GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
-    Collection<PsiMethod> methods = AnnotatedElementsSearch.searchPsiMethods(annClass, scope).findAll();
+    Collection<PsiMethod> methods = ReadAction.computeBlocking(() -> AnnotatedElementsSearch.searchPsiMethods(annClass, scope).findAll());
     assertSize(1, methods);
     assertEquals("annotatedMethod", methods.iterator().next().getName());
   }
@@ -108,7 +109,7 @@ public class ExternalAnnotatedElementsSearcherTest extends JavaCodeInsightFixtur
       """);
 
     GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
-    Collection<PsiField> fields = AnnotatedElementsSearch.searchPsiFields(annClass, scope).findAll();
+    Collection<PsiField> fields = ReadAction.computeBlocking(() -> AnnotatedElementsSearch.searchPsiFields(annClass, scope).findAll());
     assertSize(1, fields);
     assertEquals("annotatedField", fields.iterator().next().getName());
   }
@@ -136,7 +137,7 @@ public class ExternalAnnotatedElementsSearcherTest extends JavaCodeInsightFixtur
       """);
 
     GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
-    Collection<PsiMethod> methods = AnnotatedElementsSearch.searchPsiMethods(annClass, scope).findAll();
+    Collection<PsiMethod> methods = ReadAction.computeBlocking(() -> AnnotatedElementsSearch.searchPsiMethods(annClass, scope).findAll());
     assertSize(1, methods);
     PsiMethod method = methods.iterator().next();
     assertEquals("process", method.getName());
@@ -174,7 +175,7 @@ public class ExternalAnnotatedElementsSearcherTest extends JavaCodeInsightFixtur
       """);
 
     GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
-    Collection<PsiMethod> methods = AnnotatedElementsSearch.searchPsiMethods(annClass, scope).findAll();
+    Collection<PsiMethod> methods = ReadAction.computeBlocking(() -> AnnotatedElementsSearch.searchPsiMethods(annClass, scope).findAll());
     assertSize(3, methods);
     assertContainsElements(
       ContainerUtil.map(methods, PsiMethod::getName),
@@ -213,20 +214,20 @@ public class ExternalAnnotatedElementsSearcherTest extends JavaCodeInsightFixtur
     GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
 
     // Only methods
-    Collection<PsiMethod> methods = AnnotatedElementsSearch.searchPsiMethods(annClass, scope).findAll();
+    Collection<PsiMethod> methods = ReadAction.computeBlocking(() -> AnnotatedElementsSearch.searchPsiMethods(annClass, scope).findAll());
     assertSize(1, methods);
 
     // Only classes
-    Collection<PsiClass> classes = AnnotatedElementsSearch.searchPsiClasses(annClass, scope).findAll();
+    Collection<PsiClass> classes = ReadAction.computeBlocking(() -> AnnotatedElementsSearch.searchPsiClasses(annClass, scope).findAll());
     assertSize(1, classes);
 
     // Only fields
-    Collection<PsiField> fields = AnnotatedElementsSearch.searchPsiFields(annClass, scope).findAll();
+    Collection<PsiField> fields = ReadAction.computeBlocking(() -> AnnotatedElementsSearch.searchPsiFields(annClass, scope).findAll());
     assertSize(1, fields);
 
     // All members (PsiModifierListOwner)
-    Collection<? extends PsiModifierListOwner> all = AnnotatedElementsSearch.searchElements(
-      annClass, scope, PsiModifierListOwner.class).findAll();
+    Collection<? extends PsiModifierListOwner> all = ReadAction.computeBlocking(() -> AnnotatedElementsSearch.searchElements(
+      annClass, scope, PsiModifierListOwner.class).findAll());
     assertSize(3, all);
   }
 
@@ -252,7 +253,8 @@ public class ExternalAnnotatedElementsSearcherTest extends JavaCodeInsightFixtur
       """);
 
     GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
-    Collection<PsiParameter> params = AnnotatedElementsSearch.searchPsiParameters(annClass, scope).findAll();
+    Collection<PsiParameter> params =
+      ReadAction.computeBlocking(() -> AnnotatedElementsSearch.searchPsiParameters(annClass, scope).findAll());
     assertSize(1, params);
     assertEquals("input", params.iterator().next().getName());
   }
@@ -279,7 +281,7 @@ public class ExternalAnnotatedElementsSearcherTest extends JavaCodeInsightFixtur
       """);
 
     GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
-    Collection<PsiClass> result = AnnotatedElementsSearch.searchPsiClasses(annClass, scope).findAll();
+    Collection<PsiClass> result = ReadAction.computeBlocking(() -> AnnotatedElementsSearch.searchPsiClasses(annClass, scope).findAll());
     assertSize(1, result);
     assertEquals("Inner", result.iterator().next().getName());
   }
@@ -308,7 +310,7 @@ public class ExternalAnnotatedElementsSearcherTest extends JavaCodeInsightFixtur
       """);
 
     GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
-    Collection<PsiMethod> methods = AnnotatedElementsSearch.searchPsiMethods(annClass, scope).findAll();
+    Collection<PsiMethod> methods = ReadAction.computeBlocking(() -> AnnotatedElementsSearch.searchPsiMethods(annClass, scope).findAll());
     assertSize(1, methods);
     assertEquals("innerMethod", methods.iterator().next().getName());
   }
@@ -342,11 +344,11 @@ public class ExternalAnnotatedElementsSearcherTest extends JavaCodeInsightFixtur
       """);
 
     GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
-    Collection<PsiClass> classes = AnnotatedElementsSearch.searchPsiClasses(annClass, scope).findAll();
+    Collection<PsiClass> classes = ReadAction.computeBlocking(() -> AnnotatedElementsSearch.searchPsiClasses(annClass, scope).findAll());
     assertSize(1, classes);
     assertEquals("Deep", classes.iterator().next().getName());
 
-    Collection<PsiMethod> methods = AnnotatedElementsSearch.searchPsiMethods(annClass, scope).findAll();
+    Collection<PsiMethod> methods = ReadAction.computeBlocking(() -> AnnotatedElementsSearch.searchPsiMethods(annClass, scope).findAll());
     assertSize(1, methods);
     assertEquals("deepMethod", methods.iterator().next().getName());
   }
@@ -371,7 +373,7 @@ public class ExternalAnnotatedElementsSearcherTest extends JavaCodeInsightFixtur
       """);
 
     GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
-    Collection<PsiClass> result = AnnotatedElementsSearch.searchPsiClasses(annClass, scope).findAll();
+    Collection<PsiClass> result = ReadAction.computeBlocking(() -> AnnotatedElementsSearch.searchPsiClasses(annClass, scope).findAll());
     assertSize(1, result);
     assertEquals("Box", result.iterator().next().getName());
   }
@@ -437,8 +439,8 @@ public class ExternalAnnotatedElementsSearcherTest extends JavaCodeInsightFixtur
 
     // Verify AnnotatedElementsSearch also finds all three elements
     GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
-    Collection<? extends PsiModifierListOwner> found = AnnotatedElementsSearch.searchElements(
-      annClass, scope, PsiModifierListOwner.class).findAll();
+    Collection<? extends PsiModifierListOwner> found = ReadAction.computeBlocking(() -> AnnotatedElementsSearch.searchElements(
+      annClass, scope, PsiModifierListOwner.class).findAll());
     assertSize(3, found);
   }
 }

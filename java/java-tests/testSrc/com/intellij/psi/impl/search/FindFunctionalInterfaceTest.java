@@ -3,6 +3,7 @@ package com.intellij.psi.impl.search;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
@@ -63,7 +64,8 @@ public class FindFunctionalInterfaceTest extends LightJavaCodeInsightFixtureTest
   private void doTestOneExpression() {
     configure();
     final PsiClass psiClass = findClassAtCaret();
-    final Collection<PsiFunctionalExpression> expressions = FunctionalExpressionSearch.search(psiClass).findAll();
+    final Collection<PsiFunctionalExpression> expressions =
+      ReadAction.computeBlocking(() -> FunctionalExpressionSearch.search(psiClass).findAll());
     int size = expressions.size();
     assertEquals(1, size);
     final PsiFunctionalExpression next = expressions.iterator().next();
@@ -88,71 +90,71 @@ public class FindFunctionalInterfaceTest extends LightJavaCodeInsightFixtureTest
     assertNotNull(field);
     final PsiClass aClass = field.getContainingClass();
     assertTrue(aClass instanceof PsiAnonymousClass);
-    final Collection<PsiReference> references = ReferencesSearch.search(field).findAll();
+    final Collection<PsiReference> references = ReadAction.computeBlocking(() -> ReferencesSearch.search(field).findAll());
     assertFalse(references.isEmpty());
     assertEquals(1, references.size());
   }
 
   public void testMethodWithClassTypeParameter() {
     configure();
-    assertSize(1, FunctionalExpressionSearch.search(findClass("I")).findAll());
+    assertSize(1, ReadAction.computeBlocking(() -> FunctionalExpressionSearch.search(findClass("I")).findAll()));
   }
 
   public void testFindSubInterfaceLambdas() {
     configure();
 
-    assertSize(5, FunctionalExpressionSearch.search(findClass("DumbAwareRunnable")).findAll());
-    assertSize(3, FunctionalExpressionSearch.search(findClass("DumbAwareRunnable2")).findAll());
-    assertSize(6, FunctionalExpressionSearch.search(findClass("DumbAware")).findAll());
+    assertSize(5, ReadAction.computeBlocking(() -> FunctionalExpressionSearch.search(findClass("DumbAwareRunnable")).findAll()));
+    assertSize(3, ReadAction.computeBlocking(() -> FunctionalExpressionSearch.search(findClass("DumbAwareRunnable2")).findAll()));
+    assertSize(6, ReadAction.computeBlocking(() -> FunctionalExpressionSearch.search(findClass("DumbAware")).findAll()));
 
-    assertSize(1, FunctionalExpressionSearch.search(findClass("WithDefaultMethods")).findAll());
-    assertSize(1, FunctionalExpressionSearch.search(findClass("WithManyMethods")).findAll());
-    assertSize(1, FunctionalExpressionSearch.search(findClass("WithManyMethods2")).findAll());
+    assertSize(1, ReadAction.computeBlocking(() -> FunctionalExpressionSearch.search(findClass("WithDefaultMethods")).findAll()));
+    assertSize(1, ReadAction.computeBlocking(() -> FunctionalExpressionSearch.search(findClass("WithManyMethods")).findAll()));
+    assertSize(1, ReadAction.computeBlocking(() -> FunctionalExpressionSearch.search(findClass("WithManyMethods2")).findAll()));
   }
 
   public void testArraysStreamLikeApi() {
     configure();
-    assertSize(1, FunctionalExpressionSearch.search(findClass("I")).findAll());
+    assertSize(1, ReadAction.computeBlocking(() -> FunctionalExpressionSearch.search(findClass("I")).findAll()));
   }
 
   public void testStreamOfLikeApiWithLocalVar() {
     configure();
-    assertSize(1, FunctionalExpressionSearch.search(findClass("I")).findAll());
+    assertSize(1, ReadAction.computeBlocking(() -> FunctionalExpressionSearch.search(findClass("I")).findAll()));
   }
 
   public void testDefaultInHierarchy() {
     configure();
-    assertEmpty(FunctionalExpressionSearch.search(findClass("I").getMethods()[0]).findAll());
+    assertEmpty(ReadAction.computeBlocking(() -> FunctionalExpressionSearch.search(findClass("I").getMethods()[0]).findAll()));
   }
 
   public void testStreamOfLikeApiWithField() {
     myFixture.addClass("class Base { StrType Stream = null; }");
     configure();
-    assertSize(1, FunctionalExpressionSearch.search(findClass("I")).findAll());
+    assertSize(1, ReadAction.computeBlocking(() -> FunctionalExpressionSearch.search(findClass("I")).findAll()));
   }
 
   public void testCallWithQualifiedName() {
     myFixture.addClass("package pkg.p1.p2.p3; public interface I { void run() {} }");
     myFixture.addClass("package pkg.p1.p2.p3; public class Util { public static void foo(I i) {} }");
     configure();
-    assertSize(1, FunctionalExpressionSearch.search(findClass("pkg.p1.p2.p3.I")).findAll());
+    assertSize(1, ReadAction.computeBlocking(() -> FunctionalExpressionSearch.search(findClass("pkg.p1.p2.p3.I")).findAll()));
   }
 
   public void testInsideArrayInitializer() {
     myFixture.addClass("public interface Foo { void run() {}}");
     myFixture.addClass("public interface Bar { void run() {}}");
     configure();
-    assertSize(3, FunctionalExpressionSearch.search(findClass("Foo")).findAll());
+    assertSize(3, ReadAction.computeBlocking(() -> FunctionalExpressionSearch.search(findClass("Foo")).findAll()));
   }
 
   public void testCallOnGenericParameter() {
     configure();
-    assertSize(1, FunctionalExpressionSearch.search(findClass("I")).findAll());
+    assertSize(1, ReadAction.computeBlocking(() -> FunctionalExpressionSearch.search(findClass("I")).findAll()));
   }
 
   public void testChainStartingWithConstructor() {
     configure();
-    assertSize(1, FunctionalExpressionSearch.search(findClass("IterHelper.MapIterCallback")).findAll());
+    assertSize(1, ReadAction.computeBlocking(() -> FunctionalExpressionSearch.search(findClass("IterHelper.MapIterCallback")).findAll()));
   }
 
   public void testDontVisitInapplicableFiles() {
@@ -201,7 +203,7 @@ public class FindFunctionalInterfaceTest extends LightJavaCodeInsightFixtureTest
     assertFalse(((PsiFileImpl) usages).isContentsLoaded());
     assertNull(((PsiFileImpl) usages).derefStub());
 
-    Collection<PsiFunctionalExpression> all = FunctionalExpressionSearch.search(sam).findAll();
+    Collection<PsiFunctionalExpression> all = ReadAction.computeBlocking(() -> FunctionalExpressionSearch.search(sam).findAll());
     assertSize(2, all);
     for (PsiFunctionalExpression expression : all) {
       LeakHunter.checkLeak(expression, ASTNode.class);
@@ -214,7 +216,7 @@ public class FindFunctionalInterfaceTest extends LightJavaCodeInsightFixtureTest
                                                               "void bar(I i) {}" +
                                                              "{ bar(() -> {}); }; }" +
                                                               "}");
-    assertOneElement(FunctionalExpressionSearch.search(sam).findAll());
+    assertOneElement(ReadAction.computeBlocking(() -> FunctionalExpressionSearch.search(sam).findAll()));
     assertFalse(((PsiFileImpl) usages).isContentsLoaded());
   }
 
@@ -238,7 +240,8 @@ public class FindFunctionalInterfaceTest extends LightJavaCodeInsightFixtureTest
     configure();
 
     PsiClass predicate = findClass(Predicate.class.getName());
-    final PsiFunctionalExpression next = assertOneElement(FunctionalExpressionSearch.search(predicate).findAll());
+    final PsiFunctionalExpression next =
+      assertOneElement(ReadAction.computeBlocking(() -> FunctionalExpressionSearch.search(predicate).findAll()));
     assertEquals(expected, next.getText());
   }
 
@@ -255,7 +258,7 @@ public class FindFunctionalInterfaceTest extends LightJavaCodeInsightFixtureTest
                            }
                          }""");
 
-    assertSize(5, FunctionalExpressionSearch.search(findClassAtCaret()).findAll());
+    assertSize(5, ReadAction.computeBlocking(() -> FunctionalExpressionSearch.search(findClassAtCaret()).findAll()));
   }
 
   public void testFindLambdaForAllEquivalentSams() {
@@ -265,24 +268,24 @@ public class FindFunctionalInterfaceTest extends LightJavaCodeInsightFixtureTest
                                               "interface Foo { void foo(); }" +
                                               "interface Foo { void bar(); } ");
     PsiClass[] fooClasses = ((PsiJavaFile)file).getClasses();
-    assertOneElement(FunctionalExpressionSearch.search(fooClasses[0]).findAll());
-    assertOneElement(FunctionalExpressionSearch.search(fooClasses[1]).findAll());
+    assertOneElement(ReadAction.computeBlocking(() -> FunctionalExpressionSearch.search(fooClasses[0]).findAll()));
+    assertOneElement(ReadAction.computeBlocking(() -> FunctionalExpressionSearch.search(fooClasses[1]).findAll()));
   }
 
   public void testInvalidCode() {
     configure();
     // whatever, but it shouldn't throw
-    assertEmpty(FunctionalExpressionSearch.search(findClass("I")).findAll());
+    assertEmpty(ReadAction.computeBlocking(() -> FunctionalExpressionSearch.search(findClass("I")).findAll()));
   }
 
   public void testNoCrashInDumbMode() {
     PsiClass sam = myFixture.addClass("interface I { void foo(); }");
     myFixture.addClass("class Some {{ I i = () -> {}; }}");
 
-    assertSize(1, FunctionalExpressionSearch.search(sam).findAll());
+    assertSize(1, ReadAction.computeBlocking(() -> FunctionalExpressionSearch.search(sam).findAll()));
 
     DumbModeTestUtils.runInDumbModeSynchronously(getProject(), () -> {
-      assertEmpty(FunctionalExpressionSearch.search(sam).findAll());
+      assertEmpty(ReadAction.computeBlocking(() -> FunctionalExpressionSearch.search(sam).findAll()));
     });
   }
 

@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.fir.search
 
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.LocalSearchScope
@@ -61,12 +62,12 @@ class KotlinReferencesSearchTest : AbstractSearcherTest() {
     private inline fun <reified T : PsiElement> doTest(): List<PsiReference> {
         val psiFile = myFixtureProxy.configureByFile(dataFile())
         val func = myFixtureProxy.elementAtCaret.getParentOfType<T>(false)!!
-        val refs = ReferencesSearch.search(func).findAll().sortedBy { it.element.textRange.startOffset }
+        val refs = runReadActionBlocking { ReferencesSearch.search(func).findAll().sortedBy { it.element.textRange.startOffset } }
 
         // check that local reference search gives the same result
         try {
             ExpressionsOfTypeProcessor.prodMode()
-            val localRefs = ReferencesSearch.search(func, LocalSearchScope(psiFile)).findAll()
+            val localRefs = runReadActionBlocking { ReferencesSearch.search(func, LocalSearchScope(psiFile)).findAll() }
             Assert.assertEquals(refs.size, localRefs.size)
         } finally {
             ExpressionsOfTypeProcessor.resetMode()

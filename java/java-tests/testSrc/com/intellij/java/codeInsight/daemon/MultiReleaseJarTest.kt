@@ -3,6 +3,7 @@ package com.intellij.java.codeInsight.daemon
 
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.project.DumbService.Companion.getInstance
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.java.LanguageLevel
@@ -179,10 +180,10 @@ class MultiReleaseJarTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     myFixture.configureByText("Test.java", "import com.example.*; class Test extends MultiReleaseClass {}")
     for(level in listOf(LanguageLevel.JDK_1_8, LanguageLevel.JDK_1_9)) {
       IdeaTestUtil.withLevel(module, level) {
-        var refs = ReferencesSearch.search(class8).findAll()
+        var refs = runReadActionBlocking { ReferencesSearch.search(class8).findAll() }
         assertEquals(1, refs.size)
         assertEquals(myFixture.file, refs.first().element.containingFile)
-        refs = ReferencesSearch.search(class9).findAll()
+        refs = runReadActionBlocking { ReferencesSearch.search(class9).findAll() }
         assertEquals(1, refs.size)
         assertEquals(myFixture.file, refs.first().element.containingFile)
       }

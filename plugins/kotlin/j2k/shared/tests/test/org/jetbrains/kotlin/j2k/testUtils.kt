@@ -133,7 +133,7 @@ internal object J2kTestPostprocessorExtension : J2kPostprocessorExtension {
                 file.findDescendantOfType<KtParameter> { it.nameIdentifier != null }
             } ?: continue
 
-            val references = ReferencesSearch.search(firstNamedParameter, LocalSearchScope(file)).findAll()
+            val references = readAction { ReferencesSearch.search(firstNamedParameter, LocalSearchScope(file)).findAll() }
             edtWriteAction {
                 PsiImplUtil.setName(checkNotNull(firstNamedParameter.nameIdentifier), "postbar")
             }

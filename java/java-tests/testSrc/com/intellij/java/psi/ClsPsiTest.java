@@ -4,6 +4,7 @@ package com.intellij.java.psi;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.TypeNullability;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
@@ -431,7 +432,7 @@ public class ClsPsiTest extends LightIdeaTestCase {
     assertSize(1, aClass.findMethodsByName("valueOf", false));
     assertSize(1, aClass.findMethodsByName("values", false));
 
-    Collection<PsiClass> constants = DirectClassInheritorsSearch.search(aClass).findAll();
+    Collection<PsiClass> constants = ReadAction.computeBlocking(() -> DirectClassInheritorsSearch.search(aClass).findAll());
     assertSize(7, constants);
     for (PsiClass constant : constants) {
       assertSize(0, constant.findMethodsByName("valueOf", false));

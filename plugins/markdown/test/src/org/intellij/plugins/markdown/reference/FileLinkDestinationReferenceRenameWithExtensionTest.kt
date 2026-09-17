@@ -1,6 +1,7 @@
 package org.intellij.plugins.markdown.reference
 
 import com.intellij.idea.TestFor
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.searches.ReferencesSearch
@@ -35,7 +36,7 @@ class FileLinkDestinationReferenceWithExtensionTest : BaseLinkDestinationReferen
   fun testRenameWithSpaceAndParentDirectory() {
     myFixture.configureByFile("source/renameWithSpace.md")
     val target = PsiUtilCore.findFileSystemItem(project, myFixture.findFileInTempDir("test2/test data.md"))!!
-    assertTrue(ReferencesSearch.search(target).findAll().isNotEmpty())
+    assertTrue(runReadActionBlocking { ReferencesSearch.search(target).findAll()}.isNotEmpty())
     myFixture.renameElement(target, "test data2.md")
     myFixture.checkResultByFile("source/renameWithSpaceAfter.md")
   }
@@ -43,7 +44,7 @@ class FileLinkDestinationReferenceWithExtensionTest : BaseLinkDestinationReferen
   fun testRenameWithNonCanonicalEncoding() {
     myFixture.configureByFile("source/renameWithNonCanonicalEncoding.md")
     val target = PsiUtilCore.findFileSystemItem(project, myFixture.findFileInTempDir("test2/foo+bar.md"))!!
-    assertTrue(ReferencesSearch.search(target).findAll().isNotEmpty())
+    assertTrue(runReadActionBlocking { ReferencesSearch.search(target).findAll()}.isNotEmpty())
     myFixture.renameElement(target, "foo+baz.md")
     myFixture.checkResultByFile("source/renameWithNonCanonicalEncodingAfter.md")
   }

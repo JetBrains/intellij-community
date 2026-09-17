@@ -5,6 +5,7 @@ package com.intellij.uiDesigner.binding;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -41,7 +42,7 @@ public class FormPropertyUsageTest extends JavaPsiTestCase {
   public void testClassUsage() {
     PsiClass psiClass = myJavaFacade.findClass(JButton.class.getName(), GlobalSearchScope.allScope(myProject));
     final Query<PsiReference> query = ReferencesSearch.search(psiClass, GlobalSearchScope.projectScope(myProject));
-    final Collection<PsiReference> result = query.findAll();
+    final Collection<PsiReference> result = ReadAction.computeBlocking(() -> query.findAll());
     assertEquals(1, result.size());
   }
 
@@ -63,7 +64,7 @@ public class FormPropertyUsageTest extends JavaPsiTestCase {
     final Property prop = (Property)propFile.findPropertyByKey("key");
     assertNotNull(prop);
     final Query<PsiReference> query = ReferencesSearch.search(prop);
-    final Collection<PsiReference> result = query.findAll();
+    final Collection<PsiReference> result = ReadAction.computeBlocking(() -> query.findAll());
     assertEquals(1, result.size());
     PsiReference reference = ContainerUtil.getFirstItem(result);
     assertTrue(reference.isReferenceTo(prop));
@@ -85,7 +86,7 @@ public class FormPropertyUsageTest extends JavaPsiTestCase {
     PropertiesFile propFile = (PropertiesFile) myPsiManager.findFile(myTestProjectRoot.findChild(fileName));
     assertNotNull(propFile);
     final Query<PsiReference> query = ReferencesSearch.search(propFile.getContainingFile());
-    final Collection<PsiReference> result = query.findAll();
+    final Collection<PsiReference> result = ReadAction.computeBlocking(() -> query.findAll());
     assertEquals(1, result.size());
     verifyReference(ContainerUtil.getFirstItem(result), "form.form", 949);
   }

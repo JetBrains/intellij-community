@@ -5,6 +5,7 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.MarkerType;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation;
 import com.intellij.openapi.roots.OrderRootType;
@@ -65,7 +66,7 @@ public class LibraryUseSearchUsingScopeEnlargerTest extends JavaCodeInsightFixtu
   public void testSearchFromScourceLooksInLibrary() {
     PsiClass sourceClass = myFixture.findClass("TestSrcInterface");
     PsiClass libImpl = myFixture.findClass("TestInterfaceImpl");
-    Collection<PsiClass> classInheritors = ClassInheritorsSearch.search(sourceClass).findAll();
+    Collection<PsiClass> classInheritors = ReadAction.computeBlocking(() -> ClassInheritorsSearch.search(sourceClass).findAll());
 
     assertContainsElements(classInheritors, libImpl);
   }
@@ -90,7 +91,8 @@ public class LibraryUseSearchUsingScopeEnlargerTest extends JavaCodeInsightFixtu
     PsiClass sourceClass = myFixture.findClass("TestSrcInterface");
     PsiMethod testMethod = PsiTreeUtil.findChildOfType(sourceClass, PsiMethod.class);
 
-    Collection<PsiMethod> methods = OverridingMethodsSearch.search(testMethod, GlobalSearchScope.allScope(getProject()), false).findAll();
+    Collection<PsiMethod> methods = ReadAction.computeBlocking(
+      () -> OverridingMethodsSearch.search(testMethod, GlobalSearchScope.allScope(getProject()), false).findAll());
     assertSize(1, methods);
   }
 

@@ -2,6 +2,7 @@
 package com.intellij.java.search;
 
 import com.intellij.codeInsight.MetaAnnotationUtil;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.AnnotatedElementsSearch;
@@ -24,7 +25,8 @@ public class AnnotatedElementsSearchByNameTest extends JavaCodeInsightFixtureTes
     myFixture.addClass("package com.example; @test.MyAnnotation public class Foo {}");
 
     GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
-    Collection<PsiClass> result = AnnotatedElementsSearch.searchPsiClasses(getProject(), "test.MyAnnotation", scope).findAll();
+    Collection<PsiClass> result =
+      ReadAction.computeBlocking(() -> AnnotatedElementsSearch.searchPsiClasses(getProject(), "test.MyAnnotation", scope).findAll());
     assertEquals(Set.of("com.example.Foo"), ContainerUtil.map2Set(result, PsiClass::getQualifiedName));
   }
 
@@ -34,7 +36,8 @@ public class AnnotatedElementsSearchByNameTest extends JavaCodeInsightFixtureTes
     myFixture.allowTreeAccessForFile(foo.getContainingFile().getVirtualFile());
 
     GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
-    Collection<PsiClass> result = AnnotatedElementsSearch.searchPsiClasses(getProject(), "test.MyAnnotation", scope).findAll();
+    Collection<PsiClass> result =
+      ReadAction.computeBlocking(() -> AnnotatedElementsSearch.searchPsiClasses(getProject(), "test.MyAnnotation", scope).findAll());
     assertEquals(Set.of("com.example.Foo"), ContainerUtil.map2Set(result, PsiClass::getQualifiedName));
   }
 
@@ -45,7 +48,8 @@ public class AnnotatedElementsSearchByNameTest extends JavaCodeInsightFixtureTes
     myFixture.addClass("package com.example; @b.MyAnnotation public class WithB {}");
 
     GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
-    Collection<PsiClass> result = AnnotatedElementsSearch.searchPsiClasses(getProject(), "a.MyAnnotation", scope).findAll();
+    Collection<PsiClass> result =
+      ReadAction.computeBlocking(() -> AnnotatedElementsSearch.searchPsiClasses(getProject(), "a.MyAnnotation", scope).findAll());
     assertEquals(Set.of("com.example.WithA"), ContainerUtil.map2Set(result, PsiClass::getQualifiedName));
   }
 

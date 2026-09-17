@@ -2,6 +2,7 @@
 package com.intellij.java.codeInsight.daemon.lambda;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
@@ -21,7 +22,7 @@ public class MethodReferencesFindUsagesTest extends LightDaemonAnalyzerTestCase 
     assertNotNull(aClass);
     final PsiMethod[] constructors = aClass.getConstructors();
     assertEquals(1, constructors.length);
-    Collection<PsiReference> references = MethodReferencesSearch.search(constructors[0]).findAll();
+    Collection<PsiReference> references = ReadAction.computeBlocking(() -> MethodReferencesSearch.search(constructors[0]).findAll());
     assertEquals(1, references.size());
   }
 }

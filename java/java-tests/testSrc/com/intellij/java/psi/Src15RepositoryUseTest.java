@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.pom.java.LanguageLevel;
@@ -303,7 +304,8 @@ public class Src15RepositoryUseTest extends JavaPsiTestCase {
     PsiClass annotationTypeClass = findClass("annotations.AnnotationType");
     assertTrue(annotationTypeClass.isAnnotationType());
 
-    Collection<PsiMember> all = AnnotatedMembersSearch.search(annotationTypeClass, GlobalSearchScope.moduleScope(myModule)).findAll();
+    Collection<PsiMember> all = ReadAction.computeBlocking(
+      () -> AnnotatedMembersSearch.search(annotationTypeClass, GlobalSearchScope.moduleScope(myModule)).findAll());
 
     assertEquals(2, all.size());
     Set<String> correctNames = Set.of("AnnotatedClass", "correctMethod");
@@ -312,7 +314,8 @@ public class Src15RepositoryUseTest extends JavaPsiTestCase {
     }
 
     Collection<PsiPackage> packages =
-      AnnotatedPackagesSearch.search(annotationTypeClass, GlobalSearchScope.moduleScope(myModule)).findAll();
+      ReadAction.computeBlocking(
+        () -> AnnotatedPackagesSearch.search(annotationTypeClass, GlobalSearchScope.moduleScope(myModule)).findAll());
     assertEquals(1, packages.size());
     assertEquals("annotated", packages.iterator().next().getQualifiedName());
 

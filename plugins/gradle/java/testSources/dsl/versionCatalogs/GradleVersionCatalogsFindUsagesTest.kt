@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.dsl.versionCatalogs
 
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.testFramework.runInEdtAndWait
@@ -36,7 +37,7 @@ class GradleVersionCatalogsFindUsagesTest : GradleCodeInsightTestCase() {
         codeInsightFixture.configureFromExistingVirtualFile(getFile("gradle/libs.versions.toml"))
         val elementAtCaret = codeInsightFixture.elementAtCaret
         assertNotNull(elementAtCaret)
-        val usages = ReferencesSearch.search(elementAtCaret).findAll()
+        val usages = runReadActionBlocking { ReferencesSearch.search(elementAtCaret).findAll() }
         checker(usages)
       }
     }
@@ -116,7 +117,7 @@ class GradleVersionCatalogsFindUsagesTest : GradleCodeInsightTestCase() {
       writeTextAndCommit("includedBuild1/subproject1/build.gradle", "libs.apache.groovy")
       runInEdtAndWait {
         codeInsightFixture.configureFromExistingVirtualFile(getFile("includedBuild1/gradle/libs.versions.toml"))
-        val usages = ReferencesSearch.search(codeInsightFixture.elementAtCaret).findAll()
+        val usages = runReadActionBlocking { ReferencesSearch.search(codeInsightFixture.elementAtCaret).findAll() }
         assertContainsUsagesInFiles(usages, "includedBuild1/subproject1/build.gradle")
       }
     }
@@ -134,7 +135,7 @@ class GradleVersionCatalogsFindUsagesTest : GradleCodeInsightTestCase() {
       writeTextAndCommit("subprojectsDir/subproject1/build.gradle", "customLibs.apache.groovy")
       runInEdtAndWait {
         codeInsightFixture.configureFromExistingVirtualFile(getFile("customPath/custom.toml"))
-        val usages = ReferencesSearch.search(codeInsightFixture.elementAtCaret).findAll()
+        val usages = runReadActionBlocking { ReferencesSearch.search(codeInsightFixture.elementAtCaret).findAll() }
         assertContainsUsagesInFiles(usages, "subprojectsDir/subproject1/build.gradle")
       }
     }

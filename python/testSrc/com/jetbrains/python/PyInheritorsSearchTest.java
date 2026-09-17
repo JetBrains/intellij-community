@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
+import com.intellij.openapi.application.ReadAction;
 import com.jetbrains.python.allure.Components;
 import com.jetbrains.python.allure.Layers;
 import com.jetbrains.python.allure.Subsystems;
@@ -22,21 +23,21 @@ public class PyInheritorsSearchTest extends PyTestCase {
   public void testSimple() {
     setupProject();
     final PyClass pyClass = findClass("A");
-    Collection<PyClass> inheritors = PyClassInheritorsSearch.search(pyClass, false).findAll();
+    Collection<PyClass> inheritors = ReadAction.computeBlocking(() -> PyClassInheritorsSearch.search(pyClass, false).findAll());
     assertEquals(2, inheritors.size());
   }
 
   public void testDeep() {
     setupProject();
     final PyClass pyClass = findClass("A");
-    Collection<PyClass> inheritors = PyClassInheritorsSearch.search(pyClass, true).findAll();
+    Collection<PyClass> inheritors = ReadAction.computeBlocking(() -> PyClassInheritorsSearch.search(pyClass, true).findAll());
     assertEquals(2, inheritors.size());
   }
 
   public void testDotted() {
     setupProject();
     final PyClass pyClass = findClass("A");
-    Collection<PyClass> inheritors = PyClassInheritorsSearch.search(pyClass, true).findAll();
+    Collection<PyClass> inheritors = ReadAction.computeBlocking(() -> PyClassInheritorsSearch.search(pyClass, true).findAll());
     assertEquals(1, inheritors.size());
   }
 
@@ -44,7 +45,7 @@ public class PyInheritorsSearchTest extends PyTestCase {
   public void testInheritorsWhenSuperClassImportedWithAs() {
     setupProject();
     final PyClass pyClass = findClass("C");
-    final Collection<PyClass> inheritors = PyClassInheritorsSearch.search(pyClass, false).findAll();
+    final Collection<PyClass> inheritors = ReadAction.computeBlocking(() -> PyClassInheritorsSearch.search(pyClass, false).findAll());
     assertSameElements(inheritors, findClass("D"));
   }
 

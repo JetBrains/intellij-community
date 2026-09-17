@@ -92,8 +92,8 @@ public class JavaStubsTest extends LightJavaCodeInsightFixtureTestCase {
       @interface Anno {}""");
 
     PsiFileImpl file = (PsiFileImpl)cls.getContainingFile();
-    assertEquals(1, AnnotatedElementsSearch.searchPsiMethods(myFixture.findClass("Anno"), GlobalSearchScope.allScope(getProject()))
-      .findAll().size());
+    assertEquals(1, ReadAction.computeBlocking(()->AnnotatedElementsSearch.searchPsiMethods(myFixture.findClass("Anno"), GlobalSearchScope.allScope(getProject()))
+      .findAll()).size());
     assertNotNull(file.getStub());
     assertFalse(file.isContentsLoaded());
   }
@@ -304,7 +304,8 @@ public class JavaStubsTest extends LightJavaCodeInsightFixtureTestCase {
 
     PsiClass a = ((PsiJavaFile)file).getClasses()[0];
     PsiClass i = ((PsiJavaFile)file).getClasses()[1];
-    PsiAnonymousClass anon = (PsiAnonymousClass)UsefulTestCase.assertOneElement(DirectClassInheritorsSearch.search(i).findAll());
+    PsiAnonymousClass anon =
+      ReadAction.computeBlocking(() -> (PsiAnonymousClass)UsefulTestCase.assertOneElement(DirectClassInheritorsSearch.search(i).findAll()));
 
     assertEquals(i, anon.getBaseClassType().resolve());
     assertEquals(a.getMethods()[0].getTypeParameters()[0], PsiUtil.resolveClassInClassTypeOnly(anon.getBaseClassType().getParameters()[0]));
@@ -323,7 +324,8 @@ public class JavaStubsTest extends LightJavaCodeInsightFixtureTestCase {
       interface I<T> {}""");
 
     PsiClass i = ((PsiJavaFile)file).getClasses()[1];
-    PsiAnonymousClass anon = (PsiAnonymousClass)UsefulTestCase.assertOneElement(DirectClassInheritorsSearch.search(i).findAll());
+    PsiAnonymousClass anon =
+      ReadAction.computeBlocking(() -> (PsiAnonymousClass)UsefulTestCase.assertOneElement(DirectClassInheritorsSearch.search(i).findAll()));
 
     assertFalse(file.isContentsLoaded());
 

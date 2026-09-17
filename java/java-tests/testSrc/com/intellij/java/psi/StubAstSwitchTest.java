@@ -154,7 +154,7 @@ public class StubAstSwitchTest extends LightJavaCodeInsightFixtureTestCase {
       """);
     assertFalse(file.isContentsLoaded());
     PsiClass bClass = ((PsiJavaFile)file).getClasses()[1];
-    assertEquals(3, DirectClassInheritorsSearch.search(bClass).findAll().size());
+    assertEquals(3, ReadAction.computeBlocking(()->DirectClassInheritorsSearch.search(bClass).findAll()).size());
     assertFalse(file.isContentsLoaded());
 
     PsiMethod fooMethod = bClass.getMethods()[0];

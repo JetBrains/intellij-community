@@ -114,7 +114,7 @@ public class FindUsagesTest extends JavaPsiTestCase {
   public void testSiblingImplement() {
     PsiClass anInterface = myJavaFacade.findClass("A.I", GlobalSearchScope.allScope(myProject));
     PsiMethod method = anInterface.getMethods()[0];
-    final Collection<PsiMethod> overriders = OverridingMethodsSearch.search(method).findAll();
+    final Collection<PsiMethod> overriders = ReadAction.computeBlocking(() -> OverridingMethodsSearch.search(method).findAll());
     assertEquals(1, overriders.size());
   }
 
@@ -141,15 +141,15 @@ public class FindUsagesTest extends JavaPsiTestCase {
 
   public void testProtectedMethodInPackageLocalClass() {
     PsiMethod method = myJavaFacade.findClass("foo.PackageLocal", GlobalSearchScope.allScope(myProject)).getMethods()[0];
-    assertEquals(1, OverridingMethodsSearch.search(method).findAll().size());
-    assertEquals(1, ReferencesSearch.search(method).findAll().size());
+    assertEquals(1, ReadAction.computeBlocking(()->OverridingMethodsSearch.search(method).findAll()).size());
+    assertEquals(1, ReadAction.computeBlocking(()->ReferencesSearch.search(method).findAll()).size());
   }
 
   public void testLibraryClassUsageFromDecompiledSource() {
     PsiElement decompiled =
       BinaryFileTypeDecompilers.getInstance().allowDecompilerSlowOperation(() ->
         ((PsiCompiledElement)myJavaFacade.findClass("javax.swing.JLabel", GlobalSearchScope.allScope(myProject))).getMirror());
-    assertEquals(2, ReferencesSearch.search(decompiled, GlobalSearchScope.projectScope(myProject)).findAll().size());
+    assertEquals(2, ReadAction.computeBlocking(()->ReferencesSearch.search(decompiled, GlobalSearchScope.projectScope(myProject)).findAll()).size());
   }
   
   public void testFindConstructorUsagesFromClass() {
@@ -188,7 +188,8 @@ public class FindUsagesTest extends JavaPsiTestCase {
     PsiLocalVariable variable = (PsiLocalVariable)main.getBody().getStatements()[0].getFirstChild();
     PsiNewExpression newExpression = (PsiNewExpression)variable.getInitializer();
     PsiMethod defaultConstructor = newExpression.resolveMethod();
-    Collection<PsiReference> references = ReferencesSearch.search(defaultConstructor, GlobalSearchScope.projectScope(myProject)).findAll();
+    Collection<PsiReference> references =
+      ReadAction.computeBlocking(() -> ReferencesSearch.search(defaultConstructor, GlobalSearchScope.projectScope(myProject)).findAll());
     List<@NotNull PsiElement> result = 
       references.stream().map(r -> r.getElement()).sorted(PsiElementOrderComparator.getInstance()).toList();
     assertEquals(2, references.size());
@@ -200,22 +201,22 @@ public class FindUsagesTest extends JavaPsiTestCase {
     PsiMethod[] ctrs = myJavaFacade.findClass("Foo", GlobalSearchScope.allScope(myProject)).getConstructors();
     PsiMethod method = ctrs[0];
     assertEquals(0, method.getParameterList().getParametersCount());
-    assertEquals(0, ReferencesSearch.search(method).findAll().size());
+    assertEquals(0, ReadAction.computeBlocking(()->ReferencesSearch.search(method).findAll()).size());
 
     PsiMethod usedMethod = ctrs[1];
     assertEquals(1, usedMethod.getParameterList().getParametersCount());
-    assertEquals(1, ReferencesSearch.search(usedMethod).findAll().size());
+    assertEquals(1, ReadAction.computeBlocking(()->ReferencesSearch.search(usedMethod).findAll()).size());
   }
 
   public void testImplicitVarArgsConstructorsUsage() {
     PsiMethod[] ctrs = myJavaFacade.findClass("A1", GlobalSearchScope.allScope(myProject)).getConstructors();
     PsiMethod usedCtr = ctrs[0];
     assertEquals("java.lang.String", ((PsiEllipsisType)usedCtr.getParameterList().getParameters()[0].getType()).getComponentType().getCanonicalText());
-    assertEquals(1, ReferencesSearch.search(usedCtr).findAll().size());
+    assertEquals(1, ReadAction.computeBlocking(()->ReferencesSearch.search(usedCtr).findAll()).size());
 
     PsiMethod unusedCtr = ctrs[1];
     assertEquals("java.lang.Object", ((PsiEllipsisType)unusedCtr.getParameterList().getParameters()[0].getType()).getComponentType().getCanonicalText());
-    assertEquals(0, ReferencesSearch.search(unusedCtr).findAll().size());
+    assertEquals(0, ReadAction.computeBlocking(()->ReferencesSearch.search(unusedCtr).findAll()).size());
   }
 
   private static void addReference(@NotNull PsiReference ref, @NotNull List<? super PsiFile> filesList, @NotNull IntList startsList, @NotNull IntList endsList) {
@@ -423,7 +424,7 @@ public class FindUsagesTest extends JavaPsiTestCase {
       Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() ->
         ProgressManager.getInstance().runProcess(() -> {
           GlobalSearchScope scope = ReadAction.compute(() -> GlobalSearchScope.fileScope(myProject, field.getContainingFile().getVirtualFile()));
-          usages.set(ReferencesSearch.search(field, scope).findAll());
+          usages.set(ReadAction.computeBlocking(() -> ReferencesSearch.search(field, scope).findAll()));
         }, new EmptyProgressIndicator())
       );
 

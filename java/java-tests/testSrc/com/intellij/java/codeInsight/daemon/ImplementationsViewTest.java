@@ -299,7 +299,7 @@ public class ImplementationsViewTest extends LightJavaCodeInsightFixtureTestCase
         (PsiMethod)TargetElementUtil.findTargetElement(myFixture.getEditor(), TargetElementUtil.getInstance().getAllAccepted());
 
     assert psiMethod != null;
-    final Collection<PsiMethod> methods = OverridingMethodsSearch.search(psiMethod).findAll();
+    final Collection<PsiMethod> methods = ReadAction.computeBlocking(() -> OverridingMethodsSearch.search(psiMethod).findAll());
     List<PsiMethod> all = new ArrayList<>();
     all.add(psiMethod);
     all.addAll(methods);

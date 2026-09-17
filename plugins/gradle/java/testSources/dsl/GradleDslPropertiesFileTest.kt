@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.dsl
 
 import com.intellij.lang.properties.psi.PropertiesFile
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.testFramework.runInEdtAndWait
@@ -31,7 +32,7 @@ class GradleDslPropertiesFileTest : GradleCodeInsightTestCase() {
         val prop = psiPropertiesFile.findPropertyByKey("foo")
         assertNotNull(prop, "Expected not-null prop")
         val buildscriptScope = GlobalSearchScope.fileScope(codeInsightFixture.project, buildscript)
-        val usageRefs = ReferencesSearch.search(prop!!.psiElement, buildscriptScope).findAll()
+        val usageRefs = runReadActionBlocking { ReferencesSearch.search(prop!!.psiElement, buildscriptScope).findAll() }
         val usageRef = usageRefs.singleOrNull()
         assertNotNull(usageRef, "Expected not-null usage ref")
         assertTrue(usageRef!!.element.language == GroovyLanguage)

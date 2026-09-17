@@ -11,6 +11,7 @@ import com.intellij.codeInsight.javadoc.JavaDocUtil
 import com.intellij.idea.IgnoreJUnit3
 import com.intellij.java.syntax.parser.JavaKeywords
 import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -87,7 +88,7 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
       var i = 0
       while (i < nFilesToChange) {
         val fileToChange = env.generateValue(filesGenerator, null)
-        val relatedFiles = findRelatedFiles(fileToChange)
+        val relatedFiles = runReadActionBlocking { findRelatedFiles(fileToChange) }
         if (relatedFiles.isEmpty()) continue
 
         val members = findMembers(fileToChange)
