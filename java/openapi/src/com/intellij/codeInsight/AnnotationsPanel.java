@@ -14,16 +14,11 @@ import com.intellij.ui.AnActionButtonRunnable;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.ToolbarDecorator;
-import com.intellij.ui.dsl.builder.DslComponentProperty;
-import com.intellij.ui.dsl.builder.VerticalComponentGap;
 import com.intellij.ui.table.JBTable;
-import com.intellij.util.ui.JBDimension;
-import com.intellij.util.ui.UI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JComponent;
-import javax.swing.JPanel;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.RowSorter;
@@ -32,23 +27,21 @@ import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableRowSorter;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 public class AnnotationsPanel {
-  private final Project myProject;
-  private final Set<String> myDefaultAnnotations;
-  private final JBTable myTable;
-  private final JPanel myComponent;
-  private final ComboBox<String> myCombo;
-  protected final DefaultTableModel myTableModel;
-  private final TableRowSorter<DefaultTableModel> mySorter;
+  private final @NotNull Project myProject;
+  private final @NotNull Set<String> myDefaultAnnotations;
+  private final @NotNull JBTable myTable;
+  private final @NotNull JComponent myComponent;
+  private final @NotNull ComboBox<String> myCombo;
+  private final @NotNull DefaultTableModel myTableModel;
+  private final @NotNull TableRowSorter<DefaultTableModel> mySorter;
 
-  public AnnotationsPanel(Project project,
-                          @Nls String name,
+  public AnnotationsPanel(@NotNull Project project,
+                          @NotNull @Nls String name,
                           List<String> annotations,
                           List<String> defaultAnnotations) {
     myProject = project;
@@ -121,22 +114,7 @@ public class AnnotationsPanel {
     myTable.setRowSelectionAllowed(true);
     myTable.setShowGrid(false);
 
-    final var tablePanel = UI.PanelFactory
-      .panel(toolbarDecorator.createPanel())
-      .withLabel(JavaBundle.message("annotations.panel.title", name))
-      .moveLabelOnTop()
-      .resizeY(true)
-      .createPanel();
-    tablePanel.setPreferredSize(new JBDimension(tablePanel.getPreferredSize().width, 200));
-
-    myComponent = new JPanel(new GridBagLayout());
-    myComponent.putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap.BOTH);
-    GridBagConstraints constraints = new GridBagConstraints();
-    constraints.anchor = GridBagConstraints.WEST;
-    constraints.weightx = 1;
-    constraints.fill = GridBagConstraints.BOTH;
-    constraints.weighty = 1;
-    myComponent.add(tablePanel, constraints);
+    myComponent = AnnotationsPanelUiKt.createAnnotationsPanel(toolbarDecorator, name);
   }
 
   protected boolean isAnnotationAccepted(PsiClass annotation) {
