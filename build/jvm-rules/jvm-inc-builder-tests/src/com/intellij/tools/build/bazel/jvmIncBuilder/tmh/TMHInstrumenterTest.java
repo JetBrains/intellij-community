@@ -5,17 +5,22 @@ package com.intellij.tools.build.bazel.jvmIncBuilder.tmh;
 import org.jetbrains.org.objectweb.asm.ClassReader;
 import org.jetbrains.org.objectweb.asm.ClassVisitor;
 import org.jetbrains.org.objectweb.asm.ClassWriter;
+import org.jetbrains.org.objectweb.asm.Label;
 import org.jetbrains.org.objectweb.asm.MethodVisitor;
 import org.jetbrains.org.objectweb.asm.Opcodes;
 import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 public class TMHInstrumenterTest {
+  private static final String TEST_CLASS = "test/Test";
   private static final String ASSERTIONS_CLASS = "test/Assertions";
   private static final String METHOD_NAME = "doWork";
 
@@ -31,6 +36,46 @@ public class TMHInstrumenterTest {
     var assertions = instrumentedAssertions("Ltest/RequiresEdt;");
 
     assertEquals(List.of("assertEventDispatchThread"), assertions);
+  }
+
+  @Test
+  public void parameterRangeCoversInjectedAssertion() {
+    byte[] original = buildAnnotatedClass();
+    ClassReader reader = new ClassReader(original);
+    ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+
+    boolean instrumented = TMHInstrumenter.instrument(reader, writer, generators(), true);
+    assertTrue(instrumented);
+
+    Label[] firstLabel = new Label[1];
+    Label[] paramStart = new Label[1];
+    new ClassReader(writer.toByteArray()).accept(new ClassVisitor(Opcodes.API_VERSION) {
+      @Override
+      public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
+        if (!"m".equals(name)) {
+          return super.visitMethod(access, name, descriptor, signature, exceptions);
+        }
+        return new MethodVisitor(Opcodes.API_VERSION) {
+          @Override
+          public void visitLabel(Label label) {
+            if (firstLabel[0] == null) {
+              firstLabel[0] = label;
+            }
+          }
+
+          @Override
+          public void visitLocalVariable(String varName, String desc, String varSignature, Label start, Label end, int index) {
+            if ("p".equals(varName)) {
+              paramStart[0] = start;
+            }
+          }
+        };
+      }
+    }, 0);
+
+    assertNotNull(firstLabel[0]);
+    assertNotNull(paramStart[0]);
+    assertSame(firstLabel[0], paramStart[0]);
   }
 
   private static List<String> instrumentedAssertions(String... annotationDescriptors) {
@@ -79,5 +124,31 @@ public class TMHInstrumenterTest {
       }
     }, 0);
     return calls;
+  }
+
+  private static Set<TMHAssertionGenerator2> generators() {
+    return TMHAssertionGenerator2.generators(ASSERTIONS_CLASS, "test");
+  }
+
+  private static byte[] buildAnnotatedClass() {
+    ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+    writer.visit(Opcodes.V21, Opcodes.ACC_PUBLIC, TEST_CLASS, null, "java/lang/Object", null);
+
+    MethodVisitor mv = writer.visitMethod(Opcodes.ACC_PUBLIC, "m", "(I)V", null, null);
+    mv.visitAnnotation("Ltest/RequiresEdt;", true).visitEnd();
+    mv.visitCode();
+    Label start = new Label();
+    mv.visitLabel(start);
+    mv.visitLineNumber(10, start);
+    mv.visitInsn(Opcodes.RETURN);
+    Label end = new Label();
+    mv.visitLabel(end);
+    mv.visitLocalVariable("this", "L" + TEST_CLASS + ";", null, start, end, 0);
+    mv.visitLocalVariable("p", "I", null, start, end, 1);
+    mv.visitMaxs(0, 0);
+    mv.visitEnd();
+
+    writer.visitEnd();
+    return writer.toByteArray();
   }
 }

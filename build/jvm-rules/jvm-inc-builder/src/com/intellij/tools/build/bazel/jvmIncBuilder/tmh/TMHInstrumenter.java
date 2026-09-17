@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 public final class TMHInstrumenter {
@@ -86,12 +87,33 @@ public final class TMHInstrumenter {
         return super.visitMethod(access, name, descriptor, signature, exceptions);
       }
       return new FailSafeMethodVisitor(Opcodes.API_VERSION, super.visitMethod(access, name, descriptor, signature, exceptions)) {
+        private Label myPrologueStart;
+        private Label myOriginalFirstLabel;
+
         @Override
         public void visitCode() {
+          myPrologueStart = new Label();
+          mv.visitLabel(myPrologueStart);
           for (TMHAssertionGenerator generator : instrumentationInfo.assertionGenerators) {
             generator.generateAssertion(mv, instrumentationInfo.methodStartLineNumber);
           }
           super.visitCode();
+        }
+
+        @Override
+        public void visitLabel(Label label) {
+          if (myOriginalFirstLabel == null) {
+            myOriginalFirstLabel = label;
+          }
+          super.visitLabel(label);
+        }
+
+        @Override
+        public void visitLocalVariable(String name, String desc, String signature, Label start, Label end, int index) {
+          Objects.requireNonNull(myOriginalFirstLabel, "no label was visited before the first visitLocalVariable call");
+          Objects.requireNonNull(myPrologueStart, "no code was visited before the first visitLocalVariable call");
+          Label newStart = start == myOriginalFirstLabel ? myPrologueStart : start;
+          super.visitLocalVariable(name, desc, signature, newStart, end, index);
         }
       };
     }
