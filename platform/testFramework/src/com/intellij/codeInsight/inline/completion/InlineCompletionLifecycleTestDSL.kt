@@ -31,7 +31,6 @@ import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.annotations.ApiStatus
 import java.awt.event.FocusEvent
-import java.awt.event.FocusListener
 import java.awt.event.KeyEvent
 import kotlin.reflect.KClass
 import kotlin.time.Duration
@@ -127,7 +126,9 @@ class InlineCompletionLifecycleTestDSL(val fixture: CodeInsightTestFixture) {
     withContext(Dispatchers.EDT) {
       writeIntentReadAction {
         val ev = FocusEvent(fixture.editor.component, 0, false, null, cause)
-        (fixture.editor as FocusListener).focusLost(ev)
+        for (listener in fixture.editor.contentComponent.focusListeners) {
+          listener.focusLost(ev)
+        }
       }
     }
   }

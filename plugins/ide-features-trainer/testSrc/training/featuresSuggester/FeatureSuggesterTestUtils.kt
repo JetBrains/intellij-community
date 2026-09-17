@@ -14,7 +14,6 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import java.awt.event.FocusEvent
-import java.awt.event.FocusListener
 
 object FeatureSuggesterTestUtils {
   fun subscribeToSuggestions(project: Project, disposable: Disposable, suggestionFound: (UiSuggestion) -> Unit) {
@@ -174,7 +173,10 @@ object FeatureSuggesterTestUtils {
   }
 
   fun CodeInsightTestFixture.focusEditor() {
-    (editor as FocusListener).focusGained(FocusEvent(editor.component, 0))
+    val event = FocusEvent(editor.component, 0)
+    for (listener in editor.contentComponent.focusListeners) {
+      listener.focusGained(event)
+    }
   }
 
   fun CodeInsightTestFixture.typeAndCommit(text: String) {

@@ -3127,8 +3127,6 @@ f:com.intellij.openapi.editor.impl.EditorImpl
 - bidiTextFound():V
 - createBoundColorSchemeDelegate(com.intellij.openapi.editor.colors.EditorColorsScheme):com.intellij.openapi.editor.colors.EditorColorsScheme
 - findNearestDirectionBoundary(I,Z):I
-- focusGained(java.awt.event.FocusEvent):V
-- focusLost(java.awt.event.FocusEvent):V
 - getComposedTextRange():com.intellij.openapi.util.TextRange
 - getContentSize():java.awt.Dimension
 - getCopyProvider():com.intellij.ide.CopyProvider

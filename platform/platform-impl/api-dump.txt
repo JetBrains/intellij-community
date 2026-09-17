@@ -2701,7 +2701,6 @@ f:com.intellij.openapi.editor.impl.EditorImpl
 - com.intellij.openapi.editor.ex.EditorEx
 - com.intellij.openapi.editor.highlighter.HighlighterClient
 - com.intellij.openapi.ui.Queryable
-- java.awt.event.FocusListener
 - addEditorMouseListener(com.intellij.openapi.editor.event.EditorMouseListener):V
 - addEditorMouseMotionListener(com.intellij.openapi.editor.event.EditorMouseMotionListener):V
 - addFocusListener(com.intellij.openapi.editor.ex.FocusChangeListener):V
