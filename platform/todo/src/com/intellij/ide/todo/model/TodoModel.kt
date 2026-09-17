@@ -22,7 +22,15 @@ internal class TodoModel {
   fun getFileCount(): Int = files.size
   fun getTodoItemCount(): Int = todoItemCount.get()
 
-  fun applyEvent(event: TodoEvent) : TodoModelChange {
+  fun buildGrouping(showModules: Boolean, showPackages: Boolean, flattenPackages: Boolean): TodoGrouping {
+    val fileResults = synchronized(this) {
+      files.values.toList()
+    }
+    return TodoGrouping.build(fileResults, showModules, showPackages, flattenPackages)
+  }
+
+  @Synchronized
+  fun applyEvent(event: TodoEvent): TodoModelChange {
     when (event) {
       is TodoEvent.ItemUpserted -> {
         val file = event.item.fileId.virtualFile() ?: return TodoModelChange.Nothing
