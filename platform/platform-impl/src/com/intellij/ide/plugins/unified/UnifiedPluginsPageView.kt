@@ -479,6 +479,8 @@ internal class UnifiedPluginsPageView @RequiresEdt(generateAssertion = false /* 
       accessibleContext.accessibleName = IdeBundle.message("plugin.manager.search.accessible.name")
       emptyText.text = IdeBundle.message("plugin.manager.search.all.plugins")
       background = PluginManagerConfigurable.SEARCH_BG_COLOR
+      // A text field without an action listener forwards Enter to the dialog's default button.
+      addActionListener { }
       document.addDocumentListener(object : DocumentAdapter() {
         override fun textChanged(e: DocumentEvent) {
           if (!updatingSearchField) {
