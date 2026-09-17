@@ -482,11 +482,13 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : LoadablePluginsUiCom
       x("Uninstall dropdown") { byType($$"com.intellij.ui.components.BasicOptionButtonUI$ArrowButton") }
     val restartIdeButton: UiComponent = x("Restart button") { byAccessibleName("Restart IDE") }
 
-    val tabbedPane: JBTabbedPaneUiComponent = tabbedPane()
-    val overviewTab: UiComponent = tabbedPane.tab("Overview")
-    val whatsNewTab: UiComponent = tabbedPane.tab("What's New")
-    val reviewsTab: UiComponent = tabbedPane.tab("Reviews")
-    val additionalInfoTab: UiComponent = tabbedPane.tab("Additional Info")
+    val tabbedPane: JBTabbedPaneUiComponent
+      get() = this@PluginDetailsPage.tabbedPane()
+    val detailsTabs: PluginDetailsTabs = PluginDetailsTabs(this)
+    val overviewTab: UiComponent = detailsTabs.tab("Overview")
+    val whatsNewTab: UiComponent = detailsTabs.tab("What's New")
+    val reviewsTab: UiComponent = detailsTabs.tab("Reviews")
+    val additionalInfoTab: UiComponent = detailsTabs.tab("Additional Info")
     val updateSourceValue: UiComponent =
       x("${xQuery { and(byType(JLabel::class.java), byText("Updates from:")) }}/following-sibling::div[1]")
     val updateSourceBanners: UIComponentsList<UpdateSourceBannerUiComponent> =
@@ -509,13 +511,28 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : LoadablePluginsUiCom
 
     fun chooseUpdateSourceFromDescription(updateSource: String): PluginDetailsPage {
       step("Choose '$updateSource' update source from `Update from` description") {
-        check(tabbedPane.selectedTabName == additionalInfoTab.accessibleName) {
-          "Tab \'${additionalInfoTab.accessibleName}\' is not selected; selected tab\'${tabbedPane.selectedTabName}\'"
+        check(detailsTabs.selectedTabName == additionalInfoTab.accessibleName) {
+          "Tab \'${additionalInfoTab.accessibleName}\' is not selected; selected tab\'${detailsTabs.selectedTabName}\'"
         }
         updateSourceValue.click()
         driver.ui.popup().list().clickItem(updateSource)
       }
       return this
+    }
+
+    class PluginDetailsTabs(private val detailsPage: PluginDetailsPage) {
+      private val intellijTabs: UIComponentsList<UiComponent> =
+        detailsPage.xx { byType("com.intellij.ui.tabs.impl.JBTabsImpl") }
+      private val swingTabs: JBTabbedPaneUiComponent by lazy { detailsPage.tabbedPane() }
+
+      val selectedTabName: String?
+        get() = intellijTabs.list().singleOrNull()?.accessibleName ?: swingTabs.selectedTabName
+
+      fun tab(name: String): UiComponent {
+        return intellijTabs.list().singleOrNull()?.x {
+          and(byType("com.intellij.ui.tabs.impl.TabLabel"), byAccessibleName(name))
+        } ?: swingTabs.tab(name)
+      }
     }
 
     fun updatePlugin(): PluginDetailsPage {
