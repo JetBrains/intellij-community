@@ -6,7 +6,7 @@ import com.intellij.platform.workspace.storage.ExternalMappingKey
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.external.AbstractExternalEntityMappingImpl
 import com.intellij.platform.workspace.storage.impl.external.MutableExternalEntityMappingImpl
-import com.intellij.platform.workspace.storage.impl.url.ConcurrentVirtualFileUrlManager
+import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntitySource
 import com.intellij.platform.workspace.storage.testEntities.entities.SourceEntity
@@ -30,7 +30,7 @@ class ExternalEntityMappingTest {
 
   // Shared on purpose: VirtualFileUrl instances are interned per manager, so entities which are expected to match
   // each other (e.g. across replaceBySource) must get their URLs from the same manager.
-  private val virtualFileManager = ConcurrentVirtualFileUrlManager()
+  private val virtualFileManager = VirtualFileUrlManagerImpl()
 
   @Test
   fun `base mapping test`() {

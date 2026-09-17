@@ -1,41 +1,16 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl
 
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.workspace.storage.impl.url.ConcurrentVirtualFileUrlManager
-import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlImpl
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class IdeVirtualFileUrlManagerImpl(isRootDirCaseSensitive: Boolean = false) : VirtualFileUrlManagerImpl(isRootDirCaseSensitive) {
+class IdeVirtualFileUrlManagerImpl : VirtualFileUrlManagerImpl() {
+  override fun createVirtualFileUrl(name: String, manager: VirtualFileUrlManagerImpl, parent: VirtualFileUrl?): VirtualFileUrl {
+    return VirtualFileUrlBridge(name, manager, parent)
+  }
+
   override val virtualFileUrlImplementationClass: Class<out VirtualFileUrl>
     get() = VirtualFileUrlBridge::class.java
-
-  override fun createVirtualFileUrl(id: Int, manager: VirtualFileUrlManagerImpl): VirtualFileUrlImpl {
-    return VirtualFileUrlBridge(id, manager)
-  }
-}
-
-@ApiStatus.Internal
-class ConcurrentIdeVirtualFileUrlManagerImpl : ConcurrentVirtualFileUrlManager() {
-  override fun createVirtualFileUrl(name: String, manager: ConcurrentVirtualFileUrlManager, parent: VirtualFileUrl?): VirtualFileUrl {
-    return NewVirtualFileUrlBridge(name, manager, parent)
-  }
-
-  override val virtualFileUrlImplementationClass: Class<out VirtualFileUrl>
-    get() = NewVirtualFileUrlBridge::class.java
-}
-
-@ApiStatus.Internal
-fun useConcurrentVirtualFileUrlManager(): Boolean {
-  return Registry.`is`("ide.workspace.model.use.concurrent.virtual.file.url.manager", true)
-}
-
-@ApiStatus.Internal
-fun createIdeVirtualFileUrlManager(isRootDirCaseSensitive: Boolean = false): VirtualFileUrlManager {
-  return if (useConcurrentVirtualFileUrlManager()) ConcurrentIdeVirtualFileUrlManagerImpl()
-  else IdeVirtualFileUrlManagerImpl(isRootDirCaseSensitive)
 }

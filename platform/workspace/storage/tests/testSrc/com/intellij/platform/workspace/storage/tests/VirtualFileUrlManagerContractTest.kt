@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests
 
-import com.intellij.platform.workspace.storage.impl.url.ConcurrentVirtualFileUrlManager
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import org.junit.jupiter.api.BeforeEach
@@ -11,14 +10,12 @@ import kotlin.test.assertNotEquals
 import kotlin.test.assertNull
 import kotlin.test.assertSame
 
-abstract class AbstractVirtualFileUrlManagerContractTest {
-  protected abstract fun createManager(): VirtualFileUrlManager
-
+class VirtualFileUrlManagerContractTest {
   private lateinit var manager: VirtualFileUrlManager
 
   @BeforeEach
   fun setUp() {
-    manager = createManager()
+    manager = VirtualFileUrlManagerImpl()
   }
 
   @Test
@@ -31,7 +28,7 @@ abstract class AbstractVirtualFileUrlManagerContractTest {
   }
 
   @Test
-  fun `findByUrl returns null for an intermediate node that was never registered`() {
+  fun `get returns null for an intermediate node that was never registered`() {
     manager.storeAndGet("/a/b")
 
     assertNull(manager.get("/a"), "/a was only an intermediate segment and was never registered")
@@ -71,20 +68,11 @@ abstract class AbstractVirtualFileUrlManagerContractTest {
 
 
   @Test
-  fun `getOrCreateFromUrl returns the same cached instance for the same url`() {
+  fun `storeAndGet returns the same cached instance for the same url`() {
     assertSame(
       manager.storeAndGet("/a/b"),
       manager.storeAndGet("/a/b"),
-      "repeated getOrCreateFromUrl for the same URL must return the cached instance",
+      "repeated storeAndGet for the same URL must return the cached instance",
     )
   }
-
-}
-
-class VirtualFileUrlManagerImplContractTest : AbstractVirtualFileUrlManagerContractTest() {
-  override fun createManager(): VirtualFileUrlManager = VirtualFileUrlManagerImpl()
-}
-
-class ConcurrentVirtualFileUrlManagerContractTest : AbstractVirtualFileUrlManagerContractTest() {
-  override fun createManager(): VirtualFileUrlManager = ConcurrentVirtualFileUrlManager()
 }

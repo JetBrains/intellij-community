@@ -18,8 +18,6 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
-import com.intellij.openapi.util.io.FileAttributes
-import com.intellij.openapi.util.io.FileSystemUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.workspace.BridgeInitializer
 import com.intellij.platform.backend.workspace.BuilderSnapshot
@@ -45,7 +43,6 @@ import com.intellij.platform.workspace.storage.query.CollectionQuery
 import com.intellij.platform.workspace.storage.query.StorageQuery
 import com.intellij.platform.workspace.storage.toBuilder
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
-import com.intellij.project.ProjectStoreOwner
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.messages.impl.MessageBusImpl
@@ -134,7 +131,7 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
   constructor(project: Project, cs: CoroutineScope) {
     this.project = project
     this.coroutineScope = cs
-    this.virtualFileManager = createIdeVirtualFileUrlManager(isProjectCaseSensitive(project))
+    this.virtualFileManager = IdeVirtualFileUrlManagerImpl()
     log.debug { "Loading workspace model" }
     val start = Milliseconds.now()
 
@@ -723,13 +720,4 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
       setupOpenTelemetryReporting(workspaceModelMetrics.meter)
     }
   }
-}
-
-private fun isProjectCaseSensitive(project: Project): Boolean {
-  if (project !is ProjectStoreOwner) {
-    return false
-  }
-
-  val historicalProjectBasePath = project.componentStore.storeDescriptor.historicalProjectBasePath
-  return FileSystemUtil.readParentCaseSensitivity(historicalProjectBasePath) == FileAttributes.CaseSensitivity.SENSITIVE
 }

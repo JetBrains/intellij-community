@@ -59,7 +59,7 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.io.assertMatches
 import com.intellij.util.io.directoryContentOf
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
-import com.intellij.workspaceModel.ide.impl.createIdeVirtualFileUrlManager
+import com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.ide.impl.jps.serialization.CachingJpsFileContentReader
 import com.intellij.workspaceModel.ide.impl.jps.serialization.SerializationContextForTests
 import com.intellij.workspaceModel.ide.impl.jps.serialization.saveAffectedEntities
@@ -86,7 +86,7 @@ import java.nio.file.Paths
 import kotlin.time.Duration.Companion.minutes
 
 abstract class AbstractAllIntellijEntitiesGenerationTest {
-  private val virtualFileManager = createIdeVirtualFileUrlManager()
+  private val virtualFileManager = IdeVirtualFileUrlManagerImpl()
 
   private val tempPath = tempPathFixture(prefix = this.javaClass.simpleName)
   private val projectRoot: VirtualFile
@@ -504,7 +504,7 @@ private fun mergeEditorconfigsUpToTheDirectory(ultimateSourceRoot: SourceRootEnt
 }
 
 private suspend fun loadProjectIntellijProject(): Pair<MutableEntityStorage, JpsProjectSerializers> {
-  val virtualFileManager = createIdeVirtualFileUrlManager()
+  val virtualFileManager = IdeVirtualFileUrlManagerImpl()
   val mutableEntityStorage = MutableEntityStorage.create()
   val configLocation = createProjectConfigLocation()
   val context = SerializationContextForTests(virtualFileManager, CachingJpsFileContentReader(configLocation))
@@ -520,7 +520,7 @@ private suspend fun loadProjectIntellijProject(): Pair<MutableEntityStorage, Jps
 }
 
 private fun createProjectConfigLocation(): JpsProjectConfigLocation {
-  val virtualFileManager = createIdeVirtualFileUrlManager()
+  val virtualFileManager = IdeVirtualFileUrlManagerImpl()
   val projectDir = Path.of(IdeaTestExecutionPolicy.getHomePathWithPolicy()).toVirtualFileUrl(virtualFileManager)
   return JpsProjectConfigLocation.DirectoryBased(projectDir, projectDir.append(PathMacroUtil.DIRECTORY_STORE_NAME))
 }

@@ -31,7 +31,7 @@ import com.intellij.testFramework.DisposableRule
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.XmlSerializerUtil
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
-import com.intellij.workspaceModel.ide.impl.createIdeVirtualFileUrlManager
+import com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsGlobalModelSynchronizerImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LegacyCustomLibraryEntitySource
 import kotlinx.coroutines.CoroutineScope
@@ -180,7 +180,7 @@ class CustomLibraryBridgeTest {
     val coroutineScope = CoroutineScope(SupervisorJob())
     try {
       val synchronizer = JpsGlobalModelSynchronizerImpl(coroutineScope)
-      synchronizer.setVirtualFileUrlManager(createIdeVirtualFileUrlManager())
+      synchronizer.setVirtualFileUrlManager(IdeVirtualFileUrlManagerImpl())
       // The callback is not invoked on purpose: it only starts the delayed loading
       synchronizer.loadInitialState(LocalEelMachine, InternalEnvironmentName.of("test"), mutableStorage,
                                     VersionedEntityStorageImpl(mutableStorage.toSnapshot()), loadedFromCache = true)
