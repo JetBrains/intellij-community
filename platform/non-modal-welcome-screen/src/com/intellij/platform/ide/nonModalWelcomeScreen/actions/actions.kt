@@ -14,12 +14,13 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.EmptyAction
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.fileTypes.FileTypeRegistry
-import com.intellij.openapi.fileTypes.UnknownFileType
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenBundle
 import com.intellij.platform.ide.nonModalWelcomeScreen.newFileDialog.TemplateName
 import com.intellij.platform.ide.nonModalWelcomeScreen.newFileDialog.WelcomeScreenNewFileHandler
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
+import java.util.function.Supplier
 import javax.swing.Icon
 
 internal class CreateEmptyFileAction : DumbAwareAction() {
@@ -34,7 +35,7 @@ internal class CreateEmptyFileAction : DumbAwareAction() {
 }
 
 @ApiStatus.Internal
-open class NewEmptyFileAction(languageId: String, private val textKey: String, private val icon: Icon) :
+open class NewEmptyFileAction(languageId: String, private val text: Supplier<@Nls String>, private val icon: Icon) :
   AnActionWrapper(createAction(getLanguage(languageId))) {
 
   private val language: Language? = getLanguage(languageId)
@@ -45,7 +46,7 @@ open class NewEmptyFileAction(languageId: String, private val textKey: String, p
       e.presentation.isEnabledAndVisible = false
     }
     e.presentation.icon = icon
-    e.presentation.text = NonModalWelcomeScreenBundle.message(textKey)
+    e.presentation.setText(text)
   }
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -74,8 +75,11 @@ private fun getLanguage(languageId: String): Language? {
   return LanguageUtil.getFileTypeLanguage(fileType)
 }
 
-internal class MarkdownNewFileAction : NewEmptyFileAction("Markdown", "action.WelcomeMarkdownNewFile.text", AllIcons.FileTypes.Markdown)
+internal class MarkdownNewFileAction :
+  NewEmptyFileAction("Markdown", NonModalWelcomeScreenBundle.lazyMessage("action.WelcomeMarkdownNewFile.text"), AllIcons.FileTypes.Markdown)
 
-internal class NewJavaFileAction : NewEmptyFileAction("JAVA", "action.NewJavaFile.text", AllIcons.FileTypes.Java)
+internal class NewJavaFileAction :
+  NewEmptyFileAction("JAVA", NonModalWelcomeScreenBundle.lazyMessage("action.NewJavaFile.text"), AllIcons.FileTypes.Java)
 
-internal class NewKotlinFileAction : NewEmptyFileAction("Kotlin", "action.NewKotlinFile.text", AllIcons.Language.Kotlin)
+internal class NewKotlinFileAction :
+  NewEmptyFileAction("Kotlin", NonModalWelcomeScreenBundle.lazyMessage("action.NewKotlinFile.text"), AllIcons.Language.Kotlin)

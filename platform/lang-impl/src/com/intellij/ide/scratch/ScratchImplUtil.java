@@ -243,6 +243,15 @@ final class ScratchImplUtil {
       catch (IOException ignored) {
       }
     }
+
+    Language language = item.language;
+    if (language == null) {
+      language = LanguageUtil.getFileTypeLanguage(item.fileType);
+    }
+    if (language != null) {
+      ScratchFileCreationHelper.EXTENSION.forLanguage(language)
+        .afterLanguageChange(project, matchedExtensions);
+    }
   }
 
   static LRUPopupBuilder<LanguageItem> buildLanguagesPopup(@NotNull Project project,

@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -19,6 +20,8 @@ import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Set;
 
 /**
  * @author gregsh
@@ -41,7 +44,11 @@ public abstract class ScratchFileCreationHelper {
 
   public void afterCreate(@NotNull Project project, @NotNull Context context, PsiFile scratchFile) {
   }
-  
+
+  @ApiStatus.Internal
+  public void afterLanguageChange(@NotNull Project project, @NotNull Set<VirtualFile> files) {
+  }
+
   public static final class Context {
     public @NotNull String text = "";
     public @Nullable PsiFile sourceFile;
