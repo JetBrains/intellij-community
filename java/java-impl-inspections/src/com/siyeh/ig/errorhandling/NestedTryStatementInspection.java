@@ -16,6 +16,7 @@
 package com.siyeh.ig.errorhandling;
 
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.psi.PsiCatchSection;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiTryStatement;
@@ -54,6 +55,10 @@ public final class NestedTryStatementInspection extends BaseInspection {
     @Override
     public void visitTryStatement(@NotNull PsiTryStatement statement) {
       super.visitTryStatement(statement);
+      if (statement.getFinallyBlock() == null && !(statement.getLastChild() instanceof PsiCatchSection)) {
+        // ignore try-with-resources statements without catch and finally blocks
+        return;
+      }
       final PsiTryStatement parentTry = PsiTreeUtil.getParentOfType(statement, PsiTryStatement.class);
       if (parentTry == null) {
         return;

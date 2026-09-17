@@ -1,9 +1,10 @@
 <html>
 <body>
 Reports nested <code>try</code> statements.
-<p>Nested <code>try</code> statements
-  may result in unclear code and should probably have their <code>catch</code> and <code>finally</code> sections
-  merged.
+Nested <code>try</code> statements may result in code that can be difficult to understand. 
+It may be better to extract the inner <code>try</code> statement into a separate method
+or merge the two try statements into one.
+Nested try-with-resources statements without catch and finally blocks are ignored by this inspection, because they are less confusing.
   <!-- tooltip end -->
 </body>
 </html>
