@@ -128,6 +128,14 @@ public final class DebuggerSettings implements Cloneable, PersistentStateCompone
     return mySteppingFilters;
   }
 
+  /**
+   * The stepping filters a fresh installation has. A headless client, such as a DAP session, builds its own
+   * filter list from them when a launch configuration asks for the JDK filters.
+   */
+  public static ClassFilter[] getDefaultSteppingFilters() {
+    return DEFAULT_STEPPING_FILTERS.clone();
+  }
+
   public static DebuggerSettings getInstance() {
     return ApplicationManager.getApplication().getService(DebuggerSettings.class);
   }
