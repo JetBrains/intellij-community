@@ -10,6 +10,6 @@
   <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
-    <java.templateDebuggerSupport implementation="com.intellij.java.debugger.jsp.JspTemplateDebuggerSupport"/>
+    <debugger.sourceFileResolver implementation="com.intellij.java.debugger.jsp.JspDebuggerSourceFileResolver"/>
   </extensions>
 </idea-plugin>

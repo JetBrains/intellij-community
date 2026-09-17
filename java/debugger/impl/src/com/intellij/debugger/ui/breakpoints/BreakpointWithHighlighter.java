@@ -21,6 +21,7 @@ import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.statistics.StatisticsStorage;
 import com.intellij.icons.AllIcons;
+import com.intellij.debugger.source.DebuggerSourceFileResolver;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -34,7 +35,6 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SlowOperations;
@@ -101,7 +101,7 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
   public @Nullable String getShortClassName() {
     final SourcePosition pos = getSourcePosition();
     if (pos != null) {
-      if (pos.getFile() instanceof JspFile) {
+      if (DebuggerSourceFileResolver.isTemplateSourceFile(pos.getFile())) {
         return getClassName();
       }
     }

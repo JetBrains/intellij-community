@@ -18,6 +18,7 @@ import com.intellij.debugger.engine.InstrumentationBreakpointState;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.MethodBytecodeUtil;
 import com.intellij.icons.AllIcons;
+import com.intellij.debugger.source.DebuggerSourceFileResolver;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -40,7 +41,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiStatement;
 import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.LayeredIcon;
@@ -429,7 +429,7 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
   }
 
   private static @Nullable String findOwnerMethod(final PsiFile file, final int offset) {
-    if (offset < 0 || file instanceof JspFile) {
+    if (offset < 0 || DebuggerSourceFileResolver.isTemplateSourceFile(file)) {
       return null;
     }
     if (file instanceof PsiClassOwner) {

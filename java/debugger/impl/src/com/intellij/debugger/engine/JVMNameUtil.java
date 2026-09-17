@@ -6,6 +6,7 @@ import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
+import com.intellij.debugger.source.DebuggerSourceFileResolver;
 import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -28,7 +29,6 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -365,7 +365,7 @@ public final class JVMNameUtil {
 
     Pair<String, Boolean> res = ReadAction.compute(() -> {
       final PsiFile positionFile = position.getFile();
-      if (positionFile instanceof JspFile) {
+      if (DebuggerSourceFileResolver.isTemplateSourceFile(positionFile)) {
         return Pair.create(positionFile.getName(), false);
       }
 
@@ -436,7 +436,7 @@ public final class JVMNameUtil {
 
     String res = ReadAction.compute(() -> {
       final PsiFile positionFile = position.getFile();
-      if (positionFile instanceof JspFile) {
+      if (DebuggerSourceFileResolver.isTemplateSourceFile(positionFile)) {
         final PsiDirectory dir = positionFile.getContainingDirectory();
         return dir != null ? dir.getVirtualFile().getPresentableUrl() : null;
       }
