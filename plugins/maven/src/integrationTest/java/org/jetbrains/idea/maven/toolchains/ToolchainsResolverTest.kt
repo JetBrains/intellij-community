@@ -46,7 +46,7 @@ internal class ToolchainsResolverTest {
   fun testShouldInstallSdkInIdea() = runBlocking {
     val mavenSession = MavenSyncSession(maven.project, MavenSyncSpec.incremental("test"), MavenProjectsTree(maven.project))
     val toolchainsFile = createTempFile("test", "toolchains.xml")
-    val sdkFile = createTempDirectory("testSdk")
+    val sdkFile = createFakeJdkHome()
     var jdk: Sdk? = null
     mavenSession.syncContext.putUserData(MavenSyncSession.TOOLCHAINS_FILE, toolchainsFile)
     write(toolchainsFile, """<?xml version="1.0" encoding="UTF-8"?>
@@ -82,12 +82,13 @@ internal class ToolchainsResolverTest {
   @Test
   fun testShouldInstallSdkFromDiscoveredJdkToolchainCache() = runBlocking {
     val mavenSession = MavenSyncSession(maven.project, MavenSyncSpec.incremental("test"), MavenProjectsTree(maven.project))
-    val toolchainsDir = createTempDirectory("testToolchains")
-    val toolchainsFile = toolchainsDir.resolve("toolchains.xml")
-    val discoveredCacheFile = toolchainsDir.resolve("discovered-jdk-toolchains-cache.xml")
-    val sdkFile = createTempDirectory("testSdk")
+    val toolchainsFile = createTempDirectory("testToolchains").resolve("toolchains.xml")
+    // The cache lives in the .m2 directory, not next to the toolchains file.
+    val discoveredCacheFile = createTempDirectory("testM2").resolve("discovered-jdk-toolchains-cache.xml")
+    val sdkFile = createFakeJdkHome()
     var jdk: Sdk? = null
     mavenSession.syncContext.putUserData(MavenSyncSession.TOOLCHAINS_FILE, toolchainsFile)
+    mavenSession.syncContext.putUserData(MavenSyncSession.DISCOVERED_JDK_CACHE_FILE, discoveredCacheFile)
     write(discoveredCacheFile, """<?xml version="1.0" encoding="UTF-8"?>
       <toolchains>
         <toolchain>
@@ -125,6 +126,7 @@ internal class ToolchainsResolverTest {
     val toolchainsFile = createTempDirectory("testToolchains").resolve("toolchains.xml")
     val sdk = createTestSdk("test-jdk17", "17", createTempDirectory("testSdk").toString())
     mavenSession.syncContext.putUserData(MavenSyncSession.TOOLCHAINS_FILE, toolchainsFile)
+    putEmptyDiscoveryCache(mavenSession)
     edtWriteAction {
       ProjectJdkTable.getInstance(maven.project).addJdk(sdk)
     }
@@ -150,6 +152,7 @@ internal class ToolchainsResolverTest {
     val mavenSession = MavenSyncSession(maven.project, MavenSyncSpec.incremental("test"), MavenProjectsTree(maven.project))
     val toolchainsFile = createTempDirectory("testToolchains").resolve("toolchains.xml")
     mavenSession.syncContext.putUserData(MavenSyncSession.TOOLCHAINS_FILE, toolchainsFile)
+    putEmptyDiscoveryCache(mavenSession)
     val settings = MavenWorkspaceSettingsComponent.getInstance(maven.project).settings
     val originalJdkForImporter = settings.importingSettings.jdkForImporter
     val originalProjectSdk = ProjectRootManager.getInstance(maven.project).projectSdk
@@ -187,6 +190,7 @@ internal class ToolchainsResolverTest {
     val toolchainsFile = createTempDirectory("testToolchains").resolve("toolchains.xml")
     val sdk = createTestSdk("test-jdk47", "47.0.1", createTempDirectory("testSdk").toString())
     mavenSession.syncContext.putUserData(MavenSyncSession.TOOLCHAINS_FILE, toolchainsFile)
+    putEmptyDiscoveryCache(mavenSession)
     edtWriteAction {
       ProjectJdkTable.getInstance(maven.project).addJdk(sdk)
     }
@@ -204,6 +208,48 @@ internal class ToolchainsResolverTest {
         .discoverJdks(true)
         .build()
       assertNull(session.findOrInstallJdk(bareRequirement), "A bare version must match only an exact equal version")
+    }
+    finally {
+      edtWriteAction {
+        ProjectJdkTable.getInstance(maven.project).removeJdk(sdk)
+      }
+    }
+  }
+
+  @Test
+  fun testShouldSkipStaleDiscoveryCacheEntry() = runBlocking {
+    val mavenSession = MavenSyncSession(maven.project, MavenSyncSpec.incremental("test"), MavenProjectsTree(maven.project))
+    val toolchainsDir = createTempDirectory("testToolchains")
+    val toolchainsFile = toolchainsDir.resolve("toolchains.xml")
+    val discoveredCacheFile = createTempDirectory("testM2").resolve("discovered-jdk-toolchains-cache.xml")
+    val staleHome = toolchainsDir.resolve("removed-jdk")
+    mavenSession.syncContext.putUserData(MavenSyncSession.TOOLCHAINS_FILE, toolchainsFile)
+    mavenSession.syncContext.putUserData(MavenSyncSession.DISCOVERED_JDK_CACHE_FILE, discoveredCacheFile)
+    write(discoveredCacheFile, """<?xml version="1.0" encoding="UTF-8"?>
+      <toolchains>
+        <toolchain>
+          <type>jdk</type>
+          <provides>
+              <version>17</version>
+          </provides>
+          <configuration>
+              <jdkHome>$staleHome</jdkHome>
+          </configuration>
+        </toolchain>
+      </toolchains>""")
+    val sdk = createTestSdk("test-jdk17-fallback", "17", createTempDirectory("testSdk").toString())
+    edtWriteAction {
+      ProjectJdkTable.getInstance(maven.project).addJdk(sdk)
+    }
+
+    try {
+      val requirement = ToolchainRequirement.Builder(ToolchainRequirement.JDK_TYPE)
+        .set("version", "17")
+        .discoverJdks(true)
+        .build()
+
+      val jdk = ToolchainResolverSession.forSession(mavenSession).findOrInstallJdk(requirement)
+      assertSame(sdk, jdk, "A stale cache entry must not hide a valid registered SDK")
     }
     finally {
       edtWriteAction {
@@ -242,6 +288,7 @@ internal class ToolchainsResolverTest {
     val mavenSession = MavenSyncSession(maven.project, MavenSyncSpec.incremental("test"), MavenProjectsTree(maven.project))
     val toolchainsFile = createTempDirectory("testToolchains").resolve("toolchains.xml")
     mavenSession.syncContext.putUserData(MavenSyncSession.TOOLCHAINS_FILE, toolchainsFile)
+    putEmptyDiscoveryCache(mavenSession)
     val session = ToolchainResolverSession.forSession(mavenSession)
     session.environment = { mapOf("JAVA_TEST_HOME" to System.getProperty("java.home")) }
 
@@ -267,6 +314,22 @@ internal class ToolchainsResolverTest {
 
   private fun write(file: Path, data: String) {
     Files.write(file, data.toByteArray())
+  }
+
+  private fun putEmptyDiscoveryCache(mavenSession: MavenSyncSession) {
+    val cacheFile = createTempDirectory("testM2").resolve("discovered-jdk-toolchains-cache.xml")
+    mavenSession.syncContext.putUserData(MavenSyncSession.DISCOVERED_JDK_CACHE_FILE, cacheFile)
+  }
+
+  /** Creates a directory layout that [com.intellij.openapi.projectRoots.JdkUtil.checkForJdk] accepts. */
+  private fun createFakeJdkHome(): Path {
+    val home = createTempDirectory("testFakeJdk")
+    Files.createDirectories(home.resolve("bin"))
+    Files.createDirectories(home.resolve("lib"))
+    Files.createFile(home.resolve("bin/javac"))
+    Files.createFile(home.resolve("bin/javac.exe"))
+    Files.createFile(home.resolve("lib/jrt-fs.jar"))
+    return home.toRealPath()
   }
 
   private suspend fun createTestSdk(name: String, version: String, homePath: String): Sdk {

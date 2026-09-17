@@ -22,6 +22,7 @@ import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.idea.maven.buildtool.MavenSyncSession
+import org.jetbrains.idea.maven.buildtool.getDiscoveredJdkCacheFile
 import org.jetbrains.idea.maven.buildtool.getToolchainsFile
 import org.jetbrains.idea.maven.utils.MavenUtil.getJdkForImporter
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil
@@ -37,16 +38,16 @@ import kotlin.io.path.isRegularFile
 class ToolchainResolverSession private constructor(
   private val myProject: Project,
   private val myToolchainsFile: Path,
+  private val myDiscoveredJdkCacheFile: Path,
 ) {
 
   companion object {
-    private const val DISCOVERED_JDK_TOOLCHAINS_CACHE = "discovered-jdk-toolchains-cache.xml"
-
     fun forSession(syncSession: MavenSyncSession): ToolchainResolverSession {
       val project = syncSession.project
       return syncSession.syncContext.getOrCreateUserData(TOOLCHAIN_SESSION_KEY) {
         ToolchainResolverSession(project,
-                                 syncSession.getToolchainsFile())
+                                 syncSession.getToolchainsFile(),
+                                 syncSession.getDiscoveredJdkCacheFile())
       }
     }
 
@@ -84,14 +85,14 @@ class ToolchainResolverSession private constructor(
     return result
   }
 
-  private suspend fun findToolchain(requirement: ToolchainRequirement): ToolchainModel? {
+  private suspend fun findToolchains(requirement: ToolchainRequirement): List<ToolchainModel> {
     val descriptors = if (requirement.discoverJdks) {
       toolchainsFromFile() + discoveredJdks()
     }
     else {
       toolchainsFromFile()
     }
-    return descriptors.firstOrNull { it.matches(requirement) }
+    return descriptors.filter { it.matches(requirement) }
   }
 
   suspend fun descriptorToSdk(descriptor: ToolchainModel?): Sdk? {
@@ -109,6 +110,7 @@ class ToolchainResolverSession private constructor(
     val jdkHome = descriptor.jdkHome ?: return null
     val eelDescriptor = myProject.getEelDescriptor()
     val ideaPath = eelDescriptor.getPath(jdkHome).asNioPath()
+    if (!JdkUtil.checkForJdk(ideaPath)) return null
 
     return withContext(Dispatchers.EDT) {
       SdkConfigurationUtil.createAndAddSDK(ideaPath.absolutePathString(), JavaSdk.getInstance())
@@ -116,9 +118,11 @@ class ToolchainResolverSession private constructor(
   }
 
   private suspend fun readDiscoveredJdks(): List<ToolchainModel> {
-    val discoveredToolchainsFile = myToolchainsFile.parent?.resolve(DISCOVERED_JDK_TOOLCHAINS_CACHE)
-    return listOfNotNull(discoveredToolchainsFile)
-             .flatMap { readToolchains(it) } + readRegisteredJdks() + environmentJdks() + detectJdks()
+    // Maven validates the cached JDK homes during discovery. A cache entry can be stale.
+    val eelDescriptor = myProject.getEelDescriptor()
+    val cachedJdks = readToolchains(myDiscoveredJdkCacheFile)
+      .filter { model -> model.jdkHome?.let { JdkUtil.checkForJdk(eelDescriptor.getPath(it).asNioPath()) } == true }
+    return cachedJdks + readRegisteredJdks() + environmentJdks() + detectJdks()
   }
 
   private fun environmentJdks(): List<ToolchainModel> {
@@ -187,14 +191,11 @@ class ToolchainResolverSession private constructor(
   }
 
   private suspend fun doFindOrInstall(requirement: ToolchainRequirement): Sdk? {
-    val descriptor = this.findToolchain(requirement)
-    val foundSdk = if (descriptor != null) {
-      descriptorToSdk(descriptor) ?: installSdkFromDescriptor(descriptor)
+    for (descriptor in findToolchains(requirement)) {
+      val foundSdk = descriptorToSdk(descriptor) ?: installSdkFromDescriptor(descriptor)
+      if (foundSdk != null) return foundSdk
     }
-    else {
-      null
-    }
-    return foundSdk
+    return null
   }
 
   private fun findImporterJdk(requirement: ToolchainRequirement): Sdk? {
