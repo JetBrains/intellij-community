@@ -52,6 +52,17 @@ class Git(private val dir: Path) {
     return executeWithNullSeparatedOutput("git", "ls-files", "-z") { it.toList() }
   }
 
+  /** Lists indexed paths whose file name is one of [fileNames]. */
+  fun listStagingFilesByName(fileNames: Collection<String>): List<String> {
+    if (fileNames.isEmpty()) {
+      return emptyList()
+    }
+
+    // A leading star does not match a file in the directory root.
+    val pathspecs = fileNames.flatMap { listOf("*$it", it) }
+    return executeWithNullSeparatedOutput("git", "ls-files", "-z", "--", *pathspecs.toTypedArray()) { it.toList() }
+  }
+
   fun rm(files: List<Path>) {
     execute("git", "rm", *files.map { it.pathString }.toTypedArray())
   }
