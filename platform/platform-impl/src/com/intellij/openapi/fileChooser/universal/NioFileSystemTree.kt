@@ -1,7 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.universal
 
+import com.intellij.ide.dnd.DnDDragStartBean
+import com.intellij.ide.dnd.DnDSupport
 import com.intellij.ide.dnd.FileCopyPasteUtil
+import com.intellij.ide.dnd.FileFlavorProvider
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.DataKey
@@ -43,6 +46,7 @@ import java.awt.dnd.DropTargetDragEvent
 import java.awt.dnd.DropTargetDropEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
+import java.io.File
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
@@ -111,6 +115,7 @@ class NioFileSystemTree(
     })
 
     installDropTarget()
+    installDragSource()
   }
 
   private fun installDropTarget() {
@@ -144,6 +149,38 @@ class NioFileSystemTree(
         e.dropComplete(true)
       }
     })
+  }
+
+  /**
+   * Makes the tree a drag source, so a selection can be dragged out to the local file system,
+   * to the Project View, or to the editor. Only paths that resolve to a local [File] are offered:
+   * a selection that includes a non-local (remote or in-memory) path starts no drag.
+   */
+  private fun installDragSource() {
+    DnDSupport.createBuilder(myTree)
+      .disableAsTarget()
+      .setBeanProvider { createDragStartBean() }
+      .setDisposableParent(this)
+      .install()
+  }
+
+  private fun createDragStartBean(): DnDDragStartBean? {
+    val files = getSelectedFilesForDrag() ?: return null
+    return DnDDragStartBean(object : FileFlavorProvider {
+      override fun asFileList(): List<File> = files
+    })
+  }
+
+  /** Returns the selected paths as local [File]s, or null when any of them is not local. */
+  private fun getSelectedFilesForDrag(): List<File>? {
+    val paths = getSelectedFiles().filterNotNull()
+    if (paths.isEmpty()) return null
+    val files = ArrayList<File>(paths.size)
+    for (path in paths) {
+      val file = runCatching { path.toFile() }.getOrNull() ?: return null
+      files.add(file)
+    }
+    return files
   }
 
   /** Returns the tree node path under the drop point, or null when there is none. */
