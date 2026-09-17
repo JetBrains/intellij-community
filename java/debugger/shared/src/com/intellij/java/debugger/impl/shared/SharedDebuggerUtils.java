@@ -45,6 +45,15 @@ public final class SharedDebuggerUtils {
                                                       List<DumpItem> dumpItems,
                                                       RunnerLayoutUi ui,
                                                       List<Filter> filters) {
+    return createThreadDumpPanel(project, dumpItems, ui, filters, false);
+  }
+
+  @ApiStatus.Internal
+  public static ThreadDumpPanel createThreadDumpPanel(Project project,
+                                                      List<DumpItem> dumpItems,
+                                                      RunnerLayoutUi ui,
+                                                      List<Filter> filters,
+                                                      boolean platformThreadsOnly) {
     final TextConsoleBuilder consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
     consoleBuilder.filters(filters);
     final ConsoleView consoleView = consoleBuilder.getConsole();
@@ -52,7 +61,8 @@ public final class SharedDebuggerUtils {
     consoleView.allowHeavyFilters();
     final ThreadDumpPanel panel = ThreadDumpPanel.createFromDumpItems(project, consoleView, toolbarActions, dumpItems);
 
-    String id = JavaDebuggerSharedBundle.message("thread.dump.name", DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis()));
+    String time = DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis());
+    String id = JavaDebuggerSharedBundle.message(platformThreadsOnly ? "thread.dump.platform.name" : "thread.dump.name", time);
     final Content content = ui.createContent(id + " " + myThreadDumpsCount, panel, id, null, null);
     content.putUserData(RunnerContentUi.LIGHTWEIGHT_CONTENT_MARKER, Boolean.TRUE);
     content.setCloseable(true);

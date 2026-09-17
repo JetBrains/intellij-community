@@ -227,7 +227,7 @@ internal object ThreadDumpExecutor {
     val platformThreadDumpItems = withContext(Dispatchers.Default) {
       toDumpItems(platformThreadDump) + listOfNotNull(additionalDumpItem)
     }
-    return showDumpItems(project, platformThreadDumpItems, runnerContentUi, scope)
+    return showDumpItems(project, platformThreadDumpItems, runnerContentUi, scope, platformThreadsOnly = true)
   }
 
   private suspend fun showDumpItems(
@@ -235,12 +235,13 @@ internal object ThreadDumpExecutor {
     dumpItems: List<DumpItem>,
     runnerContentUi: RunnerContentUi,
     scope: GlobalSearchScope,
+    platformThreadsOnly: Boolean = false,
   ): Content? {
     val filters = ExceptionFilters.getFilters(scope)
     return withContext(nonModalEdtContext) {
       val layoutUi = runnerContentUi.runnerLayoutUi
       if (layoutUi.isDisposed) return@withContext null
-      val panel = SharedDebuggerUtils.createThreadDumpPanel(project, dumpItems, layoutUi, filters)
+      val panel = SharedDebuggerUtils.createThreadDumpPanel(project, dumpItems, layoutUi, filters, platformThreadsOnly)
       layoutUi.contents.firstOrNull { it.component === panel }
     }
   }
