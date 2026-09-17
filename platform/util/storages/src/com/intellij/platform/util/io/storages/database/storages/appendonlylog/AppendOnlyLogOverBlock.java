@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ValueLayout;
 
 import static com.intellij.platform.util.io.storages.database.spi.BlocksStore.Block.LifecycleState.ACTIVE;
 import static com.intellij.platform.util.io.storages.database.spi.BlocksStore.Block.LifecycleState.ALLOCATED;
@@ -28,7 +29,11 @@ public final class AppendOnlyLogOverBlock {
   }
 
   public static int minimumBlockContentLengthFor(int payloadLength) {
-    return Math.addExact(AppendOnlyLogOverBlockHeaderLayout.HEADER_SIZE, RecordHeader.allocated(payloadLength).totalLength());
+    return minimumBlockContentLengthFor(payloadLength, /*hasLink: */ false);
+  }
+
+  public static int minimumBlockContentLengthFor(int payloadLength, boolean hasLink) {
+    return Math.addExact(AppendOnlyLogOverBlockHeaderLayout.HEADER_SIZE, RecordHeader.totalLength(payloadLength, hasLink));
   }
 
   /// Initializes an empty log header in the block, and activates the block;
@@ -80,12 +85,21 @@ public final class AppendOnlyLogOverBlock {
   }
 
   public synchronized boolean hasSpaceFor(int payloadLength) {
-    var totalLength = RecordHeader.allocated(payloadLength).totalLength();
+    return hasSpaceFor(payloadLength, /* hasLink: */ false);
+  }
+
+  public synchronized boolean hasSpaceFor(int payloadLength, boolean hasLink) {
+    var totalLength = RecordHeader.totalLength(payloadLength, hasLink);
     return content.byteSize() - AppendOnlyLogOverBlockHeaderLayout.allocatedTail(content) >= totalLength;
   }
 
   /// Appends one payload and returns its offset inside the block
   public synchronized int append(int payloadLength, @NotNull RecordWriter writer) throws IOException {
+    return append(payloadLength, /*previousRef: */0, writer);
+  }
+
+  /// Appends a payload with an (optional) link to a previous record in chain; zero denotes an absent link.
+  public synchronized int append(int payloadLength, long previousRef, @NotNull RecordWriter writer) throws IOException {
     if (block.state() != ACTIVE) {
       throw new IllegalStateException("Block " + block.id() + " is not active");
     }
@@ -95,7 +109,8 @@ public final class AppendOnlyLogOverBlock {
       throw new IllegalStateException("Block " + block.id() + " has an incomplete allocation");
     }
 
-    var header = RecordHeader.allocated(payloadLength);
+    boolean hasLink = (previousRef != 0);
+    var header = RecordHeader.allocated(payloadLength, hasLink);
     if (content.byteSize() - recordOffset < header.totalLength()) {
       throw new IllegalStateException("Block " + block.id() + " has no space for the record");
     }
@@ -105,7 +120,11 @@ public final class AppendOnlyLogOverBlock {
     var newTail = Math.addExact(recordOffset, header.totalLength());
     AppendOnlyLogOverBlockHeaderLayout.publishAllocatedTail(content, newTail);
 
-    writer.writeTo(payload(recordOffset, header.payloadLength()));
+    if (header.hasLink()) {
+      //A header is int32, int32-aligned => [link:int64] right after header is _not_ (int64-)aligned:
+      content.set(ValueLayout.JAVA_LONG_UNALIGNED, recordOffset + RecordHeaderLayout.HEADER_SIZE, previousRef);
+    }
+    writer.writeTo(payload(recordOffset, header));
 
     header.publishCommittedTo(recordHeader);
     AppendOnlyLogOverBlockHeaderLayout.publishCommittedTail(content, newTail);
@@ -114,25 +133,38 @@ public final class AppendOnlyLogOverBlock {
 
   /// @return a read-only view of a committed payload
   public @NotNull MemorySegment read(int recordOffset) throws CorruptedException {
+    return readRecord(recordOffset).payload();
+  }
+
+  public @NotNull Record readRecord(int recordOffset) throws CorruptedException {
     if (block.state() == BlocksStore.Block.LifecycleState.RETIRED) {
       throw new IllegalStateException("Block " + block.id() + " is retired");
     }
-    var recordHeader = content.asSlice(recordOffset, RecordHeaderLayout.HEADER_SIZE);
     var committedTail = AppendOnlyLogOverBlockHeaderLayout.committedTail(content);
+    if (recordOffset < AppendOnlyLogOverBlockHeaderLayout.HEADER_SIZE ||
+        recordOffset % RecordHeaderLayout.RECORD_ALIGNMENT != 0 ||
+        (long)recordOffset + RecordHeaderLayout.HEADER_SIZE > committedTail) {
+      throw new CorruptedException("Invalid record offset " + recordOffset + " in block " + block.id());
+    }
+    var recordHeader = content.asSlice(recordOffset, RecordHeaderLayout.HEADER_SIZE);
     var header = RecordHeader.readCommitted(block.id(), recordOffset, recordHeader, committedTail);
-    return payload(recordOffset, header.payloadLength()).asReadOnly();
+    return record(recordOffset, header);
   }
 
   public void forEachCommittedRecord(@NotNull RecordReader reader) throws IOException {
+    forEachCommittedRecordWithLinks((offset, record) -> reader.process(offset, record.payload()));
+  }
+
+  public void forEachCommittedRecordWithLinks(@NotNull LinkedRecordReader reader) throws IOException {
     scanCommittedRecords(AppendOnlyLogOverBlockHeaderLayout.committedTail(content), reader);
   }
 
-  private void scanCommittedRecords(int committedTail, @NotNull RecordReader reader) throws IOException {
+  private void scanCommittedRecords(int committedTail, @NotNull LinkedRecordReader reader) throws IOException {
     var recordOffset = AppendOnlyLogOverBlockHeaderLayout.HEADER_SIZE;
     while (recordOffset < committedTail) {
       var recordHeader = content.asSlice(recordOffset, RecordHeaderLayout.HEADER_SIZE);
       var header = RecordHeader.readCommitted(block.id(), recordOffset, recordHeader, committedTail);
-      reader.process(recordOffset, payload(recordOffset, header.payloadLength()).asReadOnly());
+      reader.process(recordOffset, record(recordOffset, header));
       recordOffset += header.totalLength();
     }
     if (recordOffset != committedTail) {
@@ -142,8 +174,33 @@ public final class AppendOnlyLogOverBlock {
     }
   }
 
-  private @NotNull MemorySegment payload(int recordOffset, int payloadLength) {
-    return content.asSlice(recordOffset + RecordHeaderLayout.HEADER_SIZE, payloadLength);
+  private @NotNull MemorySegment payload(int recordOffset, @NotNull RecordHeader header) {
+    return content.asSlice(recordOffset + RecordHeaderLayout.HEADER_SIZE + (header.hasLink() ? Long.BYTES : 0), header.payloadLength());
+  }
+
+  private @NotNull Record record(int recordOffset, @NotNull RecordHeader header) throws CorruptedException {
+    long previousRef = 0;
+    if (header.hasLink()) {
+      previousRef = content.get(ValueLayout.JAVA_LONG_UNALIGNED, recordOffset + RecordHeaderLayout.HEADER_SIZE);
+      if (previousRef == 0) {
+        throw new CorruptedException("Missing record link at offset " + recordOffset + " in block " + block.id());
+      }
+    }
+    return new Record(previousRef, payload(recordOffset, header).asReadOnly());
+  }
+
+  /// The [payload] excludes the (optional) [previousRef].
+  /// `previousRef=0` denotes an absent ref.
+  public record Record(long previousRef, @NotNull MemorySegment payload) {
+    @Override
+    public String toString() {
+      return "Record[previousRef=" + previousRef + ", payloadSize=" + payload.byteSize() + ']';
+    }
+  }
+
+  @FunctionalInterface
+  public interface LinkedRecordReader {
+    void process(int recordOffset, @NotNull Record record) throws IOException;
   }
 
   /// Writes one payload into a segment with the requested payload length

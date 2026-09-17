@@ -11,6 +11,8 @@ import java.io.IOException;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -104,6 +106,30 @@ public class AppendOnlyLogOverBlockTest {
       var log = AppendOnlyLogOverBlock.open(block);
 
       assertArrayEquals(expected, log.read(recordOffset).toArray(ValueLayout.JAVA_BYTE));
+    }
+  }
+
+  @Test
+  public void optionalLinksPreservePayloadBoundariesAndAlignment(@TempDir Path databaseDirectory) throws Exception {
+    try (var database = new BlocksDatabaseFactory(CHUNK_SIZE).open(databaseDirectory)) {
+      var store = database.openStore("log", 1);
+      var block = store.allocateBlock(ARBITRARY_BLOCK_ROLE, BLOCK_CONTENT_LENGTH);
+      var log = AppendOnlyLogOverBlock.create(block);
+      assertTrue(log.hasSpaceFor(1));
+
+      int firstOffset = log.append(1, payload -> payload.set(ValueLayout.JAVA_BYTE, 0, (byte)11));
+      int linkedOffset = log.append(1, 123L, payload -> payload.set(ValueLayout.JAVA_BYTE, 0, (byte)22));
+      var reopened = AppendOnlyLogOverBlock.open(block);
+      assertEquals(0L, reopened.readRecord(firstOffset).previousRef());
+      assertEquals(123L, reopened.readRecord(linkedOffset).previousRef());
+      assertEquals(1L, reopened.readRecord(linkedOffset).payload().byteSize());
+      assertEquals(22, reopened.read(linkedOffset).get(ValueLayout.JAVA_BYTE, 0));
+
+      var values = new ArrayList<Byte>();
+      reopened.forEachCommittedRecord((_, payload) -> values.add(payload.get(ValueLayout.JAVA_BYTE, 0)));
+      assertEquals(List.of((byte)11, (byte)22), values);
+      assertEquals(8, RecordHeaderLayout.RecordHeader.totalLength(1));
+      assertEquals(16, RecordHeaderLayout.RecordHeader.totalLength(1, true));
     }
   }
 

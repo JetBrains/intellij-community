@@ -76,18 +76,24 @@ public final class RecordStorageOverBlocks {
   /// Appends one payload and returns its stable packed location.
   public long append(int payloadLength,
                      @NotNull RecordWriter writer) throws IOException {
+    return append(payloadLength, /*previousRef: */ 0, writer);
+  }
+
+  /// Appends a payload and an optional reference to its predecessor
+  public long append(int payloadLength, long previousRef, @NotNull RecordWriter writer) throws IOException {
     synchronized (appendLock){
       var log = currentLog;
-      if (log == null || !log.hasSpaceFor(payloadLength)) {
+      boolean hasLink = (previousRef != 0);
+      if (log == null || !log.hasSpaceFor(payloadLength, hasLink)) {
         if (log != null) {
           log.block().seal();
         }
-        log = allocateLog(payloadLength);
+        log = allocateLog(payloadLength, hasLink);
         currentLog = log;
       }
 
       try {
-        int recordOffset = log.append(payloadLength, writer);
+        int recordOffset = log.append(payloadLength, previousRef, writer);
         return recordRef(log.block().id(), recordOffset);
       }
       catch (IOException | RuntimeException | Error failure) {
@@ -100,6 +106,11 @@ public final class RecordStorageOverBlocks {
 
   /// @return a read-only view of the committed payload
   public @NotNull MemorySegment read(long recordRef) throws IOException {
+    return readRecord(recordRef).payload();
+  }
+
+  /// @return record for recordRef, _without_ resolving [AppendOnlyLogOverBlock.Record#previousRef()], if record has it
+  public @NotNull AppendOnlyLogOverBlock.Record readRecord(long recordRef) throws IOException {
     var blockId = blockId(recordRef);
     AppendOnlyLogOverBlock log;
     synchronized (logsByBlockIdLock) {
@@ -108,11 +119,15 @@ public final class RecordStorageOverBlocks {
     if (log == null) {
       throw new IllegalArgumentException("Unknown DATA block " + blockId);
     }
-    return log.read(recordOffset(recordRef));
+    return log.readRecord(recordOffset(recordRef));
   }
 
   /// Processes committed records in block allocation order
   public void forEachCommittedRecord(@NotNull RecordReader reader) throws IOException {
+    forEachCommittedRecordWithLinks((recordRef, record) -> reader.process(recordRef, record.payload()));
+  }
+
+  public void forEachCommittedRecordWithLinks(@NotNull LinkedRecordReader reader) throws IOException {
     synchronized (appendLock){
       for (var block : blockCatalog.blocks(DATA)) {
         if (block.state() == BlocksStore.Block.LifecycleState.RETIRED) {
@@ -125,13 +140,13 @@ public final class RecordStorageOverBlocks {
         if (log == null) {
           throw new CorruptedException("Missing DATA block " + block.id());
         }
-        log.forEachCommittedRecord((recordOffset, payload) -> reader.process(recordRef(block.id(), recordOffset), payload));
+        log.forEachCommittedRecordWithLinks((recordOffset, record) -> reader.process(recordRef(block.id(), recordOffset), record));
       }
     }
   }
 
-  private @NotNull AppendOnlyLogOverBlock allocateLog(int payloadLength) throws IOException {
-    var minimumContentLength = AppendOnlyLogOverBlock.minimumBlockContentLengthFor(payloadLength);
+  private @NotNull AppendOnlyLogOverBlock allocateLog(int payloadLength, boolean hasLink) throws IOException {
+    var minimumContentLength = AppendOnlyLogOverBlock.minimumBlockContentLengthFor(payloadLength, hasLink);
     var contentLength = Math.max(preferredBlockContentLength, minimumContentLength);
     var block = blockCatalog.allocateBlock(DATA, contentLength);
     var log = AppendOnlyLogOverBlock.create(block);
@@ -160,4 +175,8 @@ public final class RecordStorageOverBlocks {
     void process(long recordRef, @NotNull MemorySegment payload) throws IOException;
   }
 
+  @FunctionalInterface
+  public interface LinkedRecordReader {
+    void process(long recordRef, @NotNull AppendOnlyLogOverBlock.Record record) throws IOException;
+  }
 }

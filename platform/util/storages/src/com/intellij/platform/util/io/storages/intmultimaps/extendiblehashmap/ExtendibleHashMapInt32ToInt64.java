@@ -285,13 +285,29 @@ public class ExtendibleHashMapInt32ToInt64 implements IntToMultiLongMap, Durable
     return dirty;
   }
 
+  /// Marks the lookup before its owner commits data that will require a lookup update
+  public void markDirty() throws IOException {
+    checkNotClosed();
+    markModified();
+    VarHandle.fullFence();
+  }
+
+  /// Releases resources and preserves the dirty status after an incomplete update
+  public void closeKeepingDirty() throws IOException {
+    if (storage.isOpen()) {
+      markDirty();
+      storage.close();
+      segmentsCache.clear();
+      header = null;
+    }
+  }
+
   @Override
   public void close() throws IOException {
     if (storage.isOpen()) {
       flushStorage(true);
       storage.close();
 
-      //Clear all references to mapped memory segments so the storage can unmap them.
       segmentsCache.clear();
       header = null;
     }

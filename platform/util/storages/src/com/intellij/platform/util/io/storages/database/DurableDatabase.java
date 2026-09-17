@@ -4,6 +4,7 @@ package com.intellij.platform.util.io.storages.database;
 import com.intellij.platform.util.io.storages.DataExternalizerEx;
 import com.intellij.platform.util.io.storages.KeyDescriptorEx;
 import com.intellij.platform.util.io.storages.durablemap.DurableMap;
+import com.intellij.platform.util.io.storages.durablemap.PatchableDurableMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,6 +21,13 @@ public interface DurableDatabase extends Flushable, Closeable {
                                            int dataVersion,
                                            @NotNull KeyDescriptorEx<K> keyDescriptor,
                                            @NotNull DataExternalizerEx<V> valueExternalizer) throws IOException;
+
+  /// Opens a named map that accepts patches encoded by the supplied codec
+  <K, V, P> @NotNull PatchableDurableMap<K, V, P> openMap(@NotNull String name,
+                                                          int dataVersion,
+                                                          @NotNull KeyDescriptorEx<K> keyDescriptor,
+                                                          @NotNull PatchableDurableMap.PatchableValueExternalizer<V, P> valueExternalizer)
+    throws IOException;
 
   /// @return a snapshot of the current map names
   @NotNull List<String> mapNames();

@@ -2,12 +2,13 @@
 package com.intellij.platform.util.io.storages.database.storages.durablemap;
 
 import com.intellij.openapi.util.Ref;
-import com.intellij.platform.util.io.storages.DataExternalizerEx.KnownSizeRecordWriter;
 import com.intellij.platform.util.io.storages.database.spi.BlocksStore;
+import com.intellij.platform.util.io.storages.database.storages.appendonlylog.AppendOnlyLogOverBlock;
 import com.intellij.platform.util.io.storages.database.storages.extendiblehashmap.ExtendibleHashMapStorageOverBlocksStore;
 import com.intellij.platform.util.io.storages.durablemap.DurableMap;
 import com.intellij.platform.util.io.storages.durablemap.EntryExternalizer;
 import com.intellij.platform.util.io.storages.durablemap.EntryExternalizer.Entry;
+import com.intellij.platform.util.io.storages.durablemap.PatchableDurableMap;
 import com.intellij.platform.util.io.storages.intmultimaps.Durable;
 import com.intellij.platform.util.io.storages.intmultimaps.HashUtils;
 import com.intellij.platform.util.io.storages.intmultimaps.IntToMultiLongMap;
@@ -15,11 +16,17 @@ import com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.Ext
 import com.intellij.util.Processor;
 import com.intellij.util.containers.hash.EqualityPolicy;
 import com.intellij.util.io.CorruptedException;
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ValueLayout;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.function.BiPredicate;
 
 import static com.intellij.platform.util.io.storages.intmultimaps.IntToMultiLongMap.NO_VALUE;
@@ -30,8 +37,11 @@ import static com.intellij.util.io.IOUtil.KiB;
 /// - key-value entries in `DATA` blocks
 /// - hash lookup in `LOOKUP` blocks
 @ApiStatus.Internal
-public final class DurableMapOverBlocks<K, V> implements DurableMap<K, V> {
+public class DurableMapOverBlocks<K, V> implements DurableMap<K, V> {
   public static final int DEFAULT_DATA_BLOCK_CONTENT_LENGTH = 64 * KiB;
+
+  /// 32K is not enough for indexes
+  public static final int SEGMENT_SIZE = DEFAULT_SEGMENT_SIZE * 2;
 
   private final @NotNull BlocksStore blocksStore;
 
@@ -78,10 +88,34 @@ public final class DurableMapOverBlocks<K, V> implements DurableMap<K, V> {
                                                                 @NotNull EqualityPolicy<? super K> keyEquality,
                                                                 @Nullable EqualityPolicy<? super V> valueEquality,
                                                                 @NotNull EntryExternalizer<K, V> entryExternalizer) throws IOException {
+    return open(blocksStore, preferredBlockContentLength, keyEquality, valueEquality, entryExternalizer, null);
+  }
+
+  /// Opens a map whose codec can combine snapshots and patches.
+  /// Both codecs must use the same value format.
+  public static <K, V, P> @NotNull PatchableDurableMap<K, V, P> openPatchable(
+    @NotNull BlocksStore blocksStore,
+    int preferredBlockContentLength,
+    @NotNull EqualityPolicy<? super K> keyEquality,
+    @Nullable EqualityPolicy<? super V> valueEquality,
+    @NotNull EntryExternalizer<K, V> entryExternalizer,
+    @NotNull PatchableDurableMap.PatchableValueExternalizer<V, P> patchExternalizer
+  ) throws IOException {
+    return asPatchable(open(blocksStore, preferredBlockContentLength, keyEquality, valueEquality, entryExternalizer, patchExternalizer));
+  }
+
+  private static <K, V> @NotNull DurableMapOverBlocks<K, V> open(
+    @NotNull BlocksStore blocksStore,
+    int preferredBlockContentLength,
+    @NotNull EqualityPolicy<? super K> keyEquality,
+    @Nullable EqualityPolicy<? super V> valueEquality,
+    @NotNull EntryExternalizer<K, V> entryExternalizer,
+    @Nullable PatchableDurableMap.PatchableValueExternalizer<V, ?> patchExternalizer
+  ) throws IOException {
     var lookupStorage = new ExtendibleHashMapStorageOverBlocksStore(
       blocksStore,
       DurableMapBlockCatalog.DurableMapBlockRole.LOOKUP.persistentCode(),
-      DEFAULT_SEGMENT_SIZE * 2 // need large indexes!
+      SEGMENT_SIZE
     );
     var rebuildLookup = lookupStorage.isEmpty();
     ExtendibleHashMapInt32ToInt64 lookup;
@@ -104,15 +138,14 @@ public final class DurableMapOverBlocks<K, V> implements DurableMap<K, V> {
         rebuildLookup = true;
         lookup.clear();
       }
-      return open(blocksStore, preferredBlockContentLength, lookup, rebuildLookup, keyEquality, valueEquality, entryExternalizer);
+      return open(blocksStore, preferredBlockContentLength, lookup, rebuildLookup, keyEquality, valueEquality,
+                  entryExternalizer, patchExternalizer);
     }
     catch (IOException | RuntimeException | Error failure) {
       try {
+        lookup.closeKeepingDirty();
         if (rebuildLookup) {
-          lookup.closeAndClean();
-        }
-        else {
-          lookup.close();
+          lookupStorage.closeAndClean();
         }
       }
       catch (IOException | RuntimeException | Error closeFailure) {
@@ -134,13 +167,39 @@ public final class DurableMapOverBlocks<K, V> implements DurableMap<K, V> {
 
   /// Opens the map with the specified lookup.
   /// A non-durable lookup must be empty and is rebuilt from the committed DATA records.
-  public static <K, V> @NotNull DurableMapOverBlocks<K, V> open(@NotNull BlocksStore store,
+  public static <K, V> @NotNull DurableMapOverBlocks<K, V> open(@NotNull BlocksStore blocksStore,
                                                                 int preferredBlockContentLength,
                                                                 @NotNull IntToMultiLongMap lookup,
                                                                 @NotNull EqualityPolicy<? super K> keyEquality,
                                                                 @Nullable EqualityPolicy<? super V> valueEquality,
                                                                 @NotNull EntryExternalizer<K, V> entryExternalizer) throws IOException {
-    return open(store, preferredBlockContentLength, lookup, !(lookup instanceof Durable), keyEquality, valueEquality, entryExternalizer);
+    return open(
+      blocksStore,
+      preferredBlockContentLength,
+      lookup, /*rebuildLookupFromZero: */ !(lookup instanceof Durable),
+      keyEquality, valueEquality, entryExternalizer, /*patchExternalizer: */ null
+    );
+  }
+
+  /// Opens a patchable map with an externally managed lookup.
+  /// Both codecs must use the same value format.
+  public static <K, V, P> @NotNull PatchableDurableMap<K, V, P> openPatchable(
+    @NotNull BlocksStore blocksStore,
+    int preferredBlockContentLength,
+    @NotNull IntToMultiLongMap lookup,
+    @NotNull EqualityPolicy<? super K> keyEquality,
+    @Nullable EqualityPolicy<? super V> valueEquality,
+    @NotNull EntryExternalizer<K, V> entryExternalizer,
+    @NotNull PatchableDurableMap.PatchableValueExternalizer<V, P> patchExternalizer
+  ) throws IOException {
+    return asPatchable(
+      open(
+        blocksStore,
+        preferredBlockContentLength,
+        lookup, /*rebuildLookupFromZero: */ !(lookup instanceof Durable),
+        keyEquality, valueEquality, entryExternalizer, patchExternalizer
+      )
+    );
   }
 
   private static <K, V> @NotNull DurableMapOverBlocks<K, V> open(@NotNull BlocksStore blocksStore,
@@ -149,13 +208,18 @@ public final class DurableMapOverBlocks<K, V> implements DurableMap<K, V> {
                                                                  boolean rebuildLookup,
                                                                  @NotNull EqualityPolicy<? super K> keyEquality,
                                                                  @Nullable EqualityPolicy<? super V> valueEquality,
-                                                                 @NotNull EntryExternalizer<K, V> entryExternalizer) throws IOException {
+                                                                 @NotNull EntryExternalizer<K, V> entryExternalizer,
+                                                                 @Nullable PatchableDurableMap.PatchableValueExternalizer<V, ?> patchExternalizer) throws IOException {
     if (rebuildLookup && !lookup.isEmpty()) {
       throw new IllegalArgumentException("The lookup must be empty before recovery");
     }
     var blockCatalog = DurableMapBlockCatalog.open(blocksStore);
     var mapEntries = RecordStorageOverBlocks.open(blockCatalog, preferredBlockContentLength);
-    var durableMapImpl = new DurableMapOverBlocks<>(blocksStore, mapEntries, lookup, keyEquality, valueEquality, entryExternalizer);
+    DurableMapOverBlocks<K, V> durableMapImpl = (patchExternalizer == null) ?
+                                                new DurableMapOverBlocks<>(blocksStore, mapEntries, lookup, keyEquality,
+                                                                           valueEquality, entryExternalizer) :
+                                                new PatchableMap<>(blocksStore, mapEntries, lookup, keyEquality,
+                                                                     valueEquality, entryExternalizer, patchExternalizer);
     if (rebuildLookup) {
       durableMapImpl.rebuildLookupFromRecords();
     }
@@ -192,20 +256,71 @@ public final class DurableMapOverBlocks<K, V> implements DurableMap<K, V> {
           return;
         }
       }
-      // TODO A crash after DATA commit and before the lookup update leaves a stale lookup marked as properly closed.
-      //      Mark the durable lookup as dirty before appendEntry().
-      var newRecordRef = appendEntry(key, value);
-
-      if (value == null) {
-        if (oldRecordRef != NO_VALUE) {
-          keyHashToRecordRefMap.remove(keyHash, oldRecordRef);
+      if (value == null && oldRecordRef == NO_VALUE) {//skip put(key,null) if value is already null
+        return;
+      }
+      var writer = entryExternalizer.writerFor(key, value);
+      markLookupDirty();
+      try {
+        var newRecordRef = entries.append(writer.recordSize(), payload -> writer.write(payload.asByteBuffer()));
+        if (value == null) {
+          if (!keyHashToRecordRefMap.remove(keyHash, oldRecordRef)) {
+            throw new CorruptedException("The old record reference disappeared from the lookup");
+          }
+        }
+        else {
+          publishHead(keyHash, oldRecordRef, newRecordRef);
         }
       }
-      else if (oldRecordRef == NO_VALUE) {
-        keyHashToRecordRefMap.put(keyHash, newRecordRef);
+      catch (IOException | RuntimeException | Error failure) {
+        closeAfterFailure(failure);
+        throw failure;
       }
-      else if (!keyHashToRecordRefMap.replace(keyHash, oldRecordRef, newRecordRef)) {
-        throw new AssertionError("The old record reference disappeared from the lookup");
+    }
+  }
+
+  /// Serializes patches under the same lock as all other map operations
+  protected final <P> void patchValue(@NotNull K key,
+                                      @NotNull P patch,
+                                      @NotNull PatchableDurableMap.PatchableValueExternalizer<V, P> externalizer) throws IOException {
+    var keyHash = adjustedHash(key);
+    var writer = externalizer.writerForPatch(patch);
+    synchronized (lock) {
+      ensureOpen();
+      var oldHead = findRecordRef(key, keyHash);
+      if (oldHead == NO_VALUE) {
+        var headerWriter = entryExternalizer.writerForEntryHeader(key);
+        int headerSize = headerWriter.recordSize();
+        int payloadSize = Math.addExact(headerSize, writer.recordSize());
+        markLookupDirty();
+        try {
+          var newHead = entries.append(payloadSize, payload -> {
+            headerWriter.write(payload.asSlice(0, headerSize).asByteBuffer());
+            writer.write(payload.asSlice(headerSize).asByteBuffer());
+          });
+          publishHead(keyHash, NO_VALUE, newHead);
+        }
+        catch (IOException | RuntimeException | Error failure) {
+          closeAfterFailure(failure);
+          throw failure;
+        }
+      }
+      else {
+        var head = entries.readRecord(oldHead);
+        long baseRef = head.previousRef() == NO_VALUE ? oldHead : baseEntryRef(oldHead, head);
+        int payloadSize = Math.addExact(Long.BYTES, writer.recordSize());
+        markLookupDirty();
+        try {
+          var newHead = entries.append(payloadSize, oldHead, payload -> {
+            payload.set(ValueLayout.JAVA_LONG_UNALIGNED, 0, baseRef);
+            writer.write(payload.asSlice(Long.BYTES).asByteBuffer());
+          });
+          publishHead(keyHash, oldHead, newHead);
+        }
+        catch (IOException | RuntimeException | Error failure) {
+          closeAfterFailure(failure);
+          throw failure;
+        }
       }
     }
   }
@@ -285,6 +400,7 @@ public final class DurableMapOverBlocks<K, V> implements DurableMap<K, V> {
       if (closed) {
         return;
       }
+      blocksStore.flush();
       closeLookup();
       closed = true;
     }
@@ -306,22 +422,74 @@ public final class DurableMapOverBlocks<K, V> implements DurableMap<K, V> {
   }
 
   private void rebuildLookupFromRecords() throws IOException {
-    entries.forEachCommittedRecord((recordRef, payload) -> {
-      var entry = entryExternalizer.read(payload.asByteBuffer());
-      var keyHash = adjustedHash(entry.key());
-      var oldRecordRef = findRecordRef(entry.key(), keyHash);
-      if (entry.isValueVoid()) {
+    markLookupDirty();
+    Long2ObjectMap<HeadState> heads = new Long2ObjectOpenHashMap<>();
+    entries.forEachCommittedRecordWithLinks((recordRef, record) -> {
+      if (record.previousRef() != NO_VALUE) {
+        long baseRef = baseEntryRef(recordRef, record);
+        var previous = heads.remove(record.previousRef());
+        if (previous == null || previous.baseEntryRef() != baseRef) {
+          throw new CorruptedException("The patch does not continue the current chain: " + recordRef);
+        }
+        publishHead(previous.hash(), record.previousRef(), recordRef);
+        heads.put(recordRef, previous);
+        return;
+      }
+
+      var key = entryExternalizer.readKey(record.payload().asByteBuffer());
+      boolean deleted = key == null;
+      if (deleted) {
+        key = entryExternalizer.read(record.payload().asByteBuffer()).key();
+      }
+      int keyHash = adjustedHash(key);
+      long oldRecordRef = findRecordRef(key, keyHash);
+      heads.remove(oldRecordRef);
+      if (deleted) {
         if (oldRecordRef != NO_VALUE) {
           keyHashToRecordRefMap.remove(keyHash, oldRecordRef);
         }
       }
-      else if (oldRecordRef == NO_VALUE) {
-        keyHashToRecordRefMap.put(keyHash, recordRef);
-      }
-      else if (!keyHashToRecordRefMap.replace(keyHash, oldRecordRef, recordRef)) {
-        throw new AssertionError("The old record reference disappeared during lookup recovery");
+      else {
+        publishHead(keyHash, oldRecordRef, recordRef);
+        heads.put(recordRef, new HeadState(keyHash, recordRef));
       }
     });
+  }
+
+  private record HeadState(int hash, long baseEntryRef) { }
+
+  ///if lookup table implementation supports dirty-flag -- mark lookup table dirty;
+  ///Beware: lookup table should be marked 'dirty' (=out-of-sync) as soon as an update is stored to entries -- because
+  /// as the update is stored in entries, lookup table becomes (potentially) out-of-sync until flush-ed.
+  private void markLookupDirty() throws IOException {
+    if (keyHashToRecordRefMap instanceof ExtendibleHashMapInt32ToInt64 lookup) {
+      lookup.markDirty();
+    }
+  }
+
+  private void publishHead(int keyHash, long oldHead, long newHead) throws IOException {
+    boolean updated = oldHead == NO_VALUE
+                      ? keyHashToRecordRefMap.put(keyHash, newHead)
+                      : keyHashToRecordRefMap.replace(keyHash, oldHead, newHead);
+    if (!updated) {
+      throw new CorruptedException("The record reference disappeared from the lookup: " + oldHead);
+    }
+  }
+
+  /// A failed write must keep the lookup dirty, even when the caller closes the map
+  private void closeAfterFailure(@NotNull Throwable failure) {
+    closed = true;
+    try {
+      if (keyHashToRecordRefMap instanceof ExtendibleHashMapInt32ToInt64 lookup) {
+        lookup.closeKeepingDirty();
+      }
+      else {
+        closeLookup();
+      }
+    }
+    catch (IOException | RuntimeException | Error closeFailure) {
+      failure.addSuppressed(closeFailure);
+    }
   }
 
   private void closeLookup() throws IOException {
@@ -347,7 +515,18 @@ public final class DurableMapOverBlocks<K, V> implements DurableMap<K, V> {
   private @Nullable Entry<K, V> findEntry(@NotNull K key, int adjustedHash) throws IOException {
     var result = new Ref<Entry<K, V>>();
     keyHashToRecordRefMap.lookup(adjustedHash, candidateRef -> {
-      var entry = entryExternalizer.readIfKeyMatch(entries.read(candidateRef).asByteBuffer(), key);
+      var record = entries.readRecord(candidateRef);
+      Entry<K, V> entry;
+      if (record.previousRef() == NO_VALUE) {
+        entry = entryExternalizer.readIfKeyMatch(record.payload().asByteBuffer(), key);
+      }
+      else {
+        var candidateKey = readKey(candidateRef);
+        if (candidateKey == null || !keyEquality.isEqual(key, candidateKey)) {
+          return false;
+        }
+        entry = readEntry(candidateRef);
+      }
       if (entry == null) {
         return false;
       }
@@ -358,16 +537,90 @@ public final class DurableMapOverBlocks<K, V> implements DurableMap<K, V> {
   }
 
   private @Nullable K readKey(long recordRef) throws IOException {
-    return entryExternalizer.readKey(entries.read(recordRef).asByteBuffer());
+    var record = entries.readRecord(recordRef);
+    if (record.previousRef() != NO_VALUE) {
+      record = entries.readRecord(baseEntryRef(recordRef, record));
+      if (record.previousRef() != NO_VALUE) {
+        throw new CorruptedException("The base entry is a patch: " + recordRef);
+      }
+    }
+    return entryExternalizer.readKey(record.payload().asByteBuffer());
   }
 
   private @NotNull Entry<K, V> readEntry(long recordRef) throws IOException {
-    return entryExternalizer.read(entries.read(recordRef).asByteBuffer());
+    var record = entries.readRecord(recordRef);
+    if (record.previousRef() == NO_VALUE) {
+      return entryExternalizer.read(record.payload().asByteBuffer());
+    }
+
+    long baseRef = baseEntryRef(recordRef, record);
+    var patches = new ArrayList<MemorySegment>();
+    long totalSize = 0;
+    long currentRef = recordRef;
+    while (currentRef != baseRef) {
+      if (record.previousRef() == NO_VALUE || baseEntryRef(currentRef, record) != baseRef) {
+        throw new CorruptedException("The patch chain has a different base entry: " + currentRef);
+      }
+      var patch = record.payload().asSlice(Long.BYTES);
+      patches.add(patch);
+      totalSize += patch.byteSize();
+      currentRef = record.previousRef();
+      record = entries.readRecord(currentRef);
+    }
+    if (record.previousRef() != NO_VALUE || entryExternalizer.readKey(record.payload().asByteBuffer()) == null) {
+      throw new CorruptedException("The patch chain must start with a non-null entry: " + baseRef);
+    }
+    totalSize += record.payload().byteSize();
+    if (totalSize > Integer.MAX_VALUE) {
+      throw new IOException("The patched value exceeds the maximum buffer size: " + totalSize);
+    }
+    var buffer = ByteBuffer.allocate((int)totalSize);
+    buffer.put(record.payload().asByteBuffer());
+    for (int i = patches.size() - 1; i >= 0; i--) {
+      buffer.put(patches.get(i).asByteBuffer());
+    }
+    buffer.flip();
+    return entryExternalizer.read(buffer);
   }
 
-  private long appendEntry(@NotNull K key, @Nullable V value) throws IOException {
-    KnownSizeRecordWriter writer = entryExternalizer.writerFor(key, value);
-    return entries.append(writer.recordSize(), payload -> writer.write(payload.asByteBuffer()));
+  /// @return reference to 'base' record, i.e., first record in a chain of 'patches'
+  private static long baseEntryRef(long recordRef, @NotNull AppendOnlyLogOverBlock.Record record) throws CorruptedException {
+    if (record.payload().byteSize() < Long.BYTES || record.previousRef() <= NO_VALUE || record.previousRef() >= recordRef) {
+      throw new CorruptedException("Invalid patch predecessor: " + recordRef);
+    }
+    long baseRef = record.payload().get(ValueLayout.JAVA_LONG_UNALIGNED, 0);
+    if (baseRef <= NO_VALUE || baseRef > record.previousRef()) {
+      throw new CorruptedException("Invalid patch base entry: " + recordRef);
+    }
+    return baseRef;
+  }
+
+  @SuppressWarnings("unchecked")
+  private static <K, V, P> @NotNull PatchableDurableMap<K, V, P> asPatchable(@NotNull DurableMapOverBlocks<K, V> map) {
+    return (PatchableDurableMap<K, V, P>)map;
+  }
+
+  ///Opens the 'patching' capability to the shared storage implementation: [patchValue] method is already implemented
+  /// in [DurableMapOverBlocks] superclass, but hidden
+  private static final class PatchableMap<K, V, P> extends DurableMapOverBlocks<K, V> implements PatchableDurableMap<K, V, P> {
+    private final @NotNull PatchableValueExternalizer<V, P> patchExternalizer;
+
+    private PatchableMap(@NotNull BlocksStore blocksStore,
+                         @NotNull RecordStorageOverBlocks entries,
+                         @NotNull IntToMultiLongMap lookup,
+                         @NotNull EqualityPolicy<? super K> keyEquality,
+                         @Nullable EqualityPolicy<? super V> valueEquality,
+                         @NotNull EntryExternalizer<K, V> entryExternalizer,
+                         @NotNull PatchableValueExternalizer<V, P> patchExternalizer) {
+      super(blocksStore, entries, lookup, keyEquality, valueEquality, entryExternalizer);
+      this.patchExternalizer = patchExternalizer;
+    }
+
+    @Override
+    public void patchValue(@NotNull K key, @NotNull P patch) throws IOException {
+      //the patching is already implemented, but hidden
+      super.patchValue(key, patch, patchExternalizer);
+    }
   }
 
   private void ensureOpen() {

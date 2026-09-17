@@ -8,6 +8,7 @@ import com.intellij.platform.util.io.storages.database.spi.BlocksDatabase;
 import com.intellij.platform.util.io.storages.database.storages.durablemap.DurableMapOverBlocks;
 import com.intellij.platform.util.io.storages.durablemap.DefaultEntryExternalizer;
 import com.intellij.platform.util.io.storages.durablemap.DurableMap;
+import com.intellij.platform.util.io.storages.durablemap.PatchableDurableMap;
 import com.intellij.util.containers.hash.EqualityPolicy;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -23,11 +24,13 @@ import java.util.Map;
 public final class DurableDatabaseImpl implements DurableDatabase {
   private final @NotNull BlocksDatabase blocksDatabase;
 
-  private final Object mapsLock = new Object();
-  private final Map<String, DurableMapOverBlocks<?, ?>> openedMapsByName = new HashMap<>();
+  private final transient Object lock = new Object();
+  /// It is either [DurableMap], or [PatchableDurableMap].
+  /// GuardedBy(lock)
+  private final Map<String, DurableMap<?, ?>> openedMapsByName = new HashMap<>();
 
   /// Set true when [#close] is initiated
-  /// GuardedBy(mapsLock)
+  /// GuardedBy(lock)
   private boolean closed;
 
   /// Creates a facade that owns the specified block database
@@ -40,7 +43,7 @@ public final class DurableDatabaseImpl implements DurableDatabase {
                                                   int dataVersion,
                                                   @NotNull KeyDescriptorEx<K> keyDescriptor,
                                                   @NotNull DataExternalizerEx<V> valueExternalizer) throws IOException {
-    synchronized (mapsLock) {
+    synchronized (lock) {
       ensureNotClosed();
       var store = blocksDatabase.openStore(name, dataVersion);
 
@@ -50,26 +53,45 @@ public final class DurableDatabaseImpl implements DurableDatabase {
       }
 
       var entryExternalizer = new DefaultEntryExternalizer<>(keyDescriptor, valueExternalizer);
-      var map = DurableMapOverBlocks.open(
-        store,
-        DurableMapOverBlocks.DEFAULT_DATA_BLOCK_CONTENT_LENGTH,
-        keyDescriptor,
-        equalityPolicy(valueExternalizer),
-        entryExternalizer
-      );
+      DurableMap<K, V> map;
+      EqualityPolicy<? super V> valueEquality = equalityIfSupported(valueExternalizer);
+      if (valueExternalizer instanceof PatchableDurableMap.PatchableValueExternalizer<V, ?> patchExternalizer) {
+        map = DurableMapOverBlocks.openPatchable(
+          store, DurableMapOverBlocks.DEFAULT_DATA_BLOCK_CONTENT_LENGTH, keyDescriptor,
+          valueEquality, entryExternalizer, patchExternalizer
+        );
+      }
+      else {
+        map = DurableMapOverBlocks.open(
+          store, DurableMapOverBlocks.DEFAULT_DATA_BLOCK_CONTENT_LENGTH, keyDescriptor,
+          valueEquality, entryExternalizer
+        );
+      }
       openedMapsByName.put(name, map);
       return map;
     }
   }
 
+  @Override
+  public <K, V, P> @NotNull PatchableDurableMap<K, V, P> openMap(@NotNull String name,
+                                                                int dataVersion,
+                                                                @NotNull KeyDescriptorEx<K> keyDescriptor,
+                                                                @NotNull PatchableDurableMap.PatchableValueExternalizer<V, P> valueExternalizer) throws IOException {
+    var map = openMap(name, dataVersion, keyDescriptor, (DataExternalizerEx<V>)valueExternalizer);
+    if (!(map instanceof PatchableDurableMap<?, ?, ?>)) {
+      throw new IllegalStateException("The map is already open without patch support: " + name);
+    }
+    return (PatchableDurableMap<K, V, P>)map;
+  }
+
   @SuppressWarnings("unchecked")
-  private static <V> @Nullable EqualityPolicy<? super V> equalityPolicy(@NotNull DataExternalizerEx<V> externalizer) {
+  private static <V> @Nullable EqualityPolicy<? super V> equalityIfSupported(@NotNull DataExternalizerEx<V> externalizer) {
     return externalizer instanceof EqualityPolicy<?> ? (EqualityPolicy<? super V>)externalizer : null;
   }
 
   @Override
   public @NotNull List<String> mapNames() {
-    synchronized (mapsLock) {
+    synchronized (lock) {
       ensureNotClosed();
       return blocksDatabase.storeNames();
     }
@@ -77,7 +99,7 @@ public final class DurableDatabaseImpl implements DurableDatabase {
 
   @Override
   public void dropMap(@NotNull String name) throws IOException {
-    synchronized (mapsLock) {
+    synchronized (lock) {
       ensureNotClosed();
       var cachedMap = openedMapsByName.get(name);
       if (cachedMap != null && !cachedMap.isClosed()) {
@@ -104,15 +126,15 @@ public final class DurableDatabaseImpl implements DurableDatabase {
 
   @Override
   public boolean isClosed() {
-    synchronized (mapsLock) {
+    synchronized (lock) {
       return closed;
     }
   }
 
   @Override
   public void close() throws IOException {
-    List<DurableMapOverBlocks<?, ?>> mapsToClose;
-    synchronized (mapsLock) {
+    List<DurableMap<?, ?>> mapsToClose;
+    synchronized (lock) {
       if (closed) {
         return;
       }
@@ -153,7 +175,7 @@ public final class DurableDatabaseImpl implements DurableDatabase {
   }
 
   @SuppressWarnings("unchecked")
-  private static <K, V> @NotNull DurableMap<K, V> castMap(@NotNull DurableMapOverBlocks<?, ?> map) {
+  private static <K, V> @NotNull DurableMap<K, V> castMap(@NotNull DurableMap<?, ?> map) {
     return (DurableMap<K, V>)map;
   }
 

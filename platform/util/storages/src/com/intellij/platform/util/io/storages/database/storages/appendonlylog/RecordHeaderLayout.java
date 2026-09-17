@@ -23,8 +23,8 @@ public final class RecordHeaderLayout {
   // Bit-level format:
   // - bit      `0`: record state (ALLOCATED|COMMITTED)
   // - bit      `1`: record state (DEAD|PADDING) (reserved for future)
-  // - bit      `2`: has link to next record?    (reserved for chained records)
-  // - bits  `3..5`: padding size (= totalRecordSize - payloadSize - headerSize), [0..7]
+  // - bit      `2`: an int64 link precedes the payload
+  // - bits  `3..5`: padding size (= totalRecordSize - payloadSize - headerSize - linkSize), [0..7]
   // - bits `6..31`: full record length, including header and alignment, in int32 units (i.e. up to 2^28-1 ~= 256 MiB).
 
   //@formatter:off
@@ -32,7 +32,7 @@ public final class RecordHeaderLayout {
 
   public  static final int COMMITTED_STATE_MASK          = 0b000001;
   private static final int TOMBSTONE_STATE_MASK          = 0b000010; //reserved
-  private static final int HAS_LINK_MASK                 = 0b000100; //reserved
+  private static final int HAS_LINK_MASK                 = 0b000100;
   public  static final int PADDING_SIZE_MASK             = 0b111000;
   public  static final int PADDING_SIZE_SHIFT            = 3;
 
@@ -64,17 +64,35 @@ public final class RecordHeaderLayout {
     }
 
     public static @NotNull RecordHeader allocated(int payloadLength) {
+      return allocated(payloadLength, false);
+    }
+
+    public static @NotNull RecordHeader allocated(int payloadLength, boolean hasLink) {
+      var totalLength = totalLength(payloadLength, hasLink);
+      var unalignedLength = HEADER_SIZE + (hasLink ? Long.BYTES : 0) + payloadLength;
+      var lengthInInt32Units = totalLength / Integer.BYTES;
+      var paddingSize = totalLength - unalignedLength;
+      int packedHeader = (lengthInInt32Units << LENGTH_SHIFT) | (paddingSize << PADDING_SIZE_SHIFT) | (hasLink ? HAS_LINK_MASK : 0);
+      return new RecordHeader(packedHeader);
+    }
+
+    /// @return total record length (bytes): `[header] + [payload] + [int32-alignment padding]`
+    public static int totalLength(int payloadLength) {
+      return totalLength(payloadLength, /*hasLink: */ false);
+    }
+
+    /// @return total record length (bytes): `[header] + [(optional) link field] + [payload] + [int32-alignment padding]`
+    public static int totalLength(int payloadLength, boolean hasLink) {
       if (payloadLength < 0) {
         throw new IllegalArgumentException("payloadLength(=" + payloadLength + ") must be non-negative");
       }
-      var unalignedLength = Math.addExact(HEADER_SIZE, payloadLength);
+      var unalignedLength = Math.addExact(HEADER_SIZE + (hasLink ? Long.BYTES : 0), payloadLength);
       var totalLength = Math.toIntExact(((long)unalignedLength + RECORD_ALIGNMENT - 1) & -RECORD_ALIGNMENT);
-      var lengthUnits = totalLength / Integer.BYTES;
-      if (lengthUnits > MAX_LENGTH_IN_INT32_UNITS) {
+      var lengthInIn32Units = totalLength / Integer.BYTES;
+      if (lengthInIn32Units > MAX_LENGTH_IN_INT32_UNITS) {
         throw new IllegalArgumentException("payloadLength(=" + payloadLength + ") is too large");
       }
-      var paddingSize = totalLength - HEADER_SIZE - payloadLength;
-      return new RecordHeader(lengthUnits << LENGTH_SHIFT | paddingSize << PADDING_SIZE_SHIFT);
+      return totalLength;
     }
 
     public boolean isCommitted() {
@@ -98,7 +116,7 @@ public final class RecordHeaderLayout {
     }
 
     public int payloadLength() {
-      return totalLength() - HEADER_SIZE - paddingSize();
+      return totalLength() - HEADER_SIZE - (hasLink() ? Long.BYTES : 0) - paddingSize();
     }
 
     /// Writes an allocated header that is not visible to readers.
@@ -126,9 +144,6 @@ public final class RecordHeaderLayout {
       }
       if (header.isTombstone()) {
         throw corrupted(blockId, "record at offset " + recordOffset + " is dead or padding");
-      }
-      if (header.hasLink()) {
-        throw corrupted(blockId, "record at offset " + recordOffset + " has an unsupported link");
       }
       validate(blockId, recordOffset, header.totalLength(), header.payloadLength(), committedTail);
       return header;
