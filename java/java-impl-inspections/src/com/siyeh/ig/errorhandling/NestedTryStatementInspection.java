@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2026 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,21 +15,33 @@
  */
 package com.siyeh.ig.errorhandling;
 
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiTryStatement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.fixes.ExtractMethodFix;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
 
 public final class NestedTryStatementInspection extends BaseInspection {
-
+  
   @Override
   protected @NotNull String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "nested.try.statement.problem.descriptor");
+    return InspectionGadgetsBundle.message("nested.try.statement.problem.descriptor");
+  }
+
+  @Override
+  protected @NotNull LocalQuickFix buildFix(Object... infos) {
+    return new ExtractMethodFix() {
+      @Override
+      public PsiElement getElementToRefactor(PsiElement element) {
+        return element.getParent();
+      }
+    };
   }
 
   @Override
@@ -37,8 +49,7 @@ public final class NestedTryStatementInspection extends BaseInspection {
     return new NestedTryStatementVisitor();
   }
 
-  private static class NestedTryStatementVisitor
-    extends BaseInspectionVisitor {
+  private static class NestedTryStatementVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitTryStatement(@NotNull PsiTryStatement statement) {
@@ -48,9 +59,6 @@ public final class NestedTryStatementInspection extends BaseInspection {
         return;
       }
       final PsiCodeBlock tryBlock = parentTry.getTryBlock();
-      if (tryBlock == null) {
-        return;
-      }
       if (!PsiTreeUtil.isAncestor(tryBlock, statement, true)) {
         return;
       }
