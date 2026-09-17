@@ -291,6 +291,10 @@ a:com.intellij.ui.ColoredTreeCellRenderer
 - com.intellij.ui.SimpleColoredComponent
 - javax.swing.tree.TreeCellRenderer
 - *:setAccessibleStatusText(java.lang.String):V
+f:com.intellij.ui.DrawUtil
+- *sf:subscribeSimplifiedUI(com.intellij.openapi.Disposable,com.intellij.ui.DrawUtil$SimplifiedUiListener):V
+*:com.intellij.ui.DrawUtil$SimplifiedUiListener
+- a:simplifiedUiChanged():V
 a:com.intellij.ui.GroupedElementsRenderer
 - javax.accessibility.Accessible
 - *p:getToolTipOverride():java.lang.String

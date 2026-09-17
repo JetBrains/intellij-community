@@ -1,8 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui
 
+import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.PowerSaveMode
 import com.intellij.ide.RemoteDesktopService
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.service
 import com.intellij.openapi.util.registry.Registry.Companion.`is`
 import com.intellij.util.ui.JBValue
 import com.intellij.util.ui.JBValue.UIInteger
@@ -22,9 +25,34 @@ object DrawUtil {
 
   @JvmStatic
   fun isSimplifiedUI(): Boolean {
+    // SimplifiedUiTracker listens to each source below
     return `is`("ui.simplified", false) ||
            RemoteDesktopService.isRemoteSession() ||
            PowerSaveMode.isEnabled()
+  }
+
+  /**
+   * Calls [listener] once, and again after each change of [isSimplifiedUI].
+   * The subscription ends when [parent] is disposed.
+   *
+   * The platform posts the first call. Read [isSimplifiedUI] when you need the value at once.
+   *
+   * Call this method after the application loads its components.
+   */
+  @ApiStatus.Experimental
+  @JvmStatic
+  fun subscribeSimplifiedUI(parent: Disposable, listener: SimplifiedUiListener) {
+    LoadingState.COMPONENTS_LOADED.checkOccurred()
+    service<SimplifiedUiTracker>().subscribe(parent, listener)
+  }
+
+  @ApiStatus.Experimental
+  fun interface SimplifiedUiListener {
+    /**
+     * Read [DrawUtil.isSimplifiedUI] to get the new value.
+     * The platform serializes the calls, but does not specify the thread.
+     */
+    fun simplifiedUiChanged()
   }
 
   @JvmStatic
