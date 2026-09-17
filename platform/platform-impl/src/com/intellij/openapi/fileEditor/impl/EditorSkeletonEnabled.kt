@@ -3,6 +3,7 @@ package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.FileEditorComposite
+import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.util.ThreeState
 import org.jetbrains.annotations.ApiStatus
 
@@ -34,6 +35,8 @@ interface EditorSkeletonPolicy {
     private val EP_NAME: ExtensionPointName<EditorSkeletonPolicy> = ExtensionPointName("com.intellij.editorSkeletonPolicy")
 
     internal fun shouldShowSkeleton(fileEditorComposite: FileEditorComposite): Boolean {
+      if (IdeProductMode.isBackend) return false
+
       for (policy in EP_NAME.extensionList) {
         val shouldShow = policy.shouldShowSkeleton(fileEditorComposite)
         if (shouldShow == ThreeState.UNSURE) continue

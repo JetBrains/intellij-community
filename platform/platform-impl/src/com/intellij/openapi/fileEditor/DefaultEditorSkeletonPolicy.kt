@@ -12,6 +12,6 @@ internal class DefaultEditorSkeletonPolicy : EditorSkeletonPolicy {
   }
 
   override fun getSkeletonFadeInMs(fileEditorComposite: FileEditorComposite): Long {
-    return Registry.intValue("editor.skeleton.delay.ms", 500).toLong()
+    return Registry.intValue("editor.skeleton.delay.ms", 1000).toLong()
   }
 }

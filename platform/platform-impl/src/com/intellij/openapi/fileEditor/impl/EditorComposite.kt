@@ -48,6 +48,7 @@ import com.intellij.openapi.fileEditor.impl.HistoryEntry.Companion.FILE_ID_ATTRI
 import com.intellij.openapi.fileEditor.impl.HistoryEntry.Companion.MANAGING_FS_ATTRIBUTE
 import com.intellij.openapi.fileEditor.impl.HistoryEntry.Companion.PROTOCOL_ATTRIBUTE
 import com.intellij.openapi.fileEditor.impl.HistoryEntry.Companion.TAG
+import com.intellij.openapi.fileEditor.impl.skeleton.EditorSkeleton
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl
 import com.intellij.openapi.project.DumbService
@@ -1093,8 +1094,11 @@ internal class EditorCompositePanel(@JvmField val composite: EditorComposite) : 
 
     if (EditorSkeletonPolicy.shouldShowSkeleton(composite)) {
       val skeletonDelay = EditorSkeletonPolicy.getSkeletonDelayMs(composite)
-      skeletonScope.launch(Dispatchers.UI) {
-        setNewSkeleton(EditorSkeleton(skeletonScope, composite.project, skeletonDelay))
+      skeletonScope.launch(Dispatchers.Default) {
+        val skeleton = EditorSkeleton(skeletonScope, composite.project, skeletonDelay)
+        withContext(Dispatchers.UI) {
+          setNewSkeleton(skeleton)
+        }
       }
     }
     else {
@@ -1106,7 +1110,7 @@ internal class EditorCompositePanel(@JvmField val composite: EditorComposite) : 
     if (skeleton == null) return
     if (components.isEmpty()) {
       add(skeleton, BorderLayout.CENTER)
-      skeleton.startAnimation(skeletonScope)
+      skeleton.startAnimation()
     }
   }
 

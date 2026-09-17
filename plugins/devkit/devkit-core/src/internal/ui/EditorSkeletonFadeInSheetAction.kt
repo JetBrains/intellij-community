@@ -9,7 +9,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.fileChooser.FileSaverDescriptor
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.impl.EditorSkeleton
+import com.intellij.openapi.fileEditor.impl.skeleton.EditorSkeleton
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -26,8 +26,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.awt.Component
-import java.awt.Container
 import java.awt.Font
 import java.awt.image.BufferedImage
 import java.util.concurrent.atomic.AtomicLong
@@ -82,43 +80,32 @@ private class EditorSkeletonSheetScopeHolder(@JvmField val scope: CoroutineScope
 private suspend fun renderFrames(project: Project, parentScope: CoroutineScope): List<Pair<Long, BufferedImage>> {
   val clock = AtomicLong(0)
   val skeletonScope = parentScope.childScope("Editor Skeleton fade-in sheet")
-  val skeleton = withContext(Dispatchers.EDT) {
-    val skeleton = EditorSkeleton(
-      cs = skeletonScope,
-      project = project,
-      skeletonDelayMs = FADE_IN_MS,
-      nowMs = clock::get,
-    )
-    skeletonScope.cancel()
-
-    skeleton.size = skeleton.preferredSize
-    layoutTree(skeleton)
-
-    render(skeleton)
-    skeleton.tickFadeIn()
-    skeleton
-  }
+  val skeleton = EditorSkeleton(
+    cs = skeletonScope,
+    project = project,
+    skeletonDelayMs = FADE_IN_MS,
+    nowMs = clock::get,
+  )
+  skeletonScope.cancel()
+  val size = skeleton.preferredSize
+  val height = minOf(size.height, JBUI.scale(VIEWPORT_HEIGHT))
+  render(skeleton, size.width, height)
 
   val timeline = ((0..FADE_IN_MS step FRAME_STEP_MS) + FADE_IN_MS).distinct()
   return reportSequentialProgress(timeline.size) { reporter ->
     timeline.map { elapsedMs ->
       reporter.itemStep("$elapsedMs ms of $FADE_IN_MS ms")
-      withContext(Dispatchers.EDT) {
-        clock.set(elapsedMs)
-        skeleton.tickFadeIn()
-        elapsedMs to render(skeleton)
-      }
+      clock.set(elapsedMs)
+      elapsedMs to render(skeleton, size.width, height)
     }
   }
 }
 
-private fun render(skeleton: EditorSkeleton): BufferedImage {
-  val image = ImageUtil.createImage(skeleton.width, minOf(skeleton.height, JBUI.scale(VIEWPORT_HEIGHT)), BufferedImage.TYPE_INT_RGB)
+private fun render(skeleton: EditorSkeleton, width: Int, height: Int): BufferedImage {
+  val image = ImageUtil.createImage(width, height, BufferedImage.TYPE_INT_RGB)
   val g = image.createGraphics()
   try {
-    g.color = EditorSkeleton.EDITOR_BACKGROUND_COLOR
-    g.fillRect(0, 0, image.width, image.height)
-    skeleton.paint(g)
+    skeleton.paintFrame(g, width, height)
   }
   finally {
     g.dispose()
@@ -160,14 +147,6 @@ private fun contactSheet(frames: List<Pair<Long, BufferedImage>>): BufferedImage
     g.dispose()
   }
   return sheet
-}
-
-private fun layoutTree(component: Component) {
-  if (component !is Container) return
-  component.doLayout()
-  for (child in component.components) {
-    layoutTree(child)
-  }
 }
 
 private const val SHEET_FILE_NAME = "editor-skeleton-fade-in.png"

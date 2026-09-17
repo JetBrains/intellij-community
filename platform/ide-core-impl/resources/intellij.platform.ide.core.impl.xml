@@ -498,7 +498,7 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
     />
     <registryKey
       key="editor.skeleton.delay.ms"
-      defaultValue="500"
+      defaultValue="1000"
       description="Skeleton fade in duration (in milliseconds)"
     />
   </extensions>
