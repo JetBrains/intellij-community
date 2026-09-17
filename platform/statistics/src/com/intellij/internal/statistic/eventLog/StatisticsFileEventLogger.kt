@@ -134,8 +134,12 @@ open class StatisticsFileEventLogger(
 
   fun flush(): CompletableFuture<Void> {
     return CompletableFuture.runAsync({
-      if (eventWriter is FusClient<LogEvent, *>) {
-        eventWriter.flushEvents()
+      when (val writer = eventWriter) {
+        // The production path. It skips the flush when no event was written, so dispose does not build the client.
+        is LazyFusClientLogWriter -> writer.flushEventsIfInitialized()
+        // A test can pass a FusClient directly.
+        is FusClient<LogEvent, *> -> writer.flushEvents()
+        else -> {}
       }
     }, logExecutor)
   }

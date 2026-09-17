@@ -8,6 +8,10 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.Disposer
+import com.jetbrains.fus.reporting.FeatureUsageLogWriter
+import com.jetbrains.fus.reporting.FusClient
+import com.jetbrains.fus.reporting.model.lion3.LogEvent
+import com.jetbrains.fus.reporting.model.lion3.ValidatedFusReport
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job
 import org.jetbrains.annotations.ApiStatus
@@ -177,8 +181,6 @@ abstract class StatisticsEventLoggerProvider(
       alternativeRecorderId = if (useDefaultRecorderId) "FUS" else null,
     )
 
-    val fusClient = IntellijSensitiveDataValidator.getInstance(recorderId).fusClient
-                    ?: error("FusComponents.fusClient is null for recorder '$recorderId'; logger creation requires the production FusComponents path.")
     val eventLogDir = eventLogConfiguration.getEventLogDataPath().resolve("logs").resolve(recorderId)
 
     val logger = StatisticsFileEventLogger(
@@ -189,7 +191,7 @@ abstract class StatisticsEventLoggerProvider(
       recorderVersion = version.toString(),
       // Events flow to the FusClient; the SDK dispatcher's preEventWrite injects the system fields
       // (system_event_id, system_headless, ide_mode, product_mode, auto_license_type). See FusComponentProvider.
-      eventWriter = fusClient,
+      eventWriter = LazyFusClientLogWriter(recorderId),
       eventLogDir = eventLogDir
     )
 
@@ -280,4 +282,40 @@ object EmptyEventLogFilesProvider : EventLogFilesProvider {
   override fun getLogFiles(): List<File> = emptyList()
 
   override fun getLogFilesExceptActive(): List<File> = emptyList()
+}
+
+/**
+ * Resolves the recorder's [FusClient] on the thread that writes the first event, not on the thread that asks for
+ * the logger.
+ *
+ * Logger creation must stay cheap. `IntellijSensitiveDataValidator.getInstance` builds the whole client under a
+ * synchronized `lazy`: it reads and parses the event scheme, builds a validator per group, creates the HTTP client,
+ * and opens the queue files. The first event of a session comes from
+ * `LifecycleUsageTriggerCollector.onIdeStart()`, which IdeStarter launches on `Dispatchers.Default` before
+ * `AppLifecycleListener.appStarted()`. Building the client there delays startup and parks a worker of a
+ * limited-parallelism dispatcher, which slows every other startup coroutine.
+ *
+ * [StatisticsFileEventLogger] calls [queueEvent] on its own single-threaded executor, so the client is built there
+ * instead.
+ */
+@Internal
+class LazyFusClientLogWriter(private val recorderId: String) : FeatureUsageLogWriter<LogEvent> {
+  private val lazyClient: Lazy<FusClient<LogEvent, ValidatedFusReport>> = lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+    IntellijSensitiveDataValidator.getInstance(recorderId).fusClient
+    ?: error("FusComponents.fusClient is null for recorder '$recorderId'; logger creation requires the production FusComponents path.")
+  }
+
+  override fun queueEvent(event: LogEvent) {
+    lazyClient.value.queueEvent(event)
+  }
+
+  /**
+   * Flushes only when an event was written before. A session that logs nothing must not build the client just to
+   * flush it on dispose.
+   */
+  fun flushEventsIfInitialized() {
+    if (lazyClient.isInitialized()) {
+      lazyClient.value.flushEvents()
+    }
+  }
 }
