@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
+import com.intellij.psi.util.PsiVersioningService
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
@@ -50,7 +51,12 @@ interface EditorContextManager {
     @ApiStatus.Internal
     @JvmStatic
     fun getPsiFileForEditor(editor: Editor, project: Project): PsiFile? {
-      val context = getEditorContext(editor, project)
+      val context = if (PsiVersioningService.isInsideVersioningButNotLocks()) {
+        getCachedEditorContext(editor, project) ?: anyContext()
+      } else {
+        getEditorContext(editor, project)
+      }
+
       return PsiDocumentManager.getInstance(project).getPsiFile(editor.document, context)
     }
   }

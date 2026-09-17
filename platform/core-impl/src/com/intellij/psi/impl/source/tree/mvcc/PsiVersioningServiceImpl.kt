@@ -59,4 +59,6 @@ internal class PsiVersioningServiceImpl : PsiVersioningService {
       else -> element.firstChild
     }
   }
+
+  override fun isInsideVersioningButNotLocks(): Boolean = InternalPsiVersioning.isInsideVersioningButNotLocks()
 }
