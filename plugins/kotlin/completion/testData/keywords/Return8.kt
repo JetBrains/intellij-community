@@ -1,5 +1,4 @@
-// FIR_IDENTICAL
-// FIR_COMPARISON
+// LANGUAGE_VERSION: 2.4
 fun foo(p: Int?): Int = p ?: <caret>
 
-// ABSENT: return
+// EXIST: return
