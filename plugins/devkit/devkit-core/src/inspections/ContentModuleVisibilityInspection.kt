@@ -13,11 +13,13 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiReference
 import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.GlobalSearchScopesCore
 import com.intellij.psi.search.ProjectScope
 import com.intellij.psi.search.searches.ReferencesSearch
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
 import com.intellij.psi.xml.XmlFile
 import com.intellij.psi.xml.XmlTag
@@ -28,6 +30,7 @@ import com.intellij.util.xml.highlighting.DomHighlightingHelper
 import com.intellij.xml.util.XmlUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.idea.devkit.DevKitBundle.message
+import org.jetbrains.idea.devkit.dom.ContentDescriptor
 import org.jetbrains.idea.devkit.dom.ContentModuleVisibility
 import org.jetbrains.idea.devkit.dom.DependencyDescriptor
 import org.jetbrains.idea.devkit.dom.IdeaPlugin
@@ -65,15 +68,20 @@ internal class ContentModuleVisibilityInspection : DevKitPluginXmlInspectionBase
     for (currentModuleInclusionContext in currentModuleIncludingFiles) {
       for (dependencyInclusionContext in dependencyIncludingFiles) {
         if (currentModuleInclusionContext.rootPlugin == dependencyInclusionContext.rootPlugin) continue
-        val currentModuleNamespace = currentModuleInclusionContext.registrationPlace.namespace
-        val dependencyNamespace = dependencyInclusionContext.registrationPlace.namespace
+        val currentModuleNamespace = currentModuleInclusionContext.namespace
+        val dependencyNamespace = dependencyInclusionContext.namespace
         if (currentModuleNamespace != dependencyNamespace) {
           val currentModuleVendor = currentModuleInclusionContext.rootPlugin.actualVendor
           val currentModuleRegistrationFile = currentModuleInclusionContext.registrationPlace.xmlElement?.containingFile as? XmlFile
           val fixes =
             if (currentModuleNamespace == null && dependencyNamespace != null && currentModuleRegistrationFile != null &&
                 currentModuleVendor != null && currentModuleVendor == dependencyInclusionContext.rootPlugin.actualVendor) {
-              arrayOf(SetNamespaceFix(dependencyNamespace, currentModuleInclusionContext.registrationPlace.getIdOrUniqueFileName(), currentModuleRegistrationFile.createSmartPointer()))
+              arrayOf(SetNamespaceFix(
+                dependencyNamespace,
+                currentModuleInclusionContext.registrationPlace.getIdOrUniqueFileName(),
+                currentModuleRegistrationFile.createSmartPointer(),
+                currentModuleInclusionContext.registrationContent?.xmlTag?.createSmartPointer(),
+              ))
             }
             else {
               emptyArray()
@@ -150,11 +158,17 @@ internal class ContentModuleVisibilityInspection : DevKitPluginXmlInspectionBase
       return listOf(ContentModuleInclusionContext(ideaPlugin, ideaPlugin))
     }
     val moduleVirtualFile = xmlFile.virtualFile ?: return emptyList()
+    val moduleName = getModuleName(xmlFile)
     val psiManager = xmlFile.manager
     return PluginIdDependenciesIndex.findFilesIncludingContentModule(moduleVirtualFile, scope)
       .mapToXmlFileAndIdeaPlugin(psiManager)
       .withoutLibraryDuplicates(xmlFile.project)
-      .flatMap { (xmlFile, ideaPlugin) -> getRootIncludingPlugins(xmlFile, ideaPlugin, registrationPlace = ideaPlugin, scope) }
+      .flatMap { (xmlFile, ideaPlugin) ->
+        ideaPlugin.content.filter { content -> content.moduleEntry.any { it.name.stringValue == moduleName } }
+          .flatMap { content ->
+            getRootIncludingPlugins(xmlFile, ideaPlugin, registrationPlace = ideaPlugin, registrationContent = content, scope)
+          }
+      }
       .distinct()
       .sortedWith(compareBy<ContentModuleInclusionContext> { it.rootPlugin.pluginIdOrPlainFileName }.thenBy { it.registrationPlace.pluginIdOrPlainFileName })
   }
@@ -192,12 +206,13 @@ internal class ContentModuleVisibilityInspection : DevKitPluginXmlInspectionBase
      * The XML file where the content module is actually registered.
      */
     val registrationPlace: IdeaPlugin,
+    val registrationContent: ContentDescriptor? = null,
   )
 
-  private val IdeaPlugin.namespace: String?
+  private val ContentModuleInclusionContext.namespace: String?
     get() {
-      // all <content> must have the same namespace, so take it from the first:
-      return this.content.firstOrNull()?.namespace?.value
+      return if (registrationContent != null) registrationContent.namespace.value
+      else registrationPlace.content.firstOrNull()?.namespace?.value
     }
 
   private fun IdeaPlugin.getUniqueFileName(): String {
@@ -279,12 +294,13 @@ internal class ContentModuleVisibilityInspection : DevKitPluginXmlInspectionBase
     xmlFile: XmlFile,
     currentDescriptor: IdeaPlugin,
     registrationPlace: IdeaPlugin,
+    registrationContent: ContentDescriptor,
     scope: GlobalSearchScope,
     visited: MutableSet<XmlFile> = mutableSetOf(),
   ): Collection<ContentModuleInclusionContext> {
     if (!visited.add(xmlFile)) return emptyList() // prevent inclusion cycles
     if (isActualPluginDescriptor(currentDescriptor, xmlFile)) {
-      return listOf(ContentModuleInclusionContext(currentDescriptor, registrationPlace))
+      return listOf(ContentModuleInclusionContext(currentDescriptor, registrationPlace, registrationContent))
     }
     return ReferencesSearch.search(xmlFile, scope)
       .filtering { isXiIncluded(it) }
@@ -292,7 +308,7 @@ internal class ContentModuleVisibilityInspection : DevKitPluginXmlInspectionBase
       .flatMapTo(ArrayList()) { reference ->
         val referencedFile = reference.element.containingFile as? XmlFile ?: return@flatMapTo emptyList()
         val referencedDescriptor = DescriptorUtil.getIdeaPlugin(referencedFile) ?: return@flatMapTo emptyList()
-        getRootIncludingPlugins(referencedFile, currentDescriptor = referencedDescriptor, registrationPlace, scope, visited)
+        getRootIncludingPlugins(referencedFile, currentDescriptor = referencedDescriptor, registrationPlace, registrationContent, scope, visited)
       }
   }
 
@@ -358,6 +374,7 @@ internal class ContentModuleVisibilityInspection : DevKitPluginXmlInspectionBase
     private val namespace: String,
     private val declaringPluginId: String,
     private val declaringXmlFilePointer: SmartPsiElementPointer<XmlFile>,
+    private val registrationContentPointer: SmartPsiElementPointer<XmlTag>?,
   ) : LocalQuickFix {
     override fun getFamilyName(): @IntentionFamilyName String =
       message("inspection.content.module.visibility.internal.fix.set.namespace.family.name")
@@ -370,20 +387,31 @@ internal class ContentModuleVisibilityInspection : DevKitPluginXmlInspectionBase
       setNamespace(declaringXmlFile)
     }
 
-    private fun setNamespace(declaringXmlFile: XmlFile) {
-      val ideaPlugin = DescriptorUtil.getIdeaPlugin(declaringXmlFile) ?: return
-      if (ideaPlugin.content.isNotEmpty()) {
+    private fun setNamespace(declaringXmlFile: XmlFile): Boolean {
+      val ideaPlugin = DescriptorUtil.getIdeaPlugin(declaringXmlFile) ?: return false
+      if (registrationContentPointer != null) {
+        val contentTag = registrationContentPointer.dereference() ?: return false
+        val targetTag = if (contentTag.containingFile == declaringXmlFile) contentTag
+        else PsiTreeUtil.findSameElementInCopy(contentTag, declaringXmlFile)
+        val content = ideaPlugin.content.singleOrNull { it.xmlTag == targetTag } ?: return false
+        content.namespace.stringValue = namespace
+      }
+      else if (ideaPlugin.content.isNotEmpty()) {
         ideaPlugin.content.forEach { it.namespace.stringValue = namespace }
       }
       else {
-        ideaPlugin.addContent().namespace.stringValue = namespace
+        val content = ideaPlugin.addContent()
+        content.namespace.stringValue = namespace
+        val contentTag = content.xmlTag ?: return false
+        CodeStyleManager.getInstance(declaringXmlFile.project).reformatNewlyAddedElement(contentTag.parent.node, contentTag.node)
       }
+      return true
     }
 
     override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo {
       val declaringXmlFile = declaringXmlFilePointer.dereference() ?: return IntentionPreviewInfo.EMPTY
       val declaringXmlFileCopy = declaringXmlFile.copy() as XmlFile
-      setNamespace(declaringXmlFileCopy)
+      if (!setNamespace(declaringXmlFileCopy)) return IntentionPreviewInfo.EMPTY
       return IntentionPreviewInfo.CustomDiff(
         XmlFileType.INSTANCE,
         declaringXmlFile.name,

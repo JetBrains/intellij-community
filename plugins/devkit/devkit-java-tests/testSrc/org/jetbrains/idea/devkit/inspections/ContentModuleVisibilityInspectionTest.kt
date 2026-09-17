@@ -1130,6 +1130,99 @@ class ContentModuleVisibilityInspectionTest : ContentModuleVisibilityInspectionT
     testHighlighting(testedFile)
   }
 
+  fun `test private consumer uses matching namespaces in later sections`() {
+    testNamespacesInMultipleSections()
+  }
+
+  fun `test private consumer uses matching namespaces in first sections`() {
+    testNamespacesInMultipleSections(currentSectionFirst = true, dependencySectionFirst = true)
+  }
+
+  fun `test private consumer uses its later registration section`() {
+    testNamespacesInMultipleSections(dependencySectionFirst = true)
+  }
+
+  fun `test private consumer uses the later dependency section`() {
+    testNamespacesInMultipleSections(currentSectionFirst = true)
+  }
+
+  fun `test different namespaces in later sections produce an error`() {
+    testNamespacesInMultipleSections(dependencyNamespace = "another-namespace")
+  }
+
+  fun `test included descriptors retain their registration sections`() {
+    testNamespacesInMultipleSections(included = true, dependencySectionFirst = true)
+  }
+
+  fun `test included descriptors with different namespaces produce an error`() {
+    testNamespacesInMultipleSections(included = true, dependencyNamespace = "another-namespace")
+  }
+
+  private fun testNamespacesInMultipleSections(
+    currentSectionFirst: Boolean = false,
+    dependencySectionFirst: Boolean = false,
+    dependencyNamespace: String = "jetbrains",
+    included: Boolean = false,
+  ) {
+    fun addRegistration(pluginName: String, moduleName: String, namespace: String, sectionFirst: Boolean, descriptorName: String) {
+      val section = """
+        <content namespace="$namespace">
+          <module name="$moduleName"/>
+        </content>
+      """.trimIndent()
+      val unrelatedSection = """
+        <content>
+          <module name="$moduleName.unrelated"/>
+        </content>
+      """.trimIndent()
+      val content = if (sectionFirst) "$section\n$unrelatedSection" else "$unrelatedSection\n$section"
+      if (included) {
+        myFixture.addModuleWithPluginDescriptor(pluginName, "$pluginName/META-INF/plugin.xml", """
+          <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+            <id>$pluginName</id>
+            <content namespace="root-namespace"/>
+            <xi:include href="/META-INF/$descriptorName"/>
+          </idea-plugin>
+        """.trimIndent())
+        myFixture.addXmlFile("$pluginName/META-INF/$descriptorName", "<idea-plugin>$content</idea-plugin>")
+      }
+      else {
+        myFixture.addModuleWithPluginDescriptor(pluginName, "$pluginName/META-INF/plugin.xml", """
+          <idea-plugin>
+            <id>$pluginName</id>
+            $content
+          </idea-plugin>
+        """.trimIndent())
+      }
+    }
+
+    addRegistration("com.example.plugin.with.internalmodule", "com.example.internalmodule", dependencyNamespace,
+                    dependencySectionFirst, "dependency-content.xml")
+    addRegistration("com.example.plugin.with.currentmodule", "com.example.currentmodule", "jetbrains",
+                    currentSectionFirst, "current-content.xml")
+    myFixture.addModuleWithPluginDescriptor(
+      "com.example.internalmodule", "com.example.internalmodule/com.example.internalmodule.xml",
+      """<idea-plugin visibility="internal"/>""")
+
+    val dependencyName = if (dependencyNamespace == "jetbrains") {
+      "com.example.internalmodule"
+    }
+    else {
+      val dependencyFile = if (included) "dependency-content.xml" else "com.example.plugin.with.internalmodule/…/plugin.xml"
+      val currentFile = if (included) "current-content.xml" else "com.example.plugin.with.currentmodule/…/plugin.xml"
+      """<error descr="The 'com.example.internalmodule' module is internal and declared in namespace '$dependencyNamespace' in '$dependencyFile', so it cannot be accessed from module 'com.example.currentmodule', which is declared in namespace 'jetbrains' in '$currentFile'">com.example.internalmodule</error>"""
+    }
+    val testedFile = myFixture.addModuleWithPluginDescriptor(
+      "com.example.currentmodule", "com.example.currentmodule/com.example.currentmodule.xml", """
+        <idea-plugin visibility="private">
+          <dependencies>
+            <module name="$dependencyName"/>
+          </dependencies>
+        </idea-plugin>
+      """.trimIndent())
+    testHighlighting(testedFile)
+  }
+
   private fun testHighlighting(testedFile: PsiFile) {
     myFixture.testHighlighting(true, true, true, testedFile.virtualFile)
   }
@@ -1259,6 +1352,14 @@ class ChangeModuleModuleVisibilityFix : ContentModuleVisibilityInspectionTestBas
   }
 
   fun `test fix set namespace`() {
+    testSetNamespace(included = false)
+  }
+
+  fun `test fix set namespace in included descriptor`() {
+    testSetNamespace(included = true)
+  }
+
+  private fun testSetNamespace(included: Boolean) {
     myFixture.addModuleWithPluginDescriptor(
       "com.example.plugin.with.internalmodule",
       "com.example.plugin.with.internalmodule/META-INF/plugin.xml",
@@ -1279,18 +1380,42 @@ class ChangeModuleModuleVisibilityFix : ContentModuleVisibilityInspectionTestBas
       </idea-plugin>
       """.trimIndent())
 
-    myFixture.addModuleWithPluginDescriptor(
-      "com.example.plugin.with.publicmodule",
-      "com.example.plugin.with.publicmodule/META-INF/plugin.xml",
-      """
-      <idea-plugin>
+    val includedDescriptorName = "content.xml"
+    val registrationPath = if (included) "com.example.plugin.with.publicmodule/META-INF/$includedDescriptorName"
+    else "com.example.plugin.with.publicmodule/META-INF/plugin.xml"
+    val pluginIdentity = if (included) "" else """
         <id>com.example.plugin.with.publicmodule</id>
         <vendor>ExampleVendor</vendor>
+    """.trimIndent()
+    val registrationText = """
+      <idea-plugin>
+        $pluginIdentity
+        <content namespace="unrelated-namespace">
+          <module name="com.example.unrelated"/>
+        </content>
         <content>
           <module name="com.example.publicmodule"/>
         </content>
+        <content>
+          <module name="com.example.another"/>
+        </content>
       </idea-plugin>
-      """.trimIndent())
+    """.trimIndent()
+    if (included) {
+      myFixture.addModuleWithPluginDescriptor(
+        "com.example.plugin.with.publicmodule", "com.example.plugin.with.publicmodule/META-INF/plugin.xml", """
+          <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+            <id>com.example.plugin.with.publicmodule</id>
+            <vendor>ExampleVendor</vendor>
+            <content namespace="root-namespace"/>
+            <xi:include href="/META-INF/$includedDescriptorName"/>
+          </idea-plugin>
+        """.trimIndent())
+      myFixture.addXmlFile(registrationPath, registrationText)
+    }
+    else {
+      myFixture.addModuleWithPluginDescriptor("com.example.plugin.with.publicmodule", registrationPath, registrationText)
+    }
     val testedFile = myFixture.addModuleWithPluginDescriptor(
       "com.example.publicmodule",
       "com.example.publicmodule/com.example.publicmodule.xml",
@@ -1303,23 +1428,27 @@ class ChangeModuleModuleVisibilityFix : ContentModuleVisibilityInspectionTestBas
       """.trimIndent())
     myFixture.configureFromExistingVirtualFile(testedFile.virtualFile)
 
-    val intention = myFixture.findSingleIntention("Set namespace in 'com.example.plugin.with.publicmodule' to 'example_namespace'")
-    myFixture.launchAction(intention)
-
-    myFixture.checkResult(
-      "com.example.plugin.with.publicmodule/META-INF/plugin.xml",
-      //language=XML
-      """
+    val declaringPluginId = if (included) includedDescriptorName else "com.example.plugin.with.publicmodule"
+    val intention = myFixture.findSingleIntention("Set namespace in '$declaringPluginId' to 'example_namespace'")
+    val expected = """
       <idea-plugin>
-        <id>com.example.plugin.with.publicmodule</id>
-        <vendor>ExampleVendor</vendor>
+        $pluginIdentity
+        <content namespace="unrelated-namespace">
+          <module name="com.example.unrelated"/>
+        </content>
         <content namespace="example_namespace">
           <module name="com.example.publicmodule"/>
         </content>
+        <content>
+          <module name="com.example.another"/>
+        </content>
       </idea-plugin>
-      """.trimIndent(),
-      false
-    )
+    """.trimIndent()
+    assertEquals(expected, myFixture.getIntentionPreviewText(intention))
+    myFixture.checkResult(registrationPath, registrationText, false)
+    myFixture.launchAction(intention)
+    myFixture.checkResult(registrationPath, expected, false)
+    myFixture.testHighlighting(true, true, true, testedFile.virtualFile)
   }
 
   fun `test fix set namespace for dependency from plugin descriptor`() {
@@ -1358,7 +1487,7 @@ class ChangeModuleModuleVisibilityFix : ContentModuleVisibilityInspectionTestBas
     myFixture.configureFromExistingVirtualFile(testedFile.virtualFile)
 
     val intention = myFixture.findSingleIntention("Set namespace in 'com.example.plugin' to 'example_namespace'")
-    myFixture.launchAction(intention)
+    myFixture.checkPreviewAndLaunchAction(intention)
 
     myFixture.checkResult(
       "com.example.plugin/META-INF/plugin.xml",
