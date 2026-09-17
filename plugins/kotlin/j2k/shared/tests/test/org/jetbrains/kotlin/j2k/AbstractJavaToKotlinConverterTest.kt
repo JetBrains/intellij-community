@@ -78,6 +78,162 @@ abstract class AbstractJavaToKotlinConverterTest : KotlinLightCodeInsightFixture
         }
     }
 
+    protected fun addLombokAnnotations() {
+        myFixture.addClass(
+            """
+            package lombok;
+            
+            import java.lang.annotation.Target;
+            import static java.lang.annotation.ElementType.TYPE;
+            
+            @Target(TYPE)
+            public @interface RequiredArgsConstructor {
+                String staticName() default "";
+            }
+            """.trimIndent()
+        )
+        myFixture.addClass(
+            """
+            package lombok;
+            
+            import java.lang.annotation.Target;
+            import static java.lang.annotation.ElementType.TYPE;
+            
+            @Target(TYPE)
+            public @interface Data {
+                String staticConstructor() default "";
+            }
+            """.trimIndent()
+        )
+        myFixture.addClass(
+            """
+            package lombok;
+            
+            import java.lang.annotation.Target;
+            import static java.lang.annotation.ElementType.TYPE;
+            
+            @Target(TYPE)
+            public @interface NoArgsConstructor {
+                String staticName() default "";
+                boolean force() default false;
+            }
+            """.trimIndent()
+        )
+        myFixture.addClass(
+            """
+            package lombok;
+            
+            import java.lang.annotation.Target;
+            import static java.lang.annotation.ElementType.FIELD;
+            import static java.lang.annotation.ElementType.METHOD;
+            import static java.lang.annotation.ElementType.PARAMETER;
+            
+            @Target({FIELD, METHOD, PARAMETER})
+            public @interface NonNull {}
+            """.trimIndent()
+        )
+        myFixture.addClass(
+            """
+            package lombok;
+            
+            public enum AccessLevel {
+                PUBLIC, MODULE, PROTECTED, PACKAGE, PRIVATE, NONE
+            }
+            """.trimIndent()
+        )
+        val logAnnotations = listOf(
+            "lombok.extern.apachecommons" to "CommonsLog",
+            "lombok.extern.flogger" to "Flogger",
+            "lombok.extern.java" to "Log",
+            "lombok.extern.jbosslog" to "JBossLog",
+            "lombok.extern.log4j" to "Log4j",
+            "lombok.extern.log4j" to "Log4j2",
+            "lombok.extern.slf4j" to "Slf4j",
+            "lombok.extern.slf4j" to "XSlf4j",
+        )
+        for ((pkg, name) in logAnnotations) {
+            myFixture.addClass(
+                """
+                package $pkg;
+                
+                import java.lang.annotation.Target;
+                import static java.lang.annotation.ElementType.TYPE;
+                
+                @Target(TYPE)
+                public @interface $name {}
+                """.trimIndent()
+            )
+        }
+        myFixture.addClass(
+            """
+            package lombok.experimental;
+            
+            import java.lang.annotation.Target;
+            import static java.lang.annotation.ElementType.TYPE;
+            
+            @Target(TYPE)
+            public @interface SuperBuilder {}
+            """.trimIndent()
+        )
+        myFixture.addClass(
+            """
+            package lombok;
+            
+            import java.lang.annotation.Target;
+            import static java.lang.annotation.ElementType.TYPE;
+            import static java.lang.annotation.ElementType.METHOD;
+            import static java.lang.annotation.ElementType.CONSTRUCTOR;
+            
+            @Target({TYPE, METHOD, CONSTRUCTOR})
+            public @interface Builder {}
+            """.trimIndent()
+        )
+        for (name in listOf("Value", "AllArgsConstructor")) {
+            myFixture.addClass(
+                """
+                package lombok;
+                
+                import java.lang.annotation.Target;
+                import static java.lang.annotation.ElementType.TYPE;
+                
+                @Target(TYPE)
+                public @interface $name {
+                    String staticConstructor() default "";
+                }
+                """.trimIndent()
+            )
+        }
+        for (name in listOf("EqualsAndHashCode", "ToString")) {
+            myFixture.addClass(
+                """
+                package lombok;
+                
+                import java.lang.annotation.Target;
+                import static java.lang.annotation.ElementType.TYPE;
+                
+                @Target(TYPE)
+                public @interface $name {}
+                """.trimIndent()
+            )
+        }
+        for (name in listOf("Getter", "Setter")) {
+            myFixture.addClass(
+                """
+                package lombok;
+                
+                import java.lang.annotation.Target;
+                import static java.lang.annotation.ElementType.FIELD;
+                import static java.lang.annotation.ElementType.TYPE;
+                
+                @Target({FIELD, TYPE})
+                public @interface $name {
+                    AccessLevel value() default AccessLevel.PUBLIC;
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
     protected fun addJunitTestAnnotations() {
         myFixture.addClass(
             """

@@ -22,6 +22,7 @@ private const val JPA_ANNOTATIONS_DIRECTIVE = "ADD_JPA_ANNOTATIONS"
 private const val KOTLIN_API_DIRECTIVE = "ADD_KOTLIN_API"
 private const val JAVA_API_DIRECTIVE = "ADD_JAVA_API"
 private const val JUNIT_ANNOTATIONS_DIRECTIVE = "ADD_JUNIT_TEST_ANNOTATIONS"
+private const val LOMBOK_ANNOTATIONS_DIRECTIVE = "ADD_LOMBOK_ANNOTATIONS"
 private const val PREPROCESSOR_EXTENSIONS_DIRECTIVE = "INCLUDE_J2K_PREPROCESSOR_EXTENSIONS"
 private const val POSTPROCESSOR_EXTENSIONS_DIRECTIVE = "INCLUDE_J2K_POSTPROCESSOR_EXTENSIONS"
 
@@ -97,6 +98,7 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
         if (directives.contains(KOTLIN_API_DIRECTIVE)) addFile("KotlinApi.kt", "kotlinApi")
         if (directives.contains(JAVA_API_DIRECTIVE)) addFile("JavaApi.java", "javaApi")
         if (directives.contains(JUNIT_ANNOTATIONS_DIRECTIVE)) addJunitTestAnnotations()
+        if (directives.contains(LOMBOK_ANNOTATIONS_DIRECTIVE)) addLombokAnnotations()
     }
 
     private fun addExternalFiles(javaFile: File) {

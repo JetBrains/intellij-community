@@ -4278,6 +4278,64 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../shared/tests/testData/newJ2k/lombok")
+    public static class Lombok extends AbstractK2JavaToKotlinConverterSingleFileTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("allArgsConstructor.java")
+        public void testAllArgsConstructor() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/lombok/allArgsConstructor.java");
+        }
+
+        @TestMetadata("dataAccessLevel.java")
+        public void testDataAccessLevel() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/lombok/dataAccessLevel.java");
+        }
+
+        @TestMetadata("dataClass.java")
+        public void testDataClass() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/lombok/dataClass.java");
+        }
+
+        @TestMetadata("dataClassNotApplicable.java")
+        public void testDataClassNotApplicable() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/lombok/dataClassNotApplicable.java");
+        }
+
+        @TestMetadata("logAnnotations.java")
+        public void testLogAnnotations() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/lombok/logAnnotations.java");
+        }
+
+        @TestMetadata("noArgsConstructor.java")
+        public void testNoArgsConstructor() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/lombok/noArgsConstructor.java");
+        }
+
+        @TestMetadata("passThroughAnnotations.java")
+        public void testPassThroughAnnotations() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/lombok/passThroughAnnotations.java");
+        }
+
+        @TestMetadata("requiredArgsConstructor.java")
+        public void testRequiredArgsConstructor() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/lombok/requiredArgsConstructor.java");
+        }
+
+        @TestMetadata("requiredArgsConstructorNotApplicable.java")
+        public void testRequiredArgsConstructorNotApplicable() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/lombok/requiredArgsConstructorNotApplicable.java");
+        }
+
+        @TestMetadata("valueClass.java")
+        public void testValueClass() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/lombok/valueClass.java");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/methodCallExpression")
     public static class MethodCallExpression extends AbstractK2JavaToKotlinConverterSingleFileTest {
         private void runTest(String testDataFilePath) throws Exception {

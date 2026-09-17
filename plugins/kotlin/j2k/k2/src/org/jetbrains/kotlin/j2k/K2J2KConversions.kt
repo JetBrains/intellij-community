@@ -37,6 +37,7 @@ import org.jetbrains.kotlin.j2k.conversions.LabeledStatementConversion
 import org.jetbrains.kotlin.j2k.conversions.LiteralConversion
 import org.jetbrains.kotlin.j2k.conversions.MethodReferenceToLambdaConversion
 import org.jetbrains.kotlin.j2k.conversions.ModalityConversion
+import org.jetbrains.kotlin.j2k.conversions.LombokConversion
 import org.jetbrains.kotlin.j2k.conversions.MoveConstructorsAfterFieldsConversion
 import org.jetbrains.kotlin.j2k.conversions.NonCodeElementsConversion
 import org.jetbrains.kotlin.j2k.conversions.NullabilityAnnotationsConversion
@@ -83,6 +84,7 @@ internal fun getK2J2KConversions(context: ConverterContext): List<Conversion> = 
     DefaultArgumentsConversion(context),
     ConstructorConversion(context),
     MoveConstructorsAfterFieldsConversion(context),
+    LombokConversion(context),
     ImplicitInitializerConversion(context),
     ParameterModificationConversion(context),
     BlockToRunConversion(context),
