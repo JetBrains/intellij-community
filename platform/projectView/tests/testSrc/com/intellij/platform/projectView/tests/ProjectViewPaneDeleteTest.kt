@@ -53,7 +53,9 @@ internal class ProjectViewPaneDeleteTest : AbstractProjectViewPaneTest() {
 
       pane.requestDelete(world)
 
-      waitUntil("World.txt should have been deleted") {
+      // 30 seconds, not the 10-second default: the module now loads the Java plugin, which makes
+      // the first refactoring slower than the default allows.
+      waitUntil("World.txt should have been deleted", 30.seconds) {
         !pane.dumpSubtree("pvDelete", "src", "sub").lines().map { it.trim() }.contains("World.txt")
       }
     }

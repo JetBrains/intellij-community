@@ -59,7 +59,9 @@ internal class ProjectViewPanePasteTest : AbstractProjectViewPaneTest() {
         val sub = pane.expand("pvPaste", "src", "sub")
 
         pane.requestCopy(hello)
-        waitUntil("Hello.txt should have been copied into the clipboard") {
+        // 30 seconds, not the 10-second default: the module now loads the Java plugin, which makes
+        // the first paste slower than the default allows.
+        waitUntil("Hello.txt should have been copied into the clipboard", 30.seconds) {
           readAction {
             PsiCopyPasteManager.getInstance().getElements(BooleanArray(1))?.map { (it as PsiFileSystemItem).name }
           } == listOf("Hello.txt")
@@ -69,7 +71,7 @@ internal class ProjectViewPanePasteTest : AbstractProjectViewPaneTest() {
 
         // In unit test mode CopyFilesOrDirectoriesHandler skips its dialog and copies into the target
         // directory under the same name, so the tree gains src/sub/Hello.txt.
-        waitUntil("Hello.txt should have been pasted into src/sub") {
+        waitUntil("Hello.txt should have been pasted into src/sub", 30.seconds) {
           pane.dumpSubtree("pvPaste", "src", "sub").lines().map { it.trim() }.contains("Hello.txt")
         }
         assertEquals(
