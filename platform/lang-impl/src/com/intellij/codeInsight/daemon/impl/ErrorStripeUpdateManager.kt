@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
@@ -16,6 +16,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorMarkupModel
 import com.intellij.openapi.editor.impl.EditorMarkupModelImpl
@@ -32,6 +33,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -72,8 +74,11 @@ class ErrorStripeUpdateManager(private val project: Project, private val corouti
   }
 
   @JvmName("launchRepaintErrorStripePanel")
-  internal fun launchRepaintErrorStripePanel(model: EditorMarkupModel, file: PsiFile?) {
-    coroutineScope.launch {
+  internal fun launchRepaintErrorStripePanel(model: EditorMarkupModel, editorProject: Project?, document: Document): Job {
+    return coroutineScope.launch {
+      val file = if (editorProject == null) null else readAction {
+        PsiDocumentManager.getInstance(project).getPsiFile(document)
+      }
       asyncRepaintErrorStripePanel(model, file)
     }
   }

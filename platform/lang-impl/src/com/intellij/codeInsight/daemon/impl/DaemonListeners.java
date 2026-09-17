@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -40,6 +40,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -143,6 +144,7 @@ import java.util.function.Supplier;
  * listen for any daemon-related activities and restart the daemon if needed
  */
 public final class DaemonListeners implements Disposable {
+  private static final Logger LOG = Logger.getInstance(DaemonListeners.class);
   private final Project myProject;
   private final DaemonCodeAnalyzerImpl myDaemonCodeAnalyzer;
   private final PsiChangeHandler myPsiChangeHandler;
@@ -278,16 +280,8 @@ public final class DaemonListeners implements Disposable {
         }
 
         // worthBothering() checks for getCachedPsiFile, so call getPsiFile
-        PsiFile psiFile = editorProject == null ? null : psiDocumentManager.getPsiFile(document);
         ErrorStripeUpdateManager errorStripeManager = ErrorStripeUpdateManager.getInstance(myProject);
-        // ScratchLineMarkersTestGenerated/FileEditorManagerTest is failed for some reason, so, let's execute now if test in EDT
-        if (ApplicationManager.getApplication().isUnitTestMode()) {
-          //noinspection deprecation
-          errorStripeManager.repaintErrorStripePanel(editor, psiFile);
-        }
-        else {
-          errorStripeManager.launchRepaintErrorStripePanel(editorMarkup, psiFile);
-        }
+        errorStripeManager.launchRepaintErrorStripePanel(editorMarkup, editorProject, document);
         Disposable disposable = Disposer.newDisposable();
         FoldingModelEx foldingModel = (FoldingModelEx)editor.getFoldingModel();
         foldingModel.addListener(new FoldingListener() {
