@@ -255,6 +255,17 @@ _LOCAL_DISK_CACHE_ONLY = {
     "no-remote-exec": "1",
 }
 
+# What the scheduler reserves for one tool JVM, in CPUs and MiB. Without it Bazel books a JVM as a 250 MiB action and
+# starts as many as `--jobs` allows. The memory is the tool's `-Xmx` in `build/BUILD.bazel` plus the JVM's own
+# overhead and, on Windows, the launcher's `jar` helper. Keep the two sides in step.
+def _small_tool_resources(_os, _inputs):
+    """The composer and the project model tree materializer: `-Xmx2g`, single-threaded."""
+    return {"cpu": 1, "memory": 2560}
+
+def _assembler_resources(_os, _inputs):
+    """The fragment assembler: `-Xmx8g`, G1 with a few worker threads."""
+    return {"cpu": 2, "memory": 9216}
+
 # The switch that turns span output on, carried by every rule here that runs a packaging tool.
 #
 # A private label attribute read through `BuildSettingInfo` rather than a `select()` on a public one, so the value is
@@ -382,6 +393,7 @@ def _project_model_tree_impl(ctx):
         # No execution requirements: this one is hermetic. It reads its manifest and the execroot-relative sources that
         # manifest names, writes only under its output directory, and consults no environment variable, no home
         # directory and no network - so it may be sandboxed, and both caches may keep it.
+        resource_set = _small_tool_resources,
         mnemonic = "IntellijProjectModelTree",
         progress_message = "Materializing the project model tree %s" % ctx.label,
     )
@@ -508,6 +520,7 @@ def _fragment_impl(ctx):
         executable = ctx.executable.assembler,
         arguments = [args],
         execution_requirements = _LOCAL_DISK_CACHE_ONLY,
+        resource_set = _assembler_resources,
         mnemonic = _mnemonic(ctx.attr.fragment_name),
         progress_message = "Assembling %s dev fragment %s" % (ctx.attr.platform_prefix, ctx.label),
     )
@@ -827,6 +840,7 @@ def _compose(ctx, fragment_targets):
         # Composed distributions are large and intended for local consumption. Until a producer and delivery policy
         # exist, the local disk cache is the only intended cache.
         execution_requirements = {"no-remote-cache": "1"},
+        resource_set = _small_tool_resources,
         mnemonic = "IntellijDevLaunchMetadata" if local_launch else "IntellijDevDistCompose",
         progress_message = "Composing dev launch metadata %s" % ctx.label if local_launch else "Composing dev distribution %s" % ctx.label,
     )

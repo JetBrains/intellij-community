@@ -70,7 +70,7 @@ INTELLIJ_ADD_OPENS = [
 # reading side of this contract lives.
 DEV_IDE_CONFIG_PATH_PROPERTY = "idea.ide.config.path"
 
-def intellij_dev_dist_config(name, dist, visibility = None):
+def intellij_dev_dist_config(name, dist, visibility = None, tags = []):
     """A single-file label for an assembled dev distribution's config file, for `$(rlocationpath ...)`.
 
     That expansion takes a label naming exactly one file, which a dist target - two outputs, one of them declared rather
@@ -78,11 +78,14 @@ def intellij_dev_dist_config(name, dist, visibility = None):
 
     A consumer declares both this and the dist itself in `data`, and they must stay siblings in the runfiles tree: the
     config names the home relatively, so that the pair survives being read from a different path than it was written to.
+
+    `tags` is the filegroup's; a consumer that must stay out of a wildcard build passes `["manual"]`.
     """
     native.filegroup(
         name = name,
         srcs = [dist],
         output_group = "ide_config",
+        tags = tags,
         visibility = visibility,
     )
 
@@ -204,9 +207,13 @@ def intellij_dev_prebuilt_binary(
     """
     ide_config = name + "_ide_config"
 
+    # Manual, like the distribution in `data`: a wildcard build must not compose it. `bazel run` names the launcher and
+    # is not affected.
+    tags = ["manual"]
+
     dist_target = name + "_distribution"
-    native.alias(name = dist_target, actual = dist, visibility = ["//visibility:private"])
-    intellij_dev_dist_config(name = ide_config, dist = dist_target, visibility = ["//visibility:private"])
+    native.alias(name = dist_target, actual = dist, tags = tags, visibility = ["//visibility:private"])
+    intellij_dev_dist_config(name = ide_config, dist = dist_target, tags = tags, visibility = ["//visibility:private"])
 
     local_home_data = [local_home_tool] if local_home_tool else []
     local_home_flags = ["-Didea.dev.local.home.tool=$(rlocationpath %s)" % local_home_tool] if local_home_tool else []
@@ -216,6 +223,7 @@ def intellij_dev_prebuilt_binary(
         visibility = visibility,
         runtime_deps = ["@community//platform/bootstrap/dev"],
         main_class = "org.jetbrains.intellij.build.devServer.PreBuiltDevMain",
+        tags = tags,
         data = data + [dist_target, ide_config] + local_home_data,
         jvm_flags = _runtime_jvm_flags(name, jvm_flags, platform_prefix, config_path, system_path) + local_home_flags + [
             "-D%s=$(rlocationpath %s)" % (DEV_IDE_CONFIG_PATH_PROPERTY, ide_config),
