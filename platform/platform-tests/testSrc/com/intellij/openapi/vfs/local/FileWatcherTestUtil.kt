@@ -9,10 +9,11 @@ import com.intellij.openapi.vfs.impl.local.FileWatcher
 import com.intellij.util.TimeoutUtil
 import org.junit.Assert.assertTrue
 import java.nio.file.Path
+import java.util.concurrent.TimeUnit
 
 @Suppress("MemberVisibilityCanBePrivate")
 internal object FileWatcherTestUtil {
-  internal const val START_STOP_DELAY = 10000L      // time to wait for the watcher spin-up/down
+  internal const val START_STOP_DELAY = 10000L      // time to wait for the watcher setup
   internal const val INTER_RESPONSE_DELAY = 500L    // time to wait for the next event in a sequence
   internal const val NATIVE_PROCESS_DELAY = 60000L  // time to wait for a native watcher's response
   internal const val SHORT_PROCESS_DELAY = 5000L    // time to wait when no native watcher's response is expected
@@ -39,9 +40,9 @@ internal object FileWatcherTestUtil {
   }
 
   internal fun wait(timeout: Long = START_STOP_DELAY, condition: () -> Boolean) {
-    val stopAt = System.currentTimeMillis() + timeout
+    val stopAt = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeout)
     while (condition()) {
-      assertTrue("operation timed out", System.currentTimeMillis() < stopAt)
+      assertTrue("operation timed out", System.nanoTime() < stopAt)
       TimeoutUtil.sleep(10)
     }
   }
