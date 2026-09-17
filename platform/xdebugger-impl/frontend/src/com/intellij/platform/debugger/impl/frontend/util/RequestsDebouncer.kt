@@ -9,6 +9,7 @@ internal class RequestsDebouncer<K : Any>(
 ) {
   private val currentRequests = ConcurrentHashMap<K, Deferred<Unit>>()
 
+  @Synchronized // guarantee cancellation for concurrent requests
   fun submit(key: K, request: suspend () -> Unit): Deferred<Unit> {
     val newRequest = sequentialExecutor.submit(request)
     val oldRequest = currentRequests.put(key, newRequest)

@@ -132,12 +132,14 @@ internal open class FrontendXBreakpointProxy(
     forceRequestWithoutUpdate: Boolean = false,
     execute: (Long) -> Unit,
   ) {
-    val requestId = getRequestIdForStateUpdate(newValue, getter, copy, forceRequestWithoutUpdate)
-    if (requestId == REQUEST_IS_NOT_NEEDED) {
-      return
+    synchronized(this) {
+      val requestId = getRequestIdForStateUpdate(newValue, getter, copy, forceRequestWithoutUpdate)
+      if (requestId == REQUEST_IS_NOT_NEEDED) {
+        return
+      }
+      afterStateChanged()
+      execute(requestId)
     }
-    afterStateChanged()
-    execute(requestId)
     onBreakpointChange()
   }
 
