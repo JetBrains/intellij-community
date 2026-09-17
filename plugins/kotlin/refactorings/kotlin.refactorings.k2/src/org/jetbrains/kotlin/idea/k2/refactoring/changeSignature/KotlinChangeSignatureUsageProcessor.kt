@@ -545,7 +545,12 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
             if (modifierList != null) {
                 val contextParameterList = modifierList.contextParameterList
                 val contextReceivers = if (contextParameterList == null) {
-                    modifierList.addBefore(newModifierList.contextParameterList!!, modifierList.firstChild)
+                    val firstModifier = modifierList.getModifier(KtTokens.MODIFIER_KEYWORDS)
+                    if (firstModifier != null) {
+                        modifierList.addBefore(newModifierList.contextParameterList!!, firstModifier)
+                    } else {
+                        modifierList.addAfter(newModifierList.contextParameterList!!, modifierList.lastChild)
+                    }
                 } else {
                     contextParameterList.replace(newModifierList.contextParameterList!!)
                 }
