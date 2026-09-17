@@ -78,7 +78,6 @@ import com.jetbrains.fus.reporting.defaults.DefaultMetadataStorage
 import com.jetbrains.fus.reporting.defaults.DefaultRemoteConfig
 import com.jetbrains.fus.reporting.defaults.MetadataUpdateDelay
 import com.jetbrains.fus.reporting.defaults.NoOpAnonymizer
-import com.jetbrains.fus.reporting.defaults.NoOpLoggerFactory
 import com.jetbrains.fus.reporting.defaults.dispatcher.EventLogBuildType
 import com.jetbrains.fus.reporting.defaults.dispatcher.LOGS_FILE_DELETED
 import com.jetbrains.fus.reporting.defaults.dispatcher.LOGS_FILE_METRICS_CALCULATED_TOPIC
@@ -241,7 +240,7 @@ object FusComponentProvider {
     // EmptyStatisticsEventLoggerProvider reports -1, so clamp the value here.
     val sendFrequency = maxOf(eventLogProvider.sendFrequencyMs, MIN_SEND_FREQUENCY_MS).milliseconds
 
-    val isInternal = { applicationInfo.isInternal }
+    val isInternalUser = { applicationInfo.isInternal }
     val systemLogGroupId = "${recorderId.lowercase(Locale.ENGLISH)}.event.log"
     val systemCollector = eventLogProvider.eventLogSystemLogger
     val recorderConfig = EventLogConfiguration.getInstance()
@@ -321,7 +320,9 @@ object FusComponentProvider {
               excludedFields = FeatureUsageData.platformDataKeys,
               utilRulesProducer = CustomRuleProducer(recorderId)
             )
-            if (isInternal()) {
+            // [isInternalUser] is not sufficient here, apparently. The test scheme that the "Add Group to Test Scheme" action and the
+            // IDE Starter FUS tests write must load whenever the IDE runs with `idea.is.internal`.
+            if (ApplicationManager.getApplication().isInternal) {
               CompositeValidationRulesStorage(storage, ValidationTestRulesPersistedStorage(recorderId))
             }
             else {
@@ -356,7 +357,7 @@ object FusComponentProvider {
             validator,
             persistentQueue,
             device,
-            isInternal,
+            isInternalUser,
             systemLogGroupId,
             sendFrequency,
             // eventBufferSize is a safeguard against missing bundled metadata. If bundled metadata is missing due to a regression,
