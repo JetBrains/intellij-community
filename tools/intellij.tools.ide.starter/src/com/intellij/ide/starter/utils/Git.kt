@@ -927,6 +927,25 @@ object Git {
 }
 
 /**
+ * Sets the URL of [remote] to [url], if the repository has that remote and its URL differs.
+ *
+ * A cached checkout keeps the URL of the clone that created it. Without this, a change of the URL of a test
+ * project never reaches an agent that already holds the checkout.
+ *
+ * @return `true` if the URL changed
+ */
+fun Git.setRemoteUrlIfDifferent(repositoryDirectory: Path, url: String, remote: String = "origin"): Boolean {
+  require(url.isNotEmpty()) { "URL must not be empty" }
+
+  val currentUrl = getRemoteUrl(repositoryDirectory, remote)
+  if (currentUrl.isEmpty() || currentUrl == url) return false
+
+  logOutput("The $remote of $repositoryDirectory is '$currentUrl'. Setting it to '$url' ...")
+  setRemoteUrl(repositoryDirectory, remote, url)
+  return true
+}
+
+/**
  * Configures git user.name and user.email for the repository if not already set.
  * Configuration is applied locally (repository-level, not global).
  *

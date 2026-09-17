@@ -7,6 +7,7 @@ import com.intellij.ide.starter.process.exec.ExecOutputRedirect
 import com.intellij.ide.starter.process.exec.ProcessExecutor
 import com.intellij.ide.starter.utils.Git
 import com.intellij.ide.starter.utils.abortOnUnavailableGitRemote
+import com.intellij.ide.starter.utils.setRemoteUrlIfDifferent
 import com.intellij.ide.starter.utils.withRetryBlocking
 import com.intellij.tools.ide.util.common.logError
 import com.intellij.tools.ide.util.common.logOutput
@@ -103,6 +104,8 @@ data class GitProjectInfo(
 
   /** Moves the checkout in [repoRoot] to [branchName] and [commitHash]. */
   private fun setupRepositoryState(repoRoot: Path) {
+    Git.setRemoteUrlIfDifferent(repoRoot, repositoryUrl)
+
     if (!isReusable) {
       Git.reset(repositoryDirectory = repoRoot)
       Git.clean(repoRoot)
