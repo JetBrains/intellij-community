@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public enum OS {
-  Windows, macOS, Linux, FreeBSD, HarmonyOS, Other;
+  Windows, macOS, Linux, FreeBSD, OHOS, Other;
 
   /// Represents an operating system this JVM is running on.
   ///
@@ -70,7 +70,7 @@ public enum OS {
       this == Windows ? WindowsInfo.INSTANCE :
       this == macOS ? MacOsInfo.INSTANCE :
       this == Linux ? LinuxInfo.INSTANCE :
-      this == HarmonyOS ? HarmonyOSInfo.INSTANCE :
+      this == OHOS ? OHOSInfo.INSTANCE :
       UnixInfo.INSTANCE;
   }
 
@@ -85,7 +85,7 @@ public enum OS {
       if (os.startsWith("mac")) return macOS;
       if (os.startsWith("linux")) return Linux;
       if (os.startsWith("freebsd")) return FreeBSD;
-      if (os.startsWith("harmonyos")) return HarmonyOS;
+      if (os.contains("harmony")) return OHOS;
     }
     return Other;
   }
@@ -196,9 +196,9 @@ public enum OS {
       return isUnderWsl;
     }
   }
-  public static final class HarmonyOSInfo extends UnixInfo {
-    private static final HarmonyOSInfo INSTANCE = new HarmonyOSInfo();
+  public static final class OHOSInfo extends UnixInfo {
+    private static final OHOSInfo INSTANCE = new OHOSInfo();
 
-    private HarmonyOSInfo() { }
+    private OHOSInfo() { }
   }
 }

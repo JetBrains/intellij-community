@@ -109,7 +109,7 @@ enum class UnixSignal(private val bsdCode: Int, private val linuxCode: Int) {
       when (platform) {
         is EelPlatform.Darwin, is EelPlatform.FreeBSD -> true
         // No idea if Harmony uses Linux codes, but most probably yes
-        is EelPlatform.HarmonyOS, is EelPlatform.Linux -> false
+        is EelPlatform.OHOS, is EelPlatform.Linux -> false
       }
     )
   }

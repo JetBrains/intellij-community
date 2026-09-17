@@ -181,7 +181,7 @@ class EelLocalExecPosixApi(
         }
       }
 
-      is EelPlatform.FreeBSD, is EelPlatform.Linux, is EelPlatform.HarmonyOS -> { //todo[kb] double-check HOS
+      is EelPlatform.FreeBSD, is EelPlatform.Linux, is EelPlatform.OHOS -> { //todo[kb] double-check HOS
         // TODO This code wasn't checked on BSD.
         var passwdLines =
           try {

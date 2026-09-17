@@ -23,7 +23,7 @@ fun EelPlatform.toOs(): OS {
     is EelPlatform.Linux -> OS.Linux
     is EelPlatform.Darwin -> OS.macOS
     is EelPlatform.FreeBSD -> OS.FreeBSD
-    is EelPlatform.HarmonyOS -> OS.HarmonyOS
+    is EelPlatform.OHOS -> OS.OHOS
   }
 }
 

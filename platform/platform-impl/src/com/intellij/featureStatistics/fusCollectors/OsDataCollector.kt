@@ -9,8 +9,8 @@ import com.intellij.internal.statistic.eventLog.events.EventFields.String
 import com.intellij.internal.statistic.eventLog.events.EventFields.StringValidatedByRegexpReference
 import com.intellij.internal.statistic.eventLog.events.EventFields.Version
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
-import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.GlibcVersion
+import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
 import java.nio.file.Path
 import java.time.OffsetDateTime
@@ -87,7 +87,7 @@ internal class OsDataCollector : ApplicationUsagesCollector() {
     OS.macOS -> "Mac"
     OS.Linux -> "Linux"
     OS.FreeBSD -> "FreeBSD"
-    OS.HarmonyOS -> "HarmonyOS"
+    OS.OHOS -> "HarmonyOS"
     OS.Other -> "Other"
   }
 

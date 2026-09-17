@@ -43,7 +43,6 @@ import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import com.intellij.openapi.vcs.impl.PartialChangesUtil
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.eel.provider.utils.EelPathUtils
 import com.intellij.platform.eel.provider.utils.EelProjectUtils
 import com.intellij.platform.vcs.impl.shared.commit.EditedCommitDetails
 import com.intellij.util.ArrayUtil
@@ -122,7 +121,7 @@ class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment
       OS.Windows,
       OS.Linux,
       OS.FreeBSD,
-      OS.HarmonyOS,
+      OS.OHOS,
       OS.Other -> GitBundle.message("commit.action.name")
     }
   }

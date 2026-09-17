@@ -52,9 +52,6 @@ public final class SystemInfo {
   /** Use {@link OS#CURRENT} instead */
   @ApiStatus.Obsolete
   public static final boolean isUnix = OS.CURRENT != OS.Windows;
-  /** Use {@link OS#CURRENT} instead */
-  @ApiStatus.Obsolete
-  public static final boolean isHarmonyOS = OS.CURRENT == OS.HarmonyOS;
 
   /** @deprecated unimportant; use {@link OS.UnixInfo#getDistro()} if needed */
   @Deprecated

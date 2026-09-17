@@ -324,7 +324,7 @@ public final class UnixProcessManager {
       String command = isShortenCommand ? "comm" : "command";
       return new String[]{psCommand, "-ax", "-o", commandLineOnly ? command : "ppid,pid," + command};
     }
-    else if (OS.CURRENT == OS.HarmonyOS) {
+    else if (OS.CURRENT == OS.OHOS) {
       //todo[kb] support HarmonyOS
       throw new NotImplementedError(System.getProperty("os.name") + " is not implemented.");
     }

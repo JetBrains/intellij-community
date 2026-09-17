@@ -27,7 +27,7 @@ class ExtensionDescriptor(
       mac -> OS.CURRENT == OS.macOS
       linux -> OS.CURRENT == OS.Linux
       freebsd -> OS.CURRENT == OS.FreeBSD
-      harmonyos -> OS.CURRENT == OS.HarmonyOS
+      harmonyos -> OS.CURRENT == OS.OHOS
     }
   }
 }

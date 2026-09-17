@@ -26,8 +26,8 @@ enum class IdeaPluginOsRequirement {
   FreeBSD {
     override fun isHostOs(): Boolean = OS.CURRENT == OS.FreeBSD
   },
-  HarmonyOS {
-    override fun isHostOs(): Boolean = OS.CURRENT == OS.HarmonyOS
+  OHOS {
+    override fun isHostOs(): Boolean = OS.CURRENT == OS.OHOS
   },
   Unix {
     override fun isHostOs(): Boolean = OS.CURRENT != OS.Windows
@@ -56,7 +56,7 @@ enum class IdeaPluginOsRequirement {
       OS.macOS -> Mac
       OS.Linux -> Linux
       OS.FreeBSD -> FreeBSD
-      OS.HarmonyOS -> HarmonyOS
+      OS.OHOS -> OHOS
       OS.Other -> null
     }
 

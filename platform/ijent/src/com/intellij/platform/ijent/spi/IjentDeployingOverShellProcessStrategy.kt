@@ -859,7 +859,7 @@ private class PosixShellSession(
  */
 private fun DeployingContext.getLoginShellCmd(targetPlatform: EelPlatform.Posix): String? =
   when (targetPlatform) {
-    is EelPlatform.Linux, is EelPlatform.HarmonyOS ->
+    is EelPlatform.Linux, is EelPlatform.OHOS ->
       getent?.let { """$it passwd "${'$'}($whoami)" | $cut -d: -f7""" }
 
     // BSD-like systems, including macOS, don't have `getent`, but their `id` prints the whole passwd entry with the option `-P`.
