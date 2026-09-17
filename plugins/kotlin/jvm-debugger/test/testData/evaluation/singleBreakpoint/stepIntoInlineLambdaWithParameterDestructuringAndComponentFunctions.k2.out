@@ -21,15 +21,15 @@ stepIntoInlineLambdaWithParameterDestructuringAndComponentFunctions.kt:18
 stepIntoInlineLambdaWithParameterDestructuringAndComponentFunctions.kt:32
 Compile bytecode for a + b + c + d + e + f + g + h + i + j + k + l + m + n + o
 InlineStackFrame lambda 'inlineFoo' in 'main' (stepIntoInlineLambdaWithParameterDestructuringAndComponentFunctions.kt:32)
-    JavaValue[local] c: int = 1 (stepIntoInlineLambdaWithParameterDestructuringAndComponentFunctions.kt:23)
-    JavaValue[local] d: int = 1 (stepIntoInlineLambdaWithParameterDestructuringAndComponentFunctions.kt:24)
-    JavaValue[local] i: int = 1 (stepIntoInlineLambdaWithParameterDestructuringAndComponentFunctions.kt:27)
     JavaValue[local] a: int = 1 (stepIntoInlineLambdaWithParameterDestructuringAndComponentFunctions.kt:22)
     JavaValue[local] b: int = 1 (stepIntoInlineLambdaWithParameterDestructuringAndComponentFunctions.kt:22)
+    JavaValue[local] c: int = 1 (stepIntoInlineLambdaWithParameterDestructuringAndComponentFunctions.kt:23)
+    JavaValue[local] d: int = 1 (stepIntoInlineLambdaWithParameterDestructuringAndComponentFunctions.kt:24)
     JavaValue[local] e: int = 1 (stepIntoInlineLambdaWithParameterDestructuringAndComponentFunctions.kt:24)
     JavaValue[local] f: int = 1 (stepIntoInlineLambdaWithParameterDestructuringAndComponentFunctions.kt:25)
     JavaValue[local] g: int = 1 (stepIntoInlineLambdaWithParameterDestructuringAndComponentFunctions.kt:25)
     JavaValue[local] h: int = 1 (stepIntoInlineLambdaWithParameterDestructuringAndComponentFunctions.kt:26)
+    JavaValue[local] i: int = 1 (stepIntoInlineLambdaWithParameterDestructuringAndComponentFunctions.kt:27)
     JavaValue[local] j: int = 1 (stepIntoInlineLambdaWithParameterDestructuringAndComponentFunctions.kt:28)
     JavaValue[local] k: int = 1 (stepIntoInlineLambdaWithParameterDestructuringAndComponentFunctions.kt:28)
     JavaValue[local] l: int = 1 (stepIntoInlineLambdaWithParameterDestructuringAndComponentFunctions.kt:29)

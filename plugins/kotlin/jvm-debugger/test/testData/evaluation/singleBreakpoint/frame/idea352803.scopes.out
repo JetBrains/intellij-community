@@ -3,17 +3,17 @@ Run Java
 Connected to the target VM
 idea352803.kt:15
 InlineStackFrame lambda 'inlineWithCrossLambda' in 'main' (idea352803.kt:15)
-    JavaValue[local] this (@Obj): idea352803.Obj = idea352803.Obj@hashCode
-        DummyMessageValueNode = No fields to display
+    JavaValue[local] action: kotlin.jvm.functions.Function1 = null
     JavaValue[local] this: java.lang.Object
         DummyMessageValueNode = Class has no fields
-    JavaValue[local] action: kotlin.jvm.functions.Function1 = null
+    JavaValue[local] this (@Obj): idea352803.Obj = idea352803.Obj@hashCode
+        DummyMessageValueNode = No fields to display
 InlineStackFrame inlineInClassWithLambda (idea352803.kt:9)
-    JavaValue[local] this (@Obj): idea352803.Obj = idea352803.Obj@hashCode
-        DummyMessageValueNode = No fields to display
+    JavaValue[local] action: kotlin.jvm.functions.Function1 = null
     JavaValue[local] this: java.lang.Object
         DummyMessageValueNode = Class has no fields
-    JavaValue[local] action: kotlin.jvm.functions.Function1 = null
+    JavaValue[local] this (@Obj): idea352803.Obj = idea352803.Obj@hashCode
+        DummyMessageValueNode = No fields to display
 KotlinStackFrame (idea352803.kt:6)
 Disconnected from the target VM
 

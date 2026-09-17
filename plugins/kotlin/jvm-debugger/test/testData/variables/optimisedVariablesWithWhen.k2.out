@@ -16,53 +16,53 @@ Run Java
 Connected to the target VM
 optimisedVariablesWithWhen.kt:11
 CoroutinePreflightFrame foo (optimisedVariablesWithWhen.kt:11)
-    JavaValue[local] result = null
     JavaValue[local] a: java.lang.String = a (optimisedVariablesWithWhen.kt:9)
+    JavaValue[local] result = null
 optimisedVariablesWithWhen.kt:15
 CoroutinePreflightFrame foo (optimisedVariablesWithWhen.kt:15)
-    JavaValue[local] result = null
     JavaValue[local] a: java.lang.String = a (optimisedVariablesWithWhen.kt:9)
     JavaValue[local] b: java.lang.String = b (optimisedVariablesWithWhen.kt:11)
     JavaValue[local] c: java.lang.String = c (optimisedVariablesWithWhen.kt:13)
+    JavaValue[local] result = null
 optimisedVariablesWithWhen.kt:19
 KotlinStackFrame (optimisedVariablesWithWhen.kt:19)
     JavaValue[local] d: java.lang.String = d (optimisedVariablesWithWhen.kt:17)
 optimisedVariablesWithWhen.kt:25
 CoroutinePreflightFrame foo (optimisedVariablesWithWhen.kt:25)
-    JavaValue[local] result = null
-    JavaValue[local] c: java.lang.String = c (optimisedVariablesWithWhen.kt:13)
-    JavaValue[local] b: java.lang.String = b (optimisedVariablesWithWhen.kt:11)
     JavaValue[local] a: java.lang.String = a (optimisedVariablesWithWhen.kt:9)
+    JavaValue[local] b: java.lang.String = b (optimisedVariablesWithWhen.kt:11)
+    JavaValue[local] c: java.lang.String = c (optimisedVariablesWithWhen.kt:13)
     JavaValue[local] e: java.lang.String = e (optimisedVariablesWithWhen.kt:23)
+    JavaValue[local] result = null
 optimisedVariablesWithWhen.kt:32
 CoroutinePreflightFrame foo (optimisedVariablesWithWhen.kt:32)
-    JavaValue[local] result = null
-    JavaValue[local] c: java.lang.String = c (optimisedVariablesWithWhen.kt:13)
-    JavaValue[local] b: java.lang.String = b (optimisedVariablesWithWhen.kt:11)
     JavaValue[local] a: java.lang.String = a (optimisedVariablesWithWhen.kt:9)
+    JavaValue[local] b: java.lang.String = b (optimisedVariablesWithWhen.kt:11)
+    JavaValue[local] c: java.lang.String = c (optimisedVariablesWithWhen.kt:13)
+    JavaValue[continuation] e = e
     JavaValue[local] f: java.lang.String = f (optimisedVariablesWithWhen.kt:28)
     JavaValue[local] g: java.lang.String = g (optimisedVariablesWithWhen.kt:30)
-    JavaValue[continuation] e = e
+    JavaValue[local] result = null
 optimisedVariablesWithWhen.kt:36
 KotlinStackFrame (optimisedVariablesWithWhen.kt:36)
     JavaValue[local] h: java.lang.String = h (optimisedVariablesWithWhen.kt:34)
 optimisedVariablesWithWhen.kt:42
 CoroutinePreflightFrame foo (optimisedVariablesWithWhen.kt:42)
-    JavaValue[local] result = null
-    JavaValue[local] g: java.lang.String = g (optimisedVariablesWithWhen.kt:30)
-    JavaValue[local] f: java.lang.String = f (optimisedVariablesWithWhen.kt:28)
-    JavaValue[local] c: java.lang.String = c (optimisedVariablesWithWhen.kt:13)
-    JavaValue[local] b: java.lang.String = b (optimisedVariablesWithWhen.kt:11)
     JavaValue[local] a: java.lang.String = a (optimisedVariablesWithWhen.kt:9)
+    JavaValue[local] b: java.lang.String = b (optimisedVariablesWithWhen.kt:11)
+    JavaValue[local] c: java.lang.String = c (optimisedVariablesWithWhen.kt:13)
+    JavaValue[local] f: java.lang.String = f (optimisedVariablesWithWhen.kt:28)
+    JavaValue[local] g: java.lang.String = g (optimisedVariablesWithWhen.kt:30)
     JavaValue[local] i: java.lang.String = i (optimisedVariablesWithWhen.kt:40)
+    JavaValue[local] result = null
 optimisedVariablesWithWhen.kt:47
 CoroutinePreflightFrame foo (optimisedVariablesWithWhen.kt:47)
-    JavaValue[local] result = null
-    JavaValue[local] g: java.lang.String = g (optimisedVariablesWithWhen.kt:30)
-    JavaValue[local] f: java.lang.String = f (optimisedVariablesWithWhen.kt:28)
-    JavaValue[local] c: java.lang.String = c (optimisedVariablesWithWhen.kt:13)
-    JavaValue[local] b: java.lang.String = b (optimisedVariablesWithWhen.kt:11)
     JavaValue[local] a: java.lang.String = a (optimisedVariablesWithWhen.kt:9)
+    JavaValue[local] b: java.lang.String = b (optimisedVariablesWithWhen.kt:11)
+    JavaValue[local] c: java.lang.String = c (optimisedVariablesWithWhen.kt:13)
+    JavaValue[local] f: java.lang.String = f (optimisedVariablesWithWhen.kt:28)
+    JavaValue[local] g: java.lang.String = g (optimisedVariablesWithWhen.kt:30)
+    JavaValue[local] result = null
 optimisedVariablesWithWhen.kt:55
 CoroutinePreflightFrame foo$foo (optimisedVariablesWithWhen.kt:55)
     JavaValue[local] result = null
@@ -75,24 +75,24 @@ CoroutinePreflightFrame foo$foo (optimisedVariablesWithWhen.kt:58)
 optimisedVariablesWithWhen.kt:60
 CoroutinePreflightFrame foo$foo (optimisedVariablesWithWhen.kt:60)
     JavaValue[local] result = null
-    JavaValue[local] y: java.lang.String = y (optimisedVariablesWithWhen.kt:56)
     JavaValue[local] x: java.lang.String = x (optimisedVariablesWithWhen.kt:53)
+    JavaValue[local] y: java.lang.String = y (optimisedVariablesWithWhen.kt:56)
 optimisedVariablesWithWhen.kt:66
 CoroutinePreflightFrame foo (optimisedVariablesWithWhen.kt:66)
-    JavaValue[local] result = null
-    JavaValue[local] c: java.lang.String = c (optimisedVariablesWithWhen.kt:13)
-    JavaValue[local] b: java.lang.String = b (optimisedVariablesWithWhen.kt:11)
     JavaValue[local] a: java.lang.String = a (optimisedVariablesWithWhen.kt:9)
+    JavaValue[local] b: java.lang.String = b (optimisedVariablesWithWhen.kt:11)
+    JavaValue[local] c: java.lang.String = c (optimisedVariablesWithWhen.kt:13)
+    JavaValue[local] result = null
 optimisedVariablesWithWhen.kt:72
 CoroutinePreflightFrame foo (optimisedVariablesWithWhen.kt:72)
-    JavaValue[local] result = null
     JavaValue[local] a: java.lang.String = a (optimisedVariablesWithWhen.kt:9)
     JavaValue[continuation] b = b
     JavaValue[continuation] c = c
+    JavaValue[local] result = null
 optimisedVariablesWithWhen.kt:77
 CoroutinePreflightFrame foo (optimisedVariablesWithWhen.kt:77)
-    JavaValue[local] result = null
     JavaValue[local] a: java.lang.String = a (optimisedVariablesWithWhen.kt:9)
+    JavaValue[local] result = null
 Disconnected from the target VM
 
 Process finished with exit code 0
