@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.toolchains
 
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
@@ -86,6 +87,38 @@ class ToolchainsModelTest {
     val noVendor = ToolchainModel("jdk", emptyMap(), emptyMap())
     assertFalse(wrongVendor.matches(requirement))
     assertFalse(noVendor.matches(requirement))
+  }
+
+  @Test
+  fun testDefaultOrderPrefersLts() {
+    val jdk25 = ToolchainModel("jdk", mapOf("version" to "25.0.1"), mapOf("jdkHome" to "/jdk25"))
+    val jdk26 = ToolchainModel("jdk", mapOf("version" to "26"), mapOf("jdkHome" to "/jdk26"))
+    val sorted = listOf(jdk26, jdk25).sortedWith(defaultToolchainOrder(null))
+    assertSame(jdk25, sorted.first())
+  }
+
+  @Test
+  fun testDefaultOrderPrefersCurrentJdk() {
+    val other = ToolchainModel("jdk", mapOf("version" to "21.0.9"), mapOf("jdkHome" to "/other"))
+    val current = ToolchainModel("jdk", mapOf("version" to "21.0.1"), mapOf("jdkHome" to "/current"))
+    val sorted = listOf(other, current).sortedWith(defaultToolchainOrder("/current"))
+    assertSame(current, sorted.first())
+  }
+
+  @Test
+  fun testDefaultOrderPrefersEnvDefinedJdk() {
+    val plain = ToolchainModel("jdk", mapOf("version" to "21.0.9"), mapOf("jdkHome" to "/plain"))
+    val env = ToolchainModel("jdk", mapOf("version" to "21.0.1", "env" to "JAVA21_HOME"), mapOf("jdkHome" to "/env"))
+    val sorted = listOf(plain, env).sortedWith(defaultToolchainOrder(null))
+    assertSame(env, sorted.first())
+  }
+
+  @Test
+  fun testDefaultOrderPrefersNewerVersion() {
+    val older = ToolchainModel("jdk", mapOf("version" to "17.0.1"), mapOf("jdkHome" to "/older"))
+    val newer = ToolchainModel("jdk", mapOf("version" to "17.0.9"), mapOf("jdkHome" to "/newer"))
+    val sorted = listOf(older, newer).sortedWith(defaultToolchainOrder(null))
+    assertSame(newer, sorted.first())
   }
 
   @Test

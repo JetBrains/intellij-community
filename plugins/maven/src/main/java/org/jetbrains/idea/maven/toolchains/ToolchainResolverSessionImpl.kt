@@ -16,6 +16,7 @@ import com.intellij.platform.eel.fs.getPath
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.util.EnvironmentUtil
+import com.intellij.util.lang.JavaVersion
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jdom.Element
@@ -122,7 +123,13 @@ class ToolchainResolverSession private constructor(
     val eelDescriptor = myProject.getEelDescriptor()
     val cachedJdks = readToolchains(myDiscoveredJdkCacheFile)
       .filter { model -> model.jdkHome?.let { JdkUtil.checkForJdk(eelDescriptor.getPath(it).asNioPath()) } == true }
-    return cachedJdks + readRegisteredJdks() + environmentJdks() + detectJdks()
+    val order = defaultToolchainOrder(importerJdkHome())
+    // A registered SDK is explicit IDE configuration. It wins over a machine scan result.
+    return readRegisteredJdks().sortedWith(order) + (cachedJdks + environmentJdks() + detectJdks()).sortedWith(order)
+  }
+
+  private fun importerJdkHome(): String? {
+    return ToolchainModel.fromSdk(getJdkForImporter(myProject))?.jdkHome
   }
 
   private fun environmentJdks(): List<ToolchainModel> {
@@ -204,6 +211,25 @@ class ToolchainResolverSession private constructor(
     val model = ToolchainModel.fromSdk(jdk) ?: return null
     return if (model.matches(requirement)) jdk else null
   }
+}
+
+/**
+ * Orders discovery candidates like the default comparator of the Maven toolchains plugin: `lts,current,env,version,vendor`.
+ * The `current` JDK of a Maven build maps to the importer JDK of the sync.
+ * A custom `comparator` parameter is not supported and is ignored.
+ */
+@ApiStatus.Internal
+fun defaultToolchainOrder(currentJdkHome: String?): Comparator<ToolchainModel> {
+  return compareBy<ToolchainModel> { !isLtsVersion(it.provides["version"]) }
+    .thenBy { currentJdkHome == null || it.jdkHome != currentJdkHome }
+    .thenBy { !it.provides.containsKey("env") }
+    .thenByDescending { JavaVersion.tryParse(it.provides["version"]) ?: JavaVersion.compose(0) }
+    .thenBy { it.provides["vendor"] ?: "" }
+}
+
+private fun isLtsVersion(version: String?): Boolean {
+  if (version == null) return false
+  return sequenceOf("1.8", "8", "11", "17", "21", "25").any { version == it || version.startsWith("$it.") }
 }
 
 /**
