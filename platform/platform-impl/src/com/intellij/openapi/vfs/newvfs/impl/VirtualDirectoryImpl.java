@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.newvfs.FileDeletedException;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
+import com.intellij.openapi.vfs.newvfs.RefreshQueueImpl;
 import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
@@ -232,7 +233,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     VirtualFileSystemEntry newlyLoadedChild;
     synchronized (directoryData) {
       VfsData vfsData = getVfsData();
-      if (!vfsData.isFileValid(getId()) ) {
+      if (!vfsData.isFileValid(getId())) {
         //Accessing !valid file must be filtered above, but some VFS ops are still executed outside RA/WA framework
         // => vfile could be deleted concurrently => re-check it here, before potentially doing something unnatural
         // to dead file's .children:
@@ -422,11 +423,13 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   private @Nullable VirtualFileSystemEntry createChildAndFireCreationEvent(@NotNull String childName) {
     FakeVirtualFile fake = new FakeVirtualFile(this, childName);
 
-    // If file does not exist, do not run vfs refresh. It is required to avoid exception when running under read lock.
-    // Trying to do vfs refresh under read lock will result in exception, see [com.intellij.openapi.vfs.newvfs.RefreshQueueImpl.execute]
-    // Unfortunately, this method does not check for read action at the beginning, and does not call vfs refresh in all cases.
-    // So this check is required to keep compatibility, and keep old code running successfully
-    if ((ApplicationManager.getApplication().holdsReadLock() || EDT.isCurrentThreadEdt()) && fileSystem.getAttributes(fake) == null) {
+    // Performance optimization: If file does not exist, do not run vfs refresh.
+    //
+    // Also preserves backward compatibility: allow calling this method under read lock if file does not exist.
+    // Usually running this method under read lock will result in exception. See [RefreshQueueImpl.execute]
+    // However, this check can prevent this
+    var attributes = fileSystem.getAttributes(fake);
+    if (attributes == null) {
       return null;
     }
 
@@ -438,11 +441,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
     VirtualFileSystemEntry child = findChild(canonicallyCasedName);
     if (child == null) {
-      var attributes = fileSystem.getAttributes(fake);
-      if (attributes != null) {
-        LOG.warn(this + "/[" + childName + "|" + canonicallyCasedName + "]: exists (attributes: " + attributes + "), " +
-                 "but somehow still absent after refresh (adopted: " + directoryData.getAdoptedNames() + ")");
-      }
+      LOG.warn(this + "/[" + childName + "|" + canonicallyCasedName + "]: exists (attributes: " + attributes + "), " +
+               "but somehow still absent after refresh (adopted: " + directoryData.getAdoptedNames() + ")");
     }
     return child;
   }

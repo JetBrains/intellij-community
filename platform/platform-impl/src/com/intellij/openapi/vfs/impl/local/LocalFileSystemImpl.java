@@ -307,12 +307,12 @@ public class LocalFileSystemImpl
           && nextChild != null) {
         var fake = new FakeVirtualFile(lastResolvedFile, nextChild);
 
-        // If file does not exist, do not run vfs refresh. It is required to avoid exception when running under read lock.
-        // Trying to do vfs refresh under read lock will result in exception, see [com.intellij.openapi.vfs.newvfs.RefreshQueueImpl.execute]
-        // Unfortunately, this method does not check for read action at the beginning, and does not call vfs refresh in all cases.
-        // So this check is required to keep compatibility, and keep old code running successfully
-        if ((!ApplicationManager.getApplication().holdsReadLock() && !EDT.isCurrentThreadEdt()) ||
-            lastResolvedFile.getFileSystem().getAttributes(fake) != null) {
+        // Performance optimization: If file does not exist, do not run vfs refresh.
+        //
+        // Also preserves backward compatibility: allow calling this method under read lock if files don't exist.
+        // Usually running this method under read lock will result in exception. See [RefreshQueueImpl.execute]
+        // However, this check can prevent this
+        if (lastResolvedFile.getFileSystem().getAttributes(fake) != null) {
           newFilesToLoad.computeIfAbsent(lastResolvedFile, _ -> new ArrayList<>()).add(nextChild);
         }
       }
