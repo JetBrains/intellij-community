@@ -1,15 +1,29 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.problemsView.backend
 
+import com.intellij.codeInsight.daemon.HighlightDisplayKey
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil
 import com.intellij.codeInsight.intention.EmptyIntentionAction
+import com.intellij.codeInspection.CustomSuppressableInspectionTool
+import com.intellij.codeInspection.LocalInspectionTool
+import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.SuppressIntentionAction
 import com.intellij.ide.vfs.rpcId
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiPlainText
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.enableInspectionTool
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.psiFileFixture
@@ -31,7 +45,7 @@ internal class BackendProblemsViewQuickFixServiceTest {
     private val testFileFixture = projectFixture
       .moduleFixture("testModule")
       .sourceRootFixture()
-      .psiFileFixture("testFile.java", "\n")
+      .psiFileFixture("testFile.java", "class TestMe {}\n")
   }
 
   private val project by projectFixture
@@ -106,6 +120,52 @@ internal class BackendProblemsViewQuickFixServiceTest {
     }
   }
 
+  @Test
+  @Timeout(30)
+  fun `inspection suppression uses the problem element`(@TestDisposable disposable: Disposable): Unit = timeoutRunBlocking {
+    withEditor {
+      class TestSuppress : SuppressIntentionAction() {
+        override fun getText(): String = familyName
+
+        override fun getFamilyName(): String = "Suppress test class problem"
+
+        override fun isAvailable(project: Project, editor: Editor?, element: PsiElement): Boolean = true
+
+        override fun invoke(project: Project, editor: Editor?, element: PsiElement) = Unit
+      }
+
+      class TestClassInspection : LocalInspectionTool(), CustomSuppressableInspectionTool {
+        override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
+          return object : PsiElementVisitor() {
+            override fun visitPlainText(content: PsiPlainText) {
+              holder.registerProblem(content, "Test class problem")
+            }
+          }
+        }
+
+        override fun getSuppressActions(element: PsiElement?): Array<SuppressIntentionAction> {
+          return if (element is PsiFile) emptyArray() else arrayOf(TestSuppress())
+        }
+
+        override fun isSuppressedFor(element: PsiElement): Boolean = false
+      }
+
+      val inspection = TestClassInspection()
+      enableInspectionTool(project, inspection, disposable)
+      val key = requireNotNull(HighlightDisplayKey.find(inspection.shortName))
+      val info = addQuickFixInfo(key)
+      val highlighterId = getHighlighterId(requireNotNull(info.highlighter))
+      val service = BackendProblemsViewQuickFixService.getInstance(project)
+
+      requireNotNull(service.loadQuickFixes(testFile.virtualFile.rpcId(), highlighterId))
+
+      assertTrue(info.findRegisteredQuickFix { descriptor, _ ->
+        val intentionActions = descriptor.getOptions(testFile.findElementAt(0)!!, null)
+        intentionActions.any { it is TestSuppress }
+      } == true)
+    }
+  }
+
   private suspend fun <T> withEditor(action: suspend () -> T): T {
     val editor = withContext(Dispatchers.EDT) {
       EditorFactory.getInstance().createEditor(testFile.viewProvider.document, project)
@@ -118,17 +178,22 @@ internal class BackendProblemsViewQuickFixServiceTest {
     }
   }
 
-  private suspend fun addQuickFix(): Long {
+  private suspend fun addQuickFix(key: HighlightDisplayKey? = null): Long {
+    val info = addQuickFixInfo(key)
+    return getHighlighterId(requireNotNull(info.highlighter))
+  }
+
+  private suspend fun addQuickFixInfo(key: HighlightDisplayKey? = null): HighlightInfo {
     return withContext(Dispatchers.EDT) {
       val document = testFile.viewProvider.document
       val info = requireNotNull(
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
           .range(0, 0)
-          .registerFix(EmptyIntentionAction("test"), null, null, null, null)
+          .registerFix(EmptyIntentionAction("test"), null, null, null, key)
           .create()
       )
       UpdateHighlightersUtil.setHighlightersToEditor(project, document, 0, 0, listOf(info), null, 1)
-      getHighlighterId(requireNotNull(info.highlighter))
+      info
     }
   }
 

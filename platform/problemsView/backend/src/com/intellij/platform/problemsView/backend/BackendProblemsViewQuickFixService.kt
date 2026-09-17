@@ -25,6 +25,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.problemsView.backend.actions.BackendQuickFixModel
 import com.intellij.platform.problemsView.backend.actions.IntentionActionWithIds
 import com.intellij.platform.problemsView.backend.actions.IntentionOptionWithId
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import kotlinx.coroutines.Dispatchers
@@ -88,6 +90,7 @@ internal class BackendProblemsViewQuickFixService(private val project: Project) 
     if (psiFile == null) return emptyList()
 
     val editor = getEditor(file, project) ?: return emptyList()
+    val problemElement = findProblemElement(info, psiFile)
 
     val quickFixes = mutableListOf<IntentionActionWithIds>()
 
@@ -98,7 +101,7 @@ internal class BackendProblemsViewQuickFixService(private val project: Project) 
       }.getOrDefault(false)
 
       if (isActionAvailable) {
-        val options = intentionAction.getOptions(psiFile, editor).map { option ->
+        val options = intentionAction.getOptions(problemElement, editor).map { option ->
           IntentionOptionWithId(
             action = option,
             intentionId = UUID.randomUUID().toString(),
@@ -121,6 +124,13 @@ internal class BackendProblemsViewQuickFixService(private val project: Project) 
     }
 
     return quickFixes
+  }
+
+  private fun findProblemElement(info: HighlightInfo, psiFile: PsiFile): PsiElement {
+    val offset = info.actualStartOffset
+    val textLength = psiFile.textLength
+    if (textLength == 0 || offset >= textLength) return psiFile
+    return psiFile.viewProvider.findElementAt(offset, psiFile.language) ?: psiFile
   }
 
   suspend fun executeQuickFix(quickFixModelId: String, intentionId: String) {
