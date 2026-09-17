@@ -861,6 +861,9 @@ object EventFields {
   @JvmField
   val Dumb: BooleanEventField = Boolean("dumb")
 
+  @JvmField
+  val Projectless: BooleanEventField = Boolean("projectless")
+
   /**
    * Field carrying a [JcpData] payload delivered only to external (JCP) statistics listeners.
    * The payload is excluded from the events scheme and is never validated or sent to the FUS server.

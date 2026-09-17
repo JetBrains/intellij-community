@@ -4,6 +4,7 @@ package com.intellij.internal.statistic.collectors.fus.fileTypes
 import com.intellij.ide.fileTemplates.FileTemplate
 import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.ide.fileTemplates.PluginBundledTemplate
+import com.intellij.internal.statistic.collectors.fus.ProjectlessData
 import com.intellij.internal.statistic.collectors.fus.actions.ProjectStateObserver
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventField
@@ -40,7 +41,7 @@ private val LOG = Logger.getInstance(FileTypeUsageCounterCollector::class.java)
 object FileTypeUsageCounterCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup("file.types.usage", 75)
+  private val GROUP = EventLogGroup("file.types.usage", 76)
 
   private val FILE_EDITOR = Class("file_editor")
   private val SCHEMA: EventField<String?> = StringValidatedByCustomRule("schema", FileTypeSchemaValidator::class.java)
@@ -61,7 +62,8 @@ object FileTypeUsageCounterCollector : CounterUsagesCollector() {
                                                                                      BundledFileTemplateValidationRule::class.java)
 
   private fun registerFileTypeEvent(eventId: String, vararg extraFields: EventField<*>): VarargEventId {
-    val baseFields = arrayOf(EventFields.PluginInfoFromInstance, EventFields.FileType, EventFields.AnonymizedPath, SCHEMA, FILE_EXTENSION)
+    val baseFields = arrayOf(EventFields.PluginInfoFromInstance, EventFields.FileType, EventFields.AnonymizedPath, SCHEMA, FILE_EXTENSION,
+                             EventFields.Projectless)
     return GROUP.registerVarargEvent(eventId, *ArrayUtil.mergeArrays(baseFields, extraFields))
   }
 
@@ -187,12 +189,13 @@ object FileTypeUsageCounterCollector : CounterUsagesCollector() {
     withWritable: Boolean,
   ): List<EventPair<*>> {
     val fileType = file.fileType
-    val data = listOf(
+    val data = listOfNotNull(
       EventFields.PluginInfoFromInstance.with(fileType),
       EventFields.FileType.with(fileType),
       EventFields.AnonymizedPath.with(file.getPath()),
       SCHEMA.with(findSchema(project, file)),
-      FILE_EXTENSION.with(file.extension)
+      FILE_EXTENSION.with(file.extension),
+      ProjectlessData.forProject(project)
     )
 
     if (!withWritable) return data
