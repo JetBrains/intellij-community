@@ -28,6 +28,7 @@ import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls.getPluginWrite
 import com.intellij.ide.plugins.newui.PluginsViewCustomizer.PluginDetailsCustomizer
 import com.intellij.ide.plugins.newui.SelectionBasedPluginModelAction.OptionButtonController
 import com.intellij.ide.plugins.newui.buttons.InstallOptionButton
+import com.intellij.ide.setToolTipText
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
@@ -42,7 +43,6 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceId
-import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceService
 import com.intellij.openapi.updateSettings.impl.getPresentableName
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
@@ -92,8 +92,8 @@ import com.intellij.xml.util.XmlStringUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -980,8 +980,7 @@ class PluginDetailsPageComponent private constructor(
       .setItemChosenCallback { pluginUpdateSource ->
         val pluginId = plugin?.pluginId
         if (pluginId != null) {
-          link.text = pluginUpdateSource.getShortenedPresentableName()
-          link.selectedItem = pluginUpdateSource
+          setPluginUpdateSource(pluginUpdateSource, link)
           pluginModel.getModel().updateUiAfterUpdateSourceChange(pluginId, pluginUpdateSource)
           coroutineScope.launch(Dispatchers.IO) {
             pluginModel.setPendingPluginUpdateSourceInSession(pluginId, pluginUpdateSource)
@@ -1420,10 +1419,7 @@ class PluginDetailsPageComponent private constructor(
       return
     }
 
-    myPluginUpdateSourceId?.apply {
-      selectedItem = pluginUpdateSource
-      text = pluginUpdateSource.getShortenedPresentableName()
-    }
+    setPluginUpdateSource(pluginUpdateSource, myPluginUpdateSourceId)
 
     val isPluginUpdateSourceVisible: Boolean = (!isMarketplace && currentPlugin.isUpdateable) ||
                                                installedPluginForMarketplace != null || installedDescriptorForMarketplace != null
@@ -1432,6 +1428,15 @@ class PluginDetailsPageComponent private constructor(
                                            pluginUpdateSource == null &&
                                            UiPluginManager.getInstance().isMissingUpdateSourceWarningEnabled()
     updateSourceInitializedBanner?.isVisible = false
+  }
+
+  private fun setPluginUpdateSource(pluginUpdateSource: PluginUpdateSourceId?, component: DropDownLink<PluginUpdateSourceId?>?) {
+    component?.apply {
+      selectedItem = pluginUpdateSource
+      text = pluginUpdateSource.getShortenedPresentableName()
+      setToolTipText(HtmlChunk.text(pluginUpdateSource.getPresentableName()))
+      accessibleContext.accessibleName = pluginUpdateSource.getPresentableName()
+    }
   }
 
   private fun showMarketplaceData(model: PluginUiModel?) {
