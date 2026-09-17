@@ -21,6 +21,18 @@ enum class QuotingPolicy : AbstractPolicy {
   NONE
 }
 
+/**
+ * The order of the children of a container in the Variables view.
+ *
+ * [DO_NOT_SORT] keeps the order that the debugger sends. For a dict, a list, a tuple and a set this is the
+ * order of the object itself. [BY_TYPE] puts the children of one type together.
+ */
+enum class SortingPolicy : AbstractPolicy {
+  DO_NOT_SORT,
+  ALPHABETICALLY,
+  BY_TYPE
+}
+
 object NodeTypes {
   const val ARRAY_NODE_TYPE: String = "array"
   const val DICT_NODE_TYPE: String = "dict"

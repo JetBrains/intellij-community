@@ -331,8 +331,9 @@ class _FrameVariable(_AbstractVariable):
                 variable = _ObjectVariable(self.py_db, key, val, self._register_variable, is_return_value, key, frame=self.frame)
                 children_variables.append(variable)
 
-        # Frame variables always sorted.
-        children_variables.sort(key=sorted_variables_key)
+        # Frame variables keep the order of the frame, which is the order the names were bound in.
+        # The IDE owns the order the user sees and applies its own, so a sort here would only hide
+        # the order of the frame and leave the internal mode with nothing to show (PY-90334).
         if group_variables:
             # Groups have priority over other variables.
             children_variables = group_variables + children_variables
