@@ -5,6 +5,7 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManager.PositionFlags;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.find.impl.livePreview.SearchResults;
@@ -97,7 +98,7 @@ public final class FindUtil {
 
   private static @Nullable VirtualFile getVirtualFile(@NotNull Editor myEditor) {
     Project project = myEditor.getProject();
-    PsiFile file = project != null ? PsiDocumentManager.getInstance(project).getPsiFile(myEditor.getDocument()) : null;
+    PsiFile file = project != null ? EditorContextManager.getPsiFileForEditor(myEditor, project) : null;
     return file != null ? file.getVirtualFile() : null;
   }
 
@@ -274,7 +275,7 @@ public final class FindUtil {
     }
 
     model.setReplaceState(false);
-    PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    PsiFile psiFile = EditorContextManager.getPsiFileForEditor(editor, project);
     model.setFindAllEnabled(psiFile != null);
 
     findManager.showFindDialog(model, () -> {

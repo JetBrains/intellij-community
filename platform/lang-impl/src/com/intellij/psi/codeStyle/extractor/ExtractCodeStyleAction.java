@@ -2,6 +2,7 @@
 package com.intellij.psi.codeStyle.extractor;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageFormatting;
@@ -25,7 +26,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
@@ -74,7 +74,7 @@ public final class ExtractCodeStyleAction extends AnAction implements DumbAware 
       file = PsiManager.getInstance(project).findFile(files[0]);
     }
     else if (editor != null) {
-      file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+      file = EditorContextManager.getPsiFileForEditor(editor, project);
     }
     if (file == null) {
       return;
@@ -204,7 +204,7 @@ public final class ExtractCodeStyleAction extends AnAction implements DumbAware 
 
     PsiFile file = null;
     if (editor != null) {
-      file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+      file = EditorContextManager.getPsiFileForEditor(editor, project);
     }
     else {
       final VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);

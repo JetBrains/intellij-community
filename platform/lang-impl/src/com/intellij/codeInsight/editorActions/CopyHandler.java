@@ -2,6 +2,7 @@
 
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ReadAction;
@@ -19,7 +20,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +43,7 @@ public final class CopyHandler extends EditorActionHandler implements CopyAction
   public void doExecute(final @NotNull Editor editor, Caret caret, final DataContext dataContext) {
     assert caret == null : "Invocation of 'copy' operation for specific caret is not supported";
     Project project = editor.getProject();
-    PsiFile file = project == null ? null : PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    PsiFile file = project == null ? null : EditorContextManager.getPsiFileForEditor(editor, project);
     if (file == null) {
       if (myOriginalAction != null) {
         myOriginalAction.execute(editor, null, dataContext);
@@ -58,7 +58,7 @@ public final class CopyHandler extends EditorActionHandler implements CopyAction
   public @Nullable Transferable getSelection(@NotNull Editor editor, @NotNull CopyPasteOptions options) {
     Project project = editor.getProject();
     if (project == null) return null;
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    PsiFile file = EditorContextManager.getPsiFileForEditor(editor, project);
     if (file == null) return null;
     return getSelection(editor, project, file, options);
   }

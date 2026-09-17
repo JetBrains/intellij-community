@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -19,7 +20,6 @@ import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilBase;
@@ -58,7 +58,7 @@ public abstract class MultiCaretCodeInsightAction extends AnAction implements Pe
       return;
     }
     if (!EditorModificationUtil.checkModificationAllowed(hostEditor)) return;
-    PsiFile hostFile = PsiDocumentManager.getInstance(project).getPsiFile(hostEditor.getDocument());
+    PsiFile hostFile = EditorContextManager.getPsiFileForEditor(hostEditor, project);
     if (hostFile != null && !FileModificationService.getInstance().prepareFileForWrite(hostFile)) return;
 
     actionPerformedImpl(project, hostEditor);
@@ -124,7 +124,7 @@ public abstract class MultiCaretCodeInsightAction extends AnAction implements Pe
   private static void iterateOverCarets(final @NotNull Project project,
                                         final @NotNull Editor hostEditor,
                                         final @NotNull MultiCaretCodeInsightActionHandler handler) {
-    PsiFile hostFile = PsiDocumentManager.getInstance(project).getPsiFile(hostEditor.getDocument());
+    PsiFile hostFile = EditorContextManager.getPsiFileForEditor(hostEditor, project);
 
     hostEditor.getCaretModel().runForEachCaret(caret -> {
       Editor editor = hostEditor;

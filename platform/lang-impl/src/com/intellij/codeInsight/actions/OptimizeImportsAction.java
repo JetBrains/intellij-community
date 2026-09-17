@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.LanguageImportStatements;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -67,7 +68,7 @@ public final class OptimizeImportsAction extends AnAction {
     PsiDirectory dir;
 
     if (editor != null) {
-      file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+      file = EditorContextManager.getPsiFileForEditor(editor, project);
       if (file == null) return;
       dir = file.getContainingDirectory();
     }
@@ -188,7 +189,7 @@ public final class OptimizeImportsAction extends AnAction {
 
     final Editor editor = BaseCodeInsightAction.getInjectedEditor(project, CommonDataKeys.EDITOR.getData(dataContext), false);
     if (editor != null) {
-      PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+      PsiFile file = EditorContextManager.getPsiFileForEditor(editor, project);
       if (file == null || !isOptimizeImportsAvailable(file)) {
         return false;
       }

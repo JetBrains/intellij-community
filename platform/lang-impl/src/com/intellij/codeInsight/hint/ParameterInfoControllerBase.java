@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.parameterInfo.DeleteParameterInfoContext;
 import com.intellij.lang.parameterInfo.ParameterInfoHandler;
@@ -260,7 +261,7 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
     CharSequence text = myEditor.getDocument().getImmutableCharSequence();
     int offset = noDelimiter ? caretOffset : CharArrayUtil.shiftBackward(text, caretOffset - 1, WHITESPACE) + 1;
     int lbraceOffset = myLbraceMarker.getStartOffset();
-    PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
+    PsiFile file = EditorContextManager.getPsiFileForEditor(myEditor, myProject);
     PsiElement argList = lbraceOffset < offset ? findArgumentList(file, offset, lbraceOffset) : null;
     if (argList == null) return -1;
 

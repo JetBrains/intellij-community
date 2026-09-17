@@ -2,6 +2,7 @@
 
 package com.intellij.codeInsight.editorActions.moveUpDown;
 
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.DependentLanguage;
 import com.intellij.openapi.editor.Document;
@@ -41,7 +42,7 @@ final class MoveStatementHandler extends BaseMoveHandler {
     final Document document = editor.getDocument();
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     documentManager.commitDocument(document);
-    return getRoot(documentManager.getPsiFile(document), editor);
+    return getRoot(EditorContextManager.getPsiFileForEditor(editor, project), editor);
   }
 
   private static @Nullable PsiFile getRoot(final PsiFile file, final Editor editor) {

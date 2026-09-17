@@ -44,7 +44,6 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
@@ -453,7 +452,7 @@ public class EditorMouseHoverPopupManager implements Disposable {
     if (!EditorSettingsExternalizable.getInstance().isShowQuickDocOnMouseOverElement()) {
       return null;
     }
-    PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    PsiFile psiFile = EditorContextManager.getPsiFileForEditor(editor, project);
     if (psiFile == null) {
       return null;
     }

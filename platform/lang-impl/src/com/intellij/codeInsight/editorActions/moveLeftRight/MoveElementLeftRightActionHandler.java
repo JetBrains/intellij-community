@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions.moveLeftRight;
 
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
@@ -9,7 +10,6 @@ import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -44,7 +44,7 @@ public final class MoveElementLeftRightActionHandler extends EditorWriteActionHa
     Document document = editor.getDocument();
     if (!(document instanceof DocumentEx)) return false;
 
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
+    PsiFile file = EditorContextManager.getPsiFileForEditor(editor, project);
     if (file == null) return false;
     PsiElement[] elementList = getElementList(file, caret.getSelectionStart(), caret.getSelectionEnd());
     return elementList != null;
@@ -92,8 +92,7 @@ public final class MoveElementLeftRightActionHandler extends EditorWriteActionHa
     DocumentEx document = (DocumentEx)editor.getDocument();
     Project project = editor.getProject();
     assert project != null;
-    PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
-    PsiFile file = psiDocumentManager.getPsiFile(document);
+    PsiFile file = EditorContextManager.getPsiFileForEditor(editor, project);
     assert file != null;
     int selectionStart = caret.getSelectionStart();
     int selectionEnd = caret.getSelectionEnd();

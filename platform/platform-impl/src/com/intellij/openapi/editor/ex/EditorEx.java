@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.ex;
 
 import com.intellij.codeInsight.editorActions.TabOutScopesTracker;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.CutProvider;
 import com.intellij.ide.DeleteProvider;
@@ -41,7 +42,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
 import org.intellij.lang.annotations.MagicConstant;
@@ -399,7 +399,7 @@ public interface EditorEx extends Editor {
 
       @Override
       public @NotNull PsiFile getPsiFile() {
-        return Objects.requireNonNull(PsiDocumentManager.getInstance(getProject()).getPsiFile(getDocument()));
+        return Objects.requireNonNull(EditorContextManager.getPsiFileForEditor(EditorEx.this, getProject()));
       }
 
       @Override

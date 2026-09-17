@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.preview
 
+import com.intellij.codeInsight.multiverse.EditorContextManager
 import com.intellij.codeInsight.preview.ImageOrColorPreviewService.Companion.getPsiElementsAt
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
@@ -95,7 +96,7 @@ internal class ImageOrColorPreviewService(
     val psiFile = readAction {
       if (project.isDisposed || editor.isDisposed)
         return@readAction null
-      val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument())
+      val psiFile = EditorContextManager.getPsiFileForEditor(editor, project)
       if (psiFile == null || !psiFile.isValid || psiFile is PsiCompiledElement || !isSupportedFile(psiFile)) {
         null
       }
@@ -258,7 +259,7 @@ internal class ImageOrColorPreviewService(
       }
       val documentManager = PsiDocumentManager.getInstance(project)
       val document = editor.getDocument()
-      val psiFile = documentManager.getPsiFile(document)
+      val psiFile = EditorContextManager.getPsiFileForEditor(editor, project)
       if (psiFile == null || psiFile is PsiCompiledElement || !psiFile.isValid()) {
         return emptySet()
       }

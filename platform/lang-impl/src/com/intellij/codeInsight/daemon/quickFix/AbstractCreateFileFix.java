@@ -4,6 +4,7 @@ package com.intellij.codeInsight.daemon.quickFix;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
@@ -19,7 +20,6 @@ import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.SimpleListCellRenderer;
@@ -264,7 +264,7 @@ public abstract class AbstractCreateFileFix extends LocalQuickFixAndIntentionAct
         @Override
         public void onClosed(@NotNull LightweightWindowEvent event) {
           // rerun code-insight after popup close
-          PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+          PsiFile psiFile = EditorContextManager.getPsiFileForEditor(editor, project);
           if (psiFile != null) {
             DaemonCodeAnalyzer.getInstance(project).restart(psiFile, this);
           }

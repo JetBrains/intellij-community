@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers.actions
 
+import com.intellij.codeInsight.multiverse.EditorContextManager
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.browsers.BrowserLauncher
@@ -24,7 +25,6 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.vfs.newvfs.ManagingFS
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
@@ -142,7 +142,7 @@ private fun createRequest(context: DataContext, isForceFileUrlIfNoUrlProvider: B
   else {
     val project = editor.project
     if (project != null && project.isInitialized) {
-      val psiFile = CommonDataKeys.PSI_FILE.getData(context) ?: PsiDocumentManager.getInstance(project).getPsiFile(editor.document)
+      val psiFile = CommonDataKeys.PSI_FILE.getData(context) ?: EditorContextManager.getPsiFileForEditor(editor, project)
       if (psiFile != null) {
         return object : OpenInBrowserRequest(psiFile, isForceFileUrlIfNoUrlProvider) {
           private val lazyElement by lazy { file.findElementAt(editor.caretModel.offset) }

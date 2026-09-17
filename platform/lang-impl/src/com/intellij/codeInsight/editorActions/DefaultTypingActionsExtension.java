@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.formatting.service.FormattingServiceUtil;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
@@ -9,8 +10,8 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.elf.Elf;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.elf.Elf;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -73,7 +74,7 @@ public class DefaultTypingActionsExtension implements TypingActionsExtension {
                      boolean formatInjected) {
     if (formatInjected && !(editor instanceof EditorWindow)) {
       PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
-      PsiFile psiFile = psiDocumentManager.getPsiFile(editor.getDocument());
+      PsiFile psiFile = EditorContextManager.getPsiFileForEditor(editor, project);
       if (psiFile != null) {
         final List<DocumentWindow> injectedDocuments = InjectedLanguageManager.getInstance(project)
           .getCachedInjectedDocumentsInRange(psiFile, new TextRange(startOffset, endOffset));
@@ -134,7 +135,7 @@ public class DefaultTypingActionsExtension implements TypingActionsExtension {
       return;
     }
     documentManager.commitDocument(document);
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
+    PsiFile file = EditorContextManager.getPsiFileForEditor(editor, project);
     if (file == null) return;
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
     try {
@@ -149,7 +150,7 @@ public class DefaultTypingActionsExtension implements TypingActionsExtension {
     Document document = editor.getDocument();
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     documentManager.commitDocument(document);
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
+    PsiFile file = EditorContextManager.getPsiFileForEditor(editor, project);
     if (file == null) return;
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
     try {
@@ -164,7 +165,7 @@ public class DefaultTypingActionsExtension implements TypingActionsExtension {
     Document document = editor.getDocument();
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     documentManager.commitDocument(document);
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
+    PsiFile file = EditorContextManager.getPsiFileForEditor(editor, project);
     if (file == null) return;
     try {
       FormattingServiceUtil.asyncFormatElement(file, new TextRange(startOffset, endOffset), true);
@@ -175,9 +176,8 @@ public class DefaultTypingActionsExtension implements TypingActionsExtension {
   }
 
   private void indentBlock(@NotNull Project project, @NotNull Editor editor, int startOffset, int endOffset, int originalCaretCol) {
-    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     final Document document = editor.getDocument();
-    PsiFile file = documentManager.getPsiFile(document);
+    PsiFile file = EditorContextManager.getPsiFileForEditor(editor, project);
     if (file == null) {
       return;
     }

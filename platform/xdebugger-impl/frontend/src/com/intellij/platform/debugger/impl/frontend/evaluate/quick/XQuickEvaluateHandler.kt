@@ -2,6 +2,7 @@
 package com.intellij.platform.debugger.impl.frontend.evaluate.quick
 
 import com.intellij.codeInsight.TargetElementUtil
+import com.intellij.codeInsight.multiverse.EditorContextManager
 import com.intellij.frontend.FrontendApplicationInfo
 import com.intellij.frontend.FrontendType
 import com.intellij.openapi.Disposable
@@ -16,7 +17,6 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.platform.debugger.impl.frontend.FrontendXDebuggerManager
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.xdebugger.evaluation.ExpressionInfo
 import com.intellij.xdebugger.impl.evaluate.quick.XValueHint
 import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint
@@ -64,7 +64,7 @@ internal class XQuickEvaluateHandler : QuickEvaluateHandler() {
 
       val (adjustedOffset, selectionRange) = readAction {
         // adjust offset to match with other actions, like go to declaration
-        val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document) ?: return@readAction null
+        val psiFile = EditorContextManager.getPsiFileForEditor(editor, project) ?: return@readAction null
         val adjustedOffset = TargetElementUtil.adjustOffset(psiFile, document, offset)
         val selectionRange = editor.selectionModel.takeIf { it.hasSelection() }?.let { TextRange(it.selectionStart, it.selectionEnd) }
         adjustedOffset to selectionRange

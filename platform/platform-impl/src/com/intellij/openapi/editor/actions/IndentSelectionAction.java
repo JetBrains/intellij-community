@@ -3,6 +3,7 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -15,7 +16,6 @@ import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.DocumentUtil;
@@ -113,7 +113,7 @@ public class IndentSelectionAction extends EditorAction {
       if (project != null) {
         int indentationStartOffset = document.getLineStartOffset(startIndex);
         int indentationEndOffset = document.getLineStartOffset(endIndex);
-        PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
+        PsiFile file = EditorContextManager.getPsiFileForEditor(editor, project);
         IndentStrategy indentStrategy = LanguageIndentStrategy.getIndentStrategy(file);
         if (file != null && !LanguageIndentStrategy.isDefault(indentStrategy)) {
           for (int i = startIndex; i <= endIndex; i++) {

@@ -17,6 +17,7 @@ import com.intellij.codeInsight.lookup.LookupListener
 import com.intellij.codeInsight.lookup.LookupManagerListener
 import com.intellij.codeInsight.lookup.impl.LookupCustomizer
 import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.codeInsight.multiverse.EditorContextManager
 import com.intellij.codeInsight.template.impl.TemplateColors
 import com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesSettings
 import com.intellij.lang.Language
@@ -41,7 +42,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.removeUserData
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
@@ -254,7 +254,7 @@ internal class CommandCompletionListener : LookupManagerListener {
         project.service<CommandCompletionService>().addRemoteReadOnlyFilters(newLookup)
         return
       }
-      psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()) ?: return
+      psiFile = EditorContextManager.getPsiFileForEditor(editor, project) ?: return
       nonWrittenFiles = true
     }
     else {
@@ -482,7 +482,7 @@ internal class CommandCompletionLookupCustomizer : LookupCustomizer {
     val service = project.service<CommandCompletionService>()
     val editor = lookupImpl.editor
     val topLevelEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor)
-    val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(topLevelEditor.document) ?: return
+    val psiFile = EditorContextManager.getPsiFileForEditor(topLevelEditor, project) ?: return
     val element: PsiElement? =
       //it is used only in backend in split mode, so it is allowed to be on EDT
       SlowOperations.knownIssue("IJPL-181979").use {

@@ -2,6 +2,7 @@
 package com.intellij.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.UISettingsUtils;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaEditorTextFieldBorder;
@@ -634,7 +635,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     // todo IMHO this should be removed completely
     Project project = getProjectIfValid();
     if (project != null && myIsViewer) {
-      final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+      final PsiFile psiFile = EditorContextManager.getPsiFileForEditor(editor, project);
       if (psiFile != null) {
         DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(psiFile, true);
       }
@@ -743,7 +744,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     editor.setCaretEnabled(!myIsViewer);
 
     if (project != null) {
-      PsiFile psiFile = EditorThreading.compute(() -> PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()));
+      PsiFile psiFile = EditorThreading.compute(() -> EditorContextManager.getPsiFileForEditor(editor, project));
       if (psiFile != null) {
         DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(psiFile, !myIsViewer);
       }

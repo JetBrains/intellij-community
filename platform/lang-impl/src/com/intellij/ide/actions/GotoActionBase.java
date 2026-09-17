@@ -2,6 +2,7 @@
 
 package com.intellij.ide.actions;
 
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.gotoByName.ChooseByNameFilter;
 import com.intellij.ide.util.gotoByName.ChooseByNameItemProvider;
@@ -18,7 +19,6 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
@@ -28,7 +28,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.terminal.JBTerminalWidget;
@@ -122,8 +121,7 @@ public abstract class GotoActionBase extends AnAction {
     if (project == null) return null;
     Editor selectedEditor = FileEditorManager.getInstance(project).getSelectedTextEditor();
     if (selectedEditor == null) return null;
-    Document document = selectedEditor.getDocument();
-    return PsiDocumentManager.getInstance(project).getPsiFile(document);
+    return EditorContextManager.getPsiFileForEditor(selectedEditor, project);
   }
 
   protected abstract static class GotoActionCallback<T> {

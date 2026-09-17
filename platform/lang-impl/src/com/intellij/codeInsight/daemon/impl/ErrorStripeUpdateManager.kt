@@ -4,6 +4,7 @@ package com.intellij.codeInsight.daemon.impl
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile
+import com.intellij.codeInsight.multiverse.EditorContextManager
 import com.intellij.ide.EssentialHighlightingMode
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
@@ -92,7 +93,7 @@ class ErrorStripeUpdateManager(private val project: Project, private val corouti
       val editor = model.editor.takeIf { !it.isDisposed } ?: continue
       val file = readAction {
         val document = editor.getDocument()
-        if (getFileAsCached) psiDocumentManager.getCachedPsiFile(document) else psiDocumentManager.getPsiFile(document)
+        if (getFileAsCached) psiDocumentManager.getCachedPsiFile(document) else EditorContextManager.getPsiFileForEditor(editor, project)
       }
       asyncRepaintErrorStripePanel(model, file)
     }

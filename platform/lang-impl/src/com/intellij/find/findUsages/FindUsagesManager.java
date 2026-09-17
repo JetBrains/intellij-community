@@ -4,6 +4,7 @@ package com.intellij.find.findUsages;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindUsagesSettings;
 import com.intellij.find.findUsages.FindUsagesHandlerFactory.OperationMode;
@@ -18,7 +19,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -41,7 +41,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.StatusBar;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiInvalidElementAccessException;
@@ -155,8 +154,7 @@ public final class FindUsagesManager {
         return false;
     }
 
-    Document document = editor.getDocument();
-    PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+    PsiFile psiFile = EditorContextManager.getPsiFileForEditor(editor, myProject);
     if (psiFile == null) return false;
 
     FindUsagesHandler handler = getFindUsagesHandler(primaryElements[0], false);

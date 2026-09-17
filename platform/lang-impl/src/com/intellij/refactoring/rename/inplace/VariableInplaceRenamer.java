@@ -3,6 +3,7 @@ package com.intellij.refactoring.rename.inplace;
 
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.ide.DataManager;
@@ -38,7 +39,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
@@ -149,7 +149,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
   protected final boolean processDefaultAdditionalElementsToRename(@NotNull Processor<? super Pair<PsiElement, TextRange>> stringUsages) {
     final String stringToSearch = myElementToRename.getName();
     if (!StringUtil.isEmptyOrSpaces(stringToSearch)) {
-      final PsiFile currentFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
+      final PsiFile currentFile = EditorContextManager.getPsiFileForEditor(myEditor, myProject);
       return TextOccurrencesUtil.processUsagesInStringsAndComments(
         myElementToRename, GlobalSearchScope.projectScope(myElementToRename.getProject()),
         stringToSearch, false, (psiElement, textRange) -> {
@@ -408,8 +408,8 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
 
   protected final void tryRollback() {
     if (myRevertCommand == null) return;
-    Document document = InjectedLanguageEditorUtil.getTopLevelEditor(myEditor).getDocument();
-    PsiFile psiFile = Objects.requireNonNull(PsiDocumentManager.getInstance(myProject).getPsiFile(document));
+    PsiFile psiFile = Objects.requireNonNull(
+      EditorContextManager.getPsiFileForEditor(InjectedLanguageEditorUtil.getTopLevelEditor(myEditor), myProject));
     CommandProcessor.getInstance().executeCommand(myProject, () -> {
       ModCommandExecutor.getInstance().executeInBatch(ActionContext.from(null, psiFile), myRevertCommand);
     }, getCommandName(), null);

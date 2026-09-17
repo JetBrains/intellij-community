@@ -3,6 +3,7 @@
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.ide.DataManager;
 import com.intellij.lexer.Lexer;
@@ -26,7 +27,6 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -110,7 +110,7 @@ public final class TemplateEditorUtil {
     if (templateEditor != null && !templateEditor.isDisposed()) {
       final Project project = templateEditor.getProject();
       if (project != null && !project.isDisposed()) {
-        final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(templateEditor.getDocument());
+        final PsiFile psiFile = EditorContextManager.getPsiFileForEditor(templateEditor, project);
         if (psiFile != null) {
           DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(psiFile, true);
         }

@@ -2,6 +2,7 @@
 package com.intellij.refactoring.rename.inplace;
 
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.lang.Language;
@@ -103,7 +104,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
 
   @Override
   protected PsiElement checkLocalScope() {
-    PsiFile currentFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
+    PsiFile currentFile = EditorContextManager.getPsiFileForEditor(myEditor, myProject);
     if (currentFile != null) {
       return currentFile;
     }
@@ -118,7 +119,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
 
   @Override
   protected PsiElement getNameIdentifier() {
-    PsiFile currentFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
+    PsiFile currentFile = EditorContextManager.getPsiFileForEditor(myEditor, myProject);
 
     if (currentFile != null) {
       //for multiPSI files, try to get psi for required language
@@ -184,7 +185,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
 
   @Override
   protected boolean notSameFile(@Nullable VirtualFile file, @NotNull PsiFile containingFile) {
-    final PsiFile currentFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
+    final PsiFile currentFile = EditorContextManager.getPsiFileForEditor(myEditor, myProject);
     if (currentFile == null) return true;
 
     //MultiViewFileProviders should be the same
@@ -198,7 +199,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
 
   @Override
   protected SearchScope getReferencesSearchScope(VirtualFile file) {
-    PsiFile currentFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
+    PsiFile currentFile = EditorContextManager.getPsiFileForEditor(myEditor, myProject);
     return currentFile != null ? new LocalSearchScope(currentFile)
                                : ProjectScope.getProjectScope(myProject);
   }
@@ -213,7 +214,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
         appendAdditionalElement(stringUsages, variable, substituted);
         RenamePsiElementProcessor processor = RenamePsiElementProcessor.forElement(substituted);
         final HashMap<PsiElement, String> allRenames = new HashMap<>();
-        PsiFile currentFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
+        PsiFile currentFile = EditorContextManager.getPsiFileForEditor(myEditor, myProject);
         if (currentFile != null) {
           processor.prepareRenaming(substituted, "", allRenames, new LocalSearchScope(currentFile));
           for (PsiElement element : allRenames.keySet()) {
@@ -253,7 +254,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
       tryRollback();
       PsiNamedElement variable = getVariable();
       if (variable == null) {
-        PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
+        PsiFile psiFile = EditorContextManager.getPsiFileForEditor(myEditor, myProject);
         if (psiFile != null && mySubstitutedRange != null) {
           variable = PsiTreeUtil.findElementOfClassAtRange(psiFile, mySubstitutedRange.getStartOffset(), mySubstitutedRange.getEndOffset(), 
                                                            PsiNameIdentifierOwner.class);
@@ -336,7 +337,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
       return;
     }
     final String stringToSearch = myElementToRename.getName();
-    final PsiFile currentFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
+    final PsiFile currentFile = EditorContextManager.getPsiFileForEditor(myEditor, myProject);
     if (!StringUtil.isEmptyOrSpaces(stringToSearch) && currentFile != null) {
       TextOccurrencesUtil.processUsagesInStringsAndComments(
         myElementToRename, GlobalSearchScope.fileScope(currentFile),
@@ -365,7 +366,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
       return mySubstituted;
     }
     if (mySubstitutedRange != null) {
-      final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
+      final PsiFile psiFile = EditorContextManager.getPsiFileForEditor(myEditor, myProject);
       if (psiFile != null) {
         return PsiTreeUtil.findElementOfClassAtRange(psiFile, mySubstitutedRange.getStartOffset(), mySubstitutedRange.getEndOffset(), PsiNameIdentifierOwner.class);
       }

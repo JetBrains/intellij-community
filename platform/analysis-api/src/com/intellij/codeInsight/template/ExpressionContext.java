@@ -2,11 +2,11 @@
 
 package com.intellij.codeInsight.template;
 
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Contract;
@@ -35,7 +35,7 @@ public interface ExpressionContext {
   default PsiFile getPsiFile() {
     Editor editor = getEditor();
     if (editor == null) return null;
-    return PsiDocumentManager.getInstance(getProject()).getPsiFile(editor.getDocument());
+    return EditorContextManager.getPsiFileForEditor(editor, getProject());
   }
 
   @Contract(pure = true)

@@ -10,6 +10,7 @@ import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.codeInsight.multiverse.EditorContextManager
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.filters.TextConsoleBuilderFactory
 import com.intellij.execution.ui.ConsoleViewContentType
@@ -50,7 +51,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiComment
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
@@ -404,7 +404,7 @@ class CompletionQualityDialog(project: Project, editor: Editor?) : DialogWrapper
     Disposer.register(disposable, scopeChooserCombo)
 
     if (editor != null) {
-      PsiDocumentManager.getInstance(project).getPsiFile(editor.document)?.let {
+      EditorContextManager.getPsiFileForEditor(editor, project)?.let {
         fileTypeCombo.selectedItem = it.fileType
       }
     }

@@ -3,6 +3,7 @@ package com.intellij.codeInsight.actions;
 
 import com.intellij.CodeStyleBundle;
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.formatting.service.CoreFormattingService;
 import com.intellij.formatting.service.FormattingService;
@@ -84,7 +85,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware, LightEdit
     boolean hasSelection = false;
 
     if (editor != null){
-      file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+      file = EditorContextManager.getPsiFileForEditor(editor, project);
       if (file == null) return;
       dir = file.getContainingDirectory();
       hasSelection = editor.getSelectionModel().hasSelection();
@@ -322,7 +323,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware, LightEdit
     final VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
 
     if (editor != null) {
-      PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+      PsiFile file = EditorContextManager.getPsiFileForEditor(editor, project);
       if (file == null || file.getVirtualFile() == null) {
         return false;
       }

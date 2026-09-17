@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.scratch;
 
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.NewActionGroup;
 import com.intellij.ide.actions.NewFileActionWithCategory;
@@ -62,7 +63,6 @@ import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService;
 import com.intellij.openapi.wm.ex.ProjectFrameCapability;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
@@ -270,7 +270,7 @@ public final class ScratchFileActions {
     Editor editor = e.getData(CommonDataKeys.EDITOR);
     if (file == null && editor != null) {
       // see data provider in com.intellij.diff.tools.holders.TextEditorHolder
-      file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+      file = EditorContextManager.getPsiFileForEditor(editor, project);
     }
     return createContext(project, file, editor, e.getDataContext());
   }

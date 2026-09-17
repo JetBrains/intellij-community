@@ -7,6 +7,7 @@ import com.intellij.codeInsight.completion.CompletionPhase.CommittingDocuments.C
 import com.intellij.codeInsight.completion.CompletionPhase.CommittingDocuments.CommittingState.Success
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl.Companion.assertPhase
+import com.intellij.codeInsight.multiverse.EditorContextManager
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.ClientId.Companion.withExplicitClientId
 import com.intellij.openapi.Disposable
@@ -35,7 +36,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Pair
 import com.intellij.patterns.ElementPattern
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
@@ -280,9 +280,9 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
         LOG.trace { "Start non-blocking read action :: phase=${phase.replaced}" }
 
         // retrieve the injected file from scratch since our typing might have destroyed the old one completely
-        val topLevelFile = PsiDocumentManager.getInstance(project).getPsiFile(topLevelEditor.getDocument())
+        val topLevelFile = EditorContextManager.getPsiFileForEditor(topLevelEditor, project)
         val completionEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(topLevelEditor, topLevelFile, offset)
-        val completionFile = PsiDocumentManager.getInstance(project).getPsiFile(completionEditor.getDocument())
+        val completionFile = EditorContextManager.getPsiFileForEditor(completionEditor, project)
 
         if (completionFile == null || autopopup && shouldSkipAutoPopup(completionEditor, completionFile) || condition != null && !condition.value(completionFile)) {
           LOG.trace { "File is null or should skip auto popup or condition is not met :: file=$completionFile, condition=$condition" }

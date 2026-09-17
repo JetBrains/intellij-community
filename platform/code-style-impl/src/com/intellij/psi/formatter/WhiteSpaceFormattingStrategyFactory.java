@@ -1,10 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.formatter;
 
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.NotNull;
@@ -90,7 +90,7 @@ public final class WhiteSpaceFormattingStrategyFactory {
   public static WhiteSpaceFormattingStrategy getStrategy(@NotNull Editor editor) {
     Project project = editor.getProject();
     if (project != null) {
-      PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+      PsiFile psiFile = EditorContextManager.getPsiFileForEditor(editor, project);
       if (psiFile != null) {
         return getStrategy(psiFile.getLanguage());
       }

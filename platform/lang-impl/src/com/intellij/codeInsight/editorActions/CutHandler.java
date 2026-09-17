@@ -2,6 +2,7 @@
 
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Caret;
@@ -16,7 +17,6 @@ import com.intellij.openapi.editor.actions.CopyAction;
 import com.intellij.openapi.editor.actions.DocumentGuardedTextUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +38,7 @@ public final class CutHandler extends EditorWriteActionHandler {
   public void executeWriteAction(final @NotNull Editor editor, Caret caret, DataContext dataContext) {
     assert caret == null : "Invocation of 'cut' operation for specific caret is not supported";
     Project project = editor.getProject();
-    PsiFile file = project == null ? null : PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    PsiFile file = project == null ? null : EditorContextManager.getPsiFileForEditor(editor, project);
     if (file == null) {
       if (myOriginalHandler != null) {
         myOriginalHandler.execute(editor, null, dataContext);

@@ -16,7 +16,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiBinaryFile;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
@@ -49,7 +48,7 @@ public final class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
   public static @Nullable Language getLanguageInEditor(@NotNull Caret caret, final @NotNull Project project) {
     Editor editor = caret.getEditor();
     assertEditorAndProjectConsistent(project, editor);
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    PsiFile file = EditorContextManager.getPsiFileForEditor(editor, project);
 
     if (file == null) {
       return null;

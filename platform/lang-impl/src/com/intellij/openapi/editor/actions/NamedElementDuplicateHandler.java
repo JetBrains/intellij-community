@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actions;
 
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
@@ -44,7 +45,7 @@ public final class NamedElementDuplicateHandler extends EditorWriteActionHandler
     Project project = editor.getProject();
     if (project != null && !caret.hasSelection()) {
       PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
-      PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+      PsiFile file = EditorContextManager.getPsiFileForEditor(editor, project);
       if (file != null) {
         TextRange toDuplicate = EditorUtil.calcCaretLineTextRange(caret);
 

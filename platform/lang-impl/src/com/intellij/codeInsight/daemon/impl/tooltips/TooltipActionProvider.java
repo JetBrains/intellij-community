@@ -2,12 +2,12 @@
 package com.intellij.codeInsight.daemon.impl.tooltips;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.TooltipAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,7 +30,7 @@ public interface TooltipActionProvider {
 
 
   static @Nullable TooltipAction calcTooltipAction(@NotNull HighlightInfo info, @NotNull Project project, @NotNull Editor editor) {
-    PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    PsiFile psiFile = EditorContextManager.getPsiFileForEditor(editor, project);
     if (psiFile == null) return null;
 
     return EP_NAME.getExtensionList().stream()

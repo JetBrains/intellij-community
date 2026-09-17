@@ -5,6 +5,7 @@ import com.intellij.codeInsight.CodeInsightActionHandler
 import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.codeInsight.actions.BaseCodeInsightAction
 import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.codeInsight.multiverse.EditorContextManager
 import com.intellij.codeInsight.navigation.CtrlMouseAction
 import com.intellij.codeInsight.navigation.CtrlMouseData
 import com.intellij.codeInsight.navigation.PsiTargetNavigator
@@ -324,8 +325,7 @@ open class GotoDeclarationAction : BaseCodeInsightAction(), DumbAware, CtrlMouse
       editor: Editor,
       offset: Int,
     ): Array<PsiElement>? {
-      val document = editor.document
-      val file = PsiDocumentManager.getInstance(project).getPsiFile(document) ?: return null
+      val file = EditorContextManager.getPsiFileForEditor(editor, project) ?: return null
       return GotoDeclarationUtil.findTargetElementsFromProviders(editor, offset, file)
     }
 

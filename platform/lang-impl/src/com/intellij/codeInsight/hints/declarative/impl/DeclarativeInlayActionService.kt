@@ -5,6 +5,7 @@ import com.intellij.codeInsight.hints.declarative.InlayActionData
 import com.intellij.codeInsight.hints.declarative.InlayActionHandler
 import com.intellij.codeInsight.hints.declarative.InlayHintsProvider
 import com.intellij.codeInsight.hints.declarative.InlayHintsProviderFactory
+import com.intellij.codeInsight.multiverse.EditorContextManager
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
@@ -14,7 +15,6 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.platform.ide.productMode.IdeProductMode
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.awt.RelativePoint
 import org.jetbrains.annotations.ApiStatus
 
@@ -23,8 +23,7 @@ import org.jetbrains.annotations.ApiStatus
 class DeclarativeInlayActionService {
   fun invokeInlayMenu(hintData: InlayData, e: EditorMouseEvent, relativePoint: RelativePoint) {
     val project = e.editor.project ?: return
-    val document = e.editor.document
-    val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document) ?: return
+    val psiFile = EditorContextManager.getPsiFileForEditor(e.editor, project) ?: return
     val providerId = hintData.providerId
     val providerInfo = InlayHintsProviderFactory.getProviderInfo(psiFile.language, providerId) ?: return
     val providerName = providerInfo.providerName

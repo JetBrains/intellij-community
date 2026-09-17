@@ -2,6 +2,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.PasteProvider;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -82,7 +83,7 @@ public final class PasteReferenceProvider implements PasteProvider {
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     documentManager.commitDocument(editor.getDocument());
 
-    final PsiFile file = documentManager.getPsiFile(editor.getDocument());
+    final PsiFile file = EditorContextManager.getPsiFileForEditor(editor, project);
     if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
 
     CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {

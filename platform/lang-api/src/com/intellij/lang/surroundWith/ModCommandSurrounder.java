@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.surroundWith;
 
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandExecutor;
@@ -45,7 +46,7 @@ public abstract class ModCommandSurrounder implements Surrounder {
     }
     PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
     Document document = editor.getDocument();
-    PsiFile file = manager.getPsiFile(document);
+    PsiFile file = EditorContextManager.getPsiFileForEditor(editor, project);
     if (file == null) return null;
     WriteAction.run(() -> manager.doPostponedOperationsAndUnblockDocument(document));
     ActionContext context = ActionContext.from(editor, file);

@@ -2,12 +2,12 @@
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.completion.InsertionContext;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ModNavigator;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -80,7 +80,7 @@ public abstract class TailType {
   private static @NotNull PsiFile getFile(Editor editor) {
     Project project = editor.getProject();
     assert project != null;
-    PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    PsiFile psiFile = EditorContextManager.getPsiFileForEditor(editor, project);
     assert psiFile != null;
     return psiFile;
   }

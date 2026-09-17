@@ -16,6 +16,7 @@
 package com.intellij.execution.console;
 
 
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
@@ -50,7 +51,7 @@ public class ConsoleHistoryControllerTest extends LightPlatformCodeInsightTestCa
     myConsole.setConsoleEditorEnabled(true);
     setEditor(myConsole.getConsoleEditor());
     setVFile(myConsole.getVirtualFile());
-    setFile(PsiDocumentManager.getInstance(getProject()).getPsiFile(getEditor().getDocument()));
+    setFile(EditorContextManager.getPsiFileForEditor(getEditor(), getProject()));
   }
 
   private void setCaretWithText(String markedText) {

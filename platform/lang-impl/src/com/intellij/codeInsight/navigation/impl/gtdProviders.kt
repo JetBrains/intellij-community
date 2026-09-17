@@ -3,6 +3,7 @@
 package com.intellij.codeInsight.navigation.impl
 
 import com.intellij.codeInsight.TargetElementUtil
+import com.intellij.codeInsight.multiverse.EditorContextManager
 import com.intellij.codeInsight.navigation.CtrlMouseData
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler
 import com.intellij.codeInsight.navigation.getReferenceRanges
@@ -14,7 +15,6 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ThrowableComputable
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.util.indexing.DumbModeAccessType
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -32,7 +32,7 @@ fun fromGTDProviders(project: Project, editor: Editor, offset: Int): GTDActionDa
  */
 private fun fromGTDProvidersInner(project: Project, editor: Editor, offset: Int): GTDActionData? {
   val document = editor.document
-  val file = PsiDocumentManager.getInstance(project).getPsiFile(document) ?: return null
+  val file = EditorContextManager.getPsiFileForEditor(editor, project) ?: return null
   val adjustedOffset: Int = TargetElementUtil.adjustOffset(file, document, offset)
   val leafElement: PsiElement = file.findElementAt(adjustedOffset) ?: return null
 

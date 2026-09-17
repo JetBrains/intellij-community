@@ -3,6 +3,7 @@
 
 package com.intellij.codeInsight.daemon.impl
 
+import com.intellij.codeInsight.multiverse.EditorContextManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.diagnostic.debug
@@ -19,7 +20,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.openapi.wm.impl.ProjectFrameHelper
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.util.application
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Window
@@ -177,7 +177,7 @@ open class EditorTrackerImpl(@JvmField protected val project: Project) : EditorT
       if (LOG.isDebugEnabled) {
         LOG.debug("active editors changed: " + editors.joinToString(separator = "\n    ") {
           WriteIntentReadAction.compute<String> {
-            PsiDocumentManager.getInstance(project).getPsiFile(it.document).toString()
+            EditorContextManager.getPsiFileForEditor(it, project).toString()
           }
         })
 

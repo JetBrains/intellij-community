@@ -1,9 +1,9 @@
 package com.intellij.codeInsight.documentation.render
 
+import com.intellij.codeInsight.multiverse.EditorContextManager
 import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.platform.backend.documentation.InlineDocumentation
-import com.intellij.psi.PsiDocumentManager
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -21,8 +21,7 @@ interface InlineDocumentationFinder {
 
   fun getInlineDocumentation(item: DocRenderItem): InlineDocumentation? {
     if (item.highlighter.isValid) {
-      val psiDocumentManager = PsiDocumentManager.getInstance(item.editor.project ?: return null)
-      val file = psiDocumentManager.getPsiFile(item.editor.document) ?: return null
+      val file = EditorContextManager.getPsiFileForEditor(item.editor, item.editor.project ?: return null) ?: return null
       return findInlineDocumentation(file, item.highlighter.textRange)
     }
     return null

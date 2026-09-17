@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl.text
 
+import com.intellij.codeInsight.multiverse.EditorContextManager
 import com.intellij.diagnostic.PluginException
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.structureView.StructureViewBuilder
@@ -34,7 +35,6 @@ import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.TextEditorLocation
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl.Companion.getDocumentLanguage
-import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolderBase
@@ -44,7 +44,6 @@ import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.pom.Navigatable
-import com.intellij.psi.PsiDocumentManager
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineName
@@ -204,7 +203,7 @@ open class TextEditorImpl @Internal constructor(
         return null
       }
       else {
-        return PsiDocumentManager.getInstance(project).getPsiFile(editor.document)?.language
+        return EditorContextManager.getPsiFileForEditor(editor, project)?.language
       }
     }
   }

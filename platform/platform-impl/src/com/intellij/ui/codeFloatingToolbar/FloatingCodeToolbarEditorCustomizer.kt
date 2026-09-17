@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.codeFloatingToolbar
 
+import com.intellij.codeInsight.multiverse.EditorContextManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.readActionBlocking
 import com.intellij.openapi.components.serviceAsync
@@ -23,11 +24,11 @@ internal class FloatingCodeToolbarEditorCustomizer : TextEditorCustomizer {
   private suspend fun customizeAsync(textEditor: TextEditor, coroutineScope: CoroutineScope) {
     val editor = textEditor.editor
     val project = editor.project ?: return
-    val psiDocumentManager = project.serviceAsync<PsiDocumentManager>()
+    project.serviceAsync<PsiDocumentManager>()
     val none = readAction {
       if (editor.isDisposed) return@readAction true
 
-      val file = psiDocumentManager.getPsiFile(editor.document) ?: return@readAction true
+      val file = EditorContextManager.getPsiFileForEditor(editor, project) ?: return@readAction true
       val languages = file.viewProvider.languages
       languages.none { language -> findActionGroupFor(language) != null }
     }

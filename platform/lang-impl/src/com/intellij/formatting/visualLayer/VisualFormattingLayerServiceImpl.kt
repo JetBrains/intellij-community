@@ -3,6 +3,7 @@ package com.intellij.formatting.visualLayer
 
 import com.intellij.application.options.CodeStyle
 import com.intellij.codeInsight.documentation.render.DocRenderItemUpdater
+import com.intellij.codeInsight.multiverse.EditorContextManager
 import com.intellij.codeInspection.incorrectFormatting.FormattingChanges
 import com.intellij.codeInspection.incorrectFormatting.detectFormattingChanges
 import com.intellij.formatting.visualLayer.VisualFormattingLayerElement.BlockInlay
@@ -17,7 +18,6 @@ import com.intellij.openapi.editor.ex.FoldingModelEx
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper
 import com.intellij.openapi.editor.impl.LineSet
 import com.intellij.openapi.util.Disposer
-import com.intellij.psi.PsiDocumentManager
 import org.jetbrains.annotations.ApiStatus
 import kotlin.math.min
 
@@ -78,7 +78,7 @@ class VisualFormattingLayerServiceImpl : VisualFormattingLayerService() {
   override fun collectVisualFormattingLayerElements(editor: Editor): List<VisualFormattingLayerElement> {
     if (!ApplicationManager.getApplication().isUnitTestMode && editor.document.isWritable) return emptyList()
     val project = editor.project ?: return emptyList()
-    val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return emptyList()
+    val file = EditorContextManager.getPsiFileForEditor(editor, project) ?: return emptyList()
     val codeStyleSettings = editor.visualFormattingLayerCodeStyleSettings ?: return emptyList()
 
     var formattingChanges: FormattingChanges? = null

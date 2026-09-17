@@ -8,6 +8,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.impl.preview.PreviewHandler;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.LiveTemplatesConfigurable;
 import com.intellij.codeInsight.template.impl.SurroundWithLogger;
@@ -359,7 +360,7 @@ public final class SurroundWithHandler implements CodeInsightActionHandler {
     @Override
     public @NotNull IntentionPreviewInfo getPreview() {
       if (mySurrounder instanceof ModCommandSurrounder modCommandSurrounder) {
-        PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
+        PsiFile file = EditorContextManager.getPsiFileForEditor(myEditor, myProject);
         if (file != null) {
           ActionContext context = ActionContext.from(myEditor, file);
           ModCommand command = modCommandSurrounder.surroundElements(context, myElements);

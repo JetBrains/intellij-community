@@ -6,6 +6,7 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.highlighting.BraceMatcher;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -25,7 +26,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileWithOneLanguage;
@@ -74,7 +74,7 @@ public class BackspaceHandler extends EditorWriteActionHandler.ForEachCaret {
     if (injectedEditor != editor) {
       int injectedOffset = injectedEditor.getCaretModel().getOffset();
       if (isOffsetInsideInjected(injectedEditor, injectedOffset)) {
-        file = PsiDocumentManager.getInstance(project).getPsiFile(injectedEditor.getDocument());
+        file = EditorContextManager.getPsiFileForEditor(injectedEditor, project);
         editor = injectedEditor;
         offset = DocumentUtil.getPreviousCodePointOffset(injectedEditor.getDocument(), injectedOffset);
       }

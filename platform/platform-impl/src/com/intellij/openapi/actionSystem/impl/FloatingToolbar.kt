@@ -3,6 +3,7 @@ package com.intellij.openapi.actionSystem.impl
 
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
+import com.intellij.codeInsight.multiverse.EditorContextManager
 import com.intellij.ide.IdeEventQueue
 import com.intellij.idea.AppMode
 import com.intellij.openapi.Disposable
@@ -225,7 +226,7 @@ abstract class FloatingToolbar(
     if (!isEnabled()) return false
     val selectionModel = editor.selectionModel
     val project = editor.project ?: return false
-    val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()) ?: return false
+    val file = EditorContextManager.getPsiFileForEditor(editor, project) ?: return false
     val document = editor.document
     if (!PsiDocumentManager.getInstance(file.project).isCommitted(document)) {
       return false

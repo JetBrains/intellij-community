@@ -2,6 +2,7 @@
 
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Caret;
@@ -36,7 +37,7 @@ public final class UnSelectWordHandler extends EditorActionHandler.ForEachCaret 
       return;
     }
     Document document = editor.getDocument();
-    final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
+    final PsiFile file = EditorContextManager.getPsiFileForEditor(editor, project);
 
     if (file == null) {
       if (myOriginalHandler != null) {

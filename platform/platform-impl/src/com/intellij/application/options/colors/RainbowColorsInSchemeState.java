@@ -3,6 +3,7 @@ package com.intellij.application.options.colors;
 
 import com.intellij.codeHighlighting.RainbowHighlighter;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -12,7 +13,6 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
 import com.intellij.openapi.options.colors.RainbowColorSettingsPage;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -65,7 +65,7 @@ public final class RainbowColorsInSchemeState {
     for (Editor editor : allEditors) {
       final Project project = editor.getProject();
       if (project != null) {
-        PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+        PsiFile file = EditorContextManager.getPsiFileForEditor(editor, project);
         if (file != null) {
           DaemonCodeAnalyzer.getInstance(project).restart(file, reason);
         }

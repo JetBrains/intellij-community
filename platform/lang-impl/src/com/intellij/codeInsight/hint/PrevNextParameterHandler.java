@@ -4,13 +4,13 @@ package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.editorActions.TabOutScopesTracker;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.ApiStatus;
@@ -74,7 +74,7 @@ public final class PrevNextParameterHandler extends EditorActionHandler {
   }
 
   private static @Nullable PsiElement getExpressionList(@NotNull Editor editor, int offset, @NotNull Project project) {
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    PsiFile file = EditorContextManager.getPsiFileForEditor(editor, project);
     return file != null ? ParameterInfoControllerBase.findArgumentList(file, offset, -1) : null;
   }
 }

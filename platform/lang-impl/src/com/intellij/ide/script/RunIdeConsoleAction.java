@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.script;
 
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.Executor;
 import com.intellij.execution.executors.DefaultRunExecutor;
@@ -235,7 +236,7 @@ public final class RunIdeConsoleAction extends DumbAwareAction {
     String lineText = document.getText(TextRange.create(lineStart, lineEnd));
 
     // try to detect a non-trivial composite PSI element if there's a PSI file
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    PsiFile file = EditorContextManager.getPsiFileForEditor(editor, project);
     if (file != null && !StringUtil.isEmptyOrSpaces(lineText) &&
         !"textmate".equals(file.getLanguage().getID())) {
       int start = lineStart, end = lineEnd;

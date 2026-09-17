@@ -3,8 +3,8 @@ package com.intellij.testFramework;
 
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.ide.DataManager;
-import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -504,8 +504,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   protected void bringRealEditorBack() {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     if (getEditor() instanceof EditorWindow) {
-      Document document = ((DocumentWindow)getEditor().getDocument()).getDelegate();
-      myPsiFile = PsiDocumentManager.getInstance(getProject()).getPsiFile(document);
+      myPsiFile = EditorContextManager.getPsiFileForEditor(((EditorWindow)getEditor()).getDelegate(), getProject());
       myEditor = ((EditorWindow)getEditor()).getDelegate();
       myVFile = myPsiFile.getVirtualFile();
     }

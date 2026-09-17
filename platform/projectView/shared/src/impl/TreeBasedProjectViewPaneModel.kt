@@ -3,6 +3,7 @@
 
 package com.intellij.platform.projectView.impl
 
+import com.intellij.codeInsight.multiverse.EditorContextManager
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.asContextElement
 import com.intellij.ide.DataManager
@@ -84,7 +85,6 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.util.coroutines.flow.throttle
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiDirectory
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileSystemItem
@@ -768,7 +768,7 @@ abstract class TreeBasedProjectViewPaneModel<T : Any>(override val project: Proj
       return if (fileEditor is TextEditor) {
         val editor = fileEditor.editor
         if (withContext(Dispatchers.UI) { editor.isDisposed }) return null
-        readAction { PsiDocumentManager.getInstance(project).getPsiFile(editor.document)?.createSmartPointer() }
+        readAction { EditorContextManager.getPsiFileForEditor(editor, project)?.createSmartPointer() }
       }
       else {
         val file = withContext(Dispatchers.UI) { fileEditor.file } ?: return null

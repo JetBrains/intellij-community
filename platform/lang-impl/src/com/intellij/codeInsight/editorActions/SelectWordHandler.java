@@ -2,6 +2,7 @@
 
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.CompositeLanguage;
 import com.intellij.lang.Language;
@@ -85,7 +86,7 @@ public final class SelectWordHandler extends EditorActionHandler.ForEachCaret {
   }
 
   private static boolean isInsideEditableInjection(EditorWindow editor, TextRange range, Project project) {
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    PsiFile file = EditorContextManager.getPsiFileForEditor(editor, project);
     if (file == null) return true;
     List<TextRange> editables = InjectedLanguageManager.getInstance(project).intersectWithAllEditableFragments(file, range);
 
@@ -114,7 +115,7 @@ public final class SelectWordHandler extends EditorActionHandler.ForEachCaret {
 
   private static @Nullable TextRange doSelectWord(@NotNull Caret caret, @NotNull Project project) {
     Document document = caret.getEditor().getDocument();
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
+    PsiFile file = EditorContextManager.getPsiFileForEditor(caret.getEditor(), project);
     if (file == null) return null;
 
     int caretOffset = adjustCaretOffset(caret);

@@ -6,6 +6,7 @@ import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.completion.command.configuration.ApplicationCommandCompletionService
 import com.intellij.codeInsight.completion.command.configuration.CommandCompletionSettingsService
 import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.codeInsight.multiverse.EditorContextManager
 import com.intellij.idea.AppMode
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.Disposable
@@ -37,7 +38,6 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFocusManager
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.ui.LanguageTextField
 import com.intellij.ui.scale.JBUIScale
@@ -340,7 +340,7 @@ object NonWriteAccessCommandCompletionSupport {
     // the caret may be at the very end of the document, then there is no character to look at
     if (offset < document.textLength && StringUtil.isJavaIdentifierPart(document.immutableCharSequence[offset])) return null
 
-    val targetFile = PsiDocumentManager.getInstance(project).getPsiFile(document) ?: return null
+    val targetFile = EditorContextManager.getPsiFileForEditor(editor, project) ?: return null
     if (InjectedLanguageManager.getInstance(project).findInjectedElementAt(targetFile, offset) != null) return null
 
     val factory = project.service<CommandCompletionService>().getFactory(targetFile.language) ?: return null

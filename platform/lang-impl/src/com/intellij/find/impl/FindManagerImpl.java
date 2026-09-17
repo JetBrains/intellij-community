@@ -6,6 +6,7 @@ import com.intellij.codeInsight.highlighting.HighlightManagerImpl;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.find.EditorSearchSession;
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindInProjectSettings;
@@ -17,7 +18,6 @@ import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingModel;
@@ -31,7 +31,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.SearchScope;
@@ -248,8 +247,7 @@ public final class FindManagerImpl extends FindManagerBase {
   @Override
   public void findUsagesInEditor(@NotNull PsiElement element, @NotNull FileEditor fileEditor) {
     if (fileEditor instanceof TextEditor textEditor) {
-      Document document = textEditor.getEditor().getDocument();
-      PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+      PsiFile psiFile = EditorContextManager.getPsiFileForEditor(textEditor.getEditor(), myProject);
 
       myFindUsagesManager.findUsages(element, psiFile, fileEditor, false, null);
     }

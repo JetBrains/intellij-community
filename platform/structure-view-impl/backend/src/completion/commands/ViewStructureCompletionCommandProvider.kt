@@ -5,6 +5,7 @@ import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.completion.command.CommandCompletionProviderContext
 import com.intellij.codeInsight.completion.command.commands.ActionCommandProvider
 import com.intellij.codeInsight.completion.command.commands.ActionCompletionCommand
+import com.intellij.codeInsight.multiverse.EditorContextManager
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.idea.ActionsBundle
@@ -14,9 +15,8 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.project.Project
-import com.intellij.platform.structureView.impl.actions.ViewStructureActionBase
 import com.intellij.platform.structureView.backend.showFileStructurePopup
-import com.intellij.psi.PsiDocumentManager
+import com.intellij.platform.structureView.impl.actions.ViewStructureActionBase
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.psi.util.PsiTreeUtil
@@ -41,7 +41,7 @@ class ViewStructureCompletionCommandProvider : ActionCommandProvider(actionId = 
       val endOffset = psiElement.nameIdentifier?.textRange?.endOffset ?: return@callback
       val project = context.project
       val selectedTextEditor = FileEditorManager.getInstance(project).selectedTextEditor ?: return@callback
-      val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(selectedTextEditor.document) ?: return@callback
+      val psiFile = EditorContextManager.getPsiFileForEditor(selectedTextEditor, project) ?: return@callback
       if (!PsiTreeUtil.isAncestor(psiFile, psiElement, false)) return@callback
       selectedTextEditor.caretModel.moveToOffset(endOffset)
     }

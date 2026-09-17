@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search.scope;
 
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
@@ -9,7 +10,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.ApiStatus;
@@ -50,7 +50,7 @@ public final class EditorSelectionLocalSearchScope extends RangeBasedLocalSearch
 
   private void init() {
     ReadAction.runBlocking(() -> {
-      PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
+      PsiFile psiFile = EditorContextManager.getPsiFileForEditor(myEditor, myProject);
       if (psiFile == null) {
         myPsiElements = PsiElement.EMPTY_ARRAY;
         return;

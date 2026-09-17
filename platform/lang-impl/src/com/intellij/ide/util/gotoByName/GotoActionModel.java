@@ -4,6 +4,7 @@ package com.intellij.ide.util.gotoByName;
 
 import com.google.common.base.Strings;
 import com.intellij.BundleBase;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
@@ -54,7 +55,6 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.PlatformKeyboardLayoutConverter;
 import com.intellij.psi.codeStyle.WordPrefixMatcher;
@@ -179,7 +179,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
     Editor editor = myEditor != null ? myEditor.get() : null;
     if (myProject != null && !myProject.isDisposed() && !DumbService.isDumb(myProject) &&
         editor != null && !editor.isDisposed()) {
-      PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
+      PsiFile file = EditorContextManager.getPsiFileForEditor(editor, myProject);
       ApplyIntentionAction[] children = file == null ? null : ApplyIntentionAction.getAvailableIntentions(editor, file);
       if (children != null) {
         for (ApplyIntentionAction action : children) {

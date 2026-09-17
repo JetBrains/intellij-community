@@ -3,6 +3,7 @@ package com.intellij.ui.codeFloatingToolbar
 
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
+import com.intellij.codeInsight.multiverse.EditorContextManager
 import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.ide.HelpTooltip
 import com.intellij.ide.ui.customization.CustomActionsSchema
@@ -29,7 +30,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.ui.LightweightHint
@@ -182,7 +182,7 @@ class CodeFloatingToolbar(
     val mainActionGroup = CustomActionsSchema.getInstance().getCorrectedAction(contextAwareActionGroupId) ?: error("Can't find groupId action")
 
     val project = editor.project ?: return null
-    val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return null
+    val psiFile = EditorContextManager.getPsiFileForEditor(editor, project) ?: return null
 
     val actionList = buildList {
       if (!isIntentionsGroupHidden(psiFile.language)) {
@@ -215,7 +215,7 @@ class CodeFloatingToolbar(
 
   private fun getContextAwareGroupId(editor: Editor): String? {
     val project = editor.project ?: return null
-    val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)
+    val psiFile = EditorContextManager.getPsiFileForEditor(editor, project)
     val elementAtOffset = psiFile?.findElementAt(editor.caretModel.primaryCaret.offset)
     val targetLanguage = elementAtOffset?.let { PsiUtilCore.findLanguageFromElement(it) } ?: return null
     return findActionGroupFor(targetLanguage)

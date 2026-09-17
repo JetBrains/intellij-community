@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.codeInsight.hint.HintUtil
+import com.intellij.codeInsight.multiverse.EditorContextManager
 import com.intellij.codeInsight.template.Expression
 import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.TemplateManager
@@ -39,7 +40,6 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.PsiDocumentManagerBase
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
@@ -94,12 +94,12 @@ internal fun inplaceRename(project: Project, editor: Editor, target: RenameTarge
   }
 
   val document: Document = editor.document
-  val file: PsiFile = PsiDocumentManager.getInstance(project).getPsiFile(document)
+  val file: PsiFile = EditorContextManager.getPsiFileForEditor(editor, project)
                       ?: return false
 
   val hostEditor: Editor = InjectedLanguageEditorUtil.getTopLevelEditor(editor)
   val hostDocument: Document = PsiDocumentManagerBase.getTopLevelDocument(document)
-  val hostFile: PsiFile = PsiDocumentManager.getInstance(project).getPsiFile(hostDocument)
+  val hostFile: PsiFile = EditorContextManager.getPsiFileForEditor(hostEditor, project)
                           ?: return false
 
   val usageQuery: Query<out RenameUsage> = buildUsageQuery(

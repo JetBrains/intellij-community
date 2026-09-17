@@ -25,6 +25,7 @@ import com.intellij.codeInsight.completion.serialization.PrefixMatcherDescriptor
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.lookup.LookupElementWeigher
+import com.intellij.codeInsight.multiverse.EditorContextManager
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.codeInsight.template.postfix.completion.PostfixTemplateLookupElement
 import com.intellij.diagnostic.rethrowControlFlowException
@@ -155,7 +156,7 @@ internal class CommandCompletionProvider(val contributor: CommandCompletionContr
       isReadOnly = true
       editor = targetEditor.first
       offset = targetEditor.second
-      originalFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()) ?: return
+      originalFile = EditorContextManager.getPsiFileForEditor(editor, project) ?: return
     }
     if (offset == 0 && !isReadOnly) return // we need some context to work with
     if (originalFile.virtualFile is LightVirtualFile) {

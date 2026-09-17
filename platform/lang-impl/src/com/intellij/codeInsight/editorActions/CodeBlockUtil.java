@@ -4,6 +4,7 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.codeInsight.highlighting.CodeBlockSupportHandler;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -15,7 +16,6 @@ import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
@@ -33,9 +33,8 @@ public final class CodeBlockUtil {
   }
 
   public static void moveCaretToCodeBlockEnd(Project project, Editor editor, boolean isWithSelection) {
-    Document document = editor.getDocument();
     int selectionStart = editor.getSelectionModel().getLeadSelectionOffset();
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
+    PsiFile file = EditorContextManager.getPsiFileForEditor(editor, project);
     if (file == null) return;
 
     IdeDocumentHistory.getInstance(project).includeCurrentCommandAsNavigation();
@@ -70,8 +69,7 @@ public final class CodeBlockUtil {
   }
 
   public static void moveCaretToCodeBlockStart(Project project, Editor editor, boolean isWithSelection) {
-    Document document = editor.getDocument();
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
+    PsiFile file = EditorContextManager.getPsiFileForEditor(editor, project);
     int selectionStart = editor.getSelectionModel().getLeadSelectionOffset();
     if (file == null) return;
 

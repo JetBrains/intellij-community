@@ -9,12 +9,14 @@ import com.intellij.codeInsight.lookup.LookupListener;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.LookupManagerListener;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.ide.IdeTooltip;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.parameterInfo.ParameterInfoHandler;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.CoroutinesKt;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.editor.Editor;
@@ -27,7 +29,6 @@ import com.intellij.openapi.ui.popup.Balloon.Position;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
@@ -42,15 +43,12 @@ import com.intellij.util.SlowOperations;
 import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.JBUI;
-import com.intellij.openapi.application.CoroutinesKt;
 import com.intellij.util.ui.update.DebouncedUpdates;
 import com.intellij.util.ui.update.UpdateQueue;
 import kotlin.Unit;
 import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.CoroutineScopeKt;
 import kotlinx.coroutines.Dispatchers;
-
-import static kotlinx.coroutines.SupervisorKt.SupervisorJob;
 import org.jetbrains.annotations.NotNull;
 
 import javax.accessibility.Accessible;
@@ -69,6 +67,7 @@ import java.awt.Rectangle;
 import java.util.List;
 
 import static com.intellij.codeInsight.hint.ParameterInfoTaskRunnerUtil.runTask;
+import static kotlinx.coroutines.SupervisorKt.SupervisorJob;
 
 public final class ParameterInfoController extends ParameterInfoControllerBase {
   private LightweightHint myHint;
@@ -354,7 +353,7 @@ public final class ParameterInfoController extends ParameterInfoControllerBase {
 
   @Override
   protected void moveToParameterAtOffset(int offset) {
-    PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
+    PsiFile file = EditorContextManager.getPsiFileForEditor(myEditor, myProject);
     PsiElement argsList = findArgumentList(file, offset, -1);
     if (argsList == null && !CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION) return;
 

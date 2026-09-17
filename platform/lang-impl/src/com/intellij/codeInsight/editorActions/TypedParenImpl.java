@@ -5,6 +5,7 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.highlighting.BraceMatcher;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.codeInsight.highlighting.NontrivialBraceMatcher;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -20,7 +21,6 @@ import com.intellij.openapi.editor.impl.TypedActionImpl;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
@@ -140,7 +140,7 @@ final class TypedParenImpl {
     }
     int spaceStart = CharArrayUtil.shiftBackward(chars, offset - 1, " \t");
     if (spaceStart < 0 || chars.charAt(spaceStart) == '\n' || chars.charAt(spaceStart) == '\r') {
-      PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
+      PsiFile file = EditorContextManager.getPsiFileForEditor(editor, project);
       if (file == null || !file.isWritable()) {
         return;
       }

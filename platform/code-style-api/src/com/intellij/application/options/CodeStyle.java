@@ -2,6 +2,7 @@
 package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.cache.CodeStyleCachingService;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
@@ -204,7 +205,7 @@ public final class CodeStyle {
   public static @Nullable CommonCodeStyleSettings getLanguageSettings(@NotNull Editor editor) {
     Project project = editor.getProject();
     if (project != null) {
-      PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+      PsiFile file = EditorContextManager.getPsiFileForEditor(editor, project);
       if (file != null) {
         return getLanguageSettings(file);
       }
@@ -541,7 +542,7 @@ public final class CodeStyle {
     if (space < 0 && allowDocCommit) {
       final Document document = editor.getDocument();
       PsiDocumentManager.getInstance(project).commitDocument(document);
-      PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
+      PsiFile file = EditorContextManager.getPsiFileForEditor(editor, project);
       if (file == null) return 0;
       return max(0, CodeStyleManager.getInstance(project).getSpacing(file, offset));
     }

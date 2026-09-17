@@ -4,6 +4,7 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.formatting.FormatterEx;
 import com.intellij.formatting.FormattingContext;
 import com.intellij.formatting.FormattingModel;
@@ -74,7 +75,7 @@ public final class JoinLinesHandler extends EditorActionHandler.ForEachCaret {
       return;
     }
     Project project = editor.getProject();
-    PsiFile psiFile = project == null ? null : PsiDocumentManager.getInstance(project).getPsiFile(document);
+    PsiFile psiFile = project == null ? null : EditorContextManager.getPsiFileForEditor(editor, project);
     if (psiFile == null) {
       if (myOriginalHandler != null) {
         myOriginalHandler.execute(editor, caret, dataContext);

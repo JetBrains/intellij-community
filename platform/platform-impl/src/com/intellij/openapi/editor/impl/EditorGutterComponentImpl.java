@@ -8,6 +8,7 @@ import com.intellij.codeInsight.folding.impl.FoldingUtil;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.codeInsight.hint.TooltipGroup;
 import com.intellij.codeInsight.hint.TooltipRenderer;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
@@ -116,7 +117,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.ColorUtil;
@@ -2587,7 +2587,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
     Project project = myEditor.getProject();
     Language language = null;
     if (project != null) {
-      PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(myEditor.getDocument());
+      PsiFile file = EditorContextManager.getPsiFileForEditor(myEditor, project);
       if (file != null) {
         language = file.getLanguage();
       }

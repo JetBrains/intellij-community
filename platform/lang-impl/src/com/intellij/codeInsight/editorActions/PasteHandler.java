@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.ide.PasteProvider;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.actionSystem.CustomizedDataContext;
@@ -41,7 +42,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.util.Producer;
@@ -99,7 +99,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
 
     final Project project = editor.getProject();
     final Document document = editor.getDocument();
-    final PsiFile file = project == null ? null : PsiDocumentManager.getInstance(project).getPsiFile(document);
+    final PsiFile file = project == null ? null : EditorContextManager.getPsiFileForEditor(editor, project);
     if (file == null || editor.isColumnMode() || editor.getCaretModel().getCaretCount() > 1) {
       if (myOriginalHandler != null) {
         myOriginalHandler.execute(editor, null, context);

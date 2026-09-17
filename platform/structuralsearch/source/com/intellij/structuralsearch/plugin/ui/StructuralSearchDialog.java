@@ -3,6 +3,7 @@ package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.codeInsight.highlighting.HighlightHandlerBase;
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.impl.TemplateEditorUtil;
 import com.intellij.find.FindBundle;
@@ -384,8 +385,7 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
         setTextForEditor(text.trim(), mySearchCriteriaEdit);
         setTextForEditor(text, myReplaceCriteriaEdit);
         myScopePanel.setScopesFromContext(null);
-        final Document document = editor.getDocument();
-        final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+        final PsiFile file = EditorContextManager.getPsiFileForEditor(editor, myProject);
         if (file != null) {
           final PsiElement start = file.findElementAt(selectionModel.getSelectionStart());
           final PsiElement end = file.findElementAt(selectionModel.getSelectionEnd() - 1);
@@ -862,8 +862,7 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
         if (editor == null) {
           return null;
         }
-        final Document document = editor.getDocument();
-        final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+        final PsiFile file = EditorContextManager.getPsiFileForEditor(editor, myProject);
         if (file == null) {
           return null;
         }

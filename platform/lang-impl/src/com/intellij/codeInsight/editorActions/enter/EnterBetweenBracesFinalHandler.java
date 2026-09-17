@@ -6,6 +6,7 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.editorActions.CodeDocumentationUtil;
 import com.intellij.codeInsight.editorActions.EnterHandler;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.formatting.IndentInfo;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
@@ -112,7 +113,7 @@ public class EnterBetweenBracesFinalHandler implements EnterHandlerDelegate {
       restoreHostLinePrefixes(hostEditor, state.hostLinePrefix);
       documentManager.commitDocument(hostDocument);
 
-      String codeIndent = state.getNextCodeIndent(getIndentEditor(documentManager, hostEditor, state));
+      String codeIndent = state.getNextCodeIndent(getIndentEditor(project, hostEditor, state));
       int caretLine = hostDocument.getLineNumber(hostEditor.getCaretModel().getOffset());
       replaceLineIndent(hostDocument, caretLine + 1, state, state.codeIndent);
       replaceLineIndent(hostDocument, caretLine, state, codeIndent);
@@ -160,10 +161,10 @@ public class EnterBetweenBracesFinalHandler implements EnterHandlerDelegate {
    * the host line counts the prefix, and {@link #replaceLineIndent} adds the prefix again. Without a prefix a line of the fragment and
    * a host line are the same line, so the host editor is a good stand-in when the search fails.
    */
-  private static @Nullable Editor getIndentEditor(@NotNull PsiDocumentManager documentManager,
+  private static @Nullable Editor getIndentEditor(@NotNull Project project,
                                                   @NotNull Editor hostEditor,
                                                   @NotNull InjectedIndentState state) {
-    PsiFile hostFile = documentManager.getPsiFile(hostEditor.getDocument());
+    PsiFile hostFile = EditorContextManager.getPsiFileForEditor(hostEditor, project);
     PsiElement injectedElement = hostFile == null
                                  ? null
                                  : InjectedLanguageManager.getInstance(hostFile.getProject())

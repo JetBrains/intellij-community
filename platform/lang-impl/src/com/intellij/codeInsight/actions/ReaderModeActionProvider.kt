@@ -3,6 +3,7 @@ package com.intellij.codeInsight.actions
 
 import com.intellij.application.options.colors.ReaderModeStatsCollector
 import com.intellij.codeInsight.actions.ReaderModeSettings.Companion.matchMode
+import com.intellij.codeInsight.multiverse.EditorContextManager
 import com.intellij.configurationStore.saveSettings
 import com.intellij.icons.AllIcons
 import com.intellij.ide.HelpTooltip
@@ -31,7 +32,6 @@ import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.HtmlChunk
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.JBColor
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.PlatformUtils
@@ -58,7 +58,7 @@ internal class ReaderModeActionProvider : InspectionWidgetActionProvider {
           val p = e.project ?: return
           if (p.isInitialized) {
             val textEditor = e.getData(CommonDataKeys.EDITOR) ?: return
-            val file = PsiDocumentManager.getInstance(p).getPsiFile(textEditor.document)?.virtualFile
+            val file = EditorContextManager.getPsiFileForEditor(textEditor, p)?.virtualFile
             e.presentation.isEnabledAndVisible = file != null && matchMode(project = p, file = file, editor = textEditor)
           }
         }

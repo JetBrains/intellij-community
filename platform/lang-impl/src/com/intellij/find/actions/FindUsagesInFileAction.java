@@ -3,6 +3,7 @@ package com.intellij.find.actions;
 
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.find.FindBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.findUsages.EmptyFindUsagesProvider;
@@ -108,7 +109,7 @@ public final class FindUsagesInFileAction extends AnAction implements PossiblyDu
     if (editor == null) {
       return false;
     }
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    PsiFile file = EditorContextManager.getPsiFileForEditor(editor, project);
     if (file == null) {
       return false;
     }

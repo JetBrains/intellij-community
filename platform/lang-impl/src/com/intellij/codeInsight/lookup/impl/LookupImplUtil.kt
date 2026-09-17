@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.lookup.impl
 
 import com.intellij.codeInsight.lookup.Lookup
+import com.intellij.codeInsight.multiverse.EditorContextManager
 import com.intellij.injected.editor.DocumentWindow
 import com.intellij.injected.editor.EditorWindow
 import com.intellij.lang.injection.InjectedLanguageManager
@@ -49,7 +50,7 @@ object LookupImplUtil {
   }
 
   private fun getInjectedDocument(project: Project, editor: Editor, offset: Int): DocumentWindow? {
-    val hostFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()) ?: return null
+    val hostFile = EditorContextManager.getPsiFileForEditor(editor, project) ?: return null
 
     // inspired by com.intellij.codeInsight.editorActions.TypedHandler.injectedEditorIfCharTypedIsSignificant()
     val injected = InjectedLanguageManager.getInstance(project).getCachedInjectedDocumentsInRange(
@@ -65,8 +66,7 @@ object LookupImplUtil {
   fun getPsiFile(lookup: Lookup): PsiFile? {
     val editor = lookup.getEditor()
     val project: Project = lookup.getProject()
-    val document = editor.getDocument()
-    return PsiDocumentManager.getInstance(project).getPsiFile(document)
+    return EditorContextManager.getPsiFileForEditor(editor, project)
   }
 
 }

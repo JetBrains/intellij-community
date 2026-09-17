@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find;
 
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -16,7 +17,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.ExperimentalUI;
 import org.jetbrains.annotations.ApiStatus;
@@ -45,7 +45,7 @@ public final class FindAllAction extends AnAction implements ShortcutProvider, D
     e.getPresentation().setIcon(getIcon(project));
     e.getPresentation().setEnabled(editor != null && project != null &&
                                    !project.isDisposed() && search.hasMatches() &&
-                      PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()) != null);
+                      EditorContextManager.getPsiFileForEditor(editor, project) != null);
   }
 
   @Override
@@ -59,7 +59,7 @@ public final class FindAllAction extends AnAction implements ShortcutProvider, D
     if (project == null) return;
     EditorSearchSession search = e.getData(EditorSearchSession.SESSION_KEY);
     if (search == null) return;
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(search.getEditor().getDocument());
+    PsiFile file = EditorContextManager.getPsiFileForEditor(search.getEditor(), project);
     if (file == null) return;
 
     FindModel oldModel = FindManager.getInstance(project).getFindInFileModel();

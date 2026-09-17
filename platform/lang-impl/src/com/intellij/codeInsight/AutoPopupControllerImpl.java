@@ -7,6 +7,7 @@ import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler;
 import com.intellij.codeInsight.hint.EditorHintListener;
 import com.intellij.codeInsight.hint.ShowParameterInfoHandler;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.lang.documentation.ide.impl.DocumentationPopupListener;
@@ -165,11 +166,12 @@ class AutoPopupControllerImpl extends AutoPopupController {
     ReadAction.nonBlocking(() -> {
         offset.set(editor.getCaretModel().getOffset());
         PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
-        PsiFile file = documentManager.getPsiFile(editor.getDocument());
+        PsiFile file = EditorContextManager.getPsiFileForEditor(editor, myProject);
         if (file == null) return;
 
         if (!documentManager.isUncommited(editor.getDocument())) {
-          file = documentManager.getPsiFile(InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, file).getDocument());
+          file = EditorContextManager.getPsiFileForEditor(
+            InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, file), myProject);
           if (file == null) return;
         }
 
@@ -177,7 +179,7 @@ class AutoPopupControllerImpl extends AutoPopupController {
           if (!myProject.isDisposed() && !editor.isDisposed() && UIUtil.isShowing(editor.getContentComponent())) {
             int lbraceOffset = offset.get() - 1;
             try {
-              PsiFile file1 = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
+              PsiFile file1 = EditorContextManager.getPsiFileForEditor(editor, myProject);
               if (file1 != null) {
                 ShowParameterInfoHandler.invoke(myProject, editor, file1, lbraceOffset, highlightedElement, false,
                                                 true, null);

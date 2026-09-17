@@ -6,6 +6,7 @@ import com.intellij.codeInsight.inline.completion.InlineCompletionProvider
 import com.intellij.codeInsight.inline.completion.InlineCompletionRequest
 import com.intellij.codeInsight.inline.completion.editor.InlineCompletionEditorType
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.InvokedEvents
+import com.intellij.codeInsight.multiverse.EditorContextManager
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.eventLog.events.ObjectEventData
@@ -13,7 +14,6 @@ import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.lang.Language
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.PsiUtilCore
 
 /**
@@ -49,7 +49,7 @@ internal class InlineCompletionInvocationTracker(
   )
 
   fun captureContext(editor: Editor, offset: Int) {
-    val psiFile = PsiDocumentManager.getInstance(editor.project ?: return).getPsiFile(editor.document) ?: return
+    val psiFile = EditorContextManager.getPsiFileForEditor(editor, editor.project ?: return) ?: return
     language = PsiUtilCore.getLanguageAtOffset(psiFile, offset)
     fileLanguage = psiFile.language
     data.add(EventFields.Language.with(language))

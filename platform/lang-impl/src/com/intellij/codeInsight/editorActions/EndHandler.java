@@ -3,6 +3,7 @@
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
@@ -43,7 +44,7 @@ public final class EndHandler extends EditorActionHandler.ForEachCaret {
 
     final Project project = editor.getProject();
     final Document document = editor.getDocument();
-    final PsiFile file = project == null ? null : PsiDocumentManager.getInstance(project).getPsiFile(document);
+    final PsiFile file = project == null ? null : EditorContextManager.getPsiFileForEditor(editor, project);
     if (file == null) {
       if (myOriginalHandler != null){
         myOriginalHandler.execute(editor, caret, dataContext);

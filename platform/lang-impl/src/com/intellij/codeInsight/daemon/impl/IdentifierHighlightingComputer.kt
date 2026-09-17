@@ -2,11 +2,13 @@
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.codeInsight.TargetElementUtil
+import com.intellij.codeInsight.daemon.impl.IdentifierHighlightingComputer.Companion.findTarget
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlightingResult.Companion.EMPTY_RESULT
 import com.intellij.codeInsight.highlighting.CodeBlockSupportHandler
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector
 import com.intellij.codeInsight.highlighting.getUsageRanges
+import com.intellij.codeInsight.multiverse.EditorContextManager
 import com.intellij.find.FindManager
 import com.intellij.find.impl.FindManagerImpl
 import com.intellij.inlinePrompt.isInlinePromptShown
@@ -22,7 +24,6 @@ import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.util.ProperTextRange
 import com.intellij.openapi.util.Segment
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiReference
@@ -269,7 +270,7 @@ class IdentifierHighlightingComputer(
       logIndexNotReadyException(e)
     }
     val injectedEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(myEditor, myPsiFile, myCaretOffset)
-    val injectedFile = PsiDocumentManager.getInstance(myPsiFile.getProject()).getPsiFile(injectedEditor!!.getDocument())
+    val injectedFile = EditorContextManager.getPsiFileForEditor(injectedEditor!!, myPsiFile.getProject())
     if (injectedFile == null || injectedFile === myPsiFile) {
       return listOf()
     }

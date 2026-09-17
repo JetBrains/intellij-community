@@ -2,6 +2,7 @@
 package com.intellij.structuralsearch.plugin.replace.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -16,7 +17,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
@@ -104,7 +104,7 @@ public final class ReplacementPreviewDialog extends DialogWrapper {
 
   @Override
   public void dispose() {
-    final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(replacement.getDocument());
+    final PsiFile file = EditorContextManager.getPsiFileForEditor(replacement, project);
     if (file != null) {
       DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(file, true);
     }

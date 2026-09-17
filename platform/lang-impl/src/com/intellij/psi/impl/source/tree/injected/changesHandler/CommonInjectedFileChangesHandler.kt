@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree.injected.changesHandler
 
+import com.intellij.codeInsight.multiverse.EditorContextManager
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.Logger
@@ -72,7 +73,7 @@ open class CommonInjectedFileChangesHandler(
     val psiDocumentManager = PsiDocumentManager.getInstance(myProject)
     psiDocumentManager.commitDocument(myHostDocument)
 
-    val hostPsiFile = psiDocumentManager.getPsiFile(myHostDocument) ?: failAndReport("no psiFile $myHostDocument")
+    val hostPsiFile = EditorContextManager.getPsiFileForEditor(myHostEditor, myProject) ?: failAndReport("no psiFile $myHostDocument")
     val injectedLanguageManager = InjectedLanguageManager.getInstance(myProject)
 
     val newInjectedFile = getInjectionHostAtRange(hostPsiFile, contextRange)?.let { host ->

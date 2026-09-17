@@ -6,6 +6,7 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupEx;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.internal.statistic.eventLog.events.EventPair;
@@ -158,7 +159,7 @@ public abstract class BaseRefactoringAction extends AnAction {
       }
     }
 
-    final PsiFile file = editor != null ? PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()) : null;
+    final PsiFile file = editor != null ? EditorContextManager.getPsiFileForEditor(editor, project) : null;
     final Language language = file != null
                               ? file.getLanguage()
                               : (elements.length > 0 ? elements[0].getLanguage() : null);

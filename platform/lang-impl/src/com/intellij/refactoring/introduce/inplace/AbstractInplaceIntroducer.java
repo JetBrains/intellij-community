@@ -2,6 +2,7 @@
 package com.intellij.refactoring.introduce.inplace;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.codeInsight.template.TextResult;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
@@ -617,7 +618,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
       if (variable != null) {
         containingFile = variable.getContainingFile();
       } else {
-        containingFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
+        containingFile = EditorContextManager.getPsiFileForEditor(myEditor, myProject);
       }
       PsiNameIdentifierOwner identifierOwner = PsiTreeUtil.getParentOfType(containingFile.findElementAt(myLocalMarker.getStartOffset()),
                                                                            PsiNameIdentifierOwner.class, false);

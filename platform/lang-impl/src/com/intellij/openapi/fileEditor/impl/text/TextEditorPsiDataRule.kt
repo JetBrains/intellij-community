@@ -2,6 +2,7 @@
 package com.intellij.openapi.fileEditor.impl.text
 
 import com.intellij.codeInsight.TargetElementUtil
+import com.intellij.codeInsight.multiverse.EditorContextManager
 import com.intellij.codeInsight.multiverse.EditorContextManager.Companion.getEditorContext
 import com.intellij.codeInsight.multiverse.anyContext
 import com.intellij.codeInsight.navigation.activateFileWithPsiElement
@@ -95,11 +96,11 @@ internal class TextEditorPsiDataRule : UiDataRule {
     }
     sink.lazy(InjectedDataKeys.VIRTUAL_FILE) {
       val editor = getInjectedEditor(project, editor, caret, file) ?: return@lazy null
-      PsiDocumentManager.getInstance(project).getPsiFile(editor.document)?.virtualFile
+      EditorContextManager.getPsiFileForEditor(editor, project)?.virtualFile
     }
     sink.lazy(InjectedDataKeys.PSI_FILE) {
       val editor = getInjectedEditor(project, editor, caret, file) ?: return@lazy null
-      PsiDocumentManager.getInstance(project).getPsiFile(editor.document)
+      EditorContextManager.getPsiFileForEditor(editor, project)
     }
     sink.lazy(InjectedDataKeys.PSI_ELEMENT) {
       val editor = getInjectedEditor(project, editor, caret, file) ?: return@lazy null
@@ -136,7 +137,7 @@ private fun getIdeView(e: Editor, file: VirtualFile): IdeView? {
 
 private fun getInjectedLanguage(project: Project, e: EditorEx, caret: Caret, file: VirtualFile): Language? {
   val editor = getInjectedEditor(project, e, caret, file) ?: return null
-  val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()) ?: return null
+  val psiFile = EditorContextManager.getPsiFileForEditor(editor, project) ?: return null
   val injectedCaret = getInjectedCaret(editor, caret)
   return getLanguageAtCurrentPositionInEditor(injectedCaret, psiFile)
 }

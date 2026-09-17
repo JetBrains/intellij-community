@@ -2,6 +2,7 @@
 package com.intellij.psi.impl.source.tree.injected.changesHandler
 
 import com.intellij.codeInsight.editorActions.CopyPastePreProcessor
+import com.intellij.codeInsight.multiverse.EditorContextManager
 import com.intellij.injected.editor.InjectionMeta
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.command.undo.UndoManager
@@ -47,7 +48,7 @@ internal class IndentAwareInjectedFileChangesHandler(shreds: List<Shred>, editor
   override fun commitToOriginal(e: DocumentEvent) {
     LOG.logMarkers("at beginning")
     val psiDocumentManager = PsiDocumentManager.getInstance(myProject)
-    val hostPsiFile = psiDocumentManager.getPsiFile(myHostDocument) ?: failAndReport("no psiFile $myHostDocument", e)
+    val hostPsiFile = EditorContextManager.getPsiFileForEditor(myHostEditor, myProject) ?: failAndReport("no psiFile $myHostDocument", e)
     val affectedRange = TextRange.from(e.offset, max(e.newLength, e.oldLength))
     val affectedMarkers = markers.filter { affectedRange.intersects(it.fragmentMarker) }
 

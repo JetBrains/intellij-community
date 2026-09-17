@@ -3,6 +3,7 @@ package com.intellij.codeInsight.hints.settings.language
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.hint.EditorFragmentComponent
+import com.intellij.codeInsight.multiverse.EditorContextManager
 import com.intellij.lang.Language
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.editor.Editor
@@ -14,7 +15,6 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBUI
@@ -56,7 +56,7 @@ fun createEditor(language: Language,
     editor.backgroundColor = EditorFragmentComponent.getBackgroundColor(editor, false)
     editor.setBorder(JBUI.Borders.empty())
     // If editor is created as not viewer, daemon is enabled automatically. But we want to collect hints manually with another settings.
-    val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)
+    val psiFile = EditorContextManager.getPsiFileForEditor(editor, project)
     if (psiFile != null) {
       DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(psiFile, false)
     }

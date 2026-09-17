@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPassFactory;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.codeInsight.folding.impl.CodeFoldingManagerImpl;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.Language;
 import com.intellij.lang.folding.FoldingBuilder;
@@ -92,12 +93,12 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.awt.Dimension;
-import java.time.Duration;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.geom.Rectangle2D;
 import java.nio.charset.Charset;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -957,8 +958,7 @@ public final class EditorTestUtil {
       if (!((FoldingModelEx)editor.getFoldingModel()).isFoldingEnabled()) {
         return null;
       }
-      Document document = editor.getDocument();
-      PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
+      PsiFile psiFile = EditorContextManager.getPsiFileForEditor(editor, project);
       if (psiFile == null || !supportsDumbModeFolding(psiFile)) {
         return null;
       }

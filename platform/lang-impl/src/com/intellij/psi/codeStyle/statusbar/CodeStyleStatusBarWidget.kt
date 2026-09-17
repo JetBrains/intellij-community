@@ -2,6 +2,7 @@
 package com.intellij.psi.codeStyle.statusbar
 
 import com.intellij.application.options.CodeStyle
+import com.intellij.codeInsight.multiverse.EditorContextManager
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -17,7 +18,6 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.impl.status.EditorBasedStatusBarPopup
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.CodeStyleSettingsChangeEvent
 import com.intellij.psi.codeStyle.CodeStyleSettingsListener
@@ -56,7 +56,7 @@ class CodeStyleStatusBarWidget(project: Project) : EditorBasedStatusBarPopup(pro
 
   private fun Editor.getPsiFile(): PsiFile? {
     val project = this@CodeStyleStatusBarWidget.project.takeIf { !it.isDisposed } ?: return null
-    return PsiDocumentManager.getInstance(project).getPsiFile(this.document)
+    return EditorContextManager.getPsiFileForEditor(this, project)
   }
 
   override fun createPopup(context: DataContext): ListPopup? {

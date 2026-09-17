@@ -3,6 +3,7 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -15,7 +16,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.CharFilter;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -78,7 +78,7 @@ public final class CopyPasteIndentProcessor extends CopyPastePostProcessor<Inden
     if (values.get(0).getOffset() == caretOffset) return;
 
     final Document document = editor.getDocument();
-    final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
+    final PsiFile psiFile = EditorContextManager.getPsiFileForEditor(editor, project);
     if (psiFile == null || !acceptFileType(psiFile.getFileType())) {
       return;
     }

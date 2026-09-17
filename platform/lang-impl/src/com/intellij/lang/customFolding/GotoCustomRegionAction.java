@@ -2,6 +2,7 @@
 package com.intellij.lang.customFolding;
 
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.folding.CompositeFoldingBuilder;
@@ -88,7 +89,7 @@ public final class GotoCustomRegionAction extends AnAction implements DumbAware,
     Set<FoldingDescriptor> foldingDescriptors = new HashSet<>();
     final Document document = editor.getDocument();
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-    PsiFile file = documentManager != null ? documentManager.getPsiFile(document) : null;
+    PsiFile file = documentManager != null ? EditorContextManager.getPsiFileForEditor(editor, project) : null;
     if (file != null) {
       final FileViewProvider viewProvider = file.getViewProvider();
       for (final Language language : viewProvider.getLanguages()) {

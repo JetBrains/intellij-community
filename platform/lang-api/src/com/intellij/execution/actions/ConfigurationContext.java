@@ -2,6 +2,7 @@
 
 package com.intellij.execution.actions;
 
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
 import com.intellij.execution.RunManager;
@@ -30,7 +31,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -346,7 +346,7 @@ public class ConfigurationContext {
     PsiElement element = null;
     final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor != null){
-      final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+      final PsiFile psiFile = EditorContextManager.getPsiFileForEditor(editor, project);
       if (psiFile != null) {
         final int offset = editor.getCaretModel().getOffset();
         element = psiFile.findElementAt(offset);

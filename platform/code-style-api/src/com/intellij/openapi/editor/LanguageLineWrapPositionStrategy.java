@@ -1,11 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor;
 
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiVersioningService;
 import com.intellij.util.KeyedLazyInstance;
@@ -46,7 +46,7 @@ public final class LanguageLineWrapPositionStrategy extends LanguageExtension<Li
     if (project != null && !project.isDisposed()) {
       try (AccessToken ignore = SlowOperations.knownIssue("IJPL-162826")) {
         LineWrapPositionStrategy strategy = PsiVersioningService.freezePsiVersion(() -> {
-          PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+          PsiFile file = EditorContextManager.getPsiFileForEditor(editor, project);
           if (file == null) {
             return null;
           }

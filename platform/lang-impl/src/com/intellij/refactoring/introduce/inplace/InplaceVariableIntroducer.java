@@ -3,6 +3,7 @@ package com.intellij.refactoring.introduce.inplace;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.codeInsight.template.TextResult;
 import com.intellij.lang.ASTNode;
@@ -18,7 +19,6 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiWhiteSpace;
@@ -153,7 +153,7 @@ public abstract class InplaceVariableIntroducer<E extends PsiElement> extends In
 
   @Override
   protected @Nullable PsiElement checkLocalScope() {
-    return PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
+    return EditorContextManager.getPsiFileForEditor(myEditor, myProject);
   }
 
   @Override

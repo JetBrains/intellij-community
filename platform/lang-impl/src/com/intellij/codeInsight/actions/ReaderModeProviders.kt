@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.DefaultHighlightingSettingP
 import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSetting
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil
 import com.intellij.codeInsight.documentation.render.DocRenderManager
+import com.intellij.codeInsight.multiverse.EditorContextManager
 import com.intellij.formatting.visualLayer.VisualFormattingLayerService
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions
@@ -14,7 +15,6 @@ import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiDocumentManager
 
 internal class HighlightingReaderModeProvider : ReaderModeProvider {
   override fun applyModeChanged(project: Project, editor: Editor, readerMode: Boolean, fileIsOpenAlready: Boolean) {
@@ -29,7 +29,7 @@ internal class HighlightingReaderModeProvider : ReaderModeProvider {
       FileHighlightingSetting.FORCE_HIGHLIGHTING
     }
 
-    HighlightLevelUtil.forceRootHighlighting(PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return, highlighting)
+    HighlightLevelUtil.forceRootHighlighting(EditorContextManager.getPsiFileForEditor(editor, project) ?: return, highlighting)
   }
 }
 

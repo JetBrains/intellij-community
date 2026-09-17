@@ -4,6 +4,7 @@ package com.intellij.codeInsight.completion.command
 import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.multiverse.EditorContextManager
 import com.intellij.featureStatistics.FeatureUsageTracker
 import com.intellij.injected.editor.DocumentWindow
 import com.intellij.lang.injection.InjectedLanguageManager
@@ -14,7 +15,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.util.Disposer
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
 import com.intellij.util.PlatformUtils
 
@@ -35,7 +35,7 @@ internal class CommandInsertHandler(private val completionCommand: CompletionCom
       if (originalEditor != null) {
         startOffset = originalEditor.second
         editor = originalEditor.first
-        psiFile = PsiDocumentManager.getInstance(context.project).getPsiFile(editor.getDocument()) ?: return
+        psiFile = EditorContextManager.getPsiFileForEditor(editor, context.project) ?: return
         // which flow we are in is defined by where the original editor came from, not by the state of the inlay:
         // in the remote flow this handler runs on the backend, where the inlay exists only on the frontend
         if (!NonWriteAccessCommandCompletionSupport.Backend.isRemoteBackendEditor(context.editor)) {

@@ -2,6 +2,7 @@
 
 package com.intellij.ide.actions;
 
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -44,7 +45,7 @@ public final class CopyElementAction extends AnAction implements DumbAware {
     PsiDirectory defaultTargetDirectory = targetPsiElement instanceof PsiDirectory ? (PsiDirectory)targetPsiElement : null;
     if (editor != null) {
       PsiElement aElement = getTargetElement(editor, project);
-      PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+      PsiFile file = EditorContextManager.getPsiFileForEditor(editor, project);
       if (file == null) return;
       elements = new PsiElement[]{aElement};
       if (aElement == null || !CopyHandler.canCopy(elements)) {
@@ -92,7 +93,7 @@ public final class CopyElementAction extends AnAction implements DumbAware {
       return;
 
     }
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    PsiFile file = EditorContextManager.getPsiFileForEditor(editor, project);
 
     PsiElement element = getTargetElement(editor, project);
     Ref<@NlsActions.ActionText String> actionName = new Ref<>();
@@ -120,7 +121,7 @@ public final class CopyElementAction extends AnAction implements DumbAware {
 
   private static PsiElement getTargetElement(final Editor editor, final Project project) {
     int offset = editor.getCaretModel().getOffset();
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    PsiFile file = EditorContextManager.getPsiFileForEditor(editor, project);
     if (file == null) return null;
     PsiElement element = file.findElementAt(offset);
     if (element == null) element = file;

@@ -2,6 +2,7 @@
 package com.intellij.testFramework.propertyBased;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -46,7 +47,7 @@ public class RehighlightAllEditors implements MadTestingAction {
     FileDocumentManager.getInstance().saveAllDocuments(); // to avoid async document changes on automatic save during highlighting
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     PsiUtilBase.assertEditorAndProjectConsistent(project, editor);
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    PsiFile file = EditorContextManager.getPsiFileForEditor(editor, project);
     PsiTestUtil.checkStubsMatchText(file);
     
     String text = editor.getDocument().getText();

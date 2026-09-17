@@ -3,6 +3,7 @@ package com.intellij.application.options.codeStyle.arrangement.action;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.actions.RearrangeCodeProcessor;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -49,7 +50,7 @@ public final class RearrangeCodeAction extends AnAction {
     Document document = editor.getDocument();
     documentManager.commitDocument(document);
     
-    final PsiFile file = documentManager.getPsiFile(document);
+    final PsiFile file = EditorContextManager.getPsiFileForEditor(editor, project);
     if (file == null) {
       return;
     }

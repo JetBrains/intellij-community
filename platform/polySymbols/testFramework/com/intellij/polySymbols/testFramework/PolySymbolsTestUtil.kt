@@ -8,6 +8,7 @@ import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.codeInsight.TargetElementUtilBase
 import com.intellij.codeInsight.completion.PrioritizedLookupElement
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.multiverse.EditorContextManager
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationOrUsageHandler2
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationOrUsageHandler2.Companion.testGTDUOutcome
 import com.intellij.find.findUsages.CustomUsageSearcher
@@ -691,7 +692,7 @@ fun CodeInsightTestFixture.checkGTDUOutcome(expectedOutcome: GotoDeclarationOrUs
   val gtduOutcome = PlatformTestUtil.waitForFuture(
     ReadAction
       .nonBlocking(Callable {
-        val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: file
+        val file = EditorContextManager.getPsiFileForEditor(editor, project) ?: file
         testGTDUOutcome(editor, file, offset)
       })
       .submit(AppExecutorUtil.getAppExecutorService()))
@@ -719,9 +720,9 @@ private fun CodeInsightTestFixture.checkEditorNavigation(
   performEditorAction(action)
   val targetEditor = FileEditorManager.getInstance(project).selectedTextEditor?.topLevelEditor
   if (targetEditor == null) throw NullPointerException(actualSignature)
-  val targetFile = PsiDocumentManager.getInstance(project).getPsiFile(targetEditor.document)!!
+  val targetFile = EditorContextManager.getPsiFileForEditor(targetEditor, project)!!
   if (expectedFileName != null) {
-    assertEquals(actualSignature, expectedFileName, PsiDocumentManager.getInstance(project).getPsiFile(targetEditor.document)?.name)
+    assertEquals(actualSignature, expectedFileName, EditorContextManager.getPsiFileForEditor(targetEditor, project)?.name)
   }
   else {
     assertEquals(actualSignature, targetEditor, editor.topLevelEditor)

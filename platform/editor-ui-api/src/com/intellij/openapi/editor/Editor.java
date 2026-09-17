@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor;
 
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -16,7 +17,6 @@ import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import kotlinx.coroutines.CoroutineScope;
@@ -520,7 +520,7 @@ public interface Editor extends UserDataHolder {
 
       @Override
       public @NotNull PsiFile getPsiFile() {
-        return Objects.requireNonNull(PsiDocumentManager.getInstance(getProject()).getPsiFile(getDocument()));
+        return Objects.requireNonNull(EditorContextManager.getPsiFileForEditor(Editor.this, getProject()));
       }
 
       @Override

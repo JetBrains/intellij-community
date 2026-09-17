@@ -6,6 +6,7 @@ import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.lookup.LookupFocusDegree;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.codeInsight.template.CaretAutoMoveController;
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.Template;
@@ -653,7 +654,7 @@ public abstract class InplaceRefactoring {
     }
 
     if (myRenameOffset != null) {
-      PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
+      PsiFile psiFile = EditorContextManager.getPsiFileForEditor(myEditor, myProject);
       if (psiFile != null) {
         return PsiTreeUtil.findElementOfClassAtRange(psiFile, myRenameOffset.getStartOffset(), myRenameOffset.getEndOffset(), PsiNameIdentifierOwner.class);
       }
@@ -676,7 +677,7 @@ public abstract class InplaceRefactoring {
   }
 
   protected void addReferenceAtCaret(Collection<? super PsiReference> refs) {
-    PsiFile myEditorFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
+    PsiFile myEditorFile = EditorContextManager.getPsiFileForEditor(myEditor, myProject);
     // Note, that myEditorFile can be different from myElement.getContainingFile() e.g. in injections: myElement declaration in one
     // file / usage in another !
     PsiFile file = myEditorFile != null ? myEditorFile : myElementToRename.getContainingFile();

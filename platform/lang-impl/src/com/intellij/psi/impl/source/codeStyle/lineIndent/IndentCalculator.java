@@ -2,15 +2,14 @@
 package com.intellij.psi.impl.source.codeStyle.lineIndent;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.formatting.Indent;
 import com.intellij.formatting.IndentImpl;
 import com.intellij.formatting.IndentInfo;
 import com.intellij.lang.Language;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.impl.source.codeStyle.SemanticEditorPosition;
@@ -56,8 +55,7 @@ public class IndentCalculator {
   @Nullable
   String getIndentString(@Nullable Language language, @NotNull SemanticEditorPosition currPosition) {
     String baseIndent = getBaseIndent(currPosition);
-    Document document = myEditor.getDocument();
-    PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+    PsiFile file = EditorContextManager.getPsiFileForEditor(myEditor, myProject);
     if (file != null) {
       CommonCodeStyleSettings.IndentOptions fileOptions = CodeStyle.getIndentOptions(file);
       CommonCodeStyleSettings.IndentOptions options =

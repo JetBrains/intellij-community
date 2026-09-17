@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.codeStyle.lineIndent;
 
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.formatting.FormattingMode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
@@ -22,7 +23,7 @@ public class FormatterBasedLineIndentProvider implements LineIndentProvider {
     Document document = editor.getDocument();
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     documentManager.commitDocument(document);
-    PsiFile file = documentManager.getPsiFile(document);
+    PsiFile file = EditorContextManager.getPsiFileForEditor(editor, project);
     if (file == null) return "";
     return CodeStyleManager.getInstance(project).getLineIndent(file, offset, FormattingMode.ADJUST_INDENT_ON_ENTER);
   }

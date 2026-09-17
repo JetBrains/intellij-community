@@ -1,9 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation;
 
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.ApiStatus;
@@ -26,7 +26,7 @@ public final class CtrlMouseHandler {
   public static @Nullable String getGoToDeclarationOrUsagesText(@NotNull Editor editor) {
     Project project = editor.getProject();
     if (project == null) return null;
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    PsiFile file = EditorContextManager.getPsiFileForEditor(editor, project);
     if (file == null) return null;
     CtrlMouseData data = getCtrlMouseData(ACTION_GOTO_DECLARATION, editor, file, editor.getCaretModel().getOffset());
     return data == null ? null : data.getHintText();

@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.lookup
 
 import com.intellij.codeInsight.completion.PrefixMatcher
+import com.intellij.codeInsight.multiverse.EditorContextManager
 import com.intellij.injected.editor.DocumentWindow
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.diagnostic.logger
@@ -96,7 +97,7 @@ object LookupUtil {
   private fun getInjectedDocument(project: Project,
                                   editor: Editor,
                                   offset: Int): DocumentWindow? {
-    val hostFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)
+    val hostFile = EditorContextManager.getPsiFileForEditor(editor, project)
     if (hostFile != null) { // inspired by com.intellij.codeInsight.editorActions.TypedHandler.injectedEditorIfCharTypedIsSignificant()
       val injected = InjectedLanguageManager.getInstance(project)
         .getCachedInjectedDocumentsInRange(hostFile, TextRange.create(offset, offset))
