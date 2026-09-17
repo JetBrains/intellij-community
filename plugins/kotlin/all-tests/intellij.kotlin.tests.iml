@@ -95,6 +95,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.base.plugin.testFramework" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.base.projectStructure.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.base.util.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.jsr223.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.tooling.impl.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.projectWizard.compose.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java.tests" scope="RUNTIME" />

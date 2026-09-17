@@ -15,7 +15,7 @@ abstract class KotlinJsr223StandardScriptEngineFactory4IdeaBase(
 ) : KotlinJsr223JvmScriptEngineFactoryBase() {
 
     override fun getEngineName(): String {
-        return "Kotlin - Beta"
+        return "Kotlin Script"
     }
 
     override fun getScriptEngine(): ScriptEngine =

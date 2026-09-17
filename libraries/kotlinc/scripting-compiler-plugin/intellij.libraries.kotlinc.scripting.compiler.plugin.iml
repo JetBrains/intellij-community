@@ -9,19 +9,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="kotlinc.scripting-compiler-plugin" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:scripting-compiler-plugin-for-ide:2.5.0-dev-6810">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:scripting-compiler-plugin-for-ide:2.5.0-dev-7866">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/scripting-compiler-plugin-for-ide/2.5.0-dev-6810/scripting-compiler-plugin-for-ide-2.5.0-dev-6810.jar">
-              <sha256sum>308d3e2da78f3d77ee9ea1f9b44d529d97d0cf3543e4313e50bab948ae598f9d</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/scripting-compiler-plugin-for-ide/2.5.0-dev-7866/scripting-compiler-plugin-for-ide-2.5.0-dev-7866.jar">
+              <sha256sum>6ebd47939d28979759d877b0d3c1d61e5b6ba939d82d304dde727000ac337cfa</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/scripting-compiler-plugin-for-ide/2.5.0-dev-6810/scripting-compiler-plugin-for-ide-2.5.0-dev-6810.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/scripting-compiler-plugin-for-ide/2.5.0-dev-7866/scripting-compiler-plugin-for-ide-2.5.0-dev-7866.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/scripting-compiler-plugin-for-ide/2.5.0-dev-6810/scripting-compiler-plugin-for-ide-2.5.0-dev-6810-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/scripting-compiler-plugin-for-ide/2.5.0-dev-7866/scripting-compiler-plugin-for-ide-2.5.0-dev-7866-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

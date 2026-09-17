@@ -9,19 +9,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="kotlinc.compose-compiler-plugin" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:compose-compiler-plugin-for-ide:2.5.0-dev-6810">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:compose-compiler-plugin-for-ide:2.5.0-dev-7866">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/compose-compiler-plugin-for-ide/2.5.0-dev-6810/compose-compiler-plugin-for-ide-2.5.0-dev-6810.jar">
-              <sha256sum>31eb3914b87dd869875a08a1173f28a77a3a366a450893ddc5da7b096f035886</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/compose-compiler-plugin-for-ide/2.5.0-dev-7866/compose-compiler-plugin-for-ide-2.5.0-dev-7866.jar">
+              <sha256sum>591f169b370402ddc43c2644012ef0980a9a70f2e300e1dd9aaa3afe203bbe93</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/compose-compiler-plugin-for-ide/2.5.0-dev-6810/compose-compiler-plugin-for-ide-2.5.0-dev-6810.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/compose-compiler-plugin-for-ide/2.5.0-dev-7866/compose-compiler-plugin-for-ide-2.5.0-dev-7866.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/compose-compiler-plugin-for-ide/2.5.0-dev-6810/compose-compiler-plugin-for-ide-2.5.0-dev-6810-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/compose-compiler-plugin-for-ide/2.5.0-dev-7866/compose-compiler-plugin-for-ide-2.5.0-dev-7866-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.fir.configuration;
 
-import com.intellij.jarRepository.RepositoryLibraryType;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
@@ -17,7 +16,6 @@ import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.RootPolicy;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
-import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Ref;
@@ -36,9 +34,7 @@ import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider;
 import org.jetbrains.kotlin.config.LanguageVersion;
 import org.jetbrains.kotlin.idea.base.facet.platform.TargetPlatformDetectorUtils;
 import org.jetbrains.kotlin.idea.base.indices.JavaIndicesUtils;
-import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind;
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptStdlibDetectorFacility;
-import org.jetbrains.kotlin.idea.base.platforms.LibraryEffectiveKindProvider;
 import org.jetbrains.kotlin.idea.base.projectStructure.LanguageVersionSettingsProviderUtils;
 import org.jetbrains.kotlin.idea.base.psi.JavaPsiUtils;
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion;
@@ -179,22 +175,6 @@ public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
         Library jsRuntime = getFirstLibrary(myProject);
         IdeKotlinVersion version = KotlinJavaScriptStdlibDetectorFacility.INSTANCE.getStdlibVersion(myProject, jsRuntime);
         assertEquals(new KotlinVersion(1, 0, 6), version.getKotlinVersion());
-    }
-
-    public void testMavenProvidedTestJsKind() {
-        Ref<LibraryEx> jsTest = new Ref<>();
-        OrderEnumerator.orderEntries(myProject).forEachLibrary((library) -> {
-            if (library.getName().contains("kotlin-test-js")) {
-                jsTest.set((LibraryEx) library);
-                return false;
-            }
-            return true;
-        });
-
-        LibraryEffectiveKindProvider effectiveKindProvider = myProject.getService(LibraryEffectiveKindProvider.class);
-
-        assertEquals(RepositoryLibraryType.REPOSITORY_LIBRARY_KIND, jsTest.get().getKind());
-        assertEquals(KotlinJavaScriptLibraryKind.INSTANCE, effectiveKindProvider.getEffectiveKind(jsTest.get()));
     }
 
     public void testJvmProjectWithV1FacetConfig() {

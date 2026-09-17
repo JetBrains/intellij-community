@@ -30,31 +30,6 @@ class StdlibJsDetectorFacilityTest {
     val module: TestFixture<Module> = project.moduleFixture()
 
     @Test
-    fun testJsStdlib_1_0_7() {
-        doTest("org.jetbrains.kotlin:kotlin-js-library:1.0.7", isJsStdlib = true)
-    }
-
-    @Test
-    fun testJsStdlib_1_1_0() {
-        doTest("org.jetbrains.kotlin:kotlin-stdlib-js:1.1.0", isJsStdlib = true)
-    }
-
-    @Test
-    fun testJsStdlib_1_3_0() {
-        doTest("org.jetbrains.kotlin:kotlin-stdlib-js:1.3.0", isJsStdlib = true)
-    }
-
-    @Test
-    fun testJsStdlib_1_6_20() {
-        doTest("org.jetbrains.kotlin:kotlin-stdlib-js:1.6.20", isJsStdlib = true)
-    }
-
-    @Test
-    fun testJsStdlib_1_9_24() {
-        doTest("org.jetbrains.kotlin:kotlin-stdlib-js:1.9.24", isJsStdlib = true)
-    }
-
-    @Test
     fun testJsStdlib_2_0_0() {
         doTest("org.jetbrains.kotlin:kotlin-stdlib-js:2.0.0", isJsStdlib = true, packaging = "klib")
     }

@@ -1,6 +1,7 @@
 <idea-plugin visibility="internal">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <module name="intellij.java.aetherDependencyResolver"/>
     <module name="intellij.java.execution.impl"/>
     <module name="intellij.java.frontback.psi"/>
     <module name="intellij.java.psi"/>
@@ -71,6 +72,8 @@
   </applicationListeners>
 
   <extensions defaultExtensionNs="com.intellij">
+    <jarRepositoryAuthenticationDataProvider
+        implementation="org.jetbrains.kotlin.idea.core.script.dependencies.ScriptRepositoryAuthenticationDataProvider"/>
     <localInspection implementationClass="org.jetbrains.kotlin.idea.core.script.inspections.KotlinScriptTemplateNotRegisteredInspection"
                      language="kotlin"
                      groupPath="Kotlin"

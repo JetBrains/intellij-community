@@ -7,11 +7,14 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.core.script.definition.kotlinScriptTemplate
 import java.nio.file.Path
+import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.dependenciesSources
+import kotlin.script.experimental.api.hostConfiguration
 import kotlin.script.experimental.api.ide
 import kotlin.script.experimental.api.with
 import kotlin.script.experimental.host.ScriptDefinition
 import kotlin.script.experimental.host.ScriptingHostConfiguration
+import kotlin.script.experimental.host.shouldResolveDependencies
 import kotlin.script.experimental.intellij.ScriptDefinitionsProvider
 import kotlin.script.experimental.jvm.JvmDependency
 
@@ -40,6 +43,12 @@ class MainKtsScriptDefinitionsProvider(val project: Project) : ScriptDefinitions
                 @Suppress("HardCodedStringLiteral")
                 description = "Standalone script, supports @file:DependsOn for external library imports."
             }
+
+            hostConfiguration(
+                ScriptingHostConfiguration(this[ScriptCompilationConfiguration.hostConfiguration] ?: baseHostConfiguration) {
+                    shouldResolveDependencies(false)
+                }
+            )
         }
 
         ScriptDefinition(compilationConfiguration, definition.evaluationConfiguration)

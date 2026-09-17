@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform
 
 import com.intellij.ide.plugins.DynamicPluginListener
@@ -50,6 +50,7 @@ import org.jetbrains.kotlin.idea.base.util.caching.getChanges
 import org.jetbrains.kotlin.idea.facet.isKotlinFacet
 import org.jetbrains.kotlin.idea.util.AbstractSingleFileModuleBeforeFileEventListener
 import org.jetbrains.kotlin.idea.workspaceModel.KotlinSettingsEntity
+import org.jetbrains.kotlin.psi.KtPlatformInterface
 import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.alwaysTrue
 import java.net.URL
@@ -94,6 +95,8 @@ class FirIdeModuleStateModificationService(val project: Project) : Disposable {
     internal class BuiltinsFileDocumentListener(private val project: Project) : FileDocumentManagerListener {
         private val builtinsFiles: Set<String> by lazy {
             val result = mutableSetOf<String>()
+
+            @OptIn(KtPlatformInterface::class)
             object : BuiltinsVirtualFileProviderBaseImpl() {
                 override fun findVirtualFile(url: URL): VirtualFile {
                     result.addIfNotNull(URLUtil.splitJarUrl(url.file)?.first)

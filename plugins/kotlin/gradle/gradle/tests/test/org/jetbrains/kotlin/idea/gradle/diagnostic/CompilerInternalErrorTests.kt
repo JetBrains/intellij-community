@@ -5,6 +5,7 @@ import org.testng.annotations.Test
 import java.io.File
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class CompilerInternalErrorTests {
@@ -60,6 +61,44 @@ class CompilerInternalErrorTests {
                          "expected kotlin version: \n$kotlinVersion but got \n${kotlinCompilerCrash.version}")
         }
         assertTrue { wasCalled }
+    }
+
+    @Test
+    fun `parse stack that has no message for the top-level exception`() {
+        val rawStack = listOf(
+            "\tat org.test.Foo.fail(Foo.kt:10)",
+            "Caused by: java.lang.IllegalStateException: broken",
+            "\tat org.test.Foo.check(Foo.kt:20)",
+            "\t... 1 more",
+        )
+
+        val exceptions = CompilerInternalError.parseStack(rawStack)
+        assertEquals(1, exceptions.size)
+
+        val exception = exceptions.first()
+        assertNull(exception.message, "the report has no message for the top-level exception")
+        assertEquals("org.test.Foo.fail(Foo.kt:10)", exception.stackTrace.single().toString())
+
+        val cause = exception.cause!!
+        assertEquals("java.lang.IllegalStateException: broken", cause.message)
+        assertEquals("org.test.Foo.check(Foo.kt:20)", cause.stackTrace.single().toString())
+        assertNull(cause.cause)
+    }
+
+    @Test
+    fun `parse stack that starts with a cause`() {
+        val rawStack = listOf(
+            "Caused by: java.lang.IllegalStateException: broken",
+            "\tat org.test.Foo.check(Foo.kt:20)",
+        )
+
+        val exceptions = CompilerInternalError.parseStack(rawStack)
+        assertEquals(1, exceptions.size)
+
+        val exception = exceptions.first()
+        assertEquals("java.lang.IllegalStateException: broken", exception.message)
+        assertEquals("org.test.Foo.check(Foo.kt:20)", exception.stackTrace.single().toString())
+        assertNull(exception.cause, "an empty level must not become an exception")
     }
 
 }

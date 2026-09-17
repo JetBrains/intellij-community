@@ -1,24 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
-load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build kotlin.util.compiler-dependencies` start
-create_kotlinc_options(
-    name = "custom_compiler-dependencies",
-    opt_in = [
-        "org.jetbrains.kotlin.psi.KtExperimentalApi",
-        "org.jetbrains.kotlin.psi.KtNonPublicApi",
-        "org.jetbrains.kotlin.psi.KtIdeApi",
-        "org.jetbrains.kotlin.analysis.api.KaExperimentalApi",
-        "org.jetbrains.kotlin.analysis.api.KaIdeApi",
-        "org.jetbrains.kotlin.analysis.api.KaPlatformInterface",
-        "org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaUnstableDiagnosticApi",
-        "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
-        "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
-        "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
-    ],
-    x_context_parameters = True,
-)
-
 jvm_library(
     name = "compiler-dependencies",
     srcs = glob(
@@ -44,12 +26,12 @@ jvm_library(
         "//libraries/kotlinc/low-level-api-fir:libraries-kotlinc-low-level-api-fir",
         "//libraries/kotlinc/noarg-compiler-plugin:libraries-kotlinc-noarg-compiler-plugin",
         "//libraries/kotlinc/parcelize-compiler-plugin:libraries-kotlinc-parcelize-compiler-plugin",
-        "//libraries/kotlinc/scripting-compiler-plugin:libraries-kotlinc-scripting-compiler-plugin",
-        "//libraries/kotlinc/kotlin-dataframe-compiler-plugin:libraries-kotlinc-kotlin-dataframe-compiler-plugin",
         "//libraries/kotlinc/sam-with-receiver-compiler-plugin:libraries-kotlinc-sam-with-receiver-compiler-plugin",
         "//libraries/kotlinc/assignment-compiler-plugin:libraries-kotlinc-assignment-compiler-plugin",
+        "//libraries/kotlinc/scripting-compiler-plugin:libraries-kotlinc-scripting-compiler-plugin",
         "//libraries/kotlinc/compose-compiler-plugin:libraries-kotlinc-compose-compiler-plugin",
         "//libraries/kotlinc/js-plain-objects-compiler-plugin:libraries-kotlinc-js-plain-objects-compiler-plugin",
+        "//libraries/kotlinc/kotlin-dataframe-compiler-plugin:libraries-kotlinc-kotlin-dataframe-compiler-plugin",
         "//libraries/kotlinc/kotlin-jps-common:libraries-kotlinc-kotlin-jps-common",
         "//libraries/kotlinc/kotlin-scripting-common:libraries-kotlinc-kotlin-scripting-common",
         "//libraries/kotlinc/kotlin-scripting-dependencies:libraries-kotlinc-kotlin-scripting-dependencies",
@@ -66,7 +48,6 @@ jvm_library(
         [],
         allow_empty = True,
     ),
-    kotlinc_opts = ":custom_compiler-dependencies",
     module_name = "kotlin.util.compiler-dependencies",
     visibility = ["//visibility:public"],
     runtime_deps = [
@@ -92,12 +73,12 @@ jvm_library(
         "//libraries/kotlinc/low-level-api-fir:libraries-kotlinc-low-level-api-fir_test_lib",
         "//libraries/kotlinc/noarg-compiler-plugin:libraries-kotlinc-noarg-compiler-plugin_test_lib",
         "//libraries/kotlinc/parcelize-compiler-plugin:libraries-kotlinc-parcelize-compiler-plugin_test_lib",
-        "//libraries/kotlinc/scripting-compiler-plugin:libraries-kotlinc-scripting-compiler-plugin_test_lib",
-        "//libraries/kotlinc/kotlin-dataframe-compiler-plugin:libraries-kotlinc-kotlin-dataframe-compiler-plugin_test_lib",
         "//libraries/kotlinc/sam-with-receiver-compiler-plugin:libraries-kotlinc-sam-with-receiver-compiler-plugin_test_lib",
         "//libraries/kotlinc/assignment-compiler-plugin:libraries-kotlinc-assignment-compiler-plugin_test_lib",
+        "//libraries/kotlinc/scripting-compiler-plugin:libraries-kotlinc-scripting-compiler-plugin_test_lib",
         "//libraries/kotlinc/compose-compiler-plugin:libraries-kotlinc-compose-compiler-plugin_test_lib",
         "//libraries/kotlinc/js-plain-objects-compiler-plugin:libraries-kotlinc-js-plain-objects-compiler-plugin_test_lib",
+        "//libraries/kotlinc/kotlin-dataframe-compiler-plugin:libraries-kotlinc-kotlin-dataframe-compiler-plugin_test_lib",
         "//libraries/kotlinc/kotlin-jps-common:libraries-kotlinc-kotlin-jps-common_test_lib",
         "@lib//:kotlinc-kotlin-objcexport-header-generator-provided",
         "@lib//:kotlinc-kotlin-swift-export-provided",
