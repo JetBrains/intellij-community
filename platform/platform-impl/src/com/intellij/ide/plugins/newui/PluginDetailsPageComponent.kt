@@ -67,6 +67,7 @@ import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.ui.components.panels.ListLayout
 import com.intellij.ui.components.panels.ListLayout.Companion.horizontal
+import com.intellij.ui.components.panels.ListLayout.Companion.vertical
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.OpaquePanel
 import com.intellij.ui.components.panels.Wrapper
@@ -429,7 +430,7 @@ class PluginDetailsPageComponent private constructor(
   private fun createTabsContentPanel() {
     panel = OpaquePanel(BorderLayout(), PluginManagerConfigurable.MAIN_BG_COLOR)
 
-    val topPanel = OpaquePanel(VerticalLayout(JBUI.scale(8)), PluginManagerConfigurable.MAIN_BG_COLOR)
+    val topPanel = OpaquePanel(vertical(8, horGrow = ListLayout.GrowPolicy.NO_GROW), PluginManagerConfigurable.MAIN_BG_COLOR)
     topPanel.border = createMainBorder(layout.contentHorizontalInset)
     panel!!.add(topPanel, BorderLayout.NORTH)
 
@@ -442,10 +443,11 @@ class PluginDetailsPageComponent private constructor(
     homePage = LinkPanel(linkPanel, false)
 
     topPanel.add(nameAndButtons)
-    topPanel.add(mySuggestedIdeBanner, VerticalLayout.FILL_HORIZONTAL)
+    topPanel.add(mySuggestedIdeBanner, ListLayout.GrowPolicy.GROW)
 
-    suggestedFeatures = SuggestedComponent()
-    topPanel.add(suggestedFeatures, VerticalLayout.FILL_HORIZONTAL)
+    val suggestedFeaturesComponent = SuggestedComponent()
+    suggestedFeatures = suggestedFeaturesComponent
+    topPanel.add(suggestedFeaturesComponent, ListLayout.GrowPolicy.GROW)
 
     val unknownUpdateSourceWarning = UpdateSourceBanner.createUnknownPluginUpdateSourceWarning {
       val popup = createUpdateSourcesPopup(myPluginUpdateSourceId!!) {
@@ -458,11 +460,11 @@ class PluginDetailsPageComponent private constructor(
       }
     }
     unknownUpdateSourceBanner = unknownUpdateSourceWarning
-    topPanel.add(unknownUpdateSourceWarning, VerticalLayout.FILL_HORIZONTAL)
+    topPanel.add(unknownUpdateSourceWarning, ListLayout.GrowPolicy.GROW)
 
     val successBanner = UpdateSourceBanner.createSuccessfullyUpdateSourceSetting()
     updateSourceInitializedBanner = successBanner
-    topPanel.add(successBanner, VerticalLayout.FILL_HORIZONTAL)
+    topPanel.add(successBanner, ListLayout.GrowPolicy.GROW)
 
     additionalTextLabel.foreground = ListPluginComponent.GRAY_COLOR
     additionalTextLabel.isVisible = false
@@ -476,18 +478,18 @@ class PluginDetailsPageComponent private constructor(
     createButtons()
     nameAndButtons!!.setProgressDisabledButton((if (isMarketplace) installButton?.getComponent() else if (pluginManagerCustomizer != null && updateDescriptor == null) gearButton else updateButton)!!)
 
-    topPanel.add(ErrorComponent().also { errorComponent = it }, VerticalLayout.FILL_HORIZONTAL)
+    topPanel.add(ErrorComponent().also { errorComponent = it }, ListLayout.GrowPolicy.GROW)
     topPanel.add(licensePanel)
     licensePanel.border = JBUI.Borders.emptyBottom(5)
     topPanel.add(customLicensePanel)
     customLicensePanel.border = JBUI.Borders.emptyBottom(5)
 
     if (unavailableWithoutSubscriptionBanner != null) {
-      topPanel.add(unavailableWithoutSubscriptionBanner, VerticalLayout.FILL_HORIZONTAL)
+      topPanel.add(unavailableWithoutSubscriptionBanner, ListLayout.GrowPolicy.GROW)
       unavailableWithoutSubscriptionBanner.isVisible = false
     }
     if (partiallyAvailableBanner != null) {
-      topPanel.add(partiallyAvailableBanner, VerticalLayout.FILL_HORIZONTAL)
+      topPanel.add(partiallyAvailableBanner, ListLayout.GrowPolicy.GROW)
       partiallyAvailableBanner.isVisible = false
     }
 
@@ -900,7 +902,7 @@ class PluginDetailsPageComponent private constructor(
   }
 
   private fun createAdditionalInfoTab(pane: JBTabbedPane) {
-    val infoPanel: JPanel = OpaquePanel(VerticalLayout(JBUI.scale(16)), PluginManagerConfigurable.MAIN_BG_COLOR)
+    val infoPanel: JPanel = OpaquePanel(vertical(16, horGrow = ListLayout.GrowPolicy.NO_GROW), PluginManagerConfigurable.MAIN_BG_COLOR)
     val horizontalInset = layout.tabContentHorizontalInset
     infoPanel.border = if (horizontalInset == null) {
       JBUI.Borders.empty(16, 12, 0, 0)
@@ -931,7 +933,7 @@ class PluginDetailsPageComponent private constructor(
     mySize = addLabel()
     myPluginId = addLabel()
     initializePluginSourceIdDropDownLink(infoPanel)
-    infoPanel.add(createRequiredPluginsComponent().also { requiredPlugins = it }, VerticalLayout.FILL_HORIZONTAL)
+    infoPanel.add(createRequiredPluginsComponent().also { requiredPlugins = it }, ListLayout.GrowPolicy.GROW)
 
     if (isMarketplace && ApplicationManager.getApplication().isInternal) {
       infoPanel.add(JLabel().also { customRepoForDebug = it })
