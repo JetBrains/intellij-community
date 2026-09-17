@@ -908,12 +908,23 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
 
   private static final long REBUILD_LIST_DELAY = 100;
   private final Alarm rebuildListAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
+  /**
+   * True while a rebuild waits in {@link #rebuildListAlarm}.
+   * <p>
+   * The flag drops to false when the rebuild starts, so a change that arrives while the rebuild runs schedules the next
+   * one. {@link Alarm#getActiveRequestCount()} also counts the running request, so it cannot answer this question.
+   */
+  private boolean rebuildListScheduled;
 
   private void scheduleRebuildList(SearchRestartReason reason) {
-    if (!rebuildListAlarm.isDisposed() && rebuildListAlarm.getActiveRequestCount() == 0) {
-      long delay = StringUtil.isEmpty(getSearchPattern()) ? 0 : REBUILD_LIST_DELAY;
-      rebuildListAlarm.addRequest(() -> rebuildList(reason), delay);
-    }
+    if (rebuildListAlarm.isDisposed() || rebuildListScheduled) return;
+
+    rebuildListScheduled = true;
+    long delay = StringUtil.isEmpty(getSearchPattern()) ? 0 : REBUILD_LIST_DELAY;
+    rebuildListAlarm.addRequest(() -> {
+      rebuildListScheduled = false;
+      rebuildList(reason);
+    }, delay);
   }
 
   private void rebuildList(SearchRestartReason reason) {
