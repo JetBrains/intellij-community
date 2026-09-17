@@ -12,7 +12,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.search.impl.VirtualFileEnumeration
 import com.intellij.psi.search.impl.VirtualFileEnumerationAware
-import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.indexing.IndexingBundle
 import it.unimi.dsi.fastutil.objects.Object2IntMap
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
@@ -121,7 +120,7 @@ class ModuleWithDependenciesScope internal constructor(
   ) {
     fun calculateRoots(): RootContainer {
       return if (isSharedSourceSupportEnabled(module.project)) {
-        MultiverseRootContainer(calcRootsMultiverse())
+        calcRootsMultiverse()
       }
       else {
         ClassicRootContainer(calcRoots())
@@ -144,18 +143,11 @@ class ModuleWithDependenciesScope internal constructor(
       return map
     }
 
-    private fun calcRootsMultiverse(): Map<VirtualFile, ScopeRootDescriptor> {
+    private fun calcRootsMultiverse(): MultiverseRootContainer {
       val en = getOrderEnumeratorForOptions(module, myOptions).roots { entry ->
         if (entry is ModuleOrderEntry || entry is ModuleSourceOrderEntry) OrderRootType.SOURCES else OrderRootType.CLASSES
       }
-      val entries = en.getRootEntries()
-
-      var i = 1
-      val map = CollectionFactory.createSmallMemoryFootprintMap<VirtualFile, ScopeRootDescriptor>(entries.size)
-      for (root in entries) {
-        map.putIfAbsent(root.root, ScopeRootDescriptor(root.orderEntry, i++))
-      }
-      return map
+      return MultiverseRootContainer.build(en.getRootEntries())
     }
   }
 }

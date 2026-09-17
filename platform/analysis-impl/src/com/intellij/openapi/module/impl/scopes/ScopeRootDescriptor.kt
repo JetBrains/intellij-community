@@ -21,31 +21,26 @@ import com.intellij.openapi.roots.impl.SdkRootDescriptor
 
 internal fun ScopeRootDescriptor(
   orderEntry: OrderEntry,
-  orderIndex: Int, // used to check which dependency has higher priority
 ): ScopeRootDescriptor = when (orderEntry) {
-  is LibraryOrderEntry -> LibScopeDescriptor(orderEntry, orderIndex)
-  is ModuleOrderEntry -> ModuleScopeDescriptor(orderEntry, orderIndex)
-  is ModuleSourceOrderEntry -> ModuleSourceScopeDescriptor(orderEntry, orderIndex)
-  is JdkOrderEntry -> SdkScopeDescriptor(orderEntry, orderIndex)
+  is LibraryOrderEntry -> LibScopeDescriptor(orderEntry)
+  is ModuleOrderEntry -> ModuleScopeDescriptor(orderEntry)
+  is ModuleSourceOrderEntry -> ModuleSourceScopeDescriptor(orderEntry)
+  is JdkOrderEntry -> SdkScopeDescriptor(orderEntry)
   else -> {
     log.error("Unexpected order entry: $orderEntry")
-    InvalidScopeDescriptor(orderEntry, orderIndex)
+    InvalidScopeDescriptor(orderEntry)
   }
 }
 
 internal sealed interface ScopeRootDescriptor {
   val orderEntry: OrderEntry
 
-  /** used to check which dependency has higher priority */
-  val orderIndex: Int
-
   fun correspondTo(rootDescriptor: RootDescriptor): Boolean
 }
 
 private class LibScopeDescriptor(
   orderEntry: LibraryOrderEntry,
-  orderIndex: Int,
-) : ScopeRootDescriptorBase<LibraryOrderEntry>(orderEntry, orderIndex) {
+) : ScopeRootDescriptorBase<LibraryOrderEntry>(orderEntry) {
   override fun correspondTo(rootDescriptor: RootDescriptor): Boolean {
     if (rootDescriptor is LibraryRootDescriptor) {
       val library = orderEntry.library ?: return false
@@ -57,8 +52,7 @@ private class LibScopeDescriptor(
 
 private class ModuleScopeDescriptor(
   orderEntry: ModuleOrderEntry,
-  orderIndex: Int,
-) : ScopeRootDescriptorBase<ModuleOrderEntry>(orderEntry, orderIndex) {
+) : ScopeRootDescriptorBase<ModuleOrderEntry>(orderEntry) {
   override fun correspondTo(rootDescriptor: RootDescriptor): Boolean {
     if (rootDescriptor is ModuleRootDescriptor) {
       val module = orderEntry.module
@@ -70,8 +64,7 @@ private class ModuleScopeDescriptor(
 
 private class ModuleSourceScopeDescriptor(
   orderEntry: ModuleSourceOrderEntry,
-  orderIndex: Int,
-) : ScopeRootDescriptorBase<ModuleSourceOrderEntry>(orderEntry, orderIndex) {
+) : ScopeRootDescriptorBase<ModuleSourceOrderEntry>(orderEntry) {
   override fun correspondTo(rootDescriptor: RootDescriptor): Boolean {
     if (rootDescriptor is ModuleRootDescriptor) {
       val module = orderEntry.rootModel.module
@@ -83,8 +76,7 @@ private class ModuleSourceScopeDescriptor(
 
 private class SdkScopeDescriptor(
   orderEntry: JdkOrderEntry,
-  orderIndex: Int,
-) : ScopeRootDescriptorBase<JdkOrderEntry>(orderEntry, orderIndex) {
+) : ScopeRootDescriptorBase<JdkOrderEntry>(orderEntry) {
   @Volatile
   private var cachedSdk: Any? = null
 
@@ -128,12 +120,10 @@ private class SdkScopeDescriptor(
 
 private class InvalidScopeDescriptor(
   orderEntry: OrderEntry,
-  orderIndex: Int,
-) : ScopeRootDescriptorBase<OrderEntry>(orderEntry, orderIndex)
+) : ScopeRootDescriptorBase<OrderEntry>(orderEntry)
 
 private abstract class ScopeRootDescriptorBase<Entry : OrderEntry>(
   override val orderEntry: Entry,
-  override val orderIndex: Int, // used to check which dependency has higher priority
 ) : ScopeRootDescriptor {
   override fun correspondTo(rootDescriptor: RootDescriptor): Boolean {
     if (rootDescriptor !is DummyRootDescriptor) return false
