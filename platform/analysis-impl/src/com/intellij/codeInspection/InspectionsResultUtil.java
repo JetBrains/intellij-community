@@ -97,7 +97,7 @@ public final class InspectionsResultUtil {
 
           final String description = toolWrapper.loadDescription();
           if (description != null) {
-            xmlWriter.writeCharacters(description);
+            xmlWriter.writeCharacters(ProblemDescriptorUtil.sanitizeIllegalXmlChars(description));
           }
           else {
             inspectionsWithoutDescriptions.add(shortName);
