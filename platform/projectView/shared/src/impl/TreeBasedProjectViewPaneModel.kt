@@ -918,28 +918,34 @@ abstract class TreeBasedProjectViewPaneModel<T : Any>(override val project: Proj
       for ((nodeId, updateOptions) in updatesForPath) {
         LOG.trace { "Update for ${n(nodeId)}: $updateOptions" }
         if (updateOptions == null) continue
-        applyNodeUpdate(nodeId, updateOptions)
-        if (updateOptions.deep) break // we've just updated all deeper nodes
+        val effectiveOptions = applyNodeUpdate(nodeId, updateOptions)
+        if (effectiveOptions == null) break // the node is gone with all its children
+        if (effectiveOptions.deep) break // we've just updated all deeper nodes
       }
     }
 
-    private suspend fun applyNodeUpdate(nodeId: Long, updateOptions: ProjectViewNodeUpdateOptions) {
-      val node = suspendingState.getNodeById(nodeId) ?: return
-      val newNodeModel = createUpdatedModel(node)
-      if (newNodeModel == null) { // the node was removed/invalidated
-        LOG.trace { "The node ${n(nodeId)} no longer exists" }
-        val parent = suspendingState.getParentByChildId(nodeId) ?: return
-        val siblings = suspendingState.getChildren(parent) ?: return
-        val childIndex = siblings.indexOf(node).takeIf { it != -1 } ?: return
-        builder.removeNodeChild(parent.id, childIndex)
+    private suspend fun applyNodeUpdate(nodeId: Long, updateOptions: ProjectViewNodeUpdateOptions): ProjectViewNodeUpdateOptions? {
+      var node = suspendingState.getNodeById(nodeId) ?: return null // was removed earlier, nothing to update
+      var effectiveOptions = updateOptions
+      var newNodeModel: BackendProjectViewNodeModel<T>?
+      while (true) {
+        newNodeModel = createUpdatedModel(node)
+        if (newNodeModel != null) break
+        // A structural update like this can happen, for example, if there was some restructuring of a subtree.
+        // For example, we had "org.example", and created "org.something", which means "org.example" no longer exists as a single flattened node,
+        // and we have "org" instead with two children. Trying to update "org.example" will find out that it's gone, so we need to update its parent's children instead.
+        // Otherwise, it'll simply disappear (IJPL-255213).
+        LOG.trace { "The node ${n(node.id)} no longer exists, meaning it's a structural update of an ancestor, propagating..." }
+        node = suspendingState.getParentByChildId(node.id) ?: return null // was removed earlier, nothing to update
+        LOG.trace { "Trying ${n(node.id)}..." }
+        effectiveOptions = updateOptions.withDeep()
       }
-      else {
-        LOG.trace { "The node ${n(nodeId)} is updated, the new model is $newNodeModel" }
-        builder.updateNode(newNodeModel)
-        if (updateOptions.deep) { // update recursively, but only already loaded children
-          updateChildren(parentId = nodeId, allowLoading = false, deep = true)
-        }
+      LOG.trace { "The node ${n(node.id)} is updated, the new model is $newNodeModel" }
+      builder.updateNode(newNodeModel)
+      if (effectiveOptions.deep) { // update recursively, but only already loaded children
+        updateChildren(parentId = node.id, allowLoading = false, deep = true)
       }
+      return effectiveOptions
     }
 
     suspend fun updateChildren(parentId: Long, allowLoading: Boolean, deep: Boolean) {
