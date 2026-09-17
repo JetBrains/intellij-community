@@ -1,0 +1,11 @@
+// "Remove the receiver" "true"
+// COMPILER_ARGUMENTS: -XXLanguage:+CompanionBlocks -XXLanguage:+CompanionExtensions
+// K2_ERROR: UNRESOLVED_REFERENCE
+class Example {
+    fun m(e: Example): Int = e.n<caret>um
+
+    companion {
+        val num = 1
+    }
+}
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.RemoveInstanceReceiverForCompanionMemberFix

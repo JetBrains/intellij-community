@@ -438,6 +438,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(UnresolvedInvocationQuickFixFactories.removeParentInvocationQuickFixFactory)
         registerFactory(UnresolvedInvocationQuickFixFactories.addInterpolationPrefixFixFactory)
         registerFactory(UnresolvedInvocationQuickFixFactories.removeInvocationQuickFixFactory)
+        registerFactory(CompanionMemberFixFactories.unresolvedReferenceFactory)
         registerFactory(AddExclExclCallFixFactories.unsafeCallFactory)
         registerFactory(AddExclExclCallFixFactories.unsafeInfixCallFactory)
         registerFactory(AddExclExclCallFixFactories.unsafeOperatorCallFactory)

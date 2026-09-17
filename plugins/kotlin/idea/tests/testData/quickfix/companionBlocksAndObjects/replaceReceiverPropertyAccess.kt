@@ -1,0 +1,11 @@
+// "Replace the receiver with 'Example'" "true"
+// COMPILER_ARGUMENTS: -XXLanguage:+CompanionBlocks -XXLanguage:+CompanionExtensions
+// K2_ERROR: UNRESOLVED_REFERENCE
+class Example {
+    companion {
+        val test = 1
+    }
+}
+
+fun m(e: Example): Int = e.t<caret>est
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ReplaceInstanceReceiverWithClassNameFix

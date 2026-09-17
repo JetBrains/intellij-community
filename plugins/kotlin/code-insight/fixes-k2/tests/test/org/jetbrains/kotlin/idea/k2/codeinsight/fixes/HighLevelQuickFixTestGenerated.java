@@ -3099,6 +3099,134 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/companionBlocksAndObjects")
+    public static class CompanionBlocksAndObjects extends AbstractHighLevelQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("removeReceiverCompanionExtensionInsideClass.kt")
+        public void testRemoveReceiverCompanionExtensionInsideClass() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/companionBlocksAndObjects/removeReceiverCompanionExtensionInsideClass.kt");
+        }
+
+        @TestMetadata("removeReceiverCompanionExtensionUnavailableOutside.kt")
+        public void testRemoveReceiverCompanionExtensionUnavailableOutside() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/companionBlocksAndObjects/removeReceiverCompanionExtensionUnavailableOutside.kt");
+        }
+
+        @TestMetadata("removeReceiverCompanionObjectMemberInsideClass.kt")
+        public void testRemoveReceiverCompanionObjectMemberInsideClass() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/companionBlocksAndObjects/removeReceiverCompanionObjectMemberInsideClass.kt");
+        }
+
+        @TestMetadata("removeReceiverCompanionObjectPropertyAccessInsideClass.kt")
+        public void testRemoveReceiverCompanionObjectPropertyAccessInsideClass() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/companionBlocksAndObjects/removeReceiverCompanionObjectPropertyAccessInsideClass.kt");
+        }
+
+        @TestMetadata("removeReceiverMemberInsideClass.kt")
+        public void testRemoveReceiverMemberInsideClass() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/companionBlocksAndObjects/removeReceiverMemberInsideClass.kt");
+        }
+
+        @TestMetadata("removeReceiverPropertyAccessInsideClass.kt")
+        public void testRemoveReceiverPropertyAccessInsideClass() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/companionBlocksAndObjects/removeReceiverPropertyAccessInsideClass.kt");
+        }
+
+        @TestMetadata("removeReceiverUnavailableOutsideClass.kt")
+        public void testRemoveReceiverUnavailableOutsideClass() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/companionBlocksAndObjects/removeReceiverUnavailableOutsideClass.kt");
+        }
+
+        @TestMetadata("removeReceiverUnavailableSideEffectingReceiver.kt")
+        public void testRemoveReceiverUnavailableSideEffectingReceiver() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/companionBlocksAndObjects/removeReceiverUnavailableSideEffectingReceiver.kt");
+        }
+
+        @TestMetadata("removeReceiverWrongSignature.kt")
+        public void testRemoveReceiverWrongSignature() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/companionBlocksAndObjects/removeReceiverWrongSignature.kt");
+        }
+
+        @TestMetadata("replaceReceiverBlockMemberWithCompanionObject.kt")
+        public void testReplaceReceiverBlockMemberWithCompanionObject() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/companionBlocksAndObjects/replaceReceiverBlockMemberWithCompanionObject.kt");
+        }
+
+        @TestMetadata("replaceReceiverCompanionExtension.kt")
+        public void testReplaceReceiverCompanionExtension() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/companionBlocksAndObjects/replaceReceiverCompanionExtension.kt");
+        }
+
+        @TestMetadata("replaceReceiverCompanionObjectMemberOutsideClass.kt")
+        public void testReplaceReceiverCompanionObjectMemberOutsideClass() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/companionBlocksAndObjects/replaceReceiverCompanionObjectMemberOutsideClass.kt");
+        }
+
+        @TestMetadata("replaceReceiverMemberInsideClass.kt")
+        public void testReplaceReceiverMemberInsideClass() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/companionBlocksAndObjects/replaceReceiverMemberInsideClass.kt");
+        }
+
+        @TestMetadata("replaceReceiverMemberInsideClassCompanionObject.kt")
+        public void testReplaceReceiverMemberInsideClassCompanionObject() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/companionBlocksAndObjects/replaceReceiverMemberInsideClassCompanionObject.kt");
+        }
+
+        @TestMetadata("replaceReceiverMemberOutsideClass.kt")
+        public void testReplaceReceiverMemberOutsideClass() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/companionBlocksAndObjects/replaceReceiverMemberOutsideClass.kt");
+        }
+
+        @TestMetadata("replaceReceiverNestedNotImportedClass.kt")
+        public void testReplaceReceiverNestedNotImportedClass() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/companionBlocksAndObjects/replaceReceiverNestedNotImportedClass.kt");
+        }
+
+        @TestMetadata("replaceReceiverOverloads.kt")
+        public void testReplaceReceiverOverloads() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/companionBlocksAndObjects/replaceReceiverOverloads.kt");
+        }
+
+        @TestMetadata("replaceReceiverPropertyAccess.kt")
+        public void testReplaceReceiverPropertyAccess() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/companionBlocksAndObjects/replaceReceiverPropertyAccess.kt");
+        }
+
+        @TestMetadata("replaceReceiverSafeCall.kt")
+        public void testReplaceReceiverSafeCall() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/companionBlocksAndObjects/replaceReceiverSafeCall.kt");
+        }
+
+        @TestMetadata("replaceReceiverSideEffectingReceiver.kt")
+        public void testReplaceReceiverSideEffectingReceiver() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/companionBlocksAndObjects/replaceReceiverSideEffectingReceiver.kt");
+        }
+
+        @TestMetadata("replaceReceiverSideEffectingReceiverObject.kt")
+        public void testReplaceReceiverSideEffectingReceiverObject() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/companionBlocksAndObjects/replaceReceiverSideEffectingReceiverObject.kt");
+        }
+
+        @TestMetadata("replaceReceiverUnaccessible.kt")
+        public void testReplaceReceiverUnaccessible() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/companionBlocksAndObjects/replaceReceiverUnaccessible.kt");
+        }
+
+        @TestMetadata("replaceReceiverUnaccessibleCompanionObject.kt")
+        public void testReplaceReceiverUnaccessibleCompanionObject() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/companionBlocksAndObjects/replaceReceiverUnaccessibleCompanionObject.kt");
+        }
+
+        @TestMetadata("replaceReceiverWrongSignature.kt")
+        public void testReplaceReceiverWrongSignature() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/companionBlocksAndObjects/replaceReceiverWrongSignature.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/quickfix/conflictingImports")
     public static class ConflictingImports extends AbstractHighLevelQuickFixTest {
         private void runTest(String testDataFilePath) throws Exception {

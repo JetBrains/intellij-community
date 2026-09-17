@@ -70,6 +70,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/changeSuperTypeListEntryTypeArgument", pattern = pattern)
             model("$idea/quickfix/changeToLabeledReturn", pattern = pattern)
             model("$idea/quickfix/changeToUseSpreadOperator", pattern = pattern)
+            model("$idea/quickfix/companionBlocksAndObjects", pattern = pattern)
             model("$idea/quickfix/conflictingImports", pattern = pattern)
             model("$idea/quickfix/compilerError", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/convertCollectionLiteralToIntArrayOf", pattern = pattern)
