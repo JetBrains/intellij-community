@@ -105,7 +105,7 @@ val nioPath = eelPath.asNioPath()
 val eelPath = descriptor.asEelPath(project.basePath)
 ```
 
-See [Path Conversion](EelApi_Path_Conversion.md) for the details.
+See [EelPath and nio Path](eel-path-and-nio-path.md) for the rules and [Path Conversion](EelApi_Path_Conversion.md) for the use cases.
 
 ## Platform Detection
 

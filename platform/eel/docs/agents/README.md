@@ -15,8 +15,9 @@ The [Quick Reference](../api/quick-reference.md) shows the calls for each rule.
 
 1. [Eel Architecture](../overview/architecture.md). Five minutes. It explains the model and the Eel and IJent split.
 2. [Quick Reference](../api/quick-reference.md). The common calls.
-3. [Eel API Tutorial](../api/EelApi_Tutorial.md) when you need the full explanation.
-4. [Module Layout](../internal/module-layout.md) and [Testing](../internal/testing.md) before you change Eel code.
+3. [Two File System APIs](../overview/file-systems.md) and [EelPath and nio Path](../api/eel-path-and-nio-path.md) before you touch a path or a file.
+4. [Eel API Tutorial](../api/EelApi_Tutorial.md) when you need the full explanation.
+5. [Module Layout](../internal/module-layout.md), [Testing](../internal/testing.md), and [NIO Routing Internals](../internal/nio-routing.md) before you change Eel code.
 
 ## Where a New Document Goes
 

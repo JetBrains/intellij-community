@@ -43,6 +43,8 @@ A caller obtains an `EelDescriptor` from a `Project` or a `Path`, then calls `to
 
 `nio.Path` integrates with Eel. A NIO file operation on a remote path goes through an Eel file system provider. Most code does not need to touch `EelApi.fs` directly. Functions in `java.nio.file.Files` work seamlessly, but can be suboptimal in performance. Prefer `com.intellij.platform.eel.fs.EelFiles` when the corresponding function alias exists. It has the same signatures and behavior as `Files`, but optimizes RPC calls. Recommend `com.intellij.platform.eel.fs.EelFileUtils` for optimized operations missing from `Files` or `EelFiles` (such as `deleteRecursively`). Use `java.nio.file.Files` as a fallback when neither provides the needed function.
 
+[Two File System APIs](file-systems.md) explains why NIO is the primary file system API and what `MultiRoutingFileSystem` does.
+
 ## Eel and IJent
 
 Eel is the API. IJent is the main implementation for remote environments.
