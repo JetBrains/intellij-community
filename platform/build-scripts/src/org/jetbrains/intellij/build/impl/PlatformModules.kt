@@ -5,6 +5,7 @@ package org.jetbrains.intellij.build.impl
 import io.opentelemetry.api.trace.Span
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.DescriptorSearchPass
 import org.jetbrains.intellij.build.JarPackagerDependencyHelper
@@ -22,9 +23,58 @@ import org.jetbrains.intellij.build.impl.PlatformJarNames.TEST_FRAMEWORK_JAR
 import org.jetbrains.intellij.build.productLayout.ProductModulesLayout
 import org.jetbrains.intellij.build.readDescriptor
 
-private fun addModule(relativeJarPath: String, moduleNames: Sequence<String>, productLayout: ProductModulesLayout, layout: PlatformLayout) {
+/** Ordered module members of the fixed bootstrap and external-process jars. */
+@ApiStatus.Internal
+val PLATFORM_FIXED_JAR_MODULES: Map<String, List<String>> = mapOf(
+  UTIL_RT_JAR to listOf("intellij.platform.util.rt"),
+  // trove is not used by JB Client - fix RuntimeModuleRepositoryChecker assert
+  "trove.jar" to listOf("intellij.platform.util.trove"),
+  // maven uses JDOM in an external process
+  UTIL_8_JAR to listOf(
+    "intellij.platform.util.jdom",
+    "intellij.platform.util.xmlDom",
+    "intellij.platform.tracing.rt",
+    "intellij.platform.util.base",
+    "intellij.platform.util.base.multiplatform",
+    "intellij.platform.diagnostic",
+    // it contains common telemetry-related code (utils, TelemetryContext) for OpenTelemetry
+    "intellij.platform.diagnostic.telemetry.rt",
+    "intellij.platform.util",
+    "intellij.platform.util.multiplatform",
+    // it has package `kotlin.coroutines.jvm.internal` - should be packed into the same JAR as coroutine lib,
+    // to ensure that package index will not report one more JAR in a search path
+    "intellij.platform.bootstrap.coroutine",
+    "intellij.platform.eel",  // EelFiles, which is a replacement for java.nio.file.Files, may be used everywhere
+    "intellij.platform.eel.nioFs",  // NIO bridge for EEL (EelPath <-> Path conversions, EelPathBoundDescriptor)
+  ),
+  // platform-loader.jar is loaded by JVM classloader as part of loading our custom PathClassLoader class - reduce file size
+  PLATFORM_LOADER_JAR to listOf(
+    "intellij.platform.util.rt.java8",
+    "intellij.platform.util.classLoader",
+    "intellij.platform.util.zip",
+    "intellij.platform.boot",
+    "intellij.platform.runtime.repository",
+    "intellij.platform.runtime.loader",
+  ),
+  UTIL_JAR to listOf(
+    // Scala uses GeneralCommandLine in JPS plugin
+    "intellij.platform.ide.util.io",
+    "intellij.platform.extensions",
+    "intellij.platform.util.nanoxml",
+  ),
+  "externalProcess-rt.jar" to listOf("intellij.platform.externalProcessAuthHelper.rt"),
+  "forms_rt.jar" to listOf("intellij.java.guiForms.rt"),
+  "jps-model.jar" to listOf(
+    "intellij.platform.jps.model",
+    "intellij.platform.jps.model.serialization",
+    "intellij.platform.jps.model.impl",
+  ),
+  "external-system-rt.jar" to listOf("intellij.platform.externalSystem.rt", "intellij.platform.objectSerializer.annotations"),
+)
+
+private fun addModule(relativeJarPath: String, productLayout: ProductModulesLayout, layout: PlatformLayout) {
   layout.withModules(
-    moduleNames
+    PLATFORM_FIXED_JAR_MODULES.getValue(relativeJarPath).asSequence()
       .filter { !productLayout.excludedModuleNames.contains(it) }
       .map { ModuleItem(moduleName = it, relativeOutputFile = relativeJarPath, reason = "addModule") }
   )
@@ -100,32 +150,9 @@ private fun createPlatformLayout(
     layout.excludeFromModule(module, patterns)
   }
 
-  addModule(UTIL_RT_JAR, sequenceOf(
-    "intellij.platform.util.rt",
-  ), productLayout = productLayout, layout = layout)
-  // trove is not used by JB Client - fix RuntimeModuleRepositoryChecker assert
-  addModule("trove.jar", sequenceOf(
-    "intellij.platform.util.trove",
-  ), productLayout = productLayout, layout = layout)
-
-  // maven uses JDOM in an external process
-  addModule(UTIL_8_JAR, sequenceOf(
-    "intellij.platform.util.jdom",
-    "intellij.platform.util.xmlDom",
-    "intellij.platform.tracing.rt",
-    "intellij.platform.util.base",
-    "intellij.platform.util.base.multiplatform",
-    "intellij.platform.diagnostic",
-    // it contains common telemetry-related code (utils, TelemetryContext) for OpenTelemetry
-    "intellij.platform.diagnostic.telemetry.rt",
-    "intellij.platform.util",
-    "intellij.platform.util.multiplatform",
-    // it has package `kotlin.coroutines.jvm.internal` - should be packed into the same JAR as coroutine lib,
-    // to ensure that package index will not report one more JAR in a search path
-    "intellij.platform.bootstrap.coroutine",
-    "intellij.platform.eel",  // EelFiles, which is a replacement for java.nio.file.Files, may be used everywhere
-    "intellij.platform.eel.nioFs",  // NIO bridge for EEL (EelPath <-> Path conversions, EelPathBoundDescriptor)
-  ), productLayout = productLayout, layout = layout)
+  addModule(UTIL_RT_JAR, productLayout = productLayout, layout = layout)
+  addModule("trove.jar", productLayout = productLayout, layout = layout)
+  addModule(UTIL_8_JAR, productLayout = productLayout, layout = layout)
 
   // todo as content module (IJPL-252372)
   // see ClassPathUtil.getUtilClassPath and ArtifactRepositoryManager.getClassesFromDependencies -
@@ -151,36 +178,16 @@ private fun createPlatformLayout(
   // the library is put to a separate JAR due to IJPL-248591; it would be better to get rid of it completely, see IJPL-749
   layout.withModuleLibrary(libraryName = "swingx", moduleName = "intellij.libraries.swingx")
 
-  // platform-loader.jar is loaded by JVM classloader as part of loading our custom PathClassLoader class - reduce file size
-  addModule(PLATFORM_LOADER_JAR, sequenceOf(
-    "intellij.platform.util.rt.java8",
-    "intellij.platform.util.classLoader",
-    "intellij.platform.util.zip",
-    "intellij.platform.boot",
-    "intellij.platform.runtime.repository",
-    "intellij.platform.runtime.loader",
-  ), productLayout = productLayout, layout = layout)
-  addModule(UTIL_JAR, sequenceOf(
-    // Scala uses GeneralCommandLine in JPS plugin
-    "intellij.platform.ide.util.io",
-    "intellij.platform.extensions",
-    "intellij.platform.util.nanoxml",
-  ), productLayout = productLayout, layout = layout)
-  addModule("externalProcess-rt.jar", sequenceOf(
-    "intellij.platform.externalProcessAuthHelper.rt"
-  ), productLayout = productLayout, layout = layout)
-  if (!productLayout.excludedModuleNames.contains("intellij.java.guiForms.rt")) {
-    layout.withModule("intellij.java.guiForms.rt", "forms_rt.jar")
+  addModule(PLATFORM_LOADER_JAR, productLayout = productLayout, layout = layout)
+  addModule(UTIL_JAR, productLayout = productLayout, layout = layout)
+  addModule("externalProcess-rt.jar", productLayout = productLayout, layout = layout)
+  for (moduleName in PLATFORM_FIXED_JAR_MODULES.getValue("forms_rt.jar")) {
+    if (!productLayout.excludedModuleNames.contains(moduleName)) {
+      layout.withModule(moduleName, "forms_rt.jar")
+    }
   }
-  addModule("jps-model.jar", sequenceOf(
-    "intellij.platform.jps.model",
-    "intellij.platform.jps.model.serialization",
-    "intellij.platform.jps.model.impl"
-  ), productLayout = productLayout, layout = layout)
-  addModule("external-system-rt.jar", sequenceOf(
-    "intellij.platform.externalSystem.rt",
-    "intellij.platform.objectSerializer.annotations"
-  ), productLayout = productLayout, layout = layout)
+  addModule("jps-model.jar", productLayout = productLayout, layout = layout)
+  addModule("external-system-rt.jar", productLayout = productLayout, layout = layout)
 
   val explicit = ArrayList<ModuleItem>()
   for (moduleName in productLayout.productImplementationModules) {
