@@ -456,3 +456,5 @@ val process = (wslApi as EelPosixApi).exec.spawnProcess("/bin/bash")
 7. **Use the builder pattern**: Many EelApi methods accept builder objects for configuring options. Use them to make your code more readable and maintainable.
 
 8. **Prefer `toEelApi()` over `toEelApiBlocking()`**: Use the suspending version when possible to avoid blocking threads.
+
+9. **Prefer `EelFiles` and `EelFileUtils` over `java.nio.file.Files` for file operations**: Functions in `java.nio.file.Files` work seamlessly with Eel, but can be suboptimal in performance. Prefer `com.intellij.platform.eel.fs.EelFiles` when the needed function alias exists. Functions in `EelFiles` have the same signatures and behavior as in `Files`, but optimize RPC round-trips. Recommend `com.intellij.platform.eel.fs.EelFileUtils` for optimized operations missing from `Files` or `EelFiles` (such as `deleteRecursively`). When neither provides the required function, use `java.nio.file.Files`. See [NIO Integration](EelApi_NIO_Integration.md).
