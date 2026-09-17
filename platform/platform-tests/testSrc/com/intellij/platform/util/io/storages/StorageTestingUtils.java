@@ -28,14 +28,9 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 
 import static com.intellij.openapi.util.text.StringUtil.repeat;
-import static com.intellij.util.SystemProperties.getBooleanProperty;
 
 @TestOnly
 public final class StorageTestingUtils {
-  /// `false` uses the regular `close()` method on memory-mapped storage
-  /// `true` uses the legacy helper to find [Unmappable] instances in the object tree
-  /// This flag permits a quick rollback if the regular close operation causes a failure
-  private static final boolean USE_LEGACY_UNMAP = getBooleanProperty("StorageTestingUtils.USE_LEGACY_UNMAP", false);
 
   /**
    * Emulates scenario there underlying storage(s) was closed without invoking storage.close() method -- as-if
@@ -217,87 +212,6 @@ public final class StorageTestingUtils {
     }
   }
 
-  /// @deprecated FFM scopes now close and unmap memory-mapped storage reliably. Use the regular `close()` method instead
-  @Deprecated
-  public static void bestEffortToCloseAndUnmap(@NotNull Object storage) throws Exception {
-    if (storage instanceof AutoCloseable ac && !USE_LEGACY_UNMAP) {
-      ac.close();
-    }
-    else {
-      bestEffortToCloseAndUnmap("", storage, new HashSet<>(), 0);
-    }
-  }
-
-  private static void bestEffortToCloseAndUnmap(@NotNull String fieldName,
-                                                @NotNull Object value,
-                                                @NotNull Set<Object> alreadyProcessed,
-                                                int depth) throws Exception {
-    if (isUntouchable(value)) {
-      return;
-    }
-    if (alreadyProcessed.contains(value)) {
-      return;
-    }
-    alreadyProcessed.add(value);
-
-    if (value instanceof Unmappable) {
-      log(depth, fieldName, "closeAndUnmap()");
-      ((Unmappable)value).closeAndUnsafelyUnmap();
-      return;
-    }
-
-    if (value instanceof Iterable<?>) {
-      log(depth, fieldName, "iterate and dive deeper...");
-      int i = 0;
-      for (Object nested : (Iterable<?>)value) {
-        bestEffortToCloseAndUnmap("[" + i + "]", nested, alreadyProcessed, depth + 1);
-        i++;
-      }
-      return;
-    }
-    //MAYBE RC: iterate Object[] also?
-
-    //Assume everything else is 'compound' storage that _may_ hold 'raw' underlying storage(s)
-    // somewhere deeper:
-    if (value instanceof AutoCloseable) {
-      log(depth, fieldName, "close() and dive deeper...");
-      ((AutoCloseable)value).close();
-    }
-    else if (value instanceof Disposable) {
-      log(depth, fieldName, "dispose() and dive deeper...");
-      Disposer.dispose((Disposable)value);
-    }
-    else {
-      log(depth, fieldName, "just dive deeper...");
-    }
-
-    Field[] fields = collectAllFields(value);
-    for (Field field : fields) {
-
-      if (Modifier.isStatic(field.getModifiers())
-          || field.isSynthetic()
-          || field.getType().isPrimitive()) {
-        //log(depth + 1, field, "ignore");
-        continue;
-      }
-
-      try {
-        field.setAccessible(true);
-        Object fieldValue = field.get(value);
-        if (fieldValue == null) {
-          //log(depth + 1, field, "ignore null");
-          continue;
-        }
-
-        bestEffortToCloseAndUnmap(field.getName(), fieldValue, alreadyProcessed, depth + 1);
-      }
-      catch (Throwable t) {
-        log(depth, field, "failed: " + t.getMessage());
-      }
-    }
-  }
-
-
   private static Field[] collectAllFields(@NotNull Object value) {
     //RC: collect through all the hierarchy seems too dangerous
     //return ReflectionUtil.collectFields(value.getClass()).toArray(Field[]::new);
@@ -346,7 +260,7 @@ public final class StorageTestingUtils {
     return false;
   }
 
-
+  // ================ helpers for debugging, now empty: ================================================================
   private static void log(int depth,
                           Field field,
                           String message) {

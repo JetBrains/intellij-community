@@ -210,8 +210,8 @@ public class VFSInitializationTest {
         Path cachesDir = temporaryDirectory.createDir();
         PersistentFSRecordsStorageFactory.setStorageImplementation(storageKind);
 
-        FSRecordsImpl fsRecords = FSRecordsImpl.connect(cachesDir);
-        try {
+
+        try (FSRecordsImpl fsRecords = FSRecordsImpl.connect(cachesDir)) {
           //add something to VFS so it is not empty
           int testFileId = fsRecords.createRecord();
           fsRecords.setName(testFileId, "test");
@@ -222,9 +222,6 @@ public class VFSInitializationTest {
             stream.writeInt(42);
           }
           vfsVersion = fsRecords.getVersion();
-        }
-        finally {
-          StorageTestingUtils.bestEffortToCloseAndUnmap(fsRecords);
         }
 
         Path[] vfsFilesToTryDeleting = Files.list(cachesDir)
@@ -279,21 +276,16 @@ public class VFSInitializationTest {
         Path cachesDir = temporaryDirectory.createDir();
         PersistentFSRecordsStorageFactory.setStorageImplementation(kindBefore);
         long firstVfsCreationTimestamp;
-        FSRecordsImpl vfs = FSRecordsImpl.connect(cachesDir);
-        try {
+        try(FSRecordsImpl vfs = FSRecordsImpl.connect(cachesDir)) {
           firstVfsCreationTimestamp = vfs.getCreationTimestamp();
-        }
-        finally {
-          StorageTestingUtils.bestEffortToCloseAndUnmap(vfs);
         }
         Thread.sleep(500);//ensure system clock is moving
 
         //reopen:
         PersistentFSRecordsStorageFactory.setStorageImplementation(kindAfter);
-        FSRecordsImpl reopenedVfs = FSRecordsImpl.connect(cachesDir);
-        try {
-          long reopenedVfsCreationTimestamp = reopenedVfs.getCreationTimestamp();
 
+        try (FSRecordsImpl reopenedVfs = FSRecordsImpl.connect(cachesDir)) {
+          long reopenedVfsCreationTimestamp = reopenedVfs.getCreationTimestamp();
 
           if (kindBefore == kindAfter) {
             assertEquals(
@@ -309,9 +301,6 @@ public class VFSInitializationTest {
               reopenedVfsCreationTimestamp
             );
           }
-        }
-        finally {
-          StorageTestingUtils.bestEffortToCloseAndUnmap(reopenedVfs);
         }
       }
     }
@@ -433,7 +422,6 @@ public class VFSInitializationTest {
 
   private static void disconnect(PersistentFSConnection connection) throws Exception {
     connection.close();
-    StorageTestingUtils.bestEffortToCloseAndUnmap(connection);
   }
 
   @After
@@ -442,7 +430,6 @@ public class VFSInitializationTest {
 
     for (PersistentFSConnection connection : connectionsOpened) {
       connection.close();
-      StorageTestingUtils.bestEffortToCloseAndUnmap(connection);
     }
     for (PersistentFSConnection connection : connectionsOpened) {
       StorageTestingUtils.bestEffortToCloseAndClean(connection);

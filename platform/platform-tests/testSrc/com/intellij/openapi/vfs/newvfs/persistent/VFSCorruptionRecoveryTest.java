@@ -414,8 +414,7 @@ public class VFSCorruptionRecoveryTest {
 
 
   private static void setupVFSFillSomeDataAndClose(Path cachesDir) throws Exception {
-    FSRecordsImpl fsRecords = FSRecordsImpl.connect(cachesDir);
-    try {
+    try (FSRecordsImpl fsRecords = FSRecordsImpl.connect(cachesDir)){
       //add something to VFS so it is not empty
       int testFileId = fsRecords.createRecord();
       fsRecords.setName(testFileId, "test");
@@ -425,9 +424,6 @@ public class VFSCorruptionRecoveryTest {
       try (var stream = fsRecords.writeAttribute(testFileId, TEST_FILE_ATTRIBUTE)) {
         stream.writeInt(42);
       }
-    }
-    finally {
-      StorageTestingUtils.bestEffortToCloseAndUnmap(fsRecords);
     }
   }
 

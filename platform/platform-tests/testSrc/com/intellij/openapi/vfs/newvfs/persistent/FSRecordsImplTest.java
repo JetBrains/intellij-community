@@ -412,7 +412,7 @@ public class FSRecordsImplTest {
   }
 
   private FSRecordsImpl reloadVFS() throws Exception {
-    StorageTestingUtils.bestEffortToCloseAndUnmap(vfs);
+    vfs.close();
     return FSRecordsImpl.connect(vfsDir, FSRecordsImpl.ON_ERROR_RETHROW);
   }
 
