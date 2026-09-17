@@ -2,11 +2,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.projectView.frontend.window
 
+import com.intellij.configurationStore.SettingsSavingComponent
 import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.ide.projectView.impl.ProjectViewPane
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.UI
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
@@ -80,7 +83,7 @@ import kotlin.time.Duration.Companion.seconds
 @State(name = "FrontendProjectView", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
 internal class ProjectViewToolWindowServiceImpl(
   val project: Project,
-) : ProjectViewToolWindowService, PersistentStateComponent<Element> {
+) : ProjectViewToolWindowService, PersistentStateComponent<Element>, SettingsSavingComponent {
   companion object {
     fun getInstance(project: Project): ProjectViewToolWindowServiceImpl =
       ProjectViewToolWindowService.getInstance(project) as ProjectViewToolWindowServiceImpl
@@ -313,6 +316,15 @@ internal class ProjectViewToolWindowServiceImpl(
     }
     LOG.debug { "Selecting $nodePath" }
     pane.selectNode(nodePath)
+  }
+
+  override suspend fun save() {
+    // Not sure if this thing can be invoked under a modal state, but it better run fast regardless.
+    withContext(Dispatchers.UI + ModalityState.any().asContextElement()) {
+      for (pane in panes.values) {
+        savePaneState(pane)
+      }
+    }
   }
 
   override fun getState(): Element = Element("projectView").also { element ->
