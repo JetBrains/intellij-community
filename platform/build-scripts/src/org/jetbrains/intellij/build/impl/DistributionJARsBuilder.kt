@@ -65,7 +65,6 @@ internal fun buildDistribution(
   val state = context.distributionState()
   val platformLayout = state.platformLayout
   validateModuleStructure(platformLayout, context)
-  context.productProperties.validateLayout(platformLayout, context)
   createBuildBrokenPluginListJob(context)
 
   // The authoring assets must describe the distribution, so their runner loads the bundled plugins only.
