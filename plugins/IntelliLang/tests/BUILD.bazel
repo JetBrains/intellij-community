@@ -4,6 +4,9 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jps_test(
     name = "tests_test",
     timeout = "moderate",
+    data = [
+        "@community//java/java-tests:testData",
+    ],
     tags = ["community-aggregator"],
     runtime_deps = [":tests_test_lib"],
 )
