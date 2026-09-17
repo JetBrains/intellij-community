@@ -16,6 +16,8 @@ internal interface PluginsPageSession : Disposable {
 
   fun getComponent(): JComponent
 
+  fun getPreferredFocusedComponent(): JComponent? = null
+
   fun isMarketplaceTabShowing(): Boolean
 
   fun isInstalledTabShowing(): Boolean

@@ -117,6 +117,7 @@ internal class UnifiedPluginsPageSessionTest {
         assertThat(session.getCenterComponent(Configurable.TopComponentController.EMPTY)).isSameAs(center)
         assertThat(componentsOfType(content, SearchTextField::class.java)).isEmpty()
         assertThat(searchField.text).isEqualTo("initial query")
+        assertThat(session.getPreferredFocusedComponent()).isSameAs(searchField.textEditor)
         assertThat(searchField.textEditor.actionListeners).isNotEmpty()
         assertThat(session.isMarketplaceTabShowing()).isTrue()
         assertThat(session.isInstalledTabShowing()).isTrue()

@@ -119,6 +119,7 @@ internal class UnifiedPluginsPageView @RequiresEdt(generateAssertion = false /* 
   private var lastAnnouncedResults: ResultsAnnouncementSignature? = null
 
   val component: JComponent
+  val preferredFocusedComponent: JComponent = searchField.textEditor
   val searchComponent: JComponent = SearchFieldWithExtension(
     searchToolbar.component,
     searchField,

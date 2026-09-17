@@ -341,6 +341,8 @@ internal class UnifiedPluginsPageSession @RequiresEdt(generateAssertion = false 
 
   override fun getComponent(): JComponent = contentComponent
 
+  override fun getPreferredFocusedComponent(): JComponent = view.preferredFocusedComponent
+
   override fun isMarketplaceTabShowing(): Boolean = true
 
   override fun isInstalledTabShowing(): Boolean = true

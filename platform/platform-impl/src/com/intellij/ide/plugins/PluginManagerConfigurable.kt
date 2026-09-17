@@ -82,6 +82,8 @@ class PluginManagerConfigurable() : SearchableConfigurable, Configurable.NoScrol
     return panel.getComponent()
   }
 
+  override fun getPreferredFocusedComponent(): JComponent? = myPanel?.getPreferredFocusedComponent()
+
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun createPanelIfNeeded(
     searchQuery: String? = null,

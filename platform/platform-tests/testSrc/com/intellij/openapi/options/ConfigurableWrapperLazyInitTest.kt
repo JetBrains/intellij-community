@@ -85,6 +85,14 @@ internal class ConfigurableWrapperLazyInitTest {
     assertThat(InitLog.initialized()).containsExactly(PlainConfigurable::class.java)
   }
 
+  @Test
+  fun `preferred focus query leaves the configurable uninitialized`() {
+    val configurable = wrap(instanceEp("focused", PreferredFocusConfigurable::class.java))
+
+    assertThat(configurable.preferredFocusedComponent).isNull()
+    assertThat(InitLog.initialized()).isEmpty()
+  }
+
   private fun wrap(ep: ConfigurableEP<Configurable>): Configurable {
     return requireNotNull(ConfigurableWrapper.wrapConfigurable(ep)) { "no wrapper for $ep" }
   }
@@ -138,6 +146,10 @@ internal class ConfigurableWrapperLazyInitTest {
   private class PlainConfigurable : TrackedConfigurable()
 
   private class NewOptionsConfigurable : TrackedConfigurable(), Configurable.NewOptions
+
+  private class PreferredFocusConfigurable : TrackedConfigurable() {
+    override fun getPreferredFocusedComponent(): JComponent = error("The wrapper must not call this method")
+  }
 
   private class TypedProvider : ConfigurableProvider() {
     override fun createConfigurable(): Configurable = PlainConfigurable()

@@ -185,9 +185,16 @@ public class ConfigurableEditor extends AbstractEditor implements AnActionListen
 
   @Override
   public JComponent getPreferredFocusedComponent() {
+    Configurable configurable = this.configurable;
     if (configurable == null) return null; // settings editor is not configured yet
-    JComponent preferred = configurable.getPreferredFocusedComponent();
-    return preferred == null ? UIUtil.getPreferredFocusedComponent(getContent(configurable)) : preferred;
+    JComponent content = getContent(configurable);
+    Configurable focusConfigurable = configurable;
+    if (configurable instanceof ConfigurableWrapper wrapper) {
+      if (content == null) return null;
+      focusConfigurable = ConfigurableWrapper.castIfCreated(Configurable.class, wrapper);
+    }
+    JComponent preferred = focusConfigurable == null ? null : focusConfigurable.getPreferredFocusedComponent();
+    return preferred == null ? UIUtil.getPreferredFocusedComponent(content) : preferred;
   }
 
   @Override
