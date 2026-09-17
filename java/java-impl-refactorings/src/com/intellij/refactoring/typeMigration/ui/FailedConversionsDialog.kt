@@ -1,99 +1,85 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.refactoring.typeMigration.ui;
+package com.intellij.refactoring.typeMigration.ui
 
-import com.intellij.java.refactoring.JavaRefactoringBundle;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.text.HtmlBuilder;
-import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.util.ui.HTMLEditorKitBuilder;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UI;
-import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.java.refactoring.JavaRefactoringBundle
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.refactoring.RefactoringBundle
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.LabelPosition
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.util.ui.HTMLEditorKitBuilder
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.Nls
+import java.awt.event.ActionEvent
+import javax.swing.AbstractAction
+import javax.swing.Action
+import javax.swing.JComponent
+import javax.swing.JEditorPane
 
-import javax.swing.AbstractAction;
-import javax.swing.Action;
-import javax.swing.JComponent;
-import javax.swing.JEditorPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import java.awt.event.ActionEvent;
+// DialogWrapper was initially used
+@Suppress("SplitModeApiUsage")
+class FailedConversionsDialog(private val myConflictDescriptions: Array<@Nls String>, project: Project) :
+  DialogWrapper(project, true) {
 
-/**
- * created at Sep 12, 2001
- * @author Jeka
- */
-public class FailedConversionsDialog extends DialogWrapper {
-  private final @Nls String[] myConflictDescriptions;
-  public static final int VIEW_USAGES_EXIT_CODE = NEXT_USER_EXIT_CODE;
-
-  public FailedConversionsDialog(@Nls String[] conflictDescriptions, Project project) {
-    super(project, true);
-    myConflictDescriptions = conflictDescriptions;
-    setTitle(RefactoringBundle.message("problems.detected.title"));
-    setOKButtonText(JavaRefactoringBundle.message("ignore.button"));
-    getOKAction().putValue(Action.MNEMONIC_KEY, Integer.valueOf('I'));
-    init();
+  companion object {
+    const val VIEW_USAGES_EXIT_CODE: Int = NEXT_USER_EXIT_CODE
   }
 
-  @Override
-  protected Action @NotNull [] createActions() {
-    return new Action[]{getOKAction(), new ViewUsagesAction(), new CancelAction()};
+  init {
+    title = RefactoringBundle.message("problems.detected.title")
+    setOKButtonText(JavaRefactoringBundle.message("ignore.button"))
+    okAction.putValue(Action.MNEMONIC_KEY, 'I'.code)
+    init()
   }
 
-  @Override
-  protected JComponent createCenterPanel() {
-    final JEditorPane messagePane = new JEditorPane(UIUtil.HTML_MIME, "");
-    messagePane.setEditorKit(HTMLEditorKitBuilder.simple());
-    messagePane.setEditable(false);
-    messagePane.setMargin(JBUI.insets(5));
-    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(messagePane);
-    scrollPane.setPreferredSize(JBUI.size(500, 400));
+  override fun createActions(): Array<Action> {
+    return arrayOf(okAction, ViewUsagesAction(), CancelAction())
+  }
 
-    JPanel panel = UI.PanelFactory.panel(scrollPane)
-      .withLabel(RefactoringBundle.message("the.following.problems.were.found"))
-      .moveLabelOnTop()
-      .resizeY(true)
-      .createPanel();
+  override fun createCenterPanel(): JComponent {
+    val messagePane = JEditorPane(UIUtil.HTML_MIME, "")
+    messagePane.editorKit = HTMLEditorKitBuilder.simple()
+    messagePane.isEditable = false
+    messagePane.margin = JBUI.insets(5)
 
-    HtmlBuilder builder = new HtmlBuilder();
-    for (@Nls String conflictDescription : myConflictDescriptions) {
-      builder.appendRaw(conflictDescription).br().br();
+    val builder = HtmlBuilder()
+    for (conflictDescription in myConflictDescriptions) {
+      builder.appendRaw(conflictDescription).br().br()
     }
-    String text = builder.wrapWithHtmlBody().toString();
-    messagePane.setText(text);
-    return panel;
-  }
+    messagePane.text = builder.wrapWithHtmlBody().toString()
 
-  @Override
-  protected String getDimensionServiceKey() {
-    return "#com.intellij.refactoring.typeMigration.ui.FailedConversionsDialog";
-  }
-
-  private class CancelAction extends AbstractAction {
-    CancelAction() {
-      super(RefactoringBundle.message("cancel.button"));
-    }
-
-    @Override
-    public void actionPerformed(ActionEvent e) {
-      doCancelAction();
+    return panel {
+      row {
+        scrollCell(messagePane)
+          .label(RefactoringBundle.message("the.following.problems.were.found"), LabelPosition.TOP)
+          .align(Align.FILL)
+      }.resizableRow()
+    }.apply {
+      preferredSize = JBUI.size(500, 400)
     }
   }
 
-  private class ViewUsagesAction extends AbstractAction {
-    ViewUsagesAction() {
-      super(RefactoringBundle.message("view.usages"));
-      putValue(Action.MNEMONIC_KEY, Integer.valueOf('V'));
-      putValue(DialogWrapper.DEFAULT_ACTION, Boolean.TRUE);
+  override fun getDimensionServiceKey(): String {
+    return "#com.intellij.refactoring.typeMigration.ui.FailedConversionsDialog"
+  }
+
+  private inner class CancelAction : AbstractAction(RefactoringBundle.message("cancel.button")) {
+    override fun actionPerformed(e: ActionEvent) {
+      doCancelAction()
+    }
+  }
+
+  private inner class ViewUsagesAction : AbstractAction(RefactoringBundle.message("view.usages")) {
+    init {
+      putValue(MNEMONIC_KEY, 'V'.code)
+      putValue(DEFAULT_ACTION, true)
     }
 
-    @Override
-    public void actionPerformed(ActionEvent e) {
-      close(VIEW_USAGES_EXIT_CODE);
+    override fun actionPerformed(e: ActionEvent) {
+      close(VIEW_USAGES_EXIT_CODE)
     }
   }
 }
