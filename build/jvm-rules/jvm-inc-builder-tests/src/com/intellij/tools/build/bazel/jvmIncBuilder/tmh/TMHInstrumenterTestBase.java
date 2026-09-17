@@ -1,15 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.jps.devkit.threadingModelHelper;
-
-import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.UsefulTestCase;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.ExceptionUtil;
-import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
+package com.intellij.tools.build.bazel.jvmIncBuilder.tmh;
 
 import java.io.File;
 import java.io.IOException;
@@ -18,9 +8,11 @@ import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -28,11 +20,18 @@ import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.intellij.util.concurrency.ThreadingAssertions.MUST_EXECUTE_IN_EDT;
+import javax.tools.JavaCompiler;
+import javax.tools.StandardJavaFileManager;
+import javax.tools.StandardLocation;
+import javax.tools.ToolProvider;
 
-public abstract class TMHInstrumenterTestBase extends UsefulTestCase {
+import junit.framework.TestCase;
 
-  private static final String TEST_DATA_PATH = "plugins/devkit/jps-plugin/testData/threadingModelHelper/instrumenter/";
+import static org.junit.Assert.assertThrows;
+
+public abstract class TMHInstrumenterTestBase extends TestCase {
+
+  private static final String TEST_DATA_PATH_PROPERTY = "jvm-inc-builder.tmh.test-data";
   private static final String TESTING_BACKGROUND_THREAD_NAME = "TESTING_BACKGROUND_THREAD";
 
   private final String dependencyPath;
@@ -47,31 +46,30 @@ public abstract class TMHInstrumenterTestBase extends UsefulTestCase {
   final void doEdtTest() throws Exception {
     TestClass testClass = getInstrumentedTestClass();
     invokeMethod(testClass.aClass);
-    assertThrows(Throwable.class, MUST_EXECUTE_IN_EDT, () -> executeInBackground(() -> invokeMethod(testClass.aClass)));
+    assertThrows("Access is allowed from Event Dispatch Thread (EDT) only", Throwable.class, () -> executeInBackground(() -> invokeMethod(testClass.aClass)));
   }
 
-  final @NotNull TestClass getInstrumentedTestClass() throws IOException {
+  final TestClass getInstrumentedTestClass() throws IOException {
     TestClass testClass = prepareTest(false);
     assertTrue(testClass.isInstrumented);
     return testClass;
   }
 
-  final @NotNull TestClass getNotInstrumentedTestClass() throws IOException {
+  final TestClass getNotInstrumentedTestClass() throws IOException {
     TestClass testClass = prepareTest(false);
     assertFalse(testClass.isInstrumented);
     return testClass;
   }
 
-  @NotNull
   final TestClass prepareTest(@SuppressWarnings("SameParameterValue") boolean printClassFiles) throws IOException {
     List<File> classFiles = compileTestFiles();
     MyClassLoader classLoader = new MyClassLoader(getClass().getClassLoader());
     TestClass testClass = null;
     classFiles.sort(Comparator.comparing(File::getName));
     for (File classFile : classFiles) {
-      String className = FileUtil.getNameWithoutExtension(classFile.getName());
-      byte[] classData = FileUtil.loadFileBytes(classFile);
-      if (!className.equals(getTestName(false))) {
+      String className = classFile.getName().replaceFirst("\\.class$", "");
+      byte[] classData = Files.readAllBytes(classFile.toPath());
+      if (!className.equals(getTestDataFileName())) {
         classLoader.doDefineClass(null, classData);
       }
       else {
@@ -87,22 +85,28 @@ public abstract class TMHInstrumenterTestBase extends UsefulTestCase {
         }
       }
     }
-    assertNotNull("Class " + getTestName(false) + " not found!", testClass);
+    assertNotNull("Class " + getTestDataFileName() + " not found!", testClass);
     return testClass;
   }
 
-  @NotNull
   private List<File> compileTestFiles() throws IOException {
-    File testFile = PathManagerEx.findFileUnderProjectHome(TEST_DATA_PATH + getTestName(false) + ".java", getClass());
-    File classesDir = FileUtil.createTempDirectory("tmh-test-output", null);
+    File testFile = new File(getTestDataPath(), getTestDataFileName() + ".java");
+    File classesDir = Files.createTempDirectory("tmh-test-output").toFile();
 
-    File dependenciesDir = PathManagerEx.findFileUnderProjectHome(TEST_DATA_PATH + dependencyPath, getClass());
+    File dependenciesDir = new File(getTestDataPath(), dependencyPath);
     File[] dependencies = dependenciesDir.listFiles();
     if (dependencies == null || dependencies.length == 0) {
       throw new IllegalStateException("Cannot find dependencies at " + dependenciesDir.getAbsolutePath());
     }
-    List<String> dependencyPaths = ContainerUtil.map(dependencies, File::getAbsolutePath);
-    IdeaTestUtil.compileFile(testFile, classesDir, ArrayUtil.toStringArray(dependencyPaths));
+    JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+    assertNotNull("The test needs a JDK compiler", compiler);
+    List<File> sourceFiles = new ArrayList<>(List.of(dependencies));
+    sourceFiles.add(testFile);
+    try (StandardJavaFileManager fileManager = compiler.getStandardFileManager(null, null, null)) {
+      fileManager.setLocationFromPaths(StandardLocation.CLASS_OUTPUT, List.of(classesDir.toPath()));
+      assertTrue("Cannot compile test sources", compiler.getTask(null, fileManager, null, null, null,
+                                                                 fileManager.getJavaFileObjectsFromFiles(sourceFiles)).call());
+    }
     try (Stream<Path> walk = Files.walk(Paths.get(classesDir.getAbsolutePath()))) {
       return walk
         .filter(Files::isRegularFile)
@@ -111,7 +115,24 @@ public abstract class TMHInstrumenterTestBase extends UsefulTestCase {
     }
   }
 
-  static void invokeMethod(@NotNull Class<?> testClass) {
+  private static File getTestDataPath() {
+    String testDataFile = System.getProperty(TEST_DATA_PATH_PROPERTY);
+    if (testDataFile == null) {
+      throw new IllegalStateException("The test data path is not set");
+    }
+    File testDataRoot = new File(testDataFile).getParentFile();
+    if (testDataRoot == null) {
+      throw new IllegalStateException("The test data file has no parent directory");
+    }
+    return testDataRoot;
+  }
+
+  private String getTestDataFileName() {
+    String testName = getName();
+    return testName.startsWith("test") ? testName.substring("test".length()) : testName;
+  }
+
+  static void invokeMethod(Class<?> testClass) {
     rethrowExceptions(() -> {
       Object instance = testClass.getDeclaredConstructor().newInstance();
       Method method = testClass.getMethod("test");
@@ -119,29 +140,30 @@ public abstract class TMHInstrumenterTestBase extends UsefulTestCase {
     });
   }
 
-  private static void rethrowExceptions(@NotNull ThrowableRunnable<? extends Throwable> runnable) {
+  private static void rethrowExceptions(ThrowingRunnable runnable) {
     try {
       runnable.run();
     }
     catch (Throwable e) {
       //noinspection InstanceofCatchParameter
       if (e instanceof InvocationTargetException) {
-        ExceptionUtil.rethrowAllAsUnchecked(e.getCause());
+        throwUnchecked(e.getCause());
       }
-      ExceptionUtil.rethrowAllAsUnchecked(e);
+      throwUnchecked(e);
     }
   }
 
-  static void executeInBackground(@NotNull ThrowableRunnable<? extends Throwable> runnable) throws ExecutionException {
-    waitResult(startInBackground(runnable));
+  static void executeInBackground(ThrowingRunnable runnable) throws ExecutionException {
+    ExecutorService executor = Executors.newSingleThreadExecutor(r -> new Thread(r, TESTING_BACKGROUND_THREAD_NAME));
+    try {
+      waitResult(executor.submit(() -> rethrowExceptions(runnable)));
+    }
+    finally {
+      executor.shutdownNow();
+    }
   }
 
-  private static @NotNull Future<?> startInBackground(@NotNull ThrowableRunnable<? extends Throwable> runnable) {
-    return Executors.newSingleThreadExecutor(r -> new Thread(r, TESTING_BACKGROUND_THREAD_NAME))
-      .submit(() -> rethrowExceptions(runnable));
-  }
-
-  private static void waitResult(@NotNull Future<?> future) throws ExecutionException {
+  private static void waitResult(Future<?> future) throws ExecutionException {
     try {
       future.get(10, TimeUnit.MINUTES);
     }
@@ -149,6 +171,20 @@ public abstract class TMHInstrumenterTestBase extends UsefulTestCase {
       e.printStackTrace();
       fail("Background computation didn't finish as expected");
     }
+  }
+
+  private static void throwUnchecked(Throwable throwable) {
+    TMHInstrumenterTestBase.<RuntimeException>throwAs(throwable);
+  }
+
+  @SuppressWarnings("unchecked")
+  private static <T extends Throwable> void throwAs(Throwable throwable) throws T {
+    throw (T)throwable;
+  }
+
+  @FunctionalInterface
+  interface ThrowingRunnable {
+    void run() throws Throwable;
   }
 
   private static class MyClassLoader extends ClassLoader {

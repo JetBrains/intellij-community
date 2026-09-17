@@ -34,6 +34,7 @@ java_test(
         "-Djvm-inc-builder.bazel.executable=$(rlocationpath @test_bazel_tool//:bazel)",
         "-Djvm-inc-builder.module.bazel.txt=$(rlocationpath :testData/MODULE.bazel.txt)",
         "-Djvm-inc-builder.rules.jvm.zip=$(rlocationpath //:rules_jvm_zip)",
+        "-Djvm-inc-builder.tmh.test-data=$(rlocationpath :testData/threadingModelHelper/Simple.java)",
     ] + ADD_OPENS_JVM_FLAGS,
     test_class = "com.intellij.tools.build.bazel.AllTests",
     runtime_deps = [

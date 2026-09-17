@@ -1,11 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.jps.devkit.threadingModelHelper;
+package com.intellij.tools.build.bazel.jvmIncBuilder.tmh;
 
-import com.intellij.compiler.instrumentation.FailSafeClassReader;
-import com.intellij.compiler.instrumentation.InstrumenterClassWriter;
-import com.intellij.openapi.util.Ref;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.tools.build.bazel.jvmIncBuilder.instrumentation.FailSafeClassReader;
 import org.jetbrains.org.objectweb.asm.ClassReader;
 import org.jetbrains.org.objectweb.asm.ClassVisitor;
 import org.jetbrains.org.objectweb.asm.ClassWriter;
@@ -36,7 +32,7 @@ public final class TMHTestUtil {
     System.out.println(classDataToText(instrumentedClassData));
   }
 
-  public static @NotNull String classDataToText(byte[] data) {
+  public static String classDataToText(byte[] data) {
     ByteArrayOutputStream buffer = new ByteArrayOutputStream();
     @SuppressWarnings("ImplicitDefaultCharsetUsage")
     PrintWriter printWriter = new PrintWriter(buffer);
@@ -45,8 +41,8 @@ public final class TMHTestUtil {
     return buffer.toString();
   }
 
-  public static boolean containsMethodCall(byte @NotNull [] classBytes, final @NotNull String methodName) {
-    Ref<Boolean> contains = Ref.create(Boolean.FALSE);
+  public static boolean containsMethodCall(byte[] classBytes, final String methodName) {
+    boolean[] contains = {false};
     ClassVisitor visitor = new ClassVisitor(Opcodes.API_VERSION) {
       @Override
       public MethodVisitor visitMethod(int access,
@@ -58,7 +54,7 @@ public final class TMHTestUtil {
           @Override
           public void visitMethodInsn(int opcode, String owner, String name, String descriptor, boolean isInterface) {
             if (name.equals(methodName)) {
-              contains.set(Boolean.TRUE);
+              contains[0] = true;
             }
           }
         };
@@ -66,10 +62,10 @@ public final class TMHTestUtil {
     };
     ClassReader reader = new ClassReader(classBytes);
     reader.accept(visitor, 0);
-    return contains.get();
+    return contains[0];
   }
 
-  public static List<Integer> getLineNumbers(byte @NotNull [] classBytes) {
+  public static List<Integer> getLineNumbers(byte[] classBytes) {
     List<Integer> lineNumbers = new ArrayList<>();
     ClassVisitor visitor = new ClassVisitor(Opcodes.API_VERSION) {
       @Override
@@ -91,10 +87,9 @@ public final class TMHTestUtil {
     return lineNumbers;
   }
 
-  public static byte @Nullable [] instrument(byte @NotNull [] classData, boolean useThreadingAssertions) {
+  public static byte[] instrument(byte[] classData, boolean useThreadingAssertions) {
     FailSafeClassReader reader = new FailSafeClassReader(classData);
-    int flags = InstrumenterClassWriter.getAsmClassWriterFlags(InstrumenterClassWriter.getClassFileVersion(reader));
-    ClassWriter writer = new ClassWriter(reader, flags);
+    ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_FRAMES);
 
     var generators = useThreadingAssertions ? TMHAssertionGenerator2.generators(
       "com/intellij/util/concurrency/fake/ThreadingAssertions",

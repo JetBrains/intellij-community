@@ -106,7 +106,6 @@ class CompilerBuildViewTest : BaseCompilerTestCase() {
           Updating dependency information… [a]
           Parsing java… [a]
           Writing classes… [a]
-          Adding threading assertions… [a]
           Adding pattern assertions… [a]
           Adding nullability assertions… [a]
           Running 'after' tasks
@@ -119,7 +118,6 @@ class CompilerBuildViewTest : BaseCompilerTestCase() {
           Copying resources… [a]
           Parsing java… [a]
           Writing classes… [a]
-          Adding threading assertions… [a]
           Adding pattern assertions… [a]
           Adding nullability assertions… [a]
           Updating dependency information… [a]
@@ -145,7 +143,6 @@ class CompilerBuildViewTest : BaseCompilerTestCase() {
         Updating dependency information… [a]
         Parsing java… [a]
         Writing classes… [a]
-        Adding threading assertions… [a]
         Adding pattern assertions… [a]
         Adding nullability assertions… [a]
         Running 'after' tasks
@@ -157,7 +154,6 @@ class CompilerBuildViewTest : BaseCompilerTestCase() {
         Copying resources… [a]
         Parsing java… [a]
         Writing classes… [a]
-        Adding threading assertions… [a]
         Adding pattern assertions… [a]
         Adding nullability assertions… [a]
         Updating dependency information… [a]

@@ -18,14 +18,14 @@ import java.lang.annotation.Target;
  * Parameters annotated with {@code @RequiresBackgroundThread} must be callables and are guaranteed to be called from some thread
  * that is not the Event Dispatch Thread.
  * <h2>Instrumentation</h2>
- * Aside from a documentation purpose, this annotation is processed by {@link org.jetbrains.jps.devkit.threadingModelHelper} from
+ * Aside from a documentation purpose, this annotation is processed by {@link com.intellij.tools.build.bazel.jvmIncBuilder.tmh} from
  * the <a href="https://plugins.jetbrains.com/plugin/22851-plugin-devkit">DevKit plugin</a>.
  * The plugin instruments annotated elements with {@link ThreadingAssertions#assertBackgroundThread()} calls
  * to ensure annotation's contract is not violated at runtime. The instrumentation can be disabled
  * by setting {@link RequiresBackgroundThread#generateAssertion()} to {@code false}.
  * <p>
  * <b>Important:</b> the instrumentation has limitations. Please read the docs
- * of the {@link org.jetbrains.jps.devkit.threadingModelHelper} to learn about them.
+ * of the {@link com.intellij.tools.build.bazel.jvmIncBuilder.tmh} to learn about them.
  *
  * <h2>Q&A</h2>
  * <p>
