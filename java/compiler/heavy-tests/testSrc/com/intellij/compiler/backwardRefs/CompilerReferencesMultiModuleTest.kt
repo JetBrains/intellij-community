@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.backwardRefs
 
 import com.intellij.compiler.CompilerReferenceService
-import com.intellij.java.compiler.CompilerReferencesTestBase
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.Module
@@ -14,9 +13,10 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.fixtures.CompilerReferencesFixtureTestCase
 import org.intellij.lang.annotations.Language
 
-class CompilerReferencesMultiModuleTest : CompilerReferencesTestBase() {
+class CompilerReferencesMultiModuleTest : CompilerReferencesFixtureTestCase() {
   private var moduleA: Module? = null
   private var moduleB: Module? = null
 
