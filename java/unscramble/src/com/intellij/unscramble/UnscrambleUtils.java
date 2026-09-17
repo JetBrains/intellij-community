@@ -11,6 +11,7 @@ import com.intellij.threadDumpParser.ThreadDumpParser;
 import com.intellij.threadDumpParser.ThreadState;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.Icon;
@@ -139,5 +140,14 @@ public final class UnscrambleUtils {
       if (linesCount > 2) return true;
     }
     return false;
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull ThreadDumpState parseThreadDump(@NotNull String text) {
+    ThreadDumpState threadDumpState = JcmdJsonThreadDumpParserKt.parseJcmdJsonThreadDump(text);
+    if (threadDumpState != null) {
+      return threadDumpState;
+    }
+    return IntelliJThreadDumpParserKt.parseIntelliJThreadDump(text);
   }
 }

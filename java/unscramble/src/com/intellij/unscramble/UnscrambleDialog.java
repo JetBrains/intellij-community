@@ -475,10 +475,7 @@ public class UnscrambleDialog extends DialogWrapper {
     String unscrambledTrace =
       unscrambleSupport == null ? textToUnscramble : unscrambleSupport.unscramble(project, textToUnscramble, logName, settings);
     if (unscrambledTrace == null) return null;
-    ThreadDumpState threadDumpState = JcmdJsonThreadDumpParserKt.parseJcmdJsonThreadDump(unscrambledTrace);
-    if (threadDumpState == null) {
-      threadDumpState = IntelliJThreadDumpParserKt.parseIntelliJThreadDump(unscrambledTrace);
-    }
+    ThreadDumpState threadDumpState = UnscrambleUtils.parseThreadDump(unscrambledTrace);
     return UnscrambleUtils.addConsole(project, threadDumpState, unscrambledTrace);
   }
 
@@ -493,13 +490,9 @@ public class UnscrambleDialog extends DialogWrapper {
         String unscrambledTrace =
           unscrambleSupport == null ? textToUnscramble : unscrambleSupport.unscramble(project, textToUnscramble, logName, settings);
         if (unscrambledTrace == null) return;
-        ThreadDumpState threadDumpState = JcmdJsonThreadDumpParserKt.parseJcmdJsonThreadDump(unscrambledTrace);
-        if (threadDumpState == null) {
-          threadDumpState = IntelliJThreadDumpParserKt.parseIntelliJThreadDump(unscrambledTrace);
-        }
-        final ThreadDumpState finalThreadDumpState = threadDumpState;
+        final ThreadDumpState threadDumpState = UnscrambleUtils.parseThreadDump(unscrambledTrace);
         application.invokeLater(() -> {
-          UnscrambleUtils.addConsole(project, finalThreadDumpState, unscrambledTrace);
+          UnscrambleUtils.addConsole(project, threadDumpState, unscrambledTrace);
           myLogFile.addCurrentTextToHistory();
         }, ModalityState.any());
       });
