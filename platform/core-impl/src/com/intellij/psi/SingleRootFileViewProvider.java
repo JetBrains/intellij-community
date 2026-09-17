@@ -1,13 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
+import com.intellij.diagnostic.ControlFlowExceptionsKt;
 import com.intellij.lang.FileASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -155,10 +155,8 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
     try {
       return shouldCreatePsi() ? createFile(getManager().getProject(), getVirtualFile(), getFileType()) : null;
     }
-    catch (ProcessCanceledException e) {
-      throw e;
-    }
     catch (Throwable e) {
+      ControlFlowExceptionsKt.rethrowControlFlowException(e);
       LOG.error(e);
       return null;
     }

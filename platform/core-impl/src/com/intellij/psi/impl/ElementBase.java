@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
+import com.intellij.diagnostic.ControlFlowExceptionsKt;
 import com.intellij.ide.FileIconUtil;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.application.ApplicationManager;
@@ -9,7 +10,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.INativeFileType;
 import com.intellij.openapi.fileTypes.UnknownFileType;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
@@ -71,10 +71,11 @@ public abstract class ElementBase extends VersionedUserDataHolderBase implements
     try {
       return computeIcon(flags);
     }
-    catch (ProcessCanceledException | IndexNotReadyException e) {
+    catch (IndexNotReadyException e) {
       throw e;
     }
     catch (Exception e) {
+      ControlFlowExceptionsKt.rethrowControlFlowException(e);
       LOG.error(e);
       return null;
     }
@@ -164,10 +165,8 @@ public abstract class ElementBase extends VersionedUserDataHolderBase implements
           try {
             return file.getFileType().getIcon();
           }
-          catch (ProcessCanceledException e) {
-            throw e;
-          }
           catch (Throwable e) {
+            ControlFlowExceptionsKt.rethrowControlFlowException(e);
             LOG.error(e);
           }
         }
