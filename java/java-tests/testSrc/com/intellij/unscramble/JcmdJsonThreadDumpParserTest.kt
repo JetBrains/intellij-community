@@ -162,6 +162,29 @@ internal class JcmdJsonThreadDumpParserTest {
   }
 
   @Test
+  fun `parser returns null for non-scalar thread id`() {
+    assertNull(parseJcmdJsonThreadDump("""
+      {
+        "threadDump": {
+          "threadContainers": [
+            {
+              "threads": [
+                {
+                  "tid": {
+                    "value": 1
+                  },
+                  "name": "main",
+                  "state": "RUNNABLE"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    """.trimIndent()))
+  }
+
+  @Test
   fun `parser handles only root container`() {
     val json = """
       {
@@ -193,6 +216,69 @@ internal class JcmdJsonThreadDumpParserTest {
     assertThat(parsed.threadContainerDescriptors).isEmpty()
     // Thread in root has null container parent
     assertNull(parsed.threadStates[0].threadContainerUniqueId)
+  }
+
+  @Test
+  fun `parser accepts numeric identifiers from jdk 27 json dumps`() {
+    val json = """
+      {
+        "threadDump": {
+          "formatVersion": 2,
+          "processId": 12345,
+          "threadContainers": [
+            {
+              "container": "<root>",
+              "parent": null,
+              "owner": null,
+              "threads": [
+                {
+                  "tid": 3,
+                  "name": "main",
+                  "state": "WAITING",
+                  "stack": [
+                    "example.Main.await(Main.java:1)"
+                  ]
+                }
+              ],
+              "threadCount": 1
+            },
+            {
+              "container": "java.util.concurrent.StructuredTaskScope@1234",
+              "parent": "<root>",
+              "owner": 3,
+              "threads": [
+                {
+                  "tid": 40,
+                  "name": "virtual-worker",
+                  "virtual": true,
+                  "carrier": 38,
+                  "state": "RUNNABLE",
+                  "stack": [
+                    "example.Virtual.run(Virtual.java:1)",
+                    "java.base/java.lang.VirtualThread.run(VirtualThread.java:456)"
+                  ]
+                }
+              ],
+              "threadCount": 1
+            }
+          ]
+        }
+      }
+    """.trimIndent()
+
+    val parsed = requireNotNull(parseJcmdJsonThreadDump(json))
+
+    val main = parsed.threadStates.single { it.name == "main" }
+    assertEquals(3L, main.uniqueId)
+
+    val virtualWorker = parsed.threadStates.single { it.name == "virtual-worker" }
+    assertEquals(40L, virtualWorker.uniqueId)
+    assertTrue(virtualWorker.isVirtual)
+    assertThat(virtualWorker.stackTrace).startsWith("\"virtual-worker\" tid=40 virtual carrierId=38 RUNNABLE\n")
+
+    val container = parsed.threadContainerDescriptors.single { it.name == "java.util.concurrent.StructuredTaskScope@1234" }
+    assertEquals(3L, container.parentId)
+    assertEquals(container.containerId, virtualWorker.threadContainerUniqueId)
   }
 
   // ----------------------- LOCK TESTS ----------------------- //

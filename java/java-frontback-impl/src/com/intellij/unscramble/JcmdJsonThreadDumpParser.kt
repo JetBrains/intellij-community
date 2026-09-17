@@ -6,6 +6,8 @@ import com.intellij.threadDumpParser.ThreadState
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.contentOrNull
 import org.jetbrains.annotations.ApiStatus
 
 private val jcmdJson = Json { ignoreUnknownKeys = true }
@@ -165,6 +167,8 @@ private data class PlatformThreadMetadata(
 )
 
 private fun JcmdThread.toThreadState(containerId: Long?): ThreadState {
+  val tidText = tid.scalarText().orEmpty()
+  val carrierText = carrier.scalarText()
   val threadState = ThreadState(name, state)
   threadState.javaThreadState = state
 
@@ -175,9 +179,9 @@ private fun JcmdThread.toThreadState(containerId: Long?): ThreadState {
   threadState.isVirtual = virtual ?: false
 
   val stackTrace = buildString {
-    append("\"$name\" tid=$tid")
+    append("\"$name\" tid=$tidText")
     if (threadState.isVirtual) {
-      val carrierInfo = if (carrier != null) "carrierId=$carrier" else "unmounted"
+      val carrierInfo = if (carrierText != null) "carrierId=$carrierText" else "unmounted"
       append(" virtual $carrierInfo")
     }
     append(" $state")
@@ -187,7 +191,7 @@ private fun JcmdThread.toThreadState(containerId: Long?): ThreadState {
 
   threadState.setStackTrace(stackTrace, rawStackTrace.isEmpty())
 
-  val tidLong = tid.toLongOrNull()
+  val tidLong = tidText.toLongOrNull()
   if (tidLong != null) {
     threadState.uniqueId = tidLong
   }
@@ -200,7 +204,7 @@ private fun JcmdThread.toThreadState(containerId: Long?): ThreadState {
 
 private fun JcmdContainer.toJavaThreadContainerDesc(containerNameToId: Map<String, Long>): JavaThreadContainerDesc? {
   val containerId = containerNameToId[container] ?: return null
-  val parentId = owner?.toLongOrNull() ?: parent?.let { containerNameToId[parent] }
+  val parentId = owner.scalarText()?.toLongOrNull() ?: parent?.let { containerNameToId[parent] }
   return JavaThreadContainerDesc(
     name = container,
     containerId = containerId,
@@ -251,16 +255,16 @@ private data class JcmdThreadDump(
 private data class JcmdContainer(
   val container: String = "",
   val parent: String? = null,
-  val owner: String? = null,
+  val owner: JsonPrimitive? = null,
   val threads: List<JcmdThread> = emptyList(),
 )
 
 @Serializable
 private data class JcmdThread(
   val name: String = "",
-  val tid: String = "",
+  val tid: JsonPrimitive? = null,
   val virtual: Boolean? = null,
-  val carrier: String? = null,
+  val carrier: JsonPrimitive? = null,
   val stack: List<String> = emptyList(),
   val state: String = "unknown",
   val blockedOn: String? = null,
@@ -279,3 +283,5 @@ private data class JcmdMonitorInfo(
   val depth: Int = -1,
   val locks: List<String> = emptyList(),
 )
+
+private fun JsonPrimitive?.scalarText(): String? = this?.contentOrNull

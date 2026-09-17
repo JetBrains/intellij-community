@@ -65,6 +65,42 @@ public class UnscrambleDialogTest extends JavaCodeInsightFixtureTestCase {
     assertEquals("<Threads>", myContent.getDisplayName());
   }
 
+  public void testJcmdJsonNumericIdentifiersThreadDump() {
+    showText("""
+               {
+                 "threadDump": {
+                   "formatVersion": 2,
+                   "processId": 79302,
+                   "threadContainers": [
+                     {
+                       "container": "<root>",
+                       "threads": [
+                         {
+                           "tid": 157,
+                           "name": "main",
+                           "state": "RUNNABLE",
+                           "stack": [
+                             "example.Main.run(Main.java:1)"
+                           ]
+                         },
+                         {
+                           "tid": 158,
+                           "name": "worker",
+                           "state": "WAITING",
+                           "stack": [
+                             "example.Worker.await(Worker.java:1)"
+                           ]
+                         }
+                       ],
+                       "threadCount": 2
+                     }
+                   ]
+                 }
+               }""");
+    assertIcon("dump.svg", myContent.getIcon());
+    assertEquals("<Threads>", myContent.getDisplayName());
+  }
+
   public void testDeadlock() throws Exception {
     File file = new File(getTestDataPath() + "deadlock.txt");
     String s = FileUtil.loadFile(file);

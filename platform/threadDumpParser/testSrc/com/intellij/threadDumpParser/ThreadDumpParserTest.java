@@ -792,6 +792,42 @@ public class ThreadDumpParserTest {
   }
 
   @Test
+  public void testJcmdJsonNumericIdentifiers() {
+    String text = """
+      {
+        "threadDump": {
+          "formatVersion": 2,
+          "processId": 79302,
+          "threadContainers": [
+            {
+              "threads": [
+                {
+                  "tid": 157,
+                  "name": "waiting-thread",
+                  "state": "WAITING",
+                  "stack": [
+                    "java.base/jdk.internal.misc.Unsafe.park(Native Method)"
+                  ]
+                }
+              ],
+              "threadCount": 1
+            }
+          ]
+        }
+      }
+      """;
+
+    List<ThreadState> threads = ThreadDumpParser.parse(text);
+    assertEquals(1, threads.size());
+
+    ThreadState waitingThread = ContainerUtil.find(threads, thread -> "waiting-thread".equals(thread.getName()));
+    assertNotNull(waitingThread);
+    assertEquals("waiting-thread", waitingThread.getName());
+    assertEquals("WAITING", waitingThread.getJavaThreadState());
+    assertTrue(waitingThread.getStackTrace().startsWith("#157 \"waiting-thread\"\n"));
+  }
+
+  @Test
   public void testOurDebuggerExportFormatWithVirtualThreads() {
     // Note, that virtual threads have no priority.
     String text = """
