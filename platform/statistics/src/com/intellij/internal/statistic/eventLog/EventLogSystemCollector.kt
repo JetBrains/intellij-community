@@ -37,7 +37,7 @@ open class EventLogSystemCollector(eventLoggerProvider: StatisticsEventLoggerPro
     // Increase the group's versions locally
     // and not increase the versions in all StatisticsEventLoggerProvider
     // in case of any changes in the groups
-    eventLoggerProvider.version + 7,
+    eventLoggerProvider.version + 8,
     eventLoggerProvider.recorderId
   )
   override fun getGroup(): EventLogGroup = GROUP
