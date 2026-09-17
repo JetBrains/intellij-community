@@ -26,7 +26,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.util.HtmlVisionHelper
-import com.intellij.util.HtmlVisionHelper.Companion.getMIMEType
+import com.intellij.util.HtmlVisionHelper.getMIMEType
 import com.intellij.util.PlatformUtils
 import com.intellij.util.Restarter
 import com.intellij.util.system.OS

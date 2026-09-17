@@ -6,7 +6,7 @@ import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider.ResourceHandler.R
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.platform.whatsNew.WhatsNewVisionContent.Companion.LOCALHOST
 import com.intellij.platform.whatsNew.WhatsNewVisionContent.Companion.WHATS_NEW_VISION_SCHEME
-import com.intellij.util.HtmlVisionHelper.Companion.getMIMEType
+import com.intellij.util.HtmlVisionHelper.getMIMEType
 import java.io.InputStream
 import kotlin.io.path.extension
 
