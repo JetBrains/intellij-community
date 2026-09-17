@@ -43,6 +43,8 @@ class MarkdownFormatterTest: LightPlatformCodeInsightTestCase() {
 
   fun `test headers`() = doTest()
 
+  fun `test do not wrap ATX headers with codespans`() = doTest(rightMargin = 90)
+
   fun `test paragraphs`() = doTest()
 
   fun `test lists`() = doTest()
