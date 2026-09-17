@@ -131,7 +131,6 @@ class MacDistributionBuilder(
 
     context.executeStep(spanBuilder("copy product bin files"), BuildOptions.PRODUCT_BIN_DIR_STEP) {
       copyNativeBinFiles(macBinDir, arch)
-      copyDeclaredOsSpecificFiles(targetPath, arch, context.distributionState().platformLayout, context)
 
       context.getEmbeddedFrontendProductContext()?.let { clientContext ->
         writeMacOsVmOptions(macBinDir, clientContext)
@@ -139,6 +138,7 @@ class MacDistributionBuilder(
       val executable = context.productProperties.baseFileName
       generateScripts(macBinDir, executable, context)
     }
+    copyDeclaredOsSpecificFiles(targetPath, arch, context.distributionState().platformLayout, context)
 
     val ideaPropertiesContent = if (context.isLanguageServer) {
       ideaProperties!!

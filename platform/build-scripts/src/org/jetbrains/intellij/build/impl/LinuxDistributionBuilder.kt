@@ -77,7 +77,6 @@ class LinuxDistributionBuilder(
 
       context.executeStep(spanBuilder("copy product bin files"), BuildOptions.PRODUCT_BIN_DIR_STEP) {
         copyNativeBinFiles(distBinDir, arch)
-        copyDeclaredOsSpecificFiles(targetPath, arch, context.distributionState().platformLayout, context)
 
         context.getEmbeddedFrontendProductContext()?.let { clientContext ->
           writeLinuxVmOptions(distBinDir, clientContext)
@@ -87,6 +86,7 @@ class LinuxDistributionBuilder(
         }
         generateScripts(distBinDir, arch, targetLibcImpl, context)
       }
+      copyDeclaredOsSpecificFiles(targetPath, arch, context.distributionState().platformLayout, context)
       addNativeLauncher(distBinDir, targetPath, arch, context)
       generateBuildTxt(targetPath, context)
       copyDistFiles(targetPath, OsFamily.LINUX, arch, targetLibcImpl, context)

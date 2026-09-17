@@ -89,7 +89,6 @@ internal class WindowsDistributionBuilder(
 
     context.executeStep(spanBuilder("copy product bin files"), BuildOptions.PRODUCT_BIN_DIR_STEP) {
       copyNativeBinFiles(distBinDir, arch)
-      copyDeclaredOsSpecificFiles(targetPath, arch, context.distributionState().platformLayout, context)
 
       context.getEmbeddedFrontendProductContext()?.let { clientContext ->
         writeWindowsVmOptions(distBinDir, clientContext)
@@ -101,6 +100,7 @@ internal class WindowsDistributionBuilder(
         generateScripts(distBinDir, arch, context)
       }
     }
+    copyDeclaredOsSpecificFiles(targetPath, arch, context.distributionState().platformLayout, context)
 
     generateBuildTxt(targetPath, context)
     copyDistFiles(targetPath, OsFamily.WINDOWS, arch, WindowsLibcImpl.DEFAULT, context)
