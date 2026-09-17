@@ -484,6 +484,10 @@ abstract class ProductProperties {
   @ApiStatus.Experimental
   open fun validateLayout(platformLayout: PlatformLayout, context: BuildContext) {}
 
+  /** Checks the complete platform layout before source derivation or packaging uses it. */
+  @ApiStatus.Internal
+  open fun validateLayout(platformLayout: PlatformLayout) {}
+
   /**
    * Copies additional localization resources to the plugin-generated localization resources directory.
    */

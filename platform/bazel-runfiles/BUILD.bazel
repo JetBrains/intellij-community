@@ -1,4 +1,9 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.platform.bazel.runfiles` start
+content_module_jar(module = ":bazel-runfiles")
+### auto-generated section `dev intellij.platform.bazel.runfiles` end
 
 ### auto-generated section `build intellij.platform.bazel.runfiles` start
 jvm_library(
@@ -13,6 +18,10 @@ jvm_library(
     ),
     kotlinc_opts = "@community//:k8",
     module_name = "intellij.platform.bazel.runfiles",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
@@ -45,6 +54,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.bazel.runfiles.iml",
+        "resources/intellij.platform.bazel.runfiles.xml",
     ],
     visibility = ["//visibility:public"],
 )

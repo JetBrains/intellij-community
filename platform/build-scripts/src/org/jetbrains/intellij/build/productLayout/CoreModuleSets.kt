@@ -105,6 +105,7 @@ object CoreModuleSets {
     moduleSet(telemetry())
 
     embeddedModule("intellij.platform.runtime.product")
+    embeddedModule("intellij.platform.bazel.runfiles")
 
     module("intellij.platform.buildScripts.concurrency")
 

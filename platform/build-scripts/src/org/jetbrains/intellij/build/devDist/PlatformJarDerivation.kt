@@ -80,6 +80,47 @@ fun derivePlatformJars(product: String, productProperties: ProductProperties, ou
   return derivePlatformJars(product, createPlatformLayout(productProperties, outputProvider), outputProvider::findRequiredModule)
 }
 
+/** Requires content ownership except for the exact ordered members of [retainedJars]. */
+@Internal
+@Suppress("ReplaceGetOrSet")
+fun validatePlatformContentOwnership(
+  modules: Collection<ModuleItem>,
+  retainedJars: Map<String, List<String>>,
+  explicitModuleNames: Collection<String> = emptyList(),
+) {
+  val errors = ArrayList<String>()
+  for ((name, owners) in modules.groupBy { it.moduleName }) {
+    if (owners.size > 1) {
+      errors.add("Duplicate platform ownership for $name: $owners")
+    }
+  }
+  val contentModules = modules.filter { ModuleIncludeReasons.isProductModule(it.reason) }.mapTo(HashSet()) { it.moduleName }
+  for (name in explicitModuleNames) {
+    if (name in contentModules) {
+      errors.add("Content module $name also has explicit platform ownership")
+    }
+  }
+  val nonContentModules = modules.filterNot { ModuleIncludeReasons.isProductModule(it.reason) }
+  for (item in nonContentModules) {
+    if (retainedJars.get(item.relativeOutputFile)?.contains(item.moduleName) != true) {
+      errors.add("Missing content ownership: ${item.moduleName} in ${item.relativeOutputFile}; ${item.reason}")
+    }
+  }
+  val actualJars = modules.groupBy({ it.relativeOutputFile }, { it.moduleName })
+  val nonContentJars = nonContentModules.groupBy({ it.relativeOutputFile }, { it.moduleName })
+  for ((path, members) in retainedJars) {
+    for (name in members) {
+      if (name !in nonContentJars.get(path).orEmpty()) {
+        errors.add("Stale content ownership exception: $name in $path")
+      }
+    }
+    if (actualJars.get(path) != members) {
+      errors.add("Changed retained jar $path: expected $members, actual ${actualJars.get(path)}")
+    }
+  }
+  check(errors.isEmpty()) { errors.joinToString("\n") }
+}
+
 /**
  * The names of the libraries the platform packer merges into the jar of [item], in the order [module] declares them.
  *

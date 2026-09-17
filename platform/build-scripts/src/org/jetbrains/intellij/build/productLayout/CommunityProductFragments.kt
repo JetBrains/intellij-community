@@ -50,6 +50,7 @@ object CommunityProductFragments {
     deprecatedInclude("intellij.uiDesigner", "META-INF/DesignerCorePlugin.xml", optional = true)
 
     // Extensions block (UTM tracking, new UI onboarding)
+    embeddedModule("intellij.java.ide.resources")
     deprecatedInclude("intellij.java.ide.resources", "META-INF/JavaIdePlugin.xml")
   }
 

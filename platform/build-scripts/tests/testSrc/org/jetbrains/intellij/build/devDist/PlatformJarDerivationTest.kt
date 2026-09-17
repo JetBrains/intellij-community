@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build.devDist
 
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.jetbrains.intellij.build.impl.ModuleIncludeReasons
 import org.jetbrains.intellij.build.impl.ModuleItem
 import org.jetbrains.intellij.build.impl.PlatformLayout
@@ -22,6 +23,76 @@ import org.junit.jupiter.api.Test
  * distribution.
  */
 class PlatformJarDerivationTest {
+  @Test
+  fun `missing content ownership reports the dependency chain`() {
+    assertThatThrownBy {
+      validatePlatformContentOwnership(
+        modules = listOf(ModuleItem("missing", "missing.jar", "<- dependency <- root")),
+        retainedJars = emptyMap(),
+      )
+    }.isInstanceOf(IllegalStateException::class.java)
+      .hasMessageContaining("Missing content ownership: missing in missing.jar; <- dependency <- root")
+  }
+
+  @Test
+  fun `retained jars require exact ordered members`() {
+    val first = ModuleItem("first", "util.jar", "addModule")
+    val second = ModuleItem("second", "util.jar", "addModule")
+    val retained = mapOf("util.jar" to listOf("first", "second"))
+    validatePlatformContentOwnership(listOf(first, second), retained)
+    assertThatThrownBy {
+      validatePlatformContentOwnership(listOf(second, first), retained)
+    }.hasMessageContaining("Changed retained jar util.jar")
+    assertThatThrownBy {
+      validatePlatformContentOwnership(listOf(first, second, ModuleItem("extra", "util.jar", "<- root")), retained)
+    }.hasMessageContaining("Missing content ownership: extra").hasMessageContaining("Changed retained jar util.jar")
+  }
+
+  @Test
+  fun `removed and migrated modules invalidate exceptions`() {
+    val retained = mapOf("util.jar" to listOf("first"))
+    assertThatThrownBy {
+      validatePlatformContentOwnership(emptyList(), retained)
+    }.hasMessageContaining("Stale content ownership exception: first in util.jar")
+    assertThatThrownBy {
+      validatePlatformContentOwnership(listOf(ModuleItem("first", "util.jar", ModuleIncludeReasons.PRODUCT_EMBEDDED_MODULES)), retained)
+    }.hasMessageContaining("Stale content ownership exception: first in util.jar")
+  }
+
+  @Test
+  fun `content modules cannot have duplicate or explicit ownership`() {
+    val content = ModuleItem("content", "content.jar", ModuleIncludeReasons.PRODUCT_EMBEDDED_MODULES)
+    validatePlatformContentOwnership(listOf(content), emptyMap())
+    assertThatThrownBy {
+      validatePlatformContentOwnership(listOf(content, content), emptyMap())
+    }.hasMessageContaining("Duplicate platform ownership for content")
+    assertThatThrownBy {
+      validatePlatformContentOwnership(listOf(content), emptyMap(), explicitModuleNames = listOf("content"))
+    }.hasMessageContaining("Content module content also has explicit platform ownership")
+  }
+
+  @Test
+  fun `content ownership preserves fixed bundle membership and order`() {
+    val project = JpsElementFactory.getInstance().createModel().project
+    val layout = PlatformLayout()
+    val members = listOf("intellij.platform.util.second", "intellij.platform.util.first", "intellij.platform.content")
+    for (name in members) {
+      project.addModule(name, JpsJavaModuleType.INSTANCE)
+    }
+    layout.withModules(sequenceOf(
+      ModuleItem(members[0], "util.jar", "addModule"),
+      ModuleItem(members[1], "util.jar", "addModule"),
+      ModuleItem(members[2], "content.jar", ModuleIncludeReasons.PRODUCT_EMBEDDED_MODULES),
+    ))
+
+    val rows = derivePlatformJars(product = "demo", layout = layout, findModule = { requireNotNull(project.findModuleByName(it)) })
+
+    assertThat(rows.contentModules.map { it.module }).containsExactly("intellij.platform.content")
+    assertThat(rows.jars.map { it.relativeOutputFile }).containsExactly("util.jar", "content.jar")
+    assertThat(rows.jars.first().members).containsExactly("intellij.platform.util.second", "intellij.platform.util.first")
+    assertThat(rows.jars.last().members).containsExactly("intellij.platform.content")
+  }
+
   @Test
   fun `same-named declared libraries retain their project and module scopes`() {
     val project = JpsElementFactory.getInstance().createModel().project

@@ -277,6 +277,7 @@ private fun createPlatformLayout(
     layout.withModule(platformMainModule, "ext/platform-main.jar")
   }
 
+  productProperties.validateLayout(layout)
   return layout
 }
 
