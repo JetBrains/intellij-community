@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.codeInsight.hint.DocumentFragmentTooltipRenderer;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.codeInsight.hint.TooltipGroup;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.DocumentFragment;
 import com.intellij.openapi.editor.Editor;
@@ -41,10 +42,8 @@ public final class FoldingPopupManager implements EditorMouseListener, EditorMou
     editor.putUserData(DISABLED, null);
   }
 
-  FoldingPopupManager(EditorImpl editor) {
-    myAlarm = new Alarm(editor.getDisposable());
-    editor.addEditorMouseListener(this);
-    editor.addEditorMouseMotionListener(this);
+  FoldingPopupManager(Disposable disposable) {
+    myAlarm = new Alarm(disposable);
   }
 
   @Override

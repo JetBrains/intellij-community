@@ -554,6 +554,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private final ImmediatePainter myImmediatePainter;
 
+  /// @noinspection TypeParameterExtendsFinalClass -- leaked to public api
   private final List<IntFunction<? extends @NotNull Collection<? extends LineExtensionInfo>>> myLineExtensionPainters = new SmartList<>();
 
   private volatile int myExpectedCaretOffset = -1;
@@ -661,7 +662,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     setHighlighter(highlighter == null ? new NullEditorHighlighter() : highlighter);
 
-    new FoldingPopupManager(this);
+    FoldingPopupManager popupManager = new FoldingPopupManager(myDisposable);
+    addEditorMouseListener(popupManager);
+    addEditorMouseMotionListener(popupManager);
 
     myEditorComponent = new EditorComponentImpl(this);
     myVerticalScrollBar = (MyScrollBar)myScrollPane.getVerticalScrollBar();
@@ -3392,7 +3395,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
               }
               oldSelectionStart = visualPositionToOffset(oldVisLeadSelectionStart);
             }
-            setSelectionAndBlockActions(e, oldVisLeadSelectionStart, oldSelectionStart, newVisualCaret, newCaretOffset);
+            setSelectionAndBlockActions(e, Objects.requireNonNull(oldVisLeadSelectionStart), oldSelectionStart, newVisualCaret, newCaretOffset);
             cancelAutoResetForMouseSelectionState();
             myDragSelectionStarted = true;
           }
@@ -4051,6 +4054,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public int getVerticalScrollbarOrientation() {
+    //noinspection MagicConstant
     return myState.getVerticalScrollBarOrientation();
   }
 
@@ -5655,6 +5659,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       setInputMap(WHEN_ANCESTOR_OF_FOCUSED_COMPONENT, null);
     }
 
+    /// @noinspection deprecation
     @Override
     public void layout() {
       if (isInDistractionFreeMode()) {
