@@ -112,7 +112,6 @@ Adds an xi:include directive to include XML content from a module's resources.
 
 **Example:**
 ```kotlin
-deprecatedInclude("intellij.java.ide.resources", "META-INF/JavaIdePlugin.xml")
 deprecatedInclude("intellij.ultimate.resources", "META-INF/UltimatePlugin.xml")
 deprecatedInclude("intellij.rider.languages", "intellij.rider.languages.xml", optional = true)
 ```

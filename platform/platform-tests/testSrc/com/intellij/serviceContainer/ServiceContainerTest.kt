@@ -13,6 +13,15 @@ import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
+import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleVisibilityValue
+import com.intellij.platform.pluginSystem.testFramework.buildPluginSet
+import com.intellij.platform.testFramework.plugins.content
+import com.intellij.platform.testFramework.plugins.dependencies
+import com.intellij.platform.testFramework.plugins.depends
+import com.intellij.platform.testFramework.plugins.extensions
+import com.intellij.platform.testFramework.plugins.module
+import com.intellij.platform.testFramework.plugins.pluginAlias
 import com.intellij.testFramework.LoggedErrorProcessor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.runBlocking
@@ -22,8 +31,10 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertInstanceOf
 import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.api.assertNull
+import org.junit.jupiter.api.io.TempDir
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
+import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
@@ -403,6 +414,43 @@ class ServiceContainerTest {
                  "Should be the service itself, not a proxy class (because the service is not open).")
     assertEquals(c.greet2, c.invokeGreet(ref2))
     assertEquals(c.greet2, c.invokeGreet(ref1), "Old reference should redirect calls to new instance")
+  }
+
+  @Test
+  fun `a dependent plugin overrides a service from required core content`(@TempDir pluginsDir: Path) {
+    val pluginSet = buildPluginSet(pluginsDir, configureClassLoaders = false) {
+      plugin("com.intellij") {
+        pluginAlias("com.intellij.modules.androidstudio")
+        content(namespace = "jetbrains") {
+          module("core.resources", loadingRule = ModuleLoadingRuleValue.REQUIRED) {
+            moduleVisibility = ModuleVisibilityValue.PUBLIC
+            extensions("""
+              <applicationService serviceInterface="${ClsService::class.java.name}"
+                                  serviceImplementation="${ClsServiceImpl1::class.java.name}"/>
+            """.trimIndent())
+          }
+        }
+      }
+      plugin("dependent") {
+        depends("com.intellij")
+        dependencies {
+          module("core.resources")
+        }
+        depends("com.intellij.modules.androidstudio", configFile = "studio.xml") {
+          extensions("""
+            <applicationService serviceImplementation="${ClsService::class.java.name}" overrides="true"/>
+          """.trimIndent())
+        }
+      }
+    }
+    assertThat(pluginSet.findEnabledPlugin(PluginId("dependent"))).isNotNull()
+    val componentManager = TestComponentManager()
+    for (descriptor in pluginSet.sequenceResolvedSortedDescriptorsForRegistration()) {
+      for (service in descriptor.appContainerDescriptor.services) {
+        componentManager.registerService(service, descriptor)
+      }
+    }
+    assertThat(componentManager.getService(ClsService::class.java)).isExactlyInstanceOf(ClsService::class.java)
   }
 
   @Test

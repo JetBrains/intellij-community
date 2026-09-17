@@ -18,6 +18,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/platform-impl:ide-impl",
+        "//platform/new-ui-onboarding",
+    ],
 )
 
 jvm_library(
@@ -29,7 +34,12 @@ jvm_library(
     ),
     module_name = "intellij.java.ide.resources",
     visibility = ["//visibility:public"],
-    runtime_deps = [":ide-resources"],
+    runtime_deps = [
+        # do not sort,
+        ":ide-resources",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/new-ui-onboarding:new-ui-onboarding_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.java.ide.resources` end
 
@@ -37,7 +47,6 @@ jvm_library(
 exports_files(
     [
         "intellij.java.ide.resources.iml",
-        "resources/META-INF/JavaIdePlugin.xml",
         "resources/ProductivityFeaturesRegistry.xml",
         "resources/intellij.java.ide.resources.xml",
     ],
