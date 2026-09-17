@@ -386,9 +386,9 @@ public final class IOUtil {
    * the remaining closeables.
    */
   @ApiStatus.Internal
-  public static void closeAllSafely(@Nullable Closeable ... closeables) throws IOException {
+  public static void closeAllSafely(@Nullable AutoCloseable @NotNull ... closeables) throws IOException {
     Throwable closeEx = null;
-    for (Closeable closeable : closeables) {
+    for (AutoCloseable closeable : closeables) {
       if (closeable != null) {
         try {
           closeable.close();
@@ -414,6 +414,11 @@ public final class IOUtil {
     }
   }
 
+  /// Binary-compatible with legacy version -- better use [AutoCloseable] version now
+  @ApiStatus.Internal
+  public static void closeAllSafely(@Nullable Closeable @NotNull ... closeables) throws IOException {
+    closeAllSafely((AutoCloseable[])closeables);
+  }
 
   private static final byte[] ZEROES = new byte[64 * 1024];
 

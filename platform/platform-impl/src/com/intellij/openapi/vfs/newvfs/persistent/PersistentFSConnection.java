@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSRecoveryInfo;
 import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.ThreadSafeThrottler;
 import com.intellij.util.io.DataEnumerator;
+import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.ScannableDataEnumeratorEx;
 import com.intellij.util.io.SimpleStringPersistentEnumerator;
 import com.intellij.util.io.storage.HeavyProcessLatch;
@@ -51,7 +52,7 @@ import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 @ApiStatus.Internal
-public final class PersistentFSConnection {
+public final class PersistentFSConnection implements Closeable {
   private static final Logger LOG = Logger.getInstance(PersistentFSConnection.class);
 
   /**
@@ -197,28 +198,46 @@ public final class PersistentFSConnection {
     return closed;
   }
 
+  @Override
   public synchronized void close() throws IOException {
     if (closed) {
       return;
     }
 
-    force();
-
-    try {//ensure async loading is finished:
-      freeRecords.getValue();
-    }
-    catch (Throwable ex) {
-      //not an issue on close, but could provide some insights
-      LOG.info("Free records loading is failed", ex);
-    }
+    IOException forceEx = null;
     try {
-      closeStorages(records,
-                    namesEnumerator,
-                    attributesStorage,
-                    contentStorage);
+      force();
+    }
+    catch (IOException t) {
+      forceEx = t;
     }
     finally {
-      closed = true;
+      try {//ensure async loading is finished:
+        freeRecords.getValue();
+      }
+      catch (Throwable ex) {//not an issue on close, but could provide some insights:
+        LOG.info("Free records loading is failed", ex);
+      }
+
+      try {
+        closeStorages(records, namesEnumerator, attributesStorage, contentStorage);
+      }
+      catch (Throwable closeEx) {
+        if (forceEx == null) {
+          throw closeEx;
+        }
+        if (forceEx != closeEx) {
+          forceEx.addSuppressed(closeEx);
+        }
+        throw forceEx;
+      }
+      finally {
+        closed = true;
+      }
+
+      if (forceEx != null) {
+        throw forceEx;
+      }
     }
   }
 
@@ -238,21 +257,12 @@ public final class PersistentFSConnection {
                             @Nullable ScannableDataEnumeratorEx<String> names,
                             @Nullable VFSAttributesStorage attributes,
                             @Nullable VFSContentStorage contents) throws IOException {
-    if (names instanceof Closeable) {//implies != null
-      ((Closeable)names).close();
-    }
-
-    if (attributes != null) {
-      attributes.close();
-    }
-
-    if (contents != null) {
-      contents.close();
-    }
-
-    if (records != null) {
-      records.close();
-    }
+    IOUtil.closeAllSafely(
+      (names instanceof Closeable closeable) ? closeable : null,
+      attributes,
+      contents,
+      records
+    );
   }
 
   private final ThreadSafeThrottler corruptionNotificationThrottler = new ThreadSafeThrottler(5, MINUTES);
