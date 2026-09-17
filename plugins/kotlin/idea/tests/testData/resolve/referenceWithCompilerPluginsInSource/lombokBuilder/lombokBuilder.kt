@@ -6,5 +6,5 @@ fun usage() {
     User.builder().<caret>name("John").build()
 }
 
-// REF_EMPTY
+// REF: of test.User.name
 // SKIP_IS_REFERENCE_TO_CHECK
