@@ -48,6 +48,7 @@ import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
+import com.intellij.testFramework.utils.ActionsOnSaveTestUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.LocalTimeCounter;
@@ -332,6 +333,7 @@ public class FileStatusMapTest extends ProductionDaemonAnalyzerTestCase {
 
     StoreUtilKt.runInAllowSaveMode(true, () -> {
       StoreUtil.saveDocumentsAndProjectsAndApp(true);
+      ActionsOnSaveTestUtil.waitForActionsOnSaveToFinish(getProject());
       VirtualFile workspaceFile = Objects.requireNonNull(getProject().getWorkspaceFile());
       PsiFile excludedPsiFile = Objects.requireNonNull(PsiManager.getInstance(getProject()).findFile(workspaceFile));
       Document excludedDocument = Objects.requireNonNull(PsiDocumentManager.getInstance(getProject()).getDocument(excludedPsiFile));
