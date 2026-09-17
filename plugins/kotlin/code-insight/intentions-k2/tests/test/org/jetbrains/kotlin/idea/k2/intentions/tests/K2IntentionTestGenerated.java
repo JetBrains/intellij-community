@@ -15382,6 +15382,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             public void testSingleParameter() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/contextParameters/regularParameterToContextParameter/singleParameter.kt");
             }
+
+            @TestMetadata("withAnnotation.kt")
+            public void testWithAnnotation() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/regularParameterToContextParameter/withAnnotation.kt");
+            }
         }
     }
 
