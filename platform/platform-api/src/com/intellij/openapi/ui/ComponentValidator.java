@@ -44,7 +44,6 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.plaf.basic.BasicHTML;
 import javax.swing.text.DefaultCaret;
-import javax.swing.text.EditorKit;
 import javax.swing.text.JTextComponent;
 import javax.swing.text.View;
 import javax.swing.text.html.HTMLEditorKit;
@@ -308,24 +307,7 @@ public class ComponentValidator {
     JEditorPane tipComponent = new JEditorPane();
     tipComponent.setContentType("text/html");
     tipComponent.setEditable(false);
-    tipComponent.setEditorKit(HTMLEditorKitBuilder.simple());
-
-    EditorKit kit = tipComponent.getEditorKit();
-    if (kit instanceof HTMLEditorKit) {
-      StyleSheet css = ((HTMLEditorKit)kit).getStyleSheet();
-
-      css.addRule("a, a:link {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.Foreground.ENABLED) + ";}");
-      css.addRule("a:visited {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.Foreground.VISITED) + ";}");
-      css.addRule("a:hover {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.Foreground.HOVERED) + ";}");
-      css.addRule("a:active {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.Foreground.PRESSED) + ";}");
-      css.addRule("body {background-color:#" + ColorUtil.toHex(isWarning ? warningBackgroundColor() : errorBackgroundColor()) + ";}");
-    }
-
-    if (tipComponent.getCaret() instanceof DefaultCaret) {
-      ((DefaultCaret)tipComponent.getCaret()).setUpdatePolicy(DefaultCaret.NEVER_UPDATE);
-    }
-
-    tipComponent.setCaretPosition(0);
+    initTipComponent(tipComponent, isWarning);
 
     tipComponent.setBackground(isWarning ? warningBackgroundColor() : errorBackgroundColor());
     tipComponent.setOpaque(true);
@@ -340,6 +322,27 @@ public class ComponentValidator {
       setCancelOnClickOutside(false).
       setShowShadow(true).
       setFocusable(false);
+  }
+
+  private static void initTipComponent(@NotNull JEditorPane tipComponent, boolean isWarning) {
+    HTMLEditorKit editorKit = HTMLEditorKitBuilder.simple();
+    StyleSheet css = editorKit.getStyleSheet();
+
+    css.addRule("a, a:link {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.Foreground.ENABLED) + ";}");
+    css.addRule("a:visited {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.Foreground.VISITED) + ";}");
+    css.addRule("a:hover {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.Foreground.HOVERED) + ";}");
+    css.addRule("a:active {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.Foreground.PRESSED) + ";}");
+    css.addRule("body {background-color:#" + ColorUtil.toHex(isWarning ? warningBackgroundColor() : errorBackgroundColor()) + ";}");
+
+    if (tipComponent.getCaret() instanceof DefaultCaret) {
+      ((DefaultCaret)tipComponent.getCaret()).setUpdatePolicy(DefaultCaret.NEVER_UPDATE);
+    }
+
+    String text = tipComponent.getText();
+
+    tipComponent.setEditorKit(editorKit);
+    tipComponent.setText(text);
+    tipComponent.setCaretPosition(0);
   }
 
   /**
@@ -392,6 +395,8 @@ public class ComponentValidator {
         validationInfo != null &&
         validationInfo.component != null &&
         validationInfo.component.isEnabled()) {
+      tipComponent.updateUI();
+      initTipComponent(tipComponent, validationInfo.warning);
       popup = popupBuilder.createPopup();
 
       Insets i = validationInfo.component.getInsets();
