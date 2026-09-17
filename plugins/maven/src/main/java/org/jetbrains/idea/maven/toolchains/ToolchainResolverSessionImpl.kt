@@ -15,15 +15,21 @@ import com.intellij.openapi.util.getOrCreateUserData
 import com.intellij.platform.eel.fs.getPath
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.util.EnvironmentUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.idea.maven.buildtool.MavenSyncSession
 import org.jetbrains.idea.maven.buildtool.getToolchainsFile
 import org.jetbrains.idea.maven.utils.MavenUtil.getJdkForImporter
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil
 import org.jetbrains.jps.model.java.JdkVersionDetector
+import java.io.IOException
+import java.nio.file.InvalidPathException
 import java.nio.file.Path
+import java.util.TreeMap
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.isRegularFile
 
@@ -49,6 +55,10 @@ class ToolchainResolverSession private constructor(
 
   private var cachedToolchains: List<ToolchainModel>? = null
   private var cachedDiscoveredJdks: List<ToolchainModel>? = null
+
+  @set:TestOnly
+  @get:ApiStatus.Internal
+  var environment: () -> Map<String, String> = { EnvironmentUtil.getEnvironmentMap() }
 
   private val resolvedSdks = HashMap<ToolchainRequirement, Sdk>()
   private val unresolvedSdks = HashSet<ToolchainRequirement>()
@@ -108,7 +118,13 @@ class ToolchainResolverSession private constructor(
   private suspend fun readDiscoveredJdks(): List<ToolchainModel> {
     val discoveredToolchainsFile = myToolchainsFile.parent?.resolve(DISCOVERED_JDK_TOOLCHAINS_CACHE)
     return listOfNotNull(discoveredToolchainsFile)
-             .flatMap { readToolchains(it) } + readRegisteredJdks() + detectJdks()
+             .flatMap { readToolchains(it) } + readRegisteredJdks() + environmentJdks() + detectJdks()
+  }
+
+  private fun environmentJdks(): List<ToolchainModel> {
+    return jdkModelsFromEnvironment(environment()) {
+      JdkVersionDetector.getInstance().detectJdkVersionInfo(it.toString())
+    }
   }
 
   private suspend fun readToolchains(toolchainsFile: Path): List<ToolchainModel> {
@@ -186,5 +202,41 @@ class ToolchainResolverSession private constructor(
     val jdk = getJdkForImporter(myProject)
     val model = ToolchainModel.fromSdk(jdk) ?: return null
     return if (model.matches(requirement)) jdk else null
+  }
+}
+
+/**
+ * Builds toolchain models from `JAVA*_HOME` environment variables, as the Maven toolchains plugin discovery does.
+ * The `env` provide holds the variable names that point to the JDK home.
+ */
+@ApiStatus.Internal
+fun jdkModelsFromEnvironment(
+  env: Map<String, String>,
+  versionInfoProvider: (Path) -> JdkVersionDetector.JdkVersionInfo?,
+): List<ToolchainModel> {
+  val namesByHome = TreeMap<String, MutableList<String>>()
+  for ((name, value) in env) {
+    if (!name.startsWith("JAVA") || !name.endsWith("_HOME") || value.isBlank()) continue
+    val home = try {
+      Path.of(value.trim()).toRealPath()
+    }
+    catch (_: IOException) {
+      continue
+    }
+    catch (_: InvalidPathException) {
+      continue
+    }
+    namesByHome.computeIfAbsent(home.toString()) { ArrayList() }.add(name)
+  }
+
+  return namesByHome.mapNotNull { (home, names) ->
+    val versionInfo = versionInfoProvider(Path.of(home)) ?: return@mapNotNull null
+    val provides = HashMap<String, String>()
+    provides["version"] = versionInfo.version.toString()
+    if (versionInfo.variant != JdkVersionDetector.Variant.Unknown) {
+      provides["vendor"] = versionInfo.variant.displayName
+    }
+    provides["env"] = names.sorted().joinToString(",")
+    ToolchainModel(type = "jdk", providesMap = provides, configurationMap = mapOf("jdkHome" to home))
   }
 }

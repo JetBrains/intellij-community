@@ -8,6 +8,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.util.lang.JavaVersion
+import com.intellij.util.system.CpuArch
 import com.intellij.maven.testFramework.fixtures.mavenFixture
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
@@ -16,6 +17,8 @@ import org.jetbrains.idea.maven.buildtool.MavenSyncSpec
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.project.MavenProjectsTree
+import org.jetbrains.jps.model.java.JdkVersionDetector
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertSame
@@ -205,6 +208,59 @@ internal class ToolchainsResolverTest {
     finally {
       edtWriteAction {
         ProjectJdkTable.getInstance(maven.project).removeJdk(sdk)
+      }
+    }
+  }
+
+  @Test
+  fun testShouldBuildJdkModelsFromEnvironmentVariables() {
+    val jdkHome = createTempDirectory("testEnvJdk").toRealPath()
+    val otherDir = createTempDirectory("testEnvOther").toRealPath()
+    val env = mapOf(
+      "JAVA47_HOME" to jdkHome.toString(),
+      "JAVA_HOME" to jdkHome.toString(),
+      "JAVA_BROKEN_HOME" to otherDir.toString(),
+      "JAVA_MISSING_HOME" to otherDir.resolve("missing").toString(),
+      "MAVEN_HOME" to jdkHome.toString(),
+      "PATH" to "irrelevant",
+    )
+    val versionInfo = JdkVersionDetector.JdkVersionInfo(JavaVersion.compose(47, 0, 1, 0, false), JdkVersionDetector.Variant.Temurin,
+                                                        CpuArch.X86_64)
+
+    val models = jdkModelsFromEnvironment(env) { if (it == jdkHome) versionInfo else null }
+
+    assertEquals(1, models.size)
+    val model = models.single()
+    assertEquals("47.0.1", model.provides["version"])
+    assertEquals("Eclipse Temurin", model.provides["vendor"])
+    assertEquals("JAVA47_HOME,JAVA_HOME", model.provides["env"])
+    assertEquals(jdkHome.toString(), model.jdkHome)
+  }
+
+  @Test
+  fun testShouldDiscoverJdkFromEnvironmentVariable() = runBlocking {
+    val mavenSession = MavenSyncSession(maven.project, MavenSyncSpec.incremental("test"), MavenProjectsTree(maven.project))
+    val toolchainsFile = createTempDirectory("testToolchains").resolve("toolchains.xml")
+    mavenSession.syncContext.putUserData(MavenSyncSession.TOOLCHAINS_FILE, toolchainsFile)
+    val session = ToolchainResolverSession.forSession(mavenSession)
+    session.environment = { mapOf("JAVA_TEST_HOME" to System.getProperty("java.home")) }
+
+    val requirement = ToolchainRequirement.Builder(ToolchainRequirement.JDK_TYPE)
+      .set("env", "JAVA_TEST_HOME")
+      .discoverJdks(true)
+      .build()
+
+    val registeredBefore = ProjectJdkTable.getInstance(maven.project).allJdks.toSet()
+    var jdk: Sdk? = null
+    try {
+      jdk = session.findOrInstallJdk(requirement)
+      assertNotNull(jdk, "The resolver must discover the JDK behind the JAVA_TEST_HOME variable")
+    }
+    finally {
+      if (jdk != null && jdk !in registeredBefore) {
+        edtWriteAction {
+          SdkConfigurationUtil.removeSdk(jdk)
+        }
       }
     }
   }
