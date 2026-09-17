@@ -71,6 +71,10 @@ open class DataManagerImpl : DataManager() {
     return getDataFromRuleInner(rule, dataId, provider)
   }
 
+  /** Whether the current thread is inside a data rule run, i.e. the request is nested. */
+  @ApiStatus.Internal
+  fun isInsideDataRule(): Boolean = ourGetDataLevel.get().depth > 0
+
   private fun getDataFromProviderAndRules(dataId: String, provider: DataProvider): Any? {
     ProgressManager.checkCanceled()
     val state = ourGetDataLevel.get()

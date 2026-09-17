@@ -37,6 +37,8 @@ import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils
+import com.intellij.openapi.progress.util.waitWithParallelismCompensation
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.UserDataHolder
@@ -63,6 +65,7 @@ import java.awt.Component
 import java.lang.ref.Reference
 import java.lang.ref.WeakReference
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JComponent
@@ -236,30 +239,59 @@ internal open class PreCachedDataContext : AsyncDataContext, UserDataHolder, Inj
     val keyIndex: Int = getDataKeyIndex(dataId)
     if (keyIndex == -1) return CustomizedDataContext.EXPLICIT_NULL // DataKey not found
 
-    var answer: Any?
-    ProgressManager.checkCanceled()
-    var isComputed = false
-    answer = myCachedData.uiData(dataId) ?: myCachedData.bgtComputed[dataId]?.also {
-      isComputed = true
-    }
-    if (answer === CustomizedDataContext.EXPLICIT_NULL) {
-      return answer
-    }
-    else if (answer != null) {
-      if (isComputed) {
-        reportValueProvidedByRulesUsage(dataId, !ruleValuesAllowed)
-        if (!ruleValuesAllowed) return null
+    while (true) {
+      var answer: Any?
+      ProgressManager.checkCanceled()
+      var isComputed = false
+      answer = myCachedData.uiData(dataId) ?: myCachedData.bgtComputed[dataId]?.also {
+        isComputed = true
       }
-      answer = DataValidators.validOrNull(answer, dataId, this)
-      if (answer != null) return answer
-      if (!isComputed) return null
-      // allow slow data providers and rules to re-calc the value
-      myCachedData.bgtComputed.remove(dataId)
+      if (answer === CustomizedDataContext.EXPLICIT_NULL) {
+        return answer
+      }
+      else if (answer != null) {
+        if (isComputed) {
+          reportValueProvidedByRulesUsage(dataId, !ruleValuesAllowed)
+          if (!ruleValuesAllowed) return null
+        }
+        answer = DataValidators.validOrNull(answer, dataId, this)
+        if (answer != null) return answer
+        if (!isComputed) return null
+        // allow slow data providers and rules to re-calc the value
+        myCachedData.bgtComputed.remove(dataId)
+      }
+      if (!rulesAllowed || myCachedData.nullsByRules.get(keyIndex)) return null
+
+      // Keep one BGT running the data rules for the key while others wait and reuse the cached result.
+      // A thread already inside a rule run computes directly: rules can reference each other in a cycle,
+      // and `DataManagerImpl` breaks it with a thread-local set of the ids the thread already asked for.
+      if (EDT.isCurrentThreadEdt() || myDataManager.isInsideDataRule() ||
+          !Registry.`is`("actionSystem.update.actions.share.dataRules.computation", true)) {
+        return computeFromRules(dataId, keyIndex)
+      }
+      val mine = CountDownLatch(1)
+      val other = myCachedData.inFlightRules.putIfAbsent(dataId, mine)
+      if (other != null) {
+        // the owner can end without a result, e.g. if its read action is canceled, so re-read the cache and maybe redo
+        waitWithParallelismCompensation { ProgressIndicatorUtils.awaitWithCheckCanceled(other) }
+        continue
+      }
+      try {
+        // might finish between the cache read above and putIfAbsent
+        if (myCachedData.bgtComputed[dataId] != null || myCachedData.nullsByRules.get(keyIndex)) {
+          continue
+        }
+        return computeFromRules(dataId, keyIndex)
+      }
+      finally {
+        myCachedData.inFlightRules.remove(dataId, mine)
+        mine.countDown()
+      }
     }
-    if (!rulesAllowed || myCachedData.nullsByRules.get(keyIndex)) return null
+  }
 
-    answer = myDataManager.getDataFromRules(dataId, ContextRuleProvider())
-
+  private fun computeFromRules(dataId: String, keyIndex: Int): Any? {
+    val answer = myDataManager.getDataFromRules(dataId, ContextRuleProvider())
     if (answer == null) {
       myCachedData.nullsByRules.set(keyIndex)
     }
@@ -666,6 +698,8 @@ private class CachedData(
     private set
   val uiComputed = ConcurrentHashMap<String, Any>()
   val bgtComputed = ConcurrentHashMap<String, Any>()
+  /** Data rule runs in progress: the owner thread's latch per data id, released when the run ends */
+  val inFlightRules = ConcurrentHashMap<String, CountDownLatch>()
 
   // to avoid lots of nulls in maps
   val nullsByRules = ConcurrentBitSet.create()

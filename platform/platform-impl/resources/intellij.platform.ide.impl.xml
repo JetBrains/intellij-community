@@ -518,6 +518,9 @@
     <registryKey
       key="ea.auto.report.forced.tag" defaultValue=""
       description="Additional tag for error reports"/>
+    <registryKey
+      key="actionSystem.update.actions.share.dataRules.computation" defaultValue="true"
+      description="Whether BG action updates share computation instead of trying to compete"/>
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.platform.ide.menu.MainMenuCollector"/>
     <editorEmptyStateComponentProvider implementation="com.intellij.openapi.fileEditor.impl.EditorEmptyTextComponentProvider" order="last"/>
