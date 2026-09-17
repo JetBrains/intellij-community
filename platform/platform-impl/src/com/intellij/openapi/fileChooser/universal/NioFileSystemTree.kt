@@ -5,6 +5,7 @@ import com.intellij.ide.dnd.DnDDragStartBean
 import com.intellij.ide.dnd.DnDSupport
 import com.intellij.ide.dnd.FileCopyPasteUtil
 import com.intellij.ide.dnd.FileFlavorProvider
+import com.intellij.ide.dnd.PathFlavorProvider
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.DataKey
@@ -153,8 +154,7 @@ class NioFileSystemTree(
 
   /**
    * Makes the tree a drag source, so a selection can be dragged out to the local file system,
-   * to the Project View, or to the editor. Only paths that resolve to a local [File] are offered:
-   * a selection that includes a non-local (remote or in-memory) path starts no drag.
+   * to the Project View, or to the editor.
    */
   private fun installDragSource() {
     DnDSupport.createBuilder(myTree)
@@ -165,22 +165,36 @@ class NioFileSystemTree(
   }
 
   private fun createDragStartBean(): DnDDragStartBean? {
-    val files = getSelectedFilesForDrag() ?: return null
-    return DnDDragStartBean(object : FileFlavorProvider {
-      override fun asFileList(): List<File> = files
-    })
-  }
-
-  /** Returns the selected paths as local [File]s, or null when any of them is not local. */
-  private fun getSelectedFilesForDrag(): List<File>? {
     val paths = getSelectedFiles().filterNotNull()
     if (paths.isEmpty()) return null
+    return DnDDragStartBean(DraggedFiles(paths, toLocalFiles(paths)))
+  }
+
+  /** Returns the paths as local [File]s, or an empty list when one of them has no local form. */
+  private fun toLocalFiles(paths: List<Path>): List<File> {
     val files = ArrayList<File>(paths.size)
     for (path in paths) {
-      val file = runCatching { path.toFile() }.getOrNull() ?: return null
+      val file = runCatching { path.toFile() }.getOrNull() ?: return emptyList()
       files.add(file)
     }
     return files
+  }
+
+  /**
+   * The dragged selection.
+   *
+   * [asFileList] reports the local form, which a target outside the IDE needs. It is empty when the
+   * selection holds a path with no local form, for example a path in a Docker container.
+   * [asPathList] always reports the whole selection, so a target inside the IDE can copy a file
+   * from another environment.
+   */
+  private class DraggedFiles(
+    private val paths: List<Path>,
+    private val files: List<File>,
+  ) : FileFlavorProvider, PathFlavorProvider {
+    override fun asFileList(): List<File> = files
+
+    override fun asPathList(): List<Path> = paths
   }
 
   /** Returns the tree node path under the drop point, or null when there is none. */

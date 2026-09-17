@@ -3,6 +3,7 @@ package com.intellij.openapi.fileChooser.universal
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.dnd.DroppedFileCopy
 import com.intellij.ide.ui.ProductIcons
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
@@ -43,9 +44,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
-import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.toEelApi
-import com.intellij.platform.eel.provider.utils.EelPathTransfer
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.util.progress.RawProgressReporter
@@ -601,7 +600,7 @@ object UniversalFileChooser {
       scope.launch {
         val destinationDir = withContext(Dispatchers.IO) { resolveDestinationDir(fileView, candidate) }
                              ?: return@launch
-        val foreign = paths.any { it.getEelDescriptor() != destinationDir.getEelDescriptor() }
+        val foreign = withContext(Dispatchers.IO) { DroppedFileCopy.isAcrossEnvironments(paths, destinationDir) }
         if (!foreign) {
           runOnEdt { navigateToFile(paths.first()) }
           return@launch
@@ -618,50 +617,18 @@ object UniversalFileChooser {
     }
 
     private suspend fun copyDroppedFiles(fileView: FileView, destinationDir: Path, paths: List<Path>) {
-      var firstCopied: Path? = null
-      var failedSource: Path? = null
-      var failure: Exception? = null
+      var copied: List<Path> = emptyList()
       try {
-        withBackgroundProgress(project, IdeBundle.message("universal.file.chooser.dnd.copy.progress.title")) {
-          withContext(Dispatchers.IO) {
-            reportRawProgress { reporter ->
-              for (source in paths) {
-                val name = source.fileName?.toString() ?: continue
-                val target = destinationDir.resolve(name)
-                reporter.text(IdeBundle.message("universal.file.chooser.dnd.copy.progress.item", name))
-                try {
-                  EelPathTransfer.walkingTransfer(source, target, removeSource = false, copyAttributes = true)
-                }
-                catch (e: CancellationException) {
-                  throw e
-                }
-                catch (e: Exception) {
-                  failedSource = source
-                  failure = e
-                  break
-                }
-                if (firstCopied == null) firstCopied = target
-              }
-            }
-          }
-        }
+        copied = DroppedFileCopy.copy(project, destinationDir, paths)
       }
-      catch (e: CancellationException) {
-        runOnEdt { fileView.fileTree.updateTree() }
-        throw e
-      }
-      val copied = firstCopied
-      val error = failure
-      runOnEdt {
-        fileView.fileTree.updateTree()
-        if (error != null) {
-          val name = failedSource?.fileName?.toString() ?: ""
-          Messages.showErrorDialog(
-            IdeBundle.message("universal.file.chooser.dnd.copy.error.message", name, error.message ?: ""),
-            IdeBundle.message("universal.file.chooser.dnd.copy.error.title"),
-          )
+      finally {
+        // The tree must show the result also when the user cancels the copy, because the copy can
+        // stop after some files.
+        val done = copied
+        runOnEdt {
+          fileView.fileTree.updateTree()
+          done.firstOrNull()?.let { navigateToFile(it) }
         }
-        if (copied != null) navigateToFile(copied)
       }
     }
 

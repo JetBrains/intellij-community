@@ -1018,6 +1018,7 @@ f:com.intellij.ide.dnd.FileCopyPasteUtil
 - s:getFileList(java.awt.datatransfer.Transferable):java.util.List
 - s:getFileListFromAttachedObject(java.lang.Object):java.util.List
 - s:getFiles(java.awt.datatransfer.Transferable):java.util.List
+- s:getPathListFromAttachedObject(java.lang.Object):java.util.List
 - s:isFileListFlavorAvailable():Z
 - s:isFileListFlavorAvailable(com.intellij.ide.dnd.DnDEvent):Z
 - s:isFileListFlavorAvailable(java.awt.datatransfer.DataFlavor[]):Z

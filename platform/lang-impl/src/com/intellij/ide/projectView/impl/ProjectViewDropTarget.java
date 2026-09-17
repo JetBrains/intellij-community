@@ -5,6 +5,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.dnd.DnDAction;
 import com.intellij.ide.dnd.DnDEvent;
 import com.intellij.ide.dnd.DnDNativeTarget;
+import com.intellij.ide.dnd.DroppedFileCopy;
 import com.intellij.ide.dnd.FileCopyPasteUtil;
 import com.intellij.ide.dnd.TransferableWrapper;
 import com.intellij.ide.projectView.impl.nodes.DropTargetNode;
@@ -20,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileUtil;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDirectoryContainer;
 import com.intellij.psi.PsiDocumentManager;
@@ -45,6 +47,7 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.dnd.DnDConstants;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
@@ -85,7 +88,7 @@ public abstract class ProjectViewDropTarget implements DnDNativeTarget {
     if (sources != null) {
       if (ArrayUtilRt.find(sources, target) != -1) return false;//TODO???? nodes
     }
-    else if (!FileCopyPasteUtil.isFileListFlavorAvailable(event)) {
+    else if (!isFileDropPossible(event)) {
       return false;
     }
     event.setHighlighting(new RelativeRectangle(myTree, bounds), DnDEvent.DropTargetHighlightingType.RECTANGLE);
@@ -116,16 +119,87 @@ public abstract class ProjectViewDropTarget implements DnDNativeTarget {
     TreePath[] sources = getSourcePaths(event.getAttachedObject());
 
     if (sources == null) {
-      if (FileCopyPasteUtil.isFileListFlavorAvailable(event)) {
-        List<File> fileList = FileCopyPasteUtil.getFileListFromAttachedObject(attached);
-        if (!fileList.isEmpty()) {
-          handler.doDropFiles(fileList, target);
-        }
+      List<Path> paths = FileCopyPasteUtil.getPathListFromAttachedObject(attached);
+      if (!paths.isEmpty()) {
+        doDropPaths(paths, attached, target, handler);
+      }
+      else if (FileCopyPasteUtil.isFileListFlavorAvailable(event)) {
+        doDropFiles(attached, target, handler);
       }
     }
     else {
       doValidDrop(sources, target, handler);
     }
+  }
+
+  /**
+   * Returns true when the drop source has a file to give.
+   * <p>
+   * A source can report a file as a NIO path only, because a file in another environment has no
+   * local {@link File} form.
+   */
+  private static boolean isFileDropPossible(@NotNull DnDEvent event) {
+    return !FileCopyPasteUtil.getPathListFromAttachedObject(event.getAttachedObject()).isEmpty()
+           || FileCopyPasteUtil.isFileListFlavorAvailable(event);
+  }
+
+  /**
+   * Drops the files that the source reports as NIO paths.
+   * <p>
+   * A source inside the IDE, for example the universal file chooser, can drag a file from another
+   * environment such as a Docker container or WSL. Such a file has no local {@link File} form, and
+   * a move refactoring cannot cross a file system, so the drop copies the file into the target
+   * directory with the EEL API. A file in the same environment as the target keeps the standard
+   * move or copy behavior.
+   */
+  private void doDropPaths(@NotNull List<Path> paths, Object attached, @NotNull TreePath target, @NotNull DropHandler handler) {
+    record CopyContext(@Nullable Path destination) { }
+    ReadAction.nonBlocking(() -> new CopyContext(findCopyDestination(paths, target)))
+      .expireWith(myProject)
+      .finishOnUiThread(
+        ModalityState.defaultModalityState(),
+        context -> {
+          if (context.destination != null) {
+            DroppedFileCopy.copyInBackground(myProject, context.destination, paths);
+          }
+          else {
+            doDropFiles(attached, target, handler);
+          }
+        })
+      .submit(AppExecutorUtil.getAppExecutorService());
+  }
+
+  private static void doDropFiles(Object attached, @NotNull TreePath target, @NotNull DropHandler handler) {
+    List<File> fileList = FileCopyPasteUtil.getFileListFromAttachedObject(attached);
+    if (!fileList.isEmpty()) {
+      handler.doDropFiles(fileList, target);
+    }
+  }
+
+  /**
+   * Returns the directory that must hold the copy of {@code paths}, or null when the drop needs no copy.
+   */
+  private @Nullable Path findCopyDestination(@NotNull List<Path> paths, @NotNull TreePath target) {
+    PsiDirectory directory = getTargetDirectory(getPsiElement(target));
+    if (directory == null) return null;
+    Path destination = VirtualFileUtil.toNioPathOrNull(directory.getVirtualFile());
+    if (destination == null) return null;
+    return DroppedFileCopy.isAcrossEnvironments(paths, destination) ? destination : null;
+  }
+
+  /** Returns the directory that holds {@code element}, or {@code element} itself when it is a directory. */
+  private static @Nullable PsiDirectory getTargetDirectory(@Nullable PsiElement element) {
+    if (element instanceof PsiDirectoryContainer directoryContainer) {
+      PsiDirectory[] psiDirectories = directoryContainer.getDirectories();
+      return psiDirectories.length != 0 ? psiDirectories[0] : null;
+    }
+    if (element instanceof PsiDirectory psiDirectory) {
+      return psiDirectory;
+    }
+    if (element == null) return null;
+    PsiFile containingFile = element.getContainingFile();
+    LOG.assertTrue(containingFile != null, element);
+    return containingFile.getContainingDirectory();
   }
 
   private static TreePath @Nullable [] getSourcePaths(Object transferData) {
@@ -413,20 +487,7 @@ public abstract class ProjectViewDropTarget implements DnDNativeTarget {
       final PsiElement @Nullable [] sources = getPsiElements(context);
       if (targetElement == null || sources == null) return;
 
-      final PsiDirectory psiDirectory;
-      if (targetElement instanceof PsiDirectoryContainer directoryContainer) {
-        final PsiDirectory[] psiDirectories = directoryContainer.getDirectories();
-        psiDirectory = psiDirectories.length != 0 ? psiDirectories[0] : null;
-      }
-      else if (targetElement instanceof PsiDirectory) {
-        psiDirectory = (PsiDirectory)targetElement;
-      }
-      else {
-        final PsiFile containingFile = targetElement.getContainingFile();
-        LOG.assertTrue(containingFile != null, targetElement);
-        psiDirectory = containingFile.getContainingDirectory();
-      }
-      CopyHandler.doCopy(sources, psiDirectory);
+      CopyHandler.doCopy(sources, getTargetDirectory(targetElement));
     }
 
     @Override

@@ -110,6 +110,16 @@ public final class FileCopyPasteUtil {
     return result == null ? List.of() : result;
   }
 
+  /**
+   * Returns the dragged files as NIO paths, or an empty list when the source reports none.
+   *
+   * @see PathFlavorProvider
+   */
+  public static @NotNull List<Path> getPathListFromAttachedObject(Object attached) {
+    List<Path> result = attached instanceof PathFlavorProvider provider ? provider.asPathList() : null;
+    return result == null ? List.of() : result;
+  }
+
   public static @NotNull List<@NotNull VirtualFile> getVirtualFileListFromAttachedObject(Object attached) {
     var files = getFileListFromAttachedObject(attached);
     if (files.isEmpty()) {
