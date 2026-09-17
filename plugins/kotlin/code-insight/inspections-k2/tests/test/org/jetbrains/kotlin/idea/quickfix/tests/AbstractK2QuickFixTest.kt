@@ -42,9 +42,6 @@ abstract class AbstractK2QuickFixTest : AbstractQuickFixTest() {
         )
     }
 
-    override val inspectionFileName: String
-        get() = ".k2Inspection"
-
     override fun checkForErrorsBefore(mainFile: File, ktFile: KtFile, fileText: String) {
         K2DirectiveBasedActionUtils.checkForErrorsBefore(mainFile, ktFile, fileText)
     }

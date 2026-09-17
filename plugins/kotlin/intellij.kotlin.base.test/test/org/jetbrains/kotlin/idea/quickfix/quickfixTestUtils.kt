@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.quickfix
 import java.io.File
 
 fun findInspectionFile(startDir: File): File? {
-    return findInspectionFile(startDir, ".k2Inspection")
+    return findInspectionFile(startDir, ".inspection")
 }
 
 fun findInspectionFile(startDir: File, inspectionFileName: String): File? {

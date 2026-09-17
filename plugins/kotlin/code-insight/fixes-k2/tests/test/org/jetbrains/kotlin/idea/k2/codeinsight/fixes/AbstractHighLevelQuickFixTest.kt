@@ -59,9 +59,6 @@ abstract class AbstractHighLevelQuickFixTest : AbstractQuickFixTest() {
         K2DirectiveBasedActionUtils.checkForErrorsAfter(mainFile, ktFile, fileText)
     }
 
-    override val inspectionFileName: String
-        get() = ".k2Inspection"
-
     override val actionPrefix: String? = "K2_ACTION:"
 
     override fun checkAvailableActionsAreExpected(actions: List<IntentionAction>) {

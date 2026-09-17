@@ -8,3 +8,5 @@ val ONE = HELLO
 enum class MyEnum {
     HELLO
 }
+
+// IGNORE_K2
