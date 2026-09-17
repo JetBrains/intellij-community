@@ -345,6 +345,13 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : LoadablePluginsUiCom
     val uninstalledButton: UiComponent =
       x("Uninstalled button") { and(byType(JButton::class.java), byAccessibleName("Uninstalled")) }
     val enabledCheckBox: JCheckBoxUi = checkBox("State checkbox") { and(byType(JCheckBox::class.java), byAccessibleName("Enabled")) }
+    val enabledControl: EnabledControlUiComponent =
+      x(EnabledControlUiComponent::class.java, readableName = "Plugin state control") {
+        and(
+          or(byType(JCheckBox::class.java), byType("com.intellij.ui.components.OnOffButton")),
+          byAccessibleName("Enabled"),
+        )
+      }
     val ultimateTagLabel: UiComponent = x("'Ultimate' label") { and(byType("com.intellij.ide.plugins.newui.TagComponent"), byAccessibleName("Ultimate")) }
     val proTagLabel: UiComponent = x("'Pro' label") { and(byType("com.intellij.ide.plugins.newui.TagComponent"), byAccessibleName("Pro")) }
     val errorNotice: JTextComponentUI = textComponent("Error notice") { byType("com.intellij.ide.plugins.newui.ErrorComponent") }
@@ -443,6 +450,16 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : LoadablePluginsUiCom
       }
       return driver.ui.x(PluginDetailsPage::class.java) { byType("com.intellij.ide.plugins.newui.PluginDetailsPageComponent") }
     }
+
+    class EnabledControlUiComponent(data: ComponentData) : UiComponent(data) {
+      private val abstractButton get() = driver.cast(component, AbstractButtonRef::class)
+
+      fun waitSelected(selected: Boolean, timeout: Duration = 5.seconds) {
+        waitFor("Plugin state control should be ${if (selected) "selected" else "not selected"}", timeout) {
+          abstractButton.isSelected() == selected
+        }
+      }
+    }
   }
 
   class UnifiedPluginsSectionUiComponent(data: ComponentData) : UiComponent(data)
@@ -450,6 +467,11 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : LoadablePluginsUiCom
   @Remote("com.intellij.ide.plugins.newui.ListPluginComponent")
   interface ListPluginComponentRef {
     fun getPluginModel(): PluginUiModel
+  }
+
+  @Remote("javax.swing.AbstractButton")
+  interface AbstractButtonRef {
+    fun isSelected(): Boolean
   }
 
   @Remote("com.intellij.ide.plugins.newui.PluginUiModel")
