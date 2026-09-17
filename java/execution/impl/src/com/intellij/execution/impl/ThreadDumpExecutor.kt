@@ -64,6 +64,7 @@ internal object ThreadDumpExecutor {
     processHandler: ProcessHandler,
     runnerContentUi: RunnerContentUi,
     scope: GlobalSearchScope,
+    onlyPlatformThreads: Boolean,
     fallbackDump: Runnable,
   ) {
     val state = getThreadDumpState(processHandler)
@@ -79,6 +80,12 @@ internal object ThreadDumpExecutor {
       }
       if (platformThreadDump == null) {
         fallbackDump.run()
+        return@launch
+      }
+      if (onlyPlatformThreads) {
+        showPlatformThreadDump(project, runnerContentUi, scope, platformThreadDump).also {
+          state.rememberDumpContent(it)
+        }
         return@launch
       }
       if (ThreadDumpProvider.isVirtualThreadsDumpAvailable(pid)) {

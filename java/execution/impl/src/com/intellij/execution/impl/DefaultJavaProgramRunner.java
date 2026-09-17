@@ -66,6 +66,7 @@ import com.intellij.threadDumpParser.ThreadDumpParser;
 import com.intellij.threadDumpParser.ThreadState;
 import com.intellij.unscramble.AnalyzeStacktraceUtil;
 import com.intellij.unscramble.ThreadDumpConsoleFactory;
+import com.intellij.util.BitUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -333,7 +334,9 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
         GlobalSearchScope scope =
           runTab instanceof RunContentBuilder ? ((RunContentBuilder)runTab).getSearchScope() : GlobalSearchScope.allScope(project);
         if (!JavaDebuggerAttachUtil.getAttachedPids(project).contains(pid)) {
+          boolean onlyPlatformThreads = BitUtil.isSet(event.getModifiers(), InputEvent.ALT_DOWN_MASK);
           ThreadDumpExecutor.dump(project, pid, processHandler, runnerContentUi, scope,
+                                  onlyPlatformThreads,
                                   () -> dumpWithBreak(proxy, project, processHandler));
           return;
         }
