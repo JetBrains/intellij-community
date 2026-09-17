@@ -122,6 +122,7 @@
                        groupKey="markdown.inspection.group.ruby.name"
                        enabledByDefault="true"
                        level="WARNING"
+                       editorAttributes="INFO_ATTRIBUTES"
                        implementationClass="com.intellij.markdown.backend.inspections.MarkdownUnresolvedFileReferenceInspection"/>
 
       <localInspection language="Markdown"

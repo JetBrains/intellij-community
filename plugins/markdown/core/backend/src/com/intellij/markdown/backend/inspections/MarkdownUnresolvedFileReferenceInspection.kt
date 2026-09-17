@@ -31,7 +31,7 @@ class MarkdownUnresolvedFileReferenceInspection: LocalInspectionTool() {
         holder.registerProblem(
           reference,
           ProblemsHolder.unresolvedReferenceMessage(reference),
-          ProblemHighlightType.LIKE_UNKNOWN_SYMBOL
+          ProblemHighlightType.GENERIC_ERROR_OR_WARNING
         )
       }
   }
