@@ -36,6 +36,7 @@ import com.intellij.internal.statistic.FUCollectorTestCase
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.DataMap
 import com.intellij.openapi.actionSystem.DataProvider
@@ -44,15 +45,23 @@ import com.intellij.openapi.actionSystem.DataSnapshotProvider
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.options.Configurable
+import com.intellij.openapi.options.newEditor.SpotlightPainter
+import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.ExpirableRunnable
 import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.openapi.wm.IdeFrame
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.replaceService
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.SearchTextField
@@ -80,6 +89,7 @@ import java.awt.Container
 import java.awt.Dimension
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
+import java.awt.Window
 import java.awt.event.FocusEvent
 import java.awt.image.BufferedImage
 import java.util.ArrayList
@@ -227,6 +237,27 @@ internal class UnifiedPluginsPageSessionTest {
         session.enableSearch("")!!.run()
 
         assertThat(searchField(session).text).isEmpty()
+      }
+      finally {
+        Disposer.dispose(session)
+      }
+    }
+
+  @Test
+  fun `Spotlight search applies its query without requesting focus`(@TestDisposable disposable: Disposable): Unit =
+    uiTest {
+      val focusManager = RecordingIdeFocusManager(IdeFocusManager.getGlobalInstance())
+      ApplicationManager.getApplication().replaceService(IdeFocusManager::class.java, focusManager, disposable)
+      val session = createSession(null)
+      try {
+        SpotlightSearchCaller().applySearch(session, "Spotlight query")
+
+        assertThat(searchField(session).text).isEqualTo("Spotlight query")
+        assertThat(focusManager.requestedComponents).isEmpty()
+
+        session.enableSearch("Direct query")!!.run()
+
+        assertThat(focusManager.requestedComponents).containsExactly(searchField(session))
       }
       finally {
         Disposer.dispose(session)
@@ -956,6 +987,47 @@ internal class UnifiedPluginsPageSessionTest {
     val container = JPanel()
     ComponentUtil.forceMarkAsShowing(container, true)
     withShowingChanged { container.add(component) }
+  }
+
+  private class SpotlightSearchCaller : SpotlightPainter(JPanel(), {}) {
+    fun applySearch(session: UnifiedPluginsPageSession, query: String) {
+      session.enableSearch(query)?.run()
+    }
+  }
+
+  @Suppress("DEPRECATION", "OVERRIDE_DEPRECATION")
+  private class RecordingIdeFocusManager(private val delegate: IdeFocusManager) : IdeFocusManager() {
+    val requestedComponents = mutableListOf<Component>()
+
+    override fun requestFocus(component: Component, forced: Boolean): ActionCallback {
+      requestedComponents.add(component)
+      return ActionCallback.DONE
+    }
+
+    override fun getFocusTargetFor(component: JComponent): JComponent? = delegate.getFocusTargetFor(component)
+
+    override fun doWhenFocusSettlesDown(runnable: Runnable) = delegate.doWhenFocusSettlesDown(runnable)
+
+    override fun doWhenFocusSettlesDown(runnable: Runnable, modality: ModalityState) =
+      delegate.doWhenFocusSettlesDown(runnable, modality)
+
+    override fun doWhenFocusSettlesDown(runnable: ExpirableRunnable) = delegate.doWhenFocusSettlesDown(runnable)
+
+    override fun getFocusedDescendantFor(component: Component): Component? = delegate.getFocusedDescendantFor(component)
+
+    override fun isFocusTransferEnabled(): Boolean = delegate.isFocusTransferEnabled
+
+    override fun getFocusOwner(): Component? = delegate.focusOwner
+
+    override fun runOnOwnContext(context: DataContext, runnable: Runnable) = delegate.runOnOwnContext(context, runnable)
+
+    override fun getLastFocusedFor(frame: Window?): Component? = delegate.getLastFocusedFor(frame)
+
+    override fun getLastFocusedFrame(): IdeFrame? = delegate.lastFocusedFrame
+
+    override fun getLastFocusedIdeWindow(): Window? = delegate.lastFocusedIdeWindow
+
+    override fun toFront(component: JComponent) = delegate.toFront(component)
   }
 
   private suspend fun waitForPluginIds(content: Component, expected: Set<String>) {

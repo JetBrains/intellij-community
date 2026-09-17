@@ -460,6 +460,7 @@ internal class UnifiedPluginsPageSession @RequiresEdt(generateAssertion = false 
     val calledFromSpotlight = isCalledFromSpotlightPainter()
     // SpotlightPainter calls enableSearch("") when Settings opens. Ignore this refresh before it invalidates a pending navigation request.
     // After Spotlight applies a user query, the same call clears that query normally.
+    // Spotlight query changes keep focus in the Settings search field.
     if (query.isEmpty() && calledFromSpotlight && !spotlightSearchActive) return null
 
     val requestRevision = ++settingsRequestRevision
@@ -471,7 +472,7 @@ internal class UnifiedPluginsPageSession @RequiresEdt(generateAssertion = false 
     val scope = if (ignoreTagMarketplaceTab) PluginsQueryScope.Installed else PluginsQueryScope.Unified
     return Runnable {
       if (disposed || requestRevision != settingsRequestRevision || intentRevision != queryIntentRevision) return@Runnable
-      applyQueryIntent(query, requestFocus = true, scope = scope)
+      applyQueryIntent(query, requestFocus = !calledFromSpotlight, scope = scope)
       if (calledFromSpotlight || query.isEmpty()) spotlightSearchActive = query.isNotEmpty()
     }
   }
