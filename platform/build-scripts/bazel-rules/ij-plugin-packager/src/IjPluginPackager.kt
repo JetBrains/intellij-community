@@ -16,6 +16,7 @@ import org.jetbrains.intellij.build.io.readEntryFromZip
 import java.io.Writer
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.name
 import kotlin.io.path.pathString
 import kotlin.io.path.readText
 
@@ -28,7 +29,9 @@ import kotlin.io.path.readText
  *
  * The first argument is the path to the output directory where the distribution should be generated.
  * Other arguments are:
- * * `--descriptor_module module_name:path_to_jar` (mandatory): specifies the name of a JPS module containing the plugin descriptor and path to its JAR file;
+ * * `--descriptor_module module_name:path_to_jar[,path_to_jar...]` (mandatory): specifies the name of a JPS module containing the plugin descriptor and path to its JAR file;
+ *   the first path contains the plugin descriptor, each additional path is a module-level library JAR, which is packed as a separate JAR in
+ *   the `lib` directory;
  * * `--content_module module_name:path_to_jar[,path_to_jar...]`: includes a plugin content module in the distribution; the first path contains the module XML descriptor, if
  *   additional paths are specified, they are packed together with the content module;
  *   Specify each module only once.
@@ -134,7 +137,8 @@ object IjPluginPackager {
       }
     }
 
-    val descriptorOutputJar = libDirectory.resolve(generateNameForPluginDescriptorJar(descriptorModuleArgument.name))
+    val pluginDescriptorJarName = generateNameForPluginDescriptorJar(descriptorModuleArgument.name)
+    val descriptorOutputJar = libDirectory.resolve(pluginDescriptorJarName)
     PluginJarPackager(descriptorOutputJar).use { packager ->
       val patchedPluginXmlContent = patchPluginDescriptor(
         originalContent = originalPluginXmlContent,
@@ -167,7 +171,43 @@ object IjPluginPackager {
       packedModulesWriter?.addModule(descriptorOutputJar, it.moduleElement.name)
     }
     copyNonClasspathData(nonClasspathData, outputDirectory)
+    val additionalJars = descriptorModuleArgument.jars.asSequence().drop(1)
+    packAdditionalJarsForDescriptorModule(
+      jars = additionalJars,
+      libDirectory = libDirectory,
+      pluginDescriptorJarName = pluginDescriptorJarName,
+      pluginDescriptorModuleName = descriptorModuleArgument.name,
+      packedModulesWriter = packedModulesWriter
+    )
     packedModulesWriter?.write()
+  }
+
+  private fun packAdditionalJarsForDescriptorModule(
+    jars: Sequence<Path>,
+    libDirectory: Path,
+    pluginDescriptorJarName: String,
+    pluginDescriptorModuleName: String,
+    packedModulesWriter: PackedModulesWriter?
+  ) {
+    val existingJarNames = HashMap<String, String>()
+    existingJarNames[pluginDescriptorJarName] = "plugin descriptor module JAR"
+    jars.forEach {  jar ->
+      val targetJarName = removeVersionFromJar(jar.name)
+      val old = existingJarNames.put(targetJarName, jar.pathString)
+      val targetJar = libDirectory.resolve(targetJarName)
+      if (old != null) {
+        throw IjPluginPackagingException("Duplicate JAR name: both $old and ${jar.pathString} are put to ${targetJar.pathString}")
+      }
+      PluginJarPackager(targetJar).use {
+        it.addEntriesFromJar(jar) { filePath, dataFetcher ->
+          if (isSkippedFromLibraries(filePath)) {
+            return@addEntriesFromJar null
+          }
+          dataFetcher()
+        }
+      }
+      packedModulesWriter?.addModuleLibrary(targetJar, pluginDescriptorModuleName, targetJarName.removeSuffix(".jar"))
+    }
   }
 
   private fun readContentModuleDescriptors(
@@ -217,7 +257,13 @@ object IjPluginPackager {
           }
         }
       }
-      packedModulesWriter?.addContentModule(outputJar, contentModuleElement.name)
+      if (packedModulesWriter != null) {
+        packedModulesWriter.addContentModule(outputJar, contentModuleElement.name)
+        contentModule.jars.asSequence().drop(1).forEach { jar ->
+          val libraryName = removeVersionFromJar(jar.name).removeSuffix(".jar")
+          packedModulesWriter.addModuleLibrary(outputJar, contentModuleElement.name, libraryName)
+        }
+      }
     }
   }
 
@@ -304,6 +350,13 @@ private fun computePluginVersion(string: String?, buildNumberFromFile: Lazy<Stri
 
 private fun substituteBuildNumber(string: String?, buildNumberFromFile: Lazy<String>): String? {
   return if (string == BUILD_NUMBER_FROM_FILE_MARKER) buildNumberFromFile.value else string
+}
+
+private val JAR_NAME_WITH_VERSION_PATTERN = Regex("(.*)-\\d+(?:\\.\\d+)*\\.jar")
+
+private fun removeVersionFromJar(fileName: String): String {
+  val matcher = JAR_NAME_WITH_VERSION_PATTERN.matchEntire(fileName)
+  return if (matcher != null) "${matcher.groupValues[1]}.jar" else fileName
 }
 
 internal object IjPluginPackagerExecutor : WorkRequestExecutor {

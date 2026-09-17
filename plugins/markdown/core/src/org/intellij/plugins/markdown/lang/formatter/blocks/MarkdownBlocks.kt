@@ -66,6 +66,7 @@ internal object MarkdownBlocks {
   internal fun shouldWrapText(node: ASTNode, settings: CodeStyleSettings): Boolean {
     val customSettings = settings.getCustomSettings(MarkdownCustomCodeStyleSettings::class.java)
     return customSettings.WRAP_TEXT_IF_LONG
+           && node.parents(withSelf = true).none { it.hasType(MarkdownTokenTypeSets.ATX_HEADERS) }
            && (customSettings.WRAP_TEXT_INSIDE_BLOCKQUOTES || !isInsideBlockquote(node))
   }
 

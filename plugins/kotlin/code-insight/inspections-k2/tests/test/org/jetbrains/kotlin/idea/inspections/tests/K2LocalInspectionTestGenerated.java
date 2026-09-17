@@ -17648,6 +17648,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                     runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_nestedRunBlocking.kt");
                 }
 
+                @TestMetadata("runCatching_noCoroutinesDependency.kt")
+                public void testRunCatching_noCoroutinesDependency() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_noCoroutinesDependency.kt");
+                }
+
                 @TestMetadata("runCatching_noSuspendCallInBody.kt")
                 public void testRunCatching_noSuspendCallInBody() throws Exception {
                     runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_noSuspendCallInBody.kt");
@@ -18051,6 +18056,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 @TestMetadata("tryCatchTimeoutCancellation_rethrown_thenBroadClause.kt")
                 public void testTryCatchTimeoutCancellation_rethrown_thenBroadClause() throws Exception {
                     runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/tryCatchTimeoutCancellation_rethrown_thenBroadClause.kt");
+                }
+
+                @TestMetadata("tryCatch_noCoroutinesDependency.kt")
+                public void testTryCatch_noCoroutinesDependency() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/tryCatch_noCoroutinesDependency.kt");
                 }
 
                 @TestMetadata("tryFinallyWithoutCatch.kt")

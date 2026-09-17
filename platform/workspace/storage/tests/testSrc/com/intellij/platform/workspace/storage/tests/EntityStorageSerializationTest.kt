@@ -6,7 +6,6 @@ import com.intellij.platform.workspace.storage.entities
 import com.intellij.platform.workspace.storage.impl.MutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.assertConsistency
 import com.intellij.platform.workspace.storage.impl.serialization.EntityStorageSerializerImpl
-import com.intellij.platform.workspace.storage.impl.url.ConcurrentVirtualFileUrlManager
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.platform.workspace.storage.testEntities.entities.ChildEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.CollectionFieldEntity
@@ -48,7 +47,7 @@ class EntityStorageSerializationTest {
 
   @BeforeEach
   fun setUp() {
-    virtualFileManager = ConcurrentVirtualFileUrlManager()
+    virtualFileManager = VirtualFileUrlManagerImpl()
   }
 
   @Test
@@ -64,7 +63,7 @@ class EntityStorageSerializationTest {
   fun `entity properties serialization`() {
     val builder = createEmptyBuilder()
     mutableSetOf("c", "d")
-    ConcurrentVirtualFileUrlManager()
+    VirtualFileUrlManagerImpl()
     builder addEntity SampleEntity(false, stringProperty = "MyEntity",
                                    stringListProperty = mutableListOf("a", "b"),
                                    stringMapProperty = HashMap(), fileProperty = virtualFileManager.storeAndGet("file:///tmp"),
@@ -75,7 +74,7 @@ class EntityStorageSerializationTest {
 
   @Test
   fun `serialization works with kotlin buildList and other collections`() {
-    val virtualFileManager: VirtualFileUrlManager = ConcurrentVirtualFileUrlManager()
+    val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManagerImpl()
     val builder = createEmptyBuilder()
     val stringListProperty = buildList {
       this.add("a")
@@ -97,7 +96,7 @@ class EntityStorageSerializationTest {
     builder.addEntity(CollectionFieldEntity(setProperty, listOf("one", "two", "three"), MySource))
     builder.addEntity(CollectionFieldEntity(setOf(1, 2, 3, 3, 4), listOf("one", "two", "three"), MySource))
 
-    val serializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, ConcurrentVirtualFileUrlManager(), ijBuildVersion = "")
+    val serializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, VirtualFileUrlManagerImpl(), ijBuildVersion = "")
 
     withTempFile { file ->
       val result = serializer.serializeCache(file, builder.toSnapshot())
@@ -133,7 +132,7 @@ class EntityStorageSerializationTest {
 
     builder addEntity softLinkEntity
 
-    val serializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, ConcurrentVirtualFileUrlManager(), ijBuildVersion = "")
+    val serializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, VirtualFileUrlManagerImpl(), ijBuildVersion = "")
 
     withTempFile { file ->
       val result = serializer.serializeCache(file, builder.toSnapshot())
@@ -143,7 +142,7 @@ class EntityStorageSerializationTest {
 
   @Test
   fun `entity uuid serialization`() {
-    val virtualFileManager: VirtualFileUrlManager = ConcurrentVirtualFileUrlManager()
+    val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManagerImpl()
     val builder = createEmptyBuilder()
     val entity = SampleEntity(false, "MyEntity", emptyList(),
                               emptyMap(), virtualFileManager.storeAndGet("file:///tmp"), SampleEntitySource("test")) {
@@ -157,11 +156,11 @@ class EntityStorageSerializationTest {
   @Test
   fun `serialization with version changing`() {
     val builder = createEmptyBuilder()
-    builder addEntity SampleEntity(false, "MyEntity", ArrayList(), HashMap(), ConcurrentVirtualFileUrlManager().storeAndGet("file:///tmp"),
+    builder addEntity SampleEntity(false, "MyEntity", ArrayList(), HashMap(), VirtualFileUrlManagerImpl().storeAndGet("file:///tmp"),
                                    SampleEntitySource("test"))
 
-    val serializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, ConcurrentVirtualFileUrlManager(), ijBuildVersion = "")
-    val deserializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, ConcurrentVirtualFileUrlManager(), ijBuildVersion = "")
+    val serializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, VirtualFileUrlManagerImpl(), ijBuildVersion = "")
+    val deserializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, VirtualFileUrlManagerImpl(), ijBuildVersion = "")
       .also { it.serializerDataFormatVersion = "XYZ" }
 
     withTempFile { file ->
@@ -179,9 +178,9 @@ class EntityStorageSerializationTest {
       this.child = ChildEntity("Child", MySource)
     }
 
-    val serializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, ConcurrentVirtualFileUrlManager(), ijBuildVersion = "One")
+    val serializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, VirtualFileUrlManagerImpl(), ijBuildVersion = "One")
     val deserializer =
-      EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, ConcurrentVirtualFileUrlManager(), ijBuildVersion = "Two")
+      EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, VirtualFileUrlManagerImpl(), ijBuildVersion = "Two")
 
     withTempFile { file ->
       serializer.serializeCache(file, builder.toSnapshot())
@@ -192,34 +191,6 @@ class EntityStorageSerializationTest {
     }
   }
 
-  /**
-   * Both managers occupy the same kryo registration slot and write the same payload, so switching the implementation
-   * (see `ide.workspace.model.use.concurrent.virtual.file.url.manager`) must not invalidate an existing cache.
-   */
-  @Test
-  fun `cache is readable across VirtualFileUrlManager implementations`() {
-    val managerPairs = listOf(
-      VirtualFileUrlManagerImpl() to ConcurrentVirtualFileUrlManager(),
-      ConcurrentVirtualFileUrlManager() to VirtualFileUrlManagerImpl(),
-    )
-    for ((writerManager, readerManager) in managerPairs) {
-      val builder = createEmptyBuilder()
-      builder addEntity SampleEntity(false, "MyEntity", ArrayList(), HashMap(),
-                                     writerManager.storeAndGet("file:///tmp/some/dir"), SampleEntitySource("test"))
-
-      val serializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, writerManager, ijBuildVersion = "")
-      val deserializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, readerManager, ijBuildVersion = "")
-
-      withTempFile { file ->
-        serializer.serializeCache(file, builder.toSnapshot())
-
-        val deserialized = (deserializer.deserializeCache(file).getOrThrow() as? MutableEntityStorageImpl)?.toSnapshot()
-        assertNotNull(deserialized, "${writerManager.javaClass.simpleName} -> ${readerManager.javaClass.simpleName}")
-        assertEquals("file:///tmp/some/dir", deserialized.entities<SampleEntity>().single().fileProperty.url)
-      }
-    }
-  }
-
   @Test
   fun `broken serialization without ij build version changing`() {
     val builder = createEmptyBuilder()
@@ -227,9 +198,9 @@ class EntityStorageSerializationTest {
       this.child = ChildEntity("Child", MySource)
     }
 
-    val serializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, ConcurrentVirtualFileUrlManager(), ijBuildVersion = "One")
+    val serializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, VirtualFileUrlManagerImpl(), ijBuildVersion = "One")
     val deserializer =
-      EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, ConcurrentVirtualFileUrlManager(), ijBuildVersion = "One")
+      EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, VirtualFileUrlManagerImpl(), ijBuildVersion = "One")
 
     withTempFile { file ->
       builder.refs.oneToOneContainer.clear()
@@ -257,9 +228,9 @@ class EntityStorageSerializationTest {
       this.child = ChildEntity("Child", MySource)
     }
 
-    val serializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, ConcurrentVirtualFileUrlManager(), ijBuildVersion = "One")
+    val serializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, VirtualFileUrlManagerImpl(), ijBuildVersion = "One")
     val deserializer =
-      EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, ConcurrentVirtualFileUrlManager(), ijBuildVersion = "Two")
+      EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, VirtualFileUrlManagerImpl(), ijBuildVersion = "Two")
 
     withTempFile { file ->
       builder.refs.oneToOneContainer.clear()
@@ -277,8 +248,8 @@ class EntityStorageSerializationTest {
 
   @Test
   fun `serializer version`() {
-    // Deliberately uses VirtualFileUrlManagerImpl: the kryo registration table below records
-    // `virtualFileUrlImplementationClass`, and this test is the canary which forces a serialization version bump.
+    // The kryo registration table below records `virtualFileUrlImplementationClass`,
+    // and this test is the canary which forces a serialization version bump.
     val serializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, VirtualFileUrlManagerImpl(), ijBuildVersion = "")
 
     val (kryo, _) = serializer.createKryo()
@@ -320,7 +291,7 @@ class EntityStorageSerializationTest {
 
   @Test
   fun `serialize empty lists`() {
-    val virtualFileManager = ConcurrentVirtualFileUrlManager()
+    val virtualFileManager = VirtualFileUrlManagerImpl()
     val serializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, virtualFileManager, ijBuildVersion = "")
 
     val builder = createEmptyBuilder()
@@ -335,12 +306,12 @@ class EntityStorageSerializationTest {
 
   @Test
   fun `serialize abstract`() {
-    val virtualFileManager = ConcurrentVirtualFileUrlManager()
+    val virtualFileManager = VirtualFileUrlManagerImpl()
     val serializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, virtualFileManager, ijBuildVersion = "")
 
     val builder = createEmptyBuilder()
 
-    builder addEntity SampleEntity(false, "myString", ArrayList(), HashMap(), ConcurrentVirtualFileUrlManager().storeAndGet("file:///tmp"),
+    builder addEntity SampleEntity(false, "myString", ArrayList(), HashMap(), VirtualFileUrlManagerImpl().storeAndGet("file:///tmp"),
                                    SampleEntitySource("test"))
 
     withTempFile { file ->
@@ -351,7 +322,7 @@ class EntityStorageSerializationTest {
 
   @Test
   fun `serialize rider like`() {
-    val virtualFileManager = ConcurrentVirtualFileUrlManager()
+    val virtualFileManager = VirtualFileUrlManagerImpl()
     val serializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, virtualFileManager, ijBuildVersion = "")
 
     val builder = createEmptyBuilder()
@@ -366,12 +337,12 @@ class EntityStorageSerializationTest {
 
   @Test
   fun `read broken cache`() {
-    val virtualFileManager = ConcurrentVirtualFileUrlManager()
+    val virtualFileManager = VirtualFileUrlManagerImpl()
     val serializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, virtualFileManager, ijBuildVersion = "")
 
     val builder = createEmptyBuilder()
 
-    builder addEntity SampleEntity(false, "myString", ArrayList(), HashMap(), ConcurrentVirtualFileUrlManager().storeAndGet("file:///tmp"),
+    builder addEntity SampleEntity(false, "myString", ArrayList(), HashMap(), VirtualFileUrlManagerImpl().storeAndGet("file:///tmp"),
                                    SampleEntitySource("test"))
 
     withTempFile { file ->

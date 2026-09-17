@@ -517,6 +517,9 @@ internal class SuppressedCancellationExceptionInspection :
 
     context(session: KaSession)
     override fun prepareContext(element: KtExpression): SuppressedCancellationExceptionInspectionData? {
+        // We do not have the coroutines library in our dependencies, disable the inspection
+        if (!CoroutinesIds.ensureActive.canBeResolved()) return null
+
         // We use this cache in `isInSuspendContext` and `getContainingSuspendContext` which
         // might be called for many elements that share the same suspend context, so caching
         // will provide a speed-up.

@@ -23,7 +23,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.platform.backend.workspace.WorkspaceModel;
-import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerEx;
+import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.TreeNodeProcessingResult;
@@ -119,7 +119,7 @@ final class TransientChildScanner implements ChildScanner {
     for (Project openProject : ProjectManager.getInstance().getOpenProjects()) {
       ReadAction.runBlocking(() -> {
         var workspaceFileIndex = WorkspaceFileIndexEx.getInstance(openProject);
-        var vfuManager = (VirtualFileUrlManagerEx)WorkspaceModel.getInstance(openProject).getVirtualFileUrlManager();
+        var vfuManager = (VirtualFileUrlManagerImpl)WorkspaceModel.getInstance(openProject).getVirtualFileUrlManager();
         vfuManager.processChildrenRecursively(url, child -> {
           if (workspaceFileIndex.isUrlIndexableRecursiveFileSetRoot(child.getUrl())) {
             var root = directory.findFileByRelativePath(child.getUrl().substring(url.length()));

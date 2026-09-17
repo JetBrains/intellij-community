@@ -2,15 +2,11 @@ package com.intellij.python.processOutput.frontend.ui.components
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.editor.colors.EditorColorsManager
-import com.intellij.openapi.ui.popup.IconButton
 import com.intellij.python.processOutput.frontend.ConsoleTag
 import com.intellij.python.processOutput.frontend.ConsoleTagFormatter
-import com.intellij.python.processOutput.frontend.ProcessOutputBundle.message
 import com.intellij.ui.ColorUtil
-import com.intellij.ui.InplaceButton
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
-import kotlinx.coroutines.flow.MutableStateFlow
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Color
@@ -22,13 +18,21 @@ import java.awt.event.MouseEvent
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.JTextPane
+import javax.swing.SizeRequirements
 import javax.swing.SwingConstants
 import javax.swing.SwingUtilities
+import javax.swing.text.AbstractDocument
 import javax.swing.text.BadLocationException
 import javax.swing.text.DefaultCaret
+import javax.swing.text.Element
+import javax.swing.text.LabelView
+import javax.swing.text.ParagraphView
 import javax.swing.text.SimpleAttributeSet
 import javax.swing.text.Style
 import javax.swing.text.StyleConstants
+import javax.swing.text.StyledEditorKit
+import javax.swing.text.View
+import javax.swing.text.ViewFactory
 
 internal data class ConsoleTextLine<TTag>(
   val tag: TTag,
@@ -41,7 +45,6 @@ internal class ConsoleRegion<TTag> private constructor(
   name: String,
   private val formatter: ConsoleTagFormatter<TTag>,
   private val onChevronClicked: (() -> Unit)? = null,
-  private val onCopy: ((line: ConsoleTextLine<TTag>, index: Int) -> Unit)? = null,
   private val onRebuild: (() -> Unit)? = null,
 ) where TTag : ConsoleTag, TTag : Enum<TTag> {
   private var lines = emptyList<ConsoleTextLine<TTag>>()
@@ -67,9 +70,8 @@ internal class ConsoleRegion<TTag> private constructor(
         return Dimension(maxOf(superSize.width, width), superSize.height)
       }
     }
-  private val baseStyle = textPane.addStyle(null, null)
+  private var baseStyle: Style
   private val tagColumn = ColumnPanel { i -> sections.getOrNull(i)?.textOffset }
-  private val copyColumn = ColumnPanel { i -> sections.getOrNull(i)?.textOffset }
   private val chevronLabel = JBLabel(AllIcons.General.ArrowDown)
   private val body = JPanel(BorderLayout())
   private val header = JPanel(BorderLayout())
@@ -79,6 +81,9 @@ internal class ConsoleRegion<TTag> private constructor(
     field = JPanel(BorderLayout())
 
   init {
+    textPane.editorKit = WrappingEditorKit()
+    baseStyle = textPane.addStyle(null, null)
+
     textPane.isEditable = false
     textPane.isOpaque = false
     textPane.border = JBUI.Borders.empty()
@@ -90,20 +95,14 @@ internal class ConsoleRegion<TTag> private constructor(
 
     body.isOpaque = false
     body.border =
-      JBUI.Borders.empty(
-        0,
-        if (isCollapsible) {
-          0
-        }
-        else {
-          Styling.HEADER_HORIZONTAL_PADDING + chevronLabel.icon.iconWidth + Styling.HEADER_ICON_TEXT_GAP
-        },
-        Styling.BODY_BOTTOM_PADDING,
-        0
-      )
+      if (isCollapsible) {
+        JBUI.Borders.emptyBottom(Styling.BODY_BOTTOM_PADDING)
+      }
+      else {
+        body.border
+      }
     body.add(tagColumn, BorderLayout.WEST)
     body.add(textPane, BorderLayout.CENTER)
-    body.add(copyColumn, BorderLayout.EAST)
 
     header.name = name
     header.isOpaque = false
@@ -234,7 +233,6 @@ internal class ConsoleRegion<TTag> private constructor(
 
   private fun rebuildSections() {
     tagColumn.removeAll()
-    copyColumn.removeAll()
 
     val newSections = mutableListOf<Section<TTag>>()
     var prevTag: TTag? = null
@@ -264,10 +262,6 @@ internal class ConsoleRegion<TTag> private constructor(
       tagLabel.horizontalAlignment = SwingConstants.RIGHT
       tagLabel.verticalAlignment = SwingConstants.TOP
       tagColumn.add(tagLabel)
-
-      if (onCopy != null) {
-        copyColumn.add(copyButton(section))
-      }
     }
 
     SwingUtilities.invokeLater {
@@ -276,17 +270,6 @@ internal class ConsoleRegion<TTag> private constructor(
 
       onRebuild?.invoke()
     }
-  }
-
-  private fun copyButton(section: Section<TTag>): JComponent {
-    val iconButton = IconButton(message("process.output.output.copySection.tooltip"), AllIcons.Actions.Copy)
-    val button = InplaceButton(iconButton) {
-      onCopy?.invoke(section.line, section.index)
-    }
-
-    button.preferredSize = Dimension(Styling.COPY_BUTTON_SIZE, Styling.COPY_BUTTON_SIZE)
-
-    return button
   }
 
   private inner class ColumnPanel(private val childOffset: (Int) -> Int?) : JComponent() {
@@ -332,6 +315,48 @@ internal class ConsoleRegion<TTag> private constructor(
       }
   }
 
+  private class WrappingEditorKit : StyledEditorKit() {
+    private val delegate = super.getViewFactory()
+    private val factory = ViewFactory { elem -> createView(elem) }
+
+    override fun getViewFactory(): ViewFactory = factory
+
+    private fun createView(elem: Element): View =
+      when (elem.name) {
+        AbstractDocument.ParagraphElementName ->
+          object : ParagraphView(elem) {
+            override fun calculateMinorAxisRequirements(axis: Int, r: SizeRequirements?): SizeRequirements =
+              super.calculateMinorAxisRequirements(axis, r).also { it.minimum = 0 }
+          }
+        AbstractDocument.ContentElementName ->
+          object : LabelView(elem) {
+            override fun getMinimumSpan(axis: Int): Float =
+              if (axis == X_AXIS) {
+                0f
+              }
+              else {
+                super.getMinimumSpan(axis)
+              }
+
+            override fun getBreakWeight(axis: Int, pos: Float, len: Float): Int {
+              if (axis != X_AXIS) {
+                return super.getBreakWeight(axis, pos, len)
+              }
+
+              val superWeight = super.getBreakWeight(axis, pos, len)
+
+              return if (superWeight < GoodBreakWeight) {
+                GoodBreakWeight
+              }
+              else {
+                superWeight
+              }
+            }
+          }
+        else -> delegate.create(elem)
+      }
+  }
+
   private data class Section<TTag>(
     val line: ConsoleTextLine<TTag>,
     val textOffset: Int,
@@ -339,7 +364,6 @@ internal class ConsoleRegion<TTag> private constructor(
   ) where TTag : ConsoleTag, TTag : Enum<TTag>
 
   private object Styling {
-    const val COPY_BUTTON_SIZE = 18
     const val HEADER_VERTICAL_PADDING = 4
     const val HEADER_HORIZONTAL_PADDING = 8
     const val HEADER_ICON_TEXT_GAP = 4
@@ -358,17 +382,15 @@ internal class ConsoleRegion<TTag> private constructor(
       name: String,
       formatter: ConsoleTagFormatter<TTag>,
       onChevronClicked: () -> Unit,
-      onCopy: ((line: ConsoleTextLine<TTag>, index: Int) -> Unit)? = null,
       onRebuild: (() -> Unit)? = null,
     ) where TTag : ConsoleTag, TTag : Enum<TTag> =
-      ConsoleRegion(title, name, formatter, onChevronClicked, onCopy, onRebuild)
+      ConsoleRegion(title, name, formatter, onChevronClicked, onRebuild)
 
     fun <TTag> createStaticRegion(
       name: String,
       formatter: ConsoleTagFormatter<TTag>,
-      onCopy: ((line: ConsoleTextLine<TTag>, index: Int) -> Unit)? = null,
       onRebuild: (() -> Unit)? = null,
     ) where TTag : ConsoleTag, TTag : Enum<TTag> =
-      ConsoleRegion("", name, formatter, null, onCopy, onRebuild)
+      ConsoleRegion("", name, formatter, null, onRebuild)
   }
 }

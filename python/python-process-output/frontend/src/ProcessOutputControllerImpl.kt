@@ -195,47 +195,6 @@ internal class ProcessOutputControllerImpl(
     usageCollector.log(ProcessOutputUsageEvent.OutputCopyClicked)
   }
 
-  override fun copyOutputTagAtIndexToClipboard(
-    loggedProcess: LoggedProcess,
-    fromIndex: Int,
-  ) {
-    val stringToCopy = buildString {
-      val lines = loggedProcess.lines.value
-
-      lines
-        .drop(fromIndex)
-        .takeWhile { it.kind == lines[fromIndex].kind }
-        .forEach {
-          appendLine(it.text)
-        }
-    }
-
-    clipboardCopier.copyToClipboard(stringToCopy)
-
-    usageCollector.log(ProcessOutputUsageEvent.TagSectionCopyClicked)
-  }
-
-  override fun copyOutputExitInfoToClipboard(loggedProcess: LoggedProcess) {
-    val exitData = when (val status = loggedProcess.status.value) {
-      ProcessStatus.Running -> return
-      is ProcessStatus.Done -> status
-    }
-    val stringToCopy = buildString {
-      append(exitData.exitCode)
-
-      exitData.additionalMessageToUser?.also { message ->
-        append(": ")
-        append(message)
-      }
-
-      appendLine()
-    }
-
-    clipboardCopier.copyToClipboard(stringToCopy)
-
-    usageCollector.log(ProcessOutputUsageEvent.ExitInfoCopyClicked)
-  }
-
   private fun collectTopicEvents() {
     val interactiveProcesses = mutableListOf<MutableLoggedProcess>()
     val backgroundProcesses = mutableListOf<MutableLoggedProcess>()

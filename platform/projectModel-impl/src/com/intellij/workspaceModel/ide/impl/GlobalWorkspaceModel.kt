@@ -65,7 +65,7 @@ import kotlin.system.measureTimeMillis
 @OptIn(EntityStorageInstrumentationApi::class)
 @ApiStatus.Internal
 class GlobalWorkspaceModels internal constructor() {
-  internal var virtualFileManager: VirtualFileUrlManager = createIdeVirtualFileUrlManager()
+  internal var virtualFileManager: VirtualFileUrlManager = IdeVirtualFileUrlManagerImpl()
 
   internal val globalWorkspaceModelCache = GlobalWorkspaceModelCache.getInstance()?.apply {
     setVirtualFileUrlManager(virtualFileManager)
@@ -82,7 +82,7 @@ class GlobalWorkspaceModels internal constructor() {
 
   @TestOnly
   fun resetVirtualFileUrlManager() {
-    virtualFileManager = createIdeVirtualFileUrlManager()
+    virtualFileManager = IdeVirtualFileUrlManagerImpl()
     globalWorkspaceModelCache?.setVirtualFileUrlManager(virtualFileManager)
   }
 }

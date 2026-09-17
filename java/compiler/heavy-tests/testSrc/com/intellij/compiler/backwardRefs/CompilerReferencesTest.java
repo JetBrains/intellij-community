@@ -1,11 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.backwardRefs;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.compiler.CompilerDirectHierarchyInfo;
 import com.intellij.compiler.CompilerReferenceService;
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.java.compiler.CompilerReferencesTestBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.CommonClassNames;
@@ -20,6 +19,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
+import com.intellij.testFramework.fixtures.CompilerReferencesFixtureTestCase;
 
 import java.util.Collection;
 import java.util.List;
@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 @SkipSlowTestLocally
-public class CompilerReferencesTest extends CompilerReferencesTestBase {
+public class CompilerReferencesTest extends CompilerReferencesFixtureTestCase {
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath() + "/compiler/bytecodeReferences/";

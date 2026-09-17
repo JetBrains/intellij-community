@@ -1,12 +1,19 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlImpl
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
+import kotlin.test.assertNotSame
+import kotlin.test.assertNull
+import kotlin.test.assertSame
+
 
 class VirtualFileUrlManagerTest {
   private lateinit var virtualFileManager: VirtualFileUrlManagerImpl
@@ -18,154 +25,74 @@ class VirtualFileUrlManagerTest {
 
   @Test
   fun `check base insert case`() {
-    virtualFileManager.add("/a/b/a.txt")
-    virtualFileManager.add("/a/b.txt")
-    virtualFileManager.add("/c")
-    virtualFileManager.add("/a/b/d.txt")
-    assertEquals("""
-      # 
-      # |-  a
-      # |    |-  b
-      # |    |    |-  a.txt
-      # |    |    '-  d.txt
-      # |    '-  b.txt
-      # '-  c
-      #""".trimMargin("#"), virtualFileManager.print())
+    virtualFileManager.storeAndGet("/a/b/a.txt")
+    virtualFileManager.storeAndGet("/a/b.txt")
+    virtualFileManager.storeAndGet("/c")
+    virtualFileManager.storeAndGet("/a/b/d.txt")
+
+    // Every inserted path is retrievable and interned to the same (equal) node; a missing path is not.
+    for (path in listOf("/a/b/a.txt", "/a/b.txt", "/c", "/a/b/d.txt")) {
+      assertEquals(virtualFileManager.storeAndGet(path), virtualFileManager.get(path))
+    }
+    assertNull(virtualFileManager.get("/a/b/missing.txt"))
+
+    // Prefix sharing: the subtree under "/a"
+    assertEquals(
+      setOf(
+        virtualFileManager.storeAndGet("/a/b"),
+        virtualFileManager.storeAndGet("/a/b/a.txt"),
+        virtualFileManager.storeAndGet("/a/b/d.txt"),
+        virtualFileManager.storeAndGet("/a/b.txt"),
+      ),
+      virtualFileManager.storeAndGet("/a").getSubTreeFileUrls().toSet(),
+    )
+  }
+
+  @Test
+  fun `repeated segment names share a single canonical string instance`() {
+    val a = virtualFileManager.storeAndGet("/x/src/A.kt")
+    val b = virtualFileManager.storeAndGet("/y/src/B.kt")
+
+    // The "src" segment lives under two different parents but must be stored as one interned String
+    assertSame(
+      a.parent!!.fileName,
+      b.parent!!.fileName,
+      "the 'src' segment under different parents must be the same canonical String instance",
+    )
+    assertEquals("src", a.parent!!.fileName)
   }
 
   @Test
   fun `check insert with duplicates`() {
-    virtualFileManager.add("/a/b/a.txt")
-    virtualFileManager.add("/a/b/a.txt")
-    virtualFileManager.add("/a/b/a.txt")
-    virtualFileManager.add("/a/b/a.txt")
-    assertEquals("""
-      # 
-      # '-  a
-      #      '-  b
-      #           '-  a.txt
-      #""".trimMargin("#"), virtualFileManager.print())
-  }
-
-  @Test
-  fun `check insert and remove same path`() {
-    virtualFileManager.add("/a/b/a.txt")
-    virtualFileManager.remove("/a/b/a.txt")
-    assertEquals("", virtualFileManager.print())
-  }
-
-  @Test
-  fun `check insert and remove other node`() {
-    virtualFileManager.add("/a/b/a.txt")
-    virtualFileManager.add("/a/c/a.txt")
-    virtualFileManager.remove("/a/b/a.txt")
-    assertEquals("""
-      # 
-      # '-  a
-      #      '-  c
-      #           '-  a.txt
-      #""".trimMargin("#"), virtualFileManager.print())
-  }
-
-  @Test
-  fun `check remove file with another id`() {
-    virtualFileManager.add("/")
-    virtualFileManager.add("/a")
-    virtualFileManager.remove("/a")
-    assertEquals("""
-      # 
-      # '-  
-      #""".trimMargin("#"), virtualFileManager.print())
-  }
-
-  @Test
-  fun `check filename update`() {
-    virtualFileManager.add("/a/b/a.txt")
-    assertEquals("""
-      # 
-      # '-  a
-      #      '-  b
-      #           '-  a.txt
-      #""".trimMargin("#"), virtualFileManager.print())
-    virtualFileManager.update("/a/b/a.txt", "/a/b/d.txt")
-    assertEquals("""
-      # 
-      # '-  a
-      #      '-  b
-      #           '-  d.txt
-      #""".trimMargin("#"), virtualFileManager.print())
-  }
-
-  @Test
-  fun `check update to the existing path`() {
-    virtualFileManager.add("/a/b/c.txt")
-    virtualFileManager.add("/a/c/d.txt")
-    assertEquals("""
-      # 
-      # '-  a
-      #      |-  b
-      #      |    '-  c.txt
-      #      '-  c
-      #           '-  d.txt
-      #""".trimMargin("#"), virtualFileManager.print())
-    virtualFileManager.update("/a/b/c.txt", "/a/c/d.txt")
-    assertEquals("""
-      # 
-      # '-  a
-      #      '-  c
-      #           '-  d.txt
-      #""".trimMargin("#"), virtualFileManager.print())
-  }
-
-  @Test
-  fun `check update file and sub folder`() {
-    virtualFileManager.add("/a/b/c.txt")
-    assertEquals("""
-      # 
-      # '-  a
-      #      '-  b
-      #           '-  c.txt
-      #""".trimMargin("#"), virtualFileManager.print())
-    virtualFileManager.update("/a/b/c.txt", "/a/b/k.txt")
-    assertEquals("""
-      # 
-      # '-  a
-      #      '-  b
-      #           '-  k.txt
-      #""".trimMargin("#"), virtualFileManager.print())
-  }
-
-  @Test
-  fun `check update with file in root`() {
-    virtualFileManager.add("/a/b/c.txt")
-    assertEquals("""
-      # 
-      # '-  a
-      #      '-  b
-      #           '-  c.txt
-      #""".trimMargin("#"), virtualFileManager.print())
-    virtualFileManager.update("/a/b/c.txt", "/k.txt")
-    assertEquals("""
-      # 
-      # '-  k.txt
-      #""".trimMargin("#"), virtualFileManager.print())
+    val first = virtualFileManager.storeAndGet("/a/b/a.txt")
+    repeat(3) {
+      assertEquals(first, virtualFileManager.storeAndGet("/a/b/a.txt"))
+    }
+    // No duplicate nodes are created
+    assertEquals(
+      setOf(
+        virtualFileManager.storeAndGet("/a/b"),
+        virtualFileManager.storeAndGet("/a/b/a.txt"),
+      ),
+      virtualFileManager.storeAndGet("/a").getSubTreeFileUrls().toSet(),
+    )
   }
 
   @Test
   fun `check roundTrip`() {
-    roundTrip("")
-    roundTrip("/")
-    roundTrip("foobar")
-    roundTrip("file:///a")
-    roundTrip("file:///")
-    roundTrip("file://")
-    roundTrip("file:////")
-    roundTrip("file:///a/")
-    roundTrip("jar://C:/Users/X/.m2/repository/org/jetbrains/intellij/deps/jdom/2.0.6/jdom-2.0.6.jar")
-    roundTrip("jar://C:/Users/X/.m2/repository/org/jetbrains/intellij/deps/jdom/2.0.6/jdom-2.0.6.jar!/")
-    roundTrip("jar://C:/Users/X/.m2/repository/org/jetbrains/intellij/deps/jdom/2.0.6/jdom-2.0.6.jar!//")
-    roundTrip("file://C:/Users/user/Monorepo/intellij/community/java/jdkAnnotations")
-    roundTrip("//wsl.localhost/Ubuntu/home/test/.jdks/openjdk-20.0.1")
+    for (url in ROUND_TRIP_URLS) {
+      roundTrip(url)
+    }
+  }
+
+  @Test
+  fun `segments round trip without the url string`() {
+    for (url in ROUND_TRIP_URLS) {
+      val segments = url.split('/', '\\')
+      val fromUrl = virtualFileManager.storeAndGet(url)
+      assertSame(fromUrl, virtualFileManager.fromUrlSegments(segments), url)
+      assertEquals(segments, (fromUrl as VirtualFileUrlImpl).getUrlSegments(), url)
+    }
   }
 
   @Test
@@ -197,6 +124,44 @@ class VirtualFileUrlManagerTest {
     assertEquals("jar://C:/Users/X/a.txt", virtualFileManager.storeAndGet("jar://C:/Users\\X\\a.txt").url)
   }
 
+  @Test
+  fun `the overridable factory makes the empty url`() {
+    val manager = FactoryTrackingVirtualFileUrlManager()
+
+    val empty = manager.storeAndGet("")
+
+    assertEquals("", empty.url)
+    // storeAndGet gives the empty URL to callers. Therefore, the empty URL must have the same class as all other
+    // nodes. IdeVirtualFileUrlManagerImpl needs this class to be a VirtualFilePointer.
+    assertIs<FactoryTrackingVirtualFileUrl>(empty, "createVirtualFileUrl must make the empty URL")
+    assertIs<FactoryTrackingVirtualFileUrl>(manager.storeAndGet("/a/b"))
+    assertSame(empty, manager.storeAndGet(""), "the empty URL must be one shared instance")
+  }
+
+  @Test
+  fun `different nodes can have the same url and must stay different`() {
+    // The two empty segments of "/" both have the URL "/". Therefore, equality that uses only getUrl() is not correct.
+    val slash = virtualFileManager.storeAndGet("/")
+    val parent = slash.parent!!
+
+    assertEquals("/", slash.url)
+    assertEquals("/", parent.url)
+    assertNotSame(slash, parent)
+    assertEquals(2, hashSetOf(slash, parent).size, "nodes with the same URL must be two different entries")
+  }
+
+  private class FactoryTrackingVirtualFileUrlManager : VirtualFileUrlManagerImpl() {
+    override fun createVirtualFileUrl(name: String, manager: VirtualFileUrlManagerImpl, parent: VirtualFileUrl?): VirtualFileUrl {
+      return FactoryTrackingVirtualFileUrl(name, manager, parent as VirtualFileUrlImpl?)
+    }
+  }
+
+  private class FactoryTrackingVirtualFileUrl(
+    name: String,
+    manager: VirtualFileUrlManagerImpl,
+    parent: VirtualFileUrlImpl?,
+  ) : VirtualFileUrlImpl(name, manager, parent)
+
   private fun assertFilePath(expectedResult: String?, url: String) {
     assertEquals(expectedResult, virtualFileManager.storeAndGet(url).presentableUrl)
   }
@@ -205,3 +170,19 @@ class VirtualFileUrlManagerTest {
     assertEquals(url, virtualFileManager.storeAndGet(url).url)
   }
 }
+
+private val ROUND_TRIP_URLS = listOf(
+  "",
+  "/",
+  "foobar",
+  "file:///a",
+  "file:///",
+  "file://",
+  "file:////",
+  "file:///a/",
+  "jar://C:/Users/X/.m2/repository/org/jetbrains/intellij/deps/jdom/2.0.6/jdom-2.0.6.jar",
+  "jar://C:/Users/X/.m2/repository/org/jetbrains/intellij/deps/jdom/2.0.6/jdom-2.0.6.jar!/",
+  "jar://C:/Users/X/.m2/repository/org/jetbrains/intellij/deps/jdom/2.0.6/jdom-2.0.6.jar!//",
+  "file://C:/Users/user/Monorepo/intellij/community/java/jdkAnnotations",
+  "//wsl.localhost/Ubuntu/home/test/.jdks/openjdk-20.0.1",
+)

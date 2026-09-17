@@ -1,11 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests
 
-import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.assertConsistency
-import com.intellij.platform.workspace.storage.impl.url.ConcurrentVirtualFileUrlManager
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.platform.workspace.storage.testEntities.entities.ListVFUEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.NullableVFUEntity
@@ -16,14 +12,12 @@ import com.intellij.platform.workspace.storage.testEntities.entities.modifyVFUEn
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.testFramework.junit5.TestApplication
-import org.junit.jupiter.api.Assumptions.assumeFalse
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
-import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 @TestApplication
@@ -32,7 +26,7 @@ class VirtualFileIndexTest {
 
   @BeforeEach
   fun setUp() {
-    virtualFileManager = ConcurrentVirtualFileUrlManager()
+    virtualFileManager = VirtualFileUrlManagerImpl()
   }
 
   @Test
@@ -193,28 +187,5 @@ class VirtualFileIndexTest {
     assertEquals(fileUrlC, virtualFile.first().url)
     assertNotEquals(fileUrlB, entityB.fileProperty.url)
     assertEquals(entityB.fileProperty, virtualFile.first())
-  }
-
-  @Test
-  fun `check case sensitivity`() {
-    assumeFalse(SystemInfo.isFileSystemCaseSensitive)
-    Registry.get("ide.new.project.model.index.case.sensitivity").setValue(true)
-    // Case-insensitive URL deduplication is only implemented by VirtualFileUrlManagerImpl (see IJPL-245353).
-    virtualFileManager = VirtualFileUrlManagerImpl()
-
-    val fileUrlA = "/user/opt/app/a.txt"
-    val fileUrlB = "/user/opt/App/a.txt"
-    val fileUrlC = "/user/opt/app/c.txt"
-    val builder = createEmptyBuilder()
-    val entityA = builder addEntity VFUEntity("bar", virtualFileManager.storeAndGet(fileUrlA), SampleEntitySource("test"))
-    val entityB = builder addEntity VFUEntity("foo", virtualFileManager.storeAndGet(fileUrlB), SampleEntitySource("test"))
-    builder addEntity VFUEntity("baz", virtualFileManager.storeAndGet(fileUrlC), SampleEntitySource("test"))
-    builder.assertConsistency()
-    assertEquals(entityA.fileProperty, builder.indexes.virtualFileIndex.getVirtualFiles((entityA as WorkspaceEntityBase).id).first())
-    assertEquals(entityB.fileProperty, builder.indexes.virtualFileIndex.getVirtualFiles((entityB as WorkspaceEntityBase).id).first())
-    assertSame(entityA.fileProperty, entityB.fileProperty)
-
-    assertEquals(fileUrlA, entityA.fileProperty.url)
-    assertEquals(fileUrlA, entityB.fileProperty.url)
   }
 }

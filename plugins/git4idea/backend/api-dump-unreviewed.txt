@@ -1606,13 +1606,12 @@ a:git4idea.config.GitExecutable
 - a:patchCommandLine(git4idea.commands.GitHandler,com.intellij.execution.configurations.GeneralCommandLine,git4idea.config.GitExecutableContext):V
 f:git4idea.config.GitExecutable$Eel
 - git4idea.config.GitExecutable
-- <init>(com.intellij.platform.eel.path.EelPath,com.intellij.platform.eel.EelApi):V
-- f:component1():com.intellij.platform.eel.path.EelPath
-- f:component2():com.intellij.platform.eel.EelApi
+- <init>(com.intellij.platform.eel.EelApi,com.intellij.platform.eel.path.EelPath):V
+- <init>(com.intellij.platform.eel.EelApi,java.lang.String):V
+- f:component1():com.intellij.platform.eel.EelApi
+- f:component2():com.intellij.platform.eel.path.EelPath
 - convertFilePath(java.nio.file.Path):java.lang.String
 - convertFilePathBack(java.lang.String,java.nio.file.Path):java.nio.file.Path
-- f:copy(com.intellij.platform.eel.path.EelPath,com.intellij.platform.eel.EelApi):git4idea.config.GitExecutable$Eel
-- bs:copy$default(git4idea.config.GitExecutable$Eel,com.intellij.platform.eel.path.EelPath,com.intellij.platform.eel.EelApi,I,java.lang.Object):git4idea.config.GitExecutable$Eel
 - createBundledCommandLine(com.intellij.openapi.project.Project,java.lang.String[]):com.intellij.execution.configurations.GeneralCommandLine
 - equals(java.lang.Object):Z
 - f:getEel():com.intellij.platform.eel.EelApi
@@ -1695,6 +1694,7 @@ c:git4idea.config.GitExecutableDetector
 - s:getDefaultExecutable():java.lang.String
 - getExecutable(com.intellij.openapi.project.Project,java.nio.file.Path,Z):java.lang.String
 - s:getGitExecutable(com.intellij.openapi.project.Project,java.lang.String):git4idea.config.GitExecutable
+- s:getGitExecutable(com.intellij.openapi.project.Project,java.lang.String,java.nio.file.Path):git4idea.config.GitExecutable
 - p:getPathEnv():java.lang.String
 - p:getWinRootInTests():java.io.File
 git4idea.config.GitExecutableListener

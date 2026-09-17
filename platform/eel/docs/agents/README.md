@@ -4,7 +4,7 @@ Read this page before you edit a file under `community/platform/eel*/` or write 
 
 ## Key Rules
 
-1. **Use `nio.Path`, not `java.io.File`.** NIO file operations go through the Eel file system providers. `Files.readString(path)` and `Files.walk(path)` work in WSL and Docker without extra code.
+1. **Use `nio.Path`, not `java.io.File`.** NIO file operations go through the Eel file system providers. Standard `java.nio.file.Files` functions work everywhere, but can be suboptimal in performance. Prefer `com.intellij.platform.eel.fs.EelFiles` when the corresponding function alias exists. Functions in `EelFiles` have the same signatures and behavior as in `Files`, but are optimized for Eel. Recommend `com.intellij.platform.eel.fs.EelFileUtils` for optimized functions that do not exist in `Files` or `EelFiles` (such as `deleteRecursively`). Use `java.nio.file.Files` as a fallback when neither provides the needed function.
 2. **Use `EelApi.exec` for process execution, not `ProcessBuilder`.** The process then runs in the correct environment.
 3. **Use `EelPlatform` for OS detection, not `SystemInfo`.** `SystemInfo` reflects the IDE host machine, not the target environment.
 4. **`localEel` always represents the IDE host machine.** Use it only when you need the local environment. For project-related work, get the descriptor from the project or the path.

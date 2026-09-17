@@ -14,6 +14,8 @@ This document explains how the Eel API integrates with Java's NIO file system an
 The Eel API provides seamless integration with Java's NIO file system, allowing you to work with files in different environments (local, WSL, Docker, etc.) using standard Java APIs. This integration is achieved through several components:
 
 - **EelPathUtils**: A utility class that provides methods for working with paths across different environments
+- **EelFiles**: An optimized drop-in replacement for `java.nio.file.Files` that minimizes RPC calls in remote environments
+- **EelFileUtils**: Optimized utility functions (such as `deleteRecursively`) that do not exist in `Files` or `EelFiles`
 - **Path Conversion**: Functions to convert between EelPath and java.nio.file.Path (covered in [Path Conversion in EelApi](EelApi_Path_Conversion.md))
 - **JBR Patches**: Modifications to JetBrains Runtime that enable java.io.File to work with remote file systems
 
@@ -162,21 +164,41 @@ val remoteJar = EelPathUtils.transferLocalContentToRemote(localJar, specificTarg
 
 ## Working with File Systems Through nio.Path
 
-Once you have a `java.nio.file.Path` object (either created directly or converted from an `EelPath`), you can use the standard Java NIO API to work with files and directories, regardless of whether they're local or remote.
+Once you have a `java.nio.file.Path` object (either created directly or converted from an `EelPath`), you can use it to work with files and directories across environments.
+
+### Performance: Prefer EelFiles and EelFileUtils Over java.nio.file.Files
+
+Various `java.nio.file.Files` functions work seamlessly with Eel, but they can be suboptimal in performance. Standard `Files` operations can trigger multiple sequential RPC requests to IJent for a single file operation.
+
+IntelliJ Platform provides two optimized utility classes:
+
+- `com.intellij.platform.eel.fs.EelFiles`: An optimized drop-in replacement for `java.nio.file.Files`. Functions in `EelFiles` have the same signatures and behavior as in `java.nio.file.Files`. They optimize remote execution by transferring file contents in a single RPC round-trip where possible. When an alias exists in `EelFiles`, prefer `EelFiles`.
+- `com.intellij.platform.eel.fs.EelFileUtils`: Optimized functions that do not exist in `Files` or `EelFiles`. For example, `deleteRecursively` deletes a file or directory tree efficiently in remote environments. Use `EelFileUtils` instead of manual iteration or older platform utilities.
+
+Standard `java.nio.file.Files` is fully supported anyway. Use it as a fallback when an operation is absent from both `EelFiles` and `EelFileUtils`.
 
 ### Reading and Writing Files
 
+Prefer `EelFiles` and `EelFileUtils` when operating on files and directories:
+
 ```kotlin
-// Read a file
-val content = Files.readString(path)
+import com.intellij.platform.eel.fs.EelFiles
+import com.intellij.platform.eel.fs.EelFileUtils
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
 
-// Write to a file
-Files.writeString(path, "Hello, World!")
+// Read file content (optimized for Eel)
+val content = EelFiles.readString(path)
+val bytes = EelFiles.readAllBytes(path)
 
-// Copy a file
+// Write file content (optimized for Eel)
+EelFiles.write(path, bytes)
+
+// Delete recursively (optimized for Eel, not in Files or EelFiles)
+EelFileUtils.deleteRecursively(path)
+
+// Operations without an EelFiles or EelFileUtils alias use java.nio.file.Files:
 Files.copy(sourcePath, targetPath, StandardCopyOption.REPLACE_EXISTING)
-
-// Delete a file
 Files.delete(path)
 ```
 

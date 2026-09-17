@@ -120,10 +120,29 @@ when {
 
 `SystemInfo` reflects the IDE host machine, not the target environment. Use `EelPlatform` instead.
 
+## File Operations
+
+```kotlin
+import com.intellij.platform.eel.fs.EelFiles
+import com.intellij.platform.eel.fs.EelFileUtils
+import java.nio.file.Files
+
+// EelFiles is optimized for Eel (fewer RPC calls).
+val text = EelFiles.readString(path)
+val bytes = EelFiles.readAllBytes(path)
+EelFiles.write(path, bytes)
+
+// EelFileUtils provides optimized functions missing from Files and EelFiles.
+EelFileUtils.deleteRecursively(path)
+
+// Use java.nio.file.Files when EelFiles lacks the function.
+val stream = Files.list(path)
+```
+
 ## Best Practices
 
 1. **Write environment-agnostic code.** Do not check for `LocalEelDescriptor`. Use the Eel API uniformly. See [LocalEelDescriptor](EelApi_LocalEelDescriptor.md) for the rare exceptions.
-2. **Use `nio.Path`, not `java.io.File`.** NIO file operations go through the Eel file system providers. `Files.readString(path)` and `Files.walk(path)` work in WSL and Docker without extra code. See [NIO Integration](EelApi_NIO_Integration.md).
+2. **Use `nio.Path`, not `java.io.File`.** NIO file operations go through the Eel file system providers. Standard `java.nio.file.Files` functions work everywhere, but can be suboptimal in performance. Prefer `com.intellij.platform.eel.fs.EelFiles` when the corresponding function alias exists. Recommend `com.intellij.platform.eel.fs.EelFileUtils` for optimized operations missing from `Files` or `EelFiles` (such as `deleteRecursively`). Use `java.nio.file.Files` as a fallback when neither provides the needed function. See [NIO Integration](EelApi_NIO_Integration.md).
 3. **Use `EelApi.exec`, not `ProcessBuilder`.** The process then runs in the correct environment.
 4. **Prefer `toEelApi()` over `toEelApiBlocking()`.** The suspending version does not block a thread.
 5. **Use the `asEelPath()` helpers.** Do not convert WSL paths by hand.

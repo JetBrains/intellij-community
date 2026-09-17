@@ -41,7 +41,7 @@ Three types form the core of the API:
 
 A caller obtains an `EelDescriptor` from a `Project` or a `Path`, then calls `toEelApi()` to get the `EelApi`. The descriptor is cheap and always available. The `EelApi` can start a connection, so `toEelApi()` is a suspending function.
 
-`nio.Path` integrates with Eel. A NIO file operation on a remote path goes through an Eel file system provider. Most code does not need to touch `EelApi.fs` directly.
+`nio.Path` integrates with Eel. A NIO file operation on a remote path goes through an Eel file system provider. Most code does not need to touch `EelApi.fs` directly. Functions in `java.nio.file.Files` work seamlessly, but can be suboptimal in performance. Prefer `com.intellij.platform.eel.fs.EelFiles` when the corresponding function alias exists. It has the same signatures and behavior as `Files`, but optimizes RPC calls. Recommend `com.intellij.platform.eel.fs.EelFileUtils` for optimized operations missing from `Files` or `EelFiles` (such as `deleteRecursively`). Use `java.nio.file.Files` as a fallback when neither provides the needed function.
 
 ## Eel and IJent
 

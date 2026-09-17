@@ -12,9 +12,9 @@
     <orderEntry type="module" module-name="intellij.devkit.jps.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle.jps.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.groovy.jps.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.compiler.heavy.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.compiler.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.guiForms.jps.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.java.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.maven.jps.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jps.build.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.serialization.tests" scope="TEST" />

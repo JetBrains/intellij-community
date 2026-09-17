@@ -286,6 +286,7 @@ java/codeserver/core
 java/codeserver/highlighting
 java/compiler
 java/compiler/forms-compiler
+java/compiler/heavy-tests
 java/compiler/impl
 java/compiler/instrumentation-util
 java/compiler/instrumentation-util-8

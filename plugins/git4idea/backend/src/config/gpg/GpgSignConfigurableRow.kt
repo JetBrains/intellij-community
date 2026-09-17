@@ -73,7 +73,6 @@ class GpgSignConfigurableRow(val project: Project, val disposable: Disposable) {
 
     updateRepoList()
     reloadConfigs()
-    reloadSecretKeys()
   }
 
   private fun Panel.createRow() {
@@ -105,7 +104,6 @@ class GpgSignConfigurableRow(val project: Project, val disposable: Disposable) {
     alarm.addRequest(Runnable {
       updateRepoList()
       reloadConfigs()
-      reloadSecretKeys()
     }, 500, ModalityState.any())
   }
 
@@ -132,12 +130,6 @@ class GpgSignConfigurableRow(val project: Project, val disposable: Disposable) {
       for (config in repoConfigs) {
         config.tryReload()
       }
-    }
-  }
-
-  private fun reloadSecretKeys() {
-    scope.launch(uiDispatcher + CoroutineName("GpgSignRowPanel - reload secret keys")) {
-      secretKeys.tryReload()
     }
   }
 

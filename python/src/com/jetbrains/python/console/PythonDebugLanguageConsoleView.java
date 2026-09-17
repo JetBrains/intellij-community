@@ -52,8 +52,16 @@ public class PythonDebugLanguageConsoleView extends DuplexConsoleView<ConsoleVie
   /**
    * @param testMode this console will be used to display test output and should support TC messages
    */
+  @SuppressWarnings("IncorrectParentDisposable") // the project is the shortest lifetime available before the adoption
   public PythonDebugLanguageConsoleView(final Project project, Sdk sdk, ConsoleView consoleView, final boolean testMode) {
     super(consoleView, createPydevConsoleView(project, sdk, testMode, consoleView));
+
+    // The super constructor made this console the owner of the two consoles. This console needs an owner of its own,
+    // because a RunContentDescriptor adopts it much later. XDebugSessionImpl.init makes that descriptor, and the
+    // project can close first. A failure in the window would leave this console at the Disposer root, where it holds
+    // the project through the message bus connections of the two consoles. Disposer.register moves this console to
+    // the descriptor at the adoption, so the project owns it only until then.
+    Disposer.tryRegister(project, this);
 
     if (consoleView instanceof ConsoleViewImpl) {
       var console = this.getPydevConsoleView();
@@ -88,10 +96,18 @@ public class PythonDebugLanguageConsoleView extends DuplexConsoleView<ConsoleVie
    * <p>
    * A project can close while a debug adapter starts a session for a subprocess. The constructor of
    * {@link PythonConsoleView} then throws {@code AlreadyDisposedException}.
+   * <p>
+   * Both consoles get the project as the owner here. {@link DuplexConsoleView} moves them under itself when it adopts
+   * them. Its own constructor calls {@code getComponent()} on both consoles before the adoption, and that call fails
+   * on a closing project. The project owns the consoles in that case, so neither one stays at the Disposer root.
    */
+  @SuppressWarnings("IncorrectParentDisposable") // the project is the shortest lifetime available before the adoption
   private static PythonConsoleView createPydevConsoleView(Project project, Sdk sdk, boolean testMode, ConsoleView primaryConsoleView) {
+    Disposer.tryRegister(project, primaryConsoleView);
     try {
-      return new PythonConsoleView(project, PyBundle.message("python.console"), sdk, testMode);
+      PythonConsoleView pydevConsoleView = new PythonConsoleView(project, PyBundle.message("python.console"), sdk, testMode);
+      Disposer.tryRegister(project, pydevConsoleView);
+      return pydevConsoleView;
     }
     catch (Throwable e) {
       // The caller must see why the console did not appear, so a failure of the release keeps the first cause.

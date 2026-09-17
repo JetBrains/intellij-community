@@ -24,6 +24,8 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BooleanSupplier;
+import java.util.function.Supplier;
 
 public final class PyVariableViewSettings {
   /**
@@ -195,6 +197,74 @@ public final class PyVariableViewSettings {
     }
   }
 
+  @ApiStatus.Internal
+  public static final class SortingPolicyAction extends AbstractPolicyAction<SortingPolicy, SortingPolicyGroup> {
+    private final @NotNull BooleanSupplier myAvailable;
+
+    public SortingPolicyAction(@Nls @NotNull String text,
+                               @Nls @NotNull String description,
+                               @NotNull SortingPolicy policy,
+                               @NotNull SortingPolicyGroup actionGroup,
+                               @NotNull BooleanSupplier available) {
+      super(text, description, policy, actionGroup);
+      myAvailable = available;
+    }
+
+    @Override
+    public void update(final @NotNull AnActionEvent e) {
+      super.update(e);
+      // Read on every update, because the session learns which debugger it talks to after the tab is built.
+      e.getPresentation().setVisible(myAvailable.getAsBoolean());
+    }
+
+    @Override
+    protected void changeDebuggerSettings() {
+      PyDebuggerSettings.getInstance().setSortingPolicy(getPolicy());
+    }
+  }
+
+  @ApiStatus.Internal
+  public static final class SortingPolicyGroup extends AbstractPolicyGroup<SortingPolicy, SortingPolicyAction> {
+    private final @Nullable XDebugProcess myProcess;
+    private final @NotNull Supplier<SortingPolicy> myPolicyToMark;
+
+    /**
+     * @param policyToMark            the mode the session applies, which is the one to mark. It is not always the
+     *                                stored mode, because a session can be unable to honor that one.
+     * @param internalOrderAvailable  whether the internal mode is offered at all for this session.
+     */
+    public SortingPolicyGroup(@Nullable XDebugProcess debugProcess,
+                              @NotNull Supplier<SortingPolicy> policyToMark,
+                              @NotNull BooleanSupplier internalOrderAvailable) {
+      super(PyBundle.message("debugger.variables.view.sorting.policy"));
+      myProcess = debugProcess;
+      myPolicyToMark = policyToMark;
+      addPolicyActions(new SortingPolicyAction(PyBundle.message("debugger.variables.view.sorting.internal.text"),
+                                               PyBundle.message("debugger.variables.view.sorting.internal.description"),
+                                               SortingPolicy.DO_NOT_SORT, this, internalOrderAvailable),
+                       new SortingPolicyAction(PyBundle.message("debugger.variables.view.sorting.alphabetically.text"),
+                                               PyBundle.message("debugger.variables.view.sorting.alphabetically.description"),
+                                               SortingPolicy.ALPHABETICALLY, this, () -> true),
+                       new SortingPolicyAction(PyBundle.message("debugger.variables.view.sorting.by.type.text"),
+                                               PyBundle.message("debugger.variables.view.sorting.by.type.description"),
+                                               SortingPolicy.BY_TYPE, this, () -> true));
+    }
+
+    @Override
+    protected SortingPolicy getDebuggerPolicy() {
+      return myPolicyToMark.get();
+    }
+
+    @Override
+    public void notifyPolicyUpdated() {
+      super.notifyPolicyUpdated();
+      // The tree holds the children in the previous order, so it must be built again.
+      if (myProcess != null) {
+        myProcess.getSession().rebuildViews();
+      }
+    }
+  }
+
   private abstract static class AbstractPolicyAction<Policy extends AbstractPolicy, PolicyGroup extends AbstractPolicyGroup<Policy, ? extends ToggleAction>>
     extends ToggleAction {
     private final @NotNull Policy myPolicy;
@@ -208,7 +278,7 @@ public final class PyVariableViewSettings {
       super(text, description, null);
       myPolicy = policy;
       myActionGroup = actionGroup;
-      isEnabled = PyDebuggerSettings.getInstance().getValuesPolicy() == policy;
+      isEnabled = actionGroup.getDebuggerPolicy() == policy;
     }
 
     public @NotNull PolicyGroup getActionGroup() {

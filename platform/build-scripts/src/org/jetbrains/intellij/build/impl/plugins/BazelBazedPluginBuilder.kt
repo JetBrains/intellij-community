@@ -4,9 +4,6 @@ package org.jetbrains.intellij.build.impl.plugins
 import com.intellij.platform.buildScripts.searchableOptionsInjector.SearchableOptionsEntry
 import com.intellij.platform.buildScripts.searchableOptionsInjector.SearchableOptionsInjection
 import com.intellij.platform.buildScripts.searchableOptionsInjector.injectSearchableOptions
-import com.intellij.platform.distributionContent.FileEntry
-import com.intellij.platform.distributionContent.ModuleEntry
-import com.intellij.platform.distributionContent.deserializeContentData
 import io.opentelemetry.api.common.AttributeKey
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
@@ -16,7 +13,6 @@ import org.jetbrains.intellij.build.generateInclusionReasonForContentModule
 import org.jetbrains.intellij.build.impl.BazelModuleOutputProvider
 import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.impl.DescriptorCacheContainer
-import org.jetbrains.intellij.build.impl.ModuleItem
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.ScopedCachedDescriptorContainer
 import org.jetbrains.intellij.build.impl.bazel.runBazelBuild
@@ -31,7 +27,6 @@ import org.jetbrains.intellij.build.telemetry.use
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.name
-import kotlin.io.path.readText
 
 internal data class PluginsSplitByBuildingMethod(
   val inProcess: Collection<PluginLayout>,
@@ -129,72 +124,6 @@ internal fun buildPluginsByBazel(
   return buildResults
 }
 
-/**
- * Reads the `packed-modules.yaml` that the `ij_plugin` Bazel rule writes for one plugin.
- *
- * The file names each jar of the plugin distribution, and under each jar the modules the packager put into it. Its
- * shape is the [FileEntry] shape, so that schema's own deserializer reads it. The conversion to [ModuleOutputEntry]
- * stays local, because nothing outside this builder wants it.
- *
- * Only [FileEntry.modules] and [FileEntry.contentModules] become entries, and [checkOnlyModuleLists] refuses a file
- * that carries anything else. `PackedModulesWriter` writes those two lists and a name, so nothing fails that check
- * today. It is here for the day the writer grows a third list. A silent drop would leave the plugin's distribution
- * entries short of that content.
- *
- * [ModuleOutputEntry] gets a size and a hash of 0, because no reader of these entries asks for a byte count.
- * [com.intellij.platform.distributionContent.ModuleEntry] offers a size, and [checkOnlyModuleLists]
- * refuses a module that states one.
- */
-private fun readPackedModules(
-  packedModulesPath: Path,
-  pluginMainModule: String,
-  pluginDistributionDirectory: Path,
-): List<DistributionFileEntry> {
-  return deserializeContentData(packedModulesPath.readText()).flatMap { entry ->
-    checkOnlyModuleLists(packedModulesPath, entry)
-    entry.modules.map { convertModuleEntry(it, entry.name, pluginMainModule, isContentModule = false, pluginDistributionDirectory) } +
-    entry.contentModules.map { convertModuleEntry(it, entry.name, pluginMainModule, isContentModule = true, pluginDistributionDirectory) }
-  }
-}
-
-/**
- * Fails when [entry] carries a field that [readPackedModules] does not convert.
- *
- * The comparison is against a copy that holds the name and the two module lists, so the check needs no list of the
- * fields it rejects and a new field in the schema cannot slip past it.
- */
-private fun checkOnlyModuleLists(packedModulesPath: Path, entry: FileEntry) {
-  check(entry == FileEntry(name = entry.name, modules = entry.modules, contentModules = entry.contentModules)) {
-    "$packedModulesPath: entry '${entry.name}' sets a field that the build scripts do not convert: $entry"
-  }
-  for (module in entry.modules.asSequence() + entry.contentModules.asSequence()) {
-    check(module == ModuleEntry(name = module.name)) {
-      "$packedModulesPath: module '${module.name}' of '${entry.name}' sets a field that the build scripts do not convert: $module"
-    }
-  }
-}
-
-private fun convertModuleEntry(
-  moduleEntry: ModuleEntry,
-  relativeJarPath: String,
-  pluginMainModule: String,
-  isContentModule: Boolean,
-  pluginDistributionDirectory: Path,
-): ModuleOutputEntry {
-  val moduleItem = ModuleItem(
-    moduleName = moduleEntry.name,
-    relativeOutputFile = relativeJarPath.removePrefix("lib/"),
-    reason = if (isContentModule) generateInclusionReasonForContentModule(pluginMainModule) else null,
-  )
-  return ModuleOutputEntry(
-    path = pluginDistributionDirectory.resolve(relativeJarPath),
-    owner = moduleItem,
-    size = 0,
-    hash = 0,
-    relativeOutputFile = moduleItem.relativeOutputFile,
-    reason = moduleItem.reason,
-  )
-}
 
 /**
  * Maps the searchable options index to the JARs of a plugin distribution built by the `ij_plugin` rule, following the same

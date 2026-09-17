@@ -18,15 +18,21 @@ val PROTECTED_ATTRS_EXCLUDED: Set<String> = setOf(DUNDER_LEN, DUNDER_EX)
 open class PyXValueGroup(groupName: String, val groupType: ProcessDebugger.GROUP_TYPE) : XValueGroup(groupName)
 
 
+/**
+ * @param alreadySorted whether the caller owns the order of [children], so that the platform does not sort
+ *                      the children of the group again. See [addGroupValues].
+ */
+@JvmOverloads
 fun extractChildrenToGroup(groupName: String,
                            icon: Icon,
                            node: XCompositeNode,
                            children: XValueChildrenList,
                            predicate: (String) -> Boolean,
-                           excludedNames: Set<String>) {
+                           excludedNames: Set<String>,
+                           alreadySorted: Boolean = false) {
   val filterResult = filterChildren(children, predicate, excludedNames)
   node.addChildren(filterResult.filteredChildren, filterResult.groupElements.isEmpty())
-  addGroupValues(groupName, icon, node, filterResult.groupElements, null, ProcessDebugger.GROUP_TYPE.DEFAULT, null)
+  addGroupValues(groupName, icon, node, filterResult.groupElements, null, ProcessDebugger.GROUP_TYPE.DEFAULT, null, alreadySorted)
 }
 
 
@@ -53,16 +59,24 @@ private fun filterChildren(children: XValueChildrenList, predicate: (String) -> 
   return result
 }
 
+/**
+ * @param alreadySorted whether the caller owns the order of [groupElements], so that the platform does not
+ *                      sort the children of the group again. A group is a node of its own, so the flag the
+ *                      parent node carries does not reach it.
+ */
+@JvmOverloads
 fun addGroupValues(groupName: String,
                    groupIcon: Icon,
                    node: XCompositeNode,
                    groupElements: Map<String, XValue>?,
                    myDebugProcess: PyFrameAccessor?,
                    groupType: ProcessDebugger.GROUP_TYPE,
-                   nameSuffix: String?) {
+                   nameSuffix: String?,
+                   alreadySorted: Boolean = false) {
   val group = object : PyXValueGroup(groupName, groupType) {
     override fun computeChildren(node: XCompositeNode) {
       if (node.isObsolete) return
+      node.setAlreadySorted(alreadySorted)
       ApplicationManager.getApplication().executeOnPooledThread {
         val list: XValueChildrenList? =
           if (groupType == ProcessDebugger.GROUP_TYPE.DEFAULT) {

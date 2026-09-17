@@ -695,6 +695,61 @@ class AnalysisIgnoreTest {
   }
 
   // -----------------------------------------------------------------------------------------------------------------------------------
+  // How the condition reads a file
+  // -----------------------------------------------------------------------------------------------------------------------------------
+
+  @Test
+  @RegistryKey(key = ENABLED, value = "true")
+  fun `an anchored path excludes at its own depth only`() = runBlocking {
+    val third = dir("projectRoot/a/b/third")
+    val deeper = dir("projectRoot/a/b/x/third")
+    val elsewhere = dir("projectRoot/c/b/third")
+    val excludeFile = writeAnalysisIgnoreFile("projectRoot", "/a/b/third/")
+
+    discover(excludeFile)
+
+    // The condition counts the steps from a directory up to the directory of the file, and it compares names at the depth of the pattern
+    // only.
+    assertEquals(setOf(third.url), outOfContent(third, deeper, elsewhere))
+  }
+
+  @Test
+  @RegistryKey(key = ENABLED, value = "true")
+  fun `a double asterisk excludes what it names at any depth`() = runBlocking {
+    val aDir = dir("projectRoot/a")
+    val deepB = dir("projectRoot/a/x/y/b")
+    val abcDir = dir("projectRoot/abc")
+    val insideAbc = dir("projectRoot/abc/inside")
+    val excludeFile = writeAnalysisIgnoreFile("projectRoot", "a/**/b", "abc/**")
+
+    discover(excludeFile)
+
+    assertEquals(setOf(deepB.url, insideAbc.url), outOfContent(aDir, deepB, abcDir, insideAbc))
+  }
+
+  @Test
+  fun `a name is compared by its id first and by its letters on a case-insensitive file system`() {
+    val build = dir("projectRoot/build")
+    val capitalBuild = dir("projectRoot/other/Build")
+    val builds = dir("projectRoot/builds")
+    val generated = dir("projectRoot/docs/Generated")
+
+    // The ids of two names are equal only if the names are equal. On a case-sensitive file system a different id ends the comparison.
+    val caseSensitive = matcherOf(projectRoot, caseSensitive = true, "build", "/docs/generated/")
+    assertTrue(caseSensitive.shouldExclude(build))
+    assertFalse(caseSensitive.shouldExclude(capitalBuild))
+    assertFalse(caseSensitive.shouldExclude(builds))
+    assertFalse(caseSensitive.shouldExclude(generated))
+
+    // On a case-insensitive file system a different id says nothing, and the letters decide.
+    val caseInsensitive = matcherOf(projectRoot, caseSensitive = false, "build", "/docs/generated/")
+    assertTrue(caseInsensitive.shouldExclude(build))
+    assertTrue(caseInsensitive.shouldExclude(capitalBuild))
+    assertFalse(caseInsensitive.shouldExclude(builds))
+    assertTrue(caseInsensitive.shouldExclude(generated))
+  }
+
+  // -----------------------------------------------------------------------------------------------------------------------------------
   // The narrowed coverage: only the content that the IDE indexes
   // -----------------------------------------------------------------------------------------------------------------------------------
 
@@ -1187,6 +1242,10 @@ class AnalysisIgnoreTest {
 
   private fun writeAnalysisIgnoreFile(relativeDirPath: String, vararg lines: String): VirtualFile =
     projectModel.baseProjectDir.newVirtualFile("$relativeDirPath/$ANALYSIS_IGNORE_FILE_NAME", lines.joinToString("\n").toByteArray())
+
+  /** The condition of the index for [lines] in a file of [baseDir], as the contributor builds it. */
+  private fun matcherOf(baseDir: VirtualFile, caseSensitive: Boolean, vararg lines: String): AnalysisIgnoreMatcher =
+    AnalysisIgnoreMatcher(baseDir.url, baseDir, AnalysisIgnorePattern.compileAll(lines.toList(), caseSensitive), caseSensitive)
 
   /**
    * Changes the text of [file] in the editor and does not save it. [FileDocumentManager] then holds a document with an unsaved change.

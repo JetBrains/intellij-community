@@ -9,6 +9,7 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.xdebugger.settings.DebuggerSettingsCategory;
 import com.intellij.xdebugger.settings.XDebuggerSettings;
 import com.jetbrains.python.debugger.QuotingPolicy;
+import com.jetbrains.python.debugger.SortingPolicy;
 import com.jetbrains.python.debugger.ValuesPolicy;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,6 +28,7 @@ public final class PyDebuggerSettings extends XDebuggerSettings<PyDebuggerSettin
   private boolean mySimplifiedView = true;
   private volatile ValuesPolicy myValuesPolicy = ValuesPolicy.ASYNC;
   private volatile QuotingPolicy myQuotingPolicy = QuotingPolicy.SINGLE;
+  private volatile SortingPolicy mySortingPolicy = SortingPolicy.DO_NOT_SORT;
   private boolean myAlwaysDoSmartStepIntoEnabled = true;
   private boolean myDebugpyLoggingEnabled = false;
 
@@ -65,6 +67,14 @@ public final class PyDebuggerSettings extends XDebuggerSettings<PyDebuggerSettin
 
   public void setQuotingPolicy(QuotingPolicy copyQuotingPolicy) {
     myQuotingPolicy = copyQuotingPolicy;
+  }
+
+  public SortingPolicy getSortingPolicy() {
+    return mySortingPolicy;
+  }
+
+  public void setSortingPolicy(SortingPolicy sortingPolicy) {
+    mySortingPolicy = sortingPolicy;
   }
 
   public static PyDebuggerSettings getInstance() {

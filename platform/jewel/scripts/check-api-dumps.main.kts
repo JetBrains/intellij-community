@@ -26,7 +26,7 @@ private class CheckUpdatedCommand : SuspendingCliktCommand(name = "check") {
         val repoRoot = findCommunityRoot() ?: exitWithError("Could not find the repository root directory.")
         println(" DONE: ${repoRoot.canonicalPath}")
 
-        val command = "./tests.cmd --module $TEST_MODULE --test $TEST_CLASS"
+        val command = "./bazel.cmd test --cache_test_results=no $TEST_TARGET --test_filter=$TEST_CLASS"
         if (verbose) println("Running: $command")
 
         // Stream output in real-time and save to a temporary file for later analysis
@@ -36,7 +36,7 @@ private class CheckUpdatedCommand : SuspendingCliktCommand(name = "check") {
             println("Output will be streamed in real-time and saved to: ${outputFile.absolutePath}")
 
             // Create a temporary shell script to handle the pipe properly. The pipeline's exit status must be
-            // tests.cmd's and not tee's, hence the pipefail; errexit makes a failing cd fatal, too.
+            // Bazel's and not tee's, hence the pipefail; errexit makes a failing cd fatal, too.
             scriptFile.writeText(
                 """
                 #!/bin/bash
@@ -86,13 +86,12 @@ private class CheckUpdatedCommand : SuspendingCliktCommand(name = "check") {
     private fun String.asShellLiteral(): String = "'" + replace("'", """'\''""") + "'"
 
     private fun extractFailingModules(output: String): List<String> {
-        val failurePattern = """##teamcity\[testFailed name='${Regex.escape(TEST_CLASS)}\.([^']+)'""".toRegex()
+        val failurePattern = """^\s*FAILED\s+${Regex.escape(TEST_CLASS)}\.([^\s]+)""".toRegex(RegexOption.MULTILINE)
         return failurePattern.findAll(output).map { it.groupValues[1] }.distinct().sorted().toList()
     }
 
     private companion object {
-        // tests.cmd needs both the JPS module that holds the test class, and the test pattern itself.
-        const val TEST_MODULE = "intellij.platform.testFramework.monorepo.tests"
+        const val TEST_TARGET = "//platform/testFramework/monorepo:monorepo-tests_test"
         const val TEST_CLASS = "com.intellij.platform.testFramework.monorepo.api.ApiCheckTest"
     }
 }

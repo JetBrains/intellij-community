@@ -2,12 +2,13 @@
 package org.jetbrains.plugins.gradle.service.execution
 
 import com.intellij.openapi.extensions.ExtensionPointName
-import org.gradle.tooling.model.build.BuildEnvironment
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 interface GradleExecutionChecker {
-  fun checkExecution(context: GradleExecutionContext, buildEnvironment: BuildEnvironment): Unit
+
+  fun checkExecutionEnvironment(context: GradleExecutionContext)
+
   companion object {
     @JvmField
     val EP_NAME: ExtensionPointName<GradleExecutionChecker> = ExtensionPointName("org.jetbrains.plugins.gradle.executionChecker")

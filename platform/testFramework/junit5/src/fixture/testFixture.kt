@@ -63,22 +63,6 @@ sealed interface TestFixture<out T> {
    */
   @Experimental
   fun dependsOn(vararg dependencies: TestFixture<*>): TestFixture<T>
-
-  /**
-   * Registers [interceptor] before initialization starts.
-   * Returns this fixture and preserves its dependencies.
-   *
-   * @throws IllegalStateException if initialization has already started.
-   */
-  @Experimental
-  fun interceptLifecycle(interceptor: TestFixtureLifecycleInterceptor): TestFixture<T>
-}
-
-/** Each interceptor must invoke the supplied action once and preserve its result or exception. */
-@Experimental
-interface TestFixtureLifecycleInterceptor {
-  suspend fun <T> initialize(action: suspend () -> T): T
-  suspend fun tearDown(action: suspend () -> Unit)
 }
 
 sealed interface TestContext {

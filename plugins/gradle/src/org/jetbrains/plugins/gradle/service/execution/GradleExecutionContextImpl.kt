@@ -13,7 +13,7 @@ import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 
 @Internal
 open class GradleExecutionContextImpl(
-  override val projectPath: String,
+  override var projectPath: String,
   override val taskId: ExternalSystemTaskId,
   override val settings: GradleExecutionSettings,
   override val listener: ExternalSystemTaskNotificationListener,

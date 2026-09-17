@@ -12,8 +12,6 @@ internal sealed interface ProcessOutputUsageEvent {
   data object CollapseAllClicked : ProcessOutputUsageEvent
   data class OutputFilterToggled(val filterItem: OutputFilter.Item, val enabled: Boolean) : ProcessOutputUsageEvent
   data object OutputCopyClicked : ProcessOutputUsageEvent
-  data object TagSectionCopyClicked : ProcessOutputUsageEvent
-  data object ExitInfoCopyClicked : ProcessOutputUsageEvent
   data class ProcessInfoRegionToggled(val enabled: Boolean) : ProcessOutputUsageEvent
   data class ProcessOutputRegionToggled(val enabled: Boolean) : ProcessOutputUsageEvent
   data object ToolWindowOpenedDueToError : ProcessOutputUsageEvent
@@ -24,7 +22,7 @@ internal fun interface ProcessOutputUsageCollector {
 }
 
 internal object ProcessOutputUsageCollectorImpl : CounterUsagesCollector(), ProcessOutputUsageCollector {
-  private val GROUP: EventLogGroup = EventLogGroup("pycharm.processOutputToolWindow", 4)
+  private val GROUP: EventLogGroup = EventLogGroup("pycharm.processOutputToolWindow", 5)
 
   private val TOGGLED_FIELD = EventFields.Boolean("enabled")
   private val TOGGLED_TREE_FILTER =
@@ -48,10 +46,6 @@ internal object ProcessOutputUsageCollectorImpl : CounterUsagesCollector(), Proc
     TOGGLED_FILTER_ENABLED,
   )
   private val OUTPUT_COPY_CLICKED = GROUP.registerVarargEvent("output.copyClicked")
-  private val OUTPUT_TAG_SECTION_COPY_CLICKED =
-    GROUP.registerVarargEvent("output.copyTagSectionClicked")
-  private val OUTPUT_EXIT_INFO_COPY_CLICKED =
-    GROUP.registerVarargEvent("output.copyExitInfoClicked")
   private val OUTPUT_PROCESS_INFO_TOGGLED = GROUP.registerVarargEvent(
     "output.processInfoToggled",
     TOGGLED_FIELD,
@@ -67,7 +61,6 @@ internal object ProcessOutputUsageCollectorImpl : CounterUsagesCollector(), Proc
   override fun log(event: ProcessOutputUsageEvent) {
     when (event) {
       ProcessOutputUsageEvent.CollapseAllClicked -> TREE_COLLAPSE_ALL_CLICKED.log()
-      ProcessOutputUsageEvent.ExitInfoCopyClicked -> OUTPUT_EXIT_INFO_COPY_CLICKED.log()
       ProcessOutputUsageEvent.ExpandAllClicked -> TREE_EXPAND_ALL_CLICKED.log()
       ProcessOutputUsageEvent.OutputCopyClicked -> OUTPUT_COPY_CLICKED.log()
       is ProcessOutputUsageEvent.OutputFilterToggled ->
@@ -81,7 +74,6 @@ internal object ProcessOutputUsageCollectorImpl : CounterUsagesCollector(), Proc
         OUTPUT_PROCESS_OUTPUT_TOGGLED.log(TOGGLED_FIELD.with(event.enabled))
       ProcessOutputUsageEvent.ProcessSelected -> TREE_PROCESS_SELECTED.log()
       ProcessOutputUsageEvent.SearchEdited -> TREE_SEARCH_EDITED.log()
-      ProcessOutputUsageEvent.TagSectionCopyClicked -> OUTPUT_TAG_SECTION_COPY_CLICKED.log()
       ProcessOutputUsageEvent.ToolWindowOpenedDueToError -> TOOLWINDOW_OPENED_DUE_TO_ERROR.log()
       is ProcessOutputUsageEvent.TreeFilterToggled ->
         TREE_FILTER_TOGGLED.log(

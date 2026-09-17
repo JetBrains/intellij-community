@@ -13,7 +13,6 @@ import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.util.application
 import com.intellij.util.containers.forEachLoggingErrors
 import org.gradle.initialization.BuildCancellationToken
-import org.gradle.tooling.CancellationToken
 import org.gradle.tooling.GradleConnector
 import org.gradle.tooling.ProjectConnection
 import org.gradle.tooling.internal.consumer.CancellationTokenInternal
@@ -24,14 +23,13 @@ import org.jetbrains.plugins.gradle.execution.target.TargetGradleConnector
 import org.jetbrains.plugins.gradle.internal.daemon.getDaemonsStatus
 import org.jetbrains.plugins.gradle.internal.daemon.gracefulStopDaemons
 import org.jetbrains.plugins.gradle.internal.daemon.stopDaemons
-import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
+import org.jetbrains.plugins.gradle.service.execution.GradleExecutionContext
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettingsListener
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.function.Function
 
 /**
  * @author Vladislav.Soroka
@@ -68,27 +66,20 @@ internal class GradleConnectorServiceImpl(project: Project) : GradleConnectorSer
     return knownGradleUserHomes
   }
 
-  override fun <R> withGradleConnection(
-    projectPath: String,
-    taskId: ExternalSystemTaskId?,
-    executionSettings: GradleExecutionSettings?,
-    listener: ExternalSystemTaskNotificationListener?,
-    cancellationToken: CancellationToken?,
-    function: Function<ProjectConnection, R>,
-  ): R {
+  override fun <R> withGradleConnection(context: GradleExecutionContext, function: (ProjectConnection) -> R): R {
     return ExternalSystemTelemetryUtil.getTracer(GradleConstants.SYSTEM_ID)
       .spanBuilder("GradleConnection")
       .use {
-        val buildCancellationToken = (cancellationToken as? CancellationTokenInternal)?.token
+        val buildCancellationToken = (context.cancellationToken as? CancellationTokenInternal)?.token
         buildCancellationToken?.let { cancellationTokens.add(it) }
         try {
-          val connectionParams = ConnectorParams(projectPath, executionSettings)
-          val connection = getConnection(connectionParams, taskId, listener)
+          val connectionParams = ConnectorParams(context.projectPath, context.settings)
+          val connection = getConnection(connectionParams, context.taskId, context.listener)
           return@use if (connection is NonClosableConnection) {
-            function.apply(connection)
+            function(connection)
           }
           else {
-            connection.use(function::apply)
+            connection.use(function)
           }
         }
         finally {

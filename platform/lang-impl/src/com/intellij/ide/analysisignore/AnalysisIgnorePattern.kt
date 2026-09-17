@@ -2,6 +2,9 @@
 package com.intellij.ide.analysisignore
 
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry
 import org.jetbrains.annotations.ApiStatus
 import java.util.regex.Pattern
 import java.util.regex.PatternSyntaxException
@@ -20,16 +23,79 @@ class AnalysisIgnorePattern internal constructor(
    * A pattern without such a `/` matches a name at any level below that directory.
    */
   val anchored: Boolean,
-  private val matcher: (CharSequence) -> Boolean,
+  private val segments: List<AnalysisIgnoreSegment>,
 ) {
+
+  // `true` if a segment is a `**`. Such a pattern matches paths of several depths, and thus it needs the whole path of a file.
+  internal val hasAnySegments: Boolean = segments.any { it === AnalysisIgnoreSegment.AnySegments }
+
+  // The count of the segments. An anchored pattern without a `**` matches a path of this depth only.
+  internal val depth: Int
+    get() = segments.size
 
   /**
    * Returns `true` if this pattern matches the path itself.
    */
   fun matches(relativePath: CharSequence, name: CharSequence, isDirectory: Boolean): Boolean {
     if (directoryOnly && !isDirectory) return false
+    if (!anchored) return segments[0].matches(name)
 
-    return matcher(if (anchored) relativePath else name)
+    val names = relativePath.split('/')
+    return matchesSegments(names.size) { segment, index -> segment.matches(names[index]) }
+  }
+
+  /**
+   *  Returns `true` if this pattern without a slash matches the name of [node].
+   */
+  internal fun matchesName(node: AnalysisIgnoreNode): Boolean {
+    if (directoryOnly && !node.isDirectory) return false
+    return segments[0].matches(node)
+  }
+
+  internal fun matchesUpward(node: AnalysisIgnoreNode): Boolean {
+    if (directoryOnly && !node.isDirectory) return false
+    if (!segments[segments.lastIndex].matches(node)) return false
+
+    var current = node.file
+    for (i in segments.lastIndex - 1 downTo 0) {
+      current = current.parent ?: return false
+      if (!segments[i].matches(AnalysisIgnoreNode(current))) return false
+    }
+    return true
+  }
+
+  internal fun matchesChain(chain: List<AnalysisIgnoreNode>): Boolean {
+    if (directoryOnly && !chain[chain.lastIndex].isDirectory) return false
+    return matchesSegments(chain.size) { segment, index -> segment.matches(chain[index]) }
+  }
+
+  private inline fun matchesSegments(pathLength: Int, matchesAt: (AnalysisIgnoreSegment, Int) -> Boolean): Boolean {
+    var segmentIndex = 0
+    var pathIndex = 0
+    var lastAnyIndex = -1
+    var lastAnyPathIndex = -1
+    while (pathIndex < pathLength) {
+      if (segmentIndex < segments.size) {
+        val segment = segments[segmentIndex]
+        if (segment === AnalysisIgnoreSegment.AnySegments) {
+          lastAnyIndex = segmentIndex
+          lastAnyPathIndex = pathIndex
+          segmentIndex++
+          continue
+        }
+        if (matchesAt(segment, pathIndex)) {
+          segmentIndex++
+          pathIndex++
+          continue
+        }
+      }
+      if (lastAnyIndex < 0) return false
+      segmentIndex = lastAnyIndex + 1
+      lastAnyPathIndex++
+      pathIndex = lastAnyPathIndex
+    }
+    while (segmentIndex < segments.size && segments[segmentIndex] === AnalysisIgnoreSegment.AnySegments) segmentIndex++
+    return segmentIndex == segments.size
   }
 
   companion object {
@@ -59,7 +125,7 @@ class AnalysisIgnorePattern internal constructor(
         source = source,
         directoryOnly = parsed.directoryOnly,
         anchored = parsed.anchored,
-        matcher = matcherOf(parsed.body, parsed.anchored, caseSensitive),
+        segments = segmentsOf(parsed.body, parsed.anchored, caseSensitive),
       )
     }
 
@@ -112,6 +178,95 @@ class AnalysisIgnorePattern internal constructor(
     }
   }
 }
+
+
+/**
+ * One component of a pattern. It matches one component of a path, apart from [AnySegments], which takes zero or more of them.
+ */
+internal sealed interface AnalysisIgnoreSegment {
+  /** Returns `true` if this segment matches [name], one component of a path. */
+  fun matches(name: CharSequence): Boolean
+
+  /** Returns `true` if this segment matches the name of [node]. */
+  fun matches(node: AnalysisIgnoreNode): Boolean = matches(node.name)
+
+  /** A component without a wildcard. It compares the id of a name first, which reads no string from the VFS. */
+  class Literal(private val text: String, private val ignoreCase: Boolean) : AnalysisIgnoreSegment {
+    // The id of [text] in the names of the VFS, or [NO_NAME_ID] before the first comparison with a file of the VFS. Two threads can store
+    // the name at the same time and get the same id.
+    @Volatile
+    private var textNameId: Int = NO_NAME_ID
+
+    override fun matches(name: CharSequence): Boolean = name.contentEquals(text, ignoreCase)
+
+    override fun matches(node: AnalysisIgnoreNode): Boolean {
+      val nameId = node.nameId
+      if (nameId == NO_NAME_ID) return matches(node.name)
+
+      // Equal ids mean equal names. Different ids mean different names on a case-sensitive file system only.
+      if (nameId == textNameId()) return true
+      return ignoreCase && matches(node.name)
+    }
+
+    private fun textNameId(): Int {
+      var id = textNameId
+      if (id == NO_NAME_ID) {
+        id = VirtualFileManager.getInstance().storeName(text)
+        textNameId = id
+      }
+      return id
+    }
+  }
+
+  /** A component of one leading `*` and a tail without a wildcard, as `*.log`. */
+  class Suffix(private val suffix: String, private val ignoreCase: Boolean) : AnalysisIgnoreSegment {
+    override fun matches(name: CharSequence): Boolean = name.endsWith(suffix, ignoreCase)
+  }
+
+  // A component with a wildcard.
+  class Glob(private val regex: Pattern) : AnalysisIgnoreSegment {
+    override fun matches(name: CharSequence): Boolean = regex.matcher(name).matches()
+  }
+
+  /** A `*` alone. It matches every name. */
+  object AnyName : AnalysisIgnoreSegment {
+    override fun matches(name: CharSequence): Boolean = true
+  }
+
+  /** A component that matches no name. */
+  object NoName : AnalysisIgnoreSegment {
+    override fun matches(name: CharSequence): Boolean = false
+  }
+
+  /** A `**` that fills a component. */
+  object AnySegments : AnalysisIgnoreSegment {
+    override fun matches(name: CharSequence): Boolean = false
+  }
+}
+
+
+internal class AnalysisIgnoreNode(val file: VirtualFile) {
+  val isDirectory: Boolean = file.isDirectory
+
+  private var nameIdRead = false
+  private var nameIdValue = NO_NAME_ID
+  private var nameValue: CharSequence? = null
+
+  /** The id of the name of the file in the names of the VFS, or [NO_NAME_ID] for a file outside the VFS. */
+  val nameId: Int
+    get() {
+      if (!nameIdRead) {
+        nameIdValue = (file as? VirtualFileSystemEntry)?.nameId ?: NO_NAME_ID
+        nameIdRead = true
+      }
+      return nameIdValue
+    }
+
+  val name: CharSequence
+    get() = nameValue ?: file.nameSequence.also { nameValue = it }
+}
+
+internal const val NO_NAME_ID: Int = -1
 
 
 /**
@@ -178,45 +333,48 @@ private class Parsed(
 private val LOG = logger<AnalysisIgnorePattern>()
 
 /**
- * Returns the test of the pattern [body].
+ * Returns the segments of the pattern [body].
  */
-private fun matcherOf(body: String, anchored: Boolean, caseSensitive: Boolean): (CharSequence) -> Boolean {
+private fun segmentsOf(body: String, anchored: Boolean, caseSensitive: Boolean): List<AnalysisIgnoreSegment> {
   val ignoreCase = !caseSensitive
-  if (body.hasNoWildcard()) {
-    return { text -> text.contentEquals(body, ignoreCase) }
-  }
-  if (!anchored && body.isSuffixMask()) {
-    val suffix = body.substring(1)
-    return { text -> text.endsWith(suffix, ignoreCase) }
-  }
+  if (!anchored) return listOf(nameSegmentOf(body, ignoreCase))
 
-  val regex = regexOf(body, caseSensitive) ?: return { false }
-  return { text -> regex.matcher(text).matches() }
+  val components = body.split('/')
+  val segments = ArrayList<AnalysisIgnoreSegment>(components.size + 1)
+  for (component in components) {
+    segments.add(if (component == "**") AnalysisIgnoreSegment.AnySegments else nameSegmentOf(component, ignoreCase))
+  }
+  if (segments[segments.lastIndex] === AnalysisIgnoreSegment.AnySegments) {
+    segments.add(AnalysisIgnoreSegment.AnyName)
+  }
+  return segments
 }
 
-private fun regexOf(body: String, caseSensitive: Boolean): Pattern? {
-  val regexText = StringBuilder(body.length * 2)
-  var i = 0
-  while (i < body.length) {
-    val c = body[i]
+/**
+ * Returns the segment of one [component] of a path. The cheaper segments come first, and a regex is the last resort.
+ */
+private fun nameSegmentOf(component: String, ignoreCase: Boolean): AnalysisIgnoreSegment = when {
+  component.isEmpty() -> AnalysisIgnoreSegment.NoName
+  component == "*" || component == "**" -> AnalysisIgnoreSegment.AnyName
+  component.hasNoWildcard() -> AnalysisIgnoreSegment.Literal(component, ignoreCase)
+  component.isSuffixMask() -> AnalysisIgnoreSegment.Suffix(component.substring(1), ignoreCase)
+  else -> regexOf(component, ignoreCase)?.let { AnalysisIgnoreSegment.Glob(it) } ?: AnalysisIgnoreSegment.NoName
+}
+
+/**
+ * Returns the regex of one [component] of a path. A `*` and a `?` stop at a slash, and every other character means itself.
+ */
+private fun regexOf(component: String, ignoreCase: Boolean): Pattern? {
+  val regexText = StringBuilder(component.length * 2)
+  for (c in component) {
     when (c) {
-        '*' -> {
-          var end = i
-          while (end < body.length && body[end] == '*') end++
-          i = regexText.appendAsterisksOf(body, i, end)
-        }
-        '?' -> {
-          regexText.append("[^/]")
-          i++
-        }
-        else -> {
-          regexText.appendLiteral(c)
-          i++
-        }
+      '*' -> regexText.append("[^/]*")
+      '?' -> regexText.append("[^/]")
+      else -> regexText.appendLiteral(c)
     }
   }
 
-  val flags = if (caseSensitive) 0 else Pattern.CASE_INSENSITIVE or Pattern.UNICODE_CASE
+  val flags = if (ignoreCase) Pattern.CASE_INSENSITIVE or Pattern.UNICODE_CASE else 0
   return try {
     Pattern.compile(regexText.toString(), flags)
   }
@@ -236,23 +394,6 @@ private fun String.hasNoWildcard(): Boolean = none { it == '*' || it == '?' }
 
 /** Returns `true` if the receiver is one `*` followed by characters that mean themselves, as `*.log` is. */
 private fun String.isSuffixMask(): Boolean = length > 1 && this[0] == '*' && indexOf('*', 1) < 0 && indexOf('?') < 0
-
-private fun StringBuilder.appendAsterisksOf(body: String, start: Int, end: Int): Int {
-  if (end - start == 1) {
-    append("[^/]*")
-    return end
-  }
-
-  if (end == body.length) {
-    // A trailing '/**' matches everything below the component before it.
-    append(".*")
-    return end
-  }
-
-  // A '**/' matches zero or more components.
-  append("(?:.*/)?")
-  return end + 1
-}
 
 private fun StringBuilder.appendLiteral(c: Char) {
   if (c in REGEX_METACHARACTERS) append('\\')

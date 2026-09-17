@@ -27,8 +27,9 @@ def _ij_plugin_impl(ctx):
     since_build = _computeSinceBuild(ctx.attr.since_build, ide_build_number, use_exact_build_compatibility)
     until_build = _computeUntilBuild(ctx.attr.until_build, since_build, ide_build_number, ide_stability_level, use_exact_build_compatibility)
 
-    plugin_descriptor_jar = plugin_descriptor_module_info.all_output_jars[0]
-    inputs = [plugin_descriptor_jar]
+    inputs = []
+    plugin_descriptor_jars = plugin_descriptor_module_info.all_output_jars
+    inputs.extend(plugin_descriptor_jars)
 
     # Files are added to `args` as artifacts and not as strings, so their paths are rewritten when path mapping is enabled.
     args = ctx.actions.args()
@@ -49,10 +50,11 @@ def _ij_plugin_impl(ctx):
 
     args.add("--packed_modules")
     args.add(packed_modules_file)
-    args.add_all(
+    args.add_joined(
         "--descriptor_module",
-        [plugin_descriptor_jar],
-        format_each = plugin_descriptor_module_info.module_name + ":%s",
+        plugin_descriptor_jars,
+        format_joined = plugin_descriptor_module_info.module_name + ":%s",
+        join_with = ",",
     )
     _add_non_classpath_data(args, inputs, plugin_descriptor_module_info)
     for content_module in ctx.attr.content_modules:

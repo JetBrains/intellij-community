@@ -14,11 +14,9 @@ import org.jetbrains.plugins.gradle.service.execution.GradleExecutionChecker
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionContext
 
 internal class OutdatedGradleVersionChecker: GradleExecutionChecker {
-  override fun checkExecution(
-    context: GradleExecutionContext,
-    buildEnvironment: BuildEnvironment,
-  ) {
-    val currentVersion = GradleVersion.version(buildEnvironment.gradle.gradleVersion)
+
+  override fun checkExecutionEnvironment(context: GradleExecutionContext) {
+    val currentVersion = context.gradleVersion
     if (isGradleDeprecatedByIdea(currentVersion)) return
     if (isLatestMinorVersionInspectionDisabled(context)) return
     if (isMinorGradleVersionOutdated(currentVersion)) return

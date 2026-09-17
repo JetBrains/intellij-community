@@ -135,6 +135,49 @@ class AnalysisIgnorePatternTest {
     assertFalse(matcher.excludes("x/a/b"))
   }
 
+  @Test
+  fun `each double asterisk of several takes zero or more directories`() {
+    val matcher = matcherOf("a/**/b/**/c")
+
+    assertTrue(matcher.excludes("a/b/c"))
+    assertTrue(matcher.excludes("a/x/b/y/c"))
+    assertTrue(matcher.excludes("a/x/y/b/c"))
+    assertFalse(matcher.excludes("a/c"))
+    assertFalse(matcher.excludes("a/b"))
+    assertFalse(matcher.excludes("x/a/b/c"))
+  }
+
+  @Test
+  fun `a double asterisk on both sides of a name matches everything inside that name anywhere`() {
+    val matcher = matcherOf("**/a/**")
+
+    assertTrue(matcher.excludes("a/y"))
+    assertTrue(matcher.excludes("x/a/y"))
+    assertTrue(matcher.excludes("x/a/y/z"))
+    // 'a' itself stays wherever it is: the pattern names what is inside it.
+    assertFalse(matcher.excludes("a"))
+    assertFalse(matcher.excludes("x/a"))
+  }
+
+  @Test
+  fun `a slash and a double asterisk match everything below the directory of the file`() {
+    val matcher = matcherOf("/**")
+
+    assertTrue(matcher.excludes("a"))
+    assertTrue(matcher.excludes("a/b"))
+    assertTrue(matcher.excludes("a.txt", isDirectory = false))
+    assertFalse(matcher.isExcluded("", isDirectory = true))
+  }
+
+  @Test
+  fun `an asterisk between two slashes matches one directory`() {
+    val matcher = matcherOf("a/*/b")
+
+    assertTrue(matcher.excludes("a/x/b"))
+    assertFalse(matcher.excludes("a/b"))
+    assertFalse(matcher.excludes("a/x/y/b"))
+  }
+
   // -----------------------------------------------------------------------------------------------------------------------------------
   // The lines that the format leaves out
   // -----------------------------------------------------------------------------------------------------------------------------------

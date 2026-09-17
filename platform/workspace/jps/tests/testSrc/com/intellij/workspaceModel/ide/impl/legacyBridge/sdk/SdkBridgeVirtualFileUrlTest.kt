@@ -12,7 +12,7 @@ import com.intellij.platform.workspace.storage.entities
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
-import com.intellij.workspaceModel.ide.impl.createIdeVirtualFileUrlManager
+import com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl
 import org.junit.jupiter.api.Test
 import kotlin.test.assertSame
 
@@ -60,7 +60,7 @@ class SdkBridgeVirtualFileUrlTest {
     GlobalWorkspaceModel.getInstance(LocalEelMachine).getVirtualFileUrlManager()
 
   private fun projectVirtualFileUrlManager(): VirtualFileUrlManager {
-    return createIdeVirtualFileUrlManager()
+    return IdeVirtualFileUrlManagerImpl()
   }
 
   private fun emptySdkEntity(): SdkEntityBuilder =

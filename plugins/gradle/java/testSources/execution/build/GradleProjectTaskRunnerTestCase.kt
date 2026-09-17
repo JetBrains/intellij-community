@@ -6,8 +6,6 @@ import com.intellij.execution.configurations.ModuleBasedConfiguration
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.util.setKotlinProperty
 import com.intellij.openapi.options.advanced.AdvancedSettings
@@ -18,7 +16,6 @@ import com.intellij.task.impl.ModuleBuildTaskImpl
 import com.intellij.testFramework.common.mock.notImplemented
 import com.intellij.testFramework.replaceService
 import org.gradle.tooling.BuildLauncher
-import org.gradle.tooling.CancellationToken
 import org.gradle.tooling.ModelBuilder
 import org.gradle.tooling.ProjectConnection
 import org.gradle.tooling.model.BuildIdentifier
@@ -27,7 +24,7 @@ import org.gradle.tooling.model.build.GradleEnvironment
 import org.gradle.tooling.model.build.JavaEnvironment
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.connection.GradleConnectorService
-import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
+import org.jetbrains.plugins.gradle.service.execution.GradleExecutionContext
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.testFramework.GradleProjectTestCase
@@ -37,7 +34,6 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 import java.io.File
 import java.nio.file.Path
-import java.util.function.Function
 
 @GradleProjectTestApplication
 abstract class GradleProjectTaskRunnerTestCase : GradleProjectTestCase() {
@@ -113,14 +109,8 @@ abstract class GradleProjectTaskRunnerTestCase : GradleProjectTestCase() {
   fun mockGradleConnectionService(disposable: Disposable, execute: () -> Unit) {
     val connection = mockProjectConnection(execute)
     val connectorService = object : GradleConnectorService by notImplemented() {
-      override fun <R> withGradleConnection(
-        projectPath: String,
-        taskId: ExternalSystemTaskId?,
-        executionSettings: GradleExecutionSettings?,
-        listener: ExternalSystemTaskNotificationListener?,
-        cancellationToken: CancellationToken?,
-        function: Function<ProjectConnection, R>,
-      ): R = function.apply(connection)
+      override fun <R> withGradleConnection(context: GradleExecutionContext, function: (ProjectConnection) -> R): R =
+        function(connection)
     }
     project.replaceService(GradleConnectorService::class.java, connectorService, disposable)
   }

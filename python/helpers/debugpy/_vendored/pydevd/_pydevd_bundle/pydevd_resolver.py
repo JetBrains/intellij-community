@@ -42,6 +42,24 @@ except:
 # =======================================================================================================================
 
 
+def _names_in_definition_order(var):
+    """
+    The names `dir()` reports, in the order `__dir__` gives them.
+
+    `object.__dir__` already walks the instance dictionary and the MRO, and it returns the names in
+    the order they were defined, so this reads it the way `dir()` does and keeps that order.
+
+    `type(var).__dir__(var)` rather than `var.__dir__()`, so that a class object answers too.
+    `dir()` also removes a duplicate, which `object.__dir__` can report for a name that is both in
+    the instance and in the class.
+    """
+    try:
+        return list(dict.fromkeys(type(var).__dir__(var)))
+    except Exception:
+        # A custom __dir__ may return something unusable. The sorted order is still better than none.
+        return dir(var)
+
+
 def sorted_attributes_key(attr_name):
     if attr_name.startswith("__"):
         if attr_name.endswith("__"):
@@ -75,7 +93,10 @@ class DefaultResolver:
         else:
             dct = self._get_jy_dictionary(obj)[0]
 
-        lst = sorted(dct.items(), key=lambda tup: sorted_attributes_key(tup[0]))
+        # The order of the object, which is the order the attributes were defined in. The IDE owns the
+        # order the user sees and applies its own, so a sort here would only hide the definition
+        # order and leave the internal mode with nothing to show (PY-75114).
+        lst = list(dct.items())
         if used___dict__:
             eval_name = ".__dict__[%s]"
         else:
@@ -151,7 +172,7 @@ class DefaultResolver:
     def get_names(self, var):
         used___dict__ = False
         try:
-            names = dir(var)
+            names = _names_in_definition_order(var)
         except Exception:
             names = []
         if not names:

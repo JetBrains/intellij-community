@@ -9,19 +9,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="kotlinx-coroutines-slf4j" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.kotlinx:kotlinx-coroutines-slf4j:1.10.2-intellij-3">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.kotlinx:kotlinx-coroutines-slf4j:1.10.2-intellij-4">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/kotlinx/kotlinx-coroutines-slf4j/1.10.2-intellij-3/kotlinx-coroutines-slf4j-1.10.2-intellij-3.jar">
-              <sha256sum>3dc71a2fb23b75d24a06cb8f03845bb01c5cf1059297e74440aa030929701acb</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/kotlinx/kotlinx-coroutines-slf4j/1.10.2-intellij-4/kotlinx-coroutines-slf4j-1.10.2-intellij-4.jar">
+              <sha256sum>f1c9b8d5877a880a3fa4838d9e902d1d18677cd3e5590164599a165ab5ec61a4</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/kotlinx/kotlinx-coroutines-slf4j/1.10.2-intellij-3/kotlinx-coroutines-slf4j-1.10.2-intellij-3.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/kotlinx/kotlinx-coroutines-slf4j/1.10.2-intellij-4/kotlinx-coroutines-slf4j-1.10.2-intellij-4.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/kotlinx/kotlinx-coroutines-slf4j/1.10.2-intellij-3/kotlinx-coroutines-slf4j-1.10.2-intellij-3-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/kotlinx/kotlinx-coroutines-slf4j/1.10.2-intellij-4/kotlinx-coroutines-slf4j-1.10.2-intellij-4-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

@@ -26,7 +26,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerEx
+import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.serviceContainer.NonInjectable
 import com.intellij.util.PathUtil
@@ -317,7 +317,7 @@ class WorkspaceFileIndexImpl : WorkspaceFileIndexEx, Disposable.Default {
 
     /* there may be other file sets under this directory; their URLs must be registered in VirtualFileUrlManager,
        so it's enough to process VirtualFileUrls only. */
-    val virtualFileUrlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager() as VirtualFileUrlManagerEx
+    val virtualFileUrlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager() as VirtualFileUrlManagerImpl
     val processed = virtualFileUrlManager.processChildrenRecursively(dir.url) { childUrl ->
       val childFile = findFileByUrlIfCached(childUrl.url) ?: return@processChildrenRecursively TreeNodeProcessingResult.SKIP_CHILDREN
       val isChildInContent = findFileSet(

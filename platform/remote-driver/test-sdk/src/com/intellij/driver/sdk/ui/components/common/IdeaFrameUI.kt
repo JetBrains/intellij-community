@@ -195,6 +195,9 @@ open class IdeaFrameUI(data: ComponentData) : WindowUiComponent(data) {
   }
 
   fun doubleClickEmptyToolbarArea() {
+    // On Linux the window manager can take the first click to activate the frame.
+    // Then the IDE gets one click only, and the header never toggles the maximized state.
+    toFront()
     toolbar.doubleClick(emptyMainToolbarAreaPointOnScreen().relativeTo(toolbar))
   }
 

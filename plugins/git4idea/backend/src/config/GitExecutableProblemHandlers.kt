@@ -119,8 +119,12 @@ internal fun getHumanReadableErrorFor(exception: Throwable): @Nls String? {
 
 private class DefaultExecutableProblemHandler(val project: Project) : GitExecutableProblemHandler {
   override fun showError(exception: Throwable, errorNotifier: ErrorNotifier, onErrorResolved: () -> Unit) {
-    errorNotifier.showError(GitBundle.message("executable.error.git.not.installed"),
-                            getHumanReadableErrorFor(exception),
-                            getLinkToConfigure(project))
+    val description = if (exception is GitNotInstalledException) {
+      GitBundle.message("executable.error.git.not.installed.hint")
+    }
+    else {
+      getHumanReadableErrorFor(exception)
+    }
+    errorNotifier.showError(GitBundle.message("executable.error.git.not.installed"), description, getLinkToConfigure(project))
   }
 }

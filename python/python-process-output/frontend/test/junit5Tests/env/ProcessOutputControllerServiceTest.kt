@@ -15,6 +15,7 @@ import com.intellij.python.processOutput.common.OutputKindDto
 import com.intellij.python.processOutput.common.ProcessId
 import com.intellij.python.processOutput.frontend.LoggedProcess
 import com.intellij.python.processOutput.frontend.ProcessOutputControllerService
+import com.intellij.python.processOutput.frontend.ProcessStatus
 import com.intellij.python.processOutput.frontend.ProcessTreeNode
 import com.intellij.python.processOutput.frontend.childrenOf
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -130,20 +131,22 @@ internal class ProcessOutputControllerServiceTest {
         service.controller.treeSectionState.treeRoot.value.findProcess(process.id)
         ?: return@waitUntil false
 
-      true
+      loggedProcess.lines.value.size == 6 &&
+      loggedProcess.status.value is ProcessStatus.Done
     }
 
-    // copying stdout
-    service.controller.copyOutputTagAtIndexToClipboard(loggedProcess, 0)
+    // copy the entire output via the toolbar action
+    service.controller.copyOutputToClipboard(loggedProcess)
 
     assertEquals(
       """
-        out1
-        out2
-        out3
-        out4
-        out5
-        out6
+        [stdout] out1
+                 out2
+                 out3
+                 out4
+                 out5
+                 out6
+          [exit] 0
 
       """.trimIndent(),
       CopyPasteManager.getInstance().getContents<String>(DataFlavor.stringFlavor),

@@ -94,17 +94,31 @@ These checks ensure that paths are correctly identified as belonging to the appr
 
 Path conversion is useful in several scenarios:
 
-### 1. Working with Standard Java APIs
+### 1. Working with Standard Java APIs, EelFiles, and EelFileUtils
 
-Many Java APIs only accept `java.nio.file.Path` objects. By converting EelPath to NIO Path, you can use these APIs with paths from any environment:
+Many Java APIs accept only `java.nio.file.Path` objects. By converting an `EelPath` to a NIO `Path`, you can use these APIs with paths from any environment.
+
+For file operations, prefer `com.intellij.platform.eel.fs.EelFiles` over `java.nio.file.Files` when the needed function alias exists. It provides identical signatures and behavior, but optimizes RPC performance. Recommend `com.intellij.platform.eel.fs.EelFileUtils` for optimized functions that do not exist in `Files` or `EelFiles` (such as `deleteRecursively`):
 
 ```kotlin
+import com.intellij.platform.eel.fs.EelFiles
+import com.intellij.platform.eel.fs.EelFileUtils
+import java.nio.file.Files
+
 // Get an EelPath for a file in a Docker container
 val eelPath = EelPath.parse("/app/data/config.json", dockerDescriptor)
 
-// Convert to NIO Path to use with standard Java APIs
+// Convert to NIO Path
 val nioPath = eelPath.asNioPath()
-val content = Files.readString(nioPath)
+
+// EelFiles is preferred for performance:
+val content = EelFiles.readString(nioPath)
+
+// EelFileUtils provides optimized functions missing from Files:
+EelFileUtils.deleteRecursively(nioPath)
+
+// Standard java.nio.file.Files is also fully supported:
+val lines = Files.readAllLines(nioPath)
 ```
 
 ### 2. Determining the Environment of a Path

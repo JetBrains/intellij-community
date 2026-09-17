@@ -105,11 +105,23 @@ public class GitExecutableDetector {
   }
 
   public static @NotNull GitExecutable getGitExecutable(@Nullable Project project, @NotNull String pathToGit) {
-    Path pathToGitParsed = Path.of(pathToGit);
-    var eel = GitEelExecutableDetectionHelper.tryGetEel(project, pathToGitParsed);
+    return getGitExecutable(project, pathToGit, null);
+  }
 
-    if (eel != null && pathToGitParsed.isAbsolute()) {
-      return new GitExecutable.Eel(EelNioBridgeServiceKt.asEelPath(pathToGitParsed), eel);
+  /**
+   * @param gitDirectory a directory that identifies the target machine when {@code pathToGit} is not an
+   * absolute path. Use this for a candidate repository root. For example, probe it before the project opens.
+   * The method does not read the directory. It does not check that the directory holds a Git repository.
+   */
+  public static @NotNull GitExecutable getGitExecutable(@Nullable Project project, @NotNull String pathToGit, @Nullable Path gitDirectory) {
+    Path pathToGitParsed = Path.of(pathToGit);
+    var eel = GitEelExecutableDetectionHelper.tryGetEel(project, pathToGitParsed.isAbsolute() ? pathToGitParsed : gitDirectory);
+
+    if (eel != null) {
+      if (pathToGitParsed.isAbsolute()) {
+        return new GitExecutable.Eel(eel, EelNioBridgeServiceKt.asEelPath(pathToGitParsed));
+      }
+      return new GitExecutable.Eel(eel, pathToGit);
     }
 
     WslPath wslPath = WslPath.parseWindowsUncPath(pathToGit);
@@ -201,7 +213,8 @@ public class GitExecutableDetector {
 
     var eelDescriptor = GitEelExecutableDetectionHelper.tryGetEelDescriptor(project, gitDirectory);
     if (eelDescriptor != null) {
-      final var path = project != null ? project.getBasePath() : gitDirectory != null ? gitDirectory.toString() : null;
+      final var path = project != null && !project.isDefault() ? project.getBasePath() :
+                       gitDirectory != null ? gitDirectory.toString() : null;
       assert path != null;
       detectors.add(new EelBasedDetector(eelDescriptor, path));
       return detectors;

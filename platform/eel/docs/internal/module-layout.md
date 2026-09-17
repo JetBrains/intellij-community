@@ -7,7 +7,7 @@ This page lists the Eel modules in `community/platform/` and states where new co
 | Module | Directory | Content |
 | --- | --- | --- |
 | `intellij.platform.eel` | `eel/src/`, `eel/gen-builders/` | The public API: `EelApi`, `EelDescriptor`, `EelExecApi`, `EelFileSystemApi`, `EelTunnelsApi`, `EelPath`, `LocalEelApi`, `LocalEelDescriptor`. `gen-builders/` holds generated argument builders. |
-| `intellij.platform.eel.nioFs` | `eel-nioFs/src/` | The bridge between the Eel API and `java.nio.file`: `EelPathDescriptor`, path conversion (`asEelPath`, `asNioPath`), `EelNioFsBackend`, `EelFiles`. |
+| `intellij.platform.eel.nioFs` | `eel-nioFs/src/` | The bridge between the Eel API and `java.nio.file`: `EelPathDescriptor`, path conversion (`asEelPath`, `asNioPath`), `EelNioFsBackend`, `EelFiles`, `EelFileUtils`. |
 | `intellij.platform.eel.provider` | `eel-provider/src/` | Project-level glue: `Project.getEelDescriptor()`, `getEelMachine()`, project-scoped temp files and system folders, remote-dev host paths, blocking wrappers. |
 | `intellij.platform.eel.impl.base` | `eel-impl-base/src/` | Implementation pieces shared by every Eel provider. It depends only on the API and `eel.nioFs`. |
 | `intellij.platform.eel.impl` | `eel-impl/src/`, `eel-impl/resources/` | The local Eel implementation and the platform services: `LocalEelApi` for the IDE host, file chooser support, settings. |

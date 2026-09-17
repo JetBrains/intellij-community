@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests
 
-import com.intellij.platform.workspace.storage.impl.url.ConcurrentVirtualFileUrlManager
+import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicReference
 class VirtualFileUrlManagerConcurrencyStressTest {
   @Test
   fun `concurrent interning and lookup stay consistent`() {
-    val manager = ConcurrentVirtualFileUrlManager()
+    val manager = VirtualFileUrlManagerImpl()
     val threadCount = Runtime.getRuntime().availableProcessors().coerceAtLeast(2)
     val iterationsPerThread = 20_000
     // Overlapping, forward-slash paths (so url round-trips to the input) that share ancestors,
