@@ -19,9 +19,9 @@ import org.junit.jupiter.api.Test
 
 /**
  * A type context picks its engine when it is created, and the context cache keeps it until the PSI
- * changes. A context created while the engine's server did not run has no engine. The start and the
- * stop of that server must drop the cached contexts, or the file keeps PyCharm's own inference until
- * the next edit.
+ * changes. The engine of the selected tool answers `Unknown` while its server does not run. The start
+ * and the stop of that server must drop the cached contexts, or the file keeps the `Unknown` types
+ * until the next edit.
  */
 @TestApplication
 @TestFor(issues = ["PY-92008"])

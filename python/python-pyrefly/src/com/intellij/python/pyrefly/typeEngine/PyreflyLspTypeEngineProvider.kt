@@ -1,12 +1,12 @@
 package com.intellij.python.pyrefly.typeEngine
 
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.lsp.api.LspClientManager
 import com.intellij.platform.lsp.api.ensureClientStarted
-import com.intellij.python.lsp.core.findLspClientForModule
 import com.intellij.python.lsp.core.typeEngine.PyTypeEngineUtils
 import com.intellij.python.pyrefly.PyreflyPyTool
 import com.intellij.python.pyrefly.lsp.PyreflyLspIntegrationProvider
@@ -16,22 +16,23 @@ import com.jetbrains.python.psi.types.engine.PyTypeEngineProvider
 
 
 /**
- * External type engine provider that delegates to Pyrefly's LSP endpoint.
- * This provider is enabled when the Type Engine feature is enabled via registry.
- * The actual per-module check for Pyrefly configuration is done in [PyreflyLspTypeEngine.isSupportedForResolve].
+ * The type engine provider that delegates to the Pyrefly server.
+ *
+ * The answer depends on the settings and the project model alone, not on the state of the server. So
+ * every context of a module gets the same engine, whether the server runs or still starts. The
+ * engine answers `Unknown` until the server runs, see [PyreflyLspTypeEngine].
  */
 class PyreflyLspTypeEngineProvider : PyTypeEngineProvider {
   override fun createTypeEngine(module: Module): PyTypeEngine? {
-    // Check if type engine feature is enabled (via registry or unit tests)
-    val isFeatureEnabled = Util.isAvailable(module.project)
-
-    if (!isFeatureEnabled) {
+    val project = module.project
+    // The registry key or the unit-test mode can enable the feature.
+    if (!Util.isAvailable(project)) {
       return null
     }
 
-    // Provide types only when Pyrefly is the selected type engine — not merely enabled as an LSP
-    // tool. This decouples type inference from the External Tools toggle (PY-90550).
-    if (!PyreflyPyTool.getInstance().isSelectedAsTypeEngine(module.project)) {
+    // Provide types only when Pyrefly is the selected type engine, not when it is enabled as an LSP
+    // tool alone. This decouples type inference from the External Tools toggle (PY-90550).
+    if (!PyreflyPyTool.getInstance().isSelectedAsTypeEngine(project)) {
       return null
     }
 
@@ -42,14 +43,15 @@ class PyreflyLspTypeEngineProvider : PyTypeEngineProvider {
       return null
     }
 
-    LspClientManager.getInstance(module.project)
-      .ensureClientStarted<PyreflyLspIntegrationProvider>(pyreflyDescriptor(module))
-    // Take the client that answers for *this* module. One server can answer for several modules,
-    // but a project can still hold more than one server, and the wrong one resolves everything to
-    // `Any` because it answers for another module's content roots.
-    val server = findLspClientForModule(module, PyreflyLspIntegrationProvider::class.java) ?: return null
+    // An untrusted project starts no server, see `LspClientManagerImpl.ensureStarted`, so the engine
+    // would never be ready. The built-in engine answers there.
+    if (!TrustedProjects.isProjectTrusted(project)) {
+      return null
+    }
 
-    return PyreflyLspTypeEngine(module, server)
+    LspClientManager.getInstance(project)
+      .ensureClientStarted<PyreflyLspIntegrationProvider>(pyreflyDescriptor(module))
+    return PyreflyLspTypeEngine(module)
   }
 
   object Util {

@@ -24,10 +24,33 @@ interface PyLspTypeEngine : PyTypeEngine {
   /** The module this engine answers for. */
   val module: Module
 
-  /** The client whose server answers for [module]. One server can answer for several modules. */
-  val lspClient: LspClient
+  /**
+   * The client whose server answers for [module], or `null` while no running server does. One server
+   * can answer for several modules.
+   */
+  val lspClient: LspClient?
+
+  /**
+   * A stopped or starting server answers nothing, see [isUsable]. The context then answers `Unknown`
+   * or asks the built-in engine, see [allowsBuiltInTypeEngineFallbackWhenUnavailable], and it does
+   * not cache the gap.
+   */
+  override val isReady: Boolean
+    get() = lspClient?.isUsable == true
 
   override fun isSupportedForResolve(pyTypedElement: PyTypedElement): Boolean {
+    if (!isVisibleToServer(pyTypedElement))
+      return false
+    val isSupportedTypesVisitor = LspIsSupportedTypesVisitor()
+    pyTypedElement.accept(isSupportedTypesVisitor)
+    return isSupportedTypesVisitor.isSupported
+  }
+
+  /**
+   * Whether the server sees the file of [pyTypedElement] at all. The answer does not depend on the
+   * state of the server, so it is the same before and after the server starts.
+   */
+  fun isVisibleToServer(pyTypedElement: PyTypedElement): Boolean {
     val realFile = pyTypedElement.containingFile?.originalFile ?: return false
     if (realFile is PyExpressionCodeFragment)
       return false
@@ -43,21 +66,10 @@ interface PyLspTypeEngine : PyTypeEngine {
     // file of any other module resolves to `Any` there, so it must not go to this server.
     // A file of no module goes to any server: a library file reaches this point, and so
     // does a scratch file or a file outside every content root.
+    // Before the server runs, the engine knows its own module alone.
+    val servedModules = lspClient?.pyServedModules ?: listOf(module)
     val fileModule = moduleOfFile(realFile)
-    if (fileModule != null && fileModule !in lspClient.pyServedModules)
-      return false
-
-    // A restart replaces the client, and a cached `TypeEvalContext` still holds this engine and this
-    // client. A stopped server answers nothing, and `TypeEvalContextImpl.getType` would then store
-    // `PyNullType` instead of letting PyCharm infer the type itself, so every type of the file would
-    // go unknown until the user edits it. Nothing that restarts a server moves the trackers that
-    // drop the context cache.
-    if (!lspClient.isUsable)
-      return false
-
-    val isSupportedTypesVisitor = LspIsSupportedTypesVisitor()
-    pyTypedElement.accept(isSupportedTypesVisitor)
-    return isSupportedTypesVisitor.isSupported
+    return fileModule == null || fileModule in servedModules
   }
 }
 

@@ -2,6 +2,7 @@
 package com.intellij.python.lsp.core
 
 import com.intellij.codeInsight.completion.CompletionParameters
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.intention.CustomizableIntentionAction
 import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.codeInsight.intention.IntentionAction
@@ -18,6 +19,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.components.Service
@@ -69,6 +71,7 @@ import com.intellij.platform.lsp.api.customization.LspOptimizeImportsDisabled
 import com.intellij.platform.lsp.api.lsWidget.LspClientWidgetItem
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiManager
 import com.intellij.python.community.execService.BinaryToExec
 import com.intellij.python.community.execService.asGeneralCommandLine
 import com.intellij.python.lsp.core.utils.PyLspToolVersionTracker
@@ -670,15 +673,20 @@ abstract class PyLspToolDescriptor(
     }
 
     /**
-     * A type context picks its engine once, when it is created, and the context cache keeps it until the
-     * PSI changes. A context created while this server did not run has no engine, and one created before
-     * a stop keeps an engine that no server answers. So each start and stop of the selected engine's
-     * server drops the cached contexts.
+     * The engine of the selected tool exists before this server runs, and it answers `Unknown` until
+     * then. A type context does not cache that answer, but a cached value or a resolve result built on
+     * it keeps the `Unknown` until the next edit, and nothing else learns that the server started. So
+     * each start and stop of the selected engine's server drops the cached contexts and the PSI
+     * caches, and runs the daemon again.
      */
     private fun dropCachedTypeContexts() {
-      if (pyTool.isSelectedAsTypeEngine(project)) {
-        PyTypeEngineSettingsModificationTracker.getInstance(project).incModificationCount()
-      }
+      if (!pyTool.isSelectedAsTypeEngine(project)) return
+      PyTypeEngineSettingsModificationTracker.getInstance(project).incModificationCount()
+      // `dropPsiCaches` needs the EDT or a write action, and the server listener runs on a pooled thread.
+      ApplicationManager.getApplication().invokeLater({
+        PsiManager.getInstance(project).dropPsiCaches()
+        DaemonCodeAnalyzer.getInstance(project).restart("PyLspToolDescriptor.dropCachedTypeContexts")
+      }, project.disposed)
     }
   }
 

@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.JdkOrderEntry
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.registry.Registry
@@ -50,10 +51,24 @@ open class TypeEvalContextImpl internal constructor(
     if (isNotebookExternalTypeEngineDisabled(it)) {
       return@let null
     }
-    ModuleUtilCore.findModuleForFile(it)
-  }?.let { module ->
-    PyTypeEngineProvider.createTypeEngine(module)
+    findTypeEngine(it.originalFile)
   }
+
+  private fun getTypeEngine(element: PyTypedElement): PyTypeEngine? {
+    if (constraints.myOrigin != null) {
+      return typeEngine
+    }
+
+    val containingFile = element.containingFile ?: return null
+    if (isNotebookExternalTypeEngineDisabled(containingFile)) {
+      return null
+    }
+    containingFile.getUserData(ModuleUtilCore.KEY_MODULE)?.let {
+      return PyTypeEngineProvider.createTypeEngine(it)
+    }
+    return findTypeEngine(containingFile.originalFile)
+  }
+
   protected val myEvaluated: MutableMap<PyTypedElement?, PyType?> = getConcurrentMapForCachingTypes()
   protected val myEvaluatedReturn: MutableMap<PyCallable?, PyType?> = getConcurrentMapForCachingTypes()
   protected val contextTypeCache: ConcurrentMap<Pair<Any, Any>, PyType> = getConcurrentMapForCachingTypes()
@@ -95,6 +110,21 @@ open class TypeEvalContextImpl internal constructor(
     val realFile = origin.originalFile.virtualFile ?: return false
     return realFile.extension.equals("ipynb", ignoreCase = true) &&
            !Registry.`is`("python.lsp.type.engine.notebooks", false)
+  }
+
+  private fun findTypeEngine(origin: PsiFile): PyTypeEngine? {
+    val module = ModuleUtilCore.findModuleForFile(origin)
+    if (module != null) {
+      return PyTypeEngineProvider.createTypeEngine(module)
+    }
+
+    val virtualFile = origin.virtualFile ?: return null
+    return ProjectFileIndex.getInstance(origin.project).getOrderEntriesForFile(virtualFile)
+      .asSequence()
+      .filterIsInstance<JdkOrderEntry>()
+      .map { it.ownerModule }
+      .distinct()
+      .firstNotNullOfOrNull(PyTypeEngineProvider::createTypeEngine)
   }
 
   @ApiStatus.Internal
@@ -234,19 +264,26 @@ open class TypeEvalContextImpl internal constructor(
     }
 
     return RecursionManager.doPreventingRecursion(element to this, false) {
-      val engine = typeEngine
+      val engine = getTypeEngine(element)
       val type = if (engine != null && engine.isSupportedForResolve(element)) {
-        PyTypeEvaluationAggregatesCollector.recordHybridTypeEngineTime(engine) {
-          val isUserInitiated = constraints.myAllowStubToAST && constraints.myAllowDataFlow
-          // An engine gives no answer for an element it cannot see, for example one in an unopened file.
-          // That means an unknown type, the same as the null it used to give.
-          engine.resolveType(element, this is LibraryTypeEvalContext, isUserInitiated)?.get() ?: PyAnyType.unknown
+        if (engine.isReady) {
+          PyTypeEvaluationAggregatesCollector.recordHybridTypeEngineTime(engine) {
+            val isUserInitiated = constraints.myAllowStubToAST && constraints.myAllowDataFlow
+            // An engine gives no answer for an element it cannot see, for example one in an unopened file.
+            // That means an unknown type, the same as the null it used to give.
+            engine.resolveType(element, this is LibraryTypeEvalContext, isUserInitiated)?.get() ?: PyAnyType.unknown
+          }
+        }
+        else if (!engine.allowsBuiltInTypeEngineFallbackWhenUnavailable) {
+          // The engine answers after its server starts, and the start drops this context. Do not cache the gap.
+          return@doPreventingRecursion PyAnyType.unknown
+        }
+        else {
+          evaluateWithBuiltInEngine(element)
         }
       }
       else {
-        PyTypeEvaluationAggregatesCollector.recordPyCharmTypeEngineTime {
-          element.getType(this, KeyImpl)
-        }
+        evaluateWithBuiltInEngine(element)
       }
 
       assertValid(type, element)
@@ -254,6 +291,11 @@ open class TypeEvalContextImpl internal constructor(
       publish(myEvaluated, element, type)
     } ?: PyAnyType.unknown
   }
+
+  private fun evaluateWithBuiltInEngine(element: PyTypedElement): PyType? =
+    PyTypeEvaluationAggregatesCollector.recordPyCharmTypeEngineTime {
+      element.getType(this, KeyImpl)
+    }
 
   override fun getReturnType(callable: PyCallable): PyType? {
     if (canDelegateToLibraryContext(callable)) {
