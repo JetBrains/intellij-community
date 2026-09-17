@@ -105,10 +105,6 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
     myHighlightVisitorRunner = new HighlightVisitorRunner(psiFile, globalScheme, runVisitors, highlightErrorElements);
   }
 
-  boolean hasErrorElement() {
-    return myHasErrorElement;
-  }
-
   private @NotNull PsiFile getFile() {
     return myFile;
   }
@@ -124,7 +120,7 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
       Consumer<? super ManagedHighlighterRecycler> recyclerConsumer = invalidPsiRecycler -> {
         List<Divider.DividedElements> dividedElements = new ArrayList<>();
         List<Divider.DividedElements> notVisitableElements = new ArrayList<>();
-        Divider.divideInsideAndOutsideAllRoots(getFile(), myRestrictRange, myPriorityRange, psiFile -> true,
+        Divider.divideInsideAndOutsideAllRoots(getFile(), myRestrictRange, myPriorityRange, _ -> true,
           elements -> {
             if (SHOULD_HIGHLIGHT_FILTER.test(elements.psiRoot())) {
               dividedElements.add(elements);
@@ -242,16 +238,16 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
                                     @NotNull ResultSink resultSink) {
     int chunkSize = Math.max(1, (elements1.size()+elements2.size()) / 100); // one percent precision is enough
     ProgressManager.checkCanceled();
-    Runnable runnable = () -> myHighlightVisitorRunner.runVisitors(getFile(), elements1, elements2, visitors, forceHighlightParents, chunkSize,
+    Runnable runHighlightVisitors = () -> myHighlightVisitorRunner.runVisitors(getFile(), elements1, elements2, visitors, forceHighlightParents, chunkSize,
                                                                    myUpdateAll, () -> createInfoHolder(getFile()), resultSink);
     AnnotationSession session = AnnotationSessionImpl.create(getFile());
     setupAnnotationSession(session, myPriorityRange, restrictRange, getHighlightingSession().getMinimumSeverity());
     AnnotatorRunner annotatorRunner = myRunAnnotators ? new AnnotatorRunner(session, myBatchMode) : null;
     if (annotatorRunner == null) {
-      runnable.run();
+      runHighlightVisitors.run();
       return true;
     }
-    return annotatorRunner.runAnnotatorsAsync(getDocument(), elements1, elements2, runnable, resultSink);
+    return annotatorRunner.runAnnotatorsAsync(getDocument(), elements1, elements2, runHighlightVisitors, resultSink);
   }
 
   @ApiStatus.Internal
