@@ -7,6 +7,7 @@ import com.intellij.ide.actions.ActionsCollector
 import com.intellij.ide.actions.ToolwindowFusEventFields
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.internal.statistic.collectors.fus.DataContextUtils
+import com.intellij.internal.statistic.collectors.fus.ProjectlessData
 import com.intellij.internal.statistic.collectors.fus.actions.ProjectStateObserver
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
@@ -41,6 +42,7 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.TimeoutUtil
+import com.intellij.util.containers.addIfNotNull
 import it.unimi.dsi.fastutil.objects.Object2LongMaps
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap
 import org.jetbrains.annotations.ApiStatus
@@ -181,6 +183,9 @@ class ActionsCollectorImpl : ActionsCollector() {
       val projectPairs = projectData(project)
       eventId.log(project) {
         addAll(projectPairs)
+        if (eventId == ActionsEventLogGroup.ACTION_FINISHED) {
+          addIfNotNull(ProjectlessData.forProject(project))
+        }
         dataBuilder()
       }
     }
@@ -213,6 +218,7 @@ class ActionsCollectorImpl : ActionsCollector() {
           if (eventId == ActionsEventLogGroup.ACTION_FINISHED) {
             add(ActionsEventLogGroup.LOOKUP_ACTIVE.with(isLookupActive))
             add(ToolwindowFusEventFields.TOOLWINDOW.with(toolWindowId))
+            addIfNotNull(ProjectlessData.forProject(project))
           }
         }
         customDataProvider(this)
