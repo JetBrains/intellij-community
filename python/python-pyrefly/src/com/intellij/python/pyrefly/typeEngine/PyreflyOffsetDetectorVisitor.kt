@@ -4,6 +4,7 @@ import com.intellij.psi.util.endOffset
 import com.intellij.psi.util.startOffset
 import com.jetbrains.python.psi.PyBinaryExpression
 import com.jetbrains.python.psi.PyCallExpression
+import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyDecorator
 import com.jetbrains.python.psi.PyDictLiteralExpression
 import com.jetbrains.python.psi.PyElement
@@ -24,6 +25,14 @@ class PyreflyOffsetDetectorVisitor : PyElementVisitor() {
   }
 
   override fun visitPyFunction(node: PyFunction) {
+    offset = node.nameNode?.startOffset ?: node.startOffset
+  }
+
+  /**
+   * The type of a class declaration is the type of its name, `type[C]`. The default end offset points at
+   * the last token of the class body, and `PyClassImpl.getMROAncestorTypes` reads the type of the class.
+   */
+  override fun visitPyClass(node: PyClass) {
     offset = node.nameNode?.startOffset ?: node.startOffset
   }
 

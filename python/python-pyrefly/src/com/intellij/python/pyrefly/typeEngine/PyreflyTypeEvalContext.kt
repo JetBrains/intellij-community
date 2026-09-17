@@ -32,6 +32,7 @@ import com.jetbrains.python.psi.types.PyCallableParameterImpl
 import com.jetbrains.python.psi.types.PyCallableParameterListTypeImpl
 import com.jetbrains.python.psi.types.PyCallableType
 import com.jetbrains.python.psi.types.PyCallableTypeImpl
+import com.jetbrains.python.psi.types.PyClassLikeType
 import com.jetbrains.python.psi.types.PyClassTypeImpl
 import com.jetbrains.python.psi.types.PyCollectionTypeImpl
 import com.jetbrains.python.psi.types.PyLiteralType
@@ -140,7 +141,7 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
       "unknown" -> PyAnyType.unknown
       "unbound" -> null
       "callable" -> PyTypingTypeProvider.createTypingCallableType(pyElement)
-      else -> PyClassTypeImpl.createTypeByQName(pyElement, "typing.$name", false)
+      else -> PyClassTypeImpl.createTypeByQName(pyElement, "typing.$name", tspType.isInstantiable())
               ?: PyClassTypeImpl.createTypeByQName(pyElement, PyTypingTypeProvider.SPECIAL_FORM, false)
     }
     if (type == null) return null
@@ -151,13 +152,17 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
   private fun buildPyClassType(pyElement: PyTypedElement, tspType: PyreflyLsp4jServer.TspType): Ref<PyType?>? {
     val declaration = tspType.declaration ?: return null
     val defNode = declaration.node
+    // The `INSTANTIABLE` flag marks a class object, such as the base class expression `Model` in
+    // `class Book(Model)`. `PyClassImpl` keeps only a definition type in the ancestor list, so an
+    // instance type here drops the base class and its members from the hierarchy.
+    val isDefinition = tspType.isInstantiable()
     if (defNode == null || defNode.uri.isEmpty()) {
       // Pyrefly emits a synthesized stub class with `typeArgs` for built-in generic instances
       // such as `tuple[...]`. Recover the element types from `typeArgs`.
       if (!tspType.typeArgs.isNullOrEmpty()) {
-        buildPyTupleType(pyElement, tspType.typeArgs)?.let { return it }
+        buildPyTupleType(pyElement, tspType.typeArgs, isDefinition)?.let { return it }
       }
-      return buildBuiltinClassType(pyElement, declaration.name)
+      return buildBuiltinClassType(pyElement, declaration.name, isDefinition)
     }
     val target = findElement(defNode)
     val pyClass = target?.let { PsiTreeUtil.getParentOfType(it, PyClass::class.java) }
@@ -165,10 +170,10 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
       // Pyrefly emits a sentinel `range=(0,0)` for builtin instances (e.g. `int` for the literal
       // default value `5`). The offset points to the start of `builtins.pyi`, so PSI gives us no
       // class — fall back to looking up the class by `declaration.name` in the builtin cache.
-      return buildBuiltinClassType(pyElement, declaration.name)
+      return buildBuiltinClassType(pyElement, declaration.name, isDefinition)
     }
     val typeArgs = tspType.typeArgs
-    val classType: PyType = if (!typeArgs.isNullOrEmpty()) {
+    val instanceType: PyClassLikeType = if (!typeArgs.isNullOrEmpty()) {
       val elementTypes = typeArgs.map { buildPyType(pyElement, it)?.get() }
       if (pyClass.qualifiedName == PyNames.FQN.TUPLE) {
         PyTupleType.create(pyElement, elementTypes) ?: PyClassTypeImpl(pyClass, false)
@@ -180,23 +185,24 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
     else {
       PyClassTypeImpl(pyClass, false)
     }
-    thisLogger().info("Pyrefly TSP: built PyClassType for ${pyClass.qualifiedName ?: pyClass.name} at ${defNode.uri}:${defNode.range.start} (typeArgs=${typeArgs?.size ?: 0})")
+    val classType = instanceType.asDefinitionIf(isDefinition)
+    thisLogger().info("Pyrefly TSP: built PyClassType for ${pyClass.qualifiedName ?: pyClass.name} at ${defNode.uri}:${defNode.range.start} (typeArgs=${typeArgs?.size ?: 0}, isDefinition=$isDefinition)")
     return Ref.create(classType)
   }
 
-  private fun buildBuiltinClassType(pyElement: PyTypedElement, name: String?): Ref<PyType?>? {
+  private fun buildBuiltinClassType(pyElement: PyTypedElement, name: String?, isDefinition: Boolean): Ref<PyType?>? {
     if (name.isNullOrEmpty()) return null
     val type = PyBuiltinCache.getInstance(pyElement).getObjectType(name) ?: return null
-    thisLogger().info("Pyrefly TSP: built PyClassType for builtin $name")
-    return Ref.create(type)
+    thisLogger().info("Pyrefly TSP: built PyClassType for builtin $name (isDefinition=$isDefinition)")
+    return Ref.create(type.asDefinitionIf(isDefinition))
   }
 
-  private fun buildPyTupleType(pyElement: PyTypedElement, typeArgs: List<PyreflyLsp4jServer.TspType>): Ref<PyType?>? {
+  private fun buildPyTupleType(pyElement: PyTypedElement, typeArgs: List<PyreflyLsp4jServer.TspType>, isDefinition: Boolean): Ref<PyType?>? {
     if (typeArgs.isEmpty()) return null
     val elementTypes = typeArgs.map { buildPyType(pyElement, it)?.get() }
     val tupleType = PyTupleType.create(pyElement, elementTypes) ?: return null
-    thisLogger().info("Pyrefly TSP: built PyTupleType with ${elementTypes.size} elements")
-    return Ref.create(tupleType)
+    thisLogger().info("Pyrefly TSP: built PyTupleType with ${elementTypes.size} elements (isDefinition=$isDefinition)")
+    return Ref.create(tupleType.asDefinitionIf(isDefinition))
   }
 
   private fun buildPyFunctionType(pyElement: PyTypedElement, tspType: PyreflyLsp4jServer.TspType): Ref<PyType?>? {
@@ -207,7 +213,13 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
       // declaration is a Synthesized stub. The real symbol lives on `returnType`.
       val returnType = tspType.returnType
       if (returnType != null && returnType.hasSourceLocation()) {
-        return buildPyType(pyElement, returnType)
+        val builtReturnType = buildPyType(pyElement, returnType) ?: return null
+        // For `type[X]` Pyrefly sets `INSTANTIABLE` on the envelope, not on `returnType`.
+        val type = builtReturnType.get()
+        if (tspType.isInstantiable() && type is PyClassLikeType) {
+          return Ref.create(type.asDefinitionIf(true))
+        }
+        return builtReturnType
       }
       return buildBuiltinFunctionType(pyElement, declaration.name, tspType)
     }
@@ -343,6 +355,13 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
   override fun resolveStringType(element: PyTypedElement, stringType: String): Ref<PyType?>? {
     return resolveStringTypeImpl(element, stringType)
   }
+
+  /** True for a class object. A server that sends no `flags` reports an instance. */
+  private fun PyreflyLsp4jServer.TspType.isInstantiable(): Boolean =
+    flags?.and(PyreflyLsp4jServer.INSTANTIABLE_FLAG) != 0
+
+  private fun PyClassLikeType.asDefinitionIf(isDefinition: Boolean): PyClassLikeType =
+    if (isDefinition && !this.isDefinition) toClass() else this
 
   private fun PyreflyLsp4jServer.TspType.hasSourceLocation(): Boolean {
     if (declaration != null) {

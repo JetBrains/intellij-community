@@ -59,7 +59,9 @@ interface PyreflyLsp4jServer : Lsp4jServer {
     val specializedTypes: TspSpecializedFunctionTypes? = null,
     val boundToType: TspType? = null,
     /**
-     * `TypeFlags` bitfield from the TSP protocol. Bit 3 (`0x8`) is `LITERAL` and indicates
+     * `TypeFlags` bitfield from the TSP protocol. Bit 0 (`0x1`) is `INSTANTIABLE`: the type is a
+     * class object, such as the type of `Model` in `class Book(Model)`. Bit 1 (`0x2`) is `INSTANCE`:
+     * the type is an instance of a class. Bit 3 (`0x8`) is `LITERAL` and indicates
      * the type carries a literal value in [literalValue]. See `tsp_types::TypeFlags` upstream
      * for the full set of bits.
      */
@@ -73,6 +75,9 @@ interface PyreflyLsp4jServer : Lsp4jServer {
   )
 
   companion object {
+    /** Bit 0 of `TypeFlags`. Set when the type is a class object, not an instance. */
+    const val INSTANTIABLE_FLAG: Int = 0x1
+
     /** Bit 3 of `TypeFlags` — set when the type wraps a literal value. */
     const val LITERAL_FLAG: Int = 0x8
   }
