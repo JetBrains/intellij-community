@@ -143,7 +143,6 @@ c:com.intellij.application.options.codeStyle.CodeStyleSpacesPanel
 - p:initTables():V
 f:com.intellij.application.options.codeStyle.CommenterForm
 - com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable
-- $$$getRootComponent$$$():javax.swing.JComponent
 - <init>(com.intellij.lang.Language):V
 - apply(com.intellij.psi.codeStyle.CodeStyleSettings):V
 - getCommenterPanel():javax.swing.JPanel
@@ -2150,7 +2149,6 @@ f:com.intellij.facet.impl.invalid.InvalidFacetType
 - com.intellij.facet.FacetType
 - s:getInstance():com.intellij.facet.impl.invalid.InvalidFacetType
 f:com.intellij.facet.impl.ui.FacetErrorPanel
-- $$$getRootComponent$$$():javax.swing.JComponent
 - <init>():V
 - getComponent():javax.swing.JComponent
 - getValidatorsManager():com.intellij.facet.ui.FacetValidatorsManager
@@ -5158,8 +5156,6 @@ e:com.intellij.refactoring.introduce.inplace.OccurrencesChooser$ReplaceChoice
 - com.intellij.refactoring.introduce.inplace.OccurrencesChooser$BaseReplaceChoice
 - isAll():Z
 - s:values():com.intellij.refactoring.introduce.inplace.OccurrencesChooser$ReplaceChoice[]
-a:com.intellij.refactoring.introduceParameterObject.AbstractIntroduceParameterObjectDialog
-- $$$getRootComponent$$$():javax.swing.JComponent
 a:com.intellij.refactoring.introduceParameterObject.IntroduceParameterObjectClassDescriptor
 - <init>(java.lang.String,java.lang.String,Z,Z,java.lang.String,Z,com.intellij.refactoring.changeSignature.ParameterInfo[]):V
 - a:createClass(com.intellij.psi.PsiNamedElement,com.intellij.codeInsight.highlighting.ReadWriteAccessDetector$Access[]):com.intellij.psi.PsiElement
