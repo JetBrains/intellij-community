@@ -5,35 +5,54 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.User32Ex;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import static com.intellij.diagnostic.ControlFlowExceptionsKt.rethrowControlFlowException;
+
 final class RemoteDesktopDetector extends RemoteDesktopService {
+  private static final Logger LOG = Logger.getInstance(RemoteDesktopDetector.class);
+
+  private final AtomicBoolean myRemoteDesktopConnected = new AtomicBoolean();
   private volatile boolean myFailureDetected;
-  private volatile boolean myRemoteDesktopConnected;
 
   private RemoteDesktopDetector() {
     if (SystemInfoRt.isWindows) {
+      // the initial read must finish first, or it can overwrite the result of a concurrent updateState
+      myRemoteDesktopConnected.set(readRemoteDesktopConnected());
       DisplayChangeDetector.getInstance().addListener(this::updateState);
-      updateState();
-    }
-  }
-
-  private void updateState() {
-    if (!myFailureDetected) {
-      try {
-        // This might not work in all cases, but hopefully is a more reliable method than the current one (checking for font smoothing)
-        // see https://msdn.microsoft.com/en-us/library/aa380798%28v=vs.85%29.aspx
-        myRemoteDesktopConnected = User32Ex.getSystemMetrics(User32Ex.SM_REMOTESESSION) != 0;
-        Logger.getInstance(RemoteDesktopDetector.class).debug("Detected remote desktop: ", myRemoteDesktopConnected);
-      }
-      catch (Throwable e) {
-        myRemoteDesktopConnected = false;
-        myFailureDetected = true;
-        Logger.getInstance(RemoteDesktopDetector.class).warn("Error while calling GetSystemMetrics", e);
-      }
     }
   }
 
   @Override
   public boolean isRemoteDesktopConnected() {
-    return myRemoteDesktopConnected;
+    return myRemoteDesktopConnected.get();
+  }
+
+  private void updateState() {
+    boolean connected = readRemoteDesktopConnected();
+    // succeeds once per change, even with several callers
+    if (myRemoteDesktopConnected.compareAndSet(!connected, connected)) {
+      fireRemoteSessionChanged();
+    }
+  }
+
+  /** @return the current state, or the last known state after a failed native call */
+  private boolean readRemoteDesktopConnected() {
+    if (myFailureDetected) {
+      return myRemoteDesktopConnected.get();
+    }
+    try {
+      // This might not work in all cases, but hopefully is a more reliable method than the current one (checking for font smoothing)
+      // see https://msdn.microsoft.com/en-us/library/aa380798%28v=vs.85%29.aspx
+      boolean connected = User32Ex.getSystemMetrics(User32Ex.SM_REMOTESESSION) != 0;
+      LOG.debug("Detected remote desktop: ", connected);
+      return connected;
+    }
+    catch (Throwable e) {
+      rethrowControlFlowException(e);
+      myFailureDetected = true;
+      LOG.warn("Error while calling GetSystemMetrics", e);
+      return false;
+    }
   }
 }
