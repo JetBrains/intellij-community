@@ -21,9 +21,13 @@ import com.intellij.platform.util.coroutines.flow.MutableStateWithIncrementalUpd
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.ConcurrentHashMap
 
-internal class ProjectViewPaneStateBuilderImpl(
+@ApiStatus.Internal
+@VisibleForTesting
+class ProjectViewPaneStateBuilderImpl(
   paneId: ProjectViewPaneId,
 ) : ProjectViewPaneStateBuilder {
   private class State(private val paneId: ProjectViewPaneId) : MutableStateWithIncrementalUpdates<ProjectViewPaneStateEvent> {
@@ -108,10 +112,14 @@ internal class ProjectViewPaneStateBuilderImpl(
     }
 
     private fun removeNode(id: Long) {
-      val removed = nodeById.remove(id)
-      val userObject = removed?.model?.userObject
-      if (userObject != null) {
-        nodeByUserObject.remove(userObject)
+      val removed = nodeById.remove(id) ?: return
+      val userObject = removed.model.userObject
+      nodeByUserObject.remove(userObject)
+      val children = removed.children
+      if (children != null) {
+        for (child in children) {
+          removeNode(child.model.id)
+        }
       }
     }
 
@@ -327,6 +335,10 @@ private class ProjectViewPaneSettingsAccessorImpl(
   }
 }
 
-private data class Node(val parent: Node?, var model: ProjectViewNodeModelImpl<*>, var children: MutableList<Node>? = null)
+private class Node(val parent: Node?, var model: ProjectViewNodeModelImpl<*>, var children: MutableList<Node>? = null) {
+  override fun toString(): String {
+    return "Node(parentID=${parent?.model?.id}, model=$model, childrenIDs=${children?.joinToString { it.model.id.toString() }})"
+  }
+}
 
 private val LOG = logger<ProjectViewPaneStateBuilder>()
