@@ -21,6 +21,7 @@ import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
+import com.intellij.xdebugger.breakpoints.XWatchpointType;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
 import com.siyeh.ig.psiutils.CollectionUtils;
 import org.jetbrains.annotations.ApiStatus;
@@ -34,7 +35,8 @@ import javax.swing.Icon;
 import javax.swing.JComponent;
 
 @ApiStatus.Experimental
-public final class JavaCollectionBreakpointType extends JavaLineBreakpointTypeBase<JavaCollectionBreakpointProperties> {
+public final class JavaCollectionBreakpointType extends JavaLineBreakpointTypeBase<JavaCollectionBreakpointProperties>
+  implements XWatchpointType {
 
   public JavaCollectionBreakpointType() {
     super("java-collection", JavaDebuggerBundle.message("collection.watchpoints.tab.title"));

@@ -21,6 +21,7 @@ import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType
+import com.intellij.xdebugger.breakpoints.XWatchpointType
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import com.intellij.xml.CommonXmlStrings
@@ -45,7 +46,8 @@ class KotlinFieldBreakpointType :
     XLineBreakpointType<KotlinPropertyBreakpointProperties>(
         "kotlin-field", KotlinDebuggerCoreBundle.message("property.watchpoint.tab.title")
     ),
-    KotlinBreakpointType
+    KotlinBreakpointType,
+    XWatchpointType
 {
     override fun getGeneralDescription(variant: XLineBreakpointVariant): String =
         KotlinDebuggerCoreBundle.message("property.watchpoint.description")

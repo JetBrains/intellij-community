@@ -21,6 +21,7 @@ import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
+import com.intellij.xdebugger.breakpoints.XWatchpointType;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
 import com.intellij.xml.CommonXmlStrings;
 import org.jetbrains.annotations.Nls;
@@ -35,7 +36,7 @@ import java.util.List;
 /**
  * @author Eugene Zhuravlev
  */
-public final class JavaFieldBreakpointType extends JavaLineBreakpointTypeBase<JavaFieldBreakpointProperties> {
+public final class JavaFieldBreakpointType extends JavaLineBreakpointTypeBase<JavaFieldBreakpointProperties> implements XWatchpointType {
   public JavaFieldBreakpointType() {
     super("java-field", JavaDebuggerBundle.message("field.watchpoints.tab.title"));
   }
