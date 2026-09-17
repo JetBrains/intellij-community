@@ -86,20 +86,21 @@ public class MapIndexStorage<Key, Value> extends IndexStorageLockingBase impleme
       inputRemapping = ValueContainerInputRemapping.IDENTITY;
     }
     myInputRemapping = inputRemapping;
-    if (initialize) initMapAndCache();
+    if (initialize) {
+      withWriteLock(this::initMapAndCache);
+    }
   }
 
+  /// Must be called while the storage write lock is held.
   protected void initMapAndCache() throws IOException {
-    withWriteLock(() -> {
-      ValueContainerMap<Key, Value> map = createValueContainerMap();
-      myCache = MapIndexStorageCacheProvider.Companion.getActualProvider().createCache(
-        map::getModifiableValueContainer,
-        this::onDropFromCache,
-        myKeyDescriptor,
-        myCacheSize
-      );
-      myMap = map;
-    });
+    ValueContainerMap<Key, Value> map = createValueContainerMap();
+    myCache = MapIndexStorageCacheProvider.Companion.getActualProvider().createCache(
+      map::getModifiableValueContainer,
+      this::onDropFromCache,
+      myKeyDescriptor,
+      myCacheSize
+    );
+    myMap = map;
   }
 
   protected final @Nullable StorageLockContext storageLockContext() {
@@ -302,20 +303,24 @@ public class MapIndexStorage<Key, Value> extends IndexStorageLockingBase impleme
 
   @Override
   public void clear() throws StorageException {
-    try {
-      myMap.closeAndDelete();
-    }
-    catch (Exception ignored) {
-    }
-    try {
-      initMapAndCache();
-    }
-    catch (IOException e) {
-      throw new StorageException(e);
-    }
-    catch (RuntimeException e) {
-      unwrapCauseAndRethrow(e);
-    }
+    // The write lock prevents an old storage from deleting files that a concurrent replacement created.
+    withWriteLock(() -> {
+      try {
+        myMap.closeAndDelete();
+      }
+      catch (Exception deleteEx) {
+        LOG.warn("Failed to closeAndDelete(" + myBaseStorageFile + "]", deleteEx);
+      }
+      try {
+        initMapAndCache();
+      }
+      catch (IOException e) {
+        throw new StorageException(e);
+      }
+      catch (RuntimeException e) {
+        unwrapCauseAndRethrow(e);
+      }
+    });
   }
 
   @Override

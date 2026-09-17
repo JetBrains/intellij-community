@@ -373,6 +373,9 @@ public final class PersistentMapImpl<Key, Value> implements PersistentMapBase<Ke
     catch (IOException ignored) {
     }
     try {
+      //If the map is reopened concurrently -- the new channel for the same file could already be opened in cache, concurrently,
+      // and detected here as-if it is 'our' channel, unclosed.
+      // ... but in this case stop on exception here is still marginally better than continue to deleteAllFilesStartingWith() below
       assertNoOpenChannelsForFilesStartingWith(baseFile, myStorageLockContext);
     }
     catch (IOException e) {

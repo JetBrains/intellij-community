@@ -107,22 +107,20 @@ public class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<Key, Va
           storageLockContext
     );
     myBuildKeyHashToVirtualFileMapping = buildKeyHashToVirtualFileMapping;
-    initMapAndCache();
+    withWriteLock(this::initMapAndCache);
   }
 
   @Override
   protected void initMapAndCache() throws IOException {
-    withWriteLock(() -> {
-      super.initMapAndCache();
-      if (myBuildKeyHashToVirtualFileMapping && myBaseStorageFile != null) {
-        FileSystem projectFileFS = myBaseStorageFile.getFileSystem();
-        assert !projectFileFS.isReadOnly() : "File system " + projectFileFS + " is read only";
-        myKeyHashToVirtualFileMapping = new KeyHashLog<>(myKeyDescriptor, myBaseStorageFile, storageLockContext());
-      }
-      else {
-        myKeyHashToVirtualFileMapping = null;
-      }
-    });
+    super.initMapAndCache();
+    if (myBuildKeyHashToVirtualFileMapping && myBaseStorageFile != null) {
+      FileSystem projectFileFS = myBaseStorageFile.getFileSystem();
+      assert !projectFileFS.isReadOnly() : "File system " + projectFileFS + " is read only";
+      myKeyHashToVirtualFileMapping = new KeyHashLog<>(myKeyDescriptor, myBaseStorageFile, storageLockContext());
+    }
+    else {
+      myKeyHashToVirtualFileMapping = null;
+    }
   }
 
   @Override
