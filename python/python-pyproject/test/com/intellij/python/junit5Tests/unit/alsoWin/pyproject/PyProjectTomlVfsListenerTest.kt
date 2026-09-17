@@ -15,14 +15,19 @@ import com.intellij.python.pyproject.model.api.ModelRebuiltListener
 import com.intellij.python.pyproject.model.api.isPyProjectTomlBased
 import com.intellij.python.pyproject.model.internal.MODEL_REBUILD
 import com.intellij.python.pyproject.model.internal.platformBridge.PyProjectModelSyncService
+import com.intellij.python.pyproject.model.spi.PyProjectManager
+import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.util.io.createDirectories
+import com.jetbrains.python.venvReader.Directory
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeoutOrNull
+import org.apache.tuweni.toml.TomlTable
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -30,6 +35,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 import java.nio.file.Path
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.io.path.deleteExisting
 import kotlin.io.path.writeText
@@ -71,6 +77,38 @@ internal class PyProjectTomlVfsListenerTest {
     root.resolve("fresh").resolve("nested").writeToml("nested")
     refreshWithoutRecursion(root)
     awaitPyModules("a nested pyproject.toml of a new directory", "member", "nested")
+  }
+
+  @Test
+  fun testNewDirectoryDuringInitialBuild(@TestDisposable disposable: Disposable): Unit = timeoutRunBlocking(TEST_TIMEOUT) {
+    val service = projectFixture.get().service<PyProjectModelSyncService>()
+    service.stop()
+    val managers = PyProjectManager.EP.extensionList
+    val manager = managers.first()
+    val firstBuild = AtomicBoolean(true)
+    val buildStarted = CompletableDeferred<Unit>()
+    val continueBuild = CompletableDeferred<Unit>()
+    val gatedManager = object : PyProjectManager by manager {
+      override suspend fun getSrcRoots(toml: TomlTable, projectRoot: Directory): Set<Directory> {
+        if (firstBuild.compareAndSet(true, false)) {
+          buildStarted.complete(Unit)
+          continueBuild.await()
+        }
+        return manager.getSrcRoots(toml, projectRoot)
+      }
+    }
+    ExtensionTestUtil.maskExtensions(PyProjectManager.EP, listOf(gatedManager) + managers.drop(1), disposable)
+    try {
+      service.start()
+      buildStarted.await()
+      root.resolve("fresh/nested").writeToml("nested")
+      refreshWithoutRecursion(root)
+      continueBuild.complete(Unit)
+      awaitPyModules("a directory added during the initial build", "member", "nested")
+    }
+    finally {
+      continueBuild.complete(Unit)
+    }
   }
 
   @Test

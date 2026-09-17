@@ -10,6 +10,7 @@ import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.python.pyproject.model.internal.workspaceBridge.isPythonEntity
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.CheckReturnValue
@@ -18,6 +19,7 @@ import org.jetbrains.annotations.CheckReturnValue
 /**
  * Tracks the workspace model of [project] for a change that the `pyproject.toml` model reads.
  * Calls [onWsmChanged] if one happens. Be sure to cancel the returned job when not needed.
+ * Establishes the subscription before returning.
  *
  * The first argument of [onWsmChanged] holds every directory that stopped being excluded. The scanning pass
  * never descends into an excluded directory, so the VFS does not know its content. Such a directory therefore
@@ -27,8 +29,8 @@ import org.jetbrains.annotations.CheckReturnValue
  * so this reason tells a reader whether a build started another build.
  */
 @CheckReturnValue
-internal fun CoroutineScope.createWsmTracker(project: Project, onWsmChanged: (Set<VirtualFile>, String) -> Unit): Job =
-  launch {
+internal fun CoroutineScope.createWsmTracker(project: Project, onWsmChanged: suspend (Set<VirtualFile>, String) -> Unit): Job =
+  launch(start = CoroutineStart.UNDISPATCHED) {
     project.workspaceModel.eventLog.collect { event ->
       val trigger = event.findTrigger() ?: return@collect
       onWsmChanged(trigger.directoriesToLoad, trigger.reason)

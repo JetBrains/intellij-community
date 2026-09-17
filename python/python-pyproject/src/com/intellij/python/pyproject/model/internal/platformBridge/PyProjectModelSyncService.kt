@@ -30,6 +30,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import com.intellij.platform.util.coroutines.flow.debounceBatch
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -56,7 +58,7 @@ internal class PyProjectModelSyncService(private val project: Project, private v
     assert(!project.isDefault) { "Default project not supported" }
   }
 
-  private var session: Session? = null
+  private var buildJob: Job? = null
 
   /**
    * The roots of the last rebuild. The VFS listener reads them to drop a change of another project.
@@ -68,51 +70,59 @@ internal class PyProjectModelSyncService(private val project: Project, private v
   private var knownRoots: Set<Path> = emptySet()
 
   @get:TestOnly
-  internal val initialized: Boolean get() = synchronized(m) { session != null }
+  internal val initialized: Boolean get() = synchronized(m) { buildJob?.isActive == true }
 
   /**
    * Builds the model and starts to track the project for a change. Does nothing if already started.
    * Method is synchronized. You can always [stop] it, so does [dispose].
    */
   fun start(): Unit = synchronized(m) {
-    if (session?.buildJob?.isActive == true) {
+    if (buildJob?.isActive == true) {
       log.info("PyProject sync already started")
       return@synchronized
     }
-    val vfsListenerDisposable = Disposer.newDisposable("PyProjectModelSyncService")
-    Disposer.register(this, vfsListenerDisposable)
-    knownRoots = setOf(project.stateStore.projectBasePath)
-    val requests = Channel<RebuildRequest>(Channel.UNLIMITED)
-    // Both trackers subscribe before the build starts, so no change of the wait window is lost.
-    // The channel is unlimited, hence a request that arrives before the first build waits in it.
-    subscribeToPyProjectTomlChanges(vfsListenerDisposable, { knownRoots }) { requests.sendOrWarn(it) }
-    val wsmTrackerJob = scope.createWsmTracker(project) { unExcluded, reason ->
-      requests.sendOrWarn(RebuildRequest(unExcluded, reason))
-    }
-    val buildJob = scope.launch {
+    val previousBuildJob = buildJob
+    buildJob = scope.launch {
+      previousBuildJob?.join()
       awaitVfsAndJpsModel()
-      consumeRequests(requests)
+      trackChanges()
     }
-    buildJob.invokeOnCompletion {
-      Disposer.dispose(vfsListenerDisposable)
-      wsmTrackerJob.cancel()
-    }
-    session = Session(vfsListenerDisposable, buildJob, wsmTrackerJob)
     log.info("PyProject sync started")
   }
 
   /** Stops the tracking started by [start]. Does nothing if already stopped. Method is synchronized. */
   fun stop(): Unit = synchronized(m) {
-    val session = this.session ?: return@synchronized
+    val buildJob = this.buildJob ?: return@synchronized
     log.info("PyProject sync stopped")
-    session.buildJob.cancel()
-    session.wsmTrackerJob.cancel()
-    Disposer.dispose(session.vfsListenerDisposable)
-    this.session = null
+    buildJob.cancel()
   }
 
   override fun dispose() {
     stop()
+  }
+
+  /** Tracks changes from before the initial scan until the session ends. */
+  private suspend fun trackChanges(): Unit = coroutineScope {
+    ensureActive()
+    val vfsListenerDisposable = Disposer.newDisposable("PyProjectModelSyncService")
+    val requests = Channel<RebuildRequest>(Channel.UNLIMITED)
+    try {
+      knownRoots = setOf(project.stateStore.projectBasePath)
+      subscribeToPyProjectTomlChanges(vfsListenerDisposable, { knownRoots }) { requests.trySend(it) }
+      val wsmTrackerJob = createWsmTracker(project) { unExcluded, reason ->
+        requests.send(RebuildRequest(unExcluded, reason))
+      }
+      try {
+        consumeRequests(requests)
+      }
+      finally {
+        wsmTrackerJob.cancel()
+      }
+    }
+    finally {
+      Disposer.dispose(vfsListenerDisposable)
+      requests.cancel()
+    }
   }
 
   /**
@@ -181,20 +191,6 @@ internal class PyProjectModelSyncService(private val project: Project, private v
         log.debug { "Loaded ${directoriesToLoad.size} new directories into the VFS in $loaded" }
       }
       rebuildNow(batch.mapTo(LinkedHashSet()) { it.reason }.joinToString(" and "))
-    }
-  }
-
-  /**
-   * Puts [request] in this channel, and reports a loss.
-   *
-   * The channel is unlimited and nothing closes it, so a send fails only after the session ended. A lost
-   * request leaves the model stale until the next change of a `pyproject.toml`, so a loss must not pass in
-   * silence.
-   */
-  private fun Channel<RebuildRequest>.sendOrWarn(request: RebuildRequest) {
-    val result = trySend(request)
-    if (result.isFailure) {
-      log.warn("Lost a rebuild request of ${request.reason}: $result")
     }
   }
 
@@ -286,18 +282,6 @@ internal class PyProjectModelSyncService(private val project: Project, private v
       documents.forEach(fileDocumentManager::saveDocument)
     }
   }
-
-  /**
-   * What one [start] created, so that [stop] ends exactly that.
-   *
-   * [buildJob] waits for the platform, builds the first model, and then builds one model for each batch of
-   * requests. [wsmTrackerJob] and [vfsListenerDisposable] hold the two sources of a request.
-   */
-  private class Session(
-    val vfsListenerDisposable: Disposable,
-    val buildJob: Job,
-    val wsmTrackerJob: Job,
-  )
 
   private companion object {
     val log = fileLogger()
