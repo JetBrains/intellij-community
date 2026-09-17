@@ -10,15 +10,23 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.platform.bazel.runfiles.BazelLabel;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.common.BazelTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 public final class JavaTestUtil {
+  private static final BazelLabel JAVA_TEST_DATA_LABEL = BazelLabel.Companion.fromString("@community//java/java-tests:testData");
 
   public static String getJavaTestDataPath() {
-    return PathManagerEx.getTestDataPath();
+    if (BazelTestUtil.isUnderBazelTest()) {
+      var testDataPath = BazelTestUtil.getFileFromBazelRuntime(JAVA_TEST_DATA_LABEL).toAbsolutePath();
+      return testDataPath.toAbsolutePath().toString();
+    } else {
+      return PathManagerEx.getTestDataPath();
+    }
   }
 
   public static String getRelativeJavaTestDataPath() {
