@@ -157,13 +157,6 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   }
 
   protected <T> void updateStateIfNeededAndNotify(long requestId, T newValue, Supplier<? extends T> getter, Consumer<T> setter) {
-    updateStateIfNeededAndNotify(requestId, false, newValue, getter, setter);
-  }
-
-  /**
-   * @param propertiesChanged true when the caller changed the properties already, so the listeners need the event even for a stale request
-   */
-  protected <T> void updateStateIfNeededAndNotify(long requestId, boolean propertiesChanged, T newValue, Supplier<? extends T> getter, Consumer<T> setter) {
     boolean updateNeeded = withStateLock(() -> {
       T currentValue = getter.get();
       if (!Objects.equals(currentValue, newValue)) {
@@ -174,7 +167,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     });
 
     boolean requestCompleted = myBreakpointManager.getRequestCounter().setRequestCompleted(myId, requestId);
-    if (propertiesChanged || updateNeeded || requestCompleted) {
+    if (updateNeeded || requestCompleted) {
       fireBreakpointChanged();
     }
   }

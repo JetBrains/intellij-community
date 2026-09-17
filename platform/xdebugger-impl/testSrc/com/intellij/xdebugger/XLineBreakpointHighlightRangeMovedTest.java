@@ -57,37 +57,6 @@ public class XLineBreakpointHighlightRangeMovedTest extends XBreakpointsTestCase
     assertEquals(List.of(breakpoint), myChanged);
   }
 
-  public void testStaleRequestNotifiesWhenRangeMoved() {
-    XLineBreakpointImpl<?> breakpoint = addBreakpoint();
-
-    breakpoint.resetSourcePosition(2, new TextRange(3, 7));
-    breakpoint.resetSourcePosition(1, new TextRange(4, 8));
-
-    assertEquals(List.of(new TextRange(3, 7), new TextRange(4, 8)), myType.myRanges);
-    assertEquals(List.of(breakpoint, breakpoint), myChanged);
-  }
-
-  public void testStaleRequestWithUnchangedPropertiesSkipsNotification() {
-    XLineBreakpointImpl<?> breakpoint = addBreakpoint();
-    myType.myReportsChange = false;
-
-    breakpoint.resetSourcePosition(2, new TextRange(3, 7));
-    breakpoint.resetSourcePosition(1, new TextRange(4, 8));
-
-    assertEquals(List.of(new TextRange(3, 7), new TextRange(4, 8)), myType.myRanges);
-    assertEquals(List.of(breakpoint), myChanged);
-  }
-
-  public void testSetLineOnSameLineWithStaleRequestNotifiesWhenRangeMoved() {
-    XLineBreakpointImpl<?> breakpoint = addBreakpoint();
-
-    breakpoint.setLine(2, 0, new TextRange(3, 7));
-    breakpoint.setLine(1, 0, new TextRange(4, 8));
-
-    assertEquals(0, breakpoint.getLine());
-    assertEquals(List.of(breakpoint, breakpoint), myChanged);
-  }
-
   public void testNullRangeSkipsHook() {
     XLineBreakpointImpl<?> breakpoint = addBreakpoint();
 
@@ -107,7 +76,6 @@ public class XLineBreakpointHighlightRangeMovedTest extends XBreakpointsTestCase
   private static final class RecordingLineBreakpointType extends XLineBreakpointType<MyBreakpointProperties> {
     final List<TextRange> myRanges = new ArrayList<>();
     final List<Integer> myLinesAtReport = new ArrayList<>();
-    boolean myReportsChange = true;
 
     RecordingLineBreakpointType() {
       super("testLineHighlightRange", "range");
@@ -124,10 +92,9 @@ public class XLineBreakpointHighlightRangeMovedTest extends XBreakpointsTestCase
     }
 
     @Override
-    public boolean highlightRangeMoved(@NotNull XLineBreakpoint<MyBreakpointProperties> breakpoint, @NotNull TextRange range) {
+    public void highlightRangeMoved(@NotNull XLineBreakpoint<MyBreakpointProperties> breakpoint, @NotNull TextRange range) {
       myRanges.add(range);
       myLinesAtReport.add(breakpoint.getLine());
-      return myReportsChange;
     }
   }
 }
