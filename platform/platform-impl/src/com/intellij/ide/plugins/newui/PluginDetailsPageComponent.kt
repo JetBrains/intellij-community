@@ -90,7 +90,6 @@ import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.launchOnShow
 import com.intellij.xml.util.XmlStringUtil
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BufferOverflow
@@ -98,7 +97,6 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Component
@@ -133,7 +131,7 @@ import javax.swing.text.html.ParagraphView
 import kotlin.coroutines.coroutineContext
 import kotlin.time.TimeSource
 
-@Internal
+@ApiStatus.Internal
 class PluginDetailsPageComponent private constructor(
   private val pluginModel: PluginModelFacade,
   private val searchListener: LinkListener<Any>,
@@ -240,7 +238,7 @@ class PluginDetailsPageComponent private constructor(
   private lateinit var bottomScrollPane: JBScrollPane
   private val scrollPanes = ArrayList<JBScrollPane>()
   private var descriptionComponent: JEditorPane? = null
-  private var description: String? = null
+  private var description: @NlsSafe String? = null
   private var changeNotesPanel: ChangeNotes? = null
   private var myChangeNotesEmptyState: JBPanelWithEmptyText? = null
   private var myImagesComponent: PluginImagesComponent? = null
@@ -269,7 +267,6 @@ class PluginDetailsPageComponent private constructor(
   private val operationLauncher = operationLauncherOverride?.launcher ?: PluginOperationLauncher(coroutineScope)
   private val operationUi = operationLauncherOverride?.operationUiBridge?.createHandle(this) ?: PluginOperationUiHandle(this)
   private val showPluginSemaphore = OverflowSemaphore(overflow = BufferOverflow.DROP_OLDEST)
-  private var buttonsLoadedDeferred: Deferred<Unit>? = null
   private var detached = false
 
   private val tracker: PluginManagerUiTracker = PluginManagerUiTracker()
@@ -332,7 +329,7 @@ class PluginDetailsPageComponent private constructor(
       val editorPane = JEditorPane()
       editorPane.isEditable = false
       editorPane.isOpaque = false
-      editorPane.border = null
+      editorPane.border = JBUI.Borders.empty()
       editorPane.contentType = "text/html"
       editorPane.editorKit = kit
       editorPane.addHyperlinkListener(HelpIdAwareLinkListener.getInstance())
@@ -624,7 +621,7 @@ class PluginDetailsPageComponent private constructor(
 
   fun setOnlyUpdateMode() {
     nameAndButtons!!.removeButtons()
-    emptyPanel!!.border = null
+    emptyPanel!!.border = JBUI.Borders.empty()
   }
 
   private fun updatePlugin() {
@@ -753,6 +750,7 @@ class PluginDetailsPageComponent private constructor(
             InsetsUIResource(insets.top, left, insets.bottom, insets.right)
           }
           else {
+            @Suppress("UseDPIAwareInsets") // values are already scaled
             Insets(insets.top, left, insets.bottom, insets.right)
           }
         }
@@ -795,12 +793,13 @@ class PluginDetailsPageComponent private constructor(
   private fun createDescriptionTab(pane: JBTabbedPane) {
     descriptionComponent = createDescriptionComponent(createHtmlImageViewHandler())
 
-    myImagesComponent = PluginImagesComponent()
+    val imagesComponent = PluginImagesComponent()
+    myImagesComponent = imagesComponent
     myImagesComponent!!.border = JBUI.Borders.emptyRight(layout.overviewImagesRightInset)
 
     val parent: JPanel = OpaquePanel(BorderLayout(), PluginManagerConfigurable.MAIN_BG_COLOR)
     parent.border = JBUI.Borders.empty(16, 16, 0, layout.overviewRightInset)
-    parent.add(myImagesComponent, BorderLayout.NORTH)
+    parent.add(imagesComponent, BorderLayout.NORTH)
     parent.add(descriptionComponent)
 
     addTabWithoutBorders(pane) {
@@ -865,7 +864,7 @@ class PluginDetailsPageComponent private constructor(
     val nextPageButton = reviewNextPageButton
     reviewsPanel.add(Wrapper(FlowLayout(), reviewNextPageButton), BorderLayout.SOUTH)
 
-    nextPageButton?.addActionListener { e: ActionEvent? ->
+    nextPageButton?.addActionListener { _: ActionEvent? ->
       val component = showComponent ?: return@addActionListener
       coroutineScope.launch(Dispatchers.EDT + ModalityState.stateForComponent(component).asContextElement()) {
 
@@ -1000,13 +999,13 @@ class PluginDetailsPageComponent private constructor(
           UiPluginManager.getInstance().getAllPluginUpdateSources()
             .filter { it.isMarketplace || it.host.isNotBlank() }
             .sortedWith { first, second ->
-            when {
-              first.isMarketplace && second.isMarketplace -> 0
-              first.isMarketplace -> -1
-              second.isMarketplace -> 1
-              else -> first.host.compareTo(second.host)
+              when {
+                first.isMarketplace && second.isMarketplace -> 0
+                first.isMarketplace -> -1
+                second.isMarketplace -> 1
+                else -> first.host.compareTo(second.host)
+              }
             }
-          }
         }
         updater.replaceModel(loadedItems)
         shouldPack = true
@@ -1242,7 +1241,7 @@ class PluginDetailsPageComponent private constructor(
   }
 
   private suspend fun showPlugin(pluginModel: PluginUiModel) {
-    val text: @NlsSafe String = "<html><span>" + pluginModel.name + "</span></html>"
+    val text: @NlsSafe String = HtmlChunk.html().children(HtmlChunk.span().children(HtmlChunk.text(pluginModel.name ?: ""))).toString()
     nameComponent.text = text
     nameComponent.foreground = null
     scheduleNotificationsUpdate()
@@ -1300,7 +1299,9 @@ class PluginDetailsPageComponent private constructor(
       updateEnabledForProject()
     }
 
+    @Suppress("HardCodedStringLiteral")
     val vendor = if (pluginModel.isBundled) null else pluginModel.vendor?.trim()
+    @Suppress("HardCodedStringLiteral")
     val organization = if (pluginModel.isBundled) null else pluginModel.organization?.trim()
     if (!organization.isNullOrBlank()) {
       author!!.show(organization) {
@@ -1378,12 +1379,12 @@ class PluginDetailsPageComponent private constructor(
       this.show((node ?: pluginModel))
     }
 
-    ApplicationManager.getApplication().invokeLater({
-                                                      IdeEventQueue.getInstance().flushQueue()
-                                                      for (scrollPane in scrollPanes) {
-                                                        (scrollPane.verticalScrollBar as JBScrollBar).setCurrentValue(0)
-                                                      }
-                                                    }, ModalityState.any())
+    withContext(Dispatchers.EDT) {
+      IdeEventQueue.getInstance().flushQueue()
+      for (scrollPane in scrollPanes) {
+        (scrollPane.verticalScrollBar as JBScrollBar).setCurrentValue(0)
+      }
+    }
 
     if (this@PluginDetailsPageComponent.pluginModel.isPluginInstallingOrUpdating(pluginModel) && indicator == null) {
       applyCustomization()
@@ -2154,21 +2155,20 @@ suspend fun loadAllPluginDetails(existingModel: PluginUiModel, targetModel: Plug
 }
 
 @ApiStatus.Internal
-suspend fun loadReviews(existingModel: PluginUiModel): PluginUiModel? {
+private suspend fun loadReviews(existingModel: PluginUiModel): PluginUiModel {
   val reviews = UiPluginManager.getInstance().loadPluginReviews(existingModel.pluginId, 1) ?: emptyList()
   existingModel.reviewComments = ReviewsPageContainer.firstPage(reviews)
   return existingModel
 }
 
 @ApiStatus.Internal
-suspend fun loadDependencyNames(targetModel: PluginUiModel): PluginUiModel? {
-  val resultNode = targetModel
-  val pluginIds = resultNode.dependencies
+private suspend fun loadDependencyNames(targetModel: PluginUiModel): PluginUiModel {
+  val pluginIds = targetModel.dependencies
     .filter { !it.isOptional }
     .map(PluginDependencyModel::pluginId)
     .filter { isNotPlatformAlias(it) }
 
-  resultNode.dependencyNames = UiPluginManager.getInstance().findPluginNames(pluginIds)
+  targetModel.dependencyNames = UiPluginManager.getInstance().findPluginNames(pluginIds)
 
   return targetModel
 }
@@ -2332,7 +2332,8 @@ private fun createNameComponent(): JEditorPane {
 
   editorPane.font = JBFont.create(labelFont.deriveFont(Font.BOLD, 18f))
 
-  val text: @NlsSafe String = "<html><span>Foo</span></html>"
+  @Suppress("HardCodedStringLiteral")
+  val text: @NlsSafe String = HtmlChunk.html().children(HtmlChunk.span().children(HtmlChunk.text("Foo"))).toString()
   editorPane.text = text
   editorPane.minimumSize = editorPane.preferredSize
   editorPane.text = null
