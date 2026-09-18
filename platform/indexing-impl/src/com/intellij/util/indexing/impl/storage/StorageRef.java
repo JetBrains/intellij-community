@@ -28,15 +28,6 @@ import static com.intellij.util.SystemProperties.getBooleanProperty;
 public class StorageRef<C extends Closeable, E extends Exception> {
   private static final Logger LOG = Logger.getInstance(StorageRef.class);
 
-  /**
-   * If we don't throw exception, we must close the storage -- otherwise the invariant [<=1 storage instance exists at any given moment]
-   * is broken -- and keeping this invariant is the only reason this class was created.
-   * Hence, this property must be true, and inlined.
-   * It is temporary made configurable, because I suspect it could cause too many tests failures, so I want to provide a
-   * way out :)
-   */
-  private static final boolean CLOSE_BEFORE_REOPEN = getBooleanProperty("indexes.force-close-before-reopen", true);
-
   private @Nullable C storage = null;
 
   private final String storageName;
@@ -80,11 +71,8 @@ public class StorageRef<C extends Closeable, E extends Exception> {
 
     LOG.warn(message);
 
-    //TODO RC: if we don't throw exception -- we should close storage here, otherwise this is not logically-consistent
-    //         behavior
-    if (CLOSE_BEFORE_REOPEN) {
-      storage.close();
-    }
+    //if we don't throw exception -- we should close storage here, otherwise this is not logically-consistent behavior:
+    storage.close();
 
     storage = storageOpener.compute();
     return storage;
@@ -110,10 +98,7 @@ public class StorageRef<C extends Closeable, E extends Exception> {
 
     LOG.warn(message);
 
-    //TODO RC: if we don't throw exception -- we should close storage here, otherwise this is not logically-consistent
-    //         behavior
-    if (CLOSE_BEFORE_REOPEN) {
-      storage.close();
-    }
+    //if we don't throw exception -- we should close storage here, otherwise this is not logically-consistent behavior:
+    storage.close();
   }
 }
