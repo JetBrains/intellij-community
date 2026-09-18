@@ -75,6 +75,7 @@ internal fun interface UnifiedPluginUpdateAllExecutor {
   fun close() = Unit
 }
 
+// @spec platform/platform-impl/spec/plugin-manager/plugin-operations.spec.md
 /**
  * Owns one page session's Update All request and presentation state.
  *

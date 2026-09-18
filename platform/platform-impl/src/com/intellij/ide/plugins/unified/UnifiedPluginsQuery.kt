@@ -72,6 +72,12 @@ internal sealed interface UnifiedPluginQueryPart {
   data class Other(override val rawText: String) : UnifiedPluginQueryPart
 }
 
+// @spec platform/platform-impl/spec/plugin-manager/unified-plugin-manager-ui.spec.md
+/**
+ * Parses a unified query and edits supported controls without changing unrelated query parts.
+ *
+ * The source coordinator owns source routing. This class owns only query meaning and text edits.
+ */
 internal class UnifiedPluginsQuery private constructor(
   val rawQuery: String,
   internal val parts: List<UnifiedPluginQueryPart>,

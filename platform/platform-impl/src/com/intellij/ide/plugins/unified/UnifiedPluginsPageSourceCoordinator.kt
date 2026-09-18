@@ -60,6 +60,7 @@ internal data class UnifiedPluginsSourceRoute(
   val sortVisible: Boolean,
 )
 
+// @spec platform/platform-impl/spec/plugin-manager/unified-plugin-manager-ui.spec.md
 /**
  * Combines all plugin source states into one page source state.
  *

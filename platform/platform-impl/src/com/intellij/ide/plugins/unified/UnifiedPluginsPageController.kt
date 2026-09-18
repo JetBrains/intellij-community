@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
+// @spec platform/platform-impl/spec/plugin-manager/unified-plugin-manager-ui.spec.md
 /**
  * Owns the page interaction state.
  *

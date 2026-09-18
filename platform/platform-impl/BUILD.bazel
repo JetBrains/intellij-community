@@ -434,6 +434,10 @@ jvm_library(
         allow_empty = True,
     ),
     associates = ["//platform/platform-impl:ide-impl"],
+    resource_strip_prefix = "spec/plugin-manager",
+    resources = glob(
+        ["spec/plugin-manager/**/*"],
+    ),
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
@@ -479,6 +483,8 @@ jvm_library(
         "@lib//:mac-provided",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
+        "//platform/pluginManager/testFramework",
+        "//platform/pluginManager/testFramework:testFramework_test_lib",
         "//platform/analysis-api:analysis",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/code-style-api:codeStyle",

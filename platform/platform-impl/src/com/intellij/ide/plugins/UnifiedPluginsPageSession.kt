@@ -116,6 +116,15 @@ import kotlin.time.TimeSource
 
 private const val SETTINGS_BUTTON_FOCUS_INSTALLED_PROPERTY: String = "UnifiedPlugins.settingsButtonFocusInstalled"
 
+// @spec platform/platform-impl/spec/plugin-manager/unified-plugin-manager-ui.spec.md
+// @spec platform/platform-impl/spec/plugin-manager/plugin-operations.spec.md
+/**
+ * Owns one unified Plugins page and coordinates its sources, state, view, and plugin session.
+ *
+ * The page scope owns source requests and presentation work. It ends during [dispose].
+ * The application scope owns started install and update work, so that work can finish after the page closes.
+ * The plugin session owns prepared settings changes. Disposal closes that session when no apply or reset operation owns it.
+ */
 internal class UnifiedPluginsPageSession @RequiresEdt(generateAssertion = false /* IJPL-115548 */) constructor(
   initialNavigation: PluginsPageInitialNavigation?,
   openSource: PluginManagerOpenSourceEnum,

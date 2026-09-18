@@ -5,28 +5,16 @@ package com.intellij.ide.plugins
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
-/**
- * Extension point for providing promotion panels for specific plugin categories.
- * The promotion panel is displayed under the category title.
- * This provider can also define priority for the category to be displayed first.
- */
+// @spec platform/platform-impl/spec/plugin-manager/unified-plugin-manager-ui.spec.md
+/** Provides a promotion panel and display priority for one exact Bundled category name. */
 @ApiStatus.Internal
 interface PluginCategoryPromotionProvider {
-  /**
-   * Returns the name of the category for which this provider creates a promotion panel.
-   */
+  /** Returns the Bundled category name. */
   fun getCategoryName(): String
-  
-  /**
-   * Creates a promotion panel for the category.
-   * @return JComponent to be displayed under the category title, or null if no promotion is needed
-   */
+
+  /** Returns the panel that the expanded Bundled category shows below its header. */
   fun createPromotionPanel(): JComponent?
-  
-  /**
-   * Returns whether this category should have priority in the plugin list.
-   * Priority categories are displayed first in the installed plugins list.
-   * @return true if this category should be prioritized, false otherwise
-   */
+
+  /** Returns whether the Bundled section puts this category before other healthy categories. */
   fun isPriorityCategory(): Boolean = false
 }

@@ -10,6 +10,7 @@ import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.openapi.extensions.PluginId
 import java.util.UUID
 
+// @spec platform/platform-impl/spec/plugin-manager/plugin-operations.spec.md
 /**
  * Retains installation attempts for one plugin manager session.
  *
