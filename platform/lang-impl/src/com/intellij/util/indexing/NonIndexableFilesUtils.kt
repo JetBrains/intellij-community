@@ -80,9 +80,19 @@ private fun WorkspaceFileIndexEx.isExcludedOrInvalid(file: VirtualFile): Boolean
   }
 }
 
-private data class SubtreeProcessingMode(val shouldProcessRoot: Boolean, val shouldProcessChildren: Boolean) {
+private enum class SubtreeProcessingMode(val shouldProcessRoot: Boolean, val shouldProcessChildren: Boolean) {
+  NONE(false, false),
+  ROOT_ONLY(true, false),
+  CHILDREN_ONLY(false, true),
+  ROOT_AND_CHILDREN(true, true);
+
   companion object {
-    val NONE = SubtreeProcessingMode(false, false)
+    fun fromFlags(shouldProcessRoot: Boolean, shouldProcessChildren: Boolean): SubtreeProcessingMode = when {
+      shouldProcessRoot && shouldProcessChildren -> ROOT_AND_CHILDREN
+      shouldProcessRoot -> ROOT_ONLY
+      shouldProcessChildren -> CHILDREN_ONLY
+      else -> NONE
+    }
   }
 }
 
@@ -100,7 +110,7 @@ private fun getSubtreeProcessingModeAt(
   val shouldProcessRoot = indexableFileSetsFromFile.nonRecursive.isEmpty() &&
                           (filter == null || runReadActionBlocking { filter.accept(file) })
 
-  return SubtreeProcessingMode(shouldProcessRoot, shouldProcessChildren)
+  return SubtreeProcessingMode.fromFlags(shouldProcessRoot, shouldProcessChildren)
 }
 
 @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
@@ -114,11 +124,11 @@ private fun WorkspaceFileIndexEx.iterateNonIndexableFilesImpl(
       override fun visitFileEx(file: VirtualFile): Result {
         ProgressManager.checkCanceled()
         val subtreeProcessingMode = getSubtreeProcessingModeAt(file, this@iterateNonIndexableFilesImpl, filter)
-        return when {
-          subtreeProcessingMode == SubtreeProcessingMode.NONE -> SKIP_CHILDREN
-          !subtreeProcessingMode.shouldProcessRoot -> CONTINUE // skip only the current file, children can be non-indexable
-          !processor.processFile(file) -> skipTo(root) // terminate processing
-          else -> CONTINUE
+        return when (subtreeProcessingMode) {
+          SubtreeProcessingMode.NONE -> SKIP_CHILDREN
+          SubtreeProcessingMode.CHILDREN_ONLY -> CONTINUE
+          SubtreeProcessingMode.ROOT_ONLY -> if (processor.processFile(file)) SKIP_CHILDREN else skipTo(root)
+          SubtreeProcessingMode.ROOT_AND_CHILDREN -> if (processor.processFile(file)) CONTINUE else skipTo(root)
         }
       }
     })
