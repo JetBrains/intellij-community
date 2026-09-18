@@ -89,7 +89,6 @@
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <beforeResolveHighlightingVisitor implementation="org.jetbrains.kotlin.idea.highlighting.visitor.ParameterNamesHighlightingExtension"/>
     <beforeResolveHighlightingVisitor implementation="org.jetbrains.kotlin.idea.highlighting.beforeResolve.DeclarationHighlightingExtension"/>
-    <beforeResolveHighlightingVisitor implementation="org.jetbrains.kotlin.idea.highlighting.beforeResolve.AnnotationsHighlightingExtension"/>
   </extensions>
 
 </idea-plugin>
