@@ -35,6 +35,10 @@
     {
       "id": "MarkdownTablePipeInCodeSpan",
       "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "MarkdownNonExistentInternetResource",
+      "codeQualityCategory": "Reliability"
     }
   ]
 }

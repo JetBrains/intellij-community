@@ -39,6 +39,8 @@
     <extensions defaultExtensionNs="com.intellij">
       <applicationService serviceImplementation="com.intellij.markdown.backend.services.MarkdownFrontendRunnerRequestService" client="all"/>
       <highlightingPassFactory implementation="com.intellij.markdown.backend.editor.livepreview.MarkdownLivePreviewPassFactory"/>
+      <externalAnnotator language="Markdown"
+                         implementationClass="com.intellij.markdown.backend.inspections.MarkdownNonExistentInternetResourcesAnnotator"/>
       <platform.rpc.backend.remoteApiProvider
         implementation="com.intellij.markdown.backend.editor.livepreview.MarkdownLivePreviewRemoteApiProvider"
         apiInterfaces="org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewRemoteApi"/>
@@ -157,6 +159,15 @@
                        enabledByDefault="true"
                        level="WARNING"
                        implementationClass="com.intellij.markdown.backend.inspections.MarkdownSkillFrontMatterInspection"/>
+
+      <localInspection language="Markdown"
+                       shortName="MarkdownNonExistentInternetResource"
+                       bundle="messages.MarkdownBundle"
+                       key="markdown.unresolved.web.link.inspection.name"
+                       groupKey="markdown.inspection.group.ruby.name"
+                       enabledByDefault="false"
+                       level="WARNING"
+                       implementationClass="com.intellij.markdown.backend.inspections.MarkdownNonExistentInternetResourceInspection"/>
 
       <psi.referenceContributor language="Markdown" implementation="com.intellij.markdown.backend.reference.link.CommonLinkDestinationReferenceContributor"/>
       <psi.referenceContributor language="Markdown" implementation="com.intellij.markdown.backend.reference.link.AutoLinkWebReferenceContributor"/>
