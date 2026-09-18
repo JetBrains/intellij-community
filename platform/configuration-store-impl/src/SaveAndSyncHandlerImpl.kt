@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
+import com.intellij.configurationStore.ConfigurationAwaiter.Companion.awaitConfiguration
 import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.IdeBundle
@@ -18,6 +19,8 @@ import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.application.ui
 import com.intellij.openapi.components.ComponentManager
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.debug
@@ -55,6 +58,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -72,7 +76,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.Path
 import java.util.ArrayDeque
 import java.util.concurrent.CopyOnWriteArrayList
@@ -671,7 +675,7 @@ internal class SaveAndSyncHandlerImpl @JvmOverloads constructor(
                             projectHashes.isNotEmpty() &&
                             projectManager != null &&
                             // wait for all projects to be configured. `true` if all are already configured
-                            awaitAllConfigurations(projectManager, projectHashes)
+                            projectHashes.all { awaitConfiguration(projectManager.findOpenProjectByHash(it)) }
 
         if (canTryRefresh && keepRefreshing() && refreshAllLocalRootsInBackground(queue)) {
           sessions.incrementAndGet()
@@ -687,14 +691,25 @@ internal class SaveAndSyncHandlerImpl @JvmOverloads constructor(
   }
 }
 
-/**
- * @return `true` if all projects are already configured. `false`, if a project was configured during the execution
- * @see Observation.awaitConfiguration
- */
-private suspend fun awaitAllConfigurations(projectManager: ProjectManager, projectHashes: List<@NonNls String>): Boolean {
-  return projectHashes.all { hash ->
-    val project = projectManager.findOpenProjectByHash(hash) ?: return@all false
-    !Observation.awaitConfiguration(project) { message -> LOG.info("Periodic VFS refresh is blocked because project.name=${project.name} being configured, reason=$message") }
+@VisibleForTesting
+@Service(Service.Level.PROJECT)
+internal class ConfigurationAwaiter(private val cs: CoroutineScope) {
+  companion object {
+    /**
+     * Wait until project is configured. Avoid leaking project by executing wait in project coroutine scope.
+     *
+     * @return `true` if all project is already configured. `false`, if project was configured during the execution
+     * @see Observation.awaitConfiguration
+     */
+    internal suspend fun awaitConfiguration(project: Project?): Boolean {
+      if (project == null || project.isDisposed) return false
+
+      return project.service<ConfigurationAwaiter>().cs.async {
+        !Observation.awaitConfiguration(project) { message ->
+          LOG.info("Periodic VFS refresh is blocked because project.name=${project.name} being configured, reason=$message")
+        }
+      }.await()
+    }
   }
 }
 
