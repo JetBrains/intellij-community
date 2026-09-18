@@ -65,3 +65,30 @@ An API must always be consistent and logical:
 * If a function is a hotspot or private, you can mark it with `@RequiresBackgroundThread` or `@RequiresEdt`.
   The annotation only asserts the thread, so the caller must still switch to it.
 * Otherwise, use the "main-safe rule": make the function `suspend`, and choose the appropriate `Dispatcher` inside it.
+
+## Test assertions
+
+Use AssertJ for every assertion. Import `org.assertj.core.api.Assertions.assertThat`.
+Do not use `assertEquals`, `assertTrue` or another JUnit assertion. Do not use the
+Kotlin `assert`.
+
+To check a type and then a property of the value, use one chain with `asInstanceOf`
+and a factory from `org.assertj.core.api.InstanceOfAssertFactories`. Do not cast the
+value again.
+
+```kotlin
+// Good
+assertThat(output.error)
+  .asInstanceOf(type(ExecError::class.java))
+  .extracting { it.exe }
+  .asInstanceOf(type(Exe.OnEel::class.java))
+  .extracting { it.eelPath.asNioPath() }
+  .isEqualTo(binary)
+
+// Bad
+val err = output.error as ExecError
+assertEquals(binary, (err.exe as Exe.OnEel).eelPath.asNioPath())
+```
+
+`asInstanceOf` also asserts that the value is not null, and a failure reports the
+full chain. A cast reports only a `ClassCastException`.
