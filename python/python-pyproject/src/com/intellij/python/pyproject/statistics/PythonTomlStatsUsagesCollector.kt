@@ -6,6 +6,7 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.findPsiFile
 import com.intellij.psi.PsiFile
@@ -16,6 +17,7 @@ import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.PY_PROJECT_TOML_BUILD_SYSTEM
 import com.intellij.python.pyproject.PY_PROJECT_TOML_DEPENDENCY_GROUPS
 import com.intellij.python.pyproject.PY_PROJECT_TOML_TOOL_PREFIX
+import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
 import com.jetbrains.python.packaging.PyPackageName
 import com.intellij.python.requirements.parser.PyRequirementParser
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
@@ -61,7 +63,7 @@ internal val TRACKED_DEPENDENCY_GROUPS = listOf(
 )
 internal const val DEPENDENCY_GROUP_OTHER = "other"
 
-private val GROUP = EventLogGroup("python.toml.stats", 7)
+private val GROUP = EventLogGroup("python.toml.stats", 8)
 private val PACKAGE_NAME_FIELD = EventFields.StringValidatedByDictionary("name", "python_packages.ndjson")
 private val TOOL_ID_FIELD = EventFields.String("toolId", PyProjectSdkConfigurationExtension.toolIds.map { it.id })
 private val CHECKBOX_VALUE = EventFields.Boolean("checked")
@@ -80,6 +82,19 @@ internal val PYTHON_PYPROJECT_DEPENDENCY_GROUP = GROUP.registerEvent(
 
 internal val PYTHON_PYPROJECT_COUNT = GROUP.registerEvent("python.pyproject.count", EventFields.Int("count"))
 
+/**
+ * Buckets for the two structure counts. Exact up to five, because "one project, or a handful" is the question they
+ * answer, and coarse above, because an exact per-project count is a fingerprint of that project (see
+ * `.agents/skills/fus/REFERENCE.md`).
+ */
+private val STRUCTURE_BOUNDS = intArrayOf(0, 1, 2, 3, 4, 5, 10, 20, 50, 100, 500)
+
+internal val PYTHON_PYPROJECT_MODEL_STRUCTURE = GROUP.registerEvent(
+  "python.pyproject.model.structure",
+  EventFields.BoundedInt("py_projects", STRUCTURE_BOUNDS),
+  EventFields.BoundedInt("workspaces", STRUCTURE_BOUNDS),
+)
+
 internal val PYTHON_WORKSPACE_SETUP_NOTIFICATION_SHOWN = GROUP.registerVarargEvent("python.workspace.setup.notification.shown")
 internal val PYTHON_WORKSPACE_SETUP_NOTIFICATION_CONFIGURE_CLICKED =
   GROUP.registerVarargEvent("python.workspace.setup.notification.configure.clicked")
@@ -97,6 +112,8 @@ internal val PYTHON_SDK_SETUP_FROM_NOTIFICATION: VarargEventId =
 
 internal class PythonTomlStatsUsagesCollector : ProjectUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
+
+  override suspend fun collect(project: Project): Set<MetricEvent> = super.collect(project) + modelStructureMetrics(project)
 
   override fun requiresReadAccess() = true
 
@@ -133,6 +150,28 @@ internal class PythonTomlStatsUsagesCollector : ProjectUsagesCollector() {
     toolsDetectedByMarkers.mapTo(metrics) { PYTHON_TOOL_MARKERS_DETECTED.metric(it) }
 
     return metrics
+  }
+
+  /**
+   * The structure [EvoPyProjectModel] holds: how many Python projects it detected, and how many workspaces they form.
+   *
+   * [EvoPyProjectModel.snapshot] answers the current generation, because the state behind it is a `StateFlow` and a
+   * collector of one reads the value it holds at once. It waits only when there is no generation yet, and that is the
+   * case this collector must cover: it can be what creates the service, and [EvoPyProjectModel.snapshotOrNull] would
+   * then answer `null` and lose the metric until the next project pass 12 hours later, which most sessions never reach.
+   *
+   * The number is the resolved one in both cases. The platform runs the first project pass 5 minutes after smart mode,
+   * so the `pyproject.toml` sync has already run: a model that was already there has republished on it, and a model
+   * created here computes its generation from a workspace model that already holds the result.
+   *
+   * The wait is not bounded. It ends when the model publishes, and the only thing that stops it from publishing is
+   * [EvoPyProjectModel.computeSnapshot] hanging — on the project model, or on the interpreter detection it runs. The
+   * interpreter widget, the packages tool window and the console target all read the same model, so that state breaks
+   * them first and is not one a statistics collector has to survive.
+   */
+  private suspend fun modelStructureMetrics(project: Project): Set<MetricEvent> {
+    val snapshot = project.service<EvoPyProjectModel>().snapshot()
+    return setOf(PYTHON_PYPROJECT_MODEL_STRUCTURE.metric(snapshot.pyProjects.count(), snapshot.workspaces.size))
   }
 }
 
