@@ -92,7 +92,7 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
 
         if (myNextRunPlatformUpdateVersion != null) {
           myNewPlatformUpdate = true;
-          setWidgetStatus(properties.getBoolean(NEXT_RUN_KEY_RELEASE_CHANNEL, false));
+          IdeUpdateWidgetState.getInstance().onUpdateFound(properties.getBoolean(NEXT_RUN_KEY_RELEASE_CHANNEL, false));
           updateState();
         }
         else {
@@ -131,7 +131,7 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
 
   static void clearUpdatesInfo() {
     setPlatformUpdateInfo(null);
-    setWidgetStatus(false);
+    IdeUpdateWidgetState.getInstance().onUpdateFound(false);
     newPlatformUpdate(null, null, (String)null, null);
     updateState();
   }
@@ -142,7 +142,7 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
    */
   static void clearPlatformUpdateInfo() {
     setPlatformUpdateInfo(null);
-    setWidgetStatus(false);
+    IdeUpdateWidgetState.getInstance().onUpdateFound(false);
     myNextRunPlatformUpdateVersion = null;
     updateState();
   }
@@ -154,11 +154,11 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
     UpdateSettings settings = UpdateSettings.getInstance();
     if (settings.isCheckNeeded()) {
       setPlatformUpdateInfo(platformUpdateInfo);
-      setWidgetStatus(isReleaseChannel(platformUpdateInfo));
+      IdeUpdateWidgetState.getInstance().onUpdateFound(isReleaseChannel(platformUpdateInfo));
     }
     else {
       setPlatformUpdateInfo(null);
-      setWidgetStatus(false);
+      IdeUpdateWidgetState.getInstance().onUpdateFound(false);
     }
     if (settings.isPluginsCheckNeeded()) {
       newPlatformUpdate(updatesForPlugins, incompatiblePluginNames, null, localUpdatesForPlugins);
@@ -184,11 +184,6 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
       properties.setValue(NEXT_RUN_KEY_SELF_BUILD, ApplicationInfo.getInstance().getBuild().asString());
       properties.setValue(NEXT_RUN_KEY_RELEASE_CHANNEL, isReleaseChannel(platformUpdateInfo));
     }
-  }
-
-  private static void setWidgetStatus(boolean updateAvailable) {
-    IdeUpdateWidgetState.getInstance()
-      .updateStatus(updateAvailable ? IdeUpdateWidgetState.Status.AVAILABLE : IdeUpdateWidgetState.Status.NONE);
   }
 
   /**
@@ -304,7 +299,7 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
     PluginUpdatesModel pluginUpdatesModel = result.getSecond();
     if (platformUpdateInfo instanceof PlatformUpdates.Loaded loadedUpdate && pluginUpdatesModel != null) {
       setPlatformUpdateInfo(loadedUpdate);
-      setWidgetStatus(isReleaseChannel(loadedUpdate));
+      IdeUpdateWidgetState.getInstance().onUpdateFound(isReleaseChannel(loadedUpdate));
       newPlatformUpdate(new ArrayList<>(pluginUpdatesModel.getPluginUpdates()),
                         pluginUpdatesModel.getIncompatiblePluginNames(),
                         null,

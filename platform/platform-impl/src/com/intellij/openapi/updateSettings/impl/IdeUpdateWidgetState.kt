@@ -51,7 +51,7 @@ class IdeUpdateWidgetState {
     fun getInstance(): IdeUpdateWidgetState = service()
 
     @JvmStatic
-    fun isEnabled(): Boolean = Registry.`is`("ide.update.toolbar.widget", false)
+    fun isEnabled(): Boolean = Registry.`is`("ide.update.toolbar.widget", true)
 
     /**
      * When the toolbar button owns the update, it replaces the item in the [com.intellij.ide.actions.SettingsEntryPointAction] menu.
@@ -87,14 +87,76 @@ class IdeUpdateWidgetState {
   var restartCommand: Array<String>? = null
     private set
 
-  /**
-   * Moves the button between the statuses.
-   */
-  fun updateStatus(value: Status) {
+  fun onUpdateFound(found: Boolean) {
     if (!isEnabled()) {
       return
     }
 
+    LOG.info("onUpdateFound: $found")
+
+    updateStatus(if (found) Status.AVAILABLE else Status.NONE)
+  }
+
+  fun onDownloadStarted() {
+    if (!isUpdateAvailable()) {
+      return
+    }
+
+    LOG.info("onDownloadStarted")
+
+    updateStatus(Status.DOWNLOADING)
+  }
+
+  /**
+   * Returns the button from [Status.DOWNLOADING] when the patch task ends without a patch.
+   *
+   * A prepared patch has already left [Status.DOWNLOADING] for [Status.RESTART], so only a failed download and a cancellation
+   * reach the transition.
+   */
+  fun onDownloadFinished() {
+    if (!isUpdateAvailable()) {
+      return
+    }
+
+    LOG.info("onDownloadFinished")
+
+    updateStatus(Status.AVAILABLE)
+  }
+
+  /**
+   * The [command] is `null` when restart is not available
+   */
+  fun onRestartReady(command: Array<String>?) {
+    if (!isUpdateAvailable()) {
+      return
+    }
+
+    LOG.info("onRestartReady, restart capable: ${command != null}")
+
+    restartCommand = command
+    updateStatus(Status.RESTART)
+  }
+
+  fun remindMeLater() {
+    if (!isEnabled()) {
+      return
+    }
+
+    LOG.info("remindMeLater")
+
+    PropertiesComponent.getInstance().setValue(REMIND_LATER_TIME, System.currentTimeMillis().toString())
+  }
+
+  fun isClickable(): Boolean = when (status.value) {
+    Status.DOWNLOADING -> false
+    Status.RESTART -> restartCommand != null
+    else -> true
+  }
+
+  /**
+   * Moves the button between the statuses. Every caller checks first that the button accepts the transition.
+   */
+  private fun updateStatus(value: Status) {
     val current = mutableStatus.value
     if (current == value) {
       return
@@ -112,42 +174,6 @@ class IdeUpdateWidgetState {
 
       updateWidget()
     }
-  }
-
-  fun remindMeLater() {
-    LOG.info("remindMeLater")
-
-    PropertiesComponent.getInstance().setValue(REMIND_LATER_TIME, System.currentTimeMillis().toString())
-  }
-
-  /**
-   * Returns the button from [Status.DOWNLOADING] when the patch task ends without a patch.
-   *
-   * A prepared patch has already left [Status.DOWNLOADING] for [Status.RESTART], so only a failed download and a cancellation
-   * reach the transition.
-   */
-  fun onDownloadFinished() {
-    if (isEnabled() && mutableStatus.compareAndSet(Status.DOWNLOADING, Status.AVAILABLE)) {
-      LOG.info("onDownloadFinished")
-
-      updateWidget()
-    }
-  }
-
-  /**
-   * The [command] is `null` when restart is not available
-   */
-  fun onRestartReady(command: Array<String>?) {
-    LOG.info("onRestartReady, restart capable: ${command != null}")
-
-    restartCommand = command
-    updateStatus(Status.RESTART)
-  }
-
-  fun isClickable(): Boolean = when (status.value) {
-    Status.DOWNLOADING -> false
-    Status.RESTART -> restartCommand != null
-    else -> true
   }
 
   private fun updateWidget() {
