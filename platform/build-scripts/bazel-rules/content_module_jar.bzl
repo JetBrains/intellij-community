@@ -212,6 +212,7 @@ def pack_jar(ctx, output, spans, module_jars, library_jars, merged_module_names,
 
     outputs = [output, metadata]
     if spans:
+        # Packers put `trace-file=` inside their flag file so per-action paths do not split persistent workers.
         # Inside the flag file, as a `trace-file=` line, rather than as a `--trace-file=` argument - which is what every
         # other producer of these span files takes. A worker has no other per-action channel: Bazel splits a worker
         # spawn's arguments at the param file, everything before it becomes the worker *process*'s command line and part

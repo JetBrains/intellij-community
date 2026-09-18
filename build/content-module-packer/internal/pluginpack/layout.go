@@ -585,6 +585,8 @@ func (executor *layoutExecutor) gzipXMLArchives(inputs []layoutInput, asset Layo
 }
 
 // gzipBytes compresses the content as one gzip member at the best speed, with a zero modification time and no name.
+// The Go gzip writer produces other bytes than the JDK deflater, so a *.xml.gzip entry differs from the production
+// build in bytes, not in payload.
 func gzipBytes(content []byte) ([]byte, error) {
 	var buffer bytes.Buffer
 	compressor, err := gzip.NewWriterLevel(&buffer, gzip.BestSpeed)

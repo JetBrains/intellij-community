@@ -126,6 +126,7 @@ dev_dist_platform_payload = rule(
     doc = """The payload of the fragment that owns `lib/`, and which of its jars another producer already packed.
 
     This is the one intersection that decides jar ownership within `lib/`, and it is a **question asked of the graph**.
+    Pruning happens during analysis because the bridge cannot inspect `ContentModuleJarInfo` providers during loading.
     It used to be a set intersection at *fetch* time: `jpsModelToBazel` wrote every module that packs a jar to a
     generated `build/dev_dist_content_module_jars.bzl` - 2 524 names, 18 of which said anything the module's own
     `jvm_library` did not already say - and the repository rule intersected that table with the payload, because a
