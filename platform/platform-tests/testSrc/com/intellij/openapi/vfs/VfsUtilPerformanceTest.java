@@ -7,6 +7,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.FrequentEventDetector;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -102,16 +103,19 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
     ManagingFS managingFS = ManagingFS.getInstance();
     NewVirtualFile root = managingFS.findRoot(path, fs);
     Benchmark.newBenchmark("finding root",
-                           () -> JobLauncher.getInstance().invokeConcurrentlyUnderProgress(
-                                            Collections.nCopies(500, null), new EmptyProgressIndicator(),
-                                            _ -> {
-                                              for (int i = 0; i < 100_000; i++) {
-                                                NewVirtualFile rootJar = managingFS.findRoot(path, fs);
-                                                assertNotNull(rootJar);
-                                                assertSame(root, rootJar);
-                                              }
-                                              return true;
-                                            })).start();
+                           () -> {
+      ProgressManager.getInstance().runProcess(()->
+                                                 JobLauncher.getInstance().invokeConcurrentlyUnderContextProgress(
+                                                   Collections.nCopies(500, null),
+                                                   _ -> {
+                                                     for (int i = 0; i < 100_000; i++) {
+                                                       NewVirtualFile rootJar = managingFS.findRoot(path, fs);
+                                                       assertNotNull(rootJar);
+                                                       assertSame(root, rootJar);
+                                                     }
+                                                     return true;
+                                                   }), new EmptyProgressIndicator());
+                           }).start();
   }
 
   @Test
@@ -192,18 +196,19 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
   public void testAsyncRefresh() throws Throwable {
     var ex = new AtomicReference<Throwable>();
     var tasks = IntStream.range(0, JobSchedulerImpl.getJobPoolParallelism()).boxed().toList();
-    var success = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(tasks, new EmptyProgressIndicator(), task -> {
-      try {
-        doAsyncRefreshTest(task);
-      }
-      catch (Throwable t) {
-        ex.set(t);
-      }
-      return true;
-    });
-
+    ProgressManager.getInstance().runProcess(()-> {
+      var success = JobLauncher.getInstance().invokeConcurrentlyUnderContextProgress(tasks, task -> {
+        try {
+          doAsyncRefreshTest(task);
+        }
+        catch (Throwable t) {
+          ex.set(t);
+        }
+        return true;
+      });
+      assertTrue(success);
+    }, new EmptyProgressIndicator());
     if (ex.get() != null) throw ex.get();
-    assertTrue(success);
   }
 
   private void doAsyncRefreshTest(int task) throws Exception {

@@ -3,6 +3,7 @@ package com.intellij.util;
 
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.testFramework.LightPlatformTestCase;
 import one.util.streamex.IntStreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -28,10 +29,11 @@ public class QueryTest extends LightPlatformTestCase {
     assertTrue(cores > 1);
     int eachSleep = 200;
     long start = System.currentTimeMillis();
+    ProgressManager.getInstance().runProcess(()->
     parallelQuery(Arrays.asList("a", "b")).allowParallelProcessing().forEach(_ -> {
       TimeoutUtil.sleep(eachSleep);
       return true;
-    });
+    }), new EmptyProgressIndicator());
     long elapsed = System.currentTimeMillis() - start;
     assertTrue("elapsed " + elapsed + " on " + cores + " cores", elapsed < eachSleep * 2);
   }
@@ -40,7 +42,7 @@ public class QueryTest extends LightPlatformTestCase {
     return new AbstractQuery<>() {
       @Override
       protected boolean processResults(@NotNull Processor<? super String> consumer) {
-        JobLauncher.getInstance().invokeConcurrentlyUnderProgress(strings, new EmptyProgressIndicator(), consumer);
+        JobLauncher.getInstance().invokeConcurrentlyUnderContextProgress(strings, consumer);
         return false;
       }
     };
