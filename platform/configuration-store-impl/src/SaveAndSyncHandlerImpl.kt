@@ -694,7 +694,7 @@ internal class SaveAndSyncHandlerImpl @JvmOverloads constructor(
 private suspend fun awaitAllConfigurations(projectManager: ProjectManager, projectHashes: List<@NonNls String>): Boolean {
   return projectHashes.all { hash ->
     val project = projectManager.findOpenProjectByHash(hash) ?: return@all false
-    !Observation.awaitConfiguration(project) { message -> LOG.trace("Periodic VFS refresh is blocked because project.name=${project.name} being configured, message=$message") }
+    !Observation.awaitConfiguration(project) { message -> LOG.info("Periodic VFS refresh is blocked because project.name=${project.name} being configured, reason=$message") }
   }
 }
 
