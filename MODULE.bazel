@@ -174,6 +174,12 @@ use_repo(
     "jps_dynamic_deps_community",
 )
 
+# OpenedPackages.txt as Starlark. This creates the @intellij_add_opens repository.
+use_repo(
+    use_extension("//build:intellij_add_opens.bzl", "intellij_add_opens_extension"),
+    "intellij_add_opens",
+)
+
 # Hermetic node/npm used by the KMP resolver (//fleet/build/rules:kmp.bzl) to resolve
 # the NPM dependencies declared by the `package.json` embedded in KMP klibs.
 bazel_dep(name = "rules_nodejs", version = "6.7.4")

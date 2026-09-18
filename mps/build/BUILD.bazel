@@ -1,8 +1,8 @@
 load("@community//build:tests-options.bzl", "jps_test")
+load("@intellij_add_opens//:intellij_add_opens.bzl", "INTELLIJ_ADD_OPENS")
 load("@jps_dynamic_deps_community//:targets.bzl", "ALL_COMMUNITY_TARGETS", "BAZEL_TARGETS_JSON_COMMUNITY")
 load("@rules_java//java:defs.bzl", "java_binary")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
-load("//build:intellij_dev.bzl", "INTELLIJ_ADD_OPENS")
 
 java_binary(
     name = "mps_builder",

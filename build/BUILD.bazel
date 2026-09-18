@@ -1,18 +1,21 @@
+load("@intellij_add_opens//:intellij_add_opens.bzl", "INTELLIJ_ADD_OPENS")
 load("@jps_dynamic_deps_community//:targets.bzl", "ALL_COMMUNITY_IML_TARGETS", "ALL_COMMUNITY_MODULE_DESCRIPTOR_TARGETS", "ALL_COMMUNITY_PLUGIN_DISTRIBUTION_TARGETS", "ALL_COMMUNITY_TARGETS", "ALL_LIBRARY_COMMUNITY_TARGETS", "ALL_PRODUCTION_COMMUNITY_TARGETS", "ALL_TEST_COMMUNITY_TARGETS", "BAZEL_TARGETS_JSON_COMMUNITY", "JPS_TO_BAZEL_TREAT_KOTLIN_DEV_VERSION_AS_SNAPSHOT")
 load("@rules_java//java:defs.bzl", "java_binary")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
-load("//build:intellij_dev.bzl", "INTELLIJ_ADD_OPENS")
 load("//build:intellij_dev_community.bzl", "intellij_dev_binary_community")
 load("//build:jps_to_bazel_targets_json.bzl", "jps_to_bazel_targets_json")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 load("//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev_dist_product_info")
 load(":dev_launch_dependencies_test.bzl", "dev_launch_dependencies_test_suite")
+load(":intellij_add_opens_test.bzl", "intellij_add_opens_test_suite")
 load(":jps_library_derivation_pipeline_test.bzl", "jps_library_derivation_pipeline_test_suite")
 load(":jps_library_derivation_test.bzl", "jps_library_derivation_test_suite")
 
 jps_library_derivation_test_suite(name = "jps_library_derivation_test")
 
 dev_launch_dependencies_test_suite(name = "dev_launch_dependencies_test")
+
+intellij_add_opens_test_suite(name = "intellij_add_opens_test")
 
 # The pinned build-dependency versions, for tests that gate shared dev-launch dependency sets
 # against version bumps, and for a dev assembly that reads them out of a materialized project tree

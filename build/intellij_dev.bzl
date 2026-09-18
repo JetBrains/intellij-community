@@ -1,5 +1,6 @@
 """Macros for IntelliJ-based IDE development builds."""
 
+load("@intellij_add_opens//:intellij_add_opens.bzl", "INTELLIJ_ADD_OPENS")
 load("@rules_java//java:defs.bzl", "java_binary")
 load(
     ":dev_launch_dependencies.bzl",
@@ -8,62 +9,6 @@ load(
     "preloaded_downloads_manifest_data",
     "preloaded_downloads_only_flag",
 )
-
-INTELLIJ_ADD_OPENS = [
-    "java.base/java.io",
-    "java.base/java.lang",
-    "java.base/java.lang.ref",
-    "java.base/java.lang.reflect",
-    "java.base/java.net",
-    "java.base/java.nio",
-    "java.base/java.nio.charset",
-    "java.base/java.text",
-    "java.base/java.time",
-    "java.base/java.util",
-    "java.base/java.util.concurrent",
-    "java.base/java.util.concurrent.atomic",
-    "java.base/java.util.concurrent.locks",
-    "java.base/jdk.internal.ref",
-    "java.base/jdk.internal.vm",
-    "java.base/sun.net.dns",
-    "java.base/sun.nio",
-    "java.base/sun.nio.ch",
-    "java.base/sun.nio.fs",
-    "java.base/sun.security.ssl",
-    "java.base/sun.security.util",
-    "java.desktop/com.apple.eawt",
-    "java.desktop/com.apple.eawt.event",
-    "java.desktop/com.apple.laf",
-    "java.desktop/com.sun.java.swing",
-    "java.desktop/com.sun.java.swing.plaf.gtk",
-    "java.desktop/java.awt",
-    "java.desktop/java.awt.dnd.peer",
-    "java.desktop/java.awt.event",
-    "java.desktop/java.awt.font",
-    "java.desktop/java.awt.image",
-    "java.desktop/java.awt.peer",
-    "java.desktop/javax.swing",
-    "java.desktop/javax.swing.plaf.basic",
-    "java.desktop/javax.swing.text",
-    "java.desktop/javax.swing.text.html",
-    "java.desktop/javax.swing.text.html.parser",
-    "java.desktop/sun.awt",
-    "java.desktop/sun.awt.X11",
-    "java.desktop/sun.awt.datatransfer",
-    "java.desktop/sun.awt.image",
-    "java.desktop/sun.awt.windows",
-    "java.desktop/sun.font",
-    "java.desktop/sun.java2d",
-    "java.desktop/sun.lwawt",
-    "java.desktop/sun.lwawt.macosx",
-    "java.desktop/sun.swing",
-    "java.desktop/sun.swing.text",
-    "java.management/sun.management",
-    "jdk.attach/sun.tools.attach",
-    "jdk.compiler/com.sun.tools.javac.api",
-    "jdk.internal.jvmstat/sun.jvmstat.monitor",
-    "jdk.jdi/com.sun.tools.jdi",
-]
 
 # Names the prepared distribution for whoever consumes one - `PreBuiltDevMain` when it is a launcher, the IDE Starter's
 # prebuilt dev-build runner when it is a test. Keep in sync with `DevIdeConfig.CONFIG_PATH_PROPERTY`, which is where the
