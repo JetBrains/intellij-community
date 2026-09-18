@@ -64,9 +64,11 @@
 
         <<error descr="Marked for removal extension point 'com.intellij.myPlugin.scheduledForRemovalApiEP' in version 'removeVersion'">myPlugin.scheduledForRemovalApiEP</error> <error descr="Marked for removal attribute 'scheduledForRemovalAttribute'">scheduledForRemovalAttribute="DoNotUse"</error>/>
 
-        <warning descr="Usage of API marked with @org.jetbrains.annotations.ApiStatus.Experimental. Such API may be changed or removed in future IDE versions causing compatibility problems."><myPlugin.experimentalApiEP implementation="foo.MyExperimentalEP" <warning descr="Usage of API marked with @org.jetbrains.annotations.ApiStatus.Experimental. Such API may be changed or removed in future IDE versions causing compatibility problems.">experimentalAttribute="java.lang.String"</warning>/></warning>
+        <!-- the experimental API is reported by JetBrainsUnstableExtensionsUsageInspection -->
+        <myPlugin.experimentalApiEP implementation="foo.MyExperimentalEP" experimentalAttribute="java.lang.String"/>
 
-        <warning descr="Usage of API marked with @org.jetbrains.annotations.ApiStatus.Internal. Such API should not be used outside of IntelliJ IDEA project."><myPlugin.internalApiEP implementation="foo.MyInternalEP" <warning descr="Usage of API marked with @org.jetbrains.annotations.ApiStatus.Internal. Such API should not be used outside of IntelliJ IDEA project.">internalAttribute="DoNotUse"</warning>/></warning>
+        <!-- the internal API is reported by JetBrainsInternalExtensionsUsageInspection -->
+        <myPlugin.internalApiEP implementation="foo.MyInternalEP" internalAttribute="DoNotUse"/>
 
         <error descr="Usage of API marked with @org.jetbrains.annotations.ApiStatus.Obsolete. Such API should not be used in new code."><myPlugin.obsoleteApiEP implementation="foo.MyObsoleteEP" <error descr="Usage of API marked with @org.jetbrains.annotations.ApiStatus.Obsolete. Such API should not be used in new code.">obsoleteAttribute="DoNotUse"</error>/></error>
 
