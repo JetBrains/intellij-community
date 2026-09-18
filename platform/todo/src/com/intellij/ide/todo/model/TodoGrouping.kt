@@ -11,8 +11,21 @@ internal class TodoGrouping private constructor(
   val groups: List<TodoGrouping>,
   val files: List<TodoFileResult>,
 ) {
+  private val groupKeys: Set<Key> = buildSet {
+    add(key)
+    groups.forEach { addAll(it.groupKeys) }
+  }
+  private val fileIds: Set<VirtualFileId> = buildSet {
+    files.mapTo(this) { it.fileId }
+    groups.forEach { addAll(it.fileIds) }
+  }
+
   val fileCount: Int = files.size + groups.sumOf { it.fileCount }
   val todoItemCount: Int = files.sumOf { it.todos.size } + groups.sumOf { it.todoItemCount }
+
+  fun contains(key: Key): Boolean = key in groupKeys
+
+  fun contains(fileId: VirtualFileId): Boolean = fileId in fileIds
 
   sealed interface Key {
     data object Root : Key

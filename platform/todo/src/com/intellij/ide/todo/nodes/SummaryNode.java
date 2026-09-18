@@ -22,6 +22,7 @@ import static com.intellij.ide.todo.TodoImplementationChooserKt.shouldUseSplitTo
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Objects;
 
 public class SummaryNode extends BaseToDoNode<ToDoSummary> {
   public SummaryNode(Project project, @NotNull ToDoSummary value, TodoTreeBuilder builder) {
@@ -30,34 +31,11 @@ public class SummaryNode extends BaseToDoNode<ToDoSummary> {
 
   @Override
   public @NotNull Collection<? extends AbstractTreeNode<?>> getChildren() {
-    ArrayList<AbstractTreeNode<?>> children = new ArrayList<>();
-
     if (shouldUseSplitTodo()) {
-      for (Iterator<VirtualFile> i = myBuilder.getAllVirtualFiles(); i.hasNext(); ) {
-        VirtualFile virtualFile = i.next();
-        if (virtualFile == null || !virtualFile.isValid() || !myBuilder.hasRemoteTodos(virtualFile)) {
-          continue;
-        }
-
-        TodoRemoteFileNode fileNode = new TodoRemoteFileNode(
-          getProject(),
-          new TodoRemoteFileNode.Value(virtualFile),
-          myBuilder,
-          false
-        );
-        if (!children.contains(fileNode)) {
-          children.add(fileNode);
-        }
-      }
-
-      children.sort((node1, node2) -> {
-        VirtualFile file1 = ((TodoRemoteFileNode)node1).getVirtualFile();
-        VirtualFile file2 = ((TodoRemoteFileNode)node2).getVirtualFile();
-        return file1.getPresentableUrl().compareToIgnoreCase(file2.getPresentableUrl());
-      });
-      return children;
+      return TodoRemoteGroupingNode.createChildren(Objects.requireNonNull(getProject()), myBuilder.buildRemoteGrouping(), myBuilder);
     }
 
+    ArrayList<AbstractTreeNode<?>> children = new ArrayList<>();
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();
     if (myToDoSettings.isModulesShown()) {
       for (Iterator<? extends PsiFile> i = myBuilder.getAllFiles(); i.hasNext(); ) {

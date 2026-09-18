@@ -3,6 +3,7 @@
 package com.intellij.ide.todo;
 
 import com.intellij.ide.highlighter.HighlighterFactory;
+import com.intellij.ide.todo.model.TodoGrouping;
 import com.intellij.ide.todo.model.TodoModel;
 import com.intellij.ide.todo.model.TodoModelChange;
 import com.intellij.ide.todo.model.TodoScope;
@@ -522,6 +523,13 @@ public abstract class TodoTreeBuilder implements Disposable {
     return myTodoModel.getTodoItemCount();
   }
 
+  @ApiStatus.Internal
+  public @NotNull TodoGrouping buildRemoteGrouping() {
+    return myTodoModel.buildGrouping(myTreeStructure.isModulesShown(),
+                                    myTreeStructure.isPackagesShown(),
+                                    myTreeStructure.areFlattenPackages());
+  }
+
   /**
    * @return first {@code SmartTodoItemPointer} that is the children (in depth) of the specified {@code element}.
    * If {@code element} itself is a {@code TodoItem} then the method returns the {@code element}.
@@ -620,7 +628,7 @@ public abstract class TodoTreeBuilder implements Disposable {
     }
     if (obj instanceof TodoRemoteFileNode remoteFileNode) {
       VirtualFile file = remoteFileNode.getVirtualFile();
-      return new TodoNodeVisitor(() -> remoteFileNode, file);
+      return new TodoNodeVisitor(() -> remoteFileNode.getValue(), file);
     }
     else {
       Object o = obj instanceof AbstractTreeNode ? ((AbstractTreeNode<?>)obj).getValue() : null;
