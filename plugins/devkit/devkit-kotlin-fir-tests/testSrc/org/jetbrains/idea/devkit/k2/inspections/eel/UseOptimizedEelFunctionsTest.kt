@@ -648,12 +648,80 @@ class UseOptimizedEelFunctionsTest {
           void example() throws IOException {
             Files.write(Path.of("hello.txt"), List.of("hello"));
             Files.write(Path.of("hello.txt"), List.of("hello"), StandardCharsets.UTF_8);
-            Files.writeString(Path.of("hello.txt"), "hello");
           }
         }
       """.trimIndent()
 
       doHighlightingTest("Example.java", source)
+    }
+
+    @Test
+    fun `Files writeString Java`() {
+      @Language("Java")
+      val source = """
+        import java.io.IOException;
+        import java.nio.charset.StandardCharsets;
+        import java.nio.file.Files;
+        import java.nio.file.Path;
+        import java.nio.file.StandardOpenOption;
+
+        class Example {
+          void example() throws IOException {
+            Files.<warning descr="Can require multiple round trips for one file operation">writeString</warning>(Path.of("first.txt"), "first");
+            Files.<warning descr="Can require multiple round trips for one file operation">writeString</warning>(Path.of("second.txt"), "second", StandardCharsets.UTF_16LE, StandardOpenOption.CREATE);
+          }
+        }
+      """.trimIndent()
+
+      @Language("Java")
+      val expectedResult = """
+        import com.intellij.platform.eel.fs.EelFiles;
+
+        import java.io.IOException;
+        import java.nio.charset.StandardCharsets;
+        import java.nio.file.Files;
+        import java.nio.file.Path;
+        import java.nio.file.StandardOpenOption;
+
+        class Example {
+          void example() throws IOException {
+            EelFiles.writeString(Path.of("first.txt"), "first");
+            EelFiles.writeString(Path.of("second.txt"), "second", StandardCharsets.UTF_16LE, StandardOpenOption.CREATE);
+          }
+        }
+      """.trimIndent()
+
+      doTest("Example.java", source, expectedResult)
+    }
+
+    @Test
+    fun `Files writeString Kotlin`() {
+      @Language("Kt")
+      val source = """
+        import java.nio.charset.StandardCharsets
+        import java.nio.file.Files
+        import java.nio.file.Path
+        import java.nio.file.StandardOpenOption
+
+        fun example() {
+          Files.<warning descr="Can require multiple round trips for one file operation">writeString</warning>(Path.of("hello.txt"), "hello", StandardCharsets.UTF_16LE, StandardOpenOption.CREATE)
+        }
+      """.trimIndent()
+
+      @Language("Kt")
+      val expectedResult = """
+        import com.intellij.platform.eel.fs.EelFiles
+        import java.nio.charset.StandardCharsets
+        import java.nio.file.Files
+        import java.nio.file.Path
+        import java.nio.file.StandardOpenOption
+
+        fun example() {
+            EelFiles.writeString(Path.of("hello.txt"), "hello", StandardCharsets.UTF_16LE, StandardOpenOption.CREATE)
+        }
+      """.trimIndent()
+
+      doTest("Example.kt", source, expectedResult)
     }
 
     @Test

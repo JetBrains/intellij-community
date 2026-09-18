@@ -33,7 +33,7 @@ import org.jetbrains.uast.getQualifiedChain
 import org.jetbrains.uast.getQualifiedName
 import org.jetbrains.uast.getUastParentOfType
 
-private val OPTIMIZED_METHOD_NAMES = setOf("deleteRecursively", "readAllBytes", "readString", "write")
+private val OPTIMIZED_METHOD_NAMES = setOf("deleteRecursively", "readAllBytes", "readString", "write", "writeString")
 
 @ApiStatus.Internal
 @VisibleForTesting
@@ -98,6 +98,12 @@ class UseOptimizedEelFunctions : LocalInspectionTool() {
       holder.registerProblem(
         methodPsi, DevKitBundle.message("inspection.message.works.ineffectively.with.remote.eel"), highlightType,
         ReplaceWithEelFunction(holder.project, "com.intellij.platform.eel.fs.EelFiles", "write"),
+      )
+    }
+    if (fqn == "java.nio.file.Files.writeString") {
+      holder.registerProblem(
+        methodPsi, DevKitBundle.message("inspection.message.works.ineffectively.with.remote.eel"), highlightType,
+        ReplaceWithEelFunction(holder.project, "com.intellij.platform.eel.fs.EelFiles", "writeString"),
       )
     }
     if (
