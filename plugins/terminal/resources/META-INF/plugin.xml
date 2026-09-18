@@ -209,6 +209,9 @@
 
     <group id="Terminal.PromptToolbar"/>
 
+    <action id="Terminal.Completion.ShowFeedbackNotification" internal="true"
+            class="org.jetbrains.plugins.terminal.block.completion.feedback.ShowTerminalInlineCompletionFeedbackNotificationAction"/>
+
   </actions>
 
 </idea-plugin>
