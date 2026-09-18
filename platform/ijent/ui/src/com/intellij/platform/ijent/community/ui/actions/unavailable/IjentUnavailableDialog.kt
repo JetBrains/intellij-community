@@ -55,7 +55,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import javax.swing.JComponent
@@ -89,10 +91,12 @@ private class EdtOnceTask : OnceTask<IjentUnavailableHandlerResult, ReconnectUiD
  * that generation is closed and new projects are opened on the same IJent.
  */
 @Service
-private class NotRespondingFilesystemDialogService {
+@ApiStatus.Internal
+@VisibleForTesting
+class NotRespondingFilesystemDialogService {
   private val pendingRequests = ConcurrentHashMap<EelDescriptor, Pair<List<Project>, EdtOnceTask>>()
-  suspend fun doOnceOrWait(ijentId: EelDescriptor, dialogParams: IjentUnavailableDialogHandler.DialogParams, onComputing: (Deferred<ReconnectUiDialogImpl>) -> Unit, f: suspend (CompletableDeferred<ReconnectUiDialogImpl>) -> IjentUnavailableHandlerResult): IjentUnavailableHandlerResult {
-    val onceTask = pendingRequests.compute(ijentId) { _, v ->
+  suspend fun doOnceOrWait(dialogParams: IjentUnavailableDialogHandler.DialogParams, onComputing: (Deferred<ReconnectUiDialogImpl>) -> Unit, f: suspend (CompletableDeferred<ReconnectUiDialogImpl>) -> IjentUnavailableHandlerResult): IjentUnavailableHandlerResult {
+    val onceTask = pendingRequests.compute(dialogParams.eelDescriptor) { _, v ->
       when (dialogParams) {
         is IjentUnavailableDialogHandler.DialogParams.ProjectIjent -> {
           when {
@@ -119,7 +123,9 @@ private class NotRespondingFilesystemDialogService {
   }
 }
 
-internal class IjentUnavailableDialogHandler : IjentUnavailableHandler {
+@ApiStatus.Internal
+@VisibleForTesting
+class IjentUnavailableDialogHandler : IjentUnavailableHandler {
   override suspend fun showModalDialog(eelDescriptor: EelDescriptor, uiHandle: ReconnectUiHandleImpl): IjentUnavailableHandlerResult {
     val activeProject = ProjectUtil.getActiveProject()
     val dialogParams = ProjectManager.getInstance().openProjects.filter {
@@ -132,7 +138,7 @@ internal class IjentUnavailableDialogHandler : IjentUnavailableHandler {
       DialogParams.ProjectIjent(eelDescriptor, it)
     } ?: DialogParams.UnrelatedIjent(eelDescriptor, ProjectManager.getInstance().defaultProject)
     LOG.warn("Ijent is unavailable. Modal dialog will be shown.")
-    return NotRespondingFilesystemDialogService.getInstance().doOnceOrWait(eelDescriptor, dialogParams, uiHandle::setDialogSession) { dialogSession ->
+    return NotRespondingFilesystemDialogService.getInstance().doOnceOrWait(dialogParams, uiHandle::setDialogSession) { dialogSession ->
       coroutineScope {
         val logJob = launch(Dispatchers.IO) {
           val ijentSession = eelDescriptor.getResolvedEelMachine().asSafely<IjentMachine>()?.getCachedIjentSession()

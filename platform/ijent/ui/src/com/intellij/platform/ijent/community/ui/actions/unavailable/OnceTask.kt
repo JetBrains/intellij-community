@@ -7,8 +7,12 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 
-internal abstract class OnceTask<T, C> {
+@ApiStatus.Internal
+@VisibleForTesting
+abstract class OnceTask<T, C> {
   private val state: MutableStateFlow<State<T, C>> = MutableStateFlow(State.Uninitialized)
 
   abstract suspend fun <R> executeUnderLockIfNotAlreadyAcquired(f: suspend () -> R): R
