@@ -20,13 +20,17 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.util.io.PowerStatus
+import com.intellij.util.system.LowLevelLocalMachineAccess
+import com.intellij.util.system.OS
 import com.sun.management.OperatingSystemMXBean
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.lang.management.ManagementFactory
+import java.lang.management.MemoryType
 import java.util.concurrent.TimeUnit.NANOSECONDS
 import kotlin.math.roundToInt
 import kotlin.time.Duration
@@ -36,12 +40,12 @@ import kotlin.time.Duration.Companion.seconds
 
 internal class IdeHeartbeatEventReporter : ProjectActivity {
   init {
-    if (ApplicationManager.getApplication().isUnitTestMode) {
-      throw ExtensionNotApplicableException.create()
-    }
+    if (ApplicationManager.getApplication().isHeadlessEnvironment) throw ExtensionNotApplicableException.create()
   }
 
   override suspend fun execute(project: Project) {
+    RegistryManager.getInstanceAsync() // await Registry before loading service
+
     serviceAsync<IdeHeartbeatEventReporterService>()
   }
 }
@@ -61,6 +65,9 @@ internal data class EventDurationHistogram(
   val p99: Duration,
 )
 
+/** The OS memory counter that backs the reported process footprint. */
+internal enum class FootprintSource { RSS, PRIVATE_BYTES, PHYS_FOOTPRINT }
+
 /**
  * This is an app service because the routine should be shared between projects.
  * It's not required on startup, so it's initialized on the first open project in [ProjectActivity].
@@ -68,13 +75,14 @@ internal data class EventDurationHistogram(
 @Service(Service.Level.APP)
 private class IdeHeartbeatEventReporterService(cs: CoroutineScope) {
   init {
-    cs.launch {
+    cs.launch(Dispatchers.IO) {
       heartBeatRoutine()
     }
   }
 
+  @OptIn(LowLevelLocalMachineAccess::class)
   private suspend fun heartBeatRoutine() {
-    delay(Registry.intValue("ide.heartbeat.delay").toLong().milliseconds)
+    delay(RegistryManager.getInstanceAsync().intValue("ide.heartbeat.delay").toLong().milliseconds)
 
     val cpuTimeDiffer = LongDiffer(0)//cpu time is in nanoseconds
     //other durations are in milliseconds by default:
@@ -123,13 +131,86 @@ private class IdeHeartbeatEventReporterService(cs: CoroutineScope) {
         timeToSafepointMs, timeAtSafepointMs, safepointsCount
       )
 
-      delay(100.seconds)
+      // The footprint is not available when the OS does not report the process memory stats.
+      var footprintMb: Int? = null
+      var footprintSource: FootprintSource? = null
+      val memoryStats = PlatformMemoryUtil.getInstance().getCurrentProcessMemoryStats()
+      if (memoryStats != null) {
+        val source = when (OS.CURRENT) {
+          OS.Linux -> FootprintSource.RSS
+          OS.macOS -> FootprintSource.PHYS_FOOTPRINT
+          else -> FootprintSource.PRIVATE_BYTES
+        }
+        val footprintBytes = when (source) {
+          FootprintSource.RSS -> memoryStats.ram
+          FootprintSource.PRIVATE_BYTES, FootprintSource.PHYS_FOOTPRINT -> memoryStats.ramPlusSwapMinusFileMappings
+        }
+        footprintSource = source
+        footprintMb = toMegabytes(footprintBytes)
+      }
+
+      val heapCommittedMb = toMegabytes(ManagementFactory.getMemoryMXBean().heapMemoryUsage.committed)
+
+      var oldGenLiveSetBytes = -1L
+      var metaspaceCommittedBytes = -1L
+      var codeCacheCommittedBytes = -1L
+      for (pool in ManagementFactory.getMemoryPoolMXBeans()) {
+        val name = pool.name
+        when {
+          pool.type == MemoryType.HEAP && (name.contains("Old Gen") || name.contains("Tenured Gen")) -> {
+            // `getCollectionUsage` is the pool usage right after the last GC of the pool, so it is the live set after an old GC.
+            pool.collectionUsage?.let {
+              if (oldGenLiveSetBytes < 0) oldGenLiveSetBytes = 0
+              oldGenLiveSetBytes += it.used
+            }
+          }
+          name == "Metaspace" -> pool.usage?.let { metaspaceCommittedBytes = it.committed }
+          name == "Code Cache" || name.startsWith("CodeHeap") -> pool.usage?.let {
+            if (codeCacheCommittedBytes < 0) codeCacheCommittedBytes = 0
+            codeCacheCommittedBytes += it.committed
+          }
+        }
+      }
+
+      var oldGcTimeMs = -1L
+      var oldGcCount = -1L
+      for (gc in gcBeans) {
+        if (isOldGenGcBean(gc.name)) {
+          oldGcTimeMs = gc.collectionTime.coerceAtLeast(0)
+          oldGcCount = gc.collectionCount.coerceAtLeast(0)
+          break
+        }
+      }
+
+      UILatencyLogger.reportMemorySampled(
+        footprintMb = footprintMb,
+        footprintSource = footprintSource,
+        heapLiveSetMb = toMegabytesOrUnavailable(oldGenLiveSetBytes),
+        heapCommittedMb = heapCommittedMb,
+        metaspaceCommittedMb = toMegabytesOrUnavailable(metaspaceCommittedBytes),
+        codeCacheCommittedMb = toMegabytesOrUnavailable(codeCacheCommittedBytes),
+        oldGcTimeMs = oldGcTimeMs,
+        oldGcCount = oldGcCount,
+      )
+
+      delay(60.seconds)
     }
   }
+
+  private fun isOldGenGcBean(name: String): Boolean =
+    name == "MarkSweepCompact" ||    // -XX:+UseSerialGC
+    name == "PS MarkSweep" ||        // -XX:+UseParallelGC
+    name == "ConcurrentMarkSweep" || // -XX:+UseConcMarkSweepGC
+    name == "G1 Old Generation"      // -XX:+UseG1GC
+
+  private fun toMegabytes(bytes: Long): Int = (bytes / 1024 / 1024).toInt()
+
+  /** @return -1 if [bytes] is negative, which is the marker 'metric is not available' */
+  private fun toMegabytesOrUnavailable(bytes: Long): Int = if (bytes < 0) -1 else toMegabytes(bytes)
 }
 
 internal object UILatencyLogger : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("performance", 82)
+  private val GROUP = EventLogGroup("performance", 83)
 
   private val SYSTEM_CPU_LOAD = EventFields.Int("system_cpu_load")
   private val SWAP_LOAD = EventFields.Int("swap_load")
@@ -173,13 +254,83 @@ internal object UILatencyLogger : CounterUsagesCollector() {
     )
   }
 
+  private val FOOTPRINT_MB_LAST = EventFields.Int(
+    "footprint_mb_last",
+    "Instantaneous process memory footprint in megabytes. It is RSS on Linux, Private Bytes on Windows, and phys_footprint on macOS."
+  )
+  private val FOOTPRINT_SOURCE = EventFields.Enum<FootprintSource>(
+    "footprint_source",
+    "The OS memory counter that backs the footprint value."
+  )
+  private val HEAP_LIVE_SET_MB = EventFields.Int(
+    "heap_live_set_mb",
+    "Live heap set in megabytes, measured after the last old-generation GC. It is -1 when the value is not available."
+  )
+  private val HEAP_COMMITTED_MB_LAST = EventFields.Int(
+    "heap_committed_mb_last",
+    "Committed heap size in megabytes. It includes all allocated heap, not only the live set."
+  )
+  private val METASPACE_COMMITTED_MB_LAST = EventFields.Int(
+    "metaspace_committed_mb_last",
+    "Committed metaspace size in megabytes. It is -1 when the value is not available."
+  )
+  private val CODECACHE_COMMITTED_MB_LAST = EventFields.Int(
+    "codecache_committed_mb_last",
+    "Committed code cache size in megabytes. It is -1 when the value is not available."
+  )
+  private val GC_OLD_TIME_MS_TOTAL = EventFields.Long(
+    "gc_old_time_ms_total",
+    "Total time in milliseconds in old-generation GC since JVM start. It is -1 when the value is not available."
+  )
+  private val GC_OLD_COUNT_TOTAL = EventFields.Long(
+    "gc_old_count_total",
+    "Total number of old-generation GC collections since JVM start. It is -1 when the value is not available."
+  )
+  private val MEMORY_SAMPLED_EVENT = GROUP.registerVarargEvent(
+    "memory.sampled",
+    FOOTPRINT_MB_LAST, FOOTPRINT_SOURCE, HEAP_LIVE_SET_MB, HEAP_COMMITTED_MB_LAST,
+    METASPACE_COMMITTED_MB_LAST, CODECACHE_COMMITTED_MB_LAST, GC_OLD_TIME_MS_TOTAL, GC_OLD_COUNT_TOTAL
+  )
+
+  /**
+   * [footprintMb] and [footprintSource] are null together when the OS does not report the process memory stats.
+   * Then the event holds no footprint field.
+   */
+  internal fun reportMemorySampled(
+    footprintMb: Int?,
+    footprintSource: FootprintSource?,
+    heapLiveSetMb: Int,
+    heapCommittedMb: Int,
+    metaspaceCommittedMb: Int,
+    codeCacheCommittedMb: Int,
+    oldGcTimeMs: Long,
+    oldGcCount: Long,
+  ) {
+    val pairs = mutableListOf<EventPair<*>>()
+
+    if (footprintMb != null && footprintSource != null) {
+      pairs += FOOTPRINT_MB_LAST.with(footprintMb)
+      pairs += FOOTPRINT_SOURCE.with(footprintSource)
+    }
+
+    pairs += HEAP_COMMITTED_MB_LAST.with(heapCommittedMb)
+    pairs += HEAP_LIVE_SET_MB.with(heapLiveSetMb)
+    pairs += METASPACE_COMMITTED_MB_LAST.with(metaspaceCommittedMb)
+    pairs += CODECACHE_COMMITTED_MB_LAST.with(codeCacheCommittedMb)
+    pairs += GC_OLD_TIME_MS_TOTAL.with(oldGcTimeMs)
+    pairs += GC_OLD_COUNT_TOTAL.with(oldGcCount)
+
+    MEMORY_SAMPLED_EVENT.log(pairs)
+  }
+
   private val LATENCY = GROUP.registerEvent("ui.latency", EventFields.DurationMs)
   private val LAGGING = GROUP.registerEvent(
     eventId = "ui.lagging",
     eventField1 = EventFields.DurationMs,
     eventField2 = EventFields.Boolean("during_indexing"),
-    eventField3 = EventFields.Boolean("freeze_popup_shown", description = "Whether the Freeze Popup was shown (or going to be shown) during the UI lag. " +
-                                                                          "The appearance of the popup indicates that the UI thread was processing the Read-Write lock."))
+    eventField3 = EventFields.Boolean("freeze_popup_shown",
+                                      description = "Whether the Freeze Popup was shown (or going to be shown) during the UI lag. " +
+                                                    "The appearance of the popup indicates that the UI thread was processing the Read-Write lock."))
   private val COLD_START = EventFields.Boolean("cold_start")
   private val ACTION_POPUP_LATENCY = GROUP.registerVarargEvent(
     "popup.latency",
@@ -249,57 +400,111 @@ internal object UILatencyLogger : CounterUsagesCollector() {
 
   private val WINDOW_LENGTH_MS = EventFields.Int("window_length_ms", "The duration of measurement window in milliseconds.")
 
-  private val UI_EXECUTION_TIME_TOTAL_MS = EventFields.Int("ui_execution_total_ms", "Total time spent on executing UI events in milliseconds.")
-  private val UI_EXECUTION_TIME_50_US = EventFields.Int("ui_execution_p50_us", "Median duration of execution of a UI event in microseconds.")
-  private val UI_EXECUTION_TIME_95_TO_50 = EventFields.Float("ui_execution_p95_to_p50", "Relation of 95-th percentile of a UI event execution to the median")
-  private val UI_EXECUTION_TIME_99_TO_50 = EventFields.Float("ui_execution_p99_to_p50", "Relation of 99-th percentile of a UI event execution to the median")
+  private val UI_EXECUTION_TIME_TOTAL_MS =
+    EventFields.Int("ui_execution_total_ms", "Total time spent on executing UI events in milliseconds.")
+  private val UI_EXECUTION_TIME_50_US =
+    EventFields.Int("ui_execution_p50_us", "Median duration of execution of a UI event in microseconds.")
+  private val UI_EXECUTION_TIME_95_TO_50 =
+    EventFields.Float("ui_execution_p95_to_p50", "Relation of 95-th percentile of a UI event execution to the median")
+  private val UI_EXECUTION_TIME_99_TO_50 =
+    EventFields.Float("ui_execution_p99_to_p50", "Relation of 99-th percentile of a UI event execution to the median")
 
-  private val INVOCATION_EVENTS_COUNT = EventFields.Int("invocation_events_count", "Number of executed invocation events. Events skipped because of modality mismatch are not counted.")
+  private val INVOCATION_EVENTS_COUNT = EventFields.Int("invocation_events_count",
+                                                        "Number of executed invocation events. Events skipped because of modality mismatch are not counted.")
 
-  private val INVOCATION_WAITING_TIME_TOTAL_MS = EventFields.Int("invocation_waiting_total_ms", "Sum over times of each invocation event spending in the event queue in milliseconds.")
-  private val INVOCATION_WAITING_TIME_50_US = EventFields.Int("invocation_waiting_p50_us", "Median waiting time of an invocation event in microseconds.")
-  private val INVOCATION_WAITING_TIME_95_TO_50 = EventFields.Float("invocation_waiting_p95_to_p50", "Relation of 95-th percentile of an invocation event waiting to the median")
-  private val INVOCATION_WAITING_TIME_99_TO_50 = EventFields.Float("invocation_waiting_p99_to_p50", "Relation of 99-th percentile of an invocation event waiting to the median")
+  private val INVOCATION_WAITING_TIME_TOTAL_MS =
+    EventFields.Int("invocation_waiting_total_ms", "Sum over times of each invocation event spending in the event queue in milliseconds.")
+  private val INVOCATION_WAITING_TIME_50_US =
+    EventFields.Int("invocation_waiting_p50_us", "Median waiting time of an invocation event in microseconds.")
+  private val INVOCATION_WAITING_TIME_95_TO_50 =
+    EventFields.Float("invocation_waiting_p95_to_p50", "Relation of 95-th percentile of an invocation event waiting to the median")
+  private val INVOCATION_WAITING_TIME_99_TO_50 =
+    EventFields.Float("invocation_waiting_p99_to_p50", "Relation of 99-th percentile of an invocation event waiting to the median")
 
-  private val INVOCATION_EXECUTION_TIME_TOTAL_MS = EventFields.Int("invocation_execution_total_ms", "Total time spent on executing invocation events in milliseconds.")
-  private val INVOCATION_EXECUTION_TIME_50_US = EventFields.Int("invocation_execution_p50_us", "Median execution time of an invocation events in microseconds.")
-  private val INVOCATION_EXECUTION_TIME_95_TO_50 = EventFields.Float("invocation_execution_p95_to_p50", "Relation of 95-th percentile of an invocation event execution to the median")
-  private val INVOCATION_EXECUTION_TIME_99_TO_50 = EventFields.Float("invocation_execution_p99_to_p50", "Relation of 99-th percentile of an invocation event execution to the median")
+  private val INVOCATION_EXECUTION_TIME_TOTAL_MS =
+    EventFields.Int("invocation_execution_total_ms", "Total time spent on executing invocation events in milliseconds.")
+  private val INVOCATION_EXECUTION_TIME_50_US =
+    EventFields.Int("invocation_execution_p50_us", "Median execution time of an invocation events in microseconds.")
+  private val INVOCATION_EXECUTION_TIME_95_TO_50 =
+    EventFields.Float("invocation_execution_p95_to_p50", "Relation of 95-th percentile of an invocation event execution to the median")
+  private val INVOCATION_EXECUTION_TIME_99_TO_50 =
+    EventFields.Float("invocation_execution_p99_to_p50", "Relation of 99-th percentile of an invocation event execution to the median")
 
   private val WRITE_LOCK_EVENTS = EventFields.Int("write_lock_events_count", "Number of requests for write lock")
 
-  private val WRITE_LOCK_WAITING_TIME_TOTAL_MS = EventFields.Int("write_lock_waiting_ms", "Total time spent on waiting for acquisition of the write lock in milliseconds.")
-  private val WRITE_LOCK_WAITING_TIME_50_US = EventFields.Int("write_lock_waiting_p50_us", "Median waiting time for the write lock in microseconds.")
-  private val WRITE_LOCK_WAITING_TIME_95_TO_50 = EventFields.Float("write_lock_waiting_p95_to_p50", "Relation of 95-th percentile of a write lock acquisition to the median")
-  private val WRITE_LOCK_WAITING_TIME_99_TO_50 = EventFields.Float("write_lock_waiting_p99_to_p50", "Relation of 99-th percentile of a write lock acquisition to the median")
+  private val WRITE_LOCK_WAITING_TIME_TOTAL_MS =
+    EventFields.Int("write_lock_waiting_ms", "Total time spent on waiting for acquisition of the write lock in milliseconds.")
+  private val WRITE_LOCK_WAITING_TIME_50_US =
+    EventFields.Int("write_lock_waiting_p50_us", "Median waiting time for the write lock in microseconds.")
+  private val WRITE_LOCK_WAITING_TIME_95_TO_50 =
+    EventFields.Float("write_lock_waiting_p95_to_p50", "Relation of 95-th percentile of a write lock acquisition to the median")
+  private val WRITE_LOCK_WAITING_TIME_99_TO_50 =
+    EventFields.Float("write_lock_waiting_p99_to_p50", "Relation of 99-th percentile of a write lock acquisition to the median")
 
-  private val WRITE_LOCK_EXECUTION_TIME_TOTAL_MS = EventFields.Int("write_lock_execution_ms", "Total time spent on execution of write actions in milliseconds.")
-  private val WRITE_LOCK_EXECUTION_TIME_50_US = EventFields.Int("write_lock_execution_p50_us", "Median execution time of write actions in microseconds.")
-  private val WRITE_LOCK_EXECUTION_TIME_95_TO_50 = EventFields.Float("write_lock_execution_p95_to_p50", "Relation of 95-th percentile of a write action execution time to the median")
-  private val WRITE_LOCK_EXECUTION_TIME_99_TO_50 = EventFields.Float("write_lock_execution_p99_to_p50", "Relation of 99-th percentile of a write action execution time to the median")
+  private val WRITE_LOCK_EXECUTION_TIME_TOTAL_MS =
+    EventFields.Int("write_lock_execution_ms", "Total time spent on execution of write actions in milliseconds.")
+  private val WRITE_LOCK_EXECUTION_TIME_50_US =
+    EventFields.Int("write_lock_execution_p50_us", "Median execution time of write actions in microseconds.")
+  private val WRITE_LOCK_EXECUTION_TIME_95_TO_50 =
+    EventFields.Float("write_lock_execution_p95_to_p50", "Relation of 95-th percentile of a write action execution time to the median")
+  private val WRITE_LOCK_EXECUTION_TIME_99_TO_50 =
+    EventFields.Float("write_lock_execution_p99_to_p50", "Relation of 99-th percentile of a write action execution time to the median")
 
   private val READING_LOCK_EVENTS = EventFields.Int("reading_lock_events_count", "Number of events for read and write-intent locks")
 
-  private val READING_LOCK_WAITING_TIME_TOTAL_MS = EventFields.Int("reading_lock_waiting_ms", "Total time spent on waiting for read and write-intent locks in milliseconds.")
-  private val READING_LOCK_WAITING_TIME_50_US = EventFields.Int("reading_lock_waiting_p50_us", "Median waiting time for the read and write-intent locks in microseconds.")
-  private val READING_LOCK_WAITING_TIME_95_TO_50 = EventFields.Float("reading_lock_waiting_p95_to_p50", "Relation of 95-th percentile of read and write-intent locks waiting to the median")
-  private val READING_LOCK_WAITING_TIME_99_TO_50 = EventFields.Float("reading_lock_waiting_p99_to_p50", "Relation of 99-th percentile of read and write-intent locks waiting to the median")
+  private val READING_LOCK_WAITING_TIME_TOTAL_MS =
+    EventFields.Int("reading_lock_waiting_ms", "Total time spent on waiting for read and write-intent locks in milliseconds.")
+  private val READING_LOCK_WAITING_TIME_50_US =
+    EventFields.Int("reading_lock_waiting_p50_us", "Median waiting time for the read and write-intent locks in microseconds.")
+  private val READING_LOCK_WAITING_TIME_95_TO_50 = EventFields.Float("reading_lock_waiting_p95_to_p50",
+                                                                     "Relation of 95-th percentile of read and write-intent locks waiting to the median")
+  private val READING_LOCK_WAITING_TIME_99_TO_50 = EventFields.Float("reading_lock_waiting_p99_to_p50",
+                                                                     "Relation of 99-th percentile of read and write-intent locks waiting to the median")
 
-  private val READING_LOCK_EXECUTION_TIME_TOTAL_MS = EventFields.Int("reading_lock_execution_ms", "Total time spent on execution of read and write-intent actions in milliseconds.")
-  private val READING_LOCK_EXECUTION_TIME_50_US = EventFields.Int("reading_lock_execution_p50_us", "Median execution time of read and write-intent actions in microseconds.")
-  private val READING_LOCK_EXECUTION_TIME_95_TO_50 = EventFields.Float("reading_lock_execution_p95_to_p50", "Relation of 95-th percentile of read and write-intent actions execution time to the median")
-  private val READING_LOCK_EXECUTION_TIME_99_TO_50 = EventFields.Float("reading_lock_execution_p99_to_p50", "Relation of 99-th percentile of read and write-intent actions execution time to the median")
+  private val READING_LOCK_EXECUTION_TIME_TOTAL_MS =
+    EventFields.Int("reading_lock_execution_ms", "Total time spent on execution of read and write-intent actions in milliseconds.")
+  private val READING_LOCK_EXECUTION_TIME_50_US =
+    EventFields.Int("reading_lock_execution_p50_us", "Median execution time of read and write-intent actions in microseconds.")
+  private val READING_LOCK_EXECUTION_TIME_95_TO_50 = EventFields.Float("reading_lock_execution_p95_to_p50",
+                                                                       "Relation of 95-th percentile of read and write-intent actions execution time to the median")
+  private val READING_LOCK_EXECUTION_TIME_99_TO_50 = EventFields.Float("reading_lock_execution_p99_to_p50",
+                                                                       "Relation of 99-th percentile of read and write-intent actions execution time to the median")
 
   private val UI_RESPONSIVENESS = GROUP.registerVarargEvent(
     "ui.responsiveness",
-    UI_EVENTS_COUNT, WINDOW_LENGTH_MS, UI_EXECUTION_TIME_TOTAL_MS, UI_EXECUTION_TIME_50_US, UI_EXECUTION_TIME_95_TO_50,
-    UI_EXECUTION_TIME_99_TO_50, INVOCATION_EVENTS_COUNT, INVOCATION_WAITING_TIME_TOTAL_MS, INVOCATION_WAITING_TIME_50_US,
-    INVOCATION_WAITING_TIME_95_TO_50, INVOCATION_WAITING_TIME_99_TO_50, INVOCATION_EXECUTION_TIME_TOTAL_MS, INVOCATION_EXECUTION_TIME_50_US,
-    INVOCATION_EXECUTION_TIME_95_TO_50, INVOCATION_EXECUTION_TIME_99_TO_50, WRITE_LOCK_EVENTS, WRITE_LOCK_WAITING_TIME_TOTAL_MS,
-    WRITE_LOCK_WAITING_TIME_50_US, WRITE_LOCK_WAITING_TIME_95_TO_50, WRITE_LOCK_WAITING_TIME_99_TO_50, WRITE_LOCK_EXECUTION_TIME_TOTAL_MS,
-    WRITE_LOCK_EXECUTION_TIME_50_US, WRITE_LOCK_EXECUTION_TIME_95_TO_50, WRITE_LOCK_EXECUTION_TIME_99_TO_50, READING_LOCK_EVENTS,
-    READING_LOCK_WAITING_TIME_TOTAL_MS, READING_LOCK_WAITING_TIME_50_US, READING_LOCK_WAITING_TIME_95_TO_50, READING_LOCK_WAITING_TIME_99_TO_50,
-    READING_LOCK_EXECUTION_TIME_TOTAL_MS, READING_LOCK_EXECUTION_TIME_50_US, READING_LOCK_EXECUTION_TIME_95_TO_50, READING_LOCK_EXECUTION_TIME_99_TO_50
+    UI_EVENTS_COUNT,
+    WINDOW_LENGTH_MS,
+    UI_EXECUTION_TIME_TOTAL_MS,
+    UI_EXECUTION_TIME_50_US,
+    UI_EXECUTION_TIME_95_TO_50,
+    UI_EXECUTION_TIME_99_TO_50,
+    INVOCATION_EVENTS_COUNT,
+    INVOCATION_WAITING_TIME_TOTAL_MS,
+    INVOCATION_WAITING_TIME_50_US,
+    INVOCATION_WAITING_TIME_95_TO_50,
+    INVOCATION_WAITING_TIME_99_TO_50,
+    INVOCATION_EXECUTION_TIME_TOTAL_MS,
+    INVOCATION_EXECUTION_TIME_50_US,
+    INVOCATION_EXECUTION_TIME_95_TO_50,
+    INVOCATION_EXECUTION_TIME_99_TO_50,
+    WRITE_LOCK_EVENTS,
+    WRITE_LOCK_WAITING_TIME_TOTAL_MS,
+    WRITE_LOCK_WAITING_TIME_50_US,
+    WRITE_LOCK_WAITING_TIME_95_TO_50,
+    WRITE_LOCK_WAITING_TIME_99_TO_50,
+    WRITE_LOCK_EXECUTION_TIME_TOTAL_MS,
+    WRITE_LOCK_EXECUTION_TIME_50_US,
+    WRITE_LOCK_EXECUTION_TIME_95_TO_50,
+    WRITE_LOCK_EXECUTION_TIME_99_TO_50,
+    READING_LOCK_EVENTS,
+    READING_LOCK_WAITING_TIME_TOTAL_MS,
+    READING_LOCK_WAITING_TIME_50_US,
+    READING_LOCK_WAITING_TIME_95_TO_50,
+    READING_LOCK_WAITING_TIME_99_TO_50,
+    READING_LOCK_EXECUTION_TIME_TOTAL_MS,
+    READING_LOCK_EXECUTION_TIME_50_US,
+    READING_LOCK_EXECUTION_TIME_95_TO_50,
+    READING_LOCK_EXECUTION_TIME_99_TO_50
   )
 
   fun reportUiResponsiveness(
@@ -315,18 +520,46 @@ internal object UILatencyLogger : CounterUsagesCollector() {
     UI_RESPONSIVENESS.log(
       UI_EVENTS_COUNT.with(totalExecution.totalCount),
       WINDOW_LENGTH_MS.with(windowLength.inWholeMilliseconds.toInt()),
-      *reportDurationHistograms(totalExecution, UI_EXECUTION_TIME_TOTAL_MS, UI_EXECUTION_TIME_50_US, UI_EXECUTION_TIME_95_TO_50, UI_EXECUTION_TIME_99_TO_50),
+      *reportDurationHistograms(totalExecution,
+                                UI_EXECUTION_TIME_TOTAL_MS,
+                                UI_EXECUTION_TIME_50_US,
+                                UI_EXECUTION_TIME_95_TO_50,
+                                UI_EXECUTION_TIME_99_TO_50),
       INVOCATION_EVENTS_COUNT.with(invocationEventsWaiting.totalCount),
-      *reportDurationHistograms(invocationEventsWaiting, INVOCATION_WAITING_TIME_TOTAL_MS, INVOCATION_WAITING_TIME_50_US, INVOCATION_WAITING_TIME_95_TO_50, INVOCATION_WAITING_TIME_99_TO_50),
-      *reportDurationHistograms(invocationEventsExecution, INVOCATION_EXECUTION_TIME_TOTAL_MS, INVOCATION_EXECUTION_TIME_50_US, INVOCATION_EXECUTION_TIME_95_TO_50, INVOCATION_EXECUTION_TIME_99_TO_50),
+      *reportDurationHistograms(invocationEventsWaiting,
+                                INVOCATION_WAITING_TIME_TOTAL_MS,
+                                INVOCATION_WAITING_TIME_50_US,
+                                INVOCATION_WAITING_TIME_95_TO_50,
+                                INVOCATION_WAITING_TIME_99_TO_50),
+      *reportDurationHistograms(invocationEventsExecution,
+                                INVOCATION_EXECUTION_TIME_TOTAL_MS,
+                                INVOCATION_EXECUTION_TIME_50_US,
+                                INVOCATION_EXECUTION_TIME_95_TO_50,
+                                INVOCATION_EXECUTION_TIME_99_TO_50),
       // some write lock requests may be upgraded from write-intent lock
       // we don't think it is useful to know the exact number of events that are blocked on write lock acquisition
       WRITE_LOCK_EVENTS.with(writeLockExecution.totalCount),
-      *reportDurationHistograms(writeLockWaiting, WRITE_LOCK_WAITING_TIME_TOTAL_MS, WRITE_LOCK_WAITING_TIME_50_US, WRITE_LOCK_WAITING_TIME_95_TO_50, WRITE_LOCK_WAITING_TIME_99_TO_50),
-      *reportDurationHistograms(writeLockExecution, WRITE_LOCK_EXECUTION_TIME_TOTAL_MS, WRITE_LOCK_EXECUTION_TIME_50_US, WRITE_LOCK_EXECUTION_TIME_95_TO_50, WRITE_LOCK_EXECUTION_TIME_99_TO_50),
+      *reportDurationHistograms(writeLockWaiting,
+                                WRITE_LOCK_WAITING_TIME_TOTAL_MS,
+                                WRITE_LOCK_WAITING_TIME_50_US,
+                                WRITE_LOCK_WAITING_TIME_95_TO_50,
+                                WRITE_LOCK_WAITING_TIME_99_TO_50),
+      *reportDurationHistograms(writeLockExecution,
+                                WRITE_LOCK_EXECUTION_TIME_TOTAL_MS,
+                                WRITE_LOCK_EXECUTION_TIME_50_US,
+                                WRITE_LOCK_EXECUTION_TIME_95_TO_50,
+                                WRITE_LOCK_EXECUTION_TIME_99_TO_50),
       READING_LOCK_EVENTS.with(readingLockExecution.totalCount),
-      *reportDurationHistograms(readingLockWaiting, READING_LOCK_WAITING_TIME_TOTAL_MS, READING_LOCK_WAITING_TIME_50_US, READING_LOCK_WAITING_TIME_95_TO_50, READING_LOCK_WAITING_TIME_99_TO_50),
-      *reportDurationHistograms(readingLockExecution, READING_LOCK_EXECUTION_TIME_TOTAL_MS, READING_LOCK_EXECUTION_TIME_50_US, READING_LOCK_EXECUTION_TIME_95_TO_50, READING_LOCK_EXECUTION_TIME_99_TO_50),
+      *reportDurationHistograms(readingLockWaiting,
+                                READING_LOCK_WAITING_TIME_TOTAL_MS,
+                                READING_LOCK_WAITING_TIME_50_US,
+                                READING_LOCK_WAITING_TIME_95_TO_50,
+                                READING_LOCK_WAITING_TIME_99_TO_50),
+      *reportDurationHistograms(readingLockExecution,
+                                READING_LOCK_EXECUTION_TIME_TOTAL_MS,
+                                READING_LOCK_EXECUTION_TIME_50_US,
+                                READING_LOCK_EXECUTION_TIME_95_TO_50,
+                                READING_LOCK_EXECUTION_TIME_99_TO_50),
     )
   }
 
@@ -349,22 +582,22 @@ internal object UILatencyLogger : CounterUsagesCollector() {
   }
 
   private val MEM_HISTOGRAM_BUCKETS = longArrayOf(
-    1*1024, // 1g
-    5*256, 6*256, 7*256, 8*256, // 2g
-    9*256, 10*256, 11*256, 12*256, // 3g
-    7*512, 8*512, // 4g
-    9*512, 10*512, // 5g
-    6*1024,
-    7*1024,
-    8*1024,
-    9*1024,
-    10*1024,
-    11*1024,
-    12*1024,
-    13*1024,
-    14*1024,
-    15*1024,
-    16*1024,
+    1 * 1024, // 1g
+    5 * 256, 6 * 256, 7 * 256, 8 * 256, // 2g
+    9 * 256, 10 * 256, 11 * 256, 12 * 256, // 3g
+    7 * 512, 8 * 512, // 4g
+    9 * 512, 10 * 512, // 5g
+    6 * 1024,
+    7 * 1024,
+    8 * 1024,
+    9 * 1024,
+    10 * 1024,
+    11 * 1024,
+    12 * 1024,
+    13 * 1024,
+    14 * 1024,
+    15 * 1024,
+    16 * 1024,
   )
   private val MEM_XMX_FIELD = EventFields.BoundedInt("xmx", intArrayOf(512, 768, 1024, 1536, 2048, 4096, 6000, 8192, 12288, 16384))
   private val MEM_SAMPLES_FIELD = EventFields.Int("samples")
@@ -464,7 +697,7 @@ internal object UILatencyLogger : CounterUsagesCollector() {
 }
 
 /** Converts accumulated value into diff-value */
-internal class LongDiffer(var previousAccumulatedValue: Long = 0){
+internal class LongDiffer(var previousAccumulatedValue: Long = 0) {
   /** @return diff between newAccumulatedValue and previous accumulated value, and updates the previous accumulated value */
   fun toDiff(newAccumulatedValue: Long): Long {
     val diff = newAccumulatedValue - previousAccumulatedValue

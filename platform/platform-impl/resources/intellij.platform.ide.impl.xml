@@ -651,7 +651,9 @@
     <applicationService serviceImplementation="com.intellij.diagnostic.LowMemoryNotifier" preload="true" open="true"/>
     <applicationService serviceInterface="com.intellij.diagnostic.EditMemorySettingsService" open="true"
                         serviceImplementation="com.intellij.diagnostic.EditMemorySettingsServiceImpl" preload="true"/>
-    <backgroundPostStartupActivity implementation="com.intellij.diagnostic.IdeHeartbeatEventReporter"/>
+    <postStartupActivity implementation="com.intellij.diagnostic.IdeHeartbeatEventReporter"/>
+    <registryKey key="ide.heartbeat.delay" defaultValue="60000"
+                 description="Delay before the heartbeat thread starts reporting performance data"/>
     <applicationService serviceInterface="com.intellij.ide.plugins.PluginManagerConfigurableService"
                         serviceImplementation="com.intellij.ide.plugins.PluginManagerConfigurableServiceImpl"/>
     <applicationService serviceInterface="com.intellij.ide.plugins.UltimateDependencyChecker"
