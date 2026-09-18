@@ -10,6 +10,8 @@
 - sf:readString(java.nio.file.Path):java.lang.String
 - sf:readString(java.nio.file.Path,java.nio.charset.Charset):java.lang.String
 - sf:write(java.nio.file.Path,B[],java.nio.file.OpenOption[]):java.nio.file.Path
+- sf:writeString(java.nio.file.Path,java.lang.CharSequence,java.nio.charset.Charset,java.nio.file.OpenOption[]):java.nio.file.Path
+- sf:writeString(java.nio.file.Path,java.lang.CharSequence,java.nio.file.OpenOption[]):java.nio.file.Path
 *e:com.intellij.platform.eel.fs.EelOpenOption
 - java.lang.Enum
 - java.nio.file.OpenOption
