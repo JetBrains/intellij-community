@@ -202,7 +202,7 @@ internal class OverrideRegexStringFusMetric(metric: String, regex: String) :
  */
 internal class PathFusMetric(metric: String) : KotlinBuildToolFusMetric<String>(
     metric,
-    EventFields.StringListValidatedByInlineRegexp(metric.lowercase(), anonymizedProjectRegexp) as EventField<String>,
+    EventFields.StringValidatedByInlineRegexp(metric.lowercase(), anonymizedProjectRegexp) as EventField<String>,
     validationStep = KotlinBuildToolProjectPathValidationStep,
     aggregationStep = OverrideValueAggregationStep()
 )

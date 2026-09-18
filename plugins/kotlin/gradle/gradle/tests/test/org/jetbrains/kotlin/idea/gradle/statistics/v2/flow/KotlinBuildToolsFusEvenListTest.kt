@@ -25,27 +25,45 @@ class KotlinBuildToolsFusEvenListTest {
         }
     }
 
-    private val GROUP_EXPECTED_VERSION_AND_HASH = Pair(19, "81aec677123a3862ff19b1840ae3bafb")
+    private val GROUP_EXPECTED_VERSION_AND_HASH = Pair(20, "58ecb2fe5512c71d7d195d8137dcb5b2")
+
+    /**
+     * The source files that define the reported events and the event metrics.
+     * A change in any of them needs a new group version.
+     * The order is a part of the checksum, so keep it stable.
+     */
+    private val VERSIONED_SOURCE_FILE_NAMES = listOf(
+        "kotlinBuildToolEvents.kt",
+        "KotlinBuildToolFusMetric.kt",
+    )
 
     @Test
     fun checkGroupVersionVersion() {
-        val file = File(PathManager.getCommunityHomePath() + "/plugins/kotlin/gradle/gradle/src/org/jetbrains/kotlin/idea/gradle/statistics/v2/flow/kotlinBuildToolEvents.kt").normalize()
+        val files = VERSIONED_SOURCE_FILE_NAMES.map { versionedSourceFile(it) }
         val actualGroupVersionAndHash =
             Pair(
                 KotlinBuildToolFusFlowCollector.group.version,
-                calculateFileChecksum(file)
+                calculateFilesChecksum(files)
             )
         assertEquals(
             GROUP_EXPECTED_VERSION_AND_HASH,
             actualGroupVersionAndHash,
-            "Hash of `${file.absolutePath}` has been changed, please increase FusFlowSendingStep.GROUP_VERSION value. " +
+            "Hash of ${files.joinToString { "`${it.absolutePath}`" }} has been changed, " +
+                    "please increase KotlinBuildToolFusFlowCollector.GROUP_VERSION value. " +
                     "Also you need to update hash and version in this test class."
         )
 
     }
 
-    private fun calculateFileChecksum(file: File): String {
-        assertTrue { file.exists() }
-        return MessageDigest.getInstance("MD5").digest(file.readBytes()).joinToString("") { "%02x".format(it) }
+    private fun versionedSourceFile(fileName: String): File =
+        File(PathManager.getCommunityHomePath() + "/plugins/kotlin/gradle/gradle/src/org/jetbrains/kotlin/idea/gradle/statistics/v2/flow/" + fileName).normalize()
+
+    private fun calculateFilesChecksum(files: List<File>): String {
+        val digest = MessageDigest.getInstance("MD5")
+        for (file in files) {
+            assertTrue(file.exists(), "File `${file.absolutePath}` does not exist")
+            digest.update(file.readBytes())
+        }
+        return digest.digest().joinToString("") { "%02x".format(it) }
     }
 }
