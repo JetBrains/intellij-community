@@ -28,6 +28,23 @@ sealed interface DevPluginLayoutAssetSource {
     @JvmField val fileName: String,
   ) : DevPluginLayoutAssetSource
 
+  /** Declares Jupyter configuration and frontend inputs. Paths are relative to the project root. */
+  data class JupyterFrontend(
+    @JvmField val configurationModule: String,
+    @JvmField val remoteConfigurationPath: String,
+    /** A null path disables local configuration. A missing file permits a later override. */
+    @JvmField val localConfigurationPath: String?,
+    @JvmField val frontendModule: String,
+    @JvmField val frontendPath: String,
+    /** Files and directories relative to [frontendPath], including the declarations of tool versions. */
+    @JvmField val buildInputPaths: List<String>,
+    @JvmField val optionalLicensePath: String,
+    @JvmField val resourceDirectory: String,
+    @JvmField val licenseMetadataFileName: String,
+    @JvmField val skipStep: String,
+    @JvmField val operation: JupyterFrontendOperation,
+  ) : DevPluginLayoutAssetSource
+
   data class BazelTarget(
     @JvmField val label: String,
     @JvmField val kind: String,
@@ -54,6 +71,12 @@ sealed interface DevPluginLayoutAssetSource {
     @JvmField val folder: String,
     @JvmField val language: String,
   ) : DevPluginLayoutAssetSource
+}
+
+@ApiStatus.Internal
+enum class JupyterFrontendOperation {
+  RESOURCES_AND_LICENSES,
+  LICENSES_ONLY,
 }
 
 /**

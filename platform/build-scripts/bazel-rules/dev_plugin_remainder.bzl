@@ -165,6 +165,110 @@ def _declare_source_trees(ctx):
         result[identifier] = directory
     return result
 
+def _properties_value(value):
+    return value.replace("\\", "\\\\").replace("\n", "\\n").replace("\r", "\\r").replace("=", "\\=").replace(":", "\\:").replace(" ", "\\ ")
+
+def _dev_jupyter_frontend_impl(ctx):
+    resources = ctx.actions.declare_directory(ctx.label.name + "/jupyter-web") if ctx.attr.operation == "RESOURCES_AND_LICENSES" else None
+    if ctx.attr.skip:
+        if resources == None:
+            return [DefaultInfo(files = depset())]
+        ctx.actions.run_shell(
+            outputs = [resources],
+            command = 'mkdir -p "$1"',
+            arguments = [resources.path],
+            mnemonic = "JupyterFrontendOmitted",
+        )
+        return [DefaultInfo(files = depset([resources]))]
+    temporary = ctx.actions.declare_directory(ctx.label.name + ".temporary")
+    metadata = ctx.actions.declare_file(ctx.label.name + ".licenses.json")
+    cache_key = ctx.actions.declare_file(ctx.label.name + ".cache-key")
+    parameters = dict(ctx.attr.parameters)
+    parameters.update({
+        "allowLocal": str(ctx.attr.allow_local).lower(),
+        "operation": ctx.attr.operation,
+        "remoteConfiguration": ctx.file.remote_configuration.path,
+        "licenseMetadataFile": metadata.path,
+        "cacheKeyFile": cache_key.path,
+        "temporaryDirectory": temporary.path,
+        "frontendDirectory": temporary.path + ".unused-frontend",
+    })
+    if resources:
+        parameters["targetDirectory"] = resources.dirname
+    inputs = [ctx.file.remote_configuration]
+    materialized_inputs = None
+    if ctx.file.local_configuration:
+        parameters["localConfiguration"] = ctx.file.local_configuration.path
+        inputs.append(ctx.file.local_configuration)
+    if ctx.file.archive:
+        parameters["archiveFile"] = ctx.file.archive.path
+        inputs.append(ctx.file.archive)
+    else:
+        materialized_inputs = ctx.actions.declare_directory(ctx.label.name + ".inputs")
+        parameters["materializedInputsDirectory"] = materialized_inputs.path
+        if ctx.attr.operation == "LICENSES_ONLY":
+            for file in ctx.attr.source_tree_targets["frontend"][DefaultInfo].files.to_list():
+                if file.short_path.endswith("/resources/jupyter-web/licenses.json"):
+                    parameters["localLicenseFile"] = file.path
+                    inputs.append(file)
+        else:
+            trees = _declare_source_trees(ctx)
+            parameters["frontendDirectory"] = trees["frontend"].path
+            inputs.extend(trees.values())
+            if "tools" in trees:
+                root = trees["tools"].path
+                parameters["localInputsRoot"] = root
+                if ctx.file.local_parameters:
+                    parameters["localToolsFile"] = ctx.file.local_parameters.path
+                    inputs.append(ctx.file.local_parameters)
+                for key, relative in ctx.attr.local_paths.items():
+                    parameters["path." + key] = relative
+            if ctx.files.native_tools:
+                parameters["nativeInputsRoot"] = ctx.files.native_tools[0].dirname
+                inputs.extend(ctx.files.native_tools)
+    request = ctx.actions.declare_file(ctx.label.name + ".properties")
+    ctx.actions.write(request, "\n".join([key + "=" + _properties_value(parameters[key]) for key in sorted(parameters)]) + "\n")
+    outputs = [metadata, cache_key, temporary]
+    if materialized_inputs:
+        outputs.append(materialized_inputs)
+    if ctx.attr.operation == "RESOURCES_AND_LICENSES":
+        outputs.append(resources)
+    ctx.actions.run(
+        executable = ctx.executable.preparer,
+        tools = [ctx.attr.preparer[DefaultInfo].files_to_run],
+        arguments = [request.path],
+        inputs = depset(inputs + [request]),
+        outputs = outputs,
+        mnemonic = "JupyterFrontendPreparation",
+        progress_message = "Preparing Jupyter frontend %{label}",
+        execution_requirements = {"block-network": "1", "no-remote-exec": "1"} if ctx.files.native_tools else {"block-network": "1"},
+    )
+    return [
+        DefaultInfo(files = depset([resources] if ctx.attr.operation == "RESOURCES_AND_LICENSES" else [metadata])),
+        OutputGroupInfo(licenses = depset([metadata]), cache_key = depset([cache_key])),
+    ]
+
+dev_jupyter_frontend = rule(
+    implementation = _dev_jupyter_frontend_impl,
+    attrs = {
+        "preparer": attr.label(mandatory = True, executable = True, cfg = "exec"),
+        "remote_configuration": attr.label(allow_single_file = True),
+        "local_configuration": attr.label(allow_single_file = True),
+        "archive": attr.label(allow_single_file = True),
+        "allow_local": attr.bool(default = True),
+        "skip": attr.bool(),
+        "operation": attr.string(default = "RESOURCES_AND_LICENSES", values = ["RESOURCES_AND_LICENSES", "LICENSES_ONLY"]),
+        "parameters": attr.string_dict(),
+        "local_parameters": attr.label(allow_single_file = True),
+        "native_tools": attr.label_list(allow_files = True),
+        "local_paths": attr.string_dict(),
+        "source_tree_targets": attr.string_keyed_label_dict(allow_files = True),
+        "source_tree_prefixes": attr.string_dict(),
+        "_zipper": attr.label(default = "@bazel_tools//tools/zip:zipper", executable = True, cfg = "exec"),
+    },
+    doc = "Runs typed Jupyter preparation with resolved inputs. Skipping contributes an empty resource tree and no licenses.",
+)
+
 def _dev_debugger_egg_impl(ctx):
     if sorted(ctx.attr.source_tree_targets.keys()) != ["metadata", "pydev"]:
         fail("debugger egg source tree IDs must be exactly metadata and pydev")
