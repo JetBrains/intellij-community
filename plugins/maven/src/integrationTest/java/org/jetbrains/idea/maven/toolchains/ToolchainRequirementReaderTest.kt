@@ -141,6 +141,91 @@ class ToolchainRequirementReaderTest(mavenVersion: String, modelVersion: String)
   }
 
   @Test
+  fun testReadSelectJdkToolchainRequirementFromPluginConfiguration() = runBlocking {
+    val finder = ToolchainFinder()
+
+    maven.importProjectAsync("""
+      <groupId>test</groupId>
+      <artifactId>test</artifactId>
+      <version>1</version>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-toolchains-plugin</artifactId>
+            <configuration>
+              <version>99</version>
+              <useJdk>Never</useJdk>
+            </configuration>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>select-jdk-toolchain</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+""")
+
+    val mavenProject = maven.projectsManager.rootProjects[0]!!
+
+    val expectedRequirement = ToolchainRequirement.Builder(ToolchainRequirement.JDK_TYPE)
+      .set("version", "99")
+      .discoverJdks(true)
+      .build()
+
+    assertSameElements(finder.allToolchainRequirements(mavenProject), expectedRequirement)
+    assertEquals(expectedRequirement, finder.searchToolchainRequirementForMain(mavenProject), "Main toolchain does not match")
+    assertEquals(expectedRequirement, finder.searchToolchainRequirementForTest(mavenProject), "Test toolchain does not match")
+  }
+
+  @Test
+  fun testEmptySelectJdkToolchainParameterFallsBackToUserProperty() = runBlocking {
+    val finder = ToolchainFinder()
+
+    maven.importProjectAsync("""
+      <groupId>test</groupId>
+      <artifactId>test</artifactId>
+      <version>1</version>
+      <properties>
+        <toolchain.jdk.version>[99,100)</toolchain.jdk.version>
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-toolchains-plugin</artifactId>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>select-jdk-toolchain</goal>
+                </goals>
+                <configuration>
+                  <version></version>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+""")
+
+    val mavenProject = maven.projectsManager.rootProjects[0]!!
+
+    val expectedRequirement = ToolchainRequirement.Builder(ToolchainRequirement.JDK_TYPE)
+      .set("version", "[99,100)")
+      .useImporterJdkIfMatches(true)
+      .discoverJdks(true)
+      .build()
+
+    assertSameElements(finder.allToolchainRequirements(mavenProject), expectedRequirement)
+    assertEquals(expectedRequirement, finder.searchToolchainRequirementForMain(mavenProject), "Main toolchain does not match")
+    assertEquals(expectedRequirement, finder.searchToolchainRequirementForTest(mavenProject), "Test toolchain does not match")
+  }
+
+  @Test
   fun testIgnoreToolchainGoalConfigurationForSelectJdkToolchain() = runBlocking {
     val finder = ToolchainFinder()
 

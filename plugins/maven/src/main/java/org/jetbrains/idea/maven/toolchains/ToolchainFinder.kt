@@ -77,19 +77,30 @@ class ToolchainFinder {
       it.goals.contains(SELECT_JDK_TOOLCHAIN_GOAL)
     } ?: return null
     val builder = ToolchainRequirement.Builder(ToolchainRequirement.JDK_TYPE)
-      .useImporterJdkIfMatches(canUseImporterJdkIfMatches(mavenProject, execution.configurationElement))
-      .discoverJdks(canDiscoverJdks(mavenProject, execution.configurationElement))
+      .useImporterJdkIfMatches(canUseImporterJdkIfMatches(mavenProject, execution))
+      .discoverJdks(canDiscoverJdks(mavenProject, execution))
     var hasRequirements = false
     for (parameter in SELECT_JDK_TOOLCHAIN_PARAMETERS) {
-      val value = execution.configurationElement?.getChildTextTrim(parameter.xmlName)
-                  ?: mavenProject.properties.getProperty(parameter.propertyName)?.trim()
-      if (!value.isNullOrBlank()) {
+      val value = readParameter(mavenProject, execution, parameter.xmlName, parameter.propertyName)
+      if (value != null) {
         builder.set(parameter.requirementName, value)
         hasRequirements = true
       }
     }
     if (!hasRequirements) return null
     return builder.build()
+  }
+
+  /** A blank configuration value counts as absent, so the documented user property still applies. */
+  private fun readParameter(
+    mavenProject: MavenProject,
+    execution: MavenPlugin.Execution,
+    xmlName: String,
+    propertyName: String,
+  ): String? {
+    val configured = execution.configurationElement?.getChildTextTrim(xmlName)
+    if (!configured.isNullOrBlank()) return configured
+    return mavenProject.properties.getProperty(propertyName)?.trim()?.takeIf { it.isNotBlank() }
   }
 
 
@@ -102,15 +113,13 @@ class ToolchainFinder {
     return builder.build()
   }
 
-  private fun canUseImporterJdkIfMatches(mavenProject: MavenProject, config: Element?): Boolean {
-    val mode = config?.getChildTextTrim(USE_JDK_PARAMETER)
-               ?: mavenProject.properties.getProperty(TOOLCHAIN_JDK_MODE_PROPERTY)?.trim()
+  private fun canUseImporterJdkIfMatches(mavenProject: MavenProject, execution: MavenPlugin.Execution): Boolean {
+    val mode = readParameter(mavenProject, execution, USE_JDK_PARAMETER, TOOLCHAIN_JDK_MODE_PROPERTY)
     return mode == null || mode.equals(USE_JDK_IF_MATCH, ignoreCase = true)
   }
 
-  private fun canDiscoverJdks(mavenProject: MavenProject, config: Element?): Boolean {
-    val discoverToolchains = config?.getChildTextTrim(DISCOVER_TOOLCHAINS_PARAMETER)
-                             ?: mavenProject.properties.getProperty(TOOLCHAIN_JDK_DISCOVER_PROPERTY)?.trim()
+  private fun canDiscoverJdks(mavenProject: MavenProject, execution: MavenPlugin.Execution): Boolean {
+    val discoverToolchains = readParameter(mavenProject, execution, DISCOVER_TOOLCHAINS_PARAMETER, TOOLCHAIN_JDK_DISCOVER_PROPERTY)
     return !discoverToolchains.equals("false", ignoreCase = true)
   }
 
