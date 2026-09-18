@@ -185,7 +185,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
 
     Processor<ChooseByNameContributor> processor = contributor ->
       processContributorForName(contributor, applicable.get(contributor), parameters, canceled, items);
-    if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(new ArrayList<>(applicable.keySet()), canceled, processor)) {
+    if (!JobLauncher.getInstance().invokeConcurrentlyUnderContextProgress(new ArrayList<>(applicable.keySet()), processor)) {
       canceled.cancel();
     }
     canceled.checkCanceled(); // if parallel job execution was canceled because of PCE, rethrow it from here

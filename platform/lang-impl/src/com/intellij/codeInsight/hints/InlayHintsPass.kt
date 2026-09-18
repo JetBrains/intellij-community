@@ -54,11 +54,8 @@ class InlayHintsPass(
     val elementsOutside = allDivided.flatMap(Divider.DividedElements::outside)
     val skippedCollectors = ConcurrentCollectionFactory.createConcurrentSet<Int>()
 
-    if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(
+    if (!JobLauncher.getInstance().invokeConcurrentlyUnderContextProgress(
         elementsInside + elementsOutside,
-        progress,
-        true,
-        false,
         Processor { element ->
           for (collectorInd in enabledCollectors.indices.minus(skippedCollectors)) {
             val collector = enabledCollectors[collectorInd]

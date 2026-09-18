@@ -26,6 +26,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtilsCore;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.progress.util.TooManyUsagesStatus;
 import com.intellij.openapi.project.DumbService;
@@ -322,7 +323,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         return processor.toString();
       }
     };
-    return JobLauncher.getInstance().invokeConcurrentlyUnderContextProgress(Arrays.asList(scopeElements), localProcessor);
+    return ProgressIndicatorUtilsCore.runUnderEmptyProgressIfNone(()->JobLauncher.getInstance().invokeConcurrentlyUnderContextProgress(Arrays.asList(scopeElements), localProcessor));
   }
 
   private @Nullable("null means we did not find common container files") Set<VirtualFile> intersectionWithContainerNameFiles(@NotNull GlobalSearchScope commonScope,
@@ -625,7 +626,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
           };
           // try to run parallel read actions but fail as soon as possible
           try {
-            JobLauncher.getInstance().invokeConcurrentlyUnderProgress(files, wrapper, processor);
+            List<? extends VirtualFile> finalFiles = files;
+            ProgressManager.getInstance().executeProcessUnderProgress(()->
+            JobLauncher.getInstance().invokeConcurrentlyUnderContextProgress(finalFiles, processor), wrapper);
             processorCanceled = stopped.get();
           }
           catch (ProcessCanceledException _) {
@@ -783,7 +786,11 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     if (qName.isEmpty()) {
       throw new IllegalArgumentException("Cannot search for elements with empty text. Element: "+originalElement+ "; "+(originalElement == null ? null : originalElement.getClass()));
     }
-    ProgressIndicator progress = getOrCreateIndicator();
+    ProgressIndicator progress = ProgressIndicatorProvider.getGlobalProgressIndicator();
+    if (progress == null) {
+      return ProgressManager.getInstance().runProcess(()->processUsagesInNonJavaFiles(originalElement, qName, processor, initialScope), new EmptyProgressIndicator());
+    }
+    progress.setIndeterminate(false);
 
     int dotIndex = qName.lastIndexOf('.');
     int dollarIndex = qName.lastIndexOf('$');
@@ -811,7 +818,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
       int patternLength = qName.length();
       AtomicInteger i = new AtomicInteger();
-      JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Arrays.asList(files), progress, psiFile -> {
+      JobLauncher.getInstance().invokeConcurrentlyUnderContextProgress(Arrays.asList(files), psiFile -> {
         if (psiFile instanceof PsiBinaryFile) {
           return true;
         }

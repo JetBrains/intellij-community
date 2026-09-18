@@ -505,7 +505,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
             .instantiateMainPasses(psiFile, document, HighlightInfoProcessor.getEmpty());
 
           JobLauncher.getInstance()
-            .invokeConcurrentlyUnderProgress(mainPasses, progress, true, true, pass -> {
+            .invokeConcurrentlyUnderContextProgress(mainPasses, pass -> {
               pass.doCollectInformation(progress);
               return true;
             });

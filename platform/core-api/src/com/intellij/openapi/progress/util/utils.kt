@@ -5,10 +5,13 @@ package com.intellij.openapi.progress.util
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.Cancellation
+import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.assertRunBlockingBackgroundThreadAndNoWriteAction
+import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.ExceptionUtil
@@ -159,4 +162,15 @@ fun <T> runWithCheckCanceled(
 fun <T> awaitWithCheckCanceled(deferred: Deferred<T>): T {
   assertRunBlockingBackgroundThreadAndNoWriteAction()
   return deferred.asCompletableFuture().awaitWithCheckCanceled()
+}
+
+@ApiStatus.Internal
+fun <T> runUnderEmptyProgressIfNone(computable: Computable<out T>): T {
+  val indicator = ProgressIndicatorProvider.getGlobalProgressIndicator()
+  if (indicator == null) {
+    return ProgressManager.getInstance().runProcess(computable, EmptyProgressIndicator())
+  }
+  else {
+    return computable.compute()
+  }
 }

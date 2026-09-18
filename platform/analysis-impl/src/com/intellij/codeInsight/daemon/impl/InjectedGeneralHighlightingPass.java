@@ -103,7 +103,7 @@ final class InjectedGeneralHighlightingPass extends ProgressableTextEditorHighli
     TextAttributesKey fragmentKey = EditorColors.createInjectedLanguageFragmentKey(myFile.getLanguage());
     Set<@NotNull FileViewProvider> injected = ConcurrentCollectionFactory.createConcurrentSet();  // in case of concatenation, multiple hosts can return the same injected fragment. have to visit it only once
     ManagedHighlighterRecycler.runWithRecycler(getHighlightingSession(), "IGHP", recycler -> {
-      processInjectedPsiFiles(allInsideElements, allOutsideElements, progress, injected,
+      processInjectedPsiFiles(allInsideElements, allOutsideElements, injected,
                               (injectedPsi, places) ->
         runAnnotatorsAndVisitorsOnInjectedPsi(injectedLanguageManager, injectedPsi, places, fragmentKey, (toolId, psiElement, infos) -> {
           myHighlightInfoUpdater.psiElementVisited(toolId, psiElement, infos, getDocument(), injectedPsi, myProject, getHighlightingSession(), recycler);
@@ -125,7 +125,6 @@ final class InjectedGeneralHighlightingPass extends ProgressableTextEditorHighli
   @RequiresReadLock
   private void processInjectedPsiFiles(@NotNull List<? extends PsiElement> elements1,
                                        @NotNull List<? extends PsiElement> elements2,
-                                       @NotNull ProgressIndicator progress,
                                        @NotNull Set<? super FileViewProvider> visitedInjected,
                                        @NotNull PsiLanguageInjectionHost.InjectedPsiVisitor visitor) {
     ThreadingAssertions.assertReadAccess();
@@ -172,7 +171,7 @@ final class InjectedGeneralHighlightingPass extends ProgressableTextEditorHighli
     // so instead of showing "highlighted 1% of injected fragments", show "ran injectors for 1% of hosts"
     setProgressLimit(hosts.size());
 
-    if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(new ArrayList<>(hosts), progress, element -> {
+    if (!JobLauncher.getInstance().invokeConcurrentlyUnderContextProgress(new ArrayList<>(hosts), element -> {
       ThreadingAssertions.assertReadAccess();
       try {
         injectedLanguageManager.enumerateEx(element, myFile, false, (injectedPsi, places) -> {
@@ -219,7 +218,7 @@ final class InjectedGeneralHighlightingPass extends ProgressableTextEditorHighli
     AnnotatorRunner annotatorRunner = myRunAnnotators ? new AnnotatorRunner(session, myBatchMode) : null;
     Divider.divideInsideAndOutsideAllRoots(injectedPsi, injectedPsi.getTextRange(), injectedPsi.getTextRange(), GeneralHighlightingPass.SHOULD_HIGHLIGHT_FILTER, dividedElements -> {
       List<? extends @NotNull PsiElement> inside = dividedElements.inside();
-      Runnable runnable = () -> {
+      Runnable runHighlightVisitors = () -> {
         HighlightVisitorRunner highlightVisitorRunner = new HighlightVisitorRunner(injectedPsi, myGlobalScheme, myRunVisitors, myHighlightErrorElements);
 
         highlightVisitorRunner.createHighlightVisitorsFor(visitors -> {
@@ -237,10 +236,10 @@ final class InjectedGeneralHighlightingPass extends ProgressableTextEditorHighli
         highlightInjectedSyntax(injectedPsi, places, resultSink);
       };
       if (annotatorRunner == null) {
-        runnable.run();
+        runHighlightVisitors.run();
       }
       else {
-        annotatorRunner.runAnnotatorsAsync(documentWindow, inside, List.of(), runnable, resultSink);
+        annotatorRunner.runAnnotatorsAsync(documentWindow, inside, List.of(), runHighlightVisitors, resultSink);
       }
       return true;
     });
