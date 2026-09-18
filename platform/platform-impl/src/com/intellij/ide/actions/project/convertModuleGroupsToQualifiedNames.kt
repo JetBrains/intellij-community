@@ -37,10 +37,9 @@ import com.intellij.ui.EditorTextField
 import com.intellij.ui.EditorTextFieldProvider
 import com.intellij.ui.JBColor
 import com.intellij.ui.MonospaceEditorCustomization
-import com.intellij.ui.components.JBLabel
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
-import com.intellij.xml.util.XmlStringUtil
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.util.ui.JBDimension
 import java.awt.Color
 import java.awt.Font
 import javax.swing.Action
@@ -105,14 +104,21 @@ internal class ConvertModuleGroupsToQualifiedNamesDialog(val project: Project) :
   }
 
   override fun createCenterPanel(): JPanel {
-    val text = XmlStringUtil.wrapInHtml(ProjectBundle.message("convert.module.groups.description.text"))
-    val recordPreviousNames = com.intellij.util.ui.UI.PanelFactory.panel(recordPreviousNamesCheckBox)
-      .withTooltip(ProjectBundle.message("convert.module.groups.record.previous.names.tooltip",
-                                         ApplicationNamesInfo.getInstance().fullProductName)).createPanel()
-    return JBUI.Panels.simplePanel(0, UIUtil.DEFAULT_VGAP)
-      .addToCenter(editorArea)
-      .addToTop(JBLabel(text))
-      .addToBottom(recordPreviousNames)
+    return panel {
+      row {
+        text(ProjectBundle.message("convert.module.groups.description.text"))
+      }
+      row {
+        cell(editorArea)
+          .applyToComponent { minimumSize = JBDimension(100, 60) }
+          .align(Align.FILL)
+      }.resizableRow()
+      row {
+        cell(recordPreviousNamesCheckBox)
+          .contextHelp(ProjectBundle.message("convert.module.groups.record.previous.names.tooltip",
+                                             ApplicationNamesInfo.getInstance().fullProductName))
+      }
+    }
   }
 
   override fun getPreferredFocusedComponent(): JComponent = editorArea.focusTarget
