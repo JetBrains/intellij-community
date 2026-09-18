@@ -78,10 +78,10 @@ internal class VenvEvoEnvironmentProvider : PyEvoEnvironmentProvider {
    * The node claims no mark of its own: it creates its environments with the standard library's `venv`, which writes
    * nothing into `pyvenv.cfg` to say so. An environment naming no tool therefore reads as this node's own.
    */
-  override suspend fun loadSections(pyProject: EvoPyProject, fileSystem: FileSystem<PathHolder.Eel>, discovered: List<DiscoveredVenv>): EvoLoadResultDto {
+  override suspend fun loadSections(context: EvoToolContext, discovered: List<DiscoveredVenv>): EvoLoadResultDto {
     return EvoLoadResultDto.Ok(discovered.toInProjectAndOtherSections(
       owner = this,
-      baseDir = pyProject.workspace.baseDir,
+      baseDir = context.workspace.baseDir,
       icon = icon,
       label = PySdkBundle.message("evolution.section.in.project"),
     ))
@@ -132,7 +132,7 @@ internal class VenvEvoEnvironmentProvider : PyEvoEnvironmentProvider {
    * interpreter outside the project belongs to something else, whatever put it there.
    */
   override suspend fun recreateSpecFor(context: EvoToolContext, leaf: EvoLeafDto): EvoRecreateDto? {
-    leaf.ref.ownedEnvBinaryIn(context.pyProject.workspace.baseDir) ?: return null
+    leaf.ref.ownedEnvBinaryIn(context.workspace.baseDir) ?: return null
     val options = context.systemPythonOptions().takeIf { it.isNotEmpty() } ?: return null
     return EvoRecreateDto(options = options, canSyncPackages = false)
   }
@@ -178,7 +178,7 @@ internal class VenvEvoEnvironmentProvider : PyEvoEnvironmentProvider {
    */
   override suspend fun addNewEnvSpec(context: EvoToolContext, section: EvoSectionDto): EvoAddNewDto? {
     val options = context.systemPythonOptions().takeIf { it.isNotEmpty() } ?: return null
-    val container = section.addNewFolderPath?.let { Path.of(it) } ?: context.pyProject.workspace.baseDir
+    val container = section.addNewFolderPath?.let { Path.of(it) } ?: context.workspace.baseDir
     val taken = listEntryNames(container)
     return EvoAddNewDto(
       name = firstFreeVenvDir(container).fileName.toString(),

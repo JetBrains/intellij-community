@@ -7,11 +7,9 @@ import com.intellij.python.sdk.backend.evolution.DiscoveredVenv
 import com.intellij.python.sdk.backend.evolution.PyEvoEnvironmentProvider
 import com.intellij.python.sdk.backend.evolution.toInProjectAndOtherSections
 import com.intellij.python.sdk.common.PyInterpreterRef
-import com.intellij.python.sdk.backend.evolution.EvoPyProject
+import com.intellij.python.sdk.backend.evolution.EvoToolContext
 import com.intellij.python.sdk.common.evolution.EvoLoadResultDto
 import com.intellij.python.sdk.common.evolution.EvoSectionDto
-import com.jetbrains.python.sdk.add.v2.FileSystem
-import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
@@ -39,8 +37,7 @@ class PyEvoInProjectSectionsTest {
     override val icon: Icon = AllIcons.Language.Python
 
     override suspend fun loadSections(
-      pyProject: EvoPyProject,
-      fileSystem: FileSystem<PathHolder.Eel>,
+      context: EvoToolContext,
       discovered: List<DiscoveredVenv>,
     ): EvoLoadResultDto = EvoLoadResultDto.Ok(emptyList())
   }

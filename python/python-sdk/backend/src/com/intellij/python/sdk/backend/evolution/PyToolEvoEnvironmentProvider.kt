@@ -41,8 +41,8 @@ abstract class PyToolEvoEnvironmentProvider : PyEvoEnvironmentProvider {
   /** The tool's own FUS identity — a well-known Python package name, so statistics need no vocabulary of their own. */
   override val fusId: String get() = tool.fusId
 
-  override suspend fun isAvailable(pyProject: EvoPyProject, fileSystem: FileSystem<PathHolder.Eel>): Boolean =
-    executableOrNull(fileSystem) != null
+  override suspend fun isAvailable(context: EvoToolContext): Boolean =
+    executableOrNull(context.fileSystem) != null
 
   /**
    * This tool's executable on [fileSystem], or `null` when it is not installed there.

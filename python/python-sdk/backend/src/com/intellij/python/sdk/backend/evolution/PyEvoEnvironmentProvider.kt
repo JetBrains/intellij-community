@@ -62,46 +62,48 @@ import kotlin.io.path.pathString
 private val LOG: Logger = fileLogger()
 
 /**
- * The modules that share one environment, and where that environment lives.
+ * The projects that share one environment, and where that environment lives.
  *
  * A tool workspace (uv, poetry) declares one environment at its [root], and no member owns one. So every directory a
  * tool works in is the root's ([baseDir]), every tool is driven from the root's [module], and an interpreter picked
  * for any one member is written to all of [members].
  *
- * A standalone project is a workspace of one and is its own root. That is why a project always has one, and why
+ * A standalone project is a workspace of one and is its own root. That is why a project always belongs to one, and why
  * nothing downstream has to ask whether a workspace exists before it can act.
  *
- * One instance is shared by every member, so "the same workspace" is answerable by identity.
+ * The owner of its projects. A member states nothing about the workspace it belongs to, so a caller that needs both is
+ * handed both, as [EvoToolContext] does. `EvoPyProjectModel` holds the workspaces of a project model generation.
  */
 @ApiStatus.Internal
 class EvoWorkspace(
   /** The project every directory and every tool is resolved against. */
-  val root: PyProject,
+  val root: EvoPyProject,
   /** Every project of the workspace, the [root] included. A selected interpreter is written to all of them. */
-  val members: List<PyProject>,
+  val members: List<EvoPyProject>,
 ) {
   /** The module every tool is driven from. */
-  val module: Module get() = root.residesOnModule
+  val module: Module get() = root.module
 
   /** The directory every tool runs in. */
   val baseDir: Directory get() = root.baseDir
 
+  /** The project every member of this workspace belongs to. */
+  val project: Project get() = root.project
+
   /** The wire identity of the [root]. See [keyOf]. */
-  val rootKey: String = keyOf(root)
+  val rootKey: String get() = root.key
 }
 
 /**
- * The [PyProject] the widget acts on, resolved against the workspace it belongs to.
+ * The [PyProject] the widget acts on: one Python module, its own directory and the interpreter it uses.
  *
- * Two views of one project, and every member belongs to exactly one of them. [module], [baseDir] and [sdk] describe
- * the project the user is looking at, which is what the status bar reflects. [workspace] describes what a tool acts on,
- * which for a workspace member is the workspace root and not the member.
+ * [module], [baseDir] and [interpreter] describe the project the user is looking at, which is what the status bar
+ * reflects. It states nothing about the workspace it belongs to, because the workspace owns its members and not the
+ * other way round — see [EvoWorkspace] for what a tool acts on.
  */
 @ApiStatus.Internal
 class EvoPyProject(
   private val self: PyProject,
-  /** What a tool acts on. See [EvoWorkspace]. */
-  val workspace: EvoWorkspace,
   /**
    * The interpreter this project uses, as it stood when the snapshot was computed.
    *
@@ -147,11 +149,15 @@ private fun keyOf(pyProject: PyProject): String = FileUtil.toSystemIndependentNa
 private const val SYSTEM_PYTHONS_KEY: String = "core.systemPythons"
 
 /**
- * What a provider needs to act on the module the widget is showing: the [pyProject] resolved against its workspace, the
- * [fileSystem] of the machine it lives on, and the [errorSink] a failed tool command must be reported to.
+ * What a provider needs to act on the module the widget is showing: the [workspace] a tool acts on, the [pyProject] the
+ * user is looking at, the [fileSystem] of the machine it lives on, and the [errorSink] a failed tool command must be
+ * reported to.
  *
- * Bundled into one parameter because every tool-owned operation needs all three, and because it gives the core a single
+ * Bundled into one parameter because every tool-owned operation needs all four, and because it gives the core a single
  * place to decide what a provider is handed — a provider must not reach for the project or the Eel machine itself.
+ *
+ * Both the workspace and the project, because a provider needs both and neither states the other: a directory a tool
+ * runs in is the workspace's, while the module a tool is configured against is the project's.
  *
  * Report a tool failure through [errorSink] rather than swallowing it: the default sink opens the platform's
  * process-execution-error dialog with the command, its exit code and its output, which is the only way the user finds
@@ -159,6 +165,7 @@ private const val SYSTEM_PYTHONS_KEY: String = "core.systemPythons"
  */
 @ApiStatus.Internal
 class EvoToolContext(
+  val workspace: EvoWorkspace,
   val pyProject: EvoPyProject,
   val fileSystem: FileSystem<PathHolder.Eel>,
   val errorSink: ErrorSink,
@@ -289,15 +296,14 @@ interface PyEvoEnvironmentProvider {
    * Whether this provider's tool is available on the project's Eel machine. Unavailable providers are dropped
    * from the node list, so an uninstalled tool never shows up. Defaults to always-available.
    */
-  suspend fun isAvailable(pyProject: EvoPyProject, fileSystem: FileSystem<PathHolder.Eel>): Boolean = true
+  suspend fun isAvailable(context: EvoToolContext): Boolean = true
 
   /**
    * Lazily compute this node's sections (layout owned by the provider) when it is expanded. [discovered] is the
    * centrally-found list of virtualenvs under the project's base dirs; providers filter it to the subset they own.
    */
   suspend fun loadSections(
-    pyProject: EvoPyProject,
-    fileSystem: FileSystem<PathHolder.Eel>,
+    context: EvoToolContext,
     discovered: List<DiscoveredVenv>,
   ): EvoLoadResultDto
 
@@ -560,8 +566,8 @@ fun EvoToolContext.resolveNewVenvDir(ref: PyInterpreterRef.CreateEnv): Path {
   val name = ref.name
   return when {
     !folder.isNullOrBlank() && !name.isNullOrBlank() -> Path.of(folder).resolve(name)
-    !folder.isNullOrBlank() -> pyProject.workspace.baseDir.resolve(folder)
-    else -> firstFreeVenvDir(pyProject.workspace.baseDir)
+    !folder.isNullOrBlank() -> workspace.baseDir.resolve(folder)
+    else -> firstFreeVenvDir(workspace.baseDir)
   }
 }
 

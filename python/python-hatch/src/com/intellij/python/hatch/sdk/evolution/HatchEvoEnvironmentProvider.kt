@@ -55,8 +55,8 @@ internal class HatchEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
 
   override val stepDescription: String get() = PySdkBundle.message("evolution.node.step.hatch")
 
-  override suspend fun loadSections(pyProject: EvoPyProject, fileSystem: FileSystem<PathHolder.Eel>, discovered: List<DiscoveredVenv>): EvoLoadResultDto {
-    val hatchService = pyProject.module.getHatchService(fileSystem).getOrNull()
+  override suspend fun loadSections(context: EvoToolContext, discovered: List<DiscoveredVenv>): EvoLoadResultDto {
+    val hatchService = context.pyProject.module.getHatchService(context.fileSystem).getOrNull()
                        ?: return evoWarning(PyHatchBundle.message("evolution.hatch.executable.is.not.found"))
     val environments = hatchService.listEnvironments().takeIf { it.isNotEmpty() } ?: return EvoLoadResultDto.Ok(emptyList())
     val leaves = environments.map { env ->
@@ -78,7 +78,7 @@ internal class HatchEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
       candidate.pythonVirtualEnvironment?.pythonHomePath?.path?.resolvePythonBinary()?.toString() == homePath.toString()
     } ?: return PyResult.localizedError(PySdkBundle.message("evolution.error.env.not.found", homePath.toString()))
     // A missing working directory is not fatal: hatch is driven from the module's base dir in that case, as before.
-    val workingDir = resolveHatchWorkingDirectory(context.pyProject.project, module).getOrNull() ?: context.pyProject.workspace.baseDir
+    val workingDir = resolveHatchWorkingDirectory(context.pyProject.project, module).getOrNull() ?: context.workspace.baseDir
     return env.createSdk(workingDir, context.fileSystem, null)
   }
 
