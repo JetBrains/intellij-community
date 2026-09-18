@@ -55,6 +55,31 @@ class FileProviderMapTest {
   }
 
   @Test
+  fun `get does not reassign the any-context entry to a specific context`() {
+    val map = FileProviderMap()
+    val provider = MockFileViewProvider("provider1")
+    map.cacheOrGet(anyContext(), provider)
+
+    // only cacheOrGet reassigns the entry, so get reports a miss here
+    assertNull(map[MockContext("context1")])
+    assertEquals(anyContext(), map.entries.single().key)
+  }
+
+  @Test
+  fun `remove does not resolve the any context`() {
+    val context1 = MockContext("context1")
+    val provider1 = MockFileViewProvider("provider1")
+
+    val map = FileProviderMap()
+    map.cacheOrGet(context1, provider1)
+
+    // the provider answers a request for anyContext, but its key is context1
+    assertSame(provider1, map[anyContext()])
+    assertFalse(map.remove(anyContext(), provider1))
+    assertSame(provider1, map[context1])
+  }
+
+  @Test
   fun `any context returns the same provider on every request`() {
     val context1 = MockContext("context1")
     val context2 = MockContext("context2")

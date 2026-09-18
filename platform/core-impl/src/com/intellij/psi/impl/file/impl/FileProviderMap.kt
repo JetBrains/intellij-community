@@ -23,7 +23,8 @@ import kotlin.contracts.contract
  * The map handles [anyContext] as a special case:
  * - The map can be empty.
  * - If the map contains only one entry, it can have as a key either a specific context or [anyContext].
- * - If the map contains only [anyContext] entry, and it receives a request for some specific context, the provider of [anyContext] is reassigned to the requested context, and it is returned.
+ * - If the map contains only [anyContext] entry, and [cacheOrGet] receives a request for some specific context, the provider of [anyContext] is reassigned to the requested context, and it is returned.
+ * - [get] does not reassign. It returns `null` for a specific context while the map contains only [anyContext] entry.
  * - If the map contains several view providers, all of them are guaranteed to be assigned to some specific contexts ([anyContext] is not allowed to be stored in the map)
  * - If this map contains several entries or a single entry assigned to non-[anyContext], and it receives a request for [anyContext], one of the existing providers is returned.
  *   The returned provider is guaranteed to be the same for subsequent requests until it gets collected by GC.
@@ -42,6 +43,9 @@ internal sealed interface FileProviderMap {
 
   /**
    * Removes the view provider for the given [context] if it is equal to [provider].
+   *
+   * This method does not resolve [anyContext]. It removes an entry only if [context] is the actual key of the entry.
+   * So it returns false for [anyContext] when [get] still returns [provider] for [anyContext].
    *
    * @return true if the provider was removed.
    */
@@ -345,9 +349,19 @@ private fun installContext(viewProvider: FileViewProvider, context: CodeInsightC
  */
 internal interface ContextMap<V : Any> {
   operator fun get(key: CodeInsightContext): V?
+
+  /** Returns a map where [key] holds [value]. An existing value of [key] is replaced. */
   fun add(key: CodeInsightContext, value: V): ContextMap<V>
+
   fun remove(key: CodeInsightContext): ContextMap<V>
+
+  /** Returns the entries whose value is still alive. */
   fun entries(): Collection<Map.Entry<CodeInsightContext, V>>
+
+  /**
+   * Returns the number of entries, the collected values included.
+   * So this is an upper bound of the number of live values. [entries] gives the live ones.
+   */
   fun size(): Int
   fun defaultValue(): V? // can be null if the value was collected
   fun processQueue(): ContextMap<V>
