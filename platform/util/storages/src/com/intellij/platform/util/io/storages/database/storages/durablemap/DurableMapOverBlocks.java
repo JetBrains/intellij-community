@@ -2,9 +2,10 @@
 package com.intellij.platform.util.io.storages.database.storages.durablemap;
 
 import com.intellij.openapi.util.Ref;
+import com.intellij.platform.util.io.storages.UnsupportedFormatException;
 import com.intellij.platform.util.io.storages.database.spi.BlocksStore;
 import com.intellij.platform.util.io.storages.database.storages.appendonlylog.AppendOnlyLogOverBlock;
-import com.intellij.platform.util.io.storages.database.storages.extendiblehashmap.ExtendibleHashMapStorageOverBlocksStore;
+import com.intellij.platform.util.io.storages.database.storages.extendiblehashmap.ExtendibleHashMapStorageOverLookupBlocks;
 import com.intellij.platform.util.io.storages.durablemap.DurableMap;
 import com.intellij.platform.util.io.storages.durablemap.EntryExternalizer;
 import com.intellij.platform.util.io.storages.durablemap.EntryExternalizer.Entry;
@@ -28,6 +29,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.function.BiPredicate;
 
+import static com.intellij.platform.util.io.storages.database.storages.extendiblehashmap.ExtendibleHashMapStorageOverLookupBlocks.IMPLEMENTATION_ID;
 import static com.intellij.platform.util.io.storages.intmultimaps.IntToMultiLongMap.NO_VALUE;
 import static com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleHashMapInt32ToInt64.DEFAULT_SEGMENT_SIZE;
 import static com.intellij.util.io.IOUtil.KiB;
@@ -111,9 +113,27 @@ public class DurableMapOverBlocks<K, V> implements DurableMap<K, V> {
     @NotNull EntryExternalizer<K, V> entryExternalizer,
     @Nullable PatchableDurableMap.PatchableValueExternalizer<V, ?> patchExternalizer
   ) throws IOException {
-    var recordIndexStorage = new ExtendibleHashMapStorageOverBlocksStore(
-      blocksStore,
-      DurableMapBlockCatalog.DurableMapBlockRole.LOOKUP.persistentCode(),
+    var storeMetadata = blocksStore.storeMetadata();
+    DurableMapMetadata mapMetadata;
+    if (storeMetadata.version() == 0) {//'not set'
+      mapMetadata = DurableMapMetadata.initial();
+      blocksStore.updateStoreMetadata(mapMetadata.toStoreMetadata());
+    }
+    else {
+      mapMetadata = DurableMapMetadata.fromStoreMetadata(storeMetadata);
+    }
+
+    if (mapMetadata.lookupImplementationId() != IMPLEMENTATION_ID) {
+      throw new CorruptedException("Unknown lookup implementation " + mapMetadata.lookupImplementationId());
+    }
+    if (mapMetadata.lookupFormatVersion() != ExtendibleHashMapInt32ToInt64.IMPLEMENTATION_VERSION) {
+      throw new UnsupportedFormatException(
+        "lookup", ExtendibleHashMapInt32ToInt64.IMPLEMENTATION_VERSION, mapMetadata.lookupFormatVersion()
+      );
+    }
+    var blockCatalog = DurableMapBlockCatalog.open(blocksStore);
+    var recordIndexStorage = new ExtendibleHashMapStorageOverLookupBlocks(
+      blockCatalog.lookupBlocks(mapMetadata.lookupImplementationId(), mapMetadata.lookupGeneration()),
       SEGMENT_SIZE
     );
     var rebuildIndex = recordIndexStorage.isEmpty();
@@ -137,7 +157,7 @@ public class DurableMapOverBlocks<K, V> implements DurableMap<K, V> {
         rebuildIndex = true;
         recordRefIndex.clear();
       }
-      return open(blocksStore, preferredBlockContentLength, recordRefIndex, rebuildIndex, keyEquality, valueEquality,
+      return open(blocksStore, blockCatalog, preferredBlockContentLength, recordRefIndex, rebuildIndex, keyEquality, valueEquality,
                   entryExternalizer, patchExternalizer);
     }
     catch (IOException | RuntimeException | Error failure) {
@@ -175,7 +195,7 @@ public class DurableMapOverBlocks<K, V> implements DurableMap<K, V> {
                                                                 @Nullable EqualityPolicy<? super V> valueEquality,
                                                                 @NotNull EntryExternalizer<K, V> entryExternalizer) throws IOException {
     return open(
-      blocksStore,
+      blocksStore, DurableMapBlockCatalog.open(blocksStore),
       preferredBlockContentLength,
       recordRefIndex, rebuildIndex,
       keyEquality, valueEquality, entryExternalizer, /*patchExternalizer: */ null
@@ -196,7 +216,7 @@ public class DurableMapOverBlocks<K, V> implements DurableMap<K, V> {
   ) throws IOException {
     return asPatchable(
       open(
-        blocksStore,
+        blocksStore, DurableMapBlockCatalog.open(blocksStore),
         preferredBlockContentLength,
         recordRefIndex, rebuildIndex,
         keyEquality, valueEquality, entryExternalizer, patchExternalizer
@@ -205,6 +225,7 @@ public class DurableMapOverBlocks<K, V> implements DurableMap<K, V> {
   }
 
   private static <K, V> @NotNull DurableMapOverBlocks<K, V> open(@NotNull BlocksStore blocksStore,
+                                                                 @NotNull DurableMapBlockCatalog blockCatalog,
                                                                  int preferredBlockContentLength,
                                                                  @NotNull RecordRefIndex recordRefIndex,
                                                                  boolean rebuildLookup,
@@ -215,7 +236,6 @@ public class DurableMapOverBlocks<K, V> implements DurableMap<K, V> {
     if (rebuildLookup && !recordRefIndex.isEmpty()) {
       throw new IllegalArgumentException("The recordRefIndex must be empty before recovery");
     }
-    var blockCatalog = DurableMapBlockCatalog.open(blocksStore);
     var mapEntries = RecordStorageOverBlocks.open(blockCatalog, preferredBlockContentLength);
     DurableMapOverBlocks<K, V> durableMapImpl = (patchExternalizer == null) ?
                                                 new DurableMapOverBlocks<>(blocksStore, mapEntries, recordRefIndex, keyEquality,

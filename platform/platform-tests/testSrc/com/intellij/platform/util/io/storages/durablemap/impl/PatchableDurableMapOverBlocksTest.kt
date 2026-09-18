@@ -13,7 +13,7 @@ import com.intellij.platform.util.io.storages.database.storages.durablemap.Durab
 import com.intellij.platform.util.io.storages.database.storages.durablemap.DurableMapBlockCatalog.DurableMapBlockRole.LOOKUP
 import com.intellij.platform.util.io.storages.database.storages.durablemap.DurableMapOverBlocks
 import com.intellij.platform.util.io.storages.database.storages.durablemap.RecordStorageOverBlocks
-import com.intellij.platform.util.io.storages.database.storages.extendiblehashmap.ExtendibleHashMapStorageOverBlocksStore
+import com.intellij.platform.util.io.storages.database.storages.extendiblehashmap.ExtendibleHashMapStorageOverLookupBlocks
 import com.intellij.platform.util.io.storages.durablemap.DefaultEntryExternalizer
 import com.intellij.platform.util.io.storages.durablemap.PatchableDurableMap
 import com.intellij.platform.util.io.storages.durablemap.PatchableDurableMap.PatchableValueExternalizer
@@ -373,7 +373,13 @@ class PatchableDurableMapOverBlocksTest {
   private fun records(store: BlocksStore): RecordStorageOverBlocks = RecordStorageOverBlocks.open(DurableMapBlockCatalog.open(store), BLOCK_SIZE)
 
   private fun openRecordRefIndex(store: BlocksStore): ExtendibleHashMapInt32ToInt64 = ExtendibleHashMapInt32ToInt64(
-    ExtendibleHashMapStorageOverBlocksStore(store, LOOKUP.persistentCode(), DurableMapOverBlocks.SEGMENT_SIZE)
+    ExtendibleHashMapStorageOverLookupBlocks(
+      DurableMapBlockCatalog.open(store).lookupBlocks(
+        ExtendibleHashMapStorageOverLookupBlocks.IMPLEMENTATION_ID,
+        ExtendibleHashMapStorageOverLookupBlocks.INITIAL_GENERATION,
+      ),
+      DurableMapOverBlocks.SEGMENT_SIZE,
+    )
   )
 
   private fun dropRecordRefIndex(store: BlocksStore) {

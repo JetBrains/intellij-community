@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.io.storages.database.storages.extendiblehashmap;
 
-import com.intellij.platform.util.io.storages.database.spi.BlocksStore;
+import com.intellij.platform.util.io.storages.database.storages.durablemap.LookupBlocks;
 import com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleHashMapStorage;
 import com.intellij.util.io.ClosedStorageException;
 import com.intellij.util.io.CorruptedException;
@@ -12,39 +12,39 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.lang.foreign.MemorySegment;
-import java.util.ArrayList;
 
 import static com.intellij.platform.util.io.storages.database.spi.BlocksStore.Block.LifecycleState.ACTIVE;
 import static com.intellij.platform.util.io.storages.database.spi.BlocksStore.Block.LifecycleState.ALLOCATED;
 import static com.intellij.platform.util.io.storages.database.spi.BlocksStore.Block.LifecycleState.RETIRED;
 import static com.intellij.platform.util.io.storages.database.storages.extendiblehashmap.ExtendibleHashMapSegmentBlockLayout.HEADER_SIZE;
 
-/// Maps fixed-size logical segments to database blocks with the specified role
+/// Maps fixed-size logical segments to scoped lookup blocks
 @ApiStatus.Internal
-public final class ExtendibleHashMapStorageOverBlocksStore implements ExtendibleHashMapStorage {
-  private final @NotNull BlocksStore store;
-  private final int blockRole;
+public final class ExtendibleHashMapStorageOverLookupBlocks implements ExtendibleHashMapStorage {
+  /// Persistent identifier of the extendible hash map lookup format
+  public static final int IMPLEMENTATION_ID = 1;
+
+  /// Generation used before a map descriptor selects a generation
+  public static final int INITIAL_GENERATION = 1;
+
+  private final @NotNull LookupBlocks lookupBlocks;
   private final int segmentSize;
 
-  /// Blocks are added here even before their segment-header is initialized
-  private final ArrayList<BlocksStore.Block> ownedBlocks = new ArrayList<>();
   /// Blocks are added here after their segment-header is initialized
-  private final Int2ObjectMap<BlocksStore.Block> blocksBySegmentIndex = new Int2ObjectOpenHashMap<>();
+  private final Int2ObjectMap<LookupBlocks.Block> blocksBySegmentIndex = new Int2ObjectOpenHashMap<>();
 
   private boolean open = true;
 
-  public ExtendibleHashMapStorageOverBlocksStore(@NotNull BlocksStore store,
-                                                 int blockRole,
-                                                 int segmentSize) throws IOException {
+  public ExtendibleHashMapStorageOverLookupBlocks(@NotNull LookupBlocks lookupBlocks,
+                                                  int segmentSize) throws IOException {
     if (segmentSize <= 0) {
       throw new IllegalArgumentException("segmentSize(=" + segmentSize + ") must be positive");
     }
-    this.store = store;
-    this.blockRole = blockRole;
+    this.lookupBlocks = lookupBlocks;
     this.segmentSize = segmentSize;
 
-    for (var block : store.blocks()) {
-      if (block.role() == blockRole && block.state() != RETIRED) {
+    for (var block : lookupBlocks.blocks()) {
+      if (block.state() != RETIRED) {
         addExistingBlock(block);
       }
     }
@@ -85,11 +85,10 @@ public final class ExtendibleHashMapStorageOverBlocksStore implements Extendible
       throw new IllegalArgumentException("Hashmap segment #" + segmentIndex + " already exists");
     }
 
-    var block = store.allocateBlock(blockRole, Math.addExact(HEADER_SIZE, segmentSize));
-    ownedBlocks.add(block);
+    var block = lookupBlocks.allocate(Math.addExact(HEADER_SIZE, segmentSize));
     var initialized = false;
     try {
-      var content = block.content();
+      var content = block.payload();
       ExtendibleHashMapSegmentBlockLayout.initializeSegmentIndex(content, segmentIndex);
       var payload = segmentPayload(block);
       block.activate();
@@ -113,7 +112,7 @@ public final class ExtendibleHashMapStorageOverBlocksStore implements Extendible
   @Override
   public void flush() throws IOException {
     ensureOpen();
-    store.flush();
+    lookupBlocks.flush();
   }
 
   @Override
@@ -128,15 +127,16 @@ public final class ExtendibleHashMapStorageOverBlocksStore implements Extendible
     open = false;
   }
 
-  private void addExistingBlock(@NotNull BlocksStore.Block block) throws IOException {
+  private void addExistingBlock(@NotNull LookupBlocks.Block block) throws IOException {
     if (block.state() != ACTIVE) {
+      // SEALED blocks can't be used in Indexes because sealed means 'read-only', and Index impl
+      // usually do modify its blocks
       throw corrupted(block, "the block is not active");
     }
-    var content = block.content();
+    var content = block.payload();
     if (content.byteSize() < HEADER_SIZE) {
       throw corrupted(block, "the content is too small for the block header");
     }
-    ownedBlocks.add(block);
     var segmentIndex = ExtendibleHashMapSegmentBlockLayout.segmentIndex(content);
     if (segmentIndex < 0) {
       throw corrupted(block, "segment index " + segmentIndex + " is negative");
@@ -150,8 +150,8 @@ public final class ExtendibleHashMapStorageOverBlocksStore implements Extendible
     }
   }
 
-  private @NotNull MemorySegment segmentPayload(@NotNull BlocksStore.Block block) throws CorruptedException {
-    var content = block.content();
+  private @NotNull MemorySegment segmentPayload(@NotNull LookupBlocks.Block block) throws IOException {
+    var content = block.payload();
     if (content.byteSize() < HEADER_SIZE + (long)segmentSize) {
       throw corrupted(block, "the content is too small for a " + segmentSize + "-byte segment");
     }
@@ -159,18 +159,7 @@ public final class ExtendibleHashMapStorageOverBlocksStore implements Extendible
   }
 
   private void retireOwnedBlocks() {
-    for (var block : ownedBlocks) {
-      switch (block.state()) {
-        case ALLOCATED -> block.discard();
-        case ACTIVE -> {
-          block.seal();
-          block.retire();
-        }
-        case SEALED -> block.retire();
-        case RETIRED -> { }
-      }
-    }
-    ownedBlocks.clear();
+    lookupBlocks.retireAll();
     blocksBySegmentIndex.clear();
   }
 
@@ -186,7 +175,7 @@ public final class ExtendibleHashMapStorageOverBlocksStore implements Extendible
     }
   }
 
-  private static @NotNull CorruptedException corrupted(@NotNull BlocksStore.Block block,
+  private static @NotNull CorruptedException corrupted(@NotNull LookupBlocks.Block block,
                                                         @NotNull String details) {
     return new CorruptedException("Invalid hashmap segment block #" + block.id() + ": " + details);
   }

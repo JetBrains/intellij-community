@@ -7,6 +7,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.lang.foreign.MemorySegment;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
@@ -51,6 +52,134 @@ public final class DurableMapBlockCatalog {
     var block = store.allocateBlock(role.persistentCode(), minimumContentLength);
     addBlock(blocks, blocksByRole, block);
     return block;
+  }
+
+  /// @return access restricted to the specified lookup implementation and generation
+  public @NotNull LookupBlocks lookupBlocks(int implementationId, int generation) throws CorruptedException {
+    return new ScopedLookupBlocks(implementationId, generation);
+  }
+
+  private final class ScopedLookupBlocks implements LookupBlocks {
+    private final int implementationId;
+    private final int generation;
+    private final ArrayList<LookupBlocks.Block> scopedBlocks = new ArrayList<>();
+
+    private ScopedLookupBlocks(int implementationId, int generation) throws CorruptedException {
+      if (implementationId <= 0) {
+        throw new IllegalArgumentException("implementationId(=" + implementationId + ") must be positive");
+      }
+      if (generation < 0) {
+        throw new IllegalArgumentException("generation(=" + generation + ") must not be negative");
+      }
+      this.implementationId = implementationId;
+      this.generation = generation;
+      for (var block : DurableMapBlockCatalog.this.blocks(DurableMapBlockRole.LOOKUP)) {
+        if (block.state() == BlocksStore.Block.LifecycleState.RETIRED) {
+          continue;
+        }
+        if (LookupBlockHeaderLayout.implementationId(block) == implementationId &&
+            LookupBlockHeaderLayout.generation(block) == generation) {
+          scopedBlocks.add(new ScopedLookupBlock(block));
+        }
+      }
+    }
+
+    @Override
+    public synchronized @NotNull List<LookupBlocks.Block> blocks() {
+      return List.copyOf(scopedBlocks);
+    }
+
+    @Override
+    public synchronized @NotNull LookupBlocks.Block allocate(int minimumPayloadLength) throws IOException {
+      if (minimumPayloadLength < 0) {
+        throw new IllegalArgumentException("minimumPayloadLength(=" + minimumPayloadLength + ") must not be negative");
+      }
+      var block = allocateBlock(
+        DurableMapBlockRole.LOOKUP,
+        Math.addExact(LookupBlockHeaderLayout.HEADER_SIZE, minimumPayloadLength)
+      );
+      var initialized = false;
+      try {
+        LookupBlockHeaderLayout.initialize(block, implementationId, generation);
+        var scopedBlock = new ScopedLookupBlock(block);
+        scopedBlocks.add(scopedBlock);
+        initialized = true;
+        return scopedBlock;
+      }
+      finally {
+        if (!initialized && block.state() == BlocksStore.Block.LifecycleState.ALLOCATED) {
+          block.discard();
+        }
+      }
+    }
+
+    @Override
+    public synchronized void retireAll() {
+      for (var block : scopedBlocks) {
+        switch (block.state()) {
+          case ALLOCATED -> block.discard();
+          case ACTIVE -> {
+            block.seal();
+            block.retire();
+          }
+          case SEALED -> block.retire();
+          case RETIRED -> { }
+        }
+      }
+    }
+
+    @Override
+    public void flush() throws IOException {
+      store.flush();
+    }
+  }
+
+  private static final class ScopedLookupBlock implements LookupBlocks.Block {
+    private final @NotNull BlocksStore.Block block;
+
+    private ScopedLookupBlock(@NotNull BlocksStore.Block block) {
+      this.block = block;
+    }
+
+    @Override
+    public int id() {
+      return block.id();
+    }
+
+    @Override
+    public @NotNull BlocksStore.Block.LifecycleState state() {
+      return block.state();
+    }
+
+    @Override
+    public @NotNull MemorySegment payload() throws IOException {
+      return LookupBlockHeaderLayout.payload(block);
+    }
+
+    @Override
+    public void activate() {
+      block.activate();
+    }
+
+    @Override
+    public void discard() {
+      block.discard();
+    }
+
+    @Override
+    public void seal() {
+      block.seal();
+    }
+
+    @Override
+    public void retire() {
+      block.retire();
+    }
+
+    @Override
+    public String toString() {
+      return "ScopedLookupBlock{wrapped: " + block + "}";
+    }
   }
 
   private static @NotNull EnumMap<DurableMapBlockRole, ArrayList<BlocksStore.Block>> emptyRoleCatalog() {

@@ -3,7 +3,9 @@ package com.intellij.platform.util.io.storages.database.storages.extendiblehashm
 
 import com.intellij.platform.util.io.storages.database.spi.BlocksDatabaseFactory;
 import com.intellij.platform.util.io.storages.database.spi.BlocksStore;
+import com.intellij.platform.util.io.storages.database.storages.durablemap.DurableMapBlockCatalog;
 import com.intellij.platform.util.io.storages.database.storages.durablemap.DurableMapBlockCatalog.DurableMapBlockRole;
+import com.intellij.platform.util.io.storages.database.storages.durablemap.LookupBlocks;
 import com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleHashMapInt32ToInt64;
 import com.intellij.util.io.CorruptedException;
 import org.jetbrains.annotations.NotNull;
@@ -22,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class ExtendibleHashMapStorageOverBlocksStoreTest {
+class ExtendibleHashMapStorageOverLookupBlocksTest {
   private static final int CHUNK_SIZE = 1024 * 1024;
   private static final int SEGMENT_SIZE = 1024;
   private static final int LOOKUP_ROLE = DurableMapBlockRole.LOOKUP.persistentCode();
@@ -31,7 +33,8 @@ class ExtendibleHashMapStorageOverBlocksStoreTest {
   void logicalSegmentIndexes_SurviveReopen(@TempDir @NotNull Path databaseDirectory) throws Exception {
     try (var database = new BlocksDatabaseFactory(CHUNK_SIZE).open(databaseDirectory)) {
       var store = database.openStore("map", 1);
-      try (var storage = new ExtendibleHashMapStorageOverBlocksStore(store, LOOKUP_ROLE, SEGMENT_SIZE)) {
+      var lookupBlocks = lookupBlocks(store);
+      try (var storage = new ExtendibleHashMapStorageOverLookupBlocks(lookupBlocks, SEGMENT_SIZE)) {
         assertTrue(storage.isEmpty());
 
         var headerSegment = storage.allocateSegment(0);
@@ -39,12 +42,12 @@ class ExtendibleHashMapStorageOverBlocksStoreTest {
         headerSegment.set(JAVA_INT, 0, 42);
         dataSegment.set(JAVA_INT, 0, 73);
 
-        var blocks = store.blocks();
-        assertEquals(0, ExtendibleHashMapSegmentBlockLayout.segmentIndex(blocks.getFirst().content()));
-        assertEquals(7, ExtendibleHashMapSegmentBlockLayout.segmentIndex(blocks.getLast().content()));
+        var blocks = lookupBlocks.blocks();
+        assertEquals(0, ExtendibleHashMapSegmentBlockLayout.segmentIndex(blocks.getFirst().payload()));
+        assertEquals(7, ExtendibleHashMapSegmentBlockLayout.segmentIndex(blocks.getLast().payload()));
       }
 
-      try (var reopened = new ExtendibleHashMapStorageOverBlocksStore(store, LOOKUP_ROLE, SEGMENT_SIZE)) {
+      try (var reopened = new ExtendibleHashMapStorageOverLookupBlocks(lookupBlocks(store), SEGMENT_SIZE)) {
         assertFalse(reopened.isEmpty());
         assertEquals(42, reopened.segment(0).get(JAVA_INT, 0));
         assertEquals(73, reopened.segment(7).get(JAVA_INT, 0));
@@ -104,11 +107,11 @@ class ExtendibleHashMapStorageOverBlocksStoreTest {
     var factory = new BlocksDatabaseFactory(CHUNK_SIZE);
     int allocatedBlockId;
     try (var database = factory.open(databaseDirectory)) {
-      var store = database.openStore("map", 1);
-      var block = store.allocateBlock(LOOKUP_ROLE, SEGMENT_SIZE + ExtendibleHashMapSegmentBlockLayout.HEADER_SIZE);
+      var lookupBlocks = lookupBlocks(database.openStore("map", 1));
+      var block = lookupBlocks.allocate(SEGMENT_SIZE + ExtendibleHashMapSegmentBlockLayout.HEADER_SIZE);
       allocatedBlockId = block.id();
       assertEquals(ALLOCATED, block.state());
-      store.flush();
+      lookupBlocks.flush();
     }
 
     try (var database = factory.open(databaseDirectory)) {
@@ -118,10 +121,12 @@ class ExtendibleHashMapStorageOverBlocksStoreTest {
       assertNotNull(recoveredBlock);
       assertEquals(RETIRED, recoveredBlock.state());
 
-      try (var storage = new ExtendibleHashMapStorageOverBlocksStore(store, LOOKUP_ROLE, SEGMENT_SIZE)) {
+      var lookupBlocks = lookupBlocks(store);
+      assertTrue(lookupBlocks.blocks().isEmpty(), "The provider must not see the incomplete block");
+      try (var storage = new ExtendibleHashMapStorageOverLookupBlocks(lookupBlocks, SEGMENT_SIZE)) {
         assertTrue(storage.isEmpty());
         storage.allocateSegment(0);
-        var replacement = store.blocks().getLast();
+        var replacement = lookupBlocks.blocks().getFirst();
         assertEquals(ACTIVE, replacement.state());
         assertTrue(replacement.id() > allocatedBlockId, "The replacement must not reuse the retired identifier");
       }
@@ -132,11 +137,12 @@ class ExtendibleHashMapStorageOverBlocksStoreTest {
   void duplicateLogicalSegment_IsRejected(@TempDir @NotNull Path databaseDirectory) throws Exception {
     try (var database = new BlocksDatabaseFactory(CHUNK_SIZE).open(databaseDirectory)) {
       var store = database.openStore("map", 1);
-      allocatePublishedSegmentThreeBlock(store);
-      allocatePublishedSegmentThreeBlock(store);
+      var lookupBlocks = lookupBlocks(store);
+      allocatePublishedSegmentThreeBlock(lookupBlocks);
+      allocatePublishedSegmentThreeBlock(lookupBlocks);
 
       assertThrows(CorruptedException.class, () -> {
-        try (var storage = new ExtendibleHashMapStorageOverBlocksStore(store, LOOKUP_ROLE, SEGMENT_SIZE)) {
+        try (var storage = new ExtendibleHashMapStorageOverLookupBlocks(lookupBlocks, SEGMENT_SIZE)) {
           assertNotNull(storage);
         }
       });
@@ -149,7 +155,7 @@ class ExtendibleHashMapStorageOverBlocksStoreTest {
       var store = database.openStore("map", 1);
       var dataBlock = store.allocateBlock(DurableMapBlockRole.DATA.persistentCode(), SEGMENT_SIZE);
       dataBlock.activate();
-      try (var storage = new ExtendibleHashMapStorageOverBlocksStore(store, LOOKUP_ROLE, SEGMENT_SIZE)) {
+      try (var storage = new ExtendibleHashMapStorageOverLookupBlocks(lookupBlocks(store), SEGMENT_SIZE)) {
         storage.allocateSegment(0);
         var lookupBlock = store.blocks().getLast();
 
@@ -164,13 +170,20 @@ class ExtendibleHashMapStorageOverBlocksStoreTest {
 
   private static @NotNull ExtendibleHashMapInt32ToInt64 openMap(@NotNull BlocksStore store) throws Exception {
     return new ExtendibleHashMapInt32ToInt64(
-      new ExtendibleHashMapStorageOverBlocksStore(store, LOOKUP_ROLE, SEGMENT_SIZE)
+      new ExtendibleHashMapStorageOverLookupBlocks(lookupBlocks(store), SEGMENT_SIZE)
     );
   }
 
-  private static void allocatePublishedSegmentThreeBlock(@NotNull BlocksStore store) throws Exception {
-    var block = store.allocateBlock(LOOKUP_ROLE, SEGMENT_SIZE + ExtendibleHashMapSegmentBlockLayout.HEADER_SIZE);
-    ExtendibleHashMapSegmentBlockLayout.initializeSegmentIndex(block.content(), 3);
+  private static @NotNull LookupBlocks lookupBlocks(@NotNull BlocksStore store) throws Exception {
+    return DurableMapBlockCatalog.open(store).lookupBlocks(
+      ExtendibleHashMapStorageOverLookupBlocks.IMPLEMENTATION_ID,
+      ExtendibleHashMapStorageOverLookupBlocks.INITIAL_GENERATION
+    );
+  }
+
+  private static void allocatePublishedSegmentThreeBlock(@NotNull LookupBlocks lookupBlocks) throws Exception {
+    var block = lookupBlocks.allocate(SEGMENT_SIZE + ExtendibleHashMapSegmentBlockLayout.HEADER_SIZE);
+    ExtendibleHashMapSegmentBlockLayout.initializeSegmentIndex(block.payload(), 3);
     block.activate();
   }
 
