@@ -2,7 +2,7 @@
      checks that the result matches the distribution produced by the build scripts. See IJPL-251444. -->
 <idea-plugin>
   <id>intellij.peek.definition</id>
-  <name>Peek to Definition</name>
+  <name>Peek Definition</name>
   <vendor>JetBrains</vendor>
   <category>Other Tools</category>
   <description><![CDATA[
