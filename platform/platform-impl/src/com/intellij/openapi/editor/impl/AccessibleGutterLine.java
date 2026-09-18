@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.ShortcutSet;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
@@ -84,7 +85,7 @@ final class AccessibleGutterLine extends JPanel {
   }
 
   private static @NotNull AccessibleGutterLine createAndActivate(@NotNull EditorGutterComponentImpl gutter) {
-    return new AccessibleGutterLine(gutter);
+    return WriteIntentReadAction.compute(() -> new AccessibleGutterLine(gutter));
   }
 
   void escape(boolean requestFocusToEditor) {
