@@ -5,6 +5,7 @@ import com.intellij.diagnostic.VMOptions;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.internal.DebugAttachDetector;
 import com.intellij.internal.statistic.collectors.fus.MethodNameRuleValidator;
+import com.intellij.internal.statistic.collectors.fus.ProjectlessData;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.BooleanEventField;
 import com.intellij.internal.statistic.eventLog.events.ClassEventField;
@@ -28,6 +29,7 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.text.Strings;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,7 +44,7 @@ import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPlug
 public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector {
   private static final Logger LOG = Logger.getInstance(LifecycleUsageTriggerCollector.class);
 
-  private static final EventLogGroup LIFECYCLE = new EventLogGroup("lifecycle", 80);
+  private static final EventLogGroup LIFECYCLE = new EventLogGroup("lifecycle", 81);
 
   private static final AtomicInteger MAX_SIMULTANEOUS_PROJECTS = new AtomicInteger(0);
 
@@ -63,7 +65,7 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
   private static final EventId2<Long, Boolean> PROJECT_OPENING_FINISHED =
     LIFECYCLE.registerEvent("project.opening.finished", EventFields.Long("duration_ms"), EventFields.Boolean("project_tab"));
 
-  private static final EventId PROJECT_OPENED = LIFECYCLE.registerEvent("project.opened");
+  private static final VarargEventId PROJECT_OPENED = LIFECYCLE.registerVarargEvent("project.opened", EventFields.Projectless);
 
   private static final EventId1<Integer> PROJECT_MAX_SIMULTANEOUS =
     LIFECYCLE.registerEvent("project.max.simultaneous",
@@ -179,7 +181,9 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
   }
 
   public static void onProjectOpened(@NotNull Project project) {
-    PROJECT_OPENED.log(project);
+    var data = new ArrayList<EventPair<?>>(1);
+    ContainerUtil.addIfNotNull(data, ProjectlessData.forProject(project));
+    PROJECT_OPENED.log(project, data);
     int current = ProjectManager.getInstance().getOpenProjects().length;
     MAX_SIMULTANEOUS_PROJECTS.updateAndGet(prev -> Math.max(prev, current));
   }
