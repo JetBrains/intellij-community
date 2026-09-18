@@ -1,4 +1,4 @@
-load("@aspect_rules_lint//format:defs.bzl", "format_multirun")
+load("@buildifier_prebuilt//:rules.bzl", "buildifier")
 load("@community//build:bazel_targets_json.bzl", "current_bazel_targets_json")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "kt_javac_options")
@@ -6,9 +6,23 @@ load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 BAZEL_TARGETS_JSON = current_bazel_targets_json()
 
-format_multirun(
+buildifier(
     name = "format",
-    starlark = "@buildifier_prebuilt//:buildifier",
+    exclude_patterns = [
+        "./out/**",
+        "./**/~BUILD.bazel",
+    ],
+    mode = "fix",
+    visibility = ["//visibility:public"],
+)
+
+buildifier(
+    name = "format.check",
+    exclude_patterns = [
+        "./out/**",
+        "./**/~BUILD.bazel",
+    ],
+    mode = "check",
     visibility = ["//visibility:public"],
 )
 
