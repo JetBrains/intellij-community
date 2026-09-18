@@ -17,5 +17,7 @@
                     interface="com.intellij.codeInspection.blockingCallsDetection.BlockingMethodChecker" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.codeInsight.nonBlockingContextChecker"
                     interface="com.intellij.codeInspection.blockingCallsDetection.NonBlockingContextChecker" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.codeInsight.unstableApiUsageFilter"
+                    interface="com.intellij.codeInspection.UnstableApiUsageFilter" dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

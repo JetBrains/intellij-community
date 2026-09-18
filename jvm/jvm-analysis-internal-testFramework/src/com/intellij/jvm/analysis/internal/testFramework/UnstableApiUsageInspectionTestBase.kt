@@ -16,6 +16,47 @@ abstract class UnstableApiUsageInspectionTestBase : JvmInspectionTestBase() {
     myFixture.allowTreeAccessForAllFiles()
     setupExperimentalApi()
     setupScheduledForRemovalApi()
+    setupInternalApi()
+  }
+
+  private fun setupInternalApi() {
+    myFixture.addFileToProject("internal/annotatedPkg/ClassInAnnotatedPkg.java", """
+      package internal.annotatedPkg;
+      public class ClassInAnnotatedPkg { }
+    """.trimIndent())
+    myFixture.addFileToProject("internal/annotatedPkg/package-info.java", """
+      @org.jetbrains.annotations.ApiStatus.Internal
+      package internal.annotatedPkg;
+    """.trimIndent())
+
+    myFixture.addFileToProject("internal/pkg/AnnotatedClass.java", """
+      package internal.pkg;
+
+      import org.jetbrains.annotations.ApiStatus;
+
+      @ApiStatus.Internal
+      public class AnnotatedClass {
+        public static final String NON_ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS = "";
+        public AnnotatedClass() {}
+        public void nonAnnotatedMethodInAnnotatedClass() {}
+        @ApiStatus.Internal public void annotatedMethodInAnnotatedClass() {}
+      }
+    """.trimIndent())
+    myFixture.addFileToProject("internal/pkg/ClassWithInternalTypeInSignature.java", """
+      package internal.pkg;
+
+      public class ClassWithInternalTypeInSignature<T extends AnnotatedClass> { }
+    """.trimIndent())
+    myFixture.addFileToProject("internal/pkg/NonAnnotatedClass.java", """
+      package internal.pkg;
+
+      import org.jetbrains.annotations.ApiStatus;
+
+      public class NonAnnotatedClass {
+        public void nonAnnotatedMethodInNonAnnotatedClass() {}
+        @ApiStatus.Internal public void annotatedMethodInNonAnnotatedClass() {}
+      }
+    """.trimIndent())
   }
 
   private fun setupScheduledForRemovalApi() {

@@ -24,6 +24,11 @@ public final class StaticAnalysisAnnotationManager {
     "org.gradle.api.Incubating"
   };
 
+  private static final String[] KNOWN_INTERNAL_API_ANNOTATIONS = {
+    "org.jetbrains.annotations.ApiStatus.Internal",
+    "com.intellij.openapi.util.IntellijInternalApi"
+  };
+
   private static final String[] KNOWN_CONTRACT_ANNOTATIONS = {
     "org.jetbrains.annotations.Contract",
     "org.springframework.lang.Contract"
@@ -39,6 +44,13 @@ public final class StaticAnalysisAnnotationManager {
    */
   public @NotNull String @NotNull [] getKnownUnstableApiAnnotations() {
     return KNOWN_UNSTABLE_API_ANNOTATIONS;
+  }
+
+  /**
+   * @return array of annotations applicable to JVM methods, fields and classes that mark element as not intended for external use.
+   */
+  public @NotNull String @NotNull [] getKnownInternalApiAnnotations() {
+    return KNOWN_INTERNAL_API_ANNOTATIONS;
   }
 
   /**

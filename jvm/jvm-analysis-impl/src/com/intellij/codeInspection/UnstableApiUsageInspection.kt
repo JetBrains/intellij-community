@@ -5,39 +5,19 @@ import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.codeInsight.StaticAnalysisAnnotationManager
 import com.intellij.codeInsight.options.JavaClassValidator
-import com.intellij.codeInspection.AnnotatedApiUsageUtil.findAnnotatedContainingDeclaration
-import com.intellij.codeInspection.AnnotatedApiUsageUtil.findAnnotatedTypeUsedInDeclarationSignature
-import com.intellij.codeInspection.apiUsage.ApiUsageProcessor
-import com.intellij.codeInspection.apiUsage.ApiUsageUastVisitor
 import com.intellij.codeInspection.deprecation.DeprecationInspection
 import com.intellij.codeInspection.options.OptPane
 import com.intellij.codeInspection.options.OptPane.checkbox
 import com.intellij.codeInspection.options.OptPane.pane
 import com.intellij.codeInspection.options.OptPane.stringList
-import com.intellij.codeInspection.util.InspectionMessage
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.roots.ProjectFileIndex
-import com.intellij.psi.PsiAnnotation
-import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiElementVisitor
-import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiModifierListOwner
-import com.intellij.psi.util.PsiUtilCore
 import com.siyeh.ig.ui.ExternalizableStringSet
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
-import org.jetbrains.uast.UClass
-import org.jetbrains.uast.UDeclaration
-import org.jetbrains.uast.UElement
-import org.jetbrains.uast.UExpression
-import org.jetbrains.uast.UField
-import org.jetbrains.uast.UMethod
-import org.jetbrains.uast.sourcePsiElement
-import org.jetbrains.uast.toUElement
 
 @VisibleForTesting
-class UnstableApiUsageInspection : LocalInspectionTool() {
+class UnstableApiUsageInspection : UnstableApiUsageInspectionBase() {
 
   private inline val SCHEDULED_FOR_REMOVAL_ANNOTATION_NAME: String get() = ApiStatus.ScheduledForRemoval::class.java.canonicalName
 
@@ -53,23 +33,20 @@ class UnstableApiUsageInspection : LocalInspectionTool() {
   @JvmField
   var myIgnoreApiDeclaredInThisProject: Boolean = true
 
-  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
-    val annotations = unstableApiAnnotations.toList()
-    return if (annotations.any { AnnotatedApiUsageUtil.canAnnotationBeUsedInFile(it, holder.file) }) {
-      ApiUsageUastVisitor.createPsiElementVisitor(
-        UnstableApiUsageProcessor(
-          holder,
-          myIgnoreInsideImports,
-          myIgnoreApiDeclaredInThisProject,
-          annotations,
-          knownAnnotationMessageProviders
-        )
-      )
-    }
-    else {
-      PsiElementVisitor.EMPTY_VISITOR
-    }
-  }
+  override val annotationsToCheck: List<String>
+    get() = unstableApiAnnotations.toList()
+
+  override val ignoreInsideImports: Boolean
+    get() = myIgnoreInsideImports
+
+  override val ignoreApiDeclaredInThisProject: Boolean
+    get() = myIgnoreApiDeclaredInThisProject
+
+  override fun getMessageProvider(annotationFqn: String): UnstableApiUsageMessageProvider =
+    knownAnnotationMessageProviders[annotationFqn] ?: DefaultUnstableApiUsageMessageProvider
+
+  override fun isUsageIgnored(usage: PsiElement, annotationFqn: String): Boolean =
+    UnstableApiUsageFilter.EP_NAME.extensionList.any { it.isUsageIgnored(usage, annotationFqn) }
 
   override fun getOptionsPane(): OptPane {
     return pane(
@@ -81,135 +58,6 @@ class UnstableApiUsageInspection : LocalInspectionTool() {
                  JavaClassValidator().annotationsOnly())
     )
   }
-}
-
-private class UnstableApiUsageProcessor(
-  private val problemsHolder: ProblemsHolder,
-  private val ignoreInsideImports: Boolean,
-  private val ignoreApiDeclaredInThisProject: Boolean,
-  private val unstableApiAnnotations: List<String>,
-  private val knownAnnotationMessageProviders: Map<String, UnstableApiUsageMessageProvider>
-) : ApiUsageProcessor {
-
-  private companion object {
-    fun isLibraryElement(element: PsiElement): Boolean {
-      if (ApplicationManager.getApplication().isUnitTestMode) {
-        return true
-      }
-      val containingVirtualFile = PsiUtilCore.getVirtualFile(element)
-      return containingVirtualFile != null && ProjectFileIndex.getInstance(element.project).isInLibraryClasses(containingVirtualFile)
-    }
-  }
-
-  override fun processImportReference(sourceNode: UElement, target: PsiModifierListOwner) {
-    if (!ignoreInsideImports) {
-      checkUnstableApiUsage(target, sourceNode, false)
-    }
-  }
-
-  override fun processReference(sourceNode: UElement, target: PsiModifierListOwner, qualifier: UExpression?) {
-    checkUnstableApiUsage(target, sourceNode, false)
-  }
-
-  override fun processConstructorInvocation(
-    sourceNode: UElement,
-    instantiatedClass: PsiClass,
-    constructor: PsiMethod?,
-    subclassDeclaration: UClass?
-  ) {
-    if (constructor != null) {
-      checkUnstableApiUsage(constructor, sourceNode, false)
-    }
-  }
-
-  override fun processMethodOverriding(method: UMethod, overriddenMethod: PsiMethod) {
-    checkUnstableApiUsage(overriddenMethod, method, true)
-  }
-
-  private fun getMessageProvider(psiAnnotation: PsiAnnotation): UnstableApiUsageMessageProvider? {
-    val annotationName = psiAnnotation.qualifiedName ?: return null
-    return knownAnnotationMessageProviders[annotationName] ?: DefaultUnstableApiUsageMessageProvider
-  }
-
-  private fun getElementToHighlight(sourceNode: UElement): PsiElement? =
-    (sourceNode as? UDeclaration)?.uastAnchor.sourcePsiElement ?: sourceNode.sourcePsi
-
-  private fun checkUnstableApiUsage(target: PsiModifierListOwner, sourceNode: UElement, isMethodOverriding: Boolean) {
-    if (ignoreApiDeclaredInThisProject && !isLibraryElement(target)) {
-      return
-    }
-
-    if (checkTargetIsUnstableItself(target, sourceNode, isMethodOverriding)) {
-      return
-    }
-
-    checkTargetReferencesUnstableTypeInSignature(target, sourceNode, isMethodOverriding)
-  }
-
-  private fun checkTargetIsUnstableItself(target: PsiModifierListOwner, sourceNode: UElement, isMethodOverriding: Boolean): Boolean {
-    val annotatedContainingDeclaration = findAnnotatedContainingDeclaration(target, unstableApiAnnotations, true)
-    if (annotatedContainingDeclaration != null) {
-      val messageProvider = getMessageProvider(annotatedContainingDeclaration.psiAnnotation) ?: return false
-      val message = if (isMethodOverriding) {
-        messageProvider.buildMessageUnstableMethodOverridden(annotatedContainingDeclaration)
-      }
-      else {
-        messageProvider.buildMessage(annotatedContainingDeclaration)
-      }
-      val elementToHighlight = getElementToHighlight(sourceNode) ?: return false
-      val fix = DeprecationInspection.getReplacementQuickFix(target, elementToHighlight)
-      if (fix != null) {
-        problemsHolder.registerProblem(elementToHighlight, message, messageProvider.problemHighlightType, fix)
-      }
-      else {
-        problemsHolder.registerProblem(elementToHighlight, message, messageProvider.problemHighlightType)
-      }
-      return true
-    }
-    return false
-  }
-
-  private fun checkTargetReferencesUnstableTypeInSignature(target: PsiModifierListOwner,
-                                                           sourceNode: UElement,
-                                                           isMethodOverriding: Boolean) {
-    if (!isMethodOverriding && !arePsiElementsFromTheSameFile(sourceNode.sourcePsi, target.containingFile)) {
-      val declaration = target.toUElement(UDeclaration::class.java)
-      if (declaration !is UClass && declaration !is UMethod && declaration !is UField) {
-        return
-      }
-      val unstableTypeUsedInSignature = findAnnotatedTypeUsedInDeclarationSignature(declaration, unstableApiAnnotations)
-      if (unstableTypeUsedInSignature != null) {
-        val messageProvider = getMessageProvider(unstableTypeUsedInSignature.psiAnnotation) ?: return
-        val message = messageProvider.buildMessageUnstableTypeIsUsedInSignatureOfReferencedApi(target, unstableTypeUsedInSignature)
-        val elementToHighlight = getElementToHighlight(sourceNode) ?: return
-        problemsHolder.registerProblem(elementToHighlight, message, messageProvider.problemHighlightType)
-      }
-    }
-  }
-
-  private fun arePsiElementsFromTheSameFile(one: PsiElement?, two: PsiElement?): Boolean {
-    //For Kotlin: naive comparison of PSI containingFile-s does not work because one of the PSI elements might be light PSI element
-    // coming from a light PSI file, and another element would be physical PSI file, and they are not "equals()".
-    return one?.containingFile?.virtualFile == two?.containingFile?.virtualFile
-  }
-
-}
-
-private interface UnstableApiUsageMessageProvider {
-
-  val problemHighlightType: ProblemHighlightType
-
-  @InspectionMessage
-  fun buildMessage(annotatedContainingDeclaration: AnnotatedContainingDeclaration): String
-
-  @InspectionMessage
-  fun buildMessageUnstableMethodOverridden(annotatedContainingDeclaration: AnnotatedContainingDeclaration): String
-
-  @InspectionMessage
-  fun buildMessageUnstableTypeIsUsedInSignatureOfReferencedApi(
-    referencedApi: PsiModifierListOwner,
-    annotatedTypeUsedInSignature: AnnotatedContainingDeclaration
-  ): String
 }
 
 private object DefaultUnstableApiUsageMessageProvider : UnstableApiUsageMessageProvider {

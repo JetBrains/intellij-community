@@ -11,6 +11,7 @@
     <module name="intellij.java.ui"/>
     <module name="intellij.java.xml.dom.impl"/>
     <module name="intellij.json.backend"/>
+    <module name="intellij.jvm.analysis.impl"/>
     <module name="intellij.libraries.caffeine"/>
     <module name="intellij.libraries.fastutil"/>
     <module name="intellij.libraries.guava"/>
@@ -297,6 +298,14 @@
                      enabledByDefault="false" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PluginXmlReferencesModuleReachabilityInspection"
                      key="inspection.plugin.xml.references.module.reachability.display.name"/>
+    <localInspection language="UAST" shortName="JetBrainsInternalApiUsage"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     enabledByDefault="true" level="ERROR"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.JetBrainsInternalApiUsageInspection"
+                     key="inspections.jetbrains.internal.api.usage.display.name"/>
+    <codeInsight.unstableApiUsageFilter
+      implementation="org.jetbrains.idea.devkit.inspections.JetBrainsInternalApiUsageFilter"/>
 
     <localInspection language="JVM" shortName="ComponentNotRegistered"
                      projectType="INTELLIJ_PLUGIN"
