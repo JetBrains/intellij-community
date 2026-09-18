@@ -165,10 +165,10 @@ internal class WorkspaceFileIndexDataImpl(
   private val packageDirectoryCache = PackageDirectoryCacheImpl(::fillPackageFilesAndDirectories, ::isPackageDirectory)
   private val nonIncrementalContributors = NonIncrementalContributors(project)
   private val fileIdWithoutFileSets = ConcurrentBitSet.create()
-  // A set bit for a directory means: no collection at the directory or above it holds an [ExcludedFileSet.ByUnscopedCondition].
+  // A set bit for a directory means: no collection at the directory or above it holds an unscoped exclusion.
   private val fileIdWithoutUnscopedConditionsAbove = ConcurrentBitSet.create()
   @Volatile
-  private var hasUnscopedExclusions = fileSets.values.any { it.hasUnscopedCondition() }
+  private var hasUnscopedExclusions = fileSets.values.any { it.hasUnscopedExclusion() }
   private val fileTypeRegistry = FileTypeRegistry.getInstance()
   private val dirtyEntities = HashSet<EntityPointer<WorkspaceEntity>>()
   private val dirtyFiles = HashSet<VirtualFile>()
@@ -253,7 +253,8 @@ internal class WorkspaceFileIndexDataImpl(
   }
 
   /**
-   * Returns `true` if an [ExcludedFileSet.ByUnscopedCondition] above [nestedRoot] excludes [file]. [nestedRoot] is the nearest root of [file].
+   * Returns `true` if an [unscoped exclusion][isUnscopedExclusion] above [nestedRoot] excludes [file]. [nestedRoot] is the nearest root of
+   * [file].
    */
   private fun isExcludedAbove(file: VirtualFile, nestedRoot: VirtualFile, acceptedKindsMask: Int): Boolean {
     var current = nestedRoot.parent
@@ -263,9 +264,9 @@ internal class WorkspaceFileIndexDataImpl(
       if (fileId >= 0 && fileIdWithoutUnscopedConditionsAbove.get(fileId)) break
       if (fileId < 0 || !fileIdWithoutFileSets.get(fileId)) {
         val storedFileSets = fileSets[current]
-        if (storedFileSets != null && storedFileSets.hasUnscopedCondition()) {
+        if (storedFileSets != null && storedFileSets.hasUnscopedExclusion()) {
           highestUnscopedConditionRoot = current
-          if (storedFileSets.excludesByUnscopedCondition(file, acceptedKindsMask)) {
+          if (storedFileSets.excludesByUnscopedExclusion(file, acceptedKindsMask)) {
             return true
           }
         }
@@ -276,24 +277,28 @@ internal class WorkspaceFileIndexDataImpl(
     return false
   }
 
-  private fun StoredFileSetCollection.hasUnscopedCondition(): Boolean {
+  private fun StoredFileSetCollection.hasUnscopedExclusion(): Boolean {
     var found = false
-    forEach { if (it is ExcludedFileSet.ByUnscopedCondition) found = true }
+    forEach { if (it.isUnscopedExclusion()) found = true }
     return found
   }
 
+  /** An exclusion that applies also inside a file set nested below its root. */
+  private fun StoredFileSet.isUnscopedExclusion(): Boolean =
+    this is ExcludedFileSet.ByUnscopedCondition || this is ExcludedFileSet.UnscopedRoot
+
   private fun updateHasUnscopedExclusions(registeredFileSets: Set<StoredFileSet>, removedFileSets: Set<StoredFileSet>) {
-    if (registeredFileSets.any { it is ExcludedFileSet.ByUnscopedCondition }) {
+    if (registeredFileSets.any { it.isUnscopedExclusion() }) {
       hasUnscopedExclusions = true
     }
-    else if (removedFileSets.any { it is ExcludedFileSet.ByUnscopedCondition }) {
-      hasUnscopedExclusions = fileSets.values.any { it.hasUnscopedCondition() }
+    else if (removedFileSets.any { it.isUnscopedExclusion() }) {
+      hasUnscopedExclusions = fileSets.values.any { it.hasUnscopedExclusion() }
     }
   }
 
-  private fun StoredFileSetCollection.excludesByUnscopedCondition(file: VirtualFile, acceptedKindsMask: Int): Boolean {
+  private fun StoredFileSetCollection.excludesByUnscopedExclusion(file: VirtualFile, acceptedKindsMask: Int): Boolean {
     var masks = acceptedKindsMask shl ACCEPTED_KINDS_MASK_SHIFT
-    forEach { if (it is ExcludedFileSet.ByUnscopedCondition) masks = it.computeMasks(masks, project, true, file) }
+    forEach { if (it.isUnscopedExclusion()) masks = it.computeMasks(masks, project, true, file) }
     return (masks shr ACCEPTED_KINDS_MASK_SHIFT) and WorkspaceFileKindMask.ALL == 0
   }
 
@@ -826,6 +831,16 @@ private class RemoveFileSetsRegistrarImpl(
     }
   }
 
+  override fun registerUnscopedExcludedRoot(excludedRoot: VirtualFileUrl, directoryOnly: Boolean, entity: WorkspaceEntity) {
+    val excludedRootFile = excludedRoot.virtualFile
+    if (excludedRootFile == null) {
+      nonExistingFilesRegistry.unregisterUrl(excludedRoot, entity, storageKind)
+    }
+    else {
+      removeAndTrackValue(excludedRootFile) { it is ExcludedFileSet.UnscopedRoot && it.entityPointer.isPointerTo(entity) }
+    }
+  }
+
   private fun removeAndTrackValue(rootFile: VirtualFile, valuePredicate: (StoredFileSet) -> Boolean) {
     val fileSetToRemove = fileSets[rootFile]
     fileSetToRemove?.forEach { fileSet ->
@@ -996,6 +1011,19 @@ private class StoreFileSetsRegistrarImpl(
     else {
       val fileSet = ExcludedFileSet.ByUnscopedCondition(rootFile, condition, entity.createPointer(), storageKind)
       fileSets.putValue(rootFile, fileSet)
+      registeredFileSets.add(fileSet)
+    }
+  }
+
+  override fun registerUnscopedExcludedRoot(excludedRoot: VirtualFileUrl, directoryOnly: Boolean, entity: WorkspaceEntity) {
+    val excludedRootFile = excludedRoot.virtualFile
+    if (excludedRootFile == null) {
+      nonExistingFilesRegistry.registerUrl(excludedRoot, entity, storageKind, NonExistingFileSetKind.EXCLUDED_FROM_CONTENT,
+                                           recursive = true)
+    }
+    else {
+      val fileSet = ExcludedFileSet.UnscopedRoot(excludedRootFile, directoryOnly, entity.createPointer(), storageKind)
+      fileSets.putValue(excludedRootFile, fileSet)
       registeredFileSets.add(fileSet)
     }
   }

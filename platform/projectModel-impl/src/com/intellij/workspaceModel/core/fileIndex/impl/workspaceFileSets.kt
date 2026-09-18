@@ -345,7 +345,7 @@ internal object WorkspaceFileKindMask {
  * The exclusion type determines whether it also applies to files covered by a nested inclusion rule:
  *
  * * [ByFileKind], [ByPattern], and [ByCondition] allow a nested inclusion rule to include excluded files again.
- * * [ByUnscopedCondition] continues to exclude matching files even inside a nested inclusion rule.
+ * * [ByUnscopedCondition] and [UnscopedRoot] continue to exclude matching files even inside a nested inclusion rule.
  *
  * [WorkspaceFileIndexEx.getFileInfo] applies exclusion rules when `honorExclusion` is `true`.
  */
@@ -391,6 +391,41 @@ internal sealed interface ExcludedFileSet : StoredFileSet {
 
     override fun toString(): String {
       return "ExcludedFileSet.ByFileKind{mask=$mask}"
+    }
+  }
+
+  /**
+   * Excludes [root] and its descendants from all kinds.
+   * The exclusion continues to apply inside a nested inclusion rule, as [ByUnscopedCondition] does.
+   * With [directoryOnly] it applies only while [root] is a directory.
+   */
+  class UnscopedRoot(override val root: VirtualFile, val directoryOnly: Boolean,
+                     override val entityPointer: EntityPointer<WorkspaceEntity>,
+                     override val entityStorageKind: EntityStorageKind) : ExcludedFileSet {
+    override fun computeMasks(currentMasks: Int, project: Project, honorExclusion: Boolean, file: VirtualFile): Int {
+      val excludes = honorExclusion && (!directoryOnly || root.isDirectory)
+      val withExclusion = if (excludes) currentMasks.unsetAcceptedKinds(WorkspaceFileKindMask.ALL) else currentMasks
+      return withExclusion or StoredFileSetKindMask.IRRELEVANT_FILE_SET
+    }
+
+    override fun hasSameProperties(other: StoredFileSet): Boolean {
+      if (other !is UnscopedRoot) return false
+      return root == other.root &&
+             directoryOnly == other.directoryOnly &&
+             entityStorageKind == other.entityStorageKind &&
+             entityPointer.isPointerToEntityOfSameTypeAs(other.entityPointer)
+    }
+
+    override fun hashcodeOfProperties(): Int {
+      var result = root.hashCode()
+      result = 31 * result + directoryOnly.hashCode()
+      result = 31 * result + entityPointer.classHashcode()
+      result = 31 * result + entityStorageKind.hashCode()
+      return result
+    }
+
+    override fun toString(): String {
+      return "ExcludedFileSet.UnscopedRoot{root=$root, directoryOnly=$directoryOnly}"
     }
   }
 

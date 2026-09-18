@@ -87,6 +87,58 @@ class WorkspaceFileIndexContributorDynamicRegistrationTest {
     assertFalse(fileIndex.isInContent(fileInNestedRoot))
   }
 
+  @Test
+  fun `an unscoped excluded root reaches a nested content root`(@TestDisposable testDisposable: Disposable) {
+    val excludedDir = projectModel.baseProjectDir.newVirtualDirectory("root/$EXCLUDED_DIR_NAME")
+    val fileInExcludedDir = projectModel.baseProjectDir.newVirtualFile("root/$EXCLUDED_DIR_NAME/a.txt")
+    val nestedRoot = projectModel.baseProjectDir.newVirtualDirectory("root/$EXCLUDED_DIR_NAME/nested")
+    val fileInNestedRoot = projectModel.baseProjectDir.newVirtualFile("root/$EXCLUDED_DIR_NAME/nested/b.txt")
+    val sibling = projectModel.baseProjectDir.newVirtualFile("root/c.txt")
+    ModuleRootModificationUtil.addContentRoot(projectModel.createModule("nested"), nestedRoot)
+
+    WorkspaceFileIndexImpl.EP_NAME.point.registerExtension(ExcludeSpecialDirRootContributor(directoryOnly = false), testDisposable)
+
+    assertFalse(fileIndex.isInContent(excludedDir))
+    assertFalse(fileIndex.isInContent(fileInExcludedDir))
+    assertFalse(fileIndex.isInContent(nestedRoot))
+    assertFalse(fileIndex.isInContent(fileInNestedRoot))
+    assertTrue(fileIndex.isInContent(sibling))
+  }
+
+  @Test
+  fun `a directory-only unscoped excluded root leaves a file of that name in content`(@TestDisposable testDisposable: Disposable) {
+    val fileWithTheName = projectModel.baseProjectDir.newVirtualFile("root/$EXCLUDED_DIR_NAME")
+
+    WorkspaceFileIndexImpl.EP_NAME.point.registerExtension(ExcludeSpecialDirRootContributor(directoryOnly = true), testDisposable)
+
+    assertTrue(fileIndex.isInContent(fileWithTheName))
+  }
+
+  @Test
+  fun `an unscoped excluded root that does not exist yet excludes the directory once created`(@TestDisposable testDisposable: Disposable) {
+    WorkspaceFileIndexImpl.EP_NAME.point.registerExtension(ExcludeSpecialDirRootContributor(directoryOnly = true), testDisposable)
+    // The index builds its file sets on the first query. The root does not exist at that time.
+    assertTrue(fileIndex.isInContent(contentRoot))
+
+    val excludedDir = projectModel.baseProjectDir.newVirtualDirectory("root/$EXCLUDED_DIR_NAME")
+    val fileInExcludedDir = projectModel.baseProjectDir.newVirtualFile("root/$EXCLUDED_DIR_NAME/a.txt")
+
+    assertFalse(fileIndex.isInContent(excludedDir))
+    assertFalse(fileIndex.isInContent(fileInExcludedDir))
+  }
+
+  @Test
+  fun `an unscoped excluded root wins over a content root registered for the same directory`(@TestDisposable testDisposable: Disposable) {
+    val excludedDir = projectModel.baseProjectDir.newVirtualDirectory("root/$EXCLUDED_DIR_NAME")
+    val fileInExcludedDir = projectModel.baseProjectDir.newVirtualFile("root/$EXCLUDED_DIR_NAME/a.txt")
+    ModuleRootModificationUtil.addContentRoot(projectModel.createModule("same"), excludedDir)
+
+    WorkspaceFileIndexImpl.EP_NAME.point.registerExtension(ExcludeSpecialDirRootContributor(directoryOnly = true), testDisposable)
+
+    assertFalse(fileIndex.isInContent(excludedDir))
+    assertFalse(fileIndex.isInContent(fileInExcludedDir))
+  }
+
   private class ExcludeSpecialFileContributor : WorkspaceFileIndexContributor<ContentRootEntity> {
     override val entityClass: Class<ContentRootEntity>
       get() = ContentRootEntity::class.java
@@ -113,6 +165,16 @@ class WorkspaceFileIndexContributorDynamicRegistrationTest {
 
     override fun registerFileSets(entity: ContentRootEntity, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {
       registrar.registerUnscopedExclusionCondition(entity.url, ExcludeSpecialDirCondition, entity)
+    }
+  }
+
+  /** The special directory below each content root as an excluded root by URL, which a nested file set does not scope out. */
+  private class ExcludeSpecialDirRootContributor(private val directoryOnly: Boolean) : WorkspaceFileIndexContributor<ContentRootEntity> {
+    override val entityClass: Class<ContentRootEntity>
+      get() = ContentRootEntity::class.java
+
+    override fun registerFileSets(entity: ContentRootEntity, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {
+      registrar.registerUnscopedExcludedRoot(entity.url.append(EXCLUDED_DIR_NAME), directoryOnly, entity)
     }
   }
 

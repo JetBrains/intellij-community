@@ -4,6 +4,7 @@ package com.intellij.ide.analysisignore
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
@@ -327,6 +328,19 @@ class AnalysisIgnorePatternTest {
     assertFalse(matcher.excludes("docs/Generated"))
     assertFalse(matcher.excludes("a/docs/generated"))
     assertFalse(matcher.excludes("docs/generated2"))
+  }
+
+  @Test
+  fun `an anchored path without a wildcard names one path`() {
+    // The index excludes such a path by its URL, and no condition sees it.
+    assertEquals("a/b", AnalysisIgnorePattern.compile("/a/b/", caseSensitive = true).literalPath)
+    assertEquals("a/b", AnalysisIgnorePattern.compile("a/b", caseSensitive = true).literalPath)
+    assertEquals("dist", AnalysisIgnorePattern.compile("/dist", caseSensitive = true).literalPath)
+
+    // A wildcard, a name at any level, an empty component, and a component that means the directory itself or the one above.
+    for (pattern in listOf("a/*/b", "a/**", "**/a/b", "build", "*.log", "a//b", "./a", "a/../b")) {
+      assertNull(AnalysisIgnorePattern.compile(pattern, caseSensitive = true).literalPath, pattern)
+    }
   }
 
   @Test

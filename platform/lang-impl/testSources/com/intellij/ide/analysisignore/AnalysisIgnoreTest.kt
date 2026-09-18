@@ -44,6 +44,7 @@ import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assumptions.assumeFalse
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -747,6 +748,64 @@ class AnalysisIgnoreTest {
     assertTrue(caseInsensitive.shouldExclude(capitalBuild))
     assertFalse(caseInsensitive.shouldExclude(builds))
     assertTrue(caseInsensitive.shouldExclude(generated))
+  }
+
+  // -----------------------------------------------------------------------------------------------------------------------------------
+  // How the index stores the patterns: a path without a wildcard is an excluded root, every other pattern is a condition
+  // -----------------------------------------------------------------------------------------------------------------------------------
+
+  @Test
+  fun `a path without a wildcard becomes an excluded root, and every other pattern stays a condition`() {
+    val aDir = dir("projectRoot/a")
+    val patterns = AnalysisIgnorePattern.compileAll(listOf("/a/", "/later/", "build", "*.log", "a/**/b"), caseSensitive = true)
+
+    val registration = splitForRegistration(urlOf(projectRoot), patterns)
+
+    // A path that does not exist yet is an excluded root too: the index registers it once the path appears.
+    assertEquals(listOf("/a/", "/later/"), registration.roots.map { it.second.source })
+    assertEquals(listOf(aDir.url, projectRoot.url + "/later"), registration.roots.map { it.first.url })
+    assertEquals(listOf("build", "*.log", "a/**/b"), registration.conditionPatterns.map { it.source })
+  }
+
+  @Test
+  @RegistryKey(key = ENABLED, value = "true")
+  fun `a directory-only path that is a file today excludes the directory that replaces it`() = runBlocking {
+    val outFile = file("projectRoot/out")
+    val excludeFile = writeAnalysisIgnoreFile("projectRoot", "/out/")
+    discover(excludeFile)
+    assertTrue(isInContent(outFile))
+
+    writeAction { outFile.delete(this@AnalysisIgnoreTest) }
+    val outDir = dir("projectRoot/out")
+
+    assertFalse(isInContent(outDir))
+  }
+
+  @Test
+  @RegistryKey(key = ENABLED, value = "true")
+  fun `a path spelled in another case excludes the directory on a case-insensitive file system`() = runBlocking {
+    assumeFalse(projectRoot.isCaseSensitive)
+    val buildDir = dir("projectRoot/Build")
+    val excludeFile = writeAnalysisIgnoreFile("projectRoot", "/build/")
+    discover(excludeFile)
+
+    // A path that exists resolves through the VFS, which tells no case apart on this file system.
+    assertFalse(isInContent(buildDir))
+  }
+
+  @Test
+  @RegistryKey(key = ENABLED, value = "true")
+  fun `removing one path from the file frees its directory and keeps the others`() = runBlocking {
+    val aDir = dir("projectRoot/a")
+    val bDir = dir("projectRoot/b")
+    val excludeFile = writeAnalysisIgnoreFile("projectRoot", "/a/", "/b/")
+    discover(excludeFile)
+    assertEquals(setOf(aDir.url, bDir.url), outOfContent(aDir, bDir))
+
+    writeAction { VfsUtil.saveText(excludeFile, "/b/") }
+    discover(excludeFile)
+
+    assertEquals(setOf(bDir.url), outOfContent(aDir, bDir))
   }
 
   // -----------------------------------------------------------------------------------------------------------------------------------

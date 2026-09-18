@@ -163,6 +163,11 @@ final class ExcludeRootsCache {
     }
 
     @Override
+    public void registerUnscopedExcludedRoot(@NotNull VirtualFileUrl excludedRoot, boolean directoryOnly, @NotNull WorkspaceEntity entity) {
+      // An analysis exclusion is not an excluded URL for the VCS and the VFS refresh
+    }
+
+    @Override
     public void registerNonRecursiveFileSet(@NotNull VirtualFileUrl file, @NotNull WorkspaceFileKind kind, @NotNull WorkspaceEntity entity, WorkspaceFileSetData customData) {
       // We only care about excluded roots
     }

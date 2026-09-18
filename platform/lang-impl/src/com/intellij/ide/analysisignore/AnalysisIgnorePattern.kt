@@ -23,6 +23,11 @@ class AnalysisIgnorePattern internal constructor(
    * A pattern without such a `/` matches a name at any level below that directory.
    */
   val anchored: Boolean,
+  /**
+   * The path below the directory of the file that an anchored pattern without a wildcard names, with a `/` between its components.
+   * `null` for every other pattern.
+   */
+  val literalPath: String?,
   private val segments: List<AnalysisIgnoreSegment>,
 ) {
 
@@ -125,6 +130,7 @@ class AnalysisIgnorePattern internal constructor(
         source = source,
         directoryOnly = parsed.directoryOnly,
         anchored = parsed.anchored,
+        literalPath = literalPathOf(parsed.body, parsed.anchored),
         segments = segmentsOf(parsed.body, parsed.anchored, caseSensitive),
       )
     }
@@ -331,6 +337,16 @@ private class Parsed(
 
 
 private val LOG = logger<AnalysisIgnorePattern>()
+
+/**
+ * Returns [body] if the anchored pattern names one path: no wildcard, and no component that is empty, `.` or `..`. Returns `null`
+ * otherwise.
+ */
+private fun literalPathOf(body: String, anchored: Boolean): String? {
+  if (!anchored || !body.hasNoWildcard()) return null
+  if (body.split('/').any { it.isEmpty() || it == "." || it == ".." }) return null
+  return body
+}
 
 /**
  * Returns the segments of the pattern [body].
