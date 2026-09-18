@@ -9,13 +9,13 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="apache.logging.log4j.to.slf4j" type="repository">
-        <properties maven-id="org.apache.logging.log4j:log4j-to-slf4j:2.20.0">
+        <properties maven-id="org.apache.logging.log4j:log4j-to-slf4j:2.26.1">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/logging/log4j/log4j-to-slf4j/2.20.0/log4j-to-slf4j-2.20.0.jar">
-              <sha256sum>88e731d7f455da59dfa08769527f87d6c496053a712637df7b999f6977933a2c</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/logging/log4j/log4j-to-slf4j/2.26.1/log4j-to-slf4j-2.26.1.jar">
+              <sha256sum>6b10bc838a3c773b3fd02979c7ef4e7a443371fa89bda4415d89099bbee224df</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/logging/log4j/log4j-api/2.20.0/log4j-api-2.20.0.jar">
-              <sha256sum>2f43eea679ea66f14ca0f13fec2a8600ac124f5a5231dcb4df8393eddcb97550</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/logging/log4j/log4j-api/2.26.1/log4j-api-2.26.1.jar">
+              <sha256sum>f1810a4704ccce019d02bba029dc02a4f2ac0c997f647b465e7d409c1927f822</sha256sum>
             </artifact>
           </verification>
           <exclude>
@@ -23,13 +23,13 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/logging/log4j/log4j-to-slf4j/2.20.0/log4j-to-slf4j-2.20.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/logging/log4j/log4j-api/2.20.0/log4j-api-2.20.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/logging/log4j/log4j-to-slf4j/2.26.1/log4j-to-slf4j-2.26.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/logging/log4j/log4j-api/2.26.1/log4j-api-2.26.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/logging/log4j/log4j-to-slf4j/2.20.0/log4j-to-slf4j-2.20.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/logging/log4j/log4j-api/2.20.0/log4j-api-2.20.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/logging/log4j/log4j-to-slf4j/2.26.1/log4j-to-slf4j-2.26.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/logging/log4j/log4j-api/2.26.1/log4j-api-2.26.1-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

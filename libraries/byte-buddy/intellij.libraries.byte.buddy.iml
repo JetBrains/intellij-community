@@ -9,19 +9,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="byte-buddy" type="repository">
-        <properties maven-id="net.bytebuddy:byte-buddy:1.18.13">
+        <properties maven-id="net.bytebuddy:byte-buddy:1.18.14">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy/1.18.13/byte-buddy-1.18.13.jar">
-              <sha256sum>aa0013fbcb7e8086f4775f3dcb69a6c6833f7fd9023fe027d2d0241834cc51d5</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy/1.18.14/byte-buddy-1.18.14.jar">
+              <sha256sum>b7f2b2f111c6ddc09d3d9718ca5895dde16217bb4e5f2d2a6eb571f274909a82</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy/1.18.13/byte-buddy-1.18.13.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy/1.18.14/byte-buddy-1.18.14.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy/1.18.13/byte-buddy-1.18.13-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy/1.18.14/byte-buddy-1.18.14-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
