@@ -14,6 +14,8 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiReference
 import com.intellij.util.ref.GCWatcher
+import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.CyclicBarrier
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertSame
@@ -163,7 +165,63 @@ class FileProviderMapTest {
     assertNull(map[anyContext()])
     assertEquals(emptyList<Map.Entry<CodeInsightContext, FileViewProvider>>(), map.entries.toList())
   }
+
+  @Test
+  fun `a concurrent cacheOrGet survives the reassignment of the any-context provider`() {
+    // The reassignment rebuilds the map from a snapshot. A cacheOrGet that commits during the rebuild
+    // must not be lost, so try to commit one inside that window.
+    repeat(ROUNDS) { round ->
+      val liveProviders = mutableListOf<FileViewProvider>()
+      val map = FileProviderMap()
+
+      // the first entry owns the default value of the map, so make that one collectible
+      val deadProviderTracker = addCollectibleProvider(map, MockContext("collectible"))
+      for (i in 1 until FILLER_COUNT) {
+        val provider = MockFileViewProvider("filler$i")
+        liveProviders.add(provider)
+        map.cacheOrGet(MockContext("filler$i"), provider)
+      }
+      deadProviderTracker.ensureCollected()
+      assertEquals(FILLER_COUNT - 1, map.entries.size, "the collectible provider is still alive")
+
+      val stored = ConcurrentLinkedQueue<Pair<CodeInsightContext, FileViewProvider>>()
+      val barrier = CyclicBarrier(2)
+      val writer = Thread {
+        barrier.await()
+        for (i in 0 until WRITE_COUNT) {
+          val context = MockContext("writer$i")
+          val provider = MockFileViewProvider("writer$round-$i")
+          liveProviders.add(provider)
+          if (map.cacheOrGet(context, provider) === provider) {
+            stored.add(context to provider)
+          }
+        }
+      }
+      writer.start()
+
+      barrier.await()
+      map[anyContext()] // reassigns the default value, because the old one was collected
+      writer.join()
+
+      for ((context, provider) in stored) {
+        assertSame(provider, map[context], "round $round lost $provider of $context")
+      }
+      assertEquals(liveProviders.size, map.entries.size, "round $round lost entries")
+    }
+  }
+
+  private fun addCollectibleProvider(map: FileProviderMap, context: CodeInsightContext): GCWatcher {
+    // the provider must stay unreachable from the caller, so that GC can collect it
+    val provider = MockFileViewProvider("collectible")
+    map.cacheOrGet(context, provider)
+    return GCWatcher.tracking(provider)
+  }
 }
+
+/** A rebuild of this many entries gives a concurrent `cacheOrGet` a window to commit in. */
+private const val FILLER_COUNT = 64
+private const val WRITE_COUNT = 64
+private const val ROUNDS = 8
 
 /**
  * A [FileViewProvider] that only holds user data. [FileProviderMap] stores a strong link to itself in the

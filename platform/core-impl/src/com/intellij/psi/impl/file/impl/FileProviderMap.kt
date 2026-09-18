@@ -147,17 +147,18 @@ private class FileProviderMapImpl : FileProviderMap, AtomicReference<ContextMap<
         return it
       }
 
-      // evicting collected items and assigning the new default context
-      update {
-        snapshot.processQueue()
-      }
+      // Evict the collected items and assign the new default context.
+      // The block must use its own argument. A stale snapshot would drop a concurrently added entry.
+      update { it.processQueue() }
 
       // Damn it. Another view provider was collected too! Let's try one more time.
       log.trace { "anyContext was GCed for [$this]. Trying again" }
       attemptCounter++
-      if (attemptCounter % 1000 == 0) {
-        log.error("Can't find anyContext by $attemptCounter attempts. $this")
+      if (attemptCounter >= MAX_ANY_CONTEXT_ATTEMPTS) {
+        // Another thread keeps this map busy. Report a miss, because the caller can build a new provider.
         ProgressManager.checkCanceled()
+        log.error("Can't find anyContext by $attemptCounter attempts. $this")
+        return null
       }
     }
 
@@ -551,6 +552,9 @@ private class EntryImpl<V : Any>(
 ) : Map.Entry<CodeInsightContext, V>
 
 private val log = com.intellij.openapi.diagnostic.logger<FileProviderMap>()
+
+/** How many times [FileProviderMap.get] retries to find a provider for [anyContext] before it reports a miss. */
+private const val MAX_ANY_CONTEXT_ATTEMPTS = 1000
 
 private val strongLinkToFileProviderMap = Key.create<FileProviderMap>("strongLinkToFileProviderMap")
 
