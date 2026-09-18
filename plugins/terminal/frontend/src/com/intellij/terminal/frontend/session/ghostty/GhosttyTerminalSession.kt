@@ -416,11 +416,13 @@ class GhosttyTerminalSession internal constructor(
           if (disposed) return
           emulator.resize(TerminalSize(event.newSize.columns, event.newSize.rows))
           changedSinceLastProjection = true
-          runCatching { ttyConnector.resize(TermSize(event.newSize.columns, event.newSize.rows)) }
-            .onFailure { if (!disposed) LOG.warn("Failed to resize the PTY to ${event.newSize}", it) }
           responses = takeResponsesLocked()
         }
         flushResponses(responses)
+        // PTY resize must be called outside the lock: it is a blocking operation.
+        // Especially in the case of remote connection to IJent - it can be stuck indefinitely if the connection is lost.
+        runCatching { ttyConnector.resize(TermSize(event.newSize.columns, event.newSize.rows)) }
+          .onFailure { if (!disposed) LOG.warn("Failed to resize the PTY to ${event.newSize}", it) }
         // The reflowed frame is picked up by the next projection tick.
       }
       is TerminalClearBufferEvent -> handleClearBuffer()
