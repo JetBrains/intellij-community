@@ -49,7 +49,11 @@ open class JBOptionButton(action: Action?, options: Array<Action>?) : JButton(ac
     }
   var optionAdText: @NlsContexts.PopupAdvertisement String? = null
 
-  val isSimpleButton: Boolean get() = options.isNullOrEmpty()
+  /**
+   * Tells the UI to draw one plain button without the arrow half.
+   * The default answers `true` when [options] is empty. A subclass that opens its own popup from [togglePopup] can answer `false`.
+   */
+  open val isSimpleButton: Boolean get() = options.isNullOrEmpty()
 
   var addSeparator: Boolean = true
   var hideDisabledOptions: Boolean = false
@@ -67,7 +71,8 @@ open class JBOptionButton(action: Action?, options: Array<Action>?) : JButton(ac
 
   override fun getWeight(): Double = 0.5
 
-  fun togglePopup(): Unit = getUI().togglePopup()
+  /** Opens or closes the option popup. The arrow half calls this. A subclass can open its own popup instead. */
+  open fun togglePopup(): Unit = getUI().togglePopup()
   fun showPopup(actionToSelect: Action? = null, ensureSelection: Boolean = true): Unit = getUI().showPopup(actionToSelect, ensureSelection)
   fun closePopup(): Unit = getUI().closePopup()
 

@@ -2493,6 +2493,7 @@ c:com.intellij.openapi.actionSystem.SplitButtonAction
 - getActionGroup():com.intellij.openapi.actionSystem.ActionGroup
 - p:getMainAction(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.openapi.actionSystem.AnAction
 - p:isGroupPresentationDependsOnSelectedAction():Z
+- p:showPopup(com.intellij.openapi.actionSystem.AnActionEvent):Z
 - updateCustomComponent(javax.swing.JComponent,com.intellij.openapi.actionSystem.Presentation):V
 - p:useDynamicSplitButton():Z
 f:com.intellij.openapi.actionSystem.ex.QuickList

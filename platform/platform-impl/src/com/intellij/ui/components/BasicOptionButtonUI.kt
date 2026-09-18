@@ -254,7 +254,7 @@ open class BasicOptionButtonUI : OptionButtonUI() {
     }
   }
 
-  protected open fun createArrowButtonActionListener(): ActionListener? = ActionListener { togglePopup() }
+  protected open fun createArrowButtonActionListener(): ActionListener? = ActionListener { optionButton.togglePopup() }
 
   protected open fun createArrowButtonMouseListener(): MouseListener? = object : MouseAdapter() {
     override fun mousePressed(e: MouseEvent) {

@@ -7826,7 +7826,7 @@ c:com.intellij.ui.components.JBOptionButton
 - getUI():com.intellij.ui.components.OptionButtonUI
 - getUIClassID():java.lang.String
 - getWeight():D
-- f:isSimpleButton():Z
+- isSimpleButton():Z
 - f:setAddSeparator(Z):V
 - f:setHideDisabledOptions(Z):V
 - f:setOptionAdText(java.lang.String):V
@@ -7839,7 +7839,7 @@ c:com.intellij.ui.components.JBOptionButton
 - f:setShowPopupYOffset(I):V
 - f:showPopup(javax.swing.Action,Z):V
 - bs:showPopup$default(com.intellij.ui.components.JBOptionButton,javax.swing.Action,Z,I,java.lang.Object):V
-- f:togglePopup():V
+- togglePopup():V
 f:com.intellij.ui.components.JBOptionButton$Companion
 - f:getDefaultShowPopupShortcut():com.intellij.openapi.actionSystem.CustomShortcutSet
 - f:getDefaultTooltip():java.lang.String

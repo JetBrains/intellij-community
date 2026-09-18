@@ -102,6 +102,16 @@ public class SplitButtonAction extends ActionGroupWrapper implements CustomCompo
     return false;
   }
 
+  /**
+   * Opens the chevron popup for {@code event}.
+   * The default answers {@code false}, and the button shows {@link #getActionGroup()} as a popup menu.
+   * An override that opens its own popup answers {@code true}.
+   */
+  @SuppressWarnings("unused")
+  protected boolean showPopup(@NotNull AnActionEvent event) {
+    return false;
+  }
+
   @Override
   public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
     return new SplitButton(this, presentation, place, getDelegate(), useDynamicSplitButton());
@@ -114,6 +124,7 @@ public class SplitButtonAction extends ActionGroupWrapper implements CustomCompo
 
     private static final Icon ARROW_DOWN = AllIcons.General.ButtonDropTriangle;
 
+    private final SplitButtonAction mySplitButtonAction;
     private final ActionGroup myActionGroup;
     private AnAction selectedAction;
     private boolean actionEnabled = true;
@@ -121,12 +132,13 @@ public class SplitButtonAction extends ActionGroupWrapper implements CustomCompo
     private SimpleMessageBusConnection myConnection;
     private final boolean myUpdateSelectedActionAfterExecution;
 
-    private SplitButton(@NotNull AnAction action,
+    private SplitButton(@NotNull SplitButtonAction action,
                         @NotNull Presentation presentation,
                         String place,
                         ActionGroup actionGroup,
                         boolean updateSelectedActionAfterExecution) {
       super(action, presentation, place, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
+      mySplitButtonAction = action;
       myActionGroup = actionGroup;
       myUpdateSelectedActionAfterExecution = updateSelectedActionAfterExecution;
       selectedAction = presentation.getClientProperty(FIRST_ACTION);
@@ -263,7 +275,9 @@ public class SplitButtonAction extends ActionGroupWrapper implements CustomCompo
       HelpTooltip.hide(this);
 
       if (mousePressType == MousePressType.Popup || !selectedActionEnabled()) {
-        showActionGroupPopup(myActionGroup, event);
+        if (!mySplitButtonAction.showPopup(event)) {
+          showActionGroupPopup(myActionGroup, event);
+        }
       }
       else if (mousePressType == MousePressType.Action) {
         selectedAction.actionPerformed(event);
