@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.k2.inspections.eel
 
+import com.intellij.lang.Language as IntelliJLanguage
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.module.Module
@@ -26,6 +27,8 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.devkit.inspections.eel.UseOptimizedEelFunctions
+import org.jetbrains.idea.devkit.inspections.eel.OptimizedEelFunctionCallNameProviders
+import org.jetbrains.idea.devkit.kotlin.inspections.eel.KtOptimizedEelFunctionCallNameProvider
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
@@ -733,6 +736,11 @@ class UseOptimizedEelFunctionsTest {
       .getFixture()
     myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, LightTempDirTestFixtureImpl(true))
     myFixture.setUp()
+    OptimizedEelFunctionCallNameProviders.addExplicitExtension(
+      IntelliJLanguage.findLanguageByID("kotlin")!!,
+      KtOptimizedEelFunctionCallNameProvider(),
+      myFixture.testRootDisposable,
+    )
     IntelliJProjectUtil.markAsIntelliJPlatformProject(myFixture.project, true)
     myFixture.enableInspections(UseOptimizedEelFunctions::class.java)
   }

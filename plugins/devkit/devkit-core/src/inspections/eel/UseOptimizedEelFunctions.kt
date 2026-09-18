@@ -20,13 +20,11 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiTypes
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.uast.UastVisitorAdapter
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.util.PsiUtil
 import org.jetbrains.uast.UCallExpression
-import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.UQualifiedReferenceExpression
 import org.jetbrains.uast.UReferenceExpression
 import org.jetbrains.uast.generate.getUastElementFactory
@@ -34,7 +32,6 @@ import org.jetbrains.uast.generate.replace
 import org.jetbrains.uast.getQualifiedChain
 import org.jetbrains.uast.getQualifiedName
 import org.jetbrains.uast.getUastParentOfType
-import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
 private val OPTIMIZED_METHOD_NAMES = setOf("deleteRecursively", "readAllBytes", "readString", "write")
 
@@ -51,29 +48,15 @@ class UseOptimizedEelFunctions : LocalInspectionTool() {
     else {
       ProblemHighlightType.INFORMATION
     }
-    return UastVisitorAdapter(object : AbstractUastNonRecursiveVisitor() {
-      private val visitedCalls = hashSetOf<UExpression>()
+    val aliases = OptimizedEelFunctionCallNameProviders.forLanguage(holder.file.language)?.getAliases(holder.file, OPTIMIZED_METHOD_NAMES).orEmpty()
+    val candidateNames = OPTIMIZED_METHOD_NAMES + aliases
+    return object : PsiElementVisitor() {
+      override fun visitElement(element: PsiElement) {
+        if (element.firstChild != null || element.text !in candidateNames) return
 
-      override fun visitQualifiedReferenceExpression(node: UQualifiedReferenceExpression): Boolean {
-        if (!visitedCalls.add(node)) {
-          return true
-        }
-
-        val selector = node.selector
-        if (selector is UCallExpression) {
-          return visitCallExpression(selector)
-        }
-
-        return false
-      }
-
-      override fun visitCallExpression(node: UCallExpression): Boolean {
-        if (!visitedCalls.add(node)) {
-          return true
-        }
-
-        val methodName = node.methodName ?: return true
-        if (methodName !in OPTIMIZED_METHOD_NAMES) return true
+        val node = element.getUastParentOfType<UCallExpression>() ?: return
+        val methodName = node.methodName ?: return
+        if (methodName !in OPTIMIZED_METHOD_NAMES) return
 
         val receiverName = node.receiver
           ?.getQualifiedChain()
@@ -86,17 +69,15 @@ class UseOptimizedEelFunctions : LocalInspectionTool() {
         }
         else {
           // Handle static imports and aliases: resolve the method to get its fully qualified name
-          val method = node.resolve() ?: return true
-          val containingClass = method.containingClass?.qualifiedName ?: return true
+          val method = node.resolve() ?: return
+          val containingClass = method.containingClass?.qualifiedName ?: return
           val actualMethodName = method.name
           "$containingClass.$actualMethodName"
         }
 
         handleMethod(holder, node, fqn, highlightType)
-
-        return true
       }
-    }, true)
+    }
   }
 
   private fun handleMethod(holder: ProblemsHolder, node: UCallExpression, fqn: String, highlightType: ProblemHighlightType) {

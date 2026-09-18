@@ -180,6 +180,9 @@
     <cancellationCheckProvider
       language="kotlin"
       implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.KtCancellationCheckProvider"/>
+    <optimizedEelFunctionCallNameProvider
+      language="kotlin"
+      implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.eel.KtOptimizedEelFunctionCallNameProvider"/>
     <cancellationCheckInLoopsFixProvider
       language="kotlin"
       implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.KtCancellationCheckInLoopsFixProvider"/>
