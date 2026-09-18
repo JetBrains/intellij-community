@@ -17,6 +17,14 @@ import kotlin.io.path.absolutePathString
  */
 abstract class AbstractReferenceResolveWithCompilerPluginsInSourceTest : AbstractReferenceResolveTest() {
 
+    protected open val compilerPlugins: List<CompilerPluginConfiguration> = listOf(
+        CompilerPluginConfiguration(
+            name = "SERIALIZATION",
+            registrarClassName = "org.jetbrains.kotlinx.serialization.compiler.extensions.SerializationComponentRegistrar",
+            libraryCoordinates = KOTLINX_SERIALIZATION_CORE_JVM_MAVEN_COORDINATES,
+        ),
+    )
+
     protected val testDirectoryPath: String
         get() = KotlinTestUtils.getTestDataFileName(this::class.java, this.name)!!
 
@@ -52,28 +60,19 @@ abstract class AbstractReferenceResolveWithCompilerPluginsInSourceTest : Abstrac
         }
     }
 
-    private fun parseCompilerPlugin(fileText: String): CompilerPlugin {
+    private fun parseCompilerPlugin(fileText: String): CompilerPluginConfiguration {
         val pluginNames = InTextDirectivesUtils.findLinesWithPrefixesRemoved(fileText, COMPILER_PLUGIN_PRESET_DIRECTIVE)
         val pluginName = pluginNames.singleOrNull()
             ?: error("Specify exactly one $COMPILER_PLUGIN_PRESET_DIRECTIVE directive")
-        return CompilerPlugin.entries.singleOrNull { it.name == pluginName }
-            ?: error("Unknown compiler plugin: $pluginName. Available values: ${CompilerPlugin.entries.joinToString { it.name }}")
+        return compilerPlugins.singleOrNull { it.name == pluginName }
+            ?: error("Unknown compiler plugin: $pluginName. Available values: ${compilerPlugins.joinToString { it.name }}")
     }
 
-    private enum class CompilerPlugin(
+    protected data class CompilerPluginConfiguration(
+        val name: String,
         private val registrarClassName: String,
         val libraryCoordinates: String,
     ) {
-        LOMBOK(
-            "org.jetbrains.kotlin.lombok.LombokComponentRegistrar",
-            "org.projectlombok:lombok:1.18.26",
-        ),
-
-        SERIALIZATION(
-            "org.jetbrains.kotlinx.serialization.compiler.extensions.SerializationComponentRegistrar",
-            KOTLINX_SERIALIZATION_CORE_JVM_MAVEN_COORDINATES,
-        );
-
         val jarPath: Path
             get() {
                 val registrarClass = Class.forName(registrarClassName)

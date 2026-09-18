@@ -23,31 +23,6 @@ public class FirReferenceResolveWithCompilerPluginsInSourceTestGenerated extends
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
-    @TestMetadata("lombokBuilder")
-    public void testLombokBuilder() throws Exception {
-        runTest("../../idea/tests/testData/resolve/referenceWithCompilerPluginsInSource/lombokBuilder/");
-    }
-
-    @TestMetadata("lombokBuilderFunction")
-    public void testLombokBuilderFunction() throws Exception {
-        runTest("../../idea/tests/testData/resolve/referenceWithCompilerPluginsInSource/lombokBuilderFunction/");
-    }
-
-    @TestMetadata("lombokGetter")
-    public void testLombokGetter() throws Exception {
-        runTest("../../idea/tests/testData/resolve/referenceWithCompilerPluginsInSource/lombokGetter/");
-    }
-
-    @TestMetadata("lombokGetterSetter")
-    public void testLombokGetterSetter() throws Exception {
-        runTest("../../idea/tests/testData/resolve/referenceWithCompilerPluginsInSource/lombokGetterSetter/");
-    }
-
-    @TestMetadata("lombokSetter")
-    public void testLombokSetter() throws Exception {
-        runTest("../../idea/tests/testData/resolve/referenceWithCompilerPluginsInSource/lombokSetter/");
-    }
-
     @TestMetadata("serializationInSource_companionObject")
     public void testSerializationInSource_companionObject() throws Exception {
         runTest("../../idea/tests/testData/resolve/referenceWithCompilerPluginsInSource/serializationInSource_companionObject/");

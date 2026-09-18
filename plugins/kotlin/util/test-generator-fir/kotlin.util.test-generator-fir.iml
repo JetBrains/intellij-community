@@ -21,6 +21,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.analysis.platform.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.util.test-generator-api" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.fir.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.lombok.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.maven.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.projectWizard.cli" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.project-wizard.tests" scope="TEST" />
