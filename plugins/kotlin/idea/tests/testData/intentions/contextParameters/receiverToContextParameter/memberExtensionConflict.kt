@@ -1,5 +1,5 @@
+// SHOULD_FAIL_WITH: Callable reference 's::fn' cannot pass its receiver value as a context argument
 // COMPILER_ARGUMENTS: -Xcontext-parameters -Xcallable-references-to-contextual
-// SHOULD_FAIL_WITH: Callable reference 's::fn' cannot reference a member extension function and will not be updated
 // K2_ERROR: EXTENSION_IN_CLASS_REFERENCE_NOT_ALLOWED
 // K2_AFTER_ERROR: EXTENSION_IN_CLASS_REFERENCE_NOT_ALLOWED
 

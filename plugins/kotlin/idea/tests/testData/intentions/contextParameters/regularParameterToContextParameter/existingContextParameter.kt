@@ -1,3 +1,4 @@
+// SHOULD_FAIL_WITH: Callable reference '::fn' cannot pass an explicit argument to context parameter 'b'
 // COMPILER_ARGUMENTS: -Xcontext-parameters -Xcallable-references-to-contextual
 
 class CtxA

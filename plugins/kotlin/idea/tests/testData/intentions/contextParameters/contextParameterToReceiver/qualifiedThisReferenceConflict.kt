@@ -1,5 +1,5 @@
+// SHOULD_FAIL_WITH: Callable reference 'this::fn' cannot be updated to a member with an extension receiver
 // COMPILER_ARGUMENTS: -Xcontext-parameters -Xcallable-references-to-contextual
-// SHOULD_FAIL_WITH: Callable reference 'this::fn' cannot reference a member extension function and will not be updated
 
 class Ctx
 

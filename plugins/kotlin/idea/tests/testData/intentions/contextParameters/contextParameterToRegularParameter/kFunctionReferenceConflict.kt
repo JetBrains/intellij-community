@@ -1,5 +1,5 @@
+// SHOULD_FAIL_WITH: Callable reference '::fn' will no longer match the expected function type
 // COMPILER_ARGUMENTS: -Xcontext-parameters -Xcallable-references-to-contextual
-// SHOULD_FAIL_WITH: Callable reference '::fn' cannot be updated automatically because parameters were converted to/from context parameters
 
 import kotlin.reflect.KFunction1
 
