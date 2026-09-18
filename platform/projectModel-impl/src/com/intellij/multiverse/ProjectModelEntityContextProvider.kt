@@ -56,6 +56,12 @@ internal class ProjectModelEntityContextProvider : CodeInsightContextProvider {
 
     val storage = WorkspaceModel.getInstance(project).currentSnapshot
 
+    // One file set needs no duplicate check, and most files have one.
+    if (fileSets.size == 1) {
+      val context = extractContext(fileSets.single(), storage, project) ?: return null
+      return listOf(context)
+    }
+
     val contexts = fileSets
       .mapNotNull { fileSet -> extractContext(fileSet, storage, project) }
       .distinct()
