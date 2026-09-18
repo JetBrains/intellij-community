@@ -56,11 +56,9 @@ internal fun iterateNonIndexableFilesImpl(project: Project, inputFilter: Virtual
   return workspaceFileIndex.iterateNonIndexableFilesImpl(roots, inputFilter, processor)
 }
 
-@ApiStatus.Internal
-data class AllFileSets(val recursive: List<WorkspaceFileSet>, val nonRecursive: List<WorkspaceFileSet>)
+private data class AllFileSets(val recursive: List<WorkspaceFileSet>, val nonRecursive: List<WorkspaceFileSet>)
 
-@ApiStatus.Internal
-fun WorkspaceFileIndex.allIndexableFileSets(root: VirtualFile): AllFileSets {
+private fun WorkspaceFileIndex.allIndexableFileSets(root: VirtualFile): AllFileSets {
   val indexableFileSets =
     findFileSets(root, true, true, false, true, true, false, true)
 
@@ -69,8 +67,7 @@ fun WorkspaceFileIndex.allIndexableFileSets(root: VirtualFile): AllFileSets {
     .let { (recursive, nonRecursive) -> AllFileSets(recursive, nonRecursive) }
 }
 
-@ApiStatus.Internal
-fun WorkspaceFileIndexEx.isExcludedOrInvalid(file: VirtualFile): Boolean {
+private fun WorkspaceFileIndexEx.isExcludedOrInvalid(file: VirtualFile): Boolean {
   val info =
     getFileInfo(file, true, true, true, true, true, true, true)
 
@@ -180,8 +177,7 @@ interface FilesDeque {
   }
 }
 
-@ApiStatus.Internal
-class FilesDequeImpl internal constructor(
+private class FilesDequeImpl(
   private val traversal: ConcurrentFileTraversal,
 ) : FilesDeque {
   private val bfsQueue = ArrayDeque(traversal.roots)
@@ -199,8 +195,7 @@ class FilesDequeImpl internal constructor(
   }
 }
 
-@ApiStatus.Internal
-class ConcurrentNonIndexableFileTraversal internal constructor(
+private class ConcurrentNonIndexableFileTraversal(
   private val project: Project,
   override val roots: Set<VirtualFile>,
   private val filter: VirtualFileFilter?,
