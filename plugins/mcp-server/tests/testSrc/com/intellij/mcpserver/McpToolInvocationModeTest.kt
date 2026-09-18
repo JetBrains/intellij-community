@@ -45,7 +45,8 @@ class McpToolInvocationModeTest {
         override fun getTools(): List<McpTool> = listOf(
           fakeTool("tool_a", "test.tool_a"),
           fakeTool("tool_b", "test.tool_b"),
-          fakeTool("tool_c", "test.tool_c")
+          fakeTool("tool_c", "test.tool_c"),
+          fakeTool("tool_direct", "test.tool_direct", alwaysIncluded = true)
         )
       },
       disposable
@@ -70,7 +71,7 @@ class McpToolInvocationModeTest {
     )
 
     val names = tools.map { it.descriptor.name }.toSet()
-    assertThat(names).contains("tool_a", "tool_b", "tool_c", ROUTER_TOOL)
+    assertThat(names).contains("tool_a", "tool_b", "tool_c", "tool_direct", ROUTER_TOOL)
   }
 
   @Test
@@ -81,7 +82,7 @@ class McpToolInvocationModeTest {
 
     val names = tools.map { it.descriptor.name }.toSet()
     assertThat(names)
-      .contains("tool_c", ROUTER_TOOL)
+      .contains("tool_c", "tool_direct", ROUTER_TOOL)
       .doesNotContain("tool_a", "tool_b")
   }
 
@@ -94,7 +95,7 @@ class McpToolInvocationModeTest {
     val names = tools.map { it.descriptor.name }.toSet()
     assertThat(names)
       .contains("tool_a", "tool_b", ROUTER_TOOL)
-      .doesNotContain("tool_c")
+      .doesNotContain("tool_c", "tool_direct")
   }
 
   /**
@@ -113,13 +114,14 @@ class McpToolInvocationModeTest {
       .isEqualTo(ValidationResultType.REJECTED)
   }
 
-  private fun fakeTool(name: String, fullName: String): McpTool {
+  private fun fakeTool(name: String, fullName: String, alwaysIncluded: Boolean = false): McpTool {
     return object : McpTool {
       override val descriptor = McpToolDescriptor(
         name = name,
         description = name,
         fullyQualifiedName = fullName,
-        category = McpToolCategory(shortName = "Test", fullyQualifiedName = "test", isExperimental = false),
+        category = McpToolCategory(shortName = "Test", fullyQualifiedName = "test", isExperimental = false,
+                                   alwaysIncluded = alwaysIncluded),
         inputSchema = McpToolSchema.ofPropertiesSchema(JsonObject(emptyMap()), emptySet(), emptyMap()),
       )
 

@@ -27,7 +27,9 @@ interface McpToolFilterProvider {
   )
 
   class McpToolFilterContext(tools: Collection<McpTool>) {
-    private val toolStates: MutableMap<McpTool, McpToolState> = tools.associateWith { McpToolState() }.toMutableMap()
+    private val toolStates: MutableMap<McpTool, McpToolState> = tools.associateWith {
+      McpToolState(routerOnly = !it.descriptor.category.alwaysIncluded)
+    }.toMutableMap()
 
     val onTools: Set<McpTool> get() = toolStates.filterValues { it.enabled && !it.routerOnly }.keys
     val routerOnlyTools: Set<McpTool> get() = toolStates.filterValues { it.enabled && it.routerOnly }.keys

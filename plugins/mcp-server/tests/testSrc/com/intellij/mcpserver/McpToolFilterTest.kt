@@ -170,6 +170,23 @@ class McpToolFilterTest {
   // --- McpToolFilterContext tests ---
 
   @Test
+  fun `always included tools are direct by default and still obey filters`() {
+    val direct = fakeTool("direct", alwaysIncluded = true)
+    val routed = fakeTool("routed")
+    val context = McpToolFilterContext(listOf(direct, routed))
+
+    assertThat(context.onTools).containsExactly(direct)
+    assertThat(context.routerOnlyTools).containsExactly(routed)
+
+    context.updateState(routerOnly = true) { it == direct }
+    assertThat(context.onTools).isEmpty()
+    assertThat(context.routerOnlyTools).containsExactlyInAnyOrder(direct, routed)
+
+    context.updateState(enabled = false) { it == direct }
+    assertThat(context.routerOnlyTools).containsExactly(routed)
+  }
+
+  @Test
   fun `updateState sets enabled only without affecting routerOnly`() {
     val tool = fakeTool("read_file")
     val context = McpToolFilterContext(listOf(tool))
@@ -259,13 +276,14 @@ class McpToolFilterTest {
     assertThat(context.routerOnlyTools).doesNotContain(tool)
   }
 
-  private fun fakeTool(name: String): McpTool {
+  private fun fakeTool(name: String, alwaysIncluded: Boolean = false): McpTool {
     return object : McpTool {
       override val descriptor = McpToolDescriptor(
         name = name,
         description = name,
         fullyQualifiedName = "test.$name",
-        category = McpToolCategory(shortName = "Test", fullyQualifiedName = "test", isExperimental = false),
+        category = McpToolCategory(shortName = "Test", fullyQualifiedName = "test", isExperimental = false,
+                                   alwaysIncluded = alwaysIncluded),
         inputSchema = McpToolSchema.ofPropertiesSchema(
           JsonObject(emptyMap()), emptySet(), emptyMap()
         ),

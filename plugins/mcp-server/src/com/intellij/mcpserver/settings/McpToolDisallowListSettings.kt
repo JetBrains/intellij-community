@@ -64,7 +64,7 @@ internal class McpToolDisallowListSettingsImpl : McpToolDisallowListSettings, Si
     val states = toolStates
     return states[tool.descriptor.fullyQualifiedName]
            ?: states[tool.descriptor.name]
-           ?: ToolState()
+           ?: ToolState(routerOnly = !tool.descriptor.category.alwaysIncluded)
   }
 
   internal class ToolStateBean() : BaseState() {
