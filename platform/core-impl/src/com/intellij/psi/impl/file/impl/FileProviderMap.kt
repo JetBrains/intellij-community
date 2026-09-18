@@ -111,22 +111,22 @@ private class FileProviderMapImpl : FileProviderMap, AtomicReference<ContextMap<
   }
 
   /**
-   * [map] has a designated value for [anyContext] that is called [ContextMap.defaultValue].
+   * [snapshot] has a designated value for [anyContext] that is called [ContextMap.defaultValue].
    *
    * We try to use it if it's not collected.
    * Otherwise, we process the GC queue and try again.
    */
   private fun findAnyContext(
-    map: ContextMap<FileViewProvider>,
+    snapshot: ContextMap<FileViewProvider>,
   ): FileViewProvider? {
-    if (map.size() == 0) {
+    if (snapshot.size() == 0) {
       return null
     }
 
     // The map is not empty, and we are asking for ANY view provider
-    // In this case, we can return a view provider of a real context by calling `map.defaultValue`.
+    // In this case, we can return a view provider of a real context by calling `snapshot.defaultValue`.
 
-    val defaultValue = map.defaultValue()
+    val defaultValue = snapshot.defaultValue()
     if (defaultValue != null) {
       log.trace { "anyContext found for [$this]" }
       return defaultValue
@@ -135,21 +135,28 @@ private class FileProviderMapImpl : FileProviderMap, AtomicReference<ContextMap<
     // There was a designated default context, but its provider was collected.
     // Let's try to find another one.
 
-    var cancellationCounter = 0
-    while (this.map.size() > 0) {
-      // evicting collected items and assigning the new default context
-      update {
-        map.processQueue()
+    var attemptCounter = 0
+    while (true) {
+      // one read of the map per round, so that the size and the default value come from the same state
+      val currentMap = map
+      if (currentMap.size() == 0) {
+        break
       }
-      this.map.defaultValue()?.let {
+      currentMap.defaultValue()?.let {
         log.trace { "anyContext found for [$this] after GC queue processing." }
         return it
       }
+
+      // evicting collected items and assigning the new default context
+      update {
+        snapshot.processQueue()
+      }
+
       // Damn it. Another view provider was collected too! Let's try one more time.
       log.trace { "anyContext was GCed for [$this]. Trying again" }
-      cancellationCounter++
-      if (cancellationCounter % 1000 == 0) {
-        log.error("Can't find anyContext by ${cancellationCounter} attempts. $this")
+      attemptCounter++
+      if (attemptCounter % 1000 == 0) {
+        log.error("Can't find anyContext by $attemptCounter attempts. $this")
         ProgressManager.checkCanceled()
       }
     }
