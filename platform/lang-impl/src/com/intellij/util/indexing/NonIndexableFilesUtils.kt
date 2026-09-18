@@ -80,6 +80,29 @@ private fun WorkspaceFileIndexEx.isExcludedOrInvalid(file: VirtualFile): Boolean
   }
 }
 
+private data class SubtreeProcessingMode(val shouldProcessRoot: Boolean, val shouldProcessChildren: Boolean) {
+  companion object {
+    val NONE = SubtreeProcessingMode(false, false)
+  }
+}
+
+private fun getSubtreeProcessingModeAt(
+  file: VirtualFile,
+  workspaceFileIndex: WorkspaceFileIndexEx,
+  filter: VirtualFileFilter?,
+): SubtreeProcessingMode {
+  if (workspaceFileIndex.isExcludedOrInvalid(file)) return SubtreeProcessingMode.NONE
+
+  val indexableFileSetsFromFile = workspaceFileIndex.allIndexableFileSets(file)
+  if (indexableFileSetsFromFile.recursive.isNotEmpty()) return SubtreeProcessingMode.NONE
+
+  val shouldProcessChildren = file.isValid && !file.isRecursiveOrCircularSymlink
+  val shouldProcessRoot = indexableFileSetsFromFile.nonRecursive.isEmpty() &&
+                          (filter == null || runReadActionBlocking { filter.accept(file) })
+
+  return SubtreeProcessingMode(shouldProcessRoot, shouldProcessChildren)
+}
+
 @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 private fun WorkspaceFileIndexEx.iterateNonIndexableFilesImpl(
   roots: Set<VirtualFile>,
@@ -90,12 +113,10 @@ private fun WorkspaceFileIndexEx.iterateNonIndexableFilesImpl(
     val res = VfsUtilCore.visitChildrenRecursively(root, object : VirtualFileVisitor<Any?>() {
       override fun visitFileEx(file: VirtualFile): Result {
         ProgressManager.checkCanceled()
-        if (isExcludedOrInvalid(file)) return SKIP_CHILDREN
-        val currentIndexableFileSets = allIndexableFileSets(root = file)
+        val subtreeProcessingMode = getSubtreeProcessingModeAt(file, this@iterateNonIndexableFilesImpl, filter)
         return when {
-          currentIndexableFileSets.recursive.isNotEmpty() -> SKIP_CHILDREN
-          currentIndexableFileSets.nonRecursive.isNotEmpty() -> CONTINUE // skip only the current file, children can be non-indexable
-          filter != null && !runReadActionBlocking { filter.accept(file) } -> CONTINUE // skip only the current file, children can pass the filter
+          subtreeProcessingMode == SubtreeProcessingMode.NONE -> SKIP_CHILDREN
+          !subtreeProcessingMode.shouldProcessRoot -> CONTINUE // skip only the current file, children can be non-indexable
           !processor.processFile(file) -> skipTo(root) // terminate processing
           else -> CONTINUE
         }
@@ -201,24 +222,6 @@ private class ConcurrentNonIndexableFileTraversal(
   private val filter: VirtualFileFilter?,
 ) : ConcurrentFileTraversal {
 
-  private data class SubtreeProcessingMode(val shouldProcessRoot: Boolean, val shouldProcessChildren: Boolean){
-    companion object {
-      val NONE = SubtreeProcessingMode(false, false)
-    }
-  }
-
-  private fun getSubtreeProcessingModeAt(file: VirtualFile, workspaceFileIndex: WorkspaceFileIndexEx): SubtreeProcessingMode {
-    if (workspaceFileIndex.isExcludedOrInvalid(file)) return SubtreeProcessingMode.NONE
-
-    val indexableFileSetsFromFile = workspaceFileIndex.allIndexableFileSets(file)
-    if (indexableFileSetsFromFile.recursive.isNotEmpty()) return SubtreeProcessingMode.NONE
-
-    val shouldProcessChildren = (file.isValid && !file.isRecursiveOrCircularSymlink)
-    val shouldProcessRoot = indexableFileSetsFromFile.nonRecursive.isEmpty() // skip only the current file, children can be non-indexable
-
-    return SubtreeProcessingMode(shouldProcessRoot, shouldProcessChildren)
-  }
-
   private val visitedRoots: MutableSet<VirtualFile> = ConcurrentHashMap.newKeySet()
 
   override fun expand(file: VirtualFile, consumer: (List<VirtualFile>) -> Unit): Boolean {
@@ -227,17 +230,12 @@ private class ConcurrentNonIndexableFileTraversal(
       if (!visitedRoots.add(file)) return false
     }
 
-    val subtreeProcessingMode = getSubtreeProcessingModeAt(file, WorkspaceFileIndexEx.getInstance(project))
+    val subtreeProcessingMode = getSubtreeProcessingModeAt(file, WorkspaceFileIndexEx.getInstance(project), filter)
 
     if (subtreeProcessingMode.shouldProcessChildren) {
       consumer(file.children.asList())
     }
 
-    if (subtreeProcessingMode.shouldProcessRoot) {
-      return filter == null || runReadActionBlocking { filter.accept(file) }
-    }
-    else {
-      return false
-    }
+    return subtreeProcessingMode.shouldProcessRoot
   }
 }
