@@ -466,7 +466,7 @@
     />
     <registryKey
       key="ide.update.toolbar.widget"
-      defaultValue="false"
+      defaultValue="true"
       description="Show an available IDE update as a main toolbar button instead of an item in the Settings menu"
     />
     <registryKey

@@ -286,7 +286,7 @@ public final class PlatformUpdateDialog extends AbstractUpdateDialog {
     @Nullable Path testPatch,
     @NotNull Collection<PluginDownloader> pluginsToUpdate
   ) {
-    IdeUpdateWidgetState.getInstance().updateStatus(IdeUpdateWidgetState.Status.DOWNLOADING);
+    IdeUpdateWidgetState.getInstance().onDownloadStarted();
 
     //noinspection UsagesOfObsoleteApi
     new Task.Backgroundable(project, IdeBundle.message("update.preparing"), true, PerformInBackgroundOption.DEAF) {
@@ -325,20 +325,21 @@ public final class PlatformUpdateDialog extends AbstractUpdateDialog {
         }
 
         if (ApplicationManager.getApplication().isRestartCapable()) {
-          if (IdeUpdateWidgetState.isWidgetShown()) {
-            IdeUpdateWidgetState.getInstance().onRestartReady(command);
-          }
-          else if (indicator.isShowing()) {
-            restartLaterAndRunCommand(command);
-          }
-          else {
-            var title = IdeBundle.message("updates.notification.title", ApplicationNamesInfo.getInstance().getFullProductName());
-            var message = IdeBundle.message("update.ready.message");
-            UpdateChecker.getNotificationGroupForIdeUpdateResults()
-              .createNotification(title, message, NotificationType.INFORMATION)
-              .addAction(NotificationAction.createSimpleExpiring(IdeBundle.message("update.ready.restart"), () -> restartLaterAndRunCommand(command)))
-              .setDisplayId("ide.update.suggest.restart")
-              .notify(project);
+          IdeUpdateWidgetState.getInstance().onRestartReady(command);
+
+          if (!IdeUpdateWidgetState.isWidgetShown()) {
+            if (indicator.isShowing()) {
+              restartLaterAndRunCommand(command);
+            }
+            else {
+              var title = IdeBundle.message("updates.notification.title", ApplicationNamesInfo.getInstance().getFullProductName());
+              var message = IdeBundle.message("update.ready.message");
+              UpdateChecker.getNotificationGroupForIdeUpdateResults()
+                .createNotification(title, message, NotificationType.INFORMATION)
+                .addAction(NotificationAction.createSimpleExpiring(IdeBundle.message("update.ready.restart"), () -> restartLaterAndRunCommand(command)))
+                .setDisplayId("ide.update.suggest.restart")
+                .notify(project);
+            }
           }
         }
         else {
