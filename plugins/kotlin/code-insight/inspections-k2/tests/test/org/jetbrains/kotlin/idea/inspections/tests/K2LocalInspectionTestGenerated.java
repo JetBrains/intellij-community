@@ -25,6 +25,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("argumentIsEnclosingContextParameter.kt")
+        public void testArgumentIsEnclosingContextParameter() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedContextParameterCall/argumentIsEnclosingContextParameter.kt");
+        }
+
         @TestMetadata("callableReference.kt")
         public void testCallableReference() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedContextParameterCall/callableReference.kt");
@@ -53,6 +58,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         @TestMetadata("contextualMemberCalledDirectly.kt")
         public void testContextualMemberCalledDirectly() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedContextParameterCall/contextualMemberCalledDirectly.kt");
+        }
+
+        @TestMetadata("doubleUsingSupertype.kt")
+        public void testDoubleUsingSupertype() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedContextParameterCall/doubleUsingSupertype.kt");
         }
 
         @TestMetadata("explicitContextArgument.kt")
@@ -103,6 +113,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         @TestMetadata("labelUnrelated.kt")
         public void testLabelUnrelated() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedContextParameterCall/labelUnrelated.kt");
+        }
+
+        @TestMetadata("multipleContextParameters1.kt")
+        public void testMultipleContextParameters1() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedContextParameterCall/multipleContextParameters1.kt");
         }
 
         @TestMetadata("multipleStatements.kt")
@@ -173,6 +188,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         @TestMetadata("userDefinedContext.kt")
         public void testUserDefinedContext() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedContextParameterCall/userDefinedContext.kt");
+        }
+
+        @TestMetadata("usingSupertype.kt")
+        public void testUsingSupertype() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedContextParameterCall/usingSupertype.kt");
         }
 
         @TestMetadata("wholeCallUnused.kt")
