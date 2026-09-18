@@ -29,11 +29,13 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.ui.LayeredIcon
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.popup.PopupState
 import com.intellij.util.PathUtil
 import com.intellij.util.ThreeState
@@ -41,6 +43,7 @@ import com.intellij.util.UriUtil
 import com.intellij.util.concurrency.NonUrgentExecutor
 import com.intellij.util.ui.FormBuilder
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.ThreeStateCheckBox
 import com.intellij.util.ui.UI
 import com.intellij.util.ui.UIUtil
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
@@ -49,20 +52,28 @@ import java.awt.BorderLayout
 import java.awt.event.ActionListener
 import javax.swing.Icon
 import javax.swing.JButton
+import javax.swing.JCheckBox
+import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.LayoutFocusTraversalPolicy
+import javax.swing.SwingConstants
 import javax.swing.text.JTextComponent
 
 @ApiStatus.Internal
-abstract class ProjectFileStorageSelector(
+abstract class ProjectFileStorageSelector @JvmOverloads constructor(
   private val project: Project,
   private val pathLabel: @NlsContexts.Label String,
+  supportsMixedState: Boolean = false,
 ) {
-  private val storeAsFileCheckBox = JBCheckBox(ExecutionBundle.message("run.configuration.store.as.project.file"))
+  private val storeAsFileCheckBox: JCheckBox = if (supportsMixedState) {
+    ThreeStateCheckBox(ExecutionBundle.message("run.configuration.store.as.project.file"), ThreeStateCheckBox.State.NOT_SELECTED)
+  }
+  else JBCheckBox(ExecutionBundle.message("run.configuration.store.as.project.file"))
   private val storeAsFileGearButton = createStoreAsFileGearButton()
 
   init {
     storeAsFileCheckBox.addActionListener {
+      if (storeAsFileCheckBox is ThreeStateCheckBox) storeAsFileCheckBox.isThirdStateEnabled = false
       onStorageSelectionChanged(storeAsFileCheckBox.isSelected)
       storeAsFileGearButton.isEnabled = storeAsFileCheckBox.isSelected
       if (storeAsFileCheckBox.isSelected) {
@@ -79,18 +90,43 @@ abstract class ProjectFileStorageSelector(
   protected abstract fun createPathChooserDescriptor(): FileChooserDescriptor
 
   protected open fun isPathInvalid(): Boolean = getPathError(getStoragePath()) != null
+  protected open fun getStoragePathComment(): @NlsContexts.DetailedDescription String? = null
 
   fun createComponent(): JPanel = FormBuilder.createFormBuilder().setFormLeftIndent(10).setHorizontalGap(0)
     .addLabeledComponent(storeAsFileCheckBox, storeAsFileGearButton)
     .panel
 
+  fun createToolbarComponent(): JPanel {
+    storeAsFileCheckBox.isOpaque = false
+    storeAsFileCheckBox.border = JBUI.Borders.emptyRight(3)
+    storeAsFileGearButton.isFocusable = true
+    return JPanel(HorizontalLayout(0, SwingConstants.CENTER)).apply {
+      isOpaque = false
+      border = JBUI.Borders.empty(0, 10, 0, 2)
+      add(storeAsFileCheckBox)
+      add(storeAsFileGearButton)
+    }
+  }
+
+  val focusOrder: List<JComponent> get() = listOf(storeAsFileCheckBox, storeAsFileGearButton)
+
   fun addStoreAsFileCheckBoxListener(listener: ActionListener) {
     storeAsFileCheckBox.addActionListener(listener)
   }
 
-  protected fun resetStorageUi(selected: Boolean, enabled: Boolean) {
+  protected fun resetStorageUi(selected: Boolean?, enabled: Boolean) {
     storeAsFileCheckBox.isEnabled = enabled
-    storeAsFileCheckBox.isSelected = selected
+    if (storeAsFileCheckBox is ThreeStateCheckBox) {
+      storeAsFileCheckBox.isThirdStateEnabled = selected == null
+      storeAsFileCheckBox.state = when (selected) {
+        true -> ThreeStateCheckBox.State.SELECTED
+        false -> ThreeStateCheckBox.State.NOT_SELECTED
+        null -> ThreeStateCheckBox.State.DONT_CARE
+      }
+    }
+    else {
+      storeAsFileCheckBox.isSelected = selected == true
+    }
     storeAsFileGearButton.isVisible = enabled
     storeAsFileGearButton.isEnabled = storeAsFileCheckBox.isSelected
     validatePath()
@@ -112,7 +148,7 @@ abstract class ProjectFileStorageSelector(
   private fun manageStorageFileLocation(state: PopupState<Balloon>?) {
     val balloonDisposable = Disposer.newDisposable()
     val popup = StoragePathPopup(
-      project, pathLabel, createPathChooserDescriptor(), ::getPathError, balloonDisposable,
+      project, pathLabel, getStoragePathComment(), createPathChooserDescriptor(), ::getPathError, balloonDisposable,
     )
     val balloon = JBPopupFactory.getInstance().createBalloonBuilder(popup.mainPanel)
       .setDialogMode(true)
@@ -203,6 +239,7 @@ abstract class ProjectFileStorageSelector(
 private class StoragePathPopup(
   project: Project,
   pathLabel: @NlsContexts.Label String,
+  pathComment: @NlsContexts.DetailedDescription String?,
   descriptor: FileChooserDescriptor,
   pathToErrorMessage: (String) -> @NlsContexts.DialogMessage String?,
   uiDisposable: Disposable,
@@ -224,7 +261,9 @@ private class StoragePathPopup(
       .andRegisterOnDocumentListener(comboBoxEditorComponent)
       .installOn(comboBoxEditorComponent)
 
-    val comboBoxPanel = UI.PanelFactory.panel(pathComboBox).withLabel(pathLabel).moveLabelOnTop().createPanel()
+    val comboBoxPanel = UI.PanelFactory.panel(pathComboBox).withLabel(pathLabel).moveLabelOnTop().apply {
+      if (pathComment != null) withComment(StringUtil.escapeXmlEntities(pathComment))
+    }.createPanel()
     val doneButton = JButton(ExecutionBundle.message("run.configuration.done.button"))
     doneButton.addActionListener { closePopupAction() }
     val doneButtonPanel = JPanel(BorderLayout())
