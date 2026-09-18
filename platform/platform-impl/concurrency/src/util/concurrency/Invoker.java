@@ -6,7 +6,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ExceptionUtil;
@@ -19,6 +18,7 @@ import org.jetbrains.concurrency.Obsolescent;
 import org.jetbrains.concurrency.Promise;
 
 import java.util.Set;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeoutException;
@@ -215,7 +215,7 @@ public abstract class Invoker implements Disposable {
   }
 
   private void handleTaskError(@NotNull Task<?, ?> task, @NotNull Throwable throwable, int attempt) {
-    if (throwable instanceof ProcessCanceledException || throwable == AsyncPromise.CANCELED || throwable instanceof IndexNotReadyException) {
+    if (throwable instanceof CancellationException || throwable instanceof IndexNotReadyException) {
       offerRestart(task, attempt);
       return;
     }
