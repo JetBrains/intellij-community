@@ -28,6 +28,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Predicates;
@@ -404,6 +405,13 @@ public final class InspectionEngine {
     });
 
     return resultDescriptors;
+  }
+
+  @ApiStatus.Internal
+  public static void assertUnderProgressIndicator() {
+    if (ProgressIndicatorProvider.getGlobalProgressIndicator() == null) {
+      throw new IllegalStateException("Must be run under ProgressIndicator. See ProgressManager.runProcess()");
+    }
   }
 
   private static @Nullable LocalInspectionToolWrapper getRedirectedToolWrapper(LocalInspectionToolWrapper tool,

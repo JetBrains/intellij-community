@@ -89,8 +89,7 @@ public abstract class JobLauncher {
    * All processing is finished when the method returns, unless PCE is thrown, in which case there are no guarantees
    */
   @ApiStatus.Internal
-  public <T> boolean processConcurrentlyAsync(@NotNull ProgressIndicator progress,
-                                              @NotNull List<? extends T> items,
+  public <T> boolean processConcurrentlyAsync(@NotNull List<? extends T> items,
                                               @NotNull Processor<? super T> thingProcessor,
                                               @NotNull Runnable runnable) throws ProcessCanceledException {
     return false;

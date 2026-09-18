@@ -21,7 +21,6 @@ import com.intellij.codeInspection.ex.InspectionProfileWrapper;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.concurrency.JobLauncher;
-import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.VirtualFileWindow;
@@ -138,6 +137,7 @@ final class InspectionRunner {
                                   @NotNull ApplyIncrementallyCallback applyIncrementallyCallback,
                                   @NotNull Consumer<? super InspectionContext> contextFinishedCallback,
                                   @Nullable Condition<? super LocalInspectionToolWrapper> enabledToolsPredicate) {
+    InspectionEngine.assertUnderProgressIndicator();
     if (!shouldInspect(myPsiFile)) {
       return Collections.emptyList();
     }
@@ -224,7 +224,7 @@ final class InspectionRunner {
       // the InspectionContext with (visible=true) is run and then InspectionContext with (visible=false).
       // Thus, we avoid running the same inspection tool visitor in a reentrant manner (on visible elements parallel to invisible elements),
       // because some of them are not ready for that.
-      if (!JobLauncher.getInstance().processConcurrentlyAsync(new SensitiveProgressWrapper(myProgress), init, contextProcessor, () -> {
+      if (!JobLauncher.getInstance().processConcurrentlyAsync(init, contextProcessor, () -> {
         // have to do all this even for empty elements, to perform correct cleanup/inspectionFinished
         reportIdsOfInspectionsReportedAnyProblemToFUS(init);
 
@@ -240,7 +240,7 @@ final class InspectionRunner {
         throw new ProcessCanceledException();
       }
 
-      boolean isWholeFileInspectionsPass = !init.isEmpty() && init.get(0).tool.runForWholeFile();
+      boolean isWholeFileInspectionsPass = !init.isEmpty() && init.getFirst().tool.runForWholeFile();
       if (myIsOnTheFly && !isWholeFileInspectionsPass) {
         // do not save stats for the batch process, there could be too many files
         InspectionProfilerDataHolder.saveStats(myPsiFile, init, highlightInfoUpdater);
@@ -281,7 +281,7 @@ final class InspectionRunner {
   }
 
   private static @NotNull TextRange finalPriorityRange(@NotNull TextRange priorityRange, @NotNull List<? extends Divider.DividedElements> allDivided) {
-    long finalPriorityRange = allDivided.isEmpty() ? TextRangeScalarUtil.toScalarRange(priorityRange) : allDivided.get(0).priorityRange();
+    long finalPriorityRange = allDivided.isEmpty() ? TextRangeScalarUtil.toScalarRange(priorityRange) : allDivided.getFirst().priorityRange();
     for (int i = 1; i < allDivided.size(); i++) {
       Divider.DividedElements dividedElements = allDivided.get(i);
       finalPriorityRange = TextRangeScalarUtil.union(finalPriorityRange, dividedElements.priorityRange());
@@ -543,7 +543,7 @@ final class InspectionRunner {
                                     @Nullable Condition<? super LocalInspectionToolWrapper> enabledToolsPredicate) {
     Map<PsiFile, PsiElement> injectedToHost = Collections.synchronizedMap(createInjectedFileMap());
     Project project = myPsiFile.getProject();
-    JobLauncher.getInstance().invokeConcurrentlyUnderProgress(elements, myProgress, element -> {
+    JobLauncher.getInstance().invokeConcurrentlyUnderContextProgress(elements, element -> {
       InjectedLanguageManager.getInstance(project).enumerateEx(element, myPsiFile, false, (injectedPsi, places) -> {
          if (injectedToHost.put(injectedPsi, element) == null) {
            if (LOG.isTraceEnabled()) {

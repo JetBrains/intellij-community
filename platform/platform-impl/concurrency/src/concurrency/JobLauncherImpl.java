@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.progress.util.StandardProgressIndicatorBase;
@@ -52,6 +53,14 @@ public final class JobLauncherImpl extends JobLauncher {
 
   JobLauncherImpl() {
     this(ForkJoinPool.commonPool());
+  }
+
+  private static @NotNull ProgressIndicator assertUnderProgressIndicator() {
+    ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
+    if (indicator == null) {
+      throw new IllegalStateException("Must be run under ProgressIndicator. See ProgressManager.runProcess()");
+    }
+    return indicator;
   }
 
   @Override
@@ -480,10 +489,10 @@ public final class JobLauncherImpl extends JobLauncher {
 
   @Override
   @ApiStatus.Internal
-  public <T> boolean processConcurrentlyAsync(@NotNull ProgressIndicator progress,
-                                              @NotNull List<? extends T> items,
+  public <T> boolean processConcurrentlyAsync(@NotNull List<? extends T> items,
                                               @NotNull Processor<? super T> thingProcessor,
                                               @NotNull Runnable runnable) throws ProcessCanceledException {
-    return invokeConcurrentlyUnderProgressAsync(items, progress, true, true, thingProcessor, runnable);
+    ProgressIndicator indicator = assertUnderProgressIndicator();
+    return invokeConcurrentlyUnderProgressAsync(items, indicator, true, true, thingProcessor, runnable);
   }
 }

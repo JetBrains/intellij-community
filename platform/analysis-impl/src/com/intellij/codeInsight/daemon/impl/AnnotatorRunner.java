@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.AnnotatorStatisticsCollector;
-import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.diagnostic.PluginExceptionUtil;
 import com.intellij.injected.editor.DocumentWindow;
@@ -71,14 +70,13 @@ final class AnnotatorRunner {
                              @NotNull Runnable runnable,
                              @NotNull ResultSink resultSink) {
     ThreadingAssertions.assertBackgroundThread();
-    DaemonProgressIndicator indicator = GlobalInspectionContextBase.assertUnderDaemonProgress();
 
     // TODO move inside Divider to calc only once
     List<PsiElement> insideThenOutside = ContainerUtil.concat(inside, outside);
     Map<Annotator, Set<Language>> supportedLanguages = calcSupportedLanguages(insideThenOutside);
     Processor<? super Annotator> processor = annotator ->
       ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> runAnnotator(document, annotator, insideThenOutside, supportedLanguages, resultSink));
-    boolean result = JobLauncher.getInstance().processConcurrentlyAsync(indicator, new ArrayList<>(supportedLanguages.keySet()), processor, runnable);
+    boolean result = JobLauncher.getInstance().processConcurrentlyAsync(new ArrayList<>(supportedLanguages.keySet()), processor, runnable);
     myAnnotatorStatisticsCollector.reportAnalysisFinished(myProject, myAnnotationSession, myPsiFile);
     return result;
   }
