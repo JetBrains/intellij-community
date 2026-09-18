@@ -6,70 +6,23 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfigurationVcsSupport;
-import com.intellij.icons.AllIcons;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonShortcuts;
-import com.intellij.openapi.actionSystem.CompositeShortcutSet;
-import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.actionSystem.impl.ActionButton;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.ui.BrowseFolderRunnable;
-import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.ui.ComponentValidator;
-import com.intellij.openapi.ui.TextComponentAccessor;
-import com.intellij.openapi.ui.ValidationInfo;
-import com.intellij.openapi.ui.panel.ComponentPanelBuilder;
-import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.JBPopupListener;
-import com.intellij.openapi.ui.popup.LightweightWindowEvent;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.ProjectKt;
-import com.intellij.ui.LayeredIcon;
-import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.components.JBCheckBox;
-import com.intellij.ui.popup.PopupState;
-import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.ThreeState;
-import com.intellij.util.UriUtil;
-import com.intellij.util.concurrency.NonUrgentExecutor;
-import com.intellij.util.ui.FormBuilder;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UI;
-import com.intellij.util.ui.UIUtil;
-import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
 
-import javax.swing.Icon;
-import javax.swing.JButton;
-import javax.swing.JPanel;
-import javax.swing.LayoutFocusTraversalPolicy;
-import javax.swing.text.JTextComponent;
-import java.awt.BorderLayout;
-import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.Collection;
 import java.util.HashSet;
@@ -77,15 +30,8 @@ import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
 
-public final class RunConfigurationStorageUi {
+public final class RunConfigurationStorageUi extends ProjectFileStorageSelector {
   private static final Logger LOG = Logger.getInstance(RunConfigurationStorageUi.class);
-
-  private static final Icon GEAR_WITH_DROPDOWN_ICON = LayeredIcon.layeredIcon(() -> new Icon[]{AllIcons.General.GearPlain, AllIcons.General.Dropdown});
-  private static final Icon GEAR_WITH_DROPDOWN_DISABLED_ICON = LayeredIcon.layeredIcon(() -> new Icon[]{IconLoader.getDisabledIcon(AllIcons.General.GearPlain), IconLoader.getDisabledIcon(AllIcons.General.Dropdown)});
-  private static final Icon GEAR_WITH_DROPDOWN_ERROR_ICON = LayeredIcon.layeredIcon(() -> new Icon[]{AllIcons.General.Error, AllIcons.General.Dropdown});
-
-  private final JBCheckBox myStoreAsFileCheckBox;
-  private final ActionButton myStoreAsFileGearButton;
 
   private final @NotNull Project myProject;
   private final @Nullable Runnable myOnModifiedRunnable;
@@ -99,71 +45,37 @@ public final class RunConfigurationStorageUi {
   private @Nullable Boolean myDotIdeaStorageVcsIgnored = null; // used as cache; null means not initialized yet
 
   public RunConfigurationStorageUi(@NotNull Project project, @Nullable Runnable onModifiedRunnable) {
+    super(project, ExecutionBundle.message("run.configuration.store.in"));
     if (project.isDefault()) LOG.error("Don't use RunConfigurationStorageUi for default project");
 
     myProject = project;
     myOnModifiedRunnable = onModifiedRunnable;
-
-    myStoreAsFileCheckBox = new JBCheckBox(ExecutionBundle.message("run.configuration.store.as.project.file"));
-    myStoreAsFileGearButton = createStoreAsFileGearButton();
-
-    myStoreAsFileCheckBox.addActionListener(e -> {
-      if (myStoreAsFileCheckBox.isSelected()) {
-        setStorageTypeAndPathToTheBestPossibleState();
-      }
-      else {
-        myRCStorageType = RCStorageType.Workspace;
-        myFolderPathIfStoredInArbitraryFile = null;
-      }
-
-      if (myOnModifiedRunnable != null) {
-        myOnModifiedRunnable.run();
-      }
-
-      myStoreAsFileGearButton.setEnabled(myStoreAsFileCheckBox.isSelected());
-      if (myStoreAsFileCheckBox.isSelected()) {
-        manageStorageFileLocation(null);
-      }
-    });
   }
 
-  private @NotNull ActionButton createStoreAsFileGearButton() {
-    PopupState<Balloon> state = PopupState.forBalloon();
-    AnAction showStoragePathAction = new DumbAwareAction() {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        if (!state.isRecentlyHidden()) manageStorageFileLocation(state);
-      }
-    };
-    Presentation presentation = new Presentation(ExecutionBundle.message("run.configuration.manage.file.location"));
-    presentation.setIcon(GEAR_WITH_DROPDOWN_ICON);
-    presentation.setDisabledIcon(GEAR_WITH_DROPDOWN_DISABLED_ICON);
-    return new ActionButton(showStoragePathAction, presentation, ActionPlaces.TOOLBAR, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
+  @Override
+  protected void onStorageSelectionChanged(boolean selected) {
+    if (selected) {
+      setStorageTypeAndPathToTheBestPossibleState();
+    }
+    else {
+      myRCStorageType = RCStorageType.Workspace;
+      myFolderPathIfStoredInArbitraryFile = null;
+    }
+
+    if (myOnModifiedRunnable != null) {
+      myOnModifiedRunnable.run();
+    }
   }
 
-  private void manageStorageFileLocation(@Nullable PopupState<Balloon> state) {
-    Disposable balloonDisposable = Disposer.newDisposable();
+  @Override
+  protected @NotNull String getStoragePath() {
+    return myRCStorageType == RCStorageType.DotIdeaFolder
+           ? getDotIdeaStoragePath(myProject)
+           : StringUtil.notNullize(myFolderPathIfStoredInArbitraryFile);
+  }
 
-    Function<String, String> pathToErrorMessage = path -> getErrorIfBadFolderPathForStoringInArbitraryFile(myProject, path);
-    RunConfigurationStoragePopup popup =
-      new RunConfigurationStoragePopup(myProject, getDotIdeaStoragePath(myProject), pathToErrorMessage, balloonDisposable);
-
-    Balloon balloon = JBPopupFactory.getInstance().createBalloonBuilder(popup.getMainPanel())
-      .setDialogMode(true)
-      .setBorderInsets(JBUI.insets(20, 15, 10, 15))
-      .setFillColor(UIUtil.getPanelBackground())
-      .setHideOnAction(false)
-      .setHideOnLinkClick(false)
-      .setHideOnKeyOutside(false) // otherwise any keypress in file chooser hides the underlying balloon
-      .setBlockClicksThroughBalloon(true)
-      .setRequestFocus(true)
-      .createBalloon();
-    balloon.setAnimationEnabled(false);
-
-    String path = myRCStorageType == RCStorageType.DotIdeaFolder
-                  ? getDotIdeaStoragePath(myProject)
-                  : StringUtil.notNullize(myFolderPathIfStoredInArbitraryFile);
-
+  @Override
+  protected @NotNull Collection<String> getSuggestedPaths(@NotNull String path) {
     Set<String> pathsToSuggest = new LinkedHashSet<>();
     if (getErrorIfBadFolderPathForStoringInArbitraryFile(myProject, path) == null) {
       pathsToSuggest.add(path);
@@ -173,27 +85,38 @@ public final class RunConfigurationStorageUi {
     }
     pathsToSuggest.add(getDotIdeaStoragePath(myProject));
     pathsToSuggest.addAll(getFolderPathsWithinProjectWhereRunConfigurationsStored(myProject));
+    return pathsToSuggest;
+  }
 
-    popup.reset(path, pathsToSuggest, () -> balloon.hide());
+  @Override
+  protected void onStoragePathChanged(@NotNull String path) {
+    applyChangedStoragePath(path);
+    if (myOnModifiedRunnable != null) {
+      myOnModifiedRunnable.run();
+    }
+  }
 
-    balloon.addListener(new JBPopupListener() {
+  @Override
+  protected @Nullable String getPathError(@NotNull String path) {
+    return getErrorIfBadFolderPathForStoringInArbitraryFile(myProject, path);
+  }
+
+  @Override
+  protected @NotNull FileChooserDescriptor createPathChooserDescriptor() {
+    String dotIdeaStoragePath = getDotIdeaStoragePath(myProject);
+    // `chooseFiles` is set to `true` to be able to select 'project.ipr' file in IPR-based projects; other files are not selectable
+    return new FileChooserDescriptor(true, true, false, false, false, false) {
       @Override
-      public void onClosed(@NotNull LightweightWindowEvent event) {
-        Disposer.dispose(balloonDisposable);
-
-        String newPath = popup.getPath();
-        if (!newPath.equals(path)) {
-          applyChangedStoragePath(newPath);
-
-          if (myOnModifiedRunnable != null) {
-            myOnModifiedRunnable.run();
-          }
-        }
+      public boolean isFileSelectable(@Nullable VirtualFile file) {
+        if (file == null) return false;
+        if (file.getPath().equals(dotIdeaStoragePath)) return true;
+        return file.isDirectory() &&
+               super.isFileSelectable(file) &&
+               !file.getPath().endsWith("/.idea") &&
+               !file.getPath().contains("/.idea/") &&
+               ReadAction.computeBlocking(() -> ProjectFileIndex.getInstance(myProject).isInContent(file));
       }
-    });
-
-    if (state != null) state.prepareToShow(balloon);
-    balloon.show(RelativePoint.getSouthOf(myStoreAsFileCheckBox), Balloon.Position.below);
+    }.withEnvironmentRestricted(true);
   }
 
   private void applyChangedStoragePath(String newPath) {
@@ -208,20 +131,10 @@ public final class RunConfigurationStorageUi {
     validatePath();
   }
 
-  private void validatePath() {
-    ReadAction.nonBlocking(this::checkPathAndGetErrorIcon)
-      .expireWhen(() -> !myStoreAsFileGearButton.isShowing())
-      .finishOnUiThread(ModalityState.defaultModalityState(), myStoreAsFileGearButton::setIcon)
-      .submit(NonUrgentExecutor.getInstance());
-  }
-
-  private Icon checkPathAndGetErrorIcon() {
-    if (myStoreAsFileCheckBox.isSelected() &&
-        myRCStorageType == RCStorageType.ArbitraryFileInProject &&
-        getErrorIfBadFolderPathForStoringInArbitraryFile(myProject, myFolderPathIfStoredInArbitraryFile) != null) {
-      return GEAR_WITH_DROPDOWN_ERROR_ICON;
-    }
-    return GEAR_WITH_DROPDOWN_ICON;
+  @Override
+  protected boolean isPathInvalid() {
+    return myRCStorageType == RCStorageType.ArbitraryFileInProject &&
+           getErrorIfBadFolderPathForStoringInArbitraryFile(myProject, myFolderPathIfStoredInArbitraryFile) != null;
   }
 
   private static @NonNls @NotNull String getFileNameByRCName(@NotNull String rcName) {
@@ -231,41 +144,8 @@ public final class RunConfigurationStorageUi {
   @Contract("_,null -> !null")
   private static @Nullable String getErrorIfBadFolderPathForStoringInArbitraryFile(@NotNull Project project,
                                                                                    @Nullable @NonNls @SystemIndependent String path) {
-    if (getDotIdeaStoragePath(project).equals(path)) return null; // that's ok
-
-    if (StringUtil.isEmpty(path)) return ExecutionBundle.message("run.configuration.storage.folder.path.not.specified");
-    if (path.endsWith("/.idea") || path.contains("/.idea/")) {
-      return ExecutionBundle.message("run.configuration.storage.folder.dot.idea.forbidden", File.separator);
-    }
-
-    VirtualFile file = StandardFileSystems.local().findFileByPath(path);
-    if (file != null && !file.isDirectory()) return ExecutionBundle.message("run.configuration.storage.folder.path.expected");
-
-    String folderName = PathUtil.getFileName(path);
-    String parentPath = PathUtil.getParentPath(path);
-    while (file == null && !parentPath.isEmpty()) {
-      if (!PathUtil.isValidFileName(folderName)) {
-        return ExecutionBundle.message("run.configuration.storage.folder.path.expected");
-      }
-      file = StandardFileSystems.local().findFileByPath(parentPath);
-      folderName = PathUtil.getFileName(parentPath);
-      parentPath = PathUtil.getParentPath(parentPath);
-    }
-
-    if (file == null) return ExecutionBundle.message("run.configuration.storage.folder.not.within.project");
-    if (!file.isDirectory()) return ExecutionBundle.message("run.configuration.storage.folder.path.expected");
-
-    boolean isInContent = WorkspaceFileIndex.getInstance(project).isUrlInContent(VfsUtilCore.pathToUrl(path)) != ThreeState.NO;
-    if (!isInContent) {
-      if (WorkspaceFileIndex.getInstance(project).getContentFileSetRoot(file, false) == null) {
-        return ExecutionBundle.message("run.configuration.storage.folder.not.within.project");
-      }
-      else {
-        return ExecutionBundle.message("run.configuration.storage.folder.in.excluded.root");
-      }
-    }
-
-    return null; // ok
+    return getErrorIfBadFolderPath(project, path, getDotIdeaStoragePath(project),
+                                  ExecutionBundle.message("run.configuration.storage.folder.dot.idea.forbidden", File.separator));
   }
 
   /**
@@ -364,16 +244,6 @@ public final class RunConfigurationStorageUi {
     return result;
   }
 
-  public JPanel createComponent() {
-    return FormBuilder.createFormBuilder().setFormLeftIndent(10).setHorizontalGap(0)
-      .addLabeledComponent(myStoreAsFileCheckBox, myStoreAsFileGearButton)
-      .getPanel();
-  }
-
-  public void addStoreAsFileCheckBoxListener(ActionListener listener) {
-    myStoreAsFileCheckBox.addActionListener(listener);
-  }
-
   public boolean isStoredInFile() {
     return myRCStorageType == RCStorageType.DotIdeaFolder || myRCStorageType == RCStorageType.ArbitraryFileInProject;
   }
@@ -400,12 +270,8 @@ public final class RunConfigurationStorageUi {
     myRCStorageTypeInitial = myRCStorageType;
     myFolderPathIfStoredInArbitraryFileInitial = myFolderPathIfStoredInArbitraryFile;
 
-    myStoreAsFileCheckBox.setEnabled(isManagedRunConfiguration);
-    myStoreAsFileCheckBox.setSelected(myRCStorageType == RCStorageType.DotIdeaFolder ||
-                                      myRCStorageType == RCStorageType.ArbitraryFileInProject);
-    myStoreAsFileGearButton.setVisible(isManagedRunConfiguration);
-    myStoreAsFileGearButton.setEnabled(myStoreAsFileCheckBox.isSelected());
-    validatePath();
+    resetStorageUi(myRCStorageType == RCStorageType.DotIdeaFolder || myRCStorageType == RCStorageType.ArbitraryFileInProject,
+                   isManagedRunConfiguration);
   }
 
   public void apply(@NotNull RunnerAndConfigurationSettings settings) {
@@ -428,102 +294,6 @@ public final class RunConfigurationStorageUi {
         }
       }
       default -> throw new IllegalStateException("Unexpected value: " + myRCStorageType);
-    }
-  }
-
-  private static final class RunConfigurationStoragePopup {
-    private final JPanel myMainPanel;
-    private final ComboBox<String> myPathComboBox;
-
-    private final @NonNls @SystemIndependent String myDotIdeaStoragePath;
-
-    private Runnable myClosePopupAction;
-
-    RunConfigurationStoragePopup(@NotNull Project project,
-                                 @NotNull String dotIdeaStoragePath,
-                                 @NotNull Function<? super String, @NlsContexts.DialogMessage String> pathToErrorMessage,
-                                 @NotNull Disposable uiDisposable) {
-      myDotIdeaStoragePath = dotIdeaStoragePath;
-      myPathComboBox = createPathComboBox(project, uiDisposable);
-
-      ComponentValidator validator = new ComponentValidator(uiDisposable);
-      JTextComponent comboBoxEditorComponent = (JTextComponent)myPathComboBox.getEditor().getEditorComponent();
-      validator.withValidator(() -> {
-        String errorMessage = pathToErrorMessage.fun(getPath());
-        return errorMessage != null ? new ValidationInfo(errorMessage, myPathComboBox) : null;
-      })
-        .andRegisterOnDocumentListener(comboBoxEditorComponent)
-        .installOn(comboBoxEditorComponent);
-
-      ComponentPanelBuilder builder = UI.PanelFactory.panel(myPathComboBox)
-        .withLabel(ExecutionBundle.message("run.configuration.store.in")).moveLabelOnTop();
-      JPanel comboBoxPanel = builder.createPanel();
-
-      JButton doneButton = new JButton(ExecutionBundle.message("run.configuration.done.button"));
-      doneButton.addActionListener(e -> myClosePopupAction.run());
-      JPanel doneButtonPanel = new JPanel(new BorderLayout());
-      doneButtonPanel.add(doneButton, BorderLayout.EAST);
-
-      myMainPanel = FormBuilder.createFormBuilder()
-        .addComponent(comboBoxPanel)
-        .addComponent(doneButtonPanel)
-        .getPanel();
-
-      myMainPanel.setFocusCycleRoot(true);
-      myMainPanel.setFocusTraversalPolicy(new LayoutFocusTraversalPolicy());
-
-      // need to handle Enter keypress, otherwise Enter closes the main Run Configurations dialog.
-      // Escape should also be handled manually because setHideOnKeyOutside(false) is set for this balloon.
-      DumbAwareAction.create(e -> {
-        if (myPathComboBox.isPopupVisible()) {
-          myPathComboBox.setPopupVisible(false);
-        }
-        else {
-          validator.updateInfo(null);
-          myClosePopupAction.run();
-        }
-      }).registerCustomShortcutSet(new CompositeShortcutSet(CommonShortcuts.ENTER, CommonShortcuts.ESCAPE), myMainPanel, uiDisposable);
-    }
-
-    private @NotNull ComboBox<String> createPathComboBox(@NotNull Project project, @NotNull Disposable uiDisposable) {
-      var comboBox = new ComboBox<String>(JBUI.scale(500));
-      comboBox.setEditable(true);
-
-      // `chooseFiles` is set to `true` to be able to select 'project.ipr' file in IPR-based projects; other files are not selectable
-      var descriptor = new FileChooserDescriptor(true, true, false, false, false, false) {
-        @Override
-        public boolean isFileSelectable(@Nullable VirtualFile file) {
-          if (file == null) return false;
-          if (file.getPath().equals(myDotIdeaStoragePath)) return true;
-          return file.isDirectory() &&
-                 super.isFileSelectable(file) &&
-                 !file.getPath().endsWith("/.idea") &&
-                 !file.getPath().contains("/.idea/") &&
-                 ReadAction.computeBlocking(() -> ProjectFileIndex.getInstance(project).isInContent(file));
-        }
-      }.withEnvironmentRestricted(true);
-
-      var selectFolderAction = new BrowseFolderRunnable<>(project, descriptor, comboBox, TextComponentAccessor.STRING_COMBOBOX_WHOLE_TEXT);
-      comboBox.initBrowsableEditor(selectFolderAction, uiDisposable);
-      return comboBox;
-    }
-
-    JPanel getMainPanel() {
-      return myMainPanel;
-    }
-
-    void reset(@NotNull @SystemIndependent String folderPath, Collection<String> pathsToSuggest, @NotNull Runnable closePopupAction) {
-      myPathComboBox.setSelectedItem(FileUtil.toSystemDependentName(folderPath));
-
-      for (String s : pathsToSuggest) {
-        myPathComboBox.addItem(FileUtil.toSystemDependentName(s));
-      }
-
-      myClosePopupAction = closePopupAction;
-    }
-
-    @NotNull @SystemIndependent String getPath() {
-      return UriUtil.trimTrailingSlashes(FileUtil.toSystemIndependentName(myPathComboBox.getEditor().getItem().toString().trim()));
     }
   }
 

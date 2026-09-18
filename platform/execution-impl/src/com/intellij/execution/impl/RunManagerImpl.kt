@@ -270,7 +270,7 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, priva
   internal val dotIdeaRunConfigurationsPath: String
     get() = FileUtilRt.toSystemIndependentName(projectSchemeManager.rootDirectory.path)
 
-  private val rcInArbitraryFileManager = RCInArbitraryFileManager(project)
+  private val rcInArbitraryFileManager = RCInArbitraryFileManager(this, lock)
 
   private val isFirstLoadState = AtomicBoolean(true)
 
@@ -435,7 +435,7 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, priva
   private fun deleteRunConfigsFromArbitraryFilesNotWithinProjectContent() {
     ReadAction
       .nonBlocking(Callable {
-        rcInArbitraryFileManager.findRunConfigsThatAreNotWithinProjectContent(lock)
+        rcInArbitraryFileManager.findRunConfigsThatAreNotWithinProjectContent()
       })
       .coalesceBy(this)
       .expireWith(project)
@@ -466,7 +466,7 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, priva
 
     for (filePath in updatedFilePaths) {
       val deletedAndAddedRunConfigs = runReadActionBlocking {
-        rcInArbitraryFileManager.loadChangedRunConfigsFromFile(this, lock, filePath)
+        rcInArbitraryFileManager.loadChangedRunConfigsFromFile(filePath)
       }
 
       for (runConfig in deletedAndAddedRunConfigs.addedRunConfigs) {
@@ -695,7 +695,7 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, priva
     }
 
   override suspend fun save() {
-    rcInArbitraryFileManager.saveRunConfigs(lock)
+    rcInArbitraryFileManager.save()
   }
 
   override fun getState(): Element {
