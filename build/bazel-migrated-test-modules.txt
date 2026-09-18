@@ -83,6 +83,7 @@ intellij.platform.completion.common.tests
 intellij.platform.compose.swing.tests
 intellij.platform.compose.tests
 intellij.platform.configurationStore.tests
+intellij.platform.core.impl.tests
 intellij.platform.core.nio.fs.tests
 intellij.platform.coverage.tests
 intellij.platform.credentialStore.impl.tests

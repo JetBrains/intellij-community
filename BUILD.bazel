@@ -1193,6 +1193,8 @@ jvm_library(
         "//platform/testFramework:testFramework_test_lib",
         "//platform/kernel/rpc.tests",
         "//platform/kernel/rpc.tests:rpc.tests_test_lib",
+        "//platform/core-impl:core-impl-tests",
+        "//platform/core-impl:core-impl-tests_test_lib",
     ],
 )
 ### auto-generated section `build intellij.idea.community.main.tests` end

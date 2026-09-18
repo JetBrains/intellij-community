@@ -10,8 +10,6 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Key
 import com.intellij.psi.FileViewProvider
 import com.intellij.util.containers.ContainerUtil
-import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.VisibleForTesting
 import java.lang.ref.WeakReference
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.contracts.ExperimentalContracts
@@ -337,9 +335,7 @@ private fun installContext(viewProvider: FileViewProvider, context: CodeInsightC
  * It stays the same during the whole life of a given [ContextMap]. Though it can be collected by GC.
  * To reassign the default context, [processQueue] should be called which will return a new instance of [ContextMap] with a new default context.
  */
-@ApiStatus.Internal
-@VisibleForTesting
-interface ContextMap<V : Any> {
+internal interface ContextMap<V : Any> {
   operator fun get(key: CodeInsightContext): V?
   fun add(key: CodeInsightContext, value: V): ContextMap<V>
   fun remove(key: CodeInsightContext): ContextMap<V>
@@ -350,9 +346,7 @@ interface ContextMap<V : Any> {
 }
 
 @Suppress("UNCHECKED_CAST")
-@ApiStatus.Internal
-@VisibleForTesting
-fun <V : Any> emptyContextMap(): ContextMap<V> = EmptyMap as ContextMap<V>
+internal fun <V : Any> emptyContextMap(): ContextMap<V> = EmptyMap as ContextMap<V>
 
 private object EmptyMap : ContextMap<Any> {
   override fun get(key: CodeInsightContext): Any? = null
