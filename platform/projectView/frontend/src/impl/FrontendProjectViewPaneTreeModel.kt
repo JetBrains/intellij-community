@@ -111,6 +111,10 @@ internal class FrontendProjectViewPaneTreeModel(
     check(requestChannel.trySend(request).isSuccess)
   }
 
+  internal fun getTreePathById(nodeId: Long): TreePath? {
+    return nodeById[nodeId]?.treePath
+  }
+
   /**
    * Requests the backend to load the children of the given node. Called by the UI when a node is expanded.
    */
@@ -412,7 +416,7 @@ internal class Node(
   override fun toString(): String = "{${if (isLeaf) "-" else "+"}[${projectViewNode.id}] ${projectViewNode.presentation.mainText}}"
 }
 
-private val Node.treePath: TreePath
+internal val Node.treePath: TreePath
   get() = CachingTreePath(path)
 
 private val LOG = logger<FrontendProjectViewPaneTreeModel>()

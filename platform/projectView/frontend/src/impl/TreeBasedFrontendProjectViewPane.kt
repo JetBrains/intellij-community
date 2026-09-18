@@ -26,6 +26,7 @@ import com.intellij.platform.projectView.actions.ProjectViewActionSupport
 import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPane
 import com.intellij.platform.projectView.frontend.pane.id
 import com.intellij.platform.projectView.pane.PROJECT_VIEW_SELECTED_NODE_IDS_KEY
+import com.intellij.platform.projectView.pane.ProjectViewChildrenLoaded
 import com.intellij.platform.projectView.pane.ProjectViewNodeModelImpl
 import com.intellij.platform.projectView.pane.ProjectViewNodePath
 import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorImpl
@@ -234,6 +235,24 @@ internal class TreeBasedFrontendProjectViewPane(
   suspend fun applyStateChange(event: ProjectViewPaneStateEvent) {
     withContext(Dispatchers.UI) {
       paneTreeModel.applyStateChange(event)
+      // Normally a newly loaded node can't be expanded.
+      // But it's possible when the pane was fully unloaded, and then reloaded again.
+      // Then, the frontend pane can retain some stale state, and in that state some nodes can be pre-expanded.
+      // We need to load every visible node, otherwise we may end with broken frontend-only nodes that can't do anything (IJPL-254925).
+      if (event is ProjectViewChildrenLoaded) {
+        loadVisibleGrandchildren(event.parentId)
+      }
+    }
+  }
+
+  private fun loadVisibleGrandchildren(parentId: Long) {
+    val parent = paneTreeModel.getTreePathById(parentId)?.lastPathComponent as? Node? ?: return
+    val children = parent.children().asSequence().filterIsInstance<Node>().toList()
+    for (child in children) {
+      if (tree.isExpanded(child.treePath)) {
+        LOG.debug { "The newly loaded node ${child.id} was previously expanded, requesting its children..." }
+        paneTreeModel.requestLoadChildren(child.id)
+      }
     }
   }
 
